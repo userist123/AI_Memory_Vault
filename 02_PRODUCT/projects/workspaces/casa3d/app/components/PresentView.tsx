@@ -31,12 +31,14 @@ import { feedbackLog } from '@/core/feedback-log';
 
 const nextFrame = () => new Promise<void>(res => requestAnimationFrame(() => res()));
 /** Pe linkul pentru client (`share`) prezentarea vine din revizia partajată și are, sub fiecare planșă de cameră, caseta de păreri. */
-export interface SharedDeck { token: string; name: string; snapshot: Snapshot; revisionNumber: number; catalog: Catalog; mc: MaterialsCatalog; progress?: ClientProgress | null }
+export interface SharedDeck { token: string; name: string; snapshot: Snapshot; revisionNumber: number; catalog: Catalog; mc: MaterialsCatalog; progress?: ClientProgress | null; renders?: Record<string, number[]> }
 export default function PresentView({ id, share }: { id?: string; share?: SharedDeck }){
   const { t, lang, units } = usePrefs();
-  const [data, setData] = useState<{ snap: Snapshot; name: string; catalog: Catalog; mc: MaterialsCatalog } | null>(null), [err, setErr] = useState(false);
+  // pe link datele vin deja de pe server: planșele (și coperta, elementul LCP) sunt în HTML-ul inițial, nu după hidratare
+  const fromShare = (sh: SharedDeck) => ({ snap: sh.snapshot, name: sh.snapshot.name || sh.name, catalog: sh.catalog, mc: sh.mc });
+  const [data, setData] = useState<{ snap: Snapshot; name: string; catalog: Catalog; mc: MaterialsCatalog } | null>(() => share ? fromShare(share) : null), [err, setErr] = useState(false);
   const [images, setImages] = useState<Record<string, { url: string; w: number }>>({}), [queued, setQueued] = useState(0), [printing, setPrinting] = useState(false), [noGL, setNoGL] = useState(false), canvasRef = useRef<HTMLCanvasElement>(null);
-  useEffect(() => { if (share){ setData({ snap: share.snapshot, name: share.snapshot.name || share.name, catalog: share.catalog, mc: share.mc }); return; }
+  useEffect(() => { if (share){ setData(d => d && d.catalog === share.catalog ? d : fromShare(share)); return; }
     Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.json()), fetch('/api/materials').then(r => r.json())])
       .then(([p, catalog, mc]) => setData({ snap: p.draft, name: p.draft.name || p.name, catalog, mc })).catch(() => setErr(true)); }, [id, share]);
   // numele implicite ale camerelor în limba cititorului („Kitchen” → „Bucătărie”), doar la afișare; numele personalizate rămân
@@ -85,13 +87,17 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
     setPhotos(out); }).catch(() => {}); }, [id]);
   const photoFor = (roomId: string) => photos[roomId.replace(/[^\w-]/g, '_')];
   const imgFor = (roomId: string) => photoFor(roomId) ?? images[roomId]?.url;
+  // pe link: imaginile gata randate la publicare (fișiere obișnuite, cu srcset); motorul 3D rămâne doar pentru ce lipsește
+  const cachedFor = (key: string) => { const ws = share?.renders?.[key]; if (!share || !ws?.length) return null;
+    const u = (w: number) => `/api/share/${share.token}/render/${encodeURIComponent(key)}?w=${w}`;
+    return { src: u(ws[ws.length - 1]!), srcSet: ws.map(w => `${u(w)} ${w}w`).join(', '), full: ws.includes(FULL_W) }; };
   // fiecare planșă cu imagine 3D cere imaginea abia când se apropie de ecran
   useEffect(() => { if (!data) return; const els = [...document.querySelectorAll<HTMLElement>('[data-shot]')];
     if (typeof IntersectionObserver === 'undefined'){ for (const el of els){ const b = el.getBoundingClientRect(); shoot(el.dataset.shot!, b.width, false, b.height); } return; }
     const io = new IntersectionObserver(es => { for (const en of es) if (en.isIntersecting){ io.unobserve(en.target); const el = en.target as HTMLElement; shoot(el.dataset.shot!, en.boundingClientRect.width || el.clientWidth, false, en.boundingClientRect.height || el.clientHeight); } }, { rootMargin: '400px 0px' });
     for (const el of els) io.observe(el); return () => io.disconnect(); }, [data, photos]); // eslint-disable-line
   async function printDeck(){ if (printing || !data) return; setPrinting(true);
-    try { const keys = ['overview', ...floors(data.snap).flatMap((_, i) => levelView(data.snap, i).floor.rooms.map(r => r.id)).filter(k => !photoFor(k))];
+    try { const keys = ['overview', ...floors(data.snap).flatMap((_, i) => levelView(data.snap, i).floor.rooms.map(r => r.id)).filter(k => !photoFor(k))].filter(k => !cachedFor(k)?.full);
       for (const k of keys) shoot(k, FULL_W, true); await eng.current.chain; await nextFrame(); await nextFrame(); }
     finally { setPrinting(false); } print(); }
   const busy = queued > 0 || printing;
@@ -128,12 +134,12 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
   const cur = data.catalog.offers[0]?.currency ?? 'RON', money = (v: number | null) => formatMoney(v, cur, lang, '—'), date = new Date().toLocaleDateString(intlLocale(lang), { month: 'long', year: 'numeric' });
   const role = (r: string) => t(`pres.role.${r.split('.')[0]}`), title = (n?: string) => (n ?? '').split(',')[0];
   const fl = floors(data.snap)[0]!, b = floorBounds(fl) ?? { x0: 0, x1: 6, z0: 0, z1: 5 }, box = { x0: b.x0 - .4, z0: b.z0 - .4, w: b.x1 - b.x0 + .8, d: b.z1 - b.z0 + .8 };
-  const n = pres.rooms.length + 4, num = (i: number) => `${String(i).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
+  const cover = cachedFor('overview'), n = pres.rooms.length + 4, num = (i: number) => `${String(i).padStart(2, '0')} / ${String(n).padStart(2, '0')}`;
   return (<main className="deck">{canvas}
     {share && <p className="fb-intro no-print">{t('fb.intro')}</p>}
     <div className="deck-bar no-print"><span>{busy ? t('print.preparing') : t('pres.keys')}</span><button className="btn primary" onClick={printDeck} disabled={printing}>{t('pres.pdf')}</button></div>
     <section className="slide cover">
-      <div className="shot" data-shot="overview">{images.overview ? <img src={images.overview.url} alt="" /> : <div className={noGL ? 'ph' : 'ph ph-wait'} role="img" aria-label={t('pres.renderWait')} />}
+      <div className="shot" data-shot={cover ? undefined : 'overview'}>{cover ? <img src={cover.src} srcSet={cover.srcSet} sizes="(max-width: 700px) 100vw, 60vw" alt="" fetchPriority="high" decoding="async" /> : images.overview ? <img src={images.overview.url} alt="" /> : <div className={noGL ? 'ph' : 'ph ph-wait'} role="img" aria-label={t('pres.renderWait')} />}
         {share && <PinLayer token={share.token} surface="overview" roomId={null} pins={feedback.filter(f => f.anchor?.surface === 'overview')} onAdded={added} />}</div>
       <div className="cover-txt"><span className="kicker">{t('pres.kicker')}</span>
         <div className="cover-main"><h1 className={data.name.length > 70 ? 'long xlong' : data.name.length > 40 ? 'long' : undefined} title={data.name}>{data.name}</h1><p>{t('pres.coverSub', { rooms: pres.rooms.length, area: formatArea(pres.totalArea, units, lang) })}</p></div>
@@ -147,7 +153,7 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
       <div className="pb-rooms"><h3>{t('pres2.byRoom')}</h3><ul>{pres.rooms.slice(0, 8).map(r => <li key={r.id}><b>{r.name}</b><span>{r.swatches.slice(0, 4).map((s, k) => <i key={k} title={s.material ? title(s.material.name) : s.color} style={s.material ? { ...swatchStyle(s.material), backgroundColor: s.color } : { background: s.color }} />)}</span></li>)}</ul></div>
       <footer>{num(2)}</footer></section>
     {pres.rooms.map((r, i) => <Fragment key={r.id}><section className="slide room">
-      <div className="room-img" data-shot={photoFor(r.id) ? undefined : r.id}>{imgFor(r.id) ? <img src={imgFor(r.id)} alt={r.name} /> : <div className={noGL ? 'ph' : 'ph ph-wait'} role="img" aria-label={t('pres.renderWait')} />}
+      <div className="room-img" data-shot={photoFor(r.id) || cachedFor(r.id) ? undefined : r.id}>{cachedFor(r.id) ? <img src={cachedFor(r.id)!.src} srcSet={cachedFor(r.id)!.srcSet} sizes="(max-width: 700px) 100vw, 58vw" alt={r.name} loading="lazy" decoding="async" /> : imgFor(r.id) ? <img src={imgFor(r.id)} alt={r.name} /> : <div className={noGL ? 'ph' : 'ph ph-wait'} role="img" aria-label={t('pres.renderWait')} />}
         {share && <PinLayer token={share.token} surface="room" roomId={r.id} pins={feedback.filter(f => f.anchor?.surface === 'room' && f.roomId === r.id)} onAdded={added} />}</div>
       <div className="room-txt"><span className="kicker">{t(`roomType.${r.type}`)} · {formatArea(r.areaM2, units, lang)}</span><h2>{r.name}</h2>
         <ul className="sw-list">{r.swatches.slice(0, 9).map((s, k) => <li key={k}><i style={s.material ? { ...swatchStyle(s.material), backgroundColor: s.color } : { background: s.color }} /><span><small>{role(s.role)}</small>{s.material ? title(s.material.name) : s.color}</span></li>)}</ul>

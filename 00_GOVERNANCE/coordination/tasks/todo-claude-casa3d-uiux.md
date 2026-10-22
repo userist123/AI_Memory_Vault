@@ -1,5 +1,5 @@
 # todo-claude-casa3d-uiux
-STATUS: IN_PROGRESS   UPDATED: 2026-10-23T02:20:00+03:00
+STATUS: IN_PROGRESS   UPDATED: 2026-10-23T03:05:00+03:00
 TASK: Casa3D UI/UX P1 from the research report (owner request 2026-10-22; report kept locally, not in repo)
 BRANCH / PR: claude/casa3d-uiux-p1 (worktree D:/w/uiux, base origin/main 6eb24f87)
 P1 items (report table rows 1-7):
@@ -30,5 +30,11 @@ DONE:
   audits every slide type at 390 px and 16:9 (1024/1280/1920) for content leaving the slide or clipped text; exit 1 on
   failure. Found and fixed: long project name pushed the cover row past the slide (footer cut) -> fixed row, smaller
   title steps (>40, >70 chars), 4-line clamp with title attr; floating deck bar covered cover data -> in flow above slides.
-NEXT: item 3; independent review; PR; merge.
-KEY FILES: casa3d/app/core/templates.ts, core/boq.ts, core/budget-excluded.ts, components/{Editor,PresentView,PrintView,SiteReport,MoodBoard,PlanView,Viewer3D,DialogHost}.tsx, core/{typed-dimension,feedback-log}.ts, lib/dialog.ts
+- (3) Share LCP: PresentView initialises from server data (slides in initial HTML, not after hydration); revision_renders
+  table + lib/share-renders.ts (WebP/JPEG magic-byte check, <=1.2 MB, keys = overview + revision rooms, owner-only write,
+  active-share-only read); lib/share-images.ts renders missing images once in the designer's browser (800 + 1600 px) after
+  "client link" / share and in the background for active links; link uses <img srcset>, cover fetchpriority=high,
+  three.js only for missing images. Slow 4G + 4x CPU at 390 px: LCP 3741 ms -> 806 ms, no three.js download, CLS 0.
+  tests/share-renders.test.ts (4); share-gate-routes inventory updated. Suite 696/696.
+NEXT: independent review (vault-reviewer); PR; CI; merge.
+KEY FILES: casa3d/app/core/templates.ts, core/boq.ts, core/budget-excluded.ts, components/{Editor,PresentView,PrintView,SiteReport,MoodBoard,PlanView,Viewer3D,DialogHost}.tsx, core/{typed-dimension,feedback-log}.ts, lib/{dialog,share-renders,share-images}.ts, scripts/check-slides.mjs
