@@ -256,7 +256,7 @@ namespace LogAnalyzer.UI.ViewModels
                 foreach (var p in protections) Protections.Add(p);
                 ApplyFilter();
                 var attention = _all.Count(a => a.NeedsAttention);
-                Summary = $"Conectate acum: {_all.Count(a => a.Device.ConnectedNow && a.Device.Kind != DeviceKind.Bluetooth)} · cunoscute de stație: {_all.Count}" +
+                Summary = $"Inventarul Windows (fila „Toate dispozitivele”): conectate acum {_all.Count(a => a.Device.ConnectedNow && a.Device.Kind != DeviceKind.Bluetooth)} · cunoscute de stație: {_all.Count}" +
                           (!MediaRegisterFeature.Enabled ? "." : attention == 0 ? " · toate mediile urmărite sunt în registru." : $" · {attention} cer atenție (nu sunt în registru, sunt retrase sau au expirat).");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.ComponentModel.Win32Exception)

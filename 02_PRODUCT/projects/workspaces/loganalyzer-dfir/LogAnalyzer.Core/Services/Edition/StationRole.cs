@@ -102,12 +102,12 @@ namespace LogAnalyzer.Core.Services.Edition
 
             if (edition == EditionKind.Classified)
             {
-                reasons.Add("Ediția clasificată (P1) rulează mereu ca Stație de control: nu are rețea, AI sau acțiuni pe gazdă compilate.");
+                reasons.Add("Ediția Standalone (P1) rulează mereu ca Stație de control: nu are rețea, AI sau acțiuni pe gazdă compilate.");
                 if (requested == StationRole.Csirt)
-                    reasons.Add("Politica cere rolul CSIRT; cererea a fost respinsă pentru că ediția clasificată nu poate avea acest rol" +
+                    reasons.Add("Politica cere rolul CSIRT; cererea a fost respinsă pentru că ediția Standalone nu poate avea acest rol" +
                                 (policy is { Valid: true } ? "." : " (politica nici nu este verificată în această ediție)."));
                 else if (policy is not null)
-                    reasons.Add(policy.Valid ? "Politica nu schimbă nimic în ediția clasificată." : $"Politica nu a fost acceptată: {policy.Reason}");
+                    reasons.Add(policy.Valid ? "Politica nu schimbă nimic în ediția Standalone." : $"Politica nu a fost acceptată: {policy.Reason}");
                 return new StationRoleDecision(StationRole.Control, requested, edition, AppMode.AirGapped, sha, reasons, nowUtc);
             }
 

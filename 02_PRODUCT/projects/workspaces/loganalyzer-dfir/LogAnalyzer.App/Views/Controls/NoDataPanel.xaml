@@ -25,7 +25,7 @@
             <Button DockPanel.Dock="Right" Content="Colectează acum" Command="{x:Static services:CollectAllState.Command}" Style="{StaticResource AccentButtonStyle}"
                     AutomationProperties.Name="Colectează acum (colectare și analiză completă pentru rolul stației)" VerticalAlignment="Center"/>
             <StackPanel>
-                <TextBlock Text="{x:Static services:CollectAllState.EmptyText}" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="{x:Static services:CollectAllState.EmptyTitle}" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,12,0"/>
             </StackPanel>
         </DockPanel>

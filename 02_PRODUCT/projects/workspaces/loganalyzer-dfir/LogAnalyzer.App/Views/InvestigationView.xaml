@@ -328,7 +328,7 @@
                     </ListBox>
                 </DockPanel>
             </TabItem>
-            <TabItem Header="Analiză AI (locală)" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Analiză AI (locală)" Style="{StaticResource InspectorTabItemStyle}" Visibility="{Binding HasAiAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ctrl:FeaturePlaceholder FeatureKey="AiAnalysis" Title="Analiza AI" ViewModel="{Binding AiAnalysis}"/>
             </TabItem>
             <TabItem Header="Colectare la distanță" Style="{StaticResource InspectorTabItemStyle}">

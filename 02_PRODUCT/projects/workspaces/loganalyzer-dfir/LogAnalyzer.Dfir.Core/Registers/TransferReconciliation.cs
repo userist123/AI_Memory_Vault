@@ -13,7 +13,7 @@ public sealed record UsbSessionCheck(DeviceRecord Device, DateTimeOffset Connect
 
 public static class TransferReconciliation
 {
-    public const string UnregisteredMessage = "stick folosit fără înregistrare în registrul de transferuri";
+    public const string UnregisteredMessage = "mediu de stocare folosit fără înregistrare în registrul de transferuri";
 
     /// <summary>
     /// For every connection of a removable storage device (USB stick/disk, memory card) whose local day falls in [<paramref name="from"/>, <paramref name="to"/>],

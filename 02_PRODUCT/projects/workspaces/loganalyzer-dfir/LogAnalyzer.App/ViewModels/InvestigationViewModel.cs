@@ -110,6 +110,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>The optional AI screen's view model; null in the classified edition (no AI code in that build).</summary>
         public object? AiAnalysis { get; private set; }
 
+        /// <summary>False in the classified edition: its „Analiză AI (locală)” tab is then hidden instead of saying the feature is missing.</summary>
+        public bool HasAiAnalysis => AiAnalysis is not null;
+
         /// <summary>The finished investigation, for optional layers that read it (AI explanation). Null before a run.</summary>
         public InvestigationResult? CurrentResult => _result;
 

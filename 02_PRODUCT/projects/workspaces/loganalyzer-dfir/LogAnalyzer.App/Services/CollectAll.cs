@@ -37,6 +37,12 @@ namespace LogAnalyzer.UI.Services
     {
         public const string EmptyText = "Nu există încă date — Colectează acum";
 
+        /// <summary>Banner title of an empty page (G3; 2026-10-22 walkthrough: the title and the subtitle must not repeat each other).</summary>
+        public const string EmptyTitle = "Nu există încă date";
+
+        /// <summary>Banner subtitle of an empty page: says what „Colectează acum” does and that the collection only reads.</summary>
+        public const string EmptySubtitle = "„Colectează acum” citește jurnalele, Prefetch, SRUM și starea stației (doar citire), apoi rulează analiza; rezultatele se salvează în caz.";
+
         public static CollectAllState Instance { get; } = new();
 
         /// <summary>Set by the main window: navigates to the investigation page and runs the complete collection and analysis for the role.</summary>
@@ -54,7 +60,7 @@ namespace LogAnalyzer.UI.Services
         }
 
         [ObservableProperty] [NotifyPropertyChangedFor(nameof(HasData), nameof(IsEmpty))] private InvestigationResult? _current;
-        [ObservableProperty] private string _status = EmptyText;
+        [ObservableProperty] private string _status = EmptySubtitle;
         [ObservableProperty] private bool _isRunning;
 
         public bool HasData => Current is not null;
@@ -70,7 +76,7 @@ namespace LogAnalyzer.UI.Services
             Published?.Invoke(r);
         }
 
-        public void Clear() { Current = null; Status = EmptyText; }
+        public void Clear() { Current = null; Status = EmptySubtitle; }
 
         /// <summary>The plan for a role: the incident-response station collects everything (complete profile); the control station collects the standard set and runs the station control.</summary>
         public static CollectAllPlan Plan(StationRole role) => role switch

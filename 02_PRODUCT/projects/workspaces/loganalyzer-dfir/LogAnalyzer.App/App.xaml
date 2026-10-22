@@ -28,6 +28,30 @@
                 <ResourceDictionary Source="/Themes/Components/Timeline.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <!-- 2026-10-22 walkthrough: the built-in DatePicker watermark (English, no Romanian resource) is replaced here, and the public
+                 DatePickerTextBox API has no Watermark property. This template keeps the TextBox look and shows „Alegeți data” while the box is empty. -->
+            <Style TargetType="DatePickerTextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="DatePickerTextBox">
+                            <Grid>
+                                <Border Background="{TemplateBinding Background}" BorderBrush="{TemplateBinding BorderBrush}" BorderThickness="{TemplateBinding BorderThickness}" CornerRadius="4"/>
+                                <ScrollViewer x:Name="PART_ContentHost" Focusable="False" Padding="{TemplateBinding Padding}" HorizontalScrollBarVisibility="Hidden" VerticalScrollBarVisibility="Hidden"/>
+                                <TextBlock x:Name="RoDateWatermark" Text="Alegeți data" IsHitTestVisible="False" VerticalAlignment="Center" Margin="{TemplateBinding Padding}"
+                                           Foreground="{StaticResource TextMutedBrush}" Visibility="Collapsed"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="Text" Value="">
+                                    <Setter TargetName="RoDateWatermark" Property="Visibility" Value="Visible"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter Property="Opacity" Value="0.5"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
+            </Style>
         </ResourceDictionary>
     </Application.Resources>
 </Application>

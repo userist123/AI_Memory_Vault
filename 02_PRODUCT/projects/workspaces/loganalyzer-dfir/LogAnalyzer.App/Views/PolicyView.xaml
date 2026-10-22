@@ -20,7 +20,7 @@
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
             <TextBlock Text="Politici — import, aprobare, aplicare verificată" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
             <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
-                       Text="DRAFT → VALIDATED → TESTED → APPROVED → DEPLOYED → VERIFIED. Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată."/>
+                       Text="Stări: CIORNĂ (DRAFT) → VALIDATĂ (VALIDATED) → TESTATĂ (TESTED) → APROBATĂ (APPROVED) → APLICATĂ (DEPLOYED) → VERIFICATĂ (VERIFIED).Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată."/>
         </StackPanel>
 
         <Border Grid.Row="1" Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,8">

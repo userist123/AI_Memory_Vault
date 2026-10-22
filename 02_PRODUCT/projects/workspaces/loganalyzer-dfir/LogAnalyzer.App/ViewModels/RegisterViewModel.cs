@@ -287,7 +287,7 @@ namespace LogAnalyzer.UI.ViewModels
         public override string Notice => UsersRegister.EditNotice;
         public override string Hint =>
             "Rândurile vin de pe stație (conturile existente sau folosite pe ea); persoana completează doar ce stația nu poate ști: autorizația (nivelul), zonele și nevoia de a cunoaște. " +
-            "Person; Accounts: DOMENIU\\utilizator, separate prin ; sau |; Sids: opțional; Clearance: nivel NATO, UE sau național (un rând pentru fiecare abilitare; gol = fără abilitare); " +
-            "ClearanceValidFrom/To: yyyy-MM-dd; NeedToKnow: note; ZonesAllowed: zone separate prin ; sau |. Abilitările se introduc manual; nu se deduc din nimic.";
+            "Persoana (Person); Conturile (Accounts): DOMENIU\\utilizator, separate prin ; sau |; Identificatorii de cont (Sids): opțional; Autorizația (Clearance): nivel NATO, UE sau național (un rând pentru fiecare abilitare; gol = fără abilitare); " +
+            "Autorizație valabilă de la / până la (ClearanceValidFrom/To): aaaa-LL-zz; Necesitatea de a cunoaște (NeedToKnow): note; Zone permise (ZonesAllowed): zone separate prin ; sau |. Abilitările se introduc manual; nu se deduc din nimic.";
     }
 }

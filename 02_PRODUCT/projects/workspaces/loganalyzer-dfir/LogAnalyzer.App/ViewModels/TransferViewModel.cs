@@ -117,7 +117,7 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var a in _media.ConnectedNow.Where(a => a.Device.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.Optical or DeviceKind.PortableDevice or DeviceKind.ExternalDisk))
                 Media.Add(a);
             SelectedMedium = Media.FirstOrDefault(m => m.Device.InstanceId == keep) ?? Media.FirstOrDefault();
-            if (Media.Count == 0) Status = "Niciun stick, card sau CD conectat acum. Conectați mediul sau completați seria de mână.";
+            if (Media.Count == 0) Status = "Niciun mediu de stocare conectat acum (stick USB, card, disc extern sau CD). Conectați mediul sau completați seria de mână.";
         }
 
         private void Reload()
@@ -147,7 +147,7 @@ namespace LogAnalyzer.UI.ViewModels
             var checks = TransferReconciliation.CheckUsbSessions(all.Select(a => a.Device), _register.Rows, today.AddDays(-ReconcileDays), today,
                 d => regOf.TryGetValue(d.InstanceId, out var n) ? n : "");
             foreach (var c in checks.Where(c => c.Status == UsbSessionStatus.ToVerify).OrderByDescending(c => c.Connected)) UnregisteredConnections.Add(new UnregisteredConnection(c));
-            UnregisteredSummary = all.Count == 0 ? "Mediile stației nu au fost citite încă (deschideți pagina „Medii de stocare”)."
+            UnregisteredSummary = all.Count == 0 ? "Mediile stației nu au fost citite încă (deschideți pagina „Monitor dispozitive”)."
                 : UnregisteredConnections.Count == 0 ? $"Toate conectările din ultimele {ReconcileDays} de zile au un transfer înregistrat."
                 : $"{UnregisteredConnections.Count} conectări din ultimele {ReconcileDays} de zile nu au un transfer înregistrat.";
         }

@@ -146,7 +146,7 @@
                                     <Setter Property="Text" Value="Izolarea automată este oprită (implicit). Izolarea se face manual, din pagina de izolare a proceselor."/>
                                     <Style.Triggers>
                                     <DataTrigger Binding="{Binding HasContainment}" Value="False">
-                                        <Setter Property="Text" Value="Izolarea proceselor nu este disponibilă în ediția clasificată."/>
+                                        <Setter Property="Text" Value="Izolarea proceselor nu este disponibilă în ediția Standalone."/>
                                     </DataTrigger>
                                         <DataTrigger Binding="{Binding Containment.AutoContainEnabled}" Value="True">
                                             <Setter Property="Text" Value="Izolare automată pornită: procesele cu încredere mare sunt izolate de rețea (nu sunt suspendate)."/>

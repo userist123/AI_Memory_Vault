@@ -6,7 +6,7 @@
         xmlns:views="clr-namespace:LogAnalyzer.UI.Views"
         xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
         xmlns:services="clr-namespace:LogAnalyzer.UI.Services"
-        Title="LogAnalyzer Enterprise — Threat Triage &amp; Incident Response Command Center" fit:WindowFit.ToWorkArea="True"
+        Title="LogAnalyzer" fit:WindowFit.ToWorkArea="True"
         Height="900" Width="1500" MinHeight="600" MinWidth="1000"
         WindowStartupLocation="CenterScreen" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}">
 
@@ -344,7 +344,7 @@
                                 <Setter Property="Text" Value="Izolare automată: oprită (implicit)"/>
                                 <Style.Triggers>
                                     <DataTrigger Binding="{Binding HasContainment}" Value="False">
-                                        <Setter Property="Text" Value="Izolare automată: nu este disponibilă în ediția clasificată"/>
+                                        <Setter Property="Text" Value="Izolare automată: nu este disponibilă în ediția Standalone"/>
                                     </DataTrigger>
                                     <DataTrigger Binding="{Binding Containment.AutoContainEnabled}" Value="True">
                                         <Setter Property="Text" Value="Izolare automată: pornită"/>
