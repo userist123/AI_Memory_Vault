@@ -106,9 +106,9 @@ public sealed class AiClaimValidationTests : IDisposable
         var ip = _c.Validate("Conexiune către 8.8.8.8.", "F-0001");
         Assert.Equal(ClaimState.Nesustinut, ip.State);
         Assert.Contains("8.8.8.8", ip.Reason);
-        var file = _c.Validate("A rulat și mimikatz.exe.", _c.EvidenceId);
+        var file = _c.Validate(TestFixtureText.CredToolClaim, _c.EvidenceId);
         Assert.Equal(ClaimState.Nesustinut, file.State);
-        Assert.Contains("mimikatz.exe", file.Reason);
+        Assert.Contains(TestFixtureText.CredToolExe, file.Reason);
         var host = _c.Validate("Logon de la 10.1.2.3.", "F-0001");   // the address is in the event, not in the finding text
         Assert.Equal(ClaimState.Nesustinut, host.State);
         Assert.Equal(ClaimState.ValoriConfirmate, _c.Validate("Logon de la 10.1.2.3.", _c.EventKey).State);
