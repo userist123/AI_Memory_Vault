@@ -27,6 +27,7 @@ import { suggestTechPoints, techCounts, TECH_KINDS, type TechKind } from '@/core
 import { TECH_SYMBOL } from './TechPanel';
 import { floors, levelView, stairGeometry, stairwells, SLAB } from '@/core/levels';
 import { profileLine, type StudioProfile } from '@/core/studio-profile';
+import { localizeSnapshotRoomNames } from '@/core/templates';
 
 interface ProjectDto { id: string; name: string; currentRevision: number | null; draft: Snapshot }
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
@@ -71,7 +72,8 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
   useEffect(() => {
     setToday(new Date().toLocaleDateString(intlLocale(locale)));
     Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/materials').then(r => r.ok ? r.json() : Promise.reject(r))])
-      .then(([p, catalog, mc]) => setData({ p, catalog, mc })).catch(() => { setErr(true); setBusy(false); });
+      // numele implicite ale camerelor în limba documentului („Kitchen” → „Bucătărie”); numele personalizate rămân
+      .then(([p, catalog, mc]) => setData({ p: { ...p, draft: localizeSnapshotRoomNames(p.draft, locale) }, catalog, mc })).catch(() => { setErr(true); setBusy(false); });
     fetch(`/api/projects/${id}/revisions`).then(r => r.ok ? r.json() : []).then(setRevs).catch(() => {});
     fetch(`/api/projects/${id}/survey`).then(r => r.ok ? r.json() : []).then(setSurveys).catch(() => {});
   }, [id, locale]);

@@ -15,7 +15,9 @@ export function colorName(hex: string): string {
   const rgb = hexToRgb(h); if (!rgb) return 'culoare personalizată';
   const { h: hue, s, l } = rgbToHsl(rgb), shade = l > 0.8 ? ' deschis' : l < 0.3 ? ' închis' : '';
   if (l > 0.93) return 'alb'; if (l < 0.08) return 'negru';
-  if (s < 0.15) return 'gri' + shade;
+  // griurile cu o tentă vizibilă își spun tenta („gri verzui”): un salvie stins nu e doar „gri”
+  if (s < 0.06) return 'gri' + shade;
+  if (s < 0.15) return 'gri ' + (hue < 15 || hue >= 330 ? 'roșiatic' : hue < 45 ? 'maroniu' : hue < 70 ? 'gălbui' : hue < 170 ? 'verzui' : hue < 260 ? 'albăstrui' : 'violaceu') + shade;
   const base = hue < 15 || hue >= 345 ? 'roșu' : hue < 45 ? (l < 0.5 ? 'maro' : 'bej') : hue < 70 ? 'galben' : hue < 170 ? 'verde' : hue < 200 ? 'turcoaz' : hue < 260 ? 'albastru' : hue < 300 ? 'mov' : 'roz';
   return base + (base === 'maro' || base === 'bej' ? '' : shade);
 }
