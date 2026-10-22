@@ -276,3 +276,8 @@ Not verified: `Removable` on a real internal webcam/keyboard (CM_DEVCAP_REMOVABL
 - Review round 1 of 98102663e: CHANGES_REQUIRED (step 2 still crossed kinds: a single OLD target, no target, two current targets). FIXED: step 2 uses
   `KindFoldAllowed` only for one current-classifier target, otherwise `SameFamily` (same kind or keyboard/mouse); `KindFoldAllowed` now allows any
   older<newer known pair (v2->v3 Keyboard/Mouse->Bluetooth folds). 4 tests (red before). Dfir 2391/31/0, App 670/0. Next: round-2 review of this delta.
+- Round 2 of 9577d12b5: APPROVE; pushed. Demo reinstalled from 9577d12b5 (exe hash = publish 31EB117B…, old exe kept as .bak, --self-test exit 0).
+- Real PC 2026-10-22 (elevated UIA driver in the session scratchpad, test account): signed in; monitor page = Razer one "Mouse extern" row, BT rows
+  "Dispozitiv Bluetooth" red; control wizard step 1 -> scope dialog („Mai târziu”, scope stays provisional) -> step 2 (period „De la ultimul control”).
+  Step 3 click was refused by the auto-mode classifier: owner must allow it (permission rule) or press „Înainte” + „Fă controlul stației” himself.
+- Next: finish the control run + PDF + investigation screenshots; CI read once on PR #308; merge #303 -> #306 -> #307 -> #308.
