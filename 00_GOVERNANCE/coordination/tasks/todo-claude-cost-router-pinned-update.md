@@ -85,3 +85,12 @@ malformed / wrong schema / non-40-hex commit; P11 eol conversion turning a good 
   (hook = no-pin until the owner pins a merged commit and installs with --source-ref).
 - Full suite once (D: temp, `pytest 20_TESTS security/tests`): 14 failed / 4976 passed / 56 skipped / 9 xfailed / 3 errors;
   10 failing ids, all in the phase-7 baseline list (0 new); no ENOSPC. NEXT: commit, push, draft PR (base PR #313 branch), CI once.
+- 2026-10-22 committed 1413c1b96, pushed, draft PR #317 (base claude/overnight-reliability-p6-p7). CI checked once:
+  #317 pending (7). #313 RED (4 fail): (a) "Structural and path hygiene" x2 = repository_hygiene.py TEST_ABSOLUTE_PATH in
+  20_TESTS/redteam/test_redteam_runtime.py and 20_TESTS/test_claude_cost_router_benchmark.py (fake C:/Users/x fixtures:
+  mark `# hygiene: intentional-absolute-path` or use placeholders); (b) Linux regression: test_redteam_runtime.py::
+  test_rt17_a_failing_pytest_in_the_benchmark_harness_is_not_recorded_as_correct (assert False is True) and
+  test_cost_router_enforcement.py::test_agent_hook_requires_the_vault_router_for_implement_in_the_vault ('allow' != 'deny')
+  -> reproduce on Linux semantics (paths/shell), fix on branch claude/overnight-reliability-p6-p7, then rebase #317.
+  (c) "enforce" check: read its log. NEXT SESSION: start from this note; worktree D:/w/costrouter-p9 (checkout the p6-p7
+  branch for the fix; C: is full -> temp on D:).
