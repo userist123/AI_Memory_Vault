@@ -380,6 +380,55 @@ public sealed class DeviceMonitorRound3Tests : IDisposable
         Assert.Equal(4, j.Devices.Count(DeviceScope.IsShown));
     }
 
+    private static List<DeviceJournalEntry> MouseWithLegacyKeyboardRows(bool otherKeyboard = false)
+    {
+        var rows = new List<DeviceJournalEntry>
+        {
+            new() { Identity = @"ID|USB\VID_1532&PID_009C\6&FAKE01&0&2", InstanceId = @"USB\VID_1532&PID_009C\6&FAKE01&0&2", Name = "USB Input Device", Manufacturer = "Razer Inc", Class = DeviceClass.Mouse, VidPid = "1532:009C", GenericSerial = true, ClassifierVersion = 2, Present = true, FirstSeenUtc = T0.AddDays(3), LastConnectedUtc = T0.AddDays(3) },
+            new() { Identity = @"ID|HID\VID_1532&PID_009C&MI_01&COL01\7&AAAA&0&0000", InstanceId = @"HID\VID_1532&PID_009C&MI_01&COL01\7&AAAA&0&0000", Name = "HID Keyboard Device", Manufacturer = "Razer Inc", Class = DeviceClass.Keyboard, VidPid = "1532:009C", GenericSerial = true, Present = false, FirstSeenUtc = T0, LastConnectedUtc = T0, LastDisconnectedUtc = T0.AddHours(1) },
+            new() { Identity = @"ID|HID\VID_1532&PID_009C&MI_02\7&BBBB&0&0000", InstanceId = @"HID\VID_1532&PID_009C&MI_02\7&BBBB&0&0000", Name = "HID Keyboard Device", Manufacturer = "Razer Inc", Class = DeviceClass.Keyboard, VidPid = "", Present = false, FirstSeenUtc = T0.AddDays(1), LastDisconnectedUtc = T0.AddDays(1).AddHours(1) },
+        };
+        if (otherKeyboard)
+            rows.Add(new() { Identity = @"ID|HID\VID_1532&PID_009D&MI_00\7&CCCC&0&0000", InstanceId = @"HID\VID_1532&PID_009D&MI_00\7&CCCC&0&0000", Name = "HID Keyboard Device", Manufacturer = "Razer Inc", Class = DeviceClass.Keyboard, VidPid = "1532:009D", Present = false, FirstSeenUtc = T0 });
+        return rows;
+    }
+
+    [Fact]
+    public void Disconnected_legacy_keyboard_interface_rows_fold_into_the_connected_mouse_of_the_same_device()
+    {
+        var j = new DeviceJournal { Devices = MouseWithLegacyKeyboardRows() };
+        DeviceJournalMerge.MarkSuperseded(j);
+        var shown = Assert.Single(j.Devices.Where(DeviceScope.IsShown));
+        Assert.Equal(DeviceClass.Mouse, shown.Class);
+        Assert.Equal(2, j.Devices.Count(d => d.SupersededBy == shown.Identity));
+        Assert.Equal(3, j.Devices.Count);                                   // nothing deleted
+        Assert.Equal(3, DeviceJournalMerge.FoldedIdentities(j, shown.Identity).Count);   // the history keeps the legacy rows' events
+        Assert.Equal(DeviceClass.Keyboard, j.Devices[1].Class);              // the journal row is unchanged
+        Assert.Equal(T0, DeviceJournalMerge.ShownView(j, shown).FirstSeenUtc);
+    }
+
+    [Fact]
+    public void A_different_keyboard_model_stays_a_row_of_its_own_next_to_the_folded_ones()
+    {
+        var j = new DeviceJournal { Devices = MouseWithLegacyKeyboardRows(otherKeyboard: true) };
+        DeviceJournalMerge.MarkSuperseded(j);
+        Assert.Equal("", j.Find(@"ID|HID\VID_1532&PID_009D&MI_00\7&CCCC&0&0000")!.SupersededBy);
+        Assert.Equal(2, j.Devices.Count(DeviceScope.IsShown));
+    }
+
+    [Fact]
+    public void Two_connected_rows_and_different_registration_numbers_are_never_folded_into_the_mouse()
+    {
+        var rows = MouseWithLegacyKeyboardRows();
+        rows[1].Present = true;   // two connected rows
+        rows[2].RegistrationNumber = "NR-9";
+        rows[0].RegistrationNumber = "NR-1";
+        var j = new DeviceJournal { Devices = rows };
+        DeviceJournalMerge.MarkSuperseded(j);
+        Assert.Equal("", rows[0].SupersededBy);
+        Assert.Equal("", rows[2].SupersededBy);
+    }
+
     [Fact]
     public void Rows_with_two_different_registration_numbers_are_not_folded()
     {
