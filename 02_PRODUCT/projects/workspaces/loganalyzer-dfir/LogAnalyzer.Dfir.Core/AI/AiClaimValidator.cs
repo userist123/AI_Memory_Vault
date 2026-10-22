@@ -200,6 +200,8 @@ public static class AiClaimValidator
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
     internal const string NegationReason = "conține o negație sau o concluzie: sensul nu poate fi verificat automat";
     internal const string EvidenceOnlyReason = "citează doar fișierul, nu evenimentul sau constatarea: valorile nu sunt legate de un singur înregistrare";
+    internal const string SpreadReason = "valorile provin din înregistrări diferite: nicio înregistrare citată nu le conține pe toate";
+    internal const string LookalikeReason = "conține caractere care imită alte litere";
     internal const string InjectionGeneric = "conține text de tip instrucțiune (posibilă injecție din probe sau din model); nu este tratat ca instrucțiune și nu este o constatare";
     internal const string InjectionQuoted = "citatul există în probă, dar conține text de tip instrucțiune; afișat ca citat, nu ca afirmație confirmată";
 
@@ -223,7 +225,13 @@ public static class AiClaimValidator
     {
         if (string.IsNullOrWhiteSpace(c.Text)) return Make(c, ClaimState.Nesustinut, "afirmație goală", []);
         var cites = c.Cites.Select(x => x?.Trim().Trim('[', ']') ?? "").Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        if (Injection.IsMatch(c.Text)) return Make(c, ClaimState.Nesustinut, InjectionReason(c, cites, facts), []);
+        // NFKC first: full-width, ligature and other compatibility forms become the plain characters before anything is extracted or compared.
+        var text = c.Text.Normalize(NormalizationForm.FormKC);
+        var norm = c with { Text = text };
+        if (Injection.IsMatch(text)) return Make(c, ClaimState.Nesustinut, InjectionReason(norm, cites, facts), []);
+        // A token that mixes scripts (Latin "evil." + Cyrillic "ехе", a hash with one Cyrillic "а") escapes the extractors and would let a value that is not
+        // in the case pass: such a claim is refused outright.
+        if (Lookalikes.Find(text) is { } spoof) return Make(c, ClaimState.Nesustinut, $"{LookalikeReason}: „{spoof.Token}” ({spoof.Detail})", []);
         if (cites.Count == 0) return Make(c, ClaimState.Nesustinut, "nu citează nicio probă din caz", []);
 
         var cited = new List<AiCaseRecord>();
@@ -242,7 +250,7 @@ public static class AiClaimValidator
         // the file" says nothing about the event the claim talks about: such a claim is compared against the file but can reach PARTIAL at most.
         var specific = cited.Where(r => r.Kind != "evidence").ToList();
         var basis = specific.Count > 0 ? specific : cited;
-        var checks = ClaimFacts.Check(c.Text, basis);
+        var checks = ClaimFacts.Check(text, basis);
         var bad = checks.Where(f => !f.Matched).ToList();
         if (bad.Count > 0)
             return Make(c, ClaimState.Nesustinut, "valori care nu apar exact în elementele citate — " + string.Join("; ", bad.Select(b => $"{b.Kind} „{b.Value}”" + (b.Note.Length > 0 ? " (" + b.Note + ")" : ""))), checks);
@@ -250,7 +258,10 @@ public static class AiClaimValidator
             return Make(c, ClaimState.Partial, "citările există în caz, dar afirmația nu conține valori pe care validatorul să le poată compara determinist (timp, cale, hash, adresă, număr, valoare între ghilimele)", checks);
         var caps = new List<string>();
         if (specific.Count == 0) caps.Add(EvidenceOnlyReason);
-        if (NegationOrVerdict.IsMatch(c.Text)) caps.Add(NegationReason);
+        // VALORI_CONFIRMATE needs ONE cited record that holds every value of the claim: values gathered from several records ("evil.exe" from one event,
+        // the address and port from another) do not describe one event. Counts of the cited set ("2 evenimente") are still recomputed over the whole set.
+        if (!basis.Any(r => ClaimFacts.Check(text, [r], countBasis: basis).All(f => f.Matched))) caps.Add(SpreadReason);
+        if (NegationOrVerdict.IsMatch(text)) caps.Add(NegationReason);
         if (caps.Count > 0) return Make(c, ClaimState.Partial, string.Join("; ", caps), checks);
         return Make(c, ClaimState.ValoriConfirmate, "", checks);
     }
@@ -260,6 +271,7 @@ public static class AiClaimValidator
 internal static class ClaimFacts
 {
     private static readonly Regex Timestamp = new(@"\b(?<d>\d{4}-\d{2}-\d{2})[T ](?<h>\d{2}):(?<m>\d{2})(?::(?<s>\d{2})(?:\.(?<f>\d{1,7}))?)?(?<z>Z|[+-]\d{2}:?\d{2})?(?![\d])", RegexOptions.Compiled);
+    private static readonly Regex TimeOfDay = new(@"(?<![\p{L}\d])(?:la\s+)?ora\s+(?<h>\d{1,2})(?:[:.](?<m>\d{2}))?(?![\d:]|\.\d)", RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex DateOnly = new(@"\b\d{4}-\d{2}-\d{2}\b", RegexOptions.Compiled);
     private static readonly Regex Hash = new(@"\b[0-9a-fA-F]{12,128}\b", RegexOptions.Compiled);
     private static readonly Regex Ipv4 = new(@"(?<![\d.])(?<ip>(?:\d{1,3}\.){3}\d{1,3})(?![\d]|\.\d)(?::(?<port>\d{1,5})(?![\d\w]))?", RegexOptions.Compiled);
@@ -300,8 +312,10 @@ internal static class ClaimFacts
         RegexOptions.IgnoreCase | RegexOptions.Compiled);
     private static readonly Regex BareNumber = new(@"(?<![\w.,\-])(?:\d{1,3}(?:[.,]\d{3})+(?:[.,]\d+)?|\d+[.,]\d+|\d{3,})(?![\w]|[.,]\d)", RegexOptions.Compiled);
 
-    public static List<ClaimFactCheck> Check(string text, IReadOnlyList<AiCaseRecord> cited)
+    /// <param name="countBasis">The records counts of the cited set ("N evenimente") are recomputed over; <paramref name="cited"/> when null.</param>
+    public static List<ClaimFactCheck> Check(string text, IReadOnlyList<AiCaseRecord> cited, IReadOnlyList<AiCaseRecord>? countBasis = null)
     {
+        countBasis ??= cited;
         var checks = new List<ClaimFactCheck>();
         var rest = new StringBuilder(text);
         void Blank(Group m) { for (int i = m.Index; i < m.Index + m.Length; i++) rest[i] = ' '; }
@@ -325,6 +339,18 @@ internal static class ClaimFacts
         {
             bool ok = cited.Any(r => r.Times.Any(t => t.UtcDateTime.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) == m.Value)) || InAny(m.Value);
             checks.Add(new ClaimFactCheck("dată", m.Value, ok));
+            Blank(m);
+        }
+        // a time of day without a date ("la ora 11", "ora 10:30"): compared with the hour (and minute) of the cited record's time, on the clock the record states
+        foreach (Match m in TimeOfDay.Matches(rest.ToString()))
+        {
+            int h = int.Parse(m.Groups["h"].Value, CultureInfo.InvariantCulture);
+            int? min = m.Groups["m"].Success ? int.Parse(m.Groups["m"].Value, CultureInfo.InvariantCulture) : null;
+            var times = cited.SelectMany(r => r.Times).ToList();
+            bool ok = h <= 23 && times.Any(t => t.Hour == h && (min is null || t.Minute == min));
+            var note = ok ? "" : times.Count == 0 ? "elementul citat nu are un timp" :
+                "în elementul citat: " + string.Join(", ", times.Select(t => t.ToString("HH:mm", CultureInfo.InvariantCulture) + (t.Offset == TimeSpan.Zero ? " UTC" : t.ToString(" zzz", CultureInfo.InvariantCulture))).Distinct());
+            checks.Add(new ClaimFactCheck("oră", m.Value.Trim(), ok, note));
             Blank(m);
         }
         foreach (Match m in WinPath.Matches(rest.ToString()))
@@ -390,7 +416,7 @@ internal static class ClaimFacts
         {
             var n = ParseInt(m.Groups["n"].Value);
             var cls = NounClass(m.Groups["w"].Value);
-            var allowed = RecomputedCounts(cls, cited);
+            var allowed = RecomputedCounts(cls, countBasis);
             bool ok = n is { } v && allowed.Contains(v);
             checks.Add(new ClaimFactCheck("număr", m.Value, ok, ok ? "" : $"în caz, pentru elementele citate: {string.Join(" sau ", allowed.OrderBy(x => x))}"));
             Blank(m);
@@ -490,4 +516,66 @@ internal static class ClaimFacts
     }
 
     private static bool IsWord(char c) => char.IsLetterOrDigit(c) || c == '_';
+}
+
+/// <summary>
+/// Look-alike characters (homoglyphs). A token of a claim (letters, digits and the punctuation of names, paths and hashes) is refused when it mixes
+/// scripts (Latin with Cyrillic, Greek, IPA, ...), contains an invisible format character or a non-ASCII digit, contains a character of the small fixed
+/// table of Latin-range letters that imitate other letters, or puts ASCII digits next to a Cyrillic / Greek letter that looks like a Latin one.
+/// Romanian diacritics (ă â î ș ț, also ş ţ) are Latin and are never flagged.
+/// </summary>
+internal static class Lookalikes
+{
+    internal sealed record Hit(string Token, string Detail);
+
+    private static readonly Regex Token = new(@"[\p{L}\p{M}\p{N}\p{Cf}._\-\\/:@$~]+", RegexOptions.Compiled);
+
+    /// <summary>Latin-range letters that imitate other letters (dotless i, dotless j, long s, Latin alpha, script g, iota, small capitals, click letters).</summary>
+    private static readonly HashSet<int> LatinConfusables = [0x0131, 0x0237, 0x017F, 0x0251, 0x0261, 0x0269, 0x026A, 0x028F, 0x0280, 0x0274, 0x01C0, 0x01C3];
+
+    /// <summary>Cyrillic and Greek letters that look like Latin letters.</summary>
+    private static readonly HashSet<char> ForeignLookalikes = [.. "аеорсухіјѕԁԛԝһӏүвкмнтАВЕКМНОРСТХІЈЅԜУαοιρνκτυχΑΒΕΖΗΙΚΜΝΟΡΤΥΧ"];
+
+    public static Hit? Find(string text)
+    {
+        foreach (Match m in Token.Matches(text))
+        {
+            var scripts = new HashSet<string>(StringComparer.Ordinal);
+            bool asciiDigit = false, foreignLookalike = false;
+            foreach (var r in m.Value.EnumerateRunes())
+            {
+                var v = r.Value;
+                if (Rune.GetUnicodeCategory(r) == UnicodeCategory.Format) return new Hit(m.Value, $"caracter invizibil U+{v:X4}");
+                if (LatinConfusables.Contains(v)) return new Hit(m.Value, $"U+{v:X4}");
+                if (Rune.IsDigit(r))
+                {
+                    if (v > 0x7F) return new Hit(m.Value, $"cifră din alt alfabet U+{v:X4}");
+                    asciiDigit = true;
+                    continue;
+                }
+                if (!Rune.IsLetter(r)) continue;
+                scripts.Add(Script(v));
+                if (v <= 0xFFFF && ForeignLookalikes.Contains((char)v)) foreignLookalike = true;
+            }
+            if (scripts.Count > 1)
+            {
+                var foreign = m.Value.EnumerateRunes().FirstOrDefault(r => Rune.IsLetter(r) && Script(r.Value) != "latin");
+                return new Hit(m.Value, $"amestecă alfabetele {string.Join(" și ", scripts.OrderBy(x => x, StringComparer.Ordinal))}, de ex. U+{foreign.Value:X4}");
+            }
+            if (asciiDigit && foreignLookalike) return new Hit(m.Value, "cifre lângă o literă chirilică sau grecească ce imită una latină");
+        }
+        return null;
+    }
+
+    private static string Script(int v) => v switch
+    {
+        < 0x0250 or (>= 0x1E00 and <= 0x1EFF) or (>= 0x2C60 and <= 0x2C7F) or (>= 0xA720 and <= 0xA7FF) or (>= 0xAB30 and <= 0xAB6F) => "latin",
+        (>= 0x0250 and <= 0x02AF) or (>= 0x1D00 and <= 0x1DBF) => "IPA",
+        (>= 0x0370 and <= 0x03FF) or (>= 0x1F00 and <= 0x1FFF) => "grec",
+        (>= 0x0400 and <= 0x052F) or (>= 0x1C80 and <= 0x1C8F) or (>= 0x2DE0 and <= 0x2DFF) or (>= 0xA640 and <= 0xA69F) => "chirilic",
+        (>= 0x0530 and <= 0x058F) => "armean",
+        (>= 0x13A0 and <= 0x13FF) or (>= 0xAB70 and <= 0xABBF) => "cherokee",
+        (>= 0x3040 and <= 0x30FF) or (>= 0x3400 and <= 0x9FFF) or (>= 0xAC00 and <= 0xD7AF) or (>= 0xF900 and <= 0xFAFF) => "CJK",
+        _ => $"bloc U+{v >> 7 << 7:X4}",
+    };
 }

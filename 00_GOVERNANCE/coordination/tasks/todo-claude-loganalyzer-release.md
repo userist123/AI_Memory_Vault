@@ -3,7 +3,7 @@
 - **Task:** owner order 2026-10-22: work until LogAnalyzer is ready for use. Measure = the project's own release gate
   (`02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RELEASE_GATE.md`, `release-gate/gate-items.json`) + SECURITY_AUDIT.md.
 - **Branch:** `claude/loganalyzer-release-gate`, worktree `.claude/worktrees/la-rel` (build ONLY here), base E7 head efa0a03b9 (stack on #307).
-- **Updated:** 2026-10-22.
+- **Updated:** 2026-10-22 (WP4 closed, register draft, notices).
 
 ## Gate state (2026-10-22, from code; the gate needs PowerShell 7, not installed locally, CI runs it)
 - PASS expected: tests_passing, synthetic_corpus, evidence_integrity; audit_integrity probably PASS (AuditChainCustodyTests exists; RELEASE_GATE.md "Today" stale).
@@ -69,7 +69,27 @@
   Residuals: extraction is best effort (names in prose without keyword not compared; fixed negation word list; stoplist after "user"/"host"); statement-level state in
   ai_reasoning.json is not cross-checked claim by claim against ai_validation.json (only the validation file's custody hash + evidence binding). Round 2 = delta only.
 
+- 2026-10-22 WP4 final round (round 2, last; vault-worker) + release items. WP4 CLOSED. Each fix has a test seen failing on eadd40c04 (`AiClaimValidationFinal{,Report}Tests`,
+  `ResponseVerificationPoolSaturationTests`, Dfir.Tests):
+  (1) VALORI_CONFIRMATE only when ONE cited record holds every value (`ClaimFacts.Check(text, [r], countBasis)`); spread over records -> PARTIAL
+  "valorile provin din înregistrări diferite" (counts of the cited set still recomputed over the whole set);
+  (2) claim NFKC-normalised, then `Lookalikes.Find`: token mixing scripts / invisible Cf char / non-ASCII digit / fixed Latin confusable table / ASCII digits next to a
+  Cyrillic-Greek look-alike -> NESUSTINUT "conține caractere care imită alte litere" (Romanian diacritics not flagged, tested);
+  (3) `ResponseVerifier.Observe` runs the re-read on a dedicated background thread (TCS wait), timeout still injectable, default 20 s unchanged, timeout = NOT_VERIFIED;
+  test: failure modes 60 s limit, timeout mode waits on a ManualResetEventSlim released at the end; saturation test blocks 2x ProcessorCount pool threads and asserts
+  the re-read never runs on a pool thread (non-parallel collection). 20x loop of the WP9 classes: 20/20 green (21 tests each);
+  (4) `AiClaims` normalises the stored state with `ClaimStates.Parse` (legacy SUSTINUT / unknown -> NEVERIFICABIL);
+  (5) time of day "la ora N" / "ora N:MM" compared with the record's hour (record's own offset); other residuals listed in RELEASE_GATE.md limits
+  (bare small numbers, paraphrased negation, names without keyword, number words, all-Cyrillic words).
+- 2026-10-22 findings register DRAFT `release-gate/findings-register.draft.json` (36 entries: 32 fixed with verified commits, 4 owner items #10, #21, licence key,
+  QuestPDF), `prepared_by: agent, unverified`; schema-valid (gate function run under PS 5.1 on it: PASS); gate reads only the exact path (new assertion in
+  `release-gate/tests/Test-ReleaseGate.ps1`, needs pwsh 7 = CI). `findings-register.json` NOT created (owner only). RELEASE_GATE.md §4 says the owner reviews and saves it.
+- 2026-10-22 THIRD_PARTY_NOTICES.md: QuestPDF 2026.7.2 (QuestPDF Community License; eligibility owner check) + every direct PackageReference of the 17 lock files.
+  FLAG for owner: QuestPDF licence v3.0 says public-sector entities / government agencies are NOT eligible for Community regardless of revenue.
+  Tests: Dfir 2284/31/0 (+24), App 644, UI 354, Edition 45; solution build 0 errors.
+
 ## Next
-- Opus `vault-reviewer` round 2 on the WP9 fix delta only (max 2 rounds), then main session decides. Residuals: IL scan excludes WPF assemblies and delegate-injected
-  primitives; `NotVerified` incidents are not re-contained automatically; LIVE case is opened for station-wide defense audit.
-- WP4 review round 1 fixed (above); round 2 (delta only) optional. Next: findings register + notices + docs (item 3).
+- Main session: read the CI release-gate run once (pwsh 7 self-test incl. the new draft assertion), then nice-to-have code rows.
+- Owner: review `findings-register.draft.json` and save as `findings-register.json`; QuestPDF licence decision (public-sector clause); #10, #21, licence key.
+- Residuals WP9: IL scan excludes WPF assemblies and delegate-injected primitives; `NotVerified` incidents are not re-contained automatically; abandoned hung re-read
+  threads stay alive (background) until the reader returns.

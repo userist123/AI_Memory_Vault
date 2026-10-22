@@ -69,7 +69,8 @@ public static class AiClaims
             }
             v.Verdict = state == StandardState.Verified ? StandardState.Inferred : state;   // belt and braces: never VERIFIED
             v.Reason = reason;
-            if (Prop(st, "validation") is { ValueKind: JsonValueKind.Object } cv && Text(cv, "state") is { Length: > 0 } cs) v.ClaimValidation = cs.ToUpperInvariant();
+            if (Prop(st, "validation") is { ValueKind: JsonValueKind.Object } cv && Text(cv, "state") is { Length: > 0 } cs)
+                v.ClaimValidation = LogAnalyzer.Dfir.AI.ClaimStates.ToSpec(LogAnalyzer.Dfir.AI.ClaimStates.Parse(cs));   // only the four known states; legacy "SUSTINUT" or any other string -> NEVERIFICABIL
             // the stored claim state is only as good as the validation file it came from: a stale, modified or missing validation makes it NEVERIFICABIL
             if (validity.Length > 0 && v.ClaimValidation != "NEVERIFICABIL")
             {

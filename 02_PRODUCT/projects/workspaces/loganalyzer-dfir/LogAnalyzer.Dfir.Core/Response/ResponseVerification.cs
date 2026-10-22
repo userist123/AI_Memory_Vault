@@ -114,17 +114,29 @@ public static class ResponseVerifier
         return new ResponseOutcome { Action = action, Phase = phase, Status = status, Cause = cause, Checks = checks, CheckedUtc = DateTimeOffset.UtcNow };
     }
 
-    /// <summary>Runs one re-read with a time limit; every failure of the reader becomes NOT_VERIFIED with its cause.</summary>
+    /// <summary>
+    /// Runs one re-read with a time limit; every failure of the reader becomes NOT_VERIFIED with its cause. The re-read runs on its own dedicated
+    /// background thread, never on a thread-pool thread: a starved pool cannot delay it into a false timeout, and a re-read that hangs holds only
+    /// its own thread (abandoned after the limit, it never blocks process exit). The wait is a signalled wait on the reader's completion.
+    /// </summary>
     public static ResponseObservation Observe(Func<ResponseObservation> read, TimeSpan timeout)
     {
-        Task<ResponseObservation> task;
-        try { task = Task.Run(read); }
+        var done = new TaskCompletionSource<ResponseObservation?>(TaskCreationOptions.RunContinuationsAsynchronously);
+        try
+        {
+            var worker = new Thread(() =>
+            {
+                try { done.TrySetResult(read()); }
+                catch (Exception ex) { done.TrySetException(ex); }
+            }) { IsBackground = true, Name = "response-recheck" };
+            worker.Start();
+        }
         catch (Exception ex) { return ResponseObservation.Unknown("re-citirea nu a pornit: " + Describe(ex)); }
         try
         {
-            if (!task.Wait(timeout))
+            if (!done.Task.Wait(timeout))
                 return ResponseObservation.Unknown($"re-citirea nu a răspuns în {timeout.TotalSeconds:0.#} s (timeout)");
-            var r = task.Result;
+            var r = done.Task.Result;
             return r ?? ResponseObservation.Unknown("re-citirea nu a întors nicio stare");
         }
         catch (AggregateException ex) { return ResponseObservation.Unknown("re-citirea a eșuat: " + Describe(ex.GetBaseException())); }
