@@ -119,7 +119,7 @@ def test_install_adds_rules_and_deny_once_and_uninstall_removes_only_them(tmp_pa
     assert deny[:2] == own and deny.count("Read(**/__pycache__/**)") == 1 and "Read(**/.mypy_cache/**)" in deny
     assert not any("node_modules" in r or "venv" in r or "dist" in r for r in deny), "dependency/build trees stay readable"
     starts = settings["hooks"]["SessionStart"]
-    maps = [e for e in starts if "cost-router/hook_repo_map.py" in json.dumps(e)]
+    maps = [e for e in starts if "cost-router/hook_repo_map.py" in json.dumps(e).replace("\\\\", "/")]
     assert len(maps) == 1 and len(starts) == 2  # the other is the self-update hook
     assert maps[0]["matcher"] == "startup|clear|compact"
     r = _run([INSTALL, "--home", home, "--uninstall"], home)

@@ -276,6 +276,7 @@ def test_usage_report_dedupes_by_request_id_and_prices(tmp_path):
 
 def test_project_slug_matches_claude_code_layout():
     assert project_slug(Path("/srv/user/AI_Memory_Vault_CODEX_READY")) == "-srv-user-AI-Memory-Vault-CODEX-READY"
+    assert project_slug("C:\\Users\\user\\AI_Memory_Vault_CODEX_READY") == "C--Users-user-AI-Memory-Vault-CODEX-READY"  # hygiene: intentional-absolute-path
 
 
 # -- CLI ----------------------------------------------------------------------
