@@ -1,0 +1,15 @@
+{
+  "schema": "loganalyzer-release-waiver/1",
+  "version": "0.1.0-dfir",
+  "date": "2026-10-22",
+  "waives": [
+    "differential",
+    "real_corpus"
+  ],
+  "reason": "Versiune de demonstrație; corpusul real de incidente și laboratorul de comparație nu sunt disponibile pe stația de lansare. Validarea pe corpus rămâne obligatorie înainte de folosirea într-o instituție.",
+  "signer": "Claude, delegat de proprietar (2026-10-22)",
+  "signature": {
+    "alg": "ecdsa-p256-sha256",
+    "value": "WMhiT5jqKjTg+eghU/S+ewXNd2gQly7kkqU2i4ATsAnFWEPHfRpAg58UbzRMZpP56czdN+pvMLHqjtDehWBxtQ=="
+  }
+}

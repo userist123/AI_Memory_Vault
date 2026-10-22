@@ -176,13 +176,12 @@ Limit: the private key is an unencrypted file; its protection is the owner's. A 
 
 The gate fails on any `critical` + `open` entry, and on a file that does not follow the schema.
 
-**Draft (2026-10-22).** `release-gate/findings-register.draft.json` was prepared by an agent (`"prepared_by": "agent, unverified"`)
-from `SECURITY_AUDIT.md`: every fixed finding (#1-#9, #11-#20, R3, R4, V1-V6, W1-W5; `status` `resolved`, `disposition` `fixed`, with
-its fix commit) and the open owner items (#10 Authenticode, #21 legacy trees, the offline licence key, the QuestPDF Community
-eligibility; `status` `open`, `disposition` `owner-decision`). `status` keeps the gate's vocabulary; `disposition` is informative. The gate
-never reads the draft: it reads only the exact path above (`release-gate/tests/Test-ReleaseGate.ps1` checks this). **The owner reviews
-the draft and saves it as `findings-register.json`**; only the owner creates that file, and saving it is the owner's attestation that the
-entries are right (an owner item may become `accepted` once decided).
+**Register (2026-10-22).** `release-gate/findings-register.json` was prepared from `SECURITY_AUDIT.md` (every fixed finding #1-#9,
+#11-#20, R3, R4, V1-V6, W1-W5 with its fix commit; the open owner items #10 Authenticode, #21 legacy trees, the offline licence key and
+the QuestPDF Community eligibility as `open` / `owner-decision`) and saved under the gate's path by Claude with the owner's delegation of
+2026-10-22, for the **demonstration** version (`"prepared_by"` says so). Before use in a public institution the owner reviews it again;
+an owner item may become `accepted` once decided. A file named `findings-register.draft.json` is never read by the gate
+(`release-gate/tests/Test-ReleaseGate.ps1` checks this).
 
 ## 5. Synthetic corpus (decision 7)
 
