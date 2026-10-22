@@ -72,11 +72,12 @@ export const toolShortcut = (tk: Tool): Shortcut => ({ key: TOOL_KEYS[tk] });
 export const commandHint = (id: string, o: { mac: boolean }) => { const s = commandById(id)?.shortcuts[0]; return s ? formatShortcut(s, o) : undefined; };
 
 /** Un rând din ajutor: `keysKey` (cheie i18n) are prioritate față de `keys` (text literal); `label` primește {small}/{big}. */
-export interface HelpRow { keys: string; keysKey?: string; label: string }
-/** Rândurile dialogului `?`, în ordinea veche, plus rotița (zoom), Alt+trage (pan), paleta și uneltele. */
+export interface HelpRow { keys: string; keysKey?: string; label: string; section: 'edit' | 'draw' | 'tools' }
+/** Rândurile dialogului `?` pe secțiuni: editare (ordinea veche, rotița, Alt+trage, paleta), desenare precisă (lungimea tastată, Shift), unelte. */
 export function helpRows(o: { mac: boolean }): HelpRow[] {
-  const row = (c: CommandDef): HelpRow => ({ keys: c.shortcuts.map(s => formatShortcut(s, o)).join(' / '), keysKey: c.helpKeys, label: c.label });
+  const row = (c: CommandDef): HelpRow => ({ keys: c.shortcuts.map(s => formatShortcut(s, o)).join(' / '), keysKey: c.helpKeys, label: c.label, section: c.group === 'tools' ? 'tools' : 'edit' });
   const edit = COMMANDS.filter(c => c.group === 'edit').map(row), by = (id: string) => row(commandById(id)!);
-  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan' }, by('help'), by('palette'),
+  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom', section: 'edit' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan', section: 'edit' }, by('help'), by('palette'),
+    { keys: '', keysKey: 'help.typeLengthKeys', label: 'help.typeLength', section: 'draw' }, { keys: '', keysKey: 'help.shiftDrawKeys', label: 'help.shiftDraw', section: 'draw' },
     ...COMMANDS.filter(c => c.group === 'tools').map(row)];
 }

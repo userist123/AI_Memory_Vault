@@ -62,7 +62,7 @@ export const en: Dict = {
   "viewer.quality": "High quality", "viewer.qualityTitle": "Contact shadows in corners and under furniture (ambient occlusion)", "viewer.sun": "Sun from {deg}°",
   "viewer.noWebgl": "Your browser does not support WebGL, so the 3D view is unavailable.", "viewer.hintWalkTouch": "Drag to look around · use the joystick on the left to walk",
   "viewer.hintWalk": "Drag to look around · W A S D or arrow keys to walk", "viewer.hintHouse": "Drag to rotate · wheel to zoom · click an item", "viewer.joystick": "Movement joystick",
-  "help.title": "Keyboard shortcuts", "help.undoKeys": "Ctrl/Cmd + Z", "help.undo": "Undo", "help.redoKeys": "Ctrl/Cmd + Y or Ctrl/Cmd + Shift + Z", "help.redo": "Redo",
+  "help.title": "Keyboard shortcuts", "help.section.edit": "Editing", "help.section.draw": "Precise drawing", "help.typeLengthKeys": "Digits + Enter", "help.typeLength": "Exact length of the wall being drawn (e.g. {ex}); Esc clears", "help.shiftDrawKeys": "Shift (while drawing)", "help.shiftDraw": "No snapping: free angle and length", "help.undoKeys": "Ctrl/Cmd + Z", "help.undo": "Undo", "help.redoKeys": "Ctrl/Cmd + Y or Ctrl/Cmd + Shift + Z", "help.redo": "Redo",
   "help.deleteKeys": "Delete / Backspace", "help.delete": "Delete selection", "help.rotate": "Rotate item 90°", "help.duplicateKeys": "Ctrl/Cmd + D", "help.duplicate": "Duplicate selected item",
   "help.arrowKeys": "Arrow keys", "help.nudge": "Move item by {small}", "help.shiftArrowKeys": "Shift + arrow keys", "help.nudgeBig": "Move item by {big}",
   "help.escape": "Back to \"Select\", stop measuring", "help.wheelKeys": "Mouse wheel", "help.zoom": "Zoom the plan", "help.altDragKeys": "Alt + drag", "help.pan": "Pan the plan", "help.toggle": "Show / hide this list",

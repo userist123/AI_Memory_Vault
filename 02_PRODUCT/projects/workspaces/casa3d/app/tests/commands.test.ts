@@ -69,4 +69,10 @@ describe('registrul de comenzi', () => {
     assert.equal(rows.find(r => r.label === 'help.undo')!.keysKey, 'help.undoKeys'); assert.equal(rows.find(r => r.label === 'tool.wall')!.keys, 'P'); assert.equal(rows.find(r => r.label === 'help.rotate')!.keys, 'R');
     assert.equal(new Set(labels).size, labels.length);
   });
+  test('ajutorul are trei secțiuni în ordine (editare, desenare precisă, unelte) și documentează lungimea tastată și Shift', () => {
+    const rows = helpRows({ mac: false }), order = rows.map(r => r.section);
+    assert.deepEqual([...new Set(order)], ['edit', 'draw', 'tools']); assert.deepEqual(order, [...order].sort((x, y) => ['edit', 'draw', 'tools'].indexOf(x) - ['edit', 'draw', 'tools'].indexOf(y)));
+    for (const k of ['help.typeLength', 'help.shiftDraw']) assert.equal(rows.find(r => r.label === k)?.section, 'draw', k);
+    assert.ok(rows.filter(r => r.section === 'tools').every(r => r.label.startsWith('tool.')));
+  });
 });
