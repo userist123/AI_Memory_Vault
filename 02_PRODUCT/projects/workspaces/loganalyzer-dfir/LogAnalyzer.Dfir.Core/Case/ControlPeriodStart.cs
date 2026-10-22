@@ -37,7 +37,7 @@ public static class ControlPeriodStart
         {
             var v = AuditAnchor.Verify(auditPath, paperCode);
             if (v.Status == AnchorContinuityStatus.Continuous && v.MatchedSeq is { } seq && events.FirstOrDefault(e => e.Seq == seq) is { } anchored && Time(anchored) is { } t && t <= nowUtc)
-                return Plan(nowUtc, t, $"de la controlul ancorat pe procesul-verbal ({t.UtcDateTime:yyyy-MM-dd HH:mm} UTC)");
+                return Plan(nowUtc, t, $"de la controlul ancorat pe procesul-verbal ({Local(t)})");
             prefix = "codul de pe procesul-verbal nu se regăsește în jurnal (verificarea A11 o va spune); ";
         }
         // re-review of PR #298: this step trusts only a log whose head matches its seal; a plain-valid entry appended without the key (a "control" dated
@@ -48,9 +48,12 @@ public static class ControlPeriodStart
         if (sealedCheck.Status == ChainStatus.Broken)
             return new ControlPeriodPlan(nowUtc.AddDays(-DefaultDays), DefaultDays, prefix + SealUnverifiable);
         var last = events.Where(e => e.Event == "control.finished").Select(Time).Where(t => t is { } x && x <= nowUtc).Max();
-        if (last is { } l) return Plan(nowUtc, l, prefix + $"de la ultimul control din jurnalul sigilat ({l.UtcDateTime:yyyy-MM-dd HH:mm} UTC)");
+        if (last is { } l) return Plan(nowUtc, l, prefix + $"de la ultimul control din jurnalul sigilat ({Local(l)})");
         return Default(nowUtc, prefix + "niciun control anterior în jurnalul sigilat");
     }
+
+    /// <summary>Station local time in the Romanian format shown everywhere in the UI (dd.MM.yyyy HH:mm, ora stației).</summary>
+    private static string Local(DateTimeOffset t) => t.ToLocalTime().ToString("dd.MM.yyyy HH:mm", CultureInfo.InvariantCulture) + ", ora stației";
 
     private static DateTimeOffset? Time(AuditAnchor.AuditEvent e) =>
         DateTimeOffset.TryParse(e.WhenUtc, CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var t) ? t : null;

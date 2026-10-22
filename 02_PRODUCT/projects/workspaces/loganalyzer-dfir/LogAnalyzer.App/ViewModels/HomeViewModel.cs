@@ -47,7 +47,7 @@ namespace LogAnalyzer.UI.ViewModels
             Profile = profile ?? RoleProfiles.For(StationRoleContext.Role, new UnclassifiedEditionProfile(), AppModeContext.Current.Mode);
             foreach (var i in Profile.PrimaryIntents) PrimaryIntents.Add(new HomeIntentView(i));
             foreach (var i in Profile.MoreIntents) MoreIntents.Add(new HomeIntentView(i));
-            _investigation.StateChanged += (_, _) => Refresh();
+            _investigation.StateChanged += (_, _) => { Refresh(); RecordSessionCase(); };
             ClockMemory.WarningChanged += () =>
             {
                 var d = System.Windows.Application.Current?.Dispatcher;
@@ -146,10 +146,11 @@ namespace LogAnalyzer.UI.ViewModels
             if (QuickGate() is not { } q || q.IsBusy) return;
             OpenStatus = "";
             await q.RunQuickAsync();
+            RecordLiveCase();
         }
 
         /// <summary>„Deschide raportul” (Ctrl+O).</summary>
-        [RelayCommand] private void OpenControlReport() { if (QuickGate() is { } q) q.OpenReport(); }
+        [RelayCommand] private void OpenControlReport() { if (QuickGate() is { } q) { q.OpenReport(); RecordLiveCase(); } }
         /// <summary>„Semnează ca ofițer” (Ctrl+Shift+S): an authority action; Windows asks the card PIN.</summary>
         [RelayCommand] private void SignControlReport() { if (QuickGate() is { } q) q.SignAsOfficer(); }
         /// <summary>„Exportă pentru ofițer” (Ctrl+E).</summary>
@@ -192,6 +193,31 @@ namespace LogAnalyzer.UI.ViewModels
             CoverageLine = h.CoverageLine;
             NextSteps.Clear(); foreach (var s in h.NextSteps) NextSteps.Add(s);
             CoverageRows.Clear(); foreach (var row in h.Coverage.Rows) CoverageRows.Add(row);
+        }
+
+        /// <summary>
+        /// 2026-10-22 PC walkthrough: a case created in this session (by an investigation) is listed under „Cazuri recente” like one opened from disk.
+        /// A case opened from disk is already recorded by <see cref="CaseLoader"/>; this only handles the freshly created one.
+        /// </summary>
+        private void RecordSessionCase()
+        {
+            if (_investigation.CurrentResult is { } r && _investigation.Loaded is null) RecordCase(r.Case);
+        }
+
+        /// <summary>The station's LIVE case (where a control saves its report and anchor) is listed once it exists on disk.</summary>
+        private void RecordLiveCase()
+        {
+            try
+            {
+                if (System.IO.File.Exists(System.IO.Path.Combine(LogAnalyzer.UI.Services.LiveCase.Root, "case.json"))) RecordCase(LogAnalyzer.UI.Services.LiveCase.Get());
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { /* the list is a convenience */ }
+        }
+
+        private void RecordCase(CaseWorkspace ws)
+        {
+            _recent.Record(ws.Root, string.IsNullOrWhiteSpace(ws.Info.Name) ? ws.Info.CaseId : ws.Info.Name, CaseLifecycle.Active);
+            ReloadRecent();
         }
 
         public void ReloadRecent()

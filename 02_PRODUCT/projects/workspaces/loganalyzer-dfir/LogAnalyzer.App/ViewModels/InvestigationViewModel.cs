@@ -384,7 +384,7 @@ namespace LogAnalyzer.UI.ViewModels
                 IntegrityLine = (await Task.Run(() => checkedCase.Recheck(ct))).Summary;
                 VerificationLine = VerificationText(_result);
                 OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[_result.State] + " — " + _result.StateReason;
-                Summary += $" · analiză: {LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[_result.State]} (nu verifică constatările)";
+                Summary += $" · analiză: {LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[_result.State].ToLower(Ro)} (nu verifică constatările)";
                 Loaded = null; IsReadOnlyCase = false; ReadOnlyNotice = "";
                 StateChanged?.Invoke(this, EventArgs.Empty);
                 Log += "Gata. Dublu-click pe o constatare sau pe un eveniment pentru detalii." + Environment.NewLine;
@@ -402,6 +402,8 @@ namespace LogAnalyzer.UI.ViewModels
         private void Cancel() => _cts?.Cancel();
 
         /// <summary>Fills every collection and summary line of the page from a result: a run that just finished or an existing case that was opened (WP5).</summary>
+        private static readonly System.Globalization.CultureInfo Ro = System.Globalization.CultureInfo.GetCultureInfo("ro-RO");
+
         private void ShowResult(InvestigationResult result)
         {
             _result = result;
@@ -417,7 +419,7 @@ namespace LogAnalyzer.UI.ViewModels
                 ? "Secvențe combinate: nicio secvență observată în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (o sursă necolectată dă „pas neobservat”, nu absență)."
                 : $"Secvențe combinate: {SequenceFindings.Count} ({SequenceFindings.Count(a => a.Severity >= Severity.High)} ridicate). Fiecare arată faptele observate, în ordine, și pașii neobservați; nu stabilește scopul.";
             SequenceSteps = string.Join(Environment.NewLine + Environment.NewLine, SequenceFindings.Select(f =>
-                $"{f.Title} [{f.Severity.ToSpec()}] — {f.FindingId}{Environment.NewLine}" +
+                $"{f.Title} [{LogAnalyzer.Dfir.Language.RoLabels.Severity(f.Severity).ToLower(Ro)}] — {f.FindingId}{Environment.NewLine}" +
                 string.Join(Environment.NewLine, (f.Sequence?.Steps ?? []).Select(st => st.Observed
                     ? $"  {st.Order}. {st.WhenUtc:yyyy-MM-dd HH:mm} UTC — {st.Name}: {st.Note} [cont: {(st.Account.Length > 0 ? st.Account : "necunoscut în sursă")}; sursa: {st.Source}]"
                     : $"  {st.Order}. {st.Name}: {st.Note}")) +
@@ -432,7 +434,7 @@ namespace LogAnalyzer.UI.ViewModels
             FillTimeline();
             var chains = _result.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
             Chains = chains.Count == 0 ? "Niciun lanț de incident (constatări grave grupate în timp)." :
-                string.Join(Environment.NewLine + Environment.NewLine, chains.Select(c => $"{c.Title} [{c.Severity.ToSpec()}]{Environment.NewLine}" +
+                string.Join(Environment.NewLine + Environment.NewLine, chains.Select(c => $"{c.Title} [{LogAnalyzer.Dfir.Language.RoLabels.Severity(c.Severity).ToLower(Ro)}]{Environment.NewLine}" +
                     string.Join(Environment.NewLine, c.Description.Split(" → ").Select(s => "  → " + s))));
             GapsText = string.Join(Environment.NewLine, _result.Gaps.Select(g => $"{g.Artifact}: {g.Status.ToSpec()} — {g.Reason}"));
             AntiForensics.Clear();
@@ -442,7 +444,7 @@ namespace LogAnalyzer.UI.ViewModels
             PolicyTimelineSummary = _result.PolicyTimelineLine;
             FillGraphEntities();
             GraphStatus = _result.Graph is { } gr ? $"Graf: {gr.Entities.Count} entități, {gr.Relationships.Count} relații." : "Graful nu a fost construit.";
-            Summary = $"{_result.Timeline.Count:N0} evenimente · {_result.Findings.Count(f => f.Severity == Severity.Critical)} critice · " +
+            Summary = $"{_result.Timeline.Count.ToString("N0", Ro)} evenimente · {_result.Findings.Count(f => f.Severity == Severity.Critical)} critice · " +
                       $"{_result.Findings.Count(f => f.Severity == Severity.High)} ridicate · {_result.Findings.Count} constatări · {_result.Gaps.Count} goluri · caz {_result.Case.Info.CaseId}";
         }
 
@@ -452,7 +454,7 @@ namespace LogAnalyzer.UI.ViewModels
             UserActivity.Clear();
             if (report is null) { UserActivitySummary = "Activitatea utilizatorului: nedefinită (nicio analiză încă)."; return; }
             foreach (var i in report.Items.Take(MaxUserActivityRows)) UserActivity.Add(i);
-            UserActivitySummary = report.Summary + (report.Total > MaxUserActivityRows ? $" Se listează primele {MaxUserActivityRows:N0}; restul sunt în cronologie." : "");
+            UserActivitySummary = report.Summary + (report.Total > MaxUserActivityRows ? $" Se listează primele {MaxUserActivityRows.ToString("N0", Ro)}; restul sunt în cronologie." : "");
         }
 
         private void FillTimeline()
