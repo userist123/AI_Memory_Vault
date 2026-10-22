@@ -1,8 +1,8 @@
 {
   "schema": "loganalyzer-findings-register/1",
-  "prepared_by": "agent, unverified",
-  "prepared_utc": "2026-10-22",
-  "note": "DRAFT. Not read by the release gate (it reads only release-gate/findings-register.json). The owner reviews every entry and, if correct, saves it as release-gate/findings-register.json. status uses the gate vocabulary (open|resolved|accepted); disposition is fixed|open|owner-decision.",
+  "prepared_by": "Claude, delegat de proprietar (2026-10-22)",
+  "prepared_utc": "2026-10-22T07:24:46Z",
+  "note": "Finalizat de Claude cu delegarea proprietarului din 2026-10-22, pentru versiunea de demonstrație. Cele patru puncte deschise sunt decizii ale proprietarului; înainte de folosirea într-o instituție publică registrul se revede de proprietar.",
   "findings": [
     {
       "id": "SA-1",
@@ -488,7 +488,7 @@
       "severity": "medium",
       "status": "open",
       "disposition": "owner-decision",
-      "title": "PASS",
+      "title": "The published exe is not Authenticode-signed; no signed SHA256SUMS or startup self-verification",
       "source": "owner item",
       "evidence": {
         "commits": [],
