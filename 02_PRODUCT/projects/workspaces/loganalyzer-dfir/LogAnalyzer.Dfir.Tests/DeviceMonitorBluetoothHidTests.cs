@@ -66,6 +66,33 @@ public sealed class DeviceMonitorBluetoothHidTests
         Assert.Equal(2, j4.Devices.Count(DeviceScope.IsShown));
     }
 
+    [Fact]
+    public void The_same_instance_fold_never_folds_a_real_serial_clone_in_either_direction()
+    {
+        // a comparable serial (not a placeholder): the same serial + VID/PID with another real manufacturer is a clone (SerialConflict)
+        const string id = @"USB\VID_1234&PID_00AB\SYNTH0001";
+        DeviceJournalEntry Row(string identity, string maker, bool present) => new()
+        {
+            Identity = identity, InstanceId = id, Name = "USB Input Device", Class = DeviceClass.Mouse, VidPid = "1234:00AB", Serial = "SYNTH0001", Manufacturer = maker,
+            ClassifierVersion = 2, Present = present, FirstSeenUtc = present ? T0.AddDays(3) : T0, LastConnectedUtc = T0.AddDays(3),
+        };
+        // clone disconnected, original connected
+        var orig = Row("SN|1234:00AB|SYNTH0001", "Logitech", present: true);
+        var clone = Row("SN|1234:00AB|SYNTH0001|DUP|1", "Evil Corp", present: false);
+        Assert.True(DeviceJournalMerge.SerialConflict(orig, clone));
+        var j = new DeviceJournal { Devices = [orig, clone] };
+        DeviceJournalMerge.MarkSuperseded(j);
+        Assert.Equal(2, j.Devices.Count(DeviceScope.IsShown));
+        Assert.All(j.Devices, d => Assert.Equal("", d.SupersededBy));
+        // original disconnected, clone connected: the registered row is never hidden under the clone
+        var orig2 = Row("SN|1234:00AB|SYNTH0001", "Logitech", present: false); orig2.RegistrationNumber = "REG-1";
+        var clone2 = Row("SN|1234:00AB|SYNTH0001|DUP|1", "Evil Corp", present: true);
+        var j2 = new DeviceJournal { Devices = [orig2, clone2] };
+        DeviceJournalMerge.MarkSuperseded(j2);
+        Assert.Equal(2, j2.Devices.Count(DeviceScope.IsShown));
+        Assert.All(j2.Devices, d => Assert.Equal("", d.SupersededBy));
+    }
+
     // ---- 2. Bluetooth HID ------------------------------------------------------------------------------------------------------------------------
 
     private const string Box = "{CCCCCCCC-0000-0000-0000-00000000A003}";

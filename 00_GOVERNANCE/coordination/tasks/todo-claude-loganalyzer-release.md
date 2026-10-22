@@ -253,3 +253,13 @@ Not verified: `Removable` on a real internal webcam/keyboard (CM_DEVCAP_REMOVABL
 - Disk: C: had 0 GB; old worktrees' bin/obj/publish deleted (owner rule, memory `disk-full-move-to-d-and-clean`), 5.4 GB free.
 - Next: Opus review of the delta above; owner starts "Fă controlul stației" (or allows the automated click) so the control, PDF and
   investigation pages can be checked with screenshots; then merge order #303 -> #306 -> #307 -> #308.
+
+## Opus review of 55e0a4a00..5b4ded8a6 (2026-10-22, next session)
+- vault-reviewer round 1: CHANGES_REQUIRED. MEDIUM: `FoldSameInstance` (step 1c) folded a real serial clone row (SerialConflict) into the original, or the
+  disconnected original under a connected clone (display only; D05/report and the "serie duplicată" alert were intact). FIXED: the same guard as step 1
+  (`rows.Any(o => SerialConflict(r, o))` -> no fold) + test `The_same_instance_fold_never_folds_a_real_serial_clone_in_either_direction` (red before the fix).
+  Dfir 2373/31/0, App 670/0.
+- LOW residual (pre-existing, not a regression, NEEDS OWNER ACCEPTANCE): `FoldLegacyIntoPresent` can fold a disconnected legacy row of another class
+  (e.g. v0 NetworkAdapter `&MI_02`) or another unit of the same model (HID\ id, no USB parent) under a connected row: the page shows the connected row's
+  decision. Display only (D05/report use IsInScope). Possible fix: cross-class fold only for pairs in `KnownReclassifications`.
+- Next: round-2 review of the fix delta only; then owner: station control run, merge #303 -> #306 -> #307 -> #308.
