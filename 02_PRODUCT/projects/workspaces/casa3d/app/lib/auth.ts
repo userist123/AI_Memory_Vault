@@ -34,11 +34,27 @@ export function setPassword(password: unknown, owner: string): void {
 }
 export function removePassword(){ try { fs.unlinkSync(file()); } catch { /* deja lipsă */ } cache = null; }
 /** Verificarea e asincronă (scrypt în fundal): serverul nu se blochează cât se verifică o parolă. */
+// Cel mult 2 calcule scrypt simultan (~128 MB și ~200 ms fiecare la N=2^17): un val de încercări nu umple memoria și nu
+// ocupă tot threadpool-ul Node (fișiere, DNS, crypto pentru celelalte cereri); restul așteaptă la rând.
+const SCRYPT_SLOTS = 2; let scryptBusy = 0; const scryptQueue: (() => void)[] = [];
+async function withScryptSlot<T>(fn: () => Promise<T>): Promise<T> {
+  if (scryptBusy >= SCRYPT_SLOTS) await new Promise<void>(r => scryptQueue.push(r));
+  scryptBusy++; try { return await fn(); } finally { scryptBusy--; scryptQueue.shift()?.(); }
+}
 export async function checkPassword(cfg: AuthConfig, password: unknown): Promise<boolean> {
   if (typeof password !== 'string' || password.length > PASSWORD_MAX) return false;
   const N = cfg.n === SCRYPT_N ? SCRYPT_N : SCRYPT_LEGACY_N;   // doar valorile cunoscute: un auth.json modificat nu poate cere un cost uriaș
-  const a = await new Promise<Buffer>((res, rej) => scrypt(password.normalize('NFC'), Buffer.from(cfg.salt, 'base64'), 64, scryptOpts(N), (e, k) => e ? rej(e) : res(k)));
+  const a = await withScryptSlot(() => new Promise<Buffer>((res, rej) => scrypt(password.normalize('NFC'), Buffer.from(cfg.salt, 'base64'), 64, scryptOpts(N), (e, k) => e ? rej(e) : res(k))));
   const b = Buffer.from(cfg.hash, 'base64'); return a.length === b.length && timingSafeEqual(a, b);
+}
+/** După un login reușit cu o parolă veche (N=2^14): hash nou la N=2^17, cu același proprietar și aceeași cheie de
+ *  sesiune (telefoanele logate rămân logate). Întoarce configurația nouă. */
+export async function upgradePasswordHash(cfg: AuthConfig, password: string): Promise<AuthConfig> {
+  if (cfg.n === SCRYPT_N) return cfg;
+  const salt = randomBytes(16).toString('base64');
+  const hash = (await withScryptSlot(() => new Promise<Buffer>((res, rej) => scrypt(password.normalize('NFC'), Buffer.from(salt, 'base64'), 64, scryptOpts(SCRYPT_N), (e, k) => e ? rej(e) : res(k))))).toString('base64');
+  const next: AuthConfig = { ...cfg, salt, hash, n: SCRYPT_N, updatedAt: new Date().toISOString() }, f = file();
+  const tmp = `${f}.${process.pid}.tmp`; fs.writeFileSync(tmp, JSON.stringify(next), { mode: 0o600 }); fs.renameSync(tmp, f); cache = null; return next;
 }
 
 const sign = (cfg: AuthConfig, exp: number) => createHmac('sha256', cfg.secret).update(`${exp}.${cfg.owner}`).digest('base64url');

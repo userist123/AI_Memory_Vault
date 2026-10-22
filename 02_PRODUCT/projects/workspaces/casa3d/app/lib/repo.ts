@@ -62,7 +62,7 @@ export function checkUnderlay(u: any): Underlay {
   return { dataUrl: u.dataUrl, x: u.x, z: u.z, widthM: u.widthM, opacity: u.opacity, locked: u.locked, ...(typeof u.confirmed === 'boolean' ? { confirmed: u.confirmed } : {}) };
 }
 /** Cheile de pe primul nivel ale modelului (core/types.ts, interfața Snapshot). Orice altă cheie se elimină la salvare,
- *  ca la scări: în proiect nu ajung câmpuri pe care nimic nu le validează. Testul din tests/snapshot-hardening.test.ts
+ *  ca la scări: în proiect nu ajung câmpuri pe care nimic nu le validează. Testul din tests/audit-fixes.test.ts (C-2)
  *  compară lista cu interfața, ca o cheie nouă din model să nu fie ștearsă din greșeală. */
 export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary'] as const;
 /** Coordonatele (metri) rămân într-un pătrat de 2 km: valori uriașe (1e300) ar face suprafețele și bugetul Infinity. */
@@ -91,7 +91,7 @@ export function checkSnapshot(s: any): Snapshot {
   // scări: dreptunghi plauzibil; se păstrează doar câmpurile modelului
   for (const f of fls){ if (f.stairs == null){ delete f.stairs; continue; }
     if (!Array.isArray(f.stairs) || f.stairs.length > 20) throw new HttpError(400, 'Scările sunt invalide.');
-    f.stairs = f.stairs.map((st: any) => { if (!st || typeof st.id !== 'string' || !/^[\w-]{1,80}$/.test(st.id) || !num(st.x) || !num(st.z) || !num(st.rotation)
+    f.stairs = f.stairs.map((st: any) => { if (!st || typeof st.id !== 'string' || !/^[\w-]{1,80}$/.test(st.id) || !inBox(st.x) || !inBox(st.z) || !num(st.rotation)
         || !(num(st.width) && st.width >= .6 && st.width <= 3) || !(num(st.length) && st.length >= .8 && st.length <= 8)) throw new HttpError(400, 'O scară are dimensiuni invalide (lățime 60–300 cm, lungime 80–800 cm).');
       return { id: st.id, x: st.x, z: st.z, width: st.width, length: st.length, rotation: st.rotation }; });
     if (!f.stairs.length) delete f.stairs; }

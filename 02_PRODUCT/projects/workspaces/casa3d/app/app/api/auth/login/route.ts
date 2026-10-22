@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { readAuth, checkPassword, makeSession, takeLoginAttempt, loginSucceeded, loginRetryAfterMs, SESSION_COOKIE, SESSION_DAYS } from '@/lib/auth';
+import { readAuth, checkPassword, upgradePasswordHash, makeSession, takeLoginAttempt, loginSucceeded, loginRetryAfterMs, SESSION_COOKIE, SESSION_DAYS } from '@/lib/auth';
 import { sameOriginJson } from '@/lib/public-gate';
 import { readJsonLimited } from '@/lib/body-limit';
 import { HttpError } from '@/lib/repo';
@@ -20,6 +20,7 @@ export const POST = async (req: Request) => {
     const b = await readJsonLimited(req, 2048) as any;
     if (!(await checkPassword(cfg, b?.password))) throw new HttpError(401, 'Parolă greșită.');
     loginSucceeded(ip);
+    await upgradePasswordHash(cfg, b.password).catch(() => {});   // parolele vechi trec la N=2^17; o eroare de scriere nu blochează login-ul
     // Secure în producție; în dev, doar pentru cererile venite prin tunel sau pe https (local pe http rămâne fără)
     const res = NextResponse.json({ ok: true }, { headers: H }), secure = process.env.NODE_ENV === 'production' || wantsSecureCookie(req);
     res.cookies.set(SESSION_COOKIE, makeSession(cfg), { httpOnly: true, sameSite: 'lax', secure, path: '/', maxAge: SESSION_DAYS * 86400 });

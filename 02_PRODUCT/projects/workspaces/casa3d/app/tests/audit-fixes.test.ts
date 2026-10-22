@@ -131,3 +131,14 @@ test('A-5: configurația greșită e refuzată la pornire; lipsa variabilelor r�
     { CASA3D_CLIENT_IP_HEADER: 'x real ip' }, { CASA3D_LOCAL_TRUST: '1', CASA3D_DEMO: '1' }]) assert.equal(envProblems(env).length, 1, JSON.stringify(env));
   const inst = fs.readFileSync(new URL('../instrumentation.ts', import.meta.url), 'utf8'); assert.match(inst, /process\.exit\(1\)/);
 });
+test('review L2: login reușit cu parolă veche (N=2^14) → hash nou N=2^17, aceeași cheie de sesiune; scrypt limitat la 2 simultan', async () => {
+  const { upgradePasswordHash, makeSession, verifySession } = await import('../lib/auth');
+  const salt = randomBytes(16).toString('base64'), legacy: AuthConfig = { v: 1, salt, owner: OWNER, secret: 'cheie-sesiune', updatedAt: '', hash: scryptSync('veche-parola-2', Buffer.from(salt, 'base64'), 64, { N: 2 ** 14, r: 8, p: 1 }).toString('base64') };
+  fs.writeFileSync(process.env.CASA3D_AUTH_FILE!, JSON.stringify(legacy)); const session = makeSession(legacy);
+  const next = await upgradePasswordHash(legacy, 'veche-parola-2');
+  assert.equal(next.n, SCRYPT_N); assert.equal(readAuth()!.n, SCRYPT_N); assert.equal(await checkPassword(readAuth()!, 'veche-parola-2'), true);
+  assert.equal(verifySession(readAuth(), session), true, 'telefoanele logate rămân logate');
+  const t0 = Date.now(); const rs = await Promise.all(Array.from({ length: 6 }, () => checkPassword(readAuth()!, 'gresit')));
+  assert.ok(rs.every(r => r === false)); assert.ok(Date.now() - t0 > 0);
+  const src = fs.readFileSync(new URL('../lib/auth.ts', import.meta.url), 'utf8'); assert.match(src, /SCRYPT_SLOTS = 2/);
+});
