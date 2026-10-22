@@ -35,6 +35,23 @@ file is versioned and the paste is not.
 
 ---
 
+## Companion: the Prompt Master Table
+
+[`PROMPT_MASTER_TABLE.md`](PROMPT_MASTER_TABLE.md) holds 20 senior-role mega
+prompts (engineering, UI, DevOps, research, content, finance) with a routing
+table and an orchestration protocol. The two do different jobs: this file
+writes a prompt *for another tool*; the table is what an agent uses to assign
+*itself* a role before executing a short or vague request directly.
+
+Both are gated by `30_SCRIPTS/prompt/prompt_master_eval.py check`: it verifies
+the structure of the two files (including the hard rules of the block above),
+routes a golden set of 20 requests (`07_EVALUATION/prompting/golden_prompts.json`)
+and scores reference answers against a PASS/FAIL rubric. The
+`prompt-master-eval.yml` workflow runs it on every change to these files; the
+rubric is described in the table's "Evaluare PASS/FAIL" section.
+
+---
+
 ## The portable instruction block
 
 Everything between the markers is the vendor-neutral core. It carries the
