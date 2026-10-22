@@ -1,7 +1,7 @@
 # todo-claude-casa3d-pins
-STATUS: BLOCKED_ON_OWNER   UPDATED: 2026-10-22T07:30:00+03:00
+STATUS: DONE               UPDATED: 2026-10-22T09:00:00+03:00
 TASK: Casa3D — CI green on PR #304 + PIN-gated client pins on /share
-BRANCH / PR: gemini/casa3d-nextgen-functionality-uiux / PR #304    REMOTE HEAD: 8c8616e76
+BRANCH / PR: gemini/casa3d-nextgen-functionality-uiux / PR #304    REMOTE HEAD: c22666479
 DONE (all pushed):
 - a8c614b03 IBAN fixtures: personal_data_guard PASS (guard and allowlist untouched).
 - d0e31c2f7 PIN-gated pins (design + threat model P1-P11: 00_GOVERNANCE/coordination/projects/CASA3D/SHARE_PINS_DESIGN.md);
@@ -17,11 +17,19 @@ NEXT (in order):
    twin-core, CodeQL js/ts/python, Gitleaks, personal data). Red = only item 3 below: 2x "Structural and path hygiene"
    (3 TEST_ABSOLUTE_PATH) + "enforce" (1 IMPLEMENTATION_ABSOLUTE_PATH claude_usage_report.py). Pending at check time:
    regression-and-heldout, Analyze (csharp) — not re-polled.
-3. Remaining red, NOT Casa3D (cost-router, other agent has uncommitted edits in these files — do not touch, report to owner):
+3. DONE 2026-10-22 c22666479 (pushed from worktree D:/w/fix304): cost-router red fixed — test lines got the official
+   marker "# hygiene: intentional-absolute-path"; claude_usage_report.project_slug slugs drive paths as written (Linux CI).
+   hygiene FAILURES=0, layout PASS, 71 tests pass; PR #304 CI ALL GREEN, mergeStateStatus CLEAN.
+   NOTE: main checkout still has the other agent's uncommitted edits in test_cost_router_{self_update,skill}.py and
+   local commit 655f829be (= 3444380c9 on remote); expect a small conflict on the marker lines when it pulls.
+   Was red:
    - repository hygiene TEST_ABSOLUTE_PATH: 20_TESTS/test_claude_model_router.py, test_cost_router_self_update.py, test_cost_router_skill.py
    - layout IMPLEMENTATION_ABSOLUTE_PATH: 03_IMPLEMENTATION/packages/routing/claude_usage_report.py
    - test_claude_model_router.py::test_project_slug_matches_claude_code_layout (hardcoded Windows slug; fails on Linux CI)
-4. Owner: merge #304 (close #305 as contained), decide #257 (4 docs commits) / #258 (218 commits, conflicting).
+4. DONE 2026-10-22 (owner derogation): #304 squash-merged as 5e4687289; #305 closed (contained); #257 closed
+   (superseded, add/add conflict). #258 left OPEN, not merged (218 commits/510 files, 202 patches not in main, CONFLICTING).
+   main CI on 5e4687289 checked once: no failures, several jobs still in progress (not re-polled).
+NEXT: salvage #258 in its own session if the owner wants anything from it.
 UNVERIFIED: cloudflared tunnel sends x-forwarded-proto https (cookie Secure flag).
 NOTES:
 - Antigravity's uncommitted files (CASA3D_*_AUDIT/INVENTORY/STATUS/EVIDENCE*.md, edits in todo-antigravity-casa3d.md) left untouched.
