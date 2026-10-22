@@ -1,0 +1,777 @@
+{
+  "arm": "embed_top20",
+  "n_cases": 29,
+  "sha256": "0222d5e858dfca5bbae6db4559eafe0d43b133380a912664aaa7e4ea6c0d8418",
+  "premise_cases_ok": 29,
+  "production": {
+    "k": 2,
+    "n": 29,
+    "text": "2/29",
+    "ci": {
+      "proportion": 0.069,
+      "lower": 0.0191,
+      "upper": 0.2196
+    }
+  },
+  "arm_recall": {
+    "k": 6,
+    "n": 29,
+    "text": "6/29",
+    "ci": {
+      "proportion": 0.2069,
+      "lower": 0.0985,
+      "upper": 0.3839
+    }
+  },
+  "paired": {
+    "gained": 5,
+    "lost": 1,
+    "tied_both_1": 1,
+    "tied_both_0": 22,
+    "discordant": 6,
+    "skipped_unmeasurable": 0,
+    "exact_mcnemar_p": 0.21875,
+    "winning_cases": [
+      "H03",
+      "H07",
+      "H10",
+      "H21",
+      "H23"
+    ],
+    "losing_cases": [
+      "H01"
+    ]
+  },
+  "rows": {
+    "production": [
+      {
+        "id": "H01",
+        "class": "exact_identifier_lookup",
+        "order": [
+          "9511672c-6467-407f-afd7-e1477e73389a",
+          "50d556ce-ec38-4dfa-8e50-a720d4b00527",
+          "8ee20e64-1d04-4838-8447-e572e5e77875",
+          "c1a01101-7291-49fa-9481-22904c10d010",
+          "cat-skills-251-master"
+        ],
+        "context_recall": 1,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H02",
+        "class": "exact_identifier_lookup",
+        "order": [
+          "vault-memory-mesh-architecture-0001",
+          "knw-agent-memory-trace-protocol-0001",
+          "knw-memory-usage-audit-principles-0001",
+          "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+          "knw-retrieval-bottleneck-p0-0001"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H03",
+        "class": "exact_identifier_lookup",
+        "order": [
+          "8f2f1707-194c-4e18-b080-6058f1c62d4f",
+          "standard-neural-naming-taxonomy",
+          "vault-memory-mesh-architecture-0001",
+          "7cd936b5-69d3-4800-bc58-7b098761fda1",
+          "knw-agent-memory-trace-protocol-0001"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H04",
+        "class": "exact_identifier_lookup",
+        "order": [
+          "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H05",
+        "class": "exact_identifier_lookup",
+        "order": [
+          "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+          "46cfee29-6e38-5dea-b4be-ec220daadf60",
+          "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+          "7cd936b5-69d3-4800-bc58-7b098761fda1",
+          "e6bfe28e-9d91-5dd3-a18c-4af282af627b"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H06",
+        "class": "paraphrase",
+        "order": [
+          "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+          "17e7ea30-a054-4b96-b33e-a42a05115eb8",
+          "5d7b785f-221c-48ba-9e7e-557998c9fefa",
+          "d2c10cab-0028-44c7-8f9e-a1d3d963c526",
+          "c756201a-2e4b-4471-bada-3d7ddd1f7b71"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H07",
+        "class": "paraphrase",
+        "order": [
+          "7cd936b5-69d3-4800-bc58-7b098761fda1",
+          "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e",
+          "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+          "a1189bdf-cee5-43e8-a11e-31cb44f97ea5",
+          "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H08",
+        "class": "paraphrase",
+        "order": [
+          "cb0155f4-d99c-4fd0-b4c7-2326604c70f4",
+          "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+          "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+          "123fe8df-2490-44f0-b695-143c3d5a997f",
+          "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H09",
+        "class": "paraphrase",
+        "order": [
+          "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+          "123fe8df-2490-44f0-b695-143c3d5a997f",
+          "0056507e-53b9-4d12-9610-a5be259403f5",
+          "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+          "0923cd4f-b2bd-4285-b11f-63be9d9977e8"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H10",
+        "class": "synonym_substitution",
+        "order": [
+          "7cd936b5-69d3-4800-bc58-7b098761fda1",
+          "knw-agent-memory-trace-protocol-0001",
+          "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+          "0056507e-53b9-4d12-9610-a5be259403f5",
+          "1ee292c4-d86b-5927-8242-3bdf0124ab9e"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H11",
+        "class": "synonym_substitution",
+        "order": [
+          "cat-skills-251-master",
+          "0056507e-53b9-4d12-9610-a5be259403f5",
+          "123fe8df-2490-44f0-b695-143c3d5a997f",
+          "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+          "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H12",
+        "class": "synonym_substitution",
+        "order": [
+          "2ecc82e6-a508-4db9-9d62-60b9062da602",
+          "7fd8ae5b-eabd-4b54-a8fb-63e6daae9557",
+          "37a81ae3-71a3-5bb4-b8e9-351f4edd2450",
+          "afb5de0a-9538-42cc-ab49-618f890e8867",
+          "vault-memory-mesh-architecture-0001"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H13",
+        "class": "synonym_substitution",
+        "order": [
+          "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+          "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e",
+          "a1189bdf-cee5-43e8-a11e-31cb44f97ea5",
+          "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+          "moc-imports-0010"
+        ],
+        "context_recall": 1,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H14",
+        "class": "lexical_trap",
+        "order": [
+          "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+          "5fa452dd-c98b-581d-8ee9-24450ae24390",
+          "4ad5e2c5-0500-5b92-9ee6-8e3e435be059",
+          "66559b50-540d-5014-8cad-9d0ea451fc90",
+          "7cd936b5-69d3-4800-bc58-7b098761fda1"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H15",
+        "class": "lexical_trap",
+        "order": [
+          "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H16",
+        "class": "lexical_trap",
+        "order": [
+          "moc-home-0001",
+          "cat-skills-251-master",
+          "moc-artifacts-0015",
+          "knw-retrieval-bottleneck-p0-0001",
+          "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H17",
+        "class": "lexical_trap",
+        "order": [
+          "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e",
+          "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+          "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+          "a1189bdf-cee5-43e8-a11e-31cb44f97ea5",
+          "a81adbaa-68bf-4d8a-a18a-26af82a3d375"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H18",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "vault-master-index-0001",
+          "16a52553-1ef8-46d0-9ce9-4d3e1bb946a0",
+          "5d7b785f-221c-48ba-9e7e-557998c9fefa",
+          "b492d001-c841-4e12-b5e1-8890471b8991",
+          "vault-architecture-map-0001"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H19",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "vault-master-index-0001",
+          "5d7b785f-221c-48ba-9e7e-557998c9fefa",
+          "c1a01101-7291-49fa-9481-22904c10d090",
+          "vault-architecture-map-0001",
+          "b492d001-c841-4e12-b5e1-8890471b8991"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H20",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "60a9210f-eb13-4b64-9347-605ce4792ae2",
+          "cat-skills-251-master",
+          "7cd936b5-69d3-4800-bc58-7b098761fda1",
+          "2831032f-0fe9-44d6-b9e8-8214284babd7",
+          "vault-memory-mesh-architecture-0001"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H21",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "71a2ef74-8d48-411d-b686-d44746f0515c",
+          "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+          "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+          "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+          "1ee292c4-d86b-5927-8242-3bdf0124ab9e"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H22",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "c1a01101-7291-49fa-9481-22904c10d003",
+          "c1a01101-7291-49fa-9481-22904c10c001",
+          "cfca79df-d8f8-4720-bd8f-7f7ea7116b47"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H23",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "ef084612-2d02-481e-a7d3-6cbe4608e10d",
+          "3d063fab-d6d1-411b-89b2-d31222f4b937",
+          "a1189bdf-cee5-43e8-a11e-31cb44f97ea5",
+          "a81adbaa-68bf-4d8a-a18a-26af82a3d375",
+          "moc-imports-0010"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H24",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "finscope-project-core",
+          "5d7b785f-221c-48ba-9e7e-557998c9fefa",
+          "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+          "b5b8ed33-da3a-42cc-8e94-4dde6b1edb6d",
+          "17e7ea30-a054-4b96-b33e-a42a05115eb8"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H25",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "a81adbaa-68bf-4d8a-a18a-26af82a3d375",
+          "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+          "a1189bdf-cee5-43e8-a11e-31cb44f97ea5"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H26",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "cat-skills-251-master",
+          "7cd936b5-69d3-4800-bc58-7b098761fda1",
+          "2831032f-0fe9-44d6-b9e8-8214284babd7",
+          "c1a01101-7291-49fa-9481-22904c10d080",
+          "vault-memory-mesh-architecture-0001"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H27",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "2831032f-0fe9-44d6-b9e8-8214284babd7",
+          "43f78207-5f51-4c8d-9c71-1b154394b9e6",
+          "8f2f1707-194c-4e18-b080-6058f1c62d4f",
+          "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+          "bca30cd9-2208-4c0a-b274-6ec893699666"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H31",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "proc-enterprise-integration-0001",
+          "c1a01101-7291-49fa-9481-22904c10b001",
+          "16a52553-1ef8-46d0-9ce9-4d3e1bb946a0",
+          "1fc1d8ff-7b08-4baf-88dc-32c7aa23253e",
+          "2b3ba545-1585-4d12-a241-dc2abd1fe28a"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H32",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "0056507e-53b9-4d12-9610-a5be259403f5",
+          "0479ee1a-44b8-41b8-b608-0c232f2f9a31",
+          "04953748-4b63-421b-8e02-6cce24e52234",
+          "04e86b85-4346-4c5f-a495-c5a43231b61e",
+          "07d27579-d273-4b81-b2b7-25ad820f2535"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      }
+    ],
+    "embed_top20": [
+      {
+        "id": "H01",
+        "class": "exact_identifier_lookup",
+        "order": [
+          "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+          "9511672c-6467-407f-afd7-e1477e73389a",
+          "7cd936b5-69d3-4800-bc58-7b098761fda1",
+          "50d556ce-ec38-4dfa-8e50-a720d4b00527",
+          "11e9fe55-6924-4231-9635-c5629bff6ae3"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H02",
+        "class": "exact_identifier_lookup",
+        "order": [
+          "knw-memory-usage-audit-principles-0001",
+          "327bd878-c580-59ca-bfbc-5e09579d61b4",
+          "1ee292c4-d86b-5927-8242-3bdf0124ab9e",
+          "3d14b6f4-c885-409e-978a-fcffb8a2036a",
+          "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H03",
+        "class": "exact_identifier_lookup",
+        "order": [
+          "cat-skills-251-master",
+          "60a9210f-eb13-4b64-9347-605ce4792ae2",
+          "110d08fd-23a9-42aa-818b-b15b819e958b",
+          "1dd8895e-4ba8-4d52-824a-a15973ba947a",
+          "standard-neural-naming-taxonomy"
+        ],
+        "context_recall": 1,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H04",
+        "class": "exact_identifier_lookup",
+        "order": [
+          "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H05",
+        "class": "exact_identifier_lookup",
+        "order": [
+          "46cfee29-6e38-5dea-b4be-ec220daadf60",
+          "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+          "aa6cb048-4c56-5d2e-a4d5-10d1cf385d3b",
+          "66559b50-540d-5014-8cad-9d0ea451fc90",
+          "bd0e0105-38d9-5373-a176-59f1f454f32f"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H06",
+        "class": "paraphrase",
+        "order": [
+          "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+          "17e7ea30-a054-4b96-b33e-a42a05115eb8",
+          "c756201a-2e4b-4471-bada-3d7ddd1f7b71",
+          "d0f3ac43-9b23-4152-999b-8dee06b43c71",
+          "finscope-project-core"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H07",
+        "class": "paraphrase",
+        "order": [
+          "67e1cb1d-3e5a-45be-b265-67bb126a2cd3",
+          "ae0206df-b0cb-4810-b2a2-cea462600561",
+          "7cd936b5-69d3-4800-bc58-7b098761fda1",
+          "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e",
+          "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc"
+        ],
+        "context_recall": 1,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H08",
+        "class": "paraphrase",
+        "order": [
+          "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+          "cb0155f4-d99c-4fd0-b4c7-2326604c70f4",
+          "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+          "7b6aae13-83e6-43ec-80df-7c8a202251fd",
+          "0d68bba6-662b-4633-b065-bf1666889af9"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H09",
+        "class": "paraphrase",
+        "order": [
+          "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+          "0d0d9f30-fa32-416f-95e3-0149006dae79",
+          "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+          "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+          "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H10",
+        "class": "synonym_substitution",
+        "order": [
+          "a1189bdf-cee5-43e8-a11e-31cb44f97ea5",
+          "7cd936b5-69d3-4800-bc58-7b098761fda1",
+          "67e1cb1d-3e5a-45be-b265-67bb126a2cd3",
+          "7fd8ae5b-eabd-4b54-a8fb-63e6daae9557",
+          "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc"
+        ],
+        "context_recall": 1,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H11",
+        "class": "synonym_substitution",
+        "order": [
+          "64fd38ce-3a9c-40af-8348-1021ffcb0fca",
+          "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+          "0056507e-53b9-4d12-9610-a5be259403f5",
+          "a6cd6aa4-910a-462b-8659-341a183536a8",
+          "123fe8df-2490-44f0-b695-143c3d5a997f"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H12",
+        "class": "synonym_substitution",
+        "order": [
+          "slot-03-ontology",
+          "afb5de0a-9538-42cc-ab49-618f890e8867",
+          "2ecc82e6-a508-4db9-9d62-60b9062da602",
+          "knw-temporal-memory-p2-0001",
+          "11e9fe55-6924-4231-9635-c5629bff6ae3"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H13",
+        "class": "synonym_substitution",
+        "order": [
+          "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e",
+          "441f6cc3-a6a0-47ff-9b41-164b5901560f",
+          "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+          "a1189bdf-cee5-43e8-a11e-31cb44f97ea5",
+          "a81adbaa-68bf-4d8a-a18a-26af82a3d375"
+        ],
+        "context_recall": 1,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H14",
+        "class": "lexical_trap",
+        "order": [
+          "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb",
+          "66559b50-540d-5014-8cad-9d0ea451fc90",
+          "67a36e52-a645-57b9-a04e-fb4b1b08fac5",
+          "46cfee29-6e38-5dea-b4be-ec220daadf60",
+          "7cd936b5-69d3-4800-bc58-7b098761fda1"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H15",
+        "class": "lexical_trap",
+        "order": [
+          "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H16",
+        "class": "lexical_trap",
+        "order": [
+          "cat-skills-251-master",
+          "7986a2c9-0fb7-4282-95fa-3ea39da1ceb1",
+          "7cd936b5-69d3-4800-bc58-7b098761fda1",
+          "110d08fd-23a9-42aa-818b-b15b819e958b",
+          "standard-neural-naming-taxonomy"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H17",
+        "class": "lexical_trap",
+        "order": [
+          "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e",
+          "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+          "441f6cc3-a6a0-47ff-9b41-164b5901560f",
+          "78fe5b4d-0822-4616-8437-fa8a84cedf55",
+          "a1189bdf-cee5-43e8-a11e-31cb44f97ea5"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H18",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "b492d001-c841-4e12-b5e1-8890471b8991",
+          "5d7b785f-221c-48ba-9e7e-557998c9fefa",
+          "vault-architecture-map-0001",
+          "vault-master-index-0001"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H19",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "b492d001-c841-4e12-b5e1-8890471b8991",
+          "5d7b785f-221c-48ba-9e7e-557998c9fefa",
+          "vault-architecture-map-0001",
+          "knw-agent-memory-trace-protocol-0001",
+          "7cd936b5-69d3-4800-bc58-7b098761fda1"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H20",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "60a9210f-eb13-4b64-9347-605ce4792ae2",
+          "1cc8460e-c414-40aa-ba07-1fcf27428d62",
+          "cat-skills-251-master",
+          "383bde31-1174-47e3-ada8-a5e797b9e93f",
+          "922b466f-58a8-4fc8-a17f-895d32a00805"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H21",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "6bdb2775-add5-426b-ac0c-1b1fef75f2e1",
+          "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+          "71a2ef74-8d48-411d-b686-d44746f0515c",
+          "67e1cb1d-3e5a-45be-b265-67bb126a2cd3",
+          "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb"
+        ],
+        "context_recall": 1,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H22",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "cfca79df-d8f8-4720-bd8f-7f7ea7116b47",
+          "53f27d1c-b47a-5c1e-b963-dcdf3fddd8cb",
+          "37a81ae3-71a3-5bb4-b8e9-351f4edd2450"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H23",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "ef084612-2d02-481e-a7d3-6cbe4608e10d",
+          "3d063fab-d6d1-411b-89b2-d31222f4b937",
+          "bb3e720a-0ac2-4243-a44e-350e5e2cb6dc",
+          "441f6cc3-a6a0-47ff-9b41-164b5901560f",
+          "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e"
+        ],
+        "context_recall": 1,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H24",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "finscope-project-core",
+          "17e7ea30-a054-4b96-b33e-a42a05115eb8",
+          "c756201a-2e4b-4471-bada-3d7ddd1f7b71",
+          "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+          "5d7b785f-221c-48ba-9e7e-557998c9fefa"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H25",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "aa5076f2-fd31-4d11-aa4b-23ad1cf89a4e"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H26",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "cat-skills-251-master",
+          "c1a01101-7291-49fa-9481-22904c10d090",
+          "7cd936b5-69d3-4800-bc58-7b098761fda1",
+          "1bd0162e-f183-4c6f-ac3c-2057c2a96a62",
+          "c1a01101-7291-49fa-9481-22904c10d080"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H27",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "ontology-spec",
+          "29fe72cf-57bb-4a5e-a912-3eb8f945e05f",
+          "37a81ae3-71a3-5bb4-b8e9-351f4edd2450",
+          "43f78207-5f51-4c8d-9c71-1b154394b9e6",
+          "2831032f-0fe9-44d6-b9e8-8214284babd7"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 1
+      },
+      {
+        "id": "H31",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "proc-enterprise-integration-0001",
+          "1dd8895e-4ba8-4d52-824a-a15973ba947a",
+          "5221f2fb-54b3-45fe-a319-fd9d7fc2af18",
+          "436ca97b-751d-41cf-9f9c-c2fa0d149cf7"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      },
+      {
+        "id": "H32",
+        "class": "one_hop_graph_expansion",
+        "order": [
+          "0be22e07-e4d2-4fba-90fe-6d8dd0796aed",
+          "110d08fd-23a9-42aa-818b-b15b819e958b",
+          "0e95a2f1-b9f4-4f0a-81b4-17625f8034a6",
+          "0b19a8be-f4cc-4c0f-8e3d-465960dcc61e",
+          "0923cd4f-b2bd-4285-b11f-63be9d9977e8"
+        ],
+        "context_recall": 0,
+        "candidate_recall": 0
+      }
+    ]
+  }
+}

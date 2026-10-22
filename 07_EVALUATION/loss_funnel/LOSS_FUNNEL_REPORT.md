@@ -92,8 +92,22 @@ Plafonul oracol reprezintă rata de succes maximă teoretică ce ar putea fi ati
 | $k = 100$ | **92 / 130** | **70.77%** | [62.44%, 77.90%] | Peste 70% din întrebări pot fi rezolvate fără modificarea generării de candidați. |
 | $k = 200$ | **99 / 130** | **76.15%** | [68.14%, 82.66%] | Plafonul absolut al pool-ului actual de candidați BM25/fuziune. |
 
-> [!TIP]
-> **Plafonul Oracol la k=200 este 76.15%** (99/130). Aceasta demonstrează că generatorul existent identifică nota corectă în peste 3 sferturi din cazuri. Niciun reranker pe acest pool nu poate depăși 76.15%, dar spațiul de creștere de la 16.15% la 76.15% este uriaș (+60 pp).
+> [!WARNING]
+> **Acest plafon nu este o proprietate a pool-ului de candidați și nu trebuie citat ca atare.**
+> `diagnose_case` caută rangul notei de aur mai întâi în pagina returnată și abia
+> apoi în ordinea de fuziune, deci plafonul se mișcă odată cu brațul de clasare,
+> pentru un pool identic. La $k$ = `page_size`, pe brațul care sortează chiar după
+> scorul de fuziune, definiția devine circulară și plafonul coincide cu recall-ul obținut.
+> Cifra măsurată aici, la $k=200$, este 76.15% (99/130), față de un recall obținut de 16.15% (21/130).
+>
+> Plafonul independent de braț este măsurat separat, din ordinea de fuziune și numai
+> din ea, de `30_SCRIPTS/evaluation/measure_reranker_ceiling.py`; rezultatul este în
+> `07_EVALUATION/ranking_formula/reranker_ceiling.json`.
+>
+> Marja utilă pentru un reranker nu este diferența dintre recall și plafon, ci numai
+> cazurile care au nota de aur în pool sub rangul returnat: **78**. Celelalte
+> ratări sunt 15 eșecuri de generare de candidați și 16 excluderi de
+> politică, pe care reorganizarea listei nu le atinge.
 
 ---
 

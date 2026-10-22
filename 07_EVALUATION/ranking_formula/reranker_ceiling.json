@@ -1,0 +1,1138 @@
+{
+  "schema": "reranker-ceiling.v1",
+  "benchmark_sha256": "eeb53822ae5f022df89290d6fca789c1d4387b7572ed70103a7c08aae5b57eaa",
+  "operating_point": {
+    "principal": "AI_AGENT",
+    "page_size": 5,
+    "agent_lifecycle_floor": true,
+    "graph_expansion": false
+  },
+  "ranking_arm": "production default (fused_score); irrelevant to the ceiling by construction",
+  "n_cases": 130,
+  "achieved_recall": {
+    "k": 24,
+    "n": 130,
+    "text": "24/130",
+    "ci_95": {
+      "proportion": 0.1846,
+      "lower": 0.1273,
+      "upper": 0.26
+    }
+  },
+  "gold_anywhere_in_pool": {
+    "k": 94,
+    "n": 130,
+    "text": "94/130",
+    "ci_95": {
+      "proportion": 0.7231,
+      "lower": 0.6406,
+      "upper": 0.7928
+    }
+  },
+  "ceiling_by_k": {
+    "5": {
+      "k": 5,
+      "reachable_cases": 24,
+      "recall": 0.1846,
+      "ci_95": {
+        "proportion": 0.1846,
+        "lower": 0.1273,
+        "upper": 0.26
+      }
+    },
+    "10": {
+      "k": 10,
+      "reachable_cases": 36,
+      "recall": 0.2769,
+      "ci_95": {
+        "proportion": 0.2769,
+        "lower": 0.2072,
+        "upper": 0.3594
+      }
+    },
+    "20": {
+      "k": 20,
+      "reachable_cases": 49,
+      "recall": 0.3769,
+      "ci_95": {
+        "proportion": 0.3769,
+        "lower": 0.2983,
+        "upper": 0.4626
+      }
+    },
+    "50": {
+      "k": 50,
+      "reachable_cases": 76,
+      "recall": 0.5846,
+      "ci_95": {
+        "proportion": 0.5846,
+        "lower": 0.4987,
+        "upper": 0.6657
+      }
+    },
+    "100": {
+      "k": 100,
+      "reachable_cases": 87,
+      "recall": 0.6692,
+      "ci_95": {
+        "proportion": 0.6692,
+        "lower": 0.5845,
+        "upper": 0.7442
+      }
+    },
+    "200": {
+      "k": 200,
+      "reachable_cases": 94,
+      "recall": 0.7231,
+      "ci_95": {
+        "proportion": 0.7231,
+        "lower": 0.6406,
+        "upper": 0.7928
+      }
+    }
+  },
+  "mean_pool_size": 189.82,
+  "note": "Gold's rank is read only from candidate_trace.fused_ranking, never from the returned page. The funnel reads the page first, which is why its ceiling differs between arms for an identical pool.",
+  "rows": [
+    {
+      "id": "R3-001",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-002",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-003",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-004",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-005",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-006",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-007",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-008",
+      "class": "direct",
+      "fused_rank_of_gold": 17,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-009",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-010",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-011",
+      "class": "direct",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-012",
+      "class": "direct",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-013",
+      "class": "direct",
+      "fused_rank_of_gold": 23,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-014",
+      "class": "direct",
+      "fused_rank_of_gold": 78,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-015",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-016",
+      "class": "direct",
+      "fused_rank_of_gold": 87,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-017",
+      "class": "direct",
+      "fused_rank_of_gold": 123,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-018",
+      "class": "direct",
+      "fused_rank_of_gold": 164,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-019",
+      "class": "direct",
+      "fused_rank_of_gold": 75,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-020",
+      "class": "direct",
+      "fused_rank_of_gold": 131,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-021",
+      "class": "direct",
+      "fused_rank_of_gold": 56,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-022",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-023",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-024",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-025",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 2,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-026",
+      "class": "direct",
+      "fused_rank_of_gold": 11,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-027",
+      "class": "direct",
+      "fused_rank_of_gold": 43,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-028",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-029",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-030",
+      "class": "direct",
+      "fused_rank_of_gold": 51,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-031",
+      "class": "direct",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-032",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 0,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-033",
+      "class": "direct",
+      "fused_rank_of_gold": 138,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-034",
+      "class": "direct",
+      "fused_rank_of_gold": 46,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-035",
+      "class": "direct",
+      "fused_rank_of_gold": 31,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-036",
+      "class": "direct",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-037",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-038",
+      "class": "direct",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-039",
+      "class": "direct",
+      "fused_rank_of_gold": 151,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-040",
+      "class": "direct",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-041",
+      "class": "direct",
+      "fused_rank_of_gold": 4,
+      "gold_in_pool": true,
+      "pool_size": 9,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-042",
+      "class": "direct",
+      "fused_rank_of_gold": 8,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-043",
+      "class": "direct",
+      "fused_rank_of_gold": 17,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-044",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-045",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-046",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-047",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-048",
+      "class": "direct",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-049",
+      "class": "direct",
+      "fused_rank_of_gold": 3,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-050",
+      "class": "direct",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-051",
+      "class": "direct",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-052",
+      "class": "direct",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 31,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-053",
+      "class": "direct",
+      "fused_rank_of_gold": 7,
+      "gold_in_pool": true,
+      "pool_size": 31,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-054",
+      "class": "direct",
+      "fused_rank_of_gold": 2,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-055",
+      "class": "direct",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-056",
+      "class": "direct",
+      "fused_rank_of_gold": 7,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-057",
+      "class": "direct",
+      "fused_rank_of_gold": 7,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-058",
+      "class": "direct",
+      "fused_rank_of_gold": 36,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-059",
+      "class": "direct",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-060",
+      "class": "direct",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-061",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 61,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-062",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 7,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-063",
+      "class": "multi_hop",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-064",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 48,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-065",
+      "class": "multi_hop",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-066",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 47,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-067",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 6,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-068",
+      "class": "multi_hop",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-069",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 37,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-070",
+      "class": "multi_hop",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-071",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 31,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-072",
+      "class": "multi_hop",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-073",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 30,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-074",
+      "class": "multi_hop",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-075",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 30,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-076",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 18,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-077",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 29,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-078",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 36,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-079",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 63,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-080",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 23,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-081",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 34,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-082",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 26,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-083",
+      "class": "multi_hop",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-084",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 138,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-085",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 12,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-086",
+      "class": "multi_hop",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-087",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-088",
+      "class": "multi_hop",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 2,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-089",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 79,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-090",
+      "class": "multi_hop",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-091",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 28,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-092",
+      "class": "multi_hop",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-093",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 112,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-094",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-095",
+      "class": "multi_hop",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-096",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 9,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-097",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 13,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-098",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 62,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-099",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 25,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-100",
+      "class": "multi_hop",
+      "fused_rank_of_gold": 27,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-101",
+      "class": "conceptual",
+      "fused_rank_of_gold": 17,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-102",
+      "class": "conceptual",
+      "fused_rank_of_gold": 14,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-103",
+      "class": "conceptual",
+      "fused_rank_of_gold": 55,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-104",
+      "class": "conceptual",
+      "fused_rank_of_gold": 20,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-105",
+      "class": "conceptual",
+      "fused_rank_of_gold": 24,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-106",
+      "class": "conceptual",
+      "fused_rank_of_gold": 7,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-107",
+      "class": "conceptual",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-108",
+      "class": "conceptual",
+      "fused_rank_of_gold": 18,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-109",
+      "class": "conceptual",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-110",
+      "class": "conceptual",
+      "fused_rank_of_gold": 30,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-111",
+      "class": "conceptual",
+      "fused_rank_of_gold": 76,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-112",
+      "class": "conceptual",
+      "fused_rank_of_gold": 6,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-113",
+      "class": "conceptual",
+      "fused_rank_of_gold": 2,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-114",
+      "class": "conceptual",
+      "fused_rank_of_gold": 9,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-115",
+      "class": "conceptual",
+      "fused_rank_of_gold": 35,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-116",
+      "class": "conceptual",
+      "fused_rank_of_gold": 22,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-117",
+      "class": "conceptual",
+      "fused_rank_of_gold": 2,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-118",
+      "class": "conceptual",
+      "fused_rank_of_gold": 50,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-119",
+      "class": "conceptual",
+      "fused_rank_of_gold": 16,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-120",
+      "class": "conceptual",
+      "fused_rank_of_gold": null,
+      "gold_in_pool": false,
+      "pool_size": 1,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-121",
+      "class": "conceptual",
+      "fused_rank_of_gold": 15,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-122",
+      "class": "conceptual",
+      "fused_rank_of_gold": 8,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-123",
+      "class": "conceptual",
+      "fused_rank_of_gold": 26,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-124",
+      "class": "conceptual",
+      "fused_rank_of_gold": 8,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-125",
+      "class": "conceptual",
+      "fused_rank_of_gold": 26,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-126",
+      "class": "conceptual",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-127",
+      "class": "conceptual",
+      "fused_rank_of_gold": 28,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-128",
+      "class": "conceptual",
+      "fused_rank_of_gold": 14,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": false
+    },
+    {
+      "id": "R3-129",
+      "class": "conceptual",
+      "fused_rank_of_gold": 1,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    },
+    {
+      "id": "R3-130",
+      "class": "conceptual",
+      "fused_rank_of_gold": 2,
+      "gold_in_pool": true,
+      "pool_size": 200,
+      "hit_on_page": true
+    }
+  ]
+}
