@@ -55,6 +55,9 @@ export async function saveRevisionRender(owner: string, id: string, rev: unknown
   if (!renderKeys(await revisionSnapshot(id, n)).includes(b.key)) throw new HttpError(400, 'Cameră inexistentă în revizie.');
   const img = parseRenderImage(b.image); if (!img) throw new HttpError(400, 'Imaginea trebuie să fie WebP sau JPEG, de cel mult 1,2 MB.');
   const { q } = await getDb();
+  // doar pentru o revizie arătată de un link activ: o trimitere întârziată după revocare nu lasă imagini orfane
+  const live = await q(`select 1 from shares where project_id=$1 and revision_number=$2 and ${shareActive()} limit 1`, [id, n]);
+  if (!live.rows[0]) throw new HttpError(409, 'Revizia nu mai are un link activ.');
   await q(`insert into revision_renders(project_id, revision_number, key, width, mime, data) values($1,$2,$3,$4,$5,$6)
     on conflict (project_id, revision_number, key, width) do update set mime=excluded.mime, data=excluded.data, created_at=now()`, [id, n, b.key, b.width, img.mime, img.base64]);
   return { ok: true };

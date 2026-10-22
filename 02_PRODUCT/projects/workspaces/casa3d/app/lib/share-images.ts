@@ -56,6 +56,6 @@ export async function prepareShareImages(projectId: string, rev: number, onProgr
   } catch { return sent; }
   // contextul WebGL se eliberează explicit: browserul ține doar câteva deodată, iar editorul are deja unul pentru vederea 3D
   finally { running.delete(tag); try { viewer?.dispose(); } catch { /* deja eliberat */ }
-    try { ((canvas.getContext('webgl2') || canvas.getContext('webgl')) as WebGLRenderingContext | null)?.getExtension('WEBGL_lose_context')?.loseContext(); } catch { /* fără extensie */ }
+    if (viewer) try { ((canvas.getContext('webgl2') || canvas.getContext('webgl')) as WebGLRenderingContext | null)?.getExtension('WEBGL_lose_context')?.loseContext(); } catch { /* fără extensie */ }
     canvas.remove(); }
 }
