@@ -52,3 +52,34 @@ export function normalize(value) {
   });
   return parts.join(',');
 }
+
+/** Custom properties of every rule whose selector is exactly `selector` (comments removed; later rules win). */
+export function ruleProps(css, selector) {
+  const clean = css.replace(/\/\*[\s\S]*?\*\//g, '');
+  const props = new Map();
+  for (const m of clean.matchAll(/(^|[}\s])([^{}]+?)\s*\{([^{}]*)\}/g)) {
+    if (m[2].trim().replace(/\s+/g, ' ') !== selector) continue;
+    for (const decl of m[3].split(';')) {
+      const i = decl.indexOf(':');
+      const name = decl.slice(0, i).trim();
+      if (i > 0 && name.startsWith('--')) props.set(name, decl.slice(i + 1).trim());
+    }
+  }
+  return props;
+}
+
+/**
+ * Computed value of `name` on an element matched by the last scope of `chain` (outermost first, :root at 0).
+ * As in CSS: a var() is substituted on the element that declares it, and an undeclared property inherits the
+ * parent's computed value. So `--bg: var(--color-bg-canvas)` on :root does not follow a later scope's canvas.
+ */
+export function computed(chain, name, seen = new Set()) {
+  for (let i = chain.length - 1; i >= 0; i--) {
+    if (!chain[i].has(name)) continue;
+    const key = `${i}:${name}`;
+    if (seen.has(key)) throw new Error(`var() cycle at ${name}`);
+    const m = chain[i].get(name).match(/^var\((--[a-z0-9-]+)\)$/i);
+    return m ? computed(chain.slice(0, i + 1), m[1], new Set([...seen, key])) : chain[i].get(name);
+  }
+  return undefined;
+}
