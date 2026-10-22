@@ -28,6 +28,15 @@
                 <ResourceDictionary Source="/Themes/Components/Timeline.xaml"/>
             </ResourceDictionary.MergedDictionaries>
             <BooleanToVisibilityConverter x:Key="BooleanToVisibilityConverter"/>
+            <!-- 2026-10-22 round 3: DatePicker/Calendar format with CurrentCulture unless Language is set on the element itself (a metadata
+                 default does not count), so the owner's PC showed „01-Sep-26”. A style setter counts as set: the pickers show dd.MM.yyyy and
+                 Romanian month names; the thread culture stays unchanged. -->
+            <Style TargetType="DatePicker">
+                <Setter Property="Language" Value="ro-RO"/>
+            </Style>
+            <Style TargetType="Calendar">
+                <Setter Property="Language" Value="ro-RO"/>
+            </Style>
             <!-- 2026-10-22 walkthrough: the built-in DatePicker watermark (English, no Romanian resource) is replaced here, and the public
                  DatePickerTextBox API has no Watermark property. This template keeps the TextBox look and shows „Alegeți data” while the box is empty. -->
             <Style TargetType="DatePickerTextBox" BasedOn="{StaticResource {x:Type TextBox}}">

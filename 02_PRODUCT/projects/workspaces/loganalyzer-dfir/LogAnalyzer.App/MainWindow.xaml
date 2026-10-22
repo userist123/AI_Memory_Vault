@@ -103,10 +103,12 @@
                     <!-- WP18 S3: language level (Simple for everyone; Expert is a switch) and the glossary -->
                     <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,3" Margin="0,0,10,0" VerticalAlignment="Center"
                             ToolTip="Simplu: cuvinte pe înțelesul tuturor, detaliile tehnice la un click distanță. Expert: numele tehnice rămân lângă cele simple. Datele sunt aceleași.">
-                        <StackPanel Orientation="Horizontal">
+                        <StackPanel Orientation="Horizontal" AutomationProperties.Name="Nivel de limbaj: Simplu sau Expert">
                             <TextBlock Text="Limbaj: " FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
-                            <CheckBox IsChecked="{Binding IsExpertLevel}" Content="{Binding LanguageLevelText}" AutomationProperties.Name="Nivel de limbaj: Simplu sau Expert"
-                                      AutomationProperties.HelpText="Bifat: Expert, numele tehnice rămân lângă cele simple. Nebifat: Simplu." Foreground="{StaticResource TextPrimaryBrush}" FontSize="12" VerticalAlignment="Center"/>
+                            <RadioButton Content="Simplu" IsChecked="{Binding IsSimpleLevel}" Style="{StaticResource ChipTabStyle}" Padding="8,2" Margin="0,0,2,0" VerticalAlignment="Center"
+                                         AutomationProperties.Name="Limbaj simplu" AutomationProperties.HelpText="Cuvinte pe înțelesul tuturor; detaliile tehnice la un click distanță."/>
+                            <RadioButton Content="Expert" IsChecked="{Binding IsExpertLevel}" Style="{StaticResource ChipTabStyle}" Padding="8,2" Margin="0" VerticalAlignment="Center"
+                                         AutomationProperties.Name="Limbaj expert" AutomationProperties.HelpText="Numele tehnice rămân lângă cele simple."/>
                         </StackPanel>
                     </Border>
                     <!-- G3: one „Colectează tot” for the station's role; every page reuses the result -->
