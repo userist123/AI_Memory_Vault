@@ -1,5 +1,5 @@
 # todo-claude-casa3d-uiux-p2
-STATUS: IN_PROGRESS   UPDATED: 2026-10-23T07:45:00+03:00
+STATUS: IN_PROGRESS   UPDATED: 2026-10-23T08:20:00+03:00
 TASK: Casa3D UI/UX P2 from the research report (rows 8-14; P1 merged in PR #321). Owner: "Continua recomandat".
 BRANCH / PR: claude/casa3d-uiux-p2 (worktree D:/w/uiux2, base origin/main 944d1427)
 P2 items (report rows 8-14):
@@ -33,6 +33,12 @@ DONE:
   moves the orbit centre (F->FT damped) and distance; X-Ray = transparent cached clones on wall meshes (shared
   originals untouched). PlanView hover outline + "3D" HUD button; Viewer3D "Show in plan" + X-Ray in Display;
   Editor shared hover state, frameIn3d/frameInPlan (opens split view), Ctrl+K "frame in the other view".
-NEXT: item 8 (chrome recalibration); review; PR; merge.
+- (8) Editor chrome recalibrated with an appended override block (deleting it restores the old theme): OKLCH tokens
+  generated from base hue/chroma + accent + contrast (--base-h, --base-c, --contrast, --accent-in); warm desaturated
+  charcoal instead of aubergine for top bar, stages, tool rail, 3D bar, palette, toasts; terracotta only for primary
+  (Save revision, Continue), current-stage underline (selection) and focus; pressed toggles/tools neutral; sans in
+  chrome, serif kept in content. Measured WCAG contrast: min 4.89 (terracotta buttons), others 6.5-11.
+  check-slides OK (client link unaffected). Suite 706/706.
+NEXT: independent review; PR; CI; merge.
 KEY FILES: casa3d/app/core/{frame,camera-glide,saved-views}.ts, lib/motion.ts, components/{PlanView,Editor,KeyboardHelp,Viewer3D,StagePicker,FoldSection,TasksPanel,TimePanel,ContractPanel,SurveyPanel}.tsx,
   components/viewer3d-engine.js, app/globals.css

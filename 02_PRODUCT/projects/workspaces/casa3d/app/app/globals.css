@@ -1349,3 +1349,68 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 .side-wide[aria-pressed=true]{color:var(--accent)}
 .ws .stagepick-phase button[aria-checked=true]{background:#C63C29;color:#FFF8F1} .ws .stagepick-phase button[aria-checked=true] i{color:#FFE3DA}
 .ws .stagepick-phase button[aria-checked=true] em{border-color:#FFF8F1}
+
+/* ===== UI/UX P2-8: cromatica editorului recalibrată (după Linear 2026 / Geist) =====
+   În locul vinetei saturate, un neutru cald, desaturat, în OKLCH, generat din trei intrări: bază (nuanță + cromă),
+   accent și contrast. Terracotta rămâne doar pentru acțiunea principală, selecție și focus; stările „apăsat” ale
+   comutatoarelor și uneltelor devin neutre. Serif doar în conținut (planșe, documente), nu în cromatica aplicației.
+   Blocul suprascrie regulile mai vechi cu aceleași selectoare: ștergerea lui readuce tema de dinainte. */
+.ws{
+  --base-h:70; --base-c:.009; --contrast:.5; --accent-in:oklch(.555 .18 33);
+  --c0:oklch(calc(.205 - var(--contrast) * .03) var(--base-c) var(--base-h));
+  --c1:oklch(calc(.25 - var(--contrast) * .02) var(--base-c) var(--base-h));
+  --c2:oklch(.305 var(--base-c) var(--base-h));
+  --c3:oklch(.40 calc(var(--base-c) * 1.3) var(--base-h));
+  --cl:oklch(.335 var(--base-c) var(--base-h));
+  --t1:oklch(calc(.95 + var(--contrast) * .03) .008 var(--base-h));
+  --t2:oklch(calc(.80 + var(--contrast) * .05) .01 var(--base-h));
+  --t3:oklch(calc(.68 + var(--contrast) * .07) .012 var(--base-h));
+  --bg:var(--c0); --bg-2:var(--c2); --surface:var(--c1); --surface-2:var(--c2);
+  --ink:var(--t1); --ink-2:var(--t2); --ink-3:var(--t3); --ink-num:var(--t3);
+  --line:var(--cl); --line-strong:var(--c3);
+  --accent:var(--accent-in); --accent-hover:oklch(from var(--accent-in) calc(l - .07) c h);
+  --accent-soft:oklch(from var(--accent-in) .33 calc(c * .35) h); --focus:oklch(from var(--accent-in) calc(l + .14) c h);
+  background:var(--c0);
+}
+.ws .topbar{border-bottom:1px solid var(--line)} .ws .topbar:after{display:none}
+.ws .topbar .name{font:600 18px/1.15 var(--sans);letter-spacing:-.01em}
+.ws .topbar .btn:hover:not(:disabled),.ws .tb-actions .btn:hover:not(:disabled){border-color:var(--c3);background:var(--c2);color:var(--t1)}
+.ws .topbar .tb-save,.ws .topbar .btn.primary{background:var(--accent);border-color:var(--accent);color:#FFF8F1}
+.ws .topbar .tb-save:hover:not(:disabled),.ws .topbar .btn.primary:hover:not(:disabled){background:var(--accent-hover);border-color:var(--accent-hover);color:#fff}
+.ws .topbar .status{background:var(--c2);color:var(--t2);border-color:var(--c3)}
+.ws .topbar .seg{background:var(--c0);border-color:var(--c3)}
+.ws .topbar .seg button{color:var(--t2)} .ws .topbar .seg button:hover{color:var(--t1)}
+.ws .topbar .seg button[aria-pressed=true]{background:var(--t1);color:var(--c0)}
+.ws .stagebar .phase-label{color:var(--t3)}
+.ws .stagebar button{color:var(--t2)} .ws .stagebar button:hover,.ws .stagebar button[aria-current=step]{color:var(--t1)}
+.ws .stagebar button[aria-current=step]:after{background:var(--accent)}
+.ws .stagebar button i,.ws .stagebar button[aria-current=step] i{color:var(--t3)}
+.ws .stage-step{color:var(--t2)} .ws .stage-step:hover:not(:disabled){background:var(--c2);color:var(--t1)}
+.ws .stagepick-btn:hover{background:var(--c2)} .ws .stagepick-btn i{color:var(--t3)} .ws .stagepick-btn small{color:var(--t3)}
+.ws .body,.ws .view3d{background:var(--c0)}
+.ws .tools button{color:var(--t2)}
+.ws .tools button:hover{background:var(--c2);color:var(--t1);border-color:var(--c3)}
+.ws .tools button[aria-pressed=true]{background:var(--t1);color:var(--c0);border-color:var(--t1)}
+.ws .v3bar .btn,.ws .v3light{border-color:var(--c3);background:color-mix(in oklch,var(--c1) 94%,transparent);color:var(--t1);box-shadow:0 10px 28px oklch(.15 .01 70 / .22)}
+.ws .v3bar .btn:hover:not(:disabled),.ws .v3light .btn:hover:not(:disabled){background:var(--c2);color:var(--t1)}
+.ws .v3bar .btn[aria-pressed=true],.ws .v3light .btn[aria-pressed=true]{background:var(--t1);border-color:var(--t1);color:var(--c0)}
+.ws .side .stage-title{font:600 20px/1.15 var(--sans);letter-spacing:-.01em}
+.ws .side .stage-title i{background:oklch(.27 .01 70);color:oklch(.96 .01 70)}
+.ws .side h3,.ws .side h2,.ws .fold > summary h3,.ws .ctr-panel h3{font-family:var(--sans);font-weight:600;letter-spacing:-.005em}
+.ws :focus-visible{outline-color:var(--focus)}
+/* panoul lateral și bara de niveluri: aceeași bază caldă (cerneala închisă fără tentă violet) */
+.ws .side{--ink:oklch(.22 .012 var(--base-h));--ink-2:oklch(.33 .012 var(--base-h));--ink-3:oklch(.42 .012 var(--base-h));--ink-num:oklch(.42 .012 var(--base-h));--lead:oklch(.42 .012 var(--base-h));--graphite:oklch(.22 .012 var(--base-h));color:var(--ink)}
+.ws .side h3,.ws .side h2,.ws .side h4,.ws .side .stage-title{color:var(--ink)}
+.ws .side .prov,.ws .side .muted,.ws .side small,.ws .side label.f,.ws .side label.f>span,.ws .side .sm-phase{color:var(--ink-3)}
+.ws .levelbar{color:oklch(.25 .01 var(--base-h))} .ws .levelbar .btn{color:oklch(.42 .012 var(--base-h))}
+.ws .levelbar .btn[aria-selected=true],.ws .levelbar .btn[aria-pressed=true]{background:oklch(.25 .01 var(--base-h));color:oklch(.97 .008 var(--base-h))}
+.ws .levelbar .btn:hover:not(:disabled){background:oklch(.90 .012 var(--base-h));color:oklch(.25 .01 var(--base-h))}
+.ws .pcard-ed summary b{font:600 var(--fs-md) var(--sans)}
+/* restul suprafețelor închise ale editorului (paleta Ctrl+K, mesaje, previzualizare, avertismente) pe aceeași bază */
+.ws .cmdk-kbd,.ws kbd{border-color:var(--c3);background:var(--c2);color:var(--t2)}
+.ws .cmdk-card,.ws .cmdk-search,.ws .cmdk-list,.ws .previewbar,.ws .pending{background:var(--c1);color:var(--t1);border-color:var(--c3)}
+.ws .cmdk-opt{color:var(--t2)} .ws .cmdk-opt[aria-selected=true]{background:var(--accent-soft);color:var(--t1)}
+.ws .cmdk-foot{background:var(--c0);border-color:var(--cl);color:var(--t3)}
+.ws .side .toast,.ws .toast{border-color:var(--c3);background:var(--c2);color:var(--t1)}
+.ws .topbar .status{border-color:var(--c3)}
+.ws :focus-visible{outline-color:var(--focus)}
