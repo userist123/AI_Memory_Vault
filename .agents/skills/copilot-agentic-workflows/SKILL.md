@@ -35,7 +35,7 @@ Progressive disclosure is mandatory:
 
 ## Multi-Agent Orchestration
 
-Follow `99_SYSTEM/Council_Context_Budget.md`.
+Follow `00_GOVERNANCE/protocols/Council_Context_Budget.md`.
 
 Default:
 
