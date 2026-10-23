@@ -6,7 +6,7 @@ export const TOOL_GROUPS: { id: 'openings' | 'structure' | 'notes' | 'decor'; to
   { id: 'structure', tools: ['column', 'shaft', 'beam', 'glass_wall'] },
   { id: 'notes', tools: ['measure', 'dim', 'text'] },
   // decorul de perete (Finisaje, Concept, Mobilier): placarea pe porțiune și obiectele de pe perete
-  { id: 'decor', tools: ['clad'] },
+  { id: 'decor', tools: ['clad', 'wall_item'] },
 ];
 /** Peste câte unelte se grupează (pe ecran lat); sub prag bara rămâne plată, ca înainte. */
 export const GROUP_OVER = 8;

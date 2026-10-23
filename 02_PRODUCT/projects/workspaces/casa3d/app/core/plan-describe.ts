@@ -7,10 +7,12 @@ import { formatArea, formatLength, type Units } from './format';
 import { footprintOf } from './validate';
 import { resolve } from './catalog';
 import { nicheRoom } from './niches';
+import { wallItemRoom } from './wall-items';
+import type { WallItem } from './types';
 import { annotationCenter, dimGeometry } from './annotations';
 
 type T = (key: string, vars?: Record<string, string | number>) => string;
-export type MirrorItem = { kind: 'room' | 'placement' | 'wall' | 'opening' | 'column' | 'beam' | 'stair' | 'glass_wall' | 'niche' | 'annotation'; id: string; wallId?: string; label: string };
+export type MirrorItem = { kind: 'room' | 'placement' | 'wall' | 'opening' | 'column' | 'beam' | 'stair' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item'; id: string; wallId?: string; label: string };
 export type MirrorGroup = { id: string; title: string; items: MirrorItem[] };
 
 const ord = (a: { x: number; z: number; id: string }, b: { x: number; z: number; id: string }) => (Math.abs(a.z - b.z) > .05 ? a.z - b.z : a.x - b.x) || a.id.localeCompare(b.id);
@@ -36,6 +38,7 @@ export function roomsAtOpening(snap: Pick<Snapshot, 'floor'>, w: Wall, o: { offs
 export function describePlan(snap: Pick<Snapshot, 'floor' | 'placements'>, cat: Catalog, o: { t: T; units: Units; lang: 'ro' | 'en' }): MirrorGroup[] {
   const { t, units, lang } = o, L = (m: number) => formatLength(m, units, lang), f = snap.floor;
   const groups: MirrorGroup[] = [];
+  const wallItemEntry = (it: WallItem): MirrorItem => ({ kind: 'wall_item', id: it.id, label: t('mirror.wallItem', { kind: it.label || t(`wallItem.kind.${it.kind}`), w: L(it.width), h: L(it.height), y: L(it.elevation) }) });
   for (const r of [...f.rooms].sort((a, b) => ord({ x: a.rect.x0, z: a.rect.z0, id: a.id }, { x: b.rect.x0, z: b.rect.z0, id: b.id }))){
     const w = r.rect.x1 - r.rect.x0, d = r.rect.z1 - r.rect.z0;
     const items: MirrorItem[] = [{ kind: 'room', id: r.id, label: t('mirror.room', { name: r.name, area: formatArea(w * d, units, lang), w: L(w), d: L(d) }) }];
@@ -43,6 +46,8 @@ export function describePlan(snap: Pick<Snapshot, 'floor' | 'placements'>, cat: 
       const rv = resolve(cat, p.variantId), fp = footprintOf(cat, p), name = rv ? rv.product.name : p.group;
       items.push({ kind: 'placement', id: p.id, label: fp ? t('mirror.piece', { name, w: L(fp.x1 - fp.x0), d: L(fp.z1 - fp.z0) }) : name });
     }
+    // obiectele de pe pereții camerei (tablou, oglindă, raft, TV), cu mărimea și cota centrului
+    for (const it of (f.wallItems ?? []).filter(x => wallItemRoom(f, x)?.id === r.id)) items.push(wallItemEntry(it));
     groups.push({ id: r.id, title: r.name, items });
   }
   // piesele care nu sunt în nicio cameră existentă (cameră ștearsă, piesă mutată afară)
@@ -58,6 +63,8 @@ export function describePlan(snap: Pick<Snapshot, 'floor' | 'placements'>, cat: 
     // nișele peretelui, după poziție, cu camera în care dau
     for (const n of (f.niches ?? []).filter(x => x.wallId === wl.id).sort((a, b) => a.offset - b.offset))
       struct.push({ kind: 'niche', id: n.id, label: t('mirror.niche', { w: L(n.width), h: L(n.height), d: L(n.depth), rooms: nicheRoom(f, n)?.name ?? where }) });
+    // obiectele de pe perete care nu dau în nicio cameră rămân lângă peretele lor
+    for (const it of (f.wallItems ?? []).filter(x => x.wallId === wl.id && !wallItemRoom(f, x)).sort((a, b) => a.offset - b.offset)) struct.push(wallItemEntry(it));
   }
   for (const c of f.columns ?? []) struct.push({ kind: 'column', id: c.id, label: t(c.role === 'shaft' ? 'mirror.shaft' : c.role === 'boxing' ? 'mirror.boxing' : 'mirror.column', { w: L(c.w), d: L(c.d) }) });
   for (const b of f.beams ?? []) struct.push({ kind: 'beam', id: b.id, label: t('mirror.beam', { len: L(len(b)) }) });

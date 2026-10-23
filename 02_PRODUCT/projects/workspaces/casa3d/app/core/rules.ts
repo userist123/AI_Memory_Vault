@@ -15,6 +15,13 @@ export const DOOR_TYPES = ['swing', 'double', 'sliding', 'pocket', 'folding', 'p
 export const DOOR_TYPE_RULES: Record<(typeof DOOR_TYPES)[number], { minM: number; maxM: number; std: number }> = {
   swing: { minM: .5, maxM: 1.4, std: .8 }, double: { minM: .8, maxM: 2.4, std: 1.2 }, sliding: { minM: .5, maxM: 1.4, std: .8 },
   pocket: { minM: .5, maxM: 1.4, std: .8 }, folding: { minM: .5, maxM: 1.4, std: .8 }, pivot: { minM: .5, maxM: 1.4, std: .9 } };
+// Obiectele de pe perete (core/wall-items.ts): mărimea și cota implicite (centrul), după regulile de montaj citate în raportul
+// de cercetare (centrul tabloului la ~145 cm; deasupra mobilei, marginea de jos la 15–30 cm, luăm 20 cm), și ce înseamnă „piesa din fața peretelui”.
+export const WALL_ITEM_RULES = {
+  defaults: { art: { width: .7, height: .5, depth: .03, elevation: 1.45 }, mirror: { width: .6, height: .9, depth: .02, elevation: 1.55 },
+    shelf: { width: .8, height: .03, depth: .2, elevation: 1.6 }, tv: { width: 1.23, height: .71, depth: .05, elevation: 1.1 } },
+  aboveFurnitureM: .2, furnitureNearM: .35, aboveGroups: ['canapea', 'pat', 'comoda', 'comodaTv'] as readonly string[],
+} as const;
 // Tapetul (core/finishes.ts wallpaperRolls): tăierea sus-jos la fiecare fâșie și rezerva pe tipul de potrivire a modelului
 // (ghidurile de montaj: 10 % la model drept sau liber, 15–25 % la model decalat; am luat pragul de jos), rotunjită în sus la rolă.
 export const WALLPAPER_RULES = { trimM: .05, spare: { free: .1, straight: .1, offset: .15 } } as const;
