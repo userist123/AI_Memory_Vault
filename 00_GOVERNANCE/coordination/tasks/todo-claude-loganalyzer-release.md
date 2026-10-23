@@ -493,6 +493,10 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   all green incl. Build and test, 3 packages, npm lockfiles, security-boundary. Merge commits (stack-safe), heads checked before each:
   #303 c323d6585, #306 5038d6cd9, #307 1a13c4afe, #308 132a8eec6. main tree == CI-tested tree (d3e9f56e1). Branches NOT deleted (worktrees).
   Known timing-sensitive tests (pass alone, failed once under load): DeviceMonitorTests.A_lost_event_source…, EvidenceReasonerTests.Local_model_answer… - follow-up.
+  FOLLOW-UP DONE 37962117f (PR #329, draft): A root-caused (test read the journal after the audit but before RaiseAlert+Save in RefreshAsync, pool
+  thread) - test now waits for the save holding the alert; Thread.Sleep guard in Fakes makes the old wait fail deterministically. B NOT reproduced in
+  19 runs (real Ollama qwen2.5:7b present); latent race fixed anyway: AiIndependenceTests + OwnerEditionDecisionsTests reset the global AppModeContext
+  outside the "AppMode" collection -> now in it. Main re-ran Dfir 2418/31/0, App 816/0 (worker: 5x each green). If B fails again: capture with --logger trx.
   C: free space keeps shrinking (6.8 -> 0 GB in ~3 h, source not fully found; VS installer cache 5.8 GB in %TEMP%\2ouqcvha is the owner's) - run tests with TEMP on D:.
 - (old) MERGE chain #303 -> #306 -> #307 -> #308 into main: NOT done - security/authority-sensitive (auth, device monitor, response verification); CLAUDE.md
   forbids auto-merge; needs the owner's explicit "da, fă merge". #303 ready (mergeable UNKNOWN at 2026-10-23), #306-#308 drafts MERGEABLE. PR #308 title
