@@ -438,6 +438,19 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   ACCEPTED RESIDUALS (owner: "use the recommendation"): (a) no "sealed external alert" check for the radio hide; (b) LOW: a row first sealed before v2,
   journal classifier_version edited down + device attached so PnP puts it in the local machine container -> hidden from the PAGE only (D05, report 3c and the
   sealed alert still list it). NIT: IsBluetoothDeviceNode true for DEV_000000000000 (harmless). Realtek row hides only after the first live reading.
+- C/D polish DONE 90604e079 (worker; main re-ran build 0 err, App 748/0, UI 354/1). Published to D:\w\la-publish-90604e0 (C: had 2 GB), installed
+  (exe 4CD45671…, hash = publish, --self-test 0). REAL PC VERIFIED 2026-10-23 with screenshots (sent): guide 3 screens + Esc + reopen from Home; Home Simplu one
+  action, no banner, no bottom-left buttons; Control "ultimul control terminat 22.10.2026 21:44 … ultimul raport salvat 20:54"; anchor step 2 of 4; Investigation
+  Simplu wizard with "Această stație"/"Un folder adus", results empty-state; Monitor 8 rows (was 27), WH-CH720N + DA V2 X one row each, Realtek gone, "—" registry
+  for non-storage; transfer dates dd.MM.yyyy; empty-state cards on users/procedures/policies; Cont nou labels; Avansat scrolls; glossary filter works.
+  ROUND-4 findings (not fixed): (1) Home: "what happens" sentence said twice under the main button; (2) Simplu/Expert toggle jumps left when Expert shows
+  "Colectează tot" (click lands on the wrong item) - keep its position fixed; (3) anchor step explains the code 3 times; (4) Investigation Simplu still shows the
+  "Colectează acum" banner (parallel to the wizard's "Această stație") and the case header buttons (Folder caz, Închidere caz, raport) before any case;
+  (5) glossary "1 termeni potriviți" -> "1 termen potrivit"; (6) users/procedures/policies: the "Avansat" expander content is visible while its chevron looks
+  collapsed (check IsExpanded default = false) and the primary button is duplicated inside it; long page subtitle repeats the card; policies have 3 "open" buttons;
+  (7) transfer: "Sursă (structura / departamentul)" vs "Destinație (structura)"; (8) monitor Bluetooth rows show producer "Microsoft" (driver provider) not the device maker
+  - show "—" or the BT manufacturer if known; (9) real mouse clicks on Control "Înainte" twice did not register (UIA Invoke did) - recheck by hand.
+- UIA driver notes: `type`/`key` call Focus() = main window; for a secondary window use `rxy`/`rtype`/`rkey` (no focus change). Driver must be started BEFORE send.ps1 (creates cmd/).
 - After that: C/D items of PORNIRE_INCEPATOR (table rows 4,7-10,12-20), publish + reinstall + real-PC screenshots (do NOT send `max` before sign-in), CI once, cleanup list for owner.
 - Next (was: owner answers): fix B items (BT fold is device-monitor = security-relevant -> Opus review), then C/D;
   cleanup of test data with owner OK; CI read once; merge chain.
