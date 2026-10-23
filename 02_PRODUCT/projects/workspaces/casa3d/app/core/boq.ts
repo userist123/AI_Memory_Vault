@@ -1,4 +1,4 @@
-import type { Catalog, Snapshot, Room, MaterialsCatalog, Material, RoomFinishes, BudgetSettings, Confidence } from './types';
+import type { Catalog, Floor, Snapshot, Room, MaterialsCatalog, Material, RoomFinishes, BudgetSettings, Confidence } from './types';
 import { resolve, groupOf } from './catalog';
 import { area as rectArea } from './geometry';
 import { openingsOnSide } from './validate';
@@ -9,6 +9,7 @@ import { kitchenOf, kitchenRun, kitchenQuantities, KITCHEN_DEFAULT } from './kit
 import { bathOf } from './bath';
 import { fixtureCount } from './fixtures';
 import { formatQty } from './format';
+import { nicheRoom, nicheTileArea } from './niches';
 import { colorName } from './budget-excluded';
 /** Pereții în documente: punctele cardinale în română, nu literele interne N/S/E/W. */
 const SIDE_RO: Record<string, string> = { N: 'nord', S: 'sud', E: 'est', W: 'vest' };
@@ -28,6 +29,15 @@ export function roomGeometry(snap: Snapshot, room: Room): RoomGeometry {
     const len = Math.max(0, Math.min(o.b, hi) - Math.max(o.a, lo)); if (o.kind === 'door') doorWidth += len; else windowWidth += len; }
   const perimeter = 2 * (w + d), wallGross = perimeter * H, openings = doorWidth * DOOR_HEIGHT + windowWidth * WINDOW_HEIGHT;
   return { roomId: room.id, name: room.name, floorArea: r2(rectArea(r)), perimeter: r2(perimeter), height: H, doorWidth: r2(doorWidth), windowWidth: r2(windowWidth), wallGross: r2(wallGross), openings: r2(openings), wallNet: r2(Math.max(0, wallGross - openings)), ceiling: r2(rectArea(r)) };
+}
+/** Ghenele și casetările al căror centru e în cameră: suprafața de gips-carton = perimetrul fețelor libere (nelipite de
+ *  pereții camerei) × înălțimea (lipsă = tavanul). Stâlpul structural nu are cost. */
+export function shaftsIn(fl: Floor, room: Room){
+  const r = room.rect, e = .05;
+  return (fl.columns ?? []).filter(c => (c.role === 'shaft' || c.role === 'boxing') && c.x >= r.x0 && c.x <= r.x1 && c.z >= r.z0 && c.z <= r.z1).map(c => {
+    const height = Math.min(fl.ceilingHeight, c.height ?? fl.ceilingHeight), x0 = c.x - c.w / 2, x1 = c.x + c.w / 2, z0 = c.z - c.d / 2, z1 = c.z + c.d / 2;
+    const free = c.shape === 'round' ? Math.PI * c.w : (Math.abs(z0 - r.z0) > e ? c.w : 0) + (Math.abs(z1 - r.z1) > e ? c.w : 0) + (Math.abs(x0 - r.x0) > e ? c.d : 0) + (Math.abs(x1 - r.x1) > e ? c.d : 0);
+    return { id: c.id, role: c.role as 'shaft' | 'boxing', w: c.w, d: c.d, height, freePerimeter: r2(free), area: r2(free * height) }; });
 }
 export function defaultFinishes(room: Room): RoomFinishes {
   if (room.type === 'baie') return { floor: 'gresie-mckinley', wallPaint: 'vopsea-innenweiss', wallTile: 'faianta-grafen', baseboard: null, light: 'lampa-virrmo' };
@@ -77,6 +87,17 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
       // placarea dintre blat și suspendate e faianță doar dacă așa s-a ales în sistemul de bucătărie
       if (f.kitchen && kitchenOf(f).backsplash !== 'tile') tileArea = 0; }
     const wt = M(f.wallTile); if (wt && tileArea > 0){ items.push(materialLine(wt, `${room.id}:walltile`, room.id, `Faianță · ${room.name}`, tileArea, mc.verifiedAt)); adhesiveArea += tileArea; addLabor(room.id, 'manopera-faianta', tileArea); }
+    // ghene și casetări din gips-carton în cameră: placa pe fețele libere × înălțime; în baie și faianța peste ea
+    for (const sh of shaftsIn(fl, room)){ const gk = mc.materials.find(m => m.category === 'plasterboard'), where = `${room.name} (${sh.role === 'shaft' ? 'ghenă' : 'casetare'} ${Math.round(sh.w * 100)}×${Math.round(sh.d * 100)} cm, h ${r2(sh.height)} m)`;
+      if (sh.area <= 0) continue;
+      if (gk) items.push(materialLine(gk, `${room.id}:shaft:${sh.id}`, room.id, `Casetare gips-carton · ${where}`, sh.area, mc.verifiedAt)); else unknown.push(`Gips-carton casetare · ${where}`);
+      unknown.push(`Manoperă casetare gips-carton ${r2(sh.area)} m² · ${where}`);
+      if (room.type === 'baie' && wt){ items.push(materialLine(wt, `${room.id}:shaft-tile:${sh.id}`, room.id, `Faianță casetare · ${where}`, sh.area, mc.verifiedAt)); adhesiveArea += sh.area; addLabor(room.id, 'manopera-faianta', sh.area); } }
+    // nișe: în baie (sau cu finisaj de faianță) fundul și fețele interioare se placează; manopera și profilul de colț nu au preț verificat
+    for (const n of (fl.niches ?? []).filter(x => nicheRoom(fl, x)?.id === room.id)){ const where = `${room.name} (${Math.round(n.width * 100)}×${Math.round(n.height * 100)}×${Math.round(n.depth * 100)} cm)`, area = r2(nicheTileArea(n));
+      if ((room.type === 'baie' || n.finish === 'tile') && wt){ items.push(materialLine(wt, `${room.id}:niche:${n.id}`, room.id, `Faianță nișă · ${where}`, area, mc.verifiedAt)); adhesiveArea += area; addLabor(room.id, 'manopera-faianta', area); }
+      unknown.push(`Manoperă nișă (1 buc) · ${where}`); if (room.type === 'baie' || n.finish === 'tile') unknown.push(`Profil de colț nișă ${r2(2 * (n.width + n.height))} ml · ${where}`);
+      if (n.finish === 'led') unknown.push(`Bandă LED nișă ${r2(n.width)} m · ${where}`); }
     // placări pe pereți (tapet, riflaj, tencuială decorativă, cărămidă, piatră, faianță), fiecare pe latura ei, până la înălțimea aleasă
     let featureArea = 0;
     for (const [i, wf] of (f.wallFeatures || []).entries()){ const m = M(wf.material), sg = bandGeometry(fl, room, wf);

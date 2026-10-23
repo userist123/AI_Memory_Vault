@@ -5,20 +5,29 @@ export interface RoomRect { x0: number; z0: number; x1: number; z1: number }
 export type RoomSpaceKind = 'interior' | 'open_balcony' | 'covered_balcony' | 'terrace' | 'outdoor';
 /** `boundary` stores a rectilinear editable room contour as [x,z] points in metres. `rect` remains its bounding box for legacy tools. */
 export interface Room { id: string; name: string; type: string; rect: RoomRect; boundary?: [number, number][]; spaceKind?: RoomSpaceKind }
-/** `hinge`: capătul golului cu balamalele ('start' = spre `a`-ul peretelui); `swing`: partea peretelui spre care se deschide ușa (+1 = spre normala (-uz, ux), -1 = invers). Lipsă → regula implicită din core/doors.ts. */
-export interface Opening { id: string; kind: 'door' | 'window'; offset: number; width: number; entrance?: boolean; height?: number; sill?: number; hinge?: 'start' | 'end'; swing?: 1 | -1 }
+/** `hinge`: capătul golului cu balamalele ('start' = spre `a`-ul peretelui); `swing`: partea peretelui spre care se deschide ușa (+1 = spre normala (-uz, ux), -1 = invers). Lipsă → regula implicită din core/doors.ts.
+ *  `passage`: gol de trecere fără foaie (doar pe ușă: rămâne `kind: 'door'`, ca devizul și motorul să nu-l ia drept fereastră). */
+export interface Opening { id: string; kind: 'door' | 'window'; offset: number; width: number; entrance?: boolean; height?: number; sill?: number; hinge?: 'start' | 'end'; swing?: 1 | -1; passage?: true }
 export interface Wall { id: string; a: [number, number]; b: [number, number]; thickness: number; exterior: boolean; openings: Opening[] }
 /** Scară dreaptă pe un nivel, care urcă la nivelul următor (centrul x/z, lățime și lungime în m, rotație în multipli de 90°). */
 export interface Stair { id: string; x: number; z: number; width: number; length: number; rotation: number }
-/** Stâlp / coloană structurală (dreptunghiular sau rotund, poziție x/z, dimensiuni w/d în m). */
-export interface Column { id: string; x: number; z: number; w: number; d: number; shape: 'rect' | 'round'; rotation?: number; material?: string }
+/** Stâlp / coloană structurală (dreptunghiular sau rotund, poziție x/z, dimensiuni w/d în m).
+ *  `role`: lipsă = stâlp structural; `shaft` = ghenă (coloane de instalații), `boxing` = casetare din gips-carton;
+ *  `height` (m): lipsă = până la tavan (o casetare pentru WC suspendat are ~1,1 m). */
+export type ColumnRole = 'structural' | 'shaft' | 'boxing';
+export interface Column { id: string; x: number; z: number; w: number; d: number; shape: 'rect' | 'round'; rotation?: number; material?: string; role?: ColumnRole; height?: number }
 /** Grindă structurală sub tavan (de la a la b, lățime și înălțime/drop în m). */
 export interface Beam { id: string; a: [number, number]; b: [number, number]; width: number; depth: number }
 /** Perete vitrat / compartimentare din sticlă cu profile metalice. */
 export interface GlassWall { id: string; a: [number, number]; b: [number, number]; thickness: number; mullions?: number; frameColor?: string }
-/** Nișă încastrată în perete. */
-export interface Niche { id: string; wallId: string; offset: number; width: number; height: number; depth: number; elevation: number }
-export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[]; columns?: Column[]; beams?: Beam[]; glassWalls?: GlassWall[]; niches?: Niche[] }
+/** Nișă încastrată în perete: `offset` de la capătul `a` al peretelui, `elevation` = cota de la pardoseală (m).
+ *  `side`: fața peretelui în care e scobită (+1 = spre normala (-uz, ux), ca la `Opening.swing`); lipsă = +1. */
+export interface Niche { id: string; wallId: string; offset: number; width: number; height: number; depth: number; elevation: number; side?: 1 | -1; finish?: 'tile' | 'paint' | 'led' }
+/** Adnotări de planșă: cotă persistentă (aliniată sau ortogonală, linia la `offset` m de segmentul a–b) și text liber. */
+export interface DimAnnotation { id: string; kind: 'dim'; a: [number, number]; b: [number, number]; offset: number; mode?: 'aligned' | 'ortho' }
+export interface TextAnnotation { id: string; kind: 'text'; at: [number, number]; text: string; size?: 's' | 'm' | 'l'; rotation?: number }
+export type Annotation = DimAnnotation | TextAnnotation;
+export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[]; columns?: Column[]; beams?: Beam[]; glassWalls?: GlassWall[]; niches?: Niche[]; annotations?: Annotation[] }
 /** `size` (cm) = piesă pe comandă cu altă dimensiune decât varianta din catalog; prețul ei devine necunoscut. */
 export interface FurniturePlacement { id: string; roomId: string; group: string; variantId: string; x: number; z: number; rotation: number; source: 'auto' | 'manual'; size?: { w: number; d: number; h: number } }
 /** Culoare (hex #rrggbb) și, unde modelul permite, material; lipsa înseamnă aspectul implicit. */
@@ -42,7 +51,8 @@ export interface Offer { id: string; variantId: string; supplierId: string; pric
 export interface Catalog { suppliers: Supplier[]; products: Product[]; variants: ProductVariant[]; offers: Offer[] }
 export type Severity = 'PASS' | 'WARNING' | 'ERROR';
 /** `message` = textul românesc (compatibil cu API-ul); `key` + `vars` = același text în orice limbă (lib/i18n.ts issueText). */
-export interface Issue { code: 'OUT_OF_ROOM' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW_BLOCKED' | 'CLEARANCE' | 'UNKNOWN_VARIANT' | 'OPENING_OUTSIDE_WALL' | 'WALL_TOO_SHORT' | 'STAIR'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
+export interface Issue { code: 'OUT_OF_ROOM' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW_BLOCKED' | 'CLEARANCE' | 'UNKNOWN_VARIANT' | 'OPENING_OUTSIDE_WALL' | 'WALL_TOO_SHORT' | 'STAIR'
+  | 'NICHE_OUTSIDE_WALL' | 'NICHE_TOO_DEEP' | 'NICHE_OVER_OPENING' | 'SHAFT_DOOR' | 'SHAFT_OUTSIDE_ROOM'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
 
 // ---------- Faza 2: materiale, manoperă, servicii, finisaje, buget ----------
 export type MaterialCategory = 'parquet' | 'floor_tile' | 'wall_tile' | 'paint' | 'baseboard' | 'tile_adhesive' | 'lighting'
