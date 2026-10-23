@@ -1,6 +1,7 @@
 'use client';
 // Sarcinile: pe panoul studioului ca „Azi” (întârziate, azi, săptămâna aceasta, pe toate proiectele), în proiect ca listă simplă.
 // Adăugare dintr-un rând, bifare dintr-o atingere.
+import FoldSection from './FoldSection';
 import { useEffect, useState, useRef } from 'react';
 import { agenda, type Task } from '@/core/tasks';
 import { usePrefs } from '@/lib/prefs';
@@ -27,9 +28,7 @@ export default function TasksPanel({ projectId, projects }: { projectId?: string
     {!projectId && x.projectId ? <a className="btn" href={`/p/${x.projectId}`} aria-label={t('tasks.openProject')}>→</a> : <button type="button" className="del" aria-label={t('common.delete')} onClick={() => remove(x)}>×</button>}</li>;
   const a = agenda(tasks ?? [], today()), done = (tasks ?? []).filter(x => x.doneAt);
   const sec = (key: string, list: T[], cls = '') => list.length > 0 && <div className="tsec"><h4 className={cls}>{t(`tasks.${key}`)} <i>{list.length}</i></h4><ul>{list.map(x => item(x, cls))}</ul></div>;
-  return (<section className={`tasks ${projectId ? 'in-project' : ''}`}>
-    {!projectId && <div className="home-sec"><h2>{t('tasks.today')}</h2><span className="muted">{new Date().toLocaleDateString(intlLocale(lang), { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>}
-    {projectId && <h3>{t('tasks.title')}</h3>}
+  const body = (<>
     <form className="task-add" onSubmit={add}>
       <input value={title} onChange={e => setTitle(e.target.value)} maxLength={200} placeholder={t('tasks.placeholder')} aria-label={t('tasks.placeholder')} />
       <input type="date" value={due} onChange={e => setDue(e.target.value)} aria-label={t('tasks.due')} />
@@ -40,5 +39,11 @@ export default function TasksPanel({ projectId, projects }: { projectId?: string
     {tasks && tasks.length === 0 && <EmptyState title={t('empty.tasks.title')} text={t('tasks.none')} />}
     {sec('overdue', a.overdue, 'late')}{sec('dueToday', a.today, 'soon')}{sec('week', a.week)}{sec('later', a.later)}{sec('noDate', a.noDate)}
     {done.length > 0 && <details className="tsec"><summary>{t('tasks.done')} <i>{done.length}</i></summary><ul>{done.map(x => item(x))}</ul></details>}
+  </>);
+  // în proiect: secțiune pliabilă cu stare memorată (UI/UX P2-9); pe pagina principală: lista zilei, mereu deschisă
+  if (projectId) return <FoldSection id="tasks" className="tasks in-project" title={<h3>{t('tasks.title')}</h3>}>{body}</FoldSection>;
+  return (<section className="tasks">
+    {!projectId && <div className="home-sec"><h2>{t('tasks.today')}</h2><span className="muted">{new Date().toLocaleDateString(intlLocale(lang), { weekday: 'long', day: 'numeric', month: 'long' })}</span></div>}
+    {body}
   </section>);
 }
