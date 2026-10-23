@@ -25,7 +25,7 @@ export interface KeyLike { key: string; shiftKey: boolean; ctrlKey: boolean; met
 
 // Literele urmează numele românești; aceleași taste în engleză. R rămâne rotire. W/A/S/D sunt rezervate mersului prin
 // vederea 3D (viewer3d-engine.js le citește pe window), de aceea scara e E, nu S. Record<Tool, …>: o unealtă nouă fără tastă nu compilează.
-const TOOL_KEYS: Record<Tool, string> = { select: 'v', wall: 'p', room: 'c', door: 'u', window: 'f', column: 't', beam: 'g', glass_wall: 'l', stair: 'e', measure: 'm', tech: 'i' };
+const TOOL_KEYS: Record<Tool, string> = { select: 'v', wall: 'p', room: 'c', door: 'u', window: 'o', column: 't', beam: 'g', glass_wall: 'l', stair: 'e', measure: 'm', tech: 'i' };
 export const TOOLS = Object.keys(TOOL_KEYS) as Tool[];
 
 const ANY = { ctrlOrMeta: 'any', shift: 'any', alt: 'any' } as const;
@@ -78,7 +78,7 @@ export interface HelpRow { keys: string; keysKey?: string; label: string; sectio
 export function helpRows(o: { mac: boolean }): HelpRow[] {
   const row = (c: CommandDef): HelpRow => ({ keys: c.shortcuts.map(s => formatShortcut(s, o)).join(' / '), keysKey: c.helpKeys, label: c.label, section: c.group === 'tools' ? 'tools' : 'edit' });
   const edit = COMMANDS.filter(c => c.group === 'edit').map(row), by = (id: string) => row(commandById(id)!);
-  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom', section: 'edit' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan', section: 'edit' }, by('help'), by('palette'),
+  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom', section: 'edit' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan', section: 'edit' }, { keys: 'F', label: 'help.frame', section: 'edit' }, by('help'), by('palette'),
     { keys: '', keysKey: 'help.typeLengthKeys', label: 'help.typeLength', section: 'draw' }, { keys: '', keysKey: 'help.shiftDrawKeys', label: 'help.shiftDraw', section: 'draw' },
     ...COMMANDS.filter(c => c.group === 'tools').map(row)];
 }

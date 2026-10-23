@@ -23,11 +23,16 @@ import { MIN_ROOM_M, type EdgeKey } from '@/core/room-neighbours';
 import { edgeHandleAt, edgeHandlePoint } from '@/core/room-edit';
 import { computeLightingWiringArcs } from '@/core/technical';
 import { parseTypedLength, parseTypedSize, typedRect, acceptsTypedKey } from '@/core/typed-dimension';
+import { selectionBox, frameViewBox } from '@/core/frame';
 
 export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'measure' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair';
 export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
 type Phase = 'start' | 'move' | 'end';
 interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severities: Record<string, Severity>;
+  /** cerere de încadrare din afară (clic pe o problemă din „Sănătate”): `n` crește la fiecare cerere */
+  frame?: { sel: Sel; n: number; at: number };
+  /** selecția comună cu 3D (UI/UX P2-10): piesa de sub mouse (aici sau în 3D) și „Arată în 3D” din bara piesei */
+  hoverId?: string | null; onHover?(id: string | null): void; onFrameOther?(id: string): void;
   onSelect(s: Sel): void; onEdit(fn: (s: Snapshot) => void, phase: Phase): void; onAddWall(a: [number, number], b: [number, number]): void;
   onAddRoom(r: { x0: number; z0: number; x1: number; z1: number }): void; onAddOpening(wallId: string, offset: number, kind: 'door' | 'window'): void;
   onAddColumn?(x: number, z: number, shape?: 'rect' | 'round'): void;
@@ -246,6 +251,8 @@ export default function PlanView(p: Props){
   }
   function keyDown(e: React.KeyboardEvent<SVGSVGElement>){
     if (typedKey(e)){ e.preventDefault(); e.stopPropagation(); return; }
+    // F: încadrează selecția (ca în Figma / Archicad); fără selecție, tot planul
+    if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey){ e.preventDefault(); e.stopPropagation(); if (!frameSel(p.sel)) fitAll(); return; }
     const a = planKeyAction(e, planItems(p.snap), p.sel); if (!a) return;
     if (a.type === 'leave') return;
     e.preventDefault(); e.stopPropagation();
@@ -257,6 +264,11 @@ export default function PlanView(p: Props){
   // WCAG 2.2 2.5.7: zoom-ul (rotiță/ciupire) și deplasarea (Alt+tragere) au și butoane cu un singur clic
   const zoomBy = (k: number) => setVb(v => { const w = Math.min(80, Math.max(1.5, v.w * k)), h = v.h * (w / v.w), cx = v.x + v.w / 2, cy = v.y + v.h / 2; return { x: cx - w / 2, y: cy - h / 2, w, h }; });
   const panBy = (fx: number, fy: number) => setVb(v => ({ ...v, x: v.x + v.w * fx, y: v.y + v.h * fy }));
+  // încadrarea obiectului selectat, la proporția reală a planului de pe ecran; false dacă obiectul nu există pe acest nivel
+  const frameSel = (s: Sel) => { const box = selectionBox(p.snap, p.catalog, s), el = svg.current; if (!box) return false;
+    setVb(frameViewBox(box, el && el.clientHeight > 0 ? el.clientWidth / el.clientHeight : 1.5)); return true; };
+  // doar cererile proaspete: la remontare (alt nivel, ieșirea din previzualizare) planul nu sare la o țintă veche
+  useEffect(() => { if (p.frame && Date.now() - p.frame.at < 4000) frameSel(p.frame.sel); }, [p.frame?.n]); // eslint-disable-line
   const fitAll = () => { const pad = 1.2; setVb({ x: bounds.x0 - pad, y: bounds.z0 - pad, w: bounds.x1 - bounds.x0 + pad * 2, h: bounds.z1 - bounds.z0 + pad * 2 }); };
   return (<><svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onContextMenu={e => { e.preventDefault(); setPreview(null); setTyped(''); }}
     style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair', color: '#1A141C' }} role="application" aria-label={t('plan.aria')} tabIndex={0} onKeyDown={keyDown}>
@@ -277,7 +289,7 @@ export default function PlanView(p: Props){
       return (<g key={st.id}><rect data-k="stair" data-id={st.id} x={r.x0} y={r.z0} width={r.x1 - r.x0} height={r.z1 - r.z0} fill="#e9e2d5" stroke={s ? '#8B6A45' : '#5E636B'} strokeWidth={s ? .035 : .018} style={{ cursor: 'move' }} />
         <path d={treads} stroke="#8A8F96" strokeWidth={.01} pointerEvents="none" /><path d={arrow} fill="none" stroke="#23262B" strokeWidth={.02} pointerEvents="none" />
         <text x={g.bottom[0] - dx * fs * .5} y={g.bottom[1] - dz * fs * .5 + fs * .3} textAnchor="middle" fontSize={fs * .7} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#23262B" pointerEvents="none">{t('stair.up')}</text></g>); })}
-    {p.snap.placements.map(pl => { const fp = footprintOf(p.catalog, pl); if (!fp) return null; const sv = p.severities[pl.id] || 'PASS', rv = resolve(p.catalog, pl.variantId), on = isSel('placement', pl.id);
+    {p.snap.placements.map(pl => { const fp = footprintOf(p.catalog, pl); if (!fp) return null; const sv = p.severities[pl.id] || 'PASS', rv = resolve(p.catalog, pl.variantId), on = isSel('placement', pl.id), hov = p.hoverId === pl.id;
       // simbolul de arhitectură al piesei, la dimensiunile ei reale, rotit spre fața ei; dreptunghiul transparent rămâne pentru selecție și tragere
       const w = pl.size ? pl.size.w / 100 : rv?.w ?? fp.x1 - fp.x0, d = pl.size ? pl.size.d / 100 : rv?.d ?? fp.z1 - fp.z0, sym = planSymbol(pl.group, w, d, rv?.variant.chairs ?? 4);
       const ink = sv === 'PASS' ? (on ? '#8B6A45' : '#3a352f') : SEV[sv], sw = on ? .03 : .015;
@@ -285,7 +297,8 @@ export default function PlanView(p: Props){
         <g transform={`translate(${pl.x} ${pl.z}) rotate(${symbolAngle(pl.rotation)})`} pointerEvents="none" fill="none" stroke={ink} strokeLinejoin="round">
           {sym.outline && <path d={sym.outline} fill={sym.fill === 'soft' ? '#fffdf8' : '#fffdfa'} fillOpacity={.92} strokeWidth={sw * 1.4} />}
           {sym.detail && <path d={sym.detail} strokeWidth={sw * .8} />}</g>
-        <rect data-k="placement" data-id={pl.id} x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill={on ? '#8B6A45' : sv === 'PASS' ? 'transparent' : SEV[sv]} fillOpacity={on ? .12 : sv === 'PASS' ? 0 : .12} stroke={on ? '#8B6A45' : 'none'} strokeWidth={.02} strokeDasharray={on ? '.06 .04' : undefined} style={{ cursor: 'move' }} /></g>); })}
+        <rect data-k="placement" data-id={pl.id} x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill={on ? '#8B6A45' : sv === 'PASS' ? 'transparent' : SEV[sv]} fillOpacity={on ? .12 : sv === 'PASS' ? 0 : .12} stroke={on ? '#8B6A45' : hov ? '#C63C29' : 'none'} strokeOpacity={hov && !on ? .7 : 1} strokeWidth={.02} strokeDasharray={on || hov ? '.06 .04' : undefined} style={{ cursor: 'move' }}
+          onPointerEnter={p.onHover ? () => p.onHover!(pl.id) : undefined} onPointerLeave={p.onHover ? () => p.onHover!(null) : undefined} /></g>); })}
     {/* camera aleasă: chenar punctat în interiorul pereților, vizibil și când e aleasă de la tastatură */}
     {floor.rooms.filter(r => isSel('room', r.id)).map(r => <path key={`sel-${r.id}`} pointerEvents="none" d={roomBoundaryPath(r)} fill="#7A5A36" fillOpacity={.07} stroke="#7A5A36" strokeWidth={.045} strokeDasharray=".14 .08" />)}
     {/* etichetele camerelor deasupra mobilierului, cu contur de hârtie ca să rămână lizibile */}
@@ -418,6 +431,7 @@ export default function PlanView(p: Props){
       if (hud.canRotate) btns.push({ key: 'rot', label: 'R', icon: '⟳', title: t('hud.rotate'), act: () => p.onRotateSelected?.() });
       if (hud.canToggleShape) btns.push({ key: 'shape', label: '◯', icon: '◯', title: t('hud.toggleShape'), act: () => p.onToggleColumnShape?.() });
       if (hud.canDuplicate) btns.push({ key: 'dup', label: '📋', icon: '⧉', title: t('hud.duplicate'), act: () => p.onDuplicateSelected?.() });
+      if (hud.kind === 'placement' && p.onFrameOther) btns.push({ key: 'f3d', label: '3D', icon: '3D', title: t('hud.frame3d'), act: () => p.onFrameOther?.(hud.id) });
       if (hud.canAutoFurnish) btns.push({ key: 'auto', label: '⚡', icon: '⚡', title: t('hud.autoFurnish'), act: () => p.onAutoFurnishRoom?.(hud.id) });
       if (hud.canSplit) btns.push({ key: 'split', label: '✂', icon: '✂', title: t('hud.splitRoom'), act: () => p.onSplitRoom?.(hud.id, 'x') });
       if (hud.canDelete) btns.push({ key: 'del', label: '✕', icon: '✕', title: t('hud.delete'), act: () => p.onDeleteSelected?.(), danger: true });

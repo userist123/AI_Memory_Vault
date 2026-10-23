@@ -11,8 +11,9 @@ export default function KeyboardHelp({ onClose }: { onClose(): void }){
   const body = (sec: 'edit' | 'draw', title: string) => <tbody><tr><th colSpan={2} scope="colgroup" style={{ ...H, textAlign: 'left', padding: '12px 0 4px' }}>{title}</th></tr>
     {rows.filter(r => r.section === sec).map(r => <tr key={r.label}><td style={K}><kbd className="mono">{r.keysKey ? t(r.keysKey) : r.keys}</kbd></td><td>{t(r.label, vars)}</td></tr>)}</tbody>;
   // trei secțiuni (registrul le dă în ordine): editarea și desenarea într-un singur tabel, ca tastele să stea pe aceeași coloană;
-  // uneltele, scurte, pe două coloane, ca lista să încapă și pe un laptop de 768 px
-  return (<div className="pending" role="dialog" aria-label={t('help.title')} style={{ maxWidth: 560, maxHeight: 'calc(100% - 24px)', overflowY: 'auto' }}>
+  // uneltele, scurte, pe două coloane, ca lista să încapă și pe un laptop de 768 px. Lățimea e fixată: .pending e centrat
+  // cu left:50%, iar fără lățime dialogul s-ar strânge la jumătatea pânzei și descrierile s-ar rupe cuvânt cu cuvânt
+  return (<div className="pending" role="dialog" aria-label={t('help.title')} style={{ width: 'min(560px, calc(100% - 24px))', maxWidth: 560, maxHeight: 'calc(100% - 24px)', overflowY: 'auto' }}>
     <strong>{t('help.title')}</strong>
     <table style={{ borderCollapse: 'collapse', fontSize: 13 }}>{body('edit', t('help.section.edit'))}{body('draw', t('help.section.draw'))}</table>
     <h4 style={H}>{t('cmdk.group.tools')}</h4>

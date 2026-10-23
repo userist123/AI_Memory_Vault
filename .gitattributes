@@ -1,3 +1,14 @@
+# Text files are stored with LF and checked out with LF on every platform.
+# Without this, core.autocrlf=true on Windows rewrites them to CRLF on disk, and every
+# check that hashes or reads a file verbatim (vault_read sha256, committed B06/B2M packets,
+# leakage report) disagrees with the same check on Linux CI.
+* text=auto eol=lf
+
+# cmd.exe misparses labels and GOTO in LF batch files.
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Exceptions below come last so they win.
 
 # Recovered evidence: bytes must match MANIFEST.json exactly, so no line-ending conversion.
 07_EVALUATION/polymarket/research/recovered_20260914/** -text

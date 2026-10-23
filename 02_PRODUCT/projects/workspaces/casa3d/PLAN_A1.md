@@ -20,7 +20,7 @@ Bază: `origin/main` `f0ee40d67`. Ramura `claude/casa3d-a1-precision`, worktree 
   pattern-ul de comandă în sine. Dovedim invariantul cu teste; trecerea la comenzi doar dacă un test o cere.
 - **Bypass cu Shift**, nu Alt: Alt+drag face deja pan în plan (`PlanView.tsx` `down`).
 - **Taste pentru unelte** (litere, fără modificator, ignorate în câmpuri și dialoguri ca acum prin `editorIgnoresKey`):
-  V selecție, P perete, C cameră, U ușă, F fereastră, T stâlp, G grindă, L perete de sticlă, E scară (nu S: W/A/S/D merg prin vederea 3D), M măsurare, I instalații.
+  V selecție, P perete, C cameră, U ușă, O fereastră (F încadrează planul, decizia proprietarului 2026-10-23), T stâlp, G grindă, L perete de sticlă, E scară (nu S: W/A/S/D merg prin vederea 3D), M măsurare, I instalații.
   Literele urmează numele românești; aceleași taste în engleză (afișate în ajutor). R rămâne rotire.
 - **Indicatorul de precizie e o cotă de arhitect** (limbajul planșei, nu o etichetă plutitoare): linie de cotă paralelă cu
   segmentul în lucru, decalată, cu tick-uri la 45°, lungimea pe linie, unghiul lângă capătul liber; la punctul de snap un
