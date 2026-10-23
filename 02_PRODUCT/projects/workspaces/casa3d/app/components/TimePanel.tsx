@@ -1,5 +1,6 @@
 'use client';
 // Pontajul proiectului: adaugi rapid orele (azi, „1,5” sau „1:30”, etapa), vezi totalul pe etape și tariful efectiv față de onorariu.
+import FoldSection from './FoldSection';
 import { useEffect, useState } from 'react';
 import { TIME_KINDS, parseDuration, type TimeEntry, type TimeKind } from '@/core/timesheet';
 import { formatMoney } from '@/core/format';
@@ -20,7 +21,7 @@ export default function TimePanel({ id, cur, say }: { id: string; cur: string; s
       if (!r.ok){ say(j.error || t('time.error')); return; } setF(x => ({ ...x, dur: '', note: '' })); load(); } finally { setBusy(false); } }
   async function del(e: TimeEntry){ const r = await fetch(`/api/projects/${id}/time?entry=${e.id}`, { method: 'DELETE' }); if (r.ok) load(); else say(t('time.error')); }
   const s = d?.summary, kinds = s ? (Object.entries(s.byKind) as [TimeKind, number][]).sort((a, b) => b[1] - a[1]) : [];
-  return (<section className="timep"><h3>{t('time.title')}{s && s.minutes > 0 && <span className="pill">{hm(s.minutes)} h</span>}</h3>
+  return (<FoldSection id="time" className="timep" title={<h3>{t('time.title')}{s && s.minutes > 0 && <span className="pill">{hm(s.minutes)} h</span>}</h3>}>
     {s && s.minutes > 0 && <p className="timep-sum">{s.effectiveRate != null ? t('time.rate', { v: formatMoney(s.effectiveRate, cur, lang) }) : s.billable != null ? t('time.billable', { v: formatMoney(s.billable, cur, lang) }) : t('time.noFee')}
       {kinds.length > 0 && <small>{kinds.map(([k, m]) => `${label(k)} ${hm(m)}`).join(' · ')}</small>}</p>}
     <div className="timep-add">
@@ -33,5 +34,5 @@ export default function TimePanel({ id, cur, say }: { id: string; cur: string; s
       <span>{new Date(e.date + 'T12:00:00').toLocaleDateString(intlLocale(lang), { day: 'numeric', month: 'short' })} · <b>{hm(e.minutes)}</b> · {label(e.kind)}{e.note ? ` — ${e.note}` : ''}</span>
       <button className="btn-x" aria-label={t('time.delete')} onClick={() => del(e)}>×</button></li>)}</ul>}
     {d && d.entries.length > 5 && <button className="btn link" onClick={() => setAll(x => !x)}>{all ? t('time.less') : t('time.more', { n: d.entries.length - 5 })}</button>}
-  </section>);
+  </FoldSection>);
 }

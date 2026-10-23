@@ -49,7 +49,14 @@ DONE:
   point, so Enter goes right. Browser: click, "150", Enter -> horizontal 150 wall (undone). tsc 0, vitest 119/729.
   Residual (not merge-caused, already on main): typedEndpoint unused in production; Esc with a selection while
   drawing deselects first; Delete while typing reaches del().
-NEXT-NOW: push, check CI once, merge #323.
+- Pushed 48d528351; #323 then CONFLICTING: main got #327 (UI/UX P2) + #328. Second merge (origin/main 3e5c5192e):
+  conflicts KeyboardHelp (kept registry) + PlanView imports (+ core/frame). #327 added F = frame selection in PlanView.
+  OWNER DECISION 2026-10-23: F = frame, Window tool -> O. lib/commands.ts window 'o', help row F/help.frame,
+  test "F is not a tool key"; PLAN_A1.md key list updated. Help dialog fix: .pending is centred with left:50% so it
+  shrank to half the canvas (descriptions wrapped per word at 1024) -> explicit width min(560px, 100% - 24px).
+  Browser: O -> Fereastra (tooltip "(O)"), F (plan focused) frames, F unfocused no tool change, help RO lists F and
+  O, 560 px no overflow; typed 4,25mx line-through, 4,25 -> 425 (undone). tsc 0; vitest 123/739.
+NEXT-NOW: full pytest result, commit merge, push, check CI once, merge #323.
 OLD PLAN (done):
   1. One parser: drop parseLengthInput from core/snap.ts (+ its tests, help.rule* keys); walls/beam/glass use
      parseTypedLength. Keep snapDraw/pointAtLength (pointAtLength keeps the 15-deg direction + Shift free).
