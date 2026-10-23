@@ -1,5 +1,5 @@
 # todo-claude-casa3d-uiux-p2
-STATUS: IN_PROGRESS   UPDATED: 2026-10-23T08:20:00+03:00
+STATUS: IN_PROGRESS   UPDATED: 2026-10-23T09:00:00+03:00
 TASK: Casa3D UI/UX P2 from the research report (rows 8-14; P1 merged in PR #321). Owner: "Continua recomandat".
 BRANCH / PR: claude/casa3d-uiux-p2 (worktree D:/w/uiux2, base origin/main 944d1427)
 P2 items (report rows 8-14):
@@ -39,6 +39,14 @@ DONE:
   (Save revision, Continue), current-stage underline (selection) and focus; pressed toggles/tools neutral; sans in
   chrome, serif kept in content. Measured WCAG contrast: min 4.89 (terracotta buttons), others 6.5-11.
   check-slides OK (client link unaffected). Suite 706/706.
-NEXT: independent review; PR; CI; merge.
+REVIEW round 1 (vault-reviewer): NOT READY. Fixed: HIGH X-Ray leaked into Blender/GLB export and 360 panorama
+  (solid() wrapper turns X-Ray off around them); MEDIUM drawRooms update order under the async view transition
+  (setStage(s, after) in the same flushSync). LOW fixed: 3D hover cleared on pointerleave / unmount / view change;
+  plan frame requests carry `at` (no stale re-frame on remount); X-Ray re-applied after texture/context rebuilds and
+  originals restored before rebuild (no leak); relative-OKLCH tokens behind @supports with hex fallbacks; delete
+  button role=menuitem, views menu focuses first item, status dot role=img. Also: panorama bar title was near
+  invisible (light ink on white, pre-existing) - dark text. Accepted residuals: glide does not collide (cosmetic),
+  orbit centre stays on a moved/deleted framed piece until a preset/'0', hover re-renders the Editor.
+NEXT: review round 2 (delta); PR; CI; merge.
 KEY FILES: casa3d/app/core/{frame,camera-glide,saved-views}.ts, lib/motion.ts, components/{PlanView,Editor,KeyboardHelp,Viewer3D,StagePicker,FoldSection,TasksPanel,TimePanel,ContractPanel,SurveyPanel}.tsx,
   components/viewer3d-engine.js, app/globals.css

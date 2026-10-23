@@ -29,7 +29,7 @@ export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | '
 type Phase = 'start' | 'move' | 'end';
 interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severities: Record<string, Severity>;
   /** cerere de încadrare din afară (clic pe o problemă din „Sănătate”): `n` crește la fiecare cerere */
-  frame?: { sel: Sel; n: number };
+  frame?: { sel: Sel; n: number; at: number };
   /** selecția comună cu 3D (UI/UX P2-10): piesa de sub mouse (aici sau în 3D) și „Arată în 3D” din bara piesei */
   hoverId?: string | null; onHover?(id: string | null): void; onFrameOther?(id: string): void;
   onSelect(s: Sel): void; onEdit(fn: (s: Snapshot) => void, phase: Phase): void; onAddWall(a: [number, number], b: [number, number]): void;
@@ -261,7 +261,8 @@ export default function PlanView(p: Props){
   // încadrarea obiectului selectat, la proporția reală a planului de pe ecran; false dacă obiectul nu există pe acest nivel
   const frameSel = (s: Sel) => { const box = selectionBox(p.snap, p.catalog, s), el = svg.current; if (!box) return false;
     setVb(frameViewBox(box, el && el.clientHeight > 0 ? el.clientWidth / el.clientHeight : 1.5)); return true; };
-  useEffect(() => { if (p.frame) frameSel(p.frame.sel); }, [p.frame?.n]); // eslint-disable-line
+  // doar cererile proaspete: la remontare (alt nivel, ieșirea din previzualizare) planul nu sare la o țintă veche
+  useEffect(() => { if (p.frame && Date.now() - p.frame.at < 4000) frameSel(p.frame.sel); }, [p.frame?.n]); // eslint-disable-line
   const fitAll = () => { const pad = 1.2; setVb({ x: bounds.x0 - pad, y: bounds.z0 - pad, w: bounds.x1 - bounds.x0 + pad * 2, h: bounds.z1 - bounds.z0 + pad * 2 }); };
   return (<><svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onContextMenu={e => { e.preventDefault(); setPreview(null); }}
     style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair', color: '#1A141C' }} role="application" aria-label={t('plan.aria')} tabIndex={0} onKeyDown={keyDown}>

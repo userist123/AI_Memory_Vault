@@ -1368,9 +1368,12 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
   --bg:var(--c0); --bg-2:var(--c2); --surface:var(--c1); --surface-2:var(--c2);
   --ink:var(--t1); --ink-2:var(--t2); --ink-3:var(--t3); --ink-num:var(--t3);
   --line:var(--cl); --line-strong:var(--c3);
-  --accent:var(--accent-in); --accent-hover:oklch(from var(--accent-in) calc(l - .07) c h);
-  --accent-soft:oklch(from var(--accent-in) .33 calc(c * .35) h); --focus:oklch(from var(--accent-in) calc(l + .14) c h);
+  --accent:var(--accent-in); --accent-hover:#A82F1F; --accent-soft:#4A2C32; --focus:#FF8C78;
   background:var(--c0);
+}
+/* nuanțele derivate din accent (sintaxa relativă OKLCH) doar unde browserul o are; altfel rămân valorile fixe de mai sus */
+@supports (color: oklch(from red l c h)){
+  .ws{--accent-hover:oklch(from var(--accent-in) calc(l - .07) c h);--accent-soft:oklch(from var(--accent-in) .33 calc(c * .35) h);--focus:oklch(from var(--accent-in) calc(l + .14) c h)}
 }
 .ws .topbar{border-bottom:1px solid var(--line)} .ws .topbar:after{display:none}
 .ws .topbar .name{font:600 18px/1.15 var(--sans);letter-spacing:-.01em}
@@ -1414,3 +1417,5 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 .ws .side .toast,.ws .toast{border-color:var(--c3);background:var(--c2);color:var(--t1)}
 .ws .topbar .status{border-color:var(--c3)}
 .ws :focus-visible{outline-color:var(--focus)}
+/* bara panoramei are fundal deschis și în editorul cu temă închisă: text închis (titlul era aproape invizibil) */
+.panobar{color:#1F1A17} .panobar .muted{color:#5A524C}
