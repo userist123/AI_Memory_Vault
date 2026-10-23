@@ -41,7 +41,13 @@ namespace LogAnalyzer.UI.ViewModels
         {
             _register = register;
             // G3: a new analysis result refreshes the medium detail (history, what followed the connection) without collecting again.
-            LogAnalyzer.UI.Services.CollectAllState.Instance.Published += _ => OnSelectedDeviceChanged(SelectedDevice);
+            // The result may be published on another thread: the bound collections change only on this page's dispatcher.
+            var dispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
+            LogAnalyzer.UI.Services.CollectAllState.Instance.Published += _ =>
+            {
+                if (dispatcher.CheckAccess()) OnSelectedDeviceChanged(SelectedDevice);
+                else dispatcher.BeginInvoke(() => OnSelectedDeviceChanged(SelectedDevice));
+            };
         }
 
         /// <summary>Set by the main window: opens the separate "Registrul de transferuri" page (owner 2026-10-11: the transfer register is not part of this page).</summary>
@@ -256,7 +262,7 @@ namespace LogAnalyzer.UI.ViewModels
                 foreach (var p in protections) Protections.Add(p);
                 ApplyFilter();
                 var attention = _all.Count(a => a.NeedsAttention);
-                Summary = $"Conectate acum: {_all.Count(a => a.Device.ConnectedNow && a.Device.Kind != DeviceKind.Bluetooth)} · cunoscute de stație: {_all.Count}" +
+                Summary = $"Inventarul Windows (fila „Toate dispozitivele”): conectate acum {_all.Count(a => a.Device.ConnectedNow && a.Device.Kind != DeviceKind.Bluetooth)} · cunoscute de stație: {_all.Count}" +
                           (!MediaRegisterFeature.Enabled ? "." : attention == 0 ? " · toate mediile urmărite sunt în registru." : $" · {attention} cer atenție (nu sunt în registru, sunt retrase sau au expirat).");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.ComponentModel.Win32Exception)

@@ -6,7 +6,10 @@ namespace LogAnalyzer.Dfir.Devices;
 public sealed record DeviceAuditAlert(DateTimeOffset TimeUtc, string Identity, string Device, string Text, string Class = "");
 
 /// <summary>A device as the sealed audit recorded it the first time the monitor saw it ("device.first_seen"); <c>RecordUtc</c> is the time of the audit record.</summary>
-public sealed record SealedDevice(string Identity, string Class, string Serial, DateTimeOffset FirstSeenUtc, DateTimeOffset RecordUtc, string Device = "");
+public sealed record SealedDevice(string Identity, string Class, string Serial, DateTimeOffset FirstSeenUtc, DateTimeOffset RecordUtc, string Device = "", int ClassifierVersion = 1);
+
+/// <summary>A kind change the application sealed because its classifier changed ("device.reclassified"): old and new kind, the classifier versions, the operator ("application").</summary>
+public sealed record SealedReclassification(DateTimeOffset TimeUtc, string Identity, string OldClass, string NewClass, int OldVersion, int NewVersion, string Device = "", string Operator = "");
 
 /// <summary>A radio state change sealed by the monitor ("device.radio_state"): <c>Blind</c> = from this time the radio is off, absent or disabled.</summary>
 public sealed record SealedRadioState(DateTimeOffset TimeUtc, string Kind, bool Blind, string Text, string User);
@@ -47,6 +50,8 @@ public sealed record DeviceAuditReading(bool ChainValid, IReadOnlyDictionary<str
     public IReadOnlyList<SealedRadioState> RadioStates { get; init; } = [];
     /// <summary>Every sealed disconnection and the set of devices present at each run start (whole history).</summary>
     public IReadOnlyList<SealedPresence> Presence { get; init; } = [];
+    /// <summary>The kind changes the application sealed after a classifier change ("device.reclassified"), in the order of the audit.</summary>
+    public IReadOnlyList<SealedReclassification> Reclassifications { get; init; } = [];
     /// <summary>The sealed problem code and active state transitions of the devices (whole history).</summary>
     public IReadOnlyList<SealedDeviceState> States { get; init; } = [];
     /// <summary>Every sealed record that concerns one device (first seen, connection and disconnection, registration change, alert, state change), in the order of the audit, with the account that wrote it.</summary>
@@ -138,7 +143,7 @@ public static class DeviceMonitorAuditCheck
                 findings.Add($"dispozitivul {what} este în jurnalul sigilat, dar rândul lui lipsește din jurnalul monitorului (rând șters?)");
                 continue;
             }
-            if (sd.Class.Length > 0 && !sd.Class.Equals(row.Class.ToString(), StringComparison.OrdinalIgnoreCase))
+            if (sd.Class.Length > 0 && !ClassAgrees(audit, id, sd, row.Class))
                 findings.Add($"dispozitivul {what} apare în jurnalul monitorului cu alt tip: „{DeviceMonitorRules.ClassText(row.Class)}” (tip schimbat în fișier?)");
             if ((row.FirstSeenUtc - sd.FirstSeenUtc).Duration() > FirstSeenTolerance)
                 findings.Add($"dispozitivul {what} apare în jurnalul monitorului cu altă dată a primei observări: {T(row.FirstSeenUtc)} (dată mutată în fișier?)");
@@ -157,10 +162,83 @@ public static class DeviceMonitorAuditCheck
             if (a.TimeUtc < fromUtc || a.TimeUtc > toUtc || reset is { } r && a.TimeUtc < r) continue;
             if (!listed.TryGetValue(a.Identity, out var row))
                 findings.Add($"{kind} sigilată din {T(a.TimeUtc)} pentru {a.Device} ({ClassWord(a.Class)}) — {a.Text} — nu are rând în perioadă în jurnalul monitorului (rând șters sau cu date mutate?)");
-            else if (a.Class.Length > 0 && !a.Class.Equals(row.Class.ToString(), StringComparison.OrdinalIgnoreCase))
+            else if (a.Class.Length > 0 && !a.Class.Equals(row.Class.ToString(), StringComparison.OrdinalIgnoreCase) && !AlertClassAgrees(audit, a, row.Class, sealedById))
                 findings.Add($"{kind} sigilată din {T(a.TimeUtc)} pentru {a.Device} ({ClassWord(a.Class)}) are în jurnalul monitorului alt tip: „{DeviceMonitorRules.ClassText(row.Class)}”");
         }
         return findings;
+    }
+
+    /// <summary>
+    /// The chain of kinds a device legitimately had: the kind of its first-seen record, then every sealed "device.reclassified" note that continues it (the note's
+    /// old kind is the current one and its new classifier version is HIGHER than the classifier version the device was last sealed with). A note that does not
+    /// continue the chain, or lowers the version, is ignored: it proves nothing about the row.
+    /// </summary>
+    public static IReadOnlyList<(string Class, SealedReclassification? Via)> KindChain(DeviceAuditReading audit, string identity, SealedDevice first)
+    {
+        var chain = new List<(string, SealedReclassification?)> { (first.Class, null) };
+        var current = first.Class;
+        int version = first.ClassifierVersion;
+        foreach (var r in audit.Reclassifications.Where(r => r.Identity.Equals(identity, StringComparison.OrdinalIgnoreCase)).OrderBy(r => r.TimeUtc))
+        {
+            if (!r.OldClass.Equals(current, StringComparison.OrdinalIgnoreCase) || r.NewClass.Equals(r.OldClass, StringComparison.OrdinalIgnoreCase)
+                || r.NewVersion <= r.OldVersion || r.NewVersion <= version || r.OldVersion < version
+                || !DeviceScope.IsKnownReclassification(r.OldVersion, r.NewVersion, r.OldClass, r.NewClass)) continue;   // only what that version bump is known to change
+            current = r.NewClass; version = r.NewVersion;
+            chain.Add((current, r));
+        }
+        return chain;
+    }
+
+    /// <summary>
+    /// The last kind of every device and the classifier version it was sealed with, by sealed identity (the monitor's source for a reclassification; never the
+    /// journal): the first-seen record's kind and version, moved on by every valid sealed note (<see cref="KindChain"/>).
+    /// </summary>
+    public static IReadOnlyDictionary<string, SealedKind> SealedKinds(DeviceAuditReading audit)
+    {
+        var map = new Dictionary<string, SealedKind>(StringComparer.OrdinalIgnoreCase);
+        foreach (var g in audit.Devices.GroupBy(d => d.Identity, StringComparer.OrdinalIgnoreCase))
+        {
+            var first = g.OrderBy(d => d.FirstSeenUtc).First();
+            var chain = KindChain(audit, g.Key, first);
+            map[g.Key] = new SealedKind(chain[^1].Class, chain[^1].Via?.NewVersion ?? first.ClassifierVersion);
+        }
+        return map;
+    }
+
+    private static bool ClassAgrees(DeviceAuditReading audit, string identity, SealedDevice first, DeviceClass rowClass) =>
+        KindChain(audit, identity, first)[^1].Class.Equals(rowClass.ToString(), StringComparison.OrdinalIgnoreCase);
+
+    // a sealed alert written under an earlier kind of the device (before its reclassification) still belongs to the row, once the row is the last kind of the chain
+    private static bool AlertClassAgrees(DeviceAuditReading audit, DeviceAuditAlert a, DeviceClass rowClass, IReadOnlyDictionary<string, SealedDevice> sealedById) =>
+        sealedById.TryGetValue(a.Identity, out var first) && KindChain(audit, a.Identity, first) is { Count: > 1 } chain
+        && chain[^1].Class.Equals(rowClass.ToString(), StringComparison.OrdinalIgnoreCase) && chain.Any(c => c.Class.Equals(a.Class, StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>The text of one "device.reclassified" record (history and report).</summary>
+    public static string ReclassifiedText(IReadOnlyDictionary<string, string> f)
+    {
+        string V(string k) => f.TryGetValue(k, out var v) ? v : "";
+        return $"{ClassWord(V("class_old"))} → {ClassWord(V("class_new"))} (clasificator v{V("classifier_old")} → v{V("classifier_new")}: s-a schimbat regula de clasificare a aplicației, nu dispozitivul)";
+    }
+
+    /// <summary>
+    /// Informational lines for the rows whose kind differs from the sealed first-seen kind only through a valid chain of sealed reclassification notes: the
+    /// reason is the classifier, so D05 does not report them as a kind changed in the file.
+    /// </summary>
+    public static IReadOnlyList<string> Reclassifications(DeviceJournal journal, DeviceAuditReading audit)
+    {
+        var lines = new List<string>();
+        var sealedById = audit.Devices.GroupBy(d => d.Identity, StringComparer.OrdinalIgnoreCase)
+            .ToDictionary(g => g.Key, g => g.OrderBy(d => d.FirstSeenUtc).First(), StringComparer.OrdinalIgnoreCase);
+        foreach (var row in journal.Devices)
+        {
+            if (!sealedById.TryGetValue(OperationAudit.DeviceField(row.Identity), out var first)) continue;
+            var chain = KindChain(audit, OperationAudit.DeviceField(row.Identity), first);
+            if (chain.Count < 2 || !chain[^1].Class.Equals(row.Class.ToString(), StringComparison.OrdinalIgnoreCase)) continue;
+            foreach (var (cls, via) in chain.Skip(1))
+                lines.Add($"RECLASIFICAT (informativ): {(row.Name.Length > 0 ? row.Name : row.Identity)} — {ClassWord(via!.OldClass)} → {ClassWord(cls)}, {DeviceMonitorReport.UtcText(via.TimeUtc)}; " +
+                          $"motiv: clasificatorul aplicației a trecut de la versiunea {via.OldVersion} la {via.NewVersion} (dispozitivul este același, nu a fost schimbat); operator: {(via.Operator.Length > 0 ? via.Operator : "aplicație")} (jurnal sigilat)");
+        }
+        return lines;
     }
 
     /// <summary>

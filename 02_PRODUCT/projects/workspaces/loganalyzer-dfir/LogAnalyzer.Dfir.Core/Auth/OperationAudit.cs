@@ -94,9 +94,20 @@ public static class OperationAudit
     /// </summary>
     public const string DeviceFirstSeen = "device.first_seen";
 
-    public static string DeviceFirstSeenDetail(string identity, string deviceClass, string device, string serial, DateTimeOffset firstSeenUtc, string note = "", string user = "") =>
+    public static string DeviceFirstSeenDetail(string identity, string deviceClass, string device, string serial, DateTimeOffset firstSeenUtc, string note = "", string user = "", int classifier = 0) =>
         $"identity={DeviceField(identity)}; class={DeviceField(deviceClass)}; device={DeviceField(device)}; serial={DeviceField(serial)}; " +
-        $"first_seen={firstSeenUtc.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture)}" + (note.Length > 0 ? "; note=" + DeviceField(note) : "") + (user.Length > 0 ? "; user=" + DeviceField(user) : "");
+        $"first_seen={firstSeenUtc.ToUniversalTime().ToString("O", System.Globalization.CultureInfo.InvariantCulture)}" + (note.Length > 0 ? "; note=" + DeviceField(note) : "") + (user.Length > 0 ? "; user=" + DeviceField(user) : "") +
+        (classifier > 0 ? "; classifier=" + classifier.ToString(System.Globalization.CultureInfo.InvariantCulture) : "");
+
+    /// <summary>
+    /// A device whose KIND changed because the classifier changed (the same identity; a row of an older classifier version): the old and new kind, both classifier
+    /// versions and the operator (the application itself, nobody typed it). Check D05 reads it as informational and follows the chain of kinds from the first-seen record.
+    /// </summary>
+    public const string DeviceReclassified = "device.reclassified";
+
+    public static string DeviceReclassifiedDetail(string identity, string oldClass, string newClass, int oldVersion, int newVersion, string device) =>
+        $"identity={DeviceField(identity)}; device={DeviceField(device)}; class_old={DeviceField(oldClass)}; class_new={DeviceField(newClass)}; " +
+        $"classifier_old={oldVersion.ToString(System.Globalization.CultureInfo.InvariantCulture)}; classifier_new={newVersion.ToString(System.Globalization.CultureInfo.InvariantCulture)}; operator=application";
 
     /// <summary>A card whose medium could not be identified at insertion (encrypted or RAW) got its real identity once the volume became readable: the link is sealed.</summary>
     public const string DeviceMediumRekeyed = "device.medium_rekeyed";
@@ -177,6 +188,7 @@ public static class OperationAudit
         var radios = new List<LogAnalyzer.Dfir.Devices.SealedRadioState>();
         var presence = new List<LogAnalyzer.Dfir.Devices.SealedPresence>();
         var states = new List<LogAnalyzer.Dfir.Devices.SealedDeviceState>();
+        var reclass = new List<LogAnalyzer.Dfir.Devices.SealedReclassification>();
         int unreadable = 0;
         if (scan is not null)
         {
@@ -220,7 +232,16 @@ public static class OperationAudit
                 else if (ev == DeviceFirstSeen)
                 {
                     if (!f.TryGetValue("identity", out var id) || id.Length == 0 || !TryTime(f, "first_seen", out var first)) { unreadable++; continue; }
-                    devices.Add(new(id, f.GetValueOrDefault("class", ""), f.GetValueOrDefault("serial", ""), first, t, f.GetValueOrDefault("device", "")));
+                    devices.Add(new(id, f.GetValueOrDefault("class", ""), f.GetValueOrDefault("serial", ""), first, t, f.GetValueOrDefault("device", ""),
+                        int.TryParse(f.GetValueOrDefault("classifier", ""), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var cv) && cv > 0 ? cv : 1));
+                }
+                else if (ev == DeviceReclassified)
+                {
+                    if (f.GetValueOrDefault("identity", "") is { Length: > 0 } rid && f.GetValueOrDefault("class_old", "") is { Length: > 0 } co && f.GetValueOrDefault("class_new", "") is { Length: > 0 } cn
+                        && int.TryParse(f.GetValueOrDefault("classifier_old", ""), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var vo)
+                        && int.TryParse(f.GetValueOrDefault("classifier_new", ""), System.Globalization.NumberStyles.Integer, System.Globalization.CultureInfo.InvariantCulture, out var vn))
+                        reclass.Add(new(t, rid, co, cn, vo, vn, f.GetValueOrDefault("device", ""), f.GetValueOrDefault("operator", "")));
+                    else unreadable++;
                 }
                 else if (ev == DeviceMediumRekeyed)
                 {
@@ -274,6 +295,7 @@ public static class OperationAudit
             Runs = runs, Gaps = gaps, ObservedOnResume = observed, Migrations = migrations,
             Devices = devices.Select(d => d with { Identity = Follow(d.Identity) }).ToList(),
             InfoAlerts = infos.Select(a => a with { Identity = Follow(a.Identity) }).ToList(), Resets = resets, RadioStates = radios,
+            Reclassifications = reclass.Select(x => x with { Identity = Follow(x.Identity) }).ToList(),
             Presence = presence.Select(p => p with { Identity = Follow(p.Identity) }).ToList(), States = states.Select(x => x with { Identity = Follow(x.Identity) }).ToList(),
         };
     }
@@ -523,7 +545,7 @@ public static class OperationAudit
                 else if (ev == DeviceRegistrationChanged) scan.DeviceRegistrations.Add((detail, when));
                 else if (ev is DeviceAlertCritical or DeviceAlertInfo) scan.DeviceAlerts.Add((ev, detail, when));
                 else if (ev is DeviceMonitorStarted or DeviceMonitorHeartbeat or DeviceMonitorStopped or DeviceMonitorGap or DeviceObservedOnResume or DeviceJournalMigrated
-                         or DeviceFirstSeen or DeviceMediumRekeyed or DeviceJournalReset or DeviceRadioState or DeviceDisconnected or DevicePresent or DeviceStateChanged) scan.DeviceMonitorEvents.Add((ev, detail, when));
+                         or DeviceFirstSeen or DeviceReclassified or DeviceMediumRekeyed or DeviceJournalReset or DeviceRadioState or DeviceDisconnected or DevicePresent or DeviceStateChanged) scan.DeviceMonitorEvents.Add((ev, detail, when));
                 else if (ev == ControlHashing)
                 {
                     if (TryParseControlHashing(detail, out var w)) scan.Hashing.Add((w, when, index));

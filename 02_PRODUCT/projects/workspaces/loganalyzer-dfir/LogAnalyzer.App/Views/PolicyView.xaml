@@ -1,12 +1,21 @@
 <UserControl x:Class="LogAnalyzer.UI.Views.PolicyView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vmx="clr-namespace:LogAnalyzer.UI.ViewModels"
              xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
-             xmlns:local="clr-namespace:LogAnalyzer.UI.Views">
+             xmlns:local="clr-namespace:LogAnalyzer.UI.Views"
+             xmlns:services="clr-namespace:LogAnalyzer.UI.Services">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
         <local:PolicySettingOneLineConverter x:Key="SettingOneLine"/>
+        <!-- the operator and the two file/folder buttons: one definition, shown in the toolbar (Expert) or under "Avansat" (Simplu); each use gets its own copy -->
+        <WrapPanel x:Key="PolicyOpenTools" x:Shared="False" VerticalAlignment="Center">
+            <TextBlock Text="Operator:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <TextBlock Text="{Binding Operator}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+            <Button Content="Deschide fișier…" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+            <Button Content="Deschide folder GPO…" Command="{Binding OpenFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+        </WrapPanel>
     </UserControl.Resources>
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -18,22 +27,32 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="Politici — import, aprobare, aplicare verificată" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+            <TextBlock Text="Politici" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
             <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
-                       Text="DRAFT → VALIDATED → TESTED → APPROVED → DEPLOYED → VERIFIED. Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată."/>
+                       Text="Importați, aprobați și aplicați politici de securitate Windows, cu verificare după aplicare."/>
+            <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
+                       Text="Stări: CIORNĂ (DRAFT) → VALIDATĂ (VALIDATED) → TESTATĂ (TESTED) → APROBATĂ (APPROVED) → APLICATĂ (DEPLOYED) → VERIFICATĂ (VERIFIED). Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată.">
+                <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+            </TextBlock>
+            <StackPanel Visibility="{Binding NothingOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ctrl:EmptyStateCard What="{x:Static vmx:EmptyStates.PolicyWhat}" Why="{x:Static vmx:EmptyStates.PolicyWhy}" Step="{x:Static vmx:EmptyStates.PolicyStep}"/>
+            </StackPanel>
         </StackPanel>
 
         <Border Grid.Row="1" Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,8">
             <StackPanel>
-                <WrapPanel VerticalAlignment="Center">
-                    <TextBlock Text="Depozit politici:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBox Text="{Binding StoreRoot, UpdateSourceTrigger=LostFocus}" Width="360" Margin="0,0,16,0"/>
-                    <TextBlock Text="Operator:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBlock Text="{Binding Operator}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                    <Button Content="Deschide fișier…" Command="{Binding OpenFileCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Deschide folder GPO…" Command="{Binding OpenFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
-                </WrapPanel>
+                
+                <ContentControl Content="{StaticResource PolicyOpenTools}" local:SimpleLevel.HideInSimple="True" IsTabStop="False"/>
                 <TextBlock Text="{Binding PolicyInfo}" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                <Expander Header="Avansat" IsExpanded="False" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0" AutomationProperties.Name="Avansat: depozitul de politici">
+                    <StackPanel>
+                    <ContentControl Content="{StaticResource PolicyOpenTools}" local:SimpleLevel.OnlyInSimple="True" IsTabStop="False" Margin="0,6,0,0"/>
+                    <WrapPanel Margin="0,6,0,0">
+                        <TextBlock Text="Depozit politici:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Depozit politici" Text="{Binding StoreRoot, UpdateSourceTrigger=LostFocus}" Width="360"/>
+                    </WrapPanel>
+                    </StackPanel>
+                </Expander>
             </StackPanel>
         </Border>
 
@@ -45,7 +64,7 @@
                         Visibility="{Binding NextStep.CanAct, Converter={StaticResource BoolToVis}}" AutomationProperties.Name="Fă pasul următor"/>
                 <TextBlock Text="{Binding NextStep.Text}" TextWrapping="Wrap" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
             </DockPanel>
-            <Expander Header="Toți pașii, manual (pentru cine cunoaște ciclul politicii)" Foreground="{StaticResource TextSecondaryBrush}">
+            <Expander Header="Toți pașii, manual (pentru cine cunoaște ciclul politicii)" local:SimpleLevel.HideInSimple="True" Foreground="{StaticResource TextSecondaryBrush}">
             <WrapPanel VerticalAlignment="Center" Margin="0,6,0,0">
                 <Button Content="1. Înregistrează" Command="{Binding RegisterCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="2. Validează" Command="{Binding ValidateCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
@@ -66,7 +85,7 @@
             </StackPanel>
         </Border>
 
-        <TabControl Grid.Row="3" ctrl:PageFill.MinHeight="360" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+        <TabControl x:Name="PolicyTabs" Grid.Row="3" ctrl:PageFill.MinHeight="360" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
             <TabItem Header="Plan (curent / dorit / diferență)" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <TextBlock DockPanel.Dock="Top" Text="{Binding PlanSummary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
@@ -137,7 +156,7 @@
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>
-            <TabItem Header="Conformitate" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Conformitate" local:SimpleLevel.HideInSimple="True" Style="{StaticResource InspectorTabItemStyle}">
                 <DataGrid Margin="8" ItemsSource="{Binding Compliance}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Control benchmark" Binding="{Binding BenchmarkControl}" Width="130"/>
@@ -150,10 +169,10 @@
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>
-            <TabItem Header="Neacceptate la import" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Neacceptate la import" local:SimpleLevel.HideInSimple="True" Style="{StaticResource InspectorTabItemStyle}">
                 <ListBox Margin="8" ItemsSource="{Binding Unsupported}" Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"/>
             </TabItem>
-            <TabItem Header="Istoric ciclu de viață" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Istoric ciclu de viață" local:SimpleLevel.HideInSimple="True" Style="{StaticResource InspectorTabItemStyle}">
                 <DataGrid Margin="8" ItemsSource="{Binding History}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding AtUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>

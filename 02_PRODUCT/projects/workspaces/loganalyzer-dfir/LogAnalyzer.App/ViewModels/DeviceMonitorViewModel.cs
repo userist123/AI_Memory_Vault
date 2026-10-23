@@ -36,6 +36,19 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _statusTip = "";
         [ObservableProperty] private string _name = "";
         [ObservableProperty] private string _manufacturer = "";
+        /// <summary>Tooltip of the „Producător” cell when the driver provider is hidden (Bluetooth rows).</summary>
+        public const string BluetoothMakerTip = "Producătorul nu este raportat prin Bluetooth";
+        /// <summary>
+        /// What the „Producător” column shows (display only; the journal and the CSV keep the raw value). A Bluetooth row whose manufacturer is „Microsoft” with no VID is the
+        /// Windows driver provider, not the device maker: „—”.
+        /// </summary>
+        public static string ManufacturerDisplay(DeviceClass cls, string manufacturer, string vidPid) =>
+            cls is DeviceClass.Bluetooth or DeviceClass.BluetoothAdapter
+            && string.Equals((manufacturer ?? "").Trim(), "Microsoft", StringComparison.OrdinalIgnoreCase)
+            && string.IsNullOrWhiteSpace(DeviceMonitorRules.SplitVidPid(vidPid ?? "").Vid)
+                ? "—" : manufacturer ?? "";
+        public string ManufacturerText => ManufacturerDisplay(Class, Manufacturer, VidPid);
+        public string ManufacturerCellTip => ManufacturerText == "—" && Manufacturer.Length > 0 ? BluetoothMakerTip : ManufacturerText;
         [ObservableProperty] private string _model = "";
         [ObservableProperty] private string _vidPid = "";
         [ObservableProperty] private string _vid = "";
@@ -61,12 +74,17 @@ namespace LogAnalyzer.UI.ViewModels
         public string StatusText => DeviceMonitorRules.StatusText(Status);
         public bool IsStorageMedium => DeviceMonitorRules.IsStorageMedium(Class);
         /// <summary>„Registru”, from the SEALED audit (never from the journal alone): „Înregistrat”, „Neînregistrat” or „Neconfirmat (nesigilat)”.</summary>
-        public RegistryState Registry => _owner.RegistryStateOf(Identity, _registrationNumber);
+        public RegistryState Registry => _mediumMismatch ? RegistryState.NotRegistered : _owner.RegistryStateOf(Identity, _registrationNumber);
+        private bool _mediumMismatch;
         public string RegistryText => DeviceMonitorReport.RegistryTextOf(Registry);
+        /// <summary>Row 12: the registry state only means something for storage media; a mouse, keyboard or Bluetooth device shows "—" (tooltip: not required).</summary>
+        public static string RegistryCellTextFor(bool isStorage, string registryText) => isStorage ? registryText : "—";
+        public string RegistryCellText => RegistryCellTextFor(IsStorageMedium, RegistryText);
+        public string RegistrationCellTip => IsStorageMedium ? "" : "Nu se cere: numărul de înregistrare este doar pentru medii de stocare.";
         /// <summary>A storage medium whose registration the sealed audit does not confirm (no number, a different one, or one still pending): the row is shown in red.</summary>
         public bool NeedsRegistration => IsStorageMedium && Registry != RegistryState.Registered;
         /// <summary>A storage medium with no registration number at all (the filter and the summary count these).</summary>
-        public bool HasNoNumber => IsStorageMedium && _registrationNumber.Trim().Length == 0;
+        public bool HasNoNumber => IsStorageMedium && (_registrationNumber.Trim().Length == 0 || _mediumMismatch);
 
         /// <summary>„Nr. de înregistrare”: editable for every device. A change the sealed audit refuses is undone and the reason shown on the page.</summary>
         public string RegistrationNumber
@@ -79,20 +97,22 @@ namespace LogAnalyzer.UI.ViewModels
                 if (_owner.SetRegistrationNumber(this, _registrationNumber, v)) _registrationNumber = v;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(NeedsRegistration));
-                OnPropertyChanged(nameof(RegistryText));
+                OnPropertyChanged(nameof(RegistryText)); OnPropertyChanged(nameof(RegistryCellText));
                 _owner.Refresh(this);
             }
         }
 
         partial void OnStatusChanged(DeviceStatus value) => OnPropertyChanged(nameof(StatusText));
-        partial void OnClassChanged(DeviceClass value) { OnPropertyChanged(nameof(ClassText)); OnPropertyChanged(nameof(IsStorageMedium)); OnPropertyChanged(nameof(NeedsRegistration)); }
+        partial void OnClassChanged(DeviceClass value) { OnPropertyChanged(nameof(ClassText)); OnPropertyChanged(nameof(IsStorageMedium)); OnPropertyChanged(nameof(NeedsRegistration)); OnPropertyChanged(nameof(RegistryCellText)); OnPropertyChanged(nameof(RegistrationCellTip)); }
 
         public void Update(DeviceJournalEntry e, string alertText = "", bool alertCritical = false)
         {
-            Present = e.Present; Class = e.Class; Status = e.Status;
-            StatusTip = StatusText + (e.Present && e.ConfigManagerErrorCode > 0 ? $" (cod {e.ConfigManagerErrorCode}: {DeviceMonitorRules.ProblemText(e.ConfigManagerErrorCode)})" : "");
-            Name = e.Name.Length > 0 ? e.Name : "(fără nume)"; Manufacturer = e.Manufacturer; Model = e.Model; VidPid = e.VidPid;
-            Serial = e.Serial.Length > 0 ? e.Serial : e.NoUniqueSerial ? DeviceMonitorRules.NoUniqueSerialText : "";
+            Present = e.Present; Class = DeviceMonitorRules.DisplayClass(e); Status = e.Status;
+            StatusTip = StatusText + (e.Present && e.ConfigManagerErrorCode > 0 ? $" (cod {e.ConfigManagerErrorCode}: {DeviceMonitorRules.ProblemText(e.ConfigManagerErrorCode)})" : "") + (DeviceMonitorRules.DisplayDetail(e) is { Length: > 0 } dd ? " – " + dd : "");
+            // a row an older version named after the drive letter („F:\”) shows the model or the manufacturer instead
+            var name = DeviceMonitorRules.FriendlyName([e.Name], e.Model.Length > 0 ? e.Model : LogAnalyzer.Dfir.Devices.DeviceJournalMerge.KnownManufacturer(e.Manufacturer).Length > 0 ? e.Manufacturer.Trim() : "");
+            Name = name.Length > 0 ? name : "(fără nume)"; Manufacturer = e.Manufacturer; Model = e.Model; VidPid = e.VidPid;
+            Serial = DeviceMonitorRules.SerialText(e.Serial, e.NoUniqueSerial, e.GenericSerial);
             (Vid, Pid) = DeviceMonitorRules.SplitVidPid(e.VidPid);
             // capacity, letter and label belong to storage media only
             bool storage = DeviceMonitorRules.IsStorageMedium(e.Class);
@@ -106,8 +126,10 @@ namespace LogAnalyzer.UI.ViewModels
             LastConnectedText = DeviceMonitorViewModel.When(e.LastConnectedUtc);
             LastDisconnectedText = DeviceMonitorViewModel.When(e.LastDisconnectedUtc);
             AlertText = alertText; AlertIsCritical = alertCritical;
+            if (e.RegistrationMediumMismatch != _mediumMismatch) { _mediumMismatch = e.RegistrationMediumMismatch; OnPropertyChanged(nameof(NeedsRegistration)); }
             if (e.RegistrationNumber != _registrationNumber) { _registrationNumber = e.RegistrationNumber; OnPropertyChanged(nameof(RegistrationNumber)); OnPropertyChanged(nameof(NeedsRegistration)); }
             OnPropertyChanged(nameof(RegistryText));
+            OnPropertyChanged(nameof(ManufacturerText)); OnPropertyChanged(nameof(ManufacturerCellTip));
         }
 
         /// <summary>The cells of the CSV row, in the order of <see cref="DeviceCsv.Headers"/>.</summary>
@@ -183,7 +205,7 @@ namespace LogAnalyzer.UI.ViewModels
             // every write to the sealed audit goes through here: a refusal because the sealing key cannot be read (not started as administrator) is noted
             _audit = (ev, detail) => { var refused = audit(ev, detail); NoteSealResult(refused); return refused; }; _journal = journal; _save = save; _isolated = isolated; _clock = clock ?? (() => DateTimeOffset.UtcNow);
             _consoleUser = consoleUser ?? (() => ""); _owner = owner;
-            foreach (var e in _journal.Devices.Where(DeviceScope.IsInScope)) _rows[e.Identity] = new DeviceMonitorRow(e, this);
+            foreach (var e in _journal.Devices.Where(DeviceScope.IsShown)) _rows[e.Identity] = new DeviceMonitorRow(DeviceJournalMerge.ShownView(_journal, e), this);
             // records a previous run could not seal (a refused write) were saved in the journal as pending: they are written at the first reading
             _journal.PendingSeals ??= [];
             if (owner) foreach (var p in _journal.PendingSeals) _unsealed.Add((p.Event, p.Detail));
@@ -240,6 +262,7 @@ namespace LogAnalyzer.UI.ViewModels
         public string[] Filters { get; } = { FilterAll, FilterConnected, FilterStorage, FilterNoNumber, FilterAlert };
         public const string FilterAll = "Toate dispozitivele", FilterConnected = "Conectate acum", FilterStorage = "Medii de stocare",
                             FilterNoNumber = "Medii fără număr de înregistrare", FilterAlert = "Cu alertă";
+        /// <summary>Owner decision 2026-10-22 (supersedes „connected only”): the list opens on the devices that were plugged into the station as external devices, connected or disconnected, one row per physical device.</summary>
         [ObservableProperty] private string _filter = FilterAll;
         partial void OnFilterChanged(string value) => ApplyFilter();
 
@@ -406,6 +429,7 @@ namespace LogAnalyzer.UI.ViewModels
                 List<DeviceJournalChange> changes;
                 var alerts = new List<(DeviceAlertRecord Record, bool Show)>();
                 var rekeys = new List<MediumRekey>();
+                var reclassified = new List<DeviceReclassification>();
                 IReadOnlyList<RadioChange> radios;
                 List<DeviceJournalEntry> firstSeen;
                 int before;
@@ -413,7 +437,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     before = _journal.Devices.Count;
                     var known = new HashSet<string>(_journal.Devices.Select(d => d.Identity), StringComparer.OrdinalIgnoreCase);
-                    changes = DeviceJournalMerge.Apply(_journal, now, media, user, when, initial, rekeys).ToList();
+                    changes = DeviceJournalMerge.Apply(_journal, now, media, user, when, initial, rekeys, reclassified, ReadSealedKinds).ToList();
                     radios = DeviceJournalMerge.NoteRadios(_journal, DeviceMonitorRules.BlindRadios(now), when);
                     _lastReadUtc = when;
                     DeviceJournalMerge.Heartbeat(_journal, when);
@@ -426,7 +450,10 @@ namespace LogAnalyzer.UI.ViewModels
                 foreach (var r in rekeys)
                     Seal(OperationAudit.DeviceMediumRekeyed, OperationAudit.DeviceMediumRekeyedDetail(r.OldIdentity, r.NewIdentity, r.Device.Class.ToString(), r.Device.Name));
                 foreach (var e in firstSeen)
-                    Seal(OperationAudit.DeviceFirstSeen, OperationAudit.DeviceFirstSeenDetail(e.Identity, e.Class.ToString(), e.Name, e.Serial, e.FirstSeenUtc, user: e.ConnectedUser));
+                    Seal(OperationAudit.DeviceFirstSeen, OperationAudit.DeviceFirstSeenDetail(e.Identity, e.Class.ToString(), e.Name, e.Serial, e.FirstSeenUtc, user: e.ConnectedUser, classifier: DeviceScope.ClassifierVersion));
+                // the kind of a known device changed because the classifier changed (not the device): one sealed note, informational for check D05
+                foreach (var c in reclassified)
+                    Seal(OperationAudit.DeviceReclassified, OperationAudit.DeviceReclassifiedDetail(c.Identity, c.OldClass.ToString(), c.NewClass.ToString(), c.OldVersion, c.NewVersion, c.Device.Name));
                 foreach (var r in radios)
                     _audit(OperationAudit.DeviceRadioState, OperationAudit.DeviceRadioStateDetail(r.Kind, r.Blind, r.Text, user));
                 // review round 2: every disconnection (who was logged on) and the set of devices present at each run start are sealed, so a row that claims
@@ -452,7 +479,7 @@ namespace LogAnalyzer.UI.ViewModels
                     if (!c.Arrived) continue;
                     var decision = c.CloneText is not null
                         ? new DeviceAlertDecision(DeviceAlertSeverity.Critical, c.CloneText)
-                        : DeviceMonitorRules.Decide(c.Device.Class, c.Device.InstanceId, c.Device.RegistrationNumber, _isolated, c.Device.ConfigManagerErrorCode);
+                        : DeviceMonitorRules.Decide(c.Device.Class, c.Device.InstanceId, DeviceMonitorRules.EffectiveNumber(c.Device), _isolated, c.Device.ConfigManagerErrorCode);
                     var text = gapFrom is not null && (resume || initial) ? "observat la reluare: " + decision.Reason : decision.Reason;
                     alerts.Add(RaiseAlert(c.Device, decision.Severity, text, when));
                     // the same device back with another volume (reformatted, or a clone of its serial): its own sealed record, never a silent take-over
@@ -607,6 +634,16 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
+        /// <summary>
+        /// The kind and classifier version of every device as the SEALED audit holds them, read fresh (the reclassification must be sealed at the very reading that
+        /// sees the change); null when there is no reader or the chain does not verify: then nothing is a reclassification and check D05 keeps its finding.
+        /// </summary>
+        private IReadOnlyDictionary<string, SealedKind>? ReadSealedKinds()
+        {
+            try { return _auditReader?.Invoke() is { ChainValid: true } a ? DeviceMonitorAuditCheck.SealedKinds(a) : null; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { return null; }
+        }
+
         /// <summary>„Registru” of a row: the number in the journal against the number the sealed audit holds (and a change still waiting to be sealed).</summary>
         internal RegistryState RegistryStateOf(string identity, string journalNumber)
         {
@@ -625,8 +662,13 @@ namespace LogAnalyzer.UI.ViewModels
             try { audit = _auditReader?.Invoke(); }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { audit = null; }
             List<PendingSeal> pending;
-            lock (_journal) pending = _journal.PendingSeals.Select(p => new PendingSeal { Event = p.Event, Detail = p.Detail }).ToList();
-            return (DeviceHistory.Build(row.Identity, audit, pending), DeviceHistory.Notice(audit));
+            IReadOnlyList<string> identities;
+            lock (_journal)
+            {
+                pending = _journal.PendingSeals.Select(p => new PendingSeal { Event = p.Event, Detail = p.Detail }).ToList();
+                identities = DeviceJournalMerge.FoldedIdentities(_journal, row.Identity);   // the history of every row folded into this one
+            }
+            return (DeviceHistory.Build(identities.ToList(), audit, pending), DeviceHistory.Notice(audit));
         }
 
         /// <summary>The CSV of the rows in view: the bytes of the file (UTF-8 with a byte-order mark), the number of rows and the SHA-256 of the bytes.</summary>
@@ -669,7 +711,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (e.DuplicateSerial) { parts.Add(DeviceMonitorRules.DuplicateSerialMark); critical = true; }
             if (e.Present || e.LastConnectedUtc is not null)
             {
-                var d = DeviceMonitorRules.Decide(e.Class, e.InstanceId, e.RegistrationNumber, _isolated, e.ConfigManagerErrorCode);
+                var d = DeviceMonitorRules.Decide(DeviceMonitorRules.DisplayClass(e), e.InstanceId, DeviceMonitorRules.EffectiveNumber(e), _isolated, e.ConfigManagerErrorCode);
                 if (d.Severity == DeviceAlertSeverity.Critical) { parts.Add(d.Reason); critical = true; }
             }
             return (string.Join("; ", parts), critical);
@@ -681,6 +723,7 @@ namespace LogAnalyzer.UI.ViewModels
             lock (_journal) e = _journal.Find(row.Identity);
             if (e is null) return;
             var (text, critical) = RowAlert(e);
+            lock (_journal) e = DeviceJournalMerge.ShownView(_journal, e);
             row.Update(e, text, critical);
         }
 
@@ -688,14 +731,16 @@ namespace LogAnalyzer.UI.ViewModels
         {
             lock (_journal)
             {
-                foreach (var e in _journal.Devices.Where(DeviceScope.IsInScope))
+                // one physical device is one row: rows folded into another one (interfaces, the bridge of a disk, an old clone mark) are not listed while absent
+                foreach (var e in _journal.Devices.Where(DeviceScope.IsShown))
                 {
                     var (text, critical) = RowAlert(e);
-                    if (_rows.TryGetValue(e.Identity, out var row)) row.Update(e, text, critical);
-                    else { _rows[e.Identity] = row = new DeviceMonitorRow(e, this); row.Update(e, text, critical); }
+                    var v = DeviceJournalMerge.ShownView(_journal, e);
+                    if (_rows.TryGetValue(e.Identity, out var row)) row.Update(v, text, critical);
+                    else { _rows[e.Identity] = row = new DeviceMonitorRow(v, this); row.Update(v, text, critical); }
                 }
                 // a card row re-keyed once its medium became readable: the row of the old identity goes (the journal no longer has it)
-                var ids = new HashSet<string>(_journal.Devices.Where(DeviceScope.IsInScope).Select(e => e.Identity), StringComparer.OrdinalIgnoreCase);
+                var ids = new HashSet<string>(_journal.Devices.Where(DeviceScope.IsShown).Select(e => e.Identity), StringComparer.OrdinalIgnoreCase);
                 foreach (var stale in _rows.Keys.Where(k => !ids.Contains(k)).ToList()) _rows.Remove(stale);
             }
         }
@@ -704,7 +749,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             var all = _rows.Values.ToList();
             int connected = all.Count(r => r.Present), noNumber = all.Count(r => r.HasNoNumber);
-            Summary = $"Conectate acum: {connected} · cunoscute de monitor: {all.Count}" +
+            Summary = $"Conectate acum (stocare și externe): {connected} · văzute de monitor (inclusiv deconectate): {all.Count}" +
                       (noNumber > 0 ? $" · {noNumber} {(noNumber == 1 ? "mediu de stocare" : "medii de stocare")} {DeviceMonitorReport.NoRegistration}" : "") + ".";
         }
 

@@ -33,6 +33,7 @@ namespace LogAnalyzer.UI.ViewModels
             _media = media;
             _media.ConnectedNow.CollectionChanged += (_, _) => RefreshMedia();
             _media.DevicesRefreshed += RefreshUnregistered;
+            System.ComponentModel.PropertyChangedEventManager.AddHandler(LogAnalyzer.UI.Services.LanguageLevelState.Instance, OnLevelChanged, nameof(LogAnalyzer.UI.Services.LanguageLevelState.IsSimple));
             Reload();
             RefreshMedia();
         }
@@ -49,11 +50,12 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>USB/card connections in the last <see cref="ReconcileDays"/> days with no transfer on that medium (same day or +-1 day).</summary>
         public ObservableCollection<UnregisteredConnection> UnregisteredConnections { get; } = new();
         public const int ReconcileDays = 30;
+        public const string UsbMediumLabel = "Mediu de stocare USB";
 
         /// <summary>One line for a non-IT controller: which stick, when, and what is missing.</summary>
         public sealed record UnregisteredConnection(UsbSessionCheck Check)
         {
-            public string Text => $"{Check.Device.DisplayName} · S/N {Check.Device.Serial} · conectat {Check.Connected.ToLocalTime():yyyy-MM-dd HH:mm} · {Check.Message}";
+            public string Text => $"{Check.Device.DisplayName} · S/N {Check.Device.Serial} · conectat {Check.Connected.ToLocalTime():dd.MM.yyyy HH:mm} · {Check.Message}";
         }
 
         [ObservableProperty] private string _unregisteredSummary = "";
@@ -101,13 +103,41 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (value is null) return;
             var d = value.Device;
-            MediumType = d.Kind switch { DeviceKind.UsbStorage => "Stick / disc USB", DeviceKind.MemoryCard => "Card de memorie", DeviceKind.Optical => "CD/DVD", DeviceKind.PortableDevice => "Dispozitiv portabil", _ => d.KindText };
+            MediumType = d.Kind switch { DeviceKind.UsbStorage => UsbMediumLabel, DeviceKind.MemoryCard => "Card de memorie", DeviceKind.Optical => "CD/DVD", DeviceKind.PortableDevice => "Dispozitiv portabil", _ => d.KindText };
             MediumSerial = d.Serial;
             MediumRegistration = value.RegistrationNumber;
             var row = _media.Register.Snapshot().Rows.FirstOrDefault(r => r.RegistrationNumber == value.RegistrationNumber);
             if (row?.Level is { } l) Classification = l.Name;
-            Status = value.Match == RegisterMatch.Registered ? $"Mediu din registru: {value.RegistrationNumber}."
-                   : $"ATENȚIE: {value.MatchText}. {value.WhatToDo}";
+            _mediumStatus = MediumStatus(value, LogAnalyzer.UI.Services.LanguageLevelState.Instance.IsSimple);
+            Status = _mediumStatus;
+            OnPropertyChanged(nameof(StatusIsWarning));
+        }
+
+        /// <summary>True while <see cref="Status"/> is the warning about the chosen medium (the page colours it).</summary>
+        public bool StatusIsWarning => SelectedMedium is { Match: not RegisterMatch.Registered } && Status == _mediumStatus;
+        partial void OnStatusChanged(string value) => OnPropertyChanged(nameof(StatusIsWarning));
+        private string _mediumStatus = "";
+        private void OnLevelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            // the medium's status text follows the level; any other status message is left alone
+            if (SelectedMedium is null || Status != _mediumStatus) return;
+            _mediumStatus = MediumStatus(SelectedMedium, LogAnalyzer.UI.Services.LanguageLevelState.Instance.IsSimple);
+            Status = _mediumStatus;
+        }
+
+        /// <summary>The line under the form about the chosen medium. Simplu: sentence case ("Atenție: mediul nu este în registru. …"); Expert: as before.</summary>
+        internal static string MediumStatus(DeviceAssessment value, bool simple)
+        {
+            if (value.Match == RegisterMatch.Registered) return $"Mediu din registru: {value.RegistrationNumber}.";
+            if (!simple) return $"ATENȚIE: {value.MatchText}. {value.WhatToDo}";
+            var what = value.Match switch
+            {
+                RegisterMatch.NotRegistered => "mediul nu este în registru",
+                RegisterMatch.Withdrawn => "mediul este retras / distrus în registru",
+                RegisterMatch.Expired => "mediul este în registru, dar valabilitatea a expirat",
+                _ => "mediul nu se ține în registru",
+            };
+            return $"Atenție: {what}. {value.WhatToDo}";
         }
 
         private void RefreshMedia()
@@ -117,7 +147,7 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var a in _media.ConnectedNow.Where(a => a.Device.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.Optical or DeviceKind.PortableDevice or DeviceKind.ExternalDisk))
                 Media.Add(a);
             SelectedMedium = Media.FirstOrDefault(m => m.Device.InstanceId == keep) ?? Media.FirstOrDefault();
-            if (Media.Count == 0) Status = "Niciun stick, card sau CD conectat acum. Conectați mediul sau completați seria de mână.";
+            if (Media.Count == 0) Status = "Niciun mediu de stocare conectat acum (stick USB, card, disc extern sau CD). Conectați mediul sau completați seria de mână.";
         }
 
         private void Reload()
@@ -147,7 +177,7 @@ namespace LogAnalyzer.UI.ViewModels
             var checks = TransferReconciliation.CheckUsbSessions(all.Select(a => a.Device), _register.Rows, today.AddDays(-ReconcileDays), today,
                 d => regOf.TryGetValue(d.InstanceId, out var n) ? n : "");
             foreach (var c in checks.Where(c => c.Status == UsbSessionStatus.ToVerify).OrderByDescending(c => c.Connected)) UnregisteredConnections.Add(new UnregisteredConnection(c));
-            UnregisteredSummary = all.Count == 0 ? "Mediile stației nu au fost citite încă (deschideți pagina „Medii de stocare”)."
+            UnregisteredSummary = all.Count == 0 ? "Mediile stației nu au fost citite încă (deschideți pagina „Monitor dispozitive”)."
                 : UnregisteredConnections.Count == 0 ? $"Toate conectările din ultimele {ReconcileDays} de zile au un transfer înregistrat."
                 : $"{UnregisteredConnections.Count} conectări din ultimele {ReconcileDays} de zile nu au un transfer înregistrat.";
         }
@@ -158,11 +188,11 @@ namespace LogAnalyzer.UI.ViewModels
             if (item is null) return;
             var d = item.Check.Device;
             SelectedMedium = Media.FirstOrDefault(m => m.Device.InstanceId == d.InstanceId);
-            MediumType = d.Kind == DeviceKind.MemoryCard ? "Card de memorie" : "Stick / disc USB";
+            MediumType = d.Kind == DeviceKind.MemoryCard ? "Card de memorie" : UsbMediumLabel;
             MediumSerial = d.Serial;
             MediumRegistration = _media.AllDevices.FirstOrDefault(a => a.Device.InstanceId == d.InstanceId)?.RegistrationNumber ?? "";
             TransferDate = item.Check.Connected.ToLocalTime().DateTime.Date;
-            Status = $"Formularul este pregătit pentru mediul {d.DisplayName}, data {TransferDate:yyyy-MM-dd}. Alegeți fișierele, scrieți destinația și martorul.";
+            Status = $"Formularul este pregătit pentru mediul {d.DisplayName}, data {TransferDate:dd.MM.yyyy}. Alegeți fișierele, scrieți destinația și martorul.";
         }
 
         [RelayCommand]

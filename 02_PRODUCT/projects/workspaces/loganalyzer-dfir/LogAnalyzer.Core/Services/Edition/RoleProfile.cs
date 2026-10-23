@@ -140,7 +140,7 @@ namespace LogAnalyzer.Core.Services.Edition
                         "Rulează controlul de conformitate pe perioada aleasă. Aplicația doar citește; nu modifică nimic pe stație.",
                         TabStationControl)),
                     A(new("check_media", "Verifică un suport (USB, CD/DVD)",
-                        "Monitorul în timp real: tot ce se conectează la stație (stick-uri, telefoane, Bluetooth, rețea, imprimante…), cu driverul și numărul de înregistrare al fiecărui mediu.",
+                        "Monitorul în timp real: tot ce se conectează la stație (stick-uri, telefoane, Bluetooth, rețea, imprimante…), cu numărul de înregistrare al fiecărui mediu.",
                         TabMediaRegister)),
                     A(new("who_worked", "Cine a lucrat și când",
                         "Conturi, autentificări locale și RDP, sesiuni privilegiate, pe utilizator, cu dovada fiecăreia.",
@@ -184,7 +184,7 @@ namespace LogAnalyzer.Core.Services.Edition
             if (p.PrimaryIntents.Count > MaxPrimary) yield return $"{p.PrimaryIntents.Count} intenții principale (maxim {MaxPrimary})";
             if (edition.Kind == EditionKind.Classified)
                 foreach (var i in p.PrimaryIntents.Concat(p.MoreIntents).Where(i => i.Enabled && (i.Intent.RequiresNetwork || i.Intent.RequiresFeature is not null)))
-                    yield return $"intenția „{i.Title}” este activă în ediția clasificată";
+                    yield return $"intenția „{i.Title}” este activă în ediția Standalone";
         }
     }
 }

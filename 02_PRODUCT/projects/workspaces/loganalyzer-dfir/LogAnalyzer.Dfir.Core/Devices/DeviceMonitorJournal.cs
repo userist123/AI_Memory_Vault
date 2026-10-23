@@ -196,6 +196,12 @@ public static class DeviceJournalStore
     /// </summary>
     public static DeviceJournal Load(string path, out string problem) => Load(path, out problem, out _);
 
+    /// <summary>A row the JSON gave a null text field (a hand-edited or damaged file): the rules would throw on it.</summary>
+    private static bool HasNullText(DeviceJournalEntry d) =>
+        d.Identity is null || d.InstanceId is null || d.SetupClass is null || d.Name is null || d.Manufacturer is null || d.Model is null || d.VidPid is null
+        || d.Serial is null || d.RegistrationNumber is null || d.VolumeLetters is null || d.VolumeLabel is null || d.VolumeSerial is null || d.DiskSignature is null
+        || d.ConnectedUser is null || d.RegistrationBoundVolumeSerial is null || d.RegistrationBoundDiskSignature is null;
+
     private static DeviceJournal Load(string path, out string problem, out bool damaged)
     {
         problem = "";
@@ -210,8 +216,28 @@ public static class DeviceJournalStore
             j.Runs ??= [];
             j.Radios ??= [];
             j.PendingSeals ??= [];
-            j.Devices.RemoveAll(d => d is null || d.Identity.Length == 0);
+            // review finding 3 (2026-10-22): a row with a missing (null) text field is damaged: it is left out and reported, the rest of the journal is read; the
+            // rules below never see a null (they threw NullReferenceException / ArgumentNullException past this method before)
+            int damagedRows = j.Devices.RemoveAll(d => d is null || HasNullText(d));
+            damagedRows += j.Alerts.RemoveAll(a => a is null || a.Identity is null || a.Device is null || a.Text is null);
+            damagedRows += j.Runs.RemoveAll(r => r is null || r.RunId is null);
+            damagedRows += j.Radios.RemoveAll(r => r is null || r.Kind is null || r.Text is null);
+            damagedRows += j.PendingSeals.RemoveAll(p => p is null || p.Event is null || p.Detail is null);
+            j.Devices.RemoveAll(d => d.Identity.Length == 0);
+            // the stored clone marks are not trusted: recomputed from the rows (older versions marked the nodes of one stick as clones of each other)
+            DeviceJournalMerge.RecomputeDuplicateSerials(j);
+            // rows of one physical device are folded for the page (display only, recomputed on every reading)
+            DeviceJournalMerge.MarkSuperseded(j);
+            if (damagedRows > 0)
+                problem = $"Jurnalul monitorului de dispozitive este parțial deteriorat: {damagedRows} {(damagedRows == 1 ? "înregistrare cu câmpuri lipsă a fost ignorată" : "înregistrări cu câmpuri lipsă au fost ignorate")} (cauza: câmp null în fișier); restul jurnalului a fost citit.";
             return j;
+        }
+        catch (Exception ex) when (ex is NullReferenceException or ArgumentNullException)
+        {
+            // defence in depth: a field the checks above do not know of; the file is treated as damaged, never an exception for the caller
+            damaged = true;
+            problem = "Jurnalul monitorului de dispozitive este deteriorat (câmp lipsă: " + ex.GetType().Name + ")";
+            return new DeviceJournal();
         }
         catch (Exception ex) when (ex is JsonException or InvalidDataException or NotSupportedException)
         {
@@ -320,15 +346,15 @@ public static class DeviceMonitorReport
     }
 
     public static bool Offends(DeviceJournalEntry e, bool isolated, DateTimeOffset? fromUtc = null) =>
-        (DeviceMonitorRules.IsStorageMedium(e.Class) && e.RegistrationNumber.Trim().Length == 0) || ForbiddenSeen(e, isolated, fromUtc);
+        (DeviceMonitorRules.IsStorageMedium(e.Class) && DeviceMonitorRules.EffectiveNumber(e).Trim().Length == 0) || ForbiddenSeen(e, isolated, fromUtc);
 
     /// <summary>
     /// A class the policy forbids on an isolated station, active in the period. A Wi-Fi, Bluetooth or network adapter that is disabled (problem code 22) is what
     /// the policy asks for and does not count, unless it was seen enabled since <paramref name="fromUtc"/>.
     /// </summary>
     public static bool ForbiddenSeen(DeviceJournalEntry e, bool isolated, DateTimeOffset? fromUtc = null) =>
-        isolated && DeviceMonitorRules.ForbiddenOnIsolated(e.Class, e.InstanceId)
-        && !(DeviceMonitorRules.IsDisabledRadio(e.Class, e.ConfigManagerErrorCode) && !(e.ActiveSeenUtc is { } a && a >= (fromUtc ?? DateTimeOffset.MinValue)));
+        isolated && DeviceMonitorRules.ForbiddenOnIsolated(DeviceMonitorRules.DisplayClass(e), e.InstanceId)
+        && !(DeviceMonitorRules.IsDisabledRadio(DeviceMonitorRules.DisplayClass(e), e.ConfigManagerErrorCode) && !(e.ActiveSeenUtc is { } a && a >= (fromUtc ?? DateTimeOffset.MinValue)));
 
     public static string UtcText(DateTimeOffset t) => Utc(t);
 
@@ -344,13 +370,14 @@ public static class DeviceMonitorReport
         var parts = new List<string>
         {
             "Stare: " + DeviceMonitorRules.StatusText(e.Status).ToLowerInvariant(),
-            DeviceMonitorRules.ClassText(e.Class),
+            DeviceMonitorRules.IsStoredBluetoothInput(e) ? DeviceMonitorRules.ClassText(DeviceMonitorRules.DisplayClass(e)) + " — " + DeviceMonitorRules.DisplayDetail(e) : DeviceMonitorRules.ClassText(e.Class),
             e.Name.Length > 0 ? e.Name : "(fără nume)",
         };
         if (e.Manufacturer.Length > 0) parts.Add(e.Manufacturer);
         if (e.Model.Length > 0) parts.Add("model " + e.Model);
         if (e.VidPid.Length > 0) parts.Add("VID/PID " + e.VidPid);
-        parts.Add(e.Serial.Length > 0 ? "SN " + e.Serial : DeviceMonitorRules.NoUniqueSerialText);
+        var serialText = DeviceMonitorRules.SerialText(e.Serial, e.NoUniqueSerial, e.GenericSerial);
+        parts.Add(serialText.Length > 0 && serialText == e.Serial && !DeviceMonitorRules.IsGenericSerial(e.Serial) ? "SN " + e.Serial : serialText.Length > 0 ? serialText : DeviceMonitorRules.NoUniqueSerialText);
         if (e.DuplicateSerial) parts.Add(DeviceMonitorRules.DuplicateSerialMark.ToUpperInvariant());
         if (e.UnidentifiableMedium) parts.Add(DeviceMonitorRules.UnidentifiableMediumText);
         if (DeviceMonitorRules.IsStorageMedium(e.Class))
@@ -363,9 +390,9 @@ public static class DeviceMonitorReport
         parts.Add("văzut prima dată " + Utc(e.FirstSeenUtc));
         if (e.LastConnectedUtc is { } lc) parts.Add("ultima conectare " + Utc(lc));
         if (e.LastDisconnectedUtc is { } ld) parts.Add("ultima deconectare " + Utc(ld));
-        bool hasNumber = e.RegistrationNumber.Trim().Length > 0;
-        var state = RegistryStateOf(e.Identity, e.RegistrationNumber, audit, pending);
-        parts.Add(hasNumber ? "nr. de înregistrare " + e.RegistrationNumber.Trim() : NoRegistration);
+        bool hasNumber = DeviceMonitorRules.EffectiveNumber(e).Trim().Length > 0;
+        var state = e.RegistrationMediumMismatch ? RegistryState.NotRegistered : RegistryStateOf(e.Identity, e.RegistrationNumber, audit, pending);
+        parts.Add(hasNumber ? "nr. de înregistrare " + e.RegistrationNumber.Trim() : e.RegistrationMediumMismatch ? DeviceMonitorRules.MediumNotRegisteredAlertText : NoRegistration);
         parts.Add("registru: " + RegistryTextOf(state));
         return string.Join(" · ", parts);
     }

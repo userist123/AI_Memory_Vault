@@ -30,7 +30,7 @@ public enum DeviceStatus { Connected, Disconnected, NotWorking, Disabled }
 /// instance id of the parent node (DEVPKEY_Device_Parent; a USB Attached SCSI disk hangs off a USB node whose service is UASPStor); "" = not read.
 /// </summary>
 public sealed record PnpSnapshotEntry(string InstanceId, string Name, string SetupClass, string Manufacturer, string HardwareIds, string Service, int ConfigManagerErrorCode,
-    string ContainerId = "", string Parent = "");
+    string ContainerId = "", string Parent = "", bool? Removable = null);
 
 /// <summary>
 /// What is known about the medium in a drive: the volume serial, the capacity of the disk, the drive letters and the volume label, and the disk signature (MBR
@@ -72,6 +72,31 @@ public static class DeviceMonitorRules
         _ => "În afara domeniului (componentă internă)",
     };
 
+    /// <summary>A name that is only a drive letter or a volume path („F:\”, „F:”): Windows names the portable-device view of a phone's storage that way.</summary>
+    public static bool IsDriveLetterName(string name) => System.Text.RegularExpressions.Regex.IsMatch(name.Trim(), @"^[A-Za-z]:\\?$");
+
+    /// <summary>
+    /// The name a row shows: the first friendly name among <paramref name="names"/> that is not a drive letter (the device's own name or model, not the volume
+    /// letter a phone's storage got); when every name is a drive letter, <paramref name="fallback"/> (the model or manufacturer) if known, else the first name.
+    /// </summary>
+    public static string FriendlyName(IEnumerable<string> names, string fallback = "")
+    {
+        var list = names.Where(n => !string.IsNullOrWhiteSpace(n)).Select(n => n.Trim()).ToList();
+        var good = list.FirstOrDefault(n => !IsDriveLetterName(n));
+        if (good is not null) return good;
+        return fallback.Trim().Length > 0 ? fallback.Trim() : list.FirstOrDefault() ?? "";
+    }
+
+    public const string MediumNotRegisteredAlertText = "mediu fără serie unică: nu corespunde mediului înregistrat";
+
+    /// <summary>A storage medium (not a card: its identity is its volume) that the monitor cannot tell from another of the same model by a serial: a placeholder serial, or none.</summary>
+    public static bool HasNoUniqueIdentity(DeviceJournalEntry e) =>
+        IsStorageMedium(e.Class) && e.Class != DeviceClass.MemoryCard && !e.Identity.Contains("|MEDIUM|", StringComparison.OrdinalIgnoreCase)
+        && (e.NoUniqueSerial || e.GenericSerial || e.Serial.Length == 0 || IsGenericSerial(e.Serial));
+
+    /// <summary>The registration number the row really has: none while the medium on it is not the one the number was set for.</summary>
+    public static string EffectiveNumber(DeviceJournalEntry e) => e.RegistrationMediumMismatch ? "" : e.RegistrationNumber;
+
     /// <summary>Storage media: the classes that carry a registration number („Nr. de înregistrare”) and are alerted without one.</summary>
     public static bool IsStorageMedium(DeviceClass c) => c is DeviceClass.UsbStorage or DeviceClass.MemoryCard or DeviceClass.ExternalDisk;
 
@@ -79,9 +104,32 @@ public static class DeviceMonitorRules
     public static string Serial(string instanceId)
     {
         var id = instanceId.ToUpperInvariant();
-        return id.StartsWith(@"USB\", StringComparison.Ordinal) || id.StartsWith(@"USBSTOR\", StringComparison.Ordinal) || id.StartsWith(@"SCSI\", StringComparison.Ordinal)
+        var serial = id.StartsWith(@"USB\", StringComparison.Ordinal) || id.StartsWith(@"USBSTOR\", StringComparison.Ordinal) || id.StartsWith(@"SCSI\", StringComparison.Ordinal)
             ? DeviceRules.Serial(instanceId) : "";
+        return IsGenericSerial(serial) ? "" : serial;   // a made-up serial (000000000000) is not a serial: the device is told apart by its instance id
     }
+
+    /// <summary>
+    /// A serial that is the same character repeated (000000000000, 111111, FFFFFFFF): cheap devices ship the same placeholder, so it identifies nothing and is
+    /// never compared for clones (owner decision 2026-10-22).
+    /// </summary>
+    public static bool IsGenericSerial(string serial)
+    {
+        var s = serial.Trim();
+        return s.Length > 0 && s.All(c => char.ToUpperInvariant(c) == char.ToUpperInvariant(s[0]));
+    }
+
+    /// <summary>The instance id of a USB, USB-storage or SCSI device carries a serial that is a placeholder (<see cref="IsGenericSerial"/>).</summary>
+    public static bool HasGenericSerial(string instanceId)
+    {
+        var id = instanceId.ToUpperInvariant();
+        return (id.StartsWith(@"USB\", StringComparison.Ordinal) || id.StartsWith(@"USBSTOR\", StringComparison.Ordinal) || id.StartsWith(@"SCSI\", StringComparison.Ordinal))
+               && IsGenericSerial(DeviceRules.Serial(instanceId));
+    }
+
+    /// <summary>What a row shows in the serial column: the serial, „fără serie unică (serie generică)” for a placeholder, „fără serie unică”, or nothing.</summary>
+    public static string SerialText(string serial, bool noUniqueSerial, bool genericSerial) =>
+        genericSerial || IsGenericSerial(serial) ? GenericSerialText : serial.Length > 0 ? serial : noUniqueSerial ? NoUniqueSerialText : "";
 
     /// <summary>
     /// A USB or USB-storage device whose instance id has no serial of its own: Windows generated the last segment (like 7&amp;1A2B3C4D&amp;0), so the device
@@ -91,7 +139,7 @@ public static class DeviceMonitorRules
     {
         var id = instanceId.ToUpperInvariant();
         bool usb = id.StartsWith(@"USB\", StringComparison.Ordinal) || id.StartsWith(@"USBSTOR\", StringComparison.Ordinal);
-        return usb && DeviceRules.Serial(instanceId).Length == 0;
+        return usb && (DeviceRules.Serial(instanceId).Length == 0 || HasGenericSerial(instanceId));
     }
 
     /// <summary>VID:PID from the instance id or the hardware ids; for USB storage (which carries vendor and product names instead) "Ven Prod".</summary>
@@ -160,7 +208,7 @@ public static class DeviceMonitorRules
     public const string DuplicateSerialMark = "serie duplicată – posibilă clonă";
 
     /// <summary>The Serie column text for a device whose serial Windows made up.</summary>
-    public const string NoUniqueSerialText = "fără serie unică";
+    public const string NoUniqueSerialText = "fără serie unică", GenericSerialText = "fără serie unică (serie generică)";
 
     /// <summary>Whether an alert text is a clone alert (simultaneous clones or a duplicate serial over time).</summary>
     public static bool IsCloneAlert(string text) => text.Contains("posibilă clon", StringComparison.OrdinalIgnoreCase);
@@ -294,6 +342,20 @@ public static class DeviceMonitorRules
         DeviceClass.Phone or DeviceClass.Bluetooth or DeviceClass.BluetoothAdapter or DeviceClass.WiFi or DeviceClass.NetworkAdapter or DeviceClass.Modem => true,
         _ => false,
     };
+
+    /// <summary>
+    /// A stored row of a keyboard or mouse whose instance id is Bluetooth (an older classifier kept it as "Tastatură externă" / "Mouse extern"). Display and alert
+    /// presentation only: the stored kind is never rewritten and no reclassification is sealed from it.
+    /// </summary>
+    public static bool IsStoredBluetoothInput(DeviceJournalEntry e) =>
+        e.Class is DeviceClass.Keyboard or DeviceClass.Mouse && DeviceScope.IsBluetoothInstanceId(e.InstanceId);
+
+    /// <summary>The class a row is shown and alerted as: Bluetooth for a stored Bluetooth keyboard or mouse, the stored class otherwise.</summary>
+    public static DeviceClass DisplayClass(DeviceJournalEntry e) => IsStoredBluetoothInput(e) ? DeviceClass.Bluetooth : e.Class;
+
+    /// <summary>The detail of a stored Bluetooth keyboard or mouse row (with the old stored kind); the stored detail otherwise.</summary>
+    public static string DisplayDetail(DeviceJournalEntry e) => !IsStoredBluetoothInput(e) ? e.Detail
+        : $"{(e.Class == DeviceClass.Keyboard ? "tastatură" : "mouse")} prin Bluetooth (tip vechi înregistrat: {ClassText(e.Class)})";
 
     /// <summary>The ending of the critical alert of a class the policy forbids on an isolated station (the sealed alert is compared with it by the control).</summary>
     public const string ForbiddenClassAlertSuffix = "clasă interzisă pe o stație izolată";

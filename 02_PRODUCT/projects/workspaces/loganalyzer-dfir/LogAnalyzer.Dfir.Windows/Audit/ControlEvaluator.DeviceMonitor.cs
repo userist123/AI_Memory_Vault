@@ -60,6 +60,8 @@ public static partial class ControlEvaluator
         var deviceFindings = auditUsable
             ? DeviceMonitorAuditCheck.DeviceMismatches(journal, audit!, from, to, devices).Concat(DeviceMonitorAuditCheck.PresenceMismatches(journal, audit!, from, to, devices)).ToList() : [];
         // what the sealed audit alone says about a class the policy forbids (the plain journal's problem code and "active" time can be edited)
+        // a kind that changed because the application's classifier changed (sealed "device.reclassified"): informational, never a finding
+        var reclassified = auditUsable ? DeviceMonitorAuditCheck.Reclassifications(journal, audit!) : [];
         var forbiddenSealed = auditUsable ? DeviceMonitorAuditCheck.ForbiddenSealed(audit!, from, to, isolated) : [];
         var pendingSeals = journal.PendingSeals?.Count ?? 0;
         // the critical alerts of the journal that the sealed audit does not have (its write failed when they were raised, or they were added by hand)
@@ -126,11 +128,12 @@ public static partial class ControlEvaluator
         evidence.AddRange(resumed.Select(o => $"observat la reluare {DeviceMonitorReport.UtcText(o.TimeUtc)}: {o.Device} ({o.Change})"));
         evidence.AddRange(blind.Select(x => x.Text + (x.BlindNow ? "" : $" (văzut așa la {DeviceMonitorReport.UtcText(x.LastBlindUtc ?? to)})")));
         evidence.AddRange(history);
+        evidence.AddRange(reclassified);
         evidence.AddRange(devices.Except(s.Offending).Select(d => DeviceMonitorReport.Line(d, audit, journal.PendingSeals)));
 
         int connected = devices.Count(d => d.Present);
         int storage = devices.Count(d => DeviceMonitorRules.IsStorageMedium(d.Class));
-        int noNumber = devices.Count(d => DeviceMonitorRules.IsStorageMedium(d.Class) && d.RegistrationNumber.Trim().Length == 0);
+        int noNumber = devices.Count(d => DeviceMonitorRules.IsStorageMedium(d.Class) && DeviceMonitorRules.EffectiveNumber(d).Trim().Length == 0);
         int forbidden = devices.Count(d => DeviceMonitorReport.ForbiddenSeen(d, isolated, from));
         int duplicate = devices.Count(d => d.DuplicateSerial);
         var parts = new List<string>();
@@ -144,6 +147,8 @@ public static partial class ControlEvaluator
         if (blind.Count > 0) detail += " " + string.Join(". ", blind.Select(x => x.Text)) + " (absența dispozitivelor de acest fel nu înseamnă că nu s-au conectat).";
         if (deviceFindings.Count > 0)
             detail += $" Rândurile jurnalului monitorului nu corespund înregistrărilor sigilate ale dispozitivelor în {Ro.CountMasc(deviceFindings.Count, "punct", "puncte")} (rând șters, adăugat, cu tip sau date schimbate, sau o alertă sigilată fără rând în perioadă): posibilă alterare a fișierului.";
+        if (reclassified.Count > 0)
+            detail += $" {Ro.Capitalize(Ro.CountFem(reclassified.Count, "reclasificare informativă", "reclasificări informative"))}: tipul unui dispozitiv a fost schimbat de aplicația însăși când i s-a schimbat regula de clasificare (nota sigilată „device.reclassified”, listată în dovezi); nu este o constatare.";
         if (resets.Count > 0) detail += " Jurnalul monitorului a fost resetat în perioadă (fișier deteriorat, păstrat deoparte; resetarea este sigilată).";
         if (lostInPeriod.Count > 0 || resumed.Count > 0) detail += " Monitorul a pierdut evenimente în perioadă (intervale pierdute sau dispozitive observate la reluare, listate în dovezi).";
         if (volumeAlerts.Count > 0) detail += " Un dispozitiv a revenit cu altă serie de volum (reformatat sau clonă).";
