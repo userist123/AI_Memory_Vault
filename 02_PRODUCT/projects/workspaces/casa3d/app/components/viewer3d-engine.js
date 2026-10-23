@@ -1075,7 +1075,9 @@ function model(it){
   // macheta taie pereții la 42% din înălțime; aceeași tăietură se aplică și mobilierului (dulapuri înalte, biblioteci),
   // altfel ar ieși deasupra pereților și ar părea în afara casei
   const cut = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1.1);
-  function setMode(m){ const changed = m !== mode; mode = m; walls.scale.y = m === 'walk' ? 1 : .42; ceilings.visible = m === 'walk'; cut.constant = (plan ? plan.inaltime : 2.6) * .42 + .01; R.clippingPlanes = m === 'walk' ? [] : [cut];
+  // înălțimea de tăiere a machetei, ca fracțiune din înălțimea pereților (glisorul „casă de păpuși”, UI/UX P2-11)
+  let cutFrac = .42;
+  function setMode(m){ const changed = m !== mode; mode = m; walls.scale.y = m === 'walk' ? 1 : cutFrac; ceilings.visible = m === 'walk'; cut.constant = (plan ? plan.inaltime : 2.6) * cutFrac + .01; R.clippingPlanes = m === 'walk' ? [] : [cut];
     // turul: FOV-ul regulii SHOT și obiectivul deplasat (verticale drepte la privirea orizontală); macheta: fără deplasare
     if (m === 'walk'){ cam.fov = walkFov(); lensFor(cam, cam.aspect || 1.5); } else { cam.fov = 68; cam.clearViewOffset(); }
     cam.updateProjectionMatrix(); applyBackdrop(); if (changed){ R.shadowMap.needsUpdate = true; assignLights(true); } }
@@ -1226,6 +1228,13 @@ function model(it){
     setDoors(open){ doorsOpen = !!open; doorsNow(doorsOpen); },
     setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama, exportScene, exportGLB,
     setCameraPreset,
+    // vederile salvate (UI/UX P2-11): poziția camerei, modul și tăierea; restaurarea folosește aceeași amortizare
+    getView(){ return mode === 'walk' ? { mode: 'walk', x: player.x, z: player.z, yaw, pitch, cut: cutFrac } : { mode: 'house', th: orbit.th, ph: orbit.ph, r: orbit.r, cut: cutFrac }; },
+    setCut(f){ cutFrac = Math.min(1, Math.max(.12, Number(f) || .42)); if (mode === 'house'){ walls.scale.y = cutFrac; cut.constant = (plan ? plan.inaltime : 2.6) * cutFrac + .01; R.shadowMap.needsUpdate = true; } },
+    setView(v){ if (!v) return; glide = null; this.setCut(v.cut);
+      if (v.mode === 'walk'){ const was = mode === 'walk'; if (!was) setMode('walk'); const [x, z] = collide(v.x, v.z);
+        if (was && !reduce) glide = { x, z, yaw: v.yaw, pitch: v.pitch }; else { player.set(x, 0, z); yaw = v.yaw; pitch = v.pitch; } assignLights(true); }
+      else { if (mode === 'walk') setMode('house'); orbit.th = v.th; orbit.ph = Math.max(.05, Math.min(1.5, v.ph)); orbit.r = Math.max(4, Math.min(40, v.r)); } },
     // pași discreți pentru butoanele de pe ecran (WCAG 2.2 2.5.7: alternativă cu un clic la rotirea/zoom-ul prin tragere)
     nudge(kind){ const a = .35; glide = null;
       if (mode === 'walk'){ if (kind === 'left') yaw += a; else if (kind === 'right') yaw -= a; else if (kind === 'up') pitch = Math.min(1.1, pitch + .2); else if (kind === 'down') pitch = Math.max(-1.2, pitch - .2);
