@@ -9,6 +9,7 @@ import { doorSwing } from './doors';
 import { floors, levelView, stairGeometry, stairVoids, stairRect, SLAB } from './levels';
 import { wallLength } from './geometry';
 import { nicheGeometry } from './niches';
+import { dimGeometry, textHeight } from './annotations';
 
 export const DXF_LAYERS = [
   { name: 'WALLS', color: 7 }, { name: 'DOORS', color: 1 }, { name: 'WINDOWS', color: 5 }, { name: 'ROOMS', color: 3 },
@@ -16,6 +17,8 @@ export const DXF_LAYERS = [
 ] as const;
 /** Straturi adăugate doar când există mai multe niveluri sau scări; mereu în tabelul LAYER. */
 export const DXF_LEVEL_LAYERS = [{ name: 'LEVELS', color: 30 }, { name: 'STAIRS', color: 140 }] as const;
+/** Textele libere de pe plan (cotele persistente merg pe DIMENSIONS); mereu în tabelul LAYER. */
+export const DXF_NOTE_LAYERS = [{ name: 'NOTES', color: 8 }] as const;
 export const TECH_SYMBOL: Record<TechKind, string> = { outlet: 'P', outlet_double: 'P2', switch: 'I', light_point: 'L', data: 'D', cooker: 'K', water_cold: 'A', water_hot: 'C', drain: 'S', hvac_split: 'AC', thermostat: 'T', vent_exhaust: 'V', radiator: 'R' };
 
 /** Text sigur pentru R12: fără caractere de control, fără coduri %% (oricâte %), fără \, non-ASCII ca \U+XXXX (convenția AutoCAD). */
@@ -115,6 +118,14 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
     // ---- nișe: conturul scobiturii în grosimea peretelui ----
     for (const n of snap.floor.niches ?? []){ const g = nicheGeometry(snap.floor, n); if (g) poly('WALLS', g.quad.map(q => P(q[0], q[1]))); }
 
+    // ---- cote persistente (LINE + TEXT, ca cotele pereților) și texte libere (curățate de dxfText) ----
+    for (const an of snap.floor.annotations ?? []){
+      if (an.kind === 'dim'){ const g = dimGeometry(an), A = P(...g.p1), B = P(...g.p2), t = 80, dx = g.u[0], dy = -g.u[1];
+        line('DIMENSIONS', A, B); line('DIMENSIONS', P(...an.a), A); line('DIMENSIONS', P(...an.b), B);
+        for (const pt of [A, B]) line('DIMENSIONS', [pt[0] - (dx - dy) * t, pt[1] - (dy + dx) * t], [pt[0] + (dx - dy) * t, pt[1] + (dy + dx) * t]);
+        const m = P(g.mid[0] + g.n[0] * .12, g.mid[1] + g.n[1] * .12); text('DIMENSIONS', m, 120, String(Math.round(g.value * 1000)), { rot: ((-g.rot) % 360 + 360) % 360, center: true }); }
+      else text('NOTES', P(...an.at), textHeight(an) * 1000, an.text, { rot: an.rotation ? (360 - an.rotation) % 360 : 0 }); }
+
     // ---- mobilier ----
     for (const p of snap.placements){ const fp = footprintOf(cat, p); if (!fp) continue;
       poly('FURNITURE', [P(fp.x0, fp.z0), P(fp.x1, fp.z0), P(fp.x1, fp.z1), P(fp.x0, fp.z1)]);
@@ -155,7 +166,7 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
 
   if (!Number.isFinite(x0)){ x0 = y0 = 0; x1 = y1 = 1000; }
   const lt = ['0\nLTYPE', tag(2, 'CONTINUOUS'), tag(70, 0), tag(3, 'Solid line'), tag(72, 65), tag(73, 0), tag(40, 0)];
-  const layers = [...DXF_LAYERS, ...DXF_LEVEL_LAYERS].map(l => ['0\nLAYER', tag(2, l.name), tag(70, 0), tag(62, l.color), tag(6, 'CONTINUOUS')].join('\n'));
+  const layers = [...DXF_LAYERS, ...DXF_LEVEL_LAYERS, ...DXF_NOTE_LAYERS].map(l => ['0\nLAYER', tag(2, l.name), tag(70, 0), tag(62, l.color), tag(6, 'CONTINUOUS')].join('\n'));
   void opts;   // limba: etichetele din desen sunt neutre (nume de camere deja localizate, cote în mm, simboluri)
   return [
     '0\nSECTION', '2\nHEADER', '9\n$ACADVER\n1\nAC1009', '9\n$INSUNITS\n70\n4', '9\n$MEASUREMENT\n70\n1',
