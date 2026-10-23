@@ -20,7 +20,7 @@
     "pg": "^8.23.1",
     "react": "^19.3.0",
     "react-dom": "^19.3.0",
-    "three": "^0.128.0"
+    "three": "^0.186.1"
   },
   "devDependencies": {
     "@types/node": "^26.6.3",
