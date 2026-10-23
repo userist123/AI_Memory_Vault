@@ -1,5 +1,5 @@
 # todo-claude-casa3d-uiux-p2
-STATUS: IN_PROGRESS   UPDATED: 2026-10-23T09:00:00+03:00
+STATUS: DONE   UPDATED: 2026-10-23T09:20:00+03:00
 TASK: Casa3D UI/UX P2 from the research report (rows 8-14; P1 merged in PR #321). Owner: "Continua recomandat".
 BRANCH / PR: claude/casa3d-uiux-p2 (worktree D:/w/uiux2, base origin/main 944d1427)
 P2 items (report rows 8-14):
@@ -47,6 +47,8 @@ REVIEW round 1 (vault-reviewer): NOT READY. Fixed: HIGH X-Ray leaked into Blende
   button role=menuitem, views menu focuses first item, status dot role=img. Also: panorama bar title was near
   invisible (light ink on white, pre-existing) - dark text. Accepted residuals: glide does not collide (cosmetic),
   orbit centre stays on a moved/deleted framed piece until a preset/'0', hover re-renders the Editor.
-NEXT: review round 2 (delta); PR; CI; merge.
+REVIEW round 2: READY. Its one new LOW (async GLB export restoring X-Ray after the user turned it off) fixed: applied
+  vs requested X-Ray state (xrayWant, solidDepth). Suite 706/706, build OK.
+NEXT: PR, CI, merge (main session).
 KEY FILES: casa3d/app/core/{frame,camera-glide,saved-views}.ts, lib/motion.ts, components/{PlanView,Editor,KeyboardHelp,Viewer3D,StagePicker,FoldSection,TasksPanel,TimePanel,ContractPanel,SurveyPanel}.tsx,
   components/viewer3d-engine.js, app/globals.css
