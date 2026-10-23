@@ -77,6 +77,7 @@ import { prepareShareImages } from '@/lib/share-images';
 import { withViewTransition } from '@/lib/motion';
 import StagePicker from './StagePicker';
 import PlanObjects from './PlanObjects';
+import { PLAN_LIMITS } from '@/core/plan-limits';
 import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
 import { flushSync } from 'react-dom';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
@@ -701,8 +702,8 @@ export default function Editor({ id }: { id: string }){
             <div style={{ display: 'grid', gap: 8 }}>
               <h3>{t('tool.column')}</h3>
               <div className="grid2">
-                <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selColumn.w)} onChange={e => num(e.target.value, x => mutate(s => { const c = s.floor.columns?.find(c => c.id === selColumn.id); if (c) c.w = r3(x / 100); }), 10)} /></label>
-                <label className="f"><span>{t('editor.depth', { u })}</span><input type="number" value={inField(selColumn.d)} onChange={e => num(e.target.value, x => mutate(s => { const c = s.floor.columns?.find(c => c.id === selColumn.id); if (c) c.d = r3(x / 100); }), 10)} /></label>
+                <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selColumn.w)} onChange={e => num(e.target.value, x => mutate(s => { const c = s.floor.columns?.find(c => c.id === selColumn.id); if (c) c.w = r3(Math.min(x, PLAN_LIMITS.column.maxM * 100) / 100); }), PLAN_LIMITS.column.minM * 100)} /></label>
+                <label className="f"><span>{t('editor.depth', { u })}</span><input type="number" value={inField(selColumn.d)} onChange={e => num(e.target.value, x => mutate(s => { const c = s.floor.columns?.find(c => c.id === selColumn.id); if (c) c.d = r3(Math.min(x, PLAN_LIMITS.column.maxM * 100) / 100); }), PLAN_LIMITS.column.minM * 100)} /></label>
               </div>
               <label className="f"><span>{t('column.shape')}</span>
                 <select value={selColumn.shape} onChange={e => mutate(s => { const c = s.floor.columns?.find(c => c.id === selColumn.id); if (c) c.shape = e.target.value as any; })}>
@@ -721,8 +722,8 @@ export default function Editor({ id }: { id: string }){
               <h3>{t('tool.beam')}</h3>
               <div className="prov">{formatLength(wallLength(selBeam.a, selBeam.b), units, lang)}</div>
               <div className="grid2">
-                <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selBeam.width)} onChange={e => num(e.target.value, x => mutate(s => { const b = s.floor.beams?.find(b => b.id === selBeam.id); if (b) b.width = r3(x / 100); }), 10)} /></label>
-                <label className="f"><span>{t('beam.depth', { u })}</span><input type="number" value={inField(selBeam.depth)} onChange={e => num(e.target.value, x => mutate(s => { const b = s.floor.beams?.find(b => b.id === selBeam.id); if (b) b.depth = r3(x / 100); }), 10)} /></label>
+                <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selBeam.width)} onChange={e => num(e.target.value, x => mutate(s => { const b = s.floor.beams?.find(b => b.id === selBeam.id); if (b) b.width = r3(Math.min(x, PLAN_LIMITS.beam.maxM * 100) / 100); }), PLAN_LIMITS.beam.minM * 100)} /></label>
+                <label className="f"><span>{t('beam.depth', { u })}</span><input type="number" value={inField(selBeam.depth)} onChange={e => num(e.target.value, x => mutate(s => { const b = s.floor.beams?.find(b => b.id === selBeam.id); if (b) b.depth = r3(Math.min(x, PLAN_LIMITS.beam.maxM * 100) / 100); }), PLAN_LIMITS.beam.minM * 100)} /></label>
               </div>
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
             </div>
@@ -732,7 +733,7 @@ export default function Editor({ id }: { id: string }){
               <h3>{t('tool.glass_wall')}</h3>
               <div className="prov">{formatLength(wallLength(selGlassWall.a, selGlassWall.b), units, lang)}</div>
               <div className="grid2">
-                <label className="f"><span>{t('editor.thickness', { u })}</span><input type="number" value={inField(selGlassWall.thickness)} onChange={e => num(e.target.value, x => mutate(s => { const g = s.floor.glassWalls?.find(g => g.id === selGlassWall.id); if (g) g.thickness = r3(x / 100); }), 3)} /></label>
+                <label className="f"><span>{t('editor.thickness', { u })}</span><input type="number" value={inField(selGlassWall.thickness)} onChange={e => num(e.target.value, x => mutate(s => { const g = s.floor.glassWalls?.find(g => g.id === selGlassWall.id); if (g) g.thickness = r3(Math.min(x, PLAN_LIMITS.glassWall.thickMaxM * 100) / 100); }), PLAN_LIMITS.glassWall.thickMinM * 100)} /></label>
                 <label className="f"><span>{t('glassWall.mullions')}</span><input type="number" min={0} max={10} value={selGlassWall.mullions ?? 2} onChange={e => mutate(s => { const g = s.floor.glassWalls?.find(g => g.id === selGlassWall.id); if (g) g.mullions = Math.max(0, parseInt(e.target.value, 10) || 0); })} /></label>
               </div>
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
