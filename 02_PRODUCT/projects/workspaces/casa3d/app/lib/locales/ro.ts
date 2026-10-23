@@ -26,7 +26,7 @@ export const ro: Dict = {
   "editor.view": "Vizualizare", "editor.view2d": "Plan", "editor.viewSplit": "Plan + 3D", "editor.exportDxf": "DXF", "editor.print": "Tipărește / PDF", "editor.saveRevision": "Salvează revizia", "editor.tools": "Unelte",
   "editor.hintWall": "Click pentru început, click pentru fiecare colț · tastează lungimea (320, 3,2 sau 3,2 m) + Enter · Esc sau click dreapta termină", "editor.hintRoom": "Trage un dreptunghi sau dă clic în două colțuri · după primul clic poți tasta 4,5;3,2 + Enter", "editor.hintOpening": "Apasă lângă un perete",
   "editor.hintColumn": "Click în plan pentru a plasa un stâlp · R = rotire", "editor.hintBeam": "Trage o linie pentru a plasa o grindă de tavan", "editor.hintGlassWall": "Trage o linie pentru a plasa un perete despărțitor de sticlă", "editor.hintStair": "Click în plan pentru a plasa o scară",
-  "editor.hintMeasure": "Click pe două puncte ca să afli distanța · Esc oprește", "editor.hintSelect": "Rotița = zoom · Alt+trage = deplasare · R = rotește · Delete = șterge · ? = comenzi rapide",
+  "editor.hintMeasure": "Click pe două puncte ca să afli distanța · Esc oprește", "editor.hintSelect": "Rotița = zoom · Alt+trage = deplasare · R = rotește · F = încadrează · Delete = șterge · ? = comenzi rapide",
   "editor.previewBar": "Previzualizare: {title} (nesalvată)", "editor.warnings": "Avertismente", "editor.positionWarnings": "Poziția are avertismente",
   "editor.keepPosition": "Păstrez poziția", "editor.revert": "Revin", "editor.hidePanel": "Ascunde panoul", "editor.showPanel": "Arată panoul",
   "editor.summaryRooms": "{n} încăperi", "editor.summaryRooms.one": "{n} încăpere", "editor.summaryPieces": "{n} piese", "editor.summaryPieces.one": "{n} piesă", "editor.pieces": "{n} piese", "editor.pieces.one": "{n} piesă",
@@ -66,7 +66,7 @@ export const ro: Dict = {
   "help.title": "Comenzi rapide", "help.undoKeys": "Ctrl/Cmd + Z", "help.undo": "Anulează", "help.redoKeys": "Ctrl/Cmd + Y sau Ctrl/Cmd + Shift + Z", "help.redo": "Refă",
   "help.deleteKeys": "Delete / Backspace", "help.delete": "Șterge selecția", "help.rotate": "Rotește piesa cu 90°", "help.duplicateKeys": "Ctrl/Cmd + D", "help.duplicate": "Duplică piesa selectată",
   "help.arrowKeys": "Săgeți", "help.nudge": "Mută piesa cu {small}", "help.shiftArrowKeys": "Shift + săgeți", "help.nudgeBig": "Mută piesa cu {big}",
-  "help.escape": "Revine la „Selectez”, oprește măsurarea", "help.wheelKeys": "Rotița mouse-ului", "help.zoom": "Zoom în plan", "help.altDragKeys": "Alt + trage", "help.pan": "Deplasează planul", "help.toggle": "Afișează / ascunde această listă",
+  "help.escape": "Revine la „Selectez”, oprește măsurarea", "help.wheelKeys": "Rotița mouse-ului", "help.zoom": "Zoom în plan", "help.altDragKeys": "Alt + trage", "help.pan": "Deplasează planul", "help.frame": "Încadrează selecția (fără selecție: tot planul)", "help.toggle": "Afișează / ascunde această listă",
   // ---- buget ----
   "budget.cat.furniture": "Mobilier", "budget.cat.finishes": "Finisaje", "budget.cat.lighting": "Iluminat", "budget.cat.appliances": "Electrocasnice", "budget.cat.sanitary": "Sanitare",
   "budget.unit.ml": "ml", "budget.unit.buc": "buc", "budget.conf.HIGH": "încredere mare", "budget.conf.MEDIUM": "încredere medie", "budget.conf.LOW": "orientativ", "budget.conf.UNKNOWN": "necunoscut",

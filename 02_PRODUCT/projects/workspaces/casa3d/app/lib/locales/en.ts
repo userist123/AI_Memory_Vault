@@ -26,7 +26,7 @@ export const en: Dict = {
   "editor.view": "View", "editor.view2d": "Plan", "editor.viewSplit": "Plan + 3D", "editor.exportDxf": "DXF", "editor.print": "Print / PDF", "editor.saveRevision": "Save revision", "editor.tools": "Tools",
   "editor.hintWall": "Click to start, click each corner · type a length (320, 3.2 or 3.2 m) + Enter · Esc or right-click to finish", "editor.hintRoom": "Drag a rectangle or click two corners · after the first click you can type 4.5;3.2 + Enter", "editor.hintOpening": "Click next to a wall",
   "editor.hintColumn": "Click on plan to place a column · R = rotate", "editor.hintBeam": "Drag to place a ceiling beam", "editor.hintGlassWall": "Drag to place a glass partition", "editor.hintStair": "Click on plan to place stairs",
-  "editor.hintMeasure": "Click two points to measure the distance · Esc to stop", "editor.hintSelect": "Wheel = zoom · Alt+drag = pan · R = rotate · Delete = remove · ? = shortcuts",
+  "editor.hintMeasure": "Click two points to measure the distance · Esc to stop", "editor.hintSelect": "Wheel = zoom · Alt+drag = pan · R = rotate · F = frame · Delete = remove · ? = shortcuts",
   "editor.previewBar": "Preview: {title} (not saved)", "editor.warnings": "Warnings", "editor.positionWarnings": "This position has warnings",
   "editor.keepPosition": "Keep position", "editor.revert": "Revert", "editor.hidePanel": "Hide panel", "editor.showPanel": "Show panel",
   "editor.summaryRooms": "{n} rooms", "editor.summaryRooms.one": "{n} room", "editor.summaryPieces": "{n} items", "editor.summaryPieces.one": "{n} item", "editor.pieces": "{n} items", "editor.pieces.one": "{n} item",
@@ -66,7 +66,7 @@ export const en: Dict = {
   "help.title": "Keyboard shortcuts", "help.undoKeys": "Ctrl/Cmd + Z", "help.undo": "Undo", "help.redoKeys": "Ctrl/Cmd + Y or Ctrl/Cmd + Shift + Z", "help.redo": "Redo",
   "help.deleteKeys": "Delete / Backspace", "help.delete": "Delete selection", "help.rotate": "Rotate item 90°", "help.duplicateKeys": "Ctrl/Cmd + D", "help.duplicate": "Duplicate selected item",
   "help.arrowKeys": "Arrow keys", "help.nudge": "Move item by {small}", "help.shiftArrowKeys": "Shift + arrow keys", "help.nudgeBig": "Move item by {big}",
-  "help.escape": "Back to \"Select\", stop measuring", "help.wheelKeys": "Mouse wheel", "help.zoom": "Zoom the plan", "help.altDragKeys": "Alt + drag", "help.pan": "Pan the plan", "help.toggle": "Show / hide this list",
+  "help.escape": "Back to \"Select\", stop measuring", "help.wheelKeys": "Mouse wheel", "help.zoom": "Zoom the plan", "help.altDragKeys": "Alt + drag", "help.pan": "Pan the plan", "help.frame": "Frame the selection (nothing selected: the whole plan)", "help.toggle": "Show / hide this list",
   // ---- budget ----
   "budget.cat.furniture": "Furniture", "budget.cat.finishes": "Finishes", "budget.cat.lighting": "Lighting", "budget.cat.appliances": "Appliances", "budget.cat.sanitary": "Sanitary",
   "budget.unit.ml": "m", "budget.unit.buc": "pcs", "budget.conf.HIGH": "high confidence", "budget.conf.MEDIUM": "medium confidence", "budget.conf.LOW": "indicative", "budget.conf.UNKNOWN": "unknown",
