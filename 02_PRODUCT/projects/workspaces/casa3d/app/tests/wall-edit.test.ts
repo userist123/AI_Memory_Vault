@@ -43,4 +43,17 @@ describe('setWallLength', () => {
     assert.throws(() => setWallLength(fl, 'w1', 3.3), (e: unknown) => e instanceof WallEditError && e.key === 'wallEdit.openingOut');
     assert.deepEqual(byId(setWallLength(fl, 'w1', 3.4), 'w1').b, [3.4, 0]);
   });
+  test('peretele de lungime zero e refuzat, nu scrie NaN în plan', () => {
+    const fl = room(); fl.walls.push(wall('z', [4, 0], [4, 0]));
+    assert.throws(() => setWallLength(fl, 'z', 3), (e: unknown) => e instanceof WallEditError && e.key === 'wallEdit.degenerate');
+  });
+  test('refuză când vecinul coliniar care urmează colțul s-ar strânge sub 20 cm', () => {
+    const fl = room(); fl.walls = [wall('a', [0, 0], [4, 0]), wall('b', [4, 0], [8, 0])];
+    assert.throws(() => setWallLength(fl, 'a', 8), (e: unknown) => e instanceof WallEditError && e.key === 'wallEdit.neighbourShort');
+    assert.deepEqual(byId(setWallLength(fl, 'a', 7.8), 'b').a, [7.8, 0]);
+  });
+  test('refuză când fereastra vecinului n-ar mai încăpea pe el', () => {
+    const fl = room(); fl.walls = [wall('a', [0, 0], [4, 0]), wall('b', [4, 0], [8, 0], [{ id: 'f', kind: 'window', offset: 2.5, width: 1.2 }])];
+    assert.throws(() => setWallLength(fl, 'a', 6), (e: unknown) => e instanceof WallEditError && e.key === 'wallEdit.openingOut');
+  });
 });
