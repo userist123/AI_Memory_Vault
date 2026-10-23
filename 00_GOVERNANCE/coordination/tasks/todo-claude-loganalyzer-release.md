@@ -476,6 +476,15 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   Installed (exe 1DFB2340…, hash = publish, self-test 0). REAL PC VERIFIED 2026-10-23: procedures toolbar Salvează + Importă JSON…; users Preia + Salvează;
   policies only "Deschide politica…" (toolbar under Avansat); Control step 1 plain ("nu respectă regula de denumire a unității", "Ediția: Standalone (stație
   izolată, fără rețea)."). Minor open: users page has two accent buttons; users subtitle repeated (bold line + short line + card).
+- SIMPLIFY round 3 DONE 46d8ae400 (worker, red-first 11/14 failed then 14/14): monitor hides "Oprește supravegherea" (when live) + Export CSV in Simplu;
+  sidebar "Avansat" only in Expert, Simplu link "Toate paginile (nivelul Expert)" -> Expert + menu open; Simplu on an Avansat page -> Acasă
+  (AdvancedNav.TabAfterLevelChange); registers one accent button; transfer "Atenție: mediul nu este în registru…" sentence case + warning colour;
+  Home "Alte acțiuni" hides duplicates in Simplu.
+  FLAKE ROOT-CAUSED + FIXED (main): CollectAllTests failed 2/815 in ~1 of 3 runs: NotSupportedException "CollectionView … different from the Dispatcher
+  thread" - a MediaCenterViewModel left by a real-view test answered CollectAllState.Published from another thread (MediaCenterViewModel.cs ctor). Fix: the
+  handler runs on the page's dispatcher (CheckAccess/BeginInvoke). Deterministic test PublishThreadAffinityTests (red before, green after). App 816/0 x5 runs.
+  Installed (exe 13E5C452…, hash = publish, self-test 0). REAL PC VERIFIED 2026-10-23 incl. link -> Expert and Simplu on "Panou general" -> Acasă.
+  Login automation: the account text can be lost when typed right after `start` - always crop-check BOTH fields before submitting (did; 0 failed attempts).
 - OPEN QUESTION to owner: move LogAnalyzer.db/.key (+ .bak-20261016) from %LOCALAPPDATA%\LogAnalyzer too (not in the approved cleanup list)?
 - send.ps1 now recreates cmd/ and out/ (the scratchpad cleaner removed them twice).
 - (old) CLEANUP list given to owner 2026-10-23, waiting for OK + answers (person name "Eu Mister" -> ?, Policies 45 files test or keep?): delete Cases (16, 2.9 GB incl.
