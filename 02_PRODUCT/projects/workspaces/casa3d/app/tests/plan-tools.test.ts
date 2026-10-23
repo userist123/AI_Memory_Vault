@@ -5,8 +5,9 @@ import catalogJson from '../data/catalog.v1.json';
 import materialsJson from '../data/materials.v1.json';
 import { newSnapshot } from '../core/project';
 import { doorOpenings } from '../core/doors';
-import { doorZones } from '../core/validate';
-import { computeBOQ, roomGeometry } from '../core/boq';
+import { doorZones, validateFloor, issueTarget } from '../core/validate';
+import { checkSnapshot } from '../lib/repo';
+import { computeBOQ, roomGeometry, shaftsIn, defaultFinishes } from '../core/boq';
 import { floorToPlan, planToFloor } from '../features/migration/legacy.js';
 import { viewerInput } from '../lib/viewer-input';
 import { describePlan } from '../core/plan-describe';
@@ -43,5 +44,33 @@ describe('gol de trecere', () => {
     const s = withPassage(); assert.match(desc(s).find(i => i.id === 'tr-1')!.label, /^Gol de trecere · 90/);
     const arcs = (x: Snapshot) => ents(planToDxf(x, cat, { lang: 'ro' }), 'ARC', 'DOORS'), lines = (x: Snapshot) => ents(planToDxf(x, cat, { lang: 'ro' }), 'LINE', 'DOORS');
     assert.equal(arcs(s), arcs(blank())); assert.equal(lines(s), lines(blank()) + 2);
+  });
+});
+
+describe('ghenă / casetare', () => {
+  const withShaft = (o: Partial<import('../core/types').Column> = {}) => { const s = blank(); s.floor.rooms[0]!.type = 'baie'; s.finishes = { [s.floor.rooms[0]!.id]: { ...defaultFinishes(s.floor.rooms[0]!) } };
+    s.floor.columns = [{ id: 'gh-1', x: 4.85, z: 2, w: .3, d: .3, shape: 'rect', role: 'shaft', ...o }]; return s; };
+  test('deviz: gips-carton pe fețele libere × înălțime, faianță în baie; stâlpul structural fără cost', () => {
+    const s = withShaft(), [sh] = shaftsIn(s.floor, s.floor.rooms[0]!);
+    // lipită de peretele de est (x = 5): fețe libere = 0,3 + 0,3 + 0,3 = 0,9 m, înălțimea tavanului
+    assert.equal(sh!.freePerimeter, .9); assert.equal(sh!.area, Math.round(.9 * s.floor.ceilingHeight * 100) / 100);
+    const b = computeBOQ(s, cat, mc); assert.ok(b.items.some(i => i.key.endsWith(':shaft:gh-1') && i.netQty === sh!.area));
+    assert.ok(b.items.some(i => i.key.endsWith(':shaft-tile:gh-1'))); assert.ok(b.unknown.some(u => u.startsWith('Manoperă casetare')));
+    const low = withShaft({ role: 'boxing', height: 1.1 }); assert.equal(shaftsIn(low.floor, low.floor.rooms[0]!)[0]!.area, Math.round(.9 * 1.1 * 100) / 100);
+    const st = withShaft({ role: undefined }); assert.deepEqual(shaftsIn(st.floor, st.floor.rooms[0]!), []); assert.ok(!computeBOQ(st, cat, mc).items.some(i => i.key.includes('shaft')));
+  });
+  test('validări: în deschiderea ușii și în afara camerei → avertismente; ținta e ghena', () => {
+    assert.deepEqual(validateFloor(withShaft().floor).filter(i => i.code.startsWith('SHAFT')), []);
+    const out = withShaft({ x: 6 }), iss = validateFloor(out.floor).find(i => i.code === 'SHAFT_OUTSIDE_ROOM')!;
+    assert.equal(iss.severity, 'WARNING'); assert.deepEqual(issueTarget(iss, out.floor), { kind: 'column', id: 'gh-1' });
+    const door = blank().floor.walls[3]!.openings[0]!, s = withShaft({ x: .3, z: 4 - door.offset - door.width / 2 });
+    assert.ok(validateFloor(s.floor).some(i => i.code === 'SHAFT_DOOR' && i.severity === 'WARNING'));
+  });
+  test('3D, descriere, DXF, server: înălțimea ajunge la motor, rolul în listă și pe stratul pereților; rol necunoscut respins', () => {
+    const s = withShaft({ height: 1.1 }); assert.equal((viewerInput(s, cat).plan.stalpi[0] as any).height, 1.1);
+    assert.match(desc(s).find(i => i.id === 'gh-1')!.label, /^Ghenă · 30/);
+    assert.equal(ents(planToDxf(s, cat, { lang: 'ro' }), 'LINE', 'WALLS'), ents(planToDxf(blank(), cat, { lang: 'ro' }), 'LINE', 'WALLS') + 2);
+    const bad: any = withShaft(); bad.floor.columns[0].role = 'chimney'; assert.throws(() => checkSnapshot(bad), (e: any) => e.status === 400);
+    const old = withShaft({ role: undefined }); assert.ok(!('role' in (checkSnapshot(structuredClone(old)) as any).floor.columns[0]));
   });
 });

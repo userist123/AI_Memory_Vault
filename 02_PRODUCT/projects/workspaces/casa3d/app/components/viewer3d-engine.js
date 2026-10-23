@@ -731,16 +731,17 @@ function model(it){
       structBlockers.push({ x0: v.x0, z0: v.z0, x1: v.x1, z1: v.z1 }); });
     // stâlpi / coloane structurale
     (p.stalpi || []).forEach(col => {
-      const w = col.w || 0.35, d = col.d || 0.35;
+      // ghena / casetarea poate fi mai joasă decât tavanul (ex. casetare de WC suspendat, ~1,1 m)
+      const w = col.w || 0.35, d = col.d || 0.35, ch = Math.min(H, col.height || H);
       if (col.shape === 'round') {
-        const geo = sharedGeo('col-rnd-' + k3(w, H, 0), () => new THREE.CylinderGeometry(w / 2, w / 2, H, 24));
+        const geo = sharedGeo('col-rnd-' + k3(w, ch, 0), () => new THREE.CylinderGeometry(w / 2, w / 2, ch, 24));
         const m = new THREE.Mesh(geo, wallMat);
-        m.position.set(col.x, H / 2, col.z);
+        m.position.set(col.x, ch / 2, col.z);
         m.castShadow = m.receiveShadow = true;
         m.userData.wall = true;
         walls.add(m);
       } else {
-        box(w, H, d, wallMat, col.x, H / 2, col.z, 0, walls).userData.wall = true;
+        box(w, ch, d, wallMat, col.x, ch / 2, col.z, 0, walls).userData.wall = true;
       }
       structBlockers.push({ x0: col.x - w / 2, z0: col.z - d / 2, x1: col.x + w / 2, z1: col.z + d / 2 });
     });

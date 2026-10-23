@@ -106,6 +106,11 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
       const mid: Pt = [(A[0] + B[0]) / 2 + nx * 120, (A[1] + B[1]) / 2 - nz * 120];
       text('DIMENSIONS', mid, 120, String(Math.round(L * 1000)), { rot, center: true }); }
 
+    // ---- ghene și casetări: contur pe stratul pereților, ghena cu diagonale (hașură) ----
+    for (const c of snap.floor.columns ?? []){ if (c.role !== 'shaft' && c.role !== 'boxing') continue; const x0 = c.x - c.w / 2, x1 = c.x + c.w / 2, z0 = c.z - c.d / 2, z1 = c.z + c.d / 2;
+      poly('WALLS', [P(x0, z0), P(x1, z0), P(x1, z1), P(x0, z1)]);
+      if (c.role === 'shaft'){ line('WALLS', P(x0, z0), P(x1, z1)); line('WALLS', P(x1, z0), P(x0, z1)); } }
+
     // ---- mobilier ----
     for (const p of snap.placements){ const fp = footprintOf(cat, p); if (!fp) continue;
       poly('FURNITURE', [P(fp.x0, fp.z0), P(fp.x1, fp.z0), P(fp.x1, fp.z1), P(fp.x0, fp.z1)]);
