@@ -86,17 +86,19 @@ def make_vault(tmp: Path, private: bool = True):
     for rel, text in FILES.items():
         path = root / rel
         path.parent.mkdir(parents=True, exist_ok=True)
-        path.write_text(text, encoding="utf-8")
+        # LF on every platform, like a checkout under .gitattributes `eol=lf`: on Windows the default
+        # newline would write CRLF, and vault_read's verbatim text/sha256 would differ from Linux.
+        path.write_text(text, encoding="utf-8", newline="\n")
     (root / "10_DOCUMENTATION/procedures/Latin1.md").write_bytes("# Café\n\nna\xefve\n".encode("latin-1"))
     cfg = tmp / "cfg" / "04_CONFIG"
     cfg.mkdir(parents=True)
-    (cfg / "vault_domains.yaml").write_text(yaml.safe_dump(DOMAINS, sort_keys=False), encoding="utf-8")
-    (cfg / "access_policy.yaml").write_text(yaml.safe_dump(POLICY, sort_keys=False), encoding="utf-8")
+    (cfg / "vault_domains.yaml").write_text(yaml.safe_dump(DOMAINS, sort_keys=False), encoding="utf-8", newline="\n")
+    (cfg / "access_policy.yaml").write_text(yaml.safe_dump(POLICY, sort_keys=False), encoding="utf-8", newline="\n")
     priv = None
     if private:
         priv = tmp / "private"
         (priv / "notes").mkdir(parents=True)
-        (priv / "notes" / "Sensitive_Plan.md").write_text("# Sensitive plan\n\nlocal only\n", encoding="utf-8")
+        (priv / "notes" / "Sensitive_Plan.md").write_text("# Sensitive plan\n\nlocal only\n", encoding="utf-8", newline="\n")
     return root, cfg.parent, priv
 
 
