@@ -434,7 +434,7 @@ export default function Editor({ id }: { id: string }){
     setSel({ kind: 'column', id: cid }); setTool('select');
   };
   // nișa nouă: 60 × 40 × 10 cm la 110 cm de pardoseală, pe fața peretelui unde s-a dat clic; mărimile se schimbă în panou
-  const onAddNiche = (wallId: string, offset: number, side: 1 | -1) => { if (full(snap.floor.niches?.length, PLAN_LIMITS.niche.max)) return; const w =snap.floor.walls.find(x => x.id === wallId)!, L = wallLength(w.a, w.b), D = PLAN_DEFAULTS.niche, width = Math.min(D.width, r3(L - .1));
+  const onAddNiche = (wallId: string, offset: number, side: 1 | -1) => { if (full(snap.floor.niches?.length, PLAN_LIMITS.niche.max)) return; const w = snap.floor.walls.find(x => x.id === wallId)!, L = wallLength(w.a, w.b), D = PLAN_DEFAULTS.niche, width = Math.min(D.width, r3(L - .1));
     if (width < PLAN_LIMITS.niche.widthMinM){ say(t('editor.wallTooShort')); return; } const nid = `nisa-${uid().slice(0, 8)}`, depth = r3(Math.max(PLAN_LIMITS.niche.depthMinM, Math.min(D.depth, w.thickness - .05)));
     mutate(s => { s.floor.niches = [...(s.floor.niches || []), { id: nid, wallId, offset: r3(Math.max(0, Math.min(L - width, offset - width / 2))), width, height: D.height, depth, elevation: D.elevation, side }]; });
     setSel({ kind: 'niche', id: nid }); setTool('select'); };
@@ -446,11 +446,13 @@ export default function Editor({ id }: { id: string }){
   const patchAnn = (aid: string, fn: (a: Annotation) => void) => mutate(s => { const a = s.floor.annotations?.find(x => x.id === aid); if (a) fn(a); });
   const patchNiche = (nid: string, fn: (n: Niche) => void) => mutate(s => { const n = s.floor.niches?.find(x => x.id === nid); if (n) fn(n); });
   const onAddBeam = (a: [number, number], b: [number, number]) => {
+    if (full(snap.floor.beams?.length, PLAN_LIMITS.beam.max)) return;
     const bid = `bm-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.beams = [...(s.floor.beams || []), { id: bid, a, b, width: .25, depth: .35 }]; });
     setSel({ kind: 'beam', id: bid }); setTool('select');
   };
   const onAddGlassWall = (a: [number, number], b: [number, number]) => {
+    if (full(snap.floor.glassWalls?.length, PLAN_LIMITS.glassWall.max)) return;
     const gid = `gw-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.glassWalls = [...(s.floor.glassWalls || []), { id: gid, a, b, thickness: .08, mullions: 2, frameColor: '#23262B' }]; });
     setSel({ kind: 'glass_wall', id: gid }); setTool('select');

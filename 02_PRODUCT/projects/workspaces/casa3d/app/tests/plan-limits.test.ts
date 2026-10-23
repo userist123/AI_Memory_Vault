@@ -31,6 +31,7 @@ test('server: adnotările (cote, texte) curățate, textul fără < > și caract
   for (const bad of [{ id: 'd', kind: 'dim', a: [0, 0], b: [0.001, 0], offset: .3 }, { id: 'd', kind: 'dim', a: [0, 0], b: [2, 0], offset: Infinity }, { id: 'x', kind: 'arrow', at: [0, 0] }, { id: 't', kind: 'text', at: [5000, 0], text: 'x' }]){
     const t2 = base(); t2.floor.annotations = [bad]; rejects(() => checkSnapshot(t2)); }
   const many = base(); many.floor.annotations = Array.from({ length: 301 }, (_, i) => ({ id: `t${i}`, kind: 'text', at: [0, 0], text: 'x' })); rejects(() => checkSnapshot(many));
+  assert.equal(cleanPlanText('f\u061Cg'), 'f g');
   assert.equal(cleanPlanText('ab\u202Ecd\u2066e'), 'ab cd e');
   assert.equal(cleanPlanText('a'.repeat(500)).length, PLAN_LIMITS.annotation.textMax);
 });
@@ -48,5 +49,7 @@ test('server: valorile vechi peste limită (salvate de interfața de dinainte) s
   assert.equal(r.floor.columns[0].w, L.column.maxM); assert.equal(r.floor.columns[0].d, L.column.maxM);
   assert.equal(r.floor.beams[0].width, L.beam.maxM); assert.equal(r.floor.beams[0].depth, L.beam.minM);
   assert.equal(r.floor.glassWalls[0].thickness, L.glassWall.thickMaxM); assert.equal(r.floor.glassWalls[0].mullions, L.glassWall.mullionsMax);
+  for (const bad of [{ w: -5 }, { w: 0 }]){ const t = base(); t.floor.columns = [Object.assign({ id: 'col-1', x: 1, z: 1, w: .35, d: .35, shape: 'rect' }, bad)]; rejects(() => checkSnapshot(t)); }
+  const nb = base(); nb.floor.beams = [{ id: 'bm-1', a: [0, 0], b: [2, 0], width: -1, depth: .3 }]; rejects(() => checkSnapshot(nb));
   const neg = base(); neg.floor.glassWalls = [{ id: 'gw-1', a: [0, 1], b: [2, 1], thickness: .08, mullions: -1 }]; rejects(() => checkSnapshot(neg));
 });
