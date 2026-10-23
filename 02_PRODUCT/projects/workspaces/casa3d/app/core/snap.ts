@@ -1,14 +1,12 @@
 // Desenarea precisă a pereților (PLAN_A1, felia 2): magnetul cursorului (capăt de perete → unghi în trepte → grilă),
-// punctul la o lungime tastată și citirea lungimii scrise de utilizator. Doar logică pură, fără DOM; PlanView o aplică.
+// punctul la o lungime tastată (lungimea se citește în core/typed-dimension.ts). Doar logică pură, fără DOM; PlanView o aplică.
 import type { Floor } from './types';
-import { CM_PER_IN, type Units } from './format';
 import { r3 } from './geometry';
 
 export type SnapKind = 'endpoint' | 'angle' | 'grid' | 'free';
 export interface SnapResult { p: [number, number]; kind: SnapKind; length: number | null; angleDeg: number | null }
 export interface SnapOpts { floor: Pick<Floor, 'walls'>; anchor?: [number, number] | null; free?: boolean; grid?: number; radius?: number; stepDeg?: number }
 
-const M_PER_IN = CM_PER_IN / 100, MAX_M = 100;
 const DEG = Math.PI / 180;
 const angleOf = (a: [number, number], p: [number, number]) => { const d = Math.atan2(p[1] - a[1], p[0] - a[0]) / DEG; return r3(((d % 360) + 360) % 360) % 360; };
 const along = (a: [number, number], deg: number, len: number): [number, number] => [r3(a[0] + len * Math.cos(deg * DEG)), r3(a[1] + len * Math.sin(deg * DEG))];
@@ -42,24 +40,4 @@ export function snapDraw(cursor: [number, number], o: SnapOpts): SnapResult {
 export function pointAtLength(anchor: [number, number], toward: [number, number], lengthM: number, stepDeg = 15, free = false): [number, number] {
   const deg = free ? Math.atan2(toward[1] - anchor[1], toward[0] - anchor[0]) / DEG : snapDir(anchor, toward, stepDeg);
   return along(anchor, deg, lengthM);
-}
-
-const N = String.raw`(\d+(?:[.,]\d+)?|[.,]\d+)`;
-const num = (s: string) => Number(s.replace(',', '.'));
-const RE_METRIC = new RegExp(String.raw`^${N}\s*(mm|cm|m)?$`, 'i');
-const RE_FT_IN = new RegExp(String.raw`^${N}\s*(?:'|ft)\s*(?:${N}\s*(?:"|in)?)?$`, 'i');
-const RE_IN = new RegExp(String.raw`^${N}\s*(?:"|in)$`, 'i');
-const RE_FT = new RegExp(String.raw`^${N}$`);
-
-/** Lungimea scrisă de utilizator, în metri (rotunjită la mm), sau `null` dacă nu e validă (gol, text, negativ, zero, peste 100 m). */
-export function parseLengthInput(text: string, units: Units): number | null {
-  const t = text.trim(); let m: number | null = null, x: RegExpMatchArray | null;
-  if ((x = t.match(RE_METRIC)) && x[2]) m = num(x[1]) * ({ mm: .001, cm: .01, m: 1 } as Record<string, number>)[x[2].toLowerCase()];
-  else if (units === 'imperial') {
-    if ((x = t.match(RE_FT_IN))) m = (num(x[1]) * 12 + (x[2] ? num(x[2]) : 0)) * M_PER_IN;
-    else if ((x = t.match(RE_IN))) m = num(x[1]) * M_PER_IN;
-    else if ((x = t.match(RE_FT))) m = num(x[1]) * 12 * M_PER_IN;
-  } else if ((x = t.match(RE_FT))) { const v = num(x[1]); m = v > 30 ? v / 100 : v; } // fără unitate: ≤ 30 metri, peste 30 centimetri
-  if (m === null || !Number.isFinite(m)) return null;
-  const r = r3(m); return r > 0 && r <= MAX_M ? r : null;
 }

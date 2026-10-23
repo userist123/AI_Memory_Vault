@@ -34,7 +34,7 @@ import { appearanceColors } from '@/core/appearance';
 import { History, type HistoryMark } from '@/core/history';
 import { usePrefs } from '@/lib/prefs';
 import { issueText } from '@/lib/i18n';
-import { intlLocale } from '@/lib/i18n';
+import { intlLocale, LANGS } from '@/lib/i18n';
 import PrefsSwitcher from './PrefsSwitcher';
 import { formatMoney, formatArea, formatLength, formatDimsCm, cmToInput, inputToCm, lengthInputUnit, catalogCurrency } from '@/core/format';
 import { validatePlacement, validateFloor, severityOf, issueTarget } from '@/core/validate';
@@ -73,6 +73,7 @@ import CommandPalette, { type Command } from './CommandPalette';
 import { isPaletteShortcut } from '@/lib/fuzzy';
 import { editorIgnoresKey } from '@/lib/palette-keys';
 import { matchCommand, commandById, commandHint, formatShortcut, ariaShortcut, toolShortcut } from '@/lib/commands';
+import { prepareShareImages } from '@/lib/share-images';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
 const uid = () => crypto.randomUUID();
@@ -120,7 +121,7 @@ const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: tr
   { id: 'site', view: '2d', tools: [], page: true }
 ];
 export default function Editor({ id }: { id: string }){
-  const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
+  const { t, tp, lang, units, setLang, setUnits } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
   const [meta, setMeta] = useState<ProjectMeta | null>(null), [house, setHouse] = useState<Snapshot | null>(null), [lvl, setLvl] = useState(0), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
   const compact = useCompact(), [sheet, setSheet] = useState<'peek' | 'half' | 'full'>('half'), [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('2d'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'offline' | 'auth'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
@@ -151,10 +152,13 @@ export default function Editor({ id }: { id: string }){
     fetch('/api/outbound').then(r => r.ok ? r.json() : null).then(setOut).catch(() => {});
     loadRevs(); }, [id]); // eslint-disable-line
   const loadRevs = () => { fetch(`/api/projects/${id}/revisions`).then(r => r.ok ? r.json() : []).then(setRevs); fetch(`/api/projects/${id}/shares`).then(r => r.ok ? r.json() : []).then(setShares); };
+  // linkurile active fără imagini gata randate (linkuri vechi, o randare întreruptă) se completează în fundal, fără mesaj
+  useEffect(() => { const revs = [...new Set(shares.filter(s => s.active).map(s => s.revisionNumber as number))]; if (!revs.length) return;
+    const tm = setTimeout(() => { revs.reduce((p, n) => p.then(() => prepareShareImages(id, n)).then(() => {}), Promise.resolve()); }, 4000); return () => clearTimeout(tm); }, [shares, id]);
   const flight = useRef(singleFlight()).current, [revBusy, setRevBusy] = useState(false);
   async function shareRevision(n: number){ return flight.run(`share:${n}`, () => shareRevisionNow(n)); }
   async function shareRevisionNow(n: number){ const r = await fetch(`/api/projects/${id}/shares`, { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ revision: n }) }); if (!authOk(r)) return; const j = await r.json().catch(() => ({}));
-    if (!r.ok){ say(j.error || t('editor.shareFailed')); return; } const url = `${location.origin}${j.path}`; try { await navigator.clipboard.writeText(url); say(t('editor.shareCopied')); } catch { say(t('editor.shareLink', { url })); } loadRevs(); }
+    if (!r.ok){ say(j.error || t('editor.shareFailed')); return; } prepareShareImages(id, n).then(k => { if (k) say(t('client.imagesReady')); }); const url = `${location.origin}${j.path}`; try { await navigator.clipboard.writeText(url); say(t('editor.shareCopied')); } catch { say(t('editor.shareLink', { url })); } loadRevs(); }
   async function revokeShare(token: string){ const r = await fetch(`/api/projects/${id}/shares`, { method: 'DELETE', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ token }) }); if (!authOk(r)) return; if (!r.ok){ say(t('editor.revokeFailed')); return; } say(t('editor.revoked')); loadRevs(); }
   // fiecare salvare spune de la ce versiune a pornit; dacă proiectul s-a schimbat între timp (alt dispozitiv), nu suprascrie tăcut
   // Salvările merg una după alta (fiecare pornește de la versiunea primită de precedenta); rețeaua căzută nu aruncă: starea devine
@@ -440,7 +444,11 @@ export default function Editor({ id }: { id: string }){
     ...(stageDef.page ? [] : [{ id: 'v-2d', group: t('cmdk.group.views'), label: t('cmdk.view2d'), keywords: ['2D'], run: () => { setView('2d'); if (compact) setSheet('peek'); } },
       { id: 'v-split', group: t('cmdk.group.views'), label: t('cmdk.viewSplit'), disabled: compact, run: () => setView('split') },
       { id: 'v-3d', group: t('cmdk.group.views'), label: t('cmdk.view3d'), run: () => { setView('3d'); if (compact) setSheet('peek'); } }]),
-    ...(stageDef.page ? [] : stageDef.tools.map(tk => ({ id: `tool-${tk}`, group: t('cmdk.group.tools'), label: t(TOOL_LABEL[tk]), hint: formatShortcut(toolShortcut(tk), { mac }), run: () => setTool(tk) }))),
+    // UI/UX P1-5: paleta acoperă tot ce se poate face din editor: unelte (cu scurtătura din registru), obiecte după nume,
+    // setări, toate documentele
+    ...(stageDef.page ? [] : stageDef.tools.map(tk => { const k = formatShortcut(toolShortcut(tk), { mac });
+      return { id: `tool-${tk}`, group: t('cmdk.group.tools'), label: t(TOOL_LABEL[tk]), keywords: [t('cmdk.kw.tool')],
+        hint: tool === tk ? [t('cmdk.active'), k].filter(Boolean).join(' · ') : k || undefined, run: () => setTool(tk) }; })),
     { id: 'undo', group: t('cmdk.group.actions'), label: t('editor.undo'), hint: hint('undo'), keywords: [t('cmdk.kw.undo')], disabled: !hist.current.canUndo, run: undo },
     { id: 'redo', group: t('cmdk.group.actions'), label: t('editor.redo'), hint: hint('redo'), disabled: !hist.current.canRedo, run: redo },
     { id: 'rev', group: t('cmdk.group.actions'), label: t('editor.saveRevision'), keywords: [t('cmdk.kw.save')], disabled: revBusy, run: () => { setRevBusy(true); flight.run('revision', saveRevision).finally(() => setRevBusy(false)); } },
@@ -449,6 +457,16 @@ export default function Editor({ id }: { id: string }){
     { id: 'present', group: t('cmdk.group.docs'), label: t('cmdk.present'), run: () => { window.open(`/p/${id}/present`, '_blank', 'noopener'); } },
     { id: 'board', group: t('cmdk.group.docs'), label: t('cmdk.board'), run: () => { window.open(`/p/${id}/board`, '_blank', 'noopener'); } },
     { id: 'home', group: t('cmdk.group.actions'), label: t('cmdk.home'), run: () => { location.href = '/'; } },
+    ...(stageDef.page ? [] : snap.floor.rooms.map(r => ({ id: `room-${r.id}`, group: t('cmdk.group.objects'), label: r.name, keywords: [t(`roomType.${r.type}`), t('cmdk.kw.room')],
+      hint: t('cmdk.room'), run: () => { setTool('select'); setSel({ kind: 'room', id: r.id }); } }))),
+    ...(stageDef.page ? [] : snap.placements.map(pl => { const rv = resolve(catalog, pl.variantId), room = snap.floor.rooms.find(r => r.id === pl.roomId)?.name;
+      return { id: `pl-${pl.id}`, group: t('cmdk.group.objects'), label: rv ? rv.product.name : pl.group, keywords: [rv?.variant.name ?? '', room ?? '', pl.group],
+        hint: room, run: () => { setTool('select'); setSel({ kind: 'placement', id: pl.id }); } }; })),
+    { id: 'health', group: t('cmdk.group.actions'), label: t('cmdk.health'), keywords: [t('cmdk.kw.health')], run: () => setShowHealth(true) },
+    { id: 'lang', group: t('cmdk.group.settings'), label: LANGS.find(l => l.code !== lang)!.name, keywords: [t('cmdk.kw.lang'), 'language', 'limba'], run: () => setLang(lang === 'ro' ? 'en' : 'ro') },
+    { id: 'units', group: t('cmdk.group.settings'), label: units === 'metric' ? t('cmdk.unitsImperial') : t('cmdk.unitsMetric'), keywords: [t('cmdk.kw.units')], run: () => setUnits(units === 'metric' ? 'imperial' : 'metric') },
+    ...(['offer', 'contract', 'proforma', 'handover', 'site-report'] as const).map(d => ({ id: `doc-${d}`, group: t('cmdk.group.docs'), label: t(`cmdk.doc.${d}`), keywords: [t('cmdk.kw.print')],
+      run: () => { window.open(`/p/${id}/${d}`, '_blank', 'noopener'); } })),
   ];
 
   return (<div className="ws spatial-studio" data-ui="spatial-studio">
@@ -950,7 +968,8 @@ function ClientPanel({ id, say, onLinked, flush, roomNames, cur }: { id: string;
   async function make(){ if (making.current) return; making.current = true; setBusy(true); try { if (!(await flush())) return; const r = await fetch(`/api/projects/${id}/client-link`, { method: 'POST' }), j = await r.json();
       if (!r.ok){ say(j.error || t('client.failed')); return; }
       const url = j.url ?? `${location.origin}${j.path}`, local = j.publicUrl === false && isLocalHostname(location.hostname);
-      setLink({ url, local }); setTick(n => n + 1); if (j.newRevision) say(t('client.newRev', { n: j.revisionNumber })); await copy(url); onLinked(); }
+      setLink({ url, local }); setTick(n => n + 1); if (j.newRevision) say(t('client.newRev', { n: j.revisionNumber })); await copy(url); onLinked();
+      prepareShareImages(id, j.revisionNumber).then(k => { if (k) say(t('client.imagesReady')); }); }
     catch { say(t('client.failed')); } finally { making.current = false; setBusy(false); } }
   async function toggle(f: ClientFeedback){ const r = await fetch(`/api/projects/${id}/feedback`, { method: 'PATCH', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ id: f.id, resolved: !f.resolvedAt }) });
     if (r.ok){ const j = await r.json(); setItems(xs => (xs ?? []).map(x => x.id === f.id ? { ...x, resolvedAt: j.resolvedAt } : x)); } }

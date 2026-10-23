@@ -91,4 +91,8 @@ alter table custom_items add column if not exists cost_price numeric(12,2);
 alter table custom_items add column if not exists lead_days int;
 alter table custom_items add column if not exists dimension text;
 create table if not exists project_commercial(project_id uuid primary key references projects(id) on delete cascade, data jsonb not null, updated_at timestamptz not null default now());
+-- UI/UX P1-3: imaginile 3D ale unei revizii partajate, randate o dată în browserul designerului (WebP/JPEG, base64), ca
+-- linkul clientului să le arate imediat, fără motorul 3D. Cheia e „overview” sau id-ul camerei, câte o lățime (800, 1600)
+create table if not exists revision_renders(project_id uuid not null references projects(id) on delete cascade, revision_number int not null, key text not null,
+  width int not null, mime text not null, data text not null, created_at timestamptz not null default now(), primary key(project_id, revision_number, key, width));
 `;
