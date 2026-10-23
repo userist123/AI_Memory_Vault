@@ -455,6 +455,18 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   buttons; users/policies "Avansat" collapsed, one accent button; transfer "Sursă (structura)"/"Destinație (structura)"; monitor BT producer "—"; glossary
   "188 de termeni". Item 9 cause: first REAL click on Control step 1 "Înainte" opens the provisional-scope dialog (by design), not a hit-test bug.
   Flake: one App.Tests failure (name not captured) in 1 of 3 runs, then 771/0 twice - probably DeviceMonitorTests lost-event-source (worker saw it too). Track.
+- SIMPLIFY round DONE 798ddb7cf (worker + main: integrity warning band OUTSIDE "Setări avansate" on AuthView, visible in both levels when IntegrityBroken,
+  test A_broken_accounts_integrity_is_warned_outside_the_advanced_settings_expander, written after the code). Main re-ran build 0 err, App 793/0, UI 354/1.
+  Mechanism: Views/SimpleLevel.cs attached HideInSimple/OnlyInSimple (also DataGrid columns), KeepFirstTabWhenSimple, MoreDetailsExpanderStyle.
+  Installed (exe 2DBF3F30…, hash = publish, self-test 0). REAL PC VERIFIED 2026-10-23 (screenshots sent): monitor 9 columns + one tab + one-line intro; transfer
+  short form, validation under the button, "Mai multe detalii"; auth: cards, password, users, "Setări avansate" collapsed; procedures 7 tabs + "Mai multe secțiuni";
+  policies 2 tabs, no states line; control page without "Avansat (parametrii controlului)"; status bar short. Integrity band NOT seen live (integrity intact).
+  CI on 54e210da1 read once: all LogAnalyzer jobs green, only "npm lockfiles" red (unrelated imported project).
+  Next simplification candidates: procedures toolbar (9 buttons + checkbox) -> Simplu keeps Salvează + Importă; policies "Deschide fișier…/folder GPO" vs step
+  "Deschide politica…" (keep one in Simplu); Control step 1 jargon ("Numele stației nu urmează convenția", "postura ediției"); users register toolbar (8 buttons).
+- CLEANUP list given to owner 2026-10-23, waiting for OK + answers (person name "Eu Mister" -> ?, Policies 45 files test or keep?): delete Cases (16, 2.9 GB incl.
+  LIVE-MARIUS-PC with 14 controls and the "Test" scope), transfers TR-2026-0001/0002, first-run-guide.seen; keep licence, accounts/password, sealed audit chain,
+  provenance ledger, device monitor journal.
 - UIA driver notes: `type`/`key` call Focus() = main window; for a secondary window use `rxy`/`rtype`/`rkey` (no focus change). Driver must be started BEFORE send.ps1 (creates cmd/).
 - After that: C/D items of PORNIRE_INCEPATOR (table rows 4,7-10,12-20), publish + reinstall + real-PC screenshots (do NOT send `max` before sign-in), CI once, cleanup list for owner.
 - Next (was: owner answers): fix B items (BT fold is device-monitor = security-relevant -> Opus review), then C/D;
