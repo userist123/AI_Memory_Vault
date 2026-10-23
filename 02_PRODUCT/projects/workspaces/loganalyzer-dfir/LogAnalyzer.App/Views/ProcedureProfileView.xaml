@@ -3,6 +3,7 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:vmx="clr-namespace:LogAnalyzer.UI.ViewModels"
              xmlns:services="clr-namespace:LogAnalyzer.UI.Services"
+             xmlns:views="clr-namespace:LogAnalyzer.UI.Views"
              xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls">
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -43,6 +44,8 @@
                     <Button Content="Lipește în tabel" Command="{Binding PasteCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,10,0"/>
                     <CheckBox Content="înlocuiește conținutul tabelului la import/lipire" IsChecked="{Binding ReplaceOnImport}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 </WrapPanel>
+                <CheckBox Margin="0,8,0,0" Content="Mai multe secțiuni (sărbători legale, schimburi, rotirea jurnalelor, canale și destinații de transfer)" IsChecked="{Binding ShowMoreSections}"
+                          Foreground="{StaticResource TextPrimaryBrush}" views:SimpleLevel.OnlyInSimple="True" AutomationProperties.Name="Mai multe secțiuni: arată și tabelele rar folosite"/>
                 <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/>
                 <Expander Header="Avansat" IsExpanded="False" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0" AutomationProperties.Name="Avansat: fișierul profilului">
                     <WrapPanel Margin="0,6,0,0">
@@ -76,9 +79,21 @@
             </StackPanel>
         </Border>
 
-        <TabControl AutomationProperties.Name="Tabelele profilului de proceduri" Grid.Row="2" ctrl:PageFill.MinHeight="360" ItemsSource="{Binding Tables}" SelectedItem="{Binding SelectedTable, Mode=TwoWay}" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+        <TabControl x:Name="ProfileTabs" AutomationProperties.Name="Tabelele profilului de proceduri" Grid.Row="2" ctrl:PageFill.MinHeight="360" ItemsSource="{Binding Tables}" SelectedItem="{Binding SelectedTable, Mode=TwoWay}" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
             <TabControl.ItemContainerStyle>
-                <Style TargetType="TabItem" BasedOn="{StaticResource InspectorTabItemStyle}"/>
+                <Style TargetType="TabItem" BasedOn="{StaticResource InspectorTabItemStyle}">
+                    <Style.Triggers>
+                        <!-- Simplu: the five rarely needed tables show only after „Mai multe secțiuni” -->
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"/>
+                                <Condition Binding="{Binding IsRare}" Value="True"/>
+                                <Condition Binding="{Binding DataContext.ShowMoreSections, RelativeSource={RelativeSource AncestorType=TabControl}}" Value="False"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
             </TabControl.ItemContainerStyle>
             <TabControl.ItemTemplate>
                 <DataTemplate>

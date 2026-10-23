@@ -24,10 +24,6 @@
             <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
                        Text="Importați, aprobați și aplicați politici de securitate Windows, cu verificare după aplicare."/>
             <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
-                       Text="Stări: CIORNĂ → VALIDATĂ → TESTATĂ → APROBATĂ → APLICATĂ → VERIFICATĂ. Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată.">
-                <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
-            </TextBlock>
-            <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
                        Text="Stări: CIORNĂ (DRAFT) → VALIDATĂ (VALIDATED) → TESTATĂ (TESTED) → APROBATĂ (APPROVED) → APLICATĂ (DEPLOYED) → VERIFICATĂ (VERIFIED). Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată.">
                 <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
             </TextBlock>
@@ -63,7 +59,7 @@
                         Visibility="{Binding NextStep.CanAct, Converter={StaticResource BoolToVis}}" AutomationProperties.Name="Fă pasul următor"/>
                 <TextBlock Text="{Binding NextStep.Text}" TextWrapping="Wrap" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
             </DockPanel>
-            <Expander Header="Toți pașii, manual (pentru cine cunoaște ciclul politicii)" Foreground="{StaticResource TextSecondaryBrush}">
+            <Expander Header="Toți pașii, manual (pentru cine cunoaște ciclul politicii)" local:SimpleLevel.HideInSimple="True" Foreground="{StaticResource TextSecondaryBrush}">
             <WrapPanel VerticalAlignment="Center" Margin="0,6,0,0">
                 <Button Content="1. Înregistrează" Command="{Binding RegisterCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="2. Validează" Command="{Binding ValidateCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
@@ -84,7 +80,7 @@
             </StackPanel>
         </Border>
 
-        <TabControl Grid.Row="3" ctrl:PageFill.MinHeight="360" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+        <TabControl x:Name="PolicyTabs" Grid.Row="3" ctrl:PageFill.MinHeight="360" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
             <TabItem Header="Plan (curent / dorit / diferență)" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <TextBlock DockPanel.Dock="Top" Text="{Binding PlanSummary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
@@ -155,7 +151,7 @@
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>
-            <TabItem Header="Conformitate" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Conformitate" local:SimpleLevel.HideInSimple="True" Style="{StaticResource InspectorTabItemStyle}">
                 <DataGrid Margin="8" ItemsSource="{Binding Compliance}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Control benchmark" Binding="{Binding BenchmarkControl}" Width="130"/>
@@ -168,10 +164,10 @@
                     </DataGrid.Columns>
                 </DataGrid>
             </TabItem>
-            <TabItem Header="Neacceptate la import" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Neacceptate la import" local:SimpleLevel.HideInSimple="True" Style="{StaticResource InspectorTabItemStyle}">
                 <ListBox Margin="8" ItemsSource="{Binding Unsupported}" Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}"/>
             </TabItem>
-            <TabItem Header="Istoric ciclu de viață" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Istoric ciclu de viață" local:SimpleLevel.HideInSimple="True" Style="{StaticResource InspectorTabItemStyle}">
                 <DataGrid Margin="8" ItemsSource="{Binding History}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding AtUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
