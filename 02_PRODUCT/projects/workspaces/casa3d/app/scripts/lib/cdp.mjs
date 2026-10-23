@@ -39,11 +39,16 @@ export async function page(cdp){
 }
 /** În pagină (aceeași origine, cookie-ul de proprietar): proiect demo → revizie → link pentru client. */
 export async function makeShare(p, base, name = 'Verificare automată', roomNames = []){
-  await p.go(`${base}/`);
+  // Pe un profil nou, pagina principală își face propriile cereri fără cookie de proprietar: fiecare primește un proprietar
+  // nou, iar cookie-ul rămas poate fi al altuia decât proiectul creat aici (404 imediat după creare, văzut în CI).
+  // Deci: așteptăm cererile paginii, fixăm cookie-ul printr-o cerere proprie, apoi creăm; o singură reîncercare.
+  await p.go(`${base}/`); await sleep(1500);
   return p.evaluate(async (name, rooms) => {
     const j = async (url, method = 'GET', body) => { const r = await fetch(url, { method, headers: { 'content-type': 'application/json' }, body: body && JSON.stringify(body) });
-      const d = await r.json().catch(() => null); if (!r.ok) throw new Error(`${method} ${url}: ${r.status} ${JSON.stringify(d)}`); return d; };
-    const { id } = await j('/api/projects', 'POST', { name, template: 'demo', lang: 'ro' });
+      const d = await r.json().catch(() => null); if (!r.ok) throw Object.assign(new Error(`${method} ${url}: ${r.status} ${JSON.stringify(d)}`), { status: r.status }); return d; };
+    await j('/api/projects');
+    let id; for (let k = 0; k < 2; k++){ ({ id } = await j('/api/projects', 'POST', { name, template: 'demo', lang: 'ro' }));
+      try { await j(`/api/projects/${id}`); break; } catch (e){ if (e.status !== 404 || k) throw e; await new Promise(r => setTimeout(r, 500)); } }
     const pr = await j(`/api/projects/${id}`), snap = pr.draft; snap.name = name;
     snap.floor.rooms.slice(0, rooms.length).forEach((r, i) => { r.name = rooms[i]; });
     await j(`/api/projects/${id}`, 'PUT', { snapshot: snap, base: pr.draftRev });
