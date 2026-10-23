@@ -20,11 +20,16 @@ const set = (s: Snapshot, id: string, patch: Partial<RoomFinishes>) => { s.finis
 const keys = (s: Snapshot, id: string) => finishIssues(s, mc, s.floor, room(s, id), finishesOf(s, room(s, id))).map(i => i.key);
 
 describe('calcule de bază', () => {
-  test('tapet: fâșii pe lungime, câte fâșii dintr-o rolă, role întregi', () => {
-    assert.deepEqual(wallpaperRolls(3.5, 2.6, { widthM: .53, lengthM: 10.05, repeatCm: 0 }), { strips: 7, perRoll: 3, rolls: 3 });
-    // un raport de 64 cm lasă doar 2 fâșii pe rolă
-    assert.deepEqual(wallpaperRolls(3.5, 2.6, { widthM: .53, lengthM: 10.05, repeatCm: 64 }), { strips: 7, perRoll: 3, rolls: 3 });
-    assert.deepEqual(wallpaperRolls(3.5, 2.6, { widthM: .53, lengthM: 10.05, repeatCm: 80 }), { strips: 7, perRoll: 2, rolls: 4 });
+  test('tapet: fâșia rotunjită la multiplu de raport, potrivirea decalată, rezerva rotunjită la rolă', () => {
+    // fără raport: fâșia = 2,6 + 5 cm; 7 fâșii, 3 pe rolă → 3 role + 10 % rezervă = 4
+    assert.deepEqual(wallpaperRolls(3.5, 2.6, { widthM: .53, lengthM: 10.05, repeatCm: 0 }), { strips: 7, perRoll: 3, rolls: 4, spare: 1, dropM: 2.65, match: 'free' });
+    // raport de 64 cm: 2,65 m se rotunjește la 5 × 0,64 = 3,20 m (nu 2,6 + 0,64 + 0,05 = 3,29 m)
+    assert.deepEqual(wallpaperRolls(3.5, 2.6, { widthM: .53, lengthM: 10.05, repeatCm: 64 }), { strips: 7, perRoll: 3, rolls: 4, spare: 1, dropM: 3.2, match: 'straight' });
+    // potrivire decalată: + jumătate de raport (3,52 m), doar 2 fâșii pe rolă, rezervă 15 %
+    assert.deepEqual(wallpaperRolls(3.5, 2.6, { widthM: .53, lengthM: 10.05, repeatCm: 64, match: 'offset' }), { strips: 7, perRoll: 2, rolls: 5, spare: 1, dropM: 3.52, match: 'offset' });
+    assert.equal(wallpaperRolls(3.5, 2.6, { widthM: .53, lengthM: 10.05, repeatCm: 80 }).dropM, 3.2);
+    assert.equal(wallpaperRolls(20, 2.6, { widthM: .53, lengthM: 10.05, repeatCm: 0 }).spare, 2, '38 fâșii → 13 role + 10 % = 15');
+    assert.equal(wallpaperRolls(0, 2.6, { widthM: .53, lengthM: 10.05, repeatCm: 0 }).rolls, 0);
   });
   test('riflaj: coloane × rânduri de panouri', () => { assert.equal(panelCount(3, 2.4, [60, 240]), 5); assert.equal(panelCount(3.1, 2.6, [60, 240]), 7, 'restul de 20 cm se taie din panouri: 12 bucăți dintr-unul'); });
   test('pierderi după modul de așezare și format', () => {
@@ -270,5 +275,39 @@ describe('placare pe o porțiune (alongFromM / alongToM)', () => {
   test('server: porțiunea inversată dă 400 la salvare', async () => {
     resetDbForTests(); const A = '99999999-9999-4999-8999-999999999998', id = await repo.createProject(A, 'F', 'demo'), s = set(demo(), 'living', { wallFeatures: [{ side: 'N', kind: 'slats', material: 'riflaj-mdf-unic-alb', alongFromM: 3, alongToM: 1 }] });
     await assert.rejects(repo.saveDraft(A, id, s), (e: any) => e.status === 400);
+  });
+});
+
+// ---------- P1.b3: tapet corect și vopsea decorativă cu efect ----------
+import { featureLabor, effectOf, EFFECT_LABOR } from '../core/finishes';
+describe('tapet și vopsea decorativă cu efect', () => {
+  test('deviz: linia de tapet spune fâșiile, rezerva și lotul; rolele includ rezerva', () => {
+    const s = set(demo(), 'living', { wallFeatures: [{ side: 'N', kind: 'wallpaper', material: 'tapet-grandeco-marmor' }] });
+    const it = computeBOQ(s, cat, mc).items.find(i => i.key === 'living:wall:N:0')!, n = sideGeometry(s.floor, room(s, 'living'), 'N'), rr = wallpaperRolls(n.lengthM, n.heightM, { widthM: .53, lengthM: 10.05, repeatCm: 0 });
+    assert.equal(it.orderedQty, rr.rolls); assert.ok(rr.spare >= 1);
+    assert.match(it.label, /fâșii de 2\.65 m, 3 pe rolă, \+ 1 rolă rezervă; toate din același lot/);
+  });
+  test('efectul: manopera are tarif propriu; fără tarif și fără produs pentru efect, ambele apar fără preț (nu cu prețul tencuielii obișnuite)', () => {
+    assert.equal(featureLabor({ kind: 'plaster' }), 'manopera-tencuiala-decorativa');
+    assert.equal(featureLabor({ kind: 'plaster', effect: 'textured' }), 'manopera-tencuiala-decorativa');
+    assert.equal(featureLabor({ kind: 'plaster', effect: 'venetian' }), EFFECT_LABOR.venetian); assert.notEqual(EFFECT_LABOR.venetian, 'manopera-tencuiala-decorativa');
+    assert.equal(effectOf({ kind: 'paint', effect: 'silk' }), null, 'efectul doar pe tencuială');
+    assert.equal(effectOf({ kind: 'plaster' }, { specs: { effect: 'concrete' } } as any), 'concrete', 'efectul declarat de produs are prioritate');
+    const base = computeBOQ(demo(), cat, mc).items.find(i => i.key === 'living:paint')!.netQty;
+    const s = set(demo(), 'living', { wallFeatures: [{ side: 'W', kind: 'plaster', material: 'tencuiala-kober-bob-orez', effect: 'venetian' }] }), b = computeBOQ(s, cat, mc);
+    assert.ok(!b.items.some(i => i.key.startsWith('living:wall:W')), 'Kober nu e venețiană: fără linie cu prețul ei');
+    assert.ok(b.unknown.some(u => /efect venețiană \(material/.test(u)) && b.unknown.some(u => /Manoperă vopsea decorativă efect venețiană/.test(u)));
+    assert.ok(!b.labor.some(l => l.rateId === 'manopera-tencuiala-decorativa'), 'tariful tencuielii obișnuite nu se folosește la venețiană');
+    assert.ok(b.items.find(i => i.key === 'living:paint')!.netQty < base, 'peretele cu efect nu se mai vopsește cu vopseaua camerei');
+    const tx = computeBOQ(set(demo(), 'living', { wallFeatures: [{ side: 'W', kind: 'plaster', material: 'tencuiala-kober-bob-orez', effect: 'textured' }] }), cat, mc);
+    assert.ok(tx.items.some(i => i.key === 'living:wall:W:0') && tx.labor.some(l => l.rateId === 'manopera-tencuiala-decorativa'));
+  });
+  test('avertismente: microciment în baie, efect fără produs; 3D primește efectul; serverul îl acceptă doar pe tencuială', () => {
+    const s = set(demo(), 'baie', { wallFeatures: [{ side: 'N', kind: 'plaster', material: 'tencuiala-kober-bob-orez', effect: 'microcement' }] });
+    const k = keys(s, 'baie'); assert.ok(k.includes('fin.microcementWet') && k.includes('fin.effectUnpriced'));
+    assert.equal(roomVisual(mc, finishesOf(s, room(s, 'baie')), 'baie').walls[0]!.effect, 'microcement');
+    assert.equal(sanitizeFinishes({ x: { wallFeatures: [{ side: 'N', kind: 'plaster', material: 'a', effect: 'venetian' }] } }), null);
+    assert.equal(sanitizeFinishes({ x: { wallFeatures: [{ side: 'N', kind: 'plaster', material: 'a', effect: 'gold' }] } }), 'Placările de pe pereți sunt invalide.');
+    assert.equal(sanitizeFinishes({ x: { wallFeatures: [{ side: 'N', kind: 'paint', material: 'a', effect: 'silk' }] } }), 'Placările de pe pereți sunt invalide.');
   });
 });
