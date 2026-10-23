@@ -129,7 +129,8 @@ whole-corpus retrieval numbers.
   not exist. No code reads the registry (the code router uses `04_CONFIG/agent_router.json`),
   and 18 of the 149 skills it names are not in `.agents/skills/`. Of the council limits (copy in
   `AGENTS.md` wins), `max_memory_results`, skills per agent and graph hops are enforced
-  (`executive.py`, `agent_router.py`); council-agent counts and token caps are not.
+  (`executive.py`, `agent_router.py`) and one primary agent holds by construction; the cap of 3
+  council agents (a route can carry 4), `MAX_TOTAL_SELECTED_SKILLS` and the token caps are not.
 - **Agents now have direct routes, but no live agent turn has used them yet.** The `vault_*` tools are
   registered for Claude Code, Codex, Antigravity and Gemini CLI (`AGENTS.md`, "Direct routes for every AI");
   the stdio contract is tested, no client session has been observed calling them. The 8 coordination files
