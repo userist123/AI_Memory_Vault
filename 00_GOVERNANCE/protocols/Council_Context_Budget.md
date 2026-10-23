@@ -12,12 +12,19 @@ document_status: active
 > **Provenance.** Restored on 2026-10-23, byte for byte below this note, from
 > `99_SYSTEM/Council_Context_Budget.md` at `dbcfbc502^`. Commit `dbcfbc502` deleted
 > `99_SYSTEM/` as "redundant scaffold", but the 21 agent profiles and two skills kept
-> pointing here, and no other file carried this policy.
+> pointing here for the selection order and routing rules below.
 >
-> **Enforcement status.** This is the documented policy. The numeric limits below
-> (`max_council_agents`, token caps, ...) are **not enforced by code**: the runtime
-> gate is `03_IMPLEMENTATION/packages/memory/council_budget_controller.py`, which picks a
-> council tier (NONE / LIGHT / STANDARD / HIGH_RISK) and does not read these values.
+> **Which copy of the limits wins.** The same numbers are in `AGENTS.md` ("Council
+> limits", which also has `MAX_TOTAL_SELECTED_SKILLS = 4`). `AGENTS.md` is the repository
+> contract and wins on any conflict; this file keeps the rationale and the procedure.
+>
+> **Enforcement status (measured on restore).** Enforced by code: `max_memory_results`
+> (`memory/executive.py` `MAX_COUNCIL_MEMORY_RESULTS = 5`; `routing/agent_router.py` from
+> `04_CONFIG/agent_router.json` `defaults`), `max_skills_per_agent` (`agent_router.py`, per
+> agent `max_skills`) and `max_graph_hops` (`agent_router.py`, `defaults`). **Not enforced**:
+> `max_council_agents`, `max_primary_agents` and the two token caps. The council gate
+> `memory/council_budget_controller.py` picks a tier (NONE / LIGHT / STANDARD / HIGH_RISK)
+> and reads none of these values.
 
 ## Purpose
 
