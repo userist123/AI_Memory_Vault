@@ -646,10 +646,11 @@ The workflows in [`.github/workflows/`](.github/workflows/), grouped by what the
 
 | What it checks | Workflows |
 |---|---|
-| the full test suite and repository structure | `r001-enforcement.yml`, `memory-v6-tests.yml`, `security-boundary.yml`, `context-token-economy-gate.yml`, `ai-security-update-watch.yml` |
+| the full test suite and repository structure | `r001-enforcement.yml`, `memory-v6-tests.yml`, `security-boundary.yml`, `context-token-economy-gate.yml`, `ai-security-update-watch.yml`, `prompt-master-eval.yml` |
 | repository hygiene: absolute paths, disallowed root files, personal data | `repository-hygiene.yml` |
 | retrieval on the held-out benchmark, frozen by SHA-256 | `r009b-heldout-benchmark.yml` |
 | LogAnalyzer DFIR (.NET): build, tests and the editions' win-x64 packages | `loganalyzer-dfir-build.yml` |
+| Casa3D: typecheck, Vitest and the Next.js build for the app and twin-core | `casa3d-build.yml` |
 | Dependency audit (npm, .NET) per manifest; fails on CRITICAL | `dependency-audit.yml` |
 | imported material, scanned for injected instructions | `untrusted-content-guard.yml` |
 | owner approval for PRs (GitHub environment; effective only once the owner sets its reviewers) | `owner-approval-gate.yml` |

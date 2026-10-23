@@ -1,0 +1,48 @@
+{
+ "fields": {
+  "incomplete": false,
+  "usage_complete": true,
+  "tokens_complete": true,
+  "missing_fields": [],
+  "total_tokens": 3983,
+  "tok_input": 15,
+  "tok_cache_read": 3500,
+  "tok_cache_creation": 360,
+  "tok_output": 108,
+  "requests": 5,
+  "tool_calls": 2,
+  "delegations": 2,
+  "cost_authoritative_usd": 0.022
+ },
+ "absent": [
+  "usage_mismatch",
+  "residual_negative",
+  "attribution_mismatch",
+  "cost_without_tokens",
+  "tokens_without_cost",
+  "cost_partial"
+ ],
+ "rows": {
+  "main|claude-sonnet-5-5": {
+   "input_tokens": 4,
+   "cache_read_input_tokens": 2300,
+   "cache_creation_input_tokens": 210,
+   "output_tokens": 50,
+   "requests": 2
+  },
+  "subagent:Explore|claude-haiku-5-5": {
+   "input_tokens": 7,
+   "cache_read_input_tokens": 700,
+   "cache_creation_input_tokens": 100,
+   "output_tokens": 28,
+   "requests": 2
+  },
+  "subagent:vault-worker|claude-sonnet-5-5": {
+   "input_tokens": 4,
+   "cache_read_input_tokens": 500,
+   "cache_creation_input_tokens": 50,
+   "output_tokens": 30,
+   "requests": 1
+  }
+ }
+}
