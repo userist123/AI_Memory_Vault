@@ -72,6 +72,7 @@ import { PHASES, phaseOf, stageDone, nextStage, doneCount, STAGE_IDS, activeShar
 import CommandPalette, { type Command } from './CommandPalette';
 import { isPaletteShortcut } from '@/lib/fuzzy';
 import { editorIgnoresKey } from '@/lib/palette-keys';
+import { matchCommand, commandById, commandHint, formatShortcut, ariaShortcut, toolShortcut } from '@/lib/commands';
 import { prepareShareImages } from '@/lib/share-images';
 import { withViewTransition } from '@/lib/motion';
 import StagePicker from './StagePicker';
@@ -322,17 +323,19 @@ export default function Editor({ id }: { id: string }){
     // în lista obiectelor planului tastele aparțin listei (săgeți, Enter, Escape): Backspace nu șterge selecția pe neașteptate
     if (el.closest?.('.plan-mirror')) return;
     if (editorIgnoresKey({ preview: !!preview, inField: !!el.closest?.('input,select,textarea,[contenteditable=true]'), inDialog: !!el.closest?.('dialog[open],[aria-modal=true]'), paletteOpen: paletteOpenRef.current })) return;
-    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){ e.preventDefault(); e.shiftKey ? redo() : undo(); }
-    else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y'){ e.preventDefault(); redo(); }
-    else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'd'){ e.preventDefault(); if (sel?.kind === 'placement') duplicate(sel.id); }
-    else if (e.key === '?'){ setHelp(h => !h); }
-    else if (e.key.startsWith('Arrow') && sel?.kind === 'placement' && !e.ctrlKey && !e.metaKey && !e.altKey){ e.preventDefault(); const st = e.shiftKey ? NUDGE_BIG_CM : NUDGE_CM;
-      nudge(sel.id, e.key === 'ArrowLeft' ? -st : e.key === 'ArrowRight' ? st : 0, e.key === 'ArrowUp' ? -st : e.key === 'ArrowDown' ? st : 0); }
-    else if (e.key === 'Delete' || e.key === 'Backspace'){ del(); }
-    else if (e.key.toLowerCase() === 'r' && sel?.kind === 'placement') rotate(sel.id);
-    else if (e.key.toLowerCase() === 'r' && sel?.kind === 'stair') rotateStair(sel.id);
-    else if (e.key.toLowerCase() === 'r' && sel?.kind === 'column') rotateColumn(sel.id);
-    else if (e.key === 'Escape'){ setTool('select'); setHelp(false); setCalib(null); setShowHealth(false); setShowLab(false); setActiveImpact(null); } };
+    // scurtăturile vin din registru (lib/commands.ts); Ctrl/⌘K rămâne la paletă (isPaletteShortcut)
+    const cid = matchCommand(e); if (!cid) return;
+    switch (cid){
+      case 'undo': e.preventDefault(); undo(); break;
+      case 'redo': e.preventDefault(); redo(); break;
+      case 'duplicate': e.preventDefault(); if (sel?.kind === 'placement') duplicate(sel.id); break;
+      case 'help': setHelp(h => !h); break;
+      case 'nudge': case 'nudge.big': if (sel?.kind !== 'placement') break; { e.preventDefault(); const st = cid === 'nudge.big' ? NUDGE_BIG_CM : NUDGE_CM;
+        nudge(sel.id, e.key === 'ArrowLeft' ? -st : e.key === 'ArrowRight' ? st : 0, e.key === 'ArrowUp' ? -st : e.key === 'ArrowDown' ? st : 0); } break;
+      case 'delete': del(); break;
+      case 'rotate': if (sel?.kind === 'placement') rotate(sel.id); else if (sel?.kind === 'stair') rotateStair(sel.id); else if (sel?.kind === 'column') rotateColumn(sel.id); break;
+      case 'escape': setTool('select'); setHelp(false); setCalib(null); setShowHealth(false); setShowLab(false); setActiveImpact(null); break;
+      default: { const tk = commandById(cid)?.tool; if (tk && STAGES.find(x => x.id === stage)?.tools.includes(tk)) setTool(tk); } } };
     addEventListener('keydown', k); return () => removeEventListener('keydown', k); });
 
   // salvarea automată e amânată 700 ms; înainte de o revizie sau de un link pentru client se trimite imediat ultima stare
@@ -465,7 +468,7 @@ export default function Editor({ id }: { id: string }){
   const num = (v: string, f: (x: number) => void, min = 0) => { const x = v.trim() === '' ? 0 : inputToCm(v, units), tol = units === 'imperial' ? 1.27 : 1e-9; if (x != null && x >= min - tol) f(Math.max(x, min)); };
   const cur = catalogCurrency(catalog), money = (v: number | null | undefined) => formatMoney(v, cur, lang, t('common.unknownPrice')), when = (d: string) => new Date(d).toLocaleString(intlLocale(lang)), inField = (m: number) => cmToInput(m * 100, units);
 
-  const kbd = (k: string) => mac ? `⌘${k}` : `Ctrl+${k}`, stageName = (sid: Stage) => t(`stage.${sid}`);
+  const hint = (cid: string) => commandHint(cid, { mac }), stageName = (sid: Stage) => t(`stage.${sid}`);
   const commands: Command[] = [
     ...(nextId ? [{ id: 'next', group: t('cmdk.group.next'), label: t('cmdk.continue', { stage: stageName(nextId) }), keywords: [t('stage.continue'), t('cmdk.kw.next')], done: !!done?.[nextId], run: () => setStage(nextId) }] : []),
     ...STAGES.map((st, i) => ({ id: `st-${st.id}`, group: t('cmdk.group.stages'), label: t('cmdk.goStage', { n: String(i + 1).padStart(2, '0'), stage: stageName(st.id) }), keywords: [stageName(st.id), t(`phase.${phaseOf(st.id)}`)],
@@ -473,17 +476,19 @@ export default function Editor({ id }: { id: string }){
     ...(stageDef.page ? [] : [{ id: 'v-2d', group: t('cmdk.group.views'), label: t('cmdk.view2d'), keywords: ['2D'], run: () => { setView('2d'); if (compact) setSheet('peek'); } },
       { id: 'v-split', group: t('cmdk.group.views'), label: t('cmdk.viewSplit'), disabled: compact, run: () => setView('split') },
       { id: 'v-3d', group: t('cmdk.group.views'), label: t('cmdk.view3d'), run: () => { setView('3d'); if (compact) setSheet('peek'); } }]),
-    { id: 'undo', group: t('cmdk.group.actions'), label: t('editor.undo'), hint: kbd('Z'), keywords: [t('cmdk.kw.undo')], disabled: !hist.current.canUndo, run: undo },
-    { id: 'redo', group: t('cmdk.group.actions'), label: t('editor.redo'), hint: kbd('Y'), disabled: !hist.current.canRedo, run: redo },
+    // UI/UX P1-5: paleta acoperă tot ce se poate face din editor: unelte (cu scurtătura din registru), obiecte după nume,
+    // setări, toate documentele
+    ...(stageDef.page ? [] : stageDef.tools.map(tk => { const k = formatShortcut(toolShortcut(tk), { mac });
+      return { id: `tool-${tk}`, group: t('cmdk.group.tools'), label: t(TOOL_LABEL[tk]), keywords: [t('cmdk.kw.tool')],
+        hint: tool === tk ? [t('cmdk.active'), k].filter(Boolean).join(' · ') : k || undefined, run: () => setTool(tk) }; })),
+    { id: 'undo', group: t('cmdk.group.actions'), label: t('editor.undo'), hint: hint('undo'), keywords: [t('cmdk.kw.undo')], disabled: !hist.current.canUndo, run: undo },
+    { id: 'redo', group: t('cmdk.group.actions'), label: t('editor.redo'), hint: hint('redo'), disabled: !hist.current.canRedo, run: redo },
     { id: 'rev', group: t('cmdk.group.actions'), label: t('editor.saveRevision'), keywords: [t('cmdk.kw.save')], disabled: revBusy, run: () => { setRevBusy(true); flight.run('revision', saveRevision).finally(() => setRevBusy(false)); } },
-    { id: 'help', group: t('cmdk.group.actions'), label: t('editor.shortcuts'), hint: '?', run: () => setHelp(true) },
+    { id: 'help', group: t('cmdk.group.actions'), label: t('editor.shortcuts'), hint: hint('help'), run: () => setHelp(true) },
     { id: 'print', group: t('cmdk.group.docs'), label: t('cmdk.print'), keywords: [t('cmdk.kw.print')], run: () => { window.open(`/p/${id}/print`, '_blank', 'noopener'); } },
     { id: 'present', group: t('cmdk.group.docs'), label: t('cmdk.present'), run: () => { window.open(`/p/${id}/present`, '_blank', 'noopener'); } },
     { id: 'board', group: t('cmdk.group.docs'), label: t('cmdk.board'), run: () => { window.open(`/p/${id}/board`, '_blank', 'noopener'); } },
     { id: 'home', group: t('cmdk.group.actions'), label: t('cmdk.home'), run: () => { location.href = '/'; } },
-    // UI/UX P1-5: paleta acoperă tot ce se poate face din editor: unelte, obiecte după nume, setări, toate documentele
-    ...(stageDef.page ? [] : stageDef.tools.map(tk => ({ id: `tool-${tk}`, group: t('cmdk.group.tools'), label: t(TOOL_LABEL[tk]), keywords: [t('cmdk.kw.tool')],
-      hint: tool === tk ? t('cmdk.active') : undefined, run: () => setTool(tk) }))),
     ...(stageDef.page ? [] : snap.floor.rooms.map(r => ({ id: `room-${r.id}`, group: t('cmdk.group.objects'), label: r.name, keywords: [t(`roomType.${r.type}`), t('cmdk.kw.room')],
       hint: t('cmdk.room'), run: () => { setTool('select'); setSel({ kind: 'room', id: r.id }); } }))),
     ...(stageDef.page ? [] : snap.placements.map(pl => { const rv = resolve(catalog, pl.variantId), room = snap.floor.rooms.find(r => r.id === pl.roomId)?.name;
@@ -505,9 +510,9 @@ export default function Editor({ id }: { id: string }){
       <input className="name" value={snap.name} aria-label={t('editor.projectName')} maxLength={120} onChange={e => { const n = { ...house!, name: e.target.value }; setHouse(n); persist(n); }} />
       <SaveChip save={save} rev={rev} />
       <div className="tb-actions">
-      <button type="button" className="btn ghost cmdk-trigger" aria-haspopup="dialog" aria-expanded={cmdOpen} aria-keyshortcuts="Control+K Meta+K" title={`${t('cmdk.open')} (${kbd('K')})`} onClick={() => setCmdOpen(true)}><Icon name="search" /><span className="lbl">{t('cmdk.openShort')}</span><kbd className="cmdk-kbd" aria-hidden="true">{kbd('K')}</kbd></button>
-      <button className="btn ghost icon-btn" onClick={undo} disabled={!hist.current.canUndo} title={hist.current.canUndo ? `${t('editor.undo')} (Ctrl+Z)` : t('editor.nothingToUndo')} aria-label={t('editor.undo')}><Icon name="undo" /><span className="lbl">{t('editor.undo')}</span></button>
-      <button className="btn ghost icon-btn" onClick={redo} disabled={!hist.current.canRedo} title={hist.current.canRedo ? `${t('editor.redo')} (Ctrl+Y)` : t('editor.nothingToRedo')} aria-label={t('editor.redo')}><Icon name="redo" /><span className="lbl">{t('editor.redo')}</span></button>
+      <button type="button" className="btn ghost cmdk-trigger" aria-haspopup="dialog" aria-expanded={cmdOpen} aria-keyshortcuts="Control+K Meta+K" title={`${t('cmdk.open')} (${hint('palette')})`} onClick={() => setCmdOpen(true)}><Icon name="search" /><span className="lbl">{t('cmdk.openShort')}</span><kbd className="cmdk-kbd" aria-hidden="true">{hint('palette')}</kbd></button>
+      <button className="btn ghost icon-btn" onClick={undo} disabled={!hist.current.canUndo} title={hist.current.canUndo ? `${t('editor.undo')} (${hint('undo')})` : t('editor.nothingToUndo')} aria-label={t('editor.undo')} aria-keyshortcuts={ariaShortcut(commandById('undo')!.shortcuts[0]!, { mac })}><Icon name="undo" /><span className="lbl">{t('editor.undo')}</span></button>
+      <button className="btn ghost icon-btn" onClick={redo} disabled={!hist.current.canRedo} title={hist.current.canRedo ? `${t('editor.redo')} (${hint('redo')})` : t('editor.nothingToRedo')} aria-label={t('editor.redo')} aria-keyshortcuts={ariaShortcut(commandById('redo')!.shortcuts[0]!, { mac })}><Icon name="redo" /><span className="lbl">{t('editor.redo')}</span></button>
       {!stageDef.page && <div className="seg" role="group" aria-label={t('editor.view')}>
         {compact ? (['2d', '3d', 'panel'] as const).map(vv => { const on = vv === 'panel' ? sheet === 'full' : view === vv && sheet !== 'full';
             return <button key={vv} aria-pressed={on} onClick={() => { if (vv === 'panel'){ setSheet('full'); setSideOpen(true); } else { setView(vv); setSheet('peek'); } }}><Icon name={vv === '2d' ? 'plan' : vv === '3d' ? 'cube' : 'panel'} /><span>{vv === '2d' ? t('editor.view2d') : vv === '3d' ? '3D' : t('editor.viewPanel')}</span></button>; })
@@ -560,7 +565,7 @@ export default function Editor({ id }: { id: string }){
     {stageDef.page ? <div className="pagebody">{stage === 'orders' && <OrdersPage onPickFurniture={() => setStage('ffe')} id={id} cur={cur} say={say} projectName={snap.name} rooms={floors(house!).flatMap(f => f.rooms).map(r => ({ id: r.id, name: r.name }))} />}{stage === 'site' && <SitePage id={id} rooms={floors(house!).flatMap(f => f.rooms)} say={say} />}</div> :
     <div className={`body studio-body ${compact ? `is-compact sheet-${sheet}` : ""} ${!compact && wideSide ? "wide-side" : ""}`}>
       <nav className="tools studio-toolrail" aria-label={t('editor.tools')}>
-        {(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk)).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={t(TOOL_LABEL[tk])}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
+        {(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk)).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={`${t(TOOL_LABEL[tk])} (${formatShortcut(toolShortcut(tk), { mac })})`} aria-keyshortcuts={ariaShortcut(toolShortcut(tk), { mac })}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
       </nav>
       <div className={`canvas studio-canvas ${view === 'split' && !compact ? 'split' : ''}`}>
         <div className="levelbar">
@@ -919,7 +924,7 @@ function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMo
       <label className="f"><span>{t('editor.xField', { u })}</span><input type="number" value={inField(p.x)} onChange={e => num(e.target.value, (x: number) => onMove(x / 100, p.z), -1e9)} /></label>
       <label className="f"><span>{t('editor.zField', { u })}</span><input type="number" value={inField(p.z)} onChange={e => num(e.target.value, (z: number) => onMove(p.x, z / 100), -1e9)} /></label>
     </div>
-    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button className="btn" onClick={onRotate}>{t('editor.rotate')}</button><button className="btn" onClick={onDuplicate} title="Ctrl+D">{t('editor.duplicate')}</button>{rv.offer && out?.targets[`o:${rv.offer.id}`] && <a className="btn" href={`/go/o/${rv.offer.id}`} target="_blank" rel={relFor(out.targets[`o:${rv.offer.id}`])}>{t('editor.viewProduct')}{out.targets[`o:${rv.offer.id}`] === 'affiliate' ? ` ${t('editor.affiliateTag')}` : ''}</a>}<button className="btn danger" onClick={onDelete}>{t('common.delete')}</button></div>
+    <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button className="btn" onClick={onRotate}>{t('editor.rotate')}</button><button className="btn" onClick={onDuplicate} title={commandHint('duplicate', { mac: typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) })}>{t('editor.duplicate')}</button>{rv.offer && out?.targets[`o:${rv.offer.id}`] && <a className="btn" href={`/go/o/${rv.offer.id}`} target="_blank" rel={relFor(out.targets[`o:${rv.offer.id}`])}>{t('editor.viewProduct')}{out.targets[`o:${rv.offer.id}`] === 'affiliate' ? ` ${t('editor.affiliateTag')}` : ''}</a>}<button className="btn danger" onClick={onDelete}>{t('common.delete')}</button></div>
     <h4>{t('editor.variantsOnly', { n: g.variants.length })}</h4>
     {g.variants.map((v: any) => { const o = catalog.offers.find(x => x.variantId === v.id), dm = v.dimensionsCm;
       return <button key={v.id} className="var" aria-pressed={v.id === p.variantId} onClick={() => onVariant(v.id)}><span>{v.name}</span><span className="mono">{o ? lei(o.price) : '—'}</span><small>{dm ? formatDimsCm(dm, units, lang) : t('common.unknownDims')}{v.dimensionsConfidence === 'MEDIUM' ? ` ${t('common.approx')}` : ''}</small></button>; })}

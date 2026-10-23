@@ -189,6 +189,14 @@ public static class ControlReportPdf
                     if (head) t.Bold();
                 }
 
+                // owner decision 2026-10-16: every device the real-time monitor saw in the period (check D05), with state, registration number and alerts
+                P(col, DeviceSectionTitle).Bold().FontSize(11).FontColor(Ink);
+                foreach (var (text, head, color) in DeviceSectionLines(r))
+                {
+                    var t = P(col, W(text)).FontSize(head ? 8.5f : 7.5f).FontColor(color);
+                    if (head) t.Bold();
+                }
+
                 col.Item().Text("4. Acoperirea jurnalelor și surse lipsă sau incomplete").Bold().FontSize(11).FontColor(Ink);
                 foreach (var c in f.Coverage)
                     col.Item().Text($"{c.Channel}: {(c.Readable ? $"{LogAnalyzer.Dfir.Language.RoText.Count(c.Records, "eveniment", "evenimente")} citite, cel mai vechi {L(c.OldestUtc)}" : "NECITIT")} {c.Note}").FontSize(7.5f);
@@ -261,6 +269,7 @@ public static class ControlReportPdf
         if (r.Users.Count > 0) { A("RDP"); foreach (var u in r.Users) A(u.User); }
         foreach (var a in r.Actions.Take(1500)) { A(a.Action); A(a.Detail); A(a.Source); }
         foreach (var (text, _, _) in ClassifiedSectionLines(r)) A(text);
+        foreach (var (text, _, _) in DeviceSectionLines(r)) A(text);
         foreach (var lim in Limitations(f)) A(lim);
         foreach (var line in OfficerSectionLines(r)) A(line);
         return sb.ToString();
@@ -313,7 +322,61 @@ public static class ControlReportPdf
         }),
     };
 
+    /// <summary>The user-activity part for the JSON report: the summary and the rows that are in classified folders or on removable volumes (null = not evaluated by this control).</summary>
+    private static object? UserActivityJson(ControlReport r) => r.UserActivity is not { } u ? null : new
+    {
+        u.Summary,
+        Rows = u.Items.Where(i => i.IsRelevant).Select(i => new { i.Source, i.Path, i.TimeUtc, i.TimeMeaning, i.Who, i.Relevance, i.RContent }),
+    };
+
     public const string ClassifiedSectionTitle = "3b. Informații clasificate — acces și ieșiri";
+
+    public const string DeviceSectionTitle = "3c. Dispozitive văzute de monitorul în timp real (verificarea D05)";
+
+    /// <summary>
+    /// The lines of the device section: a summary, the alerts raised in the period, every device seen (those that break the rule first, in red) with class,
+    /// state (connected, disconnected, not working, disabled) and the registration number or „fără număr de înregistrare”. Pure, so the tests read it without
+    /// parsing the PDF.
+    /// </summary>
+    public static List<(string Text, bool Head, string Color)> DeviceSectionLines(ControlReport r, int maxDevices = 1000)
+    {
+        const string Red = "#b91c1c", Amber = "#b45309";
+        var l = new List<(string, bool, string)>();
+        var f = r.Facts;
+        if (f.DeviceMonitorProblem.Length > 0) l.Add((f.DeviceMonitorProblem, false, Amber));
+        if (f.DeviceMonitor is not { } journal)
+        {
+            l.Add(("Jurnalul monitorului de dispozitive lipsește: monitorul nu a rulat pe această stație, deci dispozitivele nu pot fi listate (vezi istoricul Windows, D01).", false, Amber));
+            return l;
+        }
+        bool isolated = f.Posture != LogAnalyzer.Core.Services.Edition.StationPosture.Internet;
+        var from = f.PeriodStartUtc;
+        var to = f.PeriodEndUtc == default ? DateTimeOffset.MaxValue : f.PeriodEndUtc;
+        var s = LogAnalyzer.Dfir.Devices.DeviceMonitorReport.Build(journal, from, to, isolated);
+        l.Add(($"Medii de stocare și dispozitive conectate extern, văzute în perioadă: {s.Devices.Count} ({s.Devices.Count(d => d.Present)} conectate acum) · încalcă regula: {s.Offending.Count} · alerte: {s.Alerts.Count} ({s.Critical} critice). " +
+               "Se listează doar mediile de stocare și dispozitivele conectate extern (aceeași listă ca în pagina monitorului și în verificarea D05); componentele interne nu se numără. " +
+               "Monitorul vede doar cât timp aplicația este pornită; orele sunt cele la care a observat schimbarea.", false, Ink));
+        if (f.DeviceJournalUntrusted.Length > 0) l.Add((f.DeviceJournalUntrusted, false, Amber));
+        if (f.DeviceAudit is { ChainValid: true } audit && f.PeriodEndUtc != default)
+        {
+            var cov = LogAnalyzer.Dfir.Devices.DeviceMonitorCoverage.Analyze(audit.Runs, audit.Gaps, from, to);
+            l.Add((!cov.AnyCoverage ? "Acoperire: nicio rulare sigilată a monitorului nu acoperă perioada."
+                : cov.Gaps.Count == 0 ? "Acoperire: monitorul a rulat pe toată perioada (din înregistrările sigilate)."
+                : "Acoperire incompletă: " + string.Join("; ", cov.Gaps.Take(8).Select(g => $"{LogAnalyzer.Dfir.Devices.DeviceMonitorReport.UtcText(g.FromUtc)} – {LogAnalyzer.Dfir.Devices.DeviceMonitorReport.UtcText(g.ToUtc)}")) + ".", false, cov.Complete ? Ink : Amber));
+        }
+        foreach (var x in journal.Radios.Where(x => x.BlindNow || x.LastBlindUtc >= from && x.FirstBlindUtc <= to)) l.Add((x.Text, false, Amber));
+        if (f.DeviceAudit is { ChainValid: true } reclassAudit)
+            foreach (var line in LogAnalyzer.Dfir.Devices.DeviceMonitorAuditCheck.Reclassifications(journal, reclassAudit)) l.Add((line, false, Muted));
+        l.Add(("Alertele date în perioadă", true, Ink));
+        if (s.Alerts.Count == 0) l.Add(("Nicio alertă în perioadă.", false, Muted));
+        foreach (var a in s.Alerts) l.Add((LogAnalyzer.Dfir.Devices.DeviceMonitorReport.AlertLine(a), false, a.Severity == LogAnalyzer.Dfir.Devices.DeviceAlertSeverity.Critical ? Red : Muted));
+        l.Add(("Dispozitivele (stare, tip, nume, producător/model, VID/PID, serie, capacitate/literă, utilizator la conectare, prima apariție, ultima conectare/deconectare, nr. de înregistrare, registru)", true, Ink));
+        var offending = new HashSet<LogAnalyzer.Dfir.Devices.DeviceJournalEntry>(s.Offending);
+        foreach (var d in s.Offending.Concat(s.Devices.Where(d => !offending.Contains(d))).Take(maxDevices))
+            l.Add(((offending.Contains(d) ? "ÎNCALCĂ REGULA: " : "") + LogAnalyzer.Dfir.Devices.DeviceMonitorReport.Line(d, f.DeviceAudit, journal.PendingSeals), false, offending.Contains(d) ? Red : Ink));
+        if (s.Devices.Count > maxDevices) l.Add(($"… încă {s.Devices.Count - maxDevices} dispozitive (în jurnalul monitorului).", false, Muted));
+        return l;
+    }
 
     /// <summary>
     /// The lines of the classified-information section: per file (unjustified exits first), the exits with their verdict and register entry, then the
@@ -325,6 +388,7 @@ public static class ControlReportPdf
         if (r.Classified is not { } c)
         {
             l.Add(("Profilul de proceduri nu definește foldere clasificate (sau nu a fost transmis controlului): accesul la documentele clasificate și ieșirile lor nu au putut fi urmărite.", false, "#b45309"));
+            AddUserActivity(r, l);
             return l;
         }
         l.Add(($"Ieșiri nejustificate: {c.Unjustified} · de verificat: {c.ToVerify} · aprobate (în registrul transferurilor): {c.Approved} · fișiere șterse: {c.Deleted} · " +
@@ -351,7 +415,15 @@ public static class ControlReportPdf
                 l.Add(($"  Acces {(a.TimeUtc is { } t ? t.ToString("yyyy-MM-dd HH:mm:ss") + " UTC" : "ora necunoscută")} · {a.Who} · {a.Process} · {a.Access}{(a.Weak ? " (dovadă mai slabă)" : "")} [{a.Evidence}]", false, Muted));
             if (f.Accesses.Count > maxAccessesPerFile) l.Add(($"  … încă {f.Accesses.Count - maxAccessesPerFile} accese (în fișierul JSON al raportului)", false, Muted));
         }
+        AddUserActivity(r, l);
         return l;
+    }
+
+    /// <summary>E7: the user-activity rows of section 3b (counts, strongest traces with the meaning of their time, limits), or the statement that this control did not evaluate them.</summary>
+    private static void AddUserActivity(ControlReport r, List<(string Text, bool Head, string Color)> l)
+    {
+        foreach (var (text, head) in LogAnalyzer.Dfir.Analysis.UserActivityAnalysis.ReportLines(r.UserActivity))
+            l.Add((text, head, head ? Ink : Muted));
     }
 
     /// <summary>The limits of a control report, always printed (legal research G7, docs/dfir/RESEARCH_2026-10-11_PROBE_VALOARE_JURIDICA.md).</summary>
@@ -377,7 +449,7 @@ public static class ControlReportPdf
         var dir = Path.Combine(ws.Root, "Control", $"CONTROL_{r.Facts.CollectedUtc:yyyyMMdd_HHmmss}");
         Directory.CreateDirectory(dir);
         var json = Path.Combine(dir, "control_report.json");
-        File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions, Classified = ClassifiedJson(r), ManualChecks = manual ?? [] },
+        File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions, Classified = ClassifiedJson(r), UserActivity = UserActivityJson(r), ManualChecks = manual ?? [] },
             new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } }));
         var pdf = Path.Combine(dir, $"Raport_control_{r.Facts.Host}_{r.Facts.CollectedUtc:yyyyMMdd}.pdf");
         var pre = LogAnalyzer.Dfir.Case.PreReportCheck.ForCase(ws);   // F2: re-verify the case evidence first; its audit entry is inside the printed chain heads

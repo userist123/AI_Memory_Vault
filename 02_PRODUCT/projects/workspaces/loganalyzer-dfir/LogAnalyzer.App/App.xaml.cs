@@ -22,11 +22,14 @@ namespace LogAnalyzer.UI
         static App()
         {
             LogAnalyzer.Dfir.RegexDefaults.Apply();     // security audit #11: before the first regex of the process is built
+            // 2026-10-22 walkthrough: the dates of the pickers show as dd.MM.yyyy (ro-RO). This sets only the WPF language of the elements (what
+            // DatePicker formats with); the thread culture is NOT changed, so evidence parsing and export keep their current formatting.
+            FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement), new FrameworkPropertyMetadata(System.Windows.Markup.XmlLanguage.GetLanguage("ro-RO")));
             VerifyNativeLibrariesOrExit();
         }
 
         /// <summary>
-        /// Security audit #5 + independent review #3: the executable (elevated, highestAvailable) loads SQLCipher / WPF / QuestPDF native libraries
+        /// Security audit #5 + independent review #3: the executable (always elevated, requireAdministrator) loads SQLCipher / WPF / QuestPDF native libraries
         /// from its own folder; they must match the SHA-256 manifest EMBEDDED in this assembly at publish (eng/NativeLibraryManifest.targets), and
         /// no other DLL may be there. The embedded manifest is checked whenever it is present, single-file or not; only a Debug build falls back to
         /// the text file next to the exe; a non-Debug build without the embedded manifest never starts elevated (review of the remediations #4).

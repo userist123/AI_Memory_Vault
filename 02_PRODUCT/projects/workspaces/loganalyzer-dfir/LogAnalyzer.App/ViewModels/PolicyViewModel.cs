@@ -38,6 +38,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private bool _isBusy;
         [ObservableProperty] private string _status = "Deschideți o politică (.lapolicy/.yaml/.json, Registry.pol, .inf, audit.csv, text LGPO sau backup GPO). Nimic nu se aplică fără aprobare și confirmarea planului.";
 
+        /// <summary>No policy is open: the page then shows the "Ce este / de ce contează / primul pas" panel (row 17).</summary>
+        public bool NothingOpen => _policy is null;
         public string Operator => _bench.Operator;
 
         // Owner 2026-10-11: one "next step" with its reason, instead of ten buttons the operator has to know the order of.
@@ -134,8 +136,8 @@ namespace LogAnalyzer.UI.ViewModels
             return $"Deschisă: {opened.Policy.Controls.Count} controale, {opened.Unsupported.Count} elemente neacceptate (listate). Copie în bibliotecă: {opened.LibraryPath}";
         });
 
-        [RelayCommand] private void Register() => WithPolicy(p => { _bench.Register(p); return "Înregistrată ca DRAFT."; });
-        [RelayCommand] private void Validate() => WithPolicy(p => { _bench.Validate(p); return "Validare structurală trecută: VALIDATED."; });
+        [RelayCommand] private void Register() => WithPolicy(p => { _bench.Register(p); return "Înregistrată ca ciornă (DRAFT)."; });
+        [RelayCommand] private void Validate() => WithPolicy(p => { _bench.Validate(p); return "Validare structurală trecută: stare VALIDATĂ (VALIDATED)."; });
 
         [RelayCommand]
         private async Task DryRun()
@@ -147,12 +149,12 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 var plan = await Task.Run(() => _bench.Plan(p));
                 ShowPlan(plan);
-                Step(() => { _bench.Store.MarkTested(p, _bench.Operator, plan.Controls.Count - plan.Unreadable, plan.Unreadable); return "Rulare de probă: toate controalele au fost citite. TESTED."; });
+                Step(() => { _bench.Store.MarkTested(p, _bench.Operator, plan.Controls.Count - plan.Unreadable, plan.Unreadable); return "Rulare de probă: toate controalele au fost citite. Stare: TESTATĂ (TESTED).";});
             }
             finally { IsBusy = false; }
         }
 
-        [RelayCommand] private void Approve() => WithPolicy(p => { _bench.Approve(p, ApprovalReason); return $"Aprobată de {_bench.Operator}: APPROVED."; });
+        [RelayCommand] private void Approve() => WithPolicy(p => { _bench.Approve(p, ApprovalReason); return $"Aprobată de {_bench.Operator}: stare APROBATĂ (APPROVED)."; });
 
         [RelayCommand]
         private async Task ComputePlan()
@@ -283,6 +285,7 @@ namespace LogAnalyzer.UI.ViewModels
             OnPropertyChanged(nameof(Operator));
             UpdateNextStep();
             History.Clear();
+            OnPropertyChanged(nameof(NothingOpen));
             if (_policy is null) { PolicyInfo = "Nicio politică deschisă."; return; }
             var rec = _bench.Store.Get(_policy);
             if (rec is not null) foreach (var h in rec.History) History.Add(h);

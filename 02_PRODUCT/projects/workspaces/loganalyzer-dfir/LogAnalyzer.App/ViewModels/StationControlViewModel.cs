@@ -8,7 +8,9 @@ using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using LogAnalyzer.Core.Services.Connectivity;
+using LogAnalyzer.Dfir.Case;
 using LogAnalyzer.Dfir.Flow;
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Profile;
 using LogAnalyzer.Dfir.Windows.Audit;
 using Microsoft.Win32;
@@ -31,10 +33,22 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Fixed at compile time by the edition (never chosen by the operator).</summary>
         public LogAnalyzer.Core.Services.Edition.StationPosture Posture { get; } = LogAnalyzer.Core.Services.Edition.StationPostureContext.Current;
         public string PostureLine => "Ediția: " + LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(Posture) + " — regulile de control se aplică după postura ediției.";
+        /// <summary>Simplu: the same fact in plain words (display only; Expert keeps <see cref="PostureLine"/>).</summary>
+        public string PostureLineSimple => PlainPostureLine(Posture);
+        public static string PlainPostureLine(LogAnalyzer.Core.Services.Edition.StationPosture p) => p switch
+        {
+            LogAnalyzer.Core.Services.Edition.StationPosture.Standalone => "Ediția: Standalone (stație izolată, fără rețea).",
+            LogAnalyzer.Core.Services.Edition.StationPosture.IsolatedNetwork => "Ediția: Rețea air-gap (rețea închisă, fără internet).",
+            _ => "Ediția: Internet (stație conectată la internet).",
+        };
+        /// <summary>The naming rule the station name is checked against, said once for the tooltip.</summary>
+        public const string NamingRuleHelp = "Regula de denumire: stație izolată = cod de unitate (cifre) + compartiment (litere) + număr de înregistrare (cifre) + clasificare (1–3 litere), de exemplu 1234DOC5143SV; stație în rețea = prefixul rețelei + WS + număr, de exemplu NETWS01. Doar informativ: nu schimbă controlul.";
+        public static string PlainStationDescription(LogAnalyzer.Dfir.Registers.StationName n) =>
+            n.Kind == LogAnalyzer.Dfir.Registers.StationNameKind.Unknown ? "Numele stației nu respectă regula de denumire a unității" : n.Describe();
         [ObservableProperty] private string _inspector = LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified;
         [ObservableProperty] private string _notes = "";
         [ObservableProperty] private bool _isBusy;
-        [ObservableProperty] private string _status = "Apăsați „Înainte” ca să alegeți perioada. Controlul doar citește; nu modifică stația.";
+        [ObservableProperty] private string _status = FlowHints[0];
         [ObservableProperty] private string _summary = "";
         [ObservableProperty] private string _statusFilter = "Toate";
         [ObservableProperty] private string _gapsText = "";
@@ -91,28 +105,69 @@ namespace LogAnalyzer.UI.ViewModels
 
         private readonly GuidedFlow _flow;
 
+        /// <summary>The line under the wizard for each step (2026-10-22 walkthrough: the first step's hint stayed on steps 2 and 3).</summary>
+        private static readonly string[] FlowHints =
+        [
+            "Apăsați „Înainte” ca să continuați, apoi alegeți perioada. Controlul doar citește; nu modifică stația.",
+            "Lăsați gol dacă nu aveți procesul-verbal, apoi apăsați „Înainte”.",
+            "Alegeți perioada de verificare, apoi apăsați „Înainte” ca să alegeți procedurile.",
+            "Apăsați „Pornește controlul” ca să rulați verificarea. Controlul doar citește; nu modifică stația.",
+        ];
+
+        private void SetFlowHint()
+        {
+            if (_flow.StepIndex >= 0 && _flow.StepIndex < FlowHints.Length) Status = FlowHints[_flow.StepIndex];
+        }
+
         public StationControlViewModel()
         {
             HookManual();
             _flow = new GuidedFlow("Verifică această stație",
             [
                 new FlowStep("station", "Ce stație?", "Controlul se face pe acest calculator. Aplicația doar citește; nu modifică nimic."),
+                new FlowStep("anchor", "Procesul-verbal anterior (opțional)", "Aveți procesul-verbal al controlului anterior?"),
                 new FlowStep("period", "Ce perioadă?", "Alegeți perioada pe care o verificați.", ValidatePeriod),
                 new FlowStep("procedures", "Ce proceduri?", "Acestea sunt procedurile după care se judecă stația. O secțiune nedefinită nu poate da CONFORM."),
             ]);
             PeriodOptions = Enum.GetValues<ControlPeriodChoice>().Select(c => new PeriodOption(c, ControlPeriods.Label(c))).ToList();
             StationLine = $"{Environment.MachineName} · {LogAnalyzer.Dfir.Registers.StationName.Parse(Environment.MachineName).Describe()} · " +
                           (AppModeContext.IsAirGapped ? "fără rețea (izolată)" : "conectată");
+            StationLineSimple = $"{Environment.MachineName} · {PlainStationDescription(LogAnalyzer.Dfir.Registers.StationName.Parse(Environment.MachineName))} · " +
+                                (AppModeContext.IsAirGapped ? "fără rețea (izolată)" : "conectată");
             LoadPreviousControls();
             InspectorFunction = _headerProfile.InspectorFunction;
             RaiseFlow();
         }
 
         public IReadOnlyList<PeriodOption> PeriodOptions { get; }
+
+        /// <summary>One sentence under the optional anchor question: why the code matters, and that it may stay empty.</summary>
+        public const string AnchorWhy = "Scrieți codul de ancorare de pe el: așa se verifică dacă jurnalul stației a rămas același. Puteți lăsa gol, de exemplu la primul control.";
+        public string AnchorWhyText => AnchorWhy;
+
+        /// <summary>
+        /// The line about earlier controls. „Ultimul control” means one thing on every page: the last control FINISHED, taken from the sealed audit (<see cref="ControlPeriodStart.LastFinished"/>),
+        /// in the format Home uses. The newest saved report folder is named separately, only when it is a different moment (a report is saved shortly around the end of its control).
+        /// </summary>
+        public static string PreviousNoteText(int savedCount, DateTimeOffset? lastFinished, DateTimeOffset? newestSaved, int unreadable)
+        {
+            string problems = unreadable > 0 ? $" Foldere necitite: {unreadable}." : "";
+            if (savedCount == 0 && lastFinished is null) return "Niciun control anterior salvat pe această stație." + problems;
+            var parts = new System.Collections.Generic.List<string>();
+            if (lastFinished is { } done) parts.Add($"ultimul control terminat: {ControlPeriodStart.Describe(done)}");
+            bool sameMoment = lastFinished is { } f && newestSaved is { } s && (f - s).Duration() <= TimeSpan.FromMinutes(30);
+            if (newestSaved is { } saved && !sameMoment) parts.Add($"ultimul raport salvat: {ControlPeriodStart.Describe(saved)}");
+            var head = savedCount == 0 ? "Niciun raport de control salvat" : RoText.Count(savedCount, "control anterior", "controale anterioare");
+            var line = head + (parts.Count > 0 ? "; " + string.Join("; ", parts) : "") + ".";
+            if (lastFinished is null) line += " Jurnalul sigilat nu are un control terminat verificabil.";
+            return line + problems;
+        }
         [ObservableProperty] private ControlPeriodChoice _periodChoice = ControlPeriodChoice.SinceLastControl;
         [ObservableProperty] private int _customDays = 30;
         [ObservableProperty] private string _periodNote = "";
         [ObservableProperty] private string _stationLine = "";
+        /// <summary>Simplu wording of <see cref="StationLine"/> (plain words; display only).</summary>
+        public string StationLineSimple { get; private set; } = "";
         [ObservableProperty] private string _profileLine = "";
         [ObservableProperty] private string _flowError = "";
         [ObservableProperty] private ControlResultScreen? _result;
@@ -180,8 +235,8 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 var list = ControlArchive.List(LogAnalyzer.UI.Services.LiveCase.Root, out var problems);
                 foreach (var p in list) PreviousControls.Add(p);
-                PreviousNote = list.Count == 0 ? "Niciun control anterior salvat pe această stație."
-                    : $"{list.Count} controale anterioare; cel mai recent: {list[0].Label}." + (problems.Count > 0 ? $" Foldere necitite: {problems.Count}." : "");
+                LogAnalyzer.UI.Services.CollectAllState.Instance.HasEarlierControls = list.Count > 0;   // the empty-page offer is hidden by the same list
+                PreviousNote = PreviousNoteText(list.Count, ControlPeriodStart.LastFinished(AuditLogPath(), DateTimeOffset.UtcNow), list.Count > 0 ? list[0].CollectedUtc : null, problems.Count);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { PreviousNote = "Controalele anterioare nu au putut fi citite: " + ex.Message; }
         }
@@ -228,7 +283,8 @@ namespace LogAnalyzer.UI.ViewModels
             if (_flow.StepIndex == 0 && !LogAnalyzer.UI.Services.LiveCase.EnsureScopeAtStart() && LogAnalyzer.UI.Services.LiveCase.ScopePrompt is not null)
                 Status = "Scopul cazului nu a fost completat; veți fi întrebat din nou la salvarea raportului.";
             if (!_flow.Next()) { RaiseFlow(); return; }
-            if (_flow.StepIndex == 2 && !wasLast) LoadProfileSections();
+            SetFlowHint();
+            if (_flow.StepIndex == 3 && !wasLast) LoadProfileSections();
             RaiseFlow();
             if (wasLast && _flow.Completed)
             {
@@ -238,9 +294,9 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
-        [RelayCommand] private void FlowBack() { _flow.Back(); RaiseFlow(); }
+        [RelayCommand] private void FlowBack() { _flow.Back(); SetFlowHint(); RaiseFlow(); }
         [RelayCommand] private void FlowStop() { _flow.Stop(); RaiseFlow(); Status = "Controlul a fost oprit. Ce ați ales rămâne; apăsați „Înainte” ca să continuați."; }
-        [RelayCommand] private void FlowRestart() { _flow.Restart(); Result = null; Comparison = null; ComparisonChanges.Clear(); RaiseFlow(); }
+        [RelayCommand] private void FlowRestart() { _flow.Restart(); Result = null; Comparison = null; ComparisonChanges.Clear(); SetFlowHint(); RaiseFlow(); }
 
         /// <summary>"Compară cu controlul anterior": a difference against the selected (or the most recent) saved control.</summary>
         [RelayCommand]
@@ -296,6 +352,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var previousAnchor = PreviousAnchorCode;
                 var previousFromStation = PreviousCodeIsStationHint();
                 _lastReportPdf = null;
+                _controlFinishAudited = false;
                 bool auditedStart = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlStarted,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail(LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(posture), posture.ToString(),
                         new System.Security.Principal.WindowsPrincipal(System.Security.Principal.WindowsIdentity.GetCurrent()).IsInRole(System.Security.Principal.WindowsBuiltInRole.Administrator), PeriodDays, folders.Count, runId, LogAnalyzer.Dfir.Windows.Audit.ClassifiedFactCollector.AppSha256()));
@@ -305,12 +362,26 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     // N13: only the Network edition registers the active probe (LogAnalyzer.Connectors); the other editions have none.
                     var dcProbe = global::LogAnalyzer.UI.AppComposition.ServiceProvider?.GetService(typeof(IDomainControllerProbe)) as IDomainControllerProbe;
-                    var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates, dcProbe: dcProbe, transfers: transfers);
-                    // Time memory (S05): the latest time the application recorded, read BEFORE this report adds its own "clock.seen" entry.
                     string? auditPath = null;
                     try { auditPath = LogAnalyzer.UI.Services.AuthApp.Service.AuditPath; } catch (InvalidOperationException) { }
+                    // D05 reads the device monitor's records from the sealed audit (registration numbers, alerts, the monitor's running windows); only a chain that verifies
+                    // counts, and the records are read from the very bytes the chain was verified on (the file is read once)
+                    bool deviceChainValid = false;
+                    byte[]? deviceAuditBytes = null;
+                    if (auditPath is not null)
+                    {
+                        try { deviceChainValid = LogAnalyzer.UI.Services.AuthApp.Service.VerifyAuditSnapshot(out var bytes).Status == LogAnalyzer.Dfir.Case.ChainStatus.Valid; deviceAuditBytes = bytes; }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { deviceChainValid = false; }
+                    }
+                    var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates, dcProbe: dcProbe, transfers: transfers,
+                                                             auditPath: auditPath, auditChainValid: deviceChainValid, auditBytes: deviceAuditBytes);
+                    // Time memory (S05): the latest time the application recorded, read BEFORE this report adds its own "clock.seen" entry.
                     // D04 and the transfer register: the officer-signed media register in force (re-verified; compared with the last install in the sealed audit)
-                    facts.SignedMedia = LogAnalyzer.UI.Services.MediaRegisterFlows.Active(LogAnalyzer.Dfir.Registers.SignedMediaRegisterStore.Shared, auditPath);
+                    // owner decision 2026-10-16: with the register switched off (MediaRegisterFeature) it is not read; D04 is "Nu se aplică" and the transfer
+                    // register does not require it (as for a case without a signed register)
+                    facts.SignedMedia = LogAnalyzer.Dfir.Registers.MediaRegisterFeature.Enabled
+                        ? LogAnalyzer.UI.Services.MediaRegisterFlows.Active(LogAnalyzer.Dfir.Registers.SignedMediaRegisterStore.Shared, auditPath)
+                        : null;
                     (facts.MediaCapacityTolerance, var toleranceWarning) = LogAnalyzer.Dfir.Registers.MediaMatchSettings.Load();   // B7: station setting, default 0.02, 0..0.10
                     facts.MediaCapacityToleranceWarning = toleranceWarning ?? "";
                     if (auditPath is not null)
@@ -351,6 +422,7 @@ namespace LogAnalyzer.UI.ViewModels
                 bool auditedFinish = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinished,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlFinishedDetail(_report.Facts.Host, _report.Facts.IsAdministrator, _report.Checks.Count,
                         _report.Count(ControlStatus.Neconform), _report.Count(ControlStatus.DeVerificat), _report.Count(ControlStatus.Nedeterminat), runId));
+                _controlFinishAudited = auditedFinish;
                 AfterControlAnchor();
                 FillChecks();
                 Users.Clear();
@@ -364,9 +436,11 @@ namespace LogAnalyzer.UI.ViewModels
                 GapsText = _report.Facts.Gaps.Count == 0 ? "" :
                     "Surse lipsă sau incomplete: " + string.Join("; ", _report.Facts.Gaps.Select(g => $"{g.Artifact} ({g.Reason})"));
                 Status = _report.Facts.IsAdministrator
-                    ? $"Control finalizat: {_report.Checks.Count} verificări, {_report.Actions.Count} acțiuni în cronologie. Dublu-click pe orice rând pentru detalii."
+                    ? $"Control finalizat: {_report.Checks.Count} verificări, {_report.Actions.Count} acțiuni în cronologie.{DoubleClickHint}"
                     : "Control finalizat FĂRĂ drepturi de administrator: jurnalul Security și o parte din setări nu au putut fi citite (verificările respective sunt NEDETERMINATE). Reporniți aplicația ca administrator.";
                 if (!auditedStart || !auditedFinish || !auditedHashing) Status += " ATENȚIE: controlul nu a putut fi trecut în jurnalul de audit (vezi avertismentul de sus).";
+                // 2026-10-22 PC walkthrough: the empty-data banner and the status bar must follow a finished control
+                LogAnalyzer.UI.Services.CollectAllState.Instance.RecordControl("Control stație finalizat: " + Summary + ".");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
             {
@@ -488,11 +562,16 @@ namespace LogAnalyzer.UI.ViewModels
         /// one of these), and remembers it as the report "Semnează ca ofițer de securitate" signs. Returns the PDF path, or null with the reason in Status.
         /// </summary>
         /// <remarks>Usability 2026-10-16: it never opens a dialog; a copy elsewhere is <see cref="SaveReportCopy"/>.</remarks>
+        /// <summary>The control and its anchor are "saved" only when the anchor code was issued and the end of the control reached the sealed audit.</summary>
+        internal static string ReportScopeMessage(bool anchorIssued, bool finishAudited) => LogAnalyzer.UI.Services.LiveCase.ReportScopeMessage(anchorIssued && finishAudited);
+
+        private bool _controlFinishAudited;
+
         private string? GenerateReport()
         {
             if (_report is null) { Status = "Rulați întâi controlul."; return null; }
             var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
-            if (ws is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return null; }
+            if (ws is null) { Status = ReportScopeMessage(_report.Anchor is not null, _controlFinishAudited); return null; }
             if (Result is null) BuildResult();
             var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result, ManualItems.Select(m => m.ToResult()).ToList());
             string sha;

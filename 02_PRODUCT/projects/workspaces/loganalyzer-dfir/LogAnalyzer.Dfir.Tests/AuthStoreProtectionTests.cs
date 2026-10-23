@@ -258,7 +258,7 @@ public sealed class AuthStoreProtectionTests : IDisposable
         Activity(svc);
         var before = File.ReadAllText(AuditPath);
         var noKey = Svc(keyed: false);
-        Assert.Throws<UnauthorizedAccessException>(() => noKey.SignInWithPassword(Admin, Pw));
+        Assert.Throws<SealingKeyUnavailableException>(() => noKey.SignInWithPassword(Admin, Pw));
         Assert.Equal(before, File.ReadAllText(AuditPath));
         Assert.Equal(ChainStatus.Broken, noKey.VerifyAudit().Status);
         Assert.Contains("cheia", noKey.VerifyAudit().Reason);
