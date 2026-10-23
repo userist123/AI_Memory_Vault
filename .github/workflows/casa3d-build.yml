@@ -66,7 +66,7 @@ jobs:
         # Windows is in the matrix on purpose: the case-insensitive file system is where the
         # viewer3d.js / Viewer3D.tsx clash was found (VERIFICATION_2026-10-10.md).
         os: [ubuntu-latest, windows-latest]
-    timeout-minutes: 20
+    timeout-minutes: 30  # build + Vitest + the browser checks (axe, slides) on ubuntu
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:

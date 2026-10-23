@@ -44,8 +44,8 @@ try {
     if (need(ok, `etapa ${st}`)) failures += await audit(p, `editor-${st}`);
   }
   // paleta Ctrl+K deschisă (dialog modal)
-  await p.evaluate(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })); await new Promise(r => setTimeout(r, 500)); return true; });
-  failures += await audit(p, 'editor-ctrlk');
+  if (need(await p.evaluate(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })); await new Promise(r => setTimeout(r, 500)); return !!document.querySelector('dialog.cmdk[open]'); }), 'paleta Ctrl+K'))
+    failures += await audit(p, 'editor-ctrlk');
   for (const doc of ['print', 'offer', 'contract', 'proforma', 'handover', 'site-report', 'board']){ await p.go(`${BASE}/p/${id}/${doc}`); await sleep(1200); failures += await audit(p, `doc-${doc}`); }
   await p.go(`${BASE}/share/${token}`); await sleep(1500); failures += await audit(p, 'link-desktop');
   await view(p, PHONE); await p.go(`${BASE}/share/${token}`); await sleep(1500); failures += await audit(p, 'link-telefon');
