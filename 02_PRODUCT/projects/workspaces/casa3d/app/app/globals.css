@@ -1268,6 +1268,7 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .v3nudge .btn:nth-child(5){grid-column:1;grid-row:1} .v3nudge .btn:nth-child(6){grid-column:3;grid-row:1}
 @media (max-width:700px){ .v3nudge{grid-template-columns:repeat(3,44px)} .v3nudge .btn{min-height:44px;min-width:44px} }
 /* WCAG 2.2 2.5.7: zoom și deplasare în plan cu un clic (sus-dreapta; jos-dreapta e ocupat de coordonate) */
+.plan-text-input{min-width:200px;font:500 14px/1.3 var(--sans);padding:6px 8px;border:2px solid #7A5A36;border-radius:6px;background:#fff;color:#1A141C;transform:translateY(-50%)}
 .plan-nudge{position:absolute;right:10px;top:10px;display:grid;grid-template-columns:repeat(4,36px);gap:4px;z-index:2}
 .plan-nudge .btn.btn{min-height:36px;min-width:36px;padding:0;justify-content:center;font-size:15px;line-height:1;background:rgba(255,255,255,.92);color:#2a2320;border:1px solid rgba(60,45,30,.22);box-shadow:0 1px 2px rgba(0,0,0,.06)}
 .plan-nudge .btn.btn:hover{background:#fff;border-color:rgba(60,45,30,.45)}

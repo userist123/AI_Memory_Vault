@@ -7,9 +7,10 @@ import { formatArea, formatLength, type Units } from './format';
 import { footprintOf } from './validate';
 import { resolve } from './catalog';
 import { nicheRoom } from './niches';
+import { annotationCenter, dimGeometry } from './annotations';
 
 type T = (key: string, vars?: Record<string, string | number>) => string;
-export type MirrorItem = { kind: 'room' | 'placement' | 'wall' | 'opening' | 'column' | 'beam' | 'stair' | 'glass_wall' | 'niche'; id: string; wallId?: string; label: string };
+export type MirrorItem = { kind: 'room' | 'placement' | 'wall' | 'opening' | 'column' | 'beam' | 'stair' | 'glass_wall' | 'niche' | 'annotation'; id: string; wallId?: string; label: string };
 export type MirrorGroup = { id: string; title: string; items: MirrorItem[] };
 
 const ord = (a: { x: number; z: number; id: string }, b: { x: number; z: number; id: string }) => (Math.abs(a.z - b.z) > .05 ? a.z - b.z : a.x - b.x) || a.id.localeCompare(b.id);
@@ -63,6 +64,10 @@ export function describePlan(snap: Pick<Snapshot, 'floor' | 'placements'>, cat: 
   for (const g of f.glassWalls ?? []) struct.push({ kind: 'glass_wall', id: g.id, label: t('mirror.glass', { len: L(len(g)) }) });
   for (const s of f.stairs ?? []) struct.push({ kind: 'stair', id: s.id, label: t('mirror.stair', { w: L(s.width), len: L(s.length) }) });
   if (struct.length) groups.push({ id: 'structure', title: t('mirror.structure'), items: struct });
+  // cotele și textele planșei, în ordinea citirii
+  const notes = [...(f.annotations ?? [])].sort((a, b) => { const [ax, az] = annotationCenter(a), [bx, bz] = annotationCenter(b); return ord({ x: ax, z: az, id: a.id }, { x: bx, z: bz, id: b.id }); })
+    .map((a): MirrorItem => ({ kind: 'annotation', id: a.id, label: a.kind === 'dim' ? t(a.mode === 'ortho' ? 'mirror.dimOrtho' : 'mirror.dim', { len: L(dimGeometry(a).value) }) : t('mirror.text', { text: a.text }) }));
+  if (notes.length) groups.push({ id: 'notes', title: t('mirror.notes'), items: notes });
   return groups;
 }
 /** Descrierea unui obiect selectat (pentru anunțul din regiunea live), sau null. */

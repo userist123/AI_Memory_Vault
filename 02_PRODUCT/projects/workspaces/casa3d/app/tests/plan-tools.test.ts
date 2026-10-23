@@ -17,6 +17,7 @@ import { nicheGeometry, nicheRoom, nicheSide, nicheTileArea } from '../core/nich
 import { addLevel } from '../core/levels';
 import { selectionBox } from '../core/frame';
 import { planItems } from '../core/plan-keys';
+import { dimGeometry, dimOffsetAt, dimOk } from '../core/annotations';
 import type { Catalog, MaterialsCatalog, Niche, Snapshot } from '../core/types';
 const cat = catalogJson as unknown as Catalog, mc = materialsJson as unknown as MaterialsCatalog;
 // camera 5 × 4 m cu pereți exteriori (wall-1 = latura de nord, de la [0,0] la [5,0], fereastră la 1,8–3,2 m) și ușa de intrare pe wall-4
@@ -118,5 +119,31 @@ describe('nișă', () => {
     assert.ok(planItems(s).some(i => i.kind === 'niche' && i.id === 'nisa-1'));
     assert.equal(ents(planToDxf(s, cat, { lang: 'ro' }), 'POLYLINE', 'WALLS'), ents(planToDxf(blank(), cat, { lang: 'ro' }), 'POLYLINE', 'WALLS') + 1);
     const bad: any = withNiche(); bad.floor.niches[0].depth = 2; assert.throws(() => checkSnapshot(bad), (e: any) => e.status === 400);
+  });
+});
+
+describe('cote persistente și text', () => {
+  const withNotes = (): Snapshot => { const s = blank(); s.floor.annotations = [{ id: 'cota-1', kind: 'dim', a: [0, 0], b: [3, 4], offset: .5 }, { id: 'cota-2', kind: 'dim', a: [0, 0], b: [3, 1], offset: -.4, mode: 'ortho' }, { id: 'text-1', kind: 'text', at: [1, 2], text: 'h = 2,45', size: 'l' }]; return s; };
+  test('geometrie: oblica măsoară lungimea reală, ortogonala axa dominantă; linia trece prin cursor; sub 1 cm se refuză', () => {
+    const g = dimGeometry({ a: [0, 0], b: [3, 4], offset: .5 }); assert.equal(g.value, 5); assert.ok(Math.abs(Math.hypot(g.p1[0], g.p1[1]) - .5) < 1e-9);
+    const o = dimGeometry({ a: [0, 0], b: [3, 1], offset: -.4, mode: 'ortho' }); assert.equal(o.value, 3); assert.deepEqual(o.p1, [0, -.4]); assert.deepEqual(o.p2, [3, -.4]);
+    assert.equal(dimOffsetAt([0, 0], [3, 0], 'aligned', [1, .7]), .7); assert.equal(dimOffsetAt([0, 0], [0, 3], 'ortho', [-1, 1]), 1);
+    assert.ok(!dimOk([0, 0], [.005, 0])); assert.ok(dimOk([0, 0], [.005, 2], 'ortho'));
+  });
+  test('descriere și încadrare: grupul „Cote și texte”, în ordinea citirii; Tab trece și prin ele', () => {
+    const s = withNotes(), g = describePlan(s, cat, { t: translator('ro'), units: 'metric', lang: 'ro' }).find(x => x.id === 'notes')!;
+    assert.equal(g.title, 'Cote și texte'); assert.deepEqual(g.items.map(i => i.label).sort(), ['Cotă ortogonală · 3,00 m', 'Cotă · 5,00 m', 'Text · h = 2,45'].sort());
+    assert.ok(selectionBox(s, cat, { kind: 'annotation', id: 'text-1' })); assert.equal(planItems(s).filter(i => i.kind === 'annotation').length, 3);
+  });
+  test('DXF: cotele pe DIMENSIONS (linie, extensii, tick-uri, valoarea în mm), textul curățat pe NOTES', () => {
+    const s = withNotes(); s.floor.annotations!.push({ id: 'text-2', kind: 'text', at: [2, 2], text: 'a\b %%c' });
+    const dxf = planToDxf(s, cat, { lang: 'ro' }), base = planToDxf(blank(), cat, { lang: 'ro' });
+    assert.equal(ents(dxf, 'LINE', 'DIMENSIONS'), ents(base, 'LINE', 'DIMENSIONS') + 10); assert.ok(dxf.includes('\n1\n5000\n')); assert.ok(dxf.includes('\n1\n3000\n'));
+    assert.equal(ents(dxf, 'TEXT', 'NOTES'), 2); assert.ok(dxf.includes('2\nNOTES\n')); assert.ok(!dxf.includes('a\b')); assert.ok(!dxf.includes('%%c'));
+  });
+  test('server: textul fără marcaj; o cotă de 0 cm respinsă; proiectul vechi fără adnotări rămâne la fel', () => {
+    const s: any = withNotes(); s.floor.annotations[2].text = '<img src=x onerror=alert(1)>'; const r: any = checkSnapshot(s);
+    assert.ok(!r.floor.annotations[2].text.includes('<')); const z: any = withNotes(); z.floor.annotations[0].b = [0, 0]; assert.throws(() => checkSnapshot(z), (e: any) => e.status === 400);
+    assert.ok(!('annotations' in (checkSnapshot(blank() as any) as any).floor));
   });
 });
