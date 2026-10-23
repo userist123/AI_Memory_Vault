@@ -64,6 +64,10 @@ namespace LogAnalyzer.UI.ViewModels
         public RegistryState Registry => _mediumMismatch ? RegistryState.NotRegistered : _owner.RegistryStateOf(Identity, _registrationNumber);
         private bool _mediumMismatch;
         public string RegistryText => DeviceMonitorReport.RegistryTextOf(Registry);
+        /// <summary>Row 12: the registry state only means something for storage media; a mouse, keyboard or Bluetooth device shows "—" (tooltip: not required).</summary>
+        public static string RegistryCellTextFor(bool isStorage, string registryText) => isStorage ? registryText : "—";
+        public string RegistryCellText => RegistryCellTextFor(IsStorageMedium, RegistryText);
+        public string RegistrationCellTip => IsStorageMedium ? "" : "Nu se cere: numărul de înregistrare este doar pentru medii de stocare.";
         /// <summary>A storage medium whose registration the sealed audit does not confirm (no number, a different one, or one still pending): the row is shown in red.</summary>
         public bool NeedsRegistration => IsStorageMedium && Registry != RegistryState.Registered;
         /// <summary>A storage medium with no registration number at all (the filter and the summary count these).</summary>
@@ -80,13 +84,13 @@ namespace LogAnalyzer.UI.ViewModels
                 if (_owner.SetRegistrationNumber(this, _registrationNumber, v)) _registrationNumber = v;
                 OnPropertyChanged();
                 OnPropertyChanged(nameof(NeedsRegistration));
-                OnPropertyChanged(nameof(RegistryText));
+                OnPropertyChanged(nameof(RegistryText)); OnPropertyChanged(nameof(RegistryCellText));
                 _owner.Refresh(this);
             }
         }
 
         partial void OnStatusChanged(DeviceStatus value) => OnPropertyChanged(nameof(StatusText));
-        partial void OnClassChanged(DeviceClass value) { OnPropertyChanged(nameof(ClassText)); OnPropertyChanged(nameof(IsStorageMedium)); OnPropertyChanged(nameof(NeedsRegistration)); }
+        partial void OnClassChanged(DeviceClass value) { OnPropertyChanged(nameof(ClassText)); OnPropertyChanged(nameof(IsStorageMedium)); OnPropertyChanged(nameof(NeedsRegistration)); OnPropertyChanged(nameof(RegistryCellText)); OnPropertyChanged(nameof(RegistrationCellTip)); }
 
         public void Update(DeviceJournalEntry e, string alertText = "", bool alertCritical = false)
         {

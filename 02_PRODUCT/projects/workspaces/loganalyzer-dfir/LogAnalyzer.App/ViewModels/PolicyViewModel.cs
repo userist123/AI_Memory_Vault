@@ -38,6 +38,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private bool _isBusy;
         [ObservableProperty] private string _status = "Deschideți o politică (.lapolicy/.yaml/.json, Registry.pol, .inf, audit.csv, text LGPO sau backup GPO). Nimic nu se aplică fără aprobare și confirmarea planului.";
 
+        /// <summary>No policy is open: the page then shows the "Ce este / de ce contează / primul pas" panel (row 17).</summary>
+        public bool NothingOpen => _policy is null;
         public string Operator => _bench.Operator;
 
         // Owner 2026-10-11: one "next step" with its reason, instead of ten buttons the operator has to know the order of.
@@ -283,6 +285,7 @@ namespace LogAnalyzer.UI.ViewModels
             OnPropertyChanged(nameof(Operator));
             UpdateNextStep();
             History.Clear();
+            OnPropertyChanged(nameof(NothingOpen));
             if (_policy is null) { PolicyInfo = "Nicio politică deschisă."; return; }
             var rec = _bench.Store.Get(_policy);
             if (rec is not null) foreach (var h in rec.History) History.Add(h);

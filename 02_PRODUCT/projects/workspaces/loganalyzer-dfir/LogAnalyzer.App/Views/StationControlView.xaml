@@ -17,7 +17,7 @@
 
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
             <StackPanel DockPanel.Dock="Left">
-                <TextBlock Text="Verifică această stație" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="Control stație" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock Text="Conturi, politici, autentificări, suporturi USB, rețele și programe instalate. Aplicația doar citește; nu modifică nimic pe stație."
                            FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
             </StackPanel>

@@ -15,7 +15,7 @@
             <!-- Page Title & Operational Context -->
             <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,20">
                 <StackPanel DockPanel.Dock="Left">
-                    <TextBlock Text="Command Center" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="Panou general" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <TextBlock Text="Operational posture, prioritized telemetry &amp; live threat triage" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
                 </StackPanel>
                 <Border DockPanel.Dock="Right" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,6" VerticalAlignment="Center">

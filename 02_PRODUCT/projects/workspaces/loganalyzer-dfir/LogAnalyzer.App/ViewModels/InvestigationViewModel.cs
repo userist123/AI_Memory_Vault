@@ -265,10 +265,23 @@ namespace LogAnalyzer.UI.ViewModels
 
         private readonly LogAnalyzer.Dfir.Flow.GuidedFlow _intake = new("Primește probe de la o stație",
         [
-            new LogAnalyzer.Dfir.Flow.FlowStep("folder", "De unde vin probele?", "Alegeți folderul (sau suportul) adus de la stația afectată. Nimic nu se copiază încă."),
+            new LogAnalyzer.Dfir.Flow.FlowStep("folder", "De unde vin probele?", "Alegeți: colectez acum de pe această stație (doar citire) sau folderul (ori suportul) adus de la stația afectată. Nimic nu se copiază încă."),
             new LogAnalyzer.Dfir.Flow.FlowStep("found", "Ce s-a găsit?", "Ce conține folderul, ce lipsește și ce nu este probă. Integritatea se calculează la import."),
             new LogAnalyzer.Dfir.Flow.FlowStep("scope", "Scopul cazului", "De ce, pentru ce perioadă, pe ce sisteme, cine aprobă. Fără scop nu se creează cazul."),
         ]);
+        // Step 1 of the wizard (owner decision 2026-10-22, „Simplu” has no other form): the evidence comes from this station (collected now, read-only) or from a folder
+        // brought from the affected station. The default is the folder, as before; „this station” maps to the same switch the Expert form has (CollectFromThisStation).
+        private bool _intakeFromThisStation;
+        public bool IntakeFromThisStation
+        {
+            get => _intakeFromThisStation;
+            set { if (SetProperty(ref _intakeFromThisStation, value)) OnPropertyChanged(nameof(IntakeFromFolder)); }
+        }
+        public bool IntakeFromFolder
+        {
+            get => !_intakeFromThisStation;
+            set => IntakeFromThisStation = !value;
+        }
         [ObservableProperty] private string _intakeFolder = "";
         [ObservableProperty] private IncomingEvidenceScan? _intakeScan;
         [ObservableProperty] private string _intakeError = "";
@@ -291,7 +304,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private string? ValidateIntakeStep() => _intake.StepIndex switch
         {
-            0 => string.IsNullOrWhiteSpace(IntakeFolder) || !Directory.Exists(IntakeFolder) ? "Alegeți folderul cu probele aduse de la stație." : null,
+            0 => IntakeFromThisStation ? null : string.IsNullOrWhiteSpace(IntakeFolder) || !Directory.Exists(IntakeFolder) ? "Alegeți folderul cu probele aduse de la stație." : null,
             1 => IntakeScan is { HasAnything: true } ? null : "Folderul nu conține probe pe care aplicația să le poată importa; alegeți alt folder.",
             _ => BuildScope().MissingFields() is { Count: > 0 } m ? "Scopul cazului este incomplet; câmpuri lipsă: " + string.Join(", ", m.Select(ScopeFieldRo)) : null,
         };
@@ -321,6 +334,7 @@ namespace LogAnalyzer.UI.ViewModels
             var dlg = new OpenFolderDialog { Title = "Folderul (sau suportul) cu probele aduse de la stația afectată" };
             if (LogAnalyzer.Dfir.Language.FolderMemory.Shared.Get(LogAnalyzer.Dfir.Language.FolderMemory.Evidence) is { } last) dlg.InitialDirectory = last;
             if (dlg.ShowDialog() != true) return;
+            IntakeFromFolder = true;
             IntakeFolder = dlg.FolderName;
             LogAnalyzer.Dfir.Language.FolderMemory.Shared.Remember(LogAnalyzer.Dfir.Language.FolderMemory.Evidence, dlg.FolderName);
             if (_intake.StepIndex == 0 && !_intake.Completed) await IntakeNext();
@@ -334,6 +348,16 @@ namespace LogAnalyzer.UI.ViewModels
             var error = ValidateIntakeStep();
             if (error is not null) { IntakeError = error; return; }
             bool wasLast = _intake.IsLastStep;
+            if (_intake.StepIndex == 0 && IntakeFromThisStation)
+            {
+                // this station: nothing to scan or import; the „what was found” step only exists for a folder, so it is skipped
+                IntakeScan = null; IntakeFamilies.Clear(); ImportFiles.Clear();
+                CollectFromThisStation = true;
+                Log += "Probele se colectează acum de pe această stație (doar citire)." + Environment.NewLine;
+                _intake.Next(); _intake.Next();
+                RaiseIntake();
+                return;
+            }
             if (_intake.StepIndex == 0)
             {
                 IntakeScan = IncomingEvidence.Scan(IntakeFolder);
@@ -347,7 +371,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (wasLast && _intake.Completed) await Run();
         }
 
-        [RelayCommand] private void IntakeBack() { _intake.Back(); RaiseIntake(); }
+        [RelayCommand] private void IntakeBack() { _intake.Back(); if (IntakeFromThisStation && _intake.StepIndex == 1) _intake.Back(); RaiseIntake(); }
         [RelayCommand] private void IntakeStop() { _intake.Stop(); RaiseIntake(); Log += "Primirea probelor a fost oprită; ce ați ales rămâne." + Environment.NewLine; }
         [RelayCommand] private void IntakeRestart() { _intake.Restart(); IntakeScan = null; IntakeFamilies.Clear(); RaiseIntake(); }
 

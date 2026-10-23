@@ -10,6 +10,10 @@
         Height="900" Width="1500" MinHeight="600" MinWidth="1000"
         WindowStartupLocation="CenterScreen" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}">
 
+    <Window.Resources>
+        <views:AdvancedNavVisibilityConverter x:Key="AdvancedNavVisibility"/>
+    </Window.Resources>
+
     <Window.InputBindings>
         <KeyBinding Key="K" Modifiers="Control" Command="{Binding ToggleCommandPaletteCommand}"/>
         <KeyBinding Key="Escape" Command="{Binding CloseCommandPaletteCommand}"/>
@@ -163,53 +167,59 @@
                             <!-- Decision 5: every other page stays reachable under "Avansat" -->
                             <Expander Header="Avansat (toate paginile)" IsExpanded="False" Foreground="{StaticResource TextMutedBrush}" FontSize="12" FontWeight="SemiBold" Margin="12,16,0,0"
                                       AutomationProperties.Name="Avansat: toate paginile aplicației">
+                            <!-- row 20: the expanded list scrolls inside its own box, so it never slides under the buttons at the bottom left -->
+                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="420" Focusable="False">
                             <StackPanel Margin="-12,0,0,0">
                             <!-- GROUP 1: OPERATIONS -->
                             <TextBlock Text="Operațiuni" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
-                            <RadioButton Content="Panou general" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="0"/>
-                            <RadioButton Content="Monitorizare în timp real" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="11" Visibility="{Binding IsNetworkMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <RadioButton Content="Amenințări și detecții" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="3"/>
-                            <RadioButton Content="Cronologia incidentului" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="4"/>
+                            <RadioButton Content="Panou general" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="0" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=0}"/>
+                            <RadioButton Content="Monitorizare în timp real" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="11" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=11;net}"/>
+                            <RadioButton Content="Amenințări și detecții" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="3" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=3}"/>
+                            <RadioButton Content="Cronologia evenimentelor" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="4" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=4}"/>
 
                             <!-- GROUP 2: INVESTIGATION -->
                             <TextBlock Text="Investigație" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
-                            <RadioButton Content="{views:Term evtx}" ToolTip="{views:Term evtx, Tooltip=True}" AutomationProperties.Name="{views:Term evtx}" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="1"/>
-                            <RadioButton Content="Analiza registrului Windows" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="2"/>
-                            <RadioButton Content="Analiza riscului" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="5"/>
-                            <RadioButton Content="Firul atacului" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="6"/>
+                            <RadioButton Content="{views:Term evtx}" ToolTip="{views:Term evtx, Tooltip=True}" AutomationProperties.Name="{views:Term evtx}" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="1" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=1}"/>
+                            <RadioButton Content="Analiza registrului Windows" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="2" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=2}"/>
+                            <RadioButton Content="Analiza riscului" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="5" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=5}"/>
+                            <RadioButton Content="Firul atacului" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="6" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=6}"/>
 
                             <!-- GROUP 3: DETECTION & INTEL -->
                             <TextBlock Text="Detecție și informații" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
-                            <RadioButton Content="Informații despre amenințări" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="7"/>
-                            <RadioButton Content="Conturi locale și USB" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding IsAirGappedMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <RadioButton Content="Active Directory" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding IsNetworkMode, Converter={StaticResource BooleanToVisibilityConverter}}"/>
-                            <RadioButton Content="{views:Term chain_of_custody, Suffix=' (NIS2)'}" ToolTip="{views:Term chain_of_custody, Tooltip=True}" AutomationProperties.Name="{views:Term chain_of_custody}" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="9"/>
-                            <RadioButton Content="Tehnici de atac (MITRE ATT&amp;CK)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="10"/>
+                            <RadioButton Content="Informații despre amenințări" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="7" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=7}"/>
+                            <RadioButton Content="Conturi locale și USB" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=8;air}"/>
+                            <RadioButton Content="Active Directory" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=8;net}"/>
+                            <RadioButton Content="Istoricul probelor" ToolTip="{views:Term chain_of_custody, Tooltip=True}" AutomationProperties.Name="Istoricul probelor" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="9" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=9}"/>
+                            <RadioButton Content="Tehnici de atac (MITRE ATT&amp;CK)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="10" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=10}"/>
 
                             <!-- GROUP 4: TELEMETRY & AUDIT -->
                             <TextBlock Text="Administrare" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
-                            <RadioButton Content="Colectare date" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="12"/>
-                            <RadioButton Content="Izolare procese suspecte" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="13"/>
-                            <RadioButton Content="Control stație" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="14"/>
-                            <RadioButton Content="Investigație domeniu și e-mail" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="15"/>
-                            <RadioButton Content="Investigație completă (caz)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="16"/>
-                            <RadioButton Content="Politici (import, aprobare, aplicare)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="17"/>
-                            <RadioButton Content="Profil de proceduri" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="18"/>
+                            <RadioButton Content="Colectare date" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="12" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=12}"/>
+                            <RadioButton Content="Izolare procese suspecte" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="13" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=13}"/>
+                            <RadioButton Content="Control stație" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="14" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=14}"/>
+                            <RadioButton Content="Investigație domeniu și e-mail" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="15" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=15}"/>
+                            <RadioButton Content="Investigație completă (caz)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="16" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=16}"/>
+                            <RadioButton Content="Politici" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="17" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=17}"/>
+                            <RadioButton Content="Profil de proceduri" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="18" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=18}"/>
                             <!-- owner decision 2026-10-16: the media register page became the real-time device monitor (the register is switched off, MediaRegisterFeature) -->
-                            <RadioButton Content="Monitor dispozitive" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="19"/>
-                            <RadioButton Content="Registrul de transferuri" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="23"/>
-                            <RadioButton Content="Registru utilizatori" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="20"/>
-                            <RadioButton Content="Autentificare și conturi" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="21"/>
+                            <RadioButton Content="Monitor dispozitive" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="19" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=19}"/>
+                            <RadioButton Content="Registrul de transferuri" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="23" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=23}"/>
+                            <RadioButton Content="Registru utilizatori" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="20" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=20}"/>
+                            <RadioButton Content="Autentificare și conturi" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="21" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=21}"/>
                             </StackPanel>
+                            </ScrollViewer>
                             </Expander>
                         </StackPanel>
                     </ScrollViewer>
 
                     <!-- Bottom Quick Intake Actions (Air-Gapped Mode) -->
+                    <!-- row 9: only on the pages with an event table (MainViewModel.ShowEventTableButtons); not on Home, the control, the registers or the accounts -->
                     <StackPanel Grid.Row="1" Margin="14,10" Visibility="{Binding IsAirGappedMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Button Content="Încarcă un folder de probe" Command="{Binding LoadFolderCommand}" Margin="0,3"/>
-                        <Button Content="Încarcă jurnale Windows" Command="{Binding LoadFilesCommand}" Margin="0,3"/>
-                        <Button Content="Exportă tabelul (CSV)" Command="{Binding ExportCsvCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,3"/>
+                        <StackPanel Visibility="{Binding ShowEventTableButtons, Converter={StaticResource BooleanToVisibilityConverter}}">
+                            <Button Content="Încarcă un folder de probe" Command="{Binding LoadFolderCommand}" Margin="0,3"/>
+                            <Button Content="Încarcă jurnale Windows" Command="{Binding LoadFilesCommand}" Margin="0,3"/>
+                            <Button Content="Exportă tabelul (CSV)" Command="{Binding ExportCsvCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,3"/>
+                        </StackPanel>
                     </StackPanel>
 
                     <!-- Bottom Quick Actions (Network Live Mode) -->
@@ -223,7 +233,8 @@
                                 <TextBlock Text="Urmărește jurnalele Windows ale stației (fără driver de kernel)." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
-                        <Button Content="Exportă raportul" Command="{Binding ExportCsvCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,2"/>
+                        <Button Content="Exportă raportul" Command="{Binding ExportCsvCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,2"
+                                Visibility="{Binding ShowEventTableButtons, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     </StackPanel>
                 </Grid>
             </Border>
@@ -315,7 +326,7 @@
                     <TabItem><ctrl:LazyPage><DataTemplate><views:DataCollectionView/></DataTemplate></ctrl:LazyPage></TabItem>
                 <TabItem><ctrl:LazyPage><DataTemplate><ctrl:FeaturePlaceholder FeatureKey="Containment" Title="Izolare procese suspecte" ViewModel="{Binding Containment}"/></DataTemplate></ctrl:LazyPage></TabItem>
                 <TabItem><ctrl:LazyPage><DataTemplate><views:StationControlView DataContext="{Binding StationControl}"/></DataTemplate></ctrl:LazyPage></TabItem>
-                <TabItem><ctrl:LazyPage><DataTemplate><ctrl:FeaturePlaceholder FeatureKey="DomainInvestigation" Title="Investigație domeniu" ViewModel="{Binding DomainInvestigation}"/></DataTemplate></ctrl:LazyPage></TabItem>
+                <TabItem><ctrl:LazyPage><DataTemplate><ctrl:FeaturePlaceholder FeatureKey="DomainInvestigation" Title="Investigație domeniu și e-mail" ViewModel="{Binding DomainInvestigation}"/></DataTemplate></ctrl:LazyPage></TabItem>
                 <TabItem><ctrl:LazyPage><DataTemplate><views:InvestigationView DataContext="{Binding Investigation}"/></DataTemplate></ctrl:LazyPage></TabItem>
                 <TabItem><ctrl:LazyPage><DataTemplate><views:PolicyView DataContext="{Binding Policy}"/></DataTemplate></ctrl:LazyPage></TabItem>
                 <TabItem><ctrl:LazyPage><DataTemplate><views:ProcedureProfileView DataContext="{Binding ProcedureProfile}"/></DataTemplate></ctrl:LazyPage></TabItem>
@@ -339,16 +350,21 @@
                 </Grid.ColumnDefinitions>
                 <TextBlock Text="{Binding StatusMessage, FallbackValue='Stare: nicio analiză rulată'}" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" VerticalAlignment="Center" FontSize="11"/>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <StackPanel.Style>
+                        <Style TargetType="StackPanel">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding HasContainment}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </StackPanel.Style>
                     <Ellipse Width="6" Height="6" Fill="{StaticResource TextMutedBrush}" Margin="0,0,8,0"/>
-                    <!-- Reports the real auto-containment switch; it says nothing about the host being safe. -->
+                    <!-- Reports the real auto-containment switch; it says nothing about the host being safe. Row 8: an edition without containment shows nothing here (the permanent
+                         „nu este disponibilă” was a negative message with no action); the reason is on the containment page and on the dashboard card. -->
                     <TextBlock Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Bold" FontSize="10.5" ToolTip="Starea comutatorului de izolare automată. Nu este o evaluare a siguranței stației.">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Text" Value="Izolare automată: oprită (implicit)"/>
                                 <Style.Triggers>
-                                    <DataTrigger Binding="{Binding HasContainment}" Value="False">
-                                        <Setter Property="Text" Value="Izolare automată: nu este disponibilă în ediția Standalone"/>
-                                    </DataTrigger>
                                     <DataTrigger Binding="{Binding Containment.AutoContainEnabled}" Value="True">
                                         <Setter Property="Text" Value="Izolare automată: pornită"/>
                                     </DataTrigger>
