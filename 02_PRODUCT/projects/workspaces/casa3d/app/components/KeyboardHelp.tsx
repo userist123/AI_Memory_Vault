@@ -7,7 +7,7 @@ import { helpRows } from '@/lib/commands';
 const H = { fontSize: 12, fontWeight: 600, margin: '12px 0 4px', opacity: .8 } as const, K = { padding: '3px 12px 3px 0', whiteSpace: 'nowrap', verticalAlign: 'top' } as const;
 export default function KeyboardHelp({ onClose }: { onClose(): void }){
   const { t, lang, units } = usePrefs(), step = (cm: number) => formatLength(cm / 100, units, lang), mac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
-  const rows = helpRows({ mac }), vars = { small: step(NUDGE_CM), big: step(NUDGE_BIG_CM), ex: units === 'imperial' ? `12'6"` : lang === 'ro' ? '4,25' : '4.25', rule: t(units === 'imperial' ? 'help.ruleImperial' : 'help.ruleMetric') };
+  const rows = helpRows({ mac }), vars = { small: step(NUDGE_CM), big: step(NUDGE_BIG_CM), ex: t(units === 'imperial' ? 'help.exImperial' : 'help.exMetric'), rule: t(units === 'imperial' ? 'help.ruleImperial' : 'help.ruleMetric') };
   const body = (sec: 'edit' | 'draw', title: string) => <tbody><tr><th colSpan={2} scope="colgroup" style={{ ...H, textAlign: 'left', padding: '12px 0 4px' }}>{title}</th></tr>
     {rows.filter(r => r.section === sec).map(r => <tr key={r.label}><td style={K}><kbd className="mono">{r.keysKey ? t(r.keysKey) : r.keys}</kbd></td><td>{t(r.label, vars)}</td></tr>)}</tbody>;
   // trei secțiuni (registrul le dă în ordine): editarea și desenarea într-un singur tabel, ca tastele să stea pe aceeași coloană;

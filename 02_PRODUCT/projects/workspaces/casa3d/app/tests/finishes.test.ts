@@ -161,7 +161,7 @@ describe('pereți în straturi (benzi)', () => {
     assert.match(wp.label, /1\.1–2\.6 m/); const rr = wallpaperRolls(3.8, 1.5, { widthM: .53, lengthM: 10.05, repeatCm: 0 }); assert.equal(wp.orderedQty, rr.rolls);
     const pan = b.items.find(i => i.key === 'living:wall:E:0')!; assert.equal(pan.orderedQty, panelCount(3.8, 1.1, [60, 240]));
     assert.ok(b.unknown.some(u => /baghetă/.test(u)), 'bagheta fără produs e necunoscută');
-    const accent = b.items.find(i => i.key === 'living:wall:W:3')!; assert.match(accent.label, /nuanța #5b7065/); assert.equal(accent.refId, 'vopsea-savana-super');
+    const accent = b.items.find(i => i.key === 'living:wall:W:3')!; assert.match(accent.label, /nuanță gri verzui/); assert.match(accent.label, /perete vest/); assert.ok(!/#[0-9a-f]{6}/i.test(accent.label), 'fără hex în etichetă'); assert.equal(accent.color, '#5b7065', 'codul exact rămâne pe articol'); assert.equal(accent.refId, 'vopsea-savana-super');
     const main = b.items.find(i => i.key === 'living:paint')!.netQty, west = sideGeometry(fl, r, 'W').netM2;
     assert.ok(Math.abs((base - main) - (full + west) * 2 / 13) < .05, `${base} - ${main}`); void low;
   });
