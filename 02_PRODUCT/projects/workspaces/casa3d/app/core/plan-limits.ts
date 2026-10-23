@@ -22,37 +22,42 @@ const pt = (p: unknown): p is [number, number] => Array.isArray(p) && p.length =
 const within = (v: unknown, lo: number, hi: number) => num(v) && v >= lo - 1e-9 && v <= hi + 1e-9;
 const HEX = /^#[0-9a-f]{6}$/i;
 
-/** Textul liber de pe plan: fără caractere de control și fără `<>` (ajunge în SVG, DXF și PDF), cel mult 120 de caractere. */
-export const cleanPlanText = (s: unknown) => String(s ?? '').replace(/[\u0000-\u001f\u007f<>]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, PLAN_LIMITS.annotation.textMax);
+/** Textul liber de pe plan: fără caractere de control, fără `<>` (ajunge în SVG, DXF și PDF) și fără comenzi de direcție
+ *  (bidi, ar inversa vizual textul pe planșă), cel mult 120 de caractere. */
+export const cleanPlanText = (s: unknown) => String(s ?? '').replace(/[\u0000-\u001f\u007f<>\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, PLAN_LIMITS.annotation.textMax);
 
 export class PlanLimitError extends Error {}
 const bad = (m: string): never => { throw new PlanLimitError(m); };
+/** Câmpurile care existau înainte de aceste limite (stâlp, grindă, perete de sticlă): interfața veche le lăsa fără maxim,
+ *  deci o valoare finită în afara intervalului se aduce la interval, nu blochează salvarea întregului proiect. */
+const clamp = (v: unknown, lo: number, hi: number, what: string): number => num(v) ? Math.min(hi, Math.max(lo, v)) : bad(what);
 const list = (v: unknown, max: number, what: string): any[] | null => { if (v == null) return null; if (!Array.isArray(v) || v.length > max) bad(`${what}: cel mult ${max} pe nivel.`); return v as any[]; };
 
 export function sanitizeColumn(c: any): Column {
   const L = PLAN_LIMITS.column;
   if (!c || typeof c !== 'object' || typeof c.id !== 'string' || !ID.test(c.id) || !inBox(c.x) || !inBox(c.z)) bad('Un stâlp are poziția invalidă.');
-  if (!within(c.w, L.minM, L.maxM) || !within(c.d, L.minM, L.maxM)) bad(`Un stâlp sau o ghenă are dimensiuni invalide (${L.minM * 100}–${L.maxM * 100} cm).`);
+  const w = clamp(c.w, L.minM, L.maxM, 'Un stâlp are dimensiuni invalide.'), d = clamp(c.d, L.minM, L.maxM, 'Un stâlp are dimensiuni invalide.');
   if (c.shape !== 'rect' && c.shape !== 'round') bad('Forma stâlpului este invalidă.');
   if (c.role != null && !['structural', 'shaft', 'boxing'].includes(c.role)) bad('Rolul stâlpului este invalid.');
   if (c.height != null && !within(c.height, L.heightMinM, L.heightMaxM)) bad(`Înălțimea ghenei trebuie să fie între ${L.heightMinM * 100} și ${L.heightMaxM * 100} cm.`);
   if (c.rotation != null && !num(c.rotation)) bad('Rotația stâlpului este invalidă.');
-  return { id: c.id, x: c.x, z: c.z, w: c.w, d: c.d, shape: c.shape, ...(c.rotation != null ? { rotation: c.rotation } : {}),
+  return { id: c.id, x: c.x, z: c.z, w, d, shape: c.shape, ...(c.rotation != null ? { rotation: c.rotation } : {}),
     ...(typeof c.material === 'string' && c.material.length <= 80 ? { material: c.material } : {}),
     ...(c.role && c.role !== 'structural' ? { role: c.role } : {}), ...(c.height != null ? { height: c.height } : {}) };
 }
 export function sanitizeBeam(b: any): Beam {
   const L = PLAN_LIMITS.beam;
   if (!b || typeof b !== 'object' || typeof b.id !== 'string' || !ID.test(b.id) || !pt(b.a) || !pt(b.b)) bad('O grindă are capetele invalide.');
-  if (!within(b.width, L.minM, L.maxM) || !within(b.depth, L.minM, L.maxM)) bad(`O grindă are dimensiuni invalide (${L.minM * 100}–${L.maxM * 100} cm).`);
-  return { id: b.id, a: [b.a[0], b.a[1]], b: [b.b[0], b.b[1]], width: b.width, depth: b.depth };
+  const width = clamp(b.width, L.minM, L.maxM, 'O grindă are dimensiuni invalide.'), depth = clamp(b.depth, L.minM, L.maxM, 'O grindă are dimensiuni invalide.');
+  return { id: b.id, a: [b.a[0], b.a[1]], b: [b.b[0], b.b[1]], width, depth };
 }
 export function sanitizeGlassWall(g: any): GlassWall {
   const L = PLAN_LIMITS.glassWall;
   if (!g || typeof g !== 'object' || typeof g.id !== 'string' || !ID.test(g.id) || !pt(g.a) || !pt(g.b)) bad('Un perete de sticlă are capetele invalide.');
-  if (!within(g.thickness, L.thickMinM, L.thickMaxM)) bad(`Grosimea peretelui de sticlă trebuie să fie între ${L.thickMinM * 100} și ${L.thickMaxM * 100} cm.`);
-  if (g.mullions != null && !(Number.isInteger(g.mullions) && g.mullions >= 0 && g.mullions <= L.mullionsMax)) bad(`Un perete de sticlă are cel mult ${L.mullionsMax} montanți.`);
-  return { id: g.id, a: [g.a[0], g.a[1]], b: [g.b[0], g.b[1]], thickness: g.thickness, ...(g.mullions != null ? { mullions: g.mullions } : {}), ...(typeof g.frameColor === 'string' && HEX.test(g.frameColor) ? { frameColor: g.frameColor } : {}) };
+  const thickness = clamp(g.thickness, L.thickMinM, L.thickMaxM, 'Grosimea peretelui de sticlă este invalidă.');
+  if (g.mullions != null && !(Number.isInteger(g.mullions) && g.mullions >= 0)) bad('Numărul de montanți este invalid.');
+  const mullions = g.mullions != null ? Math.min(L.mullionsMax, g.mullions) : null;
+  return { id: g.id, a: [g.a[0], g.a[1]], b: [g.b[0], g.b[1]], thickness, ...(mullions != null ? { mullions } : {}), ...(typeof g.frameColor === 'string' && HEX.test(g.frameColor) ? { frameColor: g.frameColor } : {}) };
 }
 export function sanitizeNiche(n: any): Niche {
   const L = PLAN_LIMITS.niche;
