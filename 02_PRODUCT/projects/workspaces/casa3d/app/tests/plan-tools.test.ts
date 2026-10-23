@@ -13,7 +13,11 @@ import { viewerInput } from '../lib/viewer-input';
 import { describePlan } from '../core/plan-describe';
 import { translator } from '../lib/i18n';
 import { planToDxf } from '../core/dxf';
-import type { Catalog, MaterialsCatalog, Snapshot } from '../core/types';
+import { nicheGeometry, nicheRoom, nicheSide, nicheTileArea } from '../core/niches';
+import { addLevel } from '../core/levels';
+import { selectionBox } from '../core/frame';
+import { planItems } from '../core/plan-keys';
+import type { Catalog, MaterialsCatalog, Niche, Snapshot } from '../core/types';
 const cat = catalogJson as unknown as Catalog, mc = materialsJson as unknown as MaterialsCatalog;
 // camera 5 × 4 m cu pereți exteriori (wall-1 = latura de nord, de la [0,0] la [5,0], fereastră la 1,8–3,2 m) și ușa de intrare pe wall-4
 const blank = (): Snapshot => newSnapshot(cat, 'Unelte', 'blank');
@@ -72,5 +76,47 @@ describe('ghenă / casetare', () => {
     assert.equal(ents(planToDxf(s, cat, { lang: 'ro' }), 'LINE', 'WALLS'), ents(planToDxf(blank(), cat, { lang: 'ro' }), 'LINE', 'WALLS') + 2);
     const bad: any = withShaft(); bad.floor.columns[0].role = 'chimney'; assert.throws(() => checkSnapshot(bad), (e: any) => e.status === 400);
     const old = withShaft({ role: undefined }); assert.ok(!('role' in (checkSnapshot(structuredClone(old)) as any).floor.columns[0]));
+  });
+});
+
+describe('nișă', () => {
+  // pe peretele de est (wall-2, de la [5,0] la [5,4]): normala (-uz, ux) = (-1, 0) dă spre cameră, deci side = +1
+  const withNiche = (o: Partial<Niche> = {}, type = 'baie') => { const s = blank(); s.floor.rooms[0]!.type = type;
+    s.floor.niches = [{ id: 'nisa-1', wallId: 'wall-2', offset: 1, width: .6, height: .4, depth: .1, elevation: 1.1, side: 1, ...o }]; return s; };
+  test('model: fața dinspre clic, scobitura în grosimea peretelui, camera în care dă', () => {
+    const s = withNiche(), w = s.floor.walls[1]!; assert.equal(nicheSide(w, [4.5, 1]), 1); assert.equal(nicheSide(w, [5.5, 1]), -1);
+    const g = nicheGeometry(s.floor, s.floor.niches![0]!)!; assert.ok(g.quad.every(q => q[0] >= 5 - .125 - 1e-9 && q[0] <= 5));
+    assert.equal(nicheRoom(s.floor, s.floor.niches![0]!)?.id, s.floor.rooms[0]!.id);
+    assert.equal(nicheRoom(s.floor, { ...s.floor.niches![0]!, side: -1 }), null);
+  });
+  test('validări: în perete și sub tavan, adâncimea cu 2 cm rămași, fără suprapunere cu un gol', () => {
+    const codes = (s: Snapshot) => validateFloor(s.floor).filter(i => i.code.startsWith('NICHE')).map(i => `${i.code}:${i.severity}`);
+    assert.deepEqual(codes(withNiche()), []);
+    assert.deepEqual(codes(withNiche({ offset: 3.8 })), ['NICHE_OUTSIDE_WALL:ERROR']);
+    assert.deepEqual(codes(withNiche({ elevation: 2.4 })), ['NICHE_OUTSIDE_WALL:ERROR']);
+    assert.deepEqual(codes(withNiche({ depth: .24 })), ['NICHE_TOO_DEEP:ERROR']);   // perete exterior
+    const inner = withNiche({ depth: .24 }); inner.floor.walls[1]!.exterior = false; assert.deepEqual(codes(inner), ['NICHE_TOO_DEEP:WARNING']);
+    const op = withNiche(); op.floor.walls[1]!.openings.push({ id: 'f', kind: 'window', offset: 1.2, width: 1, sill: 1 }); assert.deepEqual(codes(op), ['NICHE_OVER_OPENING:ERROR']);
+    const low = withNiche(); low.floor.walls[1]!.openings.push({ id: 'f', kind: 'window', offset: 1.2, width: 1, sill: 1.6 }); assert.deepEqual(codes(low), []);
+    const iss = validateFloor(withNiche({ offset: 3.8 }).floor).find(i => i.code === 'NICHE_OUTSIDE_WALL')!; assert.deepEqual(issueTarget(iss, withNiche().floor), { kind: 'niche', id: 'nisa-1' });
+  });
+  test('deviz: în baie faianța pe fund și fețe (w·h + 2·(w+h)·adâncime), manopera pe bucată necunoscută; în living doar manopera', () => {
+    const b = computeBOQ(withNiche(), cat, mc), line = b.items.find(i => i.key.endsWith(':niche:nisa-1'))!;
+    assert.equal(line.netQty, Math.round((.6 * .4 + 2 * (.6 + .4) * .1) * 100) / 100); assert.equal(nicheTileArea({ width: .6, height: .4, depth: .1 }), .6 * .4 + 2 * 1 * .1);
+    assert.ok(b.unknown.some(u => u.startsWith('Manoperă nișă'))); assert.ok(b.unknown.some(u => u.startsWith('Profil de colț nișă')));
+    const lv = computeBOQ(withNiche({}, 'living'), cat, mc); assert.ok(!lv.items.some(i => i.key.includes(':niche:'))); assert.ok(lv.unknown.some(u => u.startsWith('Manoperă nișă')));
+  });
+  test('niveluri: nișa urcă cu peretele ei (id nou, perete remapat); cotele și textele nu se copiază', () => {
+    const s = withNiche(); s.floor.annotations = [{ id: 't1', kind: 'text', at: [1, 1], text: 'x' }];
+    const up = addLevel(s, { name: 'Etaj' }).levels![0]!, n = up.niches![0]!;
+    assert.notEqual(n.id, 'nisa-1'); assert.ok(up.walls.some(w => w.id === n.wallId)); assert.ok(!up.walls.some(w => w.id === 'wall-2')); assert.equal(up.annotations, undefined);
+  });
+  test('3D, descriere, încadrare, tastatură, DXF, server', () => {
+    const s = withNiche(); assert.deepEqual(viewerInput(s, cat).plan.nise[0], { id: 'nisa-1', wi: 1, la: 1, l: .6, y: 1.1, h: .4, ad: .1, side: 1 });
+    assert.match(desc(s).find(i => i.id === 'nisa-1')!.label, /^Nișă · 60 cm × 40 cm, adâncime 10 cm · Living$/);
+    const box = selectionBox(s, cat, { kind: 'niche', id: 'nisa-1' })!; assert.ok(box.z0 >= 1 - 1e-9 && box.z1 <= 1.6 + 1e-9);
+    assert.ok(planItems(s).some(i => i.kind === 'niche' && i.id === 'nisa-1'));
+    assert.equal(ents(planToDxf(s, cat, { lang: 'ro' }), 'POLYLINE', 'WALLS'), ents(planToDxf(blank(), cat, { lang: 'ro' }), 'POLYLINE', 'WALLS') + 1);
+    const bad: any = withNiche(); bad.floor.niches[0].depth = 2; assert.throws(() => checkSnapshot(bad), (e: any) => e.status === 400);
   });
 });

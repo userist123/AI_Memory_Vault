@@ -25,6 +25,7 @@ import { formatMoney, formatLength, formatArea, formatDimsCm, formatQty, type Un
 import { intlLocale, translator, type Lang, type Translate } from '@/lib/i18n';
 import { suggestTechPoints, techCounts, TECH_KINDS, type TechKind } from '@/core/technical';
 import { TECH_SYMBOL } from './TechPanel';
+import { nicheGeometry } from '@/core/niches';
 import { floors, levelView, stairGeometry, stairwells, SLAB } from '@/core/levels';
 import { profileLine, type StudioProfile } from '@/core/studio-profile';
 import { localizeSnapshotRoomNames } from '@/core/templates';
@@ -44,6 +45,7 @@ export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, loca
       return w.openings.map(o => <line key={o.id} x1={w.a[0] + ux * o.offset} y1={w.a[1] + uz * o.offset} x2={w.a[0] + ux * (o.offset + o.width)} y2={w.a[1] + uz * (o.offset + o.width)} stroke={o.kind === 'door' ? '#B7791F' : '#5b8fb9'} strokeWidth={w.thickness + 0.02} />); })}
     {(f.columns ?? []).filter(c => c.role === 'shaft' || c.role === 'boxing').map(c => <g key={c.id} stroke="#333" strokeWidth={fs(0.2)} fill="#f4f1ea"><rect x={c.x - c.w / 2} y={c.z - c.d / 2} width={c.w} height={c.d} />
       {c.role === 'shaft' && <path d={`M${c.x - c.w / 2} ${c.z - c.d / 2}L${c.x + c.w / 2} ${c.z + c.d / 2}M${c.x + c.w / 2} ${c.z - c.d / 2}L${c.x - c.w / 2} ${c.z + c.d / 2}`} strokeWidth={fs(0.12)} />}</g>)}
+    {(f.niches ?? []).map(n => { const g = nicheGeometry(f, n); return g ? <path key={n.id} d={`M${g.quad.map(q => q.join(' ')).join('L')}Z`} fill="#fbfaf7" stroke="#333" strokeWidth={fs(0.15)} strokeDasharray={`${fs(0.8)} ${fs(0.5)}`} /> : null; })}
     {voids.map((v, k) => <g key={'v' + k} stroke="#666" strokeWidth={fs(0.2)} fill="none"><rect x={v.x0} y={v.z0} width={v.x1 - v.x0} height={v.z1 - v.z0} strokeDasharray={`${fs(1.2)} ${fs(0.8)}`} /><path d={`M${v.x0} ${v.z0}L${v.x1} ${v.z1}M${v.x1} ${v.z0}L${v.x0} ${v.z1}`} /></g>)}
     {(f.stairs ?? []).map(st => { const g = stairGeometry(st, f.ceilingHeight + SLAB), r = g.rect, [dx, dz] = g.dir, px = -dz, pz = dx, hw = st.width / 2;
       const treads = Array.from({ length: g.steps - 1 }, (_, k) => { const cx = g.bottom[0] + dx * g.going * (k + 1), cz = g.bottom[1] + dz * g.going * (k + 1); return `M${cx - px * hw} ${cz - pz * hw}L${cx + px * hw} ${cz + pz * hw}`; }).join('');

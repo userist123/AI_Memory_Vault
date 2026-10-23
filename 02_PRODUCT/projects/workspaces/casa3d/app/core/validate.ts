@@ -1,6 +1,7 @@
 import { resolve } from './catalog';
 import { rectHit, insideRect, footprintAt, frontRect, wallLength } from './geometry';
 import { FRONT_CLEARANCE, DINING_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M, ALLOWED_OVERLAP, WALL_HIGH } from './rules';
+import { nicheIssues } from './niches';
 import type { Catalog, Floor, FurniturePlacement, Issue, Room, Severity, Snapshot, RoomRect } from './types';
 
 const allowed = (a: string, b: string) => WALL_HIGH.has(a) !== WALL_HIGH.has(b) || ALLOWED_OVERLAP.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
@@ -58,6 +59,7 @@ export function validateFloor(floor: Floor): Issue[] {
   for (const w of floor.walls){ const L = wallLength(w.a, w.b);
     if (L < .2) out.push({ code: 'WALL_TOO_SHORT', severity: 'ERROR', message: `Peretele ${w.id} are sub 20 cm.`, key: 'issue.WALL_TOO_SHORT', vars: { id: w.id, d_m: 0.2 } });
     for (const o of w.openings) if (o.offset < 0 || o.offset + o.width > L + 1e-6) out.push({ code: 'OPENING_OUTSIDE_WALL', severity: 'ERROR', message: `Golul ${o.id} iese din peretele ${w.id}.`, key: 'issue.OPENING_OUTSIDE_WALL', vars: { op: o.id, id: w.id } }); }
+  out.push(...nicheIssues(floor));
   // ghene și casetări: avertismente (se pot construi, dar blochează o ușă sau ies din cameră)
   for (const c of floor.columns ?? []){ if (c.role !== 'shaft' && c.role !== 'boxing') continue; const r = columnRect(c);
     if (!floor.rooms.some(room => insideRect(room.rect, r))) out.push({ code: 'SHAFT_OUTSIDE_ROOM', severity: 'WARNING', message: `Ghena ${c.id} nu stă în întregime într-o cameră.`, key: 'issue.SHAFT_OUTSIDE_ROOM', vars: { col: c.id } });
@@ -67,12 +69,13 @@ export function validateFloor(floor: Floor): Issue[] {
 
 export const columnRect = (c: { x: number; z: number; w: number; d: number }): RoomRect => ({ x0: c.x - c.w / 2, x1: c.x + c.w / 2, z0: c.z - c.d / 2, z1: c.z + c.d / 2 });
 export type IssueTarget =
-  | { kind: 'placement' | 'room' | 'wall' | 'stair' | 'column'; id: string }
+  | { kind: 'placement' | 'room' | 'wall' | 'stair' | 'column' | 'niche'; id: string }
   | { kind: 'opening'; id: string; wallId: string };
 
 export function issueTarget(issue: Pick<Partial<Issue>, 'with' | 'vars'> & { refs?: string[] }, floor?: Floor, placements?: FurniturePlacement[]): IssueTarget | null {
   if (issue.with && (!placements || placements.some(p => p.id === issue.with))) return { kind: 'placement', id: issue.with };
   if (issue.vars?.stair && (!floor?.stairs || floor.stairs.some(s => s.id === String(issue.vars?.stair)))) return { kind: 'stair', id: String(issue.vars.stair) };
+  if (issue.vars?.niche && (!floor || floor.niches?.some(n => n.id === String(issue.vars?.niche)))) return { kind: 'niche', id: String(issue.vars.niche) };
   if (issue.vars?.col && (!floor || floor.columns?.some(c => c.id === String(issue.vars?.col)))) return { kind: 'column', id: String(issue.vars.col) };
   if (issue.vars?.op && issue.vars?.id) return { kind: 'opening', id: String(issue.vars.op), wallId: String(issue.vars.id) };
   if (issue.vars?.id && (!floor || floor.walls.some(w => w.id === String(issue.vars?.id)))) return { kind: 'wall', id: String(issue.vars.id) };

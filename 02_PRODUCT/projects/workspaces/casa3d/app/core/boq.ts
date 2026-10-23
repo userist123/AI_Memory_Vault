@@ -9,6 +9,7 @@ import { kitchenOf, kitchenRun, kitchenQuantities, KITCHEN_DEFAULT } from './kit
 import { bathOf } from './bath';
 import { fixtureCount } from './fixtures';
 import { formatQty } from './format';
+import { nicheRoom, nicheTileArea } from './niches';
 import { colorName } from './budget-excluded';
 /** Pereții în documente: punctele cardinale în română, nu literele interne N/S/E/W. */
 const SIDE_RO: Record<string, string> = { N: 'nord', S: 'sud', E: 'est', W: 'vest' };
@@ -92,6 +93,11 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
       if (gk) items.push(materialLine(gk, `${room.id}:shaft:${sh.id}`, room.id, `Casetare gips-carton · ${where}`, sh.area, mc.verifiedAt)); else unknown.push(`Gips-carton casetare · ${where}`);
       unknown.push(`Manoperă casetare gips-carton ${r2(sh.area)} m² · ${where}`);
       if (room.type === 'baie' && wt){ items.push(materialLine(wt, `${room.id}:shaft-tile:${sh.id}`, room.id, `Faianță casetare · ${where}`, sh.area, mc.verifiedAt)); adhesiveArea += sh.area; addLabor(room.id, 'manopera-faianta', sh.area); } }
+    // nișe: în baie (sau cu finisaj de faianță) fundul și fețele interioare se placează; manopera și profilul de colț nu au preț verificat
+    for (const n of (fl.niches ?? []).filter(x => nicheRoom(fl, x)?.id === room.id)){ const where = `${room.name} (${Math.round(n.width * 100)}×${Math.round(n.height * 100)}×${Math.round(n.depth * 100)} cm)`, area = r2(nicheTileArea(n));
+      if ((room.type === 'baie' || n.finish === 'tile') && wt){ items.push(materialLine(wt, `${room.id}:niche:${n.id}`, room.id, `Faianță nișă · ${where}`, area, mc.verifiedAt)); adhesiveArea += area; addLabor(room.id, 'manopera-faianta', area); }
+      unknown.push(`Manoperă nișă (1 buc) · ${where}`); if (room.type === 'baie' || n.finish === 'tile') unknown.push(`Profil de colț nișă ${r2(2 * (n.width + n.height))} ml · ${where}`);
+      if (n.finish === 'led') unknown.push(`Bandă LED nișă ${r2(n.width)} m · ${where}`); }
     // placări pe pereți (tapet, riflaj, tencuială decorativă, cărămidă, piatră, faianță), fiecare pe latura ei, până la înălțimea aleasă
     let featureArea = 0;
     for (const [i, wf] of (f.wallFeatures || []).entries()){ const m = M(wf.material), sg = bandGeometry(fl, room, wf);
