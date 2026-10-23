@@ -485,7 +485,13 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   handler runs on the page's dispatcher (CheckAccess/BeginInvoke). Deterministic test PublishThreadAffinityTests (red before, green after). App 816/0 x5 runs.
   Installed (exe 13E5C452…, hash = publish, self-test 0). REAL PC VERIFIED 2026-10-23 incl. link -> Expert and Simplu on "Panou general" -> Acasă.
   Login automation: the account text can be lost when typed right after `start` - always crop-check BOTH fields before submitting (did; 0 failed attempts).
-- OPEN QUESTION to owner: move LogAnalyzer.db/.key (+ .bak-20261016) from %LOCALAPPDATA%\LogAnalyzer too (not in the approved cleanup list)?
+- DECIDED (main, owner "continuă recomandat") 2026-10-23: LogAnalyzer.db/.key STAY. Reason: AppInstallDate takes the EARLIEST of the audit chain's first
+  record and the app's traces (program files, licence, LogAnalyzer.db, case folders); the db (created 11.08.2026) is the earliest trace - moving it would make
+  the install date look later and the next control (A16) would report a reinstall that never happened. Moving Cases did not change it (db was earlier).
+- MERGE chain #303 -> #306 -> #307 -> #308 into main: NOT done - security/authority-sensitive (auth, device monitor, response verification); CLAUDE.md
+  forbids auto-merge; needs the owner's explicit "da, fă merge". #303 ready (mergeable UNKNOWN at 2026-10-23), #306-#308 drafts MERGEABLE. PR #308 title
+  "demo" removed.
+- (old) OPEN QUESTION to owner: move LogAnalyzer.db/.key (+ .bak-20261016) from %LOCALAPPDATA%\LogAnalyzer too (not in the approved cleanup list)?
 - send.ps1 now recreates cmd/ and out/ (the scratchpad cleaner removed them twice).
 - (old) CLEANUP list given to owner 2026-10-23, waiting for OK + answers (person name "Eu Mister" -> ?, Policies 45 files test or keep?): delete Cases (16, 2.9 GB incl.
   LIVE-MARIUS-PC with 14 controls and the "Test" scope), transfers TR-2026-0001/0002, first-run-guide.seen; keep licence, accounts/password, sealed audit chain,
