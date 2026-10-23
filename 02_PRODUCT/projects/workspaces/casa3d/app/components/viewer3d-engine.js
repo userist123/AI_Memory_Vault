@@ -10,6 +10,7 @@ import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { SLAB } from '../core/levels';
+import { glideStep, dampFactor } from '../core/camera-glide';
 
 // Pasul final al calității înalte: în r128 tone mapping-ul (ACES) se aplică și la randarea în texturi
 // (WebGLPrograms: toneMapping nu depinde de țintă), dar ieșirea în textură rămâne liniară; aici facem doar sRGB.
@@ -1057,6 +1058,8 @@ function model(it){
 
   // ---------- navigare ----------
   let mode = 'house', yaw = 0, pitch = 0; const EYE = SHOT.eye, player = new THREE.Vector3(); const orbit = { th: -.7, ph: .95, r: 12 };
+  // alunecarea spre o cameră nouă în tur (UI/UX P2-14): amortizată, întreruptă de orice comandă, tăietură la mișcare redusă
+  let glide = null;
   function collide(x, z){ const r = .24;
     for (const c of colliders){ const px = x - c.ax, pz = z - c.az, s = Math.max(c.s0, Math.min(c.s1, px * c.ux + pz * c.uz)), cx = c.ax + c.ux * s, cz = c.az + c.uz * s, dx = x - cx, dz = z - cz, dd = Math.hypot(dx, dz);
       if (dd < r + .07 && dd > 1e-6){ const k = (r + .07 - dd) / dd; x += dx * k; z += dz * k; } }
@@ -1064,8 +1067,11 @@ function model(it){
       if (m === dl) x = b.x0 - r; else if (m === dr) x = b.x1 + r; else if (m === du) z = b.z0 - r; else z = b.z1 + r; } }
     return [x, z]; }
   // intrarea în tur: același cadru ca imaginea de prezentare a camerei (regula SHOT: 1,5 m, orizontal, spre piesele principale)
-  function goRoom(id){ if (!plan) return; const room = plan.camere.find(r => r.id === id); if (!room) return; resize(); setMode('walk'); scene.updateMatrixWorld(true);
-    const sh = roomShot(room, cam.aspect || 1.5, walkFov()), [x, z] = collide(sh.x, sh.z); player.set(x, 0, z); yaw = Math.atan2(-(sh.tx - x), -(sh.tz - z)); pitch = 0; assignLights(true); }
+  function goRoom(id){ if (!plan) return; const room = plan.camere.find(r => r.id === id); if (!room) return; resize();
+    const wasWalk = mode === 'walk'; setMode('walk'); scene.updateMatrixWorld(true);
+    const sh = roomShot(room, cam.aspect || 1.5, walkFov()), [x, z] = collide(sh.x, sh.z), ty = Math.atan2(-(sh.tx - x), -(sh.tz - z));
+    // din tur în altă cameră: alunecare; din machetă în tur (schimbare de mod) sau la mișcare redusă: direct
+    if (wasWalk && !reduce) glide = { x, z, yaw: ty, pitch: 0 }; else { glide = null; player.set(x, 0, z); yaw = ty; pitch = 0; } assignLights(true); }
   // macheta taie pereții la 42% din înălțime; aceeași tăietură se aplică și mobilierului (dulapuri înalte, biblioteci),
   // altfel ar ieși deasupra pereților și ar părea în afara casei
   const cut = new THREE.Plane(new THREE.Vector3(0, -1, 0), 1.1);
@@ -1084,9 +1090,9 @@ function model(it){
     if (ptrs.size === 2){ pinchD = pdist(); drag = false; moved = 99; return; } drag = true; lx = e.clientX; ly = e.clientY; moved = 0; };
   const pmv = e => { if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (ptrs.size >= 2 && pinchD > 0){ const d = pdist(), k = pinchD / Math.max(1, d); pinchD = d;
-      if (mode === 'house') orbit.r = Math.max(4, Math.min(40, orbit.r * k)); else { const step = (1 - k) * 2.2, [x, z] = collide(player.x - Math.sin(yaw) * step, player.z - Math.cos(yaw) * step); player.x = x; player.z = z; } return; }
+      if (mode === 'house') orbit.r = Math.max(4, Math.min(40, orbit.r * k)); else { glide = null; const step = (1 - k) * 2.2, [x, z] = collide(player.x - Math.sin(yaw) * step, player.z - Math.cos(yaw) * step); player.x = x; player.z = z; } return; }
     if (!drag) return; const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
-    if (mode === 'walk'){ yaw -= dx * .0045; pitch = Math.max(-1.2, Math.min(1.1, pitch - dy * .0035)); } else { orbit.th -= dx * .006; orbit.ph = Math.max(.12, Math.min(1.45, orbit.ph - dy * .005)); } };
+    if (mode === 'walk'){ glide = null; yaw -= dx * .0045; pitch = Math.max(-1.2, Math.min(1.1, pitch - dy * .0035)); } else { orbit.th -= dx * .006; orbit.ph = Math.max(.12, Math.min(1.45, orbit.ph - dy * .005)); } };
   const pu = e => { const wasPinch = ptrs.size >= 2 || pinchD > 0; ptrs.delete(e.pointerId); if (ptrs.size < 2) pinchD = 0; if (wasPinch){ drag = false; return; }
     drag = false; if (moved >= 6) return; const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
     // clic pe o ușă: se deschide sau se închide (înaintea mobilierului, ca într-un tur real)
@@ -1108,10 +1114,11 @@ function model(it){
     for (const d of doorLeaves) if (d.open !== d.target){ d.open = reduce ? d.target : (d.target > d.open ? Math.min(d.target, d.open + dt * 1.4) : Math.max(d.target, d.open - dt * 1.4));
       const e = d.open * d.open * (3 - 2 * d.open); d.pivot.rotation.y = d.closed + d.maxOpen * e; R.shadowMap.needsUpdate = true; }
     if (mode === 'walk'){ let f = 0, s = 0; if (keys.w || keys.arrowup) f += 1; if (keys.s || keys.arrowdown) f -= 1; if (keys.a || keys.arrowleft) s -= 1; if (keys.d || keys.arrowright) s += 1; f = Math.max(-1, Math.min(1, f + joy.f)); s = Math.max(-1, Math.min(1, s + joy.s));
-      if (f || s){ const sp = 1.7 * dt, fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw); const [x, z] = collide(player.x + (fx * f + rx * s) * sp, player.z + (fz * f + rz * s) * sp); player.x = x; player.z = z; }
+      if (glide && !f && !s){ const g = glideStep({ x: player.x, z: player.z, yaw, pitch }, glide, dt, reduce); player.x = g.pose.x; player.z = g.pose.z; yaw = g.pose.yaw; pitch = g.pose.pitch; if (g.done) glide = null; }
+      if (f || s){ glide = null; const sp = 1.7 * dt, fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw); const [x, z] = collide(player.x + (fx * f + rx * s) * sp, player.z + (fz * f + rz * s) * sp); player.x = x; player.z = z; }
       cam.position.set(player.x, EYE, player.z); cam.rotation.order = 'YXZ'; cam.rotation.set(pitch, yaw, 0); assignLights(false);
       if (mirrorsDirty) updateMirrors();
-    } else {
+    } else { glide = null;
       if (keys.arrowleft || keys.a) orbit.th -= 1.4 * dt;
       if (keys.arrowright || keys.d) orbit.th += 1.4 * dt;
       if (keys.arrowup || keys.w) orbit.ph = Math.max(.12, orbit.ph - 1.1 * dt);
@@ -1119,7 +1126,7 @@ function model(it){
       if (keys['+'] || keys['=']) orbit.r = Math.max(4, orbit.r - 6 * dt);
       if (keys['-'] || keys['_']) orbit.r = Math.min(40, orbit.r + 6 * dt);
       if (keys['0']) { orbit.th = -.7; orbit.ph = .95; orbit.r = Math.max(W, D, 4) * 1.15; }
-      const t = new THREE.Vector3(C.x + Math.sin(orbit.th) * Math.sin(orbit.ph) * orbit.r, Math.cos(orbit.ph) * orbit.r, C.z + Math.cos(orbit.th) * Math.sin(orbit.ph) * orbit.r); cam.position.lerp(t, reduce ? 1 : Math.min(1, dt * 5)); cam.lookAt(C);
+      const t = new THREE.Vector3(C.x + Math.sin(orbit.th) * Math.sin(orbit.ph) * orbit.r, Math.cos(orbit.ph) * orbit.r, C.z + Math.cos(orbit.th) * Math.sin(orbit.ph) * orbit.r); cam.position.lerp(t, reduce ? 1 : dampFactor(5, dt)); cam.lookAt(C);
     }
     draw(); })();
   // ---------- scena pentru randarea fotorealistă (tools/blender/casa3d_render.py) ----------
@@ -1220,7 +1227,7 @@ function model(it){
     setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama, exportScene, exportGLB,
     setCameraPreset,
     // pași discreți pentru butoanele de pe ecran (WCAG 2.2 2.5.7: alternativă cu un clic la rotirea/zoom-ul prin tragere)
-    nudge(kind){ const a = .35;
+    nudge(kind){ const a = .35; glide = null;
       if (mode === 'walk'){ if (kind === 'left') yaw += a; else if (kind === 'right') yaw -= a; else if (kind === 'up') pitch = Math.min(1.1, pitch + .2); else if (kind === 'down') pitch = Math.max(-1.2, pitch - .2);
         else if (kind === 'in' || kind === 'out'){ const step = kind === 'in' ? .8 : -.8, [x, z] = collide(player.x - Math.sin(yaw) * step, player.z - Math.cos(yaw) * step); player.x = x; player.z = z; } }
       else { if (kind === 'left') orbit.th -= a; else if (kind === 'right') orbit.th += a; else if (kind === 'up') orbit.ph = Math.max(.12, orbit.ph - .15); else if (kind === 'down') orbit.ph = Math.min(1.45, orbit.ph + .15);
