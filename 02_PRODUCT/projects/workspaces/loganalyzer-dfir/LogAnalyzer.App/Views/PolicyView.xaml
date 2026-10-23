@@ -1,8 +1,10 @@
 <UserControl x:Class="LogAnalyzer.UI.Views.PolicyView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:vmx="clr-namespace:LogAnalyzer.UI.ViewModels"
              xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
-             xmlns:local="clr-namespace:LogAnalyzer.UI.Views">
+             xmlns:local="clr-namespace:LogAnalyzer.UI.Views"
+             xmlns:services="clr-namespace:LogAnalyzer.UI.Services">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
@@ -18,16 +20,32 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="Politici — import, aprobare, aplicare verificată" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+            <TextBlock Text="Politici" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
             <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
-                       Text="Stări: CIORNĂ (DRAFT) → VALIDATĂ (VALIDATED) → TESTATĂ (TESTED) → APROBATĂ (APPROVED) → APLICATĂ (DEPLOYED) → VERIFICATĂ (VERIFIED).Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată."/>
+                       Text="Importați, aprobați și aplicați politici de securitate Windows, cu verificare după aplicare."/>
+            <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
+                       Text="Stări: CIORNĂ → VALIDATĂ → TESTATĂ → APROBATĂ → APLICATĂ → VERIFICATĂ. Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată.">
+                <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+            </TextBlock>
+            <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
+                       Text="Stări: CIORNĂ (DRAFT) → VALIDATĂ (VALIDATED) → TESTATĂ (TESTED) → APROBATĂ (APPROVED) → APLICATĂ (DEPLOYED) → VERIFICATĂ (VERIFIED). Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată.">
+                <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+            </TextBlock>
+            <StackPanel Visibility="{Binding NothingOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <ctrl:EmptyStateCard What="{x:Static vmx:EmptyStates.PolicyWhat}" Why="{x:Static vmx:EmptyStates.PolicyWhy}" Step="{x:Static vmx:EmptyStates.PolicyStep}"/>
+                <Button Content="Deschide fișier…" Command="{Binding OpenFileCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" Margin="0,0,0,10"/>
+            </StackPanel>
         </StackPanel>
 
         <Border Grid.Row="1" Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,8">
             <StackPanel>
+                <Expander Header="Avansat" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8" AutomationProperties.Name="Avansat: depozitul de politici">
+                    <WrapPanel Margin="0,6,0,0">
+                        <TextBlock Text="Depozit politici:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                        <TextBox AutomationProperties.Name="Depozit politici" Text="{Binding StoreRoot, UpdateSourceTrigger=LostFocus}" Width="360"/>
+                    </WrapPanel>
+                </Expander>
                 <WrapPanel VerticalAlignment="Center">
-                    <TextBlock Text="Depozit politici:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBox Text="{Binding StoreRoot, UpdateSourceTrigger=LostFocus}" Width="360" Margin="0,0,16,0"/>
                     <TextBlock Text="Operator:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <TextBlock Text="{Binding Operator}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
                     <Button Content="Deschide fișier…" Command="{Binding OpenFileCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>

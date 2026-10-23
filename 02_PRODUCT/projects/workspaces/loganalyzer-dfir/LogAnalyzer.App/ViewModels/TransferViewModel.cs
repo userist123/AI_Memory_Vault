@@ -49,11 +49,12 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>USB/card connections in the last <see cref="ReconcileDays"/> days with no transfer on that medium (same day or +-1 day).</summary>
         public ObservableCollection<UnregisteredConnection> UnregisteredConnections { get; } = new();
         public const int ReconcileDays = 30;
+        public const string UsbMediumLabel = "Mediu de stocare USB";
 
         /// <summary>One line for a non-IT controller: which stick, when, and what is missing.</summary>
         public sealed record UnregisteredConnection(UsbSessionCheck Check)
         {
-            public string Text => $"{Check.Device.DisplayName} · S/N {Check.Device.Serial} · conectat {Check.Connected.ToLocalTime():yyyy-MM-dd HH:mm} · {Check.Message}";
+            public string Text => $"{Check.Device.DisplayName} · S/N {Check.Device.Serial} · conectat {Check.Connected.ToLocalTime():dd.MM.yyyy HH:mm} · {Check.Message}";
         }
 
         [ObservableProperty] private string _unregisteredSummary = "";
@@ -101,7 +102,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (value is null) return;
             var d = value.Device;
-            MediumType = d.Kind switch { DeviceKind.UsbStorage => "Stick / disc USB", DeviceKind.MemoryCard => "Card de memorie", DeviceKind.Optical => "CD/DVD", DeviceKind.PortableDevice => "Dispozitiv portabil", _ => d.KindText };
+            MediumType = d.Kind switch { DeviceKind.UsbStorage => UsbMediumLabel, DeviceKind.MemoryCard => "Card de memorie", DeviceKind.Optical => "CD/DVD", DeviceKind.PortableDevice => "Dispozitiv portabil", _ => d.KindText };
             MediumSerial = d.Serial;
             MediumRegistration = value.RegistrationNumber;
             var row = _media.Register.Snapshot().Rows.FirstOrDefault(r => r.RegistrationNumber == value.RegistrationNumber);
@@ -158,11 +159,11 @@ namespace LogAnalyzer.UI.ViewModels
             if (item is null) return;
             var d = item.Check.Device;
             SelectedMedium = Media.FirstOrDefault(m => m.Device.InstanceId == d.InstanceId);
-            MediumType = d.Kind == DeviceKind.MemoryCard ? "Card de memorie" : "Stick / disc USB";
+            MediumType = d.Kind == DeviceKind.MemoryCard ? "Card de memorie" : UsbMediumLabel;
             MediumSerial = d.Serial;
             MediumRegistration = _media.AllDevices.FirstOrDefault(a => a.Device.InstanceId == d.InstanceId)?.RegistrationNumber ?? "";
             TransferDate = item.Check.Connected.ToLocalTime().DateTime.Date;
-            Status = $"Formularul este pregătit pentru mediul {d.DisplayName}, data {TransferDate:yyyy-MM-dd}. Alegeți fișierele, scrieți destinația și martorul.";
+            Status = $"Formularul este pregătit pentru mediul {d.DisplayName}, data {TransferDate:dd.MM.yyyy}. Alegeți fișierele, scrieți destinația și martorul.";
         }
 
         [RelayCommand]

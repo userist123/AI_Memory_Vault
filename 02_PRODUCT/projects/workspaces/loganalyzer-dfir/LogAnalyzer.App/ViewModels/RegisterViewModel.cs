@@ -28,9 +28,13 @@ namespace LogAnalyzer.UI.ViewModels
         protected RegisterViewModel(string? path = null)
         {
             _registerPath = path ?? RegisterStore.DefaultPath<T>();
-            _status = "Introduceți rândurile în tabel (sau lipiți / importați), apoi apăsați „Salvează”. Un registru fără rânduri este „registru nedefinit”. Nimic din registru nu se aplică pe Windows.";
+            _status = "Introduceți rândurile în tabel (sau lipiți / importați), apoi apăsați „Salvează”. Nimic din registru nu se aplică pe Windows.";
             Data = new DataTable(_register.Kind);
             foreach (var c in _register.Columns) Data.Columns.Add(c, typeof(string));
+            // the "empty page" panel goes away as soon as the first row is typed, pasted or imported; the hint follows the language level
+            Data.RowChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
+            Data.RowDeleted += (_, _) => OnPropertyChanged(nameof(IsEmpty));
+            System.ComponentModel.PropertyChangedEventManager.AddHandler(LogAnalyzer.UI.Services.LanguageLevelState.Instance, (_, _) => OnPropertyChanged(nameof(Hint)), nameof(LogAnalyzer.UI.Services.LanguageLevelState.IsSimple));
             SaveCommand = new RelayCommand(Save);
             ReloadCommand = new RelayCommand(() => LoadFrom(RegisterPath));
             OpenFileCommand = new RelayCommand(OpenFile);
@@ -43,6 +47,8 @@ namespace LogAnalyzer.UI.ViewModels
             Services.AuthApp.SessionChanged += () => { OnPropertyChanged(nameof(AccessNotice)); OnPropertyChanged(nameof(CanEdit)); DiscoverCommand.NotifyCanExecuteChanged(); };
         }
 
+        /// <summary>True while the grid holds no row: the page then shows the "Ce este / de ce contează / primul pas" panel (rows 16-17).</summary>
+        public bool IsEmpty => !Data.Rows.Cast<DataRow>().Any(r => r.ItemArray.Any(v => !string.IsNullOrWhiteSpace(v?.ToString())));
         public string Title => _register.Title;
         public string Columns => string.Join(" · ", System.Linq.Enumerable.Select(_register.Columns, LogAnalyzer.UI.Views.ColumnLabels.For));
         /// <summary>A shown-always line under the title (for the users register: who may edit it, and that the application cannot enforce it yet).</summary>
@@ -104,8 +110,12 @@ namespace LogAnalyzer.UI.ViewModels
         {
             Data.Clear();
             foreach (var row in _register.Cells()) Data.Rows.Add(row.Cast<object>().ToArray());
-            Definition = _register.IsDefined ? $"definit ({_register.Cells().Count} rânduri)" : "nedefinit (registru nedefinit: nu există rânduri)";
+            Definition = DefinitionText();
+            OnPropertyChanged(nameof(IsEmpty));
         }
+
+        /// <summary>"registru nedefinit" is said once on the page (in its subtitle); here only the state.</summary>
+        private string DefinitionText() => _register.IsDefined ? $"definit ({_register.Cells().Count} rânduri)" : "nedefinit: nu există rânduri";
 
         private void ShowIssues(System.Collections.Generic.IEnumerable<RegisterIssue> issues)
         {
@@ -121,7 +131,7 @@ namespace LogAnalyzer.UI.ViewModels
                 _register = new T();
                 Push();
                 ShowIssues(r.Issues);
-                Status = r.Issues.Count > 0 ? "Registrul nu a putut fi citit; lista de mai jos arată motivul. Nu s-a înlocuit nimic." : startup ? "Nu există un registru salvat: registru nedefinit." : "Fișierul nu există.";
+                Status = r.Issues.Count > 0 ? "Registrul nu a putut fi citit; lista de mai jos arată motivul. Nu s-a înlocuit nimic." : startup ? "Nu există un registru salvat." : "Fișierul nu există.";
                 return;
             }
             _register = r.Register;
@@ -153,7 +163,7 @@ namespace LogAnalyzer.UI.ViewModels
                 ShowIssues(issues);
                 if (issues.Any(i => i.IsError)) { Status = $"Nu s-a salvat nimic: {issues.Count(i => i.IsError)} erori (vezi lista, pe linii)."; return; }
                 Sha256 = sha;
-                Definition = _register.IsDefined ? $"definit ({_register.Cells().Count} rânduri)" : "nedefinit (registru nedefinit: nu există rânduri)";
+                Definition = DefinitionText();
                 Status = $"Registru salvat în {RegisterPath} (SHA-256 {sha}). Se folosește la următoarea analiză; fiecare caz își păstrează o copie și hash-ul în custodie. Modificarea este în jurnalul de audit al registrelor.";
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
@@ -284,8 +294,18 @@ namespace LogAnalyzer.UI.ViewModels
             return $"Preluat de pe stație: {c.Added} conturi noi, {c.AlreadyPresent} erau deja în registru. Salvați ca să păstrați.";
         }
 
-        public override string Notice => UsersRegister.EditNotice;
-        public override string Hint =>
+        // the stored sentence starts in lower case (it is a pinned constant of the register); on screen it is a subtitle and starts with a capital
+        public override string Notice => UsersRegister.EditNotice.Length == 0 ? "" : char.ToUpper(UsersRegister.EditNotice[0], System.Globalization.CultureInfo.GetCultureInfo("ro-RO")) + UsersRegister.EditNotice[1..];
+
+        /// <summary>Simplu: the field names in Romanian only; Expert keeps the English column names next to them.</summary>
+        public override string Hint => LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert ? ExpertHint : SimpleHint;
+
+        private const string SimpleHint =
+            "Rândurile vin de pe stație (conturile existente sau folosite pe ea); persoana completează doar ce stația nu poate ști: autorizarea (nivelul), zonele și nevoia de a cunoaște. " +
+            "Persoana; Conturile: DOMENIU\\utilizator, separate prin ; sau |; Identificatorii de cont: opțional; Autorizarea: nivel NATO, UE sau național (un rând pentru fiecare abilitare; gol = fără abilitare); " +
+            "Autorizare valabilă de la / până la: aaaa-LL-zz; Necesitatea de a cunoaște: note; Zone permise: zone separate prin ; sau |. Abilitările se introduc manual; nu se deduc din nimic.";
+
+        private const string ExpertHint =
             "Rândurile vin de pe stație (conturile existente sau folosite pe ea); persoana completează doar ce stația nu poate ști: autorizația (nivelul), zonele și nevoia de a cunoaște. " +
             "Persoana (Person); Conturile (Accounts): DOMENIU\\utilizator, separate prin ; sau |; Identificatorii de cont (Sids): opțional; Autorizația (Clearance): nivel NATO, UE sau național (un rând pentru fiecare abilitare; gol = fără abilitare); " +
             "Autorizație valabilă de la / până la (ClearanceValidFrom/To): aaaa-LL-zz; Necesitatea de a cunoaște (NeedToKnow): note; Zone permise (ZonesAllowed): zone separate prin ; sau |. Abilitările se introduc manual; nu se deduc din nimic.";

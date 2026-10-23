@@ -12,9 +12,10 @@
                 AutomationProperties.Name="Deschide ghidul de început" ToolTip="Cele trei ecrane de început: ce face aplicația, drumul obișnuit și unde găsiți ajutor."/>
         <DockPanel DockPanel.Dock="Top" Margin="0,0,0,10">
             <TextBlock Text="Caută:" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
-            <TextBox x:Name="SearchBox" AutomationProperties.Name="Caută în glosar" TextChanged="SearchBox_TextChanged" Padding="6,4"/>
+            <TextBox x:Name="SearchBox" AutomationProperties.Name="Caută în glosar" Text="{Binding Query, UpdateSourceTrigger=PropertyChanged}" Padding="6,4"/>
         </DockPanel>
-        <DataGrid x:Name="Grid" AutomationProperties.Name="Glosarul termenilor" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+        <TextBlock DockPanel.Dock="Top" Text="{Binding Summary}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+        <DataGrid x:Name="Grid" AutomationProperties.Name="Glosarul termenilor" ItemsSource="{Binding Results}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
                   GridLinesVisibility="Horizontal" RowHeight="NaN" CanUserResizeRows="False">
             <DataGrid.Columns>
                 <DataGridTextColumn Header="Pe înțelesul tuturor" Binding="{Binding Romanian}" Width="1.4*">

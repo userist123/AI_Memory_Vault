@@ -305,7 +305,7 @@ namespace LogAnalyzer.UI.ViewModels
         }
 
         // Dashboard stats
-        [ObservableProperty, NotifyPropertyChangedFor(nameof(IsLegacyDataPage))] private int _selectedTabIndex = HomeViewModel.HomeTabIndex;   // WP5: the app opens on Home
+        [ObservableProperty, NotifyPropertyChangedFor(nameof(IsLegacyDataPage), nameof(ShowEventTableButtons))] private int _selectedTabIndex = HomeViewModel.HomeTabIndex;   // WP5: the app opens on Home
 
         /// <summary>G3: the older pages under "Avansat" that load their own events (dashboard, events, registry, alerts, timeline, risk, attack chain,
         /// threat intelligence, MITRE); on them the window shows the empty offer while neither "Colectează tot" nor the page has data.</summary>
@@ -609,6 +609,20 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <summary>The status-bar line for a finished control or investigation; an active audit-health warning stays in front of it, never overwritten.</summary>
         internal static string ActivityStatusLine(string line, string? auditWarning) => string.IsNullOrWhiteSpace(auditWarning) ? line : auditWarning + " · " + line;
+
+        /// <summary>
+        /// The status-bar line when no analysis ran in this session (2026-10-22 beginner walkthrough, row 8): „Nicio analiză încă.” is true only on a station with no history;
+        /// with a control or case of this session the line is that activity, with earlier controls or recent cases it points to Home, where they are.
+        /// </summary>
+        internal static string NoAnalysisLine(string lastActivity, bool earlierControls, int recentCases) =>
+            !string.IsNullOrWhiteSpace(lastActivity) ? lastActivity
+            : earlierControls || recentCases > 0 ? "Nicio analiză în această sesiune; controalele și cazurile anterioare sunt pe pagina Acasă."
+            : "Nicio analiză încă.";
+
+        /// <summary>The pages that show an event table: only there do „Încarcă un folder de probe / Încarcă jurnale Windows / Exportă tabelul (CSV)” act on something (row 9).</summary>
+        internal static readonly int[] EventTablePages = [1, 3, 4];
+        internal static bool IsEventTablePage(int tab) => EventTablePages.Contains(tab);
+        public bool ShowEventTableButtons => IsEventTablePage(SelectedTabIndex);
 
         public MainViewModel(
             IEventParser eventParser, IAnalysisEngine analysisEngine, IRegistryParser registryParser,
@@ -2906,7 +2920,7 @@ namespace LogAnalyzer.UI.ViewModels
                 // 2026-10-22 walkthrough: no summary without collected data, and the AI label only where the edition has the AI layer (Standalone has none).
                 // 2026-10-22 round 2: nor right after sign-in, when only the data of an earlier session was re-read (announce = false)
                 StatusMessage = eventsForAnalysis.Count == 0 || !announce
-                    ? "Nicio analiză încă."
+                    ? NoAnalysisLine(LogAnalyzer.UI.Services.CollectAllState.Instance.LastActivity, LogAnalyzer.UI.Services.CollectAllState.Instance.HasEarlierControls, Home?.RecentList.Count ?? 0)
                     : (Edition.Has(LogAnalyzer.Core.Services.Edition.EditionFeature.AiAnalysis) ? "✅ Analiză AI finalizată" : "✅ Analiză finalizată")
                       + $": Risc {AiRiskScore}/100 | {kerbFindings.Count} Kerberos | {lolbas.Count} LOLBAS | {multiCorrelations.Count} Lanțuri Corelate";
                 UpdateStorylineAndAptAttribution();

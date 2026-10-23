@@ -28,7 +28,27 @@ namespace LogAnalyzer.UI.ViewModels
         public DataTable Data { get; }
         public DataView View => Data.DefaultView;
 
-        public string Hint => Table switch
+        /// <summary>Simplu: Romanian only; Expert keeps the English field names next to them.</summary>
+        public string Hint => LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert ? ExpertHint : SimpleHint;
+
+        private string SimpleHint => Table switch
+        {
+            ProfileTable.WorkingHours => "Ziua: de luni până duminică; începutul și sfârșitul: HH:mm. Un schimb de noapte (22:00-06:00) este acceptat.",
+            ProfileTable.Holidays => "Data: aaaa-LL-zz.",
+            ProfileTable.Shifts => "Numele; începutul și sfârșitul: HH:mm.",
+            ProfileTable.ApprovedAccounts => "Contul: DOMENIU\\utilizator sau utilizator. Conturile care au voie să golească jurnalele.",
+            ProfileTable.MaintenanceWindows => "Tipul: o singură dată, săptămânal sau lunar (lunar: numărul săptămânii 1-4 sau ultima, plus ziua), de exemplu prima zi de luni din lună, 08:00-10:00. Ora locală a stației.",
+            ProfileTable.RotationProcedure => "Pașii, în ordinea procedurii: export, amprentă, arhivare, verificare, golire.",
+            ProfileTable.ApprovedSoftware => "Numele; editorul; șablonul căii (ex. C:\\Program Files\\7-Zip\\*); amprenta SHA-256 (opțional, 64 de caractere hexazecimale).",
+            ProfileTable.ExpectedPolicies => "Calea politicii: calea din secțiunea Politici (import GPO existent; nu se copiază aici); amprenta SHA-256 opțională.",
+            ProfileTable.Zones => "Zonele organizației (ex. ROSU, PUBLIC). Fără zone, orice conectivitate pe un sistem izolat (air-gap) este „conectivitate observată, necesită explicație”.",
+            ProfileTable.TransferChannels => "Din zona / în zona: zone definite mai sus; mediul: suportul sau calea de transfer aprobată.",
+            ProfileTable.NetworkDestinations => "Adresa: IP, rețea CIDR sau nume; zona în care se află.",
+            ProfileTable.ClassifiedFolders => "Calea completă a unui folder cu documente clasificate (ex. D:\\Clasificat). La controlul stației se verifică dacă accesul la fișierele din el este auditat.",
+            _ => "",
+        };
+
+        private string ExpertHint => Table switch
         {
             ProfileTable.WorkingHours => "Ziua (Day): Luni..Duminică (sau Mon..Sun); începutul și sfârșitul (Start/End): HH:mm. Un schimb de noapte (22:00-06:00) este acceptat.",
             ProfileTable.Holidays => "Data (Date): aaaa-LL-zz.",
@@ -114,7 +134,13 @@ namespace LogAnalyzer.UI.ViewModels
         {
             _provider = provider ?? ProfileProvider.Shared;
             _profilePath = _provider.Path;
-            foreach (var t in ProfileTables.All) Tables.Add(new ProfileTableViewModel(t));
+            foreach (var t in ProfileTables.All)
+            {
+                var tvm = new ProfileTableViewModel(t);
+                tvm.Data.RowChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
+                tvm.Data.RowDeleted += (_, _) => OnPropertyChanged(nameof(IsEmpty));
+                Tables.Add(tvm);
+            }
             SelectedTable = Tables[0];
             LoadFrom(_profilePath, startup: true);
             LoadHeader();
@@ -123,6 +149,8 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <summary>Shown when the signed-in user may read but not change the profile (only the global administrator edits; decision 33).</summary>
         public string AccessNotice => LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration ? "" : LogAnalyzer.Dfir.Auth.OperatorIdentity.AdministratorOnlyMessage + ". Puteți citi profilul, nu îl puteți modifica.";
+        /// <summary>True while no table of the profile holds a row: the page then shows the "Ce este / de ce contează / primul pas" panel (rows 16-17).</summary>
+        public bool IsEmpty => Tables.All(t => t.Rows().Count == 0);
         public bool CanEdit => LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration;
 
         private void Pull()
@@ -134,6 +162,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             foreach (var t in Tables) t.Load(_profile);
             Refresh();
+            OnPropertyChanged(nameof(IsEmpty));
         }
 
         private void Refresh()
