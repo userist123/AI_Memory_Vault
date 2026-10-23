@@ -6,6 +6,7 @@ import { footprintOf } from './validate';
 import { TECH_KINDS, type TechKind } from './technical';
 import { wallDimensions, roomSchedule } from './dimensions';
 import { doorSwing } from './doors';
+import { doorSymbol } from './door-symbols';
 import { floors, levelView, stairGeometry, stairVoids, stairRect, SLAB } from './levels';
 import { wallLength } from './geometry';
 import { nicheGeometry } from './niches';
@@ -78,12 +79,22 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
         if (o.kind === 'door' && o.passage){ line('DOORS', pa(s, 1), pa(s, -1)); line('DOORS', pa(e, 1), pa(e, -1)); }
         else if (o.kind === 'door'){
           // balamaua și partea de deschidere: aceleași ca în plan și în 3D (core/doors.ts)
-          const sw = doorSwing(snap.floor, snap.floor.walls.indexOf(w), w.openings.indexOf(o)), atS = sw.hinge !== 'end';
-          const hinge = pa(atS ? s : e), rr = (e - s) * 1000, d: Pt = atS ? [ux, -uz] : [-ux, uz], n: Pt = [-uz * sw.swing, -ux * sw.swing];   // în coordonate DXF (z inversat)
-          const closed: Pt = [hinge[0] + d[0] * rr, hinge[1] + d[1] * rr], open: Pt = [hinge[0] + n[0] * rr, hinge[1] + n[1] * rr];
-          line('DOORS', hinge, open);
-          const aC = Math.atan2(d[1], d[0]), aO = Math.atan2(n[1], n[0]), ccw = d[0] * n[1] - d[1] * n[0] > 0;
-          arc('DOORS', hinge, rr, deg(ccw ? aC : aO), deg(ccw ? aO : aC)); void closed;
+          const wi = snap.floor.walls.indexOf(w), oi = w.openings.indexOf(o), sw = doorSwing(snap.floor, wi, oi), type = o.doorType ?? 'swing';
+          // o foaie batantă: linia foii deschise și arcul ei, cu balamaua la `t` (atS = foaia se întinde spre capătul `e`)
+          const swingLeaf = (t: number, atS: boolean, width: number) => { const hinge = pa(t), rr = width * 1000, d: Pt = atS ? [ux, -uz] : [-ux, uz], n: Pt = [-uz * sw.swing, -ux * sw.swing];   // în coordonate DXF (z inversat)
+            line('DOORS', hinge, [hinge[0] + n[0] * rr, hinge[1] + n[1] * rr]);
+            const aC = Math.atan2(d[1], d[0]), aO = Math.atan2(n[1], n[0]), ccw = d[0] * n[1] - d[1] * n[0] > 0;
+            arc('DOORS', hinge, rr, deg(ccw ? aC : aO), deg(ccw ? aO : aC)); };
+          if (type === 'swing') swingLeaf(sw.hinge !== 'end' ? s : e, sw.hinge !== 'end', e - s);
+          else if (type === 'double'){ swingLeaf(s, true, (e - s) / 2); swingLeaf(e, false, (e - s) / 2); }
+          else { // glisantă, în perete, pliantă, pivotantă: segmentele simbolului din plan (core/door-symbols.ts); arcele pivotantei rămân doar în plan
+            const sym = doorSymbol({ a: [w.a[0] + ux * s, w.a[1] + uz * s], b: [w.a[0] + ux * e, w.a[1] + uz * e], thickness: w.thickness, hinge: sw.hinge, swing: sw.swing, type, flush: o.flush });
+            for (const q of sym.paths){ let cur: Pt | null = null, first: Pt | null = null;
+              for (const [, c, args] of q.d.matchAll(/([MLAZ])([^MLAZ]*)/g)){ const v = args!.trim().split(/[\s,]+/).filter(Boolean).map(Number);
+                if (c === 'M'){ cur = first = P(v[0]!, v[1]!); }
+                else if (c === 'L' && cur){ const nx2 = P(v[0]!, v[1]!); line('DOORS', cur, nx2); cur = nx2; }
+                else if (c === 'A'){ cur = P(v[5]!, v[6]!); }
+                else if (c === 'Z' && cur && first){ line('DOORS', cur, first); cur = first; } } } }
         } else for (const side of [1, 0, -1]) line('WINDOWS', pa(s, side), pa(e, side));
       }
     }
