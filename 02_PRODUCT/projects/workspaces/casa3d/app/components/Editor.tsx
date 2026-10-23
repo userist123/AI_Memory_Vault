@@ -74,6 +74,7 @@ import { isPaletteShortcut } from '@/lib/fuzzy';
 import { editorIgnoresKey } from '@/lib/palette-keys';
 import { prepareShareImages } from '@/lib/share-images';
 import { withViewTransition } from '@/lib/motion';
+import StagePicker from './StagePicker';
 import { flushSync } from 'react-dom';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
@@ -124,7 +125,7 @@ const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: tr
 export default function Editor({ id }: { id: string }){
   const { t, tp, lang, units, setLang, setUnits } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
   const [meta, setMeta] = useState<ProjectMeta | null>(null), [house, setHouse] = useState<Snapshot | null>(null), [lvl, setLvl] = useState(0), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
-  const compact = useCompact(), [sheet, setSheet] = useState<'peek' | 'half' | 'full'>('half'), [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [frame, setFrame] = useState<{ sel: Sel; n: number } | null>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('2d'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
+  const compact = useCompact(), [sheet, setSheet] = useState<'peek' | 'half' | 'full'>('half'), [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [frame, setFrame] = useState<{ sel: Sel; n: number } | null>(null), [wideSide, setWideSide] = useState(false), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('2d'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'offline' | 'auth'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
   const [showTech, setShowTech] = useState(true), [techKind, setTechKind] = useState<TechKind>('outlet_double');
   const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[]; discard?: () => void } | null>(null), [persistent, setPersistent] = useState(true), [demo, setDemo] = useState(false), [stage, setStageRaw] = useState<Stage>('survey'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
@@ -374,6 +375,8 @@ export default function Editor({ id }: { id: string }){
     addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, []);
   // „gata” pe etapă, din datele proiectului (core/stage-progress.ts); se recalculează la fiecare modificare
   const done = useMemo(() => house ? stageDone({ house, warnings: advice.filter(a => a.severity !== 'TIP').length, shares: activeShares(shares), status: meta?.status ?? 'design' }) : null, [house, advice, shares, meta]);
+  // (hook înainte de orice return timpuriu) modul „document lat” al panoului, ținut minte în browser
+  useEffect(() => { try { setWideSide(localStorage.getItem('casa3d.sideWide') === '1'); } catch { /* stocare blocată */ } }, []);
   if (!snap || !catalog || !mc) return toast ? <div className="home"><p className="muted" role="status">{toast}</p></div> : <EditorSkeleton label={t('editor.loading')} />;
   const G = groups(catalog);
   const onAddWall = (a: [number, number], b: [number, number]) => mutate(s => { s.floor.walls.push({ id: `wall-${uid().slice(0, 8)}`, a, b, thickness: .15, exterior: false, openings: [] }); });
@@ -404,6 +407,8 @@ export default function Editor({ id }: { id: string }){
   };
   const rotateColumn = (cid: string) => mutate(s => { const c = s.floor.columns?.find(x => x.id === cid); if (c) { const tmp = c.w; c.w = c.d; c.d = tmp; } });
   // pe telefon nu e loc pentru plan + 3D unul sub altul: etapele care îl folosesc pornesc pe plan
+  // modul „document lat” al panoului (UI/UX P2-9): formularele lungi (client, contract, releveu) au loc; ținut minte în browser
+  const toggleWide = () => setWideSide(w => { try { localStorage.setItem('casa3d.sideWide', w ? '0' : '1'); } catch { /* stocare blocată */ } return !w; });
   // schimbarea etapei animă doar panoul lateral (View Transition, lib/motion.ts); flushSync: DOM-ul nou trebuie să existe în callback
   const setStage = (s: Stage) => { const st = STAGES.find(x => x.id === s)!; withViewTransition(() => flushSync(() => { setStageRaw(s); setView(st.view === 'split' && isCompact() ? '2d' : st.view); if (!st.tools.includes(tool)) setTool('select'); if (s === 'mep') setShowTech(true); setSideOpen(true); setSheet('half'); })); };
   const nextId = nextStage(stage);
@@ -517,6 +522,7 @@ export default function Editor({ id }: { id: string }){
     </header>
     <div className={`stagewrap studio-stagewrap ${barFade.over ? 'is-over' : ''}`}>
     <button type="button" className="stage-step" aria-label={t('stage.prev')} title={t('stage.prev')} disabled={STAGES.indexOf(stageDef) === 0} onClick={() => setStage(STAGES[Math.max(0, STAGES.indexOf(stageDef) - 1)]!.id)}><Icon name="chevronLeft" /></button>
+    <StagePicker stages={STAGES} phases={PHASES} current={stage} done={done} warn={warnCount} onPick={id => setStage(id as Stage)} />
     <nav className={`stagebar ${barFade.l ? 'fade-l' : ''} ${barFade.r ? 'fade-r' : ''}`} aria-label={t('stage.aria')} ref={stageBarRef} onScroll={measureBar}>
       {PHASES.map(ph => <div key={ph.id} className="phase" role="group" aria-label={t('phase.aria', { phase: t(`phase.${ph.id}`) })} data-phase={ph.id}>
         <span className="phase-label" aria-hidden="true">{t(`phase.${ph.id}`)}</span>
@@ -527,7 +533,7 @@ export default function Editor({ id }: { id: string }){
     <button type="button" className="stage-step" aria-label={t('stage.next')} title={t('stage.next')} disabled={STAGES.indexOf(stageDef) === STAGES.length - 1} onClick={() => setStage(STAGES[Math.min(STAGES.length - 1, STAGES.indexOf(stageDef) + 1)]!.id)}><Icon name="chevronRight" /></button>
     </div>
     {stageDef.page ? <div className="pagebody">{stage === 'orders' && <OrdersPage onPickFurniture={() => setStage('ffe')} id={id} cur={cur} say={say} projectName={snap.name} rooms={floors(house!).flatMap(f => f.rooms).map(r => ({ id: r.id, name: r.name }))} />}{stage === 'site' && <SitePage id={id} rooms={floors(house!).flatMap(f => f.rooms)} say={say} />}</div> :
-    <div className={`body studio-body ${compact ? `is-compact sheet-${sheet}` : ""}`}>
+    <div className={`body studio-body ${compact ? `is-compact sheet-${sheet}` : ""} ${!compact && wideSide ? "wide-side" : ""}`}>
       <nav className="tools studio-toolrail" aria-label={t('editor.tools')}>
         {(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk)).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={t(TOOL_LABEL[tk])}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
       </nav>
@@ -579,6 +585,7 @@ export default function Editor({ id }: { id: string }){
           {compact && <button type="button" className="sheet-grip" aria-label={sheet === 'full' ? t('editor.sheetLess') : t('editor.sheetMore')} aria-expanded={sheet !== 'peek'} onClick={() => setSheet(x => x === 'peek' ? 'half' : x === 'half' ? 'full' : 'peek')}><span aria-hidden="true" /></button>}
           <h2 className="stage-title"><i>{String(STAGES.indexOf(stageDef) + 1).padStart(2, '0')}</i>{t(`stage.${stage}`)}</h2>
           {nextId && <button type="button" className="btn primary sm stage-continue" aria-label={t('stage.continueTo', { stage: t(`stage.${nextId}`) })} title={t('stage.continueTo', { stage: t(`stage.${nextId}`) })} onClick={() => setStage(nextId)}><span>{t('stage.continue')}</span><Icon name="chevronRight" size={16} /></button>}
+          {!compact && <button type="button" className="btn ghost icon-btn side-wide" aria-pressed={wideSide} aria-label={t('editor.sideWide')} title={t('editor.sideWide')} onClick={toggleWide}><Icon name={wideSide ? 'chevronRight' : 'chevronLeft'} /></button>}
           {compact && <button type="button" className="btn ghost icon-btn" aria-label={sheet === 'peek' ? t('editor.showPanel') : t('editor.hidePanel')} onClick={() => setSheet(x => x === 'peek' ? 'half' : 'peek')}><Icon name={sheet === 'peek' ? 'chevronUp' : 'chevronDown'} /></button>}
         </div>
         <StageMeta stage={stage} done={done} />
