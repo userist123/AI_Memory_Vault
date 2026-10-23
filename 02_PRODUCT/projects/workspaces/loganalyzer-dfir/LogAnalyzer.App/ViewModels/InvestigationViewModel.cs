@@ -48,6 +48,16 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<Finding> SequenceFindings { get; } = new();
         [ObservableProperty] private string _sequenceSummary = "Secvențe combinate: nedefinite (nicio analiză încă).";
         [ObservableProperty] private string _sequenceSteps = "";
+        /// <summary>E7: "Activitatea utilizatorului" tab: ShellBags, RecentDocs, Office MRU and Recycle Bin ($I) rows, the ones in classified folders or on removable volumes first.</summary>
+        public ObservableCollection<LogAnalyzer.Dfir.Analysis.UserActivityItem> UserActivity { get; } = new();
+        [ObservableProperty] private string _userActivitySummary = "Activitatea utilizatorului: nedefinită (nicio analiză încă).";
+        /// <summary>Most rows the tab lists; the rest stay in the timeline (the summary says how many were left out).</summary>
+        public const int MaxUserActivityRows = 5000;
+        /// <summary>What the times of this tab mean (shown above the table, next to the time column).</summary>
+        public string UserActivityTimeNote =>
+            "Ce înseamnă ora: ShellBags = ultima actualizare a intrării folderului de către Explorer (nu prima deschidere, nu dovedește citirea unui fișier); RecentDocs = ora cheii, doar pentru cea mai nouă intrare; " +
+            "Office MRU = ultima deschidere de aplicația Office (UTC); Coș de reciclare = ora ștergerii (UTC), iar „conținut golit sau eliminat” înseamnă că fișierul $R lipsește, nu că elementul nu a existat. " +
+            "Rândurile din foldere clasificate sau de pe volume amovibile sunt primele; sunt urme slabe, DE VERIFICAT, nu dovezi de acces la conținut.";
         /// <summary>WP14a: the zone of the analysed system, as the operator declares it (compared with the zone in the media register).</summary>
         [ObservableProperty] private string _systemZone = "";
         [ObservableProperty] private string _registerLine = "Registre: nedefinite (nicio analiză încă).";
@@ -147,7 +157,7 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _remoteJustification = "";
         [ObservableProperty] private string _remoteStatus = "Pachetul rulează pe stația țintă (local, fără rețea), calculează SHA-256 acolo; îl aduceți pe suport extern și îl verificați aici înainte de import.";
 
-        public string[] Profiles { get; } = { "Rapid (jurnale, Prefetch, stare live)", "Standard (+ SRUM)", "Complet" };
+        public string[] Profiles { get; } = { "Rapid (jurnale, Prefetch, stare live)", "Standard (+ SRUM)", "Complet (+ hive-uri utilizatori, Coș $I)" };
         [ObservableProperty] private int _profileIndex = 1;
         [ObservableProperty] private bool _collectFromThisStation = true;
         // Case scope (owner decision 23): mandatory; the case is not created while a field is missing. Nothing is pre-filled on the operator's behalf.
@@ -409,6 +419,7 @@ namespace LogAnalyzer.UI.ViewModels
                     ? $"  {st.Order}. {st.WhenUtc:yyyy-MM-dd HH:mm} UTC — {st.Name}: {st.Note} [cont: {(st.Account.Length > 0 ? st.Account : "necunoscut în sursă")}; sursa: {st.Source}]"
                     : $"  {st.Order}. {st.Name}: {st.Note}")) +
                 $"{Environment.NewLine}  Legătură: {f.Sequence?.Link}{Environment.NewLine}  Constatări componente: {string.Join(", ", f.RelatedFindingIds)}"));
+            FillUserActivity(_result.UserActivityView());
             RegisterLine = _result.RegisterLine;
             AirGapSummary = AirGapFindings.Count == 0
                 ? "Integritate air-gap: nu s-a observat nimic în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (jurnalele au o istorie limitată; unele canale pot lipsi, vezi „Surse lipsă sau incomplete”)."
@@ -430,6 +441,15 @@ namespace LogAnalyzer.UI.ViewModels
             GraphStatus = _result.Graph is { } gr ? $"Graf: {gr.Entities.Count} entități, {gr.Relationships.Count} relații." : "Graful nu a fost construit.";
             Summary = $"{_result.Timeline.Count:N0} evenimente · {_result.Findings.Count(f => f.Severity == Severity.Critical)} critice · " +
                       $"{_result.Findings.Count(f => f.Severity == Severity.High)} ridicate · {_result.Findings.Count} constatări · {_result.Gaps.Count} goluri · caz {_result.Case.Info.CaseId}";
+        }
+
+        /// <summary>Fills the "Activitatea utilizatorului" tab from the user-activity view of a result (internal for the tests); null = nothing analysed yet.</summary>
+        internal void FillUserActivity(LogAnalyzer.Dfir.Analysis.UserActivityReport? report)
+        {
+            UserActivity.Clear();
+            if (report is null) { UserActivitySummary = "Activitatea utilizatorului: nedefinită (nicio analiză încă)."; return; }
+            foreach (var i in report.Items.Take(MaxUserActivityRows)) UserActivity.Add(i);
+            UserActivitySummary = report.Summary + (report.Total > MaxUserActivityRows ? $" Se listează primele {MaxUserActivityRows:N0}; restul sunt în cronologie." : "");
         }
 
         private void FillTimeline()

@@ -41,6 +41,8 @@ public static class FindingContract
         "UsbDevicesParser" => "Dispozitivele USB din registry",
         "SystemHiveExecutionParser" => "Registry-ul sistemului (SYSTEM)",
         "UserHiveParser" => "Registry-ul utilizatorului",
+        "ShellBagsParser" => "ShellBags (foldere răsfoite în Explorer)",
+        "RecycleBinInfoParser" => "Metadatele Coșului de reciclare",
         "SoftwareHiveParser" => "Registry-ul SOFTWARE",
         "UsnJournalParser" => "Jurnalul USN",
         "SrumNetworkParser" => "SRUM (rețea)",

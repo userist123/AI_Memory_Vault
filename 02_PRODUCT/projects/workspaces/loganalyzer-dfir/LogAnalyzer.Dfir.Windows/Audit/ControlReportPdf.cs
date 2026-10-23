@@ -322,6 +322,13 @@ public static class ControlReportPdf
         }),
     };
 
+    /// <summary>The user-activity part for the JSON report: the summary and the rows that are in classified folders or on removable volumes (null = not evaluated by this control).</summary>
+    private static object? UserActivityJson(ControlReport r) => r.UserActivity is not { } u ? null : new
+    {
+        u.Summary,
+        Rows = u.Items.Where(i => i.IsRelevant).Select(i => new { i.Source, i.Path, i.TimeUtc, i.TimeMeaning, i.Who, i.Relevance, i.RContent }),
+    };
+
     public const string ClassifiedSectionTitle = "3b. Informații clasificate — acces și ieșiri";
 
     public const string DeviceSectionTitle = "3c. Dispozitive văzute de monitorul în timp real (verificarea D05)";
@@ -379,6 +386,7 @@ public static class ControlReportPdf
         if (r.Classified is not { } c)
         {
             l.Add(("Profilul de proceduri nu definește foldere clasificate (sau nu a fost transmis controlului): accesul la documentele clasificate și ieșirile lor nu au putut fi urmărite.", false, "#b45309"));
+            AddUserActivity(r, l);
             return l;
         }
         l.Add(($"Ieșiri nejustificate: {c.Unjustified} · de verificat: {c.ToVerify} · aprobate (în registrul transferurilor): {c.Approved} · fișiere șterse: {c.Deleted} · " +
@@ -405,7 +413,15 @@ public static class ControlReportPdf
                 l.Add(($"  Acces {(a.TimeUtc is { } t ? t.ToString("yyyy-MM-dd HH:mm:ss") + " UTC" : "ora necunoscută")} · {a.Who} · {a.Process} · {a.Access}{(a.Weak ? " (dovadă mai slabă)" : "")} [{a.Evidence}]", false, Muted));
             if (f.Accesses.Count > maxAccessesPerFile) l.Add(($"  … încă {f.Accesses.Count - maxAccessesPerFile} accese (în fișierul JSON al raportului)", false, Muted));
         }
+        AddUserActivity(r, l);
         return l;
+    }
+
+    /// <summary>E7: the user-activity rows of section 3b (counts, strongest traces with the meaning of their time, limits), or the statement that this control did not evaluate them.</summary>
+    private static void AddUserActivity(ControlReport r, List<(string Text, bool Head, string Color)> l)
+    {
+        foreach (var (text, head) in LogAnalyzer.Dfir.Analysis.UserActivityAnalysis.ReportLines(r.UserActivity))
+            l.Add((text, head, head ? Ink : Muted));
     }
 
     /// <summary>The limits of a control report, always printed (legal research G7, docs/dfir/RESEARCH_2026-10-11_PROBE_VALOARE_JURIDICA.md).</summary>
@@ -431,7 +447,7 @@ public static class ControlReportPdf
         var dir = Path.Combine(ws.Root, "Control", $"CONTROL_{r.Facts.CollectedUtc:yyyyMMdd_HHmmss}");
         Directory.CreateDirectory(dir);
         var json = Path.Combine(dir, "control_report.json");
-        File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions, Classified = ClassifiedJson(r), ManualChecks = manual ?? [] },
+        File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions, Classified = ClassifiedJson(r), UserActivity = UserActivityJson(r), ManualChecks = manual ?? [] },
             new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } }));
         var pdf = Path.Combine(dir, $"Raport_control_{r.Facts.Host}_{r.Facts.CollectedUtc:yyyyMMdd}.pdf");
         var pre = LogAnalyzer.Dfir.Case.PreReportCheck.ForCase(ws);   // F2: re-verify the case evidence first; its audit entry is inside the printed chain heads
