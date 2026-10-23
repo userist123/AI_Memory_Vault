@@ -1,5 +1,5 @@
 # todo-claude-casa3d-uiux-p2
-STATUS: IN_PROGRESS   UPDATED: 2026-10-23T06:20:00+03:00
+STATUS: IN_PROGRESS   UPDATED: 2026-10-23T07:00:00+03:00
 TASK: Casa3D UI/UX P2 from the research report (rows 8-14; P1 merged in PR #321). Owner: "Continua recomandat".
 BRANCH / PR: claude/casa3d-uiux-p2 (worktree D:/w/uiux2, base origin/main 944d1427)
 P2 items (report rows 8-14):
@@ -24,6 +24,10 @@ DONE:
   (cutFrac replaces fixed .42); Viewer3D: one "Views" menu (presets + saved views with delete + save current, stored
   per project in localStorage) and one "Display" panel (doors, dollhouse cut slider, time of day, quality, sun),
   moved under the 3D bar (it covered the nudge buttons). Suite 706/706.
-NEXT: items 9, 10, 8; review; PR; merge.
-KEY FILES: casa3d/app/core/{frame,camera-glide,saved-views}.ts, lib/motion.ts, components/{PlanView,Editor,KeyboardHelp,Viewer3D}.tsx,
+- (9) components/StagePicker.tsx: compact stage selector (1024-1499 px; full bar kept wider, mobile unchanged), menu of
+  10 stages by phase with done dots, focus on current, outside click / Escape close. components/FoldSection.tsx:
+  remembered collapsible sections (title + counters in <summary>) for tasks, time, contract, site survey. Editor
+  "wide panel" document mode (remembered). Bug caught in browser: hook after early return (React #310) - moved up.
+NEXT: items 10, 8; review; PR; merge.
+KEY FILES: casa3d/app/core/{frame,camera-glide,saved-views}.ts, lib/motion.ts, components/{PlanView,Editor,KeyboardHelp,Viewer3D,StagePicker,FoldSection,TasksPanel,TimePanel,ContractPanel,SurveyPanel}.tsx,
   components/viewer3d-engine.js, app/globals.css
