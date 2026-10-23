@@ -18,6 +18,8 @@ relations: []
 
 # Casa3D: plan for selling to other users (accounts and hosting)
 
+> Note (2026-10-23): since Next.js 16 (PR #334) `middleware.ts` is `proxy.ts`; the gate described below is unchanged.
+
 Status: written plan only. Nothing here has been bought, deployed, published or
 created. All prices are estimates from public list prices known as of late 2026
 and must be re-checked on the vendor page before any purchase.
