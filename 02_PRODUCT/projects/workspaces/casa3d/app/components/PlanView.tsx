@@ -219,8 +219,8 @@ export default function PlanView(p: Props){
   useEffect(() => { const k = (e: KeyboardEvent) => { const c = segRef.current, el = e.target as HTMLElement;
     if (!c.active || !c.preview || e.ctrlKey || e.metaKey || e.altKey || el.closest?.('input,select,textarea,[contenteditable=true],dialog[open],[aria-modal=true]')) return;
     const eat = () => { e.preventDefault(); e.stopImmediatePropagation(); };
-    // cifrele încep lungimea; după prima cifră și m / c (pentru „80cm”, „4m”) rămân pe cotă, nu schimbă unealta
-    if ((/^[0-9.,'"]$/.test(e.key) || (c.typed && /^[mc]$/i.test(e.key))) && c.typed.length < 12){ eat(); setTyped(c.typed + e.key.toLowerCase()); }
+    // cifrele încep lungimea; după prima cifră literele unității (m, cm, mm; în imperial ft, in și spațiul din „12 ft”) rămân pe cotă, nu schimbă unealta
+    if ((/^[0-9.,'"]$/.test(e.key) || (c.typed && (c.units === 'imperial' ? /^[mcftin ]$/i : /^[mc]$/i).test(e.key))) && c.typed.length < 12){ eat(); setTyped(c.typed + e.key.toLowerCase()); }
     else if (e.key === 'Backspace' && c.typed){ eat(); setTyped(c.typed.slice(0, -1)); }
     else if (e.key === 'Escape' && c.typed){ eat(); setTyped(''); }
     else if (e.key === 'Enter' && c.typed){ eat(); const len = parseLengthInput(c.typed, c.units); if (len == null) return;

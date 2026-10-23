@@ -23,7 +23,11 @@ DONE:
 - Review round 1 (vault-reviewer Opus): CHANGES_REQUESTED, 3 findings fixed in this commit: stair key S->E (S walked
   3D and switched tool), bare number >30 = cm (80 -> 0.8 m) + m/c accepted while typing, typed/preview reset on tool
   change. Browser-verified (80cm -> 0.8000 m; V/P then Enter adds nothing; S no-op, E stair). vitest 111/686.
-NEXT: delta review (round 2, only this fix commit); then mark PR ready. Previously: vault-reviewer (Opus) on diff origin/main..HEAD; fix; push; draft PR; send screenshots (re-take on PR build;
+- Merged origin/main (f1b0a3ac4; allowlist union). PR #323 draft opened.
+- Review round 2 (delta): fixes confirmed; 1 finding fixed here: help rule text per units (imperial = feet) + imperial
+  ft/in letters and space stay on the dimension. Browser: imperial "12 ft" -> 3.6580 m, help text correct. Local dev now
+  needs `npm run dev` (CASA3D_LOCAL_TRUST from main #316). vitest 115/716.
+NEXT: CI once -> mark ready -> merge when green. Then remove casa3d-a1 from .claude/launch.json. Previously: vault-reviewer (Opus) on diff origin/main..HEAD; fix; push; draft PR; send screenshots (re-take on PR build;
   previous ones live only in the old session). Then remove casa3d-a1 from .claude/launch.json (local, untracked) when done.
 RESIDUALS (record in PR): RO header wraps "Salveaza revizia" at 1440 (pre-existing?);
   palette "Keyboard shortcuts (?)" label + hint "?" duplicate (pre-existing); 75deg wall typed 4 -> 4.0002 (mm rounding).
