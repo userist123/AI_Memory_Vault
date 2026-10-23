@@ -56,7 +56,14 @@ DONE:
   shrank to half the canvas (descriptions wrapped per word at 1024) -> explicit width min(560px, 100% - 24px).
   Browser: O -> Fereastra (tooltip "(O)"), F (plan focused) frames, F unfocused no tool change, help RO lists F and
   O, 560 px no overflow; typed 4,25mx line-through, 4,25 -> 425 (undone). tsc 0; vitest 123/739.
-NEXT-NOW: full pytest result, commit merge, push, check CI once, merge #323.
+- Merge commit a52eacee9. Full pytest in D:/w/a1: 9 failed (b2m/book_to_memory/corpus_health/strict_yaml/
+  vault_state) - all working-tree scanners hit local casa3d node_modules/.next; same 6 files on a clean worktree of
+  HEAD: 111 passed. (An earlier full run also had 703 order-dependent errors; the file passes alone 158/158 and the
+  rerun had 0 errors.) Pushed; #323 MERGEABLE, CI started.
+NEXT (new session): check #323 CI once (ccd_pr get_status / gh pr checks 323). Green -> merge #323 (owner: no red at
+  merge, nothing compromised); red -> read the failing job log, fix, push. After merge: mark STATUS DONE here.
+  Follow-ups (not blocking): typedEndpoint unused in production; Esc with a selection while drawing deselects
+  first; Delete while typing reaches del() (both pre-existing on main).
 OLD PLAN (done):
   1. One parser: drop parseLengthInput from core/snap.ts (+ its tests, help.rule* keys); walls/beam/glass use
      parseTypedLength. Keep snapDraw/pointAtLength (pointAtLength keeps the 15-deg direction + Shift free).
