@@ -23,7 +23,7 @@ const FinishShader = { uniforms: { tDiffuse: { value: null } }, vertexShader: 'v
 const texLoader = typeof document !== 'undefined' ? new THREE.TextureLoader() : null;
 const normalTex = (src, rep) => { if (!texLoader) return null; const t = texLoader.load(src); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); t.anisotropy = 8; return t; };
 const linenN = normalTex('/tex/rough_linen_nor_gl_web.jpg', 5), boucleN = normalTex('/tex/wool_boucle_nor_gl_web.jpg', 4), plasterN = normalTex('/tex/white_plaster_rough_02_nor_gl_web.jpg', 2);
-export function createViewer(canvas, { onPick, onContextLost, onContextRestored } = {}){
+export function createViewer(canvas, { onPick, onHover, onContextLost, onContextRestored } = {}){
   let raf = 0, last = performance.now(), alive = true, contextLost = false;
   const mql = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
   let reduce = !!(mql && mql.matches);
@@ -506,6 +506,8 @@ function model(it){
   let house = new THREE.Group(), ceilings = new THREE.Group(), walls = new THREE.Group(), furniture = new THREE.Group(); scene.add(house, furniture);
   let doorLeaves = [], doorsOpen = true; // ușile cu balamale: deschise/închise, animate în bucla de randare
   let colliders = [], blockers = [], structBlockers = [], plan = null, W = 1, D = 1, C = new THREE.Vector3(), pickables = [];
+  // centrul orbitei machetei: casa, sau piesa încadrată din plan (UI/UX P2-10); F alunecă spre FT
+  const F = new THREE.Vector3(), FT = new THREE.Vector3(); let framed = false, fInit = false;
   // la reconstruire: geometria și texturile clonate pentru finisaje (fiecare clonă e o încărcare separată pe GPU)
   const disposeGroup = g => g.traverse(o => { if (o.geometry && !(o.geometry.userData && o.geometry.userData.shared)) o.geometry.dispose(); const m = o.material; if (m && m.map && m.map.userData && m.map.userData.owned){ m.map.dispose(); m.dispose(); } else if (m && m.userData && m.userData.ownedMat) m.dispose(); });
   const owned = m => { m.userData = { ...(m.userData || {}), ownedMat: true }; return m; };
@@ -773,6 +775,7 @@ function model(it){
     const xs = p.camere.flatMap(r => [r.x0, r.x1]), zs = p.camere.flatMap(r => [r.z0, r.z1]);
     const minX = Math.min(...xs, 0), maxX = Math.max(...xs, 1), minZ = Math.min(...zs, 0), maxZ = Math.max(...zs, 1);
     W = maxX - minX; D = maxZ - minZ; C.set((minX + maxX) / 2, 0, (minZ + maxZ) / 2); placeSun(); sun.target.position.copy(C);
+    if (!framed) FT.copy(C); if (!fInit){ F.copy(C); fInit = true; }
     // camera de umbră a soarelui pe măsura casei (mai multă rezoluție pe metru decât un pătrat fix de 24 m)
     { const rr = Math.hypot(W, D) / 2 + 1.5; Object.assign(sun.shadow.camera, { left: -rr, right: rr, top: rr, bottom: -rr, near: .5, far: 14 + rr + 6 }); sun.shadow.camera.updateProjectionMatrix(); }
     orbit.r = Math.max(W, D, 4) * 1.15; freeze(house); setMode(mode); dirty();
@@ -861,7 +864,7 @@ function model(it){
   function buildFurniture(items){ disposeGroup(furniture); scene.remove(furniture); furniture = new THREE.Group(); scene.add(furniture); pickables = []; blockers = [];
     for (const it of items){ if (!it.variant || !it.variant.w) continue; const m = model(it.variant); m.position.set(it.x, 0, it.z); m.rotation.y = it.rotation; m.userData = { pid: it.id }; m.traverse(o => { o.userData.item = m; }); furniture.add(m); pickables.push(m);
       if (it.group !== 'scaunBirou' && it.fp) blockers.push(it.fp); }
-    lastItems = items; freeze(furniture); buildContact(); buildDecor(items); dirty(); }
+    lastItems = items; freeze(furniture); buildContact(); buildDecor(items); refreshMarks(); dirty(); }
 
   // soarele stă pe direcția dată (azimut, înălțime), la ~14 m de centrul casei; implicit ca în prototip
   function placeSun(){ const dir = light && light.dir ? light.dir : null; if (dir) sun.position.set(C.x + dir[0] * 14, dir[1] * 14, C.z + dir[2] * 14); else sun.position.set(C.x + 6, 11, C.z - 8); }
@@ -1057,6 +1060,28 @@ function model(it){
     finally { scene.remove(cc); quad.geometry.dispose(); mat.dispose(); rt.dispose(); R.setPixelRatio(prevRatio); R.setSize(prevSize.x, prevSize.y, false); if (composer) composer.setSize(prevSize.x, prevSize.y); setMode(prevMode); } }
 
   // ---------- navigare ----------
+  // ---------- selecția și hover-ul (UI/UX P2-10) ----------
+  // conturul piesei selectate (și, mai discret, al celei de sub mouse, aici sau în plan) se desenează într-o scenă
+  // separată, peste geometrie și fără planul de tăiere, doar în bucla interactivă: nu ajunge în capturi sau în prezentare
+  const overlay = new THREE.Scene();
+  const markBox = op => { const g = new THREE.BoxGeometry(1, 1, 1), e = new THREE.EdgesGeometry(g); g.dispose();
+    const l = new THREE.LineSegments(e, new THREE.LineBasicMaterial({ color: 0xC63C29, transparent: true, opacity: op, depthTest: false, depthWrite: false })); l.visible = false; l.renderOrder = 999; overlay.add(l); return l; };
+  const selMark = markBox(1), hovMark = markBox(.45); let selPid = null, hovPid = null, hoverT = 0;
+  const itemOf = pid => pid ? pickables.find(m => m.userData && m.userData.pid === pid) : null;
+  const placeMark = (mk, pid, grow) => { const it = itemOf(pid); if (!it){ mk.visible = false; return null; } const b = new THREE.Box3().setFromObject(it), c = new THREE.Vector3(), sz = new THREE.Vector3();
+    b.getCenter(c); b.getSize(sz); mk.position.copy(c); mk.scale.set(Math.max(.05, sz.x + grow), Math.max(.05, sz.y + grow), Math.max(.05, sz.z + grow)); mk.visible = true; return { c, sz }; };
+  function refreshMarks(){ placeMark(selMark, selPid, .06); if (hovPid && hovPid !== selPid) placeMark(hovMark, hovPid, .03); else hovMark.visible = false; }
+  function drawOverlay(){ if (contextLost || (!selMark.visible && !hovMark.visible)) return; const cp = R.clippingPlanes, ac = R.autoClear;
+    R.clippingPlanes = []; R.autoClear = false; R.clearDepth(); R.render(overlay, cam); R.autoClear = ac; R.clippingPlanes = cp; }
+  function hoverAt(e){ if (!onHover || e.pointerType !== 'mouse' || ptrs.size > 1) return; const now = performance.now(); if (now - hoverT < 50) return; hoverT = now;
+    const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
+    const h = ray.intersectObjects(pickables, true)[0], pid = h ? h.object.userData.item.userData.pid : null; if (pid !== hovPid){ hovPid = pid; refreshMarks(); onHover(pid); } }
+  // X-Ray: pereții (cu ușile, ferestrele, perdelele) devin transparenți; materialele lor pot fi folosite și de mobilier,
+  // deci pereții primesc copii transparente (în cache), iar originalele rămân neatinse
+  let xray = false; const xrayMats = new Map();
+  const xrayOf = m => { let c = xrayMats.get(m); if (!c){ c = m.clone(); c.transparent = true; c.opacity = Math.min(m.opacity ?? 1, .18); c.depthWrite = false; xrayMats.set(m, c); } return c; };
+  function applyXray(){ walls.traverse(o => { if (!o.isMesh) return; if (xray){ if (!o.userData.xrOrig){ o.userData.xrOrig = o.material; o.material = Array.isArray(o.material) ? o.material.map(xrayOf) : xrayOf(o.material); } }
+      else if (o.userData.xrOrig){ o.material = o.userData.xrOrig; delete o.userData.xrOrig; } }); R.shadowMap.needsUpdate = true; }
   let mode = 'house', yaw = 0, pitch = 0; const EYE = SHOT.eye, player = new THREE.Vector3(); const orbit = { th: -.7, ph: .95, r: 12 };
   // alunecarea spre o cameră nouă în tur (UI/UX P2-14): amortizată, întreruptă de orice comandă, tăietură la mișcare redusă
   let glide = null;
@@ -1093,7 +1118,7 @@ function model(it){
   const pmv = e => { if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
     if (ptrs.size >= 2 && pinchD > 0){ const d = pdist(), k = pinchD / Math.max(1, d); pinchD = d;
       if (mode === 'house') orbit.r = Math.max(4, Math.min(40, orbit.r * k)); else { glide = null; const step = (1 - k) * 2.2, [x, z] = collide(player.x - Math.sin(yaw) * step, player.z - Math.cos(yaw) * step); player.x = x; player.z = z; } return; }
-    if (!drag) return; const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+    if (!drag){ hoverAt(e); return; } const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
     if (mode === 'walk'){ glide = null; yaw -= dx * .0045; pitch = Math.max(-1.2, Math.min(1.1, pitch - dy * .0035)); } else { orbit.th -= dx * .006; orbit.ph = Math.max(.12, Math.min(1.45, orbit.ph - dy * .005)); } };
   const pu = e => { const wasPinch = ptrs.size >= 2 || pinchD > 0; ptrs.delete(e.pointerId); if (ptrs.size < 2) pinchD = 0; if (wasPinch){ drag = false; return; }
     drag = false; if (moved >= 6) return; const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
@@ -1127,10 +1152,11 @@ function model(it){
       if (keys.arrowdown || keys.s) orbit.ph = Math.min(1.45, orbit.ph + 1.1 * dt);
       if (keys['+'] || keys['=']) orbit.r = Math.max(4, orbit.r - 6 * dt);
       if (keys['-'] || keys['_']) orbit.r = Math.min(40, orbit.r + 6 * dt);
-      if (keys['0']) { orbit.th = -.7; orbit.ph = .95; orbit.r = Math.max(W, D, 4) * 1.15; }
-      const t = new THREE.Vector3(C.x + Math.sin(orbit.th) * Math.sin(orbit.ph) * orbit.r, Math.cos(orbit.ph) * orbit.r, C.z + Math.cos(orbit.th) * Math.sin(orbit.ph) * orbit.r); cam.position.lerp(t, reduce ? 1 : dampFactor(5, dt)); cam.lookAt(C);
+      if (keys['0']) { framed = false; FT.copy(C); orbit.th = -.7; orbit.ph = .95; orbit.r = Math.max(W, D, 4) * 1.15; }
+      F.lerp(FT, reduce ? 1 : dampFactor(5, dt));
+      const t = new THREE.Vector3(F.x + Math.sin(orbit.th) * Math.sin(orbit.ph) * orbit.r, F.y + Math.cos(orbit.ph) * orbit.r, F.z + Math.cos(orbit.th) * Math.sin(orbit.ph) * orbit.r); cam.position.lerp(t, reduce ? 1 : dampFactor(5, dt)); cam.lookAt(F);
     }
-    draw(); })();
+    draw(); drawOverlay(); })();
   // ---------- scena pentru randarea fotorealistă (tools/blender/casa3d_render.py) ----------
   // Aceleași primitive ca vederea 3D (cutii, cutii rotunjite, cilindri, plăci, tor), cu poziția în lume și materialul
   // lor: tipul (lemn, textil, sticlă...) se deduce din textura și parametrii PBR, iar valorile brute merg și ele.
@@ -1205,7 +1231,7 @@ function model(it){
     scene.traverse(o => { if (o.isMesh && vis(o)){ meshes++; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => mats.add(m)); } if (o.isPointLight && vis(o)) pl++; });
     return { calls: steady.calls, triangles: steady.triangles, callsWithShadow: sh.calls, geometries: R.info.memory.geometries, textures: R.info.memory.textures, programs: R.info.programs ? R.info.programs.length : 0, meshes, materials: mats.size, pointLights: pl, mode, shot: lastShot }; }
   function setCameraPreset(preset){
-    if (mode === 'walk') setMode('house');
+    if (mode === 'walk') setMode('house'); framed = false; FT.copy(C);
     if (preset === 'top'){
       orbit.th = 0;
       orbit.ph = 0.05;
@@ -1222,12 +1248,18 @@ function model(it){
     dirty();
   }
   return {
-    setState(p, items){ plan = p; buildHouse(p); buildFurniture(items); },
+    setState(p, items){ plan = p; buildHouse(p); buildFurniture(items); for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); applyXray(); },
     getStats,
     setDecor(on){ decorOn = !!on; buildDecor(lastItems); },
     setDoors(open){ doorsOpen = !!open; doorsNow(doorsOpen); },
     setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama, exportScene, exportGLB,
     setCameraPreset,
+    setSelection(pid){ selPid = pid || null; refreshMarks(); },
+    setHover(pid){ if ((pid || null) === hovPid) return; hovPid = pid || null; refreshMarks(); },
+    setXray(on){ xray = !!on; applyXray(); },
+    // încadrează piesa în machetă (din plan, „Arată în 3D”): centrul orbitei pe piesă, distanța după mărimea ei
+    frame(pid){ const it = itemOf(pid); if (!it) return false; const b = new THREE.Box3().setFromObject(it), c = new THREE.Vector3(), sz = new THREE.Vector3(); b.getCenter(c); b.getSize(sz);
+      glide = null; if (mode === 'walk') setMode('house'); framed = true; FT.set(c.x, Math.min(c.y, 1), c.z); orbit.r = Math.max(4, Math.min(40, Math.max(sz.x, sz.y, sz.z) * 3 + 2.5)); orbit.ph = Math.min(orbit.ph, 1.1); return true; },
     // vederile salvate (UI/UX P2-11): poziția camerei, modul și tăierea; restaurarea folosește aceeași amortizare
     getView(){ return mode === 'walk' ? { mode: 'walk', x: player.x, z: player.z, yaw, pitch, cut: cutFrac } : { mode: 'house', th: orbit.th, ph: orbit.ph, r: orbit.r, cut: cutFrac }; },
     setCut(f){ cutFrac = Math.min(1, Math.max(.12, Number(f) || .42)); if (mode === 'house'){ walls.scale.y = cutFrac; cut.constant = (plan ? plan.inaltime : 2.6) * cutFrac + .01; R.shadowMap.needsUpdate = true; } },
@@ -1244,6 +1276,6 @@ function model(it){
       dirty(); },
     setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
-    dispose(){ alive = false; unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }
+    dispose(){ alive = false; for (const mk of [selMark, hovMark]){ mk.geometry.dispose(); mk.material.dispose(); } for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }
   };
 }
