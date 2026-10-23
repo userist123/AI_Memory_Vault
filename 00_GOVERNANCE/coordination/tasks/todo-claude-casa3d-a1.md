@@ -1,5 +1,5 @@
 # todo-claude-casa3d-a1
-STATUS: IN_PROGRESS        UPDATED: 2026-10-23T01:00:00+03:00
+STATUS: IN_PROGRESS        UPDATED: 2026-10-23T17:00:00+03:00
 TASK: Casa3D A1.1 — command registry, drawing precision (snap HUD, Shift bypass, typed length), proven undo
 BRANCH / PR: claude/casa3d-a1-precision (worktree D:/w/a1, base origin/main f0ee40d67) / not opened yet
 SPEC: 02_PRODUCT/projects/workspaces/casa3d/PLAN_A1.md (decisions + slices 1-3)
@@ -38,7 +38,19 @@ DONE:
   typedRect; acceptsTypedKey), two-click room (roomDraft.pending), typed chip near cursor, keys via svg onKeyDown
   (svg focused on click), state names `typed`/`setTyped` collide with A1. Also Editor imports prepareShareImages.
 - OWNER DECISION 2026-10-23: keep main's number rule (integer = cm, decimal = m; "4" rejected).
-NEXT (new session; do the merge in D:/w/a1, `git fetch origin main && git merge FETCH_HEAD`):
+- Merge f9e763ae9 (origin/main 02c63629b) DONE per plan below, plus: palette had duplicate `tool-*` ids from both
+  sides -> one entry (shortcut + active + keywords); duplicate locale key cmdk.group.tools removed; help keys
+  help.exMetric/exImperial. tsc 0; vitest 119/729. Browser 127.0.0.1:3200: 400->400, 4,25->425, room 400x500 exact
+  4x5, beam 250 + Shift 2.500 m @13.5deg, 2mcift eaten (tool unchanged), invalid Enter keeps text, S no-op/E stair,
+  help EN+RO, palette single Perete (P) / Selectie "activa · V"; test edits undone. /shares 500 once = dev compile
+  race (retry 200). pytest strict_yaml: 92 unlisted all in local node_modules (env, not CI).
+- Delta review of the merge (vault-reviewer Opus): APPROVE; tsc 0, vitest 119/729, parser probes ok. Low finding fixed:
+  click-without-move + typed length went toward the stale hover point (e.g. 30deg) -> first click sets raw = start
+  point, so Enter goes right. Browser: click, "150", Enter -> horizontal 150 wall (undone). tsc 0, vitest 119/729.
+  Residual (not merge-caused, already on main): typedEndpoint unused in production; Esc with a selection while
+  drawing deselects first; Delete while typing reaches del().
+NEXT-NOW: push, check CI once, merge #323.
+OLD PLAN (done):
   1. One parser: drop parseLengthInput from core/snap.ts (+ its tests, help.rule* keys); walls/beam/glass use
      parseTypedLength. Keep snapDraw/pointAtLength (pointAtLength keeps the 15-deg direction + Shift free).
   2. One key path: keep main's svg onKeyDown + acceptsTypedKey for wall AND room; delete A1's window capture listener
