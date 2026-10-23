@@ -70,6 +70,8 @@ describe('parseLengthInput', () => {
   const m = (s: string) => parseLengthInput(s, 'metric'), i = (s: string) => parseLengthInput(s, 'imperial');
   test('metric', () => {
     assert.equal(m('4'), 4); assert.equal(m('4,25'), 4.25); assert.equal(m('4.25'), 4.25); assert.equal(m('425'), 4.25);
+    // fără unitate: până la 30 = metri, peste 30 = centimetri (un perete de 80 m nu există într-o casă; „80” e o paravan de 80 cm)
+    assert.equal(m('30'), 30); assert.equal(m('12'), 12); assert.equal(m('31'), .31); assert.equal(m('80'), .8); assert.equal(m('99,5'), .995); assert.equal(m('80cm'), .8); assert.equal(m('80 m'), 80);
     assert.equal(m(' 4,25 m '), 4.25); assert.equal(m('425 cm'), 4.25); assert.equal(m('4250 mm'), 4.25);
     assert.equal(m('4.25M'), 4.25); assert.equal(m('425CM'), 4.25); assert.equal(m('4250mm'), 4.25); assert.equal(m('150 m'), null);
   });

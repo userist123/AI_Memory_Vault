@@ -20,7 +20,7 @@ Bază: `origin/main` `f0ee40d67`. Ramura `claude/casa3d-a1-precision`, worktree 
   pattern-ul de comandă în sine. Dovedim invariantul cu teste; trecerea la comenzi doar dacă un test o cere.
 - **Bypass cu Shift**, nu Alt: Alt+drag face deja pan în plan (`PlanView.tsx` `down`).
 - **Taste pentru unelte** (litere, fără modificator, ignorate în câmpuri și dialoguri ca acum prin `editorIgnoresKey`):
-  V selecție, P perete, C cameră, U ușă, F fereastră, T stâlp, G grindă, L perete de sticlă, S scară, M măsurare.
+  V selecție, P perete, C cameră, U ușă, F fereastră, T stâlp, G grindă, L perete de sticlă, E scară (nu S: W/A/S/D merg prin vederea 3D), M măsurare, I instalații.
   Literele urmează numele românești; aceleași taste în engleză (afișate în ajutor). R rămâne rotire.
 - **Indicatorul de precizie e o cotă de arhitect** (limbajul planșei, nu o etichetă plutitoare): linie de cotă paralelă cu
   segmentul în lucru, decalată, cu tick-uri la 45°, lungimea pe linie, unghiul lângă capătul liber; la punctul de snap un
@@ -38,7 +38,7 @@ Bază: `origin/main` `f0ee40d67`. Ramura `claude/casa3d-a1-precision`, worktree 
    toolbar în registru (test care compară `Tool` cu registrul).
 2. **Precizie.** `core/snap.ts` (pur) + `tests/snap.test.ts`, apoi `PlanView.tsx`. Prioritate: capăt de perete >
    unghi (pași de 15°, lungimea rotunjită la grilă pe direcție) > grilă; Shift = liber (rotunjit la 1 mm).
-   `parseLengthInput(text, units)` cu cazuri: „4”, „4,25”, „4.25”, „425” în cm, „4,25 m”, gol, „abc”, negativ, zero.
+   `parseLengthInput(text, units)` cu cazuri: „4”, „4,25”, „4.25”, „425” (fără unitate: ≤ 30 = metri, peste 30 = cm, după review: „80” e 80 cm, nu 80 m), „4,25 m”, gol, „abc”, negativ, zero.
    Gata când: testele trec, iar în browser peretele de 4,00 m tastat are exact 4,000 m în proiect.
 3. **Undo dovedit.** `tests/history.test.ts`: N editări aleatoare (seed fix) → undo N → copie → redo N = document identic;
    limita de 100 aruncă cel mai vechi; `begin`/`rollback` restaurează redo; `rollback` refuzat după altă operație.

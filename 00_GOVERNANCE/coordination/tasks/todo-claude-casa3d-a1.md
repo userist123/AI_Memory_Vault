@@ -20,7 +20,10 @@ DONE:
   push clears redo, begin/rollback incl. refusal + limit, discardLast, empty stacks). No History bug found.
   Duplicate tooltip now from registry. Full suite: tsc 0; vitest --maxWorkers=2 111 files / 685 tests (default
   workers OOM while dev server runs).
-NEXT: vault-reviewer (Opus) on diff origin/main..HEAD; fix; push; draft PR; send screenshots (re-take on PR build;
+- Review round 1 (vault-reviewer Opus): CHANGES_REQUESTED, 3 findings fixed in this commit: stair key S->E (S walked
+  3D and switched tool), bare number >30 = cm (80 -> 0.8 m) + m/c accepted while typing, typed/preview reset on tool
+  change. Browser-verified (80cm -> 0.8000 m; V/P then Enter adds nothing; S no-op, E stair). vitest 111/686.
+NEXT: delta review (round 2, only this fix commit); then mark PR ready. Previously: vault-reviewer (Opus) on diff origin/main..HEAD; fix; push; draft PR; send screenshots (re-take on PR build;
   previous ones live only in the old session). Then remove casa3d-a1 from .claude/launch.json (local, untracked) when done.
 RESIDUALS (record in PR): RO header wraps "Salveaza revizia" at 1440 (pre-existing?);
   palette "Keyboard shortcuts (?)" label + hint "?" duplicate (pre-existing); 75deg wall typed 4 -> 4.0002 (mm rounding).
