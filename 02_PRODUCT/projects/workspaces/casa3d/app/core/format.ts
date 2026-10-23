@@ -25,7 +25,7 @@ export function formatArea(m2: number, units: Units = 'metric', locale: Locale =
   return units === 'imperial' ? `${nf.format(m2 / M2_PER_FT2)} ft²` : `${nf.format(m2)} m²`;
 }
 export const toMetres = (value: number, units: Units) => units === 'imperial' ? value * M_PER_FT : value;
-const CM_PER_IN = 2.54;
+export const CM_PER_IN = 2.54;
 /** Eticheta unității pentru câmpurile de lungime mică: „cm” (metric) sau „in” (imperial). */
 export const lengthInputUnit = (units: Units): 'cm' | 'in' => units === 'imperial' ? 'in' : 'cm';
 /** Valoarea de afișat într-un câmp numeric dat în cm: cm întregi (metric) sau inci cu o zecimală (imperial). Datele rămân metrice. */

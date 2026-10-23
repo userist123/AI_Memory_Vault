@@ -52,6 +52,29 @@ public sealed class LanguagePreferences
         return Path.Combine(_dir, (safe.Length == 0 ? "account" : safe) + ".json");
     }
 
+    // The first-run guide (3 screens) is shown once per Windows user: this folder is under that user's LOCALAPPDATA, so one marker file here is "seen by this Windows user".
+    // A different extension from the per-account *.json files, so no account name can collide with it.
+    private string GuideMarker => Path.Combine(_dir, "first-run-guide.seen");
+
+    /// <summary>True when the first-run guide was already shown to this Windows user. A convenience, never evidence: an unreadable folder means "not seen".</summary>
+    public bool FirstRunGuideSeen()
+    {
+        try { return File.Exists(GuideMarker); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return false; }
+    }
+
+    /// <summary>Remembers that the guide was shown. Best effort like <see cref="Save"/>; false when it could not be written.</summary>
+    public bool MarkFirstRunGuideSeen()
+    {
+        try
+        {
+            Directory.CreateDirectory(_dir);
+            File.WriteAllText(GuideMarker, DateTimeOffset.UtcNow.ToString("o"));
+            return true;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return false; }
+    }
+
     public UiLanguageLevel Load(string account)
     {
         try

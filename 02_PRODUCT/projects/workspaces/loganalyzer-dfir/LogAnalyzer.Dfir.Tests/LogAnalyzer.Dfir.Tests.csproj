@@ -19,6 +19,8 @@
     <ProjectReference Include="..\LogAnalyzer.Verification\LogAnalyzer.Verification.csproj" />
     <ProjectReference Include="..\LogAnalyzer.Connectors\LogAnalyzer.Connectors.csproj" />
     <ProjectReference Include="..\LogAnalyzer.Response\LogAnalyzer.Response.csproj" />
+    <!-- Scanned by ResponseVerificationRegistryTests: every production assembly that may hold a host-changing response. -->
+    <ProjectReference Include="..\LogAnalyzer.Infrastructure\LogAnalyzer.Infrastructure.csproj" />
     <ProjectReference Include="..\LogAnalyzer.Ai\LogAnalyzer.Ai.csproj" />
   </ItemGroup>
   <ItemGroup>

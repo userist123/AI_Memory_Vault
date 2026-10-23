@@ -116,7 +116,7 @@ namespace LogAnalyzer.UI.ViewModels
             var masker = PiiMasker.FromTimeline(_result.Timeline, _result.Case.Info.Host, _result.Case.Info.User);
             LogAnalyzer.Dfir.IO.TimelineCsv.Write(dlg.FileName, _result.Timeline.Select(masker.Mask).ToList());
             _result.Case.Audit("timeline.export_masked", $"{Path.GetFileName(dlg.FileName)} rows={_result.Timeline.Count} pseudonime={masker.Mapping.Count}");
-            ReportStatus = $"Cronologie mascată salvată: {_result.Timeline.Count:N0} rânduri, {masker.Mapping.Count} valori înlocuite (același pseudonim pentru aceeași valoare, ca în raportul mascat).";
+            ReportStatus = $"Cronologie mascată salvată: {_result.Timeline.Count.ToString("N0", Ro)} rânduri, {masker.Mapping.Count} valori înlocuite (același pseudonim pentru aceeași valoare, ca în raportul mascat).";
         }
 
         // ---- F4: verifiable case archive ----

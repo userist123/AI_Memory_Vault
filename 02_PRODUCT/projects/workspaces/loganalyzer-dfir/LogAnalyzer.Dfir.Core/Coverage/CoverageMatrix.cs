@@ -89,7 +89,7 @@ public sealed class CoverageMatrix
         new("shimcache", "ShimCache (AppCompatCache)", ["SystemHiveExecutionParser"], ["ExecutionArtifactsCollector"], [], [], "citit de același parser ca BAM"),
         new("bam", "BAM", ["SystemHiveExecutionParser"], ["ExecutionArtifactsCollector"], [], [], "citit de același parser ca ShimCache"),
         new("srum", "SRUM", ["SrumNetworkParser"], ["SrumCollector"], [], [], "se citesc utilizarea rețelei per aplicație și durata conectării per interfață"),
-        new("registry", "Hive-uri de registru (NTUSER, SOFTWARE)", ["UserHiveParser", "SoftwareHiveParser"], ["ExecutionArtifactsCollector"], [], []),
+        new("registry", "Hive-uri de registru (NTUSER, SOFTWARE)", ["UserHiveParser", "SoftwareHiveParser"], ["ExecutionArtifactsCollector", "UserArtifactsCollector"], [], []),
         new("services", "Servicii și drivere (hive SYSTEM)", ["ServicesParser"], [], [], []),
         new("usn", "Jurnal USN", ["UsnJournalParser"], [], [], []),
         new("lnk_jumplist", "LNK și Jump Lists", ["LnkParser", "JumpListParser"], [], [], []),
