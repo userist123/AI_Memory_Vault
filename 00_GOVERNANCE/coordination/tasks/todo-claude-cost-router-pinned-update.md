@@ -100,3 +100,11 @@ malformed / wrong schema / non-40-hex commit; P11 eol conversion turning a good 
   phase13-contract); #317 8/8 pass.
 - NEXT (owner): confirm the 2 pending #313 jobs; mark #313 then #317 ready for review/merge; after merge generate the first
   pin (`lib/release_pin.py generate --commit <merged sha> --seq 1`), commit it separately, install with --source-ref.
+- 2026-10-23 DONE (owner delegated execution): #313 merged (490966b40), #317 merged (debba0207; CI fix: install snapshot
+  ignores __pycache__ - CI has no PYTHONDONTWRITEBYTECODE), #320 merged (1639038fe): first release pin seq 1 ->
+  debba0207 (21 files; real-GitHub fetch_verified 3.5 s) + r009b timeout 20->30 min (suite now ~21-22 min; was cancelled at
+  20) + pin tests independent of the repo's own pin. Global install from main checkout:
+  `install.py --no-hook --no-context --source-ref debba0207...` (owner's earlier flags; settings.json hash unchanged;
+  backup D:/w/costrouter-p9-tmp/global_backup_*). Real end-to-end self-update on the global install: "updated" in 3.4 s;
+  `install.py --verify`: OK. Hourly refresh stays OFF (no global hook, no opt-in) - owner choice.
+- Open: signing of the pin (residual); next release = bump seq, pin the merged commit, reinstall with --source-ref.
