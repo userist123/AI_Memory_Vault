@@ -88,7 +88,7 @@ export default function PlanView(p: Props){
   useEffect(() => { setRuler(null); setPreview(null); setTyped(''); setHit(null); setRoomDraft(null); setMenu(null); setDim(null); }, [p.tool]);
   // meniul contextual (registru: contextCommands) și cota editată pe loc; ambele în coordonate de ecran
   const [menu, setMenu] = useState<{ x: number; y: number; kind: ContextKind } | null>(null), menuByKey = useRef(0);
-  const [dim, setDim] = useState<{ wallId: string; text: string; x: number; y: number; bad: boolean } | null>(null), dimClick = useRef<{ id: string; at: number } | null>(null);
+  const [dim, setDim] = useState<{ wallId: string; text: string; orig: string; x: number; y: number; bad: boolean } | null>(null), dimClick = useRef<{ id: string; at: number } | null>(null);
   useEffect(() => { setMenu(null); setDim(null); }, [vb]);   // poziția lor pe ecran nu mai corespunde după zoom / deplasare
   const mac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
@@ -249,7 +249,10 @@ export default function PlanView(p: Props){
   const segment = SEGMENT_TOOLS.includes(p.tool), typing = (segment && !!preview) || (p.tool === 'room' && !!roomDraft);
   const typedValue = !typed ? null : segment ? parseTypedLength(typed, units) : parseTypedSize(typed, units);
   function typedKey(e: React.KeyboardEvent<SVGSVGElement>): boolean {
-    if (!typing || e.ctrlKey || e.metaKey || e.altKey) return false;
+    if (!typing) return false;
+    // cât timp se desenează, Delete și Backspace (și cu Ctrl/⌘, ⌘⌫ pe Mac) nu ajung la „șterge selecția” din editor
+    if ((e.key === 'Backspace' || e.key === 'Delete') && (e.ctrlKey || e.metaKey || e.altKey)) return true;
+    if (e.ctrlKey || e.metaKey || e.altKey) return false;
     if (e.key === 'Enter' && typed){ if (typedValue == null) return true;
       // segmentul păstrează direcția magnetului (pas de 15°; Shift = liberă); fără mișcare de mouse, spre dreapta
       if (segment && preview && typeof typedValue === 'number'){ const a = preview.a, free = !!raw.current?.free;
@@ -294,8 +297,10 @@ export default function PlanView(p: Props){
   const toScreen = (q: [number, number]) => { const s = svg.current!, pt = s.createSVGPoint(); pt.x = q[0]; pt.y = q[1]; const r = pt.matrixTransform(s.getScreenCTM()!); return { x: r.x, y: r.y }; };
   // cota peretelui editată pe loc: câmpul stă peste eticheta cotei, cu lungimea curentă selectată
   const openDim = (wallId: string) => { const w = floor.walls.find(x => x.id === wallId); if (!w || !p.onSetWallLength || wallLength(w.a, w.b) < .01) return;
-    setDim({ wallId, text: wl(wallLength(w.a, w.b)), ...toScreen(dimLabelAt(w, fs)), bad: false }); };
-  const applyDim = () => { if (!dim) return; const m = parseTypedLength(dim.text, units);
+    const text = wl(wallLength(w.a, w.b)); setDim({ wallId, text, orig: text, ...toScreen(dimLabelAt(w, fs)), bad: false }); };
+  // textul neatins (și forma imperială 12′ 6″, pe care parserul n-o citește) închide câmpul fără modificare
+  const closeDim = () => { setDim(null); svg.current?.focus({ preventScroll: true }); };
+  const applyDim = () => { if (!dim) return; if (dim.text.trim() === dim.orig){ closeDim(); return; } const m = parseTypedLength(dim.text, units);
     if (m == null || !p.onSetWallLength?.(dim.wallId, m)){ setDim({ ...dim, bad: true }); return; } setDim(null); svg.current?.focus({ preventScroll: true }); };
   // comenzile meniului: aceleași acțiuni ca bara piesei și tastele (lib/commands.ts dă eticheta și scurtătura)
   const runCommand = (id: string) => { const s = p.sel; setMenu(null); svg.current?.focus({ preventScroll: true }); if (!s) return;

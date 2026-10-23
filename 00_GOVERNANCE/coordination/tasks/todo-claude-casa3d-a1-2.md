@@ -25,12 +25,18 @@ DONE (all in the WIP commit):
   double-click on dim 320 opens input, Esc closes with no change, focus back on plan; Shift+F10 opens at selection;
   wall tool: preview at 15 cm thickness snapped onto top wall axis (279.2 deg, T); Delete + Backspace while drawing:
   wall count unchanged (8).
-OPEN (investigate first): after p, click, hover, Delete, Backspace the Undo button became ENABLED and status
-  "Unsaved changes", selection cleared, geometry identical (8 walls, 9 openings, 19 placements, 5 rooms). Find what
-  was committed: compare GET /api/projects/<id> draft before/after one Ctrl+Z (window.__before was being captured).
-  Suspects: Shift stuck after shift+F10 (first click came out free, 3.589/1.957 not on grid), Editor tool switch,
-  an empty commit. Then: browser check of RO texts + T glyph at zoom, re-run tsc/vitest, vault-reviewer (Opus) on the
-  diff (max 2 rounds), PR, CI once, merge if green, mark phase 1 DONE in the roadmap checkpoint.
+2026-10-23 session 2: phantom Undo NOT REPRODUCED on 3 paths (fresh load; 750 + Ctrl+Z then p/click/Delete/Backspace;
+  refused 30 then same): Undo stays disabled, server draft identical. "Unsaved changes" was the transient debounced
+  save after Ctrl+Z (draftRev 6->7, chip back to "Saved"); old probe regex read body text. RO checked: menu
+  (Editează lungimea / Încadrează / Șterge), input aria "Lungimea peretelui" aria-invalid, toast RO; T glyph path at
+  the wall axis x=3.20 when zoomed. tsc 0; vitest 126 files / 757 tests green.
+Review round 1 (vault-reviewer): 6 findings, all fixed in commit "fix(casa3d): A1.2 runda 1": zero-length wall refused
+  (wallEdit.degenerate), moved neighbours checked (<20 cm -> wallEdit.neighbourShort, openings -> openingOut), Inspector
+  length applies on Enter/blur (no T-foot capture, one undo), Ctrl/Cmd+Delete/Backspace swallowed while drawing,
+  untouched dim text closes input (imperial ok), same length = no undo step. +3 wall-edit tests. tsc 0; targeted vitest
+  42/42; browser verified all. Accepted residual: 90deg corner neighbour becomes slanted (matches spec).
+NEXT: full vitest (PowerShell: npx vitest run --maxWorkers=2; bash npx gave exit 127), round-2 review of the delta
+  only, PR, CI once, merge if green, mark phase 1 DONE in the roadmap checkpoint.
 KEY FILES: app/components/PlanView.tsx, PlanContextMenu.tsx, Editor.tsx (onSetWallLength, SEGMENT_THICKNESS),
   core/wall-edit.ts, core/snap.ts, lib/commands.ts, lib/locales/{ro,en}.ts, app/globals.css, tests/{wall-edit,snap,commands,typed-dimension}.test.ts.
 ENV: dev server `casa3d-a12` in repo-root .claude/launch.json (local, not committed); vitest needs --maxWorkers=2.
