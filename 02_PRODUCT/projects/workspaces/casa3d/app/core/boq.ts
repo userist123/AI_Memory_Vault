@@ -16,7 +16,7 @@ import { colorName } from './budget-excluded';
 const SIDE_RO: Record<string, string> = { N: 'nord', S: 'sud', E: 'est', W: 'vest' };
 const LIGHT_CATS = new Set(['lighting', 'spot', 'led_strip', 'pendant', 'wall_light', 'led_profile']);
 const FIXTURE_LABEL = { pendant: 'Pendul', sconce: 'Aplică', track: 'Șină cu spoturi' } as const;
-import { bandGeometry, bathTiles, layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, featureLabor, effectOf } from './finishes';
+import { bandGeometry, bathTiles, layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, featureLabor, effectOf, alongOf, sideSpan } from './finishes';
 import { WASTE, PAINT_COATS, DOOR_HEIGHT, WINDOW_HEIGHT, BATH_TILE_HEIGHT, BACKSPLASH_HEIGHT, LIGHTS_EXTRA_PER_M2, VAT_RATE, WET_ROOMS, SANITARY, APPLIANCES, DEFAULT_BUDGET } from './rules.boq';
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
@@ -87,7 +87,7 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
     // faianță: baie până la 2,1 m; bucătărie = zona dintre blat și dulapuri, pe lungimea mobilierului de bucătărie
     let tileArea = 0;
     // baie: până la 2,1 m pe fiecare perete care nu are altă placare (aceeași regulă ca în 3D)
-    if (room.type === 'baie') tileArea = bathTiles(f, room.type).reduce((a, w) => a + sideGeometry(fl, room, w.side, w.heightM).netM2, 0);
+    if (room.type === 'baie') tileArea = bathTiles(f, room.type, room).reduce((a, w) => a + sideGeometry(fl, room, w.side, w.heightM, w.alongFromM !== undefined ? alongOf(w, sideSpan(room, w.side)) : undefined).netM2, 0);
     if (room.type === 'bucatarie'){ const k = snap.placements.find(p => p.roomId === room.id && p.group === 'bucatarie'), rv = k && resolve(cat, k.variantId); tileArea = rv ? rv.w * BACKSPLASH_HEIGHT : 0;
       // placarea dintre blat și suspendate e faianță doar dacă așa s-a ales în sistemul de bucătărie
       if (f.kitchen && kitchenOf(f).backsplash !== 'tile') tileArea = 0; }

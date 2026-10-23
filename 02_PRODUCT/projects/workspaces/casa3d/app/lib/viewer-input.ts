@@ -29,7 +29,7 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   const plan = planWithLook(snap), mc = extra.mc;
   // finisajele de designer ale fiecărei camere (modul de așezare, placări, tavan), doar când avem catalogul de materiale
   if (mc) plan.camere.forEach((c: any) => { const r = snap.floor.rooms.find(x => x.id === c.id); if (!r) return; const f = finishesOf(snap, r), tv = textileVisual(mc, snap.floor, r, f);
-    c.fin = { ...roomVisual(mc, f, r.type), rug: tv.rug };
+    c.fin = { ...roomVisual(mc, f, r.type, r), rug: tv.rug };
     // textilele de la ferestre stau pe golul lor, pe partea dinspre cameră
     for (const w of tv.windows){ const g = plan.pereti[w.wallIndex]?.goluri[w.openingIndex]; if (g) g.trat = { inward: w.inward, rodH: w.rodH, curtain: w.curtain, sheer: w.sheer, blind: w.blind }; } });
   // bucătăria ca sistem: fronturile, blatul, placarea și LED-ul ajung în stilul piesei de bucătărie
@@ -52,7 +52,7 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   const CLAD: Record<string, number> = { stone: .022, brick: .014, slats: .021, panel: .012, tile: .01 };
   const obiectePerete = (snap.floor.wallItems ?? []).flatMap(it => { const g = wallItemGeometry(snap.floor, it); if (!g) return []; const face = wallItemFace(snap.floor, it);
     let clad = 0; if (face){ const f = finishesOf(snap, face.room), len = sideSpan(face.room, face.side);
-      for (const w of [...(f.wallFeatures || []), ...bathTiles(f, face.room.type)]){ if (w.side !== face.side || !(w.kind in CLAD)) continue; const [y0, y1] = bandOf(w, snap.floor.ceilingHeight), [a, b] = alongOf(w, len);
+      for (const w of [...(f.wallFeatures || []), ...bathTiles(f, face.room.type, face.room)]){ if (w.side !== face.side || !(w.kind in CLAD)) continue; const [y0, y1] = bandOf(w, snap.floor.ceilingHeight), [a, b] = alongOf(w, len);
         if (face.u > a && face.u < b && it.elevation > y0 && it.elevation < y1) clad = Math.max(clad, CLAD[w.kind]!); } }
     return [{ id: it.id, wi: g.wallIndex, la: it.offset, l: it.width, y: it.elevation, h: it.height, ad: wallItemDepth(it), side: it.side === -1 ? -1 : 1, kind: it.kind, color: it.color ?? null, room: face?.room.id ?? null, fata: face?.side ?? null, clad }]; });
   return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, nise, obiectePerete, goluriPlaca: extra.voids ?? [] }, items };
