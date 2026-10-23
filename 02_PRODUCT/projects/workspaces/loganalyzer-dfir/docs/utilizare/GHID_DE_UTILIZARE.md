@@ -87,6 +87,36 @@ Apăsați **„Raport pentru proces-verbal (PDF)”**. **Prima dată** pe o sta�
 
 Raportul se salvează în cazul stației, cu amprenta lui; vi se oferă și salvarea unei copii unde doriți (originalul rămâne în caz). Raportul conține verificările, pe ce se bazează fiecare și golurile de probă (sursele care nu au putut fi citite și ce înseamnă asta pentru control).
 
+### 4.6 Colectarea pentru investigație: ce aduce profilul „Complet”
+
+În ecranul de investigație, profilul de colectare „Complet (+ hive-uri utilizatori, Coș $I)” aduce, pe lângă ce aduce „Standard”, urmele de activitate ale **fiecărui profil de utilizator** de pe stație. Fișierele utilizatorilor doar se citesc; singura urmă lăsată pe stație este copia de umbră temporară, pe care o creează și o elimină `esentutl` (aplicația verifică după colectare că nu a rămas niciuna și raportează dacă a rămas). Este nevoie de drepturi de administrator: fără ele aplicația scrie că nu a colectat nimic și de ce.
+
+- **NTUSER.DAT** și **UsrClass.dat** (`AppData\Local\Microsoft\Windows`) ale fiecărui profil din lista de profiluri a Windows (cheia `ProfileList`): se copiază dintr-o copie de umbră (VSS) cu `esentutl /vss`, la fel ca Amcache și SRUM. Profilurile de serviciu (S-1-5-18, 19, 20) se iau doar dacă au hive. Jurnalele de tranzacții ale hive-urilor (`.LOG1`, `.LOG2`) nu se copiază.
+- **Coșul de reciclare**: fișierele `$I` din `$Recycle.Bin\<SID>` de pe fiecare volum fix (ora ștergerii, calea inițială, dimensiunea). Pentru fiecare `$I` se notează doar **dacă fișierul `$R` (conținutul) exista și ce dimensiune avea** în momentul colectării; **conținutul `$R` nu se copiază niciodată**.
+- Fiecare copie primește amprenta SHA-256 în momentul colectării, iar în notele probei apar SID-ul și profilul.
+- Ce nu s-a putut lua apare ca lacună, cu motivul: lipsa drepturilor, copia de umbră indisponibilă sau eșuată, folderul profilului lipsă sau necitibil, hive lipsă, Coș necitibil, limite atinse (cel mult 200 de profiluri, 10 000 de fișiere `$I` pentru un SID și 20 000 în total, un `$I` de cel mult 128 KiB). Legăturile (joncțiuni, legături simbolice) din calea profilului sau din Coș nu se urmează, iar folderele al căror nume nu este un SID se omit cu o notă.
+
+### 4.7 „Activitatea utilizatorului”: ce arată fila și ce înseamnă orele
+
+În pagina **Investigație**, fila **„Activitatea utilizatorului”** listează urmele pe care Windows le păstrează în profilul fiecărui utilizator și în Coșul de reciclare: **ShellBags** (foldere afișate în Explorer), **RecentDocs** (documente recente), **Office MRU** (fișiere deschise recent în Word, Excel etc.) și **Coșul de reciclare ($I)** (elemente șterse). Ele apar doar dacă investigația a folosit profilul de colectare „Complet” (vezi 4.6) sau dacă ați importat hive-urile și fișierele `$I`; fără ele fila spune că nu există nicio urmă, ceea ce **nu dovedește** că nu s-a întâmplat nimic.
+
+Coloanele sunt: **Relevanță** (folder clasificat din profilul de proceduri, volum amovibil sau „—”), **Sursă**, **Cale**, **Ora**, **Ce înseamnă ora**, **Utilizator / SID** (profilul, sau SID-ul proprietarului pentru Coș), **Detalii** și **Probă**. Rândurile din foldere clasificate sau de pe volume amovibile sunt primele. Deasupra tabelului sunt numărătorile și explicația orelor.
+
+**Ce înseamnă ora, pe sursă (nu este niciodată „ora accesului”):**
+
+- **ShellBags**: ultima actualizare a intrării folderului de către Explorer (ora cheii BagMRU). Nu este prima deschidere și nu dovedește că un fișier a fost citit, doar că Explorer a afișat folderul. Doar cea mai nouă intrare din cheie are ora cheii; celelalte apar „fără oră”. Orele din interiorul elementului (data DOS, rezoluție 2 secunde, ora locală fără fus) sunt ale folderului însuși și apar doar la Detalii.
+- **RecentDocs**: ora cheii, valabilă doar pentru cea mai nouă intrare. RecentDocs păstrează numai numele documentului, nu calea întreagă, deci nu poate fi legat de un folder.
+- **Office MRU**: ultima deschidere a fișierului de către aplicația Office (UTC).
+- **Coș de reciclare**: ora ștergerii (UTC), calea inițială și dimensiunea. Dacă fișierul `$R` lipsește, textul spune „conținut golit sau eliminat”: asta nu înseamnă că elementul nu a existat. Ștergerea definitivă (Shift+Del) nu lasă urme în Coș.
+
+**La redeschiderea unui caz:** folderele clasificate ale profilului folosit, literele suporturilor amovibile confirmate de stație și câmpurile specifice parserelor se salvează în caz (`Analysis/user_activity.json`). Un caz mai vechi, fără acest fișier, arată „neevaluabil la redeschidere: profilul și literele confirmate nu au fost salvate cu acest caz”; rulați din nou investigația pentru a-l evalua.
+
+**Limită cunoscută la potrivirea cu folderele clasificate:** ShellBags păstrează căile ca Explorer le-a arătat („Documente\Clasificat”, „Desktop\…”, „Descărcări\…”, „Rețea\server\share\…”). Aplicația le rezolvă la calea absolută (de ex. `C:\Users\x\Documents\Clasificat`, `\\server\share`) numai dacă folderul profilului utilizatorului este cunoscut din nota probei „Profil <SID> (<cale>)” scrisă la colectarea de pe stație (calea este a stației). Un hive importat are calea originală pe mașina examinatorului, nu pe discul stației: pentru el rădăcinile cunoscute NU sunt rezolvate, rândul spune acest lucru, iar un folder clasificat poate lipsi din rezultat. Litera de unitate (și „posibil amovibil”) se ia numai din calea afișată de Explorer. Un folder cunoscut redirecționat (OneDrive, alt disc) este rezolvat la locul implicit din profil, deci poate să nu se potrivească; unde calea nu poate fi rezolvată, un folder clasificat poate lipsi din rezultat (fals negativ). RecentDocs păstrează doar numele și nu se potrivește niciodată cu un folder. Numele scurte 8.3 și legăturile simbolice nu sunt rezolvate.
+
+**Regulile care citesc aceste urme** (apar la Constatări și în fila „Integritate air-gap”): `USER-ACTIVITY-CLASSIFIED` (un folder clasificat apare în ShellBags sau Office MRU), `USER-ACTIVITY-REMOVABLE` (căi pe litera unui suport amovibil din istoricul dispozitivelor din caz, sau doar „posibil amovibilă” pentru alte litere decât C:, cu incertitudinea scrisă) și `USER-ACTIVITY-DELETED` (elemente din Coș șterse dintr-un folder clasificat sau de pe un volum amovibil). Sunt urme slabe și indirecte: rezultatul este **DE VERIFICAT**, niciodată NECONFORM din ele singure, iar severitatea este provizorie, o stabilește proprietarul procedurii. Legătura cu un suport se face după **litera** unității, nu după seria volumului; o literă poate fi reutilizată.
+
+**În raport:** raportul investigației are, după constatări, un paragraf „Activitatea utilizatorului” (numărători, cele mai relevante urme, cu ora și ce înseamnă ea). În raportul de control, secțiunea 3b arată același paragraf doar când controlul primește o investigație a aceleiași stații; altfel spune că activitatea utilizatorului nu a fost evaluată de acest raport. **Nu sunt încă făcute:** Zone.Identifier (Mark-of-the-Web) și copierea jurnalelor de tranzacții ale hive-urilor (`.LOG1`, `.LOG2`).
+
 ## 5. Cum citiți rezultatele
 
 | Rezultat | Ce înseamnă | Ce faceți |

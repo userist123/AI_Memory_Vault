@@ -42,6 +42,8 @@ public sealed class ControlReport
     public List<ActionEntry> Actions { get; } = [];
     /// <summary>Accesses to the classified folders' files and their exits (A15); null when the profile defines no classified folders.</summary>
     public LogAnalyzer.Dfir.Analysis.ClassifiedAccessReport? Classified { get; set; }
+    /// <summary>E7: user-activity traces (ShellBags, RecentDocs, Office MRU, Recycle Bin) of the station, when the caller has them from an investigation of the same station; null = this control did not evaluate them (the report says so, never "none found").</summary>
+    public LogAnalyzer.Dfir.Analysis.UserActivityReport? UserActivity { get; set; }
     public int Count(ControlStatus s) => Checks.Count(c => c.Status == s);
     /// <summary>The checks that apply to the posture (every status except NU SE APLICĂ): the only ones counted in summaries and verdicts.</summary>
     public int Applicable => Checks.Count(c => c.Status != ControlStatus.NuSeAplica);
