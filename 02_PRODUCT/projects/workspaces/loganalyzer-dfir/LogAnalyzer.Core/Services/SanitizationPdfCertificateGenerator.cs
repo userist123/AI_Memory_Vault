@@ -58,7 +58,7 @@ namespace LogAnalyzer.Core.Services
                             row.Spacing(6);
                             AddMetaBox(row, "DATA & ORA EMITERII", $"{data.TimestampUtc:yyyy-MM-dd HH:mm:ss} UTC", "#0f172a");
                             AddMetaBox(row, "STAȚIE DE OPERARE", data.SystemHostId, "#0f172a");
-                            AddMetaBox(row, "REZULTAT SANITIZARE", data.IsVerifiedZeroized ? "VERIFICAT PRIN CITIRE" : "NEVERIFICAT", data.IsVerifiedZeroized ? "#10b981" : "#b91c1c");
+                            AddMetaBox(row, "REZULTAT SANITIZARE", data.IsVerifiedZeroized ? "VERIFICAT PRIN CITIRE" : data.ReadBackFoundData ? "EȘUAT: DATE RĂMASE" : "NEVERIFICAT", data.IsVerifiedZeroized ? "#10b981" : "#b91c1c");
                         });
 
                         // 1. Hardware Identification
@@ -94,7 +94,7 @@ namespace LogAnalyzer.Core.Services
                             AddTableRow(table, "Standard de Conformitate:", data.StandardCompliance, false);
                             AddTableRow(table, "Hash SHA-256 Pre-Sanitizare:", data.PreSanitizationSha256, true, isMonospace: true);
                             AddTableRow(table, "Hash SHA-256 Post-Sanitizare:", data.PostSanitizationSha256, false, isMonospace: true);
-                            AddTableRow(table, "Verificare Stare Zeroizare:", data.IsVerifiedZeroized ? "CONFIRMATĂ prin citire (fișierul conține doar 0x00)" : "NECONFIRMATĂ", true, textColor: data.IsVerifiedZeroized ? "#10b981" : "#b91c1c");
+                            AddTableRow(table, "Verificare Stare Zeroizare:", data.ZeroizationText, true, textColor: data.IsVerifiedZeroized ? "#10b981" : "#b91c1c");
                         });
 
                         // 3. Chain of Custody & Dual Sign-off (4-Eyes Principle)

@@ -65,6 +65,23 @@ public sealed class RawRegistry
             yield return Guard(() => ReadKey(off, $@"{keyPath}\{KeyName(off)}"));
     }
 
+    /// <summary>
+    /// Cell offsets of the direct subkeys of a key that was read from this hive (<see cref="RawKey.CellOffset"/>), in file order. Unlike
+    /// <see cref="SubKeys"/> it does not walk the path again, so reading a whole tree costs time linear in its size; the offsets also let a caller
+    /// keep a visited set and so detect a hive whose subkey lists form a cycle.
+    /// </summary>
+    public IReadOnlyList<int> ChildOffsets(RawKey parent) => Guard(() =>
+    {
+        if (parent.CellOffset < 0) throw new InvalidDataException("Cheia nu provine din acest hive (fără poziție de celulă).");
+        var key = Cell(parent.CellOffset);
+        Expect(key, "nk");
+        if (BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x14)) == 0) return (IReadOnlyList<int>)[];
+        return ListOffsets(BinaryPrimitives.ReadInt32LittleEndian(key.AsSpan(0x1C))).ToList();
+    });
+
+    /// <summary>Reads the subkey at <paramref name="offset"/> (from <see cref="ChildOffsets"/>) with its path under <paramref name="parent"/>.</summary>
+    public RawKey ReadChild(RawKey parent, int offset) => Guard(() => ReadKey(offset, $@"{parent.Path}\{KeyName(offset)}"));
+
     private int? Locate(string keyPath)
     {
         int nk = _rootCell;
@@ -99,7 +116,7 @@ public sealed class RawRegistry
                 values.Add(new RawValue(name, BinaryPrimitives.ReadInt32LittleEndian(vk.AsSpan(0x0C)), Data(vk)));
             }
         }
-        return new RawKey(keyPath, lastWrite, subkeys, values);
+        return new RawKey(keyPath, lastWrite, subkeys, values) { CellOffset = nk };
     }
 
     /// <summary>UTF-16 code units taken as-is (no replacement of unpaired surrogates), as regedit shows them.</summary>
@@ -225,5 +242,8 @@ public sealed record RawValue(string Name, int Type, byte[] Data)
 
 public sealed record RawKey(string Path, DateTime LastWriteUtc, IReadOnlyList<string> SubkeyNames, IReadOnlyList<RawValue> Values)
 {
+    /// <summary>Hive-bin-relative offset of this key's nk cell; -1 for a key not read from a hive.</summary>
+    public int CellOffset { get; init; } = -1;
+
     public RawValue? Value(string name) => Values.FirstOrDefault(v => v.Name.Equals(name, StringComparison.OrdinalIgnoreCase));
 }

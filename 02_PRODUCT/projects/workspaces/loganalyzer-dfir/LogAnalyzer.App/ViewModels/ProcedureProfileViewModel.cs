@@ -24,20 +24,45 @@ namespace LogAnalyzer.UI.ViewModels
         public ProfileTable Table { get; }
         public string Title => ProfileTables.Title(Table);
         public string Section => ProfileTables.Section(Table);
+
+        /// <summary>Simplu keeps these tabs behind „Mai multe secțiuni” (2026-10-23); display only, the tables and their checks are unchanged.</summary>
+        public static bool IsRareTable(ProfileTable t) => t is ProfileTable.Holidays or ProfileTable.Shifts or ProfileTable.RotationProcedure
+            or ProfileTable.TransferChannels or ProfileTable.NetworkDestinations;
+        public bool IsRare => IsRareTable(Table);
         public string Columns => string.Join(" · ", ProfileTables.Columns(Table).Select(LogAnalyzer.UI.Views.ColumnLabels.For));
         public DataTable Data { get; }
         public DataView View => Data.DefaultView;
 
-        public string Hint => Table switch
+        /// <summary>Simplu: Romanian only; Expert keeps the English field names next to them.</summary>
+        public string Hint => LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert ? ExpertHint : SimpleHint;
+
+        private string SimpleHint => Table switch
         {
-            ProfileTable.WorkingHours => "Day: Mon..Sun (sau Luni..Duminică); Start/End: HH:mm. Un schimb de noapte (22:00-06:00) este acceptat.",
-            ProfileTable.Holidays => "Date: yyyy-MM-dd.",
-            ProfileTable.Shifts => "Name; Start/End: HH:mm.",
-            ProfileTable.ApprovedAccounts => "Account: DOMENIU\\utilizator sau utilizator. Conturile care au voie să golească jurnalele.",
-            ProfileTable.MaintenanceWindows => "Kind: once (Date), weekly (Day) sau monthly (Ordinal 1-4/last + Day), de exemplu prima zi de luni din lună = monthly, Mon, 1, 08:00-10:00. Ora locală a stației.",
+            ProfileTable.WorkingHours => "Ziua: de luni până duminică; începutul și sfârșitul: HH:mm. Un schimb de noapte (22:00-06:00) este acceptat.",
+            ProfileTable.Holidays => "Data: aaaa-LL-zz.",
+            ProfileTable.Shifts => "Numele; începutul și sfârșitul: HH:mm.",
+            ProfileTable.ApprovedAccounts => "Contul: DOMENIU\\utilizator sau utilizator. Conturile care au voie să golească jurnalele.",
+            ProfileTable.MaintenanceWindows => "Tipul: o singură dată, săptămânal sau lunar (lunar: numărul săptămânii 1-4 sau ultima, plus ziua), de exemplu prima zi de luni din lună, 08:00-10:00. Ora locală a stației.",
+            ProfileTable.RotationProcedure => "Pașii, în ordinea procedurii: export, amprentă, arhivare, verificare, golire.",
+            ProfileTable.ApprovedSoftware => "Numele; editorul; șablonul căii (ex. C:\\Program Files\\7-Zip\\*); amprenta SHA-256 (opțional, 64 de caractere hexazecimale).",
+            ProfileTable.ExpectedPolicies => "Calea politicii: calea din secțiunea Politici (import GPO existent; nu se copiază aici); amprenta SHA-256 opțională.",
+            ProfileTable.Zones => "Zonele organizației (ex. ROSU, PUBLIC). Fără zone, orice conectivitate pe un sistem izolat (air-gap) este „conectivitate observată, necesită explicație”.",
+            ProfileTable.TransferChannels => "Din zona / în zona: zone definite mai sus; mediul: suportul sau calea de transfer aprobată.",
+            ProfileTable.NetworkDestinations => "Adresa: IP, rețea CIDR sau nume; zona în care se află.",
+            ProfileTable.ClassifiedFolders => "Calea completă a unui folder cu documente clasificate (ex. D:\\Clasificat). La controlul stației se verifică dacă accesul la fișierele din el este auditat.",
+            _ => "",
+        };
+
+        private string ExpertHint => Table switch
+        {
+            ProfileTable.WorkingHours => "Ziua (Day): Luni..Duminică (sau Mon..Sun); începutul și sfârșitul (Start/End): HH:mm. Un schimb de noapte (22:00-06:00) este acceptat.",
+            ProfileTable.Holidays => "Data (Date): aaaa-LL-zz.",
+            ProfileTable.Shifts => "Numele (Name); începutul și sfârșitul (Start/End): HH:mm.",
+            ProfileTable.ApprovedAccounts => "Contul (Account): DOMENIU\\utilizator sau utilizator. Conturile care au voie să golească jurnalele.",
+            ProfileTable.MaintenanceWindows => "Tipul (Kind): once (o singură dată, Date), weekly (săptămânal, Day) sau monthly (lunar, Ordinal 1-4/last + Day), de exemplu prima zi de luni din lună = monthly, Mon, 1, 08:00-10:00. Ora locală a stației.",
             ProfileTable.RotationProcedure => "Pașii, în ordinea procedurii: EXPORT → HASH → ARCHIVE → VERIFY → CLEAR.",
-            ProfileTable.ApprovedSoftware => "Name; Publisher; PathPattern (ex. C:\\Program Files\\7-Zip\\*); Sha256 (opțional, 64 hex).",
-            ProfileTable.ExpectedPolicies => "PolicyPath: calea politicii din secțiunea Politici (import GPO existent; nu se copiază aici); Sha256 opțional.",
+            ProfileTable.ApprovedSoftware => "Numele (Name); editorul (Publisher); șablonul căii (PathPattern, ex. C:\\Program Files\\7-Zip\\*); Sha256 (opțional, 64 de caractere hexazecimale).",
+            ProfileTable.ExpectedPolicies => "Calea politicii (PolicyPath): calea din secțiunea Politici (import GPO existent; nu se copiază aici); Sha256 opțional.",
             ProfileTable.Zones => "Zonele organizației (ex. ROSU, PUBLIC). Fără zone, orice conectivitate pe un sistem air-gapped este „conectivitate observată, necesită explicație”.",
             ProfileTable.TransferChannels => "FromZone/ToZone: zone definite mai sus; Medium: suport sau cale de transfer aprobată.",
             ProfileTable.NetworkDestinations => "Address: IP, rețea CIDR sau nume; Zone: zona în care se află.",
@@ -70,6 +95,14 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<string> SectionLines { get; } = new();
 
         [ObservableProperty] private ProfileTableViewModel? _selectedTable;
+        /// <summary>The „Mai multe secțiuni” toggle of Simplu; Expert always shows every tab.</summary>
+        [ObservableProperty] private bool _showMoreSections;
+        partial void OnShowMoreSectionsChanged(bool value) => EnsureSelectedTabVisible();
+        /// <summary>When Simplu hides the selected tab (toggle turned off, or the level switched), the first tab takes over.</summary>
+        public void EnsureSelectedTabVisible()
+        {
+            if (!LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert && !ShowMoreSections && SelectedTable is { IsRare: true } && Tables.Count > 0) SelectedTable = Tables[0];
+        }
         [ObservableProperty] private string _profilePath;
         [ObservableProperty] private string _status = "Introduceți datele în tabele (sau lipiți / importați), apoi apăsați „Salvează”. Secțiunile goale rămân „nedefinit”. Nimic din profil nu se aplică pe Windows.";
         [ObservableProperty] private bool _replaceOnImport;
@@ -114,7 +147,13 @@ namespace LogAnalyzer.UI.ViewModels
         {
             _provider = provider ?? ProfileProvider.Shared;
             _profilePath = _provider.Path;
-            foreach (var t in ProfileTables.All) Tables.Add(new ProfileTableViewModel(t));
+            foreach (var t in ProfileTables.All)
+            {
+                var tvm = new ProfileTableViewModel(t);
+                tvm.Data.RowChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
+                tvm.Data.RowDeleted += (_, _) => OnPropertyChanged(nameof(IsEmpty));
+                Tables.Add(tvm);
+            }
             SelectedTable = Tables[0];
             LoadFrom(_profilePath, startup: true);
             LoadHeader();
@@ -123,6 +162,8 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <summary>Shown when the signed-in user may read but not change the profile (only the global administrator edits; decision 33).</summary>
         public string AccessNotice => LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration ? "" : LogAnalyzer.Dfir.Auth.OperatorIdentity.AdministratorOnlyMessage + ". Puteți citi profilul, nu îl puteți modifica.";
+        /// <summary>True while no table of the profile holds a row: the page then shows the "Ce este / de ce contează / primul pas" panel (rows 16-17).</summary>
+        public bool IsEmpty => Tables.All(t => t.Rows().Count == 0);
         public bool CanEdit => LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration;
 
         private void Pull()
@@ -134,6 +175,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             foreach (var t in Tables) t.Load(_profile);
             Refresh();
+            OnPropertyChanged(nameof(IsEmpty));
         }
 
         private void Refresh()

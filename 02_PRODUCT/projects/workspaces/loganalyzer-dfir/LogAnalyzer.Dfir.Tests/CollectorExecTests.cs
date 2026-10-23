@@ -161,7 +161,7 @@ public sealed class CollectorExecTests : IDisposable
 
     // ---- the station control: own events leave every check, look-alikes stay, claimed ones are DE VERIFICAT ----
 
-    private const string Abused = "$b = [Convert]::FromBase64String($x)\nGet-ItemProperty HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa\n";
+    private static readonly string Abused = TestFixtureText.EncodedCredStoreRead;
 
     private static StationFacts Station(OperationAudit.CollectorExecs? execs, params LogFact[] logs)
     {
