@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "prompt_eval_schema.json",
+  "title": "Prompt Master golden set",
+  "description": "Format of golden_prompts.json. validate_golden() in 30_SCRIPTS/prompt/prompt_master_eval.py enforces the same constraints without a jsonschema dependency.",
+  "type": "object",
+  "required": ["schema_version", "cases"],
+  "properties": {
+    "schema_version": {"const": 1},
+    "description": {"type": "string"},
+    "cases": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["id", "input", "expected"],
+        "additionalProperties": false,
+        "properties": {
+          "id": {"type": "string", "pattern": "^G[0-9]{2}-[a-z0-9_-]+$"},
+          "input": {"type": "string", "minLength": 1, "description": "The short user request, as typed."},
+          "note": {"type": "string"},
+          "expected": {
+            "type": "object",
+            "required": ["mode", "rule", "templates"],
+            "properties": {
+              "mode": {"enum": ["execute", "clarify", "prompt_for_tool"]},
+              "rule": {"type": "string", "description": "A rule id from prompt_master_routing.json."},
+              "templates": {"type": "array", "items": {"type": "integer", "minimum": 1, "maximum": 20}}
+            }
+          },
+          "reference_outputs": {
+            "type": "array",
+            "description": "Model answers with a known verdict; the rubric must reproduce it.",
+            "items": {
+              "type": "object",
+              "required": ["file", "verdict"],
+              "properties": {
+                "file": {"type": "string", "description": "Path relative to 07_EVALUATION/prompting/."},
+                "verdict": {"enum": ["PASS", "FAIL"]}
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
