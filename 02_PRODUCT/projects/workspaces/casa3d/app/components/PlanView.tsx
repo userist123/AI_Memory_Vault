@@ -156,7 +156,7 @@ export default function PlanView(p: Props){
     if (p.calib?.stage === 'pick'){ const q: [number, number] = [r3(pt[0]), r3(pt[1])]; if (!calA) setCalA(q); else if (Math.hypot(q[0] - calA[0], q[1] - calA[1]) > .05){ p.onCalibPick?.(calA, q); setCalA(null); } return; }
     if (p.tool === 'tech'){ p.onTechAt?.(pt[0], pt[1]); return; }
     if (p.tool === 'column'){ const s = snapPoint(pt, floor); p.onAddColumn?.(s[0], s[1]); return; }
-    if (SEGMENT_TOOLS.includes(p.tool)){ const r = snapDraw(pt, { floor, anchor: preview?.a, free: e.shiftKey }); svg.current!.focus({ preventScroll: true }); if (!preview){ setTyped(''); setPreview({ a: r.p, b: r.p }); setHit(snapDraw(pt, { floor, anchor: r.p, free: e.shiftKey })); } else addSegment(preview.a, r.p); return; }
+    if (SEGMENT_TOOLS.includes(p.tool)){ const r = snapDraw(pt, { floor, anchor: preview?.a, free: e.shiftKey }); svg.current!.focus({ preventScroll: true }); if (!preview){ setTyped(''); raw.current = { pt: r.p, free: e.shiftKey }; setPreview({ a: r.p, b: r.p }); setHit(snapDraw(pt, { floor, anchor: r.p, free: e.shiftKey })); } else addSegment(preview.a, r.p); return; }
     if (p.tool === 'stair'){ const s = snapPoint(pt, floor); p.onAddStairAt?.(s[0], s[1]); return; }
     if (p.tool === 'measure'){ const s = snapPoint(pt, floor); setRuler(r => r && !r.b ? { a: r.a, b: s } : { a: s, b: null }); return; }
     if (p.tool === 'room'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])];
