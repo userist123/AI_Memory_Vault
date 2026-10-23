@@ -111,7 +111,14 @@ namespace LogAnalyzer.UI.ViewModels
             _languagePreferences.Save(PreferenceAccount, LogAnalyzer.Dfir.Language.LanguageLevelContext.Current);
             OnPropertyChanged(nameof(LanguageLevelText));
             OnPropertyChanged(nameof(IsSimpleLevel));
+            // Simplu hides the „Avansat” menu: an Avansat page that is open goes back to Acasă (display only; nothing is closed or saved)
+            if (!value && RoleProfile is not null) SelectedTabIndex = AdvancedNav.TabAfterLevelChange(RoleNavigation, SelectedTabIndex, simple: true);
         }
+        /// <summary>The sidebar „Avansat (toate paginile)” menu is open (two-way bound).</summary>
+        [ObservableProperty] private bool _advancedPagesOpen;
+        /// <summary>Simplu: „Toate paginile (nivelul Expert)” switches to Expert and opens the menu.</summary>
+        [RelayCommand]
+        private void ShowAllPages() { IsExpertLevel = true; AdvancedPagesOpen = true; }
         /// <summary>"Ce înseamnă?": the single glossary, searchable.</summary>
         [RelayCommand]
         private void OpenGlossary()

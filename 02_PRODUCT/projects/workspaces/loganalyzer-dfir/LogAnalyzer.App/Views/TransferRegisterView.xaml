@@ -31,14 +31,22 @@
         <StackPanel Grid.Row="0" Margin="0,0,0,10">
             <TextBlock Text="Registrul de transferuri" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
             <TextBlock Text="Transferurile de date pe medii de stocare: un singur formular, aproape totul completat. Mediile conectate și registrul de medii se citesc din pagina „Monitor dispozitive”; aici nu se modifică."
-                       TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                       local:SimpleLevel.HideInSimple="True" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+            <TextBlock Text="Fiecare transfer de date pe un mediu de stocare se înregistrează aici."
+                       local:SimpleLevel.OnlyInSimple="True" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
         </StackPanel>
         <Grid Grid.Row="1" Margin="0">
             <Grid.ColumnDefinitions><ColumnDefinition Width="4*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="5*"/></Grid.ColumnDefinitions>
             <ScrollViewer VerticalScrollBarVisibility="Auto">
                 <StackPanel Margin="0,0,12,0">
                     <TextBlock FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"><Run Text="Transfer nou · "/><Run Text="{Binding NextNumber, Mode=OneWay}"/></TextBlock>
-                    <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,8"/>
+                    <TextBlock Text="{Binding Status}" TextWrapping="Wrap" Margin="0,4,0,8">
+                        <!-- 2026-10-23: in Simplu a warning about the chosen medium is sentence case in the warning colour (Expert keeps its capitals and colour) -->
+                        <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/><Style.Triggers><MultiDataTrigger><MultiDataTrigger.Conditions>
+                            <Condition Binding="{Binding StatusIsWarning}" Value="True"/>
+                            <Condition Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"/>
+                        </MultiDataTrigger.Conditions><Setter Property="Foreground" Value="{StaticResource WarningBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></MultiDataTrigger></Style.Triggers></Style></TextBlock.Style>
+                    </TextBlock>
                     <ProgressBar IsIndeterminate="True" Height="4" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}" Margin="0,0,0,6"/>
         
                     <TextBlock Text="Direcție" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
