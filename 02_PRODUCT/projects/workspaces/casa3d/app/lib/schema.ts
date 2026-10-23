@@ -51,6 +51,9 @@ alter table shares add column if not exists pin_salt text;
 alter table shares add column if not exists pin_key text;
 alter table shares add column if not exists pin_failures int not null default 0;
 alter table shares add column if not exists pin_locked_until timestamptz;
+-- P0: expirare opțională (null = linkurile vechi, fără expirare) și ultima deschidere (rotunjită la oră, fără IP)
+alter table shares add column if not exists expires_at timestamptz;
+alter table shares add column if not exists last_access_at timestamptz;
 create table if not exists site_photos(id uuid primary key default gen_random_uuid(), project_id uuid not null references projects(id) on delete cascade,
   mime text not null, data bytea not null, bytes int not null, created_at timestamptz not null default now());
 create index if not exists site_photos_project on site_photos(project_id);

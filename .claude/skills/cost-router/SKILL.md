@@ -163,10 +163,13 @@ context, 78% of it inside long-lived subagents. Therefore:
   `git log`, `gh pr view|checks|merge|edit`, ...; no chain, pipe or redirect) and a short edit of
   `MEMORY.md`, a memory note or a `todo-*.md` checkpoint. A subagent's own calls (`agent_id`/`agent_type` set) are never counted.
   A reviewer/verifier `subagent_type` is never below Opus.
-- **Vault router first**: inside the AI Memory Vault, an Agent spawn for an
-  implement/review/design/frontier route is denied until
-  `python -m routing.route_cli route|dispatch` actually ran in Bash (at the command start or after a
-  separator; merely mentioning it does not count; `PYTHONPATH=03_IMPLEMENTATION/packages`).
+- **Vault router in-hook**: inside the AI Memory Vault, an Agent spawn for an implement/review/design/
+  frontier route first runs `python -m routing.route_cli route --goal <first 300 chars>` itself (5 s
+  timeout, `PYTHONPATH=03_IMPLEMENTATION/packages`; the goal is never stored). ROUTED/PLANNED records the
+  receipt and allows (context line `vault-router: <status> -> <subagent_type>`, only with COST_ROUTER_VERBOSE_ROUTE=1); BLOCKED, a crash, a
+  timeout or unparsable output denies and sets `delegation_denied` (fallback text: run the router
+  in Bash). A Bash call of `routing.route_cli route|dispatch` (at the command start or after a
+  separator; a mention does not count) still marks the router as run, so no second run happens.
   The call is also recorded per session as a route receipt for the prompt's task class; a later
   prompt of the same class reuses it instead of running the router again. Inside Claude Code
   (`CLAUDECODE=1`) the router offers `vault-worker`, `vault-reviewer` and `Explore` as runtimes
@@ -176,15 +179,125 @@ context, 78% of it inside long-lived subagents. Therefore:
   `uv run python`, `env VAR=x python`. Known limitation: the mark is set in PreToolUse, when the
   command is about to run, not after it succeeded (the Bash PostToolUse input does not reliably
   expose an exit code), so a router call that fails still counts as routed.
+- **Advisory on the same tier**: SessionStart stores the session `model` (startup/clear/compact only; a later
+  `/model` switch is not seen until the next compact or restart). If the route's model tier EQUALS the session's
+  (sonnet session, sonnet route), the 4th direct call is allowed with one note instead of denied: delegating to
+  the same tier is pure overhead (final A/B, 24 runs: +9..+74% cost where implement work went to `vault-worker`
+  on the session model; `07_EVALUATION/reports/cost_router_claude_ab_benchmark_2026-10-21_phase2_final/SUMMARY.md`).
+  A route ABOVE the session (risk floor, review -> opus) or BELOW it (opus session, sonnet route) is enforced as
+  before; unknown session model: denied as before.
+  The session model is resolved on SessionStart and on every prompt (`route_state.resolve_session_model`: payload `model` >
+  stored > last assistant `message.model` of the transcript > env `ANTHROPIC_MODEL` > `.claude/settings.local.json`, `.claude/settings.json`,
+  `~/.claude/settings.json` `model` > unknown); headless payloads carry no `model`. On an equal tier (class not review/design/frontier,
+  risk < high) the route line reads `cost-router: <class> same tier (<model>): direct work ok`, the state keeps `subagent` for
+  telemetry plus `same_tier: true`, and enforcement is one advisory note.
+  A router decision whose `execute_via` is not `claude_code_agent_tool` denies the Claude spawn (dispatch it with `route_cli dispatch`).
 - **Resume guard**: `hook_resume_guard.py` (PreToolUse on SendMessage) finds the target's
   transcript (`<session>/subagents/agent-<id>.jsonl`); a second resume of the same subagent is
   denied, a first one above 150k context tokens (`COST_ROUTER_RESUME_MAX_TOKENS`) gets a warning.
-  Teammates, other sessions and unknown names are left alone.
+  Teammates, other sessions and unknown names are left alone when the session's subagents directory exists;
+  when the transcript cannot be resolved the resume is counted by the named agent id (no fail-open). The counter
+  is a read-modify-write under a lock file (`route-<sid>.resumes.lock`), so concurrent hooks lose no increment.
 - **Overrides**: `#direct` in the prompt, even a short one such as `#direct do it` (owner: the
   main session does it itself), or
   `COST_ROUTER_ENFORCE=0` in the environment. Any hook error allows the call.
+- **Kill switch**: `COST_ROUTER_OFF=1` (also `true`/`yes`/`on`) makes every hook return at once: exit 0, no stdout, no
+  state writes (`route_state.disabled_by_env()`; used by the benchmark baseline arm so both arms load identical
+  CLAUDE.md, project MCP and skills and differ only in the hook layer). `hook_agent_usage.py --report` still works.
+
+### 4B. Subagent usage telemetry and idempotency
+
+- **Telemetry**: `hook_agent_usage.py` (PostToolUse on `Agent|Task`) records per subagent, in
+  `route-<sid>.agent_usage.jsonl` (append-only JSON lines, last 200): resolved model, requested model, the 4-way token split
+  (input, cache_read, cache_creation, output), total tokens, duration, tool-use count and an
+  estimated USD cost from the policy rate card (`transcript_usage.estimate_cost_usd`; unknown model
+  -> `null`, never an invented price). Prompt and subagent content are never stored; it prints nothing.
+- **Idempotency keys** (`route_state.seen_event`, sidecar `route-<sid>.seen`, last 500 keys): `post:<tool_use_id>`
+  (telemetry), `pre:<tool_use_id>` (main-session call counter; a replay returns the same decision),
+  `resume:<tool_use_id>` (resume counter), `prompt:<prompt_id>` (prompt routing). Hooks of one event
+  run in parallel and an identical command in several settings files runs once, but a copy under a
+  different path (a global install) runs twice, so a repeated id must not count twice.
+- **Never both paths closed**: when `hook_agent_model.py` denies a spawn (router BLOCKED or unavailable) it sets the
+  per-prompt marker `delegation_denied`; `hook_enforce_route.py` then allows at most `BREAKER_EXTRA_CALLS` (6) direct calls past the 3 free ones
+  (the first with a context line), then denies; a new prompt epoch resets it.
+- **Fail open**: these hooks are efficiency policy, not authorization. Malformed JSON, missing fields,
+  an unknown event, an unwritable state directory or any exception means exit 0 with no output.
+- **context_tokens** = `input_tokens + cache_read_input_tokens + cache_creation_input_tokens` of the
+  last assistant message (output excluded); `transcript_usage.usage_split()` returns all parts.
+- **Report**: `python .claude/skills/cost-router/hook_agent_usage.py --report [session_id]` prints the
+  recorded subagents with per-model totals and the summed estimated cost (read-only). After a
+  compaction `hook_repo_map.py` also adds one `cost-router:` state line to the context.
+
+## 4A. Context-size switches (environment)
+
+- `COST_ROUTER_REPO_MAP_MAX_CHARS` caps the SessionStart repo map (default 2500, about 600 tokens); the
+  largest directories are kept, the rest is summarised as "N smaller directories omitted".
+- `COST_ROUTER_NO_REPO_MAP=1`: `hook_repo_map.py` prints nothing.
+- The per-prompt route line is compact by default (class, target, model; at most 120 chars). The long form
+  (effort, verifier, owner-language reminder, local-LLM hint, enforcement note) needs `COST_ROUTER_VERBOSE_ROUTE=1`.
+- Enforcement does not depend on the text: state is persisted either way. `COST_ROUTER_ENFORCE=0` still disables it.
+- The compact line ends with ` lang=<code>` when `~/.claude/settings.json` sets `language` (still at most 120 chars).
+
+## 4C. Escalation policy (owner rule 2026-10-21; hook_agent_model.py, never silent)
+- Review/verify briefs (by subagent type OR brief), critical risk and live operations (production, deploy, delete,
+  rotate: `rules.implementer_risk_floor.never_for_stems`) need opus, whatever `subagent_type` or `model` the Agent call
+  names. A risk-high IMPLEMENTER (worker type or non-review brief) stays on its class model (sonnet) because the Opus
+  reviewer pass is mandatory (`rules.implementer_risk_floor`, owner rule 2026-10-16).
+  On a session below the required tier the spawn is DENIED (`requires <tier>; session is <s>`) unless the owner wrote `#escalate`.
+- `#escalate` counts only in the owner's own prompt (UserPromptSubmit), only for that prompt; `tool_input` text never does.
+- Normal-risk work is capped at the session tier (note `not escalated: session <s>; #escalate allows <t>`);
+  an explicit `model` above the session tier is capped the same way. Downward routing is unchanged.
+- An explicit `model` is capped the same way on EVERY class, an unclassified brief included (W7): above the session tier ->
+  session tier + note; unclassified without `model` and an agent default (frontmatter `model:` or `CLAUDE_CODE_SUBAGENT_MODEL`)
+  above the session tier -> `updatedInput.model` = session tier + note. `#escalate` allows with a note.
+- R2-1: the agent default is read from the project `.claude/agents/<type>.md`, then the user `~/.claude/agents/<type>.md`
+  (matched by directory listing; the type name is never a path). A plugin type (`a:b`), a path-like name, a non-built-in
+  type with no agent file, an unreadable file or an unrecognised `model:` is UNKNOWN -> session tier + note, even with
+  `#escalate`. Built-ins (general-purpose, Explore, Plan, ...) inherit and are left alone.
+- R2-2: an explicit `model` is resolved by alias, exact id, alias with a `[..]` suffix (`opus[1m]`) or the longest model_id
+  prefix followed by `-`/`[`; same tier as the target keeps the given spelling. Anything else (`claude-opus-4-1`, `gpt-5`, `""`)
+  is never passed through: unclassified -> session tier, classified -> route model, risky/review -> the floor; note
+  `unrecognised model '<x>'; capped to <tier>`; `#escalate` does not apply to it.
+- Unknown session model = cheapest tier (note: set ANTHROPIC_MODEL). The transcript's last model beats a stored one.
+  A model known only from a settings file (`route_state.resolve_session_model_ex` source `settings`/`none`) is a guess and counts
+  as unknown for escalation; payload, transcript, stored and env `ANTHROPIC_MODEL` are trusted.
+- `COST_ROUTER_OFF=1` stays inert for every hook, including `install.py --session-start`.
+- `COST_ROUTER_NO_SELF_INSTALL=1` makes `hook_self_update.py` and `install.py --session-start/--self-update` inert:
+  no git, no network, no write under `~/.claude`.
+- Hook-driven refresh is OFF by default (owner, 2026-10-22): `install.py --session-start/--self-update` and
+  `hook_self_update.py` do nothing unless `COST_ROUTER_SELF_INSTALL=1` or `~/.claude/cost-router.auto-refresh`
+  exists (`--uninstall` removes it). The opt-outs above keep priority. HIGH-2 is fixed by the pinned release below.
+
+### Pinned release (HIGH-2)
+
+The self-update hook never follows `main`. It re-syncs to the commit named by the INSTALLED `release_pin.json`
+(`lib/release_pin.py`): fetch by SHA, verify every byte against the pin, then run the installed `install.py
+--self-update --source-root <staging> --release-pin <temp copy of the validated pin> --source-ref <pin commit>`. No
+installed pin -> `no-pin`; an install whose `VERSION` line 1 is not the pin commit (e.g. a plain checkout install) ->
+`not-pinned-install`; in both cases nothing happens.
+Residual: the pin is unsigned and the update only re-syncs to the installed pin; a lower `seq` is refused without `--force`.
+Release procedure (owner): 1) commit the change; 2) `python .claude/skills/cost-router/lib/release_pin.py generate --repo . --commit <sha> --seq <n>`
+(`seq` above the previous pin; writes `.claude/skills/cost-router/release_pin.json`, which never lists itself);
+3) commit the pin in a later commit (that commit changes nothing else) and push both; 4) from that trusted checkout run
+`python .claude/skills/cost-router/install.py --source-ref <pinned sha>` on each machine: VERSION records the pinned
+commit, so the hook keeps that install in sync (a mismatching `--source-ref` is refused). Without `--source-ref` the
+install records the checkout HEAD and the hook leaves it alone (`not-pinned-install`). The pin file is never part of
+the commit it pins.
+
+## 4B. Install integrity (VERSION and --verify)
+
+Every install (also `--session-start`) writes `VERSION`: line 1 is the source commit (`git rev-parse HEAD`, `+dirty`, or `unknown`; the
+self-update ref when given), line 2 the sha256 of the file manifest. `python install.py --verify [--json] [--home <dir>]` is read-only:
+it lists missing/extra/differing files and both VERSION lines; exit 0 only when identical, 1 on any difference or a missing VERSION.
 
 ## 5. Report shape (end of task)
 
 Outcome first, then evidence (commands, exit codes, counts), then what was not verified, then the
 delegation that happened (which subagent, which model) in one line. Nothing else.
+
+## Token-lean defaults (phase 3) and their env switches
+- Read/Grep/Glob are never denied by the enforce hook (a deny costs a retry request that re-reads the prefix); the delegate reason is delivered once as context. Edit/Write/NotebookEdit/non-exempt Bash are still denied. `COST_ROUTER_DENY_READS=1` restores the deny.
+- The route line prints only when (class, model, subagent) changes, on risk >= high, or with `COST_ROUTER_VERBOSE_ROUTE=1` (long form, always). State is written every prompt either way.
+- The repo map is injected on `startup` only (`COST_ROUTER_REPO_MAP=always`: also clear/compact); compact gets a one-line state. Cap 1500 chars (`COST_ROUTER_REPO_MAP_MAX_CHARS`).
+- The Agent hook emits no allow-path context (only the denial reason, or `COST_ROUTER_VERBOSE_ROUTE=1`); read-only agent types (strict allowlist: a project `.claude/agents/<type>.md` whose frontmatter `tools` are all in Read, Grep, Glob, LS, WebFetch, WebSearch or vault-memory read MCP tools; the built-in Explore without such a file, or the project Explore with Bash, is NOT read-only) are clamped to the explore class (haiku, cap one tier above) on non-risky, non-review/design briefs only (review/verify/design or risk >= high keep the old floor); `COST_ROUTER_READONLY_FLOOR=1` restores the old floor. The subagent `prompt` is never modified.
+- `COST_ROUTER_OFF=1` makes every hook inert. Evidence: the phase-3 benchmark dir under `07_EVALUATION/reports/` (to be produced).

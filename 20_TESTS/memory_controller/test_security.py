@@ -27,10 +27,10 @@ def setup_function():
     })
 
 def test_prompt_injection_sanitization():
-    # Existing sanitize_query contract
+    # Owner-approved contract change 2026-10-22: query is data; escape at render sites.
     malicious = "Hello {{prompt}} <script>alert(1)</script> World <html>"
     clean = sanitize_query(malicious)
-    assert clean == "Hello   World"
+    assert clean == malicious.strip()
     
     # Test via controller
     pack = controller.search(Principal.HUMAN, malicious)
