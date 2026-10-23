@@ -128,7 +128,7 @@ namespace LogAnalyzer.UI.ViewModels
         }
 
         /// <summary>The one line under the big button: what happens when it is pressed.</summary>
-        public const string WhatHappensQuickControlText = "Ce se întâmplă: verifică stația pe perioada de mai jos și arată rezultatul aici. Aplicația doar citește; nu modifică nimic pe stație.";
+        public const string WhatHappensQuickControlText = "Ce se întâmplă: verifică stația pe perioada afișată mai sus și arată rezultatul aici. Aplicația doar citește; nu modifică nimic pe stație.";
         public string WhatHappensQuickControl => WhatHappensQuickControlText;
 
         /// <summary>„Ghidul de început” (3 ecrane): reopened from Home at any time.</summary>
