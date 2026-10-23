@@ -319,6 +319,8 @@ export default function Editor({ id }: { id: string }){
       else if (sel.kind === 'column'){ const c = snap?.floor.columns?.find(x => x.id === sel.id); if (c) mutate(s => { const col = s.floor.columns?.find(x => x.id === sel.id); if (col) { col.x = r3(col.x + dx); col.z = r3(col.z + dz); } }); }
       else if (sel.kind === 'room') mutate(s => { const r = s.floor.rooms.find(x => x.id === sel.id); if (r) r.rect = { x0: r3(r.rect.x0 + dx), x1: r3(r.rect.x1 + dx), z0: r3(r.rect.z0 + dz), z1: r3(r.rect.z1 + dz) }; }); } };
   useEffect(() => { const k = (e: KeyboardEvent) => { const el = e.target as HTMLElement;
+    // în lista obiectelor planului tastele aparțin listei (săgeți, Enter, Escape): Backspace nu șterge selecția pe neașteptate
+    if (el.closest?.('.plan-mirror')) return;
     if (editorIgnoresKey({ preview: !!preview, inField: !!el.closest?.('input,select,textarea,[contenteditable=true]'), inDialog: !!el.closest?.('dialog[open],[aria-modal=true]'), paletteOpen: paletteOpenRef.current })) return;
     if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z'){ e.preventDefault(); e.shiftKey ? redo() : undo(); }
     else if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'y'){ e.preventDefault(); redo(); }
@@ -381,8 +383,11 @@ export default function Editor({ id }: { id: string }){
   // săgețile nu schimbă descrierea, deci nu produce zeci de anunțuri), în limba interfeței
   const mirror = useMemo(() => snap && catalog ? describePlan(snap, catalog, { t, units, lang }) : [], [snap, catalog, t, units, lang]);
   const selDesc = useMemo(() => describeSelection(mirror, sel), [mirror, sel]);
-  const [liveSel, setLiveSel] = useState('');
-  useEffect(() => { const tm = setTimeout(() => setLiveSel(selDesc ? t('mirror.selected', { label: selDesc }) : ''), 350); return () => clearTimeout(tm); }, [selDesc, t]);
+  // descrierea + ce se poate face cu obiectul; un spațiu invizibil alternant face ca a doua piesă identică să fie anunțată și ea
+  const [liveSel, setLiveSel] = useState(''), liveFlip = useRef(false);
+  useEffect(() => { const tm = setTimeout(() => { if (!selDesc || !sel){ setLiveSel(''); return; } liveFlip.current = !liveFlip.current;
+      const keys = ['placement', 'room', 'stair', 'column'].includes(sel.kind) ? t(`mirror.keys.${sel.kind}`) : t('mirror.keys.other');
+      setLiveSel(`${t('mirror.selected', { label: selDesc })}. ${keys}${liveFlip.current ? ' ' : ''}`); }, 350); return () => clearTimeout(tm); }, [selDesc, sel?.kind, sel?.id, t]); // eslint-disable-line
   // hover-ul comun nu rămâne agățat când una din vederi dispare (schimbarea Plan / 3D)
   useEffect(() => { setHoverPid(null); }, [view]);
   // (hook înainte de orice return timpuriu) modul „document lat” al panoului, ținut minte în browser

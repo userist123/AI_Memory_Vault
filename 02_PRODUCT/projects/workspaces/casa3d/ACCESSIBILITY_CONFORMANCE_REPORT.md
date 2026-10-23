@@ -26,11 +26,11 @@ Public statement (RO/EN): page `/accesibilitate` (`app/lib/a11y-statement.ts`).
 
 ## Evidence
 
-- `scripts/check-a11y.mjs` (axe-core 4.14.0, tags wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa) on 18 page states:
-  home, accessibility statement, editor stages Survey / Finishes / FF&E / Quote / Present / Orders, the command palette,
+- `scripts/check-a11y.mjs` (axe-core 4.14.0, tags wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa) on 19 page states:
+  home, accessibility statement, editor stages Survey / Finishes / FF&E / Quote / Present / Orders, the open plan-objects list, the command palette,
   seven print documents, client link on desktop (1600 px) and phone (390 px). Result on 2026-10-23: **0 violations,
   0 accepted exceptions** (`scripts/a11y-known.json` is empty). Runs in CI (`.github/workflows/casa3d-build.yml`).
-- `scripts/check-slides.mjs`: no presentation content leaves its 16:9 slide, no horizontal scroll at 390 px.
+- `scripts/check-slides.mjs`: no presentation content leaves its 16:9 slide, no horizontal scroll on the client link at 320 px and 390 px.
 - Unit tests: typed dimensions (2.5.7), dialog keyboard handling, i18n coverage.
 - Measured contrast of the editor chrome (2026-10-23): minimum 4.89:1 (white on terracotta buttons).
 
@@ -57,13 +57,13 @@ two-way voice, video) are not applicable.
 | 1.4.3 Contrast (minimum) | Supports | axe color-contrast: 0 violations on all checked pages; measured minimum 4.89:1. |
 | 1.4.4 Resize text | Not evaluated manually | Layout uses relative units and container queries; no 200 % zoom test recorded yet. |
 | 1.4.5 Images of text | Supports | No images of text. |
-| 1.4.10 Reflow | Supports | Client link at 390 px: no horizontal scroll (automated). Editor plan/3D canvases are exempt (two-dimensional content). |
+| 1.4.10 Reflow | Partially supports | Client link at 320 px and 390 px: no horizontal scroll (automated). The editor is a desktop/tablet tool and is not designed for 320 px; its plan/3D canvases are two-dimensional content (exempt). |
 | 1.4.11 Non-text contrast | Not evaluated manually | Focus rings and control borders designed to 3:1; not measured on every control. |
 | 1.4.12 Text spacing | Not evaluated manually | |
 | 1.4.13 Content on hover or focus | Supports | Tooltips are native `title`; popovers close with Escape. |
 | 2.1.1 Keyboard | Partially supports | All controls and the client link are keyboard operable; every plan object is in a keyboard list ("Plan objects", first Tab stop of the plan) with generated descriptions, Enter selects and frames it; arrows move, R rotates. Drawing new geometry needs pointer or typed dimensions after a first point. |
 | 2.1.2 No keyboard trap | Supports | Modal dialogs trap focus by design and close with Escape (tests/dialog.test.ts). |
-| 2.1.4 Character key shortcuts | Partially supports | Single-key shortcuts (R, F, ?) only act when the plan has focus; no setting to turn them off. |
+| 2.1.4 Character key shortcuts | Does not support | F acts only when the plan has focus, but R, Delete/Backspace and ? act whenever focus is outside text fields, dialogs and the plan-objects list; there is no setting to turn them off or remap them yet. |
 | 2.2.1 Timing adjustable | Supports | No time limits. |
 | 2.2.2 Pause, stop, hide | Supports | No auto-moving content; loading shimmer stops under reduced motion. |
 | 2.3.1 Three flashes | Supports | No flashing content. |
@@ -80,7 +80,7 @@ two-way voice, video) are not applicable.
 | 2.5.3 Label in name | Supports | axe label-content-name-mismatch: 0 (fixed for stage buttons and the 3D export menu on 2026-10-23). |
 | 2.5.4 Motion actuation | Not applicable | No device-motion input. |
 | 2.5.7 Dragging movements | Supports | Plan: zoom/pan buttons, click-click rooms, typed dimensions; 3D: rotate/zoom buttons. |
-| 2.5.8 Target size (minimum) | Supports | Targets at least 24 × 24 px; 44 × 44 px on touch devices (audited on the client link). |
+| 2.5.8 Target size (minimum) | Supports | Targets at least 24 × 24 px (axe target-size: 0); 44 × 44 px measured on the client link on phones. |
 | 3.1.1 Language of page | Supports | `lang` set from the reader's language. |
 | 3.1.2 Language of parts | Supports | |
 | 3.2.1 On focus / 3.2.2 On input | Supports | No context change on focus or input. |
@@ -97,5 +97,6 @@ two-way voice, video) are not applicable.
 
 ## Known gaps and plan
 
-1. Manual tests with NVDA / VoiceOver / TalkBack and 200 % zoom; an external audit before public sale.
-2. Tagged PDF output for documents (server-side PDF generation).
+1. A setting to turn single-key shortcuts off (2.1.4).
+2. Manual tests with NVDA / VoiceOver / TalkBack and 200 % zoom; an external audit before public sale.
+3. Tagged PDF output for documents (server-side PDF generation).
