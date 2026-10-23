@@ -81,7 +81,7 @@ import { prepareShareImages } from '@/lib/share-images';
 import { withViewTransition } from '@/lib/motion';
 import StagePicker from './StagePicker';
 import PlanObjects from './PlanObjects';
-import { PLAN_LIMITS, PLAN_DEFAULTS, cleanPlanText } from '@/core/plan-limits';
+import { PLAN_LIMITS, PLAN_DEFAULTS, cleanPlanText, stripPlanText } from '@/core/plan-limits';
 import ToolRail from './ToolRail';
 import { dimGeometry } from '@/core/annotations';
 import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
@@ -424,7 +424,7 @@ export default function Editor({ id }: { id: string }){
   // descrierea + ce se poate face cu obiectul; un spațiu invizibil alternant face ca a doua piesă identică să fie anunțată și ea
   const [liveSel, setLiveSel] = useState(''), liveFlip = useRef(false);
   useEffect(() => { const tm = setTimeout(() => { if (!selDesc || !sel){ setLiveSel(''); return; } liveFlip.current = !liveFlip.current;
-      const keys = ['placement', 'room', 'stair', 'column'].includes(sel.kind) ? t(`mirror.keys.${sel.kind}`) : t('mirror.keys.other');
+      const keys = ['placement', 'room', 'stair', 'column', 'wall_item'].includes(sel.kind) ? t(`mirror.keys.${sel.kind}`) : t('mirror.keys.other');
       // din listă tastele de editare nu acționează (săgețile trec prin obiecte): mesajul spune întâi cum se ajunge în plan
       const inList = !!(document.activeElement as HTMLElement | null)?.closest?.('.plan-mirror');
       setLiveSel(`${t('mirror.selected', { label: selDesc })}. ${inList ? t('mirror.escFirst') + ' ' : ''}${keys}${liveFlip.current ? ' ' : ''}`); }, 350); return () => clearTimeout(tm); }, [selDesc, sel?.kind, sel?.id, t]); // eslint-disable-line
@@ -842,7 +842,7 @@ export default function Editor({ id }: { id: string }){
               </div>
               <button className="btn" onClick={() => patchAnn(selAnn.id, a => { if (a.kind === 'dim') a.offset = -a.offset; })}>{t('dim.flip')}</button></>
             : <>
-              <label className="f"><span>{t('text.content')}</span><input value={selAnn.text} maxLength={PLAN_LIMITS.annotation.textMax} onChange={e => { const v = e.target.value.replace(/[\u0000-\u001f\u007f<>]/g, ' '); patchAnn(selAnn.id, a => { if (a.kind === 'text') a.text = v; }); }} onBlur={() => { if (!cleanPlanText(selAnn.text)) del(); }} /></label>
+              <label className="f"><span>{t('text.content')}</span><input value={selAnn.text} maxLength={PLAN_LIMITS.annotation.textMax} onChange={e => { const v = stripPlanText(e.target.value); patchAnn(selAnn.id, a => { if (a.kind === 'text') a.text = v; }); }} onBlur={() => { if (!cleanPlanText(selAnn.text)) del(); }} /></label>
               <div className="grid2">
                 <label className="f"><span>{t('text.size')}</span><select value={selAnn.size ?? 'm'} onChange={e => patchAnn(selAnn.id, a => { if (a.kind !== 'text') return; const v = e.target.value; if (v === 's' || v === 'l') a.size = v; else delete a.size; })}>
                   <option value="s">{t('text.sizeS')}</option><option value="m">{t('text.sizeM')}</option><option value="l">{t('text.sizeL')}</option></select></label>
@@ -879,7 +879,8 @@ export default function Editor({ id }: { id: string }){
               <div className="grid2">
                 <label className="f"><span>{t('wallItem.kind')}</span><select value={it.kind} onChange={e => patchWallItem(it.id, n => { n.kind = e.target.value as WallItemKind; delete n.product; delete n.depth; })}>
                   {WALL_ITEM_KINDS.map(k => <option key={k} value={k}>{t(`wallItem.kind.${k}`)}</option>)}</select></label>
-                <label className="f"><span>{t('wallItem.label')}</span><input type="text" maxLength={WL.labelMax} value={it.label ?? ''} onChange={e => patchWallItem(it.id, n => { const v = cleanPlanText(e.target.value).slice(0, WL.labelMax); if (v) n.label = v; else delete n.label; })} /></label>
+                <label className="f"><span>{t('wallItem.label')}</span><input type="text" maxLength={WL.labelMax} value={it.label ?? ''} onChange={e => patchWallItem(it.id, n => { const v = stripPlanText(e.target.value).slice(0, WL.labelMax); if (v.trim()) n.label = v; else delete n.label; })}
+                  onBlur={() => patchWallItem(it.id, n => { const v = cleanPlanText(n.label); if (v) n.label = v; else delete n.label; })} /></label>
                 <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(it.width)} onChange={e => cm('width', WL.widthMinM, Math.min(WL.widthMaxM, L))(e.target.value)} /></label>
                 <label className="f"><span>{t('niche.height', { u })}</span><input type="number" value={inField(it.height)} onChange={e => cm('height', WL.heightMinM, Math.min(WL.heightMaxM, H))(e.target.value)} /></label>
                 <label className="f"><span>{t('wallItem.offset', { u })}</span><input type="number" value={inField(it.offset)} onChange={e => cm('offset', 0, L)(e.target.value)} /></label>

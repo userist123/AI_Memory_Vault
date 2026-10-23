@@ -70,7 +70,7 @@ export function alongWall(r: Room['rect'], side: Side, x: number, z: number): nu
 export function wallElevations(snap: Snapshot, mc: MaterialsCatalog, cat: Catalog, fl: Floor, room: Room): Elevation[] {
   const f = finishesOf(snap, room), r = room.rect, H = fl.ceilingHeight, c = ceilingOf(f), base = materialOf(mc, f.baseboard), wet = room.type === 'baie' || room.type === 'bucatarie';
   const fixtures = (f.fixtures || []).flatMap(fx => fixturePoints(snap, cat, room, fx)).filter(p => p.kind === 'sconce');
-  const tiles = bathTiles(f, room.type), tileM = materialOf(mc, f.wallTile);
+  const tiles = bathTiles(f, room.type, room), tileM = materialOf(mc, f.wallTile);
   return SIDES.map(side => { const horiz = side === 'N' || side === 'S', len = horiz ? r.x1 - r.x0 : r.z1 - r.z0, edge = { N: r.z0, S: r.z1, W: r.x0, E: r.x1 }[side];
     const openings: ElevOpening[] = [];
     for (const w of fl.walls){ const h = Math.abs(w.a[1] - w.b[1]) < 1e-6; if (h !== horiz || Math.abs((h ? w.a[1] : w.a[0]) - edge) > 1e-6) continue;

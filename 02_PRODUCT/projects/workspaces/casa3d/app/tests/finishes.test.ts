@@ -269,7 +269,7 @@ describe('placare pe o porțiune (alongFromM / alongToM)', () => {
     const bad = (w: object) => sanitizeFinishes({ x: { wallFeatures: [{ side: 'N', kind: 'slats', material: 'a', ...w }] } });
     assert.equal(bad({ alongFromM: 1, alongToM: 2, vertical: false }), null);
     assert.equal(bad({ alongFromM: 2, alongToM: 1 }), 'Placările de pe pereți sunt invalide.');
-    assert.equal(bad({ alongToM: 60 }), 'Placările de pe pereți sunt invalide.');
+    assert.equal(bad({ alongToM: 1001 }), 'Placările de pe pereți sunt invalide.');
     assert.equal(sanitizeFinishes({ x: { wallFeatures: [{ side: 'N', kind: 'paint', material: 'a', vertical: true }] } }), 'Placările de pe pereți sunt invalide.', 'orientarea doar la riflaj');
   });
   test('server: porțiunea inversată dă 400 la salvare', async () => {

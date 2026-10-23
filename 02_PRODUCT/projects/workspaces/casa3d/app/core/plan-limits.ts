@@ -26,7 +26,9 @@ const HEX = /^#[0-9a-f]{6}$/i;
 
 /** Textul liber de pe plan: fără caractere de control, fără `<>` (ajunge în SVG, DXF și PDF) și fără comenzi de direcție
  *  (bidi, ar inversa vizual textul pe planșă), cel mult 120 de caractere. */
-export const cleanPlanText = (s: unknown) => String(s ?? '').replace(/[\u0000-\u001f\u007f<>\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, PLAN_LIMITS.annotation.textMax);
+/** Doar fără caracterele interzise (pentru câmpurile în care se tastează: spațiile rămân); cleanPlanText curăță și marginile. */
+export const stripPlanText = (s: unknown) => String(s ?? '').replace(/[\u0000-\u001f\u007f<>\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, ' ');
+export const cleanPlanText = (s: unknown) => stripPlanText(s).replace(/\s+/g, ' ').trim().slice(0, PLAN_LIMITS.annotation.textMax);
 
 export class PlanLimitError extends Error {}
 const bad = (m: string): never => { throw new PlanLimitError(m); };
@@ -81,6 +83,7 @@ export function sanitizeWallItem(it: any, wallLen: number | undefined, ceiling: 
   if (!num(it.offset) || !num(it.elevation)) bad('Poziția unui obiect de pe perete este invalidă.');
   if (it.product != null && (typeof it.product !== 'string' || it.product.length > 80)) bad('Produsul unui obiect de pe perete este invalid.');
   if (it.color != null && (typeof it.color !== 'string' || !HEX.test(it.color))) bad('Culoarea unui obiect de pe perete este invalidă.');
+  if (it.label != null && typeof it.label !== 'string') bad('Numele unui obiect de pe perete este invalid.');
   const label = it.label != null ? cleanPlanText(it.label).slice(0, L.labelMax) : '';
   return { id: it.id, wallId: it.wallId, side: it.side, kind: it.kind, offset: Math.max(0, Math.min(wallLen ?? Math.abs(it.offset), it.offset)), elevation: Math.max(0, Math.min(ceiling, it.elevation)),
     width: it.width, height: it.height, ...(it.depth != null ? { depth: it.depth } : {}), ...(typeof it.product === 'string' && it.product ? { product: it.product } : {}),
@@ -99,6 +102,7 @@ export function sanitizeAnnotation(a: any): Annotation | null {
     if (!pt(a.at)) bad('Un text de pe plan are poziția invalidă.');
     if (a.size != null && !['s', 'm', 'l'].includes(a.size)) bad('Mărimea textului este invalidă.');
     if (a.rotation != null && !num(a.rotation)) bad('Rotația textului este invalidă.');
+    if (typeof a.text !== 'string') bad('Textul de pe plan este invalid.');
     const text = cleanPlanText(a.text); if (!text) return null;
     return { id: a.id, kind: 'text', at: [a.at[0], a.at[1]], text, ...(a.size ? { size: a.size } : {}), ...(a.rotation ? { rotation: ((a.rotation % 360) + 360) % 360 } : {}) }; }
   return bad('Tipul adnotării este invalid.');
