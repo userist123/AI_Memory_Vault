@@ -182,15 +182,19 @@ public sealed class DeviceMonitorTests
         public int Saves;
         public DeviceJournal? Saved;
         public Action? OnSave;
+        /// <summary>Called after each sealed record, on the thread that sealed it (a reading runs on a pool thread, so a test can stretch the interval between two effects of one reading).</summary>
+        public Action<string>? AfterAudit;
+        /// <summary>Called after each journal save with the saved copy.</summary>
+        public Action<DeviceJournal>? AfterSave;
         public DateTimeOffset Now = T0;
         public string User = "";
 
         public DeviceMonitorViewModel Create(bool isolated, DeviceJournal? journal = null, bool owner = true) => new(
             () => Present.ToList(),
             _ => new Dictionary<string, MediumInfo>(Media, StringComparer.OrdinalIgnoreCase),
-            (ev, detail) => { lock (Audited) { if (AuditRefusal is null) Audited.Add((ev, detail)); } return AuditRefusal is null ? null : new LogAnalyzer.Dfir.Devices.AuditRefusal(AuditRefusal, KeyRefusal); },
+            (ev, detail) => { lock (Audited) { if (AuditRefusal is null) Audited.Add((ev, detail)); } AfterAudit?.Invoke(ev); return AuditRefusal is null ? null : new LogAnalyzer.Dfir.Devices.AuditRefusal(AuditRefusal, KeyRefusal); },
             journal ?? new DeviceJournal(),
-            j => { Saves++; Saved = j.Copy(); OnSave?.Invoke(); return null; },
+            j => { Saves++; Saved = j.Copy(); OnSave?.Invoke(); AfterSave?.Invoke(Saved); return null; },
             isolated, () => Now, consoleUser: () => User, owner: owner, auditReader: Reader);
 
         public List<(string Ev, string Detail)> Events(string ev) { lock (Audited) return Audited.Where(a => a.Ev == ev).ToList(); }
@@ -329,12 +333,17 @@ public sealed class DeviceMonitorTests
     public async Task A_lost_event_source_is_sealed_as_a_gap_and_the_rescan_records_what_changed_meanwhile()
     {
         var f = new Fakes { Present = [Mouse] };
+        // the reading seals "observed on resume" before it records the alert in the journal: stretch that interval, which a loaded machine does at random
+        f.AfterAudit = ev => { if (ev == OperationAudit.DeviceObservedOnResume) Thread.Sleep(300); };
+        // the rescan is complete when its journal is saved with the alert: that, not the first sealed record, is what the test waits for
+        var rescanSaved = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        f.AfterSave = j => { if (j.Alerts.Any(a => a.Text.StartsWith("observat la reluare: "))) rescanSaved.TrySetResult(); };
         using var vm = f.Create(isolated: true);
         await vm.StartAsync(eventsAvailable: true);
         f.Present = [Mouse, Phone];                                                  // a phone was connected while the events were lost
         f.Now = T0.AddMinutes(20);
         vm.ReportLoss("depășire de tampon: evenimente pierdute");
-        for (int i = 0; i < 100 && f.Events(OperationAudit.DeviceObservedOnResume).Count == 0; i++) await Task.Delay(30);
+        await rescanSaved.Task.WaitAsync(TimeSpan.FromSeconds(60));                   // a safety net against a hang, not the synchronisation
         var gap = Assert.Single(f.Events(OperationAudit.DeviceMonitorGap));
         Assert.Contains("reason=depășire de tampon", gap.Detail);
         Assert.Contains("from=", gap.Detail);
