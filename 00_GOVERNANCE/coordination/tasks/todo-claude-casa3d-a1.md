@@ -1,5 +1,5 @@
 # todo-claude-casa3d-a1
-STATUS: IN_PROGRESS        UPDATED: 2026-10-23T17:00:00+03:00
+STATUS: DONE               UPDATED: 2026-10-23T20:30:00+03:00
 TASK: Casa3D A1.1 — command registry, drawing precision (snap HUD, Shift bypass, typed length), proven undo
 BRANCH / PR: claude/casa3d-a1-precision (worktree D:/w/a1, base origin/main f0ee40d67) / not opened yet
 SPEC: 02_PRODUCT/projects/workspaces/casa3d/PLAN_A1.md (decisions + slices 1-3)
@@ -66,9 +66,9 @@ DONE:
   #332 CI: 36/36 pass incl. zero-regression-gate. Merge of #332 by the agent DENIED by auto-mode classifier
   (Merge Without Review) -> owner said "continua"; #332 MERGED 6aedeac80. Merged origin/main into A1 (6e7bf9203,
   no conflicts; main touched no casa3d file, only LogAnalyzer + allowlist). Pushed; #323 CI rerunning.
-NEXT: #323 CI green -> merge #323. Old step: #332 merged -> then update #323 with main (gh pr update-branch 323) so the gate reruns; green -> merge
-  #323. Earlier plan: check #323 CI once (ccd_pr get_status / gh pr checks 323). Green -> merge #323 (owner: no red at
-  merge, nothing compromised); red -> read the failing job log, fix, push. After merge: mark STATUS DONE here.
+- #323 CI on 4ed067038: 40/40 pass, CLEAN -> #323 MERGED c2a04d4d8 (2026-10-23). A1.1 DONE.
+NEXT: none for A1.1. Follow-ups (not blocking, pre-existing on main): typedEndpoint unused in production; Esc with a
+  selection while drawing deselects first; Delete while typing reaches del().
   Follow-ups (not blocking): typedEndpoint unused in production; Esc with a selection while drawing deselects
   first; Delete while typing reaches del() (both pre-existing on main).
 OLD PLAN (done):

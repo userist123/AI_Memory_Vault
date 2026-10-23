@@ -426,29 +426,34 @@ export default function Editor({ id }: { id: string }){
     if (L < width + .1){ say(t('editor.wallTooShort')); return; } const oid = `op-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.walls.find(x => x.id === wallId)!.openings.push({ id: oid, kind: kind === 'window' ? 'window' : 'door', offset: r3(Math.max(0, Math.min(L - width, offset - width / 2))), width, ...(kind === 'passage' ? { passage: true as const } : {}) }); }); setSel({ kind: 'opening', id: oid, wallId }); };
   // ghena nouă: 30 × 30 cm până la tavan; rolul și înălțimea se schimbă în panou
+  // peste limita serverului (PLAN_LIMITS.*.max pe nivel) salvarea întregului proiect ar eșua: refuzăm la plasare
+  const full = (n: number | undefined, max: number) => { if ((n ?? 0) < max) return false; say(t('editor.limitReached', { max })); return true; };
   const onAddColumn = (x: number, z: number, shape: 'rect' | 'round' = 'rect', role?: 'shaft') => {
+    if (full(snap.floor.columns?.length, PLAN_LIMITS.column.max)) return;
     const cid = `col-${uid().slice(0, 8)}`, w = role ? PLAN_DEFAULTS.shaft : .35;
     mutate(s => { s.floor.columns = [...(s.floor.columns || []), { id: cid, x: r3(x), z: r3(z), w, d: w, shape, ...(role ? { role } : {}) }]; });
     setSel({ kind: 'column', id: cid }); setTool('select');
   };
   // nișa nouă: 60 × 40 × 10 cm la 110 cm de pardoseală, pe fața peretelui unde s-a dat clic; mărimile se schimbă în panou
-  const onAddNiche = (wallId: string, offset: number, side: 1 | -1) => { const w = snap.floor.walls.find(x => x.id === wallId)!, L = wallLength(w.a, w.b), D = PLAN_DEFAULTS.niche, width = Math.min(D.width, r3(L - .1));
+  const onAddNiche = (wallId: string, offset: number, side: 1 | -1) => { if (full(snap.floor.niches?.length, PLAN_LIMITS.niche.max)) return; const w = snap.floor.walls.find(x => x.id === wallId)!, L = wallLength(w.a, w.b), D = PLAN_DEFAULTS.niche, width = Math.min(D.width, r3(L - .1));
     if (width < PLAN_LIMITS.niche.widthMinM){ say(t('editor.wallTooShort')); return; } const nid = `nisa-${uid().slice(0, 8)}`, depth = r3(Math.max(PLAN_LIMITS.niche.depthMinM, Math.min(D.depth, w.thickness - .05)));
     mutate(s => { s.floor.niches = [...(s.floor.niches || []), { id: nid, wallId, offset: r3(Math.max(0, Math.min(L - width, offset - width / 2))), width, height: D.height, depth, elevation: D.elevation, side }]; });
     setSel({ kind: 'niche', id: nid }); setTool('select'); };
   // cote și texte de planșă: rămân selectate după plasare, ca restul uneltelor
-  const onAddDim = (a: [number, number], b: [number, number], offset: number, mode: 'aligned' | 'ortho') => { const aid = `cota-${uid().slice(0, 8)}`;
+  const onAddDim = (a: [number, number], b: [number, number], offset: number, mode: 'aligned' | 'ortho') => { if (full(snap.floor.annotations?.length, PLAN_LIMITS.annotation.max)) return; const aid = `cota-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.annotations = [...(s.floor.annotations || []), { id: aid, kind: 'dim', a, b, offset: r3(offset), ...(mode === 'ortho' ? { mode } : {}) }]; }); setSel({ kind: 'annotation', id: aid }); setTool('select'); };
-  const onAddText = (at: [number, number], text: string) => { const v = cleanPlanText(text); if (!v) return; const aid = `text-${uid().slice(0, 8)}`;
+  const onAddText = (at: [number, number], text: string) => { const v = cleanPlanText(text); if (!v || full(snap.floor.annotations?.length, PLAN_LIMITS.annotation.max)) return; const aid = `text-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.annotations = [...(s.floor.annotations || []), { id: aid, kind: 'text', at, text: v }]; }); setSel({ kind: 'annotation', id: aid }); setTool('select'); };
   const patchAnn = (aid: string, fn: (a: Annotation) => void) => mutate(s => { const a = s.floor.annotations?.find(x => x.id === aid); if (a) fn(a); });
   const patchNiche = (nid: string, fn: (n: Niche) => void) => mutate(s => { const n = s.floor.niches?.find(x => x.id === nid); if (n) fn(n); });
   const onAddBeam = (a: [number, number], b: [number, number]) => {
+    if (full(snap.floor.beams?.length, PLAN_LIMITS.beam.max)) return;
     const bid = `bm-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.beams = [...(s.floor.beams || []), { id: bid, a, b, width: .25, depth: .35 }]; });
     setSel({ kind: 'beam', id: bid }); setTool('select');
   };
   const onAddGlassWall = (a: [number, number], b: [number, number]) => {
+    if (full(snap.floor.glassWalls?.length, PLAN_LIMITS.glassWall.max)) return;
     const gid = `gw-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.glassWalls = [...(s.floor.glassWalls || []), { id: gid, a, b, thickness: .08, mullions: 2, frameColor: '#23262B' }]; });
     setSel({ kind: 'glass_wall', id: gid }); setTool('select');
@@ -826,7 +831,7 @@ export default function Editor({ id }: { id: string }){
               <div className="prov">{formatLength(wallLength(selGlassWall.a, selGlassWall.b), units, lang)}</div>
               <div className="grid2">
                 <label className="f"><span>{t('editor.thickness', { u })}</span><input type="number" value={inField(selGlassWall.thickness)} onChange={e => num(e.target.value, x => mutate(s => { const g = s.floor.glassWalls?.find(g => g.id === selGlassWall.id); if (g) g.thickness = r3(Math.min(x, PLAN_LIMITS.glassWall.thickMaxM * 100) / 100); }), PLAN_LIMITS.glassWall.thickMinM * 100)} /></label>
-                <label className="f"><span>{t('glassWall.mullions')}</span><input type="number" min={0} max={10} value={selGlassWall.mullions ?? 2} onChange={e => mutate(s => { const g = s.floor.glassWalls?.find(g => g.id === selGlassWall.id); if (g) g.mullions = Math.max(0, parseInt(e.target.value, 10) || 0); })} /></label>
+                <label className="f"><span>{t('glassWall.mullions')}</span><input type="number" min={0} max={PLAN_LIMITS.glassWall.mullionsMax} value={selGlassWall.mullions ?? 2} onChange={e => mutate(s => { const g = s.floor.glassWalls?.find(g => g.id === selGlassWall.id); if (g) g.mullions = Math.min(PLAN_LIMITS.glassWall.mullionsMax, Math.max(0, parseInt(e.target.value, 10) || 0)); })} /></label>
               </div>
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
             </div>

@@ -7,7 +7,7 @@ import path from 'node:path';
 process.env.PGLITE_MEMORY = '1'; delete process.env.DATABASE_URL;
 process.env.CASA3D_AUTH_FILE = path.join(import.meta.dirname, '__no_auth_file__.json');
 import { NextRequest } from 'next/server';
-import { middleware } from '../middleware';
+import { proxy as middleware } from '../proxy';   // Next.js 16: middleware.ts → proxy.ts
 import { resetDbForTests } from '../lib/db';
 import { resetShareLimits, createLimiter, shareLimitMessage } from '../lib/rate-limit';
 beforeAll(() => resetDbForTests());
