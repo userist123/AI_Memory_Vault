@@ -156,22 +156,24 @@ public sealed class Wp18FlowTests : IDisposable
     public void Station_control_guided_flow_refuses_an_empty_custom_period_and_keeps_answers_across_back_and_stop()
     {
         var vm = new StationControlViewModel();
-        Assert.Equal("Pasul 1 din 3", vm.FlowProgress);
+        Assert.Equal("Pasul 1 din 4", vm.FlowProgress);   // 2026-10-22: the optional previous-report (anchor code) step was added before the period
         vm.FlowNextCommand.Execute(null);
-        Assert.Equal(1, vm.FlowStepIndex);
+        Assert.Equal(1, vm.FlowStepIndex);                // the previous proces-verbal: optional, may stay empty
+        vm.FlowNextCommand.Execute(null);
+        Assert.Equal(2, vm.FlowStepIndex);                // the period
         vm.PeriodChoice = ControlPeriodChoice.Custom; vm.CustomDays = 0;
         vm.FlowNextCommand.Execute(null);
-        Assert.Equal(1, vm.FlowStepIndex);
+        Assert.Equal(2, vm.FlowStepIndex);
         Assert.Contains("între 1 și", vm.FlowError);
         vm.CustomDays = 45;
         vm.FlowNextCommand.Execute(null);
-        Assert.Equal(2, vm.FlowStepIndex);
+        Assert.Equal(3, vm.FlowStepIndex);
         Assert.Equal(45, vm.PeriodDays);
         Assert.NotEmpty(vm.ProfileSections);
         vm.FlowStopCommand.Execute(null);
         Assert.True(vm.FlowStopped);
         vm.FlowBackCommand.Execute(null);
-        Assert.Equal(1, vm.FlowStepIndex); Assert.Equal(45, vm.CustomDays); Assert.False(vm.FlowStopped);
+        Assert.Equal(2, vm.FlowStepIndex); Assert.Equal(45, vm.CustomDays); Assert.False(vm.FlowStopped);
     }
 
     [Fact]

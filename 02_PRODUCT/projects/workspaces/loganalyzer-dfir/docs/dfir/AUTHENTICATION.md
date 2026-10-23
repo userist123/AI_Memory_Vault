@@ -75,8 +75,9 @@ sealed head, so someone who can write the folder but cannot read the key can no 
 not started from an administrator account) nothing is written to the audit and sign-in fails with that cause.
 
 Every sign-in writes the auth audit, so LogAnalyzer is started from **Windows accounts in the local Administrators group** (live collection
-needs it anyway; the manifest `highestAvailable` elevates them). Started from a standard account, the sign-in window refuses with the cause
-("folderul de autentificare nu poate fi scris") and nobody is signed in.
+needs it anyway). Since 2026-10-21 (owner decision) the manifest asks for `requireAdministrator`: started from a standard account, Windows asks
+for administrator credentials (UAC) and the application does not start without them. If the auth store still cannot be written, the sign-in
+window refuses with the cause ("folderul de autentificare nu poate fi scris") and nobody is signed in.
 
 ### 3. Trust: import the organisation CA
 Sign in as administrator → **Autentificare și conturi** → **Importă certificat CA…**. Import the root CA certificate of the organisation

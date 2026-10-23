@@ -269,6 +269,17 @@
           "System.Management": "[10.0.10, )"
         }
       },
+      "loganalyzer.infrastructure": {
+        "type": "Project",
+        "dependencies": {
+          "DiscUtils.Registry": "[0.16.13, )",
+          "LogAnalyzer.Core": "[1.0.0, )",
+          "LogAnalyzer.Dfir.Core": "[1.0.0, )",
+          "Microsoft.Data.Sqlite.Core": "[9.0.0, )",
+          "SQLitePCLRaw.bundle_e_sqlcipher": "[2.1.10, )",
+          "System.Diagnostics.EventLog": "[10.0.10, )"
+        }
+      },
       "loganalyzer.response": {
         "type": "Project",
         "dependencies": {
