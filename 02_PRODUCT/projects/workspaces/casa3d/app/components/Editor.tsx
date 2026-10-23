@@ -536,7 +536,7 @@ export default function Editor({ id }: { id: string }){
       {PHASES.map(ph => <div key={ph.id} className="phase" role="group" aria-label={t('phase.aria', { phase: t(`phase.${ph.id}`) })} data-phase={ph.id}>
         <span className="phase-label" aria-hidden="true">{t(`phase.${ph.id}`)}</span>
         {ph.stages.map(sid => { const st = STAGES.find(x => x.id === sid)!, i = STAGES.indexOf(st), ok = !!done?.[sid];
-          return <button key={st.id} data-stage={st.id} aria-current={stage === st.id ? 'step' : undefined} title={t(`stage.why.${st.id}`)} aria-label={`${String(i + 1).padStart(2, '0')} ${t(`stage.${st.id}`)} · ${ok ? t('stage.doneAria') : t('stage.todoAria')}${st.id === 'docs' && warnCount > 0 ? ` · ${t('stage.warnAria', { n: warnCount })}` : ''}`} onClick={() => setStage(st.id)} onFocus={e => { try { e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch { /* browser vechi */ } }}><i aria-hidden="true">{String(i + 1).padStart(2, '0')}</i><span className={`st-dot ${ok ? 'is-done' : ''}`} aria-hidden="true" /><span className="st-name" aria-hidden="true">{t(`stage.${st.id}`)}</span>{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')} aria-hidden="true">{warnCount}</b>}</button>; })}
+          return <button key={st.id} data-stage={st.id} aria-current={stage === st.id ? 'step' : undefined} title={t(`stage.why.${st.id}`)} aria-label={`${String(i + 1).padStart(2, '0')} ${t(`stage.${st.id}`)}${st.id === 'docs' && warnCount > 0 ? ` ${warnCount}` : ''} · ${ok ? t('stage.doneAria') : t('stage.todoAria')}${st.id === 'docs' && warnCount > 0 ? ` · ${t('stage.warnAria', { n: warnCount })}` : ''}`} onClick={() => setStage(st.id)} onFocus={e => { try { e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch { /* browser vechi */ } }}><i aria-hidden="true">{String(i + 1).padStart(2, '0')}</i>{' '}<span className={`st-dot ${ok ? 'is-done' : ''}`} aria-hidden="true" /><span className="st-name" aria-hidden="true">{t(`stage.${st.id}`)}</span>{st.id === 'docs' && warnCount > 0 && ' '}{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')} aria-hidden="true">{warnCount}</b>}</button>; })}
       </div>)}
     </nav>
     <button type="button" className="stage-step" aria-label={t('stage.next')} title={t('stage.next')} disabled={STAGES.indexOf(stageDef) === STAGES.length - 1} onClick={() => setStage(STAGES[Math.min(STAGES.length - 1, STAGES.indexOf(stageDef) + 1)]!.id)}><Icon name="chevronRight" /></button>
@@ -547,8 +547,9 @@ export default function Editor({ id }: { id: string }){
         {(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk)).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={t(TOOL_LABEL[tk])}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
       </nav>
       <div className={`canvas studio-canvas ${view === 'split' && !compact ? 'split' : ''}`}>
-        <div className="levelbar" role="tablist" aria-label={t('level.tabs')}>
-          {floors(house!).map((_, i) => <button key={i} role="tab" aria-selected={i === L} className="btn" onClick={() => goLevel(i)}>{levelName(i)}</button>)}
+        <div className="levelbar">
+          {/* doar nivelurile sunt tab-uri; „+ Nivel” e o acțiune, în afara listei de tab-uri (ARIA: tablist conține doar tab) */}
+          <div role="tablist" aria-label={t('level.tabs')} className="levelbar-tabs">{floors(house!).map((_, i) => <button key={i} role="tab" aria-selected={i === L} className="btn" onClick={() => goLevel(i)}>{levelName(i)}</button>)}</div>
           <button className="btn" onClick={onAddLevel} title={t('level.addTitle')} disabled={nLevels >= MAX_LEVELS}>{t('level.add')}</button></div>
         {(view === '2d' || (view === 'split' && !compact)) && <div className="planwrap"><PlanView
           onKey={onPlanKey}

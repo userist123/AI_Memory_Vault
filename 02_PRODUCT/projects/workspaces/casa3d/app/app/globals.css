@@ -1419,3 +1419,17 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 .ws :focus-visible{outline-color:var(--focus)}
 /* bara panoramei are fundal deschis și în editorul cu temă închisă: text închis (titlul era aproape invizibil) */
 .panobar{color:#1F1A17} .panobar .muted{color:#5A524C}
+
+/* paginile întregi din editor (Comenzi, Șantier) au fundal de hârtie: aceleași culori de text ca panoul lateral (cu
+   cerneala închisă a temei .ws textul ieșea aproape invizibil — găsit de verificarea axe, UI/UX P3-17) */
+.ws .pagebody{--ink:#1F1720;--ink-2:#3B2F3A;--ink-3:#4B3D4A;--ink-num:#4B3D4A;--lead:#4B3D4A;--graphite:#1F1720;--rule:#D6C9C0;--paper:#F7F2E9;--paper-2:#EEE6DC;--surface:#F7F2E9;--surface-2:#FFFCF6;--line:#E1D6CC;--line-strong:#BFB0A7;--accent:#C63C29;--accent-soft:#F7E3DC;--focus:#A82F1F;--ok:#245842;--ok-soft:#E0EEE5;--warn:#7A4A0A;--warn-soft:#F5E8CE;--err:#9A2C22;--err-soft:#F6E2DF;color:var(--ink);color-scheme:light}
+.ws .pagebody{--ink:oklch(.22 .012 var(--base-h));--ink-2:oklch(.33 .012 var(--base-h));--ink-3:oklch(.42 .012 var(--base-h));--ink-num:oklch(.42 .012 var(--base-h));--lead:oklch(.42 .012 var(--base-h));--graphite:oklch(.22 .012 var(--base-h))}
+/* titlurile de grup din Ctrl+K: accentul deschis (contrast pe fundalul închis al paletei) */
+.ws .cmdk-gname{color:var(--focus)}
+/* linkurile de pe hârtie (pagini întregi, panoul lateral): accentul închis, nu cel deschis al cromaticii */
+.ws .pagebody a,.ws .side a{color:#A82F1F} .ws .pagebody a.btn:not(.primary),.ws .side a.btn:not(.primary){color:var(--ink)}
+/* legătura spre declarația de accesibilitate (subsolul paginii principale și al linkului clientului) */
+.a11y-foot{margin:var(--s-5) auto 0;width:min(1280px,94vw);font-size:var(--fs-sm);color:var(--ink-3)} .a11y-foot a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.deck .a11y-foot{margin:0 auto}
+.statement h2{font:600 var(--fs-lg) var(--sans);margin:var(--s-5) 0 var(--s-2)} .statement ul{display:grid;gap:8px;padding-left:1.2em} .statement p,.statement li{line-height:1.6;max-width:68ch}
+.home.statement section{margin:0;padding:0;border:0;background:none;box-shadow:none}

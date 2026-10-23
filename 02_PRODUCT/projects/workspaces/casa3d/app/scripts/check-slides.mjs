@@ -4,10 +4,9 @@
 //   node scripts/check-slides.mjs [http://127.0.0.1:3370]      (CHROME_PATH=… dacă Chrome nu e în locul obișnuit)
 // Creează un proiect de test cu nume lungi (proiect, camere), salvează o revizie, deschide linkul clientului și verifică
 // fiecare tip de planșă la fiecare dimensiune. Iese cu 1 la orice problemă; capturile merg în SHOTS_DIR, dacă e setat.
-import { spawn } from 'node:child_process';
-import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync, mkdirSync } from 'node:fs';
-import { tmpdir } from 'node:os';
+import { mkdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
+import { launch, page, makeShare, sleep } from './lib/cdp.mjs';
 
 const BASE = (process.argv[2] || 'http://127.0.0.1:3370').replace(/\/$/, '');
 const VIEWPORTS = [
@@ -19,54 +18,6 @@ const VIEWPORTS = [
 const TYPES = ['cover', 'pboard', 'room', 'planslide', 'budgetslide'];
 const LONG_PROJECT = 'Apartament cu trei camere și terasă, strada Fântânele de Sus nr. 143, bloc C2, scara 4';
 const LONG_ROOMS = ['Dormitorul matrimonial cu dressing integrat și baie proprie', 'Bucătăria deschisă spre sufragerie, cu insulă centrală'];
-
-function chromePath(){
-  const c = [process.env.CHROME_PATH, 'C:/Program Files/Google/Chrome/Application/chrome.exe', 'C:/Program Files (x86)/Google/Chrome/Application/chrome.exe',
-    '/opt/pw-browsers/chromium', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/usr/bin/google-chrome', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'];
-  const p = c.find(x => x && existsSync(x)); if (!p) throw new Error('Chrome negăsit; setați CHROME_PATH.'); return p;
-}
-const sleep = ms => new Promise(r => setTimeout(r, ms));
-
-async function launch(){
-  const dir = mkdtempSync(join(tmpdir(), 'casa3d-slides-'));
-  const proc = spawn(chromePath(), ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${dir}`, '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', 'about:blank'], { stdio: 'ignore' });
-  const portFile = join(dir, 'DevToolsActivePort');
-  for (let i = 0; i < 100 && !existsSync(portFile); i++) await sleep(100);
-  const [port, path] = readFileSync(portFile, 'utf8').trim().split('\n');
-  const ws = new WebSocket(`ws://127.0.0.1:${port}${path}`); await new Promise((ok, ko) => { ws.onopen = ok; ws.onerror = ko; });
-  let seq = 0; const waiting = new Map(), events = [];
-  ws.onmessage = m => { const d = JSON.parse(m.data); if (d.id && waiting.has(d.id)){ const w = waiting.get(d.id); waiting.delete(d.id); d.error ? w.ko(new Error(d.error.message)) : w.ok(d.result); } else events.push(d); };
-  const send = (method, params = {}, sessionId) => new Promise((ok, ko) => { const id = ++seq; waiting.set(id, { ok, ko }); ws.send(JSON.stringify({ id, method, params, sessionId })); });
-  const close = () => { try { ws.close(); } catch {} proc.kill(); setTimeout(() => { try { rmSync(dir, { recursive: true, force: true }); } catch {} }, 500); };
-  return { send, close };
-}
-
-async function page(cdp){
-  const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
-  const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
-  const s = (m, p) => cdp.send(m, p, sessionId);
-  await s('Page.enable'); await s('Runtime.enable');
-  const evaluate = async (fn, ...args) => { const r = await s('Runtime.evaluate', { expression: `(${fn})(...${JSON.stringify(args)})`, awaitPromise: true, returnByValue: true });
-    if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text); return r.result.value; };
-  const go = async url => { await s('Page.navigate', { url }); for (let i = 0; i < 200; i++){ await sleep(100); if (await evaluate(() => document.readyState === 'complete').catch(() => false)) return; } };
-  return { s, evaluate, go };
-}
-
-// în pagină: proiect demo cu nume lungi → revizie → link pentru client
-async function makeShare(p){
-  await p.go(`${BASE}/`);
-  return p.evaluate(async (name, rooms) => {
-    const j = async (url, method = 'GET', body) => { const r = await fetch(url, { method, headers: { 'content-type': 'application/json' }, body: body && JSON.stringify(body) });
-      const d = await r.json().catch(() => null); if (!r.ok) throw new Error(`${method} ${url}: ${r.status} ${JSON.stringify(d)}`); return d; };
-    const { id } = await j('/api/projects', 'POST', { name, template: 'demo', lang: 'ro' });
-    const pr = await j(`/api/projects/${id}`), snap = pr.draft; snap.name = name;
-    snap.floor.rooms.slice(0, rooms.length).forEach((r, i) => { r.name = rooms[i]; });
-    await j(`/api/projects/${id}`, 'PUT', { snapshot: snap, base: pr.draftRev });
-    const rev = await j(`/api/projects/${id}/revisions`, 'POST', { note: 'verificare planșe' });
-    const sh = await j(`/api/projects/${id}/shares`, 'POST', { revision: rev.revision ?? rev.number ?? rev });
-    return sh.token;
-  }, LONG_PROJECT, LONG_ROOMS);
-}
 
 // în pagină: pentru fiecare planșă, elementele vizibile care ies din ea (16:9) sau din lățimea ecranului (telefon)
 function audit(types){
@@ -95,7 +46,7 @@ function audit(types){
 
 const cdp = await launch(); let failed = false;
 try {
-  const p = await page(cdp), token = await makeShare(p);
+  const p = await page(cdp), { token } = await makeShare(p, BASE, LONG_PROJECT, LONG_ROOMS);
   console.log(`link: ${BASE}/share/${token}`);
   for (const v of VIEWPORTS){
     await p.s('Emulation.setDeviceMetricsOverride', { width: v.width, height: v.height, deviceScaleFactor: v.scale ?? 1, mobile: !!v.mobile });
