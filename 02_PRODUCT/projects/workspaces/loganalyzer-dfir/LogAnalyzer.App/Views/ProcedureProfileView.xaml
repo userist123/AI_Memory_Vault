@@ -26,7 +26,7 @@
             <TextBlock Text="{Binding AccessNotice}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
             <StackPanel Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ctrl:EmptyStateCard What="{x:Static vmx:EmptyStates.ProfileWhat}" Why="{x:Static vmx:EmptyStates.ProfileWhy}" Step="{x:Static vmx:EmptyStates.ProfileStep}"/>
-                <Button Content="Importă JSON…" Command="{Binding ImportJsonCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" Margin="0,0,0,4" IsEnabled="{Binding CanEdit}"/>
+                <Button Content="Importă JSON…" views:SimpleLevel.HideInSimple="True" Command="{Binding ImportJsonCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" Margin="0,0,0,4" IsEnabled="{Binding CanEdit}"/>
             </StackPanel>
         </StackPanel>
 
@@ -35,23 +35,34 @@
                 
                 <WrapPanel VerticalAlignment="Center">
                     <Button Content="Salvează" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Salvează ca…" Command="{Binding SaveAsCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Reîncarcă" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Deschide…" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Validează" Command="{Binding ValidateCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
+                    <Button Content="Salvează ca…" views:SimpleLevel.HideInSimple="True" Command="{Binding SaveAsCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Reîncarcă" views:SimpleLevel.HideInSimple="True" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Deschide…" views:SimpleLevel.HideInSimple="True" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Validează" views:SimpleLevel.HideInSimple="True" Command="{Binding ValidateCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
                     <Button Content="Importă JSON…" Command="{Binding ImportJsonCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Importă CSV în tabel…" Command="{Binding ImportCsvCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Lipește în tabel" Command="{Binding PasteCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,10,0"/>
-                    <CheckBox Content="înlocuiește conținutul tabelului la import/lipire" IsChecked="{Binding ReplaceOnImport}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    <Button Content="Importă CSV în tabel…" views:SimpleLevel.HideInSimple="True" Command="{Binding ImportCsvCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Lipește în tabel" views:SimpleLevel.HideInSimple="True" Command="{Binding PasteCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,10,0"/>
+                    <CheckBox Content="înlocuiește conținutul tabelului la import/lipire" views:SimpleLevel.HideInSimple="True" IsChecked="{Binding ReplaceOnImport}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 </WrapPanel>
                 <CheckBox Margin="0,8,0,0" Content="Mai multe secțiuni (sărbători legale, schimburi, rotirea jurnalelor, canale și destinații de transfer)" IsChecked="{Binding ShowMoreSections}"
                           Foreground="{StaticResource TextPrimaryBrush}" views:SimpleLevel.OnlyInSimple="True" AutomationProperties.Name="Mai multe secțiuni: arată și tabelele rar folosite"/>
                 <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/>
                 <Expander Header="Avansat" IsExpanded="False" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0" AutomationProperties.Name="Avansat: fișierul profilului">
+                    <StackPanel>
+                    <WrapPanel Margin="0,6,0,0" views:SimpleLevel.OnlyInSimple="True">
+                        <Button Content="Salvează ca…" Command="{Binding SaveAsCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,4"/>
+                        <Button Content="Reîncarcă" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,4"/>
+                        <Button Content="Deschide…" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,4"/>
+                        <Button Content="Validează" Command="{Binding ValidateCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,4"/>
+                        <Button Content="Importă CSV în tabel…" Command="{Binding ImportCsvCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,4"/>
+                        <Button Content="Lipește în tabel" Command="{Binding PasteCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,10,4"/>
+                        <CheckBox Content="înlocuiește conținutul tabelului la import/lipire" IsChecked="{Binding ReplaceOnImport}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    </WrapPanel>
                     <WrapPanel Margin="0,6,0,0">
                         <TextBlock Text="Fișier:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox AutomationProperties.Name="Fișierul profilului" Text="{Binding ProfilePath, Mode=OneWay}" IsReadOnly="True" Width="420"/>
                     </WrapPanel>
+                    </StackPanel>
                 </Expander>
                 <!-- WP18 S5: the unit's report header for the proces-verbal (decision D3) -->
                 <Expander Header="Antetul rapoartelor unității (pentru procesul-verbal)" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,0">

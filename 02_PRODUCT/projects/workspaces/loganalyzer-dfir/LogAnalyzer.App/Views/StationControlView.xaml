@@ -2,7 +2,8 @@
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:LogAnalyzer.UI.Views"
-             xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls">
+             xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
+             xmlns:vm="clr-namespace:LogAnalyzer.UI.ViewModels">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
@@ -37,9 +38,11 @@
                 <!-- step 1: the station -->
                 <StackPanel>
                     <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding FlowStepIndex}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-                    <TextBlock Text="{Binding StationLine}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding StationLine}" local:SimpleLevel.HideInSimple="True" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding StationLineSimple}" local:SimpleLevel.OnlyInSimple="True" ToolTip="{x:Static vm:StationControlViewModel.NamingRuleHelp}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
                     <TextBlock Text="{Binding PreviousNote}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
-                    <TextBlock Text="{Binding PostureLine}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                    <TextBlock Text="{Binding PostureLine}" local:SimpleLevel.HideInSimple="True" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
+                    <TextBlock Text="{Binding PostureLineSimple}" local:SimpleLevel.OnlyInSimple="True" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
                 </StackPanel>
                 <!-- step 2: the previous proces-verbal (optional; owner decision 2026-10-22: the anchor code is asked here, not first on Home) -->
                 <StackPanel>
