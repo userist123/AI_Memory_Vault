@@ -8,6 +8,7 @@ import { sanitizeKitchen } from './kitchen';
 import { sanitizeBath, bathTileHeight } from './bath';
 import { sanitizeFixtures } from './fixtures';
 import { openingsOnSide } from './validate';
+import { WALLPAPER_RULES } from './rules';
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
 export const SIDES = ['N', 'E', 'S', 'W'] as const;
@@ -142,10 +143,16 @@ export function sideGeometry(fl: Floor, room: Room, side: WallFeature['side'], h
     openings += o.kind === 'door' ? w * Math.min(top, 2.1) : w * Math.max(0, Math.min(top, 2.2) - .9); }
   return { side, lengthM: r2(len), heightM: r2(top), openingsM2: r2(openings), netM2: r2(Math.max(0, len * top - openings)) };
 }
-/** Role de tapet: fâșii pe lungimea peretelui, câte fâșii întregi ies dintr-o rolă (înălțimea plus raportul modelului). */
-export function wallpaperRolls(lengthM: number, heightM: number, roll: { widthM: number; lengthM: number; repeatCm: number }): { strips: number; perRoll: number; rolls: number } {
-  const drop = heightM + roll.repeatCm / 100 + .05, perRoll = Math.max(1, Math.floor(roll.lengthM / drop)), strips = Math.ceil(lengthM / roll.widthM - 1e-9);
-  return { strips, perRoll, rolls: Math.ceil(strips / perRoll) };
+/** Role de tapet, pe fâșii: lungimea fâșiei = înălțimea + tăierea, rotunjită în sus la multiplu de raport (r); la potrivirea
+ *  decalată (`offset`) se mai adaugă r/2. Fâșii = ⌈lungime / lățimea rolei⌉, fâșii pe rolă = ⌊lungimea rolei / fâșie⌋, role =
+ *  ⌈fâșii / fâșii pe rolă⌉, plus rezerva (10 % drept sau liber, 15 % decalat), rotunjită în sus la rolă. Rolele se comandă din același lot.
+ *  Potrivirea lipsă: liberă fără raport, dreaptă cu raport. */
+export function wallpaperRolls(lengthM: number, heightM: number, roll: { widthM: number; lengthM: number; repeatCm: number; match?: 'free' | 'straight' | 'offset' }): { strips: number; perRoll: number; rolls: number; spare: number; dropM: number; match: 'free' | 'straight' | 'offset' } {
+  const r = Math.max(0, roll.repeatCm) / 100, match = roll.match ?? (r > 0 ? 'straight' : 'free'), need = heightM + WALLPAPER_RULES.trimM;
+  const dropM = r > 0 ? Math.round((Math.ceil(need / r - 1e-9) * r + (match === 'offset' ? r / 2 : 0)) * 1000) / 1000 : Math.round(need * 1000) / 1000;
+  const perRoll = Math.max(1, Math.floor(roll.lengthM / dropM + 1e-9)), strips = Math.ceil(lengthM / roll.widthM - 1e-9), base = Math.ceil(strips / perRoll);
+  const rolls = strips > 0 ? Math.ceil(base * (1 + WALLPAPER_RULES.spare[match]) - 1e-9) : 0;
+  return { strips, perRoll, rolls, spare: rolls - base, dropM, match };
 }
 /** Panouri riflaj: coloane pe lungime × rânduri pe înălțime. */
 export function panelCount(lengthM: number, heightM: number, sizeCm: [number, number]): number {
@@ -174,7 +181,10 @@ export function finishIssues(snap: Snapshot, mc: MaterialsCatalog, fl: Floor, ro
   }
   if ((lay.pattern === 'herringbone' || lay.pattern === 'chevron') && fm?.category === 'parquet' && !fm.specs?.patterns?.includes(lay.pattern)) add('fin.patternProduct', { pattern: lay.pattern });
   if (fm?.category === 'parquet' && fm.specs?.patterns?.includes('herringbone') && lay.pattern !== 'herringbone') add('fin.herringboneOnly');
-  for (const w of f.wallFeatures || []){ const m = materialOf(mc, w.material);
+  for (const w of f.wallFeatures || []){ const m = materialOf(mc, w.material), eff = effectOf(w, m);
+    // vopseaua decorativă cu efect: microcimentul într-o cameră umedă cere sistem hidroizolat; un efect fără produs declarat nu are preț
+    if (eff === 'microcement' && wet && m?.specs?.wet !== true) add('fin.microcementWet', { side: w.side });
+    if (eff && eff !== 'textured' && m?.specs?.effect !== eff){ add('fin.effectUnpriced', { side: w.side, effect: eff }); continue; }
     if (!m) { add('fin.unknownMaterial', { side: w.side }); continue; }
     if (wet && m.specs?.wet === false) add('fin.notForWet', { side: w.side, name: m.name }); }
   const c = ceilingOf(f);

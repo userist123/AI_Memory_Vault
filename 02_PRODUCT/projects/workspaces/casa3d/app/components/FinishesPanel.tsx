@@ -5,7 +5,7 @@ import { useEffect, useMemo, useRef } from 'react';
 import type { Snapshot, MaterialsCatalog, RoomFinishes, Room, Material, WallFeature, WallFeatureKind, FloorPattern, Catalog, WindowTreatment } from '@/core/types';
 import { finishesOf, roomGeometry, computeBOQ } from '@/core/boq';
 import { floorOfRoom } from '@/core/levels';
-import { bandsOverlap, sideSpan, defaultLayout, PATTERNS, SIDES, FEATURE_CATEGORY, layoutOf, materialOf, sideGeometry, ceilingOf, clearHeight, finishIssues, pieceSizeCm, FINISH_RULES } from '@/core/finishes';
+import { bandsOverlap, sideSpan, PLASTER_EFFECTS, defaultLayout, PATTERNS, SIDES, FEATURE_CATEGORY, layoutOf, materialOf, sideGeometry, ceilingOf, clearHeight, finishIssues, pieceSizeCm, FINISH_RULES } from '@/core/finishes';
 import { formatMoney, formatArea, formatLength } from '@/core/format';
 import { normalizeHex } from '@/core/appearance';
 import { lightReport } from '@/core/light-design';
@@ -106,6 +106,8 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSw
           <label className="f"><span>{t('fin.alongTo')}</span><input type="number" min={0} max={len} step={.05} value={w.alongToM ?? ''} placeholder={String(r2(len))}
             onChange={e => { const v = e.target.value === '' ? undefined : r2(Math.max((w.alongFromM ?? 0) + .05, Math.min(len, Number(e.target.value) || len))); setFeature(i, { alongToM: v, ...(v != null && w.alongFromM == null ? { alongFromM: 0 } : {}) }); }} /></label>
           {partial && <button type="button" className="btn" style={{ alignSelf: 'end' }} onClick={() => setFeature(i, { alongFromM: undefined, alongToM: undefined })}>{t('fin.wholeSide')}</button>}
+          {w.kind === 'plaster' && <label className="f"><span>{t('fin.effect')}</span><select value={w.effect ?? ''} onChange={e => setFeature(i, { effect: (e.target.value || undefined) as WallFeature['effect'] })}>
+            <option value="">{t('fin.effect.none')}</option>{PLASTER_EFFECTS.map(x => <option key={x} value={x}>{t(`fin.effect.${x}`)}</option>)}</select></label>}
           {w.kind === 'slats' && <label className="f" style={{ alignSelf: 'end' }}><span><input type="checkbox" checked={w.vertical !== false} onChange={e => setFeature(i, { vertical: e.target.checked ? undefined : false })} /> {t('fin.slatsVertical')}</span></label>}
         </div>
       </div>; })}</div>

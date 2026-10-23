@@ -15,4 +15,7 @@ export const DOOR_TYPES = ['swing', 'double', 'sliding', 'pocket', 'folding', 'p
 export const DOOR_TYPE_RULES: Record<(typeof DOOR_TYPES)[number], { minM: number; maxM: number; std: number }> = {
   swing: { minM: .5, maxM: 1.4, std: .8 }, double: { minM: .8, maxM: 2.4, std: 1.2 }, sliding: { minM: .5, maxM: 1.4, std: .8 },
   pocket: { minM: .5, maxM: 1.4, std: .8 }, folding: { minM: .5, maxM: 1.4, std: .8 }, pivot: { minM: .5, maxM: 1.4, std: .9 } };
+// Tapetul (core/finishes.ts wallpaperRolls): tăierea sus-jos la fiecare fâșie și rezerva pe tipul de potrivire a modelului
+// (ghidurile de montaj: 10 % la model drept sau liber, 15–25 % la model decalat; am luat pragul de jos), rotunjită în sus la rolă.
+export const WALLPAPER_RULES = { trimM: .05, spare: { free: .1, straight: .1, offset: .15 } } as const;
 export const DOOR_SLIDE_EXTRA_M = .1, POCKET_MIN_WALL_M = .1, FOLDING_FOUR_PANELS_M = .9, DOUBLE_NARROW_M = 1;
