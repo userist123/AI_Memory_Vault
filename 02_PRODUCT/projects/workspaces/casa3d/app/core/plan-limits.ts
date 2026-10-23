@@ -24,13 +24,13 @@ const HEX = /^#[0-9a-f]{6}$/i;
 
 /** Textul liber de pe plan: fără caractere de control, fără `<>` (ajunge în SVG, DXF și PDF) și fără comenzi de direcție
  *  (bidi, ar inversa vizual textul pe planșă), cel mult 120 de caractere. */
-export const cleanPlanText = (s: unknown) => String(s ?? '').replace(/[\u0000-\u001f\u007f<>\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, PLAN_LIMITS.annotation.textMax);
+export const cleanPlanText = (s: unknown) => String(s ?? '').replace(/[\u0000-\u001f\u007f<>\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, PLAN_LIMITS.annotation.textMax);
 
 export class PlanLimitError extends Error {}
 const bad = (m: string): never => { throw new PlanLimitError(m); };
 /** Câmpurile care existau înainte de aceste limite (stâlp, grindă, perete de sticlă): interfața veche le lăsa fără maxim,
  *  deci o valoare finită în afara intervalului se aduce la interval, nu blochează salvarea întregului proiect. */
-const clamp = (v: unknown, lo: number, hi: number, what: string): number => num(v) ? Math.min(hi, Math.max(lo, v)) : bad(what);
+const clamp = (v: unknown, lo: number, hi: number, what: string): number => num(v) && v > 0 ? Math.min(hi, Math.max(lo, v)) : bad(what);
 const list = (v: unknown, max: number, what: string): any[] | null => { if (v == null) return null; if (!Array.isArray(v) || v.length > max) bad(`${what}: cel mult ${max} pe nivel.`); return v as any[]; };
 
 export function sanitizeColumn(c: any): Column {
