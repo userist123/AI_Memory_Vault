@@ -25,7 +25,7 @@ import { computeLightingWiringArcs } from '@/core/technical';
 import { parseTypedLength, parseTypedSize, typedRect, acceptsTypedKey } from '@/core/typed-dimension';
 import { selectionBox, frameViewBox } from '@/core/frame';
 
-export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair';
+export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair';
 export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
 type Phase = 'start' | 'move' | 'end';
 interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severities: Record<string, Severity>;
@@ -35,7 +35,7 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   hoverId?: string | null; onHover?(id: string | null): void; onFrameOther?(id: string): void;
   onSelect(s: Sel): void; onEdit(fn: (s: Snapshot) => void, phase: Phase): void; onAddWall(a: [number, number], b: [number, number]): void;
   onAddRoom(r: { x0: number; z0: number; x1: number; z1: number }): void; onAddOpening(wallId: string, offset: number, kind: 'door' | 'window' | 'passage'): void;
-  onAddColumn?(x: number, z: number, shape?: 'rect' | 'round'): void;
+  onAddColumn?(x: number, z: number, shape?: 'rect' | 'round', role?: 'shaft'): void;
   onAddBeam?(a: [number, number], b: [number, number]): void;
   onAddGlassWall?(a: [number, number], b: [number, number]): void;
   onAddStairAt?(x: number, z: number): void;
@@ -103,7 +103,7 @@ export default function PlanView(p: Props){
       const col = floor.columns?.find(x => x.id === id);
       if (!col) return null;
       const tag = `${Math.round(col.w * 100)}×${Math.round(col.d * 100)} cm`;
-      return { x: col.x, z: col.z - col.d / 2 - 0.28, kind, id, tag, canRotate: true, canToggleShape: true, canDelete: true };
+      return { x: col.x, z: col.z - col.d / 2 - 0.28, kind, id, tag, canRotate: true, canToggleShape: !col.role || col.role === 'structural', canDelete: true };
     }
     if (kind === 'stair') {
       const st = floor.stairs?.find(x => x.id === id);
@@ -161,6 +161,7 @@ export default function PlanView(p: Props){
     if (p.calib?.stage === 'pick'){ const q: [number, number] = [r3(pt[0]), r3(pt[1])]; if (!calA) setCalA(q); else if (Math.hypot(q[0] - calA[0], q[1] - calA[1]) > .05){ p.onCalibPick?.(calA, q); setCalA(null); } return; }
     if (p.tool === 'tech'){ p.onTechAt?.(pt[0], pt[1]); return; }
     if (p.tool === 'column'){ const s = snapPoint(pt, floor); p.onAddColumn?.(s[0], s[1]); return; }
+    if (p.tool === 'shaft'){ const s = snapPoint(pt, floor); p.onAddColumn?.(s[0], s[1], 'rect', 'shaft'); return; }
     if (SEGMENT_TOOLS.includes(p.tool)){ const r = snapDraw(pt, { floor, anchor: preview?.a, free: e.shiftKey }); svg.current!.focus({ preventScroll: true }); if (!preview){ setTyped(''); raw.current = { pt: r.p, free: e.shiftKey }; setPreview({ a: r.p, b: r.p }); setHit(snapDraw(pt, { floor, anchor: r.p, free: e.shiftKey })); } else addSegment(preview.a, r.p); return; }
     if (p.tool === 'stair'){ const s = snapPoint(pt, floor); p.onAddStairAt?.(s[0], s[1]); return; }
     if (p.tool === 'measure'){ const s = snapPoint(pt, floor); setRuler(r => r && !r.b ? { a: r.a, b: s } : { a: s, b: null }); return; }
@@ -272,7 +273,9 @@ export default function PlanView(p: Props){
   const fitAll = () => { const pad = 1.2; setVb({ x: bounds.x0 - pad, y: bounds.z0 - pad, w: bounds.x1 - bounds.x0 + pad * 2, h: bounds.z1 - bounds.z0 + pad * 2 }); };
   return (<><svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onContextMenu={e => { e.preventDefault(); setPreview(null); setTyped(''); }}
     style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair', color: '#1A141C' }} role="application" aria-label={t('plan.aria')} tabIndex={0} onKeyDown={keyDown}>
-    <defs><pattern id="g" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#e4e5e0" strokeWidth=".01" /></pattern></defs>
+    <defs><pattern id="g" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#e4e5e0" strokeWidth=".01" /></pattern>
+      {/* hașura ghenei: diagonale subțiri la 6 cm */}
+      <pattern id="shaft-hatch" width=".06" height=".06" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V.06" stroke="#5E636B" strokeWidth=".008" /></pattern></defs>
     <rect x={vb.x} y={vb.y} width={vb.w} height={vb.h} fill="url(#g)" />
     {ul && <image data-k="underlay" href={ul.dataUrl} x={ul.x} y={ul.z} width={ul.widthM} height={ul.widthM * aspect} preserveAspectRatio="none" opacity={ul.opacity} pointerEvents={ul.locked || p.calib?.stage === 'pick' ? 'none' : 'auto'} style={{ cursor: ul.locked ? 'default' : 'move' }} />}
     {floor.rooms.map(r => <g key={r.id}>
@@ -355,6 +358,13 @@ export default function PlanView(p: Props){
     {/* Stâlpi / Coloane structurale */}
     {(floor.columns || []).map(col => {
       const cs = isSel('column', col.id);
+      // ghena: dreptunghi hașurat; casetarea: contur dublu; stâlpul structural rămâne plin
+      if (col.role === 'shaft' || col.role === 'boxing'){ const x0 = col.x - col.w / 2, z0 = col.z - col.d / 2, k = Math.min(.03, col.w / 6, col.d / 6), ink = cs ? '#8B6A45' : '#3D343B';
+        return (<g key={col.id} data-k="column" data-id={col.id} style={{ cursor: 'move' }}>
+          <title>{t(col.role === 'shaft' ? 'tool.shaft' : 'column.boxing')} ({Math.round(col.w * 100)}×{Math.round(col.d * 100)} cm{col.height ? ` · h ${Math.round(col.height * 100)}` : ''})</title>
+          <rect x={x0} y={z0} width={col.w} height={col.d} fill={col.role === 'shaft' ? 'url(#shaft-hatch)' : '#f4f1ea'} stroke={ink} strokeWidth={cs ? .035 : .02} />
+          {col.role === 'shaft' ? <rect x={x0} y={z0} width={col.w} height={col.d} fill="#fbfaf7" fillOpacity={.35} pointerEvents="none" />
+            : <rect x={x0 + k} y={z0 + k} width={col.w - 2 * k} height={col.d - 2 * k} fill="none" stroke={ink} strokeWidth={.012} pointerEvents="none" />}</g>); }
       return (<g key={col.id} data-k="column" data-id={col.id} style={{ cursor: 'move' }}>
         <title>{t('tool.column')} ({Math.round(col.w * 100)}×{Math.round(col.d * 100)} cm)</title>
         {col.shape === 'round' ? (
