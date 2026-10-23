@@ -472,6 +472,12 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   journal, LogAnalyzer.db/.key (NOT in the approved list - ask owner). C: free 2 -> 6.8 GB. Verified in app: guide shows again, recent cases empty, transfers
   empty (next TR-2026-0001), Control "Niciun raport de control salvat; ultimul control terminat 22.10.2026 21:44" (sealed audit kept).
   Login note: an automated sign-in failed once ("cont sau parolă incorecte", focus); type with visual check of the fields before submitting (lockout after 3).
+- SIMPLIFY round 2 DONE 9e5f566a3 (worker; main re-ran App 801/0; worker UI 354/1, Dfir 2418/31/0; tests written after code, not red-first).
+  Installed (exe 1DFB2340…, hash = publish, self-test 0). REAL PC VERIFIED 2026-10-23: procedures toolbar Salvează + Importă JSON…; users Preia + Salvează;
+  policies only "Deschide politica…" (toolbar under Avansat); Control step 1 plain ("nu respectă regula de denumire a unității", "Ediția: Standalone (stație
+  izolată, fără rețea)."). Minor open: users page has two accent buttons; users subtitle repeated (bold line + short line + card).
+- OPEN QUESTION to owner: move LogAnalyzer.db/.key (+ .bak-20261016) from %LOCALAPPDATA%\LogAnalyzer too (not in the approved cleanup list)?
+- send.ps1 now recreates cmd/ and out/ (the scratchpad cleaner removed them twice).
 - (old) CLEANUP list given to owner 2026-10-23, waiting for OK + answers (person name "Eu Mister" -> ?, Policies 45 files test or keep?): delete Cases (16, 2.9 GB incl.
   LIVE-MARIUS-PC with 14 controls and the "Test" scope), transfers TR-2026-0001/0002, first-run-guide.seen; keep licence, accounts/password, sealed audit chain,
   provenance ledger, device monitor journal.
