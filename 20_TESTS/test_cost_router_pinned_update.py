@@ -107,6 +107,8 @@ class Env:
                 shutil.copytree(src, dst, ignore=shutil.ignore_patterns("__pycache__"))
             else:
                 shutil.copy2(src, dst)
+        # the real repo carries its own release pin; the test release is pinned by the test (self.pinfile) only
+        (self.work / ".claude" / "skills" / "cost-router" / "release_pin.json").unlink(missing_ok=True)
         subprocess.run(["git", "init", "-q", "-b", "main", str(self.work)], check=True)
         _g(self.work, "config", "core.autocrlf", "false")
         self.rp = _rp_module()
@@ -176,7 +178,11 @@ def test_happy_path_installs_the_pinned_bytes_and_keeps_the_trusted_pin(env):
         assert hashlib.sha256(dst.read_bytes()).hexdigest() == sha, rel
     assert env.installed_pin.read_bytes() == env.pinfile.read_bytes()
     assert (skill / "VERSION").read_text(encoding="utf-8").splitlines()[0] == env.c1
-    assert _installer(env.home, "--verify", check=False).returncode == 0
+    # verify against the pinned release's own checkout (the real repo carries a different, real release pin)
+    work_install = env.work / ".claude" / "skills" / "cost-router" / "install.py"
+    r = subprocess.run([sys.executable, str(work_install), "--home", str(env.home), "--verify"], env=_env(env.home),
+                       capture_output=True, text=True, timeout=90)
+    assert r.returncode == 0, r.stdout + r.stderr
 
 
 def test_generator_cli_writes_a_pin_that_loads(env, tmp_path):
@@ -378,7 +384,9 @@ def test_p8_fetched_installer_is_never_executed_and_install_uses_the_verified_st
 
 def test_p9_no_pin_installed_means_no_git_at_all(tmp_path, monkeypatch):
     home = tmp_path / "home"
-    _installer(home)  # a plain install carries no pin
+    _installer(home)
+    (home / ".claude" / "skills" / "cost-router" / "release_pin.json").unlink(missing_ok=True)  # a machine without a pin
+    assert not (home / ".claude" / "skills" / "cost-router" / "release_pin.json").exists()
     mod = _hook(home)
 
     def boom(*a, **k):
