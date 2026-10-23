@@ -143,6 +143,13 @@ try {
     '{"nonsense":true}' | Set-Content (Join-Path $r5 'release-gate/findings-register.json')
     Assert-That ((Row (Eval $r5) 'critical_findings').Status -eq 'FAIL') 'a malformed register fails (not silently PASS)'
 
+    Write-Host '== a findings register DRAFT is never read (only the owner creates findings-register.json)'
+    $r6 = New-Root 'draft'
+    '{"schema":"loganalyzer-findings-register/1","findings":[{"id":"F9","severity":"critical","status":"open"}]}' | Set-Content (Join-Path $r6 'release-gate/findings-register.draft.json')
+    Assert-That ((Row (Eval $r6) 'critical_findings').Status -eq 'NOT_IMPLEMENTED') 'a draft next to the register path is ignored: still NOT_IMPLEMENTED'
+    Copy-Item (Join-Path $release 'findings-register.json') (Join-Path $r6 'release-gate/findings-register.json')
+    Assert-That ((Row (Eval $r6) 'critical_findings').Status -eq 'PASS') 'the committed register follows the schema and holds no open critical entry'
+
     Write-Host '== real corpus report that is not AVAILABLE'
     'FORENSIC VALIDATION = PARTIAL (5/21)' | Set-Content (Join-Path $r5 'bin/Release/forensic_validation.txt')
     Assert-That ((Row (Eval $r5) 'real_corpus').Status -eq 'NOT_RUN') 'PARTIAL corpus is NOT_RUN, not PASS'

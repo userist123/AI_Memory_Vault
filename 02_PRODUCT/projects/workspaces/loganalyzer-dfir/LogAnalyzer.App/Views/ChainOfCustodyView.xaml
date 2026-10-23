@@ -10,7 +10,7 @@
         <!-- Header -->
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
             <StackPanel DockPanel.Dock="Left">
-                <TextBlock Text="Chain of Custody &amp; Forensic Provenance" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="Istoricul probelor" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock Text="Immutable evidence ledger, cryptographic SHA-256 integrity &amp; NIS2 / DNSC incident reporting" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
             <Button DockPanel.Dock="Right" Content="Export Evidence Package" Command="{Binding ExportCsvCommand}" Style="{StaticResource AccentButtonStyle}" Padding="16,8"/>

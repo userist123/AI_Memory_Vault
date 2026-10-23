@@ -12,7 +12,7 @@
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,16">
             <StackPanel DockPanel.Dock="Left">
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                    <TextBlock Text="Standalone PC Forensics &amp; Endpoint Audit Center" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="Conturi locale și USB" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <Border Margin="12,0,0,0" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
                         <TextBlock Text="AIR-GAPPED STANDALONE EDITION" FontSize="9" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                     </Border>

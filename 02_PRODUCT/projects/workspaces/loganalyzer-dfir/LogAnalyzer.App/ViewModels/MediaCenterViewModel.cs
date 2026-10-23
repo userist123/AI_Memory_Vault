@@ -41,7 +41,13 @@ namespace LogAnalyzer.UI.ViewModels
         {
             _register = register;
             // G3: a new analysis result refreshes the medium detail (history, what followed the connection) without collecting again.
-            LogAnalyzer.UI.Services.CollectAllState.Instance.Published += _ => OnSelectedDeviceChanged(SelectedDevice);
+            // The result may be published on another thread: the bound collections change only on this page's dispatcher.
+            var dispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
+            LogAnalyzer.UI.Services.CollectAllState.Instance.Published += _ =>
+            {
+                if (dispatcher.CheckAccess()) OnSelectedDeviceChanged(SelectedDevice);
+                else dispatcher.BeginInvoke(() => OnSelectedDeviceChanged(SelectedDevice));
+            };
         }
 
         /// <summary>Set by the main window: opens the separate "Registrul de transferuri" page (owner 2026-10-11: the transfer register is not part of this page).</summary>
@@ -50,6 +56,51 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand] private void RecordTransfer() { AlertText = ""; NavigateToTransferRegister?.Invoke(); }
 
         public MediaRegisterViewModel Register => _register;
+
+        /// <summary>
+        /// Owner decision 2026-10-16: the media register tabs ("Registrul de medii", "Registrul semnat") and the register columns are shown only while
+        /// <see cref="MediaRegisterFeature.Enabled"/> is on (off by default); the code stays, switched off.
+        /// </summary>
+        public bool SignedRegisterVisible => MediaRegisterFeature.Enabled;
+
+        private DeviceMonitorViewModel? _monitor;
+        /// <summary>"Monitor în timp real": every device of every class, live, with status circle, driver state and registration number (owner decision 2026-10-16).</summary>
+        public DeviceMonitorViewModel Monitor
+        {
+            get
+            {
+                if (_monitor is null)
+                {
+                    _monitor = DeviceMonitorViewModel.CreateForStation();
+                    _monitor.Alert += OnMonitorAlert;
+                }
+                return _monitor;
+            }
+        }
+
+        /// <summary>The sub-tab shown on the page; 0 = the real-time monitor.</summary>
+        [ObservableProperty] private int _selectedTab;
+        /// <summary>The banner is a critical alert (red, with a sound) rather than information about a connection.</summary>
+        [ObservableProperty] private bool _alertIsCritical = true;
+
+        /// <summary>
+        /// A device was connected (seen by the monitor): an information banner, or a critical one for a storage medium without a registration number or a class
+        /// the station policy forbids. Information never covers a critical alert that has not been acknowledged.
+        /// </summary>
+        private void OnMonitorAlert(DeviceAlertRecord a)
+        {
+            bool critical = a.Severity == DeviceAlertSeverity.Critical;
+            if (!critical && HasAlert && AlertIsCritical) return;
+            var when = a.TimeUtc.ToLocalTime().ToString("HH:mm:ss");
+            var cls = DeviceMonitorRules.ClassText(a.Class);
+            AlertIsCritical = critical;
+            AlertText = critical
+                ? $"ATENȚIE {when}: s-a conectat „{a.Device}” ({cls}) — {a.Text}. " +
+                  (DeviceMonitorRules.IsStorageMedium(a.Class) ? "Aflați al cui este și treceți numărul de înregistrare în monitorul de dispozitive." : "Aflați cine l-a conectat și de ce; pe o stație izolată nu este permis.")
+                : $"{when}: s-a conectat „{a.Device}” ({cls}).";
+            if (critical) System.Media.SystemSounds.Exclamation.Play();
+            Log(new LiveDeviceEntry(a.TimeUtc, critical ? "alertă critică (monitor)" : "conectare (monitor)", a.Device, "", a.Text, critical));
+        }
 
         private SignedMediaRegisterViewModel? _signed;
         /// <summary>"Registrul semnat": enrolment on the transfer station, officer signature, import on every station (created when its tab is first shown).</summary>
@@ -69,7 +120,9 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<DeviceProtection> Protections { get; } = new();
         public ObservableCollection<DeviceDetail> SelectedDetails { get; } = new();
 
-        public string[] Filters { get; } = { "Toate", "Conectate acum", "Cer atenție (nu sunt în registru)", "Stocare USB și carduri", "Discuri interne", "Telefoane și Bluetooth", "Rețea și discuri virtuale" };
+        public string[] Filters { get; } = MediaRegisterFeature.Enabled
+            ? new[] { "Toate", "Conectate acum", "Cer atenție (nu sunt în registru)", "Stocare USB și carduri", "Discuri interne", "Telefoane și Bluetooth", "Rețea și discuri virtuale" }
+            : new[] { "Toate", "Conectate acum", "Stocare USB și carduri", "Discuri interne", "Telefoane și Bluetooth", "Rețea și discuri virtuale" };
         [ObservableProperty] private string _filter = "Toate";
         partial void OnFilterChanged(string value) => ApplyFilter();
 
@@ -87,7 +140,8 @@ namespace LogAnalyzer.UI.ViewModels
         {
             SelectedDetails.Clear();
             if (value is null) return;
-            foreach (var d in DeviceDetails.For(value)) SelectedDetails.Add(d);
+            // without the register (MediaRegisterFeature off) the register comparison and its advice are not shown
+            foreach (var d in DeviceDetails.For(value).Where(d => MediaRegisterFeature.Enabled || d.Label is not ("Față de registrul de medii" or "Ce faceți"))) SelectedDetails.Add(d);
             foreach (var d in AnalysisDetails(value.Device.Serial, LogAnalyzer.UI.Services.CollectAllState.Instance.Current?.Timeline)) SelectedDetails.Add(d);
         }
 
@@ -122,6 +176,7 @@ namespace LogAnalyzer.UI.ViewModels
             _activated = true;
             _ = RefreshThenInspectAsync();
             StartLive();
+            _ = Monitor.StartAsync(_watcher?.PnpEventsActive == true);
         }
 
         // ---- inspection of an inserted stick (research 2026-10-12, item 4): read-only, root + one level --------------------------------
@@ -132,7 +187,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Checks every removable volume connected now that has not been checked yet (<paramref name="force"/> = all); raises the live alert on anything suspicious.</summary>
         public async Task InspectConnectedAsync(bool force = false)
         {
-            foreach (var a in ConnectedNow.Where(a => a.Device.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard).ToList())
+            foreach (var a in ConnectedNow.Where(a => a.Device.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.ExternalDisk).ToList())
             {
                 var letter = a.Device.DriveLetters.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault(l => l.Length == 2 && l[1] == ':');
                 if (letter is null) continue;
@@ -140,17 +195,38 @@ namespace LogAnalyzer.UI.ViewModels
                 if (!force && !_inspected.Add(key)) continue;
                 _inspected.Add(key);
                 var label = a.Device.VolumeLabel;
-                var result = await Task.Run(() => RemovableMediaInspector.Inspect(letter + "\\", label));
-                var line = new MediumCheckLine(a.Device.DisplayName, result.Text, result.IsSuspicious);
-                var old = MediumChecks.FirstOrDefault(m => m.Device == line.Device);
-                if (old is not null) MediumChecks.Remove(old);
-                MediumChecks.Add(line);
+                // E6: the listing (no hashing, so no file is opened for the arrival analysis) is taken BEFORE Inspect reads any shortcut, so last-access times
+                // are not our own; the alert is published first and the arrival summary follows
+                var (result, listing, fs) = await Task.Run(() =>
+                {
+                    var l = RemovableMediaInspector.List(letter + "\\", label, maxHashed: 0);
+                    var r = RemovableMediaInspector.Inspect(letter + "\\", label);
+                    string f; try { f = new System.IO.DriveInfo(letter).DriveFormat; } catch (Exception ex) when (ex is IOException or ArgumentException or UnauthorizedAccessException) { f = ""; }
+                    return (r, l, f);
+                });
+                void Publish(string text)
+                {
+                    var line = new MediumCheckLine(a.Device.DisplayName, text, result.IsSuspicious);
+                    var old = MediumChecks.FirstOrDefault(m => m.Device == line.Device);
+                    if (old is not null) MediumChecks.Remove(old);
+                    MediumChecks.Add(line);
+                }
+                Publish(result.Text + " Se pregătește rezumatul sosirii fișierelor…");
                 Log(new LiveDeviceEntry(DateTimeOffset.UtcNow, "verificare suport", a.Device.DisplayName, a.Device.Serial, result.Text, result.IsSuspicious));
                 if (result.IsSuspicious)
                 {
+                    AlertIsCritical = true;
                     AlertText = $"ATENȚIE {DateTime.Now:HH:mm:ss}: pe „{a.Device.DisplayName}” ({letter}) s-au găsit semne suspecte: {string.Join("; ", result.Findings.Take(5).Select(f => f.Message))}. Nu deschideți nimic de pe suport; anunțați responsabilul de securitate.";
                     System.Media.SystemSounds.Exclamation.Play();
                 }
+                var arrival = await Task.Run(() =>
+                {
+                    // when the file times were copied onto the medium; shown as an observation, never as a suspicion
+                    var report = MediaArrivalAnalysis.Analyze(listing, fs);
+                    var usn = MediaArrivalReport.UsnNote(fs, letter[..1]);
+                    return report.Text + (usn.Length > 0 ? " " + usn : "");
+                });
+                Publish(result.Text + " " + arrival);
             }
         }
 
@@ -186,8 +262,8 @@ namespace LogAnalyzer.UI.ViewModels
                 foreach (var p in protections) Protections.Add(p);
                 ApplyFilter();
                 var attention = _all.Count(a => a.NeedsAttention);
-                Summary = $"Conectate acum: {_all.Count(a => a.Device.ConnectedNow && a.Device.Kind != DeviceKind.Bluetooth)} · cunoscute de stație: {_all.Count} · " +
-                          (attention == 0 ? "toate mediile urmărite sunt în registru." : $"{attention} cer atenție (nu sunt în registru, sunt retrase sau au expirat).");
+                Summary = $"Inventarul Windows (fila „Toate dispozitivele”): conectate acum {_all.Count(a => a.Device.ConnectedNow && a.Device.Kind != DeviceKind.Bluetooth)} · cunoscute de stație: {_all.Count}" +
+                          (!MediaRegisterFeature.Enabled ? "." : attention == 0 ? " · toate mediile urmărite sunt în registru." : $" · {attention} cer atenție (nu sunt în registru, sunt retrase sau au expirat).");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException or System.ComponentModel.Win32Exception)
             {
@@ -211,7 +287,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             "Conectate acum" => a.Device.ConnectedNow,
             "Cer atenție (nu sunt în registru)" => a.NeedsAttention,
-            "Stocare USB și carduri" => a.Device.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard,
+            "Stocare USB și carduri" => a.Device.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.ExternalDisk,
             "Discuri interne" => a.Device.Kind == DeviceKind.InternalDisk,
             "Telefoane și Bluetooth" => a.Device.Kind is DeviceKind.PortableDevice or DeviceKind.Bluetooth,
             "Rețea și discuri virtuale" => a.Device.Kind is DeviceKind.NetworkDrive or DeviceKind.VirtualDisk,
@@ -231,8 +307,11 @@ namespace LogAnalyzer.UI.ViewModels
             if (_watcher is not null) return;
             _watcher = new DeviceWatcher();
             _watcher.Changed += c => Application.Current?.Dispatcher.BeginInvoke(() => OnChange(c));
-            _watcher.Failed += m => Application.Current?.Dispatcher.BeginInvoke(() => LiveStatus = m);
+            _watcher.Failed += m => Application.Current?.Dispatcher.BeginInvoke(() => { LiveStatus = m; _monitor?.ReportLoss(m); });   // a lost event source is a sealed gap + a rescan
+            // the device monitor reads the device list again on every Plug and Play event, whatever the class of the device
+            _watcher.PnpChanged += (_, _) => Application.Current?.Dispatcher.BeginInvoke(() => _monitor?.OnPnpEvent());
             _watcher.Start();
+            _monitor?.SetEventsAvailable(_watcher.PnpEventsActive);
             IsLive = true;
             LiveStatus = "Supraveghere în timp real PORNITĂ: orice dispozitiv conectat sau scos apare mai jos în câteva secunde.";
         }
@@ -241,6 +320,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             _watcher?.Dispose();
             _watcher = null;
+            _monitor?.SetEventsAvailable(false);   // without the events the monitor reads the device list every 2 seconds
             IsLive = false;
             LiveStatus = "Supravegherea în timp real este oprită. Apăsați „Pornește supravegherea” ca să vedeți conectările pe loc.";
         }
@@ -278,11 +358,13 @@ namespace LogAnalyzer.UI.ViewModels
             var what = c.Arrived ? $"{kind}: conectat" : $"{kind}: scos";
             if (c.InstanceId.Length == 0) what = c.Detail;
             var entry = new LiveDeviceEntry(c.TimeUtc, what, a?.Device.Name is { Length: > 0 } n ? n : c.Name, a?.Device.Serial ?? "",
-                                            a is null ? "" : a.MatchText + (a.NeedsAttention ? " — " + a.WhatToDo : ""), c.Arrived && a?.NeedsAttention == true);
+                                            a is null || !MediaRegisterFeature.Enabled ? "" : a.MatchText + (a.NeedsAttention ? " — " + a.WhatToDo : ""),
+                                            MediaRegisterFeature.Enabled && c.Arrived && a?.NeedsAttention == true);
             LiveFeed.Insert(0, entry);
             while (LiveFeed.Count > 500) LiveFeed.RemoveAt(LiveFeed.Count - 1);
             if (entry.NeedsAttention)
             {
+                AlertIsCritical = true;
                 AlertText = $"ATENȚIE {entry.TimeText}: s-a conectat „{entry.Device}” (serie {(entry.Serial.Length > 0 ? entry.Serial : "necunoscută")}), care {a!.MatchText}. {a.WhatToDo}";
                 System.Media.SystemSounds.Exclamation.Play();
             }
@@ -330,6 +412,10 @@ namespace LogAnalyzer.UI.ViewModels
             Summary = _register.Status + " Deschideți fila „Registrul de medii” ca să completați nivelul, zona și utilizatorul, apoi salvați.";
         }
 
-        public void Dispose() => _watcher?.Dispose();
+        public void Dispose()
+        {
+            _watcher?.Dispose();
+            _monitor?.Dispose();
+        }
     }
 }

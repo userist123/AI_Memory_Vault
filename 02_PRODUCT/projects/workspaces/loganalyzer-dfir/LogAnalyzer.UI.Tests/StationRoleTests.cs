@@ -114,7 +114,8 @@ namespace LogAnalyzer.UI.Tests
             var d = StationRoleResolver.Decide(EditionKind.Classified, r, mode, Now);
             Assert.Equal(StationRole.Control, d.EffectiveRole);
             Assert.Equal(StationRole.Csirt, d.RequestedRole);
-            Assert.Contains(d.Reasons, x => x.Contains("clasificat", StringComparison.OrdinalIgnoreCase) && x.Contains("respins", StringComparison.OrdinalIgnoreCase));
+            // was "clasificat": the reason now names the edition (Standalone), not its old classified label
+            Assert.Contains(d.Reasons, x => x.Contains("Standalone", StringComparison.OrdinalIgnoreCase) && x.Contains("respins", StringComparison.OrdinalIgnoreCase));
             // and with no policy at all
             var none = StationRoleResolver.Decide(EditionKind.Classified, null, mode, Now);
             Assert.Equal(StationRole.Control, none.EffectiveRole);

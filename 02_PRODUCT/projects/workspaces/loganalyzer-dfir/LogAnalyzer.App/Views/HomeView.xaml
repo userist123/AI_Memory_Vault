@@ -10,7 +10,7 @@
         <StackPanel Margin="24">
             <!-- WP18 redesign (docs/dfir/RESEARCH_2026-10-11_UI_SI_POLITICI.md): one question, one list of actions, no card grid -->
             <StackPanel MaxWidth="760" HorizontalAlignment="Left">
-                <ctrl:NoDataPanel/>
+                <ctrl:NoDataPanel HideAfterControl="True" HideInSimpleLevel="True"/>
                 <TextBlock Text="{Binding StationHeading}" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}"/>
                 <TextBlock Text="{Binding EditionWarning}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" Margin="0,6,0,0">
                     <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding HasEditionWarning}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
@@ -20,15 +20,9 @@
                 <!-- usability 2026-10-16: the station control in one click; the report, the officer's signature and the export follow in the same panel -->
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,16" Visibility="{Binding ShowQuickControl, Converter={StaticResource BoolToVis}}">
                     <StackPanel>
-                        <WrapPanel>
-                            <TextBlock Text="Codul de ancorare de pe procesul-verbal anterior:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                            <TextBox Text="{Binding QuickControl.PreviousAnchorCode, UpdateSourceTrigger=PropertyChanged}" Width="230" FontFamily="Consolas"
-                                     AutomationProperties.Name="Codul de ancorare de pe procesul-verbal anterior; gol la primul control"
-                                     ToolTip="Scrieți codul de pe procesul-verbal semnat al controlului anterior (4 grupe de 5 caractere). Lăsați gol la primul control."/>
-                            <local:HelpButton Term="anchor_code"/>
-                        </WrapPanel>
+                        <!-- owner decision 2026-10-22: the anchor code of the previous proces-verbal is asked in the control wizard (optional step), not first on Home -->
                         <!-- review of PR #298: the period is said before the control runs, and can be changed on the control page -->
-                        <WrapPanel Margin="0,8,0,0">
+                        <WrapPanel>
                             <TextBlock Text="{Binding QuickControl.PlannedPeriod}" TextWrapping="Wrap" MaxWidth="560" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                             <TextBlock VerticalAlignment="Center">
                                 <Hyperlink Command="{Binding ShowControlDetailsCommand}" AutomationProperties.Name="Schimbă perioada controlului pe pagina Control stație"><Run Text="Schimbă perioada"/></Hyperlink>
@@ -42,13 +36,27 @@
                             </Button>
                             <ProgressBar Width="120" Height="4" IsIndeterminate="True" VerticalAlignment="Center" Visibility="{Binding QuickControl.IsBusy, Converter={StaticResource BoolToVis}}"/>
                         </WrapPanel>
-                        <TextBlock Text="{Binding QuickControl.Status}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding WhatHappensQuickControl}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,0"/>
+                        <TextBlock Text="{Binding QuickControl.HomeStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0">
+                            <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding QuickControl.HomeStatus}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                        </TextBlock>
                         <StackPanel Margin="0,8,0,0" Visibility="{Binding QuickControl.HasResult, Converter={StaticResource BoolToVis}}">
                             <ItemsControl ItemsSource="{Binding QuickControl.ResultCounts}" AutomationProperties.Name="Rezultatele controlului">
                                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
-                                        <Border Background="{StaticResource Surface2Brush}" CornerRadius="10" Padding="10,3" Margin="0,0,8,6">
+                                        <Border CornerRadius="10" Padding="10,3" Margin="0,0,8,6" BorderThickness="1">
+                                            <Border.Style>
+                                                <Style TargetType="Border">
+                                                    <Setter Property="Background" Value="{StaticResource Surface2Brush}"/>
+                                                    <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                                    <Style.Triggers>
+                                                        <DataTrigger Binding="{Binding Tone}" Value="Critical"><Setter Property="Background" Value="{StaticResource BadgeCriticalBgBrush}"/><Setter Property="BorderBrush" Value="{StaticResource CriticalBrush}"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Tone}" Value="Warning"><Setter Property="Background" Value="{StaticResource BadgeHighBgBrush}"/><Setter Property="BorderBrush" Value="{StaticResource HighBrush}"/></DataTrigger>
+                                                        <DataTrigger Binding="{Binding Tone}" Value="Success"><Setter Property="Background" Value="{StaticResource BadgeSuccessBgBrush}"/><Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}"/></DataTrigger>
+                                                    </Style.Triggers>
+                                                </Style>
+                                            </Border.Style>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="{Binding Label}" FontWeight="SemiBold" local:TermTip.Auto="True"/>
                                                 <TextBlock Text="{Binding Count}" Margin="6,0,0,0"/>
@@ -84,7 +92,7 @@
                     </StackPanel>
                 </Border>
 
-                <ItemsControl ItemsSource="{Binding PrimaryIntents}" AutomationProperties.Name="Acțiuni">
+                <ItemsControl ItemsSource="{Binding ShownPrimaryIntents}" AutomationProperties.Name="Acțiuni">
                     <ItemsControl.ItemTemplate>
                         <DataTemplate>
                             <Button Style="{StaticResource ActionRowStyle}" Command="{Binding DataContext.RunIntentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
@@ -102,8 +110,8 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <Expander Header="Alte acțiuni" Margin="0,12,0,0" Foreground="{StaticResource TextPrimaryBrush}">
-                    <ItemsControl ItemsSource="{Binding MoreIntents}" Margin="0,8,0,0" AutomationProperties.Name="Alte acțiuni">
+                <Expander Header="Alte acțiuni" Margin="0,12,0,0" Foreground="{StaticResource TextPrimaryBrush}" Visibility="{Binding HasShownMoreIntents, Converter={StaticResource BoolToVis}}">
+                    <ItemsControl ItemsSource="{Binding ShownMoreIntents}" Margin="0,8,0,0" AutomationProperties.Name="Alte acțiuni">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Button Style="{StaticResource ActionRowStyle}" Padding="16,9" Command="{Binding DataContext.RunIntentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"
@@ -111,6 +119,7 @@
                                         AutomationProperties.Name="{Binding Title}" AutomationProperties.HelpText="{Binding Tooltip}">
                                     <StackPanel>
                                         <TextBlock Text="{Binding Title}" FontSize="14" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{Binding Description}" FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
                                         <TextBlock Text="{Binding ReasonLine}" FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}">
                                             <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Visible"/><Style.Triggers><DataTrigger Binding="{Binding Enabled}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
                                         </TextBlock>
@@ -122,6 +131,10 @@
                 </Expander>
 
                 <TextBlock Text="{Binding OpenStatus}" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,10,0,0"/>
+                <TextBlock Margin="0,12,0,0" Foreground="{StaticResource TextSecondaryBrush}">
+                    <Hyperlink Command="{Binding OpenGuideCommand}" AutomationProperties.Name="Deschide ghidul de început, trei ecrane"><Run Text="Ghid de început (3 ecrane)"/></Hyperlink>
+                    <Run Text=" — ce face aplicația, drumul obișnuit și unde găsiți ajutor."/>
+                </TextBlock>
             </StackPanel>
 
             <!-- The open case: shown only when there is one (no four boxes saying "no case") -->
@@ -208,11 +221,11 @@
                                             Command="{Binding DataContext.ForgetRecentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
                                     <Button DockPanel.Dock="Right" Content="Deschide" AutomationProperties.Name="{Binding Entry.Title, StringFormat='Deschide cazul {0}'}" Style="{StaticResource OutlineButtonStyle}"
                                             Command="{Binding DataContext.OpenRecentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"/>
-                                    <TextBlock Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis">
+                                    <TextBlock Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" TextTrimming="CharacterEllipsis" ToolTip="{Binding Entry.Path}">
                                         <Run Text="{Binding Entry.Title, Mode=OneWay}" FontWeight="SemiBold"/>
-                                        <Run Text="{Binding StateText, Mode=OneWay}"/>
-                                        <Run Text="{Binding Entry.LastOpenedUtc, Mode=OneWay, StringFormat='deschis ultima dată {0:yyyy-MM-dd HH:mm} UTC'}"/>
-                                        <Run Text="{Binding Entry.Path, Mode=OneWay}" Foreground="{StaticResource TextMutedBrush}"/>
+                                        <Run Text="{Binding DisplayState, Mode=OneWay, StringFormat='· {0}'}"/>
+                                        <Run Text="{Binding LastOpenedLocalText, Mode=OneWay, StringFormat='· {0}'}"/>
+                                        <Run Text="{Binding Entry.Path, Mode=OneWay, StringFormat='· {0}'}" Foreground="{StaticResource TextMutedBrush}"/>
                                     </TextBlock>
                                 </DockPanel>
                             </DataTemplate>
