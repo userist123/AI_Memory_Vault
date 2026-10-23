@@ -1079,12 +1079,14 @@ function model(it){
     const h = ray.intersectObjects(pickables, true)[0], pid = h ? h.object.userData.item.userData.pid : null; if (pid !== hovPid){ hovPid = pid; refreshMarks(); onHover(pid); } }
   // X-Ray: pereții (cu ușile, ferestrele, perdelele) devin transparenți; materialele lor pot fi folosite și de mobilier,
   // deci pereții primesc copii transparente (în cache), iar originalele rămân neatinse
-  let xray = false; const xrayMats = new Map();
+  // xray = starea aplicată pe pereți; xrayWant = ce a cerut utilizatorul (în timpul unui export pot diferi)
+  let xray = false, xrayWant = false, solidDepth = 0; const xrayMats = new Map();
   const xrayOf = m => { let c = xrayMats.get(m); if (!c){ c = m.clone(); c.transparent = true; c.opacity = Math.min(m.opacity ?? 1, .18); c.depthWrite = false; xrayMats.set(m, c); } return c; };
   // casa se reconstruiește cu originalele la loc (clonele vechi se eliberează), apoi X-Ray se reaplică pe pereții noi
   function rebuildHouse(p){ if (xray){ xray = false; applyXray(); xray = true; } buildHouse(p); for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); applyXray(); }
   // exporturile și panorama arată casa reală, fără X-Ray (pereți opaci), oricum ar fi vederea de lucru
-  const solid = fn => function(...a){ if (!xray) return fn.apply(this, a); xray = false; applyXray(); const back = () => { xray = true; applyXray(); };
+  const solid = fn => function(...a){ if (!xray) return fn.apply(this, a); xray = false; applyXray(); solidDepth++;
+    const back = () => { solidDepth--; if (!solidDepth){ xray = xrayWant; applyXray(); } };   // starea cerută la final, nu cea de la început
     let r; try { r = fn.apply(this, a); } catch (e){ back(); throw e; } if (r && typeof r.then === 'function') return r.finally(back); back(); return r; };
   function applyXray(){ walls.traverse(o => { if (!o.isMesh) return; if (xray){ if (!o.userData.xrOrig){ o.userData.xrOrig = o.material; o.material = Array.isArray(o.material) ? o.material.map(xrayOf) : xrayOf(o.material); } }
       else if (o.userData.xrOrig){ o.material = o.userData.xrOrig; delete o.userData.xrOrig; } }); R.shadowMap.needsUpdate = true; }
@@ -1262,7 +1264,7 @@ function model(it){
     setCameraPreset,
     setSelection(pid){ selPid = pid || null; refreshMarks(); },
     setHover(pid){ if ((pid || null) === hovPid) return; hovPid = pid || null; refreshMarks(); },
-    setXray(on){ xray = !!on; applyXray(); },
+    setXray(on){ xrayWant = !!on; if (!solidDepth){ xray = xrayWant; applyXray(); } },
     // încadrează piesa în machetă (din plan, „Arată în 3D”): centrul orbitei pe piesă, distanța după mărimea ei
     frame(pid){ const it = itemOf(pid); if (!it) return false; const b = new THREE.Box3().setFromObject(it), c = new THREE.Vector3(), sz = new THREE.Vector3(); b.getCenter(c); b.getSize(sz);
       glide = null; if (mode === 'walk') setMode('house'); framed = true; FT.set(c.x, Math.min(c.y, 1), c.z); orbit.r = Math.max(4, Math.min(40, Math.max(sz.x, sz.y, sz.z) * 3 + 2.5)); orbit.ph = Math.min(orbit.ph, 1.1); return true; },
