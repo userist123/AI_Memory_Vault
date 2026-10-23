@@ -17,6 +17,7 @@ import { planSymbol, symbolAngle } from '@/core/plan-symbols';
 import { doorSwing } from '@/core/doors';
 import { doorSymbol } from '@/core/door-symbols';
 import { nicheGeometry, nicheSide } from '@/core/niches';
+import { wallItemGeometry, wallItemDepth } from '@/core/wall-items';
 import { dimGeometry, dimOffsetAt, dimOk, textHeight } from '@/core/annotations';
 import { PLAN_DEFAULTS, PLAN_LIMITS, cleanPlanText } from '@/core/plan-limits';
 import type { DimAnnotation } from '@/core/types';
@@ -32,8 +33,8 @@ import { computeLightingWiringArcs } from '@/core/technical';
 import { parseTypedLength, parseTypedSize, typedRect, acceptsTypedKey } from '@/core/typed-dimension';
 import { selectionBox, frameViewBox } from '@/core/frame';
 
-export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'niche' | 'dim' | 'text' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair' | 'clad';
-export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'annotation'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
+export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'niche' | 'dim' | 'text' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair' | 'clad' | 'wall_item';
+export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
 type Phase = 'start' | 'move' | 'end';
 interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severities: Record<string, Severity>;
   /** cerere de încadrare din afară (clic pe o problemă din „Sănătate”): `n` crește la fiecare cerere */
@@ -47,6 +48,8 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   onAddClad?(roomId: string, side: WallFeature['side'], from?: number, to?: number): void;
   /** stratul de finisaje de perete (benzile placărilor cu marcajul lor), în etapele Finisaje și Planșe */
   showFinishes?: boolean; mc?: MaterialsCatalog | null;
+  /** unealta „Pe perete”: clic lângă perete, pe fața pe care stă obiectul; `showWallItems` = false le ascunde (Releveu) */
+  onAddWallItem?(wallId: string, offset: number, side: 1 | -1): void; showWallItems?: boolean;
   onAddDim?(a: [number, number], b: [number, number], offset: number, mode: 'aligned' | 'ortho'): void;
   onAddText?(at: [number, number], text: string): void;
   onAddColumn?(x: number, z: number, shape?: 'rect' | 'round', role?: 'shaft'): void;
@@ -204,6 +207,7 @@ export default function PlanView(p: Props){
       if (cladDraft && cladDraft.roomId === h.roomId && cladDraft.side === h.side){ const a = Math.min(cladDraft.along, h.along), b = Math.max(cladDraft.along, h.along); setCladDraft(null);
         if (b - a < .05) p.onAddClad?.(h.roomId, h.side); else p.onAddClad?.(h.roomId, h.side, a, b); }
       else setCladDraft({ roomId: h.roomId, side: h.side, along: h.along }); return; }
+    if (p.tool === 'wall_item'){ const w = nearestWall(pt), wl = w && floor.walls.find(x => x.id === w.id); if (w && wl) p.onAddWallItem?.(w.id, w.offset, nicheSide(wl, pt)); return; }
     if (p.tool === 'niche'){ const w = nearestWall(pt), wl = w && floor.walls.find(x => x.id === w.id); if (w && wl) p.onAddNiche?.(w.id, w.offset, nicheSide(wl, pt)); return; }
     if (p.tool === 'door' || p.tool === 'window' || p.tool === 'passage'){ const w = nearestWall(pt); if (w) p.onAddOpening(w.id, w.offset, p.tool); return; }
     let t = (e.target as Element).closest('[data-k]') as HTMLElement | null;
@@ -252,6 +256,7 @@ export default function PlanView(p: Props){
         if (d.end === 'a') b.a = np; else b.b = np; }
       else if (d.kind === 'annotation'){ const a = o.floor.annotations?.find(x => x.id === d.id), b = s.floor.annotations?.find(x => x.id === d.id), ddx = snapG(dx), ddz = snapG(dz), mv = (q: [number, number]): [number, number] => [r3(q[0] + ddx), r3(q[1] + ddz)];
         if (a?.kind === 'dim' && b?.kind === 'dim'){ b.a = mv(a.a); b.b = mv(a.b); } else if (a?.kind === 'text' && b?.kind === 'text') b.at = mv(a.at); }
+      else if (d.kind === 'wall_item'){ const it = s.floor.wallItems?.find(x => x.id === d.id), g = it && wallItemGeometry(s.floor, it); if (it && g){ const sAlong = (pt[0] - g.wall.a[0]) * g.ux + (pt[1] - g.wall.a[1]) * g.uz; it.offset = r3(Math.max(it.width / 2, Math.min(g.L - it.width / 2, snapG(sAlong)))); } }
       else if (d.kind === 'niche'){ const n = s.floor.niches?.find(x => x.id === d.id), g = n && nicheGeometry(s.floor, n); if (n && g){ const sAlong = (pt[0] - g.wall.a[0]) * g.ux + (pt[1] - g.wall.a[1]) * g.uz; n.offset = r3(Math.max(0, Math.min(g.L - n.width, snapG(sAlong - n.width / 2)))); } }
       else if (d.kind === 'opening'){ const w = s.floor.walls.find(x => x.id === d.wallId)!, op = w.openings.find(x => x.id === d.id)!, L = wallLength(w.a, w.b), ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
         const sAlong = (pt[0] - w.a[0]) * ux + (pt[1] - w.a[1]) * uz; op.offset = r3(Math.max(0, Math.min(L - op.width, snapG(sAlong - op.width / 2)))); }
@@ -385,7 +390,8 @@ export default function PlanView(p: Props){
     {p.showFinishes && (() => { const marks = featureMarks(p.snap, floor, finishesOf);
       return marks.map(mk => { const room = floor.rooms.find(r => r.id === mk.roomId)!, w = finishesOf(p.snap, room).wallFeatures![mk.index]!, rc = featurePlanRect(floor, room, w); if (!rc) return null;
         const horiz = w.side === 'N' || w.side === 'S', inward = w.side === 'N' || w.side === 'W' ? 1 : -1, cx = (rc.x0 + rc.x1) / 2, cz = (rc.z0 + rc.z1) / 2;
-        const lx = horiz ? cx : cx + inward * fs * 1.1, lz = horiz ? cz + inward * fs * 1.1 : cz, code = `${t(`fin.code.${w.kind}`)}${mk.n}`;
+        // marcajul stă la capătul de început al benzii (la mijloc ar acoperi eticheta unui obiect de pe perete centrat pe ea)
+        const k0 = Math.min(fs * 1.2, (horiz ? rc.x1 - rc.x0 : rc.z1 - rc.z0) / 2), lx = horiz ? rc.x0 + k0 : cx + inward * fs * 1.1, lz = horiz ? cz + inward * fs * 1.1 : rc.z0 + k0, code = `${t(`fin.code.${w.kind}`)}${mk.n}`;
         const fill = w.kind === 'paint' || w.kind === 'panel' ? (w.color ?? (p.mc ? materialOf(p.mc, w.material)?.specs?.color : undefined) ?? '#d9cbb5') : FIN_FILL[w.kind] ?? '#cbbfae';
         const pat = w.kind === 'wallpaper' ? 'url(#fin-hatch)' : w.kind === 'slats' ? `url(#fin-slats-${horiz ? 'h' : 'v'})` : w.kind === 'plaster' ? 'url(#fin-dots)' : null;
         return (<g key={`${mk.roomId}:${mk.index}`} pointerEvents="none" data-finish={code}><title>{code} · {t(`fin.kind.${w.kind}`)}</title>
@@ -400,6 +406,13 @@ export default function PlanView(p: Props){
       return (<g key={n.id} data-k="niche" data-id={n.id} style={{ cursor: 'ew-resize' }}><title>{t('tool.niche')} ({Math.round(n.width * 100)}×{Math.round(n.height * 100)}×{Math.round(n.depth * 100)} cm)</title>
         <path d={`M${g.quad.map(q => q.join(' ')).join('L')}Z`} fill={ns ? '#efe5d8' : '#FBFBF9'} stroke={ns ? '#8B6A45' : '#3a352f'} strokeWidth={ns ? .02 : .012} strokeDasharray=".05 .03" />
         <text x={lx} y={lz + fs * .25} textAnchor="middle" fontSize={fs * .6} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={ns ? '#8B6A45' : '#3D343B'} stroke="#FFFDF8" strokeWidth={fs * .15} paintOrder="stroke" pointerEvents="none">N {Math.round(n.width * 100)}×{Math.round(n.height * 100)}</text></g>); })}
+    {/* Obiecte pe perete (deasupra planului de secțiune): linie dublă punctată pe fața peretelui, de lățimea obiectului, cu eticheta T/O/R/TV */}
+    {p.showWallItems !== false && (floor.wallItems || []).map(it => { const g = wallItemGeometry(floor, it); if (!g) return null; const on = isSel('wall_item', it.id), d = Math.max(.03, Math.min(.2, wallItemDepth(it)));
+      const [a, b] = g.face, off = (q: [number, number], k: number) => `${q[0] + g.nx * k} ${q[1] + g.nz * k}`, ink = on ? '#8B6A45' : '#3a352f', lx = g.center[0] + g.nx * (d + fs * .9), lz = g.center[1] + g.nz * (d + fs * .9);
+      return (<g key={it.id} data-k="wall_item" data-id={it.id} data-wall-item={it.kind} style={{ cursor: 'ew-resize' }}><title>{it.label || t(`wallItem.kind.${it.kind}`)} ({Math.round(it.width * 100)}×{Math.round(it.height * 100)} cm, {Math.round(it.elevation * 100)} cm)</title>
+        <path d={`M${off(a, 0)}L${off(b, 0)}L${off(b, d)}L${off(a, d)}Z`} fill={on ? '#efe5d8' : '#fff'} fillOpacity={.85} stroke="transparent" strokeWidth={fs * .4} />
+        <path d={`M${off(a, .01)}L${off(b, .01)}M${off(a, d)}L${off(b, d)}`} fill="none" stroke={ink} strokeWidth={on ? .018 : .01} strokeDasharray=".05 .03" />
+        <text x={lx} y={lz + fs * .22} textAnchor="middle" fontSize={fs * .55} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={ink} stroke="#FFFDF8" strokeWidth={fs * .12} paintOrder="stroke" pointerEvents="none">{t(`wallItem.code.${it.kind}`)}</text></g>); })}
     {/* Cote persistente și texte de pe planșă */}
     {(floor.annotations || []).map(an => { const on = isSel('annotation', an.id), ink = on ? '#8B6A45' : DIM;
       if (an.kind === 'text') return (<text key={an.id} data-k="annotation" data-id={an.id} x={an.at[0]} y={an.at[1]} fontSize={textHeight(an)} transform={an.rotation ? `rotate(${an.rotation} ${an.at[0]} ${an.at[1]})` : undefined} fontFamily="Instrument Sans, Segoe UI, sans-serif"

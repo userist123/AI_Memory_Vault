@@ -32,7 +32,13 @@ export interface Niche { id: string; wallId: string; offset: number; width: numb
 export interface DimAnnotation { id: string; kind: 'dim'; a: [number, number]; b: [number, number]; offset: number; mode?: 'aligned' | 'ortho' }
 export interface TextAnnotation { id: string; kind: 'text'; at: [number, number]; text: string; size?: 's' | 'm' | 'l'; rotation?: number }
 export type Annotation = DimAnnotation | TextAnnotation;
-export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[]; columns?: Column[]; beams?: Beam[]; glassWalls?: GlassWall[]; niches?: Niche[]; annotations?: Annotation[] }
+/** Obiect pe perete (tablou, oglindă, raft, TV): pe fața `side` a peretelui `wallId` (ca nișa); `offset` = centrul, de la capătul `a`
+ *  al peretelui; `elevation` = centrul, de la pardoseală; dimensiuni în m (`depth` lipsă = implicitul tipului). `product` = id din
+ *  catalogul de materiale (wall_art / mirror / wall_shelf), opțional: fără produs e obiectul clientului, fără linie în deviz. */
+export type WallItemKind = 'art' | 'mirror' | 'shelf' | 'tv';
+export interface WallItem { id: string; wallId: string; side: 1 | -1; kind: WallItemKind; offset: number; elevation: number; width: number; height: number; depth?: number;
+  product?: string | null; color?: string; label?: string }
+export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[]; columns?: Column[]; beams?: Beam[]; glassWalls?: GlassWall[]; niches?: Niche[]; annotations?: Annotation[]; wallItems?: WallItem[] }
 /** `size` (cm) = piesă pe comandă cu altă dimensiune decât varianta din catalog; prețul ei devine necunoscut. */
 export interface FurniturePlacement { id: string; roomId: string; group: string; variantId: string; x: number; z: number; rotation: number; source: 'auto' | 'manual'; size?: { w: number; d: number; h: number } }
 /** Culoare (hex #rrggbb) și, unde modelul permite, material; lipsa înseamnă aspectul implicit. */
@@ -57,12 +63,13 @@ export interface Catalog { suppliers: Supplier[]; products: Product[]; variants:
 export type Severity = 'PASS' | 'WARNING' | 'ERROR';
 /** `message` = textul românesc (compatibil cu API-ul); `key` + `vars` = același text în orice limbă (lib/i18n.ts issueText). */
 export interface Issue { code: 'OUT_OF_ROOM' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW_BLOCKED' | 'CLEARANCE' | 'UNKNOWN_VARIANT' | 'OPENING_OUTSIDE_WALL' | 'WALL_TOO_SHORT' | 'STAIR'
-  | 'NICHE_OUTSIDE_WALL' | 'NICHE_TOO_DEEP' | 'NICHE_OVER_OPENING' | 'SHAFT_DOOR' | 'SHAFT_OUTSIDE_ROOM' | 'DOOR_TYPE'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
+  | 'NICHE_OUTSIDE_WALL' | 'NICHE_TOO_DEEP' | 'NICHE_OVER_OPENING' | 'SHAFT_DOOR' | 'SHAFT_OUTSIDE_ROOM' | 'DOOR_TYPE' | 'WALL_ITEM'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
 
 // ---------- Faza 2: materiale, manoperă, servicii, finisaje, buget ----------
 export type MaterialCategory = 'parquet' | 'floor_tile' | 'wall_tile' | 'paint' | 'baseboard' | 'tile_adhesive' | 'lighting'
   | 'wallpaper' | 'wall_panel' | 'decorative_plaster' | 'brick_cladding' | 'stone_cladding' | 'plasterboard' | 'cornice' | 'led_strip' | 'spot'
   | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'door_system' | 'moulding'
+  | 'wall_art' | 'mirror' | 'wall_shelf'
   | 'countertop' | 'kitchen_sink' | 'kitchen_tap' | 'bath_tap' | 'shower_set' | 'towel_radiator' | 'led_mirror' | 'pendant' | 'wall_light' | 'led_profile';
 /** Modul de așezare a pardoselii (parchet sau plăci). */
 export type FloorPattern = 'straight' | 'brick' | 'third' | 'diagonal' | 'herringbone' | 'chevron' | 'checker';

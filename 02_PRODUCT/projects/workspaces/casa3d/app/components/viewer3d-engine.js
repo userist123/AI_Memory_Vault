@@ -772,6 +772,15 @@ function model(it){
       const back = MAT('paint', '#fbf7ee'), reveal = MAT('paint', '#cfc8ba'), at = (d, w2, h2, d2, mat, dy = 0, ds = 0) => box(w2, h2, d2, mat, ax + ux * (m + ds) + nx * d, y + dy, az + uz * (m + ds) + nz * d, rot, walls);
       at(f + .004, n.l, n.h, .006, back).castShadow = false;
       [[0, n.h / 2 - .006, n.l, .012, 0], [0, -n.h / 2 + .006, n.l, .012, 0], [-n.l / 2 + .006, 0, .012, n.h, 0], [n.l / 2 - .006, 0, .012, n.h, 0]].forEach(([ds, dy, w2, h2]) => { at(f + .012, w2, h2, .02, reveal, dy, ds).castShadow = false; }); });
+    // obiecte pe perete (Floor.wallItems): tablou = ramă și pânză, oglindă = ramă subțire și oglindă, raft = poliță, TV = ramă
+    // neagră și ecran; pe fața peretelui, în fața placării de acolo (`clad`, calculat în viewer-input)
+    (p.obiectePerete || []).forEach(o => { const wl = p.pereti[o.wi]; if (!wl) return; const [ax, az] = wl.a, [bx, bz] = wl.b, L = Math.hypot(bx - ax, bz - az); if (L < .01) return;
+      const ux = (bx - ax) / L, uz = (bz - az) / L, rot = -Math.atan2(uz, ux), th = wl.ext ? .25 : .15, nx = -uz * o.side, nz = ux * o.side, base = th / 2 + (o.clad || 0) + .002;
+      const at = (d, w2, h2, d2, mat) => { const m = box(w2, h2, d2, mat, ax + ux * o.la + nx * (base + d), o.y, az + uz * o.la + nz * (base + d), rot, walls); m.userData.wallItem = o.id; return m; };
+      if (o.kind === 'art'){ at(o.ad / 2, o.l, o.h, o.ad, MAT('wood', '#3b2f25')); at(o.ad + .002, Math.max(.02, o.l - .08), Math.max(.02, o.h - .08), .004, MAT('paint', o.color || '#7f8f7c')).castShadow = false; }
+      else if (o.kind === 'mirror'){ at(.01, o.l, o.h, .02, MAT('metal', o.color || '#2d2a26')); at(.021, Math.max(.02, o.l - .04), Math.max(.02, o.h - .04), .004, MAT('mirror', '#dfe6ea')).castShadow = false; }
+      else if (o.kind === 'shelf') at(o.ad / 2, o.l, Math.max(.018, o.h), o.ad, MAT('wood', o.color || '#b88a5a'));
+      else { at(.02, o.l, o.h, .04, MAT('metal', '#151515')); at(.041, Math.max(.02, o.l - .02), Math.max(.02, o.h - .02), .003, MAT('screen', '#0b0c0e')).castShadow = false; } });
     // grinzi sub tavan
     (p.grinzi || []).forEach(bm => {
       const bw = bm.width || 0.25, bd = bm.depth || 0.35;
@@ -822,7 +831,9 @@ function model(it){
       const u = side === 'N' || side === 'S' ? it.x - room.x0 : it.z - room.z0;
       const clad = room.fin && room.fin.walls && room.fin.walls.some(w => w.side === side && ['slats', 'brick', 'stone', 'panel', 'tile'].includes(w.kind) && (!w.along || (u > w.along[0] && u < w.along[1]))) ? .06 : 0, k = .02 + clad;
       const wallAt = () => Math.abs(bx) > .5 ? [bx > 0 ? room.x1 - k : room.x0 + k, it.z] : [it.x, bz > 0 ? room.z1 - k : room.z0 + k];
-      if (it.group === 'canapea' || it.group === 'pat'){ const [wx, wz] = wallAt(); put('art', wx, it.group === 'pat' ? 1.25 : 1.32, wz, it.rotation); }
+      // tabloul automat nu se pune pe o latură unde designerul a pus deja un tablou sau un TV (Floor.wallItems)
+      const explicit = (plan.obiectePerete || []).some(o => o.room === room.id && o.fata === side && (o.kind === 'art' || o.kind === 'tv'));
+      if (it.group === 'canapea' || it.group === 'pat'){ if (!explicit){ const [wx, wz] = wallAt(); put('art', wx, it.group === 'pat' ? 1.25 : 1.32, wz, it.rotation); } }
       else if (it.group === 'comodaTv') put('vase', it.x - Math.cos(it.rotation) * (v.w / 100) * .36, h, it.z + Math.sin(it.rotation) * (v.w / 100) * .36, it.rotation);
       else if (it.group === 'masa') put('jug', it.x, h, it.z, 0);
       else if (it.group === 'noptiera') put('photo', it.x + Math.cos(it.rotation) * .12, h, it.z - Math.sin(it.rotation) * .12, it.rotation + .35);

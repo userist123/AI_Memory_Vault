@@ -13,6 +13,8 @@ import { itemStyle, itemSizeCm } from '@/core/appearance';
 import { toEngineCatalog, groupOf, indexOf } from '@/core/catalog';
 import { footprintOf } from '@/core/validate';
 import { stairGeometry, SLAB } from '@/core/levels';
+import { wallItemGeometry, wallItemFace, wallItemDepth } from '@/core/wall-items';
+import { bandOf, alongOf, bathTiles, sideSpan } from '@/core/finishes';
 
 /** Gol în placa nivelului arătat (golul scării de dedesubt); `dir` = sensul urcării scării, marginea de sosire e pe partea +dir. */
 export interface PlateVoid { x0: number; z0: number; x1: number; z1: number; dir: [number, number] }
@@ -45,5 +47,13 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   const peretiSticla = snap.floor.glassWalls ?? [];
   // nișele: peretele (index în plan.pereti), poziția pe el, cota, mărimea și fața (motorul o desenează pe fața peretelui)
   const nise = (snap.floor.niches ?? []).flatMap(n => { const wi = snap.floor.walls.findIndex(w => w.id === n.wallId); return wi < 0 ? [] : [{ id: n.id, wi, la: n.offset, l: n.width, y: n.elevation, h: n.height, ad: n.depth, side: n.side ?? 1 }]; });
-  return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, nise, goluriPlaca: extra.voids ?? [] }, items };
+  // obiectele de pe perete: peretele (index), centrul pe el și cota, mărimea, fața; camera și latura (pentru decorul automat) și
+  // grosimea placării din spatele lor (riflaj, piatră…), ca obiectul să stea în fața ei
+  const CLAD: Record<string, number> = { stone: .022, brick: .014, slats: .021, panel: .012, tile: .01 };
+  const obiectePerete = (snap.floor.wallItems ?? []).flatMap(it => { const g = wallItemGeometry(snap.floor, it); if (!g) return []; const face = wallItemFace(snap.floor, it);
+    let clad = 0; if (face){ const f = finishesOf(snap, face.room), len = sideSpan(face.room, face.side);
+      for (const w of [...(f.wallFeatures || []), ...bathTiles(f, face.room.type)]){ if (w.side !== face.side || !(w.kind in CLAD)) continue; const [y0, y1] = bandOf(w, snap.floor.ceilingHeight), [a, b] = alongOf(w, len);
+        if (face.u > a && face.u < b && it.elevation > y0 && it.elevation < y1) clad = Math.max(clad, CLAD[w.kind]!); } }
+    return [{ id: it.id, wi: g.wallIndex, la: it.offset, l: it.width, y: it.elevation, h: it.height, ad: wallItemDepth(it), side: it.side === -1 ? -1 : 1, kind: it.kind, color: it.color ?? null, room: face?.room.id ?? null, fata: face?.side ?? null, clad }]; });
+  return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, nise, obiectePerete, goluriPlaca: extra.voids ?? [] }, items };
 }

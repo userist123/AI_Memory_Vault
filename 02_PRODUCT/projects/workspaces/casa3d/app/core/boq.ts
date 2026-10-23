@@ -10,6 +10,7 @@ import { bathOf } from './bath';
 import { fixtureCount } from './fixtures';
 import { formatQty } from './format';
 import { nicheRoom, nicheTileArea } from './niches';
+import { wallItemRoom, wallItemFace, WALL_ITEM_CATEGORY } from './wall-items';
 import { colorName } from './budget-excluded';
 /** Pereții în documente: punctele cardinale în română, nu literele interne N/S/E/W. */
 const SIDE_RO: Record<string, string> = { N: 'nord', S: 'sud', E: 'est', W: 'vest' };
@@ -51,6 +52,8 @@ export const budgetOf = (snap: Snapshot): BudgetSettings => ({ ...DEFAULT_BUDGET
 const TEXTILE_CATS = new Set(['curtain', 'sheer', 'blind', 'rug']);
 const PATTERN_LABEL: Record<string, string> = { straight: 'drept', brick: 'decalat 1/2', third: 'decalat 1/3', diagonal: 'diagonală', herringbone: 'spic', chevron: 'chevron', checker: 'șah' };
 /** Efectele vopselei decorative, în documente. */
+/** Obiectele de pe perete, în documente. */
+const WALL_ITEM_RO: Record<string, string> = { art: 'Tablou', mirror: 'Oglindă', shelf: 'Raft', tv: 'Televizor' };
 const EFFECT_RO: Record<string, string> = { venetian: 'venețiană', concrete: 'beton', microcement: 'microciment', travertine: 'travertin', silk: 'mătase', textured: 'structurată' };
 const FEATURE_LABEL: Record<string, string> = { paint: 'Vopsea', panel: 'Lambriu', rail: 'Baghetă', wallpaper: 'Tapet', slats: 'Riflaj', plaster: 'Tencuială decorativă', brick: 'Cărămidă aparentă', stone: 'Piatră decorativă', tile: 'Faianță' };
 export type BoqCategory = 'furniture' | 'finishes' | 'lighting' | 'appliances' | 'sanitary' | 'textiles';
@@ -100,6 +103,11 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
       if ((room.type === 'baie' || n.finish === 'tile') && wt){ items.push(materialLine(wt, `${room.id}:niche:${n.id}`, room.id, `Faianță nișă · ${where}`, area, mc.verifiedAt)); adhesiveArea += area; addLabor(room.id, 'manopera-faianta', area); }
       unknown.push(`Manoperă nișă (1 buc) · ${where}`); if (room.type === 'baie' || n.finish === 'tile') unknown.push(`Profil de colț nișă ${r2(2 * (n.width + n.height))} ml · ${where}`);
       if (n.finish === 'led') unknown.push(`Bandă LED nișă ${r2(n.width)} m · ${where}`); }
+    // obiecte pe perete: cu produs ales, o linie de 1 buc; fără produs e obiectul clientului (nicio linie); montajul nu are tarif verificat
+    for (const it of (fl.wallItems ?? []).filter(x => wallItemRoom(fl, x)?.id === room.id)){ const face = wallItemFace(fl, it), nm = WALL_ITEM_RO[it.kind] ?? it.kind, m = M(it.product);
+      const where = `${room.name}, perete ${face ? SIDE_RO[face.side] : '-'} (${Math.round(it.width * 100)}×${Math.round(it.height * 100)} cm, centrul la ${r2(it.elevation)} m)`;
+      if (it.product){ if (m && m.category === WALL_ITEM_CATEGORY[it.kind]) items.push(materialLine(m, `${room.id}:wallitem:${it.id}`, room.id, `${nm} · ${where}`, 1, mc.verifiedAt, 0)); else unknown.push(`${nm} · ${where}: produsul ales nu are preț verificat`); }
+      unknown.push(`Montaj ${nm.toLowerCase()} (1 buc) · ${where}`); }
     // placări pe pereți (tapet, riflaj, tencuială decorativă, cărămidă, piatră, faianță), fiecare pe latura ei, până la înălțimea aleasă
     let featureArea = 0;
     for (const [i, wf] of (f.wallFeatures || []).entries()){ const m = M(wf.material), sg = bandGeometry(fl, room, wf);

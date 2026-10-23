@@ -9,6 +9,8 @@ import { ceilingOf, layoutOf, materialOf, pieceSizeCm, bandOf, bathTiles, alongO
 import { fixturePoints, fixtureCount, type FixturePoint } from './fixtures';
 import { lightReport, autoLightCount } from './light-design';
 import { DOOR_HEIGHT } from './rules.boq';
+import { wallItemsOnSide } from './wall-items';
+import type { WallItemKind } from './types';
 
 type Side = WallFeature['side'];
 export const SIDES: Side[] = ['N', 'E', 'S', 'W'];
@@ -58,7 +60,9 @@ export function floorPlan(snap: Snapshot, mc: MaterialsCatalog, fl: Floor): Floo
 export interface ElevOpening { kind: 'door' | 'window'; u0: number; u1: number; y0: number; y1: number }
 /** `u0`–`u1` = porțiunea pe lungime, în coordonata elevației (de la stânga la dreapta, privind peretele din cameră). */
 export interface ElevBand { kind: WallFeature['kind'] | 'walltile'; y0: number; y1: number; u0: number; u1: number; material: string; name: string; color: string | null }
-export interface Elevation { side: Side; lengthM: number; heightM: number; openings: ElevOpening[]; bands: ElevBand[]; baseboardM: number | null; sconces: { u: number; y: number }[]; ceilingDropM: number }
+/** `items` = obiectele de pe perete (centrul `u`, `y`, lățimea și înălțimea, m), cu cota centrului desenată pe elevație. */
+export interface Elevation { side: Side; lengthM: number; heightM: number; openings: ElevOpening[]; bands: ElevBand[]; baseboardM: number | null; sconces: { u: number; y: number }[]; ceilingDropM: number;
+  items: { id: string; kind: WallItemKind; u: number; y: number; w: number; h: number }[] }
 /** Poziția de-a lungul peretelui, de la stânga la dreapta, privind peretele din cameră. */
 export function alongWall(r: Room['rect'], side: Side, x: number, z: number): number {
   return side === 'N' ? x - r.x0 : side === 'S' ? r.x1 - x : side === 'E' ? z - r.z0 : r.z1 - z;
@@ -82,5 +86,5 @@ export function wallElevations(snap: Snapshot, mc: MaterialsCatalog, cat: Catalo
       .sort((a, b) => a.y0 - b.y0 || a.u0 - b.u0);
     const sconces = fixtures.filter(p => (horiz ? Math.abs(p.z - edge) : Math.abs(p.x - edge)) < .2).map(p => ({ u: Math.round(alongWall(r, side, p.x, p.z) * 1000) / 1000, y: p.y }));
     return { side, lengthM: Math.round(len * 1000) / 1000, heightM: H, openings: openings.sort((a, b) => a.u0 - b.u0), bands, baseboardM: !wet && base ? (base.specs?.sizeCm?.[1] ?? Number(base.name.match(/x (\d{2,3}) x \d+ mm/)?.[1] ?? 60) / 10) / 100 : null, sconces,
-      ceilingDropM: c.type === 'flat' ? 0 : c.dropCm / 100 }; });
+      ceilingDropM: c.type === 'flat' ? 0 : c.dropCm / 100, items: wallItemsOnSide(fl, room, side) }; });
 }
