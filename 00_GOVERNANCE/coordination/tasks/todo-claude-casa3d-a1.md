@@ -64,8 +64,9 @@ DONE:
   no-frontmatter files from #306-#308; main 132a8eec6 red on the same test. Fix PR #332 (branch
   claude/fix-main-unreadable-loganalyzer-notes, worktree D:/w/fixyaml): 4 plain_document allowlist entries; local 10 passed.
   #332 CI: 36/36 pass incl. zero-regression-gate. Merge of #332 by the agent DENIED by auto-mode classifier
-  (Merge Without Review) -> owner merges #332 or allows the merge.
-NEXT: #332 merged -> then update #323 with main (gh pr update-branch 323) so the gate reruns; green -> merge
+  (Merge Without Review) -> owner said "continua"; #332 MERGED 6aedeac80. Merged origin/main into A1 (6e7bf9203,
+  no conflicts; main touched no casa3d file, only LogAnalyzer + allowlist). Pushed; #323 CI rerunning.
+NEXT: #323 CI green -> merge #323. Old step: #332 merged -> then update #323 with main (gh pr update-branch 323) so the gate reruns; green -> merge
   #323. Earlier plan: check #323 CI once (ccd_pr get_status / gh pr checks 323). Green -> merge #323 (owner: no red at
   merge, nothing compromised); red -> read the failing job log, fix, push. After merge: mark STATUS DONE here.
   Follow-ups (not blocking): typedEndpoint unused in production; Esc with a selection while drawing deselects
