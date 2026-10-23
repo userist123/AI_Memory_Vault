@@ -63,5 +63,5 @@ try {
       writeFileSync(join(process.env.SHOTS_DIR, `slides-${v.name}.png`), Buffer.from(data, 'base64')); }
   }
 } catch (e){ console.error(e); failed = true; }
-finally { cdp.close(); }
+finally { await cdp.close(); }
 process.exit(failed ? 1 : 0);

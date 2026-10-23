@@ -1,5 +1,7 @@
 // Mișcare nativă (UI/UX P2-13): View Transitions doar unde browserul le are și utilizatorul nu a cerut mișcare redusă;
 // altfel schimbarea se face direct, fără animație și fără erori în browserele vechi.
+// Decizie UI/UX P3-18 (Next.js 16 / React 19.3): rămânem pe API-ul nativ, nu pe <ViewTransition> din React. Schimbarea
+// etapei e stare locală, nu navigare; <ViewTransition> ar cere startTransition și o cheie care remontează tot panoul.
 type Doc = { startViewTransition?: (cb: () => void) => unknown };
 type Win = { matchMedia?: (q: string) => { matches: boolean } };
 

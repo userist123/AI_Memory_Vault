@@ -20,7 +20,7 @@ These entries are capability metadata. They MUST NOT be loaded as full runtime c
 
 The authoritative council policy is:
 
-`99_SYSTEM/Council_Context_Budget.md`
+`00_GOVERNANCE/protocols/Council_Context_Budget.md`
 
 ### Default limits
 

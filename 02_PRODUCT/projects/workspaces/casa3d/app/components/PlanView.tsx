@@ -90,7 +90,7 @@ export default function PlanView(p: Props){
   // cota persistentă în lucru: clic pe a, clic pe b, apoi clic (sau Enter) pentru distanța liniei; O comută aliniată / ortogonală
   const [dimDraft, setDimDraft] = useState<{ a: [number, number]; b?: [number, number]; mode: 'aligned' | 'ortho' } | null>(null);
   // textul în lucru: caseta de editare stă peste plan, la locul clicului (Enter confirmă, Esc renunță)
-  const [textDraft, setTextDraft] = useState<{ at: [number, number]; left: number; top: number } | null>(null), [textVal, setTextVal] = useState(''), textInput = useRef<HTMLInputElement>(null);
+  const [textDraft, setTextDraft] = useState<{ at: [number, number]; left: number; top: number } | null>(null), [textVal, setTextVal] = useState(''), textInput = useRef<HTMLInputElement>(null), textClosed = useRef(false);
   useEffect(() => { if (textDraft) textInput.current?.focus(); }, [textDraft]);
   // altă unealtă = alt gest: rigla, segmentul în lucru, camera pornită cu un clic și cota tastată nu trec dintr-o unealtă
   // în alta (altfel ciorna rămâne după cursor și blochează tragerea în Selecție)
@@ -181,6 +181,8 @@ export default function PlanView(p: Props){
       if (!dimDraft){ setDimDraft({ a: s, mode: 'aligned' }); setTyped(''); }
       else if (!dimDraft.b){ if (dimOk(dimDraft.a, s, dimDraft.mode)){ setDimDraft({ ...dimDraft, b: s }); setTyped(''); } }
       else finishDim(dimOffsetAt(dimDraft.a, dimDraft.b, dimDraft.mode, pt)); return; }
+    // preventDefault oprește blur-ul inputului: un text deja tastat se plasează aici (clicul nu-l pierde), apoi unealta revine la selecție
+    if (p.tool === 'text' && textDraft && cleanPlanText(textVal)){ e.preventDefault(); textClosed.current = true; p.onAddText?.(textDraft.at, cleanPlanText(textVal)); setTextDraft(null); svg.current?.focus(); return; }
     if (p.tool === 'text'){ e.preventDefault(); const par = svg.current!.parentElement!.getBoundingClientRect(); setTextVal(''); setTextDraft({ at: [r3(pt[0]), r3(pt[1])], left: e.clientX - par.left, top: e.clientY - par.top }); return; }
     if (p.tool === 'measure'){ const s = snapPoint(pt, floor); setRuler(r => r && !r.b ? { a: r.a, b: s } : { a: s, b: null }); return; }
     if (p.tool === 'room'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])];
@@ -541,8 +543,13 @@ export default function PlanView(p: Props){
     {cursor && <text x={vb.x + vb.w - fs * .6} y={vb.y + vb.h - fs * .6} textAnchor="end" fontSize={fs * .8} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#5E636B" pointerEvents="none">{units === 'imperial' ? `x ${formatLength(cursor[0], 'imperial', lang)} · z ${formatLength(cursor[1], 'imperial', lang)}` : `x ${cursor[0].toFixed(2)} · z ${cursor[1].toFixed(2)} m`}</text>}
   </svg>
     {textDraft && <input ref={textInput} className="plan-text-input" style={{ position: 'absolute', left: textDraft.left, top: textDraft.top, zIndex: 3 }} aria-label={t('text.inputAria')} placeholder={t('text.placeholder')}
-      maxLength={PLAN_LIMITS.annotation.textMax} value={textVal} onChange={e => setTextVal(e.target.value)} onBlur={() => setTextDraft(null)}
-      onKeyDown={e => { e.stopPropagation(); if (e.key === 'Enter'){ e.preventDefault(); const v = cleanPlanText(textVal); if (v) p.onAddText?.(textDraft.at, v); setTextDraft(null); } else if (e.key === 'Escape'){ e.preventDefault(); setTextDraft(null); } }} />}
+      maxLength={PLAN_LIMITS.annotation.textMax} value={textVal} onChange={e => setTextVal(e.target.value)}
+      // clic în afară păstrează textul tastat (ca Enter); după Enter / Escape focusul revine pe plan, nu pe <body>
+      // (textClosed: focus() pe plan declanșează sincron blur-ul inputului, care altfel ar adăuga textul a doua oară)
+      onFocus={() => { textClosed.current = false; }}
+      onBlur={() => { if (textClosed.current) return; textClosed.current = true; const v = cleanPlanText(textVal); if (v) p.onAddText?.(textDraft.at, v); setTextDraft(null); }}
+      onKeyDown={e => { e.stopPropagation(); if (e.key !== 'Enter' && e.key !== 'Escape') return; e.preventDefault(); textClosed.current = true;
+        const v = e.key === 'Enter' ? cleanPlanText(textVal) : ''; if (v) p.onAddText?.(textDraft.at, v); setTextDraft(null); svg.current?.focus(); }} />}
     {<div className="plan-nudge" role="group" aria-label={t('plan.nudgeAria')}>
       {([['in', '+', () => zoomBy(1 / 1.25)], ['out', '−', () => zoomBy(1.25)], ['fit', '⤢', fitAll], ['left', '◀', () => panBy(-.2, 0)], ['up', '▲', () => panBy(0, -.2)], ['down', '▼', () => panBy(0, .2)], ['right', '▶', () => panBy(.2, 0)]] as const).map(([k, sym, fn]) =>
         <button key={k} type="button" className="btn" aria-label={t(`plan.nudge.${k}`)} title={t(`plan.nudge.${k}`)} onClick={fn}>{sym}</button>)}
