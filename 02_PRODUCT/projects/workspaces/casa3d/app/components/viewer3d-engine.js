@@ -745,6 +745,13 @@ function model(it){
       }
       structBlockers.push({ x0: col.x - w / 2, z0: col.z - d / 2, x1: col.x + w / 2, z1: col.z + d / 2 });
     });
+    // nișe: reprezentare vizuală pe fața peretelui, fără tăiere în perete (coliziunile rămân neatinse): fundul mai deschis
+    // la culoare, ușor retras spre interior, și patru fețe de glaf mai închise, ca să se citească adâncimea
+    (p.nise || []).forEach(n => { const wl = p.pereti[n.wi]; if (!wl) return; const [ax, az] = wl.a, [bx, bz] = wl.b, L = Math.hypot(bx - ax, bz - az); if (L < .01) return;
+      const ux = (bx - ax) / L, uz = (bz - az) / L, rot = -Math.atan2(uz, ux), th = wl.ext ? .25 : .15, nx = -uz * n.side, nz = ux * n.side, m = n.la + n.l / 2, y = n.y + n.h / 2, f = th / 2;
+      const back = MAT('paint', '#fbf7ee'), reveal = MAT('paint', '#cfc8ba'), at = (d, w2, h2, d2, mat, dy = 0, ds = 0) => box(w2, h2, d2, mat, ax + ux * (m + ds) + nx * d, y + dy, az + uz * (m + ds) + nz * d, rot, walls);
+      at(f + .004, n.l, n.h, .006, back).castShadow = false;
+      [[0, n.h / 2 - .006, n.l, .012, 0], [0, -n.h / 2 + .006, n.l, .012, 0], [-n.l / 2 + .006, 0, .012, n.h, 0], [n.l / 2 - .006, 0, .012, n.h, 0]].forEach(([ds, dy, w2, h2]) => { at(f + .012, w2, h2, .02, reveal, dy, ds).castShadow = false; }); });
     // grinzi sub tavan
     (p.grinzi || []).forEach(bm => {
       const bw = bm.width || 0.25, bd = bm.depth || 0.35;

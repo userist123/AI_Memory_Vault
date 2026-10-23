@@ -15,6 +15,7 @@ import { pinchViewBox, midpoint, distance, type Pt } from '@/core/gesture';
 import { stairGeometry, SLAB } from '@/core/levels';
 import { planSymbol, symbolAngle } from '@/core/plan-symbols';
 import { doorSwing } from '@/core/doors';
+import { nicheGeometry, nicheSide } from '@/core/niches';
 import { allFixturePoints } from '@/core/fixtures';
 import { finishesOf } from '@/core/boq';
 import { planItems, planKeyAction, type PlanKeyAction } from '@/core/plan-keys';
@@ -25,8 +26,8 @@ import { computeLightingWiringArcs } from '@/core/technical';
 import { parseTypedLength, parseTypedSize, typedRect, acceptsTypedKey } from '@/core/typed-dimension';
 import { selectionBox, frameViewBox } from '@/core/frame';
 
-export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair';
-export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
+export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'niche' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair';
+export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
 type Phase = 'start' | 'move' | 'end';
 interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severities: Record<string, Severity>;
   /** cerere de încadrare din afară (clic pe o problemă din „Sănătate”): `n` crește la fiecare cerere */
@@ -35,6 +36,7 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   hoverId?: string | null; onHover?(id: string | null): void; onFrameOther?(id: string): void;
   onSelect(s: Sel): void; onEdit(fn: (s: Snapshot) => void, phase: Phase): void; onAddWall(a: [number, number], b: [number, number]): void;
   onAddRoom(r: { x0: number; z0: number; x1: number; z1: number }): void; onAddOpening(wallId: string, offset: number, kind: 'door' | 'window' | 'passage'): void;
+  onAddNiche?(wallId: string, offset: number, side: 1 | -1): void;
   onAddColumn?(x: number, z: number, shape?: 'rect' | 'round', role?: 'shaft'): void;
   onAddBeam?(a: [number, number], b: [number, number]): void;
   onAddGlassWall?(a: [number, number], b: [number, number]): void;
@@ -168,6 +170,7 @@ export default function PlanView(p: Props){
     if (p.tool === 'room'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])];
       if (roomDraft?.pending){ finishRoom(roomDraft.a, s); return; }   // al doilea clic: colțul opus
       setRoomDraft({ a: s, b: s }); setTyped(''); svg.current!.setPointerCapture(e.pointerId); svg.current!.focus({ preventScroll: true }); return; }
+    if (p.tool === 'niche'){ const w = nearestWall(pt), wl = w && floor.walls.find(x => x.id === w.id); if (w && wl) p.onAddNiche?.(w.id, w.offset, nicheSide(wl, pt)); return; }
     if (p.tool === 'door' || p.tool === 'window' || p.tool === 'passage'){ const w = nearestWall(pt); if (w) p.onAddOpening(w.id, w.offset, p.tool); return; }
     let t = (e.target as Element).closest('[data-k]') as HTMLElement | null;
     // ușile și ferestrele au prioritate față de mânerul laturii (zona lui de 44 px poate atinge un gol pe un plan mic), cu excepția cazului când golul acoperă tot peretele și mânerul e decalat în afară
@@ -213,6 +216,7 @@ export default function PlanView(p: Props){
         b.a = [r3(a.a[0] + ddx), r3(a.a[1] + ddz)]; b.b = [r3(a.b[0] + ddx), r3(a.b[1] + ddz)]; }
       else if (d.kind === 'handle'){ const b = s.floor.walls.find(x => x.id === d.wallId)!; const other = d.end === 'a' ? b.b : b.a; const np = snapDraw(pt, { floor: { walls: s.floor.walls.filter(w => w.id !== d.wallId) }, anchor: other, free: e.shiftKey }).p;
         if (d.end === 'a') b.a = np; else b.b = np; }
+      else if (d.kind === 'niche'){ const n = s.floor.niches?.find(x => x.id === d.id), g = n && nicheGeometry(s.floor, n); if (n && g){ const sAlong = (pt[0] - g.wall.a[0]) * g.ux + (pt[1] - g.wall.a[1]) * g.uz; n.offset = r3(Math.max(0, Math.min(g.L - n.width, snapG(sAlong - n.width / 2)))); } }
       else if (d.kind === 'opening'){ const w = s.floor.walls.find(x => x.id === d.wallId)!, op = w.openings.find(x => x.id === d.id)!, L = wallLength(w.a, w.b), ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
         const sAlong = (pt[0] - w.a[0]) * ux + (pt[1] - w.a[1]) * uz; op.offset = r3(Math.max(0, Math.min(L - op.width, snapG(sAlong - op.width / 2)))); }
     }, phase);
@@ -326,6 +330,11 @@ export default function PlanView(p: Props){
         <text x={mid[0]} y={mid[1] + fs * .3} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={sel ? '#B8432C' : '#3D343B'} stroke="#FFFDF8" strokeWidth={fs * .18} strokeLinejoin="round" paintOrder="stroke" pointerEvents="none">{wl(L)}</text>
         {sel && ([['a', w.a], ['b', w.b]] as const).map(([end, pt]) => <circle key={end} data-k="handle" data-w={w.id} data-end={end} data-id={w.id} cx={pt[0]} cy={pt[1]} r={fs * .6} fill="#fff" stroke="#8B6A45" strokeWidth={.03} style={{ cursor: 'grab' }} />)}
       </g>); })}
+    {/* Nișe: scobitura punctată în grosimea peretelui, pe fața ei, cu eticheta „N lățime×înălțime” */}
+    {(floor.niches || []).map(n => { const g = nicheGeometry(floor, n); if (!g) return null; const ns = isSel('niche', n.id), lx = g.center[0] + g.nx * fs * 1.1, lz = g.center[1] + g.nz * fs * 1.1;
+      return (<g key={n.id} data-k="niche" data-id={n.id} style={{ cursor: 'ew-resize' }}><title>{t('tool.niche')} ({Math.round(n.width * 100)}×{Math.round(n.height * 100)}×{Math.round(n.depth * 100)} cm)</title>
+        <path d={`M${g.quad.map(q => q.join(' ')).join('L')}Z`} fill={ns ? '#efe5d8' : '#FBFBF9'} stroke={ns ? '#8B6A45' : '#3a352f'} strokeWidth={ns ? .02 : .012} strokeDasharray=".05 .03" />
+        <text x={lx} y={lz + fs * .25} textAnchor="middle" fontSize={fs * .6} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={ns ? '#8B6A45' : '#3D343B'} stroke="#FFFDF8" strokeWidth={fs * .15} paintOrder="stroke" pointerEvents="none">N {Math.round(n.width * 100)}×{Math.round(n.height * 100)}</text></g>); })}
     {/* Grinzi sub tavan */}
     {(floor.beams || []).map(bm => {
       const bs = isSel('beam', bm.id);

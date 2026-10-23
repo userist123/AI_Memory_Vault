@@ -8,6 +8,7 @@ import { wallDimensions, roomSchedule } from './dimensions';
 import { doorSwing } from './doors';
 import { floors, levelView, stairGeometry, stairVoids, stairRect, SLAB } from './levels';
 import { wallLength } from './geometry';
+import { nicheGeometry } from './niches';
 
 export const DXF_LAYERS = [
   { name: 'WALLS', color: 7 }, { name: 'DOORS', color: 1 }, { name: 'WINDOWS', color: 5 }, { name: 'ROOMS', color: 3 },
@@ -110,6 +111,9 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
     for (const c of snap.floor.columns ?? []){ if (c.role !== 'shaft' && c.role !== 'boxing') continue; const x0 = c.x - c.w / 2, x1 = c.x + c.w / 2, z0 = c.z - c.d / 2, z1 = c.z + c.d / 2;
       poly('WALLS', [P(x0, z0), P(x1, z0), P(x1, z1), P(x0, z1)]);
       if (c.role === 'shaft'){ line('WALLS', P(x0, z0), P(x1, z1)); line('WALLS', P(x1, z0), P(x0, z1)); } }
+
+    // ---- nișe: conturul scobiturii în grosimea peretelui ----
+    for (const n of snap.floor.niches ?? []){ const g = nicheGeometry(snap.floor, n); if (g) poly('WALLS', g.quad.map(q => P(q[0], q[1]))); }
 
     // ---- mobilier ----
     for (const p of snap.placements){ const fp = footprintOf(cat, p); if (!fp) continue;
