@@ -450,6 +450,11 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   collapsed (check IsExpanded default = false) and the primary button is duplicated inside it; long page subtitle repeats the card; policies have 3 "open" buttons;
   (7) transfer: "Sursă (structura / departamentul)" vs "Destinație (structura)"; (8) monitor Bluetooth rows show producer "Microsoft" (driver provider) not the device maker
   - show "—" or the BT manufacturer if known; (9) real mouse clicks on Control "Înainte" twice did not register (UIA Invoke did) - recheck by hand.
+- ROUND-4 fixes DONE 4ccdec247 (worker; main re-ran App 771/0) + "perioada afișată mai sus" (main). Installed (exe F3647EBA…, hash = publish, self-test 0).
+  REAL PC VERIFIED 2026-10-23: toggle fixed (Simplu at same x in both levels); Home one sentence; anchor step short; Investigation Simplu no banner/no case
+  buttons; users/policies "Avansat" collapsed, one accent button; transfer "Sursă (structura)"/"Destinație (structura)"; monitor BT producer "—"; glossary
+  "188 de termeni". Item 9 cause: first REAL click on Control step 1 "Înainte" opens the provisional-scope dialog (by design), not a hit-test bug.
+  Flake: one App.Tests failure (name not captured) in 1 of 3 runs, then 771/0 twice - probably DeviceMonitorTests lost-event-source (worker saw it too). Track.
 - UIA driver notes: `type`/`key` call Focus() = main window; for a secondary window use `rxy`/`rtype`/`rkey` (no focus change). Driver must be started BEFORE send.ps1 (creates cmd/).
 - After that: C/D items of PORNIRE_INCEPATOR (table rows 4,7-10,12-20), publish + reinstall + real-PC screenshots (do NOT send `max` before sign-in), CI once, cleanup list for owner.
 - Next (was: owner answers): fix B items (BT fold is device-monitor = security-relevant -> Opus review), then C/D;
