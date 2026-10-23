@@ -61,7 +61,7 @@ two-way voice, video) are not applicable.
 | 1.4.11 Non-text contrast | Not evaluated manually | Focus rings and control borders designed to 3:1; not measured on every control. |
 | 1.4.12 Text spacing | Not evaluated manually | |
 | 1.4.13 Content on hover or focus | Supports | Tooltips are native `title`; popovers close with Escape. |
-| 2.1.1 Keyboard | Partially supports | All controls and the client link are keyboard operable; plan objects reachable with Tab, arrows move, R rotates. Drawing new geometry needs pointer or typed dimensions after a first point. |
+| 2.1.1 Keyboard | Partially supports | All controls and the client link are keyboard operable; every plan object is in a keyboard list ("Plan objects", first Tab stop of the plan) with generated descriptions, Enter selects and frames it; arrows move, R rotates. Drawing new geometry needs pointer or typed dimensions after a first point. |
 | 2.1.2 No keyboard trap | Supports | Modal dialogs trap focus by design and close with Escape (tests/dialog.test.ts). |
 | 2.1.4 Character key shortcuts | Partially supports | Single-key shortcuts (R, F, ?) only act when the plan has focus; no setting to turn them off. |
 | 2.2.1 Timing adjustable | Supports | No time limits. |
@@ -97,6 +97,5 @@ two-way voice, video) are not applicable.
 
 ## Known gaps and plan
 
-1. Text equivalent for the plan (UI/UX P3-16): a keyboard-navigable list of plan objects with generated descriptions.
-2. Manual tests with NVDA / VoiceOver / TalkBack and 200 % zoom; an external audit before public sale.
-3. Tagged PDF output for documents (server-side PDF generation).
+1. Manual tests with NVDA / VoiceOver / TalkBack and 200 % zoom; an external audit before public sale.
+2. Tagged PDF output for documents (server-side PDF generation).

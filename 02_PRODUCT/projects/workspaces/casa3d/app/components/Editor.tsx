@@ -75,6 +75,8 @@ import { editorIgnoresKey } from '@/lib/palette-keys';
 import { prepareShareImages } from '@/lib/share-images';
 import { withViewTransition } from '@/lib/motion';
 import StagePicker from './StagePicker';
+import PlanObjects from './PlanObjects';
+import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
 import { flushSync } from 'react-dom';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
@@ -375,6 +377,12 @@ export default function Editor({ id }: { id: string }){
     addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, []);
   // „gata” pe etapă, din datele proiectului (core/stage-progress.ts); se recalculează la fiecare modificare
   const done = useMemo(() => house ? stageDone({ house, warnings: advice.filter(a => a.severity !== 'TIP').length, shares: activeShares(shares), status: meta?.status ?? 'design' }) : null, [house, advice, shares, meta]);
+  // echivalentul text al planului (UI/UX P3-16): lista obiectelor și descrierea selecției, anunțată grupat (o mutare cu
+  // săgețile nu schimbă descrierea, deci nu produce zeci de anunțuri), în limba interfeței
+  const mirror = useMemo(() => snap && catalog ? describePlan(snap, catalog, { t, units, lang }) : [], [snap, catalog, t, units, lang]);
+  const selDesc = useMemo(() => describeSelection(mirror, sel), [mirror, sel]);
+  const [liveSel, setLiveSel] = useState('');
+  useEffect(() => { const tm = setTimeout(() => setLiveSel(selDesc ? t('mirror.selected', { label: selDesc }) : ''), 350); return () => clearTimeout(tm); }, [selDesc, t]);
   // hover-ul comun nu rămâne agățat când una din vederi dispare (schimbarea Plan / 3D)
   useEffect(() => { setHoverPid(null); }, [view]);
   // (hook înainte de orice return timpuriu) modul „document lat” al panoului, ținut minte în browser
@@ -413,6 +421,7 @@ export default function Editor({ id }: { id: string }){
   const toggleWide = () => setWideSide(w => { try { localStorage.setItem('casa3d.sideWide', w ? '0' : '1'); } catch { /* stocare blocată */ } return !w; });
   // selecția comună plan ↔ 3D (UI/UX P2-10): „Arată în 3D” deschide vederea 3D lângă plan și încadrează piesa;
   // „Arată în plan” face invers. Pe ecran îngust vederea se schimbă (nu încap amândouă).
+  const pickMirror = (i: MirrorItem) => { const s: Sel = i.kind === 'opening' ? { kind: 'opening', id: i.id, wallId: i.wallId! } : { kind: i.kind, id: i.id } as Sel; setSel(s); setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
   const frameIn3d = (pid: string) => { if (view === '2d') setView(compact ? '3d' : 'split'); setFrame3d(f => ({ id: pid, n: (f?.n ?? 0) + 1, at: Date.now() })); };
   const frameInPlan = (pid: string) => { const s: Sel = { kind: 'placement', id: pid }; setSel(s); if (view === '3d') setView(compact ? '2d' : 'split'); setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
   // schimbarea etapei animă doar panoul lateral (View Transition, lib/motion.ts); flushSync: DOM-ul nou trebuie să existe în callback
@@ -551,7 +560,7 @@ export default function Editor({ id }: { id: string }){
           {/* doar nivelurile sunt tab-uri; „+ Nivel” e o acțiune, în afara listei de tab-uri (ARIA: tablist conține doar tab) */}
           <div role="tablist" aria-label={t('level.tabs')} className="levelbar-tabs">{floors(house!).map((_, i) => <button key={i} role="tab" aria-selected={i === L} className="btn" onClick={() => goLevel(i)}>{levelName(i)}</button>)}</div>
           <button className="btn" onClick={onAddLevel} title={t('level.addTitle')} disabled={nLevels >= MAX_LEVELS}>{t('level.add')}</button></div>
-        {(view === '2d' || (view === 'split' && !compact)) && <div className="planwrap"><PlanView
+        {(view === '2d' || (view === 'split' && !compact)) && <div className="planwrap">{!preview && <PlanObjects groups={mirror} selected={sel} onPick={pickMirror} />}<PlanView
           onKey={onPlanKey}
           showTech={showTech && !preview}
           onTechAt={(x, z) => { if (!snap || preview) return; const pt = placeTechPoint(snap, techKind, x, z); if (!pt){ say(t('tech.outside')); return; } mutate(s => { s.tech = [...(s.tech || []), pt]; }); say(t('tech.placed', { rn: snap.floor.rooms.find(r => r.id === pt.roomId)?.name ?? '' })); }}
@@ -583,7 +592,7 @@ export default function Editor({ id }: { id: string }){
           onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })}
         />
           {!preview && !snap.floor.rooms.length && !snap.floor.walls.length && tool !== 'room' && tool !== 'wall' && <EmptyState className="plan-empty" title={t('empty.plan.title')} text={t('empty.plan.text')} action={{ label: t('empty.plan.action'), onClick: drawRooms }} />}
-          <p className="sr-only" aria-live="polite">{selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'column' ? t('editor.hintColumn') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
+          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'column' ? t('editor.hintColumn') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
         {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })}
           selectedId={!preview && sel?.kind === 'placement' ? sel.id : null} hoverId={preview ? null : hoverPid} onHover={setHoverPid} frame={frame3d ?? undefined} onFrameOther={frameInPlan} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}

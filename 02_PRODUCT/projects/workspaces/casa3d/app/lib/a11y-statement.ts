@@ -22,7 +22,7 @@ const ro: Statement = {
     ] },
     { h: 'Limitări cunoscute', list: [
       'Vederea 3D (desen WebGL) nu are un echivalent text complet. Aceleași informații sunt disponibile ca text: numele camerelor, suprafețele, materialele, piesele și bugetul, pe planșe și în documente.',
-      'Desenarea în planul 2D cere mouse, atingere sau cote tastate; obiectele existente se aleg cu Tab și au descrieri, dar o listă completă a obiectelor planului pentru cititoarele de ecran este în lucru.',
+      'Desenarea în planul 2D cere mouse, atingere sau cote tastate. Toate obiectele planului (camere, piese, pereți, uși, ferestre, structură) sunt într-o listă pentru tastatură și cititor de ecran, cu descrieri („Perete interior · 3,20 m · Hol, Bucătărie”), din care se aleg și se încadrează.',
       'Fișierele PDF obținute cu „Salvează PDF” sunt generate de browser și nu au structură etichetată (tagged PDF); paginile din care provin sunt accesibile.',
     ] },
     { h: 'Cum a fost evaluată', p: [`Autoevaluare și teste automate în codul aplicației, la data de ${STATEMENT_DATE}. Nu a fost făcut încă un audit extern.`] },
@@ -46,7 +46,7 @@ const en: Statement = {
     ] },
     { h: 'Known limitations', list: [
       'The 3D view (WebGL drawing) has no complete text equivalent. The same information is available as text: room names, areas, materials, pieces and budget, on the slides and in the documents.',
-      'Drawing in the 2D plan needs a mouse, touch or typed dimensions; existing objects can be reached with Tab and have descriptions, but a complete screen-reader list of the plan objects is in progress.',
+      'Drawing in the 2D plan needs a mouse, touch or typed dimensions. All plan objects (rooms, pieces, walls, doors, windows, structure) are in a keyboard and screen-reader list with descriptions (“Interior wall · 3.20 m · Hall, Kitchen”), from which they can be selected and framed.',
       'PDF files made with “Save PDF” are produced by the browser and are not tagged; the pages they come from are accessible.',
     ] },
     { h: 'How it was assessed', p: [`Self-assessment and automated tests in the application code, on ${STATEMENT_DATE}. No external audit yet.`] },
