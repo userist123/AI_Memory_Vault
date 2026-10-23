@@ -12,10 +12,15 @@ import { lighting, sunDirection, captureFileName, type TimeOfDay } from '@/core/
 import { parseViews, addView, removeView, viewsKey, clampCut, type SavedView } from '@/core/saved-views';
 import { askPrompt } from '@/lib/dialog';
 
-export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_VOIDS, projectId }: { snap: Snapshot; catalog: Catalog; mc?: MaterialsCatalog | null; onPick(id: string | null): void; voids?: PlateVoid[]; projectId?: string }){
+export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_VOIDS, projectId, selectedId = null, hoverId = null, onHover, frame, onFrameOther }: { snap: Snapshot; catalog: Catalog; mc?: MaterialsCatalog | null; onPick(id: string | null): void; voids?: PlateVoid[]; projectId?: string;
+  /** selecția comună cu planul (UI/UX P2-10): piesa selectată și cea de sub mouse (aici sau în plan); `frame.n` crește la fiecare cerere de încadrare */
+  selectedId?: string | null; hoverId?: string | null; onHover?(id: string | null): void; frame?: { id: string; n: number; at: number }; onFrameOther?(id: string): void }){
   const { t, lang } = usePrefs();
   const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string } | null>(null), [panoBusy, setPanoBusy] = useState(false), [panoMsg, setPanoMsg] = useState('');
-  const ref = useRef<HTMLCanvasElement>(null), v = useRef<any>(null), pickRef = useRef(onPick);
+  const ref = useRef<HTMLCanvasElement>(null), v = useRef<any>(null), pickRef = useRef(onPick), hoverRef = useRef(onHover); hoverRef.current = onHover;
+  const [xray, setXray] = useState(false);
+  // motorul se încarcă asincron: selecția și o cerere de încadrare venite înainte se aplică imediat după creare
+  const syncSel = useRef(() => {}); syncSel.current = () => { v.current?.setSelection?.(selectedId); v.current?.setHover?.(hoverId); if (frame && Date.now() - frame.at < 4000 && v.current?.frame?.(frame.id)){ setMode('house'); setRoom(null); } };
   const [mode, setMode] = useState<'house' | 'walk'>('house'), [err, setErr] = useState(''), [touch, setTouch] = useState(false);
   const [time, setTime] = useState<TimeOfDay>('day'), [azimuth, setAzimuth] = useState(135), [lightOpen, setLightOpen] = useState(false), [exportOpen, setExportOpen] = useState(false);
   // vederi salvate (pe proiect, în acest browser) și tăierea machetei (UI/UX P2-11)
@@ -33,12 +38,16 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   pickRef.current = onPick;
   const [doorsOpen, setDoorsOpen] = useState(true);
   useEffect(() => { let alive = true;
-    import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id), onContextLost: () => setErr('context-lost'), onContextRestored: () => { setErr(''); applyLight(); v.current?.setQuality?.(qRef.current); push(); } }); if (process.env.NODE_ENV !== 'production') (window as any).__casa3dViewer = v.current; applyLight(); v.current.setQuality?.(qRef.current); push(); } catch (e){ console.error('3D', e); setErr('webgl'); } });
+    import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id), onHover: (id: string | null) => hoverRef.current?.(id), onContextLost: () => setErr('context-lost'), onContextRestored: () => { setErr(''); applyLight(); v.current?.setQuality?.(qRef.current); push(); } }); if (process.env.NODE_ENV !== 'production') (window as any).__casa3dViewer = v.current; applyLight(); v.current.setQuality?.(qRef.current); push(); syncSel.current(); } catch (e){ console.error('3D', e); setErr('webgl'); } });
     return () => { alive = false; v.current?.dispose(); v.current = null; }; }, []); // eslint-disable-line
   const engineCat = useRef<ReturnType<typeof toEngineCatalog> | null>(null);
   function push(){ if (!v.current) return; engineCat.current ||= toEngineCatalog(catalog);
     const { plan, items } = viewerInput(snap, catalog, engineCat.current, { voids, mc }); v.current.setState(plan, items); }
   useEffect(push, [snap, mc]); // eslint-disable-line
+  useEffect(() => { v.current?.setSelection?.(selectedId); }, [selectedId, snap]);
+  useEffect(() => { v.current?.setHover?.(hoverId); }, [hoverId]);
+  useEffect(() => { if (frame && v.current?.frame?.(frame.id)){ setMode('house'); setRoom(null); } }, [frame?.n]); // eslint-disable-line
+  useEffect(() => { v.current?.setXray?.(xray); }, [xray]);
   function applyLight(){ const p = lighting(time, azimuth); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
   useEffect(applyLight, [time, azimuth]); // eslint-disable-line
   useEffect(() => { const q = v.current?.setQuality?.(quality); if (q && q !== quality) setQuality(q); }, [quality]); // eslint-disable-line
@@ -96,6 +105,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       {panoMsg && <span className="muted" role="status">{panoMsg}</span>}
       {/* un singur meniu „Afișare”: uși, tăierea machetei, lumină și calitate */}
       <button className="btn" aria-expanded={lightOpen} onClick={() => { setLightOpen(o => !o); setViewsOpen(false); }} title={t('viewer.displayTitle')} aria-label={t('viewer.displayTitle')}><Icon name="sun" size={16} /><span className="v3lbl" aria-hidden="true">{t('viewer.display')}</span></button>
+      {selectedId && onFrameOther && <button className="btn" title={t('viewer.showInPlanTitle')} onClick={() => onFrameOther(selectedId)}><Icon name="plan" size={16} /><span className="v3lbl">{t('viewer.showInPlan')}</span></button>}
       <div className="v3exp">
         <button className="btn" aria-expanded={exportOpen} aria-haspopup="menu" disabled={!!err} onClick={() => setExportOpen(o => !o)} title={t('viewer.exportTitle')} aria-label={t('viewer.exportTitle')}><Icon name="download" size={16} /><span className="v3lbl" aria-hidden="true">{t('viewer.export')}</span><Icon name={exportOpen ? 'chevronUp' : 'chevronDown'} size={14} /></button>
         {exportOpen && <div className="v3menu" role="menu" onKeyDown={e => { if (e.key === 'Escape') setExportOpen(false); }}>
@@ -107,6 +117,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
     </div>
     {lightOpen && <div className="v3light" role="group" aria-label={t('viewer.displayTitle')}>
       <button className="btn" aria-pressed={doorsOpen} title={t('viewer.doors')} onClick={() => { const n = !doorsOpen; setDoorsOpen(n); v.current?.setDoors(n); }}><Icon name="door" size={16} />{t('viewer.doorsOpen')}</button>
+      <button className="btn" aria-pressed={xray} title={t('viewer.xrayTitle')} onClick={() => setXray(x => !x)}>{t('viewer.xray')}</button>
       {mode === 'house' && <label className="f" style={{ minWidth: 160 }} title={t('viewer.cutTitle')}><span>{t('viewer.cut', { pct: cutPct })}</span><input type="range" min={12} max={100} value={cutPct} onChange={e => { const n = Number(e.target.value); setCutPct(n); v.current?.setCut?.(clampCut(n / 100)); }} /></label>}
       {(['day', 'evening', 'night'] as const).map(tod => <button key={tod} className="btn" aria-pressed={time === tod} onClick={() => setTime(tod)}>{t(tod === 'day' ? 'viewer.day' : tod === 'evening' ? 'viewer.evening' : 'viewer.night')}</button>)}
       <button className="btn" aria-pressed={quality === 'high'} onClick={() => setQuality(q => q === 'high' ? 'normal' : 'high')} title={t('viewer.qualityTitle')}>{t('viewer.quality')}</button>
