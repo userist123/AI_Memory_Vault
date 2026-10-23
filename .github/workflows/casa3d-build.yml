@@ -105,3 +105,21 @@ jobs:
         run: |
           if [ -f scripts/verify-f4.mjs ]; then node scripts/verify-f4.mjs; fi
           if [ -f scripts/verify-f5.mjs ]; then node scripts/verify-f5.mjs; fi
+      - name: Accessibility (axe, WCAG 2.2 AA) and slide layout checks
+        # UI/UX P3-17: the real pages in headless Chrome (preinstalled on ubuntu runners), no Playwright:
+        # scripts/check-a11y.mjs fails on any axe violation not listed with a reason in scripts/a11y-known.json,
+        # scripts/check-slides.mjs fails when presentation content leaves its 16:9 slide or overflows at 390 px.
+        if: steps.app.outputs.present == 'true' && runner.os == 'Linux'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
+        shell: bash
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+          PGLITE_DIR: ${{ runner.temp }}/casa3d-pglite
+        run: |
+          node scripts/run-local.mjs start -p 3399 > "$RUNNER_TEMP/casa3d-server.log" 2>&1 &
+          for i in $(seq 1 90); do curl -sf -o /dev/null http://127.0.0.1:3399/ && break; sleep 1; done
+          status=0
+          node scripts/check-a11y.mjs http://127.0.0.1:3399 || status=1
+          node scripts/check-slides.mjs http://127.0.0.1:3399 || status=1
+          if [ "$status" != 0 ]; then echo "--- server log ---"; tail -n 80 "$RUNNER_TEMP/casa3d-server.log"; fi
+          exit $status
