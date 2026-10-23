@@ -41,13 +41,41 @@ entities primitives. If they raise, ``generate_candidates`` raises, and
 ``RetrievalEngine.retrieve()`` MUST let that propagate rather than silently
 falling back to the pre-fix "first N by insertion order" behaviour and
 reporting success.
+
+Performance contract
+---------------------
+Every search scores every gated note, and folding + tokenizing each note's
+full text was ~90% of a search (measured 2026-10-23: 3.3 s of a 3.3 s search
+on a ~470-note vault). ``tokenize`` and ``entities`` are pure functions of
+their text, so note texts are memoized by ``(function, text)``: an edited
+note is a different text and therefore a different key, and a tokenizer
+swapped in at module level (``eval_tokenizer_experiment.arm_tokenizer``) is a
+different function and therefore never served another function's results.
+Results are stored immutable (tuple / frozenset). Exceptions are not cached,
+so the fail-closed contract above is unchanged. The query itself is not
+memoized.
 """
 from __future__ import annotations
 
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Sequence, Set, Tuple
+from functools import lru_cache
+from typing import Any, Callable, Dict, FrozenSet, List, Sequence, Set, Tuple
 
 from ..hybrid_retrieval import BM25, entities, tokenize
+
+# Bounded: a few times the vault's note count, so a full corpus stays resident
+# while a long-lived process that sees many edited versions cannot grow without limit.
+_DOC_CACHE_SIZE = 8192
+
+
+@lru_cache(maxsize=_DOC_CACHE_SIZE)
+def _doc_tokens(tokenize_fn: Callable[[str], List[str]], text: str) -> Tuple[str, ...]:
+    return tuple(tokenize_fn(text))
+
+
+@lru_cache(maxsize=_DOC_CACHE_SIZE)
+def _doc_entities(entities_fn: Callable[[str], set], text: str) -> FrozenSet[str]:
+    return frozenset(entities_fn(text))
 
 # Fusion constants. Deliberately kept as independent, locally-owned values
 # (not imported from HybridRetriever) so this production path never
@@ -114,7 +142,8 @@ def _note_text(note: Dict[str, Any]) -> str:
 def _note_entities(note: Dict[str, Any], text: str) -> Set[str]:
     tags = note.get("tags") or []
     tag_set = {str(t).lower() for t in tags}
-    return entities(text) | tag_set
+    # `entities` is looked up at call time so a module-level patch is honoured.
+    return set(_doc_entities(entities, text)) | tag_set
 
 
 def _rank_all(scores: Sequence[float], ids: Sequence[str]) -> List[int]:
@@ -152,7 +181,8 @@ def generate_candidates(
 
     ids = [str(n.get("id")) for n in notes]
     texts = [_note_text(n) for n in notes]
-    tokenized_docs = [tokenize(t) for t in texts]
+    # `tokenize` is looked up at call time so a module-level patch is honoured.
+    tokenized_docs = [_doc_tokens(tokenize, t) for t in texts]
     entity_sets = [_note_entities(n, t) for n, t in zip(notes, texts)]
 
     q_tokens = tokenize(query)
