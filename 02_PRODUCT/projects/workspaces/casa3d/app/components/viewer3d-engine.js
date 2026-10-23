@@ -698,7 +698,8 @@ function model(it){
     // placări pe pereți (tapet, riflaj, tencuială, cărămidă, piatră, faianță): un strat subțire pe fața dinspre cameră, tăiat în jurul ușilor și ferestrelor
     p.camere.forEach(r => { if (!r.fin || !r.fin.walls || !r.fin.walls.length) return;
       r.fin.walls.forEach((wv, wi) => { const horiz = wv.side === 'N' || wv.side === 'S', edge = { N: r.z0, S: r.z1, W: r.x0, E: r.x1 }[wv.side], inward = wv.side === 'N' || wv.side === 'W' ? 1 : -1;
-        const lo = (horiz ? r.x0 : r.z0) + .075, hi = (horiz ? r.x1 : r.z1) - .075, bottom = Math.max(0, Math.min(H, wv.fromM || 0)), top = wv.kind === 'rail' ? Math.min(H, bottom + .045) : Math.min(H, wv.heightM || H); if (hi - lo < .05 || top - bottom < .005) return;
+        // porțiunea pe lungime (`along`, m de la colțul x0/z0): placarea se taie la ea; lipsă = toată latura
+        const base = horiz ? r.x0 : r.z0, lo = Math.max(base + .075, wv.along ? base + wv.along[0] : -Infinity), hi = Math.min((horiz ? r.x1 : r.z1) - .075, wv.along ? base + wv.along[1] : Infinity), bottom = Math.max(0, Math.min(H, wv.fromM || 0)), top = wv.kind === 'rail' ? Math.min(H, bottom + .045) : Math.min(H, wv.heightM || H); if (hi - lo < .05 || top - bottom < .005) return;
         // pereții pe latura asta: grosimea (fața camerei) și golurile, în coordonata de-a lungul laturii
         let th = .15, found = false; const holes = [];
         p.pereti.forEach(wl => { const [ax, az] = wl.a, [bx, bz] = wl.b, h2 = Math.abs(az - bz) < 1e-6, v2 = Math.abs(ax - bx) < 1e-6;
@@ -721,6 +722,8 @@ function model(it){
             for (let k = 0; k < n; k++){ const sm = s0 + pw * (k + .5), px = horiz ? sm : off + inward * .006, pz = horiz ? off + inward * .006 : sm; box(pw - .1, Math.max(.05, hgt - .16), .006, pm, px, (y0 + y1) / 2, pz, rot, walls).castShadow = false; }
             box(len, .03, depth + .012, pm, x, y1 - .015, z, rot, walls).castShadow = false; return; }
           if (kind === 'slats'){ box(len, hgt, .006, slatBack, horiz ? mid : edge + inward * (th / 2 + .004), (y0 + y1) / 2, horiz ? edge + inward * (th / 2 + .004) : mid, rot, walls).castShadow = false;
+            // lamele verticale (implicit) sau orizontale (`vertical: false`), la pas de 5 cm
+            if (wv.vertical === false){ for (let sy = y0 + .02; sy < y1 - .01; sy += .05) box(len, .027, depth, slatMat, x, sy + .0135, z, rot, walls).castShadow = false; return; }
             for (let sx = s0 + .02; sx < s1 - .01; sx += .05){ const px = horiz ? sx : off, pz = horiz ? off : sx; box(.027, hgt, depth, slatMat, px, (y0 + y1) / 2, pz, rot, walls).castShadow = false; } return; }
           box(len, hgt, depth, mkMat(len, hgt, s0, y0), x, (y0 + y1) / 2, z, rot, walls).castShadow = false; };
         // benzi verticale între marginile golurilor; în fiecare bandă, intervalele de înălțime rămase după scăderea golurilor
@@ -816,7 +819,8 @@ function model(it){
     for (const it of items){ const v = it.variant; if (!v || !v.w) continue; const h = v.h / 100, d = v.d / 100, room = plan.camere.find(c => it.x > c.x0 && it.x < c.x1 && it.z > c.z0 && it.z < c.z1); if (!room) continue;
       const [bx, bz] = back(it.rotation), side = Math.abs(bx) > .5 ? (bx > 0 ? 'E' : 'W') : (bz > 0 ? 'S' : 'N');
       // pe un perete placat (riflaj, cărămidă, piatră, lambriu) tabloul stă în fața placării
-      const clad = room.fin && room.fin.walls && room.fin.walls.some(w => w.side === side && ['slats', 'brick', 'stone', 'panel', 'tile'].includes(w.kind)) ? .06 : 0, k = .02 + clad;
+      const u = side === 'N' || side === 'S' ? it.x - room.x0 : it.z - room.z0;
+      const clad = room.fin && room.fin.walls && room.fin.walls.some(w => w.side === side && ['slats', 'brick', 'stone', 'panel', 'tile'].includes(w.kind) && (!w.along || (u > w.along[0] && u < w.along[1]))) ? .06 : 0, k = .02 + clad;
       const wallAt = () => Math.abs(bx) > .5 ? [bx > 0 ? room.x1 - k : room.x0 + k, it.z] : [it.x, bz > 0 ? room.z1 - k : room.z0 + k];
       if (it.group === 'canapea' || it.group === 'pat'){ const [wx, wz] = wallAt(); put('art', wx, it.group === 'pat' ? 1.25 : 1.32, wz, it.rotation); }
       else if (it.group === 'comodaTv') put('vase', it.x - Math.cos(it.rotation) * (v.w / 100) * .36, h, it.z + Math.sin(it.rotation) * (v.w / 100) * .36, it.rotation);

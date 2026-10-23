@@ -5,7 +5,7 @@
 // Aici e doar geometria; desenul SVG e în components/Drawings.tsx.
 import type { Catalog, Floor, MaterialsCatalog, Room, Snapshot, WallFeature } from './types';
 import { finishesOf } from './boq';
-import { ceilingOf, layoutOf, materialOf, pieceSizeCm, bandOf, bathTiles } from './finishes';
+import { ceilingOf, layoutOf, materialOf, pieceSizeCm, bandOf, bathTiles, alongOf } from './finishes';
 import { fixturePoints, fixtureCount, type FixturePoint } from './fixtures';
 import { lightReport, autoLightCount } from './light-design';
 import { DOOR_HEIGHT } from './rules.boq';
@@ -56,7 +56,8 @@ export function floorPlan(snap: Snapshot, mc: MaterialsCatalog, fl: Floor): Floo
 
 // ---------- elevații ----------
 export interface ElevOpening { kind: 'door' | 'window'; u0: number; u1: number; y0: number; y1: number }
-export interface ElevBand { kind: WallFeature['kind'] | 'walltile'; y0: number; y1: number; material: string; name: string; color: string | null }
+/** `u0`–`u1` = porțiunea pe lungime, în coordonata elevației (de la stânga la dreapta, privind peretele din cameră). */
+export interface ElevBand { kind: WallFeature['kind'] | 'walltile'; y0: number; y1: number; u0: number; u1: number; material: string; name: string; color: string | null }
 export interface Elevation { side: Side; lengthM: number; heightM: number; openings: ElevOpening[]; bands: ElevBand[]; baseboardM: number | null; sconces: { u: number; y: number }[]; ceilingDropM: number }
 /** Poziția de-a lungul peretelui, de la stânga la dreapta, privind peretele din cameră. */
 export function alongWall(r: Room['rect'], side: Side, x: number, z: number): number {
@@ -74,9 +75,11 @@ export function wallElevations(snap: Snapshot, mc: MaterialsCatalog, cat: Catalo
         const ua = alongWall(r, side, pa[0]!, pa[1]!), ub = alongWall(r, side, pb[0]!, pb[1]!), u0 = Math.max(0, Math.min(ua, ub)), u1 = Math.min(len, Math.max(ua, ub)); if (u1 - u0 < .01) continue;
         const sill = o.kind === 'window' ? o.sill ?? .9 : 0, top = o.kind === 'window' ? sill + (o.height ?? 1.3) : Math.min(H, DOOR_HEIGHT);
         openings.push({ kind: o.kind === 'door' ? 'door' : 'window', u0, u1, y0: sill, y1: Math.min(H, top) }); } }
-    const bands: ElevBand[] = [...(f.wallFeatures || []).filter(w => w.side === side), ...tiles.filter(w => w.side === side)].map(w => { const m = materialOf(mc, w.material), [y0, y1] = bandOf(w, H), tile = tiles.includes(w);
-      return { kind: tile ? 'walltile' as const : w.kind, y0, y1: w.kind === 'rail' ? y0 + (m?.specs?.sizeCm?.[1] ?? 4) / 100 : y1, material: w.material, name: m?.name ?? w.material, color: w.color ?? m?.specs?.color ?? (tile ? tileM?.specs?.color ?? null : null) }; })
-      .sort((a, b) => a.y0 - b.y0);
+    // porțiunea se măsoară de la colțul x0/z0; elevația laturilor S și V se citește invers (de la x1/z1)
+    const flip = side === 'S' || side === 'W', r3 = (v: number) => Math.round(v * 1000) / 1000;
+    const bands: ElevBand[] = [...(f.wallFeatures || []).filter(w => w.side === side), ...tiles.filter(w => w.side === side)].map(w => { const m = materialOf(mc, w.material), [y0, y1] = bandOf(w, H), tile = tiles.includes(w), [a, b] = alongOf(w, len);
+      return { kind: tile ? 'walltile' as const : w.kind, y0, y1: w.kind === 'rail' ? y0 + (m?.specs?.sizeCm?.[1] ?? 4) / 100 : y1, u0: r3(flip ? len - b : a), u1: r3(flip ? len - a : b), material: w.material, name: m?.name ?? w.material, color: w.color ?? m?.specs?.color ?? (tile ? tileM?.specs?.color ?? null : null) }; })
+      .sort((a, b) => a.y0 - b.y0 || a.u0 - b.u0);
     const sconces = fixtures.filter(p => (horiz ? Math.abs(p.z - edge) : Math.abs(p.x - edge)) < .2).map(p => ({ u: Math.round(alongWall(r, side, p.x, p.z) * 1000) / 1000, y: p.y }));
     return { side, lengthM: Math.round(len * 1000) / 1000, heightM: H, openings: openings.sort((a, b) => a.u0 - b.u0), bands, baseboardM: !wet && base ? (base.specs?.sizeCm?.[1] ?? Number(base.name.match(/x (\d{2,3}) x \d+ mm/)?.[1] ?? 60) / 10) / 100 : null, sconces,
       ceilingDropM: c.type === 'flat' ? 0 : c.dropCm / 100 }; });

@@ -68,9 +68,9 @@ export type MaterialCategory = 'parquet' | 'floor_tile' | 'wall_tile' | 'paint' 
 export type FloorPattern = 'straight' | 'brick' | 'third' | 'diagonal' | 'herringbone' | 'chevron' | 'checker';
 /** Date tehnice citite pe pagina produsului; lipsa unei valori înseamnă „nedeclarat”, nu „bun”. */
 export interface MaterialSpecs { sizeCm?: [number, number]; rectified?: boolean; slip?: 'R9' | 'R10' | 'R11' | 'R12' | 'R13'; ip?: string; cctK?: number; lumens?: number;
-  roll?: { widthM: number; lengthM: number; repeatCm: number }; patterns?: FloorPattern[]; wet?: boolean; pieceM?: number; color?: string;
+  roll?: { widthM: number; lengthM: number; repeatCm: number; match?: 'free' | 'straight' | 'offset' }; patterns?: FloorPattern[]; wet?: boolean; pieceM?: number; color?: string;
   pieces?: number; opacity?: number; blind?: 'roller' | 'roman' | 'venetian'; door?: 'plain' | 'panel' | 'glass'; wood?: boolean; doorTypes?: DoorType[]; system?: 'sliding' | 'pocket' | 'folding';
-  thicknessMm?: number; finish?: string; material?: string; diameterCm?: number }
+  thicknessMm?: number; finish?: string; material?: string; diameterCm?: number; effect?: PlasterEffect }
 export interface Material { id: string; category: MaterialCategory; name: string; supplier: string; unit: 'm2' | 'ml' | 'L' | 'kg' | 'buc'; unitPrice: number;
   pack?: { size: number; label: string; price?: number }; coverage?: number; consumption?: number; sourceUrl: string | null; verificationType: string; confidence: Confidence; note?: string; specs?: MaterialSpecs; verifiedAt?: string }
 export interface LaborRate { id: string; label: string; unit: 'm2' | 'ml'; low: number; expected: number; high: number; sources: { name: string; url: string }[]; confidence: Confidence }
@@ -81,7 +81,12 @@ export type WallFeatureKind = 'wallpaper' | 'slats' | 'plaster' | 'brick' | 'sto
 /** O bandă pe un perete al camerei (latura N/S/V/E): de la `fromM` (lipsă = pardoseala) până la `heightM` (lipsă = tavanul).
  *  Pe același perete pot sta mai multe benzi fără să se suprapună (ex. lambriu 0–1,1 m, baghetă la 1,1 m, tapet deasupra);
  *  `rail` e o baghetă orizontală la înălțimea `heightM`; `paint` e o vopsea de altă culoare pe banda ei. */
-export interface WallFeature { side: 'N' | 'S' | 'W' | 'E'; kind: WallFeatureKind; material: string; color?: string; fromM?: number; heightM?: number }
+/** Porțiunea pe lungime: `alongFromM`/`alongToM` (m) se măsoară pe latura camerei de la colțul cu x0 (laturile N și S) sau z0 (V și E);
+ *  lipsa lor înseamnă toată latura. `vertical` doar la `slats`: lipsă = lamele verticale, `false` = orizontale.
+ *  `effect` doar la `plaster`: vopseaua decorativă cu efect (manopera și textura 3D depind de efect). */
+export type PlasterEffect = 'venetian' | 'concrete' | 'microcement' | 'travertine' | 'silk' | 'textured';
+export interface WallFeature { side: 'N' | 'S' | 'W' | 'E'; kind: WallFeatureKind; material: string; color?: string; fromM?: number; heightM?: number;
+  alongFromM?: number; alongToM?: number; vertical?: boolean; effect?: PlasterEffect }
 /** Tavan: drept (vopsit), fals din gips-carton coborât cu `dropCm`, sau fals cu scafă luminoasă pe contur. */
 export interface CeilingFinish { type: 'flat' | 'drop' | 'cove'; dropCm?: number; coveCm?: number; led?: string | null; cornice?: string | null; spot?: string | null; spots?: number }
 export interface RoomFinishes { floor: string; wallPaint: string; wallTile?: string | null; baseboard?: string | null; light: string; lights?: number;
