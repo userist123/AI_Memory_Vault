@@ -1008,6 +1008,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-uiux.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
     }
   ]
 }
