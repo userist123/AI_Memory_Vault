@@ -1,7 +1,8 @@
 // Limitele elementelor de plan (structură, nișe, adnotări): o singură sursă pentru interfață (câmpurile din panou,
 // uneltele) și pentru server (checkSnapshot din lib/repo.ts). Un client cu o limită mai largă decât serverul ar bloca
 // salvarea întregului proiect (400), de aceea ambele citesc de aici. Funcții pure, fără I/O.
-import type { Annotation, Beam, Column, Floor, GlassWall, Niche } from './types';
+import type { Annotation, Beam, Column, DoorType, Floor, GlassWall, Niche } from './types';
+import { DOOR_TYPES, DOOR_TYPE_RULES } from './rules';
 
 export const PLAN_LIMITS = {
   coordM: 1000,
@@ -91,7 +92,17 @@ export function sanitizeFloorElements(f: Floor & Record<string, any>): void {
   const ns = list(f.niches, L.niche.max, 'Nișele'); set('niches', ns && ns.map(sanitizeNiche).filter(n => walls.has(n.wallId)));
   const an = list(f.annotations, L.annotation.max, 'Adnotările'); set('annotations', an && an.map(sanitizeAnnotation).filter((x): x is Annotation => !!x));
   for (const w of f.walls || []) for (const o of w.openings || []){
-    if (o.passage == null){ delete o.passage; continue; }
-    if (o.passage !== true || o.kind !== 'door') bad('Golul de trecere este invalid (doar pe un gol de ușă).');
-    if (!within(o.width, L.passage.widthMinM, L.passage.widthMaxM)) bad(`Golul de trecere trebuie să aibă între ${L.passage.widthMinM * 100} și ${L.passage.widthMaxM * 100} cm.`); }
+    if (o.passage == null) delete o.passage;
+    else { if (o.passage !== true || o.kind !== 'door') bad('Golul de trecere este invalid (doar pe un gol de ușă).');
+      if (!within(o.width, L.passage.widthMinM, L.passage.widthMaxM)) bad(`Golul de trecere trebuie să aibă între ${L.passage.widthMinM * 100} și ${L.passage.widthMaxM * 100} cm.`);
+      // trecerea câștigă: n-are foaie, deci nici tip, nici filomuro (se șterg, nu se resping, ca un client vechi să poată salva)
+      delete o.doorType; delete o.flush; continue; }
+    sanitizeDoorType(o); }
+}
+/** Tipul ușii și filomuro pe un gol (fără trecere): doar pe ușă, din enumerare; lățimea pe tip se verifică doar când tipul e ales. */
+export function sanitizeDoorType(o: any): void {
+  if (o.doorType == null) delete o.doorType;
+  else { if (o.kind !== 'door' || !(DOOR_TYPES as readonly string[]).includes(o.doorType)) bad('Tipul ușii este invalid.');
+    const r = DOOR_TYPE_RULES[o.doorType as DoorType]; if (!within(o.width, r.minM, r.maxM)) bad(`Ușa de acest tip trebuie să aibă între ${Math.round(r.minM * 100)} și ${Math.round(r.maxM * 100)} cm.`); }
+  if (o.flush == null) delete o.flush; else if (o.flush !== true || o.kind !== 'door') bad('Ușa ascunsă (filomuro) este invalidă.');
 }

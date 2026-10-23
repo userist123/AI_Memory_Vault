@@ -15,6 +15,7 @@ import { pinchViewBox, midpoint, distance, type Pt } from '@/core/gesture';
 import { stairGeometry, SLAB } from '@/core/levels';
 import { planSymbol, symbolAngle } from '@/core/plan-symbols';
 import { doorSwing } from '@/core/doors';
+import { doorSymbol } from '@/core/door-symbols';
 import { nicheGeometry, nicheSide } from '@/core/niches';
 import { dimGeometry, dimOffsetAt, dimOk, textHeight } from '@/core/annotations';
 import { PLAN_DEFAULTS, PLAN_LIMITS, cleanPlanText } from '@/core/plan-limits';
@@ -347,10 +348,11 @@ export default function PlanView(p: Props){
               // golul de trecere: fără foaie și fără arc, doar tocurile (linii scurte peste grosime) și buiandrugul punctat
               : o.passage ? <g pointerEvents="none" stroke="#3a352f"><path d={`M${a[0] - nx * w.thickness / 2} ${a[1] - nz * w.thickness / 2}L${a[0] + nx * w.thickness / 2} ${a[1] + nz * w.thickness / 2}M${b[0] - nx * w.thickness / 2} ${b[1] - nz * w.thickness / 2}L${b[0] + nx * w.thickness / 2} ${b[1] + nz * w.thickness / 2}`} strokeWidth={.02} />
                 <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} strokeWidth={.012} strokeDasharray=".08 .05" /></g>
-              : (() => { const sw = doorSwing(floor, floor.walls.indexOf(w), w.openings.indexOf(o)), H = sw.hinge === 'end' ? b : a, E = sw.hinge === 'end' ? a : b, sx = nx * sw.swing, sz = nz * sw.swing;
-                // foaia deschisă (linie) și arcul de deschidere, de partea și cu balamaua alese
-                const Px = H[0] + sx * o.width, Pz = H[1] + sz * o.width, cr = (Px - H[0]) * (E[1] - H[1]) - (Pz - H[1]) * (E[0] - H[0]);
-                return <path d={`M${H[0]} ${H[1]} L${Px} ${Pz} A${o.width} ${o.width} 0 0 ${cr > 0 ? 1 : 0} ${E[0]} ${E[1]}`} fill="none" stroke="#3a352f" strokeWidth={.012} pointerEvents="none" />; })()}</g>); })}
+              : (() => { const sw = doorSwing(floor, floor.walls.indexOf(w), w.openings.indexOf(o));
+                // simbolul pe tip (core/door-symbols.ts): foaia și arcul la batantă, șina la glisantă, caseta punctată, zigzagul, pivotul
+                const sym = doorSymbol({ a: a as [number, number], b: b as [number, number], thickness: w.thickness, hinge: sw.hinge, swing: sw.swing, type: o.doorType, flush: o.flush });
+                return <g pointerEvents="none" data-door-type={sym.type}>{sym.paths.map((q, i) => <path key={i} d={q.d} fill={q.fill ? '#3a352f' : 'none'} fillOpacity={q.fill ? .35 : undefined} stroke="#3a352f" strokeWidth={.012} strokeDasharray={q.dash ? '.05 .035' : undefined} />)}
+                  {sym.label && <text x={sym.label.x} y={sym.label.z + fs * .25} textAnchor="middle" fontSize={fs * .7} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#3a352f">{sym.label.text}</text>}</g>; })()}</g>); })}
         <text x={mid[0]} y={mid[1] + fs * .3} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={sel ? '#B8432C' : '#3D343B'} stroke="#FFFDF8" strokeWidth={fs * .18} strokeLinejoin="round" paintOrder="stroke" pointerEvents="none">{wl(L)}</text>
         {sel && ([['a', w.a], ['b', w.b]] as const).map(([end, pt]) => <circle key={end} data-k="handle" data-w={w.id} data-end={end} data-id={w.id} cx={pt[0]} cy={pt[1]} r={fs * .6} fill="#fff" stroke="#8B6A45" strokeWidth={.03} style={{ cursor: 'grab' }} />)}
       </g>); })}

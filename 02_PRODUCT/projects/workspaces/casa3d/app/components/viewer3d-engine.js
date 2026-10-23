@@ -504,7 +504,9 @@ function model(it){
 
   // ---------- casa (reconstruită la fiecare schimbare de plan) ----------
   let house = new THREE.Group(), ceilings = new THREE.Group(), walls = new THREE.Group(), furniture = new THREE.Group(); scene.add(house, furniture);
-  let doorLeaves = [], doorsOpen = true; // ușile cu balamale: deschise/închise, animate în bucla de randare
+  let doorLeaves = [], doorsOpen = true;
+  // poziția unei foi la deschiderea e (0..1): rotită (batantă, dublă, pivotantă), alunecată spre parcare (glisantă, în perete) sau strânsă (pliantă)
+  const setLeaf = (d, e) => { if (d.kind === 'slide' || d.kind === 'pocket') d.pivot.position.set(d.bx + d.sx * e, 0, d.bz + d.sz * e); else if (d.kind === 'fold') d.pivot.scale.x = 1 - .78 * e; else d.pivot.rotation.y = d.closed + d.maxOpen * e; }; // ușile cu balamale: deschise/închise, animate în bucla de randare
   let colliders = [], blockers = [], structBlockers = [], plan = null, W = 1, D = 1, C = new THREE.Vector3(), pickables = [];
   // centrul orbitei machetei: casa, sau piesa încadrată din plan (UI/UX P2-10); F alunecă spre FT
   const F = new THREE.Vector3(), FT = new THREE.Vector3(); let framed = false, fInit = false;
@@ -618,30 +620,45 @@ function model(it){
       gs.forEach(g => { seg(q, g.la, 0, H);
         if (g.tip === 'usa'){ const dh = Math.min(H - .05, g.h || 2.1), fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat; seg(g.la, g.la + g.l, dh, H); const m = g.la + g.l / 2;
           // golul de trecere: doar buiandrugul de deasupra, fără toc și fără foaie
-          if (!g.trecere){ [g.la, g.la + g.l].forEach(s => { box(.05, dh, th + .02, fm, ax + ux * s, dh / 2, az + uz * s, rot, walls).castShadow = false; }); box(g.l - .002, .05, th + .016, fm, ax + ux * m, dh, az + uz * m, rot, walls).castShadow = false;
+          // tipul ușii (core/door-geometry.ts): batantă, dublă, glisantă pe perete, în perete (casetă), pliantă, pivotantă; filomuro = fără toc și pervaz la vedere
+          if (!g.trecere){ const tip = g.tipUsa || 'swing', flush = !!g.filomuro;
+          if (!flush){ [g.la, g.la + g.l].forEach(s => { box(.05, dh, th + .02, fm, ax + ux * s, dh / 2, az + uz * s, rot, walls).castShadow = false; }); box(g.l - .002, .05, th + .016, fm, ax + ux * m, dh, az + uz * m, rot, walls).castShadow = false; }
           // foaia ușii pe balamale reale: capătul și partea din plan (core/doors.ts doorSwing), deschisă sau închisă (clic pe ușă)
           const sw = g.sw || { hinge: 'start', swing: ((mx0, mz0) => { const cmx = (pMinX + pMaxX) / 2, cmz = (pMinZ + pMaxZ) / 2; return ((mx0 - cmx) * nx + (mz0 - cmz) * nz) > 0 ? -1 : 1; })(ax + ux * m, az + uz * m) };
-          const atStart = sw.hinge !== 'end', hs = atStart ? g.la + .025 : g.la + g.l - .025, hx = ax + ux * hs, hz = az + uz * hs, lw = Math.max(.3, g.l - .05), lh = dh - .012;
-          const cdx = atStart ? ux : -ux, cdz = atStart ? uz : -uz, odx = nx * sw.swing, odz = nz * sw.swing, faceOff = sw.swing * (th / 2 - .03);
-          const us = g.usa, lm = us && us.color ? (us.wood ? MAT('woodV', us.color) : MAT('paint', us.color)) : (g.intrare ? entranceMat : leafMat), hm = us && us.handle ? MAT('chrome', us.handle) : handleMat;
-          // pivotul: pe linia balamalelor, la fața peretelui dinspre care se deschide; x local = de-a lungul foii
-          const pivot = new THREE.Group(); pivot.position.set(hx + nx * faceOff, 0, hz + nz * faceOff); walls.add(pivot);
-          const P = (bw, bh, bd, x, y, z, mat, shadow = true) => { const o = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), mat); o.position.set(x, y, z); o.castShadow = shadow; o.receiveShadow = true; pivot.add(o); return o; };
-          const lt = g.intrare ? .07 : .04; P(lw, lh, lt, lw / 2, lh / 2 + .006, 0, lm);
-          if (us && us.style === 'glass') [1, -1].forEach(sg => P(lw * .55, lh * .55, .006, lw / 2, lh * .58, sg * (lt / 2 + .002), MAT('frost', '#e9ecec'), false));
-          if (us && us.style === 'panel' || g.intrare) [1, -1].forEach(sg => [lh * .72, lh * .3].forEach((y, i) => P(lw * .66, lh * (i ? .36 : .3), .006, lw / 2, y, sg * (lt / 2 + .003), lm, false)));
-          // mâner cu rozetă pe ambele fețe, balamale vizibile, vizor la ușa de intrare
-          [1, -1].forEach(sg => { const z0 = sg * (lt / 2 + .006); P(.05, .05, .008, lw - .07, 1.02, z0, hm, false); const lev = P(.13, .018, .018, lw - .07 - .05, 1.02, sg * (lt / 2 + .03), hm, false); lev.rotation.x = 0;
-            P(.018, .03, .02, lw - .07, 1.02, sg * (lt / 2 + .016), hm, false); P(.035, .09, .008, lw - .07, .9, z0, hm, false); });
-          [.25, lh - .25].forEach(y => P(.012, .1, lt + .008, .006, y, 0, MAT('metal', '#8f8a80'), false));
-          if (g.intrare) [1, -1].forEach(sg => { const o = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .01, 12), MAT('chrome', '#bdbdbd')); o.rotation.x = Math.PI / 2; o.position.set(lw / 2, 1.55, sg * (lt / 2 + .004)); pivot.add(o); });
-          const closed = -Math.atan2(cdz, cdx), openDir = Math.atan2(odz, odx), sweep = -(openDir - Math.atan2(cdz, cdx));
-          // unghiul de deschidere: de la direcția închisă spre partea de deschidere, cu cel mai scurt sens
-          const dAng = Math.atan2(Math.sin(sweep), Math.cos(sweep)), maxOpen = Math.sign(dAng) * Math.PI * .48;
-          pivot.rotation.y = closed + (doorsOpen ? maxOpen : 0); doorLeaves.push({ pivot, closed, maxOpen, w: lw, open: doorsOpen ? 1 : 0, target: doorsOpen ? 1 : 0 });
-          pivot.traverse(o => { if (o.isMesh) o.userData.door = doorLeaves.length - 1; });
-          // pervazuri (ancadramente) pe ambele fețe ale golului
-          [1, -1].forEach(sg => { const k = th / 2 + .008, ex = ax + nx * sg * k, ez = az + nz * sg * k;
+          const us = g.usa, lm = us && us.color ? (us.wood ? MAT('woodV', us.color) : MAT('paint', us.color)) : (g.intrare ? entranceMat : leafMat), hm = us && us.handle ? MAT('chrome', us.handle) : handleMat, lh = dh - .012;
+          // o foaie: `atStart` = balamaua (sau capătul spre care parchează / se strânge) la începutul segmentului [la0, la0 + span]; `kind`:
+          // null = se rotește (batantă, dublă), 'pivot' = se rotește în jurul unui pivot la w/4, 'slide' = alunecă pe fața peretelui, 'pocket' = intră în perete, 'fold' = se strânge
+          const leaf = (atStart, la0, span, kind) => { const hs = atStart ? la0 + .025 : la0 + span - .025, lw = Math.max(.15, span - .05);
+            const cdx = atStart ? ux : -ux, cdz = atStart ? uz : -uz, odx = nx * sw.swing, odz = nz * sw.swing, pv = kind === 'pivot' ? lw / 4 : 0;
+            const faceOff = kind === 'slide' ? sw.swing * (th / 2 + .03) : kind === 'pocket' || kind === 'pivot' ? 0 : sw.swing * (th / 2 - .03);
+            const hx = ax + ux * hs + cdx * pv, hz = az + uz * hs + cdz * pv;
+            // pivotul: pe linia balamalelor, la fața peretelui dinspre care se deschide; x local = de-a lungul foii
+            const pivot = new THREE.Group(); pivot.position.set(hx + nx * faceOff, 0, hz + nz * faceOff); walls.add(pivot); const inner = new THREE.Group(); inner.position.x = -pv; pivot.add(inner);
+            const P = (bw, bh, bd, x, y, z, mat, shadow = true) => { const o = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), mat); o.position.set(x, y, z); o.castShadow = shadow; o.receiveShadow = true; inner.add(o); return o; };
+            const lt = g.intrare ? .07 : .04; P(lw, lh, lt, lw / 2, lh / 2 + .006, 0, lm);
+            if (us && us.style === 'glass') [1, -1].forEach(sg => P(lw * .55, lh * .55, .006, lw / 2, lh * .58, sg * (lt / 2 + .002), MAT('frost', '#e9ecec'), false));
+            if (us && us.style === 'panel' || g.intrare) [1, -1].forEach(sg => [lh * .72, lh * .3].forEach((y, i) => P(lw * .66, lh * (i ? .36 : .3), .006, lw / 2, y, sg * (lt / 2 + .003), lm, false)));
+            if (kind === 'slide' || kind === 'pocket') [1, -1].forEach(sg => P(.025, .16, .004, lw - .06, 1.02, sg * (lt / 2 + .002), hm, false));   // mâner îngropat (foaia trece pe lângă perete sau intră în el)
+            else {
+              // mâner cu rozetă pe ambele fețe, balamale vizibile, vizor la ușa de intrare
+              [1, -1].forEach(sg => { const z0 = sg * (lt / 2 + .006); P(.05, .05, .008, lw - .07, 1.02, z0, hm, false); const lev = P(.13, .018, .018, lw - .07 - .05, 1.02, sg * (lt / 2 + .03), hm, false); lev.rotation.x = 0;
+                P(.018, .03, .02, lw - .07, 1.02, sg * (lt / 2 + .016), hm, false); P(.035, .09, .008, lw - .07, .9, z0, hm, false); });
+              if (kind !== 'pivot' && !flush) [.25, lh - .25].forEach(y => P(.012, .1, lt + .008, .006, y, 0, MAT('metal', '#8f8a80'), false)); }
+            if (g.intrare) [1, -1].forEach(sg => { const o = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .01, 12), MAT('chrome', '#bdbdbd')); o.rotation.x = Math.PI / 2; o.position.set(lw / 2, 1.55, sg * (lt / 2 + .004)); inner.add(o); });
+            const closed = -Math.atan2(cdz, cdx), openDir = Math.atan2(odz, odx), sweep = -(openDir - Math.atan2(cdz, cdx));
+            // unghiul de deschidere: de la direcția închisă spre partea de deschidere, cu cel mai scurt sens; glisantele nu se rotesc, ci alunecă spre capătul de parcare
+            const dAng = Math.atan2(Math.sin(sweep), Math.cos(sweep)), rotates = !kind || kind === 'pivot', maxOpen = rotates ? Math.sign(dAng) * Math.PI * .48 : 0;
+            const d = { pivot, closed, maxOpen, w: lw, open: doorsOpen ? 1 : 0, target: doorsOpen ? 1 : 0, kind, bx: pivot.position.x, bz: pivot.position.z, sx: -cdx * (lw - .04), sz: -cdz * (lw - .04) };
+            pivot.rotation.y = closed; doorLeaves.push(d); setLeaf(d, d.open);
+            pivot.traverse(o => { if (o.isMesh) o.userData.door = doorLeaves.indexOf(d); }); };
+          const atS = sw.hinge !== 'end';
+          if (tip === 'double'){ leaf(true, g.la, g.l / 2, null); leaf(false, g.la + g.l / 2, g.l / 2, null); }
+          else leaf(atS, g.la, g.l, tip === 'sliding' ? 'slide' : tip === 'pocket' ? 'pocket' : tip === 'folding' ? 'fold' : tip === 'pivot' ? 'pivot' : null);
+          // glisanta pe perete: șina deasupra golului, cât golul plus zona de parcare, pe fața foii
+          if (tip === 'sliding'){ const s0 = atS ? g.la - g.l - .05 : g.la, s1 = atS ? g.la + g.l : g.la + 2 * g.l + .05, k = sw.swing * (th / 2 + .03);
+            box(s1 - s0, .05, .05, MAT('metal', '#8f8a80'), ax + ux * (s0 + s1) / 2 + nx * k, dh + .035, az + uz * (s0 + s1) / 2 + nz * k, rot, walls).castShadow = false; }
+          // pervazuri (ancadramente) pe ambele fețe ale golului; filomuro nu are
+          if (!flush) [1, -1].forEach(sg => { const k = th / 2 + .008, ex = ax + nx * sg * k, ez = az + nz * sg * k;
             [g.la - .035, g.la + g.l + .035].forEach(sv => box(.07, dh, .016, fm, ex + ux * sv, dh / 2, ez + uz * sv, rot, walls).castShadow = false);
             box(g.l + .14, .07, .018, fm, ex + nx * sg * .001 + ux * m, dh + .035, ez + nz * sg * .001 + uz * m, rot, walls).castShadow = false; });
           if (g.intrare) box(g.l, .02, th + .02, MAT('metal', '#7b766e'), ax + ux * m, .01, az + uz * m, rot, walls); } }
@@ -1021,7 +1038,7 @@ function model(it){
     lastShot = { room: r.id, openNow, cands: cands.length, pool: pool.length, obs: obs.length, leaves: leaves.map(L => L.map(p => p.map(v => +v.toFixed(2)))), sill: sill.map(p => p.map(v => +v.toFixed(2))), pick: [best.c, best.t, +best.sc.toFixed(2), +best.cover.toFixed(3), +(best.fg || 0).toFixed(2), +(best.depth || 0).toFixed(2)], top: ranked.slice(0, 24).map(q => [q.c.map(v => +v.toFixed(2)), q.t.map(v => +v.toFixed(2)), +q.sc.toFixed(2), q.cover == null ? null : +q.cover.toFixed(3), q.fg == null ? null : +q.fg.toFixed(2), q.depth == null ? null : +q.depth.toFixed(2)]) };
     return { x: best.c[0], y: EYE_Y, z: best.c[1], tx: best.t[0], ty: EYE_Y, tz: best.t[1], fov: FOV, shift: SHOT.shift, cover: best.cover }; }
   // ușile, imediat (fără animație): închise pentru imaginile fixe, apoi starea de dinainte
-  function doorsNow(open){ doorLeaves.forEach((d, i) => { const v = Array.isArray(open) ? open[i] : (open ? 1 : 0); d.open = d.target = v; d.pivot.rotation.y = d.closed + d.maxOpen * v * v * (3 - 2 * v); }); R.shadowMap.needsUpdate = true; }
+  function doorsNow(open){ doorLeaves.forEach((d, i) => { const v = Array.isArray(open) ? open[i] : (open ? 1 : 0); d.open = d.target = v; setLeaf(d, v * v * (3 - 2 * v)); }); R.shadowMap.needsUpdate = true; }
   // imagini fixe pentru export: ansamblu (machetă) sau o cameră după regula SHOT, cu ușile închise
   function renderView(view, w = 1200, h = 800){ if (!plan) return null;
     const prevMode = mode, prevDoors = doorLeaves.map(d => d.target);
@@ -1157,7 +1174,7 @@ function model(it){
   const ro = new ResizeObserver(resize); ro.observe(canvas);
   (function loop(){ if (!alive) return; raf = requestAnimationFrame(loop); const now = performance.now(), dt = Math.min(.05, (now - last) / 1000); last = now;
     for (const d of doorLeaves) if (d.open !== d.target){ d.open = reduce ? d.target : (d.target > d.open ? Math.min(d.target, d.open + dt * 1.4) : Math.max(d.target, d.open - dt * 1.4));
-      const e = d.open * d.open * (3 - 2 * d.open); d.pivot.rotation.y = d.closed + d.maxOpen * e; R.shadowMap.needsUpdate = true; }
+      const e = d.open * d.open * (3 - 2 * d.open); setLeaf(d, e); R.shadowMap.needsUpdate = true; }
     if (mode === 'walk'){ let f = 0, s = 0; if (keys.w || keys.arrowup) f += 1; if (keys.s || keys.arrowdown) f -= 1; if (keys.a || keys.arrowleft) s -= 1; if (keys.d || keys.arrowright) s += 1; f = Math.max(-1, Math.min(1, f + joy.f)); s = Math.max(-1, Math.min(1, s + joy.s));
       if (glide && !f && !s){ const g = glideStep({ x: player.x, z: player.z, yaw, pitch }, glide, dt, reduce); player.x = g.pose.x; player.z = g.pose.z; yaw = g.pose.yaw; pitch = g.pose.pitch; if (g.done) glide = null; }
       if (f || s){ glide = null; const sp = 1.7 * dt, fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw); const [x, z] = collide(player.x + (fx * f + rx * s) * sp, player.z + (fz * f + rz * s) * sp); player.x = x; player.z = z; }
