@@ -16,6 +16,20 @@
         </Grid.RowDefinitions>
         <DockPanel Grid.Row="0" Margin="0,0,0,12">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- round 4 2026-10-23: in Simplu the case buttons wait for a case (a result); Expert unchanged -->
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"/>
+                                    <Condition Binding="{Binding HasResult}" Value="False"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
                 <Button Content="Folder caz" Command="{Binding OpenCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="Închidere caz" Command="{Binding CloseCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"
                         ToolTip="Afișează capetele lanțurilor de custodie și de audit, de înscris în registrul de custodie cu semnătură și dată"/>
@@ -31,7 +45,7 @@
         </DockPanel>
 
         <StackPanel Grid.Row="1">
-        <ctrl:NoDataPanel/>
+        <ctrl:NoDataPanel HideInSimpleLevel="True"/>
         <!-- WP18 S4: "Primește probe de la o stație" in three steps; the full form stays below -->
         <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
             <StackPanel>

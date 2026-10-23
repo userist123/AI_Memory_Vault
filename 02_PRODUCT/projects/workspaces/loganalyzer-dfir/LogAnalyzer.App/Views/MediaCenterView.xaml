@@ -146,7 +146,13 @@
                             </DataGridTemplateColumn>
                             <DataGridTextColumn Header="Nume" Binding="{Binding Name, Mode=OneWay}" IsReadOnly="True" Width="1.5*" MinWidth="170" ElementStyle="{StaticResource MonitorCellWrap}"/>
                             <DataGridTextColumn Header="Tip" Binding="{Binding ClassText, Mode=OneWay}" IsReadOnly="True" Width="1.1*" MinWidth="120" ElementStyle="{StaticResource MonitorCellTrim}"/>
-                            <DataGridTextColumn Header="Producător" Binding="{Binding Manufacturer, Mode=OneWay}" IsReadOnly="True" Width="*" MinWidth="140" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="Producător" Binding="{Binding ManufacturerText, Mode=OneWay}" IsReadOnly="True" Width="*" MinWidth="140">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource MonitorCellTrim}">
+                                        <Setter Property="ToolTip" Value="{Binding ManufacturerCellTip}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
                             <DataGridTextColumn Header="Model" Binding="{Binding Model, Mode=OneWay}" IsReadOnly="True" Width="*" MinWidth="160" ElementStyle="{StaticResource MonitorCellTrim}"/>
                             <DataGridTextColumn Header="VID" Binding="{Binding Vid, Mode=OneWay}" IsReadOnly="True" Width="64" MinWidth="64" ElementStyle="{StaticResource MonitorCellTrim}"/>
                             <DataGridTextColumn Header="PID" Binding="{Binding Pid, Mode=OneWay}" IsReadOnly="True" Width="64" MinWidth="64" ElementStyle="{StaticResource MonitorCellTrim}"/>

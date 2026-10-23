@@ -33,25 +33,25 @@
             </TextBlock>
             <StackPanel Visibility="{Binding NothingOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ctrl:EmptyStateCard What="{x:Static vmx:EmptyStates.PolicyWhat}" Why="{x:Static vmx:EmptyStates.PolicyWhy}" Step="{x:Static vmx:EmptyStates.PolicyStep}"/>
-                <Button Content="Deschide fișier…" Command="{Binding OpenFileCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" Margin="0,0,0,10"/>
             </StackPanel>
         </StackPanel>
 
         <Border Grid.Row="1" Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,8">
             <StackPanel>
-                <Expander Header="Avansat" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8" AutomationProperties.Name="Avansat: depozitul de politici">
+                
+                <WrapPanel VerticalAlignment="Center">
+                    <TextBlock Text="Operator:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <TextBlock Text="{Binding Operator}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+                    <Button Content="Deschide fișier…" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Deschide folder GPO…" Command="{Binding OpenFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                </WrapPanel>
+                <TextBlock Text="{Binding PolicyInfo}" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/>
+                <Expander Header="Avansat" IsExpanded="False" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0" AutomationProperties.Name="Avansat: depozitul de politici">
                     <WrapPanel Margin="0,6,0,0">
                         <TextBlock Text="Depozit politici:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox AutomationProperties.Name="Depozit politici" Text="{Binding StoreRoot, UpdateSourceTrigger=LostFocus}" Width="360"/>
                     </WrapPanel>
                 </Expander>
-                <WrapPanel VerticalAlignment="Center">
-                    <TextBlock Text="Operator:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBlock Text="{Binding Operator}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                    <Button Content="Deschide fișier…" Command="{Binding OpenFileCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Deschide folder GPO…" Command="{Binding OpenFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
-                </WrapPanel>
-                <TextBlock Text="{Binding PolicyInfo}" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/>
             </StackPanel>
         </Border>
 

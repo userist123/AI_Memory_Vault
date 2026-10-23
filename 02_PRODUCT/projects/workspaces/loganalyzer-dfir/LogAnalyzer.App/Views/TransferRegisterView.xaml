@@ -61,7 +61,7 @@
                     <Grid>
                         <Grid.ColumnDefinitions><ColumnDefinition/><ColumnDefinition Width="12"/><ColumnDefinition/></Grid.ColumnDefinitions>
                         <StackPanel>
-                            <TextBlock Text="Sursă (structura / departamentul)" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text="Sursă (structura)" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
                             <ComboBox IsEditable="True" Text="{Binding Source, UpdateSourceTrigger=PropertyChanged}" ItemsSource="{Binding KnownDestinations}" AutomationProperties.Name="Sursa"/>
                             <TextBlock Text="Stația sursă" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
                             <TextBox Text="{Binding SourceStation, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Stația sursă"/>

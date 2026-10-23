@@ -51,7 +51,6 @@
                         <TextBox AutomationProperties.Name="Codul de ancorare de la controlul anterior, de pe procesul-verbal semnat" Text="{Binding PreviousAnchorCode, UpdateSourceTrigger=PropertyChanged}"
                                  Width="230" FontFamily="Consolas" ToolTip="{Binding PreviousAnchorHelp}"/>
                     </WrapPanel>
-                    <TextBlock Text="{Binding PreviousAnchorHelp}" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                     <WrapPanel Margin="0,4,0,0">
                         <Button Content="Folosește codul propus de stație (nesigur)" Command="{Binding UseStationAnchorCodeCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,8,0"
                                 ToolTip="Completează câmpul cu codul pe care stația și-l amintește de la ultimul control. Nu înlocuiește procesul-verbal: cine a rescris jurnalul poate schimba și propunerea; verificările A11 și A13 vor spune că nu a fost tastat de pe hârtie."/>
