@@ -498,6 +498,16 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   19 runs (real Ollama qwen2.5:7b present); latent race fixed anyway: AiIndependenceTests + OwnerEditionDecisionsTests reset the global AppModeContext
   outside the "AppMode" collection -> now in it. Main re-ran Dfir 2418/31/0, App 816/0 (worker: 5x each green). If B fails again: capture with --logger trx.
   C: free space keeps shrinking (6.8 -> 0 GB in ~3 h, source not fully found; VS installer cache 5.8 GB in %TEMP%\2ouqcvha is the owner's) - run tests with TEMP on D:.
+- 2026-10-23 real-PC pass (screens 210-228): F1 proceduri hint stays English after Expert->Simplu; F2 Politici hides the
+  imported GPO after restart; F3 Cazuri recente empty after a control. FIXED in 92eaade35 (PR #329, draft), tests
+  RealPc20261023Tests (4, red without fix). Verified here: App 820/0, UI 354/1 (worker also Dfir 2418/31/0). NOT yet on screen.
+- docs/dfir/MATRICE_HG585_ORNISS_2026-10-23.md: 39 requirements -> checks -> gaps + flow proposal. Main gaps: measure+deadline
+  per non-conformity in the PV (#38), delta vs previous control (#39), registers (interventions with witness, backups,
+  incidents), training dates, accreditation expiry. Owner questions open: target level (secret de serviciu vs secrete de stat),
+  unit thresholds from CSS/PrOpSec, PV form, implementation order (proposed #38 then #39).
+- NEXT (new session): publish Standalone from 51e995916, reinstall, re-login (administrator.principal), screenshot Profil de
+  proceduri (Expert->Simplu), Politici (library list), Acasa (Cazuri recente after a control); then CI on #329 once; then
+  the owner's answers decide the HG 585 work. Tests: TEMP/TMP on D:\w\tmp (C: nearly full).
 - (old) MERGE chain #303 -> #306 -> #307 -> #308 into main: NOT done - security/authority-sensitive (auth, device monitor, response verification); CLAUDE.md
   forbids auto-merge; needs the owner's explicit "da, fă merge". #303 ready (mergeable UNKNOWN at 2026-10-23), #306-#308 drafts MERGEABLE. PR #308 title
   "demo" removed.
