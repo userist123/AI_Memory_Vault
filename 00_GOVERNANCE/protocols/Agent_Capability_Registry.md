@@ -15,6 +15,12 @@ document_status: active
 > list of their own and pointed here, and no other file maps agents to skill ids
 > (`01_ARCHITECTURE/knowledge/Agents_Skill_Matrix.md` lists domains, not skills).
 >
+> **No code reads this file.** The line below saying capability lists "are queried by the
+> router" was true of the design, not of the code: `routing/agent_router.py` reads
+> `04_CONFIG/agent_router.json`, which maps its own 8 router agents to generic capability
+> labels, not to these 21 profiles' skill ids. This file is capability metadata for agents
+> and humans selecting skills.
+>
 > **Skills named here that are not in `.agents/skills/` (18 of 149, measured on restore):**
 > `agency-grid-layout-minimal`, `ansible-automation`, `background-grid-webgl`, `clean-minimal-beige-light-mode`,
 > `corner-lasers`, `dither-laser-dark-mode`, `editorial-tech`, `framed-grid-layout`, `glass-dark-mode-clock`,

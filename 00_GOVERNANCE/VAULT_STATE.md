@@ -126,9 +126,10 @@ whole-corpus retrieval numbers.
   registry was the only agent-to-skill mapping. Since 2026-10-23 both files are restored to
   `00_GOVERNANCE/protocols/` with provenance, the references point there, and
   `20_TESTS/test_agent_docs_memory_interfaces.py` fails on any path a profile cites that does
-  not exist. The council limits in `Council_Context_Budget.md` are documented policy, **not
-  enforced by code** (`council_budget_controller.py` decides a tier only), and 18 of the 149
-  skills the registry names are not in `.agents/skills/`.
+  not exist. No code reads the registry (the code router uses `04_CONFIG/agent_router.json`),
+  and 18 of the 149 skills it names are not in `.agents/skills/`. Of the council limits (copy in
+  `AGENTS.md` wins), `max_memory_results`, skills per agent and graph hops are enforced
+  (`executive.py`, `agent_router.py`); council-agent counts and token caps are not.
 - **Agents now have direct routes, but no live agent turn has used them yet.** The `vault_*` tools are
   registered for Claude Code, Codex, Antigravity and Gemini CLI (`AGENTS.md`, "Direct routes for every AI");
   the stdio contract is tested, no client session has been observed calling them. The 8 coordination files
