@@ -27,7 +27,11 @@ DONE:
 - Review round 2 (delta): fixes confirmed; 1 finding fixed here: help rule text per units (imperial = feet) + imperial
   ft/in letters and space stay on the dimension. Browser: imperial "12 ft" -> 3.6580 m, help text correct. Local dev now
   needs `npm run dev` (CASA3D_LOCAL_TRUST from main #316). vitest 115/716.
-NEXT: CI once -> mark ready -> merge when green. Then remove casa3d-a1 from .claude/launch.json. Previously: vault-reviewer (Opus) on diff origin/main..HEAD; fix; push; draft PR; send screenshots (re-take on PR build;
+- PR #323 marked ready. Owner (2026-10-23): no red at merge, without compromising anything.
+- Root cause of red "Dependency audit": next 16.4.0 critical RCE in imported trading-journal. Fixed in PR #325
+  (branch claude/fix-next-critical-trading-journal, worktree D:/w/tj-next): next 16.4.2, audit critical 0, tsc 0;
+  local next build blocked by machine SWC cache ACL (env, CI does not build it).
+NEXT: when #325 CI green -> merge #325; merge origin/main into #323; CI green -> merge #323. Then remove casa3d-a1 from .claude/launch.json. Previously: vault-reviewer (Opus) on diff origin/main..HEAD; fix; push; draft PR; send screenshots (re-take on PR build;
   previous ones live only in the old session). Then remove casa3d-a1 from .claude/launch.json (local, untracked) when done.
 RESIDUALS (record in PR): RO header wraps "Salveaza revizia" at 1440 (pre-existing?);
   palette "Keyboard shortcuts (?)" label + hint "?" duplicate (pre-existing); 75deg wall typed 4 -> 4.0002 (mm rounding).
