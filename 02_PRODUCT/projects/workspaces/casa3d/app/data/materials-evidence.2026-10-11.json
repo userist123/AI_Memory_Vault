@@ -1,0 +1,1478 @@
+{
+ "note": "Dovezi pentru produsele de finisaj adăugate la 2026-10-11: preț și specificații citite de pe pagina produsului (Dedeman, IKEA România).",
+ "items": [
+  {
+   "id": "dedeman-kadda-clover-my1708-2-lavoar-cromat",
+   "sourceUrl": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-kadda-clover-my1708-2-cr-montaj-stativ-monocomanda-finisaj-cromat/p/3033761",
+   "evidence": "198.00 lei/bucata; Material: alama",
+   "specsRaw": {
+    "finish": "cromat",
+    "colorName": "cromat",
+    "color": "#C9CCCE",
+    "material": "alama",
+    "brand": "Kadda"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-hansgrohe-logis-e-71160000-lavoar-cromat",
+   "sourceUrl": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-hansgrohe-logis-e-71160000-montaj-stativ-monocomanda-finisaj-cromat-ventil-inclus/p/3035165",
+   "evidence": "324.99 lei/bucata; Material: alama",
+   "specsRaw": {
+    "finish": "cromat",
+    "colorName": "cromat",
+    "color": "#C9CCCE",
+    "material": "alama",
+    "brand": "Hansgrohe"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-grohe-start-235502432-lavoar-negru-mat",
+   "sourceUrl": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-grohe-start-235502432-montaj-stativ-monocomanda-finisaj-negru-mat/p/3048968",
+   "evidence": "399.00 lei/bucata; Finisaj: negru; Material: alama sanitara",
+   "specsRaw": {
+    "finish": "negru mat",
+    "colorName": "negru mat",
+    "color": "#1F1F1F",
+    "material": "alama sanitara",
+    "brand": "Grohe"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kadda-girard-my2061-2g-lavoar-auriu",
+   "sourceUrl": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-kadda-girard-my2061-2g-montaj-stativ-monocomanda-finisaj-auriu-ventil-inclus/p/3040044",
+   "evidence": "419.00 lei/bucata; Finisaj: auriu; Material: alama",
+   "specsRaw": {
+    "finish": "auriu",
+    "colorName": "auriu",
+    "color": "#C9A44C",
+    "material": "alama",
+    "brand": "Kadda"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kludi-renon-42266n075-lavoar-auriu-periat",
+   "sourceUrl": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-kludi-renon-42266n075-montaj-stativ-monocomanda-finisaj-auriu-periat/p/3057686",
+   "evidence": "700.00 lei/bucata; Finisaj: auriu periat; Material: alama sanitara",
+   "specsRaw": {
+    "finish": "auriu periat",
+    "colorName": "auriu periat",
+    "color": "#B8975A",
+    "material": "alama sanitara",
+    "brand": "Kludi"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-grohe-essence-32628al1-lavoar-grafit-mat",
+   "sourceUrl": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-grohe-essence-32628al1-3/8-marimea-l-montaj-stativ-monocomanda-finisaj-grafit-mat-set-evacuare-cu-tija/p/3041063",
+   "evidence": "1330.00 lei/bucata; Finisaj: grafit mat; Material: alama",
+   "specsRaw": {
+    "finish": "grafit mat",
+    "colorName": "grafit mat",
+    "color": "#4A4B4D",
+    "material": "alama",
+    "brand": "Grohe"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kadda-girard-my2061-p2h-lavoar-gri-periat",
+   "sourceUrl": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-kadda-girard-my2061-p2h-montaj-stativ-monocomanda-finisaj-gri-periat-ventil-inclus/p/3048427",
+   "evidence": "399.00 lei/bucata; Finisaj: gri; Material: alama sanitara",
+   "specsRaw": {
+    "finish": "gri periat",
+    "colorName": "gri periat",
+    "color": "#6E6F70",
+    "material": "alama sanitara",
+    "brand": "Kadda"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-runskar-baterie-lavoar-alama",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/runskaer-baterie-lavoar-alama-90532867/",
+   "evidence": "299 lei (JSON-LD offer RON, pret afisat 299); denumire: Baterie lavoar - alamă; Înălțime 10 cm",
+   "specsRaw": {
+    "finish": "alamă",
+    "colorName": "alamă (galben)",
+    "color": "#B5A36A",
+    "material": "alamă",
+    "heightCm": 10
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-dalskar-baterie-lavoar-negru",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/dalskaer-baterie-lavoar-negru-70603498/",
+   "evidence": "299 lei (JSON-LD offer RON, pret afisat 299); denumire: Baterie lavoar - negru; Înălțime 18 cm",
+   "specsRaw": {
+    "finish": "negru",
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "heightCm": 18
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kadda-clover-my1708-42-bucatarie-cromat",
+   "sourceUrl": "https://www.dedeman.ro/ro/baterie-bucatarie-kadda-clover-my1708-42-cr-stativa-monocomanda-alama-finisaj-cromat/p/3033766",
+   "evidence": "125.00 lei/bucata (pret vechi 158.99 lei, promo pana la 31.10.2026); Material: alama",
+   "specsRaw": {
+    "finish": "cromat",
+    "colorName": "cromat",
+    "color": "#C9CCCE",
+    "material": "alama",
+    "brand": "Kadda"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-ferro-fitness-nero-bfs4blb-bucatarie-negru",
+   "sourceUrl": "https://www.dedeman.ro/ro/baterie-bucatarie-ferro-fitness-nero-bfs4blb-stativa-monocomanda-alama-finisaj-negru/p/3050236",
+   "evidence": "298.00 lei/bucata; Finisaj: negru; Material: alama sanitara",
+   "specsRaw": {
+    "finish": "negru",
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "material": "alama sanitara",
+    "brand": "Ferro"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-ferro-coretto-square-bcx4-bucatarie-inox",
+   "sourceUrl": "https://www.dedeman.ro/ro/baterie-bucatarie-ferro-coretto-square-bcx4-stativa-monocomanda-inox-finisaj-inox/p/3044543",
+   "evidence": "199.00 lei/bucata; Finisaj: inox; Material: inox",
+   "specsRaw": {
+    "finish": "inox",
+    "colorName": "inox",
+    "color": "#B4B7BA",
+    "material": "inox",
+    "brand": "Ferro"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-casa-blanca-steel-blr4a-bucatarie-inox",
+   "sourceUrl": "https://www.dedeman.ro/ro/baterie-bucatarie-casa-blanca-steel-blr4a-stativ-monocomanda-inox-finisaj-inox/p/3054369",
+   "evidence": "258.00 lei/bucata; Finisaj: inox; Material: inox AISI 304",
+   "specsRaw": {
+    "finish": "inox",
+    "colorName": "inox",
+    "color": "#B4B7BA",
+    "material": "inox AISI 304",
+    "brand": "Casa Blanca"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-grohe-minta-31375gn0-bucatarie-auriu-mat",
+   "sourceUrl": "https://www.dedeman.ro/ro/baterie-bucatarie-grohe-minta-31375gn0-stativa-monocomanda-finisaj-auriu-mat/p/3041120",
+   "evidence": "1328.99 lei/bucata; Finisaj: mat; Material: alama",
+   "specsRaw": {
+    "finish": "auriu mat",
+    "colorName": "auriu mat",
+    "color": "#BFA160",
+    "material": "alama",
+    "brand": "Grohe"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-almaren-baterie-bucatarie-negru",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/aelmaren-baterie-bucatarie-negru-00603500/",
+   "evidence": "399 lei (JSON-LD offer RON, pret afisat 399); denumire: Baterie bucătărie - negru; Înălțime 36 cm",
+   "specsRaw": {
+    "finish": "negru",
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "heightCm": 36
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-taksjon-baterie-bucatarie-aspect-inox",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/taksjoen-baterie-monocomanda-bucatarie-aspect-otel-inoxidabil-00602303/",
+   "evidence": "499 lei (JSON-LD offer RON, pret afisat 499); denumire: Baterie monocomandă bucătărie - aspect oțel inoxidabil; Înălțime 274 mm",
+   "specsRaw": {
+    "finish": "aspect oțel inoxidabil",
+    "colorName": "aspect inox",
+    "color": "#B4B7BA",
+    "heightCm": 27.4
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kadda-girard-my2061-77c-sistem-dus-cromat",
+   "sourceUrl": "https://www.dedeman.ro/ro/sistem-dus-kadda-girard-my2061-77c-finisaj-cromat/p/3040026",
+   "evidence": "529.00 lei/bucata; Finisaj: cromat; Baterie inclusa: Da",
+   "specsRaw": {
+    "finish": "cromat",
+    "colorName": "cromat",
+    "color": "#C9CCCE",
+    "material": "alama sanitara",
+    "brand": "Kadda"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-roca-vega-a5a976ec00-sistem-dus-cromat",
+   "sourceUrl": "https://www.dedeman.ro/ro/sistem-dus-roca-vega-a5a976ec00-finisaj-cromat/p/3050945",
+   "evidence": "763.23 lei/bucata; Finisaj: cromat; Baterie inclusa: Da",
+   "specsRaw": {
+    "finish": "cromat",
+    "colorName": "cromat",
+    "color": "#C9CCCE",
+    "material": "alama",
+    "brand": "Roca"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kadda-girard-my2061-77b-sistem-dus-negru",
+   "sourceUrl": "https://www.dedeman.ro/ro/sistem-dus-kadda-girard-my2061-77b-finisaj-negru/p/3040043",
+   "evidence": "628.99 lei/bucata; Finisaj: negru; Baterie inclusa: Da",
+   "specsRaw": {
+    "finish": "negru",
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "material": "alama sanitara",
+    "brand": "Kadda"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-ideal-standard-ceratherm-alu-bd583-sistem-dus-negru-mat",
+   "sourceUrl": "https://www.dedeman.ro/ro/sistem-dus-ideal-standard-ceratherm-alu-bd583-baterie-termostatata-finisaj-negru-mat/p/3051634",
+   "evidence": "1429.00 lei/bucata; Finisaj: negru; Baterie inclusa: Da",
+   "specsRaw": {
+    "finish": "negru mat",
+    "colorName": "negru mat",
+    "color": "#1F1F1F",
+    "material": "aluminiu",
+    "brand": "Ideal Standard"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kadda-girard-my2061-77g-sistem-dus-auriu",
+   "sourceUrl": "https://www.dedeman.ro/ro/sistem-dus-kadda-girard-my2061-77g-finisaj-auriu/p/3040048",
+   "evidence": "789.00 lei/bucata; Finisaj: auriu; Baterie inclusa: Da",
+   "specsRaw": {
+    "finish": "auriu",
+    "colorName": "auriu",
+    "color": "#C9A44C",
+    "material": "alama sanitara",
+    "brand": "Kadda"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-radox-scala-portprosop-alb-500x1200",
+   "sourceUrl": "https://www.dedeman.ro/ro/calorifer-baie-radox-scala-portprosop-drept-alb-500-x-1200-mm-accesorii-montaj/p/2001968",
+   "evidence": "479.00 lei/bucata (pret vechi 526.00 lei, promo pana la 31.10.2026); Culoare: alb; Putere (W): 743",
+   "specsRaw": {
+    "colorName": "alb",
+    "color": "#F4F4F2",
+    "sizeCm": [
+     50,
+     120
+    ],
+    "material": "tabla otel",
+    "powerW": 743,
+    "brand": "Radox"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-radox-scala-portprosop-negru-mat-600x1200",
+   "sourceUrl": "https://www.dedeman.ro/ro/calorifer-baie-radox-scala-portprosop-drept-negru-mat-600-x-1200-mm-accesorii-montaj/p/2025922",
+   "evidence": "809.00 lei/bucata; Culoare: negru; Putere (W): 808",
+   "specsRaw": {
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "sizeCm": [
+     60,
+     120
+    ],
+    "material": "otel vopsit",
+    "powerW": 808,
+    "brand": "Radox"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-purmo-banga-portprosop-negru-500x1222",
+   "sourceUrl": "https://www.dedeman.ro/ro/calorifer-baie-purmo-banga-portprosop-drept-negru-500-x-1222-mm-accesorii-montaj/p/2034304",
+   "evidence": "377.00 lei/bucata; Culoare: negru; Putere (W): 511",
+   "specsRaw": {
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "sizeCm": [
+     50,
+     122.2
+    ],
+    "material": "otel",
+    "powerW": 511,
+    "brand": "Purmo"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-radox-scala-portprosop-cromat-600x1200",
+   "sourceUrl": "https://www.dedeman.ro/ro/calorifer-baie-radox-scala-portprosop-drept-cromat-600-x-1200-mm-accesorii-montaj/p/2006579",
+   "evidence": "1232.00 lei/bucata; Culoare: crom; Putere (W): 590",
+   "specsRaw": {
+    "colorName": "crom",
+    "color": "#C9CCCE",
+    "sizeCm": [
+     60,
+     120
+    ],
+    "material": "tabla otel",
+    "powerW": 590,
+    "brand": "Radox"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-radox-scala-portprosop-auriu-600x1200",
+   "sourceUrl": "https://www.dedeman.ro/ro/calorifer-baie-radox-scala-portprosop-drept-auriu-600-x-1200-mm-accesorii-montaj/p/2034303",
+   "evidence": "809.00 lei/bucata; Culoare: auriu; Putere (W): 808",
+   "specsRaw": {
+    "colorName": "auriu",
+    "color": "#C9A44C",
+    "sizeCm": [
+     60,
+     120
+    ],
+    "material": "otel",
+    "powerW": 808,
+    "brand": "Radox"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-savini-due-spr101-oglinda-led-60x80",
+   "sourceUrl": "https://www.dedeman.ro/ro/oglinda-baie-cu-led-savini-due-spr101-60-x-80-cm-margini-rotunjite/p/3036564",
+   "evidence": "436.46 lei/bucata (pret vechi 561.00 lei, promo pana la 31.12.2026); Grad de protectie: IP44; Flux luminos corp de iluminat (lm): 968",
+   "specsRaw": {
+    "colorName": "argintiu",
+    "color": "#C0C0C0",
+    "sizeCm": [
+     60,
+     80
+    ],
+    "ip": "IP44",
+    "lumens": 968,
+    "cctK": 3133,
+    "brand": "Savini Due"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kadda-h-3025-oglinda-led-ovala-60x80",
+   "sourceUrl": "https://www.dedeman.ro/ro/oglinda-baie-cu-led-kadda-h-3025-60-x-80-cm-actionare-touch-functie-dezaburire-functie-ceas-dimabila-ovala/p/3052301",
+   "evidence": "548.00 lei/bucata; Grad de protectie: IP44; Flux luminos corp de iluminat (lm): 672",
+   "specsRaw": {
+    "colorName": "argintiu",
+    "color": "#C0C0C0",
+    "sizeCm": [
+     60,
+     80
+    ],
+    "ip": "IP44",
+    "lumens": 672,
+    "cctK": 6000,
+    "brand": "Kadda"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-savini-due-br-80-60-oglinda-led-80x60",
+   "sourceUrl": "https://www.dedeman.ro/ro/oglinda-baie-cu-led-savini-due-br-80-60-re-fr-80-x-60-cm-actionare-touch-dezaburire-dreptunghiulara/p/3056342",
+   "evidence": "625.00 lei/bucata; Grad de protectie: IP44",
+   "specsRaw": {
+    "colorName": "negru mat",
+    "color": "#1F1F1F",
+    "sizeCm": [
+     80,
+     60
+    ],
+    "ip": "IP44",
+    "cctK": 4000,
+    "brand": "Savini Due"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kadda-nw-18-oglinda-led-rotunda-60",
+   "sourceUrl": "https://www.dedeman.ro/ro/oglinda-baie-cu-led-kadda-nw-18-60-x-60-cm-dezaburire-iluminare-led-dimabila-actionare-touch-rotunda/p/3057257",
+   "evidence": "302.00 lei/bucata; Grad de protectie: IP44; Flux luminos corp de iluminat (lm): 1100",
+   "specsRaw": {
+    "colorName": "argintiu",
+    "color": "#C0C0C0",
+    "sizeCm": [
+     60,
+     60
+    ],
+    "ip": "IP44",
+    "lumens": 1100,
+    "cctK": "3000 / 4000 / 6000",
+    "brand": "Kadda"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-karrsjon-oglinda-iluminat-anti-ceata-60x80",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/kaerrsjoen-oglinda-cu-iluminat-integrat-anti-ceata-60613394/",
+   "evidence": "599 lei (JSON-LD offer RON, pret afisat 599); Omologat IP44; Culoarea luminii poate varia între alb cald (2200 Kelvin) şi alb rece (6500 Kelvin); 60x80 cm",
+   "specsRaw": {
+    "sizeCm": [
+     60,
+     80
+    ],
+    "ip": "IP44",
+    "cctK": "2200-6500"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-faxalven-oglinda-iluminat-60x95",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/faxaelven-oglinda-cu-iluminat-integrat-s79516703/",
+   "evidence": "749 lei (JSON-LD offer RON, pret afisat 749); Flux luminos 680 lm; Sursa de lumină LED este aprobată pentru IP44; alb cald (2700 Kelvin)",
+   "specsRaw": {
+    "sizeCm": [
+     60,
+     95
+    ],
+    "ip": "IP44",
+    "lumens": 680,
+    "cctK": 2700,
+    "colorName": "alb",
+    "color": "#F4F4F2"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-franke-bsg-611-78-chiuveta-fragranit-avena-bej",
+   "sourceUrl": "https://www.dedeman.ro/ro/chiuveta-bucatarie-compozit-fragranite-franke-bsg-611-78-avena-bej-dreptunghiulara-pozitionare-cuva-stanga/-dreapta-78-x-50-cm-adancime-cuva-20-cm/p/3032116",
+   "evidence": "859.01 lei/bucata (pret vechi 919.00 lei, promo pana la 31.10.2026); Material: compozit; Culoare: bej",
+   "specsRaw": {
+    "finish": "fragranit",
+    "colorName": "bej",
+    "color": "#D8C7A8",
+    "sizeCm": [
+     78,
+     50
+    ],
+    "material": "compozit",
+    "bowlDepthCm": 20.0,
+    "brand": "Franke"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-franke-bsg-611-78-s-chiuveta-fragranit-negru",
+   "sourceUrl": "https://www.dedeman.ro/ro/chiuveta-bucatarie-compozit-fragranite-franke-bsg-611-78-s-negru-dreptunghiulara-pozitionare-cuva-stanga/-dreapta-78-x-43-5-cm-adancime-cuva-20-cm/p/3043485",
+   "evidence": "799.00 lei/bucata; Material: compozit; Culoare: negru",
+   "specsRaw": {
+    "finish": "fragranit",
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "sizeCm": [
+     78,
+     43.5
+    ],
+    "material": "compozit",
+    "bowlDepthCm": 20.0,
+    "brand": "Franke"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-sandonna-lena-chiuveta-quartz-alb-rotunda",
+   "sourceUrl": "https://www.dedeman.ro/ro/chiuveta-bucatarie-compozit-quartz-sandonna-lena-alb-rotunda-51-x-51-cm-adancime-cuva-20-cm/p/3046895",
+   "evidence": "458.99 lei/bucata; Material: quartz",
+   "specsRaw": {
+    "colorName": "alb",
+    "color": "#F4F4F2",
+    "sizeCm": [
+     51,
+     51
+    ],
+    "material": "quartz",
+    "bowlDepthCm": 20.0,
+    "brand": "SanDonna"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-evido-quadro-6-chiuveta-granit-antracit",
+   "sourceUrl": "https://www.dedeman.ro/ro/chiuveta-bucatarie-compozit-granit-evido-quadro-6-antracit-negru-dreptunghiulara-56-5-x-51-cm-adancime-cuva-20-cm/p/3037615",
+   "evidence": "699.00 lei/bucata; Material: compozit; Culoare: negru antracit",
+   "specsRaw": {
+    "finish": "granit",
+    "colorName": "negru antracit",
+    "color": "#2E2F31",
+    "sizeCm": [
+     56.5,
+     51
+    ],
+    "material": "compozit",
+    "bowlDepthCm": 20.0,
+    "brand": "Evido"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-alveus-compact-10-chiuveta-inox-leinen",
+   "sourceUrl": "https://www.dedeman.ro/ro/chiuveta-bucatarie-inox-leinen-alveus-compact-10-7365-dreptunghiulara-pozitionare-cuva-dreapta-80-x-50-cm-adancime-cuva-15-5-cm/p/3003735",
+   "evidence": "279.00 lei/bucata (pret vechi 339.00 lei, promo pana la 31.10.2026); Material: inox; Culoare: gri",
+   "specsRaw": {
+    "finish": "leinen",
+    "colorName": "gri",
+    "color": "#8A8C8E",
+    "sizeCm": [
+     80,
+     50
+    ],
+    "material": "inox",
+    "bowlDepthCm": 15.5,
+    "brand": "Alveus"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-kilsviken-chiuveta-1-cuva-uscator-negru-compozit-cuart",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/kilsviken-chiuveta-incorporata-1cuva-uscator-negru-compozit-cuart-s89337027/",
+   "evidence": "1119 lei (JSON-LD offer RON, pret afisat 1.119); denumire: Chiuvetă încorporată, 1cuvă+uscător - negru/compozit cuarţ 72x46 cm",
+   "specsRaw": {
+    "material": "compozit cuarț",
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "sizeCm": [
+     72,
+     46
+    ]
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-kilsviken-chiuveta-1-cuva-gri-bej-compozit-cuart",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/kilsviken-chiuveta-incorporata-1-cuva-gri-bej-compozit-cuart-s79590397/",
+   "evidence": "1019 lei (JSON-LD offer RON, pret afisat 1.019); denumire: Chiuvetă încorporată, 1 cuvă - gri-bej compozit cuarţ 56x46 cm",
+   "specsRaw": {
+    "material": "compozit cuarț",
+    "colorName": "gri-bej",
+    "color": "#B9B2A3",
+    "sizeCm": [
+     56,
+     46
+    ]
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kronodesign-k003fp-blat-stejar-3040x600x28",
+   "sourceUrl": "https://www.dedeman.ro/ro/blat-bucatarie-kronodesign-k003fp-pal-finisaj-lemn-stejar-3040-x-600-x-28-mm/p/6048866",
+   "evidence": "315.89 lei/bucata; Grosime (mm): 28; Aspect: lemn",
+   "specsRaw": {
+    "finish": "lemn / stejar",
+    "colorName": "stejar",
+    "color": "#C49A6C",
+    "sizeCm": [
+     304,
+     60
+    ],
+    "thicknessMm": 28,
+    "material": "PAL brut acoperit cu HPL",
+    "pieceM": 3.04,
+    "brand": "Kronodesign"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kronodesign-k095su-blat-marmura-gri-3040x600x28",
+   "sourceUrl": "https://www.dedeman.ro/ro/blat-bucatarie-kronodesign-k095su-pal-finisaj-marmura-gri-3040-x-600-x-28-mm/p/6048864",
+   "evidence": "315.89 lei/bucata; Grosime (mm): 28; Aspect: marmura",
+   "specsRaw": {
+    "finish": "marmura / gri",
+    "colorName": "gri",
+    "color": "#8A8C8E",
+    "sizeCm": [
+     304,
+     60
+    ],
+    "thicknessMm": 28,
+    "material": "PAL brut acoperit cu HPL",
+    "pieceM": 3.04,
+    "brand": "Kronodesign"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kronodesign-k205rs-blat-piatra-negru-3040x600x28",
+   "sourceUrl": "https://www.dedeman.ro/ro/blat-bucatarie-kronodesign-k205rs-pal-finisaj-piatra-negru-3040-x-600-x-28-mm/p/6048862",
+   "evidence": "315.89 lei/bucata; Grosime (mm): 28; Aspect: piatra",
+   "specsRaw": {
+    "finish": "piatra / negru",
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "sizeCm": [
+     304,
+     60
+    ],
+    "thicknessMm": 28,
+    "material": "PAL brut acoperit cu HPL",
+    "pieceM": 3.04,
+    "brand": "Kronodesign"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kronodesign-k217ggu-blat-piatra-alb-4100x600x38",
+   "sourceUrl": "https://www.dedeman.ro/ro/blat-bucatarie-kronodesign-k217ggu-pal-finisaj-piatra-sclipitoare-alb-4100-x-600-x-38-mm/p/6048867",
+   "evidence": "556.00 lei/bucata; Grosime (mm): 38; Aspect: piatra",
+   "specsRaw": {
+    "finish": "piatra / piatra alb sclipitor",
+    "colorName": "piatra alb sclipitor",
+    "color": "#EEEDEA",
+    "sizeCm": [
+     410,
+     60
+    ],
+    "thicknessMm": 38,
+    "material": "PAL brut acoperit cu HPL",
+    "pieceM": 4.1,
+    "brand": "Kronodesign"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-smarty-blat-alb-2000x600x25",
+   "sourceUrl": "https://www.dedeman.ro/ro/blat-bucatarie-smarty-pal-alb-2000-x-600-x-25-mm/p/8133618",
+   "evidence": "209.00 lei/bucata; Grosime (mm): 25; Aspect: unicolor",
+   "specsRaw": {
+    "finish": "unicolor",
+    "colorName": "alb",
+    "color": "#F4F4F2",
+    "sizeCm": [
+     200,
+     60
+    ],
+    "thicknessMm": 25,
+    "material": "PAL brut acoperit cu HPL",
+    "pieceM": 2.0,
+    "brand": "Prod Alcar"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-kronospan-bk201rsl-blat-beton-gri-inchis-2600x600x28",
+   "sourceUrl": "https://www.dedeman.ro/ro/blat-bucatarie-kronospan-bk201rsl-pal-finisaj-beton-gri-inchis-2600-x-600-x-28-mm/p/6053764",
+   "evidence": "235.45 lei/bucata; Grosime (mm): 28; Aspect: beton",
+   "specsRaw": {
+    "finish": "beton / beton gri inchis",
+    "colorName": "beton gri inchis",
+    "color": "#5E5F60",
+    "sizeCm": [
+     260,
+     60
+    ],
+    "thicknessMm": 28,
+    "material": "PAL brut acoperit cu HPL",
+    "pieceM": 2.6,
+    "brand": "Kronospan"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-ekbacken-blat-negru-186x2-8",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/ekbacken-blat-negru-laminat-10589674/",
+   "evidence": "299 lei (JSON-LD offer RON, pret afisat 299); denumire: Blat - negru/laminat 186x2.8 cm; Adâncime 63.5 cm; Grosime 2.8 cm",
+   "specsRaw": {
+    "finish": "laminat",
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "sizeCm": [
+     186,
+     63.5
+    ],
+    "thicknessMm": 28,
+    "pieceM": 1.86,
+    "material": "laminat"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-ekbacken-blat-alb-aspect-marmura-246x2-8",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/ekbacken-blat-alb-aspect-marmura-laminat-60609033/",
+   "evidence": "349 lei (JSON-LD offer RON, pret afisat 349); denumire: Blat - alb aspect marmură/laminat 246x2.8 cm; Grosime 2.8 cm",
+   "specsRaw": {
+    "finish": "aspect marmură / laminat",
+    "colorName": "alb aspect marmură",
+    "color": "#EDEDEA",
+    "sizeCm": [
+     246,
+     63.5
+    ],
+    "thicknessMm": 28,
+    "pieceM": 2.46,
+    "material": "laminat"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-karlby-blat-stejar-furnir-186x3-8",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/karlby-blat-stejar-furnir-70335189/",
+   "evidence": "999 lei (JSON-LD offer RON, pret afisat 999); denumire: Blat - stejar/furnir 186x3.8 cm; Grosime 3.8 cm",
+   "specsRaw": {
+    "finish": "furnir stejar",
+    "colorName": "stejar",
+    "color": "#C49A6C",
+    "sizeCm": [
+     186,
+     63.5
+    ],
+    "thicknessMm": 38,
+    "pieceM": 1.86,
+    "material": "furnir stejar"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-smarter-fold-01-4341-suspensie-led-negru",
+   "sourceUrl": "https://www.dedeman.ro/ro/suspensie-led-fold-01-4341-40-w-2500-lm-lumina-neutra-negru-modern/p/1095719",
+   "evidence": "339.00 lei/bucata (pret vechi 382.00 lei, promo pana la 31.10.2026); Dulie: LED; Flux luminos corp de iluminat (lm): 2500",
+   "specsRaw": {
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "ip": "IP20",
+    "lumens": 2500,
+    "cctK": 4000,
+    "material": "aluminiu + metal",
+    "socket": "LED",
+    "brand": "Smarter"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-smarter-kaya-01-4750-suspensie-3xe27-auriu-alb",
+   "sourceUrl": "https://www.dedeman.ro/ro/suspensie-kaya-01-4750-3-x-e27-auriu-alb-modern/p/1108586",
+   "evidence": "389.00 lei/bucata (pret vechi 431.99 lei, promo pana la 31.10.2026); Dulie: E27",
+   "specsRaw": {
+    "colorName": "auriu + alb",
+    "color": "#C9A44C",
+    "ip": "IP20",
+    "material": "metal",
+    "socket": "3 x E27",
+    "brand": "Smarter"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-smarter-global-01-3167-suspensie-e27-alama",
+   "sourceUrl": "https://www.dedeman.ro/ro/suspensie-global-01-3167-1-x-e27-alama-d-250-mm-modern/p/1081693",
+   "evidence": "201.00 lei/bucata; Dulie: E27",
+   "specsRaw": {
+    "colorName": "alama",
+    "color": "#B5A36A",
+    "ip": "IP20",
+    "material": "metal",
+    "socket": "1 x E27",
+    "brand": "Smarter"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-rabalux-rattan-72025-suspensie-e27-bej",
+   "sourceUrl": "https://www.dedeman.ro/ro/suspensie-rattan-72025-1-x-e27-bej-modern/p/1074382",
+   "evidence": "254.02 lei/bucata; Dulie: E27",
+   "specsRaw": {
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "ip": "IP20",
+    "material": "lemn + metal",
+    "socket": "1 x E27",
+    "brand": "Rabalux"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-smarter-boom-01-3480-suspensie-3xgu10-negru-mat",
+   "sourceUrl": "https://www.dedeman.ro/ro/suspensie-boom-01-3480-3-x-gu10-negru-mat-modern/p/1085779",
+   "evidence": "323.00 lei/bucata; Dulie: GU10",
+   "specsRaw": {
+    "colorName": "negru mat",
+    "color": "#1F1F1F",
+    "ip": "IP20",
+    "material": "metal",
+    "socket": "3 x GU10",
+    "brand": "Smarter"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-akterspring-lustra-opalin-alamit-73",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/akterspring-lustra-opalin-sticla-alamit-80577880/",
+   "evidence": "329 lei (JSON-LD offer RON, pret afisat 329); Becurile se vând separat. IKEA recomandă becul LED E14 ... (3 buc); 73 cm",
+   "specsRaw": {
+    "socket": "3 x E14 (becuri se vând separat)",
+    "material": "sticlă opalină / alămit",
+    "colorName": "opalin / alămit",
+    "color": "#F2EFE6",
+    "widthCm": 73
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-stockholm-2025-lustra-sticla-alamit-38",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/stockholm-2025-lustra-sticla-alamit-50586305/",
+   "evidence": "499 lei (JSON-LD offer RON, pret afisat 499); Becul se vinde separat. IKEA recomandă un bec LED E27 decorativ; 38 cm",
+   "specsRaw": {
+    "socket": "E27 (becul se vinde separat)",
+    "material": "sticlă / alămit",
+    "colorName": "sticlă / alămit",
+    "color": "#C9B27A",
+    "diameterCm": 38
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-narrkolv-lustra-ratan-56",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/narrkolv-lustra-ratan-00594341/",
+   "evidence": "249 lei (JSON-LD offer RON, pret afisat 249); Becul se vinde separat. IKEA recomandă becul LED E27 glob transparent; 56 cm",
+   "specsRaw": {
+    "socket": "E27 (becul se vinde separat)",
+    "material": "ratan",
+    "colorName": "bej (ratan)",
+    "color": "#C8A97E",
+    "diameterCm": 56
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-smarter-kaya-01-4741-aplica-e14-negru-alb",
+   "sourceUrl": "https://www.dedeman.ro/ro/aplica-kaya-01-4741-1-x-e14-negru-alb-modern/p/1108575",
+   "evidence": "93.90 lei/bucata (pret vechi 106.00 lei, promo pana la 31.10.2026); Dulie: E14; Grad de protectie: IP20",
+   "specsRaw": {
+    "colorName": "negru + alb",
+    "color": "#1C1C1C",
+    "ip": "IP20",
+    "material": "metal",
+    "socket": "1 x E14",
+    "brand": "Smarter"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-hoff-douche-aplica-led-baie-ip44-crom",
+   "sourceUrl": "https://www.dedeman.ro/ro/aplica-led-pentru-baie-hoff-douche-10-w-750-lm-lumina-neutra/-rece-ip44-crom-alb-modern/p/1084177",
+   "evidence": "96.90 lei/bucata (pret vechi 109.00 lei, promo pana la 31.10.2026); Dulie: LED; Grad de protectie: IP44",
+   "specsRaw": {
+    "colorName": "crom + alb",
+    "color": "#C9CCCE",
+    "ip": "IP44",
+    "lumens": 750,
+    "cctK": "4000 / 6500",
+    "material": "aluminiu",
+    "socket": "LED",
+    "brand": "Hoff"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-klausen-intrigue-kl141015-aplica-led-negru",
+   "sourceUrl": "https://www.dedeman.ro/ro/aplica-led-intrigue-kl141015-16-w-1300-lm-lumina-neutra-4000k-negru-modern/p/1070422",
+   "evidence": "182.90 lei/bucata (pret vechi 279.99 lei, promo pana la 31.10.2026); Dulie: LED; Grad de protectie: IP20",
+   "specsRaw": {
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "ip": "IP20",
+    "lumens": 1300,
+    "cctK": 4000,
+    "material": "metal",
+    "socket": "LED",
+    "brand": "Klausen"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-smarter-timber-01-1663-aplica-e27-negru-fag",
+   "sourceUrl": "https://www.dedeman.ro/ro/aplica-timber-01-1663-1-x-e27-negru-mat-lemn-de-fag-natur-modern/p/1051533",
+   "evidence": "95.99 lei/bucata; Dulie: E27; Grad de protectie: IP20",
+   "specsRaw": {
+    "colorName": "negru mat, natur",
+    "color": "#1F1F1F",
+    "ip": "IP20",
+    "material": "metal",
+    "socket": "1 x E27",
+    "brand": "Smarter"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-kabomba-aplica-led-oglinda-negru-20",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/kabomba-aplica-led-cu-oglinda-intensitate-reglabila-mat-negru-60485283/",
+   "evidence": "249 lei (JSON-LD offer RON, pret afisat 249); Flux luminos 600 lm; Omologat IP44; Ø 20 cm",
+   "specsRaw": {
+    "lumens": 600,
+    "ip": "IP44",
+    "colorName": "mat/negru",
+    "color": "#1C1C1C",
+    "diameterCm": 20
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "ikea-varmblixt-aplica-led-perete-oglinda-bronz-55",
+   "sourceUrl": "https://www.ikea.com/ro/ro/p/varmblixt-aplica-led-perete-oglinda-intensitate-reglabila-bronz-rotund-10531541/",
+   "evidence": "399 lei (JSON-LD offer RON, pret afisat 399); Flux luminos 150 lm; Temperatură culoare 2700 K; Ø 55 cm",
+   "specsRaw": {
+    "lumens": 150,
+    "cctK": 2700,
+    "colorName": "bronz",
+    "color": "#8C6A45",
+    "diameterCm": 55
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-bagheta-polistiren-was-063-alb-200cm",
+   "sourceUrl": "https://www.dedeman.ro/ro/bagheta-decorativa-polistiren-was-063-modern-alb-200-x-7-x-4-cm/p/8096542",
+   "evidence": "34.26 lei/bucata (pret vechi 42.99 lei, promo pana la 31.10.2026); Lungime (cm): 200; Material: polistiren",
+   "specsRaw": {
+    "colorName": "alb",
+    "color": "#F4F4F2",
+    "sizeCm": [
+     200,
+     7
+    ],
+    "thicknessMm": 40,
+    "material": "polistiren",
+    "pieceM": 2.0
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-bagheta-polistiren-decosa-a80-alb-200cm",
+   "sourceUrl": "https://www.dedeman.ro/ro/bagheta-decorativa-polistiren-decosa-a80-clasic-alb-200-x-8-cm/p/8042061",
+   "evidence": "19.99 lei/bucata; Lungime (cm): 200; Material: polistiren",
+   "specsRaw": {
+    "colorName": "alb",
+    "color": "#F4F4F2",
+    "sizeCm": [
+     200,
+     8
+    ],
+    "material": "polistiren",
+    "pieceM": 2.0,
+    "brand": "Decosa"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-bagheta-polimer-dur-wood-class-chp2040-alb-200cm",
+   "sourceUrl": "https://www.dedeman.ro/ro/bagheta-decorativa-polimer-dur-wood-class-chp2040-modern-alb-200-x-4-x-2-cm/p/8132039",
+   "evidence": "22.99 lei/bucata; Lungime (cm): 200; Material: polimer dur",
+   "specsRaw": {
+    "colorName": "alb",
+    "color": "#F4F4F2",
+    "sizeCm": [
+     200,
+     4
+    ],
+    "thicknessMm": 20,
+    "material": "polimer dur",
+    "pieceM": 2.0,
+    "brand": "Wood Class"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-cornisa-polimer-aw08080-alb-200cm",
+   "sourceUrl": "https://www.dedeman.ro/ro/cornisa-decorativa-polimer-aw08080-clasic-alb-200-x-8-x-8-cm/p/8115290",
+   "evidence": "30.00 lei/bucata; Lungime (cm): 200; Material: polimer",
+   "specsRaw": {
+    "colorName": "alb",
+    "color": "#F4F4F2",
+    "sizeCm": [
+     200,
+     8
+    ],
+    "material": "polimer",
+    "pieceM": 2.0
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-bagheta-polistiren-cm17-rwg-alb-auriu-200cm",
+   "sourceUrl": "https://www.dedeman.ro/ro/bagheta-decorativa-polistiren-cm17-rwg-clasic-alb-auriu-200-x-9-5-cm/p/8063303",
+   "evidence": "13.99 lei/bucata; Lungime (cm): 200; Material: polistiren expandat",
+   "specsRaw": {
+    "colorName": "alb + auriu",
+    "color": "#F4F4F2",
+    "sizeCm": [
+     200,
+     9.5
+    ],
+    "material": "polistiren expandat",
+    "pieceM": 2.0
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-parchet-swiss-krono-sigma-d5382-pamphylia-oak-8mm",
+   "sourceUrl": "https://www.dedeman.ro/ro/parchet-laminat-8-mm-swiss-krono-sigma-d5382-pamphylia-oak-clasa-32/p/4027359",
+   "evidence": "42.90 lei/m2 (pret vechi 46.90 lei/m2, promo pana la 31.10.2026); pachet 2.397 m2; Clasa trafic: comercial general (cl. 32); Suprafata totala (mp/pachet): 2.397",
+   "specsRaw": {
+    "finish": "laminat",
+    "colorName": "Pamphylia oak",
+    "sizeCm": [
+     138,
+     19.3
+    ],
+    "thicknessMm": 8,
+    "material": "HDF",
+    "trafficClass": "comercial general (cl. 32)",
+    "brand": "Swiss Krono"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-parchet-classen-wr-story-68138-oak-brava-12mm",
+   "sourceUrl": "https://www.dedeman.ro/ro/parchet-laminat-12-mm-classen-wr-story-68138-oak-brava-clasa-33/p/4030095",
+   "evidence": "87.89 lei/m2; pachet 1.48 m2; Clasa trafic: comercial intens (cl. 33); Suprafata totala (mp/pachet): 1.48",
+   "specsRaw": {
+    "finish": "laminat",
+    "colorName": "oak Brava",
+    "sizeCm": [
+     128.5,
+     19.2
+    ],
+    "thicknessMm": 12,
+    "material": "HDF",
+    "trafficClass": "comercial intens (cl. 33)",
+    "brand": "Classen"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-parchet-egger-neutral-h2970-stejar-nord-10mm",
+   "sourceUrl": "https://www.dedeman.ro/ro/parchet-laminat-10-mm-egger-neutral-h2970-stejar-nord-natur-clasa-32/p/4028495",
+   "evidence": "59.90 lei/m2; pachet 1.745 m2; Clasa trafic: comercial general (cl. 32); Suprafata totala (mp/pachet): 1.745",
+   "specsRaw": {
+    "finish": "laminat",
+    "colorName": "stejar nord natur",
+    "color": "#C49A6C",
+    "sizeCm": [
+     129.2,
+     19.3
+    ],
+    "thicknessMm": 10,
+    "material": "HDF",
+    "trafficClass": "comercial general (cl. 32)",
+    "brand": "Egger"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-parchet-kaindl-classic-touch-37813-severina-oak-8mm",
+   "sourceUrl": "https://www.dedeman.ro/ro/parchet-laminat-8-mm-kaindl-laminate-classic-touch-37813-severina-oak-clasa-32/p/4027952",
+   "evidence": "41.90 lei/m2 (pret vechi 44.90 lei/m2, promo pana la 31.10.2026); pachet 2.4 m2; Clasa trafic: comercial general (cl. 32); Suprafata totala (mp/pachet): 2.4",
+   "specsRaw": {
+    "finish": "laminat",
+    "colorName": "Severina oak",
+    "sizeCm": [
+     138.3,
+     19.3
+    ],
+    "thicknessMm": 8,
+    "material": "HDF",
+    "trafficClass": "comercial general (cl. 32)",
+    "brand": "Kaindl"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-parchet-floorpan-stonex-012-tunisia-10mm",
+   "sourceUrl": "https://www.dedeman.ro/ro/parchet-laminat-10-mm-floorpan-stonex-012-tunisia-v-clasa-33/p/4025865",
+   "evidence": "75.90 lei/m2; pachet 2.424 m2; Clasa trafic: comercial intens (cl. 33); Suprafata totala (mp/pachet): 2.424",
+   "specsRaw": {
+    "colorName": "Tunisia V",
+    "sizeCm": [
+     120.6,
+     40.2
+    ],
+    "thicknessMm": 10,
+    "material": "HDF",
+    "trafficClass": "comercial intens (cl. 33)",
+    "brand": "Floorpan"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-parchet-swiss-krono-sound-d3342-chestnut-12mm",
+   "sourceUrl": "https://www.dedeman.ro/ro/parchet-laminat-12-mm-swiss-krono-sound-d3342-chestnut-v-clasa-33/p/4024485",
+   "evidence": "82.90 lei/m2; pachet 1.293 m2; Clasa trafic: comercial intens (cl. 33); Suprafata totala (mp/pachet): 1.293",
+   "specsRaw": {
+    "colorName": "Chestnut V",
+    "sizeCm": [
+     137.5,
+     18.8
+    ],
+    "thicknessMm": 12,
+    "material": "HDF",
+    "trafficClass": "comercial intens (cl. 33)",
+    "brand": "Swiss Krono"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-gresie-e-stone-limestone-3587-60x120-bej",
+   "sourceUrl": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-e-stone-limestone-3587-60-x-120-cm-bej-mata-rectificata-aspect-piatra/p/4030427",
+   "evidence": "69.90 lei/m2; cutie 1.44 m2; Rectificata: Da; Glazura: mata",
+   "specsRaw": {
+    "finish": "mata",
+    "colorName": "bej",
+    "color": "#D8C7A8",
+    "sizeCm": [
+     120,
+     60
+    ],
+    "thicknessMm": 7.45,
+    "rectified": true,
+    "slip": "R10",
+    "pei": "PEI 4"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-gresie-mckinley-60x120-alb-lucios",
+   "sourceUrl": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-mckinley-60-x-120-cm-alb-lucioasa-rectificata-imitatie-marmura/p/4025688",
+   "evidence": "79.90 lei/m2 (pret vechi 89.89 lei/m2, promo pana la 31.10.2026); cutie 1.44 m2; Rectificata: Da; Glazura: lucioasa",
+   "specsRaw": {
+    "finish": "lucioasa",
+    "colorName": "alb",
+    "color": "#F4F4F2",
+    "sizeCm": [
+     120,
+     60
+    ],
+    "thicknessMm": 9,
+    "rectified": true,
+    "pei": "PEI 2"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-gresie-havana-grey-60x120",
+   "sourceUrl": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-havana-grey-60-x-120-cm-gri-mata-rectificata-aspect-piatra/p/4030732",
+   "evidence": "69.90 lei/m2 (pret vechi 74.90 lei/m2, promo pana la 31.10.2026); cutie 1.44 m2; Rectificata: Da; Glazura: mata",
+   "specsRaw": {
+    "finish": "mata",
+    "colorName": "gri",
+    "color": "#8A8C8E",
+    "sizeCm": [
+     120,
+     60
+    ],
+    "thicknessMm": 8.5,
+    "rectified": true,
+    "slip": "R9",
+    "pei": "PEI 3"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-gresie-milena-nuez-20x120-lemn",
+   "sourceUrl": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-milena-nuez-20-x-120-cm-maro-mata-rectificata-aspect-lemn/p/4030414",
+   "evidence": "79.90 lei/m2 (pret vechi 89.89 lei/m2, promo pana la 31.10.2026); cutie 1.2 m2; Rectificata: Da; Glazura: mata",
+   "specsRaw": {
+    "finish": "mata",
+    "colorName": "maro",
+    "color": "#6B4A33",
+    "sizeCm": [
+     120,
+     20
+    ],
+    "thicknessMm": 9,
+    "rectified": true,
+    "pei": "PEI 3"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-gresie-dazzle-onyx-black-60x120",
+   "sourceUrl": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-dazzle-onyx-black-60-x-120-cm-negru-lucioasa-rectificata-aspect-marmura/p/4026195",
+   "evidence": "89.90 lei/m2 (pret vechi 119.00 lei/m2, promo pana la 31.10.2026); cutie 1.44 m2; Rectificata: Da; Glazura: lucioasa",
+   "specsRaw": {
+    "finish": "lucioasa",
+    "colorName": "negru",
+    "color": "#1C1C1C",
+    "sizeCm": [
+     120,
+     60
+    ],
+    "thicknessMm": 9,
+    "rectified": true,
+    "slip": "R9",
+    "pei": "PEI 2"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-gresie-pmr-96120472-60x120-ciment",
+   "sourceUrl": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-pmr-96120472-60-x-120-cm-gri-mata-rectificata-aspect-ciment/p/4032450",
+   "evidence": "49.90 lei/m2 (pret vechi 74.90 lei/m2, promo pana la 31.10.2026); cutie 1.44 m2; Rectificata: Da; Glazura: mata",
+   "specsRaw": {
+    "finish": "mata",
+    "colorName": "gri",
+    "color": "#8A8C8E",
+    "sizeCm": [
+     120,
+     60
+    ],
+    "thicknessMm": 9.2,
+    "rectified": true,
+    "slip": "R9",
+    "pei": "PEI 3"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-gresie-cancun-30x60-antiderapanta",
+   "sourceUrl": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-cancun-30-x-60-cm-gri-mata-antiderapanta-imitatie-piatra/p/4020416",
+   "evidence": "48.90 lei/m2 (pret vechi 58.90 lei/m2, promo pana la 31.10.2026); cutie 1.62 m2; Rectificata: Nu; Glazura: mata",
+   "specsRaw": {
+    "finish": "mata",
+    "colorName": "gri",
+    "color": "#8A8C8E",
+    "sizeCm": [
+     60,
+     30
+    ],
+    "thicknessMm": 9,
+    "rectified": false,
+    "slip": "R11",
+    "pei": "PEI 4"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-faianta-alpino-white-30x60",
+   "sourceUrl": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-alpino-white-30-x-60-cm-lucioasa-rectificata-alb-aspect-marmura/p/4027492",
+   "evidence": "49.90 lei/m2 (pret vechi 59.90 lei/m2, promo pana la 31.10.2026); cutie 1.44 m2; Rectificata: Da; Glazura: lucioasa",
+   "specsRaw": {
+    "finish": "lucioasa",
+    "colorName": "alb",
+    "color": "#F4F4F2",
+    "sizeCm": [
+     60,
+     30
+    ],
+    "thicknessMm": 10,
+    "rectified": true
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-faianta-toja-beige-40x120",
+   "sourceUrl": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-toja-beige-40-x-120-cm-mata-rectificata-bej/p/4029653",
+   "evidence": "109.00 lei/m2 (pret vechi 119.00 lei/m2, promo pana la 31.10.2026); cutie 1.44 m2; Rectificata: Da; Glazura: mata",
+   "specsRaw": {
+    "finish": "mata",
+    "colorName": "bej",
+    "color": "#D8C7A8",
+    "sizeCm": [
+     120,
+     40
+    ],
+    "thicknessMm": 10.5,
+    "rectified": true
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-faianta-layla-grey-30x60",
+   "sourceUrl": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-layla-grey-30-x-60-cm-lucioasa-rectificata-gri-aspect-piatra/p/4031244",
+   "evidence": "49.90 lei/m2 (pret vechi 59.90 lei/m2, promo pana la 31.10.2026); cutie 1.44 m2; Rectificata: Da; Glazura: lucioasa",
+   "specsRaw": {
+    "finish": "lucioasa",
+    "colorName": "gri",
+    "color": "#8A8C8E",
+    "sizeCm": [
+     60,
+     30
+    ],
+    "thicknessMm": 10,
+    "rectified": true
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-faianta-rockstone-pearl-33x90",
+   "sourceUrl": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-rockstone-pearl-33-3-x-90-cm-mata-rectificata-gri-imitatie-piatra/p/4022707",
+   "evidence": "84.90 lei/m2 (pret vechi 89.90 lei/m2, promo pana la 31.10.2026); cutie 1.199 m2; Rectificata: Da; Glazura: mata",
+   "specsRaw": {
+    "finish": "mata",
+    "colorName": "gri",
+    "color": "#8A8C8E",
+    "sizeCm": [
+     90,
+     33.3
+    ],
+    "thicknessMm": 10.5,
+    "rectified": true
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-faianta-holiday-30x60-verde",
+   "sourceUrl": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-holiday-30-x-60-cm-lucioasa-verde/p/4031201",
+   "evidence": "54.90 lei/m2 (pret vechi 59.90 lei/m2, promo pana la 31.10.2026); cutie 1.44 m2; Rectificata: Nu; Glazura: lucioasa",
+   "specsRaw": {
+    "finish": "lucioasa",
+    "colorName": "verde",
+    "color": "#7FA48C",
+    "sizeCm": [
+     60,
+     30
+    ],
+    "thicknessMm": 8.3,
+    "rectified": false
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-faianta-timber-line-roble-30x60",
+   "sourceUrl": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-timber-line-roble-30-x-60-cm-mata-maro-aspect-lemn/p/4031200",
+   "evidence": "54.90 lei/m2 (pret vechi 59.90 lei/m2, promo pana la 31.10.2026); cutie 1.44 m2; Rectificata: Nu; Glazura: mata",
+   "specsRaw": {
+    "finish": "mata",
+    "colorName": "maro",
+    "color": "#6B4A33",
+    "sizeCm": [
+     60,
+     30
+    ],
+    "thicknessMm": 8.3,
+    "rectified": false
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-faianta-jasper-white-25x75",
+   "sourceUrl": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-jasper-white-25-x-75-cm-mata-gri-aspect-ciment/p/4026280",
+   "evidence": "59.90 lei/m2 (pret vechi 64.90 lei/m2, promo pana la 31.10.2026); cutie 1.31 m2; Rectificata: Nu; Glazura: mata",
+   "specsRaw": {
+    "finish": "mata",
+    "colorName": "gri deschis",
+    "color": "#BDBDB8",
+    "sizeCm": [
+     75,
+     25
+    ],
+    "thicknessMm": 9.5,
+    "rectified": false
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-vopsea-savana-superculoare-bej-armonie-5l",
+   "sourceUrl": "https://www.dedeman.ro/ro/vopsea-gata-colorata-interior-savana-superculoare-bej-armonie-5-l/p/5017136",
+   "evidence": "27.20 lei/litru, 136.00 lei/bucata; Cantitate: 5 L; Nuanta: bej",
+   "specsRaw": {
+    "finish": "mat",
+    "colorName": "bej",
+    "color": "#D8C7A8",
+    "litres": 5.0,
+    "brand": "Savana"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-vopsea-savana-superculoare-verde-senin-5l",
+   "sourceUrl": "https://www.dedeman.ro/ro/vopsea-gata-colorata-interior-savana-superculoare-verde-senin-calm-5-l/p/5017139",
+   "evidence": "27.20 lei/litru, 136.00 lei/bucata; Cantitate: 5 L; Nuanta: verde senin",
+   "specsRaw": {
+    "finish": "mat",
+    "colorName": "verde senin",
+    "color": "#A9C3A6",
+    "litres": 5.0,
+    "brand": "Savana"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-vopsea-savana-superculoare-gri-nordic-5l",
+   "sourceUrl": "https://www.dedeman.ro/ro/vopsea-gata-colorata-interior-savana-superculoare-gri-nordic-rafinament-5-l/p/5017144",
+   "evidence": "39.40 lei/litru, 197.00 lei/bucata; Cantitate: 5 L; Nuanta: gri nordic",
+   "specsRaw": {
+    "finish": "mat",
+    "colorName": "gri nordic",
+    "color": "#9EA3A6",
+    "litres": 5.0,
+    "brand": "Savana"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-vopsea-savana-superculoare-bleumarin-5l",
+   "sourceUrl": "https://www.dedeman.ro/ro/vopsea-gata-colorata-interior-savana-superculoare-bleumarin-extravaganta-5-l/p/5017145",
+   "evidence": "39.40 lei/litru, 197.00 lei/bucata; Cantitate: 5 L; Nuanta: bleumarin",
+   "specsRaw": {
+    "finish": "mat",
+    "colorName": "bleumarin",
+    "color": "#1F2A4D",
+    "litres": 5.0,
+    "brand": "Savana"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-vopsea-kober-cafeniu-v8370-8-5l",
+   "sourceUrl": "https://www.dedeman.ro/ro/vopsea-lavabila-interior-kober-cafeniu-v8370-8-5-l/p/5013930",
+   "evidence": "11.65 lei/litru, 99.00 lei/bucata (pret vechi 112.00 lei, promo pana la 31.10.2026); Cantitate: 8.5 L; Nuanta: cafeniu",
+   "specsRaw": {
+    "finish": "mat",
+    "colorName": "cafeniu",
+    "color": "#8B6A4F",
+    "litres": 8.5,
+    "brand": "Kober"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-vopsea-oskar-coloris-scandinavian-grey-5l",
+   "sourceUrl": "https://www.dedeman.ro/ro/vopsea-lavabila-interior-oskar-coloris-scandinavian-grey-5-l/p/5021274",
+   "evidence": "29.80 lei/litru, 149.00 lei/bucata; Cantitate: 5 L; Nuanta: scandinavian grey",
+   "specsRaw": {
+    "finish": "mat",
+    "colorName": "scandinavian grey",
+    "color": "#B9BBB8",
+    "litres": 5.0,
+    "brand": "Oskar"
+   },
+   "verifiedAt": "2026-10-11"
+  },
+  {
+   "id": "dedeman-vopsea-oskar-coloris-classic-cream-5l",
+   "sourceUrl": "https://www.dedeman.ro/ro/vopsea-lavabila-interior-oskar-coloris-classic-cream-5-l/p/5021285",
+   "evidence": "29.80 lei/litru, 149.00 lei/bucata; Cantitate: 5 L; Nuanta: classic cream",
+   "specsRaw": {
+    "finish": "mat",
+    "colorName": "classic cream",
+    "color": "#EDE3CC",
+    "litres": 5.0,
+    "brand": "Oskar"
+   },
+   "verifiedAt": "2026-10-11"
+  }
+ ]
+}
