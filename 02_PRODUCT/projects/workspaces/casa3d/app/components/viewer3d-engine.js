@@ -879,13 +879,23 @@ function model(it){
   function placeSun(){ const dir = light && light.dir ? light.dir : null; if (dir) sun.position.set(C.x + dir[0] * 14, dir[1] * 14, C.z + dir[2] * 14); else sun.position.set(C.x + 6, 11, C.z - 8); }
   // momentul zilei, dedus din parametri (core/lighting.ts nu-l trimite): cerul, terenul și lumina proprie a tavanului
   const timeOf = p => p.sun < .3 ? 'night' : p.sun < 1 ? 'evening' : 'day';
-  function setLighting(p){ light = p; const t = timeOf(p); paintSky(t); applyBackdrop();
-    hemi.intensity = p.hemi * LI; sun.color.set(p.sunColor); sun.intensity = p.sun * LI; R.toneMappingExposure = p.exposure * EXPOSURE_GAIN;
+  function setLighting(p){ light = p; const t = timeOf(p); paintSky(t);
+    hemi.intensity = p.hemi * LI; sun.color.set(p.sunColor); sun.intensity = p.sun * LI; R.toneMappingExposure = p.exposure * EXPOSURE_GAIN; applyBackdrop();
     ceilMats.forEach(m => { m.emissiveIntensity = ceilFill[t]; });
     interiorLights.forEach(l => { l.intensity = p.interior * LI * PL; }); placeSun(); dirty(); }
   // fundalul: în machetă culoarea neutră din lumină; în tur și în imaginile fixe cerul și terenul de afară
+  // Pe calea cu compozitor (calitate înaltă) culoarea de fundal trece prin OutputPass (ACES + sRGB); pe calea normală e
+  // scrisă direct. untone dă culoarea care, după ACES (formula din three r186) și sRGB, iese egală cu cea cerută.
+  const ACES_IN = [[.59719, .35458, .04823], [.07600, .90834, .01566], [.02840, .13383, .83777]], ACES_OUT = [[1.60475, -.53108, -.07367], [-.10208, 1.10813, -.00605], [-.00327, -.07276, 1.07602]];
+  const mul = (m, v) => m.map(r => r[0] * v[0] + r[1] * v[1] + r[2] * v[2]);
+  const inv3 = m => { const [[a, b, c], [d, e, f], [g, h, i]] = m, A = e * i - f * h, B = f * g - d * i, C = d * h - e * g, det = a * A + b * B + c * C;
+    return [[A, c * h - b * i, b * f - c * e], [B, a * i - c * g, c * d - a * f], [C, b * g - a * h, a * e - b * d]].map(r => r.map(x => x / det)); };
+  const ACES_IN_INV = inv3(ACES_IN), ACES_OUT_INV = inv3(ACES_OUT);
+  const unfit = y => { const a = 1 - .983729 * y, b = .0245786 - .4329510 * y, c = -.000090537 - .238081 * y; return (-b + Math.sqrt(Math.max(0, b * b - 4 * a * c))) / (2 * a); };
+  function untone(c, exposure){ const t = new THREE.Color(c).convertSRGBToLinear(), y = mul(ACES_OUT_INV, [t.r, t.g, t.b].map(v => Math.min(.98, v))).map(unfit), v = mul(ACES_IN_INV, y).map(x => Math.max(0, x * .6 / (exposure || 1)));
+    return new THREE.Color(v[0], v[1], v[2]); }
   function applyBackdrop(){ const walk = mode === 'walk', bg = new THREE.Color(light ? light.background : '#d9d3c8'), hz = lin(SKY[skyKey][0]);
-    sky.visible = walk; scene.background = walk ? new THREE.Color(SKY[skyKey][0]) : bg; scene.fog.color.copy(walk ? hz : bg); scene.fog.near = walk ? 35 : 25; scene.fog.far = walk ? 105 : 60;
+    sky.visible = walk; scene.background = walk ? new THREE.Color(SKY[skyKey][0]) : quality === 'high' && composer ? untone(bg, R.toneMappingExposure) : bg; scene.fog.color.copy(walk ? hz : bg); scene.fog.near = walk ? 35 : 25; scene.fog.far = walk ? 105 : 60;
     ground.material.color.copy(walk ? lin(SKY[skyKey][3]) : groundHouse); }
   // captură PNG: randează cadrul curent și îl citește imediat (fără preserveDrawingBuffer)
   function capture(){ draw(); return canvas.toDataURL('image/png'); }
@@ -1055,14 +1065,18 @@ function model(it){
     catch { /* fără sondă: oglinda folosește mediul scenei */ }
     finally { mirrors.forEach((o, i) => { o.visible = vis[i]; }); } }
   // panoramă 360° (echirectangulară 2:1) din mijlocul camerei, la înălțimea ochilor: cub de 6 vederi → proiecție
-  // echirectangulară într-un shader. Cubul primește deja tone mapping + sRGB, deci pasul de proiecție copiază valorile.
+  // echirectangulară într-un shader. Din r153 randarea în țintă nu aplică tone mapping, deci cubul ține valori liniare (HalfFloat,
+  // fără tăiere peste 1), iar ACES + sRGB se aplică la proiecție, ca pe ecran.
   const EquiShader = { uniforms: { tCube: { value: null } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
     fragmentShader: `uniform samplerCube tCube; varying vec2 vUv; const float PI = 3.141592653589793;
-      void main(){ float lon = (vUv.x - 0.5) * 2.0 * PI, lat = (vUv.y - 0.5) * PI; vec3 dir = vec3(cos(lat) * sin(lon), sin(lat), -cos(lat) * cos(lon)); gl_FragColor = textureCube(tCube, dir); }` };
+      void main(){ float lon = (vUv.x - 0.5) * 2.0 * PI, lat = (vUv.y - 0.5) * PI; vec3 dir = vec3(cos(lat) * sin(lon), sin(lat), -cos(lat) * cos(lon)); gl_FragColor = textureCube(tCube, dir);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+      }` };
   function renderPanorama(roomId, w = 2048){ if (!plan) return null; const r = plan.camere.find(x => x.id === roomId); if (!r) return null;
     const prevMode = mode, prevSize = new THREE.Vector2(), prevRatio = R.getPixelRatio(); R.getSize(prevSize); setMode('walk');
-    const rt = new THREE.WebGLCubeRenderTarget(Math.min(2048, w / 2), { colorSpace: THREE.SRGBColorSpace, generateMipmaps: false }), cc = new THREE.CubeCamera(.05, 200, rt);
-    const mat = new THREE.ShaderMaterial({ ...EquiShader, uniforms: { tCube: { value: rt.texture } }, depthTest: false, depthWrite: false }), quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat), qs = new THREE.Scene(); qs.add(quad);
+    const rt = new THREE.WebGLCubeRenderTarget(Math.min(2048, w / 2), { type: THREE.HalfFloatType, generateMipmaps: false }), cc = new THREE.CubeCamera(.05, 200, rt);
+    const mat = new THREE.ShaderMaterial({ ...EquiShader, uniforms: { tCube: { value: rt.texture } }, depthTest: false, depthWrite: false, toneMapped: true }), quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat), qs = new THREE.Scene(); qs.add(quad);
     // orice excepție lasă randatorul cum era (mărime, densitate, mod) și eliberează resursele GPU ale panoramei
     try { cc.position.set((r.x0 + r.x1) / 2, SHOT.eye, (r.z0 + r.z1) / 2); scene.add(cc); cc.update(R, scene);
       R.setPixelRatio(1); R.setSize(w, w / 2, false); R.render(qs, new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)); return canvas.toDataURL('image/jpeg', .92); }
@@ -1291,8 +1305,8 @@ function model(it){
       else { if (kind === 'left') orbit.th -= a; else if (kind === 'right') orbit.th += a; else if (kind === 'up') orbit.ph = Math.max(.12, orbit.ph - .15); else if (kind === 'down') orbit.ph = Math.min(1.45, orbit.ph + .15);
         else if (kind === 'in' || kind === 'out') orbit.r = Math.max(4, Math.min(40, orbit.r * (kind === 'in' ? .85 : 1.18))); }
       dirty(); },
-    setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } return quality; },
+    setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } applyBackdrop(); dirty(); return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
-    dispose(){ alive = false; for (const mk of [selMark, hovMark]){ mk.geometry.dispose(); mk.material.dispose(); } for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('pointerleave', hoverOut); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }
+    dispose(){ alive = false; for (const mk of [selMark, hovMark]){ mk.geometry.dispose(); mk.material.dispose(); } for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('pointerleave', hoverOut); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); finish.dispose(); composer.dispose(); composer = null; } R.dispose(); }
   };
 }
