@@ -113,6 +113,18 @@ public static class InvestigationReportPdf
                         vc.Item().PaddingTop(3).Background("#fef2f2").Border(1).BorderColor("#b91c1c").Padding(4).Text(warn).FontSize(8).Bold().FontColor("#7f1d1d");
                     }
                 });
+                // R22.5: AI text reaches this report only through the case-level claim validation (AiValidationText); never raw.
+                col.Item().Border(0.8f).BorderColor(Line).Padding(5).Column(ac =>
+                {
+                    ac.Spacing(2);
+                    foreach (var l in LogAnalyzer.Dfir.AI.AiValidationText.Lines(r.Case.Root, AiCaseFactsFactory.ForResult(r)))
+                    {
+                        var t = P(ac, l.Text).FontSize(l.Heading ? 8 : 7.5f);
+                        if (l.Heading) t.Bold();
+                        t.FontColor(l.Struck ? Muted : l.Warning ? "#7f1d1d" : Ink);
+                        if (l.Struck) t.Strikethrough();
+                    }
+                });
                 col.Item().Row(row =>
                 {
                     void Box(RowDescriptor rw, string value, string label, string sub, string color) { sub = W(sub); printed.Add($"{value} {label} {sub}".Trim()); InvestigationReportPdf.Box(rw, value, label, sub, color); }
@@ -197,6 +209,13 @@ public static class InvestigationReportPdf
                     Head("Limitări generale (valabile pentru toate constatările)");
                     foreach (var l in general) P(col, "• " + l).FontSize(7.5f);
                     P(col, "Limitările specifice unei constatări sunt trecute la constatarea respectivă.").FontSize(7).Italic().FontColor(Muted);
+                }
+
+                // E7: user activity (ShellBags, RecentDocs, Office MRU, Recycle Bin): counts and the strongest rows, with what each time means; never an overclaim
+                foreach (var (text, head) in InvestigationReportText.UserActivityLines(r))
+                {
+                    var line = P(col, RoText.CleanPathsInText(text)).FontSize(head ? 8.5f : 7.5f);
+                    if (head) line.Bold();
                 }
 
                 }

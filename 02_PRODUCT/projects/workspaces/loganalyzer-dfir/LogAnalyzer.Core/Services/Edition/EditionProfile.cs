@@ -42,7 +42,7 @@ namespace LogAnalyzer.Core.Services.Edition
 
     public static class EditionText
     {
-        public const string NotAvailableClassified = "nu este disponibil în ediția clasificată";
+        public const string NotAvailableClassified = "nu este disponibil în ediția Standalone";
         public static string Unavailable(string what) => $"{what}: {NotAvailableClassified}.";
     }
 

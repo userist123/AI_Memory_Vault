@@ -29,7 +29,7 @@ public enum ControlState { Compliant, NonCompliant, Unreadable }
 public enum PlannedAction { None, Set, Manual }
 
 /// <summary>Outcome of one control in an execution. There is no "success": a change is VERIFIED only when re-reading confirms it.</summary>
-public enum ControlOutcome { Compliant, Verified, NotVerified, Failed, Stale, ManualRequired, Unreadable, NotSelected, RolledBack, RollbackFailed }
+public enum ControlOutcome { Compliant, Verified, NotVerified, Failed, Stale, ManualRequired, Unreadable, NotSelected, RolledBack, RollbackFailed, RollbackNotVerified }
 
 public enum ExecutionStatus { Verified, NotVerified, Failed, NothingApplied }
 
@@ -57,7 +57,32 @@ public sealed record ControlResult(
 public sealed record ExecutionRecord(
     string ExecutionId, string Kind, string PolicyId, string PolicyVersion, string PolicySha256, string PlanSha256, string Station,
     string Operator, string Approver, DateTimeOffset ApprovedUtc, DateTimeOffset StartedUtc, DateTimeOffset FinishedUtc,
-    ExecutionStatus Status, bool PolicyCompliantAfter, IReadOnlyList<ControlResult> Results, string? RollbackOf = null);
+    ExecutionStatus Status, bool PolicyCompliantAfter, IReadOnlyList<ControlResult> Results, string? RollbackOf = null)
+{
+    /// <summary>
+    /// The execution in the shared response contract (computed from the re-read results, not serialized): one check per control that
+    /// was written; a control that was read again and matched is VERIFIED, one that did not is FAILED, one whose re-read failed is NOT_VERIFIED.
+    /// </summary>
+    [JsonIgnore]
+    public LogAnalyzer.Dfir.Response.ResponseOutcome Verification
+    {
+        get
+        {
+            // Only controls something was written to (or attempted on) are checks; untouched, stale and manual controls are not.
+            var checks = Results.Where(r => r.Action != "niciuna").Select(r => new LogAnalyzer.Dfir.Response.ResponseCheck(
+                r.Setting, r.Action, r.After?.Display ?? r.Detail,
+                r.Outcome switch
+                {
+                    ControlOutcome.Verified or ControlOutcome.RolledBack => LogAnalyzer.Dfir.Response.ResponseStatus.Verified,
+                    ControlOutcome.NotVerified or ControlOutcome.RollbackNotVerified => LogAnalyzer.Dfir.Response.ResponseStatus.NotVerified,
+                    _ => LogAnalyzer.Dfir.Response.ResponseStatus.Failed,
+                })).ToList();
+            if (Status == ExecutionStatus.NothingApplied)
+                return LogAnalyzer.Dfir.Response.ResponseOutcome.NotAttempted($"policy {PolicyId}", Kind, LogAnalyzer.Dfir.Response.ResponseStatus.Rejected, "nimic aplicat: nicio setare nu a fost scrisă");
+            return LogAnalyzer.Dfir.Response.ResponseVerifier.Aggregate($"policy {PolicyId}", Kind, checks);
+        }
+    }
+}
 
 /// <summary>
 /// Policy execution (master spec §13): CURRENT → DESIRED → DIFF → IMPACT (<see cref="Plan"/>), APPROVAL (policy APPROVED in
@@ -110,6 +135,7 @@ public sealed class PolicyExecutor(IEnumerable<ISettingProvider> providers, stri
         return plan with { Sha256 = plan.ComputeSha256() };
     }
 
+    [LogAnalyzer.Dfir.Response.ControlledResponse("each written setting re-read through its provider, then the whole policy re-read")]
     public ExecutionRecord Apply(PolicyDocument policy, PolicyPlan plan, PolicyStore store, string operatorName, string confirmedPlanSha256,
         IReadOnlySet<string>? onlyControls = null)
     {
@@ -234,6 +260,7 @@ public sealed class PolicyExecutor(IEnumerable<ISettingProvider> providers, stri
     /// registered, unchanged and approved (sealed approval not cancelled by a retirement), and the operator a signed-in administrator; every check
     /// runs before anything is read or written.
     /// </summary>
+    [LogAnalyzer.Dfir.Response.ControlledResponse("each restored setting re-read through its provider")]
     public ExecutionRecord Rollback(PolicyDocument policy, string executionId, string operatorName, PolicyStore? store = null)
     {
         LogAnalyzer.Dfir.Auth.OperatorIdentity.RequireHostChange();
@@ -278,10 +305,16 @@ public sealed class PolicyExecutor(IEnumerable<ISettingProvider> providers, stri
                 {
                     var target = before.Kind is { } k && k != c.Setting.ValueType ? c.Setting with { ValueType = k } : c.Setting;
                     if (before.Value is null) provider.Delete(c.Setting); else provider.Write(target, before.Value);
-                    var after = provider.Read(c.Setting);
-                    r = after == before
-                        ? new ControlResult(w.ControlId, w.Setting, ControlOutcome.RolledBack, now, before.Value is null ? "delete" : $"set {before.Value}", after, "reread", "starea dinainte a fost restaurată")
-                        : new ControlResult(w.ControlId, w.Setting, ControlOutcome.RollbackFailed, now, before.Value is null ? "delete" : $"set {before.Value}", after, "reread", $"după rollback valoarea este {after.Display}, nu {before.Display}");
+                    var rbAction = before.Value is null ? "delete" : $"set {before.Value}";
+                    SettingValue? after = null;
+                    string? rereadError = null;
+                    try { after = provider.Read(c.Setting); }
+                    catch (Exception ex) { rereadError = ex.Message; }
+                    r = after is null
+                        ? new ControlResult(w.ControlId, w.Setting, ControlOutcome.RollbackNotVerified, now, rbAction, null, "reread", $"restaurat, dar re-citirea a eșuat: {rereadError}")
+                        : after == before
+                        ? new ControlResult(w.ControlId, w.Setting, ControlOutcome.RolledBack, now, rbAction, after, "reread", "starea dinainte a fost restaurată")
+                        : new ControlResult(w.ControlId, w.Setting, ControlOutcome.RollbackFailed, now, rbAction, after, "reread", $"după rollback valoarea este {after.Display}, nu {before.Display}");
                 }
             }
             catch (Exception ex) { r = new ControlResult(w.ControlId, w.Setting, ControlOutcome.RollbackFailed, null, "rollback", null, "", ex.Message); }
@@ -290,6 +323,7 @@ public sealed class PolicyExecutor(IEnumerable<ISettingProvider> providers, stri
                 source.PlanSha256, _station, r.ControlId, r.Setting, r.Before?.Display, r.Action, r.After?.Display, r.Outcome.ToString(), r.Detail));
         }
         var status = results.Any(r => r.Outcome == ControlOutcome.RollbackFailed) ? ExecutionStatus.Failed
+            : results.Any(r => r.Outcome == ControlOutcome.RollbackNotVerified) ? ExecutionStatus.NotVerified
             : results.Any(r => r.Outcome == ControlOutcome.RolledBack) ? ExecutionStatus.Verified : ExecutionStatus.NothingApplied;
         var exec = new ExecutionRecord(rbId, "rollback", policy.Id, policy.Version, policy.Sha256, source.PlanSha256, _station, operatorName, source.Approver,
             source.ApprovedUtc, started, DateTimeOffset.UtcNow, status, false, results, executionId);

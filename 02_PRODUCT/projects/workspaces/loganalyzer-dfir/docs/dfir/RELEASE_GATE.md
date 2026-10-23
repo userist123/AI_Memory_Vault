@@ -5,9 +5,10 @@ Source of the rules: `CONTRACT_AUDIT_STAGE1.md` section 7 (WP12) and section 8, 
 
 ## 1. What a release needs today
 
-**A release is currently impossible.** In enforce mode the gate fails unless every item is `PASS` or `WAIVED`. Four blocking items
-have no capability behind them yet (audit integrity, AI claim validation, response verification, the findings register). They
-become checkable only when the later work packages land (WP3, WP4, WP9) and the owner creates the findings register. Until then
+**A release is currently impossible.** In enforce mode the gate fails unless every item is `PASS` or `WAIVED`. Blocking items
+without a capability behind them when this was written: the findings register (response verification got its test classes with WP9
+and AI claim validation with WP4, both on 2026-10-22; audit integrity see the table). It becomes checkable only when the owner
+creates the findings register. Until then
 the gate reports them `NOT_IMPLEMENTED` and an enforce run fails. The gate never turns a missing capability into a pass, and no
 waiver can cover a blocking item.
 
@@ -21,9 +22,9 @@ It reads the `.trx` files of a `dotnet test` run, a findings register and a waiv
 | `tests_passing` | R22.1 | blocking | No failed test in any `.trx`, at least one passed | real check; PASS when CI is green |
 | `synthetic_corpus` | R21.5, decision 7 | blocking | `SyntheticCorpusTests`: 14 or more executed, none failed | real check |
 | `evidence_integrity` | R22.4 | blocking | `EvidenceIntegrityTests` and `EvidenceContractTests` executed and passing | real check, unit level only (see limits) |
-| `audit_integrity` | R22.7 | blocking | a test class `AuditIntegrity*Tests`, `AuditChain*Tests` or `CustodyChain*Tests` must exist and pass | NOT_IMPLEMENTED (WP3) |
-| `ai_claim_validation` | R22.5 | blocking | a test class `AiClaimValidation*Tests` must exist and pass | NOT_IMPLEMENTED (WP4) |
-| `response_verification` | R22.6 | blocking | a test class `ResponseVerification*Tests` must exist and pass | NOT_IMPLEMENTED (WP9) |
+| `audit_integrity` | R22.7 | blocking | a test class `AuditIntegrity*Tests`, `AuditChain*Tests` or `CustodyChain*Tests` must exist and pass | `AuditChainCustodyTests` exists (Dfir.Tests); the gate judges it from the CI test results (PASS only when CI says so) |
+| `ai_claim_validation` | R22.5 | blocking | a test class `AiClaimValidation*Tests` must exist and pass | real check since WP4 (2026-10-22): `AiClaimValidationTests`, `AiClaimValidationReportTests` (Dfir.Tests), `AiClaimValidationUiTests` (App.Tests); fakes only, see limits |
+| `response_verification` | R22.6 | blocking | a test class `ResponseVerification*Tests` must exist and pass | real check since WP9 (2026-10-22): `ResponseVerificationTests`, `ResponseVerificationProcessTests`, `ResponseVerificationRegistryTests` (fakes only, see limits) |
 | `critical_findings` | R22.8 | blocking | `release-gate/findings-register.json` must exist, be valid, and hold no `critical` + `open` entry | NOT_IMPLEMENTED (no register) |
 | `real_corpus` | R22.2 | waivable | `forensic_validation.txt` says `AVAILABLE` and every corpus test ran and passed | NOT_RUN in CI |
 | `differential` | R22.3 | waivable | the `ForensicLab` tests (`LADFIR_LAB=1`) executed and passed | NOT_RUN in CI |
@@ -39,6 +40,54 @@ empty or always-green class with that name. The `minExecuted` guard in `gate-ite
 
 - `evidence_integrity` is a unit-level check (hashing, mutation refusal, evidence contract). No artefact yet attests the integrity
   of the shipped rule set and parsers (audit R22.4).
+- `response_verification` (WP9) proves the contract with fakes, never on a real firewall or process: every controlled response
+  (per-program containment and its release, station isolation / restore, IoC block, audit-policy change, policy apply / rollback,
+  media sanitization) returns a `ResponseOutcome` from one verifier (`LogAnalyzer.Dfir.Core/Response/ResponseVerification.cs`) that
+  re-reads the target after the action; a re-read that throws, is denied or times out is NOT_VERIFIED, a re-read showing the old state
+  is FAILED; the outcome goes to the case audit (policy: its own hash-chained `audit.jsonl`; sanitization: the provenance ledger) and
+  an audit write failure removes the success. `ResponseVerificationRegistryTests` scans the IL of the production assemblies and fails on
+  any method reaching the host-change gate or a host-changing primitive without `[ControlledResponse]`. Not covered by that scan: the
+  WPF assemblies, and a primitive injected as a delegate (the suspend / resume `Action<int>`); the real-firewall run is the existing
+  `[AdminFact]` in `ContainmentTests`, skipped unless elevated.
+  Process safety (review 2026-10-22): a PID is suspended only when it runs the program being contained (image path, and SHA-256
+  when known) with a readable identity; it is resumed only when its current holder matches the captured PID + start time + image
+  SHA-256; unknown identity or an unreadable process list -> nothing is resumed, NOT_VERIFIED with the cause.
+- `ai_claim_validation` (WP4) proves the contract with fakes, never with a real model: every AI statement is split into claims and checked
+  against THIS case (`LogAnalyzer.Dfir.Core/AI/AiClaimValidator.cs`, no model as judge, no network). The validator confirms VALUES, never
+  MEANING. A claim is VALORI_CONFIRMATE (display "valori confirmate") only when it cites an event or a finding (not just an evidence file) and
+  ONE cited record contains every value it states (values spread over several cited records are at most PARTIAL, "valorile provin din
+  înregistrări diferite"; counts of the cited set are still recomputed over the whole set): timestamps to the stated precision, a time of day
+  ("la ora 11", "ora 10:30", compared with the hour and minute of the record's time on the clock the record states), paths, hashes, addresses and ports, file names,
+  user names (`DOMAIN\user`, `user@host`, after "utilizatorul" / "user"), host names (after "hostul" / "stația", FQDN), MITRE ids, quoted values,
+  and counts (events / findings / evidence are recomputed from the case; "de N ori" / "N conexiuni" must occur in the record). It is never shown
+  without the caveat "afirmație a modelului, nu constatare; s-au confirmat doar valorile citate, nu sensul". PARTIAL = citations exist but nothing
+  is comparable, or the claim cites only the evidence file ("citează doar fișierul, nu evenimentul"), or it contains a negation or an overall
+  verdict (nu, niciodată, fără, never, benign, curat, compromis, clean, malicious ...): "sensul nu poate fi verificat automat". NESUSTINUT = no
+  citation, missing / foreign / self-referential id, a value that does not match, look-alike characters ("conține caractere care imită alte
+  litere": a token mixing scripts such as Latin with Cyrillic or Greek, an invisible format character, a non-ASCII digit, a letter of a small
+  fixed confusable table; the claim is NFKC-normalised first, plain Romanian diacritics are never flagged), or an instruction aimed at the assistant (when the quoted
+  instruction really is in the cited evidence the reason says so and it is shown as a quote, not as a confirmed claim). NEVERIFICABIL = the
+  validator could not run (cause given), the validation is stale, or `ai_validation.json` no longer matches its custody SHA-256 ("fișierul de
+  validare a fost modificat"). NESUSTINUT is moved to the rejected list, struck in the screen and the PDF, never a finding. The result is
+  `Analysis/ai_validation.json`, registered as a case output that depends on every evidence item, with an `ai.claim_validation` entry in the
+  hash-chained audit; it is bound to the evidence set (ids, SHA-256, sizes) and shows as stale, every claim NEVERIFICABIL, once that set changes;
+  `verification.json` applies the same binding and custody check to the stored state and never carries VALORI_CONFIRMATE next to a REJECTED or
+  CONTRADICTED verdict. `AiClaimValidationReportTests` scans the IL of the production assemblies: every type that touches raw AI text (model
+  statements, verification verdicts on them, `ai_*` files) must be in an explicit registry, a stale entry fails too, and every report / PDF /
+  export writer is listed with whether it goes through `AiValidationText`; `AiClaimValidationUiTests` fails on ANY type of the App assembly (not
+  only report writers) that reads the raw AI types besides the validated AI screen. Limits, said plainly: the check compares values only, not
+  meaning; a sentence whose values are all in the cited record can still be false (wrong subject, wrong verb, reversed relation), which is why
+  the top state is "valori confirmate", a model statement and not a finding. Extraction is best effort: a name or host in prose without a
+  keyword ("utilizatorul", "hostul"), without `DOMAIN\user` / `user@host` form or quotes is not compared; negation and verdict words are matched
+  by a fixed list (a paraphrase outside it is not caught); the WPF screen is covered by reflection and row logic, not rendered; the scan needs
+  new report writers to be added to the list by hand (an unlisted `*ReportPdf` / `*Export` fails).
+  Accepted residuals of the extraction (final WP4 review, 2026-10-22), each a value or a sense that is NOT compared, so a claim relying on it
+  can still reach VALORI_CONFIRMATE on its other values: (a) a bare 1-2 digit number without a keyword (no "ori" / "conexiuni" / "evenimente"
+  etc.) is not compared, only a time of day ("la ora N", "ora N:MM") is; (b) a paraphrased negation or verdict outside the fixed list
+  ("blocat de antivirus", "binar legitim", "quarantined") is not recognised; (c) a user or host name in prose without a keyword, without
+  `DOMAIN\user` / `user@host` form or quotes is not compared; (d) numbers written as words ("de trei ori", "three times") are not compared;
+  (e) a word written entirely in Cyrillic or Greek letters, with no Latin letter and no digit in the same token, is not a look-alike by the
+  token rule (it also matches no Latin value of the case).
 - The gate does not read CodeQL or code-scanning alerts. `critical_findings` is the owner's register; an empty or missing register
   is not "no findings", it is `NOT_IMPLEMENTED`.
 - `tests_passing` depends on the tests being meaningful. On Windows CI everything runs; the corpus and lab tests are skipped there and are
@@ -126,6 +175,13 @@ Limit: the private key is an unencrypted file; its protection is the owner's. A 
 ```
 
 The gate fails on any `critical` + `open` entry, and on a file that does not follow the schema.
+
+**Register (2026-10-22).** `release-gate/findings-register.json` was prepared from `SECURITY_AUDIT.md` (every fixed finding #1-#9,
+#11-#20, R3, R4, V1-V6, W1-W5 with its fix commit; the open owner items #10 Authenticode, #21 legacy trees, the offline licence key and
+the QuestPDF Community eligibility as `open` / `owner-decision`) and saved under the gate's path by Claude with the owner's delegation of
+2026-10-22, for the **demonstration** version (`"prepared_by"` says so). Before use in a public institution the owner reviews it again;
+an owner item may become `accepted` once decided. A file named `findings-register.draft.json` is never read by the gate
+(`release-gate/tests/Test-ReleaseGate.ps1` checks this).
 
 ## 5. Synthetic corpus (decision 7)
 

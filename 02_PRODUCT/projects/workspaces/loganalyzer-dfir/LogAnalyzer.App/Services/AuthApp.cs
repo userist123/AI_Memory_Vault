@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using LogAnalyzer.Dfir.Auth;
+using LogAnalyzer.Dfir.Devices;
 using LogAnalyzer.Dfir.Windows.Auth;
 
 namespace LogAnalyzer.UI.Services
@@ -54,11 +55,22 @@ namespace LogAnalyzer.UI.Services
         /// Appends an operator operation to the sealed audit with the current session. Returns null when it was written, otherwise the reason (in Romanian).
         /// Nothing is reported here: the caller decides (an export is refused, see <see cref="ExportAudit"/>).
         /// </summary>
-        public static string? TryRecord(string ev, string detail)
+        public static DeviceAuditReading? ReadDeviceAudit()
         {
-            if (_service is null) return "autentificarea aplicației nu este pornită";
+            if (_service is null) return null;
+            var verdict = _service.VerifyAuditSnapshot(out var bytes);
+            return LogAnalyzer.Dfir.Auth.OperationAudit.ReadDeviceMonitor(bytes, verdict.Status == LogAnalyzer.Dfir.Case.ChainStatus.Valid);
+        }
+
+        public static string? TryRecord(string ev, string detail) => TryRecordTyped(ev, detail)?.Reason;
+
+        /// <summary>Like <see cref="TryRecord"/>, but says by type (not by the text) when the refusal is because the sealing key cannot be read.</summary>
+        public static LogAnalyzer.Dfir.Devices.AuditRefusal? TryRecordTyped(string ev, string detail)
+        {
+            if (_service is null) return new("autentificarea aplicației nu este pornită");
             try { _service.AuditOperation(Session, ev, detail); return null; }
-            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or InvalidOperationException) { return ex.Message; }
+            catch (LogAnalyzer.Dfir.Case.SealingKeyUnavailableException ex) { return new(ex.Message, KeyUnavailable: true); }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or InvalidOperationException) { return new(ex.Message); }
         }
 
         /// <summary>
