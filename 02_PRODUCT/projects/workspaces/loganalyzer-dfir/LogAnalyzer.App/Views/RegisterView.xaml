@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:services="clr-namespace:LogAnalyzer.UI.Services"
              xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
-             xmlns:vmx="clr-namespace:LogAnalyzer.UI.ViewModels">
+             xmlns:vmx="clr-namespace:LogAnalyzer.UI.ViewModels"
+             xmlns:views="clr-namespace:LogAnalyzer.UI.Views">
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -36,21 +37,32 @@
                     <Button Content="Preia de pe stație" Command="{Binding DiscoverCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"
                             AutomationProperties.HelpText="Citește de pe această stație conturile sau mediile existente și adaugă rândurile care lipsesc. Nu modifică nimic pe Windows și nu schimbă rândurile deja existente."/>
                     <Button Content="Salvează" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Reîncarcă" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Deschide…" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Validează" Command="{Binding ValidateCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
-                    <Button Content="Importă JSON…" Command="{Binding ImportJsonCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Importă CSV…" Command="{Binding ImportCsvCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Lipește în tabel" Command="{Binding PasteCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,10,0"/>
-                    <CheckBox Content="înlocuiește conținutul la import/lipire" IsChecked="{Binding ReplaceOnImport}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    <Button Content="Reîncarcă" views:SimpleLevel.HideInSimple="True" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Deschide…" views:SimpleLevel.HideInSimple="True" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Validează" views:SimpleLevel.HideInSimple="True" Command="{Binding ValidateCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
+                    <Button Content="Importă JSON…" views:SimpleLevel.HideInSimple="True" Command="{Binding ImportJsonCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Importă CSV…" views:SimpleLevel.HideInSimple="True" Command="{Binding ImportCsvCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Lipește în tabel" views:SimpleLevel.HideInSimple="True" Command="{Binding PasteCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,10,0"/>
+                    <CheckBox Content="înlocuiește conținutul la import/lipire" views:SimpleLevel.HideInSimple="True" IsChecked="{Binding ReplaceOnImport}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 </WrapPanel>
                 <TextBlock Text="{Binding Definition, StringFormat='Registru: {0}'}" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,0"/>
                 <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,4,0,0" TextWrapping="Wrap"/>
                 <Expander Header="Avansat" IsExpanded="False" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0" AutomationProperties.Name="Avansat: fișierul registrului">
+                    <StackPanel>
+                    <WrapPanel Margin="0,6,0,0" views:SimpleLevel.OnlyInSimple="True">
+                        <Button Content="Reîncarcă" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,4"/>
+                        <Button Content="Deschide…" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,4"/>
+                        <Button Content="Validează" Command="{Binding ValidateCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,4"/>
+                        <Button Content="Importă JSON…" Command="{Binding ImportJsonCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,4"/>
+                        <Button Content="Importă CSV…" Command="{Binding ImportCsvCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,4"/>
+                        <Button Content="Lipește în tabel" Command="{Binding PasteCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,10,4"/>
+                        <CheckBox Content="înlocuiește conținutul la import/lipire" IsChecked="{Binding ReplaceOnImport}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                    </WrapPanel>
                     <WrapPanel Margin="0,6,0,0">
                         <TextBlock Text="Fișier:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox AutomationProperties.Name="Fișierul registrului" Text="{Binding RegisterPath, Mode=OneWay}" IsReadOnly="True" Width="420"/>
                     </WrapPanel>
+                    </StackPanel>
                 </Expander>
             </StackPanel>
         </Border>

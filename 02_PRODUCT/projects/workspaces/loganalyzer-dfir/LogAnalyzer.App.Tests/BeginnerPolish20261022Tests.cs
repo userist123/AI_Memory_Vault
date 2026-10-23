@@ -224,7 +224,7 @@ public sealed class BeginnerPolish20261022Tests : IDisposable
         }
         Assert.Contains("Preia de pe stație", EmptyStates.UsersStep);
         Assert.Contains("Importă", EmptyStates.ProfileStep);
-        Assert.Contains("Deschide fișier", EmptyStates.PolicyStep);
+        Assert.Contains("Deschide politica", EmptyStates.PolicyStep);
     }
 
     [Theory]

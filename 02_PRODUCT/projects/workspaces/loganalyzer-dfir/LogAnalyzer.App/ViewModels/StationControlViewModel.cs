@@ -33,6 +33,18 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>Fixed at compile time by the edition (never chosen by the operator).</summary>
         public LogAnalyzer.Core.Services.Edition.StationPosture Posture { get; } = LogAnalyzer.Core.Services.Edition.StationPostureContext.Current;
         public string PostureLine => "Ediția: " + LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(Posture) + " — regulile de control se aplică după postura ediției.";
+        /// <summary>Simplu: the same fact in plain words (display only; Expert keeps <see cref="PostureLine"/>).</summary>
+        public string PostureLineSimple => PlainPostureLine(Posture);
+        public static string PlainPostureLine(LogAnalyzer.Core.Services.Edition.StationPosture p) => p switch
+        {
+            LogAnalyzer.Core.Services.Edition.StationPosture.Standalone => "Ediția: Standalone (stație izolată, fără rețea).",
+            LogAnalyzer.Core.Services.Edition.StationPosture.IsolatedNetwork => "Ediția: Rețea air-gap (rețea închisă, fără internet).",
+            _ => "Ediția: Internet (stație conectată la internet).",
+        };
+        /// <summary>The naming rule the station name is checked against, said once for the tooltip.</summary>
+        public const string NamingRuleHelp = "Regula de denumire: stație izolată = cod de unitate (cifre) + compartiment (litere) + număr de înregistrare (cifre) + clasificare (1–3 litere), de exemplu 1234DOC5143SV; stație în rețea = prefixul rețelei + WS + număr, de exemplu NETWS01. Doar informativ: nu schimbă controlul.";
+        public static string PlainStationDescription(LogAnalyzer.Dfir.Registers.StationName n) =>
+            n.Kind == LogAnalyzer.Dfir.Registers.StationNameKind.Unknown ? "Numele stației nu respectă regula de denumire a unității" : n.Describe();
         [ObservableProperty] private string _inspector = LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified;
         [ObservableProperty] private string _notes = "";
         [ObservableProperty] private bool _isBusy;
@@ -120,6 +132,8 @@ namespace LogAnalyzer.UI.ViewModels
             PeriodOptions = Enum.GetValues<ControlPeriodChoice>().Select(c => new PeriodOption(c, ControlPeriods.Label(c))).ToList();
             StationLine = $"{Environment.MachineName} · {LogAnalyzer.Dfir.Registers.StationName.Parse(Environment.MachineName).Describe()} · " +
                           (AppModeContext.IsAirGapped ? "fără rețea (izolată)" : "conectată");
+            StationLineSimple = $"{Environment.MachineName} · {PlainStationDescription(LogAnalyzer.Dfir.Registers.StationName.Parse(Environment.MachineName))} · " +
+                                (AppModeContext.IsAirGapped ? "fără rețea (izolată)" : "conectată");
             LoadPreviousControls();
             InspectorFunction = _headerProfile.InspectorFunction;
             RaiseFlow();
@@ -152,6 +166,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private int _customDays = 30;
         [ObservableProperty] private string _periodNote = "";
         [ObservableProperty] private string _stationLine = "";
+        /// <summary>Simplu wording of <see cref="StationLine"/> (plain words; display only).</summary>
+        public string StationLineSimple { get; private set; } = "";
         [ObservableProperty] private string _profileLine = "";
         [ObservableProperty] private string _flowError = "";
         [ObservableProperty] private ControlResultScreen? _result;

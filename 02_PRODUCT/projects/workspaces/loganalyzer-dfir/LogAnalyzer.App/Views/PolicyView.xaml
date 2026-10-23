@@ -9,6 +9,13 @@
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
         <local:InverseBoolToVisibilityConverter x:Key="InverseBoolToVis"/>
         <local:PolicySettingOneLineConverter x:Key="SettingOneLine"/>
+        <!-- the operator and the two file/folder buttons: one definition, shown in the toolbar (Expert) or under "Avansat" (Simplu); each use gets its own copy -->
+        <WrapPanel x:Key="PolicyOpenTools" x:Shared="False" VerticalAlignment="Center">
+            <TextBlock Text="Operator:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+            <TextBlock Text="{Binding Operator}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
+            <Button Content="Deschide fișier…" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+            <Button Content="Deschide folder GPO…" Command="{Binding OpenFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+        </WrapPanel>
     </UserControl.Resources>
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -35,18 +42,16 @@
         <Border Grid.Row="1" Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,8">
             <StackPanel>
                 
-                <WrapPanel VerticalAlignment="Center">
-                    <TextBlock Text="Operator:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                    <TextBlock Text="{Binding Operator}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"/>
-                    <Button Content="Deschide fișier…" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="Deschide folder GPO…" Command="{Binding OpenFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
-                </WrapPanel>
+                <ContentControl Content="{StaticResource PolicyOpenTools}" local:SimpleLevel.HideInSimple="True" IsTabStop="False"/>
                 <TextBlock Text="{Binding PolicyInfo}" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/>
                 <Expander Header="Avansat" IsExpanded="False" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0" AutomationProperties.Name="Avansat: depozitul de politici">
+                    <StackPanel>
+                    <ContentControl Content="{StaticResource PolicyOpenTools}" local:SimpleLevel.OnlyInSimple="True" IsTabStop="False" Margin="0,6,0,0"/>
                     <WrapPanel Margin="0,6,0,0">
                         <TextBlock Text="Depozit politici:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox AutomationProperties.Name="Depozit politici" Text="{Binding StoreRoot, UpdateSourceTrigger=LostFocus}" Width="360"/>
                     </WrapPanel>
+                    </StackPanel>
                 </Expander>
             </StackPanel>
         </Border>

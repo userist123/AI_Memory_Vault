@@ -464,7 +464,15 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   CI on 54e210da1 read once: all LogAnalyzer jobs green, only "npm lockfiles" red (unrelated imported project).
   Next simplification candidates: procedures toolbar (9 buttons + checkbox) -> Simplu keeps Salvează + Importă; policies "Deschide fișier…/folder GPO" vs step
   "Deschide politica…" (keep one in Simplu); Control step 1 jargon ("Numele stației nu urmează convenția", "postura ediției"); users register toolbar (8 buttons).
-- CLEANUP list given to owner 2026-10-23, waiting for OK + answers (person name "Eu Mister" -> ?, Policies 45 files test or keep?): delete Cases (16, 2.9 GB incl.
+- CLEANUP DONE 2026-10-23 with owner OK ("Continuă, ai ok-ul meu"; policies are user-loaded, no predefined set -> test; accounts stay, they are test accounts
+  for now). MOVED (not deleted) to D:\w\la-cleanup-20261023 (Local\Cases 5694 files 2,944.5 MB = before; Local\Policies 45 files; recent_cases.json;
+  preferences\first-run-guide.seen; ProgramData\registers\transfers.json + register_audit.jsonl moved together = "no register", no chain finding).
+  First run stopped on a locked file (test report PDF open in Adobe Reader): 15 cases moved, LIVE-LAB-PC partly; finished file by file (copy + SHA-256
+  compare + delete), Reader closed with CloseMainWindow. Kept: licence, auth (accounts incl. test person name), sealed AuditLogs, provenance ledger, device monitor
+  journal, LogAnalyzer.db/.key (NOT in the approved list - ask owner). C: free 2 -> 6.8 GB. Verified in app: guide shows again, recent cases empty, transfers
+  empty (next TR-2026-0001), Control "Niciun raport de control salvat; ultimul control terminat 22.10.2026 21:44" (sealed audit kept).
+  Login note: an automated sign-in failed once ("cont sau parolă incorecte", focus); type with visual check of the fields before submitting (lockout after 3).
+- (old) CLEANUP list given to owner 2026-10-23, waiting for OK + answers (person name "Eu Mister" -> ?, Policies 45 files test or keep?): delete Cases (16, 2.9 GB incl.
   LIVE-LAB-PC with 14 controls and the "Test" scope), transfers TR-2026-0001/0002, first-run-guide.seen; keep licence, accounts/password, sealed audit chain,
   provenance ledger, device monitor journal.
 - UIA driver notes: `type`/`key` call Focus() = main window; for a secondary window use `rxy`/`rtype`/`rkey` (no focus change). Driver must be started BEFORE send.ps1 (creates cmd/).

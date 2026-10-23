@@ -16,6 +16,6 @@ namespace LogAnalyzer.UI.ViewModels
 
         public const string PolicyWhat = "O politică este un set de setări de securitate Windows (de exemplu dintr-un export de politică de grup) pe care le importați, le aprobați și apoi le aplicați, cu verificare după aplicare.";
         public const string PolicyWhy = "Controlul stației compară setările reale cu politica așteptată. Cât timp nu este deschisă nicio politică, verificările de conformitate cu politica rămân NEDETERMINAT.";
-        public const string PolicyStep = "Primul pas: apăsați „Deschide fișier…” și alegeți politica (un fișier de politică, Registry.pol, .inf sau o copie de rezervă a politicii de grup).";
+        public const string PolicyStep = "Primul pas: apăsați „Deschide politica…” și alegeți politica (un fișier de politică, Registry.pol, .inf sau o copie de rezervă a politicii de grup).";
     }
 }
