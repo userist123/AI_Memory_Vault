@@ -53,7 +53,7 @@ public sealed class RegisterViewModelTests : IDisposable
     {
         // Decision 33 replaced the "authentication not implemented yet" notice with the real role gate.
         var vm = new UsersRegisterViewModel(Path.Combine(_dir, "users.json"));
-        Assert.Equal(UsersRegister.EditNotice, vm.Notice);
+        Assert.Equal(char.ToUpperInvariant(UsersRegister.EditNotice[0]) + UsersRegister.EditNotice[1..], vm.Notice);   // 2026-10-22: the subtitle starts with a capital
         Assert.Contains("administratorului global autentificat", vm.Notice);
         Assert.Equal("", new MediaRegisterViewModel(Path.Combine(_dir, "m.json")).Notice);
     }

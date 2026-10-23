@@ -1,7 +1,7 @@
 # LogAnalyzer DFIR – Security audit (2026-10-12, read-only review)
 
 - **Scope:** `02_PRODUCT/projects/workspaces/loganalyzer-dfir` – the 16 projects in `LogAnalyzer.slnx` (App, App.Classified, Core, Infrastructure, Connectors, Response, Dfir.Core, Dfir.Windows, Verification, KeyGen, LicenseManager, Ai, plus tests). Legacy trees (`_recovered/`, root `App.xaml`/`Services`/`ViewModels`, `LogAnalyzer.UI/AirGapped/Network.csproj`) are not in the solution and were only grepped.
-- **Stack:** .NET 10 (SDK 10.0.301), WPF, SQLCipher (SQLitePCLRaw.bundle_e_sqlcipher 2.1.10), QuestPDF, System.Management, DiscUtils.Registry, Registry 2026.5.0, Serilog 4.3.1, YamlDotNet 18.1.0.
+- **Stack:** .NET 10 (SDK 10.0.402, runtime 10.0.13 since 2026-10-22), WPF, SQLCipher (SQLitePCLRaw.bundle_e_sqlcipher 2.1.10), QuestPDF, System.Management, DiscUtils.Registry, Registry 2026.5.0, Serilog 4.3.1, YamlDotNet 18.1.0.
 - **Commit audited:** ff5be1e77 (branch claude/loganalyzer-dfir-roles-ui-0a71fb), clean tree. Audit performed by an independent reviewer agent; fixes tracked in the "Findings fixed" section as they land.
 - **Stage:** local testing; licences and accreditation before institutional use. Public repository.
 - **Commands run (read-only unless noted):**

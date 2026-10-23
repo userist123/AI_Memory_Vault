@@ -66,19 +66,23 @@ public sealed class UserHiveParser : EvidenceParserBase
 
     public override ParserDescriptor Descriptor { get; } = new()
     {
-        ParserId = "UserHiveParser", Version = "1.0", Artifact = "Hive utilizator (NTUSER.DAT) — UserAssist și cheile Run/RunOnce",
+        ParserId = "UserHiveParser", Version = "1.1", Artifact = "Hive utilizator (NTUSER.DAT) — UserAssist, Run/RunOnce, RecentDocs, Office MRU, ShellBags (BagMRU)",
         SourceTypes = ["ntuser_hive"], FileNames = ["NTUSER.DAT", "NTUSER*.hiv", "HKCU.hiv"], Fingerprints = ["regf"],
         SupportedOs = "Oricare (citire offline cu RawRegistry)",
-        FormatVersions = ["UserAssist versiunea 5 (Windows 7 – 11, 72 de octeți) și versiunea 3 (XP, 16 octeți)", "Run / RunOnce (REG_SZ, REG_EXPAND_SZ neexpandat)", "RunMRU (ordinea din MRUList) și TypedPaths (url1 = cea mai nouă); doar intrarea cea mai nouă are ora cheii"],
+        FormatVersions = ["UserAssist versiunea 5 (Windows 7 – 11, 72 de octeți) și versiunea 3 (XP, 16 octeți)", "Run / RunOnce (REG_SZ, REG_EXPAND_SZ neexpandat)", "RunMRU (ordinea din MRUList) și TypedPaths (url1 = cea mai nouă); doar intrarea cea mai nouă are ora cheii",
+                         "RecentDocs (toate tipurile, per extensie și Folder; MRUListEx; doar prima intrare are ora cheii)", "Office MRU: File MRU / Place MRU și User MRU\\<id>, „[F…][T<FILETIME>][O…]*cale” (ora [T] este UTC)", "ShellBags: Software\\Microsoft\\Windows\\Shell\\BagMRU (elemente shell decodate; vezi ShellBagsParser pentru UsrClass.dat)"],
         Limitations =
         [
             "UserAssist înregistrează doar programele pornite din interfața grafică (Explorer, meniul Start), nu din linia de comandă.",
             "Ora unei valori Run este LastWriteTime al cheii, comună tuturor valorilor din cheie.",
             "SID-ul proprietarului nu este stocat în hive; se deduce din locul de unde a fost copiat.",
             "Jurnalele de tranzacții ale hive-ului nu sunt aplicate.",
+            "Părțile adăugate în versiunea 1.1 (RecentDocs, Office MRU, ShellBags din NTUSER) sunt validate doar pe hive-uri sintetice; starea VALIDATED privește UserAssist și Run/RunOnce, verificate pe corpus real.",
+            "RecentDocs nu păstrează calea completă (doar numele); doar cea mai nouă intrare dintr-o cheie are o oră. Ora [T] din Office MRU este ultima deschidere de către aplicația Office respectivă.",
+            "ShellBags din NTUSER.DAT (BagMRU) acoperă în principal Windows XP și locuri speciale; pe Windows 7+ folderele locale sunt în UsrClass.dat. Ora cheii BagMRU este ultima actualizare a intrării de către Explorer, nu prima deschidere, iar orele din elementul shell sunt DOS (oră locală fără fus orar, 2 s).",
         ],
         Status = ParserMaturity.Validated,
-        Validation = "RegistryPersistenceParserTests: NTUSER real din corpus comparat cu reg export (UserAssist: număr de rulări și FILETIME; Run/RunOnce: comenzi) și hive sintetic",
+        Validation = "RegistryPersistenceParserTests: NTUSER real din corpus comparat cu reg export (UserAssist: număr de rulări și FILETIME; Run/RunOnce: comenzi) și hive sintetic; RecentDocs, Office MRU și ShellBags (NTUSER): doar sintetic (UserActivityParserTests), fără corpus real",
     };
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
@@ -132,6 +136,11 @@ public sealed class UserHiveParser : EvidenceParserBase
 
         EmitMountPoints2(reg, item, sink, result, ct);
         EmitTypedCommands(reg, item, sink, result);
+        // E7: what the user opened or browsed. A damaged structure is a reported gap; the rest of the hive is still read.
+        UserActivity.Guarded("RecentDocs", result, () => UserActivity.RecentDocs(reg, item, sink, result, ct));
+        UserActivity.Guarded("Office MRU", result, () => UserActivity.OfficeMru(reg, item, sink, result, ct));
+        foreach (var bagRoot in UserActivity.BagRootsNtUser)
+            UserActivity.Guarded("ShellBags", result, () => UserActivity.ShellBags(reg, "NTUSER", bagRoot, item, sink, result, ct));
         DeletedRegistryTraces.Emit(fullPath, "NTUSER", item, sink, result, ct);
     }
 
