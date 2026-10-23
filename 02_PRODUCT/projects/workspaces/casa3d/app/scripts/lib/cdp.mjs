@@ -11,13 +11,19 @@ export function chromePath(){
     '/opt/pw-browsers/chromium', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', '/usr/bin/chromium-browser', '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome'];
   const p = c.find(x => x && existsSync(x)); if (!p) throw new Error('Chrome negăsit; setați CHROME_PATH.'); return p;
 }
-export async function launch(){
+// Chrome poate porni greu la prima rulare pe un runner curat (CI): așteptăm până la 45 s și reîncercăm o dată
+export async function launch(attempt = 1){
+  try { return await launchOnce(); }
+  catch (e){ if (attempt >= 2) throw e; console.error(`Chrome n-a pornit (${e.message}); reîncerc o dată.`); return launch(attempt + 1); }
+}
+async function launchOnce(){
   const dir = mkdtempSync(join(tmpdir(), 'casa3d-cdp-'));
   const args = ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${dir}`, '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--lang=ro-RO'];   // româna: limba principală a clienților (pe link, prima randare urmează Accept-Language)
   if (process.platform === 'linux') args.push('--no-sandbox');   // runner-ele CI rulează fără user namespaces
   const proc = spawn(chromePath(), [...args, 'about:blank'], { stdio: 'ignore' });
   const portFile = join(dir, 'DevToolsActivePort');
-  for (let i = 0; i < 150 && !existsSync(portFile); i++) await sleep(100);
+  for (let i = 0; i < 450 && !existsSync(portFile); i++) await sleep(100);
+  if (!existsSync(portFile)){ proc.kill(); try { rmSync(dir, { recursive: true, force: true }); } catch {} throw new Error('DevToolsActivePort nu a apărut în 45 s'); }
   const [port, path] = readFileSync(portFile, 'utf8').trim().split('\n');
   const ws = new WebSocket(`ws://127.0.0.1:${port}${path}`); await new Promise((ok, ko) => { ws.onopen = ok; ws.onerror = ko; });
   let seq = 0; const waiting = new Map();
