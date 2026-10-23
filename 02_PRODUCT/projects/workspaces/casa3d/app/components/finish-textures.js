@@ -22,7 +22,7 @@ function rng(seed){ let s = 0; for (const ch of String(seed)) s = (s * 31 + ch.c
 const hex2rgb = h => { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; };
 const shade = (h, k) => { const [r, g, b] = hex2rgb(h), f = v => Math.max(0, Math.min(255, Math.round(v * k))); return `rgb(${f(r)},${f(g)},${f(b)})`; };
 function canvasTexture(wPx, hPx, draw, repeat){ const cv = document.createElement('canvas'); cv.width = wPx; cv.height = hPx; draw(cv.getContext('2d'), wPx, hPx);
-  const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.anisotropy = 8; t.wrapS = t.wrapT = repeat ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping; return t; }
+  const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.anisotropy = 8; t.wrapS = t.wrapT = repeat ? THREE.RepeatWrapping : THREE.ClampToEdgeWrapping; return t; }
 
 // ---------- pardoseală ----------
 /** O piesă (placă sau lamelă) ca dreptunghi rotit: centru, lungime, lățime, unghi. Desenează fața, rostul și fibra lemnului. */

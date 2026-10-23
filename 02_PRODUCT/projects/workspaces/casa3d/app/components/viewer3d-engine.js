@@ -3,21 +3,28 @@
 import * as THREE from 'three';
 import { floorTexture, wallTexture, onTexturesReady } from './finish-textures.js';
 import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js';
-import { RGBELoader } from 'three/examples/jsm/loaders/RGBELoader.js';
+import { HDRLoader } from 'three/examples/jsm/loaders/HDRLoader.js';
 import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader.js';
 import { EffectComposer } from 'three/examples/jsm/postprocessing/EffectComposer.js';
 import { SSAOPass } from 'three/examples/jsm/postprocessing/SSAOPass.js';
-import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
+import { OutputPass } from 'three/examples/jsm/postprocessing/OutputPass.js';
+import { RenderPass } from 'three/examples/jsm/postprocessing/RenderPass.js';
 import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js';
 import { SLAB } from '../core/levels';
+// three.js r186 (UI/UX P3-15, de la r128): culorile din cod sunt deja convertite manual sRGB → liniar (lin(), mai jos),
+// ca în r128; gestiunea automată a culorilor (implicită din r152) ar converti a doua oară, deci rămâne oprită.
+THREE.ColorManagement.enabled = false;
+// Din r155 luminile sunt fizic corecte: lumina directă nu mai e înmulțită intern cu π. LI păstrează aspectul calibrat pe r128.
+const LI = Math.PI;
+// Calibrat pe imaginile de referință r128 (scripts/capture-renders.mjs + compare-renders.mjs, 2026-10-23): ACES ca înainte,
+// expunerea ×0,8 și luminile interioare ×4. Luminile punctuale fizice (r155) scad cu pătratul distanței, cele vechi doar
+// liniar până la rază, deci la 2–3 m dădeau de câteva ori mai multă lumină caldă. Rezultat: luminozitatea în ±5 (zgomotul
+// randării e ±4), căldura culorilor (R − B) în ±3 față de r128.
+const EXPOSURE_GAIN = .8, PL = 4;
 import { glideStep, dampFactor } from '../core/camera-glide';
 
-// Pasul final al calității înalte: în r128 tone mapping-ul (ACES) se aplică și la randarea în texturi
-// (WebGLPrograms: toneMapping nu depinde de țintă), dar ieșirea în textură rămâne liniară; aici facem doar sRGB.
-const FinishShader = { uniforms: { tDiffuse: { value: null } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
-  fragmentShader: `uniform sampler2D tDiffuse; varying vec2 vUv;
-    vec3 srgb(vec3 c){ return mix(pow(c, vec3(0.41666)) * 1.055 - vec3(0.055), c * 12.92, vec3(lessThanEqual(c, vec3(0.0031308)))); }
-    void main(){ vec4 t = texture2D(tDiffuse, vUv); gl_FragColor = vec4(srgb(clamp(t.rgb, 0.0, 1.0)), t.a); }` };
+// Pasul final al calității înalte (r186): OutputPass aplică tone mapping-ul (ACES) și conversia sRGB din setările
+// renderer-ului; din r153 randarea în texturi (SSAO) rămâne liniară și fără tone mapping, deci acest pas le face pe amândouă.
 
 // hărți de normale fotografice (CC0, public/tex): țesătura textilelor și tencuiala pereților
 const texLoader = typeof document !== 'undefined' ? new THREE.TextureLoader() : null;
@@ -28,9 +35,9 @@ export function createViewer(canvas, { onPick, onHover, onContextLost, onContext
   const mql = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
   let reduce = !!(mql && mql.matches);
   const R = new THREE.WebGLRenderer({ canvas, antialias: true });
-  R.setPixelRatio(Math.min(devicePixelRatio, 2)); R.outputEncoding = THREE.sRGBEncoding; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = .78;
+  R.setPixelRatio(Math.min(devicePixelRatio, 2)); R.outputColorSpace = THREE.SRGBColorSpace; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = .78 * EXPOSURE_GAIN;
   // umbrele soarelui se recalculează doar când se schimbă ceva (planul, lumina, modul, o ușă), nu la fiecare cadru
-  R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFSoftShadowMap; R.shadowMap.autoUpdate = false; R.shadowMap.needsUpdate = true;
+  R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFShadowMap; R.shadowMap.autoUpdate = false; R.shadowMap.needsUpdate = true;
   let mirrorsDirty = true; const dirty = () => { R.shadowMap.needsUpdate = true; mirrorsDirty = true; };
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#d9d3c8'); scene.fog = new THREE.Fog('#d9d3c8', 25, 60);
   // regula comună a cadrelor (imaginile de prezentare și intrarea în tur): ochiul la 1,5 m, FOV vertical 52°,
@@ -42,17 +49,19 @@ export function createViewer(canvas, { onPick, onHover, onContextLost, onContext
   // normalizată la (far - near) = ~200 m: 0.0015 ≈ 0,3 m, 0.0001 ≈ 2 cm (sub atât, suprafețele plane s-ar umbri singure); raza nucleului e în metri.
   let quality = 'normal', composer = null, ssao = null, finish = null;
   function setupComposer(){ const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; composer = new EffectComposer(R); composer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); composer.setSize(w, h);
+    // r186: SSAOPass doar înmulțește ocluzia peste imaginea existentă (în r128 randa și scena), deci scena vine dintr-un RenderPass
+    composer.addPass(new RenderPass(scene, cam));
     ssao = new SSAOPass(scene, cam, w, h); ssao.kernelRadius = .45; ssao.minDistance = .0001; ssao.maxDistance = .002; composer.addPass(ssao);
-    finish = new ShaderPass(FinishShader); composer.addPass(finish); }
+    finish = new OutputPass(); composer.addPass(finish); }
   // SSAOPass (r128) copiază proiecția camerei doar la creare și la setSize; o sincronizăm la fiecare cadru,
   // altfel umbrele de contact folosesc un aspect/fov vechi (după redimensionare sau în imaginile de export)
   const syncSsao = () => { const u = ssao.ssaoMaterial.uniforms; u.cameraProjectionMatrix.value.copy(cam.projectionMatrix); u.cameraInverseProjectionMatrix.value.copy(cam.projectionMatrixInverse);
     u.cameraNear.value = cam.near; u.cameraFar.value = cam.far; ssao.depthRenderMaterial.uniforms.cameraNear.value = cam.near; ssao.depthRenderMaterial.uniforms.cameraFar.value = cam.far; };
   const draw = () => { if (contextLost) return; if (quality === 'high' && composer){ syncSsao(); composer.render(); } else R.render(scene, cam); };
-  const pm = new THREE.PMREMGenerator(R); scene.environment = pm.fromScene(new RoomEnvironment(), .04).texture;
+  const pm = new THREE.PMREMGenerator(R); scene.environment = pm.fromScene(new RoomEnvironment(), .04).texture; 
   // lumina de mediu dintr-un interior real (HDRI CC0, public/tex): reflexii și umbre moi credibile; până se încarcă rămâne camera sintetică
-  try { new RGBELoader().setDataType(THREE.UnsignedByteType).load('/tex/lebombo_1k.hdr', t => { if (!alive) { t.dispose(); return; } const env = pm.fromEquirectangular(t).texture; t.dispose(); const old = scene.environment; scene.environment = env; old?.dispose?.(); }, undefined, () => {}); } catch { /* fără HDRI: rămâne mediul sintetic */ }
-  const hemi = new THREE.HemisphereLight(0xfff6ea, 0x8f8272, .3); scene.add(hemi);
+  try { new HDRLoader().setDataType(THREE.HalfFloatType).load('/tex/lebombo_1k.hdr', t => { if (!alive) { t.dispose(); return; } const env = pm.fromEquirectangular(t).texture; t.dispose(); const old = scene.environment; scene.environment = env; old?.dispose?.(); }, undefined, () => {}); } catch { /* fără HDRI: rămâne mediul sintetic */ }
+  const hemi = new THREE.HemisphereLight(0xfff6ea, 0x8f8272, .3 * LI); scene.add(hemi);
   let light = null; const interiorLights = []; // parametrii de iluminare primiți din core/lighting.ts
   // luminile camerelor: una pe încăpere în plan (roomLights), dar cel mult MAX_PL PointLight-uri active în scenă, mutate la
   // camerele cele mai apropiate de jucător (în tur) sau la cele mai mari (machetă)
@@ -62,7 +71,7 @@ export function createViewer(canvas, { onPick, onHover, onContextLost, onContext
     if (!force && here === lightRoom) return; lightRoom = here;
     const order = [...roomLights].sort((a, b) => walk ? Math.hypot(a.x - px, a.z - pz) - Math.hypot(b.x - px, b.z - pz) : b.area - a.area);
     interiorLights.forEach((l, i) => { const r = order[i]; l.position.set(r.x, r.y, r.z); l.updateMatrixWorld(); }); }
-  const sun = new THREE.DirectionalLight(0xfff0dc, 1.5); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 50 }); sun.shadow.bias = -.0004; sun.shadow.normalBias = .03; sun.shadow.radius = 3; scene.add(sun, sun.target);
+  const sun = new THREE.DirectionalLight(0xfff0dc, 1.5 * LI); sun.castShadow = true; sun.shadow.mapSize.set(2048, 2048); Object.assign(sun.shadow.camera, { left: -12, right: 12, top: 12, bottom: -12, near: 1, far: 50 }); sun.shadow.bias = -.0004; sun.shadow.normalBias = .03; sun.shadow.radius = 3; scene.add(sun, sun.target);
   const ground = new THREE.Mesh(new THREE.PlaneGeometry(240, 240), new THREE.MeshStandardMaterial({ color: new THREE.Color('#b9afa0').convertSRGBToLinear(), roughness: 1 })); ground.rotation.x = -Math.PI / 2; ground.position.y = -.02; ground.receiveShadow = true; scene.add(ground);
   const lin = c => new THREE.Color(c).convertSRGBToLinear();
   // exteriorul văzut prin ferestre în tur și în imaginile fixe: cer în degradeu (orizont deschis → zenit albastru) și teren,
@@ -77,7 +86,7 @@ export function createViewer(canvas, { onPick, onHover, onContextLost, onContext
     skyGeo.attributes.color.needsUpdate = true; }
   paintSky('day');
   const M = (c, o) => new THREE.MeshStandardMaterial(Object.assign({ color: lin(c), roughness: .75, envMapIntensity: .7 }, o || {}));
-  const tex = (w, h, draw) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const t = new THREE.CanvasTexture(cv); t.encoding = THREE.sRGBEncoding; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
+  const tex = (w, h, draw) => { const cv = document.createElement('canvas'); cv.width = w; cv.height = h; draw(cv.getContext('2d'), w, h); const t = new THREE.CanvasTexture(cv); t.colorSpace = THREE.SRGBColorSpace; t.wrapS = t.wrapT = THREE.RepeatWrapping; t.anisotropy = 8; return t; };
   const parquet = tex(512, 512, (g, w, h) => { const cols = ['#b88a5a', '#a97c4f', '#c29665', '#9f7248', '#b5855a'];
     for (let y = 0; y < h; y += 32) for (let x = -((y / 32) % 3) * 64; x < w; x += 192){ g.fillStyle = cols[(x / 64 + y / 32 * 7 & 7) % 5]; g.fillRect(x, y, 190, 30);
       for (let k = 0; k < 6; k++){ g.strokeStyle = 'rgba(70,40,20,.10)'; g.beginPath(); g.moveTo(x, y + 4 + k * 4.5); g.bezierCurveTo(x + 60, y + 2 + k * 4.5, x + 120, y + 8 + k * 4.5, x + 190, y + 4 + k * 4.5); g.stroke(); } } });
@@ -582,7 +591,7 @@ function model(it){
       const w = r.x1 - r.x0, d = r.z1 - r.z0;
       roomLights.push({ id: r.id, x: (r.x0 + r.x1) / 2, y: H - .3, z: (r.z0 + r.z1) / 2, area: w * d }); void w; void d; });
     // cel mult MAX_PL lumini punctuale active (numărul rămâne fix, deci shaderele nu se recompilează): cele mai apropiate de jucător în tur
-    for (let i = 0; i < Math.min(MAX_PL, roomLights.length); i++){ const pl = new THREE.PointLight(0xfff0dc, light ? light.interior : .35, 7, 2); interiorLights.push(pl); ceilings.add(pl); } lightRoom = null; assignLights(true);
+    for (let i = 0; i < Math.min(MAX_PL, roomLights.length); i++){ const pl = new THREE.PointLight(0xfff0dc, (light ? light.interior : .35) * LI * PL, 7, 2); interiorLights.push(pl); ceilings.add(pl); } lightRoom = null; assignLights(true);
     // corpurile de iluminat plasate: pendul (cablu + abajur + bec), aplică (bază pe perete + abajur), șină cu spoturi
     const bulb = owned(new THREE.MeshStandardMaterial({ color: lin('#fff6e6'), emissive: lin('#ffd9a8'), emissiveIntensity: 1.6 })), cord = MAT('paint', '#222222');
     (p.lumini || []).forEach(f => { const sm = MAT('paint', f.color || '#1c1c1c'), shade = owned(sm.clone()); shade.side = THREE.DoubleSide;
@@ -870,13 +879,23 @@ function model(it){
   function placeSun(){ const dir = light && light.dir ? light.dir : null; if (dir) sun.position.set(C.x + dir[0] * 14, dir[1] * 14, C.z + dir[2] * 14); else sun.position.set(C.x + 6, 11, C.z - 8); }
   // momentul zilei, dedus din parametri (core/lighting.ts nu-l trimite): cerul, terenul și lumina proprie a tavanului
   const timeOf = p => p.sun < .3 ? 'night' : p.sun < 1 ? 'evening' : 'day';
-  function setLighting(p){ light = p; const t = timeOf(p); paintSky(t); applyBackdrop();
-    hemi.intensity = p.hemi; sun.color.set(p.sunColor); sun.intensity = p.sun; R.toneMappingExposure = p.exposure;
+  function setLighting(p){ light = p; const t = timeOf(p); paintSky(t);
+    hemi.intensity = p.hemi * LI; sun.color.set(p.sunColor); sun.intensity = p.sun * LI; R.toneMappingExposure = p.exposure * EXPOSURE_GAIN; applyBackdrop();
     ceilMats.forEach(m => { m.emissiveIntensity = ceilFill[t]; });
-    interiorLights.forEach(l => { l.intensity = p.interior; }); placeSun(); dirty(); }
+    interiorLights.forEach(l => { l.intensity = p.interior * LI * PL; }); placeSun(); dirty(); }
   // fundalul: în machetă culoarea neutră din lumină; în tur și în imaginile fixe cerul și terenul de afară
+  // Pe calea cu compozitor (calitate înaltă) culoarea de fundal trece prin OutputPass (ACES + sRGB); pe calea normală e
+  // scrisă direct. untone dă culoarea care, după ACES (formula din three r186) și sRGB, iese egală cu cea cerută.
+  const ACES_IN = [[.59719, .35458, .04823], [.07600, .90834, .01566], [.02840, .13383, .83777]], ACES_OUT = [[1.60475, -.53108, -.07367], [-.10208, 1.10813, -.00605], [-.00327, -.07276, 1.07602]];
+  const mul = (m, v) => m.map(r => r[0] * v[0] + r[1] * v[1] + r[2] * v[2]);
+  const inv3 = m => { const [[a, b, c], [d, e, f], [g, h, i]] = m, A = e * i - f * h, B = f * g - d * i, C = d * h - e * g, det = a * A + b * B + c * C;
+    return [[A, c * h - b * i, b * f - c * e], [B, a * i - c * g, c * d - a * f], [C, b * g - a * h, a * e - b * d]].map(r => r.map(x => x / det)); };
+  const ACES_IN_INV = inv3(ACES_IN), ACES_OUT_INV = inv3(ACES_OUT);
+  const unfit = y => { const a = 1 - .983729 * y, b = .0245786 - .4329510 * y, c = -.000090537 - .238081 * y; return (-b + Math.sqrt(Math.max(0, b * b - 4 * a * c))) / (2 * a); };
+  function untone(c, exposure){ const t = new THREE.Color(c).convertSRGBToLinear(), y = mul(ACES_OUT_INV, [t.r, t.g, t.b].map(v => Math.min(.98, v))).map(unfit), v = mul(ACES_IN_INV, y).map(x => Math.max(0, x * .6 / (exposure || 1)));
+    return new THREE.Color(v[0], v[1], v[2]); }
   function applyBackdrop(){ const walk = mode === 'walk', bg = new THREE.Color(light ? light.background : '#d9d3c8'), hz = lin(SKY[skyKey][0]);
-    sky.visible = walk; scene.background = walk ? new THREE.Color(SKY[skyKey][0]) : bg; scene.fog.color.copy(walk ? hz : bg); scene.fog.near = walk ? 35 : 25; scene.fog.far = walk ? 105 : 60;
+    sky.visible = walk; scene.background = walk ? new THREE.Color(SKY[skyKey][0]) : quality === 'high' && composer ? untone(bg, R.toneMappingExposure) : bg; scene.fog.color.copy(walk ? hz : bg); scene.fog.near = walk ? 35 : 25; scene.fog.far = walk ? 105 : 60;
     ground.material.color.copy(walk ? lin(SKY[skyKey][3]) : groundHouse); }
   // captură PNG: randează cadrul curent și îl citește imediat (fără preserveDrawingBuffer)
   function capture(){ draw(); return canvas.toDataURL('image/png'); }
@@ -1038,7 +1057,7 @@ function model(it){
       if (!rooms.has(k)) rooms.set(k, { r, list: [], sum: new THREE.Vector3() }); const e = rooms.get(k); e.list.push(o); e.sum.add(P); }
     const vis = mirrors.map(o => o.visible); mirrors.forEach(o => { o.visible = false; });
     try { for (const { r, list, sum } of rooms.values()){ const at = sum.divideScalar(list.length); if (r) at.lerp(new THREE.Vector3((r.x0 + r.x1) / 2, at.y, (r.z0 + r.z1) / 2), .45); at.y = SHOT.eye;
-        const rt = new THREE.WebGLCubeRenderTarget(128, { encoding: THREE.sRGBEncoding, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter }), cc = new THREE.CubeCamera(.05, 80, rt);
+        const rt = new THREE.WebGLCubeRenderTarget(128, { colorSpace: THREE.SRGBColorSpace, generateMipmaps: true, minFilter: THREE.LinearMipmapLinearFilter }), cc = new THREE.CubeCamera(.05, 80, rt);
         cc.position.copy(at); scene.add(cc); cc.update(R, scene); scene.remove(cc);
         const mats = new Map(); for (const o of list){ const base = o.material.userData.mirrorOf || o.material; let m = mats.get(base);
           if (!m){ m = base.clone(); m.userData = { ...base.userData, mirror: false, mirrorOf: base }; m.envMap = rt.texture; m.envMapIntensity = 1.5; mats.set(base, m); } o.material = m; }
@@ -1046,14 +1065,18 @@ function model(it){
     catch { /* fără sondă: oglinda folosește mediul scenei */ }
     finally { mirrors.forEach((o, i) => { o.visible = vis[i]; }); } }
   // panoramă 360° (echirectangulară 2:1) din mijlocul camerei, la înălțimea ochilor: cub de 6 vederi → proiecție
-  // echirectangulară într-un shader. Cubul primește deja tone mapping + sRGB, deci pasul de proiecție copiază valorile.
+  // echirectangulară într-un shader. Din r153 randarea în țintă nu aplică tone mapping, deci cubul ține valori liniare (HalfFloat,
+  // fără tăiere peste 1), iar ACES + sRGB se aplică la proiecție, ca pe ecran.
   const EquiShader = { uniforms: { tCube: { value: null } }, vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = vec4(position.xy, 0.0, 1.0); }',
     fragmentShader: `uniform samplerCube tCube; varying vec2 vUv; const float PI = 3.141592653589793;
-      void main(){ float lon = (vUv.x - 0.5) * 2.0 * PI, lat = (vUv.y - 0.5) * PI; vec3 dir = vec3(cos(lat) * sin(lon), sin(lat), -cos(lat) * cos(lon)); gl_FragColor = textureCube(tCube, dir); }` };
+      void main(){ float lon = (vUv.x - 0.5) * 2.0 * PI, lat = (vUv.y - 0.5) * PI; vec3 dir = vec3(cos(lat) * sin(lon), sin(lat), -cos(lat) * cos(lon)); gl_FragColor = textureCube(tCube, dir);
+      #include <tonemapping_fragment>
+      #include <colorspace_fragment>
+      }` };
   function renderPanorama(roomId, w = 2048){ if (!plan) return null; const r = plan.camere.find(x => x.id === roomId); if (!r) return null;
     const prevMode = mode, prevSize = new THREE.Vector2(), prevRatio = R.getPixelRatio(); R.getSize(prevSize); setMode('walk');
-    const rt = new THREE.WebGLCubeRenderTarget(Math.min(2048, w / 2), { encoding: THREE.sRGBEncoding, generateMipmaps: false }), cc = new THREE.CubeCamera(.05, 200, rt);
-    const mat = new THREE.ShaderMaterial({ ...EquiShader, uniforms: { tCube: { value: rt.texture } }, depthTest: false, depthWrite: false }), quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat), qs = new THREE.Scene(); qs.add(quad);
+    const rt = new THREE.WebGLCubeRenderTarget(Math.min(2048, w / 2), { type: THREE.HalfFloatType, generateMipmaps: false }), cc = new THREE.CubeCamera(.05, 200, rt);
+    const mat = new THREE.ShaderMaterial({ ...EquiShader, uniforms: { tCube: { value: rt.texture } }, depthTest: false, depthWrite: false, toneMapped: true }), quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat), qs = new THREE.Scene(); qs.add(quad);
     // orice excepție lasă randatorul cum era (mărime, densitate, mod) și eliberează resursele GPU ale panoramei
     try { cc.position.set((r.x0 + r.x1) / 2, SHOT.eye, (r.z0 + r.z1) / 2); scene.add(cc); cc.update(R, scene);
       R.setPixelRatio(1); R.setSize(w, w / 2, false); R.render(qs, new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1)); return canvas.toDataURL('image/jpeg', .92); }
@@ -1282,8 +1305,8 @@ function model(it){
       else { if (kind === 'left') orbit.th -= a; else if (kind === 'right') orbit.th += a; else if (kind === 'up') orbit.ph = Math.max(.12, orbit.ph - .15); else if (kind === 'down') orbit.ph = Math.min(1.45, orbit.ph + .15);
         else if (kind === 'in' || kind === 'out') orbit.r = Math.max(4, Math.min(40, orbit.r * (kind === 'in' ? .85 : 1.18))); }
       dirty(); },
-    setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } return quality; },
+    setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } applyBackdrop(); dirty(); return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
-    dispose(){ alive = false; for (const mk of [selMark, hovMark]){ mk.geometry.dispose(); mk.material.dispose(); } for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('pointerleave', hoverOut); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }
+    dispose(){ alive = false; for (const mk of [selMark, hovMark]){ mk.geometry.dispose(); mk.material.dispose(); } for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('pointerleave', hoverOut); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); finish.dispose(); composer.dispose(); composer = null; } R.dispose(); }
   };
 }
