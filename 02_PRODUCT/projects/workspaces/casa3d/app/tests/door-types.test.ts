@@ -146,3 +146,10 @@ describe('integrare', () => {
     for (const k of keys){ assert.ok((ro as any)[k], `ro ${k}`); assert.ok((en as any)[k], `en ${k}`); }
   });
 });
+
+test('compatibilitate: o „ușă” veche de 1,5 m fără tip (trecere desenată ca ușă) se salvează neschimbată', () => {
+  const s: any = structuredClone(newSnapshot(catalogJson as any, 'Vechi', 'demo'));
+  s.floor.walls = [{ id: 'w1', a: [0, 0], b: [4, 0], thickness: .15, exterior: false, openings: [{ id: 'o1', kind: 'door', offset: .5, width: 1.5, hinge: 'end', swing: -1 }] }];
+  const o: any = (checkSnapshot(s) as any).floor.walls[0].openings[0];
+  assert.equal(o.width, 1.5); assert.equal(o.doorType, undefined); assert.equal(o.hinge, 'end'); assert.equal(o.swing, -1);
+});
