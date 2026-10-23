@@ -81,7 +81,7 @@ export function ElevationSheet({ elevs, t, units, locale }: { elevs: Elevation[]
       <svg viewBox={`${-pad} ${-pad} ${W + 2 * pad} ${H + 2 * pad}`} width={`${(W + 2 * pad) * k}mm`} height={`${(H + 2 * pad) * k}mm`} role="img" aria-label={`${t('draw.wall', { side: e.side })}`}>
         <g transform={`translate(0 ${H}) scale(1 -1)`}>
           <rect x={0} y={0} width={W} height={H} fill="#faf9f6" stroke={INK} strokeWidth={.02} />
-          {e.bands.map((b, i) => <rect key={i} x={0} y={b.y0} width={W} height={Math.max(.01, b.y1 - b.y0)} fill={b.color ?? BAND_FILL[b.kind] ?? '#eee'} fillOpacity={.85} stroke="#8a857a" strokeWidth={.006} />)}
+          {e.bands.map((b, i) => <rect key={i} x={b.u0} y={b.y0} width={Math.max(.01, b.u1 - b.u0)} height={Math.max(.01, b.y1 - b.y0)} fill={b.color ?? BAND_FILL[b.kind] ?? '#eee'} fillOpacity={.85} stroke="#8a857a" strokeWidth={.006} />)}
           {e.baseboardM && <rect x={0} y={0} width={W} height={e.baseboardM} fill="#fff" stroke="#8a857a" strokeWidth={.006} />}
           {e.ceilingDropM > 0 && <line x1={0} y1={H - e.ceilingDropM} x2={W} y2={H - e.ceilingDropM} stroke={INK} strokeWidth={.01} strokeDasharray=".06 .04" />}
           {e.openings.map((o, i) => <g key={i}><rect x={o.u0} y={o.y0} width={o.u1 - o.u0} height={o.y1 - o.y0} fill="#fff" stroke={INK} strokeWidth={.015} />
@@ -96,7 +96,7 @@ export function ElevationSheet({ elevs, t, units, locale }: { elevs: Elevation[]
           {e.openings.map((o, i) => <text key={i} x={(o.u0 + o.u1) / 2} y={H - o.y1 - .04} textAnchor="middle" fontSize={fsz * .85}>{formatLength(o.u1 - o.u0, units, locale)}{o.kind === 'window' ? ` · ${t('draw.sill')} ${formatLength(o.y0, units, locale)}` : ''}</text>)}
         </g>
       </svg>
-      <ul className="print-elev-legend">{e.bands.map((b, i) => <li key={i}><i style={{ background: b.color ?? BAND_FILL[b.kind] ?? '#eee' }} />{t(b.kind === 'walltile' ? 'sched.el.walltile' : `fin.kind.${b.kind}`)} {formatLength(b.y0, units, locale)}–{formatLength(b.y1, units, locale)}: {b.name}{b.color ? ` (${b.color})` : ''}</li>)}
+      <ul className="print-elev-legend">{e.bands.map((b, i) => <li key={i}><i style={{ background: b.color ?? BAND_FILL[b.kind] ?? '#eee' }} />{t(b.kind === 'walltile' ? 'sched.el.walltile' : `fin.kind.${b.kind}`)} {formatLength(b.y0, units, locale)}–{formatLength(b.y1, units, locale)}{b.u0 > .005 || b.u1 < W - .005 ? ` · ${t('draw.along', { a: formatLength(b.u0, units, locale), b: formatLength(b.u1, units, locale) })}` : ''}: {b.name}{b.color ? ` (${b.color})` : ''}</li>)}
         {e.baseboardM ? <li><i style={{ background: '#fff' }} />{t('sched.el.baseboard')} {formatLength(e.baseboardM, units, locale)}</li> : null}
         {e.sconces.length > 0 && <li>{t('draw.sconces', { n: e.sconces.length, h: formatLength(e.sconces[0]!.y, units, locale) })}</li>}</ul>
     </figure>); })}</div>);
