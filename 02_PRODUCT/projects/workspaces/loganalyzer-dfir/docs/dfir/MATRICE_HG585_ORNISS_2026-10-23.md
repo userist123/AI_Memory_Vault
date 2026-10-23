@@ -119,9 +119,17 @@ starea stației (text + culoare), 3–5 sarcini (ex. „stick-ul KINGSTON conect
 5. Acreditare cu termen și alertă (#34); registrul de incidente cu raport precompletat (#32, #33).
 6. Amprente pentru software aprobat (#18); inventarul anual al suporturilor (#15); copii de siguranță (#30).
 
-## 4. Ce trebuie confirmat de proprietar sau de structura de securitate
+## 4. Decizii ale proprietarului
+
+- 2026-10-23: **nivelurile acoperite sunt de la secret de serviciu în sus** (SSv, S, SS, SSID). Nivelul stației
+  este o setare a profilului; cerințele care diferă pe nivel se aplică după el: retenția registrelor de acces
+  (#8: SSv = cât fixează documentația de acreditare, S/SS ≥ 3 ani, SSID ≥ 10 ani), inventarul suporturilor
+  (#15: SSv/S controale punctuale, SS inventar periodic, SSID cel puțin anual), distrugerea (#36: la SSID
+  doar distrugere), TEMPEST (#35: doar secrete de stat), internetul (#26: interzis la SSID). La SSv
+  documentația este cea din modelul ORNISS (RAR, CSSS, PrOpSec aprobate de conducător, avizate de funcționarul de securitate).
+
+## 5. Ce mai trebuie confirmat de proprietar sau de structura de securitate
 
 - Pragurile reale (parolă, retenție, frecvența scanărilor) din CSS/PrOpSec ale unității — nu sunt publice.
 - Forma documentului de constatare folosită în unitate (nu există model public pentru control intern de stație).
 - Dacă semnătura PV rămâne olografă sau și electronică.
-- Nivelul de clasificare țintă (secret de serviciu vs secrete de stat): schimbă retenția (#8) și cerințele TEMPEST (#35).

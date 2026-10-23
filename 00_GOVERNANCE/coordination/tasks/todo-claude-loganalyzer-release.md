@@ -503,7 +503,8 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   RealPc20261023Tests (4, red without fix). Verified here: App 820/0, UI 354/1 (worker also Dfir 2418/31/0). NOT yet on screen.
 - docs/dfir/MATRICE_HG585_ORNISS_2026-10-23.md: 39 requirements -> checks -> gaps + flow proposal. Main gaps: measure+deadline
   per non-conformity in the PV (#38), delta vs previous control (#39), registers (interventions with witness, backups,
-  incidents), training dates, accreditation expiry. Owner questions open: target level (secret de serviciu vs secrete de stat),
+  incidents), training dates, accreditation expiry. OWNER DECIDED 2026-10-23: levels from secret de serviciu upward
+  (SSv, S, SS, SSID) -> station level is a profile setting; level-dependent rules per matrix section 4. Still open:
   unit thresholds from CSS/PrOpSec, PV form, implementation order (proposed #38 then #39).
 - NEXT (new session): publish Standalone from 51e995916, reinstall, re-login (administrator.principal), screenshot Profil de
   proceduri (Expert->Simplu), Politici (library list), Acasa (Cazuri recente after a control); then CI on #329 once; then
