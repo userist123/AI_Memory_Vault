@@ -76,6 +76,8 @@ import { matchCommand, commandById, commandHint, formatShortcut, ariaShortcut, t
 import { prepareShareImages } from '@/lib/share-images';
 import { withViewTransition } from '@/lib/motion';
 import StagePicker from './StagePicker';
+import PlanObjects from './PlanObjects';
+import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
 import { flushSync } from 'react-dom';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
@@ -318,6 +320,8 @@ export default function Editor({ id }: { id: string }){
       else if (sel.kind === 'column'){ const c = snap?.floor.columns?.find(x => x.id === sel.id); if (c) mutate(s => { const col = s.floor.columns?.find(x => x.id === sel.id); if (col) { col.x = r3(col.x + dx); col.z = r3(col.z + dz); } }); }
       else if (sel.kind === 'room') mutate(s => { const r = s.floor.rooms.find(x => x.id === sel.id); if (r) r.rect = { x0: r3(r.rect.x0 + dx), x1: r3(r.rect.x1 + dx), z0: r3(r.rect.z0 + dz), z1: r3(r.rect.z1 + dz) }; }); } };
   useEffect(() => { const k = (e: KeyboardEvent) => { const el = e.target as HTMLElement;
+    // în lista obiectelor planului tastele aparțin listei (săgeți, Enter, Escape): Backspace nu șterge selecția pe neașteptate
+    if (el.closest?.('.plan-mirror')) return;
     if (editorIgnoresKey({ preview: !!preview, inField: !!el.closest?.('input,select,textarea,[contenteditable=true]'), inDialog: !!el.closest?.('dialog[open],[aria-modal=true]'), paletteOpen: paletteOpenRef.current })) return;
     // scurtăturile vin din registru (lib/commands.ts); Ctrl/⌘K rămâne la paletă (isPaletteShortcut)
     const cid = matchCommand(e); if (!cid) return;
@@ -378,6 +382,17 @@ export default function Editor({ id }: { id: string }){
     addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, []);
   // „gata” pe etapă, din datele proiectului (core/stage-progress.ts); se recalculează la fiecare modificare
   const done = useMemo(() => house ? stageDone({ house, warnings: advice.filter(a => a.severity !== 'TIP').length, shares: activeShares(shares), status: meta?.status ?? 'design' }) : null, [house, advice, shares, meta]);
+  // echivalentul text al planului (UI/UX P3-16): lista obiectelor și descrierea selecției, anunțată grupat (o mutare cu
+  // săgețile nu schimbă descrierea, deci nu produce zeci de anunțuri), în limba interfeței
+  const mirror = useMemo(() => snap && catalog ? describePlan(snap, catalog, { t, units, lang }) : [], [snap, catalog, t, units, lang]);
+  const selDesc = useMemo(() => describeSelection(mirror, sel), [mirror, sel]);
+  // descrierea + ce se poate face cu obiectul; un spațiu invizibil alternant face ca a doua piesă identică să fie anunțată și ea
+  const [liveSel, setLiveSel] = useState(''), liveFlip = useRef(false);
+  useEffect(() => { const tm = setTimeout(() => { if (!selDesc || !sel){ setLiveSel(''); return; } liveFlip.current = !liveFlip.current;
+      const keys = ['placement', 'room', 'stair', 'column'].includes(sel.kind) ? t(`mirror.keys.${sel.kind}`) : t('mirror.keys.other');
+      // din listă tastele de editare nu acționează (săgețile trec prin obiecte): mesajul spune întâi cum se ajunge în plan
+      const inList = !!(document.activeElement as HTMLElement | null)?.closest?.('.plan-mirror');
+      setLiveSel(`${t('mirror.selected', { label: selDesc })}. ${inList ? t('mirror.escFirst') + ' ' : ''}${keys}${liveFlip.current ? ' ' : ''}`); }, 350); return () => clearTimeout(tm); }, [selDesc, sel?.kind, sel?.id, t]); // eslint-disable-line
   // hover-ul comun nu rămâne agățat când una din vederi dispare (schimbarea Plan / 3D)
   useEffect(() => { setHoverPid(null); }, [view]);
   // (hook înainte de orice return timpuriu) modul „document lat” al panoului, ținut minte în browser
@@ -416,6 +431,7 @@ export default function Editor({ id }: { id: string }){
   const toggleWide = () => setWideSide(w => { try { localStorage.setItem('casa3d.sideWide', w ? '0' : '1'); } catch { /* stocare blocată */ } return !w; });
   // selecția comună plan ↔ 3D (UI/UX P2-10): „Arată în 3D” deschide vederea 3D lângă plan și încadrează piesa;
   // „Arată în plan” face invers. Pe ecran îngust vederea se schimbă (nu încap amândouă).
+  const pickMirror = (i: MirrorItem) => { const s: Sel = i.kind === 'opening' ? { kind: 'opening', id: i.id, wallId: i.wallId! } : { kind: i.kind, id: i.id } as Sel; setSel(s); setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
   const frameIn3d = (pid: string) => { if (view === '2d') setView(compact ? '3d' : 'split'); setFrame3d(f => ({ id: pid, n: (f?.n ?? 0) + 1, at: Date.now() })); };
   const frameInPlan = (pid: string) => { const s: Sel = { kind: 'placement', id: pid }; setSel(s); if (view === '3d') setView(compact ? '2d' : 'split'); setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
   // schimbarea etapei animă doar panoul lateral (View Transition, lib/motion.ts); flushSync: DOM-ul nou trebuie să existe în callback
@@ -541,7 +557,7 @@ export default function Editor({ id }: { id: string }){
       {PHASES.map(ph => <div key={ph.id} className="phase" role="group" aria-label={t('phase.aria', { phase: t(`phase.${ph.id}`) })} data-phase={ph.id}>
         <span className="phase-label" aria-hidden="true">{t(`phase.${ph.id}`)}</span>
         {ph.stages.map(sid => { const st = STAGES.find(x => x.id === sid)!, i = STAGES.indexOf(st), ok = !!done?.[sid];
-          return <button key={st.id} data-stage={st.id} aria-current={stage === st.id ? 'step' : undefined} title={t(`stage.why.${st.id}`)} aria-label={`${String(i + 1).padStart(2, '0')} ${t(`stage.${st.id}`)} · ${ok ? t('stage.doneAria') : t('stage.todoAria')}${st.id === 'docs' && warnCount > 0 ? ` · ${t('stage.warnAria', { n: warnCount })}` : ''}`} onClick={() => setStage(st.id)} onFocus={e => { try { e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch { /* browser vechi */ } }}><i aria-hidden="true">{String(i + 1).padStart(2, '0')}</i><span className={`st-dot ${ok ? 'is-done' : ''}`} aria-hidden="true" /><span className="st-name" aria-hidden="true">{t(`stage.${st.id}`)}</span>{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')} aria-hidden="true">{warnCount}</b>}</button>; })}
+          return <button key={st.id} data-stage={st.id} aria-current={stage === st.id ? 'step' : undefined} title={t(`stage.why.${st.id}`)} aria-label={`${String(i + 1).padStart(2, '0')} ${t(`stage.${st.id}`)}${st.id === 'docs' && warnCount > 0 ? ` ${warnCount}` : ''} · ${ok ? t('stage.doneAria') : t('stage.todoAria')}${st.id === 'docs' && warnCount > 0 ? ` · ${t('stage.warnAria', { n: warnCount })}` : ''}`} onClick={() => setStage(st.id)} onFocus={e => { try { e.currentTarget.scrollIntoView({ block: 'nearest', inline: 'nearest' }); } catch { /* browser vechi */ } }}><i aria-hidden="true">{String(i + 1).padStart(2, '0')}</i>{' '}<span className={`st-dot ${ok ? 'is-done' : ''}`} aria-hidden="true" /><span className="st-name" aria-hidden="true">{t(`stage.${st.id}`)}</span>{st.id === 'docs' && warnCount > 0 && ' '}{st.id === 'docs' && warnCount > 0 && <b className="count" title={t('stage.checks')} aria-hidden="true">{warnCount}</b>}</button>; })}
       </div>)}
     </nav>
     <button type="button" className="stage-step" aria-label={t('stage.next')} title={t('stage.next')} disabled={STAGES.indexOf(stageDef) === STAGES.length - 1} onClick={() => setStage(STAGES[Math.min(STAGES.length - 1, STAGES.indexOf(stageDef) + 1)]!.id)}><Icon name="chevronRight" /></button>
@@ -552,10 +568,11 @@ export default function Editor({ id }: { id: string }){
         {(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk)).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={`${t(TOOL_LABEL[tk])} (${formatShortcut(toolShortcut(tk), { mac })})`} aria-keyshortcuts={ariaShortcut(toolShortcut(tk), { mac })}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
       </nav>
       <div className={`canvas studio-canvas ${view === 'split' && !compact ? 'split' : ''}`}>
-        <div className="levelbar" role="tablist" aria-label={t('level.tabs')}>
-          {floors(house!).map((_, i) => <button key={i} role="tab" aria-selected={i === L} className="btn" onClick={() => goLevel(i)}>{levelName(i)}</button>)}
+        <div className="levelbar">
+          {/* doar nivelurile sunt tab-uri; „+ Nivel” e o acțiune, în afara listei de tab-uri (ARIA: tablist conține doar tab) */}
+          <div role="tablist" aria-label={t('level.tabs')} className="levelbar-tabs">{floors(house!).map((_, i) => <button key={i} role="tab" aria-selected={i === L} className="btn" onClick={() => goLevel(i)}>{levelName(i)}</button>)}</div>
           <button className="btn" onClick={onAddLevel} title={t('level.addTitle')} disabled={nLevels >= MAX_LEVELS}>{t('level.add')}</button></div>
-        {(view === '2d' || (view === 'split' && !compact)) && <div className="planwrap"><PlanView
+        {(view === '2d' || (view === 'split' && !compact)) && <div className="planwrap">{!preview && <PlanObjects groups={mirror} selected={sel} onPick={pickMirror} />}<PlanView
           onKey={onPlanKey}
           showTech={showTech && !preview}
           onTechAt={(x, z) => { if (!snap || preview) return; const pt = placeTechPoint(snap, techKind, x, z); if (!pt){ say(t('tech.outside')); return; } mutate(s => { s.tech = [...(s.tech || []), pt]; }); say(t('tech.placed', { rn: snap.floor.rooms.find(r => r.id === pt.roomId)?.name ?? '' })); }}
@@ -587,7 +604,7 @@ export default function Editor({ id }: { id: string }){
           onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })}
         />
           {!preview && !snap.floor.rooms.length && !snap.floor.walls.length && tool !== 'room' && tool !== 'wall' && <EmptyState className="plan-empty" title={t('empty.plan.title')} text={t('empty.plan.text')} action={{ label: t('empty.plan.action'), onClick: drawRooms }} />}
-          <p className="sr-only" aria-live="polite">{selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'column' ? t('editor.hintColumn') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
+          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'column' ? t('editor.hintColumn') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
         {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })}
           selectedId={!preview && sel?.kind === 'placement' ? sel.id : null} hoverId={preview ? null : hoverPid} onHover={setHoverPid} frame={frame3d ?? undefined} onFrameOther={frameInPlan} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
