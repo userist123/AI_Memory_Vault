@@ -110,8 +110,8 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
 
-                <Expander Header="Alte acțiuni" Margin="0,12,0,0" Foreground="{StaticResource TextPrimaryBrush}">
-                    <ItemsControl ItemsSource="{Binding MoreIntents}" Margin="0,8,0,0" AutomationProperties.Name="Alte acțiuni">
+                <Expander Header="Alte acțiuni" Margin="0,12,0,0" Foreground="{StaticResource TextPrimaryBrush}" Visibility="{Binding HasShownMoreIntents, Converter={StaticResource BoolToVis}}">
+                    <ItemsControl ItemsSource="{Binding ShownMoreIntents}" Margin="0,8,0,0" AutomationProperties.Name="Alte acțiuni">
                         <ItemsControl.ItemTemplate>
                             <DataTemplate>
                                 <Button Style="{StaticResource ActionRowStyle}" Padding="16,9" Command="{Binding DataContext.RunIntentCommand, RelativeSource={RelativeSource AncestorType=UserControl}}" CommandParameter="{Binding}"

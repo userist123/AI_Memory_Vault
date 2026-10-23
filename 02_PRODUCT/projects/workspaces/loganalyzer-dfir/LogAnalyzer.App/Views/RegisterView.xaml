@@ -15,11 +15,24 @@
 
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
             <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-            <TextBlock Text="{Binding Notice}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+            <TextBlock Text="{Binding Notice}" Margin="0,4,0,0" TextWrapping="Wrap">
+                <!-- 2026-10-23: in Simplu the permissions line is a small secondary line under the one explanation -->
+                <TextBlock.Style><Style TargetType="TextBlock">
+                    <Setter Property="FontSize" Value="13"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                    <Style.Triggers><DataTrigger Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True">
+                        <Setter Property="FontSize" Value="12"/><Setter Property="FontWeight" Value="Normal"/><Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                    </DataTrigger></Style.Triggers>
+                </Style></TextBlock.Style>
+            </TextBlock>
             <TextBlock Text="{Binding AccessNotice}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
             <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
                        Text="Lista persoanelor care lucrează pe stație. Apăsați „Preia de pe stație”; o completați apoi cu autorizările.">
-                <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers>
+                    <MultiDataTrigger><MultiDataTrigger.Conditions>
+                        <Condition Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"/>
+                        <Condition Binding="{Binding IsEmpty}" Value="False"/>
+                    </MultiDataTrigger.Conditions><Setter Property="Visibility" Value="Visible"/></MultiDataTrigger>
+                </Style.Triggers></Style></TextBlock.Style>
             </TextBlock>
             <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
                        Text="Rândurile se preiau de pe stație („Preia de pe stație”); persoana completează doar ce stația nu poate ști. Se pot și lipi din tabel sau importa (JSON / CSV). Analiza le compară cu ce s-a observat; nimic nu se aplică pe Windows. Un registru fără rânduri este „registru nedefinit”, niciodată „conform”. Fiecare modificare salvată intră într-un jurnal de audit înlănțuit prin hash.">
@@ -36,7 +49,9 @@
                 <WrapPanel VerticalAlignment="Center">
                     <Button Content="Preia de pe stație" Command="{Binding DiscoverCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"
                             AutomationProperties.HelpText="Citește de pe această stație conturile sau mediile existente și adaugă rândurile care lipsesc. Nu modifică nimic pe Windows și nu schimbă rândurile deja existente."/>
-                    <Button Content="Salvează" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                    <!-- 2026-10-23: one accent button in Simplu ("Preia de pe stație"); "Salvează" is the accent one in Expert as before -->
+                    <Button Content="Salvează" views:SimpleLevel.HideInSimple="True" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Salvează" views:SimpleLevel.OnlyInSimple="True" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Reîncarcă" views:SimpleLevel.HideInSimple="True" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Deschide…" views:SimpleLevel.HideInSimple="True" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Validează" views:SimpleLevel.HideInSimple="True" Command="{Binding ValidateCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>

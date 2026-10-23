@@ -41,7 +41,13 @@ namespace LogAnalyzer.UI.ViewModels
         {
             _register = register;
             // G3: a new analysis result refreshes the medium detail (history, what followed the connection) without collecting again.
-            LogAnalyzer.UI.Services.CollectAllState.Instance.Published += _ => OnSelectedDeviceChanged(SelectedDevice);
+            // The result may be published on another thread: the bound collections change only on this page's dispatcher.
+            var dispatcher = System.Windows.Threading.Dispatcher.CurrentDispatcher;
+            LogAnalyzer.UI.Services.CollectAllState.Instance.Published += _ =>
+            {
+                if (dispatcher.CheckAccess()) OnSelectedDeviceChanged(SelectedDevice);
+                else dispatcher.BeginInvoke(() => OnSelectedDeviceChanged(SelectedDevice));
+            };
         }
 
         /// <summary>Set by the main window: opens the separate "Registrul de transferuri" page (owner 2026-10-11: the transfer register is not part of this page).</summary>

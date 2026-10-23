@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -110,6 +111,14 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<HomeIntentView> PrimaryIntents { get; } = new();
         /// <summary>The rest, under "Mai multe".</summary>
         public ObservableCollection<HomeIntentView> MoreIntents { get; } = new();
+        /// <summary>„Alte acțiuni” as the level shows it: Simplu drops the entries that only repeat a main-menu page of this role and the expert-only ones.</summary>
+        public ObservableCollection<HomeIntentView> ShownMoreIntents { get; } = new();
+        public bool HasShownMoreIntents => ShownMoreIntents.Count > 0;
+        /// <summary>Expert-only „Alte acțiuni” entries (not a menu page, but a hand-off outside the control or investigation itself).</summary>
+        private static readonly string[] ExpertOnlyMoreIntents = ["send_to_vault"];
+        /// <summary>Simplu hides an „Alte acțiuni” entry that opens a page the role's main menu already lists (no extra import/collect action) or is expert-only.</summary>
+        internal static bool HiddenInSimple(IntentAvailability i, IReadOnlyList<NavigationEntry> mainMenu) =>
+            ExpertOnlyMoreIntents.Contains(i.Key) || (i.Intent.Source == IntentSource.None && mainMenu.Any(n => n.Tab == i.TargetTab));
 
         /// <summary>
         /// What Home shows as the big actions. Owner decision 2026-10-22: in „Simplu” the big „Fă controlul stației” button is the one main action, so the card
@@ -120,7 +129,15 @@ namespace LogAnalyzer.UI.ViewModels
 
         private void RefreshShownIntents()
         {
-            bool dropControlCard = !LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert && ShowQuickControl;
+            var simple = !LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert;
+            var moreWanted = MoreIntents.Where(i => !(simple && HiddenInSimple(i.Availability, Profile.Navigation))).ToList();
+            if (!moreWanted.SequenceEqual(ShownMoreIntents))
+            {
+                ShownMoreIntents.Clear();
+                foreach (var i in moreWanted) ShownMoreIntents.Add(i);
+                OnPropertyChanged(nameof(HasShownMoreIntents));
+            }
+            bool dropControlCard = simple && ShowQuickControl;
             var wanted = PrimaryIntents.Where(i => !(dropControlCard && i.Key == "check_station")).ToList();
             if (wanted.SequenceEqual(ShownPrimaryIntents)) return;
             ShownPrimaryIntents.Clear();

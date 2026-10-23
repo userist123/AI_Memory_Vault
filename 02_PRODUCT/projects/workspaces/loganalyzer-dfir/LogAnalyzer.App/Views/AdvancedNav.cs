@@ -16,6 +16,14 @@ namespace LogAnalyzer.UI.Views
     public static class AdvancedNav
     {
         public static bool IsShown(IReadOnlyList<NavigationEntry> roleNavigation, int tab) => !roleNavigation.Any(n => n.Tab == tab);
+
+
+        /// <summary>
+        /// Simplu hides the „Avansat” menu; if the page open when the level moves to Simplu is one of its pages (not Acasă, not a main page of the role),
+        /// the person lands on Acasă so no hidden page stays selected. Expert, and any main page, stay where they are.
+        /// </summary>
+        public static int TabAfterLevelChange(IReadOnlyList<NavigationEntry> roleNavigation, int selectedTab, bool simple) =>
+            simple && selectedTab != RoleProfiles.TabHome && IsShown(roleNavigation, selectedTab) ? RoleProfiles.TabHome : selectedTab;
     }
 
     /// <summary>

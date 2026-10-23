@@ -165,7 +165,16 @@
                             </ItemsControl>
 
                             <!-- Decision 5: every other page stays reachable under "Avansat" -->
-                            <Expander Header="Avansat (toate paginile)" IsExpanded="False" Foreground="{StaticResource TextMutedBrush}" FontSize="12" FontWeight="SemiBold" Margin="12,16,0,0"
+                            <!-- 2026-10-23: Simplu does not show the long menu; a small link switches to Expert and opens it -->
+                            <Button views:SimpleLevel.OnlyInSimple="True" Content="Toate paginile (nivelul Expert)" Command="{Binding ShowAllPagesCommand}" Margin="12,16,0,0" HorizontalAlignment="Left" Cursor="Hand"
+                                    AutomationProperties.Name="Toate paginile, nivelul Expert" AutomationProperties.HelpText="Trece la nivelul Expert și deschide lista cu toate paginile aplicației.">
+                                <Button.Template>
+                                    <ControlTemplate TargetType="Button">
+                                        <TextBlock Text="{TemplateBinding Content}" FontSize="12" TextDecorations="Underline" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                                    </ControlTemplate>
+                                </Button.Template>
+                            </Button>
+                            <Expander Header="Avansat (toate paginile)" views:SimpleLevel.HideInSimple="True" IsExpanded="{Binding AdvancedPagesOpen, Mode=TwoWay}" Foreground="{StaticResource TextMutedBrush}" FontSize="12" FontWeight="SemiBold" Margin="12,16,0,0"
                                       AutomationProperties.Name="Avansat: toate paginile aplicației">
                             <!-- row 20: the expanded list scrolls inside its own box, so it never slides under the buttons at the bottom left -->
                             <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="420" Focusable="False">
