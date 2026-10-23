@@ -26,6 +26,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   // vederi salvate (pe proiect, în acest browser) și tăierea machetei (UI/UX P2-11)
   const [views, setViews] = useState<SavedView[]>([]), [viewsOpen, setViewsOpen] = useState(false), [cutPct, setCutPct] = useState(42);
   useEffect(() => { if (!projectId) return; try { setViews(parseViews(localStorage.getItem(viewsKey(projectId)))); } catch { /* stocare blocată */ } }, [projectId]);
+  useEffect(() => { if (viewsOpen) document.querySelector<HTMLElement>('.v3pop .v3menu [role=menuitem]')?.focus(); }, [viewsOpen]);
   const keepViews = (l: SavedView[]) => { setViews(l); if (projectId) try { localStorage.setItem(viewsKey(projectId), JSON.stringify(l)); } catch { /* stocare plină sau blocată */ } };
   async function saveView(){ const view = v.current?.getView?.(); if (!view) return; setViewsOpen(false);
     const name = await askPrompt({ title: t('viewer.saveView'), confirmLabel: t('viewer.saveViewOk'), input: { label: t('viewer.viewName'), maxLength: 40, initial: mode === 'walk' && room ? snap.floor.rooms.find(r => r.id === room)?.name ?? '' : '' } });
@@ -39,7 +40,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   const [doorsOpen, setDoorsOpen] = useState(true);
   useEffect(() => { let alive = true;
     import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id), onHover: (id: string | null) => hoverRef.current?.(id), onContextLost: () => setErr('context-lost'), onContextRestored: () => { setErr(''); applyLight(); v.current?.setQuality?.(qRef.current); push(); } }); if (process.env.NODE_ENV !== 'production') (window as any).__casa3dViewer = v.current; applyLight(); v.current.setQuality?.(qRef.current); push(); syncSel.current(); } catch (e){ console.error('3D', e); setErr('webgl'); } });
-    return () => { alive = false; v.current?.dispose(); v.current = null; }; }, []); // eslint-disable-line
+    return () => { alive = false; v.current?.dispose(); v.current = null; hoverRef.current?.(null); }; }, []); // eslint-disable-line
   const engineCat = useRef<ReturnType<typeof toEngineCatalog> | null>(null);
   function push(){ if (!v.current) return; engineCat.current ||= toEngineCatalog(catalog);
     const { plan, items } = viewerInput(snap, catalog, engineCat.current, { voids, mc }); v.current.setState(plan, items); }
@@ -92,7 +93,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
           {views.length > 0 && <div className="v3menu-h" role="presentation">{t('viewer.savedViews')}</div>}
           {views.map(sv => <div key={sv.id} className="v3menu-row" role="presentation">
             <button role="menuitem" onClick={() => openView(sv)}>{sv.name}</button>
-            <button type="button" className="v3menu-x" aria-label={t('viewer.deleteView', { name: sv.name })} title={t('viewer.deleteView', { name: sv.name })} onClick={() => keepViews(removeView(views, sv.id))}>×</button></div>)}
+            <button type="button" role="menuitem" className="v3menu-x" aria-label={t('viewer.deleteView', { name: sv.name })} title={t('viewer.deleteView', { name: sv.name })} onClick={() => keepViews(removeView(views, sv.id))}>×</button></div>)}
           {projectId && <button role="menuitem" className="v3menu-add" onClick={saveView}>{t('viewer.saveView')}…</button>}
         </div>}
       </div>

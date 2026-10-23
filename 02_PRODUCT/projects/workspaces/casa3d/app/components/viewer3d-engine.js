@@ -1073,6 +1073,7 @@ function model(it){
   function refreshMarks(){ placeMark(selMark, selPid, .06); if (hovPid && hovPid !== selPid) placeMark(hovMark, hovPid, .03); else hovMark.visible = false; }
   function drawOverlay(){ if (contextLost || (!selMark.visible && !hovMark.visible)) return; const cp = R.clippingPlanes, ac = R.autoClear;
     R.clippingPlanes = []; R.autoClear = false; R.clearDepth(); R.render(overlay, cam); R.autoClear = ac; R.clippingPlanes = cp; }
+  function hoverOut(){ if (hovPid === null || !onHover) return; hovPid = null; refreshMarks(); onHover(null); }
   function hoverAt(e){ if (!onHover || e.pointerType !== 'mouse' || ptrs.size > 1) return; const now = performance.now(); if (now - hoverT < 50) return; hoverT = now;
     const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
     const h = ray.intersectObjects(pickables, true)[0], pid = h ? h.object.userData.item.userData.pid : null; if (pid !== hovPid){ hovPid = pid; refreshMarks(); onHover(pid); } }
@@ -1080,6 +1081,11 @@ function model(it){
   // deci pereții primesc copii transparente (în cache), iar originalele rămân neatinse
   let xray = false; const xrayMats = new Map();
   const xrayOf = m => { let c = xrayMats.get(m); if (!c){ c = m.clone(); c.transparent = true; c.opacity = Math.min(m.opacity ?? 1, .18); c.depthWrite = false; xrayMats.set(m, c); } return c; };
+  // casa se reconstruiește cu originalele la loc (clonele vechi se eliberează), apoi X-Ray se reaplică pe pereții noi
+  function rebuildHouse(p){ if (xray){ xray = false; applyXray(); xray = true; } buildHouse(p); for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); applyXray(); }
+  // exporturile și panorama arată casa reală, fără X-Ray (pereți opaci), oricum ar fi vederea de lucru
+  const solid = fn => function(...a){ if (!xray) return fn.apply(this, a); xray = false; applyXray(); const back = () => { xray = true; applyXray(); };
+    let r; try { r = fn.apply(this, a); } catch (e){ back(); throw e; } if (r && typeof r.then === 'function') return r.finally(back); back(); return r; };
   function applyXray(){ walls.traverse(o => { if (!o.isMesh) return; if (xray){ if (!o.userData.xrOrig){ o.userData.xrOrig = o.material; o.material = Array.isArray(o.material) ? o.material.map(xrayOf) : xrayOf(o.material); } }
       else if (o.userData.xrOrig){ o.material = o.userData.xrOrig; delete o.userData.xrOrig; } }); R.shadowMap.needsUpdate = true; }
   let mode = 'house', yaw = 0, pitch = 0; const EYE = SHOT.eye, player = new THREE.Vector3(); const orbit = { th: -.7, ph: .95, r: 12 };
@@ -1128,13 +1134,13 @@ function model(it){
     if (onPick) onPick(fh ? fh.object.userData.item.userData.pid : null); };
   const wh = e => { if (mode === 'house'){ orbit.r = Math.max(4, Math.min(40, orbit.r + e.deltaY * .01)); e.preventDefault(); } };
   const onCtxLost = e => { e.preventDefault(); contextLost = true; if (onContextLost) onContextLost(); };
-  const onCtxRestored = () => { contextLost = false; R.shadowMap.needsUpdate = true; mirrorsDirty = true; if (plan) { buildHouse(plan); buildFurniture(lastItems); } if (onContextRestored) onContextRestored(); };
+  const onCtxRestored = () => { contextLost = false; R.shadowMap.needsUpdate = true; mirrorsDirty = true; if (plan) { rebuildHouse(plan); buildFurniture(lastItems); } if (onContextRestored) onContextRestored(); };
   const onMql = e => { reduce = !!e.matches; if (reduce) doorsNow(doorsOpen); };
   if (mql && mql.addEventListener) mql.addEventListener('change', onMql);
   canvas.addEventListener('webglcontextlost', onCtxLost); canvas.addEventListener('webglcontextrestored', onCtxRestored);
-  canvas.addEventListener('pointerdown', pd); canvas.addEventListener('pointermove', pmv); canvas.addEventListener('pointerup', pu); canvas.addEventListener('pointercancel', pu); canvas.style.touchAction = 'none'; canvas.addEventListener('wheel', wh, { passive: false });
+  canvas.addEventListener('pointerdown', pd); canvas.addEventListener('pointermove', pmv); canvas.addEventListener('pointerup', pu); canvas.addEventListener('pointercancel', pu); canvas.addEventListener('pointerleave', hoverOut); canvas.style.touchAction = 'none'; canvas.addEventListener('wheel', wh, { passive: false });
   // fibra fotografică a parchetului sosește după prima construire: reconstruim casa o singură dată
-  const unTex = onTexturesReady(() => { if (alive && plan) buildHouse(plan); });
+  const unTex = onTexturesReady(() => { if (alive && plan) rebuildHouse(plan); });
   function resize(){ const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; R.setSize(w, h, false); if (composer) composer.setSize(w, h); cam.aspect = w / h; if (mode === 'walk'){ cam.fov = walkFov(); lensFor(cam, cam.aspect); } cam.updateProjectionMatrix(); }
   const ro = new ResizeObserver(resize); ro.observe(canvas);
   (function loop(){ if (!alive) return; raf = requestAnimationFrame(loop); const now = performance.now(), dt = Math.min(.05, (now - last) / 1000); last = now;
@@ -1248,11 +1254,11 @@ function model(it){
     dirty();
   }
   return {
-    setState(p, items){ plan = p; buildHouse(p); buildFurniture(items); for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); applyXray(); },
+    setState(p, items){ plan = p; rebuildHouse(p); buildFurniture(items); },
     getStats,
     setDecor(on){ decorOn = !!on; buildDecor(lastItems); },
     setDoors(open){ doorsOpen = !!open; doorsNow(doorsOpen); },
-    setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama, exportScene, exportGLB,
+    setMode, goRoom, getMode: () => mode, setLighting, capture, renderView, renderPanorama: solid(renderPanorama), exportScene: solid(exportScene), exportGLB: solid(exportGLB),
     setCameraPreset,
     setSelection(pid){ selPid = pid || null; refreshMarks(); },
     setHover(pid){ if ((pid || null) === hovPid) return; hovPid = pid || null; refreshMarks(); },
@@ -1276,6 +1282,6 @@ function model(it){
       dirty(); },
     setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
-    dispose(){ alive = false; for (const mk of [selMark, hovMark]){ mk.geometry.dispose(); mk.material.dispose(); } for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }
+    dispose(){ alive = false; for (const mk of [selMark, hovMark]){ mk.geometry.dispose(); mk.material.dispose(); } for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('pointerleave', hoverOut); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); composer.renderTarget1.dispose(); composer.renderTarget2.dispose(); composer = null; } R.dispose(); }
   };
 }

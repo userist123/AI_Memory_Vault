@@ -125,7 +125,7 @@ const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: tr
 export default function Editor({ id }: { id: string }){
   const { t, tp, lang, units, setLang, setUnits } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units);
   const [meta, setMeta] = useState<ProjectMeta | null>(null), [house, setHouse] = useState<Snapshot | null>(null), [lvl, setLvl] = useState(0), [catalog, setCatalog] = useState<Catalog | null>(null), [mc, setMc] = useState<MaterialsCatalog | null>(null), [out, setOut] = useState<Outbound | null>(null);
-  const compact = useCompact(), [sheet, setSheet] = useState<'peek' | 'half' | 'full'>('half'), [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [frame, setFrame] = useState<{ sel: Sel; n: number } | null>(null), [wideSide, setWideSide] = useState(false), [hoverPid, setHoverPid] = useState<string | null>(null), [frame3d, setFrame3d] = useState<{ id: string; n: number; at: number } | null>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('2d'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
+  const compact = useCompact(), [sheet, setSheet] = useState<'peek' | 'half' | 'full'>('half'), [sideOpen, setSideOpen] = useState(true), [sel, setSel] = useState<Sel>(null), [frame, setFrame] = useState<{ sel: Sel; n: number; at: number } | null>(null), [wideSide, setWideSide] = useState(false), [hoverPid, setHoverPid] = useState<string | null>(null), [frame3d, setFrame3d] = useState<{ id: string; n: number; at: number } | null>(null), [tool, setTool] = useState<Tool>('select'), [view, setView] = useState<'2d' | '3d' | 'split'>('2d'), [help, setHelp] = useState(false), [calib, setCalib] = useState<Calib | null>(null);
   const [save, setSave] = useState<'saved' | 'dirty' | 'saving' | 'error' | 'conflict' | 'offline' | 'auth'>('saved'), baseRev = useRef<number | null>(null), saveRef = useRef<string>('saved'), [toast, setToast] = useState(''), [revs, setRevs] = useState<any[]>([]), [rev, setRev] = useState(0);
   const [showTech, setShowTech] = useState(true), [techKind, setTechKind] = useState<TechKind>('outlet_double');
   const [pending, setPending] = useState<{ before: Snapshot; issues: Issue[]; discard?: () => void } | null>(null), [persistent, setPersistent] = useState(true), [demo, setDemo] = useState(false), [stage, setStageRaw] = useState<Stage>('survey'), [preview, setPreview] = useState<{ v: any; pid: string } | null>(null), [shares, setShares] = useState<any[]>([]);
@@ -375,6 +375,8 @@ export default function Editor({ id }: { id: string }){
     addEventListener('keydown', k); return () => removeEventListener('keydown', k); }, []);
   // „gata” pe etapă, din datele proiectului (core/stage-progress.ts); se recalculează la fiecare modificare
   const done = useMemo(() => house ? stageDone({ house, warnings: advice.filter(a => a.severity !== 'TIP').length, shares: activeShares(shares), status: meta?.status ?? 'design' }) : null, [house, advice, shares, meta]);
+  // hover-ul comun nu rămâne agățat când una din vederi dispare (schimbarea Plan / 3D)
+  useEffect(() => { setHoverPid(null); }, [view]);
   // (hook înainte de orice return timpuriu) modul „document lat” al panoului, ținut minte în browser
   useEffect(() => { try { setWideSide(localStorage.getItem('casa3d.sideWide') === '1'); } catch { /* stocare blocată */ } }, []);
   if (!snap || !catalog || !mc) return toast ? <div className="home"><p className="muted" role="status">{toast}</p></div> : <EditorSkeleton label={t('editor.loading')} />;
@@ -412,12 +414,14 @@ export default function Editor({ id }: { id: string }){
   // selecția comună plan ↔ 3D (UI/UX P2-10): „Arată în 3D” deschide vederea 3D lângă plan și încadrează piesa;
   // „Arată în plan” face invers. Pe ecran îngust vederea se schimbă (nu încap amândouă).
   const frameIn3d = (pid: string) => { if (view === '2d') setView(compact ? '3d' : 'split'); setFrame3d(f => ({ id: pid, n: (f?.n ?? 0) + 1, at: Date.now() })); };
-  const frameInPlan = (pid: string) => { const s: Sel = { kind: 'placement', id: pid }; setSel(s); if (view === '3d') setView(compact ? '2d' : 'split'); setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1 })); };
+  const frameInPlan = (pid: string) => { const s: Sel = { kind: 'placement', id: pid }; setSel(s); if (view === '3d') setView(compact ? '2d' : 'split'); setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
   // schimbarea etapei animă doar panoul lateral (View Transition, lib/motion.ts); flushSync: DOM-ul nou trebuie să existe în callback
-  const setStage = (s: Stage) => { const st = STAGES.find(x => x.id === s)!; withViewTransition(() => flushSync(() => { setStageRaw(s); setView(st.view === 'split' && isCompact() ? '2d' : st.view); if (!st.tools.includes(tool)) setTool('select'); if (s === 'mep') setShowTech(true); setSideOpen(true); setSheet('half'); })); };
+  // `after`: ce mai schimbă apelantul, în aceeași actualizare (tranziția rulează callback-ul mai târziu, deci după
+  // orice setState făcut imediat după apel)
+  const setStage = (s: Stage, after?: () => void) => { const st = STAGES.find(x => x.id === s)!; withViewTransition(() => flushSync(() => { setStageRaw(s); setView(st.view === 'split' && isCompact() ? '2d' : st.view); if (!st.tools.includes(tool)) setTool('select'); if (s === 'mep') setShowTech(true); setSideOpen(true); setSheet('half'); after?.(); })); };
   const nextId = nextStage(stage);
   // stările goale „desenează camerele”: etapa Releveu cu unealta Cameră, plan vizibil (și foaia de jos coborâtă pe ecranele mici)
-  const drawRooms = () => { if (stage !== 'survey') setStage('survey'); setView('2d'); setTool('room'); if (compact) setSheet('peek'); };
+  const drawRooms = () => { const go = () => { setView('2d'); setTool('room'); if (compact) setSheet('peek'); }; if (stage !== 'survey') setStage('survey', go); else go(); };
   const stageDef = STAGES.find(x => x.id === stage)!, warnCount = advice.filter(a => a.severity !== 'TIP').length;
   const total = snap.placements.reduce((a, p) => a + (resolve(catalog, p.variantId)?.offer?.price || 0), 0);
   const selPl = sel?.kind === 'placement' ? snap.placements.find(p => p.id === sel.id) : undefined, selRoom = sel?.kind === 'room' ? snap.floor.rooms.find(r => r.id === sel.id) : undefined;
@@ -836,7 +840,7 @@ export default function Editor({ id }: { id: string }){
               if (act.stageTarget) setStageRaw(act.stageTarget as any);
               // problema se selectează și se încadrează în plan (UI/UX P2-12)
               const target: Sel = act.targetKind === 'placement' && act.targetId ? { kind: 'placement', id: act.targetId } : act.targetKind === 'room' && act.targetId ? { kind: 'room', id: act.targetId } : null;
-              if (target){ setSel(target); setFrame(f => ({ sel: target, n: (f?.n ?? 0) + 1 })); }
+              if (target){ setSel(target); setFrame(f => ({ sel: target, n: (f?.n ?? 0) + 1, at: Date.now() })); }
               setShowHealth(false);
             }}
           />

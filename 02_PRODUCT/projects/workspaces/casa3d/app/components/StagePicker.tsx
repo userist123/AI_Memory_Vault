@@ -22,7 +22,7 @@ export default function StagePicker({ stages, phases, current, done, warn, onPic
     {open && <div className="stagepick-menu" role="menu" aria-label={t('stage.aria')}>
       {phases.map(ph => <div key={ph.id} role="group" aria-label={t(`phase.${ph.id}`)} className="stagepick-phase"><span aria-hidden="true">{t(`phase.${ph.id}`)}</span>
         {ph.stages.map(id => <button key={id} type="button" role="menuitemradio" aria-checked={id === current} onClick={() => pick(id)} title={t(`stage.why.${id}`)}>
-          <i>{num(id)}</i><b>{t(`stage.${id}`)}</b>{id === 'docs' && warn > 0 && <span className="count">{warn}</span>}<em className={done?.[id] ? 'ok' : ''} aria-label={done?.[id] ? t('stage.doneAria') : t('stage.todoAria')} /></button>)}
+          <i>{num(id)}</i><b>{t(`stage.${id}`)}</b>{id === 'docs' && warn > 0 && <span className="count">{warn}</span>}<em role="img" className={done?.[id] ? 'ok' : ''} aria-label={done?.[id] ? t('stage.doneAria') : t('stage.todoAria')} /></button>)}
       </div>)}
     </div>}
   </div>);
