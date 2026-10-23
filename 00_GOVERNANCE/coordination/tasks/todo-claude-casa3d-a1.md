@@ -31,8 +31,26 @@ DONE:
 - Root cause of red "Dependency audit": next 16.4.0 critical RCE in imported trading-journal. Fixed in PR #325
   (branch claude/fix-next-critical-trading-journal, worktree D:/w/tj-next): next 16.4.2, audit critical 0, tsc 0;
   local next build blocked by machine SWC cache ACL (env, CI does not build it).
-NEXT: when #325 CI green -> merge #325; merge origin/main into #323; CI green -> merge #323. Then remove casa3d-a1 from .claude/launch.json. Previously: vault-reviewer (Opus) on diff origin/main..HEAD; fix; push; draft PR; send screenshots (re-take on PR build;
-  previous ones live only in the old session). Then remove casa3d-a1 from .claude/launch.json (local, untracked) when done.
+- #325 MERGED (02c63629b): audit npm green. Local Next build needs SWC_NATIVE_BINDING_CACHE=%USERPROFILE%\.swc-native-cache
+  (owner-only ACL; AppData\Local and D:\w ACLs are refused by @swc/core).
+- Merge of origin/main into #323 ABORTED (branch untouched): main got #321 (f27d1dde7) with its OWN typed lengths:
+  core/typed-dimension.ts (parseTypedLength: integer=cm, decimal=m, MIN .2 m; parseTypedSize "4x5"; typedEndpoint;
+  typedRect; acceptsTypedKey), two-click room (roomDraft.pending), typed chip near cursor, keys via svg onKeyDown
+  (svg focused on click), state names `typed`/`setTyped` collide with A1. Also Editor imports prepareShareImages.
+- OWNER DECISION 2026-10-23: keep main's number rule (integer = cm, decimal = m; "4" rejected).
+NEXT (new session; do the merge in D:/w/a1, `git fetch origin main && git merge FETCH_HEAD`):
+  1. One parser: drop parseLengthInput from core/snap.ts (+ its tests, help.rule* keys); walls/beam/glass use
+     parseTypedLength. Keep snapDraw/pointAtLength (pointAtLength keeps the 15-deg direction + Shift free).
+  2. One key path: keep main's svg onKeyDown + acceptsTypedKey for wall AND room; delete A1's window capture listener
+     (keep its guarantees: Backspace/Esc/Enter never reach Editor while typing - svg handler already stopPropagation;
+     verify tool letters m/c/f/t/i are eaten after a digit, as acceptsTypedKey does). Extend `typing` to beam/glass_wall.
+  3. Display: segments (wall/beam/glass) use A1 DrawHud (dimension line shows `typed`, invalid = line-through);
+     room keeps main's typed chip. Remove main's old preview <text> label for segments (DrawHud replaces it).
+  4. Keep main's two-click room + typedRect; keep A1 reset of typed/preview on tool change.
+  5. Help: draw-section text from main's rule (example "320 sau 3,20; camera 4x5"), RO+EN; tests commands/i18n.
+  6. Editor.tsx imports: keep both (commands + prepareShareImages). Allowlist: union.
+  7. tsc, vitest --maxWorkers=2, browser (npm run dev, 127.0.0.1:3200): wall "400"->4.000 m, "4,25"->4.25, room
+     "400x500", Shift free, S no-op/E stair, help RO/EN. Delta review (vault-reviewer) of the merge. Push, CI, merge #323.
 RESIDUALS (record in PR): RO header wraps "Salveaza revizia" at 1440 (pre-existing?);
   palette "Keyboard shortcuts (?)" label + hint "?" duplicate (pre-existing); 75deg wall typed 4 -> 4.0002 (mm rounding).
 BLOCKERS: none
