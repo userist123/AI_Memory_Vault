@@ -271,9 +271,9 @@ public sealed class BeginnerPolish20261022Tests : IDisposable
     {
         var doc = Xaml("Views", "PolicyView.xaml");
         var texts = doc.Descendants().Where(e => e.Name.LocalName == "TextBlock" && Attr(e, "Text").Contains("CIORNĂ")).ToList();
-        Assert.Equal(2, texts.Count);                         // Simplu and Expert
+        // 2026-10-23: Simplu has no states line any more (BeginnerSimplify20261023Tests); only the Expert line, with the English names, remains
+        Assert.Single(texts);
         foreach (var t in texts) { Assert.DoesNotContain(").Aprobarea", Attr(t, "Text")); Assert.Matches("\\. Aprobarea", Attr(t, "Text")); }
-        Assert.Single(texts, t => !Attr(t, "Text").Contains("DRAFT"));
         Assert.Single(texts, t => Attr(t, "Text").Contains("DRAFT"));
     }
 

@@ -24,6 +24,11 @@ namespace LogAnalyzer.UI.ViewModels
         public ProfileTable Table { get; }
         public string Title => ProfileTables.Title(Table);
         public string Section => ProfileTables.Section(Table);
+
+        /// <summary>Simplu keeps these tabs behind „Mai multe secțiuni” (2026-10-23); display only, the tables and their checks are unchanged.</summary>
+        public static bool IsRareTable(ProfileTable t) => t is ProfileTable.Holidays or ProfileTable.Shifts or ProfileTable.RotationProcedure
+            or ProfileTable.TransferChannels or ProfileTable.NetworkDestinations;
+        public bool IsRare => IsRareTable(Table);
         public string Columns => string.Join(" · ", ProfileTables.Columns(Table).Select(LogAnalyzer.UI.Views.ColumnLabels.For));
         public DataTable Data { get; }
         public DataView View => Data.DefaultView;
@@ -90,6 +95,14 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<string> SectionLines { get; } = new();
 
         [ObservableProperty] private ProfileTableViewModel? _selectedTable;
+        /// <summary>The „Mai multe secțiuni” toggle of Simplu; Expert always shows every tab.</summary>
+        [ObservableProperty] private bool _showMoreSections;
+        partial void OnShowMoreSectionsChanged(bool value) => EnsureSelectedTabVisible();
+        /// <summary>When Simplu hides the selected tab (toggle turned off, or the level switched), the first tab takes over.</summary>
+        public void EnsureSelectedTabVisible()
+        {
+            if (!LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert && !ShowMoreSections && SelectedTable is { IsRare: true } && Tables.Count > 0) SelectedTable = Tables[0];
+        }
         [ObservableProperty] private string _profilePath;
         [ObservableProperty] private string _status = "Introduceți datele în tabele (sau lipiți / importați), apoi apăsați „Salvează”. Secțiunile goale rămân „nedefinit”. Nimic din profil nu se aplică pe Windows.";
         [ObservableProperty] private bool _replaceOnImport;

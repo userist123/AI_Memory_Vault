@@ -204,7 +204,7 @@
         </Expander>
 
         <!-- Parameters (the raw form stays under "Avansat") -->
-        <Expander Header="Avansat (parametrii controlului)" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12">
+        <Expander Header="Avansat (parametrii controlului)" local:SimpleLevel.HideInSimple="True" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12">
         <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,6,0,0">
             <WrapPanel VerticalAlignment="Center">
                 <TextBlock Text="Perioada (zile în urmă):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
