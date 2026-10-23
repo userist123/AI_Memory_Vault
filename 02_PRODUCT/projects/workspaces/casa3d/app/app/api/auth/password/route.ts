@@ -6,7 +6,7 @@ import { readJsonLimited } from '@/lib/body-limit';
 import { ownerId } from '@/lib/owner';
 import { HttpError } from '@/lib/repo';
 export const dynamic = 'force-dynamic';
-// Doar de pe calculatorul designerului (și poarta din middleware.ts o blochează prin tunel): starea, setarea, oprirea.
+// Doar de pe calculatorul designerului (și poarta din proxy.ts o blochează prin tunel): starea, setarea, oprirea.
 async function local<T>(req: Request, fn: () => Promise<T>){
   try { if (!isLocalRequest(req.headers.get('host'), req.headers)) throw new HttpError(404, 'Nu există.');
     // o pagină străină deschisă în browserul designerului nu poate schimba parola (CSRF): doar din aplicație, ca JSON

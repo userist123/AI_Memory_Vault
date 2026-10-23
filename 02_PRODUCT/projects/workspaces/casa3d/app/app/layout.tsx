@@ -7,7 +7,7 @@ import { headers } from 'next/headers';
 import { PrefsProvider } from '@/lib/prefs';
 import DialogHost from '@/components/DialogHost';
 export const metadata = { title: 'Casa mea 3D', description: 'Floor plan, real furniture and budget in one project. / Plan, mobilier real și buget, într-un singur proiect.' };
-// Citirea antetelor face fiecare pagină dinamică: Next pune nonce-ul din CSP (middleware.ts) pe scripturile proprii;
+// Citirea antetelor face fiecare pagină dinamică: Next pune nonce-ul din CSP (proxy.ts) pe scripturile proprii;
 // o pagină pre-randată static n-ar avea nonce și ar fi blocată de 'strict-dynamic'.
 export default async function RootLayout({ children }: { children: React.ReactNode }){
   await headers();
