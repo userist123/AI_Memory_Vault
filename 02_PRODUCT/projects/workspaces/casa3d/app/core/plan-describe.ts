@@ -52,7 +52,7 @@ export function describePlan(snap: Pick<Snapshot, 'floor' | 'placements'>, cat: 
     const rooms = roomsAlongWall(snap, wl), where = rooms.length ? rooms.join(', ') : t('mirror.noRoom');
     struct.push({ kind: 'wall', id: wl.id, label: t(wl.exterior ? 'mirror.wallExt' : 'mirror.wall', { len: L(len(wl)), rooms: where }) });
     for (const op of [...wl.openings].sort((a, b) => a.offset - b.offset))
-      { const at = roomsAtOpening(snap, wl, op); struct.push({ kind: 'opening', id: op.id, wallId: wl.id, label: t(op.kind === 'door' ? (op.entrance ? 'mirror.entrance' : 'mirror.door') : 'mirror.window', { w: L(op.width), rooms: at.length ? at.join(', ') : where }) }); }
+      { const at = roomsAtOpening(snap, wl, op); struct.push({ kind: 'opening', id: op.id, wallId: wl.id, label: t(op.kind === 'door' ? (op.passage ? 'mirror.passage' : op.entrance ? 'mirror.entrance' : 'mirror.door') : 'mirror.window', { w: L(op.width), rooms: at.length ? at.join(', ') : where }) }); }
   }
   for (const c of f.columns ?? []) struct.push({ kind: 'column', id: c.id, label: t('mirror.column', { w: L(c.w), d: L(c.d) }) });
   for (const b of f.beams ?? []) struct.push({ kind: 'beam', id: b.id, label: t('mirror.beam', { len: L(len(b)) }) });

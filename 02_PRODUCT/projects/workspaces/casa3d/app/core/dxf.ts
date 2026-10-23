@@ -70,7 +70,9 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
       void dims;
       for (const { o, s, e } of ops){
         const pa = (t: number, side = 0) => P(w.a[0] + ux * t - uz * h * side, w.a[1] + uz * t + ux * h * side);
-        if (o.kind === 'door'){
+        // golul de trecere: doar tocurile (peste grosimea peretelui), fără foaie și fără arc
+        if (o.kind === 'door' && o.passage){ line('DOORS', pa(s, 1), pa(s, -1)); line('DOORS', pa(e, 1), pa(e, -1)); }
+        else if (o.kind === 'door'){
           // balamaua și partea de deschidere: aceleași ca în plan și în 3D (core/doors.ts)
           const sw = doorSwing(snap.floor, snap.floor.walls.indexOf(w), w.openings.indexOf(o)), atS = sw.hinge !== 'end';
           const hinge = pa(atS ? s : e), rr = (e - s) * 1000, d: Pt = atS ? [ux, -uz] : [-ux, uz], n: Pt = [-uz * sw.swing, -ux * sw.swing];   // în coordonate DXF (z inversat)

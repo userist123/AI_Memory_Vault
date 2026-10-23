@@ -616,7 +616,9 @@ function model(it){
       const piece = (s0, s1, y0, y1) => { if (s1 - s0 < .005 || y1 - y0 < .005) return; const m = (s0 + s1) / 2; box(s1 - s0, y1 - y0, th, matAt(m), ax + ux * m, (y0 + y1) / 2, az + uz * m, rot, walls).userData.wall = true; if (y0 === 0) skirting(s0, s1, m); };
       const seg = (s0, s1, y0, y1) => { let q0 = s0; for (const t of breaks){ if (t > q0 + .005 && t < s1 - .005){ piece(q0, t, y0, y1); q0 = t; } } piece(q0, s1, y0, y1); };
       gs.forEach(g => { seg(q, g.la, 0, H);
-        if (g.tip === 'usa'){ const dh = Math.min(H - .05, g.h || 2.1), fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat; seg(g.la, g.la + g.l, dh, H); const m = g.la + g.l / 2; [g.la, g.la + g.l].forEach(s => { box(.05, dh, th + .02, fm, ax + ux * s, dh / 2, az + uz * s, rot, walls).castShadow = false; }); box(g.l - .002, .05, th + .016, fm, ax + ux * m, dh, az + uz * m, rot, walls).castShadow = false;
+        if (g.tip === 'usa'){ const dh = Math.min(H - .05, g.h || 2.1), fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat; seg(g.la, g.la + g.l, dh, H); const m = g.la + g.l / 2;
+          // golul de trecere: doar buiandrugul de deasupra, fără toc și fără foaie
+          if (!g.trecere){ [g.la, g.la + g.l].forEach(s => { box(.05, dh, th + .02, fm, ax + ux * s, dh / 2, az + uz * s, rot, walls).castShadow = false; }); box(g.l - .002, .05, th + .016, fm, ax + ux * m, dh, az + uz * m, rot, walls).castShadow = false;
           // foaia ușii pe balamale reale: capătul și partea din plan (core/doors.ts doorSwing), deschisă sau închisă (clic pe ușă)
           const sw = g.sw || { hinge: 'start', swing: ((mx0, mz0) => { const cmx = (pMinX + pMaxX) / 2, cmz = (pMinZ + pMaxZ) / 2; return ((mx0 - cmx) * nx + (mz0 - cmz) * nz) > 0 ? -1 : 1; })(ax + ux * m, az + uz * m) };
           const atStart = sw.hinge !== 'end', hs = atStart ? g.la + .025 : g.la + g.l - .025, hx = ax + ux * hs, hz = az + uz * hs, lw = Math.max(.3, g.l - .05), lh = dh - .012;
@@ -642,7 +644,7 @@ function model(it){
           [1, -1].forEach(sg => { const k = th / 2 + .008, ex = ax + nx * sg * k, ez = az + nz * sg * k;
             [g.la - .035, g.la + g.l + .035].forEach(sv => box(.07, dh, .016, fm, ex + ux * sv, dh / 2, ez + uz * sv, rot, walls).castShadow = false);
             box(g.l + .14, .07, .018, fm, ex + nx * sg * .001 + ux * m, dh + .035, ez + nz * sg * .001 + uz * m, rot, walls).castShadow = false; });
-          if (g.intrare) box(g.l, .02, th + .02, MAT('metal', '#7b766e'), ax + ux * m, .01, az + uz * m, rot, walls); }
+          if (g.intrare) box(g.l, .02, th + .02, MAT('metal', '#7b766e'), ax + ux * m, .01, az + uz * m, rot, walls); } }
         else { const sl = g.sill != null ? g.sill : .9, top = Math.min(H - .05, sl + (g.h || 1.3)), wh = top - sl, cy = (sl + top) / 2, fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat;
           seg(g.la, g.la + g.l, 0, sl); seg(g.la, g.la + g.l, top, H); const m = g.la + g.l / 2; box(g.l, wh, .02, glass, ax + ux * m, cy, az + uz * m, rot, walls).castShadow = false;
           // fereastră reală: toc PVC de 6 cm, canaturi cu profil, montant între canaturi, mânere, glaf interior și pervaz exterior
