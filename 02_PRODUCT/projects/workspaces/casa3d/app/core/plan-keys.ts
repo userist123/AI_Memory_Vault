@@ -2,8 +2,10 @@
 // citirii (sus → jos, stânga → dreapta), săgețile mută elementul ales, R îl rotește, Delete îl șterge, Escape renunță.
 // Aici e doar logica, fără DOM: ce element urmează și ce acțiune produce o tastă. PlanView și editorul o aplică.
 import type { Snapshot } from './types';
+import { nicheGeometry } from './niches';
+import { annotationCenter } from './annotations';
 
-export type PlanItemKind = 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall';
+export type PlanItemKind = 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'annotation';
 export interface PlanItem { kind: PlanItemKind; id: string; x: number; z: number }
 export type PlanSel = { kind: string; id: string } | null;
 
@@ -16,7 +18,9 @@ export function planItems(snap: Pick<Snapshot, 'floor' | 'placements'>): PlanIte
   const columns = (snap.floor.columns ?? []).map(c => ({ kind: 'column' as const, id: c.id, x: c.x, z: c.z })).sort(order);
   const beams = (snap.floor.beams ?? []).map(b => ({ kind: 'beam' as const, id: b.id, x: (b.a[0] + b.b[0]) / 2, z: (b.a[1] + b.b[1]) / 2 })).sort(order);
   const glassWalls = (snap.floor.glassWalls ?? []).map(g => ({ kind: 'glass_wall' as const, id: g.id, x: (g.a[0] + g.b[0]) / 2, z: (g.a[1] + g.b[1]) / 2 })).sort(order);
-  return [...rooms, ...pieces, ...stairs, ...columns, ...beams, ...glassWalls];
+  const niches = (snap.floor.niches ?? []).flatMap(n => { const g = nicheGeometry(snap.floor, n); return g ? [{ kind: 'niche' as const, id: n.id, x: g.center[0], z: g.center[1] }] : []; }).sort(order);
+  const notes = (snap.floor.annotations ?? []).map(a => { const [x, z] = annotationCenter(a); return { kind: 'annotation' as const, id: a.id, x, z }; }).sort(order);
+  return [...rooms, ...pieces, ...stairs, ...columns, ...beams, ...glassWalls, ...niches, ...notes];
 }
 
 /** Elementul următor (dir = 1) sau anterior (dir = −1). `null` = Tab iese din plan (după ultimul sau înainte de primul). */

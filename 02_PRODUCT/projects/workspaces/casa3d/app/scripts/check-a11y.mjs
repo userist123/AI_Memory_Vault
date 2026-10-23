@@ -50,5 +50,5 @@ try {
   await p.go(`${BASE}/share/${token}`); await sleep(1500); failures += await audit(p, 'link-desktop');
   await view(p, PHONE); await p.go(`${BASE}/share/${token}`); await sleep(1500); failures += await audit(p, 'link-telefon');
 } catch (e){ console.error(e); failures++; }
-finally { cdp.close(); }
+finally { await cdp.close(); }
 process.exit(failures ? 1 : 0);

@@ -9,7 +9,7 @@ import { evaluateProjectHealth, type HealthAction } from '@/core/project-health'
 import { EditorSkeleton } from './Skeleton';
 import dynamic from 'next/dynamic';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import type { Catalog, Snapshot, Severity, Issue, FurniturePlacement, MaterialsCatalog, BudgetSettings, RoomFinishes, Appearance, Finish, Room, Stair } from '@/core/types';
+import type { Catalog, Snapshot, Severity, Issue, FurniturePlacement, MaterialsCatalog, BudgetSettings, RoomFinishes, Appearance, Finish, Room, Stair, Niche, Annotation } from '@/core/types';
 import { type Outbound } from './BudgetPanel';
 import BudgetWithCustom from './CustomItemsImport';
 import { relFor, freshness } from '@/core/outbound';
@@ -77,6 +77,9 @@ import { prepareShareImages } from '@/lib/share-images';
 import { withViewTransition } from '@/lib/motion';
 import StagePicker from './StagePicker';
 import PlanObjects from './PlanObjects';
+import { PLAN_LIMITS, PLAN_DEFAULTS, cleanPlanText } from '@/core/plan-limits';
+import ToolRail from './ToolRail';
+import { dimGeometry } from '@/core/annotations';
 import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
 import { flushSync } from 'react-dom';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
@@ -90,6 +93,11 @@ const ICON: Record<Tool, string> = {
   room: 'M4 4h16v16H4z',
   door: 'M5 21V4h9v17M5 21h14M12 12h.01',
   window: 'M4 5h16v14H4zM12 5v14M4 12h16',
+  passage: 'M5 21V4h14v17M3 21h4M17 21h4M8 4v2M16 4v2',
+  shaft: 'M6 4h12v16H6zM6 9l5-5M6 14l10-10M6 19l12-12M11 20l7-7',
+  niche: 'M3 4h18v16H3zM8 8h8v7H8z',
+  dim: 'M3 8v8M21 8v8M3 12h18M6 10l-2 2 2 2M18 10l2 2-2 2',
+  text: 'M5 5h14M12 5v14M9 19h6',
   column: 'M6 4h12v3H6zm2 3h8v10H8zm-2 10h12v3H6z',
   beam: 'M3 7h18v4H3zm0 6h18v1H3zm0 3h18v1H3z',
   glass_wall: 'M4 4h16v16H4zm2 2v12h5V6zm7 0v12h5V6z',
@@ -103,6 +111,11 @@ const TOOL_LABEL: Record<Tool, string> = {
   room: 'tool.room',
   door: 'tool.door',
   window: 'tool.window',
+  passage: 'tool.passage',
+  shaft: 'tool.shaft',
+  niche: 'tool.niche',
+  dim: 'tool.dim',
+  text: 'tool.text',
   column: 'tool.column',
   beam: 'tool.beam',
   glass_wall: 'tool.glass_wall',
@@ -114,12 +127,12 @@ const TOOL_LABEL: Record<Tool, string> = {
 /** Etapele unui proiect de amenajare, în ordinea în care lucrează un designer: fiecare are vederea, uneltele și panoul ei. */
 type Stage = typeof STAGE_IDS[number];
 const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: true }[] = [
-  { id: 'survey', view: '2d', tools: ['select', 'wall', 'room', 'door', 'window', 'column', 'beam', 'glass_wall', 'stair', 'measure'] },
-  { id: 'concept', view: 'split', tools: ['select', 'column', 'glass_wall', 'measure'] },
+  { id: 'survey', view: '2d', tools: ['select', 'wall', 'room', 'door', 'window', 'passage', 'niche', 'column', 'shaft', 'beam', 'glass_wall', 'stair', 'measure', 'dim', 'text'] },
+  { id: 'concept', view: 'split', tools: ['select', 'niche', 'column', 'glass_wall', 'measure'] },
   { id: 'finishes', view: 'split', tools: ['select', 'measure'] },
   { id: 'ffe', view: 'split', tools: ['select', 'measure'] },
-  { id: 'mep', view: '2d', tools: ['select', 'tech', 'measure'] },
-  { id: 'docs', view: '2d', tools: ['select', 'measure'] },
+  { id: 'mep', view: '2d', tools: ['select', 'tech', 'shaft', 'measure'] },
+  { id: 'docs', view: '2d', tools: ['select', 'measure', 'dim', 'text'] },
   { id: 'quote', view: '2d', tools: ['select'] },
   { id: 'present', view: '3d', tools: ['select'] },
   { id: 'orders', view: '2d', tools: [], page: true },
@@ -282,10 +295,13 @@ export default function Editor({ id }: { id: string }){
   const redo = () => { if (!house || dragStart.current) return; const s = hist.current.redo(house); if (s){ setHouse(s); persist(s); force(x => x + 1); } };
   const del = () => { if (!sel) return; mutate(s => {
     if (sel.kind === 'placement') s.placements = s.placements.filter(p => p.id !== sel.id);
-    if (sel.kind === 'wall') s.floor.walls = s.floor.walls.filter(w => w.id !== sel.id);
+    // peretele șters își ia și nișele
+    if (sel.kind === 'wall'){ s.floor.walls = s.floor.walls.filter(w => w.id !== sel.id); if (s.floor.niches){ s.floor.niches = s.floor.niches.filter(n => n.wallId !== sel.id); if (!s.floor.niches.length) delete s.floor.niches; } }
     if (sel.kind === 'stair'){ s.floor.stairs = (s.floor.stairs || []).filter(x => x.id !== sel.id); if (!s.floor.stairs.length) delete s.floor.stairs; }
     if (sel.kind === 'column'){ s.floor.columns = (s.floor.columns || []).filter(x => x.id !== sel.id); if (!s.floor.columns.length) delete s.floor.columns; }
     if (sel.kind === 'beam'){ s.floor.beams = (s.floor.beams || []).filter(x => x.id !== sel.id); if (!s.floor.beams.length) delete s.floor.beams; }
+    if (sel.kind === 'annotation'){ s.floor.annotations = (s.floor.annotations || []).filter(x => x.id !== sel.id); if (!s.floor.annotations.length) delete s.floor.annotations; }
+    if (sel.kind === 'niche'){ s.floor.niches = (s.floor.niches || []).filter(x => x.id !== sel.id); if (!s.floor.niches.length) delete s.floor.niches; }
     if (sel.kind === 'glass_wall'){ s.floor.glassWalls = (s.floor.glassWalls || []).filter(x => x.id !== sel.id); if (!s.floor.glassWalls.length) delete s.floor.glassWalls; }
     if (sel.kind === 'opening'){ const w = s.floor.walls.find(w => w.id === sel.wallId); if (w) w.openings = w.openings.filter(o => o.id !== sel.id); }
     if (sel.kind === 'room'){ s.floor.rooms = s.floor.rooms.filter(r => r.id !== sel.id); s.placements = s.placements.filter(p => p.roomId !== sel.id); } }); setSel(null); };
@@ -318,6 +334,9 @@ export default function Editor({ id }: { id: string }){
       if (sel.kind === 'placement') nudge(sel.id, a.dxCm, a.dzCm);
       else if (sel.kind === 'stair'){ const st = snap?.floor.stairs?.find(x => x.id === sel.id); if (st) patchStair(sel.id, { x: r3(st.x + dx), z: r3(st.z + dz) }); }
       else if (sel.kind === 'column'){ const c = snap?.floor.columns?.find(x => x.id === sel.id); if (c) mutate(s => { const col = s.floor.columns?.find(x => x.id === sel.id); if (col) { col.x = r3(col.x + dx); col.z = r3(col.z + dz); } }); }
+      else if (sel.kind === 'annotation') patchAnn(sel.id, an => { const mv = (q: [number, number]): [number, number] => [r3(q[0] + dx), r3(q[1] + dz)]; if (an.kind === 'dim'){ an.a = mv(an.a); an.b = mv(an.b); } else an.at = mv(an.at); });
+      else if (sel.kind === 'niche'){ const n = snap?.floor.niches?.find(x => x.id === sel.id), w = n && snap!.floor.walls.find(x => x.id === n.wallId); if (n && w){ const L = wallLength(w.a, w.b), along = ((w.b[0] - w.a[0]) * dx + (w.b[1] - w.a[1]) * dz) / (L || 1);
+        patchNiche(sel.id, q => { q.offset = r3(Math.max(0, Math.min(L - q.width, q.offset + along))); }); } }
       else if (sel.kind === 'room') mutate(s => { const r = s.floor.rooms.find(x => x.id === sel.id); if (r) r.rect = { x0: r3(r.rect.x0 + dx), x1: r3(r.rect.x1 + dx), z0: r3(r.rect.z0 + dz), z1: r3(r.rect.z1 + dz) }; }); } };
   useEffect(() => { const k = (e: KeyboardEvent) => { const el = e.target as HTMLElement;
     // în lista obiectelor planului tastele aparțin listei (săgeți, Enter, Escape): Backspace nu șterge selecția pe neașteptate
@@ -401,20 +420,39 @@ export default function Editor({ id }: { id: string }){
   const G = groups(catalog);
   const onAddWall = (a: [number, number], b: [number, number]) => mutate(s => { s.floor.walls.push({ id: `wall-${uid().slice(0, 8)}`, a, b, thickness: .15, exterior: false, openings: [] }); });
   const onAddRoom = (rect: any) => { const rid = `camera-${uid().slice(0, 8)}`; mutate(s => { s.floor.rooms.push({ id: rid, name: t('editor.newRoomName', { n: s.floor.rooms.length + 1 }), type: 'living', rect }); }); setSel({ kind: 'room', id: rid }); setTool('select'); };
-  const onAddOpening = (wallId: string, offset: number, kind: 'door' | 'window') => { const w = snap.floor.walls.find(x => x.id === wallId)!, L = wallLength(w.a, w.b), width = kind === 'door' ? .8 : 1.2;
+  // golul de trecere e o ușă fără foaie (`passage`): devizul îl scade ca pe o ușă, dar nu cere produs de ușă
+  const onAddOpening = (wallId: string, offset: number, kind: 'door' | 'window' | 'passage') => { const w = snap.floor.walls.find(x => x.id === wallId)!, L = wallLength(w.a, w.b), width = kind === 'door' ? .8 : kind === 'passage' ? PLAN_DEFAULTS.passageWidth : 1.2;
     if (L < width + .1){ say(t('editor.wallTooShort')); return; } const oid = `op-${uid().slice(0, 8)}`;
-    mutate(s => { s.floor.walls.find(x => x.id === wallId)!.openings.push({ id: oid, kind, offset: r3(Math.max(0, Math.min(L - width, offset - width / 2))), width }); }); setSel({ kind: 'opening', id: oid, wallId }); };
-  const onAddColumn = (x: number, z: number, shape: 'rect' | 'round' = 'rect') => {
-    const cid = `col-${uid().slice(0, 8)}`;
-    mutate(s => { s.floor.columns = [...(s.floor.columns || []), { id: cid, x: r3(x), z: r3(z), w: .35, d: .35, shape }]; });
+    mutate(s => { s.floor.walls.find(x => x.id === wallId)!.openings.push({ id: oid, kind: kind === 'window' ? 'window' : 'door', offset: r3(Math.max(0, Math.min(L - width, offset - width / 2))), width, ...(kind === 'passage' ? { passage: true as const } : {}) }); }); setSel({ kind: 'opening', id: oid, wallId }); };
+  // ghena nouă: 30 × 30 cm până la tavan; rolul și înălțimea se schimbă în panou
+  // peste limita serverului (PLAN_LIMITS.*.max pe nivel) salvarea întregului proiect ar eșua: refuzăm la plasare
+  const full = (n: number | undefined, max: number) => { if ((n ?? 0) < max) return false; say(t('editor.limitReached', { max })); return true; };
+  const onAddColumn = (x: number, z: number, shape: 'rect' | 'round' = 'rect', role?: 'shaft') => {
+    if (full(snap.floor.columns?.length, PLAN_LIMITS.column.max)) return;
+    const cid = `col-${uid().slice(0, 8)}`, w = role ? PLAN_DEFAULTS.shaft : .35;
+    mutate(s => { s.floor.columns = [...(s.floor.columns || []), { id: cid, x: r3(x), z: r3(z), w, d: w, shape, ...(role ? { role } : {}) }]; });
     setSel({ kind: 'column', id: cid }); setTool('select');
   };
+  // nișa nouă: 60 × 40 × 10 cm la 110 cm de pardoseală, pe fața peretelui unde s-a dat clic; mărimile se schimbă în panou
+  const onAddNiche = (wallId: string, offset: number, side: 1 | -1) => { if (full(snap.floor.niches?.length, PLAN_LIMITS.niche.max)) return; const w = snap.floor.walls.find(x => x.id === wallId)!, L = wallLength(w.a, w.b), D = PLAN_DEFAULTS.niche, width = Math.min(D.width, r3(L - .1));
+    if (width < PLAN_LIMITS.niche.widthMinM){ say(t('editor.wallTooShort')); return; } const nid = `nisa-${uid().slice(0, 8)}`, depth = r3(Math.max(PLAN_LIMITS.niche.depthMinM, Math.min(D.depth, w.thickness - .05)));
+    mutate(s => { s.floor.niches = [...(s.floor.niches || []), { id: nid, wallId, offset: r3(Math.max(0, Math.min(L - width, offset - width / 2))), width, height: D.height, depth, elevation: D.elevation, side }]; });
+    setSel({ kind: 'niche', id: nid }); setTool('select'); };
+  // cote și texte de planșă: rămân selectate după plasare, ca restul uneltelor
+  const onAddDim = (a: [number, number], b: [number, number], offset: number, mode: 'aligned' | 'ortho') => { if (full(snap.floor.annotations?.length, PLAN_LIMITS.annotation.max)) return; const aid = `cota-${uid().slice(0, 8)}`;
+    mutate(s => { s.floor.annotations = [...(s.floor.annotations || []), { id: aid, kind: 'dim', a, b, offset: r3(offset), ...(mode === 'ortho' ? { mode } : {}) }]; }); setSel({ kind: 'annotation', id: aid }); setTool('select'); };
+  const onAddText = (at: [number, number], text: string) => { const v = cleanPlanText(text); if (!v || full(snap.floor.annotations?.length, PLAN_LIMITS.annotation.max)) return; const aid = `text-${uid().slice(0, 8)}`;
+    mutate(s => { s.floor.annotations = [...(s.floor.annotations || []), { id: aid, kind: 'text', at, text: v }]; }); setSel({ kind: 'annotation', id: aid }); setTool('select'); };
+  const patchAnn = (aid: string, fn: (a: Annotation) => void) => mutate(s => { const a = s.floor.annotations?.find(x => x.id === aid); if (a) fn(a); });
+  const patchNiche = (nid: string, fn: (n: Niche) => void) => mutate(s => { const n = s.floor.niches?.find(x => x.id === nid); if (n) fn(n); });
   const onAddBeam = (a: [number, number], b: [number, number]) => {
+    if (full(snap.floor.beams?.length, PLAN_LIMITS.beam.max)) return;
     const bid = `bm-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.beams = [...(s.floor.beams || []), { id: bid, a, b, width: .25, depth: .35 }]; });
     setSel({ kind: 'beam', id: bid }); setTool('select');
   };
   const onAddGlassWall = (a: [number, number], b: [number, number]) => {
+    if (full(snap.floor.glassWalls?.length, PLAN_LIMITS.glassWall.max)) return;
     const gid = `gw-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.glassWalls = [...(s.floor.glassWalls || []), { id: gid, a, b, thickness: .08, mullions: 2, frameColor: '#23262B' }]; });
     setSel({ kind: 'glass_wall', id: gid }); setTool('select');
@@ -452,7 +490,9 @@ export default function Editor({ id }: { id: string }){
   const selColumn = sel?.kind === 'column' ? snap.floor.columns?.find(c => c.id === sel.id) : undefined;
   const selBeam = sel?.kind === 'beam' ? snap.floor.beams?.find(b => b.id === sel.id) : undefined;
   const selGlassWall = sel?.kind === 'glass_wall' ? snap.floor.glassWalls?.find(g => g.id === sel.id) : undefined;
-  const selAnnounce = selPl ? t('plan.selPiece', { name: resolve(catalog, selPl.variantId)?.variant.name ?? selPl.group }) : selRoom ? t('plan.selRoom', { name: selRoom.name }) : selStair ? t('plan.selStair') : selWall ? t('editor.wall') : selColumn ? t('tool.column') : selBeam ? t('tool.beam') : selGlassWall ? t('tool.glass_wall') : '';
+  const selAnn = sel?.kind === 'annotation' ? snap.floor.annotations?.find(a => a.id === sel.id) : undefined;
+  const selNiche = sel?.kind === 'niche' ? snap.floor.niches?.find(n => n.id === sel.id) : undefined;
+  const selAnnounce = selPl ? t('plan.selPiece', { name: resolve(catalog, selPl.variantId)?.variant.name ?? selPl.group }) : selRoom ? t('plan.selRoom', { name: selRoom.name }) : selStair ? t('plan.selStair') : selWall ? t('editor.wall') : selColumn ? t(selColumn.role === 'shaft' ? 'tool.shaft' : selColumn.role === 'boxing' ? 'column.boxing' : 'tool.column') : selBeam ? t('tool.beam') : selGlassWall ? t('tool.glass_wall') : selNiche ? t('tool.niche') : selAnn ? t(selAnn.kind === 'dim' ? 'tool.dim' : 'tool.text') : '';
   // „Adaugă în cameră” fără cameră aleasă: camera potrivită grupei (dormitor pentru pat), altfel cea mai mare
   const roomsFor = (vid: string) => { const g = groupOf(vid), bySize = [...snap.floor.rooms].sort((a, b) => area(b.rect) - area(a.rect));
     return [...bySize.filter(r => groupsForRoom(r.type, [g]).suggested.includes(g)), ...bySize.filter(r => !groupsForRoom(r.type, [g]).suggested.includes(g))]; };
@@ -462,7 +502,7 @@ export default function Editor({ id }: { id: string }){
     say(t('editor.noFreeSpot')); };
   // ce se vede în panou: selecția (dacă etapa o folosește) sau conținutul etapei
   const roomStage = stage === 'survey' || stage === 'finishes' || stage === 'ffe';
-  const showSel = !!((selRoom || selWall || selOp || selStair || selColumn || selBeam || selGlassWall) ? roomStage : selPl ? stage === 'ffe' || stage === 'concept' || stage === 'finishes' || stage === 'present' : false);
+  const showSel = !!(selAnn ? stage === 'survey' || stage === 'docs' : selColumn ? roomStage || stage === 'mep' : selNiche ? roomStage || stage === 'concept' : (selRoom || selWall || selOp || selStair || selBeam || selGlassWall) ? roomStage : selPl ? stage === 'ffe' || stage === 'concept' || stage === 'finishes' || stage === 'present' : false);
   // câmpurile numerice sunt în cm (metric) sau inci (imperial); `f` și `min` primesc mereu cm, datele rămân metrice
   // în inci, minimul afișat (ex. 78,7″ pentru 200 cm) se întoarce puțin sub pragul în cm: acceptăm o jumătate de inci toleranță și fixăm la minim
   const num = (v: string, f: (x: number) => void, min = 0) => { const x = v.trim() === '' ? 0 : inputToCm(v, units), tol = units === 'imperial' ? 1.27 : 1e-9; if (x != null && x >= min - tol) f(Math.max(x, min)); };
@@ -564,9 +604,8 @@ export default function Editor({ id }: { id: string }){
     </div>
     {stageDef.page ? <div className="pagebody">{stage === 'orders' && <OrdersPage onPickFurniture={() => setStage('ffe')} id={id} cur={cur} say={say} projectName={snap.name} rooms={floors(house!).flatMap(f => f.rooms).map(r => ({ id: r.id, name: r.name }))} />}{stage === 'site' && <SitePage id={id} rooms={floors(house!).flatMap(f => f.rooms)} say={say} />}</div> :
     <div className={`body studio-body ${compact ? `is-compact sheet-${sheet}` : ""} ${!compact && wideSide ? "wide-side" : ""}`}>
-      <nav className="tools studio-toolrail" aria-label={t('editor.tools')}>
-        {(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk)).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={`${t(TOOL_LABEL[tk])} (${formatShortcut(toolShortcut(tk), { mac })})`} aria-keyshortcuts={ariaShortcut(toolShortcut(tk), { mac })}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
-      </nav>
+      <ToolRail tools={(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk))} active={tool} grouped={!compact} icon={ICON} label={tk => t(TOOL_LABEL[tk])} ariaLabel={t('editor.tools')}
+        title={tk => `${t(TOOL_LABEL[tk])} (${formatShortcut(toolShortcut(tk), { mac })})`} keys={tk => ariaShortcut(toolShortcut(tk), { mac })} groupLabel={g => t(`toolGroup.${g}`)} onPick={setTool} />
       <div className={`canvas studio-canvas ${view === 'split' && !compact ? 'split' : ''}`}>
         <div className="levelbar">
           {/* doar nivelurile sunt tab-uri; „+ Nivel” e o acțiune, în afara listei de tab-uri (ARIA: tablist conține doar tab) */}
@@ -591,6 +630,9 @@ export default function Editor({ id }: { id: string }){
           onAddRoom={preview ? () => {} : onAddRoom}
           onAddOpening={preview ? () => {} : onAddOpening}
           onAddColumn={preview ? undefined : onAddColumn}
+          onAddNiche={preview ? undefined : onAddNiche}
+          onAddDim={preview ? undefined : onAddDim}
+          onAddText={preview ? undefined : onAddText}
           onAddBeam={preview ? undefined : onAddBeam}
           onAddGlassWall={preview ? undefined : onAddGlassWall}
           onAddStairAt={preview ? undefined : onAddStairAt}
@@ -604,7 +646,7 @@ export default function Editor({ id }: { id: string }){
           onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })}
         />
           {!preview && !snap.floor.rooms.length && !snap.floor.walls.length && tool !== 'room' && tool !== 'wall' && <EmptyState className="plan-empty" title={t('empty.plan.title')} text={t('empty.plan.text')} action={{ label: t('empty.plan.action'), onClick: drawRooms }} />}
-          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'column' ? t('editor.hintColumn') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
+          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
         {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })}
           selectedId={!preview && sel?.kind === 'placement' ? sel.id : null} hoverId={preview ? null : hoverPid} onHover={setHoverPid} frame={frame3d ?? undefined} onFrameOther={frameInPlan} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
@@ -670,20 +712,21 @@ export default function Editor({ id }: { id: string }){
             <button className="btn danger" onClick={del}>{t('editor.deleteWall')}</button>
           </>}
           {selOp && roomStage && <>
-            <h3>{selOp.kind === 'door' ? t('tool.door') : t('tool.window')}</h3>
+            <h3>{selOp.passage ? t('tool.passage') : selOp.kind === 'door' ? t('tool.door') : t('tool.window')}</h3>
             <div className="grid2">
-              <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selOp.width)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!.width = r3(x / 100); }), 30)} /></label>
+              <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selOp.width)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!.width = r3((selOp.passage ? Math.min(x, PLAN_LIMITS.passage.widthMaxM * 100) : x) / 100); }), 30)} /></label>
               <label className="f"><span>{t('editor.offsetOnWall', { u })}</span><input type="number" value={inField(selOp.offset)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!.offset = r3(x / 100); }))} /></label>
             </div>
             <OpeningLookPanel op={selOp} snap={snap} num={num} onPatch={patch => mutate(s => { Object.assign(s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!, patch); })}
               onFrame={hex => look(a => { a.openings = setFinish(a.openings, selOp.id, { color: hex }); })} />
-            {selOp.kind === 'door' && (() => { const wi = snap.floor.walls.findIndex(w => w.id === (sel as any).wallId), oi = snap.floor.walls[wi]?.openings.findIndex(o => o.id === selOp.id) ?? -1;
+            {selOp.kind === 'door' && !selOp.entrance && <label className="f" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={!!selOp.passage} onChange={e => mutate(s => { const o = s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!; if (e.target.checked){ o.passage = true; o.width = r3(Math.min(Math.max(o.width, PLAN_LIMITS.passage.widthMinM), PLAN_LIMITS.passage.widthMaxM)); delete o.hinge; delete o.swing; if (s.doors) delete s.doors[o.id]; } else delete o.passage; })} /> {t('door.passage')}</label>}
+            {selOp.kind === 'door' && !selOp.passage && (() => { const wi = snap.floor.walls.findIndex(w => w.id === (sel as any).wallId), oi = snap.floor.walls[wi]?.openings.findIndex(o => o.id === selOp.id) ?? -1;
               if (wi < 0 || oi < 0) return null; const sw = doorSwing(snap.floor, wi, oi), patchOp = (p: object) => mutate(s => { Object.assign(s.floor.walls[wi]!.openings[oi]!, p); });
               return <div className="grid2">
                 <button className="btn" onClick={() => patchOp({ hinge: sw.hinge === 'start' ? 'end' : 'start', swing: sw.swing })}>{t('door.flipHinge')}</button>
                 <button className="btn" onClick={() => patchOp({ swing: sw.swing === 1 ? -1 : 1, hinge: sw.hinge })}>{t('door.flipSwing')}</button>
                 <small className="prov" style={{ gridColumn: '1/-1' }}>{sw.auto ? t('door.swingAuto') : t('door.swingSet')}</small></div>; })()}
-            {selOp.kind === 'door' && mc && <DoorPanel op={selOp} snap={house!} mc={mc} cur={cur} onChange={(p: { product?: string | null; handle?: string | null }) => mutate(s => { const cur0 = s.doors?.[selOp.id] ?? {}, next = { ...cur0, ...p };
+            {selOp.kind === 'door' && !selOp.passage && mc && <DoorPanel op={selOp} snap={house!} mc={mc} cur={cur} onChange={(p: { product?: string | null; handle?: string | null }) => mutate(s => { const cur0 = s.doors?.[selOp.id] ?? {}, next = { ...cur0, ...p };
               const clean = { ...(next.product ? { product: next.product } : {}), ...(next.handle ? { handle: next.handle } : {}) }; s.doors = { ...(s.doors || {}) }; if (Object.keys(clean).length) s.doors[selOp.id] = clean; else delete s.doors[selOp.id]; })} />}
             <button className="btn danger" onClick={del}>{t('editor.deleteOpening')}</button>
           </>}
@@ -697,19 +740,24 @@ export default function Editor({ id }: { id: string }){
             onItem={patch => look(a => { a.items = setFinish(a.items, selPl.id, patch); })}
             onSize={size => changePiece(selPl.id, q => { if (size) q.size = size; else delete q.size; }, t('editor.sizeNoFit'))}
             onVariant={vid => changePiece(selPl.id, q => { q.variantId = vid; }, t('editor.variantNoFit'))} />}
-          {selColumn && roomStage && (
+          {selColumn && (roomStage || stage === 'mep') && (
             <div style={{ display: 'grid', gap: 8 }}>
-              <h3>{t('tool.column')}</h3>
+              <h3>{selColumn.role === 'shaft' ? t('tool.shaft') : selColumn.role === 'boxing' ? t('column.boxing') : t('tool.column')}</h3>
+              <label className="f"><span>{t('column.role')}</span>
+                <select value={selColumn.role ?? 'structural'} onChange={e => mutate(s => { const c = s.floor.columns?.find(c => c.id === selColumn.id); if (!c) return; const v = e.target.value as 'structural' | 'shaft' | 'boxing'; if (v === 'structural'){ delete c.role; delete c.height; } else { c.role = v; c.shape = 'rect'; } })}>
+                  <option value="structural">{t('column.structural')}</option><option value="shaft">{t('tool.shaft')}</option><option value="boxing">{t('column.boxing')}</option>
+                </select></label>
+              {selColumn.role && selColumn.role !== 'structural' && <label className="f"><span>{t('column.height', { u })}</span><input type="number" placeholder={t('column.toCeiling')} value={selColumn.height != null ? inField(selColumn.height) : ''} onChange={e => { const v = e.target.value; if (v.trim() === '') mutate(s => { const c = s.floor.columns?.find(c => c.id === selColumn.id); if (c) delete c.height; }); else num(v, x => mutate(s => { const c = s.floor.columns?.find(c => c.id === selColumn.id); if (c) c.height = r3(Math.min(x, PLAN_LIMITS.column.heightMaxM * 100) / 100); }), PLAN_LIMITS.column.heightMinM * 100); }} /></label>}
               <div className="grid2">
-                <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selColumn.w)} onChange={e => num(e.target.value, x => mutate(s => { const c = s.floor.columns?.find(c => c.id === selColumn.id); if (c) c.w = r3(x / 100); }), 10)} /></label>
-                <label className="f"><span>{t('editor.depth', { u })}</span><input type="number" value={inField(selColumn.d)} onChange={e => num(e.target.value, x => mutate(s => { const c = s.floor.columns?.find(c => c.id === selColumn.id); if (c) c.d = r3(x / 100); }), 10)} /></label>
+                <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selColumn.w)} onChange={e => num(e.target.value, x => mutate(s => { const c = s.floor.columns?.find(c => c.id === selColumn.id); if (c) c.w = r3(Math.min(x, PLAN_LIMITS.column.maxM * 100) / 100); }), PLAN_LIMITS.column.minM * 100)} /></label>
+                <label className="f"><span>{t('editor.depth', { u })}</span><input type="number" value={inField(selColumn.d)} onChange={e => num(e.target.value, x => mutate(s => { const c = s.floor.columns?.find(c => c.id === selColumn.id); if (c) c.d = r3(Math.min(x, PLAN_LIMITS.column.maxM * 100) / 100); }), PLAN_LIMITS.column.minM * 100)} /></label>
               </div>
-              <label className="f"><span>{t('column.shape')}</span>
+              {!selColumn.role && <label className="f"><span>{t('column.shape')}</span>
                 <select value={selColumn.shape} onChange={e => mutate(s => { const c = s.floor.columns?.find(c => c.id === selColumn.id); if (c) c.shape = e.target.value as any; })}>
                   <option value="rect">{t('column.rect')}</option>
                   <option value="round">{t('column.round')}</option>
                 </select>
-              </label>
+              </label>}
               <div style={{ display: 'flex', gap: 8 }}>
                 <button className="btn" onClick={() => rotateColumn(selColumn.id)}>{t('editor.rotate')}</button>
                 <button className="btn danger" onClick={del}>{t('common.delete')}</button>
@@ -721,19 +769,58 @@ export default function Editor({ id }: { id: string }){
               <h3>{t('tool.beam')}</h3>
               <div className="prov">{formatLength(wallLength(selBeam.a, selBeam.b), units, lang)}</div>
               <div className="grid2">
-                <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selBeam.width)} onChange={e => num(e.target.value, x => mutate(s => { const b = s.floor.beams?.find(b => b.id === selBeam.id); if (b) b.width = r3(x / 100); }), 10)} /></label>
-                <label className="f"><span>{t('beam.depth', { u })}</span><input type="number" value={inField(selBeam.depth)} onChange={e => num(e.target.value, x => mutate(s => { const b = s.floor.beams?.find(b => b.id === selBeam.id); if (b) b.depth = r3(x / 100); }), 10)} /></label>
+                <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selBeam.width)} onChange={e => num(e.target.value, x => mutate(s => { const b = s.floor.beams?.find(b => b.id === selBeam.id); if (b) b.width = r3(Math.min(x, PLAN_LIMITS.beam.maxM * 100) / 100); }), PLAN_LIMITS.beam.minM * 100)} /></label>
+                <label className="f"><span>{t('beam.depth', { u })}</span><input type="number" value={inField(selBeam.depth)} onChange={e => num(e.target.value, x => mutate(s => { const b = s.floor.beams?.find(b => b.id === selBeam.id); if (b) b.depth = r3(Math.min(x, PLAN_LIMITS.beam.maxM * 100) / 100); }), PLAN_LIMITS.beam.minM * 100)} /></label>
               </div>
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
             </div>
           )}
+          {selAnn && (stage === 'survey' || stage === 'docs') && (<div style={{ display: 'grid', gap: 8 }}>
+            <h3>{t(selAnn.kind === 'dim' ? 'tool.dim' : 'tool.text')}</h3>
+            {selAnn.kind === 'dim' ? <>
+              <div className="prov">{formatLength(dimGeometry(selAnn).value, units, lang)}</div>
+              <div className="grid2">
+                <label className="f"><span>{t('dim.offset', { u })}</span><input type="number" value={inField(Math.abs(selAnn.offset))} onChange={e => num(e.target.value, x => patchAnn(selAnn.id, a => { if (a.kind === 'dim') a.offset = r3((Math.sign(a.offset) || 1) * Math.min(x, PLAN_LIMITS.annotation.offsetMaxM * 100) / 100); }))} /></label>
+                <label className="f"><span>{t('dim.mode')}</span><select value={selAnn.mode ?? 'aligned'} onChange={e => patchAnn(selAnn.id, a => { if (a.kind !== 'dim') return; if (e.target.value === 'ortho') a.mode = 'ortho'; else delete a.mode; })}>
+                  <option value="aligned">{t('dim.aligned')}</option><option value="ortho">{t('dim.ortho')}</option></select></label>
+              </div>
+              <button className="btn" onClick={() => patchAnn(selAnn.id, a => { if (a.kind === 'dim') a.offset = -a.offset; })}>{t('dim.flip')}</button></>
+            : <>
+              <label className="f"><span>{t('text.content')}</span><input value={selAnn.text} maxLength={PLAN_LIMITS.annotation.textMax} onChange={e => { const v = e.target.value.replace(/[\u0000-\u001f\u007f<>]/g, ' '); patchAnn(selAnn.id, a => { if (a.kind === 'text') a.text = v; }); }} onBlur={() => { if (!cleanPlanText(selAnn.text)) del(); }} /></label>
+              <div className="grid2">
+                <label className="f"><span>{t('text.size')}</span><select value={selAnn.size ?? 'm'} onChange={e => patchAnn(selAnn.id, a => { if (a.kind !== 'text') return; const v = e.target.value; if (v === 's' || v === 'l') a.size = v; else delete a.size; })}>
+                  <option value="s">{t('text.sizeS')}</option><option value="m">{t('text.sizeM')}</option><option value="l">{t('text.sizeL')}</option></select></label>
+                <label className="f"><span>{t('text.rotation')}</span><select value={String(selAnn.rotation ?? 0)} onChange={e => patchAnn(selAnn.id, a => { if (a.kind !== 'text') return; const v = Number(e.target.value); if (v) a.rotation = v; else delete a.rotation; })}>
+                  {[0, 90, 270].map(r => <option key={r} value={r}>{r}°</option>)}</select></label>
+              </div></>}
+            <button className="btn danger" onClick={del}>{t('common.delete')}</button>
+          </div>)}
+          {selNiche && (roomStage || stage === 'concept') && (() => { const NL = PLAN_LIMITS.niche, wl = snap.floor.walls.find(w => w.id === selNiche.wallId), cm = (k: 'width' | 'height' | 'depth' | 'elevation' | 'offset', lo: number, hi: number) =>
+              (v: string) => num(v, x => patchNiche(selNiche.id, n => { n[k] = r3(Math.min(x, hi * 100) / 100); }), lo * 100);
+            return (<div style={{ display: 'grid', gap: 8 }}>
+              <h3>{t('tool.niche')}</h3>
+              {floorIssues.filter(i => i.vars?.niche === selNiche.id).map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
+              <div className="grid2">
+                <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selNiche.width)} onChange={e => cm('width', NL.widthMinM, NL.widthMaxM)(e.target.value)} /></label>
+                <label className="f"><span>{t('niche.height', { u })}</span><input type="number" value={inField(selNiche.height)} onChange={e => cm('height', NL.heightMinM, NL.heightMaxM)(e.target.value)} /></label>
+                <label className="f"><span>{t('editor.depth', { u })}</span><input type="number" value={inField(selNiche.depth)} onChange={e => cm('depth', NL.depthMinM, NL.depthMaxM)(e.target.value)} /></label>
+                <label className="f"><span>{t('niche.elevation', { u })}</span><input type="number" value={inField(selNiche.elevation)} onChange={e => cm('elevation', 0, NL.elevMaxM)(e.target.value)} /></label>
+                <label className="f"><span>{t('editor.offsetOnWall', { u })}</span><input type="number" value={inField(selNiche.offset)} onChange={e => cm('offset', 0, wl ? wallLength(wl.a, wl.b) : PLAN_LIMITS.coordM)(e.target.value)} /></label>
+                <label className="f"><span>{t('niche.finish')}</span><select value={selNiche.finish ?? ''} onChange={e => patchNiche(selNiche.id, n => { const v = e.target.value; if (v === 'tile' || v === 'paint' || v === 'led') n.finish = v; else delete n.finish; })}>
+                  <option value="">{t('niche.finishAuto')}</option><option value="tile">{t('niche.tile')}</option><option value="paint">{t('niche.paint')}</option><option value="led">{t('niche.led')}</option></select></label>
+              </div>
+              <div style={{ display: 'flex', gap: 8 }}>
+                <button className="btn" onClick={() => patchNiche(selNiche.id, n => { n.side = (n.side ?? 1) === 1 ? -1 : 1; })}>{t('niche.flip')}</button>
+                <button className="btn danger" onClick={del}>{t('common.delete')}</button>
+              </div>
+            </div>); })()}
           {selGlassWall && roomStage && (
             <div style={{ display: 'grid', gap: 8 }}>
               <h3>{t('tool.glass_wall')}</h3>
               <div className="prov">{formatLength(wallLength(selGlassWall.a, selGlassWall.b), units, lang)}</div>
               <div className="grid2">
-                <label className="f"><span>{t('editor.thickness', { u })}</span><input type="number" value={inField(selGlassWall.thickness)} onChange={e => num(e.target.value, x => mutate(s => { const g = s.floor.glassWalls?.find(g => g.id === selGlassWall.id); if (g) g.thickness = r3(x / 100); }), 3)} /></label>
-                <label className="f"><span>{t('glassWall.mullions')}</span><input type="number" min={0} max={10} value={selGlassWall.mullions ?? 2} onChange={e => mutate(s => { const g = s.floor.glassWalls?.find(g => g.id === selGlassWall.id); if (g) g.mullions = Math.max(0, parseInt(e.target.value, 10) || 0); })} /></label>
+                <label className="f"><span>{t('editor.thickness', { u })}</span><input type="number" value={inField(selGlassWall.thickness)} onChange={e => num(e.target.value, x => mutate(s => { const g = s.floor.glassWalls?.find(g => g.id === selGlassWall.id); if (g) g.thickness = r3(Math.min(x, PLAN_LIMITS.glassWall.thickMaxM * 100) / 100); }), PLAN_LIMITS.glassWall.thickMinM * 100)} /></label>
+                <label className="f"><span>{t('glassWall.mullions')}</span><input type="number" min={0} max={PLAN_LIMITS.glassWall.mullionsMax} value={selGlassWall.mullions ?? 2} onChange={e => mutate(s => { const g = s.floor.glassWalls?.find(g => g.id === selGlassWall.id); if (g) g.mullions = Math.min(PLAN_LIMITS.glassWall.mullionsMax, Math.max(0, parseInt(e.target.value, 10) || 0)); })} /></label>
               </div>
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
             </div>

@@ -8,7 +8,8 @@ export interface DoorOpening { id: string; level: number; widthM: number; entran
 export function doorOpenings(snap: Snapshot): DoorOpening[] {
   // camerele de o parte și de alta a ușii: cele al căror dreptunghi atinge mijlocul golului
   return floors(snap).flatMap((fl: Floor, level) => fl.walls.flatMap((w, wi) => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
-    return w.openings.flatMap((o, oi) => { if (o.kind !== 'door') return []; const m = o.offset + o.width / 2, x = w.a[0] + ux * m, z = w.a[1] + uz * m, e = .01;
+    // golul de trecere nu are foaie: nu cere produs de ușă, mâner sau montaj
+    return w.openings.flatMap((o, oi) => { if (o.kind !== 'door' || o.passage) return []; const m = o.offset + o.width / 2, x = w.a[0] + ux * m, z = w.a[1] + uz * m, e = .01;
       const roomIds = fl.rooms.filter(r => x >= r.rect.x0 - e && x <= r.rect.x1 + e && z >= r.rect.z0 - e && z <= r.rect.z1 + e).map(r => r.id);
       return [{ id: o.id, level, widthM: o.width, entrance: !!o.entrance, wallIndex: wi, openingIndex: oi, roomIds }]; }); }));
 }

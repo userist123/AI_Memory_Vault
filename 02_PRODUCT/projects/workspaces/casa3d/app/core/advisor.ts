@@ -129,7 +129,7 @@ export function adviseProject(snap: Snapshot, cat: Catalog, opts: AdvisorOptions
     const esc = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), wallId = snap.floor.walls.find(w => new RegExp(`(^|[^\\w-])${esc(w.id)}(?![\\w-])`).test(i.message))?.id;
     const refs: AdviceRefs = wallId ? { wallIds: [wallId] } : {};
     if (i.code === 'WALL_TOO_SHORT') add('WALL_TOO_SHORT', { severity: 'BLOCKER', category: 'siguranta', refs, code: 'WALL_TOO_SHORT', vars: { min_m: 0.2 } });
-    else add('OPENING_OUTSIDE_WALL', { severity: 'BLOCKER', category: 'siguranta', refs, code: 'OPENING_OUTSIDE_WALL', vars: {} });
+    else if (i.code === 'OPENING_OUTSIDE_WALL') add('OPENING_OUTSIDE_WALL', { severity: 'BLOCKER', category: 'siguranta', refs, code: 'OPENING_OUTSIDE_WALL', vars: {} });
   }
 
   // ---------- 2) Pe cameră ----------

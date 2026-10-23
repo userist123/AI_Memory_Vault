@@ -1,24 +1,27 @@
 import { resolve } from './catalog';
 import { rectHit, insideRect, footprintAt, frontRect, wallLength } from './geometry';
 import { FRONT_CLEARANCE, DINING_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M, ALLOWED_OVERLAP, WALL_HIGH } from './rules';
+import { nicheIssues } from './niches';
 import type { Catalog, Floor, FurniturePlacement, Issue, Room, Severity, Snapshot, RoomRect } from './types';
 
 const allowed = (a: string, b: string) => WALL_HIGH.has(a) !== WALL_HIGH.has(b) || ALLOWED_OVERLAP.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
 // golurile de pe o latură a camerei (aceeași logică ca openingsOnSide din motor)
 export function openingsOnSide(floor: Floor, room: Room, side: 'N' | 'S' | 'W' | 'E'){
-  const r = room.rect, out: { kind: string; a: number; b: number }[] = [];
+  const r = room.rect, out: { kind: string; a: number; b: number; passage?: boolean }[] = [];
   for (const w of floor.walls){ const [ax, az] = w.a, [bx, bz] = w.b, horiz = Math.abs(az - bz) < 1e-6;
     const on = (side === 'N' && horiz && Math.abs(az - r.z0) < 1e-6) || (side === 'S' && horiz && Math.abs(az - r.z1) < 1e-6) || (side === 'W' && !horiz && Math.abs(ax - r.x0) < 1e-6) || (side === 'E' && !horiz && Math.abs(ax - r.x1) < 1e-6);
     if (!on) continue; const dir = horiz ? Math.sign(bx - ax) : Math.sign(bz - az), s0 = horiz ? ax : az;
-    for (const o of w.openings){ const p = s0 + dir * o.offset, q = s0 + dir * (o.offset + o.width); out.push({ kind: o.kind, a: Math.min(p, q), b: Math.max(p, q) }); } }
+    for (const o of w.openings){ const p = s0 + dir * o.offset, q = s0 + dir * (o.offset + o.width); out.push({ kind: o.kind, a: Math.min(p, q), b: Math.max(p, q), ...(o.passage ? { passage: true } : {}) }); } }
   const lo = side === 'N' || side === 'S' ? r.x0 : r.z0, hi = side === 'N' || side === 'S' ? r.x1 : r.z1;
   return out.filter(o => o.b > lo + .01 && o.a < hi - .01);
 }
+// zona din fața ușii: 95 cm (arcul foii); la golul de trecere doar 60 cm de circulație
+export const DOOR_ZONE_M = .95, PASSAGE_ZONE_M = .6;
 export function doorZones(floor: Floor, room: Room): RoomRect[] {
   const r = room.rect, z: RoomRect[] = [];
-  for (const s of ['N', 'S', 'W', 'E'] as const) for (const o of openingsOnSide(floor, room, s).filter(o => o.kind === 'door')){
+  for (const s of ['N', 'S', 'W', 'E'] as const) for (const o of openingsOnSide(floor, room, s).filter(o => o.kind === 'door')){ const dz = o.passage ? PASSAGE_ZONE_M : DOOR_ZONE_M;
     const f = s === 'N' || s === 'S' ? { x0: o.a - .05, x1: o.b + .05, z0: r.z0, z1: r.z1 } : { z0: o.a - .05, z1: o.b + .05, x0: r.x0, x1: r.x1 };
-    if (s === 'N') f.z1 = r.z0 + .95; if (s === 'S') f.z0 = r.z1 - .95; if (s === 'W') f.x1 = r.x0 + .95; if (s === 'E') f.x0 = r.x1 - .95; z.push(f); }
+    if (s === 'N') f.z1 = r.z0 + dz; if (s === 'S') f.z0 = r.z1 - dz; if (s === 'W') f.x1 = r.x0 + dz; if (s === 'E') f.x0 = r.x1 - dz; z.push(f); }
   return z;
 }
 export function footprintOf(cat: Catalog, p: FurniturePlacement){ const rv = resolve(cat, p.variantId); if (!rv) return null; return p.size ? footprintAt(p.x, p.z, p.rotation, p.size.w / 100, p.size.d / 100) : footprintAt(p.x, p.z, p.rotation, rv.w, rv.d); }
@@ -56,16 +59,24 @@ export function validateFloor(floor: Floor): Issue[] {
   for (const w of floor.walls){ const L = wallLength(w.a, w.b);
     if (L < .2) out.push({ code: 'WALL_TOO_SHORT', severity: 'ERROR', message: `Peretele ${w.id} are sub 20 cm.`, key: 'issue.WALL_TOO_SHORT', vars: { id: w.id, d_m: 0.2 } });
     for (const o of w.openings) if (o.offset < 0 || o.offset + o.width > L + 1e-6) out.push({ code: 'OPENING_OUTSIDE_WALL', severity: 'ERROR', message: `Golul ${o.id} iese din peretele ${w.id}.`, key: 'issue.OPENING_OUTSIDE_WALL', vars: { op: o.id, id: w.id } }); }
+  out.push(...nicheIssues(floor));
+  // ghene și casetări: avertismente (se pot construi, dar blochează o ușă sau ies din cameră)
+  for (const c of floor.columns ?? []){ if (c.role !== 'shaft' && c.role !== 'boxing') continue; const r = columnRect(c);
+    if (!floor.rooms.some(room => insideRect(room.rect, r))) out.push({ code: 'SHAFT_OUTSIDE_ROOM', severity: 'WARNING', message: `Ghena ${c.id} nu stă în întregime într-o cameră.`, key: 'issue.SHAFT_OUTSIDE_ROOM', vars: { col: c.id } });
+    if (floor.rooms.some(room => doorZones(floor, room).some(z => rectHit(z, r)))) out.push({ code: 'SHAFT_DOOR', severity: 'WARNING', message: `Ghena ${c.id} stă în deschiderea unei uși.`, key: 'issue.SHAFT_DOOR', vars: { col: c.id } }); }
   return out;
 }
 
+export const columnRect = (c: { x: number; z: number; w: number; d: number }): RoomRect => ({ x0: c.x - c.w / 2, x1: c.x + c.w / 2, z0: c.z - c.d / 2, z1: c.z + c.d / 2 });
 export type IssueTarget =
-  | { kind: 'placement' | 'room' | 'wall' | 'stair'; id: string }
+  | { kind: 'placement' | 'room' | 'wall' | 'stair' | 'column' | 'niche'; id: string }
   | { kind: 'opening'; id: string; wallId: string };
 
 export function issueTarget(issue: Pick<Partial<Issue>, 'with' | 'vars'> & { refs?: string[] }, floor?: Floor, placements?: FurniturePlacement[]): IssueTarget | null {
   if (issue.with && (!placements || placements.some(p => p.id === issue.with))) return { kind: 'placement', id: issue.with };
   if (issue.vars?.stair && (!floor?.stairs || floor.stairs.some(s => s.id === String(issue.vars?.stair)))) return { kind: 'stair', id: String(issue.vars.stair) };
+  if (issue.vars?.niche && (!floor || floor.niches?.some(n => n.id === String(issue.vars?.niche)))) return { kind: 'niche', id: String(issue.vars.niche) };
+  if (issue.vars?.col && (!floor || floor.columns?.some(c => c.id === String(issue.vars?.col)))) return { kind: 'column', id: String(issue.vars.col) };
   if (issue.vars?.op && issue.vars?.id) return { kind: 'opening', id: String(issue.vars.op), wallId: String(issue.vars.id) };
   if (issue.vars?.id && (!floor || floor.walls.some(w => w.id === String(issue.vars?.id)))) return { kind: 'wall', id: String(issue.vars.id) };
   if (Array.isArray(issue.refs)) {

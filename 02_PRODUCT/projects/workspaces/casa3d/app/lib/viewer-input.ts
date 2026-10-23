@@ -43,5 +43,7 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   const stalpi = snap.floor.columns ?? [];
   const grinzi = snap.floor.beams ?? [];
   const peretiSticla = snap.floor.glassWalls ?? [];
-  return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, goluriPlaca: extra.voids ?? [] }, items };
+  // nișele: peretele (index în plan.pereti), poziția pe el, cota, mărimea și fața (motorul o desenează pe fața peretelui)
+  const nise = (snap.floor.niches ?? []).flatMap(n => { const wi = snap.floor.walls.findIndex(w => w.id === n.wallId); return wi < 0 ? [] : [{ id: n.id, wi, la: n.offset, l: n.width, y: n.elevation, h: n.height, ad: n.depth, side: n.side ?? 1 }]; });
+  return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, nise, goluriPlaca: extra.voids ?? [] }, items };
 }
