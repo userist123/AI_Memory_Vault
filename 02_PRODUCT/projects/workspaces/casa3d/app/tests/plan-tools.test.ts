@@ -19,6 +19,9 @@ import { selectionBox } from '../core/frame';
 import { planItems } from '../core/plan-keys';
 import { dimGeometry, dimOffsetAt, dimOk } from '../core/annotations';
 import type { Catalog, MaterialsCatalog, Niche, Snapshot } from '../core/types';
+import { railSlots, TOOL_GROUPS } from '../lib/tool-groups';
+import { TOOLS } from '../lib/commands';
+import type { Tool } from '../components/PlanView';
 const cat = catalogJson as unknown as Catalog, mc = materialsJson as unknown as MaterialsCatalog;
 // camera 5 × 4 m cu pereți exteriori (wall-1 = latura de nord, de la [0,0] la [5,0], fereastră la 1,8–3,2 m) și ușa de intrare pe wall-4
 const blank = (): Snapshot => newSnapshot(cat, 'Unelte', 'blank');
@@ -145,5 +148,17 @@ describe('cote persistente și text', () => {
     const s: any = withNotes(); s.floor.annotations[2].text = '<img src=x onerror=alert(1)>'; const r: any = checkSnapshot(s);
     assert.ok(!r.floor.annotations[2].text.includes('<')); const z: any = withNotes(); z.floor.annotations[0].b = [0, 0]; assert.throws(() => checkSnapshot(z), (e: any) => e.status === 400);
     assert.ok(!('annotations' in (checkSnapshot(blank() as any) as any).floor));
+  });
+});
+
+describe('bara din stânga', () => {
+  test('Releveu pe ecran lat: 15 unelte în 7 locuri (Goluri, Structură, Adnotări); pe telefon și sub prag rămâne plată', () => {
+    const survey: Tool[] = ['select', 'wall', 'room', 'door', 'window', 'passage', 'niche', 'column', 'shaft', 'beam', 'glass_wall', 'stair', 'measure', 'dim', 'text'];
+    const slots = railSlots(survey, true); assert.equal(slots.length, 7);
+    assert.deepEqual(slots.map(s => 'tool' in s ? s.tool : s.group), ['select', 'wall', 'room', 'openings', 'structure', 'stair', 'notes']);
+    assert.deepEqual(slots.flatMap(s => 'tool' in s ? [s.tool] : s.tools).sort(), [...survey].sort());
+    assert.equal(railSlots(survey, false).length, 15);
+    assert.deepEqual(railSlots(['select', 'niche', 'column', 'glass_wall', 'measure'], true).map(s => 'tool' in s ? s.tool : s.group), ['select', 'niche', 'column', 'glass_wall', 'measure']);
+    assert.ok(TOOL_GROUPS.flatMap(g => g.tools).every(tk => TOOLS.includes(tk)));
   });
 });

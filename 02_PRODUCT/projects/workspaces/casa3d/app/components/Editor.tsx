@@ -78,6 +78,7 @@ import { withViewTransition } from '@/lib/motion';
 import StagePicker from './StagePicker';
 import PlanObjects from './PlanObjects';
 import { PLAN_LIMITS, PLAN_DEFAULTS, cleanPlanText } from '@/core/plan-limits';
+import ToolRail from './ToolRail';
 import { dimGeometry } from '@/core/annotations';
 import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
 import { flushSync } from 'react-dom';
@@ -598,9 +599,8 @@ export default function Editor({ id }: { id: string }){
     </div>
     {stageDef.page ? <div className="pagebody">{stage === 'orders' && <OrdersPage onPickFurniture={() => setStage('ffe')} id={id} cur={cur} say={say} projectName={snap.name} rooms={floors(house!).flatMap(f => f.rooms).map(r => ({ id: r.id, name: r.name }))} />}{stage === 'site' && <SitePage id={id} rooms={floors(house!).flatMap(f => f.rooms)} say={say} />}</div> :
     <div className={`body studio-body ${compact ? `is-compact sheet-${sheet}` : ""} ${!compact && wideSide ? "wide-side" : ""}`}>
-      <nav className="tools studio-toolrail" aria-label={t('editor.tools')}>
-        {(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk)).map(tk => <button key={tk} aria-pressed={tool === tk} onClick={() => setTool(tk)} title={`${t(TOOL_LABEL[tk])} (${formatShortcut(toolShortcut(tk), { mac })})`} aria-keyshortcuts={ariaShortcut(toolShortcut(tk), { mac })}><svg viewBox="0 0 24 24"><path d={ICON[tk]} /></svg>{t(TOOL_LABEL[tk])}</button>)}
-      </nav>
+      <ToolRail tools={(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk))} active={tool} grouped={!compact} icon={ICON} label={tk => t(TOOL_LABEL[tk])} ariaLabel={t('editor.tools')}
+        title={tk => `${t(TOOL_LABEL[tk])} (${formatShortcut(toolShortcut(tk), { mac })})`} keys={tk => ariaShortcut(toolShortcut(tk), { mac })} groupLabel={g => t(`toolGroup.${g}`)} onPick={setTool} />
       <div className={`canvas studio-canvas ${view === 'split' && !compact ? 'split' : ''}`}>
         <div className="levelbar">
           {/* doar nivelurile sunt tab-uri; „+ Nivel” e o acțiune, în afara listei de tab-uri (ARIA: tablist conține doar tab) */}
