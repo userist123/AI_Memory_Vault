@@ -70,7 +70,8 @@ export default function PlanView(p: Props){
   useEffect(() => { if (!ul) return; const i = new Image(); i.onload = () => i.naturalWidth && setAspect(i.naturalHeight / i.naturalWidth); i.src = ul.dataUrl; }, [ul?.dataUrl]); // eslint-disable-line
   useEffect(() => { if (p.calib?.stage !== 'pick') setCalA(null); }, [p.calib?.stage]);
   const [ruler, setRuler] = useState<{ a: [number, number]; b: [number, number] | null } | null>(null);
-  useEffect(() => { setRuler(null); }, [p.tool]);
+  // altă unealtă = alt gest: rigla, segmentul în lucru și lungimea tastată nu trec dintr-o unealtă în alta
+  useEffect(() => { setRuler(null); setPreview(null); setTyped(''); setHit(null); }, [p.tool]);
 
   const wiringArcs = useMemo(() => {
     if (!p.showTech) return [];
@@ -218,7 +219,8 @@ export default function PlanView(p: Props){
   useEffect(() => { const k = (e: KeyboardEvent) => { const c = segRef.current, el = e.target as HTMLElement;
     if (!c.active || !c.preview || e.ctrlKey || e.metaKey || e.altKey || el.closest?.('input,select,textarea,[contenteditable=true],dialog[open],[aria-modal=true]')) return;
     const eat = () => { e.preventDefault(); e.stopImmediatePropagation(); };
-    if (/^[0-9.,'"]$/.test(e.key) && c.typed.length < 12){ eat(); setTyped(c.typed + e.key); }
+    // cifrele încep lungimea; după prima cifră și m / c (pentru „80cm”, „4m”) rămân pe cotă, nu schimbă unealta
+    if ((/^[0-9.,'"]$/.test(e.key) || (c.typed && /^[mc]$/i.test(e.key))) && c.typed.length < 12){ eat(); setTyped(c.typed + e.key.toLowerCase()); }
     else if (e.key === 'Backspace' && c.typed){ eat(); setTyped(c.typed.slice(0, -1)); }
     else if (e.key === 'Escape' && c.typed){ eat(); setTyped(''); }
     else if (e.key === 'Enter' && c.typed){ eat(); const len = parseLengthInput(c.typed, c.units); if (len == null) return;

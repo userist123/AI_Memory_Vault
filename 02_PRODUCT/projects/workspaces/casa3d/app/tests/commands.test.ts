@@ -47,7 +47,7 @@ describe('registrul de comenzi', () => {
     for (const tk of TOOLS){ const c = COMMANDS.find(x => x.id === `tool.${tk}`)!; assert.equal(c.tool, tk); assert.equal(c.label, `tool.${tk}`); assert.ok(toolShortcut(tk)); }
   });
   test('tastele uneltelor: literă fără modificator, mare sau mică; cu modificator nimic; R rămâne rotire', () => {
-    const map: Record<string, Tool> = { v: 'select', p: 'wall', c: 'room', u: 'door', f: 'window', t: 'column', g: 'beam', l: 'glass_wall', s: 'stair', m: 'measure', i: 'tech' };
+    const map: Record<string, Tool> = { v: 'select', p: 'wall', c: 'room', u: 'door', f: 'window', t: 'column', g: 'beam', l: 'glass_wall', e: 'stair', m: 'measure', i: 'tech' };
     for (const [k, tk] of Object.entries(map)){
       assert.equal(matchCommand(ev(k)), `tool.${tk}`, k); assert.equal(matchCommand(ev(k.toUpperCase())), `tool.${tk}`, k.toUpperCase());
       for (const m of [{ ctrlKey: true }, { metaKey: true }, { altKey: true }, { shiftKey: true }]){ assert.equal(matchCommand(ev(k, m)), null, `${k} ${JSON.stringify(m)}`); assert.equal(matchCommand(ev(k.toUpperCase(), m)), null); }
@@ -74,5 +74,9 @@ describe('registrul de comenzi', () => {
     assert.deepEqual([...new Set(order)], ['edit', 'draw', 'tools']); assert.deepEqual(order, [...order].sort((x, y) => ['edit', 'draw', 'tools'].indexOf(x) - ['edit', 'draw', 'tools'].indexOf(y)));
     for (const k of ['help.typeLength', 'help.shiftDraw']) assert.equal(rows.find(r => r.label === k)?.section, 'draw', k);
     assert.ok(rows.filter(r => r.section === 'tools').every(r => r.label.startsWith('tool.')));
+  });
+  test('nicio unealtă nu folosește W/A/S/D (mersul prin vederea 3D le citește pe window)', () => {
+    for (const tk of TOOLS) assert.ok(!['w', 'a', 's', 'd'].includes(toolShortcut(tk).key), tk);
+    assert.equal(matchCommand(ev('e')), 'tool.stair'); assert.equal(matchCommand(ev('s')), null);
   });
 });

@@ -23,8 +23,9 @@ export interface CommandDef {
 }
 export interface KeyLike { key: string; shiftKey: boolean; ctrlKey: boolean; metaKey: boolean; altKey: boolean }
 
-// Literele urmează numele românești; aceleași taste în engleză. R rămâne rotire. Record<Tool, …>: o unealtă nouă fără tastă nu compilează.
-const TOOL_KEYS: Record<Tool, string> = { select: 'v', wall: 'p', room: 'c', door: 'u', window: 'f', column: 't', beam: 'g', glass_wall: 'l', stair: 's', measure: 'm', tech: 'i' };
+// Literele urmează numele românești; aceleași taste în engleză. R rămâne rotire. W/A/S/D sunt rezervate mersului prin
+// vederea 3D (viewer3d-engine.js le citește pe window), de aceea scara e E, nu S. Record<Tool, …>: o unealtă nouă fără tastă nu compilează.
+const TOOL_KEYS: Record<Tool, string> = { select: 'v', wall: 'p', room: 'c', door: 'u', window: 'f', column: 't', beam: 'g', glass_wall: 'l', stair: 'e', measure: 'm', tech: 'i' };
 export const TOOLS = Object.keys(TOOL_KEYS) as Tool[];
 
 const ANY = { ctrlOrMeta: 'any', shift: 'any', alt: 'any' } as const;

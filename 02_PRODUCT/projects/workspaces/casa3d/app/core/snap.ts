@@ -59,7 +59,7 @@ export function parseLengthInput(text: string, units: Units): number | null {
     if ((x = t.match(RE_FT_IN))) m = (num(x[1]) * 12 + (x[2] ? num(x[2]) : 0)) * M_PER_IN;
     else if ((x = t.match(RE_IN))) m = num(x[1]) * M_PER_IN;
     else if ((x = t.match(RE_FT))) m = num(x[1]) * 12 * M_PER_IN;
-  } else if ((x = t.match(RE_FT))) { const v = num(x[1]); m = v >= 100 ? v / 100 : v; }
+  } else if ((x = t.match(RE_FT))) { const v = num(x[1]); m = v > 30 ? v / 100 : v; } // fără unitate: ≤ 30 metri, peste 30 centimetri
   if (m === null || !Number.isFinite(m)) return null;
   const r = r3(m); return r > 0 && r <= MAX_M ? r : null;
 }
