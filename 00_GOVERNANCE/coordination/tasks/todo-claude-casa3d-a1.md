@@ -60,7 +60,13 @@ DONE:
   vault_state) - all working-tree scanners hit local casa3d node_modules/.next; same 6 files on a clean worktree of
   HEAD: 111 passed. (An earlier full run also had 703 order-dependent errors; the file passes alone 158/158 and the
   rerun had 0 errors.) Pushed; #323 MERGEABLE, CI started.
-NEXT (new session): check #323 CI once (ccd_pr get_status / gh pr checks 323). Green -> merge #323 (owner: no red at
+- 2026-10-23 CI #323: all green except R009b zero-regression-gate = test_notes_strict_yaml unlisted 4 LogAnalyzer
+  no-frontmatter files from #306-#308; main 132a8eec6 red on the same test. Fix PR #332 (branch
+  claude/fix-main-unreadable-loganalyzer-notes, worktree D:/w/fixyaml): 4 plain_document allowlist entries; local 10 passed.
+  #332 CI: 36/36 pass incl. zero-regression-gate. Merge of #332 by the agent DENIED by auto-mode classifier
+  (Merge Without Review) -> owner merges #332 or allows the merge.
+NEXT: #332 merged -> then update #323 with main (gh pr update-branch 323) so the gate reruns; green -> merge
+  #323. Earlier plan: check #323 CI once (ccd_pr get_status / gh pr checks 323). Green -> merge #323 (owner: no red at
   merge, nothing compromised); red -> read the failing job log, fix, push. After merge: mark STATUS DONE here.
   Follow-ups (not blocking): typedEndpoint unused in production; Esc with a selection while drawing deselects
   first; Delete while typing reaches del() (both pre-existing on main).
