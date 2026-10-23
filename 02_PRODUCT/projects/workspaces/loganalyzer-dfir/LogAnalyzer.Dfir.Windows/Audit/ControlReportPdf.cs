@@ -365,6 +365,8 @@ public static class ControlReportPdf
                 : "Acoperire incompletă: " + string.Join("; ", cov.Gaps.Take(8).Select(g => $"{LogAnalyzer.Dfir.Devices.DeviceMonitorReport.UtcText(g.FromUtc)} – {LogAnalyzer.Dfir.Devices.DeviceMonitorReport.UtcText(g.ToUtc)}")) + ".", false, cov.Complete ? Ink : Amber));
         }
         foreach (var x in journal.Radios.Where(x => x.BlindNow || x.LastBlindUtc >= from && x.FirstBlindUtc <= to)) l.Add((x.Text, false, Amber));
+        if (f.DeviceAudit is { ChainValid: true } reclassAudit)
+            foreach (var line in LogAnalyzer.Dfir.Devices.DeviceMonitorAuditCheck.Reclassifications(journal, reclassAudit)) l.Add((line, false, Muted));
         l.Add(("Alertele date în perioadă", true, Ink));
         if (s.Alerts.Count == 0) l.Add(("Nicio alertă în perioadă.", false, Muted));
         foreach (var a in s.Alerts) l.Add((LogAnalyzer.Dfir.Devices.DeviceMonitorReport.AlertLine(a), false, a.Severity == LogAnalyzer.Dfir.Devices.DeviceAlertSeverity.Critical ? Red : Muted));

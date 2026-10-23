@@ -103,12 +103,22 @@ namespace LogAnalyzer.UI.ViewModels
         private static string PreferenceAccount => AuthApp.Session?.Account ?? Environment.UserName;
         [ObservableProperty] private bool _isExpertLevel = LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert;
         public string LanguageLevelText => IsExpertLevel ? "Expert" : "Simplu";
+        /// <summary>The "Simplu" half of the header's Simplu | Expert switch (2026-10-22 round 3: a bare checkbox read as unclear).</summary>
+        public bool IsSimpleLevel { get => !IsExpertLevel; set => IsExpertLevel = !value; }
         partial void OnIsExpertLevelChanged(bool value)
         {
             LogAnalyzer.Dfir.Language.LanguageLevelContext.Set(value ? LogAnalyzer.Dfir.Language.UiLanguageLevel.Expert : LogAnalyzer.Dfir.Language.UiLanguageLevel.Simple);
             _languagePreferences.Save(PreferenceAccount, LogAnalyzer.Dfir.Language.LanguageLevelContext.Current);
             OnPropertyChanged(nameof(LanguageLevelText));
+            OnPropertyChanged(nameof(IsSimpleLevel));
+            // Simplu hides the „Avansat” menu: an Avansat page that is open goes back to Acasă (display only; nothing is closed or saved)
+            if (!value && RoleProfile is not null) SelectedTabIndex = AdvancedNav.TabAfterLevelChange(RoleNavigation, SelectedTabIndex, simple: true);
         }
+        /// <summary>The sidebar „Avansat (toate paginile)” menu is open (two-way bound).</summary>
+        [ObservableProperty] private bool _advancedPagesOpen;
+        /// <summary>Simplu: „Toate paginile (nivelul Expert)” switches to Expert and opens the menu.</summary>
+        [RelayCommand]
+        private void ShowAllPages() { IsExpertLevel = true; AdvancedPagesOpen = true; }
         /// <summary>"Ce înseamnă?": the single glossary, searchable.</summary>
         [RelayCommand]
         private void OpenGlossary()
@@ -171,7 +181,11 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<AiAnomalyItem> AiAnomalies { get; set; } = new();
         [ObservableProperty] private int _aiRiskScore = 0;
         [ObservableProperty] private string _aiRiskLevel = "NEDETERMINAT (analiza nu a fost rulată)";
-        [ObservableProperty] private string _aiRiskColor = "#94a3b8";
+        [ObservableProperty] private string _aiRiskColor = NeutralRiskColor;
+        /// <summary>The colour of a risk level that was not computed (grey, never the green of „normal”).</summary>
+        public const string NeutralRiskColor = "#94a3b8";
+        /// <summary>The summary when there is no event to analyse (review finding 4, 2026-10-22).</summary>
+        public const string NoDataSummary = "Nu există date analizate.";
         [ObservableProperty] private int _aiHighEntropyCount = 0;
         [ObservableProperty] private int _aiMasqueradingCount = 0;
         [ObservableProperty] private int _aiOffHoursCount = 0;
@@ -298,7 +312,7 @@ namespace LogAnalyzer.UI.ViewModels
         }
 
         // Dashboard stats
-        [ObservableProperty, NotifyPropertyChangedFor(nameof(IsLegacyDataPage))] private int _selectedTabIndex = HomeViewModel.HomeTabIndex;   // WP5: the app opens on Home
+        [ObservableProperty, NotifyPropertyChangedFor(nameof(IsLegacyDataPage), nameof(ShowEventTableButtons))] private int _selectedTabIndex = HomeViewModel.HomeTabIndex;   // WP5: the app opens on Home
 
         /// <summary>G3: the older pages under "Avansat" that load their own events (dashboard, events, registry, alerts, timeline, risk, attack chain,
         /// threat intelligence, MITRE); on them the window shows the empty offer while neither "Colectează tot" nor the page has data.</summary>
@@ -600,6 +614,34 @@ namespace LogAnalyzer.UI.ViewModels
             ReloadRegistryFromDb();
         }
 
+        /// <summary>The status-bar line for a finished control or investigation; an active audit-health warning stays in front of it, never overwritten.</summary>
+        internal static string ActivityStatusLine(string line, string? auditWarning) => string.IsNullOrWhiteSpace(auditWarning) ? line : auditWarning + " · " + line;
+
+        /// <summary>
+        /// The status-bar line when no analysis ran in this session (2026-10-22 beginner walkthrough, row 8): „Nicio analiză încă.” is true only on a station with no history;
+        /// with a control or case of this session the line is that activity, with earlier controls or recent cases it points to Home, where they are.
+        /// </summary>
+        internal static string NoAnalysisLine(string lastActivity, bool earlierControls, int recentCases, bool onHome = false) =>
+            !string.IsNullOrWhiteSpace(lastActivity) ? lastActivity
+            : earlierControls || recentCases > 0 ? (onHome ? IdleLineHome : IdleLineElsewhere)
+            : "Nicio analiză încă.";
+
+        // 2026-10-23: on Home (which lists the earlier controls and cases) the line stops at the fact; elsewhere it adds where the earlier ones are.
+        internal const string IdleLineHome = "Nicio analiză în această sesiune.";
+        internal const string IdleLineElsewhere = IdleLineHome + " Cazurile anterioare: pagina Acasă.";
+
+        partial void OnSelectedTabIndexChanged(int value)
+        {
+            var home = value == HomeViewModel.HomeTabIndex;
+            if (home && StatusMessage == IdleLineElsewhere) StatusMessage = IdleLineHome;
+            else if (!home && StatusMessage == IdleLineHome) StatusMessage = IdleLineElsewhere;
+        }
+
+        /// <summary>The pages that show an event table: only there do „Încarcă un folder de probe / Încarcă jurnale Windows / Exportă tabelul (CSV)” act on something (row 9).</summary>
+        internal static readonly int[] EventTablePages = [1, 3, 4];
+        internal static bool IsEventTablePage(int tab) => EventTablePages.Contains(tab);
+        public bool ShowEventTableButtons => IsEventTablePage(SelectedTabIndex);
+
         public MainViewModel(
             IEventParser eventParser, IAnalysisEngine analysisEngine, IRegistryParser registryParser,
             AuditLogService auditService, KnowledgeBaseService kbService, PluginManagerService pluginManager,
@@ -623,6 +665,8 @@ namespace LogAnalyzer.UI.ViewModels
             IsExpertLevel = LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert;
             RoleProfile = LogAnalyzer.Core.Services.Edition.RoleProfiles.For(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role, edition, AppModeContext.Current.Mode);
             Home = new HomeViewModel(Investigation, tab => SelectedTabIndex = tab, profile: RoleProfile, quickControl: StationControl);
+            // 2026-10-22 PC walkthrough: the status bar follows the last control or investigation instead of staying on „Nicio analiză încă.”
+            LogAnalyzer.UI.Services.CollectAllState.Instance.ActivityRecorded += line => StatusMessage = ActivityStatusLine(line, AuditHealth.HasWarning ? AuditHealth.Warning : null);
             // G3: „Colectează tot” anywhere in the window runs the complete collection and analysis for the role; the control station also runs its control.
             LogAnalyzer.UI.Services.CollectAllState.Handler = async () =>
             {
@@ -700,7 +744,8 @@ namespace LogAnalyzer.UI.ViewModels
                         ReloadRegistryFromDb();
                         ReloadTimelineFromDb();
                         ReloadDashboardStats();
-                        _ = RunAiAnalysis();
+                        // the data stored by an earlier session is re-read, but no summary is announced for it: the status bar says what ran in THIS session
+                        _ = RunAnalysisAsync(announce: false);
                         if (IsNetworkMode)
                             StartLiveMonitoring();
                     });
@@ -1973,7 +2018,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (MessageBox.Show("Izolați ÎNTREAGA stație de rețea (tot traficul de ieșire blocat)?\n\nPentru un singur program suspect folosiți „Izolare procese suspecte”, care lasă restul PC-ului conectat.",
                     "Izolare stație", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
-            var res = _hostDefense.IsolateHostFromNetwork();
+            var res = RecordResponse(_hostDefense.IsolateHostFromNetwork());
             StatusMessage = $"🛡️ {res.Message}";
             IsCountermeasureModalVisible = false;
             _auditService.LogAction("HOST_ISOLATION", $"{OperatorName} - {res.Status} - {res.Message}");
@@ -1983,10 +2028,27 @@ namespace LogAnalyzer.UI.ViewModels
                 res.Success ? MessageBoxImage.Information : MessageBoxImage.Warning);
         }
 
+        /// <summary>
+        /// Writes a station-wide response and its re-check evidence to the station's case audit (hash-chained). A case that cannot be opened
+        /// or written is kept on the result and turns its success off: an unaudited response is never shown as a success.
+        /// </summary>
+        private static DefenseActionResult RecordResponse(DefenseActionResult res)
+        {
+            if (res.Status == DefenseActionResult.Unavailable) return res;   // not part of this edition: nothing attempted, no case is opened
+            Action<string, string>? sink;
+            try { var ws = LogAnalyzer.UI.Services.LiveCase.Get(); sink = (a, d) => ws.Audit("defense." + a, d); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+            {
+                var why = ex.Message;
+                sink = (_, _) => throw new IOException("cazul stației nu poate fi deschis: " + why);
+            }
+            return res.RecordTo(sink);
+        }
+
         [RelayCommand]
         private void ExecuteRestoreNetwork()
         {
-            var res = _hostDefense.RestoreNetworkAccess();
+            var res = RecordResponse(_hostDefense.RestoreNetworkAccess());
             StatusMessage = $"🌐 {res.Message}";
             _auditService.LogAction("HOST_RESTORE_NETWORK", $"{OperatorName} - {res.Status} - {res.Message}");
             MessageBox.Show(res.Success ? res.Message : $"{res.Message}\n\n{res.ExecutionDetails}", $"Restaurare rețea — {res.Status}", MessageBoxButton.OK,
@@ -2026,7 +2088,7 @@ namespace LogAnalyzer.UI.ViewModels
                     "Blocare IoC", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
             foreach (var ip in ips)
             {
-                var res = _hostDefense.BlockMaliciousIoC(ip);
+                var res = RecordResponse(_hostDefense.BlockMaliciousIoC(ip));
                 _auditService.LogAction("BLOCK_IOC_FIREWALL", $"{OperatorName} - Tinta: {ip}, {res.Status}: {res.Message}");
                 StatusMessage = res.Message;
                 if (!res.Success)
@@ -2617,7 +2679,13 @@ namespace LogAnalyzer.UI.ViewModels
         /// the window ~0.45 s with 7.6k events and ~1.25 s with 50k, right after start-up); only filling the lists happens on the UI thread.
         /// </summary>
         [RelayCommand]
-        public async Task RunAiAnalysis()
+        public Task RunAiAnalysis() => RunAnalysisAsync(announce: true);
+
+        /// <summary>
+        /// <paramref name="announce"/> = the analysis ran on data collected or imported in this session (or on the operator's request): only then does the status
+        /// bar give its summary. Re-reading the stored data at start-up (<c>false</c>) leaves „Nicio analiză încă.”; without any event no score is shown.
+        /// </summary>
+        private async Task RunAnalysisAsync(bool announce)
         {
             if (_analysisEngine is not AnalysisEngine ae || _aiRunning) return;
             _aiRunning = true;
@@ -2710,14 +2778,19 @@ namespace LogAnalyzer.UI.ViewModels
 
                 // Evaluare Scor de Risc Explicabil (ISO/IEC 27042)
                 var explainableRisk = _explainableAiEngine.Evaluate(DetectedIssues, entropyCount, masqCount, offHoursCount, yaraMatches.Count, LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.WorkingHours);
-                AiRiskScore = explainableRisk.TotalScore;
-                AiRiskLevel = explainableRisk.Level;
-                AiRiskColor = explainableRisk.LevelColor;
-                AiExecutiveSummary = explainableRisk.ExecutiveSummaryRo;
+                // no score without evidence: with no event analysed the engine's baseline (5 points) is not a risk of this station. Review finding 4 (2026-10-22):
+                // nor at start-up, when only an earlier session's data was re-read (announce = false) and the status bar says „Nicio analiză încă.”; then the
+                // page says that nothing was analysed, in a neutral colour, never „Parametrii analizați se încadrează în limitele normale” in green
+                bool evidence = eventsForAnalysis.Count > 0 && announce;
+                AiRiskScore = evidence ? explainableRisk.TotalScore : 0;
+                AiRiskLevel = evidence ? explainableRisk.Level : eventsForAnalysis.Count > 0 ? "NEDETERMINAT (analiza nu a fost rulată în această sesiune)" : "NEDETERMINAT (nu există date analizate)";
+                AiRiskColor = evidence ? explainableRisk.LevelColor : NeutralRiskColor;
+                AiExecutiveSummary = evidence ? explainableRisk.ExecutiveSummaryRo
+                    : eventsForAnalysis.Count > 0 ? "Nicio analiză în această sesiune: importați sau colectați jurnale ori apăsați butonul de analiză." : NoDataSummary;
                 AiTacticalRecommendation = "1. Examinați factorii de risc ponderați din tabelul explicabil.\n2. Verificați alertele Kerberos/AD și procesele LOLBAS identificate.\n3. Generați draftul de notificare NIS2 / DNSC dacă incidentul este semnificativ.\n4. Exportați lanțul de custodie în format CASE/UCO 1.3.";
 
                 ExplainableRiskFactors.Clear();
-                foreach (var factor in explainableRisk.Factors)
+                foreach (var factor in explainableRisk.Factors.Where(_ => evidence))
                 {
                     ExplainableRiskFactors.Add(factor);
                 }
@@ -2862,7 +2935,12 @@ namespace LogAnalyzer.UI.ViewModels
                     ProvenanceEntries.Add(entry);
                 }
 
-                StatusMessage = $"✅ Analiză AI finalizată: Risc {AiRiskScore}/100 | {kerbFindings.Count} Kerberos | {lolbas.Count} LOLBAS | {multiCorrelations.Count} Lanțuri Corelate";
+                // 2026-10-22 walkthrough: no summary without collected data, and the AI label only where the edition has the AI layer (Standalone has none).
+                // 2026-10-22 round 2: nor right after sign-in, when only the data of an earlier session was re-read (announce = false)
+                StatusMessage = eventsForAnalysis.Count == 0 || !announce
+                    ? NoAnalysisLine(LogAnalyzer.UI.Services.CollectAllState.Instance.LastActivity, LogAnalyzer.UI.Services.CollectAllState.Instance.HasEarlierControls, Home?.RecentList.Count ?? 0, SelectedTabIndex == HomeViewModel.HomeTabIndex)
+                    : (Edition.Has(LogAnalyzer.Core.Services.Edition.EditionFeature.AiAnalysis) ? "✅ Analiză AI finalizată" : "✅ Analiză finalizată")
+                      + $": Risc {AiRiskScore}/100 | {kerbFindings.Count} Kerberos | {lolbas.Count} LOLBAS | {multiCorrelations.Count} Lanțuri Corelate";
                 UpdateStorylineAndAptAttribution();
             }
             catch (Exception ex) when (ex is not OutOfMemoryException)
@@ -3060,14 +3138,15 @@ namespace LogAnalyzer.UI.ViewModels
                             var certData = SanitizationCertificateData.FromResult(result, targetFile, OperatorName);
 
                             _sanitizationPdfGenerator.GeneratePdfCertificate(saveDialog.FileName, certData);
-                            var verdict = result.ReadBackVerified ? "verificată prin citire" : $"NEVERIFICATĂ ({result.ReadBackNote})";
+                            var verdict = result.ReadBackVerdict;   // a read-back that found data is EȘUATĂ, not NEVERIFICATĂ
                             _provenanceLedger.AppendEntry("MEDIA_SANITIZED_CERT_PDF", saveDialog.FileName, result.PostSanitizationSha256,
                                 $"Suprascriere {result.Method} pe '{Path.GetFileName(targetFile)}', {verdict}. Hash audit certificat: {certData.TamperEvidentAuditHash}.");
 
                             MessageBox.Show($"Fișierul a fost suprascris; zeroizarea este {verdict}.\n\nRaportul PDF a fost salvat în:\n{saveDialog.FileName}\n\n" +
                                 "Seria dispozitivului și al doilea operator nu sunt cunoscute de aplicație și apar ca NEDECLARAT.",
-                                "Sanitizare", MessageBoxButton.OK, result.ReadBackVerified ? MessageBoxImage.Information : MessageBoxImage.Warning);
-                            StatusMessage = result.ReadBackVerified ? "Sanitizare finalizată și verificată prin citire." : "Sanitizare finalizată, dar NEVERIFICATĂ.";
+                                "Sanitizare", MessageBoxButton.OK, result.ReadBackVerified ? MessageBoxImage.Information : result.ReadBackFoundData ? MessageBoxImage.Error : MessageBoxImage.Warning);
+                            StatusMessage = result.ReadBackVerified ? "Sanitizare finalizată și verificată prin citire."
+                                : result.ReadBackFoundData ? "Sanitizare EȘUATĂ: citirea de verificare a găsit date nenule." : "Sanitizare finalizată, dar NEVERIFICATĂ.";
                         }
                         else
                         {

@@ -22,6 +22,9 @@ namespace LogAnalyzer.UI
         static App()
         {
             LogAnalyzer.Dfir.RegexDefaults.Apply();     // security audit #11: before the first regex of the process is built
+            // 2026-10-22 walkthrough: the dates of the pickers show as dd.MM.yyyy (ro-RO). This sets only the WPF language of the elements (what
+            // DatePicker formats with); the thread culture is NOT changed, so evidence parsing and export keep their current formatting.
+            FrameworkElement.LanguageProperty.OverrideMetadata(typeof(FrameworkElement), new FrameworkPropertyMetadata(System.Windows.Markup.XmlLanguage.GetLanguage("ro-RO")));
             VerifyNativeLibrariesOrExit();
         }
 

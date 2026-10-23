@@ -19,6 +19,11 @@ public static class CaseLifecycleNames
         CaseLifecycle.Active => "activ", CaseLifecycle.Sealed => "sigilat (închis)", CaseLifecycle.Archived => "arhivat",
         CaseLifecycle.Invalidated => "invalidat", _ => "integritate eșuată",
     };
+
+    /// <summary>Romanian label of a stored spec name (ACTIVE -> activ); an unknown value is shown lower-cased, never dropped.</summary>
+    public static string LabelFromSpec(string? spec) =>
+        string.IsNullOrEmpty(spec) ? "necunoscut" :
+        Enum.GetValues<CaseLifecycle>().Where(l => Spec(l) == spec).Select(l => (CaseLifecycle?)l).FirstOrDefault() is { } life ? Label(life) : spec.ToLowerInvariant();
 }
 
 /// <summary>One remembered case. <see cref="State"/> is the last known lifecycle (spec name), not a live reading.</summary>
@@ -28,6 +33,12 @@ public sealed record RecentCase(string Path, string Title, DateTimeOffset LastOp
 public sealed record RecentCaseView(RecentCase Entry, bool Exists)
 {
     public string StateText => Exists ? Entry.State : "LIPSĂ (folderul nu mai există)";
+
+    /// <summary>Display only: the state in Romanian words (the stored spec name is unchanged).</summary>
+    public string DisplayState => Exists ? CaseLifecycleNames.LabelFromSpec(Entry.State) : StateText;
+
+    /// <summary>Display only: the last-opened time in the operator's local time, dd.MM.yyyy HH:mm.</summary>
+    public string LastOpenedLocalText => "deschis ultima dată " + Entry.LastOpenedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture);
 }
 
 /// <summary>

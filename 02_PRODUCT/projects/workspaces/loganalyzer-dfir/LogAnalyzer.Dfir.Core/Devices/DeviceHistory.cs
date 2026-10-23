@@ -23,22 +23,29 @@ public static class DeviceHistory
     public const string PendingMark = "în așteptare (nesigilat)";
     public const string UnverifiedMark = "neverificat", BackdatedMark = "neverificat (dată anterioară)";
     public const string FirstSeen = "Prima apariție", Connected = "Conectare", Disconnected = "Deconectare", PresentAtStart = "Prezent la pornirea monitorului",
-                        RegistrationChanged = "Schimbare nr. de înregistrare", Alert = "Alertă", StateChanged = "Schimbare stare";
+                        RegistrationChanged = "Schimbare nr. de înregistrare", Alert = "Alertă", StateChanged = "Schimbare stare", Reclassified = "Tip reclasificat";
     public const string NoUser = "—";
 
     /// <summary>The audit records that belong in a device's history.</summary>
     public static bool IsHistoryEvent(string ev) =>
         ev is OperationAudit.DeviceFirstSeen or OperationAudit.DeviceDisconnected or OperationAudit.DevicePresent or OperationAudit.DeviceRegistrationChanged
-            or OperationAudit.DeviceAlertCritical or OperationAudit.DeviceAlertInfo or OperationAudit.DeviceStateChanged;
+            or OperationAudit.DeviceAlertCritical or OperationAudit.DeviceAlertInfo or OperationAudit.DeviceStateChanged or OperationAudit.DeviceReclassified;
 
     /// <summary>The history of the device named <paramref name="identity"/>: sealed events by time (the audit order for equal times), then the pending ones.</summary>
-    public static IReadOnlyList<DeviceHistoryEvent> Build(string identity, DeviceAuditReading? audit, IEnumerable<PendingSeal>? pending = null)
+    public static IReadOnlyList<DeviceHistoryEvent> Build(string identity, DeviceAuditReading? audit, IEnumerable<PendingSeal>? pending = null) =>
+        Build([identity], audit, pending);
+
+    /// <summary>
+    /// The history of one device shown as one row although the journal has several rows for it (rows folded on the page, <see cref="DeviceJournalMerge.MarkSuperseded"/>):
+    /// the sealed events of every identity, merged by time.
+    /// </summary>
+    public static IReadOnlyList<DeviceHistoryEvent> Build(IReadOnlyCollection<string> identities, DeviceAuditReading? audit, IEnumerable<PendingSeal>? pending = null)
     {
-        var key = OperationAudit.DeviceField(identity);
+        var keys = new HashSet<string>(identities.Select(OperationAudit.DeviceField), StringComparer.OrdinalIgnoreCase);
         var sealedLines = new List<(DateTimeOffset Time, int Order, DeviceHistoryEvent Event)>();
         int order = 0;
         if (audit is not null)
-            foreach (var e in audit.Events.Where(e => e.Identity.Equals(key, StringComparison.OrdinalIgnoreCase)))
+            foreach (var e in audit.Events.Where(e => keys.Contains(e.Identity)))
             {
                 // a chain that does not verify proves nothing; a record after one with an earlier time has a time that cannot be relied on
                 var mark = !audit.ChainValid ? UnverifiedMark : e.Index >= audit.FirstRegression ? BackdatedMark : null;
@@ -50,7 +57,7 @@ public static class DeviceHistory
         {
             var f = Fields(p.Detail);
             // a pending record carries the identity of its time: a medium re-keyed since keeps its pending history (the sealed re-key map is followed)
-            if (!f.TryGetValue("identity", out var id) || !(audit?.Follow(id) ?? id).Equals(key, StringComparison.OrdinalIgnoreCase)) continue;
+            if (!f.TryGetValue("identity", out var id) || !keys.Contains(audit?.Follow(id) ?? id)) continue;
             if (!IsHistoryEvent(p.Event)) continue;
             DateTimeOffset? when = f.TryGetValue("first_seen", out var fs) && DateTimeOffset.TryParse(fs, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.RoundtripKind, out var t) ? t : null;
             foreach (var (kind, user, details) in Map(p.Event, f, ""))
@@ -73,6 +80,9 @@ public static class DeviceHistory
         {
             case OperationAudit.DeviceFirstSeen:
                 yield return (FirstSeen, User(), Join(V("device"), V("serial").Length > 0 ? "serie " + V("serial") : "", V("note")));
+                break;
+            case OperationAudit.DeviceReclassified:
+                yield return (Reclassified, V("operator").Length > 0 ? V("operator") : NoUser, DeviceMonitorAuditCheck.ReclassifiedText(f));
                 break;
             case OperationAudit.DevicePresent:
                 yield return (PresentAtStart, User(), V("device"));

@@ -10,7 +10,7 @@
         <!-- Title & Coverage Stats -->
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,16">
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="MITRE ATT&amp;CK Tactic Correlation Matrix" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="Tehnici de atac (MITRE ATT&amp;CK)" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 <Border Margin="14,0,0,0" BorderBrush="{StaticResource PrimaryAccentBrush}" Background="{StaticResource Surface3Brush}" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
                     <TextBlock Text="ENTERPRISE MATRIX" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                 </Border>

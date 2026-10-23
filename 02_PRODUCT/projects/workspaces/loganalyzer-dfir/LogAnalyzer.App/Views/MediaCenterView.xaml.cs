@@ -11,7 +11,7 @@ namespace LogAnalyzer.UI.Views
 {
     public partial class MediaCenterView : UserControl
     {
-        public MediaCenterView() => InitializeComponent();
+        public MediaCenterView() { InitializeComponent(); SimpleLevel.KeepFirstTabWhenSimple(this, MainTabs); }
 
         /// <summary>„Istoric”: the sealed events of the row's device in a dialog.</summary>
         private void History_Click(object sender, RoutedEventArgs e)
