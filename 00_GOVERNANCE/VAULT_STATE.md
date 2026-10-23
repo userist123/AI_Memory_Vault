@@ -122,7 +122,13 @@ whole-corpus retrieval numbers.
   `BOOTSTRAP_ALL_AGENTS_V1.md` and the universal protocol pointed at the retired
   `09_COORDINATION/AGENT_MEMORY/` tree until 2026-10-14
   (`20_TESTS/test_bootstrap_cold_start_paths.py`). The 21 `.agents/agents/*/agent.md`
-  profiles and several skills still cite `99_SYSTEM/*` files that do not exist.
+  profiles and two skills cited `99_SYSTEM/*` files deleted in `dbcfbc502`; for 20 of them that
+  registry was the only agent-to-skill mapping. Since 2026-10-23 both files are restored to
+  `00_GOVERNANCE/protocols/` with provenance, the references point there, and
+  `20_TESTS/test_agent_docs_memory_interfaces.py` fails on any path a profile cites that does
+  not exist. The council limits in `Council_Context_Budget.md` are documented policy, **not
+  enforced by code** (`council_budget_controller.py` decides a tier only), and 18 of the 149
+  skills the registry names are not in `.agents/skills/`.
 - **Agents now have direct routes, but no live agent turn has used them yet.** The `vault_*` tools are
   registered for Claude Code, Codex, Antigravity and Gemini CLI (`AGENTS.md`, "Direct routes for every AI");
   the stdio contract is tested, no client session has been observed calling them. The 8 coordination files
