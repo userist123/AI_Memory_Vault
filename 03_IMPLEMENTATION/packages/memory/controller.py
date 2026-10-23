@@ -295,23 +295,31 @@ class MemoryController:
         #: requirement 3. See CLASSIFIER_FILTER_ARMS and RetrievalEngine.retrieve().
         self.classifier_filter_arm = classifier_filter_arm
 
+    # The cognitive-core classes are imported where they are built, not at module level:
+    # `executive`, `reasoning`, `recall`, ... import this module at their top, so any
+    # module-level import of them here is a cycle that breaks whenever one of them is
+    # imported first (`20_TESTS/test_cognitive_core_import_order.py`).
     def _get_working_memory(self, capacity: int = 10) -> "WorkingMemory":
         if self.working_memory is None:
+            from cognitive_core.working_memory import WorkingMemory
             self.working_memory = WorkingMemory(capacity=capacity)
         return self.working_memory
 
     def _get_global_workspace(self, max_slots: int = 5) -> "GlobalWorkspace":
         if self.global_workspace is None:
+            from cognitive_core.global_workspace import GlobalWorkspace
             self.global_workspace = GlobalWorkspace(max_slots=max_slots)
         return self.global_workspace
 
     def _get_reasoning_engine(self) -> "ReasoningEngine":
         if self.reasoning_engine is None:
+            from cognitive_core.reasoning import ReasoningEngine
             self.reasoning_engine = ReasoningEngine(self)
         return self.reasoning_engine
 
     def _get_executive(self) -> "Executive":
         if self.executive is None:
+            from cognitive_core.executive import Executive
             self.executive = Executive(self)
         return self.executive
 
@@ -1294,6 +1302,7 @@ class MemoryController:
 
             if active_enable_global_workspace:
                 gw = self._get_global_workspace(max_slots=page_size)
+                from cognitive_core.global_workspace import WorkspaceProposal
                 for n in notes:
                     n_id = n.get('id')
                     if not n_id:
@@ -2024,17 +2033,13 @@ def __getattr__(name: str):
 
 
 # Cognitive core modules wired in production path behind explicit flags (OFF by
-# default). They are imported at the bottom because `reasoning` and `executive`
-# take the controller itself, so importing them at the top is circular. Every
-# annotation above that names one of them is therefore a string: Python 3.11
-# evaluates a return annotation when the `def` runs, which is long before this
-# line, and CI failed with `NameError: name 'WorkingMemory' is not defined`
-# while a local 3.14 passed -- PEP 649 made annotations lazy there.
-# `20_TESTS/test_controller_late_imports.py` keeps this from coming back.
-from cognitive_core.working_memory import WorkingMemory
-from cognitive_core.global_workspace import GlobalWorkspace, WorkspaceProposal
-from cognitive_core.reasoning import ReasoningEngine
-from cognitive_core.executive import Executive
+# default) -- WorkingMemory, GlobalWorkspace/WorkspaceProposal, ReasoningEngine,
+# Executive -- are imported inside the methods that build them (see `_get_executive`).
+# They used to be imported here, at the bottom, which only broke the cycle when this
+# module was imported first: `import cognitive_core.executive` (or reasoning, recall,
+# orchestrator, ...) as the first import failed with "partially initialized module".
+# Every annotation above that names one of them stays a string: Python 3.11 evaluates
+# a return annotation when the `def` runs (`20_TESTS/test_controller_late_imports.py`).
 from graph.plasticity import PlasticityEngine
 
 # Late import, used by the lazy singleton above (resolved at call time).
