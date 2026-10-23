@@ -4,3 +4,6 @@ node_modules
 *.tsbuildinfo
 .env*.local
 .env
+
+# Next.js 16 scrie singur un AGENTS.md (documentația versiunii) când detectează un agent de programare; nu e al proiectului
+/AGENTS.md
