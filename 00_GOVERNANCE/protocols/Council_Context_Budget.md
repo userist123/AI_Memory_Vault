@@ -14,17 +14,19 @@ document_status: active
 > `99_SYSTEM/` as "redundant scaffold", but the 21 agent profiles and two skills kept
 > pointing here for the selection order and routing rules below.
 >
-> **Which copy of the limits wins.** The same numbers are in `AGENTS.md` ("Council
-> limits", which also has `MAX_TOTAL_SELECTED_SKILLS = 4`). `AGENTS.md` is the repository
-> contract and wins on any conflict; this file keeps the rationale and the procedure.
+> **Which copy of the limits wins.** The same numbers are in `AGENTS.md`, section "Runtime
+> Context Contract", which also has `MAX_TOTAL_SELECTED_SKILLS = 4`. `AGENTS.md` is the
+> repository contract and wins on any conflict; this file keeps the rationale and the procedure.
 >
 > **Enforcement status (measured on restore).** Enforced by code: `max_memory_results`
 > (`memory/executive.py` `MAX_COUNCIL_MEMORY_RESULTS = 5`; `routing/agent_router.py` from
 > `04_CONFIG/agent_router.json` `defaults`), `max_skills_per_agent` (`agent_router.py`, per
-> agent `max_skills`) and `max_graph_hops` (`agent_router.py`, `defaults`). **Not enforced**:
-> `max_council_agents`, `max_primary_agents` and the two token caps. The council gate
-> `memory/council_budget_controller.py` picks a tier (NONE / LIGHT / STANDARD / HIGH_RISK)
-> and reads none of these values.
+> agent `max_skills`) and `max_graph_hops` (`agent_router.py`, `defaults`). One primary agent
+> holds by construction (the router returns a single `primary`). **Not enforced**:
+> `max_council_agents` (a route can carry 1 primary + up to 2 support agents + a verifier = 4;
+> the router never reads `max_support_agents`), `MAX_TOTAL_SELECTED_SKILLS` and the two token
+> caps. The council gate `memory/council_budget_controller.py` picks a tier
+> (NONE / LIGHT / STANDARD / HIGH_RISK) and reads none of these values.
 
 ## Purpose
 
