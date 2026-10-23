@@ -488,7 +488,13 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
 - DECIDED (main, owner "continuă recomandat") 2026-10-23: LogAnalyzer.db/.key STAY. Reason: AppInstallDate takes the EARLIEST of the audit chain's first
   record and the app's traces (program files, licence, LogAnalyzer.db, case folders); the db (created 11.08.2026) is the earliest trace - moving it would make
   the install date look later and the next control (A16) would report a reinstall that never happened. Moving Cases did not change it (db was earlier).
-- MERGE chain #303 -> #306 -> #307 -> #308 into main: NOT done - security/authority-sensitive (auth, device monitor, response verification); CLAUDE.md
+- MERGED 2026-10-23 with the owner's explicit "Da, fă merge": origin/main merged into release-gate (1c8f18fd3, no conflicts, no LogAnalyzer file from main);
+  local suites on it: Dfir 2418/31/0, App 816/0, UI 354/1, Edition 45/0 (TEMP on D:; an earlier run failed only because C: was full); CI on 1c8f18fd3
+  all green incl. Build and test, 3 packages, npm lockfiles, security-boundary. Merge commits (stack-safe), heads checked before each:
+  #303 c323d6585, #306 5038d6cd9, #307 1a13c4afe, #308 132a8eec6. main tree == CI-tested tree (d3e9f56e1). Branches NOT deleted (worktrees).
+  Known timing-sensitive tests (pass alone, failed once under load): DeviceMonitorTests.A_lost_event_source…, EvidenceReasonerTests.Local_model_answer… - follow-up.
+  C: free space keeps shrinking (6.8 -> 0 GB in ~3 h, source not fully found; VS installer cache 5.8 GB in %TEMP%\2ouqcvha is the owner's) - run tests with TEMP on D:.
+- (old) MERGE chain #303 -> #306 -> #307 -> #308 into main: NOT done - security/authority-sensitive (auth, device monitor, response verification); CLAUDE.md
   forbids auto-merge; needs the owner's explicit "da, fă merge". #303 ready (mergeable UNKNOWN at 2026-10-23), #306-#308 drafts MERGEABLE. PR #308 title
   "demo" removed.
 - (old) OPEN QUESTION to owner: move LogAnalyzer.db/.key (+ .bak-20261016) from %LOCALAPPDATA%\LogAnalyzer too (not in the approved cleanup list)?
