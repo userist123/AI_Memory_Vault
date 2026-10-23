@@ -51,6 +51,16 @@ namespace LogAnalyzer.UI.ViewModels
             RefreshShownIntents();
             System.ComponentModel.PropertyChangedEventManager.AddHandler(LogAnalyzer.UI.Services.LanguageLevelState.Instance, OnLanguageLevelChanged, nameof(LogAnalyzer.UI.Services.LanguageLevelState.IsSimple));
             _investigation.StateChanged += (_, _) => { Refresh(); RecordSessionCase(); };
+            // weak: the state is a process-wide singleton and must not keep a closed page's view model alive
+            var weak = new WeakReference<HomeViewModel>(this);
+            Action? onControl = null;
+            onControl = () =>
+            {
+                if (weak.TryGetTarget(out var home)) home.OnControlRecorded();
+                else LogAnalyzer.UI.Services.CollectAllState.Instance.ControlRecorded -= onControl;
+            };
+            LogAnalyzer.UI.Services.CollectAllState.Instance.ControlRecorded += onControl;
+
             ClockMemory.WarningChanged += () =>
             {
                 var d = System.Windows.Application.Current?.Dispatcher;
@@ -256,20 +266,42 @@ namespace LogAnalyzer.UI.ViewModels
             if (_investigation.CurrentResult is { } r && _investigation.Loaded is null) RecordCase(r.Case);
         }
 
-        /// <summary>The station's LIVE case (where a control saves its report and anchor) is listed once it exists on disk.</summary>
+        /// <summary>Folder of the station's LIVE case; settable so tests do not touch the real profile.</summary>
+        public string LiveCaseRoot { get; set; } = LogAnalyzer.UI.Services.LiveCase.Root;
+
+        /// <summary>A control finished or a live collection was exported: the station's LIVE case is listed under „Cazuri recente”.</summary>
+        public void NoteLiveCaseUsed() => RecordLiveCase();
+
+        private void OnControlRecorded()
+        {
+            // the control ends on the UI thread; a view model bound to another thread's collection gets the work on its own thread
+            if (_ownerDispatcher is { } d && !d.CheckAccess()) d.BeginInvoke(new Action(RecordLiveCase));
+            else RecordLiveCase();
+        }
+
+        /// <summary>
+        /// The station's LIVE case (where a control saves its report and anchor) is listed as soon as a control finished or a live collection was exported,
+        /// also when case.json does not exist yet (2026-10-23 PC walkthrough: it exists only after a report or a confirmed scope).
+        /// </summary>
         private void RecordLiveCase()
         {
             // the LIVE case is not opened here: opening it would open the case, may confirm a scope (case.json + audit) and start a background re-check
             try
             {
-                var root = LogAnalyzer.UI.Services.LiveCase.Root;
+                var root = LiveCaseRoot;
                 var file = System.IO.Path.Combine(root, "case.json");
-                if (!System.IO.File.Exists(file)) return;
-                var info = LogAnalyzer.Dfir.IO.Json.Read<LogAnalyzer.Dfir.Model.CaseInfo>(file);
-                _recent.Record(root, string.IsNullOrWhiteSpace(info.Name) ? info.CaseId : info.Name, CaseLifecycle.Active);
+                var title = $"Stația {Environment.MachineName} (caz LIVE)";
+                try
+                {
+                    if (System.IO.File.Exists(file) && LogAnalyzer.Dfir.IO.Json.Read<LogAnalyzer.Dfir.Model.CaseInfo>(file) is { } info)
+                        title = string.IsNullOrWhiteSpace(info.Name) ? info.CaseId : info.Name;
+                }
+                catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidDataException) { /* a corrupt case file still lists the folder */ }
+                System.IO.Directory.CreateDirectory(root);
+                _recent.Record(root, title, CaseLifecycle.Active);
                 ReloadRecent();
             }
-            catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidDataException or IOException or UnauthorizedAccessException or InvalidOperationException) { /* the list is a convenience */ }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { /* the list is a convenience */ }
         }
 
         private void RecordCase(CaseWorkspace ws)
@@ -316,8 +348,16 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (entry is null) return;
             if (!entry.Exists) { OpenStatus = $"Folderul cazului nu mai există: {entry.Entry.Path}. Intrarea rămâne în listă până o eliminați."; return; }
+            if (!System.IO.File.Exists(System.IO.Path.Combine(entry.Entry.Path, "case.json")) && SamePlace(entry.Entry.Path, LiveCaseRoot))
+            {
+                OpenStatus = "Cazul LIVE al stației nu are încă un raport sau un scop confirmat, deci nu poate fi deschis ca investigație. Se completează la primul raport de control (Acasă → Fă controlul stației → Deschide raportul).";
+                return;
+            }
             await OpenFolder(entry.Entry.Path);
         }
+
+        private static bool SamePlace(string a, string b) =>
+            string.Equals(System.IO.Path.GetFullPath(a).TrimEnd('\\', '/'), System.IO.Path.GetFullPath(b).TrimEnd('\\', '/'), StringComparison.OrdinalIgnoreCase);
 
         /// <summary>Removes an entry from the recent list; only the operator's explicit action does this.</summary>
         [RelayCommand]

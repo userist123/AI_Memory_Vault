@@ -19,7 +19,12 @@ namespace LogAnalyzer.UI.ViewModels
             Table = table;
             Data = new DataTable(table.ToString());
             foreach (var c in ProfileTables.Columns(table)) Data.Columns.Add(c, typeof(string));
+            // the hint is level-dependent text: it follows the Simplu / Expert switch (2026-10-23 PC walkthrough: it stayed in Expert after switching to Simplu)
+            System.ComponentModel.PropertyChangedEventManager.AddHandler(LogAnalyzer.UI.Services.LanguageLevelState.Instance, OnLevelChanged, nameof(LogAnalyzer.UI.Services.LanguageLevelState.IsSimple));
         }
+
+        // a named method, not a lambda: the weak event manager keeps only a weak reference to the handler's target
+        private void OnLevelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e) => OnPropertyChanged(nameof(Hint));
 
         public ProfileTable Table { get; }
         public string Title => ProfileTables.Title(Table);
