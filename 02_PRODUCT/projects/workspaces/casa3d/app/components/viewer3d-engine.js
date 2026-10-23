@@ -628,7 +628,7 @@ function model(it){
           const us = g.usa, lm = us && us.color ? (us.wood ? MAT('woodV', us.color) : MAT('paint', us.color)) : (g.intrare ? entranceMat : leafMat), hm = us && us.handle ? MAT('chrome', us.handle) : handleMat, lh = dh - .012;
           // o foaie: `atStart` = balamaua (sau capătul spre care parchează / se strânge) la începutul segmentului [la0, la0 + span]; `kind`:
           // null = se rotește (batantă, dublă), 'pivot' = se rotește în jurul unui pivot la w/4, 'slide' = alunecă pe fața peretelui, 'pocket' = intră în perete, 'fold' = se strânge
-          const leaf = (atStart, la0, span, kind) => { const hs = atStart ? la0 + .025 : la0 + span - .025, lw = Math.max(.15, span - .05);
+          const leaf = (atStart, la0, span, kind, half = false) => { const hs = atStart ? la0 + .025 : la0 + span - .025, lw = Math.max(.15, span - (half ? .028 : .05));   // dubla: fără toc la mijloc, foile se întâlnesc (3 mm rost)
             const cdx = atStart ? ux : -ux, cdz = atStart ? uz : -uz, odx = nx * sw.swing, odz = nz * sw.swing, pv = kind === 'pivot' ? lw / 4 : 0;
             const faceOff = kind === 'slide' ? sw.swing * (th / 2 + .03) : kind === 'pocket' || kind === 'pivot' ? 0 : sw.swing * (th / 2 - .03);
             const hx = ax + ux * hs + cdx * pv, hz = az + uz * hs + cdz * pv;
@@ -652,7 +652,7 @@ function model(it){
             pivot.rotation.y = closed; doorLeaves.push(d); setLeaf(d, d.open);
             pivot.traverse(o => { if (o.isMesh) o.userData.door = doorLeaves.indexOf(d); }); };
           const atS = sw.hinge !== 'end';
-          if (tip === 'double'){ leaf(true, g.la, g.l / 2, null); leaf(false, g.la + g.l / 2, g.l / 2, null); }
+          if (tip === 'double'){ leaf(true, g.la, g.l / 2, null, true); leaf(false, g.la + g.l / 2, g.l / 2, null, true); }
           else leaf(atS, g.la, g.l, tip === 'sliding' ? 'slide' : tip === 'pocket' ? 'pocket' : tip === 'folding' ? 'fold' : tip === 'pivot' ? 'pivot' : null);
           // glisanta pe perete: șina deasupra golului, cât golul plus zona de parcare, pe fața foii
           if (tip === 'sliding'){ const s0 = atS ? g.la - g.l - .05 : g.la, s1 = atS ? g.la + g.l : g.la + 2 * g.l + .05, k = sw.swing * (th / 2 + .03);

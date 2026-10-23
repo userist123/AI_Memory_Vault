@@ -1,5 +1,5 @@
 # todo-claude-casa3d-doors
-STATUS: IN_PROGRESS (lot 2a done; next lots not started)        UPDATED: 2026-10-24T02:10:00Z
+STATUS: IN_PROGRESS (lot 2a done and reviewed READY; lot 2b next)   UPDATED: 2026-10-24T04:30:00+03:00
 TASK: Casa3D lot 2a — door types (swing, double, sliding, pocket, folding, pivot) + concealed (filomuro)
 BRANCH / PR: claude/casa3d-doors-decor / none (pushed; PR is the coordinator's call)    BASE: 40b32343 (claude/casa3d-plan-tools)
 SPEC: app/core/types.ts (Opening.doorType / flush comment), app/core/rules.ts (DOOR_TYPE_RULES)
@@ -19,6 +19,9 @@ DONE:
 - Editor: type select (full width), flush checkbox, per-type hint, flip buttons per type, width clamped to the type range,
   type change resets width to the type standard when out of range and drops a system made for another type.
 - legacy.js round trip (tipUsa / filomuro); plan mirror names type and flush; ro/en strings.
+REVIEW 2a (vault-reviewer, READY): fixed type wider than the wall (option disabled), double leaves meet in 3D,
+  type hint linked by aria-describedby, system picker hidden without catalog systems, test for legacy 1.5 m door.
+  Accepted residuals: 3D framing ignores pivot/fold geometry; clicking the wall over a hidden pocket leaf closes it.
 NEXT (in order):
 1. Coordinator: review + PR for this branch (contains the plan-tools commits it is based on).
 2. Catalog has no door_system products yet (picker shows only when products exist); adding real ones needs product-page research.

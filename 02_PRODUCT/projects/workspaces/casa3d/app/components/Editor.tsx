@@ -723,16 +723,17 @@ export default function Editor({ id }: { id: string }){
             {selOp.kind === 'door' && !selOp.entrance && <label className="f" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={!!selOp.passage} onChange={e => mutate(s => { const o = s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!; if (e.target.checked){ o.passage = true; o.width = r3(Math.min(Math.max(o.width, PLAN_LIMITS.passage.widthMinM), PLAN_LIMITS.passage.widthMaxM)); delete o.hinge; delete o.swing; delete o.doorType; delete o.flush; if (s.doors) delete s.doors[o.id]; } else delete o.passage; })} /> {t('door.passage')}</label>}
             {selOp.kind === 'door' && !selOp.passage && (() => { const wi = snap.floor.walls.findIndex(w => w.id === (sel as any).wallId), oi = snap.floor.walls[wi]?.openings.findIndex(o => o.id === selOp.id) ?? -1;
               if (wi < 0 || oi < 0) return null; const sw = doorSwing(snap.floor, wi, oi), patchOp = (p: object) => mutate(s => { Object.assign(s.floor.walls[wi]!.openings[oi]!, p); });
-              const type = doorTypeOf(selOp) ?? 'swing', sliding = isSlidingType(type);
+              const type = doorTypeOf(selOp) ?? 'swing', sliding = isSlidingType(type), wl = wallLength(snap.floor.walls[wi]!.a, snap.floor.walls[wi]!.b);
+              // un tip mai lat decât peretele (dubla pe 70 cm) ar da o lățime sub minimul tipului, pe care serverul o respinge: nu se poate alege
               // tipul ușii: lățimea iese din intervalul tipului → lățimea standard a tipului (dubla sub 80 cm primește 120 cm), fără să iasă din perete
-              const setType = (v: DoorType) => mutate(s => { const w = s.floor.walls[wi]!, o = w.openings[oi]!, r = DOOR_TYPE_RULES[v], L = wallLength(w.a, w.b);
+              const setType = (v: DoorType) => mutate(s => { const w = s.floor.walls[wi]!, o = w.openings[oi]!, r = DOOR_TYPE_RULES[v], L = wallLength(w.a, w.b); if (L < r.minM - 1e-9) return;
                 if (v === 'swing') delete o.doorType; else o.doorType = v; delete o.hinge;
                 if (o.width < r.minM - 1e-9 || o.width > r.maxM + 1e-9){ o.width = r3(Math.min(r.std, L)); o.offset = r3(Math.max(0, Math.min(o.offset, L - o.width))); }
                 const sys = s.doors?.[o.id]; if (sys?.system){ const m = mc ? materialOf(mc, sys.system) : undefined; if (m?.specs?.system !== v){ delete sys.system; if (!Object.keys(sys).length) delete s.doors![o.id]; } } });
               return <>
-                  <label className="f"><span>{t('door.type')}</span><select value={type} onChange={e => setType(e.target.value as DoorType)}>{DOOR_TYPES.map(k => <option key={k} value={k}>{t(`door.type.${k}`)}</option>)}</select></label>
+                  <label className="f"><span>{t('door.type')}</span><select value={type} aria-describedby={`door-hint-${selOp.id}`} onChange={e => setType(e.target.value as DoorType)}>{DOOR_TYPES.map(k => <option key={k} value={k} disabled={k !== type && DOOR_TYPE_RULES[k].minM > wl + 1e-9}>{t(`door.type.${k}`)}</option>)}</select></label>
                   <label className="f" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={!!selOp.flush} onChange={e => patchOp(e.target.checked ? { flush: true } : { flush: undefined })} /> {t('door.flush')}</label>
-                <small className="prov">{t(`door.typeHint.${type}`)}</small>
+                <small className="prov" id={`door-hint-${selOp.id}`}>{t(`door.typeHint.${type}`)}</small>
                 <div className="grid2">
                   {type !== 'double' && <button className="btn" onClick={() => patchOp({ hinge: sw.hinge === 'start' ? 'end' : 'start', swing: sw.swing })}>{t(sliding ? 'door.flipSlide' : type === 'folding' ? 'door.flipFold' : 'door.flipHinge')}</button>}
                   {type !== 'pocket' && <button className="btn" onClick={() => patchOp({ swing: sw.swing === 1 ? -1 : 1, hinge: sw.hinge })}>{t(type === 'sliding' ? 'door.flipFace' : 'door.flipSwing')}</button>}
@@ -1039,7 +1040,7 @@ function DoorPanel({ op, snap, mc, cur, onChange }: { op: Opening; snap: Snapsho
     {iss.map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.key === 'door.typeMismatch' ? { ...i.vars, type: String(i.vars?.type ?? '').split(', ').map(x => t(`door.type.${x}`)).join(', '), gap: t(`door.type.${i.vars?.gap}`) } : i.key === 'door.techInSlide' ? { ...i.vars, point: TECH_KINDS[i.vars?.point as TechKind]?.label[lang === 'en' ? 'en' : 'ro'] ?? String(i.vars?.point) } : i.vars)}</div>)}
     <label className="f"><span>{t('door.product')}</span><MaterialPicker cur={cur} value={c.product} options={by('door')} none={t('door.none')} onChange={v => onChange({ product: v || null })} /></label>
     <label className="f"><span>{t('door.handle')}</span><MaterialPicker cur={cur} value={c.handle} options={by('door_handle')} none={t('door.none')} onChange={v => onChange({ handle: v || null })} /></label>
-    {(type === 'sliding' || type === 'pocket' || type === 'folding') && <label className="f"><span>{t('door.system')}</span><MaterialPicker cur={cur} value={c.system} options={systems} none={t('door.none')} onChange={v => onChange({ system: v || null })} /></label>}
+    {(type === 'sliding' || type === 'pocket' || type === 'folding') && (systems.length > 0 || !!c.system) && <label className="f"><span>{t('door.system')}</span><MaterialPicker cur={cur} value={c.system} options={systems} none={t('door.none')} onChange={v => onChange({ system: v || null })} /></label>}
   </>);
 }
 
