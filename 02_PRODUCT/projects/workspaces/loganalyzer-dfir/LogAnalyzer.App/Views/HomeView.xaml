@@ -37,7 +37,9 @@
                             <ProgressBar Width="120" Height="4" IsIndeterminate="True" VerticalAlignment="Center" Visibility="{Binding QuickControl.IsBusy, Converter={StaticResource BoolToVis}}"/>
                         </WrapPanel>
                         <TextBlock Text="{Binding WhatHappensQuickControl}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,0"/>
-                        <TextBlock Text="{Binding QuickControl.HomeStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0"/>
+                        <TextBlock Text="{Binding QuickControl.HomeStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0">
+                            <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><DataTrigger Binding="{Binding QuickControl.HomeStatus}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                        </TextBlock>
                         <StackPanel Margin="0,8,0,0" Visibility="{Binding QuickControl.HasResult, Converter={StaticResource BoolToVis}}">
                             <ItemsControl ItemsSource="{Binding QuickControl.ResultCounts}" AutomationProperties.Name="Rezultatele controlului">
                                 <ItemsControl.ItemsPanel><ItemsPanelTemplate><WrapPanel/></ItemsPanelTemplate></ItemsControl.ItemsPanel>

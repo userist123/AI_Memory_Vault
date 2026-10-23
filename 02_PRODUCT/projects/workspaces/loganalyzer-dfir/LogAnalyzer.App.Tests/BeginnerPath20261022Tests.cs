@@ -76,7 +76,7 @@ public sealed class BeginnerPath20261022Tests : IDisposable
         Assert.Contains("LanguageLevelState", panel);
         Assert.Contains("HideInSimpleLevel=\"True\"", Src("Views", "HomeView.xaml"));
         Assert.Contains("HideInSimpleLevel=\"True\"", Src("Views", "StationControlView.xaml"));
-        Assert.DoesNotContain("HideInSimpleLevel", Src("Views", "InvestigationView.xaml"));
+        Assert.Contains("HideInSimpleLevel=\"True\"", Src("Views", "InvestigationView.xaml"));   // round 4 2026-10-23: the investigation wizard is its path in Simplu
         Assert.DoesNotContain("HideInSimpleLevel", Src("Views", "MediaCenterView.xaml"));
         Assert.DoesNotContain("HideInSimpleLevel", Src("MainWindow.xaml"));
         Assert.NotNull(typeof(LogAnalyzer.UI.Views.Controls.NoDataPanel).GetProperty("HideInSimpleLevel"));

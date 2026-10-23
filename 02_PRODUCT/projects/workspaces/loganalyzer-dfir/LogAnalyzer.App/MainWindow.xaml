@@ -96,6 +96,10 @@
                 <!-- Right: Telemetry, Cryptographic DB, Operator -->
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
 
+                    <!-- round 4 2026-10-23: placed LEFT of the language switch, so showing it in Expert never moves the switch (the right edge is fixed). G3: one „Colectează tot” for the station's role; every page reuses the result -->
+                    <Button Content="Colectează tot" Command="{x:Static services:CollectAllState.Command}" Style="{StaticResource AccentButtonStyle}" Padding="10,5" Margin="0,0,10,0"
+                            AutomationProperties.HelpText="Colectare și analiză completă pentru rolul acestei stații; rezultatul este folosit de toate paginile."
+                            Visibility="{Binding IsExpertLevel, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     <!-- Operator -->
                     <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="0,0,10,0">
                         <StackPanel Orientation="Horizontal">
@@ -115,10 +119,6 @@
                                          AutomationProperties.Name="Limbaj expert" AutomationProperties.HelpText="Numele tehnice rămân lângă cele simple."/>
                         </StackPanel>
                     </Border>
-                    <!-- G3: one „Colectează tot” for the station's role; every page reuses the result -->
-                    <Button Content="Colectează tot" Command="{x:Static services:CollectAllState.Command}" Style="{StaticResource AccentButtonStyle}" Padding="10,5" Margin="0,0,10,0"
-                            AutomationProperties.HelpText="Colectare și analiză completă pentru rolul acestei stații; rezultatul este folosit de toate paginile."
-                            Visibility="{Binding IsExpertLevel, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     <Button Content="Ce înseamnă?" Command="{Binding OpenGlossaryCommand}" Style="{StaticResource ActionButtonStyle}" Padding="10,5" Margin="0,0,10,0"
                             AutomationProperties.HelpText="Deschide glosarul: fiecare termen tehnic, cu numele pe înțelesul tuturor și o explicație scurtă."/>
 

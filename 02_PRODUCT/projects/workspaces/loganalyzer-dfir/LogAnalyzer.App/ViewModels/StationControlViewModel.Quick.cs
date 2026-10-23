@@ -64,7 +64,7 @@ namespace LogAnalyzer.UI.ViewModels
         public const string HomeHint = "Apăsați „Fă controlul stației” ca să verificați stația. Controlul doar citește; nu modifică stația.";
 
         /// <inheritdoc cref="IStationQuickControl.HomeStatus"/>
-        public string HomeStatus => Array.IndexOf(FlowHints, Status) >= 0 || Status.Contains("„Înainte”", StringComparison.Ordinal) ? HomeHint
+        public string HomeStatus => Array.IndexOf(FlowHints, Status) >= 0 || Status.Contains("„Înainte”", StringComparison.Ordinal) ? ""   // the sentence under the main button already says what happens (2026-10-23 round 4)
             : Status.Replace(DoubleClickHint, "", StringComparison.Ordinal);   // Home has no rows to double-click (2026-10-22 PC walkthrough)
 
         /// <summary>The hint appended to the result line; only the Control stație page has the grid it refers to.</summary>

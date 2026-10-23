@@ -97,7 +97,7 @@ namespace LogAnalyzer.UI.ViewModels
         private static readonly string[] FlowHints =
         [
             "Apăsați „Înainte” ca să continuați, apoi alegeți perioada. Controlul doar citește; nu modifică stația.",
-            "Dacă aveți procesul-verbal al controlului anterior, scrieți codul de ancorare de pe el (se poate lăsa gol), apoi apăsați „Înainte” ca să alegeți perioada.",
+            "Lăsați gol dacă nu aveți procesul-verbal, apoi apăsați „Înainte”.",
             "Alegeți perioada de verificare, apoi apăsați „Înainte” ca să alegeți procedurile.",
             "Apăsați „Pornește controlul” ca să rulați verificarea. Controlul doar citește; nu modifică stația.",
         ];
@@ -128,7 +128,7 @@ namespace LogAnalyzer.UI.ViewModels
         public IReadOnlyList<PeriodOption> PeriodOptions { get; }
 
         /// <summary>One sentence under the optional anchor question: why the code matters, and that it may stay empty.</summary>
-        public const string AnchorWhy = "Dacă îl aveți, scrieți codul de ancorare de pe el: controlul verifică atunci dacă jurnalul stației a rămas același de la acel raport (continuitatea față de controlul anterior). Câmpul se poate lăsa gol, de exemplu la primul control.";
+        public const string AnchorWhy = "Scrieți codul de ancorare de pe el: așa se verifică dacă jurnalul stației a rămas același. Puteți lăsa gol, de exemplu la primul control.";
         public string AnchorWhyText => AnchorWhy;
 
         /// <summary>

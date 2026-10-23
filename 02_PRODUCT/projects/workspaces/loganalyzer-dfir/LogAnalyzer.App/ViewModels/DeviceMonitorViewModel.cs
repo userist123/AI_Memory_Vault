@@ -36,6 +36,19 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _statusTip = "";
         [ObservableProperty] private string _name = "";
         [ObservableProperty] private string _manufacturer = "";
+        /// <summary>Tooltip of the „Producător” cell when the driver provider is hidden (Bluetooth rows).</summary>
+        public const string BluetoothMakerTip = "Producătorul nu este raportat prin Bluetooth";
+        /// <summary>
+        /// What the „Producător” column shows (display only; the journal and the CSV keep the raw value). A Bluetooth row whose manufacturer is „Microsoft” with no VID is the
+        /// Windows driver provider, not the device maker: „—”.
+        /// </summary>
+        public static string ManufacturerDisplay(DeviceClass cls, string manufacturer, string vidPid) =>
+            cls is DeviceClass.Bluetooth or DeviceClass.BluetoothAdapter
+            && string.Equals((manufacturer ?? "").Trim(), "Microsoft", StringComparison.OrdinalIgnoreCase)
+            && string.IsNullOrWhiteSpace(DeviceMonitorRules.SplitVidPid(vidPid ?? "").Vid)
+                ? "—" : manufacturer ?? "";
+        public string ManufacturerText => ManufacturerDisplay(Class, Manufacturer, VidPid);
+        public string ManufacturerCellTip => ManufacturerText == "—" && Manufacturer.Length > 0 ? BluetoothMakerTip : ManufacturerText;
         [ObservableProperty] private string _model = "";
         [ObservableProperty] private string _vidPid = "";
         [ObservableProperty] private string _vid = "";
@@ -116,6 +129,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (e.RegistrationMediumMismatch != _mediumMismatch) { _mediumMismatch = e.RegistrationMediumMismatch; OnPropertyChanged(nameof(NeedsRegistration)); }
             if (e.RegistrationNumber != _registrationNumber) { _registrationNumber = e.RegistrationNumber; OnPropertyChanged(nameof(RegistrationNumber)); OnPropertyChanged(nameof(NeedsRegistration)); }
             OnPropertyChanged(nameof(RegistryText));
+            OnPropertyChanged(nameof(ManufacturerText)); OnPropertyChanged(nameof(ManufacturerCellTip));
         }
 
         /// <summary>The cells of the CSV row, in the order of <see cref="DeviceCsv.Headers"/>.</summary>

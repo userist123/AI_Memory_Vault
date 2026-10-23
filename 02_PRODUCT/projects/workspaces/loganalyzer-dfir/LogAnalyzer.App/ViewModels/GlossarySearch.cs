@@ -24,7 +24,16 @@ namespace LogAnalyzer.UI.ViewModels
         partial void OnQueryChanged(string value) => Results = Filter(value);
 
         partial void OnResultsChanged(IReadOnlyList<GlossaryTerm> value) =>
-            Summary = value.Count == 0 ? "Niciun termen nu se potrivește căutării." : string.IsNullOrWhiteSpace(Query) ? $"{value.Count} termeni." : $"{value.Count} termeni potriviți.";
+            Summary = value.Count == 0 ? "Niciun termen nu se potrivește căutării." : string.IsNullOrWhiteSpace(Query) ? $"{TermCount(value.Count, false)}." : $"{TermCount(value.Count, true)}.";
+
+        /// <summary>Romanian plural: 1 termen, 2..19 termeni, 20+ "de termeni" unless the last two digits are 01..19.</summary>
+        public static string TermCount(int n, bool matching)
+        {
+            var last = n % 100;
+            if (n == 1) return matching ? "1 termen potrivit" : "1 termen";
+            var de = last == 0 || last >= 20 ? "de " : "";
+            return $"{n} {de}termeni{(matching ? " potriviți" : "")}";
+        }
 
         private IReadOnlyList<GlossaryTerm> Filter(string text)
         {
