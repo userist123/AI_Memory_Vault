@@ -10,6 +10,7 @@ import { launch, page, makeShare, sleep } from './lib/cdp.mjs';
 
 const BASE = (process.argv[2] || 'http://127.0.0.1:3370').replace(/\/$/, '');
 const VIEWPORTS = [
+  { name: 'telefon-320', width: 320, height: 640, mobile: true, scale: 2 },   // WCAG 1.4.10: 320 px CSS
   { name: 'telefon-390', width: 390, height: 844, mobile: true, scale: 3 },
   { name: '16x9-1024', width: 1024, height: 576 },
   { name: '16x9-1280', width: 1280, height: 720 },

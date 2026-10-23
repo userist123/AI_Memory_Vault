@@ -13,7 +13,7 @@ export function chromePath(){
 }
 export async function launch(){
   const dir = mkdtempSync(join(tmpdir(), 'casa3d-cdp-'));
-  const args = ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${dir}`, '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--lang=ro-RO'];
+  const args = ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${dir}`, '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--lang=ro-RO'];   // româna: limba principală a clienților (pe link, prima randare urmează Accept-Language)
   if (process.platform === 'linux') args.push('--no-sandbox');   // runner-ele CI rulează fără user namespaces
   const proc = spawn(chromePath(), [...args, 'about:blank'], { stdio: 'ignore' });
   const portFile = join(dir, 'DevToolsActivePort');
