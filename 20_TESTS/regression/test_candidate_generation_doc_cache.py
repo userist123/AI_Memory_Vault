@@ -107,3 +107,27 @@ def test_exceptions_propagate_and_are_not_cached(monkeypatch):
     with pytest.raises(RuntimeError):
         cg.generate_candidates("q", _notes(), 2)
     assert calls["n"] == 2  # the failure was recomputed, not served from a cache
+
+
+def test_an_entities_function_patched_at_module_level_is_honoured(monkeypatch):
+    # review follow-up: a cache keyed by text only would serve the production entity sets here
+    cg.generate_candidates("docker", _notes(), 4)  # warm the cache with the production `entities`
+    monkeypatch.setattr(cg, "entities", lambda text: {"only-this"})
+    _, trace = cg.generate_candidates("only-this", _notes(), 4)
+    entity_scores = {i: s["entity"] for i, s in trace.raw_scores_by_signal.items()}
+    assert all(v > 0 for v in entity_scores.values()), entity_scores
+
+
+def test_the_memory_controller_copy_has_its_own_honoured_cache(monkeypatch):
+    # MemoryController calls the shim's second copy of this module; the tokenizer experiment patches both
+    import memory_controller.context.candidate_generation as mc_cg
+
+    assert mc_cg is not cg
+    plain_top, _ = mc_cg.generate_candidates("docker", _notes(), 4)
+    monkeypatch.setattr(mc_cg, "tokenize", lambda text: ["same"])
+    _, trace = mc_cg.generate_candidates("same", _notes(), 4)
+    bm25 = {s["bm25"] for s in trace.raw_scores_by_signal.values()}
+    assert len(bm25) == 1  # every note tokenized by the patched function scores identically
+    monkeypatch.undo()
+    again_top, _ = mc_cg.generate_candidates("docker", _notes(), 4)
+    assert [n["id"] for n in again_top] == [n["id"] for n in plain_top]
