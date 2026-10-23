@@ -25,7 +25,7 @@ export default function ToolRail(p: Props){
         <button type="button" className={on ? 'is-active' : undefined} aria-expanded={isOpen} aria-controls={menu} aria-label={`${p.groupLabel(s.group)} · ${p.label(shown)}`} title={p.groupLabel(s.group)} onClick={() => setOpen(isOpen ? null : s.group)}>
           <svg viewBox="0 0 24 24" aria-hidden="true"><path d={p.icon[shown]} /></svg>{p.groupLabel(s.group)}<span className="tg-caret" aria-hidden="true">▸</span></button>
         {isOpen && <div id={menu} className="toolgroup-menu" role="group" aria-label={p.groupLabel(s.group)}>
-          {s.tools.map(tk => btn(tk, () => { setLast(l => ({ ...l, [s.group]: tk })); close(false); }))}</div>}
+          {s.tools.map(tk => btn(tk, () => { setLast(l => ({ ...l, [s.group]: tk })); close(true); }))}</div>}
       </div>); })}
   </nav>);
 }

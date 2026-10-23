@@ -14,9 +14,9 @@ test('server: stâlpii, grinzile și pereții de sticlă trec doar cu numere fin
   const s = base(); s.floor.columns = [{ id: 'col-1', x: 1, z: 1, w: .35, d: .35, shape: 'rect', evil: '<x>' }]; s.floor.beams = [{ id: 'bm-1', a: [0, 0], b: [2, 0], width: .25, depth: .35 }];
   s.floor.glassWalls = [{ id: 'gw-1', a: [0, 1], b: [2, 1], thickness: .08, mullions: 2, frameColor: '#23262B' }];
   const r: any = checkSnapshot(s); assert.ok(!('evil' in r.floor.columns[0])); assert.equal(r.floor.beams.length, 1); assert.equal(r.floor.glassWalls[0].frameColor, '#23262B');
-  for (const bad of [{ x: NaN }, { w: 1e300 }, { w: Infinity }, { shape: 'hex' }, { role: 'x' }, { height: 50 }, { id: '<script>' }]){ const t = base(); t.floor.columns = [{ id: 'col-1', x: 1, z: 1, w: .35, d: .35, shape: 'rect', ...bad }]; rejects(() => checkSnapshot(t)); }
+  for (const bad of [{ x: NaN }, { w: Infinity }, { w: '1' }, { shape: 'hex' }, { role: 'x' }, { height: 50 }, { id: '<script>' }]){ const t = base(); t.floor.columns = [{ id: 'col-1', x: 1, z: 1, w: .35, d: .35, shape: 'rect', ...bad }]; rejects(() => checkSnapshot(t)); }
   const b = base(); b.floor.beams = [{ id: 'bm-1', a: [0, NaN], b: [2, 0], width: .25, depth: .35 }]; rejects(() => checkSnapshot(b));
-  const g = base(); g.floor.glassWalls = [{ id: 'gw-1', a: [0, 1], b: [2, 1], thickness: 5 }]; rejects(() => checkSnapshot(g));
+  const g = base(); g.floor.glassWalls = [{ id: 'gw-1', a: [0, 1], b: [2, 1], thickness: NaN }]; rejects(() => checkSnapshot(g));
   const many = base(); many.floor.columns = Array.from({ length: PLAN_LIMITS.column.max + 1 }, (_, i) => ({ id: `c${i}`, x: 1, z: 1, w: .3, d: .3, shape: 'rect' })); rejects(() => checkSnapshot(many));
   const empty = base(); empty.floor.columns = []; assert.ok(!('columns' in (checkSnapshot(empty) as any).floor));
 });
@@ -31,6 +31,7 @@ test('server: adnotările (cote, texte) curățate, textul fără < > și caract
   for (const bad of [{ id: 'd', kind: 'dim', a: [0, 0], b: [0.001, 0], offset: .3 }, { id: 'd', kind: 'dim', a: [0, 0], b: [2, 0], offset: Infinity }, { id: 'x', kind: 'arrow', at: [0, 0] }, { id: 't', kind: 'text', at: [5000, 0], text: 'x' }]){
     const t2 = base(); t2.floor.annotations = [bad]; rejects(() => checkSnapshot(t2)); }
   const many = base(); many.floor.annotations = Array.from({ length: 301 }, (_, i) => ({ id: `t${i}`, kind: 'text', at: [0, 0], text: 'x' })); rejects(() => checkSnapshot(many));
+  assert.equal(cleanPlanText('ab\u202Ecd\u2066e'), 'ab cd e');
   assert.equal(cleanPlanText('a'.repeat(500)).length, PLAN_LIMITS.annotation.textMax);
 });
 test('server: golul de trecere doar `true` și doar pe ușă; proiectul vechi fără câmpuri noi rămâne neschimbat', () => {
@@ -38,4 +39,14 @@ test('server: golul de trecere doar `true` și doar pe ușă; proiectul vechi f�
   for (const bad of [{ kind: 'door', passage: 'x' }, { kind: 'window', passage: true }, { kind: 'door', passage: true, width: 9 }]){ const t = base(); t.floor.walls[0].openings = [{ id: 'o1', offset: 0, width: .9, ...bad }]; rejects(() => checkSnapshot(t)); }
   const old = structuredClone(newSnapshot(cat, 'Vechi', 'demo')), before = JSON.stringify(old.floor); assert.equal(JSON.stringify(checkSnapshot(structuredClone(old)).floor), before);
   const f: any = { id: 'f', name: 'x', ceilingHeight: 2.6, rooms: [], walls: [] }; sanitizeFloorElements(f); assert.deepEqual(Object.keys(f).sort(), ['ceilingHeight', 'id', 'name', 'rooms', 'walls']);
+});
+
+test('server: valorile vechi peste limită (salvate de interfața de dinainte) se aduc la interval, nu blochează salvarea', () => {
+  const s = base(); s.floor.columns = [{ id: 'col-1', x: 1, z: 1, w: 4, d: 1e300, shape: 'rect' }]; s.floor.beams = [{ id: 'bm-1', a: [0, 0], b: [2, 0], width: 3, depth: .01 }];
+  s.floor.glassWalls = [{ id: 'gw-1', a: [0, 1], b: [2, 1], thickness: 5, mullions: 25 }];
+  const r: any = checkSnapshot(s), L = PLAN_LIMITS;
+  assert.equal(r.floor.columns[0].w, L.column.maxM); assert.equal(r.floor.columns[0].d, L.column.maxM);
+  assert.equal(r.floor.beams[0].width, L.beam.maxM); assert.equal(r.floor.beams[0].depth, L.beam.minM);
+  assert.equal(r.floor.glassWalls[0].thickness, L.glassWall.thickMaxM); assert.equal(r.floor.glassWalls[0].mullions, L.glassWall.mullionsMax);
+  const neg = base(); neg.floor.glassWalls = [{ id: 'gw-1', a: [0, 1], b: [2, 1], thickness: .08, mullions: -1 }]; rejects(() => checkSnapshot(neg));
 });
