@@ -14,7 +14,7 @@ import * as repo from '../lib/repo';
 import { errorSummary } from '../lib/log';
 import { body, BODY_MAX, DRAFT_BODY_MAX } from '../lib/http';
 import { isCrossSiteWrite, isLocalRequest } from '../lib/public-gate';
-import { middleware } from '../middleware';
+import { proxy as middleware } from '../proxy';   // Next.js 16: middleware.ts → proxy.ts
 import { clientIp, ipv6Prefix64 } from '../lib/rate-limit';
 import { setPassword, readAuth, checkPassword, removePassword, SCRYPT_N, type AuthConfig } from '../lib/auth';
 import { assertAdmin } from '../lib/outbound';
