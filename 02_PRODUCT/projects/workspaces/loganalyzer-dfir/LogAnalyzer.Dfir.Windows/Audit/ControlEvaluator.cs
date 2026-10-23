@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
 using LogAnalyzer.Core.Services.Edition;
+using LogAnalyzer.Dfir.Devices;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Windows.Native;
 using Ro = LogAnalyzer.Dfir.Language.RoText;
@@ -74,6 +75,7 @@ public static partial class ControlEvaluator
         Logons(f, r);
         Devices(f, r);
         SignedMediaRegisterCheck(f, r);
+        DeviceMonitorCheck(f, r);
         Network(f, r);
         Software(f, r);
         StationHardening(f, r);
@@ -580,11 +582,15 @@ public static partial class ControlEvaluator
 
     // ---- devices / network / software ----------------------------------------------------------------------
 
+    /// <summary>The disk connections of the Partition/Diagnostic log (event 1006): removable media only (D01, and D05 for the intervals the monitor did not run).</summary>
+    private static List<LogFact> PartitionConnections(StationFacts f) =>
+        // BusType: 7 = USB, 12 = SD, 13 = MMC (STORAGE_BUS_TYPE). Internal NVMe/SATA disks are not removable media.
+        Logs(f, "Microsoft-Windows-Partition/Diagnostic", 1006)
+            .Where(l => V(l, "Capacity") is not ("0" or "") && V(l, "BusType") is "7" or "12" or "13" or "").ToList();
+
     private static void Devices(StationFacts f, ControlReport r)
     {
-        // BusType: 7 = USB, 12 = SD, 13 = MMC (STORAGE_BUS_TYPE). Internal NVMe/SATA disks are not removable media.
-        var partition = Logs(f, "Microsoft-Windows-Partition/Diagnostic", 1006)
-            .Where(l => V(l, "Capacity") is not ("0" or "") && V(l, "BusType") is "7" or "12" or "13" or "").ToList();
+        var partition = PartitionConnections(f);
         foreach (var l in partition)
             r.Actions.Add(new ActionEntry(l.TimeUtc, "", "dispozitiv de stocare conectat", $"{Clean(V(l, "Manufacturer"))} {Clean(V(l, "Model"))} SN {Clean(V(l, "SerialNumber"))} ({FormatBytes(V(l, "Capacity"))})", Ev(l)));
         var pnp = Logs(f, "Security", 6416).ToList();

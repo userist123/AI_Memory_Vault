@@ -31,7 +31,7 @@ public static class TransferReconciliation
         var result = new List<UsbSessionCheck>();
         foreach (var d in devices)
         {
-            if (d.Kind is not (DeviceKind.UsbStorage or DeviceKind.MemoryCard)) continue;
+            if (d.Kind is not (DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.ExternalDisk)) continue;
             var serial = MediaRegister.NormalizeSerial(d.Serial);
             var reg = (registrationOf?.Invoke(d) ?? "").Trim();
             foreach (var c in d.Connections.Distinct().OrderBy(c => c))

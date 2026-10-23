@@ -14,6 +14,13 @@ public static partial class ControlEvaluator
     {
         const string id = "D04", area = "Dispozitive", title = "Mediile de stocare văzute pe stație sunt în registrul semnat de ofițer";
         const string rec = "Înrolați toate mediile pe stația de transfer, cereți ofițerului de securitate să semneze registrul cu cardul și importați versiunea nouă pe fiecare stație; un mediu neînregistrat se predă ofițerului.";
+        // owner decision 2026-10-16: the register is switched off on the station (MediaRegisterFeature); the device monitor (D05) follows the media instead
+        if (!f.SignedMediaRegisterInUse)
+        {
+            Add(r, id, area, title, ControlStatus.NuSeAplica,
+                $"Nu se aplică: {MediaRegisterFeature.NotInUseReason}. Mediile de stocare și celelalte dispozitive sunt urmărite de monitorul de dispozitive în timp real (verificarea D05), cu numărul de înregistrare al fiecărui mediu.");
+            return;
+        }
         if (f.ObservedMedia is not { } seen)
         {
             Add(r, id, area, title, ControlStatus.Nedeterminat, "Lista mediilor de stocare ale stației nu a putut fi citită, deci nu se poate compara cu registrul semnat." + Gap(f, "Medii amovibile (registrul semnat)"), rec: rec);

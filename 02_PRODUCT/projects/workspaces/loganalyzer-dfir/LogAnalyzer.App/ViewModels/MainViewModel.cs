@@ -154,7 +154,13 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>„Registrul de transferuri”: its own page; reads the media register and the media connected now from <see cref="MediaCenter"/>.</summary>
         public TransferViewModel Transfer { get; }
 
-        [RelayCommand] private void ShowMediaCenter() => SelectedTabIndex = LogAnalyzer.Core.Services.Edition.RoleProfiles.TabMediaRegister;
+        /// <summary>"Vezi dispozitivul" on the alert banner: the media page, on its real-time monitor tab.</summary>
+        [RelayCommand]
+        private void ShowMediaCenter()
+        {
+            SelectedTabIndex = LogAnalyzer.Core.Services.Edition.RoleProfiles.TabMediaRegister;
+            MediaCenter.SelectedTab = 0;
+        }
         public UsersRegisterViewModel UsersRegister { get; }
         public AuthViewModel Auth { get; }
 
