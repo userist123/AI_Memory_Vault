@@ -49,6 +49,16 @@ describe('snapDraw', () => {
     assert.equal(snapDraw([-2, 0], { floor: none, anchor: [0, 0] }).angleDeg, 180);
     assert.equal(snapDraw([0, -2], { floor: none, anchor: [0, 0] }).angleDeg, 270);
   });
+  test('îmbinare în T: lângă axa unui perete -> punct pe axă, pe grilă de-a lungul lui', () => {
+    const r = snapDraw([6.53, 5.12], { floor, anchor: [6.5, 2] });
+    assert.equal(r.kind, 'wall'); assert.deepEqual(r.p, [6.55, 5]); near(r.length!, Math.hypot(.05, 3), 1e-3);
+    assert.equal(snapDraw([6.53, 5.12], { floor }).kind, 'wall');   // și primul clic poate porni din perete
+  });
+  test('capătul bate corpul peretelui; peste rază, sau pe peretele din care pornești, nu se prinde', () => {
+    assert.equal(snapDraw([7.9, 5.05], { floor, anchor: [6.5, 2] }).kind, 'endpoint');
+    assert.notEqual(snapDraw([6.5, 5.4], { floor, anchor: [6.5, 2] }).kind, 'wall');
+    assert.notEqual(snapDraw([7, 5.03], { floor, anchor: [6, 5] }).kind, 'wall');
+  });
   test('lungime 0 după rotunjire -> anchor', () => {
     const r = snapDraw([1.01, 1], { floor: none, anchor: [1, 1] });
     assert.deepEqual(r.p, [1, 1]); assert.equal(r.length, 0);

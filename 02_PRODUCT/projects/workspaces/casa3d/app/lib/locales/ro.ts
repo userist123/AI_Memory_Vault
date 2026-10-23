@@ -35,6 +35,8 @@ export const ro: Dict = {
   "editor.autoApplied": "Amenajare automată aplicată.", "editor.notFit": "Nu au încăput: {list}", "editor.notFitItem": "{key} în {room}",
   "editor.selectHint": "Selectează o cameră, un perete sau o piesă.", "editor.someNotFit": "Unele piese nu au încăput.", "editor.roomAutoApplied": "{room}: amenajare automată aplicată.",
   "editor.wall": "Perete", "editor.length": "Lungime ({u})", "editor.thickness": "Grosime ({u})", "editor.exteriorWall": "Perete exterior",
+  "wallEdit.missing": "Peretele nu mai există.", "wallEdit.tooShort": "Peretele trebuie să aibă cel puțin 20 cm.", "wallEdit.tooLong": "Peretele poate avea cel mult 1 km.", "wallEdit.openingOut": "O ușă sau o fereastră n-ar mai încăpea pe perete. Mut-o întâi.",
+  "plan.dimEdit": "Lungimea peretelui", "plan.dimEditHint": "Dublu clic: editează lungimea", "ctx.aria": "Acțiuni pentru selecție", "ctx.rotate": "Rotește 90°", "ctx.duplicate": "Duplică", "ctx.delete": "Șterge", "ctx.frame": "Încadrează", "ctx.editLength": "Editează lungimea", "ctx.columnShape": "Formă: dreptunghi / rotund",
   "editor.openingsDrag": "{n} goluri · trage capetele albastre ca să-l modifici", "editor.openingsDrag.one": "{n} gol · trage capetele albastre ca să-l modifici", "editor.deleteWall": "Șterge peretele",
   "editor.width": "Lățime ({u})", "editor.depth": "Adâncime ({u})", "editor.offsetOnWall": "Poziție pe perete ({u})", "editor.deleteOpening": "Șterge golul",
   "column.shape": "Secțiune stâlp", "column.rect": "Dreptunghiulară", "column.round": "Circulară",

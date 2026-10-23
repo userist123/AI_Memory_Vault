@@ -1,13 +1,15 @@
 'use client';
 import { useEffect, useMemo, useRef, useState } from 'react';
-import type { Catalog, Floor, Snapshot, Severity } from '@/core/types';
+import type { Catalog, Floor, Snapshot, Severity, Wall } from '@/core/types';
 import { footprintOf } from '@/core/validate';
 import { resolve } from '@/core/catalog';
 import { r3, snapPoint, wallLength } from '@/core/geometry';
 import { roomArea, roomBoundaryPath, roomCentroid, transformBoundary } from '@/core/room-geometry';
 import { measure } from '@/core/edit-ops';
 import { formatArea, formatLength } from '@/core/format';
-import { snapDraw, pointAtLength, type SnapResult } from '@/core/snap';
+import { snapDraw, pointAtLength, SEGMENT_THICKNESS, type SnapResult } from '@/core/snap';
+import { contextCommands, commandById, commandHint, type ContextKind } from '@/lib/commands';
+import PlanContextMenu from './PlanContextMenu';
 import { usePrefs } from '@/lib/prefs';
 import type { Calib } from './UnderlayPanel';
 import { TECH_SYMBOL } from './TechPanel';
@@ -45,6 +47,8 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   onToggleColumnShape?(): void;
   onAutoFurnishRoom?(roomId: string): void;
   onSplitRoom?(roomId: string, axis: 'x' | 'z'): void;
+  /** lungimea tastată pe cota peretelui; false = refuzată (editorul anunță motivul), câmpul rămâne deschis */
+  onSetWallLength?(wallId: string, m: number): boolean;
   calib?: Calib | null; onCalibPick?(a: [number, number], b: [number, number]): void;
   showTech?: boolean; onTechAt?(x: number, z: number): void;
   /** golurile din placă ale acestui nivel (scările care urcă de dedesubt) */
@@ -81,7 +85,12 @@ export default function PlanView(p: Props){
   const [ruler, setRuler] = useState<{ a: [number, number]; b: [number, number] | null } | null>(null);
   // altă unealtă = alt gest: rigla, segmentul în lucru, camera pornită cu un clic și cota tastată nu trec dintr-o unealtă
   // în alta (altfel ciorna rămâne după cursor și blochează tragerea în Selecție)
-  useEffect(() => { setRuler(null); setPreview(null); setTyped(''); setHit(null); setRoomDraft(null); }, [p.tool]);
+  useEffect(() => { setRuler(null); setPreview(null); setTyped(''); setHit(null); setRoomDraft(null); setMenu(null); setDim(null); }, [p.tool]);
+  // meniul contextual (registru: contextCommands) și cota editată pe loc; ambele în coordonate de ecran
+  const [menu, setMenu] = useState<{ x: number; y: number; kind: ContextKind } | null>(null), menuByKey = useRef(0);
+  const [dim, setDim] = useState<{ wallId: string; text: string; x: number; y: number; bad: boolean } | null>(null), dimClick = useRef<{ id: string; at: number } | null>(null);
+  useEffect(() => { setMenu(null); setDim(null); }, [vb]);   // poziția lor pe ecran nu mai corespunde după zoom / deplasare
+  const mac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
 
   const wiringArcs = useMemo(() => {
     if (!p.showTech) return [];
@@ -173,6 +182,10 @@ export default function PlanView(p: Props){
     if (t?.dataset.k === 'redge' && !t.dataset.offset){ const op = document.elementsFromPoint?.(e.clientX, e.clientY).find(x => (x as HTMLElement).dataset?.k === 'opening') as HTMLElement | undefined; if (op) t = op; }
     if (!t){ p.onSelect(null); if (e.pointerType === 'touch') pan.current = { x: e.clientX, y: e.clientY, vb }; return; }
     const kind = t.dataset.k!, id = t.dataset.id!;
+    // dublu clic pe cota peretelui: câmpul de lungime. Numărat aici (pointerdown.detail e 0 în Chrome, iar captura pointerului
+    // mută ținta lui dblclick pe svg); deschis după eveniment, altfel focusul dat planului la mousedown închide câmpul pe loc
+    if (t.dataset.dim){ const last = dimClick.current; dimClick.current = { id, at: e.timeStamp };
+      if (last && last.id === id && e.timeStamp - last.at < 500){ dimClick.current = null; p.onSelect({ kind: 'wall', id }); setTimeout(() => openDim(id), 0); return; } }
     if (kind === 'underlay'){ p.onSelect(null); drag.current = { kind, start: pt, moved: false, orig: null }; svg.current!.setPointerCapture(e.pointerId); return; }
     if (kind === 'handle'){ drag.current = { kind, wallId: t.dataset.w, end: t.dataset.end, start: pt, moved: false }; }
     else if (kind === 'redge'){ drag.current = { kind, id, edge: t.dataset.edge, start: pt, moved: false, orig: null }; }
@@ -245,12 +258,21 @@ export default function PlanView(p: Props){
       else if (p.tool === 'room' && roomDraft && typeof typedValue === 'object'){ const r = typedRect(roomDraft.a, roomDraft.b, typedValue); setRoomDraft(null); setTyped(''); p.onAddRoom(r); }
       return true; }
     if (e.key === 'Backspace' && typed){ setTyped(x => x.slice(0, -1)); return true; }
+    // cât timp se desenează, Delete și Backspace nu ajung la „șterge selecția” din editor
+    if (e.key === 'Backspace' || e.key === 'Delete') return true;
     if (e.key === 'Escape' && typed){ setTyped(''); return true; }
     if (acceptsTypedKey(e.key, typed)){ setTyped(x => (x + e.key).slice(0, 24)); return true; }
     return false;
   }
   function keyDown(e: React.KeyboardEvent<SVGSVGElement>){
     if (typedKey(e)){ e.preventDefault(); e.stopPropagation(); return; }
+    // Esc în timpul desenării anulează desenul (ascultătorii de pe window), chiar dacă e ceva selectat: nu deselectează întâi
+    if (e.key === 'Escape' && typing) return;
+    // Shift+F10 / tasta Menu: meniul contextual al selecției, la centrul ei pe ecran
+    if ((e.key === 'ContextMenu' || (e.key === 'F10' && e.shiftKey)) && !typing && p.tool === 'select' && p.sel){ e.preventDefault(); e.stopPropagation();
+      const box = selectionBox(p.snap, p.catalog, p.sel), at = box ? toScreen([(box.x0 + box.x1) / 2, (box.z0 + box.z1) / 2]) : null;
+      const r = svg.current!.getBoundingClientRect(), q = at ?? { x: r.left + r.width / 2, y: r.top + r.height / 2 };
+      menuByKey.current = Date.now(); setMenu({ ...q, kind: p.sel.kind }); return; }
     // F: încadrează selecția (ca în Figma / Archicad); fără selecție, tot planul
     if ((e.key === 'f' || e.key === 'F') && !e.ctrlKey && !e.metaKey && !e.altKey){ e.preventDefault(); e.stopPropagation(); if (!frameSel(p.sel)) fitAll(); return; }
     const a = planKeyAction(e, planItems(p.snap), p.sel); if (!a) return;
@@ -269,8 +291,30 @@ export default function PlanView(p: Props){
     setVb(frameViewBox(box, el && el.clientHeight > 0 ? el.clientWidth / el.clientHeight : 1.5)); return true; };
   // doar cererile proaspete: la remontare (alt nivel, ieșirea din previzualizare) planul nu sare la o țintă veche
   useEffect(() => { if (p.frame && Date.now() - p.frame.at < 4000) frameSel(p.frame.sel); }, [p.frame?.n]); // eslint-disable-line
+  const toScreen = (q: [number, number]) => { const s = svg.current!, pt = s.createSVGPoint(); pt.x = q[0]; pt.y = q[1]; const r = pt.matrixTransform(s.getScreenCTM()!); return { x: r.x, y: r.y }; };
+  // cota peretelui editată pe loc: câmpul stă peste eticheta cotei, cu lungimea curentă selectată
+  const openDim = (wallId: string) => { const w = floor.walls.find(x => x.id === wallId); if (!w || !p.onSetWallLength || wallLength(w.a, w.b) < .01) return;
+    setDim({ wallId, text: wl(wallLength(w.a, w.b)), ...toScreen(dimLabelAt(w, fs)), bad: false }); };
+  const applyDim = () => { if (!dim) return; const m = parseTypedLength(dim.text, units);
+    if (m == null || !p.onSetWallLength?.(dim.wallId, m)){ setDim({ ...dim, bad: true }); return; } setDim(null); svg.current?.focus({ preventScroll: true }); };
+  // comenzile meniului: aceleași acțiuni ca bara piesei și tastele (lib/commands.ts dă eticheta și scurtătura)
+  const runCommand = (id: string) => { const s = p.sel; setMenu(null); svg.current?.focus({ preventScroll: true }); if (!s) return;
+    if (id === 'rotate') p.onRotateSelected?.(); else if (id === 'duplicate') p.onDuplicateSelected?.(); else if (id === 'delete') p.onDeleteSelected?.();
+    else if (id === 'frame'){ if (!frameSel(s)) fitAll(); } else if (id === 'view3d') p.onFrameOther?.(s.id); else if (id === 'column.shape') p.onToggleColumnShape?.();
+    else if (id === 'room.furnish') p.onAutoFurnishRoom?.(s.id); else if (id === 'room.split') p.onSplitRoom?.(s.id, 'x'); else if (id === 'wall.length') openDim(s.id); };
+  // ce oferă meniul acum: comenzile fără acțiune legată (ex. 3D în vederea doar-plan) nu apar
+  const available = (id: string) => ({ view3d: !!p.onFrameOther, 'wall.length': !!p.onSetWallLength, 'room.furnish': !!p.onAutoFurnishRoom, 'room.split': !!p.onSplitRoom,
+    'column.shape': !!p.onToggleColumnShape, rotate: !!p.onRotateSelected, duplicate: !!p.onDuplicateSelected, delete: !!p.onDeleteSelected } as Record<string, boolean>)[id] ?? true;
+  // clic dreapta: în timpul desenării anulează segmentul; în Selecție alege obiectul de sub cursor și deschide meniul
+  function contextMenu(e: React.MouseEvent){ e.preventDefault();
+    if (preview || roomDraft){ setPreview(null); setRoomDraft(null); setTyped(''); return; }
+    if (p.tool !== 'select' || Date.now() - menuByKey.current < 600) return;
+    const t0 = (e.target as Element).closest('[data-k]') as HTMLElement | null, k = t0?.dataset.k;
+    if (!t0 || !k || !['wall', 'room', 'placement', 'stair', 'column', 'beam', 'glass_wall', 'opening'].includes(k)){ setMenu(null); return; }
+    const s: Sel = k === 'opening' ? { kind: 'opening', id: t0.dataset.id!, wallId: t0.dataset.w! } : { kind: k as Exclude<ContextKind, 'opening'>, id: t0.dataset.id! };
+    p.onSelect(s); setMenu({ x: e.clientX, y: e.clientY, kind: s.kind }); }
   const fitAll = () => { const pad = 1.2; setVb({ x: bounds.x0 - pad, y: bounds.z0 - pad, w: bounds.x1 - bounds.x0 + pad * 2, h: bounds.z1 - bounds.z0 + pad * 2 }); };
-  return (<><svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onContextMenu={e => { e.preventDefault(); setPreview(null); setTyped(''); }}
+  return (<><svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onContextMenu={contextMenu}
     style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair', color: '#1A141C' }} role="application" aria-label={t('plan.aria')} tabIndex={0} onKeyDown={keyDown}>
     <defs><pattern id="g" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#e4e5e0" strokeWidth=".01" /></pattern></defs>
     <rect x={vb.x} y={vb.y} width={vb.w} height={vb.h} fill="url(#g)" />
@@ -307,7 +351,7 @@ export default function PlanView(p: Props){
         <text x={cx} y={cz - fs * .2} textAnchor="middle" fontSize={fs * 1.15} fontFamily="Newsreader, Georgia, serif" fill="#1A141C" stroke="#FFFDF8" strokeWidth={fs * .2} strokeLinejoin="round" paintOrder="stroke">{r.name}</text>
         <text x={cx} y={cz + fs * 1.1} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#3D343B" stroke="#FFFDF8" strokeWidth={fs * .18} strokeLinejoin="round" paintOrder="stroke">{formatArea(roomArea(r), units, lang)} · {wl(w)}×{wl(d)}</text></g>); })}
     {floor.walls.map(w => { const L = wallLength(w.a, w.b); if (L < .01) return null; const ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, nx = -uz, nz = ux, sel = isSel('wall', w.id);
-      const mid = [(w.a[0] + w.b[0]) / 2 + nx * (w.thickness / 2 + fs * .9), (w.a[1] + w.b[1]) / 2 + nz * (w.thickness / 2 + fs * .9)];
+      const mid = dimLabelAt(w, fs), dimOn = p.tool === 'select' && !!p.onSetWallLength;
       return (<g key={w.id}>
         <line data-k="wall" data-id={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke={sel ? '#8B6A45' : '#23262B'} strokeWidth={w.thickness} strokeLinecap="square" style={{ cursor: 'pointer' }} />
         {w.openings.map(o => { const a = [w.a[0] + ux * o.offset, w.a[1] + uz * o.offset], b = [w.a[0] + ux * (o.offset + o.width), w.a[1] + uz * (o.offset + o.width)], os = p.sel?.kind === 'opening' && p.sel.id === o.id;
@@ -318,6 +362,9 @@ export default function PlanView(p: Props){
                 const Px = H[0] + sx * o.width, Pz = H[1] + sz * o.width, cr = (Px - H[0]) * (E[1] - H[1]) - (Pz - H[1]) * (E[0] - H[0]);
                 return <path d={`M${H[0]} ${H[1]} L${Px} ${Pz} A${o.width} ${o.width} 0 0 ${cr > 0 ? 1 : 0} ${E[0]} ${E[1]}`} fill="none" stroke="#3a352f" strokeWidth={.012} pointerEvents="none" />; })()}</g>); })}
         <text x={mid[0]} y={mid[1] + fs * .3} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={sel ? '#B8432C' : '#3D343B'} stroke="#FFFDF8" strokeWidth={fs * .18} strokeLinejoin="round" paintOrder="stroke" pointerEvents="none">{wl(L)}</text>
+        {/* zona de apucare a cotei: cel puțin 44 × 24 px pe ecran (WCAG 2.5.8), clic = peretele, dublu clic = lungimea */}
+        {dimOn && (() => { const hw = Math.max(fs * 1.6, pxPerM > 0 ? 22 / pxPerM : 0), hh = Math.max(fs * .7, pxPerM > 0 ? 12 / pxPerM : 0);
+          return <rect data-k="wall" data-id={w.id} data-dim="1" x={mid[0] - hw} y={mid[1] - hh} width={hw * 2} height={hh * 2} fill="transparent" style={{ cursor: 'text' }}><title>{t('plan.dimEditHint')}</title></rect>; })()}
         {sel && ([['a', w.a], ['b', w.b]] as const).map(([end, pt]) => <circle key={end} data-k="handle" data-w={w.id} data-end={end} data-id={w.id} cx={pt[0]} cy={pt[1]} r={fs * .6} fill="#fff" stroke="#8B6A45" strokeWidth={.03} style={{ cursor: 'grab' }} />)}
       </g>); })}
     {/* Grinzi sub tavan */}
@@ -371,7 +418,8 @@ export default function PlanView(p: Props){
         <title>{t('plan.resizeEdge')}</title>
         <circle cx={cx} cy={cz} r={hitR} fill="transparent" />
         <rect x={cx - (v ? th : len) / 2} y={cz - (v ? len : th) / 2} width={v ? th : len} height={v ? len : th} rx={th / 2} fill="#fff" stroke="#7A5A36" strokeWidth={.03} /></g>); }))}
-    {preview && <line x1={preview.a[0]} y1={preview.a[1]} x2={preview.b[0]} y2={preview.b[1]} stroke="#6E8798" strokeWidth={.15} strokeOpacity={.5} strokeDasharray=".1 .06" />}
+    {/* segmentul în lucru la grosimea lui reală și cu același capăt pătrat ca rezultatul: colțul în L / T arată cum va fi */}
+    {preview && segment && <line x1={preview.a[0]} y1={preview.a[1]} x2={preview.b[0]} y2={preview.b[1]} stroke="#6E8798" strokeWidth={SEGMENT_THICKNESS[p.tool as keyof typeof SEGMENT_THICKNESS]} strokeLinecap="square" strokeOpacity={.55} pointerEvents="none" />}
     {segment && <DrawHud preview={preview} hit={hit} typed={typed} fs={fs} label={m => formatLength(m, units, lang)} invalid={!!typed && typedValue == null} />}
     {typing && !segment && (() => { const at = roomDraft!.b, bad = !!typed && typedValue == null, w = Math.max(fs * 7, fs * .62 * ((typed || t('plan.typeHint')).length + 2));
       return <g className="typed-chip" aria-hidden="true" transform={`translate(${at[0] + fs * .8} ${at[1] + fs * .8})`}>
@@ -485,10 +533,20 @@ export default function PlanView(p: Props){
     {<div className="plan-nudge" role="group" aria-label={t('plan.nudgeAria')}>
       {([['in', '+', () => zoomBy(1 / 1.25)], ['out', '−', () => zoomBy(1.25)], ['fit', '⤢', fitAll], ['left', '◀', () => panBy(-.2, 0)], ['up', '▲', () => panBy(0, -.2)], ['down', '▼', () => panBy(0, .2)], ['right', '▶', () => panBy(.2, 0)]] as const).map(([k, sym, fn]) =>
         <button key={k} type="button" className="btn" aria-label={t(`plan.nudge.${k}`)} title={t(`plan.nudge.${k}`)} onClick={fn}>{sym}</button>)}
-    </div>}</>);
+    </div>}
+    {menu && p.sel && <PlanContextMenu x={menu.x} y={menu.y} label={t('ctx.aria')} onClose={() => { setMenu(null); svg.current?.focus({ preventScroll: true }); }} onPick={runCommand}
+      items={contextCommands(menu.kind).filter(available).map(id => { const c = commandById(id)!; return { id, label: t(c.menuLabel ?? c.label), hint: commandHint(id, { mac }), danger: id === 'delete' }; })} />}
+    {dim && <input className="plan-dim-input" autoFocus aria-label={t('plan.dimEdit')} aria-invalid={dim.bad} value={dim.text} style={{ left: dim.x, top: dim.y }}
+      onFocus={e => e.currentTarget.select()} onChange={e => setDim({ ...dim, text: e.target.value, bad: false })} onBlur={() => setDim(null)}
+      onKeyDown={e => { e.stopPropagation(); if (e.key === 'Enter'){ e.preventDefault(); applyDim(); } else if (e.key === 'Escape'){ e.preventDefault(); setDim(null); svg.current?.focus({ preventScroll: true }); } }} />}</>);
 }
 
 const SEGMENT_TOOLS: Tool[] = ['wall', 'beam', 'glass_wall'];
+/** Centrul etichetei de cotă a peretelui: la mijloc, decalată spre normala din stânga, în afara grosimii. */
+function dimLabelAt(w: Wall, fs: number): [number, number] {
+  const L = wallLength(w.a, w.b), nx = -(w.b[1] - w.a[1]) / L, nz = (w.b[0] - w.a[0]) / L, off = w.thickness / 2 + fs * .9;
+  return [(w.a[0] + w.b[0]) / 2 + nx * off, (w.a[1] + w.b[1]) / 2 + nz * off];
+}
 const DIM = '#B8432C', HALO = '#FFFDF8';
 /** Cota segmentului în lucru, în limbajul planșei: linie de cotă paralelă, decalată, cu tick-uri la 45°, lungimea pe linie
  *  (sau ce se tastează), unghiul lângă capătul liber; la punctul prins de magnet un glif: pătrat = capăt de perete,
@@ -496,6 +554,7 @@ const DIM = '#B8432C', HALO = '#FFFDF8';
 function DrawHud({ preview, hit, typed, fs, label, invalid }: { preview: { a: [number, number]; b: [number, number] } | null; hit: SnapResult | null; typed: string; fs: number; label(m: number): string; invalid: boolean }){
   const g = fs * .32, sw = fs * .07, q = hit?.p;
   const glyph = q && (hit!.kind === 'endpoint' ? <rect x={q[0] - g} y={q[1] - g} width={g * 2} height={g * 2} fill="none" stroke={DIM} strokeWidth={sw} />
+    : hit!.kind === 'wall' ? <path d={`M${q[0] - g} ${q[1] - g}H${q[0] + g}M${q[0]} ${q[1] - g}V${q[1] + g}`} stroke={DIM} strokeWidth={sw} />
     : hit!.kind === 'grid' ? <path d={`M${q[0] - g} ${q[1]}H${q[0] + g}M${q[0]} ${q[1] - g}V${q[1] + g}`} stroke={DIM} strokeWidth={sw} />
     : hit!.kind === 'angle' ? <path d={`M${q[0] - g} ${q[1] + g * .6}A${g * 1.4} ${g * 1.4} 0 0 1 ${q[0] + g} ${q[1] + g * .6}`} fill="none" stroke={DIM} strokeWidth={sw} />
     : <circle cx={q[0]} cy={q[1]} r={g} fill="none" stroke={DIM} strokeWidth={sw} />);
