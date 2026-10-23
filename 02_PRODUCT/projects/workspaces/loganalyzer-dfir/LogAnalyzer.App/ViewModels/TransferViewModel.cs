@@ -114,7 +114,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             var keep = SelectedMedium?.Device.InstanceId;
             Media.Clear();
-            foreach (var a in _media.ConnectedNow.Where(a => a.Device.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.Optical or DeviceKind.PortableDevice))
+            foreach (var a in _media.ConnectedNow.Where(a => a.Device.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.Optical or DeviceKind.PortableDevice or DeviceKind.ExternalDisk))
                 Media.Add(a);
             SelectedMedium = Media.FirstOrDefault(m => m.Device.InstanceId == keep) ?? Media.FirstOrDefault();
             if (Media.Count == 0) Status = "Niciun stick, card sau CD conectat acum. Conectați mediul sau completați seria de mână.";

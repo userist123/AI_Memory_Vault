@@ -157,6 +157,22 @@ public sealed class StationFacts
     public double MediaCapacityTolerance { get; set; } = LogAnalyzer.Dfir.Registers.SignedMediaMatcher.DefaultCapacityTolerance;
     /// <summary>Check D04: why the configured tolerance was not used (out of range or unreadable); empty = none.</summary>
     public string MediaCapacityToleranceWarning { get; set; } = "";
+    /// <summary>
+    /// Check D04: whether the officer-signed media register is used on this station. The collector sets it from <see cref="LogAnalyzer.Dfir.Registers.MediaRegisterFeature"/>
+    /// (switched off by the owner decision of 2026-10-16); false makes D04 "Nu se aplică". True by default so facts built elsewhere keep evaluating D04.
+    /// </summary>
+    public bool SignedMediaRegisterInUse { get; set; } = true;
+    /// <summary>Check D05: the journal of the real-time device monitor (every device seen, its driver, connections, registration number, alerts); null = not available.</summary>
+    public LogAnalyzer.Dfir.Devices.DeviceJournal? DeviceMonitor { get; set; }
+    /// <summary>Check D05: why the journal could not be used as it was (damaged, unreadable); empty = none.</summary>
+    public string DeviceMonitorProblem { get; set; } = "";
+    /// <summary>
+    /// Check D05: what the sealed audit says about the device monitor (last registration number per device, critical alerts); the application fills it from the
+    /// audit it keeps. Null = the sealed audit could not be read, so the journal cannot be checked against it.
+    /// </summary>
+    public LogAnalyzer.Dfir.Devices.DeviceAuditReading? DeviceAudit { get; set; }
+    /// <summary>Check D05: the journal folder or file belongs to an account other than SYSTEM or Administrators (the journal is then not trusted); empty = trusted.</summary>
+    public string DeviceJournalUntrusted { get; set; } = "";
 }
 
 public static class StationFactCollector
@@ -200,7 +216,8 @@ public static class StationFactCollector
     /// only on a domain-joined station; null = not probed.</param>
     public static StationFacts Collect(DateTimeOffset periodStartUtc, LogAnalyzer.Core.Services.Edition.StationPosture posture, int maxPerId = 5000, CancellationToken ct = default,
                                        IReadOnlyList<string>? classifiedFolders = null, IReadOnlyList<LogAnalyzer.Dfir.Registers.UpdateRow>? offlineUpdates = null,
-                                       IDomainControllerProbe? dcProbe = null, LogAnalyzer.Dfir.Registers.TransferRegister? transfers = null)
+                                       IDomainControllerProbe? dcProbe = null, LogAnalyzer.Dfir.Registers.TransferRegister? transfers = null,
+                                       string? auditPath = null, bool auditChainValid = false, byte[]? auditBytes = null)
     {
         using var id = WindowsIdentity.GetCurrent();
         var facts = new StationFacts
@@ -245,6 +262,23 @@ public static class StationFactCollector
         Try(facts, "Interfețe de rețea", () => facts.ConnectedInterfacesNow.AddRange(ReadConnectedInterfaces()));
         Try(facts, "Dispozitive USB (USBSTOR)", () => facts.UsbDevices.AddRange(ReadUsbStor()));
         Try(facts, "Medii amovibile (registrul semnat)", () => facts.ObservedMedia = LogAnalyzer.Dfir.Registers.SignedMediaEnrollment.Observed(LogAnalyzer.Dfir.Windows.Devices.DeviceInventory.Collect().Devices));
+        facts.SignedMediaRegisterInUse = LogAnalyzer.Dfir.Registers.MediaRegisterFeature.Enabled;
+        // D05: the device monitor's machine-wide journal (written by the application while it runs); no file = the monitor never ran on this station.
+        // Read-only: the collector never renames, moves or writes the journal (a damaged file is only reported; the running monitor sets it aside and seals it)
+        var journalPath = LogAnalyzer.Dfir.Devices.DeviceJournalStore.DefaultPath;
+        if (File.Exists(journalPath))
+        {
+            facts.DeviceMonitor = LogAnalyzer.Dfir.Devices.DeviceJournalStore.Load(journalPath, out var journalProblem);
+            facts.DeviceMonitorProblem = journalProblem;
+            // a folder or file owned by another account than SYSTEM / Administrators: the journal is shown but not trusted (the sealed audit wins)
+            facts.DeviceJournalUntrusted = LogAnalyzer.Dfir.Devices.DeviceJournalStore.EnsureSecure(journalPath, create: false).Warning;
+        }
+        // D05: what the sealed audit says (registration numbers, critical alerts, the monitor's running windows); without it the journal cannot be checked
+        // the records come from the same bytes the chain was verified on when the caller passes them (m5)
+        if (auditBytes is not null)
+            Try(facts, "Jurnalul sigilat (monitorul de dispozitive)", () => facts.DeviceAudit = LogAnalyzer.Dfir.Auth.OperationAudit.ReadDeviceMonitor(auditBytes, auditChainValid));
+        else if (auditPath is not null)
+            Try(facts, "Jurnalul sigilat (monitorul de dispozitive)", () => facts.DeviceAudit = LogAnalyzer.Dfir.Auth.OperationAudit.ReadDeviceMonitor(auditPath, auditChainValid));
         // classified folders: their access records have their own budget, so the general cap of 4663 cannot push them out
         Func<int, IReadOnlyDictionary<string, string>, bool>? classified = null;
         if (classifiedFolders is not null)

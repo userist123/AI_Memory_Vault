@@ -7,6 +7,8 @@ namespace LogAnalyzer.Dfir.Devices;
 public enum DeviceKind
 {
     InternalDisk, UsbStorage, MemoryCard, Optical, PortableDevice, Bluetooth, NetworkDrive, VirtualDisk, Thunderbolt, Other,
+    /// <summary>A disk attached from outside the station that is not a USB stick (USB Attached SCSI, a USB-NVMe bridge, Thunderbolt / USB4 NVMe): „Disc extern”.</summary>
+    ExternalDisk,
 }
 
 /// <summary>
@@ -81,6 +83,7 @@ public static class DeviceText
         DeviceKind.NetworkDrive => "Unitate de rețea (folder partajat)",
         DeviceKind.VirtualDisk => "Disc virtual (VHD/ISO montat)",
         DeviceKind.Thunderbolt => "Dispozitiv Thunderbolt / FireWire",
+        DeviceKind.ExternalDisk => "Disc extern",
         _ => "Alt dispozitiv",
     };
 
@@ -95,8 +98,31 @@ public static class DeviceText
         DeviceKind.NetworkDrive => "Un folder de pe alt calculator folosit ca unitate. Pe o stație izolată nu ar trebui să existe.",
         DeviceKind.VirtualDisk => "Un fișier imagine (VHD, VHDX, ISO) montat ca disc. Poate aduce sau scoate date fără un suport fizic.",
         DeviceKind.Thunderbolt => "Un dispozitiv conectat prin Thunderbolt sau FireWire; poate fi un disc extern sau un adaptor.",
+        DeviceKind.ExternalDisk => "Un disc atașat din exterior (USB Attached SCSI, NVMe în carcasă USB, Thunderbolt / USB4), nu un stick. Se tratează ca un mediu de stocare amovibil.",
         _ => "Un dispozitiv care poate stoca sau transfera date.",
     };
+
+    /// <summary>The capacity as the monitor page and the CSV show it: decimal units with a decimal comma („14,9 GB”), whatever the language of the station.</summary>
+    /// <summary>
+    /// The capacity of a medium as the monitor shows it (owner, 2026-10-21: both units): first as Windows Explorer shows it (binary units,
+    /// 1 GB = 2^30 bytes), then in brackets as the label on the stick says it (decimal units, 1 GB = 10^9 bytes): „14,9 GB (16 GB pe etichetă)”.
+    /// Below 1 MB (decimal) the two are the same number of bytes and only one is shown.
+    /// </summary>
+    public static string CapacityRo(long b)
+    {
+        if (b <= 0) return "";
+        if (b < 1_000_000) return $"{b} B";
+        return BinaryBytes(b).Replace('.', ',') + " (" + Bytes(b).Replace('.', ',') + " pe etichetă)";
+    }
+
+    /// <summary>Bytes in binary units, as Windows Explorer shows them (KB, MB, GB, TB are powers of 1024).</summary>
+    public static string BinaryBytes(long b) =>
+        b >= 1L << 40 ? $"{b / (double)(1L << 40):0.#} TB" : b >= 1L << 30 ? $"{b / (double)(1L << 30):0.#} GB"
+        : b >= 1L << 20 ? $"{b / (double)(1L << 20):0.#} MB" : b >= 1L << 10 ? $"{b / 1024.0:0.#} KB" : $"{b} B";
+
+    /// <summary>A time as the monitor page shows it: the station's local time, dd.MM.yyyy HH:mm:ss; empty when unknown.</summary>
+    public static string LocalTime(DateTimeOffset? t) =>
+        t is { } v ? v.ToLocalTime().ToString("dd.MM.yyyy HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture) : "";
 
     public static string Bytes(long b) => b >= 1_000_000_000_000 ? $"{b / 1e12:0.#} TB" : b >= 1_000_000_000 ? $"{b / 1e9:0.#} GB" : b >= 1_000_000 ? $"{b / 1e6:0.#} MB" : $"{b} B";
 }
@@ -106,9 +132,11 @@ public static class DeviceRules
 {
     /// <summary>
     /// The kind of a device from its instance id (enumerator), setup class and hardware ids; null when it is not a storage/connectable device we
-    /// track (keyboards, internal buses, Bluetooth service entries, volumes that belong to a disk we already list).
+    /// track (keyboards, internal buses, Bluetooth service entries, volumes that belong to a disk we already list). <paramref name="attachedOutside"/>: the caller
+    /// knows the disk is attached from outside the station (its container is not the local machine's, it hangs off a UASPStor or USB node, or its own service
+    /// is UASPStor); it is decided BEFORE a SCSI / NVMe disk is taken as internal, so a UAS or USB-NVMe enclosure is never an internal disk.
     /// </summary>
-    public static DeviceKind? Classify(string instanceId, string setupClass, string hardwareIds, string name)
+    public static DeviceKind? Classify(string instanceId, string setupClass, string hardwareIds, string name, bool attachedOutside = false)
     {
         var id = instanceId.ToUpperInvariant();
         var cls = setupClass.ToUpperInvariant();
@@ -121,6 +149,7 @@ public static class DeviceRules
             if (hw.Contains("MSFT") && hw.Contains("VIRTUAL")) return DeviceKind.VirtualDisk;
             if (id.StartsWith(@"SCSI\") && (hw.Contains("UASPSTOR") || hw.Contains(@"USB\VID_"))) return DeviceKind.UsbStorage;   // USB Attached SCSI: the parent is a USB device
             if (hw.Contains("SD/MMC") || hw.Contains("SDXC") || hw.Contains("SDHC") || hw.Contains("CARD READER")) return DeviceKind.MemoryCard;
+            if (attachedOutside) return DeviceKind.ExternalDisk;                                                                      // UAS / USB-NVMe / external container
             return DeviceKind.InternalDisk;
         }
         if (cls == "WPD")
@@ -167,7 +196,7 @@ public static class DeviceRules
     }
 
     /// <summary>Kinds the media register is about (removable and internal storage, optical, cards, portable devices).</summary>
-    public static bool TrackedByRegister(DeviceKind k) => k is DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.InternalDisk or DeviceKind.Optical or DeviceKind.PortableDevice or DeviceKind.Thunderbolt;
+    public static bool TrackedByRegister(DeviceKind k) => k is DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.InternalDisk or DeviceKind.Optical or DeviceKind.PortableDevice or DeviceKind.Thunderbolt or DeviceKind.ExternalDisk;
 
     /// <summary>Compares a device with the media register (by serial, then by VID/PID when the device has no serial).</summary>
     public static DeviceAssessment Assess(DeviceRecord d, MediaRegister? register, DateOnly today, bool stationIsolated)

@@ -221,7 +221,7 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 string? type = d.Kind switch
                 {
-                    LogAnalyzer.Dfir.Devices.DeviceKind.UsbStorage => "USB",
+                    LogAnalyzer.Dfir.Devices.DeviceKind.UsbStorage or LogAnalyzer.Dfir.Devices.DeviceKind.ExternalDisk => "USB",
                     LogAnalyzer.Dfir.Devices.DeviceKind.InternalDisk => d.Name.Contains("SSD", StringComparison.OrdinalIgnoreCase) || d.Name.Contains("NVMe", StringComparison.OrdinalIgnoreCase) || d.Bus.Contains("NVME", StringComparison.OrdinalIgnoreCase) || d.InstanceId.Contains("NVME", StringComparison.OrdinalIgnoreCase) ? "SSD" : "HDD",
                     LogAnalyzer.Dfir.Devices.DeviceKind.MemoryCard or LogAnalyzer.Dfir.Devices.DeviceKind.PortableDevice or LogAnalyzer.Dfir.Devices.DeviceKind.Thunderbolt => "other",
                     _ => null,   // optical drives, Bluetooth, network and virtual disks are not media of the register
