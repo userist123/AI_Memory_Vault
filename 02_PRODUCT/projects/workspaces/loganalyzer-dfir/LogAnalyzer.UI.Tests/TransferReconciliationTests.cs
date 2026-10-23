@@ -47,7 +47,7 @@ namespace LogAnalyzer.UI.Tests
             var s = Assert.Single(r);
             Assert.Equal(UsbSessionStatus.ToVerify, s.Status);
             Assert.Equal("DE_VERIFICAT", s.StatusText);
-            Assert.Equal("stick folosit fără înregistrare în registrul de transferuri", s.Message);
+            Assert.Equal("mediu de stocare folosit fără înregistrare în registrul de transferuri", s.Message);
         }
 
         [Fact]

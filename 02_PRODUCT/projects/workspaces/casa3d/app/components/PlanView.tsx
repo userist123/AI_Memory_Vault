@@ -7,6 +7,7 @@ import { r3, snapPoint, wallLength } from '@/core/geometry';
 import { roomArea, roomBoundaryPath, roomCentroid, transformBoundary } from '@/core/room-geometry';
 import { measure } from '@/core/edit-ops';
 import { formatArea, formatLength } from '@/core/format';
+import { snapDraw, pointAtLength, type SnapResult } from '@/core/snap';
 import { usePrefs } from '@/lib/prefs';
 import type { Calib } from './UnderlayPanel';
 import { TECH_SYMBOL } from './TechPanel';
@@ -21,7 +22,7 @@ import { resizeRoom, RoomResizeError } from '@/core/room-resize';
 import { MIN_ROOM_M, type EdgeKey } from '@/core/room-neighbours';
 import { edgeHandleAt, edgeHandlePoint } from '@/core/room-edit';
 import { computeLightingWiringArcs } from '@/core/technical';
-import { parseTypedLength, parseTypedSize, typedEndpoint, typedRect, acceptsTypedKey } from '@/core/typed-dimension';
+import { parseTypedLength, parseTypedSize, typedRect, acceptsTypedKey } from '@/core/typed-dimension';
 import { selectionBox, frameViewBox } from '@/core/frame';
 
 export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'measure' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair';
@@ -69,17 +70,18 @@ export default function PlanView(p: Props){
   const [roomDraft, setRoomDraft] = useState<{ a: [number, number]; b: [number, number]; pending?: boolean } | null>(null);
   // cota tastată în timpul desenării (UI/UX P1-6): cifrele merg în chipul de lângă cursor, Enter construiește exact
   const [typed, setTyped] = useState('');
-  // la schimbarea uneltei se renunță la ce era pe jumătate (cota tastată, camera pornită cu un clic): altfel ciorna
-  // rămâne după cursor și blochează tragerea în Selecție
-  useEffect(() => { setTyped(''); setRoomDraft(null); }, [p.tool]);
   const [cursor, setCursor] = useState<[number, number] | null>(null);
   const [rulerHover, setRulerHover] = useState<[number, number] | null>(null);
+  // desenarea precisă (core/snap.ts): ce a prins magnetul și ultimul cursor brut (direcția pentru Enter)
+  const [hit, setHit] = useState<SnapResult | null>(null), raw = useRef<{ pt: [number, number]; free: boolean } | null>(null);
   const [aspect, setAspect] = useState(1), [calA, setCalA] = useState<[number, number] | null>(null);
   const ul = p.snap.underlay;
   useEffect(() => { if (!ul) return; const i = new Image(); i.onload = () => i.naturalWidth && setAspect(i.naturalHeight / i.naturalWidth); i.src = ul.dataUrl; }, [ul?.dataUrl]); // eslint-disable-line
   useEffect(() => { if (p.calib?.stage !== 'pick') setCalA(null); }, [p.calib?.stage]);
   const [ruler, setRuler] = useState<{ a: [number, number]; b: [number, number] | null } | null>(null);
-  useEffect(() => { setRuler(null); }, [p.tool]);
+  // altă unealtă = alt gest: rigla, segmentul în lucru, camera pornită cu un clic și cota tastată nu trec dintr-o unealtă
+  // în alta (altfel ciorna rămâne după cursor și blochează tragerea în Selecție)
+  useEffect(() => { setRuler(null); setPreview(null); setTyped(''); setHit(null); setRoomDraft(null); }, [p.tool]);
 
   const wiringArcs = useMemo(() => {
     if (!p.showTech) return [];
@@ -146,7 +148,7 @@ export default function PlanView(p: Props){
   // transaction, otherwise the editor keeps waiting for 'end' and ignores undo/redo
   const onEditRef = useRef(p.onEdit); onEditRef.current = p.onEdit;
   const cancelDrag = () => { const d = drag.current; drag.current = null; if (d?.moved) onEditRef.current(() => {}, 'end'); };
-  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setCalA(null); setRuler(null); setPreview(null); setRoomDraft(null); cancelDrag(); } }; addEventListener('keydown', k); return () => { removeEventListener('keydown', k); cancelDrag(); }; }, []);
+  useEffect(() => { const k = (e: KeyboardEvent) => { if (e.key === 'Escape'){ setCalA(null); setRuler(null); setPreview(null); setRoomDraft(null); setTyped(''); cancelDrag(); } }; addEventListener('keydown', k); return () => { removeEventListener('keydown', k); cancelDrag(); }; }, []);
 
   function nearestWall(pt: [number, number], maxD = .35){ let best: { id: string; offset: number; d: number } | null = null;
     for (const w of floor.walls){ const L = wallLength(w.a, w.b); if (L < .01) continue; const ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, s = Math.max(0, Math.min(L, (pt[0] - w.a[0]) * ux + (pt[1] - w.a[1]) * uz)), d = Math.hypot(pt[0] - (w.a[0] + ux * s), pt[1] - (w.a[1] + uz * s));
@@ -159,11 +161,9 @@ export default function PlanView(p: Props){
     if (p.calib?.stage === 'pick'){ const q: [number, number] = [r3(pt[0]), r3(pt[1])]; if (!calA) setCalA(q); else if (Math.hypot(q[0] - calA[0], q[1] - calA[1]) > .05){ p.onCalibPick?.(calA, q); setCalA(null); } return; }
     if (p.tool === 'tech'){ p.onTechAt?.(pt[0], pt[1]); return; }
     if (p.tool === 'column'){ const s = snapPoint(pt, floor); p.onAddColumn?.(s[0], s[1]); return; }
-    if (p.tool === 'beam'){ const s = snapPoint(pt, floor); if (!preview) setPreview({ a: s, b: s }); else { const b = ortho(preview.a, snapPoint(pt, floor)); if (wallLength(preview.a, b) >= .2) p.onAddBeam?.(preview.a, b); setPreview({ a: b, b }); } return; }
-    if (p.tool === 'glass_wall'){ const s = snapPoint(pt, floor); if (!preview) setPreview({ a: s, b: s }); else { const b = ortho(preview.a, snapPoint(pt, floor)); if (wallLength(preview.a, b) >= .2) p.onAddGlassWall?.(preview.a, b); setPreview({ a: b, b }); } return; }
+    if (SEGMENT_TOOLS.includes(p.tool)){ const r = snapDraw(pt, { floor, anchor: preview?.a, free: e.shiftKey }); svg.current!.focus({ preventScroll: true }); if (!preview){ setTyped(''); raw.current = { pt: r.p, free: e.shiftKey }; setPreview({ a: r.p, b: r.p }); setHit(snapDraw(pt, { floor, anchor: r.p, free: e.shiftKey })); } else addSegment(preview.a, r.p); return; }
     if (p.tool === 'stair'){ const s = snapPoint(pt, floor); p.onAddStairAt?.(s[0], s[1]); return; }
     if (p.tool === 'measure'){ const s = snapPoint(pt, floor); setRuler(r => r && !r.b ? { a: r.a, b: s } : { a: s, b: null }); return; }
-    if (p.tool === 'wall'){ const s = snapPoint(pt, floor); setTyped(''); svg.current!.focus({ preventScroll: true }); if (!preview) setPreview({ a: s, b: s }); else { const b = ortho(preview.a, snapPoint(pt, floor)); if (wallLength(preview.a, b) >= .2) p.onAddWall(preview.a, b); setPreview({ a: b, b }); } return; }
     if (p.tool === 'room'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])];
       if (roomDraft?.pending){ finishRoom(roomDraft.a, s); return; }   // al doilea clic: colțul opus
       setRoomDraft({ a: s, b: s }); setTyped(''); svg.current!.setPointerCapture(e.pointerId); svg.current!.focus({ preventScroll: true }); return; }
@@ -186,7 +186,7 @@ export default function PlanView(p: Props){
     const pt = toWorld(e); setCursor(pt);
     if (pan.current){ const s = svg.current!.getScreenCTM()!, k = 1 / s.a; setVb({ ...pan.current.vb, x: pan.current.vb.x - (e.clientX - pan.current.x) * k, y: pan.current.vb.y - (e.clientY - pan.current.y) * k }); return; }
     if (ruler && !ruler.b) { setRulerHover(snapPoint(pt, floor)); }
-    if (preview && (p.tool === 'wall' || p.tool === 'beam' || p.tool === 'glass_wall')){ setPreview({ a: preview.a, b: ortho(preview.a, snapPoint(pt, floor)) }); return; }
+    if (SEGMENT_TOOLS.includes(p.tool)){ raw.current = { pt, free: e.shiftKey }; const r = snapDraw(pt, { floor, anchor: preview?.a, free: e.shiftKey }); setHit(r); if (preview){ setPreview({ a: preview.a, b: r.p }); return; } }
     if (roomDraft){ setRoomDraft({ ...roomDraft, b: [snapG(pt[0]), snapG(pt[1])] }); return; }   // păstrează „pending” (camera clic-clic)
     const d = drag.current; if (!d) return;
     const dx = pt[0] - d.start[0], dz = pt[1] - d.start[1]; if (!d.moved && Math.hypot(dx, dz) < .03) return;
@@ -210,7 +210,7 @@ export default function PlanView(p: Props){
         try { s.floor = resizeRoom(o.floor, d.id, { ...a, [k]: v }, () => `wall-${crypto.randomUUID().slice(0, 8)}`, { neighbours: true }); } catch (err){ if (!(err instanceof RoomResizeError)) throw err; } }
       else if (d.kind === 'wall'){ const a = o.floor.walls.find(x => x.id === d.id)!, b = s.floor.walls.find(x => x.id === d.id)!; const ddx = snapG(dx), ddz = snapG(dz);
         b.a = [r3(a.a[0] + ddx), r3(a.a[1] + ddz)]; b.b = [r3(a.b[0] + ddx), r3(a.b[1] + ddz)]; }
-      else if (d.kind === 'handle'){ const b = s.floor.walls.find(x => x.id === d.wallId)!; const other = d.end === 'a' ? b.b : b.a; const np = ortho(other, snapPoint(pt, { ...s.floor, walls: s.floor.walls.filter(w => w.id !== d.wallId) }));
+      else if (d.kind === 'handle'){ const b = s.floor.walls.find(x => x.id === d.wallId)!; const other = d.end === 'a' ? b.b : b.a; const np = snapDraw(pt, { floor: { walls: s.floor.walls.filter(w => w.id !== d.wallId) }, anchor: other, free: e.shiftKey }).p;
         if (d.end === 'a') b.a = np; else b.b = np; }
       else if (d.kind === 'opening'){ const w = s.floor.walls.find(x => x.id === d.wallId)!, op = w.openings.find(x => x.id === d.id)!, L = wallLength(w.a, w.b), ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
         const sAlong = (pt[0] - w.a[0]) * ux + (pt[1] - w.a[1]) * uz; op.offset = r3(Math.max(0, Math.min(L - op.width, snapG(sAlong - op.width / 2)))); }
@@ -224,18 +224,24 @@ export default function PlanView(p: Props){
       finishRoom(a, b); return; }
     const d = drag.current; drag.current = null; if (d?.moved) p.onEdit(() => {}, 'end');
   }
-  const ortho = (a: [number, number], b: [number, number]): [number, number] => { const dx = b[0] - a[0], dz = b[1] - a[1]; if (Math.abs(dx) < Math.abs(dz) * .15) return [a[0], b[1]]; if (Math.abs(dz) < Math.abs(dx) * .15) return [b[0], a[1]]; return b; };
+  // un segment terminat (perete, grindă, perete de sticlă) pornește următorul din capătul lui; sub 20 cm nu se adaugă
+  const addSegment = (a: [number, number], b: [number, number]) => { if (wallLength(a, b) >= .2){ if (p.tool === 'wall') p.onAddWall(a, b); else if (p.tool === 'beam') p.onAddBeam?.(a, b); else p.onAddGlassWall?.(a, b); }
+    setPreview({ a: b, b }); setTyped(''); setHit(raw.current ? snapDraw(raw.current.pt, { floor, anchor: b, free: raw.current.free }) : null); };
 
   // Tab / Shift+Tab aleg camerele, piesele și scările pe rând (după ultimul, Tab iese din plan); restul tastelor merg la editor
   function finishRoom(a: [number, number], b: [number, number]){ setRoomDraft(null); setTyped('');
     const r = { x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), z0: Math.min(a[1], b[1]), z1: Math.max(a[1], b[1]) }; if (r.x1 - r.x0 >= .6 && r.z1 - r.z0 >= .6) p.onAddRoom(r); }
-  // cota tastată: valabilă doar cât se desenează un perete sau o cameră; Backspace/Escape nu ajung la scurtăturile editorului
-  const typing = (p.tool === 'wall' && !!preview) || (p.tool === 'room' && !!roomDraft);
-  const typedValue = !typed ? null : p.tool === 'wall' ? parseTypedLength(typed, units) : parseTypedSize(typed, units);
+  // cota tastată: valabilă doar cât se desenează un segment (perete, grindă, sticlă) sau o cameră; tastele prinse aici
+  // (cifre, unitățile după o cifră, Backspace, Escape, Enter) nu ajung la scurtăturile editorului
+  const segment = SEGMENT_TOOLS.includes(p.tool), typing = (segment && !!preview) || (p.tool === 'room' && !!roomDraft);
+  const typedValue = !typed ? null : segment ? parseTypedLength(typed, units) : parseTypedSize(typed, units);
   function typedKey(e: React.KeyboardEvent<SVGSVGElement>): boolean {
     if (!typing || e.ctrlKey || e.metaKey || e.altKey) return false;
     if (e.key === 'Enter' && typed){ if (typedValue == null) return true;
-      if (p.tool === 'wall' && preview && typeof typedValue === 'number'){ const b = typedEndpoint(preview.a, preview.b, typedValue); p.onAddWall(preview.a, b); setPreview({ a: b, b }); setTyped(''); }
+      // segmentul păstrează direcția magnetului (pas de 15°; Shift = liberă); fără mișcare de mouse, spre dreapta
+      if (segment && preview && typeof typedValue === 'number'){ const a = preview.a, free = !!raw.current?.free;
+        const toward: [number, number] = wallLength(a, preview.b) > 1e-3 ? preview.b : raw.current && wallLength(a, raw.current.pt) > 1e-3 ? raw.current.pt : [a[0] + 1, a[1]];
+        addSegment(a, pointAtLength(a, toward, typedValue, 15, free)); }
       else if (p.tool === 'room' && roomDraft && typeof typedValue === 'object'){ const r = typedRect(roomDraft.a, roomDraft.b, typedValue); setRoomDraft(null); setTyped(''); p.onAddRoom(r); }
       return true; }
     if (e.key === 'Backspace' && typed){ setTyped(x => x.slice(0, -1)); return true; }
@@ -264,7 +270,7 @@ export default function PlanView(p: Props){
   // doar cererile proaspete: la remontare (alt nivel, ieșirea din previzualizare) planul nu sare la o țintă veche
   useEffect(() => { if (p.frame && Date.now() - p.frame.at < 4000) frameSel(p.frame.sel); }, [p.frame?.n]); // eslint-disable-line
   const fitAll = () => { const pad = 1.2; setVb({ x: bounds.x0 - pad, y: bounds.z0 - pad, w: bounds.x1 - bounds.x0 + pad * 2, h: bounds.z1 - bounds.z0 + pad * 2 }); };
-  return (<><svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onContextMenu={e => { e.preventDefault(); setPreview(null); }}
+  return (<><svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onContextMenu={e => { e.preventDefault(); setPreview(null); setTyped(''); }}
     style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair', color: '#1A141C' }} role="application" aria-label={t('plan.aria')} tabIndex={0} onKeyDown={keyDown}>
     <defs><pattern id="g" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#e4e5e0" strokeWidth=".01" /></pattern></defs>
     <rect x={vb.x} y={vb.y} width={vb.w} height={vb.h} fill="url(#g)" />
@@ -366,8 +372,8 @@ export default function PlanView(p: Props){
         <circle cx={cx} cy={cz} r={hitR} fill="transparent" />
         <rect x={cx - (v ? th : len) / 2} y={cz - (v ? len : th) / 2} width={v ? th : len} height={v ? len : th} rx={th / 2} fill="#fff" stroke="#7A5A36" strokeWidth={.03} /></g>); }))}
     {preview && <line x1={preview.a[0]} y1={preview.a[1]} x2={preview.b[0]} y2={preview.b[1]} stroke="#6E8798" strokeWidth={.15} strokeOpacity={.5} strokeDasharray=".1 .06" />}
-    {preview && <text x={(preview.a[0] + preview.b[0]) / 2} y={(preview.a[1] + preview.b[1]) / 2 - fs} textAnchor="middle" fontSize={fs} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#8B6A45">{units === 'imperial' ? formatLength(wallLength(preview.a, preview.b), 'imperial', lang) : `${Math.round(wallLength(preview.a, preview.b) * 100)} cm`}</text>}
-    {typing && (() => { const at = p.tool === 'wall' ? preview!.b : roomDraft!.b, bad = !!typed && typedValue == null, w = Math.max(fs * 7, fs * .62 * ((typed || t('plan.typeHint')).length + 2));
+    {segment && <DrawHud preview={preview} hit={hit} typed={typed} fs={fs} label={m => formatLength(m, units, lang)} invalid={!!typed && typedValue == null} />}
+    {typing && !segment && (() => { const at = roomDraft!.b, bad = !!typed && typedValue == null, w = Math.max(fs * 7, fs * .62 * ((typed || t('plan.typeHint')).length + 2));
       return <g className="typed-chip" aria-hidden="true" transform={`translate(${at[0] + fs * .8} ${at[1] + fs * .8})`}>
         <rect width={w} height={fs * 1.9} rx={fs * .45} fill={bad ? '#FCEBEA' : '#fff'} stroke={bad ? '#B3261E' : '#7A5A36'} strokeWidth={fs * .08} />
         <text x={fs * .6} y={fs * 1.3} fontSize={fs} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={typed ? (bad ? '#B3261E' : '#1A141C') : '#7A6F66'}>{typed || t('plan.typeHint')}</text></g>; })()}
@@ -480,4 +486,34 @@ export default function PlanView(p: Props){
       {([['in', '+', () => zoomBy(1 / 1.25)], ['out', '−', () => zoomBy(1.25)], ['fit', '⤢', fitAll], ['left', '◀', () => panBy(-.2, 0)], ['up', '▲', () => panBy(0, -.2)], ['down', '▼', () => panBy(0, .2)], ['right', '▶', () => panBy(.2, 0)]] as const).map(([k, sym, fn]) =>
         <button key={k} type="button" className="btn" aria-label={t(`plan.nudge.${k}`)} title={t(`plan.nudge.${k}`)} onClick={fn}>{sym}</button>)}
     </div>}</>);
+}
+
+const SEGMENT_TOOLS: Tool[] = ['wall', 'beam', 'glass_wall'];
+const DIM = '#B8432C', HALO = '#FFFDF8';
+/** Cota segmentului în lucru, în limbajul planșei: linie de cotă paralelă, decalată, cu tick-uri la 45°, lungimea pe linie
+ *  (sau ce se tastează), unghiul lângă capătul liber; la punctul prins de magnet un glif: pătrat = capăt de perete,
+ *  cruce = grilă, arc = unghi, cerc gol = liber (Shift). Fără animație. */
+function DrawHud({ preview, hit, typed, fs, label, invalid }: { preview: { a: [number, number]; b: [number, number] } | null; hit: SnapResult | null; typed: string; fs: number; label(m: number): string; invalid: boolean }){
+  const g = fs * .32, sw = fs * .07, q = hit?.p;
+  const glyph = q && (hit!.kind === 'endpoint' ? <rect x={q[0] - g} y={q[1] - g} width={g * 2} height={g * 2} fill="none" stroke={DIM} strokeWidth={sw} />
+    : hit!.kind === 'grid' ? <path d={`M${q[0] - g} ${q[1]}H${q[0] + g}M${q[0]} ${q[1] - g}V${q[1] + g}`} stroke={DIM} strokeWidth={sw} />
+    : hit!.kind === 'angle' ? <path d={`M${q[0] - g} ${q[1] + g * .6}A${g * 1.4} ${g * 1.4} 0 0 1 ${q[0] + g} ${q[1] + g * .6}`} fill="none" stroke={DIM} strokeWidth={sw} />
+    : <circle cx={q[0]} cy={q[1]} r={g} fill="none" stroke={DIM} strokeWidth={sw} />);
+  if (!preview) return glyph ? <g pointerEvents="none" aria-hidden="true">{glyph}</g> : null;
+  const { a, b } = preview, L = Math.hypot(b[0] - a[0], b[1] - a[1]);
+  if (L < 1e-3 && !typed) return glyph ? <g pointerEvents="none" aria-hidden="true">{glyph}</g> : null;
+  const ux = L > 1e-3 ? (b[0] - a[0]) / L : 1, uz = L > 1e-3 ? (b[1] - a[1]) / L : 0, nx = uz, nz = -ux, off = fs * 1.4, ext = fs * .35, tk = fs * .3;
+  const A: [number, number] = [a[0] + nx * off, a[1] + nz * off], B: [number, number] = [b[0] + nx * off, b[1] + nz * off];
+  let rot = Math.atan2(uz, ux) * 180 / Math.PI; if (rot > 90) rot -= 180; if (rot <= -90) rot += 180;
+  const mid: [number, number] = [(A[0] + B[0]) / 2 + nx * fs * .45, (A[1] + B[1]) / 2 + nz * fs * .45];
+  const tick = (P: [number, number]) => `M${P[0] - (ux + nx) * tk * .7} ${P[1] - (uz + nz) * tk * .7}L${P[0] + (ux + nx) * tk * .7} ${P[1] + (uz + nz) * tk * .7}`;
+  const text = typed ? `${typed}▏` : label(L), ang = hit?.angleDeg;
+  return (<g pointerEvents="none" aria-hidden="true">
+    <path d={`M${a[0] + nx * fs * .2} ${a[1] + nz * fs * .2}L${A[0] + nx * ext} ${A[1] + nz * ext}M${b[0] + nx * fs * .2} ${b[1] + nz * fs * .2}L${B[0] + nx * ext} ${B[1] + nz * ext}`} stroke={DIM} strokeWidth={sw * .7} />
+    <path d={`M${A[0]} ${A[1]}L${B[0]} ${B[1]}${tick(A)}${tick(B)}`} stroke={DIM} strokeWidth={sw} />
+    <text x={mid[0]} y={mid[1]} transform={`rotate(${rot} ${mid[0]} ${mid[1]})`} textAnchor="middle" dominantBaseline="central" fontSize={fs} fontFamily="Instrument Sans, Segoe UI, sans-serif" fontWeight={600}
+      fill={DIM} stroke={HALO} strokeWidth={fs * .22} strokeLinejoin="round" paintOrder="stroke" textDecoration={invalid ? 'line-through' : undefined}>{text}</text>
+    {ang != null && L > 1e-3 && <text x={b[0] - nx * fs * 1.1 + ux * fs * .6} y={b[1] - nz * fs * 1.1 + uz * fs * .6} textAnchor="middle" dominantBaseline="central" fontSize={fs * .72} fontFamily="Instrument Sans, Segoe UI, sans-serif"
+      fill="#5E636B" stroke={HALO} strokeWidth={fs * .18} strokeLinejoin="round" paintOrder="stroke">{`${Math.round(ang * 10) / 10}°`}</text>}
+    {glyph}</g>);
 }

@@ -54,7 +54,7 @@ public sealed class RegistrySettingProvider(IRegistryValueWriter? writer = null)
     }
 
     public string? CannotWrite(SettingRef s) =>
-        writer is null ? "scrierea în registru nu este disponibilă în ediția clasificată"
+        writer is null ? "scrierea în registru nu este disponibilă în ediția Standalone"
         : s.ValueType is not ("dword" or "qword" or "string" or "expand_string") ? $"tipul {s.ValueType} nu este scris de motor"
         : s.Hive == "HKLM" && !WindowsSettingProviders.IsElevated() ? "HKLM cere un proces rulat ca administrator"
         : null;

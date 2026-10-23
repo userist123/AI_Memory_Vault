@@ -35,8 +35,8 @@ public static class IncidentPdfReport
                         c.Item().Text($"Raport incident {i.IncidentId} — {Path.GetFileName(i.ProgramPath)}").Bold().FontSize(14).FontColor(Ink);
                         c.Item().Text($"Caz {i.CaseId} ({caseName}) · stația {host} · generat {Local(DateTimeOffset.UtcNow)} ({zone.Id})").FontSize(8).FontColor(Muted);
                     });
-                    r.ConstantItem(130).AlignRight().Container().Background(i.State == ContainmentState.Contained ? Danger : Ink)
-                        .PaddingVertical(4).PaddingHorizontal(8).Text(StateText(i.State)).Bold().FontSize(8).FontColor(Colors.White);
+                    r.ConstantItem(130).AlignRight().Container().Background(i.State == ContainmentState.Contained && i.Verification?.Status == LogAnalyzer.Dfir.Response.ResponseStatus.Verified ? Danger : Ink)
+                        .PaddingVertical(4).PaddingHorizontal(8).Text(ContainmentText.State(i)).Bold().FontSize(8).FontColor(Colors.White);
                 });
                 h.Item().PaddingTop(6).LineHorizontal(1.2f).LineColor(Ink);
             });
@@ -126,9 +126,12 @@ public static class IncidentPdfReport
 
                 Section(col, "6. Acțiuni de izolare (jurnal)");
                 Table(col, new[] { "Ora", "Acțiune", "Țintă", "Rezultat", "Detaliu", "Operator" },
-                    i.Actions.Select(a => new[] { Local(a.TimeUtc), a.Action, a.Target, a.Success ? "OK" : "EȘUAT", a.Detail, a.Operator }));
+                    i.Actions.Select(a => new[] { Local(a.TimeUtc), a.Action, a.Target, ContainmentText.Action(a.Success), a.Detail, a.Operator }));
+                foreach (var line in ContainmentText.Verification("Re-verificarea izolării", i.Verification)) col.Item().Text(line).FontSize(8);
+                if (i.ReleaseVerification is not null || i.State == ContainmentState.Released)
+                    foreach (var line in ContainmentText.Verification("Re-verificarea ridicării", i.ReleaseVerification)) col.Item().Text(line).FontSize(8);
                 if (i.FirewallRules.Count > 0)
-                    col.Item().Text("Reguli de firewall active: " + string.Join(", ", i.FirewallRules)).FontSize(8);
+                    col.Item().Text("Reguli de firewall create de aplicație (starea lor reală este cea din re-verificare): " + string.Join(", ", i.FirewallRules)).FontSize(8);
 
                 Section(col, "7. Surse lipsă sau incomplete");
                 if (s is null || s.Gaps.Count == 0) col.Item().Text("Niciun gol raportat de scanare.").FontColor(Muted);
@@ -147,13 +150,6 @@ public static class IncidentPdfReport
             });
         })).GeneratePdf(outputPath);
     }
-
-    private static string StateText(ContainmentState s) => s switch
-    {
-        ContainmentState.Contained => "IZOLAT",
-        ContainmentState.Released => "IZOLARE RIDICATĂ",
-        _ => "IZOLARE EȘUATĂ",
-    };
 
     private static string DefenderText(DefenderVerdict d) => d.ThreatFound switch
     {

@@ -31,6 +31,31 @@ public sealed class QuickControlPeriodTests : IDisposable
     }
 
     [Fact]
+    public void The_last_finished_control_is_the_newest_control_finished_of_a_verifiable_log_and_is_described_in_the_home_format()
+    {
+        var log = Log(("control.started", Now.AddDays(-45)), ("control.finished", Now.AddDays(-44)), ("control.finished", Now.AddDays(-20)), ("login", Now.AddDays(-1)));
+        Assert.Equal(Now.AddDays(-20), ControlPeriodStart.LastFinished(log, Now));
+        Assert.Matches(@"^\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}, ora stației$", ControlPeriodStart.Describe(Now.AddDays(-20)));
+        // the same instant Home prints in its period line
+        Assert.Contains(ControlPeriodStart.Describe(Now.AddDays(-20)), ControlPeriodStart.From(log, "", Now).Basis);
+        File.Delete(log);   // the helper appends to the same file
+        Assert.Null(ControlPeriodStart.LastFinished(Log(("login", Now.AddDays(-1))), Now));
+        Assert.Null(ControlPeriodStart.LastFinished(Path.Combine(_dir, "missing.jsonl"), Now));
+        Assert.Null(ControlPeriodStart.LastFinished(null, Now));
+    }
+
+    [Fact]
+    public void A_broken_chain_gives_no_last_finished_control()
+    {
+        var log = Log(("control.finished", Now.AddDays(-5)), ("login", Now.AddDays(-4)));
+        var lines = File.ReadAllLines(log);
+        lines[0] = System.Text.RegularExpressions.Regex.Replace(lines[0], @"(""[Dd]etail"":)""d""", "$1\"x\"");   // an entry changed after it was written
+        Assert.NotEqual(File.ReadAllLines(log)[0], lines[0]);
+        File.WriteAllLines(log, lines);
+        Assert.Null(ControlPeriodStart.LastFinished(log, Now));
+    }
+
+    [Fact]
     public void Without_a_paper_code_the_period_starts_at_the_last_control_finished_in_the_sealed_audit()
     {
         var log = Log(("control.started", Now.AddDays(-45)), ("control.finished", Now.AddDays(-44)), ("control.finished", Now.AddDays(-20)), ("login", Now.AddDays(-1)));
@@ -38,6 +63,9 @@ public sealed class QuickControlPeriodTests : IDisposable
         Assert.Equal(20, p.Days);
         Assert.Equal(Now.AddDays(-20), p.StartUtc);
         Assert.Contains("jurnalul sigilat", p.Basis);
+        // 2026-10-22 PC walkthrough: local time in the Romanian format, not UTC in ISO format
+        Assert.Matches(@"\(\d{2}\.\d{2}\.\d{4} \d{2}:\d{2}, ora stației\)", p.Basis);
+        Assert.DoesNotContain("UTC", p.Basis);
     }
 
     [Fact]

@@ -13,7 +13,7 @@ public sealed record UsbSessionCheck(DeviceRecord Device, DateTimeOffset Connect
 
 public static class TransferReconciliation
 {
-    public const string UnregisteredMessage = "stick folosit fără înregistrare în registrul de transferuri";
+    public const string UnregisteredMessage = "mediu de stocare folosit fără înregistrare în registrul de transferuri";
 
     /// <summary>
     /// For every connection of a removable storage device (USB stick/disk, memory card) whose local day falls in [<paramref name="from"/>, <paramref name="to"/>],
@@ -31,7 +31,7 @@ public static class TransferReconciliation
         var result = new List<UsbSessionCheck>();
         foreach (var d in devices)
         {
-            if (d.Kind is not (DeviceKind.UsbStorage or DeviceKind.MemoryCard)) continue;
+            if (d.Kind is not (DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.ExternalDisk)) continue;
             var serial = MediaRegister.NormalizeSerial(d.Serial);
             var reg = (registrationOf?.Invoke(d) ?? "").Trim();
             foreach (var c in d.Connections.Distinct().OrderBy(c => c))
