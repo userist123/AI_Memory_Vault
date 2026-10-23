@@ -25,7 +25,7 @@ import { computeLightingWiringArcs } from '@/core/technical';
 import { parseTypedLength, parseTypedSize, typedRect, acceptsTypedKey } from '@/core/typed-dimension';
 import { selectionBox, frameViewBox } from '@/core/frame';
 
-export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'measure' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair';
+export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair';
 export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
 type Phase = 'start' | 'move' | 'end';
 interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severities: Record<string, Severity>;
@@ -34,7 +34,7 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   /** selecția comună cu 3D (UI/UX P2-10): piesa de sub mouse (aici sau în 3D) și „Arată în 3D” din bara piesei */
   hoverId?: string | null; onHover?(id: string | null): void; onFrameOther?(id: string): void;
   onSelect(s: Sel): void; onEdit(fn: (s: Snapshot) => void, phase: Phase): void; onAddWall(a: [number, number], b: [number, number]): void;
-  onAddRoom(r: { x0: number; z0: number; x1: number; z1: number }): void; onAddOpening(wallId: string, offset: number, kind: 'door' | 'window'): void;
+  onAddRoom(r: { x0: number; z0: number; x1: number; z1: number }): void; onAddOpening(wallId: string, offset: number, kind: 'door' | 'window' | 'passage'): void;
   onAddColumn?(x: number, z: number, shape?: 'rect' | 'round'): void;
   onAddBeam?(a: [number, number], b: [number, number]): void;
   onAddGlassWall?(a: [number, number], b: [number, number]): void;
@@ -167,7 +167,7 @@ export default function PlanView(p: Props){
     if (p.tool === 'room'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])];
       if (roomDraft?.pending){ finishRoom(roomDraft.a, s); return; }   // al doilea clic: colțul opus
       setRoomDraft({ a: s, b: s }); setTyped(''); svg.current!.setPointerCapture(e.pointerId); svg.current!.focus({ preventScroll: true }); return; }
-    if (p.tool === 'door' || p.tool === 'window'){ const w = nearestWall(pt); if (w) p.onAddOpening(w.id, w.offset, p.tool); return; }
+    if (p.tool === 'door' || p.tool === 'window' || p.tool === 'passage'){ const w = nearestWall(pt); if (w) p.onAddOpening(w.id, w.offset, p.tool); return; }
     let t = (e.target as Element).closest('[data-k]') as HTMLElement | null;
     // ușile și ferestrele au prioritate față de mânerul laturii (zona lui de 44 px poate atinge un gol pe un plan mic), cu excepția cazului când golul acoperă tot peretele și mânerul e decalat în afară
     if (t?.dataset.k === 'redge' && !t.dataset.offset){ const op = document.elementsFromPoint?.(e.clientX, e.clientY).find(x => (x as HTMLElement).dataset?.k === 'opening') as HTMLElement | undefined; if (op) t = op; }
@@ -313,6 +313,9 @@ export default function PlanView(p: Props){
         {w.openings.map(o => { const a = [w.a[0] + ux * o.offset, w.a[1] + uz * o.offset], b = [w.a[0] + ux * (o.offset + o.width), w.a[1] + uz * (o.offset + o.width)], os = p.sel?.kind === 'opening' && p.sel.id === o.id;
           return (<g key={o.id}><line data-k="opening" data-id={o.id} data-w={w.id} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={os ? '#efe5d8' : '#FBFBF9'} strokeWidth={w.thickness + .01} style={{ cursor: 'ew-resize' }} />
             {o.kind === 'window' ? <><line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="#6E8798" strokeWidth={.025} pointerEvents="none" /><line x1={a[0] + nx * w.thickness * .3} y1={a[1] + nz * w.thickness * .3} x2={b[0] + nx * w.thickness * .3} y2={b[1] + nz * w.thickness * .3} stroke="#6E8798" strokeWidth={.012} pointerEvents="none" /></>
+              // golul de trecere: fără foaie și fără arc, doar tocurile (linii scurte peste grosime) și buiandrugul punctat
+              : o.passage ? <g pointerEvents="none" stroke="#3a352f"><path d={`M${a[0] - nx * w.thickness / 2} ${a[1] - nz * w.thickness / 2}L${a[0] + nx * w.thickness / 2} ${a[1] + nz * w.thickness / 2}M${b[0] - nx * w.thickness / 2} ${b[1] - nz * w.thickness / 2}L${b[0] + nx * w.thickness / 2} ${b[1] + nz * w.thickness / 2}`} strokeWidth={.02} />
+                <line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} strokeWidth={.012} strokeDasharray=".08 .05" /></g>
               : (() => { const sw = doorSwing(floor, floor.walls.indexOf(w), w.openings.indexOf(o)), H = sw.hinge === 'end' ? b : a, E = sw.hinge === 'end' ? a : b, sx = nx * sw.swing, sz = nz * sw.swing;
                 // foaia deschisă (linie) și arcul de deschidere, de partea și cu balamaua alese
                 const Px = H[0] + sx * o.width, Pz = H[1] + sz * o.width, cr = (Px - H[0]) * (E[1] - H[1]) - (Pz - H[1]) * (E[0] - H[0]);

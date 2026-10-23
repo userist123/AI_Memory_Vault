@@ -77,7 +77,7 @@ import { prepareShareImages } from '@/lib/share-images';
 import { withViewTransition } from '@/lib/motion';
 import StagePicker from './StagePicker';
 import PlanObjects from './PlanObjects';
-import { PLAN_LIMITS } from '@/core/plan-limits';
+import { PLAN_LIMITS, PLAN_DEFAULTS } from '@/core/plan-limits';
 import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
 import { flushSync } from 'react-dom';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
@@ -91,6 +91,7 @@ const ICON: Record<Tool, string> = {
   room: 'M4 4h16v16H4z',
   door: 'M5 21V4h9v17M5 21h14M12 12h.01',
   window: 'M4 5h16v14H4zM12 5v14M4 12h16',
+  passage: 'M5 21V4h14v17M3 21h4M17 21h4M8 4v2M16 4v2',
   column: 'M6 4h12v3H6zm2 3h8v10H8zm-2 10h12v3H6z',
   beam: 'M3 7h18v4H3zm0 6h18v1H3zm0 3h18v1H3z',
   glass_wall: 'M4 4h16v16H4zm2 2v12h5V6zm7 0v12h5V6z',
@@ -104,6 +105,7 @@ const TOOL_LABEL: Record<Tool, string> = {
   room: 'tool.room',
   door: 'tool.door',
   window: 'tool.window',
+  passage: 'tool.passage',
   column: 'tool.column',
   beam: 'tool.beam',
   glass_wall: 'tool.glass_wall',
@@ -115,7 +117,7 @@ const TOOL_LABEL: Record<Tool, string> = {
 /** Etapele unui proiect de amenajare, în ordinea în care lucrează un designer: fiecare are vederea, uneltele și panoul ei. */
 type Stage = typeof STAGE_IDS[number];
 const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: true }[] = [
-  { id: 'survey', view: '2d', tools: ['select', 'wall', 'room', 'door', 'window', 'column', 'beam', 'glass_wall', 'stair', 'measure'] },
+  { id: 'survey', view: '2d', tools: ['select', 'wall', 'room', 'door', 'window', 'passage', 'column', 'beam', 'glass_wall', 'stair', 'measure'] },
   { id: 'concept', view: 'split', tools: ['select', 'column', 'glass_wall', 'measure'] },
   { id: 'finishes', view: 'split', tools: ['select', 'measure'] },
   { id: 'ffe', view: 'split', tools: ['select', 'measure'] },
@@ -402,9 +404,10 @@ export default function Editor({ id }: { id: string }){
   const G = groups(catalog);
   const onAddWall = (a: [number, number], b: [number, number]) => mutate(s => { s.floor.walls.push({ id: `wall-${uid().slice(0, 8)}`, a, b, thickness: .15, exterior: false, openings: [] }); });
   const onAddRoom = (rect: any) => { const rid = `camera-${uid().slice(0, 8)}`; mutate(s => { s.floor.rooms.push({ id: rid, name: t('editor.newRoomName', { n: s.floor.rooms.length + 1 }), type: 'living', rect }); }); setSel({ kind: 'room', id: rid }); setTool('select'); };
-  const onAddOpening = (wallId: string, offset: number, kind: 'door' | 'window') => { const w = snap.floor.walls.find(x => x.id === wallId)!, L = wallLength(w.a, w.b), width = kind === 'door' ? .8 : 1.2;
+  // golul de trecere e o ușă fără foaie (`passage`): devizul îl scade ca pe o ușă, dar nu cere produs de ușă
+  const onAddOpening = (wallId: string, offset: number, kind: 'door' | 'window' | 'passage') => { const w = snap.floor.walls.find(x => x.id === wallId)!, L = wallLength(w.a, w.b), width = kind === 'door' ? .8 : kind === 'passage' ? PLAN_DEFAULTS.passageWidth : 1.2;
     if (L < width + .1){ say(t('editor.wallTooShort')); return; } const oid = `op-${uid().slice(0, 8)}`;
-    mutate(s => { s.floor.walls.find(x => x.id === wallId)!.openings.push({ id: oid, kind, offset: r3(Math.max(0, Math.min(L - width, offset - width / 2))), width }); }); setSel({ kind: 'opening', id: oid, wallId }); };
+    mutate(s => { s.floor.walls.find(x => x.id === wallId)!.openings.push({ id: oid, kind: kind === 'window' ? 'window' : 'door', offset: r3(Math.max(0, Math.min(L - width, offset - width / 2))), width, ...(kind === 'passage' ? { passage: true as const } : {}) }); }); setSel({ kind: 'opening', id: oid, wallId }); };
   const onAddColumn = (x: number, z: number, shape: 'rect' | 'round' = 'rect') => {
     const cid = `col-${uid().slice(0, 8)}`;
     mutate(s => { s.floor.columns = [...(s.floor.columns || []), { id: cid, x: r3(x), z: r3(z), w: .35, d: .35, shape }]; });
@@ -605,7 +608,7 @@ export default function Editor({ id }: { id: string }){
           onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })}
         />
           {!preview && !snap.floor.rooms.length && !snap.floor.walls.length && tool !== 'room' && tool !== 'wall' && <EmptyState className="plan-empty" title={t('empty.plan.title')} text={t('empty.plan.text')} action={{ label: t('empty.plan.action'), onClick: drawRooms }} />}
-          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'column' ? t('editor.hintColumn') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
+          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : t('editor.hintSelect')}</div></div>}
         {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })}
           selectedId={!preview && sel?.kind === 'placement' ? sel.id : null} hoverId={preview ? null : hoverPid} onHover={setHoverPid} frame={frame3d ?? undefined} onFrameOther={frameInPlan} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
@@ -671,20 +674,21 @@ export default function Editor({ id }: { id: string }){
             <button className="btn danger" onClick={del}>{t('editor.deleteWall')}</button>
           </>}
           {selOp && roomStage && <>
-            <h3>{selOp.kind === 'door' ? t('tool.door') : t('tool.window')}</h3>
+            <h3>{selOp.passage ? t('tool.passage') : selOp.kind === 'door' ? t('tool.door') : t('tool.window')}</h3>
             <div className="grid2">
-              <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selOp.width)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!.width = r3(x / 100); }), 30)} /></label>
+              <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(selOp.width)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!.width = r3((selOp.passage ? Math.min(x, PLAN_LIMITS.passage.widthMaxM * 100) : x) / 100); }), 30)} /></label>
               <label className="f"><span>{t('editor.offsetOnWall', { u })}</span><input type="number" value={inField(selOp.offset)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!.offset = r3(x / 100); }))} /></label>
             </div>
             <OpeningLookPanel op={selOp} snap={snap} num={num} onPatch={patch => mutate(s => { Object.assign(s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!, patch); })}
               onFrame={hex => look(a => { a.openings = setFinish(a.openings, selOp.id, { color: hex }); })} />
-            {selOp.kind === 'door' && (() => { const wi = snap.floor.walls.findIndex(w => w.id === (sel as any).wallId), oi = snap.floor.walls[wi]?.openings.findIndex(o => o.id === selOp.id) ?? -1;
+            {selOp.kind === 'door' && !selOp.entrance && <label className="f" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={!!selOp.passage} onChange={e => mutate(s => { const o = s.floor.walls.find(w => w.id === (sel as any).wallId)!.openings.find(o => o.id === selOp.id)!; if (e.target.checked){ o.passage = true; o.width = r3(Math.min(Math.max(o.width, PLAN_LIMITS.passage.widthMinM), PLAN_LIMITS.passage.widthMaxM)); delete o.hinge; delete o.swing; if (s.doors) delete s.doors[o.id]; } else delete o.passage; })} /> {t('door.passage')}</label>}
+            {selOp.kind === 'door' && !selOp.passage && (() => { const wi = snap.floor.walls.findIndex(w => w.id === (sel as any).wallId), oi = snap.floor.walls[wi]?.openings.findIndex(o => o.id === selOp.id) ?? -1;
               if (wi < 0 || oi < 0) return null; const sw = doorSwing(snap.floor, wi, oi), patchOp = (p: object) => mutate(s => { Object.assign(s.floor.walls[wi]!.openings[oi]!, p); });
               return <div className="grid2">
                 <button className="btn" onClick={() => patchOp({ hinge: sw.hinge === 'start' ? 'end' : 'start', swing: sw.swing })}>{t('door.flipHinge')}</button>
                 <button className="btn" onClick={() => patchOp({ swing: sw.swing === 1 ? -1 : 1, hinge: sw.hinge })}>{t('door.flipSwing')}</button>
                 <small className="prov" style={{ gridColumn: '1/-1' }}>{sw.auto ? t('door.swingAuto') : t('door.swingSet')}</small></div>; })()}
-            {selOp.kind === 'door' && mc && <DoorPanel op={selOp} snap={house!} mc={mc} cur={cur} onChange={(p: { product?: string | null; handle?: string | null }) => mutate(s => { const cur0 = s.doors?.[selOp.id] ?? {}, next = { ...cur0, ...p };
+            {selOp.kind === 'door' && !selOp.passage && mc && <DoorPanel op={selOp} snap={house!} mc={mc} cur={cur} onChange={(p: { product?: string | null; handle?: string | null }) => mutate(s => { const cur0 = s.doors?.[selOp.id] ?? {}, next = { ...cur0, ...p };
               const clean = { ...(next.product ? { product: next.product } : {}), ...(next.handle ? { handle: next.handle } : {}) }; s.doors = { ...(s.doors || {}) }; if (Object.keys(clean).length) s.doors[selOp.id] = clean; else delete s.doors[selOp.id]; })} />}
             <button className="btn danger" onClick={del}>{t('editor.deleteOpening')}</button>
           </>}

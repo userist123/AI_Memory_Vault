@@ -6,19 +6,21 @@ import type { Catalog, Floor, FurniturePlacement, Issue, Room, Severity, Snapsho
 const allowed = (a: string, b: string) => WALL_HIGH.has(a) !== WALL_HIGH.has(b) || ALLOWED_OVERLAP.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
 // golurile de pe o latură a camerei (aceeași logică ca openingsOnSide din motor)
 export function openingsOnSide(floor: Floor, room: Room, side: 'N' | 'S' | 'W' | 'E'){
-  const r = room.rect, out: { kind: string; a: number; b: number }[] = [];
+  const r = room.rect, out: { kind: string; a: number; b: number; passage?: boolean }[] = [];
   for (const w of floor.walls){ const [ax, az] = w.a, [bx, bz] = w.b, horiz = Math.abs(az - bz) < 1e-6;
     const on = (side === 'N' && horiz && Math.abs(az - r.z0) < 1e-6) || (side === 'S' && horiz && Math.abs(az - r.z1) < 1e-6) || (side === 'W' && !horiz && Math.abs(ax - r.x0) < 1e-6) || (side === 'E' && !horiz && Math.abs(ax - r.x1) < 1e-6);
     if (!on) continue; const dir = horiz ? Math.sign(bx - ax) : Math.sign(bz - az), s0 = horiz ? ax : az;
-    for (const o of w.openings){ const p = s0 + dir * o.offset, q = s0 + dir * (o.offset + o.width); out.push({ kind: o.kind, a: Math.min(p, q), b: Math.max(p, q) }); } }
+    for (const o of w.openings){ const p = s0 + dir * o.offset, q = s0 + dir * (o.offset + o.width); out.push({ kind: o.kind, a: Math.min(p, q), b: Math.max(p, q), ...(o.passage ? { passage: true } : {}) }); } }
   const lo = side === 'N' || side === 'S' ? r.x0 : r.z0, hi = side === 'N' || side === 'S' ? r.x1 : r.z1;
   return out.filter(o => o.b > lo + .01 && o.a < hi - .01);
 }
+// zona din fața ușii: 95 cm (arcul foii); la golul de trecere doar 60 cm de circulație
+export const DOOR_ZONE_M = .95, PASSAGE_ZONE_M = .6;
 export function doorZones(floor: Floor, room: Room): RoomRect[] {
   const r = room.rect, z: RoomRect[] = [];
-  for (const s of ['N', 'S', 'W', 'E'] as const) for (const o of openingsOnSide(floor, room, s).filter(o => o.kind === 'door')){
+  for (const s of ['N', 'S', 'W', 'E'] as const) for (const o of openingsOnSide(floor, room, s).filter(o => o.kind === 'door')){ const dz = o.passage ? PASSAGE_ZONE_M : DOOR_ZONE_M;
     const f = s === 'N' || s === 'S' ? { x0: o.a - .05, x1: o.b + .05, z0: r.z0, z1: r.z1 } : { z0: o.a - .05, z1: o.b + .05, x0: r.x0, x1: r.x1 };
-    if (s === 'N') f.z1 = r.z0 + .95; if (s === 'S') f.z0 = r.z1 - .95; if (s === 'W') f.x1 = r.x0 + .95; if (s === 'E') f.x0 = r.x1 - .95; z.push(f); }
+    if (s === 'N') f.z1 = r.z0 + dz; if (s === 'S') f.z0 = r.z1 - dz; if (s === 'W') f.x1 = r.x0 + dz; if (s === 'E') f.x0 = r.x1 - dz; z.push(f); }
   return z;
 }
 export function footprintOf(cat: Catalog, p: FurniturePlacement){ const rv = resolve(cat, p.variantId); if (!rv) return null; return p.size ? footprintAt(p.x, p.z, p.rotation, p.size.w / 100, p.size.d / 100) : footprintAt(p.x, p.z, p.rotation, rv.w, rv.d); }
