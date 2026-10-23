@@ -10,33 +10,38 @@ import { usePrefs } from '@/lib/prefs';
 const FOCUSABLE = 'button:not([disabled]),input:not([disabled]),textarea:not([disabled]),select:not([disabled]),a[href]';
 export default function DialogHost(){
   const d = useSyncExternalStore(subscribeDialogs, currentDialog, () => null), { t } = usePrefs();
-  const ref = useRef<HTMLDialogElement>(null), back = useRef(focusMemory<Element>()), [text, setText] = useState('');
+  const ref = useRef<HTMLDialogElement>(null), back = useRef(focusMemory<Element>()), [text, setText] = useState(''), [checked, setChecked] = useState<Set<string>>(new Set());
   // pagina s-a schimbat (link, înapoi, router.push): dialogurile paginii vechi se anulează, nu rămân peste pagina nouă
   const pathname = usePathname(), shownPath = useRef(pathname);
   useEffect(() => { if (shownPath.current === pathname) return; shownPath.current = pathname; cancelAllDialogs(); }, [pathname]);
   useEffect(() => { const el = ref.current; if (!el) return;
-    if (d){ back.current.show(document.activeElement); setText(d.input?.initial ?? ''); try { if (!el.open) el.showModal?.(); } catch { /* fără showModal: rămâne afișat ca bloc */ }
+    if (d){ back.current.show(document.activeElement); setText(d.input?.initial ?? ''); setChecked(new Set((d.checklist ?? []).flatMap(g => g.items.map(i => i.key)))); try { if (!el.open) el.showModal?.(); } catch { /* fără showModal: rămâne afișat ca bloc */ }
       requestAnimationFrame(() => { const first = el.querySelector<HTMLElement>(d.input ? 'input,textarea' : d.danger ? '[data-cancel]' : '[data-ok]'); first?.focus(); }); }
     else { if (el.open) el.close?.(); const prev = back.current.hide() as HTMLElement | null; if (prev?.isConnected) prev.focus?.(); } }, [d?.id]); // eslint-disable-line
   if (!d) return <dialog ref={ref} className="dlg" aria-hidden="true" />;
-  const ok = canConfirm(d, text), done = (v: boolean | string | null) => answerDialog(v);
-  const accept = () => { if (!ok) return; done(d.kind === 'prompt' ? text : true); };
-  const onKey = (e: React.KeyboardEvent) => { const single = (e.target as HTMLElement).tagName === 'INPUT', act = dialogKey(e.key, single);
-    if (act === 'cancel'){ e.preventDefault(); done(d.kind === 'prompt' ? null : false); }
+  const ok = canConfirm(d, text, checked.size), done = (v: Parameters<typeof answerDialog>[0]) => answerDialog(v);
+  const allKeys = (d.checklist ?? []).flatMap(g => g.items.map(i => i.key)), toggle = (k: string) => setChecked(s => { const n = new Set(s); if (n.has(k)) n.delete(k); else n.add(k); return n; });
+  const accept = () => { if (!ok) return; done(d.kind === 'prompt' ? text : d.kind === 'review' ? { text: text.trim(), keys: allKeys.filter(k => checked.has(k)) } : true); };
+  const onKey = (e: React.KeyboardEvent) => { const el = e.target as HTMLInputElement, single = el.tagName === 'INPUT' && el.type !== 'checkbox', act = dialogKey(e.key, single);
+    if (act === 'cancel'){ e.preventDefault(); done(d.kind === 'confirm' ? false : null); }
     else if (act === 'confirm'){ e.preventDefault(); accept(); }
     else if (act === 'trap'){ const els = [...ref.current!.querySelectorAll<HTMLElement>(FOCUSABLE)], i = trapFocusIndex(els.length, els.indexOf(document.activeElement as HTMLElement), e.shiftKey);
       if (i >= 0){ e.preventDefault(); els[i]!.focus(); } } };
   const tid = `dlg-t-${d.id}`, bid = `dlg-b-${d.id}`;
   return (<dialog ref={ref} className="dlg" role={d.danger ? 'alertdialog' : 'dialog'} aria-modal="true" aria-labelledby={tid} aria-describedby={d.body ? bid : undefined}
-    onKeyDown={onKey} onCancel={e => { e.preventDefault(); done(d.kind === 'prompt' ? null : false); }} onClick={e => { if (e.target === ref.current) done(d.kind === 'prompt' ? null : false); }}>
+    onKeyDown={onKey} onCancel={e => { e.preventDefault(); done(d.kind === 'confirm' ? false : null); }} onClick={e => { if (e.target === ref.current) done(d.kind === 'confirm' ? false : null); }}>
     <form className="dlg-card" method="dialog" onSubmit={e => { e.preventDefault(); accept(); }}>
       <h2 id={tid}>{d.title}</h2>
       {d.body && <p id={bid}>{d.body}</p>}
       {d.input && <label className="f"><span>{d.input.label}</span>{d.input.multiline
         ? <textarea value={text} rows={3} maxLength={d.input.maxLength} placeholder={d.input.placeholder} onChange={e => setText(e.target.value)} />
         : <input type="text" value={text} maxLength={d.input.maxLength} placeholder={d.input.placeholder} autoComplete="off" onChange={e => setText(e.target.value)} aria-invalid={d.input.mustEqual != null && text.length > 0 && !ok} />}</label>}
+      {d.checklist && <fieldset className="dlg-check"><legend>{t('dlg.checkCount', { n: checked.size, total: allKeys.length })}
+          <button type="button" className="linkish" onClick={() => setChecked(checked.size === allKeys.length ? new Set() : new Set(allKeys))}>{checked.size === allKeys.length ? t('dlg.checkNone') : t('dlg.checkAll')}</button></legend>
+        <div className="dlg-check-list">{d.checklist.map((g, gi) => <div key={gi} className="dlg-check-group"><h3>{g.heading}</h3>
+          {g.items.map(i => <label key={i.key}><input type="checkbox" checked={checked.has(i.key)} onChange={() => toggle(i.key)} /><span>{i.label}</span></label>)}</div>)}</div></fieldset>}
       <div className="dlg-act">
-        <button type="button" className="btn" data-cancel onClick={() => done(d.kind === 'prompt' ? null : false)}>{d.cancelLabel ?? t('dlg.cancel')}</button>
+        <button type="button" className="btn" data-cancel onClick={() => done(d.kind === 'confirm' ? false : null)}>{d.cancelLabel ?? t('dlg.cancel')}</button>
         <button type="submit" className={`btn primary ${d.danger ? 'danger' : ''}`} data-ok disabled={!ok}>{d.confirmLabel ?? t('dlg.ok')}</button>
       </div>
     </form>
