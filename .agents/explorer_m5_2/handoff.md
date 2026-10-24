@@ -3,7 +3,7 @@
 ## 1. Observation
 
 ### 1.1 Source Code Structure & Implementation
-- **File**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\cognitive_core\evaluation.py`
+- **File**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\cognitive_core\evaluation.py`
   - Lines 5-12: `RetrievalEvaluator` class declaration with optional `semantic_provider: Optional[SemanticProvider]`.
   - Lines 15-30 (`utilization`):
     ```python

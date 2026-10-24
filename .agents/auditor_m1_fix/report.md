@@ -2,7 +2,7 @@
 
 **Work Product**: `memory_controller/financial_schema.py` and `tests/financial/test_schema.py`  
 **Auditor**: Forensic Auditor M1 Fix (`teamwork_preview_auditor`)  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_fix`  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_fix`  
 **Integrity Mode**: Development (per `ORIGINAL_REQUEST.md`)  
 **Verdict**: **CLEAN**
 

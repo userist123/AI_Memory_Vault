@@ -1,6 +1,6 @@
 # Forensic Audit Report: Jarvis Cognitive Brain (Milestone 1)
 
-**Work Product**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
+**Work Product**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
 **Auditor**: Forensic Auditor (`.agents/auditor_m1`)  
 **Parent Agent**: `5a625f23-4992-4b00-bb13-1f4b316b216c`  
 **Profile**: General Project / Vault Security Audit  
@@ -51,7 +51,7 @@ Under the strict Forensic Auditor protocol:
      ```
    - **Empirical Execution Output** (Executed independently via PowerShell):
      ```text
-     PS C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain> python -m pytest
+     PS C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain> python -m pytest
      =========================== short test summary info ===========================
      ERROR tests/unit/test_memory_storage.py::test_sqlite_pragmas_and_wal_mode
      ERROR tests/unit/test_memory_storage.py::test_ai_agent_cannot_propose_verified
@@ -127,7 +127,7 @@ To verify this audit finding:
 
 ```powershell
 # 1. Run the test suite in the project directory
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 python -m pytest
 
 # 2. Observe the 16 fixture setup errors:

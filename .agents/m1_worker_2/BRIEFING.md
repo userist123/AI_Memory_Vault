@@ -6,7 +6,7 @@ Fix 3 edge-case defects in `xau_kinetic/financial_ingestion/indicators.py` ident
 ## 🔒 My Identity
 - Archetype: implementer / qa / specialist
 - Roles: implementer, qa, specialist
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_worker_2
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_worker_2
 - Original parent: fe349d87-bb77-42da-8379-001833bc54af
 - Milestone: M1 Remediation (Financial Ingestion Pipeline)
 

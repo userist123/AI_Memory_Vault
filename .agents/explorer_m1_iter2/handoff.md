@@ -491,7 +491,7 @@ class OODACognitiveEngine:
 To independently verify these remediations:
 
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 # 1. Run full unit and adversarial test suite (Expected: 54 passed in < 2.0s)
 python -m pytest tests/unit/ -v

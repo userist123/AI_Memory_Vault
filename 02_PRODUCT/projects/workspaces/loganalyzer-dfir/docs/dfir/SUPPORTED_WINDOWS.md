@@ -1,6 +1,6 @@
 # LogAnalyzer - versiuni Windows susținute și lista de laborator
 
-Sursa: `WINDOWS_TOOLING_COMPAT.md` (partea 3). Lista de versiuni este o PROPUNERE; decide proprietarul. Nimic de aici nu a fost
+Sursa: `WINDOWS_TOOLING_COMPAT.md` (partea 3). Lista de versiuni este cea decisă de proprietar (deciziile 15 și 32, `CONTRACT_AUDIT_STAGE1.md` §8). Nimic de aici nu a fost
 testat încă pe mașini reale: coloana "Stare" spune ce s-a verificat.
 
 ## Pachetul este self-contained
@@ -17,8 +17,8 @@ Cod de ieșire 0 = totul a mers. CI rulează comanda pe executabilul publicat, f
 
 | Nivel | Versiuni | Stare |
 |---|---|---|
-| Țintă completă | Windows 11 23H2 / 24H2 / 25H2; Windows Server 2022 / 2025 (Desktop Experience) | declarată; neverificată în laborator |
-| Țintă extinsă (best-effort) | Windows Server 2016 / 2019 (Desktop Experience); Windows 10 22H2 ("legacy", suportul Microsoft Home/Pro a încetat la 14.10.2025) | declarată; neverificată |
+| Țintă completă | Windows 11 23H2 / 24H2 / 25H2; Windows 10 LTSC 2019 / 2021 (inclusiv IoT); Windows Server 2022 / 2025 (Desktop Experience) | declarată; neverificată în laborator |
+| Țintă extinsă (best-effort) | Windows Server 2016 / 2019 (Desktop Experience); Windows 10 22H2 ("legacy", suportul Microsoft Home/Pro a încetat la 14.10.2025); Windows 10 LTSB 2016 | declarată; neverificată |
 | Nesusținute | Server Core / Nano (WPF cere Desktop Experience, de confirmat), Windows 10 sub 22H2, Server 2012 / 2012 R2 | - |
 
 CI rulează doar pe `windows-latest` (self-test al executabilului publicat). Restul matricei cere laborator.

@@ -21,10 +21,24 @@ import pytest
 REPO = Path(__file__).resolve().parents[1]
 READMES = ("README.md", "README.en.md")
 WORKFLOWS = REPO / ".github" / "workflows"
-UNTRACKED_BY_DESIGN = ("06_INBOX/",)
+# 04_MEMORY/ is the legacy write root (storage/path_resolver.py), gitignored and
+# created at runtime; it is never in a clean checkout.
+UNTRACKED_BY_DESIGN = ("06_INBOX/", "04_MEMORY/")
+# The READMEs cite implementation modules package-relative (`memory/controller.py`,
+# `security/authority.py`): resolve against the package root as well, exactly.
+PACKAGES = "03_IMPLEMENTATION/packages"
 
-_PATH_IN_CODE = re.compile(r"`((?:\d\d_[A-Z_]+|\.github|cognitive_core)/[^`\s<>*]+)`")
-_PATH_IN_LINK = re.compile(r"\]\(((?:\d\d_[A-Z_]+|\.github|cognitive_core)/[^)\s#]+)\)")
+_ROOTS = (
+    r"\d\d_[A-Z_]+|\.github|cognitive_core|docs|scripts|security|telemetry"
+    r"|\.agents|\.claude-plugin|\.claude|\.codex|\.gemini"
+)
+# `*` after the slash means the citation is a glob; zero characters after it is a bare directory.
+_PATH_IN_CODE = re.compile(rf"`((?:{_ROOTS})/[^`\s<>*]*)`")
+_PATH_IN_LINK = re.compile(rf"\]\(((?:{_ROOTS})/[^)\s#]*)\)")
+# The README deliberately names the older layout that only the Obsidian projection carries, to say
+# it is not the repository root (README.md "nu este rădăcina depozitului" / README.en.md "is not the
+# repository root"). These bare directory mentions are the only retired names allowed to be absent.
+PROJECTION_ONLY = ("00_CORE/", "09_COORDINATION/", "99_SYSTEM/")
 _WORKFLOW_NAME = re.compile(r"`([A-Za-z0-9_.*-]+\.yml)`")
 
 
@@ -35,7 +49,9 @@ def cited_paths(text: str) -> set[str]:
 def missing_paths(text: str, root: Path) -> list[str]:
     return sorted(
         p for p in cited_paths(text)
-        if not p.startswith(UNTRACKED_BY_DESIGN) and not (root / p.rstrip("/")).exists()
+        if not p.startswith(UNTRACKED_BY_DESIGN) and p not in PROJECTION_ONLY
+        and not (root / p.rstrip("/")).exists()
+        and not (root / PACKAGES / p.rstrip("/")).exists()
     )
 
 
@@ -53,6 +69,12 @@ def unnamed_files(names: set[str], files: set[str]) -> list[str]:
 
 def _workflow_files() -> set[str]:
     return {p.name for p in WORKFLOWS.glob("*.yml")}
+
+
+def test_bare_directory_that_does_not_exist_is_reported(tmp_path):
+    (tmp_path / "docs").mkdir()
+    text = "see `foo_dir/`, `docs/`, `99_NOPE/`, `scripts/gone/`, [x](security/) and `00_CORE/`"
+    assert missing_paths(text, tmp_path) == ["99_NOPE/", "scripts/gone/", "security/"]
 
 
 @pytest.mark.parametrize("readme", READMES)

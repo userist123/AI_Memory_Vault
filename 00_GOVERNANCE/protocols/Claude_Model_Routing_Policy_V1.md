@@ -1,0 +1,278 @@
+# Claude Model Routing Policy V1 — which Claude model runs which work, and why
+
+**Status:** REAL, TEST_VERIFIED (`20_TESTS/test_claude_model_router.py`,
+`20_TESTS/test_cost_router_skill.py`). Applied in Claude Code by the **`cost-router` skill**
+(`.claude/skills/cost-router/SKILL.md`): the skill carries the protocol, a `UserPromptSubmit` hook
+injects one route line per non-trivial prompt, and the subagents in `.claude/agents/` pin the
+cheaper models. Nothing here calls a provider.
+
+**Owner question answered:** "Which model should Claude Code use for what, so the session
+spends fewer tokens-dollars without losing the result?"
+
+## 1. Rate card (Anthropic first-party API, as of 2026-10-06; `04_CONFIG/claude_model_routing.json`)
+
+| Alias | Model | $/MTok in | $/MTok out | cache read | relative to Opus |
+|---|---|---|---|---|---|
+| `fable` | Claude Fable 5.1 | 10.00 | 50.00 | 0.25 | 2.5x |
+| `opus` | Claude Opus 5.5 (Claude Code default) | 4.00 | 20.00 | 0.20 | 1x |
+| `sonnet` | Claude Sonnet 5.5 | 2.00 | 10.00 | 0.20 | 0.5x |
+| `haiku` | Claude Haiku 5.5 (>100K-token prompts cost 5x more) | 0.10 | 0.50 | 0.01 | 0.025x |
+
+Fable usage can bill to usage credits instead of the plan's included limits; Claude Code asks
+for consent before that happens. Every current model has thinking on; `effort`
+(`low`..`max`) is the only depth control. Opus 5.5, Sonnet 5.5 and Haiku 5.5 default to
+`medium`; Fable to `high`.
+
+## 2. What the research says (claude-api skill, cost-optimization guide; Claude Code docs)
+
+1. **Caching is the biggest lever and it is free.** Every turn resends the whole conversation;
+   a stable system prompt and tool list keep it priced at the cache-read rate. Changing the
+   model, the top-level effort or the tool set mid-session cold-starts the cache. In the session
+   that built this, 91% of input was served from cache (§5).
+2. **Lower effort on the same model before changing the model.** Research-style work is nearly
+   flat across effort levels; long-horizon coding loses a few points per step down for a large
+   cost saving. Sweep effort first, switch models between tasks, never inside one.
+3. **Model choice is the last lever, and it is priced per completed task, not per token.** A
+   cheaper model that needs retries is not cheaper. The published winners are two shapes only:
+   an **orchestrator** (frontier model plans, cheap workers do bulk independent pieces) and
+   an **advisor** (cheap executor, frontier consult on hard decisions). A single dependent chain
+   that fits one context is cheapest on one model at lower effort.
+4. **Re-run failures at higher effort/tier.** Run everything cheap, re-run only what the tests
+   reject; this held the pass rate at roughly half the cost in Anthropic's coding runs.
+5. **Subagents are the mechanism in Claude Code.** A subagent file pins `model:` and `effort:`;
+   a project agent named `Explore` overrides the built-in explorer and keeps its own model; the
+   built-in `claude-code-guide` already runs on Haiku. Subagent requests count against the same
+   usage limits.
+
+## 3. The routing table (`task_classes` in the policy file)
+
+| Class | Model / effort | Runs as | Use for | Why |
+|---|---|---|---|---|
+| `explore` | haiku / low | `Explore` subagent | where is X, who imports Y, list every Z | answer is a location, not a judgment |
+| `summarize` | haiku / low | `Explore` subagent | summarize, extract, classify, convert | checkable mechanical output |
+| `implement` | sonnet / medium | `vault-worker` subagent | spec'd change with tests as the failure signal | run cheap first, escalate failures |
+| `review` | opus / high | `vault-reviewer` subagent | verify DONE claims, review diffs, security review | edge-case reasoning; independent context |
+| `design` | opus / xhigh | main session | architecture, root cause, multi-file plans | a wrong plan costs more than tokens |
+| `frontier` | fable / high | main session only | ambiguous, long-horizon, end-to-end orchestration | the one place Fable earns 2.5x |
+| unclassified | opus / medium (Claude Code default) | — | anything the keywords miss | reported as `confidence: low`, never guessed cheaper |
+
+Rules applied after classification (`rules` in the policy; can only raise a tier):
+- **risk floor**: `high`/`critical` risk (production, credentials, deletes, security boundary)
+  never below Opus;
+- **Fable is never a subagent model**; a subagent route that would escalate to Fable hands the
+  step back to the main session;
+- **risk is read from the task text** (`rules.risk_keywords`, English and Romanian: production,
+  credentials, secrets, auth, trust boundaries, deletes, git history, ...); a detected `high`/
+  `critical` risk raises the route to Opus at `high` effort, keeps it in the main session (the
+  cheaper-model subagents are not used) and names an independent verifier;
+- **the verifier is always `vault-reviewer` (Opus, fresh context)**, for every high/critical or
+  security task that is not itself a review; Fable is never a verifier;
+- **escalation order on failure**: haiku → sonnet → opus, one notch, after the tests say the
+  cheaper attempt failed. Opus is the ceiling: Fable is reachable only for the `frontier` class,
+  in the main session (owner decision, 2026-10-15); every other class stays on Opus;
+- **subagent output contract**: `decision / evidence / risks / unknowns / confidence /
+  recommended_action`, under 300 words, so the main session's context stays small.
+
+## 3A. Enforcement and the local tier (2026-10-10, owner-approved)
+
+- **Any subagent type, the model per route.** A `PreToolUse` hook on `Agent`
+  (`.claude/skills/cost-router/hook_agent_model.py`) classifies each spawn's brief and rewrites its
+  `model`: none given → the route's model; cheaper than the route → raised; more than one tier
+  above → capped (one-notch escalation stays allowed); risk detected → Opus; Fable → Opus. An
+  unclassified brief without risk is left to the agent's own frontmatter. The hook answers `allow`
+  with `updatedInput`, as the hooks reference requires; deny/ask rules still apply. It never blocks.
+- **One route line per prompt.** A project copy of a hook stays silent when the user-scope install
+  of the same hook is registered (`is_shadowed` in `lib/route.py`).
+- **Local tier.** `lib/local_llm.py` sends text-in/short-text-out work to Ollama on loopback
+  (`local_llm` in the policy: `qwen2.5:7b-instruct` / `mistral:7b-instruct` for text,
+  `qwen2.5-coder:7b` / `qwen2.5-coder:3b` for code; measured on the owner's PC, an 8 GB laptop GPU,
+  3.6–7.4 s cold). Files are read by the local model, never by Claude; input over
+  `max_input_chars` is refused, not truncated; exit 3 = unavailable → Haiku subagent. The prompt hook
+  advertises it for `summarize` only when a configured model answers on 127.0.0.1:11434. Never used
+  for multi-step code, design, risky work or verification; unreachable from cloud sessions.
+
+## 3C. Token-waste fixes (2026-10-16, owner-requested)
+
+Measured on the local transcripts of 2026-10-14..16 (LogAnalyzer three-editions work): 6,491 Opus
+requests, 1.9 B cache-read and 83 M cache-write tokens for 0.75 M output tokens; 78% of the cache
+reads came from subagents. The cost was context re-reading, not generated code. Changes:
+
+- **Risk floor on the reviewer, not the implementer.** `rules.implementer_risk_floor`: an
+  `implement` route at `high` risk keeps its class model (Sonnet, effort raised to `high`) when an
+  independent verifier at or above the floor is mandatory (`verifier_model` Opus,
+  `security_requires_independent_verifier`). The decision records
+  `risk_floor_deferred_to_verifier:high->opus` and `independent_verifier->opus`. Not deferred:
+  `critical` risk and any goal naming a live operation (`never_for_stems`: production, deploy,
+  release, publish, delet-, purg-, revok-, rotat-, leak, --force, migrat-, șterg-, rotim, ...;
+  matched at a word start with no right boundary, so deleting/deployment/production-db hit too),
+  because a review after the fact cannot undo it. Design and
+  root cause stay on Opus in the main session; a review route keeps its `vault-reviewer` subagent
+  (already Opus) instead of falling back to the main session. `route(..., role=...)`: the Agent
+  hook passes `implementer` for worker subagent types (a pricier text class such as review is
+  routed as implement) and `reviewer` for reviewer types (never below the verifier model). A
+  requested model below the implementer class model is rejected on risky code.
+- **Vault router knows the host's subagents.** `04_CONFIG/agent_router.json` adds the
+  `claude_subagent` transport: `claude_subagent_worker` (vault-worker), `claude_subagent_reviewer`
+  (vault-reviewer, read-only) and `claude_subagent_explore` (Explore). `route_cli` marks them
+  available only when `CLAUDECODE=1`; the receipt's `execution_contract` then says
+  `execute_via: claude_code_agent_tool` with the `subagent_type`, and `dispatch --execute` refuses
+  (the host spawns them). A verifier must have `tool_use` (it reads the diff and runs the checks;
+  `local_llm` can do neither). With no vendor-independent verifier, a `vault-reviewer` candidate of
+  a different agent is used as a logged fallback (`rejected`:
+  `verifier:no_independent_route->fallback:...`, plus a warning) instead of BLOCKED; outside Claude
+  Code nothing changes (fail closed).
+- **Cached route receipt.** A router call records the prompt's task class for the session
+  (`route-<sid>.routed_classes`); the Agent gate accepts it for later prompts of the same class.
+- **Single-command exemptions.** One read-only or one-shot git/gh command and a short edit of
+  `MEMORY.md`, a memory note or a `todo-*.md` checkpoint do not count toward the 3-call limit.
+  Only explicit forms (`git status|log|diff|show|rev-parse|ls-files`, `git branch` listing,
+  `git remote -v`, `gh pr view|checks|merge|edit|list|diff|comment|status|ready`, `gh run|issue`
+  reads); no chain, pipe, redirect or substitution, and no flag that runs a program, writes a file
+  or bypasses protection (`-c`, `--output`, `--ext-diff`, `--textconv`, `--upload-pack`,
+  `--receive-pack`, `--exec`, `--config`, `--admin`). `git fetch`/`ls-remote` are not exempt.
+- **Bounded resumes.** `hook_resume_guard.py` (PreToolUse on SendMessage): a second resume of the
+  same subagent is denied (start a new agent from a <=40-line checkpoint); a first one above 150k
+  context tokens is warned. **Main-transcript reminder**: above 250k context tokens every prompt
+  gets a reminder to checkpoint and continue with /clear.
+- **Process rules** (skill §2A, `CLAUDE.md`): threat model / probe list in the brief before
+  security work, at most 2 review rounds with delta-only round 2, one implementation agent at a
+  time, agents never poll CI, product questions and check-id reservations before dispatch.
+
+Tests: `20_TESTS/test_cost_router_token_waste.py`.
+
+## 3B. Context economy in every project (2026-10-10, owner-approved)
+
+Sessions spent 300–400k tokens exploring repositories (owner report, not measured here). The user
+install now adds, for every project on the machine (and every cloud session via the bootstrap):
+- **Repository map** — `SessionStart` hook `hook_repo_map.py` (matcher `startup|clear|compact`)
+  injects `lib/repo_map.py`'s map of the current git repository: root files, test command, each
+  top-level directory with file count, size, main types, README line and largest subdirectories;
+  ⚠ marks directories over 300 files or 50 MB. Built from `git ls-files` and file sizes only,
+  capped at 4,000 characters (about 1k tokens), cached in `~/.claude/cache/repo-map/` by path and
+  HEAD (this repository, 17,562 files: 0.35 s uncached). Silent outside git; never blocks.
+- **Reading rules** — a marked block in `~/.claude/CLAUDE.md` (rest of the file untouched): use the
+  map, grep narrowly, no wholesale reads of ⚠ directories, one task per session with `/clear` from
+  a checkpoint.
+- **Read deny rules** in `~/.claude/settings.json` for pure tool caches only (`__pycache__`,
+  `.pytest_cache`, `.mypy_cache`, `.ruff_cache`, `.git/objects`). Dependency and build trees
+  (node_modules, virtualenvs, dist) stay readable: a deny beats any project allow, and debugging
+  needs them. The rules actually added are recorded in `~/.claude/cost-router.deny-added.json`.
+`--no-context` skips the last two; `--uninstall` removes exactly what was added. Tests:
+`20_TESTS/test_cost_router_repo_map.py`.
+
+## 4. How to use it
+
+**One install per surface, then it runs and stays current** (owner rule, 2026-10-10):
+
+| Surface | Install once | Takes effect | Stays current |
+|---|---|---|---|
+| PC (Claude Code CLI/desktop, every project) | `install.py` below, or the bootstrap line in any shell | next session | `SessionStart` hook `hook_self_update.py`: at most hourly, sparse clone of `main` + its `install.py` |
+| Cloud sessions (any repository, or none) | bootstrap line in the environment *Setup script* | next new session | every new session runs it |
+| claude.ai chat | zip `.claude/skills/cost-router/chat/` (folder `cost-router` with `SKILL.md`) and upload it under Settings > Capabilities > Skills | next chat | re-upload when it changes (rare); chat has no hooks |
+
+```text
+python3 .claude/skills/cost-router/install.py            # skill + agents + 3 hooks into ~/.claude
+python3 .claude/skills/cost-router/install.py --no-hook  # skill + agents only, no hooks, no self-update
+python3 .claude/skills/cost-router/install.py --uninstall
+```
+
+The self-update fetches only from the canonical repository URL fixed in the hook, prints nothing,
+gives up silently offline (the installed copy keeps working), never runs after `--uninstall`, writes
+the source commit to `~/.claude/skills/cost-router/VERSION`, and replaces an agent file only while it
+is still the copy an install wrote (owner edits are kept). Every install holds
+`~/.claude/cost-router.lock` and swaps the skill directory in by rename, so two sessions starting at
+once or a run killed by the 60 s hook timeout never leave a half-deleted skill; an update never undoes
+`--uninstall`. Tests: `20_TESTS/test_cost_router_self_update.py` (including the concurrency race the
+independent review reproduced on the first draft).
+Chat cannot switch its own model or spawn model-pinned subagents: the chat skill only names the
+cheaper model in one line and keeps the conversation short.
+
+Inside this repository nothing needs installing: the project skill, agents and the hook in
+`.claude/settings.json` are versioned, and a `SessionStart` hook (startup and resume) runs
+`install.py --session-start` so the skill and agents also land in the session's user scope
+(`~/.claude`), which is what an ephemeral cloud container needs. It adds no user-scope hook and it
+does nothing after an `--uninstall` on that machine (marker `~/.claude/cost-router.disabled`; an
+explicit `install.py` clears it). The installer refuses a user `settings.json` it cannot parse as
+strict JSON before copying anything. Hook commands are `bash` lines: on Windows they need Claude
+Code's Git Bash (unverified here). Another repository, or every cloud session at once, gets the same with the **bootstrap** below: a
+sparse clone of just the skill's files (9 files, about 2 seconds, measured 2026-10-10 from a cloud
+container), the installer, then cleanup. It never touches the current project's git state.
+
+```bash
+d=$(mktemp -d) && git clone -q --filter=blob:none --sparse --depth 1 https://github.com/userist123/AI_Memory_Vault_CODEX_READY "$d" && git -C "$d" sparse-checkout set --no-cone .claude/skills/cost-router .claude/agents 03_IMPLEMENTATION/packages/routing/claude_model_router.py 04_CONFIG/claude_model_routing.json >/dev/null 2>&1 && for py in python3 python; do if "$py" -c "import sys" >/dev/null 2>&1; then "$py" "$d/.claude/skills/cost-router/install.py"; break; fi; done; rm -rf "$d"; exit 0
+```
+
+The patterns carry no leading `/`: Git Bash (MSYS) rewrites an argument that starts with `/` into a
+Windows path, so `/03_IMPLEMENTATION/...` never reached git and `install.py` stopped on "missing
+source" (seen on the owner's PC, 2026-10-10). A slash inside the pattern anchors it to the root
+just the same (gitignore rules; git prints a harmless warning, discarded). The `python3`/`python`
+loop covers Windows, where `python3` may be the Store stub.
+
+- **Every cloud session, any repository:** paste that line into the cloud environment's *Setup
+  script* (session title bar, cloud environment menu, Edit). New sessions run it at start.
+- **One other repository:** put it in that repo's `.claude/settings.json` as a `SessionStart`
+  hook (`"matcher": "startup|resume"`, `"timeout": 60`).
+- **A personal computer:** run it once in any shell (Git Bash on Windows); it is the same as
+  running `install.py` from a clone. `/cost-router` invokes the skill by hand; Claude also loads
+it on its own from the description. The hook adds about 60 tokens per prompt and is silent on
+trivial prompts (slash commands, yes/no, under four words); it can never block a prompt.
+
+Manual tools:
+
+```text
+python -m routing.claude_model_cli policy                       # the table above, from the JSON
+python -m routing.claude_model_cli route --goal "<task>" [--risk high] [--subagent] [--input-tokens N]
+python -m routing.claude_model_cli report [--project-dir .] [--all-projects] [--json]
+```
+(run from `03_IMPLEMENTATION/packages`, or with `PYTHONPATH=03_IMPLEMENTATION/packages`).
+
+`route` prints class, model, effort, subagent, verifier, escalation target, the estimated cost
+and what the same tokens cost on Fable. `report` reads the local Claude Code transcripts
+(`~/.claude/projects/<slug>/*.jsonl`, de-duplicated by `requestId`) and prices real usage per
+model, with the counterfactual cost on every other model (equal-token assumption: an upper
+bound on savings).
+
+The project `.claude/settings.json` sets `"model": "opus"`, so a session on this repository starts
+on Opus 5.5 unless the owner overrides it (`/model`, `--model` and `ANTHROPIC_MODEL` all rank
+higher): the main-session model is the largest single cost lever (Fable is 2.5x Opus per token)
+and the skill never changes it. Pick Fable deliberately, for the ambiguous long-horizon tail.
+
+In a session, the main agent (whatever model the owner picked with `/model`) does the
+classification itself with this table and delegates: `Agent(subagent_type="Explore")` for
+reads, `vault-worker` for bounded changes, `vault-reviewer` before claiming DONE. The main
+session keeps design and orchestration. Defaults that keep the bill down regardless of routing:
+`/effort medium` on Opus for routine work, `xhigh` only for the hard tail; stable tools and
+system prompt within a session; excerpts, not whole files (CLAUDE.md token-economy rule).
+
+## 5. Evidence
+
+- Unit tests: `20_TESTS/test_claude_model_router.py` (policy validity, classification, risk
+  floor, Fable-never-subagent, verifier independence, rate-card math, transcript de-duplication,
+  subagent files consistent with the policy, CLI).
+- Measured on the session that built this (2026-10-10, Fable 5.1 main session, after 11
+  requests):
+
+```text
+model                  req     input   cache_rd   cache_wr   output   think  hit%      usd
+claude-fable-5-1        11       292    1807494     171175    33964    5526   91%     5.58
+                    same tokens on: fable $5.58, opus $2.41, sonnet $1.39, haiku $0.07
+```
+
+  Reading: with the prefix cached, the bill is dominated by cache reads of the 1.8M resent
+  tokens and by output. The same token volume on Opus would have cost 43%, which is the
+  argument for running routine sessions on Opus at `medium` and reserving Fable for the
+  ambiguous tail; the exploration reads inside this session (several hundred KB of files) are
+  what the `Explore` subagent now takes off the main model's bill.
+
+## 6. Limits (honest)
+
+- Keyword classification is heuristic. It is meant to make the policy explicit and testable,
+  not to replace judgment; the main agent is the classifier in practice.
+- Prices drift; `pricing_as_of` is in the file and must be refreshed with the rate card.
+- The hook only *nudges* (one line of context); the skill body loads when invoked and stays in
+  context for the session (about 1.2K tokens), which is the price of having the protocol present.
+  The main agent still makes the call; a subagent is only as good as the brief it gets.
+- The usage counterfactual assumes equal token counts across models; a cheaper model that
+  retries is not cheaper. Judge per completed task.
+- Distinct from `providers/model_tier_router.py` (council tiers, protected core) and
+  `routing/agent_router.py` (external runtimes); neither is changed.

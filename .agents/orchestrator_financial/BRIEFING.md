@@ -6,13 +6,13 @@ Execute end-to-end implementation of the Financial Ingestion Pipeline and Multi-
 ## 🔒 My Identity
 - Archetype: teamwork_preview_orchestrator
 - Roles: orchestrator, user_liaison, human_reporter, successor
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_financial
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_financial
 - Original parent: parent (8f1dd307-f59b-4416-8532-3dc7d78040ca)
 - Original parent conversation ID: 8f1dd307-f59b-4416-8532-3dc7d78040ca
 
 ## 🔒 My Workflow
 - **Pattern**: Project Orchestrator
-- **Scope document**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
+- **Scope document**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
 1. **Decompose**: Survey codebase and requirements with 3 explorers/miners, construct Feature Inventory, decompose into modular milestones and an independent E2E Testing track.
 2. **Dispatch & Execute**:
    - Direct iteration loops (Explorer -> Worker -> Reviewer -> Challenger -> Auditor -> Gate) for milestones.
@@ -71,9 +71,9 @@ Execute end-to-end implementation of the Financial Ingestion Pipeline and Multi-
 - Safety timer: none
 
 ## Artifact Index
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md — Authoritative User Request
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md — Global Project Specification & Decomposition
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md — E2E Testing Verification Certification
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_financial\DISPATCH.md — Dispatch log
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_financial\progress.md — Liveness & progress tracker
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_financial\GATE_STATUS.md — Milestone gate tracker
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md — Authoritative User Request
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md — Global Project Specification & Decomposition
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md — E2E Testing Verification Certification
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_financial\DISPATCH.md — Dispatch log
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_financial\progress.md — Liveness & progress tracker
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_financial\GATE_STATUS.md — Milestone gate tracker

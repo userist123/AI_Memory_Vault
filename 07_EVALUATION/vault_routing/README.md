@@ -5,11 +5,11 @@ on the working tree of `claude/vault-universal-access` (base commit in the JSON)
 
 | Measure | Value |
 |---|---:|
-| Routes (files reachable by `vault://`) | 4220 |
-| Domains (`04_CONFIG/vault_domains.yaml`, `expand: subdirs` included) | 114 (113 before the Casa3D sub-directory landed on main: `expand: subdirs` adds one domain per sub-directory). `VAULT_STATE.md` states the current count (4221 routes, 114 domains; by URI 4221/4221, re-measured 2026-10-07) and a test checks it; the by-name rows below were measured on 4220 routes |
-| `vault_resolve(uri)` returns that route | 4220 / 4220 |
-| `vault_resolve(<last slug segment>)` returns that route | 3998 / 4220 (94.7%) |
-| … returns AMBIGUOUS (name shared by several files) | 222 (readme 112, agent 22, current 9, …) |
+| Routes (files reachable by `vault://`) | 4433 |
+| Domains (`04_CONFIG/vault_domains.yaml`, `expand: subdirs` included) | 114 (113 before the Casa3D sub-directory landed on main: `expand: subdirs` adds one domain per sub-directory). `VAULT_STATE.md` states the current count (4433 routes, 117 domains; by URI 4433/4433, re-measured 2026-10-10) and a test checks it; the by-name rows below were re-measured 2026-10-10 on 4433 routes |
+| `vault_resolve(uri)` returns that route | 4433 / 4433 |
+| `vault_resolve(<last slug segment>)` returns that route | 4199 / 4433 (94.7%) |
+| … returns AMBIGUOUS (name shared by several files) | 234 (readme 116, agent 22, current 10, …) |
 | … RESOLVED to a different file | **0** |
 
 What this does and does not show:

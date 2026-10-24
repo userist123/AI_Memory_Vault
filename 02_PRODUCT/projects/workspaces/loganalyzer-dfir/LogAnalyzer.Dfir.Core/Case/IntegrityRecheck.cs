@@ -55,6 +55,8 @@ public sealed class OutputManifest
     public List<OutputManifestFile> Files { get; set; } = [];
     /// <summary>Chain heads when the manifest was written. Keep a copy outside the case to detect truncation at the end of a chain.</summary>
     public ChainAnchor Anchor { get; set; } = null!;
+    /// <summary>"scop provizoriu, neconfirmat ..." while the case scope is provisional (decision 28); empty once confirmed.</summary>
+    public string ScopeNote { get; set; } = "";
 }
 
 public sealed record OutputManifestFile(string Path, string Sha256, long Size);

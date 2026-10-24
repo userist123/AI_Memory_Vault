@@ -2,7 +2,7 @@
 
 **Agent**: Spec Miner Survey 2 (`teamwork_preview_spec_miner`)  
 **Parent**: `parent` (`e87bdef8-bfc1-4e8e-a965-ccd159cf02a1`)  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2`  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2`  
 **Date**: 2026-08-26T16:05:00Z  
 **Handoff Type**: Hard (Task Complete)
 
@@ -11,7 +11,7 @@
 ## 1. Observation
 
 1. **Source Script Ingestion (`ghid.py`)**:
-   - Inspected `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py` (1,954 lines).
+   - Inspected `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py` (1,954 lines).
    - Contains complete asset dictionaries for 95 instruments: `INDICI` (14), `ACTIUNI` (30), `CRYPTO` (25), `VALUTE` (12), `MATERII_PRIME` (14) (lines 44–166).
    - Contains 5 macro benchmark tickers (`MACRO_TICKERS`, lines 152–159): `^VIX`, `^TNX`, `^IRX`, `^TYX`, `DX-Y.NYB`.
    - Contains FRED series fetcher (`get_fred`, lines 649–678) and Fear & Greed sentiment fetcher (`get_fear_greed`, lines 635–648).
@@ -20,7 +20,7 @@
    - *Security Audit Observation*: Line 29 contains a hardcoded plaintext API key: `FRED_API_KEY = "e372c6879cce084b8c3601f76adbe78d"`.
 
 2. **Excel Model Ingestion (`Analiza_Piata_Profesionala.xlsx`)**:
-   - Inspected `C:\Users\Marius\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx`.
+   - Inspected `C:\Users\user\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx`.
    - Contains 15 sheets: `DASHBOARD`, `FISA ACTIV`, `REZUMAT EXECUTIV`, `SEMNALE INTRARE`, `INDICATORI TEHNICI`, `INDICATORI MACRO`, `COMPETITORI SECTOR`, `PRETURI VOLUME`, `RISCURI OPORTUNITATI`, `CALENDAR ECONOMIC`, `JURNAL TRANZACTII`, `ISTORIC TRENDING`, `LEGENDA`, `LIST_ACTIVE`, `GHID INVATARE`.
    - Identified dynamic R/R Excel formula injected in `SEMNALE INTRARE` column 14: `=IFERROR((M{row}-K{row})/(K{row}-L{row}),"N/A")`.
    - Verified standard hedge fund transaction schema in `JURNAL TRANZACTII` (14 columns: ID, Data, Ora, Activ, L/S, Setup, Entry, SL, TP, Mărime poz., Risc $, Exit, Data ieșire, P&L $).
@@ -65,7 +65,7 @@
 ## 4. Conclusion
 
 The specification mining for the financial data ingestion pipeline and schema architecture is complete and authoritative.
-- The complete specification report has been written to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\survey_spec.md`.
+- The complete specification report has been written to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\survey_spec.md`.
 - All 15 Excel sheets, 95 assets, 5 macro benchmarks, 4 FRED series, 10 technical indicators, confluence scoring rules, dynamic ATR risk models, Draft-07 JSON Schema, and Pydantic v2 models are fully documented.
 - Downstream implementation agents can implement `memory_controller/financial_schema.py` and `memory_controller/financial_query.py` directly using the provided contracts.
 
@@ -76,10 +76,10 @@ The specification mining for the financial data ingestion pipeline and schema ar
 To independently verify the specification and source data consistency:
 
 1. **Inspect Specification Report**:
-   - View `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\survey_spec.md`.
+   - View `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\spec_miner_survey_2\survey_spec.md`.
 2. **Verify Excel Structure & Sheet Names**:
    ```powershell
-   python -c "import sys, openpyxl; sys.stdout.reconfigure(encoding='utf-8'); wb = openpyxl.load_workbook(r'C:\Users\Marius\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx', data_only=True); print('Sheets:', len(wb.sheetnames), wb.sheetnames)"
+   python -c "import sys, openpyxl; sys.stdout.reconfigure(encoding='utf-8'); wb = openpyxl.load_workbook(r'C:\Users\user\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx', data_only=True); print('Sheets:', len(wb.sheetnames), wb.sheetnames)"
    ```
 3. **Verify Existing Financial Search Test Suite**:
    ```powershell

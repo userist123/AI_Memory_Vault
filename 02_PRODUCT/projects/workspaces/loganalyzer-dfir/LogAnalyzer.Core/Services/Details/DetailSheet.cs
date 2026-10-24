@@ -100,9 +100,15 @@ namespace LogAnalyzer.Core.Services.Details
             if (!string.IsNullOrWhiteSpace(ev.Message)) Add(sheet, "Mesaj", "Text", ev.Message);
 
             EventMeaning.Explain(ev.EventId, ev.ProviderName ?? "", data, sheet.Meaning);
-            if (!string.IsNullOrWhiteSpace(ev.OfficialDescription)) sheet.Meaning.Add("Descriere: " + ev.OfficialDescription);
-            if (!string.IsNullOrWhiteSpace(ev.PotentialCriticality)) sheet.Meaning.Add("Criticitate potențială: " + ev.PotentialCriticality);
-            if (!string.IsNullOrWhiteSpace(ev.TacticalExample)) sheet.Meaning.Add("Exemplu de abuz: " + ev.TacticalExample);
+            if (sheet.Meaning.Count == 0)
+                sheet.Meaning.Add($"Evenimentul {ev.EventId} al sursei „{ev.ProviderName}” nu are încă o explicație scrisă în aplicație. Câmpurile lui sunt în fila „Toate câmpurile”, mesajul Windows în secțiunea „Mesaj”.");
+            // Owner 2026-10-11: the knowledge base's sample event (another computer, another person) was shown as „Exemplu de abuz”. It is gone;
+            // what remains of the external source is labelled as such and its severity word is translated.
+            // events stored before the fix may still carry the sample event text: never shown
+            if (!string.IsNullOrWhiteSpace(ev.TacticalExample) && !ev.TacticalExample.Contains("Security ID:", StringComparison.OrdinalIgnoreCase) && !ev.TacticalExample.Contains("Account Name:", StringComparison.OrdinalIgnoreCase))
+                sheet.Meaning.Add("Ce faceți: " + ev.TacticalExample);
+            if (!string.IsNullOrWhiteSpace(ev.PotentialCriticality)) sheet.Meaning.Add("Importanță (după sursa externă): " + ItemMeaning.Severity(ev.PotentialCriticality) + ".");
+            if (!string.IsNullOrWhiteSpace(ev.OfficialDescription)) sheet.Meaning.Add("Descriere din sursa externă (în engleză): " + ev.OfficialDescription);
             if (!string.IsNullOrWhiteSpace(ev.ReferenceUrl)) sheet.Meaning.Add("Referință: " + ev.ReferenceUrl);
 
             FindRelated(ev, data, sheet);
@@ -186,10 +192,12 @@ namespace LogAnalyzer.Core.Services.Details
             Add(sheet, "Valoare", "Date", ra.ValueData);
             Add(sheet, "Evaluare", "Categorie", ra.Category);
             Add(sheet, "Evaluare", "Nivel de suspiciune", ra.SuspicionLevel);
+            ItemMeaning.ExplainRegistry(ra.KeyPath, ra.ValueName, ra.ValueData, ra.SuspicionLevel, sheet.Meaning);
             if (ra.LastWriteTime is null) sheet.Meaning.Add("Ora ultimei scrieri a cheii nu este disponibilă în această sursă.");
             else sheet.Meaning.Add("Ora afișată este ultima scriere a CHEII (LastWriteTime), nu neapărat momentul în care a fost setată această valoare.");
             var path = (ra.KeyPath ?? "").ToLowerInvariant();
-            if (path.Contains(@"\run")) sheet.Meaning.Add("Cheie de pornire automată: programul din valoare rulează la fiecare autentificare/pornire. Mecanism frecvent de persistență (MITRE T1547.001).");
+            // \Run, \RunOnce, \RunServices only: "\RunMRU" is what the user typed in Win+R, not a start-up entry (senior review A.5)
+            if (System.Text.RegularExpressions.Regex.IsMatch(path, @"\\run(once|services)?(\\|$)")) sheet.Meaning.Add("Cheie de pornire automată: programul din valoare rulează la fiecare autentificare/pornire. Mecanism frecvent de persistență (MITRE T1547.001).");
             if (path.Contains(@"\services\")) sheet.Meaning.Add("Configurație de serviciu Windows: ImagePath/ServiceDll indică ce rulează ca serviciu (MITRE T1543.003).");
             if (path.Contains("userassist")) sheet.Meaning.Add("UserAssist: programe lansate din interfața grafică de utilizator (numele sunt codate ROT13).");
             sheet.Raw = JsonSerializer.Serialize(ra, new JsonSerializerOptions { WriteIndented = true });
@@ -205,6 +213,7 @@ namespace LogAnalyzer.Core.Services.Details
             Add(sheet, "Element", "Utilizator / stație", ti.UserOrHost);
             Add(sheet, "Element", "MITRE", ti.MitreTags);
             Add(sheet, "Descriere", "Text", ti.Description);
+            ItemMeaning.Explain(ti, sheet.Meaning);
             var corpus = EventCorpus?.Invoke();
             if (corpus is not null && ti.Timestamp != default)
                 foreach (var ev in corpus.Where(e => (e.TimeCreated - ti.Timestamp).Duration() <= TimeSpan.FromMinutes(2)).Take(100))
@@ -219,6 +228,7 @@ namespace LogAnalyzer.Core.Services.Details
         {
             var type = item.GetType();
             var sheet = new DetailSheet { Title = DisplayName(item), Kind = type.Name, TimeUtc = FindTime(item), Source = item };
+            ItemMeaning.Explain(item, sheet.Meaning);
             foreach (var p in type.GetProperties(BindingFlags.Public | BindingFlags.Instance).Where(p => p.GetIndexParameters().Length == 0))
             {
                 object? v;
@@ -289,7 +299,7 @@ namespace LogAnalyzer.Core.Services.Details
         {
             doc = null;
             if (string.IsNullOrWhiteSpace(xml) || !xml.TrimStart().StartsWith('<')) return false;
-            try { doc = XDocument.Parse(xml); return doc.Root is not null; }
+            try { doc = LogAnalyzer.Dfir.IO.SafeXml.Parse(xml); return doc.Root is not null; }
             catch (System.Xml.XmlException) { return false; }
         }
 

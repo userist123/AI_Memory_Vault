@@ -2,8 +2,8 @@
 
 **Survey Date / Time**: 2026-08-14T23:02:00+03:00  
 **Test Explorer Agent**: `survey_test_explorer_1`  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_test_explorer_1`  
-**Test Suite Root**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY`
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_test_explorer_1`  
+**Test Suite Root**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY`
 
 ---
 

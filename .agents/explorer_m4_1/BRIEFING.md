@@ -6,7 +6,7 @@ Explore and design Milestone 4: FastMCP & IoT Home Assistant Integration (Jarvis
 ## 🔒 My Identity
 - Archetype: explorer
 - Roles: [explorer, investigator, architect, synthesizer]
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m4_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m4_1
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Milestone: Milestone 4 (FastMCP & IoT Home Assistant Integration)
 

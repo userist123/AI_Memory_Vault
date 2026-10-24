@@ -8,16 +8,16 @@ Conduct the final forensic integrity audit of Milestone 4: Cognitive Loop & Mult
 4. Formulate your explicit verdict (**CLEAN** or **INTEGRITY VIOLATION**).
 
 ## Mandatory Reference Documents
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md`
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_3\handoff.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_3\handoff.md`
 
 ## Working Directory
 `.agents/auditor_m4_3`
 
 ## Output Requirements
 1. Formulate your explicit verdict (CLEAN or INTEGRITY VIOLATION).
-2. Write your complete handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_3\handoff.md`.
+2. Write your complete handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_3\handoff.md`.
 
 ---
 

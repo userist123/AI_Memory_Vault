@@ -2,17 +2,17 @@
 
 ## 2026-08-15T02:26:39Z
 You are Worker 1 for Milestone 5 (Continual Learning, TRACe/IR Benchmarks & Full Pytest Pass).
-Your working directory is: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m5_1
-Authoritative requirements: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md
-Project plan: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
+Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m5_1
+Authoritative requirements: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md
+Project plan: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
 Explorer Reports:
-- Explorer 1: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_1\handoff.md
-- Explorer 2: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_2\handoff.md
-- Explorer 3: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_3\handoff.md
+- Explorer 1: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_1\handoff.md
+- Explorer 2: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_2\handoff.md
+- Explorer 3: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_3\handoff.md
 
 Skill references:
-- vault-operations: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
-- vault-security-audit: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
+- vault-operations: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
+- vault-security-audit: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
 
 Tasks:
 1. Examine `cognitive_core/learning.py`:
@@ -23,7 +23,7 @@ Tasks:
    - Ensure all edge cases (zero division, empty lists, k <= 0, k > len, vacuous gold sets) are correctly handled.
 3. Write comprehensive, high-quality test coverage for Milestone 5 in `cognitive_core/tests/test_milestone5_continual_learning_eval.py`.
 4. Run full pytest across the entire repository (`python -m pytest -v` or `python -m pytest`). Verify that 100% of all tests pass with 0 failures.
-5. Write your complete handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m5_1\handoff.md`.
+5. Write your complete handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m5_1\handoff.md`.
 6. Send a completion message back to the orchestrator.
 
 ---

@@ -95,8 +95,8 @@ namespace LogAnalyzer.UI.ViewModels
         // AI / Heuristic Analysis Properties
         public ObservableCollection<AiAnomalyItem> AiAnomalies { get; set; } = new();
         [ObservableProperty] private int _aiRiskScore = 0;
-        [ObservableProperty] private string _aiRiskLevel = "SCĂZUT (Normal)";
-        [ObservableProperty] private string _aiRiskColor = "#22c55e";
+        [ObservableProperty] private string _aiRiskLevel = "NEDETERMINAT (analiza nu a fost rulată)";
+        [ObservableProperty] private string _aiRiskColor = "#94a3b8";
         [ObservableProperty] private int _aiHighEntropyCount = 0;
         [ObservableProperty] private int _aiMasqueradingCount = 0;
         [ObservableProperty] private int _aiOffHoursCount = 0;
@@ -128,7 +128,7 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<ProvenanceLedgerEntry> ProvenanceEntries { get; set; } = new();
         public ObservableCollection<MitreTacticColumn> MitreTacticColumns { get; set; } = new();
         public ObservableCollection<MultiEventCorrelationFinding> MultiEventCorrelations { get; set; } = new();
-        [ObservableProperty] private string _provenanceStatusMessage = "✅ Lanț Criptografic Verificat (SHA-256)";
+        [ObservableProperty] private string _provenanceStatusMessage = "Lanțul de custodie nu a fost verificat în această sesiune";
 
         // ADAudit Plus & Active Directory Analytics Properties
         [ObservableProperty] private int _adEventsAnalyzedCount = 0;
@@ -266,7 +266,7 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<string> TargetTypes { get; } = new() { "PC", "Server", "NAS" };
         [ObservableProperty] private string _selectedTargetType = "PC";
         [ObservableProperty] private string _collectionOutputDir = "C:\\fișiere audit";
-        [ObservableProperty] private string _collectionHostname = "PC-AUDIT";
+        [ObservableProperty] private string _collectionHostname = Environment.MachineName;
         [ObservableProperty] private string _collectionLogs = string.Empty;
         [ObservableProperty] private bool _isCollectionRunning;
         [ObservableProperty] private int _syslogPort = 514;
@@ -634,81 +634,9 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
-        private void InitializeDefaultTimeline()
-        {
-            if (TimelineItems.Count > 0) return;
-            var baseDate = DateTime.Today.AddHours(9).AddMinutes(15).AddSeconds(32);
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate,
-                Title = "Proces legitim lansat",
-                Description = "explorer.exe a fost lansat de către utilizator MARIUS-PC\\Marius",
-                Category = "Proces",
-                Severity = "Informativ",
-                Source = "EDR",
-                UserOrHost = "MARIUS-PC\\Marius"
-            });
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate.AddMinutes(2).AddSeconds(42),
-                Title = "Conexiune de rețea outbound",
-                Description = "Cerere DNS inițiată către portalul de actualizări și sincronizare sesiune utilizator.",
-                Category = "Rețea",
-                Severity = "Informativ",
-                Source = "Sysmon Network",
-                UserOrHost = "MARIUS-PC\\Marius"
-            });
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate.AddMinutes(5).AddSeconds(33),
-                Title = "Execuție script PowerShell codificat (Base64)",
-                Description = "powershell.exe -NoP -NonI -W Hidden -Enc SQBFAFgA... a fost detectat în linia de comandă.",
-                Category = "Script",
-                Severity = "Avertizare",
-                Source = "PowerShell ScriptBlock (EID 4104)",
-                UserOrHost = "MARIUS-PC\\Marius"
-            });
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate.AddMinutes(8).AddSeconds(8),
-                Title = "Tentativă de acces neautorizat la HKLM\\SAM",
-                Description = "Procesul suspect a încercat citirea directă a cheilor de registru pentru credential dumping.",
-                Category = "Registru",
-                Severity = "Avertizare",
-                Source = "EDR Kernel Monitor",
-                UserOrHost = "NT AUTHORITY\\SYSTEM"
-            });
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate.AddMinutes(9).AddSeconds(40),
-                Title = "Escaladare Privilegii (SeDebugPrivilege / Potato)",
-                Description = "Token de securitate escaladat cu succes la NT AUTHORITY\\SYSTEM prin SeImpersonatePrivilege.",
-                Category = "Privilegii",
-                Severity = "Critic",
-                Source = "Windows Security (EID 4672)",
-                UserOrHost = "NT AUTHORITY\\SYSTEM"
-            });
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate.AddMinutes(10).AddSeconds(29),
-                Title = "Conexiune C2 stabilită (185.220.101.45:4444)",
-                Description = "Conexiune socket TCP persistentă detectată către adresă IP C2 cunoscută pe portul 4444.",
-                Category = "C2 Beacon",
-                Severity = "Critic",
-                Source = "Windows Firewall EID 5156",
-                UserOrHost = "185.220.101.45:4444"
-            });
-            TimelineItems.Add(new TimelineItem
-            {
-                Timestamp = baseDate.AddMinutes(11).AddSeconds(46),
-                Title = "Încărcare librărie malițioasă rundll32 (%TEMP%\\sk.dll)",
-                Description = "rundll32.exe a executat biblioteca dinamică nesemnată %TEMP%\\sk.dll pentru persistență.",
-                Category = "EDR Shield",
-                Severity = "Critic",
-                Source = "Process Hollowing EID 9999",
-                UserOrHost = "rundll32.exe"
-            });
-        }
+        // An empty timeline stays empty: this method used to add an invented attack (encoded PowerShell, SAM access) under a fixed
+        // machine name, which a forensic tool must never show as if it were evidence.
+        private void InitializeDefaultTimeline() { }
 
         private void ReloadDashboardStats()
         {
@@ -2332,7 +2260,7 @@ namespace LogAnalyzer.UI.ViewModels
                 MachineName = Environment.MachineName,
                 ProviderName = "Microsoft-Windows-Security-Auditing",
                 TimeCreated = DateTime.Now,
-                Message = "An attempt was made to access an object.\nProcess Name: C:\\Users\\Marius\\AppData\\Local\\Temp\\stealc.exe (Lumma / Stealc Infostealer)\nObject Name: %LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Network\\Cookies (OAuth Session Tokens & MFA Bypass Cookies)\nAccess Request: ReadData / Extract SQLite DB"
+                Message = "An attempt was made to access an object.\nProcess Name: C:\\Users\\user\\AppData\\Local\\Temp\\stealc.exe (Lumma / Stealc Infostealer)\nObject Name: %LOCALAPPDATA%\\Google\\Chrome\\User Data\\Default\\Network\\Cookies (OAuth Session Tokens & MFA Bypass Cookies)\nAccess Request: ReadData / Extract SQLite DB"
             };
 
             TotalLiveEventsCaptured++;

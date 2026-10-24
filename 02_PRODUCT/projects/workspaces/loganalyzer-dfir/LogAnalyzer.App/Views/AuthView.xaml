@@ -1,0 +1,178 @@
+<UserControl x:Class="LogAnalyzer.UI.Views.AuthView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:services="clr-namespace:LogAnalyzer.UI.Services">
+    <UserControl.Resources>
+        <!-- 2026-10-23: a group of details that Simplu keeps behind a collapsed expander and Expert shows open, without the header (same content, same order). -->
+        <Style x:Key="MoreDetailsExpanderStyle" TargetType="Expander">
+            <Setter Property="IsExpanded" Value="False"/>
+            <Style.Triggers>
+                <DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True">
+                    <Setter Property="IsExpanded" Value="True"/>
+                    <Setter Property="Template">
+                        <Setter.Value>
+                            <ControlTemplate TargetType="Expander"><ContentPresenter/></ControlTemplate>
+                        </Setter.Value>
+                    </Setter>
+                </DataTrigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+    <ScrollViewer VerticalScrollBarVisibility="Auto">
+        <StackPanel Margin="24,24,24,48">
+            <TextBlock Text="Autentificare și conturi" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+            <TextBlock Text="{Binding CurrentUser, StringFormat='Sesiune: {0}'}" FontSize="13" FontWeight="SemiBold" Margin="0,4,0,0" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+            <TextBlock FontSize="12" Margin="0,4,0,8" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"
+                       Text="Utilizatorii se autentifică cu cardul (smart card cu contacte, în slotul tastaturii) și PIN-ul, gestionate de SafeNet Authentication Client. Aplicația nu vede PIN-ul. Administratorul principal se poate autentifica oricând și cu cont + parolă. Fiecare acțiune de aici intră în auditul înlănțuit prin hash al autentificării."/>
+            <TextBlock Text="{Binding Status}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+
+            <!-- Own card -->
+            <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,10">
+                <StackPanel>
+                    <TextBlock Text="Cardurile mele" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="Detectați cardul din slot, alegeți certificatul și înrolați-l (card de rezervă sau de înlocuire). Cardul semnează o provocare; PIN-ul se introduce în fereastra Windows / SafeNet."
+                               FontSize="11" TextWrapping="Wrap" Margin="0,2,0,6" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <StackPanel Orientation="Horizontal" Margin="0,0,0,6">
+                        <Button Content="Detectează cardul" Command="{Binding DetectCardsCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                        <Button Content="Înregistrează cardul ales pentru contul meu" Command="{Binding EnrollForMeCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                    </StackPanel>
+                    <DataGrid AutomationProperties.Name="Cardurile detectate" ItemsSource="{Binding Detected}" SelectedItem="{Binding SelectedDetected}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="120">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Certificat" Binding="{Binding Subject}" Width="2*"/>
+                            <DataGridTextColumn Header="Cititor" Binding="{Binding Reader}" Width="*"/>
+                            <DataGridTextColumn Header="Serie" Binding="{Binding Serial}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </StackPanel>
+            </Border>
+
+            <!-- Primary admin password -->
+            <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,10" Visibility="{Binding IsPrimaryAdmin, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <StackPanel>
+                    <TextBlock Text="Parola administratorului principal" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="Schimbarea cere parola curentă. Cel puțin 14 caractere, diferită de nume, nu o parolă obișnuită. Parola rămâne valabilă chiar dacă aveți card înrolat."
+                               FontSize="11" TextWrapping="Wrap" Margin="0,2,0,6" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <WrapPanel>
+                        <StackPanel Margin="0,0,6,0"><TextBlock Text="Parola curentă" Margin="0,0,0,2" Foreground="{StaticResource TextSecondaryBrush}"/><PasswordBox AutomationProperties.Name="Parola curentă" x:Name="CurrentPw" Width="200"/></StackPanel>
+                        <StackPanel Margin="0,0,6,0"><TextBlock Text="Parola nouă" Margin="0,0,0,2" Foreground="{StaticResource TextSecondaryBrush}"/><PasswordBox AutomationProperties.Name="Parola nouă" x:Name="NewPw" Width="200"/></StackPanel>
+                        <StackPanel Margin="0,0,6,0"><TextBlock Text="Repetați parola nouă" Margin="0,0,0,2" Foreground="{StaticResource TextSecondaryBrush}"/><PasswordBox AutomationProperties.Name="Repetați parola nouă" x:Name="ConfirmPw" Width="200"/></StackPanel>
+                        <Button Content="Schimbă parola" Click="ChangePassword_Click" Style="{StaticResource OutlineButtonStyle}"/>
+                    </WrapPanel>
+                </StackPanel>
+            </Border>
+
+            <!-- Administration -->
+            <StackPanel Visibility="{Binding IsAdministrator, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Utilizatori și carduri (administrator global)" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{Binding RegisterGap}" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,4" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <DataGrid AutomationProperties.Name="Conturile aplicației" ItemsSource="{Binding Accounts}" SelectedItem="{Binding SelectedAccount}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="170">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Cont" Binding="{Binding Account}" Width="*"/>
+                                <DataGridTextColumn Header="Persoană" Binding="{Binding Person}" Width="*"/>
+                                <DataGridTextColumn Header="Rol" Binding="{Binding Role}" Width="Auto"/>
+                                <DataGridTextColumn Header="Stare" Binding="{Binding State}" Width="Auto"/>
+                                <DataGridTextColumn Header="Carduri" Binding="{Binding Cards}" Width="Auto"/>
+                                <DataGridTextColumn Header="Autentificare" Binding="{Binding Mode}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <WrapPanel Margin="0,6,0,6">
+                            <Button Content="Schimbă rolul" Command="{Binding ToggleRoleCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                            <Button Content="Dezactivează / reactivează contul" Command="{Binding ToggleAccountDisabledCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                            <Button Content="Înregistrează cardul ales (secțiunea de sus) pentru persoana selectată" Command="{Binding EnrollForSelectedCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                        </WrapPanel>
+                        <DataGrid AutomationProperties.Name="Cardurile contului selectat" ItemsSource="{Binding Cards}" SelectedItem="{Binding SelectedCard}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="130">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Amprenta cardului (SHA-256)" Binding="{Binding ShortThumbprint}" Width="Auto"/>
+                                <DataGridTextColumn Header="Subiect" Binding="{Binding Subject}" Width="2*"/>
+                                <DataGridTextColumn Header="Serie" Binding="{Binding Serial}" Width="Auto"/>
+                                <DataGridTextColumn Header="Stare" Binding="{Binding State}" Width="Auto"/>
+                                <DataGridTextColumn Header="Înrolat de" Binding="{Binding EnrolledBy}" Width="*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <Button Content="Dezactivează / reactivează cardul ales" Command="{Binding ToggleCardDisabledCommand}" Style="{StaticResource OutlineButtonStyle}" HorizontalAlignment="Left" Margin="0,6,0,8"/>
+                        <TextBlock Text="Cont nou (se autentifică numai cu card + PIN)" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <WrapPanel Margin="0,4,0,0">
+                            <StackPanel Margin="0,0,6,0"><TextBlock Text="Contul (ex. DOMENIU\utilizator)" Margin="0,0,0,2" Foreground="{StaticResource TextSecondaryBrush}"/><TextBox AutomationProperties.Name="Contul persoanei noi" Text="{Binding NewAccount, UpdateSourceTrigger=PropertyChanged}" Width="220" ToolTip="DOMENIU\utilizator sau utilizator"/></StackPanel>
+                            <StackPanel Margin="0,0,6,0"><TextBlock Text="Numele persoanei" Margin="0,0,0,2" Foreground="{StaticResource TextSecondaryBrush}"/><TextBox AutomationProperties.Name="Numele persoanei noi" Text="{Binding NewPerson, UpdateSourceTrigger=PropertyChanged}" Width="220" ToolTip="Nume și prenume"/></StackPanel>
+                            <CheckBox Content="administrator global" IsChecked="{Binding NewIsAdministrator}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Bottom" Margin="0,0,6,6"/>
+                            <Button Content="Adaugă persoana (creează contul)" Command="{Binding CreateAccountCommand}" Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Bottom" Margin="0,0,0,2"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+            </StackPanel>
+
+            <!-- A broken accounts integrity is never hidden behind "Setări avansate": the warning shows here in both levels -->
+            <Border Visibility="{Binding IntegrityBroken, Converter={StaticResource BooleanToVisibilityConverter}}" BorderBrush="{StaticResource CriticalBrush}" BorderThickness="1"
+                    CornerRadius="4" Padding="10,8" Margin="0,0,0,10" AutomationProperties.Name="Avertisment: integritatea conturilor">
+                <StackPanel>
+                    <TextBlock Text="Atenție: integritatea conturilor nu se verifică" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}"/>
+                    <TextBlock Text="{Binding Integrity}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2,0,0"/>
+                    <TextBlock Text="Detaliile și acceptarea stării curente: „Setări avansate”, secțiunea „Audit și integritate”." TextWrapping="Wrap"
+                               Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                </StackPanel>
+            </Border>
+
+            <!-- 2026-10-23: Simplu keeps the password, users and own cards; the rest is behind one collapsed expander (open and header-less in Expert) -->
+            <Expander Header="Setări avansate" Style="{StaticResource MoreDetailsExpanderStyle}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,10" AutomationProperties.Name="Setări avansate">
+                <StackPanel>
+            <!-- offline update of the detection lists -->
+            <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,10">
+                <StackPanel>
+                    <TextBlock Text="Actualizarea listelor de detecție" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="{Binding DataPackLine}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,6"/>
+                    <TextBlock Text="Pachetul (.zip) vine semnat de la administratorul aplicației, pe un mediu înregistrat. Aplicația verifică semnătura, versiunea și amprenta fiecărui fișier; nu rulează nimic din pachet."
+                               TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"/>
+                    <Button Content="Importă pachetul de date…" Command="{Binding ImportDataPackCommand}" HorizontalAlignment="Left"/>
+                    <TextBlock Text="{Binding DataPackStatus}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,0"/>
+                </StackPanel>
+            </Border>
+                    <StackPanel Visibility="{Binding IsAdministrator, Converter={StaticResource BooleanToVisibilityConverter}}">
+                <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Încredere (offline): autoritatea de certificare (CA) și lista certificatelor revocate (CRL)" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock FontSize="11" TextWrapping="Wrap" Margin="0,2,0,6" Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="Un card este acceptat numai dacă certificatul lui vine de la o autoritate de certificare (CA) adusă aici. Cardurile retrase se cunosc numai din listele certificatelor revocate (CRL) aduse pe suport; aplicația nu descarcă nimic."/>
+                        <WrapPanel Margin="0,0,0,4">
+                            <Button Content="Adu certificatul autorității de certificare (CA)…" Command="{Binding ImportCaCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                            <Button Content="Adu lista certificatelor revocate (CRL)…" Command="{Binding ImportCrlCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                        </WrapPanel>
+                        <ListBox AutomationProperties.Name="Autoritățile de certificare aduse" ItemsSource="{Binding TrustAnchors}" MaxHeight="90" Background="Transparent" BorderThickness="0"/>
+                        <ListBox AutomationProperties.Name="Listele certificatelor revocate aduse" ItemsSource="{Binding Crls}" MaxHeight="90" Background="Transparent" BorderThickness="0"/>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Parametri" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <CheckBox Content="Refuză autentificarea dacă lista cardurilor retrase (CRL) nu este la zi. Lăsat nebifat, aplicația doar avertizează (nu și în ediția Standalone, unde se refuză mereu)." IsChecked="{Binding MissingCrlRefuse}" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,4"/>
+                        <WrapPanel>
+                            <TextBlock Text="Blocare după inactivitate (min):" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Blocare după inactivitate, minute" Text="{Binding IdleLockMinutes}" Width="50" Margin="0,0,16,0"/>
+                            <TextBlock Text="Încercări greșite de parolă până la blocare temporară:" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Încercări greșite până la blocare" Text="{Binding LockoutThreshold}" Width="50" Margin="0,0,16,0"/>
+                            <Button Content="Salvează parametrii" Command="{Binding SavePolicyCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                        </WrapPanel>
+                    </StackPanel>
+                </Border>
+
+                <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,10">
+                    <StackPanel>
+                        <TextBlock Text="Audit și integritate" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{Binding AuditSummary}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{Binding Integrity}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,2,0,0"/>
+                        <Button Content="Acceptă starea curentă a conturilor (administrator principal)" Command="{Binding AcceptIntegrityCommand}" Style="{StaticResource OutlineButtonStyle}"
+                                HorizontalAlignment="Left" Margin="0,6,0,0" Visibility="{Binding IntegrityBroken, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                        <TextBlock Text="{Binding AuthDirectory, StringFormat='Director: {0}'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,0"/>
+                    </StackPanel>
+                </Border>
+                    </StackPanel>
+                </StackPanel>
+            </Expander>
+
+            <Button Content="Încheie sesiunea și închide aplicația" Command="{Binding SignOutCommand}" Style="{StaticResource OutlineButtonStyle}" HorizontalAlignment="Left"/>
+        </StackPanel>
+    </ScrollViewer>
+</UserControl>

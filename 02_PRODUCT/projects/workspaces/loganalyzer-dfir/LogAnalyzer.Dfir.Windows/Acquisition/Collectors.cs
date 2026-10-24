@@ -1,6 +1,7 @@
 using System.Diagnostics;
 using System.Management;
 using System.Text.Json;
+using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Windows.Containment;
 using LogAnalyzer.Dfir.Windows.Native;
@@ -19,7 +20,13 @@ public sealed class EventLogCollector : ICollector
         "Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", "Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational",
         "Microsoft-Windows-Sysmon/Operational", "Microsoft-Windows-Bits-Client/Operational", "Microsoft-Windows-WMI-Activity/Operational",
         "Microsoft-Windows-Windows Firewall With Advanced Security/Firewall", "Microsoft-Windows-Partition/Diagnostic",
+        "Microsoft-Windows-WinRM/Operational", "OpenSSH/Operational",
         "Microsoft-Windows-NetworkProfile/Operational", "Microsoft-Windows-WLAN-AutoConfig/Operational", "Microsoft-Windows-DNS-Client/Operational",
+        // WP14a: removable media, CD/DVD and network adapters on air-gapped systems. A channel that does not exist on this system is "indisponibil", not a failure.
+        "Microsoft-Windows-Kernel-PnP/Configuration", "Microsoft-Windows-DriverFrameworks-UserMode/Operational", "Microsoft-Windows-Dhcp-Client/Operational",
+        "Microsoft-Windows-VHDMP-Operational", "Microsoft-Windows-PrintService/Operational",
+        // Owner directive 2026-10-16: the adapter, the lease and the internet capability of a network connection (DHCP-Client/Admin, NCSI 4042, NlaSvc).
+        "Microsoft-Windows-Dhcp-Client/Admin", "Microsoft-Windows-NCSI/Operational", "Microsoft-Windows-NlaSvc/Operational",
     ];
 
     public string Name => "EventLogCollector";
@@ -49,7 +56,7 @@ public sealed class EventLogCollector : ICollector
             }
             if (status != EventLogExportStatus.Exported || !File.Exists(dest))
             {
-                o.Errors.Add($"{ch}: export eșuat ({status}, cod {err}: {EventLogExport.Describe(err)})");
+                o.Errors.Add($"{ch}: {(status == EventLogExportStatus.AccessDenied ? "export refuzat" : "export eșuat")} ({EventLogExport.Describe(err)})");
                 continue;
             }
             o.Evidence.Add(ctx.Case.RegisterStored(dest, ch, "EventLog:" + ch, "evtx", TemporalType.Historical, Name, Version));
@@ -114,6 +121,62 @@ public sealed class SrumCollector : ICollector
         var o = new CollectorOutcome { Tool = "esentutl.exe", ToolVersion = ToolRunner.FileVersion(ToolRunner.System32("esentutl.exe")), Source = src, ExitCode = run.ExitCode, Commands = { run.CommandLine } };
         if (run.ExitCode != 0 || !File.Exists(dest)) { o.Status = EvidenceStatus.Failed; o.Errors.Add($"esentutl exit {run.ExitCode}"); return o; }
         o.Evidence.Add(ctx.Case.RegisterStored(dest, src, "SRUM", "srum", TemporalType.Historical, Name, Version));
+        return o;
+    }
+}
+
+/// <summary>
+/// Windows Firewall text logs (pfirewall.log and its previous generation .old) of every profile, at the path the policy or the local setting names.
+/// When logging is off the source is reported as missing with how to turn it on; nothing is changed on the station.
+/// </summary>
+public sealed class FirewallLogCollector : ICollector
+{
+    public string Name => "FirewallLogCollector";
+    public string Version => "1.0";
+    public bool RequiresElevation => true;
+    public CollectionProfile Profiles => CollectionProfile.QuickAndUp;
+
+    /// <summary>Described, not given as a ready command line (the Standalone build holds no text that changes the station's configuration).</summary>
+    public const string HowToEnable = LogAnalyzer.Dfir.Analysis.Wp14Rules.HowToEnableFirewallLog;
+
+    public CollectorOutcome Collect(CollectorContext ctx, CancellationToken ct)
+    {
+        var n = new NetworkEvidenceFacts();
+        try { AirGapFactsCollector.ReadFirewallLogging(n); }
+        catch (Exception ex) when (ex is UnauthorizedAccessException or System.Security.SecurityException or IOException)
+        { return CollectorOutcome.NotAvailable($"sursă lipsă: setările de jurnalizare ale firewall-ului, de ce lipsește: {ex.Message}, cum se pornește: rulați ca administrator"); }
+        var enabled = n.FirewallLogs.Where(f => f.LogAllowed == true || f.LogDropped == true).ToList();
+        // Review of PR #288: a path refused by FirewallLogParser.RejectPath (UNC, device, network or removable drive) is never touched.
+        var rejected = n.FirewallLogs.Where(f => f.Rejected.Length > 0).Select(f => $"{f.Profile}: {f.Rejected}").Distinct().ToList();
+        var files = n.FirewallLogs.Where(f => f.Rejected.Length == 0).Select(f => f.Path).Distinct(StringComparer.OrdinalIgnoreCase)
+                     .SelectMany(p => new[] { p, p + ".old" }).Where(File.Exists).ToList();
+        if (files.Count == 0)
+            return CollectorOutcome.NotAvailable(
+                (rejected.Count > 0 ? string.Join("; ", rejected) + "; " : "") +
+                (enabled.Count == 0
+                    ? $"sursă lipsă: pfirewall.log, de ce lipsește: jurnalizarea firewall-ului este oprită pe toate profilurile (implicit în Windows), {HowToEnable}"
+                    : $"sursă lipsă: pfirewall.log, de ce lipsește: jurnalizarea este pornită ({string.Join(", ", enabled.Select(f => f.Profile))}), dar fișierul nu există sau calea nu este permisă, {HowToEnable}"),
+                n.FirewallLogs.FirstOrDefault()?.Path ?? "");
+        if (!ctx.IsElevated) return CollectorOutcome.NotAvailable("sursă lipsă: pfirewall.log, de ce lipsește: folderul LogFiles\\Firewall se citește doar cu drepturi de administrator, cum se pornește: rulați colectarea ca administrator", files[0]);
+        var o = new CollectorOutcome { Source = string.Join("; ", files), Tool = "copy" };
+        o.Errors.AddRange(rejected);
+        foreach (var f in files)
+        {
+            ct.ThrowIfCancellationRequested();
+            long size;
+            try { size = new FileInfo(f).Length; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { o.Errors.Add($"{Path.GetFileName(f)}: {ex.Message}"); continue; }
+            if (size > LogAnalyzer.Dfir.Network.FirewallLogParser.MaxLogBytes)
+            {
+                o.Errors.Add($"{Path.GetFileName(f)}: {size / 1_048_576} MB, peste limita de {LogAnalyzer.Dfir.Network.FirewallLogParser.MaxLogBytes / 1_048_576} MB a unui jurnal de firewall (Windows îl limitează la 32 MB): nu a fost copiat");
+                continue;
+            }
+            try { o.Evidence.Add(ctx.Case.ImportFile(f, "Firewall", LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName, TemporalType.Historical, Name, Version)); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { o.Errors.Add($"{Path.GetFileName(f)}: {ex.Message}"); }
+        }
+        if (enabled.Count < n.FirewallLogs.Count)
+            o.Errors.Add($"jurnalizarea firewall-ului nu este pornită pe toate profilurile (pornită: {(enabled.Count > 0 ? string.Join(", ", enabled.Select(f => f.Profile)) : "niciunul")}); {HowToEnable}");
+        o.Status = o.Evidence.Count == 0 ? EvidenceStatus.Failed : o.Errors.Count > 0 ? EvidenceStatus.Partial : EvidenceStatus.Success;
         return o;
     }
 }
@@ -202,13 +265,7 @@ public sealed class LiveStateCollector : ICollector
     private static string Describe(SignatureInfo s) => s.IsSigned ? (s.IsValid ? $"semnat ({s.Kind}) {s.Signer}" : $"semnătură invalidă: {s.Status}") : "NESEMNAT";
 
     /// <summary>Executable part of a command line or service ImagePath ("C:\a b\x.exe" -arg, or C:\x.exe -arg).</summary>
-    public static string ExePath(string cmd)
-    {
-        cmd = cmd.Trim();
-        if (cmd.StartsWith('"')) { int e = cmd.IndexOf('"', 1); return e > 1 ? cmd[1..e] : cmd.Trim('"'); }
-        int exe = cmd.IndexOf(".exe", StringComparison.OrdinalIgnoreCase);
-        return exe > 0 ? cmd[..(exe + 4)] : cmd.Split(' ')[0];
-    }
+    public static string ExePath(string cmd) => LogAnalyzer.Dfir.Analysis.Correlation.CommandExecutable(cmd);
 
     private static string Between(string s, string a, string b)
     {

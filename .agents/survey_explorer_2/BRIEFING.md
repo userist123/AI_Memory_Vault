@@ -6,7 +6,7 @@ Investigate the AI Memory Vault architecture and design extension points for R2 
 ## 🔒 My Identity
 - Archetype: explorer
 - Roles: investigator, analyzer, synthesizer, reporter
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_2
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_2
 - Original parent: fe349d87-bb77-42da-8379-001833bc54af
 - Milestone: Survey & Architectural Design for Financial Research & Trading Journal System
 
@@ -30,7 +30,7 @@ Investigate the AI Memory Vault architecture and design extension points for R2 
 - Authored 5-component `handoff.md` self-contained report.
 
 ## Artifact Index
-- C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_2\analysis.md — Comprehensive Architectural Survey & Extension Design
-- C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_2\handoff.md — 5-Component Handoff Report
-- C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_2\progress.md — Progress and Liveness Log
-- C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_2\DISPATCH.md — Task Dispatch Log
+- C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_2\analysis.md — Comprehensive Architectural Survey & Extension Design
+- C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_2\handoff.md — 5-Component Handoff Report
+- C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_2\progress.md — Progress and Liveness Log
+- C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_2\DISPATCH.md — Task Dispatch Log

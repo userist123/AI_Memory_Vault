@@ -2,13 +2,13 @@
 You are the Project Orchestrator (orchestrator_jarvis_gen3).
 
 Your Working Directory for coordination metadata is:
-`c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen3`
+`c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen3`
 
 The Project Working Directory is:
-`C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+`C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
 The authoritative user request is recorded in:
-`c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+`c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
 
 ### Task Objective:
 Resume execution starting from Milestone 3 (Multi-Agent Workers), Milestone 4 (FastMCP & IoT Home Assistant Integration), and Milestone 5 (Ultra-Modern 3D Web HUD Interface).

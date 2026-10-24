@@ -259,7 +259,7 @@
 - **Citat Verbatim Sursă**:
   > "In recent security hardening commits (54e85f20a, 4fbc35dd9), a check was introduced into MemoryController.promote() (memory_controller/controller.py:379):"
 - **Citat Verbatim Țintă**:
-  > "Location & Environment - **Path**: `C:\Users\Marius\finscope` - **Orchestration**: Multi-Agent Orchestrator via secure delegation (`cognitive_core/dispatch_cli.py`, gated by `MemoryController` enforcing `I-001..I-012` and `I-RETRIEVAL`)."
+  > "Location & Environment - **Path**: `C:\Users\user\finscope` - **Orchestration**: Multi-Agent Orchestrator via secure delegation (`cognitive_core/dispatch_cli.py`, gated by `MemoryController` enforcing `I-001..I-012` and `I-RETRIEVAL`)."
 - **Rubrică de Evaluare**:
   - [ ] ACCEPT
   - [ ] REJECT
@@ -277,7 +277,7 @@
 - **Citat Verbatim Sursă**:
   > "Phase 5 successfully executes and verifies the production wiring of `MemoryController.search()` to `RetrievalIntegrationAdapter`."
 - **Citat Verbatim Țintă**:
-  > "Location & Environment - **Path**: `C:\Users\Marius\finscope` - **Orchestration**: Multi-Agent Orchestrator via secure delegation (`cognitive_core/dispatch_cli.py`, gated by `MemoryController` enforcing `I-001..I-012` and `I-RETRIEVAL`)."
+  > "Location & Environment - **Path**: `C:\Users\user\finscope` - **Orchestration**: Multi-Agent Orchestrator via secure delegation (`cognitive_core/dispatch_cli.py`, gated by `MemoryController` enforcing `I-001..I-012` and `I-RETRIEVAL`)."
 - **Rubrică de Evaluare**:
   - [ ] ACCEPT
   - [ ] REJECT

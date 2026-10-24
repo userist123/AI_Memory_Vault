@@ -18,6 +18,7 @@ public sealed class JumpListParser : EvidenceParserBase
     {
         ParserId = "JumpListParser", Version = "1.0", Artifact = "Jump List automată (*.automaticDestinations-ms)",
         SourceTypes = ["jumplist_auto"], FileNames = [".automaticDestinations-ms"], Fingerprints = ["cfb"],
+        MaxInputBytes = 256L * 1024 * 1024,   // compound file read whole
         SupportedOs = "Oricare (OLE Compound File citit în cod gestionat)",
         FormatVersions = ["DestList versiunea 3 – 6 (Windows 10 / 11; intrare de 130 de octeți + cale UTF-16 + 4 octeți)"],
         Limitations =
@@ -77,14 +78,14 @@ public sealed class JumpListParser : EvidenceParserBase
                 Time = ft > 0 ? Timestamp.FromFileTime(ft, "DestList last access FILETIME") : Timestamp.Unknown(),
                 TimeSemantics = "item last used through this application (Jump List DestList)",
                 Source = "JumpList", EvidenceId = item.EvidenceId, Path = target, Process = target.Contains('\\') ? WinPath.GetFileName(target) : "",
-                Host = host, Summary = $"Jump List {appId}: {target} folosit de {uses} ori" + (pin >= 0 ? " (fixat)" : ""),
+                Host = host, Summary = $"Jump List {appId}: {target} folosit de {LogAnalyzer.Dfir.Language.RoText.Times(uses)}" + (pin >= 0 ? " (fixat)" : ""),
                 TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.High,
                 Locator = $"DestList entry {entryNo} / stream {streamName}",
                 Fields =
                 {
                     ["AppId"] = appId, ["EntryNumber"] = entryNo.ToString(CultureInfo.InvariantCulture), ["AccessCount"] = uses.ToString(CultureInfo.InvariantCulture),
                     ["Pinned"] = pin >= 0 ? "true" : "false", ["Hostname"] = host, ["DestListPath"] = destPath, ["LnkTarget"] = link?.Target ?? "",
-                    ["Arguments"] = link?.Arguments ?? "", ["DestListVersion"] = version.ToString(CultureInfo.InvariantCulture),
+                    ["Arguments"] = link?.Arguments ?? "", ["VolumeSerial"] = link?.Serial ?? "", ["DriveType"] = link?.DriveType ?? "", ["DestListVersion"] = version.ToString(CultureInfo.InvariantCulture),
                 },
             });
             result.Records++;

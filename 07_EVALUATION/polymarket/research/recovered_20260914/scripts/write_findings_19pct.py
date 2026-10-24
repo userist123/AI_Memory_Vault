@@ -1,3 +1,4 @@
+import os
 findings_text = """# CEI 19 PUNCTE PROCENTUALE: REALITATE SAU ARTEFACT? (`NINETEEN_PERCENTAGE_POINTS_FINDINGS.md`)
 
 > **Destinatar**: MARIUS · **Operator**: ANTIGRAVITY  
@@ -128,7 +129,7 @@ Cei 19 puncte procentuale nu au fost o ineficiență structurală a Polymarket �
 La o scară de 483 de piețe CLOB, **Polymarket este remarcabil de bine calibrat**: cotațiile de ~50 de cenți câștigă în 46,7% din cazuri (în interiorul intervalului de încredere [41,5%, 52,1%]), iar un control mecanic cumpără-și-ține fără semnal înregistrează o pierdere netă de -27,89 USD.
 """
 
-target = "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/NINETEEN_PERCENTAGE_POINTS_FINDINGS.md"
+target = os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/NINETEEN_PERCENTAGE_POINTS_FINDINGS.md")
 with open(target, "w", encoding="utf-8") as f:
     f.write(findings_text)
 

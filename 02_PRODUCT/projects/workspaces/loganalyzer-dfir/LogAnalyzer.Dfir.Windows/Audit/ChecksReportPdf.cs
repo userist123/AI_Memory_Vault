@@ -10,7 +10,12 @@ public static class ChecksReportPdf
 {
     public sealed record Table(string Title, string[] Headers, IReadOnlyList<string[]> Rows);
 
-    public static void Write(string path, string title, string subtitle, IReadOnlyList<ControlCheck> checks, IReadOnlyList<string> notes, params Table[] tables)
+    /// <summary>Without a case there is no chain to anchor: the footer says so.</summary>
+    public static void Write(string path, string title, string subtitle, IReadOnlyList<ControlCheck> checks, IReadOnlyList<string> notes, params Table[] tables) =>
+        Write(path, title, subtitle, null, checks, notes, tables);
+
+    /// <param name="seal">Chain head hashes and scope label of the case the report belongs to (decisions 28, 30).</param>
+    public static void Write(string path, string title, string subtitle, LogAnalyzer.Dfir.Case.ReportSeal? seal, IReadOnlyList<ControlCheck> checks, IReadOnlyList<string> notes, params Table[] tables)
     {
         QuestPDF.Settings.License = LicenseType.Community;
         Document.Create(doc => doc.Page(page =>
@@ -48,13 +53,7 @@ public static class ChecksReportPdf
                     });
                 }
             });
-            page.Footer().AlignCenter().Text(t =>
-            {
-                t.Span($"LogAnalyzer {DfirInfo.ApplicationVersion} · pagina ").FontSize(7).FontColor("#64748b");
-                t.CurrentPageNumber().FontSize(7).FontColor("#64748b");
-                t.Span(" / ").FontSize(7).FontColor("#64748b");
-                t.TotalPages().FontSize(7).FontColor("#64748b");
-            });
+            ReportFooter.Compose(page.Footer(), "checks", $"LogAnalyzer {DfirInfo.ApplicationVersion}", seal);
         })).GeneratePdf(path);
     }
 }

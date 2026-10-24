@@ -77,7 +77,7 @@ Classification tiers:
 
 ### 2.3 Targeted Remediation of 5 Concrete Blockers
 
-Detailed regression and adversarial proofs are documented in [`docs/security/PR209_REGRESSION_PROOF.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/docs/security/PR209_REGRESSION_PROOF.md).
+Detailed regression and adversarial proofs are documented in [`docs/security/PR209_REGRESSION_PROOF.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/docs/security/PR209_REGRESSION_PROOF.md).
 
 | Blocker ID | Description | Surface | Status | Enforcement & Verification |
 |---|---|---|---|---|
@@ -88,9 +88,9 @@ Detailed regression and adversarial proofs are documented in [`docs/security/PR2
 | **Blocker 5** | CI success reporting masks scanner failure | `.github/workflows/apisec-scan.yml`, `fortify.yml` | **VERIFIED_FIXED** | Added explicit step IDs (`id: apisec_scan`, `id: fortify_scan`). Final reporting step inspects step `outcome`: `EXECUTED_PASSED` is emitted ONLY if scanner succeeded (`outcome == 'success'`). Failed scanner emits `EXECUTED_FAILED`. Unconfigured emits `NOT_CONFIGURED_OPTIONAL`. Validated by `test_apisec_and_fortify_scan_outcome_checked_before_reporting_passed` and `test_blocker5_*`. |
 
 ### 2.2 Proof Artifacts & Empirical Verification
-- **Multi-Process Nonce & Authority Proof**: [`docs/security/PR209_AUTHORITY_MULTIPROCESS_PROOF.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/docs/security/PR209_AUTHORITY_MULTIPROCESS_PROOF.md)
-- **Security Barrier Mutation Proof**: [`docs/security/PR209_SECURITY_BARRIER_MUTATION_PROOF.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/docs/security/PR209_SECURITY_BARRIER_MUTATION_PROOF.md)
-- **CI Failure Root Cause Analysis**: [`docs/security/PR209_CI_FAILURE_ROOT_CAUSE.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/docs/security/PR209_CI_FAILURE_ROOT_CAUSE.md)
+- **Multi-Process Nonce & Authority Proof**: [`docs/security/PR209_AUTHORITY_MULTIPROCESS_PROOF.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/docs/security/PR209_AUTHORITY_MULTIPROCESS_PROOF.md)
+- **Security Barrier Mutation Proof**: [`docs/security/PR209_SECURITY_BARRIER_MUTATION_PROOF.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/docs/security/PR209_SECURITY_BARRIER_MUTATION_PROOF.md)
+- **CI Failure Root Cause Analysis**: [`docs/security/PR209_CI_FAILURE_ROOT_CAUSE.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/docs/security/PR209_CI_FAILURE_ROOT_CAUSE.md)
 
 ---
 

@@ -1,7 +1,7 @@
 # Handoff Report: Milestone 3 Multi-Agent Worker Orchestration Exploration
 
 **Agent:** `explorer_m3_1` (`teamwork_preview_explorer`)  
-**Working Directory:** `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_1`  
+**Working Directory:** `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_1`  
 **Target Milestone:** Milestone 3 (Multi-Agent Worker Orchestration)  
 **Parent Conversation ID:** `8b531079-7cca-4ec6-a0e3-4ce625943430`  
 **Timestamp:** 2026-08-28T13:58:00Z  
@@ -87,12 +87,12 @@ The recommended structure is:
 To verify the findings and validate the implementation:
 
 1. Inspect report and handoff files:
-   - `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_1\report.md`
-   - `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_1\handoff.md`
+   - `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_1\report.md`
+   - `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_1\handoff.md`
 
 2. Run the test suite:
    ```powershell
-   cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+   cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
    python -m pytest -q
    ```
    *Expected outcome:* All 235 existing tests pass with 0 errors.

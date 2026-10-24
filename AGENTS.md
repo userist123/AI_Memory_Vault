@@ -49,7 +49,7 @@ CLASSIFY
 
 1. Select agents before loading skills.
 2. Agent profiles are identity/persona manifests only.
-3. Capability mappings are authoritative in the current governance/agent configuration; do not rely on retired `99_SYSTEM/*` paths.
+3. Skill ids per agent profile are listed in `00_GOVERNANCE/protocols/Agent_Capability_Registry.md` (metadata; the code router uses `04_CONFIG/agent_router.json`). The council limits above win over the copy and rationale in `00_GOVERNANCE/protocols/Council_Context_Budget.md`. Both were restored from the retired `99_SYSTEM/*` paths, which must not be used.
 4. Assigned capabilities MUST NOT be loaded wholesale.
 5. Load full `SKILL.md` only after selecting the skill for the current task.
 6. Select at most two skills per agent and four skills across the council unless the task is explicitly staged.
@@ -145,6 +145,17 @@ Direct unauthenticated filesystem scans, raw `os.walk` traversals outside the au
 > - `P16/P17/P18` = Invariante separate de telemetrie hardware și criminalistică.
 > - `P0-P18` = Termen umbrelă sintetic; nu reprezintă 19 invariante secvențiale de memorie.
 
+## Owner privacy
+
+This repository is public. Never commit, push or publish anything about the owner's own machine or about material the owner hands over. This covers:
+- the machine name, the Windows user name and `C:\Users\<user>\...` profile paths (in every form: backslash, forward slash, escaped, `/c/Users/<user>`);
+- device, USB and disk serials, account SIDs, Wi-Fi network names, case ids from real runs;
+- the content of reports, logs, screenshots or files the owner provides.
+
+The rule applies to files, test fixtures, docs, generated artifacts, commit messages and PR/issue text. Use placeholders instead: `LAB-PC`, `user`, `C:\Users\user`, fake same-format serials and SIDs. Functional paths in code become environment variables or relative paths. Analysis of owner material stays in local scratch space only, never in the repository.
+
+Before every commit, grep the staged diff and the commit message against the local, untracked list `%APPDATA%\ai-memory-vault\private_identifiers.txt` (never commit that list); a hit blocks the commit. Rewriting Git history and changing repository visibility are the owner's decision, never an agent's.
+
 ## Multi-Agent Development Coordination
 
 When multiple AI development environments/agents (Antigravity, Claude Code, ChatGPT, Perplexity, etc.) operate on this repository:
@@ -162,6 +173,20 @@ commits it with its work. On a cold resume, read only that checkpoint and the fi
 previous conversation; restart work as a new agent from the checkpoint instead of resuming a long transcript.
 Read excerpts rather than whole files, run the full suite once before the final push, and prefer one agent at a
 time. Full protocol and template: `00_GOVERNANCE/coordination/tasks/README.md`.
+
+### Context Economy & Precision Navigation Protocol
+1. **Targeted Reading and Target Edit Single-Shot**: For files exceeding 800 lines (or tool maximum window), do not read the full file without line ranges; locate the target symbol via narrow search and inspect the contextual block. For small-to-medium files (<= 800 lines) designated as modification targets, direct single-shot reading is preferred over multi-round chunking to prevent token inflation from conversational history re-transmission.
+2. **Permitted Context Expansion**: Full-file or multi-section reading is explicitly permitted when required for:
+   - architectural reviews, cross-module data flow analysis, and circular dependency checks;
+   - structured specifications, YAML/JSON configuration files, and tabular protocols;
+   - security audits, threat modeling, and forensic investigations (e.g., verifying sanitization throughout an execution path).
+3. **Conditional Context Reuse and Git Verification Hygiene**: Do not re-read a file if the required excerpt is still available, trustworthy, and demonstrably unexpired in the active context. Do not execute redundant pre-edit git status or inspect commands if working directory status is already established. Re-reading is required only when:
+   - verifying disk state immediately after applying an edit;
+   - resuming after session compaction, context degradation, or cold resume;
+   - test failures or compiler diagnostics indicate unexpected behavior outside previously inspected lines;
+   - any external tool, script, or concurrent process could have altered the file.
+4. **Directory Scan Guard**: Never run unconstrained recursive directory traversals (`dir /s`, `find .`, `Get-ChildItem -Recurse`) across heavy paths (`.git`, `node_modules`, `venv`, `build`, `dist`, `.mypy_cache`, `.tempmediaStorage`). Targeted inspection of specific build/dependency metadata (e.g. `package.json`, `.gitleaks.toml`) remains permitted.
+5. **Compaction Hygiene & Checkpoint Cadence**: Agents must not attempt to trigger compaction automatically. Major milestones and meaningful progress justify updating `todo-<agent>.md`. A session reaching approximately 50 turns is an advisory cue to re-evaluate context size and recommend `/compact` to the owner, not an unconditional mandate to rewrite the checkpoint.
 
 ## Global Production-Consumer Rule
 

@@ -6,7 +6,7 @@ Forensic integrity audit of Milestone 4 (FastMCP IoT & Home Assistant Integratio
 ## 🔒 My Identity
 - Archetype: forensic_auditor
 - Roles: [critic, specialist, auditor]
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_1
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Target: milestone_4_fastmcp_iot
 

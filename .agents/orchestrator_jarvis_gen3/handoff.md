@@ -23,10 +23,10 @@
   3. Build unified `jarvis/main.py` launching audio engine, executive OODA daemon, multi-agent supervisor, FastMCP server, and HUD server.
 
 ## 4. Key Artifacts
-- Global Scope: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- Authoritative User Request: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
-- Gate Tracking: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen3\GATE_STATUS.md`
-- Progress Log: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen3\progress.md`
-- Briefing: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen3\BRIEFING.md`
-- Challenger M4 Report: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_1\report.md`
-- Auditor M4 Report: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_1\report.md`
+- Global Scope: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- Authoritative User Request: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+- Gate Tracking: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen3\GATE_STATUS.md`
+- Progress Log: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen3\progress.md`
+- Briefing: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_jarvis_gen3\BRIEFING.md`
+- Challenger M4 Report: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_1\report.md`
+- Auditor M4 Report: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_1\report.md`

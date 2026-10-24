@@ -6,7 +6,7 @@ Implement Milestone 1: Financial Ingestion Pipeline & Canonical Memory Adapter (
 ## 🔒 My Identity
 - Archetype: M1 Worker
 - Roles: implementer, qa, specialist
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_worker_1
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_worker_1
 - Original parent: fe349d87-bb77-42da-8379-001833bc54af
 - Milestone: M1 - Financial Ingestion Pipeline & Canonical Memory Adapter
 

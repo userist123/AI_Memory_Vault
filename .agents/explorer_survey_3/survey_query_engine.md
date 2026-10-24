@@ -27,8 +27,8 @@ The architecture strictly adheres to **AGENTS.md**, **PROJECT.md**, **Canonical 
 |                                      INGESTION PIPELINE                                       |
 +-----------------------------------------------------------------------------------------------+
 |  RAW SOURCES:                                                                                 |
-|  - C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py                                         |
-|  - C:\Users\Marius\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx                  |
+|  - C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py                                         |
+|  - C:\Users\user\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx                  |
 +-----------------------------------------------------------------------------------------------+
                                                 |
                                                 v

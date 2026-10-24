@@ -32,9 +32,9 @@ public sealed class IocMatcherTests(ITestOutputHelper output) : IDisposable
         var p = Path.Combine(_dir, "IOC_INVENTORY.csv");
         File.WriteAllText(p, """
             Type,Value,Context,Classification,Confidence,Source
-            sha1,2832AD566FA1A3B12A70341F2D7B34422E76EDE0,bootstrap_7d57.cmd,DIRECT,HIGH,MPLog
-            path,C:\Users\Marius\AppData\Local\Conexant\CxUtilSvc Helper\,Loader directory,DIRECT,HIGH,fs
-            path,C:\Users\Marius\AppData\Local\Temp\6q5x6m*\6q5x6m*.msi,Random MSI drop,DIRECT,HIGH,MsiInstaller
+            sha1,2832AD566FA1A3B12A70341F2D7B34422E76EDE0,vendor_helper.cmd,DIRECT,HIGH,MPLog
+            path,C:\Users\user\AppData\Local\VendorX\VxUtilSvc Helper\,Loader directory,DIRECT,HIGH,fs
+            path,C:\Users\user\AppData\Local\Temp\setup_x*\setup_x*.msi,Random MSI drop,DIRECT,HIGH,MsiInstaller
             domain,tzd4is.cyou,landing domain,DIRECT,MEDIUM,history
             task,\orchestratormaintain,Persistence,DIRECT,HIGH,Defender
             ip,203.0.113.7,c2,DIRECT,LOW,pcap
@@ -51,12 +51,12 @@ public sealed class IocMatcherTests(ITestOutputHelper output) : IDisposable
 
         var events = new List<TimelineEvent>
         {
-            E("pf", "", "", "", "", ("ReferencedFiles", @"\VOLUME{x}\WINDOWS\SYSTEM32\MSIEXEC.EXE|\VOLUME{x}\USERS\MARIUS\APPDATA\LOCAL\CONEXANT\CXUTILSVC HELPER\BOOTSTRAP_7D57.CMD")),
-            E("msi", path: @"C:\Users\Marius\AppData\Local\Temp\6q5x6mab\6q5x6mab.msi"),
+            E("pf", "", "", "", "", ("ReferencedFiles", @"\VOLUME{x}\WINDOWS\SYSTEM32\MSIEXEC.EXE|\VOLUME{x}\USERS\USER\APPDATA\LOCAL\VENDORX\VXUTILSVC HELPER\VENDOR_HELPER.CMD")),
+            E("msi", path: @"C:\Users\user\AppData\Local\Temp\setup_xab\setup_xab.msi"),
             E("visit", dns: "mailjilq.tzd4is.cyou"),
             E("amcache", hash: "2832ad566fa1a3b12a70341f2d7b34422e76ede0"),
             E("task", task: @"\orchestratormaintain"),
-            E("benign", path: @"C:\Users\Marius\AppData\Local\Temp\other\setup.msi", dns: "nottzd4is.cyou"),
+            E("benign", path: @"C:\Users\user\AppData\Local\Temp\other\setup.msi", dns: "nottzd4is.cyou"),
         };
         var r = m.MatchEvents(events).ToList();
 
@@ -97,6 +97,6 @@ public sealed class IocMatcherTests(ITestOutputHelper output) : IDisposable
         var pf = Corpus.File("prefetchMsiexec");
         var sink = new ListSink();
         new PrefetchParser().Parse(new EvidenceItem { EvidenceId = "EV-PF", CaseId = "C", Source = "p", SourceType = "prefetch", StoredPath = pf }, pf, sink, default);
-        Assert.Contains(m.MatchEvents(sink.Events), x => x.RuleId.Contains(@"CxUtilSvc Helper\") && x.Match.Contains("BOOTSTRAP_7D57.CMD"));
+        Assert.Contains(m.MatchEvents(sink.Events), x => x.RuleId.Contains(@"VxUtilSvc Helper\") && x.Match.Contains("VENDOR_HELPER.CMD"));
     }
 }

@@ -61,7 +61,7 @@ It provides:
 
 ## 4. Unit Test Results
 
-The catalog was validated across 14 tests in [test_book_to_memory_catalog.py](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/20_TESTS/test_book_to_memory_catalog.py):
+The catalog was validated across 14 tests in [test_book_to_memory_catalog.py](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/20_TESTS/test_book_to_memory_catalog.py):
 - Registration, retrieval, duplicate rejection, and schema validation: PASS
 - Atomic note linkage and idempotence: PASS
 - Chapter coverage calculation & gap analysis: PASS

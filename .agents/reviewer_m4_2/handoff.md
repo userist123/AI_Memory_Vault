@@ -43,7 +43,7 @@
 ## 5. Verification Method
 To independently reproduce verification:
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 python -m pytest tests/unit/test_challenger_m4_stress.py -v
 python -m pytest tests/unit/test_fastmcp_iot.py -v
 python -m pytest

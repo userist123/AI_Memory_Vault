@@ -2,7 +2,7 @@
 
 - **Agent**: Explorer Survey 3 (`teamwork_preview_explorer`)
 - **Date**: 2026-08-26
-- **Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3`
+- **Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3`
 - **Handoff Type**: Hard (Investigation complete)
 
 ---
@@ -10,7 +10,7 @@
 ## 1. Observation
 
 1. **Source Files & Location**:
-   - `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py` exists (91,619 bytes, 1,954 lines).
+   - `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py` exists (91,619 bytes, 1,954 lines).
      * Line 29: `FRED_API_KEY = "e372c6879cce084b8c3601f76adbe78d"` (demonstrates a raw hardcoded API key that must be redacted and injected via env var).
      * Lines 44–150: Dictionaries for `INDICI` (14), `ACTIUNI` (30), `CRYPTO` (25), `VALUTE` (12), `MATERII_PRIME` (14) = 95 total assets.
      * Lines 152–158: `MACRO_TICKERS` (`^VIX`, `^TNX`, `^IRX`, `^TYX`, `DX-Y.NYB`).
@@ -18,8 +18,8 @@
      * Lines 176–217: `RISK_LIBRARY` with 30 structured risk factors across 5 categories with Impact (1–5), Probability (10–50%), and Horizon.
      * Lines 219–225: `CALENDAR_LIBRARY` with economic calendar catalysts.
      * Lines 393–400+: Technical indicators and trade explanation heuristics (`explica_miscare`, `identifica_oportunitate`, `extrage_lectie`).
-   - `C:\Users\Marius\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx` exists (1,648,819 bytes).
-   - `C:\Users\Marius\Desktop\Nu sterge\nusterge\actualizare_unificat.log` exists (51,659 bytes).
+   - `C:\Users\user\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx` exists (1,648,819 bytes).
+   - `C:\Users\user\Desktop\Nu sterge\nusterge\actualizare_unificat.log` exists (51,659 bytes).
 
 2. **Existing Codebase State**:
    - `memory_controller/financial_schema.py`: currently an empty stub `FINANCIAL_NOTE_SCHEMA = {}`.
@@ -81,10 +81,10 @@ Key Deliverables Specified:
 
 To independently verify this architectural investigation:
 1. **Inspect Report**:
-   - `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3\survey_query_engine.md`
+   - `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3\survey_query_engine.md`
 2. **Execute Test Suite**:
    - Run `python -m pytest -q tests/financial/` from the root workspace directory.
 3. **Verify Source Files**:
-   - Inspect `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py` and `Analiza_Piata_Profesionala.xlsx`.
+   - Inspect `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py` and `Analiza_Piata_Profesionala.xlsx`.
 4. **Verify Invariant Compliance**:
    - Inspect `memory_controller/authorizer.py`, `memory_controller/validation/schema.py`, and `memory_controller/audit/logger.py`.

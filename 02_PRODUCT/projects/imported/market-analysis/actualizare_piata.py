@@ -16,7 +16,7 @@ from openpyxl.chart.updown_bars import UpDownBars
 from openpyxl.chart.data_source import NumData, NumVal
 from copy import deepcopy
 
-EXCEL_PATH = Path(r"C:\\Users\\Marius\\Desktop\\Nu sterge\\Analiza_Piata_Profesionala.xlsx")
+EXCEL_PATH = Path(os.path.expanduser(r"~\\Desktop\\Nu sterge\\Analiza_Piata_Profesionala.xlsx"))
 FRED_API_KEY = os.environ.get("FRED_API_KEY", "")
 
 INDICI = {

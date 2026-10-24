@@ -122,5 +122,41 @@ namespace LogAnalyzer.UI.Tests
             Assert.Equal("Info", issue.Severity);
             Assert.DoesNotContain("atacator", issue.Explanation);
         }
+
+        private static ParsedEvent Clear1102(string user) => new()
+        {
+            EventId = 1102, MachineName = "SRV-01", Message = "", ProviderName = "Microsoft-Windows-Eventlog",
+            TimeCreated = new DateTime(2026, 9, 19, 12, 0, 0, DateTimeKind.Utc),
+            XmlData = $"<EventData><Data Name=\"SubjectUserName\">{user}</Data><Data Name=\"SubjectDomainName\">CORP</Data></EventData>",
+        };
+
+        private static LogMaintenancePolicy ProfilePolicy() =>
+            new([@"CORP\alice"], [new MaintenanceWindow(new DateTimeOffset(2026, 9, 19, 11, 0, 0, TimeSpan.Zero), new DateTimeOffset(2026, 9, 19, 13, 0, 0, TimeSpan.Zero))]);
+
+        [Fact]
+        public void AnalysisEngine_with_a_profile_policy_gives_Routine_Info_or_Unexpected_High_and_without_it_stays_Medium()
+        {
+            var engine = new AnalysisEngine { MaintenancePolicy = ProfilePolicy() };
+            Assert.Equal("Info", Assert.Single(engine.AnalyzeEvents([Clear1102("alice")])).Severity);
+            var bad = Assert.Single(engine.AnalyzeEvents([Clear1102("mallory")]));
+            Assert.Equal("High", bad.Severity);
+            Assert.Equal("Medium", Assert.Single(new AnalysisEngine().AnalyzeEvents([Clear1102("alice")])).Severity);
+        }
+
+        [Fact]
+        public void LiveMonitoring_with_a_profile_policy_uses_the_lifecycle_too()
+        {
+            var live = new LiveSecurityMonitoringEngine { MaintenancePolicy = ProfilePolicy() };
+            Assert.Equal("Info", live.EvaluateLiveEvent(Clear1102("alice"))!.Severity);
+            Assert.Equal("High", live.EvaluateLiveEvent(Clear1102("mallory"))!.Severity);
+        }
+
+        [Fact]
+        public void Subject_is_read_from_event_data_and_from_user_data_xml()
+        {
+            Assert.Equal(("alice", "CORP"), LogClearAssessment.SubjectFromXml(Clear1102("alice").XmlData));
+            Assert.Equal(("bob", "X"), LogClearAssessment.SubjectFromXml("<UserData><LogFileCleared><SubjectUserName>bob</SubjectUserName><SubjectDomainName>X</SubjectDomainName></LogFileCleared></UserData>"));
+            Assert.Equal(("", ""), LogClearAssessment.SubjectFromXml(null));
+        }
     }
 }

@@ -11,7 +11,7 @@
 
 ## 1. Scope & Governance Authority
 
-The **Controlled Experimentation Harness** (`BookToMemoryExperimentHarness`), implemented in [book_to_memory_experiment.py](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_experiment.py), serves as the execution engine for research tracks under (no experiment has been run on real data yet):
+The **Controlled Experimentation Harness** (`BookToMemoryExperimentHarness`), implemented in [book_to_memory_experiment.py](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_experiment.py), serves as the execution engine for research tracks under (no experiment has been run on real data yet):
 - `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md` (Section 14: Biological Fact $\to$ Engineering Hypothesis $\to$ Controlled Experiment $\to$ Vault Mechanism)
 - `08_RESEARCH/BOOK_TO_MEMORY/RESEARCH-TRACK-CONTRACT.md` (Sections 88–148: Anti-Gaming, Paired Evaluation, and Shadow Mode)
 

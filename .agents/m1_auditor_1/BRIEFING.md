@@ -6,7 +6,7 @@ Conduct an exhaustive forensic integrity audit of Milestone 1 (Financial Ingesti
 ## 🔒 My Identity
 - Archetype: forensic_auditor
 - Roles: critic, specialist, auditor
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_auditor_1
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_auditor_1
 - Original parent: fe349d87-bb77-42da-8379-001833bc54af
 - Target: Milestone 1 (Financial Ingestion Pipeline)
 
@@ -43,9 +43,9 @@ Conduct an exhaustive forensic integrity audit of Milestone 1 (Financial Ingesti
 - **Untested angles**: Live external network latency when yfinance or FRED APIs are throttled (mitigated by offline fallbacks)
 
 ## Loaded Skills
-- **Source**: vault-operations (c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md)
+- **Source**: vault-operations (c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md)
   - Core methodology: Standard operational procedures for interacting with Vault
-- **Source**: vault-security-audit (c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md)
+- **Source**: vault-security-audit (c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md)
   - Core methodology: Security verification and forensic validation runbook for testing trust boundaries and invariants P0-P15
 
 ## Artifact Index

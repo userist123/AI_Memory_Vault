@@ -6,13 +6,13 @@ Investigate STT, VAD, and Audio Input Driver pipelines for Jarvis Cognitive Brai
 ## 🔒 My Identity
 - Archetype: explorer
 - Roles: [read-only investigator, STT/VAD/Audio Driver architecture specialist]
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m2_2
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m2_2
 - Original parent: 0bbc34c1-eddc-44cf-8e9e-c4d23195d41e
 - Milestone: Milestone 2 ("Creier Vorbitor")
 
 ## 🔒 Key Constraints
 - Read-only investigation — do NOT implement in target codebase
-- Write only to C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m2_2\
+- Write only to C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m2_2\
 - Continuous audio capture at 16kHz via AudioInputDriver (real sounddevice mic + Virtual/Mock audio streams)
 - Silero VAD classifier (ONNX/Torch runtime) with 500ms trailing silence threshold
 - Local faster-whisper CTranslate2 engine (Romanian & English auto-detect, prompt biasing)

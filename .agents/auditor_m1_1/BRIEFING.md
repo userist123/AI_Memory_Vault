@@ -6,7 +6,7 @@ Forensic integrity audit of Milestone 1 (`memory_controller/financial_schema.py`
 ## 🔒 My Identity
 - Archetype: forensic_auditor
 - Roles: critic, specialist, auditor
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1
 - Original parent: e87bdef8-bfc1-4e8e-a965-ccd159cf02a1
 - Target: Milestone 1 (Financial Schema & Pydantic Validation)
 

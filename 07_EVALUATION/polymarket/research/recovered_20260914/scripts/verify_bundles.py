@@ -1,10 +1,11 @@
+import os
 import json
 import sys
-sys.path.insert(0, "C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages")
+sys.path.insert(0, os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages"))
 
 from polymarket.historical_paper_replay import HistoricalMarketBundle, HistoricalTapePoint
 
-with open("C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json", "r", encoding="utf-8") as f:
+with open(os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json"), "r", encoding="utf-8") as f:
     data = json.load(f)
 
 bundles = []

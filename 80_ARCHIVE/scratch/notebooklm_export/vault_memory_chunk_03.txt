@@ -1,6 +1,6 @@
 AI MEMORY VAULT - EXPORTED FOR NOTEBOOKLM
 Export date: 2026-08-27 21:57:23
-Vault root: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY
+Vault root: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
 ======================================================================
 
 
@@ -9841,7 +9841,7 @@ To achieve true autonomy, the Cognitive Core must survive restarts and handle mu
 
 **Proposed Next Steps:**
 1. **BRAIN-7: Persistent Working Memory**
-   - Introduce a state file (e.g., `C:\Users\Marius\.gemini\antigravity\brain\...\active_context.json` or within `04_MEMORY/`) to serialize `WorkingMemory` (node IDs, activation, attention, tick).
+   - Introduce a state file (e.g., `C:\Users\user\.gemini\antigravity\brain\...\active_context.json` or within `04_MEMORY/`) to serialize `WorkingMemory` (node IDs, activation, attention, tick).
    - Implement `save_state()` and `load_state()` in `WorkingMemory`.
 2. **BRAIN-8: Persistent Task Tracker**
    - Upgrade `Planner` to output a stateful plan object.
@@ -10118,11 +10118,11 @@ Welcome, Successor Agent (Perplexity). Do not guess or assume what the previous 
 
 1. **Read this Document First**: This handoff details the entire system architecture, runtime call graphs, and historical context.
 2. **Read the Core Operating Protocols**:
-   - Inspect [00_CORE/Rules.md](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_CORE/Rules.md) (Core rules).
-   - Inspect [00_CORE/Memory_Protocol.md](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_CORE/Memory_Protocol.md) (Deduplication, versioning, and supersession enforcements).
+   - Inspect [00_CORE/Rules.md](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_CORE/Rules.md) (Core rules).
+   - Inspect [00_CORE/Memory_Protocol.md](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/00_CORE/Memory_Protocol.md) (Deduplication, versioning, and supersession enforcements).
 3. **Verify the Environment State**:
    - Run the pytest suite immediately: `python -m pytest -q`
-   - Run the multi-process restart verification: `python C:\Users\Marius\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\scratch\run_multi_process_test.py`
+   - Run the multi-process restart verification: `python C:\Users\user\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\scratch\run_multi_process_test.py`
 4. **Respect the Autonomy Gates**: Never attempt a `HIGH` risk action (e.g. modifying human-verified nodes or raw imports) without human approval.
 5. **Do Not Overwrite Canonical Knowledge**: Verify any assumptions against the actual codebase files before modifying memory notes. Code is the source of truth.
 6. **Proceed to the Next Task**: Read the **Next-Task Contract (AG-CONT-01)** in Section 11 and execute only that task.
@@ -10153,7 +10153,7 @@ The runtime cognitive loop operates sequentially:
 ### Component Directory & Interface Tracing
 
 #### 1. Executive
-- **FILE**: [`cognitive_core/executive.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py)
+- **FILE**: [`cognitive_core/executive.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py)
 - **CLASS/FUNCTION**: `Executive`
 - **CALLED BY**: Task orchestrator scripts, test suites.
 - **CALLS**: `ToolRouter`, `ActivationEngine`, `RecallEngine`, `WorkingMemory`, `ReasoningEngine`, `Planner`, `ReflectionPipeline`, `Consolidator`, `Deduplicator`, `LearningEngine`.
@@ -10164,7 +10164,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_executive.py`, `test_cognitive_loop.py`
 
 #### 2. WorkingMemory
-- **FILE**: [`cognitive_core/working_memory.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/working_memory.py)
+- **FILE**: [`cognitive_core/working_memory.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/working_memory.py)
 - **CLASS/FUNCTION**: `WorkingMemory`
 - **CALLED BY**: `Executive`, `RecallEngine`
 - **CALLS**: `AttentionModel.calculate_score`
@@ -10175,7 +10175,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_working_memory.py`, `test_working_memory_persistence.py`
 
 #### 3. RecallEngine
-- **FILE**: [`cognitive_core/recall.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/recall.py)
+- **FILE**: [`cognitive_core/recall.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/recall.py)
 - **CLASS/FUNCTION**: `RecallEngine`
 - **CALLED BY**: `Executive`
 - **CALLS**: `MemoryController.search`, `parse_technology_version`
@@ -10186,7 +10186,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_recall.py`, `memory_controller/tests/test_supersession_phase43.py`
 
 #### 4. Deduplicator
-- **FILE**: [`cognitive_core/deduplication.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/deduplication.py)
+- **FILE**: [`cognitive_core/deduplication.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/deduplication.py)
 - **CLASS/FUNCTION**: `Deduplicator`
 - **CALLED BY**: `Executive`
 - **CALLS**: `MemoryController.search`, `ToolRouter.execute`
@@ -10197,7 +10197,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_deduplication.py`
 
 #### 5. ReflectionPipeline
-- **FILE**: [`cognitive_core/reflection.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/reflection.py)
+- **FILE**: [`cognitive_core/reflection.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/reflection.py)
 - **CLASS/FUNCTION**: `ReflectionPipeline`
 - **CALLED BY**: `Executive`
 - **CALLS**: `MemoryController.propose`, `MemoryController.update`
@@ -10208,7 +10208,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_reflection.py`, `test_dynamic_synapses.py`
 
 #### 6. ToolRouter
-- **FILE**: [`cognitive_core/tool_router.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/tool_router.py)
+- **FILE**: [`cognitive_core/tool_router.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/tool_router.py)
 - **CLASS/FUNCTION**: `ToolRouter`
 - **CALLED BY**: `Executive`, `Deduplicator`, `Consolidator`, `LearningEngine`
 - **CALLS**: `MemoryController` CRUD interfaces.
@@ -10219,7 +10219,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_executive.py` (indirect), `test_cognitive_loop.py`
 
 #### 7. Consolidator
-- **FILE**: [`cognitive_core/consolidation.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/consolidation.py)
+- **FILE**: [`cognitive_core/consolidation.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/consolidation.py)
 - **CLASS/FUNCTION**: `Consolidator`
 - **CALLED BY**: `Executive`
 - **CALLS**: `MemoryController.search`, `ToolRouter.execute`
@@ -10230,7 +10230,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_consolidation.py`
 
 #### 8. LearningEngine
-- **FILE**: [`cognitive_core/learning.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/learning.py)
+- **FILE**: [`cognitive_core/learning.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/learning.py)
 - **CLASS/FUNCTION**: `LearningEngine`
 - **CALLED BY**: `Executive`
 - **CALLS**: `MemoryController.search`, `ToolRouter.execute`
@@ -10241,7 +10241,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_learning.py`
 
 #### 9. ActivationEngine
-- **FILE**: [`cognitive_core/activation.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/activation.py)
+- **FILE**: [`cognitive_core/activation.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/activation.py)
 - **CLASS/FUNCTION**: `ActivationEngine`
 - **CALLED BY**: `Executive`
 - **CALLS**: `MemoryController.search`, `MemoryController.read`
@@ -10252,7 +10252,7 @@ The runtime cognitive loop operates sequentially:
 - **TEST COVERAGE**: `cognitive_core/tests/test_activation.py`
 
 #### 10. Planner
-- **FILE**: [`cognitive_core/planning.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/planning.py)
+- **FILE**: [`cognitive_core/planning.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/planning.py)
 - **CLASS/FUNCTION**: `Planner`, `ActivePlan`
 - **CALLED BY**: `Executive`
 - **CALLS**: None.
@@ -10382,7 +10382,7 @@ TRUE MULTI-PROCESS VERIFICATION SUCCESSFUL!
 - **ROOT CAUSE**: Circular imports between `controller.py`, `core.py`, and `supersession.py`.
 - **FAILED APPROACH**: Re-importing inside methods.
 - **FINAL SOLUTION**: Checked enum states using string literals (`"SUPERSEDED"`) inside `supersession.py`, completely avoiding importing `Lifecycle`.
-- **AFFECTED FILES**: [`memory_controller/validation/supersession.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/validation/supersession.py).
+- **AFFECTED FILES**: [`memory_controller/validation/supersession.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/validation/supersession.py).
 - **LESSON**: Enums in cross-module boundary validators should be checked as string values when they represent serialization attributes.
 
 ### 2. Propose Method Field Dropping
@@ -10390,7 +10390,7 @@ TRUE MULTI-PROCESS VERIFICATION SUCCESSFUL!
 - **ROOT CAUSE**: `MemoryController.propose` originally populated note dictionaries by copy-indexing only a static default parameters list.
 - **FAILED APPROACH**: Manually defining each new parameter in `propose`.
 - **FINAL SOLUTION**: Restructured `propose` to initialize defaults and overlay the incoming `note_data` dictionary comprehensively.
-- **AFFECTED FILES**: [`memory_controller/controller.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/controller.py).
+- **AFFECTED FILES**: [`memory_controller/controller.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/controller.py).
 - **LESSON**: Controller proposal handlers must dynamically merge complete incoming payloads to support version upgrades.
 
 ### 3. Jaccard Tokenization Overlap
@@ -10398,7 +10398,7 @@ TRUE MULTI-PROCESS VERIFICATION SUCCESSFUL!
 - **ROOT CAUSE**: Tokenizer split words directly on whitespace without casing normalization.
 - **FAILED APPROACH**: Regex splitting without normalization.
 - **FINAL SOLUTION**: Normalizing alphanumeric tokens via lowercase casts.
-- **AFFECTED FILES**: [`cognitive_core/semantic.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/semantic.py).
+- **AFFECTED FILES**: [`cognitive_core/semantic.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/semantic.py).
 - **LESSON**: Semantic mock metrics must normalise text content before scoring.
 
 ---
@@ -10419,7 +10419,7 @@ TRUE MULTI-PROCESS VERIFICATION SUCCESSFUL!
 - **TASK ID**: `AG-CONT-01`
 - **OBJECTIVE**: Integrate the Agent Handoff / Continuity layer as a core automation feature of the loop. Specifically, update the `Executive` to automatically compile a task summary, verified test results, and next actions to `02_PROJECTS/Continuity_Handoff.md` upon loop termination or task exit.
 - **WHY IT IS NEXT**: Handing off projects must be a programmatic, tool-driven event native to the loop, instead of manual write-ups.
-- **FILES LIKELY INVOLVED**: [`cognitive_core/executive.py`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py), [`02_PROJECTS/Continuity_Handoff.md`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/02_PROJECTS/Continuity_Handoff.md).
+- **FILES LIKELY INVOLVED**: [`cognitive_core/executive.py`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py), [`02_PROJECTS/Continuity_Handoff.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/02_PROJECTS/Continuity_Handoff.md).
 - **DEPENDENCIES**: Completed Phase 4.3 architecture.
 - **INVARIANTS**: Writing continuity state must never alter human-verified files or bypass path traversal checkers.
 - **ACCEPTANCE CRITERIA**:
@@ -11571,9 +11571,9 @@ Voi folosi un script Python dedicat (Rulează pe Node-ul Local) pentru a executa
 
 Aceste profiluri globale descriu cum vrei tu să lucreze agenții indiferent de proiect. Vor fi adăugate ca standarde canonice:
 
-#### [NEW] [Global_Antigravity_Agent_Profile.md](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Antigravity_Agent_Profile.md)
-#### [NEW] [Global_Claude_Code_Profile.md](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Claude_Code_Profile.md)
-#### [NEW] [Global_Gemini_CLI_Profile.md](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Gemini_CLI_Profile.md)
+#### [NEW] [Global_Antigravity_Agent_Profile.md](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Antigravity_Agent_Profile.md)
+#### [NEW] [Global_Claude_Code_Profile.md](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Claude_Code_Profile.md)
+#### [NEW] [Global_Gemini_CLI_Profile.md](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Gemini_CLI_Profile.md)
 
 ### 2. Exporturile `claude_original/` și `perplexity_original/`
 
@@ -12145,19 +12145,19 @@ propose_synapse()     — never invoked by Executive or Reflection.evaluate_outc
 ## 3. Missing Connections (14 Critical Gaps)
 
 ### GAP-1: RecallEngine is orphaned
-[recall.py](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/recall.py) exists but is never instantiated or called by `Executive`. The Executive uses `ActivationEngine.activate_from_query()` directly and never applies RecallEngine's multi-signal scoring.
+[recall.py](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/recall.py) exists but is never instantiated or called by `Executive`. The Executive uses `ActivationEngine.activate_from_query()` directly and never applies RecallEngine's multi-signal scoring.
 
 > [!IMPORTANT]
 > RecallEngine was designed to combine semantic similarity, activation, confidence, and WM relevance. None of these signals currently influence retrieval beyond ActivationEngine's rank-order decay.
 
 ### GAP-2: Consolidator is orphaned
-[consolidation.py](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/consolidation.py) exists but is never triggered by the cognitive loop. There is no periodic trigger, no post-task hook, and no Executive call.
+[consolidation.py](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/consolidation.py) exists but is never triggered by the cognitive loop. There is no periodic trigger, no post-task hook, and no Executive call.
 
 ### GAP-3: Deduplicator is orphaned
-[deduplication.py](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/deduplication.py) exists but is never triggered.
+[deduplication.py](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/deduplication.py) exists but is never triggered.
 
 ### GAP-4: LearningEngine is orphaned
-[learning.py](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/learning.py) exists but is never triggered. A learned confidence promotion can never influence a future recall because it is never executed.
+[learning.py](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/learning.py) exists but is never triggered. A learned confidence promotion can never influence a future recall because it is never executed.
 
 ### GAP-5: Dynamic Synapses never fire
 `ReflectionPipeline.propose_synapse()` exists but `evaluate_outcome()` never calls it. The only callers are unit tests. **No new graph edges are ever created autonomously.**
@@ -12174,7 +12174,7 @@ All three call `MemoryController` directly, bypassing:
 This means Consolidator could archive a human-verified memory if called directly.
 
 ### GAP-8: Consolidator archive signature mismatch
-`Consolidator.consolidate_lessons()` at [line 75](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/consolidation.py#L75) calls:
+`Consolidator.consolidate_lessons()` at [line 75](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/consolidation.py#L75) calls:
 ```python
 self.controller.archive(principal, lesson["id"])
 ```
@@ -12182,7 +12182,7 @@ But `MemoryController.archive()` requires **3 arguments**: `(principal, note_id,
 **This will crash at runtime.**
 
 ### GAP-9: Planner produces only single-step plans
-[planning.py](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/planning.py#L53-L64) always creates a 1-step plan with a fixed `search` action. Multi-step task execution is structurally supported by `ActivePlan` but functionally impossible because the Planner never generates multi-step plans from context.
+[planning.py](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/planning.py#L53-L64) always creates a 1-step plan with a fixed `search` action. Multi-step task execution is structurally supported by `ActivePlan` but functionally impossible because the Planner never generates multi-step plans from context.
 
 ### GAP-10: Failed tasks cannot be replanned
 When `step_loop()` encounters an error or block, it returns the result but does **not**:
@@ -12198,17 +12198,17 @@ The Executive simply stops.
 > This is the single most critical gap. The learning loop is broken: the system can reflect and produce lessons, but those lessons are permanently invisible to future cognitive operations.
 
 ### GAP-12: No crash-before-checkpoint protection
-`Executive.step_loop()` executes the action at [line 73](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py#L73), then calls `complete_current_step()` at [line 80](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py#L80), but `save_state()` is **never called automatically**. If the process crashes between action execution and the next explicit `save_state()` call, the step completion is lost. On restart, the step will be re-executed (non-idempotent).
+`Executive.step_loop()` executes the action at [line 73](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py#L73), then calls `complete_current_step()` at [line 80](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/cognitive_core/executive.py#L80), but `save_state()` is **never called automatically**. If the process crashes between action execution and the next explicit `save_state()` call, the step completion is lost. On restart, the step will be re-executed (non-idempotent).
 
 ### GAP-13: Duplicate Lifecycle enum definitions
 `Lifecycle` is defined in **both**:
-- [controller.py L53-L61](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/controller.py#L53-L61)
-- [core.py L23-L31](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/core.py#L23-L31)
+- [controller.py L53-L61](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/controller.py#L53-L61)
+- [core.py L23-L31](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/core.py#L23-L31)
 
 The Cognitive Core imports from `memory_controller.core.Lifecycle`. Some modules import from `memory_controller.controller.Lifecycle`. These are separate classes that happen to have the same values. Cross-module comparisons may fail unexpectedly.
 
 ### GAP-14: Duplicate StorageEngine definitions
-`StorageEngine` is defined in both [controller.py L30-L51](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/controller.py#L30-L51) and [core.py L10-L21](file:///c:/Users/Marius/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/core.py#L10-L21). The production singleton uses the one from `controller.py`. `core.py` is a dead duplicate.
+`StorageEngine` is defined in both [controller.py L30-L51](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/controller.py#L30-L51) and [core.py L10-L21](file:///c:/Users/user/Documents/Codex/AI_Memory_VAULT_CODEX_READY/memory_controller/core.py#L10-L21). The production singleton uses the one from `controller.py`. `core.py` is a dead duplicate.
 
 ---
 
@@ -13492,7 +13492,7 @@ relations: []
 ### 00_CORE__Goals.md
 - **Source**: `06_INBOX/RAW_IMPORTS/claude_original/00_CORE__Goals.md`
 - **ID**: `d51450b2-942d-4627-b1ad-5e48b83629f0`
-- **Destination**: `C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\goals_d51450b2.md`
+- **Destination**: `C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\goals_d51450b2.md`
 - **Type**: `core`
 - **Lifecycle**: `REVIEW`
 - **Provenance**: Preserved
@@ -13504,7 +13504,7 @@ relations: []
 ### 00_CORE__Identity.md
 - **Source**: `06_INBOX/RAW_IMPORTS/claude_original/00_CORE__Identity.md`
 - **ID**: `0b9d7faf-83d4-4ef0-b2ed-e4ead54e6062`
-- **Destination**: `C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\identity_0b9d7faf.md`
+- **Destination**: `C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\identity_0b9d7faf.md`
 - **Type**: `core`
 - **Lifecycle**: `REVIEW`
 - **Provenance**: Preserved
@@ -13516,7 +13516,7 @@ relations: []
 ### 00_CORE__Rules.md
 - **Source**: `06_INBOX/RAW_IMPORTS/claude_original/00_CORE__Rules.md`
 - **ID**: `41607599-0690-45f6-b94f-dc4add54e737`
-- **Destination**: `C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\rules_41607599.md`
+- **Destination**: `C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\rules_41607599.md`
 - **Type**: `core`
 - **Lifecycle**: `REVIEW`
 - **Provenance**: Preserved
@@ -13528,7 +13528,7 @@ relations: []
 ### 00_CORE__System_Architecture.md
 - **Source**: `06_INBOX/RAW_IMPORTS/claude_original/00_CORE__System_Architecture.md`
 - **ID**: `5861146f-f696-4f55-9b06-192717597cf8`
-- **Destination**: `C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\architecture_5861146f.md`
+- **Destination**: `C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\architecture_5861146f.md`
 - **Type**: `core`
 - **Lifecycle**: `REVIEW`
 - **Provenance**: Preserved
@@ -13540,7 +13540,7 @@ relations: []
 ### 02_PROJECTS___Projects_Index.md
 - **Source**: `06_INBOX/RAW_IMPORTS/claude_original/02_PROJECTS___Projects_Index.md`
 - **ID**: `17e7ea30-a054-4b96-b33e-a42a05115eb8`
-- **Destination**: `C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\02_PROJECTS\index_17e7ea30.md`
+- **Destination**: `C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\02_PROJECTS\index_17e7ea30.md`
 - **Type**: `project`
 - **Lifecycle**: `REVIEW`
 - **Provenance**: Preserved
@@ -13552,7 +13552,7 @@ relations: []
 ### 03_PROCEDURES__Import_Sanitization.md
 - **Source**: `06_INBOX/RAW_IMPORTS/claude_original/03_PROCEDURES__Import_Sanitization.md`
 - **ID**: `eb0af74c-f4f3-47d6-9a5a-7d60fabcded2`
-- **Destination**: `C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\03_PROCEDURES\vault-maintenance_eb0af74c.md`
+- **Destination**: `C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\03_PROCEDURES\vault-maintenance_eb0af74c.md`
 - **Type**: `procedure`
 - **Lifecycle**: `REVIEW`
 - **Provenance**: Preserved
@@ -13564,7 +13564,7 @@ relations: []
 ### 99_SYSTEM__RAG_KnowledgeGraph_Architecture.md
 - **Source**: `06_INBOX/RAW_IMPORTS/claude_original/99_SYSTEM__RAG_KnowledgeGraph_Architecture.md`
 - **ID**: `87689ea3-74f8-4e13-8030-aec1ab2b3987`
-- **Destination**: `C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\99_SYSTEM\system-architecture_87689ea3.md`
+- **Destination**: `C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\99_SYSTEM\system-architecture_87689ea3.md`
 - **Type**: `system`
 - **Lifecycle**: `REVIEW`
 - **Provenance**: Preserved
@@ -13576,7 +13576,7 @@ relations: []
 ### Goals.md
 - **Source**: `06_INBOX/RAW_IMPORTS/perplexity_original/Goals.md`
 - **ID**: `6d01d507-5ef4-4e3e-8422-edd9be5d7f25`
-- **Destination**: `C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\test_6d01d507.md`
+- **Destination**: `C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\test_6d01d507.md`
 - **Type**: `core`
 - **Lifecycle**: `REVIEW`
 - **Provenance**: Preserved
@@ -13588,7 +13588,7 @@ relations: []
 ### Identity.md
 - **Source**: `06_INBOX/RAW_IMPORTS/perplexity_original/Identity.md`
 - **ID**: `92a44168-907a-4fdd-9111-f7fe3ff32121`
-- **Destination**: `C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\test_92a44168.md`
+- **Destination**: `C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\test_92a44168.md`
 - **Type**: `core`
 - **Lifecycle**: `REVIEW`
 - **Provenance**: Preserved
@@ -13600,7 +13600,7 @@ relations: []
 ### RAG_Structure.md
 - **Source**: `06_INBOX/RAW_IMPORTS/perplexity_original/RAG_Structure.md`
 - **ID**: `ca940601-808d-4632-9c7c-5c3052776a56`
-- **Destination**: `C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\01_KNOWLEDGE\test_ca940601.md`
+- **Destination**: `C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\01_KNOWLEDGE\test_ca940601.md`
 - **Type**: `knowledge`
 - **Lifecycle**: `REVIEW`
 - **Provenance**: Preserved
@@ -13612,7 +13612,7 @@ relations: []
 ### Rules.md
 - **Source**: `06_INBOX/RAW_IMPORTS/perplexity_original/Rules.md`
 - **ID**: `d10e69b1-3c50-4489-a868-1ce103b89cfd`
-- **Destination**: `C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\test_d10e69b1.md`
+- **Destination**: `C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\test_d10e69b1.md`
 - **Type**: `core`
 - **Lifecycle**: `REVIEW`
 - **Provenance**: Preserved
@@ -13624,7 +13624,7 @@ relations: []
 ### System_Architecture.md
 - **Source**: `06_INBOX/RAW_IMPORTS/perplexity_original/System_Architecture.md`
 - **ID**: `b3edc0de-4f64-4e9b-b72e-e07281579fc6`
-- **Destination**: `C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\test_b3edc0de.md`
+- **Destination**: `C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\00_CORE\test_b3edc0de.md`
 - **Type**: `core`
 - **Lifecycle**: `REVIEW`
 - **Provenance**: Preserved
@@ -13634,8 +13634,8 @@ relations: []
 - **Search**: FAIL
 
 ## Exceptions
-- Cannot map type for: C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\06_INBOX\RAW_IMPORTS\perplexity_original\Folder_Structure_Overview.md
-- Cannot map type for: C:\Users\Marius\Documents\Codex\AI_Memory_VAULT_CODEX_READY\06_INBOX\RAW_IMPORTS\perplexity_original\Knowledge_Graph_Schema.md
+- Cannot map type for: C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\06_INBOX\RAW_IMPORTS\perplexity_original\Folder_Structure_Overview.md
+- Cannot map type for: C:\Users\user\Documents\Codex\AI_Memory_VAULT_CODEX_READY\06_INBOX\RAW_IMPORTS\perplexity_original\Knowledge_Graph_Schema.md
 
 ---
 

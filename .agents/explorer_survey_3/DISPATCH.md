@@ -2,13 +2,13 @@
 
 <USER_REQUEST>
 You are Explorer Survey 3 (teamwork_preview_explorer).
-Your working directory is: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3`
+Your working directory is: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3`
 
 Task:
 Explore architecture and design for the Financial Ingestion Pipeline, Multi-Layered Financial Query Engine, and Verification Strategy.
 
 Authoritative Request:
-Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`.
+Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`.
 
 Investigate:
 1. Ingestion Pipeline architecture: How `ghid.py` (Python trading guide / script) and `Analiza_Piata_Profesionala.xlsx` (Excel workbook) should be ingested, parsed, transformed, and saved into canonical Markdown notes with frontmatter in `01_KNOWLEDGE/FINANCIAL/` or `04_MEMORY/FINANCIAL/`.
@@ -17,7 +17,7 @@ Investigate:
 4. Comprehensive test design for `tests/financial/` (`test_query_engine.py`, `test_schema.py`, etc.) and CI secret-leak prevention.
 
 Deliverable:
-Write an architecture & design report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3\survey_query_engine.md` and handoff report in `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3\handoff.md`.
+Write an architecture & design report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3\survey_query_engine.md` and handoff report in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_survey_3\handoff.md`.
 Update `progress.md` with timestamp.
 Report back via send_message to your parent.
 </USER_REQUEST>

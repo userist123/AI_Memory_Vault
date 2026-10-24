@@ -1,9 +1,9 @@
 ## 2026-08-14T19:59:28Z
 You are the Codebase Architect Explorer for the Cognitive Brain system.
-Your working directory is: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1
+Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1
 
 MANDATORY FIRST STEP:
-Read c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md.
+Read c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md.
 
 Your task:
 1. Thoroughly explore the existing codebase (Python modules, packages, directory structure, files, schemas).
@@ -16,8 +16,8 @@ Your task:
    - Multi-agent coordination and worker implementations.
    - Metrics & Guards: TRACe metrics, IR ranking/benchmarks, ContinualLearningGuard.
 3. Identify existing code strengths, architectural gaps, bugs, missing methods/classes, and syntax/import issues.
-4. Write your full analysis report at c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1\report.md.
-5. Write your handoff at c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1\handoff.md.
+4. Write your full analysis report at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1\report.md.
+5. Write your handoff at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1\handoff.md.
 6. Notify parent via send_message.
 
 ---

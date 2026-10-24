@@ -5,7 +5,7 @@
 <USER_REQUEST>
 Build a production-grade, 100% FREE web-based voice AI assistant ("JARVIS Web Ecosystem") with real-time Speech-to-Text (STT), Text-to-Speech (TTS), interactive 3D WebGL holographic UI, tactical sound effects, and deep integration with the local AI Memory Vault (v6.0.0 REST API).
 
-Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web
+Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web
 
 Integrity mode: development
 
@@ -43,9 +43,9 @@ Provide a standalone, responsive Web UI dashboard (index.html, app.js, style.css
 > Goal: Craft prompt → get user approval → delegate to teamwork_preview
 > Requested team: Very large team of agents (as previously specified)
 
-Integrate a financial data ingestion pipeline and a multi‑layered financial query engine into the AI Memory Vault (`AI_Memory_Vault_CODEX_READY`). The system will ingest scripts and Excel files from `C:\Users\Marius\Desktop\Nu sterge\nusterge` (`ghid.py`, `Analiza_Piata_Profesionala.xlsx`), transform them into canonical financial notes, and expose search capabilities via the vault API.
+Integrate a financial data ingestion pipeline and a multi‑layered financial query engine into the AI Memory Vault (`AI_Memory_Vault_CODEX_READY`). The system will ingest scripts and Excel files from `C:\Users\user\Desktop\Nu sterge\nusterge` (`ghid.py`, `Analiza_Piata_Profesionala.xlsx`), transform them into canonical financial notes, and expose search capabilities via the vault API.
 
-Working directory: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY`
+Working directory: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY`
 Integrity mode: development
 
 ## Requirements
@@ -126,7 +126,7 @@ Provide an automated test suite (pytest) that validates:
 <USER_REQUEST>
 Building a local, fully autonomous, self-improving Cognitive Brain ("Creier Vorbitor") featuring a complete cognitive OODA loop (Observe, Retrieve, Reason, Plan, Act, Reflect, Consolidate), integrated with a real-time cascading audio pipeline (STT Silero VAD + Faster-Whisper, TTS Kokoro-82M with barge-in/AEC), multi-agent worker coordination, a local Home Assistant IoT REST API simulation, and an ultra-modern 3D Web HUD interface.
 
-Working directory: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+Working directory: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 Integrity mode: demo
 
 ## Requirements
@@ -170,11 +170,11 @@ Build a highly polished, responsive Web UI dashboard and 3D visualizer showing:
 
 ## 2026-08-27T19:41:54Z
 
-RESUME INSTRUCTION: The project has already completed Milestone 1 (Cognitive OODA loop, modular LLM provider layer, and memory persistence engine are implemented under C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain and 113+ tests are passing cleanly). Please scan the existing codebase and test suite, verify the state of the project, and resume execution starting with Milestone 2: Cascaded Audio Pipeline (STT Silero VAD + Faster-Whisper, TTS Kokoro-82M ONNX, and Barge-in/AEC interruption) and onwards.
+RESUME INSTRUCTION: The project has already completed Milestone 1 (Cognitive OODA loop, modular LLM provider layer, and memory persistence engine are implemented under C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain and 113+ tests are passing cleanly). Please scan the existing codebase and test suite, verify the state of the project, and resume execution starting with Milestone 2: Cascaded Audio Pipeline (STT Silero VAD + Faster-Whisper, TTS Kokoro-82M ONNX, and Barge-in/AEC interruption) and onwards.
 
 Project Description: Building a local, fully autonomous, self-improving Cognitive Brain ("Creier Vorbitor") featuring a complete cognitive OODA loop (Observe, Retrieve, Reason, Plan, Act, Reflect, Consolidate), integrated with a real-time cascading audio pipeline (STT Silero VAD + Faster-Whisper, TTS Kokoro-82M with barge-in/AEC), multi-agent worker coordination, a local Home Assistant IoT REST API simulation, and an ultra-modern 3D Web HUD interface.
 
-Working directory: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+Working directory: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 Integrity mode: demo
 
 ## Requirements
@@ -223,7 +223,7 @@ IMPORTANT: Ensure that the implementations of these milestones are written as ac
 
 Project Description: Building a local, fully autonomous, self-improving Cognitive Brain ("Creier Vorbitor") featuring a complete cognitive OODA loop (Observe, Retrieve, Reason, Plan, Act, Reflect, Consolidate), integrated with a real-time cascading audio pipeline (STT Silero VAD + Faster-Whisper, TTS Kokoro-82M with barge-in/AEC), multi-agent worker coordination, a local Home Assistant IoT REST API simulation, and an ultra-modern 3D Web HUD interface.
 
-Working directory: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+Working directory: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 Integrity mode: demo
 
 ## Requirements

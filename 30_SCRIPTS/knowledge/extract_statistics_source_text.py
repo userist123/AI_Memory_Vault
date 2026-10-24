@@ -5,6 +5,7 @@ Produces test fixtures under 07_EVALUATION/curriculum/source_text/statistics_ch0
 under Creative Commons Attribution 4.0 International (CC BY 4.0).
 """
 from __future__ import annotations
+import os
 
 import hashlib
 import json
@@ -22,31 +23,31 @@ SECTIONS = [
         "8_0_introduction.html",
         "8_0_introduction.txt",
         "https://openstax.org/books/introductory-statistics-2e/pages/8-introduction",
-        Path(r"C:\Users\Marius\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\.system_generated\steps\41202\content.md")
+        Path(os.path.expanduser(r"~\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\.system_generated\steps\41202\content.md"))
     ),
     (
         "8_1_a_single_population_mean_using_the_normal_distribution.html",
         "8_1_a_single_population_mean_using_the_normal_distribution.txt",
         "https://openstax.org/books/introductory-statistics-2e/pages/8-1-a-single-population-mean-using-the-normal-distribution",
-        Path(r"C:\Users\Marius\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\.system_generated\steps\41216\content.md")
+        Path(os.path.expanduser(r"~\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\.system_generated\steps\41216\content.md"))
     ),
     (
         "8_2_a_single_population_mean_using_the_student_t_distribution.html",
         "8_2_a_single_population_mean_using_the_student_t_distribution.txt",
         "https://openstax.org/books/introductory-statistics-2e/pages/8-2-a-single-population-mean-using-the-student-t-distribution",
-        Path(r"C:\Users\Marius\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\.system_generated\steps\41218\content.md")
+        Path(os.path.expanduser(r"~\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\.system_generated\steps\41218\content.md"))
     ),
     (
         "8_3_a_population_proportion.html",
         "8_3_a_population_proportion.txt",
         "https://openstax.org/books/introductory-statistics-2e/pages/8-3-a-population-proportion",
-        Path(r"C:\Users\Marius\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\.system_generated\steps\41220\content.md")
+        Path(os.path.expanduser(r"~\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\.system_generated\steps\41220\content.md"))
     ),
     (
         "8_4_confidence_interval_calculating_sample_size.html",
         "8_4_confidence_interval_calculating_sample_size.txt",
         "https://openstax.org/books/introductory-statistics-2e/pages/8-formula-review",
-        Path(r"C:\Users\Marius\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\.system_generated\steps\41222\content.md")
+        Path(os.path.expanduser(r"~\.gemini\antigravity\brain\aebf6032-0fa2-438b-bb11-3eda139a64e3\.system_generated\steps\41222\content.md"))
     ),
 ]
 
