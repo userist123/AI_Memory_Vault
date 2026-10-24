@@ -1,5 +1,6 @@
 # todo-claude-wp2
-STATUS: IN_PROGRESS        UPDATED: 2026-10-08 (merged origin/main; PR opening, CI pending)
+STATUS: DONE   UPDATED: 2026-10-22T17:30:00+03:00
+CLOSED-NOTE (claude, 2026-10-22T17:30:00+03:00): PR #233 merged 2026-10-09. Owner question below (bare-array JSON) was not re-checked.
 TASK: LogAnalyzer stage 2 WP2 - finding contract, standard states, versioned outputs, raw time (+ lessons-learned vocabulary)
 BRANCH / PR: loganalyzer/wp2-finding-contract / opened (see GitHub)    BASE: origin/main
 SPEC: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/CONTRACT_AUDIT_STAGE1.md (s7 WP2, s8 decision 2), FINDING_CONTRACT.md
