@@ -46,6 +46,10 @@ try {
   // paleta Ctrl+K deschisă (dialog modal)
   if (need(await p.evaluate(async () => { document.dispatchEvent(new KeyboardEvent('keydown', { key: 'k', ctrlKey: true, bubbles: true })); await new Promise(r => setTimeout(r, 500)); return !!document.querySelector('dialog.cmdk[open]'); }), 'paleta Ctrl+K'))
     failures += await audit(p, 'editor-ctrlk');
+  // laptop 1366 px: bara de sus compactă (limba și unitățile în „Mai multe”, Anulează / Refă doar cu pictograma)
+  await p.s('Emulation.setDeviceMetricsOverride', { width: 1366, height: 768, deviceScaleFactor: 1, mobile: false }); await p.go(`${BASE}/p/${id}`);
+  if (need(await p.evaluate(async () => { for (let i = 0; i < 100 && !document.querySelector('svg.plan'); i++) await new Promise(r => setTimeout(r, 100)); const m = document.querySelector('.tb-more'); return !!document.querySelector('svg.plan') && !!m && getComputedStyle(m).display !== 'none'; }), 'editor la 1366 px (svg.plan, meniul Mai multe)'))
+    failures += await audit(p, 'editor-1366'); await view(p, DESKTOP);
   for (const doc of ['print', 'offer', 'contract', 'proforma', 'handover', 'site-report', 'board']){ await p.go(`${BASE}/p/${id}/${doc}`); await sleep(1200); failures += await audit(p, `doc-${doc}`); }
   await p.go(`${BASE}/share/${token}`); await sleep(1500); failures += await audit(p, 'link-desktop');
   await view(p, PHONE); await p.go(`${BASE}/share/${token}`); await sleep(1500); failures += await audit(p, 'link-telefon');
