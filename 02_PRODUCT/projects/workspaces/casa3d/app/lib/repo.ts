@@ -1,6 +1,6 @@
 import { sanitizeAppearance, SIZE_LIMITS_CM } from '../core/appearance';
 import { checkMeta, readMeta, type ProjectMeta } from '../core/project-meta';
-import { sanitizeFinishes } from '../core/finishes';
+import { sanitizeFinishes, roomCeilingDropCm } from '../core/finishes';
 import { sanitizeRoomOptions } from '../core/room-options';
 import { demoBeforeCreate } from './demo';
 import { sanitizeDoors } from '../core/doors';
@@ -178,7 +178,7 @@ export async function saveDraft(owner: string, id: string, snapshot: unknown, ba
 export function projectErrors(snap: Snapshot, cat: Catalog){
   const err = (i: { severity: string }) => i.severity === 'ERROR';
   // fiecare nivel cu piesele lui, plus scările (inclusiv golul lor de la etaj)
-  return [...floors(snap).flatMap((_, k) => { const v = levelView(snap, k); return [...validateFloor(v.floor).filter(err), ...v.placements.flatMap(pl => validatePlacement(v, cat, pl).filter(err))]; }),
+  return [...floors(snap).flatMap((_, k) => { const v = levelView(snap, k); return [...validateFloor(v.floor, id => roomCeilingDropCm(snap, id)).filter(err), ...v.placements.flatMap(pl => validatePlacement(v, cat, pl).filter(err))]; }),
     ...stairIssues(snap, cat)];
 }
 // O revizie se creează doar dacă proiectul nu are erori (constituția: ERROR blochează aplicarea).
