@@ -1,6 +1,7 @@
+import os
 import sys
 from pathlib import Path
-sys.path.insert(0, r"C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain")
+sys.path.insert(0, os.path.expanduser(r"~\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain"))
 
 import json
 import asyncio

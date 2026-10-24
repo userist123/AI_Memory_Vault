@@ -6,13 +6,13 @@ Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive 
 ## 🔒 My Identity
 - Archetype: self
 - Roles: orchestrator, user_liaison, human_reporter, successor
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_2
 - Original parent: parent
 - Original parent conversation ID: 72226d68-bdea-4026-bf4c-dfb6ed565e6b
 
 ## 🔒 My Workflow
 - **Pattern**: Project Pattern (Dual Track: Implementation Track + E2E / Test Verification Track)
-- **Scope document**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
+- **Scope document**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
 1. **Decompose**: Survey codebase with Explorers/Spec Miners -> Merge Feature Inventory -> Establish Milestones & Interface Contracts in PROJECT.md -> Decompose into modular milestones.
 2. **Dispatch & Execute**:
    - **Direct (iteration loop)**: For each milestone: Explorer(s) -> Worker -> Reviewers + Challengers + Forensic Auditor -> Gate verification.
@@ -72,10 +72,10 @@ Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive 
 - Safety timer: none
 
 ## Artifact Index
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md — Global Project Specification
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_INFRA.md — Test Infrastructure
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md — Test Readiness Signal
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_2\GATE_STATUS.md — Gate Status
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md — Global Project Specification
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_INFRA.md — Test Infrastructure
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md — Test Readiness Signal
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_2\GATE_STATUS.md — Gate Status
 
 ---
 

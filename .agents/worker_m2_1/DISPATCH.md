@@ -2,10 +2,10 @@
 
 Worker for Milestone 2: Cascaded Audio Pipeline & Barge-In ("Creier Vorbitor") of the Jarvis Cognitive Brain project.
 
-Working directory: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_1`
+Working directory: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_1`
 
 Target Codebase Directory:
-`C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+`C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 
 Files Owned:
 - `jarvis/audio/__init__.py`

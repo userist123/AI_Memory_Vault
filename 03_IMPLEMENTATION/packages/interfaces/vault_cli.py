@@ -47,7 +47,28 @@ def _note_eligibility(note_id: str):
         controller = get_memory_controller()
     except Exception:  # noqa: BLE001 - no secret / no controller: policy gates still apply
         return None
-    return memory_access._readable(controller, note_id) is not None
+    return eligible_for_agent(controller, note_id)
+
+
+def eligible_for_agent(controller, note_id: str) -> bool:
+    """MemoryController's verdict for the direct routes, the same one memory_get gives.
+
+    A note flagged quarantined, or one whose body the controller withholds (`model_egress`
+    False), is not served. `unverified=False`: an unverified REVIEW candidate is handed over by
+    the controlled tools by contract (CLAUDE.md, memory_get), marked unverified.
+    """
+    try:
+        from interfaces import memory_access
+        from memory_controller.authorizer import Principal
+        from security.verified_reduction import content_withheld_from
+        if memory_access._is_quarantined(controller.storage.get(note_id)):
+            return False
+        record = memory_access._readable(controller, note_id)
+        if record is None or record.get("model_egress") is False:
+            return False
+        return not content_withheld_from(Principal.AI_AGENT, record, unverified=False)
+    except Exception:  # noqa: BLE001 - a verdict that cannot be computed is a refusal (fail closed)
+        return False
 
 
 def build_parser() -> argparse.ArgumentParser:

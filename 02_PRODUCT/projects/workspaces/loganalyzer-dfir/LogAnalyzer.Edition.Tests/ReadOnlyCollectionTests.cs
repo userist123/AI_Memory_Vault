@@ -55,8 +55,9 @@ public sealed class ReadOnlyCollectionTests
     }
 
     [Theory]
-    [InlineData("ClassifiedOutput")]
-    [InlineData("UnclassifiedOutput")]
+    [InlineData("StandaloneOutput")]
+    [InlineData("NetworkOutput")]
+    [InlineData("InternetOutput")]
     public void No_production_assembly_clears_or_deletes_source_logs(string outputKey)
     {
         var dir = BuildOutputInspector.Output(outputKey);

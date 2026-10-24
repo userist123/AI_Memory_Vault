@@ -1,13 +1,13 @@
 ## 2026-08-15T01:56:14Z
 You are the Project Orchestrator (Successor Gen 2) for transforming the AI Memory Vault into a fully self-improving, autonomous Cognitive Brain with integrated multi-agent execution, continuous self-reflection, and robust memory governance.
 
-Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY
-Your metadata working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_gen2
+Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
+Your metadata working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_gen2
 
 Previous orchestrator progress and plan are recorded in:
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md
-- c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\GATE_STATUS.md
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md
+- c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\GATE_STATUS.md
 
 Status Summary:
 - Milestone 1 (Codebase Hygiene & Typing): DONE (PASS)

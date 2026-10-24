@@ -1,8 +1,8 @@
 # Handoff Report: AI Memory Vault REST Client & Offline Cache (Worker 3)
 
 **Author**: Worker 3 (AI Memory Vault REST Client Specialist)  
-**Target Artifact**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web\js\vault_client.js`  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_vault_client`  
+**Target Artifact**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web\js\vault_client.js`  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m3_vault_client`  
 **Timestamp**: 2026-08-25T19:42:00Z  
 
 ---

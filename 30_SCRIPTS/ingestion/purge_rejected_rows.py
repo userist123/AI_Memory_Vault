@@ -153,6 +153,7 @@ def purge_rows(
     apply: bool = False,
     allow_status: Optional[str] = None,
     from_disposition_manifest: bool = False,
+    manifest_path: Optional[str] = None,
 ) -> Dict[str, Any]:
     """
     Executes or simulates the purge of target concepts from slot markdown tables.
@@ -160,6 +161,8 @@ def purge_rows(
     target_items: list of dicts with keys 'slot_file' (or 'slot') and 'concept' (and optionally 'disposition', 'merge_into').
     allow_status: if specified, extends allowed statuses with comma-separated values (e.g. 'unverified_source').
     from_disposition_manifest: if True, indicates targets come from disposition manifest.
+    manifest_path: the manifest the targets came from; an apply on the canonical slots requires it
+        to cover the slots on disk exactly (`validate_against_slots`), as apply_row_disposition.py does.
     """
     # Before anything is read or planned. A purge deletes rows from the ontology,
     # and `--apply` used to be the only thing standing between a row selection and
@@ -178,6 +181,26 @@ def purge_rows(
                 "every target carries its recorded disposition; or point --slots-dir at "
                 "a copy of the slots for a run that writes."
             )
+        # A disposition only counts as a decision when it comes from a manifest that
+        # covers the canonical slots exactly: otherwise a self-authored one-row
+        # manifest is enough to delete from them (A-09, 2026-10-14). The check lives
+        # here so a Python caller of purge_rows() is gated like the CLI.
+        if not manifest_path:
+            raise UngatedCanonicalWrite(
+                "refusing to write the canonical slot files: purge_rows() needs the path of "
+                "the disposition manifest the targets came from (manifest_path=...)."
+            )
+        try:
+            from disposition_manifest import DispositionError, load_manifest as _load_manifest
+        except ImportError:
+            from .disposition_manifest import DispositionError, load_manifest as _load_manifest
+        try:
+            _load_manifest(manifest_path).validate_against_slots(slots_dir)
+        except DispositionError as exc:
+            raise UngatedCanonicalWrite(
+                f"refusing --apply: the disposition manifest {manifest_path} does not match the "
+                f"slots in {slots_dir}: {exc}. Nothing was written."
+            ) from exc
 
     allowed_statuses: Set[str] = {"proposed"}
     if from_disposition_manifest:
@@ -514,6 +537,7 @@ def main():
 
     target_items: List[Dict[str, Any]] = []
     from_disposition_manifest = False
+    manifest_used: Optional[str] = None
 
     if args.batch:
         catalog = load_catalog()
@@ -533,6 +557,7 @@ def main():
         manifest = load_manifest(args.disposition_file)
         target_items = [r.to_dict() for r in manifest.rows]
         from_disposition_manifest = True
+        manifest_used = args.disposition_file
 
     #: A batch is a selection, not a decision. The catalogue was built before
     #: the disposition manifest existed and knows nothing about MERGE_INTO or
@@ -548,14 +573,20 @@ def main():
         if annotated is not None:
             target_items = annotated
             from_disposition_manifest = True
+            manifest_used = args.disposition_manifest
 
-    results = purge_rows(
-        target_items,
-        slots_dir=args.slots_dir,
-        apply=args.apply,
-        allow_status=args.allow_status,
-        from_disposition_manifest=from_disposition_manifest,
-    )
+    try:
+        results = purge_rows(
+            target_items,
+            slots_dir=args.slots_dir,
+            apply=args.apply,
+            allow_status=args.allow_status,
+            from_disposition_manifest=from_disposition_manifest,
+            manifest_path=manifest_used,
+        )
+    except UngatedCanonicalWrite as exc:
+        print(str(exc), file=_sys.stderr)
+        raise SystemExit(2)
 
     if args.json:
         print(json.dumps(results, indent=2))

@@ -27,7 +27,7 @@ From `.agents/ORIGINAL_REQUEST.md` (lines 142–147, 165–166):
 > - Barge-in events successfully halt active audio playback and interrupt ongoing LLM execution.
 
 ### 1.2 Target Codebase Status
-- Target directory: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
+- Target directory: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`
 - Inspection confirmed the directory is clean and ready for implementation.
 - Prior project `projects/jarvis_web/voice_server.py` utilized Piper TTS via subprocess (`ro_RO-mihai-medium`), confirming existing system experience with Romanian voice synthesis and text cleaning patterns (`speech_text` regex stripping of markdown/URLs).
 

@@ -144,7 +144,7 @@ All 4 previously identified edge cases, concurrency deadlocks, and type vulnerab
 To independently reproduce and verify all results:
 
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 # 1. Run the edge bug verification suite:
 python -m pytest tests/unit/test_adversarial_m2_edge_bugs.py -v

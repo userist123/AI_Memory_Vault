@@ -53,8 +53,10 @@ namespace LogAnalyzer.Core.Services
 
         private static string Escape(string input)
         {
+            // Content of an always-quoted cell: line breaks flattened, hidden characters removed and marked, formulas neutralised (independent review #4).
             if (string.IsNullOrEmpty(input)) return string.Empty;
-            return input.Replace("\"", "\"\"").Replace("\r", " ").Replace("\n", " ");
+            var flat = input.Replace("\r", " ").Replace("\n", " ");
+            return LogAnalyzer.Dfir.IO.CsvWriter.NeutraliseFormula(LogAnalyzer.Dfir.Language.ReportText.Clean(flat)).Replace("\"", "\"\"");
         }
     }
 }

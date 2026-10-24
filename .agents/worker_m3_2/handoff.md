@@ -67,7 +67,7 @@ All 3 concurrency and lifecycle defects in `jarvis/agents/supervisor.py` are com
 To independently verify:
 
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 
 # 1. Run the 4 challenger & reproducer test files
 python -m pytest tests/unit/test_challenger_m3_bug_retry.py tests/unit/test_challenger_m3_bug_cancellation.py tests/unit/test_challenger_m3_bug_pending_cancel.py tests/unit/test_challenger_m3_adversarial_deep.py -v
@@ -80,7 +80,7 @@ python -m pytest
 ```
 ============================= test session starts =============================
 platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 configfile: pyproject.toml
 testpaths: tests
 plugins: anyio-4.12.1, langsmith-0.11.0, asyncio-1.4.0

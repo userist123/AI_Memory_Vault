@@ -6,7 +6,7 @@ Design and implement the comprehensive, requirement-driven 4-tier E2E and Unit T
 ## 🔒 My Identity
 - Archetype: Test Writer
 - Roles: specialist, qa
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_e2e_test_writer
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_e2e_test_writer
 - Original parent: e87bdef8-bfc1-4e8e-a965-ccd159cf02a1
 - Milestone: Financial Ingestion & Query Engine E2E Testing
 
@@ -28,9 +28,9 @@ Design and implement the comprehensive, requirement-driven 4-tier E2E and Unit T
 - **Code layout**: `tests/financial/` for test code; root `TEST_INFRA.md` and `TEST_READY.md`.
 
 ## Loaded Skills
-- **Source**: unit-test-generation-contract (`c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\unit-test-generation-contract\SKILL.md`)
+- **Source**: unit-test-generation-contract (`c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\unit-test-generation-contract\SKILL.md`)
 - **Core methodology**: Deterministic test generation, contract and boundary coverage, isolated mocking.
-- **Source**: vault-security-audit (`c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`)
+- **Source**: vault-security-audit (`c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`)
 - **Core methodology**: Invariants verification, tamper-evident audit log checks, P0-P18 trust boundary validation.
 
 ## Quality Status

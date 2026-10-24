@@ -1,8 +1,8 @@
 # Comprehensive Technical Survey & Specification Mining Report: IoT FastMCP, Multi-Agent & 3D HUD Specialist (Explorer 3)
 
 **Author**: Explorer 3 (IoT FastMCP, Multi-Agent & 3D HUD Specialist)  
-**Target Project**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_iot_fastmcp_hud`  
+**Target Project**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_iot_fastmcp_hud`  
 **Timestamp**: 2026-08-27T19:25:00Z  
 **Requirements Covered**: R3 (Multi-Agent Worker Orchestration), R4 (FastMCP & IoT Home Assistant Integration), R5 (Ultra-Modern GUI Dashboard & 3D Web HUD)
 
@@ -11,7 +11,7 @@
 ## 1. Observation
 
 1. **Authoritative Specification & Core Request**:
-   - In `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (lines 124–170, timestamp `2026-08-27T19:19:42Z`), the user specifies building a local, fully autonomous, self-improving Cognitive Brain ("Creier Vorbitor") in `projects/jarvis_cognitive_brain`.
+   - In `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md` (lines 124–170, timestamp `2026-08-27T19:19:42Z`), the user specifies building a local, fully autonomous, self-improving Cognitive Brain ("Creier Vorbitor") in `projects/jarvis_cognitive_brain`.
    - **Requirement R3** specifies: "Multi-Agent Worker Orchestration: Coordinate execution using a supervisor and specialized, least-privilege agent workers (Router, Retrieval, Verifier, Consolidator, Critic) to process background tasks (e.g., gathering data, verifying memory compliance) without blocking the primary real-time voice loop."
    - **Requirement R4** specifies: "FastMCP & IoT Home Assistant Integration: Implement a FastMCP tool server (`JarvisControls`) that provides validated tools to query and manipulate IoT device states over a local REST API (`/api/states`). Deliver a lightweight local simulator script to mock Home Assistant REST endpoints for reliable offline testing."
    - **Requirement R5** specifies: "Ultra-Modern GUI Dashboard & Web HUD: Build a highly polished, responsive Web UI dashboard and 3D visualizer showing: Active vocal states (Idle, Listening, Thinking, Speaking) with dynamic sound reactivity; Visual representation of the active 'thoughts' (OODA execution stages) and memory graphs/citations; System health meters and configuration settings."

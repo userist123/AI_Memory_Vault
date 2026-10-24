@@ -1,5 +1,7 @@
 # LogAnalyzer editions (WP-ED, owner decision 13)
 
+> Update: the product now ships as **three** editions (Standalone, Network, Internet) with a compile-time station posture. See `EDITIONS_AND_POSTURE.md`. The executable names below are now `LogAnalyzer.Standalone.exe` (was `LogAnalyzer.Classified.exe`) and `LogAnalyzer.Internet.exe` (was `LogAnalyzer.exe`); the classified edition is the Standalone edition.
+
 Two applications share the core libraries. Existing functionality is not removed: it sits behind an edition boundary,
 and the unclassified edition keeps all of it.
 
@@ -15,6 +17,10 @@ and the unclassified edition keeps all of it.
 "Absent" means absent from the build output: the P1 project references neither `LogAnalyzer.Connectors`, `LogAnalyzer.Response`
 nor `LogAnalyzer.Ai`. In P1 the screens of those features show "nu este disponibil în ediția clasificată" and the services are
 replaced by stand-ins that only refuse (`LogAnalyzer.Core/Services/Edition/UnavailableServices.cs`).
+
+Both editions require sign-in (card + PIN; the primary administrator may also use account + password) and have the same
+administrator/operator model; the only difference is the default of the missing-CRL policy (classified: refuse, unclassified: warn).
+See `AUTHENTICATION.md`.
 
 ## How the code is organised
 - Shared: `LogAnalyzer.Core`, `.Infrastructure`, `.Dfir.Core`, `.Dfir.Windows` (parsers, analysis, evidence, timeline, case, read-only
@@ -43,6 +49,19 @@ replaced by stand-ins that only refuse (`LogAnalyzer.Core/Services/Edition/Unava
   generates one and commits the public key, every installation stays air-gapped.
 - Limit: a malicious local administrator can replace the executable or the embedded key. The protection is against the operator and
   configuration mistakes, not against a hostile administrator.
+
+## Station role (WP18)
+- The same signed policy may carry `role`: `control` (default) or `csirt`. It is the optional **last line of the signed text**
+  (`EditionPolicy.Payload`), so a policy issued before WP18 stays valid and means CONTROL, and a role cannot be added or edited without re-signing.
+- Decision chain (`StationRoleResolver.Decide`, recorded in `startup_debug.log`, the `station.role` audit line, the auth audit `session.context`
+  of the signed-in session, `case.json` → `StationRole`, and the header badge tooltip): edition → signed policy → `role` → consistency checks → effective role.
+- **Fail closed to CONTROL**: no policy, invalid signature, expired, other station, rolled-back version, unknown role value (which also invalidates the policy).
+  P1 (classified) is always CONTROL; a policy asking for `csirt` is refused with a reason (P1 has no policy key, so the file is only peeked at, never trusted).
+  `csirt` with `mode: airgapped` is accepted and shown as "CSIRT fără rețea": the role never widens what the edition and the mode allow.
+- No switch exists in the UI, on the command line or in a file. Changing the role needs a new policy with a higher `version`, signed by the holder of the private key:
+  `release-gate/Sign-EditionPolicy.ps1 -Role csirt …`.
+- WP18 adds **no account role**: administrator and operator stay as in `AUTHENTICATION.md` (owner decision, 2026-10-10).
+- Tests: `LogAnalyzer.UI.Tests/StationRoleTests.cs`. What the role changes in the UI (Home intents, sidebar, flows, reports): `STATION_ROLES.md`.
 
 ## Verification
 `LogAnalyzer.Edition.Tests` reads the metadata of every `LogAnalyzer*` assembly in the P1 build output and fails if it finds an excluded

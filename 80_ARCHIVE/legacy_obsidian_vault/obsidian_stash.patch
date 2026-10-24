@@ -19,8 +19,8 @@ index d6c48af..f417454 100644
 +++ b/.agents/auditor_m1_1/BRIEFING.md
 @@ -54,3 +54,10 @@ Perform independent forensic integrity audit for Milestone 1 work products and c
  ## Loaded Skills
- - **vault-security-audit**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md` (Local reference: Security verification and forensic validation runbook)
- - **vault-operations**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md` (Local reference: Runbook and multi-step procedure for interacting with AI Memory Vault)
+ - **vault-security-audit**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md` (Local reference: Security verification and forensic validation runbook)
+ - **vault-operations**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md` (Local reference: Runbook and multi-step procedure for interacting with AI Memory Vault)
 +
 +---
 +
@@ -34,7 +34,7 @@ index be73d65..b6293a9 100644
 +++ b/.agents/auditor_m1_1/DISPATCH.md
 @@ -15,3 +15,10 @@ Task:
     - Run tests and inspect code execution traces.
- 2. Produce your formal audit verdict (CLEAN or INTEGRITY VIOLATION) in c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1\handoff.md and report.md.
+ 2. Produce your formal audit verdict (CLEAN or INTEGRITY VIOLATION) in c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1\handoff.md and report.md.
  3. Notify parent via send_message.
 +
 +---
@@ -93,7 +93,7 @@ index b536472..4101a39 100644
 --- a/.agents/auditor_m2_1/BRIEFING.md
 +++ b/.agents/auditor_m2_1/BRIEFING.md
 @@ -65,3 +65,10 @@ Perform comprehensive forensic integrity audit of Milestone 2 (SQLite WAL persis
- - **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
+ - **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
    - **Local copy**: `.agents/auditor_m2_1/skills/vault-operations/SKILL.md`
    - **Core methodology**: Runbook for memory retrieval, proposal, attestation, and reflection workflows.
 +
@@ -109,7 +109,7 @@ index 371b795..a88292b 100644
 +++ b/.agents/auditor_m2_1/DISPATCH.md
 @@ -16,3 +16,10 @@ Task:
  2. Run the test suite and inspect execution traces.
- 3. Produce your formal audit report and verdict (CLEAN or INTEGRITY VIOLATION) in `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m2_1\report.md` and `handoff.md`.
+ 3. Produce your formal audit report and verdict (CLEAN or INTEGRITY VIOLATION) in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m2_1\report.md` and `handoff.md`.
  4. Notify parent via send_message.
 +
 +---
@@ -305,7 +305,7 @@ index 754b5e4..e7507a7 100644
 @@ -22,3 +22,10 @@ Perform an independent forensic integrity audit of Milestone 4: Cognitive Loop &
  ## Output Requirements
  1. Formulate your explicit verdict (**CLEAN** or **INTEGRITY VIOLATION**).
- 2. Write your complete handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_1\handoff.md`.
+ 2. Write your complete handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_1\handoff.md`.
 +
 +---
 +
@@ -392,10 +392,10 @@ diff --git a/.agents/auditor_m4_2/DISPATCH.md b/.agents/auditor_m4_2/DISPATCH.md
 index 7417d1e..49c1def 100644
 --- a/.agents/auditor_m4_2/DISPATCH.md
 +++ b/.agents/auditor_m4_2/DISPATCH.md
-@@ -27,3 +27,10 @@ Your working directory is: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX
+@@ -27,3 +27,10 @@ Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX
  Read ORIGINAL_REQUEST.md, PROJECT.md, and .agents/worker_m4_2/handoff.md.
  Conduct an independent forensic integrity audit of Milestone 4 post-remediation: verify genuine logic, zero facades, zero security invariant violations, and full test pass.
- Write your complete handoff report with explicit verdict (CLEAN or INTEGRITY VIOLATION) to c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_2\handoff.md and notify the orchestrator.
+ Write your complete handoff report with explicit verdict (CLEAN or INTEGRITY VIOLATION) to c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_2\handoff.md and notify the orchestrator.
 +
 +---
 +
@@ -455,7 +455,7 @@ index 2811438..4324a2e 100644
 @@ -18,3 +18,10 @@ Conduct the final forensic integrity audit of Milestone 4: Cognitive Loop & Mult
  ## Output Requirements
  1. Formulate your explicit verdict (CLEAN or INTEGRITY VIOLATION).
- 2. Write your complete handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_3\handoff.md`.
+ 2. Write your complete handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m4_3\handoff.md`.
 +
 +---
 +
@@ -498,7 +498,7 @@ index 98f006a..f6d4817 100644
 --- a/.agents/auditor_m4_3/skill_vault_operations.md
 +++ b/.agents/auditor_m4_3/skill_vault_operations.md
 @@ -2,3 +2,10 @@
- Source: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
+ Source: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md
  
  Runbook and multi-step procedure for interacting with the AI Memory Vault cognitive operating system.
 +
@@ -513,7 +513,7 @@ index c27923d..17a9092 100644
 --- a/.agents/auditor_m4_3/skill_vault_security_audit.md
 +++ b/.agents/auditor_m4_3/skill_vault_security_audit.md
 @@ -2,3 +2,10 @@
- Source: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
+ Source: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
  
  Security verification and forensic validation runbook for testing trust boundaries and invariants P0-P15.
 +
@@ -545,7 +545,7 @@ index b774070..c14b0ad 100644
 @@ -18,3 +18,10 @@ Task:
  3. Run full pytest across the repository (`python -m pytest`).
  4. Issue an unambiguous binary audit verdict: CLEAN or INTEGRITY VIOLATION.
- 5. Write your detailed audit report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m5_1\handoff.md` and `report.md`, and send a completion message back.
+ 5. Write your detailed audit report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m5_1\handoff.md` and `report.md`, and send a completion message back.
 +
 +---
 +
@@ -604,7 +604,7 @@ index 0373e12..09a9648 100644
 +++ b/.agents/challenger_m1_1/DISPATCH.md
 @@ -10,3 +10,10 @@ Task:
  2. Run the full pytest test suite.
- 3. Write your verification findings and verdict (APPROVE or REQUEST_CHANGES) to c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_1\handoff.md.
+ 3. Write your verification findings and verdict (APPROVE or REQUEST_CHANGES) to c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_1\handoff.md.
  4. Notify parent via send_message.
 +
 +---
@@ -663,7 +663,7 @@ index a8f9bb1..8a011c2 100644
 --- a/.agents/challenger_m1_2/DISPATCH.md
 +++ b/.agents/challenger_m1_2/DISPATCH.md
 @@ -12,3 +12,10 @@ Task:
- 3. Record findings and verdict (APPROVE or REQUEST_CHANGES) in c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_2\handoff.md.
+ 3. Record findings and verdict (APPROVE or REQUEST_CHANGES) in c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m1_2\handoff.md.
  4. Notify parent via send_message.
  </USER_REQUEST>
 +
@@ -724,7 +724,7 @@ index 5c6a2ff..795cfe8 100644
 +++ b/.agents/challenger_m2_1/DISPATCH.md
 @@ -11,3 +11,10 @@ Task:
  3. Run the full pytest test suite.
- 4. Record empirical findings and explicit verdict (APPROVE or REQUEST_CHANGES) in `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_1\handoff.md`.
+ 4. Record empirical findings and explicit verdict (APPROVE or REQUEST_CHANGES) in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_1\handoff.md`.
  5. Notify parent via send_message.
 +
 +---
@@ -784,7 +784,7 @@ index 137ed2f..5719054 100644
 +++ b/.agents/challenger_m2_2/DISPATCH.md
 @@ -14,3 +14,10 @@ Task:
  3. Run the full pytest test suite.
- 4. Record empirical findings and explicit verdict (APPROVE or REQUEST_CHANGES) in `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_2\handoff.md`.
+ 4. Record empirical findings and explicit verdict (APPROVE or REQUEST_CHANGES) in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m2_2\handoff.md`.
  5. Notify parent via send_message.
 +
 +---
@@ -828,8 +828,8 @@ index cc67c57..e2e67e9 100644
 --- a/.agents/challenger_m3_1/BRIEFING.md
 +++ b/.agents/challenger_m3_1/BRIEFING.md
 @@ -58,3 +58,10 @@ Perform empirical adversarial stress testing on Milestone 3 Security Invariants
- - **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
-   - **Local copy**: `file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/skills/vault-operations\SKILL.md`
+ - **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
+   - **Local copy**: `file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/skills/vault-operations\SKILL.md`
    - **Core methodology**: Multi-step procedures for querying, proposing, verifying, and maintaining knowledge in the AI Memory Vault.
 +
 +---
@@ -964,7 +964,7 @@ index ab75060..36415c4 100644
 +++ b/.agents/challenger_m4_1/DISPATCH.md
 @@ -30,3 +30,9 @@ Read ORIGINAL_REQUEST.md, PROJECT.md, .agents/rules/vault_cognitive_rules.md, an
  Empirically challenge OODA loop execution, Tree-of-Thought reasoning under adversarial/complex inputs, and 10% freshness boost across complex supersession lineages.
- Run tests and write your handoff report with explicit verdict (APPROVE or REQUEST_CHANGES) to c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_1\handoff.md and notify the orchestrator.
+ Run tests and write your handoff report with explicit verdict (APPROVE or REQUEST_CHANGES) to c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_1\handoff.md and notify the orchestrator.
  
 +---
 +
@@ -1054,7 +1054,7 @@ index 87e72bb..a65a06c 100644
 @@ -20,3 +20,10 @@ Perform empirical adversarial testing and stress testing of Milestone 4:
  2. Run pytest suite (`python -m pytest`).
  3. State your explicit verdict (`APPROVE` or `REQUEST_CHANGES`).
- 4. Write your handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_2\handoff.md`.
+ 4. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_2\handoff.md`.
 +
 +---
 +
@@ -1114,7 +1114,7 @@ index 67c25e5..201648c 100644
 @@ -30,3 +30,10 @@ Read ORIGINAL_REQUEST.md, PROJECT.md, and .agents/worker_m4_2/handoff.md.
  Empirically stress-test propose_synapse against real MemoryController storage backends and test SelfRefine with hostile/None/malformed inputs.
  Run full pytest suite.
- Write your handoff report with explicit verdict (APPROVE or REQUEST_CHANGES) to c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_3\handoff.md and notify the orchestrator.
+ Write your handoff report with explicit verdict (APPROVE or REQUEST_CHANGES) to c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_3\handoff.md and notify the orchestrator.
 +
 +---
 +
@@ -1174,7 +1174,7 @@ index 701b3ed..c4902e2 100644
 @@ -20,3 +20,10 @@ Adversarially challenge and stress-test the full Cognitive Loop (OODA) and Multi
  2. Run full pytest suite.
  3. State your explicit verdict (`APPROVE` or `REQUEST_CHANGES`).
- 4. Write your handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_4\handoff.md`.
+ 4. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_4\handoff.md`.
 +
 +---
 +
@@ -1264,7 +1264,7 @@ index da3ae89..873c3e4 100644
 @@ -30,3 +30,10 @@ Read ORIGINAL_REQUEST.md, PROJECT.md, and .agents/worker_m4_3/handoff.md.
  Empirically verify VerifierAgent fuzzing resilience against non-dict provenance, RecallEngine pre-penalty score inheritance with 10% freshness boost across multi-hop/branching lineages, and full repository test execution.
  Run full pytest suite (python -m pytest).
- Write your handoff report with explicit verdict (APPROVE or REQUEST_CHANGES) to c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_5\handoff.md and notify the orchestrator.
+ Write your handoff report with explicit verdict (APPROVE or REQUEST_CHANGES) to c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m4_5\handoff.md and notify the orchestrator.
 +
 +---
 +
@@ -1354,7 +1354,7 @@ index d510d5e..86a6930 100644
 @@ -17,3 +17,10 @@ Task:
  3. Run full pytest suite (`python -m pytest`) to ensure 0 regressions.
  4. Issue an explicit verdict: APPROVE or REQUEST_CHANGES.
- 5. Write your detailed handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m5_1\handoff.md` and send a message back with your verdict.
+ 5. Write your detailed handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m5_1\handoff.md` and send a message back with your verdict.
 +
 +---
 +
@@ -1399,7 +1399,7 @@ index deb3ccf..e4281ba 100644
 @@ -13,3 +13,10 @@ Task:
  2. Run full pytest across all test modules (`python -m pytest -v`) and verify 100% pass rate.
  3. Issue an explicit verdict: APPROVE or REQUEST_CHANGES.
- 4. Write your detailed handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m5_2\handoff.md` and send a message back with your verdict.
+ 4. Write your detailed handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\challenger_m5_2\handoff.md` and send a message back with your verdict.
 +
 +---
 +
@@ -1443,7 +1443,7 @@ index 6d28417..dc44ae0 100644
 +++ b/.agents/explorer_m5_1/DISPATCH.md
 @@ -18,3 +18,10 @@ Task:
  5. Identify any bugs, edge cases, or gaps in implementation or test coverage. Recommend concrete fixes/improvements if needed.
- 6. Write your detailed findings to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_1\report.md` and `handoff.md`, and send a completion message back.
+ 6. Write your detailed findings to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_1\report.md` and `handoff.md`, and send a completion message back.
  Do NOT modify source code files. You are a read-only exploration agent.
 +
 +---
@@ -1518,7 +1518,7 @@ index 093ea3e..3a2468a 100644
 +++ b/.agents/explorer_m5_2/DISPATCH.md
 @@ -18,3 +18,10 @@ Task:
  5. Identify any numerical edge cases (division by zero, empty recall lists, K > len(results), etc.) or coverage gaps. Recommend concrete improvements if needed.
- 6. Write your detailed findings to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_2\report.md` and `handoff.md`, and send a completion message back.
+ 6. Write your detailed findings to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_2\report.md` and `handoff.md`, and send a completion message back.
  Do NOT modify source code files. You are a read-only exploration agent.
 +
 +---
@@ -1593,7 +1593,7 @@ index de7367e..62c5074 100644
 +++ b/.agents/explorer_m5_3/DISPATCH.md
 @@ -23,3 +23,10 @@ Task:
     - `ContinualLearningGuard` anchor memory protection
- 5. Write your detailed findings to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_3\report.md` and `handoff.md`, and send a completion message back.
+ 5. Write your detailed findings to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m5_3\report.md` and `handoff.md`, and send a completion message back.
  Do NOT modify source code files. You are a read-only exploration agent.
 +
 +---
@@ -1652,9 +1652,9 @@ index 51f90fc..f865d7a 100644
 --- a/.agents/orchestrator_1/BRIEFING.md
 +++ b/.agents/orchestrator_1/BRIEFING.md
 @@ -86,3 +86,10 @@ Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive
- - c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md — Test Readiness Signal
- - c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\GATE_STATUS.md — Gate Status
- - c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\handoff.md — Orchestrator 1 Soft Handoff
+ - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md — Test Readiness Signal
+ - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\GATE_STATUS.md — Gate Status
+ - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\handoff.md — Orchestrator 1 Soft Handoff
 +
 +---
 +
@@ -1727,9 +1727,9 @@ index 3c5b1c6..5988912 100644
 --- a/.agents/orchestrator_2/BRIEFING.md
 +++ b/.agents/orchestrator_2/BRIEFING.md
 @@ -76,3 +76,10 @@ Transform the AI Memory Vault into a fully self-improving, autonomous Cognitive
- - c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_INFRA.md — Test Infrastructure
- - c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md — Test Readiness Signal
- - c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_2\GATE_STATUS.md — Gate Status
+ - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_INFRA.md — Test Infrastructure
+ - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\TEST_READY.md — Test Readiness Signal
+ - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_2\GATE_STATUS.md — Gate Status
 +
 +---
 +
@@ -1938,7 +1938,7 @@ index 33671f2..addbdc0 100644
 +++ b/.agents/reviewer_m1_1/DISPATCH.md
 @@ -16,3 +16,10 @@ Task:
  4. Verify code correctness, interface conformance, and that no regressions were introduced.
- 5. Provide a clear verdict (APPROVE or REQUEST_CHANGES) in your handoff report at c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_1\handoff.md.
+ 5. Provide a clear verdict (APPROVE or REQUEST_CHANGES) in your handoff report at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_1\handoff.md.
  6. Notify parent via send_message.
 +
 +---
@@ -1998,7 +1998,7 @@ index 2103b76..86ffd07 100644
 +++ b/.agents/reviewer_m1_2/DISPATCH.md
 @@ -11,3 +11,10 @@ Task:
  3. Check for any side-effects or regressions.
- 4. Record your detailed review and explicit verdict (APPROVE or REQUEST_CHANGES) in c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_2\handoff.md.
+ 4. Record your detailed review and explicit verdict (APPROVE or REQUEST_CHANGES) in c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_2\handoff.md.
  5. Notify parent via send_message.
 +
 +---
@@ -2058,7 +2058,7 @@ index f0e3374..89e79d6 100644
 +++ b/.agents/reviewer_m2_1/DISPATCH.md
 @@ -11,3 +11,10 @@ Task:
  3. Run pytest on `memory_controller/tests/test_sqlite_storage.py` and full suite.
- 4. Record review and explicit verdict (APPROVE or REQUEST_CHANGES) in `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m2_1\handoff.md`.
+ 4. Record review and explicit verdict (APPROVE or REQUEST_CHANGES) in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m2_1\handoff.md`.
  5. Notify parent via send_message.
 +
 +---
@@ -2118,7 +2118,7 @@ index 987d149..e86f90a 100644
 +++ b/.agents/reviewer_m2_2/DISPATCH.md
 @@ -11,3 +11,10 @@ Task:
  3. Run pytest across the entire workspace.
- 4. Record review and explicit verdict (APPROVE or REQUEST_CHANGES) in `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m2_2\handoff.md`.
+ 4. Record review and explicit verdict (APPROVE or REQUEST_CHANGES) in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m2_2\handoff.md`.
  5. Notify parent via send_message.
 +
 +---
@@ -2299,7 +2299,7 @@ index 4629877..505721b 100644
 @@ -26,3 +26,10 @@ Conduct an independent, objective review and verification of Milestone 4: Cognit
  2. Run targeted test suites and full pytest suite (`python -m pytest`).
  3. Formulate your explicit verdict (`APPROVE` or `REQUEST_CHANGES`).
- 4. Write your 5-component handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_1\handoff.md`.
+ 4. Write your 5-component handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_1\handoff.md`.
 +
 +---
 +
@@ -2418,7 +2418,7 @@ index 5f53666..b9ab609 100644
 @@ -22,3 +22,10 @@ Conduct an independent review of the Milestone 4 remediation in `cognitive_core/
  1. Run pytest across target and full test suites.
  2. State your explicit verdict (`APPROVE` or `REQUEST_CHANGES`).
- 3. Write your handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_3\handoff.md`.
+ 3. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_3\handoff.md`.
 +
 +---
 +
@@ -2477,7 +2477,7 @@ index 77f7bf6..62076a2 100644
 +++ b/.agents/reviewer_m4_4/DISPATCH.md
 @@ -31,3 +31,9 @@ Review overall cognitive core stability, P0-P15 trust boundaries, and test suite
  Run full pytest suite (python -m pytest).
- Write your complete handoff report with explicit verdict (APPROVE or REQUEST_CHANGES) to c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_4\handoff.md and notify the orchestrator.
+ Write your complete handoff report with explicit verdict (APPROVE or REQUEST_CHANGES) to c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_4\handoff.md and notify the orchestrator.
  
 +---
 +
@@ -2537,7 +2537,7 @@ index e549016..e43528f 100644
 @@ -22,3 +22,10 @@ Conduct the definitive verification review of Milestone 4: Cognitive Loop & Mult
  1. Run pytest suite (`python -m pytest`) and record results.
  2. State your explicit verdict (`APPROVE` or `REQUEST_CHANGES`).
- 3. Write your handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_5\handoff.md`.
+ 3. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m4_5\handoff.md`.
 +
 +---
 +
@@ -2597,7 +2597,7 @@ index 9345ee6..606938c 100644
 @@ -23,3 +23,10 @@ Task:
     - `python -m pytest`
  5. Issue an explicit verdict: APPROVE or REQUEST_CHANGES.
- 6. Write your detailed handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m5_1\handoff.md` and send a message back with your verdict.
+ 6. Write your detailed handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m5_1\handoff.md` and send a message back with your verdict.
 +
 +---
 +
@@ -2657,7 +2657,7 @@ index f237d80..8d80a69 100644
 @@ -18,3 +18,10 @@ Task:
     - `python -m pytest`
  6. Issue an explicit verdict: APPROVE or REQUEST_CHANGES.
- 7. Write your detailed handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m5_2\handoff.md` and send a message back with your verdict.
+ 7. Write your detailed handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m5_2\handoff.md` and send a message back with your verdict.
 +
 +---
 +
@@ -2790,8 +2790,8 @@ index 5484636..35422fa 100644
 --- a/.agents/survey_codebase_explorer_1/DISPATCH.md
 +++ b/.agents/survey_codebase_explorer_1/DISPATCH.md
 @@ -19,3 +19,10 @@ Your task:
- 4. Write your full analysis report at c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1\report.md.
- 5. Write your handoff at c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1\handoff.md.
+ 4. Write your full analysis report at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1\report.md.
+ 5. Write your handoff at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_codebase_explorer_1\handoff.md.
  6. Notify parent via send_message.
 +
 +---
@@ -2837,7 +2837,7 @@ index 447963e..6c2c66e 100644
 @@ -351,3 +351,10 @@ The security enforcement layer (`memory_controller/controller.py`, `authorizer.p
  ## 6. Conclusion
  
- The Cognitive Brain architecture in `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY` is structurally complete, strictly governed by security invariant policies P0-P15, and verified with 197 passing tests. All core requirements (R1-R4) and acceptance criteria are implemented. Addressing the minor typing imports, cleaning dead code in `budget.py`, and organizing legacy audit records will bring the codebase to full production maturity.
+ The Cognitive Brain architecture in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY` is structurally complete, strictly governed by security invariant policies P0-P15, and verified with 197 passing tests. All core requirements (R1-R4) and acceptance criteria are implemented. Addressing the minor typing imports, cleaning dead code in `budget.py`, and organizing legacy audit records will bring the codebase to full production maturity.
 +
 +---
 +
@@ -2850,9 +2850,9 @@ index 5c92f98..2bf4d57 100644
 --- a/.agents/survey_miner_1/BRIEFING.md
 +++ b/.agents/survey_miner_1/BRIEFING.md
 @@ -45,3 +45,10 @@ Extract and comprehensively enumerate all functional, architectural, and securit
- - c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\report.md — Full specification mining report
- - c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\handoff.md — 5-component handoff report
- - c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\progress.md — Liveness & progress tracking
+ - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\report.md — Full specification mining report
+ - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\handoff.md — 5-component handoff report
+ - c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\progress.md — Liveness & progress tracking
 +
 +---
 +
@@ -2865,8 +2865,8 @@ index cfb9af9..3b9a965 100644
 --- a/.agents/survey_miner_1/DISPATCH.md
 +++ b/.agents/survey_miner_1/DISPATCH.md
 @@ -23,3 +23,10 @@ Your task:
- 3. Write a detailed specification document at c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\report.md.
- 4. Write handoff at c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\handoff.md.
+ 3. Write a detailed specification document at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\report.md.
+ 4. Write handoff at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_miner_1\handoff.md.
  5. Notify parent via send_message.
 +
 +---
@@ -2940,8 +2940,8 @@ index 29ac701..9f501f4 100644
 --- a/.agents/survey_test_explorer_1/DISPATCH.md
 +++ b/.agents/survey_test_explorer_1/DISPATCH.md
 @@ -17,3 +17,10 @@ Your task:
- 5. Write your detailed test survey report at c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_test_explorer_1\report.md.
- 6. Write your handoff at c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_test_explorer_1\handoff.md.
+ 5. Write your detailed test survey report at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_test_explorer_1\report.md.
+ 6. Write your handoff at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_test_explorer_1\handoff.md.
  7. Notify parent via send_message.
 +
 +---
@@ -2957,7 +2957,7 @@ index 4758236..543f16e 100644
 @@ -135,3 +135,10 @@ To independently verify the test suite findings:
  
  5. **Inspect Artifacts**:
-    - Detailed Survey Report: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_test_explorer_1\report.md`
+    - Detailed Survey Report: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_test_explorer_1\report.md`
 +
 +---
 +
@@ -3090,8 +3090,8 @@ index b8dcb1c..7a00900 100644
 --- a/.agents/worker_m2_1/BRIEFING.md
 +++ b/.agents/worker_m2_1/BRIEFING.md
 @@ -60,3 +60,10 @@ Verify, harden, and ensure 100% integrity for Milestone 2: Storage, WAL, Atomic
- - **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
-   - **Local copy**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_1\skills\vault-security-audit\SKILL.md`
+ - **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md`
+   - **Local copy**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m2_1\skills\vault-security-audit\SKILL.md`
    - **Core methodology**: Security verification and forensic validation runbook for P0-P15 invariants, concurrency, and audit integrity.
 +
 +---
@@ -3195,7 +3195,7 @@ index 4956af6..d09d0d6 100644
 --- a/.agents/worker_m3_1/BRIEFING.md
 +++ b/.agents/worker_m3_1/BRIEFING.md
 @@ -55,3 +55,10 @@ Verify and enforce all P0-P15 security invariants, attestation gates, and tool r
- - **Source**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
+ - **Source**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-operations\SKILL.md`
    - **Local copy**: `.agents/worker_m3_1/vault-operations.md`
    - **Core methodology**: Operating procedures for recall, proposal, human attestation, and error reflexion.
 +
@@ -3317,7 +3317,7 @@ index d14c95e..47830ae 100644
 @@ -26,3 +26,10 @@ DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results,
  1. Run `python -m pytest` and target test suites in `cognitive_core/tests/`.
  2. Ensure 0 failures and 100% test pass.
- 3. Write your detailed handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_1\handoff.md`.
+ 3. Write your detailed handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_1\handoff.md`.
 +
 +---
 +
@@ -3377,7 +3377,7 @@ index ffd7e4c..38cf281 100644
 @@ -26,3 +26,10 @@ DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results,
  2. Run `python -m pytest cognitive_core/tests/test_milestone4_adversarial_challenger.py cognitive_core/tests/test_milestone4_adversarial_challenger_m4_2.py cognitive_core/tests/test_reflection.py cognitive_core/tests/test_dynamic_synapses.py -v`.
  3. Run the full test suite: `python -m pytest`. Ensure 100% pass across all test modules.
- 4. Write your handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_2\handoff.md`.
+ 4. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_2\handoff.md`.
 +
 +---
 +
@@ -3421,7 +3421,7 @@ index 055dd3c..64e425d 100644
 +++ b/.agents/worker_m4_3/BRIEFING.md
 @@ -58,3 +58,10 @@ Remediate the two defects and test signature fix identified by reviewer_m4_4 for
  - **Core methodology**: Cognitive vault operations runbook
- - **Source**: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
+ - **Source**: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\vault-security-audit\SKILL.md
  - **Core methodology**: Security verification and P0-P15 invariants audit
 +
 +---
@@ -3437,7 +3437,7 @@ index 1ff4cb9..dac40e4 100644
 @@ -38,3 +38,10 @@ DO NOT CHEAT. All implementations must be genuine. DO NOT hardcode test results,
  2. Run `python -m pytest cognitive_core/tests/test_milestone4_adversarial_challenger_m4_4.py cognitive_core/tests/test_recall.py cognitive_core/tests/test_specialized_agents.py -v`.
  3. Run full test suite: `python -m pytest`. Ensure 100% pass across all test modules (0 failures).
- 4. Write your handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_3\handoff.md`.
+ 4. Write your handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m4_3\handoff.md`.
 +
 +---
 +
@@ -3496,7 +3496,7 @@ index 0f95589..a62baf1 100644
 +++ b/.agents/worker_m5_1/DISPATCH.md
 @@ -25,3 +25,10 @@ Tasks:
  4. Run full pytest across the entire repository (`python -m pytest -v` or `python -m pytest`). Verify that 100% of all tests pass with 0 failures.
- 5. Write your complete handoff report to `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m5_1\handoff.md`.
+ 5. Write your complete handoff report to `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m5_1\handoff.md`.
  6. Send a completion message back to the orchestrator.
 +
 +---

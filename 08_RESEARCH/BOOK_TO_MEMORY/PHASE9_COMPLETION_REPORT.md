@@ -15,7 +15,7 @@ Phase 9 implements the **Systematic Hypothesis Validation Engine & Problem Matri
 $$\text{BIOLOGICAL FACT} \longrightarrow \text{ENGINEERING HYPOTHESIS} \longrightarrow \text{CONTROLLED EXPERIMENT} \longrightarrow \text{VAULT MECHANISM}$$
 
 With Phase 9:
-1. The **`BookToMemoryHypothesisRegistry`** is fully implemented and tested in [book_to_memory_hypothesis.py](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_hypothesis.py).
+1. The **`BookToMemoryHypothesisRegistry`** is fully implemented and tested in [book_to_memory_hypothesis.py](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_hypothesis.py).
 2. The **8-state finite state machine** (`TrackState`) strictly governs hypothesis maturation from source extraction to validated change.
 3. The **Zero-Jump Invariant** is enforced at the code boundary; skipping intermediate validation states is rejected with explicit errors.
 4. **Anti-gaming safeguards** mandate $\ge 5$ samples, paired evaluations (`WITH_NOTE` vs `WITHOUT_NOTE`), non-negative failure tracking, and explicit reporting of both absolute and relative deltas.

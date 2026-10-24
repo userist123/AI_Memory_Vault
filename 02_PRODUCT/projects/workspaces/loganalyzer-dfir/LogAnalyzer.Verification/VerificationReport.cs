@@ -52,6 +52,18 @@ public sealed class FindingVerdict
     public List<string> MissingEvidence { get; set; } = [];
     /// <summary>Artifact kinds the supporting evidence resolves to (e.g. "Prefetch", "EventLog:Security 4688").</summary>
     public List<string> EvidenceKinds { get; set; } = [];
+
+    /// <summary>One line per check for the finding card („Verifică”): the stable check id, the outcome in Romanian, and the check's own reason.</summary>
+    public IReadOnlyList<string> CheckLines() => Checks.Select(c => $"{c.CheckId}: {OutcomeText(c.Outcome)} — {c.Reason}").ToList();
+
+    public static string OutcomeText(CheckOutcome o) => o switch
+    {
+        CheckOutcome.Pass => "trecut",
+        CheckOutcome.Fail => "eșuat",
+        CheckOutcome.Unknown => "necunoscut",
+        CheckOutcome.NotApplicable => "nu se aplică",
+        _ => "informativ",
+    };
 }
 
 /// <summary>The verdict on one statement of the AI analysis (Analysis/ai_reasoning.json). Never VERIFIED.</summary>
@@ -62,6 +74,8 @@ public sealed class AiStatementVerdict
     public List<string> Cites { get; set; } = [];
     public StandardState Verdict { get; set; } = StandardState.Unproven;
     public string Reason { get; set; } = "";
+    /// <summary>R22.5: the case-level claim validation state of this statement as written by the AI step (VALORI_CONFIRMATE / PARTIAL / NESUSTINUT / NEVERIFICABIL); NEVERIFICABIL when the file carries none.</summary>
+    public string ClaimValidation { get; set; } = "NEVERIFICABIL";
 }
 
 /// <summary>Analysis/verification.json.</summary>
@@ -117,6 +131,16 @@ public sealed class VerificationReport
         return parts.Count == 0 ? "Verificare: nicio constatare de verificat" : "Verificare: " + string.Join(", ", parts);
     }
 
+    /// <summary>Banner for the operator (WP6a, U7): the Romanian state label first, the spec name in parentheses, e.g. "Verificare: 3 Verificat (VERIFIED), 2 Nedemonstrat (UNPROVEN)". <see cref="Banner"/> stays the data form.</summary>
+    public string BannerRomanian => LineRomanian(Counts);
+
+    public static string LineRomanian(IReadOnlyDictionary<string, int> counts)
+    {
+        var parts = VerdictOrder.Where(v => counts.GetValueOrDefault(v.ToSpec()) > 0)
+            .Select(v => LogAnalyzer.Dfir.Analysis.StateLabels.RomanianCount(v, counts[v.ToSpec()])).ToList();
+        return parts.Count == 0 ? "Verificare: nicio constatare de verificat" : "Verificare: " + string.Join(", ", parts);
+    }
+
     /// <summary>Warning text when any finding is CONTRADICTED or REJECTED; null otherwise.</summary>
     public string? Warning => WarningFor(Counts);
 
@@ -124,8 +148,8 @@ public sealed class VerificationReport
     {
         int c = counts.GetValueOrDefault(StandardState.Contradicted.ToSpec()), r = counts.GetValueOrDefault(StandardState.Rejected.ToSpec());
         if (c + r == 0) return null;
-        var what = string.Join(" și ", new[] { c > 0 ? $"{c} CONTRADICTED" : "", r > 0 ? $"{r} REJECTED" : "" }.Where(x => x.Length > 0));
-        return $"ATENȚIE: {what}. Aceste constatări sunt contrazise de alte dovezi sau nu au dovezi valide; nu le prezentați ca fapte stabilite și nu le exportați în Vault.";
+        var what = string.Join(" și ", new[] { c > 0 ? LogAnalyzer.Dfir.Language.RoText.Count(c, "constatare", "constatări") + (c == 1 ? " contrazisă" : " contrazise") : "", r > 0 ? LogAnalyzer.Dfir.Language.RoText.Count(r, "constatare", "constatări") + (r == 1 ? " respinsă" : " respinse") : "" }.Where(x => x.Length > 0));
+        return $"ATENȚIE: {what}. Aceste constatări sunt contrazise de alte probe sau nu au probe valide; nu le prezentați ca fapte stabilite și nu le exportați în baza de cunoștințe.";
     }
 
     public FindingVerdict? Of(string findingId) => Findings.FirstOrDefault(f => f.FindingId == findingId);

@@ -95,30 +95,30 @@ This report establishes the authoritative, repository-wide standardization of se
 
 The following 9 active documentation and contract files have been updated:
 
-1. [`README.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/README.md):
+1. [`README.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/README.md):
    - Added standard Canonical Security Model Nomenclature block.
    - Updated Important Entry Points table (`Memory Controller & Trust Invariant Gating (I-001..I-012, I-RETRIEVAL)`).
    - Updated Current Status table (`I-001..I-012`, `P16-P18` Reconciled & Standardized).
    - Added navigation link to this nomenclature report.
-2. [`.agents/rules/vault_cognitive_rules.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md):
+2. [`.agents/rules/vault_cognitive_rules.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/.agents/rules/vault_cognitive_rules.md):
    - Added formal Security Model Nomenclature block.
    - Renamed Section 1 to `Memory Trust Boundary Invariants (I-001..I-012, I-RETRIEVAL)`.
    - Explicitly mapped rules to `I-001` through `I-005` and `I-RETRIEVAL`.
-3. [`AGENTS.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/AGENTS.md):
+3. [`AGENTS.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/AGENTS.md):
    - Clarified that `recall_cli.py` is subject to `I-001..I-012` and `I-RETRIEVAL`, validated through test contracts `P0-001..P0-015`.
    - Added Security Model Nomenclature block.
-4. [`CLAUDE.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/CLAUDE.md):
+4. [`CLAUDE.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/CLAUDE.md):
    - Updated active memory retrieval rules to cite `I-001..I-012` and `I-RETRIEVAL` under test contracts `P0-001..P0-015`.
-5. [`99_SYSTEM/MCP_Memory_Server_Specification.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/99_SYSTEM/MCP_Memory_Server_Specification.md):
+5. [`99_SYSTEM/MCP_Memory_Server_Specification.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/99_SYSTEM/MCP_Memory_Server_Specification.md):
    - Renamed Section 3 to `Conformitate cu Invariantele de Securitate a Memoriei (I-001..I-012, I-RETRIEVAL)` and cross-referenced `I-001/I-004`, `I-002/I-005`, `I-003`, and `I-007`.
-6. [`memory_controller/financial_schema.py`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/memory_controller/financial_schema.py):
+6. [`memory_controller/financial_schema.py`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/memory_controller/financial_schema.py):
    - Updated `validate_financial_note` docstring and section comment to reference `I-001`, `I-002`, and `I-003` tested under Phase 4.3 P0 contract.
    - **Zero code, error string, or production logic modified**.
-7. [`02_PROJECTS/FinScope.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/02_PROJECTS/FinScope.md):
+7. [`02_PROJECTS/FinScope.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/02_PROJECTS/FinScope.md):
    - Updated orchestration description to cite `MemoryController` enforcing `I-001..I-012` and `I-RETRIEVAL`.
-8. [`03_PROCEDURES/Autonomous_Program_Construction_Protocol.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_PROCEDURES/Autonomous_Program_Construction_Protocol.md):
+8. [`03_PROCEDURES/Autonomous_Program_Construction_Protocol.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/03_PROCEDURES/Autonomous_Program_Construction_Protocol.md):
    - Updated agent role table for `memory_controller_architect` to specify memory invariants `I-001..I-012` (`P0-001..P0-015`) and hardware immutability `P16-P18`.
-9. [`REVIEW_QUEUE.md`](file:///c:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/REVIEW_QUEUE.md):
+9. [`REVIEW_QUEUE.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/REVIEW_QUEUE.md):
    - Standardized header and operator instructions to cite `I-001..I-012` and attestation controls `I-001/I-004`.
 
 ---

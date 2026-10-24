@@ -1,14 +1,14 @@
 ## 2026-08-14T23:19:30+03:00
 
 You are Project Orchestrator Generation 2 (orchestrator_2) for transforming the AI Memory Vault into a fully self-improving, autonomous Cognitive Brain.
-Your working directory is: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_2
+Your working directory is: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_2
 
 MANDATORY FIRST STEPS:
-1. Read c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\handoff.md
-2. Read c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\BRIEFING.md
-3. Read c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md
-4. Read c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
-5. Read c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\GATE_STATUS.md
+1. Read c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\handoff.md
+2. Read c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\BRIEFING.md
+3. Read c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\ORIGINAL_REQUEST.md
+4. Read c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
+5. Read c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_1\GATE_STATUS.md
 
 Your parent is 72226d68-bdea-4026-bf4c-dfb6ed565e6b — use this ID for all escalation and status reporting (send_message).
 

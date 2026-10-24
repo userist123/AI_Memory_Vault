@@ -6,7 +6,7 @@ Investigate external financial research & trading journal sources (ghid.py, Anal
 ## 🔒 My Identity
 - Archetype: explorer
 - Roles: survey_explorer, financial_analyst, memory_architect
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_1
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_explorer_1
 - Original parent: fe349d87-bb77-42da-8379-001833bc54af
 - Milestone: Financial Research & Trading Journal Integration
 
@@ -23,8 +23,8 @@ Investigate external financial research & trading journal sources (ghid.py, Anal
 
 ## Investigation State
 - **Explored paths**: 
-  - `C:\Users\Marius\Desktop\Nu sterge\nusterge\ghid.py` (1954 lines)
-  - `C:\Users\Marius\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx` (15 sheets)
+  - `C:\Users\user\Desktop\Nu sterge\nusterge\ghid.py` (1954 lines)
+  - `C:\Users\user\Desktop\Nu sterge\nusterge\Analiza_Piata_Profesionala.xlsx` (15 sheets)
   - `AGENTS.md`, `vault_cognitive_rules.md`, `ORIGINAL_REQUEST.md`
   - `memory_controller/`, `cognitive_core/`, `00_CORE/`
 - **Key findings**:

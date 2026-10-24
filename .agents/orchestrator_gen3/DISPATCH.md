@@ -1,8 +1,8 @@
 # Dispatch Log
 
 ## 2026-08-15T02:22:51+03:00
-Resume work as Project Orchestrator (Successor Gen 3) at c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_gen3.
-Read handoff.md at c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_gen2\handoff.md, BRIEFING.md, ORIGINAL_REQUEST.md, PROJECT.md, and progress.md for current state.
+Resume work as Project Orchestrator (Successor Gen 3) at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_gen3.
+Read handoff.md at c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_gen2\handoff.md, BRIEFING.md, ORIGINAL_REQUEST.md, PROJECT.md, and progress.md for current state.
 Your parent is 72226d68-bdea-4026-bf4c-dfb6ed565e6b — use this ID for all escalation and status reporting (send_message).
 
 Status Summary:

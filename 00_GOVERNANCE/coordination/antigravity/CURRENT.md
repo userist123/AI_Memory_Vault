@@ -178,7 +178,7 @@ completed:
      4. Purged the 29 rejected relations at the source across all 27 source notes frontmatters, added [[state-determined system]] to Promoted_transformation.md to prevent island notes (87/87 Promoted notes pass in test_promoted_notes_reach_the_graph.py).
      5. Added comprehensive test suite 20_TESTS/test_plasticity_audit_purge_rollback.py with byte-for-byte rollback validation (4/4 PASS).
      6. Updated 00_GOVERNANCE/VAULT_STATE.md measured table (483 edges, 203 declared / 203 inferred / 77 wikilink, 85 typed) and passed test_vault_state_accuracy.py (11/11 PASS).
-     7. Created 30_SCRIPTS/evaluation/build_remaining_typed_edge_audit.py and packaged remaining 65 unjudged typed relations into 07_EVALUATION/edge_audit_v2_remaining/ (aggregate SHA-256 06bfd856e4b794bec75bd4a6b9e0e8474e74722e103893cfdeb8638a80d928f5, 7 batches <= 20 KB each, and copy-paste ready LABELING_PROMPT.md). Added test_remaining_typed_edge_audit.py (5/5 PASS).
+     7. Created 30_SCRIPTS/evaluation/build_remaining_typed_edge_audit.py and packaged remaining 65 unjudged typed relations into 07_EVALUATION/edge_audit_v2_remaining/ (aggregate SHA-256 6f7e4b75122a9e972ffe2ce379f4bb102de04428fa19378ea74dfde29f866194, 7 batches <= 20 KB each, and copy-paste ready LABELING_PROMPT.md). Added test_remaining_typed_edge_audit.py (5/5 PASS).
      8. Full verification: LAYOUT_STATUS=PASS, FAILURES=0, PERSONAL_DATA_STATUS=PASS, pytest 20_TESTS -q passed 2485 items (zero regressions)."
 in_progress: []
 next_actions:

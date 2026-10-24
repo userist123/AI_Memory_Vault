@@ -6,7 +6,7 @@ Adversarial security invariants & memory concurrency review of Milestone 1 (Jarv
 ## 🔒 My Identity
 - Archetype: Reviewer / Adversarial Critic
 - Roles: reviewer, critic
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_2
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\reviewer_m1_2
 - Original parent: 5a625f23-4992-4b00-bb13-1f4b316b216c
 - Milestone: Milestone 1
 - Instance: 2 of 2

@@ -6,7 +6,7 @@ Conduct independent quality and adversarial review of Milestone 1 (Financial Ing
 ## 🔒 My Identity
 - Archetype: Reviewer & Critic
 - Roles: reviewer, critic
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_reviewer_2
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\m1_reviewer_2
 - Original parent: fe349d87-bb77-42da-8379-001833bc54af
 - Milestone: M1
 - Instance: 2 of 2

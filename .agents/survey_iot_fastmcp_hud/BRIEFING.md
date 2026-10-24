@@ -6,7 +6,7 @@ Conduct comprehensive technical survey and specification mining for Requirement 
 ## 🔒 My Identity
 - Archetype: Specification Miner / Domain Specialist
 - Roles: Explorer 3 (IoT FastMCP, Multi-Agent & 3D HUD Specialist)
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_iot_fastmcp_hud
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\survey_iot_fastmcp_hud
 - Original parent: 5a625f23-4992-4b00-bb13-1f4b316b216c
 - Milestone: Survey & Specification Mining Track
 

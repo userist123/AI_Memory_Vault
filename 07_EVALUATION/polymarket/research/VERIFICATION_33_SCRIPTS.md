@@ -10,7 +10,7 @@
 Da, toate 33, dar nu în depozit:
 
 ```
-C:/Users/Marius/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/
+C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/
 ```
 
 Directorul de lucru propriu al lui Antigravity, în afara oricărui depozit git. Nu erau fișiere netrecute în git în acest depozit; nu au fost niciodată în el.

@@ -86,7 +86,7 @@ The failures stem from unhandled exception crashes in JSON-RPC 2.0 request parsi
 ## 4. Empirical Test Suite Execution Output
 
 ```powershell
-PS C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain> python -m pytest -v
+PS C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain> python -m pytest -v
 =========================== short test summary info ===========================
 FAILED tests/unit/test_challenger_m4_stress.py::test_jsonrpc_syntax_error_parsing_32700[NaN] - AttributeError: 'float' object has no attribute 'get'
 FAILED tests/unit/test_challenger_m4_stress.py::test_jsonrpc_non_dict_json_strings_should_not_crash[123] - AttributeError: 'int' object has no attribute 'get'

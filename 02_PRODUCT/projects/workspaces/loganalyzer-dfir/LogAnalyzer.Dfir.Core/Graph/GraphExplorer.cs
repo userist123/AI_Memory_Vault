@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Graph;
@@ -9,21 +10,11 @@ public sealed record GraphEdgeRow(
 
 /// <summary>
 /// Read-only queries the application shows over an Evidence Graph: find entities by text, list an entity's edges with their
-/// evidence (EvidenceId + locator) or derivation, and the shortest path between two entities. Spec §26 wording is used for
-/// the classification: OBSERVED (direct evidence), CORRELATED, INFERRED (candidate), UNPROVEN.
+/// evidence (EvidenceId + locator) or derivation, and the shortest path between two entities. The classification of an edge is shown with the Romanian
+/// state label of <see cref="StateLabels.ForClassification"/> (Observat, Corelat, Deducție, Nedemonstrat): one mapping for the whole application.
 /// </summary>
 public static class GraphExplorer
 {
-    public static string Wording(Classification c) => c switch
-    {
-        Classification.Direct => "OBSERVED",
-        Classification.Correlated => "CORRELATED",
-        Classification.Candidate => "INFERRED",
-        Classification.Unproven => "UNPROVEN",
-        Classification.BenignKnown => "BENIGN_KNOWN",
-        _ => "UNKNOWN",
-    };
-
     /// <summary>Entities whose key or label contains the text (case-insensitive), the most connected first.</summary>
     public static IReadOnlyList<Entity> Search(EvidenceGraph g, string text, int limit = 200)
     {
@@ -43,7 +34,7 @@ public static class GraphExplorer
             var support = r.EvidenceId.Length > 0 ? $"{r.EvidenceId} · {r.Locator}" : "";
             if (r.Derivation.Length > 0) support += (support.Length > 0 ? " · " : "") + "derivat: " + r.Derivation;
             return new GraphEdgeRow(outgoing ? "→" : "←", r.TypeName, other.Id, other.Type, other.Label, r.Timestamp.UtcIso,
-                Wording(r.Classification), r.Confidence.ToSpec(), support, r.Reason);
+                StateLabels.ForClassification(r.Classification), r.Confidence.ToSpec(), support, r.Reason);
         }).OrderBy(x => x.TimeUtc.Length == 0).ThenBy(x => x.TimeUtc, StringComparer.Ordinal).ToList();
     }
 

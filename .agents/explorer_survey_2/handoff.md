@@ -11,7 +11,7 @@
 ## 1. Observation
 
 ### 1.1 Requirements & Context Analysis
-From `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`, Requirement R2 mandates:
+From `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`, Requirement R2 mandates:
 - **3D WebGL Holographic Arc-Reactor / Sphere Visualization**: High-performance Three.js rendering locked at 60 FPS on standard desktop and mobile hardware.
 - **Dynamic Reactivity Across 4 Core States**:
   1. `Idle`: Calm, slow breathing pulse, low-energy atmospheric glow.

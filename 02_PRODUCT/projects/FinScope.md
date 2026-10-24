@@ -8,7 +8,7 @@ created: "2026-08-17"
 updated: "2026-08-17"
 provenance:
   source_type: "execution"
-  source_ref: "C:/Users/Marius/finscope"
+  source_ref: "C:/Users/user/finscope"
 confidence: "high"
 verification: "verified"
 relations:
@@ -29,7 +29,7 @@ relations:
 - **Analytics & Forecasting**: Recharts visualization for cashflow, recurring subscriptions, and budget tracking.
 
 ## 3. Location & Environment
-- **Path**: `C:\Users\Marius\finscope`
+- **Path**: `C:\Users\user\finscope`
 - **Orchestration**: Multi-Agent Orchestrator via secure delegation (`cognitive_core/dispatch_cli.py`, gated by `MemoryController` enforcing `I-001..I-012` and `I-RETRIEVAL`).
 
 ---

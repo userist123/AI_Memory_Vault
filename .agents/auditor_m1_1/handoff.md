@@ -1,7 +1,7 @@
 # Milestone 1 Forensic Audit Handoff Report
 
 **Agent**: Forensic Auditor M1 (`teamwork_preview_auditor`)  
-**Working Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1`  
+**Working Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\auditor_m1_1`  
 **Milestone**: M1 Financial Schema & Domain Models  
 **Timestamp**: 2026-08-26T16:11:56Z  
 **Verdict**: **INTEGRITY VIOLATION**  

@@ -24,9 +24,9 @@ Am finalizat cu succes importul a 46 de fișiere din directoarele `claude_origin
 
 ### 1. Profiluri Agenți Globali (`01_KNOWLEDGE`)
 Aceste 3 fișiere au fost importate cu statutul de **`REVIEW`** și încredere (`confidence: high`), gata să ghideze agenții de pe stația ta.
-- [`Global_Antigravity_Agent_Profile.md`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Antigravity_Agent_Profile.md)
-- [`Global_Claude_Code_Profile.md`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Claude_Code_Profile.md)
-- [`Global_Gemini_CLI_Profile.md`](file:///C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Gemini_CLI_Profile.md)
+- [`Global_Antigravity_Agent_Profile.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Antigravity_Agent_Profile.md)
+- [`Global_Claude_Code_Profile.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Claude_Code_Profile.md)
+- [`Global_Gemini_CLI_Profile.md`](file:///C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/01_KNOWLEDGE/Global_Gemini_CLI_Profile.md)
 
 ### 2. Exporturile Vechi Claude și Perplexity
 Pentru a evita suprascrierea structurii curente din `00_CORE`, `01_KNOWLEDGE`, etc., cele 43 de fișiere legacy (istorice) au primit:

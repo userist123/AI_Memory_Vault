@@ -12,19 +12,19 @@
 
 ### 1.1 Existing Codebase & Subsystem Assets
 1. **Memory Invariants & Security Boundaries**:
-   - Inspected `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain\jarvis\memory\invariants.py`:
+   - Inspected `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain\jarvis\memory\invariants.py`:
      - Lines 11–15: `Principal` enum defines `HUMAN = "human"`, `AI_AGENT = "ai_agent"`, `ADMIN = "admin"`.
      - Lines 18–29: `Operation` enum defines `PROPOSE`, `UPDATE`, `ATTEST`, `PROMOTE`, `ARCHIVE`, `SUPERSEDE`, `READ`, `SEARCH`, `DELETE`.
      - Lines 167–185: `validate_propose_invariants` strictly blocks `verification="verified"` (P0-001) and forbids privileged source types (`user`, `official`, `experience`, `import`) for `AI_AGENT` (P0-002).
      - Lines 220–230: `validate_attest_invariants` and `validate_promote_invariants` enforce that only human/admin can attest or promote to `ACTIVE`.
 
 2. **Core Data Models & Execution Engine**:
-   - Inspected `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain\jarvis\core\models.py`:
+   - Inspected `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain\jarvis\core\models.py`:
      - Lines 25–41: `UserIntent`, `PerceptionEvent`.
      - Lines 52–116: `PlanStep`, `ActivePlan` with atomic disk persistence (`save_state`/`load_state` via `tempfile` and `os.replace`).
      - Lines 128–208: `WorkingMemory` bounded container with ACT-R integration.
      - Lines 209–234: `OODACycleResult` capturing complete cognitive iteration metrics.
-   - Inspected `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain\jarvis\core\ooda.py`:
+   - Inspected `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain\jarvis\core\ooda.py`:
      - Lines 46–385: `OODACognitiveEngine` implements `observe`, `retrieve`, `reason_and_plan`, `act_step`, `act`, `reflect`, `consolidate`, and `execute_cycle`.
 
 3. **Storage, Recall, Reflection & Consolidation Modules**:
@@ -86,7 +86,7 @@ To verify the design and subsequent implementation:
 2. **Test Execution**:
    - Run the current test suite:
      ```powershell
-     cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+     cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
      pytest tests/e2e/tier1_features/test_t1_multi_agent.py -v
      pytest tests/e2e/tier3_combinations/test_t3_pairwise_interactions.py -k "multi_agent or verifier or critic" -v
      ```

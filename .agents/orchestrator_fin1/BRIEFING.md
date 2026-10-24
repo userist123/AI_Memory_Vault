@@ -6,13 +6,13 @@ Orchestrate the end-to-end Financial Research & Trading Journal System integrate
 ## 🔒 My Identity
 - Archetype: orchestrator
 - Roles: orchestrator, user_liaison, human_reporter, successor
-- Working directory: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_fin1
+- Working directory: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\orchestrator_fin1
 - Original parent: parent
 - Original parent conversation ID: ec9d1cc9-8f3f-4fc3-8086-cf161b918358
 
 ## 🔒 My Workflow
 - **Pattern**: Project Orchestration
-- **Scope document**: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
+- **Scope document**: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md
 1. **Survey**: Spawn 3 Explorers in parallel (COMPLETED).
 2. **Decompose & Delegate**:
    - Milestone 1: Financial Ingestion Pipeline [COMPLETED & GATED - PASS]

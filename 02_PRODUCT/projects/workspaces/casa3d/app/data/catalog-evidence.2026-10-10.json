@@ -1,0 +1,905 @@
+{
+ "note": "Dovezi citite pe pagina fiecărui produs (preț, dimensiuni) la data verificării.",
+ "items": [
+  {
+   "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-tibbleby-bej-gri-s49440597/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 1699lei; Lăţime228 cm; Adâncime95 cm; Înălțime83 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/ektorp-canapea-3-locuri-mangbyn-maro-multicolor-s89627201/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 1999lei; Lăţime218 cm; Adâncime88 cm; Înălţime inclusiv cu perne88 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/saltmyran-canapea-3-locuri-oereryd-gri-bej-40618514/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 999lei; Lăţime 187 cm; Adâncime 79 cm; Înălţime inclusiv cu perne 77 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/valnaes-canapea-3-locuri-knaebaeck-bej-deschis-s89615335/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "3299lei; Lăţime 246 cm; Adâncime 94 cm; Înălțime 90 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/ekholma-canapea-3-locuri-kilanda-bej-deschis-s09535597/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 2599lei; Lăţime207 cm; Adâncime85 cm; Înălţime inclusiv cu perne94 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/poaeng-fotoliu-furnir-mesteacan-knisa-bej-deschis-s39240787/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 299lei; Lăţime68 cm; Adâncime82 cm; Înălțime100 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/gaevle-fotoliu-diseroed-gri-60588846/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 199,90lei; Lăţime54 cm; Adâncime68 cm; Înălțime70 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/ekenaeset-fotoliu-kilanda-bej-deschis-90533174/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 899lei; Lăţime64 cm; Adâncime78 cm; Înălțime76 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/dyvlinge-fotoliu-rotativ-kelinge-verde-60555153/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 999lei; Lăţime63 cm; Adâncime75 cm; Înălțime68 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/oskarshamn-fotoliu-tonerud-rosu-50521682/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 1499lei; Lăţime82 cm; Adâncime86 cm; Înălțime99 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/tarva-cadru-pat-vopsit-alb-s09553973/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "599lei; Lungime209 cm; Lăţime168 cm; Înălţime tăblie92 cm (h = headboard height, no total height row)"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-alb-luroey-s69002431/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "899lei; Lungime209; Lăţime156; Înălțime100 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/brimnes-cadru-pat-cu-depozitare-si-tablie-alb-s19099157/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1.599lei; Lungime234 cm; Lăţime186 cm; Înălțime111 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/idanaes-pat-tapitat-cu-depozitare-gunnared-gri-inchis-10458970/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "3.299lei; Lungime224; Lăţime170; Înălţime tăblie120 cm (h = headboard)"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/slattum-cadru-pat-tapitat-vissle-gri-inchis-40571248/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "599lei; Lungime206; Lăţime164; Înălţime tăblie85 cm (h = headboard)"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/fagelfjaellet-cadru-pat-alb-murdar-50607157/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "899lei; Lungime207; Lăţime172; Înălțime101 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/brimnes-noptiera-alb-10234942/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "159lei; Lăţime39 cm; Adâncime41 cm; Înălțime53 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/radmansoe-noptiera-maro-aspect-nuc-80593597/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "349lei; Lăţime54 cm; Adâncime38 cm; Înălțime58 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/hauga-noptiera-alb-00488963/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "179,90lei; Lățime 40 cm; Adâncime 36 cm; Înălțime 63 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/tyssedal-noptiera-alb-70299959/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "399lei; Lăţime51 cm; Adâncime40 cm; Înălțime59 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/gullaberg-noptiera-cu-1-sertar-cu-polita-alb-20561740/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "299lei; Lăţime53 cm; Adâncime43 cm; Înălţimea69 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/brimnes-dulap-cu-3-usi-alb-40407922/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "699lei; Lăţime117 cm; Adâncime50 cm; Înălțime190 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/kleppstad-dulap-de-haine-cu-usi-glisante-alb-90437238/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "649lei; Lăţime117 cm; Adâncime55 cm; Înălțime176 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/songesand-dulap-de-haine-alb-90347351/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1099lei; Lăţime120 cm; Adâncime60 cm; Înălțime191 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/pax-forsand-dulap-alb-alb-s49502726/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "2893lei; Lăţime250 cm; Adâncime60 cm; Înălțime236.4 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/storklinta-comoda-4-sertare-alb-40627537/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "499lei; Lăţime70 cm; Adâncime50 cm; Înălțime98 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/radmansoe-comoda-6-sertare-maro-aspect-nuc-90593605/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1199lei; Lăţime159 cm; Adâncime48 cm; Înălțime81 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/tonstad-comoda-6-sertare-frnr-stjr-50614624/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1.599lei; Lăţime120 cm; Adâncime47 cm; Înălțime90 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-comoda-8-sertare-vopsit-alb-10239280/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 1599lei; Lăţime160 cm; Adâncime50 cm; Înălțime96 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/gursken-comoda-3-sertare-bej-deschis-00486327/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "250lei; Lăţime69 cm; Adâncime38 cm; Înălțime67 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/besta-comoda-tv-usi-alb-bjoerkoeviken-frnr-stjr-s59622912/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 1070lei; Lăţime180 cm; Adâncime42 cm; Înălțime38 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/brimnes-comoda-tv-alb-50409874/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "499lei; Lăţime180 cm; Adâncime41 cm; Înălțime53 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/lack-comoda-tv-negru-maro-20498904/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 279lei; Lăţime160 cm; Adâncime35 cm; Înălțime36 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/radmansoe-comoda-tv-maro-aspect-nuc-40597818/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "999lei; Lăţime176.4 cm; Adâncime48.2 cm; Înălțime66.1 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/byas-comoda-tv-lucios-alb-80227797/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 549lei; Lăţime160 cm; Adâncime42 cm; Înălțime45 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/fryksas-comoda-tv-ratan-80574099/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1.499lei; Lăţime157 cm; Adâncime41 cm; Înălțime49 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/billy-biblioteca-alb-00263850/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 279lei; Lăţime80 cm; Adâncime28 cm; Înălțime202 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-biblioteca-gri-verde-maro-deschis-vopsit-40596159/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "999lei (was 1.299); Lăţime90 cm; Adâncime37 cm; Înălțime197 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/tonstad-biblioteca-frnr-stjr-70528461/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 1499lei; Lăţime81.7 cm; Adâncime37.2 cm; Înălțime200.5 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/baggebo-biblioteca-alb-20436713/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "139,90lei; Lăţime50 cm; Adâncime25 cm; Înălțime160 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/brimnes-biblioteca-alb-90301225/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 379lei; Lăţime60 cm; Adâncime35 cm; Înălțime190 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/skalsta-masa-aspect-stejar-forma-x-negru-gri-s19590767/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "699lei; Lungime 140 cm; Lățime 80 cm; Înălțime 75 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/vihals-masa-alb-alb-s39578509/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 299lei; Lungime125 cm; Lăţime74 cm; Înălțime75 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/lisabo-masa-furnir-frasin-70294339/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "749lei; Lungime140 cm; Lăţime78 cm; Înălțime74 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/nackanaes-masa-acacia-40511056/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "999lei; Lungime140 cm; Lăţime76 cm; Înălțime75 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/docksta-masa-alb-alb-s19324995/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "749lei; Ø103 cm; Înălțime75 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/micke-birou-alb-80213074/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "399lei; Lățime105 cm; Adâncime50 cm; Înălțime75 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/lagkapten-alex-birou-alb-s09521595/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Preț 429lei; Lungime140 cm; Lăţime60 cm; Înălțime73 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/mittzon-birou-alb-s09529087/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1049lei; Lăţime160 cm; Adâncime80 cm; Înălţime max.85 cm (min.65, reglabil)"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/trotten-birou-alb-s59621917/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "299lei; Lăţime120 cm; Adâncime70 cm; Înălțime75 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/markus-scaun-rotativ-vissle-gri-inchis-70261150/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "699lei; Lăţime62 cm; Adâncime60 cm; Înălţime max.140 cm (min.129)"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/flintan-scaun-rotativ-negru-10489028/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "299lei; Lăţime71 cm; Adâncime71 cm; Înălţime max.114 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/renberget-scaun-rotativ-bomstad-negru-60493546/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "249lei; Lăţime67 cm; Adâncime67 cm; Înălţime max.111 cm (min.100)"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/hattefjaell-scaun-rotativ-cu-brate-gunnared-bej-alb-60538955/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "949lei; Lăţime68 cm; Adâncime68 cm; Înălţime max.114 cm"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/smaellen-scaun-rotativ-negru-00503435/",
+   "store": "IKEA",
+   "verifiedAt": "2026-10-10",
+   "evidence": "119lei; Lăţime65 cm; Adâncime65 cm; Înălţime max.85 cm"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/canapea-fixa-3-locuri-andy-cappuccino-215-x-78-x-90-cm-1c/p/8130788",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1999.00 lei /bucată; Lungime 215; Latime 78; Inaltime 90 (specs table)"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/canapea-fixa-3-locuri-chesterfield-maro-stofa-215-x-90-x-80-cm-1c/p/8096673",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "2898.99 lei /bucată; Lungime 215; Latime 90 (used as depth); Inaltime 80"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/canapea-fixa-3-locuri-panda-maro-taupe-280-x-104-x-81-cm-2c/p/8130382",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "3899.00 lei /bucată; Lungime 280; Latime 104 (used as depth); Inaltime 81"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/canapea-fixa-3-locuri-romano-maro-deschis-textil-215-x-88-x-73-cm-1c/p/8122462",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "3799.00 lei /bucată; Lungime 215; Latime 88 (used as depth); Inaltime 73"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/fotoliu-extensibil-eva-kt1908bd-1-gri-inchis-65-x-60-x-78-cm-1c/p/8129367",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "399.00 lei (499.00 old); Latime 65; Adancime 60; Inaltime 78"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/fotoliu-fix-charlot-textil-maro-fag-1c/p/8091835",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1199.00 lei (1399.00 old); Latime 86; Adancime 72; Inaltime 105"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/fotoliu-recliner-forest-textil-maro-ciocolatiu-1c/p/8091844",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1199.00 lei (1379.00 old); Latime 78; Adancime 90; Inaltime 113.5"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/pat-dormitor-dr-home-matrimonial-metalic-cu-sertare-negru-stejar-gri-160-x-200-cm-1c/p/8124257",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "799.00 lei /bucată; Lungime 203; Latime 160; Inaltime 112; saltea 160x200"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/pat-dormitor-dr-home-matrimonial-tapitat-crem-160-x-200-cm-2c/p/8132518",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "Lungime 202.7; Latime 164.4; Inaltime 102.5; two prices on page 789.00 and 699.00 (699 taken as current, unlabeled)"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/pat-dormitor-fidelio-matrimonial-tapitat-cu-lada-bej-deschis-160-x-200-cm-5c/p/8071675",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1459.00 lei; Lungime 213; Latime 172; Inaltime 102"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/noptiera-corsica-cu-raft-sertar-bej-50-x-40-x-60-cm-1c/p/8129721",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "358.99 lei /bucată; Latime 50; Inaltime 60; Adancime 40"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/noptiera-duero-3f-cu-3-sertare-stejar-gri-45-x-40-x-63-cm-1c/p/8063974",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "300.00 lei /bucată; Latime 45; Inaltime 63; Adancime 40"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/noptiera-colhida-cu-2-sertare-bej-cashmere-stejar-inchis-48-x-40-1-x-59-4-cm-1c/p/8130657",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "266.00 lei (316.00 old); Latime 48; Inaltime 59.4; Adancime 40.1"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/dulap-dormitor-nevis-3k1f1o-stejar-artisan-3-usi-cu-oglinda-116-8-x-51-6-x-207-3-cm-4c/p/8130661",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "799.00 lei (999.00 old); Latime 116.8; Inaltime 207.3; Adancime 51.6"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/dulap-dormitor-varadero-4k1f1o-stejar-artisan-negru-4-usi-cu-oglinda-157-6-x-53-x-203-7-cm-3c/p/8098360",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1079.01 lei (1269.00 old); Latime 157.6; Inaltime 203.7; Adancime 53"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/dulap-dormitor/-dressing-sierra-220-gri-grafit-2-usi-glisante-cu-oglinda-217-x-62-5-x-210-cm-8c/p/8063961",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "2299.00 lei /bucată; Latime 217; Inaltime 210; Adancime 62.5"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/comoda-dormitor-duero-5f-90-cu-5-sertare-stejar-gri-90-x-95-x-40-cm-1c/p/8063957",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "549.00 lei (668.98 old); Latime 90; Adancime 40; Inaltime 95"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/comoda-tv-rex-cu-lumini-cu-usi-alb-mat-negru-folie-lucioasa-alba-170-x-41-5-x-41-5-cm-2c/p/8054377",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "469.01 lei (578.99 old); Latime 170; Adancime 41.5; Inaltime 41.5"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/comoda-tv-darwen-3k2f2v-cu-usi-si-sertare-bej-cashmere-stejar-artisan-179-5-x-40-x-52-5-cm-2c/p/8124717",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "829.00 lei /bucată; Latime 179.5; Inaltime 52.5; Adancime 40"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/comoda-tv-arles-3k3v-cu-usi-bej-cashmere-stejar-artisan-192-2-x-44-x-32-cm-1c/p/8125262",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "469.00 lei /bucată; Latime 192.2; Inaltime 32; Adancime 44"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/biblioteca-living-cantal-stejar-artisan-gri-259-cm-3c/p/8108282",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "979.00 lei /bucată; Lungime 259; Adancime 38; Inaltime 193"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/biblioteca-living-margate-ah-stejar-artisan-negru-208-cm-2c/p/8124741",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "698.99 lei /bucată; Lungime 208; Adancime 40; Inaltime 167"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/biblioteca-living-retimno-stejar-artisan-negru-207-5-cm-2c/p/8119446",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "729.00 lei /bucată; Lungime 207.5; Adancime 33; Inaltime 157.5"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/biblioteca-living-glen-stejar-gri-alb-mat-170-5-cm-2c/p/8050440",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "739.00 lei; Lungime 170.5; Adancime 41.5; Inaltime 170.5"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/biblioteca-living-lorca-stejar-gri-lemn-negru-195-5-cm-2c/p/8063761",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "899.00 lei /bucată; Lungime 195.5; Adancime 35; Inaltime 171.5"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masuta-cafea-oscar-ks-dreptunghiulara-stejar-alb-120-x-60-x-41-5-cm-1c/p/8050333",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "299.00 lei (358.99 old); Lungime 120; Latime 60; Inaltime 41.5"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masuta-cafea-aberdeen-dreptunghiulara-alb-stejar-porto-120-x-56-4-x-49-5-cm-2c/p/8130622",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "569.00 lei (673.99 old); Lungime 120; Latime 56.4; Inaltime 49.5"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masuta-cafea-cirko-rotunda-alb-marmorat-negru-80-x-80-x-48-cm-set-2-in-1-1c/p/8128881",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "329.00 lei (469.00 old); Lungime 80; Latime 80; Inaltime 48; Diametru 80"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masuta-cafea-din-sticla-kugu-rotunda-crom-aramiu-75-x-75-x-50-cm-1c/p/8106760",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "459.00 lei (538.99 old); Lungime 75; Latime 75; Inaltime totala 50; Diametru 75"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masuta-cafea-aralyn-dreptunghiulara-stejar-negru-110-x-50-x-54-cm-1c/p/8128866",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "448.99 lei (538.99 old); Lungime 110; Latime 50; Inaltime 54"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masa-bucatarie/-dining-fixa-eva-ab2820-dreptunghiulara-6-persoane-natur-negru-160-x-80-x-76-cm-1c/p/8123970",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "499.00 lei (599.00 old); Lungime 160; Inaltime 76; titlu/descriere 160 x 80 x 76 cm"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masa-bucatarie/-dining-fixa-grandio-mob-tonia-dreptunghiulara-6-persoane-negru-stejar-180-x-90-x-75-cm-2c/p/8115917",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "798.99 lei (999.00 old); Lungime 180; Latime 90; Inaltime 75"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masa-bucatarie/-dining-extensibila-mb-13-dreptunghiulara-4-persoane-stejar-sonoma-120-x-80-x-78-cm-2c/p/8099510",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "799.00 lei (899.00 old); Lungime 120 (totala 150); Latime 80; Inaltime 78"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masa-bucatarie/-dining-extensibila-saxonia-dreptunghiulara-4-persoane-nuc-105/-165-x-68-x-77-5-cm-1c/p/8063498",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "300.00 lei (358.99 old, unlabeled); Lungime 165 (maxima, min 105); Latime 68; Inaltime 77.5"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/birou-calculator-standard-rubin-stejar-cannolo-130-x-65-x-73-cm-1c/p/8705096",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "209.00 lei /bucată; Latime 130; Adancime 65; Inaltime 73"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/birou-calculator-cu-sertare-si-dulap-alfa-stejar-sonoma-145-x-65-5-x-75-5-cm-2c/p/8029895",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "519.00 lei (638.99 old); Latime 145; Adancime 65.5; Inaltime 75.5"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/birou-cu-sertar-si-dulap-bany-pentru-calculator-alb-140-x-60-x-76-cm-2c/p/8097492",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "649.00 lei /bucată; Latime 140; Adancime 60; Inaltime 76"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/birou-cu-sertare-si-dulap-eustach-pentru-calculator-alb-137-x-60-x-76-3-cm-2c/p/8097564",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "929.00 lei /bucată; Latime 137; Adancime 60; Inaltime 76.3"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/scaun-birou-ergonomic-cu-suport-lombar-ericsson-rotativ-material-textil-negru/p/8115577",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "299.00 lei (358.99 old); Latime totala 61; Adancime totala 51 (descriere: 46); Inaltime 103.5 (ajustabila 94-103.5)"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/scaun-birou-ergonomic-cu-suport-lombar-si-tetiera-sd-mch801-rotativ-mesh-negru/p/8066569",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "469.00 lei /bucată; Latime totala 61; Adancime totala 67; Inaltime 128 (ajustabila 118-128)"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/scaun-birou-operational-carbo-rotativ-textil-gri/p/8132330",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "239.00 lei (279.00 old); dimensiuni totale: 49 x 55.5 x 70 - 79.5 cm"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/pantofar-buseto-2k-hdf-pal-alb-67-4-x-34-8-x-195-cm-1c/p/8098391",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "479.00 lei /bucată; Latime 67.4; Adancime 34.8; Inaltime 195"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/pantofar-elia-pal-alb-104-x-30-x-68-cm-2c/p/8111202",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "379.00 lei /bucată; Latime 104; Adancime 30; Inaltime 68"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/pantofar-hugo-24-cu-oglinda-pal-stejar-gri-67-x-28-x-155-5-cm-2c/p/8054497",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "638.99 lei /bucată; Latime 67; Adancime 28; Inaltime 155.5"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/pantofar-islay-2k-mdf-hdf-pal-stejar-artisan-91-6-x-32-4-x-184-4-cm-2c/p/8130163",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "929.00 lei /bucată; Latime 91.6; Adancime 32.4; Inaltime 184.4"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/pantofar-menorca-2k-2og-ob-blf-cu-oglinda-hdf-alb-texturat-89-5-x-37-5-x-199-cm-2c/p/8093485",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "999.00 lei /bucată; Latime 89.5; Adancime 37.5; Inaltime 199"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-savini-due-60w-cu-usi-alb-pe-pardoseala-pal-mdf-60-5-x-36-3-x-84-6-cm/p/3049330",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "518.99 lei (621.00 old); Latime 60.5; Adancime 36.3; Inaltime 84.6"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-savini-due-rimini-cu-usi-alb-pe-pardoseala-pal-mdf-56-5-x-42-5-x-87-cm/p/3024503",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "429.01 lei (500.00 old); Lățime 56.5; Adâncime 42.5; Înălțime 87"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-roca-a851925529-cu-sertare-alb-suspendat-mdf-ceramica-61-3-x-46-5-x-65-6-cm/p/3045617",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1349.00 lei (1463.63 old); Latime 61.3; Adancime 46.5; Inaltime 65.6 (descriere 63.5)"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-savini-due-creta-80-c/f40/00-cu-sertare-stejar-auriu-pe-pardoseala-pal-mdf-ceramica-81-5-x-46-5-x-85-5-cm/p/3052335",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1246.00 lei /bucată; Lxhxa 81.5 x 85.6 x 46.5 (titlu 85.5)"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-fayans-kuandra-cu-sertare-si-usi-gri-negru-pe-pardoseala-pal-65-x-42-x-85-cm/p/3018387",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1349.01 lei (1450.25 old); Width 65; Height 85; Depth 42"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-cersanit-moduo-s801-221-dsm-cu-sertare-alb-suspendat-pal-80-x-44-7-x-62-cm/p/3045112",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1188.99 lei /bucată; Latime 80; Adancime 44.7; Inaltime 62"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/frigider-arctic-ad60310m40s-cu-2-usi-si-3-rafturi-306-litri-clasa-e-gri-inaltime-175-cm-termostat-reglabil-compartiment-garden-fresh-usi-reversibile-eco-led/p/3050640",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1599.00 lei /bucată; Latime 59.5; Adancime 59.2; Inaltime 175"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/combina-frigorifica-beko-rcsa406k40dxbn-386-litri-clasa-e-inaltime-202-5-cm-dozator-apa-usi-reversibile-termostat-reglabil-iluminare-led-argintiu/p/3037924",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "2299.00 lei /bucată; Latime 59.5; Adancime 67; Inaltime 202.5"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/combina-frigorifica-albatros-cf343e-262-litri-clasa-e-inaltime-180-cm-termostat-reglabil-dezghetare-automata-frigider-usi-reversibile-lumina-interioara-tip-led-picioare-reglabile-alb/p/3049373",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1069.00 lei /bucată; Inaltime 180; Latime 55; Adancime 56"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/frigider-candy-cdg1s514ew-cu-2-usi-si-3-rafturi-211-litri-clasa-e-alb-inaltime-143-cm-termostat-reglabil-iluminare-led-usi-reversibile-picioare-reglabile/p/3051493",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "919.00 lei (1049.00 old); Latime 54; Adancime 55.1; Inaltime 143"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/frigider-arctic-ad54280m40w-cu-2-usi-si-3-rafturi-250-litri-clasa-e-alb-inaltime-160-6-cm-termostat-reglabil-compartiment-garden-fresh-usi-reversibile-eco-led/p/3050646",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1249.00 lei (1349.00 old); Inaltime 160.6; Latime 54; Adancime 57.4"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/frigider-samus-srx474nfe-cu-1-usa-si-4-rafturi-359-litri-clasa-e-argintiu-inaltime-185-cm-full-no-frost-multi-air-flow-system-functie-supercool-afisaj-electronic-lcd-usa-reversibila/p/3051743",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "2099.00 lei /bucată; Latime 60; Adancime 65; Inaltime 185"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/cabina-dus-patrata-kadda-jf-90k-sticla-securizata-transparenta-profil-cromat-90-x-90-x-200-cm/p/3056643",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1149.00 lei /bucată; Latime 90; Lungime 90; Inaltime 200"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/cabina-dus-dreptunghiulara-cadita-seldus-eur5-100-x-80-x-205-cm-sticla-securizata-transparenta-profil-negru/p/3052044",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1435.00 lei (1685.00 old); lungime 100, latime 80, inaltime totala 205"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/cabina-dus-patrata-west-cb90wst03-profil-cromat-90-x-90-x-200-cm/p/3028598",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "2850.01 lei (3172.00 old); 90 x 90 x 200 cm"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/cabina-dus-semirotunda-cadita-inalta-kadda-2018-b-90-x-90-x-200-cm-sticla-securizata-mata-profil-alb/p/3006432",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "594.99 lei (698.99 old); 90 x 90 x 200 cm"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/cabina-dus-dreptunghiulara-westcb150wst10gb-profil-negru-150-x-90-x-200-cm/p/3037972",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "3168.00 lei (3520.00 old); 150 cm lungime, 90 cm latime, 200 cm inaltime"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/vas-wc-cu-rezervor-mecanism-capac-set-cersanit-koral-k681-001-alb-evacuare-orizontala-montaj-pe-pardoseala/p/3049455",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "329.00 lei (358.99 old); 36 cm latime, 75 cm inaltime si 65 cm adancime (ceramica alba)"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/vas-wc-suspendat-kadda-therma-mgz-55-alb-evacuare-orizontala-36-3-x-48-6-x-36-4-cm-capac-wc-inclus/p/3057242",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "499.00 lei /bucată; Latime 36.3; Adancime 48.6; Inaltime 36.4"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/vas-wc-suspendat-roca-gap-a34647f000-alb-evacuare-orizontala-35-x-54-x-40-cm/p/3056839",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "648.99 lei (699.00 old); latimea de 35 cm, inaltimea de 40 cm si adancimea de 54 cm"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/vas-wc-suspendat-geberit-selnova-square-501-546-01-1-alb-evacuare-orizontala-35-x-54-x-33-cm/p/3049243",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "922.00 lei /bucată; Latime 35; Adancime 54; Inaltime 33"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/vas-wc-cersanit-bonica-k3029-002-alb-evacuare-dubla-montaj-pe-pardoseala-39-x-61-x-42-cm-capac-wc-inclus/p/3057961",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "429.00 lei (490.00 old); Latime 39; Adancime 61; Inaltime 42"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/vas-wc-suspendat-cersanit-mito-vortex-szcz1003790001-alb-evacuare-orizontala-36-x-49-x-36-cm-capac-wc-inclus/p/3055926",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "648.99 lei (699.00 old); 36 x 49 x 36 cm"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/oglinda-decorativa-f2203-dreptunghiulara-negru-55-x-75-cm/p/3043894",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "290.00 lei (353.00 old); 55 cm latime, 75 cm inaltime si 2 cm adancime"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/oglinda-decorativa-rona-0065lk-cu-suport-de-podea-auriu-60-x-160-cm-1c/p/8118894",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "349.00 lei (429.00 old); 60 cm latime, 160 cm inaltime, 2.8 cm adancime"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/oglinda-living-cottage-0162miroc-stejar-natur-160-x-2-x-55-cm-1c/p/8056934",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "578.99 lei /bucată; 160 cm latime, 2 cm adancime si 55 cm inaltime"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/oglinda-decorativa-f2205-rotunda-negru-60-x-60-cm/p/3043896",
+   "store": "Dedeman",
+   "verifiedAt": "2026-10-10",
+   "evidence": "218.99 lei (284.00 old); diametru 60 cm, 2.45 cm adancime"
+  },
+  {
+   "url": "https://jysk.ro/sufragerie/canapele/canapea-egense-3-locuri-nisipie",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1500 Lei /buc; Lățime: 200 cm, Înălțime: 80 cm, Adâncime: 80 cm"
+  },
+  {
+   "url": "https://jysk.ro/sufragerie/canapele/canapea-falslev-3-locuri-gri",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1250 Lei /buc (1699 old, valabil 24.09-23.10.2026); Lățime: 216 cm, Înălțime: 78 cm, Adâncime: 84 cm"
+  },
+  {
+   "url": "https://mobexpert.ro/products/prm114-oskar-canapea-3-locuri-extensibila",
+   "store": "Mobexpert",
+   "verifiedAt": "2026-10-10",
+   "evidence": "3.623,55 lei (valabil 07.09-01.11.2026); L.225 x l.96 x H.90 cm"
+  },
+  {
+   "url": "https://jysk.ro/dormitor/cadre-de-pat/cadru-pat-markskel-160x200-stejar-salbatic-alb",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1400 Lei /buc (1799 old); Lățime: 170 cm, Lungime: 210 cm, Înălțime: 91 cm"
+  },
+  {
+   "url": "https://jysk.ro/dormitor/paturi/cadre-de-pat-si-somiere/cadre-de-pat/cadru-pat-limfjorden-160x200-3-sertare-alb",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1350 Lei /buc; Lățime: 165 cm, Lungime: 205 cm, Înălțime: 91 cm"
+  },
+  {
+   "url": "https://jysk.ro/dormitor/paturi/cadre-de-pat-si-somiere/cadre-de-pat/cadru-pat-kongsberg-160x200-bej",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1499 Lei /buc; Lățime: 174 cm, Lungime: 216 cm, Înălțime: 101 cm"
+  },
+  {
+   "url": "https://mobexpert.ro/products/outprm002",
+   "store": "Mobexpert",
+   "verifiedAt": "2026-10-10",
+   "evidence": "2.809,30 lei; L.174 x l.217 x H.92 cm"
+  },
+  {
+   "url": "https://jysk.ro/depozitare/dulapuri/dulap-fandrup-96x176-2-usi-3-sertare-stejar",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "875 Lei /buc; Lățime: 97 cm, Înălțime: 176 cm, Adâncime: 50 cm"
+  },
+  {
+   "url": "https://jysk.ro/depozitare/dulapuri/dulap-vellerup-200x200-4-usi-3-sertare-alb",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "2000 Lei /buc; Lățime: 200 cm, Înălțime: 200 cm, Adâncime: 59 cm"
+  },
+  {
+   "url": "https://jysk.ro/birou/scaune-de-birou/scaun-birou-marbjerg-gri",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "550 Lei /buc (699 old); Lățime: 65 cm, Înălțime: 116-126 cm, Adâncime: 75 cm"
+  },
+  {
+   "url": "https://jysk.ro/birou/scaune-de-birou/scaun-birou-billum-negru",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "300 Lei /buc; Lățime: 61 cm, Înălțime: 109-119 cm, Adâncime: 62 cm"
+  },
+  {
+   "url": "https://jysk.ro/sufragerie/comode-tv/comoda-tv-vedde-stejar-salbatic",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "650 Lei /buc (899 old); Lățime: 130 cm, Înălțime: 53 cm, Adâncime: 43 cm (rezumat: 130x53x53)"
+  },
+  {
+   "url": "https://jysk.ro/depozitare/pantofare/pantofar-bakhuse-3-compartimente-alb",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "350 Lei /buc; Lățime: 65 cm, Înălțime: 124 cm, Adâncime: 25 cm"
+  },
+  {
+   "url": "https://mobexpert.ro/products/jen01-jennifer-comoda-tv",
+   "store": "Mobexpert",
+   "verifiedAt": "2026-10-10",
+   "evidence": "1.393,92 lei (1.584 old); L.163 x l.38 x H.51 cm"
+  },
+  {
+   "url": "https://mobexpert.ro/products/prl09-priscilla-masa-dining-extensibila",
+   "store": "Mobexpert",
+   "verifiedAt": "2026-10-10",
+   "evidence": "2.414,00 lei; L.160/200 x l.90 x H.76 cm"
+  },
+  {
+   "url": "https://mobexpert.ro/products/siteavnubibl02-avenue-biblioteca",
+   "store": "Mobexpert",
+   "verifiedAt": "2026-10-10",
+   "evidence": "4.319,92 lei (4.909 old); L.331 x l.41 x H.193.9 cm"
+  },
+  {
+   "url": "https://mobexpert.ro/products/snr29-lia-masuta-cafea",
+   "store": "Mobexpert",
+   "verifiedAt": "2026-10-10",
+   "evidence": "858,00 lei; L.110 x l.55 x H.36 cm"
+  },
+  {
+   "url": "https://mobexpert.ro/products/wnn1318",
+   "store": "Mobexpert",
+   "verifiedAt": "2026-10-10",
+   "evidence": "291,90 lei (417 old, valabil 07.09-01.11.2026); L.80 x l.60 x H.38 cm"
+  },
+  {
+   "url": "https://mobexpert.ro/products/ehfoc18194-tuycan-masuta-cafea",
+   "store": "Mobexpert",
+   "verifiedAt": "2026-10-10",
+   "evidence": "3.462,00 lei; Ø.69 x H.42 cm"
+  },
+  {
+   "url": "https://jysk.ro/sufragerie/masute-de-cafea/masuta-cafea-ravnsbjerg-90x90-stejar-natur",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "550 Lei /buc (799 old, valabil 24.09-23.10.2026); Lățime: 90 cm, Lungime: 90 cm, Înălțime: 35 cm"
+  },
+  {
+   "url": "https://jysk.ro/bucatarie/mese-dining/masa-aabenraa-90x160-stejar-cald/negru",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "450 Lei /buc (699 old, valabil 24.09-23.10.2026); Lățime: 90 cm, Lungime: 160 cm, Înălțime: 75 cm"
+  },
+  {
+   "url": "https://jysk.ro/bucatarie/mese-dining/mese-dining/masa-ringsted-o100-alba",
+   "store": "JYSK",
+   "verifiedAt": "2026-10-10",
+   "evidence": "749 Lei /buc; Diametru: 100 cm, Înălțime: 75 cm"
+  }
+ ]
+}

@@ -1,0 +1,323 @@
+using System;
+using System.Collections.ObjectModel;
+using System.Data;
+using System.IO;
+using System.Linq;
+using System.Windows;
+using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
+using LogAnalyzer.Dfir.Profile;
+using Microsoft.Win32;
+
+namespace LogAnalyzer.UI.ViewModels
+{
+    /// <summary>One table of the profile as the grid shows it: the cells live in a DataTable the operator edits, pastes into and imports into.</summary>
+    public sealed class ProfileTableViewModel : ObservableObject
+    {
+        public ProfileTableViewModel(ProfileTable table)
+        {
+            Table = table;
+            Data = new DataTable(table.ToString());
+            foreach (var c in ProfileTables.Columns(table)) Data.Columns.Add(c, typeof(string));
+        }
+
+        public ProfileTable Table { get; }
+        public string Title => ProfileTables.Title(Table);
+        public string Section => ProfileTables.Section(Table);
+
+        /// <summary>Simplu keeps these tabs behind „Mai multe secțiuni” (2026-10-23); display only, the tables and their checks are unchanged.</summary>
+        public static bool IsRareTable(ProfileTable t) => t is ProfileTable.Holidays or ProfileTable.Shifts or ProfileTable.RotationProcedure
+            or ProfileTable.TransferChannels or ProfileTable.NetworkDestinations;
+        public bool IsRare => IsRareTable(Table);
+        public string Columns => string.Join(" · ", ProfileTables.Columns(Table).Select(LogAnalyzer.UI.Views.ColumnLabels.For));
+        public DataTable Data { get; }
+        public DataView View => Data.DefaultView;
+
+        /// <summary>Simplu: Romanian only; Expert keeps the English field names next to them.</summary>
+        public string Hint => LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert ? ExpertHint : SimpleHint;
+
+        private string SimpleHint => Table switch
+        {
+            ProfileTable.WorkingHours => "Ziua: de luni până duminică; începutul și sfârșitul: HH:mm. Un schimb de noapte (22:00-06:00) este acceptat.",
+            ProfileTable.Holidays => "Data: aaaa-LL-zz.",
+            ProfileTable.Shifts => "Numele; începutul și sfârșitul: HH:mm.",
+            ProfileTable.ApprovedAccounts => "Contul: DOMENIU\\utilizator sau utilizator. Conturile care au voie să golească jurnalele.",
+            ProfileTable.MaintenanceWindows => "Tipul: o singură dată, săptămânal sau lunar (lunar: numărul săptămânii 1-4 sau ultima, plus ziua), de exemplu prima zi de luni din lună, 08:00-10:00. Ora locală a stației.",
+            ProfileTable.RotationProcedure => "Pașii, în ordinea procedurii: export, amprentă, arhivare, verificare, golire.",
+            ProfileTable.ApprovedSoftware => "Numele; editorul; șablonul căii (ex. C:\\Program Files\\7-Zip\\*); amprenta SHA-256 (opțional, 64 de caractere hexazecimale).",
+            ProfileTable.ExpectedPolicies => "Calea politicii: calea din secțiunea Politici (import GPO existent; nu se copiază aici); amprenta SHA-256 opțională.",
+            ProfileTable.Zones => "Zonele organizației (ex. ROSU, PUBLIC). Fără zone, orice conectivitate pe un sistem izolat (air-gap) este „conectivitate observată, necesită explicație”.",
+            ProfileTable.TransferChannels => "Din zona / în zona: zone definite mai sus; mediul: suportul sau calea de transfer aprobată.",
+            ProfileTable.NetworkDestinations => "Adresa: IP, rețea CIDR sau nume; zona în care se află.",
+            ProfileTable.ClassifiedFolders => "Calea completă a unui folder cu documente clasificate (ex. D:\\Clasificat). La controlul stației se verifică dacă accesul la fișierele din el este auditat.",
+            _ => "",
+        };
+
+        private string ExpertHint => Table switch
+        {
+            ProfileTable.WorkingHours => "Ziua (Day): Luni..Duminică (sau Mon..Sun); începutul și sfârșitul (Start/End): HH:mm. Un schimb de noapte (22:00-06:00) este acceptat.",
+            ProfileTable.Holidays => "Data (Date): aaaa-LL-zz.",
+            ProfileTable.Shifts => "Numele (Name); începutul și sfârșitul (Start/End): HH:mm.",
+            ProfileTable.ApprovedAccounts => "Contul (Account): DOMENIU\\utilizator sau utilizator. Conturile care au voie să golească jurnalele.",
+            ProfileTable.MaintenanceWindows => "Tipul (Kind): once (o singură dată, Date), weekly (săptămânal, Day) sau monthly (lunar, Ordinal 1-4/last + Day), de exemplu prima zi de luni din lună = monthly, Mon, 1, 08:00-10:00. Ora locală a stației.",
+            ProfileTable.RotationProcedure => "Pașii, în ordinea procedurii: EXPORT → HASH → ARCHIVE → VERIFY → CLEAR.",
+            ProfileTable.ApprovedSoftware => "Numele (Name); editorul (Publisher); șablonul căii (PathPattern, ex. C:\\Program Files\\7-Zip\\*); Sha256 (opțional, 64 de caractere hexazecimale).",
+            ProfileTable.ExpectedPolicies => "Calea politicii (PolicyPath): calea din secțiunea Politici (import GPO existent; nu se copiază aici); Sha256 opțional.",
+            ProfileTable.Zones => "Zonele organizației (ex. ROSU, PUBLIC). Fără zone, orice conectivitate pe un sistem air-gapped este „conectivitate observată, necesită explicație”.",
+            ProfileTable.TransferChannels => "FromZone/ToZone: zone definite mai sus; Medium: suport sau cale de transfer aprobată.",
+            ProfileTable.NetworkDestinations => "Address: IP, rețea CIDR sau nume; Zone: zona în care se află.",
+            ProfileTable.ClassifiedFolders => "Path: calea completă a unui folder cu documente clasificate (ex. D:\\Clasificat). La controlul stației se verifică dacă accesul la fișierele din el este auditat.",
+            _ => "",
+        };
+
+        public void Load(ProcedureProfile p)
+        {
+            Data.Clear();
+            foreach (var row in ProfileTables.Cells(p, Table)) Data.Rows.Add(row.Cast<object>().ToArray());
+        }
+
+        /// <summary>Rows of the grid, without the completely empty ones.</summary>
+        public System.Collections.Generic.List<string[]> Rows() =>
+            Data.Rows.Cast<DataRow>().Select(r => r.ItemArray.Select(v => v?.ToString() ?? "").ToArray()).Where(r => r.Any(c => !string.IsNullOrWhiteSpace(c))).ToList();
+    }
+
+    /// <summary>
+    /// "Profil de proceduri" (owner decisions 18 and 19): working hours, log maintenance, approved software, expected GPO policy, zones and transfers,
+    /// entered by hand, pasted or imported. It is data only: nothing here is applied to Windows. A section left empty is "nedefinit", never "conform".
+    /// </summary>
+    public partial class ProcedureProfileViewModel : ObservableObject
+    {
+        private ProcedureProfile _profile = new();
+        private readonly ProfileProvider _provider;
+
+        public ObservableCollection<ProfileTableViewModel> Tables { get; } = new();
+        public ObservableCollection<string> Issues { get; } = new();
+        public ObservableCollection<string> SectionLines { get; } = new();
+
+        [ObservableProperty] private ProfileTableViewModel? _selectedTable;
+        /// <summary>The „Mai multe secțiuni” toggle of Simplu; Expert always shows every tab.</summary>
+        [ObservableProperty] private bool _showMoreSections;
+        partial void OnShowMoreSectionsChanged(bool value) => EnsureSelectedTabVisible();
+        /// <summary>When Simplu hides the selected tab (toggle turned off, or the level switched), the first tab takes over.</summary>
+        public void EnsureSelectedTabVisible()
+        {
+            if (!LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert && !ShowMoreSections && SelectedTable is { IsRare: true } && Tables.Count > 0) SelectedTable = Tables[0];
+        }
+        [ObservableProperty] private string _profilePath;
+        [ObservableProperty] private string _status = "Introduceți datele în tabele (sau lipiți / importați), apoi apăsați „Salvează”. Secțiunile goale rămân „nedefinit”. Nimic din profil nu se aplică pe Windows.";
+        [ObservableProperty] private bool _replaceOnImport;
+        [ObservableProperty] private string _sha256 = "";
+
+        // WP18 S5 (decision D3): the unit's report header, next to the procedure profile; only the administrator saves it.
+        public string HeaderPath { get; } = LogAnalyzer.Dfir.Reporting.ReportHeaderProfile.DefaultPath;
+        [ObservableProperty] private string _headerUnit = "";
+        [ObservableProperty] private string _headerStructure = "";
+        [ObservableProperty] private string _headerInspectorFunction = "";
+        [ObservableProperty] private string _headerSignatureLeft = "";
+        [ObservableProperty] private string _headerSignatureRight = "";
+        [ObservableProperty] private string _headerStatus = "";
+
+        private void LoadHeader()
+        {
+            var h = LogAnalyzer.Dfir.Reporting.ReportHeaderProfile.Load(HeaderPath, out var problem);
+            HeaderUnit = h.Unit; HeaderStructure = h.Structure; HeaderInspectorFunction = h.InspectorFunction; HeaderSignatureLeft = h.SignatureLeft; HeaderSignatureRight = h.SignatureRight;
+            HeaderStatus = problem is null ? (System.IO.File.Exists(HeaderPath) ? "Antetul unității este încărcat." : "Antetul unității nu este încă definit; câmpurile goale apar cu „—” pe raport.")
+                                            : "Antetul nu a putut fi citit: " + problem;
+        }
+
+        [RelayCommand]
+        private void SaveHeader()
+        {
+            if (!CanEdit) { HeaderStatus = LogAnalyzer.Dfir.Auth.OperatorIdentity.AdministratorOnlyMessage; return; }
+            try
+            {
+                LogAnalyzer.Dfir.Reporting.ReportHeaderProfile.Save(new LogAnalyzer.Dfir.Reporting.ReportHeaderProfile
+                {
+                    Unit = HeaderUnit.Trim(), Structure = HeaderStructure.Trim(), InspectorFunction = HeaderInspectorFunction.Trim(),
+                    SignatureLeft = HeaderSignatureLeft.Trim(), SignatureRight = HeaderSignatureRight.Trim(),
+                }, HeaderPath);
+                HeaderStatus = "Antetul unității a fost salvat; apare pe următoarele rapoarte de control.";
+            }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { HeaderStatus = "Antetul nu a putut fi salvat: " + ex.Message; }
+        }
+
+        [RelayCommand] private void ReloadHeader() => LoadHeader();
+
+        public ProcedureProfileViewModel(ProfileProvider? provider = null)
+        {
+            _provider = provider ?? ProfileProvider.Shared;
+            _profilePath = _provider.Path;
+            foreach (var t in ProfileTables.All)
+            {
+                var tvm = new ProfileTableViewModel(t);
+                tvm.Data.RowChanged += (_, _) => OnPropertyChanged(nameof(IsEmpty));
+                tvm.Data.RowDeleted += (_, _) => OnPropertyChanged(nameof(IsEmpty));
+                Tables.Add(tvm);
+            }
+            SelectedTable = Tables[0];
+            LoadFrom(_profilePath, startup: true);
+            LoadHeader();
+            Services.AuthApp.SessionChanged += () => { OnPropertyChanged(nameof(AccessNotice)); OnPropertyChanged(nameof(CanEdit)); };
+        }
+
+        /// <summary>Shown when the signed-in user may read but not change the profile (only the global administrator edits; decision 33).</summary>
+        public string AccessNotice => LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration ? "" : LogAnalyzer.Dfir.Auth.OperatorIdentity.AdministratorOnlyMessage + ". Puteți citi profilul, nu îl puteți modifica.";
+        /// <summary>True while no table of the profile holds a row: the page then shows the "Ce este / de ce contează / primul pas" panel (rows 16-17).</summary>
+        public bool IsEmpty => Tables.All(t => t.Rows().Count == 0);
+        public bool CanEdit => LogAnalyzer.Dfir.Auth.OperatorIdentity.MayEditAdministration;
+
+        private void Pull()
+        {
+            foreach (var t in Tables) ProfileTables.SetCells(_profile, t.Table, t.Rows());
+        }
+
+        private void Push()
+        {
+            foreach (var t in Tables) t.Load(_profile);
+            Refresh();
+            OnPropertyChanged(nameof(IsEmpty));
+        }
+
+        private void Refresh()
+        {
+            SectionLines.Clear();
+            foreach (var s in ProfileOps.Status(_profile)) SectionLines.Add(s.ToString());
+        }
+
+        private void ShowIssues(System.Collections.Generic.IEnumerable<ProfileIssue> issues)
+        {
+            Issues.Clear();
+            foreach (var i in issues) Issues.Add(i.ToString());
+        }
+
+        private void LoadFrom(string path, bool startup = false)
+        {
+            var r = ProfileStore.Load(path);
+            if (r.Profile is null)
+            {
+                _profile = new ProcedureProfile();
+                Push();
+                ShowIssues(r.Issues);
+                Status = r.Issues.Count > 0 ? "Profilul nu a putut fi citit; lista de mai jos arată motivul. Nu s-a înlocuit nimic." : startup ? "Nu există un profil salvat: toate secțiunile sunt nedefinite." : "Fișierul nu există.";
+                return;
+            }
+            _profile = r.Profile;
+            Push();
+            ShowIssues(r.Issues);
+            Status = $"Profil încărcat din {path}." + (r.HasErrors ? " Unele rânduri sunt invalide (vezi lista); ele nu sunt folosite la analiză." : "");
+        }
+
+        [RelayCommand]
+        private void Reload() => LoadFrom(ProfilePath);
+
+        [RelayCommand]
+        private void OpenFile()
+        {
+            var dlg = new OpenFileDialog { Filter = "Profil de proceduri (*.json)|*.json|Toate fișierele|*.*", Title = "Deschideți un profil de proceduri" };
+            if (dlg.ShowDialog() == true) LoadFrom(dlg.FileName);
+        }
+
+        [RelayCommand]
+        private void Validate()
+        {
+            Pull();
+            var issues = ProfileOps.Validate(_profile);
+            ShowIssues(issues);
+            Refresh();
+            Status = issues.Any(i => i.IsError) ? $"{issues.Count(i => i.IsError)} erori; corectați rândurile indicate înainte de salvare." : "Profilul este valid.";
+        }
+
+        [RelayCommand]
+        private void Save() => SaveTo(ProfilePath);
+
+        [RelayCommand]
+        private void SaveAs()
+        {
+            var dlg = new SaveFileDialog { FileName = ProfileStore.FileName, Filter = "Profil de proceduri (*.json)|*.json", Title = "Salvați o copie a profilului" };
+            if (dlg.ShowDialog() == true) SaveTo(dlg.FileName);
+        }
+
+        private void SaveTo(string path)
+        {
+            Pull();
+            try
+            {
+                var before = ProfileStore.Load(path).Profile;
+                var issues = ProfileStore.Save(_profile, path, out var sha);
+                ShowIssues(issues);
+                Refresh();
+                if (issues.Any(i => i.IsError)) { Status = $"Nu s-a salvat nimic: {issues.Count(i => i.IsError)} erori (vezi lista, pe linii)."; return; }
+                Sha256 = sha;
+                // the profile is written at this point: a failure of the audit below is reported as such, never as a failed save (review 2026-10-15)
+                string? auditError = null;
+                if (LogAnalyzer.UI.Services.AuthApp.IsReady)
+                {
+                    try { LogAnalyzer.Dfir.Auth.OperationAudit.AuditProfileSave(LogAnalyzer.UI.Services.AuthApp.Service, LogAnalyzer.UI.Services.AuthApp.Session, before, _profile, Path.GetFileName(path)); }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+                    {
+                        auditError = ex.Message;
+                        LogAnalyzer.UI.Services.AuditHealth.Instance.Report(LogAnalyzer.Dfir.Auth.OperationAudit.ProfileEdited, ex.Message);
+                    }
+                }
+                if (string.Equals(Path.GetFullPath(path), Path.GetFullPath(_provider.Path), StringComparison.OrdinalIgnoreCase)) _provider.Replace(_profile);
+                Status = $"Profil salvat în {path} (SHA-256 {sha}). Se folosește la următoarea analiză; fiecare caz își păstrează o copie și hash-ul în custodie." +
+                         (auditError is null ? "" : $" ATENȚIE: modificarea nu a putut fi trecută în jurnalul de audit: {auditError}");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                Status = "Profilul nu a putut fi scris: " + ex.Message;
+            }
+        }
+
+        [RelayCommand]
+        private void ImportJson()
+        {
+            var dlg = new OpenFileDialog { Filter = "Profil JSON (*.json)|*.json|Toate fișierele|*.*", Title = "Importați un profil (format propriu)" };
+            if (dlg.ShowDialog() != true) return;
+            ImportJsonText(File.ReadAllText(dlg.FileName), dlg.FileName);
+        }
+
+        public void ImportJsonText(string json, string source)
+        {
+            var r = ProfileImport.FromJson(json);
+            ShowIssues(r.Issues);
+            // the officer list is never imported with a profile; that someone tried is itself recorded (check A13)
+            if (r.Issues.Any(i => i.Message == ProfileImport.OfficerEntriesIgnored) && LogAnalyzer.UI.Services.AuthApp.IsReady)
+                StationControlViewModel.RecordOfficerEvent(LogAnalyzer.Dfir.Auth.OperationAudit.OfficerImportIgnored, "source=" + Path.GetFileName(source));
+            if (r.Profile is null) { Status = $"Importul din {source} a eșuat; nimic nu s-a schimbat."; return; }
+            _profile = r.Profile;
+            Push();
+            Status = $"Importat din {source}: {r.RowsAccepted} rânduri valide, {r.RowsRejected} cu erori (rămân în tabel, marcate în listă; nu se salvează până nu sunt corectate).";
+        }
+
+        [RelayCommand]
+        private void ImportCsv()
+        {
+            if (SelectedTable is null) { Status = "Ca să importați un CSV, alegeți întâi tabelul în care intră datele (dați clic pe el în listă)."; return; }
+            var dlg = new OpenFileDialog { Filter = "CSV / text (*.csv;*.tsv;*.txt)|*.csv;*.tsv;*.txt|Toate fișierele|*.*", Title = $"Importați CSV în „{SelectedTable.Title}”" };
+            if (dlg.ShowDialog() == true) ImportText(File.ReadAllText(dlg.FileName), dlg.FileName);
+        }
+
+        [RelayCommand]
+        private void Paste()
+        {
+            if (SelectedTable is null) { Status = "Ca să lipiți date, alegeți întâi tabelul în care intră (dați clic pe el în listă)."; return; }
+            string text;
+            try { text = Clipboard.GetText(); }
+            catch (System.Runtime.InteropServices.COMException) { Status = "Clipboard-ul nu este disponibil."; return; }
+            if (string.IsNullOrWhiteSpace(text)) { Status = "Clipboard-ul este gol."; return; }
+            ImportText(text, "clipboard");
+        }
+
+        /// <summary>CSV / tab-separated text into the selected table; the invalid lines are listed with their line numbers and are not added.</summary>
+        public void ImportText(string text, string source)
+        {
+            if (SelectedTable is null) return;
+            Pull();
+            var r = ProfileImport.Text(_profile, SelectedTable.Table, text, ReplaceOnImport);
+            Push();
+            ShowIssues(r.Issues);
+            Status = $"{SelectedTable.Title} din {source}: {r.RowsAccepted} rânduri adăugate, {r.RowsRejected} respinse" + (r.RowsRejected > 0 ? " (vezi lista, pe linii)." : ".");
+        }
+    }
+}

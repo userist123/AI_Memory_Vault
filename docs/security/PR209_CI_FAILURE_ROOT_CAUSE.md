@@ -31,7 +31,7 @@ Both failed on the exact same two tests out of 2,637 total collected tests.
 ```text
 ============================= test session starts =============================
 platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY
+rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
 configfile: pytest.ini
 collected 18 items
 

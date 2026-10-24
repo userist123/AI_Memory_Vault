@@ -72,7 +72,9 @@ public sealed class RawRegistryMalformedTests : IDisposable
     /// <summary>Runs a read on a worker and fails the test, instead of hanging the run, if it does not finish.</summary>
     private static T Bounded<T>(Func<T> read)
     {
-        var task = Task.Run(read);
+        // a dedicated thread, not the shared pool: on a busy CI runner a pool item can wait in the queue past the limit and be reported as a HANG
+        // although the parser never ran (MalformedBinaryInputTests "truncated to 264 of 268" on the runner, 2026-10-16)
+        var task = Task.Factory.StartNew(read, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         try { Assert.True(task.Wait(TimeSpan.FromSeconds(20)), "citirea nu s-a terminat în 20 s (buclă infinită)"); }
         catch (AggregateException ex) { System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex.InnerException!).Throw(); }
         return task.Result;

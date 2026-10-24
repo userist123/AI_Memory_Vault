@@ -6,7 +6,7 @@ Explore existing codebase in `projects/jarvis_cognitive_brain` and analyze archi
 ## 🔒 My Identity
 - Archetype: explorer
 - Roles: [explorer, synthesis]
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_1
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\explorer_m3_1
 - Original parent: 8b531079-7cca-4ec6-a0e3-4ce625943430
 - Milestone: Milestone 3 (Multi-Agent Worker Orchestration)
 

@@ -84,6 +84,8 @@ staging/
 audit_log.jsonl
 test_audit_log.jsonl
 telemetry/
+# synthetic test fixtures, not runtime telemetry
+!20_TESTS/fixtures/telemetry/
 ci-evidence/
 
 # Runtime test notes from FileStorageEngine
@@ -111,7 +113,10 @@ account-statement*
 [Ii]nvoice*.pdf
 *repayment_plan*
 *extras*de*cont*
-.claude/
+.claude/*
+!.claude/agents/
+!.claude/skills/
+!.claude/settings.json
 
 # Per-machine Claude Code settings (the owner-authority gate is enabled here, opt-in)
 .claude/settings.local.json

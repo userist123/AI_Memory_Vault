@@ -1,7 +1,7 @@
 # Specification Survey Report: JARVIS Web Ecosystem
 
 **Author**: Survey Agent 1 (Specification Miner)  
-**Target Project Directory**: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web`  
+**Target Project Directory**: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web`  
 **Timestamp**: 2026-08-25T19:33:00Z  
 
 ---
@@ -9,12 +9,12 @@
 ## 1. Observation
 
 1. **Target Project Workspace**:
-   - Inspected path: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web`.
-   - Tool result: `search directory c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web does not exist`.
+   - Inspected path: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web`.
+   - Tool result: `search directory c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_web does not exist`.
    - Assessment: `projects/jarvis_web` is 100% greenfield.
 
 2. **Authoritative Request (`ORIGINAL_REQUEST.md`)**:
-   - Location: `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+   - Location: `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
    - Key specifications observed:
      - **R1**: 100% Free Web Voice & Speech Engine (`Web Speech API`, continuous STT with automatic Romanian/English language detection, native browser neural TTS, wake-word detection `"Jarvis"`, voice activity visualizer, mute/unmute controls, zero paid API keys).
      - **R2**: Futuristic 3D Holographic UI & Tactical Audio Feedback (`Three.js` WebGL Arc-Reactor/Sphere visualization reacting dynamically to `Idle`, `Listening`, `Thinking`, `Speaking` states; synthesized procedural audio via native `Web Audio API` / `AudioContext`).
@@ -23,7 +23,7 @@
      - **Acceptance Criteria**: Continuous real-time STT, speech-reactive TTS, 60 FPS Three.js rendering with state transitions, REST search with citations, automated unit tests for state machine, API fallback, and WebGL degradation.
 
 3. **Existing Vault REST API Architecture**:
-   - Discovered primary browser gateway in `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\memory_controller\api_server.py`:
+   - Discovered primary browser gateway in `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\memory_controller\api_server.py`:
      - Framework: Python standard library `http.server.HTTPServer` with zero external pip dependencies.
      - Port: `8000` (`http://127.0.0.1:8000`).
      - CORS Headers: `Access-Control-Allow-Origin: *`, `Access-Control-Allow-Methods: GET, POST, OPTIONS`, `Access-Control-Allow-Headers: Content-Type, Authorization, Mcp-Version`.

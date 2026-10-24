@@ -6,7 +6,7 @@ Implement high-fidelity, production-grade `projects/jarvis_web/js/voice_engine.j
 ## 🔒 My Identity
 - Archetype: worker
 - Roles: implementer, qa, specialist
-- Working directory: c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_voice
+- Working directory: c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_voice
 - Original parent: 95f7bf7e-c539-4492-b214-af221cca8379
 - Milestone: M1 Voice Engine
 

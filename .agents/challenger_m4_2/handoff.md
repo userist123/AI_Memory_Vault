@@ -2,7 +2,7 @@
 
 ## 1. Observation
 - **Test Execution**:
-  1. `python -m pytest tests/unit/test_challenger_m4_stress.py -v` executed across all 84 test cases in `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`. Result: **84 passed, 0 failed in 0.09s**.
+  1. `python -m pytest tests/unit/test_challenger_m4_stress.py -v` executed across all 84 test cases in `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain`. Result: **84 passed, 0 failed in 0.09s**.
   2. `python -m pytest` executed across the complete test suite (Tier 1 Features, Tier 2 Boundaries, Tier 3 Combinations, Tier 4 Workloads, and all Unit suites). Result: **434 passed, 0 failed in 11.04s** (100% pass rate).
 - **Target Edge Cases Inspected**:
   - `FastMCPIoTServer.handle_jsonrpc` correctly validates incoming requests: primitive/array JSON strings (`"123"`, `"true"`, `"false"`, `"null"`, `"NaN"`, `"[1, 2, 3]"`, `'["tool_call"]'`, `'"just_a_string"'`) return standard JSON-RPC `-32600 Invalid Request` without raising unhandled `AttributeError`.
@@ -27,7 +27,7 @@ The FastMCP IoT Server and Home Assistant integration modules are fully hardened
 ## 5. Verification Method
 Independently reproduce the empirical test runs:
 ```powershell
-cd C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
+cd C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\projects\jarvis_cognitive_brain
 python -m pytest tests/unit/test_challenger_m4_stress.py -v
 python -m pytest
 ```

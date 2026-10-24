@@ -4,9 +4,9 @@ Scope & Mission:
 Adversarially challenge and stress-test the remediated `memory_controller/financial_schema.py`.
 
 Authoritative Documents:
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
-- Read `c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_fix\handoff.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\ORIGINAL_REQUEST.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\PROJECT.md`
+- Read `c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\worker_m1_fix\handoff.md`
 
 Tasks:
 1. Execute adversarial fuzzing across `memory_controller/financial_schema.py` using `tests/financial/test_challenger_m1_adversarial.py` and `tests/financial/test_challenger_m1_invariants.py`.
