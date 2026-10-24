@@ -225,12 +225,13 @@ export function sanitizeFinishes(f: any): string | null {
  *  o scoate doar de pe porțiunea ei, dacă știm camera (lungimea laturii); fără cameră, ca înainte: toată latura. */
 export const bathTiles = (f: RoomFinishes, roomType: string, room?: Pick<Room, 'rect'>): WallFeature[] => { if (roomType !== 'baie' || !f.wallTile) return [];
   const h = bathTileHeight(f), base = (side: WallFeature['side']): WallFeature => ({ side, kind: 'tile', material: f.wallTile!, ...(h !== undefined ? { heightM: h } : {}) });
-  return SIDES.flatMap(side => { const on = (f.wallFeatures || []).filter(w => w.side === side); if (!on.length) return [base(side)];
+  // contează doar placările care acoperă faianța pe înălțime: nu un brâu și nu o bandă care începe deasupra ei (vopsea de la 2,2 m)
+  return SIDES.flatMap(side => { const on = (f.wallFeatures || []).filter(w => w.side === side && w.kind !== 'rail' && (w.fromM ?? 0) < (h ?? Infinity) - 1e-6);
+    if (!on.length) return [base(side)];
     if (!room || on.some(w => w.alongFromM === undefined && w.alongToM === undefined)) return [];
-    // o placare parțială taie faianța doar dacă o acoperă pe înălțime (nu o vopsea de la 2,2 m în sus sau un brâu)
-    const len = sideSpan(room, side), cut = on.filter(w => w.kind !== 'rail' && (w.fromM ?? 0) < (h ?? Infinity) - 1e-6).map(w => alongOf(w, len)).sort((p, q) => p[0] - q[0]), out: WallFeature[] = []; let at = 0;
+    const len = sideSpan(room, side), cut = on.map(w => alongOf(w, len)).sort((p, q) => p[0] - q[0]), out: WallFeature[] = []; let at = 0;
     for (const [a, b] of [...cut, [len, len] as [number, number]]){ if (r2(a - at) >= .05) out.push({ ...base(side), alongFromM: r2(at), alongToM: r2(a) }); at = Math.max(at, b); }
-    return out; }); };
+    return out.length === 1 && out[0]!.alongFromM === 0 && out[0]!.alongToM === r2(len) ? [base(side)] : out; }); };
 /** Culoarea folosită doar la randare (aproximată după numele culorii de pe pagina produsului). */
 export const renderColor = (m: Material | undefined, fallback: string) => m?.specs?.color || fallback;
 export interface FloorVisual { kind: 'parquet' | 'tile'; pattern: FloorPattern; angle: 0 | 90; pieceL: number; pieceW: number; grout: number; groutColor: string; color: string; marble?: boolean }

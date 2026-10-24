@@ -1,5 +1,5 @@
 # todo-claude-casa3d-doors
-STATUS: DONE (merged) UPDATED: 2026-10-25T03:00:00+03:00
+STATUS: DONE (merged) UPDATED: 2026-10-24T06:00:00+03:00
 TASK: Casa3D lot 2 — door types (2a) + wall decor P1.b1–P1.b3 (2b), spec D:/w/casa3d-verify/research/usi-decor.md §3(b)
 BRANCH / PR: claude/casa3d-doors-decor / none (pushed; PR is the coordinator's call)    BASE: 40b32343 (claude/casa3d-plan-tools)
 LOT 2a (door types, filomuro): see commits da468941, 85f535d7; accepted residuals: 3D framing ignores pivot/fold, pocket click.
