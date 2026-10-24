@@ -5,6 +5,8 @@ import { nicheIssues } from './niches';
 import { wallItemIssues } from './wall-items';
 import { renovationIssues } from './renovation';
 import { zoneIssues } from './floor-zones';
+import { ceilingZoneIssues } from './ceiling-zones';
+import { railingIssues } from './railings';
 import { radiatorFront } from './tech-geometry';
 import { slideSide, doorSwing } from './door-geometry';
 import type { Catalog, DoorType, Floor, FurniturePlacement, Issue, Room, Severity, Snapshot, RoomRect } from './types';
@@ -70,13 +72,14 @@ export function validatePlacement(snap: Snapshot, cat: Catalog, p: FurniturePlac
   return issues;
 }
 export const severityOf = (issues: Issue[]): Severity => issues.some(i => i.severity === 'ERROR') ? 'ERROR' : issues.length ? 'WARNING' : 'PASS';
-export function validateFloor(floor: Floor): Issue[] {
+/** `roomDropCm`: coborârea tavanului fals al camerei (din finisaje), pentru casetele care nu se văd; fără ea verificarea lipsește. */
+export function validateFloor(floor: Floor, roomDropCm?: (roomId: string) => number): Issue[] {
   const out: Issue[] = [];
   for (const w of floor.walls){ const L = wallLength(w.a, w.b);
     if (L < .2) out.push({ code: 'WALL_TOO_SHORT', severity: 'ERROR', message: `Peretele ${w.id} are sub 20 cm.`, key: 'issue.WALL_TOO_SHORT', vars: { id: w.id, d_m: 0.2 } });
     if (w.status === 'demolish') continue;   // golurile peretelui de demolat nu mai contează
     for (const o of w.openings) if (o.offset < 0 || o.offset + o.width > L + 1e-6) out.push({ code: 'OPENING_OUTSIDE_WALL', severity: 'ERROR', message: `Golul ${o.id} iese din peretele ${w.id}.`, key: 'issue.OPENING_OUTSIDE_WALL', vars: { op: o.id, id: w.id } }); }
-  out.push(...nicheIssues(floor), ...wallItemIssues(floor), ...renovationIssues(floor), ...zoneIssues(floor));
+  out.push(...nicheIssues(floor), ...wallItemIssues(floor), ...renovationIssues(floor), ...zoneIssues(floor), ...ceilingZoneIssues(floor, roomDropCm), ...railingIssues(floor));
   // tipul ușii: glisantele cer perete liber lângă gol (foaia + 10 cm) de partea unde parchează; caseta cere perete interior gros; dubla îngustă
   floor.walls.forEach((w, wi) => w.openings.forEach((o, oi) => { if (o.kind !== 'door' || o.passage || !o.doorType || w.status === 'demolish') return; const vars = { op: o.id, id: w.id };
     if (o.doorType === 'pocket' || o.doorType === 'sliding'){ const free = slideSide(floor, wi, oi)[doorSwing(floor, wi, oi).hinge], need = o.width + DOOR_SLIDE_EXTRA_M;
@@ -94,7 +97,7 @@ export function validateFloor(floor: Floor): Issue[] {
 
 export const columnRect = (c: { x: number; z: number; w: number; d: number }): RoomRect => ({ x0: c.x - c.w / 2, x1: c.x + c.w / 2, z0: c.z - c.d / 2, z1: c.z + c.d / 2 });
 export type IssueTarget =
-  | { kind: 'placement' | 'room' | 'wall' | 'stair' | 'column' | 'niche' | 'wall_item' | 'floor_zone'; id: string }
+  | { kind: 'placement' | 'room' | 'wall' | 'stair' | 'column' | 'niche' | 'wall_item' | 'floor_zone' | 'ceiling_zone' | 'railing'; id: string }
   | { kind: 'opening'; id: string; wallId: string };
 
 export function issueTarget(issue: Pick<Partial<Issue>, 'with' | 'vars'> & { refs?: string[] }, floor?: Floor, placements?: FurniturePlacement[]): IssueTarget | null {
@@ -103,6 +106,8 @@ export function issueTarget(issue: Pick<Partial<Issue>, 'with' | 'vars'> & { ref
   if (issue.vars?.niche && (!floor || floor.niches?.some(n => n.id === String(issue.vars?.niche)))) return { kind: 'niche', id: String(issue.vars.niche) };
   if (issue.vars?.item && (!floor || floor.wallItems?.some(x => x.id === String(issue.vars?.item)))) return { kind: 'wall_item', id: String(issue.vars.item) };
   if (issue.vars?.zone && (!floor || floor.zones?.some(x => x.id === String(issue.vars?.zone)))) return { kind: 'floor_zone', id: String(issue.vars.zone) };
+  if (issue.vars?.czone && (!floor || floor.ceilingZones?.some(x => x.id === String(issue.vars?.czone)))) return { kind: 'ceiling_zone', id: String(issue.vars.czone) };
+  if (issue.vars?.rail && (!floor || floor.railings?.some(x => x.id === String(issue.vars?.rail)))) return { kind: 'railing', id: String(issue.vars.rail) };
   if (issue.vars?.col && (!floor || floor.columns?.some(c => c.id === String(issue.vars?.col)))) return { kind: 'column', id: String(issue.vars.col) };
   if (issue.vars?.op && issue.vars?.id) return { kind: 'opening', id: String(issue.vars.op), wallId: String(issue.vars.id) };
   if (issue.vars?.id && (!floor || floor.walls.some(w => w.id === String(issue.vars?.id)))) return { kind: 'wall', id: String(issue.vars.id) };

@@ -28,7 +28,10 @@ export interface KeyLike { key: string; shiftKey: boolean; ctrlKey: boolean; met
 
 // Literele urmează numele românești; aceleași taste în engleză. R rămâne rotire. W/A/S/D sunt rezervate mersului prin
 // vederea 3D (viewer3d-engine.js le citește pe window), de aceea scara e E, nu S. Record<Tool, …>: o unealtă nouă fără tastă nu compilează.
-const TOOL_KEYS: Record<Tool, string> = { select: 'v', wall: 'p', room: 'c', door: 'u', window: 'o', passage: 'j', shaft: 'h', niche: 'n', clad: 'k', wall_item: 'x', dim: 'q', text: 'b', column: 't', beam: 'g', glass_wall: 'l', demolish: 'y', floor_zone: 'z', stair: 'e', measure: 'm', tech: 'i' };
+// Lotul 4: literele s-au terminat, deci tavanul fals pe zonă (Shift+Z, lângă zona de pardoseală Z) și balustrada (Shift+Y) au Shift.
+const TOOL_KEYS: Record<Tool, string | Shortcut> = { select: 'v', wall: 'p', room: 'c', door: 'u', window: 'o', passage: 'j', shaft: 'h', niche: 'n', clad: 'k', wall_item: 'x', dim: 'q', text: 'b', column: 't', beam: 'g', glass_wall: 'l', demolish: 'y', floor_zone: 'z', stair: 'e', measure: 'm', tech: 'i',
+  ceiling_zone: { key: 'z', shift: true }, railing: { key: 'y', shift: true } };
+const toolKey = (tk: Tool): Shortcut => { const k = TOOL_KEYS[tk]; return typeof k === 'string' ? { key: k } : { ...k }; };
 export const TOOLS = Object.keys(TOOL_KEYS) as Tool[];
 
 const ANY = { ctrlOrMeta: 'any', shift: 'any', alt: 'any' } as const;
@@ -51,7 +54,7 @@ export const COMMANDS: CommandDef[] = [
   { id: 'room.furnish', label: 'hud.autoFurnish', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
   { id: 'room.split', label: 'hud.splitRoom', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
   { id: 'column.shape', label: 'ctx.columnShape', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
-  ...TOOLS.map((tk): CommandDef => ({ id: `tool.${tk}`, label: `tool.${tk}`, group: 'tools', domain: 'editor', tool: tk, shortcuts: [{ key: TOOL_KEYS[tk] }] }))
+  ...TOOLS.map((tk): CommandDef => ({ id: `tool.${tk}`, label: `tool.${tk}`, group: 'tools', domain: 'editor', tool: tk, shortcuts: [toolKey(tk)] }))
 ];
 
 const isLetter = (k: string) => k.length === 1 && k.toLowerCase() !== k.toUpperCase();
@@ -78,17 +81,18 @@ export function ariaShortcut(s: Shortcut, o: { mac: boolean }): string {
   return [s.ctrlOrMeta === true && (o.mac ? 'Meta' : 'Control'), s.alt === true && 'Alt', s.shift === true && 'Shift', isLetter(s.key) ? s.key.toUpperCase() : s.key].filter(Boolean).join('+');
 }
 export const commandById = (id: string) => COMMANDS.find(c => c.id === id);
-export const toolShortcut = (tk: Tool): Shortcut => ({ key: TOOL_KEYS[tk] });
+export const toolShortcut = (tk: Tool): Shortcut => toolKey(tk);
 /** Hint-ul din paletă: prima scurtătură a comenzii, formatată. */
 export const commandHint = (id: string, o: { mac: boolean }) => { const s = commandById(id)?.shortcuts[0]; return s ? formatShortcut(s, o) : undefined; };
 
 /** Ce comenzi arată meniul contextual (clic dreapta, Shift+F10) pentru selecția de tipul `kind`; „șterge” e mereu ultima. */
-export type ContextKind = 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'opening' | 'niche' | 'wall_item' | 'annotation' | 'floor_zone';
+export type ContextKind = 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'opening' | 'niche' | 'wall_item' | 'annotation' | 'floor_zone' | 'ceiling_zone' | 'railing';
 const CONTEXT: Record<ContextKind, string[]> = {
   wall: ['wall.length', 'frame', 'delete'], placement: ['rotate', 'duplicate', 'view3d', 'frame', 'delete'],
   room: ['room.furnish', 'room.split', 'frame', 'delete'], column: ['rotate', 'column.shape', 'frame', 'delete'],
   stair: ['rotate', 'frame', 'delete'], beam: ['frame', 'delete'], glass_wall: ['frame', 'delete'], opening: ['frame', 'delete'],
-  niche: ['frame', 'delete'], wall_item: ['frame', 'delete'], annotation: ['frame', 'delete'], floor_zone: ['frame', 'delete']
+  niche: ['frame', 'delete'], wall_item: ['frame', 'delete'], annotation: ['frame', 'delete'], floor_zone: ['frame', 'delete'],
+  ceiling_zone: ['frame', 'delete'], railing: ['frame', 'delete']
 };
 export const contextCommands = (kind: ContextKind): string[] => CONTEXT[kind];
 

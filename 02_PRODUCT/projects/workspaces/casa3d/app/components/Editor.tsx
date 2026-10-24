@@ -26,7 +26,7 @@ import MaterialPicker from './MaterialPicker';
 import { downloadSchedule } from './FinishSchedule';
 import { finishSchedule } from '@/core/finish-schedule';
 import { WALL_ITEM_KINDS, WALL_ITEM_CATEGORY, wallItemDefaults, furnitureBelow, wallItemFurnitureIssues } from '@/core/wall-items';
-import { materialOf, insertBand, sideSpan, FEATURE_CATEGORY, featureMarks } from '@/core/finishes';
+import { materialOf, insertBand, sideSpan, FEATURE_CATEGORY, featureMarks, roomCeilingDropCm } from '@/core/finishes';
 import { doorIssues, doorSwing, doorTypeOf, isSlidingType } from '@/core/doors';
 import { DOOR_TYPES, DOOR_TYPE_RULES, WALL_ITEM_RULES } from '@/core/rules';
 import { normalizeHex } from '@/core/appearance';
@@ -34,7 +34,10 @@ import { footprintOf } from '@/core/validate';
 import { suggestTechPoints, placeTechPoint, TECH_KINDS, techIssues, techBodyCount, MAX_TECH_POINTS, type TechKind, type TechPoint } from '@/core/technical';
 import { defaultZoneMaterial, intersect, zoneAreaIn, removeRoomZones } from '@/core/floor-zones';
 import { wallStatus } from '@/core/renovation';
-import type { FloorZone, WallStatus } from '@/core/types';
+import type { FloorZone, WallStatus, CeilingZone, Railing, RoomSpaceKind } from '@/core/types';
+import { ceilingZoneRect, ceilingZoneQty, removeRoomCeilingZones } from '@/core/ceiling-zones';
+import { railingHeight, railingKind, railingLength } from '@/core/railings';
+import { RAILING_KINDS, SPACE_KINDS } from '@/core/plan-limits';
 import { RoomLookPanel, WallLookPanel, OpeningLookPanel, ItemLookPanel } from './AppearanceControls';
 import { finishesOf, budgetOf, roomGeometry, computeBudget } from '@/core/boq';
 import { appearanceColors } from '@/core/appearance';
@@ -96,7 +99,7 @@ const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 const uid = () => crypto.randomUUID();
 const newWallId = () => `wall-${uid().slice(0, 8)}`;
 /** Tipurile oferite de unealta „Placare” (lemnul decorativ întâi); bagheta se pune din panou. */
-const CLAD_KINDS: WallFeatureKind[] = ['slats', 'panel', 'wallpaper', 'plaster', 'stone', 'brick', 'paint', 'tile'];
+const CLAD_KINDS: WallFeatureKind[] = ['slats', 'panel', 'frames', 'wallpaper', 'plaster', 'stone', 'brick', 'paint', 'tile'];
 const ROOM_TYPES = [['living', 'roomType.living'], ['dormitor', 'roomType.dormitor'], ['bucatarie', 'roomType.bucatarie'], ['baie', 'roomType.baie'], ['hol', 'roomType.hol']];
 const ICON: Record<Tool, string> = {
   select: 'M5 3l12 8-6 1 3 7-2 1-3-7-4 4z',
@@ -110,11 +113,13 @@ const ICON: Record<Tool, string> = {
   clad: 'M4 3v18M8 3v18M12 3v18M16 3v18M20 3v18',
   wall_item: 'M4 5h16v12H4zM7 14l3-4 3 3 2-2 2 3M8 20h8',
   floor_zone: 'M4 4h16v16H4zM4 12h8v8M6 20l6-6M4 16l4-4',
+  ceiling_zone: 'M3 4h18M6 4v4h12V4M6 8l1 2M18 8l-1 2M7 10h10M8 14h2M12 14h2M16 14h0M5 20h14',
   dim: 'M3 8v8M21 8v8M3 12h18M6 10l-2 2 2 2M18 10l2 2-2 2',
   text: 'M5 5h14M12 5v14M9 19h6',
   column: 'M6 4h12v3H6zm2 3h8v10H8zm-2 10h12v3H6z',
   beam: 'M3 7h18v4H3zm0 6h18v1H3zm0 3h18v1H3z',
   glass_wall: 'M4 4h16v16H4zm2 2v12h5V6zm7 0v12h5V6z',
+  railing: 'M3 8h18M3 20h18M4 8v12M20 8v12M8 8v12M12 8v12M16 8v12',
   demolish: 'M3 8h7M14 8h7M3 16h18M8 4l8 16M16 4L8 20',
   stair: 'M4 19h4v-3h4v-3h4v-3h4V7h-3v3h-4v3H8v3H4z',
   measure: 'M3 17L17 3l4 4L7 21zM8 12l2 2M11 9l2 2M14 6l2 2',
@@ -132,11 +137,13 @@ const TOOL_LABEL: Record<Tool, string> = {
   clad: 'tool.clad',
   wall_item: 'tool.wall_item',
   floor_zone: 'tool.floor_zone',
+  ceiling_zone: 'tool.ceiling_zone',
   dim: 'tool.dim',
   text: 'tool.text',
   column: 'tool.column',
   beam: 'tool.beam',
   glass_wall: 'tool.glass_wall',
+  railing: 'tool.railing',
   demolish: 'tool.demolish',
   stair: 'tool.stair',
   measure: 'tool.measure',
@@ -146,9 +153,9 @@ const TOOL_LABEL: Record<Tool, string> = {
 /** Etapele unui proiect de amenajare, în ordinea în care lucrează un designer: fiecare are vederea, uneltele și panoul ei. */
 type Stage = typeof STAGE_IDS[number];
 const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: true }[] = [
-  { id: 'survey', view: '2d', tools: ['select', 'wall', 'room', 'door', 'window', 'passage', 'niche', 'column', 'shaft', 'beam', 'glass_wall', 'demolish', 'stair', 'measure', 'dim', 'text'] },
+  { id: 'survey', view: '2d', tools: ['select', 'wall', 'room', 'door', 'window', 'passage', 'niche', 'column', 'shaft', 'beam', 'glass_wall', 'railing', 'demolish', 'stair', 'measure', 'dim', 'text'] },
   { id: 'concept', view: 'split', tools: ['select', 'niche', 'column', 'glass_wall', 'wall_item', 'measure'] },
-  { id: 'finishes', view: 'split', tools: ['select', 'clad', 'wall_item', 'floor_zone', 'measure'] },
+  { id: 'finishes', view: 'split', tools: ['select', 'clad', 'wall_item', 'floor_zone', 'ceiling_zone', 'measure'] },
   { id: 'ffe', view: 'split', tools: ['select', 'wall_item', 'measure'] },
   { id: 'mep', view: '2d', tools: ['select', 'tech', 'shaft', 'measure'] },
   { id: 'docs', view: '2d', tools: ['select', 'measure', 'dim', 'text'] },
@@ -249,11 +256,12 @@ export default function Editor({ id }: { id: string }){
     for (const i of stairIss) if (i.with && m[i.with]) m[i.with].push(i); return m; }, [snap, catalog, stairIss]);
   const sev = useMemo(() => Object.fromEntries(Object.entries(issues).map(([k, v]) => [k, severityOf(v)])) as Record<string, Severity>, [issues]);
   // problemele nivelului: pereți/goluri și scările lui (cele legate de o piesă apar la piesă)
-  const floorIssues = useMemo(() => snap ? [...validateFloor(snap.floor), ...(catalog ? wallItemFurnitureIssues(snap, catalog, snap.floor) : []), ...(catalog ? techIssues(snap, catalog, snap.floor) : []), ...stairIss.filter(i => !i.with && snap.floor.stairs?.some(s => s.id === i.vars?.stair))] : [], [snap, stairIss, catalog]);
+  const floorIssues = useMemo(() => snap ? [...validateFloor(snap.floor, id => roomCeilingDropCm(snap, id)), ...(catalog ? wallItemFurnitureIssues(snap, catalog, snap.floor) : []), ...(catalog ? techIssues(snap, catalog, snap.floor) : []), ...stairIss.filter(i => !i.with && snap.floor.stairs?.some(s => s.id === i.vars?.stair))] : [], [snap, stairIss, catalog]);
   const advice = useMemo(() => { if (!snap || !catalog) return [] as Advice[]; let budget; if (mc && house){ const b = computeBudget(house, catalog, mc); budget = { total: b.chosen.total, target: b.target, unknown: b.unknownItems.length }; }
     return adviseProject(snap, catalog, { accessibility: !!snap.brief?.accessibility, budget, colorsOf: appearanceColors, currency: catalogCurrency(catalog) }); }, [snap, house, catalog, mc]);
   const showAdvice = (a: Advice) => { setStageRaw(a.refs.placementIds?.length ? 'ffe' : 'survey'); const pid = a.refs.placementIds?.[0], wid = a.refs.wallIds?.[0]; if (pid) setSel({ kind: 'placement', id: pid }); else if (a.refs.roomId) setSel({ kind: 'room', id: a.refs.roomId }); else if (wid) setSel({ kind: 'wall', id: wid }); };
-  const focusIssue = (i: Issue) => { const tgt = issueTarget(i, snap?.floor, snap?.placements); if (!tgt) return; setStageRaw(tgt.kind === 'placement' ? 'ffe' : 'survey'); setSel(tgt); if (compact && sheet === 'peek') setSheet('half'); };
+  // tavanul fals pe zonă se editează în Finisaje; restul planului în Releveu, piesele în Mobilier
+  const focusIssue = (i: Issue) => { const tgt = issueTarget(i, snap?.floor, snap?.placements); if (!tgt) return; setStageRaw(tgt.kind === 'placement' ? 'ffe' : tgt.kind === 'ceiling_zone' ? 'finishes' : 'survey'); setSel(tgt as Sel); if (compact && sheet === 'peek') setSheet('half'); };
 
   // editare din plan: mutările se validează la final (ERROR → revine, WARNING → cere confirmare)
   const onEdit = (fn: (s: Snapshot) => void, phase: 'start' | 'move' | 'end') => { if (!snap || !catalog) return;
@@ -320,6 +328,8 @@ export default function Editor({ id }: { id: string }){
       if (s.floor.wallItems){ s.floor.wallItems = s.floor.wallItems.filter(n => n.wallId !== sel.id); if (!s.floor.wallItems.length) delete s.floor.wallItems; } }
     if (sel.kind === 'wall_item'){ s.floor.wallItems = (s.floor.wallItems || []).filter(x => x.id !== sel.id); if (!s.floor.wallItems.length) delete s.floor.wallItems; }
     if (sel.kind === 'floor_zone'){ s.floor.zones = (s.floor.zones || []).filter(x => x.id !== sel.id); if (!s.floor.zones.length) delete s.floor.zones; }
+    if (sel.kind === 'ceiling_zone'){ s.floor.ceilingZones = (s.floor.ceilingZones || []).filter(x => x.id !== sel.id); if (!s.floor.ceilingZones.length) delete s.floor.ceilingZones; }
+    if (sel.kind === 'railing'){ s.floor.railings = (s.floor.railings || []).filter(x => x.id !== sel.id); if (!s.floor.railings.length) delete s.floor.railings; }
     if (sel.kind === 'stair'){ s.floor.stairs = (s.floor.stairs || []).filter(x => x.id !== sel.id); if (!s.floor.stairs.length) delete s.floor.stairs; }
     if (sel.kind === 'column'){ s.floor.columns = (s.floor.columns || []).filter(x => x.id !== sel.id); if (!s.floor.columns.length) delete s.floor.columns; }
     if (sel.kind === 'beam'){ s.floor.beams = (s.floor.beams || []).filter(x => x.id !== sel.id); if (!s.floor.beams.length) delete s.floor.beams; }
@@ -329,7 +339,7 @@ export default function Editor({ id }: { id: string }){
     if (sel.kind === 'opening'){ const w = s.floor.walls.find(w => w.id === sel.wallId); if (w) w.openings = w.openings.filter(o => o.id !== sel.id); }
     // camera ștearsă își ia piesele și zonele de pardoseală
     if (sel.kind === 'room'){ s.floor.rooms = s.floor.rooms.filter(r => r.id !== sel.id); s.placements = s.placements.filter(p => p.roomId !== sel.id);
-      removeRoomZones(s.floor, sel.id); } }); setSel(null); };
+      removeRoomZones(s.floor, sel.id); removeRoomCeilingZones(s.floor, sel.id); } }); setSel(null); };
   const rotate = (pid: string) => { if (!snap || !catalog) return; const n = structuredClone(snap), p = n.placements.find(x => x.id === pid)!; p.rotation = r3(((p.rotation + Math.PI / 2) % (Math.PI * 2))); p.source = 'manual';
     const iss = validatePlacement(n, catalog, p); if (severityOf(iss) === 'ERROR'){ say(t('editor.rotateNoFit', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; } commit(n); if (iss.length) setPending({ before: house!, issues: iss, discard: () => hist.current.discardLast() }); };
   // ---- niveluri și scări ----
@@ -366,6 +376,8 @@ export default function Editor({ id }: { id: string }){
       else if (sel.kind === 'niche'){ const n = snap?.floor.niches?.find(x => x.id === sel.id), w = n && snap!.floor.walls.find(x => x.id === n.wallId); if (n && w){ const L = wallLength(w.a, w.b), along = ((w.b[0] - w.a[0]) * dx + (w.b[1] - w.a[1]) * dz) / (L || 1);
         patchNiche(sel.id, q => { q.offset = r3(Math.max(0, Math.min(L - q.width, q.offset + along))); }); } }
       else if (sel.kind === 'floor_zone') patchZone(sel.id, z => { z.rect = { x0: r3(z.rect.x0 + dx), x1: r3(z.rect.x1 + dx), z0: r3(z.rect.z0 + dz), z1: r3(z.rect.z1 + dz) }; });
+      else if (sel.kind === 'ceiling_zone') patchCeilingZone(sel.id, z => { z.rect = { x0: r3(z.rect.x0 + dx), x1: r3(z.rect.x1 + dx), z0: r3(z.rect.z0 + dz), z1: r3(z.rect.z1 + dz) }; });
+      else if (sel.kind === 'railing') patchRailing(sel.id, q => { q.a = [r3(q.a[0] + dx), r3(q.a[1] + dz)]; q.b = [r3(q.b[0] + dx), r3(q.b[1] + dz)]; });
       else if (sel.kind === 'room') mutate(s => { const r = s.floor.rooms.find(x => x.id === sel.id); if (r) r.rect = { x0: r3(r.rect.x0 + dx), x1: r3(r.rect.x1 + dx), z0: r3(r.rect.z0 + dz), z1: r3(r.rect.z1 + dz) }; }); } };
   useEffect(() => { const k = (e: KeyboardEvent) => { const el = e.target as HTMLElement;
     // în lista obiectelor planului tastele aparțin listei (săgeți, Enter, Escape): Backspace nu șterge selecția pe neașteptate
@@ -510,6 +522,17 @@ export default function Editor({ id }: { id: string }){
     const zid = `zona-${uid().slice(0, 8)}`, z: FloorZone = { id: zid, roomId: room.id, rect: { x0: r3(c.x0), z0: r3(c.z0), x1: r3(c.x1), z1: r3(c.z1) }, floor: mat };
     mutate(s => { s.floor.zones = [...(s.floor.zones || []), z]; }); setSel({ kind: 'floor_zone', id: zid }); setTool('select'); say(t('zone.added', { room: room.name })); };
   const patchZone = (zid: string, fn: (z: FloorZone) => void) => mutate(s => { const z = s.floor.zones?.find(x => x.id === zid); if (z) fn(z); });
+  // tavanul fals pe zonă nou: în camera în care cade mijlocul dreptunghiului, decupat la cameră, coborât 15 cm, fără scafă și fără LED
+  const onAddCeilingZone = (r: { x0: number; z0: number; x1: number; z1: number }) => { if (full(snap.floor.ceilingZones?.length, PLAN_LIMITS.ceilingZone.max)) return;
+    const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2, room = snap.floor.rooms.find(q => cx >= q.rect.x0 && cx <= q.rect.x1 && cz >= q.rect.z0 && cz <= q.rect.z1);
+    if (!room){ say(t('czone.noRoom')); return; } const c = intersect(room.rect, r); if (!c || c.x1 - c.x0 < PLAN_LIMITS.ceilingZone.minM || c.z1 - c.z0 < PLAN_LIMITS.ceilingZone.minM){ say(t('czone.tooSmall')); return; }
+    const zid = `tavan-${uid().slice(0, 8)}`, z: CeilingZone = { id: zid, roomId: room.id, rect: { x0: r3(c.x0), z0: r3(c.z0), x1: r3(c.x1), z1: r3(c.z1) }, dropCm: PLAN_DEFAULTS.ceilingZone.dropCm };
+    mutate(s => { s.floor.ceilingZones = [...(s.floor.ceilingZones || []), z]; }); setSel({ kind: 'ceiling_zone', id: zid }); setTool('select'); say(t('czone.added', { room: room.name })); };
+  const patchCeilingZone = (zid: string, fn: (z: CeilingZone) => void) => mutate(s => { const z = s.floor.ceilingZones?.find(x => x.id === zid); if (z) fn(z); });
+  // balustrada nouă: metal, 1 m; unealta rămâne activă (clic-clic în lanț, ca grinda și peretele de sticlă)
+  const onAddRailing = (a: [number, number], b: [number, number]) => { if (full(snap.floor.railings?.length, PLAN_LIMITS.railing.max)) return;
+    const rid = `bal-${uid().slice(0, 8)}`; mutate(s => { s.floor.railings = [...(s.floor.railings || []), { id: rid, a, b }]; }); say(t('railing.added', { len: formatLength(wallLength(a, b), units, lang) })); };
+  const patchRailing = (rid: string, fn: (r: Railing) => void) => mutate(s => { const r = s.floor.railings?.find(x => x.id === rid); if (r) fn(r); });
   const patchTech = (tid: string, fn: (p: TechPoint) => void) => mutate(s => { const p = s.tech?.find(x => x.id === tid); if (p) fn(p); });
   const onAddBeam = (a: [number, number], b: [number, number]) => {
     if (full(snap.floor.beams?.length, PLAN_LIMITS.beam.max)) return;
@@ -560,7 +583,9 @@ export default function Editor({ id }: { id: string }){
   const selNiche = sel?.kind === 'niche' ? snap.floor.niches?.find(n => n.id === sel.id) : undefined;
   const selWallItem = sel?.kind === 'wall_item' ? snap.floor.wallItems?.find(n => n.id === sel.id) : undefined;
   const selZone = sel?.kind === 'floor_zone' ? snap.floor.zones?.find(z => z.id === sel.id) : undefined;
-  const selAnnounce = selPl ? t('plan.selPiece', { name: resolve(catalog, selPl.variantId)?.variant.name ?? selPl.group }) : selRoom ? t('plan.selRoom', { name: selRoom.name }) : selStair ? t('plan.selStair') : selWall ? t('editor.wall') : selColumn ? t(selColumn.role === 'shaft' ? 'tool.shaft' : selColumn.role === 'boxing' ? 'column.boxing' : 'tool.column') : selBeam ? t('tool.beam') : selGlassWall ? t('tool.glass_wall') : selNiche ? t('tool.niche') : selWallItem ? t(`wallItem.kind.${selWallItem.kind}`) : selZone ? t('tool.floor_zone') : selAnn ? t(selAnn.kind === 'dim' ? 'tool.dim' : 'tool.text') : '';
+  const selCeilingZone = sel?.kind === 'ceiling_zone' ? snap.floor.ceilingZones?.find(z => z.id === sel.id) : undefined;
+  const selRailing = sel?.kind === 'railing' ? snap.floor.railings?.find(r => r.id === sel.id) : undefined;
+  const selAnnounce = selPl ? t('plan.selPiece', { name: resolve(catalog, selPl.variantId)?.variant.name ?? selPl.group }) : selRoom ? t('plan.selRoom', { name: selRoom.name }) : selStair ? t('plan.selStair') : selWall ? t('editor.wall') : selColumn ? t(selColumn.role === 'shaft' ? 'tool.shaft' : selColumn.role === 'boxing' ? 'column.boxing' : 'tool.column') : selBeam ? t('tool.beam') : selGlassWall ? t('tool.glass_wall') : selNiche ? t('tool.niche') : selWallItem ? t(`wallItem.kind.${selWallItem.kind}`) : selZone ? t('tool.floor_zone') : selCeilingZone ? t('tool.ceiling_zone') : selRailing ? t('tool.railing') : selAnn ? t(selAnn.kind === 'dim' ? 'tool.dim' : 'tool.text') : '';
   // „Adaugă în cameră” fără cameră aleasă: camera potrivită grupei (dormitor pentru pat), altfel cea mai mare
   const roomsFor = (vid: string) => { const g = groupOf(vid), bySize = [...snap.floor.rooms].sort((a, b) => area(b.rect) - area(a.rect));
     return [...bySize.filter(r => groupsForRoom(r.type, [g]).suggested.includes(g)), ...bySize.filter(r => !groupsForRoom(r.type, [g]).suggested.includes(g))]; };
@@ -570,7 +595,7 @@ export default function Editor({ id }: { id: string }){
     say(t('editor.noFreeSpot')); };
   // ce se vede în panou: selecția (dacă etapa o folosește) sau conținutul etapei
   const roomStage = stage === 'survey' || stage === 'finishes' || stage === 'ffe';
-  const showSel = !!(selAnn ? stage === 'survey' || stage === 'docs' : selZone ? roomStage || stage === 'concept' : selWallItem ? stage === 'concept' || stage === 'finishes' || stage === 'ffe' : selColumn ? roomStage || stage === 'mep' : selNiche ? roomStage || stage === 'concept' : (selRoom || selWall || selOp || selStair || selBeam || selGlassWall) ? roomStage : selPl ? stage === 'ffe' || stage === 'concept' || stage === 'finishes' || stage === 'present' : false);
+  const showSel = !!(selAnn ? stage === 'survey' || stage === 'docs' : selZone || selCeilingZone ? roomStage || stage === 'concept' : selRailing ? roomStage : selWallItem ? stage === 'concept' || stage === 'finishes' || stage === 'ffe' : selColumn ? roomStage || stage === 'mep' : selNiche ? roomStage || stage === 'concept' : (selRoom || selWall || selOp || selStair || selBeam || selGlassWall) ? roomStage : selPl ? stage === 'ffe' || stage === 'concept' || stage === 'finishes' || stage === 'present' : false);
   // câmpurile numerice sunt în cm (metric) sau inci (imperial); `f` și `min` primesc mereu cm, datele rămân metrice
   // în inci, minimul afișat (ex. 78,7″ pentru 200 cm) se întoarce puțin sub pragul în cm: acceptăm o jumătate de inci toleranță și fixăm la minim
   const num = (v: string, f: (x: number) => void, min = 0) => { const x = v.trim() === '' ? 0 : inputToCm(v, units), tol = units === 'imperial' ? 1.27 : 1e-9; if (x != null && x >= min - tol) f(Math.max(x, min)); };
@@ -709,6 +734,8 @@ export default function Editor({ id }: { id: string }){
           onAddText={preview ? undefined : onAddText}
           onToggleDemolish={preview ? undefined : onToggleDemolish}
           onAddZone={preview ? undefined : onAddZone}
+          onAddCeilingZone={preview ? undefined : onAddCeilingZone}
+          onAddRailing={preview ? undefined : onAddRailing}
           onAddBeam={preview ? undefined : onAddBeam}
           onAddGlassWall={preview ? undefined : onAddGlassWall}
           onAddStairAt={preview ? undefined : onAddStairAt}
@@ -730,7 +757,7 @@ export default function Editor({ id }: { id: string }){
           {!preview && (stage === 'finishes' || stage === 'docs') && (() => { const marks = featureMarks(snap, snap.floor, finishesOf); if (!marks.length) return null;
             return (<details className="plan-legend"><summary>{t('fin.legend')}</summary><ul>{marks.map(mk => { const room = snap.floor.rooms.find(r => r.id === mk.roomId)!, w = finishesOf(snap, room).wallFeatures![mk.index]!;
               return <li key={`${mk.roomId}:${mk.index}`}><b>{t(`fin.code.${mk.kind}`)}{mk.n}</b> {t(`fin.kind.${mk.kind}`)} · {room.name}, {t(`fin.side.${w.side}`)}{w.alongFromM != null || w.alongToM != null ? ` · ${formatLength(w.alongFromM ?? 0, units, lang)}–${formatLength(w.alongToM ?? sideSpan(room, w.side), units, lang)}` : ''}</li>; })}</ul></details>); })()}
-          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : t('editor.hintSelect')}</div></div>}
+          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'ceiling_zone' ? t('editor.hintCeilingZone') : tool === 'railing' ? t('editor.hintRailing') : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : t('editor.hintSelect')}</div></div>}
         {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })}
           selectedId={!preview && sel?.kind === 'placement' ? sel.id : null} hoverId={preview ? null : hoverPid} onHover={setHoverPid} frame={frame3d ?? undefined} onFrameOther={frameInPlan} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
@@ -934,6 +961,38 @@ export default function Editor({ id }: { id: string }){
               <p className="prov" style={{ margin: 0 }}>{t('zone.rule')}</p>
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
             </div>); })()}
+          {selCeilingZone && (roomStage || stage === 'concept') && (() => { const z = selCeilingZone, room = snap.floor.rooms.find(r => r.id === z.roomId), CL = PLAN_LIMITS.ceilingZone, w = z.rect.x1 - z.rect.x0, d = z.rect.z1 - z.rect.z0;
+            const roomDrop = room ? roomCeilingDropCm(snap, room.id) : 0, q = ceilingZoneQty(snap.floor, z, roomDrop), leds = mc ? mc.materials.filter(m => m.category === 'led_strip') : [];
+            const size = (k: 'w' | 'd') => (v: string) => num(v, x => patchCeilingZone(z.id, q2 => { const m = r3(x / 100); if (k === 'w') q2.rect.x1 = r3(q2.rect.x0 + m); else q2.rect.z1 = r3(q2.rect.z0 + m); }), CL.minM * 100);
+            return (<div style={{ display: 'grid', gap: 8 }} data-panel="ceiling-zone">
+              <h3>{t('tool.ceiling_zone')}{z.label ? ` · ${z.label}` : ''}</h3>
+              <div className="prov">{t('czone.info', { room: room?.name ?? '-', area: formatArea(q?.areaM2 ?? 0, units, lang), h: formatLength(snap.floor.ceilingHeight - z.dropCm / 100, units, lang) })}</div>
+              {floorIssues.filter(i => i.vars?.czone === z.id).map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
+              <div className="grid2">
+                <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(w)} onChange={e => size('w')(e.target.value)} /></label>
+                <label className="f"><span>{t('editor.depth', { u })}</span><input type="number" value={inField(d)} onChange={e => size('d')(e.target.value)} /></label>
+                <label className="f"><span>{t('czone.drop')}</span><input type="number" min={CL.dropMinCm} max={CL.dropMaxCm} value={z.dropCm} onChange={e => { const v = Number(e.target.value); if (Number.isFinite(v) && e.target.value !== '') patchCeilingZone(z.id, q2 => { q2.dropCm = Math.round(Math.max(CL.dropMinCm, Math.min(CL.dropMaxCm, v))); }); }} /></label>
+                <label className="f"><span>{t('czone.cove')}</span><input type="number" min={0} max={CL.coveMaxCm} value={z.coveCm ?? 0} onChange={e => { const v = Number(e.target.value); if (Number.isFinite(v)) patchCeilingZone(z.id, q2 => { const c = Math.round(Math.max(0, Math.min(CL.coveMaxCm, v))); if (c > 0) q2.coveCm = c; else delete q2.coveCm; }); }} /></label>
+              </div>
+              {leds.length > 0 && <label className="f"><span>{t('czone.led')}</span><MaterialPicker cur={cur} value={z.led ?? ''} options={leds} none={t('fin.none')} onChange={v => patchCeilingZone(z.id, q2 => { if (v) q2.led = v; else delete q2.led; })} /></label>}
+              <label className="f"><span>{t('zone.label')}</span><input type="text" maxLength={CL.labelMax} value={z.label ?? ''} onChange={e => patchCeilingZone(z.id, q2 => { const v = stripPlanText(e.target.value).slice(0, CL.labelMax); if (v.trim()) q2.label = v; else delete q2.label; })} /></label>
+              {q && <div className="prov">{t('czone.qty', { board: q.boardM2, band: q.bandM2, led: q.ledM })}</div>}
+              <p className="prov" style={{ margin: 0 }}>{t('czone.rule')}</p>
+              <button className="btn danger" onClick={del}>{t('common.delete')}</button>
+            </div>); })()}
+          {selRailing && roomStage && (() => { const rl = selRailing, RL = PLAN_LIMITS.railing;
+            return (<div style={{ display: 'grid', gap: 8 }} data-panel="railing">
+              <h3>{t('tool.railing')}</h3>
+              <div className="prov">{formatLength(railingLength(rl), units, lang)}</div>
+              {floorIssues.filter(i => i.vars?.rail === rl.id).map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
+              <div className="grid2">
+                <label className="f"><span>{t('railing.height', { u })}</span><input type="number" value={inField(railingHeight(rl))} onChange={e => num(e.target.value, x => patchRailing(rl.id, q => { const h = r3(Math.min(RL.heightMaxM * 100, x) / 100); if (Math.abs(h - PLAN_DEFAULTS.railing.height) < 1e-9) delete q.height; else q.height = h; }), RL.heightMinM * 100)} /></label>
+                <label className="f"><span>{t('railing.kind')}</span><select value={railingKind(rl)} onChange={e => patchRailing(rl.id, q => { if (e.target.value === 'glass') q.kind = 'glass'; else delete q.kind; })}>
+                  {RAILING_KINDS.map(k => <option key={k} value={k}>{t(`railing.kind.${k}`)}</option>)}</select></label>
+              </div>
+              <p className="prov" style={{ margin: 0 }}>{t('railing.rule')}</p>
+              <button className="btn danger" onClick={del}>{t('common.delete')}</button>
+            </div>); })()}
           {selWallItem && (stage === 'concept' || stage === 'finishes' || stage === 'ffe') && (() => { const WL = PLAN_LIMITS.wallItem, it = selWallItem, wl = snap.floor.walls.find(w => w.id === it.wallId), L = wl ? wallLength(wl.a, wl.b) : PLAN_LIMITS.coordM, H = snap.floor.ceilingHeight;
             const cm = (k: 'width' | 'height' | 'depth' | 'elevation' | 'offset', lo: number, hi: number) => (v: string) => num(v, x => patchWallItem(it.id, n => { n[k] = r3(Math.min(x, hi * 100) / 100); }), lo * 100);
             const below = catalog ? furnitureBelow(snap, catalog, snap.floor, it) : null, cat = WALL_ITEM_CATEGORY[it.kind], products = cat && mc ? mc.materials.filter(m => m.category === cat) : [];
@@ -1127,6 +1186,8 @@ function RoomPanel({ part, focusFeature, room, snap, G, cat, mc, cur, onFinish, 
     {part === 'survey' && <><div className="grid2">
       <label className="f"><span>{t('editor.name')}</span><input type="text" value={room.name} maxLength={60} onChange={e => onChange((r: any) => { r.name = e.target.value; })} /></label>
       <label className="f"><span>{t('editor.type')}</span><select value={room.type} onChange={e => onChange((r: any) => { r.type = e.target.value; })}>{ROOM_TYPES.map(([v, l]) => <option key={v} value={v}>{t(l)}</option>)}</select></label>
+      {/* tipul spațiului (balcon, terasă): interior = câmpul lipsește, ca proiectele de până acum */}
+      <label className="f"><span>{t('space.label')}</span><select value={room.spaceKind ?? 'interior'} onChange={e => onChange((r: any) => { const v = e.target.value as RoomSpaceKind; if (v === 'interior') delete r.spaceKind; else r.spaceKind = v; })}>{SPACE_KINDS.map(k => <option key={k} value={k}>{t(`space.${k}`)}</option>)}</select></label>
       <label className="f"><span>{t('editor.width', { u })}</span><input type="number" inputMode="decimal" value={inField(w)} onChange={e => num(e.target.value, (x: number) => onResize({ ...room.rect, x1: r3(room.rect.x0 + x / 100) }), 60)} /></label>
       <label className="f"><span>{t('editor.length', { u })}</span><input type="number" inputMode="decimal" value={inField(d)} onChange={e => num(e.target.value, (x: number) => onResize({ ...room.rect, z1: r3(room.rect.z0 + x / 100) }), 60)} /></label>
       <label className="f"><span>{t('editor.posX', { u })}</span><input type="number" value={inField(room.rect.x0)} onChange={e => { const cm = inputToCm(e.target.value, units), x = cm == null ? NaN : cm / 100; if (Number.isFinite(x)) onChange((r: any) => { r.rect.x1 = r3(x + (r.rect.x1 - r.rect.x0)); r.rect.x0 = r3(x); }); }} /></label>
