@@ -1,5 +1,5 @@
 # todo-claude-casa3d-a1-3
-STATUS: IN_PROGRESS        UPDATED: 2026-10-24T21:00:00+03:00
+STATUS: DONE               UPDATED: 2026-10-24T23:00:00+03:00
 TASK: Casa3D A1.3 workspace layout (roadmap todo-claude-casa3d-a1-roadmap.md, phase 2). Plan: casa3d/PLAN_A1_3.md.
 BRANCH / WORKTREE: claude/casa3d-a1-3-workspace, D:/w/a13 (base origin/main a32613fba), npm ci done in app/.
 OWNER DECISIONS 2026-10-24: new layout ON for all + "Layout clasic" preference; catalog stays in the right panel;
@@ -18,7 +18,9 @@ REVIEW: round 1 NOT READY (keys leaked from tree into editor; right splitter scr
   Accepted residual: Ctrl+\ untested on a physical RO keyboard (alt:'any' covers AltGr in code); inspector order test
   freezes the inline blocks + RoomPanel/PlacementPanel, not DoorPanel/WallLookPanel/RoomLookPanel/RoomOptionsPanel.
 VERIFIED (final): tsc 0; vitest 136 files / 893 tests; check-a11y 21 states 0 violations (before round-1 fixes).
-NEXT: push -> draft PR -> CI once -> merge; then mark phase 2 DONE in todo-claude-casa3d-a1-roadmap.md.
+PR: #349; merged main (#348 ceiling zones/railings) in, golden describe hashes updated (labels proven identical),
+  allowlist entries for this checkpoint and PLAN_A1_3.md; CI 40/40 green on ddb2610c9. Roadmap phase 2 marked DONE.
+NEXT: none here; phase 3 per todo-claude-casa3d-a1-roadmap.md.
 ENV: launch config casa3d-a13 (port 3213) added to the primary checkout's .claude/launch.json (not committed).
   next-env.d.ts is rewritten by `npm run dev`: never commit it.
 KEY FILES: app/components/{Editor,Outliner,PanelSplitter}.tsx, app/core/{outliner,plan-describe}.ts,
