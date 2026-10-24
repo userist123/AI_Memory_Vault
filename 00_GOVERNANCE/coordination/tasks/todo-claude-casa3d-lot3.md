@@ -1,30 +1,26 @@
 # todo-claude-casa3d-lot3
-STATUS: DONE (pushed, no PR) UPDATED: 2026-10-24T12:10:00+03:00
-TASK: Casa3D lot 3 "tools around the house": unelte-plan.md P2.2, P2.3, P1.5; usi-decor.md P1.c1
-BRANCH / PR: claude/casa3d-house-lot3 / none (PR is the coordinator's call)    BASE: 62be1f8e
-DONE:
-- P2.2 Wall.status existing|new|demolish (missing = existing). Tool Demolare (Y, survey, group Structure): click toggles
-  existing <-> demolish; status select in the wall panel. Plan: new hatched, demolished dashed (no openings). 3D: demolished
-  wall kept in plan.pereti (indices) but `demolat`, no goluri, not drawn. Openings ignored (openingsOnSide, doorOpenings,
-  textiles, validate). Quote: demolition m2 + rubble unknown; new <=12.5 cm plasterboard x2 faces (priced) + labour unknown;
-  thicker = masonry unknown. WALL_DEMOLISH warning on exterior walls. DXF WALLS_NEW / WALLS_DEMOLISH only when used.
-  plan-describe appends the status. core/renovation.ts.
-- P2.3 radiator: TechPoint widthM/heightM/model (panel|towel|decorative); placed via the MEP points tool (kind radiator),
-  centred under the nearest window on the clicked wall (placeRadiator); fields in the TechPanel list. Plan ribbed rect,
-  3D ribbed box, quote unknown per piece, RADIATOR_BLOCKED (tall furniture within 30 cm). Old points without widthM unchanged.
-- P1.c1 AC: hvac_split rendered in 3D (80x29x20 white box on the wall face), unknown quote line, warnings HVAC overBed /
-  slide (sliding/pocket door run). core/tech-geometry.ts, techIssues in technical.ts.
-- P1.5 Floor.zones {id, roomId, rect, floor, layout?, label?}: tool Zonă pardoseală (Z, Finishes, group Decor; drag /
-  click-click / typed). Plan hatch + area; 3D plane +1 mm; quote room minus zones + own line + labour; ZONE_OUTSIDE_ROOM /
-  ZONE_OVERLAP errors; server sanitizeZone; room delete removes its zones (removeRoomZones). core/floor-zones.ts.
-- Rail: railSlots folds a group with >=3 members even under GROUP_OVER (Finishes 4 -> 3 slots); survey still 7.
-- Caps: PLAN_LIMITS.zone/radiator/hvac + full() at placement + checkSnapshot. Clamp finite, reject NaN/Infinity/strings.
-VERIFIED: tsc, vitest 842/842, build, a11y 19/19, slides 5/5, shots D:/w/casa3d-verify/shots/lot3-*.png
+STATUS: DONE (review fixes pushed, PR #344) UPDATED: 2026-10-24T13:20:00+03:00
+TASK: Casa3D lot 3 "tools around the house" (unelte-plan.md P2.2, P2.3, P1.5; usi-decor.md P1.c1) + PR #344 review fixes
+BRANCH / PR: claude/casa3d-house-lot3 / #344    BASE: 62be1f8e
+DONE (lot): Wall.status existing|new|demolish + tool Demolare; sized radiator; AC in 3D/quote; Floor.zones (tool Zonă
+  pardoseală); rail folding; caps. Details: core/{renovation,floor-zones,tech-geometry}.ts, tests/house-tools-lot3.test.ts.
+DONE (review #344, tests/lot3-review-fixes.test.ts, each fails on the pre-fix code):
+- core/renovation.ts activeOpenings(w) = the single helper ([] for a demolished wall); used by plan-describe, drawings
+  (elevations), trade-checks VENT_BATH, advisor TECH_NO_SWITCH, furnish hall entrance keep-out, lib/twin.
+- components/Drawings.tsx Walls (exported): demolished dashed without openings, new hatched (as PrintView).
+- finish-schedule: `<room>:zone:<id>` -> floor row with the zone's material/layout + detail sched.zone;
+  `wall-new:<id>` -> element `drywall` ("Perete nou gips-carton" / "New plasterboard wall"), room = whole home.
+- levels.addLevel skips demolished walls (and their openings/niches); new walls copied.
+- tool-groups FLAT_MAX = 4: a stage of <= 4 tools stays flat (Planșe 4 buttons); Finishes 5 -> 3 slots, Survey 7.
+- TechPanel CmField: local draft, commit (clamped, cmToClampedM) on blur/Enter, Esc reverts; aria "Lățime calorifer, <room> (cm)".
+- plan-limits isMaterialRef + FLOOR_PATTERNS shared with finishes.sanitizeFinishes/PATTERNS (zone also needs non-empty).
+VERIFIED: tsc 0, vitest 860/860 (132 files), build, a11y 20/20, slides 5/5 (4 viewports OK),
+  shots D:/w/casa3d-verify/shots/lot3-fix-{ceiling,floor,elevations}.png (script lot3-fix-shots.mjs).
 ACCEPTED RESIDUALS / NEXT:
-- Existing hvac_split points now show in 3D and add an unknown quote line (P1.c1 by design).
-- Demolish has no count cap (it places nothing); phone rail (flat) gains 1 button in Survey and Finishes.
-- Zones are rectangles only (no boundary contour); quote still on room rect (report §4.7).
-- AC plan symbol unchanged (circle); radiator/AC not draggable on plan (edit in list).
-KEY FILES: core/{renovation,floor-zones,tech-geometry,technical,plan-limits,boq,validate,dxf}.ts, lib/{repo,viewer-input,
-  tool-groups}.ts, components/{Editor,PlanView,TechPanel,PrintView}.tsx, components/viewer3d-engine.js,
-  tests/house-tools-lot3.test.ts
+- New HVAC warnings / unknown quote line on old projects with hvac_split: unchanged on purpose.
+- Drywall schedule row has no room (wall may border several); note text is the Romanian BOQ label.
+- Demolish has no count cap; zones are rectangles only; AC plan symbol unchanged; radiator/AC not draggable on plan.
+- CI not watched (agent pushes and stops).
+KEY FILES: core/{renovation,plan-describe,drawings,finish-schedule,trade-checks,advisor,furnish,levels,plan-limits,
+  finishes,tech-geometry}.ts, lib/{twin,tool-groups}.ts, lib/locales/{ro,en}.ts, components/{Drawings,TechPanel}.tsx,
+  tests/{lot3-review-fixes,house-tools-lot3,plan-tools}.test.ts

@@ -7,6 +7,8 @@ import { DOOR_HEIGHT, WINDOW_HEIGHT } from './rules.boq';
 
 export const wallStatus = (w: Pick<Wall, 'status'>): WallStatus => w.status ?? 'existing';
 export const isDemolished = (w: Pick<Wall, 'status'>) => w.status === 'demolish';
+/** Golurile care mai contează: un perete de demolat dispare, deci și ușile și ferestrele lui (listă goală). */
+export const activeOpenings = <W extends Pick<Wall, 'status' | 'openings'>>(w: W): W['openings'] => isDemolished(w) ? [] : w.openings;
 /** Peretele nou până la 12,5 cm e considerat gips-carton pe structură metalică; mai gros = zidărie. */
 export const DRYWALL_MAX_M = .125;
 

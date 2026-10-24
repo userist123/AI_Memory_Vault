@@ -23,6 +23,10 @@ export function techFrame(floor: Pick<Floor, 'walls' | 'rooms'>, p: Pick<TechBod
 }
 /** Caloriferul „nou” are mărimi (`widthM`); punctul vechi de racord (fără mărimi) rămâne un simplu simbol, ca înainte. */
 export const isSizedRadiator = (p: Pick<TechBody, 'kind' | 'widthM'>) => p.kind === 'radiator' && p.widthM != null;
+/** Valoarea tastată în centimetri → metri, adusă în intervalul [lo, hi] (m) și rotunjită la mm; text gol sau nenumeric = null (rămâne valoarea veche). */
+export function cmToClampedM(v: string, lo: number, hi: number): number | null {
+  const x = Number(v); if (v.trim() === '' || !Number.isFinite(x)) return null; return Math.round(Math.min(hi, Math.max(lo, x / 100)) * 1000) / 1000;
+}
 /** Mărimile caloriferului (m): lățime, înălțime, adâncime (port-prosopul e subțire). */
 export const radiatorSize = (p: Pick<TechBody, 'widthM' | 'heightM' | 'model'>) => ({ w: p.widthM ?? PLAN_DEFAULTS.radiator.width, h: p.heightM ?? PLAN_DEFAULTS.radiator.height, d: p.model === 'towel' ? .05 : .1 });
 /** Mărimile unității de aer condiționat (m): 80 × 29 × 20 cm implicit, lățimea se poate schimba. */

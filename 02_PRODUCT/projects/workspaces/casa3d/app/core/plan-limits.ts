@@ -25,7 +25,11 @@ export const PLAN_DEFAULTS = { passageWidth: .9, shaft: .3, niche: { width: .6, 
   radiator: { width: .8, height: .6, elevation: .15 }, hvac: { width: .8, height: .29, depth: .2 } } as const;
 export const WALL_STATUSES: readonly WallStatus[] = ['existing', 'new', 'demolish'];
 export const RADIATOR_MODELS = ['panel', 'towel', 'decorative'] as const;
-const FLOOR_PATTERNS: readonly FloorPattern[] = ['straight', 'brick', 'third', 'diagonal', 'herringbone', 'chevron', 'checker'];
+/** Modurile de așezare a pardoselii: o singură listă, folosită și de finisajele camerei (core/finishes.ts, PATTERNS). */
+export const FLOOR_PATTERNS: readonly FloorPattern[] = ['straight', 'brick', 'third', 'diagonal', 'herringbone', 'chevron', 'checker'];
+/** Referința la un material (pardoseală, vopsea, faianță...): text de cel mult 80 de caractere. Aceeași regulă pentru
+ *  finisajele camerei (sanitizeFinishes) și pentru materialul unei zone de pardoseală (sanitizeZone). */
+export const isMaterialRef = (x: unknown): x is string => typeof x === 'string' && x.length <= 80;
 
 const ID = /^[\w-]{1,80}$/;
 const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -120,7 +124,8 @@ export function sanitizeZone(z: any): FloorZone {
   if (!z || typeof z !== 'object' || typeof z.id !== 'string' || !ID.test(z.id) || typeof z.roomId !== 'string' || !ID.test(z.roomId) || !z.rect || typeof z.rect !== 'object') bad('O zonă de pardoseală este invalidă.');
   const r = z.rect; if (!['x0', 'z0', 'x1', 'z1'].every(k => inBox(r[k]))) bad('O zonă de pardoseală are coordonatele invalide.');
   if (r.x1 - r.x0 < L.minM - 1e-9 || r.z1 - r.z0 < L.minM - 1e-9) bad(`O zonă de pardoseală trebuie să aibă cel puțin ${L.minM * 100} cm pe fiecare latură.`);
-  if (typeof z.floor !== 'string' || !z.floor || z.floor.length > 80) bad('Materialul zonei de pardoseală este invalid.');
+  // aceeași regulă ca pardoseala camerei; în plus zona trebuie să aibă un material (altfel nu are rost)
+  if (!isMaterialRef(z.floor) || !z.floor) bad('Materialul zonei de pardoseală este invalid.');
   if (z.label != null && typeof z.label !== 'string') bad('Numele zonei de pardoseală este invalid.');
   const label = z.label != null ? cleanPlanText(z.label).slice(0, L.labelMax) : '';
   return { id: z.id, roomId: z.roomId, rect: { x0: r.x0, z0: r.z0, x1: r.x1, z1: r.z1 }, floor: z.floor, ...(z.layout != null ? { layout: sanitizeLayout(z.layout) } : {}), ...(label ? { label } : {}) };
