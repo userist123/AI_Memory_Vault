@@ -21,13 +21,15 @@ document_status: active
 > labels, not to these 21 profiles' skill ids. This file is capability metadata for agents
 > and humans selecting skills.
 >
-> **Skills named here that are not in `.agents/skills/` (18 of 149, measured on restore):**
-> `agency-grid-layout-minimal`, `ansible-automation`, `background-grid-webgl`, `clean-minimal-beige-light-mode`,
-> `corner-lasers`, `dither-laser-dark-mode`, `editorial-tech`, `framed-grid-layout`, `glass-dark-mode-clock`,
-> `gsap`, `gsap-scrolltrigger-storytelling`, `high-contrast-skeuomorphic-clean`, `light-mode-paper-technical`,
-> `nested-container-clean-agency`, `orange-clean-paper-saas`, `penetration-testing-playbook`,
-> `split-layout-technical`, `technical-wireframe-info-layout`. They are kept below as recorded, not
-> silently dropped; a router must treat them as unavailable.
+> **Missing skills resolved (2026-10-24, owner decision).** 18 of the 149 skills named here were
+> absent from `.agents/skills/`. Mapped to the individual steps of #196 (`ea93ec3d2`):
+> - 16 design skills were removed on purpose by `f801fa385` ("remove 38 base64 demo pages",
+>   policy: their demos embed base64-encoded HTML). The owner chose not to restore them; they are
+>   dropped from the lists below.
+> - `ansible-automation` was removed by `82a3b44a3` as an unused connector, not for a security
+>   reason; it is restored unchanged from `ea93ec3d2^`.
+> - `penetration-testing-playbook` was removed on purpose by `d699e9f52` (purge of offensive
+>   skills); dropped from the lists below.
 
 This is the authoritative capability index for the 21 specialised agents.
 
@@ -144,7 +146,6 @@ This is the authoritative capability index for the 21 specialised agents.
 - dast-dynamic-testing
 - container-vulnerability-scanning
 - secret-leak-prevention
-- penetration-testing-playbook
 - zero-trust-architecture
 - pki-certificate-management
 - opa-rego-policy-enforcement
@@ -181,21 +182,13 @@ This is the authoritative capability index for the 21 specialised agents.
 - dfir-operations
 - vault-security-audit
 - secret-leak-prevention
-- penetration-testing-playbook
 
 ### ui_sensei_architect
 - ui-sensei
-- clean-minimal-beige-light-mode
 - dark-blue-contrasting-clean
 - dark-glass-clean-layout
-- glass-dark-mode-clock
 - glass-dark-ui
-- high-contrast-skeuomorphic-clean
-- light-mode-paper-technical
-- nested-container-clean-agency
-- orange-clean-paper-saas
 - tech-green-dark-mode-modern
-- technical-wireframe-info-layout
 
 ### ui_ux_designer
 - dashboard-admin-ui
@@ -211,17 +204,12 @@ This is the authoritative capability index for the 21 specialised agents.
 ### web_creative_developer
 - threejs
 - threejs-post-processing
-- gsap
-- gsap-scrolltrigger-storytelling
 - cobejs
 - vantajs
 - matterjs
 - unicorn-studio
-- background-grid-webgl
 - bright-green-tech-system-webgl
 - globe-gl
-- corner-lasers
-- dither-laser-dark-mode
 
 ### web_design_engineer_agent
 - web-design-engineer
@@ -230,10 +218,6 @@ This is the authoritative capability index for the 21 specialised agents.
 - design-system-stripe
 - design-system-vercel
 - design-system-supabase
-- agency-grid-layout-minimal
-- editorial-tech
-- framed-grid-layout
-- split-layout-technical
 
 ### web_quality_engineer
 - web-quality-audit
