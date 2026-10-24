@@ -1,5 +1,5 @@
 # todo-claude-casa3d-lot4
-STATUS: DONE for items 1-4 and 6; item 5 NOT DONE (see below); PR #348 review fixes pushed UPDATED: 2026-10-24T18:10:00+03:00
+STATUS: DONE (merged #348, 944499dc) UPDATED: 2026-10-24T18:10:00+03:00
 TASK: Casa3D lot 4 "tools around the house" (unelte-plan.md P2.4, P2.5; usi-decor.md P2.b4, P2.c3; P2.c2/P2.c4 skipped)
 BRANCH / PR: claude/casa3d-house-lot4, PR #348 (open; main merged in, review fixes pushed)    BASE: 215d1260
 DONE:
