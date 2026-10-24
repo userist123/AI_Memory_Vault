@@ -1,4 +1,4 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <OutputType>Exe</OutputType>
@@ -7,6 +7,7 @@
     <Nullable>enable</Nullable>
     <AssemblyName>LogAnalyzer.KeyGen</AssemblyName>
     <RootNamespace>LogAnalyzer.KeyGen</RootNamespace>
+    <DefineConstants>$(DefineConstants);LOGANALYZER_KEYGEN</DefineConstants>
   </PropertyGroup>
 
   <ItemGroup>
@@ -14,8 +15,16 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- SignedCms for verify-report on officer-signed PDFs: the Microsoft WPF shared framework, no NuGet package (owner-approved 2026-10-16).
+         The CMS verifier is the application's own source file, linked, so the command line and the app check signatures identically. -->
+    <FrameworkReference Include="Microsoft.WindowsDesktop.App" />
+    <Compile Include="..\LogAnalyzer.App\Services\OfficerCms.cs" Link="OfficerCms.cs" />
+  </ItemGroup>
+
+  <ItemGroup>
     <!-- Key and Hardware ID come from the same LicenseService the editions use at activation. -->
     <ProjectReference Include="..\LogAnalyzer.Core\LogAnalyzer.Core.csproj" />
+    <ProjectReference Include="..\LogAnalyzer.Dfir.Core\LogAnalyzer.Dfir.Core.csproj" />
   </ItemGroup>
 
 </Project>

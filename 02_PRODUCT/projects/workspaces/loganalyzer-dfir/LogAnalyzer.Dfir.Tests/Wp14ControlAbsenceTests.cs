@@ -11,7 +11,7 @@ public class Wp14ControlAbsenceTests
 
     private static StationFacts Quiet(bool isolated = true, bool partitionReadable = true, bool networkReadable = true, bool usbGap = false, bool profilesGap = false)
     {
-        var f = new StationFacts { Host = "ST-1", PeriodStartUtc = Start, PeriodEndUtc = Start.AddDays(30), CollectedUtc = Start.AddDays(30), IsAdministrator = true, StationShouldBeIsolated = isolated };
+        var f = new StationFacts { Host = "ST-1", PeriodStartUtc = Start, PeriodEndUtc = Start.AddDays(30), CollectedUtc = Start.AddDays(30), IsAdministrator = true, Posture = isolated ? LogAnalyzer.Core.Services.Edition.StationPosture.Standalone : LogAnalyzer.Core.Services.Edition.StationPosture.Internet };
         foreach (var ch in StationFactCollector.Queries.Keys)
         {
             bool readable = ch switch

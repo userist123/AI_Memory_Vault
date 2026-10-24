@@ -16,7 +16,7 @@ namespace LogAnalyzer.UI.Services
 
     /// <summary>
     /// Creates the view models and views of the screens whose code lives only in the unclassified edition. The classified
-    /// edition registers <see cref="NoFeatureViews"/>: those screens then show "nu este disponibil în ediția clasificată".
+    /// edition registers <see cref="NoFeatureViews"/>: those screens then show "nu este disponibil în ediția Standalone".
     /// </summary>
     public interface IFeatureViewFactory
     {
@@ -64,7 +64,7 @@ namespace LogAnalyzer.UI.Views.Controls
         {
             FrameworkElement? view = null;
             if (ViewModel is { } vm && FeatureKey.Length > 0)
-                view = global::LogAnalyzer.UI.App.ServiceProvider?.GetService<IFeatureViewFactory>()?.CreateView(FeatureKey, vm);
+                view = global::LogAnalyzer.UI.AppComposition.ServiceProvider?.GetService<IFeatureViewFactory>()?.CreateView(FeatureKey, vm);
             Content = view ?? Notice(Title);
         }
 

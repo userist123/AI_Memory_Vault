@@ -13,7 +13,7 @@
 
         <StackPanel Grid.Row="0" Margin="0,0,0,18">
             <TextBlock Text="Manager Licențe LogAnalyzer" FontSize="22" FontWeight="SemiBold"/>
-            <TextBlock Text="Emite chei pentru LogAnalyzer (ambele moduri, AirGapped și Network). Cheia e legată de Hardware ID-ul afișat în fereastra de activare a aplicației."
+            <TextBlock Text="Emite licențe semnate (ECDSA) pentru LogAnalyzer, legate de Hardware ID-ul afișat în fereastra de activare. Semnează cu cheia privată de licență, păstrată offline. Cheile din schema veche nu mai sunt acceptate de aplicație."
                        Foreground="{StaticResource Muted}" TextWrapping="Wrap" Margin="0,4,0,0"/>
         </StackPanel>
 
@@ -24,6 +24,7 @@
                     <ColumnDefinition Width="*"/>
                 </Grid.ColumnDefinitions>
                 <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
@@ -53,7 +54,16 @@
                 <TextBlock Grid.Row="3" Text="Note" VerticalAlignment="Center"/>
                 <TextBox x:Name="TxtNotes" Grid.Row="3" Grid.Column="1" Margin="0,0,0,14" FontFamily="Segoe UI"/>
 
-                <StackPanel Grid.Row="4" Grid.Column="1" Orientation="Horizontal">
+                <TextBlock Grid.Row="4" Text="Cheie privată licență" VerticalAlignment="Center"/>
+                <DockPanel Grid.Row="4" Grid.Column="1" Margin="0,0,0,14">
+                    <Button DockPanel.Dock="Right" Content="Alege…" Margin="8,0,0,0" Click="BrowseKey_Click"
+                            ToolTip="Fișierul creat cu LogAnalyzer.KeyGen license-keygen, de pe mediul offline"/>
+                    <PasswordBox x:Name="PwdKey" DockPanel.Dock="Right" Width="160" Margin="8,0,0,0"
+                                 ToolTip="Parola cheii, doar dacă a fost creată cu --passphrase"/>
+                    <TextBox x:Name="TxtKeyPath" FontFamily="Segoe UI"/>
+                </DockPanel>
+
+                <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal">
                     <Button Content="Generează licența" Background="{StaticResource Accent}" BorderBrush="{StaticResource Accent}" Click="Generate_Click"/>
                     <Button x:Name="BtnCopy" Content="Copiază" IsEnabled="False" Click="Copy_Click"/>
                     <Button x:Name="BtnSave" Content="Salvează license.lic…" IsEnabled="False" Click="Save_Click"/>
@@ -64,7 +74,7 @@
         <Border Grid.Row="2" Background="{StaticResource Panel}" BorderBrush="{StaticResource Border}" BorderThickness="1" CornerRadius="6" Padding="18" Margin="0,14,0,0">
             <StackPanel>
                 <TextBlock Text="Licență generată (se lipește în fereastra de activare)" Foreground="{StaticResource Muted}"/>
-                <TextBox x:Name="TxtLicense" IsReadOnly="True" FontSize="18" Margin="0,8,0,8"/>
+                <TextBox x:Name="TxtLicense" IsReadOnly="True" FontSize="12" TextWrapping="Wrap" Margin="0,8,0,8"/>
                 <TextBlock x:Name="TxtStatus" TextWrapping="Wrap" Foreground="{StaticResource Muted}"/>
             </StackPanel>
         </Border>

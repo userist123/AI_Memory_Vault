@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace LogAnalyzer.Core.Services.Details
 {
@@ -11,7 +12,7 @@ namespace LogAnalyzer.Core.Services.Details
     {
         public static readonly Dictionary<string, string> LogonTypes = new()
         {
-            ["0"] = "System", ["2"] = "interactiv (tastatură/ecran)", ["3"] = "rețea (ex. share SMB)", ["4"] = "batch (task programat)",
+            ["0"] = "System", ["2"] = "interactiv (tastatură/ecran)", ["3"] = "rețea (ex. share SMB)", ["4"] = "batch (activitate planificată)",
             ["5"] = "serviciu", ["7"] = "deblocare ecran", ["8"] = "rețea cu parolă în clar (ex. IIS basic)",
             ["9"] = "NewCredentials (runas /netonly)", ["10"] = "RemoteInteractive (RDP)", ["11"] = "CachedInteractive (fără controler de domeniu)",
             ["12"] = "CachedRemoteInteractive", ["13"] = "CachedUnlock",
@@ -50,10 +51,10 @@ namespace LogAnalyzer.Core.Services.Details
             [4688] = "Proces nou creat. NewProcessName și CommandLine (dacă auditul liniei de comandă e activ) arată ce s-a rulat; ParentProcessName arată cine l-a pornit.",
             [4689] = "Proces încheiat.",
             [4697] = "Serviciu instalat în sistem (persistență frecventă).",
-            [4698] = "Task programat creat (persistență frecventă).",
-            [4699] = "Task programat șters.",
-            [4700] = "Task programat activat.",
-            [4702] = "Task programat modificat.",
+            [4698] = "Activitate planificată creată (persistență frecventă).",
+            [4699] = "Activitate planificată ștearsă.",
+            [4700] = "Activitate planificată activată.",
+            [4702] = "Activitate planificată modificată.",
             [4719] = "Politica de audit a sistemului a fost modificată (cineva poate reduce ce se înregistrează).",
             [4720] = "Cont de utilizator creat.",
             [4722] = "Cont de utilizator activat.",
@@ -81,6 +82,25 @@ namespace LogAnalyzer.Core.Services.Details
             [5157] = "Conexiune BLOCATĂ de Windows Filtering Platform (de exemplu de o regulă de izolare).",
             [6416] = "Dispozitiv extern nou recunoscut (ex. stick USB).",
             [1102] = "Jurnalul Security a fost ȘTERS. Pe o stație auditată aproape întotdeauna necesită explicație.",
+            // Senior review E1: events the engines analyse (Kerberos/AD, file server, employee activity, credentials) and that had no meaning.
+            [4656] = "S-a cerut acces la un obiect (fișier, folder sau cheie de registru). Arată cine a încercat să-l deschidă și cu ce drepturi; apare doar dacă auditul accesului la obiecte este pornit.",
+            [4662] = "S-a făcut o operație asupra unui obiect din Active Directory. Dacă operația folosește drepturile de replicare a parolelor și contul NU este un controler de domeniu, poate fi un furt al parolelor tuturor conturilor (DCSync).",
+            [4663] = "S-a accesat un obiect (fișier, folder sau cheie de registru). AccessMask arată ce s-a făcut: citire, scriere sau ștergere. Multe ștergeri sau scrieri în scurt timp pot indica criptare (ransomware) sau distrugere de date.",
+            [4739] = "Politica domeniului (parole, blocarea conturilor) a fost modificată.",
+            [4742] = "Contul unui calculator din domeniu a fost modificat. O schimbare neașteptată (de exemplu nume de serviciu sau delegare) poate pregăti un atac asupra domeniului.",
+            [4756] = "Membru adăugat într-un grup universal de securitate (grup valabil în toată pădurea de domenii).",
+            [4800] = "Ecranul stației a fost blocat (utilizatorul a plecat de la stație sau a apăsat Win+L).",
+            [4801] = "Ecranul stației a fost deblocat (utilizatorul s-a întors și a introdus parola).",
+            [4907] = "Setările de audit ale unui obiect (ce se înregistrează despre el) au fost schimbate.",
+            [4658] = "Un program a închis un fișier sau un obiect marcat pentru audit (împreună cu 4656 arată cât timp a fost deschis).",
+            [4660] = "Un fișier sau un obiect marcat pentru audit a fost șters (numele lui este în evenimentul 4663 cu același HandleId).",
+            [4670] = "Permisiunile unui obiect (fișier, folder, cheie de registru) au fost schimbate.",
+            [307] = "Un document a fost tipărit (jurnalul PrintService/Operational): numele documentului, cine l-a tipărit, imprimanta și numărul de pagini.",
+            [5136] = "Un obiect din Active Directory a fost modificat (ce atribut, valoarea veche și cea nouă). Modificările de politici de grup sau de drepturi trebuie să fie aprobate.",
+            [5137] = "Un obiect nou a fost creat în Active Directory (cont, grup, calculator, politică de grup).",
+            [5139] = "Un obiect din Active Directory a fost mutat în altă unitate organizațională.",
+            [5141] = "Un obiect a fost șters din Active Directory.",
+            [5379] = "Au fost citite credențiale salvate în Windows Credential Manager. Apare și la funcționarea normală a programelor; multe citiri la rând, făcute de un program neobișnuit, pot indica furtul parolelor salvate.",
         };
 
         private static readonly Dictionary<int, string> System_ = new()
@@ -93,7 +113,50 @@ namespace LogAnalyzer.Core.Services.Details
             [6006] = "Serviciul Event Log s-a oprit (oprire sistem).",
             [6008] = "Oprirea anterioară a sistemului a fost neașteptată.",
             [1074] = "Oprire/repornire inițiată de un proces sau utilizator.",
+            [1100] = "Serviciul de jurnalizare a evenimentelor s-a oprit. La o oprire normală a stației este firesc; altfel, cât timp serviciul este oprit nu se înregistrează nimic.",
+            [1102] = "Jurnalul Security a fost ȘTERS. Pe o stație auditată aproape întotdeauna necesită explicație.",
+            [1] = "Ora sistemului a fost schimbată (Kernel-General 1). Motivul (Reason) arată dacă a fost sincronizarea automată sau o schimbare făcută de o persoană ori de un program.",
+            [22] = "Fusul orar al sistemului a fost schimbat (Kernel-General 22). Orele locale din jurnale se mută; orele UTC rămân corecte.",
         };
+
+        // Senior review E1: providers the engines read that none of the dictionaries above covers. Provider is matched by a fragment of its name.
+        private static readonly (string Provider, int Id, string Text)[] ByProvider =
+        [
+            ("Kernel-Power", 41, "Stația a repornit fără o oprire corectă (pană de curent, blocare, buton de pornire ținut apăsat). Ce rula atunci s-a întrerupt brusc."),
+            ("WLAN-AutoConfig", 8001, "Wi-Fi: stația s-a conectat la o rețea fără fir; evenimentul are numele rețelei (SSID), adaptorul folosit și tipul de autentificare."),
+            ("WLAN-AutoConfig", 8003, "Wi-Fi: stația s-a deconectat de la o rețea fără fir (marchează sfârșitul conectării)."),
+            ("WLAN-AutoConfig", 11001, "Wi-Fi: asocierea cu rețeaua fără fir a reușit; evenimentul are adaptorul, adresa fizică locală (LocalMac) și numele rețelei (SSID)."),
+            ("NCSI", 4042, "Windows a schimbat verdictul de acces al unei rețele: internet, doar rețea locală sau fără conectivitate."),
+            ("WinRM", 6, "WinRM: această stație a deschis o sesiune de comenzi de la distanță către alt calculator."),
+            ("WinRM", 91, "WinRM: pe această stație s-a creat o sesiune de comenzi de la distanță (cineva a rulat comenzi aici de pe alt calculator)."),
+            ("WinRM", 142, "WinRM: o operație de comenzi de la distanță a eșuat."),
+            ("DNS-Server", 257, "Server DNS: a răspuns cu succes la o cerere de nume."),
+            ("DNS-Server", 258, "Server DNS: a răspuns cu eroare la o cerere de nume (numele nu există sau cererea a fost refuzată)."),
+            ("DNS-Server", 259, "Server DNS: a ignorat o cerere de nume."),
+            ("DNS-Server", 260, "Server DNS: a trimis cererea mai departe, către alt server DNS (recursivitate)."),
+            ("GroupPolicy", 5016, "Politica de grup: o componentă (extensie) a terminat aplicarea setărilor pe stație."),
+            ("GroupPolicy", 5017, "Politica de grup: un pas din aplicarea politicii s-a încheiat (cu durata lui)."),
+            ("GroupPolicy", 5312, "Politica de grup: lista politicilor (GPO) care se aplică acestei stații sau acestui utilizator."),
+            ("GroupPolicy", 7320, "Politica de grup: eroare la aplicare. Codul de eroare din eveniment arată cauza (de exemplu controlerul de domeniu nu a putut fi contactat)."),
+            ("UserPnp", 20001, "Windows a instalat driverul unui dispozitiv nou conectat (de exemplu un stick USB). Numele și seria dispozitivului sunt în eveniment."),
+            ("UserPnp", 20003, "Windows a adăugat serviciul (driverul) pentru un dispozitiv nou conectat (de exemplu un stick USB)."),
+            ("volsnap", 25, "Copiile de umbră (punctele de restaurare) ale unui disc au fost abandonate, de obicei din lipsă de spațiu. Fișierele vechi nu mai pot fi recuperate din ele."),
+            ("volsnap", 33, "Cea mai veche copie de umbră a unui disc a fost ștearsă ca să se facă loc pentru una nouă."),
+        ];
+
+        /// <summary>Microsoft Entra ID sign-in error codes (documented AADSTS codes), as the cloud engines read them from sign-in logs.</summary>
+        public static readonly Dictionary<int, string> EntraSignInCodes = new()
+        {
+            [50053] = "Autentificare în cloud blocată: contul a fost blocat temporar după prea multe parole greșite sau încercarea a venit de la o adresă cunoscută ca rău-intenționată.",
+            [50074] = "Autentificarea în cloud a cerut verificarea în doi pași (MFA). Parola era corectă; dacă utilizatorul nu a încercat atunci să intre, altcineva îi știe parola.",
+            [50125] = "Autentificarea în cloud a fost întreruptă ca să se schimbe parola sau să se înregistreze o metodă de verificare.",
+            [53003] = "Autentificare în cloud blocată de o regulă de acces condiționat a organizației (loc, dispozitiv sau risc nepermis).",
+        };
+
+        /// <summary>True when any of the tables above has a plain-language meaning for this event ID (for whatever provider).</summary>
+        public static bool HasMeaning(int eventId) =>
+            Security.ContainsKey(eventId) || System_.ContainsKey(eventId) || Other.ContainsKey(eventId) ||
+            ByProvider.Any(p => p.Id == eventId) || EntraSignInCodes.ContainsKey(eventId);
 
         private static readonly Dictionary<int, string> Other = new()
         {
@@ -107,6 +170,13 @@ namespace LogAnalyzer.Core.Services.Details
             [3] = "Sysmon: conexiune de rețea inițiată de un proces.",
             [11] = "Sysmon: fișier creat.",
             [22] = "Sysmon: interogare DNS a unui proces.",
+            [7] = "Sysmon: un program a încărcat o bibliotecă (DLL). O bibliotecă încărcată din Temp sau din Public poate fi cod rău-intenționat strecurat într-un program legitim.",
+            [8] = "Sysmon: un proces a pornit un fir de execuție în ALT proces (CreateRemoteThread). Este tehnica clasică de injectare a codului în alt program.",
+            [10] = "Sysmon: un proces a deschis memoria altui proces. Dacă ținta este lsass.exe (procesul care păstrează parolele), poate fi furt de parole.",
+            [12] = "Sysmon: o cheie de registru a fost creată sau ștearsă.",
+            [13] = "Sysmon: o valoare din registru a fost modificată.",
+            [14] = "Sysmon: o cheie sau o valoare din registru a fost redenumită.",
+            [15] = "Sysmon: a fost scris un flux alternativ al unui fișier (de exemplu marcajul „descărcat de pe internet”). Datele pot fi ascunse în astfel de fluxuri.",
             [11707] = "Windows Installer: produs instalat.",
             [11724] = "Windows Installer: produs dezinstalat.",
         };
@@ -119,11 +189,17 @@ namespace LogAnalyzer.Core.Services.Details
             else if (provider.Contains("Eventlog", StringComparison.OrdinalIgnoreCase) || provider.Contains("Service Control Manager", StringComparison.OrdinalIgnoreCase) ||
                      provider.Contains("Kernel-General", StringComparison.OrdinalIgnoreCase) || provider.Equals("User32", StringComparison.OrdinalIgnoreCase))
                 System_.TryGetValue(eventId, out text);
+            text ??= ByProvider.FirstOrDefault(p => p.Id == eventId && provider.Contains(p.Provider, StringComparison.OrdinalIgnoreCase)).Text;
             text ??= Other.TryGetValue(eventId, out var o) &&
                      (provider.Contains("PowerShell", StringComparison.OrdinalIgnoreCase) || provider.Contains("Defender", StringComparison.OrdinalIgnoreCase) ||
                       provider.Contains("Sysmon", StringComparison.OrdinalIgnoreCase) || provider.Contains("MsiInstaller", StringComparison.OrdinalIgnoreCase))
                 ? o : null;
             text ??= Security.TryGetValue(eventId, out var s) && eventId >= 4600 ? s : null;
+            text ??= EntraSignInCodes.TryGetValue(eventId, out var entra) &&
+                     (provider.Contains("Azure", StringComparison.OrdinalIgnoreCase) || provider.Contains("Entra", StringComparison.OrdinalIgnoreCase) ||
+                      provider.Contains("AAD", StringComparison.OrdinalIgnoreCase) || provider.Contains("SignIn", StringComparison.OrdinalIgnoreCase) ||
+                      provider.Contains("M365", StringComparison.OrdinalIgnoreCase))
+                ? entra : null;
             if (text is not null) into.Add(text);
 
             string D(string k) => data.TryGetValue(k, out var v) ? v : "";
@@ -143,6 +219,12 @@ namespace LogAnalyzer.Core.Services.Details
                         if (NtStatus.TryGetValue(st, out var why)) into.Add($"Motivul eșecului: {why} ({st}).");
                     }
                     if (D("ElevatedToken") == "%%1842") into.Add("Sesiunea are token elevat (drepturi de administrator).");
+                    // Owner 2026-10-11: a controller must not mistake the operating system's own logons for a person's activity.
+                    if (eventId == 4624 && (lt is "0" or "5" || D("TargetUserSid") is "S-1-5-18" or "S-1-5-19" or "S-1-5-20" || D("TargetUserName").EndsWith('$') ||
+                                            D("TargetUserName") is "SYSTEM" or "LOCAL SERVICE" or "NETWORK SERVICE" || D("TargetUserName").StartsWith("DWM-") || D("TargetUserName").StartsWith("UMFD-")))
+                        into.Add("Pe înțeles: operație normală a Windows (un serviciu sau sistemul însuși s-a autentificat), NU activitatea unei persoane. Astfel de evenimente apar de sute de ori pe zi; la control nu contează.");
+                    else if (eventId == 4624 && lt is "2" or "10" or "11" or "7")
+                        into.Add("Pe înțeles: o persoană a intrat pe stație" + (lt == "10" ? " de la distanță (Remote Desktop)." : lt == "7" ? " deblocând ecranul." : " la tastatură.") + " Contul și ora se compară cu cine avea voie să lucreze atunci.");
                     break;
                 case 4688:
                     if (D("NewProcessName").Length > 0) into.Add($"A rulat: {D("NewProcessName")}");

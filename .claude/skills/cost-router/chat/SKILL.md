@@ -36,6 +36,10 @@ floor (risky work on Haiku or Sonnet), say that first.
 - For long documents, work section by section and keep only conclusions.
 - Start a new chat when the topic changes; a long chat costs more per message.
 - One clarifying question at most, and only when the answer changes the work.
+- Security-sensitive work: write the threat model / probe list before drafting, so issues are
+  prevented in the first pass; at most 2 review passes, the second on the changed part only.
+- At a milestone, write a short checkpoint (task, done, next, key files) and continue in a new
+  chat from it instead of the long one.
 
 ## 3. Quality is not negotiable
 

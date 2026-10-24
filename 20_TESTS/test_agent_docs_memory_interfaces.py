@@ -98,6 +98,35 @@ def test_every_memory_interface_cited_exists(name):
     assert problems_in((REPO / name).read_text(encoding="utf-8")) == []
 
 
+# Agent profiles are instructions too: the router hands them to agents (`profile_ref` in
+# 04_CONFIG/agent_router.json). All 21 pointed at `99_SYSTEM/` files deleted in dbcfbc502.
+AGENT_PROFILES = sorted(p.relative_to(REPO).as_posix() for p in (REPO / ".agents" / "agents").glob("*/agent.md"))
+
+
+def test_there_are_agent_profiles_to_check():
+    assert len(AGENT_PROFILES) >= 21
+
+
+@pytest.mark.parametrize("name", AGENT_PROFILES)
+def test_every_path_an_agent_profile_cites_exists(name):
+    assert problems_in((REPO / name).read_text(encoding="utf-8")) == []
+
+
+def test_every_skill_the_capability_registry_names_exists():
+    # 18 were missing on 2026-10-23: 17 removed on purpose (dropped from the registry), ansible-automation restored
+    text = (REPO / "00_GOVERNANCE" / "protocols" / "Agent_Capability_Registry.md").read_text(encoding="utf-8")
+    named = set(re.findall(r"^- (\S+)$", text, re.MULTILINE))
+    assert len(named) > 100
+    present = {p.name for p in (REPO / ".agents" / "skills").iterdir() if (p / "SKILL.md").is_file()}
+    assert sorted(named - present) == []
+
+
+def test_the_restored_policy_files_carry_their_provenance():
+    for name in ("Agent_Capability_Registry.md", "Council_Context_Budget.md"):
+        text = (REPO / "00_GOVERNANCE" / "protocols" / name).read_text(encoding="utf-8")
+        assert "dbcfbc502^" in text and "Provenance" in text, name
+
+
 @pytest.mark.parametrize("name", ["CLAUDE.md", "AGENTS.md"])
 def test_the_instructions_point_at_the_real_interfaces(name):
     text = (REPO / name).read_text(encoding="utf-8")

@@ -17,7 +17,7 @@
 * **Lifecycle**: `ACTIVE` (`Policy status: ACTIVE`)
 * **Title**: *Reguli de calitate pentru invatarea din carti*
 * **Scope**: Ingestion, distillation, concept extraction, quality gating, and promotion of knowledge derived from monographs, textbooks, research papers, and experimental cognitive literature into the Memory Vault.
-* **Authority**: Vault Owner (`userist123 <nitumarius@yahoo.com>`).
+* **Authority**: Vault Owner (`userist123 <owner@example.invalid>`).
 * **Dependencies**: `MemoryController`, `Authorizer` (`Principal.AI_AGENT`, `Principal.HUMAN`), `type: book_map`, `registru CONFLICT-<domain>-<slug>`, Utilization Testing Harness ($\ge 8/10$), Ablation Evaluation Harness ($Delta = (S_{\text{cu}} - S_{\text{fără}}) / S_{\text{fără}}$).
 
 ---

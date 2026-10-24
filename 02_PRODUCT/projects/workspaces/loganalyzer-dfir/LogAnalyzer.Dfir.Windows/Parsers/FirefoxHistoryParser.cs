@@ -9,7 +9,7 @@ namespace LogAnalyzer.Dfir.Windows.Parsers;
 
 /// <summary>
 /// Firefox places.sqlite: page visits (moz_historyvisits + moz_places) and downloads (moz_annos
-/// downloads/destinationFileURI and downloads/metaData). Read from a working copy in %TEMP%, like the Chromium parser.
+/// downloads/destinationFileURI and downloads/metaData). Read from a working copy inside the case, like the Chromium parser.
 /// </summary>
 public sealed class FirefoxHistoryParser : EvidenceParserBase
 {
@@ -31,8 +31,8 @@ public sealed class FirefoxHistoryParser : EvidenceParserBase
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
-        var work = Path.Combine(Path.GetTempPath(), "LogAnalyzer", "sqlite_work", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(work);
+        // Security audit #14: the working copy lives in <case>\Work (or the per-user work folder outside a case), never in %TEMP%; removed in finally.
+        var work = LogAnalyzer.Dfir.IO.WorkFolders.NewWorkDirectory(fullPath, "sqlite");
         var copy = Path.Combine(work, "places.sqlite");
         try
         {
@@ -126,8 +126,7 @@ public sealed class FirefoxHistoryParser : EvidenceParserBase
         finally
         {
             SqliteConnection.ClearAllPools();
-            try { Directory.Delete(work, true); }
-            catch (IOException) { /* the working copy is not evidence; a leftover in %TEMP% is harmless */ }
+            LogAnalyzer.Dfir.IO.WorkFolders.TryDelete(work);
         }
     }
 

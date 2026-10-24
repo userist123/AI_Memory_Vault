@@ -51,7 +51,7 @@ namespace LogAnalyzer.UI.Views
 
         private void Copy_Click(object sender, RoutedEventArgs e)
         {
-            Clipboard.SetText(_sheet.ToPlainText());
+            if (LogAnalyzer.UI.Services.ExportAudit.Clipboard(LogAnalyzer.UI.Services.ExportAudit.LiveCaseId, "detail_sheet", _sheet.ToPlainText()) is { } refused) { StatusText.Text = refused; return; }
             StatusText.Text = "Copiat în clipboard.";
         }
 
@@ -60,7 +60,12 @@ namespace LogAnalyzer.UI.Views
             var safe = new string(_sheet.Title.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c).ToArray());
             var dlg = new SaveFileDialog { FileName = (safe.Length > 80 ? safe[..80] : safe) + ".pdf", Filter = "PDF (*.pdf)|*.pdf" };
             if (dlg.ShowDialog(this) != true) return;
-            DetailSheetPdf.Write(_sheet, dlg.FileName);
+            if (LogAnalyzer.UI.Services.ExportAudit.Run(LogAnalyzer.UI.Services.ExportAudit.LiveCaseId, "pdf-detail", 1, dlg.FileName,
+                    () => DetailSheetPdf.Write(_sheet, dlg.FileName)) is { } refused)
+            {
+                StatusText.Text = refused;
+                return;
+            }
             StatusText.Text = "PDF salvat: " + dlg.FileName;
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
         }

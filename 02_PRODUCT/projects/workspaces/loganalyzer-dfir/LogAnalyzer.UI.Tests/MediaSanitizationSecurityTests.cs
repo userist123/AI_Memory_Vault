@@ -90,7 +90,7 @@ namespace LogAnalyzer.UI.Tests
                 TotalPasses = 3,
                 PreSanitizationSha256 = "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
                 PostSanitizationSha256 = "ba7816bf8f01cfea414140de5dae2223b00361a396177a9cb410ff61f20015ad",
-                PrimaryOperator = "OP-MARIUS-01",
+                PrimaryOperator = "OP-ANALYST-01",
                 VerifierOperator = "SEC-OFFICER-ALEX",
                 TamperEvidentAuditHash = "9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08",
                 IsVerifiedZeroized = true
@@ -102,7 +102,7 @@ namespace LogAnalyzer.UI.Tests
             Assert.NotNull(textCert);
             Assert.Contains("CERTIFICAT OFICIAL DE SANITIZARE A DATELOR", textCert);
             Assert.Contains("4C53000123456789", textCert); // P16 Serial
-            Assert.Contains("OP-MARIUS-01", textCert);
+            Assert.Contains("OP-ANALYST-01", textCert);
             Assert.Contains("SEC-OFFICER-ALEX", textCert); // 4-Eyes
 
             Assert.NotNull(jsonCert);

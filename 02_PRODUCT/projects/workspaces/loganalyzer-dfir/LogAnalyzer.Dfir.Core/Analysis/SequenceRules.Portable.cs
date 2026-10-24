@@ -33,7 +33,7 @@ public static partial class SequenceRules
             if (removable.Contains(letter)) where = $"unitate amovibilă {letter}:";
             else if (d.UserWritablePathParts.Any(p => p.Length > 0 && path.Contains(p, StringComparison.OrdinalIgnoreCase)) &&
                      (tools.Contains(Low(name)) || d.PortableNameWords.Any(w => w.Length > 0 && name.Contains(w, StringComparison.OrdinalIgnoreCase))))
-                where = "cale scriabilă de utilizator";
+                where = "cale în care utilizatorii pot scrie";
             else continue;
             var first = g.Min(x => T(x.E))!.Value;
             // First seen in the case period: the earliest row for the path must fall inside it (when the scope gives a period).
@@ -121,7 +121,7 @@ public static partial class SequenceRules
                     "; prima apariție în perioadă înseamnă prima în sursele colectate, nu dovada că programul nu exista înainte",
                     p.Rows.Take(6).Select(r => Ref(r, $"{r.Source} {p.Path}")).ToList(), []));
             }
-            else steps.Add(SequenceEngine.Missing("software portabil sau de pe mediu amovibil", "Prefetch / BAM / Amcache", execSrc));
+            else steps.Add(SequenceEngine.Missing("software portabil sau de pe suport de stocare amovibil", "Prefetch / BAM / Amcache", execSrc));
             if (arcs.Count > 0)
             {
                 var a = arcs[0];
@@ -135,7 +135,7 @@ public static partial class SequenceRules
                 if (small > 0) miss = miss with { Note = $"pas neobservat ({small} arhive sub pragul de {SizeText(d.ArchiveMinBytes)} nu contează; sursa nu arată o arhivă mai mare în fereastră)" };
                 steps.Add(miss);
             }
-            steps.Add(new($"scriere pe mediul amovibil {m.Name}", "USN / Security 4663 pe volumul mediului", T(cs[0].Event), Fold(cs.Select(x => WriteAccount(m, x)), 3), $"mediu {m.Name} ({m.Letter}:)",
+            steps.Add(new($"scriere pe suportul de stocare amovibil {m.Name}", "USN / Security 4663 pe volumul mediului", T(cs[0].Event), Fold(cs.Select(x => WriteAccount(m, x)), 3), $"mediu {m.Name} ({m.Letter}:)",
                 $"{cs.Count} urme de scriere pe unitatea {m.Letter}: {Fold(cs.Select(x => Leaf(PathOf(x))), 6)}", cs.Take(8).Select(x => Ref(x.Event, x.What)).ToList(), m.FindingIds.ToList()));
 
             var t1 = progs.Count > 0 ? $"software {(progs[0].Executed ? "rulat" : "prezent")} la {Stamp(progs[0].FirstSeen)}" : "software portabil: pas neobservat";
