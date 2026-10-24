@@ -31,7 +31,10 @@ import { doorIssues, doorSwing, doorTypeOf, isSlidingType } from '@/core/doors';
 import { DOOR_TYPES, DOOR_TYPE_RULES, WALL_ITEM_RULES } from '@/core/rules';
 import { normalizeHex } from '@/core/appearance';
 import { footprintOf } from '@/core/validate';
-import { suggestTechPoints, placeTechPoint, TECH_KINDS, type TechKind } from '@/core/technical';
+import { suggestTechPoints, placeTechPoint, TECH_KINDS, techIssues, techBodyCount, MAX_TECH_POINTS, type TechKind, type TechPoint } from '@/core/technical';
+import { defaultZoneMaterial, intersect, zoneAreaIn, removeRoomZones } from '@/core/floor-zones';
+import { wallStatus } from '@/core/renovation';
+import type { FloorZone, WallStatus } from '@/core/types';
 import { RoomLookPanel, WallLookPanel, OpeningLookPanel, ItemLookPanel } from './AppearanceControls';
 import { finishesOf, budgetOf, roomGeometry, computeBudget } from '@/core/boq';
 import { appearanceColors } from '@/core/appearance';
@@ -104,11 +107,13 @@ const ICON: Record<Tool, string> = {
   niche: 'M3 4h18v16H3zM8 8h8v7H8z',
   clad: 'M4 3v18M8 3v18M12 3v18M16 3v18M20 3v18',
   wall_item: 'M4 5h16v12H4zM7 14l3-4 3 3 2-2 2 3M8 20h8',
+  floor_zone: 'M4 4h16v16H4zM4 12h8v8M6 20l6-6M4 16l4-4',
   dim: 'M3 8v8M21 8v8M3 12h18M6 10l-2 2 2 2M18 10l2 2-2 2',
   text: 'M5 5h14M12 5v14M9 19h6',
   column: 'M6 4h12v3H6zm2 3h8v10H8zm-2 10h12v3H6z',
   beam: 'M3 7h18v4H3zm0 6h18v1H3zm0 3h18v1H3z',
   glass_wall: 'M4 4h16v16H4zm2 2v12h5V6zm7 0v12h5V6z',
+  demolish: 'M3 8h7M14 8h7M3 16h18M8 4l8 16M16 4L8 20',
   stair: 'M4 19h4v-3h4v-3h4v-3h4V7h-3v3h-4v3H8v3H4z',
   measure: 'M3 17L17 3l4 4L7 21zM8 12l2 2M11 9l2 2M14 6l2 2',
   tech: 'M13 2L4 14h7l-1 8 9-12h-7z'
@@ -124,11 +129,13 @@ const TOOL_LABEL: Record<Tool, string> = {
   niche: 'tool.niche',
   clad: 'tool.clad',
   wall_item: 'tool.wall_item',
+  floor_zone: 'tool.floor_zone',
   dim: 'tool.dim',
   text: 'tool.text',
   column: 'tool.column',
   beam: 'tool.beam',
   glass_wall: 'tool.glass_wall',
+  demolish: 'tool.demolish',
   stair: 'tool.stair',
   measure: 'tool.measure',
   tech: 'tool.tech'
@@ -137,9 +144,9 @@ const TOOL_LABEL: Record<Tool, string> = {
 /** Etapele unui proiect de amenajare, în ordinea în care lucrează un designer: fiecare are vederea, uneltele și panoul ei. */
 type Stage = typeof STAGE_IDS[number];
 const STAGES: { id: Stage; view: '2d' | '3d' | 'split'; tools: Tool[]; page?: true }[] = [
-  { id: 'survey', view: '2d', tools: ['select', 'wall', 'room', 'door', 'window', 'passage', 'niche', 'column', 'shaft', 'beam', 'glass_wall', 'stair', 'measure', 'dim', 'text'] },
+  { id: 'survey', view: '2d', tools: ['select', 'wall', 'room', 'door', 'window', 'passage', 'niche', 'column', 'shaft', 'beam', 'glass_wall', 'demolish', 'stair', 'measure', 'dim', 'text'] },
   { id: 'concept', view: 'split', tools: ['select', 'niche', 'column', 'glass_wall', 'wall_item', 'measure'] },
-  { id: 'finishes', view: 'split', tools: ['select', 'clad', 'wall_item', 'measure'] },
+  { id: 'finishes', view: 'split', tools: ['select', 'clad', 'wall_item', 'floor_zone', 'measure'] },
   { id: 'ffe', view: 'split', tools: ['select', 'wall_item', 'measure'] },
   { id: 'mep', view: '2d', tools: ['select', 'tech', 'shaft', 'measure'] },
   { id: 'docs', view: '2d', tools: ['select', 'measure', 'dim', 'text'] },
@@ -240,7 +247,7 @@ export default function Editor({ id }: { id: string }){
     for (const i of stairIss) if (i.with && m[i.with]) m[i.with].push(i); return m; }, [snap, catalog, stairIss]);
   const sev = useMemo(() => Object.fromEntries(Object.entries(issues).map(([k, v]) => [k, severityOf(v)])) as Record<string, Severity>, [issues]);
   // problemele nivelului: pereți/goluri și scările lui (cele legate de o piesă apar la piesă)
-  const floorIssues = useMemo(() => snap ? [...validateFloor(snap.floor), ...(catalog ? wallItemFurnitureIssues(snap, catalog, snap.floor) : []), ...stairIss.filter(i => !i.with && snap.floor.stairs?.some(s => s.id === i.vars?.stair))] : [], [snap, stairIss, catalog]);
+  const floorIssues = useMemo(() => snap ? [...validateFloor(snap.floor), ...(catalog ? wallItemFurnitureIssues(snap, catalog, snap.floor) : []), ...(catalog ? techIssues(snap, catalog, snap.floor) : []), ...stairIss.filter(i => !i.with && snap.floor.stairs?.some(s => s.id === i.vars?.stair))] : [], [snap, stairIss, catalog]);
   const advice = useMemo(() => { if (!snap || !catalog) return [] as Advice[]; let budget; if (mc && house){ const b = computeBudget(house, catalog, mc); budget = { total: b.chosen.total, target: b.target, unknown: b.unknownItems.length }; }
     return adviseProject(snap, catalog, { accessibility: !!snap.brief?.accessibility, budget, colorsOf: appearanceColors, currency: catalogCurrency(catalog) }); }, [snap, house, catalog, mc]);
   const showAdvice = (a: Advice) => { setStageRaw(a.refs.placementIds?.length ? 'ffe' : 'survey'); const pid = a.refs.placementIds?.[0], wid = a.refs.wallIds?.[0]; if (pid) setSel({ kind: 'placement', id: pid }); else if (a.refs.roomId) setSel({ kind: 'room', id: a.refs.roomId }); else if (wid) setSel({ kind: 'wall', id: wid }); };
@@ -310,6 +317,7 @@ export default function Editor({ id }: { id: string }){
     if (sel.kind === 'wall'){ s.floor.walls = s.floor.walls.filter(w => w.id !== sel.id); if (s.floor.niches){ s.floor.niches = s.floor.niches.filter(n => n.wallId !== sel.id); if (!s.floor.niches.length) delete s.floor.niches; }
       if (s.floor.wallItems){ s.floor.wallItems = s.floor.wallItems.filter(n => n.wallId !== sel.id); if (!s.floor.wallItems.length) delete s.floor.wallItems; } }
     if (sel.kind === 'wall_item'){ s.floor.wallItems = (s.floor.wallItems || []).filter(x => x.id !== sel.id); if (!s.floor.wallItems.length) delete s.floor.wallItems; }
+    if (sel.kind === 'floor_zone'){ s.floor.zones = (s.floor.zones || []).filter(x => x.id !== sel.id); if (!s.floor.zones.length) delete s.floor.zones; }
     if (sel.kind === 'stair'){ s.floor.stairs = (s.floor.stairs || []).filter(x => x.id !== sel.id); if (!s.floor.stairs.length) delete s.floor.stairs; }
     if (sel.kind === 'column'){ s.floor.columns = (s.floor.columns || []).filter(x => x.id !== sel.id); if (!s.floor.columns.length) delete s.floor.columns; }
     if (sel.kind === 'beam'){ s.floor.beams = (s.floor.beams || []).filter(x => x.id !== sel.id); if (!s.floor.beams.length) delete s.floor.beams; }
@@ -317,7 +325,9 @@ export default function Editor({ id }: { id: string }){
     if (sel.kind === 'niche'){ s.floor.niches = (s.floor.niches || []).filter(x => x.id !== sel.id); if (!s.floor.niches.length) delete s.floor.niches; }
     if (sel.kind === 'glass_wall'){ s.floor.glassWalls = (s.floor.glassWalls || []).filter(x => x.id !== sel.id); if (!s.floor.glassWalls.length) delete s.floor.glassWalls; }
     if (sel.kind === 'opening'){ const w = s.floor.walls.find(w => w.id === sel.wallId); if (w) w.openings = w.openings.filter(o => o.id !== sel.id); }
-    if (sel.kind === 'room'){ s.floor.rooms = s.floor.rooms.filter(r => r.id !== sel.id); s.placements = s.placements.filter(p => p.roomId !== sel.id); } }); setSel(null); };
+    // camera ștearsă își ia piesele și zonele de pardoseală
+    if (sel.kind === 'room'){ s.floor.rooms = s.floor.rooms.filter(r => r.id !== sel.id); s.placements = s.placements.filter(p => p.roomId !== sel.id);
+      removeRoomZones(s.floor, sel.id); } }); setSel(null); };
   const rotate = (pid: string) => { if (!snap || !catalog) return; const n = structuredClone(snap), p = n.placements.find(x => x.id === pid)!; p.rotation = r3(((p.rotation + Math.PI / 2) % (Math.PI * 2))); p.source = 'manual';
     const iss = validatePlacement(n, catalog, p); if (severityOf(iss) === 'ERROR'){ say(t('editor.rotateNoFit', { msg: iT(iss.find(i => i.severity === 'ERROR')!) })); return; } commit(n); if (iss.length) setPending({ before: house!, issues: iss, discard: () => hist.current.discardLast() }); };
   // ---- niveluri și scări ----
@@ -353,6 +363,7 @@ export default function Editor({ id }: { id: string }){
         patchWallItem(sel.id, q => { q.offset = r3(Math.max(q.width / 2, Math.min(L - q.width / 2, q.offset + along))); }); } }
       else if (sel.kind === 'niche'){ const n = snap?.floor.niches?.find(x => x.id === sel.id), w = n && snap!.floor.walls.find(x => x.id === n.wallId); if (n && w){ const L = wallLength(w.a, w.b), along = ((w.b[0] - w.a[0]) * dx + (w.b[1] - w.a[1]) * dz) / (L || 1);
         patchNiche(sel.id, q => { q.offset = r3(Math.max(0, Math.min(L - q.width, q.offset + along))); }); } }
+      else if (sel.kind === 'floor_zone') patchZone(sel.id, z => { z.rect = { x0: r3(z.rect.x0 + dx), x1: r3(z.rect.x1 + dx), z0: r3(z.rect.z0 + dz), z1: r3(z.rect.z1 + dz) }; });
       else if (sel.kind === 'room') mutate(s => { const r = s.floor.rooms.find(x => x.id === sel.id); if (r) r.rect = { x0: r3(r.rect.x0 + dx), x1: r3(r.rect.x1 + dx), z0: r3(r.rect.z0 + dz), z1: r3(r.rect.z1 + dz) }; }); } };
   useEffect(() => { const k = (e: KeyboardEvent) => { const el = e.target as HTMLElement;
     // în lista obiectelor planului tastele aparțin listei (săgeți, Enter, Escape): Backspace nu șterge selecția pe neașteptate
@@ -479,6 +490,20 @@ export default function Editor({ id }: { id: string }){
     const it: WallItem = { id: wid, wallId, side, kind: wallItemKind, offset: r3(Math.max(width / 2, Math.min(L - width / 2, offset))), elevation: r3(Math.min(snap.floor.ceilingHeight - d.height / 2, d.elevation)), width, height: d.height };
     mutate(s => { s.floor.wallItems = [...(s.floor.wallItems || []), it]; }); setSel({ kind: 'wall_item', id: wid }); setTool('select'); };
   const patchWallItem = (wid: string, fn: (n: WallItem) => void) => mutate(s => { const n = s.floor.wallItems?.find(x => x.id === wid); if (n) fn(n); });
+  // starea peretelui: lipsă = existent (câmpul se șterge, ca proiectul să rămână ca înainte)
+  const setWallStatus = (wid: string, st: WallStatus) => mutate(s => { const w = s.floor.walls.find(x => x.id === wid); if (!w) return; if (st === 'existing') delete w.status; else w.status = st; });
+  // unealta „Demolare”: clic pe perete comută existent ↔ de demolat; unealta rămâne activă pentru peretele următor
+  const onToggleDemolish = (wid: string) => { const w = snap.floor.walls.find(x => x.id === wid); if (!w) return; const next: WallStatus = w.status === 'demolish' ? 'existing' : 'demolish';
+    setWallStatus(wid, next); setSel({ kind: 'wall', id: wid }); say(t(next === 'demolish' ? 'wallStatus.marked' : 'wallStatus.restored', { len: formatLength(wallLength(w.a, w.b), units, lang) })); };
+  // zona de pardoseală nouă: în camera în care cade mijlocul dreptunghiului, decupată la cameră; materialul implicit contrastează cu al camerei
+  const onAddZone = (r: { x0: number; z0: number; x1: number; z1: number }) => { if (full(snap.floor.zones?.length, PLAN_LIMITS.zone.max)) return;
+    const cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2, room = snap.floor.rooms.find(q => cx >= q.rect.x0 && cx <= q.rect.x1 && cz >= q.rect.z0 && cz <= q.rect.z1);
+    if (!room){ say(t('zone.noRoom')); return; } const c = intersect(room.rect, r); if (!c || c.x1 - c.x0 < PLAN_LIMITS.zone.minM || c.z1 - c.z0 < PLAN_LIMITS.zone.minM){ say(t('zone.tooSmall')); return; }
+    const mat = defaultZoneMaterial(mc, finishesOf(snap, room).floor); if (!mat){ say(t('fin.noProduct')); return; }
+    const zid = `zona-${uid().slice(0, 8)}`, z: FloorZone = { id: zid, roomId: room.id, rect: { x0: r3(c.x0), z0: r3(c.z0), x1: r3(c.x1), z1: r3(c.z1) }, floor: mat };
+    mutate(s => { s.floor.zones = [...(s.floor.zones || []), z]; }); setSel({ kind: 'floor_zone', id: zid }); setTool('select'); say(t('zone.added', { room: room.name })); };
+  const patchZone = (zid: string, fn: (z: FloorZone) => void) => mutate(s => { const z = s.floor.zones?.find(x => x.id === zid); if (z) fn(z); });
+  const patchTech = (tid: string, fn: (p: TechPoint) => void) => mutate(s => { const p = s.tech?.find(x => x.id === tid); if (p) fn(p); });
   const onAddBeam = (a: [number, number], b: [number, number]) => {
     if (full(snap.floor.beams?.length, PLAN_LIMITS.beam.max)) return;
     const bid = `bm-${uid().slice(0, 8)}`;
@@ -527,7 +552,8 @@ export default function Editor({ id }: { id: string }){
   const selAnn = sel?.kind === 'annotation' ? snap.floor.annotations?.find(a => a.id === sel.id) : undefined;
   const selNiche = sel?.kind === 'niche' ? snap.floor.niches?.find(n => n.id === sel.id) : undefined;
   const selWallItem = sel?.kind === 'wall_item' ? snap.floor.wallItems?.find(n => n.id === sel.id) : undefined;
-  const selAnnounce = selPl ? t('plan.selPiece', { name: resolve(catalog, selPl.variantId)?.variant.name ?? selPl.group }) : selRoom ? t('plan.selRoom', { name: selRoom.name }) : selStair ? t('plan.selStair') : selWall ? t('editor.wall') : selColumn ? t(selColumn.role === 'shaft' ? 'tool.shaft' : selColumn.role === 'boxing' ? 'column.boxing' : 'tool.column') : selBeam ? t('tool.beam') : selGlassWall ? t('tool.glass_wall') : selNiche ? t('tool.niche') : selWallItem ? t(`wallItem.kind.${selWallItem.kind}`) : selAnn ? t(selAnn.kind === 'dim' ? 'tool.dim' : 'tool.text') : '';
+  const selZone = sel?.kind === 'floor_zone' ? snap.floor.zones?.find(z => z.id === sel.id) : undefined;
+  const selAnnounce = selPl ? t('plan.selPiece', { name: resolve(catalog, selPl.variantId)?.variant.name ?? selPl.group }) : selRoom ? t('plan.selRoom', { name: selRoom.name }) : selStair ? t('plan.selStair') : selWall ? t('editor.wall') : selColumn ? t(selColumn.role === 'shaft' ? 'tool.shaft' : selColumn.role === 'boxing' ? 'column.boxing' : 'tool.column') : selBeam ? t('tool.beam') : selGlassWall ? t('tool.glass_wall') : selNiche ? t('tool.niche') : selWallItem ? t(`wallItem.kind.${selWallItem.kind}`) : selZone ? t('tool.floor_zone') : selAnn ? t(selAnn.kind === 'dim' ? 'tool.dim' : 'tool.text') : '';
   // „Adaugă în cameră” fără cameră aleasă: camera potrivită grupei (dormitor pentru pat), altfel cea mai mare
   const roomsFor = (vid: string) => { const g = groupOf(vid), bySize = [...snap.floor.rooms].sort((a, b) => area(b.rect) - area(a.rect));
     return [...bySize.filter(r => groupsForRoom(r.type, [g]).suggested.includes(g)), ...bySize.filter(r => !groupsForRoom(r.type, [g]).suggested.includes(g))]; };
@@ -537,7 +563,7 @@ export default function Editor({ id }: { id: string }){
     say(t('editor.noFreeSpot')); };
   // ce se vede în panou: selecția (dacă etapa o folosește) sau conținutul etapei
   const roomStage = stage === 'survey' || stage === 'finishes' || stage === 'ffe';
-  const showSel = !!(selAnn ? stage === 'survey' || stage === 'docs' : selWallItem ? stage === 'concept' || stage === 'finishes' || stage === 'ffe' : selColumn ? roomStage || stage === 'mep' : selNiche ? roomStage || stage === 'concept' : (selRoom || selWall || selOp || selStair || selBeam || selGlassWall) ? roomStage : selPl ? stage === 'ffe' || stage === 'concept' || stage === 'finishes' || stage === 'present' : false);
+  const showSel = !!(selAnn ? stage === 'survey' || stage === 'docs' : selZone ? roomStage || stage === 'concept' : selWallItem ? stage === 'concept' || stage === 'finishes' || stage === 'ffe' : selColumn ? roomStage || stage === 'mep' : selNiche ? roomStage || stage === 'concept' : (selRoom || selWall || selOp || selStair || selBeam || selGlassWall) ? roomStage : selPl ? stage === 'ffe' || stage === 'concept' || stage === 'finishes' || stage === 'present' : false);
   // câmpurile numerice sunt în cm (metric) sau inci (imperial); `f` și `min` primesc mereu cm, datele rămân metrice
   // în inci, minimul afișat (ex. 78,7″ pentru 200 cm) se întoarce puțin sub pragul în cm: acceptăm o jumătate de inci toleranță și fixăm la minim
   const num = (v: string, f: (x: number) => void, min = 0) => { const x = v.trim() === '' ? 0 : inputToCm(v, units), tol = units === 'imperial' ? 1.27 : 1e-9; if (x != null && x >= min - tol) f(Math.max(x, min)); };
@@ -649,7 +675,10 @@ export default function Editor({ id }: { id: string }){
         {(view === '2d' || (view === 'split' && !compact)) && <div className="planwrap">{!preview && <PlanObjects groups={mirror} selected={sel} onPick={pickMirror} />}<PlanView
           onKey={onPlanKey}
           showTech={showTech && !preview}
-          onTechAt={(x, z) => { if (!snap || preview) return; const pt = placeTechPoint(snap, techKind, x, z); if (!pt){ say(t('tech.outside')); return; } mutate(s => { s.tech = [...(s.tech || []), pt]; }); say(t('tech.placed', { rn: snap.floor.rooms.find(r => r.id === pt.roomId)?.name ?? '' })); }}
+          onTechAt={(x, z) => { if (!snap || preview) return;
+            // plafoanele serverului: toate punctele (600), caloriferele cu corp (100), unitățile de aer condiționat (40)
+            if (full(snap.tech?.length, MAX_TECH_POINTS) || (techKind === 'radiator' && full(techBodyCount(house?.tech, 'radiator'), PLAN_LIMITS.radiator.max)) || (techKind === 'hvac_split' && full(techBodyCount(house?.tech, 'hvac_split'), PLAN_LIMITS.hvac.max))) return;
+            const pt = placeTechPoint(snap, techKind, x, z); if (!pt){ say(t('tech.outside')); return; } mutate(s => { s.tech = [...(s.tech || []), pt]; }); say(t('tech.placed', { rn: snap.floor.rooms.find(r => r.id === pt.roomId)?.name ?? '' })); }}
           key={(preview ? 'p' + preview.v.tier : 'live') + L}
           voids={voids}
           snap={preview ? shown(preview.v.candidate) : snap}
@@ -671,6 +700,8 @@ export default function Editor({ id }: { id: string }){
           showFinishes={!preview && (stage === 'finishes' || stage === 'docs')} mc={mc}
           onAddDim={preview ? undefined : onAddDim}
           onAddText={preview ? undefined : onAddText}
+          onToggleDemolish={preview ? undefined : onToggleDemolish}
+          onAddZone={preview ? undefined : onAddZone}
           onAddBeam={preview ? undefined : onAddBeam}
           onAddGlassWall={preview ? undefined : onAddGlassWall}
           onAddStairAt={preview ? undefined : onAddStairAt}
@@ -691,7 +722,7 @@ export default function Editor({ id }: { id: string }){
           {!preview && (stage === 'finishes' || stage === 'docs') && (() => { const marks = featureMarks(snap, snap.floor, finishesOf); if (!marks.length) return null;
             return (<details className="plan-legend"><summary>{t('fin.legend')}</summary><ul>{marks.map(mk => { const room = snap.floor.rooms.find(r => r.id === mk.roomId)!, w = finishesOf(snap, room).wallFeatures![mk.index]!;
               return <li key={`${mk.roomId}:${mk.index}`}><b>{t(`fin.code.${mk.kind}`)}{mk.n}</b> {t(`fin.kind.${mk.kind}`)} · {room.name}, {t(`fin.side.${w.side}`)}{w.alongFromM != null || w.alongToM != null ? ` · ${formatLength(w.alongFromM ?? 0, units, lang)}–${formatLength(w.alongToM ?? sideSpan(room, w.side), units, lang)}` : ''}</li>; })}</ul></details>); })()}
-          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : t('editor.hintSelect')}</div></div>}
+          <p className="sr-only" aria-live="polite">{selDesc ? liveSel : selAnnounce}</p><div className="hintbar">{tool === 'wall' ? t('editor.hintWall') : tool === 'room' ? t('editor.hintRoom') : tool === 'door' || tool === 'window' ? t('editor.hintOpening') : tool === 'passage' ? t('editor.hintPassage') : tool === 'column' ? t('editor.hintColumn') : tool === 'shaft' ? t('editor.hintShaft') : tool === 'niche' ? t('editor.hintNiche') : tool === 'dim' ? t('editor.hintDim') : tool === 'text' ? t('editor.hintText') : tool === 'beam' ? t('editor.hintBeam') : tool === 'glass_wall' ? t('editor.hintGlassWall') : tool === 'stair' ? t('editor.hintStair') : tool === 'measure' ? t('editor.hintMeasure') : tool === 'clad' ? t('editor.hintClad') : tool === 'wall_item' ? t('editor.hintWallItem') : tool === 'demolish' ? t('editor.hintDemolish') : tool === 'floor_zone' ? t('editor.hintZone') : tool === 'tech' && techKind === 'radiator' ? t('editor.hintRadiator') : t('editor.hintSelect')}</div></div>}
         {(view === '3d' || (view === 'split' && !compact)) && <Viewer3D projectId={id} voids={voids} mc={mc} snap={preview ? shown(preview.v.candidate) : snap} catalog={catalog} onPick={pid => !preview && pid && setSel({ kind: 'placement', id: pid })}
           selectedId={!preview && sel?.kind === 'placement' ? sel.id : null} hoverId={preview ? null : hoverPid} onHover={setHoverPid} frame={frame3d ?? undefined} onFrameOther={frameInPlan} />}
         {preview && <div className="previewbar" role="status">{t('editor.previewBar', { title: preview.v.title })} <button className="btn" onClick={() => setPreview(null)}>{t('common.close')}</button></div>}
@@ -752,6 +783,10 @@ export default function Editor({ id }: { id: string }){
               <label className="f"><span>{t('editor.thickness', { u })}</span><input type="number" value={inField(selWall.thickness)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.walls.find(w => w.id === selWall.id)!.thickness = r3(x / 100); }), 5)} /></label>
             </div>
             <label className="f" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={selWall.exterior} onChange={e => mutate(s => { s.floor.walls.find(w => w.id === selWall.id)!.exterior = e.target.checked; })} /> {t('editor.exteriorWall')}</label>
+            <label className="f"><span>{t('wallStatus.label')}</span><select value={wallStatus(selWall)} onChange={e => setWallStatus(selWall.id, e.target.value as WallStatus)}>
+              {(['existing', 'new', 'demolish'] as const).map(k => <option key={k} value={k}>{t(`wallStatus.${k}`)}</option>)}</select></label>
+            {selWall.status && <p className="prov" style={{ margin: 0 }}>{t(selWall.status === 'new' ? 'wallStatus.newNote' : 'wallStatus.demolishNote')}</p>}
+            {floorIssues.filter(i => i.code === 'WALL_DEMOLISH' && i.vars?.id === selWall.id).map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
             <div className="prov">{tp('editor.openingsDrag', selWall.openings.length)}</div>
             <WallLookPanel wall={selWall} snap={snap} onFace={(rid, hex) => look(a => { a.wallFaces = setFinish(a.wallFaces, `${selWall.id}@${rid}`, { color: hex }); })} />
             <button className="btn danger" onClick={del}>{t('editor.deleteWall')}</button>
@@ -870,6 +905,22 @@ export default function Editor({ id }: { id: string }){
                 <button className="btn danger" onClick={del}>{t('common.delete')}</button>
               </div>
             </div>); })()}
+          {selZone && (roomStage || stage === 'concept') && (() => { const z = selZone, room = snap.floor.rooms.find(r => r.id === z.roomId), ZL = PLAN_LIMITS.zone;
+            const floorsMc = mc ? mc.materials.filter(m => m.category === 'floor_tile' || m.category === 'parquet') : [], w = z.rect.x1 - z.rect.x0, d = z.rect.z1 - z.rect.z0;
+            const size = (k: 'w' | 'd') => (v: string) => num(v, x => patchZone(z.id, q => { const m = r3(x / 100); if (k === 'w') q.rect.x1 = r3(q.rect.x0 + m); else q.rect.z1 = r3(q.rect.z0 + m); }), ZL.minM * 100);
+            return (<div style={{ display: 'grid', gap: 8 }}>
+              <h3>{t('tool.floor_zone')}{z.label ? ` · ${z.label}` : ''}</h3>
+              <div className="prov">{t('zone.info', { room: room?.name ?? '-', area: formatArea(zoneAreaIn(snap.floor, z), units, lang) })}</div>
+              {floorIssues.filter(i => i.vars?.zone === z.id).map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
+              {floorsMc.length > 0 && <label className="f"><span>{t('zone.material')}</span><MaterialPicker cur={cur} value={z.floor} options={floorsMc} onChange={v => { if (v) patchZone(z.id, q => { q.floor = v; delete q.layout; }); }} /></label>}
+              <div className="grid2">
+                <label className="f"><span>{t('editor.width', { u })}</span><input type="number" value={inField(w)} onChange={e => size('w')(e.target.value)} /></label>
+                <label className="f"><span>{t('editor.depth', { u })}</span><input type="number" value={inField(d)} onChange={e => size('d')(e.target.value)} /></label>
+              </div>
+              <label className="f"><span>{t('zone.label')}</span><input type="text" maxLength={ZL.labelMax} value={z.label ?? ''} onChange={e => patchZone(z.id, q => { const v = stripPlanText(e.target.value).slice(0, ZL.labelMax); if (v.trim()) q.label = v; else delete q.label; })} /></label>
+              <p className="prov" style={{ margin: 0 }}>{t('zone.rule')}</p>
+              <button className="btn danger" onClick={del}>{t('common.delete')}</button>
+            </div>); })()}
           {selWallItem && (stage === 'concept' || stage === 'finishes' || stage === 'ffe') && (() => { const WL = PLAN_LIMITS.wallItem, it = selWallItem, wl = snap.floor.walls.find(w => w.id === it.wallId), L = wl ? wallLength(wl.a, wl.b) : PLAN_LIMITS.coordM, H = snap.floor.ceilingHeight;
             const cm = (k: 'width' | 'height' | 'depth' | 'elevation' | 'offset', lo: number, hi: number) => (v: string) => num(v, x => patchWallItem(it.id, n => { n[k] = r3(Math.min(x, hi * 100) / 100); }), lo * 100);
             const below = catalog ? furnitureBelow(snap, catalog, snap.floor, it) : null, cat = WALL_ITEM_CATEGORY[it.kind], products = cat && mc ? mc.materials.filter(m => m.category === cat) : [];
@@ -957,7 +1008,8 @@ export default function Editor({ id }: { id: string }){
         {stage === 'ffe' && !showSel && <CatalogPanel locale={lang} units={units} catalog={catalog} snap={snap} onUse={(g, vid) => mutate(s => { s.selections[g] = vid; if (!s.picked.includes(g)) s.picked.push(g); })} onAdd={(vid: string) => addToRoom(vid, selRoom)} />}
         {stage === 'mep' && <TechPanel onDraw={() => setTool('tech')} snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
           onSuggest={() => { const pts = suggestTechPoints(snap); mutate(s => { s.tech = pts; }); setShowTech(true); say(t('tech.suggested', { n: pts.length })); }}
-          onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })} />}
+          onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })}
+          onPatch={(id, patch) => patchTech(id, p => { Object.assign(p, patch); })} issues={catalog ? techIssues(snap, catalog, snap.floor).map(i => ({ text: iT(i), severity: i.severity })) : []} />}
         {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
         {stage === 'docs' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
         {stage === 'quote' && <BudgetWithCustom id={id} snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
