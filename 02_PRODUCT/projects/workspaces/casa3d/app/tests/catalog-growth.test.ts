@@ -98,3 +98,22 @@ test('decor (2026-10-24): plante, lampadar, veioză, șemineu electric, focar pe
   const nh = cat.variants.find(v => v.id === 'noptiera-0')!.dimensionsCm!.h / 100; assert.equal(surfaceUnder(snap, cat, snap.placements[2]), nh);
   assert.equal(surfaceUnder(snap, cat, { ...snap.placements[2], x: 4, z: 3 }), 0);
 });
+test('veioza ieșită 2 cm peste marginea noptierei: rămâne OVERLAP și stă pe podea (review PR #352)', async () => {
+  const { validatePlacement, surfaceUnder, surfaceSupport } = await import('../core/validate');
+  const nd = cat.variants.find(v => v.id === 'noptiera-0')!.dimensionsCm!, vd = cat.variants.find(v => v.id === 'veioza-0')!.dimensionsCm!;
+  // noptiera centrată în (1, 3); veioza cu centrul pe noptieră, dar marginea dreaptă la 2 cm în afara ei
+  const vx = 1 + nd.w / 200 - vd.w / 200 + .02;
+  const mk = (x: number) => ({ floor: { id: 'f', name: 'P', ceilingHeight: 2.6, walls: [], rooms: [{ id: 'r', name: 'Dormitor', type: 'dormitor', rect: { x0: 0, z0: 0, x1: 5, z1: 4 } }] },
+    placements: [{ id: 'n1', roomId: 'r', group: 'noptiera', variantId: 'noptiera-0', x: 1, z: 3, rotation: 0, source: 'manual' },
+      { id: 'v1', roomId: 'r', group: 'veioza', variantId: 'veioza-0', x, z: 3, rotation: 0, source: 'manual' }], selections: {}, picked: [], name: 't' } as any);
+  const out = mk(vx), v = out.placements[1], n = out.placements[0];
+  assert.ok(vx > 1 - nd.w / 200 && vx < 1 + nd.w / 200, 'centrul e pe noptieră');
+  assert.equal(surfaceSupport(out, cat, v), null); assert.equal(surfaceUnder(out, cat, v), 0, 'în 3D stă pe podea');
+  assert.ok(validatePlacement(out, cat, v).some((i: any) => i.code === 'OVERLAP' && i.with === 'n1'), 'veioza: OVERLAP');
+  assert.ok(validatePlacement(out, cat, n).some((i: any) => i.code === 'OVERLAP' && i.with === 'v1'), 'noptiera mutată sub veioză: OVERLAP');
+  // la 2 cm înăuntru încape: suprapunerea e permisă și veioza stă pe noptieră
+  const ok = mk(vx - .04), v2 = ok.placements[1];
+  assert.deepEqual(surfaceSupport(ok, cat, v2), { id: 'n1', h: nd.h / 100 });
+  assert.ok(!validatePlacement(ok, cat, v2).some((i: any) => i.code === 'OVERLAP'));
+  assert.ok(!validatePlacement(ok, cat, ok.placements[0]).some((i: any) => i.code === 'OVERLAP'));
+});
