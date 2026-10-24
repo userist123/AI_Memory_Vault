@@ -23,6 +23,12 @@
       "name": "Mobexpert",
       "country": "RO",
       "website": "https://mobexpert.ro/"
+    },
+    {
+      "id": "hornbach",
+      "name": "Hornbach",
+      "country": "RO",
+      "website": "https://www.hornbach.ro/"
     }
   ],
   "products": [
