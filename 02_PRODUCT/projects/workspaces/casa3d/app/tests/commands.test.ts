@@ -34,14 +34,15 @@ describe('registrul de comenzi', () => {
       [ev('Escape'), 'escape'],
       // Ctrl/⌘K rămâne la isPaletteShortcut: registrul îl afișează, dar dispecerul nu îl dublează
       [ev('k', { ctrlKey: true }), null], [ev('k', { metaKey: true }), null],
-      [ev('z'), null], [ev('Enter'), null]
+      // Z (zonă pardoseală) și Y (demolare) au primit unelte în lotul 3; o cifră rămâne fără comandă
+      [ev('z'), 'tool.floor_zone'], [ev('y'), 'tool.demolish'], [ev('1'), null], [ev('Enter'), null]
     ];
     for (const [e, id] of cases) assert.equal(matchCommand(e), id, JSON.stringify(e));
     assert.ok(isPaletteShortcut(ev('k', { ctrlKey: true })) && isPaletteShortcut(ev('k', { metaKey: true })));
     const pal = COMMANDS.find(c => c.id === 'palette')!; assert.equal(pal.dispatch, false); assert.ok(pal.shortcuts.some(s => shortcutMatches(s, ev('k', { ctrlKey: true }))));
   });
   test('100 % din unelte sunt în registru', () => {
-    const all: Record<Tool, true> = { select: true, wall: true, room: true, door: true, window: true, passage: true, shaft: true, niche: true, clad: true, wall_item: true, dim: true, text: true, measure: true, tech: true, column: true, beam: true, glass_wall: true, stair: true };
+    const all: Record<Tool, true> = { select: true, wall: true, room: true, door: true, window: true, passage: true, shaft: true, niche: true, clad: true, wall_item: true, dim: true, text: true, measure: true, tech: true, column: true, beam: true, glass_wall: true, stair: true, demolish: true, floor_zone: true };
     assert.deepEqual([...TOOLS].sort(), Object.keys(all).sort());
     assert.deepEqual(COMMANDS.filter(c => c.id.startsWith('tool.')).map(c => c.id.slice(5)).sort(), [...TOOLS].sort());
     for (const tk of TOOLS){ const c = COMMANDS.find(x => x.id === `tool.${tk}`)!; assert.equal(c.tool, tk); assert.equal(c.label, `tool.${tk}`); assert.ok(toolShortcut(tk)); }
