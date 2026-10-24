@@ -24,15 +24,16 @@ import { usePrefs } from '@/lib/prefs';
 const KINDS = Object.keys(FEATURE_CATEGORY) as WallFeatureKind[];
 
 /** Poziția unui covor: centrul, măsurat de la peretele de vest și de la cel de nord (m); „Centrează” șterge poziția (covorul revine în
- *  mijlocul camerei, ca înainte). Câmpuri numerice, fără tragere (WCAG 2.5.7). */
-function RugPosition({ room, rug, onChange }: { room: Room; rug: RugChoice; onChange(q: RugChoice): void }){
+ *  mijlocul camerei, ca înainte). Câmpuri numerice, fără tragere (WCAG 2.5.7). `n` = numărul covorului, în numele butonului
+ *  (cu două covoare, cititorul de ecran deosebește butoanele; textul vizibil rămâne la începutul numelui, WCAG 2.5.3). */
+function RugPosition({ room, rug, n, onChange }: { room: Room; rug: RugChoice; n: number; onChange(q: RugChoice): void }){
   const { t } = usePrefs(), r = room.rect, r2 = (v: number) => Math.round(v * 100) / 100, cx = rug.x ?? (r.x0 + r.x1) / 2, cz = rug.z ?? (r.z0 + r.z1) / 2;
   const set = (k: 'x' | 'z', v: string) => { const n = Number(v); if (v === '' || !Number.isFinite(n)) return; const lo = k === 'x' ? r.x0 : r.z0, hi = k === 'x' ? r.x1 : r.z1;
     onChange({ ...rug, x: r2(cx), z: r2(cz), [k]: r2(Math.max(lo, Math.min(hi, lo + n))) }); };
   return <div className="grid2" data-rug-pos>
     <label className="f"><span>{t('tex.rugX')}</span><input type="number" step={.05} value={r2(cx - r.x0)} onChange={e => set('x', e.target.value)} /></label>
     <label className="f"><span>{t('tex.rugZ')}</span><input type="number" step={.05} value={r2(cz - r.z0)} onChange={e => set('z', e.target.value)} /></label>
-    {(rug.x != null || rug.z != null) && <button type="button" className="btn" style={{ alignSelf: 'end' }} onClick={() => { const q: RugChoice = { ...rug }; delete q.x; delete q.z; onChange(q); }}>{t('tex.rugCenter')}</button>}
+    {(rug.x != null || rug.z != null) && <button type="button" className="btn" style={{ alignSelf: 'end' }} aria-label={t('tex.rugCenterN', { n })} onClick={() => { const q: RugChoice = { ...rug }; delete q.x; delete q.z; onChange(q); }}>{t('tex.rugCenter')}</button>}
   </div>;
 }
 
@@ -246,14 +247,14 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSw
         <label className="f"><span>{t('tex.rug')}</span><MaterialPicker cur={cur} value={f.rug?.material || ''} options={by('rug')} none={t('fin.none')} onChange={v => onFinish({ rug: v ? { ...(f.rug || {}), material: v } : null })} /></label>
         {f.rug && <label className="f"><span>{t('tex.rugRotate')}</span><input type="checkbox" checked={!!f.rug.rotate} onChange={e => { const q: RugChoice = { ...f.rug! }; if (e.target.checked) q.rotate = true; else delete q.rotate; onFinish({ rug: q }); }} /></label>}
       </div>
-      {f.rug && <RugPosition room={room} rug={f.rug} onChange={q => onFinish({ rug: q })} />}
+      {f.rug && <RugPosition room={room} rug={f.rug} n={1} onChange={q => onFinish({ rug: q })} />}
       {rugHints(snap, cat, mc, room, f).map((h, k) => <div key={k} className="issue WARNING">{t(h.key)}</div>)}
       {/* covoarele în plus (al doilea covor, sub masă): fiecare cu produsul, rotirea și poziția lui */}
       {(f.rugs ?? []).map((rc, i) => { const set = (q: RugChoice | null) => { const all = [...(f.rugs ?? [])]; if (q) all[i] = q; else all.splice(i, 1); onFinish({ rugs: all.length ? all : undefined }); };
         return <div key={i} className="fin-row" data-rug-extra={i + 2}><div className="grid2">
           <label className="f"><span>{t('tex.rugN', { n: i + 2 })}</span><MaterialPicker cur={cur} value={rc.material} options={by('rug')} onChange={v => { if (v) set({ ...rc, material: v }); }} /></label>
           <label className="f"><span>{t('tex.rugRotate')}</span><input type="checkbox" checked={!!rc.rotate} onChange={e => { const q: RugChoice = { ...rc }; if (e.target.checked) q.rotate = true; else delete q.rotate; set(q); }} /></label>
-        </div><RugPosition room={room} rug={rc} onChange={set} /><button type="button" className="btn" onClick={() => set(null)}>{t('tex.rugRemove')}</button></div>; })}
+        </div><RugPosition room={room} rug={rc} n={i + 2} onChange={set} /><button type="button" className="btn" aria-label={t('tex.rugRemoveN', { n: i + 2 })} onClick={() => set(null)}>{t('tex.rugRemove')}</button></div>; })}
       {by('rug').length > 0 && (f.rugs?.length ?? 0) < RUG_EXTRA_MAX && <button type="button" className="btn" onClick={() => { const r = room.rect; onFinish({ rugs: [...(f.rugs ?? []), { material: by('rug')[0]!.id, x: r2((r.x0 + r.x1) / 2), z: r2(r.z0 + (r.z1 - r.z0) * .3) }] }); }}>{t('tex.rugAdd')}</button>}
     </fieldset>
   </div>);

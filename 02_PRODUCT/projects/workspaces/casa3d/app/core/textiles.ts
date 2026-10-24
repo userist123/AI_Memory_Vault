@@ -46,6 +46,14 @@ export function rugRectAt(room: Pick<Room, 'rect'>, size: { w: number; d: number
   const r = room.rect, cx = at?.x ?? (r.x0 + r.x1) / 2, cz = at?.z ?? (r.z0 + r.z1) / 2; return { x0: cx - size.w / 2, x1: cx + size.w / 2, z0: cz - size.d / 2, z1: cz + size.d / 2 };
 }
 const placed = (c: RugChoice) => c.x != null || c.z != null;
+/** Covorul stă în centrul camerei: fără poziție sau cu x / z la cel mult 1 cm de centru (butonul „Centrează”, rotunjirile). */
+export function rugCentred(room: Pick<Room, 'rect'>, c: Pick<RugChoice, 'x' | 'z'>): boolean {
+  const r = room.rect, tol = .01 + 1e-9;
+  return (c.x == null || Math.abs(c.x - (r.x0 + r.x1) / 2) <= tol) && (c.z == null || Math.abs(c.z - (r.z0 + r.z1) / 2) <= tol);
+}
+/** Cheile unui covor (RugChoice); serverul le păstrează doar pe acestea, la covorul principal și la cele în plus. */
+const RUG_KEYS: readonly (keyof RugChoice)[] = ['material', 'rotate', 'x', 'z'];
+const pickRug = (r: any): RugChoice => Object.fromEntries(RUG_KEYS.filter(k => r[k] !== undefined).map(k => [k, r[k]])) as unknown as RugChoice;
 export interface TextileIssue { key: string; roomId: string; vars?: Record<string, string | number> }
 export function textileIssues(mc: MaterialsCatalog, fl: Floor, room: Room, f: RoomFinishes): TextileIssue[] {
   const out: TextileIssue[] = [], wins = roomWindows(fl, room);
@@ -76,6 +84,9 @@ export function sanitizeTextiles(rf: any): string | null {
   const rugOk = (r: any) => r && typeof r === 'object' && !Array.isArray(r) && typeof r.material === 'string' && r.material.length <= 80 && (r.rotate === undefined || typeof r.rotate === 'boolean') && pos(r.x) && pos(r.z);
   if (rf.rug != null && !rugOk(rf.rug)) return 'Covorul este invalid.';
   if (rf.rugs !== undefined && (!Array.isArray(rf.rugs) || rf.rugs.length > RUG_EXTRA_MAX || rf.rugs.some((r: any) => !rugOk(r) || !r.material))) return 'Covoarele în plus sunt invalide.';
+  // listă albă: o cheie străină (oricât de lungă) nu ajunge în proiectul salvat
+  if (rf.rug != null) rf.rug = pickRug(rf.rug);
+  if (rf.rugs !== undefined) rf.rugs = rf.rugs.map(pickRug);
   return null;
 }
 /** Ce desenează motorul 3D la ferestre și covorul. */

@@ -23,7 +23,7 @@ export const PLAN_LIMITS = {
    *  FINISH_RULES.maxDropCm), scafa de cel mult 60 cm */
   ceilingZone: { max: 100, minM: .3, dropMinCm: 5, dropMaxCm: 60, coveMaxCm: 60, labelMax: 40 },
   /** balustrada: cel mult 200 pe nivel, înălțimea 30–200 cm; sub 90 cm e un avertisment (înălțimea minimă uzuală la balcon) */
-  railing: { max: 200, heightMinM: .3, heightMaxM: 2, minSafeM: .9 },
+  railing: { max: 200, minLenM: .2, heightMinM: .3, heightMaxM: 2, minSafeM: .9 },
 } as const;
 /** Dimensiunile implicite la plasare (m). */
 export const PLAN_DEFAULTS = { passageWidth: .9, shaft: .3, niche: { width: .6, height: .4, depth: .1, elevation: 1.1 }, dimOffset: .3,
@@ -157,6 +157,8 @@ export function sanitizeCeilingZone(z: any): CeilingZone {
 export function sanitizeRailing(b: any): Railing {
   const L = PLAN_LIMITS.railing;
   if (!b || typeof b !== 'object' || typeof b.id !== 'string' || !ID.test(b.id) || !pt(b.a) || !pt(b.b)) bad('O balustradă are capetele invalide.');
+  // ca în plan (unealta nu adaugă segmente sub 20 cm): o balustradă mai scurtă se respinge
+  if (Math.hypot(b.b[0] - b.a[0], b.b[1] - b.a[1]) < L.minLenM - 1e-9) bad('O balustradă are sub 20 cm.');
   const height = b.height != null ? clampNum(b.height, L.heightMinM, L.heightMaxM, 'Înălțimea balustradei este invalidă.') : null;
   if (b.kind != null && !(RAILING_KINDS as readonly string[]).includes(b.kind)) bad('Tipul balustradei este invalid (metal sau sticlă).');
   return { id: b.id, a: [b.a[0], b.a[1]], b: [b.b[0], b.b[1]], ...(height != null ? { height } : {}), ...(b.kind ? { kind: b.kind } : {}) };

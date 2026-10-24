@@ -72,13 +72,14 @@ export function validatePlacement(snap: Snapshot, cat: Catalog, p: FurniturePlac
   return issues;
 }
 export const severityOf = (issues: Issue[]): Severity => issues.some(i => i.severity === 'ERROR') ? 'ERROR' : issues.length ? 'WARNING' : 'PASS';
-export function validateFloor(floor: Floor): Issue[] {
+/** `roomDropCm`: coborârea tavanului fals al camerei (din finisaje), pentru casetele care nu se văd; fără ea verificarea lipsește. */
+export function validateFloor(floor: Floor, roomDropCm?: (roomId: string) => number): Issue[] {
   const out: Issue[] = [];
   for (const w of floor.walls){ const L = wallLength(w.a, w.b);
     if (L < .2) out.push({ code: 'WALL_TOO_SHORT', severity: 'ERROR', message: `Peretele ${w.id} are sub 20 cm.`, key: 'issue.WALL_TOO_SHORT', vars: { id: w.id, d_m: 0.2 } });
     if (w.status === 'demolish') continue;   // golurile peretelui de demolat nu mai contează
     for (const o of w.openings) if (o.offset < 0 || o.offset + o.width > L + 1e-6) out.push({ code: 'OPENING_OUTSIDE_WALL', severity: 'ERROR', message: `Golul ${o.id} iese din peretele ${w.id}.`, key: 'issue.OPENING_OUTSIDE_WALL', vars: { op: o.id, id: w.id } }); }
-  out.push(...nicheIssues(floor), ...wallItemIssues(floor), ...renovationIssues(floor), ...zoneIssues(floor), ...ceilingZoneIssues(floor), ...railingIssues(floor));
+  out.push(...nicheIssues(floor), ...wallItemIssues(floor), ...renovationIssues(floor), ...zoneIssues(floor), ...ceilingZoneIssues(floor, roomDropCm), ...railingIssues(floor));
   // tipul ușii: glisantele cer perete liber lângă gol (foaia + 10 cm) de partea unde parchează; caseta cere perete interior gros; dubla îngustă
   floor.walls.forEach((w, wi) => w.openings.forEach((o, oi) => { if (o.kind !== 'door' || o.passage || !o.doorType || w.status === 'demolish') return; const vars = { op: o.id, id: w.id };
     if (o.doorType === 'pocket' || o.doorType === 'sliding'){ const free = slideSide(floor, wi, oi)[doorSwing(floor, wi, oi).hinge], need = o.width + DOOR_SLIDE_EXTRA_M;

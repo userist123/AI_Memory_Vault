@@ -21,9 +21,9 @@ import { matchCommand, toolShortcut, formatShortcut } from '../lib/commands';
 import { ceilingZoneIssues, ceilingZoneQty, removeRoomCeilingZones, openingUnder } from '../core/ceiling-zones';
 import { railingIssues, railingVisual, spaceKindOf } from '../core/railings';
 import { sanitizeCeilingZone, sanitizeRailing, PLAN_LIMITS, PlanLimitError } from '../core/plan-limits';
-import { frameRects, frameMoulding, autoFrameCount, bandsOverlap, sanitizeFinishes, roomVisual, insertBand } from '../core/finishes';
+import { frameRects, frameMoulding, autoFrameCount, bandsOverlap, sanitizeFinishes, roomVisual, insertBand, roomCeilingDropCm } from '../core/finishes';
 import { wallElevations } from '../core/drawings';
-import { textileIssues, textileVisual, roomRugs, rugRectAt } from '../core/textiles';
+import { textileIssues, textileVisual, roomRugs, rugRectAt, rugCentred } from '../core/textiles';
 import { rugHints } from '../core/decor';
 import { finishSchedule } from '../core/finish-schedule';
 import type { Catalog, CeilingZone, MaterialsCatalog, Railing, RoomFinishes, Snapshot, WallFeature } from '../core/types';
@@ -114,6 +114,26 @@ describe('tavan fals pe zonă: deviz, 3D, plan, DXF', () => {
     withFin(s, { ceiling: { type: 'drop', dropCm: 10 } });
     assert.equal((viewerInput(s, cat, undefined, { mc }).plan as any).tavaneZona[0].top, .1);
   });
+  test('caseta care nu coboară sub tavanul fals al camerei: fără deviz, fără 3D, cu avertisment', () => {
+    const s = withFin(blank(), { ceiling: { type: 'drop', dropCm: 20 } }), drop = (id: string) => roomCeilingDropCm(s, id);
+    assert.equal(drop('camera-1'), 20); assert.equal(roomCeilingDropCm(blank(), 'camera-1'), 0);
+    for (const dropCm of [15, 20]){ s.floor.ceilingZones = [cz({ dropCm, led: LED, coveCm: 10 })]; const b = computeBOQ(s, cat, mc);
+      assert.deepEqual(b.items.filter(i => i.key.includes(':czone:')), [], `${dropCm} cm: fără linii de material`);
+      assert.deepEqual(b.labor.filter(l => l.key.includes(':czone:')), [], `${dropCm} cm: fără manoperă`);
+      assert.ok(!b.unknown.some(u => /pe zonă/.test(u)));
+      assert.equal('tavaneZona' in (viewerInput(s, cat, undefined, { mc }).plan as any), false, `${dropCm} cm: nu se desenează în 3D`);
+      const iss = validateFloor(s.floor, drop).filter(i => i.vars?.czone === 'tavan-1');
+      assert.deepEqual(iss.map(i => [i.code, i.severity, i.key]), [['CEILING_ZONE_ABOVE_ROOM_CEILING', 'WARNING', 'issue.CEILING_ZONE_ABOVE_ROOM_CEILING']]);
+      for (const lang of ['ro', 'en'] as const){ const txt = translator(lang)(iss[0]!.key!, iss[0]!.vars); assert.notEqual(txt, iss[0]!.key); assert.match(txt, new RegExp(`${dropCm}`)); }
+      assert.equal(issueTarget(iss[0]!, s.floor)?.kind, 'ceiling_zone'); }
+    // fără coborârea camerei (validateFloor fără finisaje) nu se știe, deci niciun avertisment
+    assert.deepEqual(validateFloor(s.floor).filter(i => i.code === 'CEILING_ZONE_ABOVE_ROOM_CEILING'), []);
+    // 25 cm > 20 cm: caseta se vede, intră în deviz (banda de 5 cm) și în 3D, fără avertisment
+    s.floor.ceilingZones = [cz({ dropCm: 25 })];
+    assert.ok(computeBOQ(s, cat, mc).items.some(i => i.key === 'camera-1:ceiling:czone:tavan-1'));
+    assert.equal((viewerInput(s, cat, undefined, { mc }).plan as any).tavaneZona.length, 1);
+    assert.deepEqual(validateFloor(s.floor, drop).filter(i => i.code === 'CEILING_ZONE_ABOVE_ROOM_CEILING'), []);
+  });
   test('Tab, încadrare, cititor de ecran, DXF pe stratul lui', () => {
     const s = blank(); s.floor.ceilingZones = [cz({ label: 'Masă' })];
     assert.deepEqual(planItems(s).map(i => i.kind).slice(0, 2), ['room', 'ceiling_zone']);
@@ -133,6 +153,13 @@ describe('balustradă și tipul spațiului', () => {
     assert.throws(() => sanitizeRailing(rail({ a: [NaN, 0] as any })), PlanLimitError);
     const s = blank(); s.floor.railings = [rail(), rail()]; bad400(() => checkSnapshot(structuredClone(s)));
     s.floor.railings = Array.from({ length: PLAN_LIMITS.railing.max + 1 }, (_, i) => rail({ id: `r${i}` })); bad400(() => checkSnapshot(structuredClone(s)));
+  });
+  test('serverul respinge balustrada sub 20 cm (ca planul): 400', () => {
+    assert.throws(() => sanitizeRailing(rail({ a: [0, 4.5], b: [.19, 4.5] })), PlanLimitError);
+    assert.throws(() => sanitizeRailing(rail({ a: [1, 1], b: [1, 1] })), PlanLimitError);
+    assert.deepEqual(sanitizeRailing(rail({ a: [0, 4.5], b: [.2, 4.5] })).b, [.2, 4.5]);
+    const s = blank(); s.floor.railings = [rail({ b: [.1, 4.5] })]; bad400(() => checkSnapshot(structuredClone(s)));
+    s.floor.railings = [rail()]; assert.equal(checkSnapshot(structuredClone(s)).floor.railings!.length, 1);
   });
   test('tipul spațiului: valorile cunoscute rămân, una necunoscută dispare (camera rămâne interior)', () => {
     const s = blank(); s.floor.rooms[0]!.spaceKind = 'open_balcony';
@@ -232,6 +259,14 @@ describe('covor cu poziție și al doilea covor', () => {
     assert.equal(fin({ rugs: [{ material: '' }] }), 'Covoarele în plus sunt invalide.');
     assert.equal(fin({ rugs: {} as any }), 'Covoarele în plus sunt invalide.');
   });
+  test('serverul păstrează doar cheile covorului (listă albă): o cheie străină lungă nu se salvează', () => {
+    const junk = 'k'.repeat(5000), s = blank(), room = s.floor.rooms[0]!;
+    s.finishes = { [room.id]: { ...finishesOf(s, room), rug: { material: RUG, x: 2, [junk]: 1 } as any, rugs: [{ material: RUG, rotate: true, x: 1, z: 3, [junk]: 'x'.repeat(5000), extra: { a: 1 } } as any] } };
+    const out = checkSnapshot(structuredClone(s)).finishes![room.id]!;
+    assert.deepEqual(out.rugs, [{ material: RUG, rotate: true, x: 1, z: 3 }]);
+    assert.deepEqual(out.rug, { material: RUG, x: 2 });
+    assert.ok(!JSON.stringify(out).includes(junk));
+  });
   test('3D: covorul centrat rămâne ca înainte; cel mutat are x / z; covoarele în plus au lista lor', () => {
     const s = blank(), room = s.floor.rooms[0]!;
     assert.deepEqual(textileVisual(mc, s.floor, room, { ...finishesOf(s, room), rug: { material: RUG } }).rug, { w: 2, d: .8, color: '#3e4d3b' });
@@ -255,6 +290,15 @@ describe('covor cu poziție și al doilea covor', () => {
     const f = finishesOf(s, room); assert.deepEqual(rugHints(s, cat, mc, room, f), []);
     const far = { ...f, rug: { ...f.rug!, x: room.rect.x0 + .1, z: room.rect.z0 + .1 } };
     assert.deepEqual(rugHints(s, cat, mc, room, far).map(h => h.key), ['tex.rugSofa']);
+  });
+  test('covorul cu x / z egale cu centrul camerei (± 1 cm) e centrat: fără sfatul fals tex.rugSofa', () => {
+    const s = newSnapshot(cat, 'Demo', 'demo', 'ro', { materials: mc }), fl = s.floor;
+    const room = fl.rooms.find(r => r.type === 'living' && s.finishes?.[r.id]?.rug && s.placements.some(p => p.roomId === r.id && p.group === 'canapea'))!;
+    const f = finishesOf(s, room), cx = (room.rect.x0 + room.rect.x1) / 2, cz2 = (room.rect.z0 + room.rect.z1) / 2;
+    for (const [x, z] of [[cx, cz2], [cx + .01, cz2 - .01], [cx - .006, undefined], [undefined, cz2 + .004]] as const){
+      const rug = { ...f.rug!, ...(x != null ? { x } : {}), ...(z != null ? { z } : {}) };
+      assert.equal(rugCentred(room, rug), true, `${x} ${z}`); assert.deepEqual(rugHints(s, cat, mc, room, { ...f, rug }), [], `${x} ${z}`); }
+    assert.equal(rugCentred(room, { x: cx + .02 }), false);
   });
 });
 

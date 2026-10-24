@@ -17,7 +17,7 @@ import { wallItemGeometry, wallItemFace, wallItemDepth } from '@/core/wall-items
 import { bandOf, alongOf, bathTiles, sideSpan } from '@/core/finishes';
 import { techFrame, isSizedRadiator, radiatorSize, hvacSize } from '@/core/tech-geometry';
 import { intersect } from '@/core/floor-zones';
-import { ceilingZoneRect } from '@/core/ceiling-zones';
+import { ceilingZoneRect, ceilingZoneHidden } from '@/core/ceiling-zones';
 import { railingVisual } from '@/core/railings';
 import { ceilingOf, materialOf as matOf } from '@/core/finishes';
 import type { RoomFinishes } from '@/core/types';
@@ -77,7 +77,8 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   // tavanele false pe zonă: dreptunghiul decupat la cameră, partea de sus (sub tavanul camerei, dacă e coborât) și cea de jos,
   // scafa de pe contur și culoarea LED-ului (după temperatura de culoare a benzii, ca la scafa camerei)
   const tavaneZona = (snap.floor.ceilingZones ?? []).flatMap(z => { const room = snap.floor.rooms.find(r => r.id === z.roomId), c = room && ceilingZoneRect(snap.floor, z); if (!room || !c) return [];
-    const top = ceilingOf(finishesOf(snap, room)).dropCm / 100, led = z.led ? (mc ? matOf(mc, z.led) : null) : null, cct = led?.specs?.cctK ?? 3000;
+    const roomDrop = ceilingOf(finishesOf(snap, room)).dropCm; if (ceilingZoneHidden(z, roomDrop)) return [];
+    const top = roomDrop / 100, led = z.led ? (mc ? matOf(mc, z.led) : null) : null, cct = led?.specs?.cctK ?? 3000;
     return [{ id: z.id, room: z.roomId, ...c, top, drop: Math.max(top + .02, z.dropCm / 100), cove: (z.coveCm ?? 0) / 100, led: z.led ? (cct <= 3000 ? '#ffd29a' : cct <= 4000 ? '#fff1dc' : '#f4f7ff') : null }]; });
   return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, nise, obiectePerete, ...(tehnice.length ? { tehnice } : {}), ...(zonePardoseala.length ? { zonePardoseala } : {}),
     ...(tavaneZona.length ? { tavaneZona } : {}), ...(rv.metal.length ? { balustrade: rv.metal } : {}), goluriPlaca: extra.voids ?? [] }, items };

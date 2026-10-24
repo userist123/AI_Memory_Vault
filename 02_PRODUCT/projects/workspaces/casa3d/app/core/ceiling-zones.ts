@@ -46,14 +46,22 @@ export function openingUnder(fl: Pick<Floor, 'rooms' | 'walls'>, z: CeilingZone)
     if (intersect(strip, c) && (!best || o.top > best.top)) best = { top: o.top, kind: o.door ? 'door' : 'window' }; }
   return best;
 }
+/** Caseta nu coboară sub tavanul fals al camerei (coborârea ei ≤ a camerei): nu se vede, deci nu intră în deviz și nu se desenează în 3D. */
+export const ceilingZoneHidden = (z: Pick<CeilingZone, 'dropCm'>, roomDropCm: number): boolean => z.dropCm <= roomDropCm + 1e-9;
 const nameOf = (z: CeilingZone) => z.label || `${r2(rectArea(z.rect))} m²`;
 /** CEILING_ZONE_OUTSIDE_ROOM și CEILING_ZONE_OVERLAP (erori, ca la zonele de pardoseală); CEILING_ZONE_LOW (avertisment): partea de
- *  jos a casetei ajunge sub buiandrugul unui gol din dreptul ei + 5 cm, deci ușa (sau cerceveaua) lovește tavanul. */
-export function ceilingZoneIssues(fl: Pick<Floor, 'rooms' | 'walls' | 'ceilingHeight' | 'ceilingZones'>): Issue[] {
+ *  jos a casetei ajunge sub buiandrugul unui gol din dreptul ei + 5 cm, deci ușa (sau cerceveaua) lovește tavanul.
+ *  CEILING_ZONE_ABOVE_ROOM_CEILING (avertisment, doar când se știe coborârea tavanului camerei, `roomDropCm`): caseta nu coboară
+ *  sub tavanul fals al camerei, deci nu se vede (fără deviz, fără 3D). */
+export function ceilingZoneIssues(fl: Pick<Floor, 'rooms' | 'walls' | 'ceilingHeight' | 'ceilingZones'>, roomDropCm?: (roomId: string) => number): Issue[] {
   const out: Issue[] = [], zs = fl.ceilingZones ?? [];
   for (const z of zs){ const room = fl.rooms.find(r => r.id === z.roomId), r = room?.rect, e = 1e-6;
     if (!r || z.rect.x0 < r.x0 - e || z.rect.x1 > r.x1 + e || z.rect.z0 < r.z0 - e || z.rect.z1 > r.z1 + e)
       out.push({ code: 'CEILING_ZONE_OUTSIDE_ROOM', severity: 'ERROR', message: `Tavanul fals pe zonă ${z.label || z.id} iese din ${room?.name ?? 'camera lui'}.`, key: 'issue.CEILING_ZONE_OUTSIDE_ROOM', vars: { czone: z.id, nm: nameOf(z), rn: room?.name ?? '' } });
+    const rd = room && roomDropCm ? roomDropCm(room.id) : 0;
+    if (room && roomDropCm && ceilingZoneHidden(z, rd)){
+      out.push({ code: 'CEILING_ZONE_ABOVE_ROOM_CEILING', severity: 'WARNING', message: `Tavanul fals pe zonă ${z.label || z.id} coboară ${z.dropCm} cm și nu iese sub tavanul fals al camerei (${rd} cm): nu se vede, deci nu intră în deviz și nu apare în 3D.`,
+        key: 'issue.CEILING_ZONE_ABOVE_ROOM_CEILING', vars: { czone: z.id, nm: nameOf(z), drop: z.dropCm, room: rd } }); continue; }
     const op = openingUnder(fl, z), bottom = r2(fl.ceilingHeight - z.dropCm / 100);
     if (op && bottom < op.top + CEILING_ZONE_RULES.openingClearM - 1e-9)
       out.push({ code: 'CEILING_ZONE_LOW', severity: 'WARNING', message: `Tavanul fals pe zonă ${z.label || z.id} coboară la ${Math.round(bottom * 100)} cm, sub ${op.kind === 'door' ? 'ușa' : 'fereastra'} din dreptul lui (${Math.round(op.top * 100)} cm + 5 cm): ${op.kind === 'door' ? 'ușa' : 'cerceveaua'} lovește tavanul.`,

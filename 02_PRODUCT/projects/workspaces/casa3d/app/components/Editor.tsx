@@ -26,7 +26,7 @@ import MaterialPicker from './MaterialPicker';
 import { downloadSchedule } from './FinishSchedule';
 import { finishSchedule } from '@/core/finish-schedule';
 import { WALL_ITEM_KINDS, WALL_ITEM_CATEGORY, wallItemDefaults, furnitureBelow, wallItemFurnitureIssues } from '@/core/wall-items';
-import { materialOf, insertBand, sideSpan, FEATURE_CATEGORY, featureMarks } from '@/core/finishes';
+import { materialOf, insertBand, sideSpan, FEATURE_CATEGORY, featureMarks, roomCeilingDropCm } from '@/core/finishes';
 import { doorIssues, doorSwing, doorTypeOf, isSlidingType } from '@/core/doors';
 import { DOOR_TYPES, DOOR_TYPE_RULES, WALL_ITEM_RULES } from '@/core/rules';
 import { normalizeHex } from '@/core/appearance';
@@ -256,7 +256,7 @@ export default function Editor({ id }: { id: string }){
     for (const i of stairIss) if (i.with && m[i.with]) m[i.with].push(i); return m; }, [snap, catalog, stairIss]);
   const sev = useMemo(() => Object.fromEntries(Object.entries(issues).map(([k, v]) => [k, severityOf(v)])) as Record<string, Severity>, [issues]);
   // problemele nivelului: pereți/goluri și scările lui (cele legate de o piesă apar la piesă)
-  const floorIssues = useMemo(() => snap ? [...validateFloor(snap.floor), ...(catalog ? wallItemFurnitureIssues(snap, catalog, snap.floor) : []), ...(catalog ? techIssues(snap, catalog, snap.floor) : []), ...stairIss.filter(i => !i.with && snap.floor.stairs?.some(s => s.id === i.vars?.stair))] : [], [snap, stairIss, catalog]);
+  const floorIssues = useMemo(() => snap ? [...validateFloor(snap.floor, id => roomCeilingDropCm(snap, id)), ...(catalog ? wallItemFurnitureIssues(snap, catalog, snap.floor) : []), ...(catalog ? techIssues(snap, catalog, snap.floor) : []), ...stairIss.filter(i => !i.with && snap.floor.stairs?.some(s => s.id === i.vars?.stair))] : [], [snap, stairIss, catalog]);
   const advice = useMemo(() => { if (!snap || !catalog) return [] as Advice[]; let budget; if (mc && house){ const b = computeBudget(house, catalog, mc); budget = { total: b.chosen.total, target: b.target, unknown: b.unknownItems.length }; }
     return adviseProject(snap, catalog, { accessibility: !!snap.brief?.accessibility, budget, colorsOf: appearanceColors, currency: catalogCurrency(catalog) }); }, [snap, house, catalog, mc]);
   const showAdvice = (a: Advice) => { setStageRaw(a.refs.placementIds?.length ? 'ffe' : 'survey'); const pid = a.refs.placementIds?.[0], wid = a.refs.wallIds?.[0]; if (pid) setSel({ kind: 'placement', id: pid }); else if (a.refs.roomId) setSel({ kind: 'room', id: a.refs.roomId }); else if (wid) setSel({ kind: 'wall', id: wid }); };
@@ -962,7 +962,7 @@ export default function Editor({ id }: { id: string }){
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
             </div>); })()}
           {selCeilingZone && (roomStage || stage === 'concept') && (() => { const z = selCeilingZone, room = snap.floor.rooms.find(r => r.id === z.roomId), CL = PLAN_LIMITS.ceilingZone, w = z.rect.x1 - z.rect.x0, d = z.rect.z1 - z.rect.z0;
-            const roomDrop = room ? (finishesOf(snap, room).ceiling?.type ?? 'flat') !== 'flat' ? (finishesOf(snap, room).ceiling?.dropCm ?? 10) : 0 : 0, q = ceilingZoneQty(snap.floor, z, roomDrop), leds = mc ? mc.materials.filter(m => m.category === 'led_strip') : [];
+            const roomDrop = room ? roomCeilingDropCm(snap, room.id) : 0, q = ceilingZoneQty(snap.floor, z, roomDrop), leds = mc ? mc.materials.filter(m => m.category === 'led_strip') : [];
             const size = (k: 'w' | 'd') => (v: string) => num(v, x => patchCeilingZone(z.id, q2 => { const m = r3(x / 100); if (k === 'w') q2.rect.x1 = r3(q2.rect.x0 + m); else q2.rect.z1 = r3(q2.rect.z0 + m); }), CL.minM * 100);
             return (<div style={{ display: 'grid', gap: 8 }} data-panel="ceiling-zone">
               <h3>{t('tool.ceiling_zone')}{z.label ? ` · ${z.label}` : ''}</h3>
