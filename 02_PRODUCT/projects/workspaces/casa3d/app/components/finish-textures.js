@@ -79,6 +79,17 @@ export function wallTexture(vis, seed){
             while (y < h){ x += (rnd() - .5) * 40; y += 12 + rnd() * 20; g.lineTo(((x % w) + w) % w, y); } g.stroke(); } g.globalAlpha = 1; }
         else { g.globalAlpha = .08; g.fillStyle = '#000'; for (let x = 0; x < w; x += 16) g.fillRect(x, 0, 3, h); g.globalAlpha = 1; }
         g.globalAlpha = .05; g.fillStyle = '#000'; g.fillRect(0, 0, 1, h); g.globalAlpha = 1; } // îmbinarea fâșiilor (0,53 m ≈ la jumătate de metru)
+      // vopsea decorativă cu efect: venețiana și mătasea = nori moi, translucizi (luciul vine din material); betonul și microcimentul =
+      // pete și pori; travertinul = benzi orizontale cu pori. Procedural, determinist (aceeași sămânță = același perete).
+      else if (vis.kind === 'plaster' && vis.effect && vis.effect !== 'textured'){ const e = vis.effect;
+        if (e === 'venetian' || e === 'silk'){ for (let i = 0; i < (e === 'silk' ? 18 : 40); i++){ const x = rnd() * w, y = rnd() * h, rad = 20 + rnd() * (e === 'silk' ? 120 : 70), gr = g.createRadialGradient(x, y, 0, x, y, rad);
+            gr.addColorStop(0, shade(col, rnd() < .5 ? .86 : 1.1)); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = e === 'silk' ? .25 : .45; g.fillStyle = gr; g.fillRect(0, 0, w, h); }
+          if (e === 'silk'){ g.globalAlpha = .06; g.fillStyle = '#fff'; for (let x = 0; x < w; x += 6) g.fillRect(x, 0, 2, h); } g.globalAlpha = 1; }
+        else if (e === 'concrete' || e === 'microcement'){ for (let i = 0; i < 26; i++){ const x = rnd() * w, y = rnd() * h, rad = 10 + rnd() * 45, gr = g.createRadialGradient(x, y, 0, x, y, rad);
+            gr.addColorStop(0, shade(col, .82 + rnd() * .3)); gr.addColorStop(1, 'rgba(0,0,0,0)'); g.globalAlpha = .5; g.fillStyle = gr; g.fillRect(0, 0, w, h); }
+          g.globalAlpha = .35; g.fillStyle = shade(col, .55); for (let i = 0; i < (e === 'concrete' ? 140 : 40); i++){ g.beginPath(); g.arc(rnd() * w, rnd() * h, .6 + rnd() * 1.4, 0, Math.PI * 2); g.fill(); } g.globalAlpha = 1; }
+        else if (e === 'travertine'){ let y = 0; while (y < h){ const bh = 6 + rnd() * 18; g.globalAlpha = .35; g.fillStyle = shade(col, .88 + rnd() * .2); g.fillRect(0, y, w, bh); y += bh; }
+          g.globalAlpha = .3; g.fillStyle = shade(col, .6); for (let i = 0; i < 60; i++) g.fillRect(rnd() * w, rnd() * h, 3 + rnd() * 10, 1 + rnd() * 1.5); g.globalAlpha = 1; } }
       else if (vis.kind === 'plaster'){ const id = g.getImageData(0, 0, w, h); for (let i = 0; i < id.data.length; i += 4){ const n = (rnd() - .5) * 26; id.data[i] += n; id.data[i + 1] += n; id.data[i + 2] += n; } g.putImageData(id, 0, 0); }
       else if (vis.kind === 'brick' || vis.kind === 'tile'){ const [a, b] = vis.sizeCm || (vis.kind === 'brick' ? [24, 7.1] : [30, 60]), bw = Math.max(a, b) / 100 * ppm, bh = Math.min(a, b) / 100 * ppm;
         const tileVertical = vis.kind === 'tile', tw = tileVertical ? bh : bw, th = tileVertical ? bw : bh, joint = vis.kind === 'brick' ? '#cfc8bd' : '#e4e1db', jp = vis.kind === 'brick' ? 3 : 1.2;

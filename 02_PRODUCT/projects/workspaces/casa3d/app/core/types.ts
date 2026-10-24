@@ -6,8 +6,13 @@ export type RoomSpaceKind = 'interior' | 'open_balcony' | 'covered_balcony' | 't
 /** `boundary` stores a rectilinear editable room contour as [x,z] points in metres. `rect` remains its bounding box for legacy tools. */
 export interface Room { id: string; name: string; type: string; rect: RoomRect; boundary?: [number, number][]; spaceKind?: RoomSpaceKind }
 /** `hinge`: capătul golului cu balamalele ('start' = spre `a`-ul peretelui); `swing`: partea peretelui spre care se deschide ușa (+1 = spre normala (-uz, ux), -1 = invers). Lipsă → regula implicită din core/doors.ts.
- *  `passage`: gol de trecere fără foaie (doar pe ușă: rămâne `kind: 'door'`, ca devizul și motorul să nu-l ia drept fereastră). */
-export interface Opening { id: string; kind: 'door' | 'window'; offset: number; width: number; entrance?: boolean; height?: number; sill?: number; hinge?: 'start' | 'end'; swing?: 1 | -1; passage?: true }
+ *  `passage`: gol de trecere fără foaie (doar pe ușă: rămâne `kind: 'door'`, ca devizul și motorul să nu-l ia drept fereastră).
+ *  `doorType`: tipul ușii (lipsă = 'swing', batanta de până acum); `flush`: ușă ascunsă (filomuro), fără toc vizibil. `passage` are prioritate:
+ *  o trecere nu are tip și nici `flush` (serverul le șterge). `hinge` și `swing` se refolosesc pe tip, fără câmpuri noi:
+ *  - `hinge` = capătul cu balamaua (swing, pivot), capătul unde parchează foaia (sliding, pocket) sau unde se strâng panourile (folding); la `double` se ignoră;
+ *  - `swing` = fața spre care se deschide (swing, double, folding, pivot) sau fața pe care e montată șina (sliding); la `pocket` se ignoră. */
+export type DoorType = 'swing' | 'double' | 'sliding' | 'pocket' | 'folding' | 'pivot';
+export interface Opening { id: string; kind: 'door' | 'window'; offset: number; width: number; entrance?: boolean; height?: number; sill?: number; hinge?: 'start' | 'end'; swing?: 1 | -1; passage?: true; doorType?: DoorType; flush?: true }
 export interface Wall { id: string; a: [number, number]; b: [number, number]; thickness: number; exterior: boolean; openings: Opening[] }
 /** Scară dreaptă pe un nivel, care urcă la nivelul următor (centrul x/z, lățime și lungime în m, rotație în multipli de 90°). */
 export interface Stair { id: string; x: number; z: number; width: number; length: number; rotation: number }
@@ -27,7 +32,13 @@ export interface Niche { id: string; wallId: string; offset: number; width: numb
 export interface DimAnnotation { id: string; kind: 'dim'; a: [number, number]; b: [number, number]; offset: number; mode?: 'aligned' | 'ortho' }
 export interface TextAnnotation { id: string; kind: 'text'; at: [number, number]; text: string; size?: 's' | 'm' | 'l'; rotation?: number }
 export type Annotation = DimAnnotation | TextAnnotation;
-export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[]; columns?: Column[]; beams?: Beam[]; glassWalls?: GlassWall[]; niches?: Niche[]; annotations?: Annotation[] }
+/** Obiect pe perete (tablou, oglindă, raft, TV): pe fața `side` a peretelui `wallId` (ca nișa); `offset` = centrul, de la capătul `a`
+ *  al peretelui; `elevation` = centrul, de la pardoseală; dimensiuni în m (`depth` lipsă = implicitul tipului). `product` = id din
+ *  catalogul de materiale (wall_art / mirror / wall_shelf), opțional: fără produs e obiectul clientului, fără linie în deviz. */
+export type WallItemKind = 'art' | 'mirror' | 'shelf' | 'tv';
+export interface WallItem { id: string; wallId: string; side: 1 | -1; kind: WallItemKind; offset: number; elevation: number; width: number; height: number; depth?: number;
+  product?: string | null; color?: string; label?: string }
+export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[]; columns?: Column[]; beams?: Beam[]; glassWalls?: GlassWall[]; niches?: Niche[]; annotations?: Annotation[]; wallItems?: WallItem[] }
 /** `size` (cm) = piesă pe comandă cu altă dimensiune decât varianta din catalog; prețul ei devine necunoscut. */
 export interface FurniturePlacement { id: string; roomId: string; group: string; variantId: string; x: number; z: number; rotation: number; source: 'auto' | 'manual'; size?: { w: number; d: number; h: number } }
 /** Culoare (hex #rrggbb) și, unde modelul permite, material; lipsa înseamnă aspectul implicit. */
@@ -52,20 +63,21 @@ export interface Catalog { suppliers: Supplier[]; products: Product[]; variants:
 export type Severity = 'PASS' | 'WARNING' | 'ERROR';
 /** `message` = textul românesc (compatibil cu API-ul); `key` + `vars` = același text în orice limbă (lib/i18n.ts issueText). */
 export interface Issue { code: 'OUT_OF_ROOM' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW_BLOCKED' | 'CLEARANCE' | 'UNKNOWN_VARIANT' | 'OPENING_OUTSIDE_WALL' | 'WALL_TOO_SHORT' | 'STAIR'
-  | 'NICHE_OUTSIDE_WALL' | 'NICHE_TOO_DEEP' | 'NICHE_OVER_OPENING' | 'SHAFT_DOOR' | 'SHAFT_OUTSIDE_ROOM'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
+  | 'NICHE_OUTSIDE_WALL' | 'NICHE_TOO_DEEP' | 'NICHE_OVER_OPENING' | 'SHAFT_DOOR' | 'SHAFT_OUTSIDE_ROOM' | 'DOOR_TYPE' | 'WALL_ITEM'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
 
 // ---------- Faza 2: materiale, manoperă, servicii, finisaje, buget ----------
 export type MaterialCategory = 'parquet' | 'floor_tile' | 'wall_tile' | 'paint' | 'baseboard' | 'tile_adhesive' | 'lighting'
   | 'wallpaper' | 'wall_panel' | 'decorative_plaster' | 'brick_cladding' | 'stone_cladding' | 'plasterboard' | 'cornice' | 'led_strip' | 'spot'
-  | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'moulding'
+  | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'door_system' | 'moulding'
+  | 'wall_art' | 'mirror' | 'wall_shelf'
   | 'countertop' | 'kitchen_sink' | 'kitchen_tap' | 'bath_tap' | 'shower_set' | 'towel_radiator' | 'led_mirror' | 'pendant' | 'wall_light' | 'led_profile';
 /** Modul de așezare a pardoselii (parchet sau plăci). */
 export type FloorPattern = 'straight' | 'brick' | 'third' | 'diagonal' | 'herringbone' | 'chevron' | 'checker';
 /** Date tehnice citite pe pagina produsului; lipsa unei valori înseamnă „nedeclarat”, nu „bun”. */
 export interface MaterialSpecs { sizeCm?: [number, number]; rectified?: boolean; slip?: 'R9' | 'R10' | 'R11' | 'R12' | 'R13'; ip?: string; cctK?: number; lumens?: number;
-  roll?: { widthM: number; lengthM: number; repeatCm: number }; patterns?: FloorPattern[]; wet?: boolean; pieceM?: number; color?: string;
-  pieces?: number; opacity?: number; blind?: 'roller' | 'roman' | 'venetian'; door?: 'plain' | 'panel' | 'glass'; wood?: boolean;
-  thicknessMm?: number; finish?: string; material?: string; diameterCm?: number }
+  roll?: { widthM: number; lengthM: number; repeatCm: number; match?: 'free' | 'straight' | 'offset' }; patterns?: FloorPattern[]; wet?: boolean; pieceM?: number; color?: string;
+  pieces?: number; opacity?: number; blind?: 'roller' | 'roman' | 'venetian'; door?: 'plain' | 'panel' | 'glass'; wood?: boolean; doorTypes?: DoorType[]; system?: 'sliding' | 'pocket' | 'folding';
+  thicknessMm?: number; finish?: string; material?: string; diameterCm?: number; effect?: PlasterEffect }
 export interface Material { id: string; category: MaterialCategory; name: string; supplier: string; unit: 'm2' | 'ml' | 'L' | 'kg' | 'buc'; unitPrice: number;
   pack?: { size: number; label: string; price?: number }; coverage?: number; consumption?: number; sourceUrl: string | null; verificationType: string; confidence: Confidence; note?: string; specs?: MaterialSpecs; verifiedAt?: string }
 export interface LaborRate { id: string; label: string; unit: 'm2' | 'ml'; low: number; expected: number; high: number; sources: { name: string; url: string }[]; confidence: Confidence }
@@ -76,7 +88,12 @@ export type WallFeatureKind = 'wallpaper' | 'slats' | 'plaster' | 'brick' | 'sto
 /** O bandă pe un perete al camerei (latura N/S/V/E): de la `fromM` (lipsă = pardoseala) până la `heightM` (lipsă = tavanul).
  *  Pe același perete pot sta mai multe benzi fără să se suprapună (ex. lambriu 0–1,1 m, baghetă la 1,1 m, tapet deasupra);
  *  `rail` e o baghetă orizontală la înălțimea `heightM`; `paint` e o vopsea de altă culoare pe banda ei. */
-export interface WallFeature { side: 'N' | 'S' | 'W' | 'E'; kind: WallFeatureKind; material: string; color?: string; fromM?: number; heightM?: number }
+/** Porțiunea pe lungime: `alongFromM`/`alongToM` (m) se măsoară pe latura camerei de la colțul cu x0 (laturile N și S) sau z0 (V și E);
+ *  lipsa lor înseamnă toată latura. `vertical` doar la `slats`: lipsă = lamele verticale, `false` = orizontale.
+ *  `effect` doar la `plaster`: vopseaua decorativă cu efect (manopera și textura 3D depind de efect). */
+export type PlasterEffect = 'venetian' | 'concrete' | 'microcement' | 'travertine' | 'silk' | 'textured';
+export interface WallFeature { side: 'N' | 'S' | 'W' | 'E'; kind: WallFeatureKind; material: string; color?: string; fromM?: number; heightM?: number;
+  alongFromM?: number; alongToM?: number; vertical?: boolean; effect?: PlasterEffect }
 /** Tavan: drept (vopsit), fals din gips-carton coborât cu `dropCm`, sau fals cu scafă luminoasă pe contur. */
 export interface CeilingFinish { type: 'flat' | 'drop' | 'cove'; dropCm?: number; coveCm?: number; led?: string | null; cornice?: string | null; spot?: string | null; spots?: number }
 export interface RoomFinishes { floor: string; wallPaint: string; wallTile?: string | null; baseboard?: string | null; light: string; lights?: number;
@@ -94,8 +111,8 @@ export interface KitchenSpec { frontColor?: string; frontFinish?: 'matt' | 'glos
   backsplash?: 'tile' | 'countertop' | 'glass' | 'paint'; backsplashColor?: string; sink?: string | null; tap?: string | null; underLed?: string | null ; modules?: import('./kitchen-modules').KitchenModule[] }
 /** Ce se pune la o fereastră: draperie (pereche de panouri), perdea transparentă, stor/jaluzea; `fullness` = cât de încrețită e draperia. */
 export interface WindowTreatment { openingId: string; curtain?: string | null; sheer?: string | null; blind?: string | null; fullness?: number }
-/** Ușa aleasă pentru un gol de ușă (produs cu toc) și mânerul ei. */
-export interface DoorChoice { product?: string | null; handle?: string | null }
+/** Ușa aleasă pentru un gol de ușă (produs cu toc), mânerul ei și sistemul (șină, casetă pentru ușa în perete, kit pliant). */
+export interface DoorChoice { product?: string | null; handle?: string | null; system?: string | null }
 /** Covorul camerei, centrat; `rotate` îl întoarce cu 90°. */
 export interface RugChoice { material: string; rotate?: boolean }
 export interface BudgetSettings { target: number | null; contingencyPct: number; includeLabor: boolean; laborScenario: 'low' | 'expected' | 'high';

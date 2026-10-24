@@ -1,11 +1,11 @@
 'use client';
 // Finisajele unei camere, ca la un designer: pardoseala și modul ei de așezare, pereții (vopsea, faianță, placări pe fiecare latură),
 // tavanul (drept, fals, scafă luminoasă, cornișă, spoturi), plinta și iluminatul — cu costul camerei și avertismentele tehnice.
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { Snapshot, MaterialsCatalog, RoomFinishes, Room, Material, WallFeature, WallFeatureKind, FloorPattern, Catalog, WindowTreatment } from '@/core/types';
 import { finishesOf, roomGeometry, computeBOQ } from '@/core/boq';
 import { floorOfRoom } from '@/core/levels';
-import { bandsOverlap, defaultLayout, PATTERNS, SIDES, FEATURE_CATEGORY, layoutOf, materialOf, sideGeometry, ceilingOf, clearHeight, finishIssues, pieceSizeCm, FINISH_RULES } from '@/core/finishes';
+import { bandsOverlap, sideSpan, PLASTER_EFFECTS, defaultLayout, PATTERNS, SIDES, FEATURE_CATEGORY, layoutOf, materialOf, sideGeometry, ceilingOf, clearHeight, finishIssues, pieceSizeCm, FINISH_RULES } from '@/core/finishes';
 import { formatMoney, formatArea, formatLength } from '@/core/format';
 import { normalizeHex } from '@/core/appearance';
 import { lightReport } from '@/core/light-design';
@@ -23,14 +23,19 @@ const KINDS = Object.keys(FEATURE_CATEGORY) as WallFeatureKind[];
 /** Piesele unei băi, în ordinea în care le alege un designer; fiecare se schimbă cu orice produs real din grupa ei. */
 const BATH_GROUPS = ['wc', 'lavoar', 'dus', 'cada', 'bideu', 'dulapOglinda', 'caloriferBaie', 'coloanaBaie', 'boiler'];
 
-export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSwap, onAdd }: { room: Room; snap: Snapshot; cat: Catalog; mc: MaterialsCatalog; cur: string; onFinish(p: Partial<RoomFinishes>): void; onSwap?(placementId: string, variantId: string): void; onAdd?(variantId: string): void }){
+export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSwap, onAdd, focusFeature }: { room: Room; snap: Snapshot; cat: Catalog; mc: MaterialsCatalog; cur: string; onFinish(p: Partial<RoomFinishes>): void; onSwap?(placementId: string, variantId: string): void; onAdd?(variantId: string): void;
+  /** placarea tocmai pusă cu unealta „Placare”: rândul ei se aduce în vedere și primește focusul */ focusFeature?: { i: number; n: number } | null }){
   const { t, lang, units } = usePrefs();
   const f = finishesOf(snap, room), g = roomGeometry(snap, room), fl = floorOfRoom(snap, room.id), wet = room.type === 'baie' || room.type === 'bucatarie';
   const by = (...c: Material['category'][]) => mc.materials.filter(m => c.includes(m.category));
   const fm = materialOf(mc, f.floor), lay = layoutOf(f, fm), tile = fm?.category === 'floor_tile', c = ceilingOf(f);
   const setLayout = (p: Partial<typeof lay>) => onFinish({ floorLayout: { ...lay, ...p } });
   const features = f.wallFeatures || [];
-  const setFeature = (i: number, p: Partial<WallFeature>) => onFinish({ wallFeatures: features.map((w, k) => k === i ? { ...w, ...p } : w) });
+  // câmpurile cu `undefined` în patch se șterg (porțiunea „toată latura”, orientarea implicită a lamelelor)
+  const setFeature = (i: number, p: Partial<WallFeature>) => onFinish({ wallFeatures: features.map((w, k) => { if (k !== i) return w; const q: any = { ...w, ...p }; for (const key of Object.keys(p)) if ((p as any)[key] === undefined) delete q[key]; return q as WallFeature; }) });
+  const rows = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (!focusFeature) return; const el = rows.current?.querySelector<HTMLElement>(`[data-feature="${focusFeature.i}"]`); el?.scrollIntoView?.({ block: 'nearest' }); el?.querySelector<HTMLElement>('select')?.focus({ preventScroll: true }); }, [focusFeature?.n]); // eslint-disable-line
+  const r2 = (v: number) => Math.round(v * 100) / 100;
   const firstOf = (kind: WallFeatureKind) => by(FEATURE_CATEGORY[kind])[0]?.id || '';
   const freeSide = SIDES.find(s => !features.some(w => w.side === s));
   const setCeiling = (p: Partial<NonNullable<RoomFinishes['ceiling']>>) => onFinish({ ceiling: { type: c.type, ...(f.ceiling || {}), ...p } });
@@ -78,11 +83,11 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSw
     <fieldset className="fin-group"><legend>{t('fin.walls')}</legend>
       <label className="f"><span>{t('editor.wallPaint')}</span><MaterialPicker cur={cur} value={f.wallPaint} options={by('paint')} onChange={v => onFinish({ wallPaint: v })} /></label>
       {wet && <label className="f"><span>{t('editor.wallTile')}</span><MaterialPicker cur={cur} value={f.wallTile || ''} options={by('wall_tile')} none={t('editor.noTile')} onChange={v => onFinish({ wallTile: v || null })} /></label>}
-      {features.map((w, i) => <div key={i} className="fin-row">
+      <div ref={rows} style={{ display: 'contents' }}>{features.map((w, i) => { const len = sideSpan(room, w.side), partial = w.alongFromM != null || w.alongToM != null; return <div key={i} className="fin-row" data-feature={i}>
         <div className="grid2">
           <label className="f"><span>{t('fin.side')}</span><select value={w.side} onChange={e => setFeature(i, { side: e.target.value as WallFeature['side'] })}>
             {SIDES.map(s => <option key={s} value={s}>{t(`fin.side.${s}`)} · {sideLen(s)}</option>)}</select></label>
-          <label className="f"><span>{t('fin.kind')}</span><select value={w.kind} onChange={e => { const k = e.target.value as WallFeatureKind; setFeature(i, { kind: k, material: firstOf(k) }); }}>
+          <label className="f"><span>{t('fin.kind')}</span><select value={w.kind} onChange={e => { const k = e.target.value as WallFeatureKind; setFeature(i, { kind: k, material: firstOf(k), vertical: undefined, effect: undefined }); }}>
             {KINDS.filter(k => by(FEATURE_CATEGORY[k]).length).map(k => <option key={k} value={k}>{t(`fin.kind.${k}`)}</option>)}</select></label>
         </div>
         <label className="f"><span>{t('fin.product')}</span><MaterialPicker cur={cur} value={w.material} options={by(FEATURE_CATEGORY[w.kind])} onChange={v => setFeature(i, { material: v })} /></label>
@@ -94,7 +99,18 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSw
           {(w.kind === 'paint' || w.kind === 'panel' || w.kind === 'rail') && <label className="f"><span>{t('fin.color')}</span><input type="color" value={w.color || '#f3f1ec'} onChange={e => { const h = normalizeHex(e.target.value); if (h) setFeature(i, { color: h }); }} /></label>}
           <button className="btn" style={{ alignSelf: 'end' }} onClick={() => onFinish({ wallFeatures: features.filter((_, k) => k !== i) })}>{t('fin.remove')}</button>
         </div>
-      </div>)}
+        {/* porțiunea pe lungime, de la colțul din stânga-sus al planului (x0 pe N/S, z0 pe V/E); goale = toată latura */}
+        <div className="grid2">
+          <label className="f"><span>{t('fin.alongFrom')}</span><input type="number" min={0} max={len} step={.05} value={w.alongFromM ?? ''} placeholder="0"
+            onChange={e => { const v = e.target.value === '' ? undefined : r2(Math.max(0, Math.min((w.alongToM ?? len) - .05, Number(e.target.value) || 0))); setFeature(i, { alongFromM: v, ...(v != null && w.alongToM == null ? { alongToM: r2(len) } : {}) }); }} /></label>
+          <label className="f"><span>{t('fin.alongTo')}</span><input type="number" min={0} max={len} step={.05} value={w.alongToM ?? ''} placeholder={String(r2(len))}
+            onChange={e => { const v = e.target.value === '' ? undefined : r2(Math.max((w.alongFromM ?? 0) + .05, Math.min(len, Number(e.target.value) || len))); setFeature(i, { alongToM: v, ...(v != null && w.alongFromM == null ? { alongFromM: 0 } : {}) }); }} /></label>
+          {partial && <button type="button" className="btn" style={{ alignSelf: 'end' }} onClick={() => setFeature(i, { alongFromM: undefined, alongToM: undefined })}>{t('fin.wholeSide')}</button>}
+          {w.kind === 'plaster' && <label className="f"><span>{t('fin.effect')}</span><select value={w.effect ?? ''} onChange={e => setFeature(i, { effect: (e.target.value || undefined) as WallFeature['effect'] })}>
+            <option value="">{t('fin.effect.none')}</option>{PLASTER_EFFECTS.map(x => <option key={x} value={x}>{t(`fin.effect.${x}`)}</option>)}</select></label>}
+          {w.kind === 'slats' && <label className="f" style={{ alignSelf: 'end' }}><span><input type="checkbox" checked={w.vertical !== false} onChange={e => setFeature(i, { vertical: e.target.checked ? undefined : false })} /> {t('fin.slatsVertical')}</span></label>}
+        </div>
+      </div>; })}</div>
       {features.length < 24 && <button className="btn" onClick={() => onFinish({ wallFeatures: [...features, { side: freeSide ?? 'N', kind: 'wallpaper', material: firstOf('wallpaper'), ...(freeSide ? {} : { fromM: Math.min(fl.ceilingHeight - .3, 1.2) }) }] })}>{t('fin.addFeature')}</button>}
       {bandsOverlap(features, fl.ceilingHeight) && <div className="issue WARNING">{t('fin.bandsOverlap')}</div>}
       {room.type !== 'baie' && room.type !== 'bucatarie' && <label className="f"><span>{t('editor.baseboard')}</span><MaterialPicker cur={cur} value={f.baseboard || ''} options={by('baseboard')} none={t('editor.noBaseboard')} onChange={v => onFinish({ baseboard: v || null })} /></label>}

@@ -1,7 +1,8 @@
 // Limitele elementelor de plan (structură, nișe, adnotări): o singură sursă pentru interfață (câmpurile din panou,
 // uneltele) și pentru server (checkSnapshot din lib/repo.ts). Un client cu o limită mai largă decât serverul ar bloca
 // salvarea întregului proiect (400), de aceea ambele citesc de aici. Funcții pure, fără I/O.
-import type { Annotation, Beam, Column, Floor, GlassWall, Niche } from './types';
+import type { Annotation, Beam, Column, DoorType, Floor, GlassWall, Niche, WallItem } from './types';
+import { DOOR_TYPES, DOOR_TYPE_RULES } from './rules';
 
 export const PLAN_LIMITS = {
   coordM: 1000,
@@ -11,6 +12,7 @@ export const PLAN_LIMITS = {
   niche: { max: 100, widthMinM: .1, widthMaxM: 3, heightMinM: .1, heightMaxM: 3, depthMinM: .03, depthMaxM: .5, elevMaxM: 3 },
   annotation: { max: 300, textMax: 120, dimMinM: .01, offsetMaxM: 50 },
   passage: { widthMinM: .3, widthMaxM: 4 },
+  wallItem: { max: 300, widthMinM: .05, widthMaxM: 4, heightMinM: .02, heightMaxM: 3, depthMaxM: .6, labelMax: 60 },
 } as const;
 /** Dimensiunile implicite la plasare (m). */
 export const PLAN_DEFAULTS = { passageWidth: .9, shaft: .3, niche: { width: .6, height: .4, depth: .1, elevation: 1.1 }, dimOffset: .3 } as const;
@@ -24,7 +26,9 @@ const HEX = /^#[0-9a-f]{6}$/i;
 
 /** Textul liber de pe plan: fără caractere de control, fără `<>` (ajunge în SVG, DXF și PDF) și fără comenzi de direcție
  *  (bidi, ar inversa vizual textul pe planșă), cel mult 120 de caractere. */
-export const cleanPlanText = (s: unknown) => String(s ?? '').replace(/[\u0000-\u001f\u007f<>\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, ' ').replace(/\s+/g, ' ').trim().slice(0, PLAN_LIMITS.annotation.textMax);
+/** Doar fără caracterele interzise (pentru câmpurile în care se tastează: spațiile rămân); cleanPlanText curăță și marginile. */
+export const stripPlanText = (s: unknown) => String(s ?? '').replace(/[\u0000-\u001f\u007f<>\u061C\u200E\u200F\u202A-\u202E\u2066-\u2069]/g, ' ');
+export const cleanPlanText = (s: unknown) => stripPlanText(s).replace(/\s+/g, ' ').trim().slice(0, PLAN_LIMITS.annotation.textMax);
 
 export class PlanLimitError extends Error {}
 const bad = (m: string): never => { throw new PlanLimitError(m); };
@@ -68,6 +72,23 @@ export function sanitizeNiche(n: any): Niche {
   if (n.finish != null && !['tile', 'paint', 'led'].includes(n.finish)) bad('Finisajul nișei este invalid.');
   return { id: n.id, wallId: n.wallId, offset: n.offset, width: n.width, height: n.height, depth: n.depth, elevation: n.elevation, ...(n.side != null ? { side: n.side } : {}), ...(n.finish ? { finish: n.finish } : {}) };
 }
+const WALL_ITEM_KINDS = ['art', 'mirror', 'shelf', 'tv'];
+/** Obiectul de pe perete curățat: doar câmpurile modelului. Poziția pe perete și cota se aduc în interval (un perete scurtat sau
+ *  un tavan coborât nu blochează salvarea întregului proiect; validarea arată „iese din perete”); mărimile în afara limitelor se resping. */
+export function sanitizeWallItem(it: any, wallLen: number | undefined, ceiling: number): WallItem {
+  const L = PLAN_LIMITS.wallItem;
+  if (!it || typeof it !== 'object' || typeof it.id !== 'string' || !ID.test(it.id) || typeof it.wallId !== 'string' || !WALL_ITEM_KINDS.includes(it.kind) || (it.side !== 1 && it.side !== -1)) bad('Un obiect de pe perete este invalid.');
+  if (!within(it.width, L.widthMinM, L.widthMaxM) || !within(it.height, L.heightMinM, L.heightMaxM) || (it.depth != null && !within(it.depth, 0, L.depthMaxM)))
+    bad(`Un obiect de pe perete are dimensiuni invalide (lățime ${L.widthMinM * 100}–${L.widthMaxM * 100} cm, înălțime ${L.heightMinM * 100}–${L.heightMaxM * 100} cm).`);
+  if (!num(it.offset) || !num(it.elevation)) bad('Poziția unui obiect de pe perete este invalidă.');
+  if (it.product != null && (typeof it.product !== 'string' || it.product.length > 80)) bad('Produsul unui obiect de pe perete este invalid.');
+  if (it.color != null && (typeof it.color !== 'string' || !HEX.test(it.color))) bad('Culoarea unui obiect de pe perete este invalidă.');
+  if (it.label != null && typeof it.label !== 'string') bad('Numele unui obiect de pe perete este invalid.');
+  const label = it.label != null ? cleanPlanText(it.label).slice(0, L.labelMax) : '';
+  return { id: it.id, wallId: it.wallId, side: it.side, kind: it.kind, offset: Math.max(0, Math.min(wallLen ?? Math.abs(it.offset), it.offset)), elevation: Math.max(0, Math.min(ceiling, it.elevation)),
+    width: it.width, height: it.height, ...(it.depth != null ? { depth: it.depth } : {}), ...(typeof it.product === 'string' && it.product ? { product: it.product } : {}),
+    ...(it.color ? { color: it.color.toLowerCase() } : {}), ...(label ? { label } : {}) };
+}
 /** Adnotarea curățată, sau null pentru un text gol (se aruncă). */
 export function sanitizeAnnotation(a: any): Annotation | null {
   const L = PLAN_LIMITS.annotation;
@@ -81,6 +102,7 @@ export function sanitizeAnnotation(a: any): Annotation | null {
     if (!pt(a.at)) bad('Un text de pe plan are poziția invalidă.');
     if (a.size != null && !['s', 'm', 'l'].includes(a.size)) bad('Mărimea textului este invalidă.');
     if (a.rotation != null && !num(a.rotation)) bad('Rotația textului este invalidă.');
+    if (typeof a.text !== 'string') bad('Textul de pe plan este invalid.');
     const text = cleanPlanText(a.text); if (!text) return null;
     return { id: a.id, kind: 'text', at: [a.at[0], a.at[1]], text, ...(a.size ? { size: a.size } : {}), ...(a.rotation ? { rotation: ((a.rotation % 360) + 360) % 360 } : {}) }; }
   return bad('Tipul adnotării este invalid.');
@@ -89,14 +111,28 @@ export function sanitizeAnnotation(a: any): Annotation | null {
  *  comune cu interfața, cel mult N pe nivel; o nișă pe un perete care nu mai există se elimină. Aruncă PlanLimitError. */
 export function sanitizeFloorElements(f: Floor & Record<string, any>): void {
   const L = PLAN_LIMITS, walls = new Set((f.walls || []).map(w => w.id));
-  const set = <K extends 'columns' | 'beams' | 'glassWalls' | 'niches' | 'annotations'>(k: K, v: any[] | null) => { if (v && v.length) (f as any)[k] = v; else delete f[k]; };
+  const set = <K extends 'columns' | 'beams' | 'glassWalls' | 'niches' | 'annotations' | 'wallItems'>(k: K, v: any[] | null) => { if (v && v.length) (f as any)[k] = v; else delete f[k]; };
   const cols = list(f.columns, L.column.max, 'Stâlpii'); set('columns', cols && cols.map(sanitizeColumn));
   const bms = list(f.beams, L.beam.max, 'Grinzile'); set('beams', bms && bms.map(sanitizeBeam));
   const gws = list(f.glassWalls, L.glassWall.max, 'Pereții de sticlă'); set('glassWalls', gws && gws.map(sanitizeGlassWall));
   const ns = list(f.niches, L.niche.max, 'Nișele'); set('niches', ns && ns.map(sanitizeNiche).filter(n => walls.has(n.wallId)));
+  // obiectele de pe perete: id unic, peretele existent pe acest nivel (altfel se elimină, ca nișa), poziția adusă pe perete
+  const lens = new Map((f.walls || []).map(w => [w.id, Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1])])), ceil = num(f.ceilingHeight) ? f.ceilingHeight : 10;
+  const wis = list(f.wallItems, L.wallItem.max, 'Obiectele de pe perete'), seen = new Set<string>();
+  set('wallItems', wis && wis.map(x => sanitizeWallItem(x, lens.get(x?.wallId), ceil)).filter(x => { if (seen.has(x.id)) bad('Două obiecte de pe perete au același id.'); seen.add(x.id); return walls.has(x.wallId); }));
   const an = list(f.annotations, L.annotation.max, 'Adnotările'); set('annotations', an && an.map(sanitizeAnnotation).filter((x): x is Annotation => !!x));
   for (const w of f.walls || []) for (const o of w.openings || []){
-    if (o.passage == null){ delete o.passage; continue; }
-    if (o.passage !== true || o.kind !== 'door') bad('Golul de trecere este invalid (doar pe un gol de ușă).');
-    if (!within(o.width, L.passage.widthMinM, L.passage.widthMaxM)) bad(`Golul de trecere trebuie să aibă între ${L.passage.widthMinM * 100} și ${L.passage.widthMaxM * 100} cm.`); }
+    if (o.passage == null) delete o.passage;
+    else { if (o.passage !== true || o.kind !== 'door') bad('Golul de trecere este invalid (doar pe un gol de ușă).');
+      if (!within(o.width, L.passage.widthMinM, L.passage.widthMaxM)) bad(`Golul de trecere trebuie să aibă între ${L.passage.widthMinM * 100} și ${L.passage.widthMaxM * 100} cm.`);
+      // trecerea câștigă: n-are foaie, deci nici tip, nici filomuro (se șterg, nu se resping, ca un client vechi să poată salva)
+      delete o.doorType; delete o.flush; continue; }
+    sanitizeDoorType(o); }
+}
+/** Tipul ușii și filomuro pe un gol (fără trecere): doar pe ușă, din enumerare; lățimea pe tip se verifică doar când tipul e ales. */
+export function sanitizeDoorType(o: any): void {
+  if (o.doorType == null) delete o.doorType;
+  else { if (o.kind !== 'door' || !(DOOR_TYPES as readonly string[]).includes(o.doorType)) bad('Tipul ușii este invalid.');
+    const r = DOOR_TYPE_RULES[o.doorType as DoorType]; if (!within(o.width, r.minM, r.maxM)) bad(`Ușa de acest tip trebuie să aibă între ${Math.round(r.minM * 100)} și ${Math.round(r.maxM * 100)} cm.`); }
+  if (o.flush == null) delete o.flush; else if (o.flush !== true || o.kind !== 'door') bad('Ușa ascunsă (filomuro) este invalidă.');
 }
