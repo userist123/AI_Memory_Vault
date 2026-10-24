@@ -6,7 +6,7 @@ import { nicheGeometry } from './niches';
 import { wallItemGeometry } from './wall-items';
 import { annotationCenter } from './annotations';
 
-export type PlanItemKind = 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'wall_item' | 'annotation';
+export type PlanItemKind = 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'wall_item' | 'annotation' | 'floor_zone';
 export interface PlanItem { kind: PlanItemKind; id: string; x: number; z: number }
 export type PlanSel = { kind: string; id: string } | null;
 
@@ -22,7 +22,9 @@ export function planItems(snap: Pick<Snapshot, 'floor' | 'placements'>): PlanIte
   const niches = (snap.floor.niches ?? []).flatMap(n => { const g = nicheGeometry(snap.floor, n); return g ? [{ kind: 'niche' as const, id: n.id, x: g.center[0], z: g.center[1] }] : []; }).sort(order);
   const notes = (snap.floor.annotations ?? []).map(a => { const [x, z] = annotationCenter(a); return { kind: 'annotation' as const, id: a.id, x, z }; }).sort(order);
   const wallItems = (snap.floor.wallItems ?? []).flatMap(it => { const g = wallItemGeometry(snap.floor, it); return g ? [{ kind: 'wall_item' as const, id: it.id, x: g.center[0], z: g.center[1] }] : []; }).sort(order);
-  return [...rooms, ...pieces, ...stairs, ...columns, ...beams, ...glassWalls, ...niches, ...wallItems, ...notes];
+  // zonele de pardoseală după camere: Tab ajunge la ele înainte de mobilier (stau în camera lor)
+  const zones = (snap.floor.zones ?? []).map(z => ({ kind: 'floor_zone' as const, id: z.id, x: z.rect.x0, z: z.rect.z0 })).sort(order);
+  return [...rooms, ...zones, ...pieces, ...stairs, ...columns, ...beams, ...glassWalls, ...niches, ...wallItems, ...notes];
 }
 
 /** Elementul următor (dir = 1) sau anterior (dir = −1). `null` = Tab iese din plan (după ultimul sau înainte de primul). */

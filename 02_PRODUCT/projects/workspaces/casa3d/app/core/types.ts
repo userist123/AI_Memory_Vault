@@ -13,7 +13,10 @@ export interface Room { id: string; name: string; type: string; rect: RoomRect; 
  *  - `swing` = fața spre care se deschide (swing, double, folding, pivot) sau fața pe care e montată șina (sliding); la `pocket` se ignoră. */
 export type DoorType = 'swing' | 'double' | 'sliding' | 'pocket' | 'folding' | 'pivot';
 export interface Opening { id: string; kind: 'door' | 'window'; offset: number; width: number; entrance?: boolean; height?: number; sill?: number; hinge?: 'start' | 'end'; swing?: 1 | -1; passage?: true; doorType?: DoorType; flush?: true }
-export interface Wall { id: string; a: [number, number]; b: [number, number]; thickness: number; exterior: boolean; openings: Opening[] }
+/** `status`: starea peretelui în proiectul de renovare (lipsă = existent): `new` = de construit, `demolish` = de demolat
+ *  (nu se randează în 3D, golurile lui nu mai contează în calcule; în plan apare punctat, peretele nou hașurat). */
+export type WallStatus = 'existing' | 'new' | 'demolish';
+export interface Wall { id: string; a: [number, number]; b: [number, number]; thickness: number; exterior: boolean; openings: Opening[]; status?: WallStatus }
 /** Scară dreaptă pe un nivel, care urcă la nivelul următor (centrul x/z, lățime și lungime în m, rotație în multipli de 90°). */
 export interface Stair { id: string; x: number; z: number; width: number; length: number; rotation: number }
 /** Stâlp / coloană structurală (dreptunghiular sau rotund, poziție x/z, dimensiuni w/d în m).
@@ -38,7 +41,10 @@ export type Annotation = DimAnnotation | TextAnnotation;
 export type WallItemKind = 'art' | 'mirror' | 'shelf' | 'tv';
 export interface WallItem { id: string; wallId: string; side: 1 | -1; kind: WallItemKind; offset: number; elevation: number; width: number; height: number; depth?: number;
   product?: string | null; color?: string; label?: string }
-export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[]; columns?: Column[]; beams?: Beam[]; glassWalls?: GlassWall[]; niches?: Niche[]; annotations?: Annotation[]; wallItems?: WallItem[] }
+/** Zonă de pardoseală: dreptunghi în camera `roomId` cu alt material (gresia bucătăriei din open-space, intrarea); `floor` = id de
+ *  material (parchet sau gresie), `layout` = modul de așezare (lipsă = drept). Devizul scade zona din pardoseala camerei. */
+export interface FloorZone { id: string; roomId: string; rect: RoomRect; floor: string; layout?: FloorLayout; label?: string }
+export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[]; columns?: Column[]; beams?: Beam[]; glassWalls?: GlassWall[]; niches?: Niche[]; annotations?: Annotation[]; wallItems?: WallItem[]; zones?: FloorZone[] }
 /** `size` (cm) = piesă pe comandă cu altă dimensiune decât varianta din catalog; prețul ei devine necunoscut. */
 export interface FurniturePlacement { id: string; roomId: string; group: string; variantId: string; x: number; z: number; rotation: number; source: 'auto' | 'manual'; size?: { w: number; d: number; h: number } }
 /** Culoare (hex #rrggbb) și, unde modelul permite, material; lipsa înseamnă aspectul implicit. */
@@ -63,7 +69,8 @@ export interface Catalog { suppliers: Supplier[]; products: Product[]; variants:
 export type Severity = 'PASS' | 'WARNING' | 'ERROR';
 /** `message` = textul românesc (compatibil cu API-ul); `key` + `vars` = același text în orice limbă (lib/i18n.ts issueText). */
 export interface Issue { code: 'OUT_OF_ROOM' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW_BLOCKED' | 'CLEARANCE' | 'UNKNOWN_VARIANT' | 'OPENING_OUTSIDE_WALL' | 'WALL_TOO_SHORT' | 'STAIR'
-  | 'NICHE_OUTSIDE_WALL' | 'NICHE_TOO_DEEP' | 'NICHE_OVER_OPENING' | 'SHAFT_DOOR' | 'SHAFT_OUTSIDE_ROOM' | 'DOOR_TYPE' | 'WALL_ITEM'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
+  | 'NICHE_OUTSIDE_WALL' | 'NICHE_TOO_DEEP' | 'NICHE_OVER_OPENING' | 'SHAFT_DOOR' | 'SHAFT_OUTSIDE_ROOM' | 'DOOR_TYPE' | 'WALL_ITEM'
+  | 'WALL_DEMOLISH' | 'RADIATOR_BLOCKED' | 'HVAC' | 'ZONE_OUTSIDE_ROOM' | 'ZONE_OVERLAP'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
 
 // ---------- Faza 2: materiale, manoperă, servicii, finisaje, buget ----------
 export type MaterialCategory = 'parquet' | 'floor_tile' | 'wall_tile' | 'paint' | 'baseboard' | 'tile_adhesive' | 'lighting'

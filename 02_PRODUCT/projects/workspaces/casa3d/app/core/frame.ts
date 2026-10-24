@@ -17,6 +17,7 @@ export function selectionBox(snap: Snapshot, cat: Catalog, sel: FrameSel): Box |
   if (!sel) return null; const f = snap.floor;
   switch (sel.kind){
     case 'room': { const r = f.rooms.find(x => x.id === sel.id); return r ? { ...r.rect } : null; }
+    case 'floor_zone': { const z = f.zones?.find(x => x.id === sel.id); return z ? { ...z.rect } : null; }
     case 'placement': { const p = snap.placements.find(x => x.id === sel.id); return p ? footprintOf(cat, p) : null; }
     case 'wall': { const w = f.walls.find(x => x.id === sel.id); return w ? seg(w.a, w.b, w.thickness) : null; }
     case 'opening': { const w = f.walls.find(x => x.id === sel.wallId); return w ? seg(w.a, w.b, w.thickness) : null; }

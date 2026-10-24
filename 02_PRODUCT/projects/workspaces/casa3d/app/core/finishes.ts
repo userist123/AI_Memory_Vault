@@ -9,10 +9,11 @@ import { sanitizeBath, bathTileHeight } from './bath';
 import { sanitizeFixtures } from './fixtures';
 import { openingsOnSide } from './validate';
 import { WALLPAPER_RULES } from './rules';
+import { FLOOR_PATTERNS, isMaterialRef } from './plan-limits';
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
 export const SIDES = ['N', 'E', 'S', 'W'] as const;
-export const PATTERNS: FloorPattern[] = ['straight', 'brick', 'third', 'diagonal', 'herringbone', 'chevron', 'checker'];
+export const PATTERNS: FloorPattern[] = [...FLOOR_PATTERNS];
 
 /** Pierderi la tăiere după modul de așezare (fracție din suprafața netă). Sursa: ghidurile de calcul citate în raportul de cercetare
  *  (plăci drepte ~10 %, diagonală și spic 15 %, chevron 15–20 %); formatele mari (latura ≥ 100 cm) mai adaugă 5 %. */
@@ -206,7 +207,7 @@ export function sanitizeFinishes(f: any): string | null {
   const hex = (v: unknown) => v === undefined || (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v));
   const num = (v: unknown, lo: number, hi: number) => v === undefined || (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi);
   for (const rf of Object.values<any>(f)){ if (!rf || typeof rf !== 'object') return 'Finisajele sunt invalide.';
-    if ([rf.floor, rf.wallPaint, rf.wallTile, rf.baseboard, rf.light].some(x => x != null && (typeof x !== 'string' || x.length > 80))) return 'Finisajele sunt invalide.';
+    if ([rf.floor, rf.wallPaint, rf.wallTile, rf.baseboard, rf.light].some(x => x != null && !isMaterialRef(x))) return 'Finisajele sunt invalide.';
     const l = rf.floorLayout; if (l !== undefined && (l === null || typeof l !== 'object' || !PATTERNS.includes(l.pattern) || !num(l.groutMm, 0, 20) || !hex(l.groutColor) || ![undefined, 0, 90].includes(l.angle))) return 'Modul de așezare a pardoselii este invalid.';
     const wf = rf.wallFeatures; if (wf !== undefined && (!Array.isArray(wf) || wf.length > 24 || wf.some((w: any) => !w || !SIDES.includes(w.side) || !Object.hasOwn(FEATURE_CATEGORY, w.kind) || typeof w.material !== 'string' || w.material.length > 80 || !hex(w.color) || !num(w.heightM, .05, 10) || !num(w.fromM, 0, 10)
       || (w.fromM !== undefined && w.heightM !== undefined && w.kind !== 'rail' && w.heightM <= w.fromM)
@@ -225,11 +226,13 @@ export function sanitizeFinishes(f: any): string | null {
  *  o scoate doar de pe porțiunea ei, dacă știm camera (lungimea laturii); fără cameră, ca înainte: toată latura. */
 export const bathTiles = (f: RoomFinishes, roomType: string, room?: Pick<Room, 'rect'>): WallFeature[] => { if (roomType !== 'baie' || !f.wallTile) return [];
   const h = bathTileHeight(f), base = (side: WallFeature['side']): WallFeature => ({ side, kind: 'tile', material: f.wallTile!, ...(h !== undefined ? { heightM: h } : {}) });
-  return SIDES.flatMap(side => { const on = (f.wallFeatures || []).filter(w => w.side === side); if (!on.length) return [base(side)];
+  // contează doar placările care acoperă faianța pe înălțime: nu un brâu și nu o bandă care începe deasupra ei (vopsea de la 2,2 m)
+  return SIDES.flatMap(side => { const on = (f.wallFeatures || []).filter(w => w.side === side && w.kind !== 'rail' && (w.fromM ?? 0) < (h ?? Infinity) - 1e-6);
+    if (!on.length) return [base(side)];
     if (!room || on.some(w => w.alongFromM === undefined && w.alongToM === undefined)) return [];
     const len = sideSpan(room, side), cut = on.map(w => alongOf(w, len)).sort((p, q) => p[0] - q[0]), out: WallFeature[] = []; let at = 0;
-    for (const [a, b] of [...cut, [len, len] as [number, number]]){ if (a - at >= .05) out.push({ ...base(side), alongFromM: r2(at), alongToM: r2(a) }); at = Math.max(at, b); }
-    return out; }); };
+    for (const [a, b] of [...cut, [len, len] as [number, number]]){ if (r2(a - at) >= .05) out.push({ ...base(side), alongFromM: r2(at), alongToM: r2(a) }); at = Math.max(at, b); }
+    return out.length === 1 && out[0]!.alongFromM === 0 && out[0]!.alongToM === r2(len) ? [base(side)] : out; }); };
 /** Culoarea folosită doar la randare (aproximată după numele culorii de pe pagina produsului). */
 export const renderColor = (m: Material | undefined, fallback: string) => m?.specs?.color || fallback;
 export interface FloorVisual { kind: 'parquet' | 'tile'; pattern: FloorPattern; angle: 0 | 90; pieceL: number; pieceW: number; grout: number; groutColor: string; color: string; marble?: boolean }
