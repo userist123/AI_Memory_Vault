@@ -1321,6 +1321,7 @@ namespace LogAnalyzer.UI.ViewModels
                     CollectionHostname,
                     log => App.Current.Dispatcher.Invoke(() => CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, log))
                 )) is { } refused) ShowExportRefused(refused);
+                else Home.NoteLiveCaseUsed();   // 2026-10-23: the live collection is exported for the station's LIVE case: it is listed in „Cazuri recente”
             }
             catch (Exception ex)
             {

@@ -488,7 +488,28 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
 - DECIDED (main, owner "continuă recomandat") 2026-10-23: LogAnalyzer.db/.key STAY. Reason: AppInstallDate takes the EARLIEST of the audit chain's first
   record and the app's traces (program files, licence, LogAnalyzer.db, case folders); the db (created 11.08.2026) is the earliest trace - moving it would make
   the install date look later and the next control (A16) would report a reinstall that never happened. Moving Cases did not change it (db was earlier).
-- MERGE chain #303 -> #306 -> #307 -> #308 into main: NOT done - security/authority-sensitive (auth, device monitor, response verification); CLAUDE.md
+- MERGED 2026-10-23 with the owner's explicit "Da, fă merge": origin/main merged into release-gate (1c8f18fd3, no conflicts, no LogAnalyzer file from main);
+  local suites on it: Dfir 2418/31/0, App 816/0, UI 354/1, Edition 45/0 (TEMP on D:; an earlier run failed only because C: was full); CI on 1c8f18fd3
+  all green incl. Build and test, 3 packages, npm lockfiles, security-boundary. Merge commits (stack-safe), heads checked before each:
+  #303 c323d6585, #306 5038d6cd9, #307 1a13c4afe, #308 132a8eec6. main tree == CI-tested tree (d3e9f56e1). Branches NOT deleted (worktrees).
+  Known timing-sensitive tests (pass alone, failed once under load): DeviceMonitorTests.A_lost_event_source…, EvidenceReasonerTests.Local_model_answer… - follow-up.
+  FOLLOW-UP DONE 37962117f (PR #329, draft): A root-caused (test read the journal after the audit but before RaiseAlert+Save in RefreshAsync, pool
+  thread) - test now waits for the save holding the alert; Thread.Sleep guard in Fakes makes the old wait fail deterministically. B NOT reproduced in
+  19 runs (real Ollama qwen2.5:7b present); latent race fixed anyway: AiIndependenceTests + OwnerEditionDecisionsTests reset the global AppModeContext
+  outside the "AppMode" collection -> now in it. Main re-ran Dfir 2418/31/0, App 816/0 (worker: 5x each green). If B fails again: capture with --logger trx.
+  C: free space keeps shrinking (6.8 -> 0 GB in ~3 h, source not fully found; VS installer cache 5.8 GB in %TEMP%\2ouqcvha is the owner's) - run tests with TEMP on D:.
+- 2026-10-23 real-PC pass (screens 210-228): F1 proceduri hint stays English after Expert->Simplu; F2 Politici hides the
+  imported GPO after restart; F3 Cazuri recente empty after a control. FIXED in 92eaade35 (PR #329, draft), tests
+  RealPc20261023Tests (4, red without fix). Verified here: App 820/0, UI 354/1 (worker also Dfir 2418/31/0). NOT yet on screen.
+- docs/dfir/MATRICE_HG585_ORNISS_2026-10-23.md: 39 requirements -> checks -> gaps + flow proposal. Main gaps: measure+deadline
+  per non-conformity in the PV (#38), delta vs previous control (#39), registers (interventions with witness, backups,
+  incidents), training dates, accreditation expiry. OWNER DECIDED 2026-10-23: levels from secret de serviciu upward
+  (SSv, S, SS, SSID) -> station level is a profile setting; level-dependent rules per matrix section 4. Still open:
+  unit thresholds from CSS/PrOpSec, PV form, implementation order (proposed #38 then #39).
+- NEXT (new session): publish Standalone from 51e995916, reinstall, re-login (administrator.principal), screenshot Profil de
+  proceduri (Expert->Simplu), Politici (library list), Acasa (Cazuri recente after a control); then CI on #329 once; then
+  the owner's answers decide the HG 585 work. Tests: TEMP/TMP on D:\w\tmp (C: nearly full).
+- (old) MERGE chain #303 -> #306 -> #307 -> #308 into main: NOT done - security/authority-sensitive (auth, device monitor, response verification); CLAUDE.md
   forbids auto-merge; needs the owner's explicit "da, fă merge". #303 ready (mergeable UNKNOWN at 2026-10-23), #306-#308 drafts MERGEABLE. PR #308 title
   "demo" removed.
 - (old) OPEN QUESTION to owner: move LogAnalyzer.db/.key (+ .bak-20261016) from %LOCALAPPDATA%\LogAnalyzer too (not in the approved cleanup list)?
