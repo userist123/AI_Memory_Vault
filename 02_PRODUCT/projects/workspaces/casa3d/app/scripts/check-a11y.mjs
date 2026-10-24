@@ -56,6 +56,18 @@ try {
   await p.s('Emulation.setDeviceMetricsOverride', { width: 1366, height: 768, deviceScaleFactor: 1, mobile: false }); await p.go(`${BASE}/p/${id}`);
   if (need(await p.evaluate(async () => { for (let i = 0; i < 100 && !document.querySelector('svg.plan'); i++) await new Promise(r => setTimeout(r, 100)); const m = document.querySelector('.tb-more'); return !!document.querySelector('svg.plan') && !!m && getComputedStyle(m).display !== 'none'; }), 'editor la 1366 px (svg.plan, meniul Mai multe)'))
     failures += await audit(p, 'editor-1366'); await view(p, DESKTOP);
+  // panoul Instalații cu un calorifer (80×60, produs ales) și pickerul de produs deschis: numele pickerului are camera în el
+  const rad = await p.evaluate(async id => { const j = async (url, method = 'GET', body) => { const r = await fetch(url, { method, headers: { 'content-type': 'application/json' }, body: body && JSON.stringify(body) }); if (!r.ok) return null; return r.json().catch(() => ({})); };
+    const pr = await j(`/api/projects/${id}`); if (!pr) return null; const s = pr.draft, room = s.floor.rooms[0], R = room.rect;
+    s.tech = [...(s.tech || []), { id: `radiator:${room.id}:a11y`, kind: 'radiator', roomId: room.id, x: (R.x0 + R.x1) / 2, z: R.z0, height: .15, reason: 'manual', widthM: .8, heightM: .6, model: 'panel', product: 'dedeman-calorifer-otel-pekpan-22k-600-x-800-accesorii-incluse' }];
+    return (await j(`/api/projects/${id}`, 'PUT', { snapshot: s, base: pr.draftRev })) ? room.name : null; }, id);
+  if (need(rad, 'calorifer salvat în proiect')){ await p.go(`${BASE}/p/${id}`);
+    need(await p.evaluate(async () => { for (let i = 0; i < 100 && !document.querySelector('svg.plan'); i++) await new Promise(r => setTimeout(r, 100)); const b = document.querySelector('.stagebar [data-stage="mep"]'); b?.click(); await new Promise(r => setTimeout(r, 900)); return !!b; }), 'etapa mep (Instalații)');
+    const opened = await p.evaluate(async room => { const d = [...document.querySelectorAll('details')].find(x => x.querySelector('summary')?.textContent?.startsWith(room)); if (d) d.open = true; await new Promise(r => setTimeout(r, 300));
+      const b = document.querySelector(`.mpick-cur[aria-label="Produs calorifer, ${room}"]`); b?.click(); await new Promise(r => setTimeout(r, 500));
+      return { details: !!d, picker: !!b, open: b?.getAttribute('aria-expanded') === 'true', list: !!(b && document.getElementById(b.getAttribute('aria-controls') || '')), width: !!document.querySelector(`input[aria-label="Lățime calorifer, ${room} (cm)"]`) }; }, rad);
+    need(opened.details, 'camera caloriferului în panoul Instalații'); need(opened.width, 'câmpul lățimii caloriferului'); need(opened.picker, `pickerul „Produs calorifer, ${rad}”`);
+    if (need(opened.open && opened.list, 'pickerul de calorifer deschis')) failures += await audit(p, 'editor-instalatii-calorifer'); }
   for (const doc of ['print', 'offer', 'contract', 'proforma', 'handover', 'site-report', 'board']){ await p.go(`${BASE}/p/${id}/${doc}`); await sleep(1200); failures += await audit(p, `doc-${doc}`); }
   await p.go(`${BASE}/share/${token}`); await sleep(1500); failures += await audit(p, 'link-desktop');
   await view(p, PHONE); await p.go(`${BASE}/share/${token}`); await sleep(1500); failures += await audit(p, 'link-telefon');

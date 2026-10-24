@@ -448,3 +448,21 @@ def test_c6_profile_d_via_shell_denied():
 def test_multiedit_quote_split_guard_denied():
     r = g.decide("MultiEdit", {"file_path": '~/.claude/set""tings.json', "edits": []}, ALLOW)
     assert r.action == g.DENY
+
+
+def test_installer_project_mode_writes_relative_commands(tmp_path):
+    inst = _installer()
+    root = tmp_path / "repo"
+    (root / ".claude").mkdir(parents=True)
+    (root / ".claude" / "settings.json").write_text(json.dumps({"model": "opus"}), encoding="utf-8")
+    inst.main(["--home", str(root), "--project"])
+    d = json.loads((root / ".claude" / "settings.json").read_text(encoding="utf-8"))
+    cmds = [h["command"] for ev in ("PreToolUse", "PostToolUse") for e in d["hooks"][ev]
+            for h in e["hooks"] if "agent-integrity-guard" in h["command"]]
+    assert cmds, "no guard hooks written"
+    for c in cmds:
+        assert "${CLAUDE_PROJECT_DIR" in c          # project-relative
+        assert str(tmp_path) not in c               # not an absolute worktree path
+    assert inst.main(["--home", str(root), "--verify"]) == 0
+    inst.main(["--home", str(root), "--remove"])
+    assert inst.main(["--home", str(root), "--verify"]) == 1

@@ -11,7 +11,7 @@ import { finishesOf } from '@/core/boq';
 import { planWithLook } from '@/lib/plan-look';
 import { itemStyle, itemSizeCm } from '@/core/appearance';
 import { toEngineCatalog, groupOf, indexOf } from '@/core/catalog';
-import { footprintOf } from '@/core/validate';
+import { footprintOf, surfaceUnder } from '@/core/validate';
 import { stairGeometry, SLAB } from '@/core/levels';
 import { wallItemGeometry, wallItemFace, wallItemDepth } from '@/core/wall-items';
 import { bandOf, alongOf, bathTiles, sideSpan } from '@/core/finishes';
@@ -29,7 +29,9 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   const items = snap.placements.map(p => { const g = engineCat[groupOf(p.variantId)], vv = g?.v[indexOf(p.variantId)];
     // culoarea/materialul aleși și dimensiunile pe comandă înlocuiesc stilul și mărimea variantei
     const size = p.size ? itemSizeCm(catalog, p) : null, variant = vv ? { ...vv, model: g.model, s: itemStyle(snap, p, vv.s, g.model ?? ''), ...(size ? { w: size.w, d: size.d, h: size.h } : {}) } : null;
-    return { id: p.id, group: p.group, x: p.x, z: p.z, rotation: p.rotation, fp: footprintOf(catalog, p), variant }; });
+    // veioza sau planta mică pusă pe o piesă joasă stă pe fața ei de sus (`y` doar când nu e 0, ca proiectele vechi să dea aceeași intrare)
+    const y = surfaceUnder(snap, catalog, p);
+    return { id: p.id, group: p.group, x: p.x, z: p.z, rotation: p.rotation, fp: footprintOf(catalog, p), variant, ...(y > 0 ? { y } : {}) }; });
   const rise = snap.floor.ceilingHeight + SLAB;
   const scari = (snap.floor.stairs ?? []).map(st => ({ id: st.id, x: st.x, z: st.z, w: st.width, l: st.length, rot: st.rotation, ...stairGeometry(st, rise) }));
   const plan = planWithLook(snap), mc = extra.mc;

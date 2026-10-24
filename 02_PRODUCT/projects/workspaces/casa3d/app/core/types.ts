@@ -47,9 +47,10 @@ export interface FloorZone { id: string; roomId: string; rect: RoomRect; floor: 
 /** Tavan fals pe zonă (casetă deasupra mesei sau a patului): dreptunghi în camera `roomId`, coborât cu `dropCm` față de placă;
  *  `coveCm` = scafa de pe contur (lipsă = fără scafă), `led` = banda LED de pe contur (id de material `led_strip`, lipsă = fără). */
 export interface CeilingZone { id: string; roomId: string; rect: RoomRect; dropCm: number; coveCm?: number; led?: string; label?: string }
-/** Balustradă (balcon, terasă, scară, galerie): segment de la `a` la `b`; `height` în m (lipsă = 1 m), `kind` lipsă = metal. */
+/** Balustradă (balcon, terasă, scară, galerie): segment de la `a` la `b`; `height` în m (lipsă = 1 m), `kind` lipsă = metal;
+ *  `product` = id de material `railing` (doar la metal), opțional: fără el balustrada rămâne fără preț în deviz. */
 export type RailingKind = 'glass' | 'metal';
-export interface Railing { id: string; a: [number, number]; b: [number, number]; height?: number; kind?: RailingKind }
+export interface Railing { id: string; a: [number, number]; b: [number, number]; height?: number; kind?: RailingKind; product?: string }
 export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[]; columns?: Column[]; beams?: Beam[]; glassWalls?: GlassWall[]; niches?: Niche[]; annotations?: Annotation[]; wallItems?: WallItem[]; zones?: FloorZone[];
   ceilingZones?: CeilingZone[]; railings?: Railing[] }
 /** `size` (cm) = piesă pe comandă cu altă dimensiune decât varianta din catalog; prețul ei devine necunoscut. */
@@ -78,21 +79,24 @@ export type Severity = 'PASS' | 'WARNING' | 'ERROR';
 export interface Issue { code: 'OUT_OF_ROOM' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW_BLOCKED' | 'CLEARANCE' | 'UNKNOWN_VARIANT' | 'OPENING_OUTSIDE_WALL' | 'WALL_TOO_SHORT' | 'STAIR'
   | 'NICHE_OUTSIDE_WALL' | 'NICHE_TOO_DEEP' | 'NICHE_OVER_OPENING' | 'SHAFT_DOOR' | 'SHAFT_OUTSIDE_ROOM' | 'DOOR_TYPE' | 'WALL_ITEM'
   | 'WALL_DEMOLISH' | 'RADIATOR_BLOCKED' | 'HVAC' | 'ZONE_OUTSIDE_ROOM' | 'ZONE_OVERLAP'
-  | 'CEILING_ZONE_OUTSIDE_ROOM' | 'CEILING_ZONE_OVERLAP' | 'CEILING_ZONE_LOW' | 'RAILING_LOW' | 'CEILING_ZONE_ABOVE_ROOM_CEILING'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
+  | 'CEILING_ZONE_OUTSIDE_ROOM' | 'CEILING_ZONE_OVERLAP' | 'CEILING_ZONE_LOW' | 'RAILING_LOW' | 'CEILING_ZONE_ABOVE_ROOM_CEILING' | 'CHIMNEY'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
 
 // ---------- Faza 2: materiale, manoperă, servicii, finisaje, buget ----------
 export type MaterialCategory = 'parquet' | 'floor_tile' | 'wall_tile' | 'paint' | 'baseboard' | 'tile_adhesive' | 'lighting'
   | 'wallpaper' | 'wall_panel' | 'decorative_plaster' | 'brick_cladding' | 'stone_cladding' | 'plasterboard' | 'cornice' | 'led_strip' | 'spot'
   | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'door_system' | 'moulding'
   | 'wall_art' | 'mirror' | 'wall_shelf'
-  | 'countertop' | 'kitchen_sink' | 'kitchen_tap' | 'bath_tap' | 'shower_set' | 'towel_radiator' | 'led_mirror' | 'pendant' | 'wall_light' | 'led_profile';
+  | 'countertop' | 'kitchen_sink' | 'kitchen_tap' | 'bath_tap' | 'shower_set' | 'towel_radiator' | 'led_mirror' | 'pendant' | 'wall_light' | 'led_profile'
+  | 'panel_radiator' | 'railing' | 'hvac_split';
 /** Modul de așezare a pardoselii (parchet sau plăci). */
 export type FloorPattern = 'straight' | 'brick' | 'third' | 'diagonal' | 'herringbone' | 'chevron' | 'checker';
 /** Date tehnice citite pe pagina produsului; lipsa unei valori înseamnă „nedeclarat”, nu „bun”. */
 export interface MaterialSpecs { sizeCm?: [number, number]; rectified?: boolean; slip?: 'R9' | 'R10' | 'R11' | 'R12' | 'R13'; ip?: string; cctK?: number; lumens?: number;
   roll?: { widthM: number; lengthM: number; repeatCm: number; match?: 'free' | 'straight' | 'offset' }; patterns?: FloorPattern[]; wet?: boolean; pieceM?: number; color?: string;
   pieces?: number; opacity?: number; blind?: 'roller' | 'roman' | 'venetian'; door?: 'plain' | 'panel' | 'glass'; wood?: boolean; doorTypes?: DoorType[]; system?: 'sliding' | 'pocket' | 'folding';
-  thicknessMm?: number; finish?: string; material?: string; diameterCm?: number; effect?: PlasterEffect }
+  thicknessMm?: number; finish?: string; material?: string; diameterCm?: number; effect?: PlasterEffect;
+  /** balustrada: ce parte a sistemului e produsul (mână curentă, stâlp, panou, set complet, kit de start), citit pe pagină */
+  railPart?: 'handrail' | 'post' | 'panel' | 'set' | 'start' }
 export interface Material { id: string; category: MaterialCategory; name: string; supplier: string; unit: 'm2' | 'ml' | 'L' | 'kg' | 'buc'; unitPrice: number;
   pack?: { size: number; label: string; price?: number }; coverage?: number; consumption?: number; sourceUrl: string | null; verificationType: string; confidence: Confidence; note?: string; specs?: MaterialSpecs; verifiedAt?: string }
 export interface LaborRate { id: string; label: string; unit: 'm2' | 'ml'; low: number; expected: number; high: number; sources: { name: string; url: string }[]; confidence: Confidence }

@@ -35,7 +35,7 @@ import { suggestTechPoints, placeTechPoint, TECH_KINDS, techIssues, techBodyCoun
 import { defaultZoneMaterial, intersect, zoneAreaIn, removeRoomZones } from '@/core/floor-zones';
 import { wallStatus } from '@/core/renovation';
 import type { FloorZone, WallStatus, CeilingZone, Railing, RoomSpaceKind } from '@/core/types';
-import { ceilingZoneRect, ceilingZoneQty, removeRoomCeilingZones } from '@/core/ceiling-zones';
+import { ceilingZoneRect, ceilingZoneQty, removeRoomCeilingZones, ceilingZoneHidden } from '@/core/ceiling-zones';
 import { railingHeight, railingKind, railingLength } from '@/core/railings';
 import { RAILING_KINDS, SPACE_KINDS } from '@/core/plan-limits';
 import { RoomLookPanel, WallLookPanel, OpeningLookPanel, ItemLookPanel } from './AppearanceControls';
@@ -1027,7 +1027,7 @@ export default function Editor({ id }: { id: string }){
               </div>
               {leds.length > 0 && <label className="f"><span>{t('czone.led')}</span><MaterialPicker cur={cur} value={z.led ?? ''} options={leds} none={t('fin.none')} onChange={v => patchCeilingZone(z.id, q2 => { if (v) q2.led = v; else delete q2.led; })} /></label>}
               <label className="f"><span>{t('zone.label')}</span><input type="text" maxLength={CL.labelMax} value={z.label ?? ''} onChange={e => patchCeilingZone(z.id, q2 => { const v = stripPlanText(e.target.value).slice(0, CL.labelMax); if (v.trim()) q2.label = v; else delete q2.label; })} /></label>
-              {q && <div className="prov">{t('czone.qty', { board: q.boardM2, band: q.bandM2, led: q.ledM })}</div>}
+              {q && !ceilingZoneHidden(z, roomDrop) && <div className="prov">{t('czone.qty', { board: q.boardM2, band: q.bandM2, led: q.ledM })}</div>}
               <p className="prov" style={{ margin: 0 }}>{t('czone.rule')}</p>
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
             </div>); })()}
@@ -1039,9 +1039,11 @@ export default function Editor({ id }: { id: string }){
               {floorIssues.filter(i => i.vars?.rail === rl.id).map((i, k) => <div key={k} className={`issue ${i.severity}`}>{iT(i)}</div>)}
               <div className="grid2">
                 <label className="f"><span>{t('railing.height', { u })}</span><input type="number" value={inField(railingHeight(rl))} onChange={e => num(e.target.value, x => patchRailing(rl.id, q => { const h = r3(Math.min(RL.heightMaxM * 100, x) / 100); if (Math.abs(h - PLAN_DEFAULTS.railing.height) < 1e-9) delete q.height; else q.height = h; }), RL.heightMinM * 100)} /></label>
-                <label className="f"><span>{t('railing.kind')}</span><select value={railingKind(rl)} onChange={e => patchRailing(rl.id, q => { if (e.target.value === 'glass') q.kind = 'glass'; else delete q.kind; })}>
+                <label className="f"><span>{t('railing.kind')}</span><select value={railingKind(rl)} onChange={e => patchRailing(rl.id, q => { if (e.target.value === 'glass'){ q.kind = 'glass'; delete q.product; } else delete q.kind; })}>
                   {RAILING_KINDS.map(k => <option key={k} value={k}>{t(`railing.kind.${k}`)}</option>)}</select></label>
               </div>
+              {railingKind(rl) === 'metal' && mc && <label className="f"><span>{t('railing.product')}</span><MaterialPicker cur={cur} value={rl.product ?? ''} options={mc.materials.filter(m => m.category === 'railing')} none={t('fin.none')} label={t('railing.productAria', { len: (() => { const mx = (rl.a[0] + rl.b[0]) / 2, mz = (rl.a[1] + rl.b[1]) / 2; return snap.floor.rooms.find(r => mx >= r.rect.x0 - .05 && mx <= r.rect.x1 + .05 && mz >= r.rect.z0 - .05 && mz <= r.rect.z1 + .05)?.name ?? formatLength(railingLength(rl), units, lang); })() })} onChange={v => patchRailing(rl.id, q => { if (v) q.product = v; else delete q.product; })} /></label>}
+              {railingKind(rl) === 'metal' && <p className="prov" style={{ margin: 0 }}>{t('railing.productHint')}</p>}
               <p className="prov" style={{ margin: 0 }}>{t('railing.rule')}</p>
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
             </div>); })()}
@@ -1136,7 +1138,7 @@ export default function Editor({ id }: { id: string }){
         {stage === 'mep' && <TechPanel onDraw={() => setTool('tech')} snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
           onSuggest={() => { const pts = suggestTechPoints(snap); mutate(s => { s.tech = pts; }); setShowTech(true); say(t('tech.suggested', { n: pts.length })); }}
           onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })}
-          onPatch={(id, patch) => patchTech(id, p => { Object.assign(p, patch); })} issues={catalog ? techIssues(snap, catalog, snap.floor).map(i => ({ text: iT(i), severity: i.severity })) : []} />}
+          onPatch={(id, patch) => patchTech(id, p => { Object.assign(p, patch); if (!p.product) delete p.product; })} mc={mc} cur={cur} issues={catalog ? techIssues(snap, catalog, snap.floor).map(i => ({ text: iT(i), severity: i.severity })) : []} />}
         {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
         {stage === 'docs' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
         {stage === 'quote' && <BudgetWithCustom id={id} snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
