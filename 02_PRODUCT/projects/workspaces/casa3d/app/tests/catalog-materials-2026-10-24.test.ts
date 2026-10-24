@@ -7,7 +7,7 @@ import catalogJson from '../data/catalog.v1.json';
 import materialsJson from '../data/materials.v1.json';
 import evidence24 from '../data/materials-evidence.2026-10-24.json';
 import { newSnapshot } from '../core/project';
-import { computeBOQ, finishesOf } from '../core/boq';
+import { computeBOQ, computeBudget, finishesOf } from '../core/boq';
 import { finishSchedule } from '../core/finish-schedule';
 import { placeTechPoint, techBodyFields, sanitizeTech } from '../core/technical';
 import { sanitizeRailing } from '../core/plan-limits';
@@ -66,6 +66,8 @@ describe('devizul folosește prețul doar când produsul e ales', () => {
     const h = computeBOQ(hb, cat, mc).items.find(i => i.key === 'doorsys:d-1')!; assert.equal(h.total, 1210); assert.equal(h.supplier, 'Hornbach');
     // comanda pe furnizori: sistemul de la Hornbach e o linie a magazinului Hornbach, cu linkul paginii
     const ord = procurementLines(hb, cat, mc).find(l => l.supplier === 'Hornbach')!; assert.ok(ord && ord.total === 1210 && ord.url!.startsWith('https://www.hornbach.ro/'));
+    // transportul Hornbach se află la comandă: linie necunoscută, nu 0
+    assert.ok(computeBudget(hb, cat, mc).unknownLines.some(l => l.key === 'transport-hornbach' && l.amount == null));
     const f = withInner({ doorType: 'folding', width: .85 }); f.doors = { 'd-1': { product: 'dedeman-usa-de-interior-plianta-italbox-alb-85-x-203-cm' } };
     const fb = computeBOQ(f, cat, mc); assert.equal(fb.items.find(i => i.key === 'door:d-1')!.total, 226); assert.ok(fb.unknown.some(u => /Accesorii de prindere ușă pliantă/.test(u)));
   });
