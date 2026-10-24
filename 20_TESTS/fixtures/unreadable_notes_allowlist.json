@@ -986,6 +986,24 @@
       "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
     },
     {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-design-system-a2.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint in the cold-resume format of 00_GOVERNANCE/coordination/tasks/README.md; a plain coordination document, not a memory note, so it has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/design-system/PLAN.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/design-system/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
       "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-p0.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
