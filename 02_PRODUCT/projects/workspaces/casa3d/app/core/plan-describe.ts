@@ -10,9 +10,10 @@ import { nicheRoom } from './niches';
 import { wallItemRoom } from './wall-items';
 import type { WallItem } from './types';
 import { annotationCenter, dimGeometry } from './annotations';
+import { activeOpenings } from './renovation';
 
 type T = (key: string, vars?: Record<string, string | number>) => string;
-export type MirrorItem = { kind: 'room' | 'placement' | 'wall' | 'opening' | 'column' | 'beam' | 'stair' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item'; id: string; wallId?: string; label: string };
+export type MirrorItem = { kind: 'room' | 'placement' | 'wall' | 'opening' | 'column' | 'beam' | 'stair' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item' | 'floor_zone'; id: string; wallId?: string; label: string };
 export type MirrorGroup = { id: string; title: string; items: MirrorItem[] };
 
 const ord = (a: { x: number; z: number; id: string }, b: { x: number; z: number; id: string }) => (Math.abs(a.z - b.z) > .05 ? a.z - b.z : a.x - b.x) || a.id.localeCompare(b.id);
@@ -42,6 +43,9 @@ export function describePlan(snap: Pick<Snapshot, 'floor' | 'placements'>, cat: 
   for (const r of [...f.rooms].sort((a, b) => ord({ x: a.rect.x0, z: a.rect.z0, id: a.id }, { x: b.rect.x0, z: b.rect.z0, id: b.id }))){
     const w = r.rect.x1 - r.rect.x0, d = r.rect.z1 - r.rect.z0;
     const items: MirrorItem[] = [{ kind: 'room', id: r.id, label: t('mirror.room', { name: r.name, area: formatArea(w * d, units, lang), w: L(w), d: L(d) }) }];
+    // zonele de pardoseală ale camerei, cu mărimea și suprafața
+    for (const z of (f.zones ?? []).filter(x => x.roomId === r.id)){ const zw = z.rect.x1 - z.rect.x0, zd = z.rect.z1 - z.rect.z0;
+      items.push({ kind: 'floor_zone', id: z.id, label: t('mirror.zone', { name: z.label || t('tool.floor_zone'), area: formatArea(zw * zd, units, lang), w: L(zw), d: L(zd) }) }); }
     for (const p of snap.placements.filter(x => x.roomId === r.id).sort((a, b) => ord(a, b))){
       const rv = resolve(cat, p.variantId), fp = footprintOf(cat, p), name = rv ? rv.product.name : p.group;
       items.push({ kind: 'placement', id: p.id, label: fp ? t('mirror.piece', { name, w: L(fp.x1 - fp.x0), d: L(fp.z1 - fp.z0) }) : name });
@@ -57,8 +61,9 @@ export function describePlan(snap: Pick<Snapshot, 'floor' | 'placements'>, cat: 
   const mid = (w: { a: [number, number]; b: [number, number] }) => ({ x: (w.a[0] + w.b[0]) / 2, z: (w.a[1] + w.b[1]) / 2 });
   for (const wl of [...f.walls].sort((a, b) => ord({ ...mid(a), id: a.id }, { ...mid(b), id: b.id }))){
     const rooms = roomsAlongWall(snap, wl), where = rooms.length ? rooms.join(', ') : t('mirror.noRoom');
-    struct.push({ kind: 'wall', id: wl.id, label: t(wl.exterior ? 'mirror.wallExt' : 'mirror.wall', { len: L(len(wl)), rooms: where }) });
-    for (const op of [...wl.openings].sort((a, b) => a.offset - b.offset))
+    // starea peretelui (nou / de demolat) la finalul descrierii; peretele existent rămâne ca înainte
+    struct.push({ kind: 'wall', id: wl.id, label: t(wl.exterior ? 'mirror.wallExt' : 'mirror.wall', { len: L(len(wl)), rooms: where }) + (wl.status === 'new' || wl.status === 'demolish' ? ` · ${t(`wallStatus.${wl.status}`)}` : '') });
+    for (const op of [...activeOpenings(wl)].sort((a, b) => a.offset - b.offset))
       { const at = roomsAtOpening(snap, wl, op); struct.push({ kind: 'opening', id: op.id, wallId: wl.id, label: t(op.kind === 'door' ? (op.passage ? 'mirror.passage' : op.entrance ? 'mirror.entrance' : 'mirror.door') : 'mirror.window', { w: L(op.width), rooms: at.length ? at.join(', ') : where }) + (op.kind === 'door' && !op.passage && (op.doorType && op.doorType !== 'swing' || op.flush) ? ` · ${[op.doorType && op.doorType !== 'swing' ? t(`door.type.${op.doorType}`) : '', op.flush ? t('door.flushShort') : ''].filter(Boolean).join(', ')}` : '') }); }
     // nișele peretelui, după poziție, cu camera în care dau
     for (const n of (f.niches ?? []).filter(x => x.wallId === wl.id).sort((a, b) => a.offset - b.offset))

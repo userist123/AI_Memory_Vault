@@ -152,7 +152,7 @@ describe('cote persistente și text', () => {
 });
 
 describe('bara din stânga', () => {
-  test('Releveu pe ecran lat: 15 unelte în 7 locuri (Goluri, Structură, Adnotări); pe telefon și sub prag rămâne plată', () => {
+  test('Releveu pe ecran lat: 15 unelte în 7 locuri (Goluri, Structură, Adnotări); pe telefon rămâne plată, iar sub prag se strâng doar grupele de cel puțin trei', () => {
     const survey: Tool[] = ['select', 'wall', 'room', 'door', 'window', 'passage', 'niche', 'column', 'shaft', 'beam', 'glass_wall', 'stair', 'measure', 'dim', 'text'];
     const slots = railSlots(survey, true); assert.equal(slots.length, 7);
     assert.deepEqual(slots.map(s => 'tool' in s ? s.tool : s.group), ['select', 'wall', 'room', 'openings', 'structure', 'stair', 'notes']);
@@ -160,5 +160,10 @@ describe('bara din stânga', () => {
     assert.equal(railSlots(survey, false).length, 15);
     assert.deepEqual(railSlots(['select', 'niche', 'column', 'glass_wall', 'measure'], true).map(s => 'tool' in s ? s.tool : s.group), ['select', 'niche', 'column', 'glass_wall', 'measure']);
     assert.ok(TOOL_GROUPS.flatMap(g => g.tools).every(tk => TOOLS.includes(tk)));
+  });
+  test('Planșe: Selectează, Măsoară, Cotă, Text rămân 4 butoane separate (Adnotări nu se strânge), ca înainte de grupe', () => {
+    const docs: Tool[] = ['select', 'measure', 'dim', 'text'];
+    assert.deepEqual(railSlots(docs, true).map(s => 'tool' in s ? s.tool : s.group), docs);
+    assert.deepEqual(railSlots(['select', 'clad', 'wall_item', 'floor_zone', 'measure'], true).map(s => 'tool' in s ? s.tool : s.group), ['select', 'decor', 'measure']);
   });
 });

@@ -28,7 +28,7 @@ export interface KeyLike { key: string; shiftKey: boolean; ctrlKey: boolean; met
 
 // Literele urmează numele românești; aceleași taste în engleză. R rămâne rotire. W/A/S/D sunt rezervate mersului prin
 // vederea 3D (viewer3d-engine.js le citește pe window), de aceea scara e E, nu S. Record<Tool, …>: o unealtă nouă fără tastă nu compilează.
-const TOOL_KEYS: Record<Tool, string> = { select: 'v', wall: 'p', room: 'c', door: 'u', window: 'o', passage: 'j', shaft: 'h', niche: 'n', clad: 'k', wall_item: 'x', dim: 'q', text: 'b', column: 't', beam: 'g', glass_wall: 'l', stair: 'e', measure: 'm', tech: 'i' };
+const TOOL_KEYS: Record<Tool, string> = { select: 'v', wall: 'p', room: 'c', door: 'u', window: 'o', passage: 'j', shaft: 'h', niche: 'n', clad: 'k', wall_item: 'x', dim: 'q', text: 'b', column: 't', beam: 'g', glass_wall: 'l', demolish: 'y', floor_zone: 'z', stair: 'e', measure: 'm', tech: 'i' };
 export const TOOLS = Object.keys(TOOL_KEYS) as Tool[];
 
 const ANY = { ctrlOrMeta: 'any', shift: 'any', alt: 'any' } as const;
@@ -83,12 +83,12 @@ export const toolShortcut = (tk: Tool): Shortcut => ({ key: TOOL_KEYS[tk] });
 export const commandHint = (id: string, o: { mac: boolean }) => { const s = commandById(id)?.shortcuts[0]; return s ? formatShortcut(s, o) : undefined; };
 
 /** Ce comenzi arată meniul contextual (clic dreapta, Shift+F10) pentru selecția de tipul `kind`; „șterge” e mereu ultima. */
-export type ContextKind = 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'opening' | 'niche' | 'wall_item' | 'annotation';
+export type ContextKind = 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'opening' | 'niche' | 'wall_item' | 'annotation' | 'floor_zone';
 const CONTEXT: Record<ContextKind, string[]> = {
   wall: ['wall.length', 'frame', 'delete'], placement: ['rotate', 'duplicate', 'view3d', 'frame', 'delete'],
   room: ['room.furnish', 'room.split', 'frame', 'delete'], column: ['rotate', 'column.shape', 'frame', 'delete'],
   stair: ['rotate', 'frame', 'delete'], beam: ['frame', 'delete'], glass_wall: ['frame', 'delete'], opening: ['frame', 'delete'],
-  niche: ['frame', 'delete'], wall_item: ['frame', 'delete'], annotation: ['frame', 'delete']
+  niche: ['frame', 'delete'], wall_item: ['frame', 'delete'], annotation: ['frame', 'delete'], floor_zone: ['frame', 'delete']
 };
 export const contextCommands = (kind: ContextKind): string[] => CONTEXT[kind];
 

@@ -4,8 +4,8 @@ import { sanitizeFinishes } from '../core/finishes';
 import { sanitizeRoomOptions } from '../core/room-options';
 import { demoBeforeCreate } from './demo';
 import { sanitizeDoors } from '../core/doors';
-import { sanitizeTech, MAX_TECH_POINTS } from '../core/technical';
-import { sanitizeFloorElements, PlanLimitError } from '../core/plan-limits';
+import { sanitizeTech, MAX_TECH_POINTS, techBodyCount } from '../core/technical';
+import { sanitizeFloorElements, PlanLimitError, PLAN_LIMITS } from '../core/plan-limits';
 import catalogSeed from '../data/catalog.v1.json';
 // grupă → model 3D, ca materialele permise pe piesă să fie verificate fără a citi catalogul din baza de date
 const MODEL_OF_GROUP: Record<string, string> = Object.fromEntries((catalogSeed as any).products.map((p: any) => [p.group, p.model3d]));
@@ -96,7 +96,7 @@ export function checkSnapshot(s: any): Snapshot {
         || !(num(st.width) && st.width >= .6 && st.width <= 3) || !(num(st.length) && st.length >= .8 && st.length <= 8)) throw new HttpError(400, 'O scară are dimensiuni invalide (lățime 60–300 cm, lungime 80–800 cm).');
       return { id: st.id, x: st.x, z: st.z, width: st.width, length: st.length, rotation: st.rotation }; });
     if (!f.stairs.length) delete f.stairs; }
-  // stâlpi și ghene, grinzi, pereți de sticlă, nișe, adnotări, goluri de trecere: limitele comune cu interfața (core/plan-limits.ts)
+  // stâlpi și ghene, grinzi, pereți de sticlă, nișe, adnotări, goluri de trecere, starea pereților, zone de pardoseală: limitele comune cu interfața (core/plan-limits.ts)
   for (const f of fls){ try { sanitizeFloorElements(f); } catch (e){ if (e instanceof PlanLimitError) throw new HttpError(400, e.message); throw e; } }
   for (const p of s.placements) if (!inBox(p.x) || !inBox(p.z) || !num(p.rotation) || typeof p.variantId !== 'string') throw new HttpError(400, 'O piesă de mobilier e invalidă.');
   // dimensiuni pe comandă (cm) și goluri cu înălțime/parapet: doar valori plauzibile
@@ -113,7 +113,11 @@ export function checkSnapshot(s: any): Snapshot {
     if ((o.height != null || o.sill != null) && top > ceil + 1e-9) throw new HttpError(400, `Golul depășește tavanul: are ${Math.round(top * 100)} cm, iar tavanul ${Math.round(ceil * 100)} cm.`); }
   // punctele tehnice se verifică pe nivelul camerei lor (poziție în cameră, înălțime sub tavanul acelui nivel)
   if (s.tech != null){ const raw = Array.isArray(s.tech) ? s.tech.slice(0, MAX_TECH_POINTS) : null, lvl = (t: any) => t && typeof t === 'object' && typeof t.roomId === 'string' ? Math.max(0, levelOfRoom(s, t.roomId)) : -1;
-    const t = raw ? fls.flatMap((f, i) => sanitizeTech(raw.filter((x: unknown) => lvl(x) === i), { floor: f }) ?? []) : undefined;
+    let t; try { t = raw ? fls.flatMap((f, i) => sanitizeTech(raw.filter((x: unknown) => lvl(x) === i), { floor: f }) ?? []) : undefined; }
+    catch (e){ if (e instanceof PlanLimitError) throw new HttpError(400, e.message); throw e; }
+    // caloriferele cu corp și unitățile de aer condiționat: același plafon ca la plasare (core/plan-limits.ts)
+    if (t && techBodyCount(t, 'radiator') > PLAN_LIMITS.radiator.max) throw new HttpError(400, `Caloriferele: cel mult ${PLAN_LIMITS.radiator.max} în proiect.`);
+    if (t && techBodyCount(t, 'hvac_split') > PLAN_LIMITS.hvac.max) throw new HttpError(400, `Unitățile de aer condiționat: cel mult ${PLAN_LIMITS.hvac.max} în proiect.`);
     if (raw && t) s.tech = t; else delete s.tech; }
   // culorile: camerele, pereții și golurile de pe orice nivel
   if (s.appearance != null){ const house = { ...s.floor, rooms: fls.flatMap(f => f.rooms), walls: fls.flatMap(f => f.walls) };
