@@ -127,7 +127,7 @@ whole-corpus retrieval numbers.
   `00_GOVERNANCE/protocols/` with provenance, the references point there, and
   `20_TESTS/test_agent_docs_memory_interfaces.py` fails on any path a profile cites that does
   not exist. No code reads the registry (the code router uses `04_CONFIG/agent_router.json`),
-  and 18 of the 149 skills it names are not in `.agents/skills/`. Of the council limits (copy in
+  and every skill it names exists (of 18 missing on 2026-10-23: 17 removed on purpose and dropped, `ansible-automation` restored). Of the council limits (copy in
   `AGENTS.md` wins), `max_memory_results`, skills per agent and graph hops are enforced
   (`executive.py`, `agent_router.py`) and one primary agent holds by construction; since
   2026-10-24 the router also caps a route at 3 council agents and 4 selected skills
