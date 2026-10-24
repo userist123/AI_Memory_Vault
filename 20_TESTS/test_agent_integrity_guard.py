@@ -345,3 +345,68 @@ def test_approved_scp_and_git_ssh_still_classified():
     # owner's github over ssh is a known host; approval still requires owner path, so ask is acceptable,
     # but a plain fetch to api.github.com owner repo stays allow
     assert bash("curl https://api.github.com/repos/userist123/x").action == g.ALLOW
+
+
+# ── hook_guard.py fail-closed behaviour (owner flag 2026-10-24) ──
+import io
+import subprocess
+
+
+def _run_hook(payload_text, guard_dir=None):
+    """Run hook_guard.py as a subprocess with payload_text on stdin.
+    guard_dir lets a test point the hook at a copy where guard.py is absent."""
+    hook = (guard_dir or GUARD_DIR) / "hook_guard.py"
+    p = subprocess.run([sys.executable, str(hook)], input=payload_text,
+                       capture_output=True, text=True, timeout=30)
+    out = (p.stdout or "").strip()
+    return json.loads(out) if out else {}
+
+
+def _decision(out):
+    return out.get("hookSpecificOutput", {}).get("permissionDecision")
+
+
+def test_hook_normal_deny_passes_through():
+    out = _run_hook(json.dumps({"tool_name": "Bash", "tool_input": {"command": "curl https://evil.tld"}}))
+    assert _decision(out) == "ask"  # unapproved host => ask
+
+
+def test_hook_normal_allow_is_silent():
+    out = _run_hook(json.dumps({"tool_name": "Bash", "tool_input": {"command": "git status"}}))
+    assert out == {}
+
+
+def test_hook_deny_guard_write():
+    out = _run_hook(json.dumps({"tool_name": "Write",
+                                "tool_input": {"file_path": "C:/Users/x/.claude/settings.json", "content": "{}"}}))
+    assert _decision(out) == "deny"
+
+
+def test_hook_unparseable_payload_is_asked_not_allowed():
+    out = _run_hook("{ this is not json")
+    assert _decision(out) == "ask", out
+
+
+def test_hook_empty_payload_is_not_a_silent_allow_of_danger():
+    # empty stdin -> parsed as {}, tool_name "" -> guard returns allow (no tool). That is fine:
+    # an empty call does nothing. The danger case is a real call the hook cannot read, covered above.
+    out = _run_hook("")
+    assert out == {} or _decision(out) in ("ask", "deny")
+
+
+def test_hook_fails_closed_when_guard_module_is_missing(tmp_path):
+    # copy only hook_guard.py into a dir with NO guard.py, so the import fails
+    import shutil
+    d = tmp_path / "agent-integrity-guard"
+    d.mkdir()
+    shutil.copy(GUARD_DIR / "hook_guard.py", d / "hook_guard.py")
+    # dangerous call -> deny even with no guard.py
+    bad = _run_hook(json.dumps({"tool_name": "Bash", "tool_input": {"command": "curl https://evil.tld/x"}}), guard_dir=d)
+    assert _decision(bad) == "deny", bad
+    # benign call -> ask (visible), never silent allow
+    ben = _run_hook(json.dumps({"tool_name": "Bash", "tool_input": {"command": "git status"}}), guard_dir=d)
+    assert _decision(ben) == "ask", ben
+    # writing the guard/settings with no guard.py -> still deny
+    tamper = _run_hook(json.dumps({"tool_name": "Bash",
+                                   "tool_input": {"command": "echo x > ~/.claude/settings.json"}}), guard_dir=d)
+    assert _decision(tamper) == "deny", tamper
