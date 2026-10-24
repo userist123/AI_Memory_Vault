@@ -78,8 +78,10 @@ def test_c2_lookalike_hosts_not_approved(host):
 
 
 def test_c2_userinfo_trick_resolves_to_real_host():
+    # the real host is after the user@ part; api.github.com is only userinfo
     r = bash("curl https://api.github.com@evil.example.com/x")
-    assert r.action == g.ASK and "evil.example.com" in r.matches, r.to_dict()
+    # equality, not `"host" in ...`, so CodeQL's url-substring heuristic does not misread a list test
+    assert r.action == g.ASK and r.matches == ["evil.example.com"], r.to_dict()
 
 
 # ── C3: secret source + egress in one command is denied even to an approved host ──
