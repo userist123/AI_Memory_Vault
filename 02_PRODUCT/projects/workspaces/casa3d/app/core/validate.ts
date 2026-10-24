@@ -1,6 +1,6 @@
 import { resolve } from './catalog';
 import { rectHit, insideRect, footprintAt, frontRect, wallLength } from './geometry';
-import { FRONT_CLEARANCE, DINING_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M, ALLOWED_OVERLAP, WALL_HIGH, DOOR_SLIDE_EXTRA_M, POCKET_MIN_WALL_M, DOUBLE_NARROW_M } from './rules';
+import { FRONT_CLEARANCE, DINING_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M, ALLOWED_OVERLAP, WALL_HIGH, NEEDS_CHIMNEY, ON_SURFACE, DOOR_SLIDE_EXTRA_M, POCKET_MIN_WALL_M, DOUBLE_NARROW_M } from './rules';
 import { nicheIssues } from './niches';
 import { wallItemIssues } from './wall-items';
 import { renovationIssues } from './renovation';
@@ -40,6 +40,16 @@ export function doorZones(floor: Floor, room: Room): RoomRect[] {
   return z;
 }
 export function footprintOf(cat: Catalog, p: FurniturePlacement){ const rv = resolve(cat, p.variantId); if (!rv) return null; return p.size ? footprintAt(p.x, p.z, p.rotation, p.size.w / 100, p.size.d / 100) : footprintAt(p.x, p.z, p.rotation, rv.w, rv.d); }
+/** Înălțimea (m) piesei pe care stă o veioză sau o plantă mică (ON_SURFACE): piesa din aceeași cameră, permisă dedesubt
+ *  (ALLOWED_OVERLAP), sub centrul ei; 0 = stă pe pardoseală. */
+export function surfaceUnder(snap: Pick<Snapshot, 'placements'>, cat: Catalog, p: FurniturePlacement): number {
+  if (!ON_SURFACE.has(p.group)) return 0; const fp = footprintOf(cat, p); if (!fp) return 0; const cx = (fp.x0 + fp.x1) / 2, cz = (fp.z0 + fp.z1) / 2;
+  let h = 0;
+  for (const o of snap.placements){ if (o.id === p.id || o.roomId !== p.roomId || ON_SURFACE.has(o.group) || !allowed(p.group, o.group) || WALL_HIGH.has(o.group)) continue;
+    const ofp = footprintOf(cat, o); if (!ofp || cx < ofp.x0 || cx > ofp.x1 || cz < ofp.z0 || cz > ofp.z1) continue;
+    h = Math.max(h, o.size ? o.size.h / 100 : resolve(cat, o.variantId)?.h ?? 0); }
+  return h;
+}
 function clearanceZone(cat: Catalog, p: FurniturePlacement, fp: RoomRect): RoomRect | null {
   if (p.group === 'masa'){ const rv = resolve(cat, p.variantId)!, px = (rv.variant.chairs || 4) === 2 ? DINING_CLEARANCE.chairs2 : DINING_CLEARANCE.chairs4, pz = DINING_CLEARANCE.ends;
     const q = Math.round(p.rotation / (Math.PI / 2)) % 2 !== 0; const ex = q ? pz : px, ez = q ? px : pz; return { x0: fp.x0 - ex, x1: fp.x1 + ex, z0: fp.z0 - ez, z1: fp.z1 + ez }; }
@@ -69,6 +79,8 @@ export function validatePlacement(snap: Snapshot, cat: Catalog, p: FurniturePlac
     for (const o of others){ const ofp = footprintOf(cat, o); if (ofp && !allowed(p.group, o.group) && rectHit(cz, ofp)) { issues.push({ code: 'CLEARANCE', severity: 'WARNING', message: `Prea aproape de ${resolve(cat, o.variantId)?.product.name}: spațiul de circulație e redus.`, with: o.id, key: 'issue.CLEARANCE_NEAR', vars: { nm: resolve(cat, o.variantId)?.product.name ?? '' } }); break; } } }
   for (const o of others){ const ofp = footprintOf(cat, o); if (!ofp || allowed(p.group, o.group)) continue; const oz = clearanceZone(cat, o, ofp);
     if (oz && rectHit(oz, fp) && !rectHit(ofp, fp)){ issues.push({ code: 'CLEARANCE', severity: 'WARNING', message: `Stă în spațiul de circulație al piesei ${resolve(cat, o.variantId)?.product.name}.`, with: o.id, key: 'issue.CLEARANCE_IN', vars: { nm: resolve(cat, o.variantId)?.product.name ?? '' } }); break; } }
+  // focarul pe lemne: coș de fum și verificare tehnică înainte de montaj (aplicația nu verifică tirajul, distanțele față de pereți sau aerul de ardere)
+  if (NEEDS_CHIMNEY.has(p.group)) issues.push({ code: 'CHIMNEY', severity: 'WARNING', message: 'Focarul pe lemne cere coș de fum și verificare tehnică (coșar, pompieri) înainte de montaj.', key: 'issue.CHIMNEY' });
   return issues;
 }
 export const severityOf = (issues: Issue[]): Severity => issues.some(i => i.severity === 'ERROR') ? 'ERROR' : issues.length ? 'WARNING' : 'PASS';

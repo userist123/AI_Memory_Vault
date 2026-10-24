@@ -108,6 +108,8 @@ export function suggestTechPoints(snap: Snapshot): TechPoint[] {
         case 'bideu': add('water_cold', room, w, 'bideu', 0.2); add('water_hot', room, w, 'bideu', 0.2); add('drain', room, w, 'bideu', 0.1); break;
         case 'boiler': add('outlet', room, w, 'boiler (circuit propriu, protejat la umezeală)', 1.8); add('water_cold', room, w, 'intrare boiler', 1.2); add('water_hot', room, w, 'ieșire boiler', 1.2); break;
         case 'caloriferBaie': add('outlet', room, w, 'calorifer electric port-prosop (protejat la umezeală)', 0.3); break;
+        case 'lampadar': add('outlet', room, w, 'lângă lampadar'); break;
+        case 'semineu': add('outlet', room, w, 'șemineu electric (circuit propriu recomandat)'); break;
       } }
     // completează până la minimul uzual pe tipul camerei, pe pereți, la distanță de cele existente
     const outlets = () => out.filter(t => t.roomId === room.id && (t.kind === 'outlet' || t.kind === 'outlet_double')).length, need = MIN_OUTLETS[room.type] ?? 1;

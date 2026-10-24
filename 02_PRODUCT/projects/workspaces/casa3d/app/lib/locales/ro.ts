@@ -749,4 +749,5 @@ export const ro: Dict = {
   "tex.rugOutside": "Covorul {n} iese din cameră sau lasă sub {cm} cm până la pereți.", "tex.rugOverlap": "Covorul {n} se suprapune cu alt covor.",
   "tex.rugSofa": "Covorul mutat nu mai trece pe sub picioarele din față ale canapelei (cel puțin 10 cm).",
   "tex.rugBed": "Covorul mutat nu mai stă sub cele două treimi de jos ale patului, cu margine în lateral.",
+  "issue.CHIMNEY": "Focarul pe lemne cere coș de fum și verificare tehnică (coșar, pompieri) înainte de montaj.",
 };

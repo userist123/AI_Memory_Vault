@@ -78,7 +78,7 @@ export type Severity = 'PASS' | 'WARNING' | 'ERROR';
 export interface Issue { code: 'OUT_OF_ROOM' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW_BLOCKED' | 'CLEARANCE' | 'UNKNOWN_VARIANT' | 'OPENING_OUTSIDE_WALL' | 'WALL_TOO_SHORT' | 'STAIR'
   | 'NICHE_OUTSIDE_WALL' | 'NICHE_TOO_DEEP' | 'NICHE_OVER_OPENING' | 'SHAFT_DOOR' | 'SHAFT_OUTSIDE_ROOM' | 'DOOR_TYPE' | 'WALL_ITEM'
   | 'WALL_DEMOLISH' | 'RADIATOR_BLOCKED' | 'HVAC' | 'ZONE_OUTSIDE_ROOM' | 'ZONE_OVERLAP'
-  | 'CEILING_ZONE_OUTSIDE_ROOM' | 'CEILING_ZONE_OVERLAP' | 'CEILING_ZONE_LOW' | 'RAILING_LOW' | 'CEILING_ZONE_ABOVE_ROOM_CEILING'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
+  | 'CEILING_ZONE_OUTSIDE_ROOM' | 'CEILING_ZONE_OVERLAP' | 'CEILING_ZONE_LOW' | 'RAILING_LOW' | 'CEILING_ZONE_ABOVE_ROOM_CEILING' | 'CHIMNEY'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
 
 // ---------- Faza 2: materiale, manoperă, servicii, finisaje, buget ----------
 export type MaterialCategory = 'parquet' | 'floor_tile' | 'wall_tile' | 'paint' | 'baseboard' | 'tile_adhesive' | 'lighting'

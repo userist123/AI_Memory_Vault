@@ -1815,6 +1815,190 @@
       "brand": "Ariston",
       "category": "Boiler electric",
       "model3d": "boiler"
+    },
+    {
+      "id": "plantaArtificiala-fejka-planta-artificiala-interior-exterior-palmier-areca-19-cm",
+      "group": "plantaArtificiala",
+      "name": "FEJKA plantă artificială, interior/exterior Palmier Areca, 19 cm",
+      "brand": "IKEA",
+      "category": "Plantă artificială",
+      "model3d": "plant"
+    },
+    {
+      "id": "plantaArtificiala-fejka-planta-artificiala-interior-exterior-ficus-benjamina-23-cm",
+      "group": "plantaArtificiala",
+      "name": "FEJKA plantă artificială, interior/exterior/Ficus Benjamina, 23 cm",
+      "brand": "IKEA",
+      "category": "Plantă artificială",
+      "model3d": "plant"
+    },
+    {
+      "id": "plantaArtificiala-fejka-planta-artificiala-interior-exterior-strelizia-nikolai-23-cm",
+      "group": "plantaArtificiala",
+      "name": "FEJKA plantă artificială, interior/exterior/Strelizia Nikolai, 23 cm",
+      "brand": "IKEA",
+      "category": "Plantă artificială",
+      "model3d": "plant"
+    },
+    {
+      "id": "plantaNaturala-calathea-planta-naturala-calathea-asortate-19-cm",
+      "group": "plantaNaturala",
+      "name": "CALATHEA plantă naturală, Calathea/asortate, 19 cm",
+      "brand": "IKEA",
+      "category": "Plantă naturală la ghiveci",
+      "model3d": "plant"
+    },
+    {
+      "id": "plantaNaturala-planta-interior-codiaeum-petra-croton-h-70-cm-d-21-cm",
+      "group": "plantaNaturala",
+      "name": "Planta interior - Codiaeum Petra (croton), H 70 cm, D 21 cm",
+      "brand": "Dedeman",
+      "category": "Plantă naturală la ghiveci",
+      "model3d": "plant"
+    },
+    {
+      "id": "plantaNaturala-dypsis-lutescens-planta-naturala-palmier-areca-24-cm",
+      "group": "plantaNaturala",
+      "name": "DYPSIS LUTESCENS plantă naturală, Palmier Areca, 24 cm",
+      "brand": "IKEA",
+      "category": "Plantă naturală la ghiveci",
+      "model3d": "plant"
+    },
+    {
+      "id": "plantaNaturala-planta-interior-ficus-ginseng-s-shape-h-55-cm-d-22-cm",
+      "group": "plantaNaturala",
+      "name": "Planta interior - Ficus ginseng, S Shape, H 55 cm, D 22 cm",
+      "brand": "Dedeman",
+      "category": "Plantă naturală la ghiveci",
+      "model3d": "plant"
+    },
+    {
+      "id": "lampadar-barlast-lampadar-negru-alb-150-cm",
+      "group": "lampadar",
+      "name": "BARLAST lampadar, negru/alb, 150 cm",
+      "brand": "IKEA",
+      "category": "Lampadar",
+      "model3d": "floorlamp"
+    },
+    {
+      "id": "lampadar-lampadar-action-pro-74103-e27-e14-1800-mm-bej-alb-modern",
+      "group": "lampadar",
+      "name": "Lampadar Action Pro 74103, E27 + E14, 1800 mm, bej + alb, modern",
+      "brand": "Dedeman",
+      "category": "Lampadar",
+      "model3d": "floorlamp"
+    },
+    {
+      "id": "lampadar-kinnahult-lampadar-frasin-alb-150-cm",
+      "group": "lampadar",
+      "name": "KINNAHULT lampadar, frasin/alb, 150 cm",
+      "brand": "IKEA",
+      "category": "Lampadar",
+      "model3d": "floorlamp"
+    },
+    {
+      "id": "lampadar-evedal-lampadar-gri-marmura-gri",
+      "group": "lampadar",
+      "name": "EVEDAL Lampadar, gri marmură, gri",
+      "brand": "IKEA",
+      "category": "Lampadar",
+      "model3d": "floorlamp"
+    },
+    {
+      "id": "veioza-lampan-veioza-alb-29-cm",
+      "group": "veioza",
+      "name": "LAMPAN Veioză, alb, 29 cm",
+      "brand": "IKEA",
+      "category": "Veioză",
+      "model3d": "tablelamp"
+    },
+    {
+      "id": "veioza-veioza-four-01-1375-1-x-e14-lemn-bej-modern",
+      "group": "veioza",
+      "name": "Veioza Four 01-1375, 1 x E14, lemn + bej, modern",
+      "brand": "Dedeman",
+      "category": "Veioză",
+      "model3d": "tablelamp"
+    },
+    {
+      "id": "veioza-arstid-veioza-alama-alb",
+      "group": "veioza",
+      "name": "ÅRSTID Veioză, alama, alb",
+      "brand": "IKEA",
+      "category": "Veioză",
+      "model3d": "tablelamp"
+    },
+    {
+      "id": "veioza-veioza-dalton-15885t-1-x-e27-negru-fumuriu-modern",
+      "group": "veioza",
+      "name": "Veioza Dalton 15885T, 1 x E27, negru + fumuriu, modern",
+      "brand": "Dedeman",
+      "category": "Veioză",
+      "model3d": "tablelamp"
+    },
+    {
+      "id": "veioza-snobyar-veioza-gri-turcoaz-ceramica-gri-52-cm",
+      "group": "veioza",
+      "name": "SNÖBYAR veioză, gri-turcoaz ceramică/gri, 52 cm",
+      "brand": "IKEA",
+      "category": "Veioză",
+      "model3d": "tablelamp"
+    },
+    {
+      "id": "semineu-focar-semineu-electric-de-perete-art-flame-madrid-negru-metal-efect-fl",
+      "group": "semineu",
+      "name": "Focar semineu electric, de perete, Art Flame Madrid, negru, metal, efect flacara, telecomanda, 1.5 kW, 1280 x 550 x 140 mm",
+      "brand": "Dedeman",
+      "category": "Șemineu electric",
+      "model3d": "fireplace"
+    },
+    {
+      "id": "semineu-semineu-electric-decorativ-de-perete-london-negru-2-kw-1000-x-450-x-13",
+      "group": "semineu",
+      "name": "Semineu electric decorativ, de perete, London, negru, 2 kW, 1000 x 450 x 130 mm",
+      "brand": "Dedeman",
+      "category": "Șemineu electric",
+      "model3d": "fireplace"
+    },
+    {
+      "id": "semineu-semineu-electric-decorativ-de-perete-safecare-5201-wi-fi-alb-din-metal",
+      "group": "semineu",
+      "name": "Semineu electric decorativ, de perete, Safecare 5201, Wi-Fi, alb, din metal, 2 kW, 1240 x 540 x 187 mm",
+      "brand": "Dedeman",
+      "category": "Șemineu electric",
+      "model3d": "fireplace"
+    },
+    {
+      "id": "semineu-focar-semineu-electric-incorporabil-paxton-a-801-65-negru-1-5-kw-3d-ef",
+      "group": "semineu",
+      "name": "Focar semineu electric, incorporabil, Paxton A-801-65, negru, 1.5 kW, 3D efect, 12 culori, 2 trepte, 1500 x 240 x 500 mm",
+      "brand": "Dedeman",
+      "category": "Șemineu electric",
+      "model3d": "fireplace"
+    },
+    {
+      "id": "semineu-focar-semineu-electric-incorporabil-safecare-yfg-5001werb-negru-metal-",
+      "group": "semineu",
+      "name": "Focar semineu electric, incorporabil, Safecare, YFG-5001WERB, negru, metal, 1.8 kW, 3D, sunet, Wi-Fi, 7 culori, 1250 x 320 x 555 mm",
+      "brand": "Dedeman",
+      "category": "Șemineu electric",
+      "model3d": "fireplace"
+    },
+    {
+      "id": "focarLemne-focar-semineu-etna-a-din-fonta-cu-regulator-tiraj-66-x-62-2-x-35-5-cm",
+      "group": "focarLemne",
+      "name": "Focar semineu Etna A+, din fonta, cu regulator tiraj, 66 x 62.2 x 35.5 cm",
+      "brand": "Dedeman",
+      "category": "Focar pe lemne",
+      "model3d": "stove"
+    },
+    {
+      "id": "focarLemne-focar-semineu-remus-din-fonta-cu-regulator-tiraj-830-x-750-x-432-mm",
+      "group": "focarLemne",
+      "name": "Focar semineu Remus, din fonta, cu regulator tiraj, 830 x 750 x 432 mm",
+      "brand": "Dedeman",
+      "category": "Focar pe lemne",
+      "model3d": "stove"
     }
   ],
   "variants": [
@@ -5564,6 +5748,384 @@
       "dimensionsConfidence": "MEDIUM",
       "style": {
         "flat": true
+      }
+    },
+    {
+      "id": "plantaArtificiala-0",
+      "productId": "plantaArtificiala-fejka-planta-artificiala-interior-exterior-palmier-areca-19-cm",
+      "name": "FEJKA plantă artificială, interior/exterior Palmier Areca, 19 cm",
+      "legacyIndex": 0,
+      "dimensionsCm": {
+        "w": 19,
+        "d": 19,
+        "h": 120
+      },
+      "dimensionsConfidence": "MEDIUM",
+      "style": {
+        "plant": "palm",
+        "fake": true
+      }
+    },
+    {
+      "id": "plantaArtificiala-1",
+      "productId": "plantaArtificiala-fejka-planta-artificiala-interior-exterior-ficus-benjamina-23-cm",
+      "name": "FEJKA plantă artificială, interior/exterior/Ficus Benjamina, 23 cm",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 23,
+        "d": 23,
+        "h": 210
+      },
+      "dimensionsConfidence": "MEDIUM",
+      "style": {
+        "plant": "ficus",
+        "fake": true
+      }
+    },
+    {
+      "id": "plantaArtificiala-2",
+      "productId": "plantaArtificiala-fejka-planta-artificiala-interior-exterior-strelizia-nikolai-23-cm",
+      "name": "FEJKA plantă artificială, interior/exterior/Strelizia Nikolai, 23 cm",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 23,
+        "d": 23,
+        "h": 180
+      },
+      "dimensionsConfidence": "MEDIUM",
+      "style": {
+        "plant": "strelitzia",
+        "fake": true
+      }
+    },
+    {
+      "id": "plantaNaturala-0",
+      "productId": "plantaNaturala-calathea-planta-naturala-calathea-asortate-19-cm",
+      "name": "CALATHEA plantă naturală, Calathea/asortate, 19 cm",
+      "legacyIndex": 0,
+      "dimensionsCm": {
+        "w": 19,
+        "d": 19,
+        "h": 85
+      },
+      "dimensionsConfidence": "MEDIUM",
+      "style": {
+        "plant": "calathea",
+        "pot": "#3a3a38"
+      }
+    },
+    {
+      "id": "plantaNaturala-1",
+      "productId": "plantaNaturala-planta-interior-codiaeum-petra-croton-h-70-cm-d-21-cm",
+      "name": "Planta interior - Codiaeum Petra (croton), H 70 cm, D 21 cm",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 21,
+        "d": 21,
+        "h": 70
+      },
+      "dimensionsConfidence": "MEDIUM",
+      "style": {
+        "plant": "croton",
+        "pot": "#e9e5dc"
+      }
+    },
+    {
+      "id": "plantaNaturala-2",
+      "productId": "plantaNaturala-dypsis-lutescens-planta-naturala-palmier-areca-24-cm",
+      "name": "DYPSIS LUTESCENS plantă naturală, Palmier Areca, 24 cm",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 24,
+        "d": 24,
+        "h": 120
+      },
+      "dimensionsConfidence": "MEDIUM",
+      "style": {
+        "plant": "palm",
+        "pot": "#3a3a38"
+      }
+    },
+    {
+      "id": "plantaNaturala-3",
+      "productId": "plantaNaturala-planta-interior-ficus-ginseng-s-shape-h-55-cm-d-22-cm",
+      "name": "Planta interior - Ficus ginseng, S Shape, H 55 cm, D 22 cm",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 22,
+        "d": 22,
+        "h": 55
+      },
+      "dimensionsConfidence": "MEDIUM",
+      "style": {
+        "plant": "bonsai",
+        "pot": "#5b4636",
+        "table": true
+      }
+    },
+    {
+      "id": "lampadar-0",
+      "productId": "lampadar-barlast-lampadar-negru-alb-150-cm",
+      "name": "BARLAST lampadar, negru/alb, 150 cm",
+      "legacyIndex": 0,
+      "dimensionsCm": {
+        "w": 34,
+        "d": 34,
+        "h": 150
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "shade": "#f4f4f2",
+        "col": "#1e1e20",
+        "cone": true
+      }
+    },
+    {
+      "id": "lampadar-1",
+      "productId": "lampadar-lampadar-action-pro-74103-e27-e14-1800-mm-bej-alb-modern",
+      "name": "Lampadar Action Pro 74103, E27 + E14, 1800 mm, bej + alb, modern",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 40,
+        "d": 40,
+        "h": 180
+      },
+      "dimensionsConfidence": "MEDIUM",
+      "style": {
+        "shade": "#f4f4f2",
+        "col": "#d8ccb8",
+        "two": true
+      }
+    },
+    {
+      "id": "lampadar-2",
+      "productId": "lampadar-kinnahult-lampadar-frasin-alb-150-cm",
+      "name": "KINNAHULT lampadar, frasin/alb, 150 cm",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 37,
+        "d": 37,
+        "h": 150
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "shade": "#f4f4f2",
+        "col": "#c2a47a",
+        "wood": true,
+        "tripod": true
+      }
+    },
+    {
+      "id": "lampadar-3",
+      "productId": "lampadar-evedal-lampadar-gri-marmura-gri",
+      "name": "EVEDAL Lampadar, gri marmură, gri",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 41,
+        "d": 41,
+        "h": 145
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "shade": "#9a9a96",
+        "col": "#9a9a96",
+        "marble": true,
+        "globe": true
+      }
+    },
+    {
+      "id": "veioza-0",
+      "productId": "veioza-lampan-veioza-alb-29-cm",
+      "name": "LAMPAN Veioză, alb, 29 cm",
+      "legacyIndex": 0,
+      "dimensionsCm": {
+        "w": 19,
+        "d": 19,
+        "h": 29
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "shade": "#f4f4f2",
+        "col": "#f4f4f2",
+        "mono": true
+      }
+    },
+    {
+      "id": "veioza-1",
+      "productId": "veioza-veioza-four-01-1375-1-x-e14-lemn-bej-modern",
+      "name": "Veioza Four 01-1375, 1 x E14, lemn + bej, modern",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 12,
+        "d": 12,
+        "h": 25
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "shade": "#d8ccb8",
+        "col": "#c2a47a",
+        "wood": true
+      }
+    },
+    {
+      "id": "veioza-2",
+      "productId": "veioza-arstid-veioza-alama-alb",
+      "name": "ÅRSTID Veioză, alama, alb",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 22,
+        "d": 22,
+        "h": 55
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "shade": "#f4f4f2",
+        "col": "#b08d57",
+        "metal": true
+      }
+    },
+    {
+      "id": "veioza-3",
+      "productId": "veioza-veioza-dalton-15885t-1-x-e27-negru-fumuriu-modern",
+      "name": "Veioza Dalton 15885T, 1 x E27, negru + fumuriu, modern",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 22.5,
+        "d": 18,
+        "h": 57.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "shade": "#5a5a5e",
+        "col": "#1e1e20",
+        "glass": true
+      }
+    },
+    {
+      "id": "veioza-4",
+      "productId": "veioza-snobyar-veioza-gri-turcoaz-ceramica-gri-52-cm",
+      "name": "SNÖBYAR veioză, gri-turcoaz ceramică/gri, 52 cm",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 33,
+        "d": 33,
+        "h": 52
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "shade": "#8f9a96",
+        "col": "#4f8a8b",
+        "ceramic": true
+      }
+    },
+    {
+      "id": "semineu-0",
+      "productId": "semineu-focar-semineu-electric-de-perete-art-flame-madrid-negru-metal-efect-fl",
+      "name": "Focar semineu electric, de perete, Art Flame Madrid, negru, metal, efect flacara, telecomanda, 1.5 kW, 1280 x 550 x 140 mm",
+      "legacyIndex": 0,
+      "dimensionsCm": {
+        "w": 128,
+        "d": 14,
+        "h": 55
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "wall": true,
+        "col": "#1e1e20"
+      }
+    },
+    {
+      "id": "semineu-1",
+      "productId": "semineu-semineu-electric-decorativ-de-perete-london-negru-2-kw-1000-x-450-x-13",
+      "name": "Semineu electric decorativ, de perete, London, negru, 2 kW, 1000 x 450 x 130 mm",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 100,
+        "d": 13,
+        "h": 45
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "wall": true,
+        "col": "#1e1e20"
+      }
+    },
+    {
+      "id": "semineu-2",
+      "productId": "semineu-semineu-electric-decorativ-de-perete-safecare-5201-wi-fi-alb-din-metal",
+      "name": "Semineu electric decorativ, de perete, Safecare 5201, Wi-Fi, alb, din metal, 2 kW, 1240 x 540 x 187 mm",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 124,
+        "d": 18.7,
+        "h": 54
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "wall": true,
+        "col": "#f2f2ef"
+      }
+    },
+    {
+      "id": "semineu-3",
+      "productId": "semineu-focar-semineu-electric-incorporabil-paxton-a-801-65-negru-1-5-kw-3d-ef",
+      "name": "Focar semineu electric, incorporabil, Paxton A-801-65, negru, 1.5 kW, 3D efect, 12 culori, 2 trepte, 1500 x 240 x 500 mm",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 150,
+        "d": 24,
+        "h": 50
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "inset": true,
+        "col": "#1e1e20"
+      }
+    },
+    {
+      "id": "semineu-4",
+      "productId": "semineu-focar-semineu-electric-incorporabil-safecare-yfg-5001werb-negru-metal-",
+      "name": "Focar semineu electric, incorporabil, Safecare, YFG-5001WERB, negru, metal, 1.8 kW, 3D, sunet, Wi-Fi, 7 culori, 1250 x 320 x 555 mm",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 125,
+        "d": 32,
+        "h": 55.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "inset": true,
+        "col": "#1e1e20"
+      }
+    },
+    {
+      "id": "focarLemne-0",
+      "productId": "focarLemne-focar-semineu-etna-a-din-fonta-cu-regulator-tiraj-66-x-62-2-x-35-5-cm",
+      "name": "Focar semineu Etna A+, din fonta, cu regulator tiraj, 66 x 62.2 x 35.5 cm",
+      "legacyIndex": 0,
+      "dimensionsCm": {
+        "w": 66,
+        "d": 35.5,
+        "h": 62.2
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#2b2b2d"
+      }
+    },
+    {
+      "id": "focarLemne-1",
+      "productId": "focarLemne-focar-semineu-remus-din-fonta-cu-regulator-tiraj-830-x-750-x-432-mm",
+      "name": "Focar semineu Remus, din fonta, cu regulator tiraj, 830 x 750 x 432 mm",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 75,
+        "d": 43.2,
+        "h": 83
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#2b2b2d"
       }
     }
   ],
@@ -9404,6 +9966,374 @@
         "source": "Dedeman",
         "sourceUrl": "https://www.dedeman.ro/ro/boiler-electric-ariston-velis-tech-100-afisaj-digital-ipx4-functie-eco-80-l-1500-w/p/2033764",
         "verifiedAt": "2026-10-11",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-plantaArtificiala-0",
+      "variantId": "plantaArtificiala-0",
+      "supplierId": "ikea-ro",
+      "price": 199.9,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/fejka-planta-artificiala-interior-exterior-palmier-areca-00600894/",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-plantaArtificiala-1",
+      "variantId": "plantaArtificiala-1",
+      "supplierId": "ikea-ro",
+      "price": 349,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/fejka-planta-artificiala-interior-exterior-ficus-benjamina-10610604/",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-plantaArtificiala-2",
+      "variantId": "plantaArtificiala-2",
+      "supplierId": "ikea-ro",
+      "price": 349,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/fejka-planta-artificiala-interior-exterior-strelizia-nikolai-70610601/",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-plantaNaturala-0",
+      "variantId": "plantaNaturala-0",
+      "supplierId": "ikea-ro",
+      "price": 89.9,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/calathea-planta-naturala-calathea-asortate-10258829/",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-plantaNaturala-1",
+      "variantId": "plantaNaturala-1",
+      "supplierId": "dedeman",
+      "price": 189.9,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/planta-interior-codiaeum-petra-croton-h-70-cm-d-21-cm/p/7016732",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-plantaNaturala-2",
+      "variantId": "plantaNaturala-2",
+      "supplierId": "ikea-ro",
+      "price": 199.9,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/dypsis-lutescens-planta-naturala-palmier-areca-46804005/",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-plantaNaturala-3",
+      "variantId": "plantaNaturala-3",
+      "supplierId": "dedeman",
+      "price": 299.98,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/planta-interior-ficus-ginseng-s-shape-h-55-cm-d-22-cm/p/7036495",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-lampadar-0",
+      "variantId": "lampadar-0",
+      "supplierId": "ikea-ro",
+      "price": 49.9,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/barlast-lampadar-negru-alb-10430368/",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-lampadar-1",
+      "variantId": "lampadar-1",
+      "supplierId": "dedeman",
+      "price": 142,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/lampadar-action-pro-74103-e27-e14-1800-mm-bej-alb-modern/p/1118888",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-lampadar-2",
+      "variantId": "lampadar-2",
+      "supplierId": "ikea-ro",
+      "price": 279,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/kinnahult-lampadar-frasin-alb-10559257/",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-lampadar-3",
+      "variantId": "lampadar-3",
+      "supplierId": "ikea-ro",
+      "price": 1799,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/evedal-lampadar-marmura-gri-40358592/",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-veioza-0",
+      "variantId": "veioza-0",
+      "supplierId": "ikea-ro",
+      "price": 24.9,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/lampan-veioza-alb-20046988/",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-veioza-1",
+      "variantId": "veioza-1",
+      "supplierId": "dedeman",
+      "price": 66.91,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/veioza-four-01-1375-1-x-e14-lemn-bej-modern/p/1049349",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-veioza-2",
+      "variantId": "veioza-2",
+      "supplierId": "ikea-ro",
+      "price": 119.9,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/arstid-veioza-alama-alb-30321373/",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-veioza-3",
+      "variantId": "veioza-3",
+      "supplierId": "dedeman",
+      "price": 263,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/veioza-dalton-15885t-1-x-e27-negru-fumuriu-modern/p/1086837",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-veioza-4",
+      "variantId": "veioza-4",
+      "supplierId": "ikea-ro",
+      "price": 349,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/snoebyar-veioza-gri-turcoaz-ceramica-gri-50450401/",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-semineu-0",
+      "variantId": "semineu-0",
+      "supplierId": "dedeman",
+      "price": 1429,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/focar-semineu-electric-de-perete-art-flame-madrid-negru-metal-efect-flacara-telecomanda-1-5-kw-1280-x-550-x-140-mm/p/2023436",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-semineu-1",
+      "variantId": "semineu-1",
+      "supplierId": "dedeman",
+      "price": 1449,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/semineu-electric-decorativ-de-perete-london-negru-2-kw-1000-x-450-x-130-mm/p/2021008",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-semineu-2",
+      "variantId": "semineu-2",
+      "supplierId": "dedeman",
+      "price": 2199,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/semineu-electric-decorativ-de-perete-safecare-5201-wi-fi-alb-din-metal-2-kw-1240-x-540-x-187-mm/p/2038192",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-semineu-3",
+      "variantId": "semineu-3",
+      "supplierId": "dedeman",
+      "price": 2448.11,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/focar-semineu-electric-incorporabil-paxton-a-801-65-negru-1-5-kw-3d-efect-12-culori-2-trepte-1500-x-240-x-500-mm/p/2035689",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-semineu-4",
+      "variantId": "semineu-4",
+      "supplierId": "dedeman",
+      "price": 2919,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/focar-semineu-electric-incorporabil-safecare-yfg-5001werb-negru-metal-1-8-kw-3d-sunet-wi-fi-7-culori-1250-x-320-x-555-mm/p/2033641",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-focarLemne-0",
+      "variantId": "focarLemne-0",
+      "supplierId": "dedeman",
+      "price": 2249,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/focar-semineu-etna-a-din-fonta-cu-regulator-tiraj-66-x-62-2-x-35-5-cm/p/2033911",
+        "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-focarLemne-1",
+      "variantId": "focarLemne-1",
+      "supplierId": "dedeman",
+      "price": 3698.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/focar-semineu-remus-din-fonta-cu-regulator-tiraj-830-x-750-x-432-mm/p/2024736",
+        "verifiedAt": "2026-10-24",
         "verificationType": "product_page",
         "confidence": "HIGH"
       }
