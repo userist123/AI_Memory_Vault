@@ -2,8 +2,8 @@ import { describe, test } from 'vitest';
 import assert from 'node:assert/strict';
 import { DICTS, t } from '../lib/i18n';
 import { isPaletteShortcut } from '../lib/fuzzy';
-import { COMMANDS, TOOLS, matchCommand, formatShortcut, helpRows, toolShortcut, shortcutMatches, type KeyLike } from '../lib/commands';
-import type { Tool } from '../components/PlanView';
+import { COMMANDS, TOOLS, matchCommand, formatShortcut, helpRows, toolShortcut, shortcutMatches, commandById, commandHint, contextCommands, type KeyLike } from '../lib/commands';
+import type { Tool, Sel } from '../components/PlanView';
 
 // Registrul de comenzi (lib/commands.ts): tastatura editorului, paleta, tooltip-urile și ajutorul citesc același tabel.
 const ev = (key: string, m: Partial<Omit<KeyLike, 'key'>> = {}): KeyLike => ({ key, shiftKey: false, ctrlKey: false, metaKey: false, altKey: false, ...m });
@@ -84,5 +84,34 @@ describe('registrul de comenzi', () => {
     for (const tk of TOOLS) assert.notEqual(toolShortcut(tk).key, 'f', tk);
     assert.equal(matchCommand(ev('f')), null); assert.equal(matchCommand(ev('o')), 'tool.window');
     assert.ok(helpRows({ mac: false }).some(r => r.keys === 'F' && r.label === 'help.frame' && r.section === 'edit'));
+    assert.equal(commandById('frame')?.dispatch, false);   // registrul o afișează; tasta rămâne la plan
+  });
+});
+
+describe('meniul contextual din registru', () => {
+  // toate tipurile de selecție ale planului: un tip nou fără meniu contextual nu mai compilează (tsc)
+  const ALL: Record<NonNullable<Sel>['kind'], true> = { wall: true, room: true, placement: true, stair: true, column: true, beam: true, glass_wall: true, opening: true, niche: true, wall_item: true, annotation: true, floor_zone: true, ceiling_zone: true, railing: true };
+  const KINDS = Object.keys(ALL) as NonNullable<Sel>['kind'][];
+  test('fiecare tip de selecție are comenzi din registru, cu „șterge” la final', () => {
+    for (const k of KINDS){ const ids = contextCommands(k);
+      assert.ok(ids.length >= 1, k); assert.equal(ids.at(-1), 'delete', k);
+      for (const id of ids) assert.ok(commandById(id), `${k}: ${id} lipsește din registru`);
+      assert.equal(new Set(ids).size, ids.length, k); }
+  });
+  test('etichetele de meniu există în ro și en', () => {
+    for (const k of KINDS) for (const id of contextCommands(k)) for (const lang of ['ro', 'en'] as const){ const c = commandById(id)!, key = c.menuLabel ?? c.label;
+      assert.ok(key in DICTS[lang], `${lang} ${id}: ${key}`); assert.ok(t(lang, key).trim().length > 0); }
+  });
+  test('scurtătura afișată vine din registru; comenzile doar de meniu n-au tastă și nu intră în ajutor', () => {
+    assert.equal(commandHint('rotate', { mac: false }), 'R'); assert.equal(commandHint('frame', { mac: false }), 'F'); assert.equal(commandHint('delete', { mac: false }), 'Delete');
+    assert.equal(commandHint('wall.length', { mac: false }), undefined);
+    const help = helpRows({ mac: false }).map(r => r.label);
+    for (const c of COMMANDS.filter(x => x.group === 'context')){ assert.equal(c.shortcuts.length, 0, c.id); assert.ok(!help.includes(c.label), c.id); }
+  });
+  test('ce se aplică fiecărui tip', () => {
+    assert.deepEqual(contextCommands('wall'), ['wall.length', 'frame', 'delete']);
+    assert.deepEqual(contextCommands('placement'), ['rotate', 'duplicate', 'view3d', 'frame', 'delete']);
+    assert.deepEqual(contextCommands('room'), ['room.furnish', 'room.split', 'frame', 'delete']);
+    assert.deepEqual(contextCommands('column'), ['rotate', 'column.shape', 'frame', 'delete']);
   });
 });
