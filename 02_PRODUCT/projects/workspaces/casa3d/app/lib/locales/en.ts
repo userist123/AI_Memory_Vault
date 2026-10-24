@@ -749,4 +749,5 @@ export const en: Dict = {
   "tex.rugOutside": "Rug {n} runs outside the room or leaves less than {cm} cm to the walls.", "tex.rugOverlap": "Rug {n} overlaps another rug.",
   "tex.rugSofa": "The moved rug no longer runs under the front legs of the sofa (at least 10 cm).",
   "tex.rugBed": "The moved rug no longer sits under the lower two thirds of the bed with a margin at the sides.",
+  "issue.CHIMNEY": "A wood-burning stove needs a chimney and a technical inspection (chimney sweep, fire safety) before it is installed.",
 };
