@@ -26,9 +26,9 @@ Public statement (RO/EN): page `/accesibilitate` (`app/lib/a11y-statement.ts`).
 
 ## Evidence
 
-- `scripts/check-a11y.mjs` (axe-core 4.14.0, tags wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa) on 20 page states:
-  home, accessibility statement, editor stages Survey / Finishes / FF&E / Quote / Present / Orders, the open plan-objects list, the command palette, the editor at 1366 px (compact top bar),
-  seven print documents, client link on desktop (1600 px) and phone (390 px). Result on 2026-10-23: **0 violations,
+- `scripts/check-a11y.mjs` (axe-core 4.14.0, tags wcag2a, wcag2aa, wcag21a, wcag21aa, wcag22aa) on 21 page states:
+  home, accessibility statement, editor stages Survey / Finishes / FF&E / Quote / Present / Orders, the open plan-objects list, the command palette, the editor at 1366 px (compact top bar), the Installations panel with a radiator and its product picker open,
+  seven print documents, client link on desktop (1600 px) and phone (390 px). Result on 2026-10-24: **0 violations,
   0 accepted exceptions** (`scripts/a11y-known.json` is empty). Runs in CI (`.github/workflows/casa3d-build.yml`).
 - `scripts/check-slides.mjs`: no presentation content leaves its 16:9 slide, no horizontal scroll on the client link at 320 px and 390 px.
 - Unit tests: typed dimensions (2.5.7), dialog keyboard handling, i18n coverage.

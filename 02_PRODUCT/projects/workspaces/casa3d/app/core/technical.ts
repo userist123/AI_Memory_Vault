@@ -1,8 +1,9 @@
 // Stratul tehnic: prize, întrerupătoare, puncte de lumină și de date, apă rece/caldă, scurgeri.
 // Sugestiile sunt deterministe, din mobila așezată și tipul camerei; pragurile sunt reguli uzuale de bun-simț,
 // nu norme legale (normativele diferă pe țări). Utilizatorul acceptă sau modifică punctele.
-import type { Floor, FurniturePlacement, Room, Snapshot, Catalog } from './types';
-import { finishesOf } from './boq';
+import type { Floor, FurniturePlacement, Room, Snapshot, Catalog, MaterialsCatalog } from './types';
+import { finishesOf, RADIATOR_CATEGORY } from './boq';
+import { floors } from './levels';
 import { LIGHTS_EXTRA_PER_M2 } from './rules.boq';
 import { area } from './geometry';
 import { allFixturePoints } from './fixtures';
@@ -30,6 +31,9 @@ export interface TechPoint {
   widthM?: number;
   heightM?: number;
   model?: RadiatorModel;
+  /** produsul ales (id de material): calorifer cu panouri (`panel_radiator`), port-prosop (`towel_radiator`) sau aparat split
+   *  (`hvac_split`); lipsă = fără preț în deviz, ca până acum */
+  product?: string;
 }
 export const TECH_KINDS: Record<TechKind, { category: 'electric' | 'plumbing' | 'hvac'; height: number; label: { ro: string; en: string } }> = {
   outlet: { category: 'electric', height: 0.3, label: { ro: 'Priză simplă', en: 'Single socket' } },
@@ -108,6 +112,8 @@ export function suggestTechPoints(snap: Snapshot): TechPoint[] {
         case 'bideu': add('water_cold', room, w, 'bideu', 0.2); add('water_hot', room, w, 'bideu', 0.2); add('drain', room, w, 'bideu', 0.1); break;
         case 'boiler': add('outlet', room, w, 'boiler (circuit propriu, protejat la umezeală)', 1.8); add('water_cold', room, w, 'intrare boiler', 1.2); add('water_hot', room, w, 'ieșire boiler', 1.2); break;
         case 'caloriferBaie': add('outlet', room, w, 'calorifer electric port-prosop (protejat la umezeală)', 0.3); break;
+        case 'lampadar': add('outlet', room, w, 'lângă lampadar'); break;
+        case 'semineu': add('outlet', room, w, 'șemineu electric (circuit propriu recomandat)'); break;
       } }
     // completează până la minimul uzual pe tipul camerei, pe pereți, la distanță de cele existente
     const outlets = () => out.filter(t => t.roomId === room.id && (t.kind === 'outlet' || t.kind === 'outlet_double')).length, need = MIN_OUTLETS[room.type] ?? 1;
@@ -151,15 +157,27 @@ export function sanitizeTech(x: unknown, snap: Pick<Snapshot, 'floor'>): TechPoi
 }
 /** Mărimile corpului (calorifer, aer condiționat), curățate: numerele finite se aduc în interval; NaN, Infinity și șirurile se
  *  resping (PlanLimitError → 400), ca un client vechi să poată salva, dar o valoare stricată să nu ajungă în 3D și în deviz. */
-export function techBodyFields(q: any): Pick<TechPoint, 'widthM' | 'heightM' | 'model'> {
+export function techBodyFields(q: any): Pick<TechPoint, 'widthM' | 'heightM' | 'model' | 'product'> {
+  // produsul (id de material) doar la calorifer și la aerul condiționat; un id stricat se elimină, nu blochează salvarea
+  const product = (q.kind === 'radiator' || q.kind === 'hvac_split') && typeof q.product === 'string' && /^[\w-]{1,80}$/.test(q.product) ? { product: q.product } : {};
   const R = PLAN_LIMITS.radiator, H = PLAN_LIMITS.hvac;
   if (q.kind === 'radiator'){
     if (q.model != null && !(RADIATOR_MODELS as readonly string[]).includes(q.model)) throw new PlanLimitError('Tipul caloriferului este invalid.');
     const w = q.widthM != null ? clampNum(q.widthM, R.widthMinM, R.widthMaxM, 'Lățimea caloriferului este invalidă.') : null;
     const h = q.heightM != null ? clampNum(q.heightM, R.heightMinM, R.heightMaxM, 'Înălțimea caloriferului este invalidă.') : null;
-    return { ...(w != null ? { widthM: w } : {}), ...(h != null ? { heightM: h } : {}), ...(q.model ? { model: q.model } : {}) }; }
-  if (q.kind === 'hvac_split' && q.widthM != null) return { widthM: clampNum(q.widthM, H.widthMinM, H.widthMaxM, 'Lățimea unității de aer condiționat este invalidă.') };
+    return { ...(w != null ? { widthM: w } : {}), ...(h != null ? { heightM: h } : {}), ...(q.model ? { model: q.model } : {}), ...product }; }
+  if (q.kind === 'hvac_split') return { ...(q.widthM != null ? { widthM: clampNum(q.widthM, H.widthMinM, H.widthMaxM, 'Lățimea unității de aer condiționat este invalidă.') } : {}), ...product };
   return {};
+}
+/** La salvare (cu catalogul de materiale): produsul ales la calorifer, aer condiționat sau balustradă rămâne doar dacă există în catalog
+ *  și are categoria potrivită (calorifer cu panouri / port-prosop după tip, split, balustradă); altfel câmpul se elimină, ca la
+ *  id-ul stricat (techBodyFields, sanitizeRailing): salvarea nu se blochează, iar devizul nu prețuiește un produs nepotrivit. */
+export function pruneProducts(s: Snapshot, mc: Pick<MaterialsCatalog, 'materials'>): void {
+  const cat = new Map(mc.materials.map(m => [m.id, m.category] as const));
+  for (const t of s.tech ?? []){ if (t.product == null) continue;
+    const want = t.kind === 'radiator' ? RADIATOR_CATEGORY[t.model ?? 'panel'] : t.kind === 'hvac_split' ? 'hvac_split' : undefined;
+    if (!want || cat.get(t.product) !== want) delete t.product; }
+  for (const fl of floors(s)) for (const r of fl.railings ?? []) if (r.product != null && cat.get(r.product) !== 'railing') delete r.product;
 }
 /** Punctul plasat manual: pe peretele cel mai apropiat al camerei în care s-a dat clic. */
 export function placeTechPoint(snap: Snapshot, kind: TechKind, x: number, z: number): TechPoint | null {

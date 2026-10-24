@@ -4,7 +4,7 @@ import { sanitizeFinishes, roomCeilingDropCm } from '../core/finishes';
 import { sanitizeRoomOptions } from '../core/room-options';
 import { demoBeforeCreate } from './demo';
 import { sanitizeDoors } from '../core/doors';
-import { sanitizeTech, MAX_TECH_POINTS, techBodyCount } from '../core/technical';
+import { sanitizeTech, MAX_TECH_POINTS, techBodyCount, pruneProducts } from '../core/technical';
 import { sanitizeFloorElements, PlanLimitError, PLAN_LIMITS } from '../core/plan-limits';
 import catalogSeed from '../data/catalog.v1.json';
 // grupă → model 3D, ca materialele permise pe piesă să fie verificate fără a citi catalogul din baza de date
@@ -68,7 +68,8 @@ export function checkUnderlay(u: any): Underlay {
 export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary'] as const;
 /** Coordonatele (metri) rămân într-un pătrat de 2 km: valori uriașe (1e300) ar face suprafețele și bugetul Infinity. */
 export const COORD_MAX_M = 1000;
-export function checkSnapshot(s: any): Snapshot {
+/** `mc` (catalogul de materiale, la salvare): produsele alese la calorifer, aer condiționat și balustradă trebuie să existe în el, cu categoria potrivită. */
+export function checkSnapshot(s: any, mc?: Pick<MaterialsCatalog, 'materials'>): Snapshot {
   if (!s || typeof s !== 'object' || !s.floor || !Array.isArray(s.floor.rooms) || !Array.isArray(s.floor.walls) || !Array.isArray(s.placements) || typeof s.selections !== 'object') throw new HttpError(400, 'Structura proiectului e invalidă.');
   const { underlay: rawUnderlay, ...rest } = s;
   if (JSON.stringify(rest).length > MAX_SNAPSHOT) throw new HttpError(413, 'Proiectul e prea mare.');
@@ -133,6 +134,7 @@ export function checkSnapshot(s: any): Snapshot {
     if (Object.keys(out).length) s.joinery = out; else delete s.joinery; }
   s.name = cleanName(s.name); s.picked = Array.isArray(s.picked) ? s.picked.filter((x: unknown) => typeof x === 'string') : [];
   for (const k of Object.keys(s)) if (!(SNAPSHOT_KEYS as readonly string[]).includes(k)) delete s[k];
+  if (mc) pruneProducts(s as Snapshot, mc);
   return s as Snapshot;
 }
 export async function listProjects(owner: string){
@@ -167,7 +169,7 @@ export async function getProject(owner: string, id: string){ const r = await own
 /** Salvarea desenului. Cu `base` (versiunea de la care a pornit editorul) salvarea trece doar dacă nimeni n-a schimbat între timp
  *  proiectul, de pe alt dispozitiv sau prin restaurarea unei revizii; altfel 409 cu `conflict`, ca designerul să aleagă. */
 export async function saveDraft(owner: string, id: string, snapshot: unknown, base?: unknown){
-  const s = checkSnapshot(snapshot); await own(owner, id); const { q } = await getDb();
+  const s = checkSnapshot(snapshot, await getMaterials()); await own(owner, id); const { q } = await getDb();
   const guarded = Number.isInteger(base) && (base as number) >= 0;
   const { rows } = await q(`update projects set draft=$1, name=$2, draft_rev=draft_rev+1, updated_at=now() where id=$3 and owner=$4 and deleted_at is null${guarded ? ' and draft_rev=$5' : ''} returning updated_at, draft_rev`,
     guarded ? [JSON.stringify(s), s.name, id, owner, base] : [JSON.stringify(s), s.name, id, owner]);

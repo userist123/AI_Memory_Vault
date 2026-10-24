@@ -161,7 +161,9 @@ export function sanitizeRailing(b: any): Railing {
   if (Math.hypot(b.b[0] - b.a[0], b.b[1] - b.a[1]) < L.minLenM - 1e-9) bad('O balustradă are sub 20 cm.');
   const height = b.height != null ? clampNum(b.height, L.heightMinM, L.heightMaxM, 'Înălțimea balustradei este invalidă.') : null;
   if (b.kind != null && !(RAILING_KINDS as readonly string[]).includes(b.kind)) bad('Tipul balustradei este invalid (metal sau sticlă).');
-  return { id: b.id, a: [b.a[0], b.a[1]], b: [b.b[0], b.b[1]], ...(height != null ? { height } : {}), ...(b.kind ? { kind: b.kind } : {}) };
+  // produsul (id de material) doar la balustrada de metal; un id stricat se elimină, nu blochează salvarea
+  const product = b.kind !== 'glass' && typeof b.product === 'string' && ID.test(b.product) ? b.product : null;
+  return { id: b.id, a: [b.a[0], b.a[1]], b: [b.b[0], b.b[1]], ...(height != null ? { height } : {}), ...(b.kind ? { kind: b.kind } : {}), ...(product ? { product } : {}) };
 }
 /** Adnotarea curățată, sau null pentru un text gol (se aruncă). */
 export function sanitizeAnnotation(a: any): Annotation | null {

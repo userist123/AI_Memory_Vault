@@ -35,7 +35,7 @@ export default function CatalogPanel({ catalog, snap, onUse, onAdd, locale = 'ro
     <h3>{t('catalog.title')}</h3>
     <label className="f"><span>{t('catalog.search')}</span><input type="search" value={q} placeholder={t('catalog.searchPh')} onChange={e => setQ(e.target.value)} /></label>
     <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }} role="group" aria-label={t('catalog.retailer')}>
-      {catalog.suppliers.map(s => <label key={s.id} style={{ display: 'flex', gap: 4, alignItems: 'center' }}><input type="checkbox" checked={ret.includes(s.id)} onChange={e => toggle(ret, setRet, s.id, e.target.checked)} />{s.name}</label>)}
+      {/* doar magazinele cu oferte de mobilier (Hornbach are deocamdată doar materiale) */}{catalog.suppliers.filter(s => catalog.offers.some(o => o.supplierId === s.id)).map(s => <label key={s.id} style={{ display: 'flex', gap: 4, alignItems: 'center' }}><input type="checkbox" checked={ret.includes(s.id)} onChange={e => toggle(ret, setRet, s.id, e.target.checked)} />{s.name}</label>)}
     </div>
     {markets.length > 1 && <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }} role="group" aria-label={t('catalog.market')}>
       {markets.map(c => <label key={c} style={{ display: 'flex', gap: 4, alignItems: 'center' }}><input type="checkbox" checked={mk.includes(c)} onChange={e => toggle(mk, setMk, c, e.target.checked)} />{c}</label>)}

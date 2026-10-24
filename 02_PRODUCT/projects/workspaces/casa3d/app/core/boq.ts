@@ -16,8 +16,20 @@ import { wallWorks } from './renovation';
 import { zonesOfRoom, zoneAreaIn, zonesAreaIn } from './floor-zones';
 import { isSizedRadiator, radiatorSize, hvacSize } from './tech-geometry';
 import { ceilingZonesOfRoom, ceilingZoneQty, ceilingZoneHidden } from './ceiling-zones';
-import { railingHeight, railingKind, railingLength } from './railings';
+import { railingHeight, railingKind, railingLength, RAILING_POST_M } from './railings';
 const RADIATOR_RO: Record<string, string> = { panel: 'panou', towel: 'port-prosop', decorative: 'decorativ' };
+/** Categoria de material pe tipul caloriferului (cel decorativ nu are produse verificate). */
+export const RADIATOR_CATEGORY: Record<string, string> = { panel: 'panel_radiator', towel: 'towel_radiator' };
+/** Toleranța (cm) dintre mărimea caloriferului din plan și cea declarată pe pagina produsului (specs.sizeCm = lățime × înălțime). */
+export const RADIATOR_FIT_CM = 1;
+/** Produsul ales se potrivește caloriferului: categoria tipului și mărimea (lățime și înălțime, cu toleranța de 1 cm). Fără mărime
+ *  declarată pe pagină nu se poate verifica, deci nu se potrivește. */
+export function radiatorFits(tp: { widthM?: number; heightM?: number; model?: string }, m: Pick<Material, 'category' | 'specs'> | undefined): boolean {
+  const sz = m?.specs?.sizeCm; if (!m || !sz || m.category !== RADIATOR_CATEGORY[tp.model ?? 'panel']) return false; const r = radiatorSize(tp as any);
+  return Math.abs(r.w * 100 - sz[0]) <= RADIATOR_FIT_CM + 1e-6 && Math.abs(r.h * 100 - sz[1]) <= RADIATOR_FIT_CM + 1e-6;
+}
+/** Ce mai trebuie pe lângă produsul ales al balustradei (fără preț verificat), pe partea din sistem pe care o acoperă. */
+const RAIL_REST: Record<string, string> = { handrail: 'Stâlpi, umplutură și montaj', post: 'Mână curentă, umplutură și montaj', panel: 'Montaj', set: 'Montaj', start: 'Montaj' };
 /** Pereții în documente: punctele cardinale în română, nu literele interne N/S/E/W. */
 const SIDE_RO: Record<string, string> = { N: 'nord', S: 'sud', E: 'est', W: 'vest' };
 const LIGHT_CATS = new Set(['lighting', 'spot', 'led_strip', 'pendant', 'wall_light', 'led_profile']);
@@ -217,17 +229,45 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
       if (ww.system === 'drywall'){ if (gk) items.push(materialLine(gk, `wall-new:${ww.wallId}`, null, `Perete nou gips-carton · ${where} (${ww.areaM2} m², placă pe 2 fețe)`, ww.areaM2 * 2, mc.verifiedAt)); else unknown.push(`Placă gips-carton perete nou ${r2(ww.areaM2 * 2)} m² · ${where}`);
         unknown.push(`Manoperă perete nou gips-carton ${ww.areaM2} m² (structură, vată, 2 fețe) · ${where}: fără preț verificat`); }
       else unknown.push(`Zidărie nouă ${ww.areaM2} m² (material și manoperă) · ${where}: fără preț verificat`); }
-    // balustradele: în ml, pe tip și înălțime; fără preț verificat în catalog (material și montaj)
+    // balustradele: în ml, pe tip și înălțime; cu produs ales (metal) cantitatea vine din lungime, pe partea de sistem (specs.railPart):
+    //  - handrail (Akdemir 2000 mm, Dedeman p/6074052; Pertura 2 m, Hornbach 7512021): bucăți întregi de pieceM, în sus —
+    //    lungimea bucății e cea de pe pagină; îmbinarea bucăților e regula aplicației;
+    //  - post (kit stâlp Akdemir P5, Dedeman p/6074047, „kit asamblare, 1 stalp”): un stâlp pe kit; pasul de cel mult
+    //    RAILING_POST_M = 1,2 m (+1 la capăt) e regula aplicației (core/railings.ts), nu e scris pe pagină;
+    //  - set (Pertura formă G 1,5 m, Hornbach 6762473, „Set balustradă”): seturi întregi de pieceM, în sus — lungimea e cea de pe
+    //    pagină, alăturarea mai multor seturi e regula aplicației;
+    //  - start (kit Catumia 1000 mm, Dedeman p/6077743, „kit complet pentru inceperea balustradei”): UN singur kit de start la
+    //    prețul paginii; restul lungimii cere panourile de extensie (p/6077744, pagina necitită), deci o linie fără preț, nu mai
+    //    multe kituri de start;
+    //  - panel: panouri întregi de pieceM (nefolosit acum în catalog).
+    // Restul sistemului și montajul rămân fără preț verificat; fără produs, ca până acum.
     for (const r of fl.railings ?? []){ const len = railingLength(r); if (len <= 0) continue;
+      const rm = railingKind(r) === 'metal' ? M(r.product) : undefined, part = rm?.specs?.railPart, where = `metal ${len} ml, h ${Math.round(railingHeight(r) * 100)} cm${lvl}`;
+      const qty = !rm || rm.category !== 'railing' ? null : part === 'start' ? 1 : part === 'post' ? Math.ceil(len / RAILING_POST_M - 1e-9) + 1 : rm.specs?.pieceM ? Math.ceil(len / rm.specs.pieceM - 1e-9) : null;
+      if (rm && qty != null){ const what = part === 'start' ? `kit de start (${rm.specs?.pieceM ?? 1} m)` : part === 'post' ? `${qty} stâlpi (la cel mult ${RAILING_POST_M} m)` : `${qty} ${qty === 1 ? 'bucată' : 'bucăți'} de ${rm.specs!.pieceM} m`;
+        items.push(materialLine(rm, `railing:${r.id}`, null, `Balustradă ${where}: ${what}`, qty, mc.verifiedAt, 0));
+        const rest = part === 'start' ? r2(len - (rm.specs?.pieceM ?? 1)) : 0;
+        if (rest > 0) unknown.push(`Balustradă ${where}: panouri de extensie pentru ${rest} m (preț neverificat)`);
+        unknown.push(`${RAIL_REST[part ?? 'set'] ?? 'Montaj'} balustradă ${where}: fără preț verificat`); continue; }
       unknown.push(`Balustradă ${railingKind(r) === 'glass' ? 'sticlă' : 'metal'} ${len} ml, h ${Math.round(railingHeight(r) * 100)} cm (material și montaj)${lvl}: fără preț verificat`); } });
   // punctele tehnice cu corp: aerul condiționat (unitatea interioară și traseul) și caloriferele noi; fără preț verificat
   const allRooms = floors(snap).flatMap(fl => fl.rooms);
   for (const tp of snap.tech ?? []){ const room = allRooms.find(r => r.id === tp.roomId); if (!room) continue;
-    if (tp.kind === 'hvac_split') unknown.push(`Unitate AC interioară + traseu (1 buc, ${Math.round(hvacSize(tp).w * 100)} cm) · ${room.name}: fără preț verificat`);
-    else if (isSizedRadiator(tp)){ const sz = radiatorSize(tp); unknown.push(`Calorifer ${RADIATOR_RO[tp.model ?? 'panel']} ${Math.round(sz.w * 100)}×${Math.round(sz.h * 100)} cm (1 buc, nou sau mutat, cu racordare) · ${room.name}: fără preț verificat`); } }
+    // cu produs ales (aparat split, calorifer cu panouri sau port-prosop): o linie de 1 buc; traseul, racordarea și montajul rămân necunoscute
+    const tm = M(tp.product);
+    if (tp.kind === 'hvac_split'){ if (tm?.category === 'hvac_split'){ items.push(materialLine(tm, `${room.id}:hvac:${tp.id}`, room.id, `Aer condiționat split · ${room.name}`, 1, mc.verifiedAt, 0)); unknown.push(`Traseu frigorific și montaj AC (1 buc) · ${room.name}: fără preț verificat`); }
+      else unknown.push(`Unitate AC interioară + traseu (1 buc, ${Math.round(hvacSize(tp).w * 100)} cm) · ${room.name}: fără preț verificat`); }
+    else if (isSizedRadiator(tp)){ const sz = radiatorSize(tp);
+      if (tm && radiatorFits(tp, tm)){ items.push(materialLine(tm, `${room.id}:radiator:${tp.id}`, room.id, `Calorifer ${RADIATOR_RO[tp.model ?? 'panel']} ${Math.round(sz.w * 100)}×${Math.round(sz.h * 100)} cm · ${room.name}`, 1, mc.verifiedAt, 0)); unknown.push(`Racordare și montaj calorifer (1 buc, nou sau mutat) · ${room.name}: fără preț verificat`); continue; }
+      // produsul ales, dar caloriferul a fost redimensionat: nu se prețuiește un produs de altă mărime
+      if (tm && tm.category === RADIATOR_CATEGORY[tp.model ?? 'panel']){ const ps = tm.specs?.sizeCm;
+        unknown.push(`Calorifer ${RADIATOR_RO[tp.model ?? 'panel']} ${Math.round(sz.w * 100)}×${Math.round(sz.h * 100)} cm · ${room.name}: produsul ales are altă mărime (${ps ? `${ps[0]}×${ps[1]} cm` : 'nedeclarată'}), fără preț verificat`); continue; }
+      unknown.push(`Calorifer ${RADIATOR_RO[tp.model ?? 'panel']} ${Math.round(sz.w * 100)}×${Math.round(sz.h * 100)} cm (1 buc, nou sau mutat, cu racordare) · ${room.name}: fără preț verificat`); } }
   // uși de interior (foaie + toc) și mânere, pe golul lor; montajul nu are tarif verificat
   for (const d of doorOpenings(snap)){ const c = snap.doors?.[d.id], dm = M(c?.product), hm = M(c?.handle), roomId = d.roomIds[0] ?? null;
-    if (dm){ items.push(materialLine(dm, `door:${d.id}`, roomId, `Ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj ușă ${dm.name}`); }
+    if (dm){ items.push(materialLine(dm, `door:${d.id}`, roomId, `Ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj ușă ${dm.name}`);
+      // ușa pliantă completă se vinde fără accesoriile de prindere (scrie pe pagina produsului)
+      if (dm.specs?.doorTypes?.includes('folding')) unknown.push(`Accesorii de prindere ușă pliantă (nu sunt incluse) · gol ${Math.round(d.widthM * 100)} cm`); }
     if (hm) items.push(materialLine(hm, `handle:${d.id}`, roomId, `Mâner ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0));
     // sistemul ușii (șina glisantei, caseta ușii în perete, kitul pliantei): doar pe tipul pentru care e făcut
     const sm = M(c?.system); if (sm && sm.specs?.system === d.type) items.push(materialLine(sm, `doorsys:${d.id}`, roomId, `Sistem ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); }
@@ -262,8 +302,9 @@ export function computeBudget(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog
   const hasIkea = items.some(i => i.supplier === 'IKEA'), hasDedeman = items.some(i => i.supplier === 'Dedeman');
   if (hasIkea && s.deliveryIkea){ const d = svc('livrare-ikea-z1'); extra.push({ key: 'transport-ikea', label: 'Transport IKEA', amount: d?.price ?? null, confidence: d?.confidence ?? 'UNKNOWN', note: d?.note, sourceUrl: d?.sourceUrl }); }
   if (hasDedeman) extra.push({ key: 'transport-dedeman', label: 'Transport Dedeman', amount: s.deliveryDedeman, confidence: s.deliveryDedeman == null ? 'UNKNOWN' : 'MEDIUM', note: s.deliveryDedeman == null ? 'Se calculează la comandă pe dedeman.ro; introdu valoarea ofertei.' : 'Valoare introdusă manual.' });
-  // celelalte magazine (JYSK, Mobexpert): transportul se află doar la comandă, deci rămâne necunoscut, nu 0
-  for (const sup of [...new Set(items.filter(i => i.category === 'furniture' || i.category === 'appliances' || i.category === 'sanitary').map(i => i.supplier).filter((x): x is string => !!x && x !== 'IKEA' && x !== 'Dedeman' && x !== 'UNKNOWN'))].sort())
+  // celelalte magazine (JYSK, Mobexpert, Hornbach): transportul se află doar la comandă, deci rămâne necunoscut, nu 0
+  // (orice linie: Hornbach vinde doar materiale și sisteme — balustradă, casetă de ușă, aer condiționat)
+  for (const sup of [...new Set(items.map(i => i.supplier).filter((x): x is string => !!x && x !== 'IKEA' && x !== 'Dedeman' && x !== 'UNKNOWN'))].sort())
     extra.push({ key: `transport-${sup.toLowerCase()}`, label: `Transport ${sup}`, amount: null, confidence: 'UNKNOWN', note: 'Se calculează la comandă, pe site-ul magazinului.' });
   const kit = snap.placements.find(p => p.group === 'bucatarie'), kitW = kit ? (resolve(cat, kit.variantId)?.w || 0) : 0;
   if (kit && s.kitchenAssembly){ const k = svc('montaj-bucatarie-ikea'); extra.push({ key: 'montaj-bucatarie', label: `Montaj bucătărie (${formatQty(r2(kitW), 'ml', 'ro')})`, amount: k?.pricePerMeter ? r2(k.pricePerMeter * kitW) : null, confidence: k?.confidence ?? 'UNKNOWN', note: k?.note, sourceUrl: k?.sourceUrl }); }
