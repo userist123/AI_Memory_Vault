@@ -4,6 +4,6 @@ namespace LogAnalyzer.UI.Views
 {
     public partial class PolicyView : UserControl
     {
-        public PolicyView() => InitializeComponent();
+        public PolicyView() { InitializeComponent(); SimpleLevel.KeepFirstTabWhenSimple(this, PolicyTabs); }
     }
 }

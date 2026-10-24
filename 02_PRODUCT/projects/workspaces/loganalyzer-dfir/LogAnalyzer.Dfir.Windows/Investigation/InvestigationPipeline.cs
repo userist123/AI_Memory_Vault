@@ -39,16 +39,33 @@ public sealed class InvestigationResult
     public List<AntiForensicCheck> AntiForensics { get; } = [];
     /// <summary>The procedure profile used by this run (null = none: log clears stay NotAssessed). Its snapshot is Analysis/procedure_profile.json.</summary>
     public ProcedureProfile? Procedure { get; set; }
+    /// <summary>E7: drive letters the station facts tie to removable media (a reopened case gets them back from Analysis/user_activity.json).</summary>
+    public List<string> FactsRemovableLetters { get; } = [];
+    /// <summary>E7: the classified folders of the profile this run used (Analysis/user_activity.json); null = take them from <see cref="Procedure"/>. A reopened case gets them from the file.</summary>
+    public List<LogAnalyzer.Dfir.Profile.ClassifiedFolderRow>? ActivityFolders { get; set; }
+    /// <summary>E7: set by the case loader for a reopened case that has user-activity rows but no saved context (written before it existed): the view then says it cannot be evaluated.</summary>
+    public string ActivityUnevaluable { get; set; } = "";
+    /// <summary>E7: ShellBags / RecentDocs / Office MRU / Recycle Bin rows of the timeline read against the profile's classified folders and the removable volumes (same view as the USER-ACTIVITY-* rules).</summary>
+    public LogAnalyzer.Dfir.Analysis.UserActivityReport UserActivityView()
+    {
+        if (ActivityUnevaluable.Length > 0)
+        {
+            // rows are listed, but none is read against folders or letters that were not saved: no relevance, no "nedefinite în profil"
+            var plain = LogAnalyzer.Dfir.Analysis.UserActivityAnalysis.Analyze(Timeline, [], [], evaluate: false);
+            return plain.Total == 0 ? plain : new LogAnalyzer.Dfir.Analysis.UserActivityReport { Items = plain.Items, Unevaluable = ActivityUnevaluable };
+        }
+        return LogAnalyzer.Dfir.Analysis.Wp14Rules.UserActivityForCase(Timeline, ActivityFolders ?? Procedure?.ClassifiedFolders, FactsRemovableLetters);
+    }
     /// <summary>WP15b: policy change timeline, configured/applied/enforced/observed levels, control gaps and unreliable-time windows (Analysis/policy_timeline.json).</summary>
     public PolicyTimelineResult? PolicyTimeline { get; set; }
-    public string PolicyTimelineLine => PolicyTimeline is null ? "Cronologie politici: nedefinit (nu a fost calculată)."
-        : $"Cronologie politici: {PolicyTimeline.Changes.Count} modificări de politică, {PolicyTimeline.Applications.Count} înregistrări de aplicare GroupPolicy, {PolicyTimeline.Gaps.Count} decalaje de control, {PolicyTimeline.TimeWindows.Count} ferestre de oră nesigură."
-          + (PolicyTimeline.ExpectedNote.Length > 0 ? " Politica așteptată: nedefinit." : "");
+    public string PolicyTimelineLine => PolicyTimeline is null ? "Cronologie politici: nedefinită (nu a fost calculată)."
+        : $"Cronologie politici: {LogAnalyzer.Dfir.Language.RoText.Count(PolicyTimeline.Changes.Count, "modificare", "modificări")} de politică, {LogAnalyzer.Dfir.Language.RoText.Count(PolicyTimeline.Applications.Count, "înregistrare", "înregistrări")} de aplicare GroupPolicy, {PolicyTimeline.Gaps.Count} decalaje de control, {PolicyTimeline.TimeWindows.Count} ferestre de oră nesigură."
+          + (PolicyTimeline.ExpectedNote.Length > 0 ? " Politica așteptată: nedefinită." : "");
     /// <summary>WP14a: SHA-256 of the copies of the media / users registers in the case ("" = register not defined, nothing copied).</summary>
     public string MediaRegisterSha256 { get; set; } = "";
     public string UsersRegisterSha256 { get; set; } = "";
     /// <summary>What the report says about the registers: each defined (with the SHA-256 of its copy) or "nedefinit" (never "conform").</summary>
-    public string RegisterLine { get; set; } = "Registre: nedefinit (nu au fost folosite).";
+    public string RegisterLine { get; set; } = "Registre: nedefinite (nu au fost folosite).";
     public string ProcedureProfileSha256 { get; set; } = "";
     /// <summary>What the report says about the profile: each section defined or "nedefinit" (never "conform"), and the SHA-256 of the copy in the case.</summary>
     public string ProcedureProfileLine => "Profil de proceduri: " + (Procedure is null ? "niciun profil (toate secțiunile nedefinite)" : LogAnalyzer.Dfir.Profile.ProfileOps.Describe(Procedure)
@@ -66,7 +83,7 @@ public sealed class InvestigationResult
 }
 
 /// <summary>
-/// The full investigation, as done by hand on MARIUS-PC: acquire (or import) evidence into a case, parse it with the
+/// The full investigation, as done by hand on a development PC: acquire (or import) evidence into a case, parse it with the
 /// real parsers, build one timeline, correlate, record findings and evidence gaps. Every step leaves an audit trail.
 /// </summary>
 public sealed class InvestigationPipeline
@@ -77,7 +94,7 @@ public sealed class InvestigationPipeline
     public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
 
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
-        [new LiveStateCollector(), new EventLogCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector()];
+        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -100,9 +117,12 @@ public sealed class InvestigationPipeline
         foreach (var f in files)
         {
             var type = ImportType(f);
-            var source = type == "evtx" ? Path.GetFileNameWithoutExtension(f).Replace('%', '/') : type;
+            // E1: an archived log ("Archive-Security-<date>.evtx") is the Security channel; E1/E10: the origin (archived log, Windows.old, shadow copy) goes into the notes and custody.
+            var source = type == "evtx" ? LogAnalyzer.Dfir.Windows.Acquisition.HistoricalSources.ChannelFromFileName(f) : type;
+            var origin = LogAnalyzer.Dfir.Analysis.EvidenceOrigin.Label(f);
             list.Add(ws.ImportFile(f, "Import:" + source, type == "evtx" ? "EventLog:" + source : type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion,
-                notes: "Importat de operator din: " + f));
+                notes: (origin.Length > 0 ? $"Sursă istorică ({origin}). " : "") + "Importat de operator din: " + f));
+            if (origin.Contains("VSS", StringComparison.Ordinal)) ws.Audit("vss.import", $"{list[^1].EvidenceId} din {f}");
         }
         return list;
     }
@@ -110,6 +130,9 @@ public sealed class InvestigationPipeline
     /// <summary>The evidence type <see cref="Import"/> gives a file. Every file is evidence; one with no known type is "file" (hash IOCs, YARA). WP18: the intake screen uses the same rule.</summary>
     public static string ImportType(string f)
     {
+            // A Recycle Bin $I record keeps the original extension ($IAB12CD.lnk, $IAB12CD.evtx): it is checked before the extension, by name and
+            // content, or a deleted shortcut or event log would be typed by its extension and its deletion record lost (review round 2).
+            if (Path.GetFileName(f).StartsWith("$I", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "recycle_info") return "recycle_info";
             var ext = Path.GetExtension(f).ToLowerInvariant();
             return ext switch
             {
@@ -136,6 +159,7 @@ public sealed class InvestigationPipeline
         var n = name.ToUpperInvariant();
         if (n is "NTUSER.DAT" or "HKCU.HIV" || n.StartsWith("NTUSER", StringComparison.Ordinal) && n.EndsWith(".HIV", StringComparison.Ordinal)) return "ntuser_hive";
         if (n is "SOFTWARE" or "SOFTWARE.HIV" || n.EndsWith("_SOFTWARE.HIV", StringComparison.Ordinal)) return "software_hive";
+        if (n is "USRCLASS.DAT" or "USRCLASS.HIV" || n.StartsWith("USRCLASS", StringComparison.Ordinal) && n.EndsWith(".HIV", StringComparison.Ordinal)) return "usrclass_hive";
         return null;
     }
 
@@ -159,6 +183,45 @@ public sealed class InvestigationPipeline
     {
         using var id = WindowsIdentity.GetCurrent();
         return new WindowsPrincipal(id).IsInRole(WindowsBuiltInRole.Administrator);
+    }
+
+    /// <summary>Security audit #17: an evidence index entry whose stored path resolves outside the case folder is reported and audited, never read.</summary>
+    private static EvidenceGap OutsideCaseGap(CaseWorkspace ws, EvidenceItem ev)
+    {
+        ws.Audit("evidence.path_outside_case", $"{ev.EvidenceId} {ev.StoredPath}");
+        return new EvidenceGap(ev.EvidenceId, EvidenceStatus.Failed, CaseWorkspace.OutsideCaseReason,
+            "Proba nu a fost citită: indexul probelor indică un fișier din afara cazului (index modificat sau caz importat necorespunzător)",
+            "Verificați indexul probelor și reimportați proba în caz", "Doar prin reachiziție");
+    }
+
+    /// <summary>The newest facts file of the case (adapters, burn tooling, printers, screenshots, virtual machines, archivers, camera / microphone), checked against its acquisition hash first; null when the case has none or it is unreadable.</summary>
+    private static AirGapFacts? LoadAirGapFacts(CaseWorkspace ws, InvestigationResult r)
+    {
+        var item = ws.LoadEvidence().Where(e => e.SourceType == AirGapFacts.SourceType).OrderByDescending(e => e.AcquiredAtUtc).FirstOrDefault();
+        if (item is null) return null;
+        if (!ws.TryFullPath(item.StoredPath, out var full))
+        {
+            r.Gaps.Add(OutsideCaseGap(ws, item));
+            return null;
+        }
+        var pre = EvidencePreflight.Check(item, full);
+        if (!pre.CanParse)
+        {
+            r.Gaps.Add(new EvidenceGap(Path.GetFileName(item.StoredPath), EvidenceStatus.Failed, $"{pre.Code}: {pre.Detail}", "Constatările despre adaptoare, imprimante, mașini virtuale, arhivatoare și echipamente lipsesc", "O nouă colectare a faptelor stației", "Doar prin reachiziție"));
+            ws.Audit(pre.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{item.EvidenceId} {pre.Code} {pre.Detail}");
+            return null;
+        }
+        try
+        {
+            var facts = AirGapFacts.FromJson(File.ReadAllText(full));
+            facts.EvidenceId = item.EvidenceId;
+            return facts;
+        }
+        catch (JsonException ex)
+        {
+            r.Gaps.Add(new EvidenceGap(Path.GetFileName(item.StoredPath), EvidenceStatus.Failed, ex.Message, "Faptele stației nu au putut fi citite", "O nouă colectare", "Doar prin reachiziție"));
+            return null;
+        }
     }
 
     private static void MarkEnded(InvestigationResult r, CaseWorkspace ws, OperationState state, string reason)
@@ -213,12 +276,21 @@ public sealed class InvestigationPipeline
         foreach (var ev in ws.LoadEvidence())
         {
             ct.ThrowIfCancellationRequested();
-            var full = ws.FullPath(ev.StoredPath);
+            if (!ws.TryFullPath(ev.StoredPath, out var full))
+            {
+                r.Parsing.Add(new ParseResult
+                {
+                    EvidenceId = ev.EvidenceId, Parser = "-", ParserVersion = "-", Status = EvidenceStatus.Failed,
+                    Error = CaseWorkspace.OutsideCaseReason, ExpectedSha256 = ev.Sha256,
+                });
+                r.Gaps.Add(OutsideCaseGap(ws, ev));
+                continue;
+            }
             var sel = _registry.Select(ev, full);
             if (!sel.HasCandidate)
             {
                 // Live snapshots are read by LiveStateAnalyzer below; anything else is listed, never silently ignored.
-                if (ev.SourceType != "live_snapshot")
+                if (ev.SourceType is not ("live_snapshot" or "airgap_facts"))
                     r.Parsing.Add(new ParseResult
                     {
                         EvidenceId = ev.EvidenceId, Parser = "-", ParserVersion = "-", Status = EvidenceStatus.SkippedByDesign,
@@ -235,8 +307,12 @@ public sealed class InvestigationPipeline
                     Status = EvidenceStatus.Failed, Error = sel.Problem, ExpectedSha256 = ev.Sha256, SourceSha256Before = pre0.Sha256, SourceFingerprint = pre0.Fingerprint,
                 };
                 r.Parsing.Add(refused);
-                r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), EvidenceStatus.Failed, refused.Error,
-                    "Proba nu a fost parsată: rezultatele ar putea să nu provină din sursa achiziționată", "Reachiziție din sursa originală", "Doar prin reachiziție"));
+                // An empty or unexpected-format file that still matches its acquisition hash is the acquired file, only not interpreted.
+                r.Gaps.Add(pre0.Status == PreflightStatus.FormatMismatch
+                    ? new EvidenceGap(Path.GetFileName(ev.StoredPath), EvidenceStatus.Failed, refused.Error,
+                        char.ToUpperInvariant(pre0.FormatNotice[0]) + pre0.FormatNotice[1..], "Verificați sursa originală; dacă acolo fișierul are conținut, reachiziție", "Doar prin reachiziție")
+                    : new EvidenceGap(Path.GetFileName(ev.StoredPath), EvidenceStatus.Failed, refused.Error,
+                        "Proba nu a fost parsată: rezultatele ar putea să nu provină din sursa achiziționată", "Reachiziție din sursa originală", "Doar prin reachiziție"));
                 ws.Audit(pre0.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{ev.EvidenceId} {sel.Problem}");
                 continue;
             }
@@ -246,6 +322,13 @@ public sealed class InvestigationPipeline
                 progress?.Report($"Parsare: {Path.GetFileName(ev.StoredPath)} ({parser.Descriptor.ParserId})");
                 var mark = sink.Events.Count;
                 var pr = parser.Parse(ev, full, sink, ct);
+                // Derived files a parser kept in the case (e.g. a repaired EVTX, security audit #14) are hashed into custody, linked to their evidence.
+                foreach (var derived in pr.DerivedOutputs)
+                {
+                    try { ws.RecordOutput(derived, parser.Descriptor.ParserId, parser.Descriptor.Version, [ev.EvidenceId]); }
+                    catch (Exception dex) when (dex is ArgumentException or IOException or UnauthorizedAccessException)
+                    { r.Gaps.Add(new EvidenceGap(derived, EvidenceStatus.Partial, $"proba derivată nu a putut fi înregistrată în custodie: {dex.Message}", "Copia derivată nu are SHA-256 în lanțul de custodie", "Rularea din nou a analizei", "Posibil")); }
+                }
                 pr.ExpectedSha256 = ev.Sha256;
                 pr.SourceSha256Before = pre.Sha256;
                 pr.SourceFingerprint = pre.Fingerprint;
@@ -262,10 +345,10 @@ public sealed class InvestigationPipeline
                 else
                     ProvenanceBinder.BindEvents(sink.Events.Skip(mark), ev, parser.Descriptor.ParserId, parser.Descriptor.Version);
                 r.Parsing.Add(pr);
-                ws.RecordTransformation(ev.EvidenceId, parser.Descriptor.ParserId, parser.Descriptor.Version, "Analysis/timeline.csv", $"{pr.Records} înregistrări, status {pr.Status.ToSpec()}");
+                ws.RecordTransformation(ev.EvidenceId, parser.Descriptor.ParserId, parser.Descriptor.Version, "Analysis/timeline.csv", $"{LogAnalyzer.Dfir.Language.RoText.Count(pr.Records, "înregistrare", "înregistrări")}, status {pr.Status.ToSpec()}");
                 r.Gaps.AddRange(pr.Gaps);
                 if (pr.Status is EvidenceStatus.Failed or EvidenceStatus.Partial)
-                    r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), pr.Status, pr.Error.Length > 0 ? pr.Error : $"{pr.MalformedRecords} înregistrări corupte",
+                    r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), pr.Status, pr.Error.Length > 0 ? pr.Error : $"{LogAnalyzer.Dfir.Language.RoText.Count(pr.MalformedRecords, "înregistrare", "înregistrări")} corupte",
                         "Evenimente lipsă din cronologie", "Alt parser / copie a probei", "Posibil"));
             }
         }
@@ -293,22 +376,25 @@ public sealed class InvestigationPipeline
         }
         var found = new List<Finding>(Correlation.Run(r.Timeline, maintenance, procedureProfile));
         // WP14a: removable media against the media register, CD/DVD, and NIC / Wi-Fi / Bluetooth / DHCP on an air-gapped or standalone scope.
-        progress?.Report("Medii amovibile și integritate air-gap");
+        progress?.Report("Suporturi de stocare amovibile și integritate air-gap");
         int wp14No = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n0) ? n0 : 0).DefaultIfEmpty(0).Max();
-        var wp14 = Wp14Analysis.Run(ws, r.Timeline, () => $"F-{++wp14No:D4}", mediaRegister, usersRegister, procedureProfile, systemZone);
+        var airGapFacts = LoadAirGapFacts(ws, r);
+        r.FactsRemovableLetters.AddRange(airGapFacts?.RemovableLetters ?? []);
+        var wp14 = Wp14Analysis.Run(ws, r.Timeline, () => $"F-{++wp14No:D4}", mediaRegister, usersRegister, procedureProfile, systemZone, facts: airGapFacts);
         found.AddRange(wp14.Findings);
         r.MediaRegisterSha256 = wp14.MediaSha256; r.UsersRegisterSha256 = wp14.UsersSha256; r.RegisterLine = wp14.Line;
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))
         {
-            var pre = EvidencePreflight.Check(live, ws.FullPath(live.StoredPath));
+            if (!ws.TryFullPath(live.StoredPath, out var liveFull)) { r.Gaps.Add(OutsideCaseGap(ws, live)); continue; }
+            var pre = EvidencePreflight.Check(live, liveFull);
             if (!pre.CanParse)
             {
                 r.Gaps.Add(new EvidenceGap(Path.GetFileName(live.StoredPath), EvidenceStatus.Failed, $"{pre.Code}: {pre.Detail}",
-                    "Constatările din starea live lipsesc", "O nouă fotografie a stării live", "Doar prin reachiziție"));
+                    "Constatările din starea live lipsesc", "Un nou instantaneu al stării live", "Doar prin reachiziție"));
                 ws.Audit(pre.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{live.EvidenceId} {pre.Code} {pre.Detail}");
                 continue;
             }
-            found.AddRange(LiveStateAnalyzer.Analyze(live, ws.FullPath(live.StoredPath), found.Count));
+            found.AddRange(LiveStateAnalyzer.Analyze(live, liveFull, found.Count));
         }
         // WP15b: policy change timeline, configured/applied/enforced/observed and control gaps, from the case timeline alone (EVTX is enough; the expected policy comes from the profile link).
         progress?.Report("Cronologie politici");
@@ -329,7 +415,8 @@ public sealed class InvestigationPipeline
         var sequences = SequenceRules.Run(r.Timeline, found, () => $"F-{++sequenceNo:D4}", new SequenceInput { Scope = ws.Info.Scope });
         found.AddRange(sequences);
         var (kept, rejected) = ProvenanceBinder.BindFindings(found, ws.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal));
-        TimeReliability.Apply(kept, r.Timeline);
+        LogAnalyzer.Dfir.Case.ClockMemory.Refresh();
+        TimeReliability.Apply(kept, r.Timeline, LogAnalyzer.Dfir.Case.ClockMemory.StartupWarning.Length > 0);
         // Finding contract: semantic type, standard state, limitations, provenance, audit trail (added beside Classification).
         var parsersByEvidence = r.Parsing.Where(p => p.Parser != "-" && p.Status is EvidenceStatus.Success or EvidenceStatus.Partial or EvidenceStatus.Empty)
                                          .GroupBy(p => p.EvidenceId, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Select(p => p.Parser).Distinct().ToList(), StringComparer.Ordinal);
@@ -345,6 +432,10 @@ public sealed class InvestigationPipeline
         r.TimelineCsv = Path.Combine(analysisDir, "timeline.csv");
         TimelineCsv.Write(r.TimelineCsv, r.Timeline);
         ws.RecordOutput("Analysis/timeline.csv", Producer, DfirInfo.ApplicationVersion, evidenceIds);
+        // E7: what the user-activity view needs after the case is reopened (timeline.csv does not keep the parser fields, the profile or the station's removable letters).
+        r.ActivityFolders = [.. r.Procedure?.ClassifiedFolders.Select(f => new LogAnalyzer.Dfir.Profile.ClassifiedFolderRow { Path = f.Path, Note = f.Note }) ?? []];
+        LogAnalyzer.Dfir.Analysis.UserActivityContext.From(r.Timeline, r.ActivityFolders, r.FactsRemovableLetters).Write(Path.Combine(analysisDir, "user_activity.json"));
+        ws.RecordOutput(LogAnalyzer.Dfir.Analysis.UserActivityContext.RelPath, Producer, DfirInfo.ApplicationVersion, evidenceIds);
         r.FindingsJson = Path.Combine(analysisDir, "findings.json");
         File.WriteAllText(r.FindingsJson, SchemaVersions.WithVersion(new { r.Findings, r.Gaps, r.Collection, RejectedFindings = r.RejectedFindings.Select(x => new { x.Finding.FindingId, x.Finding.RuleId, x.Finding.Title, x.Reason }) }, SchemaVersions.Findings));
         ws.RecordOutput("Analysis/findings.json", Producer, DfirInfo.ApplicationVersion, evidenceIds);
@@ -364,6 +455,7 @@ public sealed class InvestigationPipeline
         var scannable = new List<EvidenceItem>();
         foreach (var e in evidenceItems)
         {
+            if (!ws.TryFullPath(e.StoredPath, out _)) continue; // already reported as a gap by the parsing loop (audit #17)
             if (e.SourceType != "file") { scannable.Add(e); continue; }
             var pre = EvidencePreflight.Check(e, ws.FullPath(e.StoredPath));
             if (pre.CanParse) scannable.Add(e);
@@ -386,7 +478,7 @@ public sealed class InvestigationPipeline
         File.WriteAllText(Path.Combine(analysisDir, "policy_timeline.json"), policyTimeline.ToJson());
         ws.RecordOutput("Analysis/policy_timeline.json", "PolicyTimeline", "1.0", evidenceIds);
         ws.RecordTransformation("CASE", "PolicyTimeline", "1.0", "Analysis/policy_timeline.json",
-            $"{policyTimeline.Changes.Count} modificări, {policyTimeline.Applications.Count} aplicări, {policyTimeline.Gaps.Count} decalaje, {policyTimeline.TimeWindows.Count} ferestre de oră nesigură");
+            $"{LogAnalyzer.Dfir.Language.RoText.Count(policyTimeline.Changes.Count, "modificare", "modificări")}, {policyTimeline.Applications.Count} aplicări, {policyTimeline.Gaps.Count} decalaje, {policyTimeline.TimeWindows.Count} ferestre de oră nesigură");
         // WP4 verification layer (R9.7): after graph, detections and anti-forensics, before the Vault export. The verifier reads the case back from disk
         // (it is a separate module); dependencies.json is written first so it can confirm the finding -> evidence dependencies (rewritten with the proposals below).
         progress?.Report("Verificare");
@@ -436,13 +528,13 @@ public static class LiveStateAnalyzer
             yield return new Finding
             {
                 FindingId = Id(), RuleId = conns.Count > 0 ? "LIVE-UNSIGNED-USERPATH-NET" : "LIVE-UNSIGNED-USERPATH",
-                Title = $"Proces nesemnat din locație scriabilă{(conns.Count > 0 ? ", cu conexiuni în Internet" : "")}: {p.Name}",
+                Title = $"Proces nesemnat dintr-o locație în care utilizatorii pot scrie{(conns.Count > 0 ? ", cu conexiuni în Internet" : "")}: {p.Name}",
                 Severity = conns.Count > 0 ? Severity.High : Severity.Medium, Category = "Execution", Classification = Classification.Direct,
                 Confidence = conns.Count > 0 ? Confidence.High : Confidence.Medium, Process = p.Name, Pid = p.Pid, File = p.Path,
                 Ip = string.Join(", ", conns.Take(10)), FirstSeenUtc = snap.TakenUtc,
                 Description = $"PID {p.Pid}, părinte {p.Ppid}; linie de comandă: {p.CommandLine}" + (conns.Count > 0 ? $"; conexiuni: {string.Join(", ", conns.Take(10))}" : ""),
                 ClassificationReason = "Observat în fotografia stării live (semnătură verificată, tabela TCP).",
-                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Processes[pid={p.Pid}]", "fotografie live")],
+                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Processes[pid={p.Pid}]", "instantaneu al stării live")],
                 AlternativeExplanations = ["Aplicație legitimă instalată per utilizator, fără semnătură."],
                 RecommendedNextSteps = ["Izolați programul din fila „Izolare procese suspecte” pentru scanare completă."],
             };
@@ -450,31 +542,31 @@ public static class LiveStateAnalyzer
         foreach (var s in snap.Services.Where(s => s.UserWritable))
             yield return new Finding
             {
-                FindingId = Id(), RuleId = "LIVE-SERVICE-USERPATH", Title = $"Serviciu configurat dintr-o locație scriabilă: {s.Name}",
+                FindingId = Id(), RuleId = "LIVE-SERVICE-USERPATH", Title = $"Serviciu configurat dintr-o locație în care utilizatorii pot scrie: {s.Name}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1543.003",
                 File = s.Path, User = s.Account, FirstSeenUtc = snap.TakenUtc,
                 Description = $"{s.DisplayName}: {s.Path} ({s.StartMode}, {s.State}, cont {s.Account}).",
                 ClassificationReason = "Configurația curentă a serviciilor.",
-                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Services[{s.Name}]", "fotografie live")],
+                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Services[{s.Name}]", "instantaneu al stării live")],
                 ContradictingEvidence = s.StartMode.Equals("Disabled", StringComparison.OrdinalIgnoreCase) ? ["Serviciul este dezactivat (StartMode=Disabled): nu pornește singur."] : [],
             };
         foreach (var t in snap.Tasks.Where(t => t.UserWritable))
             yield return new Finding
             {
-                FindingId = Id(), RuleId = "LIVE-TASK-USERPATH", Title = $"Task programat care rulează din locație scriabilă: {Path.GetFileName(t.Path)}",
+                FindingId = Id(), RuleId = "LIVE-TASK-USERPATH", Title = $"Activitate planificată care rulează dintr-o locație în care utilizatorii pot scrie: {Path.GetFileName(t.Path)}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1053.005",
                 File = t.Command, FirstSeenUtc = snap.TakenUtc, Description = $"{t.Path}: {t.Command}",
-                ClassificationReason = "Definiția curentă a taskului.",
-                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Tasks[{t.Path}]", "fotografie live")],
+                ClassificationReason = "Definiția curentă a activității planificate.",
+                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Tasks[{t.Path}]", "instantaneu al stării live")],
             };
         foreach (var a in snap.Autoruns.Where(a => a.UserWritable))
             yield return new Finding
             {
-                FindingId = Id(), RuleId = "LIVE-AUTORUN-USERPATH", Title = $"Pornire automată din locație scriabilă: {a.Name}",
+                FindingId = Id(), RuleId = "LIVE-AUTORUN-USERPATH", Title = $"Pornire automată dintr-o locație în care utilizatorii pot scrie: {a.Name}",
                 Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1547.001",
                 File = a.Value, FirstSeenUtc = snap.TakenUtc, Description = $"{a.Location}\\{a.Name} = {a.Value}",
                 ClassificationReason = "Cheile Run curente.",
-                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Autoruns[{a.Name}]", "fotografie live")],
+                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Autoruns[{a.Name}]", "instantaneu al stării live")],
                 AlternativeExplanations = ["Multe aplicații per utilizator (actualizatoare, sincronizare) pornesc legitim din AppData."],
             };
     }

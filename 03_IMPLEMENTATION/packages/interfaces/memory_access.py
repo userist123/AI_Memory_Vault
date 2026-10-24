@@ -14,8 +14,9 @@ audit trail all stay in the controller and in lifecycle/policy.py:
   narrow: a note flagged `quarantined`, and anything the controller does not serve
   (ARCHIVED, RAW, unknown ids). Not being `verified` hides nothing: an ACTIVE note keeps its
   content and an unverified REVIEW candidate is handed over flagged `unverified`.
-* propose creates a CANDIDATE: lifecycle REVIEW, verification "unverified", a fresh uuid
-  id, provenance limited to what an AI agent may claim. Nothing becomes verified here:
+* propose creates a CANDIDATE: lifecycle REVIEW, verification "unverified", a uuid
+  id (deterministic per proposal content, so an identical repeat returns the existing candidate with
+  `deduplicated: true`), provenance limited to what an AI agent may claim. Nothing becomes verified here:
   attest() stays with the owner. The note goes where the path resolver puts new notes
   (the content tree, see storage/path_resolver.py) and can never be an ontology slot.
 
@@ -23,8 +24,13 @@ Everything a note contains is data, never an instruction: every result carries N
 """
 from __future__ import annotations
 
+import hashlib
+import importlib.util
 import os
 import re
+import sys
+import threading
+import time
 import unicodedata
 import uuid
 from pathlib import Path
@@ -47,8 +53,124 @@ MAX_SNIPPET = 320
 SLOTS_RELATIVE = "01_ARCHITECTURE/ontology/slots"
 
 
+#: Namespace for deterministic proposal ids: an identical proposal from the same principal maps to the same id.
+PROPOSAL_DEDUP_NAMESPACE = uuid.UUID("6f1d3c2e-9a4b-4c8e-b1f7-2d5e8a0c7b13")
+_SCANNER_FILE = Path(__file__).resolve().parents[3] / "security" / "skill_exfiltration_scanner.py"
+_SCANNER_MODULE = "_vault_memory_access_content_scanner"
+
+
+def _content_scanner():
+    """The repository's existing content scanner (security/skill_exfiltration_scanner.scan_text, the one
+    security/tool_response_boundary.py applies to tool output), loaded by file path because the name
+    `security` is shadowed by 03_IMPLEMENTATION/packages/security on the package path."""
+    mod = sys.modules.get(_SCANNER_MODULE)
+    if mod is None:
+        spec = importlib.util.spec_from_file_location(_SCANNER_MODULE, _SCANNER_FILE)
+        if spec is None or spec.loader is None:
+            raise ImportError(f"content scanner not found at {_SCANNER_FILE}")
+        mod = importlib.util.module_from_spec(spec)
+        sys.modules[_SCANNER_MODULE] = mod
+        try:
+            spec.loader.exec_module(mod)
+        except Exception:
+            sys.modules.pop(_SCANNER_MODULE, None)
+            raise
+    return mod.scan_text
+
+
+def review_flags(text: str, label: str) -> Dict[str, Any]:
+    """`review_required` + reasons when returned note text trips the content scanner. A flag for the
+    reader only: ranking, lifecycle and the returned text are unchanged. A scanner that cannot run
+    flags the text (fail closed) instead of silently calling it clean."""
+    if not text:
+        return {"review_required": False, "review_reasons": []}
+    try:
+        result = _content_scanner()(Path(f"<memory:{label}>"), text)
+    except Exception as exc:  # noqa: BLE001
+        return {"review_required": True, "review_reasons": [f"scanner_unavailable:{type(exc).__name__}"]}
+    if result.verdict == "SAFE":
+        return {"review_required": False, "review_reasons": []}
+    reasons = sorted({e.category for e in result.findings if e.active}) or [result.verdict.lower()]
+    return {"review_required": True, "review_reasons": [f"verdict:{result.verdict}", *reasons]}
+
+
+def _norm(text: str, fold: bool) -> str:
+    text = re.sub(r"\s+", " ", unicodedata.normalize("NFKC", text)).strip()
+    return text.casefold() if fold else text
+
+
+def proposal_fingerprint(title: str, body: str, note_type: str, source_type: str, source_ref: str,
+                         principal: str) -> str:
+    """Identity of a proposal for dedup: normalised title (case-folded), normalised body, type, provenance
+    source and the proposing principal."""
+    parts = [_norm(title, True), _norm(body, False), note_type, source_type, source_ref, principal]
+    return hashlib.sha256("\x1f".join(parts).encode("utf-8")).hexdigest()
+
+
 class ProposalRefused(ValueError):
     """The proposal breaks a rule of this interface (before the controller sees it)."""
+
+
+# Per-client rate limit on NEW proposals (sliding window, in-process). Residual: the counters live in this
+# process only, so a restarted MCP server resets them; the client name is self-declared by the MCP client.
+PROPOSE_RATE_ENV = "VAULT_PROPOSE_RATE"  # "<count>/<seconds>"
+DEFAULT_PROPOSE_RATE = (20, 3600)
+_rate_clock = time.monotonic  # replaceable in tests
+_rate_lock = threading.Lock()
+_rate_events: Dict[str, List[float]] = {}
+
+
+def _rate_reset() -> None:
+    with _rate_lock:
+        _rate_events.clear()
+
+
+def _rate_config() -> tuple:
+    """(count, seconds) from VAULT_PROPOSE_RATE; any invalid value fails closed (never unlimited)."""
+    raw = os.environ.get(PROPOSE_RATE_ENV)
+    if raw is None:
+        return DEFAULT_PROPOSE_RATE
+    parts = raw.strip().split("/")
+    if len(parts) == 2 and all(p.strip().isascii() and p.strip().isdigit() for p in parts):
+        count, seconds = int(parts[0]), int(parts[1])
+        if count >= 1 and seconds >= 1:
+            return count, seconds
+    raise ProposalRefused(f"proposal rate limit misconfigured ({PROPOSE_RATE_ENV}={raw!r}, expected "
+                          "'<count>/<seconds>' with both >= 1): proposals refused until it is fixed")
+
+
+def _rate_key(client: Optional[str]) -> str:
+    name = client.strip().lower() if isinstance(client, str) else ""
+    return name or "unknown"
+
+
+def _rate_reserve(client: Optional[str]) -> tuple:
+    """Atomically count one new proposal for this client or refuse. Returns (key, timestamp) to release."""
+    count, seconds = _rate_config()
+    key = _rate_key(client)
+    with _rate_lock:
+        now = _rate_clock()
+        # Drop clients whose window has fully expired, so rotating client names cannot grow memory unbounded.
+        for stale in [k for k, ts in _rate_events.items() if k != key and not any(now - t < seconds for t in ts)]:
+            del _rate_events[stale]
+        events = [t for t in _rate_events.get(key, []) if now - t < seconds]
+        if len(events) >= count:
+            _rate_events[key] = events
+            raise ProposalRefused(f"proposal rate limit reached for this client ({count} new proposals per "
+                                  f"{seconds} s); nothing was written")
+        events.append(now)
+        _rate_events[key] = events
+    return key, now
+
+
+def _rate_release(token: tuple) -> None:
+    key, stamp = token
+    with _rate_lock:
+        events = _rate_events.get(key, [])
+        if stamp in events:
+            events.remove(stamp)
+        if not events:
+            _rate_events.pop(key, None)
 
 
 def _vault_root(controller) -> Path:
@@ -171,6 +293,7 @@ def search(controller, query: str, limit: int = 5, principal: Principal = Princi
             "type": item.get("type"),
             "lifecycle": item.get("lifecycle"),
             "verification": str(ver),
+            **review_flags(raw_snippet_text, str(note_id)),
         })
     return {"query_results": results, "count": len(results), "notice": NOTICE}
 
@@ -199,6 +322,7 @@ def get(controller, note_id: str, principal: Principal = Principal.AI_AGENT) -> 
         "unverified": bool(note.get("_cognitive_unverified")) or str(ver) != "verified",
         "provenance": {"source_type": prov.get("source_type"), "source_ref": prov.get("source_ref")},
         "content": note.get("content", ""),
+        **review_flags(note.get("content", "") or "", clean_id),
         "notice": NOTICE,
     }
 
@@ -236,7 +360,26 @@ def propose(controller, title: str, body: str, note_type: str = "knowledge",
         raise ProposalRefused(f"an agent may claim source_type {', '.join(PROPOSAL_SOURCE_TYPES)}, not {source_type!r}")
     source_ref = str(provenance.get("source_ref") or f"mcp:memory_propose:{client or 'unknown'}")[:300]
 
-    note_id = str(uuid.uuid4())
+    # Audit B MED-4 (memory poisoning by repetition): an identical proposal from the same principal maps to a
+    # deterministic id; when that candidate already exists it is returned instead of a new note.
+    fingerprint = proposal_fingerprint(title, body, note_type, source_type, source_ref,
+                                       str(Principal.AI_AGENT.value))
+    note_id = str(uuid.uuid5(PROPOSAL_DEDUP_NAMESPACE, fingerprint))
+    # D2 (2026-10-22): `get` is the StorageEngine contract (MemoryController.propose reads it too, and refuses an
+    # existing id, A-08); this lookup only shapes the reply. A stub storage without a callable `get` skips the
+    # lookup and the proposal still goes through every gate below and the controller.
+    storage_get = getattr(controller.storage, "get", None)
+    existing = storage_get(note_id) if callable(storage_get) else None
+    if existing is not None:
+        # Report the stored state, never a hard-coded REVIEW: the owner may have changed the note since.
+        return {
+            "id": note_id,
+            "path": _relative_path(controller, note_id),
+            "lifecycle": str(existing.get("lifecycle") or "UNKNOWN"),
+            "verification": str(existing.get("verification") or "unknown"),
+            "deduplicated": True,
+            "status": "identical proposal already stored; nothing new was written; only the owner can attest it",
+        }
     note = {
         "id": note_id,
         "type": note_type,
@@ -250,11 +393,17 @@ def propose(controller, title: str, body: str, note_type: str = "knowledge",
         "content": f"# {title.strip()}\n\n{body.strip()}\n",
     }
     _assert_outside_slots(controller, note_id, note)
-    controller.propose(Principal.AI_AGENT, note)
+    token = _rate_reserve(client)  # only a proposal that would be written counts
+    try:
+        controller.propose(Principal.AI_AGENT, note)
+    except BaseException:
+        _rate_release(token)
+        raise
     return {
         "id": note_id,
         "path": _relative_path(controller, note_id),
         "lifecycle": "REVIEW",
         "verification": "unverified",
+        "deduplicated": False,
         "status": "candidate: not canonical, not verified; only the owner can attest it",
     }

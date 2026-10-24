@@ -24,7 +24,7 @@ public static class CaseVerifier
         File.WriteAllText(Path.Combine(dir, VerificationReport.FileName), report.ToJson(), new System.Text.UTF8Encoding(false));
         var evidenceIds = ws.LoadEvidence().Select(e => e.EvidenceId);
         ws.RecordOutput(VerificationReport.RelativePath, "LogAnalyzer.Verification", VerificationReport.VerifierId, evidenceIds);
-        ws.Audit("verification.run", $"{report.Findings.Count} constatări, {report.AiStatements.Count} afirmații AI; " +
+        ws.Audit("verification.run", $"{LogAnalyzer.Dfir.Language.RoText.Count(report.Findings.Count, "constatare", "constatări")}, {report.AiStatements.Count} afirmații AI; " +
                  string.Join(" ", VerificationReport.VerdictOrder.Select(v => $"{v.ToSpec()}={report.Count(v)}")));
         return report;
     }
@@ -132,10 +132,10 @@ public static class CaseVerifier
             return (StandardState.NotAssessed, $"[{CheckIds.Sufficiency}] {suff.Reason} Nicio altă verificare nu a găsit probleme, dar fără tipul semantic nu se poate da un verdict mai tare.");
         var families = refs.Where(r => r.IsResolved).Select(r => r.Family).Distinct(StringComparer.Ordinal).ToList();
         if (families.Count >= 2 && f.SemanticType != SemanticType.Correlation)
-            return (StandardState.Verified, $"Probe suficiente, intacte și consecvente, din {families.Count} tipuri de artefact independente: {string.Join(", ", families)}. Verificare automată, nu externă.");
+            return (StandardState.Verified, $"Probe suficiente, intacte și consecvente, din {families.Count} tipuri de artefact independente: {string.Join(", ", families.Select(ArtifactKinds.FamilyLabel))}. Verificare automată, nu externă.");
         var why = f.SemanticType == SemanticType.Correlation
-            ? "o corelație nu devine VERIFIED (corelația nu este dovadă)"
-            : $"un singur tip de artefact ({(families.Count == 1 ? families[0] : "neidentificat")}); VERIFIED cere cel puțin două tipuri independente";
-        return (StandardState.Supported, $"Probe suficiente, intacte și consecvente; rămâne SUPPORTED: {why}.");
+            ? "o corelație nu devine „coroborată” (corelația nu este dovadă)"
+            : $"un singur tip de artefact ({(families.Count == 1 ? ArtifactKinds.FamilyLabel(families[0]) : "neidentificat")}); starea „coroborată” cere cel puțin două tipuri independente";
+        return (StandardState.Supported, $"Probe suficiente, intacte și consecvente; rămâne „susținută de o singură sursă”: {why}.");
     }
 }

@@ -16,14 +16,14 @@ in folderul proiectului, deci orice copie ramasa duce la eroarea:
 
 **Solutie recomandata (curata):**
 
-1. Sterge complet folderul vechi: `C:\Users\Marius\Downloads\LogAnalyzer.MVP`
+1. Sterge complet folderul vechi: `C:\Users\user\Downloads\LogAnalyzer.MVP`
 2. Dezarhiveaza din nou aceasta arhiva noua intr-un folder **gol**.
 3. Verifica sa NU existe o structura dubla, adica NU trebuie sa vezi
    `LogAnalyzer.MVP\LogAnalyzer.MVP\...` ci direct
    `LogAnalyzer.MVP\LogAnalyzer.Core\...` si `LogAnalyzer.MVP\LogAnalyzer.UI\...`.
 4. Ruleaza din radacina proiectului:
    ```
-   cd C:\Users\Marius\Downloads\LogAnalyzer.MVP
+   cd C:\Users\user\Downloads\LogAnalyzer.MVP
    dotnet clean
    dotnet build
    dotnet run --project LogAnalyzer.UI/LogAnalyzer.UI.csproj

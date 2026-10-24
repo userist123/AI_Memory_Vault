@@ -31,7 +31,9 @@ def _run(args, stdin=None, home: Path | None = None, extra_env=None):
 
 
 def _agent(tool_input: dict, home: Path, tool_name: str = "Agent"):
-    r = _run([AGENT_HOOK], json.dumps({"hook_event_name": "PreToolUse", "tool_name": tool_name,
+    # W7 MED-C: a settings-file model is a guess (unknown for escalation), so these model-routing cases pin the
+    # session model through the trusted hook payload instead of inheriting whatever the repo settings say.
+    r = _run([AGENT_HOOK], json.dumps({"hook_event_name": "PreToolUse", "tool_name": tool_name, "model": "opus",
                                        "tool_input": tool_input}), home=home)
     assert r.returncode == 0, r.stderr
     return json.loads(r.stdout)["hookSpecificOutput"] if r.stdout.strip() else None
@@ -39,18 +41,18 @@ def _agent(tool_input: dict, home: Path, tool_name: str = "Agent"):
 
 # -- Agent model hook --------------------------------------------------------------
 
-@pytest.mark.parametrize("brief,given,expected", [
-    ("find which files import memory_controller and list them", None, "haiku"),
-    ("găsește unde e definit controllerul", None, "haiku"),
-    ("fix the failing test in test_memory_access.py", None, "sonnet"),
-    ("fix the failing test in test_memory_access.py", "haiku", "sonnet"),      # too cheap -> raised
-    ("find which files import memory_controller", "opus", "sonnet"),           # > one notch -> capped
-    ("find which files import memory_controller", "sonnet", None),             # one-notch escalation kept
-    ("review this diff for regressions", "fable", "opus"),                     # never Fable
-    ("rotate the production secret and delete the old key", "haiku", "opus"), # risk floor
-    ("find which files import memory_controller", "claude-opus-5-5", "sonnet"),  # full ids understood
+@pytest.mark.parametrize("brief,given,expected,cls", [
+    ("find which files import memory_controller and list them", None, "haiku", "explore"),
+    ("găsește unde e definit controllerul", None, "haiku", "explore"),
+    ("fix the failing test in test_memory_access.py", None, "sonnet", "implement"),
+    ("fix the failing test in test_memory_access.py", "haiku", "sonnet", "implement"),      # too cheap -> raised
+    ("find which files import memory_controller", "opus", "sonnet", "explore"),            # > one notch -> capped
+    ("find which files import memory_controller", "sonnet", None, None),                   # one-notch escalation kept
+    ("review this diff for regressions", "fable", "opus", "review"),                       # never Fable
+    ("rotate the production secret and delete the old key", "haiku", "opus", "unclassified"),  # risk -> opus
+    ("find which files import memory_controller", "claude-opus-5-5", "sonnet", "explore"),  # full ids understood
 ])
-def test_agent_hook_sets_the_model_per_route(tmp_path, brief, given, expected):
+def test_agent_hook_sets_the_model_per_route(tmp_path, brief, given, expected, cls):
     ti = {"description": "subagent task", "prompt": brief, "subagent_type": "general-purpose"}
     if given:
         ti["model"] = given
@@ -63,7 +65,8 @@ def test_agent_hook_sets_the_model_per_route(tmp_path, brief, given, expected):
     assert upd["model"] == expected
     assert {k: v for k, v in upd.items() if k != "model"} == {k: v for k, v in ti.items() if k != "model"}, \
         "updatedInput replaces the whole input: every other field must survive unchanged"
-    assert "cost-router" in out["additionalContext"]
+    assert "additionalContext" not in out  # allow: no extra model tokens
+    assert out["permissionDecisionReason"] == f"cost-router: subagent model {given or 'agent default'} -> {expected} (class {cls})"
 
 
 def test_agent_hook_works_for_any_subagent_type(tmp_path):
@@ -73,11 +76,20 @@ def test_agent_hook_works_for_any_subagent_type(tmp_path):
 
 
 @pytest.mark.parametrize("ti", [
-    {"prompt": "zzz qqq", "subagent_type": "Explore"},          # unclassified: frontmatter decides
-    {"prompt": "find files", "model": "gpt-9"},                 # unknown model value: untouched
+    {"prompt": "zzz qqq", "subagent_type": "Explore"},          # unclassified: built-in frontmatter decides
 ])
 def test_agent_hook_leaves_unclear_cases_alone(tmp_path, ti):
     assert _agent(ti, tmp_path) is None
+
+
+def test_agent_hook_never_passes_an_unknown_model_value(tmp_path):
+    # R2-2: an unrecognised model on a classified brief takes the route model, with a note
+    out = _agent({"prompt": "find files", "model": "gpt-9"}, tmp_path)
+    assert out["permissionDecision"] == "allow" and out["updatedInput"] == {"prompt": "find files", "model": "haiku"}
+    head = "cost-router: subagent model gpt-9 -> haiku (class explore)"
+    tail = "unrecognised model 'gpt-9'; capped to haiku"
+    assert out["permissionDecisionReason"] == f"{head}; {tail}"
+    assert out["additionalContext"] == f"{head}.\n{tail}"
 
 
 def test_agent_hook_ignores_other_tools_and_bad_input(tmp_path):
@@ -94,7 +106,9 @@ def test_project_hooks_stay_silent_when_the_user_install_is_registered(tmp_path)
     prompt = json.dumps({"prompt": "find which files import memory_controller and list them"})
     assert _run([PROMPT_HOOK], prompt, home=home).stdout == ""          # project copy: shadowed
     user_hook = home / ".claude" / "skills" / "cost-router" / "hook_prompt_route.py"
-    assert "class=explore" in _run([user_hook], prompt, home=home).stdout  # user copy answers
+    answer = json.loads(_run([user_hook], prompt, home=home).stdout)  # user copy answers, compact line
+    assert answer == {"hookSpecificOutput": {"hookEventName": "UserPromptSubmit",
+                                             "additionalContext": "cost-router: explore -> Explore subagent, haiku"}}
     assert _agent({"prompt": "find which files import X"}, home) is None   # project agent hook shadowed
     user_agent = home / ".claude" / "skills" / "cost-router" / "hook_agent_model.py"
     r = _run([user_agent], json.dumps({"tool_name": "Agent", "tool_input": {"prompt": "find which files import X"}}), home=home)
@@ -106,9 +120,13 @@ def test_installer_registers_both_hooks_once_and_removes_them(tmp_path):
     for _ in range(2):
         assert _run([INSTALL, "--home", home]).returncode == 0
     hooks = json.loads((home / ".claude" / "settings.json").read_text())["hooks"]
-    assert len(hooks["UserPromptSubmit"]) == 1 and len(hooks["PreToolUse"]) == 1
-    assert hooks["PreToolUse"][0]["matcher"] == "Agent"
-    assert "hook_agent_model.py" in json.dumps(hooks["PreToolUse"])
+    assert len(hooks["UserPromptSubmit"]) == 1 and len(hooks["PreToolUse"]) == 3
+    assert hooks["PreToolUse"][0]["matcher"] == "Agent|Task"
+    assert "hook_agent_model.py" in json.dumps(hooks["PreToolUse"][0])
+    assert hooks["PreToolUse"][1]["matcher"] == "Edit|Write|NotebookEdit|Bash|Read|Grep|Glob"
+    assert "hook_enforce_route.py" in json.dumps(hooks["PreToolUse"][1])
+    assert hooks["PreToolUse"][2]["matcher"] == "SendMessage"
+    assert "hook_resume_guard.py" in json.dumps(hooks["PreToolUse"][2])
     assert (home / ".claude" / "skills" / "cost-router" / "lib" / "local_llm.py").exists()
     assert _run([INSTALL, "--home", home, "--uninstall"]).returncode == 0
     assert "hooks" not in json.loads((home / ".claude" / "settings.json").read_text())
@@ -117,7 +135,7 @@ def test_installer_registers_both_hooks_once_and_removes_them(tmp_path):
 def test_project_settings_register_the_agent_hook():
     s = json.loads((ROOT / ".claude" / "settings.json").read_text(encoding="utf-8"))
     entry = s["hooks"]["PreToolUse"][0]
-    assert entry["matcher"] == "Agent"
+    assert entry["matcher"] == "Agent|Task"
     cmd = entry["hooks"][0]["command"]
     assert "cost-router/hook_agent_model.py" in cmd and cmd.rstrip().endswith("exit 0") and "exit 2" not in cmd
 
@@ -200,11 +218,15 @@ def test_local_missing_configured_model_is_exit_3(fake_ollama, monkeypatch):
 
 def test_prompt_hook_advertises_the_local_tier_only_when_it_answers(fake_ollama, tmp_path):
     prompt = json.dumps({"prompt": "rezumă formatul retrieval trace din document"})
-    on = _run([PROMPT_HOOK], prompt, home=tmp_path, extra_env={"COST_ROUTER_OLLAMA_ENDPOINT": fake_ollama})
+    on = _run([PROMPT_HOOK], prompt, home=tmp_path, extra_env={"COST_ROUTER_OLLAMA_ENDPOINT": fake_ollama, "COST_ROUTER_VERBOSE_ROUTE": "1"})
     ctx = json.loads(on.stdout)["hookSpecificOutput"]["additionalContext"]
     assert "class=summarize" in ctx and "local LLM available (qwen2.5:7b-instruct)" in ctx and "local_llm.py" in ctx
-    off = _run([PROMPT_HOOK], prompt, home=tmp_path, extra_env={"COST_ROUTER_OLLAMA_ENDPOINT": "http://127.0.0.1:9"})
+    off = _run([PROMPT_HOOK], prompt, home=tmp_path, extra_env={"COST_ROUTER_OLLAMA_ENDPOINT": "http://127.0.0.1:9", "COST_ROUTER_VERBOSE_ROUTE": "1"})
     assert "local LLM" not in json.loads(off.stdout)["hookSpecificOutput"]["additionalContext"]
+    # phase 6: the default (compact) line never advertises the local tier, even when it answers
+    compact = _run([PROMPT_HOOK], prompt, home=tmp_path / "compact", extra_env={"COST_ROUTER_OLLAMA_ENDPOINT": fake_ollama})
+    line = json.loads(compact.stdout)["hookSpecificOutput"]["additionalContext"]
+    assert line.startswith("cost-router: summarize") and "local LLM" not in line and len(line) <= 120
 
 
 def test_policy_local_section_names_the_measured_models():

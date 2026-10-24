@@ -18,7 +18,7 @@ public static class SelfTest
 {
     public const string Switch = "--self-test";
 
-    public sealed record Step(string Name, bool Ok, string Detail);
+    public sealed record Step(string Name, bool Ok, string Detail, long Ms = 0);
 
     public static bool IsRequested(IEnumerable<string> args) => args.Any(a => a.Equals(Switch, StringComparison.OrdinalIgnoreCase));
 
@@ -31,8 +31,9 @@ public static class SelfTest
         var steps = new List<Step>();
         void Do(string name, Func<string> body)
         {
-            try { steps.Add(new Step(name, true, body())); }
-            catch (Exception ex) { steps.Add(new Step(name, false, ex.GetType().Name + ": " + ex.Message)); }
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            try { var detail = body(); steps.Add(new Step(name, true, detail, sw.ElapsedMilliseconds)); }
+            catch (Exception ex) { steps.Add(new Step(name, false, ex.GetType().Name + ": " + ex.Message, sw.ElapsedMilliseconds)); }
         }
 
         Do("assemblies", () =>
@@ -101,17 +102,24 @@ public static class SelfTest
         return steps;
     }
 
+    public static string FormatTimings(IEnumerable<Step> steps) =>
+        string.Join(Environment.NewLine, steps.Select(s => $"{s.Ms,7} ms  {(s.Ok ? "OK  " : "FAIL")} {s.Name}")) + Environment.NewLine +
+        $"{steps.Sum(s => s.Ms),7} ms  total" + Environment.NewLine;
+
     public static string Format(IEnumerable<Step> steps) =>
         string.Join(Environment.NewLine, steps.Select(s => $"{(s.Ok ? "OK  " : "FAIL")} {s.Name} {s.Detail}")) + Environment.NewLine +
         (steps.All(s => s.Ok) ? "SELF-TEST PASSED" : "SELF-TEST FAILED") + Environment.NewLine;
 
-    public static int Execute(IReadOnlyList<string> args, string baseDirectory)
+    public static int Execute(IReadOnlyList<string> args, string baseDirectory, IReadOnlyList<string>? startupLines = null, int startupExit = 0)
     {
         var steps = Run(baseDirectory);
-        var text = Format(steps);
+        var text = (startupLines is { Count: > 0 } ? string.Join(Environment.NewLine, startupLines) + Environment.NewLine : "") + Format(steps);
         try { Console.Out.Write(text); } catch (IOException) { }
         if (OutputPath(args) is { Length: > 0 } p) File.WriteAllText(p, text, new UTF8Encoding(false));
-        return steps.All(s => s.Ok) ? 0 : 1;
+        // The step timings, next to the executable like startup_debug.log (best effort: the folder may be read-only).
+        try { File.WriteAllText(Path.Combine(baseDirectory, "startup_debug_selftest.log"), FormatTimings(steps), new UTF8Encoding(false)); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+        return startupExit != 0 ? startupExit : steps.All(s => s.Ok) ? 0 : 1;
     }
 
     /// <summary>The findings of one run, reduced to a stable signature (ids and times differ between runs; rule, severity and text must not).</summary>

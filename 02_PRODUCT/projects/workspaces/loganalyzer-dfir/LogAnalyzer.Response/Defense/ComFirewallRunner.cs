@@ -16,7 +16,7 @@ namespace LogAnalyzer.Infrastructure.Services
         public string BackendName => "INetFwPolicy2";
 
         private static readonly Regex Cmd = new(
-            "^advfirewall firewall (?<verb>add|delete|show) rule name=\"(?<name>[^\"]+)\"(?<rest>.*)$", RegexOptions.CultureInvariant | RegexOptions.Compiled);
+            "^advfirewall firewall (?<verb>add|delete|show) rule name=\"(?<name>[^\"]+)\"(?<rest>.*)\\z", RegexOptions.CultureInvariant | RegexOptions.Compiled);
         private static readonly Regex RemoteIp = new(@"\bremoteip=(?<ip>\S+)", RegexOptions.CultureInvariant);
 
         private const int NET_FW_ACTION_BLOCK = 0, NET_FW_PROFILE2_ALL = 0x7FFFFFFF, NET_FW_IP_PROTOCOL_ANY = 256, NET_FW_RULE_DIR_OUT = 2;

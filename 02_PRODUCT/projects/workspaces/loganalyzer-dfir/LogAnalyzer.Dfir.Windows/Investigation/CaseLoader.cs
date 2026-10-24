@@ -61,6 +61,9 @@ public static class CaseLoader
         List<CollectionRow> collection = [];
         VerificationReport? verification = null;
         RunState? run = null;
+        LogAnalyzer.Dfir.Analysis.UserActivityContext? activity = null;
+        bool activityRestored = false;
+        string? activityProblem = null;
         var analysis = Path.Combine(full, "Analysis");
         try
         {
@@ -83,6 +86,13 @@ public static class CaseLoader
             {
                 SchemaVersions.Accept(manifest.VersionOf("timeline.csv"), "timeline.csv");
                 timeline = TimelineCsv.Read(timelinePath);
+                // optional file: a malformed, oversized or unreadable one makes only the user-activity view unevaluable, it never refuses the case
+                try { activity = LogAnalyzer.Dfir.Analysis.UserActivityContext.Read(Path.Combine(analysis, "user_activity.json")); }
+                catch (Exception ex) when (ex is JsonException or InvalidDataException or IOException or UnauthorizedAccessException or NotSupportedException)
+                {
+                    activityProblem = LogAnalyzer.Dfir.Analysis.UserActivityContext.UnevaluableBecause($"user_activity.json nu a putut fi citit ({ex.Message})");
+                }
+                activityRestored = activity is not null && activity.TryRestoreFields(timeline);
                 notes.Add("Cronologia a fost citită din timeline.csv: conține doar coloanele acelui fișier (câmpurile specifice parserelor nu sunt păstrate în el).");
             }
             else if (ff is not null) notes.Add("Analysis/timeline.csv lipsește: cronologia nu poate fi arătată.");
@@ -126,6 +136,18 @@ public static class CaseLoader
         result.Collection.AddRange(collection);
         result.Parsing.AddRange(parsing);
         result.Timeline.AddRange(timeline);
+        if (activityRestored)
+        {
+            result.ActivityFolders = activity!.ClassifiedFolders;
+            result.FactsRemovableLetters.AddRange(activity.RemovableLetters);
+        }
+        else
+        {
+            var why = activityProblem ?? (activity is not null ? LogAnalyzer.Dfir.Analysis.UserActivityContext.MismatchText : LogAnalyzer.Dfir.Analysis.UserActivityContext.UnevaluableText);
+            result.ActivityUnevaluable = why;
+            if (timeline.Any(e => e.Source is "ShellBags" or "RecentDocs" or "OfficeMRU" or "RecycleBin"))
+                notes.Add("Activitatea utilizatorului: " + why);
+        }
         if (File.Exists(Path.Combine(analysis, "timeline.csv"))) result.TimelineCsv = Path.Combine(analysis, "timeline.csv");
         result.Verification = verification;
         if (verification is not null)

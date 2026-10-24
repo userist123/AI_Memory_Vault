@@ -4,15 +4,16 @@ from typing import List
 MAX_QUERY_LENGTH = 4096  # characters, configurable elsewhere if needed
 
 def sanitize_query(query: str) -> str:
-    """Basic sanitization to prevent prompt injection.
-    Removes suspicious patterns like "{{" "}}" and stray markdown.
+    """Return the search query as data, verbatim apart from surrounding whitespace.
+
+    Owner-approved contract change 2026-10-22: the query is no longer stripped of HTML tags or
+    `{{...}}`. The sink audit (00_GOVERNANCE/coordination/tasks/todo-claude-overnight-reliability.md,
+    PHASE 7) found no consumer that renders it as HTML, interprets templates or builds an LLM
+    prompt from it; stripping only deleted legitimate text ("a < b", "List<String>", "<DRIVE>:").
+    Any code that renders a query must escape it at that render site. Size is enforced by
+    check_query_size.
     """
-    # Remove mustache-like placeholders
-    sanitized = re.sub(r"\{\{.*?\}\}", "", query)
-    # Remove HTML/script tags
-    sanitized = re.sub(r"<script.*?>.*?</script>", "", sanitized, flags=re.DOTALL | re.IGNORECASE)
-    sanitized = re.sub(r"<[^>]+>", "", sanitized)
-    return sanitized.strip()
+    return query.strip()
 
 def check_query_size(query: str) -> None:
     """Raise ValueError if query exceeds soft/hard limits (hard enforced)."""

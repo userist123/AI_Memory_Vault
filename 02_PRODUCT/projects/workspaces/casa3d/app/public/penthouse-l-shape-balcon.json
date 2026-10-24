@@ -1,0 +1,92 @@
+{
+  "format": "casa3d-project-export",
+  "version": 1,
+  "draft": {
+    "name": "Penthouse cu Living în L și Terasă Deschisă",
+    "floor": {
+      "id": "floor-1",
+      "name": "Parter",
+      "ceilingHeight": 2.7,
+      "rooms": [
+        {
+          "id": "living-1",
+          "name": "Living & Dining L-Shape",
+          "type": "living",
+          "rect": { "x0": 0, "z0": 0, "x1": 6.8, "z1": 5.4 },
+          "boundary": [[0, 0], [6.8, 0], [6.8, 2.8], [4.0, 2.8], [4.0, 5.4], [0, 5.4]],
+          "spaceKind": "interior"
+        },
+        {
+          "id": "balcon-1",
+          "name": "Terasă Deschisă",
+          "type": "balcon",
+          "rect": { "x0": 4.0, "z0": 2.8, "x1": 6.8, "z1": 5.4 },
+          "spaceKind": "open_balcony"
+        },
+        {
+          "id": "dormitor-1",
+          "name": "Dormitor Matrimonial",
+          "type": "dormitor",
+          "rect": { "x0": 0, "z0": 5.4, "x1": 4.0, "z1": 9.2 },
+          "spaceKind": "interior"
+        },
+        {
+          "id": "baie-1",
+          "name": "Baie",
+          "type": "baie",
+          "rect": { "x0": 4.0, "z0": 5.4, "x1": 6.8, "z1": 9.2 },
+          "spaceKind": "interior"
+        }
+      ],
+      "walls": [
+        { "id": "w-1", "a": [0, 0], "b": [6.8, 0], "thickness": 0.25, "exterior": true, "openings": [{ "id": "wnd-1", "kind": "window", "offset": 2.0, "width": 1.8 }] },
+        { "id": "w-2", "a": [6.8, 0], "b": [6.8, 2.8], "thickness": 0.25, "exterior": true, "openings": [] },
+        { "id": "w-3", "a": [6.8, 2.8], "b": [4.0, 2.8], "thickness": 0.15, "exterior": false, "openings": [{ "id": "door-terasa", "kind": "door", "offset": 0.5, "width": 1.2 }] },
+        { "id": "w-4", "a": [4.0, 2.8], "b": [4.0, 5.4], "thickness": 0.15, "exterior": false, "openings": [] },
+        { "id": "w-5", "a": [4.0, 5.4], "b": [0, 5.4], "thickness": 0.15, "exterior": false, "openings": [{ "id": "door-dorm", "kind": "door", "offset": 1.2, "width": 0.9 }] },
+        { "id": "w-6", "a": [0, 5.4], "b": [0, 0], "thickness": 0.25, "exterior": true, "openings": [{ "id": "wnd-2", "kind": "window", "offset": 1.5, "width": 1.4 }] },
+        { "id": "w-7", "a": [0, 5.4], "b": [0, 9.2], "thickness": 0.25, "exterior": true, "openings": [{ "id": "wnd-dorm", "kind": "window", "offset": 1.2, "width": 1.4 }] },
+        { "id": "w-8", "a": [0, 9.2], "b": [4.0, 9.2], "thickness": 0.25, "exterior": true, "openings": [] },
+        { "id": "w-9", "a": [4.0, 9.2], "b": [4.0, 5.4], "thickness": 0.15, "exterior": false, "openings": [] },
+        { "id": "w-10", "a": [4.0, 9.2], "b": [6.8, 9.2], "thickness": 0.25, "exterior": true, "openings": [{ "id": "wnd-baie", "kind": "window", "offset": 1.0, "width": 0.8 }] },
+        { "id": "w-11", "a": [6.8, 9.2], "b": [6.8, 5.4], "thickness": 0.25, "exterior": true, "openings": [] },
+        { "id": "w-12", "a": [6.8, 5.4], "b": [4.0, 5.4], "thickness": 0.15, "exterior": false, "openings": [{ "id": "door-baie", "kind": "door", "offset": 0.8, "width": 0.8 }] }
+      ]
+    },
+    "placements": [
+      {
+        "id": "p-sofa",
+        "variantId": "canapea-kivik-3",
+        "roomId": "living-1",
+        "x": 0.5,
+        "z": 0.5,
+        "rotation": 0
+      },
+      {
+        "id": "p-table",
+        "variantId": "masuta-lack-patrata",
+        "roomId": "living-1",
+        "x": 1.2,
+        "z": 1.8,
+        "rotation": 0
+      },
+      {
+        "id": "p-dining",
+        "variantId": "masa-ekedalen-extensibila",
+        "roomId": "living-1",
+        "x": 1.2,
+        "z": 3.6,
+        "rotation": 0
+      },
+      {
+        "id": "p-bed",
+        "variantId": "pat-malm-160",
+        "roomId": "dormitor-1",
+        "x": 1.1,
+        "z": 6.8,
+        "rotation": 0
+      }
+    ],
+    "selections": {}
+  }
+}

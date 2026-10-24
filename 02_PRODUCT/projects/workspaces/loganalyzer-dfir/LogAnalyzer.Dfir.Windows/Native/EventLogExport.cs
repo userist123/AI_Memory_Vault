@@ -12,8 +12,11 @@ public enum EventLogExportStatus { Exported, ChannelNotFound, AccessDenied, Fail
 /// </summary>
 public static class EventLogExport
 {
-    private const int EvtExportLogChannelPath = 0x1;
-    private const int EvtExportLogOverwrite = 0x10000;
+    // EVT_EXPORTLOG_FLAGS from winevt.h: ChannelPath 0x1, FilePath 0x2, TolerateQueryErrors 0x1000, Overwrite 0x2000.
+    public const int EvtExportLogChannelPath = 0x1;
+    public const int EvtExportLogFilePath = 0x2;
+    public const int EvtExportLogTolerateQueryErrors = 0x1000;
+    public const int EvtExportLogOverwrite = 0x2000;
     private const int ErrorAccessDenied = 5;
     private const int ErrorEvtChannelNotFound = 15007;
     private const int ErrorEvtInvalidQuery = 15001;
@@ -32,7 +35,7 @@ public static class EventLogExport
         }, err);
     }
 
-    public static string Describe(int win32Error) => new Win32Exception(win32Error).Message;
+    public static string Describe(int win32Error) => LogAnalyzer.Dfir.Language.RoText.OsError(win32Error, new Win32Exception(win32Error).Message);
 
     [DllImport("wevtapi.dll", CharSet = CharSet.Unicode, SetLastError = true)]
     [return: MarshalAs(UnmanagedType.Bool)]

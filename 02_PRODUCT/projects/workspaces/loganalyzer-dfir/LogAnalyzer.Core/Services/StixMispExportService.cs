@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -10,7 +10,37 @@ namespace LogAnalyzer.Core.Services
 {
     public class StixMispExportService
     {
-        public static void ExportToStix21(string filePath, List<DetectedIssue> issues, List<IocItem> iocs, object? sessionHashes = null)
+        /// <summary>STIX 2.1 pattern per IOC type (audit 2026-10-11: every IOC used to be exported as a SHA-256 file hash).</summary>
+        public static string StixPattern(IocItem ioc)
+        {
+            var v = (ioc.Value ?? "").Trim().Replace("\\", "\\\\").Replace("'", "\\'");
+            return ioc.Type switch
+            {
+                IocType.IPv4 => $"[ipv4-addr:value = '{v}']",
+                IocType.IPv6 => $"[ipv6-addr:value = '{v}']",
+                IocType.Domain => $"[domain-name:value = '{v}']",
+                IocType.URL => $"[url:value = '{v}']",
+                _ => v.Length switch { 32 => $"[file:hashes.MD5 = '{v}']", 40 => $"[file:hashes.'SHA-1' = '{v}']", 128 => $"[file:hashes.'SHA-512' = '{v}']", _ => $"[file:hashes.'SHA-256' = '{v}']" },
+            };
+        }
+
+        /// <summary>
+        /// MISP attribute type per IOC (audit 2026-10-11: every non-hash IOC used to be exported as "ip-dst", so domains and URLs reached partners
+        /// labelled as IP addresses). Hash type follows the hex length; IPv4/IPv6 are destination IPs.
+        /// </summary>
+        public static string MispType(IocItem ioc) => ioc.Type switch
+        {
+            IocType.Hash => (ioc.Value ?? "").Trim().Length switch { 32 => "md5", 40 => "sha1", 128 => "sha512", _ => "sha256" },
+            IocType.Domain => "domain",
+            IocType.URL => "url",
+            _ => "ip-dst",
+        };
+
+        public static void ExportToStix21(string filePath, List<DetectedIssue> issues, List<IocItem> iocs, object? sessionHashes = null) =>
+            File.WriteAllText(filePath, BuildStix21(issues, iocs, sessionHashes), Encoding.UTF8);
+
+        /// <summary>The STIX 2.1 bundle as text (security audit #14: the string-returning exports no longer go through a temporary file).</summary>
+        public static string BuildStix21(List<DetectedIssue> issues, List<IocItem> iocs, object? sessionHashes = null)
         {
             var bundleId = $"bundle--{Guid.NewGuid()}";
             var identityId = $"identity--{Guid.NewGuid()}";
@@ -46,20 +76,18 @@ namespace LogAnalyzer.Core.Services
             {
                 foreach (var issue in issues)
                 {
-                    var indId = $"indicator--{Guid.NewGuid()}";
-                    indicatorIds.Add(indId);
+                    // An alert is not an indicator: it is exported as a note on the incident, with its ATT&CK technique as a reference
+                    // (audit 2026-10-11: it used to be an indicator with the pattern "process:name = <technique id>", which matches nothing).
                     objects.Add(new
                     {
-                        type = "indicator",
+                        type = "note",
                         spec_version = "2.1",
-                        id = indId,
+                        id = $"note--{Guid.NewGuid()}",
                         created = DateTime.UtcNow.ToString("o"),
                         modified = DateTime.UtcNow.ToString("o"),
-                        name = issue.Title,
-                        description = issue.Explanation,
-                        indicator_types = new[] { "malicious-activity" },
-                        pattern = $"[process:name = '{issue.MitreTechniqueId}']",
-                        pattern_type = "stix"
+                        @abstract = issue.Title,
+                        content = issue.Explanation + (string.IsNullOrWhiteSpace(issue.MitreTechniqueId) ? "" : $" (MITRE ATT&CK {issue.MitreTechniqueId})"),
+                        object_refs = new[] { incidentId }
                     });
                 }
             }
@@ -80,7 +108,7 @@ namespace LogAnalyzer.Core.Services
                         name = $"{ioc.Type}: {ioc.Value}",
                         description = $"Indicator IoC tip {ioc.Type}",
                         indicator_types = new[] { "malicious-activity" },
-                        pattern = $"[file:hashes.'SHA-256' = '{ioc.Value}']",
+                        pattern = StixPattern(ioc),
                         pattern_type = "stix"
                     });
                 }
@@ -109,11 +137,14 @@ namespace LogAnalyzer.Core.Services
                 objects = objects
             };
 
-            var json = JsonSerializer.Serialize(bundle, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(filePath, json, Encoding.UTF8);
+            return JsonSerializer.Serialize(bundle, new JsonSerializerOptions { WriteIndented = true });
         }
 
-        public static void ExportToMispJson(string filePath, List<DetectedIssue> issues, List<IocItem> iocs, string operatorName)
+        public static void ExportToMispJson(string filePath, List<DetectedIssue> issues, List<IocItem> iocs, string operatorName) =>
+            File.WriteAllText(filePath, BuildMispJson(issues, iocs, operatorName), Encoding.UTF8);
+
+        /// <summary>The MISP event as text (no temporary file).</summary>
+        public static string BuildMispJson(List<DetectedIssue> issues, List<IocItem> iocs, string operatorName)
         {
             var attributes = new List<object>();
 
@@ -138,8 +169,8 @@ namespace LogAnalyzer.Core.Services
                 {
                     attributes.Add(new
                     {
-                        type = ioc.Type == IocType.Hash ? "sha256" : "ip-dst",
-                        category = "Payload delivery",
+                        type = MispType(ioc),
+                        category = ioc.Type is IocType.Hash ? "Payload delivery" : "Network activity",
                         value = ioc.Value,
                         comment = $"IoC {ioc.Type} - Detectat de {operatorName}",
                         to_ids = true
@@ -160,8 +191,7 @@ namespace LogAnalyzer.Core.Services
                 }
             };
 
-            var json = JsonSerializer.Serialize(mispEvent, new JsonSerializerOptions { WriteIndented = true });
-            File.WriteAllText(filePath, json, Encoding.UTF8);
+            return JsonSerializer.Serialize(mispEvent, new JsonSerializerOptions { WriteIndented = true });
         }
 
         public string ExportToStixJson(
@@ -174,11 +204,7 @@ namespace LogAnalyzer.Core.Services
                 .Concat((samFindings ?? Enumerable.Empty<StandaloneSamFinding>()).Select(s => new DetectedIssue { Title = s.FindingType, Severity = s.Severity, Explanation = s.Description, MitreTechniqueId = s.MitreTechniqueId }))
                 .ToList();
 
-            var tempPath = Path.GetTempFileName();
-            ExportToStix21(tempPath, dummyIssues, new List<IocItem>());
-            var content = File.ReadAllText(tempPath, Encoding.UTF8);
-            try { File.Delete(tempPath); } catch { }
-            return content;
+            return BuildStix21(dummyIssues, new List<IocItem>());
         }
 
         public string ExportToStix21(
@@ -197,11 +223,7 @@ namespace LogAnalyzer.Core.Services
                 .Concat((samFindings ?? Enumerable.Empty<StandaloneSamFinding>()).Select(s => new DetectedIssue { Title = s.FindingType, Severity = s.Severity, Explanation = s.Description, MitreTechniqueId = s.MitreTechniqueId }))
                 .ToList();
 
-            var tempPath = Path.GetTempFileName();
-            ExportToMispJson(tempPath, dummyIssues, new List<IocItem>(), "Forensic Analyst");
-            var content = File.ReadAllText(tempPath, Encoding.UTF8);
-            try { File.Delete(tempPath); } catch { }
-            return content;
+            return BuildMispJson(dummyIssues, new List<IocItem>(), "Forensic Analyst");
         }
     }
 }

@@ -57,12 +57,24 @@ public static class TimeReliability
 
     public static bool IsUnreliable(TimelineEvent e) => !e.Time.IsKnown || e.TimeUncertainty.StartsWith("Oră ambiguă", StringComparison.Ordinal);
 
+    /// <summary>
+    /// A clock change made by something other than time synchronization. Same filter as AF05 (AntiForensics): W32Time runs in
+    /// svchost.exe, and Kernel-General 1 counts only with Reason 1 (system time set) in the System log. Routine synchronization
+    /// is not a clock change and must not cast doubt on the times of other findings.
+    /// </summary>
     public static bool IsClockChange(TimelineEvent e) =>
-        e.Source.Equals("EventLog:Security", StringComparison.OrdinalIgnoreCase) && e.EventId == "4616" ||
-        e.Provider.Equals("Microsoft-Windows-Kernel-General", StringComparison.OrdinalIgnoreCase) && e.EventId == "1";
+        e.Source.Equals("EventLog:Security", StringComparison.OrdinalIgnoreCase) && e.EventId == "4616" && !BySync(e) ||
+        e.Source.Equals("EventLog:System", StringComparison.OrdinalIgnoreCase) && e.EventId == "1"
+        && e.Provider.Equals("Microsoft-Windows-Kernel-General", StringComparison.OrdinalIgnoreCase)
+        && Field(e, "Reason") == "1" && !BySync(e);
+
+    private static bool BySync(TimelineEvent e) => Field(e, "ProcessName").EndsWith(@"\svchost.exe", StringComparison.OrdinalIgnoreCase);
+
+    private static string Field(TimelineEvent e, string k) => e.Fields.TryGetValue(k, out var v) ? v : "";
 
     /// <summary>Lowers the confidence of findings resting on unreliable times; returns how many were lowered.</summary>
-    public static int Apply(IEnumerable<Finding> findings, IReadOnlyList<TimelineEvent> timeline)
+    /// <param name="stationClockUnreliable">The analysis station's own clock disagrees with the application's time memory (ClockMemory): every finding with a time is lowered.</param>
+    public static int Apply(IEnumerable<Finding> findings, IReadOnlyList<TimelineEvent> timeline, bool stationClockUnreliable = false)
     {
         var rows = timeline.GroupBy(e => (e.EvidenceId, e.Locator)).ToDictionary(g => g.Key, g => g.ToList());
         var clock = timeline.Where(e => IsClockChange(e) && e.Time.IsKnown).Select(e => e.Time.Utc!.Value).ToList();
@@ -73,6 +85,8 @@ public static class TimeReliability
             string? why = null;
             if (f.SupportingEvidence.Any(r => rows.TryGetValue((r.EvidenceId, r.Locator), out var l) && l.Any(IsUnreliable)))
                 why = "o probă are oră lipsă sau ambiguă";
+            else if (stationClockUnreliable && (f.FirstSeenUtc ?? f.LastSeenUtc) is not null)
+                why = "ceasul stației de analiză nu corespunde memoriei de timp a aplicației (dat înapoi sau resetat)";
             else if ((f.FirstSeenUtc ?? f.LastSeenUtc) is { } from)
             {
                 var to = f.LastSeenUtc ?? from;
@@ -81,7 +95,9 @@ public static class TimeReliability
             if (why is null) continue;
             var before = f.Confidence;
             if (f.Confidence > Confidence.Low) f.Confidence--;
-            var msg = $"Ora nu este de încredere ({why}): încrederea {before.ToSpec()} → {f.Confidence.ToSpec()}. Severitatea nu a fost modificată.";
+            var msg = before == f.Confidence
+                ? $"Ora nu este de încredere ({why}): încrederea era deja {before.ToSpec()} și nu a mai fost coborâtă. Severitatea nu a fost modificată."
+                : $"Ora nu este de încredere ({why}): încrederea {before.ToSpec()} → {f.Confidence.ToSpec()}. Severitatea nu a fost modificată.";
             f.Limitations.Add(msg);
             f.AuditTrail.Add(new("confidence.lowered", Actor, msg));
             lowered++;

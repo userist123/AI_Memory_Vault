@@ -35,6 +35,10 @@ public sealed class ProcedureProfile
     public List<ZoneRow> Zones { get; set; } = [];
     public List<TransferChannelRow> TransferChannels { get; set; } = [];
     public List<NetworkDestinationRow> NetworkDestinations { get; set; } = [];
+
+    // Classified folders (control research H1): the folders whose file access must be audited (SACL). The station control reads their audit rules.
+    public List<ClassifiedFolderRow> ClassifiedFolders { get; set; } = [];
+
 }
 
 public sealed class WorkingHoursRow { public string Day { get; set; } = ""; public string Start { get; set; } = ""; public string End { get; set; } = ""; }
@@ -60,6 +64,8 @@ public sealed class ExpectedPolicyRow { public string PolicyPath { get; set; } =
 public sealed class ZoneRow { public string Name { get; set; } = ""; public string Description { get; set; } = ""; }
 public sealed class TransferChannelRow { public string Name { get; set; } = ""; public string FromZone { get; set; } = ""; public string ToZone { get; set; } = ""; public string Medium { get; set; } = ""; public string Note { get; set; } = ""; }
 public sealed class NetworkDestinationRow { public string Address { get; set; } = ""; public string Zone { get; set; } = ""; public string Purpose { get; set; } = ""; }
+/// <summary>A folder holding classified documents, as a full local path (e.g. D:\Clasificat). File access in it must be audited.</summary>
+public sealed class ClassifiedFolderRow { public string Path { get; set; } = ""; public string Note { get; set; } = ""; }
 
 /// <summary>The tables of the profile, in the order the view shows them.</summary>
 public enum ProfileTable
@@ -68,6 +74,7 @@ public enum ProfileTable
     ApprovedAccounts, MaintenanceWindows, RotationProcedure,
     ApprovedSoftware, ExpectedPolicies,
     Zones, TransferChannels, NetworkDestinations,
+    ClassifiedFolders,
 }
 
 /// <summary>A validation problem on one line (1-based data row; for imports, the line of the text). Never dropped silently.</summary>

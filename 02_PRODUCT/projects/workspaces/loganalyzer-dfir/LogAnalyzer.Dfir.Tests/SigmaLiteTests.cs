@@ -28,7 +28,7 @@ public sealed class SigmaLiteTests
             EventID: '7045'
             ImagePath|contains|all: ['\Temp\', '.sys']
           sel_b:
-            - ServiceName|startswith: 'Cx'
+            - ServiceName|startswith: 'Vx'
             - ServiceName|endswith: 'Helper'
           filter:
             AccountName|re: '^LocalSystem$'
@@ -45,9 +45,9 @@ public sealed class SigmaLiteTests
         {
             E("System", "7045", ("ImagePath", @"C:\Users\u\AppData\Local\Temp\x.sys"), ("AccountName", "NT AUTHORITY\\SYSTEM")),   // sel_a
             E("System", "7045", ("ImagePath", @"C:\Temp\x.exe")),                                                                   // contains|all fails
-            E("System", "7036", ("ServiceName", "CxUtilSvc")),                                                                      // sel_b (startswith)
+            E("System", "7036", ("ServiceName", "VxUtilSvc")),                                                                      // sel_b (startswith)
             E("System", "7036", ("ServiceName", "Other Helper")),                                                                   // sel_b (endswith)
-            E("System", "7036", ("ServiceName", "CxUtilSvc"), ("AccountName", "LocalSystem")),                                      // filtered
+            E("System", "7036", ("ServiceName", "VxUtilSvc"), ("AccountName", "LocalSystem")),                                      // filtered
             E("Application", "7045", ("ImagePath", @"C:\Temp\x.sys")),                                                               // other channel
         };
         var m = s.Match(events).Select(x => Array.IndexOf(events, x.Event)).ToArray();
@@ -101,7 +101,7 @@ public sealed class SigmaLiteTests
     public void Shipped_rules_select_the_same_records_as_wevtutil()
     {
         var sigma = SigmaLite.LoadDirectory(RulesDir);
-        Assert.Equal(4, sigma.Rules.Count);
+        Assert.Equal(2, sigma.Rules.Count);   // log clears are judged by LOG-TAMPER (maintenance-aware), not by a flat Sigma rule
         var logs = Path.Combine(Corpus.Root, "01_RAW_EVENTLOGS");
 
         var defender = Path.Combine(logs, "Microsoft-Windows-Windows Defender%4Operational.evtx");
@@ -112,7 +112,6 @@ public sealed class SigmaLiteTests
 
         var system = Path.Combine(logs, "System.evtx");
         var sm = sigma.Match(Parse(system).Events).ToList();
-        Assert.Equal(Wevtutil(system, "*[System[(EventID=104)]]").Select(x => x.RecordId.ToString()).ToHashSet(), Records(sm, "3a9f6c1e-2b8d-4e57-8f3a-0c6e9d2a0104"));
         XNamespace ns = "http://schemas.microsoft.com/win/2004/08/events/event";
         var userPath = Wevtutil(system, "*[System[(EventID=7045)]]")
             .Where(x => x.Event.Descendants(ns + "Data").FirstOrDefault(d => (string?)d.Attribute("Name") == "ImagePath")?.Value is { } ip

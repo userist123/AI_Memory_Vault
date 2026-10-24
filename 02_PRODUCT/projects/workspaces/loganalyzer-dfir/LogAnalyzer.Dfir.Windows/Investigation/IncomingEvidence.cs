@@ -4,7 +4,7 @@ namespace LogAnalyzer.Dfir.Windows.Investigation;
 public sealed record IncomingFamily(string Id, string HumanName, int Files, long Bytes)
 {
     public bool Present => Files > 0;
-    public string Text => Present ? $"{HumanName}: {Files} fișiere ({Bytes / 1024.0 / 1024.0:0.#} MB)" : $"{HumanName}: lipsește";
+    public string Text => Present ? $"{HumanName}: {LogAnalyzer.Dfir.Language.RoText.Count(Files, "fișier", "fișiere")} ({Bytes / 1024.0 / 1024.0:0.#} MB)" : $"{HumanName}: lipsește";
 }
 
 /// <summary>What a folder brought from another PC contains, before anything is imported (WP18 S4, "Primește probe de la o stație", step 2).</summary>
@@ -17,8 +17,8 @@ public sealed record IncomingEvidenceScan(string Folder, IReadOnlyList<IncomingF
     public bool HasAnything => Importable.Count > 0;
     public string Summary => !HasAnything
         ? "Folderul nu conține fișiere."
-        : $"{Importable.Count} fișiere se vor importa ca probe; lipsesc: {(MissingFamilies.Count == 0 ? "nimic" : string.Join(", ", MissingFamilies))}."
-          + (OtherFiles > 0 ? $" {OtherFiles} fișiere nu au un analizor dedicat: se importă oricum, cu amprentă, și se verifică cu indicatorii suspecți și regulile pe conținut." : "");
+        : $"{LogAnalyzer.Dfir.Language.RoText.Count(Importable.Count, "fișier", "fișiere")} se vor importa ca probe; lipsesc: {(MissingFamilies.Count == 0 ? "nimic" : string.Join(", ", MissingFamilies))}."
+          + (OtherFiles > 0 ? $" {LogAnalyzer.Dfir.Language.RoText.Count(OtherFiles, "fișier", "fișiere")} nu au un analizor dedicat: se importă oricum, cu amprentă, și se verifică cu indicatorii suspecți și regulile pe conținut." : "");
 }
 
 public static class IncomingEvidence
@@ -32,10 +32,11 @@ public static class IncomingEvidence
         ("prefetch", "Istoricul pornirii programelor (Prefetch)", ["prefetch"]),
         ("srum", "Consumul de rețea al programelor (SRUM)", ["srum"]),
         ("pcapng", "Captură de rețea", ["pcapng"]),
-        ("hives", "Registrul Windows (SYSTEM, SOFTWARE, NTUSER, Amcache)", ["system_hive", "software_hive", "ntuser_hive", "amcache"]),
+        ("hives", "Registrul Windows (SYSTEM, SOFTWARE, NTUSER, UsrClass, Amcache)", ["system_hive", "software_hive", "ntuser_hive", "usrclass_hive", "amcache"]),
         ("tasks", "Sarcini programate", ["task_xml"]),
         ("usn", "Jurnalul modificărilor de fișiere (USN)", ["usn_journal"]),
         ("lnk", "Scurtături și liste de documente recente", ["lnk", "jumplist_auto"]),
+        ("recycle", "Metadate Coș de reciclare ($I)", ["recycle_info"]),
         ("browser", "Istoric de navigare", ["chromium_history", "firefox_places"]),
         (OtherFamily, "Alte fișiere (inclusiv exporturi de control)", ["file"]),
     ];

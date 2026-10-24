@@ -8,8 +8,10 @@ namespace LogAnalyzer.Dfir.Analysis;
 /// <summary>DETECTED: a trace was observed. NOT_DETECTED: the source that would show it was analysed and shows none. UNDETERMINED: it was not.</summary>
 public enum AntiForensicResult { Detected, NotDetected, Undetermined }
 
-public sealed record AntiForensicCheck(string Id, string Technique, string Attack, AntiForensicResult Result, string Reason, IReadOnlyList<EvidenceRef> Evidence)
+public sealed record AntiForensicCheck(string Id, string Technique, string Attack, AntiForensicResult Result, string Reason, IReadOnlyList<EvidenceRef> Evidence, string Detail = "")
 {
+    /// <summary>Reader-facing result (DETECTAT / NEDETECTAT / NEDETERMINAT); <see cref="ResultText"/> keeps the spec code for data and the legend.</summary>
+    [System.Text.Json.Serialization.JsonIgnore] public string ResultRomanian => LogAnalyzer.Dfir.Language.RoLabels.AntiForensic(Result);
     public string ResultText => Result switch { AntiForensicResult.Detected => "DETECTED", AntiForensicResult.NotDetected => "NOT_DETECTED", _ => "UNDETERMINED" };
 }
 
@@ -76,8 +78,8 @@ public static class AntiForensics
         EvidenceRef Ref(TimelineEvent e, string d) => new(e.EvidenceId, e.Locator, d, e.SourceSha256);
         var evtxSources = events.Where(e => e.Source.StartsWith("EventLog:", StringComparison.OrdinalIgnoreCase)).ToList();
         var checks = new List<AntiForensicCheck>();
-        void Add(string id, string technique, string attack, AntiForensicResult r, string reason, IEnumerable<EvidenceRef>? ev = null) =>
-            checks.Add(new AntiForensicCheck(id, technique, attack, r, reason, (ev ?? []).Take(200).ToList()));
+        void Add(string id, string technique, string attack, AntiForensicResult r, string reason, IEnumerable<EvidenceRef>? ev = null, string detail = "") =>
+            checks.Add(new AntiForensicCheck(id, technique, attack, r, reason, (ev ?? []).Take(200).ToList(), detail));
         string Missing(params string[] s) => "lipsește " + string.Join(" și ", s.Where(x => !Has(x)).Select(x => x["EventLog:".Length..]));
 
         // AF01 — EVTX cleared: Security 1102 / System 104, written by the Eventlog service itself.
@@ -143,8 +145,9 @@ public static class AntiForensics
             }
             if (holes.Count > 0)
                 Add("AF04", "Goluri în RecordID", "T1070.001", AntiForensicResult.Detected,
-                    $"{holes.Count} anomalii: " + string.Join("; ", holes.Take(20)) +
-                    (gaps.Any(x => x.Reason.Contains(CorruptChunksMarker, StringComparison.Ordinal)) ? ". Unele pot proveni din chunk-urile corupte eliminate (AF02)." : ""), refs);
+                    $"{LogAnalyzer.Dfir.Language.RoText.Count(holes.Count, "anomalie", "anomalii")}" + (holes.Count > 3 ? $"; primele 3: " : ": ") + string.Join("; ", holes.Take(3)) +
+                    (holes.Count > 3 ? $"; lista completă ({holes.Count}) este în Analysis/anti_forensics.json, câmpul Detail" : "") +
+                    (gaps.Any(x => x.Reason.Contains(CorruptChunksMarker, StringComparison.Ordinal)) ? ". Unele pot proveni din chunk-urile corupte eliminate (AF02)." : ""), refs, string.Join("\n", holes));
             else if (evtxSources.Count > 0) Add("AF04", "Goluri în RecordID", "T1070.001", AntiForensicResult.NotDetected, "RecordID continuu și fără repetări în fiecare fișier EVTX analizat.");
             else Add("AF04", "Goluri în RecordID", "T1070.001", AntiForensicResult.Undetermined, "Niciun fișier EVTX analizat.");
         }
@@ -154,10 +157,8 @@ public static class AntiForensics
         // TEMPORAL check of the verification layer uses for its unreliable-time windows.
         {
             var tm = TimeManipulation.Analyze(events);
-            var manual = events.Where(e => Ev(e, Security, "4616") && !F(e, "ProcessName").EndsWith(@"\svchost.exe", StringComparison.OrdinalIgnoreCase)
-                                        || e.Source.Equals(System, StringComparison.OrdinalIgnoreCase) && e.EventId == "1"
-                                           && e.Provider.Equals("Microsoft-Windows-Kernel-General", StringComparison.OrdinalIgnoreCase)
-                                           && F(e, "Reason") == "1" && !F(e, "ProcessName").EndsWith(@"\svchost.exe", StringComparison.OrdinalIgnoreCase)).ToList();
+            // One filter for AF05 and for TimeReliability, so the report never says the clock was changed while AF05 says it was not.
+            var manual = events.Where(TimeReliability.IsClockChange).ToList();
             string Mag(TimelineEvent e) => tm.Jumps.FirstOrDefault(j => j.Evidence.EvidenceId == e.EvidenceId && j.Evidence.Locator == e.Locator && j.EventId == e.EventId) is { Magnitude.Length: > 0 } j ? $" [{j.Magnitude}]" : "";
             string zones = tm.ZoneChanges.Count == 0 ? "" : $" Schimbări de fus orar: {tm.ZoneChanges.Count} ({string.Join("; ", tm.ZoneChanges.Take(5).Select(z => $"{z.TimeUtc:yyyy-MM-dd HH:mm} UTC {z.Detail}"))}); nu sunt, singure, manipulare.";
             string inversions = tm.Inversions.Count == 0 ? "" : $" Ordinea înregistrărilor contrazice ora: {tm.Inversions.Count} ({string.Join("; ", tm.Inversions.Take(5).Select(v => $"{v.Source["EventLog:".Length..]} RecordID {v.PreviousRecordId} → {v.RecordId}, ora înapoi cu {TimeManipulation.Human(v.Back)}"))}).";
@@ -193,7 +194,7 @@ public static class AntiForensics
                                  .GroupBy(c => F(c, "FileName"), StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.Max(c => c.Time.Utc!.Value), StringComparer.OrdinalIgnoreCase);
                 var recreated = pfDeleted.Count(d => creates.TryGetValue(F(d, "FileName"), out var last) && d.Time.Utc is { } dt && last > dt);
                 var burst = pfDeleted.GroupBy(e => e.Time.Utc).OrderByDescending(g => g.Count()).First();
-                parts.Add($"{pfDeleted.Count} fișiere .pf șterse (jurnal USN), din care {recreated} recreate ulterior cu același nume; " +
+                parts.Add($"{LogAnalyzer.Dfir.Language.RoText.Count(pfDeleted.Count, "fișier", "fișiere")} .pf șterse (jurnal USN), din care {recreated} recreate ulterior cu același nume; " +
                           $"cel mai mare grup: {burst.Count()} în aceeași secundă, {burst.Key:yyyy-MM-ddTHH:mm:ssZ}. Jurnalul USN nu arată procesul care a șters.");
             }
             if (parts.Count > 0)
@@ -244,7 +245,7 @@ public static class AntiForensics
                 Add("AF09", "Modificări în registru ale jurnalizării", "T1112", AntiForensicResult.Detected,
                     string.Join("; ", hits.Take(10).Select(e => $"{e.Time.UtcIso} {F(e, "TargetObject")}{F(e, "ObjectName")}")), hits.Select(e => Ref(e, "modificare de registru")));
             else if (regAudit.Count > 0)
-                Add("AF09", "Modificări în registru ale jurnalizării", "T1112", AntiForensicResult.NotDetected, $"{regAudit.Count} evenimente de audit al registrului, niciunul pe cheile de jurnalizare.");
+                Add("AF09", "Modificări în registru ale jurnalizării", "T1112", AntiForensicResult.NotDetected, $"{LogAnalyzer.Dfir.Language.RoText.Count(regAudit.Count, "eveniment", "evenimente")} de audit al registrului, niciunul pe cheile de jurnalizare.");
             else Add("AF09", "Modificări în registru ale jurnalizării", "T1112", AntiForensicResult.Undetermined, "Nu există audit al registrului (Sysmon 12–14 sau Security 4657).");
         }
 
@@ -262,7 +263,7 @@ public static class AntiForensics
                 if (removed.Count > 0)
                     parts.Add($"{removed.Count} eliminări din politica de audit (4719): " + string.Join("; ", removed.GroupBy(Sub).Take(15)
                         .Select(g => $"{g.Key} ×{g.Count()} ({Change(F(g.First(), "AuditPolicyChanges"))}, de {F(g.First(), "SubjectUserName")}, prima {g.Min(x => x.Time.UtcIso)})")));
-                if (svc.Count > 0) parts.Add($"serviciul EventLog: modul de pornire schimbat de {svc.Count} ori ({string.Join("; ", svc.Take(5).Select(e => $"{F(e, "param2")} → {F(e, "param3")}"))})");
+                if (svc.Count > 0) parts.Add($"serviciul EventLog: modul de pornire schimbat de {LogAnalyzer.Dfir.Language.RoText.Times(svc.Count)} ({string.Join("; ", svc.Take(5).Select(e => $"{F(e, "param2")} → {F(e, "param3")}"))})");
                 if (disabled.Count > 0) parts.Add("serviciul EventLog este dezactivat (Start = 4) în hive-ul SYSTEM");
                 Add("AF10", "Slăbirea politicii de jurnalizare", "T1562.002", AntiForensicResult.Detected, string.Join(". ", parts), all.Select(e => Ref(e, "schimbare a jurnalizării")));
             }
@@ -282,9 +283,9 @@ public static class AntiForensics
                 var gone = installed.Where(e => !names.Contains(F(e, "ServiceName")) && !images.Contains(F(e, "ImagePath").Trim())).ToList();
                 Add("AF11", "Ștergerea unui serviciu", "T1070.009", gone.Count > 0 ? AntiForensicResult.Detected : AntiForensicResult.NotDetected,
                     gone.Count > 0
-                        ? $"{gone.Count} din {installed.Count} servicii instalate (7045) nu mai există în configurația curentă (dezinstalare legitimă sau ștergere): " +
+                        ? $"{gone.Count} din {LogAnalyzer.Dfir.Language.RoText.Count(installed.Count, "serviciu", "servicii")} instalate (7045) nu mai există în configurația curentă (dezinstalare legitimă sau ștergere): " +
                           string.Join("; ", gone.Take(15).Select(e => $"{e.Time.UtcIso} {F(e, "ServiceName")} ({F(e, "ImagePath")})"))
-                        : $"Toate cele {installed.Count} servicii instalate (7045) există în hive-ul SYSTEM.",
+                        : $"Toate cele {LogAnalyzer.Dfir.Language.RoText.Count(installed.Count, "serviciu", "servicii")} instalate (7045) există în hive-ul SYSTEM.",
                     gone.Select(e => Ref(e, "serviciu instalat, absent din configurație")));
             }
             else Add("AF11", "Ștergerea unui serviciu", "T1070.009", AntiForensicResult.Undetermined,
@@ -295,12 +296,12 @@ public static class AntiForensics
         {
             var hits = events.Where(e => Ev(e, Security, "4699") || Ev(e, TaskOps, "141")).ToList();
             if (hits.Count > 0)
-                Add("AF12", "Ștergerea unui task programat", "T1070.009", AntiForensicResult.Detected,
+                Add("AF12", "Ștergerea unei activități planificate", "T1070.009", AntiForensicResult.Detected,
                     $"{hits.Count} ștergeri: " + string.Join("; ", hits.Take(15).Select(e => $"{e.Time.UtcIso} {F(e, "TaskName")} de {F(e, "SubjectUserName")}{F(e, "UserName")}")),
-                    hits.Select(e => Ref(e, "task șters")));
+                    hits.Select(e => Ref(e, "activitate planificată ștearsă")));
             else if (Has(TaskOps))
-                Add("AF12", "Ștergerea unui task programat", "T1070.009", AntiForensicResult.NotDetected, "TaskScheduler/Operational analizat: niciun eveniment 141.");
-            else Add("AF12", "Ștergerea unui task programat", "T1070.009", AntiForensicResult.Undetermined,
+                Add("AF12", "Ștergerea unei activități planificate", "T1070.009", AntiForensicResult.NotDetected, "TaskScheduler/Operational analizat: niciun eveniment 141.");
+            else Add("AF12", "Ștergerea unei activități planificate", "T1070.009", AntiForensicResult.Undetermined,
                      "Lipsește TaskScheduler/Operational; 4699 apare doar dacă Other Object Access Events este auditat.");
         }
 
@@ -311,13 +312,13 @@ public static class AntiForensics
                                  .Where(e => e.Path.Contains('\\')).ToList();
             var hits = withPath.Where(e => IsMasquerading(e.Path)).ToList();
             if (hits.Count > 0)
-                Add("AF13", "Mascarare de proces (nume de sistem în altă locație)", "T1036.005", AntiForensicResult.Detected,
+                Add("AF13", "Deghizare de proces (nume de sistem în altă locație)", "T1036.005", AntiForensicResult.Detected,
                     string.Join("; ", hits.GroupBy(e => e.Path, StringComparer.OrdinalIgnoreCase).Take(15).Select(g => $"{g.Key} ({string.Join(", ", g.Select(x => x.Source).Distinct())})")),
                     hits.Select(e => Ref(e, "binar de sistem în afara locației lui")));
             else if (withPath.Count > 0)
-                Add("AF13", "Mascarare de proces (nume de sistem în altă locație)", "T1036.005", AntiForensicResult.NotDetected,
+                Add("AF13", "Deghizare de proces (nume de sistem în altă locație)", "T1036.005", AntiForensicResult.NotDetected,
                     $"{withPath.Count} căi de execuție verificate: niciun proces de sistem în afara locației lui.");
-            else Add("AF13", "Mascarare de proces (nume de sistem în altă locație)", "T1036.005", AntiForensicResult.Undetermined, "Nicio sursă cu căi de execuție analizată.");
+            else Add("AF13", "Deghizare de proces (nume de sistem în altă locație)", "T1036.005", AntiForensicResult.Undetermined, "Nicio sursă cu căi de execuție analizată.");
         }
 
         Add("AF14", "Fluxuri de date alternative (ADS)", "T1564.004", AntiForensicResult.Undetermined,
@@ -350,7 +351,7 @@ public static class AntiForensics
                     hits.Select(e => Ref(e, "modificare a firewall-ului")));
             else if (Has(Firewall))
                 Add("AF16", "Manipularea firewall-ului", "T1562.004", AntiForensicResult.NotDetected,
-                    "Jurnalul firewall analizat: nicio ștergere a tuturor regulilor și nicio regulă Allow pentru programe din foldere scriabile de utilizator.");
+                    "Jurnalul firewall analizat: nicio ștergere a tuturor regulilor și nicio regulă Allow pentru programe din foldere în care utilizatorii pot scrie.");
             else Add("AF16", "Manipularea firewall-ului", "T1562.004", AntiForensicResult.Undetermined, "Lipsește jurnalul Windows Firewall With Advanced Security/Firewall.");
         }
         return checks;
@@ -359,7 +360,10 @@ public static class AntiForensics
     /// <summary>True when the file name is a core Windows process and the folder is not where Windows keeps it.</summary>
     public static bool IsMasquerading(string path)
     {
-        var p = Correlation.Normalize(path.Trim().Trim('"'));
+        var raw = path.Trim().Trim('"').Replace('/', '\\');
+        // Win32 extended-length / device prefix (\\?\C:\...) and NT object prefix (\??\C:\...) do not change which file it is.
+        if (raw.StartsWith(@"\\?\", StringComparison.Ordinal) || raw.StartsWith(@"\\.\", StringComparison.Ordinal)) raw = raw[4..];
+        var p = Correlation.Normalize(raw);
         if (p.StartsWith(@"\??\", StringComparison.Ordinal)) p = Correlation.Normalize(p[4..]);
         if (p.StartsWith(@"\DEVICE\HARDDISKVOLUME", StringComparison.Ordinal)) { int i = p.IndexOf('\\', 8); if (i > 0) p = p[i..]; }
         var name = WinPath.GetFileName(p);
