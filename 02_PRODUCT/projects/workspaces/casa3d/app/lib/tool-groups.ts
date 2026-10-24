@@ -4,10 +4,12 @@ import type { Tool } from '@/components/PlanView';
 export const TOOL_GROUPS: { id: 'openings' | 'structure' | 'notes' | 'decor'; tools: Tool[] }[] = [
   { id: 'openings', tools: ['door', 'window', 'passage', 'niche'] },
   // „Demolare” (starea peretelui) stă cu structura: nu adaugă un loc nou în bara Releveului
-  { id: 'structure', tools: ['column', 'shaft', 'beam', 'glass_wall', 'demolish'] },
+  // balustrada (lotul 4) intră tot aici: Releveul rămâne cu 7 locuri
+  { id: 'structure', tools: ['column', 'shaft', 'beam', 'glass_wall', 'railing', 'demolish'] },
   { id: 'notes', tools: ['measure', 'dim', 'text'] },
   // decorul (Finisaje, Concept, Mobilier): placarea pe porțiune, obiectele de pe perete și zona de pardoseală
-  { id: 'decor', tools: ['clad', 'wall_item', 'floor_zone'] },
+  // tavanul fals pe zonă (lotul 4) intră în aceeași grupă: Finisaje rămâne cu 3 locuri
+  { id: 'decor', tools: ['clad', 'wall_item', 'floor_zone', 'ceiling_zone'] },
 ];
 /** Peste câte unelte se grupează (pe ecran lat); sub prag bara rămâne plată, ca înainte. */
 export const GROUP_OVER = 8;
