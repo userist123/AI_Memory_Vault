@@ -227,8 +227,9 @@ export const bathTiles = (f: RoomFinishes, roomType: string, room?: Pick<Room, '
   const h = bathTileHeight(f), base = (side: WallFeature['side']): WallFeature => ({ side, kind: 'tile', material: f.wallTile!, ...(h !== undefined ? { heightM: h } : {}) });
   return SIDES.flatMap(side => { const on = (f.wallFeatures || []).filter(w => w.side === side); if (!on.length) return [base(side)];
     if (!room || on.some(w => w.alongFromM === undefined && w.alongToM === undefined)) return [];
-    const len = sideSpan(room, side), cut = on.map(w => alongOf(w, len)).sort((p, q) => p[0] - q[0]), out: WallFeature[] = []; let at = 0;
-    for (const [a, b] of [...cut, [len, len] as [number, number]]){ if (a - at >= .05) out.push({ ...base(side), alongFromM: r2(at), alongToM: r2(a) }); at = Math.max(at, b); }
+    // o placare parțială taie faianța doar dacă o acoperă pe înălțime (nu o vopsea de la 2,2 m în sus sau un brâu)
+    const len = sideSpan(room, side), cut = on.filter(w => w.kind !== 'rail' && (w.fromM ?? 0) < (h ?? Infinity) - 1e-6).map(w => alongOf(w, len)).sort((p, q) => p[0] - q[0]), out: WallFeature[] = []; let at = 0;
+    for (const [a, b] of [...cut, [len, len] as [number, number]]){ if (r2(a - at) >= .05) out.push({ ...base(side), alongFromM: r2(at), alongToM: r2(a) }); at = Math.max(at, b); }
     return out; }); };
 /** Culoarea folosită doar la randare (aproximată după numele culorii de pe pagina produsului). */
 export const renderColor = (m: Material | undefined, fallback: string) => m?.specs?.color || fallback;
