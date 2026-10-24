@@ -57,9 +57,13 @@ try {
     return (await j(`/api/projects/${id}`, 'PUT', { snapshot: s, base: pr.draftRev })) ? room.name : null; }, id);
   if (need(rad, 'calorifer salvat în proiect')){ await p.go(`${BASE}/p/${id}`);
     need(await p.evaluate(async () => { for (let i = 0; i < 100 && !document.querySelector('svg.plan'); i++) await new Promise(r => setTimeout(r, 100)); const b = document.querySelector('.stagebar [data-stage="mep"]'); b?.click(); await new Promise(r => setTimeout(r, 900)); return !!b; }), 'etapa mep (Instalații)');
-    const opened = await p.evaluate(async room => { const d = [...document.querySelectorAll('details')].find(x => x.querySelector('summary')?.textContent?.startsWith(room)); if (d) d.open = true; await new Promise(r => setTimeout(r, 300));
-      const b = document.querySelector(`.mpick-cur[aria-label="Produs calorifer, ${room}"]`); b?.click(); await new Promise(r => setTimeout(r, 500));
-      return { details: !!d, picker: !!b, open: b?.getAttribute('aria-expanded') === 'true', list: !!(b && document.getElementById(b.getAttribute('aria-controls') || '')), width: !!document.querySelector(`input[aria-label="Lățime calorifer, ${room} (cm)"]`) }; }, rad);
+    const opened = await p.evaluate(async room => { const d = [...document.querySelectorAll('details')].find(x => x.querySelector('summary')?.textContent?.startsWith(room)); if (d) d.open = true;
+      // pe runner-ele CI randarea e mai lentă: așteptăm câmpurile (până la 10 s), nu un timp fix
+      const until = async f => { for (let i = 0; i < 100 && !f(); i++) await new Promise(r => setTimeout(r, 100)); return f(); };
+      await until(() => document.querySelector(`.mpick-cur[aria-label="Produs calorifer, ${room}"]`));
+      const b = document.querySelector(`.mpick-cur[aria-label="Produs calorifer, ${room}"]`); b?.click(); await until(() => b?.getAttribute('aria-expanded') === 'true');
+      return { details: !!d, picker: !!b, open: b?.getAttribute('aria-expanded') === 'true', list: !!(b && document.getElementById(b.getAttribute('aria-controls') || '')), width: !!document.querySelector(`input[aria-label="Lățime calorifer, ${room} (cm)"]`), dbg: (d?.innerText || '(fără secțiune)').replace(/s+/g, ' ').slice(0, 400) }; }, rad);
+    if (!opened.width || !opened.picker) console.log(`diagnostic Instalații: ${opened.dbg}`);
     need(opened.details, 'camera caloriferului în panoul Instalații'); need(opened.width, 'câmpul lățimii caloriferului'); need(opened.picker, `pickerul „Produs calorifer, ${rad}”`);
     if (need(opened.open && opened.list, 'pickerul de calorifer deschis')) failures += await audit(p, 'editor-instalatii-calorifer'); }
   for (const doc of ['print', 'offer', 'contract', 'proforma', 'handover', 'site-report', 'board']){ await p.go(`${BASE}/p/${id}/${doc}`); await sleep(1200); failures += await audit(p, `doc-${doc}`); }
