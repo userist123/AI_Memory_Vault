@@ -1279,6 +1279,15 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .plan-nudge .btn.btn{min-height:36px;min-width:36px;padding:0;justify-content:center;font-size:15px;line-height:1;background:rgba(255,255,255,.92);color:#2a2320;border:1px solid rgba(60,45,30,.22);box-shadow:0 1px 2px rgba(0,0,0,.06)}
 .plan-nudge .btn.btn:hover{background:#fff;border-color:rgba(60,45,30,.45)}
 @media (max-width:700px){ .plan-nudge{grid-template-columns:repeat(4,44px)} .plan-nudge .btn{min-height:44px;min-width:44px} }
+/* meniul contextual al planului (PlanContextMenu) și cota editată pe loc: fixe pe ecran, deasupra planului */
+.plan-menu{position:fixed;z-index:40;min-width:200px;max-width:min(320px,calc(100vw - 32px));padding:4px;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:var(--r-md);box-shadow:0 12px 32px rgb(30 28 25 / .22)}
+.plan-menu [role=menuitem]{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:var(--hit);padding:0 10px;border:0;border-radius:var(--r-sm);background:transparent;color:inherit;font:500 var(--fs-sm)/1.2 var(--sans);text-align:left;cursor:pointer}
+.plan-menu [role=menuitem]:hover,.plan-menu [role=menuitem]:focus-visible{background:var(--accent-soft);outline:none}
+.plan-menu [role=menuitem]:focus-visible{box-shadow:inset 0 0 0 2px var(--focus)}
+.plan-menu [role=menuitem].danger{color:var(--err)}
+.plan-dim-input{position:fixed;z-index:40;width:96px;height:32px;transform:translate(-50%,-50%);padding:0 8px;border:2px solid #B8432C;border-radius:var(--r-sm);background:#FFFDF8;color:#1A141C;font:600 var(--fs-sm)/1 var(--sans);text-align:center}
+.plan-dim-input[aria-invalid=true]{border-color:#B3261E;background:#FCEBEA;color:#B3261E}
+.plan-dim-input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
 @media print{ .plan-nudge,.v3nudge{display:none} }
 /* WCAG 2.2 2.3.3 (UI/UX P1-7): cu „mișcare redusă” din sistem, nicio animație sau tranziție decorativă nu mai rulează;
    starea finală apare imediat. Motorul 3D ascultă separat aceeași preferință pentru zborurile camerei. */

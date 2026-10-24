@@ -35,6 +35,8 @@ export const en: Dict = {
   "editor.autoApplied": "Auto-furnish applied.", "editor.notFit": "Did not fit: {list}", "editor.notFitItem": "{key} in {room}",
   "editor.selectHint": "Select a room, a wall or a piece.", "editor.someNotFit": "Some items did not fit.", "editor.roomAutoApplied": "{room}: auto-furnish applied.",
   "editor.wall": "Wall", "editor.length": "Length ({u})", "editor.thickness": "Thickness ({u})", "editor.exteriorWall": "Exterior wall",
+  "wallEdit.missing": "The wall no longer exists.", "wallEdit.tooShort": "A wall must be at least 20 cm long.", "wallEdit.tooLong": "A wall can be at most 1 km long.", "wallEdit.degenerate": "The wall has zero length; drag one of its ends first.", "wallEdit.neighbourShort": "A wall joined at the corner would drop below 20 cm.", "wallEdit.openingOut": "A door or window would no longer fit on the wall. Move it first.",
+  "plan.dimEdit": "Wall length", "plan.dimEditHint": "Double-click: edit the length", "ctx.aria": "Actions for the selection", "ctx.rotate": "Rotate 90°", "ctx.duplicate": "Duplicate", "ctx.delete": "Delete", "ctx.frame": "Frame", "ctx.editLength": "Edit length", "ctx.columnShape": "Shape: rectangle / round",
   "editor.openingsDrag": "{n} openings · drag the blue handles to adjust it", "editor.openingsDrag.one": "{n} opening · drag the blue handles to adjust it", "editor.deleteWall": "Delete wall",
   "editor.width": "Width ({u})", "editor.depth": "Depth ({u})", "editor.offsetOnWall": "Position along wall ({u})", "editor.deleteOpening": "Delete opening",
   "column.shape": "Column shape", "column.rect": "Rectangular", "column.round": "Round",

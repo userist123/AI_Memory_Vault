@@ -82,6 +82,8 @@ import { PHASES, phaseOf, stageDone, nextStage, doneCount, STAGE_IDS, activeShar
 import CommandPalette, { type Command } from './CommandPalette';
 import { isPaletteShortcut } from '@/lib/fuzzy';
 import { editorIgnoresKey } from '@/lib/palette-keys';
+import { setWallLength, WallEditError } from '@/core/wall-edit';
+import { SEGMENT_THICKNESS } from '@/core/snap';
 import { matchCommand, commandById, commandHint, formatShortcut, ariaShortcut, toolShortcut } from '@/lib/commands';
 import { prepareShareImages } from '@/lib/share-images';
 import { withViewTransition } from '@/lib/motion';
@@ -457,7 +459,12 @@ export default function Editor({ id }: { id: string }){
   useEffect(() => { try { setWideSide(localStorage.getItem('casa3d.sideWide') === '1'); } catch { /* stocare blocată */ } }, []);
   if (!snap || !catalog || !mc) return toast ? <div className="home"><p className="muted" role="status">{toast}</p></div> : <EditorSkeleton label={t('editor.loading')} />;
   const G = groups(catalog);
-  const onAddWall = (a: [number, number], b: [number, number]) => mutate(s => { s.floor.walls.push({ id: `wall-${uid().slice(0, 8)}`, a, b, thickness: .15, exterior: false, openings: [] }); });
+  const onAddWall = (a: [number, number], b: [number, number]) => mutate(s => { s.floor.walls.push({ id: `wall-${uid().slice(0, 8)}`, a, b, thickness: SEGMENT_THICKNESS.wall, exterior: false, openings: [] }); });
+  // lungimea peretelui (inspector și cota din plan): core/wall-edit.ts păstrează colțul închis; un refuz se anunță, nu se aplică
+  const onSetWallLength = (wallId: string, m: number): boolean => { const w = snap.floor.walls.find(x => x.id === wallId);
+    if (w && Math.abs(wallLength(w.a, w.b) - m) < 5e-4) return true;   // aceeași lungime: niciun pas de anulare gol
+    try { mutate(s => { s.floor = setWallLength(s.floor, wallId, m); }); return true; }
+    catch (e) { if (e instanceof WallEditError){ say(t(e.key)); return false; } throw e; } };
   const onAddRoom = (rect: any) => { const rid = `camera-${uid().slice(0, 8)}`; mutate(s => { s.floor.rooms.push({ id: rid, name: t('editor.newRoomName', { n: s.floor.rooms.length + 1 }), type: 'living', rect }); }); setSel({ kind: 'room', id: rid }); setTool('select'); };
   // golul de trecere e o ușă fără foaie (`passage`): devizul îl scade ca pe o ușă, dar nu cere produs de ușă
   const onAddOpening = (wallId: string, offset: number, kind: 'door' | 'window' | 'passage') => { const w = snap.floor.walls.find(x => x.id === wallId)!, L = wallLength(w.a, w.b), width = kind === 'door' ? .8 : kind === 'passage' ? PLAN_DEFAULTS.passageWidth : 1.2;
@@ -530,13 +537,13 @@ export default function Editor({ id }: { id: string }){
   const onAddBeam = (a: [number, number], b: [number, number]) => {
     if (full(snap.floor.beams?.length, PLAN_LIMITS.beam.max)) return;
     const bid = `bm-${uid().slice(0, 8)}`;
-    mutate(s => { s.floor.beams = [...(s.floor.beams || []), { id: bid, a, b, width: .25, depth: .35 }]; });
+    mutate(s => { s.floor.beams = [...(s.floor.beams || []), { id: bid, a, b, width: SEGMENT_THICKNESS.beam, depth: .35 }]; });
     setSel({ kind: 'beam', id: bid }); setTool('select');
   };
   const onAddGlassWall = (a: [number, number], b: [number, number]) => {
     if (full(snap.floor.glassWalls?.length, PLAN_LIMITS.glassWall.max)) return;
     const gid = `gw-${uid().slice(0, 8)}`;
-    mutate(s => { s.floor.glassWalls = [...(s.floor.glassWalls || []), { id: gid, a, b, thickness: .08, mullions: 2, frameColor: '#23262B' }]; });
+    mutate(s => { s.floor.glassWalls = [...(s.floor.glassWalls || []), { id: gid, a, b, thickness: SEGMENT_THICKNESS.glass_wall, mullions: 2, frameColor: '#23262B' }]; });
     setSel({ kind: 'glass_wall', id: gid }); setTool('select');
   };
   const onAddStairAt = (x: number, z: number) => {
@@ -735,6 +742,7 @@ export default function Editor({ id }: { id: string }){
           onRotateSelected={() => { if (!sel) return; if (sel.kind === 'placement') rotate(sel.id); else if (sel.kind === 'stair') rotateStair(sel.id); else if (sel.kind === 'column') rotateColumn(sel.id); }}
           onDuplicateSelected={() => { if (sel?.kind === 'placement') duplicate(sel.id); }}
           onDeleteSelected={del}
+          onSetWallLength={preview ? undefined : onSetWallLength}
           onToggleColumnShape={() => { if (sel?.kind === 'column') mutate(s => { const c = s.floor.columns?.find(x => x.id === sel.id); if (c) c.shape = c.shape === 'round' ? 'rect' : 'round'; }); }}
           onAutoFurnishRoom={(roomId: string) => { const r = autoLayout(snap, catalog, { roomId }); commit(r.snapshot); say(r.notFit.length ? t('editor.someNotFit') : t('editor.roomAutoApplied', { room: snap.floor.rooms.find(x => x.id === roomId)?.name ?? '' })); }}
           onSplitRoom={(roomId: string, axis: 'x' | 'z') => { const r = snap.floor.rooms.find(x => x.id === roomId); if (!r) return; try { const mid = axis === 'x' ? r3((r.rect.x0 + r.rect.x1) / 2) : r3((r.rect.z0 + r.rect.z1) / 2), nid = `room-${uid().slice(0, 8)}`, nf = splitRoom(snap.floor, r.id, axis, mid, { id: nid, name: `${r.name} B`, type: r.type }, newWallId()); mutate(s => { s.floor = nf; }); } catch (e: any) { say(e?.message || 'Error'); } }}
@@ -806,7 +814,12 @@ export default function Editor({ id }: { id: string }){
           {selWall && roomStage && <>
             <h3>{t('editor.wall')}</h3>
             <div className="grid2">
-              <label className="f"><span>{t('editor.length', { u })}</span><input type="number" value={inField(wallLength(selWall.a, selWall.b))} onChange={e => num(e.target.value, x => mutate(s => { const w = s.floor.walls.find(w => w.id === selWall.id)!, L = wallLength(w.a, w.b), ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L; w.b = [r3(w.a[0] + ux * x / 100), r3(w.a[1] + uz * x / 100)]; }), 20)} /></label>
+              <label className="f"><span>{t('editor.length', { u })}</span><input type="number" key={`${selWall.id}:${wallLength(selWall.a, selWall.b)}:${units}`} defaultValue={inField(wallLength(selWall.a, selWall.b))}
+                // se aplică la Enter sau la ieșirea din câmp, nu la fiecare pas al săgeților: un singur pas de anulare, iar
+                // capătul nu trece prin piciorul unui perete în T (care altfel l-ar urma de atunci încolo)
+                // Esc renunță; textul neatins nu se aplică (valoarea afișată e rotunjită, un perete oblic s-ar muta)
+                onKeyDown={e => { if (e.key === 'Escape'){ e.currentTarget.value = e.currentTarget.defaultValue; e.stopPropagation(); } if (e.key === 'Enter' || e.key === 'Escape') e.currentTarget.blur(); }}
+                onBlur={e => { const el = e.currentTarget; if (el.value === el.defaultValue) return; const back = inField(wallLength(selWall.a, selWall.b)); let ok = false; num(el.value, x => { ok = onSetWallLength(selWall.id, x / 100); }, 20); if (!ok) el.value = String(back); }} /></label>
               <label className="f"><span>{t('editor.thickness', { u })}</span><input type="number" value={inField(selWall.thickness)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.walls.find(w => w.id === selWall.id)!.thickness = r3(x / 100); }), 5)} /></label>
             </div>
             <label className="f" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={selWall.exterior} onChange={e => mutate(s => { s.floor.walls.find(w => w.id === selWall.id)!.exterior = e.target.checked; })} /> {t('editor.exteriorWall')}</label>
