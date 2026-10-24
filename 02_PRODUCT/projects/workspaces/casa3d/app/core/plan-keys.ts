@@ -2,8 +2,11 @@
 // citirii (sus → jos, stânga → dreapta), săgețile mută elementul ales, R îl rotește, Delete îl șterge, Escape renunță.
 // Aici e doar logica, fără DOM: ce element urmează și ce acțiune produce o tastă. PlanView și editorul o aplică.
 import type { Snapshot } from './types';
+import { nicheGeometry } from './niches';
+import { wallItemGeometry } from './wall-items';
+import { annotationCenter } from './annotations';
 
-export type PlanItemKind = 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall';
+export type PlanItemKind = 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'wall_item' | 'annotation';
 export interface PlanItem { kind: PlanItemKind; id: string; x: number; z: number }
 export type PlanSel = { kind: string; id: string } | null;
 
@@ -16,7 +19,10 @@ export function planItems(snap: Pick<Snapshot, 'floor' | 'placements'>): PlanIte
   const columns = (snap.floor.columns ?? []).map(c => ({ kind: 'column' as const, id: c.id, x: c.x, z: c.z })).sort(order);
   const beams = (snap.floor.beams ?? []).map(b => ({ kind: 'beam' as const, id: b.id, x: (b.a[0] + b.b[0]) / 2, z: (b.a[1] + b.b[1]) / 2 })).sort(order);
   const glassWalls = (snap.floor.glassWalls ?? []).map(g => ({ kind: 'glass_wall' as const, id: g.id, x: (g.a[0] + g.b[0]) / 2, z: (g.a[1] + g.b[1]) / 2 })).sort(order);
-  return [...rooms, ...pieces, ...stairs, ...columns, ...beams, ...glassWalls];
+  const niches = (snap.floor.niches ?? []).flatMap(n => { const g = nicheGeometry(snap.floor, n); return g ? [{ kind: 'niche' as const, id: n.id, x: g.center[0], z: g.center[1] }] : []; }).sort(order);
+  const notes = (snap.floor.annotations ?? []).map(a => { const [x, z] = annotationCenter(a); return { kind: 'annotation' as const, id: a.id, x, z }; }).sort(order);
+  const wallItems = (snap.floor.wallItems ?? []).flatMap(it => { const g = wallItemGeometry(snap.floor, it); return g ? [{ kind: 'wall_item' as const, id: it.id, x: g.center[0], z: g.center[1] }] : []; }).sort(order);
+  return [...rooms, ...pieces, ...stairs, ...columns, ...beams, ...glassWalls, ...niches, ...wallItems, ...notes];
 }
 
 /** Elementul următor (dir = 1) sau anterior (dir = −1). `null` = Tab iese din plan (după ultimul sau înainte de primul). */
@@ -30,7 +36,7 @@ export function cycleSelection(items: PlanItem[], sel: PlanSel, dir: 1 | -1): Pl
 export type PlanKeyAction =
   | { type: 'select'; item: PlanItem } | { type: 'leave' } | { type: 'deselect' }
   | { type: 'move'; dxCm: number; dzCm: number } | { type: 'rotate' } | { type: 'delete' }
-  | { type: 'duplicate' } | { type: 'toggleShape' } | null;
+  | { type: 'duplicate' } | { type: 'toggleShape' } | { type: 'lift'; dyCm: number } | null;
 export interface KeyIn { key: string; shiftKey?: boolean; ctrlKey?: boolean; metaKey?: boolean; altKey?: boolean }
 export const MOVE_CM = 5, MOVE_BIG_CM = 50;
 
@@ -48,6 +54,8 @@ export function planKeyAction(e: KeyIn, items: PlanItem[], sel: PlanSel): PlanKe
   if (e.key === 'Tab'){ const n = cycleSelection(items, sel, e.shiftKey ? -1 : 1); return n ? { type: 'select', item: n } : { type: 'leave' }; }
   if (e.key === 'Escape') return sel ? { type: 'deselect' } : null;
   if (!sel || !items.some(x => x.kind === sel.kind && x.id === sel.id)) return null;
+  // obiectul de pe perete: PageUp / PageDown îl urcă sau îl coboară (Shift: pasul mare); săgețile îl mută de-a lungul peretelui
+  if (sel.kind === 'wall_item' && (e.key === 'PageUp' || e.key === 'PageDown')) return { type: 'lift', dyCm: (e.key === 'PageUp' ? 1 : -1) * (e.shiftKey ? MOVE_BIG_CM : MOVE_CM) };
   if (e.key.startsWith('Arrow')){ const s = e.shiftKey ? MOVE_BIG_CM : MOVE_CM;
     return { type: 'move', dxCm: e.key === 'ArrowLeft' ? -s : e.key === 'ArrowRight' ? s : 0, dzCm: e.key === 'ArrowUp' ? -s : e.key === 'ArrowDown' ? s : 0 }; }
   if (e.key === 'r' || e.key === 'R') return sel.kind === 'room' ? null : { type: 'rotate' };

@@ -1268,6 +1268,13 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .v3nudge .btn:nth-child(5){grid-column:1;grid-row:1} .v3nudge .btn:nth-child(6){grid-column:3;grid-row:1}
 @media (max-width:700px){ .v3nudge{grid-template-columns:repeat(3,44px)} .v3nudge .btn{min-height:44px;min-width:44px} }
 /* WCAG 2.2 2.5.7: zoom și deplasare în plan cu un clic (sus-dreapta; jos-dreapta e ocupat de coordonate) */
+.toolgroup{position:relative;display:flex;flex-direction:column}
+.toolgroup>button{position:relative}
+.toolgroup .tg-caret{position:absolute;right:3px;bottom:2px;font-size:9px;line-height:1}
+.tools .toolgroup>button.is-active,.ws .tools .toolgroup>button.is-active{background:var(--t1,#1A141C);color:var(--c0,#fff);border-color:var(--t1,#1A141C)}
+.toolgroup-menu{position:absolute;left:calc(100% + 8px);top:0;z-index:40;display:flex;gap:4px;padding:6px;background:var(--surface,#fff);border:1px solid var(--line-strong,#bbb);border-radius:12px;box-shadow:0 8px 24px rgb(30 28 25 / .18)}
+.toolgroup-menu button{min-width:64px}
+.plan-text-input{min-width:200px;font:500 14px/1.3 var(--sans);padding:6px 8px;border:2px solid #7A5A36;border-radius:6px;background:#fff;color:#1A141C;transform:translateY(-50%)}
 .plan-nudge{position:absolute;right:10px;top:10px;display:grid;grid-template-columns:repeat(4,36px);gap:4px;z-index:2}
 .plan-nudge .btn.btn{min-height:36px;min-width:36px;padding:0;justify-content:center;font-size:15px;line-height:1;background:rgba(255,255,255,.92);color:#2a2320;border:1px solid rgba(60,45,30,.22);box-shadow:0 1px 2px rgba(0,0,0,.06)}
 .plan-nudge .btn.btn:hover{background:#fff;border-color:rgba(60,45,30,.45)}
@@ -1451,3 +1458,12 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 .plan-mirror ul{list-style:none;margin:0;padding:0;display:grid}
 .plan-mirror button{width:100%;min-height:36px;padding:6px 8px;border:0;border-radius:8px;background:transparent;color:inherit;text-align:left;font:400 var(--fs-sm)/1.35 var(--sans);cursor:pointer}
 .plan-mirror button:hover,.plan-mirror button:focus-visible{background:#EEE6DC} .plan-mirror button[aria-current=true]{background:#F7E3DC;color:#8C2A1B;font-weight:600}
+/* Placare / Pe perete: alegerea tipului lângă plan (vizibilă și pe telefon, spre deosebire de hintbar); legenda finisajelor de perete */
+.planwrap .toolopts{position:absolute;left:10px;top:10px;z-index:3;display:flex;gap:8px;align-items:center;background:var(--surface-2,#fffcf6);border:1px solid var(--line-strong,#d5c9be);border-radius:10px;padding:4px 8px;font-size:var(--fs-sm);color:var(--ink,#1f1a17)}
+.planwrap .toolopts select{min-height:32px}
+.planwrap .plan-legend{position:absolute;left:10px;bottom:44px;z-index:2;max-width:min(340px,calc(100% - 20px));max-height:40%;overflow:auto;background:var(--surface-2,#fffcf6);border:1px solid var(--line-strong,#d5c9be);border-radius:10px;padding:4px 10px;font-size:var(--fs-xs);color:var(--ink,#1f1a17)}
+.planwrap .plan-legend summary{cursor:pointer;min-height:24px;line-height:24px}
+.planwrap .plan-legend ul{margin:4px 0;padding-left:0;list-style:none}
+.planwrap .plan-legend b{display:inline-block;min-width:2.4em;color:inherit;font-weight:700}
+.planwrap .toolopts,.planwrap .plan-legend,.ws .planwrap .toolopts,.ws .planwrap .plan-legend{background:rgba(255,251,244,.97);color:#3d343b;border:1px solid #D5C9BE;box-shadow:0 4px 14px rgba(36,27,36,.08)}
+.planwrap .toolopts select{background:#fff;color:#1f1a17;border:1px solid #cbbfb2;border-radius:8px;padding:2px 6px}
