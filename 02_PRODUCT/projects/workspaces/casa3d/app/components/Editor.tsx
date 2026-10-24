@@ -373,7 +373,7 @@ export default function Editor({ id }: { id: string }){
       else if (sel.kind === 'room') mutate(s => { const r = s.floor.rooms.find(x => x.id === sel.id); if (r) r.rect = { x0: r3(r.rect.x0 + dx), x1: r3(r.rect.x1 + dx), z0: r3(r.rect.z0 + dz), z1: r3(r.rect.z1 + dz) }; }); } };
   useEffect(() => { const k = (e: KeyboardEvent) => { const el = e.target as HTMLElement;
     // în lista obiectelor planului tastele aparțin listei (săgeți, Enter, Escape): Backspace nu șterge selecția pe neașteptate
-    if (el.closest?.('.plan-mirror')) return;
+    if (el.closest?.('.plan-mirror,.outliner')) return;
     if (editorIgnoresKey({ preview: !!preview, inField: !!el.closest?.('input,select,textarea,[contenteditable=true]'), inDialog: !!el.closest?.('dialog[open],[aria-modal=true]'), paletteOpen: paletteOpenRef.current })) return;
     // scurtăturile vin din registru (lib/commands.ts); Ctrl/⌘K rămâne la paletă (isPaletteShortcut)
     const cid = matchCommand(e); if (!cid) return;
@@ -382,7 +382,7 @@ export default function Editor({ id }: { id: string }){
       case 'redo': e.preventDefault(); redo(); break;
       case 'duplicate': e.preventDefault(); if (sel?.kind === 'placement') duplicate(sel.id); break;
       case 'help': setHelp(h => !h); break;
-      case 'ws.focus': e.preventDefault(); if (!compact && mode === 'studio') setFocus(f => !f); break;
+      case 'ws.focus': if (!compact && mode === 'studio' && !stageDef.page){ e.preventDefault(); toggleFocus(); } break;
       case 'nudge': case 'nudge.big': if (sel?.kind !== 'placement') break; { e.preventDefault(); const st = cid === 'nudge.big' ? NUDGE_BIG_CM : NUDGE_CM;
         nudge(sel.id, e.key === 'ArrowLeft' ? -st : e.key === 'ArrowRight' ? st : 0, e.key === 'ArrowUp' ? -st : e.key === 'ArrowDown' ? st : 0); } break;
       case 'delete': del(); break;
@@ -444,7 +444,7 @@ export default function Editor({ id }: { id: string }){
   useEffect(() => { const tm = setTimeout(() => { if (!selDesc || !sel){ setLiveSel(''); return; } liveFlip.current = !liveFlip.current;
       const keys = ['placement', 'room', 'stair', 'column', 'wall_item'].includes(sel.kind) ? t(`mirror.keys.${sel.kind}`) : t('mirror.keys.other');
       // din listă tastele de editare nu acționează (săgețile trec prin obiecte): mesajul spune întâi cum se ajunge în plan
-      const inList = !!(document.activeElement as HTMLElement | null)?.closest?.('.plan-mirror');
+      const inList = !!(document.activeElement as HTMLElement | null)?.closest?.('.plan-mirror,.outliner');
       setLiveSel(`${t('mirror.selected', { label: selDesc })}. ${inList ? t('mirror.escFirst') + ' ' : ''}${keys}${liveFlip.current ? ' ' : ''}`); }, 350); return () => clearTimeout(tm); }, [selDesc, sel?.kind, sel?.id, t]); // eslint-disable-line
   // hover-ul comun nu rămâne agățat când una din vederi dispare (schimbarea Plan / 3D)
   useEffect(() => { setHoverPid(null); }, [view]);
@@ -456,6 +456,9 @@ export default function Editor({ id }: { id: string }){
   useEffect(() => { let m: string | null = null, w: string | null = null; try { m = localStorage.getItem(MODE_KEY); w = localStorage.getItem(WS_KEY); } catch { /* stocare blocată */ }
     setMode(resolveMode(m, process.env.NEXT_PUBLIC_CASA3D_LAYOUT)); setWsLay(parseWorkspace(w));
     const r = () => setVw(innerWidth); r(); addEventListener('resize', r); return () => removeEventListener('resize', r); }, []);
+  // panoul în care stătea focusul dispare (Focus, ascunderea Structurii): focusul trece în plan, nu cade pe body
+  const keepFocus = () => requestAnimationFrame(() => { const a = document.activeElement; if (!a || a === document.body || !a.isConnected) document.querySelector<SVGSVGElement>('svg.plan')?.focus(); });
+  const toggleFocus = () => { setFocus(f => !f); keepFocus(); };
   const saveWs = (n: WorkspaceState) => { setWsLay(n); try { localStorage.setItem(WS_KEY, serializeWorkspace(n)); } catch { /* stocare blocată: rămâne pe sesiune */ } };
   const setLayoutMode = (m: LayoutMode) => { setMode(m); setFocus(false); try { localStorage.setItem(MODE_KEY, m); } catch { /* stocare blocată */ } say(t(m === 'classic' ? 'ws.classicOn' : 'ws.studioOn')); };
   // arborele Structură: toate nivelurile (nivelul curent refolosește descrierea de mai sus); doar în layoutul nou sau pe telefon
@@ -611,7 +614,7 @@ export default function Editor({ id }: { id: string }){
     { id: 'redo', group: t('cmdk.group.actions'), label: t('editor.redo'), hint: hint('redo'), disabled: !hist.current.canRedo, run: redo },
     { id: 'rev', group: t('cmdk.group.actions'), label: t('editor.saveRevision'), keywords: [t('cmdk.kw.save')], disabled: revBusy, run: () => { setRevBusy(true); flight.run('revision', saveRevision).finally(() => setRevBusy(false)); } },
     { id: 'help', group: t('cmdk.group.actions'), label: t('editor.shortcuts'), hint: hint('help'), run: () => setHelp(true) },
-    ...(!compact && mode === 'studio' && !stageDef.page ? [{ id: 'ws.focus', group: t('cmdk.group.settings'), label: focus ? t('ws.focusExit') : t('ws.focus'), hint: hint('ws.focus'), keywords: ['focus', 'zen'], run: () => setFocus(f => !f) },
+    ...(!compact && mode === 'studio' && !stageDef.page ? [{ id: 'ws.focus', group: t('cmdk.group.settings'), label: focus ? t('ws.focusExit') : t('ws.focus'), hint: hint('ws.focus'), keywords: ['focus', 'zen'], run: toggleFocus },
       { id: 'ws.outliner', group: t('cmdk.group.settings'), label: t('ws.outliner'), keywords: [t('outliner.title'), 'outliner'], run: () => saveWs({ ...wsLay, outliner: !wsLay.outliner }) }] : []),
     ...(!compact ? [{ id: 'ws.classic', group: t('cmdk.group.settings'), label: mode === 'studio' ? t('ws.classic') : t('ws.studio'), keywords: ['layout'], run: () => setLayoutMode(mode === 'studio' ? 'classic' : 'studio') }] : []),
     { id: 'print', group: t('cmdk.group.docs'), label: t('cmdk.print'), keywords: [t('cmdk.kw.print')], run: () => { window.open(`/p/${id}/print`, '_blank', 'noopener'); } },
@@ -677,7 +680,7 @@ export default function Editor({ id }: { id: string }){
       <details className="tb-more"><summary className="btn ghost icon-btn" aria-label={t('editor.more')} title={t('editor.more')}><Icon name="more" /></summary><div className="tb-menu"><PrefsSwitcher /><button type="button" className="btn ghost" onClick={() => setHelp(true)}>{t('editor.shortcuts')}</button>
         {!compact && <label className="tb-check"><input type="checkbox" checked={mode === 'classic'} onChange={e => setLayoutMode(e.target.checked ? 'classic' : 'studio')} />{t('ws.classic')}</label>}</div></details>
       {studio && <button type="button" className={`btn ghost icon-btn ws-focus ${focused ? 'is-on' : ''}`} aria-pressed={focused} aria-keyshortcuts={ariaShortcut(commandById('ws.focus')!.shortcuts[0]!, { mac })}
-        aria-label={focused ? t('ws.focusExit') : t('ws.focus')} title={`${focused ? t('ws.focusExit') : t('ws.focus')} (${hint('ws.focus')})`} onClick={() => setFocus(f => !f)}><Icon name={focused ? 'split' : 'panel'} />{focused && <span className="lbl">{t('ws.focusExit')}</span>}</button>}
+        aria-label={focused ? t('ws.focusExit') : t('ws.focus')} title={`${focused ? t('ws.focusExit') : t('ws.focus')} (${hint('ws.focus')})`} onClick={toggleFocus}><Icon name={focused ? 'split' : 'panel'} />{focused && <span className="lbl">{t('ws.focusExit')}</span>}</button>}
       </div>
       <button className="btn primary tb-save" disabled={revBusy} title={t('dlg.revBody')} onClick={() => { setRevBusy(true); flight.run('revision', saveRevision).finally(() => setRevBusy(false)); }}><span className="lbl">{t('editor.saveRevision')}</span><span className="lbl-s">{t('editor.saveShort')}</span></button>
       {save === 'conflict' && <span className="conflict-bar" role="alert"><Icon name="alert" />{t('editor.conflict')} <button className="btn" onClick={() => { dropStash(); saveRef.current = 'saved'; location.reload(); }}>{t('editor.conflictReload')}</button><button className="btn" onClick={() => send(true)}>{t('editor.conflictKeep')}</button></span>}
@@ -702,7 +705,7 @@ export default function Editor({ id }: { id: string }){
       style={studio ? { '--ol-w': `${olShown ? fit.left : 0}px`, '--in-w': `${focused ? 0 : fit.right}px` } as React.CSSProperties : undefined}>
       <ToolRail tools={(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk))} active={tool} grouped={!compact} icon={ICON} label={tk => t(TOOL_LABEL[tk])} ariaLabel={t('editor.tools')}
         title={tk => `${t(TOOL_LABEL[tk])} (${formatShortcut(toolShortcut(tk), { mac })})`} keys={tk => ariaShortcut(toolShortcut(tk), { mac })} groupLabel={g => t(`toolGroup.${g}`)} onPick={setTool} />
-      {olShown && <div className="ol-pane">{outlinerEl(() => saveWs({ ...wsLay, outliner: false }))}
+      {olShown && <div className="ol-pane">{outlinerEl(() => { saveWs({ ...wsLay, outliner: false }); keepFocus(); })}
         <PanelSplitter side="left" width={fit.left} label={t('ws.resizeLeft')} onChange={w => setWsLay(x => ({ ...x, left: w }))} onCommit={w => saveWs({ ...wsLay, left: w })} /></div>}
       {studio && !focused && !wsLay.outliner && <button type="button" className="btn ghost icon-btn ol-show" aria-label={t('outliner.show')} title={t('outliner.show')} onClick={() => saveWs({ ...wsLay, outliner: true })}><Icon name="chevronRight" size={16} /></button>}
       <div className={`canvas studio-canvas ${view === 'split' && !compact ? 'split' : ''}`}>
@@ -770,8 +773,8 @@ export default function Editor({ id }: { id: string }){
           <strong>{t('editor.positionWarnings')}</strong>{pending.issues.map((i, k) => { const tgt = issueTarget(i, snap?.floor, snap?.placements); return <div key={k} className={`issue ${i.severity}`} role={tgt ? 'button' : undefined} tabIndex={tgt ? 0 : undefined} style={tgt ? { cursor: 'pointer' } : undefined} onClick={tgt ? () => focusIssue(i) : undefined} onKeyDown={tgt ? e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focusIssue(i); } } : undefined}>{iT(i)}</div>; })}
           <div style={{ display: 'flex', gap: 8 }}><button className="btn primary" onClick={() => setPending(null)}>{t('editor.keepPosition')}</button><button className="btn" onClick={() => { pending.discard?.(); setHouse(pending.before); persist(pending.before); setPending(null); force(x => x + 1); }}>{t('editor.revert')}</button></div></div>}
       </div>
+      {studio && !focused && <PanelSplitter side="right" width={fit.right} label={t('ws.resizeRight')} onChange={w => setWsLay(x => ({ ...x, right: w }))} onCommit={w => saveWs({ ...wsLay, right: w })} />}
       <aside className={`side studio-inspector ${compact ? `sheet sheet-${sheet}` : ''} ${compact && sheetPane === 'structure' ? 'pane-structure' : ''}`} aria-label={t('editor.panelAria', { stage: t(`stage.${stage}`) })}>
-        {studio && !focused && <PanelSplitter side="right" width={fit.right} label={t('ws.resizeRight')} onChange={w => setWsLay(x => ({ ...x, right: w }))} onCommit={w => saveWs({ ...wsLay, right: w })} />}
         <div className="sidetabs">
           {compact && <button type="button" className="sheet-grip" aria-label={sheet === 'full' ? t('editor.sheetLess') : t('editor.sheetMore')} aria-expanded={sheet !== 'peek'} onClick={() => setSheet(x => x === 'peek' ? 'half' : x === 'half' ? 'full' : 'peek')}><span aria-hidden="true" /></button>}
           <h2 className="stage-title"><i>{String(STAGES.indexOf(stageDef) + 1).padStart(2, '0')}</i>{t(`stage.${stage}`)}</h2>

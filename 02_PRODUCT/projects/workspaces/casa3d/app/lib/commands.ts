@@ -46,8 +46,9 @@ export const COMMANDS: CommandDef[] = [
   { id: 'palette', label: 'cmdk.open', group: 'nav', domain: 'global', dispatch: false, shortcuts: [{ key: 'k', ctrlOrMeta: true }] },
   // F e prinsă de plan (PlanView keyDown), nu de dispecerul editorului
   { id: 'frame', label: 'help.frame', menuLabel: 'ctx.frame', group: 'nav', domain: 'editor', dispatch: false, shortcuts: [{ key: 'f' }] },
-  // spațiul de lucru (PLAN_A1_3): Focus ascunde panourile; structura și layoutul clasic sunt doar în ⋯ și Ctrl/⌘K
-  { id: 'ws.focus', label: 'ws.focus', group: 'nav', domain: 'editor', shortcuts: [{ key: '\\', ctrlOrMeta: true }] },
+  // spațiul de lucru (PLAN_A1_3): Focus ascunde panourile; structura și layoutul clasic sunt doar în ⋯ și Ctrl/⌘K.
+  // Alt oricum: pe tastatura românească „\” cere AltGr, pe care Windows îl raportează ca Ctrl+Alt
+  { id: 'ws.focus', label: 'ws.focus', group: 'nav', domain: 'editor', shortcuts: [{ key: '\\', ctrlOrMeta: true, alt: 'any' }] },
   { id: 'ws.outliner', label: 'ws.outliner', group: 'nav', domain: 'editor', dispatch: false, shortcuts: [] },
   { id: 'ws.classic', label: 'ws.classic', group: 'nav', domain: 'editor', dispatch: false, shortcuts: [] },
   { id: 'wall.length', label: 'ctx.editLength', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },

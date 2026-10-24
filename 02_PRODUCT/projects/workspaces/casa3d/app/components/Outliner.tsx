@@ -31,11 +31,14 @@ export default function Outliner({ nodes, level, selected, onPick, onHover, onHi
   useEffect(() => { setOpen(o => { const need = [`L${level}`, ...(path?.ancestors ?? [])].filter(k => !o.has(k)); return need.length ? new Set([...o, ...need]) : o; }); }, [level, path?.key]); // eslint-disable-line react-hooks/exhaustive-deps
   useEffect(() => { if (!path) return; setCur(path.key); box.current?.querySelector<HTMLElement>(`[data-key="${CSS.escape(path.key)}"]`)?.scrollIntoView({ block: 'nearest' }); }, [path?.key]); // eslint-disable-line react-hooks/exhaustive-deps
   const rows = useMemo(() => visibleRows(nodes, open), [nodes, open]);
-  const ix = Math.max(0, rows.findIndex(r => r.node.key === cur)), active = rows[ix]?.node.key;
+  const ixState = Math.max(0, rows.findIndex(r => r.node.key === cur)), active = rows[ixState]?.node.key;
   const toggle = (k: string, want?: boolean) => setOpen(o => { const on = o.has(k), next = want ?? !on; if (next === on) return o; const n = new Set(o); if (next) n.add(k); else n.delete(k); return n; });
   const focusKey = (k: string) => { setCur(k); requestAnimationFrame(() => box.current?.querySelector<HTMLElement>(`[data-key="${CSS.escape(k)}"]`)?.focus()); };
   const choose = (n: OutlinerNode, frame: boolean) => { if (n.item) onPick(n.level, n.item, frame); else toggle(n.key); };
-  const onKey = (e: React.KeyboardEvent) => { const r = rows[ix]; if (!r) return; const n = r.node, kids = n.children.length > 0, isOpen = open.has(n.key);
+  const onKey = (e: React.KeyboardEvent) => {
+    // rândul e cel care primește tasta (focusul real), nu cel din stare, care poate rămâne cu un pas în urmă
+    const fk = (e.target as HTMLElement).closest<HTMLElement>('[data-key]')?.dataset.key, at = fk ? rows.findIndex(x => x.node.key === fk) : -1, ix = at >= 0 ? at : ixState;
+    const r = rows[ix]; if (!r) return; const n = r.node, kids = n.children.length > 0, isOpen = open.has(n.key);
     let done = true;
     switch (e.key){
       case 'ArrowDown': if (rows[ix + 1]) focusKey(rows[ix + 1]!.node.key); break;
@@ -46,9 +49,10 @@ export default function Outliner({ nodes, level, selected, onPick, onHover, onHi
       case 'ArrowLeft': if (kids && isOpen) toggle(n.key, false); else if (r.parent) focusKey(r.parent); break;
       case 'Enter': choose(n, true); break;
       case ' ': if (n.item) onPick(n.level, n.item, false); else toggle(n.key); break;
-      case 'Escape': document.querySelector<SVGSVGElement>('svg.plan')?.focus(); break;
+      // fără plan (doar 3D) focusul iese din arbore, ca Escape să nu rămână fără efect
+      case 'Escape': { const plan = document.querySelector<SVGSVGElement>('svg.plan'); if (plan) plan.focus(); else (e.target as HTMLElement).blur(); } break;
       default: done = false; }
-    // tastele arborelui nu ajung la scurtăturile editorului (Delete, R, săgețile care mută selecția)
+    // tastele arborelui nu ajung la ascultătorii planului; dispecerul editorului ignoră oricum tastele din .outliner
     if (done){ e.preventDefault(); e.stopPropagation(); } };
   const empty = !nodes.some(n => n.children.length);
   return (<section className="outliner" aria-labelledby="ol-title">

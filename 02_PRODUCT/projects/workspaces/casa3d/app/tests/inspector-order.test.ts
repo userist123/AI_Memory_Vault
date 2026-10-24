@@ -11,8 +11,9 @@ const MARK = /(?:\/\/|\{\/\*) inspector:([a-z_]+)/g;
 function blocks(): Record<string, string[]> {
   const marks = [...SRC.matchAll(MARK)], out: Record<string, string[]> = {};
   marks.forEach((m, i) => { if (m[1] === 'end') return; const body = SRC.slice(m.index! + m[0].length, marks[i + 1]?.index ?? SRC.length);
-    // t('cheie') și t(`cheie.${x}`) — partea variabilă rămâne ca ${…}, ordinea e cea din sursă
-    out[m[1]!] = [...body.matchAll(/\bt\((?:'([^']+)'|`([^`]+)`)/g)].map(x => x[1] ?? x[2]!); });
+    // t('cheie'), t(`cheie.${x}`) — partea variabilă rămâne ca ${…} — și t(cond ? 'a' : 'b') → a, b; ordinea e cea din sursă
+    out[m[1]!] = [...body.matchAll(/\bt\((?:'([^']+)'|`([^`]+)`|[^`()?]*\?\s*'([^']+)'\s*:\s*'([^']+)')/g)]
+      .flatMap(x => x[3] ? [x[3], x[4]!] : [x[1] ?? x[2]!]); });
   return out;
 }
 
@@ -30,6 +31,8 @@ describe('ordinea câmpurilor din inspector', () => {
     expect(blocks()).toMatchInlineSnapshot(`
       {
         "annotation": [
+          "tool.dim",
+          "tool.text",
           "dim.offset",
           "dim.mode",
           "dim.aligned",
@@ -109,6 +112,10 @@ describe('ordinea câmpurilor din inspector', () => {
           "door.type.\${k}",
           "door.flush",
           "door.typeHint.\${type}",
+          "door.flipFace",
+          "door.flipSwing",
+          "door.slideAuto",
+          "door.swingAuto",
           "door.swingSet",
           "editor.deleteOpening",
         ],
@@ -165,6 +172,8 @@ describe('ordinea câmpurilor din inspector', () => {
           "editor.exteriorWall",
           "wallStatus.label",
           "wallStatus.\${k}",
+          "wallStatus.newNote",
+          "wallStatus.demolishNote",
           "editor.deleteWall",
         ],
         "wall_item": [
@@ -177,6 +186,8 @@ describe('ordinea câmpurilor din inspector', () => {
           "wallItem.offset",
           "wallItem.elevation",
           "editor.depth",
+          "wallItem.canvas",
+          "fin.color",
           "fin.product",
           "wallItem.noProduct",
           "wallItem.rule",
