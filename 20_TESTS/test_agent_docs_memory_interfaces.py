@@ -112,6 +112,15 @@ def test_every_path_an_agent_profile_cites_exists(name):
     assert problems_in((REPO / name).read_text(encoding="utf-8")) == []
 
 
+def test_every_skill_the_capability_registry_names_exists():
+    # 18 were missing on 2026-10-23: 17 removed on purpose (dropped from the registry), ansible-automation restored
+    text = (REPO / "00_GOVERNANCE" / "protocols" / "Agent_Capability_Registry.md").read_text(encoding="utf-8")
+    named = set(re.findall(r"^- (\S+)$", text, re.MULTILINE))
+    assert len(named) > 100
+    present = {p.name for p in (REPO / ".agents" / "skills").iterdir() if (p / "SKILL.md").is_file()}
+    assert sorted(named - present) == []
+
+
 def test_the_restored_policy_files_carry_their_provenance():
     for name in ("Agent_Capability_Registry.md", "Council_Context_Budget.md"):
         text = (REPO / "00_GOVERNANCE" / "protocols" / name).read_text(encoding="utf-8")
