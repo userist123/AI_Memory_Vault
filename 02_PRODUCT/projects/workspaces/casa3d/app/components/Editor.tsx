@@ -456,9 +456,12 @@ export default function Editor({ id }: { id: string }){
   useEffect(() => { let m: string | null = null, w: string | null = null; try { m = localStorage.getItem(MODE_KEY); w = localStorage.getItem(WS_KEY); } catch { /* stocare blocată */ }
     setMode(resolveMode(m, process.env.NEXT_PUBLIC_CASA3D_LAYOUT)); setWsLay(parseWorkspace(w));
     const r = () => setVw(innerWidth); r(); addEventListener('resize', r); return () => removeEventListener('resize', r); }, []);
-  // panoul în care stătea focusul dispare (Focus, ascunderea Structurii): focusul trece în plan, nu cade pe body
-  const keepFocus = () => requestAnimationFrame(() => { const a = document.activeElement; if (!a || a === document.body || !a.isConnected) document.querySelector<SVGSVGElement>('svg.plan')?.focus(); });
-  const toggleFocus = () => { setFocus(f => !f); keepFocus(); };
+  // panoul în care stătea focusul dispare sau e ascuns (Focus = display:none, ascunderea Structurii): după commit, focusul
+  // trece în plan, nu cade pe body
+  const wsMounted = useRef(false);
+  useEffect(() => { if (!wsMounted.current){ wsMounted.current = true; return; } const a = document.activeElement; if (a && a !== document.body && a.isConnected && a.getClientRects().length) return;
+    document.querySelector<SVGSVGElement>('svg.plan')?.focus(); }, [focus, wsLay.outliner]); // eslint-disable-line react-hooks/exhaustive-deps
+  const toggleFocus = () => setFocus(f => !f);
   const saveWs = (n: WorkspaceState) => { setWsLay(n); try { localStorage.setItem(WS_KEY, serializeWorkspace(n)); } catch { /* stocare blocată: rămâne pe sesiune */ } };
   const setLayoutMode = (m: LayoutMode) => { setMode(m); setFocus(false); try { localStorage.setItem(MODE_KEY, m); } catch { /* stocare blocată */ } say(t(m === 'classic' ? 'ws.classicOn' : 'ws.studioOn')); };
   // arborele Structură: toate nivelurile (nivelul curent refolosește descrierea de mai sus); doar în layoutul nou sau pe telefon
@@ -705,7 +708,7 @@ export default function Editor({ id }: { id: string }){
       style={studio ? { '--ol-w': `${olShown ? fit.left : 0}px`, '--in-w': `${focused ? 0 : fit.right}px` } as React.CSSProperties : undefined}>
       <ToolRail tools={(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk))} active={tool} grouped={!compact} icon={ICON} label={tk => t(TOOL_LABEL[tk])} ariaLabel={t('editor.tools')}
         title={tk => `${t(TOOL_LABEL[tk])} (${formatShortcut(toolShortcut(tk), { mac })})`} keys={tk => ariaShortcut(toolShortcut(tk), { mac })} groupLabel={g => t(`toolGroup.${g}`)} onPick={setTool} />
-      {olShown && <div className="ol-pane">{outlinerEl(() => { saveWs({ ...wsLay, outliner: false }); keepFocus(); })}
+      {olShown && <div className="ol-pane">{outlinerEl(() => saveWs({ ...wsLay, outliner: false }))}
         <PanelSplitter side="left" width={fit.left} label={t('ws.resizeLeft')} onChange={w => setWsLay(x => ({ ...x, left: w }))} onCommit={w => saveWs({ ...wsLay, left: w })} /></div>}
       {studio && !focused && !wsLay.outliner && <button type="button" className="btn ghost icon-btn ol-show" aria-label={t('outliner.show')} title={t('outliner.show')} onClick={() => saveWs({ ...wsLay, outliner: true })}><Icon name="chevronRight" size={16} /></button>}
       <div className={`canvas studio-canvas ${view === 'split' && !compact ? 'split' : ''}`}>

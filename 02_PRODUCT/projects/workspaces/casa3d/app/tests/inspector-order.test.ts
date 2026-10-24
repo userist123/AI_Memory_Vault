@@ -11,9 +11,10 @@ const MARK = /(?:\/\/|\{\/\*) inspector:([a-z_]+)/g;
 function blocks(): Record<string, string[]> {
   const marks = [...SRC.matchAll(MARK)], out: Record<string, string[]> = {};
   marks.forEach((m, i) => { if (m[1] === 'end') return; const body = SRC.slice(m.index! + m[0].length, marks[i + 1]?.index ?? SRC.length);
-    // t('cheie'), t(`cheie.${x}`) — partea variabilă rămâne ca ${…} — și t(cond ? 'a' : 'b') → a, b; ordinea e cea din sursă
-    out[m[1]!] = [...body.matchAll(/\bt\((?:'([^']+)'|`([^`]+)`|[^`()?]*\?\s*'([^']+)'\s*:\s*'([^']+)')/g)]
-      .flatMap(x => x[3] ? [x[3], x[4]!] : [x[1] ?? x[2]!]); });
+    // t('cheie'), t(`cheie.${x}`) — partea variabilă rămâne ca ${…} — și ternarele, oricât de imbricate:
+    // t(a ? 'k.a' : b ? 'k.b' : 'k.c') → toate cheile cu punct din expresie (literalii fără punct sunt valori, nu chei)
+    out[m[1]!] = [...body.matchAll(/\bt\((?:'([^']+)'|`([^`]+)`|([^`()]*\?[^`()]*))/g)]
+      .flatMap(x => x[3] != null ? [...x[3].matchAll(/'([a-zA-Z][\w]*\.[\w.]+)'/g)].map(y => y[1]!) : [x[1] ?? x[2]!]); });
   return out;
 }
 
@@ -112,6 +113,9 @@ describe('ordinea câmpurilor din inspector', () => {
           "door.type.\${k}",
           "door.flush",
           "door.typeHint.\${type}",
+          "door.flipSlide",
+          "door.flipFold",
+          "door.flipHinge",
           "door.flipFace",
           "door.flipSwing",
           "door.slideAuto",

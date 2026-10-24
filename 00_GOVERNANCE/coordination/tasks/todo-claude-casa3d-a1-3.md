@@ -1,5 +1,5 @@
 # todo-claude-casa3d-a1-3
-STATUS: IN_PROGRESS        UPDATED: 2026-10-24T19:00:00+03:00
+STATUS: IN_PROGRESS        UPDATED: 2026-10-24T21:00:00+03:00
 TASK: Casa3D A1.3 workspace layout (roadmap todo-claude-casa3d-a1-roadmap.md, phase 2). Plan: casa3d/PLAN_A1_3.md.
 BRANCH / WORKTREE: claude/casa3d-a1-3-workspace, D:/w/a13 (base origin/main a32613fba), npm ci done in app/.
 OWNER DECISIONS 2026-10-24: new layout ON for all + "Layout clasic" preference; catalog stays in the right panel;
@@ -12,7 +12,13 @@ VERIFIED: tsc 0; vitest 136 files / 893 tests pass; check-a11y 21 states 0 viola
   1440 px EN+RO (tree select/expand, splitter drag + keys, reload keeps widths, Focus via key and button, classic
   round trip), phone 375 px RO (Structure/Panel switch, select from tree). Fixed in browser: room row label, room
   glyph looked like a checkbox, Focus button style specificity, pressed sheet button contrast.
-NEXT: vault-reviewer round 1 (running) -> fixes -> push -> draft PR -> CI once -> merge; mark phase 2 DONE in roadmap.
+REVIEW: round 1 NOT READY (keys leaked from tree into editor; right splitter scrolled with inspector; + 5 low) ->
+  fixed in commit 2. Round 2 (delta) READY with 2 minor gaps (focus on display:none inspector; nested ternaries in the
+  order test) -> fixed in commit 3 (focus recovery in a post-commit effect, skipped on mount). Browser re-verified.
+  Accepted residual: Ctrl+\ untested on a physical RO keyboard (alt:'any' covers AltGr in code); inspector order test
+  freezes the inline blocks + RoomPanel/PlacementPanel, not DoorPanel/WallLookPanel/RoomLookPanel/RoomOptionsPanel.
+VERIFIED (final): tsc 0; vitest 136 files / 893 tests; check-a11y 21 states 0 violations (before round-1 fixes).
+NEXT: push -> draft PR -> CI once -> merge; then mark phase 2 DONE in todo-claude-casa3d-a1-roadmap.md.
 ENV: launch config casa3d-a13 (port 3213) added to the primary checkout's .claude/launch.json (not committed).
   next-env.d.ts is rewritten by `npm run dev`: never commit it.
 KEY FILES: app/components/{Editor,Outliner,PanelSplitter}.tsx, app/core/{outliner,plan-describe}.ts,
