@@ -1458,3 +1458,12 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 .planwrap .plan-legend b{display:inline-block;min-width:2.4em;color:inherit;font-weight:700}
 .planwrap .toolopts,.planwrap .plan-legend,.ws .planwrap .toolopts,.ws .planwrap .plan-legend{background:rgba(255,251,244,.97);color:#3d343b;border:1px solid #D5C9BE;box-shadow:0 4px 14px rgba(36,27,36,.08)}
 .planwrap .toolopts select{background:#fff;color:#1f1a17;border:1px solid #cbbfb2;border-radius:8px;padding:2px 6px}
+/* laptop 1024–1599 px: bara de sus pe un singur rând (altfel „Salvează revizia” trecea singur pe al doilea rând la 1366 px).
+   Limba și unitățile intră în meniul „Mai multe”, Anulează / Refă rămân doar cu pictograma (numele e în aria-label și title);
+   sub 1440 px și „Proiecte” rămâne doar pictogramă. */
+@media (min-width:1024px) and (max-width:1599px){
+  .prefs-inline{display:none} .tb-more{display:block}
+  .tb-actions .icon-btn .lbl{display:none}
+  .topbar .name{min-width:140px}
+}
+@media (min-width:1024px) and (max-width:1439px){ .topbar > .icon-btn .lbl{display:none} }
