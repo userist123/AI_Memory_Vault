@@ -3,6 +3,12 @@ id: "idx-leg-eu-mica-2023-1114"
 type: legal_index
 lifecycle: REVIEW
 verification: verified_source
+provenance:
+  source_type: ai
+  source_ref: "https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=CELEX:32023R1114"
+  original_path: "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2023_1114_MiCA.md"
+  redaction: none
+  provenance_status: complete
 instruction_trust: NONE
 category: normative_index
 jurisdiction: "Uniunea Europeană (UE)"

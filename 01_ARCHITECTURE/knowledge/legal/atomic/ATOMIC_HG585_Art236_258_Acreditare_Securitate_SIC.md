@@ -3,6 +3,12 @@ id: "atm-hg585-art236-258-acreditare-sic"
 type: legal_atomic_obligation
 lifecycle: REVIEW
 verification: verified_source
+provenance:
+  source_type: ai
+  source_ref: "http://legislatie.just.ro/Public/DetaliiDocument/36886"
+  original_path: "01_ARCHITECTURE/knowledge/legal/primary/HG_585_2002.md"
+  redaction: none
+  provenance_status: complete
 instruction_trust: NONE
 category: technical_obligation_analysis
 source_act: "[[HG_585_2002]]"

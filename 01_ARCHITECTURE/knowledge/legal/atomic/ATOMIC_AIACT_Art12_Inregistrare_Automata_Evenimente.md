@@ -3,6 +3,12 @@ id: "atm-aiact-art12-logging"
 type: legal_atomic_obligation
 lifecycle: REVIEW
 verification: verified_source
+provenance:
+  source_type: ai
+  source_ref: "https://eur-lex.europa.eu/legal-content/RO/TXT/?uri=OJ:L_202401689"
+  original_path: "01_ARCHITECTURE/knowledge/legal/primary/Regulament_UE_2024_1689_AI_Act.md"
+  redaction: none
+  provenance_status: complete
 instruction_trust: NONE
 category: technical_obligation_analysis
 source_act: "[[Regulament_UE_2024_1689_AI_Act]]"
