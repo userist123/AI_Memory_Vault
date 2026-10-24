@@ -1,5 +1,5 @@
 # todo-claude-casa3d-plan-tools
-STATUS: REVIEW   UPDATED: 2026-10-24T03:30:00+03:00
+STATUS: DONE (merged) UPDATED: 2026-10-24T03:30:00+03:00
 TASK: Casa3D plan tools batch 1. Owner 2026-10-23: more tools in the left rail besides doors/walls/glass walls,
   research in one agent, implement in another. Research: D:/w/casa3d-verify/research/unelte-plan.md (local, not committed).
 BRANCH / PR: claude/casa3d-plan-tools (worktree D:/w/tools), base b2f29b8c, main (Next 16, #334) merged in.
@@ -21,3 +21,4 @@ OPEN: niche is not cut into the wall in 3D; "null.trim" seen once in 3D (not rep
   "Salvează revizia" onto a second row at 1366 px (pre-existing on main, not from this batch).
 KEY FILES: app/core/plan-limits.ts, app/lib/repo.ts, app/components/{Editor,PlanView,ToolRail}.tsx,
   app/lib/tool-groups.ts, app/tests/plan-limits.test.ts, app/tests/plan-tools.test.ts.
+MERGED: #337 (7fd65dfe, 2026-10-24). Follow-ups landed in claude/casa3d-polish (topbar one row at 1024-1599 px).

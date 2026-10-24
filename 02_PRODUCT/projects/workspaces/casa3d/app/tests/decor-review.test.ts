@@ -36,3 +36,19 @@ test('placare: o bandă peste tavanul coborât se taie la fel cum verifică serv
   const out = insertBand([old], { side: 'N', kind: 'slats', material: 's', fromM: 2.7, alongFromM: 1, alongToM: 2 } as WallFeature, 3.2, 2.6);
   assert.equal(bandsOverlap(out, 10), false);
 });
+
+test('faianța: o bandă de deasupra faianței sau un brâu nu o scot; pragul de 5 cm nu depinde de rotunjire', () => {
+  const g = (wf: WallFeature[]) => bathTiles({ wallTile: 'tile-x', bath: { tileZone: 'h120' }, wallFeatures: wf } as any, 'baie', room).filter(w => w.side === 'N').map(w => [w.alongFromM ?? 0, w.alongToM ?? 3.2]);
+  const hi = bathTiles({ wallTile: 'tile-x', bath: { tileZone: 'h120' }, wallFeatures: [] } as any, 'baie', room)[0]!.heightM; assert.ok(hi !== undefined);
+  if (hi !== undefined) assert.deepEqual(g([{ side: 'N', kind: 'paint', material: 'p', fromM: hi + .5, alongFromM: 1, alongToM: 2 } as WallFeature]), [[0, 3.2]]);
+  assert.deepEqual(g([{ side: 'N', kind: 'rail', material: 'r', heightM: 1, alongFromM: 1, alongToM: 2 } as WallFeature]), [[0, 3.2]]);
+  assert.deepEqual(g([{ side: 'N', kind: 'stone', material: 's', alongFromM: 0, alongToM: 2 } as WallFeature, { side: 'N', kind: 'stone', material: 's', alongFromM: 2.05, alongToM: 3.2 } as WallFeature]), [[2, 2.05]]);
+});
+
+test('faianța: vopseaua de sus și brâul pe toată latura nu scot faianța; latura neîntreruptă rămâne fără interval', () => {
+  const g = (wf: WallFeature[], r: any = room) => bathTiles({ wallTile: 'tile-x', bath: { tileZone: 'h120' }, wallFeatures: wf } as any, 'baie', r).filter(w => w.side === 'N');
+  for (const wf of [[{ side: 'N', kind: 'paint', material: 'p', fromM: 2.2 }], [{ side: 'N', kind: 'rail', material: 'r', heightM: 1.2 }]] as WallFeature[][]){
+    const t = g(wf); assert.equal(t.length, 1); assert.equal(t[0]!.alongFromM, undefined); assert.equal(g(wf, undefined).length, 1); }
+  const t = g([{ side: 'N', kind: 'paint', material: 'p', fromM: 2.2, alongFromM: 1, alongToM: 2 } as WallFeature]); assert.equal(t.length, 1); assert.equal(t[0]!.alongFromM, undefined);
+  assert.equal(g([{ side: 'N', kind: 'paint', material: 'p' } as WallFeature]).length, 0);
+});
