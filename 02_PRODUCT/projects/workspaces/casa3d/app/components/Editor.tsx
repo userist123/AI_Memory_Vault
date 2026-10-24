@@ -672,8 +672,9 @@ export default function Editor({ id }: { id: string }){
               <label className="f"><span>{t('editor.length', { u })}</span><input type="number" key={`${selWall.id}:${wallLength(selWall.a, selWall.b)}:${units}`} defaultValue={inField(wallLength(selWall.a, selWall.b))}
                 // se aplică la Enter sau la ieșirea din câmp, nu la fiecare pas al săgeților: un singur pas de anulare, iar
                 // capătul nu trece prin piciorul unui perete în T (care altfel l-ar urma de atunci încolo)
-                onKeyDown={e => { if (e.key === 'Enter') e.currentTarget.blur(); }}
-                onBlur={e => { const el = e.currentTarget, back = inField(wallLength(selWall.a, selWall.b)); let ok = false; num(el.value, x => { ok = onSetWallLength(selWall.id, x / 100); }, 20); if (!ok) el.value = String(back); }} /></label>
+                // Esc renunță; textul neatins nu se aplică (valoarea afișată e rotunjită, un perete oblic s-ar muta)
+                onKeyDown={e => { if (e.key === 'Escape'){ e.currentTarget.value = e.currentTarget.defaultValue; e.stopPropagation(); } if (e.key === 'Enter' || e.key === 'Escape') e.currentTarget.blur(); }}
+                onBlur={e => { const el = e.currentTarget; if (el.value === el.defaultValue) return; const back = inField(wallLength(selWall.a, selWall.b)); let ok = false; num(el.value, x => { ok = onSetWallLength(selWall.id, x / 100); }, 20); if (!ok) el.value = String(back); }} /></label>
               <label className="f"><span>{t('editor.thickness', { u })}</span><input type="number" value={inField(selWall.thickness)} onChange={e => num(e.target.value, x => mutate(s => { s.floor.walls.find(w => w.id === selWall.id)!.thickness = r3(x / 100); }), 5)} /></label>
             </div>
             <label className="f" style={{ display: 'flex', gap: 8, alignItems: 'center' }}><input type="checkbox" checked={selWall.exterior} onChange={e => mutate(s => { s.floor.walls.find(w => w.id === selWall.id)!.exterior = e.target.checked; })} /> {t('editor.exteriorWall')}</label>

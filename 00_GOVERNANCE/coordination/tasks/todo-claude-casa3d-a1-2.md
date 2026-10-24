@@ -35,8 +35,13 @@ Review round 1 (vault-reviewer): 6 findings, all fixed in commit "fix(casa3d): A
   length applies on Enter/blur (no T-foot capture, one undo), Ctrl/Cmd+Delete/Backspace swallowed while drawing,
   untouched dim text closes input (imperial ok), same length = no undo step. +3 wall-edit tests. tsc 0; targeted vitest
   42/42; browser verified all. Accepted residual: 90deg corner neighbour becomes slanted (matches spec).
-NEXT: full vitest (PowerShell: npx vitest run --maxWorkers=2; bash npx gave exit 127), round-2 review of the delta
-  only, PR, CI once, merge if green, mark phase 1 DONE in the roadmap checkpoint.
+2026-10-24: full suite after round 1: tsc 0, vitest 126/760 green. Review round 2 (delta only): 1 MEDIUM - Inspector
+  length applied the rounded display value on untouched blur/Enter (oblique wall / imperial moved). Fixed: skip when
+  value === defaultValue; Esc restores + blurs (stopPropagation, keeps selection); PlanView down() blurs a focused
+  inspector input (not .plan-dim-input) before changing selection, so a typed length is applied, not lost. Browser:
+  oblique 294 untouched blur/Enter no change; Esc back to 294; 200 + plan click applied, one Ctrl+Z -> 294; test wall
+  undone, Saved. tsc 0; vitest 126/760. Accepted residual (low): zero-length neighbour on old b -> neighbourShort msg.
+NEXT: PR, CI once, merge if green, mark phase 1 DONE in the roadmap checkpoint.
 KEY FILES: app/components/PlanView.tsx, PlanContextMenu.tsx, Editor.tsx (onSetWallLength, SEGMENT_THICKNESS),
   core/wall-edit.ts, core/snap.ts, lib/commands.ts, lib/locales/{ro,en}.ts, app/globals.css, tests/{wall-edit,snap,commands,typed-dimension}.test.ts.
 ENV: dev server `casa3d-a12` in repo-root .claude/launch.json (local, not committed); vitest needs --maxWorkers=2.
