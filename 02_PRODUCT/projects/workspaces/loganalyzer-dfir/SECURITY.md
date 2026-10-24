@@ -14,8 +14,8 @@ Nu deschide issue-uri publice pentru vulnerabilități. Contactează direct main
   - golurile de probă sunt raportate explicit (NOT_AVAILABLE / FAILED / PARTIAL), nu ascunse.
 - **Licențiere offline**:
   - cheile sunt legate de Hardware ID-ul stației;
-  - schema actuală (hash cu salt inclus în binar) oprește doar copierea ocazională;
-  - trecerea la semnătură asimetrică este planificată (`Documentation/MVP-DECISIONS.md`, decizia 9);
+  - licența este semnată ECDSA P-256 cu o cheie privată ținută offline; aplicația are doar cheia publică (fail closed fără ea);
+  - schema veche (hash cu salt inclus în binar) a fost eliminată; cheile emise cu ea sunt refuzate (audit de securitate #3);
   - instrumentele de emitere (`LogAnalyzer.LicenseManager`, `LogAnalyzer.KeyGen`, `Generate-LicenseKey.ps1`) nu se livrează clienților;
   - fișierele `license.lic` nu se includ în pachete (CI-ul verifică acest lucru).
 - **CI/CD**:

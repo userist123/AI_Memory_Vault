@@ -2,6 +2,7 @@
   <Project Path="LogAnalyzer.Ai/LogAnalyzer.Ai.csproj" />
   <Project Path="LogAnalyzer.App/LogAnalyzer.App.csproj" />
   <Project Path="LogAnalyzer.App.Classified/LogAnalyzer.App.Classified.csproj" />
+  <Project Path="LogAnalyzer.App.Network/LogAnalyzer.App.Network.csproj" />
   <Project Path="LogAnalyzer.App.Tests/LogAnalyzer.App.Tests.csproj" />
   <Project Path="LogAnalyzer.Connectors/LogAnalyzer.Connectors.csproj" />
   <Project Path="LogAnalyzer.Core/LogAnalyzer.Core.csproj" />

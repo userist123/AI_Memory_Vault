@@ -3,7 +3,7 @@
 
     <!-- Modal Backdrop -->
     <Style x:Key="ModalBackdropStyle" TargetType="Grid">
-        <Setter Property="Background" Value="#E6080B12"/>
+        <Setter Property="Background" Value="{StaticResource ModalBackdropBrush}"/>
         <Setter Property="Panel.ZIndex" Value="99999"/>
     </Style>
 

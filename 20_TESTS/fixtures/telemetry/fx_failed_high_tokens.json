@@ -1,0 +1,19 @@
+{
+ "task": "T1",
+ "kind": "fixture",
+ "condition": "router",
+ "repeat": 0,
+ "correct": false,
+ "incomplete": false,
+ "usage_complete": true,
+ "tokens_complete": true,
+ "total_tokens": 5000,
+ "tok_input": 10,
+ "tok_cache_read": 4890,
+ "tok_cache_creation": 60,
+ "tok_output": 40,
+ "cost_authoritative_usd": 0.5,
+ "total_cost_usd": 0.5,
+ "turns": 3,
+ "delegations": 0
+}

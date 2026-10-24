@@ -73,12 +73,12 @@ namespace LogAnalyzer.Core.Services.Edition
         /// <summary>Short text for the header badge.</summary>
         public string BadgeText => EffectiveRole == StationRole.Csirt
             ? (Mode == AppMode.AirGapped ? "CSIRT fără rețea" : "CSIRT")
-            : "STAȚIE DE CONTROL";
+            : "Stație de control";
 
         public string HumanRole => StationRoles.Human(EffectiveRole);
 
         public string Summary =>
-            $"Rol de stație: {HumanRole} ({StationRoles.Name(EffectiveRole)}). Ediție: {(Edition == EditionKind.Classified ? "clasificată (P1)" : "neclasificată (P2/P3)")}. " +
+            $"Rol de stație: {HumanRole} ({StationRoles.Name(EffectiveRole)}). Ediția: {StationPostures.EditionLabel(StationPostureContext.Current)}. " +
             $"Mod: {(Mode == AppMode.AirGapped ? "izolat (air-gap)" : "conectat")}. " +
             (PolicySha256 is null ? "Politică semnată: niciuna acceptată. " : $"Politică semnată acceptată: SHA-256 {PolicySha256[..12]}. ") +
             string.Join(" ", Reasons);
@@ -102,12 +102,12 @@ namespace LogAnalyzer.Core.Services.Edition
 
             if (edition == EditionKind.Classified)
             {
-                reasons.Add("Ediția clasificată (P1) rulează mereu ca Stație de control: nu are rețea, AI sau acțiuni pe gazdă compilate.");
+                reasons.Add("Ediția Standalone (P1) rulează mereu ca Stație de control: nu are rețea, AI sau acțiuni pe gazdă compilate.");
                 if (requested == StationRole.Csirt)
-                    reasons.Add("Politica cere rolul CSIRT; cererea a fost respinsă pentru că ediția clasificată nu poate avea acest rol" +
+                    reasons.Add("Politica cere rolul CSIRT; cererea a fost respinsă pentru că ediția Standalone nu poate avea acest rol" +
                                 (policy is { Valid: true } ? "." : " (politica nici nu este verificată în această ediție)."));
                 else if (policy is not null)
-                    reasons.Add(policy.Valid ? "Politica nu schimbă nimic în ediția clasificată." : $"Politica nu a fost acceptată: {policy.Reason}");
+                    reasons.Add(policy.Valid ? "Politica nu schimbă nimic în ediția Standalone." : $"Politica nu a fost acceptată: {policy.Reason}");
                 return new StationRoleDecision(StationRole.Control, requested, edition, AppMode.AirGapped, sha, reasons, nowUtc);
             }
 
@@ -131,7 +131,8 @@ namespace LogAnalyzer.Core.Services.Edition
     }
 
     /// <summary>What the edition composition decides at startup: the mode and the station role, from the same policy read.</summary>
-    public sealed record StartupDecision(ModeDecision Mode, StationRoleDecision Role);
+    /// <param name="PolicyVersion">Version of the signed edition policy accepted at this start (0: none); recorded in the auth audit as the anti-rollback mark (security audit #18).</param>
+    public sealed record StartupDecision(ModeDecision Mode, StationRoleDecision Role, long PolicyVersion = 0);
 
     /// <summary>The station role chosen at startup. Set once; never switched while the application runs.</summary>
     public static class StationRoleContext

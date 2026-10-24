@@ -80,6 +80,18 @@
       "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
     },
     {
+      "path": "02_PRODUCT/projects/Casa3D/GEMINI_4_ARGON_FLEXIBLE_INTERIOR_DESIGN_UPGRADE_PROMPT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/Casa3D/GEMINI_4_ARGON_PRO_EDITOR_MASTER_PROMPT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
       "path": "02_PRODUCT/projects/JARVIS_COGNITIVE_BRAIN.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
@@ -680,6 +692,12 @@
       "reason": "Plain markdown work-package prompt (WP18 proposal, 2026-10-10); not a note. Frontmatter would require owner lifecycle/verification values."
     },
     {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-loganalyzer-low-b1b10.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
       "path": "00_GOVERNANCE/coordination/tasks/todo-claude-wp18-prompt.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
@@ -702,6 +720,144 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Plain markdown project document (WP18); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_UI_SI_POLITICI.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research document (WP18, owner request 2026-10-11); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/SECURITY_AUDIT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (LogAnalyzer); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/THIRD_PARTY_NOTICES.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (LogAnalyzer); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/ANALYSIS_2026-10-11_APPLICATION_UPDATES.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PRIVACY_OF_TEST_DATA.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (LogAnalyzer); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_AMENINTARI_ACTUALE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_COMPARATIE_INSPECTRA.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_CONCURENTA.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_CONTROL_STATII_CLASIFICATE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_CSIRT_RAPORTARE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_DFIR_TRIAJ_CE_LIPSESTE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_EXFILTRARE_AIRGAP.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_MEDII_DE_STOCARE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_PROBE_VALOARE_JURIDICA.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_UX_NESPECIALISTI.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-12_COMPARATIE_AIRGAP_LOGANALYZER_INSPECTRA.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-12_SECURITATE_UNELTEI_SI_ACREDITARE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-12_UTILITATE_SI_FLUX_DE_LUCRU.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/REVIEW_2026-10-11_SENIOR_DETECTION_AND_PERFORMANCE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/REVIEW_2026-10-12_INVESTIGATION_REPORT_USEFULNESS_AND_TERMINOLOGY.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/utilizare/ANEXA_VERIFICARI_SI_CODURI.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (LogAnalyzer); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/utilizare/GHID_DE_UTILIZARE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (LogAnalyzer); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-loganalyzer-review.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
     },
     {
       "path": "00_GOVERNANCE/coordination/tasks/todo-fable-remediation.md",

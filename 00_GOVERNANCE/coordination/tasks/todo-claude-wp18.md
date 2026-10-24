@@ -57,11 +57,22 @@ VERIFICATION (S1, local, Windows):
 - `dotnet build LogAnalyzer.slnx -c Release`: Build succeeded (TEST_VERIFIED).
 - App.Tests 28/28, Edition.Tests 15/15, UI.Tests 179/179 passed.
 - Dfir.Tests 1045 passed, 4 skipped, 2 FAILED on the real local corpus: `AntiForensicsTests.Real_corpus_traces_match_wevtutil…` (28 vs 64)
-  and `InvestigationTests.NanAgent_corpus_yields_the_known_incident_chain` (chain text lacks NanAgent32.exe). Neither test touches WP18 code
+  and `InvestigationTests.LAB-PC_corpus_yields_the_known_incident_chain` (chain text lacks LAB-PC32.exe). Neither test touches WP18 code
   (parsers / AntiForensics.Evaluate / incident chain); treated as PRE-EXISTING local corpus drift, NOT fixed here. CI never runs them (no corpus).
 - Windows Defender flags `LogAnalyzer.Dfir.Tests.dll` as `Ransom:Win32/Clop.SIB!MTB` on every rebuild (test data contains the literal
   `vssadmin delete shadows /all /quiet` lines of WP11 tests). False positive on the test assembly; owner restored the file from quarantine.
 - `Sign-EditionPolicy.ps1` change: parsed OK with Windows PowerShell; end-to-end run UNVERIFIED here (needs pwsh 7, not installed).
-NEXT: CI on PR #266; owner review and merge; real-person usability run (S6). Earlier plan was: S2 Home + navigation per role → S3 language levels/terms/glossary → S4 guided flows → S5 reports → S6 accessibility → S7 docs.
+- 2026-10-11 owner run on the real PC found 4 defects, all fixed with regression tests: first-run sign-in crash (control read on a
+  background thread, pre-existing WP-AUTH), investigation crash (IPEndPoint serialized to JSON), whole Security log a gap (XPath > 22 OR
+  conditions), plus redesign request. Redesign 'Registru': light paper theme, ink-blue accent, no glow/emoji/marketing badges, readable
+  fonts, Romanian sidebar and table headers (ColumnLabels), intent cards on Home. Owner GPO backups (3) re-validated: same counts as 2026-10-05.
+- 2026-10-11 (later): owner asked for plain explanations of every code and fewer clicks. Done, commit 9dfc6b6c1 + this one:
+  CodeExplainer/CheckGuides (38 checks, 35 events, registry, audit GUIDs, SIDs, services, secpol); control screen list+explanation;
+  PolicyNextStep (one next step); event explorer 'Ce înseamnă'; live monitoring messages shown; DeadControlsTests; user guide
+  docs/utilizare/GHID_DE_UTILIZARE.md + generated annex ANEXA_VERIFICARI_SI_CODURI.md (UserGuideAppendixTests, LA_UPDATE_DOCS=1).
+  Tests: Dfir 1044+1 passed/29 skipped, App 68, UI 208, Edition 15. New panel NOT visually checked on a real control yet.
+NEXT (2026-10-11): screenshots for the guide after owner approves design; investigation and CSIRT chapters of the guide; legacy 'Avansat'
+  pages (English labels, unbound props, two entries to page 8); open question: meaning of 'SV' classification.
+NEXT (older): CI on PR #266; owner review and merge; real-person usability run (S6). Earlier plan was: S2 Home + navigation per role → S3 language levels/terms/glossary → S4 guided flows → S5 reports → S6 accessibility → S7 docs.
 BLOCKERS: none.
 KEY FILES: see DONE; prompt §2 reading list.

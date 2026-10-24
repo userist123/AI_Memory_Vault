@@ -1,0 +1,23 @@
+{
+ "fields": {
+  "incomplete": false,
+  "usage_complete": true,
+  "attribution_mismatch": true,
+  "model_usage_missing": [
+   "claude-haiku-5-5"
+  ],
+  "cost_partial": true,
+  "cost_authoritative_usd": 0.003,
+  "total_tokens": 176
+ },
+ "absent": [
+  "usage_mismatch"
+ ],
+ "rows": {
+  "subagent:Explore|claude-haiku-5-5": {
+   "input_tokens": 1,
+   "cache_read_input_tokens": 50,
+   "requests": 1
+  }
+ }
+}

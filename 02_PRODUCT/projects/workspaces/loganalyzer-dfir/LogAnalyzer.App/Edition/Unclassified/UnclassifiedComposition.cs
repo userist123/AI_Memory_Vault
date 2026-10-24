@@ -23,7 +23,10 @@ namespace LogAnalyzer.UI.Services
     /// </summary>
     public static class EditionComposition
     {
-        public const string PublicKeyResource = "edition-policy-public-key.b64";
+        public const string PublicKeyResource = SignedPolicyStartup.PublicKeyResource;
+
+        /// <summary>The posture of this executable, fixed at compile time. A signed policy only chooses the mode (StationPostures.ClampMode), never the posture.</summary>
+        public const StationPosture Posture = StationPosture.Internet;
 
         /// <summary>
         /// Signed policy → mode. Missing / invalid / expired / foreign / rolled-back policy, or no embedded verification key,
@@ -40,29 +43,14 @@ namespace LogAnalyzer.UI.Services
             var requested = EditionPolicyVerifier.RequestedOverride(args, stationMode);
             var snapshot = new WindowsConnectivityProbe().Probe();
 
-            var highWaterPath = System.IO.Path.Combine(System.IO.Path.GetDirectoryName(EditionPolicyVerifier.DefaultPolicyPath)!, "policy.highwater");
-            long highWater = 0;
-            try { if (System.IO.File.Exists(highWaterPath)) long.TryParse(System.IO.File.ReadAllText(highWaterPath).Trim(), out highWater); } catch (System.IO.IOException) { }
-
-            string? policyText = null;
-            try { if (System.IO.File.Exists(EditionPolicyVerifier.DefaultPolicyPath)) policyText = System.IO.File.ReadAllText(EditionPolicyVerifier.DefaultPolicyPath); }
-            catch (System.IO.IOException) { }
-            catch (UnauthorizedAccessException) { }
-
-            string? key = null;
-            using (var st = typeof(EditionComposition).Assembly.GetManifestResourceStream(PublicKeyResource))
-                if (st is not null) { using var r = new System.IO.StreamReader(st); key = r.ReadToEnd(); }
-
-            var result = EditionPolicyVerifier.Verify(policyText, key, Environment.MachineName, DateTimeOffset.UtcNow, highWater);
-            if (result.Valid && result.Policy!.Version > highWater)
-            {
-                // Best effort (needs write access to the policy directory, i.e. administrators): later, older policies are refused.
-                try { System.IO.File.WriteAllText(highWaterPath, result.Policy.Version.ToString()); } catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException) { }
-            }
+            var result = SignedPolicyStartup.Load(typeof(EditionComposition).Assembly);
             var mode = EditionPolicyVerifier.Decide(result, snapshot, requested);
             var role = StationRoleResolver.Decide(EditionKind.Unclassified, result, mode, DateTimeOffset.UtcNow);
-            return new StartupDecision(mode, role);
+            return new StartupDecision(mode, role, result.Valid ? result.Policy!.Version : 0);
         }
+
+        /// <summary>Anti-rollback mark (security audit #18); the logic is shared with the Network edition in SignedPolicyStartup.</summary>
+        internal static long HighWater(string highWaterPath, string authAuditPath) => SignedPolicyStartup.HighWater(highWaterPath, authAuditPath);
 
         public static void Register(IServiceCollection services)
         {
@@ -73,6 +61,8 @@ namespace LogAnalyzer.UI.Services
             services.AddSingleton<IConnectivityWatcher, NetworkChangeWatcher>();
             services.AddSingleton<IRegistryValueWriter, RegistryValueWriter>();
             services.AddSingleton<IAuditCollector, PowerShellAuditCollector>();
+            // this edition ships the firewall runner and the collection script: their programs join the inventory A17 recognises (only from the sealed audit)
+            LogAnalyzer.Response.ResponseProgramInventory.Register();
             services.AddSingleton<ISyslogReceiver, UdpSyslogReceiver>();
             services.AddSingleton<IAuditCollectionService, AuditCollectionService>();
         }

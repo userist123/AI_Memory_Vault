@@ -1,4 +1,3 @@
-using System.Text.RegularExpressions;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Analysis;
@@ -18,8 +17,9 @@ public static partial class Wp11Rules
     private static void Vss(Ctx c, List<Finding> o)
     {
         var lists = c.Data.Lists.Vss;
-        var patterns = lists.CommandPatterns.Select(p => (P: p, Rx: new Regex(p.Regex, RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200)))).ToList();
+        var patterns = lists.CommandPatterns.Select(p => (P: p, Rx: RulePatterns.Compile(p.Regex))).ToList();
         var hits = new List<VssHit>();
+        var notEvaluated = new List<TimelineEvent>();
         foreach (var e in c.Events)
         {
             string cmd; bool start;
@@ -28,13 +28,16 @@ public static partial class Wp11Rules
             else if (Ev(e, "Microsoft-Windows-PowerShell/Operational", 4104)) { cmd = F(e, "ScriptBlockText"); start = false; }
             else continue;
             if (cmd.Length == 0) continue;
+            bool timedOut = false, matched = false;
             foreach (var (p, rx) in patterns)
             {
-                bool m;
-                try { m = rx.IsMatch(cmd); } catch (RegexMatchTimeoutException) { m = false; }
-                if (m) { hits.Add(new(e, p, cmd, start)); break; }
+                var m = RulePatterns.Match(rx, cmd);
+                if (m is null) { timedOut = true; continue; }   // "neevaluat" for this pattern, never "no match"
+                if (m.Value) { hits.Add(new(e, p, cmd, start)); matched = true; break; }
             }
+            if (timedOut && !matched) notEvaluated.Add(e);
         }
+        if (notEvaluated.Count > 0) o.Add(RulePatterns.NotEvaluated(c.NextId(), "VSS-SNAPSHOT-DELETED", "Impact", notEvaluated));
         var sysEvents = c.Events.Where(e => (Ev(e, "System", 25, 33) && e.Provider.Equals("volsnap", StringComparison.OrdinalIgnoreCase)) ||
                                             (Ev(e, "Application", 8193, 8194) && e.Provider.Equals("VSS", StringComparison.OrdinalIgnoreCase))).ToList();
 
@@ -42,7 +45,8 @@ public static partial class Wp11Rules
         {
             var ordered = hits.OrderBy(h => T(h.Event)).ToList();
             var first = T(ordered[0].Event); var last = T(ordered[^1].Event);
-            bool anyDelete = hits.Any(h => h.Pattern.Kind == "delete");
+            bool anyDelete = hits.Any(h => h.Pattern.Kind != "resize");   // "inhibit" (wbadmin/bcdedit, T1490) weighs like a delete
+            bool vssOnly = hits.All(h => h.Pattern.Tool is "vssadmin" or "wmic" or "diskshadow" or "wmi-cim");
             var near = sysEvents.Where(e => first is { } f && T(e) is { } t && t >= f - c.Options.ImpactWindow && t <= (last ?? f) + c.Options.ImpactWindow).ToList();
             var impact = (first is null ? [] : c.Existing.Concat(o).Where(f => IsImpactFinding(f, lists) && (f.FirstSeenUtc ?? f.LastSeenUtc) is { } ft && (ft - first.Value).Duration() <= c.Options.ImpactWindow)).ToList();
             var sev = !anyDelete ? Severity.Low : impact.Count > 0 ? Severity.High : Severity.Medium;
@@ -50,7 +54,7 @@ public static partial class Wp11Rules
             o.Add(new Finding
             {
                 FindingId = c.NextId(), RuleId = "VSS-SNAPSHOT-DELETED",
-                Title = anyDelete ? "Comandă de ștergere a copiilor shadow (VSS) înregistrată" : "Comandă de reducere a spațiului copiilor shadow (VSS) înregistrată",
+                Title = anyDelete ? vssOnly ? "Comandă de ștergere a copiilor shadow (VSS) înregistrată" : "Comandă de ștergere a copiilor de rezervă sau de dezactivare a recuperării sistemului înregistrată" : "Comandă de reducere a spațiului copiilor shadow (VSS) înregistrată",
                 Severity = sev, Category = "Impact", Classification = impact.Count > 0 ? Classification.Correlated : Classification.Direct,
                 Confidence = impact.Count > 0 ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1490",
                 FirstSeenUtc = first, LastSeenUtc = last, User = F(ordered[0].Event, "SubjectUserName", "User"), Process = ordered[0].Event.Process,
@@ -73,10 +77,10 @@ public static partial class Wp11Rules
         o.Add(new Finding
         {
             FindingId = c.NextId(), RuleId = "VSS-SNAPSHOT-DELETED",
-            Title = aborted ? "Copii shadow (VSS) abandonate de sistem: spațiul de stocare nu a putut crește" : "Cea mai veche copie shadow (VSS) ștearsă de sistem pentru limita de spațiu",
+            Title = aborted ? "Copii umbră (VSS) abandonate de sistem: spațiul de stocare nu a putut crește" : "Cea mai veche copie umbră (VSS) ștearsă de sistem pentru limita de spațiu",
             Severity = aborted ? Severity.Low : Severity.Info, Category = "Impact", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1490",
             FirstSeenUtc = T(vol[0]), LastSeenUtc = T(vol[^1]),
-            Description = $"volsnap: {Join(vol.Select(e => e.EventId))} ({vol.Count} evenimente). 33 = cea mai veche copie a fost ștearsă pentru a respecta limita de spațiu setată; 25 = copii abandonate pentru că spațiul nu a putut crește peste limită. " +
+            Description = $"volsnap: {Join(vol.Select(e => e.EventId))} ({LogAnalyzer.Dfir.Language.RoText.Count(vol.Count, "eveniment", "evenimente")}). 33 = cea mai veche copie a fost ștearsă pentru a respecta limita de spațiu setată; 25 = copii abandonate pentru că spațiul nu a putut crește peste limită. " +
                           "Sunt efecte ale limitei de spațiu, nu dovada unei ștergeri făcute de un utilizator; nu există în caz o comandă de ștergere.",
             ClassificationReason = "Evenimente volsnap 25/33 în jurnalul System; nicio linie de comandă de ștergere a copiilor shadow în caz.",
             SemanticType = SemanticType.Observation,
@@ -86,7 +90,8 @@ public static partial class Wp11Rules
     }
 
     private static bool IsImpactFinding(Finding f, VssLists lists) =>
-        lists.ImpactMitreIds.Contains(f.MitreTechniqueId, StringComparer.OrdinalIgnoreCase) ||
+        f.RuleId != RulePatterns.NotEvaluatedRuleId &&   // a "neevaluat" gap shares the category but is never impact evidence
+        (lists.ImpactMitreIds.Contains(f.MitreTechniqueId, StringComparer.OrdinalIgnoreCase) ||
         lists.ImpactCategories.Contains(f.Category, StringComparer.OrdinalIgnoreCase) && f.RuleId != "VSS-SNAPSHOT-DELETED" ||
-        f.RuleId == "DEF-DETECTION" && lists.ImpactDetectionKeywords.Any(k => (f.Title + " " + f.Description).Contains(k, StringComparison.OrdinalIgnoreCase));
+        f.RuleId == "DEF-DETECTION" && lists.ImpactDetectionKeywords.Any(k => (f.Title + " " + f.Description).Contains(k, StringComparison.OrdinalIgnoreCase)));
 }

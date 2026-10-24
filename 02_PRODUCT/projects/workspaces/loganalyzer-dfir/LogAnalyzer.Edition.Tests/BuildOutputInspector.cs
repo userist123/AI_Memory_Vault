@@ -24,6 +24,30 @@ public static class BuildOutputInspector
     public static IEnumerable<string> OwnAssemblies(string dir) =>
         Directory.EnumerateFiles(dir, "LogAnalyzer*.dll").Where(f => !f.EndsWith(".resources.dll", StringComparison.OrdinalIgnoreCase));
 
+    /// <summary>The Int32 value of a compile-time constant field (for example an enum constant) in a type of the assembly, or null when absent.</summary>
+    public static int? ConstantInt32(string path, string typeFullName, string fieldName)
+    {
+        using var fs = File.OpenRead(path);
+        using var pe = new PEReader(fs);
+        var md = pe.GetMetadataReader();
+        foreach (var th in md.TypeDefinitions)
+        {
+            var t = md.GetTypeDefinition(th);
+            var full = t.Namespace.IsNil ? md.GetString(t.Name) : md.GetString(t.Namespace) + "." + md.GetString(t.Name);
+            if (full != typeFullName) continue;
+            foreach (var fh in t.GetFields())
+            {
+                var f = md.GetFieldDefinition(fh);
+                if (md.GetString(f.Name) != fieldName) continue;
+                var c = f.GetDefaultValue();
+                if (c.IsNil) return null;
+                var constant = md.GetConstant(c);
+                return md.GetBlobReader(constant.Value).ReadInt32();
+            }
+        }
+        return null;
+    }
+
     public static AssemblyFacts Read(string path)
     {
         using var fs = File.OpenRead(path);

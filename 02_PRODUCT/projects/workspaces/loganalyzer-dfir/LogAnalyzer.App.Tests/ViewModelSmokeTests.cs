@@ -101,7 +101,8 @@ public sealed class ViewModelSmokeTests
     {
         var vm = new StationControlViewModel();
         Assert.Equal(90, vm.PeriodDays);
-        Assert.Equal(5, vm.StatusFilters.Length);
+        Assert.Equal(6, vm.StatusFilters.Length);
+        Assert.Contains("NU SE APLICĂ", vm.StatusFilters);
         vm.SaveReportCommand.Execute(null);                              // no report yet: a message, no file, no dialog
         Assert.Contains("întâi", vm.Status);
         vm.StatusFilter = "NECONFORM";                                   // filtering an empty report must not throw

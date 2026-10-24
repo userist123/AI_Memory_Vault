@@ -21,9 +21,16 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
-  regression-and-heldout:
+  # Two independent jobs. They used to run in one job under a 20-minute limit:
+  # the suite alone takes 12-20 minutes depending on the runner, so the
+  # benchmark after it was cancelled at the limit on several branches
+  # (2026-10-22: PR #319, design-system-tokens, cost-router-pinned-self-update)
+  # while every test had passed. The benchmark does not depend on the suite.
+  zero-regression-gate:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    # #320 measured the suite at ~21-22 min and raised the old single job to 30;
+    # in this job alone it took 23 min on 2026-10-23, so 45 leaves real margin.
+    timeout-minutes: 45
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
@@ -38,9 +45,29 @@ jobs:
           python -m pip install --upgrade pip
           if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
           pip install pytest==9.1.1 pyyaml==6.0.3
+      # --durations lists the slowest tests in every run, so the next time the
+      # suite grows towards the limit the log already says where the time goes.
       - name: Zero-regression gate
         run: |
-          python -m pytest 20_TESTS -q
+          python -m pytest 20_TESTS -q --durations=30
+
+  heldout-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
+        with:
+          python-version: '3.11'
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+          pip install pyyaml==6.0.3
       # v1 is not run. 07_EVALUATION/heldout_retrieval_benchmark_v2/CONTRACT.md
       # records why: every one of v1's 36 held-out and 12 dev cases referenced
       # one of two gold notes that do not exist in the vault, so its recall is
