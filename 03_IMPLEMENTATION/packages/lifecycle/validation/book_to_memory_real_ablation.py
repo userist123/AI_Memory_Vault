@@ -278,8 +278,8 @@ def write_task_packet(tasks: Sequence[TaskNote], out_dir: Path, *, prereg_path: 
     cfg = run_config_template()
     cfg["controls"]["trials_per_run"] = len(trials)
     trials_doc = {"schema": PACKET_SCHEMA, "trials": sorted(trials, key=lambda t: t["order_index"])}
-    (out_dir / "trials.json").write_text(json.dumps(trials_doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    (out_dir / "run_config.template.json").write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8")
+    (out_dir / "trials.json").write_text(json.dumps(trials_doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
+    (out_dir / "run_config.template.json").write_text(json.dumps(cfg, indent=2) + "\n", encoding="utf-8", newline="\n")
     tasks_doc = {
         "schema": PACKET_SCHEMA,
         "note": "Scoring material. It must NOT be given to the model under test or to its orchestrator's prompts.",
@@ -289,9 +289,11 @@ def write_task_packet(tasks: Sequence[TaskNote], out_dir: Path, *, prereg_path: 
                    "source_ref": t.source_ref, "question": t.question, "note_definition": t.definition,
                    "source_passage": t.passage, "note_path": t.path} for t in tasks],
     }
-    (out_dir / "scoring" / "tasks.json").write_text(json.dumps(tasks_doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+    (out_dir / "scoring" / "tasks.json").write_text(json.dumps(tasks_doc, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
     (out_dir / "answers" / ".gitkeep").write_text("", encoding="utf-8")
-    (out_dir / "README.md").write_text(PACKET_README, encoding="utf-8")
+    # newline="\n" everywhere: the packet is compared byte for byte (`--check`) and hashed into the
+    # manifest, so a Windows run must write the same bytes as Linux CI.
+    (out_dir / "README.md").write_text(PACKET_README, encoding="utf-8", newline="\n")
     manifest = {
         "schema": PACKET_SCHEMA,
         "study": "B03/B05 pre-registered with/without-note ablation",
@@ -312,7 +314,7 @@ def write_task_packet(tasks: Sequence[TaskNote], out_dir: Path, *, prereg_path: 
         ],
         "answer_format": "UTF-8 text file per trial at answers/<trial_id>.txt",
     }
-    (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8")
+    (out_dir / "manifest.json").write_text(json.dumps(manifest, indent=2) + "\n", encoding="utf-8", newline="\n")
     return manifest
 
 
@@ -348,7 +350,7 @@ def run_trials(trials: Sequence[Mapping[str, Any]], model_fn: ModelCallable, run
         except Exception as exc:  # noqa: BLE001 - any model failure is recorded, never papered over
             rec.update(status="FAILED", answer=None, error=f"{type(exc).__name__}: {exc}")
         stamp(rec, run_config)
-        (transcript_dir / f"{tr['trial_id']}.json").write_text(json.dumps(rec, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
+        (transcript_dir / f"{tr['trial_id']}.json").write_text(json.dumps(rec, ensure_ascii=False, indent=2) + "\n", encoding="utf-8", newline="\n")
         rows.append({k: rec[k] for k in ("trial_id", "status")})
     run = {"schema": RESULT_SCHEMA, "trials": len(rows), "failed": sum(r["status"] != "OK" for r in rows),
            "transcript_dir": str(transcript_dir).replace("\\", "/")}

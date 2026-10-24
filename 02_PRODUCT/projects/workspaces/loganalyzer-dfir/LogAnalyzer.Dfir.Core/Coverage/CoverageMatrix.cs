@@ -88,13 +88,14 @@ public sealed class CoverageMatrix
         new("amcache", "Amcache", ["AmcacheParser"], ["ExecutionArtifactsCollector"], [], [], "prezență în Amcache nu înseamnă execuție"),
         new("shimcache", "ShimCache (AppCompatCache)", ["SystemHiveExecutionParser"], ["ExecutionArtifactsCollector"], [], [], "citit de același parser ca BAM"),
         new("bam", "BAM", ["SystemHiveExecutionParser"], ["ExecutionArtifactsCollector"], [], [], "citit de același parser ca ShimCache"),
-        new("srum", "SRUM", ["SrumNetworkParser"], ["SrumCollector"], [], [], "se citește doar utilizarea rețelei per aplicație"),
-        new("registry", "Hive-uri de registru (NTUSER, SOFTWARE)", ["UserHiveParser", "SoftwareHiveParser"], ["ExecutionArtifactsCollector"], [], []),
+        new("srum", "SRUM", ["SrumNetworkParser"], ["SrumCollector"], [], [], "se citesc utilizarea rețelei per aplicație și durata conectării per interfață"),
+        new("registry", "Hive-uri de registru (NTUSER, SOFTWARE)", ["UserHiveParser", "SoftwareHiveParser"], ["ExecutionArtifactsCollector", "UserArtifactsCollector"], [], []),
         new("services", "Servicii și drivere (hive SYSTEM)", ["ServicesParser"], [], [], []),
         new("usn", "Jurnal USN", ["UsnJournalParser"], [], [], []),
         new("lnk_jumplist", "LNK și Jump Lists", ["LnkParser", "JumpListParser"], [], [], []),
         new("usb", "Istoric dispozitive USB", ["UsbDevicesParser"], [], [], []),
-        new("network_profiles", "Profiluri de rețea", [], [], [], [], "niciun parser pentru profilurile de rețea"),
+        new("network_profiles", "Profiluri de rețea", [], [], [], [], "niciun parser de familie: profilurile și semnăturile NetworkList se citesc din faptele stației (AirGapFacts) și se folosesc la constatările de conectare"),
+        new("firewall_log", "Jurnalul firewall-ului (pfirewall.log)", ["FirewallLogParser"], ["FirewallLogCollector"], [], [], "există doar dacă jurnalizarea firewall-ului este pornită"),
         new("network_capture", "Captură de rețea (pcapng)", ["PcapngParser"], [], [], []),
         new("browser", "Istoric browser (Chromium, Firefox)", ["BrowserHistoryParser", "FirefoxHistoryParser"], [], [], []),
         new("tasks", "Sarcini programate", ["ScheduledTaskParser"], [], [], []),
@@ -152,7 +153,7 @@ public sealed class CoverageMatrix
         if (ownAnalyzer && registered.Count == 0)
             Result = R(CoverageState.Collected, $"{ev.Count} fotografii ale stării live, citite de analizorul propriu");
         else if (prs.Count == 0)
-            Result = R(CoverageState.Partial, $"{ev.Count} probe prezente, dar fără niciun rezultat de parser (neparsate)");
+            Result = R(CoverageState.Partial, $"{LogAnalyzer.Dfir.Language.RoText.Count(ev.Count, "probă prezentă", "probe prezente")}, dar fără niciun rezultat de parser (neparsate)");
         else
         {
             int ok = prs.Count(p => p.Status == EvidenceStatus.Success);
@@ -166,7 +167,7 @@ public sealed class CoverageMatrix
             else if (empty == prs.Count)
                 Result = R(CoverageState.Partial, "sursa a fost citită, dar nu conține înregistrări: asta nu dovedește absența activității");
             else if (part == 0 && empty == 0 && failed == 0 && unparsed == 0)
-                Result = R(CoverageState.Collected, $"{ok} probe parsate");
+                Result = R(CoverageState.Collected, $"{LogAnalyzer.Dfir.Language.RoText.Count(ok, "probă parsată", "probe parsate")}");
             else
             {
                 var bits = new List<string>();

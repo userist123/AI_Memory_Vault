@@ -7,8 +7,11 @@
     <ImplicitUsings>enable</ImplicitUsings>
     <UseWPF>true</UseWPF>
     <ApplicationManifest>app.manifest</ApplicationManifest>
-    <AssemblyName>LogAnalyzer</AssemblyName>
+    <AssemblyName>LogAnalyzer.Internet</AssemblyName>
     <RootNamespace>LogAnalyzer.UI</RootNamespace>
+    <!-- Restore also sees the win-x64 single-file publish settings, so packages.lock.json covers the publish too and CI can publish in locked mode (security audit #9). -->
+    <RuntimeIdentifiers>win-x64</RuntimeIdentifiers>
+    <EnableSingleFileAnalyzer>true</EnableSingleFileAnalyzer>
     <!-- UNCLASSIFIED edition (P2/P3): one executable, air-gapped or connected. The mode comes only from a signed policy file
          (Edition/Unclassified/UnclassifiedComposition.cs). The classified edition is LogAnalyzer.App.Classified, which shares
          the UI sources of this project but not the Connectors / Response / Ai assemblies (docs/dfir/EDITIONS.md). -->
@@ -46,5 +49,13 @@
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </None>
   </ItemGroup>
+
+  <ItemGroup>
+    <!-- Test seams (App.BuildServices(root), AuthApp.Initialize(dir)) stay internal: the startup test runs against a temporary folder. -->
+    <InternalsVisibleTo Include="LogAnalyzer.App.Tests" />
+  </ItemGroup>
+
+  <!-- Security audit #5: SHA-256 manifest of the native libraries next to the published exe, verified at startup. -->
+  <Import Project="..\eng\NativeLibraryManifest.targets" />
 
 </Project>

@@ -6,7 +6,7 @@ using Xunit;
 namespace LogAnalyzer.Dfir.Tests;
 
 /// <summary>
-/// Regression against the real LAB-PC corpus (spec §110). Expected values come from targets.json;
+/// Regression against the real WS-01 corpus (spec §110). Expected values come from targets.json;
 /// the parsers know nothing about this incident.
 /// </summary>
 public class CorpusRegressionTests

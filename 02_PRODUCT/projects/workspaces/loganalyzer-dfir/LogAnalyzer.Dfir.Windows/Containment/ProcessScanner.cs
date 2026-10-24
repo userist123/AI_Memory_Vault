@@ -280,14 +280,16 @@ public sealed class ProcessScanner
         foreach (var a in new[] { "-Scan", "-ScanType", "3", "-File", path, "-DisableRemediation" }) psi.ArgumentList.Add(a);
         try
         {
-            using var proc = Process.Start(psi)!;
+            using var proc = LogAnalyzer.Dfir.Auth.CollectorExec.Start(psi);
             var outTask = proc.StandardOutput.ReadToEndAsync(ct);
             var errTask = proc.StandardError.ReadToEndAsync(ct);
             if (!proc.WaitForExit(DefenderTimeout))
             {
                 try { proc.Kill(true); } catch (InvalidOperationException) { }
+                LogAnalyzer.Dfir.Auth.CollectorExec.Done(proc);
                 return new DefenderVerdict(EvidenceStatus.Partial, null, "Scanarea Defender a depășit timpul alocat", null);
             }
+            LogAnalyzer.Dfir.Auth.CollectorExec.Done(proc);
             var output = (outTask.Result + errTask.Result).Trim();
             // MpCmdRun: 0 = no threat, 2 = threat found (file scan with remediation disabled).
             bool? threat = proc.ExitCode switch { 0 => false, 2 => true, _ => null };
@@ -391,12 +393,12 @@ public static class PersistenceSearch
                 string xml;
                 try { xml = File.ReadAllText(task); }
                 catch (Exception ex) when (ex is UnauthorizedAccessException or IOException) { continue; }
-                if (Matches(xml)) hits.Add(new PersistenceHit("Task programat", task, ExtractCommand(xml)));
+                if (Matches(xml)) hits.Add(new PersistenceHit("Activitate planificată", task, ExtractCommand(xml)));
             }
         }
         catch (Exception ex) when (ex is UnauthorizedAccessException or IOException)
         {
-            gaps.Add(new EvidenceGap("Task-uri programate", EvidenceStatus.Partial, ProcessScanner.Reason(ex), "Task-urile care pornesc programul pot lipsi din rezultat", "schtasks /query /xml (administrator)", "Cu drepturi de administrator"));
+            gaps.Add(new EvidenceGap("Activități planificate", EvidenceStatus.Partial, ProcessScanner.Reason(ex), "Activitățile planificate care pornesc programul pot lipsi din rezultat", "schtasks /query /xml (administrator)", "Cu drepturi de administrator"));
         }
 
         foreach (var startup in new[] { Environment.GetFolderPath(Environment.SpecialFolder.Startup), Environment.GetFolderPath(Environment.SpecialFolder.CommonStartup) })

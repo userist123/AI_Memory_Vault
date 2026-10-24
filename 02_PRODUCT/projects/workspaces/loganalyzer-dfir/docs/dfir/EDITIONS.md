@@ -1,5 +1,7 @@
 # LogAnalyzer editions (WP-ED, owner decision 13)
 
+> Update: the product now ships as **three** editions (Standalone, Network, Internet) with a compile-time station posture. See `EDITIONS_AND_POSTURE.md`. The executable names below are now `LogAnalyzer.Standalone.exe` (was `LogAnalyzer.Classified.exe`) and `LogAnalyzer.Internet.exe` (was `LogAnalyzer.exe`); the classified edition is the Standalone edition.
+
 Two applications share the core libraries. Existing functionality is not removed: it sits behind an edition boundary,
 and the unclassified edition keeps all of it.
 

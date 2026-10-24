@@ -15,7 +15,7 @@ public class Wp6aGlossaryTests
         ("Amcache", "Istoricul aplicațiilor", "Application history"),
         ("Evidence Graph", "Legături între evenimente", "Connections between events"),
         ("Provenance", "De unde provine informația", "Where this information came from"),
-        ("Chain of Custody", "Istoricul probei", "Evidence history"),
+        ("Chain of Custody", "Lanțul de custodie", "Chain of custody"),
         ("IOC", "Indicator suspect", "Suspicious indicator"),
         ("Sigma", "Regulă de detecție de securitate", "Security detection rule"),
         ("YARA", "Regulă de detecție pe fișiere/conținut", "File/content detection rule"),
@@ -59,8 +59,8 @@ public class Wp6aGlossaryTests
     {
         Assert.Equal("Jurnale Windows", Glossary.Human("evtx"));
         Assert.Equal("Jurnale Windows", Glossary.Human("EVTX"));
-        Assert.Equal("Istoricul probei", Glossary.Human("chain_of_custody"));
-        Assert.Equal("Istoricul probei", Glossary.Human("Chain of Custody"));
+        Assert.Equal("Lanțul de custodie", Glossary.Human("chain_of_custody"));
+        Assert.Equal("Lanțul de custodie", Glossary.Human("Chain of Custody"));
         Assert.Equal("Windows logs", Glossary.Human("EVTX", GlossaryLanguage.English));
         Assert.Equal("ShimCache", Glossary.Human("ShimCache"));   // not in the table: never invented, shown as is
         Assert.Null(Glossary.Find("ShimCache"));

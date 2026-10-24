@@ -73,7 +73,8 @@ namespace LogAnalyzer.UI.ViewModels
             if (_service is not null) return;
             _case = LogAnalyzer.UI.Services.LiveCase.Get();
             _service = new ProcessContainmentService(new WindowsFirewallController(), new ProcessScanner(), _case,
-                ProcessSuspension.Suspend, ProcessSuspension.Resume, operatorName: LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified);
+                ProcessSuspension.Suspend, ProcessSuspension.Resume, operatorName: LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified,
+                processes: new SystemProcessTable());
             OnPropertyChanged(nameof(CaseRoot));
         }
 
@@ -144,9 +145,12 @@ namespace LogAnalyzer.UI.ViewModels
                 var inc = await Task.Run(() => _service!.Contain(path, pid, trigger, new ContainmentOptions(suspend, CopySampleIntoCase: true)));
                 Incidents.Insert(0, inc);
                 SelectedIncident = inc;
-                Status = inc.State == ContainmentState.Failed
-                    ? $"{inc.IncidentId}: izolarea a EȘUAT (vezi jurnalul incidentului; de obicei lipsesc drepturile de administrator). Scanarea s-a făcut."
-                    : $"{inc.IncidentId}: {Path.GetFileName(path)} izolat de rețea și scanat ({inc.Findings.Count} constatări).";
+                Status = inc.State switch
+                {
+                    ContainmentState.Contained => $"{inc.IncidentId}: {Path.GetFileName(path)} izolat de rețea, VERIFICAT prin re-citirea firewall-ului, și scanat ({inc.Findings.Count} constatări).",
+                    ContainmentState.NotVerified => $"{inc.IncidentId}: izolarea a fost aplicată, dar NU a putut fi verificată ({inc.Verification?.Cause}). {ContainmentText.Summary(inc)}. Scanarea s-a făcut.",
+                    _ => $"{inc.IncidentId}: izolarea a EȘUAT ({inc.Verification?.Cause ?? "vezi jurnalul incidentului"}; de obicei lipsesc drepturile de administrator). {ContainmentText.Summary(inc)}. Scanarea s-a făcut.",
+                } + (inc.Verification?.AuditError is { } ae ? " ATENȚIE: " + ae + "." : "");
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
             {
@@ -164,7 +168,8 @@ namespace LogAnalyzer.UI.ViewModels
         {
             if (IsBusy) return;
             EnsureCase();
-            var contained = Incidents.Where(i => i.State == ContainmentState.Contained).Select(i => i.ProgramPath).ToHashSet(StringComparer.OrdinalIgnoreCase);
+            // A Failed partial containment still holds active rules: it is skipped too, never re-contained every tick.
+            var contained = ContainmentAutoPolicy.AlreadyHandled(Incidents);
             var suspects = await Task.Run(() => SuspiciousProcessDetector.Scan(_trusted));
             foreach (var s in suspects.Where(s => s.EligibleForAutoContainment && !contained.Contains(s.Path)))
             {
@@ -211,9 +216,8 @@ namespace LogAnalyzer.UI.ViewModels
             if (SelectedIncident is not { } inc || _service is null) return;
             if (MessageBox.Show($"Ridicați izolarea pentru {Path.GetFileName(inc.ProgramPath)}?\nProgramul va avea din nou acces la rețea.",
                     "Ridicare izolare", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-            _service.Release(inc, "ridicată de operator");
+            Status = ContainmentRelease.Run(_service, inc, "ridicată de operator");
             IncidentDetail = IncidentDetailFormatter.Format(inc);
-            Status = $"{inc.IncidentId}: {(inc.State == ContainmentState.Released ? "izolare ridicată" : "ridicarea a eșuat parțial (vezi jurnalul)")}.";
             var idx = Incidents.IndexOf(inc);
             if (idx >= 0) { Incidents[idx] = inc; SelectedIncident = inc; }
         }
@@ -229,7 +233,9 @@ namespace LogAnalyzer.UI.ViewModels
                 InitialDirectory = _service!.IncidentDir(inc),
             };
             if (dlg.ShowDialog() != true) return;
-            IncidentPdfReport.Write(inc, dlg.FileName, _case.Info.Name, Environment.MachineName);
+            var caseName = _case.Info.Name;
+            if (LogAnalyzer.UI.Services.ExportAudit.Run(_case.Info.CaseId, "pdf-containment", 1, dlg.FileName,
+                    () => IncidentPdfReport.Write(inc, dlg.FileName, caseName, Environment.MachineName)) is { } refused) { Status = refused; return; }
             _case.Audit("report.pdf", $"{inc.IncidentId} {dlg.FileName}");
             Status = $"Raport salvat: {dlg.FileName}";
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
@@ -249,10 +255,10 @@ namespace LogAnalyzer.UI.ViewModels
             if (MessageBox.Show("Activați auditul Windows pentru conexiunile blocate (subcategoria „Filtering Platform Connection”, eșecuri)?\n\n" +
                                 "Este o modificare a politicii de audit a stației. Fără ea nu se poate vedea unde încearcă să se conecteze un program izolat.",
                     "Activare audit", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
-            var (ok, detail) = LogAnalyzer.Response.Containment.AuditPolicyChange.EnableBlockedConnectionFailureAudit();
-            _case?.Audit("auditpol.enable", $"Filtering Platform Connection failure: {(ok ? "OK" : "FAILED")} {detail}");
+            EnsureCase();
+            var r = LogAnalyzer.Response.Containment.AuditPolicyChange.EnableBlockedConnectionFailureAudit(_case is { } ws ? (a, d) => ws.Audit(a, d) : null);
             Load();
-            if (!ok) Status = "Activarea a eșuat: " + detail;
+            Status = r.Ok ? "Auditul conexiunilor blocate este activ (VERIFICAT prin re-citirea politicii)." : "Activarea auditului: " + r.Detail;
         }
 
         private static string SafePath(Process p)
@@ -268,6 +274,30 @@ namespace LogAnalyzer.UI.ViewModels
         }
     }
 
+    /// <summary>Runs a release for the screen and returns the operator's status line; never throws for an audit or role failure.</summary>
+    public static class ContainmentRelease
+    {
+        public static string Run(ProcessContainmentService service, ProcessIncident inc, string reason)
+        {
+            bool suspendedBefore = inc.ProcessSuspended;
+            try { service.Release(inc, reason); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+            {
+                // The release may have run partly (process resumed, rules removed) before the audit write failed: say what happened.
+                return $"{inc.IncidentId}: ridicarea a fost întreruptă: {ex.Message}. " +
+                       (suspendedBefore && !inc.ProcessSuspended ? "Procesul A FOST reluat. " : "") +
+                       (ex is LogAnalyzer.Dfir.Auth.HostChangeNotAuthorizedException ? "" : "Jurnalul cazului NU a putut fi scris complet. ") +
+                       $"Acțiuni făcute: {(inc.Actions.Count == 0 ? "niciuna" : string.Join("; ", inc.Actions.TakeLast(4).Select(a => $"{a.Action} {a.Target} {(a.Success ? "OK" : "EȘUAT")}")))}.";
+            }
+            var rv = inc.ReleaseVerification;
+            return $"{inc.IncidentId}: " + (inc.State == ContainmentState.Released
+                ? "izolare ridicată, VERIFICAT prin re-citirea firewall-ului."
+                : rv?.Status == LogAnalyzer.Dfir.Response.ResponseStatus.NotVerified
+                    ? $"ridicarea NU a putut fi verificată ({rv.Cause}); apăsați din nou pentru o nouă încercare."
+                    : $"ridicarea a EȘUAT ({rv?.Cause ?? "vezi jurnalul"}).") + (rv?.AuditError is { } ae ? " ATENȚIE: " + ae + "." : "");
+        }
+    }
+
     /// <summary>Plain-text detail of an incident for the side panel (the PDF carries the same content).</summary>
     public static class IncidentDetailFormatter
     {
@@ -276,7 +306,9 @@ namespace LogAnalyzer.UI.ViewModels
             string L(DateTimeOffset? t) => t is { } v ? TimeZoneInfo.ConvertTime(v, TimeZoneInfo.Local).ToString("yyyy-MM-dd HH:mm:ss") : "—";
             var sb = new StringBuilder();
             var s = i.Scan;
-            sb.AppendLine($"{i.IncidentId} — {Path.GetFileName(i.ProgramPath)} — {i.State}");
+            sb.AppendLine($"{i.IncidentId} — {Path.GetFileName(i.ProgramPath)} — {ContainmentText.State(i)}");
+            foreach (var line in ContainmentText.Verification("Re-verificarea izolării", i.Verification)) sb.AppendLine(line);
+            if (i.ReleaseVerification is not null) foreach (var line in ContainmentText.Verification("Re-verificarea ridicării", i.ReleaseVerification)) sb.AppendLine(line);
             sb.AppendLine($"Declanșator: {i.Trigger}");
             sb.AppendLine($"Izolat la: {L(i.CreatedUtc)}   Suspendat: {(i.ProcessSuspended ? "da" : "nu")}");
             sb.AppendLine($"Cale: {i.ProgramPath}");
@@ -318,11 +350,11 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var f in i.Findings) sb.AppendLine($"  [{f.Severity.ToSpec()}/{f.Classification.ToSpec()}] {f.Title}: {f.Description}");
             sb.AppendLine();
             sb.AppendLine("JURNAL ACȚIUNI");
-            foreach (var a in i.Actions) sb.AppendLine($"  {L(a.TimeUtc)}  {a.Action}  {(a.Success ? "OK" : "EȘUAT")}  {a.Target}  {a.Detail}");
+            foreach (var a in i.Actions) sb.AppendLine($"  {L(a.TimeUtc)}  {a.Action}  {ContainmentText.Action(a.Success)}  {a.Target}  {a.Detail}");
             if (s is { Gaps.Count: > 0 })
             {
                 sb.AppendLine();
-                sb.AppendLine("GOLURI DE PROBĂ");
+                sb.AppendLine("SURSE LIPSĂ SAU INCOMPLETE");
                 foreach (var g in s.Gaps) sb.AppendLine($"  {g.Artifact}: {g.Status.ToSpec()} — {g.Reason}");
             }
             return sb.ToString();

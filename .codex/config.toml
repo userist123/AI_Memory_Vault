@@ -1,6 +1,7 @@
 # Codex CLI / IDE — project-scoped MCP (loaded only when this project is trusted in Codex).
 # Same server as every other client; the principal decides what Codex may read
 # (04_CONFIG/access_policy.yaml). Instructions come from AGENTS.md.
+# Owner privacy: never commit anything about the owner's machine; see "Owner privacy" in AGENTS.md.
 [mcp_servers.vault-memory]
 command = "python"
 args = ["03_IMPLEMENTATION/packages/interfaces/memory_mcp_server.py", "--principal", "cloud_cli.codex"]

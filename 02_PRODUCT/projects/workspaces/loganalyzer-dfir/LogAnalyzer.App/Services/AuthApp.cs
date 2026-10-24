@@ -4,6 +4,7 @@ using System.Windows;
 using System.Windows.Input;
 using System.Windows.Threading;
 using LogAnalyzer.Dfir.Auth;
+using LogAnalyzer.Dfir.Devices;
 using LogAnalyzer.Dfir.Windows.Auth;
 
 namespace LogAnalyzer.UI.Services
@@ -23,14 +24,24 @@ namespace LogAnalyzer.UI.Services
         private static AuthService? _service;
 
         public static AuthService Service => _service ?? throw new InvalidOperationException("Authentication not initialised.");
+        public static bool IsReady => _service is not null;
         public static ICardProvider Cards { get; } = new WindowsSmartCardProvider();
         public static AuthSession? Session { get; private set; }
         public static event Action? SessionChanged;
 
-        public static void Initialize()
+        public static void Initialize() => Initialize(null);
+
+        /// <summary>
+        /// Test seam (internal, visible only to LogAnalyzer.App.Tests): <paramref name="storeDirectory"/> points the service at a temporary store so the
+        /// startup test never writes the machine's %PROGRAMDATA%\LogAnalyzer\auth. Production calls only <see cref="Initialize()"/> (null: the fixed folder).
+        /// </summary>
+        internal static void Initialize(string? storeDirectory)
         {
-            _service = new AuthService(null, Classified);
+            _service = new AuthService(storeDirectory, Classified);
+            LogAnalyzer.Dfir.Policy.PolicyApprovals.Ledger = _service;   // review #2: policy approvals are recorded in and verified against the sealed auth audit
             OperatorIdentity.AuthenticationRequired = true;     // from now on registers / profile edits fail closed without an administrator session
+            // every program the application starts is written to the sealed audit before it starts ("collector.exec"); a failed write raises the audit warning
+            LogAnalyzer.Dfir.Auth.CollectorExec.Sink = Record;
         }
 
         public static void SetSession(AuthSession? s)
@@ -40,7 +51,59 @@ namespace LogAnalyzer.UI.Services
             SessionChanged?.Invoke();
         }
 
+        /// <summary>
+        /// Appends an operator operation to the sealed audit with the current session. Returns null when it was written, otherwise the reason (in Romanian).
+        /// Nothing is reported here: the caller decides (an export is refused, see <see cref="ExportAudit"/>).
+        /// </summary>
+        public static DeviceAuditReading? ReadDeviceAudit()
+        {
+            if (_service is null) return null;
+            var verdict = _service.VerifyAuditSnapshot(out var bytes);
+            return LogAnalyzer.Dfir.Auth.OperationAudit.ReadDeviceMonitor(bytes, verdict.Status == LogAnalyzer.Dfir.Case.ChainStatus.Valid);
+        }
+
+        public static string? TryRecord(string ev, string detail) => TryRecordTyped(ev, detail)?.Reason;
+
+        /// <summary>Like <see cref="TryRecord"/>, but says by type (not by the text) when the refusal is because the sealing key cannot be read.</summary>
+        public static LogAnalyzer.Dfir.Devices.AuditRefusal? TryRecordTyped(string ev, string detail)
+        {
+            if (_service is null) return new("autentificarea aplicației nu este pornită");
+            try { _service.AuditOperation(Session, ev, detail); return null; }
+            catch (LogAnalyzer.Dfir.Case.SealingKeyUnavailableException ex) { return new(ex.Message, KeyUnavailable: true); }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or InvalidOperationException) { return new(ex.Message); }
+        }
+
+        /// <summary>
+        /// Appends an operator operation to the sealed audit. A failure is never silent: it raises the persistent warning of <see cref="AuditHealth"/>
+        /// (banner in the main window and the status line) and returns false.
+        /// </summary>
+        public static bool Record(string ev, string detail)
+        {
+            if (TryRecord(ev, detail) is not { } error) return true;
+            AuditHealth.Instance.Report(ev, error);
+            return false;
+        }
+
         public static void NotifyChanged() => SessionChanged?.Invoke();
+
+        /// <summary>
+        /// The operator confirms that the station clock was corrected: appends "clock.ack" to the chained audit (operator, reason, previous and
+        /// current time) and refreshes the clock warning. Returns the message to show.
+        /// </summary>
+        public static string ConfirmClockCorrected(string reason)
+        {
+            if (string.IsNullOrWhiteSpace(reason)) return "Scrieți motivul (cum a fost corectat ceasul) înainte de confirmare.";
+            try
+            {
+                var who = Session is { } s ? $"{s.Role} ({s.Account})" : "operator";
+                LogAnalyzer.Dfir.Case.ClockMemory.Acknowledge(Service.AuditPath, DateTimeOffset.UtcNow, who, reason, LogAnalyzer.Dfir.Windows.Audit.StationFactCollector.ReadInstallDate());
+                return "Corectarea ceasului a fost confirmată și trecută în jurnalul de audit.";
+            }
+            catch (Exception ex) when (ex is System.IO.IOException or UnauthorizedAccessException or InvalidOperationException)
+            {
+                return "Confirmarea nu a putut fi scrisă în jurnalul de audit: " + ex.Message;
+            }
+        }
     }
 
     /// <summary>

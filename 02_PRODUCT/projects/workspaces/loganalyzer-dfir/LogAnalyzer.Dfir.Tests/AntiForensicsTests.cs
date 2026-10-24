@@ -85,7 +85,7 @@ public sealed class AntiForensicsTests : IDisposable
         var hw = E("EventLog:System", "1", "Microsoft-Windows-Kernel-General", f: new() { ["Reason"] = "2", ["ProcessName"] = "" });
         var tz = E("EventLog:System", "1", "Microsoft-Windows-Kernel-General", f: new() { ["Reason"] = "3", ["ProcessName"] = @"\Device\HarddiskVolume3\Windows\ImmersiveControlPanel\SystemSettings.exe" });
         Assert.Equal(AntiForensicResult.NotDetected, C(Run(sync, hw, tz), "AF05").Result);
-        var manual = E("EventLog:Security", "4616", f: new() { ["ProcessName"] = @"C:\Windows\System32\SystemSettingsAdminFlows.exe", ["SubjectUserName"] = "Owner" });
+        var manual = E("EventLog:Security", "4616", f: new() { ["ProcessName"] = @"C:\Windows\System32\SystemSettingsAdminFlows.exe", ["SubjectUserName"] = "user" });
         Assert.Equal(AntiForensicResult.Detected, C(Run(sync, hw, manual), "AF05").Result);
     }
 

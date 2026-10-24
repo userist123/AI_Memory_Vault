@@ -46,7 +46,7 @@ public sealed class CaseSealTests : IDisposable
         var anchor = ws.Anchor();
         var text = string.Join("\n", seal.Lines());
         Assert.Contains(anchor.CustodyHead, text); Assert.Contains(anchor.AuditHead, text);
-        Assert.Contains($"Seq {anchor.AuditSeq}", text);
+        Assert.Contains($"ultima înregistrare nr. {anchor.AuditSeq}", text);
         Assert.Contains("scop provizoriu, neconfirmat", text);
         Assert.DoesNotContain("scop provizoriu", string.Join("\n", ReportSeal.For(NewCase("b")).Lines()));
     }

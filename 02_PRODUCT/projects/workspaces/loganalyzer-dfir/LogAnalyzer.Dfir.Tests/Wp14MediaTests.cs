@@ -106,6 +106,15 @@ public class Wp14MediaTests
         Assert.Equal(AirGapAuthorization.Undefined, x.AirGap!.Authorized);
     }
 
+    [Fact]
+    public void Only_exfiltration_indicating_statuses_carry_T1052_001()
+    {
+        // Review item D24: presence of an UNKNOWN / AUTHORIZED medium is not an exfiltration technique.
+        Assert.Equal("", Only(Go([Usb("")], media: W14.Media(Row("AA001"))), "MEDIA-UNKNOWN").MitreTechniqueId);
+        Assert.Equal("", Only(Go([Usb("AA001")], media: W14.Media(Row("AA001"))), "MEDIA-AUTHORIZED").MitreTechniqueId);
+        Assert.Equal("T1052.001", Only(Go([Usb("ZZ999")], media: W14.Media(Row("AA001"))), "MEDIA-UNREGISTERED").MitreTechniqueId);
+    }
+
     [Theory]
     [InlineData(false)]
     [InlineData(true)]
@@ -182,7 +191,9 @@ public class Wp14MediaTests
     public void Usbstor_instance_suffix_does_not_split_a_device_in_two()
     {
         var f = Go([Usb("AA001&0", 0), Usb("AA001", 1)], media: W14.Media(Row("AA001")));
-        Assert.Single(Media(f));
+        // One device finding and one connection history (MEDIA-HISTORY, E1) for the same medium, not two of either.
+        Assert.Single(Media(f), x => x.RuleId != "MEDIA-HISTORY");
+        Assert.Single(Media(f), x => x.RuleId == "MEDIA-HISTORY");
     }
 
     // ---- presence is not copying ----
@@ -191,7 +202,7 @@ public class Wp14MediaTests
     public void Without_write_evidence_the_finding_says_presence_not_copy_and_there_is_no_file_activity_finding()
     {
         var f = Go([Usb("AA001", letter: "E:")], media: W14.Media(Row("AA001")));
-        Assert.Contains("prezență, nu copiere", Only(f, "MEDIA-AUTHORIZED").Description);
+        Assert.Contains("Prezență, nu copiere", Only(f, "MEDIA-AUTHORIZED").Description);
         Assert.DoesNotContain(f, x => x.RuleId == "MEDIA-FILE-ACTIVITY");
     }
 

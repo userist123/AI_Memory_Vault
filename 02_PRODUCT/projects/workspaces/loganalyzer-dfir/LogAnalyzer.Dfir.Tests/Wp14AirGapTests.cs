@@ -165,7 +165,7 @@ public class Wp14AirGapTests
         foreach (var id in new[] { 50036, 50037, 50065, 1103 })
             Assert.Single(Air(Go([Dhcp(1, id, ("IPAddress", "10.0.0.5"), ("DhcpServer", "10.0.0.1"))], Classified())));
         var x = Only(Go([Dhcp(1, 50036)], Classified()), "AIRGAP-DHCP-LEASE");
-        Assert.Contains("adresa nu este în eveniment", x.Description);
+        Assert.Contains("câmpul adresei IP lipsește din eveniment", x.Description);   // review of PR #288: the absence of the field is stated, never an address
         Assert.Empty(Air(Go([Dhcp(1, 50099)], Classified())));
     }
 

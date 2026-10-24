@@ -217,6 +217,15 @@ The same model/provider cannot be used as its own independent verifier.
 
 If no independent verifier is eligible, the route is `BLOCKED`.
 
+Exception (owner decision 2026-10-16), the only one: when the router runs inside a Claude Code
+session (`CLAUDECODE=1`, so the `claude_subagent` runtimes are available) and no
+vendor-independent verifier is eligible, a `vault-reviewer` candidate of a different agent group
+(read-only, tool-using, Opus, fresh context) is selected as an explicit, logged fallback:
+`verifier.reason` starts with `fallback`, `rejected` carries
+`verifier:no_independent_route->fallback:<runtime>` and `warnings` states that independence is by
+context and model, not by vendor. It is never reported as independent, never applies outside
+Claude Code, and never overrides the privacy, requested-runtime or capability gates.
+
 ## Memory plan
 
 Routing produces a bounded memory plan:
@@ -252,7 +261,9 @@ Eligible route found, but availability is not confirmed.
 
 No eligible route exists, or a mandatory independent verifier cannot be selected.
 
-No implicit fallback is allowed after BLOCKED.
+No implicit fallback is allowed after BLOCKED. The logged `vault-reviewer` verifier fallback
+described under the independence rule is explicit, recorded in the receipt, and decided before the
+status is computed; it is not a fallback after BLOCKED.
 
 ## Route receipt
 

@@ -83,6 +83,14 @@ public sealed class PolicyTimelineTests
     }
 
     [Fact]
+    public void Internal_underscore_x_fields_are_not_listed_as_domain_policy_attributes()
+    {
+        var c = Assert.Single(Build([E(Sec, "4739", T0, new() { ["SubjectUserName"] = "a", ["DomainName"] = "CORP", ["MinPasswordLength"] = "14", ["_xLevel"] = "0" })]).Changes);
+        Assert.Contains("MinPasswordLength=14", c.NewValue);
+        Assert.DoesNotContain("_x", c.NewValue);
+    }
+
+    [Fact]
     public void Event_4719_reuses_the_lifecycle_classifier_and_names_the_subcategory()
     {
         var f = new Dictionary<string, string> { ["SubjectUserName"] = "admin", ["SubjectDomainName"] = "CORP", ["SubjectUserSid"] = "S-1-5-21-1", ["SubcategoryGuid"] = "{0CCE922B-69AE-11D9-BED3-505054503030}", ["AuditPolicyChanges"] = "%%8448" };
