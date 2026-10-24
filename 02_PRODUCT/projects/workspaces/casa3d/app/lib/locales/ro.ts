@@ -740,7 +740,7 @@ export const ro: Dict = {
   "space.label": "Tip spațiu", "space.interior": "Interior", "space.open_balcony": "Balcon deschis", "space.covered_balcony": "Balcon acoperit", "space.terrace": "Terasă", "space.outdoor": "Exterior (curte)",
   "fin.kind.frames": "Boiserie (casete din baghetă)", "fin.code.frames": "BO",
   "fin.frames.count": "Casete (gol = automat)", "fin.frames.margin": "Margine (m)", "fin.frames.gap": "Distanța dintre casete (m)",
-  "fin.frames.auto": "{n} casete, {ml} m de baghetă (peste vopseaua peretelui).",
+  "fin.frames.auto": "{n} casete, {ml} de baghetă (peste vopseaua peretelui).",
   "tex.rugN": "Covor {n}", "tex.rugX": "Centrul, de la peretele de vest (m)", "tex.rugZ": "Centrul, de la peretele de nord (m)", "tex.rugCenter": "Centrează în cameră",
   "tex.rugAdd": "+ Încă un covor", "tex.rugRemove": "Scoate covorul",
   "tex.rugOutside": "Covorul {n} iese din cameră sau lasă sub {cm} cm până la pereți.", "tex.rugOverlap": "Covorul {n} se suprapune cu alt covor.",
