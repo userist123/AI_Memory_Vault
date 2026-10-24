@@ -85,7 +85,8 @@ export function ElevationSheet({ elevs, t, units, locale }: { elevs: Elevation[]
       <svg viewBox={`${-pad} ${-pad} ${W + 2 * pad} ${H + 2 * pad}`} width={`${(W + 2 * pad) * k}mm`} height={`${(H + 2 * pad) * k}mm`} role="img" aria-label={`${t('draw.wall', { side: e.side })}`}>
         <g transform={`translate(0 ${H}) scale(1 -1)`}>
           <rect x={0} y={0} width={W} height={H} fill="#faf9f6" stroke={INK} strokeWidth={.02} />
-          {e.bands.map((b, i) => <rect key={i} x={b.u0} y={b.y0} width={Math.max(.01, b.u1 - b.u0)} height={Math.max(.01, b.y1 - b.y0)} fill={b.color ?? BAND_FILL[b.kind] ?? '#eee'} fillOpacity={.85} stroke="#8a857a" strokeWidth={.006} />)}
+          {e.bands.map((b, i) => b.frames ? <g key={i} data-elev="frames">{b.frames.map(([u0, y0, u1, y1], k) => <rect key={k} x={u0} y={y0} width={u1 - u0} height={y1 - y0} fill="none" stroke="#6b5a45" strokeWidth={.012} />)}</g>
+            : <rect key={i} x={b.u0} y={b.y0} width={Math.max(.01, b.u1 - b.u0)} height={Math.max(.01, b.y1 - b.y0)} fill={b.color ?? BAND_FILL[b.kind] ?? '#eee'} fillOpacity={.85} stroke="#8a857a" strokeWidth={.006} />)}
           {e.baseboardM && <rect x={0} y={0} width={W} height={e.baseboardM} fill="#fff" stroke="#8a857a" strokeWidth={.006} />}
           {e.ceilingDropM > 0 && <line x1={0} y1={H - e.ceilingDropM} x2={W} y2={H - e.ceilingDropM} stroke={INK} strokeWidth={.01} strokeDasharray=".06 .04" />}
           {e.openings.map((o, i) => <g key={i}><rect x={o.u0} y={o.y0} width={o.u1 - o.u0} height={o.y1 - o.y0} fill="#fff" stroke={INK} strokeWidth={.015} />

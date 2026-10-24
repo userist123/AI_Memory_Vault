@@ -6,7 +6,7 @@ import { nicheGeometry } from './niches';
 import { wallItemGeometry } from './wall-items';
 import { annotationCenter } from './annotations';
 
-export type PlanItemKind = 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'wall_item' | 'annotation' | 'floor_zone';
+export type PlanItemKind = 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'wall_item' | 'annotation' | 'floor_zone' | 'ceiling_zone' | 'railing';
 export interface PlanItem { kind: PlanItemKind; id: string; x: number; z: number }
 export type PlanSel = { kind: string; id: string } | null;
 
@@ -24,7 +24,10 @@ export function planItems(snap: Pick<Snapshot, 'floor' | 'placements'>): PlanIte
   const wallItems = (snap.floor.wallItems ?? []).flatMap(it => { const g = wallItemGeometry(snap.floor, it); return g ? [{ kind: 'wall_item' as const, id: it.id, x: g.center[0], z: g.center[1] }] : []; }).sort(order);
   // zonele de pardoseală după camere: Tab ajunge la ele înainte de mobilier (stau în camera lor)
   const zones = (snap.floor.zones ?? []).map(z => ({ kind: 'floor_zone' as const, id: z.id, x: z.rect.x0, z: z.rect.z0 })).sort(order);
-  return [...rooms, ...zones, ...pieces, ...stairs, ...columns, ...beams, ...glassWalls, ...niches, ...wallItems, ...notes];
+  // tavanele false pe zonă după zonele de pardoseală; balustradele lângă pereții de sticlă (structură)
+  const ceilingZones = (snap.floor.ceilingZones ?? []).map(z => ({ kind: 'ceiling_zone' as const, id: z.id, x: z.rect.x0, z: z.rect.z0 })).sort(order);
+  const railings = (snap.floor.railings ?? []).map(r => ({ kind: 'railing' as const, id: r.id, x: (r.a[0] + r.b[0]) / 2, z: (r.a[1] + r.b[1]) / 2 })).sort(order);
+  return [...rooms, ...zones, ...ceilingZones, ...pieces, ...stairs, ...columns, ...beams, ...glassWalls, ...railings, ...niches, ...wallItems, ...notes];
 }
 
 /** Elementul următor (dir = 1) sau anterior (dir = −1). `null` = Tab iese din plan (după ultimul sau înainte de primul). */
