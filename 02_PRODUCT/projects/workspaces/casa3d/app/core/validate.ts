@@ -1,6 +1,6 @@
 import { resolve } from './catalog';
 import { rectHit, insideRect, footprintAt, frontRect, wallLength } from './geometry';
-import { FRONT_CLEARANCE, DINING_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M, ALLOWED_OVERLAP, WALL_HIGH, DOOR_SLIDE_EXTRA_M, POCKET_MIN_WALL_M, DOUBLE_NARROW_M } from './rules';
+import { FRONT_CLEARANCE, DINING_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M, ALLOWED_OVERLAP, WALL_HIGH, NEEDS_CHIMNEY, ON_SURFACE, DOOR_SLIDE_EXTRA_M, POCKET_MIN_WALL_M, DOUBLE_NARROW_M } from './rules';
 import { nicheIssues } from './niches';
 import { wallItemIssues } from './wall-items';
 import { renovationIssues } from './renovation';
@@ -12,6 +12,8 @@ import { slideSide, doorSwing } from './door-geometry';
 import type { Catalog, DoorType, Floor, FurniturePlacement, Issue, Room, Severity, Snapshot, RoomRect } from './types';
 
 const allowed = (a: string, b: string) => WALL_HIGH.has(a) !== WALL_HIGH.has(b) || ALLOWED_OVERLAP.some(([x, y]) => (x === a && y === b) || (x === b && y === a));
+/** Perechea e permisă doar ca „obiect pe o suprafață” (veioză / plantă mică pe noptieră, comodă, birou, măsuță, masă). */
+const surfaceRule = (a: string, b: string) => WALL_HIGH.has(a) === WALL_HIGH.has(b) && ON_SURFACE.has(a) !== ON_SURFACE.has(b);
 // golurile de pe o latură a camerei (aceeași logică ca openingsOnSide din motor)
 export function openingsOnSide(floor: Floor, room: Room, side: 'N' | 'S' | 'W' | 'E'){
   const r = room.rect, out: { kind: string; a: number; b: number; passage?: boolean; doorType?: DoorType }[] = [];
@@ -40,6 +42,18 @@ export function doorZones(floor: Floor, room: Room): RoomRect[] {
   return z;
 }
 export function footprintOf(cat: Catalog, p: FurniturePlacement){ const rv = resolve(cat, p.variantId); if (!rv) return null; return p.size ? footprintAt(p.x, p.z, p.rotation, p.size.w / 100, p.size.d / 100) : footprintAt(p.x, p.z, p.rotation, rv.w, rv.d); }
+/** Piesa pe care stă o veioză sau o plantă mică (ON_SURFACE): piesa din aceeași cameră, permisă dedesubt (ALLOWED_OVERLAP),
+ *  pe a cărei față de sus încape TOT obiectul (centrul și amprenta); dintre ele, cea mai înaltă. null = stă pe pardoseală. */
+export function surfaceSupport(snap: Pick<Snapshot, 'placements'>, cat: Catalog, p: FurniturePlacement): { id: string; h: number } | null {
+  if (!ON_SURFACE.has(p.group)) return null; const fp = footprintOf(cat, p); if (!fp) return null;
+  let best: { id: string; h: number } | null = null;
+  for (const o of snap.placements){ if (o.id === p.id || o.roomId !== p.roomId || ON_SURFACE.has(o.group) || !allowed(p.group, o.group) || WALL_HIGH.has(o.group)) continue;
+    const ofp = footprintOf(cat, o); if (!ofp || !insideRect(ofp, fp)) continue;
+    const h = o.size ? o.size.h / 100 : resolve(cat, o.variantId)?.h ?? 0; if (!best || h > best.h) best = { id: o.id, h }; }
+  return best;
+}
+/** Înălțimea (m) piesei pe care stă o veioză sau o plantă mică (surfaceSupport); 0 = stă pe pardoseală. */
+export function surfaceUnder(snap: Pick<Snapshot, 'placements'>, cat: Catalog, p: FurniturePlacement): number { return surfaceSupport(snap, cat, p)?.h ?? 0; }
 function clearanceZone(cat: Catalog, p: FurniturePlacement, fp: RoomRect): RoomRect | null {
   if (p.group === 'masa'){ const rv = resolve(cat, p.variantId)!, px = (rv.variant.chairs || 4) === 2 ? DINING_CLEARANCE.chairs2 : DINING_CLEARANCE.chairs4, pz = DINING_CLEARANCE.ends;
     const q = Math.round(p.rotation / (Math.PI / 2)) % 2 !== 0; const ex = q ? pz : px, ez = q ? px : pz; return { x0: fp.x0 - ex, x1: fp.x1 + ex, z0: fp.z0 - ez, z1: fp.z1 + ez }; }
@@ -54,7 +68,10 @@ export function validatePlacement(snap: Snapshot, cat: Catalog, p: FurniturePlac
   if (!insideRect(room.rect, fp)) issues.push({ code: 'OUT_OF_ROOM', severity: 'ERROR', message: `Iese din ${room.name}.`, key: 'issue.OUT_OF_ROOM', vars: { rn: room.name } });
   if (doorZones(snap.floor, room).some(z => rectHit(z, fp))) issues.push({ code: 'DOOR_ZONE', severity: 'ERROR', message: 'Blochează deschiderea unei uși.', key: 'issue.DOOR_ZONE' });
   const others = snap.placements.filter(o => o.id !== p.id && o.roomId === p.roomId);
-  for (const o of others){ const ofp = footprintOf(cat, o); if (!ofp || allowed(p.group, o.group)) continue;
+  // veioza / planta mică pe o piesă joasă: suprapunerea e permisă doar cu piesa pe care stă cu totul (surfaceSupport, cu poziția nouă)
+  const placed = [...snap.placements.filter(o => o.id !== p.id), p], onTop = (a: FurniturePlacement, b: FurniturePlacement) => surfaceSupport({ placements: placed }, cat, a)?.id === b.id;
+  for (const o of others){ const ofp = footprintOf(cat, o); if (!ofp) continue;
+    if (allowed(p.group, o.group) && !(surfaceRule(p.group, o.group) && !(ON_SURFACE.has(p.group) ? onTop(p, o) : onTop(o, p)))) continue;
     if (rectHit(fp, ofp)) issues.push({ code: 'OVERLAP', severity: 'ERROR', message: `Se suprapune cu ${resolve(cat, o.variantId)?.product.name}.`, with: o.id, key: 'issue.OVERLAP', vars: { nm: resolve(cat, o.variantId)?.product.name ?? '' } }); }
   // LACUNA 1 reparată: mobilierul înalt nu are voie în fața ferestrei nici la mutarea manuală
   if (ph > TALL_ITEM_M){ const r = room.rect, sides: [('N' | 'S' | 'W' | 'E'), number, boolean][] = [['N', fp.z0 - r.z0, true], ['S', r.z1 - fp.z1, true], ['W', fp.x0 - r.x0, false], ['E', r.x1 - fp.x1, false]];
@@ -69,6 +86,8 @@ export function validatePlacement(snap: Snapshot, cat: Catalog, p: FurniturePlac
     for (const o of others){ const ofp = footprintOf(cat, o); if (ofp && !allowed(p.group, o.group) && rectHit(cz, ofp)) { issues.push({ code: 'CLEARANCE', severity: 'WARNING', message: `Prea aproape de ${resolve(cat, o.variantId)?.product.name}: spațiul de circulație e redus.`, with: o.id, key: 'issue.CLEARANCE_NEAR', vars: { nm: resolve(cat, o.variantId)?.product.name ?? '' } }); break; } } }
   for (const o of others){ const ofp = footprintOf(cat, o); if (!ofp || allowed(p.group, o.group)) continue; const oz = clearanceZone(cat, o, ofp);
     if (oz && rectHit(oz, fp) && !rectHit(ofp, fp)){ issues.push({ code: 'CLEARANCE', severity: 'WARNING', message: `Stă în spațiul de circulație al piesei ${resolve(cat, o.variantId)?.product.name}.`, with: o.id, key: 'issue.CLEARANCE_IN', vars: { nm: resolve(cat, o.variantId)?.product.name ?? '' } }); break; } }
+  // focarul pe lemne: coș de fum și verificare tehnică înainte de montaj (aplicația nu verifică tirajul, distanțele față de pereți sau aerul de ardere)
+  if (NEEDS_CHIMNEY.has(p.group)) issues.push({ code: 'CHIMNEY', severity: 'WARNING', message: 'Focarul pe lemne cere coș de fum și verificare tehnică (coșar, pompieri) înainte de montaj.', key: 'issue.CHIMNEY' });
   return issues;
 }
 export const severityOf = (issues: Issue[]): Severity => issues.some(i => i.severity === 'ERROR') ? 'ERROR' : issues.length ? 'WARNING' : 'PASS';

@@ -749,4 +749,8 @@ export const ro: Dict = {
   "tex.rugOutside": "Covorul {n} iese din cameră sau lasă sub {cm} cm până la pereți.", "tex.rugOverlap": "Covorul {n} se suprapune cu alt covor.",
   "tex.rugSofa": "Covorul mutat nu mai trece pe sub picioarele din față ale canapelei (cel puțin 10 cm).",
   "tex.rugBed": "Covorul mutat nu mai stă sub cele două treimi de jos ale patului, cu margine în lateral.",
+  "issue.CHIMNEY": "Focarul pe lemne cere coș de fum și verificare tehnică (coșar, pompieri) înainte de montaj.",
+  "railing.product": "Produs (preț verificat)", "railing.productHint": "Cantitatea vine din lungime: bucăți întregi de profil, panou sau set, stâlpi la cel mult 1,2 m, ori un singur kit de start (panourile de extensie pentru restul lungimii rămân fără preț). Restul sistemului și montajul rămân în lista fără preț.",
+  "radiator.productAria": "Produs calorifer, {room}", "radiator.unspecified": "Nespecificat", "radiator.productCleared": "Produsul ales ({name}) are altă mărime și a fost scos; alege un produs de mărimea nouă sau lasă nespecificat.", "radiator.noFit": "Nu e niciun produs cu preț verificat de mărimea aceasta; mărimi disponibile: {sizes} cm.", "hvac.productAria": "Produs aer condiționat, {room}", "railing.productAria": "Produs balustradă, {len}", "radiator.product": "Produs (preț verificat)", "hvac.product": "Aparat split (preț verificat)",
+  "sched.el.radiator": "Calorifer", "sched.el.hvac": "Aer condiționat", "sched.el.railing": "Balustradă",
 };

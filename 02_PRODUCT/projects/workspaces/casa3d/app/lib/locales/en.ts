@@ -749,4 +749,8 @@ export const en: Dict = {
   "tex.rugOutside": "Rug {n} runs outside the room or leaves less than {cm} cm to the walls.", "tex.rugOverlap": "Rug {n} overlaps another rug.",
   "tex.rugSofa": "The moved rug no longer runs under the front legs of the sofa (at least 10 cm).",
   "tex.rugBed": "The moved rug no longer sits under the lower two thirds of the bed with a margin at the sides.",
+  "issue.CHIMNEY": "A wood-burning stove needs a chimney and a technical inspection (chimney sweep, fire safety) before it is installed.",
+  "railing.product": "Product (verified price)", "railing.productHint": "The quantity comes from the length: whole pieces of profile, panel or set, posts at most 1.2 m apart, or a single starter kit (the extension panels for the rest of the length stay unpriced). The rest of the system and the installation stay in the unpriced list.",
+  "radiator.productAria": "Radiator product, {room}", "radiator.unspecified": "Unspecified", "radiator.productCleared": "The chosen product ({name}) has a different size and was removed; pick a product of the new size or leave it unspecified.", "radiator.noFit": "No product with a verified price has this size; available sizes: {sizes} cm.", "hvac.productAria": "Air conditioning product, {room}", "railing.productAria": "Railing product, {len}", "radiator.product": "Product (verified price)", "hvac.product": "Split unit (verified price)",
+  "sched.el.radiator": "Radiator", "sched.el.hvac": "Air conditioning", "sched.el.railing": "Railing",
 };
