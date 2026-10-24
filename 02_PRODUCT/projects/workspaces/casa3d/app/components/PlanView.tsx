@@ -163,6 +163,8 @@ export default function PlanView(p: Props){
     for (const w of floor.walls){ const L = wallLength(w.a, w.b); if (L < .01) continue; const ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, s = Math.max(0, Math.min(L, (pt[0] - w.a[0]) * ux + (pt[1] - w.a[1]) * uz)), d = Math.hypot(pt[0] - (w.a[0] + ux * s), pt[1] - (w.a[1] + uz * s));
       if (d < maxD && (!best || d < best.d)) best = { id: w.id, offset: s, d }; } return best; }
   function down(e: React.PointerEvent){
+    // un câmp din inspector încă focalizat se aplică înainte ca planul să schimbe selecția (altfel câmpul e demontat cu tot cu text)
+    const ae = document.activeElement as HTMLElement | null; if (ae?.tagName === 'INPUT' && !ae.classList.contains('plan-dim-input')) ae.blur();
     if (e.pointerType === 'touch'){ touches.current.set(e.pointerId, { x: e.clientX, y: e.clientY }); svg.current!.setPointerCapture(e.pointerId);
       if (touches.current.size === 2){ startPinch(); return; } if (touches.current.size > 2 || pinch.current) return; }
     if (e.button === 1 || (e.button === 0 && e.altKey)){ pan.current = { x: e.clientX, y: e.clientY, vb }; (e.target as Element).setPointerCapture?.(e.pointerId); return; }
