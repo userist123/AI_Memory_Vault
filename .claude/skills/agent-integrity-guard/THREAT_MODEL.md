@@ -48,8 +48,11 @@ Approved egress: `github.com` and `api.github.com` only under `userist123/`; `ap
   egress or touches a protected path fail closed.
 - Claude Code and MCP servers talk to their own backends outside any hook.
 - The scan runs through a shell parser written in regex, not a real shell: an exotic quoting or
-  encoding form can hide a destination or a write target. New bypass classes are added to the
-  test suite as they are found (see the 2026-10-24 adversarial review additions).
+  encoding form can hide a destination or a write target. Known forms are handled — write targets
+  are matched both raw and quote-stripped (so `set""tings.json` -> `settings.json`), `.claude/settings`
+  is matched as a prefix, and a shell write whose content contains `disableAllHooks` is denied even
+  if the sink path was obscured — and new bypass classes are added to the test suite as they are
+  found (two adversarial review rounds on 2026-10-24).
 
 ## Expected: content scanners flag `guard.py`
 
