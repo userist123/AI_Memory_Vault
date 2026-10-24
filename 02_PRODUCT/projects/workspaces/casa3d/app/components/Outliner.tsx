@@ -15,7 +15,8 @@ const GLYPH: Record<string, string> = {
   room: 'M2.5 2.5h9v9h-4v-3.5h-5z', wall: 'M1.5 5.5h11v3h-11z', glass_wall: 'M1.5 6.5h11M1.5 8h11', beam: 'M1.5 4.5h11M1.5 9.5h11',
   opening: 'M3 11.5V3.5a8 8 0 0 1 8 8z', placement: 'M3 4.5h8a1 1 0 0 1 1 1v4h-10v-4a1 1 0 0 1 1-1z', column: 'M4.5 4.5h5v5h-5z',
   stair: 'M2.5 11.5h3v-3h3v-3h3v-3', niche: 'M2.5 4.5h3v5h3v-5h3', wall_item: 'M3.5 3.5h7v5h-7zM7 8.5v3', floor_zone: 'M2.5 2.5h9v9h-9zM2.5 7h9',
-  annotation: 'M2 7h10M2 4.5v5M12 4.5v5'
+  annotation: 'M2 7h10M2 4.5v5M12 4.5v5',
+  ceiling_zone: 'M2.5 4.5h9M4 4.5v3h6v-3', railing: 'M1.5 4.5h11M3 4.5v6M7 4.5v6M11 4.5v6'
 };
 const Glyph = ({ kind }: { kind?: string }) => <svg className="ol-glyph" width="14" height="14" viewBox="0 0 14 14" aria-hidden="true">
   {kind && GLYPH[kind] ? <path d={GLYPH[kind]} /> : <circle cx="7" cy="7" r="1.6" />}</svg>;

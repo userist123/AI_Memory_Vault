@@ -11,9 +11,10 @@ import { wallItemRoom } from './wall-items';
 import type { WallItem } from './types';
 import { annotationCenter, dimGeometry } from './annotations';
 import { activeOpenings } from './renovation';
+import { railingHeight, railingKind } from './railings';
 
 type T = (key: string, vars?: Record<string, string | number>) => string;
-export type MirrorItem = { kind: 'room' | 'placement' | 'wall' | 'opening' | 'column' | 'beam' | 'stair' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item' | 'floor_zone'; id: string; wallId?: string; parent?: string; label: string };
+export type MirrorItem = { kind: 'room' | 'placement' | 'wall' | 'opening' | 'column' | 'beam' | 'stair' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item' | 'floor_zone' | 'ceiling_zone' | 'railing'; id: string; wallId?: string; parent?: string; label: string };
 export type MirrorGroup = { id: string; title: string; items: MirrorItem[] };
 
 const ord = (a: { x: number; z: number; id: string }, b: { x: number; z: number; id: string }) => (Math.abs(a.z - b.z) > .05 ? a.z - b.z : a.x - b.x) || a.id.localeCompare(b.id);
@@ -42,10 +43,14 @@ export function describePlan(snap: Pick<Snapshot, 'floor' | 'placements'>, cat: 
   const wallItemEntry = (it: WallItem): MirrorItem => ({ kind: 'wall_item', id: it.id, label: t('mirror.wallItem', { kind: it.label || t(`wallItem.kind.${it.kind}`), w: L(it.width), h: L(it.height), y: L(it.elevation) }) });
   for (const r of [...f.rooms].sort((a, b) => ord({ x: a.rect.x0, z: a.rect.z0, id: a.id }, { x: b.rect.x0, z: b.rect.z0, id: b.id }))){
     const w = r.rect.x1 - r.rect.x0, d = r.rect.z1 - r.rect.z0;
-    const items: MirrorItem[] = [{ kind: 'room', id: r.id, label: t('mirror.room', { name: r.name, area: formatArea(w * d, units, lang), w: L(w), d: L(d) }) }];
+    // tipul spațiului (balcon, terasă) la finalul descrierii camerei; camera interioară rămâne ca înainte
+    const items: MirrorItem[] = [{ kind: 'room', id: r.id, label: t('mirror.room', { name: r.name, area: formatArea(w * d, units, lang), w: L(w), d: L(d) }) + (r.spaceKind && r.spaceKind !== 'interior' ? ` · ${t(`space.${r.spaceKind}`)}` : '') }];
     // zonele de pardoseală ale camerei, cu mărimea și suprafața
     for (const z of (f.zones ?? []).filter(x => x.roomId === r.id)){ const zw = z.rect.x1 - z.rect.x0, zd = z.rect.z1 - z.rect.z0;
       items.push({ kind: 'floor_zone', id: z.id, label: t('mirror.zone', { name: z.label || t('tool.floor_zone'), area: formatArea(zw * zd, units, lang), w: L(zw), d: L(zd) }) }); }
+    // tavanele false pe zonă ale camerei: mărimea și coborârea
+    for (const z of (f.ceilingZones ?? []).filter(x => x.roomId === r.id)){ const zw = z.rect.x1 - z.rect.x0, zd = z.rect.z1 - z.rect.z0;
+      items.push({ kind: 'ceiling_zone', id: z.id, label: t('mirror.ceilingZone', { name: z.label || t('tool.ceiling_zone'), w: L(zw), d: L(zd), drop: L(z.dropCm / 100) }) }); }
     for (const p of snap.placements.filter(x => x.roomId === r.id).sort((a, b) => ord(a, b))){
       const rv = resolve(cat, p.variantId), fp = footprintOf(cat, p), name = rv ? rv.product.name : p.group;
       items.push({ kind: 'placement', id: p.id, label: fp ? t('mirror.piece', { name, w: L(fp.x1 - fp.x0), d: L(fp.z1 - fp.z0) }) : name });
@@ -74,6 +79,7 @@ export function describePlan(snap: Pick<Snapshot, 'floor' | 'placements'>, cat: 
   for (const c of f.columns ?? []) struct.push({ kind: 'column', id: c.id, label: t(c.role === 'shaft' ? 'mirror.shaft' : c.role === 'boxing' ? 'mirror.boxing' : 'mirror.column', { w: L(c.w), d: L(c.d) }) });
   for (const b of f.beams ?? []) struct.push({ kind: 'beam', id: b.id, label: t('mirror.beam', { len: L(len(b)) }) });
   for (const g of f.glassWalls ?? []) struct.push({ kind: 'glass_wall', id: g.id, label: t('mirror.glass', { len: L(len(g)) }) });
+  for (const b of f.railings ?? []) struct.push({ kind: 'railing', id: b.id, label: t('mirror.railing', { kind: t(`railing.kind.${railingKind(b)}`), len: L(len(b)), h: L(railingHeight(b)) }) });
   for (const s of f.stairs ?? []) struct.push({ kind: 'stair', id: s.id, label: t('mirror.stair', { w: L(s.width), len: L(s.length) }) });
   if (struct.length) groups.push({ id: 'structure', title: t('mirror.structure'), items: struct });
   // cotele și textele planșei, în ordinea citirii

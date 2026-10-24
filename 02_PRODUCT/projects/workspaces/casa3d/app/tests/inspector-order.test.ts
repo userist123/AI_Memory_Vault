@@ -22,7 +22,7 @@ describe('ordinea câmpurilor din inspector', () => {
   test('fiecare tip de selecție are blocul lui, o singură dată', () => {
     const kinds = [...SRC.matchAll(MARK)].map(m => m[1]).filter(k => k !== 'end');
     expect(new Set(kinds).size).toBe(kinds.length);
-    expect([...kinds].sort()).toEqual(['annotation', 'beam', 'column', 'floor_zone', 'glass_wall', 'niche', 'opening', 'placement', 'room', 'stair', 'wall', 'wall_item']);
+    expect([...kinds].sort()).toEqual(['annotation', 'beam', 'ceiling_zone', 'column', 'floor_zone', 'glass_wall', 'niche', 'opening', 'placement', 'railing', 'room', 'stair', 'wall', 'wall_item']);
   });
   test('cheile fixe există în ro și en', () => {
     for (const [k, keys] of Object.entries(blocks())) for (const key of keys) if (!key.includes('${'))
@@ -51,6 +51,20 @@ describe('ordinea câmpurilor din inspector', () => {
           "tool.beam",
           "editor.width",
           "beam.depth",
+          "common.delete",
+        ],
+        "ceiling_zone": [
+          "tool.ceiling_zone",
+          "czone.info",
+          "editor.width",
+          "editor.depth",
+          "czone.drop",
+          "czone.cove",
+          "czone.led",
+          "fin.none",
+          "zone.label",
+          "czone.qty",
+          "czone.rule",
           "common.delete",
         ],
         "column": [
@@ -140,9 +154,19 @@ describe('ordinea câmpurilor din inspector', () => {
           "common.unknownDims",
           "common.approx",
         ],
+        "railing": [
+          "tool.railing",
+          "railing.height",
+          "railing.kind",
+          "railing.kind.\${k}",
+          "railing.rule",
+          "common.delete",
+        ],
         "room": [
           "editor.name",
           "editor.type",
+          "space.label",
+          "space.\${k}",
           "editor.width",
           "editor.length",
           "editor.posX",

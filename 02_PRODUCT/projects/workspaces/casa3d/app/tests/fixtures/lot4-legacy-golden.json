@@ -1,0 +1,791 @@
+{
+ "inputs": {
+  "blank": {
+   "name": "Vechi",
+   "floor": {
+    "id": "floor-1",
+    "name": "Etaj",
+    "ceilingHeight": 2.6,
+    "rooms": [
+     {
+      "id": "camera-1",
+      "name": "Living",
+      "type": "living",
+      "rect": {
+       "x0": 0,
+       "z0": 0,
+       "x1": 5,
+       "z1": 4
+      }
+     }
+    ],
+    "walls": [
+     {
+      "id": "wall-1",
+      "a": [
+       0,
+       0
+      ],
+      "b": [
+       5,
+       0
+      ],
+      "thickness": 0.25,
+      "exterior": true,
+      "openings": [
+       {
+        "id": "op-2",
+        "kind": "window",
+        "offset": 1.8,
+        "width": 1.4
+       }
+      ]
+     },
+     {
+      "id": "wall-2",
+      "a": [
+       5,
+       0
+      ],
+      "b": [
+       5,
+       4
+      ],
+      "thickness": 0.25,
+      "exterior": true,
+      "openings": []
+     },
+     {
+      "id": "wall-3",
+      "a": [
+       5,
+       4
+      ],
+      "b": [
+       0,
+       4
+      ],
+      "thickness": 0.25,
+      "exterior": true,
+      "openings": []
+     },
+     {
+      "id": "wall-4",
+      "a": [
+       0,
+       4
+      ],
+      "b": [
+       0,
+       0
+      ],
+      "thickness": 0.25,
+      "exterior": true,
+      "openings": [
+       {
+        "id": "op-1",
+        "kind": "door",
+        "offset": 1.55,
+        "width": 0.9,
+        "entrance": true
+       }
+      ]
+     }
+    ]
+   },
+   "placements": [
+    {
+     "id": "12a31f9f-163e-4968-9f2d-5fe85ae54ae6",
+     "roomId": "camera-1",
+     "group": "canapea",
+     "variantId": "canapea-0",
+     "x": 1.9,
+     "z": 0.56,
+     "rotation": 0,
+     "source": "auto"
+    },
+    {
+     "id": "149ac92a-79fc-451b-a909-4e711aa96146",
+     "roomId": "camera-1",
+     "group": "comodaTv",
+     "variantId": "comodaTv-0",
+     "x": 1.919,
+     "z": 3.705,
+     "rotation": 3.141592653589793,
+     "source": "auto"
+    },
+    {
+     "id": "3b96a7fd-3b0a-47d5-a3ee-8de960d74ee5",
+     "roomId": "camera-1",
+     "group": "masuta",
+     "variantId": "masuta-0",
+     "x": 1.9,
+     "z": 1.875,
+     "rotation": 0,
+     "source": "auto"
+    },
+    {
+     "id": "9ee9be1f-df6a-4af5-a878-9787847057dc",
+     "roomId": "camera-1",
+     "group": "masa",
+     "variantId": "masa-13",
+     "x": 4.04,
+     "z": 1.975,
+     "rotation": 1.5707963267948966,
+     "source": "auto"
+    },
+    {
+     "id": "58092b1e-3a32-4986-8c6c-a6303f42ec79",
+     "roomId": "camera-1",
+     "group": "biblioteca",
+     "variantId": "biblioteca-0",
+     "x": 0.26,
+     "z": 0.225,
+     "rotation": 0,
+     "source": "auto"
+    },
+    {
+     "id": "f03f2f94-a339-4144-865d-291cc79e7f7e",
+     "roomId": "camera-1",
+     "group": "biblioteca",
+     "variantId": "biblioteca-0",
+     "x": 4.74,
+     "z": 0.225,
+     "rotation": 0,
+     "source": "auto"
+    }
+   ],
+   "selections": {
+    "canapea": "canapea-0",
+    "comodaTv": "comodaTv-0",
+    "masuta": "masuta-0",
+    "biblioteca": "biblioteca-0",
+    "masa": "masa-0",
+    "pat": "pat-0",
+    "noptiera": "noptiera-0",
+    "dulap": "dulap-0",
+    "birou": "birou-0",
+    "scaunBirou": "scaunBirou-0",
+    "bucatarie": "bucatarie-0",
+    "frigider": "frigider-0",
+    "plita": "plita-0",
+    "cuptor": "cuptor-0",
+    "hota": "hota-0",
+    "dus": "dus-0",
+    "lavoar": "lavoar-0",
+    "wc": "wc-0",
+    "pantofar": "pantofar-0",
+    "oglinda": "oglinda-0",
+    "fotoliu": "fotoliu-0",
+    "comoda": "comoda-0",
+    "cada": "cada-0",
+    "bideu": "bideu-0",
+    "caloriferBaie": "caloriferBaie-0",
+    "coloanaBaie": "coloanaBaie-0",
+    "dulapOglinda": "dulapOglinda-0",
+    "boiler": "boiler-0"
+   },
+   "picked": []
+  },
+  "demo": {
+   "name": "Vechi",
+   "floor": {
+    "id": "floor-1",
+    "name": "Etaj",
+    "ceilingHeight": 2.6,
+    "rooms": [
+     {
+      "id": "hol",
+      "name": "Hol",
+      "type": "hol",
+      "rect": {
+       "x0": 0,
+       "z0": 2.6,
+       "x1": 3.2,
+       "z1": 5
+      }
+     },
+     {
+      "id": "bucatarie",
+      "name": "Bucătărie",
+      "type": "bucatarie",
+      "rect": {
+       "x0": 0,
+       "z0": 0,
+       "x1": 3.2,
+       "z1": 2.6
+      }
+     },
+     {
+      "id": "living",
+      "name": "Living",
+      "type": "living",
+      "rect": {
+       "x0": 3.2,
+       "z0": 0,
+       "x1": 8.8,
+       "z1": 3.8
+      }
+     },
+     {
+      "id": "dormitor",
+      "name": "Dormitor",
+      "type": "dormitor",
+      "rect": {
+       "x0": 3.2,
+       "z0": 3.8,
+       "x1": 8.8,
+       "z1": 7
+      }
+     },
+     {
+      "id": "baie",
+      "name": "Baie",
+      "type": "baie",
+      "rect": {
+       "x0": 0,
+       "z0": 5,
+       "x1": 3.2,
+       "z1": 7
+      }
+     }
+    ],
+    "walls": [
+     {
+      "id": "wall-1",
+      "a": [
+       0,
+       0
+      ],
+      "b": [
+       8.8,
+       0
+      ],
+      "thickness": 0.25,
+      "exterior": true,
+      "openings": [
+       {
+        "id": "op-1-1",
+        "kind": "window",
+        "offset": 0.8,
+        "width": 1.4
+       },
+       {
+        "id": "op-1-2",
+        "kind": "window",
+        "offset": 5,
+        "width": 2.5
+       }
+      ]
+     },
+     {
+      "id": "wall-2",
+      "a": [
+       8.8,
+       0
+      ],
+      "b": [
+       8.8,
+       7
+      ],
+      "thickness": 0.25,
+      "exterior": true,
+      "openings": [
+       {
+        "id": "op-2-1",
+        "kind": "window",
+        "offset": 0.8,
+        "width": 2
+       },
+       {
+        "id": "op-2-2",
+        "kind": "window",
+        "offset": 4.6,
+        "width": 1.6
+       }
+      ]
+     },
+     {
+      "id": "wall-3",
+      "a": [
+       8.8,
+       7
+      ],
+      "b": [
+       0,
+       7
+      ],
+      "thickness": 0.25,
+      "exterior": true,
+      "openings": []
+     },
+     {
+      "id": "wall-4",
+      "a": [
+       0,
+       7
+      ],
+      "b": [
+       0,
+       0
+      ],
+      "thickness": 0.25,
+      "exterior": true,
+      "openings": [
+       {
+        "id": "op-4-1",
+        "kind": "door",
+        "offset": 2.7,
+        "width": 0.9,
+        "entrance": true
+       }
+      ]
+     },
+     {
+      "id": "wall-5",
+      "a": [
+       3.2,
+       0
+      ],
+      "b": [
+       3.2,
+       7
+      ],
+      "thickness": 0.15,
+      "exterior": false,
+      "openings": [
+       {
+        "id": "op-5-1",
+        "kind": "door",
+        "offset": 2.8,
+        "width": 0.8
+       },
+       {
+        "id": "op-5-2",
+        "kind": "door",
+        "offset": 4,
+        "width": 0.8
+       }
+      ]
+     },
+     {
+      "id": "wall-6",
+      "a": [
+       0,
+       2.6
+      ],
+      "b": [
+       3.2,
+       2.6
+      ],
+      "thickness": 0.15,
+      "exterior": false,
+      "openings": [
+       {
+        "id": "op-6-1",
+        "kind": "door",
+        "offset": 2.2,
+        "width": 0.8
+       }
+      ]
+     },
+     {
+      "id": "wall-7",
+      "a": [
+       0,
+       5
+      ],
+      "b": [
+       3.2,
+       5
+      ],
+      "thickness": 0.15,
+      "exterior": false,
+      "openings": [
+       {
+        "id": "op-7-1",
+        "kind": "door",
+        "offset": 2.2,
+        "width": 0.8
+       }
+      ]
+     },
+     {
+      "id": "wall-8",
+      "a": [
+       3.2,
+       3.8
+      ],
+      "b": [
+       8.8,
+       3.8
+      ],
+      "thickness": 0.15,
+      "exterior": false,
+      "openings": []
+     }
+    ]
+   },
+   "placements": [
+    {
+     "id": "1d1a0673-20a1-4c29-a466-6e6b2ffffb9c",
+     "roomId": "bucatarie",
+     "group": "bucatarie",
+     "variantId": "bucatarie-0",
+     "x": 0.405,
+     "z": 1.325,
+     "rotation": 1.5707963267948966,
+     "source": "auto"
+    },
+    {
+     "id": "ad2b5600-3290-43f2-8087-bd1974b2ac4a",
+     "roomId": "bucatarie",
+     "group": "frigider",
+     "variantId": "frigider-0",
+     "x": 2.485,
+     "z": 0.385,
+     "rotation": 0,
+     "source": "auto"
+    },
+    {
+     "id": "e95f82fe-4cd6-44cb-a6d9-d97fd5b9d8f2",
+     "roomId": "dormitor",
+     "group": "pat",
+     "variantId": "pat-0",
+     "x": 5.99,
+     "z": 4.93,
+     "rotation": 0,
+     "source": "auto"
+    },
+    {
+     "id": "d74744a0-6763-4ac3-b67a-fc8b51023c89",
+     "roomId": "dormitor",
+     "group": "noptiera",
+     "variantId": "noptiera-0",
+     "x": 4.9,
+     "z": 4.09,
+     "rotation": 0,
+     "source": "auto"
+    },
+    {
+     "id": "bd7f9d09-feb4-4c04-a9a3-b42220117a26",
+     "roomId": "dormitor",
+     "group": "noptiera",
+     "variantId": "noptiera-0",
+     "x": 7.08,
+     "z": 4.09,
+     "rotation": 0,
+     "source": "auto"
+    },
+    {
+     "id": "de23cdb7-3794-4e45-a51c-f1acebb5f6d2",
+     "roomId": "dormitor",
+     "group": "dulap",
+     "variantId": "dulap-0",
+     "x": 8.145,
+     "z": 4.135,
+     "rotation": 0,
+     "source": "auto"
+    },
+    {
+     "id": "d0de74ef-fc01-4270-94d3-6a6aab391047",
+     "roomId": "dormitor",
+     "group": "birou",
+     "variantId": "birou-0",
+     "x": 3.985,
+     "z": 6.665,
+     "rotation": 3.141592653589793,
+     "source": "auto"
+    },
+    {
+     "id": "08cab8a0-b7dd-4896-bdf0-823c8e8d6e4e",
+     "roomId": "dormitor",
+     "group": "scaunBirou",
+     "variantId": "scaunBirou-0",
+     "x": 3.985,
+     "z": 6.19,
+     "rotation": 6.283185307179586,
+     "source": "auto"
+    },
+    {
+     "id": "49063425-45f4-40f4-aa9b-fd91c651058f",
+     "roomId": "baie",
+     "group": "dus",
+     "variantId": "dus-0",
+     "x": 0.51,
+     "z": 6.465,
+     "rotation": 3.141592653589793,
+     "source": "auto"
+    },
+    {
+     "id": "f4fe7ba3-d5b0-4784-bb6f-f64a7da0471b",
+     "roomId": "baie",
+     "group": "lavoar",
+     "variantId": "lavoar-0",
+     "x": 1.61,
+     "z": 5.255,
+     "rotation": 0,
+     "source": "auto"
+    },
+    {
+     "id": "4a3c74c1-189c-41db-b9e6-c89a75b99f23",
+     "roomId": "baie",
+     "group": "wc",
+     "variantId": "wc-0",
+     "x": 2.845,
+     "z": 6.14,
+     "rotation": -1.5707963267948966,
+     "source": "auto"
+    },
+    {
+     "id": "4dbd0a4c-78a5-45a4-828e-46ea388c15dd",
+     "roomId": "living",
+     "group": "canapea",
+     "variantId": "canapea-0",
+     "x": 7.6,
+     "z": 0.56,
+     "rotation": 0,
+     "source": "auto"
+    },
+    {
+     "id": "f2404728-e95e-4677-8238-8f7123f871ea",
+     "roomId": "living",
+     "group": "comodaTv",
+     "variantId": "comodaTv-0",
+     "x": 7.588,
+     "z": 3.505,
+     "rotation": 3.141592653589793,
+     "source": "auto"
+    },
+    {
+     "id": "2a005ff2-6c09-41ab-b994-6a7491136634",
+     "roomId": "living",
+     "group": "masuta",
+     "variantId": "masuta-0",
+     "x": 7.6,
+     "z": 1.875,
+     "rotation": 0,
+     "source": "auto"
+    },
+    {
+     "id": "3d84abac-42e5-4ceb-a17e-bc1a58ff8c1b",
+     "roomId": "living",
+     "group": "masa",
+     "variantId": "masa-0",
+     "x": 4.45,
+     "z": 1.3,
+     "rotation": 0,
+     "source": "auto"
+    },
+    {
+     "id": "925557cf-e97f-465c-9305-414113416104",
+     "roomId": "living",
+     "group": "biblioteca",
+     "variantId": "biblioteca-0",
+     "x": 4.365,
+     "z": 3.575,
+     "rotation": 3.141592653589793,
+     "source": "auto"
+    },
+    {
+     "id": "affa0638-1c38-43ba-988a-482d5bd01154",
+     "roomId": "living",
+     "group": "biblioteca",
+     "variantId": "biblioteca-0",
+     "x": 4.768,
+     "z": 3.575,
+     "rotation": 3.141592653589793,
+     "source": "auto"
+    },
+    {
+     "id": "7934d095-e4ec-475b-9667-f7689010cf56",
+     "roomId": "hol",
+     "group": "pantofar",
+     "variantId": "pantofar-0",
+     "x": 0.595,
+     "z": 4.805,
+     "rotation": 3.141592653589793,
+     "source": "auto"
+    },
+    {
+     "id": "13ff6e8b-c016-43d4-bb2e-4e7e0dcffef0",
+     "roomId": "hol",
+     "group": "oglinda",
+     "variantId": "oglinda-1",
+     "x": 0.575,
+     "z": 2.765,
+     "rotation": 0,
+     "source": "auto"
+    }
+   ],
+   "selections": {
+    "canapea": "canapea-0",
+    "comodaTv": "comodaTv-0",
+    "masuta": "masuta-0",
+    "biblioteca": "biblioteca-0",
+    "masa": "masa-0",
+    "pat": "pat-0",
+    "noptiera": "noptiera-0",
+    "dulap": "dulap-0",
+    "birou": "birou-0",
+    "scaunBirou": "scaunBirou-0",
+    "bucatarie": "bucatarie-0",
+    "frigider": "frigider-0",
+    "plita": "plita-0",
+    "cuptor": "cuptor-0",
+    "hota": "hota-0",
+    "dus": "dus-0",
+    "lavoar": "lavoar-0",
+    "wc": "wc-0",
+    "pantofar": "pantofar-0",
+    "oglinda": "oglinda-0",
+    "fotoliu": "fotoliu-0",
+    "comoda": "comoda-0",
+    "cada": "cada-0",
+    "bideu": "bideu-0",
+    "caloriferBaie": "caloriferBaie-0",
+    "coloanaBaie": "coloanaBaie-0",
+    "dulapOglinda": "dulapOglinda-0",
+    "boiler": "boiler-0"
+   },
+   "picked": [],
+   "finishes": {
+    "hol": {
+     "floor": "parchet-egger-h2099",
+     "wallPaint": "dedeman-vopsea-oskar-coloris-classic-cream-5l",
+     "wallTile": null,
+     "baseboard": "plinta-mdf-60",
+     "light": "lampa-virrmo"
+    },
+    "bucatarie": {
+     "floor": "gresie-mckinley",
+     "wallPaint": "vopsea-innenweiss",
+     "wallTile": "faianta-lumiere",
+     "baseboard": null,
+     "light": "lampa-virrmo",
+     "kitchen": {
+      "underLed": "banda-led-hoff-3000k"
+     }
+    },
+    "living": {
+     "floor": "parchet-egger-h2099",
+     "wallPaint": "dedeman-vopsea-oskar-coloris-classic-cream-5l",
+     "wallTile": null,
+     "baseboard": "plinta-mdf-60",
+     "light": "lampa-virrmo",
+     "rug": {
+      "material": "covor-arende-alb-200x300"
+     },
+     "windows": [
+      {
+       "openingId": "op-1-2",
+       "curtain": "draperie-annakajsa-bej",
+       "sheer": "perdea-bergnejlika-alb"
+      },
+      {
+       "openingId": "op-2-1",
+       "curtain": "draperie-annakajsa-bej",
+       "sheer": "perdea-bergnejlika-alb"
+      }
+     ],
+     "fixtures": [
+      {
+       "kind": "pendant",
+       "anchor": "table",
+       "material": "ikea-narrkolv-lustra-ratan-56"
+      }
+     ]
+    },
+    "dormitor": {
+     "floor": "parchet-egger-h2099",
+     "wallPaint": "dedeman-vopsea-oskar-coloris-classic-cream-5l",
+     "wallTile": null,
+     "baseboard": "plinta-mdf-60",
+     "light": "lampa-virrmo",
+     "rug": {
+      "material": "covor-bronden-170x240"
+     },
+     "wallFeatures": [
+      {
+       "side": "N",
+       "kind": "paint",
+       "material": "dedeman-vopsea-savana-superculoare-bej-armonie-5l",
+       "color": "#d8c7a8"
+      }
+     ],
+     "windows": [
+      {
+       "openingId": "op-2-2",
+       "curtain": "draperie-annakajsa-bej",
+       "sheer": "perdea-bergnejlika-alb"
+      }
+     ],
+     "fixtures": [
+      {
+       "kind": "sconce",
+       "anchor": "bed",
+       "material": "dedeman-smarter-timber-01-1663-aplica-e27-negru-fag"
+      }
+     ]
+    },
+    "baie": {
+     "floor": "gresie-mckinley",
+     "wallPaint": "vopsea-innenweiss",
+     "wallTile": "faianta-grafen",
+     "baseboard": null,
+     "light": "lampa-virrmo",
+     "bath": {
+      "mirror": "dedeman-savini-due-spr101-oglinda-led-60x80"
+     }
+    }
+   },
+   "appearance": {
+    "rooms": {
+     "hol": {
+      "walls": {
+       "color": "#ede3cc"
+      }
+     },
+     "living": {
+      "walls": {
+       "color": "#ede3cc"
+      }
+     },
+     "dormitor": {
+      "walls": {
+       "color": "#ede3cc"
+      }
+     }
+    }
+   }
+  }
+ },
+ "outputs": {
+  "blank": {
+   "server": "e3d7c624f5cbfd61fd3f8721f9f6e001e226069d00a9b646768a3103bf1734aa",
+   "boq": "026472bf6e9fd754fe9b019936d9f497a6df26d34df082acf13081be70dd1f67",
+   "viewer": "e873a06a208053a7470a187793b6aa5e3b27888d27d29c0df4dc322b9b874c69",
+   "viewerNoMc": "0411227571d1dd2a98064c3a15e2aa79660c308d55c839d3b57b87f5f25111d8",
+   "dxf": "a73220f4b0afd31a13131417ced5f5e5bf7b1617ef8949e0cb76070ab5cac34a",
+   "validateFloor": "cf1cbb66a638b4860a516671fb74850e6ccf787fe6c4c8d29e9c04efe880bd05",
+   "validatePlacements": "2512cce3fee33a347bbb2519e16d29b883c5daadc74609224cb68215c50f3593",
+   "finishIssues": "68efec7e52f6b3d356fdea5c3c9cbf89752ddfe235fbe29e11a7a35ba13149ae",
+   "techIssues": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "describe": "436cd16aab35784b05905a400f6f509db05861bb35393cacbb2ace10f2fa1583",
+   "describeEn": "510e4f1344b3ae015910a8146527597dd51d10af1bc1c78279ddb3c453382920"
+  },
+  "demo": {
+   "server": "55a743b979d2f958c6e8f824856908091fd7eec630690148928d1c436c09a0fb",
+   "boq": "80310794b2b8d19d089149dea88bb2d4a7238dc07fb6a2fb19e2a676a0364d8d",
+   "viewer": "c86e57615760c0e1a9c97af5ed7fa5b43fbea024336a4c2cd88a931721072ce0",
+   "viewerNoMc": "d340c8349ba0a12a94ac3b01eae28c82a68ef6254af311df418d383c8e478003",
+   "dxf": "6645f397bf61c05be1d2087ae6a6247cb593960f2dda47bdb2c8034c6a646716",
+   "validateFloor": "cf1cbb66a638b4860a516671fb74850e6ccf787fe6c4c8d29e9c04efe880bd05",
+   "validatePlacements": "e4706c18460184e9d10777e46e1d623be0cf3e935ee6995120219b578a4303f1",
+   "finishIssues": "7b156a9905c4f188cd890708b95dff19345c85f8397ba27a2c30117a22b96ea1",
+   "techIssues": "4f53cda18c2baa0c0354bb5f9a3ecbe5ed12ab4d8e11ba873c2f11161202b945",
+   "describe": "9e9e2fdc61750ecd14a9d2ac6eaaa45150ef8d5f15fa5e488646fb7841192781",
+   "describeEn": "953ce252b328c87804347b01de72353198562da9880f7d6b9d6bf6f743dc55a0"
+  }
+ }
+}

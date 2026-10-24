@@ -44,7 +44,14 @@ export interface WallItem { id: string; wallId: string; side: 1 | -1; kind: Wall
 /** Zonă de pardoseală: dreptunghi în camera `roomId` cu alt material (gresia bucătăriei din open-space, intrarea); `floor` = id de
  *  material (parchet sau gresie), `layout` = modul de așezare (lipsă = drept). Devizul scade zona din pardoseala camerei. */
 export interface FloorZone { id: string; roomId: string; rect: RoomRect; floor: string; layout?: FloorLayout; label?: string }
-export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[]; columns?: Column[]; beams?: Beam[]; glassWalls?: GlassWall[]; niches?: Niche[]; annotations?: Annotation[]; wallItems?: WallItem[]; zones?: FloorZone[] }
+/** Tavan fals pe zonă (casetă deasupra mesei sau a patului): dreptunghi în camera `roomId`, coborât cu `dropCm` față de placă;
+ *  `coveCm` = scafa de pe contur (lipsă = fără scafă), `led` = banda LED de pe contur (id de material `led_strip`, lipsă = fără). */
+export interface CeilingZone { id: string; roomId: string; rect: RoomRect; dropCm: number; coveCm?: number; led?: string; label?: string }
+/** Balustradă (balcon, terasă, scară, galerie): segment de la `a` la `b`; `height` în m (lipsă = 1 m), `kind` lipsă = metal. */
+export type RailingKind = 'glass' | 'metal';
+export interface Railing { id: string; a: [number, number]; b: [number, number]; height?: number; kind?: RailingKind }
+export interface Floor { id: string; name: string; ceilingHeight: number; rooms: Room[]; walls: Wall[]; stairs?: Stair[]; columns?: Column[]; beams?: Beam[]; glassWalls?: GlassWall[]; niches?: Niche[]; annotations?: Annotation[]; wallItems?: WallItem[]; zones?: FloorZone[];
+  ceilingZones?: CeilingZone[]; railings?: Railing[] }
 /** `size` (cm) = piesă pe comandă cu altă dimensiune decât varianta din catalog; prețul ei devine necunoscut. */
 export interface FurniturePlacement { id: string; roomId: string; group: string; variantId: string; x: number; z: number; rotation: number; source: 'auto' | 'manual'; size?: { w: number; d: number; h: number } }
 /** Culoare (hex #rrggbb) și, unde modelul permite, material; lipsa înseamnă aspectul implicit. */
@@ -70,7 +77,8 @@ export type Severity = 'PASS' | 'WARNING' | 'ERROR';
 /** `message` = textul românesc (compatibil cu API-ul); `key` + `vars` = același text în orice limbă (lib/i18n.ts issueText). */
 export interface Issue { code: 'OUT_OF_ROOM' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW_BLOCKED' | 'CLEARANCE' | 'UNKNOWN_VARIANT' | 'OPENING_OUTSIDE_WALL' | 'WALL_TOO_SHORT' | 'STAIR'
   | 'NICHE_OUTSIDE_WALL' | 'NICHE_TOO_DEEP' | 'NICHE_OVER_OPENING' | 'SHAFT_DOOR' | 'SHAFT_OUTSIDE_ROOM' | 'DOOR_TYPE' | 'WALL_ITEM'
-  | 'WALL_DEMOLISH' | 'RADIATOR_BLOCKED' | 'HVAC' | 'ZONE_OUTSIDE_ROOM' | 'ZONE_OVERLAP'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
+  | 'WALL_DEMOLISH' | 'RADIATOR_BLOCKED' | 'HVAC' | 'ZONE_OUTSIDE_ROOM' | 'ZONE_OVERLAP'
+  | 'CEILING_ZONE_OUTSIDE_ROOM' | 'CEILING_ZONE_OVERLAP' | 'CEILING_ZONE_LOW' | 'RAILING_LOW' | 'CEILING_ZONE_ABOVE_ROOM_CEILING'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
 
 // ---------- Faza 2: materiale, manoperă, servicii, finisaje, buget ----------
 export type MaterialCategory = 'parquet' | 'floor_tile' | 'wall_tile' | 'paint' | 'baseboard' | 'tile_adhesive' | 'lighting'
@@ -91,7 +99,7 @@ export interface LaborRate { id: string; label: string; unit: 'm2' | 'ml'; low: 
 export interface Service { id: string; label: string; supplier: string; price?: number; pricePerMeter?: number; sourceUrl: string | null; verificationType: string; confidence: Confidence; note?: string }
 export interface MaterialsCatalog { verifiedAt: string; materials: Material[]; labor: LaborRate[]; services: Service[] }
 export interface FloorLayout { pattern: FloorPattern; angle?: 0 | 90; groutMm?: number; groutColor?: string }
-export type WallFeatureKind = 'wallpaper' | 'slats' | 'plaster' | 'brick' | 'stone' | 'tile' | 'paint' | 'panel' | 'rail';
+export type WallFeatureKind = 'wallpaper' | 'slats' | 'plaster' | 'brick' | 'stone' | 'tile' | 'paint' | 'panel' | 'rail' | 'frames';
 /** O bandă pe un perete al camerei (latura N/S/V/E): de la `fromM` (lipsă = pardoseala) până la `heightM` (lipsă = tavanul).
  *  Pe același perete pot sta mai multe benzi fără să se suprapună (ex. lambriu 0–1,1 m, baghetă la 1,1 m, tapet deasupra);
  *  `rail` e o baghetă orizontală la înălțimea `heightM`; `paint` e o vopsea de altă culoare pe banda ei. */
@@ -99,12 +107,15 @@ export type WallFeatureKind = 'wallpaper' | 'slats' | 'plaster' | 'brick' | 'sto
  *  lipsa lor înseamnă toată latura. `vertical` doar la `slats`: lipsă = lamele verticale, `false` = orizontale.
  *  `effect` doar la `plaster`: vopseaua decorativă cu efect (manopera și textura 3D depind de efect). */
 export type PlasterEffect = 'venetian' | 'concrete' | 'microcement' | 'travertine' | 'silk' | 'textured';
+/** Boiseria (`frames`): casete din baghetă pe banda și porțiunea date, peste vopseaua peretelui; `count` lipsă = calculat din
+ *  lungime (core/finishes.ts frameRects), `marginM` = distanța de la marginea benzii, `gapM` = distanța dintre casete. */
+export interface WallFrames { count?: number; marginM?: number; gapM?: number }
 export interface WallFeature { side: 'N' | 'S' | 'W' | 'E'; kind: WallFeatureKind; material: string; color?: string; fromM?: number; heightM?: number;
-  alongFromM?: number; alongToM?: number; vertical?: boolean; effect?: PlasterEffect }
+  alongFromM?: number; alongToM?: number; vertical?: boolean; effect?: PlasterEffect; frames?: WallFrames }
 /** Tavan: drept (vopsit), fals din gips-carton coborât cu `dropCm`, sau fals cu scafă luminoasă pe contur. */
 export interface CeilingFinish { type: 'flat' | 'drop' | 'cove'; dropCm?: number; coveCm?: number; led?: string | null; cornice?: string | null; spot?: string | null; spots?: number }
 export interface RoomFinishes { floor: string; wallPaint: string; wallTile?: string | null; baseboard?: string | null; light: string; lights?: number;
-  floorLayout?: FloorLayout; wallFeatures?: WallFeature[]; ceiling?: CeilingFinish; windows?: WindowTreatment[]; rug?: RugChoice | null; kitchen?: KitchenSpec; bath?: BathSpec; fixtures?: LightFixture[] }
+  floorLayout?: FloorLayout; wallFeatures?: WallFeature[]; ceiling?: CeilingFinish; windows?: WindowTreatment[]; rug?: RugChoice | null; rugs?: RugChoice[]; kitchen?: KitchenSpec; bath?: BathSpec; fixtures?: LightFixture[] }
 /** Un corp de iluminat plasat: pendul, aplică sau șină, legat de o piesă de mobilier (ancora) sau de un perete. */
 export type FixtureAnchor = 'table' | 'counter' | 'bed' | 'sofa' | 'desk' | 'vanity' | 'center' | 'wall';
 export interface LightFixture { kind: 'pendant' | 'sconce' | 'track'; anchor: FixtureAnchor; material?: string | null; count?: number; heightM?: number; lengthM?: number;
@@ -120,7 +131,8 @@ export interface KitchenSpec { frontColor?: string; frontFinish?: 'matt' | 'glos
 export interface WindowTreatment { openingId: string; curtain?: string | null; sheer?: string | null; blind?: string | null; fullness?: number }
 /** Ușa aleasă pentru un gol de ușă (produs cu toc), mânerul ei și sistemul (șină, casetă pentru ușa în perete, kit pliant). */
 export interface DoorChoice { product?: string | null; handle?: string | null; system?: string | null }
-/** Covorul camerei, centrat; `rotate` îl întoarce cu 90°. */
-export interface RugChoice { material: string; rotate?: boolean }
+/** Covorul camerei: centrat dacă lipsesc `x` și `z` (centrul covorului, în m, în coordonatele planului); `rotate` îl întoarce cu 90°.
+ *  `RoomFinishes.rugs` = covoarele în plus (al doilea covor, sub masă), fiecare cu poziția lui. */
+export interface RugChoice { material: string; rotate?: boolean; x?: number; z?: number }
 export interface BudgetSettings { target: number | null; contingencyPct: number; includeLabor: boolean; laborScenario: 'low' | 'expected' | 'high';
   deliveryIkea: boolean; deliveryDedeman: number | null; furnitureAssembly: number | null; kitchenAssembly: boolean; design: number }
