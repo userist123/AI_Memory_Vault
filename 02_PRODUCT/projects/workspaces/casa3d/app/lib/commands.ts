@@ -46,6 +46,10 @@ export const COMMANDS: CommandDef[] = [
   { id: 'palette', label: 'cmdk.open', group: 'nav', domain: 'global', dispatch: false, shortcuts: [{ key: 'k', ctrlOrMeta: true }] },
   // F e prinsă de plan (PlanView keyDown), nu de dispecerul editorului
   { id: 'frame', label: 'help.frame', menuLabel: 'ctx.frame', group: 'nav', domain: 'editor', dispatch: false, shortcuts: [{ key: 'f' }] },
+  // spațiul de lucru (PLAN_A1_3): Focus ascunde panourile; structura și layoutul clasic sunt doar în ⋯ și Ctrl/⌘K
+  { id: 'ws.focus', label: 'ws.focus', group: 'nav', domain: 'editor', shortcuts: [{ key: '\\', ctrlOrMeta: true }] },
+  { id: 'ws.outliner', label: 'ws.outliner', group: 'nav', domain: 'editor', dispatch: false, shortcuts: [] },
+  { id: 'ws.classic', label: 'ws.classic', group: 'nav', domain: 'editor', dispatch: false, shortcuts: [] },
   { id: 'wall.length', label: 'ctx.editLength', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
   { id: 'view3d', label: 'hud.frame3d', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
   { id: 'room.furnish', label: 'hud.autoFurnish', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
@@ -98,7 +102,7 @@ export interface HelpRow { keys: string; keysKey?: string; label: string; sectio
 export function helpRows(o: { mac: boolean }): HelpRow[] {
   const row = (c: CommandDef): HelpRow => ({ keys: c.shortcuts.map(s => formatShortcut(s, o)).join(' / '), keysKey: c.helpKeys, label: c.label, section: c.group === 'tools' ? 'tools' : 'edit' });
   const edit = COMMANDS.filter(c => c.group === 'edit').map(row), by = (id: string) => row(commandById(id)!);
-  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom', section: 'edit' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan', section: 'edit' }, by('frame'), by('help'), by('palette'),
+  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom', section: 'edit' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan', section: 'edit' }, by('frame'), by('help'), by('palette'), by('ws.focus'),
     { keys: '', keysKey: 'help.typeLengthKeys', label: 'help.typeLength', section: 'draw' }, { keys: '', keysKey: 'help.shiftDrawKeys', label: 'help.shiftDraw', section: 'draw' },
     ...COMMANDS.filter(c => c.group === 'tools').map(row)];
 }

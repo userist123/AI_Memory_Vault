@@ -86,6 +86,10 @@ import { prepareShareImages } from '@/lib/share-images';
 import { withViewTransition } from '@/lib/motion';
 import StagePicker from './StagePicker';
 import PlanObjects from './PlanObjects';
+import Outliner from './Outliner';
+import PanelSplitter from './PanelSplitter';
+import { buildOutliner } from '@/core/outliner';
+import { DEFAULT_WS, MODE_KEY, WS_KEY, fitToViewport, parseWorkspace, resolveMode, serializeWorkspace, type LayoutMode, type WorkspaceState } from '@/lib/workspace-layout';
 import { PLAN_LIMITS, PLAN_DEFAULTS, cleanPlanText, stripPlanText } from '@/core/plan-limits';
 import ToolRail from './ToolRail';
 import { dimGeometry } from '@/core/annotations';
@@ -378,6 +382,7 @@ export default function Editor({ id }: { id: string }){
       case 'redo': e.preventDefault(); redo(); break;
       case 'duplicate': e.preventDefault(); if (sel?.kind === 'placement') duplicate(sel.id); break;
       case 'help': setHelp(h => !h); break;
+      case 'ws.focus': e.preventDefault(); if (!compact && mode === 'studio') setFocus(f => !f); break;
       case 'nudge': case 'nudge.big': if (sel?.kind !== 'placement') break; { e.preventDefault(); const st = cid === 'nudge.big' ? NUDGE_BIG_CM : NUDGE_CM;
         nudge(sel.id, e.key === 'ArrowLeft' ? -st : e.key === 'ArrowRight' ? st : 0, e.key === 'ArrowUp' ? -st : e.key === 'ArrowDown' ? st : 0); } break;
       case 'delete': del(); break;
@@ -445,6 +450,17 @@ export default function Editor({ id }: { id: string }){
   useEffect(() => { setHoverPid(null); }, [view]);
   // (hook înainte de orice return timpuriu) modul „document lat” al panoului, ținut minte în browser
   useEffect(() => { try { setWideSide(localStorage.getItem('casa3d.sideWide') === '1'); } catch { /* stocare blocată */ } }, []);
+  // spațiul de lucru (PLAN_A1_3): layoutul nou (structură + inspector, panouri redimensionabile) sau cel clasic; flagul de
+  // build alege implicitul, alegerea utilizatorului îl bate. Lățimile se citesc după montare (fără nepotriviri la hidratare).
+  const [mode, setMode] = useState<LayoutMode>('studio'), [wsLay, setWsLay] = useState<WorkspaceState>(DEFAULT_WS), [focus, setFocus] = useState(false), [sheetPane, setSheetPane] = useState<'panel' | 'structure'>('panel'), [vw, setVw] = useState(1440);
+  useEffect(() => { let m: string | null = null, w: string | null = null; try { m = localStorage.getItem(MODE_KEY); w = localStorage.getItem(WS_KEY); } catch { /* stocare blocată */ }
+    setMode(resolveMode(m, process.env.NEXT_PUBLIC_CASA3D_LAYOUT)); setWsLay(parseWorkspace(w));
+    const r = () => setVw(innerWidth); r(); addEventListener('resize', r); return () => removeEventListener('resize', r); }, []);
+  const saveWs = (n: WorkspaceState) => { setWsLay(n); try { localStorage.setItem(WS_KEY, serializeWorkspace(n)); } catch { /* stocare blocată: rămâne pe sesiune */ } };
+  const setLayoutMode = (m: LayoutMode) => { setMode(m); setFocus(false); try { localStorage.setItem(MODE_KEY, m); } catch { /* stocare blocată */ } say(t(m === 'classic' ? 'ws.classicOn' : 'ws.studioOn')); };
+  // arborele Structură: toate nivelurile (nivelul curent refolosește descrierea de mai sus); doar în layoutul nou sau pe telefon
+  const outline = useMemo(() => house && catalog && (mode === 'studio' || compact) ? buildOutliner(floors(house).map((_, i) => ({ name: levelName(i), groups: i === L ? mirror : describePlan(levelView(house, i), catalog, { t, units, lang }) }))) : [],
+    [house, catalog, mode, compact, L, mirror, t, units, lang]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!snap || !catalog || !mc) return toast ? <div className="home"><p className="muted" role="status">{toast}</p></div> : <EditorSkeleton label={t('editor.loading')} />;
   const G = groups(catalog);
   const onAddWall = (a: [number, number], b: [number, number]) => mutate(s => { s.floor.walls.push({ id: `wall-${uid().slice(0, 8)}`, a, b, thickness: SEGMENT_THICKNESS.wall, exterior: false, openings: [] }); });
@@ -536,6 +552,8 @@ export default function Editor({ id }: { id: string }){
   // selecția comună plan ↔ 3D (UI/UX P2-10): „Arată în 3D” deschide vederea 3D lângă plan și încadrează piesa;
   // „Arată în plan” face invers. Pe ecran îngust vederea se schimbă (nu încap amândouă).
   const pickMirror = (i: MirrorItem) => { const s: Sel = i.kind === 'opening' ? { kind: 'opening', id: i.id, wallId: i.wallId! } : { kind: i.kind, id: i.id } as Sel; setSel(s); setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
+  const pickOutline = (lv: number, i: MirrorItem, fr: boolean) => { if (lv !== L) goLevel(lv); setTool('select');
+    const s: Sel = i.kind === 'opening' ? { kind: 'opening', id: i.id, wallId: i.wallId! } : { kind: i.kind, id: i.id } as Sel; setSel(s); if (fr) setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
   const frameIn3d = (pid: string) => { if (view === '2d') setView(compact ? '3d' : 'split'); setFrame3d(f => ({ id: pid, n: (f?.n ?? 0) + 1, at: Date.now() })); };
   const frameInPlan = (pid: string) => { const s: Sel = { kind: 'placement', id: pid }; setSel(s); if (view === '3d') setView(compact ? '2d' : 'split'); setFrame(f => ({ sel: s, n: (f?.n ?? 0) + 1, at: Date.now() })); };
   // schimbarea etapei animă doar panoul lateral (View Transition, lib/motion.ts); flushSync: DOM-ul nou trebuie să existe în callback
@@ -593,6 +611,9 @@ export default function Editor({ id }: { id: string }){
     { id: 'redo', group: t('cmdk.group.actions'), label: t('editor.redo'), hint: hint('redo'), disabled: !hist.current.canRedo, run: redo },
     { id: 'rev', group: t('cmdk.group.actions'), label: t('editor.saveRevision'), keywords: [t('cmdk.kw.save')], disabled: revBusy, run: () => { setRevBusy(true); flight.run('revision', saveRevision).finally(() => setRevBusy(false)); } },
     { id: 'help', group: t('cmdk.group.actions'), label: t('editor.shortcuts'), hint: hint('help'), run: () => setHelp(true) },
+    ...(!compact && mode === 'studio' && !stageDef.page ? [{ id: 'ws.focus', group: t('cmdk.group.settings'), label: focus ? t('ws.focusExit') : t('ws.focus'), hint: hint('ws.focus'), keywords: ['focus', 'zen'], run: () => setFocus(f => !f) },
+      { id: 'ws.outliner', group: t('cmdk.group.settings'), label: t('ws.outliner'), keywords: [t('outliner.title'), 'outliner'], run: () => saveWs({ ...wsLay, outliner: !wsLay.outliner }) }] : []),
+    ...(!compact ? [{ id: 'ws.classic', group: t('cmdk.group.settings'), label: mode === 'studio' ? t('ws.classic') : t('ws.studio'), keywords: ['layout'], run: () => setLayoutMode(mode === 'studio' ? 'classic' : 'studio') }] : []),
     { id: 'print', group: t('cmdk.group.docs'), label: t('cmdk.print'), keywords: [t('cmdk.kw.print')], run: () => { window.open(`/p/${id}/print`, '_blank', 'noopener'); } },
     { id: 'present', group: t('cmdk.group.docs'), label: t('cmdk.present'), run: () => { window.open(`/p/${id}/present`, '_blank', 'noopener'); } },
     { id: 'board', group: t('cmdk.group.docs'), label: t('cmdk.board'), run: () => { window.open(`/p/${id}/board`, '_blank', 'noopener'); } },
@@ -610,7 +631,10 @@ export default function Editor({ id }: { id: string }){
       run: () => { window.open(`/p/${id}/${d}`, '_blank', 'noopener'); } })),
   ];
 
-  return (<div className="ws spatial-studio" data-ui="spatial-studio">
+  // layoutul nou pe ecran lat; pe telefon foaia de jos comută Structură / Panou; Focus ascunde panourile și bara etapelor
+  const studio = !compact && mode === 'studio' && !stageDef.page, focused = studio && focus, olShown = studio && !focused && wsLay.outliner, fit = fitToViewport(wsLay, vw, olShown);
+  const outlinerEl = (onHide?: () => void) => <Outliner nodes={outline} level={L} selected={sel} onPick={(lv, i, fr) => { pickOutline(lv, i, fr); if (compact && fr) setSheet('peek'); }} onHover={setHoverPid} onHide={onHide} />;
+  return (<div className={`ws spatial-studio ${focused ? 'is-focus' : ''}`} data-ui="spatial-studio" data-layout={studio ? 'studio' : 'classic'}>
     <CommandPalette open={cmdOpen} onClose={() => setCmdOpen(false)} commands={commands} />
     {(!persistent || demo) && <div className="banner">{t(demo ? 'editor.publicDemoBanner' : 'editor.demoBanner')}</div>}
     <header className="topbar studio-topbar">
@@ -650,7 +674,10 @@ export default function Editor({ id }: { id: string }){
           </small>
         </button>
       )}
-      <details className="tb-more"><summary className="btn ghost icon-btn" aria-label={t('editor.more')} title={t('editor.more')}><Icon name="more" /></summary><div className="tb-menu"><PrefsSwitcher /><button type="button" className="btn ghost" onClick={() => setHelp(true)}>{t('editor.shortcuts')}</button></div></details>
+      <details className="tb-more"><summary className="btn ghost icon-btn" aria-label={t('editor.more')} title={t('editor.more')}><Icon name="more" /></summary><div className="tb-menu"><PrefsSwitcher /><button type="button" className="btn ghost" onClick={() => setHelp(true)}>{t('editor.shortcuts')}</button>
+        {!compact && <label className="tb-check"><input type="checkbox" checked={mode === 'classic'} onChange={e => setLayoutMode(e.target.checked ? 'classic' : 'studio')} />{t('ws.classic')}</label>}</div></details>
+      {studio && <button type="button" className={`btn ghost icon-btn ws-focus ${focused ? 'is-on' : ''}`} aria-pressed={focused} aria-keyshortcuts={ariaShortcut(commandById('ws.focus')!.shortcuts[0]!, { mac })}
+        aria-label={focused ? t('ws.focusExit') : t('ws.focus')} title={`${focused ? t('ws.focusExit') : t('ws.focus')} (${hint('ws.focus')})`} onClick={() => setFocus(f => !f)}><Icon name={focused ? 'split' : 'panel'} />{focused && <span className="lbl">{t('ws.focusExit')}</span>}</button>}
       </div>
       <button className="btn primary tb-save" disabled={revBusy} title={t('dlg.revBody')} onClick={() => { setRevBusy(true); flight.run('revision', saveRevision).finally(() => setRevBusy(false)); }}><span className="lbl">{t('editor.saveRevision')}</span><span className="lbl-s">{t('editor.saveShort')}</span></button>
       {save === 'conflict' && <span className="conflict-bar" role="alert"><Icon name="alert" />{t('editor.conflict')} <button className="btn" onClick={() => { dropStash(); saveRef.current = 'saved'; location.reload(); }}>{t('editor.conflictReload')}</button><button className="btn" onClick={() => send(true)}>{t('editor.conflictKeep')}</button></span>}
@@ -671,15 +698,19 @@ export default function Editor({ id }: { id: string }){
     <button type="button" className="stage-step" aria-label={t('stage.next')} title={t('stage.next')} disabled={STAGES.indexOf(stageDef) === STAGES.length - 1} onClick={() => setStage(STAGES[Math.min(STAGES.length - 1, STAGES.indexOf(stageDef) + 1)]!.id)}><Icon name="chevronRight" /></button>
     </div>
     {stageDef.page ? <div className="pagebody">{stage === 'orders' && <OrdersPage onPickFurniture={() => setStage('ffe')} id={id} cur={cur} say={say} projectName={snap.name} rooms={floors(house!).flatMap(f => f.rooms).map(r => ({ id: r.id, name: r.name }))} />}{stage === 'site' && <SitePage id={id} rooms={floors(house!).flatMap(f => f.rooms)} say={say} />}</div> :
-    <div className={`body studio-body ${compact ? `is-compact sheet-${sheet}` : ""} ${!compact && wideSide ? "wide-side" : ""}`}>
+    <div className={`body studio-body ${compact ? `is-compact sheet-${sheet}` : ""} ${!compact && !studio && wideSide ? "wide-side" : ""} ${studio ? 'ws-studio' : ''} ${olShown ? 'has-outliner' : ''}`}
+      style={studio ? { '--ol-w': `${olShown ? fit.left : 0}px`, '--in-w': `${focused ? 0 : fit.right}px` } as React.CSSProperties : undefined}>
       <ToolRail tools={(Object.keys(ICON) as Tool[]).filter(tk => stageDef.tools.includes(tk))} active={tool} grouped={!compact} icon={ICON} label={tk => t(TOOL_LABEL[tk])} ariaLabel={t('editor.tools')}
         title={tk => `${t(TOOL_LABEL[tk])} (${formatShortcut(toolShortcut(tk), { mac })})`} keys={tk => ariaShortcut(toolShortcut(tk), { mac })} groupLabel={g => t(`toolGroup.${g}`)} onPick={setTool} />
+      {olShown && <div className="ol-pane">{outlinerEl(() => saveWs({ ...wsLay, outliner: false }))}
+        <PanelSplitter side="left" width={fit.left} label={t('ws.resizeLeft')} onChange={w => setWsLay(x => ({ ...x, left: w }))} onCommit={w => saveWs({ ...wsLay, left: w })} /></div>}
+      {studio && !focused && !wsLay.outliner && <button type="button" className="btn ghost icon-btn ol-show" aria-label={t('outliner.show')} title={t('outliner.show')} onClick={() => saveWs({ ...wsLay, outliner: true })}><Icon name="chevronRight" size={16} /></button>}
       <div className={`canvas studio-canvas ${view === 'split' && !compact ? 'split' : ''}`}>
         <div className="levelbar">
           {/* doar nivelurile sunt tab-uri; „+ Nivel” e o acțiune, în afara listei de tab-uri (ARIA: tablist conține doar tab) */}
           <div role="tablist" aria-label={t('level.tabs')} className="levelbar-tabs">{floors(house!).map((_, i) => <button key={i} role="tab" aria-selected={i === L} className="btn" onClick={() => goLevel(i)}>{levelName(i)}</button>)}</div>
           <button className="btn" onClick={onAddLevel} title={t('level.addTitle')} disabled={nLevels >= MAX_LEVELS}>{t('level.add')}</button></div>
-        {(view === '2d' || (view === 'split' && !compact)) && <div className="planwrap">{!preview && <PlanObjects groups={mirror} selected={sel} onPick={pickMirror} />}<PlanView
+        {(view === '2d' || (view === 'split' && !compact)) && <div className="planwrap">{!preview && !studio && <PlanObjects groups={mirror} selected={sel} onPick={pickMirror} />}<PlanView
           onKey={onPlanKey}
           showTech={showTech && !preview}
           onTechAt={(x, z) => { if (!snap || preview) return;
@@ -739,14 +770,18 @@ export default function Editor({ id }: { id: string }){
           <strong>{t('editor.positionWarnings')}</strong>{pending.issues.map((i, k) => { const tgt = issueTarget(i, snap?.floor, snap?.placements); return <div key={k} className={`issue ${i.severity}`} role={tgt ? 'button' : undefined} tabIndex={tgt ? 0 : undefined} style={tgt ? { cursor: 'pointer' } : undefined} onClick={tgt ? () => focusIssue(i) : undefined} onKeyDown={tgt ? e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focusIssue(i); } } : undefined}>{iT(i)}</div>; })}
           <div style={{ display: 'flex', gap: 8 }}><button className="btn primary" onClick={() => setPending(null)}>{t('editor.keepPosition')}</button><button className="btn" onClick={() => { pending.discard?.(); setHouse(pending.before); persist(pending.before); setPending(null); force(x => x + 1); }}>{t('editor.revert')}</button></div></div>}
       </div>
-      <aside className={`side studio-inspector ${compact ? `sheet sheet-${sheet}` : ''}`} aria-label={t('editor.panelAria', { stage: t(`stage.${stage}`) })}>
+      <aside className={`side studio-inspector ${compact ? `sheet sheet-${sheet}` : ''} ${compact && sheetPane === 'structure' ? 'pane-structure' : ''}`} aria-label={t('editor.panelAria', { stage: t(`stage.${stage}`) })}>
+        {studio && !focused && <PanelSplitter side="right" width={fit.right} label={t('ws.resizeRight')} onChange={w => setWsLay(x => ({ ...x, right: w }))} onCommit={w => saveWs({ ...wsLay, right: w })} />}
         <div className="sidetabs">
           {compact && <button type="button" className="sheet-grip" aria-label={sheet === 'full' ? t('editor.sheetLess') : t('editor.sheetMore')} aria-expanded={sheet !== 'peek'} onClick={() => setSheet(x => x === 'peek' ? 'half' : x === 'half' ? 'full' : 'peek')}><span aria-hidden="true" /></button>}
           <h2 className="stage-title"><i>{String(STAGES.indexOf(stageDef) + 1).padStart(2, '0')}</i>{t(`stage.${stage}`)}</h2>
           {nextId && <button type="button" className="btn primary sm stage-continue" aria-label={t('stage.continueTo', { stage: t(`stage.${nextId}`) })} title={t('stage.continueTo', { stage: t(`stage.${nextId}`) })} onClick={() => setStage(nextId)}><span>{t('stage.continue')}</span><Icon name="chevronRight" size={16} /></button>}
-          {!compact && <button type="button" className="btn ghost icon-btn side-wide" aria-pressed={wideSide} aria-label={t('editor.sideWide')} title={t('editor.sideWide')} onClick={toggleWide}><Icon name={wideSide ? 'chevronRight' : 'chevronLeft'} /></button>}
+          {!compact && !studio && <button type="button" className="btn ghost icon-btn side-wide" aria-pressed={wideSide} aria-label={t('editor.sideWide')} title={t('editor.sideWide')} onClick={toggleWide}><Icon name={wideSide ? 'chevronRight' : 'chevronLeft'} /></button>}
           {compact && <button type="button" className="btn ghost icon-btn" aria-label={sheet === 'peek' ? t('editor.showPanel') : t('editor.hidePanel')} onClick={() => setSheet(x => x === 'peek' ? 'half' : 'peek')}><Icon name={sheet === 'peek' ? 'chevronUp' : 'chevronDown'} /></button>}
         </div>
+        {compact && <div className="seg sheet-pane" role="group" aria-label={t('ws.sheetAria')}>
+          {(['structure', 'panel'] as const).map(p => <button key={p} type="button" aria-pressed={sheetPane === p} onClick={() => { setSheetPane(p); if (sheet === 'peek') setSheet('half'); }}>{t(p === 'structure' ? 'ws.sheetStructure' : 'editor.viewPanel')}</button>)}</div>}
+        {compact && sheetPane === 'structure' && outlinerEl()}
         <StageMeta stage={stage} done={done} />
         {(showSel || stage === 'survey') && <>
           {stage === 'survey' && floorIssues.filter(i => !(sel?.kind === 'stair' && i.vars?.stair === sel.id)).map((i, k) => { const tgt = issueTarget(i, snap?.floor, snap?.placements); return <div key={k} className={`issue ${i.severity}`} role={tgt ? 'button' : undefined} tabIndex={tgt ? 0 : undefined} style={tgt ? { cursor: 'pointer' } : undefined} onClick={tgt ? () => focusIssue(i) : undefined} onKeyDown={tgt ? e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); focusIssue(i); } } : undefined}>{iT(i)}</div>; })}
@@ -774,6 +809,7 @@ export default function Editor({ id }: { id: string }){
             onMerge={(otherId: string) => { try { const nf = mergeRooms(snap.floor, selRoom.id, otherId); mutate(s => { s.floor = nf; s.placements = s.placements.map(p => p.roomId === otherId ? { ...p, roomId: selRoom.id } : p); }); } catch (e: any) { say(e?.message || 'Error'); } }} num={num} />}
           {selRoom && (stage === 'finishes' || stage === 'ffe') && <RoomOptionsPanel id={id} room={selRoom} snap={snap} cat={catalog} mc={mc} cur={cur} onSnap={n => commit(n)} say={say} />}
           {selRoom && stage === 'survey' && <button className="btn" title={t('stair.addTitle')} onClick={() => onAddStair(selRoom)}>{t('stair.add')}</button>}
+          {/* inspector:stair */}
           {selStair && stage === 'survey' && (() => { const g = stairGeometry(selStair, snap.floor.ceilingHeight + SLAB), cm1 = (m: number) => Math.round(m * 1000) / 10; return (<div style={{ display: 'grid', gap: 8 }}>
             <h3>{t('stair.title')}</h3>
             <div className="prov">{t('stair.info', { steps: g.steps, riser: cm1(g.riser), going: cm1(g.going), to: levelName(L + 1) })}</div>
@@ -784,6 +820,7 @@ export default function Editor({ id }: { id: string }){
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button className="btn" onClick={() => rotateStair(selStair.id)}>{t('stair.rotate')} (R)</button><button className="btn" onClick={del}>{t('stair.delete')}</button></div></div>); })()}
           {selRoom && stage === 'finishes' && <RoomLookPanel room={selRoom} snap={snap} onRoom={(part, hex) => look(a => { const r: any = { ...(a.rooms?.[selRoom.id] || {}) }; if (hex) r[part] = { ...(r[part] || {}), color: hex }; else delete r[part]; a.rooms = { ...(a.rooms || {}), [selRoom.id]: r }; })}
             onAllWalls={hex => look(a => { a.rooms = { ...(a.rooms || {}) }; for (const r of snap.floor.rooms) a.rooms[r.id] = { ...(a.rooms[r.id] || {}), walls: { color: hex } }; })} />}
+          {/* inspector:wall */}
           {selWall && roomStage && <>
             <h3>{t('editor.wall')}</h3>
             <div className="grid2">
@@ -804,6 +841,7 @@ export default function Editor({ id }: { id: string }){
             <WallLookPanel wall={selWall} snap={snap} onFace={(rid, hex) => look(a => { a.wallFaces = setFinish(a.wallFaces, `${selWall.id}@${rid}`, { color: hex }); })} />
             <button className="btn danger" onClick={del}>{t('editor.deleteWall')}</button>
           </>}
+          {/* inspector:opening */}
           {selOp && roomStage && <>
             <h3>{selOp.passage ? t('tool.passage') : selOp.kind === 'door' ? t('tool.door') : t('tool.window')}</h3>
             <div className="grid2">
@@ -834,6 +872,7 @@ export default function Editor({ id }: { id: string }){
               const clean = { ...(next.product ? { product: next.product } : {}), ...(next.handle ? { handle: next.handle } : {}), ...(next.system ? { system: next.system } : {}) }; s.doors = { ...(s.doors || {}) }; if (Object.keys(clean).length) s.doors[selOp.id] = clean; else delete s.doors[selOp.id]; })} />}
             <button className="btn danger" onClick={del}>{t('editor.deleteOpening')}</button>
           </>}
+          {/* inspector:end */}
           {selPl && showSel && <PlacementPanel out={out} p={selPl} snap={snap} catalog={catalog} issues={issues[selPl.id] || []} G={G} num={num} onFocusIssue={focusIssue}
             onVariant={vid => changePiece(selPl.id, q => { q.variantId = vid; }, t('editor.variantNoFit'))}
             onMove={(x, z) => { const n = structuredClone(snap), q = n.placements.find(p => p.id === selPl.id)!; q.x = r3(x); q.z = r3(z); q.source = 'manual'; const iss = validatePlacement(n, catalog, q);
@@ -844,6 +883,7 @@ export default function Editor({ id }: { id: string }){
             onItem={patch => look(a => { a.items = setFinish(a.items, selPl.id, patch); })}
             onSize={size => changePiece(selPl.id, q => { if (size) q.size = size; else delete q.size; }, t('editor.sizeNoFit'))}
             onVariant={vid => changePiece(selPl.id, q => { q.variantId = vid; }, t('editor.variantNoFit'))} />}
+          {/* inspector:column */}
           {selColumn && (roomStage || stage === 'mep') && (
             <div style={{ display: 'grid', gap: 8 }}>
               <h3>{selColumn.role === 'shaft' ? t('tool.shaft') : selColumn.role === 'boxing' ? t('column.boxing') : t('tool.column')}</h3>
@@ -868,6 +908,7 @@ export default function Editor({ id }: { id: string }){
               </div>
             </div>
           )}
+          {/* inspector:beam */}
           {selBeam && roomStage && (
             <div style={{ display: 'grid', gap: 8 }}>
               <h3>{t('tool.beam')}</h3>
@@ -879,6 +920,7 @@ export default function Editor({ id }: { id: string }){
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
             </div>
           )}
+          {/* inspector:annotation */}
           {selAnn && (stage === 'survey' || stage === 'docs') && (<div style={{ display: 'grid', gap: 8 }}>
             <h3>{t(selAnn.kind === 'dim' ? 'tool.dim' : 'tool.text')}</h3>
             {selAnn.kind === 'dim' ? <>
@@ -899,6 +941,7 @@ export default function Editor({ id }: { id: string }){
               </div></>}
             <button className="btn danger" onClick={del}>{t('common.delete')}</button>
           </div>)}
+          {/* inspector:niche */}
           {selNiche && (roomStage || stage === 'concept') && (() => { const NL = PLAN_LIMITS.niche, wl = snap.floor.walls.find(w => w.id === selNiche.wallId), cm = (k: 'width' | 'height' | 'depth' | 'elevation' | 'offset', lo: number, hi: number) =>
               (v: string) => num(v, x => patchNiche(selNiche.id, n => { n[k] = r3(Math.min(x, hi * 100) / 100); }), lo * 100);
             return (<div style={{ display: 'grid', gap: 8 }}>
@@ -918,6 +961,7 @@ export default function Editor({ id }: { id: string }){
                 <button className="btn danger" onClick={del}>{t('common.delete')}</button>
               </div>
             </div>); })()}
+          {/* inspector:floor_zone */}
           {selZone && (roomStage || stage === 'concept') && (() => { const z = selZone, room = snap.floor.rooms.find(r => r.id === z.roomId), ZL = PLAN_LIMITS.zone;
             const floorsMc = mc ? mc.materials.filter(m => m.category === 'floor_tile' || m.category === 'parquet') : [], w = z.rect.x1 - z.rect.x0, d = z.rect.z1 - z.rect.z0;
             const size = (k: 'w' | 'd') => (v: string) => num(v, x => patchZone(z.id, q => { const m = r3(x / 100); if (k === 'w') q.rect.x1 = r3(q.rect.x0 + m); else q.rect.z1 = r3(q.rect.z0 + m); }), ZL.minM * 100);
@@ -934,6 +978,7 @@ export default function Editor({ id }: { id: string }){
               <p className="prov" style={{ margin: 0 }}>{t('zone.rule')}</p>
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
             </div>); })()}
+          {/* inspector:wall_item */}
           {selWallItem && (stage === 'concept' || stage === 'finishes' || stage === 'ffe') && (() => { const WL = PLAN_LIMITS.wallItem, it = selWallItem, wl = snap.floor.walls.find(w => w.id === it.wallId), L = wl ? wallLength(wl.a, wl.b) : PLAN_LIMITS.coordM, H = snap.floor.ceilingHeight;
             const cm = (k: 'width' | 'height' | 'depth' | 'elevation' | 'offset', lo: number, hi: number) => (v: string) => num(v, x => patchWallItem(it.id, n => { n[k] = r3(Math.min(x, hi * 100) / 100); }), lo * 100);
             const below = catalog ? furnitureBelow(snap, catalog, snap.floor, it) : null, cat = WALL_ITEM_CATEGORY[it.kind], products = cat && mc ? mc.materials.filter(m => m.category === cat) : [];
@@ -962,6 +1007,7 @@ export default function Editor({ id }: { id: string }){
                 <button className="btn danger" onClick={del}>{t('common.delete')}</button>
               </div>
             </div>); })()}
+          {/* inspector:glass_wall */}
           {selGlassWall && roomStage && (
             <div style={{ display: 'grid', gap: 8 }}>
               <h3>{t('tool.glass_wall')}</h3>
@@ -973,6 +1019,7 @@ export default function Editor({ id }: { id: string }){
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
             </div>
           )}
+          {/* inspector:end */}
         </>}
         {stage === 'concept' && !showSel && <>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
@@ -1114,6 +1161,7 @@ export default function Editor({ id }: { id: string }){
   </div>);
 }
 
+// inspector:room
 function RoomPanel({ part, focusFeature, room, snap, G, cat, mc, cur, onFinish, onChange, onAuto, onAdd, onSwap, onResize, onSplit, onMerge, num }: any){
   const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units), inField = (m: number) => cmToInput(m * 100, units);
   // „Adaugă mobilier” pornește de la grupele potrivite camerei (dormitor: pat, dulap, noptieră…), restul sub „Altele”
@@ -1148,6 +1196,7 @@ function RoomPanel({ part, focusFeature, room, snap, G, cat, mc, cur, onFinish, 
     <button className="btn primary" disabled={!G[grp]?.variants[vi]} onClick={() => onAdd(G[grp].variants[vi].id)}>{t('editor.addToRoom')}</button></>}
   </>);
 }
+// inspector:placement
 function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMove, onRotate, onDuplicate, onDelete, onFocusIssue }: { out: Outbound | null; p: FurniturePlacement; snap: Snapshot; catalog: Catalog; issues: Issue[]; G: any; num: any; onVariant(v: string): void; onMove(x: number, z: number): void; onRotate(): void; onDuplicate(): void; onDelete(): void; onFocusIssue(i: Issue): void }){
   const { t, tp, lang, units } = usePrefs(), iT = (i: Parameters<typeof issueText>[1]) => issueText(lang, i, units), u = lengthInputUnit(units), cur = catalogCurrency(catalog), lei = (v: number) => formatMoney(v, cur, lang), inField = (m: number) => cmToInput(m * 100, units);
   const rv = resolve(catalog, p.variantId)!, room = snap.floor.rooms.find(r => r.id === p.roomId), g = G[groupOf(p.variantId)];
@@ -1167,6 +1216,7 @@ function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMo
   </>);
 }
 
+// inspector:end
 function DoorPanel({ op, snap, mc, cur, onChange }: { op: Opening; snap: Snapshot; mc: MaterialsCatalog; cur: string; onChange(p: DoorChoice): void }){
   const { t, lang } = usePrefs(), c = snap.doors?.[op.id] ?? {}, by = (k: string) => mc.materials.filter(m => m.category === k), type = doorTypeOf(op) ?? 'swing';
   // sistemul (șina, caseta, kitul pliant) doar pe tipurile care îl cer și doar cu produsele făcute pentru tipul golului

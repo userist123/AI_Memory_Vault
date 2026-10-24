@@ -722,4 +722,11 @@ export const en: Dict = {
   "issue.HVAC.slide": "The air conditioner in {rn} sits where a sliding door runs; check the track and the height.",
   "issue.ZONE_OUTSIDE_ROOM": "Floor zone {nm} runs outside its room {rn}.",
   "issue.ZONE_OVERLAP": "Two floor zones overlap ({nm} and {other}).",
+  // workspace (PLAN_A1_3)
+  "ws.focus": "Focus mode (hide panels)", "ws.focusExit": "Exit Focus", "ws.outliner": "Show or hide structure",
+  "ws.classic": "Classic layout", "ws.studio": "New layout (structure and inspector)", "ws.classicOn": "Classic layout on.", "ws.studioOn": "New layout on.",
+  "ws.resizeLeft": "Structure panel width", "ws.resizeRight": "Inspector width", "ws.sheetAria": "Sheet content", "ws.sheetStructure": "Structure",
+  "outliner.aria": "Project structure", "outliner.title": "Structure", "outliner.hide": "Hide structure", "outliner.show": "Show structure",
+  "outliner.empty": "The plan is empty. Draw a room or a wall.",
+  "outliner.keys": "Up and down arrows move through the tree, right and left open and close, Enter selects and frames, Escape returns to the plan",
 };

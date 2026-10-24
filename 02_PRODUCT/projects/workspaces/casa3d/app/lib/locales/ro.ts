@@ -722,4 +722,11 @@ export const ro: Dict = {
   "issue.HVAC.slide": "Aerul condiționat din {rn} stă în zona în care culisează o ușă glisantă; verifică șina și înălțimea.",
   "issue.ZONE_OUTSIDE_ROOM": "Zona de pardoseală {nm} iese din camera ei {rn}.",
   "issue.ZONE_OVERLAP": "Două zone de pardoseală se suprapun ({nm} și {other}).",
+  // spațiul de lucru (PLAN_A1_3)
+  "ws.focus": "Mod Focus (ascunde panourile)", "ws.focusExit": "Ieși din Focus", "ws.outliner": "Arată sau ascunde structura",
+  "ws.classic": "Layout clasic", "ws.studio": "Layout nou (structură și inspector)", "ws.classicOn": "Layout clasic activ.", "ws.studioOn": "Layout nou activ.",
+  "ws.resizeLeft": "Lățimea panoului Structură", "ws.resizeRight": "Lățimea inspectorului", "ws.sheetAria": "Ce arată foaia", "ws.sheetStructure": "Structură",
+  "outliner.aria": "Structura proiectului", "outliner.title": "Structură", "outliner.hide": "Ascunde structura", "outliner.show": "Arată structura",
+  "outliner.empty": "Planul e gol. Desenează o cameră sau un perete.",
+  "outliner.keys": "Săgețile sus și jos trec prin arbore, dreapta și stânga deschid și închid, Enter alege și încadrează, Escape revine în plan",
 };

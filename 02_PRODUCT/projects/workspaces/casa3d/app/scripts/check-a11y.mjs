@@ -35,9 +35,15 @@ try {
   const need = (ok, what) => { if (!ok){ console.log(`FAIL ${what}: elementul nu există`); failures++; } return ok; };
   await p.go(`${BASE}/p/${id}`); need(await p.evaluate(async () => { for (let i = 0; i < 100 && !document.querySelector('svg.plan'); i++) await new Promise(r => setTimeout(r, 100)); return !!document.querySelector('svg.plan'); }), 'editor (svg.plan)');
   failures += await audit(p, 'editor-releveu');
-  // lista obiectelor planului deschisă (primește focus; UI/UX P3-16)
-  need(await p.evaluate(async () => { const b = document.querySelector('.plan-mirror button[tabindex="0"]'); b?.focus(); await new Promise(r => setTimeout(r, 300)); return !!b && document.activeElement === b; }), 'lista obiectelor planului');
+  // layoutul nou (implicit, PLAN_A1_3): arborele Structură cu focus pe rândul activ
+  need(await p.evaluate(async () => { const b = document.querySelector('.outliner [role="treeitem"][tabindex="0"]'); b?.focus(); await new Promise(r => setTimeout(r, 300)); return !!b && document.activeElement === b; }), 'arborele Structură');
+  failures += await audit(p, 'editor-structura');
+  // layoutul clasic: lista obiectelor planului deschisă (primește focus; UI/UX P3-16); apoi înapoi la layoutul nou
+  const waitPlan = async () => p.evaluate(async () => { for (let i = 0; i < 100 && !document.querySelector('svg.plan'); i++) await new Promise(r => setTimeout(r, 100)); return !!document.querySelector('svg.plan'); });
+  await p.evaluate(() => { localStorage.setItem('casa3d.layout', 'classic'); return true; }); await p.go(`${BASE}/p/${id}`); need(await waitPlan(), 'editor clasic (svg.plan)');
+  need(await p.evaluate(async () => { for (let i = 0; i < 30 && !document.querySelector('.plan-mirror'); i++) await new Promise(r => setTimeout(r, 100)); const b = document.querySelector('.plan-mirror button[tabindex="0"]'); b?.focus(); await new Promise(r => setTimeout(r, 300)); return !!b && document.activeElement === b; }), 'lista obiectelor planului');
   failures += await audit(p, 'editor-lista-obiecte');
+  await p.evaluate(() => { localStorage.removeItem('casa3d.layout'); return true; }); await p.go(`${BASE}/p/${id}`); need(await waitPlan(), 'editor (svg.plan) după layoutul clasic');
   await p.evaluate(() => { document.activeElement?.blur(); return true; });
   for (const st of ['finishes', 'ffe', 'quote', 'present', 'orders']){
     const ok = await p.evaluate(async st => { const b = document.querySelector(`.stagebar [data-stage="${st}"]`); if (!b) return false; b.click(); await new Promise(r => setTimeout(r, 900)); return true; }, st);
