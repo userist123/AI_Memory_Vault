@@ -1,22 +1,23 @@
 """agent-integrity-guard — decision core.
 
-Pure stdlib. Given a Claude Code PreToolUse payload (tool name + input), decide
-allow / ask / deny and why. The hook (hook_guard.py) turns a decision into the
-permission JSON Claude Code expects; this module has no I/O so it can be tested
-directly. See THREAT_MODEL.md for the controls (C1..C9).
+Pure stdlib. Given a Claude Code tool call (name + input), return allow / ask /
+deny and why. The hook (hook_guard.py) turns a decision into permission JSON;
+this module has no I/O so it can be tested directly. See THREAT_MODEL.md for
+the controls (C1..C9).
 
-Design: allowlist by destination and by write-location, not attack signatures.
-A host not on the egress allowlist is `ask`; a secret source plus any egress is
-`deny`; a write into a persistence or guard location is `deny`. On doubt about a
-call that carries egress or touches a protected path, fail closed (`deny`).
+Principle: allowlist by destination and by write-location, not attack
+signatures. A host not on the egress allowlist is `ask`; a secret source plus
+egress is `deny`; a write (by any tool OR by a shell redirection/verb) into a
+guard or persistence location is `deny`. On doubt about a call that carries
+egress or touches a protected path, fail closed.
 """
 from __future__ import annotations
 
 import json
-import os
 import re
 from dataclasses import dataclass, field
 from pathlib import Path
+from urllib.parse import urlsplit
 
 ALLOW, ASK, DENY = "allow", "ask", "deny"
 _HERE = Path(__file__).resolve().parent
@@ -24,9 +25,9 @@ _HERE = Path(__file__).resolve().parent
 
 @dataclass
 class Decision:
-    action: str          # allow | ask | deny
+    action: str
     reason: str = ""
-    control: str = ""    # which control fired (C2, C3, ...)
+    control: str = ""
     matches: list = field(default_factory=list)
 
     def to_dict(self) -> dict:
@@ -38,237 +39,304 @@ def load_allowlist(path: Path | None = None) -> dict:
     try:
         return json.loads(p.read_text(encoding="utf-8"))
     except Exception:
-        # No readable allowlist: the safe default is to approve nothing external.
         return {"owner_namespaces": [], "egress": [], "mcp_allow_prefixes": []}
 
 
-# ───────────────────────── host / url handling ─────────────────────────
+# ───────────────────────── destinations ─────────────────────────
 
-# A URL or bare host. Deliberately broad; we only use it to pull candidate hosts.
-_URL_RE = re.compile(r"""(?xi)
-    (?:(?P<scheme>[a-z][a-z0-9+.\-]*)://)?
-    (?P<userinfo>[^/\s:@]+(?::[^/\s@]*)?@)?
-    (?P<host>
-        \[[0-9a-f:]+\] |                         # [::1]
-        (?:[a-z0-9_](?:[a-z0-9_\-]*[a-z0-9_])?\.)+[a-z][a-z0-9\-]* |  # dotted name
-        localhost |
-        \d{1,3}(?:\.\d{1,3}){3}
-    )
-    (?::(?P<port>\d+))?
-""")
-
-# Tokens that mean "this command can reach the network", even without a URL in the line.
-_NET_TOKENS = re.compile(r"""(?xi)
-    \b(
-        curl | wget | lynx | links | w3m | aria2c |
+_URL = re.compile(r"(?i)\b([a-z][a-z0-9+.\-]*)://([^\s'\"<>`|;)]+)")
+# scp / git-ssh form  user@host:path  (host must look like a domain or ip)
+_SCP = re.compile(r"(?i)(?<![\w/:.])(?:[\w.\-]+@)?((?:[a-z0-9][a-z0-9\-]*\.)+[a-z]{2,}|\d{1,3}(?:\.\d{1,3}){3}):(?=[\w.\-~/])")
+# UNC path  \\host\share
+_UNC = re.compile(r"\\\\([a-z0-9][a-z0-9.\-]*)\\", re.I)
+# network-capable command words (leading boundary excludes .ssh / foo_ssh)
+_NET = re.compile(r"""(?ix)
+    (?<![\w.])(
+        curl | wget | lynx | links | w3m | aria2c | httpie | http | https |
         scp | sftp | rsync | ssh | ftp | tftp | telnet | nc | ncat | netcat | socat |
+        dig | nslookup | host | ping | traceroute | tracert |
         certutil | bitsadmin | mshta |
-        invoke-webrequest | invoke-restmethod | start-bitstransfer |
+        invoke-webrequest | invoke-restmethod | start-bitstransfer | wget |
         net\.webclient | downloadstring | downloadfile | downloaddata |
-        httpclient | system\.net\.sockets | net\.sockets\.tcpclient | net\.sockets\.udpclient
-    )\b
-    | \biwr\b | \birm\b | \bwget\b
-""")
-
+        system\.net\.sockets | net\.sockets\.tcpclient
+    )(?![\w])
+    | (?<![\w.])(iwr|irm|curl)(?![\w])
+""")  # git remotes are judged separately (C4); scp-form in a git/scp command counts via _SCP
 _DATA_IN_URL = re.compile(r"(?xi) [?&][^=\s]{1,40}=.{80,} | (?:[A-Za-z0-9+/]{120,}={0,2}) ")
 
 
 def _norm_host(h: str) -> str:
-    return h.strip().strip(".").lower().strip("[]")
+    return (h or "").strip().strip("[]").rstrip(".").lower()
 
 
-def extract_hosts(text: str) -> list[str]:
-    hosts = []
-    for m in _URL_RE.finditer(text or ""):
-        # a userinfo@ before the host is the real host; the classic https://trusted@evil trick
-        # is handled because the regex binds host to what follows userinfo, i.e. evil.
-        h = _norm_host(m.group("host"))
-        if h:
-            hosts.append(h)
-    return hosts
+def extract_targets(text: str) -> list[tuple[str, str]]:
+    """(host, path) for every URL, scp-form and UNC target in the text."""
+    out: list[tuple[str, str]] = []
+    for scheme, rest in _URL.findall(text or ""):
+        parts = urlsplit(f"{scheme}://{rest}")
+        if parts.hostname:
+            out.append((_norm_host(parts.hostname), parts.path or "/"))
+    for m in _SCP.finditer(text or ""):
+        out.append((_norm_host(m.group(1)), "/"))
+    for h in _UNC.findall(text or ""):
+        out.append((_norm_host(h), "/"))
+    return out
 
 
-def _host_approved(host: str, allow: dict) -> bool:
+def host_approved(host: str, path: str, allow: dict) -> bool:
     host = _norm_host(host)
+    owners = [o.lower() for o in allow.get("owner_namespaces", [])]
     for e in allow.get("egress", []):
-        if host == _norm_host(e.get("host", "")):
+        if host != _norm_host(e.get("host", "")):
+            continue
+        if not e.get("owner_paths"):
             return True
+        # owner_paths: the first path segment must be an owner namespace
+        seg = [s for s in (path or "").split("/") if s]
+        if seg and seg[0].lower() in owners:
+            return True
+        # api.github.com/repos/<owner>/...
+        if len(seg) >= 2 and seg[0].lower() in ("repos", "users", "orgs") and seg[1].lower() in owners:
+            return True
+        return False
     return False
 
 
-def host_owner_scoped(host: str, allow: dict) -> bool:
-    return any(_norm_host(e.get("host", "")) == _norm_host(host) and e.get("owner_paths")
-               for e in allow.get("egress", []))
+def _has_egress(cmd: str) -> bool:
+    return bool(_NET.search(cmd) or re.search(r"[a-z][a-z0-9+.\-]*://", cmd, re.I)
+                or _UNC.search(cmd) or _SCP.search(cmd))
 
 
 # ───────────────────────── protected paths ─────────────────────────
 
-# Write destinations that mean persistence or guard-tampering. Checked against
-# normalised forward-slash paths, case-insensitive (Windows).
-_PERSIST_PATH = re.compile(r"""(?xi)
-    /\.git/hooks/ |
-    /\.bashrc$ | /\.bash_profile$ | /\.profile$ | /\.zshrc$ |
-    /\.config/autostart/ |
-    /microsoft/windows/start\ menu/programs/startup/ |
-    /appdata/roaming/microsoft/windows/start\ menu/programs/startup/
+_GUARD_PATH = re.compile(r"(?i)agent-integrity-guard[/\\]|[/\\]\.claude[/\\]settings(\.local)?\.json$|[/\\]\.claude[/\\]settings[/\\]")
+_PERSIST_PATH = re.compile(r"""(?ix)
+    [/\\]\.git[/\\]hooks[/\\] |
+    [/\\]\.(bashrc|bash_profile|profile|zshrc|zprofile|zlogin) $ |
+    [/\\]\.config[/\\]autostart[/\\] |
+    [/\\]\.config[/\\]systemd[/\\] |
+    [/\\]library[/\\]launchagents[/\\] | [/\\]library[/\\]launchdaemons[/\\] |
+    [/\\]etc[/\\](cron|init|systemd) |
+    start\ menu[/\\]programs[/\\]startup[/\\] |
+    image\ file\ execution\ options
 """)
-_GUARD_PATH = re.compile(r"(?i)agent-integrity-guard/|/\.claude/settings(\.local)?\.json$|/\.claude/settings/")
 
-_PERSIST_SHELL = re.compile(r"""(?xi)
-    \bschtasks\b .* \b/create\b | \bschtasks\s+/create\b |
-    \bcrontab\b | \b(New-ScheduledTask|Register-ScheduledTask)\b |
-    \breg(\.exe)?\b .* \b(add|import)\b .* \\run | currentversion\\run |
-    \bNew-ItemProperty\b .* \\run | \bSet-ItemProperty\b .* \\run |
+_PERSIST_SHELL = re.compile(r"""(?ix)
+    \bschtasks\b[^\n]*\/create | \bschtasks\s+\/create |
+    \bcrontab\b | (?<![\w.])at\s+(now|noon|midnight|teatime|\d) |
+    (?<![\w.])reg(\.exe)?\b[^\n]*\b(add|import)\b[^\n]*(\\run\b|\\runonce\b|image\ file\ execution\ options) |
+    new-itemproperty[^\n]*\\run | set-itemproperty[^\n]*\\run |
     \bsc(\.exe)?\s+create\b | \bnew-service\b |
     register-wmievent | __eventfilter | commandlineeventconsumer |
-    \bsetx\b
+    \bsetx\b |
+    systemctl\s+(--user\s+)?enable | \blaunchctl\s+(load|bootstrap) |
+    new-scheduledtask | register-scheduledtask
 """)
+
+# shell write-sinks: paths this command writes to / deletes
+_REDIR = re.compile(r"(?:\d*>>?|&>>?)\s*(?:\"([^\"]+)\"|'([^']+)'|([^\s;&|<>]+))")
+_WRITE_VERB = re.compile(r"""(?ix)
+    \btee\b | \bsed\b[^\n]*-i | \b(cp|mv|install|ln|dd|rsync|rm|unlink|shred|truncate)\b |
+    \bchmod\b | \bchattr\b | \battrib\b |
+    set-content | add-content | out-file | \bni\b | new-item | copy-item | move-item | remove-item |
+    open\s*\([^\n]*['\"][wax]\+? | \.write(text|bytes)?\s*\( | >\s*
+""")
+
+
+def _shell_write_targets(cmd: str) -> list[str]:
+    """Paths the command appears to write to or delete. Over-collects on purpose:
+    only used to check against guard/persistence locations, where over-collection is safe."""
+    targets = []
+    for m in _REDIR.finditer(cmd):
+        targets.append(next(g for g in m.groups() if g))
+    # if the command has a write verb, treat every path-looking token as a potential sink
+    if _WRITE_VERB.search(cmd):
+        for tok in re.findall(r"(?:\"[^\"]+\"|'[^']+'|[^\s;&|<>]+)", cmd):
+            t = tok.strip("\"'")
+            if "/" in t or "\\" in t:
+                targets.append(t)
+    return targets
 
 
 # ───────────────────────── secret sources ─────────────────────────
 
-_SECRET_SRC = re.compile(r"""(?xi)
-    \.env\b | \.env\. | /\.ssh\b | /\.aws\b | /\.gnupg\b |
-    id_rsa | id_ed25519 | \.pem\b | \.ppk\b |
-    \.npmrc | \.pypirc | \.netrc | _netrc |
-    credentials(\.json|\.yml|\.yaml|\.txt)? | secrets(\.json|\.yml|\.yaml)? |
-    \bprintenv\b | \benv\b\s*(\||$) | get-childitem\s+env: | \bgci\s+env: | \$env: |
-    hmac\.key | \.key\b | \.keystore\b |
-    /appdata/.*/(login\ data|cookies|key4\.db|logins\.json) |
-    \.config/google-chrome/ | /library/application\ support/
+_SECRET_SRC = re.compile(r"""(?ix)
+    \.env\b | \.env\. | [/\\]\.ssh\b | [/\\]\.aws\b | [/\\]\.gnupg\b |
+    \bid_rsa\b | \bid_ed25519\b | \.pem\b | \.ppk\b |
+    \.npmrc\b | \.pypirc\b | \.netrc\b | \b_netrc\b |
+    \bcredentials?(\.json|\.yml|\.yaml|\.txt)?\b | \bsecrets?(\.json|\.yml|\.yaml)?\b |
+    \bprintenv\b | get-childitem\s+env: | \bgci\s+env: | \$env: |
+    \bhmac\.key\b | \.keystore\b |
+    login\ data | key4\.db | logins\.json | cookies\.sqlite
 """)
+_SECRET_READ_CMD = re.compile(r"(?ix)\b(cat|type|less|more|head|tail|cp|copy|mv|move|scp|rsync|get-content|gc)\b")
 
-# publish / push to places the owner may not own
-_PUBLISH = re.compile(r"""(?xi)
+_PUBLISH = re.compile(r"""(?ix)
     \bnpm\s+publish\b | \btwine\s+upload\b | \bpip\s+upload\b |
     \bdocker\s+push\b | \bgh\s+release\s+create\b | \bcargo\s+publish\b | \bgem\s+push\b
 """)
-_GIT_REMOTE = re.compile(r"(?xi)\bgit\s+(?:-[^\s]+\s+)*(?:push|remote\s+(?:add|set-url))\b")
-_GH_REPO = re.compile(r"(?xi)\bgh\b.*?(?:-R|--repo)[=\s]+([^\s/]+)/([^\s]+)|\bgh\s+api\s+repos/([^/\s]+)/")
-_GITHUB_URL_OWNER = re.compile(r"(?xi)github\.com[:/]+([^/\s]+)/")
+_GIT_REMOTEISH = re.compile(r"(?ix)\bgit\b(?:\s+-[^\s]+)*\s+(?:push|remote\s+(?:add|set-url))\b")
+_GH_REPO = re.compile(r"(?ix)\bgh\b.*?(?:-R|--repo)[=\s]+([^\s/]+)/|\bgh\s+api\s+repos/([^/\s]+)/")
+_GITHUB_OWNER = re.compile(r"(?ix)github\.com[:/]+([^/\s]+)/")
 
 
 def _reads_secret(cmd: str) -> bool:
     return bool(_SECRET_SRC.search(cmd))
 
 
-def _has_egress(cmd: str) -> bool:
-    # A network call needs a network tool OR a real URL scheme. A bare dotted word
-    # like README.md or script.py is a filename, not a destination, so it is not egress.
-    return bool(_NET_TOKENS.search(cmd) or re.search(r"[a-z][a-z0-9+.\-]*://", cmd, re.I))
-
-
 # ───────────────────────── command decision ─────────────────────────
 
 def decide_command(cmd: str, allow: dict) -> Decision:
-    """Decide a shell command (Bash or PowerShell)."""
     if not cmd or not cmd.strip():
         return Decision(ALLOW)
     low = cmd
 
-    # C6/C7 persistence and guard tampering via shell
+    # C7/C6: a shell write/delete whose target is a guard or persistence location
+    for tgt in _shell_write_targets(low):
+        n = tgt.replace("\\", "/")
+        if _GUARD_PATH.search(n) or _GUARD_PATH.search(tgt):
+            return Decision(DENY, f"shell command writes/deletes a guard or settings file: {tgt}", "C7")
+        if _PERSIST_PATH.search(n) or _PERSIST_PATH.search(tgt):
+            return Decision(DENY, f"shell command writes into a persistence location: {tgt}", "C6")
+
+    # C6: persistence mechanisms invoked directly
     if _PERSIST_SHELL.search(low):
         return Decision(DENY, "command sets up autostart/persistence", "C6")
 
-    # C4 publish / foreign remote
+    # C4: publish / foreign remote
     if _PUBLISH.search(low):
         return Decision(DENY, "publishes to an external registry", "C4")
     mg = _GH_REPO.search(low)
     if mg:
-        owner = mg.group(1) or mg.group(3)
+        owner = mg.group(1) or mg.group(2)
         if owner and owner.lower() not in [o.lower() for o in allow.get("owner_namespaces", [])]:
             return Decision(ASK, f"gh targets a repo outside the owner namespace: {owner}", "C4")
-    if _GIT_REMOTE.search(low):
-        owners = _GITHUB_URL_OWNER.findall(low)
-        foreign = [o for o in owners if o.lower() not in [n.lower() for n in allow.get("owner_namespaces", [])]
-                   and o.lower() not in ("", "git")]
+    if _GIT_REMOTEISH.search(low):
+        foreign = [o for o in _GITHUB_OWNER.findall(low)
+                   if o.lower() not in [n.lower() for n in allow.get("owner_namespaces", [])] and o.lower() not in ("", "git")]
         if foreign:
             return Decision(ASK, f"git remote/push to a non-owner namespace: {foreign[0]}", "C4")
 
     egress = _has_egress(low)
-    hosts = extract_hosts(low)
+    targets = extract_targets(low)
 
-    # C3 secret + egress (deny even to an approved host)
+    # C3: secret source + egress in one command (deny even to an approved host)
     if egress and _reads_secret(low):
         return Decision(DENY, "reads a secret source and sends data out in the same command", "C3")
 
-    # C2 egress to an unapproved host
+    # C3b: staging a secret to another location (visible step before a later send)
+    if _reads_secret(low) and _SECRET_READ_CMD.search(low) and re.search(r">\s*|(?:cp|copy|mv|move|scp|rsync)\b", low, re.I):
+        # only ask when the command also names a destination path/redirect
+        if _shell_write_targets(low):
+            return Decision(ASK, "copies a secret source to another location", "C3")
+
+    # C2: egress to an unapproved destination
     if egress:
-        unapproved = []
-        for h in hosts:
-            if _host_approved(h, allow):
-                continue
-            unapproved.append(h)
+        unapproved = [h for (h, p) in targets if not host_approved(h, p, allow)]
         if unapproved:
             return Decision(ASK, f"network egress to unapproved host(s): {', '.join(sorted(set(unapproved)))}",
                             "C2", sorted(set(unapproved)))
-        if not hosts:
-            # a net tool with no parseable host: cannot confirm the destination → fail closed
+        if not targets:
             return Decision(ASK, "network command with no identifiable destination", "C2")
     return Decision(ALLOW)
 
 
-# ───────────────────────── file-write decision ─────────────────────────
+# ───────────────────────── write / url / mcp ─────────────────────────
 
 def _norm_path(p: str) -> str:
     return (p or "").replace("\\", "/").lower()
 
 
-def decide_write(path: str, allow: dict) -> Decision:
+def decide_write(path: str, blob: str, allow: dict) -> Decision:
     np = _norm_path(path)
-    if _GUARD_PATH.search(np):
+    if _GUARD_PATH.search(np) or _GUARD_PATH.search(path or ""):
         return Decision(DENY, "write would modify the guard or the settings that load it", "C7")
-    if _PERSIST_PATH.search(np):
+    if _PERSIST_PATH.search(np) or _PERSIST_PATH.search(path or ""):
         return Decision(DENY, "write lands in an autostart/persistence location", "C6")
+    if "disableallhooks" in (blob or "").lower() and ".claude" in np:
+        return Decision(DENY, "write would disable Claude Code hooks", "C7")
     return Decision(ALLOW)
 
 
-# ───────────────────────── url (WebFetch) / mcp ─────────────────────────
-
 def decide_url(url: str, allow: dict) -> Decision:
-    hosts = extract_hosts(url)
-    host = hosts[0] if hosts else ""
-    if host and not _host_approved(host, allow):
-        return Decision(ASK, f"fetch to unapproved host: {host}", "C2", [host])
+    targets = extract_targets(url)
+    if not targets and url:
+        # a bare host with no scheme in a fetch field
+        h = _norm_host(url.split("/")[0])
+        targets = [(h, "/" + "/".join(url.split("/")[1:]))] if h else []
+    for host, path in targets:
+        if not host_approved(host, path, allow):
+            return Decision(ASK, f"fetch to unapproved host: {host}", "C2", [host])
     if _DATA_IN_URL.search(url or ""):
         return Decision(ASK, "outbound URL carries a large/opaque payload", "C2")
     return Decision(ALLOW)
 
 
 def decide_mcp(tool_name: str, allow: dict) -> Decision:
-    prefixes = allow.get("mcp_allow_prefixes", [])
-    if any(tool_name.startswith(p) for p in prefixes):
+    if any(tool_name.startswith(p) for p in allow.get("mcp_allow_prefixes", [])):
         return Decision(ALLOW)
     return Decision(ASK, f"MCP tool not on the local allowlist: {tool_name}", "C5")
 
 
 # ───────────────────────── dispatch ─────────────────────────
 
-_SETTINGS_KEYS_DENY = {"disableAllHooks"}
+# tools that only read / plan; anything else that is unrecognised and carries a
+# protected path or egress is treated conservatively (C8).
+_READONLY_TOOLS = {"Read", "Grep", "Glob", "TodoWrite", "Task", "Agent", "BashOutput",
+                   "ListMcpResources", "ReadMcpResource"}
+_WRITE_TOOLS = {"Edit", "Write", "NotebookEdit", "MultiEdit"}
+
+
+def _write_paths(tool_input: dict) -> list[str]:
+    paths = []
+    for k in ("file_path", "notebook_path", "path"):
+        if isinstance(tool_input.get(k), str):
+            paths.append(tool_input[k])
+    for e in tool_input.get("edits", []) or []:
+        if isinstance(e, dict) and isinstance(e.get("file_path"), str):
+            paths.append(e["file_path"])
+    return paths
 
 
 def decide(tool_name: str, tool_input: dict, allow: dict | None = None) -> Decision:
     allow = allow if allow is not None else load_allowlist()
-    ti = tool_input or {}
+    ti = tool_input if isinstance(tool_input, dict) else {}
     try:
-        if tool_name in ("Bash", "PowerShell"):
+        if tool_name in ("Bash", "PowerShell", "BashShell"):
             return decide_command(str(ti.get("command", "")), allow)
-        if tool_name in ("Edit", "Write", "NotebookEdit"):
-            d = decide_write(str(ti.get("file_path", "")), allow)
-            if d.action != ALLOW:
-                return d
-            # a settings write that disables hooks is tampering even if the path check passed
-            blob = json.dumps(ti).lower()
-            if "disableallhooks" in blob and ".claude" in _norm_path(str(ti.get("file_path", ""))):
-                return Decision(DENY, "write would disable Claude Code hooks", "C7")
-            return d
+        if tool_name in _WRITE_TOOLS:
+            blob = json.dumps(ti)
+            paths = _write_paths(ti)
+            if not paths:
+                # a write tool with no recognisable path, but content that disables hooks
+                if "disableallhooks" in blob.lower():
+                    return Decision(DENY, "write would disable Claude Code hooks", "C7")
+                return Decision(ALLOW)
+            for p in paths:
+                d = decide_write(p, blob, allow)
+                if d.action != ALLOW:
+                    return d
+            return Decision(ALLOW)
         if tool_name in ("WebFetch", "WebSearch"):
             return decide_url(str(ti.get("url", "") or ti.get("prompt", "")), allow)
         if tool_name.startswith("mcp__"):
             return decide_mcp(tool_name, allow)
+        if tool_name in _READONLY_TOOLS:
+            return Decision(ALLOW)
+        # C8: an unrecognised tool. If its input names a protected path or a destination, be careful.
+        blob = json.dumps(ti)
+        for p in _write_paths(ti) + [blob]:
+            np = _norm_path(p)
+            if _GUARD_PATH.search(np) or _PERSIST_PATH.search(np):
+                return Decision(DENY, f"unrecognised tool {tool_name} touches a protected path", "C8")
+        if _has_egress(blob):
+            unapproved = [h for (h, pth) in extract_targets(blob) if not host_approved(h, pth, allow)]
+            if unapproved:
+                return Decision(ASK, f"unrecognised tool {tool_name} with unapproved egress: {unapproved}", "C8", unapproved)
         return Decision(ALLOW)
-    except Exception as e:  # C8: never crash-open on a call that looks dangerous
-        probe = json.dumps(ti).lower() if isinstance(ti, dict) else str(ti).lower()
-        if any(t in probe for t in ("http://", "https://", "curl", "wget", "ssh", "scp", "\\run", "schtasks")):
-            return Decision(DENY, f"guard error on a call that looks like egress/persistence: {e}", "C8")
+    except Exception as e:
+        probe = (json.dumps(ti) if isinstance(ti, dict) else str(ti)).lower()
+        if any(t in probe for t in ("://", "curl", "wget", "ssh", "scp", "\\run", "schtasks", "settings.json",
+                                    "agent-integrity-guard", "crontab", ".env", "id_rsa")):
+            return Decision(DENY, f"guard error on a call that looks like egress/persistence/tampering: {e}", "C8")
         return Decision(ALLOW, f"guard error, no risky shape detected: {e}", "C8")

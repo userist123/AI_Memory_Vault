@@ -26,8 +26,8 @@ tools and techniques nobody listed:
 | C3 | data in an outbound request (secrets, env values, file contents) | a call that both reads a secret source and has any egress is refused, even to an approved host | deny |
 | C4 | publishing or pushing to a remote the owner does not own | git/gh/package-publish targets checked against the owner namespace | deny publish, ask other remotes |
 | C5 | MCP tools that reach third-party services | tool-name allowlist, local servers only by default | ask |
-| C6 | persistence | writes into autostart, scheduled-task, git-hook and shell-profile locations, by path | deny |
-| C7 | tampering with the guard | writes/deletes touching the guard directory or its hook entries in Claude Code settings | deny |
+| C6 | persistence | writes into autostart/scheduled-task/git-hook/shell-profile/systemd/launchd/cron locations, by path AND by shell verb (`>`, tee, sed -i, cp, rm, ...); and persistence commands (schtasks, crontab, at, systemctl --user enable, launchctl, reg Run / Image File Execution Options) | deny |
+| C7 | tampering with the guard | any write or delete touching the guard directory, its settings entries or `disableAllHooks` — through Edit/Write/NotebookEdit/MultiEdit OR a shell redirection/verb | deny |
 | C8 | guard error or unparseable input | fail closed when the call has egress or a protected path; fail open otherwise | deny on doubt |
 | C9 | new code or packages | scan with the repo scanners (`skill_exfiltration_scanner`, `untrusted_content_guard`) before use | report |
 
@@ -38,8 +38,18 @@ Approved egress: `github.com` and `api.github.com` only under `userist123/`; `ap
 
 - Hooks see tool calls, not the operating system: code already running can network on its own.
   The guard narrows what an agent can be talked into; it is not a firewall.
-- Host extraction can miss obfuscated destinations; C8 makes doubtful egress fail closed.
+- **Staged exfiltration across two calls.** A PreToolUse hook sees one call at a time, so
+  copying a secret to a neutral file in call A and sending that file to an approved host in
+  call B cannot be correlated. Call A (a secret source copied to another path) is surfaced as
+  `ask` (C3b) so the staging step is visible, but a determined operator who stages into an
+  ordinary-looking file the guard does not recognise as a secret can still defeat this. This is
+  inherent to per-call hooks.
+- Host extraction can miss obfuscated destinations; C8 makes a doubtful call that carries
+  egress or touches a protected path fail closed.
 - Claude Code and MCP servers talk to their own backends outside any hook.
+- The scan runs through a shell parser written in regex, not a real shell: an exotic quoting or
+  encoding form can hide a destination or a write target. New bypass classes are added to the
+  test suite as they are found (see the 2026-10-24 adversarial review additions).
 
 ## Expected: content scanners flag `guard.py`
 
