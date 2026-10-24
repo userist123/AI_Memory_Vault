@@ -1,10 +1,10 @@
 # todo-claude-casa3d-a1-roadmap
-STATUS: IN_PROGRESS        UPDATED: 2026-10-23T21:00:00+03:00
+STATUS: IN_PROGRESS        UPDATED: 2026-10-24T13:00:00+03:00
 TASK: Casa3D plan A1 (research docs/research/UI_UX_MOTION_APLICATII_COMPLEXE_2026.md §A1, in draft PR #318), the rest
   after A1.1 (#323 merged c2a04d4d8). OWNER DECISION 2026-10-23: "Toate pe rand" = all phases below, in order,
   one phase per session (CLAUDE.md), each its own branch/worktree/PR, owner rule: no red at merge.
 PHASES (in order; mark each DONE with PR + merge commit):
-1. A1.2 completion of rows 1-3 — branch claude/casa3d-a1-2-completion, worktree D:/w/a12 (base main dd6c9ba34).
+1. DONE 2026-10-24: PR #341 merged d8337090f (2 review rounds, CI 44/44 green). A1.2 completion of rows 1-3 — branch claude/casa3d-a1-2-completion, worktree D:/w/a12 (base main dd6c9ba34).
    a. Editable dimensions after drawing: click a wall's dimension in the plan -> type length (same parser
       core/typed-dimension.ts parseTypedLength, integer=cm, decimal=m) -> wall resized keeping its start point and
       connected walls following (check how core/geometry joins walls first). One undo step.
@@ -30,4 +30,6 @@ PER PHASE: read PLAN_A1.md style -> write PLAN_A1_<n>.md (inventory on main, dec
   RO+EN, text fit, contrast) -> vault-reviewer Opus on the diff (max 2 rounds) -> PR -> CI once -> merge.
 ENV NOTES: npm ci needed in each new worktree (app/); vitest default workers OOM with dev server -> --maxWorkers=2;
   local full pytest has env-only failures from node_modules/.next (strict_yaml etc.), CI is the reference.
-NEXT: phase 1 (A1.2) in a new session from D:/w/a12.
+NEXT: phase 2 (A1.3 workspace layout) in a new session: new branch + worktree from main (npm ci in app/).
+  Note from A1.2: every new plan selection kind needs a context menu entry (lib/commands.ts CONTEXT); tests/commands.test.ts
+  enforces it at tsc. Merging main into a long branch: unreadable_notes_allowlist.json conflicts when both append at the end.
