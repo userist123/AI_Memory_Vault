@@ -1,5 +1,5 @@
 # todo-claude-casa3d-a1-2
-STATUS: IN_PROGRESS        UPDATED: 2026-10-23T22:10:00+03:00
+STATUS: DONE        UPDATED: 2026-10-24T13:00:00+03:00
 TASK: Casa3D A1.2 (phase 1 of todo-claude-casa3d-a1-roadmap.md): editable wall dimensions, joined-wall preview + T snap,
   context menu from the command registry, 3 residual bugs. Spec: 02_PRODUCT/projects/workspaces/casa3d/PLAN_A1_2.md.
 BRANCH / PR: claude/casa3d-a1-2-completion, worktree D:/w/a12 (base main dd6c9ba34) / no PR yet. WIP commit local.
@@ -41,7 +41,11 @@ Review round 1 (vault-reviewer): 6 findings, all fixed in commit "fix(casa3d): A
   inspector input (not .plan-dim-input) before changing selection, so a typed length is applied, not lost. Browser:
   oblique 294 untouched blur/Enter no change; Esc back to 294; 200 + plan click applied, one Ctrl+Z -> 294; test wall
   undone, Saved. tsc 0; vitest 126/760. Accepted residual (low): zero-length neighbour on old b -> neighbourShort msg.
-NEXT: PR, CI once, merge if green, mark phase 1 DONE in the roadmap checkpoint.
+2026-10-24: PR #341. Three merges of main (plan tools, doors/decor, lot 3): PlanView conflicts kept both sides; context
+  menu extended to niche / wall_item / annotation / floor_zone (Frame / Delete), commands.test.ts now requires a menu for
+  every Sel kind; allowlist entries for the 2 checkpoints + PLAN_A1_2.md (zero-regression-gate). Final: tsc 0, vitest
+  133 files / 875 tests, browser checked, CI 44/44 green on 855f26975. Merged d8337090f.
+DONE. Next phase: see todo-claude-casa3d-a1-roadmap.md.
 KEY FILES: app/components/PlanView.tsx, PlanContextMenu.tsx, Editor.tsx (onSetWallLength, SEGMENT_THICKNESS),
   core/wall-edit.ts, core/snap.ts, lib/commands.ts, lib/locales/{ro,en}.ts, app/globals.css, tests/{wall-edit,snap,commands,typed-dimension}.test.ts.
 ENV: dev server `casa3d-a12` in repo-root .claude/launch.json (local, not committed); vitest needs --maxWorkers=2.
