@@ -740,7 +740,7 @@ export const en: Dict = {
   "space.label": "Space type", "space.interior": "Indoor", "space.open_balcony": "Open balcony", "space.covered_balcony": "Covered balcony", "space.terrace": "Terrace", "space.outdoor": "Outdoor (yard)",
   "fin.kind.frames": "Panel moulding (boiserie)", "fin.code.frames": "FR",
   "fin.frames.count": "Panels (empty = auto)", "fin.frames.margin": "Margin (m)", "fin.frames.gap": "Gap between panels (m)",
-  "fin.frames.auto": "{n} panels, {ml} m of moulding (over the wall paint).",
+  "fin.frames.auto": "{n} panels, {ml} of moulding (over the wall paint).",
   "tex.rugN": "Rug {n}", "tex.rugX": "Centre from the west wall (m)", "tex.rugZ": "Centre from the north wall (m)", "tex.rugCenter": "Centre in the room",
   "tex.rugAdd": "+ Another rug", "tex.rugRemove": "Remove the rug",
   "tex.rugOutside": "Rug {n} runs outside the room or leaves less than {cm} cm to the walls.", "tex.rugOverlap": "Rug {n} overlaps another rug.",
