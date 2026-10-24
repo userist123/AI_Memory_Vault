@@ -52,3 +52,8 @@ jobs:
         env:
           PYTHONPATH: .
         run: pytest 20_TESTS/memory_controller -v
+
+      - name: Run runtime memory pilot contract tests
+        env:
+          PYTHONPATH: .:03_IMPLEMENTATION/packages
+        run: pytest 20_TESTS/test_runtime_memory_pilot_contract.py -v
