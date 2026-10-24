@@ -17,6 +17,9 @@ import { wallItemGeometry, wallItemFace, wallItemDepth } from '@/core/wall-items
 import { bandOf, alongOf, bathTiles, sideSpan } from '@/core/finishes';
 import { techFrame, isSizedRadiator, radiatorSize, hvacSize } from '@/core/tech-geometry';
 import { intersect } from '@/core/floor-zones';
+import { ceilingZoneRect } from '@/core/ceiling-zones';
+import { railingVisual } from '@/core/railings';
+import { ceilingOf, materialOf as matOf } from '@/core/finishes';
 import type { RoomFinishes } from '@/core/types';
 
 /** Gol în placa nivelului arătat (golul scării de dedesubt); `dir` = sensul urcării scării, marginea de sosire e pe partea +dir. */
@@ -32,7 +35,7 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   const plan = planWithLook(snap), mc = extra.mc;
   // finisajele de designer ale fiecărei camere (modul de așezare, placări, tavan), doar când avem catalogul de materiale
   if (mc) plan.camere.forEach((c: any) => { const r = snap.floor.rooms.find(x => x.id === c.id); if (!r) return; const f = finishesOf(snap, r), tv = textileVisual(mc, snap.floor, r, f);
-    c.fin = { ...roomVisual(mc, f, r.type, r), rug: tv.rug };
+    c.fin = { ...roomVisual(mc, f, r.type, r, snap.floor), rug: tv.rug, ...(tv.rugs ? { rugs: tv.rugs } : {}) };
     // textilele de la ferestre stau pe golul lor, pe partea dinspre cameră
     for (const w of tv.windows){ const g = plan.pereti[w.wallIndex]?.goluri[w.openingIndex]; if (g) g.trat = { inward: w.inward, rodH: w.rodH, curtain: w.curtain, sheer: w.sheer, blind: w.blind }; } });
   // bucătăria ca sistem: fronturile, blatul, placarea și LED-ul ajung în stilul piesei de bucătărie
@@ -47,7 +50,9 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   const lumini = allFixturePoints(snap, catalog, snap.floor.rooms, finishesOf).map(f => ({ kind: f.kind, x: f.x, z: f.z, y: f.y, nx: f.nx, nz: f.nz, len: f.len, alongX: f.alongX, top: f.top, color: f.color ?? (mc ? materialOf(mc, f.material)?.specs?.color : undefined) ?? '#1c1c1c' }));
   const stalpi = snap.floor.columns ?? [];
   const grinzi = snap.floor.beams ?? [];
-  const peretiSticla = snap.floor.glassWalls ?? [];
+  // balustradele: cele de sticlă refolosesc pereții de sticlă (cu înălțimea lor, `h`), cele de metal au lista lor
+  const rv = railingVisual(snap.floor);
+  const peretiSticla = rv.glass.length ? [...(snap.floor.glassWalls ?? []), ...rv.glass] : snap.floor.glassWalls ?? [];
   // nișele: peretele (index în plan.pereti), poziția pe el, cota, mărimea și fața (motorul o desenează pe fața peretelui)
   const nise = (snap.floor.niches ?? []).flatMap(n => { const wi = snap.floor.walls.findIndex(w => w.id === n.wallId); return wi < 0 ? [] : [{ id: n.id, wi, la: n.offset, l: n.width, y: n.elevation, h: n.height, ad: n.depth, side: n.side ?? 1 }]; });
   // obiectele de pe perete: peretele (index), centrul pe el și cota, mărimea, fața; camera și latura (pentru decorul automat) și
@@ -69,5 +74,11 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   const zonePardoseala = (snap.floor.zones ?? []).flatMap(z => { const room = snap.floor.rooms.find(r => r.id === z.roomId), c = room && intersect(room.rect, z.rect); if (!c) return [];
     const fin = mc ? roomVisual(mc, { floor: z.floor, wallPaint: '', light: '', ...(z.layout ? { floorLayout: z.layout } : {}) } as RoomFinishes).floor : null;
     return [{ id: z.id, room: z.roomId, ...c, fin }]; });
-  return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, nise, obiectePerete, ...(tehnice.length ? { tehnice } : {}), ...(zonePardoseala.length ? { zonePardoseala } : {}), goluriPlaca: extra.voids ?? [] }, items };
+  // tavanele false pe zonă: dreptunghiul decupat la cameră, partea de sus (sub tavanul camerei, dacă e coborât) și cea de jos,
+  // scafa de pe contur și culoarea LED-ului (după temperatura de culoare a benzii, ca la scafa camerei)
+  const tavaneZona = (snap.floor.ceilingZones ?? []).flatMap(z => { const room = snap.floor.rooms.find(r => r.id === z.roomId), c = room && ceilingZoneRect(snap.floor, z); if (!room || !c) return [];
+    const top = ceilingOf(finishesOf(snap, room)).dropCm / 100, led = z.led ? (mc ? matOf(mc, z.led) : null) : null, cct = led?.specs?.cctK ?? 3000;
+    return [{ id: z.id, room: z.roomId, ...c, top, drop: Math.max(top + .02, z.dropCm / 100), cove: (z.coveCm ?? 0) / 100, led: z.led ? (cct <= 3000 ? '#ffd29a' : cct <= 4000 ? '#fff1dc' : '#f4f7ff') : null }]; });
+  return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, nise, obiectePerete, ...(tehnice.length ? { tehnice } : {}), ...(zonePardoseala.length ? { zonePardoseala } : {}),
+    ...(tavaneZona.length ? { tavaneZona } : {}), ...(rv.metal.length ? { balustrade: rv.metal } : {}), goluriPlaca: extra.voids ?? [] }, items };
 }

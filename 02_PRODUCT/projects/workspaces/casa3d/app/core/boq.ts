@@ -15,12 +15,14 @@ import { colorName } from './budget-excluded';
 import { wallWorks } from './renovation';
 import { zonesOfRoom, zoneAreaIn, zonesAreaIn } from './floor-zones';
 import { isSizedRadiator, radiatorSize, hvacSize } from './tech-geometry';
+import { ceilingZonesOfRoom, ceilingZoneQty } from './ceiling-zones';
+import { railingHeight, railingKind, railingLength } from './railings';
 const RADIATOR_RO: Record<string, string> = { panel: 'panou', towel: 'port-prosop', decorative: 'decorativ' };
 /** Pereții în documente: punctele cardinale în română, nu literele interne N/S/E/W. */
 const SIDE_RO: Record<string, string> = { N: 'nord', S: 'sud', E: 'est', W: 'vest' };
 const LIGHT_CATS = new Set(['lighting', 'spot', 'led_strip', 'pendant', 'wall_light', 'led_profile']);
 const FIXTURE_LABEL = { pendant: 'Pendul', sconce: 'Aplică', track: 'Șină cu spoturi' } as const;
-import { bandGeometry, bathTiles, layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, featureLabor, effectOf, alongOf, sideSpan } from './finishes';
+import { bandGeometry, bathTiles, layoutOf, floorWaste, floorLaborId, sideGeometry, wallpaperRolls, panelCount, pieceSizeCm, ceilingOf, FEATURE_CATEGORY, featureLabor, effectOf, alongOf, sideSpan, frameRects, frameMoulding } from './finishes';
 import { WASTE, PAINT_COATS, DOOR_HEIGHT, WINDOW_HEIGHT, BATH_TILE_HEIGHT, BACKSPLASH_HEIGHT, LIGHTS_EXTRA_PER_M2, VAT_RATE, WET_ROOMS, SANITARY, APPLIANCES, DEFAULT_BUDGET } from './rules.boq';
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
@@ -125,6 +127,12 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
     for (const [i, wf] of (f.wallFeatures || []).entries()){ const m = M(wf.material), sg = bandGeometry(fl, room, wf);
       if (wf.kind === 'rail'){ if (!m || m.category !== 'moulding' || sg.lengthM <= 0){ if (sg.lengthM > 0) unknown.push(`${room.name}: baghetă ${wf.side}`); continue; }
         items.push(materialLine(m, `${room.id}:wall:${wf.side}:${i}`, room.id, `Baghetă · ${room.name}, perete ${SIDE_RO[wf.side] ?? wf.side} la ${r2(sg.toM)} m`, sg.lengthM, mc.verifiedAt)); addLabor(room.id, 'manopera-bagheta', sg.lengthM); continue; }
+      // boiserie: casete din baghetă peste vopsea (peretele se vopsește în continuare); bagheta în bucăți întregi, manopera în ml
+      if (wf.kind === 'frames'){ const rects = frameRects(fl, room, wf), mo = frameMoulding(rects, m?.unit === 'buc' ? m.specs?.pieceM : undefined); if (!rects.length) continue;
+        const where = `${room.name}, perete ${SIDE_RO[wf.side] ?? wf.side} (${rects.length} ${rects.length === 1 ? 'casetă' : 'casete'}, ${r2(sg.fromM)}–${r2(sg.toM)} m${sg.along ? `, porțiunea ${r2(sg.along[0])}–${r2(sg.along[1])} m pe lungime` : ''})`;
+        if (!m || m.category !== 'moulding' || (m.unit === 'buc' && mo.pieces == null)){ unknown.push(`Boiserie baghetă ${mo.ml} ml · ${where}: produsul ales nu are preț verificat`); continue; }
+        items.push(materialLine(m, `${room.id}:wall:${wf.side}:${i}`, room.id, `Boiserie baghetă · ${where}: ${mo.ml} ml${mo.pieces != null ? `, ${mo.pieces} bucăți de ${m.specs!.pieceM} m` : ''}`, mo.pieces ?? mo.ml, mc.verifiedAt, mo.pieces != null ? 0 : undefined));
+        addLabor(room.id, 'manopera-bagheta', mo.ml, `frames:${i}`); continue; }
       if (sg.netM2 <= 0) continue;
       const eff = effectOf(wf, m);
       // vopsea decorativă cu efect (venețiană, beton, microciment…): fără un produs care declară efectul, materialul și manopera nu au preț verificat
@@ -151,6 +159,16 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
       if (c.type === 'cove'){ addLabor(room.id, 'manopera-scafa', inner);
         const led = M(c.led); if (led) items.push(materialLine(led, `${room.id}:led`, room.id, `Bandă LED scafă · ${room.name} (${r2(inner)} m)`, inner, mc.verifiedAt)); } }
     const cm = M(c.cornice); if (cm){ items.push(materialLine(cm, `${room.id}:cornice`, room.id, `Cornișă · ${room.name}`, g.perimeter, mc.verifiedAt)); addLabor(room.id, 'manopera-cornisa', g.perimeter); }
+    // tavane false pe zonă (casete): placa de jos + banda laterală (+ raftul scafei), manopera de tavan fals și de scafă, LED pe contur în ml;
+    // fețele casetei se vopsesc (banda laterală și scafa se adaugă la vopsea, placa de jos ia locul tavanului de deasupra)
+    for (const z of ceilingZonesOfRoom(fl, room.id)){ const q = ceilingZoneQty(fl, z, c.dropCm); if (!q) continue;
+      const nm = z.label ? ` „${z.label}”` : '', where = `${room.name} (${q.w} × ${q.d} m, coborât ${z.dropCm} cm${z.coveCm ? `, scafă ${z.coveCm} cm` : ''})`, gk = mc.materials.find(m => m.category === 'plasterboard');
+      if (gk){ items.push(materialLine(gk, `${room.id}:ceiling:czone:${z.id}`, room.id, `Tavan fals pe zonă${nm} gips-carton · ${where}: placă ${q.areaM2} m² + bandă laterală ${q.bandM2} m²${q.coveM2 > 0 ? ` + scafă ${q.coveM2} m²` : ''}`, q.boardM2, mc.verifiedAt)); addLabor(room.id, 'manopera-rigips-tavan', q.boardM2, `czone:${z.id}`); }
+      else unknown.push(`Tavan fals pe zonă${nm} gips-carton ${q.boardM2} m² · ${where}: fără preț verificat`);
+      if (z.coveCm) addLabor(room.id, 'manopera-scafa', q.perimeterM, `czone:${z.id}`);
+      ceilingBand += q.bandM2 + q.coveM2;
+      if (z.led){ const led = M(z.led); if (led && led.category === 'led_strip') items.push(materialLine(led, `${room.id}:led:czone:${z.id}`, room.id, `Bandă LED tavan fals pe zonă${nm} · ${where} (${q.ledM} m)`, q.ledM, mc.verifiedAt));
+        else unknown.push(`Bandă LED tavan fals pe zonă${nm} ${q.ledM} ml · ${where}: produsul ales nu are preț verificat`); } }
     // textile: draperii și perdele în pachete (perechi de panouri), storuri pe fereastră, covorul camerei
     const wins = roomWindows(fl, room);
     for (const t of f.windows || []){ const win = wins.find(x => x.openingId === t.openingId); if (!win) continue; const n = wins.indexOf(win) + 1;
@@ -158,6 +176,8 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
         items.push(materialLine(m, `${room.id}:${k}:${t.openingId}`, room.id, `${lbl} · ${room.name}, fereastra ${n} (${r2(win.widthM)} m): bară ${p.rodW} m, ${p.panels} panouri, cădere ${p.drop} m${p.hemM > .02 ? `, tiv ${Math.round(p.hemM * 100)} cm` : ''}`, p.packs, mc.verifiedAt, 0)); }
       const bm2 = M(t.blind); if (bm2){ const p = blindPlan(win, bm2); items.push(materialLine(bm2, `${room.id}:blind:${t.openingId}`, room.id, `Stor · ${room.name}, fereastra ${n} (${r2(win.widthM)} m)`, p.count, mc.verifiedAt, 0)); } }
     const rug = M(f.rug?.material); if (rug) items.push(materialLine(rug, `${room.id}:rug`, room.id, `Covor · ${room.name}`, 1, mc.verifiedAt, 0));
+    // covoarele în plus (al doilea covor, sub masă): o linie pe covor, cheia `<cameră>:rug:<n>` (n de la 2)
+    (f.rugs ?? []).forEach((rc, i) => { const m = M(rc.material); if (m && m.category === 'rug') items.push(materialLine(m, `${room.id}:rug:${i + 2}`, room.id, `Covor ${i + 2} · ${room.name}`, 1, mc.verifiedAt, 0)); else unknown.push(`Covor ${i + 2} · ${room.name}: produsul ales nu are preț verificat`); });
     // bucătăria ca sistem: blat, chiuvetă, baterie, LED sub suspendate, mânere, placare din sticlă
     const run = f.kitchen ? kitchenRun(snap, cat, room.id) : null;
     if (run){ const k = kitchenOf(f), top = M(k.countertop), q = kitchenQuantities(run, k, top);
@@ -196,7 +216,10 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
       if (ww.status === 'demolish'){ unknown.push(`Demolare ${ww.areaM2} m² cu evacuarea molozului (~${r2(ww.areaM2 * ww.thicknessM)} m³) · ${where}: fără preț verificat`); continue; }
       if (ww.system === 'drywall'){ if (gk) items.push(materialLine(gk, `wall-new:${ww.wallId}`, null, `Perete nou gips-carton · ${where} (${ww.areaM2} m², placă pe 2 fețe)`, ww.areaM2 * 2, mc.verifiedAt)); else unknown.push(`Placă gips-carton perete nou ${r2(ww.areaM2 * 2)} m² · ${where}`);
         unknown.push(`Manoperă perete nou gips-carton ${ww.areaM2} m² (structură, vată, 2 fețe) · ${where}: fără preț verificat`); }
-      else unknown.push(`Zidărie nouă ${ww.areaM2} m² (material și manoperă) · ${where}: fără preț verificat`); } });
+      else unknown.push(`Zidărie nouă ${ww.areaM2} m² (material și manoperă) · ${where}: fără preț verificat`); }
+    // balustradele: în ml, pe tip și înălțime; fără preț verificat în catalog (material și montaj)
+    for (const r of fl.railings ?? []){ const len = railingLength(r); if (len <= 0) continue;
+      unknown.push(`Balustradă ${railingKind(r) === 'glass' ? 'sticlă' : 'metal'} ${len} ml, h ${Math.round(railingHeight(r) * 100)} cm (material și montaj)${lvl}: fără preț verificat`); } });
   // punctele tehnice cu corp: aerul condiționat (unitatea interioară și traseul) și caloriferele noi; fără preț verificat
   const allRooms = floors(snap).flatMap(fl => fl.rooms);
   for (const tp of snap.tech ?? []){ const room = allRooms.find(r => r.id === tp.roomId); if (!room) continue;

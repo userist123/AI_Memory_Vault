@@ -572,7 +572,9 @@ function model(it){
         const fg = q.__polygonRoom ? roomShapeGeometry(r.contur, r, voids) : new THREE.PlaneGeometry(w, d);
         const f = new THREE.Mesh(fg, fmat); f.rotation.x = q.__polygonRoom ? -Math.PI / 2 : -Math.PI / 2; f.position.set(q.__polygonRoom ? r.x0 : (q.x0 + q.x1) / 2, 0, q.__polygonRoom ? r.z0 : (q.z0 + q.z1) / 2); f.receiveShadow = true; house.add(f); }
       // covorul camerei, centrat, cu latura lungă după cameră (sau rotit)
-      if (r.fin && r.fin.rug){ const rg = r.fin.rug, rm = MAT('rug', rg.color || '#c8b79a'); const o = new THREE.Mesh(sharedGeo('rug' + k3(rg.w, .016, rg.d), () => rgeo(rg.w, .016, rg.d, .006)), rm); o.position.set((r.x0 + r.x1) / 2, .008, (r.z0 + r.z1) / 2); o.receiveShadow = true; house.add(o); }   // covor cu grosime și margini rotunjite, textil cu fir (nu o placă albă)
+      // covorul principal: centrat, sau la poziția aleasă (x / z); covoarele în plus (`rugs`) au mereu poziția lor
+      if (r.fin && r.fin.rug){ const rg = r.fin.rug, rm = MAT('rug', rg.color || '#c8b79a'); const o = new THREE.Mesh(sharedGeo('rug' + k3(rg.w, .016, rg.d), () => rgeo(rg.w, .016, rg.d, .006)), rm); o.position.set(rg.x != null ? rg.x : (r.x0 + r.x1) / 2, .008, rg.z != null ? rg.z : (r.z0 + r.z1) / 2); o.receiveShadow = true; house.add(o); }   // covor cu grosime și margini rotunjite, textil cu fir (nu o placă albă)
+      if (r.fin && r.fin.rugs) r.fin.rugs.forEach((rg, i) => { const o = new THREE.Mesh(sharedGeo('rug' + k3(rg.w, .016, rg.d), () => rgeo(rg.w, .016, rg.d, .006)), MAT('rug', rg.color || '#c8b79a')); o.position.set(rg.x, .0085 + i * .0005, rg.z); o.receiveShadow = true; house.add(o); });
       // tavan: drept la H; fals coborât cu `drop`; cu scafă: banda de lângă pereți rămâne sus, panoul din mijloc coboară, cu bandă LED pe margine
       const cv = r.fin && r.fin.ceiling, cmat = r.tavan ? lookMat('ceil', r.tavan, 1) : ceilMat, ctop = cv && cv.type === 'drop' ? H - cv.drop : H;
       const ceilPlane = (rect, y) => { if (Array.isArray(rect.contur) && rect.contur.length >= 3){ const g = roomShapeGeometry(rect.contur, rect, stairs.map(a => a.rect)); g.rotateX(Math.PI / 2); const c = new THREE.Mesh(g, cmat); c.position.set(rect.x0, y, rect.z0); c.castShadow = c.receiveShadow = true; ceilings.add(c); return; }
@@ -603,6 +605,26 @@ function model(it){
       const zm = owned(new THREE.MeshStandardMaterial({ map: t, roughness: ff && ff.kind === 'parquet' ? .6 : .35 }));
       if (ft) zm.userData = { ...zm.userData, kind: ff.kind === 'tile' ? 'tile' : 'parquet', pat: { ...ff, rect: [z.x0, z.z0, z.x1, z.z1] } };
       const m = new THREE.Mesh(new THREE.PlaneGeometry(w, d), zm); m.rotation.x = -Math.PI / 2; m.position.set((z.x0 + z.x1) / 2, .001, (z.z0 + z.z1) / 2); m.receiveShadow = true; m.userData.floorZone = z.id; house.add(m); });
+    // tavanele false pe zonă (Floor.ceilingZones): casetă suspendată din gips-carton — placa de jos la H − drop, banda laterală până sub
+    // tavanul camerei (H − top), cu scafă (raft spre exterior + LED care luminează tavanul) sau doar LED sub muchie; ca scafa camerei
+    (p.tavaneZona || []).forEach(z => { const w = z.x1 - z.x0, d = z.z1 - z.z0; if (w < .05 || d < .05) return; const room = p.camere.find(c => c.id === z.room), cm = room && room.tavan ? lookMat('ceil', room.tavan, 1) : ceilMat;
+      const yb = H - z.drop, yt = H - z.top, hb = Math.max(.01, yt - yb), cx = (z.x0 + z.x1) / 2, cz = (z.z0 + z.z1) / 2;
+      const under = new THREE.Mesh(new THREE.PlaneGeometry(w, d), cm); under.rotation.x = Math.PI / 2; under.position.set(cx, yb, cz); under.receiveShadow = true; under.userData.ceilingZone = z.id; ceilings.add(under);
+      [[w, .012, cx, z.z0], [w, .012, cx, z.z1], [.012, d, z.x0, cz], [.012, d, z.x1, cz]].forEach(([a, b, x, zz]) => { const m = box(a, hb, b, cm, x, yb + hb / 2, zz, 0, ceilings); m.castShadow = false; });
+      if (z.cove > 0){ const k = Math.min(.15, z.cove), y = yb + Math.min(hb * .5, .08);
+        [[w + 2 * k, k, cx, z.z0 - k / 2], [w + 2 * k, k, cx, z.z1 + k / 2], [k, d, z.x0 - k / 2, cz], [k, d, z.x1 + k / 2, cz]].forEach(([a, b, x, zz]) => { box(a, .012, b, cm, x, y, zz, 0, ceilings).castShadow = false; });
+        if (z.led){ const lm = owned(new THREE.MeshStandardMaterial({ color: lin(z.led), emissive: lin(z.led), emissiveIntensity: 1.6 }));
+          [[w, .012, cx, z.z0 - k * .7], [w, .012, cx, z.z1 + k * .7], [.012, d, z.x0 - k * .7, cz], [.012, d, z.x1 + k * .7, cz]].forEach(([a, b, x, zz]) => { box(a, .01, b, lm, x, y + .011, zz, 0, ceilings).castShadow = false; });
+          const glow = owned(new THREE.MeshStandardMaterial({ color: lin('#ffffff'), emissive: lin(z.led), emissiveIntensity: .35, roughness: 1 }));
+          const g2 = new THREE.Mesh(new THREE.PlaneGeometry(w + 2 * k + .3, d + 2 * k + .3), glow); g2.rotation.x = Math.PI / 2; g2.position.set(cx, yt - .002, cz); ceilings.add(g2); } }
+      else if (z.led){ const lm = owned(new THREE.MeshStandardMaterial({ color: lin(z.led), emissive: lin(z.led), emissiveIntensity: 1.4 }));
+        [[w - .04, .01, cx, z.z0 + .02], [w - .04, .01, cx, z.z1 - .02], [.01, d - .04, z.x0 + .02, cz], [.01, d - .04, z.x1 - .02, cz]].forEach(([a, b, x, zz]) => { box(a, .008, b, lm, x, yb - .004, zz, 0, ceilings).castShadow = false; }); } });
+    // balustradele de metal: mână curentă, bară jos, stâlpi la cel mult 1,2 m și baluștri la 11 cm (nu trece un copil printre ei)
+    (p.balustrade || []).forEach(b => { const L = Math.hypot(b.b[0] - b.a[0], b.b[1] - b.a[1]); if (L < .05) return; const rot = Math.atan2(b.b[0] - b.a[0], b.b[1] - b.a[1]), mx = (b.a[0] + b.b[0]) / 2, mz = (b.a[1] + b.b[1]) / 2, mm = MAT('metal', '#3a3d42'), h = b.h || 1;
+      box(.05, .04, L, mm, mx, h - .02, mz, rot, house).castShadow = false; box(.03, .03, L, mm, mx, .1, mz, rot, house).castShadow = false;
+      const at = (f) => [b.a[0] + (b.b[0] - b.a[0]) * f, b.a[1] + (b.b[1] - b.a[1]) * f];
+      for (let k = 0; k <= b.posts; k++){ const [x, zz] = at(k / b.posts); box(.045, h, .045, mm, x, h / 2, zz, rot, house).castShadow = false; }
+      const n = Math.max(1, Math.floor(L / .11)); for (let k = 1; k < n; k++){ const [x, zz] = at(k / n); box(.014, h - .14, .014, mm, x, .1 + (h - .14) / 2 + .015, zz, rot, house).castShadow = false; } });
     // corpurile de iluminat plasate: pendul (cablu + abajur + bec), aplică (bază pe perete + abajur), șină cu spoturi
     const bulb = owned(new THREE.MeshStandardMaterial({ color: lin('#fff6e6'), emissive: lin('#ffd9a8'), emissiveIntensity: 1.6 })), cord = MAT('paint', '#222222');
     (p.lumini || []).forEach(f => { const sm = MAT('paint', f.color || '#1c1c1c'), shade = owned(sm.clone()); shade.side = THREE.DoubleSide;
@@ -728,6 +750,11 @@ function model(it){
           wl.goluri.forEach(g => { const p0 = s0 + dir * g.la, p1 = s0 + dir * (g.la + g.l), sl = g.tip === 'usa' ? 0 : (g.sill != null ? g.sill : .9), tp = g.tip === 'usa' ? Math.min(H - .05, g.h || 2.1) : Math.min(H - .05, sl + (g.h || 1.3));
             holes.push({ a: Math.min(p0, p1), b: Math.max(p0, p1), y0: sl, y1: tp }); }); });
         if (!found) return;   // latură fără perete (deschisă spre altă cameră): nu desenăm o placare în aer
+        // boiseria: casetele din baghetă (calculate în core/finishes.ts, fără cele peste goluri), în relief ușor peste vopsea
+        if (wv.kind === 'frames'){ const pw = wv.profile || .04, dp = .015, fo = edge + inward * (th / 2 + dp / 2 + .001), fm2 = lookMat('rail', wv.color, .5), rot = horiz ? 0 : Math.PI / 2;
+          const bar = (s0, s1, y0, y1) => { const len = s1 - s0, hgt = y1 - y0, mid = (s0 + s1) / 2; box(len, hgt, dp, fm2, horiz ? mid : fo, (y0 + y1) / 2, horiz ? fo : mid, rot, walls).castShadow = false; };
+          (wv.frames || []).forEach(([u0, v0, u1, v1]) => { const s0 = base + u0, s1 = base + u1; if (s1 - s0 < 2 * pw || v1 - v0 < 2 * pw) return;
+            bar(s0, s1, v0, v0 + pw); bar(s0, s1, v1 - pw, v1); bar(s0, s0 + pw, v0 + pw, v1 - pw); bar(s1 - pw, s1, v0 + pw, v1 - pw); }); return; }
         const kind = wv.kind, depth = kind === 'stone' ? .022 : kind === 'brick' ? .014 : kind === 'slats' ? .021 : kind === 'rail' ? .02 : kind === 'panel' ? .012 : kind === 'tile' ? .01 : .003, off = edge + inward * (th / 2 + depth / 2 + .001);
         const plainKind = kind === 'slats' || kind === 'paint' || kind === 'rail' || kind === 'panel', tex = plainKind ? null : wallTexture(wv, `${r.id}:${wi}`), size = tex ? tex.userData.size : 1;
         const mkMat = (len, hgt, s0, y0) => { if (!tex) return null; const t = tex.clone(); t.userData = { ...tex.userData, owned: true }; t.needsUpdate = true; t.repeat.set(len / size, hgt / size); t.offset.set(s0 / size, y0 / size);
@@ -822,23 +849,24 @@ function model(it){
       bMesh.userData.beam = true;
     });
     // pereți vitrați / compartimentări din sticlă
+    // (balustrada de sticlă refolosește aceeași construcție, cu înălțimea ei `h` și fără să se scurteze în vederea tăiată: grupul casei)
     (p.peretiSticla || []).forEach(gw => {
-      const th = gw.thickness || 0.08;
+      const th = gw.thickness || 0.08, HH = gw.h || H, parent = gw.h ? house : walls;
       const L = Math.hypot(gw.b[0] - gw.a[0], gw.b[1] - gw.a[1]);
       if (L < 0.05) return;
       const mx = (gw.a[0] + gw.b[0]) / 2, mz = (gw.a[1] + gw.b[1]) / 2;
       const rot = Math.atan2(gw.b[0] - gw.a[0], gw.b[1] - gw.a[1]);
-      const gPane = box(th * 0.35, H - 0.06, L - 0.04, glass, mx, H / 2, mz, rot, walls);
+      const gPane = box(th * 0.35, HH - 0.06, L - 0.04, glass, mx, HH / 2, mz, rot, parent);
       gPane.castShadow = false;
       const fm = MAT('metal', gw.frameColor || '#23262B');
-      box(th, 0.04, L, fm, mx, 0.02, mz, rot, walls).castShadow = false;
-      box(th, 0.04, L, fm, mx, H - 0.02, mz, rot, walls).castShadow = false;
+      box(th, 0.04, L, fm, mx, 0.02, mz, rot, parent).castShadow = false;
+      box(th, 0.04, L, fm, mx, HH - 0.02, mz, rot, parent).castShadow = false;
       const mullions = gw.mullions ?? Math.max(1, Math.round(L / 0.9));
       for (let m = 0; m <= mullions; m++) {
         const frac = m / mullions;
         const px = gw.a[0] + (gw.b[0] - gw.a[0]) * frac;
         const pz = gw.a[1] + (gw.b[1] - gw.a[1]) * frac;
-        box(th, H, 0.04, fm, px, H / 2, pz, rot, walls).castShadow = false;
+        box(th, HH, 0.04, fm, px, HH / 2, pz, rot, parent).castShadow = false;
       }
     });
     const xs = p.camere.flatMap(r => [r.x0, r.x1]), zs = p.camere.flatMap(r => [r.z0, r.z1]);
