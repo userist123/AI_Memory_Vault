@@ -35,7 +35,7 @@ import { suggestTechPoints, placeTechPoint, TECH_KINDS, techIssues, techBodyCoun
 import { defaultZoneMaterial, intersect, zoneAreaIn, removeRoomZones } from '@/core/floor-zones';
 import { wallStatus } from '@/core/renovation';
 import type { FloorZone, WallStatus, CeilingZone, Railing, RoomSpaceKind } from '@/core/types';
-import { ceilingZoneRect, ceilingZoneQty, removeRoomCeilingZones } from '@/core/ceiling-zones';
+import { ceilingZoneRect, ceilingZoneQty, removeRoomCeilingZones, ceilingZoneHidden } from '@/core/ceiling-zones';
 import { railingHeight, railingKind, railingLength } from '@/core/railings';
 import { RAILING_KINDS, SPACE_KINDS } from '@/core/plan-limits';
 import { RoomLookPanel, WallLookPanel, OpeningLookPanel, ItemLookPanel } from './AppearanceControls';
@@ -976,7 +976,7 @@ export default function Editor({ id }: { id: string }){
               </div>
               {leds.length > 0 && <label className="f"><span>{t('czone.led')}</span><MaterialPicker cur={cur} value={z.led ?? ''} options={leds} none={t('fin.none')} onChange={v => patchCeilingZone(z.id, q2 => { if (v) q2.led = v; else delete q2.led; })} /></label>}
               <label className="f"><span>{t('zone.label')}</span><input type="text" maxLength={CL.labelMax} value={z.label ?? ''} onChange={e => patchCeilingZone(z.id, q2 => { const v = stripPlanText(e.target.value).slice(0, CL.labelMax); if (v.trim()) q2.label = v; else delete q2.label; })} /></label>
-              {q && <div className="prov">{t('czone.qty', { board: q.boardM2, band: q.bandM2, led: q.ledM })}</div>}
+              {q && !ceilingZoneHidden(z, roomDrop) && <div className="prov">{t('czone.qty', { board: q.boardM2, band: q.bandM2, led: q.ledM })}</div>}
               <p className="prov" style={{ margin: 0 }}>{t('czone.rule')}</p>
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>
             </div>); })()}
