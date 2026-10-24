@@ -1,0 +1,190 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spițerul — Cooperativă de reparat biciclete, Cluj-Napoca</title>
+<meta name="description" content="Spițerul: atelier cooperativ independent de reparații biciclete în Cluj-Napoca, cu cursuri de reparații seara.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Hanken+Grotesk:wght@400;500;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f6f0e4; --ink:#1f2a24; --muted:#5b6560; --card:#fffaf0; --line:#d9cfba;
+  --accent:#c4491c; --accent-ink:#fff; --green:#2f5d46; --soft:#ebe2cd;
+}
+@media (prefers-color-scheme:dark){
+  :root{--bg:#171c19; --ink:#f0eadb; --muted:#a4aca6; --card:#212823; --line:#37403a;
+    --accent:#ee7a4a; --accent-ink:#1a1008; --green:#7fc09f; --soft:#1d231f;}
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 17px/1.6 "Hanken Grotesk",system-ui,sans-serif}
+h1,h2,h3{font-family:"Bricolage Grotesque",system-ui,sans-serif;line-height:1.1;margin:0}
+a{color:inherit}
+.wrap{max-width:1040px;margin:0 auto;padding:0 20px}
+header{position:sticky;top:0;z-index:10;background:var(--bg);border-bottom:1px solid var(--line)}
+nav{display:flex;align-items:center;justify-content:space-between;gap:16px;padding:12px 0}
+.logo{font:800 1.4rem "Bricolage Grotesque",sans-serif;text-decoration:none;display:flex;align-items:center;gap:8px}
+.logo svg{width:30px;height:30px}
+nav ul{display:flex;gap:20px;list-style:none;margin:0;padding:0}
+nav ul a{text-decoration:none;font-weight:500}
+nav ul a:hover{color:var(--accent)}
+.btn{display:inline-block;background:var(--accent);color:var(--accent-ink);padding:12px 22px;border-radius:999px;font-weight:700;text-decoration:none;border:0;cursor:pointer;font-size:1rem}
+.btn:hover{filter:brightness(1.08)}
+.btn.ghost{background:transparent;color:var(--ink);border:2px solid var(--ink)}
+.hero{padding:72px 0 56px;display:grid;grid-template-columns:1.2fr .8fr;gap:40px;align-items:center}
+.eyebrow{color:var(--green);font-weight:700;letter-spacing:.08em;text-transform:uppercase;font-size:.8rem}
+.hero h1{font-size:clamp(2.6rem,6vw,4.6rem);font-weight:800;margin:10px 0 18px}
+.hero h1 em{color:var(--accent);font-style:normal}
+.hero p{max-width:34em;color:var(--muted);font-size:1.1rem}
+.cta{display:flex;gap:12px;flex-wrap:wrap;margin-top:26px}
+.wheel{width:100%;max-width:340px;justify-self:center;color:var(--ink)}
+.wheel .spin{transform-origin:100px 100px;animation:spin 40s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.wheel .spin{animation:none}}
+section{padding:56px 0;border-top:1px solid var(--line)}
+section h2{font-size:clamp(1.9rem,4vw,2.6rem);font-weight:800;margin-bottom:8px}
+.lead{color:var(--muted);margin:0 0 28px;max-width:40em}
+.price-list{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:6px 22px}
+.row{display:flex;justify-content:space-between;align-items:baseline;gap:16px;padding:16px 0;border-bottom:1px dashed var(--line)}
+.row:last-child{border:0}
+.row b{display:block;font-size:1.05rem}
+.row small{color:var(--muted)}
+.price{font:800 1.25rem "Bricolage Grotesque",sans-serif;color:var(--accent);white-space:nowrap}
+.note{color:var(--muted);font-size:.95rem;margin-top:14px}
+.classes{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:16px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:22px}
+.card .day{font:800 .85rem "Bricolage Grotesque",sans-serif;letter-spacing:.08em;text-transform:uppercase;color:var(--green)}
+.card h3{font-size:1.35rem;margin:6px 0 8px}
+.card .time{font-weight:700}
+.card p{color:var(--muted);margin:8px 0 0;font-size:.97rem}
+.tag{display:inline-block;margin-top:12px;background:var(--soft);padding:3px 12px;border-radius:999px;font-size:.85rem;font-weight:500}
+form.signup{margin-top:28px;background:var(--soft);border-radius:16px;padding:22px;display:grid;grid-template-columns:1fr 1fr auto;gap:12px;align-items:end}
+form label{display:flex;flex-direction:column;font-size:.85rem;font-weight:700;gap:4px}
+form input,form select{font:inherit;padding:11px 12px;border-radius:10px;border:1px solid var(--line);background:var(--card);color:var(--ink)}
+#msg{grid-column:1/-1;margin:0;font-weight:700;color:var(--green);min-height:1.2em}
+.contact{display:grid;grid-template-columns:1fr 1fr;gap:28px}
+.contact dl{margin:0}
+.contact dt{font-weight:700;margin-top:14px;color:var(--green);font-size:.85rem;text-transform:uppercase;letter-spacing:.06em}
+.contact dt:first-child{margin-top:0}
+.contact dd{margin:2px 0 0}
+.hours td{padding:5px 18px 5px 0}
+.hours .today{color:var(--accent);font-weight:700}
+.map{background:var(--soft);border:1px solid var(--line);border-radius:16px;padding:22px;display:flex;flex-direction:column;justify-content:space-between;gap:16px}
+footer{border-top:1px solid var(--line);padding:28px 0;color:var(--muted);font-size:.9rem}
+@media (max-width:760px){
+  nav ul{display:none}
+  .hero,.contact{grid-template-columns:1fr}
+  .hero{padding-top:40px}
+  .wheel{max-width:220px;order:-1}
+  form.signup{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap"><nav>
+    <a class="logo" href="#top" aria-label="Spițerul">
+      <svg viewBox="0 0 32 32" fill="none" stroke="currentColor" stroke-width="2" aria-hidden="true"><circle cx="16" cy="16" r="13"/><circle cx="16" cy="16" r="2.5"/><path d="M16 3v10M16 19v10M3 16h10M19 16h10M6.8 6.8l7.4 7.4M17.8 17.8l7.4 7.4M25.2 6.8l-7.4 7.4M14.2 17.8l-7.4 7.4"/></svg>
+      Spițerul
+    </a>
+    <ul><li><a href="#servicii">Servicii</a></li><li><a href="#cursuri">Cursuri</a></li><li><a href="#contact">Contact</a></li></ul>
+    <a class="btn" href="#contact">Programează-te</a>
+  </nav></div>
+</header>
+
+<main id="top">
+<div class="wrap">
+  <div class="hero">
+    <div>
+      <div class="eyebrow">Cooperativă de biciclete · Cluj-Napoca</div>
+      <h1>Bicicleta ta, <em>pe roți</em> în aceeași zi.</h1>
+      <p>Suntem un atelier mic și independent, deținut de cei care lucrează în el. Reparăm cinstit, explicăm ce facem și, seara, te învățăm să o faci singur.</p>
+      <div class="cta"><a class="btn" href="#servicii">Vezi prețurile</a><a class="btn ghost" href="#cursuri">Cursuri de seară</a></div>
+    </div>
+    <svg class="wheel" viewBox="0 0 200 200" fill="none" stroke="currentColor" aria-hidden="true">
+      <circle cx="100" cy="100" r="92" stroke-width="7"/>
+      <circle cx="100" cy="100" r="82" stroke-width="1.5" stroke="var(--accent)"/>
+      <g class="spin" stroke-width="1.2">
+        <path d="M100 100 L100 18 M100 100 L158 42 M100 100 L182 100 M100 100 L158 158 M100 100 L100 182 M100 100 L42 158 M100 100 L18 100 M100 100 L42 42 M100 100 L129 24 M100 100 L176 71 M100 100 L176 129 M100 100 L129 176 M100 100 L71 176 M100 100 L24 129 M100 100 L24 71 M100 100 L71 24"/>
+      </g>
+      <circle cx="100" cy="100" r="11" stroke-width="5" fill="var(--bg)"/>
+    </svg>
+  </div>
+</div>
+
+<section id="servicii"><div class="wrap">
+  <h2>Servicii și prețuri</h2>
+  <p class="lead">Prețuri fixe, afișate din start. Piesele se plătesc separat, la prețul de achiziție plus un mic adaos.</p>
+  <div class="price-list">
+    <div class="row"><div><b>Diagnoză și verificare generală</b><small>Inspecție completă, deviz scris — gratuită dacă faci reparația la noi</small></div><span class="price">30 lei</span></div>
+    <div class="row"><div><b>Reglaj schimbătoare și frâne</b><small>Față + spate, cablu și plăcuțe verificate</small></div><span class="price">60 lei</span></div>
+    <div class="row"><div><b>Înlocuire cameră / anvelopă</b><small>Manoperă pe roată, fără piesă</small></div><span class="price">25 lei</span></div>
+    <div class="row"><div><b>Centrat roată</b><small>Inclusiv tensionat spițe</small></div><span class="price">45 lei</span></div>
+    <div class="row"><div><b>Schimb lanț + curățare transmisie</b><small>Lanț, casetă și pinioane degresate</small></div><span class="price">70 lei</span></div>
+    <div class="row"><div><b>Întreținere completă</b><small>Reglaje, lubrifiere, rulmenți, verificare șuruburi</small></div><span class="price">180 lei</span></div>
+    <div class="row"><div><b>Montaj bicicletă din cutie</b><small>Asamblare, reglaj și test pe stradă</small></div><span class="price">120 lei</span></div>
+  </div>
+  <p class="note">Reparații urgente în 24 de ore: +20 lei. Bicicletele electrice și frânele hidraulice se evaluează la fața locului.</p>
+</div></section>
+
+<section id="cursuri"><div class="wrap">
+  <h2>Cursuri de reparații, seara</h2>
+  <p class="lead">Grupe de maximum 8 persoane, la banc, cu scule din atelier. Vii fără experiență, pleci știind să-ți întreții bicicleta.</p>
+  <div class="classes">
+    <div class="card"><div class="day">Luni</div><h3>Prima mea reparație</h3><div class="time">18:30 – 20:30</div><p>Pană, cameră, frâne simple și reglaje de bază.</p><span class="tag">80 lei / seară</span></div>
+    <div class="card"><div class="day">Miercuri</div><h3>Transmisie și schimbătoare</h3><div class="time">18:30 – 20:30</div><p>Lanț, casetă, indexare și uzură. Recomandat după cursul de luni.</p><span class="tag">80 lei / seară</span></div>
+    <div class="card"><div class="day">Joi</div><h3>Roți și spițe</h3><div class="time">18:00 – 21:00</div><p>Centrat și tensionat roți, pas cu pas, pe roata ta.</p><span class="tag">120 lei / seară</span></div>
+    <div class="card"><div class="day">Sâmbătă</div><h3>Atelier deschis</h3><div class="time">10:00 – 14:00</div><p>Vii cu bicicleta ta, folosești standul și primești ajutor de la un mecanic.</p><span class="tag">20 lei / sesiune</span></div>
+  </div>
+  <form class="signup" id="signup">
+    <label>Nume<input name="n" required autocomplete="name"></label>
+    <label>Curs<select id="course"><option>Prima mea reparație (luni)</option><option>Transmisie și schimbătoare (miercuri)</option><option>Roți și spițe (joi)</option><option>Atelier deschis (sâmbătă)</option></select></label>
+    <button class="btn" type="submit">Rezervă loc</button>
+    <p id="msg" role="status"></p>
+  </form>
+</div></section>
+
+<section id="contact"><div class="wrap">
+  <h2>Unde ne găsești</h2>
+  <p class="lead">Atelierul nostru e la parter, într-o curte interioară — caută firma cu roata.</p>
+  <div class="contact">
+    <dl>
+      <dt>Adresă</dt><dd>Str. Aurel Vlaicu 12, parter<br>400000 Cluj-Napoca</dd>
+      <dt>Telefon</dt><dd><a href="tel:+40264000000">0264 000 000</a></dd>
+      <dt>Email</dt><dd><a href="mailto:salut@spiterul.example">salut@spiterul.example</a></dd>
+      <dt>Program atelier</dt>
+      <dd><table class="hours" id="hours">
+        <tr data-d="1"><td>Luni</td><td>09:00 – 18:00 · seara curs</td></tr>
+        <tr data-d="2"><td>Marți</td><td>09:00 – 18:00</td></tr>
+        <tr data-d="3"><td>Miercuri</td><td>09:00 – 18:00 · seara curs</td></tr>
+        <tr data-d="4"><td>Joi</td><td>09:00 – 17:00 · seara curs</td></tr>
+        <tr data-d="5"><td>Vineri</td><td>09:00 – 18:00</td></tr>
+        <tr data-d="6"><td>Sâmbătă</td><td>10:00 – 14:00</td></tr>
+        <tr data-d="0"><td>Duminică</td><td>Închis</td></tr>
+      </table></dd>
+    </dl>
+    <div class="map">
+      <div><h3>Cum ajungi</h3><p class="note">La 5 minute de centru, pe pista de biciclete de pe Aurel Vlaicu. Stative gratuite în curte. Autobuzele 24 și 35, stația „Aurel Vlaicu”.</p></div>
+      <a class="btn" target="_blank" rel="noopener" href="https://www.google.com/maps/search/?api=1&query=Strada+Aurel+Vlaicu+12+Cluj-Napoca">Deschide în hărți</a>
+    </div>
+  </div>
+</div></section>
+</main>
+
+<footer><div class="wrap">© <span id="y"></span> Spițerul — cooperativă de reparat biciclete, Cluj-Napoca. Făcut cu ulei de lanț și răbdare.</div></footer>
+
+<script>
+document.getElementById('y').textContent=new Date().getFullYear();
+var t=document.querySelector('#hours tr[data-d="'+new Date().getDay()+'"]');
+if(t)t.className='today';
+document.getElementById('signup').addEventListener('submit',function(e){
+  e.preventDefault();
+  var f=e.target;
+  document.getElementById('msg').textContent='Mulțumim, '+f.n.value+'! Te sunăm pentru confirmare: '+f.querySelector('select').value+'.';
+  f.n.value='';
+});
+</script>
+</body>
+</html>

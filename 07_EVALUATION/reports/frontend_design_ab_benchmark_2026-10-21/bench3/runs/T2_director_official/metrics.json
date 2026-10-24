@@ -1,0 +1,76 @@
+{
+  "task": "T2",
+  "arm": "director_official",
+  "static": {
+    "generic_font": false,
+    "cream_bg": true,
+    "terracotta": false,
+    "near_black_tint": false,
+    "purple_gradient": false,
+    "middot_meta": 3,
+    "arrow_ctas": 0,
+    "numbered_markers": 1,
+    "soft_shadow": 0,
+    "radius_values": 5,
+    "gradients": 0,
+    "fade_reveal": false,
+    "has_focus_visible": true,
+    "has_reduced_motion": true,
+    "tell_score": 2.0
+  },
+  "viewports": {
+    "desktop": {
+      "h1_font": "Fraunces",
+      "body_font": "IBM Plex Sans",
+      "horizontal_overflow": false,
+      "overflow_px": 0,
+      "scroll_width": 1440,
+      "inner_width": 1440,
+      "max_element_right_px": 1440,
+      "zero_opacity_text_elements": 0,
+      "min_text_contrast_reason": null,
+      "unparsed_text_elements": 0,
+      "unparsed_color_formats": {},
+      "bg_image_skipped": 0,
+      "prefers_dark": false,
+      "upper_tracked_labels": 6,
+      "min_text_contrast": 5.945816879561452,
+      "median_text_contrast": 7.189138844497889,
+      "has_lang": true,
+      "page_height": 1736,
+      "dark_scheme": {
+        "prefers_dark": true,
+        "min_text_contrast": 6.638109880066551,
+        "median_text_contrast": 7.508854565461785,
+        "min_text_contrast_reason": null,
+        "unparsed_text_elements": 0
+      },
+      "console_errors": [
+        "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+      ]
+    },
+    "mobile": {
+      "h1_font": "Fraunces",
+      "body_font": "IBM Plex Sans",
+      "horizontal_overflow": true,
+      "overflow_px": 340,
+      "scroll_width": 730,
+      "inner_width": 730,
+      "max_element_right_px": 730,
+      "zero_opacity_text_elements": 0,
+      "min_text_contrast_reason": null,
+      "unparsed_text_elements": 0,
+      "unparsed_color_formats": {},
+      "bg_image_skipped": 0,
+      "prefers_dark": false,
+      "upper_tracked_labels": 6,
+      "min_text_contrast": 5.945816879561452,
+      "median_text_contrast": 7.189138844497889,
+      "has_lang": true,
+      "page_height": 3553,
+      "console_errors": [
+        "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+      ]
+    }
+  }
+}

@@ -1,0 +1,272 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>CORP — Contemporary Dance Festival, Timișoara</title>
+<meta name="description" content="Corp is a three-day contemporary dance festival in Timișoara: programme, venues and tickets.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,200..800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+/* Aesthetic: anatomical editorial — "corp" is Romanian for body. Bone paper, ink, one vermilion pulse. */
+:root{
+  --bone:#ece6da; --bone-2:#e0d8c8; --ink:#14110f; --ink-2:#4a443d; --pulse:#ff3b1d;
+  --display:"Bricolage Grotesque",sans-serif; --mono:"DM Mono",ui-monospace,monospace;
+  --u:clamp(1rem,2.2vw,1.5rem); --gut:clamp(1rem,4vw,3.5rem);
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{background:var(--bone);color:var(--ink);font:400 1.05rem/1.55 var(--display);font-variation-settings:"wdth" 90;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+body::before{content:"";position:fixed;inset:0;pointer-events:none;z-index:50;opacity:.07;mix-blend-mode:multiply;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence baseFrequency='.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E")}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--pulse);outline-offset:3px}
+.mono{font-family:var(--mono);font-size:.78rem;letter-spacing:.08em;text-transform:uppercase}
+.skip{position:absolute;left:-999px;background:var(--ink);color:var(--bone);padding:.6rem 1rem;z-index:99}
+.skip:focus{left:1rem;top:1rem}
+
+/* nav */
+header.bar{position:sticky;top:0;z-index:40;display:flex;justify-content:space-between;align-items:center;gap:1rem;padding:.8rem var(--gut);background:var(--bone);border-bottom:2px solid var(--ink)}
+.bar b{font-weight:800;font-size:1.3rem;letter-spacing:-.02em}
+.bar nav{display:flex;gap:clamp(.8rem,2.5vw,2rem)}
+.bar nav a{text-decoration:none}
+.bar nav a:hover{color:var(--pulse)}
+.bar .buy{background:var(--ink);color:var(--bone);padding:.45rem .9rem;text-decoration:none}
+.bar .buy:hover{background:var(--pulse)}
+
+/* hero */
+.hero{padding:clamp(1rem,3vw,2rem) var(--gut) 0;position:relative}
+.meta{display:flex;justify-content:space-between;flex-wrap:wrap;gap:.5rem 2rem;padding-bottom:.8rem;border-bottom:1px solid var(--ink)}
+.wordmark{font-size:clamp(7rem,33vw,30rem);line-height:.78;font-weight:700;letter-spacing:-.05em;margin:clamp(1.5rem,4vw,3rem) 0 0 -.04em;
+  font-variation-settings:"wdth" var(--w,100),"wght" var(--wg,700),"opsz" 96;user-select:none;white-space:nowrap}
+.wordmark span{display:inline-block;transition:font-variation-settings .15s linear}
+.wordmark .o{color:var(--pulse)}
+.hero-grid{display:grid;grid-template-columns:repeat(12,1fr);gap:1rem;align-items:end;margin-top:clamp(1rem,3vw,2.5rem);padding-bottom:clamp(2rem,6vw,5rem)}
+.lede{grid-column:1 / span 6;font-size:clamp(1.4rem,3vw,2.4rem);line-height:1.1;font-weight:500;letter-spacing:-.02em;font-variation-settings:"wdth" 82,"opsz" 48}
+.lede em{font-style:normal;color:var(--pulse)}
+.dates{grid-column:9 / -1;text-align:right}
+.dates strong{display:block;font-size:clamp(2.5rem,6vw,5rem);line-height:.9;font-weight:800;letter-spacing:-.04em}
+.hint{grid-column:1 / -1}
+.ruler{height:22px;margin:0 calc(var(--gut) * -1);background:repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 12px) bottom/100% 10px no-repeat,repeating-linear-gradient(90deg,var(--ink) 0 2px,transparent 2px 60px) bottom/100% 22px no-repeat}
+
+/* marquee */
+.tick{background:var(--ink);color:var(--bone);overflow:hidden;white-space:nowrap;padding:.7rem 0}
+.tick div{display:inline-block;animation:run 38s linear infinite}
+.tick span{margin-right:2.2rem}.tick span:nth-child(3n){color:var(--pulse)}
+@keyframes run{to{transform:translateX(-50%)}}
+
+section{padding:clamp(3rem,8vw,7rem) var(--gut)}
+.sh{display:grid;grid-template-columns:repeat(12,1fr);gap:1rem;margin-bottom:clamp(1.5rem,4vw,3rem)}
+.sh h2{grid-column:1 / span 8;font-size:clamp(3rem,10vw,9rem);line-height:.85;font-weight:800;letter-spacing:-.045em;font-variation-settings:"wdth" 78,"opsz" 96}
+.sh p{grid-column:9 / -1;align-self:end;color:var(--ink-2);max-width:28ch}
+.sh .n{color:var(--pulse)}
+
+/* programme */
+.tabs{display:flex;border:2px solid var(--ink);width:fit-content;max-width:100%;margin-left:auto;margin-bottom:0}
+.tabs button{font:inherit;font-family:var(--mono);font-size:.8rem;letter-spacing:.08em;text-transform:uppercase;background:none;border:0;border-right:2px solid var(--ink);padding:.8rem 1.3rem;cursor:pointer;color:var(--ink)}
+.tabs button:last-child{border-right:0}
+.tabs button[aria-selected=true]{background:var(--ink);color:var(--bone)}
+.tabs button:not([aria-selected=true]):hover{background:var(--pulse);color:var(--bone)}
+.day-title{display:flex;justify-content:space-between;align-items:baseline;gap:1rem;flex-wrap:wrap;padding:1.2rem 0;border-bottom:2px solid var(--ink)}
+.day-title h3{font-size:clamp(1.6rem,3.5vw,2.8rem);font-weight:700;letter-spacing:-.03em;font-variation-settings:"wdth" 80,"opsz" 64}
+.slot{display:grid;grid-template-columns:7rem 1fr 14rem;gap:1rem 2rem;padding:1.5rem 0;border-bottom:1px solid var(--ink);position:relative;transition:padding .25s,background .25s}
+.slot:hover{background:var(--ink);color:var(--bone);padding-left:1rem;padding-right:1rem}
+.slot:hover .tag,.slot:hover .t{color:var(--pulse)}
+.slot .t{font-family:var(--mono);font-size:1.1rem;color:var(--pulse)}
+.slot h4{font-size:clamp(1.4rem,2.6vw,2.2rem);line-height:1;font-weight:700;letter-spacing:-.03em;font-variation-settings:"wdth" 82,"opsz" 48}
+.slot h4 small{display:block;font:400 .75rem/1.4 var(--mono);letter-spacing:.08em;text-transform:uppercase;margin-bottom:.45rem;opacity:.7}
+.slot p{margin-top:.5rem;max-width:56ch;opacity:.85}
+.slot .where{text-align:right}
+.tag{display:inline-block;border:1px solid currentColor;padding:.05rem .5rem;margin-top:.4rem}
+
+/* venues */
+#venues{background:var(--ink);color:var(--bone)}
+#venues .sh p{color:#b9b1a2}
+.venues{display:grid;grid-template-columns:repeat(12,1fr);gap:1px;background:#5a534a;border:1px solid #5a534a}
+.v{background:var(--ink);padding:1.6rem;display:flex;flex-direction:column;gap:.8rem;min-height:20rem;position:relative}
+.v:nth-child(1){grid-column:span 7}.v:nth-child(2){grid-column:span 5}.v:nth-child(3){grid-column:span 5}.v:nth-child(4){grid-column:span 7}
+.v .k{color:var(--pulse)}
+.v h3{font-size:clamp(2rem,4.5vw,4rem);line-height:.9;font-weight:800;letter-spacing:-.04em;font-variation-settings:"wdth" 78,"opsz" 96}
+.v p{color:#cfc7b8;max-width:42ch}
+.v address{font-style:normal;margin-top:auto}
+.v .cap{display:flex;gap:1rem;flex-wrap:wrap}
+.v::after{content:attr(data-no);position:absolute;right:1rem;top:.2rem;font-size:7rem;font-weight:800;line-height:1;color:transparent;-webkit-text-stroke:1px #5a534a;pointer-events:none}
+
+/* tickets */
+.tix{display:grid;grid-template-columns:repeat(12,1fr);gap:clamp(1rem,3vw,3rem)}
+.passes{grid-column:1 / span 8;border-top:2px solid var(--ink)}
+.pass{display:grid;grid-template-columns:1fr auto auto;gap:1rem 2rem;align-items:center;padding:1.4rem 0;border-bottom:1px solid var(--ink)}
+.pass h3{font-size:clamp(1.5rem,3vw,2.5rem);line-height:1;font-weight:800;letter-spacing:-.03em;font-variation-settings:"wdth" 80,"opsz" 64}
+.pass p{color:var(--ink-2);font-size:.95rem;margin-top:.3rem}
+.price{font-size:1.8rem;font-weight:700;letter-spacing:-.03em;white-space:nowrap}
+.price small{font:400 .75rem var(--mono)}
+.qty{display:flex;align-items:center;border:2px solid var(--ink)}
+.qty button{width:2.6rem;height:2.6rem;font:600 1.3rem var(--display);background:none;border:0;cursor:pointer;color:var(--ink)}
+.qty button:hover{background:var(--ink);color:var(--bone)}
+.qty output{min-width:2.2rem;text-align:center;font-family:var(--mono)}
+.pass.best h3::after{content:"best value";font:400 .7rem var(--mono);letter-spacing:.08em;text-transform:uppercase;background:var(--pulse);color:var(--bone);padding:.2rem .5rem;margin-left:.8rem;vertical-align:middle}
+.order{grid-column:9 / -1;background:var(--pulse);color:var(--ink);padding:1.6rem;align-self:start;position:sticky;top:5rem;border:2px solid var(--ink);box-shadow:10px 10px 0 var(--ink)}
+.order h3{font-size:1.1rem;font-family:var(--mono);font-weight:500;text-transform:uppercase;letter-spacing:.08em}
+.order ul{list-style:none;padding:0;margin:1rem 0;min-height:3.5rem;font-family:var(--mono);font-size:.85rem}
+.order li{display:flex;justify-content:space-between;border-bottom:1px dashed var(--ink);padding:.3rem 0}
+.total{display:flex;justify-content:space-between;align-items:baseline;font-size:3rem;font-weight:800;letter-spacing:-.04em;line-height:1}
+.total small{font:400 .8rem var(--mono)}
+.order button.go{width:100%;margin-top:1.2rem;padding:1rem;font:500 .85rem var(--mono);letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--bone);border:0;cursor:pointer}
+.order button.go:hover:not(:disabled){background:var(--bone);color:var(--ink)}
+.order button.go:disabled{opacity:.45;cursor:not-allowed}
+.msg{margin-top:1rem;font-size:.9rem;min-height:2.6rem}
+.fine{margin-top:1.5rem;color:var(--ink-2);font-size:.9rem;max-width:60ch}
+
+footer{border-top:2px solid var(--ink);padding:2rem var(--gut) 3rem;display:grid;grid-template-columns:repeat(12,1fr);gap:1rem}
+footer .big{grid-column:1 / span 6;font-size:clamp(2rem,5vw,4rem);line-height:.9;font-weight:800;letter-spacing:-.04em}
+footer .big span{color:var(--pulse)}
+footer div:not(.big){grid-column:span 3}
+
+/* entrance: letters rise once */
+.wordmark span{animation:rise .9s cubic-bezier(.2,.8,.2,1) backwards}
+.wordmark span:nth-child(2){animation-delay:.08s}.wordmark span:nth-child(3){animation-delay:.16s}.wordmark span:nth-child(4){animation-delay:.24s}
+@keyframes rise{from{transform:translateY(60%);opacity:0}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+
+@media (max-width:900px){
+  .bar nav{display:none}
+  .lede{grid-column:1 / -1}.dates{grid-column:1 / -1;text-align:left}
+  .sh h2,.sh p{grid-column:1 / -1}
+  .slot{grid-template-columns:4.5rem 1fr}.slot .where{grid-column:2;text-align:left}
+  .v:nth-child(n){grid-column:1 / -1;min-height:16rem}
+  .passes,.order{grid-column:1 / -1}.order{position:static}
+  .pass{grid-template-columns:1fr auto}.pass .qty{grid-column:1 / -1;width:fit-content}
+  footer .big,footer div:not(.big){grid-column:1 / -1}
+  .tabs{margin-left:0;width:100%}.tabs button{flex:1;padding:.8rem .4rem}
+}
+</style>
+</head>
+<body>
+<a class="skip" href="#programme">Skip to programme</a>
+
+<header class="bar">
+  <b>Corp®</b>
+  <nav class="mono" aria-label="Sections"><a href="#programme">Programme</a><a href="#venues">Venues</a><a href="#tickets">Tickets</a></nav>
+  <a class="buy mono" href="#tickets">Get tickets</a>
+</header>
+
+<main>
+<div class="hero">
+  <div class="meta mono"><span>Contemporary dance festival</span><span>Timișoara, Romania</span><span>3 days · 4 venues · 11 works</span></div>
+  <h1 class="wordmark" id="wm" aria-label="Corp"><span>C</span><span class="o">O</span><span>R</span><span>P</span></h1>
+  <div class="hero-grid">
+    <p class="lede">Corp means <em>body</em>. For three days in May the city becomes one — stretched, loaded, breathing out of time.</p>
+    <p class="dates"><span class="mono">14 → 16 May 2027</span><strong>Fri<br>Sat<br>Sun</strong></p>
+    <p class="hint mono">Move your cursor across the wordmark — it stretches the way a body does.</p>
+  </div>
+  <div class="ruler" aria-hidden="true"></div>
+</div>
+
+<div class="tick mono" aria-hidden="true"><div id="tick"></div></div>
+
+<section id="programme">
+  <div class="sh"><h2>Pro&shy;gramme<span class="n">.</span></h2><p>Eleven works, three nights. Times are local (EEST). Doors open 30 minutes before.</p></div>
+  <div class="tabs" role="tablist" aria-label="Festival day" id="tabs"></div>
+  <div id="day" role="tabpanel" aria-live="polite"></div>
+</section>
+
+<section id="venues">
+  <div class="sh"><h2>Venues<span class="n">.</span></h2><p>Four rooms, all within a twenty-minute walk of Piața Victoriei.</p></div>
+  <div class="venues">
+    <article class="v" data-no="01"><span class="k mono">Main stage</span><h3>Sala Mare, Teatrul Național</h3><p>The gilded house on the square. Our largest works, with full lighting rigs and a raked auditorium.</p><div class="cap mono"><span>620 seats</span><span>Step-free entrance</span></div><address class="mono">Str. Alba Iulia 2 · Fri–Sun evenings</address></article>
+    <article class="v" data-no="02"><span class="k mono">Black box</span><h3>Fabrica</h3><p>A converted industrial hall. Raw floor, standing audience, loud and close.</p><div class="cap mono"><span>240 standing</span><span>Late sets</span></div><address class="mono">Zona Fabric · Sat–Sun</address></article>
+    <article class="v" data-no="03"><span class="k mono">Outdoor</span><h3>Piața Victoriei</h3><p>Free, open-air commissions on the city's main promenade. Bring nothing, stay as long as you like.</p><div class="cap mono"><span>Free entry</span><span>Weather permitting</span></div><address class="mono">Central promenade · Fri–Sun, daytime</address></article>
+    <article class="v" data-no="04"><span class="k mono">Studio</span><h3>Bastionul Theresia</h3><p>Baroque fortress walls, one hundred people on stone. Workshops by day, intimate solos at dusk.</p><div class="cap mono"><span>100 seats</span><span>Workshops</span></div><address class="mono">Str. Hector 1 · Sat–Sun</address></article>
+  </div>
+</section>
+
+<section id="tickets">
+  <div class="sh"><h2>Tickets<span class="n">.</span></h2><p>Outdoor performances in Piața Victoriei are free. Prices in lei, VAT included.</p></div>
+  <div class="tix">
+    <div class="passes" id="passes"></div>
+    <aside class="order" aria-labelledby="oh">
+      <h3 id="oh">Your order</h3>
+      <ul id="lines" aria-live="polite"></ul>
+      <div class="total"><small>Total (RON)</small><span id="total">0</span></div>
+      <button class="go" id="go" disabled>Reserve tickets</button>
+      <p class="msg" id="msg" role="status"></p>
+    </aside>
+  </div>
+  <p class="fine">Under-18s and students with ID: reduced rate. Day tickets cover every ticketed venue on that day, subject to capacity. Programme subject to change.</p>
+</section>
+</main>
+
+<footer>
+  <p class="big">Corp<span>.</span> Timișoara<br>14–16 May 2027</p>
+  <div class="mono">Box office<br>tickets@corp-festival.example<br>Mon–Fri 10–18</div>
+  <div class="mono">Press &amp; artists<br>press@corp-festival.example</div>
+</footer>
+
+<script>
+const DAYS=[
+ {k:"Fri",d:"14 May",theme:"Weight",slots:[
+  ["12:00","Piața Victoriei","Open Floor","Collective Ana Vlad","Forty local dancers take the promenade in a slow, collective walk that gathers strangers.","Free"],
+  ["18:00","Bastionul Theresia","Ledger of Small Gestures","Mira Costea","A solo built from every movement the artist made during one ordinary week.","Studio"],
+  ["20:30","Sala Mare","Kilo","Tanz Atelier Nord (DE)","Six performers and a tonne of sand. A study in pressure, fatigue and release.","Main stage"]]},
+ {k:"Sat",d:"15 May",theme:"Breath",slots:[
+  ["11:00","Bastionul Theresia","Workshop: Breath as Score","Iosif Bălan","Open class for dancers and curious non-dancers. No experience needed.","Workshop"],
+  ["15:00","Piața Victoriei","Tides","Cie Lune Courte (FR)","Twelve dancers move as one respiratory system across the square.","Free"],
+  ["19:00","Sala Mare","Anatomy of a Chorus","Teodora Pal &amp; ensemble","A new commission for fourteen bodies and a live string quartet.","Main stage"],
+  ["22:30","Fabrica","Late Pulse","Dj Ilinca + Radu Szabo","Duet for dancer and modular synth, ending in an open dance floor.","Black box"]]},
+ {k:"Sun",d:"16 May",theme:"Rest",slots:[
+  ["11:00","Fabrica","Sleep Study","Alma Kovács (HU)","Audience lies on mats while three dancers move through the hours of a night.","Black box"],
+  ["16:00","Bastionul Theresia","Hands, Unfolding","Duo Selin &amp; Pavel","A tender duet performed entirely at floor level, seated audience on three sides.","Studio"],
+  ["19:30","Sala Mare","Corp Finale: Everybody","All artists","The festival closes with a shared choreography. The final ten minutes are open to the audience.","Main stage"],
+  ["22:00","Piața Victoriei","Last Light","Collective Ana Vlad","A quiet, lit procession closes the festival.","Free"]]}];
+const PASSES=[
+ {id:"day",n:"Day ticket",p:"Any one day · all ticketed venues",price:90},
+ {id:"full",n:"Full festival",p:"All three days · priority entry",price:220,best:1},
+ {id:"red",n:"Reduced day",p:"Students, under 18, seniors 65+",price:55}];
+
+// programme
+const tabs=document.getElementById("tabs"),day=document.getElementById("day");
+DAYS.forEach((d,i)=>{const b=document.createElement("button");b.role="tab";b.id="t"+i;b.textContent=`${d.k} ${d.d.split(" ")[0]}`;b.setAttribute("aria-controls","day");b.onclick=()=>show(i);
+ b.onkeydown=e=>{if(e.key==="ArrowRight")show((i+1)%3,1);if(e.key==="ArrowLeft")show((i+2)%3,1)};tabs.append(b)});
+function show(i,f){
+ [...tabs.children].forEach((b,j)=>{b.setAttribute("aria-selected",j===i);b.tabIndex=j===i?0:-1;if(f&&j===i)b.focus()});
+ day.setAttribute("aria-labelledby","t"+i);const d=DAYS[i];
+ day.innerHTML=`<div class="day-title"><h3>${d.k}, ${d.d} — ${d.theme}</h3><span class="mono">${d.slots.length} events</span></div>`+
+ d.slots.map(s=>`<article class="slot"><div class="t">${s[0]}</div><div><h4><small>${s[3]}</small>${s[2]}</h4><p>${s[4]}</p></div><div class="where mono">${s[1]}<br><span class="tag">${s[5]}</span></div></article>`).join("");
+}
+show(0);
+
+// ticker
+const words=["Weight","Breath","Rest","Timișoara","14–16 May","Corp = body","Eleven works","Four venues"];
+document.getElementById("tick").innerHTML=(words.map(w=>`<span>${w}</span>`).join("")).repeat(2);
+
+// tickets
+const q={},passes=document.getElementById("passes");
+PASSES.forEach(p=>{q[p.id]=0;const el=document.createElement("div");el.className="pass"+(p.best?" best":"");
+ el.innerHTML=`<div><h3>${p.n}</h3><p>${p.p}</p></div><div class="price">${p.price}<small> lei</small></div>
+ <div class="qty" role="group" aria-label="${p.n} quantity"><button aria-label="Remove one ${p.n}">−</button><output aria-live="polite">0</output><button aria-label="Add one ${p.n}">+</button></div>`;
+ const [m,pl]=el.querySelectorAll("button"),o=el.querySelector("output");
+ m.onclick=()=>{q[p.id]=Math.max(0,q[p.id]-1);o.textContent=q[p.id];upd()};
+ pl.onclick=()=>{q[p.id]=Math.min(10,q[p.id]+1);o.textContent=q[p.id];upd()};
+ passes.append(el)});
+const lines=document.getElementById("lines"),total=document.getElementById("total"),go=document.getElementById("go"),msg=document.getElementById("msg");
+function upd(){
+ let t=0;lines.innerHTML="";
+ PASSES.forEach(p=>{if(q[p.id]){t+=q[p.id]*p.price;lines.insertAdjacentHTML("beforeend",`<li><span>${q[p.id]} × ${p.n}</span><span>${q[p.id]*p.price}</span></li>`)}});
+ if(!t)lines.innerHTML="<li><span>Nothing selected yet</span></li>";
+ total.textContent=t;go.disabled=!t;msg.textContent="";
+}
+go.onclick=()=>{msg.textContent=`Reserved for ${total.textContent} lei. Hold lasts 15 minutes (demo — no payment taken).`};
+upd();
+
+// wordmark: pointer stretches the letters like a body
+const wm=document.getElementById("wm"),ls=[...wm.children];
+if(!matchMedia("(prefers-reduced-motion:reduce)").matches){
+ wm.addEventListener("pointermove",e=>{
+  ls.forEach(l=>{const r=l.getBoundingClientRect(),d=Math.min(1,Math.hypot(e.clientX-(r.left+r.width/2),(e.clientY-(r.top+r.height/2))*.5)/(r.width*1.4));
+   l.style.fontVariationSettings=`"wdth" ${75+d*25},"wght" ${800-d*450},"opsz" 96`})});
+ wm.addEventListener("pointerleave",()=>ls.forEach(l=>l.style.fontVariationSettings=""));
+}
+</script>
+</body>
+</html>
