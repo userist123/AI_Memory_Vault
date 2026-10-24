@@ -64,8 +64,9 @@ try {
   if (need(rad, 'calorifer salvat în proiect')){ await p.go(`${BASE}/p/${id}`);
     need(await p.evaluate(async () => { for (let i = 0; i < 100 && !document.querySelector('svg.plan'); i++) await new Promise(r => setTimeout(r, 100)); const b = document.querySelector('.stagebar [data-stage="mep"]'); b?.click(); await new Promise(r => setTimeout(r, 900)); return !!b; }), 'etapa mep (Instalații)');
     const opened = await p.evaluate(async room => { const d = [...document.querySelectorAll('details')].find(x => x.querySelector('summary')?.textContent?.startsWith(room)); if (d) d.open = true; await new Promise(r => setTimeout(r, 300));
-      const b = document.querySelector(`.mpick-cur[aria-label="Produs calorifer, ${room}"]`); b?.click(); await new Promise(r => setTimeout(r, 500));
-      return { details: !!d, picker: !!b, open: b?.getAttribute('aria-expanded') === 'true', list: !!(b && document.getElementById(b.getAttribute('aria-controls') || '')), width: !!document.querySelector(`input[aria-label="Lățime calorifer, ${room} (cm)"]`) }; }, rad);
+      // interfața poate fi în română sau engleză (limba browserului din CI): ambele etichete
+      const b = document.querySelector(`.mpick-cur[aria-label="Produs calorifer, ${room}"], .mpick-cur[aria-label="Radiator product, ${room}"]`); b?.click(); await new Promise(r => setTimeout(r, 500));
+      return { details: !!d, picker: !!b, open: b?.getAttribute('aria-expanded') === 'true', list: !!(b && document.getElementById(b.getAttribute('aria-controls') || '')), width: !!document.querySelector(`input[aria-label="Lățime calorifer, ${room} (cm)"], input[aria-label="Radiator width, ${room} (cm)"]`) }; }, rad);
     need(opened.details, 'camera caloriferului în panoul Instalații'); need(opened.width, 'câmpul lățimii caloriferului'); need(opened.picker, `pickerul „Produs calorifer, ${rad}”`);
     if (need(opened.open && opened.list, 'pickerul de calorifer deschis')) failures += await audit(p, 'editor-instalatii-calorifer'); }
   for (const doc of ['print', 'offer', 'contract', 'proforma', 'handover', 'site-report', 'board']){ await p.go(`${BASE}/p/${id}/${doc}`); await sleep(1200); failures += await audit(p, `doc-${doc}`); }
