@@ -27,6 +27,12 @@ namespace LogAnalyzer.Core.Services
         public string TamperEvidentAuditHash { get; set; } = string.Empty;
         /// <summary>True only when the engine read every byte back as 0x00 (<see cref="SanitizationResult.ReadBackVerified"/>).</summary>
         public bool IsVerifiedZeroized { get; set; }
+        /// <summary>True when the read-back found non-zero data: the wipe FAILED, which is stronger than "not verified".</summary>
+        public bool ReadBackFoundData { get; set; }
+
+        /// <summary>Result line of the certificate: CONFIRMED, FAILED (data found) or NOT CONFIRMED.</summary>
+        public string ZeroizationText => IsVerifiedZeroized ? "CONFIRMATĂ prin citire (fișierul conține doar 0x00)"
+            : ReadBackFoundData ? "EȘUATĂ: citirea de verificare a găsit date nenule" : "NECONFIRMATĂ";
 
         /// <summary>
         /// Certificate from a real run. Fields the application cannot know (device serial, second operator) stay empty and are
@@ -46,6 +52,7 @@ namespace LogAnalyzer.Core.Services
                 PrimaryOperator = primaryOperator,
                 TimestampUtc = result.CompletedAtUtc,
                 IsVerifiedZeroized = result.Success && result.ReadBackVerified,
+                ReadBackFoundData = result.ReadBackFoundData,
             };
             c.TamperEvidentAuditHash = c.ComputeAuditHash();
             return c;
@@ -56,7 +63,7 @@ namespace LogAnalyzer.Core.Services
             var canonical = string.Join("\n", CertificateId, StandardCompliance, DeviceVendor, DeviceModel, HardwareSerialNumber,
                 DeviceCapacityBytes.ToString(CultureInfo.InvariantCulture), SanitizationMethodName, TotalPasses.ToString(CultureInfo.InvariantCulture),
                 PreSanitizationSha256, PostSanitizationSha256, PrimaryOperator, VerifierOperator, SystemHostId,
-                TimestampUtc.ToString("o", CultureInfo.InvariantCulture), IsVerifiedZeroized ? "1" : "0");
+                TimestampUtc.ToString("o", CultureInfo.InvariantCulture), IsVerifiedZeroized ? "1" : "0") + (ReadBackFoundData ? "\nREADBACK_FOUND_DATA" : "");
             return Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(canonical))).ToLowerInvariant();
         }
 
@@ -98,7 +105,7 @@ namespace LogAnalyzer.Core.Services
             sb.AppendLine($"  Număr Treceri Executate:    {data.TotalPasses}");
             sb.AppendLine($"  Hash Pre-Sanitizare:        {data.PreSanitizationSha256}");
             sb.AppendLine($"  Hash Post-Sanitizare:       {data.PostSanitizationSha256}");
-            sb.AppendLine($"  Verificare Zeroizare:       {(data.IsVerifiedZeroized ? "CONFIRMATĂ prin citire (fișierul conține doar 0x00)" : "NECONFIRMATĂ")}");
+            sb.AppendLine($"  Verificare Zeroizare:       {data.ZeroizationText}");
             sb.AppendLine();
             sb.AppendLine("--------------------------------------------------------------------------------");
             sb.AppendLine(" 3. AUTORIZARE DUALĂ & LANȚ DE CUSTODIE (4-EYES PRINCIPLE)");

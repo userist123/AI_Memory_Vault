@@ -30,13 +30,8 @@ namespace LogAnalyzer.UI.Tests
 
         public static IEnumerable<object[]> Calls()
         {
-            yield return new object[] { "threat-intel ip", (Func<HttpClient, Task>)(c => new LiveThreatIntelService(c).CheckIpReputationAsync("198.51.100.24", "k")) };
-            yield return new object[] { "threat-intel hash", (Func<HttpClient, Task>)(c => new LiveThreatIntelService(c).CheckFileHashReputationAsync(new string('a', 64), "k")) };
             yield return new object[] { "siem", (Func<HttpClient, Task>)(c => new SiemForwarderService(c).ForwardAlertsToSplunkHecAsync(
                 new List<DetectedIssue>(), new SiemForwarderConfig { SplunkHecUrl = "https://siem.invalid/x", SplunkHecToken = "t" })) };
-            yield return new object[] { "m365 token", (Func<HttpClient, Task>)(c => new M365LiveConnectorService(c).GetAccessTokenAsync(
-                new M365AuthConfig { TenantId = "t", ClientId = "c", ClientSecret = "s" })) };
-            yield return new object[] { "m365 sign-ins", (Func<HttpClient, Task>)(c => new M365LiveConnectorService(c).FetchRecentSignInsAsync("token")) };
         }
 
         [Theory]

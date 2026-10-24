@@ -76,6 +76,12 @@ def _windows_user() -> str:
     return f"{domain}\\{user}" if domain else user
 
 
+def _child_env() -> dict:
+    """Environment for the helper processes spawned here (icacls): never the HMAC secret. In-process
+    consumers (memory controller, temporal controller, pagination tokens) still read it from os.environ."""
+    return {k: v for k, v in os.environ.items() if k.upper() != SECRET_ENV}
+
+
 def _restrict_to_user(path: Path) -> None:
     """Make `path` readable by the current user only. Raises if that cannot be guaranteed."""
     if not _WINDOWS:
@@ -83,7 +89,7 @@ def _restrict_to_user(path: Path) -> None:
         return
     proc = subprocess.run(
         ["icacls", str(path), "/inheritance:r", "/grant:r", f"{_windows_user()}:(R,W,D)"],
-        capture_output=True, text=True)
+        capture_output=True, text=True, env=_child_env())
     if proc.returncode != 0:
         raise VaultSecretInvalid("could not restrict the secret file to the current user (icacls failed)")
 
@@ -96,7 +102,7 @@ def secret_file_is_private(path: Path) -> Tuple[bool, str]:
     if not _WINDOWS:
         mode = path.stat().st_mode & 0o777
         return (mode & 0o077 == 0, f"mode is {oct(mode)}, expected 0o600")
-    proc = subprocess.run(["icacls", str(path)], capture_output=True, text=True)
+    proc = subprocess.run(["icacls", str(path)], capture_output=True, text=True, env=_child_env())
     if proc.returncode != 0:
         return False, "could not read the file's access list"
     exposed = [name for name in _OPEN_TO_OTHERS if name.lower() in proc.stdout.lower()]

@@ -19,7 +19,7 @@ public static class AuditCoverage
         new("Security 4688 (crearea proceselor)", [4688], "Nu se știe din jurnal ce procese au pornit, cu ce linie de comandă și din ce părinte",
             "Prefetch, Amcache, BAM, SRUM, Sysmon 1"),
         new("Security 5156/5157 (conexiuni WFP per proces)", [5156, 5157], "Nu se știe din jurnal ce program a deschis ce conexiune",
-            "SRUM (octeți per aplicație), captură PCAP, Sysmon 3, fotografia live a conexiunilor"),
+            "SRUM (octeți per aplicație), captură PCAP, Sysmon 3, instantaneul stării live a conexiunilor"),
         new("Security 4663 (acces la obiecte / fișiere)", [4663], "Nu se știe din jurnal ce fișiere au fost citite sau șterse",
             "USN Journal, LNK / Jump Lists, ShellBags"),
     ];
@@ -35,7 +35,7 @@ public static class AuditCoverage
         var activeHours = security.Select(Hour).ToHashSet();
         var first = security.Min(e => e.Time.Utc);
         var last = security.Max(e => e.Time.Utc);
-        var span = $"{first:yyyy-MM-dd} – {last:yyyy-MM-dd}, {security.Count} evenimente în {activeHours.Count} ore cu activitate";
+        var span = $"{first:yyyy-MM-dd} – {last:yyyy-MM-dd}, {LogAnalyzer.Dfir.Language.RoText.Count(security.Count, "eveniment", "evenimente")} în {activeHours.Count} ore cu activitate";
         var gaps = new List<EvidenceGap>();
         foreach (var c in Categories)
         {
@@ -52,7 +52,7 @@ public static class AuditCoverage
             double share = (double)hours.Count / activeHours.Count;
             if (share < IntermittentShare)
                 gaps.Add(new EvidenceGap(c.Artifact, EvidenceStatus.Partial,
-                    $"{hits.Count} evenimente {string.Join("/", c.Ids)} în doar {hours.Count} din {activeHours.Count} ore cu activitate ({share:P1}; {span}): auditul nu a fost continuu" +
+                    $"{LogAnalyzer.Dfir.Language.RoText.Count(hits.Count, "eveniment", "evenimente")} {string.Join("/", c.Ids)} în doar {hours.Count} din {activeHours.Count} ore cu activitate ({share:P1}; {span}): auditul nu a fost continuu" +
                     $" (cele mai frecvente: {string.Join(", ", hits.Select(e => e.Fields.GetValueOrDefault("NewProcessName") ?? "").Where(n => n.Length > 0).Select(WinPath.GetFileName).GroupBy(n => n, StringComparer.OrdinalIgnoreCase).OrderByDescending(g => g.Count()).Take(5).Select(g => $"{g.Key} ×{g.Count()}"))})",
                     c.Impact + " în afara acestor ore", c.Alternative, "Nu (activați auditul pentru viitor)"));
         }

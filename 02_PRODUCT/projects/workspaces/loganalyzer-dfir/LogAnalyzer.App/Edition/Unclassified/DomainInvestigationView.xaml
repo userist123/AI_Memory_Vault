@@ -27,7 +27,8 @@
                         <Button Content="Inventar și verificări domeniu" Command="{Binding InventoryDomainCommand}" Style="{StaticResource AccentButtonStyle}"/>
                         <TextBlock Text="{Binding DomainStatus}" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
                     </WrapPanel>
-                    <DataGrid ItemsSource="{Binding DomainChecks}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                    <DataGrid ItemsSource="{Binding DomainChecks}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
+                              ToolTip="Dublu clic pe o verificare: ce verificăm, de ce contează și ce faceți, pe înțeles.">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110"/>
                             <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="55"/>
@@ -85,7 +86,8 @@
                                Text="Aplicația nu cere și nu păstrează parole de e-mail: scriptul folosește comenzile oficiale Microsoft și se autentifică în fereastra Microsoft a administratorului."/>
                     <Grid>
                         <Grid.RowDefinitions><RowDefinition Height="Auto" MinHeight="120"/><RowDefinition Height="8"/><RowDefinition Height="*"/></Grid.RowDefinitions>
-                        <DataGrid Grid.Row="0" ItemsSource="{Binding MailChecks}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="260">
+                        <DataGrid Grid.Row="0" ItemsSource="{Binding MailChecks}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="260"
+                                  ToolTip="Dublu clic pe o verificare: ce verificăm, de ce contează și ce faceți, pe înțeles.">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110"/>
                                 <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*"/>

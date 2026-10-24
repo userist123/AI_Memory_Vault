@@ -84,6 +84,8 @@ staging/
 audit_log.jsonl
 test_audit_log.jsonl
 telemetry/
+# synthetic test fixtures, not runtime telemetry
+!20_TESTS/fixtures/telemetry/
 ci-evidence/
 
 # Runtime test notes from FileStorageEngine

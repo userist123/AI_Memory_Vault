@@ -27,7 +27,7 @@ public sealed class MalformedBinaryInputTests : IDisposable
 
     // ------------------------------------------------------------------ valid samples
 
-    private static byte[] SampleLnk() => LnkParserTests.BuildLnk(@"C:\Users\u\Downloads\SETUP.EXE", "/x", @"C:\Users\u\Downloads", "marius-pc");
+    private static byte[] SampleLnk() => LnkParserTests.BuildLnk(@"C:\Users\u\Downloads\SETUP.EXE", "/x", @"C:\Users\u\Downloads", "ws-01");
 
     private static byte[] SampleCfb() => JumpListParserTests.BuildCfb(("a", [1, 2, 3]), ("b", new byte[900]));
 
@@ -131,7 +131,9 @@ public sealed class MalformedBinaryInputTests : IDisposable
     /// <summary>Runs one read on a worker; a case that does not finish is reported by name instead of hanging the run.</summary>
     private static (bool Finished, Exception? Error, T? Value) Run<T>(Func<T> read)
     {
-        var task = Task.Run(read);
+        // a dedicated thread, not the shared pool: on a busy CI runner a pool item can wait in the queue past the limit and be reported as a HANG
+        // although the parser never ran (MalformedBinaryInputTests "truncated to 264 of 268" on the runner, 2026-10-16)
+        var task = Task.Factory.StartNew(read, CancellationToken.None, TaskCreationOptions.LongRunning, TaskScheduler.Default);
         bool done;
         try { done = task.Wait(Limit); }
         catch (AggregateException ex) { return (true, ex.InnerException, default); }
@@ -292,6 +294,26 @@ public sealed class MalformedBinaryInputTests : IDisposable
     {
         var v = SamplePcapng();
         SmokeParser(new PcapngParser(), "pcapng", "m.pcapng", Truncations(v).Concat(RandomBytes(v, 28)).Concat(DwordMutations(v, v.Length)));
+    }
+
+    [Fact]
+    public void Pcapng_cut_inside_the_trailing_length_of_the_last_block_ends_at_once_and_keeps_every_frame()
+    {
+        // the CI case "truncated to 264 of 268": the last block's 4-byte trailing length is missing; every frame body is complete
+        var v = SamplePcapng();
+        var path = Path.Combine(_dir, "cut.pcapng");
+        File.WriteAllBytes(path, v[..^4]);
+        var whole = Path.Combine(_dir, "whole.pcapng");
+        File.WriteAllBytes(whole, v);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        var (finished, error, frames) = Run(() => PcapngReader.Read(path).Count());
+        Assert.True(finished && error is null, $"{error?.GetType().Name}: {error?.Message}");
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5), $"citirea a durat {sw.Elapsed}");
+        Assert.Equal(PcapngReader.Read(whole).Count(), frames);
+        var sink = new ListSink();
+        var (done, err, r) = Run(() => new PcapngParser().Parse(Item("pcapng", path), path, sink, default));
+        Assert.True(done && err is null);
+        Assert.NotEqual(EvidenceStatus.Failed, r!.Status);
     }
 
     [Theory]

@@ -1,0 +1,19 @@
+{
+ "fields": {
+  "incomplete": true,
+  "tokens_complete": false,
+  "total_tokens_lower_bound": true,
+  "total_tokens": 117,
+  "usage_complete": true,
+  "tool_calls": 1
+ },
+ "rows": {
+  "main|claude-sonnet-5-5": {
+   "input_tokens": 3,
+   "cache_read_input_tokens": 100,
+   "cache_creation_input_tokens": 10,
+   "output_tokens": 4,
+   "requests": 1
+  }
+ }
+}

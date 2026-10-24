@@ -167,7 +167,7 @@ public class Wp6aFindingCardTests
         var (f, ctx) = Fixture();
         f.Verification = new FindingVerification(StandardState.Supported, "Două tipuri de artefact concordă.", "LogAnalyzer.Verification/1.0", T0);
         var w = WhyExplainer.Build(f, ctx, verificationChecks: ["PROVENANCE: trecut — hash-uri intacte"]);
-        Assert.Contains("Susținut de dovezi", w.Verification);
+        Assert.Contains("Susținută de o singură sursă", w.Verification);
         Assert.Contains("Două tipuri de artefact concordă.", w.Verification);
         Assert.Contains(w.VerificationChecks, c => c.Contains("PROVENANCE"));
     }
@@ -229,7 +229,7 @@ public class Wp6aFindingCardTests
         var (f, ctx) = Fixture();
         f.Sequence = new SequenceDetail("10 min", "doar în timp",
         [
-            new(1, "Fișier descărcat", true, T0, "marius", "setup.zip", "EventLog:Security", ["F-1"], "Descărcare observată."),
+            new(1, "Fișier descărcat", true, T0, "analyst", "setup.zip", "EventLog:Security", ["F-1"], "Descărcare observată."),
             new(2, "Fișier copiat pe USB", false, null, "", "", "", [], "pas neobservat: sursa USB nu a fost colectată"),
         ]);
         ctx = new EvidenceContext
@@ -264,8 +264,8 @@ public class Wp6aFindingCardTests
         Assert.Equal("Ridicată", c.SeverityText);
         Assert.Equal("HIGH", c.SeveritySpec);
         Assert.False(string.IsNullOrWhiteSpace(c.SeverityIcon));     // not colour alone
-        Assert.Equal("Observat", c.StateLabel);
-        Assert.Equal("Neevaluat", c.VerificationLabel);
+        Assert.Equal("Observată direct", c.StateLabel);
+        Assert.Equal("Neevaluată", c.VerificationLabel);
         Assert.Contains("Nicio verificare", c.VerificationText);
         Assert.Equal(["Izolați stația de rețea.", "Colectați fișierul script.ps1."], c.NextSteps);
         Assert.Equal("4 probe din 2 surse", c.Evidence.Summary);

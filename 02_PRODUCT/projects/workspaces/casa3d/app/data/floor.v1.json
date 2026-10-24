@@ -1,0 +1,237 @@
+{
+  "id": "floor-1",
+  "name": "Etaj",
+  "ceilingHeight": 2.6,
+  "rooms": [
+    {
+      "id": "hol",
+      "name": "Hol",
+      "type": "hol",
+      "rect": {
+        "x0": 0,
+        "z0": 2.6,
+        "x1": 3.2,
+        "z1": 5
+      }
+    },
+    {
+      "id": "bucatarie",
+      "name": "Bucătărie",
+      "type": "bucatarie",
+      "rect": {
+        "x0": 0,
+        "z0": 0,
+        "x1": 3.2,
+        "z1": 2.6
+      }
+    },
+    {
+      "id": "living",
+      "name": "Living",
+      "type": "living",
+      "rect": {
+        "x0": 3.2,
+        "z0": 0,
+        "x1": 8.8,
+        "z1": 3.8
+      }
+    },
+    {
+      "id": "dormitor",
+      "name": "Dormitor",
+      "type": "dormitor",
+      "rect": {
+        "x0": 3.2,
+        "z0": 3.8,
+        "x1": 8.8,
+        "z1": 7
+      }
+    },
+    {
+      "id": "baie",
+      "name": "Baie",
+      "type": "baie",
+      "rect": {
+        "x0": 0,
+        "z0": 5,
+        "x1": 3.2,
+        "z1": 7
+      }
+    }
+  ],
+  "walls": [
+    {
+      "id": "wall-1",
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        8.8,
+        0
+      ],
+      "thickness": 0.25,
+      "exterior": true,
+      "openings": [
+        {
+          "id": "op-1-1",
+          "kind": "window",
+          "offset": 0.8,
+          "width": 1.4
+        },
+        {
+          "id": "op-1-2",
+          "kind": "window",
+          "offset": 5,
+          "width": 2.5
+        }
+      ]
+    },
+    {
+      "id": "wall-2",
+      "a": [
+        8.8,
+        0
+      ],
+      "b": [
+        8.8,
+        7
+      ],
+      "thickness": 0.25,
+      "exterior": true,
+      "openings": [
+        {
+          "id": "op-2-1",
+          "kind": "window",
+          "offset": 0.8,
+          "width": 2
+        },
+        {
+          "id": "op-2-2",
+          "kind": "window",
+          "offset": 4.6,
+          "width": 1.6
+        }
+      ]
+    },
+    {
+      "id": "wall-3",
+      "a": [
+        8.8,
+        7
+      ],
+      "b": [
+        0,
+        7
+      ],
+      "thickness": 0.25,
+      "exterior": true,
+      "openings": []
+    },
+    {
+      "id": "wall-4",
+      "a": [
+        0,
+        7
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "thickness": 0.25,
+      "exterior": true,
+      "openings": [
+        {
+          "id": "op-4-1",
+          "kind": "door",
+          "offset": 2.7,
+          "width": 0.9,
+          "entrance": true
+        }
+      ]
+    },
+    {
+      "id": "wall-5",
+      "a": [
+        3.2,
+        0
+      ],
+      "b": [
+        3.2,
+        7
+      ],
+      "thickness": 0.15,
+      "exterior": false,
+      "openings": [
+        {
+          "id": "op-5-1",
+          "kind": "door",
+          "offset": 2.8,
+          "width": 0.8
+        },
+        {
+          "id": "op-5-2",
+          "kind": "door",
+          "offset": 4,
+          "width": 0.8
+        }
+      ]
+    },
+    {
+      "id": "wall-6",
+      "a": [
+        0,
+        2.6
+      ],
+      "b": [
+        3.2,
+        2.6
+      ],
+      "thickness": 0.15,
+      "exterior": false,
+      "openings": [
+        {
+          "id": "op-6-1",
+          "kind": "door",
+          "offset": 2.2,
+          "width": 0.8
+        }
+      ]
+    },
+    {
+      "id": "wall-7",
+      "a": [
+        0,
+        5
+      ],
+      "b": [
+        3.2,
+        5
+      ],
+      "thickness": 0.15,
+      "exterior": false,
+      "openings": [
+        {
+          "id": "op-7-1",
+          "kind": "door",
+          "offset": 2.2,
+          "width": 0.8
+        }
+      ]
+    },
+    {
+      "id": "wall-8",
+      "a": [
+        3.2,
+        3.8
+      ],
+      "b": [
+        8.8,
+        3.8
+      ],
+      "thickness": 0.15,
+      "exterior": false,
+      "openings": []
+    }
+  ]
+}

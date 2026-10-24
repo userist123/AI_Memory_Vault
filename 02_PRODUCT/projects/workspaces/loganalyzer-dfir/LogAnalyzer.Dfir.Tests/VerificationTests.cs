@@ -38,7 +38,7 @@ public sealed class VerificationTests : IDisposable
         _lab.WriteAll();
         var v = Only(_lab.Verify());
         Assert.Equal(StandardState.Supported, v.Verdict);
-        Assert.Contains("VERIFIED cere cel puțin două", v.Reason);
+        Assert.Contains("cere cel puțin două", v.Reason);
     }
 
     [Fact]
@@ -333,7 +333,7 @@ public sealed class VerificationTests : IDisposable
         _lab.Findings[0] = Clone(_lab.Findings[0], first: T0.AddHours(1), last: T0.AddHours(2)); _lab.WriteAll();
         var v = Only(_lab.Verify());
         Assert.Equal(StandardState.Contradicted, v.Verdict);
-        Assert.Contains("iese din fereastra revendicată", Check(v, CheckIds.Temporal).Reason);
+        Assert.Contains("iese din intervalul declarat", Check(v, CheckIds.Temporal).Reason);
 
         _lab.Findings[0] = Clone(_lab.Findings[0], first: T0.AddMinutes(-1), last: T0.AddMinutes(1)); _lab.WriteFindings();
         Assert.Equal(StandardState.Verified, Only(_lab.Verify()).Verdict);
@@ -573,8 +573,8 @@ public sealed class VerificationTests : IDisposable
         Assert.Equal(0, r.Count(StandardState.Contradicted));
         Assert.Equal(7, r.Counts.Count);
         Assert.Equal("Verificare: 1 VERIFIED, 1 UNPROVEN, 1 REJECTED", r.Banner);
-        Assert.StartsWith("ATENȚIE: 1 REJECTED", r.Warning);
-        Assert.Contains("nu le exportați în Vault", r.Warning);
+        Assert.StartsWith("ATENȚIE: 1 constatare respinsă", r.Warning);
+        Assert.Contains("nu le exportați în baza de cunoștințe", r.Warning);
     }
 
     [Fact]

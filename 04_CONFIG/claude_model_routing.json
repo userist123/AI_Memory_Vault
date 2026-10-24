@@ -50,11 +50,12 @@
     "sonnet": {
       "model_id": "claude-sonnet-5-5",
       "display": "Claude Sonnet 5.5",
+      "cache_read_source": "2026-10-21 fit of 50 sonnet modelUsage records (07_EVALUATION/reports/cost_router_claude_ab_benchmark_2026-10-21_phase3_{final,rerun}): implied cache_read = 0.10 USD/MTok exactly (spread 0) with the other card prices fixed; earlier 0.2 overcharged 4-26%. The 0.10 fit holds with cache writes priced at cache_write_1h = 4.0 (Claude Code main-session writes are 1h); modelUsage.costUSD is Claude Code's client-side list-price estimate, not provider billing",
       "tier_rank": 2,
       "usd_per_mtok": {
         "input": 2.0,
         "output": 10.0,
-        "cache_read": 0.2,
+        "cache_read": 0.1,
         "cache_write_5m": 2.5,
         "cache_write_1h": 4.0
       },
@@ -302,6 +303,44 @@
       "critical": "opus"
     },
     "security_requires_independent_verifier": true,
+    "implementer_risk_floor": {
+      "classes": [
+        "implement"
+      ],
+      "max_risk": "high",
+      "never_for_stems": [
+        "production",
+        "prod",
+        "deploy",
+        "redeploy",
+        "release",
+        "publish",
+        "delet",
+        "purg",
+        "wipe",
+        "destroy",
+        "revok",
+        "rotat",
+        "rotate",
+        "leak",
+        "remove from git",
+        "--force",
+        "force-push",
+        "force push",
+        "migrat",
+        "producț",
+        "productie",
+        "șterg",
+        "sterg",
+        "rotește",
+        "roteste",
+        "rotim",
+        "rotiț",
+        "publicare",
+        "lansare"
+      ],
+      "note": "Owner rule 2026-10-16: an implementation worker on risky code stays on its class model (Sonnet, high effort) because an Opus vault-reviewer pass is mandatory afterwards; the risk floor binds the reviewer and main-session design. Critical risk and live operations (production, deploy, delete, rotate, leaks) stay on the floor: a review after the fact cannot undo them. Stems match at a word start with no right boundary (inflected and hyphenated forms included)."
+    },
     "verifier_min_tier_rank_delta": 0,
     "fable_never_for_subagents": true,
     "escalation_order": [

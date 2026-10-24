@@ -13,6 +13,7 @@ Outputs:
 from __future__ import annotations
 
 import argparse
+import contextlib
 import copy
 import hashlib
 import json
@@ -44,6 +45,8 @@ from memory_controller.storage.file_engine import FileStorageEngine
 from retrieval.vault_index import VaultIndex
 import retrieval.hybrid_retrieval as hr
 import retrieval.context.candidate_generation as cg
+import memory_controller.hybrid_retrieval as _mc_hr  # the copies MemoryController actually calls (shim aliases)
+import memory_controller.context.candidate_generation as _mc_cg
 
 BENCHMARK_PATH = (
     REPO_ROOT
@@ -76,8 +79,16 @@ REPORT_MD_PATH = (
     / "TOKENIZER_EXPERIMENT_REPORT.md"
 )
 
-TOKEN_RE_BASE = hr.TOKEN_RE
-STOP_BASE = hr.STOP
+# Frozen baseline (D3, 2026-10-22): the production tokenizer (hr.TOKEN_RE) changed on 2026-10-22 to
+# Unicode + NFKD folding; this experiment's baseline arm must stay the pre-change ASCII behaviour, so it is a
+# literal copy of the historical pattern, not a reference to production. The stop list is frozen the same way
+# (phase 6): the baseline arm imports nothing from the implementation under evaluation.
+TOKEN_RE_BASE = re.compile(r"[a-z0-9][a-z0-9_\-\.]*")
+STOP_BASE = frozenset(
+    "the a an and or of to in is are was were be been for on with as by at from "
+    "this that it its not no if then than but can will should must do does si "
+    "sa la de pe cu un o in este sunt care pentru din nu se al ale".split()
+)
 
 UNICODE_TOKEN_RE = re.compile(
     r"[a-z0-9\u0103\u00e2\u00ee\u0219\u021b\u015f\u0163][a-z0-9\u0103\u00e2\u00ee\u0219\u021b\u015f\u0163_\-\.]*",
@@ -165,10 +176,38 @@ def evaluate_arm(
     index: VaultIndex,
 ) -> ArmResult:
     """Evaluates a single tokenizer arm across all cases."""
-    # Patch tokenizers
-    hr.tokenize = tok_fn
-    cg.tokenize = tok_fn
+    with arm_tokenizer(tok_fn):
+        return _evaluate_arm_patched(arm_id, arm_name, desc, cases, storage, index)
 
+
+@contextlib.contextmanager
+def arm_tokenizer(tok_fn: Callable[[str], List[str]]):
+    """Patch the retrieval tokenizers for one arm and always put the production ones back (phase 6: the old
+    code "restored" by assigning the baseline arm, which left production on the ASCII tokenizer).
+
+    Phase 6 review H1: the `memory_controller` compatibility shim loads the same files a second time as
+    `memory_controller.hybrid_retrieval` / `memory_controller.context.candidate_generation`, and MemoryController
+    calls those copies. Patching only `retrieval.*` left every arm on the production tokenizer. All aliases are
+    patched here."""
+    targets = [hr, cg, _mc_hr, _mc_cg]
+    originals = [m.tokenize for m in targets]
+    for m in targets:
+        m.tokenize = tok_fn
+    try:
+        yield
+    finally:
+        for m, orig in zip(targets, originals):
+            m.tokenize = orig
+
+
+def _evaluate_arm_patched(
+    arm_id: str,
+    arm_name: str,
+    desc: str,
+    cases: List[Dict[str, Any]],
+    storage: FileStorageEngine,
+    index: VaultIndex,
+) -> ArmResult:
     # Fresh controller per arm ensures completely clean cache and isolation
     controller = MemoryController(
         storage=storage,
@@ -482,9 +521,7 @@ def run_experiment() -> Dict[str, Any]:
     elapsed = time.perf_counter() - t0
     print(f"\nExecution elapsed: {elapsed:.2f} seconds")
 
-    # Restore production tokenizer
-    hr.tokenize = tokenize_baseline
-    cg.tokenize = tokenize_baseline
+    # Production tokenizers were restored by arm_tokenizer() after each arm.
 
     # Comparisons
     comp_u = compute_mcnemar_comparison(res_arm1, res_arm2, cases)

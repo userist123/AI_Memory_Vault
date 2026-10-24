@@ -11,7 +11,7 @@
         <!-- Header -->
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Attack Storyline &amp; Kill Chain Lineage" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="Firul atacului" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <Border Margin="14,0,0,0" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource CriticalBrush}" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
                     <TextBlock Text="{Binding CurrentStoryline.RiskLevel, StringFormat='SEVERITY: {0}', FallbackValue='CRITICAL INTRUSION'}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource CriticalBrush}"/>
                 </Border>
