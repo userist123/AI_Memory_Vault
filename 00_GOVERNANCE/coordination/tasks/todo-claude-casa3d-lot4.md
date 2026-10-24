@@ -1,7 +1,7 @@
 # todo-claude-casa3d-lot4
-STATUS: DONE (merged #348, 944499dc) UPDATED: 2026-10-24T18:10:00+03:00
+STATUS: DONE (merged #348, 944499dc) UPDATED: 2026-10-24T19:00:00+03:00
 TASK: Casa3D lot 4 "tools around the house" (unelte-plan.md P2.4, P2.5; usi-decor.md P2.b4, P2.c3; P2.c2/P2.c4 skipped)
-BRANCH / PR: claude/casa3d-house-lot4, PR #348 (open; main merged in, review fixes pushed)    BASE: 215d1260
+BRANCH / PR: claude/casa3d-house-lot4, PR #348 merged (944499dc); follow-ups in #350 (claude/casa3d-followups)    BASE: 215d1260
 DONE:
 - Floor.ceilingZones (rect in a room, dropCm 5-60, coveCm, led): tool Shift+Z in Finishes (Decor group, 3 slots),
   plan dash-dot "TF -15", panel, 3D box with cove/LED, quote (plasterboard + side band + cove, LED ml, labour),
@@ -17,7 +17,7 @@ DONE:
 VERIFIED: tsc 0; vitest 886/886 (134 files); build; check-a11y 20/20; check-slides 5/5;
   shots D:/w/casa3d-verify/shots/lot4-*.png (script D:/w/casa3d-verify/lot4-shots.mjs).
   Legacy: tests/lot4-legacy-golden.test.ts hashes of blank/demo outputs captured on main before lot 4.
-NOT DONE (item 5): catalog has no plant/floor-lamp/table-lamp/fireplace groups; adding them needs product pages
+SKIPPED (item 5, needs verified catalog products; research in progress): catalog has no plant/floor-lamp/table-lamp/fireplace groups; adding them needs product pages
   through the catalog-evidence process (tests/catalog-growth.test.ts ties offers to evidence files), plus engine
   models, plan symbols and room-fit rules. Not started, no data invented.
 RESIDUALS: ceiling zones are rectangles, not copied to new levels; railing has no price; spaceKind only labels

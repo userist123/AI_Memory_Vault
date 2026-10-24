@@ -49,10 +49,12 @@ function CmField({ label, aria, valueM, lo, hi, onCommit }: { label: string; ari
   const { t } = usePrefs(), [draft, setDraft] = useState<string | null>(null), [said, setSaid] = useState('');
   // valoarea tastată în afara intervalului se aduce la limită; cititorul de ecran aude valoarea aplicată
   const commit = () => { if (draft == null) return; const m = cmToClampedM(draft, lo, hi), n = Number(draft); setDraft(null);
-    setSaid(m != null && Number.isFinite(n) && Math.round(n) !== Math.round(m * 100) ? t('radiator.clamped', { cm: Math.round(m * 100) }) : '');
+    // golit întâi, apoi scris în cadrul următor: aceeași limitare a doua oară e anunțată din nou
+    const msg = m != null && Number.isFinite(n) && Math.round(n) !== Math.round(m * 100) ? t('radiator.clamped', { cm: Math.round(m * 100) }) : '';
+    setSaid(''); if (msg) requestAnimationFrame(() => setSaid(msg));
     if (m != null && m !== valueM) onCommit(m); };
   return <label className="f"><span>{label}</span><input type="number" min={lo * 100} max={hi * 100} aria-label={aria} value={draft ?? String(Math.round(valueM * 100))}
-    onChange={e => setDraft(e.target.value)} onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') commit(); else if (e.key === 'Escape') setDraft(null); }} /><span className="sr-only" role="status">{said}</span></label>;
+    onChange={e => setDraft(e.target.value)} onBlur={commit} onFocus={() => setSaid('')} onKeyDown={e => { if (e.key === 'Enter') commit(); else if (e.key === 'Escape'){ setDraft(null); setSaid(''); } }} /><span className="sr-only" role="status">{said}</span></label>;
 }
 /** Lățimea, înălțimea (cm) și tipul unui calorifer, în rândul lui din listă (`room` = camera, pentru eticheta citită de cititorul de ecran). */
 function RadiatorFields({ p, room, onPatch }: { p: TechPoint; room: string; onPatch(patch: Partial<Pick<TechPoint, 'widthM' | 'heightM' | 'model'>>): void }){

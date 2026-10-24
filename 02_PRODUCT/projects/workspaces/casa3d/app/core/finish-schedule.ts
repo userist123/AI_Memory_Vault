@@ -52,8 +52,8 @@ export function finishSchedule(snap: Snapshot, cat: Catalog, mc: MaterialsCatalo
     if ((el === 'curtain' || el === 'sheer' || el === 'blind' || el === 'rug' || el === 'door') && m?.specs?.sizeCm) details.push({ key: 'sched.size', vars: { l: m.specs.sizeCm[0], w: m.specs.sizeCm[1] } });
     // peretele nou din gips-carton: nivelul lui (rândul nu are cameră) și detaliile traduse, nu eticheta românească din deviz
     const nw = el === 'drywall' ? newWallOf(snap, it.key) : null;
-    if (nw) details.push({ key: 'sched.newWall', vars: { t: Math.round(nw.ww.thicknessM * 100), l: nw.ww.lengthM, h: nw.ww.heightM, area: nw.ww.areaM2 } });
-    if (it.label.includes(': ')) details.push({ key: 'sched.note', vars: { note: it.label.split(': ').slice(1).join(': ') } });
+    if (nw) details.push({ key: 'sched.newWall', vars: { t: Math.round(nw.ww.thicknessM * 100), l: nw.ww.lengthM, h: nw.ww.heightM, area: nw.ww.areaM2 } }, ...(nw.ww.exterior ? [{ key: 'sched.exteriorWall' }] : []));
+    if (el !== 'drywall' && it.label.includes(': ')) details.push({ key: 'sched.note', vars: { note: it.label.split(': ').slice(1).join(': ') } });
     if (m?.specs?.cctK) details.push({ key: 'sched.cct', vars: { k: m.specs.cctK } }); if (m?.specs?.ip) details.push({ key: 'sched.ip', vars: { ip: m.specs.ip } });
     if (it.note) details.push({ key: 'sched.note', vars: { note: it.note } });
     rows.push({ level: nw ? nw.level : at?.level ?? 0, roomId: it.roomId, room: at?.r.name ?? '', element: el, ...(side ? { side } : {}), ...(kind ? { kind } : {}),
