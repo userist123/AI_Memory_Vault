@@ -9,7 +9,7 @@
 2. **Fail-closed** — VERIFIED. hook_guard.py (commit 9e63c9745): guard import fails -> inline check still denies danger / asks otherwise; unparseable payload -> ask; never a silent allow on error. Subprocess tests with guard.py absent.
 3. **Egress & integrity, adversarial** — two review rounds (vault-reviewer). Round 1 + round 2 bypasses all fixed (commits 4481f277d, c6f2a97cc), each now a test: shell writes to guard/settings incl. quote-split `set""tings.json`, MultiEdit/NotebookEdit, scp/UNC/httpie/dns egress, persistence incl. /etc/profile.d, C3 secret+egress, disableAllHooks content. 103 guard tests.
 4. **Windows compatibility** — VERIFIED (item 1): Git Bash + PowerShell, install.py idempotent/preserve/remove on C:-style home.
-5. **Final validation before activation** — tests 151 green; exfil scanner clean except the documented guard.py false positive (it holds the detection patterns); CI: PENDING on PR #346.
+5. **Final validation** — VERIFIED. 36/36 CI checks green on e9b75d03c (incl. Structural hygiene, Analyze python/actions/csharp/js, CodeQL "No new alerts", security-boundary, zero-regression suite). Local: 103 guard tests + scanners. All 5 criteria met; awaiting owner decision to activate.
 
 ## Not done on purpose
 - **Activation** = `install.py` into `~/.claude`. Separate owner-approved step, after CI is green. Not run yet.
