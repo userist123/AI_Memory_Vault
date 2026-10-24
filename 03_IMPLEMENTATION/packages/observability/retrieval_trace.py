@@ -50,6 +50,10 @@ class ExclusionReason(str, enum.Enum):
     GRAPH_DEGRADED_SKIPPED = "GRAPH_DEGRADED_SKIPPED"
     PAGINATION_CUT = "PAGINATION_CUT"
     BUDGET_EXCEEDED = "BUDGET_EXCEEDED"
+    # Egress eligibility, decided before the page is cut so that a note the pack
+    # builder would reject anyway does not take a page slot (r0xx).
+    PROVENANCE_MISSING = "PROVENANCE_MISSING"
+    UNVERIFIED_AT_EGRESS = "UNVERIFIED_AT_EGRESS"
     ABSTAINED = "ABSTAINED"
 
 
