@@ -357,8 +357,7 @@ export default function PlanView(p: Props){
     {/* zonele de pardoseală: hașură ușoară, contur subțire și suprafața (eticheta zonei, dacă are) */}
     {(floor.zones || []).map(z => { const r = z.rect, on = isSel('floor_zone', z.id), w = r.x1 - r.x0, d = r.z1 - r.z0;
       return (<g key={z.id} data-k="floor_zone" data-id={z.id} style={{ cursor: 'move' }}><title>{t('tool.floor_zone')}{z.label ? ` · ${z.label}` : ''} ({wl(w)}×{wl(d)})</title>
-        <rect x={r.x0} y={r.z0} width={w} height={d} fill="url(#zone-hatch)" stroke={on ? '#8B6A45' : '#6b5a45'} strokeWidth={on ? .03 : .012} strokeDasharray={on ? '.08 .05' : undefined} />
-        <text x={(r.x0 + r.x1) / 2} y={(r.z0 + r.z1) / 2 + fs * .25} textAnchor="middle" fontSize={fs * .62} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={on ? '#8B6A45' : '#5a4a38'} stroke="#FFFDF8" strokeWidth={fs * .14} paintOrder="stroke" pointerEvents="none">{z.label ? `${z.label} · ` : ''}{formatArea(w * d, units, lang)}</text></g>); })}
+        <rect x={r.x0} y={r.z0} width={w} height={d} fill="url(#zone-hatch)" stroke={on ? '#8B6A45' : '#6b5a45'} strokeWidth={on ? .03 : .012} strokeDasharray={on ? '.08 .05' : undefined} /></g>); })}
     {(p.voids || []).map((v, k) => <g key={`void-${k}`} pointerEvents="none">
       <rect x={v.x0} y={v.z0} width={v.x1 - v.x0} height={v.z1 - v.z0} fill="#FBFBF9" stroke="#5E636B" strokeWidth={.02} strokeDasharray=".08 .05" />
       <path d={`M${v.x0} ${v.z0}L${v.x1} ${v.z1}M${v.x1} ${v.z0}L${v.x0} ${v.z1}`} stroke="#8A8F96" strokeWidth={.012} />
@@ -382,6 +381,9 @@ export default function PlanView(p: Props){
           onPointerEnter={p.onHover ? () => p.onHover!(pl.id) : undefined} onPointerLeave={p.onHover ? () => p.onHover!(null) : undefined} /></g>); })}
     {/* camera aleasă: chenar punctat în interiorul pereților, vizibil și când e aleasă de la tastatură */}
     {floor.rooms.filter(r => isSel('room', r.id)).map(r => <path key={`sel-${r.id}`} pointerEvents="none" d={roomBoundaryPath(r)} fill="#7A5A36" fillOpacity={.07} stroke="#7A5A36" strokeWidth={.045} strokeDasharray=".14 .08" />)}
+    {/* eticheta zonei de pardoseală (nume · suprafață) în colțul ei, deasupra mobilierului, ca să nu fie acoperită de masă */}
+    {(floor.zones || []).map(z => { const r = z.rect, on = isSel('floor_zone', z.id);
+      return <text key={`zl-${z.id}`} x={r.x0 + fs * .6} y={r.z0 + fs * 1.5} fontSize={fs * .66} fontWeight={600} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={on ? '#8B6A45' : '#5a4a38'} stroke="#FFFDF8" strokeWidth={fs * .16} paintOrder="stroke" pointerEvents="none">{z.label ? `${z.label} · ` : ''}{formatArea((r.x1 - r.x0) * (r.z1 - r.z0), units, lang)}</text>; })}
     {/* etichetele camerelor deasupra mobilierului, cu contur de hârtie ca să rămână lizibile */}
     {floor.rooms.map(r => { const w = r.rect.x1 - r.rect.x0, d = r.rect.z1 - r.rect.z0, [cx, cz] = roomCentroid(r);
       return (<g key={`lbl-${r.id}`} pointerEvents="none" stroke="#FFFDF8" strokeWidth={fs * .25} strokeLinejoin="round" paintOrder="stroke">
