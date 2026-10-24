@@ -79,18 +79,31 @@ def test_no_support_without_allow_parallel():
 def _registry_with(tmp_path, **defaults):
     raw = json.loads(CONFIG.read_text(encoding="utf-8"))
     raw["defaults"].update(defaults)
+    tmp_path.mkdir(parents=True, exist_ok=True)
     cfg = tmp_path / "agent_router.json"
     cfg.write_text(json.dumps(raw), encoding="utf-8")
     return RouteRegistry.from_file(cfg)
 
 
 def test_support_skills_are_trimmed_to_the_total_budget(tmp_path):
-    unbounded = _route(*GOALS[0], verifier=False, registry=_registry_with(tmp_path, max_total_selected_skills=99))
-    assert _skills(unbounded) > 4, "scenario no longer exercises the skill budget; pick another goal"
-    d = _route(*GOALS[0], verifier=False)
+    # the budget is set just below what the scenario selects uncapped, so trimming always happens
+    unbounded = _route(*GOALS[0], verifier=False, registry=_registry_with(tmp_path / "u", max_total_selected_skills=99))
+    budget = _skills(unbounded) - 1
+    assert budget >= len(unbounded.primary.selected_skills), "scenario too small to exercise the budget"
+    d = _route(*GOALS[0], verifier=False, registry=_registry_with(tmp_path / "b", max_total_selected_skills=budget))
     assert [(s.agent_id, s.runtime_id) for s in d.support] == [(s.agent_id, s.runtime_id) for s in unbounded.support]
-    assert _skills(d) == 4
-    assert any("skills_capped:max_total_selected_skills=4" in r for r in d.rejected), d.rejected
+    assert _skills(d) == budget
+    assert any(f"skills_capped:max_total_selected_skills={budget}" in r for r in d.rejected), d.rejected
+
+
+@pytest.mark.parametrize("goal,caps", GOALS)
+@pytest.mark.parametrize("verifier", [False, True])
+def test_support_agents_are_distinct_specialists(goal, caps, verifier):
+    # owner decision 2026-10-24: the primary's agent on another runtime is a duplicate, not support
+    d = _route(goal, caps, verifier=verifier)
+    ids = [s.agent_id for s in d.support]
+    assert d.primary.agent_id not in ids
+    assert len(ids) == len(set(ids))
 
 
 def test_the_limits_come_from_the_config(tmp_path):
