@@ -513,7 +513,9 @@ function model(it){
 
   // ---------- casa (reconstruită la fiecare schimbare de plan) ----------
   let house = new THREE.Group(), ceilings = new THREE.Group(), walls = new THREE.Group(), furniture = new THREE.Group(); scene.add(house, furniture);
-  let doorLeaves = [], doorsOpen = true; // ușile cu balamale: deschise/închise, animate în bucla de randare
+  let doorLeaves = [], doorsOpen = true;
+  // poziția unei foi la deschiderea e (0..1): rotită (batantă, dublă, pivotantă), alunecată spre parcare (glisantă, în perete) sau strânsă (pliantă)
+  const setLeaf = (d, e) => { if (d.kind === 'slide' || d.kind === 'pocket') d.pivot.position.set(d.bx + d.sx * e, 0, d.bz + d.sz * e); else if (d.kind === 'fold') d.pivot.scale.x = 1 - .78 * e; else d.pivot.rotation.y = d.closed + d.maxOpen * e; }; // ușile cu balamale: deschise/închise, animate în bucla de randare
   let colliders = [], blockers = [], structBlockers = [], plan = null, W = 1, D = 1, C = new THREE.Vector3(), pickables = [];
   // centrul orbitei machetei: casa, sau piesa încadrată din plan (UI/UX P2-10); F alunecă spre FT
   const F = new THREE.Vector3(), FT = new THREE.Vector3(); let framed = false, fInit = false;
@@ -627,30 +629,45 @@ function model(it){
       gs.forEach(g => { seg(q, g.la, 0, H);
         if (g.tip === 'usa'){ const dh = Math.min(H - .05, g.h || 2.1), fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat; seg(g.la, g.la + g.l, dh, H); const m = g.la + g.l / 2;
           // golul de trecere: doar buiandrugul de deasupra, fără toc și fără foaie
-          if (!g.trecere){ [g.la, g.la + g.l].forEach(s => { box(.05, dh, th + .02, fm, ax + ux * s, dh / 2, az + uz * s, rot, walls).castShadow = false; }); box(g.l - .002, .05, th + .016, fm, ax + ux * m, dh, az + uz * m, rot, walls).castShadow = false;
+          // tipul ușii (core/door-geometry.ts): batantă, dublă, glisantă pe perete, în perete (casetă), pliantă, pivotantă; filomuro = fără toc și pervaz la vedere
+          if (!g.trecere){ const tip = g.tipUsa || 'swing', flush = !!g.filomuro;
+          if (!flush){ [g.la, g.la + g.l].forEach(s => { box(.05, dh, th + .02, fm, ax + ux * s, dh / 2, az + uz * s, rot, walls).castShadow = false; }); box(g.l - .002, .05, th + .016, fm, ax + ux * m, dh, az + uz * m, rot, walls).castShadow = false; }
           // foaia ușii pe balamale reale: capătul și partea din plan (core/doors.ts doorSwing), deschisă sau închisă (clic pe ușă)
           const sw = g.sw || { hinge: 'start', swing: ((mx0, mz0) => { const cmx = (pMinX + pMaxX) / 2, cmz = (pMinZ + pMaxZ) / 2; return ((mx0 - cmx) * nx + (mz0 - cmz) * nz) > 0 ? -1 : 1; })(ax + ux * m, az + uz * m) };
-          const atStart = sw.hinge !== 'end', hs = atStart ? g.la + .025 : g.la + g.l - .025, hx = ax + ux * hs, hz = az + uz * hs, lw = Math.max(.3, g.l - .05), lh = dh - .012;
-          const cdx = atStart ? ux : -ux, cdz = atStart ? uz : -uz, odx = nx * sw.swing, odz = nz * sw.swing, faceOff = sw.swing * (th / 2 - .03);
-          const us = g.usa, lm = us && us.color ? (us.wood ? MAT('woodV', us.color) : MAT('paint', us.color)) : (g.intrare ? entranceMat : leafMat), hm = us && us.handle ? MAT('chrome', us.handle) : handleMat;
-          // pivotul: pe linia balamalelor, la fața peretelui dinspre care se deschide; x local = de-a lungul foii
-          const pivot = new THREE.Group(); pivot.position.set(hx + nx * faceOff, 0, hz + nz * faceOff); walls.add(pivot);
-          const P = (bw, bh, bd, x, y, z, mat, shadow = true) => { const o = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), mat); o.position.set(x, y, z); o.castShadow = shadow; o.receiveShadow = true; pivot.add(o); return o; };
-          const lt = g.intrare ? .07 : .04; P(lw, lh, lt, lw / 2, lh / 2 + .006, 0, lm);
-          if (us && us.style === 'glass') [1, -1].forEach(sg => P(lw * .55, lh * .55, .006, lw / 2, lh * .58, sg * (lt / 2 + .002), MAT('frost', '#e9ecec'), false));
-          if (us && us.style === 'panel' || g.intrare) [1, -1].forEach(sg => [lh * .72, lh * .3].forEach((y, i) => P(lw * .66, lh * (i ? .36 : .3), .006, lw / 2, y, sg * (lt / 2 + .003), lm, false)));
-          // mâner cu rozetă pe ambele fețe, balamale vizibile, vizor la ușa de intrare
-          [1, -1].forEach(sg => { const z0 = sg * (lt / 2 + .006); P(.05, .05, .008, lw - .07, 1.02, z0, hm, false); const lev = P(.13, .018, .018, lw - .07 - .05, 1.02, sg * (lt / 2 + .03), hm, false); lev.rotation.x = 0;
-            P(.018, .03, .02, lw - .07, 1.02, sg * (lt / 2 + .016), hm, false); P(.035, .09, .008, lw - .07, .9, z0, hm, false); });
-          [.25, lh - .25].forEach(y => P(.012, .1, lt + .008, .006, y, 0, MAT('metal', '#8f8a80'), false));
-          if (g.intrare) [1, -1].forEach(sg => { const o = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .01, 12), MAT('chrome', '#bdbdbd')); o.rotation.x = Math.PI / 2; o.position.set(lw / 2, 1.55, sg * (lt / 2 + .004)); pivot.add(o); });
-          const closed = -Math.atan2(cdz, cdx), openDir = Math.atan2(odz, odx), sweep = -(openDir - Math.atan2(cdz, cdx));
-          // unghiul de deschidere: de la direcția închisă spre partea de deschidere, cu cel mai scurt sens
-          const dAng = Math.atan2(Math.sin(sweep), Math.cos(sweep)), maxOpen = Math.sign(dAng) * Math.PI * .48;
-          pivot.rotation.y = closed + (doorsOpen ? maxOpen : 0); doorLeaves.push({ pivot, closed, maxOpen, w: lw, open: doorsOpen ? 1 : 0, target: doorsOpen ? 1 : 0 });
-          pivot.traverse(o => { if (o.isMesh) o.userData.door = doorLeaves.length - 1; });
-          // pervazuri (ancadramente) pe ambele fețe ale golului
-          [1, -1].forEach(sg => { const k = th / 2 + .008, ex = ax + nx * sg * k, ez = az + nz * sg * k;
+          const us = g.usa, lm = us && us.color ? (us.wood ? MAT('woodV', us.color) : MAT('paint', us.color)) : (g.intrare ? entranceMat : leafMat), hm = us && us.handle ? MAT('chrome', us.handle) : handleMat, lh = dh - .012;
+          // o foaie: `atStart` = balamaua (sau capătul spre care parchează / se strânge) la începutul segmentului [la0, la0 + span]; `kind`:
+          // null = se rotește (batantă, dublă), 'pivot' = se rotește în jurul unui pivot la w/4, 'slide' = alunecă pe fața peretelui, 'pocket' = intră în perete, 'fold' = se strânge
+          const leaf = (atStart, la0, span, kind, half = false) => { const hs = atStart ? la0 + .025 : la0 + span - .025, lw = Math.max(.15, span - (half ? .028 : .05));   // dubla: fără toc la mijloc, foile se întâlnesc (3 mm rost)
+            const cdx = atStart ? ux : -ux, cdz = atStart ? uz : -uz, odx = nx * sw.swing, odz = nz * sw.swing, pv = kind === 'pivot' ? lw / 4 : 0;
+            const faceOff = kind === 'slide' ? sw.swing * (th / 2 + .03) : kind === 'pocket' || kind === 'pivot' ? 0 : sw.swing * (th / 2 - .03);
+            const hx = ax + ux * hs + cdx * pv, hz = az + uz * hs + cdz * pv;
+            // pivotul: pe linia balamalelor, la fața peretelui dinspre care se deschide; x local = de-a lungul foii
+            const pivot = new THREE.Group(); pivot.position.set(hx + nx * faceOff, 0, hz + nz * faceOff); walls.add(pivot); const inner = new THREE.Group(); inner.position.x = -pv; pivot.add(inner);
+            const P = (bw, bh, bd, x, y, z, mat, shadow = true) => { const o = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), mat); o.position.set(x, y, z); o.castShadow = shadow; o.receiveShadow = true; inner.add(o); return o; };
+            const lt = g.intrare ? .07 : .04; P(lw, lh, lt, lw / 2, lh / 2 + .006, 0, lm);
+            if (us && us.style === 'glass') [1, -1].forEach(sg => P(lw * .55, lh * .55, .006, lw / 2, lh * .58, sg * (lt / 2 + .002), MAT('frost', '#e9ecec'), false));
+            if (us && us.style === 'panel' || g.intrare) [1, -1].forEach(sg => [lh * .72, lh * .3].forEach((y, i) => P(lw * .66, lh * (i ? .36 : .3), .006, lw / 2, y, sg * (lt / 2 + .003), lm, false)));
+            if (kind === 'slide' || kind === 'pocket') [1, -1].forEach(sg => P(.025, .16, .004, lw - .06, 1.02, sg * (lt / 2 + .002), hm, false));   // mâner îngropat (foaia trece pe lângă perete sau intră în el)
+            else {
+              // mâner cu rozetă pe ambele fețe, balamale vizibile, vizor la ușa de intrare
+              [1, -1].forEach(sg => { const z0 = sg * (lt / 2 + .006); P(.05, .05, .008, lw - .07, 1.02, z0, hm, false); const lev = P(.13, .018, .018, lw - .07 - .05, 1.02, sg * (lt / 2 + .03), hm, false); lev.rotation.x = 0;
+                P(.018, .03, .02, lw - .07, 1.02, sg * (lt / 2 + .016), hm, false); P(.035, .09, .008, lw - .07, .9, z0, hm, false); });
+              if (kind !== 'pivot' && !flush) [.25, lh - .25].forEach(y => P(.012, .1, lt + .008, .006, y, 0, MAT('metal', '#8f8a80'), false)); }
+            if (g.intrare) [1, -1].forEach(sg => { const o = new THREE.Mesh(new THREE.CylinderGeometry(.008, .008, .01, 12), MAT('chrome', '#bdbdbd')); o.rotation.x = Math.PI / 2; o.position.set(lw / 2, 1.55, sg * (lt / 2 + .004)); inner.add(o); });
+            const closed = -Math.atan2(cdz, cdx), openDir = Math.atan2(odz, odx), sweep = -(openDir - Math.atan2(cdz, cdx));
+            // unghiul de deschidere: de la direcția închisă spre partea de deschidere, cu cel mai scurt sens; glisantele nu se rotesc, ci alunecă spre capătul de parcare
+            const dAng = Math.atan2(Math.sin(sweep), Math.cos(sweep)), rotates = !kind || kind === 'pivot', maxOpen = rotates ? Math.sign(dAng) * Math.PI * .48 : 0;
+            const d = { pivot, closed, maxOpen, w: lw, open: doorsOpen ? 1 : 0, target: doorsOpen ? 1 : 0, kind, bx: pivot.position.x, bz: pivot.position.z, sx: -cdx * (lw - .04), sz: -cdz * (lw - .04) };
+            pivot.rotation.y = closed; doorLeaves.push(d); setLeaf(d, d.open);
+            pivot.traverse(o => { if (o.isMesh) o.userData.door = doorLeaves.indexOf(d); }); };
+          const atS = sw.hinge !== 'end';
+          if (tip === 'double'){ leaf(true, g.la, g.l / 2, null, true); leaf(false, g.la + g.l / 2, g.l / 2, null, true); }
+          else leaf(atS, g.la, g.l, tip === 'sliding' ? 'slide' : tip === 'pocket' ? 'pocket' : tip === 'folding' ? 'fold' : tip === 'pivot' ? 'pivot' : null);
+          // glisanta pe perete: șina deasupra golului, cât golul plus zona de parcare, pe fața foii
+          if (tip === 'sliding'){ const s0 = atS ? g.la - g.l - .05 : g.la, s1 = atS ? g.la + g.l : g.la + 2 * g.l + .05, k = sw.swing * (th / 2 + .03);
+            box(s1 - s0, .05, .05, MAT('metal', '#8f8a80'), ax + ux * (s0 + s1) / 2 + nx * k, dh + .035, az + uz * (s0 + s1) / 2 + nz * k, rot, walls).castShadow = false; }
+          // pervazuri (ancadramente) pe ambele fețe ale golului; filomuro nu are
+          if (!flush) [1, -1].forEach(sg => { const k = th / 2 + .008, ex = ax + nx * sg * k, ez = az + nz * sg * k;
             [g.la - .035, g.la + g.l + .035].forEach(sv => box(.07, dh, .016, fm, ex + ux * sv, dh / 2, ez + uz * sv, rot, walls).castShadow = false);
             box(g.l + .14, .07, .018, fm, ex + nx * sg * .001 + ux * m, dh + .035, ez + nz * sg * .001 + uz * m, rot, walls).castShadow = false; });
           if (g.intrare) box(g.l, .02, th + .02, MAT('metal', '#7b766e'), ax + ux * m, .01, az + uz * m, rot, walls); } }
@@ -690,7 +707,8 @@ function model(it){
     // placări pe pereți (tapet, riflaj, tencuială, cărămidă, piatră, faianță): un strat subțire pe fața dinspre cameră, tăiat în jurul ușilor și ferestrelor
     p.camere.forEach(r => { if (!r.fin || !r.fin.walls || !r.fin.walls.length) return;
       r.fin.walls.forEach((wv, wi) => { const horiz = wv.side === 'N' || wv.side === 'S', edge = { N: r.z0, S: r.z1, W: r.x0, E: r.x1 }[wv.side], inward = wv.side === 'N' || wv.side === 'W' ? 1 : -1;
-        const lo = (horiz ? r.x0 : r.z0) + .075, hi = (horiz ? r.x1 : r.z1) - .075, bottom = Math.max(0, Math.min(H, wv.fromM || 0)), top = wv.kind === 'rail' ? Math.min(H, bottom + .045) : Math.min(H, wv.heightM || H); if (hi - lo < .05 || top - bottom < .005) return;
+        // porțiunea pe lungime (`along`, m de la colțul x0/z0): placarea se taie la ea; lipsă = toată latura
+        const base = horiz ? r.x0 : r.z0, lo = Math.max(base + .075, wv.along ? base + wv.along[0] : -Infinity), hi = Math.min((horiz ? r.x1 : r.z1) - .075, wv.along ? base + wv.along[1] : Infinity), bottom = Math.max(0, Math.min(H, wv.fromM || 0)), top = wv.kind === 'rail' ? Math.min(H, bottom + .045) : Math.min(H, wv.heightM || H); if (hi - lo < .05 || top - bottom < .005) return;
         // pereții pe latura asta: grosimea (fața camerei) și golurile, în coordonata de-a lungul laturii
         let th = .15, found = false; const holes = [];
         p.pereti.forEach(wl => { const [ax, az] = wl.a, [bx, bz] = wl.b, h2 = Math.abs(az - bz) < 1e-6, v2 = Math.abs(ax - bx) < 1e-6;
@@ -703,7 +721,7 @@ function model(it){
         const kind = wv.kind, depth = kind === 'stone' ? .022 : kind === 'brick' ? .014 : kind === 'slats' ? .021 : kind === 'rail' ? .02 : kind === 'panel' ? .012 : kind === 'tile' ? .01 : .003, off = edge + inward * (th / 2 + depth / 2 + .001);
         const plainKind = kind === 'slats' || kind === 'paint' || kind === 'rail' || kind === 'panel', tex = plainKind ? null : wallTexture(wv, `${r.id}:${wi}`), size = tex ? tex.userData.size : 1;
         const mkMat = (len, hgt, s0, y0) => { if (!tex) return null; const t = tex.clone(); t.userData = { ...tex.userData, owned: true }; t.needsUpdate = true; t.repeat.set(len / size, hgt / size); t.offset.set(s0 / size, y0 / size);
-          const m = new THREE.MeshStandardMaterial({ map: t, roughness: kind === 'tile' ? .3 : kind === 'wallpaper' ? .7 : .9 }); m.userData = { kind: kind === 'tile' ? 'tile' : kind, col: wv.color, size: wv.sizeCm ? [wv.sizeCm[0] / 100, wv.sizeCm[1] / 100] : null, marble: !!wv.marble }; return m; };
+          const m = new THREE.MeshStandardMaterial({ map: t, roughness: kind === 'tile' ? .3 : kind === 'wallpaper' ? .7 : wv.effect === 'venetian' ? .3 : wv.effect === 'silk' ? .45 : wv.effect === 'microcement' ? .7 : .9 }); m.userData = { kind: kind === 'tile' ? 'tile' : kind, col: wv.color, size: wv.sizeCm ? [wv.sizeCm[0] / 100, wv.sizeCm[1] / 100] : null, marble: !!wv.marble }; return m; };
         const slatBack = lookMat('slatback', '#2e2c2a', .95), slatMat = MAT('wood', wv.color);
         const place = (s0, s1, y0, y1) => { const len = s1 - s0, hgt = y1 - y0; if (len < .01 || hgt < .01) return; const mid = (s0 + s1) / 2, x = horiz ? mid : off, z = horiz ? off : mid, rot = horiz ? 0 : Math.PI / 2;
           if (kind === 'paint' || kind === 'rail'){ const pm = lookMat(kind === 'rail' ? 'rail' : 'bandpaint', wv.color, kind === 'rail' ? .5 : .92); pm.userData = { kind: 'paint' }; box(len, hgt, depth, pm, x, (y0 + y1) / 2, z, rot, walls).castShadow = false; return; }
@@ -713,6 +731,8 @@ function model(it){
             for (let k = 0; k < n; k++){ const sm = s0 + pw * (k + .5), px = horiz ? sm : off + inward * .006, pz = horiz ? off + inward * .006 : sm; box(pw - .1, Math.max(.05, hgt - .16), .006, pm, px, (y0 + y1) / 2, pz, rot, walls).castShadow = false; }
             box(len, .03, depth + .012, pm, x, y1 - .015, z, rot, walls).castShadow = false; return; }
           if (kind === 'slats'){ box(len, hgt, .006, slatBack, horiz ? mid : edge + inward * (th / 2 + .004), (y0 + y1) / 2, horiz ? edge + inward * (th / 2 + .004) : mid, rot, walls).castShadow = false;
+            // lamele verticale (implicit) sau orizontale (`vertical: false`), la pas de 5 cm
+            if (wv.vertical === false){ for (let sy = y0 + .02; sy < y1 - .01; sy += .05) box(len, .027, depth, slatMat, x, sy + .0135, z, rot, walls).castShadow = false; return; }
             for (let sx = s0 + .02; sx < s1 - .01; sx += .05){ const px = horiz ? sx : off, pz = horiz ? off : sx; box(.027, hgt, depth, slatMat, px, (y0 + y1) / 2, pz, rot, walls).castShadow = false; } return; }
           box(len, hgt, depth, mkMat(len, hgt, s0, y0), x, (y0 + y1) / 2, z, rot, walls).castShadow = false; };
         // benzi verticale între marginile golurilor; în fiecare bandă, intervalele de înălțime rămase după scăderea golurilor
@@ -761,6 +781,15 @@ function model(it){
       const back = MAT('paint', '#fbf7ee'), reveal = MAT('paint', '#cfc8ba'), at = (d, w2, h2, d2, mat, dy = 0, ds = 0) => box(w2, h2, d2, mat, ax + ux * (m + ds) + nx * d, y + dy, az + uz * (m + ds) + nz * d, rot, walls);
       at(f + .004, n.l, n.h, .006, back).castShadow = false;
       [[0, n.h / 2 - .006, n.l, .012, 0], [0, -n.h / 2 + .006, n.l, .012, 0], [-n.l / 2 + .006, 0, .012, n.h, 0], [n.l / 2 - .006, 0, .012, n.h, 0]].forEach(([ds, dy, w2, h2]) => { at(f + .012, w2, h2, .02, reveal, dy, ds).castShadow = false; }); });
+    // obiecte pe perete (Floor.wallItems): tablou = ramă și pânză, oglindă = ramă subțire și oglindă, raft = poliță, TV = ramă
+    // neagră și ecran; pe fața peretelui, în fața placării de acolo (`clad`, calculat în viewer-input)
+    (p.obiectePerete || []).forEach(o => { const wl = p.pereti[o.wi]; if (!wl) return; const [ax, az] = wl.a, [bx, bz] = wl.b, L = Math.hypot(bx - ax, bz - az); if (L < .01) return;
+      const ux = (bx - ax) / L, uz = (bz - az) / L, rot = -Math.atan2(uz, ux), th = wl.ext ? .25 : .15, nx = -uz * o.side, nz = ux * o.side, base = th / 2 + (o.clad || 0) + .002;
+      const at = (d, w2, h2, d2, mat) => { const m = box(w2, h2, d2, mat, ax + ux * o.la + nx * (base + d), o.y, az + uz * o.la + nz * (base + d), rot, walls); m.userData.wallItem = o.id; return m; };
+      if (o.kind === 'art'){ at(o.ad / 2, o.l, o.h, o.ad, MAT('wood', '#3b2f25')); at(o.ad + .002, Math.max(.02, o.l - .08), Math.max(.02, o.h - .08), .004, MAT('paint', o.color || '#7f8f7c')).castShadow = false; }
+      else if (o.kind === 'mirror'){ at(.01, o.l, o.h, .02, MAT('metal', o.color || '#2d2a26')); at(.021, Math.max(.02, o.l - .04), Math.max(.02, o.h - .04), .004, MAT('mirror', '#dfe6ea')).castShadow = false; }
+      else if (o.kind === 'shelf') at(o.ad / 2, o.l, Math.max(.018, o.h), o.ad, MAT('wood', o.color || '#b88a5a'));
+      else { at(.02, o.l, o.h, .04, MAT('metal', '#151515')); at(.041, Math.max(.02, o.l - .02), Math.max(.02, o.h - .02), .003, MAT('screen', '#0b0c0e')).castShadow = false; } });
     // grinzi sub tavan
     (p.grinzi || []).forEach(bm => {
       const bw = bm.width || 0.25, bd = bm.depth || 0.35;
@@ -808,9 +837,12 @@ function model(it){
     for (const it of items){ const v = it.variant; if (!v || !v.w) continue; const h = v.h / 100, d = v.d / 100, room = plan.camere.find(c => it.x > c.x0 && it.x < c.x1 && it.z > c.z0 && it.z < c.z1); if (!room) continue;
       const [bx, bz] = back(it.rotation), side = Math.abs(bx) > .5 ? (bx > 0 ? 'E' : 'W') : (bz > 0 ? 'S' : 'N');
       // pe un perete placat (riflaj, cărămidă, piatră, lambriu) tabloul stă în fața placării
-      const clad = room.fin && room.fin.walls && room.fin.walls.some(w => w.side === side && ['slats', 'brick', 'stone', 'panel', 'tile'].includes(w.kind)) ? .06 : 0, k = .02 + clad;
+      const u = side === 'N' || side === 'S' ? it.x - room.x0 : it.z - room.z0;
+      const clad = room.fin && room.fin.walls && room.fin.walls.some(w => w.side === side && ['slats', 'brick', 'stone', 'panel', 'tile'].includes(w.kind) && (!w.along || (u > w.along[0] && u < w.along[1]))) ? .06 : 0, k = .02 + clad;
       const wallAt = () => Math.abs(bx) > .5 ? [bx > 0 ? room.x1 - k : room.x0 + k, it.z] : [it.x, bz > 0 ? room.z1 - k : room.z0 + k];
-      if (it.group === 'canapea' || it.group === 'pat'){ const [wx, wz] = wallAt(); put('art', wx, it.group === 'pat' ? 1.25 : 1.32, wz, it.rotation); }
+      // tabloul automat nu se pune pe o latură unde designerul a pus deja un tablou sau un TV (Floor.wallItems)
+      const explicit = (plan.obiectePerete || []).some(o => o.room === room.id && o.fata === side && (o.kind === 'art' || o.kind === 'tv'));
+      if (it.group === 'canapea' || it.group === 'pat'){ if (!explicit){ const [wx, wz] = wallAt(); put('art', wx, it.group === 'pat' ? 1.25 : 1.32, wz, it.rotation); } }
       else if (it.group === 'comodaTv') put('vase', it.x - Math.cos(it.rotation) * (v.w / 100) * .36, h, it.z + Math.sin(it.rotation) * (v.w / 100) * .36, it.rotation);
       else if (it.group === 'masa') put('jug', it.x, h, it.z, 0);
       else if (it.group === 'noptiera') put('photo', it.x + Math.cos(it.rotation) * .12, h, it.z - Math.sin(it.rotation) * .12, it.rotation + .35);
@@ -1040,7 +1072,7 @@ function model(it){
     lastShot = { room: r.id, openNow, cands: cands.length, pool: pool.length, obs: obs.length, leaves: leaves.map(L => L.map(p => p.map(v => +v.toFixed(2)))), sill: sill.map(p => p.map(v => +v.toFixed(2))), pick: [best.c, best.t, +best.sc.toFixed(2), +best.cover.toFixed(3), +(best.fg || 0).toFixed(2), +(best.depth || 0).toFixed(2)], top: ranked.slice(0, 24).map(q => [q.c.map(v => +v.toFixed(2)), q.t.map(v => +v.toFixed(2)), +q.sc.toFixed(2), q.cover == null ? null : +q.cover.toFixed(3), q.fg == null ? null : +q.fg.toFixed(2), q.depth == null ? null : +q.depth.toFixed(2)]) };
     return { x: best.c[0], y: EYE_Y, z: best.c[1], tx: best.t[0], ty: EYE_Y, tz: best.t[1], fov: FOV, shift: SHOT.shift, cover: best.cover }; }
   // ușile, imediat (fără animație): închise pentru imaginile fixe, apoi starea de dinainte
-  function doorsNow(open){ doorLeaves.forEach((d, i) => { const v = Array.isArray(open) ? open[i] : (open ? 1 : 0); d.open = d.target = v; d.pivot.rotation.y = d.closed + d.maxOpen * v * v * (3 - 2 * v); }); R.shadowMap.needsUpdate = true; }
+  function doorsNow(open){ doorLeaves.forEach((d, i) => { const v = Array.isArray(open) ? open[i] : (open ? 1 : 0); d.open = d.target = v; setLeaf(d, v * v * (3 - 2 * v)); }); R.shadowMap.needsUpdate = true; }
   // imagini fixe pentru export: ansamblu (machetă) sau o cameră după regula SHOT, cu ușile închise
   function renderView(view, w = 1200, h = 800){ if (!plan) return null;
     const prevMode = mode, prevDoors = doorLeaves.map(d => d.target);
@@ -1180,7 +1212,7 @@ function model(it){
   const ro = new ResizeObserver(resize); ro.observe(canvas);
   (function loop(){ if (!alive) return; raf = requestAnimationFrame(loop); const now = performance.now(), dt = Math.min(.05, (now - last) / 1000); last = now;
     for (const d of doorLeaves) if (d.open !== d.target){ d.open = reduce ? d.target : (d.target > d.open ? Math.min(d.target, d.open + dt * 1.4) : Math.max(d.target, d.open - dt * 1.4));
-      const e = d.open * d.open * (3 - 2 * d.open); d.pivot.rotation.y = d.closed + d.maxOpen * e; R.shadowMap.needsUpdate = true; }
+      const e = d.open * d.open * (3 - 2 * d.open); setLeaf(d, e); R.shadowMap.needsUpdate = true; }
     if (mode === 'walk'){ let f = 0, s = 0; if (keys.w || keys.arrowup) f += 1; if (keys.s || keys.arrowdown) f -= 1; if (keys.a || keys.arrowleft) s -= 1; if (keys.d || keys.arrowright) s += 1; f = Math.max(-1, Math.min(1, f + joy.f)); s = Math.max(-1, Math.min(1, s + joy.s));
       if (glide && !f && !s){ const g = glideStep({ x: player.x, z: player.z, yaw, pitch }, glide, dt, reduce); player.x = g.pose.x; player.z = g.pose.z; yaw = g.pose.yaw; pitch = g.pose.pitch; if (g.done) glide = null; }
       if (f || s){ glide = null; const sp = 1.7 * dt, fx = -Math.sin(yaw), fz = -Math.cos(yaw), rx = Math.cos(yaw), rz = -Math.sin(yaw); const [x, z] = collide(player.x + (fx * f + rx * s) * sp, player.z + (fz * f + rz * s) * sp); player.x = x; player.z = z; }

@@ -2,7 +2,7 @@
 // (de la colț, cu rost la mijloc sau cu placa centrată) așa încât tăieturile de la capete să nu fie fâșii subțiri
 // (sub o treime de placă arată rău și se sparg la tăiere), apoi se numără plăcile reale (întregi + tăiate).
 import type { Catalog, Floor, MaterialsCatalog, Room, Snapshot } from './types';
-import { materialOf, pieceSizeCm, layoutOf, sideGeometry, bathTiles } from './finishes';
+import { materialOf, pieceSizeCm, layoutOf, sideGeometry, bathTiles, alongOf, sideSpan } from './finishes';
 import { finishesOf } from './boq';
 import { kitchenOf, kitchenRun } from './kitchen';
 import { floors } from './levels';
@@ -49,7 +49,7 @@ function roomPlans(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, fl: Floor
     const [a, b] = pieceSizeCm(fm), rot = lay.angle === 90; out.push(plan(room, 'floor', fm.name, rot ? [b, a] : [a, b], lay.groutMm ?? 3, W, D, false)); } }
   const wt = materialOf(mc, f.wallTile); if (!wt) return out;
   const [a, b] = pieceSizeCm(wt), tile: [number, number] = [a, b], grout = wt.specs?.rectified ? 2 : 3;
-  if (room.type === 'baie') for (const w of bathTiles(f, room.type)){ const g = sideGeometry(fl, room, w.side, w.heightM); if (g.lengthM > .05) out.push(plan(room, w.side, wt.name, tile, grout, g.lengthM, g.heightM, true)); }
+  if (room.type === 'baie') for (const w of bathTiles(f, room.type, room)){ const g = sideGeometry(fl, room, w.side, w.heightM, w.alongFromM !== undefined ? alongOf(w, sideSpan(room, w.side)) : undefined); if (g.lengthM > .05) out.push(plan(room, w.side, wt.name, tile, grout, g.lengthM, g.heightM, true)); }
   if (room.type === 'bucatarie' && (!f.kitchen || kitchenOf(f).backsplash === 'tile')){ const run = kitchenRun(snap, cat, room.id); if (run) out.push(plan(room, 'backsplash', wt.name, tile, grout, run.lengthM, BACKSPLASH_HEIGHT, true)); }
   return out;
 }
