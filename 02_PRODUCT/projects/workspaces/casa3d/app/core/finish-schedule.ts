@@ -7,7 +7,7 @@ import { floors } from './levels';
 import { wallWorks } from './renovation';
 import { layoutOf, materialOf, pieceSizeCm, ceilingOf, bandOf, alongOf, isPartial, sideSpan } from './finishes';
 
-export type ScheduleElement = 'floor' | 'walltile' | 'wall' | 'paint' | 'baseboard' | 'ceiling' | 'led' | 'cornice' | 'spots' | 'light' | 'fixture' | 'countertop' | 'sink' | 'tap' | 'kitchen-led' | 'bath-tap' | 'shower-set' | 'towel-radiator' | 'led-mirror' | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'door_system' | 'drywall' | 'adhesive';
+export type ScheduleElement = 'floor' | 'walltile' | 'wall' | 'paint' | 'baseboard' | 'ceiling' | 'led' | 'cornice' | 'spots' | 'light' | 'fixture' | 'countertop' | 'sink' | 'tap' | 'kitchen-led' | 'bath-tap' | 'shower-set' | 'towel-radiator' | 'led-mirror' | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'door_system' | 'radiator' | 'hvac' | 'railing' | 'drywall' | 'adhesive';
 export interface ScheduleRow { level: number; roomId: string | null; room: string; element: ScheduleElement; side?: string; kind?: string;
   product: string; supplier: string; code: string | null; details: { key: string; vars?: Record<string, string | number> }[];
   netQty: number; unit: string; wastePct: number; orderedQty: number; packs: string | null; unitPrice: number | null; total: number | null;
@@ -15,15 +15,15 @@ export interface ScheduleRow { level: number; roomId: string | null; room: strin
 
 /** Categoriile de buget care intră în fișă (aceleași pe care le arată bugetul la finisaje). */
 export const SCHEDULE_CATEGORIES = new Set(['finishes', 'lighting', 'textiles']);
-const ELEMENT_ORDER: ScheduleElement[] = ['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'cornice', 'led', 'spots', 'light', 'fixture', 'countertop', 'sink', 'tap', 'kitchen-led', 'bath-tap', 'shower-set', 'towel-radiator', 'led-mirror', 'curtain', 'sheer', 'blind', 'rug', 'door', 'door_handle', 'door_system', 'drywall', 'adhesive'];
+const ELEMENT_ORDER: ScheduleElement[] = ['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'cornice', 'led', 'spots', 'light', 'fixture', 'countertop', 'sink', 'tap', 'kitchen-led', 'bath-tap', 'shower-set', 'towel-radiator', 'led-mirror', 'curtain', 'sheer', 'blind', 'rug', 'door', 'door_handle', 'door_system', 'radiator', 'hvac', 'railing', 'drywall', 'adhesive'];
 /** Codul de produs al magazinului, din link: Dedeman …/p/4026660 (sau 1070874-1048524), IKEA …/p/virrmo-…-70430780/ → 70430780. */
 const newWallOf = (snap: Snapshot, key: string) => { const wid = key.slice('wall-new:'.length), fls = floors(snap), level = fls.findIndex(f => f.walls.some(w => w.id === wid));
   const ww = level >= 0 ? wallWorks(fls[level]!).find(x => x.wallId === wid) : undefined; return ww ? { level, ww } : null; };
 export function productCode(url: string | null): string | null { const seg = url?.match(/\/p\/([\w-]+)\/?$/)?.[1]; if (!seg) return null;
   return /[a-z]/i.test(seg) ? seg.match(/-s?(\d{6,})$/)?.[1] ?? seg : seg; }
 // `<cameră>:zone:<id>` = zona de pardoseală a camerei (element pardoseală); `wall-new:<perete>` = placa peretelui nou din gips-carton
-const elementOf = (key: string): ScheduleElement | null => { if (key.startsWith('wall-new:')) return 'drywall'; if (key.split(':')[1] === 'zone') return 'floor'; if (key.startsWith('door:')) return 'door'; if (key.startsWith('handle:')) return 'door_handle'; if (key.startsWith('doorsys:')) return 'door_system'; const k = key.split(':')[1] ?? key;
-  return k === 'adhesive' || key === 'adhesive' ? 'adhesive' : (['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'led', 'cornice', 'spots', 'light', 'fixture', 'countertop', 'sink', 'tap', 'kitchen-led', 'bath-tap', 'shower-set', 'towel-radiator', 'led-mirror', 'curtain', 'sheer', 'blind', 'rug'] as const).find(e => e === k) ?? null; };
+const elementOf = (key: string): ScheduleElement | null => { if (key.startsWith('wall-new:')) return 'drywall'; if (key.split(':')[1] === 'zone') return 'floor'; if (key.startsWith('door:')) return 'door'; if (key.startsWith('handle:')) return 'door_handle'; if (key.startsWith('doorsys:')) return 'door_system'; if (key.startsWith('railing:')) return 'railing'; const k = key.split(':')[1] ?? key;
+  return k === 'adhesive' || key === 'adhesive' ? 'adhesive' : (['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'led', 'cornice', 'spots', 'light', 'fixture', 'countertop', 'sink', 'tap', 'kitchen-led', 'bath-tap', 'shower-set', 'towel-radiator', 'led-mirror', 'curtain', 'sheer', 'blind', 'rug', 'radiator', 'hvac'] as const).find(e => e === k) ?? null; };
 
 export function finishSchedule(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog): ScheduleRow[] {
   const b = computeBOQ(snap, cat, mc), fl = floors(snap), rooms = fl.flatMap((f, i) => f.rooms.map(r => ({ r, level: i })));
