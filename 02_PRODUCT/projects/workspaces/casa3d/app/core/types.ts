@@ -95,8 +95,8 @@ export interface MaterialSpecs { sizeCm?: [number, number]; rectified?: boolean;
   roll?: { widthM: number; lengthM: number; repeatCm: number; match?: 'free' | 'straight' | 'offset' }; patterns?: FloorPattern[]; wet?: boolean; pieceM?: number; color?: string;
   pieces?: number; opacity?: number; blind?: 'roller' | 'roman' | 'venetian'; door?: 'plain' | 'panel' | 'glass'; wood?: boolean; doorTypes?: DoorType[]; system?: 'sliding' | 'pocket' | 'folding';
   thicknessMm?: number; finish?: string; material?: string; diameterCm?: number; effect?: PlasterEffect;
-  /** balustrada: ce parte a sistemului e produsul (mână curentă, stâlp, panou, set complet), citit pe pagină */
-  railPart?: 'handrail' | 'post' | 'panel' | 'set' }
+  /** balustrada: ce parte a sistemului e produsul (mână curentă, stâlp, panou, set complet, kit de start), citit pe pagină */
+  railPart?: 'handrail' | 'post' | 'panel' | 'set' | 'start' }
 export interface Material { id: string; category: MaterialCategory; name: string; supplier: string; unit: 'm2' | 'ml' | 'L' | 'kg' | 'buc'; unitPrice: number;
   pack?: { size: number; label: string; price?: number }; coverage?: number; consumption?: number; sourceUrl: string | null; verificationType: string; confidence: Confidence; note?: string; specs?: MaterialSpecs; verifiedAt?: string }
 export interface LaborRate { id: string; label: string; unit: 'm2' | 'ml'; low: number; expected: number; high: number; sources: { name: string; url: string }[]; confidence: Confidence }

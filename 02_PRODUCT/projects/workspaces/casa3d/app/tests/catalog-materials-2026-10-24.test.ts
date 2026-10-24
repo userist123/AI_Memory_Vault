@@ -7,9 +7,9 @@ import catalogJson from '../data/catalog.v1.json';
 import materialsJson from '../data/materials.v1.json';
 import evidence24 from '../data/materials-evidence.2026-10-24.json';
 import { newSnapshot } from '../core/project';
-import { computeBOQ, computeBudget, finishesOf } from '../core/boq';
+import { computeBOQ, computeBudget, finishesOf, radiatorFits } from '../core/boq';
 import { finishSchedule } from '../core/finish-schedule';
-import { placeTechPoint, techBodyFields, sanitizeTech } from '../core/technical';
+import { placeTechPoint, techBodyFields, sanitizeTech, pruneProducts } from '../core/technical';
 import { sanitizeRailing } from '../core/plan-limits';
 import { checkSnapshot } from '../lib/repo';
 import { RETAILER_HOSTS, isAllowedUrl } from '../core/outbound';
@@ -47,7 +47,7 @@ describe('dovezi și date (2026-10-24)', () => {
     assert.ok(by('door_system').length >= 4 && by('panel_radiator').length >= 4 && by('railing').length >= 3 && by('hvac_split').length >= 3);
     for (const m of by('door_system')) assert.ok(['sliding', 'pocket', 'folding'].includes(m.specs?.system as string), m.id);
     assert.ok(by('door_system').filter(m => m.specs?.system === 'pocket').length >= 4 && by('door_system').filter(m => m.specs?.system === 'sliding').length >= 5);
-    for (const m of by('railing')) assert.ok(['handrail', 'post', 'panel', 'set'].includes(m.specs?.railPart as string), m.id);
+    for (const m of by('railing')) assert.ok(['handrail', 'post', 'panel', 'set', 'start'].includes(m.specs?.railPart as string), m.id);
     for (const m of by('panel_radiator')) assert.deepEqual(m.specs?.sizeCm, [80, 60], m.id);
     for (const m of NEW.filter(x => x.category === 'door')){ assert.deepEqual(m.specs?.doorTypes, ['folding'], m.id); assert.match(m.note!, /accesoriile de prindere nu sunt incluse/, m.id); }
     for (const m of NEW.filter(x => x.category === 'moulding')) assert.equal(m.specs?.pieceM, 2, m.id);
@@ -83,6 +83,33 @@ describe('devizul folosește prețul doar când produsul e ales', () => {
     s.tech = [{ ...p, model: 'towel', widthM: .4, heightM: 1, product: 'dedeman-calorifer-baie-hirapan-hs4001000wf-portprosop-drept-alb-400-x-1000-mm-' }];
     assert.equal(computeBOQ(s, cat, mc).items.find(i => i.key.includes(':radiator:'))!.total, 143);
   });
+  test('caloriferul redimensionat după alegerea produsului: produsul de altă mărime nu se prețuiește (review PR #352)', () => {
+    const s = blank(), p = placeTechPoint(s, 'radiator', 2.5, .3)!, id = 'dedeman-calorifer-otel-mastas-22pkkp-600-x-800-mm-accesorii-incluse';
+    // 80×60 = mărimea de pe pagină; în toleranța de 1 cm încă se potrivește
+    assert.ok(radiatorFits({ widthM: .8, heightM: .6 }, M(id)) && radiatorFits({ widthM: .81, heightM: .59 }, M(id)));
+    assert.ok(!radiatorFits({ widthM: .82, heightM: .6 }, M(id)) && !radiatorFits({ widthM: .8, heightM: .9 }, M(id)) && !radiatorFits({ model: 'towel', widthM: .8, heightM: .6 }, M(id)));
+    s.tech = [{ ...p, product: id, widthM: 1.2, heightM: .6 }];
+    const b = computeBOQ(s, cat, mc);
+    assert.ok(!b.items.some(i => i.key.includes(':radiator:')), 'nu se prețuiește');
+    assert.ok(b.unknown.some(u => /^Calorifer panou 120×60 cm · .*produsul ales are altă mărime \(80×60 cm\)/.test(u)), b.unknown.join('\n'));
+    assert.ok(!b.unknown.some(u => /Racordare și montaj calorifer/.test(u)));
+    s.tech = [{ ...p, product: id, widthM: .805, heightM: .6 }]; assert.equal(computeBOQ(s, cat, mc).items.find(i => i.key.includes(':radiator:'))!.total, 269);
+  });
+  test('serverul scoate produsul care nu e în catalog sau are altă categorie (calorifer, split, balustradă)', () => {
+    const s = blank(), p = placeTechPoint(s, 'radiator', 2.5, .3)!, hv: TechPoint = { id: 'hvac_split:camera-1:m1', kind: 'hvac_split', roomId: 'camera-1', x: 2.5, z: .2, height: 2.2, reason: 'manual' };
+    const panel = 'dedeman-calorifer-otel-pekpan-22k-600-x-800-accesorii-incluse', towel = 'dedeman-calorifer-baie-hirapan-hs4001000wf-portprosop-drept-alb-400-x-1000-mm-';
+    const split = 'dedeman-aparat-aer-conditionat-ariston-nevis-12000-btu-a-a-inverter-wi-fi-r32-', post = 'dedeman-kit-stalp-balcon-akdemir-p5-aluminiu-eloxat-gri-antracit-1010-x-60-x-6';
+    const snap = (): Snapshot => ({ ...blank(), tech: [{ ...p, id: 'r1', product: panel }, { ...p, id: 'r2', product: 'nu-exista' }, { ...p, id: 'r3', product: towel }, { ...p, id: 'r4', model: 'towel', product: towel },
+      { ...hv, id: 'h1', product: split }, { ...hv, id: 'h2', product: panel }],
+      floor: { ...blank().floor, railings: [{ id: 'b1', a: [0, 4.5], b: [3, 4.5], product: post }, { id: 'b2', a: [0, 4], b: [3, 4], product: split }, { id: 'b3', a: [0, 3.5], b: [3, 3.5], product: 'nu-exista' }] } });
+    const x = snap(); pruneProducts(x, mc);
+    assert.deepEqual(x.tech!.map(t => t.product ?? null), [panel, null, null, towel, split, null]);
+    assert.deepEqual(x.floor.railings!.map(r => r.product ?? null), [post, null, null]);
+    // la salvare (checkSnapshot cu catalogul): același rezultat; fără catalog (rutele vechi) id-ul curat rămâne, ca înainte
+    const saved = checkSnapshot(structuredClone(snap()), mc);
+    assert.deepEqual(saved.tech!.map(t => t.product ?? null), [panel, null, null, towel, split, null]);
+    assert.deepEqual(saved.floor.railings!.map(r => r.product ?? null), [post, null, null]);
+  });
   test('aerul condiționat: aparatul ales intră în deviz, traseul și montajul rămân necunoscute', () => {
     const s = blank(), p: TechPoint = { id: 'hvac_split:camera-1:m1', kind: 'hvac_split', roomId: 'camera-1', x: 2.5, z: .2, height: 2.2, reason: 'manual' }; s.tech = [p];
     assert.ok(computeBOQ(s, cat, mc).unknown.some(u => /^Unitate AC interioară \+ traseu/.test(u)));
@@ -98,6 +125,12 @@ describe('devizul folosește prețul doar când produsul e ales', () => {
     let b = computeBOQ(s, cat, mc), it = b.items.find(i => i.key === 'railing:bal-1')!; assert.equal(it.orderedQty, 2); assert.equal(it.total, 143); assert.ok(b.unknown.some(u => /^Stâlpi, umplutură și montaj balustradă/.test(u)));
     s.floor.railings = [rail({ product: 'dedeman-kit-stalp-balcon-akdemir-p5-aluminiu-eloxat-gri-antracit-1010-x-60-x-6' })];
     it = computeBOQ(s, cat, mc).items.find(i => i.key === 'railing:bal-1')!; assert.equal(it.orderedQty, 4); assert.equal(it.total, 4 * 364);
+    // kitul de start Catumia (pagina: „kit complet pentru inceperea balustradei”): 1 kit la prețul paginii, restul lungimii fără preț
+    s.floor.railings = [rail({ product: 'dedeman-kit-panou-balustrada-catumia-aluminiu-negru-1000-x-1000-x-110-mm' })]; b = computeBOQ(s, cat, mc);
+    it = b.items.find(i => i.key === 'railing:bal-1')!; assert.equal(it.orderedQty, 1); assert.equal(it.total, 975); assert.match(it.label, /kit de start/);
+    assert.ok(b.unknown.some(u => u === 'Balustradă metal 3 ml, h 100 cm: panouri de extensie pentru 2 m (preț neverificat)'), b.unknown.join('\n'));
+    s.floor.railings = [rail({ b: [1, 4.5], product: 'dedeman-kit-panou-balustrada-catumia-aluminiu-negru-1000-x-1000-x-110-mm' })]; b = computeBOQ(s, cat, mc);
+    assert.equal(b.items.find(i => i.key === 'railing:bal-1')!.total, 975); assert.ok(!b.unknown.some(u => /panouri de extensie/.test(u)), 'exact 1 m: fără extensie');
     s.floor.railings = [rail({ product: 'hornbach-balustrada-pertura-forma-g-1-5-m-prindere-podea' })]; b = computeBOQ(s, cat, mc);
     assert.equal(b.items.find(i => i.key === 'railing:bal-1')!.total, 2 * 2199); assert.ok(b.unknown.some(u => /^Montaj balustradă/.test(u)));
     assert.ok(finishSchedule(s, cat, mc).some(r => r.element === 'railing'));

@@ -1,8 +1,9 @@
 // Stratul tehnic: prize, întrerupătoare, puncte de lumină și de date, apă rece/caldă, scurgeri.
 // Sugestiile sunt deterministe, din mobila așezată și tipul camerei; pragurile sunt reguli uzuale de bun-simț,
 // nu norme legale (normativele diferă pe țări). Utilizatorul acceptă sau modifică punctele.
-import type { Floor, FurniturePlacement, Room, Snapshot, Catalog } from './types';
-import { finishesOf } from './boq';
+import type { Floor, FurniturePlacement, Room, Snapshot, Catalog, MaterialsCatalog } from './types';
+import { finishesOf, RADIATOR_CATEGORY } from './boq';
+import { floors } from './levels';
 import { LIGHTS_EXTRA_PER_M2 } from './rules.boq';
 import { area } from './geometry';
 import { allFixturePoints } from './fixtures';
@@ -167,6 +168,16 @@ export function techBodyFields(q: any): Pick<TechPoint, 'widthM' | 'heightM' | '
     return { ...(w != null ? { widthM: w } : {}), ...(h != null ? { heightM: h } : {}), ...(q.model ? { model: q.model } : {}), ...product }; }
   if (q.kind === 'hvac_split') return { ...(q.widthM != null ? { widthM: clampNum(q.widthM, H.widthMinM, H.widthMaxM, 'Lățimea unității de aer condiționat este invalidă.') } : {}), ...product };
   return {};
+}
+/** La salvare (cu catalogul de materiale): produsul ales la calorifer, aer condiționat sau balustradă rămâne doar dacă există în catalog
+ *  și are categoria potrivită (calorifer cu panouri / port-prosop după tip, split, balustradă); altfel câmpul se elimină, ca la
+ *  id-ul stricat (techBodyFields, sanitizeRailing): salvarea nu se blochează, iar devizul nu prețuiește un produs nepotrivit. */
+export function pruneProducts(s: Snapshot, mc: Pick<MaterialsCatalog, 'materials'>): void {
+  const cat = new Map(mc.materials.map(m => [m.id, m.category] as const));
+  for (const t of s.tech ?? []){ if (t.product == null) continue;
+    const want = t.kind === 'radiator' ? RADIATOR_CATEGORY[t.model ?? 'panel'] : t.kind === 'hvac_split' ? 'hvac_split' : undefined;
+    if (!want || cat.get(t.product) !== want) delete t.product; }
+  for (const fl of floors(s)) for (const r of fl.railings ?? []) if (r.product != null && cat.get(r.product) !== 'railing') delete r.product;
 }
 /** Punctul plasat manual: pe peretele cel mai apropiat al camerei în care s-a dat clic. */
 export function placeTechPoint(snap: Snapshot, kind: TechKind, x: number, z: number): TechPoint | null {

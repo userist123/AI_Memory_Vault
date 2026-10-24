@@ -990,7 +990,7 @@ export default function Editor({ id }: { id: string }){
                 <label className="f"><span>{t('railing.kind')}</span><select value={railingKind(rl)} onChange={e => patchRailing(rl.id, q => { if (e.target.value === 'glass'){ q.kind = 'glass'; delete q.product; } else delete q.kind; })}>
                   {RAILING_KINDS.map(k => <option key={k} value={k}>{t(`railing.kind.${k}`)}</option>)}</select></label>
               </div>
-              {railingKind(rl) === 'metal' && mc && <label className="f"><span>{t('railing.product')}</span><MaterialPicker cur={cur} value={rl.product ?? ''} options={mc.materials.filter(m => m.category === 'railing')} none={t('fin.none')} onChange={v => patchRailing(rl.id, q => { if (v) q.product = v; else delete q.product; })} /></label>}
+              {railingKind(rl) === 'metal' && mc && <label className="f"><span>{t('railing.product')}</span><MaterialPicker cur={cur} value={rl.product ?? ''} options={mc.materials.filter(m => m.category === 'railing')} none={t('fin.none')} label={t('railing.productAria', { len: (() => { const mx = (rl.a[0] + rl.b[0]) / 2, mz = (rl.a[1] + rl.b[1]) / 2; return snap.floor.rooms.find(r => mx >= r.rect.x0 - .05 && mx <= r.rect.x1 + .05 && mz >= r.rect.z0 - .05 && mz <= r.rect.z1 + .05)?.name ?? formatLength(railingLength(rl), units, lang); })() })} onChange={v => patchRailing(rl.id, q => { if (v) q.product = v; else delete q.product; })} /></label>}
               {railingKind(rl) === 'metal' && <p className="prov" style={{ margin: 0 }}>{t('railing.productHint')}</p>}
               <p className="prov" style={{ margin: 0 }}>{t('railing.rule')}</p>
               <button className="btn danger" onClick={del}>{t('common.delete')}</button>

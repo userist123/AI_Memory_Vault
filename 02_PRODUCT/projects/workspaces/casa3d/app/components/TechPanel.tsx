@@ -3,7 +3,7 @@ import { useState } from 'react';
 // Panoul stratului tehnic: sugestii deterministe, adăugare manuală din plan, numărătoare pe camere pentru meseriași.
 import type { Snapshot, MaterialsCatalog } from '@/core/types';
 import MaterialPicker from './MaterialPicker';
-import { RADIATOR_CATEGORY } from '@/core/boq';
+import { RADIATOR_CATEGORY, radiatorFits } from '@/core/boq';
 import EmptyState from './EmptyState';
 import { TECH_KINDS, techCounts, type TechKind, type TechPoint } from '@/core/technical';
 import { PLAN_LIMITS, RADIATOR_MODELS } from '@/core/plan-limits';
@@ -43,44 +43,52 @@ export default function TechPanel({ snap, show, kind, onShow, onKind, onSuggest,
         return <details key={r.id}><summary>{r.name} · {rp.length}</summary>{rp.map(p => <div key={p.id} className="row"><span><i className="techdot" style={{ background: TECH_SYMBOL[p.kind].color }}>{TECH_SYMBOL[p.kind].letter}</i> {label(p.kind)}{p.reason && p.reason !== 'manual' ? ` · ${p.reason}` : ''}</span>
           <button className="btn" onClick={() => onDelete(p.id)}>{t('tech.delete')}</button>
           {onPatch && isSizedRadiator(p) && <RadiatorFields p={p} room={r.name} mc={mc} cur={cur} onPatch={patch => onPatch(p.id, patch)} />}
-          {onPatch && p.kind === 'hvac_split' && mc && <ProductField p={p} category="hvac_split" label={t('hvac.product')} mc={mc} cur={cur} onPatch={patch => onPatch(p.id, patch)} />}</div>)}</details>; })}</div>
+          {onPatch && p.kind === 'hvac_split' && mc && <ProductField p={p} category="hvac_split" label={t('hvac.product')} aria={t('hvac.productAria', { room: r.name })} mc={mc} cur={cur} onPatch={patch => onPatch(p.id, patch)} />}</div>)}</details>; })}</div>
     </>}
   </div>);
 }
 
-/** Câmp în centimetri: în timpul tastării valoarea rămâne locală; se aplică (adusă în interval) doar la blur sau Enter. Esc renunță. */
-function CmField({ label, aria, valueM, lo, hi, onCommit }: { label: string; aria: string; valueM: number; lo: number; hi: number; onCommit(m: number): void }){
+/** Câmp în centimetri: în timpul tastării valoarea rămâne locală; se aplică (adusă în interval) doar la blur sau Enter. Esc renunță.
+ *  `onCommit` poate întoarce un mesaj (ex. produsul scos pentru că are altă mărime), anunțat în aceeași regiune role=status. */
+function CmField({ label, aria, valueM, lo, hi, onCommit }: { label: string; aria: string; valueM: number; lo: number; hi: number; onCommit(m: number): string | void }){
   const { t } = usePrefs(), [draft, setDraft] = useState<string | null>(null), [said, setSaid] = useState('');
   // valoarea tastată în afara intervalului se aduce la limită; cititorul de ecran aude valoarea aplicată
   const commit = () => { if (draft == null) return; const m = cmToClampedM(draft, lo, hi), n = Number(draft); setDraft(null);
     // golit întâi, apoi scris în cadrul următor: aceeași limitare a doua oară e anunțată din nou
-    const msg = m != null && Number.isFinite(n) && Math.round(n) !== Math.round(m * 100) ? t('radiator.clamped', { cm: Math.round(m * 100) }) : '';
-    setSaid(''); if (msg) requestAnimationFrame(() => setSaid(msg));
-    if (m != null && m !== valueM) onCommit(m); };
+    const clamped = m != null && Number.isFinite(n) && Math.round(n) !== Math.round(m * 100) ? t('radiator.clamped', { cm: Math.round(m * 100) }) : '';
+    const extra = m != null && m !== valueM ? onCommit(m) || '' : '', msg = [clamped, extra].filter(Boolean).join(' ');
+    setSaid(''); if (msg) requestAnimationFrame(() => setSaid(msg)); };
   return <label className="f"><span>{label}</span><input type="number" min={lo * 100} max={hi * 100} aria-label={aria} value={draft ?? String(Math.round(valueM * 100))}
     onChange={e => setDraft(e.target.value)} onBlur={commit} onFocus={() => setSaid('')} onKeyDown={e => { if (e.key === 'Enter') commit(); else if (e.key === 'Escape'){ setDraft(null); setSaid(''); } }} /><span className="sr-only" role="status">{said}</span></label>;
 }
 /** Produsul cu preț verificat al punctului (calorifer sau aparat split): la alegere, mărimea corpului ia cotele produsului (aduse în
  *  limitele serverului); fără produs, punctul rămâne fără preț în deviz. */
-function ProductField({ p, category, label, mc, cur, onPatch }: { p: TechPoint; category: string; label: string; mc: MaterialsCatalog; cur?: string; onPatch(patch: Partial<Pick<TechPoint, 'widthM' | 'heightM' | 'product'>>): void }){
-  const { t } = usePrefs(), options = mc.materials.filter(m => m.category === category), R = PLAN_LIMITS.radiator, H = PLAN_LIMITS.hvac, cl = (v: number, lo: number, hi: number) => Math.round(Math.min(hi, Math.max(lo, v)) * 1000) / 1000;
-  if (!options.length) return null;
-  return <label className="f" style={{ gridColumn: '1 / -1', width: '100%' }}><span>{label}</span><MaterialPicker cur={cur ?? 'RON'} value={p.product ?? ''} options={options} none={t('fin.none')} onChange={v => {
+/** La calorifer pickerul arată doar produsele de mărimea lui (radiatorFits, toleranță 1 cm) și „Nespecificat”; altfel o notă cu mărimile
+ *  care au preț verificat. `aria`: numele citit de cititorul de ecran, cu camera. */
+function ProductField({ p, category, label, aria, mc, cur, onPatch }: { p: TechPoint; category: string; label: string; aria: string; mc: MaterialsCatalog; cur?: string; onPatch(patch: Partial<Pick<TechPoint, 'widthM' | 'heightM' | 'product'>>): void }){
+  const { t } = usePrefs(), all = mc.materials.filter(m => m.category === category), R = PLAN_LIMITS.radiator, H = PLAN_LIMITS.hvac, cl = (v: number, lo: number, hi: number) => Math.round(Math.min(hi, Math.max(lo, v)) * 1000) / 1000;
+  const rad = p.kind === 'radiator', options = rad ? all.filter(m => radiatorFits(p, m)) : all;
+  if (!all.length) return null;
+  const sizes = rad && !options.length ? [...new Set(all.map(m => m.specs?.sizeCm).filter((z): z is [number, number] => !!z).map(z => `${z[0]}×${z[1]}`))].join(', ') : '';
+  return <label className="f" style={{ gridColumn: '1 / -1', width: '100%' }}><span>{label}</span><MaterialPicker cur={cur ?? 'RON'} value={p.product ?? ''} options={options} label={aria} none={rad ? t('radiator.unspecified') : t('fin.none')} onChange={v => {
     const m = options.find(x => x.id === v), sz = m?.specs?.sizeCm;
     if (!m){ onPatch({ product: undefined }); return; }
     if (p.kind === 'radiator' && sz) onPatch({ product: v, widthM: cl(sz[0] / 100, R.widthMinM, R.widthMaxM), heightM: cl(sz[1] / 100, R.heightMinM, R.heightMaxM) });
     else if (p.kind === 'hvac_split' && sz) onPatch({ product: v, widthM: cl(sz[0] / 100, H.widthMinM, H.widthMaxM) });
-    else onPatch({ product: v }); }} /></label>;
+    else onPatch({ product: v }); }} />{sizes && <span className="prov">{t('radiator.noFit', { sizes })}</span>}</label>;
 }
 /** Lățimea, înălțimea (cm) și tipul unui calorifer, în rândul lui din listă (`room` = camera, pentru eticheta citită de cititorul de ecran). */
 function RadiatorFields({ p, room, mc, cur, onPatch }: { p: TechPoint; room: string; mc?: MaterialsCatalog | null; cur?: string; onPatch(patch: Partial<Pick<TechPoint, 'widthM' | 'heightM' | 'model' | 'product'>>): void }){
-  const { t } = usePrefs(), R = PLAN_LIMITS.radiator;
+  const { t } = usePrefs(), R = PLAN_LIMITS.radiator, prod = mc?.materials.find(m => m.id === p.product);
+  // la schimbarea mărimii, produsul ales care nu mai are mărimea caloriferului se scoate (devizul nu-l mai prețuiește) și se anunță
+  const resize = (patch: Partial<Pick<TechPoint, 'widthM' | 'heightM'>>) => { const drop = !!p.product && !!mc && !radiatorFits({ ...p, ...patch }, prod);
+    onPatch({ ...patch, ...(drop ? { product: undefined } : {}) }); return drop ? t('radiator.productCleared', { name: prod?.name.split(',')[0] ?? p.product! }) : undefined; };
   return (<div className="grid2" style={{ gridColumn: '1 / -1', width: '100%' }}>
-    <CmField label={t('radiator.width')} aria={t('radiator.widthAria', { room })} valueM={p.widthM ?? 0} lo={R.widthMinM} hi={R.widthMaxM} onCommit={m => onPatch({ widthM: m })} />
-    <CmField label={t('radiator.height')} aria={t('radiator.heightAria', { room })} valueM={p.heightM ?? 0} lo={R.heightMinM} hi={R.heightMaxM} onCommit={m => onPatch({ heightM: m })} />
-    <label className="f"><span>{t('radiator.model')}</span><select value={p.model ?? 'panel'} onChange={e => { const model = e.target.value as TechPoint['model'], keep = p.product && mc?.materials.find(m => m.id === p.product)?.category === RADIATOR_CATEGORY[model ?? 'panel'];
+    <CmField label={t('radiator.width')} aria={t('radiator.widthAria', { room })} valueM={p.widthM ?? 0} lo={R.widthMinM} hi={R.widthMaxM} onCommit={m => resize({ widthM: m })} />
+    <CmField label={t('radiator.height')} aria={t('radiator.heightAria', { room })} valueM={p.heightM ?? 0} lo={R.heightMinM} hi={R.heightMaxM} onCommit={m => resize({ heightM: m })} />
+    <label className="f"><span>{t('radiator.model')}</span><select value={p.model ?? 'panel'} onChange={e => { const model = e.target.value as TechPoint['model'], keep = p.product && radiatorFits({ ...p, model }, prod);
       onPatch({ model, ...(keep ? {} : { product: undefined }) }); }}>
       {RADIATOR_MODELS.map(m => <option key={m} value={m}>{t(`radiator.model.${m}`)}</option>)}</select></label>
-    {mc && RADIATOR_CATEGORY[p.model ?? 'panel'] && <ProductField p={p} category={RADIATOR_CATEGORY[p.model ?? 'panel']!} label={t('radiator.product')} mc={mc} cur={cur} onPatch={onPatch} />}
+    {mc && RADIATOR_CATEGORY[p.model ?? 'panel'] && <ProductField p={p} category={RADIATOR_CATEGORY[p.model ?? 'panel']!} label={t('radiator.product')} aria={t('radiator.productAria', { room })} mc={mc} cur={cur} onPatch={onPatch} />}
   </div>);
 }
