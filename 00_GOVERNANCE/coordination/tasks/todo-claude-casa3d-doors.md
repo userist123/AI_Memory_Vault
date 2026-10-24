@@ -1,5 +1,5 @@
 # todo-claude-casa3d-doors
-STATUS: IN_PROGRESS (lot 2a reviewed READY; lot 2b done, not reviewed)   UPDATED: 2026-10-25T03:00:00+03:00
+STATUS: DONE (merged) UPDATED: 2026-10-24T06:00:00+03:00
 TASK: Casa3D lot 2 — door types (2a) + wall decor P1.b1–P1.b3 (2b), spec D:/w/casa3d-verify/research/usi-decor.md §3(b)
 BRANCH / PR: claude/casa3d-doors-decor / none (pushed; PR is the coordinator's call)    BASE: 40b32343 (claude/casa3d-plan-tools)
 LOT 2a (door types, filomuro): see commits da468941, 85f535d7; accepted residuals: 3D framing ignores pivot/fold, pocket click.
@@ -31,3 +31,5 @@ KEY FILES: app/core/{wall-items,finishes,boq,drawings,plan-limits,validate,rules
 VERIFICATION: tsc clean; vitest --maxWorkers=2 129 files / 808 tests pass; npm run build OK; check-a11y 19/19 OK on :3376;
   axe on wall-item panel + kind picker + legend + finishes panel: 0 violations (D:/w/casa3d-verify/decor-axe.mjs);
   shots D:/w/casa3d-verify/shots/decor-*.png (decor-shots.mjs). CI not checked (agent stops after push).
+MERGED: #339 (4a17c9b9, 2026-10-24). Residuals fixed in claude/casa3d-polish: bath tiles kept under bands above them and
+  under rails, 5 cm threshold rounding, setting-out shows the stretch of split sides, panorama sky pre-inverted for ACES.
