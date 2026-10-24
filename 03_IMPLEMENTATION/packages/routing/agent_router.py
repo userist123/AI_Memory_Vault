@@ -139,7 +139,8 @@ class AgentRouter:
         Skills: primary keeps its own; support agents share what is left of max_total_selected_skills.
         Before this, support was `candidates[1:3]` unconditionally: with a verifier a route carried 4
         agents, and when the primary came from the available runtimes rather than candidates[0] the
-        primary itself could reappear as support.
+        primary itself could reappear as support. Support agents are distinct specialists: never
+        the primary's agent (on any runtime) and never the same agent twice.
         """
         if not request.allow_parallel or primary is None:
             return ()
@@ -147,7 +148,12 @@ class AgentRouter:
         max_council=int(d.get("max_council_agents",3)); max_support=int(d.get("max_support_agents",2))
         max_skills=int(d.get("max_total_selected_skills",4))
         slots=max(0,min(max_support,max_council-1-(1 if verifier is not None else 0)))
-        pool=[c for c in candidates if c is not primary]
+        # Owner decision 2026-10-24: support is a different specialist from the primary and from
+        # each other -- the same agent on another runtime is a duplicate, not a second opinion.
+        pool,seen=[],{primary.agent_id}
+        for c in candidates:
+            if c.agent_id not in seen:
+                seen.add(c.agent_id); pool.append(c)
         wanted=min(len(pool),max_support)
         if wanted>slots:
             rejected.append(f"support:capped:{wanted}->{slots}:max_council_agents={max_council}")
