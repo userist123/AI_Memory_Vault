@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "description": "Approved egress for agent-integrity-guard (owner decision 2026-10-24). A host not listed here is asked; paths constrain hosts that serve many owners. Edit only by hand: the guard denies tool writes to this file.",
+  "owner_namespaces": ["userist123"],
+  "egress": [
+    {"host": "github.com", "owner_paths": true},
+    {"host": "api.github.com", "owner_paths": true},
+    {"host": "api.anthropic.com"},
+    {"host": "localhost"},
+    {"host": "127.0.0.1"},
+    {"host": "::1"}
+  ],
+  "mcp_allow_prefixes": [
+    "mcp__vault-memory__",
+    "mcp__claude-code-remote__",
+    "mcp__plugin_pdf-viewer_pdf__"
+  ]
+}
