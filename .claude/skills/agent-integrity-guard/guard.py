@@ -109,17 +109,26 @@ def _has_egress(cmd: str) -> bool:
 
 # ───────────────────────── protected paths ─────────────────────────
 
-_GUARD_PATH = re.compile(r"(?i)agent-integrity-guard[/\\]|[/\\]\.claude[/\\]settings(\.local)?\.json$|[/\\]\.claude[/\\]settings[/\\]")
+# .claude/settings matched as a prefix (not anchored to `.json$`), so settings.json,
+# settings.local.json, settings/ and quote-split names all match once quotes are stripped.
+_GUARD_PATH = re.compile(r"(?i)agent-integrity-guard[/\\]|(?:^|[/\\])\.claude[/\\]settings")
 _PERSIST_PATH = re.compile(r"""(?ix)
     [/\\]\.git[/\\]hooks[/\\] |
-    [/\\]\.(bashrc|bash_profile|profile|zshrc|zprofile|zlogin) $ |
+    (?:^|[/\\])\.(bashrc|bash_profile|bash_logout|profile|zshrc|zprofile|zlogin)(\.d)? $ |
+    [/\\]\.bashrc\.d[/\\] |
     [/\\]\.config[/\\]autostart[/\\] |
     [/\\]\.config[/\\]systemd[/\\] |
+    [/\\]\.config[/\\]fish[/\\] |
     [/\\]library[/\\]launchagents[/\\] | [/\\]library[/\\]launchdaemons[/\\] |
-    [/\\]etc[/\\](cron|init|systemd) |
+    [/\\]etc[/\\](cron|init|systemd|profile\.d|rc\.local) |
     start\ menu[/\\]programs[/\\]startup[/\\] |
     image\ file\ execution\ options
 """)
+
+
+def _strip_quotes(s: str) -> str:
+    # a shell collapses set""tings.json and set''tings.json to settings.json
+    return (s or "").replace('"', "").replace("'", "")
 
 _PERSIST_SHELL = re.compile(r"""(?ix)
     \bschtasks\b[^\n]*\/create | \bschtasks\s+\/create |
@@ -145,16 +154,23 @@ _WRITE_VERB = re.compile(r"""(?ix)
 
 def _shell_write_targets(cmd: str) -> list[str]:
     """Paths the command appears to write to or delete. Over-collects on purpose:
-    only used to check against guard/persistence locations, where over-collection is safe."""
-    targets = []
+    only used to check against guard/persistence locations, where over-collection is safe.
+    Each target is returned raw and quote-stripped, because a shell collapses
+    set""tings.json / set''tings.json to settings.json before the write happens."""
+    raw: list[str] = []
     for m in _REDIR.finditer(cmd):
-        targets.append(next(g for g in m.groups() if g))
-    # if the command has a write verb, treat every path-looking token as a potential sink
+        raw.append(next(g for g in m.groups() if g))
     if _WRITE_VERB.search(cmd):
         for tok in re.findall(r"(?:\"[^\"]+\"|'[^']+'|[^\s;&|<>]+)", cmd):
             t = tok.strip("\"'")
-            if "/" in t or "\\" in t:
-                targets.append(t)
+            if "/" in t or "\\" in t or '"' in tok or "'" in tok:
+                raw.append(t)
+    targets = []
+    for t in raw:
+        targets.append(t)
+        sq = _strip_quotes(t)
+        if sq != t:
+            targets.append(sq)
     return targets
 
 
@@ -192,12 +208,17 @@ def decide_command(cmd: str, allow: dict) -> Decision:
     low = cmd
 
     # C7/C6: a shell write/delete whose target is a guard or persistence location
-    for tgt in _shell_write_targets(low):
+    writes = _shell_write_targets(low)
+    for tgt in writes:
         n = tgt.replace("\\", "/")
         if _GUARD_PATH.search(n) or _GUARD_PATH.search(tgt):
             return Decision(DENY, f"shell command writes/deletes a guard or settings file: {tgt}", "C7")
         if _PERSIST_PATH.search(n) or _PERSIST_PATH.search(tgt):
             return Decision(DENY, f"shell command writes into a persistence location: {tgt}", "C6")
+
+    # C7 content: a write that would turn the hooks off, even if the sink path was obscured
+    if writes and "disableallhooks" in _strip_quotes(low).lower():
+        return Decision(DENY, "shell command writes content that disables Claude Code hooks", "C7")
 
     # C6: persistence mechanisms invoked directly
     if _PERSIST_SHELL.search(low):
@@ -248,11 +269,12 @@ def _norm_path(p: str) -> str:
 
 
 def decide_write(path: str, blob: str, allow: dict) -> Decision:
-    np = _norm_path(path)
-    if _GUARD_PATH.search(np) or _GUARD_PATH.search(path or ""):
-        return Decision(DENY, "write would modify the guard or the settings that load it", "C7")
-    if _PERSIST_PATH.search(np) or _PERSIST_PATH.search(path or ""):
-        return Decision(DENY, "write lands in an autostart/persistence location", "C6")
+    for cand in (path or "", _strip_quotes(path or "")):
+        np = _norm_path(cand)
+        if _GUARD_PATH.search(np) or _GUARD_PATH.search(cand):
+            return Decision(DENY, "write would modify the guard or the settings that load it", "C7")
+        if _PERSIST_PATH.search(np) or _PERSIST_PATH.search(cand):
+            return Decision(DENY, "write lands in an autostart/persistence location", "C6")
     if "disableallhooks" in (blob or "").lower() and ".claude" in np:
         return Decision(DENY, "write would disable Claude Code hooks", "C7")
     return Decision(ALLOW)

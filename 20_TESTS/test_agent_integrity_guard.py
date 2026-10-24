@@ -410,3 +410,39 @@ def test_hook_fails_closed_when_guard_module_is_missing(tmp_path):
     tamper = _run_hook(json.dumps({"tool_name": "Bash",
                                    "tool_input": {"command": "echo x > ~/.claude/settings.json"}}), guard_dir=d)
     assert _decision(tamper) == "deny", tamper
+
+
+# ── round-2 adversarial: quote-split settings filename + more persistence ──
+@pytest.mark.parametrize("cmd", [
+    'echo {} > ~/.claude/set""tings.json',
+    "echo x > ~/.claude/set''tings.json",
+    'echo {} > "~/.claude/settings.json"',
+])
+def test_c7_quote_split_settings_filename_denied(cmd):
+    r = bash(cmd)
+    assert r.action == g.DENY and r.control == "C7", r.to_dict()
+
+
+def test_c7_disableallhooks_content_even_if_path_obscured():
+    # a redirect whose content disables hooks, path spelled oddly
+    r = bash('printf %s \'{"disableAllHooks":true}\' > ~/.claude/x"".json')
+    assert r.action == g.DENY and r.control == "C7", r.to_dict()
+
+
+@pytest.mark.parametrize("path", [
+    "/etc/profile.d/evil.sh",
+    "/home/u/.bash_logout",
+    "/home/u/.config/fish/config.fish",
+    "/etc/rc.local",
+])
+def test_c6_more_profile_persistence_denied(path):
+    assert g.decide("Write", {"file_path": path, "content": "x"}, ALLOW).action == g.DENY, path
+
+
+def test_c6_profile_d_via_shell_denied():
+    assert bash("echo evil > /etc/profile.d/x.sh").action == g.DENY
+
+
+def test_multiedit_quote_split_guard_denied():
+    r = g.decide("MultiEdit", {"file_path": '~/.claude/set""tings.json', "edits": []}, ALLOW)
+    assert r.action == g.DENY
