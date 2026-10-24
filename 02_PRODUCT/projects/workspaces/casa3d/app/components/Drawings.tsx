@@ -4,11 +4,15 @@ import type { Catalog, Floor, MaterialsCatalog, Room, Snapshot } from '@/core/ty
 import { ceilingPlan, lightingLegend, floorPlan, wallElevations, type Elevation } from '@/core/drawings';
 import { formatArea, formatLength, type Units } from '@/core/format';
 import type { Lang, Translate } from '@/lib/i18n';
+import { isDemolished } from '@/core/renovation';
 
 type Box = { x0: number; z0: number; w: number; d: number };
 const INK = '#2a2d31', LIGHT = '#8A5A00', LED = '#d98a00';
-const Walls = ({ fl }: { fl: Floor }) => <>{fl.walls.map(w => <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" />)}
-  {fl.walls.flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
+// starea peretelui, ca în PrintView: nou = hașurat, de demolat = contur punctat (fără goluri), existent = plin
+export const Walls = ({ fl }: { fl: Floor }) => <>{fl.walls.map(w => w.status === 'demolish' ? <line key={w.id} data-status="demolish" x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#B3261E" strokeWidth={.02} strokeDasharray=".08 .05" />
+    : w.status === 'new' ? <g key={w.id} data-status="new"><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" /><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#fff" strokeWidth={w.thickness * .7} strokeDasharray=".03 .03" /></g>
+    : <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" />)}
+  {fl.walls.filter(w => !isDemolished(w)).flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
     return w.openings.map(o => <line key={o.id} x1={w.a[0] + ux * o.offset} y1={w.a[1] + uz * o.offset} x2={w.a[0] + ux * (o.offset + o.width)} y2={w.a[1] + uz * (o.offset + o.width)} stroke={o.kind === 'door' ? '#fff' : '#5b8fb9'} strokeWidth={w.thickness * .8} />); })}</>;
 /** Simbolurile de iluminat (aceleași ca pe planul din editor), cu `r` = raza în metri de plan. */
 export function FixtureSymbol({ kind, x, z, r, nx = 0, nz = 0, len, alongX }: { kind: string; x: number; z: number; r: number; nx?: number; nz?: number; len?: number; alongX?: boolean }){

@@ -1,10 +1,11 @@
 'use client';
+import { useState } from 'react';
 // Panoul stratului tehnic: sugestii deterministe, adăugare manuală din plan, numărătoare pe camere pentru meseriași.
 import type { Snapshot } from '@/core/types';
 import EmptyState from './EmptyState';
 import { TECH_KINDS, techCounts, type TechKind, type TechPoint } from '@/core/technical';
 import { PLAN_LIMITS, RADIATOR_MODELS } from '@/core/plan-limits';
-import { isSizedRadiator } from '@/core/tech-geometry';
+import { cmToClampedM, isSizedRadiator } from '@/core/tech-geometry';
 import { usePrefs } from '@/lib/prefs';
 import { askConfirm } from '@/lib/dialog';
 
@@ -38,18 +39,24 @@ export default function TechPanel({ snap, show, kind, onShow, onKind, onSuggest,
       <div className="list">{snap.floor.rooms.map(r => { const rp = pts.filter(p => p.roomId === r.id); if (!rp.length) return null;
         return <details key={r.id}><summary>{r.name} · {rp.length}</summary>{rp.map(p => <div key={p.id} className="row"><span><i className="techdot" style={{ background: TECH_SYMBOL[p.kind].color }}>{TECH_SYMBOL[p.kind].letter}</i> {label(p.kind)}{p.reason && p.reason !== 'manual' ? ` · ${p.reason}` : ''}</span>
           <button className="btn" onClick={() => onDelete(p.id)}>{t('tech.delete')}</button>
-          {onPatch && isSizedRadiator(p) && <RadiatorFields p={p} onPatch={patch => onPatch(p.id, patch)} />}</div>)}</details>; })}</div>
+          {onPatch && isSizedRadiator(p) && <RadiatorFields p={p} room={r.name} onPatch={patch => onPatch(p.id, patch)} />}</div>)}</details>; })}</div>
     </>}
   </div>);
 }
 
-/** Lățimea, înălțimea (cm) și tipul unui calorifer, în rândul lui din listă. */
-function RadiatorFields({ p, onPatch }: { p: TechPoint; onPatch(patch: Partial<Pick<TechPoint, 'widthM' | 'heightM' | 'model'>>): void }){
+/** Câmp în centimetri: în timpul tastării valoarea rămâne locală; se aplică (adusă în interval) doar la blur sau Enter. Esc renunță. */
+function CmField({ label, aria, valueM, lo, hi, onCommit }: { label: string; aria: string; valueM: number; lo: number; hi: number; onCommit(m: number): void }){
+  const [draft, setDraft] = useState<string | null>(null);
+  const commit = () => { if (draft == null) return; const m = cmToClampedM(draft, lo, hi); setDraft(null); if (m != null && m !== valueM) onCommit(m); };
+  return <label className="f"><span>{label}</span><input type="number" min={lo * 100} max={hi * 100} aria-label={aria} value={draft ?? String(Math.round(valueM * 100))}
+    onChange={e => setDraft(e.target.value)} onBlur={commit} onKeyDown={e => { if (e.key === 'Enter') commit(); else if (e.key === 'Escape') setDraft(null); }} /></label>;
+}
+/** Lățimea, înălțimea (cm) și tipul unui calorifer, în rândul lui din listă (`room` = camera, pentru eticheta citită de cititorul de ecran). */
+function RadiatorFields({ p, room, onPatch }: { p: TechPoint; room: string; onPatch(patch: Partial<Pick<TechPoint, 'widthM' | 'heightM' | 'model'>>): void }){
   const { t } = usePrefs(), R = PLAN_LIMITS.radiator;
-  const cm = (k: 'widthM' | 'heightM', lo: number, hi: number) => (v: string) => { const x = Number(v); if (!Number.isFinite(x) || v.trim() === '') return; onPatch({ [k]: Math.round(Math.min(hi, Math.max(lo, x / 100)) * 1000) / 1000 }); };
   return (<div className="grid2" style={{ gridColumn: '1 / -1', width: '100%' }}>
-    <label className="f"><span>{t('radiator.width')}</span><input type="number" min={R.widthMinM * 100} max={R.widthMaxM * 100} value={Math.round((p.widthM ?? 0) * 100)} onChange={e => cm('widthM', R.widthMinM, R.widthMaxM)(e.target.value)} /></label>
-    <label className="f"><span>{t('radiator.height')}</span><input type="number" min={R.heightMinM * 100} max={R.heightMaxM * 100} value={Math.round((p.heightM ?? 0) * 100)} onChange={e => cm('heightM', R.heightMinM, R.heightMaxM)(e.target.value)} /></label>
+    <CmField label={t('radiator.width')} aria={t('radiator.widthAria', { room })} valueM={p.widthM ?? 0} lo={R.widthMinM} hi={R.widthMaxM} onCommit={m => onPatch({ widthM: m })} />
+    <CmField label={t('radiator.height')} aria={t('radiator.heightAria', { room })} valueM={p.heightM ?? 0} lo={R.heightMinM} hi={R.heightMaxM} onCommit={m => onPatch({ heightM: m })} />
     <label className="f"><span>{t('radiator.model')}</span><select value={p.model ?? 'panel'} onChange={e => onPatch({ model: e.target.value as TechPoint['model'] })}>
       {RADIATOR_MODELS.map(m => <option key={m} value={m}>{t(`radiator.model.${m}`)}</option>)}</select></label>
   </div>);

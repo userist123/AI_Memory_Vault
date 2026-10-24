@@ -9,10 +9,11 @@ import { sanitizeBath, bathTileHeight } from './bath';
 import { sanitizeFixtures } from './fixtures';
 import { openingsOnSide } from './validate';
 import { WALLPAPER_RULES } from './rules';
+import { FLOOR_PATTERNS, isMaterialRef } from './plan-limits';
 
 const r2 = (v: number) => Math.round(v * 100) / 100;
 export const SIDES = ['N', 'E', 'S', 'W'] as const;
-export const PATTERNS: FloorPattern[] = ['straight', 'brick', 'third', 'diagonal', 'herringbone', 'chevron', 'checker'];
+export const PATTERNS: FloorPattern[] = [...FLOOR_PATTERNS];
 
 /** Pierderi la tăiere după modul de așezare (fracție din suprafața netă). Sursa: ghidurile de calcul citate în raportul de cercetare
  *  (plăci drepte ~10 %, diagonală și spic 15 %, chevron 15–20 %); formatele mari (latura ≥ 100 cm) mai adaugă 5 %. */
@@ -206,7 +207,7 @@ export function sanitizeFinishes(f: any): string | null {
   const hex = (v: unknown) => v === undefined || (typeof v === 'string' && /^#[0-9a-fA-F]{6}$/.test(v));
   const num = (v: unknown, lo: number, hi: number) => v === undefined || (typeof v === 'number' && Number.isFinite(v) && v >= lo && v <= hi);
   for (const rf of Object.values<any>(f)){ if (!rf || typeof rf !== 'object') return 'Finisajele sunt invalide.';
-    if ([rf.floor, rf.wallPaint, rf.wallTile, rf.baseboard, rf.light].some(x => x != null && (typeof x !== 'string' || x.length > 80))) return 'Finisajele sunt invalide.';
+    if ([rf.floor, rf.wallPaint, rf.wallTile, rf.baseboard, rf.light].some(x => x != null && !isMaterialRef(x))) return 'Finisajele sunt invalide.';
     const l = rf.floorLayout; if (l !== undefined && (l === null || typeof l !== 'object' || !PATTERNS.includes(l.pattern) || !num(l.groutMm, 0, 20) || !hex(l.groutColor) || ![undefined, 0, 90].includes(l.angle))) return 'Modul de așezare a pardoselii este invalid.';
     const wf = rf.wallFeatures; if (wf !== undefined && (!Array.isArray(wf) || wf.length > 24 || wf.some((w: any) => !w || !SIDES.includes(w.side) || !Object.hasOwn(FEATURE_CATEGORY, w.kind) || typeof w.material !== 'string' || w.material.length > 80 || !hex(w.color) || !num(w.heightM, .05, 10) || !num(w.fromM, 0, 10)
       || (w.fromM !== undefined && w.heightM !== undefined && w.kind !== 'rail' && w.heightM <= w.fromM)

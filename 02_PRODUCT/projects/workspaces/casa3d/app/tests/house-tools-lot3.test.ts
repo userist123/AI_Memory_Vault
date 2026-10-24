@@ -92,8 +92,9 @@ describe('starea peretelui: plan, 3D, deviz, DXF, cititor de ecran, niveluri', (
     assert.ok(!/De demolat|Nou \(de construit\)/.test(items.find(i => i.id === 'wall-3')!.label), 'peretele existent fără sufix');
     const en = describePlan(s, cat, { t: translator('en'), units: 'metric', lang: 'en' }).find(g => g.id === 'structure')!.items; assert.match(en.find(i => i.id === 'wall-1')!.label, /To demolish$/);
   });
-  test('nivelul nou copiază starea pereților (aceleași lucrări pe verticală)', () => {
-    const s = blank(); s.floor.walls[1]!.status = 'new'; const h = addLevel(s, { name: 'Etaj' }); assert.equal(h.levels![0]!.walls[1]!.status, 'new');
+  test('nivelul nou copiază pereții noi; peretele de demolat nu urcă', () => {
+    const s = blank(); s.floor.walls[1]!.status = 'new'; s.floor.walls[2]!.status = 'demolish'; const up = addLevel(s, { name: 'Etaj' }).levels![0]!;
+    assert.equal(up.walls[1]!.status, 'new'); assert.equal(up.walls.length, 3); assert.ok(!up.walls.some(w => w.status === 'demolish'));
   });
 });
 
