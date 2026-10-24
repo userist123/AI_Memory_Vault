@@ -1464,6 +1464,6 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 @media (min-width:1024px) and (max-width:1599px){
   .prefs-inline{display:none} .tb-more{display:block}
   .tb-actions .icon-btn .lbl{display:none}
-  .topbar .name{min-width:140px}
+  .ws .topbar .name{min-width:140px}
 }
 @media (min-width:1024px) and (max-width:1439px){ .topbar > .icon-btn .lbl{display:none} }
