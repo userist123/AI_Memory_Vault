@@ -1,5 +1,5 @@
 # todo-claude-casa3d-lot3
-STATUS: DONE (review fixes pushed, PR #344) UPDATED: 2026-10-24T13:20:00+03:00
+STATUS: DONE (merged #344, 215d1260) UPDATED: 2026-10-24T17:40:00+03:00
 TASK: Casa3D lot 3 "tools around the house" (unelte-plan.md P2.2, P2.3, P1.5; usi-decor.md P1.c1) + PR #344 review fixes
 BRANCH / PR: claude/casa3d-house-lot3 / #344    BASE: 62be1f8e
 DONE (lot): Wall.status existing|new|demolish + tool Demolare; sized radiator; AC in 3D/quote; Floor.zones (tool Zonă

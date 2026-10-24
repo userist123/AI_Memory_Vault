@@ -61,6 +61,8 @@ export function addLevel(s: Snapshot, o: { name: string; id?: () => string }): S
     ...(top.columns?.length ? { columns: top.columns.map(c => ({ ...c, id: `col-${id()}` })) } : {}),
     ...(top.beams?.length ? { beams: top.beams.map(b => ({ ...b, id: `bm-${id()}`, a: [...b.a] as [number, number], b: [...b.b] as [number, number] })) } : {}),
     ...(top.glassWalls?.length ? { glassWalls: top.glassWalls.map(gw => ({ ...gw, id: `gw-${id()}`, a: [...gw.a] as [number, number], b: [...gw.b] as [number, number] })) } : {}),
+    // balustradele urcă la fel ca structura (balcoanele suprapuse); tavanele false pe zonă țin de camere (id-uri noi), deci nu se copiază
+    ...(top.railings?.length ? { railings: top.railings.map(r => ({ ...r, id: `bal-${id()}`, a: [...r.a] as [number, number], b: [...r.b] as [number, number] })) } : {}),
     ...(top.niches?.some(n => wallIds.has(n.wallId)) ? { niches: top.niches.filter(n => wallIds.has(n.wallId)).map(n => ({ ...n, id: `nisa-${id()}`, wallId: wallIds.get(n.wallId)! })) } : {}) };
   return { ...s, levels: [...(s.levels ?? []), floor] };
 }

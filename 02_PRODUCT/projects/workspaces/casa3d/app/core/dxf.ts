@@ -23,6 +23,9 @@ export const DXF_NOTE_LAYERS = [{ name: 'NOTES', color: 8 }] as const;
 /** Planul de renovare și zonele de pardoseală: în tabelul LAYER doar când proiectul le folosește (un proiect vechi rămâne identic). */
 export const DXF_RENOVATION_LAYERS = [{ name: 'WALLS_NEW', color: 3 }, { name: 'WALLS_DEMOLISH', color: 1 }] as const;
 export const DXF_ZONE_LAYERS = [{ name: 'FLOOR_ZONES', color: 9 }] as const;
+/** Straturile lotului 4, doar când proiectul le folosește: tavanele false pe zonă (deasupra planului de secțiune) și balustradele. */
+export const DXF_CEILING_ZONE_LAYERS = [{ name: 'CEILING_ZONES', color: 6 }] as const;
+export const DXF_RAILING_LAYERS = [{ name: 'RAILINGS', color: 4 }] as const;
 export const TECH_SYMBOL: Record<TechKind, string> = { outlet: 'P', outlet_double: 'P2', switch: 'I', light_point: 'L', data: 'D', cooker: 'K', water_cold: 'A', water_hot: 'C', drain: 'S', hvac_split: 'AC', thermostat: 'T', vent_exhaust: 'V', radiator: 'R' };
 
 /** Text sigur pentru R12: fără caractere de control, fără coduri %% (oricâte %), fără \, non-ASCII ca \U+XXXX (convenția AutoCAD). */
@@ -43,7 +46,7 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
   const num = (v: number) => (Math.round(v * 1000) / 1000).toString();
   const grow = (x: number, y: number) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
   let ox = 0;   // deplasarea nivelului curent pe X (mm)
-  let usedRenovation = false, usedZones = false;
+  let usedRenovation = false, usedZones = false, usedCeilingZones = false, usedRailings = false;
   const P = (x: number, z: number): Pt => [x * 1000 + ox, -z * 1000];   // metri plan -> mm DXF
   const line = (layer: string, a: Pt, b: Pt) => { grow(...a); grow(...b);
     ents.push(['0\nLINE', tag(8, layer), tag(10, num(a[0])), tag(20, num(a[1])), tag(30, 0), tag(11, num(b[0])), tag(21, num(b[1])), tag(31, 0)].join('\n')); };
@@ -136,6 +139,13 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
     for (const z of snap.floor.zones ?? []){ const r = z.rect; usedZones = true; poly('FLOOR_ZONES', [P(r.x0, r.z0), P(r.x1, r.z0), P(r.x1, r.z1), P(r.x0, r.z1)]);
       text('FLOOR_ZONES', P((r.x0 + r.x1) / 2, (r.z0 + r.z1) / 2), 90, `${z.label ? `${z.label} ` : ''}${((r.x1 - r.x0) * (r.z1 - r.z0)).toFixed(2)} m²`, { center: true }); }
 
+    // ---- tavane false pe zonă: conturul și coborârea; balustrade: linie dublă de 5 cm ----
+    for (const z of snap.floor.ceilingZones ?? []){ const r = z.rect; usedCeilingZones = true; poly('CEILING_ZONES', [P(r.x0, r.z0), P(r.x1, r.z0), P(r.x1, r.z1), P(r.x0, r.z1)]);
+      text('CEILING_ZONES', P((r.x0 + r.x1) / 2, r.z0 + .25), 90, `${z.label ? `${z.label} ` : ''}TF -${Math.round(z.dropCm)} cm`, { center: true }); }
+    for (const b of snap.floor.railings ?? []){ const L = Math.hypot(b.b[0] - b.a[0], b.b[1] - b.a[1]); if (L < 1e-3) continue; usedRailings = true;
+      const nx = -(b.b[1] - b.a[1]) / L * .025, nz = (b.b[0] - b.a[0]) / L * .025;
+      line('RAILINGS', P(b.a[0] + nx, b.a[1] + nz), P(b.b[0] + nx, b.b[1] + nz)); line('RAILINGS', P(b.a[0] - nx, b.a[1] - nz), P(b.b[0] - nx, b.b[1] - nz)); }
+
     // ---- ghene și casetări: contur pe stratul pereților, ghena cu diagonale (hașură) ----
     for (const c of snap.floor.columns ?? []){ if (c.role !== 'shaft' && c.role !== 'boxing') continue; const x0 = c.x - c.w / 2, x1 = c.x + c.w / 2, z0 = c.z - c.d / 2, z1 = c.z + c.d / 2;
       poly('WALLS', [P(x0, z0), P(x1, z0), P(x1, z1), P(x0, z1)]);
@@ -192,7 +202,7 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
 
   if (!Number.isFinite(x0)){ x0 = y0 = 0; x1 = y1 = 1000; }
   const lt = ['0\nLTYPE', tag(2, 'CONTINUOUS'), tag(70, 0), tag(3, 'Solid line'), tag(72, 65), tag(73, 0), tag(40, 0)];
-  const layers = [...DXF_LAYERS, ...DXF_LEVEL_LAYERS, ...DXF_NOTE_LAYERS, ...(usedRenovation ? DXF_RENOVATION_LAYERS : []), ...(usedZones ? DXF_ZONE_LAYERS : [])].map(l => ['0\nLAYER', tag(2, l.name), tag(70, 0), tag(62, l.color), tag(6, 'CONTINUOUS')].join('\n'));
+  const layers = [...DXF_LAYERS, ...DXF_LEVEL_LAYERS, ...DXF_NOTE_LAYERS, ...(usedRenovation ? DXF_RENOVATION_LAYERS : []), ...(usedZones ? DXF_ZONE_LAYERS : []), ...(usedCeilingZones ? DXF_CEILING_ZONE_LAYERS : []), ...(usedRailings ? DXF_RAILING_LAYERS : [])].map(l => ['0\nLAYER', tag(2, l.name), tag(70, 0), tag(62, l.color), tag(6, 'CONTINUOUS')].join('\n'));
   void opts;   // limba: etichetele din desen sunt neutre (nume de camere deja localizate, cote în mm, simboluri)
   return [
     '0\nSECTION', '2\nHEADER', '9\n$ACADVER\n1\nAC1009', '9\n$INSUNITS\n70\n4', '9\n$MEASUREMENT\n70\n1',

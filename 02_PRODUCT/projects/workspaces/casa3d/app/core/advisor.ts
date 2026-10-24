@@ -5,6 +5,7 @@ import type { Catalog, FurniturePlacement, Room, RoomRect, Snapshot } from './ty
 import { resolve } from './catalog';
 import { area, insideRect, rectHit } from './geometry';
 import { doorZones, footprintOf, openingsOnSide, validateFloor, validatePlacement } from './validate';
+import { roomCeilingDropCm } from './finishes';
 import { finishesOf, roomGeometry } from './boq';
 import { FRONT_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M } from './rules';
 import { WINDOW_HEIGHT, LIGHTS_EXTRA_PER_M2 } from './rules.boq';
@@ -126,7 +127,7 @@ export function adviseProject(snap: Snapshot, cat: Catalog, opts: AdvisorOptions
       }
     }
   }
-  for (const i of validateFloor(snap.floor)){
+  for (const i of validateFloor(snap.floor, id => roomCeilingDropCm(snap, id))){
     const esc = (t: string) => t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), wallId = snap.floor.walls.find(w => new RegExp(`(^|[^\\w-])${esc(w.id)}(?![\\w-])`).test(i.message))?.id;
     const refs: AdviceRefs = wallId ? { wallIds: [wallId] } : {};
     if (i.code === 'WALL_TOO_SHORT') add('WALL_TOO_SHORT', { severity: 'BLOCKER', category: 'siguranta', refs, code: 'WALL_TOO_SHORT', vars: { min_m: 0.2 } });

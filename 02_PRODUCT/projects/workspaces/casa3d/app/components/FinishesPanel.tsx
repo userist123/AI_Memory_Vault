@@ -9,7 +9,10 @@ import { bandsOverlap, sideSpan, PLASTER_EFFECTS, defaultLayout, PATTERNS, SIDES
 import { formatMoney, formatArea, formatLength } from '@/core/format';
 import { normalizeHex } from '@/core/appearance';
 import { lightReport } from '@/core/light-design';
-import { roomWindows, curtainPlan, blindPlan, TEXTILE_RULES } from '@/core/textiles';
+import { roomWindows, curtainPlan, blindPlan, TEXTILE_RULES, RUG_EXTRA_MAX } from '@/core/textiles';
+import { frameRects, frameMoulding, FRAME_RULES } from '@/core/finishes';
+import { rugHints } from '@/core/decor';
+import type { RugChoice } from '@/core/types';
 import { kitchenOf, kitchenRun, kitchenQuantities, kitchenIssues } from '@/core/kitchen';
 import KitchenModules from './KitchenModules';
 import MaterialPicker from './MaterialPicker';
@@ -19,6 +22,20 @@ import { fixtureIssues, fixtureCount, FIXTURE_KINDS, FIXTURE_ANCHORS } from '@/c
 import { usePrefs } from '@/lib/prefs';
 
 const KINDS = Object.keys(FEATURE_CATEGORY) as WallFeatureKind[];
+
+/** Poziția unui covor: centrul, măsurat de la peretele de vest și de la cel de nord (m); „Centrează” șterge poziția (covorul revine în
+ *  mijlocul camerei, ca înainte). Câmpuri numerice, fără tragere (WCAG 2.5.7). `n` = numărul covorului, în numele butonului
+ *  (cu două covoare, cititorul de ecran deosebește butoanele; textul vizibil rămâne la începutul numelui, WCAG 2.5.3). */
+function RugPosition({ room, rug, n, onChange }: { room: Room; rug: RugChoice; n: number; onChange(q: RugChoice): void }){
+  const { t } = usePrefs(), r = room.rect, r2 = (v: number) => Math.round(v * 100) / 100, cx = rug.x ?? (r.x0 + r.x1) / 2, cz = rug.z ?? (r.z0 + r.z1) / 2;
+  const set = (k: 'x' | 'z', v: string) => { const n = Number(v); if (v === '' || !Number.isFinite(n)) return; const lo = k === 'x' ? r.x0 : r.z0, hi = k === 'x' ? r.x1 : r.z1;
+    onChange({ ...rug, x: r2(cx), z: r2(cz), [k]: r2(Math.max(lo, Math.min(hi, lo + n))) }); };
+  return <div className="grid2" data-rug-pos>
+    <label className="f"><span>{t('tex.rugX')}</span><input type="number" step={.05} value={r2(cx - r.x0)} onChange={e => set('x', e.target.value)} /></label>
+    <label className="f"><span>{t('tex.rugZ')}</span><input type="number" step={.05} value={r2(cz - r.z0)} onChange={e => set('z', e.target.value)} /></label>
+    {(rug.x != null || rug.z != null) && <button type="button" className="btn" style={{ alignSelf: 'end' }} aria-label={t('tex.rugCenterN', { n })} onClick={() => { const q: RugChoice = { ...rug }; delete q.x; delete q.z; onChange(q); }}>{t('tex.rugCenter')}</button>}
+  </div>;
+}
 
 /** Piesele unei băi, în ordinea în care le alege un designer; fiecare se schimbă cu orice produs real din grupa ei. */
 const BATH_GROUPS = ['wc', 'lavoar', 'dus', 'cada', 'bideu', 'dulapOglinda', 'caloriferBaie', 'coloanaBaie', 'boiler'];
@@ -110,6 +127,13 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSw
             <option value="">{t('fin.effect.none')}</option>{PLASTER_EFFECTS.map(x => <option key={x} value={x}>{t(`fin.effect.${x}`)}</option>)}</select></label>}
           {w.kind === 'slats' && <label className="f" style={{ alignSelf: 'end' }}><span><input type="checkbox" checked={w.vertical !== false} onChange={e => setFeature(i, { vertical: e.target.checked ? undefined : false })} /> {t('fin.slatsVertical')}</span></label>}
         </div>
+        {/* boiseria: numărul de casete (gol = calculat din lungime), marginea și distanța; sub ele câte casete ies și câtă baghetă */}
+        {w.kind === 'frames' && (() => { const fr = w.frames ?? {}, rects = frameRects(fl, room, w), mo = frameMoulding(rects), setFr = (p: Partial<NonNullable<WallFeature['frames']>>) => { const q: any = { ...fr, ...p }; for (const k of Object.keys(p)) if ((p as any)[k] === undefined) delete q[k]; setFeature(i, { frames: Object.keys(q).length ? q : undefined }); };
+          return <><div className="grid2">
+            <label className="f"><span>{t('fin.frames.count')}</span><input type="number" min={1} max={FRAME_RULES.countMax} step={1} value={fr.count ?? ''} placeholder={String(rects.length)} onChange={e => setFr({ count: e.target.value === '' ? undefined : Math.max(1, Math.min(FRAME_RULES.countMax, Math.round(Number(e.target.value) || 1))) })} /></label>
+            <label className="f"><span>{t('fin.frames.margin')}</span><input type="number" min={0} max={FRAME_RULES.marginMaxM} step={.05} value={fr.marginM ?? ''} placeholder={String(FRAME_RULES.marginM)} onChange={e => setFr({ marginM: e.target.value === '' ? undefined : r2(Math.max(0, Math.min(FRAME_RULES.marginMaxM, Number(e.target.value) || 0))) })} /></label>
+            <label className="f"><span>{t('fin.frames.gap')}</span><input type="number" min={0} max={FRAME_RULES.gapMaxM} step={.05} value={fr.gapM ?? ''} placeholder={String(FRAME_RULES.gapM)} onChange={e => setFr({ gapM: e.target.value === '' ? undefined : r2(Math.max(0, Math.min(FRAME_RULES.gapMaxM, Number(e.target.value) || 0))) })} /></label>
+          </div><div className="prov" data-frames={rects.length}>{t('fin.frames.auto', { n: rects.length, ml: formatLength(mo.ml, units, lang) })}</div></>; })()}
       </div>; })}</div>
       {features.length < 24 && <button className="btn" onClick={() => onFinish({ wallFeatures: [...features, { side: freeSide ?? 'N', kind: 'wallpaper', material: firstOf('wallpaper'), ...(freeSide ? {} : { fromM: Math.min(fl.ceilingHeight - .3, 1.2) }) }] })}>{t('fin.addFeature')}</button>}
       {bandsOverlap(features, fl.ceilingHeight) && <div className="issue WARNING">{t('fin.bandsOverlap')}</div>}
@@ -220,9 +244,18 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSw
           {bp && <div className="prov">{t('tex.blindPlan', { n: bp.count, cover: formatLength(bp.coverM, units, lang) })}</div>}
         </div>; })}
       <div className="grid2">
-        <label className="f"><span>{t('tex.rug')}</span><MaterialPicker cur={cur} value={f.rug?.material || ''} options={by('rug')} none={t('fin.none')} onChange={v => onFinish({ rug: v ? { material: v, ...(f.rug?.rotate ? { rotate: true } : {}) } : null })} /></label>
-        {f.rug && <label className="f"><span>{t('tex.rugRotate')}</span><input type="checkbox" checked={!!f.rug.rotate} onChange={e => onFinish({ rug: { material: f.rug!.material, ...(e.target.checked ? { rotate: true } : {}) } })} /></label>}
+        <label className="f"><span>{t('tex.rug')}</span><MaterialPicker cur={cur} value={f.rug?.material || ''} options={by('rug')} none={t('fin.none')} onChange={v => onFinish({ rug: v ? { ...(f.rug || {}), material: v } : null })} /></label>
+        {f.rug && <label className="f"><span>{t('tex.rugRotate')}</span><input type="checkbox" checked={!!f.rug.rotate} onChange={e => { const q: RugChoice = { ...f.rug! }; if (e.target.checked) q.rotate = true; else delete q.rotate; onFinish({ rug: q }); }} /></label>}
       </div>
+      {f.rug && <RugPosition room={room} rug={f.rug} n={1} onChange={q => onFinish({ rug: q })} />}
+      {rugHints(snap, cat, mc, room, f).map((h, k) => <div key={k} className="issue WARNING">{t(h.key)}</div>)}
+      {/* covoarele în plus (al doilea covor, sub masă): fiecare cu produsul, rotirea și poziția lui */}
+      {(f.rugs ?? []).map((rc, i) => { const set = (q: RugChoice | null) => { const all = [...(f.rugs ?? [])]; if (q) all[i] = q; else all.splice(i, 1); onFinish({ rugs: all.length ? all : undefined }); };
+        return <div key={i} className="fin-row" data-rug-extra={i + 2}><div className="grid2">
+          <label className="f"><span>{t('tex.rugN', { n: i + 2 })}</span><MaterialPicker cur={cur} value={rc.material} options={by('rug')} onChange={v => { if (v) set({ ...rc, material: v }); }} /></label>
+          <label className="f"><span>{t('tex.rugRotate')}</span><input type="checkbox" checked={!!rc.rotate} onChange={e => { const q: RugChoice = { ...rc }; if (e.target.checked) q.rotate = true; else delete q.rotate; set(q); }} /></label>
+        </div><RugPosition room={room} rug={rc} n={i + 2} onChange={set} /><button type="button" className="btn" aria-label={t('tex.rugRemoveN', { n: i + 2 })} onClick={() => set(null)}>{t('tex.rugRemove')}</button></div>; })}
+      {by('rug').length > 0 && (f.rugs?.length ?? 0) < RUG_EXTRA_MAX && <button type="button" className="btn" onClick={() => { const r = room.rect; onFinish({ rugs: [...(f.rugs ?? []), { material: by('rug')[0]!.id, x: r2((r.x0 + r.x1) / 2), z: r2(r.z0 + (r.z1 - r.z0) * .3) }] }); }}>{t('tex.rugAdd')}</button>}
     </fieldset>
   </div>);
 }
