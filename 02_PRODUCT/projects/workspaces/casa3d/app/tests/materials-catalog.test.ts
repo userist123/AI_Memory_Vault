@@ -9,7 +9,7 @@ const mc = materials as unknown as MaterialsCatalog;
 test('id-uri unice, prețuri pozitive, surse https, ambalaj coerent', () => {
   const ids = mc.materials.map(m => m.id); assert.equal(new Set(ids).size, ids.length);
   for (const m of mc.materials){ assert.ok(m.unitPrice > 0, m.id); assert.ok(['m2', 'ml', 'L', 'kg', 'buc'].includes(m.unit), m.id);
-    if (m.sourceUrl) assert.match(m.sourceUrl, /^https:\/\/(www\.)?(dedeman\.ro|ikea\.com|jysk\.ro|mobexpert\.ro)\//, m.id);
+    if (m.sourceUrl) assert.match(m.sourceUrl, /^https:\/\/(www\.)?(dedeman\.ro|ikea\.com|jysk\.ro|mobexpert\.ro|hornbach\.ro)\//, m.id);
     if (m.pack){ assert.ok(m.pack.size > 0, m.id); if (m.pack.price != null) assert.ok(Math.abs(m.pack.price - m.pack.size * m.unitPrice) / m.pack.price < .06, `${m.id}: ${m.pack.price} vs ${m.pack.size} × ${m.unitPrice}`); }
     const s = m.specs || {}; if (s.cctK != null) assert.equal(typeof s.cctK, 'number', m.id); if (s.color) assert.match(s.color, /^#[0-9a-f]{6}$/, m.id);
     if (s.sizeCm) assert.ok(s.sizeCm.length === 2 && s.sizeCm.every(x => x > 0), m.id); }

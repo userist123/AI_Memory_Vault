@@ -49,7 +49,7 @@ async function seedCatalog(q: Query){
 async function seedOutbound(q: Query){
   // retaileri (unul pentru fiecare furnizor) + linkuri directe (fără afiliere în modul de testare) + istoricul prețurilor;
   // fiecare pas adaugă doar ce lipsește, ca pornirile repetate să nu dubleze nimic.
-  const c = catalogSeed as any, m = materialsSeed as any, slug = (s: string) => s === 'IKEA' ? 'ikea-ro' : 'dedeman';
+  const c = catalogSeed as any, m = materialsSeed as any, slug = (s: string) => c.suppliers.find((x: any) => x.name === s)?.id ?? (s === 'IKEA' ? 'ikea-ro' : 'dedeman');
   const names: Record<string, string> = { 'ikea-ro': 'IKEA România' };
   for (const s of c.suppliers) await q('insert into retailers(slug, name, website) values($1,$2,$3) on conflict do nothing', [s.id, names[s.id] ?? s.name, s.website]);
   const linked = new Set((await q("select target_kind || ':' || target_id as k from offer_links")).rows.map((r: any) => r.k));
