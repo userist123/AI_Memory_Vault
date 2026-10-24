@@ -22,10 +22,12 @@ document_status: active
 > (`memory/executive.py` `MAX_COUNCIL_MEMORY_RESULTS = 5`; `routing/agent_router.py` from
 > `04_CONFIG/agent_router.json` `defaults`), `max_skills_per_agent` (`agent_router.py`, per
 > agent `max_skills`) and `max_graph_hops` (`agent_router.py`, `defaults`). One primary agent
-> holds by construction (the router returns a single `primary`). **Not enforced**:
-> `max_council_agents` (a route can carry 1 primary + up to 2 support agents + a verifier = 4;
-> the router never reads `max_support_agents`), `MAX_TOTAL_SELECTED_SKILLS` and the two token
-> caps. The council gate `memory/council_budget_controller.py` picks a tier
+> holds by construction (the router returns a single `primary`). Since 2026-10-24 (owner
+> decision) `agent_router.py` `_council_support` also enforces `max_council_agents` (primary +
+> support + verifier <= 3, support <= `max_support_agents`) and `max_total_selected_skills` (4;
+> support agents share what the primary leaves), from `04_CONFIG/agent_router.json`, tested by
+> `20_TESTS/test_agent_router_council_limits.py`. **Not enforced**: the two token caps, which
+> stay documented until code measures specialist output. The council gate `memory/council_budget_controller.py` picks a tier
 > (NONE / LIGHT / STANDARD / HIGH_RISK) and reads none of these values.
 
 ## Purpose
