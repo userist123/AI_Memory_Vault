@@ -494,6 +494,24 @@
       "reason": "Plain markdown README documenting the knowledge area; it is not a memory note and therefore intentionally has no note frontmatter."
     },
     {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-a1-2.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent coordination checkpoint (protocol 00_GOVERNANCE/coordination/tasks/README.md), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-a1-roadmap.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent coordination checkpoint (protocol 00_GOVERNANCE/coordination/tasks/README.md), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/PLAN_A1_2.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Casa3D implementation plan for phase A1.2, a plain markdown product document; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
       "path": "00_GOVERNANCE/coordination/tasks/README.md",
       "kind": "no_frontmatter",
       "category": "plain_document",

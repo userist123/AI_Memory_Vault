@@ -7,11 +7,14 @@ export type Mod = boolean | 'any';
 /** `key` = `KeyboardEvent.key`; o literă se compară fără majuscule. `ctrlOrMeta` = Ctrl pe Windows/Linux, ⌘ pe mac. */
 export interface Shortcut { key: string; ctrlOrMeta?: Mod; shift?: Mod; alt?: Mod }
 export type CommandDomain = 'global' | 'editor';
-export type CommandGroup = 'edit' | 'tools' | 'nav';
+/** `context` = comandă doar de meniu contextual (fără tastă, nu apare în ajutor) */
+export type CommandGroup = 'edit' | 'tools' | 'nav' | 'context';
 export interface CommandDef {
   id: string;
   /** cheia i18n a etichetei */
   label: string;
+  /** eticheta scurtă din meniul contextual (lipsă = `label`) */
+  menuLabel?: string;
   group: CommandGroup;
   shortcuts: Shortcut[];
   domain: CommandDomain;
@@ -33,14 +36,21 @@ const ARROWS = ['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'];
 export const COMMANDS: CommandDef[] = [
   { id: 'undo', label: 'help.undo', group: 'edit', domain: 'editor', helpKeys: 'help.undoKeys', shortcuts: [{ key: 'z', ctrlOrMeta: true, alt: 'any' }] },
   { id: 'redo', label: 'help.redo', group: 'edit', domain: 'editor', helpKeys: 'help.redoKeys', shortcuts: [{ key: 'y', ctrlOrMeta: true, shift: 'any', alt: 'any' }, { key: 'z', ctrlOrMeta: true, shift: true, alt: 'any' }] },
-  { id: 'delete', label: 'help.delete', group: 'edit', domain: 'editor', helpKeys: 'help.deleteKeys', shortcuts: [{ key: 'Delete', ...ANY }, { key: 'Backspace', ...ANY }] },
-  { id: 'rotate', label: 'help.rotate', group: 'edit', domain: 'editor', shortcuts: [{ key: 'r', shift: 'any' }] },
-  { id: 'duplicate', label: 'help.duplicate', group: 'edit', domain: 'editor', helpKeys: 'help.duplicateKeys', shortcuts: [{ key: 'd', ctrlOrMeta: true, shift: 'any', alt: 'any' }] },
+  { id: 'delete', label: 'help.delete', menuLabel: 'ctx.delete', group: 'edit', domain: 'editor', helpKeys: 'help.deleteKeys', shortcuts: [{ key: 'Delete', ...ANY }, { key: 'Backspace', ...ANY }] },
+  { id: 'rotate', label: 'help.rotate', menuLabel: 'ctx.rotate', group: 'edit', domain: 'editor', shortcuts: [{ key: 'r', shift: 'any' }] },
+  { id: 'duplicate', label: 'help.duplicate', menuLabel: 'ctx.duplicate', group: 'edit', domain: 'editor', helpKeys: 'help.duplicateKeys', shortcuts: [{ key: 'd', ctrlOrMeta: true, shift: 'any', alt: 'any' }] },
   { id: 'nudge', label: 'help.nudge', group: 'edit', domain: 'editor', helpKeys: 'help.arrowKeys', shortcuts: ARROWS.map(key => ({ key })) },
   { id: 'nudge.big', label: 'help.nudgeBig', group: 'edit', domain: 'editor', helpKeys: 'help.shiftArrowKeys', shortcuts: ARROWS.map(key => ({ key, shift: true })) },
   { id: 'escape', label: 'help.escape', group: 'nav', domain: 'editor', shortcuts: [{ key: 'Escape', ...ANY }] },
   { id: 'help', label: 'help.toggle', group: 'nav', domain: 'editor', shortcuts: [{ key: '?', ...ANY }] },
   { id: 'palette', label: 'cmdk.open', group: 'nav', domain: 'global', dispatch: false, shortcuts: [{ key: 'k', ctrlOrMeta: true }] },
+  // F e prinsă de plan (PlanView keyDown), nu de dispecerul editorului
+  { id: 'frame', label: 'help.frame', menuLabel: 'ctx.frame', group: 'nav', domain: 'editor', dispatch: false, shortcuts: [{ key: 'f' }] },
+  { id: 'wall.length', label: 'ctx.editLength', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
+  { id: 'view3d', label: 'hud.frame3d', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
+  { id: 'room.furnish', label: 'hud.autoFurnish', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
+  { id: 'room.split', label: 'hud.splitRoom', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
+  { id: 'column.shape', label: 'ctx.columnShape', group: 'context', domain: 'editor', dispatch: false, shortcuts: [] },
   ...TOOLS.map((tk): CommandDef => ({ id: `tool.${tk}`, label: `tool.${tk}`, group: 'tools', domain: 'editor', tool: tk, shortcuts: [{ key: TOOL_KEYS[tk] }] }))
 ];
 
@@ -72,13 +82,23 @@ export const toolShortcut = (tk: Tool): Shortcut => ({ key: TOOL_KEYS[tk] });
 /** Hint-ul din paletă: prima scurtătură a comenzii, formatată. */
 export const commandHint = (id: string, o: { mac: boolean }) => { const s = commandById(id)?.shortcuts[0]; return s ? formatShortcut(s, o) : undefined; };
 
+/** Ce comenzi arată meniul contextual (clic dreapta, Shift+F10) pentru selecția de tipul `kind`; „șterge” e mereu ultima. */
+export type ContextKind = 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'opening' | 'niche' | 'wall_item' | 'annotation' | 'floor_zone';
+const CONTEXT: Record<ContextKind, string[]> = {
+  wall: ['wall.length', 'frame', 'delete'], placement: ['rotate', 'duplicate', 'view3d', 'frame', 'delete'],
+  room: ['room.furnish', 'room.split', 'frame', 'delete'], column: ['rotate', 'column.shape', 'frame', 'delete'],
+  stair: ['rotate', 'frame', 'delete'], beam: ['frame', 'delete'], glass_wall: ['frame', 'delete'], opening: ['frame', 'delete'],
+  niche: ['frame', 'delete'], wall_item: ['frame', 'delete'], annotation: ['frame', 'delete'], floor_zone: ['frame', 'delete']
+};
+export const contextCommands = (kind: ContextKind): string[] => CONTEXT[kind];
+
 /** Un rând din ajutor: `keysKey` (cheie i18n) are prioritate față de `keys` (text literal); `label` primește {small}/{big}. */
 export interface HelpRow { keys: string; keysKey?: string; label: string; section: 'edit' | 'draw' | 'tools' }
 /** Rândurile dialogului `?` pe secțiuni: editare (ordinea veche, rotița, Alt+trage, paleta), desenare precisă (lungimea tastată, Shift), unelte. */
 export function helpRows(o: { mac: boolean }): HelpRow[] {
   const row = (c: CommandDef): HelpRow => ({ keys: c.shortcuts.map(s => formatShortcut(s, o)).join(' / '), keysKey: c.helpKeys, label: c.label, section: c.group === 'tools' ? 'tools' : 'edit' });
   const edit = COMMANDS.filter(c => c.group === 'edit').map(row), by = (id: string) => row(commandById(id)!);
-  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom', section: 'edit' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan', section: 'edit' }, { keys: 'F', label: 'help.frame', section: 'edit' }, by('help'), by('palette'),
+  return [...edit, by('escape'), { keys: '', keysKey: 'help.wheelKeys', label: 'help.zoom', section: 'edit' }, { keys: '', keysKey: 'help.altDragKeys', label: 'help.pan', section: 'edit' }, by('frame'), by('help'), by('palette'),
     { keys: '', keysKey: 'help.typeLengthKeys', label: 'help.typeLength', section: 'draw' }, { keys: '', keysKey: 'help.shiftDrawKeys', label: 'help.shiftDraw', section: 'draw' },
     ...COMMANDS.filter(c => c.group === 'tools').map(row)];
 }
