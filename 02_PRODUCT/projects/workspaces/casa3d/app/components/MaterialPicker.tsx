@@ -32,9 +32,10 @@ export default function MaterialPicker({ value, options, onChange, none, cur, la
   const sel = options.find(m => m.id === value), unit = (u: string) => u === 'm2' ? 'm²' : u === 'buc' ? t('fin.unit.pc') : u;
   const shown = useMemo(() => { const s = q.trim().toLowerCase(); return s ? options.filter(m => `${m.name} ${m.supplier}`.toLowerCase().includes(s)) : options; }, [q, options]);
   const pick = (v: string) => { onChange(v); setOpen(false); setQ(''); };
-  // titlul scurt (până la prima virgulă); când două produse ar avea același titlu (caseta Megadoor 140 / 160 / 180 cm), numele întreg
+  // titlul scurt (până la prima virgulă); când două produse ar avea același titlu (caseta Megadoor 140 / 160 / 180 cm), întâi ce le
+  // deosebește (restul numelui), apoi titlul comun: pe mostra îngustă rămâne vizibilă diferența
   const dup = useMemo(() => { const n = new Map<string, number>(); for (const m of options){ const k = m.name.split(',')[0]!; n.set(k, (n.get(k) ?? 0) + 1); } return n; }, [options]);
-  const title = (m: Material) => { const k = m.name.split(',')[0]!; return (dup.get(k) ?? 0) > 1 ? m.name : k; };
+  const title = (m: Material) => { const [k, ...rest] = m.name.split(','); return (dup.get(k!) ?? 0) > 1 && rest.length ? `${rest.join(',').trim()} · ${k}` : k!; };
   return (<div className={`mpick ${open ? 'open' : ''}`}>
     <button type="button" className="mpick-cur" aria-expanded={open} aria-controls={lid} aria-label={label} onClick={() => setOpen(o => !o)}>
       <i className="sw" style={swatchStyle(sel)} />
