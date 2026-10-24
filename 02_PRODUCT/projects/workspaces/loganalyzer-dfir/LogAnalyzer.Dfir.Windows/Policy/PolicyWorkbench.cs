@@ -10,8 +10,10 @@ public sealed record OpenedPolicy(PolicyDocument Policy, string LibraryPath, IRe
 
 /// <summary>
 /// What the application uses to work with owner policies: open (native or imported), register, validate, dry-run, approve,
-/// plan, apply, roll back. Every step is done as the Windows account running the process — there is no typed operator or
-/// approver name — so approving needs a different account with access to the same store (spec: no self-approval).
+/// plan, apply, roll back. Every step is done as the signed-in application account (or, with no sign-in, the Windows account
+/// running the process) — there is no typed operator or approver name — so approving needs a different account than the
+/// registrar, and applying a different one than the approver (spec: no self-approval; security audit #2). Approve, apply
+/// and roll back also need an administrator session (core gate in PolicyStore / PolicyExecutor).
 /// Imported policies are written to the library as native YAML; that exact text is what the SHA-256 binds.
 /// </summary>
 public sealed class PolicyWorkbench
@@ -26,12 +28,16 @@ public sealed class PolicyWorkbench
     public PolicyWorkbench(string? root = null, IEnumerable<ISettingProvider>? providers = null, Func<string>? identity = null)
     {
         Root = root ?? DefaultRoot;
-        _identity = identity ?? (() => { using var id = WindowsIdentity.GetCurrent(); return id.Name; });
+        // The signed-in application account when there is one (so a card-signed operator and an administrator on the same
+        // Windows session are different people for approve/apply), otherwise the Windows account running the process.
+        _identity = identity ?? (() => LogAnalyzer.Dfir.Auth.OperatorIdentity.SignedInAccount ?? CurrentWindowsAccount());
         Store = new PolicyStore(Path.Combine(Root, "store.json"));
         Executor = new PolicyExecutor(providers ?? WindowsSettingProviders.All(), EvidenceDir);
     }
 
-    public static string DefaultRoot => Path.GetDirectoryName(PolicyStore.DefaultPath)!;
+    private static string CurrentWindowsAccount() { using var id = WindowsIdentity.GetCurrent(); return id.Name; }
+
+    public static string DefaultRoot =>Path.GetDirectoryName(PolicyStore.DefaultPath)!;
 
     public string Operator => _identity();
 
@@ -89,7 +95,7 @@ public sealed class PolicyWorkbench
     public PolicyRecord Approve(PolicyDocument p, string reason) => Store.Approve(p, Operator, reason);
     public PolicyPlan Plan(PolicyDocument p) => Executor.Plan(p);
     public ExecutionRecord Apply(PolicyDocument p, PolicyPlan plan, string confirmedPlanSha256) => Executor.Apply(p, plan, Store, Operator, confirmedPlanSha256);
-    public ExecutionRecord Rollback(PolicyDocument p, string executionId) => Executor.Rollback(p, executionId, Operator);
+    public ExecutionRecord Rollback(PolicyDocument p, string executionId) => Executor.Rollback(p, executionId, Operator, Store);
     public PolicyRecord Retire(PolicyDocument p, string reason) => Store.Retire(p, Operator, reason);
 
     public string ComplianceDir => Path.Combine(EvidenceDir, "compliance");

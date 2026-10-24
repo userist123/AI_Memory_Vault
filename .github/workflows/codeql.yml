@@ -1,5 +1,10 @@
-# CodeQL is intentionally scoped to languages actually present in this repository.
-# C# (LogAnalyzer) needs a Windows build and has its own path-filtered workflow: codeql-csharp.yml.
+# CodeQL is intentionally scoped to languages actually present in this repository: GitHub Actions workflows,
+# Python, and JavaScript/TypeScript (jarvis_web; imported/untrusted material is excluded by
+# .github/codeql/javascript-config.yml). C# (LogAnalyzer) needs a Windows build and has its own workflow:
+# codeql-csharp.yml.
+# The "Code scanning results / CodeQL" check on a pull request compares the PR's analyses with the
+# configurations present on main. Every language analyzed on main must therefore also be analyzed on every
+# pull request, otherwise the check ends "neutral" (configurations not found) instead of pass/fail.
 name: "CodeQL Advanced"
 
 on:
@@ -37,6 +42,9 @@ jobs:
           build-mode: none
         - language: python
           build-mode: none
+        - language: javascript-typescript
+          build-mode: none
+          config-file: ./.github/codeql/javascript-config.yml
 
     steps:
     - name: Checkout repository
@@ -50,6 +58,7 @@ jobs:
       with:
         languages: ${{ matrix.language }}
         build-mode: ${{ matrix.build-mode }}
+        config-file: ${{ matrix.config-file }}
 
     - name: Perform CodeQL Analysis
       uses: github/codeql-action/analyze@2892aa5e19bbd11bc0cff5427e3b750a04d9e3c2 # v4.38.2

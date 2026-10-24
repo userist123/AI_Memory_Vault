@@ -173,14 +173,44 @@ def test_the_shim_warning_still_applies(state_text):
     assert "shim" in state_text.lower()
 
 
-def test_every_referenced_path_exists(state_text):
-    """A state card pointing at files that moved is worse than none."""
-    referenced = set(re.findall(r"`([0-9A-Za-z_./]+\.(?:py|toml|md))`", state_text))
-    missing = [
+# Directories a bare `pkg/module.py` citation in VAULT_STATE.md is relative to. Resolution is exact
+# against these roots only: a same-named file elsewhere in the tree does not make a citation true.
+_CITATION_ROOTS = (
+    REPO,
+    REPO / "03_IMPLEMENTATION" / "packages",
+    REPO / "03_IMPLEMENTATION" / "packages" / "memory",  # `storage/path_resolver.py`
+    REPO / "02_PRODUCT" / "projects" / "workspaces" / "jarvis_web",  # `jarvis_v2/supervisor.py`
+)
+# Citations the card itself describes as historical or moved; each needs a reason.
+_HISTORICAL_CITATIONS = frozenset({
+    # section on test pollution: the file "moved from" here to 20_TESTS/fixtures/.
+    "01_ARCHITECTURE/knowledge/test_00000000.md",
+})
+
+
+def unresolved_citations(text: str, roots=_CITATION_ROOTS, allow=_HISTORICAL_CITATIONS) -> list[str]:
+    referenced = set(re.findall(r"`([0-9A-Za-z_./]+\.(?:py|toml|md))`", text))
+    return sorted(
         r for r in referenced
-        if "/" in r and not (REPO / r).exists() and not list(REPO.rglob(Path(r).name))
-    ]
+        if "/" in r and r not in allow and not any((root / r).exists() for root in roots)
+    )
+
+
+def test_every_referenced_path_exists(state_text):
+    """A state card pointing at files that moved is worse than none. No basename fallback."""
+    missing = unresolved_citations(state_text)
     assert not missing, f"VAULT_STATE.md references paths that do not exist: {missing}"
+
+
+def test_homonym_in_the_wrong_directory_does_not_satisfy_a_citation(tmp_path):
+    (tmp_path / "elsewhere").mkdir()
+    (tmp_path / "elsewhere" / "policy.py").write_text("", encoding="utf-8")
+    (tmp_path / "pkg").mkdir()
+    (tmp_path / "pkg" / "real.py").write_text("", encoding="utf-8")
+    text = "`lifecycle/policy.py` and `pkg/real.py` and `old/moved.md`"
+    assert unresolved_citations(text, roots=(tmp_path,), allow=frozenset({"old/moved.md"})) == [
+        "lifecycle/policy.py"
+    ]
 
 
 def _production_importers(package: str, allowed_dirs: tuple[str, ...]) -> list[str]:
@@ -283,3 +313,9 @@ def test_research_only_modules_stay_unwired():
     # Inside the research modules, nothing may import the interference gate either.
     for path in (REPO / "03_IMPLEMENTATION" / "packages" / "lifecycle" / "validation").glob("book_to_memory_*.py"):
         assert "interference_gate" not in path.read_text(encoding="utf-8", errors="ignore")
+
+
+def test_memory_v6_cli_defaults_do_not_point_at_the_retired_tree():
+    """`index-repo --output` once defaulted to 99_SYSTEM/spatial_index.json, a retired root."""
+    cli = REPO / "03_IMPLEMENTATION" / "packages" / "interfaces" / "memory_v6_cli.py"
+    assert "99_SYSTEM" not in cli.read_text(encoding="utf-8")

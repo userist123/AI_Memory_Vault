@@ -83,13 +83,44 @@ namespace LogAnalyzer.UI.Tests
                 exportService.ExportPlasoCsv(tempCsv, events, new List<ForensicArtifact>(), new List<RegistryArtifact>());
                 Assert.True(File.Exists(tempCsv));
                 string content = File.ReadAllText(tempCsv);
-                Assert.Contains("Date,Time,Timezone,MACB,Source,SourceType,Type,User,Host,Short,Desc,Version,Filename,Inode,Notes,Format,Extra", content);
+                Assert.StartsWith("message,datetime,timestamp_desc,", content);
                 Assert.Contains("Successful Logon Event ID 4624", content);
             }
             finally
             {
                 if (File.Exists(tempCsv)) File.Delete(tempCsv);
             }
+        }
+
+        [Fact]
+        public void SuperTimelineExport_TimesketchRow_HasIsoUtcAndEscapesCommasQuotesNewlines()
+        {
+            var events = new List<ParsedEvent>
+            {
+                new ParsedEvent
+                {
+                    TimeCreated = new DateTime(2026, 3, 4, 5, 6, 7, DateTimeKind.Utc),
+                    ProviderName = "P", EventId = 1, MachineName = "H",
+                    Message = "a, \"b\"\nline2"
+                }
+            };
+            string tempCsv = Path.Combine(Path.GetTempPath(), $"ts_{Guid.NewGuid():N}.csv");
+            try
+            {
+                new SuperTimelineExportService().ExportPlasoCsv(tempCsv, events, new List<ForensicArtifact>(), new List<RegistryArtifact>());
+                string content = File.ReadAllText(tempCsv);
+                Assert.StartsWith(SuperTimelineExportService.Header + "\r\n", content);
+                Assert.Contains("\"a, \"\"b\"\"\nline2\",2026-03-04T05:06:07.000000+00:00,Event Recorded,", content);
+            }
+            finally { if (File.Exists(tempCsv)) File.Delete(tempCsv); }
+        }
+
+        [Fact]
+        public void SuperTimelineExport_LocalTimeIsConvertedToUtc()
+        {
+            var local = new DateTime(2026, 6, 1, 12, 0, 0, DateTimeKind.Local);
+            Assert.Equal(local.ToUniversalTime().ToString("yyyy-MM-dd'T'HH:mm:ss.ffffff'+00:00'"),
+                SuperTimelineExportService.ToIsoUtc(local));
         }
     }
 }

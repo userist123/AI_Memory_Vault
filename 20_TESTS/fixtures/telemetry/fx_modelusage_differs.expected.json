@@ -1,0 +1,23 @@
+{
+ "fields": {
+  "incomplete": false,
+  "usage_complete": true,
+  "usage_mismatch": true,
+  "usage_mismatch_fields": [
+   "cache_read_input_tokens",
+   "cache_creation_input_tokens"
+  ],
+  "total_tokens": 170
+ },
+ "absent": [
+  "residual_negative"
+ ],
+ "rows": {
+  "unattributed_residual|claude-sonnet-5-5": {
+   "input_tokens": 0,
+   "cache_read_input_tokens": 50,
+   "cache_creation_input_tokens": 2,
+   "output_tokens": 0
+  }
+ }
+}

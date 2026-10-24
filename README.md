@@ -28,7 +28,7 @@ Un substrat de memorie externă persistentă pentru agenți AI: memorie cu prove
 |---|---|---|
 | Vault canonic | memorie în Markdown, cunoștințe, competențe, agenți, proceduri, proveniență | **IMPLEMENTAT** |
 | Memory V6 | extragere, propuneri, detectare de conflicte, ciclu de viață, consolidare, întreținerea regăsirii | **IMPLEMENTAT / ACTIV** |
-| Nucleul cognitiv | recall, activare, memorie de lucru, spațiu global de lucru, grafuri, activare prin difuzie, primitive de planificare | **IMPLEMENTAT ȘI TESTAT — NECONECTAT LA CĂUTAREA DIN PRODUCȚIE** (activarea prin difuzie e în spatele unui flag oprit; `executive` și spațiul global de lucru nu au niciun consumator în producție) |
+| Nucleul cognitiv | recall, activare, memorie de lucru, spațiu global de lucru, grafuri, activare prin difuzie, primitive de planificare | **IMPLEMENTAT, TESTAT ȘI CONECTAT LA CĂUTARE ÎN SPATELE UNOR FLAG-URI, OPRIT implicit** (`search()` le apelează doar cu flag-ul activ; activarea prin difuzie e tot în spatele unui flag oprit; `executive` și `reasoning` doar adnotează urma căutării; memoria de lucru și spațiul global de lucru reordonează și taie rezultatele când sunt activate) |
 | Memory Controller | granița de stocare, politica de citire/scriere, pachete de context, dezvăluire progresivă, control pe ciclu de viață | **IMPLEMENTAT** |
 | Execuția modelelor | abstracții de furnizor fake, local/Ollama, OpenAI, rutare pe niveluri, telemetrie de consum | **IMPLEMENTAT** |
 | Ingestia de competențe externe | descoperire, proveniență, clasificare, validare, promovare controlată | **IMPLEMENTAT** |
@@ -163,7 +163,7 @@ Aceste interfețe de execuție sunt arhitectura-țintă. Unele există ca primit
 | `02_PRODUCT/` | contextul și continuitatea proiectelor |
 | `03_IMPLEMENTATION/` | `03_IMPLEMENTATION/packages/` — nucleu cognitiv, memory controller, regăsire, polymarket, furnizori |
 | `04_CONFIG/` · `05_DATA/` | configurație și artefacte de date |
-| `04_MEMORY/` | înregistrări canonice de memorie |
+| `04_MEMORY/` | rădăcina de scriere legacy (`storage/path_resolver.py`): creată la rulare, în `.gitignore`, absentă dintr-un checkout curat |
 | `06_INBOX/` | material brut și importat, înainte de recenzie |
 | `07_EVALUATION/` | audituri, experimente, benchmark-uri, MVE, dovezi forensice, capturi de date |
 | `08_OBSERVABILITY/` · `09_SECURITY/` | telemetrie și suprafețe de securitate |
@@ -548,7 +548,7 @@ sursă cu licență verificabilă → text + hash → extragere cu citate verifi
         → întrebări înghețate înainte de extragere → control ↔ tratament → rezultat
 ```
 
-Primul capitol trecut prin tot lanțul: OpenStax *Psychology 2e*, capitolul 8 („Memory"), licență CC BY 4.0. Întrebările sunt cele de recapitulare ale autorilor cărții, cu cheia lor de răspuns, înghețate într-un commit anterior extragerii. Capcanele au răspunsul absent din capitol și nicio variantă care să indice ieșirea. Un cititor-model primește doar notele recuperate de vault și trebuie să răspundă cu o variantă **plus o propoziție citată textual dintr-o notă**, sau `INSUFFICIENT`.
+Primul capitol trecut prin tot lanțul: OpenStax *Psychology 2e*, capitolul 8 („Memory"), licență CC BY 4.0. Întrebările sunt cele de recapitulare ale autorilor cărții, cu cheia lor de răspuns, înghețate în commitul `0bb6791a5`, același cu extragerea și rezultatele (ordinea dintre ele nu se poate verifica din istoric). Capcanele au răspunsul absent din capitol și nicio variantă care să indice ieșirea. Un cititor-model primește doar notele recuperate de vault și trebuie să răspundă cu o variantă **plus o propoziție citată textual dintr-o notă**, sau `INSUFFICIENT`.
 
 | Braț | Întrebări susținute | Abțineri la capcane | Răspunsuri greșite |
 |---|---|---|---|
@@ -614,10 +614,11 @@ Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce 
 
 | Ce verifică | Workflow-uri |
 |---|---|
-| suita completă de teste și structura depozitului | `r001-enforcement.yml`, `memory-v6-tests.yml`, `security-boundary.yml`, `context-token-economy-gate.yml`, `ai-security-update-watch.yml` |
+| suita completă de teste și structura depozitului | `r001-enforcement.yml`, `memory-v6-tests.yml`, `security-boundary.yml`, `context-token-economy-gate.yml`, `ai-security-update-watch.yml`, `prompt-master-eval.yml` |
 | igiena depozitului: căi absolute, fișiere nepermise în rădăcină, date personale | `repository-hygiene.yml` |
 | regăsirea pe benchmark-ul reținut, înghețat prin SHA-256 | `r009b-heldout-benchmark.yml` |
 | LogAnalyzer DFIR (.NET): build, teste și pachetele win-x64 ale edițiilor | `loganalyzer-dfir-build.yml` |
+| Casa3D: typecheck, Vitest și build Next.js pentru aplicație și twin-core | `casa3d-build.yml` |
 | Audit de dependențe (npm, .NET) pe fiecare manifest; pică la CRITICAL | `dependency-audit.yml` |
 | materialul importat, scanat pentru instrucțiuni injectate | `untrusted-content-guard.yml` |
 | aprobarea owner-ului pentru PR-uri (mediu GitHub; efectiv abia după ce owner-ul îi setează revieweri) | `owner-approval-gate.yml` |
@@ -626,7 +627,7 @@ Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce 
 | notele ACTIVE, verificate față de amprentele înregistrate | `active-note-integrity.yml` |
 | zonele scutite de gitleaks, scanate pentru secrete de mare încredere | `exempt-area-secret-scan.yml` |
 | căile de scriere ale runtime-ului | `write-path-audit.yml` |
-| securitate: secrete, analiză statică | `secret-scan.yml`, `codeql.yml`, `codeql-csharp.yml`, `fortify.yml`, `apisec-scan.yml` |
+| securitate: secrete, analiză statică | `secret-scan.yml`, `codeql.yml`, `codeql-csharp.yml`, `codeql-config-cleanup.yml`, `fortify.yml`, `apisec-scan.yml` |
 | cercetare: Planning Influence V3 și fazele Polymarket | `planning-influence-mve.yml`, `polymarket-phase*.yml` (câte unul pe fază) |
 | cercetare: experiment H1 de recall asociativ | `h1-associative-experiment.yml` |
 | rulări programate și ingestie | `memory-consolidation.yml` (consolidarea de noapte), `import-external-skills.yml`, `jarvis-command-center.yml` |
@@ -705,7 +706,7 @@ APOI
  ├─ legarea notelor izolate: majoritatea memoriei nu are nicio sinapsă
  ├─ de la carte la procedură și poartă, pentru cărțile de metodă
  ├─ pereche susținută de model: agent real, căutare, acțiune, rezultat verificat
- ├─ nucleul cognitiv conectat la calea reală și măsurat — sau retras dacă nu ajută
+ ├─ nucleul cognitiv (conectat în spatele unor flag-uri oprite) pornit implicit doar dacă măsurarea arată că ajută — sau retras
  │
  ▼
 MAI TÂRZIU

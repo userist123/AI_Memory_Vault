@@ -8,6 +8,8 @@ namespace LogAnalyzer.Core.Interfaces
     {
         void InitializeDatabase();
         void ClearDatabase();
+        /// <summary>Compacts the database when it is mostly empty pages; returns the bytes given back (0 when nothing was done).</summary>
+        long CompactIfWasteful() => 0;
         void SaveEvents(IEnumerable<ParsedEvent> events);
         void SaveRegistryArtifacts(IEnumerable<RegistryArtifact> artifacts);
         void SaveTimeline(IEnumerable<TimelineItem> timelineItems);

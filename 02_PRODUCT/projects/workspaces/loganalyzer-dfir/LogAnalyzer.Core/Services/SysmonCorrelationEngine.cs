@@ -41,7 +41,7 @@ namespace LogAnalyzer.Core.Services
                     {
                         findings.Add(new SysmonFinding
                         {
-                            DetectionType = "Mascare Proces (Masquerading / OriginalFileName Mismatch)",
+                            DetectionType = "Deghizare de proces (Masquerading / OriginalFileName Mismatch)",
                             Severity = "Critical",
                             SysmonEventId = 1,
                             ProcessName = "svchost.exe (Fake)",

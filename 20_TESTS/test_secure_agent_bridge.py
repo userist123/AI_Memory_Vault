@@ -4,6 +4,8 @@ import time
 
 import pytest
 
+pytestmark = pytest.mark.mock_transport
+
 from agent_bridge.crypto import (
     Ed25519Signer,
     X25519Envelope,

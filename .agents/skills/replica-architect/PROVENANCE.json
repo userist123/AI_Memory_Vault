@@ -1,0 +1,15 @@
+{
+ "skill_id": "skill:replica-skill:replica-architect",
+ "source_url": "https://github.com/Jakeschincariol/replica-skill",
+ "source_commit": "77c9436fb3d18c3d58169efb8caf4fe906b0dc51",
+ "source_path": "replica-architect",
+ "license_file": "LICENSE",
+ "license": "MIT",
+ "retrieved": "2026-10-11",
+ "retrieved_by": "claude-code cloud session; shallow git clone; nothing executed",
+ "extraction_status": "CANDIDATE_PENDING_OWNER_REVIEW",
+ "files": {
+  "SKILL.md": "411c429c9b3e6858d85e0c57b1378b235dd622fd565e9cc0af677ab7ccc2992f",
+  "architecture.md": "3e45dc5523f00448d78853ece7d0c5240c1a35f2300c0d9511001b24d9e61460"
+ }
+}

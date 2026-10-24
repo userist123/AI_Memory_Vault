@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Auth;
 using System.Text.Json;
 using System.Text.Json.Nodes;
 using LogAnalyzer.Dfir.IO;
@@ -36,13 +37,14 @@ public sealed partial class CaseWorkspace
     /// </summary>
     public OutputRecord RecordOutput(string relPath, string producer, string version, IEnumerable<string>? dependsOnEvidenceIds = null)
     {
+        ThrowIfReadOnly();
         var rel = RelativeInside(relPath);
         var full = FullPath(rel);
         if (!File.Exists(full)) throw new FileNotFoundException("Output file not found in the case.", full);
         var sha = Hashing.Sha256File(full);
         var size = new FileInfo(full).Length;
         var deps = (dependsOnEvidenceIds ?? []).Where(d => !string.IsNullOrWhiteSpace(d)).Distinct(StringComparer.Ordinal).OrderBy(d => d, StringComparer.Ordinal).ToList();
-        Custody(new CustodyEntry(DateTimeOffset.UtcNow, Environment.UserName, OutputAction, "", "", rel, sha, producer, version, "",
+        Custody(new CustodyEntry(DateTimeOffset.UtcNow, OperatorIdentity.Who, OutputAction, "", "", rel, sha, producer, version, "",
             deps.Count > 0 ? DependsPrefix + string.Join(";", deps) : ""));
         return new OutputRecord(rel, sha, size, producer, version, deps);
     }
@@ -50,7 +52,7 @@ public sealed partial class CaseWorkspace
     /// <summary>Writes <paramref name="relManifestPath"/> listing <paramref name="relFiles"/> with SHA-256 and the current chain heads, then registers it as an output.</summary>
     public OutputManifest WriteManifest(string relManifestPath, IEnumerable<string> relFiles, string producer, string version)
     {
-        var m = new OutputManifest { CaseId = Info.CaseId, CreatedUtc = DateTimeOffset.UtcNow, Producer = producer, Version = version, Anchor = Anchor() };
+        var m = new OutputManifest { CaseId = Info.CaseId, CreatedUtc = DateTimeOffset.UtcNow, Producer = producer, Version = version, Anchor = Anchor(), ScopeNote = ScopeNote ?? "" };
         foreach (var f in relFiles)
         {
             var rel = RelativeInside(f);
@@ -182,11 +184,8 @@ public sealed partial class CaseWorkspace
 
     private EvidenceCheck CheckEvidence(EvidenceItem e, CancellationToken ct)
     {
-        string full;
-        try { full = FullPath(e.StoredPath); }
-        catch (ArgumentException) { return new(e.EvidenceId, e.StoredPath, e.Sha256, null, EvidenceCheckStatus.Missing, "cale invalidă"); }
-        if (!full.StartsWith(Root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
-            return new(e.EvidenceId, e.StoredPath, e.Sha256, null, EvidenceCheckStatus.Missing, "calea probei iese din folderul cazului");
+        if (!TryFullPath(e.StoredPath, out var full))
+            return new(e.EvidenceId, e.StoredPath, e.Sha256, null, EvidenceCheckStatus.Missing, OutsideCaseReason);
         if (!File.Exists(full)) return new(e.EvidenceId, e.StoredPath, e.Sha256, null, EvidenceCheckStatus.Missing);
         if (e.Sha256.Length == 0) return new(e.EvidenceId, e.StoredPath, e.Sha256, null, EvidenceCheckStatus.NoBaseline, "indexul nu are SHA-256 de referință");
         try
@@ -201,9 +200,8 @@ public sealed partial class CaseWorkspace
 
     private OutputCheck CheckOutput(OutputRecord o, CancellationToken ct)
     {
-        var full = FullPath(o.Path);
         var deps = o.DependsOn;
-        if (!File.Exists(full)) return new(o.Path, o.Producer, o.Sha256, null, OutputCheckStatus.Missing, deps);
+        if (!TryFullPath(o.Path, out var full) || !File.Exists(full)) return new(o.Path, o.Producer, o.Sha256, null, OutputCheckStatus.Missing, deps);
         try
         {
             var actual = Hashing.Sha256File(full, ct);
@@ -257,7 +255,7 @@ public sealed partial class CaseWorkspace
                 audit = audit with
                 {
                     Status = audit.Entries == 0 ? ChainStatus.Legacy : ChainStatus.Valid, LegacyLines = audit.LegacyLines + old,
-                    Message = audit.Entries == 0 ? HashChain.LegacyMessage : $"{audit.Entries} intrări verificate; {old} linii anterioare: {HashChain.LegacyMessage}",
+                    Message = audit.Entries == 0 ? HashChain.LegacyMessage : $"{LogAnalyzer.Dfir.Language.RoText.Count(audit.Entries, "intrare", "intrări")} verificate; {old} linii anterioare: {HashChain.LegacyMessage}",
                 };
             }
         }

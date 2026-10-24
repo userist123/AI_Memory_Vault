@@ -1,0 +1,125 @@
+name: Casa3D Build & Test
+
+# Casa3D lives in the vault as a workspace (02_PRODUCT/projects/workspaces/casa3d), like LogAnalyzer.
+# Every push that touches it runs the same gates the owner runs locally: typecheck, Vitest, next build.
+# No model call: ANTHROPIC_API_KEY is never set here, so the rules engine path is what gets tested.
+
+on:
+  push:
+    branches:
+      - main
+      - 'codex/casa3d-**'
+      - 'casa3d/**'
+    paths:
+      - '02_PRODUCT/projects/workspaces/casa3d/**'
+      - '.github/workflows/casa3d-build.yml'
+  pull_request:
+    paths:
+      - '02_PRODUCT/projects/workspaces/casa3d/**'
+      - '.github/workflows/casa3d-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  twin-core:
+    # Framework-free Digital Twin core (packages/twin-core): typecheck + Vitest on both OSes.
+    name: twin-core typecheck + test (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    timeout-minutes: 15
+    defaults:
+      run:
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/packages/twin-core
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: 02_PRODUCT/projects/workspaces/casa3d/packages/twin-core/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm run typecheck
+      - run: npm test
+
+  app:
+    # The Next.js application (app/), once the faza4 source is imported. hashFiles() is not allowed in a
+    # job-level `if`, so the first step detects app/package.json and every later step is gated on it.
+    name: app typecheck, test, build (${{ matrix.os }})
+    defaults:
+      run:
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Windows is in the matrix on purpose: the case-insensitive file system is where the
+        # viewer3d.js / Viewer3D.tsx clash was found (VERIFICATION_2026-10-10.md).
+        os: [ubuntu-latest, windows-latest]
+    timeout-minutes: 30  # build + Vitest + the browser checks (axe, slides) on ubuntu
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - name: Is the application imported yet?
+        id: app
+        shell: bash
+        run: |
+          if [ -f app/package.json ]; then echo "present=true" >> "$GITHUB_OUTPUT"; else echo "present=false" >> "$GITHUB_OUTPUT"; echo "app/package.json not present: the faza4 source is not imported yet, nothing to build."; fi
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        if: steps.app.outputs.present == 'true'
+        with:
+          node-version: 22
+      - name: Install (lockfile, no lifecycle scripts)
+        if: steps.app.outputs.present == 'true'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
+        run: npm ci --ignore-scripts
+      - name: Typecheck
+        if: steps.app.outputs.present == 'true'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
+        run: npm run typecheck
+      - name: Unit tests
+        if: steps.app.outputs.present == 'true'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
+        run: npm test
+      - name: Production build
+        if: steps.app.outputs.present == 'true'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
+        run: npm run build
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+      - name: Verification gates (F4, F5)
+        if: steps.app.outputs.present == 'true'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
+        shell: bash
+        run: |
+          if [ -f scripts/verify-f4.mjs ]; then node scripts/verify-f4.mjs; fi
+          if [ -f scripts/verify-f5.mjs ]; then node scripts/verify-f5.mjs; fi
+      - name: Accessibility (axe, WCAG 2.2 AA) and slide layout checks
+        # UI/UX P3-17: the real pages in headless Chrome (preinstalled on ubuntu runners), no Playwright:
+        # scripts/check-a11y.mjs fails on any axe violation not listed with a reason in scripts/a11y-known.json,
+        # scripts/check-slides.mjs fails when presentation content leaves its 16:9 slide or overflows at 390 px.
+        if: steps.app.outputs.present == 'true' && runner.os == 'Linux'
+        working-directory: 02_PRODUCT/projects/workspaces/casa3d/app
+        shell: bash
+        env:
+          NEXT_TELEMETRY_DISABLED: '1'
+          PGLITE_DIR: ${{ runner.temp }}/casa3d-pglite
+        run: |
+          node scripts/run-local.mjs start -p 3399 > "$RUNNER_TEMP/casa3d-server.log" 2>&1 &
+          for i in $(seq 1 90); do curl -sf -o /dev/null http://127.0.0.1:3399/ && break; sleep 1; done
+          status=0
+          node scripts/check-a11y.mjs http://127.0.0.1:3399 || status=1
+          node scripts/check-slides.mjs http://127.0.0.1:3399 || status=1
+          if [ "$status" != 0 ]; then echo "--- server log ---"; tail -n 80 "$RUNNER_TEMP/casa3d-server.log"; fi
+          exit $status

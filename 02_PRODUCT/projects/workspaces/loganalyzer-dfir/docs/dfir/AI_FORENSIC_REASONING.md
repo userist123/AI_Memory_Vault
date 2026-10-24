@@ -33,6 +33,24 @@ O afirmație este respinsă, cu motivul păstrat, dacă:
 O afirmație acceptată rămâne **UNPROVEN**. Este afișată cu citările ei (EvidenceId, locator, SHA-256), ca analistul să o
 verifice. Nimic din ce scrie modelul nu modifică constatările sau clasificările.
 
+## Validarea la nivel de caz (WP4, R22.5)
+
+După verificările de mai sus, fiecare afirmație trece prin `AiClaimValidator` (determinist, fără model-judecător, fără rețea) față de cazul
+curent. Validatorul confirmă **valori**, niciodată **sensul**: citările trebuie să existe în acest caz, iar valorile afirmate (timp, cale, hash,
+adresă și port, nume de fișier, utilizator, gazdă, tehnică MITRE, valoare între ghilimele, numere) trebuie să apară exact în **evenimentul sau
+constatarea citată** (nu doar undeva în fișierul de probă); numerele „N evenimente / constatări / probe” sunt recalculate din caz, iar „de N ori”
+sau „N conexiuni” trebuie să apară în elementul citat. Stări:
+**VALORI_CONFIRMATE** (afișat „valori confirmate”; mereu cu avertismentul „afirmație a modelului, nu constatare; s-au confirmat doar valorile
+citate, nu sensul”), **PARTIAL** (citările există dar nu e nimic comparabil, sau afirmația citează doar fișierul, nu evenimentul, sau conține o
+negație ori o concluzie globală: „sensul nu poate fi verificat automat”), **NESUSTINUT** (fără citare, citare inexistentă / din alt caz / la
+propriul răspuns AI, valoare care nu se potrivește, instrucțiune adresată asistentului; apare tăiată, cu motivul, în lista respinselor,
+niciodată ca constatare; dacă citatul există în probă, motivul spune asta), **NEVERIFICABIL** (validatorul nu a putut rula, validarea e
+învechită sau fișierul de validare nu mai corespunde hash-ului din custodie: „fișierul de validare a fost modificat”).
+Rezultatul este `Analysis/ai_validation.json` (în custodie, în auditul înlănțuit, legat de hash-urile probelor: la orice schimbare a
+probelor devine „învechit”). Ecranul și raportul PDF afișează doar rezultatul validării; `verification.json` aplică aceeași legare și nu
+poartă niciodată VALORI_CONFIRMATE lângă un verdict REJECTED sau CONTRADICTED. Limită: o propoziție cu toate valorile corecte poate fi totuși
+falsă (subiect, verb sau relație inversată); de aceea starea de sus nu spune „sustinut”, ci „valori confirmate”.
+
 ## Transportul
 
 - Model local servit de Ollama (`/api/chat`, `stream: false`, `think: false`, `temperature: 0`, `seed: 0`).
@@ -42,12 +60,12 @@ verifice. Nimic din ce scrie modelul nu modifică constatările sau clasificări
 - Se înregistrează în caz: `Analysis/ai_catalog.txt`, `ai_raw_response.json`, `ai_reasoning.json`. În jurnalul de audit apar
   modelul, digest-ul lui (din `/api/tags`), SHA-256 al promptului și al răspunsului.
 
-## Ce s-a încercat pe cazul real (NanAgent, 2026-10-06)
+## Ce s-a încercat pe cazul real (VendorAgent, 2026-10-06)
 
 Ollama 0.35.1, modele locale `qwen3:30b-a3b` (digest `ad815644918f…`) și `qwen2.5:7b-instruct` (digest `845dbda0ea48…`).
 
-1. **Doar citări obligatorii.** `qwen2.5:7b` a scris că „NanAgent32.exe a fost asociat cu execuția SETUP.EXE” și a citat doar
-   elementul Prefetch al lui SETUP.EXE, care nu menționează NanAgent32.exe. Regula 3 o respinge.
+1. **Doar citări obligatorii.** `qwen2.5:7b` a scris că „VendorAgent32.exe a fost asociat cu execuția SETUP.EXE” și a citat doar
+   elementul Prefetch al lui SETUP.EXE, care nu menționează VendorAgent32.exe. Regula 3 o respinge.
    Același model a citat până la 40 de elemente pe afirmație, de unde regula 2.
 2. **Un al doilea model ca verificator** (descompunere în afirmații atomice, fiecare căutată în elementele citate).
    Rezultatul a fost neîncrezător în ambele direcții:

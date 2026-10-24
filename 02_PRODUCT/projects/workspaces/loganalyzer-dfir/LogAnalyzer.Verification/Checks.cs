@@ -38,7 +38,7 @@ public static class Checks
         }
         if (rejected.Count > 0) return CheckResult.Fail(CheckIds.Provenance, StandardState.Rejected, "Proveniența nu e valabilă: " + string.Join("; ", rejected.Distinct()) + ".", rejected.Concat(unknown));
         if (unknown.Count > 0) return CheckResult.Unknown(CheckIds.Provenance, "Proveniența nu poate fi confirmată complet: " + string.Join("; ", unknown.Distinct()) + ".", unknown);
-        return CheckResult.Pass(CheckIds.Provenance, $"{refs.Select(r => r.Ref.EvidenceId).Distinct().Count()} probe: în index, cu hash intact și cu parser înregistrat.");
+        return CheckResult.Pass(CheckIds.Provenance, $"{LogAnalyzer.Dfir.Language.RoText.Count(refs.Select(r => r.Ref.EvidenceId).Distinct().Count(), "probă", "probe")}: în index, cu hash intact și cu parser înregistrat.");
     }
 
     private static bool ParserRecorded(Finding f, EvidenceItem e, CaseFacts facts, out string note)
@@ -47,7 +47,7 @@ public static class Checks
         if (e.Parser.Length > 0) return true;
         if (facts.ParsersByEvidence?.ContainsKey(e.EvidenceId) == true) return true;
         // The live snapshot is read by the pipeline's own analyzer, not by a registered parser; the finding's provenance names that producer.
-        if (e.SourceType == "live_snapshot" && f.Provenance is { Producer.Length: > 0 }) return true;
+        if (e.SourceType is "live_snapshot" or "airgap_facts" && f.Provenance is { Producer.Length: > 0 }) return true;
         if (facts.ParsersByEvidence is null)
         {
             if (f.Provenance is { Parsers.Count: > 0 }) return true;   // parsing.json is absent (old case); the finding's own provenance names a parser
@@ -123,7 +123,7 @@ public static class Checks
         {
             if (r.Rows.Count == 0)
             {
-                if (r.Item?.SourceType == "live_snapshot") continue;   // the snapshot time is the finding's own time; checked against the acquisition above
+                if (r.Item?.SourceType is "live_snapshot" or "airgap_facts") continue;   // the snapshot time is the finding's own time; checked against the acquisition above
                 if (facts.Timeline is null) unknown.Add($"timeline.csv lipsește: ora din proba {r.Ref.EvidenceId} ({r.Ref.Locator}) nu poate fi verificată");
                 else if (r.Item is not null) unknown.Add($"rândul {r.Ref.EvidenceId} {r.Ref.Locator} nu e în timeline.csv");
                 continue;
@@ -138,8 +138,22 @@ public static class Checks
             {
                 var lo = first - o.WindowTolerance; var hi = last + o.WindowTolerance;
                 if (!known.Any(x => (lo is null || x.Time >= lo) && (hi is null || x.Time <= hi)))
-                    bad.Add($"evenimentul {r.Ref.EvidenceId} {r.Ref.Locator} ({Ids(known.Select(x => T(x.Time!.Value)).Distinct())}) iese din fereastra revendicată [{(first is { } fv ? T(fv) : "…")} – {(last is { } lv ? T(lv) : "…")}]");
+                    bad.Add($"evenimentul {r.Ref.EvidenceId} {r.Ref.Locator} ({Ids(known.Select(x => T(x.Time!.Value)).Distinct())}) iese din intervalul declarat [{(first is { } fv ? T(fv) : "…")} – {(last is { } lv ? T(lv) : "…")}]");
             }
+        }
+        if (bad.Count > 0 && facts.ManipulatedWindows.Count > 0)
+        {
+            // WP15b: where the system clock was moved the timestamps cannot order events, so an ordering violation is not a contradiction there: UNKNOWN, with the window named.
+            var times = new List<DateTimeOffset>();
+            if (first is { } f0) times.Add(f0);
+            if (last is { } l0) times.Add(last.Value);
+            times.AddRange(refs.SelectMany(r => r.Rows).Where(x => x.Time is not null).Select(x => x.Time!.Value));
+            var lo = times.Count > 0 ? times.Min() : (DateTimeOffset?)null; var hi = times.Count > 0 ? times.Max() : (DateTimeOffset?)null;
+            var hit = lo is { } a0 && hi is { } b0 ? facts.ManipulatedWindows.Where(w => a0 <= w.End && b0 >= w.Start).ToList() : [];
+            if (hit.Count > 0)
+                return CheckResult.Unknown(CheckIds.Temporal,
+                    "Ceasul sistemului nu este de încredere în intervalul acestei constatări (" + string.Join("; ", hit.Take(3).Select(w => $"{w.Kind} {T(w.Start)} – {T(w.End)}: {w.Description}")) +
+                    "): ordinea în timp nu se poate judeca; ar fi fost semnalat: " + string.Join("; ", bad.Distinct()) + ".", bad.Concat(unknown));
         }
         if (bad.Count > 0) return CheckResult.Fail(CheckIds.Temporal, StandardState.Contradicted, "Încălcări de ordine în timp: " + string.Join("; ", bad.Distinct()) + ".", bad.Concat(unknown));
         if (first is null && last is null && !anyEventTime && f.SemanticType == SemanticType.Execution)
@@ -195,7 +209,7 @@ public static class Checks
         // Caveats the producing rule itself recorded (e.g. "taskul este dezactivat") are shown, not scored: they qualify the claim, they do not refute it.
         var declared = f.ContradictingEvidence.Count == 0 ? "" : $" Rezerve declarate de regula producătoare ({f.ContradictingEvidence.Count}), păstrate ca atare și nepunctate: {string.Join(" | ", f.ContradictingEvidence)}.";
         return (new CheckResult(CheckIds.Contradictions, CheckOutcome.Pass, null,
-            $"Nicio contradicție găsită de {ran.Count} reguli ({Ids(ran)}); lipsa unei contradicții nu dovedește că nu există.{note}{declared}", f.ContradictingEvidence.ToList()), found);
+            $"Nicio contradicție găsită de {LogAnalyzer.Dfir.Language.RoText.Count(ran.Count, "regulă", "reguli")} ({Ids(ran)}); lipsa unei contradicții nu dovedește că nu există.{note}{declared}", f.ContradictingEvidence.ToList()), found);
     }
 
     // ---- R10.7 MISSING EVIDENCE ----
@@ -206,6 +220,6 @@ public static class Checks
         if (facts.Timeline is not null && f.HasSemanticType && absent.Count > 0)
             missing.Add($"Artefacte așteptate pentru o afirmație de tip {f.SemanticType.ToSpec()}, absente din caz: {Ids(absent)}.");
         missing = missing.Distinct(StringComparer.Ordinal).ToList();
-        return (CheckResult.Info(CheckIds.MissingEvidence, missing.Count == 0 ? "Nicio probă lipsă cunoscută; asta nu înseamnă că nu mai există probe relevante." : $"{missing.Count} elemente de probă lipsă (nu schimbă singure verdictul).", missing), missing);
+        return (CheckResult.Info(CheckIds.MissingEvidence, missing.Count == 0 ? "Nicio probă lipsă cunoscută; asta nu înseamnă că nu mai există probe relevante." : $"{LogAnalyzer.Dfir.Language.RoText.Count(missing.Count, "element de probă lipsă", "elemente de probă lipsă")} (nu schimbă singure verdictul).", missing), missing);
     }
 }
