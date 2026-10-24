@@ -15,7 +15,7 @@ import { colorName } from './budget-excluded';
 import { wallWorks } from './renovation';
 import { zonesOfRoom, zoneAreaIn, zonesAreaIn } from './floor-zones';
 import { isSizedRadiator, radiatorSize, hvacSize } from './tech-geometry';
-import { ceilingZonesOfRoom, ceilingZoneQty } from './ceiling-zones';
+import { ceilingZonesOfRoom, ceilingZoneQty, ceilingZoneHidden } from './ceiling-zones';
 import { railingHeight, railingKind, railingLength } from './railings';
 const RADIATOR_RO: Record<string, string> = { panel: 'panou', towel: 'port-prosop', decorative: 'decorativ' };
 /** Pereții în documente: punctele cardinale în română, nu literele interne N/S/E/W. */
@@ -161,7 +161,7 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
     const cm = M(c.cornice); if (cm){ items.push(materialLine(cm, `${room.id}:cornice`, room.id, `Cornișă · ${room.name}`, g.perimeter, mc.verifiedAt)); addLabor(room.id, 'manopera-cornisa', g.perimeter); }
     // tavane false pe zonă (casete): placa de jos + banda laterală (+ raftul scafei), manopera de tavan fals și de scafă, LED pe contur în ml;
     // fețele casetei se vopsesc (banda laterală și scafa se adaugă la vopsea, placa de jos ia locul tavanului de deasupra)
-    for (const z of ceilingZonesOfRoom(fl, room.id)){ const q = ceilingZoneQty(fl, z, c.dropCm); if (!q) continue;
+    for (const z of ceilingZonesOfRoom(fl, room.id)){ if (ceilingZoneHidden(z, c.dropCm)) continue; const q = ceilingZoneQty(fl, z, c.dropCm); if (!q) continue;
       const nm = z.label ? ` „${z.label}”` : '', where = `${room.name} (${q.w} × ${q.d} m, coborât ${z.dropCm} cm${z.coveCm ? `, scafă ${z.coveCm} cm` : ''})`, gk = mc.materials.find(m => m.category === 'plasterboard');
       if (gk){ items.push(materialLine(gk, `${room.id}:ceiling:czone:${z.id}`, room.id, `Tavan fals pe zonă${nm} gips-carton · ${where}: placă ${q.areaM2} m² + bandă laterală ${q.bandM2} m²${q.coveM2 > 0 ? ` + scafă ${q.coveM2} m²` : ''}`, q.boardM2, mc.verifiedAt)); addLabor(room.id, 'manopera-rigips-tavan', q.boardM2, `czone:${z.id}`); }
       else unknown.push(`Tavan fals pe zonă${nm} gips-carton ${q.boardM2} m² · ${where}: fără preț verificat`);

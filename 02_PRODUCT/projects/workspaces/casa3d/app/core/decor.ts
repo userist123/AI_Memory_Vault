@@ -9,7 +9,7 @@ import type { Catalog, Floor, FurniturePlacement, LightFixture, MaterialsCatalog
 import { defaultFinishes } from './boq';
 import { footprintOf } from './validate';
 import { backSide } from './fixtures';
-import { roomWindows, rugSize, rugRectAt, TEXTILE_RULES } from './textiles';
+import { roomWindows, rugSize, rugRectAt, rugCentred, TEXTILE_RULES } from './textiles';
 import { materialOf } from './finishes';
 import { kitchenOf } from './kitchen';
 import { floors } from './levels';
@@ -117,7 +117,7 @@ export function decorateSnapshot(snap: Snapshot, cat: Catalog, mc: MaterialsCata
  *  `tex.rugSofa` = nu mai trece pe sub picioarele din față ale canapelei; `tex.rugBed` = nu mai stă sub cele două treimi de jos ale
  *  patului. Covorul centrat (proiectele de până acum) nu primește sfaturi noi. */
 export function rugHints(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, room: Room, f: Pick<RoomFinishes, 'rug'>): { key: string; roomId: string }[] {
-  const c = f.rug; if (!c || (c.x == null && c.z == null)) return [];
+  const c = f.rug; if (!c || rugCentred(room, c)) return [];
   const m = materialOf(mc, c.material), s = m ? rugSize(room, m, c.rotate) : null; if (!s) return [];
   const rug = rugRect(room, s, c), pieces = snap.placements.filter(p => p.roomId === room.id).flatMap(p => { const fp = footprintOf(cat, p); return fp ? [{ p, fp }] : []; });
   const sofa = pieces.find(x => x.p.group === 'canapea'), bed = pieces.find(x => x.p.group === 'pat'), out: { key: string; roomId: string }[] = [];

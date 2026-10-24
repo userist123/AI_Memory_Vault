@@ -214,6 +214,8 @@ export function panelCount(lengthM: number, heightM: number, sizeCm: [number, nu
 export function ceilingOf(f: RoomFinishes){ const c = f.ceiling || { type: 'flat' as const };
   return { type: c.type, dropCm: c.type === 'flat' ? 0 : Math.max(5, Math.min(FINISH_RULES.maxDropCm, c.dropCm ?? 10)), coveCm: c.type === 'cove' ? Math.max(10, Math.min(FINISH_RULES.maxCoveCm, c.coveCm ?? 25)) : 0,
     led: c.type === 'cove' ? (c.led === undefined ? 'banda-led-hoff-3000k' : c.led) : null, cornice: c.cornice ?? null, spot: c.spot ?? null, spots: c.spot ? Math.max(0, Math.min(40, Math.round(c.spots ?? 4))) : 0 }; }
+/** Coborârea tavanului fals al camerei `roomId` (cm, 0 la tavan simplu), din finisajele proiectului. */
+export const roomCeilingDropCm = (snap: Pick<Snapshot, 'finishes'>, roomId: string): number => ceilingOf((snap.finishes?.[roomId] ?? {}) as RoomFinishes).dropCm;
 /** Înălțimea liberă a camerei sub tavanul fals. */
 export const clearHeight = (fl: Floor, f: RoomFinishes) => r2(fl.ceilingHeight - ceilingOf(f).dropCm / 100);
 
