@@ -57,8 +57,11 @@ export function floorLaborId(layout: FloorLayout, m: Material | undefined): stri
 // ---------- pereți ----------
 /** Ce categorie de material se potrivește fiecărui tip de placare. */
 export const FEATURE_CATEGORY: Record<WallFeatureKind, Material['category']> = { wallpaper: 'wallpaper', slats: 'wall_panel', plaster: 'decorative_plaster', brick: 'brick_cladding', stone: 'stone_cladding', tile: 'wall_tile',
-  paint: 'paint', panel: 'wall_panel', rail: 'moulding' };
-export const FEATURE_LABOR: Partial<Record<WallFeatureKind, string>> = { wallpaper: 'manopera-tapet', plaster: 'manopera-tencuiala-decorativa', tile: 'manopera-faianta', paint: 'manopera-zugravit', rail: 'manopera-bagheta' };
+  paint: 'paint', panel: 'wall_panel', rail: 'moulding', frames: 'moulding' };
+/** Placările care stau peste suprafața peretelui (bagheta, casetele boiseriei): nu acoperă vopseaua, nu se suprapun cu benzile
+ *  și nu scot faianța băii. */
+export const OVERLAY_KINDS: ReadonlySet<WallFeatureKind> = new Set<WallFeatureKind>(['rail', 'frames']);
+export const FEATURE_LABOR: Partial<Record<WallFeatureKind, string>> = { wallpaper: 'manopera-tapet', plaster: 'manopera-tencuiala-decorativa', tile: 'manopera-faianta', paint: 'manopera-zugravit', rail: 'manopera-bagheta', frames: 'manopera-bagheta' };
 /** Efectele de vopsea decorativă. `textured` = tencuiala structurată obișnuită (tariful existent); celelalte cer aplicator
  *  și mai multe straturi, deci au tarif propriu: până există un tarif cu sursă în catalog, manopera lor ajunge în „necunoscute”. */
 export const PLASTER_EFFECTS: PlasterEffect[] = ['venetian', 'concrete', 'microcement', 'travertine', 'silk', 'textured'];
@@ -80,12 +83,55 @@ export const isPartial = (w: Pick<WallFeature, 'alongFromM' | 'alongToM'>) => w.
 export function bandGeometry(fl: Floor, room: Room, w: WallFeature){ const [a, b] = bandOf(w, fl.ceilingHeight), along = isPartial(w) ? alongOf(w, sideSpan(room, w.side)) : undefined;
   const top = sideGeometry(fl, room, w.side, b, along), low = a > 0 ? sideGeometry(fl, room, w.side, a, along).netM2 : 0;
   return { lengthM: top.lengthM, fromM: a, toM: b, heightM: r2(b - a), netM2: r2(Math.max(0, top.netM2 - low)), along: along ?? null }; }
+// ---------- boiserie (casete din baghetă) ----------
+/** Casetele boiseriei: lățimea țintă a unei casete (numărul se calculează din lungime), marginea și distanța implicite, limitele
+ *  comune cu serverul (sanitizeFinishes). */
+export const FRAME_RULES = { targetWidthM: .8, marginM: .15, gapM: .1, minSideM: .1, countMax: 12, marginMaxM: .5, gapMaxM: .5 };
+/** Golurile de pe o latură (ușile de la pardoseală, ferestrele de la parapet), în coordonata de-a lungul laturii (m de la colțul x0/z0). */
+function sideHoles(fl: Floor, room: Room, side: WallFeature['side']): { a: number; b: number; y0: number; y1: number }[] {
+  const r = room.rect, horiz = side === 'N' || side === 'S', edge = { N: r.z0, S: r.z1, W: r.x0, E: r.x1 }[side], base = horiz ? r.x0 : r.z0, out: { a: number; b: number; y0: number; y1: number }[] = [];
+  for (const w of fl.walls){ if (w.status === 'demolish') continue; const h2 = Math.abs(w.a[1] - w.b[1]) < 1e-6, v2 = Math.abs(w.a[0] - w.b[0]) < 1e-6;
+    if (horiz ? !(h2 && Math.abs(w.a[1] - edge) < 1e-6) : !(v2 && Math.abs(w.a[0] - edge) < 1e-6)) continue;
+    const s0 = horiz ? w.a[0] : w.a[1], dir = Math.sign(horiz ? w.b[0] - w.a[0] : w.b[1] - w.a[1]);
+    for (const o of w.openings){ const p = s0 + dir * o.offset - base, q = s0 + dir * (o.offset + o.width) - base, door = o.kind === 'door', y0 = door ? 0 : o.sill ?? .9;
+      out.push({ a: Math.min(p, q), b: Math.max(p, q), y0, y1: door ? o.height ?? 2.1 : y0 + (o.height ?? 1.3) }); } }
+  return out;
+}
+/** Câte casete încap: din lungimea liberă (fără margini), cu lățimea țintă de 80 cm; cel puțin una, cel mult 12. */
+export function autoFrameCount(innerM: number, gapM: number = FRAME_RULES.gapM): number {
+  return Math.max(1, Math.min(FRAME_RULES.countMax, Math.round((innerM + gapM) / (FRAME_RULES.targetWidthM + gapM))));
+}
+/** Dreptunghiurile casetelor unei benzi `frames`: [de la, sus de la, până la, sus până la] (m; pe lungime de la colțul x0/z0, pe
+ *  înălțime de la pardoseală). Casetele egale umplu banda minus margini; o casetă care ar trece peste o ușă sau o fereastră nu se pune. */
+export function frameRects(fl: Floor, room: Room, w: WallFeature): [number, number, number, number][] {
+  if (w.kind !== 'frames') return [];
+  const [y0, y1] = bandOf(w, fl.ceilingHeight), [a, b] = alongOf(w, sideSpan(room, w.side)), m = w.frames?.marginM ?? FRAME_RULES.marginM, gap = w.frames?.gapM ?? FRAME_RULES.gapM;
+  const inner = b - a - 2 * m, hgt = y1 - y0 - 2 * m; if (inner < FRAME_RULES.minSideM - 1e-9 || hgt < FRAME_RULES.minSideM - 1e-9) return [];
+  let n = Math.max(1, Math.min(FRAME_RULES.countMax, Math.round(w.frames?.count ?? autoFrameCount(inner, gap))));
+  while (n > 1 && (inner - gap * (n - 1)) / n < FRAME_RULES.minSideM) n--;
+  const fw = (inner - gap * (n - 1)) / n, holes = sideHoles(fl, room, w.side), out: [number, number, number, number][] = [];
+  for (let k = 0; k < n; k++){ const u0 = a + m + k * (fw + gap), u1 = u0 + fw, v0 = y0 + m, v1 = y1 - m;
+    if (holes.some(h => Math.min(u1, h.b) - Math.max(u0, h.a) > .02 && Math.min(v1, h.y1) - Math.max(v0, h.y0) > .02)) continue;
+    out.push([r2(u0), r2(v0), r2(u1), r2(v1)]); }
+  return out;
+}
+/** Bagheta boiseriei: lungimea totală (ml, suma perimetrelor casetelor) și bucățile de comandat dintr-o baghetă de `pieceM`
+ *  (laturile se taie la 45°; resturile se refolosesc pentru laturile mai scurte, cea mai lungă latură întâi). */
+export function frameMoulding(rects: [number, number, number, number][], pieceM?: number): { ml: number; pieces: number | null } {
+  const sides = rects.flatMap(([u0, v0, u1, v1]) => [u1 - u0, u1 - u0, v1 - v0, v1 - v0]), ml = r2(sides.reduce((s, x) => s + x, 0));
+  if (!pieceM || !(pieceM > 0)) return { ml, pieces: null };
+  const bins: number[] = [];
+  for (const len of [...sides].sort((x, y) => y - x)){ let rest = len;
+    while (rest > pieceM + 1e-9){ bins.push(0); rest -= pieceM; }
+    const i = bins.findIndex(f => f >= rest - 1e-9); if (i >= 0) bins[i]! -= rest; else bins.push(pieceM - rest); }
+  return { ml, pieces: bins.length };
+}
 const spanOf = (w: WallFeature): [number, number] => [w.alongFromM ?? 0, w.alongToM ?? Infinity];
 const cross = (a: [number, number], b: [number, number]) => Math.min(a[1], b[1]) - Math.max(a[0], b[0]) > 1e-6;
 /** Benzile de pe aceeași latură nu au voie să se suprapună în elevație: pe înălțime ȘI pe lungime (bagheta poate sta pe granița
  *  dintre două benzi). Așa stau pe aceeași latură „riflaj 1,6–3,6 m” și „vopsea 0–1,6 m”. */
 export function bandsOverlap(features: WallFeature[], H: number): boolean {
-  for (const s of SIDES){ const bs = features.filter(w => w.side === s && w.kind !== 'rail');
+  for (const s of SIDES){ const bs = features.filter(w => w.side === s && !OVERLAY_KINDS.has(w.kind));
     for (let i = 0; i < bs.length; i++) for (let j = i + 1; j < bs.length; j++) if (cross(bandOf(bs[i]!, H), bandOf(bs[j]!, H)) && cross(spanOf(bs[i]!), spanOf(bs[j]!))) return true; }
   return false; }
 /** Adaugă o placare pe o porțiune: benzile existente de pe aceeași latură care o acoperă (pe înălțime și pe lungime) se taie în
@@ -93,7 +139,7 @@ export function bandsOverlap(features: WallFeature[], H: number): boolean {
 export function insertBand(features: WallFeature[], add: WallFeature, sideLen: number, H: number): WallFeature[] {
   H = Math.max(H, 10);   // aceeași convenție ca serverul (bandsOverlap pe 10 m): o bandă de deasupra unui tavan coborât se taie și ea
   const [a, b] = alongOf(add, sideLen), out: WallFeature[] = [];
-  for (const w of features){ if (w.side !== add.side || w.kind === 'rail' || add.kind === 'rail' || !cross(bandOf(w, H), bandOf(add, H))){ out.push(w); continue; }
+  for (const w of features){ if (w.side !== add.side || OVERLAY_KINDS.has(w.kind) || OVERLAY_KINDS.has(add.kind) || !cross(bandOf(w, H), bandOf(add, H))){ out.push(w); continue; }
     const [c, d] = alongOf(w, sideLen); if (!cross([c, d], [a, b])){ out.push(w); continue; }
     const piece = (x: number, y: number): WallFeature => { const q: WallFeature = { ...w }; delete q.alongFromM; delete q.alongToM; return x <= 1e-6 && y >= sideLen - 1e-6 ? q : { ...q, alongFromM: r2(x), alongToM: r2(y) }; };
     if (a - c >= .05) out.push(piece(c, a)); if (d - b >= .05) out.push(piece(b, d)); }
@@ -213,7 +259,11 @@ export function sanitizeFinishes(f: any): string | null {
       || (w.fromM !== undefined && w.heightM !== undefined && w.kind !== 'rail' && w.heightM <= w.fromM)
       // porțiunea pe lungime: 0–1000 m (cât coordonatele planului), „de la” înaintea lui „până la”; lamelele doar la riflaj, efectul doar la tencuială
       || !num(w.alongFromM, 0, 1000) || !num(w.alongToM, 0, 1000) || (w.alongFromM !== undefined && w.alongToM !== undefined && w.alongToM <= w.alongFromM)
-      || (w.vertical !== undefined && (typeof w.vertical !== 'boolean' || w.kind !== 'slats')) || (w.effect !== undefined && (!PLASTER_EFFECTS.includes(w.effect) || w.kind !== 'plaster'))) || bandsOverlap(wf, 10))) return 'Placările de pe pereți sunt invalide.';
+      || (w.vertical !== undefined && (typeof w.vertical !== 'boolean' || w.kind !== 'slats')) || (w.effect !== undefined && (!PLASTER_EFFECTS.includes(w.effect) || w.kind !== 'plaster'))
+      // casetele boiseriei: doar la `frames`; numărul 1–12 (întreg), marginea și distanța 0–50 cm
+      || (w.frames !== undefined && (w.kind !== 'frames' || !w.frames || typeof w.frames !== 'object' || Array.isArray(w.frames) || Object.keys(w.frames).some(k => !['count', 'marginM', 'gapM'].includes(k))
+        || (w.frames.count !== undefined && !(Number.isInteger(w.frames.count) && w.frames.count >= 1 && w.frames.count <= FRAME_RULES.countMax))
+        || !num(w.frames.marginM, 0, FRAME_RULES.marginMaxM) || !num(w.frames.gapM, 0, FRAME_RULES.gapMaxM)))) || bandsOverlap(wf, 10))) return 'Placările de pe pereți sunt invalide.';
     const c = rf.ceiling; if (c !== undefined && (c === null || typeof c !== 'object' || !['flat', 'drop', 'cove'].includes(c.type) || !num(c.dropCm, 0, FINISH_RULES.maxDropCm) || !num(c.coveCm, 0, FINISH_RULES.maxCoveCm) || !num(c.spots, 0, 40)
       || [c.led, c.cornice, c.spot].some(x => x != null && (typeof x !== 'string' || x.length > 80)))) return 'Tavanul este invalid.';
     const tx = sanitizeTextiles(rf) ?? sanitizeKitchen(rf.kitchen) ?? sanitizeBath(rf.bath) ?? sanitizeFixtures(rf.fixtures); if (tx) return tx; }
@@ -227,7 +277,7 @@ export function sanitizeFinishes(f: any): string | null {
 export const bathTiles = (f: RoomFinishes, roomType: string, room?: Pick<Room, 'rect'>): WallFeature[] => { if (roomType !== 'baie' || !f.wallTile) return [];
   const h = bathTileHeight(f), base = (side: WallFeature['side']): WallFeature => ({ side, kind: 'tile', material: f.wallTile!, ...(h !== undefined ? { heightM: h } : {}) });
   // contează doar placările care acoperă faianța pe înălțime: nu un brâu și nu o bandă care începe deasupra ei (vopsea de la 2,2 m)
-  return SIDES.flatMap(side => { const on = (f.wallFeatures || []).filter(w => w.side === side && w.kind !== 'rail' && (w.fromM ?? 0) < (h ?? Infinity) - 1e-6);
+  return SIDES.flatMap(side => { const on = (f.wallFeatures || []).filter(w => w.side === side && !OVERLAY_KINDS.has(w.kind) && (w.fromM ?? 0) < (h ?? Infinity) - 1e-6);
     if (!on.length) return [base(side)];
     if (!room || on.some(w => w.alongFromM === undefined && w.alongToM === undefined)) return [];
     const len = sideSpan(room, side), cut = on.map(w => alongOf(w, len)).sort((p, q) => p[0] - q[0]), out: WallFeature[] = []; let at = 0;
@@ -238,10 +288,11 @@ export const renderColor = (m: Material | undefined, fallback: string) => m?.spe
 export interface FloorVisual { kind: 'parquet' | 'tile'; pattern: FloorPattern; angle: 0 | 90; pieceL: number; pieceW: number; grout: number; groutColor: string; color: string; marble?: boolean }
 /** `along` = porțiunea pe lungime (m de la colțul x0/z0), null = toată latura; `vertical` = lamelele riflajului (false = orizontale). */
 export interface WallVisual { side: WallFeature['side']; kind: WallFeatureKind; color: string; fromM: number; heightM: number | null; sizeCm: [number, number] | null; marble: boolean;
-  along: [number, number] | null; vertical: boolean; effect: PlasterEffect | null }
+  along: [number, number] | null; vertical: boolean; effect: PlasterEffect | null;
+  /** doar la boiserie: casetele [de la, sus de la, până la, sus până la] și lățimea baghetei (m) */ frames?: [number, number, number, number][]; profile?: number }
 export interface CeilingVisual { type: 'flat' | 'drop' | 'cove'; drop: number; cove: number; led: string | null; cornice: [number, number] | null; spots: number }
 /** Ce trebuie să deseneze motorul 3D pentru finisajele unei camere: dimensiuni în metri, culori, modul de așezare. */
-export function roomVisual(mc: MaterialsCatalog, f: RoomFinishes, roomType = '', room?: Pick<Room, 'rect'>): { floor: FloorVisual | null; walls: WallVisual[]; ceiling: CeilingVisual } {
+export function roomVisual(mc: MaterialsCatalog, f: RoomFinishes, roomType = '', room?: Pick<Room, 'rect'>, fl?: Floor): { floor: FloorVisual | null; walls: WallVisual[]; ceiling: CeilingVisual } {
   const fm = materialOf(mc, f.floor), lay = layoutOf(f, fm), [L, W] = pieceSizeCm(fm), tile = fm?.category === 'floor_tile', c = ceilingOf(f);
   const led = materialOf(mc, c.led), cct = led?.specs?.cctK ?? 3000;
   return {
@@ -249,7 +300,9 @@ export function roomVisual(mc: MaterialsCatalog, f: RoomFinishes, roomType = '',
       groutColor: tile ? lay.groutColor || '#bdb8ae' : '#3a2a1c', color: renderColor(fm, tile ? '#e6e4df' : '#b88a5a'), ...(tile && /marm|marble|onyx|calacatta|carrara/i.test(fm.name) ? { marble: true } : {}) } : null,
     walls: [...(f.wallFeatures || []), ...bathTiles(f, roomType, room)].map(w => { const m = materialOf(mc, w.material);
       return { side: w.side, kind: w.kind, color: w.color || renderColor(m, w.kind === 'paint' || w.kind === 'rail' || w.kind === 'panel' ? '#f3f1ec' : '#d8d4cc'), fromM: w.kind === 'rail' ? (w.heightM ?? 1) : (w.fromM ?? 0), heightM: w.heightM ?? null, sizeCm: m?.specs?.sizeCm ?? null, marble: /marm|marble/i.test(m?.name || ''),
-        along: isPartial(w) ? [w.alongFromM ?? 0, w.alongToM ?? 1e3] : null, vertical: w.vertical !== false, effect: effectOf(w, m) }; }),
+        along: isPartial(w) ? [w.alongFromM ?? 0, w.alongToM ?? 1e3] : null, vertical: w.vertical !== false, effect: effectOf(w, m),
+        // boiseria: casetele gata calculate (fără cele peste goluri) și lățimea baghetei; casetele cer camera și nivelul
+        ...(w.kind === 'frames' ? { frames: fl && room ? frameRects(fl, room as Room, w) : [], profile: m?.specs?.sizeCm ? Math.min(.1, Math.max(.02, Math.min(m.specs.sizeCm[0], m.specs.sizeCm[1]) / 100)) : .04 } : {}) }; }),
     ceiling: { type: c.type, drop: c.dropCm / 100, cove: c.coveCm / 100, led: c.type === 'cove' && led ? (cct <= 3000 ? '#ffd29a' : cct <= 4000 ? '#fff1dc' : '#f4f7ff') : null,
       cornice: (() => { const m = materialOf(mc, c.cornice); return m ? (m.specs?.sizeCm ? [m.specs.sizeCm[0] / 100, m.specs.sizeCm[1] / 100] as [number, number] : [.1, .1] as [number, number]) : null; })(), spots: c.spots },
   };
