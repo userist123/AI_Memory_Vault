@@ -36,16 +36,21 @@ SPECS = [
 ]
 
 
-def _command(script: str) -> str:
-    # Resolve python at run time (python3 or python), run the hook by absolute path.
-    p = (SKILL_DIR / script).as_posix()
+def _command(script: str, project: bool = False) -> str:
+    # Resolve python at run time (python3 or python). Global install uses the hook's
+    # absolute path; a project install uses a ${CLAUDE_PROJECT_DIR}-relative path so the
+    # committed settings.json works in every checkout of the repo, on any machine.
+    if project:
+        p = "${CLAUDE_PROJECT_DIR:-.}/.claude/skills/agent-integrity-guard/" + script
+    else:
+        p = (SKILL_DIR / script).as_posix()
     return (f'for py in python3 python; do if "$py" -c "import sys" >/dev/null 2>&1; '
             f'then "$py" "{p}"; exit 0; fi; done; exit 0')
 
 
-def _entry(script: str, matcher: str) -> dict:
+def _entry(script: str, matcher: str, project: bool = False) -> dict:
     return {"matcher": matcher,
-            "hooks": [{"type": "command", "command": _command(script), "timeout": 10}]}
+            "hooks": [{"type": "command", "command": _command(script, project), "timeout": 10}]}
 
 
 def _owned(entry: dict) -> bool:
@@ -58,13 +63,13 @@ def load(path: Path) -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
-def merge(settings_path: Path, remove: bool = False) -> str:
+def merge(settings_path: Path, remove: bool = False, project: bool = False) -> str:
     settings = load(settings_path)
     hooks = settings.get("hooks", {})
     for event, matcher, script in SPECS:
         entries = [e for e in hooks.get(event, []) if not _owned(e)]
         if not remove:
-            entries.append(_entry(script, matcher))
+            entries.append(_entry(script, matcher, project))
         if entries:
             hooks[event] = entries
         else:
@@ -97,6 +102,9 @@ def main(argv: list[str] | None = None) -> int:
                     help="settings directory (default ~/.claude); for a project pass its .claude")
     ap.add_argument("--remove", action="store_true")
     ap.add_argument("--verify", action="store_true")
+    ap.add_argument("--project", action="store_true",
+                    help="write ${CLAUDE_PROJECT_DIR}-relative hook commands for a repo's committed "
+                         ".claude/settings.json (default: absolute paths, for a global ~/.claude install)")
     args = ap.parse_args(argv)
 
     home = Path(args.home)
@@ -105,7 +113,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.verify:
         return verify(settings_path)
     try:
-        print(merge(settings_path, remove=args.remove))
+        print(merge(settings_path, remove=args.remove, project=args.project))
     except json.JSONDecodeError as e:
         print(f"settings file is not valid JSON, refusing to touch it: {e}", file=sys.stderr)
         return 2
