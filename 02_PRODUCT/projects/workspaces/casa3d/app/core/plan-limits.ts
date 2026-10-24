@@ -1,7 +1,7 @@
 // Limitele elementelor de plan (structură, nișe, adnotări): o singură sursă pentru interfață (câmpurile din panou,
 // uneltele) și pentru server (checkSnapshot din lib/repo.ts). Un client cu o limită mai largă decât serverul ar bloca
 // salvarea întregului proiect (400), de aceea ambele citesc de aici. Funcții pure, fără I/O.
-import type { Annotation, Beam, Column, DoorType, Floor, GlassWall, Niche, WallItem } from './types';
+import type { Annotation, Beam, Column, DoorType, Floor, FloorLayout, FloorPattern, FloorZone, GlassWall, Niche, WallItem, WallStatus } from './types';
 import { DOOR_TYPES, DOOR_TYPE_RULES } from './rules';
 
 export const PLAN_LIMITS = {
@@ -13,9 +13,23 @@ export const PLAN_LIMITS = {
   annotation: { max: 300, textMax: 120, dimMinM: .01, offsetMaxM: 50 },
   passage: { widthMinM: .3, widthMaxM: 4 },
   wallItem: { max: 300, widthMinM: .05, widthMaxM: 4, heightMinM: .02, heightMaxM: 3, depthMaxM: .6, labelMax: 60 },
+  /** zone de pardoseală: cel mult 100 pe nivel, latura de cel puțin 10 cm */
+  zone: { max: 100, minM: .1, labelMax: 40, groutMaxMm: 20 },
+  /** caloriferul (punct tehnic `radiator` cu mărimi): lățime 20–300 cm, înălțime 20–220 cm, cel mult 100 în proiect */
+  radiator: { max: 100, widthMinM: .2, widthMaxM: 3, heightMinM: .2, heightMaxM: 2.2 },
+  /** unitatea interioară de aer condiționat (`hvac_split`): lățime 50–150 cm, cel mult 40 în proiect */
+  hvac: { max: 40, widthMinM: .5, widthMaxM: 1.5 },
 } as const;
 /** Dimensiunile implicite la plasare (m). */
-export const PLAN_DEFAULTS = { passageWidth: .9, shaft: .3, niche: { width: .6, height: .4, depth: .1, elevation: 1.1 }, dimOffset: .3 } as const;
+export const PLAN_DEFAULTS = { passageWidth: .9, shaft: .3, niche: { width: .6, height: .4, depth: .1, elevation: 1.1 }, dimOffset: .3,
+  radiator: { width: .8, height: .6, elevation: .15 }, hvac: { width: .8, height: .29, depth: .2 } } as const;
+export const WALL_STATUSES: readonly WallStatus[] = ['existing', 'new', 'demolish'];
+export const RADIATOR_MODELS = ['panel', 'towel', 'decorative'] as const;
+/** Modurile de așezare a pardoselii: o singură listă, folosită și de finisajele camerei (core/finishes.ts, PATTERNS). */
+export const FLOOR_PATTERNS: readonly FloorPattern[] = ['straight', 'brick', 'third', 'diagonal', 'herringbone', 'chevron', 'checker'];
+/** Referința la un material (pardoseală, vopsea, faianță...): text de cel mult 80 de caractere. Aceeași regulă pentru
+ *  finisajele camerei (sanitizeFinishes) și pentru materialul unei zone de pardoseală (sanitizeZone). */
+export const isMaterialRef = (x: unknown): x is string => typeof x === 'string' && x.length <= 80;
 
 const ID = /^[\w-]{1,80}$/;
 const num = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
@@ -89,6 +103,33 @@ export function sanitizeWallItem(it: any, wallLen: number | undefined, ceiling: 
     width: it.width, height: it.height, ...(it.depth != null ? { depth: it.depth } : {}), ...(typeof it.product === 'string' && it.product ? { product: it.product } : {}),
     ...(it.color ? { color: it.color.toLowerCase() } : {}), ...(label ? { label } : {}) };
 }
+/** Starea peretelui: lipsă sau `existing` = existent (câmpul se șterge, ca proiectele vechi să rămână identice); altceva decât
+ *  `new` / `demolish` se respinge. */
+export function sanitizeWallStatus(w: any): void {
+  if (w.status == null || w.status === 'existing'){ delete w.status; return; }
+  if (!(WALL_STATUSES as readonly string[]).includes(w.status)) bad('Starea peretelui este invalidă (existent, nou sau de demolat).');
+}
+/** Un număr nou din model: NaN, Infinity și șirurile se resping; o valoare finită în afara intervalului se aduce la interval. */
+export const clampNum = (v: unknown, lo: number, hi: number, what: string): number => num(v) ? Math.min(hi, Math.max(lo, v)) : bad(what);
+function sanitizeLayout(l: any): FloorLayout {
+  if (!l || typeof l !== 'object' || !FLOOR_PATTERNS.includes(l.pattern)) bad('Modul de așezare al zonei este invalid.');
+  if (l.angle != null && l.angle !== 0 && l.angle !== 90) bad('Unghiul de așezare al zonei este invalid.');
+  if (l.groutColor != null && (typeof l.groutColor !== 'string' || !HEX.test(l.groutColor))) bad('Culoarea rostului zonei este invalidă.');
+  const grout = l.groutMm != null ? clampNum(l.groutMm, 0, PLAN_LIMITS.zone.groutMaxMm, 'Rostul zonei este invalid.') : null;
+  return { pattern: l.pattern, ...(l.angle ? { angle: 90 as const } : {}), ...(grout != null ? { groutMm: grout } : {}), ...(l.groutColor ? { groutColor: l.groutColor.toLowerCase() } : {}) };
+}
+/** Zona de pardoseală curățată: doar câmpurile modelului, coordonate în pătratul planului, latura de cel puțin 10 cm. */
+export function sanitizeZone(z: any): FloorZone {
+  const L = PLAN_LIMITS.zone;
+  if (!z || typeof z !== 'object' || typeof z.id !== 'string' || !ID.test(z.id) || typeof z.roomId !== 'string' || !ID.test(z.roomId) || !z.rect || typeof z.rect !== 'object') bad('O zonă de pardoseală este invalidă.');
+  const r = z.rect; if (!['x0', 'z0', 'x1', 'z1'].every(k => inBox(r[k]))) bad('O zonă de pardoseală are coordonatele invalide.');
+  if (r.x1 - r.x0 < L.minM - 1e-9 || r.z1 - r.z0 < L.minM - 1e-9) bad(`O zonă de pardoseală trebuie să aibă cel puțin ${L.minM * 100} cm pe fiecare latură.`);
+  // aceeași regulă ca pardoseala camerei; în plus zona trebuie să aibă un material (altfel nu are rost)
+  if (!isMaterialRef(z.floor) || !z.floor) bad('Materialul zonei de pardoseală este invalid.');
+  if (z.label != null && typeof z.label !== 'string') bad('Numele zonei de pardoseală este invalid.');
+  const label = z.label != null ? cleanPlanText(z.label).slice(0, L.labelMax) : '';
+  return { id: z.id, roomId: z.roomId, rect: { x0: r.x0, z0: r.z0, x1: r.x1, z1: r.z1 }, floor: z.floor, ...(z.layout != null ? { layout: sanitizeLayout(z.layout) } : {}), ...(label ? { label } : {}) };
+}
 /** Adnotarea curățată, sau null pentru un text gol (se aruncă). */
 export function sanitizeAnnotation(a: any): Annotation | null {
   const L = PLAN_LIMITS.annotation;
@@ -111,7 +152,7 @@ export function sanitizeAnnotation(a: any): Annotation | null {
  *  comune cu interfața, cel mult N pe nivel; o nișă pe un perete care nu mai există se elimină. Aruncă PlanLimitError. */
 export function sanitizeFloorElements(f: Floor & Record<string, any>): void {
   const L = PLAN_LIMITS, walls = new Set((f.walls || []).map(w => w.id));
-  const set = <K extends 'columns' | 'beams' | 'glassWalls' | 'niches' | 'annotations' | 'wallItems'>(k: K, v: any[] | null) => { if (v && v.length) (f as any)[k] = v; else delete f[k]; };
+  const set = <K extends 'columns' | 'beams' | 'glassWalls' | 'niches' | 'annotations' | 'wallItems' | 'zones'>(k: K, v: any[] | null) => { if (v && v.length) (f as any)[k] = v; else delete f[k]; };
   const cols = list(f.columns, L.column.max, 'Stâlpii'); set('columns', cols && cols.map(sanitizeColumn));
   const bms = list(f.beams, L.beam.max, 'Grinzile'); set('beams', bms && bms.map(sanitizeBeam));
   const gws = list(f.glassWalls, L.glassWall.max, 'Pereții de sticlă'); set('glassWalls', gws && gws.map(sanitizeGlassWall));
@@ -121,6 +162,10 @@ export function sanitizeFloorElements(f: Floor & Record<string, any>): void {
   const wis = list(f.wallItems, L.wallItem.max, 'Obiectele de pe perete'), seen = new Set<string>();
   set('wallItems', wis && wis.map(x => sanitizeWallItem(x, lens.get(x?.wallId), ceil)).filter(x => { if (seen.has(x.id)) bad('Două obiecte de pe perete au același id.'); seen.add(x.id); return walls.has(x.wallId); }));
   const an = list(f.annotations, L.annotation.max, 'Adnotările'); set('annotations', an && an.map(sanitizeAnnotation).filter((x): x is Annotation => !!x));
+  // zonele de pardoseală: id unic, camera existentă pe acest nivel (o zonă a unei camere șterse se elimină, ca nișa)
+  const rooms = new Set((f.rooms || []).map(r => r.id)), zs = list(f.zones, L.zone.max, 'Zonele de pardoseală'), zseen = new Set<string>();
+  set('zones', zs && zs.map(sanitizeZone).filter(z => { if (zseen.has(z.id)) bad('Două zone de pardoseală au același id.'); zseen.add(z.id); return rooms.has(z.roomId); }));
+  for (const w of f.walls || []) sanitizeWallStatus(w);
   for (const w of f.walls || []) for (const o of w.openings || []){
     if (o.passage == null) delete o.passage;
     else { if (o.passage !== true || o.kind !== 'door') bad('Golul de trecere este invalid (doar pe un gol de ușă).');

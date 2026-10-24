@@ -32,9 +32,11 @@ import { edgeHandleAt, edgeHandlePoint } from '@/core/room-edit';
 import { computeLightingWiringArcs } from '@/core/technical';
 import { parseTypedLength, parseTypedSize, typedRect, acceptsTypedKey } from '@/core/typed-dimension';
 import { selectionBox, frameViewBox } from '@/core/frame';
+import { radiatorRect, isSizedRadiator } from '@/core/tech-geometry';
+import { PLAN_LIMITS as LIM } from '@/core/plan-limits';
 
-export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'niche' | 'dim' | 'text' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair' | 'clad' | 'wall_item';
-export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
+export type Tool = 'select' | 'wall' | 'room' | 'door' | 'window' | 'passage' | 'measure' | 'shaft' | 'niche' | 'dim' | 'text' | 'tech' | 'column' | 'beam' | 'glass_wall' | 'stair' | 'clad' | 'wall_item' | 'demolish' | 'floor_zone';
+export type Sel = { kind: 'wall' | 'room' | 'placement' | 'stair' | 'column' | 'beam' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item' | 'floor_zone'; id: string } | { kind: 'opening'; id: string; wallId: string } | null;
 type Phase = 'start' | 'move' | 'end';
 interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severities: Record<string, Severity>;
   /** cerere de încadrare din afară (clic pe o problemă din „Sănătate”): `n` crește la fiecare cerere */
@@ -52,6 +54,10 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   onAddWallItem?(wallId: string, offset: number, side: 1 | -1): void; showWallItems?: boolean;
   onAddDim?(a: [number, number], b: [number, number], offset: number, mode: 'aligned' | 'ortho'): void;
   onAddText?(at: [number, number], text: string): void;
+  /** unealta „Demolare”: clic pe perete comută starea lui (existent ↔ de demolat) */
+  onToggleDemolish?(wallId: string): void;
+  /** unealta „Zonă pardoseală”: dreptunghiul tras (sau clic-clic / dimensiuni tastate), ca la cameră */
+  onAddZone?(r: { x0: number; z0: number; x1: number; z1: number }): void;
   onAddColumn?(x: number, z: number, shape?: 'rect' | 'round', role?: 'shaft'): void;
   onAddBeam?(a: [number, number], b: [number, number]): void;
   onAddGlassWall?(a: [number, number], b: [number, number]): void;
@@ -199,7 +205,8 @@ export default function PlanView(p: Props){
     if (p.tool === 'text' && textDraft && cleanPlanText(textVal)){ e.preventDefault(); textClosed.current = true; p.onAddText?.(textDraft.at, cleanPlanText(textVal)); setTextDraft(null); svg.current?.focus(); return; }
     if (p.tool === 'text'){ e.preventDefault(); const par = svg.current!.parentElement!.getBoundingClientRect(); setTextVal(''); setTextDraft({ at: [r3(pt[0]), r3(pt[1])], left: e.clientX - par.left, top: e.clientY - par.top }); return; }
     if (p.tool === 'measure'){ const s = snapPoint(pt, floor); setRuler(r => r && !r.b ? { a: r.a, b: s } : { a: s, b: null }); return; }
-    if (p.tool === 'room'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])];
+    if (p.tool === 'demolish'){ const w = nearestWall(pt); if (w) p.onToggleDemolish?.(w.id); return; }
+    if (p.tool === 'room' || p.tool === 'floor_zone'){ const s: [number, number] = [snapG(pt[0]), snapG(pt[1])];
       if (roomDraft?.pending){ finishRoom(roomDraft.a, s); return; }   // al doilea clic: colțul opus
       setRoomDraft({ a: s, b: s }); setTyped(''); svg.current!.setPointerCapture(e.pointerId); svg.current!.focus({ preventScroll: true }); return; }
     // placare: clic pe fața peretelui, apoi clic unde se termină; al doilea clic în același loc (dublu-clic) = toată latura
@@ -240,6 +247,7 @@ export default function PlanView(p: Props){
       else if (d.kind === 'placement'){ const a = o.placements.find(x => x.id === d.id)!, b = s.placements.find(x => x.id === d.id)!; b.x = snapG(a.x + dx); b.z = snapG(a.z + dz);
         const room = s.floor.rooms.find(r => b.x >= r.rect.x0 && b.x <= r.rect.x1 && b.z >= r.rect.z0 && b.z <= r.rect.z1); if (room) b.roomId = room.id; b.source = 'manual'; }
       else if (d.kind === 'stair'){ const a = o.floor.stairs?.find(x => x.id === d.id), b = s.floor.stairs?.find(x => x.id === d.id); if (a && b){ b.x = snapG(a.x + dx); b.z = snapG(a.z + dz); } }
+      else if (d.kind === 'floor_zone'){ const a = o.floor.zones?.find(x => x.id === d.id), b = s.floor.zones?.find(x => x.id === d.id); if (a && b){ const ddx = snapG(dx), ddz = snapG(dz); b.rect = { x0: r3(a.rect.x0 + ddx), x1: r3(a.rect.x1 + ddx), z0: r3(a.rect.z0 + ddz), z1: r3(a.rect.z1 + ddz) }; } }
       else if (d.kind === 'column'){ const a = o.floor.columns?.find(x => x.id === d.id), b = s.floor.columns?.find(x => x.id === d.id); if (a && b){ b.x = snapG(a.x + dx); b.z = snapG(a.z + dz); } }
       else if (d.kind === 'beam'){ const a = o.floor.beams?.find(x => x.id === d.id), b = s.floor.beams?.find(x => x.id === d.id); if (a && b){ const ddx = snapG(dx), ddz = snapG(dz); b.a = [r3(a.a[0] + ddx), r3(a.a[1] + ddz)]; b.b = [r3(a.b[0] + ddx), r3(a.b[1] + ddz)]; } }
       else if (d.kind === 'glass_wall'){ const a = o.floor.glassWalls?.find(x => x.id === d.id), b = s.floor.glassWalls?.find(x => x.id === d.id); if (a && b){ const ddx = snapG(dx), ddz = snapG(dz); b.a = [r3(a.a[0] + ddx), r3(a.a[1] + ddz)]; b.b = [r3(a.b[0] + ddx), r3(a.b[1] + ddz)]; } }
@@ -276,11 +284,14 @@ export default function PlanView(p: Props){
 
   // Tab / Shift+Tab aleg camerele, piesele și scările pe rând (după ultimul, Tab iese din plan); restul tastelor merg la editor
   function finishRoom(a: [number, number], b: [number, number]){ setRoomDraft(null); setTyped('');
-    const r = { x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), z0: Math.min(a[1], b[1]), z1: Math.max(a[1], b[1]) }; if (r.x1 - r.x0 >= .6 && r.z1 - r.z0 >= .6) p.onAddRoom(r); }
+    const r = { x0: Math.min(a[0], b[0]), x1: Math.max(a[0], b[0]), z0: Math.min(a[1], b[1]), z1: Math.max(a[1], b[1]) };
+    if (p.tool === 'floor_zone'){ if (r.x1 - r.x0 >= LIM.zone.minM && r.z1 - r.z0 >= LIM.zone.minM) p.onAddZone?.(r); return; }
+    if (r.x1 - r.x0 >= .6 && r.z1 - r.z0 >= .6) p.onAddRoom(r); }
   // cota tastată: valabilă doar cât se desenează un segment (perete, grindă, sticlă) sau o cameră; tastele prinse aici
   // (cifre, unitățile după o cifră, Backspace, Escape, Enter) nu ajung la scurtăturile editorului
   const finishDim = (off: number) => { if (dimDraft?.b) p.onAddDim?.(dimDraft.a, dimDraft.b, Math.max(-PLAN_LIMITS.annotation.offsetMaxM, Math.min(PLAN_LIMITS.annotation.offsetMaxM, off)), dimDraft.mode); setDimDraft(null); setTyped(''); };
-  const segment = SEGMENT_TOOLS.includes(p.tool), dimming = p.tool === 'dim' && !!dimDraft, typing = (segment && !!preview) || (p.tool === 'room' && !!roomDraft) || dimming;
+  const rectTool = p.tool === 'room' || p.tool === 'floor_zone';
+  const segment = SEGMENT_TOOLS.includes(p.tool), dimming = p.tool === 'dim' && !!dimDraft, typing = (segment && !!preview) || (rectTool && !!roomDraft) || dimming;
   const typedValue = !typed ? null : segment || dimming ? parseTypedLength(typed, units) : parseTypedSize(typed, units);
   function typedKey(e: React.KeyboardEvent<SVGSVGElement>): boolean {
     if (!typing || e.ctrlKey || e.metaKey || e.altKey) return false;
@@ -295,7 +306,7 @@ export default function PlanView(p: Props){
       if (segment && preview && typeof typedValue === 'number'){ const a = preview.a, free = !!raw.current?.free;
         const toward: [number, number] = wallLength(a, preview.b) > 1e-3 ? preview.b : raw.current && wallLength(a, raw.current.pt) > 1e-3 ? raw.current.pt : [a[0] + 1, a[1]];
         addSegment(a, pointAtLength(a, toward, typedValue, 15, free)); }
-      else if (p.tool === 'room' && roomDraft && typeof typedValue === 'object'){ const r = typedRect(roomDraft.a, roomDraft.b, typedValue); setRoomDraft(null); setTyped(''); p.onAddRoom(r); }
+      else if (rectTool && roomDraft && typeof typedValue === 'object'){ const r = typedRect(roomDraft.a, roomDraft.b, typedValue); setRoomDraft(null); setTyped(''); if (p.tool === 'floor_zone') p.onAddZone?.(r); else p.onAddRoom(r); }
       return true; }
     if (e.key === 'Backspace' && typed){ setTyped(x => x.slice(0, -1)); return true; }
     if (e.key === 'Escape' && typed){ setTyped(''); return true; }
@@ -334,12 +345,19 @@ export default function PlanView(p: Props){
       <pattern id="fin-hatch" width=".02" height=".02" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><path d="M0 0V.02" stroke="#6b5a45" strokeWidth=".003" /></pattern>
       <pattern id="fin-slats-h" width=".03" height=".04" patternUnits="userSpaceOnUse"><path d="M.015 0V.04" stroke="#5a4430" strokeWidth=".005" /></pattern>
       <pattern id="fin-slats-v" width=".04" height=".03" patternUnits="userSpaceOnUse"><path d="M0 .015H.04" stroke="#5a4430" strokeWidth=".005" /></pattern>
-      <pattern id="fin-dots" width=".02" height=".02" patternUnits="userSpaceOnUse"><circle cx=".01" cy=".01" r=".003" fill="#6b5a45" /></pattern></defs>
+      <pattern id="fin-dots" width=".02" height=".02" patternUnits="userSpaceOnUse"><circle cx=".01" cy=".01" r=".003" fill="#6b5a45" /></pattern>
+      {/* peretele nou: hașură diagonală la 5 cm; zona de pardoseală: hașură ușoară la 12 cm */}
+      <pattern id="wall-new-hatch" width=".05" height=".05" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width=".05" height=".05" fill="#FFFDF8" /><path d="M0 0V.05" stroke="#23262B" strokeWidth=".012" /></pattern>
+      <pattern id="zone-hatch" width=".12" height=".12" patternUnits="userSpaceOnUse" patternTransform="rotate(-45)"><rect width=".12" height=".12" fill="#e7dccb" fillOpacity=".55" /><path d="M0 0V.12" stroke="#8B6A45" strokeWidth=".008" strokeOpacity=".7" /></pattern></defs>
     <rect x={vb.x} y={vb.y} width={vb.w} height={vb.h} fill="url(#g)" />
     {ul && <image data-k="underlay" href={ul.dataUrl} x={ul.x} y={ul.z} width={ul.widthM} height={ul.widthM * aspect} preserveAspectRatio="none" opacity={ul.opacity} pointerEvents={ul.locked || p.calib?.stage === 'pick' ? 'none' : 'auto'} style={{ cursor: ul.locked ? 'default' : 'move' }} />}
     {floor.rooms.map(r => <g key={r.id}>
       <path data-k="room" data-id={r.id} d={roomBoundaryPath(r)} fill={ROOM_FILL[r.type] || '#f2eee6'} fillOpacity={ul ? .45 : 1} stroke={isSel('room', r.id) ? '#8B6A45' : 'none'} strokeWidth={.04} strokeLinejoin="round" />
     </g>)}
+    {/* zonele de pardoseală: hașură ușoară, contur subțire și suprafața (eticheta zonei, dacă are) */}
+    {(floor.zones || []).map(z => { const r = z.rect, on = isSel('floor_zone', z.id), w = r.x1 - r.x0, d = r.z1 - r.z0;
+      return (<g key={z.id} data-k="floor_zone" data-id={z.id} style={{ cursor: 'move' }}><title>{t('tool.floor_zone')}{z.label ? ` · ${z.label}` : ''} ({wl(w)}×{wl(d)})</title>
+        <rect x={r.x0} y={r.z0} width={w} height={d} fill="url(#zone-hatch)" stroke={on ? '#8B6A45' : '#6b5a45'} strokeWidth={on ? .03 : .012} strokeDasharray={on ? '.08 .05' : undefined} /></g>); })}
     {(p.voids || []).map((v, k) => <g key={`void-${k}`} pointerEvents="none">
       <rect x={v.x0} y={v.z0} width={v.x1 - v.x0} height={v.z1 - v.z0} fill="#FBFBF9" stroke="#5E636B" strokeWidth={.02} strokeDasharray=".08 .05" />
       <path d={`M${v.x0} ${v.z0}L${v.x1} ${v.z1}M${v.x1} ${v.z0}L${v.x0} ${v.z1}`} stroke="#8A8F96" strokeWidth={.012} />
@@ -363,6 +381,9 @@ export default function PlanView(p: Props){
           onPointerEnter={p.onHover ? () => p.onHover!(pl.id) : undefined} onPointerLeave={p.onHover ? () => p.onHover!(null) : undefined} /></g>); })}
     {/* camera aleasă: chenar punctat în interiorul pereților, vizibil și când e aleasă de la tastatură */}
     {floor.rooms.filter(r => isSel('room', r.id)).map(r => <path key={`sel-${r.id}`} pointerEvents="none" d={roomBoundaryPath(r)} fill="#7A5A36" fillOpacity={.07} stroke="#7A5A36" strokeWidth={.045} strokeDasharray=".14 .08" />)}
+    {/* eticheta zonei de pardoseală (nume · suprafață) în colțul ei, deasupra mobilierului, ca să nu fie acoperită de masă */}
+    {(floor.zones || []).map(z => { const r = z.rect, on = isSel('floor_zone', z.id);
+      return <text key={`zl-${z.id}`} x={r.x0 + fs * .6} y={r.z0 + fs * 1.5} fontSize={fs * .66} fontWeight={600} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={on ? '#8B6A45' : '#5a4a38'} stroke="#FFFDF8" strokeWidth={fs * .16} paintOrder="stroke" pointerEvents="none">{z.label ? `${z.label} · ` : ''}{formatArea((r.x1 - r.x0) * (r.z1 - r.z0), units, lang)}</text>; })}
     {/* etichetele camerelor deasupra mobilierului, cu contur de hârtie ca să rămână lizibile */}
     {floor.rooms.map(r => { const w = r.rect.x1 - r.rect.x0, d = r.rect.z1 - r.rect.z0, [cx, cz] = roomCentroid(r);
       return (<g key={`lbl-${r.id}`} pointerEvents="none" stroke="#FFFDF8" strokeWidth={fs * .25} strokeLinejoin="round" paintOrder="stroke">
@@ -370,9 +391,13 @@ export default function PlanView(p: Props){
         <text x={cx} y={cz + fs * 1.1} textAnchor="middle" fontSize={fs * .78} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#3D343B" stroke="#FFFDF8" strokeWidth={fs * .18} strokeLinejoin="round" paintOrder="stroke">{formatArea(roomArea(r), units, lang)} · {wl(w)}×{wl(d)}</text></g>); })}
     {floor.walls.map(w => { const L = wallLength(w.a, w.b); if (L < .01) return null; const ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, nx = -uz, nz = ux, sel = isSel('wall', w.id);
       const mid = [(w.a[0] + w.b[0]) / 2 + nx * (w.thickness / 2 + fs * .9), (w.a[1] + w.b[1]) / 2 + nz * (w.thickness / 2 + fs * .9)];
-      return (<g key={w.id}>
-        <line data-k="wall" data-id={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke={sel ? '#8B6A45' : '#23262B'} strokeWidth={w.thickness} strokeLinecap="square" style={{ cursor: 'pointer' }} />
-        {w.openings.map(o => { const a = [w.a[0] + ux * o.offset, w.a[1] + uz * o.offset], b = [w.a[0] + ux * (o.offset + o.width), w.a[1] + uz * (o.offset + o.width)], os = p.sel?.kind === 'opening' && p.sel.id === o.id;
+      // starea peretelui: existent = plin; nou = hașură diagonală în contur; de demolat = doar conturul punctat (golurile lui nu se mai desenează)
+      const st = w.status, h = w.thickness / 2, band = `M${w.a[0] - ux * h + nx * h} ${w.a[1] - uz * h + nz * h}L${w.b[0] + ux * h + nx * h} ${w.b[1] + uz * h + nz * h}L${w.b[0] + ux * h - nx * h} ${w.b[1] + uz * h - nz * h}L${w.a[0] - ux * h - nx * h} ${w.a[1] - uz * h - nz * h}Z`;
+      return (<g key={w.id} data-wall-status={st}>
+        <line data-k="wall" data-id={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke={st === 'demolish' ? 'transparent' : st === 'new' ? '#FFFDF8' : sel ? '#8B6A45' : '#23262B'} strokeWidth={w.thickness} strokeLinecap="square" style={{ cursor: 'pointer' }} />
+        {st === 'new' && <path d={band} fill="url(#wall-new-hatch)" stroke={sel ? '#8B6A45' : '#23262B'} strokeWidth={sel ? .03 : .015} pointerEvents="none" />}
+        {st === 'demolish' && <path d={band} fill="#FBFBF9" fillOpacity={.6} stroke={sel ? '#8B6A45' : '#B3261E'} strokeWidth={sel ? .03 : .018} strokeDasharray=".08 .05" pointerEvents="none" />}
+        {st !== 'demolish' && w.openings.map(o => { const a = [w.a[0] + ux * o.offset, w.a[1] + uz * o.offset], b = [w.a[0] + ux * (o.offset + o.width), w.a[1] + uz * (o.offset + o.width)], os = p.sel?.kind === 'opening' && p.sel.id === o.id;
           return (<g key={o.id}><line data-k="opening" data-id={o.id} data-w={w.id} x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke={os ? '#efe5d8' : '#FBFBF9'} strokeWidth={w.thickness + .01} style={{ cursor: 'ew-resize' }} />
             {o.kind === 'window' ? <><line x1={a[0]} y1={a[1]} x2={b[0]} y2={b[1]} stroke="#6E8798" strokeWidth={.025} pointerEvents="none" /><line x1={a[0] + nx * w.thickness * .3} y1={a[1] + nz * w.thickness * .3} x2={b[0] + nx * w.thickness * .3} y2={b[1] + nz * w.thickness * .3} stroke="#6E8798" strokeWidth={.012} pointerEvents="none" /></>
               // golul de trecere: fără foaie și fără arc, doar tocurile (linii scurte peste grosime) și buiandrugul punctat
@@ -483,7 +508,7 @@ export default function PlanView(p: Props){
         <rect x={cx - (v ? th : len) / 2} y={cz - (v ? len : th) / 2} width={v ? th : len} height={v ? len : th} rx={th / 2} fill="#fff" stroke="#7A5A36" strokeWidth={.03} /></g>); }))}
     {preview && <line x1={preview.a[0]} y1={preview.a[1]} x2={preview.b[0]} y2={preview.b[1]} stroke="#6E8798" strokeWidth={.15} strokeOpacity={.5} strokeDasharray=".1 .06" />}
     {segment && <DrawHud preview={preview} hit={hit} typed={typed} fs={fs} label={m => formatLength(m, units, lang)} invalid={!!typed && typedValue == null} />}
-    {typing && p.tool === 'room' && roomDraft && (() => { const at = roomDraft.b, bad = !!typed && typedValue == null, w = Math.max(fs * 7, fs * .62 * ((typed || t('plan.typeHint')).length + 2));
+    {typing && rectTool && roomDraft && (() => { const at = roomDraft.b, bad = !!typed && typedValue == null, w = Math.max(fs * 7, fs * .62 * ((typed || t('plan.typeHint')).length + 2));
       return <g className="typed-chip" aria-hidden="true" transform={`translate(${at[0] + fs * .8} ${at[1] + fs * .8})`}>
         <rect width={w} height={fs * 1.9} rx={fs * .45} fill={bad ? '#FCEBEA' : '#fff'} stroke={bad ? '#B3261E' : '#7A5A36'} strokeWidth={fs * .08} />
         <text x={fs * .6} y={fs * 1.3} fontSize={fs} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={typed ? (bad ? '#B3261E' : '#1A141C') : '#7A6F66'}>{typed || t('plan.typeHint')}</text></g>; })()}
@@ -525,6 +550,13 @@ export default function PlanView(p: Props){
       </g>
     ))}
     {p.showTech && (p.snap.tech || []).map(tp => { const sym = TECH_SYMBOL[tp.kind], r = fs * (sym.letter.length > 1 ? .62 : .5);
+      // caloriferul nou (cu mărimi): dreptunghi subțire pe fața peretelui, cu nervurile lui; punctul vechi de racord rămâne cerc
+      const rr = isSizedRadiator(tp) ? radiatorRect(floor, tp) : null;
+      if (rr){ const horiz = rr.x1 - rr.x0 >= rr.z1 - rr.z0, n = Math.max(2, Math.round((horiz ? rr.x1 - rr.x0 : rr.z1 - rr.z0) / .1));
+        return <g key={tp.id} pointerEvents="none" data-tech="radiator"><title>{t('radiator.title')} ({Math.round((tp.widthM ?? 0) * 100)}×{Math.round((tp.heightM ?? 0) * 100)} cm)</title>
+          <rect x={rr.x0} y={rr.z0} width={rr.x1 - rr.x0} height={rr.z1 - rr.z0} fill="#fff" stroke={sym.color} strokeWidth={.015} />
+          <path d={Array.from({ length: n - 1 }, (_, k) => { const f = (k + 1) / n; return horiz ? `M${rr.x0 + (rr.x1 - rr.x0) * f} ${rr.z0}V${rr.z1}` : `M${rr.x0} ${rr.z0 + (rr.z1 - rr.z0) * f}H${rr.x1}`; }).join('')} stroke={sym.color} strokeWidth={.006} />
+          <text x={(rr.x0 + rr.x1) / 2} y={(rr.z0 + rr.z1) / 2 + (horiz ? -fs * .45 : fs * .2)} textAnchor="middle" fontSize={fs * .55} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill={sym.color} stroke="#FFFDF8" strokeWidth={fs * .12} paintOrder="stroke">{sym.letter} {Math.round((tp.widthM ?? 0) * 100)}</text></g>; }
       return <g key={tp.id} pointerEvents="none"><circle cx={tp.x} cy={tp.z} r={r} fill={sym.color} stroke="#fff" strokeWidth={fs * .08} opacity={.92} />
         <text x={tp.x} y={tp.z + fs * .2} textAnchor="middle" fontSize={fs * (sym.letter.length > 1 ? .5 : .6)} fontFamily="Instrument Sans, Segoe UI, sans-serif" fill="#fff">{sym.letter}</text></g>; })}
     {ruler && (() => { const b = ruler.b || rulerHover || ruler.a, d = measure(ruler.a, b); return (<g pointerEvents="none">

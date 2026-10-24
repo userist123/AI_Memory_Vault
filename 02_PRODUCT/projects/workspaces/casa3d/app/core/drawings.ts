@@ -11,6 +11,7 @@ import { lightReport, autoLightCount } from './light-design';
 import { DOOR_HEIGHT } from './rules.boq';
 import { wallItemsOnSide } from './wall-items';
 import type { WallItemKind } from './types';
+import { activeOpenings } from './renovation';
 
 type Side = WallFeature['side'];
 export const SIDES: Side[] = ['N', 'E', 'S', 'W'];
@@ -75,7 +76,7 @@ export function wallElevations(snap: Snapshot, mc: MaterialsCatalog, cat: Catalo
     const openings: ElevOpening[] = [];
     for (const w of fl.walls){ const h = Math.abs(w.a[1] - w.b[1]) < 1e-6; if (h !== horiz || Math.abs((h ? w.a[1] : w.a[0]) - edge) > 1e-6) continue;
       const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
-      for (const o of w.openings){ const pa = [w.a[0] + ux * o.offset, w.a[1] + uz * o.offset], pb = [w.a[0] + ux * (o.offset + o.width), w.a[1] + uz * (o.offset + o.width)];
+      for (const o of activeOpenings(w)){ const pa = [w.a[0] + ux * o.offset, w.a[1] + uz * o.offset], pb = [w.a[0] + ux * (o.offset + o.width), w.a[1] + uz * (o.offset + o.width)];
         const ua = alongWall(r, side, pa[0]!, pa[1]!), ub = alongWall(r, side, pb[0]!, pb[1]!), u0 = Math.max(0, Math.min(ua, ub)), u1 = Math.min(len, Math.max(ua, ub)); if (u1 - u0 < .01) continue;
         const sill = o.kind === 'window' ? o.sill ?? .9 : 0, top = o.kind === 'window' ? sill + (o.height ?? 1.3) : Math.min(H, DOOR_HEIGHT);
         openings.push({ kind: o.kind === 'door' ? 'door' : 'window', u0, u1, y0: sill, y1: Math.min(H, top) }); } }

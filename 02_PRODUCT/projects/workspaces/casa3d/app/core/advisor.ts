@@ -9,6 +9,7 @@ import { finishesOf, roomGeometry } from './boq';
 import { FRONT_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M } from './rules';
 import { WINDOW_HEIGHT, LIGHTS_EXTRA_PER_M2 } from './rules.boq';
 import { tradeChecks } from './trade-checks';
+import { activeOpenings } from './renovation';
 import { contrastRatio, hexToRgb, hueDistance, isNeutral, relativeLuminance, rgbToHsl } from './color';
 
 export type AdviceSeverity = 'BLOCKER' | 'WARNING' | 'TIP';
@@ -223,7 +224,7 @@ export function adviseProject(snap: Snapshot, cat: Catalog, opts: AdvisorOptions
     const pts = snap.tech, near = (p: FurniturePlacement, kinds: string[], max = TECH_NEAR_M) => pts.some(t => t.roomId === p.roomId && kinds.includes(t.kind) && Math.hypot(t.x - p.x, t.z - p.z) <= max);
     for (const room of snap.floor.rooms){ const rn = room.name, n = pts.filter(t => t.roomId === room.id && (t.kind === 'outlet' || t.kind === 'outlet_double')).length, min = MIN_OUTLETS[room.type] ?? 1;
       if (n < min) add('TECH_FEW_OUTLETS', { severity: 'TIP', category: 'instalatii', refs: { roomId: room.id }, code: 'TECH_FEW_OUTLETS', vars: { rn, count: n, min } });
-      const doors = snap.floor.walls.some(w => w.openings.some(o => o.kind === 'door' && doorTouches(w, o, room)));
+      const doors = snap.floor.walls.some(w => activeOpenings(w).some(o => o.kind === 'door' && doorTouches(w, o, room)));
       if (doors && !pts.some(t => t.roomId === room.id && t.kind === 'switch')) add('TECH_NO_SWITCH', { severity: 'TIP', category: 'instalatii', refs: { roomId: room.id }, code: 'TECH_NO_SWITCH', vars: { rn } }); }
     for (const p of snap.placements.filter(q => ['lavoar', 'dus', 'wc', 'bucatarie'].includes(q.group)))
       if (!near(p, ['drain'])) add('TECH_NO_DRAIN', { severity: 'WARNING', category: 'instalatii', refs: { roomId: p.roomId, placementIds: [p.id] }, code: 'TECH_NO_DRAIN', vars: { nm: nameOf(p), rn: roomOf(p.roomId)?.name ?? '' } });

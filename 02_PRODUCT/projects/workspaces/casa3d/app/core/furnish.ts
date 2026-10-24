@@ -13,6 +13,7 @@ import { resolve, groupOf } from './catalog';
 import { openingsOnSide, doorZones, doorZoneDepth } from './validate';
 import { rectHit, insideRect, r3 } from './geometry';
 import { DINING_CLEARANCE } from './rules';
+import { activeOpenings } from './renovation';
 
 type Side = 'N' | 'S' | 'W' | 'E';
 const SIDES: Side[] = ['N', 'E', 'S', 'W'];
@@ -475,7 +476,7 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
   function furnishHall(ctx: Ctx): boolean {
     const r = ctx.r, low = (v: string) => (dims(v)?.h ?? 9) <= FURNISH_RULES.hallMaxH + 1e-9;
     // în fața ușii de intrare rămâne un spațiu liber mai adânc decât zona ușii
-    const entrance: RoomRect[] = []; for (const w of floor.walls) for (const o of w.openings){ if (!o.entrance) continue;
+    const entrance: RoomRect[] = []; for (const w of floor.walls) for (const o of activeOpenings(w)){ if (!o.entrance) continue;
       for (const s of SIDES){ const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]), ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, mx = w.a[0] + ux * (o.offset + o.width / 2), mz = w.a[1] + uz * (o.offset + o.width / 2);
         const onSide = s === 'N' ? Math.abs(mz - r.z0) < 1e-6 : s === 'S' ? Math.abs(mz - r.z1) < 1e-6 : s === 'W' ? Math.abs(mx - r.x0) < 1e-6 : Math.abs(mx - r.x1) < 1e-6;
         if (!onSide || mx < r.x0 - 1e-6 || mx > r.x1 + 1e-6 || mz < r.z0 - 1e-6 || mz > r.z1 + 1e-6) continue; const k = FURNISH_RULES.entranceKeepOut, h = o.width / 2 + .05;
