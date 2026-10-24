@@ -107,7 +107,12 @@ describe('fișa de finisaje', () => {
     const row = finishSchedule(s, cat, mc).find(r => r.element === 'drywall');
     assert.ok(row); assert.equal(row!.product, mc.materials.find(m => m.category === 'plasterboard')!.name); assert.equal(row!.roomId, null);
     assert.equal(t(`sched.el.${row!.element}`), 'Perete nou gips-carton'); assert.equal(translator('en')(`sched.el.${row!.element}`), 'New plasterboard wall');
-    assert.ok(row!.details.some(d => d.key === 'sched.note' && /perete 10 cm/.test(String(d.vars?.note))));
+    const d = row!.details.find(d => d.key === 'sched.newWall'); assert.ok(d); assert.equal(d!.vars?.t, 10); assert.equal(row!.level, 0);
+    assert.match(translator('en')('sched.newWall', d!.vars as Record<string, string | number>), /^New wall 10 cm/);
+  });
+  test('peretele nou de la etaj apare la nivelul lui în fișă', () => {
+    const s0 = blank(), s = addLevel(s0, { name: 'Etaj' }), up = s.levels![0]!; up.walls.push(inner({ status: 'new', openings: [] }));
+    const row = finishSchedule(s, cat, mc).find(r => r.element === 'drywall'); assert.ok(row); assert.equal(row!.level, 1);
   });
 });
 
