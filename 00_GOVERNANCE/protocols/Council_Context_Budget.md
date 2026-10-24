@@ -24,7 +24,7 @@ document_status: active
 > agent `max_skills`) and `max_graph_hops` (`agent_router.py`, `defaults`). One primary agent
 > holds by construction (the router returns a single `primary`). Since 2026-10-24 (owner
 > decision) `agent_router.py` `_council_support` also enforces `max_council_agents` (primary +
-> support + verifier <= 3, support <= `max_support_agents`) and `max_total_selected_skills` (4;
+> support + verifier <= 3, support <= `max_support_agents`) and `max_total_selected_skills` (4; support agents are distinct specialists, never the primary agent;
 > support agents share what the primary leaves), from `04_CONFIG/agent_router.json`, tested by
 > `20_TESTS/test_agent_router_council_limits.py`. **Not enforced**: the two token caps, which
 > stay documented until code measures specialist output. The council gate `memory/council_budget_controller.py` picks a tier

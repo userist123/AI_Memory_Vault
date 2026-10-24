@@ -1122,6 +1122,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-support-distinct.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
     }
   ]
 }
