@@ -1,0 +1,38 @@
+{
+  "tip_inregistrare": "PROCES_VERBAL_SANITIZARE_MEDIU_CLASIFICAT",
+  "departament_emitent": "STRUCTURA_INFOSEC",
+  "data_creare_utc": "2026-10-08T18:28:36Z",
+  "date_obiect": {
+    "numar_inventar_sic": "INV-SIC-2026-B992",
+    "tip_suport": "NVME_SSD",
+    "serie_hardware": "S676NF0R994123",
+    "model": "SAMSUNG MZVL21T0HCLR (NVMe SSD 1TB)",
+    "capacitate_bytes": 1024209543168,
+    "metoda_sanitizare": "NVME_SANITIZE_BLOCK_ERASE",
+    "rezultat_tehnic": "CONFORM_PURGED"
+  },
+  "dovezi_criptografice": {
+    "hash_integritate_evenimente": "4b22bc215c7d618c4ba1089a77bce78fd6220829f31ecb2151987211b698fd7b",
+    "semnatura_hardware_platforma_tpm": "SIG-TPM-[4b22bc215c7d618c]-TPM-DEVICE-KEY-PRIMARY"
+  },
+  "semnatari_calificati": {
+    "operator": {
+      "identitate": {
+        "nume": "Lt. Popescu Ion",
+        "rol": "OPERATOR_INFOSEC",
+        "serie_certificat": "RO-CERT-QUALIFIED-77889911"
+      },
+      "semnatura_calificata": "PAdES-QUALIFIED-d275ca5fd2dc9b60fcf003c93b2fb91a724837d636d853c06f93925d9a7ed39e"
+    },
+    "martor_responsabil_sic": {
+      "identitate": {
+        "nume": "Cpt. Ionescu Vasile",
+        "rol": "RESPONSABIL_SECURITATE_INFOSEC",
+        "serie_certificat": "RO-CERT-QUALIFIED-33445522"
+      },
+      "semnatura_calificata": "PAdES-QUALIFIED-fe4ee784828d453013839e2197aae7703cbc177268c5a03263bcf88bc43840ca"
+    }
+  },
+  "format_arhivare": "NATIV_DIGITAL_FARA_HARTIE",
+  "pachet_checksum_sha256": "3b702261b269b23c8efc3d261d106ddc2c30ee977cc096d3948d769813f693cd"
+}
