@@ -28,7 +28,7 @@ tools and techniques nobody listed:
 | C5 | MCP tools that reach third-party services | tool-name allowlist, local servers only by default | ask |
 | C6 | persistence | writes into autostart/scheduled-task/git-hook/shell-profile/systemd/launchd/cron locations, by path AND by shell verb (`>`, tee, sed -i, cp, rm, ...); and persistence commands (schtasks, crontab, at, systemctl --user enable, launchctl, reg Run / Image File Execution Options) | deny |
 | C7 | tampering with the guard | any write or delete touching the guard directory, its settings entries or `disableAllHooks` — through Edit/Write/NotebookEdit/MultiEdit OR a shell redirection/verb | deny |
-| C8 | guard error or unparseable input | fail closed when the call has egress or a protected path; fail open otherwise | deny on doubt |
+| C8 | guard error or unparseable input | fail closed: `hook_guard.py` never emits a silent allow on an error path. If guard.py will not import, a dependency-free check in the hook still denies obvious egress/persistence/tamper/secret shapes and asks for the rest; if the payload cannot be parsed, ask. guard.decide itself denies a doubtful call that carries egress or a protected path | deny on doubt / ask, never silent allow |
 | C9 | new code or packages | scan with the repo scanners (`skill_exfiltration_scanner`, `untrusted_content_guard`) before use | report |
 
 Approved egress: `github.com` and `api.github.com` only under `userist123/`; `api.anthropic.com`;

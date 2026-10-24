@@ -55,6 +55,13 @@ them up).
   persistence (scheduled tasks, Run keys, startup folder, git hooks, services,
   shell profiles), and any write that would modify the guard or disable its hooks.
 
+## Fail-closed
+
+The hook never turns the shield off by failing. If `guard.py` cannot be imported, `hook_guard.py`
+still denies the obvious dangerous shapes with a built-in check and asks for everything else; if the
+tool payload cannot be parsed, it asks. The only case that passes silently is a genuine `allow`.
+A broken or corrupted guard therefore makes the session noisier (more prompts), never unprotected.
+
 ## Limits
 
 The hooks see tool calls, not the operating system, so code already running can
