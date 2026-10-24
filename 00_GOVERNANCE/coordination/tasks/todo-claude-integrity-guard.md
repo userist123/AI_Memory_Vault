@@ -1,10 +1,16 @@
 # todo-claude-integrity-guard
 
-- **Task (owner request 2026-10-24):** a skill that protects against external interference / direction changes, malware, backdoors, and any data sent outside the repo/PC to a third party. Maximum protection.
-- **Branch:** `claude/agent-integrity-guard`
-- **Owner choices:** global install (`~/.claude` on C: + a project copy under D:); block everything not approved; approved egress = owner's GitHub repos, Anthropic API, localhost.
-- **Done:** `.claude/skills/agent-integrity-guard/` — THREAT_MODEL.md (controls C1..C9), guard.py (pure decision core), hook_guard.py (PreToolUse deny/ask), hook_scan_output.py (PostToolUse injection warning), allowlist.json, install.py (merge/remove/verify, idempotent), SKILL.md, README.md. 59 tests in `20_TESTS/test_agent_integrity_guard.py` (each control blocks + allows normal work; bypass attempts; installer).
-- **Design:** allowlist by destination and write-location, not attack signatures, so it holds for unknown tools. Fail closed on a doubtful call with egress or a protected path.
-- **Not installed yet:** this PR only adds the files. Installing into ~/.claude is a separate, owner-approved step (`install.py`), because it changes how every session behaves.
-- **Residual risk (stated):** hooks see tool calls, not the OS; not a firewall. Documented in THREAT_MODEL.md and README.md.
+- **Task (owner 2026-10-24):** shield against external interference / direction changes, malware, backdoors, third-party data egress. Maximum protection.
+- **Branch:** `claude/agent-integrity-guard` — PR #346 (draft).
+- **Owner choices:** global install (`~/.claude` on C: + project copy on D:); block all not approved; egress allowlist = owner's GitHub repos, Anthropic API, localhost.
+
+## Acceptance checklist (owner; do NOT close/activate until all pass) — see memory integrity-guard-acceptance
+1. **Real enforcement at runtime** — VERIFIED. hook_guard.py run through the exact settings.json command string in Git Bash and under native PowerShell on Windows: `curl evil.tld` -> ask, write to settings.json -> deny, `git status` -> silent allow.
+2. **Fail-closed** — VERIFIED. hook_guard.py (commit 9e63c9745): guard import fails -> inline check still denies danger / asks otherwise; unparseable payload -> ask; never a silent allow on error. Subprocess tests with guard.py absent.
+3. **Egress & integrity, adversarial** — two review rounds (vault-reviewer). Round 1 + round 2 bypasses all fixed (commits 4481f277d, c6f2a97cc), each now a test: shell writes to guard/settings incl. quote-split `set""tings.json`, MultiEdit/NotebookEdit, scp/UNC/httpie/dns egress, persistence incl. /etc/profile.d, C3 secret+egress, disableAllHooks content. 103 guard tests.
+4. **Windows compatibility** — VERIFIED (item 1): Git Bash + PowerShell, install.py idempotent/preserve/remove on C:-style home.
+5. **Final validation before activation** — tests 151 green; exfil scanner clean except the documented guard.py false positive (it holds the detection patterns); CI: PENDING on PR #346.
+
+## Not done on purpose
+- **Activation** = `install.py` into `~/.claude`. Separate owner-approved step, after CI is green. Not run yet.
 - **Key files:** `.claude/skills/agent-integrity-guard/*`, `20_TESTS/test_agent_integrity_guard.py`.
