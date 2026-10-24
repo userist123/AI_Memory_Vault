@@ -1,11 +1,11 @@
 # LogAnalyzer — Laboratorul de testare forensică
 
-Starea la 2026-10-05. Cod: `LogAnalyzer.Dfir.Tests/Corpus.cs`, `ForensicValidationTests.cs`, `Corpus/NanAgentCase/targets.json`.
+Starea la 2026-10-05. Cod: `LogAnalyzer.Dfir.Tests/Corpus.cs`, `ForensicValidationTests.cs`, `Corpus/VendorAgentCase/targets.json`.
 
 ## Corpusul
 
-- Corpusul real (incidentul NanAgent de pe LAB-PC, 19.09.2026) este probă locală. **Nu se adaugă niciodată în repository.**
-- Testele îl găsesc prin `LADFIR_CORPUS` (implicit `D:\FORENSIC_CASE`).
+- Corpusul real (incidentul VendorAgent de pe o stație de laborator, 19.09.2026) este probă locală. **Nu se adaugă niciodată în repository.**
+- Testele îl găsesc prin `LADFIR_CORPUS` (implicit `D:\LAB_CORPUS`).
 - `targets.json` conține doar căile relative și valorile așteptate, extrase manual din investigație:
   - nume, număr de rulări, ore;
   - bytes SRUM;
@@ -31,7 +31,7 @@ Motivul fiecărui test sărit conține și el „FORENSIC VALIDATION = UNAVAILAB
 ## Rulare de validare
 
 ```powershell
-$env:LADFIR_CORPUS = "D:\FORENSIC_CASE"
+$env:LADFIR_CORPUS = "D:\LAB_CORPUS"
 $env:LADFIR_REQUIRE_CORPUS = "1"
 dotnet test LogAnalyzer.Dfir.Tests
 ```
@@ -42,9 +42,9 @@ Cu `LADFIR_REQUIRE_CORPUS=1`, testele pe corpus nu mai sunt sărite. Dacă lipse
 
 | Secțiune | Parser | Ce se verifică |
 |---|---|---|
-| prefetch, prefetchMsiexec | PrefetchParser | SETUP.EXE: 4 rulări, ultima la 14:56:26 UTC; MSIEXEC face referire la BOOTSTRAP_7D57.CMD |
+| prefetch, prefetchMsiexec | PrefetchParser | SETUP.EXE: 4 rulări, ultima la 14:56:26 UTC; MSIEXEC face referire la VENDOR_HELPER.CMD |
 | srum | SrumNetworkParser | msbuild.exe: 7.764.746 B trimiși, 100.581.358 B primiți, la 15:15 UTC |
-| defenderEvtx, msiEvtx | EvtxParser | 1116 GenCodeInjected pe NanAgent32.exe; 1033 MsiInstaller CxUtilSvc Helper |
+| defenderEvtx, msiEvtx | EvtxParser | 1116 GenCodeInjected pe VendorAgent32.exe; 1033 MsiInstaller VxUtilSvc Helper |
 | pcapng | PcapngParser | peste 700 de fluxuri, DNS napps-1.com, SNI chatgpt.com |
 | systemHive | SystemHiveExecutionParser, RawRegistry | BAM: 72 valori comparate cu `reg query` (70 identice, 2 mai noi în fereastra de 7 s dintre capturi); AppCompatCache identic octet cu octet cu `reg query` |
 | tasks | ScheduledTaskParser | toate cele 303 definiții din System32\Tasks parsate; fiecare acțiune Exec egală cu „Task To Run” din `schtasks /query /v` (fără ghilimele, cum le afișează schtasks); taskurile cu mai multe acțiuni apar ca „Multiple actions” |
@@ -110,6 +110,10 @@ deci 31 de RecordID-uri sunt folosite de două ori. Jurnalul System arată în a
 („The previous system shutdown … was unexpected”), Kernel-Power 41 și repornire la 17:51:05. Parserul EVTX raportează acum
 refolosirea ca gol de probă și face locatorul unic (`EventRecordID=44760;occurrence=2`), iar AF04 o raportează împreună cu
 oprirea necurată.
+
+## Live facts dump (runtime verification)
+
+Setting the environment variable `LA_DUMP_FACTS` to an output directory outside the repository enables one extra test in `LogAnalyzer.Dfir.Tests` (`LiveFactsDumpTests`; without the variable it is skipped). It reads the live facts of the machine it runs on, read-only (`StationFactCollector` and `AirGapFactsCollector`, with administrator rights detected at run time), and writes `station_facts.json`, `airgap_facts.json`, `checks.json` (id, status, one-line reason for each station check) and `control_report.pdf` to that directory. Nothing is written inside the repository; the files describe the machine, so keep them out of version control and review them before sharing. Without administrator rights the checks that need it are reported as NEDETERMINAT, which is what the dump is meant to show.
 
 ## Ce lipsește (planificat)
 

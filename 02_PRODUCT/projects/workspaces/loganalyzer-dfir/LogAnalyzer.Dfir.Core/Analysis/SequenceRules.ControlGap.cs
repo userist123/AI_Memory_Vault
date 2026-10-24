@@ -64,7 +64,7 @@ public static partial class SequenceRules
                 var ids = new List<string> { m.FindingId };
                 related.Add(m.FindingId);
                 if (act is not null) { ids.Add(act.FindingId); related.Add(act.FindingId); }
-                steps.Add(new($"mediu amovibil {label} observat", m.RuleId, seen, m.User, $"mediu {label}",
+                steps.Add(new($"suport de stocare amovibil {label} observat", m.RuleId, seen, m.User, $"mediu {label}",
                     $"{m.RuleId}{where}" + (act is null ? "" : writeInGap ? $"; {act.RuleId}: urme de scriere pe volum în interiorul decalajului" : $"; {act.RuleId}: urme de activitate pe volum"), evidence, ids));
             }
             steps.Add(SequenceEngine.Missing("restabilirea controlului", "politică / GroupPolicy / Security 4719", c.Has(SecuritySource, "EventLog:Microsoft-Windows-GroupPolicy/Operational")));
@@ -77,7 +77,7 @@ public static partial class SequenceRules
             o.Add(Build(c, "SEQ-CONTROL-GAP-MEDIA", title, sev, anyWrite ? Confidence.Medium : Confidence.Low, steps,
                 $"mediu observat între începutul decalajului și {d.MediaAfterGapMinutes} min după sfârșitul ferestrei", 
                 "mediul este legat de decalaj doar prin timp (fereastra decalajului); nu există o relație dovedită între dezactivarea controlului și folosirea mediului.",
-                "Combină un decalaj de control (POLICY-CONTROL-GAP) cu observațiile de medii amovibile (MEDIA-*, MEDIA-FILE-ACTIVITY).",
+                "Combină un decalaj de control (POLICY-CONTROL-GAP) cu observațiile de suporturi de stocare amovibile (MEDIA-*, MEDIA-FILE-ACTIVITY).",
                 related, gap.Host,
                 ["Decalajul poate fi o întârziere de aplicare a politicii sau o eroare de configurare, fără legătură cu mediul.", "Mediul poate fi autorizat și folosit în activitate normală; starea lui vine din constatarea MEDIA-* componentă.",
                  "Sursele colectate nu arată cine a modificat controlul și nici dacă a fost restabilit."]));

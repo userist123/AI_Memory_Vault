@@ -114,9 +114,26 @@ def test_fable_is_never_a_subagent_model():
     assert sub.escalate_to is None
 
 
+def test_opus_is_the_escalation_ceiling_outside_frontier():
+    d = route(POLICY, "diagnose the root cause of the flaky graph expansion")
+    assert d.task_class == "design" and d.model == "opus"
+    assert d.escalate_to is None, "only frontier sessions may escalate to Fable"
+    raised = route(POLICY, "find which files import X", risk="high")
+    assert raised.model == "opus" and raised.escalate_to is None
+
+
+def test_frontier_may_escalate_to_fable_only_in_the_main_session():
+    goal = "orchestrate an end-to-end long-horizon migration"
+    main = route(POLICY, goal, requested_model="opus")
+    assert main.task_class == "frontier" and main.model == "opus" and main.escalate_to == "fable"
+    sub = route(POLICY, goal, requested_model="opus", for_subagent=True)
+    assert sub.model == "opus" and sub.escalate_to is None
+
+
 def test_security_work_gets_an_opus_verifier_never_fable():
+    # owner rule 2026-10-16: the implementer of risky code stays on Sonnet, the Opus review is mandatory
     d = route(POLICY, "implement the new token handling in the auth module")
-    assert d.model == "opus" and d.verifier_model == "opus"
+    assert d.model == "sonnet" and d.subagent == "vault-worker" and d.verifier_model == "opus"
     sub = route(POLICY, "implement the new token handling in the auth module", for_subagent=True)
     assert sub.verifier_model == "opus"
     # a review-class task is itself the verification
@@ -125,19 +142,23 @@ def test_security_work_gets_an_opus_verifier_never_fable():
 
 
 @pytest.mark.parametrize("goal", [
-    "fix the HMAC auth bypass in the I-RETRIEVAL trust boundary",
     "update the production credentials and rotate the secret",
     "find and remove the leaked API key from git history",
     "delete the old deploy tokens from the config",
     "rotește secretul de producție și șterge cheia veche",
     "repară autentificarea cu parola de producție",
+    "investigate the root cause of the auth token bypass",
+    "security audit of the HMAC trust boundary",
 ])
 def test_risky_prompts_never_go_below_opus(goal):
     """Reviewer finding 1 (2026-10-10): risk was never read from the task text."""
     d = route(POLICY, goal)
     assert POLICY.rank(d.model) >= POLICY.rank("opus"), (goal, d.model, d.applied_rules)
-    assert d.verifier_model == "opus"
-    assert d.subagent is None, "no cheaper-model subagent for risky work"
+    if d.task_class == "review":  # the review is the verification; it runs on vault-reviewer (Opus)
+        assert d.verifier_model is None and d.subagent == "vault-reviewer"
+    else:
+        assert d.verifier_model == "opus"
+        assert d.subagent is None, "no cheaper-model subagent for risky work"
     assert d.effort in ("high", "xhigh")
     assert any(r.startswith("risk_detected") for r in d.applied_rules), d.applied_rules
 
@@ -154,7 +175,10 @@ def test_requested_model_respected_unless_below_risk_floor():
     d = route(POLICY, "fix the test", requested_model="haiku")
     assert d.model == "haiku"
     d = route(POLICY, "fix the test", requested_model="haiku", risk="high")
-    assert d.model == "opus"
+    assert d.model == "sonnet", "risky code: implementer floor is its class model, Opus reviews it"
+    assert any("rejected" in r for r in d.applied_rules)
+    d = route(POLICY, "rotate the deploy key", requested_model="haiku", risk="high")
+    assert d.model == "opus", "a live operation keeps the risk floor"
     with pytest.raises(ModelRoutingPolicyError):
         route(POLICY, "fix the test", requested_model="gpt-5")
 
@@ -252,6 +276,7 @@ def test_usage_report_dedupes_by_request_id_and_prices(tmp_path):
 
 def test_project_slug_matches_claude_code_layout():
     assert project_slug(Path("/srv/user/AI_Memory_Vault_CODEX_READY")) == "-srv-user-AI-Memory-Vault-CODEX-READY"
+    assert project_slug("C:\\Users\\user\\AI_Memory_Vault_CODEX_READY") == "C--Users-user-AI-Memory-Vault-CODEX-READY"  # hygiene: intentional-absolute-path
 
 
 # -- CLI ----------------------------------------------------------------------

@@ -65,7 +65,7 @@ public static class UserInvestigation
         var d = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         try
         {
-            foreach (var e in XDocument.Parse(rec.ToXml()).Descendants().Where(e => e.Name.LocalName == "Data" && e.Attribute("Name") is not null))
+            foreach (var e in LogAnalyzer.Dfir.IO.SafeXml.Parse(rec.ToXml()).Descendants().Where(e => e.Name.LocalName == "Data" && e.Attribute("Name") is not null))
                 d[e.Attribute("Name")!.Value] = e.Value;
         }
         catch (System.Xml.XmlException ex) { d["_XmlError"] = ex.Message; }

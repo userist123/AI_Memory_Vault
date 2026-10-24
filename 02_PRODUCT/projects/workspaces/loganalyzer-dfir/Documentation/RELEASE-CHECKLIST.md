@@ -23,7 +23,7 @@ Se parcurge în ordine, înainte de orice distribuție externă. Recuperat din L
 - [ ] `--mode=airgapped` și fișierul `LogAnalyzer.mode` forțează modul; în AirGapped receptorul Syslog și integrările online sunt refuzate
 - [ ] Stație pornită în AirGapped, conectată apoi la rețea: apare avertizarea, modul rămâne AirGapped
 - [ ] Activare offline: licența emisă din `LogAnalyzer.LicenseManager` pentru Hardware ID-ul afișat este acceptată
-- [ ] Aceeași licență este acceptată și când e generată cu `LogAnalyzer.KeyGen` și cu `Generate-LicenseKey.ps1` (`CoreLicenseKeyTests` fixează formatul)
+- [ ] Cheia publică de licență este în `LogAnalyzer.Core/Licensing/license-public-keys.txt`; o licență emisă cu `LogAnalyzer.KeyGen license-sign` este acceptată, una din schema veche (`CHEIE|AAAA-LL-ZZ`) este refuzată (`CoreLicenseKeyTests`, `LicenseCliTests`)
 - [ ] O licență expirată sau emisă pentru alt Hardware ID este respinsă
 - [ ] Import EVTX și CSV de triere; timeline-ul se populează
 - [ ] Sigma/YARA rulează pe setul importat

@@ -273,6 +273,30 @@ def detect_risk(policy: ClaudeModelPolicy, goal: str) -> tuple[str, tuple[str, .
 
 # -- routing ---------------------------------------------------------------
 
+def _implementer_deferral(policy: ClaudeModelPolicy, task_class: str, risk: str, floor: Optional[str],
+                          goal: str) -> bool:
+    """True when the risk floor moves from an implementation worker to its mandatory verifier.
+
+    Policy `rules.implementer_risk_floor` = {"classes", "max_risk", "never_for_stems"}. Needs a
+    verifier model at or above the floor and security work to require one; the risk must not exceed
+    max_risk (critical stays on the floor) and no live-operation stem may appear in the goal. A stem
+    matches at the start of a word with no right boundary ("delet" hits deleting, deletion;
+    "deploy" hits deployment; "production" hits production-db), so an inflected form keeps Opus.
+    """
+    rule = policy.rules.get("implementer_risk_floor") or {}
+    if not floor or not rule or task_class not in rule.get("classes", ()):
+        return False
+    max_risk = rule.get("max_risk", "high")
+    if max_risk not in RISK_LEVELS or RISK_LEVELS.index(risk) > RISK_LEVELS.index(max_risk):
+        return False
+    if not (policy.verifier_model and policy.rules.get("security_requires_independent_verifier")
+            and policy.rank(policy.verifier_model) >= policy.rank(floor)):
+        return False
+    text = " " + re.sub(r"\s+", " ", goal.lower()) + " "
+    stems = [str(k).lower() for k in rule.get("never_for_stems", ())]
+    return not any(re.search(rf"(?<![^\W_]){re.escape(k)}", text) for k in stems if k)
+
+
 def route(
     policy: ClaudeModelPolicy,
     goal: str,
@@ -282,9 +306,15 @@ def route(
     risk: str = "medium",
     requested_model: Optional[str] = None,
     for_subagent: bool = False,
+    role: Optional[str] = None,
 ) -> ModelRouteDecision:
+    """Route one piece of work. `role` is the spawn's job when the caller knows it: "implementer"
+    (a worker subagent: routed as implement whatever its brief says) or "reviewer" (never below
+    the verifier model). None classifies from the text alone."""
     if risk not in RISK_LEVELS:
         raise ValueError(f"risk must be one of {RISK_LEVELS}")
+    if role not in (None, "implementer", "reviewer"):
+        raise ValueError("role must be None, 'implementer' or 'reviewer'")
     if requested_model is not None and requested_model not in policy.models:
         raise ModelRoutingPolicyError(f"requested model '{requested_model}' is not in the policy")
 
@@ -304,15 +334,39 @@ def route(
         task_class, confidence = tc.name, "high" if len(hits) > 1 else "medium"
         model, effort, subagent, rationale = tc.model, tc.effort, tc.subagent, tc.rationale
 
-    # Risk floor can only raise the tier.
+    # A worker spawn is implementation work whatever words its brief uses ("the reviewer will verify..."):
+    # a class pricier than implement (review, design, frontier, unclassified) is routed as implement;
+    # a cheaper one (explore, summarize) keeps its cheaper model.
+    impl = policy.task_classes.get("implement")
+    if role == "implementer" and impl is not None and task_class != "implement"             and policy.rank(model) > policy.rank(impl.model):
+        tc = impl
+        applied.append(f"role:implementer({task_class}->implement)")
+        task_class, model, effort, subagent, rationale = tc.name, tc.model, tc.effort, tc.subagent, tc.rationale
+
+    # Risk floor can only raise the tier. Exception (owner rule 2026-10-16): an implementation worker
+    # on risky *code* stays on its class model when an independent verifier at or above the floor is
+    # mandatory afterwards; the floor then binds the verifier and the main-session design, not the
+    # worker. A live operation (production, deploy, delete, rotate ...) is never deferred: a review
+    # after the fact cannot undo it.
     floor = policy.rules.get("risk_floor", {}).get(risk)
+    deferred = _implementer_deferral(policy, task_class, risk, floor, goal)
+    deferred_min = model if deferred else None  # risky code: never below the implementer class model
+    if deferred:
+        applied.append(f"risk_floor_deferred_to_verifier:{risk}->{floor}")
+        levels = policy.models[model].effort_levels
+        if "high" in levels and levels.index(effort) < levels.index("high"):
+            effort = "high"
+            applied.append(f"risk_effort:{risk}->high")
+        floor = None
     if floor and policy.rank(floor) > policy.rank(model):
         applied.append(f"risk_floor:{risk}->{floor}")
         model = floor
-    if floor:
-        # Risky work stays in the main session (the class subagents are pinned to cheaper models)
-        # at an effort where edge cases get looked at, even when the model was already high enough.
+        # The class subagent is pinned to a cheaper model: the risky work stays in the main session.
         subagent = None
+    if floor:
+        # A class whose own model already meets the floor (review -> vault-reviewer on Opus) keeps
+        # its subagent: verification runs in a fresh context, not in the main transcript. Either
+        # way the effort is one where edge cases get looked at.
         levels = policy.models[model].effort_levels
         if "high" in levels and levels.index(effort) < levels.index("high"):
             effort = "high"
@@ -327,6 +381,8 @@ def route(
     if requested_model is not None:
         if floor and policy.rank(requested_model) < policy.rank(floor):
             applied.append(f"requested:{requested_model} rejected below risk floor {floor}")
+        elif deferred_min and policy.rank(requested_model) < policy.rank(deferred_min):
+            applied.append(f"requested:{requested_model} rejected below {deferred_min} on risky code")
         else:
             applied.append(f"requested:{requested_model}")
             model = requested_model
@@ -338,7 +394,10 @@ def route(
     # is itself the verification, so it gets none. Fable is never a verifier.
     verifier: Optional[str] = None
     is_security = bool(risk_hits) or any(k in hits for k in ("security", "threat", "vulnerability", "audit", "securitate", "vulnerabilitate"))
-    needs_verifier = task_class != "review" and (
+    if role == "reviewer" and policy.verifier_model and policy.rank(model) < policy.rank(policy.verifier_model):
+        applied.append(f"role:reviewer->{policy.verifier_model}")
+        model = policy.verifier_model
+    needs_verifier = task_class != "review" and role != "reviewer" and (
         RISK_LEVELS.index(risk) >= RISK_LEVELS.index("high")
         or (is_security and policy.rules.get("security_requires_independent_verifier"))
     )
@@ -349,6 +408,8 @@ def route(
     escalate_to = policy.higher_tier(model)
     if for_subagent and escalate_to == "fable":
         escalate_to = None  # the main session, not a subagent, would take that step
+    if escalate_to == "fable" and task_class != "frontier":
+        escalate_to = None  # owner rule: Opus is the ceiling; Fable only for frontier sessions
 
     est = estimate_cost(policy, model, input_tokens, output_tokens)
     on_fable = estimate_cost(policy, "fable", input_tokens, output_tokens)

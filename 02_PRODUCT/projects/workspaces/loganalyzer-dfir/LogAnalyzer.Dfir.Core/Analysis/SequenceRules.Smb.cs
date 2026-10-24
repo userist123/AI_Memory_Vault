@@ -145,14 +145,14 @@ public static partial class SequenceRules
                 var steps = new List<SeqStep>
                 {
                     new("acces la partajare de la distanță", "Security 5140/5145/4663", aFirst, acc, As[0].Share,
-                        $"{As.Count} evenimente" + (ips.Count > 0 ? $" de la {string.Join(", ", ips)}" : "") + $": {Fold(As.Select(x => x.What), 4)}",
+                        $"{LogAnalyzer.Dfir.Language.RoText.Count(As.Count, "eveniment", "evenimente")}" + (ips.Count > 0 ? $" de la {string.Join(", ", ips)}" : "") + $": {Fold(As.Select(x => x.What), 4)}",
                         As.Take(8).Select(x => Ref(x.E, x.What)).ToList(), []),
                     Bs.Count > 0
                         ? new("staging local", "USN / Security 4663 / Sysmon 11 / LNK", Bs[0].Time, Fold(Bs.Select(x => x.Account), 3), Fold(folders, 3),
-                              $"{Bs.Count} fișiere create sau referite în {Fold(folders, 3)}: {Fold(Bs.Select(x => x.Leaf), 6)}" + (Bs.All(x => x.Weak) ? " (doar referiri LNK)" : ""),
+                              $"{LogAnalyzer.Dfir.Language.RoText.Count(Bs.Count, "fișier", "fișiere")} create sau referite în {Fold(folders, 3)}: {Fold(Bs.Select(x => x.Leaf), 6)}" + (Bs.All(x => x.Weak) ? " (doar referiri LNK)" : ""),
                               Bs.Take(8).Select(x => Ref(x.E, x.What)).ToList(), [])
                         : SequenceEngine.Missing("staging local", "USN / Security 4663 / Sysmon 11", stagingSrc),
-                    new($"scriere pe mediul amovibil {m.Name}", "USN / Security 4663 pe volumul mediului", T(Cs[0].Event), Fold(Cs.Select(x => WriteAccount(m, x)), 3), $"mediu {m.Name} ({m.Letter}:)",
+                    new($"scriere pe suportul de stocare amovibil {m.Name}", "USN / Security 4663 pe volumul mediului", T(Cs[0].Event), Fold(Cs.Select(x => WriteAccount(m, x)), 3), $"mediu {m.Name} ({m.Letter}:)",
                         $"{Cs.Count} urme de scriere pe unitatea {m.Letter}: {Fold(Cs.Select(x => Leaf(PathOf(x))), 6)}", Cs.Take(8).Select(x => Ref(x.Event, x.What)).ToList(), m.FindingIds.ToList()),
                 };
                 var title = $"Secvență: acces la partajare la {Stamp(aFirst)}; staging local " + (Bs.Count > 0 ? $"la {Stamp(Bs[0].Time)}" : "pas neobservat") +

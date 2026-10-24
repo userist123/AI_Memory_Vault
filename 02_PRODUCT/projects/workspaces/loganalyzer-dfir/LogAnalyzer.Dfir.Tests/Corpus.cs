@@ -7,7 +7,7 @@ namespace LogAnalyzer.Dfir.Tests;
 public static class Corpus
 {
     private static readonly Lazy<JsonElement> TargetsLazy = new(() =>
-        JsonDocument.Parse(System.IO.File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Corpus", "NanAgentCase", "targets.json"))).RootElement);
+        JsonDocument.Parse(System.IO.File.ReadAllText(Path.Combine(AppContext.BaseDirectory, "Corpus", "VendorAgentCase", "targets.json"))).RootElement);
 
     public static JsonElement Targets => TargetsLazy.Value;
 

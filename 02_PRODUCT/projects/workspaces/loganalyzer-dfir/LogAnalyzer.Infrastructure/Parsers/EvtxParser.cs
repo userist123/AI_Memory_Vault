@@ -24,11 +24,15 @@ namespace LogAnalyzer.Infrastructure
             #pragma warning disable CA1416 
             LastMalformedRecords = 0;
             LastRepairNote = "";
+            string? work = null;     // security audit #14: a repaired copy lives in a work folder (case or per-user), never %TEMP%, and is deleted after reading
+            try
+            {
             var damaged = LogAnalyzer.Dfir.IO.EvtxRepair.Inspect(filePath).Where(c => !c.Valid && !c.Problem.StartsWith("chunk gol", StringComparison.Ordinal)).ToList();
             if (damaged.Count > 0)
             {
                 // One corrupt chunk makes the Windows API reject the file: parse a repaired copy (original untouched).
-                var repaired = Path.Combine(Path.GetTempPath(), "LogAnalyzer", "evtx_repair", Guid.NewGuid().ToString("N")[..8] + "_" + Path.GetFileName(filePath));
+                work = LogAnalyzer.Dfir.IO.WorkFolders.NewWorkDirectory(filePath, "evtx_repair");
+                var repaired = Path.Combine(work, Path.GetFileName(filePath));
                 var r = LogAnalyzer.Dfir.IO.EvtxRepair.Repair(filePath, repaired);
                 LastRepairNote = $"{damaged.Count} chunk-uri corupte eliminate ({r.KeptChunks}/{r.TotalChunks} păstrate); lipsesc RecordID " +
                                  string.Join(", ", damaged.Take(10).Select(c => $"{c.FirstRecordId}–{c.LastRecordId}"));
@@ -84,6 +88,8 @@ namespace LogAnalyzer.Infrastructure
                     yield return ev;
                 }
             }
+            }
+            finally { LogAnalyzer.Dfir.IO.WorkFolders.TryDelete(work); }
             #pragma warning restore CA1416
         }
     }

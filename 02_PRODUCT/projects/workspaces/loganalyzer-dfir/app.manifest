@@ -16,7 +16,10 @@
             Remove this element if your application requires this virtualization for backwards
             compatibility.
         -->
-        <requestedExecutionLevel level="highestAvailable" uiAccess="false" />
+        <!-- Review of the remediations #4: this manifest belongs to the legacy root projects (LogAnalyzer.AirGapped, LogAnalyzer.Network,
+             LogAnalyzer.UI), which are not in LogAnalyzer.slnx and have none of the native-library / install-folder checks of LogAnalyzer.App.
+             They run asInvoker: they never ask for elevation. The supported application is LogAnalyzer.App (LogAnalyzer.Apppp.manifest). -->
+        <requestedExecutionLevel level="asInvoker" uiAccess="false" />
       </requestedPrivileges>
     </security>
   </trustInfo>

@@ -17,6 +17,23 @@ public sealed class ProfileImportResult
 public static class ProfileImport
 {
     /// <summary>The profile's own JSON format. A newer major version is refused; unparseable JSON is one error, not an empty profile.</summary>
+    /// <summary>
+    /// The security officers and the anchor code are not profile data: they live in their own store and change only through the officer flows. A profile
+    /// file that carries them (hand-edited, or from an older build) is imported without them, with this warning; the caller records it in the audit.
+    /// </summary>
+    public const string OfficerEntriesIgnored = "lista ofițerilor de securitate și codul de ancorare nu se importă din profil; intrările din fișier au fost ignorate (ofițerii se înregistrează doar din pagina de control)";
+
+    private static bool CarriesOfficerEntries(string json)
+    {
+        try
+        {
+            using var d = System.Text.Json.JsonDocument.Parse(json);
+            return d.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object &&
+                   d.RootElement.EnumerateObject().Any(x => x.Name.Equals("securityOfficers", StringComparison.OrdinalIgnoreCase) || x.Name.Equals("lastAnchorCode", StringComparison.OrdinalIgnoreCase));
+        }
+        catch (System.Text.Json.JsonException) { return false; }
+    }
+
     public static ProfileImportResult FromJson(string json)
     {
         ProcedureProfile? p;
@@ -27,8 +44,9 @@ public static class ProfileImport
             return Failed($"schema_version „{p.SchemaVersion}” nu este suportată (profil de procedură 1.x)");
         // Null lists in a hand-edited file are empty tables.
         p.WorkingHours ??= []; p.Holidays ??= []; p.Shifts ??= []; p.ApprovedAccounts ??= []; p.MaintenanceWindows ??= []; p.RotationProcedure ??= [];
-        p.ApprovedSoftware ??= []; p.ExpectedPolicies ??= []; p.Zones ??= []; p.TransferChannels ??= []; p.NetworkDestinations ??= [];
+        p.ApprovedSoftware ??= []; p.ExpectedPolicies ??= []; p.Zones ??= []; p.TransferChannels ??= []; p.NetworkDestinations ??= []; p.ClassifiedFolders ??= [];
         var issues = ProfileOps.Validate(p);
+        if (CarriesOfficerEntries(json)) issues.Add(new ProfileIssue(null, 0, OfficerEntriesIgnored, IsError: false));
         int rows = ProfileTables.All.Sum(t => ProfileTables.Count(p, t));
         var bad = issues.Where(i => i.IsError && i.Line > 0).Select(i => (i.Table, i.Line)).Distinct().Count();
         return new ProfileImportResult { Profile = p, RowsAccepted = rows - bad, RowsRejected = bad, Issues = issues };

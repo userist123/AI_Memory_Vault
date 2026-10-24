@@ -52,20 +52,20 @@ Nu au fost presupuse; au fost citite din textele mesajelor furnizorilor (Windows
 al proiectelor .NET). A trata orice diferență ca DETECTED ar fi fost zgomot. AF15 urmează tehnica ATT&CK T1036.003
 (redenumirea utilitarelor de sistem), adică doar `OriginalFileName` din lista utilitarelor (cmd, powershell, certutil, rundll32…).
 
-## Rezultatul pe corpusul NanAgent
+## Rezultatul pe corpusul VendorAgent
 
 Valorile de mai jos sunt recalculate de test cu `wevtutil`, iar AF11 este comparat cu lista WMI `Win32_Service` capturată pe stație.
 
 | id | rezultat | ce arată |
 |---|---|---|
-| AF01 | DETECTED | 2026-02-25 22:10:08 UTC: jurnalele System, Application și ForwardedEvents golite de LAB-PC\Owner |
+| AF01 | DETECTED | 2026-02-25 22:10:08 UTC: jurnalele System, Application și ForwardedEvents golite de un cont local al stației de laborator |
 | AF02, AF03 | NOT_DETECTED | Security (103.631), System (31.420), Application, Firewall (864): structură intactă |
 | AF04 | DETECTED | Application: după RecordID 44790 (2026-08-08 17:50:08 UTC) urmează 44760 (17:51:21); 31 de ID-uri sunt folosite de două ori. Coincide cu oprirea necurată din System (6008, Kernel-Power 41, repornire la 17:51:05). Security, System și Firewall au RecordID continuu |
-| AF05 | DETECTED | 14 schimbări de oră făcute din Setări (SystemSettingsAdminFlows.exe, utilizatorul Owner), în 4616 și în Kernel-General 1 |
+| AF05 | DETECTED | 14 schimbări de oră făcute din Setări (SystemSettingsAdminFlows.exe, un utilizator local), în 4616 și în Kernel-General 1 |
 | AF06 | DETECTED (cu jurnalul USN) | **2026-10-03 13:54:27 UTC: 349 de fișiere `.pf` distincte șterse în aceeași secundă**, în ambele exporturi USN; 84 recreate ulterior cu același nume. USN nu arată procesul; în Prefetch, imediat după, rulează doar `svchost.exe` (13:54:28) și `gh.exe`. Prefetch rămâne activ (`EnablePrefetcher` = 3) |
 | AF07 | NOT_DETECTED | jurnal unic `0x01dc84b0d77fa447`, creat la 2026-01-13 17:19:57 UTC, cu 1,5 h înainte de `InstallTime` din SOFTWARE (2026-01-13 18:50:53 UTC); fereastra exportului: 2026-10-03 13:19–20:51 UTC |
 | AF09 | NOT_DETECTED | 14 evenimente 4657, niciunul pe cheile de jurnalizare |
-| AF10 | DETECTED | 52 de eliminări din politica de audit (4719), făcute de utilizatorul Owner, începând cu 2026-08-08 |
+| AF10 | DETECTED | 52 de eliminări din politica de audit (4719), făcute de un utilizator local, începând cu 2026-08-08 |
 | AF11 | DETECTED | 41 din 110 servicii instalate nu mai există (versiuni vechi ale Google Updater, drivere Lenovo etc.); niciunul nu apare în WMI |
 | AF12 | UNDETERMINED | TaskScheduler/Operational nu este în corpus |
 | AF13, AF15 | NOT_DETECTED | 4.955 de căi de execuție; 3.078 de intrări Amcache cu `OriginalFileName` |

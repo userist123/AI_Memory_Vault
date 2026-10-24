@@ -85,10 +85,10 @@ in its constructor. Corrected 2026-09-06.
 
 | Measure | Value |
 |---|---:|
-| Notes in the index (`VaultIndex`, export residue excluded) | 1209 |
+| Notes in the index (`VaultIndex`, export residue excluded) | 1328 |
 | Notes visible to `FileStorageEngine` | 858 |
-| Graph edges | 483 |
-| — declared / inferred / wikilink | 152 / 153 / 178 |
+| Graph edges | 533 |
+| — declared / inferred / wikilink | 177 / 178 / 178 |
 | Notes usable as a graph **seed** (out-edge) | 195 |
 | Notes reachable as graph **gold** (in-edge) | 142 |
 | Graph cases with pairwise-disjoint nodes | 32 |
@@ -123,7 +123,16 @@ whole-corpus retrieval numbers.
   `BOOTSTRAP_ALL_AGENTS_V1.md` and the universal protocol pointed at the retired
   `09_COORDINATION/AGENT_MEMORY/` tree until 2026-10-14
   (`20_TESTS/test_bootstrap_cold_start_paths.py`). The 21 `.agents/agents/*/agent.md`
-  profiles and several skills still cite `99_SYSTEM/*` files that do not exist.
+  profiles and two skills cited `99_SYSTEM/*` files deleted in `dbcfbc502`; for 20 of them that
+  registry was the only agent-to-skill mapping. Since 2026-10-23 both files are restored to
+  `00_GOVERNANCE/protocols/` with provenance, the references point there, and
+  `20_TESTS/test_agent_docs_memory_interfaces.py` fails on any path a profile cites that does
+  not exist. No code reads the registry (the code router uses `04_CONFIG/agent_router.json`),
+  and every skill it names exists (of 18 missing on 2026-10-23: 17 removed on purpose and dropped, `ansible-automation` restored). Of the council limits (copy in
+  `AGENTS.md` wins), `max_memory_results`, skills per agent and graph hops are enforced
+  (`executive.py`, `agent_router.py`) and one primary agent holds by construction; since
+  2026-10-24 the router also caps a route at 3 council agents and 4 selected skills
+  (`test_agent_router_council_limits.py`). Only the token caps are not enforced.
 - **Agents now have direct routes, but no live agent turn has used them yet.** The `vault_*` tools are
   registered for Claude Code, Codex, Antigravity and Gemini CLI (`AGENTS.md`, "Direct routes for every AI");
   the stdio contract is tested, no client session has been observed calling them. The 8 coordination files

@@ -114,7 +114,8 @@ namespace LogAnalyzer.UI.Tests
             var d = StationRoleResolver.Decide(EditionKind.Classified, r, mode, Now);
             Assert.Equal(StationRole.Control, d.EffectiveRole);
             Assert.Equal(StationRole.Csirt, d.RequestedRole);
-            Assert.Contains(d.Reasons, x => x.Contains("clasificat", StringComparison.OrdinalIgnoreCase) && x.Contains("respins", StringComparison.OrdinalIgnoreCase));
+            // was "clasificat": the reason now names the edition (Standalone), not its old classified label
+            Assert.Contains(d.Reasons, x => x.Contains("Standalone", StringComparison.OrdinalIgnoreCase) && x.Contains("respins", StringComparison.OrdinalIgnoreCase));
             // and with no policy at all
             var none = StationRoleResolver.Decide(EditionKind.Classified, null, mode, Now);
             Assert.Equal(StationRole.Control, none.EffectiveRole);
@@ -171,7 +172,12 @@ namespace LogAnalyzer.UI.Tests
             var (k, pub) = NewKey();
             var r = EditionPolicyVerifier.Verify(Policy(k, AppMode.Network, StationRole.Csirt), pub, "PC1", Now);
             var d = Decide(EditionKind.Unclassified, r);
-            Assert.Contains("neclasificat", d.Summary, StringComparison.OrdinalIgnoreCase);
+            // The edition is named by the compile-time posture of the executable ("Ediția: Standalone / Rețea air-gap / Internet").
+            StationPostureContext.ResetForTests();
+            StationPostureContext.Initialize(StationPosture.Internet);
+            try { Assert.Contains("Ediția: Internet", d.Summary); }
+            finally { StationPostureContext.ResetForTests(); }
+            Assert.Contains("Ediția: Standalone", d.Summary);      // nothing initialised: the strictest posture, fail closed
             Assert.Contains("conectat", d.Summary, StringComparison.OrdinalIgnoreCase);
             Assert.Contains(r.PolicySha256![..12], d.Summary);
             foreach (var reason in d.Reasons) Assert.Contains(reason, d.Summary);

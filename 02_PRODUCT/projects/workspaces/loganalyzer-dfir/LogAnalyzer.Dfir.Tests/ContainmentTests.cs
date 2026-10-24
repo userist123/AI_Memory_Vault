@@ -84,7 +84,7 @@ public class ContainmentTests : IDisposable
     public void Location_and_address_classification()
     {
         Assert.True(SuspiciousProcessDetector.IsUserWritableLocation(Path.Combine(Path.GetTempPath(), "x.exe")));
-        Assert.True(SuspiciousProcessDetector.IsUserWritableLocation(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "Conexant", "a.exe")));
+        Assert.True(SuspiciousProcessDetector.IsUserWritableLocation(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData), "VendorX", "a.exe")));
         Assert.False(SuspiciousProcessDetector.IsUserWritableLocation(Notepad));
         Assert.True(SuspiciousProcessDetector.IsPrivateOrLocal("192.168.1.10"));
         Assert.True(SuspiciousProcessDetector.IsPrivateOrLocal("10.0.0.1"));

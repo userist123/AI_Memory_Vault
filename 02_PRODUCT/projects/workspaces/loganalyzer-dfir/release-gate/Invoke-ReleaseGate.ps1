@@ -13,7 +13,7 @@
 
 .EXAMPLE
   # Owner, on Windows, with the real corpus, before a release:
-  pwsh release-gate/Invoke-ReleaseGate.ps1 -Mode Enforce -Version 0.1.0-dfir -RunTests -CorpusRoot D:\corpus\NanAgentCase -RunDifferential
+  pwsh release-gate/Invoke-ReleaseGate.ps1 -Mode Enforce -Version 0.1.0-dfir -RunTests -CorpusRoot D:\corpus\VendorAgentCase -RunDifferential
 
 .EXAMPLE
   # CI: tests already ran, results are on disk

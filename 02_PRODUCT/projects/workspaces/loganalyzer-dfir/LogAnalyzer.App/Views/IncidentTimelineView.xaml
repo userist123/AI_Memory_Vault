@@ -10,7 +10,7 @@
         <!-- Page Header -->
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,20">
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Incident Timeline" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="Cronologia evenimentelor" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 <Border Margin="12,0,0,0" BorderBrush="{StaticResource PrimaryAccentBrush}" Background="{StaticResource Surface3Brush}" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
                     <TextBlock Text="LIVE NARRATIVE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                 </Border>

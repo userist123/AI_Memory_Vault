@@ -11,6 +11,8 @@
   <ItemGroup>
     <!-- Ships inside the package (Scripts\AuditCollector.ps1 next to the executable); the collector never looks anywhere else. -->
     <None Include="Scripts\AuditCollector.ps1" CopyToOutputDirectory="PreserveNewest" />
+    <!-- The same script, fixed in the assembly at build time: its SHA-256 is what the file next to the executable must have before it is started. -->
+    <EmbeddedResource Include="Scripts\AuditCollector.ps1" LogicalName="LogAnalyzer.Response.Scripts.AuditCollector.ps1" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LogAnalyzer.Core\LogAnalyzer.Core.csproj" />
