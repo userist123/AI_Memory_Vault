@@ -20,7 +20,7 @@ v3 are 160 de cazuri, dintre care 40 construite special ca să ceară o legătur
 | Fișier | SHA-256 |
 |---|---|
 | `retrieval_benchmark_v3.json` | `eeb53822ae5f022df89290d6fca789c1d4387b7572ed70103a7c08aae5b57eaa` — identic cu cel raportat de etichetator |
-| `labeling_corpus.json` | `5d70bb980f57bc99b6c341909c2cb3ea151fc2308923d20d60eb9f105b03f945` |
+| `labeling_corpus.json` | `1869ad0cdfdbbf66d18125648c0a9b9491d336b27a3f7906a789fd72d4c02622` |
 
 Etichetatorul a primit corpusul cu terminații CRLF; conținutul e identic, doar terminațiile de linie au fost normalizate la LF pentru commit.
 

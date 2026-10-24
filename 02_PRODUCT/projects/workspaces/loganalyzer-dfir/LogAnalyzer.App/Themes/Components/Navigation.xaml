@@ -49,6 +49,8 @@
         <Setter Property="FontWeight" Value="SemiBold"/>
         <Setter Property="FontSize" Value="{StaticResource FontSizeDense}"/>
         <Setter Property="Cursor" Value="Hand"/>
+        <!-- row 20 (2026-10-22): a long name ends in „…” and the full name is the tooltip (an entry may set its own, which wins) -->
+        <Setter Property="ToolTip" Value="{Binding Content, RelativeSource={RelativeSource Self}}"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">
@@ -59,7 +61,11 @@
                                 <ColumnDefinition Width="*"/>
                             </Grid.ColumnDefinitions>
                             <Border x:Name="ActiveRail" Width="3" Height="18" Background="{StaticResource PrimaryAccentBrush}" CornerRadius="1.5" HorizontalAlignment="Left" Visibility="Collapsed" Margin="-8,0,4,0"/>
-                            <ContentPresenter Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center"/>
+                            <ContentPresenter Grid.Column="1" HorizontalAlignment="Left" VerticalAlignment="Center">
+                                <ContentPresenter.Resources>
+                                    <Style TargetType="TextBlock"><Setter Property="TextTrimming" Value="CharacterEllipsis"/></Style>
+                                </ContentPresenter.Resources>
+                            </ContentPresenter>
                         </Grid>
                     </Border>
                     <ControlTemplate.Triggers>

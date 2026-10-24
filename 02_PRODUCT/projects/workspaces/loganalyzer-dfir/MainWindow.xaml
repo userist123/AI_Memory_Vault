@@ -210,10 +210,10 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="{Binding StatusMessage, FallbackValue='STATUS: OPERATIONAL — ALL SYSTEMS NORMAL'}" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" VerticalAlignment="Center" FontSize="11"/>
+                <TextBlock Text="{Binding StatusMessage, FallbackValue='Stare: nicio analiză rulată'}" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" VerticalAlignment="Center" FontSize="11"/>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-                    <Ellipse Width="6" Height="6" Fill="{StaticResource SuccessBrush}" Margin="0,0,8,0"/>
-                    <TextBlock Text="SHIELD ARMED &amp; SECURE" Foreground="{StaticResource SuccessBrush}" FontWeight="Bold" FontSize="10.5"/>
+                    <Ellipse Width="6" Height="6" Fill="{StaticResource TextMutedBrush}" Margin="0,0,8,0"/>
+                    <TextBlock Text="Protecție: nedeterminată" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Bold" FontSize="10.5"/>
                 </StackPanel>
             </Grid>
         </Border>

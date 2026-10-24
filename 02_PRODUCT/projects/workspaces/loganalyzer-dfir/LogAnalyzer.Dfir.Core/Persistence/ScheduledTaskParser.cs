@@ -18,16 +18,16 @@ public sealed partial class ScheduledTaskParser : EvidenceParserBase
 
     public override ParserDescriptor Descriptor { get; } = new()
     {
-        ParserId = "ScheduledTaskParser", Version = "1.0", Artifact = "Definiție de task programat (System32\\Tasks, XML)",
+        ParserId = "ScheduledTaskParser", Version = "1.0", Artifact = "Definiție de activitate planificată (System32\\Tasks, XML)",
         SourceTypes = ["task_xml"], Fingerprints = ["task_xml"],
         SupportedOs = "Oricare (XML citit offline)",
         FormatVersions = ["Task Scheduler schema 1.1–1.6 (Windows Vista – 11)"],
         Limitations =
         [
-            "Configurația taskului la momentul copierii; nu dovedește că a rulat (vezi TaskScheduler/Operational, 4698/4702).",
-            "Data din RegistrationInfo este scrisă de cel care creează taskul și poate fi falsificată; fără fus orar rămâne neconvertită.",
+            "Configurația activității planificate la momentul copierii; nu dovedește că a rulat (vezi TaskScheduler/Operational, 4698/4702).",
+            "Data din RegistrationInfo este scrisă de cel care creează activitatea planificată și poate fi falsificată; fără fus orar rămâne neconvertită.",
             "Variabilele de mediu din comandă nu sunt expandate.",
-            "Nu citește TaskCache din registru (taskuri fără fișier XML sau cu XML șters).",
+            "Nu citește TaskCache din registru (activități planificate fără fișier XML sau cu XML șters).",
         ],
         Status = ParserMaturity.Validated,
         Validation = "ScheduledTaskParserTests: 303 fișiere reale din corpus comparate cu schtasks /query /v; XML sintetic cu valori exacte",
@@ -35,9 +35,7 @@ public sealed partial class ScheduledTaskParser : EvidenceParserBase
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
-        XDocument doc;
-        using (var r = XmlReader.Create(fullPath, new XmlReaderSettings { DtdProcessing = DtdProcessing.Prohibit, XmlResolver = null }))
-            doc = XDocument.Load(r);
+        var doc = LogAnalyzer.Dfir.IO.SafeXml.Load(fullPath);
         var task = doc.Root ?? throw new InvalidDataException("XML fără element rădăcină.");
         if (task.Name != Ns + "Task") throw new InvalidDataException($"Rădăcina este {task.Name.LocalName}, nu Task.");
 
@@ -68,8 +66,8 @@ public sealed partial class ScheduledTaskParser : EvidenceParserBase
 
         var actions = task.Element(Ns + "Actions")?.Elements().ToList() ?? [];
         if (actions.Count == 0)
-            result.Gaps.Add(new EvidenceGap(uri, EvidenceStatus.Partial, "taskul nu are nicio acțiune în XML",
-                "Nu se știe ce rulează taskul", "TaskCache din hive-ul SOFTWARE", "Posibil"));
+            result.Gaps.Add(new EvidenceGap(uri, EvidenceStatus.Partial, "activitatea planificată nu are nicio acțiune în XML",
+                "Nu se știe ce rulează activitatea planificată", "TaskCache din hive-ul SOFTWARE", "Posibil"));
 
         int index = 0;
         foreach (var a in actions.DefaultIfEmpty())
@@ -91,7 +89,7 @@ public sealed partial class ScheduledTaskParser : EvidenceParserBase
                 Source = "ScheduledTask", EvidenceId = item.EvidenceId, Task = uri, User = user,
                 // Path is the executable without the quotes the XML may carry; the raw command stays in Fields["Command"].
                 Path = command.Trim().Trim('"'), Process = command.Length > 0 ? LogAnalyzer.Dfir.FileSystem.WinPath.GetFileName(command.Trim().Trim('"')) : "",
-                Summary = $"Task programat {uri}: {what}" + (common["Hidden"] == "true" ? " (ascuns)" : "") +
+                Summary = $"Activitate planificată {uri}: {what}" + (common["Hidden"] == "true" ? " (ascunsă)" : "") +
                           (triggers.Count > 0 ? $"; declanșatori: {common["Triggers"]}" : ""),
                 TemporalType = TemporalType.CurrentSnapshot, Classification = Classification.Direct, Confidence = Confidence.High,
                 Locator = a is null ? "Actions" : $"Actions/{kind}[{index}]", Fields = fields,

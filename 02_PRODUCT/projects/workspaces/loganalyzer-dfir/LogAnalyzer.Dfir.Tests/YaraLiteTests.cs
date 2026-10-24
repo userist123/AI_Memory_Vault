@@ -62,7 +62,7 @@ public sealed class YaraLiteTests(ITestOutputHelper output)
     public void Shipped_rule_matches_the_real_msbuild_loader_only()
     {
         var y = YaraLite.Parse(File.ReadAllText(Path.Combine(RulesDir, "msbuild_obfuscation.yar")), "msbuild_obfuscation.yar");
-        var folder = Path.Combine(Corpus.Root, "25_TARGET_MSBUILD", "Conexant_CxUtilSvcHelper_COPY");
+        var folder = Path.Combine(Corpus.Root, "25_TARGET_MSBUILD", "VendorX_VxUtilSvcHelper_COPY");
         var hits = Directory.GetFiles(folder, "*", SearchOption.AllDirectories)
             .Where(f => y.Scan(File.ReadAllBytes(f)).Count > 0).Select(Path.GetFileName).ToList();
         Assert.Equal(["NetworkMonitor.targets"], hits);

@@ -20,7 +20,7 @@ from openpyxl.formatting.rule import CellIsRule, ColorScaleRule
 # ═══════════════════════════════════════════════════════════════════
 # CONFIGURARE
 # ═══════════════════════════════════════════════════════════════════
-EXCEL_TEMPLATE = Path(r"C:\Users\user\Desktop\Analiza_Piata_Profesionala.xlsx")
+EXCEL_TEMPLATE = Path(os.path.expanduser(r"~\Desktop\Analiza_Piata_Profesionala.xlsx"))
 FRED_API_KEY   = os.environ.get("FRED_API_KEY", "")
 
 INDICI = {

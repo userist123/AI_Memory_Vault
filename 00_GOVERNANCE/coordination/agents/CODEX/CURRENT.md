@@ -1,4 +1,7 @@
 ---
+# HISTORICAL SNAPSHOT (verified 2026-10-14): the SHA recorded below (ea3094b53367578dd9ab4ece85010841a0f2e0e1) was not reachable from the refs
+# fetched on 2026-10-14 (only `main`; the remote has other branches). This is a dated snapshot, not live state. The live measured state is
+# 00_GOVERNANCE/VAULT_STATE.md.
 agent: CODEX
 last_updated_utc: 2026-09-04T19:15:00Z
 repository: userist123/AI_Memory_Vault_CODEX_READY
@@ -32,6 +35,10 @@ related_sessions: []
 related_agents: ANTIGRAVITY, PERPLEXITY, LUNA
 NEXT: read project CURRENT and take the next implementation task on main when activated
 ---
+
+status: HISTORICAL_SNAPSHOT
+
+> Dated snapshot (not live state): the recorded SHA was not reachable from the refs fetched on 2026-10-14 (only `main`). Live measured state: `00_GOVERNANCE/VAULT_STATE.md`.
 
 
 ## 🔗 Legături Sinaptice

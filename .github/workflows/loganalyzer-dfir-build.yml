@@ -53,10 +53,31 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: '10.x'
+          global-json-file: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/global.json
 
-      - name: Restore
-        run: dotnet restore LogAnalyzer.slnx
+      # Security audit #9: every project restores from its committed packages.lock.json (Directory.Build.props).
+      - name: Every project has a committed lock file
+        shell: pwsh
+        run: |
+          $projects = Select-String -Path LogAnalyzer.slnx -Pattern 'Path="([^"]+)\.csproj"' -AllMatches | ForEach-Object { $_.Matches } | ForEach-Object { Split-Path $_.Groups[1].Value }
+          if (-not $projects) { Write-Host "::error::Nu s-a găsit niciun proiect în LogAnalyzer.slnx"; exit 1 }
+          $missing = $projects | Where-Object { -not (Test-Path (Join-Path $_ 'packages.lock.json')) }
+          if ($missing) { Write-Host "::error::packages.lock.json lipsește pentru: $($missing -join ', ')"; exit 1 }
+          Write-Host "OK: $($projects.Count) proiecte, fiecare cu packages.lock.json"
+
+      - name: Restore (locked mode)
+        run: dotnet restore LogAnalyzer.slnx --locked-mode
+
+      # Security audit #9: any known-vulnerable package, direct or transitive, fails the build.
+      - name: Vulnerable packages (direct and transitive)
+        shell: pwsh
+        run: |
+          $out = (dotnet list LogAnalyzer.slnx package --vulnerable --include-transitive 2>&1 | Out-String)
+          $code = $LASTEXITCODE
+          Write-Host $out
+          if ($code -ne 0) { Write-Host "::error::dotnet list package --vulnerable a eșuat (cod $code)"; exit 1 }
+          if ($out -match 'has the following vulnerable packages') { Write-Host "::error::Pachete cu vulnerabilități cunoscute (vezi lista de mai sus)"; exit 1 }
+          Write-Host "OK: niciun pachet vulnerabil cunoscut"
 
       - name: Build (Release)
         run: dotnet build LogAnalyzer.slnx --no-restore --configuration Release
@@ -65,9 +86,10 @@ jobs:
       - name: Test (Release)
         run: dotnet test LogAnalyzer.slnx --no-build --configuration Release --logger "trx;LogFilePrefix=test-results"
 
-      # Edition split (docs/dfir/EDITIONS.md): both executables were built by the solution build above; this step runs only the
-      # inspection of the classified (P1) build output so a violation is named in its own step.
-      - name: Classified edition contains no network, AI or host-modifying code
+      # Edition split (docs/dfir/EDITIONS_AND_POSTURE.md): the three executables were built by the solution build above; this step runs only the
+      # inspection of their build outputs (Standalone: no network, AI or host-modifying code; Network: no internet-only code; each edition's fixed posture)
+      # so a violation is named in its own step.
+      - name: Editions - Standalone has no network code, Network has no internet-only code, fixed postures
         run: dotnet test LogAnalyzer.Edition.Tests/LogAnalyzer.Edition.Tests.csproj --no-build --configuration Release
 
       # Failed tests become annotations: they are readable from the checks API without
@@ -155,12 +177,16 @@ jobs:
       fail-fast: false
       matrix:
         include:
-          - edition: LogAnalyzer            # unclassified (P2/P3)
-            project: LogAnalyzer.App/LogAnalyzer.App.csproj
-            artifact: LogAnalyzer-win-x64
-          - edition: LogAnalyzer.Classified # classified (P1)
+          # One codebase, three executables, each published to its own folder (publish/<AssemblyName>/win-x64) and uploaded as its own artifact.
+          - edition: LogAnalyzer.Standalone # air-gapped station, no network code (formerly the classified edition)
             project: LogAnalyzer.App.Classified/LogAnalyzer.App.Classified.csproj
-            artifact: LogAnalyzer-Classified-win-x64
+            artifact: LogAnalyzer-Standalone-win-x64
+          - edition: LogAnalyzer.Retea      # air-gapped LAN (domain, servers), no internet
+            project: LogAnalyzer.App.Network/LogAnalyzer.App.Network.csproj
+            artifact: LogAnalyzer-Retea-win-x64
+          - edition: LogAnalyzer.Internet   # everything (formerly LogAnalyzer.exe)
+            project: LogAnalyzer.App/LogAnalyzer.App.csproj
+            artifact: LogAnalyzer-Internet-win-x64
     env:
       EDITION: ${{ matrix.edition }}
     steps:
@@ -172,7 +198,7 @@ jobs:
       - name: Setup .NET
         uses: actions/setup-dotnet@a98b56852c35b8e3190ac28c8c2271da59106c68 # v6.0.0
         with:
-          dotnet-version: '10.x'
+          global-json-file: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/global.json
 
       - name: Publish (win-x64 self-contained single-file)
         run: dotnet publish ${{ matrix.project }} -c Release -p:PublishProfile=win-x64-singlefile
@@ -186,12 +212,19 @@ jobs:
           Write-Host "OK: $($exe.Name) ($([math]::Round($exe.Length/1MB,1)) MB)"
           if (-not (Test-Path "$out/Categories")) { Write-Host "::error::Categories lipsește din $out"; exit 1 }
           if (Test-Path "$out/license.lic") { Write-Host "::error::license.lic nu trebuie livrat în pachet"; exit 1 }
+          # Security audit #5: native libraries next to the exe (no self-extraction) and their SHA-256 manifest, checked at startup.
+          if (-not (Test-Path "$out/native-libraries.sha256")) { Write-Host "::error::native-libraries.sha256 lipsește din $out"; exit 1 }
+          if (-not (Test-Path "$out/e_sqlcipher.dll")) { Write-Host "::error::e_sqlcipher.dll nu este lângă executabil (auto-extragere activă?)"; exit 1 }
 
       # Decision 14: the package must run on a bare PC. No .NET on PATH, DOTNET_ROOT unset, outbound traffic blocked for the exe.
       - name: Smoke test of the published executable (no .NET, no network)
         shell: pwsh
         run: |
-          $out = (Resolve-Path "publish/$env:EDITION/win-x64").Path
+          # Run it the way it is installed: from a folder only Administrators/SYSTEM can write (under Program Files, ACLs inherited),
+          # because the startup gate refuses to run elevated from a user-writable folder (security audit, native library check).
+          $out = Join-Path $env:ProgramFiles "LogAnalyzerSmoke\$env:EDITION"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
+          Copy-Item -Path "publish/$env:EDITION/win-x64/*" -Destination $out -Recurse -Force
           $exe = Join-Path $out "$env:EDITION.exe"
           Get-ChildItem Env: | Where-Object { $_.Name -like 'DOTNET*' } | ForEach-Object { Remove-Item "Env:$($_.Name)" }
           $env:PATH = (($env:PATH -split ';') | Where-Object { $_ -and $_ -notmatch 'dotnet' }) -join ';'
@@ -202,9 +235,26 @@ jobs:
           if (Test-Path $report) { Get-Content $report | ForEach-Object { Write-Host $_ } }
           if ($p.ExitCode -ne 0) { Write-Host "::error::self-test exited with $($p.ExitCode)"; exit 1 }
 
+      # Security audit #9: CycloneDX SBOM of the edition (packages from the lock files, project references followed), tool pinned in .config/dotnet-tools.json.
+      - name: SBOM (CycloneDX)
+        shell: pwsh
+        run: |
+          dotnet tool restore
+          if ($LASTEXITCODE -ne 0) { Write-Host "::error::dotnet tool restore a eșuat"; exit 1 }
+          dotnet tool run dotnet-CycloneDX ${{ matrix.project }} --recursive --output sbom --filename "$env:EDITION.cdx.json" --output-format Json --disable-package-restore --set-name "$env:EDITION"
+          if ($LASTEXITCODE -ne 0 -or -not (Test-Path "sbom/$env:EDITION.cdx.json")) { Write-Host "::error::SBOM-ul nu a fost generat"; exit 1 }
+
       - name: Upload package
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: ${{ matrix.artifact }}
           path: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/publish/${{ matrix.edition }}/win-x64
           retention-days: 30
+
+      - name: Upload SBOM
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        with:
+          name: ${{ matrix.artifact }}-sbom
+          path: 02_PRODUCT/projects/workspaces/loganalyzer-dfir/sbom/${{ matrix.edition }}.cdx.json
+          if-no-files-found: error
+          retention-days: 90

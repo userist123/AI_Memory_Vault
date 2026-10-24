@@ -80,3 +80,26 @@ def book_to_memory_test_hmac_secret(request: pytest.FixtureRequest, monkeypatch)
     import secrets
 
     monkeypatch.setenv("MEMORY_CONTROLLER_HMAC_SECRET", secrets.token_urlsafe(48))
+
+
+@pytest.fixture(scope="session", autouse=True)
+def isolate_telemetry_dir(tmp_path_factory):
+    """Keep the suite from appending to the checkout's `telemetry/` directory.
+
+    `observability.memory_trace` (and the plasticity journal) resolve their directory from
+    ANTIGRAVITY_TELEMETRY_DIR at call time, defaulting to the cwd-relative `telemetry`. Tests that
+    build context packs without passing a directory used to append to the real
+    `telemetry/observed_memory_traces.jsonl`. Tests that need a specific directory still
+    monkeypatch the variable themselves.
+    """
+    import os
+
+    previous = os.environ.get("ANTIGRAVITY_TELEMETRY_DIR")
+    os.environ["ANTIGRAVITY_TELEMETRY_DIR"] = str(tmp_path_factory.mktemp("telemetry"))
+    try:
+        yield
+    finally:
+        if previous is None:
+            os.environ.pop("ANTIGRAVITY_TELEMETRY_DIR", None)
+        else:
+            os.environ["ANTIGRAVITY_TELEMETRY_DIR"] = previous

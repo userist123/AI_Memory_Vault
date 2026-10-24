@@ -6,6 +6,15 @@ using System.Windows.Data;
 
 namespace LogAnalyzer.UI.Views
 {
+    /// <summary>Visible when the bound value is false (the hint shown before a selection is made).</summary>
+    public sealed class InverseBoolToVisibilityConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is true ? System.Windows.Visibility.Collapsed : System.Windows.Visibility.Visible;
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
+
     /// <summary>Shows a list of strings in one grid cell.</summary>
     public sealed class JoinConverter : IValueConverter
     {
@@ -28,13 +37,33 @@ namespace LogAnalyzer.UI.Views
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
 
-    /// <summary>Spec §26 wording of a classification: OBSERVED, CORRELATED, INFERRED, UNPROVEN (the graph explorer uses the same words).</summary>
+    /// <summary>Romanian state label of a classification (Observat, Corelat, Deducție, Nedemonstrat): the same mapping as the finding state and the graph view.</summary>
     public sealed class ClassificationWordingConverter : IValueConverter
     {
         public static readonly ClassificationWordingConverter Instance = new();
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-            value is LogAnalyzer.Dfir.Model.Classification c ? LogAnalyzer.Dfir.Graph.GraphExplorer.Wording(c) : "UNKNOWN";
+            value is LogAnalyzer.Dfir.Model.Classification c ? LogAnalyzer.Dfir.Analysis.StateLabels.ForClassification(c) : LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(LogAnalyzer.Dfir.Model.StandardState.Unknown);
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
+
+    /// <summary>Severity as icon + Romanian word („▲ Ridicată”), so it is never only a colour or an English enum name.</summary>
+    public sealed class SeverityTextConverter : IValueConverter
+    {
+        public static readonly SeverityTextConverter Instance = new();
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is LogAnalyzer.Dfir.Model.Severity s ? LogAnalyzer.Dfir.Presentation.SeverityLabels.Icon(s) + " " + LogAnalyzer.Dfir.Presentation.SeverityLabels.Romanian(s) : "";
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
+
+    /// <summary>The one-line „Ce face" of a policy setting, for the tooltip of a plan row.</summary>
+    public sealed class PolicySettingOneLineConverter : IValueConverter
+    {
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is LogAnalyzer.Dfir.Policy.SettingRef s ? LogAnalyzer.Dfir.Windows.Policy.PolicySettingCatalogue.OneLine(s) : "";
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }

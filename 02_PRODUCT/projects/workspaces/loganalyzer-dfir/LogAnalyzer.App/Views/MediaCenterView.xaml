@@ -1,0 +1,463 @@
+<UserControl x:Class="LogAnalyzer.UI.Views.MediaCenterView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:views="clr-namespace:LogAnalyzer.UI.Views"
+             xmlns:services="clr-namespace:LogAnalyzer.UI.Services"
+             xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
+             AutomationProperties.Name="Monitor dispozitive">
+    <!-- Owner 2026-10-11: „pentru mediile de stocare îmi trebuie toate datele … ceva viu ca la Endpoint Protector”. DataContext: MediaCenterViewModel. -->
+    <UserControl.Resources>
+        <BooleanToVisibilityConverter x:Key="BoolToVis"/>
+        <!-- An empty status line takes no space (2026-10-22 walkthrough: the empty lines left a gap above the scope text). -->
+        <!-- 2026-10-22 round 3: monitor cells were cut mid-word with no mark; long text now ends in „…” and the full text is the tooltip -->
+        <Style x:Key="MonitorCellTrim" TargetType="TextBlock">
+            <Setter Property="Margin" Value="2,0"/>
+            <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+            <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+        </Style>
+        <Style x:Key="MonitorCellWrap" TargetType="TextBlock">
+            <Setter Property="Margin" Value="2,0"/>
+            <Setter Property="TextWrapping" Value="Wrap"/>
+        </Style>
+        <Style x:Key="OptionalLine" TargetType="TextBlock">
+            <Setter Property="TextWrapping" Value="Wrap"/>
+            <Setter Property="Margin" Value="0,2,0,0"/>
+            <Style.Triggers>
+                <Trigger Property="Text" Value="">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                </Trigger>
+            </Style.Triggers>
+        </Style>
+    </UserControl.Resources>
+    <Grid Margin="24,20,24,16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Grid.Row="0" Margin="0,0,0,10">
+            <TextBlock Text="Monitor dispozitive" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+            <TextBlock views:SimpleLevel.OnlyInSimple="True" Text="Dispozitivele externe conectate la stație, câte un rând pe dispozitiv. Roșu = cere atenție."
+                       TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+            <TextBlock views:SimpleLevel.HideInSimple="True" Text="Aici apar mediile de stocare (stick USB, card, disc extern, unitate optică) și dispozitivele conectate extern (telefon, cameră, scaner, imprimantă, adaptor de rețea sau Wi-Fi USB, Bluetooth, tastatură și mouse externe, cititor de carduri). Componentele interne nu se arată. Aplicația doar citește; nu blochează și nu modifică nimic."
+                       TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+        </StackPanel>
+
+        <!-- alert + summary + live switch -->
+        <StackPanel Grid.Row="1" Margin="0,0,0,10">
+            <Border BorderThickness="1" CornerRadius="6" Padding="12,8" Margin="0,0,0,8"
+                    Visibility="{Binding HasAlert, Converter={StaticResource BoolToVis}}">
+                <Border.Style>
+                    <Style TargetType="Border">
+                        <Setter Property="Background" Value="#E8F1FB"/>
+                        <Setter Property="BorderBrush" Value="{StaticResource TextSecondaryBrush}"/>
+                        <Style.Triggers><DataTrigger Binding="{Binding AlertIsCritical}" Value="True"><Setter Property="Background" Value="#FDECEA"/><Setter Property="BorderBrush" Value="{StaticResource CriticalBrush}"/></DataTrigger></Style.Triggers>
+                    </Style>
+                </Border.Style>
+                <DockPanel>
+                    <Button DockPanel.Dock="Right" Content="Am văzut" Command="{Binding DismissAlertCommand}" Margin="8,0,0,0" VerticalAlignment="Center"/>
+                    <Button DockPanel.Dock="Right" Content="Înregistrează transferul" Command="{Binding RecordTransferCommand}" Margin="12,0,0,0" VerticalAlignment="Center"/>
+                    <TextBlock Text="{Binding AlertText}" TextWrapping="Wrap" FontWeight="SemiBold" VerticalAlignment="Center">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                <Style.Triggers><DataTrigger Binding="{Binding AlertIsCritical}" Value="True"><Setter Property="Foreground" Value="{StaticResource CriticalBrush}"/></DataTrigger></Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                </DockPanel>
+            </Border>
+            <DockPanel>
+                <StackPanel DockPanel.Dock="Right" Orientation="Horizontal">
+                    <Button Content="Deschide registrul de transferuri" Command="{Binding OpenTransferRegisterCommand}" Margin="0,0,8,0"
+                            AutomationProperties.HelpText="Registrul de transferuri este o pagină separată; folosește mediile din această pagină."/>
+                    <Button Content="Reîmprospătează" Command="{Binding RefreshCommand}" Margin="0,0,8,0"/>
+                    <Button Command="{Binding ToggleLiveCommand}" AutomationProperties.Name="Pornește sau oprește supravegherea în timp real">
+                        <Button.Style>
+                            <Style TargetType="Button" BasedOn="{StaticResource {x:Type Button}}">
+                                <Setter Property="Content" Value="Pornește supravegherea"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IsLive}" Value="True"><Setter Property="Content" Value="Oprește supravegherea"/></DataTrigger>
+                                    <!-- 2026-10-23: Simplu hides "Oprește supravegherea" (a beginner could stop the monitoring by mistake); Expert keeps it -->
+                                    <MultiDataTrigger>
+                                        <MultiDataTrigger.Conditions>
+                                            <Condition Binding="{Binding IsLive}" Value="True"/>
+                                            <Condition Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"/>
+                                        </MultiDataTrigger.Conditions>
+                                        <Setter Property="Visibility" Value="Collapsed"/>
+                                    </MultiDataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </Button.Style>
+                    </Button>
+                </StackPanel>
+                <StackPanel>
+                    <!-- 2026-10-22 round 3: hidden on the monitor tab, which has its own count (the two counts measure different sets and read as a contradiction) -->
+                    <TextBlock Text="{Binding Summary}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers><DataTrigger Binding="{Binding SelectedTab}" Value="0"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="{Binding LiveStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,0"/>
+                    <TextBlock Text="{Binding Problems}" Style="{StaticResource OptionalLine}" Foreground="{StaticResource WarningBrush}"/>
+                </StackPanel>
+            </DockPanel>
+            <ProgressBar IsIndeterminate="True" Height="4" Margin="0,6,0,0" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
+        </StackPanel>
+
+        <TabControl x:Name="MainTabs" Grid.Row="2" SelectedIndex="{Binding SelectedTab}">
+            <!-- 0. real-time monitor of every device of every class (owner decision 2026-10-16, in place of the media register; observe and alert only) -->
+            <TabItem Header="Monitor în timp real" AutomationProperties.Name="Monitorul dispozitivelor în timp real">
+                <DockPanel Margin="8" DataContext="{Binding Monitor}">
+                    <!-- persistent while the sealed audit refuses the monitor's records (sealing key unreadable: not started as administrator) -->
+                    <Border DockPanel.Dock="Top" Background="{StaticResource CriticalBrush}" Padding="10,6" Margin="0,0,0,6" Visibility="{Binding SealingBlocked, Converter={StaticResource BoolToVis}}">
+                        <TextBlock Text="{Binding SealingBanner}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="White" AutomationProperties.Name="Monitorul nu poate sigila evenimentele"/>
+                    </Border>
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                        <Button DockPanel.Dock="Right" Content="Export CSV" views:SimpleLevel.HideInSimple="True" Click="ExportCsv_Click" Margin="8,0,0,0" Padding="12,4" VerticalAlignment="Top" AutomationProperties.Name="Exportă lista afișată în CSV"/>
+                        <ComboBox DockPanel.Dock="Right" AutomationProperties.Name="Ce dispozitive arată monitorul" ItemsSource="{Binding Filters}" SelectedItem="{Binding Filter}" Width="280" VerticalAlignment="Top"/>
+                        <StackPanel Margin="0,0,12,0">
+                            <TextBlock Text="{Binding Summary}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{Binding Mode}" Style="{StaticResource OptionalLine}" Foreground="{StaticResource TextSecondaryBrush}"/>
+                            <TextBlock Text="{Binding Problem}" Style="{StaticResource OptionalLine}" Foreground="{StaticResource WarningBrush}"/>
+                            <TextBlock Text="{Binding RadioNotice}" Style="{StaticResource OptionalLine}" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" AutomationProperties.Name="Radiouri oprite"/>
+                            <TextBlock Text="{Binding SuppressedText}" Style="{StaticResource OptionalLine}" Foreground="{StaticResource WarningBrush}" AutomationProperties.Name="Alerte suprimate"/>
+                            <TextBlock Text="{Binding ExportNote}" Style="{StaticResource OptionalLine}" Foreground="{StaticResource TextSecondaryBrush}" AutomationProperties.Name="Rezultatul exportului"/>
+                        </StackPanel>
+                    </DockPanel>
+                    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" views:SimpleLevel.HideInSimple="True"
+                               Text="Orice dispozitiv conectat sau scos apare singur, fără niciun buton. Lista arată implicit dispozitivele care au fost conectate la stație ca medii de stocare sau dispozitive externe, conectate sau deconectate, câte un rând pe dispozitiv fizic; filtrul „Conectate acum” le arată doar pe cele prezente (nimic nu se șterge din jurnal). Cercul verde: conectat acum; roșu: deconectat (rândul rămâne și după repornire). Scrieți numărul de înregistrare al fiecărui mediu de stocare în coloana „Nr. de înregistrare” (se poate și pentru orice alt dispozitiv); fiecare schimbare se trece în jurnalul de audit al aplicației. Aplicația doar observă: nu blochează și nu schimbă nimic pe stație."/>
+                    <DataGrid x:Name="DevicesGrid" AutomationProperties.Name="Dispozitivele văzute de monitor" ItemsSource="{Binding Rows}" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
+                              HeadersVisibility="Column" SelectionMode="Single" HorizontalScrollBarVisibility="Auto" FrozenColumnCount="2">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AlertIsCritical}" Value="True"><Setter Property="Foreground" Value="{StaticResource CriticalBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Stare" Width="170" MinWidth="170" SortMemberPath="Present">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Orientation="Horizontal" VerticalAlignment="Center" ToolTip="{Binding StatusTip, Mode=OneWay}" AutomationProperties.Name="{Binding StatusText, Mode=OneWay}">
+                                            <Ellipse Width="12" Height="12" Margin="4,0,6,0" VerticalAlignment="Center">
+                                                <Ellipse.Style>
+                                                    <Style TargetType="Ellipse">
+                                                        <Setter Property="Fill" Value="{StaticResource CriticalBrush}"/>
+                                                        <Style.Triggers><DataTrigger Binding="{Binding Present}" Value="True"><Setter Property="Fill" Value="{StaticResource SuccessBrush}"/></DataTrigger></Style.Triggers>
+                                                    </Style>
+                                                </Ellipse.Style>
+                                            </Ellipse>
+                                            <TextBlock Text="{Binding StatusText, Mode=OneWay}" VerticalAlignment="Center" TextWrapping="Wrap"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Nume" Binding="{Binding Name, Mode=OneWay}" IsReadOnly="True" Width="1.5*" MinWidth="170" ElementStyle="{StaticResource MonitorCellWrap}"/>
+                            <DataGridTextColumn Header="Tip" Binding="{Binding ClassText, Mode=OneWay}" IsReadOnly="True" Width="1.1*" MinWidth="120" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="Producător" views:SimpleLevel.HideInSimple="True" Binding="{Binding ManufacturerText, Mode=OneWay}" IsReadOnly="True" Width="*" MinWidth="140">
+                                <DataGridTextColumn.ElementStyle>
+                                    <Style TargetType="TextBlock" BasedOn="{StaticResource MonitorCellTrim}">
+                                        <Setter Property="ToolTip" Value="{Binding ManufacturerCellTip}"/>
+                                    </Style>
+                                </DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Model" views:SimpleLevel.HideInSimple="True" Binding="{Binding Model, Mode=OneWay}" IsReadOnly="True" Width="*" MinWidth="160" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="VID" views:SimpleLevel.HideInSimple="True" Binding="{Binding Vid, Mode=OneWay}" IsReadOnly="True" Width="64" MinWidth="64" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="PID" views:SimpleLevel.HideInSimple="True" Binding="{Binding Pid, Mode=OneWay}" IsReadOnly="True" Width="64" MinWidth="64" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="Serie" Binding="{Binding Serial, Mode=OneWay}" IsReadOnly="True" Width="*" MinWidth="170" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="Capacitate" Binding="{Binding CapacityText, Mode=OneWay}" SortMemberPath="CapacityBytes" IsReadOnly="True" Width="130" MinWidth="130" ElementStyle="{StaticResource MonitorCellWrap}"/>
+                            <DataGridTextColumn Header="Literă" views:SimpleLevel.HideInSimple="True" Binding="{Binding Letter, Mode=OneWay}" IsReadOnly="True" Width="64" MinWidth="64" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="Etichetă" views:SimpleLevel.HideInSimple="True" Binding="{Binding Label, Mode=OneWay}" IsReadOnly="True" Width="*" MinWidth="110" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="Utilizator" views:SimpleLevel.HideInSimple="True" Binding="{Binding ConnectedUser, Mode=OneWay}" IsReadOnly="True" Width="1.2*" MinWidth="150" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="Prima apariție" views:SimpleLevel.HideInSimple="True" Binding="{Binding FirstSeenText, Mode=OneWay}" SortMemberPath="FirstSeenUtc" IsReadOnly="True" Width="150" MinWidth="150" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="Ultima conectare" Binding="{Binding LastConnectedText, Mode=OneWay}" SortMemberPath="LastConnectedUtc" IsReadOnly="True" Width="150" MinWidth="150" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="Ultima deconectare" views:SimpleLevel.HideInSimple="True" Binding="{Binding LastDisconnectedText, Mode=OneWay}" SortMemberPath="LastDisconnectedUtc" IsReadOnly="True" Width="160" MinWidth="160" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="Nr. de înregistrare" Binding="{Binding RegistrationNumber, UpdateSourceTrigger=LostFocus}" Width="160" MinWidth="160">
+                                <!-- row 12: only storage media have a registration number; for a mouse, keyboard or Bluetooth device the cell is read-only with a tooltip -->
+                                <DataGridTextColumn.CellStyle>
+                                    <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
+                                        <Setter Property="ToolTip" Value="{Binding RegistrationCellTip}"/>
+                                        <Style.Triggers><DataTrigger Binding="{Binding IsStorageMedium}" Value="False"><Setter Property="IsEnabled" Value="False"/></DataTrigger></Style.Triggers>
+                                    </Style>
+                                </DataGridTextColumn.CellStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Registru" views:SimpleLevel.HideInSimple="True" Binding="{Binding RegistryCellText, Mode=OneWay}" IsReadOnly="True" Width="110" MinWidth="110" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="Alertă" Binding="{Binding AlertText, Mode=OneWay}" IsReadOnly="True" Width="1.3*" MinWidth="260">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <!-- row action, not a data column -->
+                            <DataGridTemplateColumn Header="" Width="80" MinWidth="80" CanUserSort="False">
+                                <DataGridTemplateColumn.CellTemplate>
+                                    <DataTemplate>
+                                        <Button Content="Istoric" Click="History_Click" Margin="2" Padding="8,2" AutomationProperties.Name="Istoricul dispozitivului din jurnalul sigilat" ToolTip="Istoricul dispozitivului, din jurnalul sigilat"/>
+                                    </DataTemplate>
+                                </DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <!-- 1. now -->
+            <TabItem Header="Acum" views:SimpleLevel.HideInSimple="True">
+                <Grid Margin="8">
+                    <Grid.RowDefinitions><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="Auto"/><RowDefinition Height="*"/></Grid.RowDefinitions>
+                    <TextBlock Text="Conectate acum" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <StackPanel Grid.Row="1" Margin="0,4,0,12">
+                    <ItemsControl ItemsSource="{Binding MediumChecks}" AutomationProperties.Name="Verificarea suportului introdus">
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <TextBlock TextWrapping="Wrap" Margin="0,0,0,2">
+                                    <Run Text="{Binding Device, Mode=OneWay}" FontWeight="SemiBold"/><Run Text=" — "/><Run Text="{Binding Text, Mode=OneWay}"/>
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
+                                            <Style.Triggers><DataTrigger Binding="{Binding Suspicious}" Value="True"><Setter Property="Foreground" Value="{StaticResource CriticalBrush}"/></DataTrigger></Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <Button Content="Verifică suportul introdus" Command="{Binding InspectMediaCommand}" HorizontalAlignment="Left" Margin="0,2,0,6" AutomationProperties.Name="Verifică stick-urile conectate (autorun, foldere ascunse, scurtături)"/>
+                    <DataGrid AutomationProperties.Name="Dispozitive conectate acum" ItemsSource="{Binding ConnectedNow}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220" Margin="0,4,0,0">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Nume" Binding="{Binding Device.DisplayName}" Width="1.6*"/>
+                            <DataGridTextColumn Header="Față de registru" Binding="{Binding MatchText}" Width="170" Visibility="{x:Static views:MediaRegisterUi.Visibility}"/>
+                            <DataGridTextColumn Header="Ce este" Binding="{Binding Device.KindText}" Width="1.3*"/>
+                            <DataGridTextColumn Header="Serie" Binding="{Binding Device.Serial}" Width="*"/>
+                            <DataGridTextColumn Header="Literă" Binding="{Binding Device.DriveLetters}" Width="80"/>
+                            <DataGridTextColumn Header="Etichetă" Binding="{Binding Device.VolumeLabel}" Width="*"/>
+                            <DataGridTextColumn Header="Capacitate" Binding="{Binding Device.CapacityText}" Width="90"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    </StackPanel>
+                    <TextBlock Grid.Row="2" Text="Ce s-a întâmplat (în timp real, de la deschiderea aplicației)" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <DataGrid Grid.Row="3" AutomationProperties.Name="Conectări și deconectări în timp real" ItemsSource="{Binding LiveFeed}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="0,4,0,0">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                <Style.Triggers><DataTrigger Binding="{Binding NeedsAttention}" Value="True"><Setter Property="Foreground" Value="{StaticResource CriticalBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger></Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Ora" Binding="{Binding TimeText}" Width="80"/>
+                            <DataGridTextColumn Header="Ce s-a întâmplat" Binding="{Binding What}" Width="1.6*"/>
+                            <DataGridTextColumn Header="Dispozitiv" Binding="{Binding Device}" Width="1.6*"/>
+                            <DataGridTextColumn Header="Serie" Binding="{Binding Serial}" Width="*"/>
+                            <DataGridTextColumn Header="Verdict și ce faceți" Binding="{Binding Verdict}" Width="3*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </Grid>
+            </TabItem>
+
+            <!-- 2. every device: list and detail -->
+            <TabItem Header="Toate dispozitivele" views:SimpleLevel.HideInSimple="True">
+                <Grid Margin="8">
+                    <Grid.ColumnDefinitions><ColumnDefinition Width="5*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="4*"/></Grid.ColumnDefinitions>
+                    <DockPanel>
+                        <DockPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                            <ComboBox DockPanel.Dock="Right" AutomationProperties.Name="Ce dispozitive arată lista" ItemsSource="{Binding Filters}" SelectedItem="{Binding Filter}" Width="250"/>
+                            <TextBlock Text="Dați clic pe un dispozitiv: în dreapta apar toate datele lui." Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
+                        </DockPanel>
+                        <DataGrid AutomationProperties.Name="Toate dispozitivele cunoscute de stație" ItemsSource="{Binding Devices}" SelectedItem="{Binding SelectedDevice}" SelectionMode="Single"
+                                  AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                    <Style.Triggers><DataTrigger Binding="{Binding NeedsAttention}" Value="True"><Setter Property="Foreground" Value="{StaticResource CriticalBrush}"/></DataTrigger></Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Nume" Binding="{Binding Device.DisplayName}" Width="1.6*"/>
+                                <DataGridTextColumn Header="Față de registru" Binding="{Binding MatchText}" Width="150" Visibility="{x:Static views:MediaRegisterUi.Visibility}"/>
+                                <DataGridTextColumn Header="Ce este" Binding="{Binding Device.KindText}" Width="1.3*"/>
+                                <DataGridTextColumn Header="Serie" Binding="{Binding Device.Serial}" Width="*"/>
+                                <DataGridTextColumn Header="Stare" Binding="{Binding Device.ConnectedText}" Width="110"/>
+                                <DataGridTextColumn Header="Ultima conectare" Binding="{Binding Device.LastConnectedUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </DockPanel>
+                    <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent"/>
+                    <DockPanel Grid.Column="2" Margin="8,0,0,0">
+                        <StackPanel DockPanel.Dock="Bottom" Orientation="Horizontal" Margin="0,8,0,0">
+                            <Button Content="Copiază datele (pentru procesul-verbal)" Command="{Binding CopyDetailsCommand}" Margin="0,0,8,0"/>
+                            <Button Content="Adaugă în registru ce lipsește" Command="{Binding AddToRegisterCommand}" Visibility="{x:Static views:MediaRegisterUi.Visibility}"/>
+                        </StackPanel>
+                        <ctrl:NoDataPanel DockPanel.Dock="Bottom"/>
+                        <ItemsControl ItemsSource="{Binding SelectedDetails}" AutomationProperties.Name="Datele dispozitivului ales">
+                            <ItemsControl.Template><ControlTemplate><ScrollViewer VerticalScrollBarVisibility="Auto"><ItemsPresenter/></ScrollViewer></ControlTemplate></ItemsControl.Template>
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <StackPanel Margin="0,0,0,8">
+                                        <TextBlock Text="{Binding Label}" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}"/>
+                                        <TextBox Text="{Binding Value, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" TextWrapping="Wrap" Padding="0" Margin="0" MinHeight="0"
+                                                 AutomationProperties.Name="{Binding Label}" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                        <TextBlock Text="{Binding Meaning}" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}">
+                                            <TextBlock.Style><Style TargetType="TextBlock"><Style.Triggers><Trigger Property="Text" Value=""><Setter Property="Visibility" Value="Collapsed"/></Trigger></Style.Triggers></Style></TextBlock.Style>
+                                        </TextBlock>
+                                    </StackPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </DockPanel>
+                </Grid>
+            </TabItem>
+
+            <!-- 3. Windows protections -->
+            <TabItem Header="Protecțiile Windows" views:SimpleLevel.HideInSimple="True">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"
+                               Text="Ce blochează sau înregistrează Windows însuși pe această stație. Aplicația nu schimbă aceste setări; ele se aplică prin politica de grup (GPO) de către administrator."/>
+                    <DataGrid AutomationProperties.Name="Protecțiile Windows pentru dispozitive" ItemsSource="{Binding Protections}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Protecție" Binding="{Binding Title}" Width="1.6*"/>
+                            <DataGridTextColumn Header="Protejat?" Binding="{Binding ProtectedText}" Width="90"/>
+                            <DataGridTextColumn Header="Stare pe stație" Binding="{Binding State}" Width="1.3*"/>
+                            <DataGridTextColumn Header="Ce înseamnă" Binding="{Binding Meaning}" Width="3*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Unde (tehnic)" Binding="{Binding Source}" Width="1.6*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
+
+            <!-- 4. the register itself: hidden while MediaRegisterFeature is off (owner decision 2026-10-16) -->
+            <TabItem Header="Registrul de medii" Visibility="{x:Static views:MediaRegisterUi.Visibility}">
+                <views:RegisterView DataContext="{Binding Register}"/>
+            </TabItem>
+
+            <!-- 5. the register signed by the security officer (owner decision 2026-10-16): hidden while MediaRegisterFeature is off -->
+            <TabItem Header="Registrul semnat" Visibility="{x:Static views:MediaRegisterUi.Visibility}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" DataContext="{Binding Signed}">
+                    <StackPanel Margin="8">
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="Pe stația de transfer se introduc toate mediile deodată și se înrolează. Ofițerul de securitate semnează registrul cu certificatul calificat de pe card; registrul semnat se importă pe fiecare stație, care recunoaște apoi doar mediile din el. Orice schimbare (adăugare, retragere, distrugere) este o versiune nouă, semnată din nou; o versiune mai veche nu este acceptată."/>
+                        <TextBlock Text="{Binding ActiveText}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,0"/>
+
+                        <TextBlock Text="Pe stația de transfer" FontSize="16" FontWeight="SemiBold" Margin="0,14,0,4" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <StackPanel Orientation="Horizontal">
+                            <Button Content="Înrolează mediile conectate" Command="{Binding EnrollConnectedCommand}" Margin="0,0,8,0"
+                                    AutomationProperties.HelpText="Citește toate mediile amovibile conectate acum (serie, VID/PID, producător, capacitate, serie de volum, BitLocker) și le adaugă în ciornă."/>
+                            <Button Content="Semnează și exportă (cardul ofițerului)" Command="{Binding SignAndExportCommand}" Margin="0,0,8,0"/>
+                            <Button Content="Golește ciorna" Command="{Binding ClearDraftCommand}"/>
+                        </StackPanel>
+                        <TextBlock Text="{Binding Warnings}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}" Margin="0,6,0,0"/>
+                        <DataGrid AutomationProperties.Name="Ciorna registrului de medii" ItemsSource="{Binding Draft}" AutoGenerateColumns="False" CanUserAddRows="False"
+                                  HeadersVisibility="Column" Margin="0,6,0,0" MaxHeight="320">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Nr. inventar" Binding="{Binding InventoryNumber, UpdateSourceTrigger=PropertyChanged}" Width="110"/>
+                                <DataGridTextColumn Header="Nivel de clasificare" Binding="{Binding Classification, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                                <DataGridTextColumn Header="Deținător" Binding="{Binding Holder, UpdateSourceTrigger=PropertyChanged}" Width="150"/>
+                                <DataGridComboBoxColumn Header="Stare" SelectedItemBinding="{Binding Status}" Width="90">
+                                    <DataGridComboBoxColumn.ElementStyle>
+                                        <Style TargetType="ComboBox"><Setter Property="ItemsSource" Value="{Binding DataContext.StatusChoices, RelativeSource={RelativeSource AncestorType=DataGrid}}"/></Style>
+                                    </DataGridComboBoxColumn.ElementStyle>
+                                    <DataGridComboBoxColumn.EditingElementStyle>
+                                        <Style TargetType="ComboBox"><Setter Property="ItemsSource" Value="{Binding DataContext.StatusChoices, RelativeSource={RelativeSource AncestorType=DataGrid}}"/></Style>
+                                    </DataGridComboBoxColumn.EditingElementStyle>
+                                </DataGridComboBoxColumn>
+                                <DataGridTextColumn Header="Mediul" Binding="{Binding Identity, Mode=OneWay}" IsReadOnly="True" Width="2*"/>
+                                <DataGridTextColumn Header="Criptare" Binding="{Binding Encryption, Mode=OneWay}" IsReadOnly="True" Width="1.2*"/>
+                                <DataGridTextColumn Header="Origine" Binding="{Binding Origin, Mode=OneWay}" IsReadOnly="True" Width="140"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Text="Pe fiecare stație" FontSize="16" FontWeight="SemiBold" Margin="0,14,0,4" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="Scrieți amprenta certificatului ofițerului de pe procesul-verbal (16 grupe de 4 caractere). Fără ea registrul este NEOFICIAL și nu se folosește la control."/>
+                        <DockPanel Margin="0,4,0,0">
+                            <Button DockPanel.Dock="Right" Content="Importă registrul semnat" Command="{Binding ImportSignedCommand}" Margin="8,0,0,0"/>
+                            <TextBox Text="{Binding PaperFingerprint, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Amprenta ofițerului de pe procesul-verbal"/>
+                        </DockPanel>
+                        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,8,0,0" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBox Text="{Binding Result, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,6,0,0" MinHeight="60" AutomationProperties.Name="Rezultatul verificării registrului"/>
+
+                        <TextBlock Text="Istoricul versiunilor pe această stație" FontSize="14" FontWeight="SemiBold" Margin="0,14,0,4" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <DataGrid AutomationProperties.Name="Istoricul versiunilor registrului semnat" ItemsSource="{Binding History}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Versiune" Binding="{Binding Version}" Width="70"/>
+                                <DataGridTextColumn Header="Verdict" Binding="{Binding Verdict}" Width="90"/>
+                                <DataGridCheckBoxColumn Header="Instalat" Binding="{Binding Installed}" Width="70"/>
+                                <DataGridTextColumn Header="Importat (UTC)" Binding="{Binding ImportedUtc}" Width="150"/>
+                                <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="3*"/>
+                                <DataGridTextColumn Header="SHA-256" Binding="{Binding Sha256}" Width="2*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+            <!-- 6. the officer's reconciliation of the stations' signed media-history exports (owner decision 2026-10-16, every edition) -->
+            <TabItem Header="Confruntare între stații" views:SimpleLevel.HideInSimple="True">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" DataContext="{Binding Cross}">
+                    <StackPanel Margin="8">
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"
+                                   Text="Ofițerul de securitate colectează pe mediul lui exporturile semnate ale tuturor stațiilor („Exportă istoricul mediilor pentru ofițer” pe pagina de control) și le confruntă aici: pentru fiecare transfer aprobat, mediul trebuie să apară la sursă și la destinație, iar fișierele pe destinație; orice altă stație în care a fost introdus mediul este arătată. Exporturile modificate sau nesemnate sunt respinse."/>
+                        <WrapPanel Margin="0,8,0,0">
+                            <TextBlock Text="De la" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <DatePicker SelectedDate="{Binding FromDate}" Margin="0,0,10,0" AutomationProperties.Name="Începutul perioadei"/>
+                            <TextBlock Text="până la" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <DatePicker SelectedDate="{Binding ToDate}" Margin="0,0,10,0" AutomationProperties.Name="Sfârșitul perioadei"/>
+                            <TextBlock Text="Timp minim de mutare între stații (minute)" VerticalAlignment="Center" Margin="0,0,4,0"/>
+                            <TextBox Text="{Binding MinMoveMinutes, UpdateSourceTrigger=PropertyChanged}" Width="50" AutomationProperties.Name="Timp minim de mutare între stații în minute"/>
+                        </WrapPanel>
+                        <DockPanel Margin="0,6,0,0">
+                            <TextBlock DockPanel.Dock="Left" Text="Stații care trebuie să predea exportul (opțional, separate prin virgulă)" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox Text="{Binding ExpectedStations, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Stații care trebuie să predea exportul"/>
+                        </DockPanel>
+                        <TextBlock Text="Codurile de ancorare de pe procesele-verbale (opțional, câte unul pe rând: STAȚIE = COD). Un cod diferit de cel din export înseamnă că jurnalul aplicației stației a fost rescris."
+                                   TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,2"/>
+                        <TextBox Text="{Binding PaperAnchors, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" MinHeight="44" TextWrapping="Wrap" FontFamily="Consolas"
+                                 AutomationProperties.Name="Codurile de ancorare de pe procesele-verbale ale stațiilor"/>
+                        <WrapPanel Margin="0,8,0,0">
+                            <Button Content="Importă exporturile stațiilor…" Command="{Binding ImportExportsCommand}" Margin="0,0,8,6"/>
+                            <Button Content="Confruntă din nou" Command="{Binding ReconcileCommand}" Margin="0,0,8,6"/>
+                            <Button Content="Exportă raportul semnat (cardul ofițerului)" Command="{Binding ExportSignedReportCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,6"/>
+                            <Button Content="Golește lista" Command="{Binding ClearExportsCommand}" Margin="0,0,8,6"/>
+                        </WrapPanel>
+                        <TextBlock Text="{Binding Status}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{Binding RegisterLine}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" FontWeight="Bold" Margin="0,6,0,0" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <DataGrid AutomationProperties.Name="Constatările confruntării între stații, în ordinea gravității" ItemsSource="{Binding Findings}" AutoGenerateColumns="False" IsReadOnly="True"
+                                  HeadersVisibility="Column" Margin="0,6,0,0" MaxHeight="420">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Gravitate" Binding="{Binding SeverityText}" Width="100"/>
+                                <DataGridTextColumn Header="Stația" Binding="{Binding Station}" Width="130"/>
+                                <DataGridTextColumn Header="Mediul" Binding="{Binding Medium}" Width="110"/>
+                                <DataGridTextColumn Header="Transferul" Binding="{Binding Transfer}" Width="110"/>
+                                <DataGridTextColumn Header="Constatarea" Binding="{Binding Text}" Width="*">
+                                    <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                                </DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBlock Text="Exporturile importate" FontSize="14" FontWeight="SemiBold" Margin="0,12,0,4" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <DataGrid AutomationProperties.Name="Exporturile importate și verificarea lor" ItemsSource="{Binding Exports}" SelectedItem="{Binding SelectedExport}" AutoGenerateColumns="False"
+                                  IsReadOnly="True" HeadersVisibility="Column" MaxHeight="200">
+                            <DataGrid.Columns>
+                                <DataGridCheckBoxColumn Header="Acceptat" Binding="{Binding Accepted, Mode=OneWay}" Width="70"/>
+                                <DataGridTextColumn Header="Stația" Binding="{Binding StationLabel, Mode=OneWay}" Width="140"/>
+                                <DataGridTextColumn Header="Fișierul" Binding="{Binding FileName}" Width="2*"/>
+                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Headline}" Width="3*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <TextBox Text="{Binding SelectedExportText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,4,0,0" MinHeight="40" AutomationProperties.Name="Verificarea exportului ales"/>
+                        <TextBlock Text="Limitări (ce confruntarea nu poate arăta)" FontSize="14" FontWeight="SemiBold" Margin="0,12,0,4" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <ItemsControl ItemsSource="{Binding Limits}">
+                            <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding StringFormat=• {0}}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/></DataTemplate></ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
+
+        </TabControl>
+    </Grid>
+</UserControl>

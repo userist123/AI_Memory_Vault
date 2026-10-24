@@ -39,6 +39,19 @@ def _executable(rid: str, x: dict[str, Any]) -> str:
     if value not in (None,""): raise RegistryError(f"{rid}: `executable` is only valid for command runtimes")
     return ""
 
+_SUBAGENT_RE=re.compile(r"^[A-Za-z][A-Za-z0-9:_-]{0,63}$")
+
+def _subagent_type(rid: str, x: dict[str, Any]) -> str:
+    """A `claude_subagent` runtime is a Claude Code subagent (vault-worker, vault-reviewer, Explore)
+    that the host session spawns with its Agent tool; the router names it, it never launches it."""
+    value=x.get("subagent_type")
+    if x.get("transport")=="claude_subagent":
+        if not isinstance(value,str) or not _SUBAGENT_RE.fullmatch(value):
+            raise RegistryError(f"{rid}: claude_subagent runtime requires a `subagent_type`")
+        return value
+    if value not in (None,""): raise RegistryError(f"{rid}: `subagent_type` is only valid for claude_subagent runtimes")
+    return ""
+
 @dataclass(frozen=True)
 class RouteSignals:
     capabilities: dict[str, tuple[str, ...]]
@@ -67,12 +80,12 @@ class RouteRegistry:
 
         runtimes={}
         for item in raw["runtimes"]:
-            x=_strict_obj(item,"runtime"); _reject_unknown(x,{"id","capabilities","quality","cost_score","latency_score","model_local","network","tool_use","code_execution","visual","research","writable","max_context_tokens","independence_group","transport","adapter_ref","executable","model","enabled"},"runtime"); rid=str(x.get("id","")).strip()
+            x=_strict_obj(item,"runtime"); _reject_unknown(x,{"id","capabilities","quality","cost_score","latency_score","model_local","network","tool_use","code_execution","visual","research","writable","max_context_tokens","independence_group","transport","adapter_ref","executable","model","enabled","subagent_type"},"runtime"); rid=str(x.get("id","")).strip()
             if not rid or rid in runtimes: raise RegistryError(f"duplicate/empty runtime id: {rid!r}")
-            if x.get("transport") not in {"command","a2a","manual"}: raise RegistryError(f"{rid}: invalid transport")
+            if x.get("transport") not in {"command","a2a","manual","claude_subagent"}: raise RegistryError(f"{rid}: invalid transport")
             if x.get("model") is not None and not str(x.get("model")).strip(): raise RegistryError(f"{rid}: model must not be empty")
             if rid == "local_llm" and not str(x.get("model","")).strip(): raise RegistryError("local_llm: model is required")
-            executable=_executable(rid,x)
+            executable=_executable(rid,x); subagent_type=_subagent_type(rid,x)
             runtimes[rid]=RuntimeDescriptor(
                 id=rid, capabilities=frozenset(map(str,x.get("capabilities",[]))),
                 quality=_enum(QualityTier,x["quality"],f"{rid}.quality"),
@@ -83,7 +96,7 @@ class RouteRegistry:
                 max_context_tokens=int(x["max_context_tokens"]), independence_group=str(x["independence_group"]),
                 transport=str(x["transport"]), adapter_ref=str(x.get("adapter_ref","")),
                 model=(str(x["model"]).strip() if x.get("model") is not None else None),
-                enabled=bool(x.get("enabled",True)), executable=executable)
+                enabled=bool(x.get("enabled",True)), executable=executable, subagent_type=subagent_type)
         agents={}
         for item in raw["agents"]:
             x=_strict_obj(item,"agent"); _reject_unknown(x,{"id","profile_ref","capabilities","preferred_runtimes","min_quality","max_risk","default_skills","max_skills","independence_group","prompt_profile"},"agent"); aid=str(x.get("id","")).strip()

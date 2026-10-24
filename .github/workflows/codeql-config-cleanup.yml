@@ -1,0 +1,106 @@
+# Maintenance, run on demand only: delete stale CodeQL configurations from the default branch.
+# Why: the "Code scanning results / CodeQL" pull request check compares a PR with every configuration present on
+# main. Categories that main uploaded once but no workflow produces any more (an old language matrix) make that
+# check end "neutral" on every PR ("configurations not found"). The tool status page can delete them by hand; this
+# workflow does the same through the REST API with the job token, the only credential here that has
+# security-events write. Dry run by default: it lists what it would delete. Nothing is deleted unless the
+# `apply` input is true. Owner approval for the first run (c-cpp, go, ruby, rust: no code in those languages):
+# 00_GOVERNANCE/coordination/tasks/todo-claude-codeql-check.md.
+#
+# How deletion works: a category's analyses can sit in many sets (ref + tool + category + analysis key), and only
+# the newest analysis of each set is "deletable" at a time. So each round deletes every analysis the API currently
+# marks deletable, then lists again, until the category is gone. The job fails if anything is left, so a partial
+# deletion is never reported as success.
+name: "CodeQL stale configuration cleanup"
+
+on:
+  workflow_dispatch:
+    inputs:
+      categories:
+        description: "Comma-separated language categories to delete from the default branch (e.g. c-cpp,go,ruby,rust)"
+        required: true
+        default: "c-cpp,go,ruby,rust"
+      apply:
+        description: "Actually delete (true). Default false = dry run that only lists the analyses."
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+jobs:
+  cleanup:
+    name: Delete stale CodeQL configurations
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      security-events: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      GH_REPO: ${{ github.repository }}
+      CATEGORIES: ${{ inputs.categories }}
+      APPLY: ${{ inputs.apply }}
+    steps:
+    - name: List and delete stale analyses on the default branch
+      shell: bash
+      run: |
+        set -euo pipefail
+        ref="refs/heads/$(gh api "repos/$GH_REPO" --jq .default_branch)"
+        echo "Default branch ref: $ref"
+        if [ "$APPLY" = "true" ]; then echo "Mode: APPLY"; else echo "Mode: DRY-RUN"; fi
+        list_all() {
+          gh api --paginate "repos/$GH_REPO/code-scanning/analyses?ref=$ref&tool_name=CodeQL&per_page=100" --jq '.[]' | jq -s '.'
+        }
+        list="$(list_all)"
+        echo "Categories currently present on $ref:"
+        echo "$list" | jq -r 'group_by(.category) | .[] | "  \(.[0].category)  analyses=\(length)  deletable=\(map(select(.deletable)) | length)  newest=\(max_by(.created_at).created_at)"'
+        IFS=',' read -ra cats <<< "$CATEGORIES"
+        wanted=()
+        for raw in "${cats[@]}"; do
+          cat="$(echo "$raw" | tr -d '[:space:]')"
+          [ -n "$cat" ] && wanted+=("/language:$cat")
+        done
+        if [ "$APPLY" != "true" ]; then
+          for category in "${wanted[@]}"; do
+            count="$(echo "$list" | jq -r --arg c "$category" '[.[] | select(.category == $c)] | length')"
+            echo "dry run: $category has $count analyses on $ref that would be deleted"
+          done
+          exit 0
+        fi
+        round=0
+        while :; do
+          round=$((round+1))
+          left=0
+          for category in "${wanted[@]}"; do
+            ids="$(echo "$list" | jq -r --arg c "$category" '.[] | select(.category == $c and .deletable) | .id')"
+            total="$(echo "$list" | jq -r --arg c "$category" '[.[] | select(.category == $c)] | length')"
+            left=$((left+total))
+            [ "$total" -gt 0 ] || continue
+            n=0
+            for id in $ids; do
+              gh api -X DELETE "repos/$GH_REPO/code-scanning/analyses/$id?confirm_delete=true" >/dev/null
+              n=$((n+1))
+            done
+            echo "round $round: $category had $total analyses, deleted $n deletable"
+          done
+          [ "$left" -gt 0 ] || break
+          if [ "$round" -ge 400 ]; then
+            echo "::error::stopping after $round rounds with analyses still present"
+            break
+          fi
+          list="$(list_all)"
+        done
+        list="$(list_all)"
+        failed=0
+        for category in "${wanted[@]}"; do
+          remaining="$(echo "$list" | jq -r --arg c "$category" '[.[] | select(.category == $c)] | length')"
+          if [ "$remaining" -eq 0 ]; then
+            echo "configuration $category removed from $ref"
+          else
+            echo "::error::$category still has $remaining analyses on $ref"
+            failed=1
+          fi
+        done
+        exit "$failed"

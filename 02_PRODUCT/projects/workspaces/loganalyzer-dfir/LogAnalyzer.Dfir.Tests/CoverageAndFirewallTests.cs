@@ -23,7 +23,7 @@ public sealed class CoverageAndFirewallTests
     {
         var events = new List<TimelineEvent>
         {
-            Fw(2097, @"C:\Users\u\AppData\Local\Conexant\pro_cmd_core.exe", "3", "1", 1),          // allow inbound
+            Fw(2097, @"C:\Users\u\AppData\Local\VendorX\pro_cmd_core.exe", "3", "1", 1),          // allow inbound
             Fw(2097, @"C:\ProgramData\agent\a.exe", "3", "2", 2),                                    // allow outbound
             Fw(2097, @"C:\Users\u\AppData\Local\x\blocked.exe", "2", "2", 3),                         // block: not a finding
             Fw(2097, @"%ProgramData%\Microsoft\Windows Defender\Platform\4.18\MsMpEng.exe", "3", "2", 4), // Microsoft-owned

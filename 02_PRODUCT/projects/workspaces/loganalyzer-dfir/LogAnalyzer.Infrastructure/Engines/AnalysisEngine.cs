@@ -19,6 +19,9 @@ namespace LogAnalyzer.Infrastructure
         public YaraRuleEngine YaraEngine => _yaraEngine;
         public AnomalyDetectionEngine AnomalyEngine => _anomalyEngine;
 
+        /// <summary>Approved accounts and maintenance windows from the procedure profile (WP15a); <c>null</c> = no profile, log clears stay NotAssessed.</summary>
+        public LogMaintenancePolicy? MaintenancePolicy { get; set; }
+
         public IEnumerable<DetectedIssue> AnalyzeEvents(IEnumerable<ParsedEvent> events)
         {
             var issues = new List<DetectedIssue>();
@@ -44,7 +47,8 @@ namespace LogAnalyzer.Infrastructure
                 // Regula 2: Ștergerea Jurnalelor de Securitate (Evaziune)
                 else if (ev.EventId == 1102 || ev.EventId == 104)
                 {
-                    var clear = LogClearAssessment.AssessUnscheduled(ev.EventId == 1102 ? "Security" : "System", new DateTimeOffset(ev.TimeCreated.ToUniversalTime()));
+                    var (clearUser, clearDomain) = LogClearAssessment.SubjectFromXml(ev.XmlData);
+                    var clear = LogClearAssessment.AssessUnscheduled(ev.EventId == 1102 ? "Security" : "System", new DateTimeOffset(ev.TimeCreated.ToUniversalTime()), MaintenancePolicy, clearUser, clearDomain);
                     issues.Add(new DetectedIssue
                     {
                         Title = "Jurnal de evenimente golit",

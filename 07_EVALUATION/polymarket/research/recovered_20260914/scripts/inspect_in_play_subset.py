@@ -1,6 +1,7 @@
+import os
 import json
 
-with open("C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/in_play_breakdown.json", "r", encoding="utf-8") as f:
+with open(os.path.expanduser("~/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch/in_play_breakdown.json"), "r", encoding="utf-8") as f:
     results = json.load(f)
 
 in_play = [r for r in results if r["is_in_play"]]

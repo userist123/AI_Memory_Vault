@@ -8,7 +8,7 @@ namespace LogAnalyzer.Dfir.Windows.Parsers;
 
 /// <summary>
 /// Chromium "History" database (Chrome, Edge, Brave…): page visits and downloads with their URL chain. Read from a
-/// working copy in %TEMP% (an SQLite open can write a journal next to the file); the stored evidence is never opened.
+/// working copy inside the case (an SQLite open can write a journal next to the file); the stored evidence is never opened.
 /// </summary>
 public sealed class BrowserHistoryParser : EvidenceParserBase
 {
@@ -33,8 +33,8 @@ public sealed class BrowserHistoryParser : EvidenceParserBase
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
-        var work = Path.Combine(Path.GetTempPath(), "LogAnalyzer", "sqlite_work", Guid.NewGuid().ToString("N"));
-        Directory.CreateDirectory(work);
+        // Security audit #14: the working copy lives in <case>\Work (or the per-user work folder outside a case), never in %TEMP%; removed in finally.
+        var work = LogAnalyzer.Dfir.IO.WorkFolders.NewWorkDirectory(fullPath, "sqlite");
         var copy = Path.Combine(work, "History");
         try
         {
@@ -136,8 +136,7 @@ public sealed class BrowserHistoryParser : EvidenceParserBase
         finally
         {
             SqliteConnection.ClearAllPools();
-            try { Directory.Delete(work, true); }
-            catch (IOException) { /* the working copy is not evidence; a leftover in %TEMP% is harmless */ }
+            LogAnalyzer.Dfir.IO.WorkFolders.TryDelete(work);
         }
     }
 

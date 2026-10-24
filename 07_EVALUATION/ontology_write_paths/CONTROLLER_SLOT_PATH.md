@@ -1,5 +1,14 @@
 # Controlerul poate retrage sloturile ontologiei — analiză (fără modificări de cod)
 
+> **Stare: ÎNCHIS la 2026-10-14 (Varianta A, §5).** `MemoryController._refuse_ontology_slot` refuză
+> `archive`, `supersede`, `update`, `propose`, `attest`, `review`, `promote` și `challenge`/`resolve_challenge`
+> (`learning.consolidation.Consolidator`) pentru orice notă cu id `slot-*` sau `type: ontology_definition`,
+> pentru orice principal, cu `PermissionError` care numește scripturile cu poartă din `30_SCRIPTS/ingestion/`
+> ca singura cale. Citirile sunt neatinse. Test: `20_TESTS/test_controller_slot_path.py::test_controller_refuses_to_retire_an_ontology_slot`
+> (marcajul `xfail(strict=True)` scos; testele `test_today_*` înlocuite cu refuzurile pozitive) și
+> `test_every_other_controller_side_write_is_refused_by_the_slot_rule`. Secțiunile de mai jos
+> sunt analiza istorică de dinainte de închidere; numerele de linie din ele nu mai sunt actuale.
+
 Ce este acest document: o analiză a căii `MemoryController` → `FileStorageEngine.set()` către cele
 16 note `slot-*` din `01_ARCHITECTURE/ontology/slots/`. Nu modifică controlerul. Nu alege o soluție:
 decizia e a proprietarului.

@@ -45,7 +45,7 @@ Global registries are discovery sources only until a specific skill/tool is sele
 
 ## Council Interaction
 
-The router MUST respect `99_SYSTEM/Council_Context_Budget.md`.
+The router MUST respect `00_GOVERNANCE/protocols/Council_Context_Budget.md`.
 
 Assigned skills in an `agent.md` are capabilities, not automatic prompt content.
 

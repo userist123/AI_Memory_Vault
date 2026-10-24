@@ -115,7 +115,7 @@ public sealed class ForensicLab(ITestOutputHelper output)
     /// <summary>§21: the parsers' known truth from the investigation (targets.json).</summary>
     private static IEnumerable<LabCase> KnownTruth()
     {
-        const string truth = "investigația manuală a incidentului NanAgent (targets.json)";
+        const string truth = "investigația manuală a incidentului VendorAgent (targets.json)";
         {
             var pf = PrefetchParser.Read(Corpus.File("prefetch"));
             yield return LabCase.From("PrefetchParser", "SETUP.EXE", Corpus.File("prefetch"), truth,
@@ -140,7 +140,7 @@ public sealed class ForensicLab(ITestOutputHelper output)
         {
             var sink = new ListSink();
             new EvtxParser().Parse(Item(Corpus.File("defenderEvtx")), Corpus.File("defenderEvtx"), sink, default);
-            yield return LabCase.From("EvtxParser", "Defender 1116 NanAgent32.exe", Corpus.File("defenderEvtx"), truth,
+            yield return LabCase.From("EvtxParser", "Defender 1116 VendorAgent32.exe", Corpus.File("defenderEvtx"), truth,
             [
                 Cmp("detecție cu calea și amenințarea", true, sink.Events.Any(e => e.EventId == Corpus.S("defenderEvtx", "eventId")
                     && e.Path.Contains(Corpus.S("defenderEvtx", "pathContains"), StringComparison.OrdinalIgnoreCase)

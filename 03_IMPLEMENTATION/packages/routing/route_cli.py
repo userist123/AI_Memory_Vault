@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import argparse,json,shutil
+import argparse,json,os,shutil
 from pathlib import Path
 
 from .agent_router import AgentRouter
@@ -11,8 +11,14 @@ from .registry import RouteRegistry
 ROOT=Path(__file__).resolve().parents[3]
 REGISTRY=ROOT/"04_CONFIG"/"agent_router.json"
 
+def in_claude_code() -> bool:
+    """Claude Code sets CLAUDECODE=1 in the environment of the commands it runs."""
+    return os.environ.get("CLAUDECODE","").strip()=="1"
+
 def _runtime_available(rt) -> bool:
-    """A command runtime is available when the registry's `executable` is on PATH (same value the dispatcher runs)."""
+    """A command runtime is available when the registry's `executable` is on PATH (same value the dispatcher runs);
+    a claude_subagent runtime (vault-worker, vault-reviewer, Explore) when the router runs inside a Claude Code session."""
+    if rt.transport=="claude_subagent": return in_claude_code()
     return rt.transport=="command" and bool(rt.executable) and shutil.which(rt.executable) is not None
 
 def build_parser():
@@ -32,13 +38,20 @@ def build_parser():
         x.add_argument("--accept",action="append",default=[]); x.add_argument("--execute",action="store_true")
     return p
 
+# Exit code reflects the outcome: 0 completed, 2 awaiting independent verification, 1 anything else.
+_EXIT_BY_DISPATCH={"completed":0,"pending-verification":2}
+
 def main():
+    code=_main()
+    if code: raise SystemExit(code)
+
+def _main()->int:
     a=build_parser().parse_args()
     reg=RouteRegistry.from_file(REGISTRY)
     if a.cmd=="probe":
         ids=a.runtime or list(reg.runtimes)
         print(json.dumps({r:_runtime_available(reg.runtimes[r]) for r in ids},indent=2))
-        return
+        return 0
     req=TaskRequest(goal=a.goal,capabilities=tuple(a.capability),risk=RiskLevel[a.risk.upper()],
         min_quality=QualityTier[a.min_quality.upper()],privacy=PrivacyMode.LOCAL_ONLY if a.local_only else PrivacyMode.STANDARD,
         requested_runtime=a.runtime,requested_agent=a.agent,external_research_required=a.research,
@@ -52,10 +65,15 @@ def main():
     if a.cmd=="dispatch" and a.execute:
         if decision.status.value!="ROUTED":
             raise SystemExit("route is not ROUTED; dispatch refused")
+        if decision.execution_contract.get("execute_via")=="claude_code_agent_tool":
+            raise SystemExit(f"route targets the Claude Code subagent {decision.execution_contract.get('subagent_type')}:"
+                             " spawn it with the Agent tool from the host session; dispatch refused")
         dispatcher=AgentDispatcher(reg)
         packet=dispatcher.make_packet(decision,a.goal,a.source_agent,tuple(a.accept))
         result=dispatcher.dispatch(decision,packet)
         print(json.dumps(result.__dict__,ensure_ascii=False,indent=2))
+        return _EXIT_BY_DISPATCH.get(result.status.value,1)
+    return 1 if decision.status.value=="BLOCKED" else 0
 
 if __name__=="__main__":
     main()

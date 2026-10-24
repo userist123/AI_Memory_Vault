@@ -1,8 +1,9 @@
+import os
 import json
 from pathlib import Path
 import pytest
 
-root = Path(r"C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY")
+root = Path(os.path.expanduser(r"~\Documents\Codex\AI_Memory_Vault_CODEX_READY"))
 repair_dir = root / "07_EVALUATION" / "runtime_v1" / "evidence_repair"
 traces_dir = repair_dir / "traces"
 

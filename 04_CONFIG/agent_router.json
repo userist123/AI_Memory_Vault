@@ -5,7 +5,9 @@
     "max_alternatives": 5,
     "max_support_agents": 2,
     "max_memory_results": 5,
-    "max_graph_hops": 1
+    "max_graph_hops": 1,
+    "max_council_agents": 3,
+    "max_total_selected_skills": 4
   },
   "signals": {
     "capabilities": {
@@ -66,6 +68,12 @@
         "ux",
         "browser",
         "screenshot"
+      ],
+      "review": [
+        "review",
+        "code review",
+        "verify",
+        "second opinion"
       ],
       "security": [
         "security",
@@ -270,6 +278,86 @@
       "adapter_ref": "ollama",
       "executable": "ollama",
       "model": "llama3.2"
+    },
+    {
+      "id": "claude_subagent_worker",
+      "capabilities": [
+        "coding",
+        "repo",
+        "testing",
+        "ci",
+        "debugging",
+        "reasoning",
+        "security"
+      ],
+      "quality": "standard",
+      "cost_score": 25,
+      "latency_score": 30,
+      "model_local": false,
+      "network": true,
+      "tool_use": true,
+      "code_execution": true,
+      "visual": false,
+      "research": false,
+      "writable": true,
+      "max_context_tokens": 200000,
+      "independence_group": "claude",
+      "enabled": true,
+      "transport": "claude_subagent",
+      "adapter_ref": "claude_code_agent_tool",
+      "subagent_type": "vault-worker"
+    },
+    {
+      "id": "claude_subagent_reviewer",
+      "capabilities": [
+        "security",
+        "audit",
+        "review",
+        "coding",
+        "repo",
+        "testing",
+        "reasoning"
+      ],
+      "quality": "heavy",
+      "cost_score": 40,
+      "latency_score": 30,
+      "model_local": false,
+      "network": true,
+      "tool_use": true,
+      "code_execution": true,
+      "visual": false,
+      "research": false,
+      "writable": false,
+      "max_context_tokens": 200000,
+      "independence_group": "claude",
+      "enabled": true,
+      "transport": "claude_subagent",
+      "adapter_ref": "claude_code_agent_tool",
+      "subagent_type": "vault-reviewer"
+    },
+    {
+      "id": "claude_subagent_explore",
+      "capabilities": [
+        "repo",
+        "reasoning",
+        "memory"
+      ],
+      "quality": "light",
+      "cost_score": 5,
+      "latency_score": 15,
+      "model_local": false,
+      "network": true,
+      "tool_use": true,
+      "code_execution": false,
+      "visual": false,
+      "research": false,
+      "writable": false,
+      "max_context_tokens": 200000,
+      "independence_group": "claude",
+      "enabled": true,
+      "transport": "claude_subagent",
+      "adapter_ref": "claude_code_agent_tool",
+      "subagent_type": "Explore"
     }
   ],
   "agents": [
@@ -285,6 +373,7 @@
         "reasoning"
       ],
       "preferred_runtimes": [
+        "claude_subagent_worker",
         "codex",
         "claude_code"
       ],
@@ -374,6 +463,7 @@
         "reasoning"
       ],
       "preferred_runtimes": [
+        "claude_subagent_reviewer",
         "claude_code"
       ],
       "min_quality": "heavy",
@@ -416,6 +506,7 @@
         "review"
       ],
       "preferred_runtimes": [
+        "claude_subagent_reviewer",
         "antigravity",
         "claude_code"
       ],
@@ -441,6 +532,7 @@
         "review"
       ],
       "preferred_runtimes": [
+        "claude_subagent_reviewer",
         "antigravity",
         "claude_code"
       ],

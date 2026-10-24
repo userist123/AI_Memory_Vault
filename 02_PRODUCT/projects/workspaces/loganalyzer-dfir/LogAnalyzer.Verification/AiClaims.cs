@@ -18,6 +18,7 @@ public static class AiClaims
         var result = new List<AiStatementVerdict>();
         if (facts.AiReasoning is null) return result;
         var root = facts.AiReasoning.RootElement;
+        var validity = ValidationValidity(facts);
         if (root.ValueKind != JsonValueKind.Object) return result;
         var accepted = Prop(root, "accepted");
         if (accepted is not { ValueKind: JsonValueKind.Array } arr) return result;
@@ -68,9 +69,34 @@ public static class AiClaims
             }
             v.Verdict = state == StandardState.Verified ? StandardState.Inferred : state;   // belt and braces: never VERIFIED
             v.Reason = reason;
+            if (Prop(st, "validation") is { ValueKind: JsonValueKind.Object } cv && Text(cv, "state") is { Length: > 0 } cs)
+                v.ClaimValidation = LogAnalyzer.Dfir.AI.ClaimStates.ToSpec(LogAnalyzer.Dfir.AI.ClaimStates.Parse(cs));   // only the four known states; legacy "SUSTINUT" or any other string -> NEVERIFICABIL
+            // the stored claim state is only as good as the validation file it came from: a stale, modified or missing validation makes it NEVERIFICABIL
+            if (validity.Length > 0 && v.ClaimValidation != "NEVERIFICABIL")
+            {
+                v.ClaimValidation = "NEVERIFICABIL";
+                v.Reason += " Validarea afirmației nu mai este de încredere: " + validity + ".";
+            }
+            // values confirmed next to a rejected / contradicted verdict is a contradiction in the report: never shown as confirmed
+            if (v.ClaimValidation == "VALORI_CONFIRMATE" && v.Verdict is StandardState.Rejected or StandardState.Contradicted)
+            {
+                v.ClaimValidation = "NEVERIFICABIL";
+                v.Reason += " Valorile citate sunt confirmate, dar verdictul de verificare este " + v.Verdict.ToSpec() + ": starea nu este prezentată ca valori confirmate.";
+            }
             result.Add(v);
         }
         return result;
+    }
+
+    /// <summary>"" when ai_validation.json is present, matches its custody hash and is bound to the case's current evidence; otherwise why not.</summary>
+    private static string ValidationValidity(CaseFacts facts)
+    {
+        var saved = LogAnalyzer.Dfir.AI.AiValidationStore.TryRead(facts.Case.Root, out var error);
+        if (saved is null) return error.Length > 0 ? "ai_validation.json nu a putut fi citit (" + error + ")" : "ai_validation.json lipsește";
+        var caseId = facts.Case.Info.CaseId;
+        var current = new LogAnalyzer.Dfir.AI.AiCaseFacts(caseId, LogAnalyzer.Dfir.AI.AiCaseFacts.Binding(caseId, facts.Evidence.Values));
+        var checkedNow = saved.CheckAgainst(current);
+        return checkedNow.Stale ? checkedNow.StaleReason : "";
     }
 
     private static JsonElement? Prop(JsonElement e, string name)

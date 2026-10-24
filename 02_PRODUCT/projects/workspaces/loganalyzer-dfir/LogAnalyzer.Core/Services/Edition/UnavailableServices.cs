@@ -36,6 +36,8 @@ namespace LogAnalyzer.Core.Services.Edition
         public bool IsSyslogListenerActive => false;
         public void StartSyslogListener(int port, string outputDir, string hostname, Action<string> logCallback) =>
             logCallback("[INDISPONIBIL] " + EditionText.Unavailable("Receptorul Syslog"));
+        public void StartSyslogListener(SyslogListenerOptions options, Action<string> logCallback) =>
+            logCallback("[INDISPONIBIL] " + EditionText.Unavailable("Receptorul Syslog"));
         public void StopSyslogListener() { }
     }
 

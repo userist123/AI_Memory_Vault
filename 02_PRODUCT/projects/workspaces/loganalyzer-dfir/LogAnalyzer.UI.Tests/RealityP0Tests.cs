@@ -82,6 +82,28 @@ namespace LogAnalyzer.UI.Tests
         }
 
         [Fact]
+        public void Sanitization_ReadBackThatFindsData_IsFailed_NotMerelyUnverified()
+        {
+            var dirty = new SanitizationResult { Success = true, ReadBackVerified = false, ReadBackMismatchOffset = 512, ReadBackNote = "date nenule" };
+            Assert.True(dirty.ReadBackFoundData);
+            Assert.StartsWith("EȘUATĂ", dirty.ReadBackVerdict);
+            Assert.DoesNotContain("NEVERIFICAT", dirty.ReadBackVerdict);
+            Assert.Equal(LogAnalyzer.Dfir.Response.ResponseStatus.Failed, dirty.Verification.Status);
+            var cert = SanitizationCertificateData.FromResult(dirty, "f", "op");
+            Assert.True(cert.ReadBackFoundData);
+            Assert.StartsWith("EȘUATĂ", cert.ZeroizationText);
+            Assert.Contains("EȘUATĂ", new SanitizationCertificateGenerator().GenerateTextCertificate(cert));
+            var a = new SanitizationCertificateData { CertificateId = "X" };
+            var b = new SanitizationCertificateData { CertificateId = "X", ReadBackFoundData = true };
+            Assert.NotEqual(a.ComputeAuditHash(), b.ComputeAuditHash());     // the audit hash covers the FAILED flag
+
+            var unread = new SanitizationResult { Success = true, ReadBackVerified = false, ReadBackNote = "ultima trecere aleatoare" };
+            Assert.False(unread.ReadBackFoundData);
+            Assert.StartsWith("NEVERIFICATĂ", unread.ReadBackVerdict);
+            Assert.Equal("verificată prin citire", new SanitizationResult { Success = true, ReadBackVerified = true }.ReadBackVerdict);
+        }
+
+        [Fact]
         public void TextCertificate_ShowsUndeclaredFieldsAsSuch()
         {
             var text = new SanitizationCertificateGenerator().GenerateTextCertificate(new SanitizationCertificateData());
@@ -97,9 +119,8 @@ namespace LogAnalyzer.UI.Tests
             {
                 new SuperTimelineExportService().ExportPlasoCsv(csv, new List<ParsedEvent>(), new List<ForensicArtifact>(),
                     new List<RegistryArtifact> { new RegistryArtifact { KeyPath = @"HKLM\X", ValueName = "v", LastWriteTime = null } });
-                var line = File.ReadAllLines(csv)[1];
-                Assert.StartsWith("-,-,", line);
-                Assert.DoesNotContain(DateTime.UtcNow.ToString("MM/dd/yyyy"), line);
+                // A registry value without a last-write time cannot be placed on a timeline: no row, never "now".
+                Assert.Single(File.ReadAllLines(csv));
             }
             finally { File.Delete(csv); }
         }

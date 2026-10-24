@@ -1,3 +1,4 @@
+import os
 import socket
 import urllib.request
 import urllib.parse
@@ -14,7 +15,7 @@ def patched_getaddrinfo(host, port, *args, **kwargs):
     return orig_getaddrinfo(host, port, *args, **kwargs)
 socket.getaddrinfo = patched_getaddrinfo
 
-scratch_path = "C:/Users/user/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch"
+scratch_path = os.path.expanduser("~/.gemini/antigravity/brain/aebf6032-0fa2-438b-bb11-3eda139a64e3/scratch")
 with open(f"{scratch_path}/corpus_depth_results.json", "r", encoding="utf-8") as f:
     depth_res = json.load(f)
 
@@ -141,7 +142,7 @@ final_dataset = {
     "markets": dataset_markets
 }
 
-dataset_file = "C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json"
+dataset_file = os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.json")
 with open(dataset_file, "w", encoding="utf-8") as f:
     json.dump(final_dataset, f, indent=2)
 
@@ -157,7 +158,7 @@ final_provenance = {
     "markets": provenance_markets
 }
 
-provenance_file = "C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.provenance.json"
+provenance_file = os.path.expanduser("~/Documents/Codex/AI_Memory_Vault_CODEX_READY/07_EVALUATION/polymarket/fixtures/historical_dataset_50markets.provenance.json")
 with open(provenance_file, "w", encoding="utf-8") as f:
     json.dump(final_provenance, f, indent=2)
 

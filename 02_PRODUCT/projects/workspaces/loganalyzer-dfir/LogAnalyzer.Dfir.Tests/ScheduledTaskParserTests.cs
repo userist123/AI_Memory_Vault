@@ -29,7 +29,7 @@ public sealed class ScheduledTaskParserTests : IDisposable
         <Task version="1.4" xmlns="http://schemas.microsoft.com/windows/2004/02/mit/task">
           <RegistrationInfo>
             <Date>2026-09-19T17:58:12.5+03:00</Date>
-            <Author>LAB-PC\u</Author>
+            <Author>WS-01\u</Author>
             <URI>\orchestratormaintain</URI>
           </RegistrationInfo>
           <Triggers>
@@ -39,7 +39,7 @@ public sealed class ScheduledTaskParserTests : IDisposable
           <Principals><Principal id="Author"><UserId>S-1-5-21-1-2-3-1001</UserId><LogonType>InteractiveToken</LogonType><RunLevel>HighestAvailable</RunLevel></Principal></Principals>
           <Settings><Hidden>true</Hidden><Enabled>true</Enabled></Settings>
           <Actions Context="Author">
-            <Exec><Command>C:\Users\u\AppData\Local\Conexant\pro_cmd_core.exe</Command><Arguments>-run silent</Arguments><WorkingDirectory>C:\Users\u</WorkingDirectory></Exec>
+            <Exec><Command>C:\Users\u\AppData\Local\VendorX\pro_cmd_core.exe</Command><Arguments>-run silent</Arguments><WorkingDirectory>C:\Users\u</WorkingDirectory></Exec>
             <ComHandler><ClassId>{12345678-1234-1234-1234-123456789ABC}</ClassId></ComHandler>
           </Actions>
         </Task>
@@ -67,7 +67,7 @@ public sealed class ScheduledTaskParserTests : IDisposable
         var exec = sink.Events[0];
         Assert.Equal(new DateTimeOffset(2026, 9, 19, 14, 58, 12, 500, TimeSpan.Zero), exec.Time.Utc);
         Assert.Equal("2026-09-19T17:58:12.5+03:00", exec.Time.Raw);
-        Assert.Equal(@"C:\Users\u\AppData\Local\Conexant\pro_cmd_core.exe", exec.Path);
+        Assert.Equal(@"C:\Users\u\AppData\Local\VendorX\pro_cmd_core.exe", exec.Path);
         Assert.Equal("pro_cmd_core.exe", exec.Process);
         Assert.Equal(exec.Path, exec.Fields["Command"]);
         Assert.Equal(@"\orchestratormaintain", exec.Task);
@@ -110,9 +110,9 @@ public sealed class ScheduledTaskParserTests : IDisposable
     public void Task_running_from_user_writable_path_becomes_a_finding_with_evidence()
     {
         var bad = Write("orchestratormaintain", Malicious);
-        var good = Write("vendor", Malicious.Replace(@"C:\Users\u\AppData\Local\Conexant\pro_cmd_core.exe", @"C:\Program Files\Vendor\upd.exe")
+        var good = Write("vendor", Malicious.Replace(@"C:\Users\u\AppData\Local\VendorX\pro_cmd_core.exe", @"C:\Program Files\Vendor\upd.exe")
                                             .Replace(@"\orchestratormaintain", @"\vendor").Replace("<Hidden>true</Hidden>", "<Hidden>false</Hidden>"));
-        var env = Write("envtask", Malicious.Replace(@"C:\Users\u\AppData\Local\Conexant\pro_cmd_core.exe", @"%LOCALAPPDATA%\x\run.exe")
+        var env = Write("envtask", Malicious.Replace(@"C:\Users\u\AppData\Local\VendorX\pro_cmd_core.exe", @"%LOCALAPPDATA%\x\run.exe")
                                            .Replace(@"\orchestratormaintain", @"\envtask"));
         var sink = new ListSink();
         foreach (var p in new[] { bad, good, env }) new ScheduledTaskParser().Parse(Item(p), p, sink, default);

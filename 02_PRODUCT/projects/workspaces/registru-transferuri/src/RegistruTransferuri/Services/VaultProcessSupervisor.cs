@@ -18,9 +18,9 @@ public class VaultProcessSupervisor : IDisposable
 
     public bool IsRunning { get; private set; }
 
-    public VaultProcessSupervisor(string vaultPath = @"c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY", int port = 8765)
+    public VaultProcessSupervisor(string? vaultPath = null, int port = 8765)
     {
-        _vaultPath = vaultPath;
+        _vaultPath = vaultPath ?? Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.UserProfile), "Documents", "Codex", "AI_Memory_Vault_CODEX_READY");
         _port = port;
         _http = new HttpClient { Timeout = TimeSpan.FromSeconds(2) };
     }

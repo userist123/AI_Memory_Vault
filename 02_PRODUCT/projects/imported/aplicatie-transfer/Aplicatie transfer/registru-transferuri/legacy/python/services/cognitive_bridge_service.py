@@ -11,7 +11,7 @@ from typing import List, Dict, Any, Optional, Tuple
 from database.db import DatabaseManager
 
 # Path catre AI Memory Vault
-VAULT_ROOT = r"c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY"
+VAULT_ROOT = os.path.expanduser(r"~\Documents\Codex\AI_Memory_Vault_CODEX_READY")
 if os.path.exists(VAULT_ROOT) and VAULT_ROOT not in sys.path:
     sys.path.insert(0, VAULT_ROOT)
 

@@ -193,6 +193,24 @@ def _ranking_key_fn(arm, initial_score_map, fused_score_map, components_map):
 
 MAX_NOTE_CONTENT = 20_000
 
+#: A-05: the ontology slot notes (01_ARCHITECTURE/ontology/slots/, ids `slot-NN-name`,
+#: `type: ontology_definition`) are written only by the manifest-gated ingestion scripts.
+ONTOLOGY_SLOT_ID_PREFIX = "slot-"
+ONTOLOGY_SLOT_TYPE = "ontology_definition"
+ONTOLOGY_SLOT_WRITERS = (
+    "30_SCRIPTS/ingestion/merge_candidate_concepts.py",
+    "30_SCRIPTS/ingestion/promote_candidate_concept.py",
+    "30_SCRIPTS/ingestion/purge_rejected_rows.py",
+    "30_SCRIPTS/ingestion/apply_row_disposition.py",
+    "30_SCRIPTS/ingestion/promote_verified_batch.py",  # slot rewrite only behind --update-slots
+)
+
+
+def _is_ontology_slot(note_id: Any, note: Optional[Dict[str, Any]] = None) -> bool:
+    if isinstance(note_id, str) and note_id.startswith(ONTOLOGY_SLOT_ID_PREFIX):
+        return True
+    return isinstance(note, dict) and note.get("type") == ONTOLOGY_SLOT_TYPE
+
 
 class MemoryController:
     _global_review_counter = 2
@@ -277,23 +295,31 @@ class MemoryController:
         #: requirement 3. See CLASSIFIER_FILTER_ARMS and RetrievalEngine.retrieve().
         self.classifier_filter_arm = classifier_filter_arm
 
+    # The cognitive-core classes are imported where they are built, not at module level:
+    # `executive`, `reasoning`, `recall`, ... import this module at their top, so any
+    # module-level import of them here is a cycle that breaks whenever one of them is
+    # imported first (`20_TESTS/test_cognitive_core_import_order.py`).
     def _get_working_memory(self, capacity: int = 10) -> "WorkingMemory":
         if self.working_memory is None:
+            from cognitive_core.working_memory import WorkingMemory
             self.working_memory = WorkingMemory(capacity=capacity)
         return self.working_memory
 
     def _get_global_workspace(self, max_slots: int = 5) -> "GlobalWorkspace":
         if self.global_workspace is None:
+            from cognitive_core.global_workspace import GlobalWorkspace
             self.global_workspace = GlobalWorkspace(max_slots=max_slots)
         return self.global_workspace
 
     def _get_reasoning_engine(self) -> "ReasoningEngine":
         if self.reasoning_engine is None:
+            from cognitive_core.reasoning import ReasoningEngine
             self.reasoning_engine = ReasoningEngine(self)
         return self.reasoning_engine
 
     def _get_executive(self) -> "Executive":
         if self.executive is None:
+            from cognitive_core.executive import Executive
             self.executive = Executive(self)
         return self.executive
 
@@ -307,6 +333,42 @@ class MemoryController:
         out_neighbors = {s.target_id for s in out_edges}
         in_neighbors = {s.source_id for s in self.synapse_store.all() if s.target_id == node_id}
         return len(out_neighbors | in_neighbors) > 10
+
+    def _refuse_ontology_slot(self, operation: str, note_id: Any,
+                              *notes: Optional[Dict[str, Any]]) -> None:
+        """A-05 (Option A of CONTROLLER_SLOT_PATH.md): no principal may archive, supersede,
+        update, propose, attest, review or promote an ontology slot through the controller, nor
+        reconsolidate it through `learning.consolidation.Consolidator`. Reads are untouched.
+
+        A slot is a note whose id starts with ``slot-`` or whose ``type`` is
+        ``ontology_definition``; `notes` are the stored note and/or the incoming data,
+        so neither a uuid id nor a changed type gets round the rule.
+        """
+        candidates = [n for n in notes if isinstance(n, dict)] or [None]
+        if any(_is_ontology_slot(note_id, n) for n in candidates):
+            raise PermissionError(
+                f"{operation} refused on ontology slot '{note_id}': the controller never writes "
+                "an ontology slot, for any principal. Slots are changed only by the "
+                "manifest-gated script writers: " + ", ".join(ONTOLOGY_SLOT_WRITERS)
+            )
+
+    def storage_diagnostics(self) -> Dict[str, Any]:
+        """Read-only copy of the storage engine's index load report (D-01).
+
+        ``{"scanned", "indexed", "skipped": [{"path", "reason", "exception"}]}``;
+        engines without a load report (the in-memory StorageEngine) report nothing
+        skipped. No note content is ever included.
+        """
+        report = getattr(self.storage, "load_report", None)
+        if not isinstance(report, dict):
+            n = len(getattr(self.storage, "store", {}) or {})
+            return {"scanned": n, "indexed": n, "skipped": []}
+        return {
+            "scanned": report.get("scanned", 0),
+            "indexed": report.get("indexed", 0),
+            "skipped": [dict(s) for s in report.get("skipped", [])],
+        }
+
     def _check_auth(self, principal: Principal, operation: Operation) -> None:
         if not self.authorizer.is_allowed(principal, operation):
             raise PermissionError(f"{principal.value} not allowed to perform {operation.value}")
@@ -771,6 +833,16 @@ class MemoryController:
             candidate_trace['lifecycles_requested'] = [
                 getattr(l, 'value', str(l)) for l in (lifecycles or [])
             ]
+            # Surface corrupt/unreadable note files so an error is distinguishable
+            # from an empty result (never raises into the search path).
+            try:
+                _skip = getattr(self.storage, "skip_report", None)
+                _rep = _skip() if callable(_skip) else {"skipped_corrupt": 0, "skipped_paths": []}
+                candidate_trace['skipped_corrupt'] = int(_rep.get("skipped_corrupt", 0))
+                candidate_trace['skipped_paths'] = list(_rep.get("skipped_paths", []))
+            except Exception:
+                candidate_trace['skipped_corrupt'] = 0
+                candidate_trace['skipped_paths'] = []
             active_classifier_filter_arm = (
                 classifier_filter_arm if classifier_filter_arm is not None
                 else getattr(self, 'classifier_filter_arm', None)
@@ -1018,6 +1090,9 @@ class MemoryController:
                             max_new_expansions = int(_budget)
                         decay = 0.5
                         max_per_seed_contrib = 1.0
+                        # D-02: neighbours reached but dropped only because they are
+                        # already seeds, so a no-op can say why it was a no-op.
+                        neighbours_already_seeded = 0
 
                         if max_new_expansions > 0:
                             allowed_lcs = None
@@ -1046,6 +1121,7 @@ class MemoryController:
                                     if not t_id or t_id == s_id:
                                         continue
                                     if not is_spreading_enabled and t_id in seed_ids:
+                                        neighbours_already_seeded += 1
                                         continue
 
                                     # Hub cap check for target node
@@ -1104,6 +1180,8 @@ class MemoryController:
                             candidate_expansions = []
                             for t_id, act_score in sorted(activation.items(), key=lambda x: (-x[1], x[0])):
                                 if t_id in seen_ids:
+                                    if t_id in seed_ids:
+                                        neighbours_already_seeded += 1
                                     continue
 
                                 t_note = self.storage.get(t_id)
@@ -1137,7 +1215,19 @@ class MemoryController:
                             selected = candidate_expansions[:max_new_expansions]
                             expanded_notes = [item[0] for item in selected]
 
-                        candidate_trace['graph_expansion_status'] = 'ok'
+                        # D-02: "ok" only when something was actually expanded. The
+                        # no-op statuses keep the "ok" prefix (expansion ran, nothing
+                        # degraded) but say why nothing was added. Budget and
+                        # semantics are unchanged; only the label is truthful.
+                        if expanded_notes:
+                            candidate_trace['graph_expansion_status'] = 'ok'
+                        elif max_new_expansions <= 0:
+                            candidate_trace['graph_expansion_status'] = 'ok_noop_budget_zero'
+                        elif neighbours_already_seeded and not survived_filter_ids:
+                            candidate_trace['graph_expansion_status'] = 'ok_noop_all_neighbours_seeded'
+                        else:
+                            candidate_trace['graph_expansion_status'] = 'ok_noop_no_eligible_neighbours'
+                        candidate_trace['graph_expansion_budget_resolved'] = max_new_expansions
                     except Exception:
                         candidate_trace['graph_expansion_status'] = 'degraded_corrupt_data'
                         expanded_notes = []
@@ -1164,9 +1254,9 @@ class MemoryController:
                 # this before the assignment and read the empty initialiser, so
                 # it fired on every query — a false alarm in the very guard
                 # meant to catch false results.
-                if _strict and _status == 'ok' and not candidate_trace['graph_expanded_ids']:
+                if _strict and str(_status).startswith('ok') and not candidate_trace['graph_expanded_ids']:
                     raise GraphExpansionDegraded(
-                        "graph expansion reported ok but expanded no nodes; "
+                        f"graph expansion reported {_status} but expanded no nodes; "
                         f"seeds={len(candidate_trace.get('graph_seed_ids') or [])}, "
                         "so this arm is identical to the baseline"
                     )
@@ -1212,6 +1302,7 @@ class MemoryController:
 
             if active_enable_global_workspace:
                 gw = self._get_global_workspace(max_slots=page_size)
+                from cognitive_core.global_workspace import WorkspaceProposal
                 for n in notes:
                     n_id = n.get('id')
                     if not n_id:
@@ -1495,6 +1586,18 @@ class MemoryController:
                 if not note_data.get('id'):
                     raise ValueError('Note must include an id')
                 check_path_traversal(note_id)
+                existing = self.storage.get(note_id)
+                self._refuse_ontology_slot('propose', note_id, note_data, existing)
+                # A-08: a proposal creates a note; it never replaces one. An existing
+                # id (any lifecycle) used to be overwritten silently, provenance and
+                # all. Changes to an existing note go through update().
+                # `get()` returns None for an indexed file it can no longer read, so the
+                # index is consulted too: a corrupt note is still not a free id.
+                indexed = note_id in (getattr(self.storage, 'id_to_path', None) or {})
+                if existing is not None or indexed:
+                    raise ValueError(
+                        f"Note '{note_id}' already exists; propose() never overwrites. Use update()."
+                    )
 
                 if note_data.get('verification') == 'verified':
                     raise ValueError("Verification status 'verified' cannot be set via propose. Use attest() instead.")
@@ -1587,6 +1690,7 @@ class MemoryController:
                 note = self.storage.get(note_id)
                 if not note:
                     raise ValueError('Note not found')
+                self._refuse_ontology_slot('review', note_id, note)
                 _review_decision = lifecycle_policy.evaluate(
                     lifecycle_policy.TransitionRequest(
                         mutation=lifecycle_policy.Mutation.REVIEW,
@@ -1629,6 +1733,7 @@ class MemoryController:
                 note = self.storage.get(note_id)
                 if not note:
                     raise ValueError('Note not found')
+                self._refuse_ontology_slot('promote', note_id, note)
                 _promote_decision = lifecycle_policy.evaluate(
                     lifecycle_policy.TransitionRequest(
                         mutation=lifecycle_policy.Mutation.PROMOTE,
@@ -1660,6 +1765,7 @@ class MemoryController:
                 if kwargs:
                     updates = {**updates, **kwargs}
                 note = self.storage.get(note_id)
+                self._refuse_ontology_slot('update', note_id, note, updates)
                 if not note:
                     raise ValueError('Note not found')
                 immutable = {'id', 'lifecycle'}
@@ -1732,6 +1838,7 @@ class MemoryController:
                 note = self.storage.get(note_id)
                 if not note:
                     raise ValueError('Note not found')
+                self._refuse_ontology_slot('attest', note_id, note)
 
                 previous_state = note.get('verification', 'unverified')
                 if previous_state == verification_state:
@@ -1769,6 +1876,7 @@ class MemoryController:
                 self._check_auth(principal, Operation.ARCHIVE)
                 check_path_traversal(note_id)
                 note = self.storage.get(note_id)
+                self._refuse_ontology_slot('archive', note_id, note)
                 if not note:
                     raise ValueError('Note not found')
                 _archive_decision = lifecycle_policy.evaluate(
@@ -1803,7 +1911,9 @@ class MemoryController:
                 self._check_auth(principal, Operation.SUPERSEDE)
                 check_path_traversal(old_id)
                 check_path_traversal(new_id)
-                
+                self._refuse_ontology_slot('supersede', old_id, self.storage.get(old_id))
+                self._refuse_ontology_slot('supersede', new_id, self.storage.get(new_id))
+
                 # 1. Validate invariants
                 self.supersession_enforcer.validate_supersession(principal, old_id, new_id)
                 
@@ -1897,23 +2007,40 @@ class MemoryController:
 
 
 
+# Export singleton -- built lazily, on first access to `controller` or
+# `_storage_engine` (PEP 562), not at import. Importing this module used to scan
+# `_vault_root` on every import. No production module reads the singleton (only
+# tests and 80_ARCHIVE scratch do); production builds its own controller over the
+# real vault (recall_cli, memory_mcp_server). The root is unchanged:
+# 03_IMPLEMENTATION/packages, which is NOT the vault root -- notes it writes land
+# in the gitignored 03_IMPLEMENTATION/packages/01_KNOWLEDGE/ (D-06). Tests that
+# assign `controller` / `_storage_engine` on the module keep working: an assigned
+# attribute is found before __getattr__ is consulted.
+_vault_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+_SINGLETON_LOCK = threading.Lock()
+
+
+def __getattr__(name: str):
+    if name not in ("controller", "_storage_engine"):
+        raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+    with _SINGLETON_LOCK:
+        g = globals()
+        if "_storage_engine" not in g:
+            g["_storage_engine"] = FileStorageEngine(_vault_root)
+        if "controller" not in g:
+            g["controller"] = MemoryController(g["_storage_engine"])
+        return g[name]
+
+
 # Cognitive core modules wired in production path behind explicit flags (OFF by
-# default). They are imported at the bottom because `reasoning` and `executive`
-# take the controller itself, so importing them at the top is circular. Every
-# annotation above that names one of them is therefore a string: Python 3.11
-# evaluates a return annotation when the `def` runs, which is long before this
-# line, and CI failed with `NameError: name 'WorkingMemory' is not defined`
-# while a local 3.14 passed -- PEP 649 made annotations lazy there.
-# `20_TESTS/test_controller_late_imports.py` keeps this from coming back.
-from cognitive_core.working_memory import WorkingMemory
-from cognitive_core.global_workspace import GlobalWorkspace, WorkspaceProposal
-from cognitive_core.reasoning import ReasoningEngine
-from cognitive_core.executive import Executive
+# default) -- WorkingMemory, GlobalWorkspace/WorkspaceProposal, ReasoningEngine,
+# Executive -- are imported inside the methods that build them (see `_get_executive`).
+# They used to be imported here, at the bottom, which only broke the cycle when this
+# module was imported first: `import cognitive_core.executive` (or reasoning, recall,
+# orchestrator, ...) as the first import failed with "partially initialized module".
+# Every annotation above that names one of them stays a string: Python 3.11 evaluates
+# a return annotation when the `def` runs (`20_TESTS/test_controller_late_imports.py`).
 from graph.plasticity import PlasticityEngine
 
-# Export singleton
+# Late import, used by the lazy singleton above (resolved at call time).
 from .storage.file_engine import FileStorageEngine
-_vault_root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-_storage_engine = FileStorageEngine(_vault_root)
-
-controller = MemoryController(_storage_engine)
