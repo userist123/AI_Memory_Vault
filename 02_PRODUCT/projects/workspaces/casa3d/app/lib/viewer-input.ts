@@ -15,6 +15,9 @@ import { footprintOf } from '@/core/validate';
 import { stairGeometry, SLAB } from '@/core/levels';
 import { wallItemGeometry, wallItemFace, wallItemDepth } from '@/core/wall-items';
 import { bandOf, alongOf, bathTiles, sideSpan } from '@/core/finishes';
+import { techFrame, isSizedRadiator, radiatorSize, hvacSize } from '@/core/tech-geometry';
+import { intersect } from '@/core/floor-zones';
+import type { RoomFinishes } from '@/core/types';
 
 /** Gol în placa nivelului arătat (golul scării de dedesubt); `dir` = sensul urcării scării, marginea de sosire e pe partea +dir. */
 export interface PlateVoid { x0: number; z0: number; x1: number; z1: number; dir: [number, number] }
@@ -55,5 +58,16 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
       for (const w of [...(f.wallFeatures || []), ...bathTiles(f, face.room.type, face.room)]){ if (w.side !== face.side || !(w.kind in CLAD)) continue; const [y0, y1] = bandOf(w, snap.floor.ceilingHeight), [a, b] = alongOf(w, len);
         if (face.u > a && face.u < b && it.elevation > y0 && it.elevation < y1) clad = Math.max(clad, CLAD[w.kind]!); } }
     return [{ id: it.id, wi: g.wallIndex, la: it.offset, l: it.width, y: it.elevation, h: it.height, ad: wallItemDepth(it), side: it.side === -1 ? -1 : 1, kind: it.kind, color: it.color ?? null, room: face?.room.id ?? null, fata: face?.side ?? null, clad }]; });
-  return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, nise, obiectePerete, goluriPlaca: extra.voids ?? [] }, items };
+  // punctele tehnice cu corp: unitatea de aer condiționat (cutie albă pe perete) și caloriferul nou (cu nervuri), pe fața peretelui
+  // din dreptul lor; grosimea e cea a peretelui din 3D (motorul desenează pereții de 25 / 15 cm)
+  const ceil = snap.floor.ceilingHeight;
+  const tehnice = (snap.tech ?? []).flatMap(t => { const ac = t.kind === 'hvac_split'; if (!ac && !isSizedRadiator(t)) return [];
+    const f = techFrame(snap.floor, t); if (!f) return []; const th = f.wall?.exterior ? .25 : .15, k = th / 2 - f.thickness / 2, s = ac ? hvacSize(t) : radiatorSize(t);
+    const y = Math.max(0, Math.min(ceil - s.h - .02, t.height));
+    return [{ id: t.id, kind: ac ? 'ac' : 'radiator', model: t.model ?? 'panel', x: f.face[0] + f.n[0] * k, z: f.face[1] + f.n[1] * k, nx: f.n[0], nz: f.n[1], ux: f.u[0], uz: f.u[1], w: s.w, h: s.h, d: s.d, y }]; });
+  // zonele de pardoseală: dreptunghiul decupat la cameră și pardoseala aleasă (modul de așezare, placa); motorul le pune la +1 mm
+  const zonePardoseala = (snap.floor.zones ?? []).flatMap(z => { const room = snap.floor.rooms.find(r => r.id === z.roomId), c = room && intersect(room.rect, z.rect); if (!c) return [];
+    const fin = mc ? roomVisual(mc, { floor: z.floor, wallPaint: '', light: '', ...(z.layout ? { floorLayout: z.layout } : {}) } as RoomFinishes).floor : null;
+    return [{ id: z.id, room: z.roomId, ...c, fin }]; });
+  return { plan: { ...plan, scari, lumini, stalpi, grinzi, peretiSticla, nise, obiectePerete, ...(tehnice.length ? { tehnice } : {}), ...(zonePardoseala.length ? { zonePardoseala } : {}), goluriPlaca: extra.voids ?? [] }, items };
 }

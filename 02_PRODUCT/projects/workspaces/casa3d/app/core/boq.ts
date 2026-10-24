@@ -12,6 +12,10 @@ import { formatQty } from './format';
 import { nicheRoom, nicheTileArea } from './niches';
 import { wallItemRoom, wallItemFace, WALL_ITEM_CATEGORY } from './wall-items';
 import { colorName } from './budget-excluded';
+import { wallWorks } from './renovation';
+import { zonesOfRoom, zoneAreaIn, zonesAreaIn } from './floor-zones';
+import { isSizedRadiator, radiatorSize, hvacSize } from './tech-geometry';
+const RADIATOR_RO: Record<string, string> = { panel: 'panou', towel: 'port-prosop', decorative: 'decorativ' };
 /** Pereții în documente: punctele cardinale în română, nu literele interne N/S/E/W. */
 const SIDE_RO: Record<string, string> = { N: 'nord', S: 'sud', E: 'est', W: 'vest' };
 const LIGHT_CATS = new Set(['lighting', 'spot', 'led_strip', 'pendant', 'wall_light', 'led_profile']);
@@ -74,15 +78,23 @@ function materialLine(m: Material, key: string, roomId: string | null, label: st
 export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
   const items: BoqItem[] = [], labor: LaborItem[] = [], geometry: RoomGeometry[] = [], unknown: string[] = [];
   const M = (id?: string | null) => (id ? mc.materials.find(m => m.id === id) : undefined), L = (id: string) => mc.labor.find(l => l.id === id)!;
-  const addLabor = (roomId: string, rateId: string, qty: number) => { if (qty <= 0) return; const l = L(rateId);
-    labor.push({ key: `${roomId}:${rateId}`, roomId, rateId, label: l.label, qty: r2(qty), unit: l.unit, low: r2(qty * l.low), expected: r2(qty * l.expected), high: r2(qty * l.high), confidence: l.confidence, sources: l.sources }); };
+  const addLabor = (roomId: string, rateId: string, qty: number, part?: string) => { if (qty <= 0) return; const l = L(rateId);
+    labor.push({ key: `${roomId}:${rateId}${part ? `:${part}` : ''}`, roomId, rateId, label: l.label, qty: r2(qty), unit: l.unit, low: r2(qty * l.low), expected: r2(qty * l.expected), high: r2(qty * l.high), confidence: l.confidence, sources: l.sources }); };
   let adhesiveArea = 0;
   for (const room of floors(snap).flatMap(f => f.rooms)){
     const g = roomGeometry(snap, room), f = finishesOf(snap, room), fl = floorOfRoom(snap, room.id); geometry.push(g);
     // pardoseală: pierderile și manopera depind de modul de așezare (drept, decalat, diagonală, spic, chevron) și de format
+    // zonele de pardoseală (alt material pe o porțiune a camerei) se scad din pardoseala camerei și au linia lor
+    const zoned = zonesAreaIn(fl, room.id), floorNet = r2(Math.max(0, g.floorArea - zoned));
     const fm = M(f.floor); if (fm){ const lay = layoutOf(f, fm), [pl, pw] = pieceSizeCm(fm);
-      items.push(materialLine(fm, `${room.id}:floor`, room.id, `Pardoseală · ${room.name} (${PATTERN_LABEL[lay.pattern]}${fm.category === 'floor_tile' ? `, ${pl}×${pw} cm, rost ${lay.groutMm ?? 3} mm` : ''})`, g.floorArea, mc.verifiedAt, floorWaste(lay, fm)));
-      if (fm.category === 'floor_tile') adhesiveArea += g.floorArea; addLabor(room.id, floorLaborId(lay, fm), g.floorArea); }
+      items.push(materialLine(fm, `${room.id}:floor`, room.id, `Pardoseală · ${room.name} (${PATTERN_LABEL[lay.pattern]}${fm.category === 'floor_tile' ? `, ${pl}×${pw} cm, rost ${lay.groutMm ?? 3} mm` : ''}${zoned > 0 ? `, fără zonele de ${r2(zoned)} m²` : ''})`, floorNet, mc.verifiedAt, floorWaste(lay, fm)));
+      if (fm.category === 'floor_tile') adhesiveArea += floorNet; addLabor(room.id, floorLaborId(lay, fm), floorNet); }
+    for (const z of zonesOfRoom(fl, room.id)){ const area = zoneAreaIn(fl, z), zm = M(z.floor), nm = z.label ? ` „${z.label}”` : '', dims = `${r2(z.rect.x1 - z.rect.x0)} × ${r2(z.rect.z1 - z.rect.z0)} m`;
+      if (area <= 0) continue;
+      if (!zm || (zm.category !== 'parquet' && zm.category !== 'floor_tile')){ unknown.push(`Pardoseală zonă${nm} · ${room.name} (${dims}, ${area} m²): materialul ales nu are preț verificat`); continue; }
+      const lay = layoutOf({ floorLayout: z.layout } as RoomFinishes, zm), [pl, pw] = pieceSizeCm(zm);
+      items.push(materialLine(zm, `${room.id}:zone:${z.id}`, room.id, `Pardoseală zonă${nm} · ${room.name} (${dims}, ${PATTERN_LABEL[lay.pattern]}${zm.category === 'floor_tile' ? `, ${pl}×${pw} cm, rost ${lay.groutMm ?? 3} mm` : ''})`, area, mc.verifiedAt, floorWaste(lay, zm)));
+      if (zm.category === 'floor_tile') adhesiveArea += area; addLabor(room.id, floorLaborId(lay, zm), area, `zone:${z.id}`); }
     if (room.type === 'baie') addLabor(room.id, 'manopera-hidroizolatie', g.floorArea);
     // faianță: baie până la 2,1 m; bucătărie = zona dintre blat și dulapuri, pe lungimea mobilierului de bucătărie
     let tileArea = 0;
@@ -176,6 +188,20 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
     // iluminat general
     const lm = M(f.light); if (lm){ const n = f.lights ?? (1 + Math.max(0, Math.ceil((g.floorArea - LIGHTS_EXTRA_PER_M2) / LIGHTS_EXTRA_PER_M2))); const line = materialLine(lm, `${room.id}:light`, room.id, `Iluminat · ${room.name}`, n, mc.verifiedAt); items.push(line); }
   }
+  // starea pereților (renovare): demolarea cu evacuarea molozului și pereții noi (gips-carton până la 12,5 cm, altfel zidărie);
+  // demolarea, zidăria și manopera nu au preț verificat, deci rămân necunoscute; placa de gips-carton are preț din catalog
+  const gk = mc.materials.find(m => m.category === 'plasterboard');
+  floors(snap).forEach((fl, li) => { const lvl = floors(snap).length > 1 ? ` · ${li === 0 ? 'parter' : fl.name || `nivelul ${li}`}` : '';
+    for (const ww of wallWorks(fl)){ const where = `perete ${Math.round(ww.thicknessM * 100)} cm, ${ww.lengthM} m × ${ww.heightM} m${ww.exterior ? ', exterior' : ''}${lvl}`;
+      if (ww.status === 'demolish'){ unknown.push(`Demolare ${ww.areaM2} m² cu evacuarea molozului (~${r2(ww.areaM2 * ww.thicknessM)} m³) · ${where}: fără preț verificat`); continue; }
+      if (ww.system === 'drywall'){ if (gk) items.push(materialLine(gk, `wall-new:${ww.wallId}`, null, `Perete nou gips-carton · ${where} (${ww.areaM2} m², placă pe 2 fețe)`, ww.areaM2 * 2, mc.verifiedAt)); else unknown.push(`Placă gips-carton perete nou ${r2(ww.areaM2 * 2)} m² · ${where}`);
+        unknown.push(`Manoperă perete nou gips-carton ${ww.areaM2} m² (structură, vată, 2 fețe) · ${where}: fără preț verificat`); }
+      else unknown.push(`Zidărie nouă ${ww.areaM2} m² (material și manoperă) · ${where}: fără preț verificat`); } });
+  // punctele tehnice cu corp: aerul condiționat (unitatea interioară și traseul) și caloriferele noi; fără preț verificat
+  const allRooms = floors(snap).flatMap(fl => fl.rooms);
+  for (const tp of snap.tech ?? []){ const room = allRooms.find(r => r.id === tp.roomId); if (!room) continue;
+    if (tp.kind === 'hvac_split') unknown.push(`Unitate AC interioară + traseu (1 buc, ${Math.round(hvacSize(tp).w * 100)} cm) · ${room.name}: fără preț verificat`);
+    else if (isSizedRadiator(tp)){ const sz = radiatorSize(tp); unknown.push(`Calorifer ${RADIATOR_RO[tp.model ?? 'panel']} ${Math.round(sz.w * 100)}×${Math.round(sz.h * 100)} cm (1 buc, nou sau mutat, cu racordare) · ${room.name}: fără preț verificat`); } }
   // uși de interior (foaie + toc) și mânere, pe golul lor; montajul nu are tarif verificat
   for (const d of doorOpenings(snap)){ const c = snap.doors?.[d.id], dm = M(c?.product), hm = M(c?.handle), roomId = d.roomIds[0] ?? null;
     if (dm){ items.push(materialLine(dm, `door:${d.id}`, roomId, `Ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj ușă ${dm.name}`); }

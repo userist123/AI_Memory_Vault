@@ -11,7 +11,7 @@ export interface RoomWindow { openingId: string; wallIndex: number; openingIndex
 /** Ferestrele de pe pereții camerei, cu partea dinspre cameră (normala peretelui (-uz, ux) înmulțită cu `inward`). */
 export function roomWindows(fl: Floor, room: Room): RoomWindow[] {
   const r = room.rect, cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2, out: RoomWindow[] = [];
-  fl.walls.forEach((w, wi) => { const horiz = Math.abs(w.a[1] - w.b[1]) < 1e-6, vert = Math.abs(w.a[0] - w.b[0]) < 1e-6; if (!horiz && !vert) return;
+  fl.walls.forEach((w, wi) => { if (w.status === 'demolish') return; const horiz = Math.abs(w.a[1] - w.b[1]) < 1e-6, vert = Math.abs(w.a[0] - w.b[0]) < 1e-6; if (!horiz && !vert) return;
     const side = horiz ? (Math.abs(w.a[1] - r.z0) < 1e-6 ? 'N' : Math.abs(w.a[1] - r.z1) < 1e-6 ? 'S' : null) : (Math.abs(w.a[0] - r.x0) < 1e-6 ? 'W' : Math.abs(w.a[0] - r.x1) < 1e-6 ? 'E' : null);
     if (!side) return; const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
     const inward: 1 | -1 = ((cx - w.a[0]) * -uz + (cz - w.a[1]) * ux) > 0 ? 1 : -1;

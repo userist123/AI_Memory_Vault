@@ -11,7 +11,8 @@ export function planToFloor(PLAN){
 export function floorToPlan(floor, name){
   return { nume: name, inaltime: floor.ceilingHeight,
     camere: floor.rooms.map(r => ({ id: r.id, nume: r.name, tip: r.type, ...r.rect, ...(r.boundary && r.boundary.length >= 3 ? { contur: r.boundary.map(p => [p[0], p[1]]) } : {}), ...(r.spaceKind ? { spaceKind: r.spaceKind } : {}) })),
-    pereti: floor.walls.map(w => ({ a: [...w.a], b: [...w.b], ...(w.exterior ? { ext: true } : {}), goluri: w.openings.map(o => ({ tip: o.kind === 'door' ? 'usa' : 'fereastra', la: o.offset, l: o.width, ...(o.entrance ? { intrare: true } : {}), ...(o.passage ? { trecere: true } : o.kind === 'door' ? { ...(o.doorType ? { tipUsa: o.doorType } : {}), ...(o.flush ? { filomuro: true } : {}) } : {}), ...(o.height ? { h: o.height } : {}), ...(o.sill != null ? { sill: o.sill } : {}) })) })) };
+    // peretele de demolat rămâne în listă (indicii pereților leagă golurile, nișele și obiectele de pe perete), dar fără goluri și marcat `demolat`: motorul nu-l desenează
+    pereti: floor.walls.map(w => ({ a: [...w.a], b: [...w.b], ...(w.exterior ? { ext: true } : {}), ...(w.status === 'demolish' ? { demolat: true } : w.status === 'new' ? { nou: true } : {}), goluri: (w.status === 'demolish' ? [] : w.openings).map(o => ({ tip: o.kind === 'door' ? 'usa' : 'fereastra', la: o.offset, l: o.width, ...(o.entrance ? { intrare: true } : {}), ...(o.passage ? { trecere: true } : o.kind === 'door' ? { ...(o.doorType ? { tipUsa: o.doorType } : {}), ...(o.flush ? { filomuro: true } : {}) } : {}), ...(o.height ? { h: o.height } : {}), ...(o.sill != null ? { sill: o.sill } : {}) })) })) };
 }
 export function optsToCatalog(OPTS, verifiedAt){
   const suppliers = [{ id: 'ikea-ro', name: 'IKEA', country: 'RO', website: 'https://www.ikea.com/ro/ro/' }, { id: 'dedeman', name: 'Dedeman', country: 'RO', website: 'https://www.dedeman.ro/' }];
