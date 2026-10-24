@@ -10,7 +10,7 @@
         <!-- Header -->
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
             <StackPanel DockPanel.Dock="Left">
-                <TextBlock Text="Threat Intelligence &amp; Suprapunere de tehnici (nu este atribuire)" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="Informații despre amenințări" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock Text="Suprapunerea tehnicilor observate cu profile publice de actori. NU este atribuire: aceleași tehnici sunt folosite de mulți actori, iar atribuirea cere dovezi separate (infrastructură, malware, context)." FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">

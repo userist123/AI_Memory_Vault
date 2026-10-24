@@ -20,6 +20,7 @@ public sealed class UsnJournalParser(TimeZoneInfo? zone = null) : EvidenceParser
     {
         ParserId = "UsnJournalParser", Version = "1.0", Artifact = "Jurnalul de modificări NTFS (USN), export fsutil",
         SourceTypes = ["usn_journal"], FileNames = [], Fingerprints = ["usn_fsutil"],
+        MaxInputBytes = 256L * 1024 * 1024,   // CSV export read whole (path reconstruction needs every row); larger exports: filter by time first
         SupportedOs = "Oricare (text produs de fsutil usn readjournal … csv pe Windows 10/11)",
         FormatVersions = ["fsutil usn readjournal csv (înregistrări USN v2–v4)"],
         Limitations =

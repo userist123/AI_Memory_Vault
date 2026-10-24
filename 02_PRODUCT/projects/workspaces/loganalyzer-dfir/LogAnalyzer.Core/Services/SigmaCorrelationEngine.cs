@@ -54,7 +54,7 @@ namespace LogAnalyzer.Core.Services
                 }
             }
 
-            // Scenariul 2: Ștergere Copii Shadow (vssadmin/wmic) urmată de Oprire Servicii (EID 7036 / EID 4688)
+            // Scenariul 2: Ștergere Copii umbră (vssadmin/wmic) urmată de Oprire Servicii (EID 7036 / EID 4688)
             var vssDeletes = ordered.Where(e => e.EventId == 4688 && (e.Message?.Contains("delete shadows", StringComparison.OrdinalIgnoreCase) == true || e.Message?.Contains("resize shadowstorage", StringComparison.OrdinalIgnoreCase) == true)).ToList();
             var serviceStops = ordered.Where(e => e.EventId == 7036 && e.Message?.Contains("stopped", StringComparison.OrdinalIgnoreCase) == true).ToList();
 

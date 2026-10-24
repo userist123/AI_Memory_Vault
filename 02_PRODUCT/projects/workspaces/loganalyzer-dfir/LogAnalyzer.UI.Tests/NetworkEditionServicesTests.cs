@@ -38,17 +38,17 @@ namespace LogAnalyzer.UI.Tests
             Assert.Contains("Tentativă Mimikatz LSASS Dump", cefList[0]);
         }
 
-        [Fact]
-        public async Task LiveThreatIntelService_HandlesEmptyApiKeyGracefully()
+        /// <summary>
+        /// Security audit #19: the online threat-intel and Microsoft 365 connectors had no production consumer, interpolated unescaped values into
+        /// request URLs and held secrets in plain config objects. They were deleted; this keeps them from coming back unreviewed.
+        /// </summary>
+        [Theory]
+        [InlineData("LogAnalyzer.Core.Services.Network.LiveThreatIntelService")]
+        [InlineData("LogAnalyzer.Core.Services.Network.M365LiveConnectorService")]
+        [InlineData("LogAnalyzer.Core.Services.Network.M365AuthConfig")]
+        public void Dead_online_connectors_are_not_shipped(string typeName)
         {
-            AppModeTestScope.Use(AppMode.Network);
-            var service = new LiveThreatIntelService();
-            var rep = await service.CheckIpReputationAsync("198.51.100.24", "");
-
-            Assert.NotNull(rep);
-            Assert.Equal("198.51.100.24", rep.IocValue);
-            Assert.Equal(0, rep.MaliciousScore);
-            Assert.Contains("Cheia API nu este configurată", rep.Details);
+            Assert.Null(typeof(SiemForwarderService).Assembly.GetType(typeName));
         }
     }
 }

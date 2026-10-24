@@ -7,11 +7,11 @@
     <IsTestProject>true</IsTestProject>
   </PropertyGroup>
   <ItemGroup>
-    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="17.*" />
-    <PackageReference Include="xunit" Version="2.*" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" Version="[17.14.1]" />
+    <PackageReference Include="xunit" Version="[2.9.3]" />
     <!-- Only to build synthetic hives in tests; production reads hives with Dfir.Core/IO/RawRegistry. -->
     <PackageReference Include="DiscUtils.Registry" Version="0.16.13" />
-    <PackageReference Include="xunit.runner.visualstudio" Version="2.*" />
+    <PackageReference Include="xunit.runner.visualstudio" Version="[2.8.2]" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\LogAnalyzer.Dfir.Core\LogAnalyzer.Dfir.Core.csproj" />
@@ -19,6 +19,8 @@
     <ProjectReference Include="..\LogAnalyzer.Verification\LogAnalyzer.Verification.csproj" />
     <ProjectReference Include="..\LogAnalyzer.Connectors\LogAnalyzer.Connectors.csproj" />
     <ProjectReference Include="..\LogAnalyzer.Response\LogAnalyzer.Response.csproj" />
+    <!-- Scanned by ResponseVerificationRegistryTests: every production assembly that may hold a host-changing response. -->
+    <ProjectReference Include="..\LogAnalyzer.Infrastructure\LogAnalyzer.Infrastructure.csproj" />
     <ProjectReference Include="..\LogAnalyzer.Ai\LogAnalyzer.Ai.csproj" />
   </ItemGroup>
   <ItemGroup>

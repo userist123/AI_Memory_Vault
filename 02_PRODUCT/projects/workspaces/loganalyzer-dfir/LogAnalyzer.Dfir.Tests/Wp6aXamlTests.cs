@@ -48,7 +48,7 @@ public class Wp6aXamlTests
         Assert.DoesNotContain("Content=\"Event Explorer (EVTX)\"", main);
         Assert.DoesNotContain("Content=\"Chain of Custody (NIS2)\"", main);
         Assert.Matches(@"Content=""\{views:Term evtx\}""[^>]*ToolTip=""\{views:Term evtx, Tooltip=True\}""", main);
-        Assert.Matches(@"Content=""\{views:Term chain_of_custody[^}]*\}""[^>]*ToolTip=""\{views:Term chain_of_custody, Tooltip=True\}""", main);
+        Assert.Matches(@"Content=""Istoricul probelor""[^>]*ToolTip=""{views:Term chain_of_custody, Tooltip=True}""", main);   // 2026-10-22: menu name = page title
         Assert.Contains("Investigație completă (caz)", main);   // no page was removed or renamed
     }
 

@@ -1,0 +1,19 @@
+{
+ "task": "T1",
+ "kind": "fixture",
+ "condition": "baseline",
+ "repeat": 0,
+ "correct": true,
+ "incomplete": false,
+ "usage_complete": true,
+ "tokens_complete": true,
+ "total_tokens": 1000,
+ "tok_input": 10,
+ "tok_cache_read": 890,
+ "tok_cache_creation": 60,
+ "tok_output": 40,
+ "cost_authoritative_usd": 0.1,
+ "total_cost_usd": 0.1,
+ "turns": 3,
+ "delegations": 0
+}

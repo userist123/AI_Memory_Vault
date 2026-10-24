@@ -67,8 +67,9 @@ Rules applied after classification (`rules` in the policy; can only raise a tier
   cheaper-model subagents are not used) and names an independent verifier;
 - **the verifier is always `vault-reviewer` (Opus, fresh context)**, for every high/critical or
   security task that is not itself a review; Fable is never a verifier;
-- **escalation order on failure**: haiku → sonnet → opus → fable, one notch, after the tests
-  say the cheaper attempt failed;
+- **escalation order on failure**: haiku → sonnet → opus, one notch, after the tests say the
+  cheaper attempt failed. Opus is the ceiling: Fable is reachable only for the `frontier` class,
+  in the main session (owner decision, 2026-10-15); every other class stays on Opus;
 - **subagent output contract**: `decision / evidence / risks / unknowns / confidence /
   recommended_action`, under 300 words, so the main session's context stays small.
 
@@ -89,6 +90,55 @@ Rules applied after classification (`rules` in the policy; can only raise a tier
   `max_input_chars` is refused, not truncated; exit 3 = unavailable → Haiku subagent. The prompt hook
   advertises it for `summarize` only when a configured model answers on 127.0.0.1:11434. Never used
   for multi-step code, design, risky work or verification; unreachable from cloud sessions.
+
+## 3C. Token-waste fixes (2026-10-16, owner-requested)
+
+Measured on the local transcripts of 2026-10-14..16 (LogAnalyzer three-editions work): 6,491 Opus
+requests, 1.9 B cache-read and 83 M cache-write tokens for 0.75 M output tokens; 78% of the cache
+reads came from subagents. The cost was context re-reading, not generated code. Changes:
+
+- **Risk floor on the reviewer, not the implementer.** `rules.implementer_risk_floor`: an
+  `implement` route at `high` risk keeps its class model (Sonnet, effort raised to `high`) when an
+  independent verifier at or above the floor is mandatory (`verifier_model` Opus,
+  `security_requires_independent_verifier`). The decision records
+  `risk_floor_deferred_to_verifier:high->opus` and `independent_verifier->opus`. Not deferred:
+  `critical` risk and any goal naming a live operation (`never_for_stems`: production, deploy,
+  release, publish, delet-, purg-, revok-, rotat-, leak, --force, migrat-, șterg-, rotim, ...;
+  matched at a word start with no right boundary, so deleting/deployment/production-db hit too),
+  because a review after the fact cannot undo it. Design and
+  root cause stay on Opus in the main session; a review route keeps its `vault-reviewer` subagent
+  (already Opus) instead of falling back to the main session. `route(..., role=...)`: the Agent
+  hook passes `implementer` for worker subagent types (a pricier text class such as review is
+  routed as implement) and `reviewer` for reviewer types (never below the verifier model). A
+  requested model below the implementer class model is rejected on risky code.
+- **Vault router knows the host's subagents.** `04_CONFIG/agent_router.json` adds the
+  `claude_subagent` transport: `claude_subagent_worker` (vault-worker), `claude_subagent_reviewer`
+  (vault-reviewer, read-only) and `claude_subagent_explore` (Explore). `route_cli` marks them
+  available only when `CLAUDECODE=1`; the receipt's `execution_contract` then says
+  `execute_via: claude_code_agent_tool` with the `subagent_type`, and `dispatch --execute` refuses
+  (the host spawns them). A verifier must have `tool_use` (it reads the diff and runs the checks;
+  `local_llm` can do neither). With no vendor-independent verifier, a `vault-reviewer` candidate of
+  a different agent is used as a logged fallback (`rejected`:
+  `verifier:no_independent_route->fallback:...`, plus a warning) instead of BLOCKED; outside Claude
+  Code nothing changes (fail closed).
+- **Cached route receipt.** A router call records the prompt's task class for the session
+  (`route-<sid>.routed_classes`); the Agent gate accepts it for later prompts of the same class.
+- **Single-command exemptions.** One read-only or one-shot git/gh command and a short edit of
+  `MEMORY.md`, a memory note or a `todo-*.md` checkpoint do not count toward the 3-call limit.
+  Only explicit forms (`git status|log|diff|show|rev-parse|ls-files`, `git branch` listing,
+  `git remote -v`, `gh pr view|checks|merge|edit|list|diff|comment|status|ready`, `gh run|issue`
+  reads); no chain, pipe, redirect or substitution, and no flag that runs a program, writes a file
+  or bypasses protection (`-c`, `--output`, `--ext-diff`, `--textconv`, `--upload-pack`,
+  `--receive-pack`, `--exec`, `--config`, `--admin`). `git fetch`/`ls-remote` are not exempt.
+- **Bounded resumes.** `hook_resume_guard.py` (PreToolUse on SendMessage): a second resume of the
+  same subagent is denied (start a new agent from a <=40-line checkpoint); a first one above 150k
+  context tokens is warned. **Main-transcript reminder**: above 250k context tokens every prompt
+  gets a reminder to checkpoint and continue with /clear.
+- **Process rules** (skill §2A, `CLAUDE.md`): threat model / probe list in the brief before
+  security work, at most 2 review rounds with delta-only round 2, one implementation agent at a
+  time, agents never poll CI, product questions and check-id reservations before dispatch.
+
+Tests: `20_TESTS/test_cost_router_token_waste.py`.
 
 ## 3B. Context economy in every project (2026-10-10, owner-approved)
 

@@ -25,7 +25,7 @@ public static class ProfileOps
                     issues.Add(new ProfileIssue(t, i + 1, msg, isErr));
         }
         foreach (var dup in zones.GroupBy(z => z, StringComparer.OrdinalIgnoreCase).Where(g => g.Count() > 1))
-            issues.Add(new ProfileIssue(ProfileTable.Zones, 0, $"zona „{dup.Key}” este definită de {dup.Count()} ori"));
+            issues.Add(new ProfileIssue(ProfileTable.Zones, 0, $"zona „{dup.Key}” este definită de {LogAnalyzer.Dfir.Language.RoText.Times(dup.Count())}"));
         // Rotation order: EXPORT → HASH → ARCHIVE → VERIFY → CLEAR. A different order is reported, not refused: it is the operator's procedure.
         var steps = p.RotationProcedure.Select(r => r.Step.Trim().ToUpperInvariant()).Where(s => ProfileTables.RotationOrder.Contains(s)).ToList();
         if (steps.Count > 0)
@@ -51,6 +51,7 @@ public static class ProfileOps
             S("Software aprobat", ProfileTable.ApprovedSoftware),
             S("Politică GPO așteptată", ProfileTable.ExpectedPolicies),
             S("Zone și transferuri", ProfileTable.Zones, ProfileTable.TransferChannels, ProfileTable.NetworkDestinations),
+            S("Foldere clasificate", ProfileTable.ClassifiedFolders),
         ];
     }
 

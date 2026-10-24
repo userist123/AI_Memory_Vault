@@ -21,7 +21,7 @@ The stage-1 audit read the code at `0689f5d48b67`; per the audit header no LogAn
 | `LogAnalyzer.Dfir.Tests` | 252 | 0 | 28 | 280 |
 | `LogAnalyzer.UI.Tests` | 120 | 0 | 0 | 120 |
 
-The 28 skipped Dfir tests are the ones that need the owner's real corpus (`D:\FORENSIC_CASE`), the on-demand lab (`LADFIR_LAB=1`), owner GPO samples, admin-only checks or a local Ollama model.
+The 28 skipped Dfir tests are the ones that need the owner's real corpus (`D:\LAB_CORPUS`), the on-demand lab (`LADFIR_LAB=1`), owner GPO samples, admin-only checks or a local Ollama model.
 
 ## Forensic validation state
 

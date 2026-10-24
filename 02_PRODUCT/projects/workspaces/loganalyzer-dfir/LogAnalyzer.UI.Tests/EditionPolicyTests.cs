@@ -91,7 +91,7 @@ namespace LogAnalyzer.UI.Tests
             var r = h.IsolateHostFromNetwork();
             Assert.False(r.Success);
             Assert.Equal(LogAnalyzer.Core.Interfaces.DefenseActionResult.Unavailable, r.Status);
-            Assert.Contains("ediția clasificată", r.Message);
+            Assert.Contains("ediția Standalone", r.Message);
             Assert.False(new UnavailableSyslogReceiver().IsSyslogListenerActive);
             Assert.Null(new NoLiveEventSourceFactory().Create());
         }

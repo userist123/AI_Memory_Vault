@@ -41,6 +41,33 @@ namespace LogAnalyzer.Core.Services
         public long? ReadBackMismatchOffset { get; set; }
         /// <summary>Why the read-back was not done or did not confirm the wipe.</summary>
         public string ReadBackNote { get; set; } = string.Empty;
+
+        /// <summary>The read-back found data that is not 0x00: the wipe FAILED (not merely unverified).</summary>
+        public bool ReadBackFoundData => !ReadBackVerified && ReadBackMismatchOffset is not null;
+
+        /// <summary>Operator text of the read-back, in the response contract: verified / FAILED (data found) / NOT VERIFIED (why).</summary>
+        public string ReadBackVerdict => ReadBackVerified ? "verificată prin citire"
+            : ReadBackMismatchOffset is { } off ? $"EȘUATĂ (citirea de verificare a găsit date nenule la offset {off})"
+            : $"NEVERIFICATĂ ({ReadBackNote})";
+
+        /// <summary>
+        /// The overwrite in the shared response contract: VERIFIED only when the read-back confirmed every byte; a read-back that found
+        /// data is FAILED; a method whose result cannot be read back (random last pass, partial erase) is NOT_VERIFIED.
+        /// </summary>
+        public LogAnalyzer.Dfir.Response.ResponseOutcome Verification
+        {
+            get
+            {
+                const string action = "media sanitization";
+                if (!Success)
+                    return LogAnalyzer.Dfir.Response.ResponseOutcome.NotAttempted(action, "apply", LogAnalyzer.Dfir.Response.ResponseStatus.Failed, ErrorMessage);
+                var check = new LogAnalyzer.Dfir.Response.ResponseCheck("fișierul țintă", "toți octeții 0x00 la re-citire",
+                    ReadBackVerified ? "toți octeții citiți sunt 0x00" : ReadBackMismatchOffset is { } off ? $"date nenule la offset {off}" : ReadBackNote,
+                    ReadBackVerified ? LogAnalyzer.Dfir.Response.ResponseStatus.Verified
+                        : ReadBackMismatchOffset is not null ? LogAnalyzer.Dfir.Response.ResponseStatus.Failed : LogAnalyzer.Dfir.Response.ResponseStatus.NotVerified);
+                return LogAnalyzer.Dfir.Response.ResponseVerifier.Aggregate(action, "apply", [check]);
+            }
+        }
     }
 
     public class MediaSanitizationEngine
@@ -50,6 +77,7 @@ namespace LogAnalyzer.Core.Services
         /// <summary>
         /// Execută sanitizarea deterministă a unui fișier / imagine disc conform metodei NIST / DoD selectate.
         /// </summary>
+        [LogAnalyzer.Dfir.Response.ControlledResponse("the file is read back after the last pass (every byte 0x00 for the zero method)")]
         public async Task<SanitizationResult> SanitizeMediaAsync(
             string targetPath,
             SanitizationMethod method,

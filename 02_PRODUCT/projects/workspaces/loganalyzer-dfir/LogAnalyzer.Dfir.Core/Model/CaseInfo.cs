@@ -58,6 +58,8 @@ public sealed class CaseScope
     public ClassificationLevel Classification { get; init; }
     /// <summary>Free note, e.g. that the values are provisional defaults which must be confirmed.</summary>
     public string Notes { get; init; } = "";
+    /// <summary>The concrete act that authorises the work (number, date, issuer), not only its category (legal research G1). Printed in reports; empty = not stated.</summary>
+    public string AuthorizingAct { get; init; } = "";
 
     /// <summary>True when the scope is complete and was entered by the operator (not the placeholder of a LIVE case, not a pre-WP3 case).</summary>
     public bool IsConfirmed => !Provisional && MissingFields().Count == 0;

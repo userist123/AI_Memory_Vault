@@ -2,6 +2,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using LogAnalyzer.Dfir.Language;
+using LogAnalyzer.Dfir.Windows.Audit;
 
 namespace LogAnalyzer.UI.Views
 {
@@ -11,21 +12,15 @@ namespace LogAnalyzer.UI.Views
         public GlossaryWindow(string? initialSearch = null)
         {
             InitializeComponent();
-            SearchBox.Text = initialSearch ?? "";
-            Refresh();
+            DataContext = new LogAnalyzer.UI.ViewModels.GlossarySearch(initialSearch);
             SearchBox.Focus();
         }
 
-        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => Refresh();
-
-        private void Refresh()
+        /// <summary>Reopens the three-screen guide: this window closes first (it is modal), then the guide opens beside the main window.</summary>
+        private void Guide_Click(object sender, RoutedEventArgs e)
         {
-            var q = SearchBox.Text.Trim();
-            Grid.ItemsSource = string.IsNullOrEmpty(q)
-                ? Glossary.Terms.OrderBy(t => t.Romanian).ToList()
-                : Glossary.Terms.Where(t => t.Romanian.Contains(q, System.StringComparison.OrdinalIgnoreCase) || t.Technical.Contains(q, System.StringComparison.OrdinalIgnoreCase)
-                                             || t.Explanation.Contains(q, System.StringComparison.OrdinalIgnoreCase) || t.English.Contains(q, System.StringComparison.OrdinalIgnoreCase))
-                                .OrderBy(t => t.Romanian).ToList();
+            Close();
+            LogAnalyzer.UI.ViewModels.FirstRunGuideLauncher.Show();
         }
     }
 }

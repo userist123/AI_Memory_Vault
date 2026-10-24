@@ -1,0 +1,954 @@
+{
+  "verifiedAt": "30.09.2026",
+  "groups": {
+    "canapea": {
+      "eticheta": "Canapea",
+      "model": "sofa",
+      "v": [
+        {
+          "nume": "KIVIK canapea 3 locuri, Tibbleby bej/gri",
+          "mag": "IKEA",
+          "pret": 2299,
+          "w": 228,
+          "d": 95,
+          "h": 83,
+          "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-tibbleby-bej-gri-s49440597/",
+          "s": {
+            "mat": "fabric",
+            "col": "#aea395"
+          }
+        },
+        {
+          "nume": "KIVIK canapea 3 locuri, Tresund bej deschis",
+          "mag": "IKEA",
+          "pret": 2049,
+          "w": 228,
+          "d": 95,
+          "h": 83,
+          "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-tresund-bej-deschis-s89482830/",
+          "s": {
+            "mat": "fabric",
+            "col": "#d8ccb8"
+          }
+        },
+        {
+          "nume": "KIVIK canapea 3 locuri, Kelinge gri-turcoaz",
+          "mag": "IKEA",
+          "pret": 2599,
+          "w": 228,
+          "d": 95,
+          "h": 83,
+          "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-kelinge-gri-turcoaz-s39443049/",
+          "s": {
+            "mat": "velvet",
+            "col": "#3c6a6b"
+          }
+        },
+        {
+          "nume": "KIVIK canapea 3 locuri, piele Grann/Bomstad negru",
+          "mag": "IKEA",
+          "pret": 3500,
+          "w": 228,
+          "d": 95,
+          "h": 83,
+          "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-grann-bomstad-negru-00519525/",
+          "s": {
+            "mat": "leather",
+            "col": "#1c1c1e"
+          }
+        },
+        {
+          "nume": "KIVIK canapea 3 locuri cu șezlong, Tresund antracit",
+          "mag": "IKEA",
+          "pret": 3349,
+          "w": 280,
+          "d": 163,
+          "h": 83,
+          "aprox": true,
+          "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-cu-sezlong-tresund-antracit-s99482839/",
+          "s": {
+            "mat": "fabric",
+            "col": "#4a4c50",
+            "chaise": true
+          }
+        }
+      ]
+    },
+    "comodaTv": {
+      "eticheta": "Comodă TV",
+      "model": "tv",
+      "v": [
+        {
+          "nume": "BESTÅ comodă TV cu uși, alb/Lappviken, 180x42x38",
+          "mag": "IKEA",
+          "pret": 775,
+          "w": 180,
+          "d": 42,
+          "h": 38,
+          "url": "https://www.ikea.com/ro/ro/p/besta-comoda-tv-cu-usi-alb-lappviken-alb-s89330691/",
+          "s": {
+            "col": "#f3f3f0",
+            "fronts": 3
+          }
+        },
+        {
+          "nume": "BESTÅ comodă TV + uși, alb/Lappviken, 240x42x38",
+          "mag": "IKEA",
+          "pret": 1110,
+          "w": 240,
+          "d": 42,
+          "h": 38,
+          "url": "https://www.ikea.com/ro/ro/cat/comode-tv-besta-12153/",
+          "s": {
+            "col": "#f3f3f0",
+            "fronts": 4
+          }
+        },
+        {
+          "nume": "BESTÅ comodă TV cu uși, aspect stejar antichizat, 120x42x74",
+          "mag": "IKEA",
+          "pret": 750,
+          "w": 120,
+          "d": 42,
+          "h": 74,
+          "url": "https://www.ikea.com/ro/ro/cat/comode-tv-besta-12153/",
+          "s": {
+            "col": "#b89a74",
+            "wood": true,
+            "fronts": 2,
+            "tall": true
+          }
+        },
+        {
+          "nume": "BESTÅ comodă TV, alb, 120x40x48 (deschisă)",
+          "mag": "IKEA",
+          "pret": 440,
+          "w": 120,
+          "d": 40,
+          "h": 48,
+          "url": "https://www.ikea.com/ro/ro/cat/comode-tv-besta-12153/",
+          "s": {
+            "col": "#f3f3f0",
+            "open": true
+          }
+        }
+      ]
+    },
+    "masuta": {
+      "eticheta": "Măsuță de cafea",
+      "model": "coffee",
+      "v": [
+        {
+          "nume": "LACK măsuță cafea, alb, 118x78 cm",
+          "mag": "IKEA",
+          "pret": 179,
+          "w": 118,
+          "d": 78,
+          "h": 45,
+          "url": "https://www.ikea.com/ro/ro/p/lack-masuta-cafea-alb-80449901/",
+          "s": {
+            "type": "lack",
+            "col": "#f2f2ef"
+          }
+        },
+        {
+          "nume": "VITTSJÖ măsuță cafea, negru-maro/sticlă, Ø75 cm",
+          "mag": "IKEA",
+          "pret": 199.9,
+          "w": 75,
+          "d": 75,
+          "h": 45,
+          "url": "https://www.ikea.com/ro/ro/p/vittsjoe-masuta-cafea-negru-maro-sticla-80213309/",
+          "s": {
+            "type": "vittsjo",
+            "col": "#2a2522"
+          }
+        },
+        {
+          "nume": "HEMNES măsuță cafea, negru-maro, 90x90 cm",
+          "mag": "IKEA",
+          "pret": 699,
+          "w": 90,
+          "d": 90,
+          "h": 46,
+          "url": "https://www.ikea.com/ro/ro/p/hemnes-masuta-cafea-negru-maro-10176292/",
+          "s": {
+            "type": "hemnes",
+            "col": "#3b2c24"
+          }
+        },
+        {
+          "nume": "LISTERBY măsuță cafea, furnir stejar, 140x60 cm",
+          "mag": "IKEA",
+          "pret": 999,
+          "w": 140,
+          "d": 60,
+          "h": 37,
+          "url": "https://www.ikea.com/ro/ro/p/listerby-masuta-cafea-frnr-stjr-30513904/",
+          "s": {
+            "type": "listerby",
+            "col": "#c9a57a"
+          }
+        }
+      ]
+    },
+    "biblioteca": {
+      "eticheta": "Bibliotecă",
+      "model": "shelf",
+      "v": [
+        {
+          "nume": "BILLY bibliotecă, alb, 40x28x202 cm",
+          "mag": "IKEA",
+          "pret": 199,
+          "w": 40,
+          "d": 28,
+          "h": 202,
+          "url": "https://www.ikea.com/ro/ro/cat/familia-billy-28102/",
+          "s": {
+            "type": "billy",
+            "col": "#f3f3f0"
+          }
+        },
+        {
+          "nume": "BILLY bibliotecă, alb, 80x28x202 cm",
+          "mag": "IKEA",
+          "pret": 279,
+          "w": 80,
+          "d": 28,
+          "h": 202,
+          "url": "https://www.ikea.com/ro/ro/p/billy-biblioteca-alb-00263850/",
+          "s": {
+            "type": "billy",
+            "col": "#f3f3f0"
+          }
+        },
+        {
+          "nume": "BILLY bibliotecă, aspect stejar, 80x28x202 cm",
+          "mag": "IKEA",
+          "pret": 349,
+          "w": 80,
+          "d": 28,
+          "h": 202,
+          "url": "https://www.ikea.com/ro/ro/p/billy-biblioteca-aspect-stejar-10508932/",
+          "s": {
+            "type": "billy",
+            "col": "#c4a27a",
+            "wood": true
+          }
+        },
+        {
+          "nume": "KALLAX etajeră, alb, 77x39x147 cm",
+          "mag": "IKEA",
+          "pret": 259,
+          "w": 77,
+          "d": 39,
+          "h": 147,
+          "url": "https://www.ikea.com/ro/ro/p/kallax-etajera-alb-80275887/",
+          "s": {
+            "type": "kallax",
+            "col": "#f3f3f0"
+          }
+        },
+        {
+          "nume": "KALLAX etajeră cu uși, alb, 77x39x147 cm",
+          "mag": "IKEA",
+          "pret": 399,
+          "w": 77,
+          "d": 39,
+          "h": 147,
+          "url": "https://www.ikea.com/ro/ro/p/kallax-etajera-cu-usi-alb-s99017186/",
+          "s": {
+            "type": "kallax",
+            "col": "#f3f3f0",
+            "doors": true
+          }
+        }
+      ]
+    },
+    "masa": {
+      "eticheta": "Masă cu scaune",
+      "model": "dining",
+      "v": [
+        {
+          "nume": "EKEDALEN masă extensibilă + 4 scaune, maro-închis/Orrsta gri, 120/180",
+          "mag": "IKEA",
+          "pret": 1775,
+          "w": 120,
+          "d": 80,
+          "h": 75,
+          "chairs": 4,
+          "url": "https://www.ikea.com/ro/ro/p/ekedalen-ekedalen-masa-4-scaune-maro-i-orrsta-gri-s69221278/",
+          "s": {
+            "top": "#3f2d22",
+            "chair": "orrsta"
+          }
+        },
+        {
+          "nume": "EKEDALEN/ÄLVSTA masă + 4 scaune ratan, maro-închis, 120/180",
+          "mag": "IKEA",
+          "pret": 2174.6,
+          "w": 120,
+          "d": 80,
+          "h": 75,
+          "chairs": 4,
+          "url": "https://www.ikea.com/ro/ro/p/ekedalen-aelvsta-masa-4-scaune-maro-i-ratan-negru-s49570819/",
+          "s": {
+            "top": "#3f2d22",
+            "chair": "rattan"
+          }
+        },
+        {
+          "nume": "LANEBERG/EKEDALEN masă + 4 scaune, alb, 130/190x80",
+          "mag": "IKEA",
+          "pret": 1775,
+          "w": 130,
+          "d": 80,
+          "h": 75,
+          "chairs": 4,
+          "url": "https://www.ikea.com/ro/ro/p/laneberg-ekedalen-masa-4-scaune-alb-alb-gri-s89304791/",
+          "s": {
+            "top": "#efefec",
+            "chair": "orrstaWhite"
+          }
+        },
+        {
+          "nume": "EKEDALEN/INGOLF masă + 4 scaune, alb, 80/120",
+          "mag": "IKEA",
+          "pret": 1655,
+          "w": 80,
+          "d": 70,
+          "h": 75,
+          "chairs": 4,
+          "url": "https://www.ikea.com/ro/ro/p/ekedalen-ingolf-masa-4-scaune-alb-alb-s69482968/",
+          "s": {
+            "top": "#efefec",
+            "chair": "ingolf"
+          }
+        },
+        {
+          "nume": "EKEDALEN masă extensibilă + 2 scaune, maro-închis, 80/120",
+          "mag": "IKEA",
+          "pret": 1137,
+          "w": 80,
+          "d": 70,
+          "h": 75,
+          "chairs": 2,
+          "url": "https://www.ikea.com/ro/ro/p/ekedalen-ekedalen-masa-2-scaune-maro-i-orrsta-gri-s29296874/",
+          "s": {
+            "top": "#3f2d22",
+            "chair": "orrsta"
+          }
+        }
+      ]
+    },
+    "pat": {
+      "eticheta": "Pat",
+      "model": "bed",
+      "v": [
+        {
+          "nume": "MALM cadru pat + saltea Valevåg, alb, 160x200",
+          "mag": "IKEA",
+          "pret": 2298,
+          "w": 176,
+          "d": 209,
+          "h": 100,
+          "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-saltea-alb-valevag-ferma-s99536842/",
+          "s": {
+            "col": "#f1f1ee"
+          }
+        },
+        {
+          "nume": "MALM cadru pat + saltea Valevåg, negru-maro, 160x200",
+          "mag": "IKEA",
+          "pret": 2348,
+          "w": 176,
+          "d": 209,
+          "h": 100,
+          "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-saltea-negru-maro-valevag-ferma-s79536838/",
+          "s": {
+            "col": "#2d2521",
+            "wood": true
+          }
+        },
+        {
+          "nume": "MALM cadru pat înalt + 4 cutii, alb, 160x200 (fără saltea)",
+          "mag": "IKEA",
+          "pret": 1499,
+          "w": 176,
+          "d": 209,
+          "h": 100,
+          "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-4-cutii-depozitare-alb-s99931611/",
+          "s": {
+            "col": "#f1f1ee",
+            "boxes": 4
+          }
+        },
+        {
+          "nume": "MALM cadru pat înalt, furnir stejar alb, 160x200 (fără saltea)",
+          "mag": "IKEA",
+          "pret": 1139,
+          "w": 176,
+          "d": 209,
+          "h": 100,
+          "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-furnir-stejar-alb-luroey-s59027390/",
+          "s": {
+            "col": "#d9c3a2",
+            "wood": true
+          }
+        }
+      ]
+    },
+    "noptiera": {
+      "eticheta": "Noptieră",
+      "model": "night",
+      "v": [
+        {
+          "nume": "BRIMNES noptieră, alb, 39x41x53 cm",
+          "mag": "IKEA",
+          "pret": 159,
+          "w": 39,
+          "d": 41,
+          "h": 53,
+          "url": "https://www.ikea.com/ro/ro/p/brimnes-noptiera-alb-10234942/",
+          "s": {
+            "type": "brimnes",
+            "col": "#f3f3f0"
+          }
+        },
+        {
+          "nume": "SONGESAND noptieră, alb, 42x40 cm",
+          "mag": "IKEA",
+          "pret": 199.9,
+          "w": 42,
+          "d": 40,
+          "h": 55,
+          "aprox": true,
+          "url": "https://www.ikea.com/ro/ro/cat/noptiere-20656/",
+          "s": {
+            "type": "songesand",
+            "col": "#f3f3f0"
+          }
+        },
+        {
+          "nume": "HEMNES noptieră, gri-verde/maro deschis, 46x35 cm",
+          "mag": "IKEA",
+          "pret": 299,
+          "w": 46,
+          "d": 35,
+          "h": 70,
+          "aprox": true,
+          "url": "https://www.ikea.com/ro/ro/cat/noptiere-20656/",
+          "s": {
+            "type": "hemnes",
+            "col": "#7d8b7c"
+          }
+        }
+      ]
+    },
+    "dulap": {
+      "eticheta": "Dulap",
+      "model": "wardrobe",
+      "v": [
+        {
+          "nume": "BRIMNES dulap 3 uși cu oglindă, alb, 117x50x190",
+          "mag": "IKEA",
+          "pret": 699,
+          "w": 117,
+          "d": 50,
+          "h": 190,
+          "url": "https://www.ikea.com/ro/ro/p/brimnes-dulap-cu-3-usi-alb-40407922/",
+          "s": {
+            "type": "brimnes",
+            "col": "#f3f3f0"
+          }
+        },
+        {
+          "nume": "BRIMNES dulap 3 uși cu oglindă, negru, 117x50x190",
+          "mag": "IKEA",
+          "pret": 799,
+          "w": 117,
+          "d": 50,
+          "h": 190,
+          "url": "https://www.ikea.com/ro/ro/p/brimnes-dulap-cu-3-usi-negru-60407577/",
+          "s": {
+            "type": "brimnes",
+            "col": "#1e1e20"
+          }
+        },
+        {
+          "nume": "KLEPPSTAD dulap cu uși glisante, alb, 117x55x176",
+          "mag": "IKEA",
+          "pret": 649,
+          "w": 117,
+          "d": 55,
+          "h": 176,
+          "url": "https://www.ikea.com/ro/ro/cat/dulapuri-de-haine-19053/",
+          "s": {
+            "type": "kleppstad",
+            "col": "#f3f3f0"
+          }
+        }
+      ]
+    },
+    "birou": {
+      "eticheta": "Birou",
+      "model": "desk",
+      "v": [
+        {
+          "nume": "MICKE birou, alb, 105x50 cm",
+          "mag": "IKEA",
+          "pret": 399,
+          "w": 105,
+          "d": 50,
+          "h": 75,
+          "url": "https://www.ikea.com/ro/ro/p/micke-birou-alb-80213074/",
+          "s": {
+            "type": "micke"
+          }
+        },
+        {
+          "nume": "MICKE birou, alb, 142x50 cm",
+          "mag": "IKEA",
+          "pret": 449,
+          "w": 142,
+          "d": 50,
+          "h": 75,
+          "url": "https://www.ikea.com/ro/ro/cat/birouri-birouri-pentru-computer-20649/",
+          "s": {
+            "type": "micke"
+          }
+        },
+        {
+          "nume": "MICKE birou, alb, 73x50 cm",
+          "mag": "IKEA",
+          "pret": 249,
+          "w": 73,
+          "d": 50,
+          "h": 75,
+          "url": "https://www.ikea.com/ro/ro/p/micke-birou-alb-30213076/",
+          "s": {
+            "type": "micke"
+          }
+        },
+        {
+          "nume": "TORALD birou, alb, 65x40 cm",
+          "mag": "IKEA",
+          "pret": 99.9,
+          "w": 65,
+          "d": 40,
+          "h": 75,
+          "aprox": true,
+          "url": "https://www.ikea.com/ro/ro/cat/birouri-birouri-pentru-computer-20649/",
+          "s": {
+            "type": "torald"
+          }
+        }
+      ]
+    },
+    "scaunBirou": {
+      "eticheta": "Scaun de birou",
+      "model": "ochair",
+      "v": [
+        {
+          "nume": "MARKUS scaun rotativ, Vissle gri închis, mic (S)",
+          "mag": "IKEA",
+          "pret": 599,
+          "w": 62,
+          "d": 60,
+          "h": 129,
+          "url": "https://www.ikea.com/ro/ro/p/markus-scaun-rotativ-vissle-gri-inchis-30588800/",
+          "s": {}
+        },
+        {
+          "nume": "MARKUS scaun rotativ, Vissle gri închis, mediu (M)",
+          "mag": "IKEA",
+          "pret": 699,
+          "w": 62,
+          "d": 60,
+          "h": 136,
+          "aprox": true,
+          "url": "https://www.ikea.com/ro/ro/cat/scaune-de-birou-20652/",
+          "s": {}
+        },
+        {
+          "nume": "MARKUS scaun rotativ, Vissle gri închis, mare (L)",
+          "mag": "IKEA",
+          "pret": 899,
+          "w": 62,
+          "d": 60,
+          "h": 140,
+          "aprox": true,
+          "url": "https://www.ikea.com/ro/ro/cat/scaune-de-birou-20652/",
+          "s": {}
+        }
+      ]
+    },
+    "bucatarie": {
+      "eticheta": "Bucătărie",
+      "model": "kitchen",
+      "v": [
+        {
+          "nume": "ENHET bucătărie, antracit/alb, 243x63.5x241 (fără electrocasnice)",
+          "mag": "IKEA",
+          "pret": 3119.7,
+          "w": 243,
+          "d": 64,
+          "h": 241,
+          "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-alb-s19338049/",
+          "s": {
+            "frame": "#34363a"
+          }
+        },
+        {
+          "nume": "ENHET bucătărie, antracit/gri cadru, 203x63.5x222",
+          "mag": "IKEA",
+          "pret": 3543.5,
+          "w": 203,
+          "d": 64,
+          "h": 222,
+          "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-gri-cadru-s19337399/",
+          "s": {
+            "frame": "#34363a",
+            "fronts": "#8d8f8e"
+          }
+        },
+        {
+          "nume": "ENHET bucătărie, antracit/alb, 163x63.5x222",
+          "mag": "IKEA",
+          "pret": 1971.8,
+          "w": 163,
+          "d": 64,
+          "h": 222,
+          "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-alb-s99337282/",
+          "s": {
+            "frame": "#34363a"
+          }
+        }
+      ]
+    },
+    "frigider": {
+      "eticheta": "Frigider",
+      "model": "fridge",
+      "v": [
+        {
+          "nume": "LAGAN frigider/congelator, alb, 197/65 l",
+          "mag": "IKEA",
+          "pret": 1999,
+          "w": 55,
+          "d": 60,
+          "h": 180,
+          "aprox": true,
+          "url": "https://www.ikea.com/ro/ro/p/lagan-frigider-congelator-independent-alb-00571293/",
+          "s": {
+            "col": "#f6f6f4"
+          }
+        },
+        {
+          "nume": "LAGAN frigider/congelator, alb, 115/59 l",
+          "mag": "IKEA",
+          "pret": 1899,
+          "w": 47,
+          "d": 52,
+          "h": 150,
+          "url": "https://www.ikea.com/ro/ro/p/lagan-frigider-congelator-independent-alb-50619457/",
+          "s": {
+            "col": "#f6f6f4"
+          }
+        },
+        {
+          "nume": "ALINGSÅS frigider/congelator, inox, 210/106 l",
+          "mag": "IKEA",
+          "pret": 3499,
+          "w": 60,
+          "d": 66,
+          "h": 186,
+          "aprox": true,
+          "url": "https://www.ikea.com/ro/ro/cat/independente-20824/",
+          "s": {
+            "col": "#c8cbce",
+            "inox": true
+          }
+        }
+      ]
+    },
+    "plita": {
+      "eticheta": "Plită",
+      "inclus": "bucatarie",
+      "v": [
+        {
+          "nume": "VILSTA plită cu inducție, 59 cm",
+          "mag": "IKEA",
+          "pret": 1199,
+          "url": "https://www.ikea.com/ro/ro/cat/electrocasnice-ka002/"
+        },
+        {
+          "nume": "MATMÄSSIG plită cu inducție, 59 cm",
+          "mag": "IKEA",
+          "pret": 1699,
+          "url": "https://www.ikea.com/ro/ro/p/lagan-frigider-congelator-independent-alb-70490118/"
+        },
+        {
+          "nume": "LAGAN plită cu inducție plug-in, 2 zone",
+          "mag": "IKEA",
+          "pret": 799,
+          "url": "https://www.ikea.com/ro/ro/cat/familia-lagan-53227/"
+        }
+      ]
+    },
+    "cuptor": {
+      "eticheta": "Cuptor",
+      "inclus": "bucatarie",
+      "v": [
+        {
+          "nume": "LAGAN cuptor, alb",
+          "mag": "IKEA",
+          "pret": 999,
+          "url": "https://www.ikea.com/ro/ro/cat/familia-lagan-53227/"
+        },
+        {
+          "nume": "MATÄLSKARE cuptor cu convecție",
+          "mag": "IKEA",
+          "pret": 1999,
+          "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-alb-s19338049/"
+        }
+      ]
+    },
+    "hota": {
+      "eticheta": "Hotă",
+      "inclus": "bucatarie",
+      "v": [
+        {
+          "nume": "LAGAN hotă perete, 60 cm",
+          "mag": "IKEA",
+          "pret": 299,
+          "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-colt-alb-s39337992/"
+        },
+        {
+          "nume": "VIGGBO hotă perete, negru, 52 cm",
+          "mag": "IKEA",
+          "pret": 399,
+          "url": "https://www.ikea.com/ro/ro/p/lagan-frigider-congelator-independent-alb-70490118/"
+        }
+      ]
+    },
+    "dus": {
+      "eticheta": "Cabină de duș",
+      "model": "shower",
+      "v": [
+        {
+          "nume": "Cabină duș pătrată Seldus EUR4, sticlă transparentă, profil cromat, 90x90x190",
+          "mag": "Dedeman",
+          "pret": 845,
+          "w": 90,
+          "d": 90,
+          "h": 190,
+          "url": "https://www.dedeman.ro/ro/obiecte-sanitare-baie-si-accesorii/c/14",
+          "s": {
+            "prof": "#c9ccd0"
+          }
+        },
+        {
+          "nume": "Cabină duș pătrată West CB84-90WST09, profil cromat, 90x90x190",
+          "mag": "Dedeman",
+          "pret": 1784,
+          "w": 90,
+          "d": 90,
+          "h": 190,
+          "url": "https://www.dedeman.ro/ro/cabina-dus-patrata-west-cb84-90wst09-profil-cromat-90-x-90-x-190-cm/p/3035756",
+          "s": {
+            "prof": "#c9ccd0",
+            "thick": true
+          }
+        },
+        {
+          "nume": "Cabină duș semirotundă + cădiță Kadda Rena, profil alb, 90x90x192.5",
+          "mag": "Dedeman",
+          "pret": 794.99,
+          "w": 90,
+          "d": 90,
+          "h": 193,
+          "url": "https://www.dedeman.ro/ro/cabina-dus-semirotunda-cadita-kadda-rena-90-x-90-x-192-5-cm-sticla-securizata-cu-model-profil-alb/p/3024530",
+          "s": {
+            "prof": "#f2f2f2",
+            "round": true,
+            "frost": true
+          }
+        },
+        {
+          "nume": "Cabină duș pătrată West CB90WST03, profil negru, 90x90x200",
+          "mag": "Dedeman",
+          "pret": 3120,
+          "w": 90,
+          "d": 90,
+          "h": 200,
+          "url": "https://www.dedeman.ro/ro/cabina-dus-patrata-west-cb90wst03-profil-cromat-90-x-90-x-200-cm/p/3028598",
+          "s": {
+            "prof": "#1c1c1c",
+            "thick": true
+          }
+        }
+      ]
+    },
+    "lavoar": {
+      "eticheta": "Lavoar cu mobilier",
+      "model": "vanity",
+      "v": [
+        {
+          "nume": "Mască baie + lavoar Goodmob Nemo/Neon 60, alb, suspendat",
+          "mag": "Dedeman",
+          "pret": 579,
+          "w": 60,
+          "d": 34,
+          "h": 68,
+          "url": "https://www.dedeman.ro/ro/mobilier-baie/c/65",
+          "s": {
+            "col": "#f5f5f3",
+            "hang": true
+          }
+        },
+        {
+          "nume": "Mască baie + lavoar Larisa, cu uși, alb, 60x33.6x72",
+          "mag": "Dedeman",
+          "pret": 585.65,
+          "w": 60,
+          "d": 34,
+          "h": 72,
+          "url": "https://www.dedeman.ro/ro/chiuvete-baie-cu-masca/c/1390",
+          "s": {
+            "col": "#f5f5f3"
+          }
+        },
+        {
+          "nume": "Mască baie + lavoar Goodmob Crea/Neon, negru, suspendat, 60 cm",
+          "mag": "Dedeman",
+          "pret": 697.99,
+          "w": 60,
+          "d": 34,
+          "h": 68,
+          "url": "https://www.dedeman.ro/ro/mobilier-baie/c/65",
+          "s": {
+            "col": "#1f1f21",
+            "hang": true
+          }
+        },
+        {
+          "nume": "Savini Due Creta 60 cu oglindă și lampă, stejar gri/alb lucios",
+          "mag": "Dedeman",
+          "pret": 990,
+          "w": 60,
+          "d": 46,
+          "h": 86,
+          "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-oglinda-lampa-savini-due-creta-60-cu-sertare-stejar-gri-alb-lucios/p/3050421",
+          "s": {
+            "col": "#8c877f",
+            "wood": true,
+            "legs": true
+          }
+        }
+      ]
+    },
+    "wc": {
+      "eticheta": "Vas WC",
+      "model": "wc",
+      "v": [
+        {
+          "nume": "Set rezervor încastrat + vas WC Grohe Solido 4 în 1, Rimless",
+          "mag": "Dedeman",
+          "pret": 1389,
+          "w": 36,
+          "d": 54,
+          "h": 40,
+          "url": "https://www.dedeman.ro/ro/seturi-rezervoare-incastrate-cu-vase-wc/c/3934",
+          "s": {
+            "square": false
+          }
+        },
+        {
+          "nume": "Vas WC suspendat Roca Debba Square Rimless (rezervorul se cumpără separat)",
+          "mag": "Dedeman",
+          "pret": 577.84,
+          "w": 36,
+          "d": 54,
+          "h": 40,
+          "url": "https://dedeman.ro/ro/vas-wc-suspendat-roca-debba-square-rimless-a34699l000-cu-evacuare-orizontala-35-5-x-54-x-40-cm/p/3033605",
+          "s": {
+            "square": true
+          }
+        }
+      ]
+    },
+    "pantofar": {
+      "eticheta": "Pantofar",
+      "model": "shoe",
+      "v": [
+        {
+          "nume": "HEMNES dulap pantofi 4 compartimente, alb, 107x22x101",
+          "mag": "IKEA",
+          "pret": 599,
+          "w": 107,
+          "d": 22,
+          "h": 101,
+          "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-pantofi-cu-4-compartimente-alb-60156121/",
+          "s": {
+            "col": "#f3f3f0"
+          }
+        },
+        {
+          "nume": "HEMNES dulap pantofi 4 compartimente, negru-maro, 107x22x101",
+          "mag": "IKEA",
+          "pret": 699,
+          "w": 107,
+          "d": 22,
+          "h": 101,
+          "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-pantofi-cu-4-compartimente-negru-maro-80156120/",
+          "s": {
+            "col": "#2f2621",
+            "wood": true
+          }
+        },
+        {
+          "nume": "HEMNES dulap pantofi 2 compartimente, negru-maro, 89x30x127",
+          "mag": "IKEA",
+          "pret": 699,
+          "w": 89,
+          "d": 30,
+          "h": 127,
+          "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-pantofi-cu-2-compartimente-negru-maro-40216908/",
+          "s": {
+            "col": "#2f2621",
+            "wood": true,
+            "two": true
+          }
+        }
+      ]
+    },
+    "oglinda": {
+      "eticheta": "Corp cu oglindă",
+      "model": "mirror",
+      "v": [
+        {
+          "nume": "HEMNES corp înalt + ușă cu oglindă, alb, 49x31x200",
+          "mag": "IKEA",
+          "pret": 1199,
+          "w": 49,
+          "d": 31,
+          "h": 200,
+          "url": "https://www.ikea.com/ro/ro/p/hemnes-corp-inalt-usa-cu-oglinda-alb-70217685/",
+          "s": {}
+        },
+        {
+          "nume": "HEMNES dulap cu oglindă (suspendat), alb, 103x16x98",
+          "mag": "IKEA",
+          "pret": 999,
+          "w": 103,
+          "d": 16,
+          "h": 98,
+          "url": "https://www.ikea.com/ro/ro/cat/hemnes-oglinzi-si-dulapuri-cu-oglinzi-700478/",
+          "s": {
+            "wall": true
+          }
+        }
+      ]
+    }
+  }
+}

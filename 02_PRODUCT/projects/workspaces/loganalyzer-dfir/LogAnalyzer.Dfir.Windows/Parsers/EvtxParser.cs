@@ -27,7 +27,7 @@ public sealed class EvtxParser : EvidenceParserBase
             "Nu recuperează înregistrări din spațiul nealocat (carving).",
         ],
         Status = ParserMaturity.Validated,
-        Validation = "CorpusRegressionTests (defenderEvtx, msiEvtx), InvestigationTests pe corpusul NanAgent, EvtxRepairTests",
+        Validation = "CorpusRegressionTests (defenderEvtx, msiEvtx), InvestigationTests pe corpusul VendorAgent, EvtxRepairTests",
     };
 
     private static readonly HashSet<string> MessageProviders = new(StringComparer.OrdinalIgnoreCase)
@@ -43,17 +43,43 @@ public sealed class EvtxParser : EvidenceParserBase
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
+        string? work = null;
+        try { ParseCore(item, fullPath, sink, result, ct, ref work); }
+        finally { LogAnalyzer.Dfir.IO.WorkFolders.TryDelete(work); }
+    }
+
+    /// <summary>
+    /// Where the repaired copy of a damaged log goes (security audit #14): for case evidence, &lt;case&gt;\Derived\evtx_repair (kept, listed in
+    /// <see cref="ParseResult.DerivedOutputs"/> so the pipeline hashes it into custody); otherwise a per-user working folder deleted after parsing. Never %TEMP%.
+    /// </summary>
+    private static (string Path, string Shown) RepairTarget(EvidenceItem item, string fullPath, ParseResult result, ref string? work)
+    {
+        var name = $"{string.Concat(item.EvidenceId.Select(ch => Path.GetInvalidFileNameChars().Contains(ch) ? '_' : ch))}_{Path.GetFileName(fullPath)}";
+        if (LogAnalyzer.Dfir.IO.WorkFolders.CaseRootOf(fullPath) is { } root)
+        {
+            var target = Path.Combine(root, LogAnalyzer.Dfir.IO.WorkFolders.CaseDerivedFolder, "evtx_repair", name);
+            if (File.Exists(target)) File.SetAttributes(target, FileAttributes.Normal);    // a previous run: the repair is deterministic, same content
+            var rel = Path.GetRelativePath(root, target).Replace('\\', '/');
+            result.DerivedOutputs.Add(rel);
+            return (target, $"copia reparată {rel} (probă derivată, în dosarul cazului, cu SHA-256 în lanțul de custodie)");
+        }
+        work = LogAnalyzer.Dfir.IO.WorkFolders.NewWorkDirectory(fullPath, "evtx_repair");
+        return (Path.Combine(work, name), "o copie de lucru reparată (ștearsă după citire)");
+    }
+
+    private void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct, ref string? work)
+    {
         // The Windows API refuses the whole file when one chunk is corrupt: check first, and parse a repaired copy if needed.
         var damaged = LogAnalyzer.Dfir.IO.EvtxRepair.Inspect(fullPath).Where(c => !c.Valid && !c.Problem.StartsWith("chunk gol", StringComparison.Ordinal)).ToList();
         if (damaged.Count > 0)
         {
-            var repaired = Path.Combine(Path.GetTempPath(), "LogAnalyzer", "evtx_repair", $"{item.EvidenceId}_{Path.GetFileName(fullPath)}");
+            var (repaired, shown) = RepairTarget(item, fullPath, result, ref work);
             var r = LogAnalyzer.Dfir.IO.EvtxRepair.Repair(fullPath, repaired);
             result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial,
                 $"{damaged.Count} {LogAnalyzer.Dfir.Analysis.AntiForensics.CorruptChunksMarker}: " + string.Join("; ", damaged.Take(20).Select(c => $"#{c.Index} ({c.Problem}, RecordID {c.FirstRecordId}–{c.LastRecordId})")),
                 "Înregistrările din aceste intervale lipsesc din cronologie (corupere sau alterare a jurnalului)",
                 "Copii VSS ale jurnalului, SIEM, alte surse (SRUM, Prefetch)", "Doar din alte copii",
-                $"Fișierul original nu a fost modificat; s-a parsat copia reparată {repaired} ({r.KeptChunks}/{r.TotalChunks} chunk-uri)."));
+                $"Fișierul original nu a fost modificat; s-a parsat {shown} ({r.KeptChunks}/{r.TotalChunks} chunk-uri)."));
             result.MalformedRecords += damaged.Count;
             fullPath = repaired;
         }
@@ -180,7 +206,7 @@ public sealed class EvtxParser : EvidenceParserBase
 
     internal static void ExtractFields(string xml, Dictionary<string, string> fields)
     {
-        var doc = XDocument.Parse(xml);
+        var doc = LogAnalyzer.Dfir.IO.SafeXml.Parse(xml);
         XNamespace ns = doc.Root?.Name.Namespace ?? XNamespace.None;
         var data = doc.Root?.Element(ns + "EventData");
         if (data is not null)
@@ -193,6 +219,8 @@ public sealed class EvtxParser : EvidenceParserBase
                 i++;
             }
         }
+        // System/Level (1 critical ... 3 warning ...) is kept under a hidden key: Windows marks suspicious PowerShell script blocks as Warning.
+        if (doc.Root?.Element(ns + "System")?.Element(ns + "Level")?.Value is { Length: > 0 } level) fields.TryAdd("_xLevel", level);
         var user = doc.Root?.Element(ns + "UserData");
         if (user is not null)
             foreach (var leaf in user.Descendants().Where(e => !e.HasElements))

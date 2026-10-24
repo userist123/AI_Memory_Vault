@@ -228,3 +228,29 @@ def test_tokenizer_behaviors():
     toks_strip = tokenize_stripped(text_ro)
     assert "stiintific" in toks_strip
     assert "regasire" in toks_strip
+
+
+# --- Validity guard (2026-10-22): the committed run was a NULL MEASUREMENT ---
+VALIDITY_NOTICE_PATH = ARTIFACT_JSON_PATH.parent / "VALIDITY_NOTICE.md"
+
+
+def test_validity_notice_exists_and_declares_invalid():
+    assert VALIDITY_NOTICE_PATH.is_file(), "VALIDITY_NOTICE.md must accompany the EXP-TOKEN-001 artefacts"
+    text = VALIDITY_NOTICE_PATH.read_text(encoding="utf-8")
+    assert "NULL MEASUREMENT" in text
+    assert "INVALID" in text
+
+
+def test_identical_arms_require_validity_notice(tokenizer_data):
+    """If every arm reports identical totals and no discordant pairs, the run did not
+    discriminate between arms; the invalidation notice must then exist (cannot be removed silently)."""
+    arms = list(tokenizer_data["arms"].values())
+    keys = [k for k, v in arms[0].items() if isinstance(v, (int, float))]
+    identical = all(all(a[k] == arms[0][k] for k in keys) for a in arms)
+    no_discordance = all(
+        not c.get("discordant_cases") and c["all"]["gains_b"] == 0 and c["all"]["losses_c"] == 0
+        for c in tokenizer_data["comparisons"].values()
+    )
+    if identical and no_discordance:
+        assert VALIDITY_NOTICE_PATH.is_file()
+        assert "NULL MEASUREMENT" in VALIDITY_NOTICE_PATH.read_text(encoding="utf-8")

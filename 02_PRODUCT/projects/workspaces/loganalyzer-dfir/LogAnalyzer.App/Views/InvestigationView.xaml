@@ -3,7 +3,8 @@
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
              xmlns:local="clr-namespace:LogAnalyzer.UI.Views"
              xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
-             xmlns:views="clr-namespace:LogAnalyzer.UI.Views">
+             xmlns:views="clr-namespace:LogAnalyzer.UI.Views"
+             xmlns:services="clr-namespace:LogAnalyzer.UI.Services">
     <UserControl.Resources>
         <BooleanToVisibilityConverter x:Key="BoolToVis"/>
     </UserControl.Resources>
@@ -15,6 +16,20 @@
         </Grid.RowDefinitions>
         <DockPanel Grid.Row="0" Margin="0,0,0,12">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+                <!-- round 4 2026-10-23: in Simplu the case buttons wait for a case (a result); Expert unchanged -->
+                <StackPanel.Style>
+                    <Style TargetType="StackPanel">
+                        <Style.Triggers>
+                            <MultiDataTrigger>
+                                <MultiDataTrigger.Conditions>
+                                    <Condition Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"/>
+                                    <Condition Binding="{Binding HasResult}" Value="False"/>
+                                </MultiDataTrigger.Conditions>
+                                <Setter Property="Visibility" Value="Collapsed"/>
+                            </MultiDataTrigger>
+                        </Style.Triggers>
+                    </Style>
+                </StackPanel.Style>
                 <Button Content="Folder caz" Command="{Binding OpenCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="Închidere caz" Command="{Binding CloseCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"
                         ToolTip="Afișează capetele lanțurilor de custodie și de audit, de înscris în registrul de custodie cu semnătură și dată"/>
@@ -23,13 +38,14 @@
                 <Button Content="Raport de incident (PDF)" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}" ToolTip="{Binding ReportAudienceDescription}"/>
             </StackPanel>
             <StackPanel>
-                <TextBlock Text="Investigație completă" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="Investigație completă (caz)" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock Text="Colectează (sau importă) probele, le parsează, construiește cronologia, corelează și reconstituie lanțul incidentului. Totul se păstrează într-un caz cu amprente de integritate (SHA-256) și cu istoricul fiecărei probe (lanț de custodie)."
                            FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
             </StackPanel>
         </DockPanel>
 
         <StackPanel Grid.Row="1">
+        <ctrl:NoDataPanel HideInSimpleLevel="True"/>
         <!-- WP18 S4: "Primește probe de la o stație" in three steps; the full form stays below -->
         <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
             <StackPanel>
@@ -40,10 +56,18 @@
                 <TextBlock Text="{Binding IntakeQuestion}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,8"/>
                 <StackPanel>
                     <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IntakeStepIndex}" Value="0"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-                    <WrapPanel>
-                        <TextBox AutomationProperties.Name="Folderul cu probele aduse" Text="{Binding IntakeFolder, UpdateSourceTrigger=PropertyChanged}" Width="420" Margin="0,0,6,0"/>
-                        <Button Content="Alege folderul…" Command="{Binding IntakePickFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
-                    </WrapPanel>
+                    <!-- 2026-10-22 (row owner decision): where do the samples come from? „This station” is the same collection the Expert form's check box switches on -->
+                    <RadioButton GroupName="IntakeSource" Content="Această stație (colectez acum de aici)" IsChecked="{Binding IntakeFromThisStation}" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"
+                                 AutomationProperties.Name="Probele se colectează de pe această stație"/>
+                    <RadioButton GroupName="IntakeSource" Content="Un folder adus de la stația afectată" IsChecked="{Binding IntakeFromFolder}" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6"
+                                 AutomationProperties.Name="Probele vin dintr-un folder adus de la stația afectată"/>
+                    <StackPanel>
+                        <StackPanel.Style><Style TargetType="StackPanel"><Style.Triggers><DataTrigger Binding="{Binding IntakeFromFolder}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                        <WrapPanel>
+                            <TextBox AutomationProperties.Name="Folderul cu probele aduse" Text="{Binding IntakeFolder, UpdateSourceTrigger=PropertyChanged}" Width="420" Margin="0,0,6,0"/>
+                            <Button Content="Alege folderul…" Command="{Binding IntakePickFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                        </WrapPanel>
+                    </StackPanel>
                 </StackPanel>
                 <StackPanel>
                     <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IntakeStepIndex}" Value="1"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
@@ -54,19 +78,72 @@
                 </StackPanel>
                 <StackPanel>
                     <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IntakeStepIndex}" Value="2"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
-                    <TextBlock Text="Completați scopul cazului în formularul de mai jos, apoi apăsați „Pornește analiza”." Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
+                    <!-- Expert: the full form is below the wizard -->
+                    <TextBlock Text="Completați scopul cazului în formularul de mai jos, apoi apăsați „Pornește analiza”." Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap">
+                        <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                    </TextBlock>
+                    <!-- Simplu (owner decision 2026-10-22): the wizard is the only form, so the scope of the case is asked here; same fields and rules as the full form -->
+                    <StackPanel>
+                        <StackPanel.Style><Style TargetType="StackPanel"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></StackPanel.Style>
+                        <TextBlock Text="Completați scopul cazului, apoi apăsați „Pornește analiza”. Toate câmpurile sunt obligatorii în afară de numele cazului." Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                        <WrapPanel Margin="0,0,0,6">
+                            <TextBlock Text="Nume caz (opțional):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Nume caz" Text="{Binding CaseName, UpdateSourceTrigger=PropertyChanged}" Width="280"/>
+                        </WrapPanel>
+                        <WrapPanel Margin="0,0,0,6">
+                            <TextBlock Text="De ce (scop):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Scopul cazului" Text="{Binding ScopePurpose, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,10,0"/>
+                            <TextBlock Text="Cine aprobă:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Aprobator" Text="{Binding ScopeApprover, UpdateSourceTrigger=PropertyChanged}" Width="160"/>
+                        </WrapPanel>
+                        <WrapPanel Margin="0,0,0,6">
+                            <TextBlock Text="Pe ce sisteme:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Sisteme în scop" Text="{Binding ScopeSystems, UpdateSourceTrigger=PropertyChanged}" Width="260" Margin="0,0,10,0"/>
+                            <TextBlock Text="Perioada de la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <DatePicker AutomationProperties.Name="Perioada de la" SelectedDate="{Binding ScopeFrom}" Width="130" Margin="0,0,10,0"/>
+                            <TextBlock Text="până la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <DatePicker AutomationProperties.Name="Perioada până la" SelectedDate="{Binding ScopeTo}" Width="130"/>
+                        </WrapPanel>
+                        <WrapPanel>
+                            <TextBlock Text="Temei:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox AutomationProperties.Name="Temei legal" ItemsSource="{Binding LegalBases}" SelectedIndex="{Binding LegalBasisIndex}" Width="100" Margin="0,0,10,0"/>
+                            <TextBlock Text="Sistemul este:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <ComboBox AutomationProperties.Name="Categoria sistemului" ItemsSource="{Binding NetworkCategories}" SelectedIndex="{Binding NetworkIndex}" Width="140" Margin="0,0,6,0"/>
+                            <ComboBox AutomationProperties.Name="Nivel de clasificare" ItemsSource="{Binding ClassificationLevels}" SelectedIndex="{Binding ClassificationIndex}" Width="110"/>
+                        </WrapPanel>
+                    </StackPanel>
                 </StackPanel>
                 <TextBlock Text="{Binding IntakeError}" Foreground="{StaticResource WarningBrush}" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,6,0,0"/>
                 <WrapPanel Margin="0,8,0,0">
                     <Button Content="Înapoi" Command="{Binding IntakeBackCommand}" IsEnabled="{Binding IntakeCanGoBack}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="{Binding IntakeNextText}" AutomationProperties.Name="Înainte sau Pornește analiza" Command="{Binding IntakeNextCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Oprește" Command="{Binding IntakeStopCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                    <Button Content="De la început" Command="{Binding IntakeRestartCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                    <Button Content="De la început" Command="{Binding IntakeRestartCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Oprește analiza" Command="{Binding CancelCommand}" Style="{StaticResource DangerButtonStyle}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"
+                            ToolTip="Oprește analiza care rulează acum; ce s-a colectat până aici rămâne în caz."/>
                 </WrapPanel>
+                <!-- Simplu: the progress of the run, only when there is something to say (the form's own log box is hidden with the form) -->
+                <TextBox AutomationProperties.Name="Jurnalul investigației (progres)" Text="{Binding Log, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Height="110" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+                         FontFamily="Consolas" FontSize="12" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="8" Margin="0,8,0,0">
+                    <TextBox.Style>
+                        <Style TargetType="TextBox" BasedOn="{StaticResource {x:Type TextBox}}">
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding Log}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                                <DataTrigger Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="False"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </TextBox.Style>
+                </TextBox>
             </StackPanel>
         </Border>
 
-        <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,12">
+        <!-- Expert: the full form. Simplu (owner decision 2026-10-22): only the wizard above; the form is hidden, so there are not two parallel forms -->
+        <Border Margin="0,0,0,12">
+            <Border.Style>
+                <Style TargetType="Border" BasedOn="{StaticResource ObsidianCardStyle}">
+                    <Style.Triggers><DataTrigger Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Collapsed"/></DataTrigger></Style.Triggers>
+                </Style>
+            </Border.Style>
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
@@ -104,6 +181,14 @@
                         <Button Content="Pornește investigația" Command="{Binding RunCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
                         <Button Content="Oprește" Command="{Binding CancelCommand}" Style="{StaticResource DangerButtonStyle}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
                     </WrapPanel>
+                    <!-- E1 / E10: historical sources and shadow copies as the target of the analysis -->
+                    <WrapPanel Margin="0,6,0,0">
+                        <Button Content="Adaugă surse istorice (jurnale arhivate, Windows.old)…" Command="{Binding AddHistoricalFolderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                        <Button Content="Listează copiile de umbră (VSS)" Command="{Binding ListShadowCopiesCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                        <ComboBox AutomationProperties.Name="Copia de umbră aleasă" ItemsSource="{Binding ShadowCopyList}" SelectedItem="{Binding SelectedShadowCopy}" DisplayMemberPath="Label" Width="260" Margin="0,0,6,0"/>
+                        <Button Content="Analizează copia aleasă" Command="{Binding ImportFromShadowCopyCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                    </WrapPanel>
+                    <TextBlock Text="{Binding ShadowStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
                     <TextBlock Text="{Binding ImportFiles.Count, StringFormat='{}{0} fișiere de importat'}" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0"/>
                 </StackPanel>
                 <TextBox AutomationProperties.Name="Jurnalul investigației" Grid.Column="2" Text="{Binding Log, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Height="120" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
@@ -112,7 +197,37 @@
         </Border>
         </StackPanel>
 
-        <TabControl AutomationProperties.Name="Rezultatele investigației" Grid.Row="2" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+        <!-- Simplu, before the first result: one sentence instead of empty tabs -->
+        <TextBlock Grid.Row="2" Text="Rezultatele apar aici după ce porniți investigația." Foreground="{StaticResource TextSecondaryBrush}" FontSize="14" Margin="4,8,0,0">
+            <TextBlock.Style>
+                <Style TargetType="TextBlock">
+                    <Setter Property="Visibility" Value="Collapsed"/>
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"/>
+                                <Condition Binding="{Binding HasResult}" Value="False"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Visible"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TextBlock.Style>
+        </TextBlock>
+        <TabControl AutomationProperties.Name="Rezultatele investigației" Grid.Row="2" ctrl:PageFill.MinHeight="360" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+            <TabControl.Style>
+                <Style TargetType="TabControl">
+                    <Style.Triggers>
+                        <MultiDataTrigger>
+                            <MultiDataTrigger.Conditions>
+                                <Condition Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"/>
+                                <Condition Binding="{Binding HasResult}" Value="False"/>
+                            </MultiDataTrigger.Conditions>
+                            <Setter Property="Visibility" Value="Collapsed"/>
+                        </MultiDataTrigger>
+                    </Style.Triggers>
+                </Style>
+            </TabControl.Style>
             <TabItem Header="Lanțul incidentului" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <TextBlock DockPanel.Dock="Top" Text="{Binding Summary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,8"/>
@@ -221,6 +336,24 @@
                              Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12" FontSize="12.5"/>
                 </Grid>
             </TabItem>
+            <TabItem Header="Activitatea utilizatorului" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Activitatea utilizatorului: foldere și fișiere folosite, șterse">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding UserActivitySummary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding UserActivityTimeNote, Mode=OneWay}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                    <DataGrid AutomationProperties.Name="Activitatea utilizatorului" ItemsSource="{Binding UserActivity}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" EnableRowVirtualization="True">
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Relevanță" Binding="{Binding Relevance}" Width="1.6*"/>
+                            <DataGridTextColumn Header="Sursă" Binding="{Binding SourceLabel}" Width="1.3*"/>
+                            <DataGridTextColumn Header="Cale" Binding="{Binding Path}" Width="3*"/>
+                            <DataGridTextColumn Header="Ora" Binding="{Binding TimeText}" Width="150"/>
+                            <DataGridTextColumn Header="Ce înseamnă ora" Binding="{Binding TimeMeaning}" Width="3*"/>
+                            <DataGridTextColumn Header="Utilizator / SID" Binding="{Binding Who}" Width="1.4*"/>
+                            <DataGridTextColumn Header="Detalii" Binding="{Binding Detail}" Width="3*"/>
+                            <DataGridTextColumn Header="Probă" Binding="{Binding Origin.EvidenceId}" Width="85"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
             <TabItem Header="Cronologie" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
@@ -275,7 +408,7 @@
                     </Grid>
                 </DockPanel>
             </TabItem>
-            <TabItem Header="Anti-forensics" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Ascunderea sau ștergerea urmelor" Style="{StaticResource InspectorTabItemStyle}">
                 <DataGrid AutomationProperties.Name="Verificări anti-forensics" Margin="8" ItemsSource="{Binding AntiForensics}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="55"/>
@@ -301,7 +434,7 @@
                     </ListBox>
                 </DockPanel>
             </TabItem>
-            <TabItem Header="Analiză AI (locală)" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Analiză AI (locală)" Style="{StaticResource InspectorTabItemStyle}" Visibility="{Binding HasAiAnalysis, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ctrl:FeaturePlaceholder FeatureKey="AiAnalysis" Title="Analiza AI" ViewModel="{Binding AiAnalysis}"/>
             </TabItem>
             <TabItem Header="Colectare la distanță" Style="{StaticResource InspectorTabItemStyle}">
@@ -319,9 +452,51 @@
                     <TextBlock Text="{Binding RemoteStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
                 </StackPanel>
             </TabItem>
-            <TabItem Header="Goluri de probă" Style="{StaticResource InspectorTabItemStyle}">
-                <TextBox AutomationProperties.Name="Goluri de probă" Margin="8" Text="{Binding GapsText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
+            <TabItem Header="Surse lipsă sau incomplete" Style="{StaticResource InspectorTabItemStyle}">
+                <TextBox AutomationProperties.Name="Surse lipsă sau incomplete" Margin="8" Text="{Binding GapsText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
                          Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12"/>
+            </TabItem>
+            <!-- F3 / F4 / F10: signed reports and their verification, verifiable case archive, export with personal data masked -->
+            <TabItem Header="Semnătură, arhivă, partajare" Style="{StaticResource InspectorTabItemStyle}">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                    <StackPanel Margin="12">
+                        <TextBlock Text="Semnătura digitală a rapoartelor" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,6"
+                                   Text="Fiecare raport PDF se semnează cu cheia ECDSA P-256 a operatorului sau a organizației (creată cu LogAnalyzer.KeyGen report-keygen, păstrată pe un mediu înregistrat). Semnătura se scrie alături, în fișierul .sig, cu amprenta raportului (SHA-256) și semnatarul."/>
+                        <WrapPanel Margin="0,0,0,6">
+                            <TextBlock Text="Cheia privată:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Fișierul cheii private de semnare" Text="{Binding SigningKeyPath, UpdateSourceTrigger=PropertyChanged}" Width="360" Margin="0,0,6,0"/>
+                            <Button Content="Alege…" Command="{Binding BrowseSigningKeyCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,12,0"/>
+                            <TextBlock Text="Semnatar:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <TextBox AutomationProperties.Name="Numele semnatarului" Text="{Binding SignerName, UpdateSourceTrigger=PropertyChanged}" Width="200"/>
+                        </WrapPanel>
+                        <TextBlock Text="Chei publice de încredere (câte una pe rând):" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBox AutomationProperties.Name="Chei publice de încredere" Text="{Binding TrustedKeysText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="60" FontFamily="Consolas" Margin="0,2,0,6"/>
+                        <WrapPanel Margin="0,0,0,12">
+                            <Button Content="Salvează setările semnăturii" Command="{Binding SaveSigningSettingsCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                            <Button Content="Verifică un raport…" Command="{Binding VerifyReportCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                        </WrapPanel>
+                        <TextBlock Text="Arhiva verificabilă a cazului" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,6"
+                                   Text="ZIP cu tot cazul, manifest.json (SHA-256 al fiecărui fișier), amprenta manifestului (SHA-256) și README cu comenzile de verificare manuală (Get-FileHash, certutil), care merg fără LogAnalyzer. La import se verifică totul înainte."/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,2"
+                                   Text="La import, arhiva trebuie autentificată: semnătura manifestului cu una dintre cheile de încredere de mai sus, sau amprenta manifestului (SHA-256) din registrul de custodie, scrisă aici. Altfel este „neverificabilă” și se refuză, afară de cazul în care alegeți explicit importul ca neverificat."/>
+                        <TextBox AutomationProperties.Name="Amprenta manifestului din registrul de custodie" Text="{Binding ExpectedArchiveSha256, UpdateSourceTrigger=PropertyChanged}" FontFamily="Consolas" Margin="0,2,0,6"/>
+                        <WrapPanel Margin="0,0,0,12">
+                            <Button Content="Exportă arhiva cazului…" Command="{Binding ExportCaseArchiveCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                            <Button Content="Importă arhivă de caz…" Command="{Binding ImportCaseArchiveCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                        </WrapPanel>
+                        <TextBlock Text="Export cu date personale mascate" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,6"
+                                   Text="Nume de utilizatori, nume de stații, adrese IP, e-mailuri, SID-uri și segmentul de utilizator din căi sunt înlocuite cu pseudonime consecvente (aceeași valoare, același pseudonim în raport și în cronologie)."/>
+                        <WrapPanel Margin="0,0,0,12">
+                            <Button Content="Raport mascat (PDF)…" Command="{Binding ExportMaskedPdfCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
+                            <Button Content="Cronologie mascată (CSV)…" Command="{Binding ExportMaskedTimelineCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                        </WrapPanel>
+                        <TextBox AutomationProperties.Name="Rezultatul ultimei operații pe raport sau arhivă" Text="{Binding ReportStatus, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0"
+                                 Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold"/>
+                    </StackPanel>
+                </ScrollViewer>
             </TabItem>
         </TabControl>
     </Grid>

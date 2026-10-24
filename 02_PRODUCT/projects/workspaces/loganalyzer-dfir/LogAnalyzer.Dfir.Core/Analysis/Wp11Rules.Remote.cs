@@ -109,7 +109,7 @@ public static partial class Wp11Rules
             FirstSeenUtc = times.FirstOrDefault(), LastSeenUtc = times.LastOrDefault(),
             User = pairs.Count > 0 ? Account(F(pairs[0].Logon, "TargetUserName"), F(pairs[0].Logon, "TargetDomainName")) : "", Ip = pairs.Count > 0 ? F(pairs[0].Logon, "IpAddress") : "",
             Description = $"WinRM/Operational: {n6} × 6 (sesiune inițiată de această stație), {n91} × 91 (shell creat pe această stație), {n142} × 142 (operații eșuate); " +
-                          $"wsmprovhost.exe: {starts.Count} porniri 4688/Sysmon 1, {prefetch.Count} intrări Prefetch." + pairText,
+                          $"wsmprovhost.exe: {LogAnalyzer.Dfir.Language.RoText.Count(starts.Count, "pornire", "porniri")} 4688/Sysmon 1, {LogAnalyzer.Dfir.Language.RoText.Count(prefetch.Count, "intrare", "intrări")} Prefetch." + pairText,
             ClassificationReason = pairs.Count > 0 ? "wsmprovhost.exe pornit în sesiunea unei autentificări de tip 3 (LogonId sau utilizator+timp)." : "Evenimente WinRM/Operational și/sau pornirea gazdei de sesiune WinRM.",
             SemanticType = SemanticType.Observation,
             SupportingEvidence = ops.Take(8).Select(e => Ref(e, $"WinRM {e.EventId}")).Concat(starts.Take(6).Select(s => Ref(s.Event, "wsmprovhost.exe"))).Concat(prefetch.Take(2).Select(e => Ref(e, "Prefetch wsmprovhost")))
@@ -167,7 +167,7 @@ public static partial class Wp11Rules
                 FirstSeenUtc = pair is not null ? T(pair) : T(e), LastSeenUtc = T(e), File = exe, User = F(e, "AccountName"),
                 Description = $"System 7045: {what} ({name}), ImagePath {image}, cont {F(e, "AccountName")}, {Time(T(e))}. " +
                               (pair is not null ? $"Security 5145: {F(pair, "RelativeTargetName")} accesat pe ADMIN$ de {Account(F(pair, "SubjectUserName"), F(pair, "SubjectDomainName"))} din {F(pair, "IpAddress")}, {Time(T(pair))}. " : "Nu există în caz un 5145 pe ADMIN$ pentru același fișier. ") +
-                              (starts.Count > 0 ? $"Proces PSEXESVC.exe pornit: {starts.Count} evenimente. " : "") +
+                              (starts.Count > 0 ? $"Proces PSEXESVC.exe pornit: {LogAnalyzer.Dfir.Language.RoText.Count(starts.Count, "eveniment", "evenimente")}. " : "") +
                               (approved is not null ? $"PsExec este software aprobat în profil ({approved.Name}). " : "") +
                               "Instalarea serviciului nu dovedește ce a rulat prin el; indică (nu dovedește) execuție la distanță.",
                 ClassificationReason = pair is not null ? "7045 (serviciu) și 5145 (fișier scris pe ADMIN$) cu același nume de fișier, apropiate în timp." : "7045 cu numele PSEXESVC sau cu imaginea în folderul Windows / pe ADMIN$.",
