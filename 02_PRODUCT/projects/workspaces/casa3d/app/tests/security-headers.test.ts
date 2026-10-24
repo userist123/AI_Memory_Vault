@@ -6,7 +6,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 process.env.CASA3D_AUTH_FILE = path.join(import.meta.dirname, '__no_auth_file__.json');
 import { NextRequest } from 'next/server';
-import { middleware } from '../middleware';
+import { proxy as middleware } from '../proxy';   // Next.js 16: middleware.ts → proxy.ts
 import { contentSecurityPolicy, hstsFor, API_CSP } from '../lib/security-headers';
 const tok = 'A'.repeat(43);
 const req = (url: string, extra: Record<string, string> = {}, host = 'localhost:3123') => new NextRequest(`http://${host}${url}`, { headers: { host, ...extra } });

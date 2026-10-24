@@ -4,9 +4,9 @@
 import type { Catalog, MaterialsCatalog, Snapshot, Confidence } from './types';
 import { computeBOQ, finishesOf } from './boq';
 import { floors } from './levels';
-import { layoutOf, materialOf, pieceSizeCm, ceilingOf, bandOf } from './finishes';
+import { layoutOf, materialOf, pieceSizeCm, ceilingOf, bandOf, alongOf, isPartial, sideSpan } from './finishes';
 
-export type ScheduleElement = 'floor' | 'walltile' | 'wall' | 'paint' | 'baseboard' | 'ceiling' | 'led' | 'cornice' | 'spots' | 'light' | 'fixture' | 'countertop' | 'sink' | 'tap' | 'kitchen-led' | 'bath-tap' | 'shower-set' | 'towel-radiator' | 'led-mirror' | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'adhesive';
+export type ScheduleElement = 'floor' | 'walltile' | 'wall' | 'paint' | 'baseboard' | 'ceiling' | 'led' | 'cornice' | 'spots' | 'light' | 'fixture' | 'countertop' | 'sink' | 'tap' | 'kitchen-led' | 'bath-tap' | 'shower-set' | 'towel-radiator' | 'led-mirror' | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'door_system' | 'adhesive';
 export interface ScheduleRow { level: number; roomId: string | null; room: string; element: ScheduleElement; side?: string; kind?: string;
   product: string; supplier: string; code: string | null; details: { key: string; vars?: Record<string, string | number> }[];
   netQty: number; unit: string; wastePct: number; orderedQty: number; packs: string | null; unitPrice: number | null; total: number | null;
@@ -14,11 +14,11 @@ export interface ScheduleRow { level: number; roomId: string | null; room: strin
 
 /** Categoriile de buget care intră în fișă (aceleași pe care le arată bugetul la finisaje). */
 export const SCHEDULE_CATEGORIES = new Set(['finishes', 'lighting', 'textiles']);
-const ELEMENT_ORDER: ScheduleElement[] = ['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'cornice', 'led', 'spots', 'light', 'fixture', 'countertop', 'sink', 'tap', 'kitchen-led', 'bath-tap', 'shower-set', 'towel-radiator', 'led-mirror', 'curtain', 'sheer', 'blind', 'rug', 'door', 'door_handle', 'adhesive'];
+const ELEMENT_ORDER: ScheduleElement[] = ['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'cornice', 'led', 'spots', 'light', 'fixture', 'countertop', 'sink', 'tap', 'kitchen-led', 'bath-tap', 'shower-set', 'towel-radiator', 'led-mirror', 'curtain', 'sheer', 'blind', 'rug', 'door', 'door_handle', 'door_system', 'adhesive'];
 /** Codul de produs al magazinului, din link: Dedeman …/p/4026660 (sau 1070874-1048524), IKEA …/p/virrmo-…-70430780/ → 70430780. */
 export function productCode(url: string | null): string | null { const seg = url?.match(/\/p\/([\w-]+)\/?$/)?.[1]; if (!seg) return null;
   return /[a-z]/i.test(seg) ? seg.match(/-s?(\d{6,})$/)?.[1] ?? seg : seg; }
-const elementOf = (key: string): ScheduleElement | null => { if (key.startsWith('door:')) return 'door'; if (key.startsWith('handle:')) return 'door_handle'; const k = key.split(':')[1] ?? key;
+const elementOf = (key: string): ScheduleElement | null => { if (key.startsWith('door:')) return 'door'; if (key.startsWith('handle:')) return 'door_handle'; if (key.startsWith('doorsys:')) return 'door_system'; const k = key.split(':')[1] ?? key;
   return k === 'adhesive' || key === 'adhesive' ? 'adhesive' : (['floor', 'walltile', 'wall', 'paint', 'baseboard', 'ceiling', 'led', 'cornice', 'spots', 'light', 'fixture', 'countertop', 'sink', 'tap', 'kitchen-led', 'bath-tap', 'shower-set', 'towel-radiator', 'led-mirror', 'curtain', 'sheer', 'blind', 'rug'] as const).find(e => e === k) ?? null; };
 
 export function finishSchedule(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog): ScheduleRow[] {
@@ -37,6 +37,7 @@ export function finishSchedule(snap: Snapshot, cat: Catalog, mc: MaterialsCatalo
       if (el === 'wall'){ const [, , s, i] = it.key.split(':'), wf = f.wallFeatures?.[Number(i)]; side = s; kind = wf?.kind;
         if (wf){ const [a, b] = bandOf(wf, floors(snap)[at.level]!.ceilingHeight);
           details.push({ key: `fin.kind.${wf.kind}` }, { key: 'sched.wallSide', vars: { side: s ?? '' } }, wf.kind === 'rail' ? { key: 'sched.at', vars: { h: b } } : a > 0 ? { key: 'sched.band', vars: { a, b } } : wf.heightM ? { key: 'sched.upTo', vars: { h: wf.heightM } } : { key: 'fin.fullHeight' });
+          if (isPartial(wf)){ const [u0, u1] = alongOf(wf, sideSpan(at.r, wf.side)); details.push({ key: 'sched.along', vars: { a: Math.round(u0 * 100) / 100, b: Math.round(u1 * 100) / 100 } }); }
           if (wf.color) details.push({ key: 'sched.color', vars: { color: wf.color } }); } }
       if (el === 'walltile') details.push({ key: 'sched.size', vars: { l: pieceSizeCm(m)[0], w: pieceSizeCm(m)[1] } });
       if (el === 'ceiling'){ const c = ceilingOf(f); details.push({ key: `fin.ceiling.${c.type}` }, { key: 'sched.drop', vars: { cm: c.dropCm } }); if (c.type === 'cove') details.push({ key: 'sched.cove', vars: { cm: c.coveCm } }); }

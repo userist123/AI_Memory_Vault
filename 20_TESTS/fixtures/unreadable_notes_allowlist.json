@@ -1040,6 +1040,18 @@
       "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
     },
     {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-plan-tools.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-doors.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
       "path": "00_GOVERNANCE/coordination/tasks/todo-claude-r009b-split.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
@@ -1083,6 +1095,12 @@
     },
     {
       "path": "00_GOVERNANCE/coordination/tasks/todo-claude-99-system-refs.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-import-order.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
