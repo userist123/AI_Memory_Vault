@@ -61,6 +61,9 @@ def test_hidden_paths_other_than_the_checkouts_own_metadata_abort_the_import(tmp
  for offender in ('.env',os.path.join('.github','workflow.md'),os.path.join('deep','.git','config')): assert 'hidden path: '+offender in message
  assert _all_files(tmp_path/'dest')==[]
 
+@pytest.mark.skipif(os.name == "nt", reason="NTFS has no POSIX executable bit: chmod(S_IXUSR) is a no-op and st_mode "
+                    "derives X from the extension, so the case cannot be built; the importer runs on ubuntu-latest, "
+                    "where this test runs")
 def test_an_executable_bit_aborts_the_import_even_on_an_allowed_type(tmp_path):
  src=_source(tmp_path)
  launcher=src/'notes.md'; launcher.write_text('#!/bin/sh\necho hi\n'); launcher.chmod(launcher.stat().st_mode|stat.S_IXUSR)

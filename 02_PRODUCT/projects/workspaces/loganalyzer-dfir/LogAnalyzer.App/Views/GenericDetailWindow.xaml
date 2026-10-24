@@ -1,7 +1,8 @@
 <Window x:Class="LogAnalyzer.UI.Views.GenericDetailWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Detalii" Height="760" Width="1000" MinHeight="420" MinWidth="640"
+        xmlns:fit="clr-namespace:LogAnalyzer.UI.Views.Controls"
+        Title="Detalii" fit:WindowFit.ToWorkArea="True" Height="760" Width="1000" MinHeight="420" MinWidth="640"
         WindowStartupLocation="CenterOwner" ResizeMode="CanResizeWithGrip"
         Background="{StaticResource Surface1Brush}">
 

@@ -138,7 +138,7 @@ public sealed class SigmaLite
                 if (hit) yield return (r.Rule, e);
             }
         foreach (var (rule, skipped) in stopped.Values.Where(v => v.Skipped > 0))      // what the stop cost: events never evaluated
-            timeouts!.Add(new RuleTimeout(rule.Identity.RuleId, rule.Title, $"{skipped} evenimente ulterioare nu au fost evaluate cu această regulă după timeout"));
+            timeouts!.Add(new RuleTimeout(rule.Identity.RuleId, rule.Title, $"{LogAnalyzer.Dfir.Language.RoText.Count(skipped, "eveniment", "evenimente")} ulterioare nu au fost evaluate cu această regulă după timeout"));
     }
 
     public IEnumerable<DetectionResult> Detect(IEnumerable<TimelineEvent> events, ICollection<RuleTimeout>? timeouts = null) => Match(events, timeouts).Select(m => new DetectionResult(

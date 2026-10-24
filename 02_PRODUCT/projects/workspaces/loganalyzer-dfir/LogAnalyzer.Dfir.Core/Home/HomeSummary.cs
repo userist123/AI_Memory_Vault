@@ -103,9 +103,9 @@ public static class HomeAggregator
         string problem;
         if (!i.CaseOpen) problem = "Nedeterminat: nu este deschis niciun caz.";
         else if (level == AttentionLevel.Undetermined && total == 0) problem = label + ".";
-        else if (total == 0) problem = $"{NothingDetected}. Aceasta nu înseamnă că sistemul este curat: acoperire {cov.OverallLabel.ToLowerInvariant()}, {i.GapCount} goluri de probă.";
-        else problem = level >= AttentionLevel.High ? $"Da: {N(Severity.Critical) + N(Severity.High)} constatări de severitate ridicată sau critică."
-                     : level == AttentionLevel.Medium ? $"Posibil: {N(Severity.Medium)} constatări de severitate medie de revizuit."
+        else if (total == 0) problem = $"{NothingDetected}. Aceasta nu înseamnă că sistemul este curat: acoperire {cov.OverallLabel.ToLowerInvariant()}, {LogAnalyzer.Dfir.Language.RoText.Count(i.GapCount, "sursă lipsă sau incompletă", "surse lipsă sau incomplete")}.";
+        else problem = level >= AttentionLevel.High ? $"Da: {LogAnalyzer.Dfir.Language.RoText.Count(N(Severity.Critical) + N(Severity.High), "constatare", "constatări")} de severitate ridicată sau critică."
+                     : level == AttentionLevel.Medium ? $"Posibil: {LogAnalyzer.Dfir.Language.RoText.Count(N(Severity.Medium), "constatare", "constatări")} de severitate medie de revizuit."
                      : "Doar observații de severitate scăzută; verificați acoperirea înainte de a le considera neînsemnate.";
         if (trustState == TrustState.Compromised) problem += " În plus, integritatea probelor este compromisă.";
 
@@ -118,7 +118,7 @@ public static class HomeAggregator
         else
         {
             var bySev = Enum.GetValues<Severity>().Reverse().Where(s => N(s) > 0).Select(s => $"{N(s)} {SeverityWord(s).ToLowerInvariant()}").ToList();
-            found = total == 0 ? $"{NothingDetected}." : $"{total} constatări ({string.Join(", ", bySev)}).";
+            found = total == 0 ? $"{NothingDetected}." : $"{LogAnalyzer.Dfir.Language.RoText.Count(total, "constatare", "constatări")} ({string.Join(", ", bySev)}).";
             found += i.VerificationCounts is { } vc ? " " + LogAnalyzer.Dfir.Home.HomeAggregator.VerificationLine(vc) : " Verificare automată: nerulată sau indisponibilă (nedeterminat).";
             if (i.TopFindings.Count > 0) found += " Primele: " + string.Join("; ", i.TopFindings.Take(3)) + ".";
         }
@@ -163,13 +163,13 @@ public static class HomeAggregator
         if (i.AnalysisState == OperationState.NotStarted) steps.Add("Rulați analiza pe probele cazului.");
         else if (i.AnalysisState is OperationState.Failed or OperationState.Cancelled or OperationState.Blocked) steps.Add("Analiza nu s-a finalizat: reluați-o după ce remediați cauza.");
         if (level >= AttentionLevel.High) steps.Add($"Revizuiți constatările de severitate ridicată sau critică ({i.FindingsBySeverity.GetValueOrDefault(Severity.Critical) + i.FindingsBySeverity.GetValueOrDefault(Severity.High)}).");
-        else if (level is AttentionLevel.Medium or AttentionLevel.Low) steps.Add($"Revizuiți cele {total} constatări.");
+        else if (level is AttentionLevel.Medium or AttentionLevel.Low) steps.Add($"Revizuiți cele {LogAnalyzer.Dfir.Language.RoText.Count(total, "constatare", "constatări")}.");
         if (i.VerificationCounts is { } vc)
         {
             int bad = vc.GetValueOrDefault(StandardState.Contradicted.ToSpec()) + vc.GetValueOrDefault(StandardState.Rejected.ToSpec());
             int weak = vc.GetValueOrDefault(StandardState.Unproven.ToSpec());
-            if (bad > 0) steps.Add($"{bad} constatări sunt contrazise sau respinse: nu le prezentați ca fapte.");
-            else if (weak > 0) steps.Add($"{weak} constatări sunt nedovedite: căutați probe suplimentare.");
+            if (bad > 0) steps.Add($"{LogAnalyzer.Dfir.Language.RoText.Count(bad, "constatare", "constatări")} sunt contrazise sau respinse: nu le prezentați ca fapte.");
+            else if (weak > 0) steps.Add($"{LogAnalyzer.Dfir.Language.RoText.Count(weak, "constatare", "constatări")} sunt nedovedite: căutați probe suplimentare.");
         }
         var holes = i.Coverage.Gaps;
         if (holes.Count > 0) steps.Add("Completați sursele lipsă sau parțiale: " + string.Join(", ", holes.Take(4).Select(h => h.Family)) + (holes.Count > 4 ? $" și încă {holes.Count - 4}" : "") + ".");

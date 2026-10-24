@@ -74,6 +74,8 @@ public sealed class AiStatementVerdict
     public List<string> Cites { get; set; } = [];
     public StandardState Verdict { get; set; } = StandardState.Unproven;
     public string Reason { get; set; } = "";
+    /// <summary>R22.5: the case-level claim validation state of this statement as written by the AI step (VALORI_CONFIRMATE / PARTIAL / NESUSTINUT / NEVERIFICABIL); NEVERIFICABIL when the file carries none.</summary>
+    public string ClaimValidation { get; set; } = "NEVERIFICABIL";
 }
 
 /// <summary>Analysis/verification.json.</summary>
@@ -135,7 +137,7 @@ public sealed class VerificationReport
     public static string LineRomanian(IReadOnlyDictionary<string, int> counts)
     {
         var parts = VerdictOrder.Where(v => counts.GetValueOrDefault(v.ToSpec()) > 0)
-            .Select(v => $"{counts[v.ToSpec()]} {LogAnalyzer.Dfir.Analysis.StateLabels.Romanian(v)} ({v.ToSpec()})").ToList();
+            .Select(v => LogAnalyzer.Dfir.Analysis.StateLabels.RomanianCount(v, counts[v.ToSpec()])).ToList();
         return parts.Count == 0 ? "Verificare: nicio constatare de verificat" : "Verificare: " + string.Join(", ", parts);
     }
 
@@ -146,8 +148,8 @@ public sealed class VerificationReport
     {
         int c = counts.GetValueOrDefault(StandardState.Contradicted.ToSpec()), r = counts.GetValueOrDefault(StandardState.Rejected.ToSpec());
         if (c + r == 0) return null;
-        var what = string.Join(" și ", new[] { c > 0 ? $"{c} CONTRADICTED" : "", r > 0 ? $"{r} REJECTED" : "" }.Where(x => x.Length > 0));
-        return $"ATENȚIE: {what}. Aceste constatări sunt contrazise de alte dovezi sau nu au dovezi valide; nu le prezentați ca fapte stabilite și nu le exportați în Vault.";
+        var what = string.Join(" și ", new[] { c > 0 ? LogAnalyzer.Dfir.Language.RoText.Count(c, "constatare", "constatări") + (c == 1 ? " contrazisă" : " contrazise") : "", r > 0 ? LogAnalyzer.Dfir.Language.RoText.Count(r, "constatare", "constatări") + (r == 1 ? " respinsă" : " respinse") : "" }.Where(x => x.Length > 0));
+        return $"ATENȚIE: {what}. Aceste constatări sunt contrazise de alte probe sau nu au probe valide; nu le prezentați ca fapte stabilite și nu le exportați în baza de cunoștințe.";
     }
 
     public FindingVerdict? Of(string findingId) => Findings.FirstOrDefault(f => f.FindingId == findingId);

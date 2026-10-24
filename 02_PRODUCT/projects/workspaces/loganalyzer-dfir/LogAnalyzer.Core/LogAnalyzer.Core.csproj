@@ -11,6 +11,13 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- Licence public key(s), one base64 SubjectPublicKeyInfo per line, printed by `LogAnalyzer.KeyGen license-keygen`.
+         Absent = no licence is accepted (fail closed). Security audit #3. -->
+    <EmbeddedResource Include="Licensing\license-public-keys.txt" LogicalName="license-public-keys.txt"
+                      Condition="Exists('Licensing\license-public-keys.txt')" />
+  </ItemGroup>
+
+  <ItemGroup>
     <PackageReference Include="CommunityToolkit.Mvvm" Version="8.4.2" />
     <PackageReference Include="QuestPDF" Version="2026.7.2" />
     <PackageReference Include="System.Management" Version="10.0.10" />

@@ -31,8 +31,7 @@ namespace LogAnalyzer.Infrastructure.Parsers
             await Task.Run(() =>
             {
                 // Pentru a evita blocajele de fișier și a include fișierele WAL, copiem baza într-un temp
-                string tempDir = Path.Combine(Path.GetTempPath(), "DFIR_Browser_" + Guid.NewGuid().ToString("N"));
-                Directory.CreateDirectory(tempDir);
+                string tempDir = LogAnalyzer.Dfir.IO.WorkFolders.NewWorkDirectory(filePath, "browser");   // security audit #14: never %TEMP%
                 string tempDbPath = Path.Combine(tempDir, Path.GetFileName(filePath));
 
                 try
@@ -96,7 +95,8 @@ namespace LogAnalyzer.Infrastructure.Parsers
                 catch { }
                 finally
                 {
-                    try { Directory.Delete(tempDir, true); } catch { }
+                    Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+                    LogAnalyzer.Dfir.IO.WorkFolders.TryDelete(tempDir);
                 }
             }, cancellationToken);
 

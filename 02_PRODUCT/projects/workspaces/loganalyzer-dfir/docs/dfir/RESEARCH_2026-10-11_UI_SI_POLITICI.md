@@ -1,0 +1,106 @@
+# Research 2026-10-11 — interfață care nu pare generată, politicile GPO ale proprietarului, defecte găsite la rulare
+
+Cerut de proprietar în sesiunea WP18 („trebuie să-mi placă aplicația și construcția ei de design UI/UX ca să continuăm”; „tot ce faci research trebuie să ajungă și în git”).
+Depozitul este public: din materialele proprietarului au fost scoși identificatorii organizației (numele complete ale GPO-urilor, coduri interne, numele conturilor redenumite, valori de marcaj intern).
+
+## 1. De ce o interfață pare „făcută de AI”
+
+Sursele sunt bloguri de designeri și dezvoltatori din 2026, nu cercetare formală. Concordă asupra cauzei și a semnelor.
+
+**Cauza.** Modelele produc „centrul statistic” al exemplelor de antrenare: alegerile sigure, valabile peste tot. Aspectul generat nu este un stil, ci **lipsa deciziilor**: unde se rupe grila, care element contează pe ecran, ce se lasă deoparte.
+
+**Semne recunoscute:**
+- grile de fișe egale, fără un element dominant; fiecare ecran este o variantă a aceluiași tablou (meniu lateral, bară sus, grilă de fișe);
+- fișe rotunjite cu **bordură groasă colorată pe o singură latură** (folosită de noi pe butoanele de pe Acasă în varianta „Registru”: de scos);
+- aceeași rotunjire mare pe tot, gradienți violet-albastru, strălucire, insigne „Live/New”, etichete cu MAJUSCULE și spațiere mare;
+- controale lăsate pe stilul implicit al unui kit; butonul principal, cel secundar și linkul arată aproape la fel;
+- stări goale/încărcare/eroare lipsă sau doar un indicator de așteptare; texte generice („Welcome back!”, „Something went wrong”).
+
+**Remedii propuse de surse:**
+- un singur element dominant și o singură acțiune principală pe ecran;
+- aranjament ales după sarcină (editor, listă-și-detaliu, configurare ghidată, ecran de decizie), nu același tablou peste tot;
+- ritm de spațiere: strâns în interiorul grupurilor, generos între ele;
+- stări goale care spun pasul următor, erori care spun cauza și remedierea;
+- texte specifice produsului, nu generice;
+- referințe reale (capturi din produse livrate) date ca exemplu, nu doar o descriere.
+
+## 2. Ce funcționează în produse reale
+
+**Aspect nativ Windows 11 (WPF Fluent).** De la .NET 9, WPF include tema Fluent (aspectul aplicațiilor Windows 11), cu mod deschis/închis și culoarea de accent aleasă de utilizator în Windows. Se aplică prin `ThemeMode` (Light, Dark, System, None) pe `Application`/`Window` sau prin dicționarul `pack://application:,,,/PresentationFramework.Fluent;component/Themes/Fluent.xaml`. Schimbarea `ThemeMode` din cod este experimentală (eroarea WPF0001 trebuie suprimată). Culorile de accent se citesc din `SystemColors.AccentColor*` și trebuie folosite cu `DynamicResource`. Risc raportat: o excepție `XamlParseException` la pornire când Fluent e activ și Windows are contrast ridicat (dotnet/wpf#10043): de testat.
+
+**O întrebare pe ecran (GOV.UK).** Ghidul serviciilor guvernamentale britanice recomandă să se pornească de la un singur lucru pe pagină (o informație, o decizie, o întrebare) și să se grupeze doar când cercetarea cu utilizatori o justifică. Testele lor: utilizatorii cu încredere scăzută completează mai ușor, erorile și ramificările se tratează mai bine. Excepția documentată: personalul care repetă și comută des între sarcini poate avea întrebări grupate, ceea ce corespunde ecranului de analist (listă-și-detaliu).
+
+## 3. Decizii pentru LogAnalyzer (aprobate de proprietar 2026-10-11: „acum hai să facem asta”)
+
+1. Tema nativă Windows 11 (Fluent, mod deschis); din tema proprie rămân doar culorile de stare (NECONFORM, DE VERIFICAT, NEDETERMINAT, CONFORM) și dimensiunile textului.
+2. Acasă: o întrebare și o listă scurtă de acțiuni (nu grilă de fișe, fără bordură pe o latură).
+3. Controlul: o întrebare pe ecran; rezultatele ca listă-și-detaliu pentru analist.
+4. Fiecare tabel gol spune ce urmează; fiecare eroare spune cauza și ce se poate face.
+5. Întâi Acasă și primul pas al controlului, cu capturi pentru proprietar; restul doar după aprobare.
+
+**Stare 2026-10-11 (primul pas, trimis proprietarului spre aprobare):**
+- tema Fluent luminoasă (`Fluent.Light.xaml` explicit: `Fluent.xaml` urmează modul închis din Windows, activ pe stația proprietarului, și ar pune fundal închis sub textul nostru închis); stilurile implicite proprii pentru butoane, câmpuri, liste, grile și bare de derulare au fost scoase; stilurile cu cheie se bazează pe cele native;
+- Acasă: numele stației, întrebarea „Ce doriți să faceți?” și rânduri de acțiuni în stilul aplicației Setări din Windows (fără grilă de fișe, fără bordură pe o latură); fără caz deschis nu se mai afișează cele patru răspunsuri „niciun caz deschis”;
+- Verifică această stație: în timpul pașilor doar Înapoi, Înainte, Oprește; raportul, comparația, folderul și „Control nou” apar în rezultat; tabelele brute doar după un control;
+- testele WPF rulează pe un singur fir STA comun (resursele Fluent aparțin firului aplicației).
+
+## 4. Politicile GPO ale proprietarului (3 backup-uri, stații Intranet W11)
+
+Hash-urile arhivelor primite (SHA-256): computer `509FF895…7484`, user `2C706C1C…758E`, AppLocker `E01F1B38…8F1A`. Defender: nicio detecție. Scripturile din backup au fost citite ca text, nu rulate.
+
+- **Importatorul era deja validat pe aceleași trei politici** (5 octombrie); revalidarea pe codul curent a dat aceleași cifre (AppLocker 27 controale, Computer 637, User 7).
+- **Defect găsit: preferințele GPO și scripturile erau ignorate fără să apară în raport.** În preferințe sunt: blocarea stocării USB (`HKLM\SYSTEM\CurrentControlSet\Services\USBSTOR\Start = 4`), serviciile Bluetooth (`bthserv`) și Wi-Fi (`WlanSvc`) dezactivate și două chei care marchează versiunea politicii de bază aplicate. Reparat: devin controale; scripturile, acțiunile de oprire a serviciilor, preferințele de alt tip și orice fișier necitit apar nominal ca neacceptate. Computer: 642 controale, 52 neacceptate (`GpoPreferencesImportTests`, `POLICY_ENGINE.md`).
+- **Ce conțin politicile și aplicația încă nu citește:** `[Privilege Rights]` (38 drepturi de utilizator), 9 chei `[System Access]` (complexitatea parolei, redenumirea contului de administrator și a contului Guest, starea lor, căutarea anonimă de nume, parola reversibilă).
+- **Ce merită verificat de controlul stației:** jurnalul `Microsoft-Windows-PrintService/Operational` activat la 100 MB de un script de pornire (necesar urmăririi tipăririlor); cheile de marcaj al politicii de bază (ce versiune de politică are efectiv stația); categoriile cu cele mai multe setări: Internet Explorer (≈140), acces la stocare amovibilă (15), restricții de instalare a dispozitivelor (5), imprimante (8), Defender (≈18), Desktop la distanță (8), WinRM (7), dimensiunea jurnalelor (9), LAPS (2), audit avansat (40).
+
+## 5. Defecte găsite la rularea aplicației pe PC-ul proprietarului (toate reparate, cu test)
+
+| Simptom | Cauză | Reparație / test |
+|---|---|---|
+| Crash la „Creează administratorul principal” | `AccountBox.Text` citit pe un fir de fundal (WP-AUTH) | citire pe firul ferestrei; `UiThreadAccessTests` |
+| Crash la investigație („Eroare critică internă”) | `IPEndPoint` serializat în JSON (citirea `ScopeId` IPv4 aruncă excepție) | convertor text; `LiveStateSerializationTests` |
+| Jurnalul Security mereu gol de probă („The specified query is invalid”) | 25 de coduri de eveniment într-un XPath; Windows acceptă cel mult 22 (măsurat) | grupuri de cel mult 20; `EventLogXPathTests` |
+
+## 6. Audit: opțiuni care nu fac nimic și explicații care lipsesc (cerut de proprietar 2026-10-11)
+
+Cererea: „multe dintre opțiuni nu te lasă să faci nimic, sunt acolo doar să fie”; „unde am spus să îmi spună ce, de ce, cum, când nu îmi arată nimic”; „detaliile codurilor pe toate domeniile (coduri de identificare Windows EVTX, regiștri etc.)”, pentru controlorii care nu stăpânesc IT-ul; „să nu fie nevoie de 800 de clicuri, să spună omului: ca să faci aia trebuie să faci aia”.
+
+**Metodă.** Două audituri statice pe codul aplicației (toate fișierele XAML și C# din `LogAnalyzer.App`), apoi citirea fiecărui caz în cod.
+- 180 de legături de comandă: toate există; niciun corp de comandă nu e un înlocuitor (constatarea inițială pe `ShowTodo` era falsă: „Todo” ≠ „TODO”). Butonul „Restaurare rețea” are meniu, nu e mort.
+- Proprietăți setate în cod dar neafișate nicăieri: `LiveMonitoringStatusText` (mesajele de pornire/oprire/eroare și „indisponibil în această ediție” ale monitorizării în timp real nu ajungeau pe ecran), `SelectedEventThreatScenario` și `SelectedEventMitreMapping` (la evenimentul ales), plus câteva din paginile vechi (`AiTacticalRecommendation`, `DatabaseSize`, `LicenseTier`, `WorkbenchCompileResult`).
+- Comenzi care ieșeau fără niciun mesaj: raportul de incident înainte de investigație, importul/lipirea în profil fără tabel ales, exportul CSV fără evenimente, pornirea monitorizării deja pornite.
+- **Cea mai mare lipsă:** în rezultatul controlului, tabelul arăta doar codul (C01, P04…), un titlu scurt și numărul probelor; probele (cu ID-uri de eveniment, GUID-uri de audit, SID-uri) nu se vedeau deloc, iar recomandarea nu apărea pe ecran.
+
+**Reparat (cu teste):**
+- `CodeExplainer` (Dfir.Windows): fiecare cod în cuvinte simple, cu ce este, de ce contează și când apare. Acoperă 35 de evenimente Windows pe jurnale (Security, System, Application, PowerShell, TerminalServices, Partition, NetworkProfile, WLAN), valorile de registru verificate, categoriile de audit (nume și GUID, inclusiv codurile %%8448–%%8451), SID-urile cunoscute, tipurile de logon, setările Defender și firewall, serviciile, cheile de politică de securitate. Un cod necunoscut nu primește un sens inventat (`CheckGuideTests`).
+- `CheckGuides`: pentru fiecare dintre cele 38 de verificări ale controlului: ce verificăm, de ce contează, cum a verificat aplicația, sursa tehnică exactă, cum se citește rezultatul și ce faceți. Un test compară lista cu verificările pe care le poate produce `ControlEvaluator`.
+- Ecranul „Verifică această stație”: lista de verificări în stânga, explicația în dreapta (listă-și-detaliu, §2), cu prima verificare deja aleasă. Panoul arată probele și codurile din ele decodate și are butonul „Copiază explicația”, gata de lipit în procesul-verbal. Cronologia acțiunilor explică codul din coloana „Probă” al rândului ales. A06 arată numele categoriei de audit lângă GUID.
+- Ecranul Politici: un singur „Pasul următor” spune ce urmează și de ce, cu un buton care îl face (deschide → înregistrează → validează → probă → aprobare → plan → aplicare → conformitate). Dacă pasul nu se poate face din contul curent, de exemplu aprobarea propriei politici, se spune cine trebuie să-l facă și butonul lipsește. Pașii manuali rămân sub „Toți pașii, manual”. Setarea din rândul ales al planului e explicată după tip: registru, audit, serviciu sau politică de securitate (`PolicyNextStepTests`).
+- Exploratorul de evenimente: fila „Ce înseamnă” (prima) cu explicația evenimentului, scenariul și tehnica de atac; filele în română.
+- Monitorizarea în timp real își afișează mesajele; comenzile de mai sus spun ce trebuie făcut întâi; mesajul despre scopul cazului spune ce se întâmplă și ce se apasă.
+- `DeadControlsTests` (App.Tests): orice buton fără comandă, clic sau meniu și orice comandă legată care nu există sau e un înlocuitor pică testul.
+
+**Rămas:** paginile vechi de sub „Avansat” (0–13) sunt încă în engleză pe alocuri și au proprietăți calculate dar neafișate. „Conturi locale și USB” și „Active Directory” duc la aceeași pagină, dar nu e o eroare: prima apare doar în modul izolat, a doua doar în cel conectat (corectat 2026-10-11). Verificarea vizuală a noului panou se face după un control real, rulat ca administrator.
+
+## 7. „Ce înseamnă” era gol la majoritatea elementelor (raportat de proprietar 2026-10-11, cu capturi)
+
+**Constatare.** Fereastra de detalii avea explicații doar pentru evenimentele Windows. Pentru celelalte (registru, factori de risc, alerte, constatări AD/Kerberos/DNS, procese, IOC, profiluri APT, tehnici MITRE, registrul de custodie etc.) spunea „Nu există o explicație predefinită”. La evenimentul 4624, „Exemplu de abuz” arăta evenimentul-model al unei baze de cunoștințe externe, cu calculatorul și contul altcuiva. Arăta și criticitatea în engleză.
+
+**Reparat (`ItemMeaning`, `ItemMeaningTests`):**
+- fiecare tip de element spune ce este, de ce apare, cât de grav e, pe ce se bazează și ce faceți;
+- toate cele 149 de tehnici MITRE folosite în aplicație au o descriere pe înțeles. Un test caută în cod orice ID nou fără descriere. Asocierea cu o tehnică e numită indiciu, nu dovadă;
+- registrul: ce zonă este (BCD, Run, Services, USBSTOR, MountedDevices, UserAssist, ShimCache, BAM, Winlogon, LSA, Defender, firewall, IFEO, ShellBags, MountPoints2 etc.). Valorile `dword:`, `hex(2)`, `hex(7)` și `hex(b)` sunt decodate;
+- 4624: logon-urile sistemului (tip 0/5, SYSTEM, conturi de calculator) sunt numite „operație normală a Windows, NU activitatea unei persoane”; logon-urile persoanelor (2, 7, 10, 11) sunt numite ca atare;
+- textul-model din baza externă nu mai este copiat; baza se aplică doar evenimentelor Security. Evenimentele vechi din baza locală care îl conțin nu îl mai afișează.
+
+## Surse
+
+- [Why everything your AI builds looks the same](https://geekyants.com/blog/why-everything-your-ai-builds-looks-the-same)
+- [AI design slop: overused UI patterns and how to fix them](https://noqta.tn/en/blog/ai-design-slop-overused-ui-patterns-fix-2026)
+- [SaaS UI looks AI generated](https://www.saasui.design/blog/saas-ui-looks-ai-generated)
+- [Why AI design looks generic](https://superdesign.dev/blog/why-ai-design-looks-generic)
+- [GOV.UK design notes: One thing per page](https://designnotes.blog.gov.uk/2015/07/03/one-thing-per-page/)
+- [GOV.UK Service Manual: Structuring forms](https://www.gov.uk/service-manual/design/form-structure)
+- [Scottish Government Design System: Question page](https://designsystem.gov.scot/patterns/question-page)
+- [Microsoft Learn: What's new in WPF for .NET 9](https://learn.microsoft.com/en-us/dotnet/desktop/wpf/whats-new/net90)
+- [dotnet/wpf issue 10043](https://github.com/dotnet/wpf/issues/10043)

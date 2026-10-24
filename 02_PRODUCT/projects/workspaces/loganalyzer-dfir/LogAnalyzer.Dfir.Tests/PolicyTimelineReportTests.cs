@@ -66,6 +66,6 @@ public sealed class PolicyTimelineReportTests
     {
         var chains = Enumerable.Range(1, 60).Select(i => Chain(BehaviorState.NotEvaluable, "x")).ToList();
         var lines = PolicyTimelineReport.Lines(new PolicyTimelineResult { Chains = chains }, maxChains: 10);
-        Assert.Contains(lines, x => x.Text.Contains("50 modificări suplimentare"));
+        Assert.Contains(lines, x => x.Text.Contains("încă 50 de modificări"));
     }
 }

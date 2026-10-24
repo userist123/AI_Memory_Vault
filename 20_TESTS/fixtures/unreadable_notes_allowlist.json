@@ -86,6 +86,18 @@
       "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
     },
     {
+      "path": "02_PRODUCT/projects/Casa3D/GEMINI_4_ARGON_FLEXIBLE_INTERIOR_DESIGN_UPGRADE_PROMPT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/Casa3D/GEMINI_4_ARGON_PRO_EDITOR_MASTER_PROMPT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
       "path": "02_PRODUCT/projects/JARVIS_COGNITIVE_BRAIN.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
@@ -686,6 +698,12 @@
       "reason": "Plain markdown work-package prompt (WP18 proposal, 2026-10-10); not a note. Frontmatter would require owner lifecycle/verification values."
     },
     {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-loganalyzer-low-b1b10.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
       "path": "00_GOVERNANCE/coordination/tasks/todo-claude-wp18-prompt.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
@@ -710,10 +728,412 @@
       "reason": "Plain markdown project document (WP18); not a note. Frontmatter would require owner lifecycle/verification values."
     },
     {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_UI_SI_POLITICI.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research document (WP18, owner request 2026-10-11); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/SECURITY_AUDIT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (LogAnalyzer); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/THIRD_PARTY_NOTICES.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (LogAnalyzer); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/ANALYSIS_2026-10-11_APPLICATION_UPDATES.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PRIVACY_OF_TEST_DATA.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (LogAnalyzer); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_AMENINTARI_ACTUALE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_COMPARATIE_INSPECTRA.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_CONCURENTA.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_CONTROL_STATII_CLASIFICATE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_CSIRT_RAPORTARE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_DFIR_TRIAJ_CE_LIPSESTE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_EXFILTRARE_AIRGAP.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_MEDII_DE_STOCARE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_PROBE_VALOARE_JURIDICA.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-11_UX_NESPECIALISTI.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-12_COMPARATIE_AIRGAP_LOGANALYZER_INSPECTRA.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-12_SECURITATE_UNELTEI_SI_ACREDITARE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-12_UTILITATE_SI_FLUX_DE_LUCRU.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/REVIEW_2026-10-11_SENIOR_DETECTION_AND_PERFORMANCE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/REVIEW_2026-10-12_INVESTIGATION_REPORT_USEFULNESS_AND_TERMINOLOGY.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research/review document (LogAnalyzer, 2026-10); not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/utilizare/ANEXA_VERIFICARI_SI_CODURI.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (LogAnalyzer); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/utilizare/GHID_DE_UTILIZARE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (LogAnalyzer); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-loganalyzer-review.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
       "path": "00_GOVERNANCE/coordination/tasks/todo-fable-remediation.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent checkpoint file (00_GOVERNANCE/coordination/tasks/README.md template); not a memory note, intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/EDITIONS_AND_POSTURE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (three editions and per-posture check applicability); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/DESIGN_2026-10-16_OFFICER_SIGNATURE_AND_AUDIT_ANCHOR.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown design note (security officer qualified signature, audit-log anchor); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/USABILITY_2026-10-16_CLICK_AUDIT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown project document (usability click audit and in-place glossary); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_2026-10-16_STANDARDS_STANDALONE_CLASSIFIED_WORKSTATIONS.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research document (protection of classified information on standalone workstations, public sources); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PROVENANCE_2026-10-16_PDF_SIGNING_LIBRARIES.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown provenance check (PDF signing libraries for reports); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-cross-station-media.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-signed-media-register.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/CONSTITUTION.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE1.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE2.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE3.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE4.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/PHASE5.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/tools/blender/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/packages/twin-core/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/projects/CASA3D/SHARE_PINS_DESIGN.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-antigravity-casa3d.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-antigravity-cost-router.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-pins.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-p0.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/app/SECURITY_AUDIT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/PROMPT_MASTER_TABLE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Companion of PROMPT_MASTER_PORTABLE.md, gated by 30_SCRIPTS/prompt/prompt_master_eval.py."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-prompt-master-table.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-a1.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/PLAN_A1.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-uiux.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-uiux-p2.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-a11y-p3.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-plan-tools.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-doors.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-lot3.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint file (owner rule 2026-10-08); plain markdown, not a note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-r009b-split.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-faster-search.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-windows-suite.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-loganalyzer-devmon.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-loganalyzer-e7.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-loganalyzer-release.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/utilizare/PORNIRE_INCEPATOR_2026-10-22.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-99-system-refs.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-import-order.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-council-limits.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-restore-skills.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-support-distinct.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent checkpoint protocol / working checkpoint, plain markdown; not a vault note."
     }
   ]
 }

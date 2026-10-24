@@ -1,0 +1,539 @@
+{
+  "schema": "loganalyzer-findings-register/1",
+  "prepared_by": "Claude, delegat de proprietar (2026-10-22)",
+  "prepared_utc": "2026-10-22T07:24:46Z",
+  "note": "Finalizat de Claude cu delegarea proprietarului din 2026-10-22, pentru versiunea de demonstrație. Cele patru puncte deschise sunt decizii ale proprietarului; înainte de folosirea într-o instituție publică registrul se revede de proprietar.",
+  "findings": [
+    {
+      "id": "SA-1",
+      "severity": "high",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "HTML reports unencoded, no CSP",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 18)",
+      "evidence": {
+        "commits": [
+          "926e0f235"
+        ],
+        "note": "",
+        "tests": "UI.Tests `HtmlReportEncodingTests` (4): `<script>`, `\"><img onerror>` and `'`-attribute payloads in every field of both reports come out encoded; CSP `default-src 'none'` present"
+      }
+    },
+    {
+      "id": "SA-2",
+      "severity": "high",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Host-changing actions not role-gated; approver = applier",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 19)",
+      "evidence": {
+        "commits": [
+          "94a2bbb8c"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `HostChangeRoleGateTests` (8): operator session → Apply/Rollback/Approve/Contain/Release throw `HostChangeNotAuthorizedException`, isolate/restore/IoC return `NOT_AUTHORIZED`, auditpol refused, nothing written (evidence dir, case dir, fake firewall/settings unchanged); same account approv"
+      }
+    },
+    {
+      "id": "SA-3",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Salted-hash licence with public salt; licence.lic tracked",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 20)",
+      "evidence": {
+        "commits": [
+          "375332020"
+        ],
+        "note": "",
+        "tests": "UI.Tests `CoreLicenseKeyTests` (7): old-scheme golden key → `LegacyScheme`; key signed by another key → `BadSignature`; valid signed key accepted; wrong hardware id / after expiry refused; no compiled-in key → refused. App.Tests `LicenseCliTests` (6). **Owner action:** run `license-keygen` offline a"
+      }
+    },
+    {
+      "id": "SA-4",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Auth store ACL neither set nor checked; unkeyed audit chain",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 21)",
+      "evidence": {
+        "commits": [
+          "9225bb936"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `AuthStoreProtectionTests` (10): Users:Write folder → \"magazia de conturi neprotejată\", sign-in refused, admin continues only with `acknowledgeUnprotectedStore` (audited `auth.store_unprotected_ack`), operator card refused before the PIN; recomputed chain entry without the key → `VerifyAu"
+      }
+    },
+    {
+      "id": "SA-5",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Native libraries self-extracted to a user-writable folder",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 22)",
+      "evidence": {
+        "commits": [
+          "218da0fc5"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `NativeLibraryManifestTests` (5): changed / missing / extra DLL and missing or malformed manifest fail with a Romanian message. Local `dotnet publish` of LogAnalyzer.App: 8 native DLLs next to the exe + `native-libraries.sha256`; published `--self-test` exit 0; no new `%TEMP%\\.net` extrac"
+      }
+    },
+    {
+      "id": "SA-6",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "PowerShell collector command line built by interpolation",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 23)",
+      "evidence": {
+        "commits": [
+          "f06bf780b"
+        ],
+        "note": "",
+        "tests": "UI.Tests `PowerShellCollectorArgumentsTests` (4) and `AuditCollectorStationNameTests` (3): `E:\\`, a path with spaces and a hostname with `\"` reach the script verbatim through `ArgumentList`; an invalid station name is refused before start"
+      }
+    },
+    {
+      "id": "SA-7",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "UDP syslog receiver: all interfaces, no source filter, raw lines, unbounded UI log, hostname as path",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 24)",
+      "evidence": {
+        "commits": [
+          "d683c23f5"
+        ],
+        "note": "",
+        "tests": "UI.Tests `SyslogIngestSecurityTests` (9): bound to one chosen interface, source allow-list, a datagram with `\\r\\n[fake]` is one escaped line, size/rate caps, UI buffer capped, hostname with `..` refused, SHA-256 computed while writing"
+      }
+    },
+    {
+      "id": "SA-8",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "CSV formula injection in the Plaso/super-timeline export",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 25)",
+      "evidence": {
+        "commits": [
+          "019f72246"
+        ],
+        "note": "",
+        "tests": "UI.Tests `CsvFormulaNeutralisationTests` (2): `=1+1`, `+`, `-`, `@`, TAB, CR cells start with `'` in the super-timeline and timeline CSV"
+      }
+    },
+    {
+      "id": "SA-9",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Lock file only for Dfir.Windows; floating test versions; no vulnerable-package scan in CI",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 26)",
+      "evidence": {
+        "commits": [
+          "d8f8aeda0"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `SupplyChainTests` (3): every project has a lock file and locked restore in CI/Release, test packages pinned exactly; CI runs `dotnet list package --vulnerable --include-transitive` (fails on any) and writes a CycloneDX SBOM per edition. `dotnet restore --locked-mode`: exit 0 (2026-10-14)"
+      }
+    },
+    {
+      "id": "SA-11",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "71 of 77 regex calls without timeout; rule-list patterns",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 27)",
+      "evidence": {
+        "commits": [
+          "361062d43"
+        ],
+        "note": "",
+        "tests": "Process-wide `REGEX_DEFAULT_MATCH_TIMEOUT` = 5 s; rule-list patterns 200 ms explicit. Dfir.Tests `RegexDefaultTimeoutTests` (4): the runtime reads the configured value; `^(a+)+$` on a hostile input ends within the timeout; LogClearAssessment on a 20 000-tag hostile XML < 5 s. UI.Tests `YaraRuleEngin"
+      }
+    },
+    {
+      "id": "SA-12",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "`XDocument.Parse` with default settings on imported XML",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 28)",
+      "evidence": {
+        "commits": [
+          "6e0b3f1df"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `SafeXmlTests` (9): DOCTYPE, entity expansion, external entity and external DTD throw `XmlException` without expanding (< 2 s); event XML with `&amp;` / `&#x41;` parses; a GPO preference with entities is listed as \"XML invalid\" and contributes nothing; Backup.xml with a DOCTYPE → `Invalid"
+      }
+    },
+    {
+      "id": "SA-13",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "GPO zip import uncapped; duplicate names throw",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 29)",
+      "evidence": {
+        "commits": [
+          "f902a7fa9"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `GpoZipLimitsTests` (8): 1 GiB entry refused with \"prea mare\"; too many entries; total size; compression ratio > 100:1 (entries > 1 MiB); a lying size header still capped by the counted read; duplicates by case or slash direction refused (\"de două ori\"); a normal backup still reads. Folde"
+      }
+    },
+    {
+      "id": "SA-14",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Plaintext evidence in %TEMP%",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 30)",
+      "evidence": {
+        "commits": [
+          "d2920fe64"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `WorkFoldersTests` (6): SQLite working copy of case evidence is in `<case>\\Work` while parsing (observed from the sink) and gone after success and after an exception; outside a case the per-user work root is used and emptied; a repaired EVTX of case evidence is kept in `<case>\\Derived\\evt"
+      }
+    },
+    {
+      "id": "SA-15",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Startup logs next to the exe; every UI exception \"handled\"",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 31)",
+      "evidence": {
+        "commits": [
+          "5577c4a47"
+        ],
+        "note": "",
+        "tests": "App.Tests `StartupLogTests` (20): logs under `%LOCALAPPDATA%\\LogAnalyzer\\logs`; user, machine, domain names and the user segment of `C:\\Users\\…` paths replaced (short names not mangled inside words); known types (I/O, access, cancellation, regex timeout, invalid data, blocked network, refused host c"
+      }
+    },
+    {
+      "id": "SA-16",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "WQL built by interpolating group Domain/Name",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 32)",
+      "evidence": {
+        "commits": [],
+        "note": "Domain and name escaped twice (object-path key: `\\` `'`; WQL string: `\\` `\"`); commit \"loganalyzer: raportul de control …\" of 2026-10-12",
+        "tests": "ControlReportFixesTests.Group_member_query_escapes_quotes_and_backslashes_in_the_group_name (query builder; runtime WMI with a renamed group not tested)"
+      }
+    },
+    {
+      "id": "SA-17",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "`CaseWorkspace.FullPath` without containment check",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 33)",
+      "evidence": {
+        "commits": [
+          "6c838bdab"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `CaseWorkspaceContainmentTests` (8): `..\\`, `Raw\\..\\..\\`, absolute, UNC and a sibling folder sharing the case-name prefix throw; a tampered evidence index (absolute or `..\\`) gives a gap \"calea probei iese din folderul cazului\" and the file is not parsed; recheck and report integrity coun"
+      }
+    },
+    {
+      "id": "SA-18",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Edition-policy anti-rollback mark only in a plain file",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 34)",
+      "evidence": {
+        "commits": [
+          "ef071ea4e"
+        ],
+        "note": "",
+        "tests": "App.Tests `EditionPolicyHighWaterTests` (4): the accepted version is written once to the hash-chained auth audit (chain stays valid); effective mark = max(file, audit), so a missing or lowered `policy.highwater` counts as the audit maximum; a v4 policy signed with the right key is refused after the "
+      }
+    },
+    {
+      "id": "SA-19",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Dead connector code with unescaped URLs and plaintext secrets",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 35)",
+      "evidence": {
+        "commits": [
+          "75900617f"
+        ],
+        "note": "",
+        "tests": "`grep` found no production consumer (only tests). UI.Tests `NetworkEditionServicesTests.Dead_online_connectors_are_not_shipped` (3): the types are absent from the assembly; the air-gap and operating-mode tests now use the SIEM forwarder"
+      }
+    },
+    {
+      "id": "SA-20",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Legacy bare PKCS#8 report key accepted silently",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 36)",
+      "evidence": {
+        "commits": [
+          "dccd98ef8"
+        ],
+        "note": "",
+        "tests": "App.Tests `LegacyReportKeyTests` (7): signing with a bare key still signs but the status line carries the warning naming `report-key-protect`; a protected key gives no warning; `report-sign` CLI warns; `report-key-protect` rewrites the file with DPAPI (or passphrase) holding the same key (same key i"
+      }
+    },
+    {
+      "id": "SA-R3",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "(research backlog #3) Reports print bidi / zero-width / control characters from evidence",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 37)",
+      "evidence": {
+        "commits": [
+          "f2dc5aec0"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `ReportTextSanitiserTests` (13): U+202E, U+2066/2069, U+200B, U+FEFF, C0/C1, LRM/ALM removed and named in \"[caractere ascunse eliminate: U+…]\"; ordinary Romanian text, CR/LF/TAB unchanged (same instance); CSV cells sanitised; IL check that no method in Core or Dfir.Windows calls QuestPDF "
+      }
+    },
+    {
+      "id": "SA-R4",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "(research backlog #4) Parsers read whole evidence files without a size cap",
+      "source": "SECURITY_AUDIT.md, audit 2026-10-12 (line 38)",
+      "evidence": {
+        "commits": [
+          "6c1401dd0"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `ParserInputCapsTests` (11): each whole-file parser declares a cap; cap + 1 byte → FAILED, error and gap \"fișier prea mare pentru acest parser\", 0 records, file not read; a shortcut above the cap on a medium is not read; EVTX inspection of a 256 MiB log allocates < 32 MiB. **Not done:** U"
+      }
+    },
+    {
+      "id": "SA-V1",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Rule-list regex timeouts silently read as \"no match\" (Wp11Rules.Vss.cs:34, Wp14Rules.Payload.cs:385-388): a matching command padded to 30 KB timed out at 202 ms (evasion by padding)",
+      "source": "SECURITY_AUDIT.md, independent review 2026-10-14 (line 46)",
+      "evidence": {
+        "commits": [
+          "74e48218b",
+          "e8844333e"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `RulePatternTimeoutTests` (7): every shipped VSS and ClickFix pattern compiles on the linear engine; \"wmic shadowcopy delete\" padded with repeated tokens to 30 KB matches (the same input times out on the backtracking engine, checked once during the fix); a data-pack pattern the linear eng"
+      }
+    },
+    {
+      "id": "SA-V2",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Policy separation of duties compared a caller-supplied operator name with an approval read from the per-user `store.json` (PolicyExecution.cs:128-129, PolicyStore.cs:40)",
+      "source": "SECURITY_AUDIT.md, independent review 2026-10-14 (line 47)",
+      "evidence": {
+        "commits": [
+          "dd4f889b3"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `PolicyApprovalAuthorityTests` (5): with sign-in required the acting account is the signed-in one (a different typed name is refused for approve and apply); a forged `store.json` approval naming another account is refused at apply (\"nu apare în jurnalul de autentificare sigilat\"), nothing"
+      }
+    },
+    {
+      "id": "SA-V3",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Native library manifest next to the exe was unsigned, the install-folder DACL was not checked, and the check was skipped whenever `Assembly.Location` was non-empty (App.xaml.cs:35)",
+      "source": "SECURITY_AUDIT.md, independent review 2026-10-14 (line 48)",
+      "evidence": {
+        "commits": [
+          "383ef1324"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `NativeLibraryManifestTests` (+4, 9 total): the embedded manifest wins over a rewritten text file in every build/bundle combination; a Release single-file without an embedded manifest fails closed, the file is used only in Debug; a folder writable by standard users refuses an elevated sta"
+      }
+    },
+    {
+      "id": "SA-V4",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Audit_Report CSV used formula neutralisation only (MainViewModel.cs:1181-1184)",
+      "source": "SECURITY_AUDIT.md, independent review 2026-10-14 (line 49)",
+      "evidence": {
+        "commits": [
+          "c11224ad9"
+        ],
+        "note": "",
+        "tests": "App.Tests `AuditReportCsvTests` (7), UI.Tests `CsvFormulaNeutralisationTests.Ad_audit_csv_neutralises_formulas_and_removes_hidden_characters`. Grep of the solution projects: other CSV output goes through `CsvWriter`/`TimelineCsv`; the root legacy `ViewModels/MainViewModel.cs` (#21) still has the old"
+      }
+    },
+    {
+      "id": "SA-V5",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "If appending `auth.chain_sealed` failed after `Reseal()` wrote `.head`, the record was lost silently (AuthService.cs:64-68)",
+      "source": "SECURITY_AUDIT.md, independent review 2026-10-14 (line 50)",
+      "evidence": {
+        "commits": [
+          "430f2cce5"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `AuthStoreProtectionTests.A_seal_that_could_not_be_recorded_is_reported_not_silent`: read-only audit file, key created → head sealed, line missing, state set with the exception type; a normal start reports nothing"
+      }
+    },
+    {
+      "id": "SA-V6",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "`LicenseService` returned the constant `UNKNOWN_HW_ID_001` when WMI failed (LicenseService.cs:192), so one licence fitted every station with broken WMI",
+      "source": "SECURITY_AUDIT.md, independent review 2026-10-14 (line 51)",
+      "evidence": {
+        "commits": [
+          "842d7ddd5"
+        ],
+        "note": "",
+        "tests": "UI.Tests `CoreLicenseKeyTests` (+2): an unreadable CPU or board value throws instead of hashing a placeholder; activation and saved-licence validation return `HardwareIdUnavailable` with the Romanian message and write nothing"
+      }
+    },
+    {
+      "id": "SA-W1",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Rollback bypassed approval: it trusted an execution record whose `.sha256` sidecar any same-user process can recompute, and checked neither the policy state nor the sealed audit (PolicyExecution.cs:221-229, 281-289; PolicyViewModel.cs:190)",
+      "source": "SECURITY_AUDIT.md, review of the remediations 2026-10-14 (line 59)",
+      "evidence": {
+        "commits": [
+          "c306d53d5"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `PolicySealedLifecycleTests`: a record whose `Before` was edited and sidecar recomputed is refused (\"jurnalul de autentificare\", \"Nu s-a schimbat nimic\"), the station value and the evidence folder are byte-identical; a fabricated execution id is refused; rollback without the store or afte"
+      }
+    },
+    {
+      "id": "SA-W2",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Retirement was written only to store.json, so setting a retired policy back to APPROVED there made it applicable again (PolicyStore.cs:105-118)",
+      "source": "SECURITY_AUDIT.md, review of the remediations 2026-10-14 (line 60)",
+      "evidence": {
+        "commits": [
+          "c306d53d5"
+        ],
+        "note": "",
+        "tests": "`PolicySealedLifecycleTests.Retirement_is_sealed_and_a_retired_policy_set_back_to_approved_in_the_store_is_refused`: after retirement the sealed approvals are empty and apply is refused, nothing written"
+      }
+    },
+    {
+      "id": "SA-W3",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "Self-approval compared the approver with `Author` / `RegisteredBy` read from store.json (PolicyStore.cs:85)",
+      "source": "SECURITY_AUDIT.md, review of the remediations 2026-10-14 (line 61)",
+      "evidence": {
+        "commits": [
+          "c306d53d5"
+        ],
+        "note": "",
+        "tests": "`PolicySealedLifecycleTests`: the author who rewrote both store fields is refused (\"Auto-aprobarea\"); the sealed registrator is refused although the store names another account; an unsealed registration cannot be approved, re-registering seals it and another administrator then approves. Two existing"
+      }
+    },
+    {
+      "id": "SA-W4",
+      "severity": "medium",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "The native-library check failed open outside single-file: a Release build without an embedded manifest returned \"not checked\" and App skipped the install-folder check (NativeLibraryManifest.cs `VerifyInstall`, App.xaml.cs:51); the DLL search order was the default; legacy root projects asked for elevation",
+      "source": "SECURITY_AUDIT.md, review of the remediations 2026-10-14 (line 62)",
+      "evidence": {
+        "commits": [
+          "f8333ed50"
+        ],
+        "note": "",
+        "tests": "Dfir.Tests `NativeLibraryManifestTests` (+20 cases, 29 total): the 16-case matrix Debug/Release × manifest present/absent × elevated/not × folder protected/writable, each for single-file and not; a changed library refuses elevated or not; only the main assembly is exempt; source checks for the modul"
+      }
+    },
+    {
+      "id": "SA-W5",
+      "severity": "low",
+      "status": "resolved",
+      "disposition": "fixed",
+      "title": "The Hardware ID accepted empty WMI values and firmware placeholders (LicenseService.cs:212 `?? \"\"`), so stations whose processor and board report \"To be filled by O.E.M.\" share one id",
+      "source": "SECURITY_AUDIT.md, review of the remediations 2026-10-14 (line 63)",
+      "evidence": {
+        "commits": [
+          "c43751bf1"
+        ],
+        "note": "",
+        "tests": "UI.Tests `CoreLicenseKeyTests` (+15): 13 placeholder forms (empty, blanks, O.E.M. in two cases, Default string, None, 0, all-zero with separators, System Serial Number, Not Specified, all-F) are refused when both components are placeholders and accepted with one real component, with an unchanged id;"
+      }
+    },
+    {
+      "id": "SA-10",
+      "severity": "medium",
+      "status": "open",
+      "disposition": "owner-decision",
+      "title": "The published exe is not Authenticode-signed; no signed SHA256SUMS or startup self-verification",
+      "source": "owner item",
+      "evidence": {
+        "commits": [],
+        "note": "SECURITY_AUDIT.md #10 and Verdict item 1: owner buys an OV/EV code-signing certificate, signs in CI and publishes a signed SHA256SUMS.",
+        "tests": ""
+      }
+    },
+    {
+      "id": "SA-21",
+      "severity": "low",
+      "status": "open",
+      "disposition": "owner-decision",
+      "title": "Duplicate legacy source trees are tracked in a public repo (`_recovered/`, root `Services/`, `ViewModels/`, `LogAnalyzer.UI/AirGapped/Network.csproj`).",
+      "source": "owner item",
+      "evidence": {
+        "commits": [],
+        "note": "SECURITY_AUDIT.md #21 and Verdict item 2: owner decides archive branch or deletion of the legacy trees.",
+        "tests": ""
+      }
+    },
+    {
+      "id": "OWN-LICENSE-KEY",
+      "severity": "medium",
+      "status": "open",
+      "disposition": "owner-decision",
+      "title": "Offline licence signing key not generated; its public key is not compiled in, so every licence is refused (fail closed).",
+      "source": "owner item",
+      "evidence": {
+        "commits": [],
+        "note": "SECURITY_AUDIT.md #3 owner action and Verdict: owner runs license-keygen offline and compiles the public key into Core/Licensing/license-public-keys.txt.",
+        "tests": ""
+      }
+    },
+    {
+      "id": "OWN-QUESTPDF-LICENCE",
+      "severity": "medium",
+      "status": "open",
+      "disposition": "owner-decision",
+      "title": "QuestPDF is used under the QuestPDF Community License; Community use is allowed only when the owner meets its eligibility terms (annual gross revenue threshold).",
+      "source": "owner item",
+      "evidence": {
+        "commits": [],
+        "note": "THIRD_PARTY_NOTICES.md QuestPDF entry: owner checks eligibility against the licence terms or buys a commercial licence.",
+        "tests": ""
+      }
+    }
+  ]
+}

@@ -68,6 +68,8 @@ def one_line(d) -> str:
         line += f"; independent verifier: {d.verifier_model}"
     if d.escalate_to:
         line += f"; on failed check escalate to {d.escalate_to}"
+    elif d.model == "opus":
+        line += "; on failed check stay on Opus (Fable only for frontier sessions)"
     return line
 
 

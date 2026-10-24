@@ -113,7 +113,7 @@ public sealed class Wp18FlowTests : IDisposable
         Assert.Contains("2 verificări sunt NECONFORME", r.Problem);
         Assert.Contains("Conturi", r.Seriousness); Assert.Contains("Politici", r.Seriousness);
         Assert.Contains("FĂRĂ drepturi de administrator", r.Trust);
-        Assert.Contains("NECONFORM 2", r.Found);
+        Assert.Contains("2 probleme · 1 de lămurit cu organizația · 1 nu s-au putut verifica · 1 în regulă", r.Found);   // plain counts, no score (UX research R9)
         Assert.InRange(r.NextSteps.Count, 1, ControlResultScreen.MaxNextSteps);
         Assert.Contains(r.NextSteps, s => s.Contains("administrator"));
         Assert.Contains(r.NextSteps, s => s.Contains("profilul de proceduri"));
@@ -125,7 +125,7 @@ public sealed class Wp18FlowTests : IDisposable
         Assert.True(n.NothingFound);
         Assert.StartsWith("NIMIC NECONFORM GĂSIT", n.Headline);
         Assert.Contains("necitite: Security", n.Problem);          // the coverage travels with "nothing found"
-        Assert.Contains("NEDETERMINATE", n.Seriousness);
+        Assert.Contains("O verificare NEDETERMINATĂ", n.Seriousness);   // one check: singular (count grammar, 2026-10-12)
         Assert.DoesNotContain("SAFE", n.Headline + n.Problem + n.Trust + n.Found);
         Assert.DoesNotContain("sistem curat", (n.Headline + n.Problem).ToLowerInvariant());
     }
@@ -156,22 +156,24 @@ public sealed class Wp18FlowTests : IDisposable
     public void Station_control_guided_flow_refuses_an_empty_custom_period_and_keeps_answers_across_back_and_stop()
     {
         var vm = new StationControlViewModel();
-        Assert.Equal("Pasul 1 din 3", vm.FlowProgress);
+        Assert.Equal("Pasul 1 din 4", vm.FlowProgress);   // 2026-10-22: the optional previous-report (anchor code) step was added before the period
         vm.FlowNextCommand.Execute(null);
-        Assert.Equal(1, vm.FlowStepIndex);
+        Assert.Equal(1, vm.FlowStepIndex);                // the previous proces-verbal: optional, may stay empty
+        vm.FlowNextCommand.Execute(null);
+        Assert.Equal(2, vm.FlowStepIndex);                // the period
         vm.PeriodChoice = ControlPeriodChoice.Custom; vm.CustomDays = 0;
         vm.FlowNextCommand.Execute(null);
-        Assert.Equal(1, vm.FlowStepIndex);
+        Assert.Equal(2, vm.FlowStepIndex);
         Assert.Contains("între 1 și", vm.FlowError);
         vm.CustomDays = 45;
         vm.FlowNextCommand.Execute(null);
-        Assert.Equal(2, vm.FlowStepIndex);
+        Assert.Equal(3, vm.FlowStepIndex);
         Assert.Equal(45, vm.PeriodDays);
         Assert.NotEmpty(vm.ProfileSections);
         vm.FlowStopCommand.Execute(null);
         Assert.True(vm.FlowStopped);
         vm.FlowBackCommand.Execute(null);
-        Assert.Equal(1, vm.FlowStepIndex); Assert.Equal(45, vm.CustomDays); Assert.False(vm.FlowStopped);
+        Assert.Equal(2, vm.FlowStepIndex); Assert.Equal(45, vm.CustomDays); Assert.False(vm.FlowStopped);
     }
 
     [Fact]

@@ -80,7 +80,7 @@ public sealed class JumpListParserTests(ITestOutputHelper output) : IDisposable
         foreach (var (no, path, used, count, pinned) in entries)
         {
             var e = new byte[130];
-            Encoding.ASCII.GetBytes("LAB-PC").CopyTo(e, 72);
+            Encoding.ASCII.GetBytes("ws-01").CopyTo(e, 72);
             BinaryPrimitives.WriteInt32LittleEndian(e.AsSpan(88), no);
             BinaryPrimitives.WriteInt64LittleEndian(e.AsSpan(100), used.ToFileTimeUtc());
             BinaryPrimitives.WriteInt32LittleEndian(e.AsSpan(108), pinned ? 0 : -1);
@@ -112,7 +112,7 @@ public sealed class JumpListParserTests(ITestOutputHelper output) : IDisposable
     [Fact]
     public void DestList_entries_are_joined_to_their_links()
     {
-        var lnk = LnkParserTests.BuildLnk(@"C:\Users\u\Downloads\TOOL_302044\SETUP.EXE", "/x", @"C:\Users\u\Downloads", "LAB-PC");
+        var lnk = LnkParserTests.BuildLnk(@"C:\Users\u\Downloads\TOOL_302044\SETUP.EXE", "/x", @"C:\Users\u\Downloads", "ws-01");
         var data = BuildCfb(("1", lnk), ("DestList", DestList((1, @"C:\Users\u\Downloads\TOOL_302044\SETUP.EXE", Used, 3, false))));
         Directory.CreateDirectory(_dir);
         var p = Path.Combine(_dir, "f01b4d95cf55d32a.automaticDestinations-ms");
@@ -127,7 +127,7 @@ public sealed class JumpListParserTests(ITestOutputHelper output) : IDisposable
         Assert.Equal(@"C:\Users\u\Downloads\TOOL_302044\SETUP.EXE", e.Path);
         Assert.Equal("3", e.Fields["AccessCount"]);
         Assert.Equal("false", e.Fields["Pinned"]);
-        Assert.Equal("LAB-PC", e.Host);
+        Assert.Equal("ws-01", e.Host);
         Assert.Equal("f01b4d95cf55d32a", e.Fields["AppId"]);
         Assert.Equal("/x", e.Fields["Arguments"]);
     }

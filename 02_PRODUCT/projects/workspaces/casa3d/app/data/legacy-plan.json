@@ -1,0 +1,197 @@
+{
+  "nume": "Apartament 2 camere, decomandat",
+  "inaltime": 2.6,
+  "camere": [
+    {
+      "id": "hol",
+      "nume": "Hol",
+      "tip": "hol",
+      "x0": 0,
+      "z0": 2.6,
+      "x1": 3.2,
+      "z1": 5
+    },
+    {
+      "id": "bucatarie",
+      "nume": "Bucătărie",
+      "tip": "bucatarie",
+      "x0": 0,
+      "z0": 0,
+      "x1": 3.2,
+      "z1": 2.6
+    },
+    {
+      "id": "living",
+      "nume": "Living",
+      "tip": "living",
+      "x0": 3.2,
+      "z0": 0,
+      "x1": 8.8,
+      "z1": 3.8
+    },
+    {
+      "id": "dormitor",
+      "nume": "Dormitor",
+      "tip": "dormitor",
+      "x0": 3.2,
+      "z0": 3.8,
+      "x1": 8.8,
+      "z1": 7
+    },
+    {
+      "id": "baie",
+      "nume": "Baie",
+      "tip": "baie",
+      "x0": 0,
+      "z0": 5,
+      "x1": 3.2,
+      "z1": 7
+    }
+  ],
+  "pereti": [
+    {
+      "a": [
+        0,
+        0
+      ],
+      "b": [
+        8.8,
+        0
+      ],
+      "ext": true,
+      "goluri": [
+        {
+          "tip": "fereastra",
+          "la": 0.8,
+          "l": 1.4
+        },
+        {
+          "tip": "fereastra",
+          "la": 5,
+          "l": 2.5
+        }
+      ]
+    },
+    {
+      "a": [
+        8.8,
+        0
+      ],
+      "b": [
+        8.8,
+        7
+      ],
+      "ext": true,
+      "goluri": [
+        {
+          "tip": "fereastra",
+          "la": 0.8,
+          "l": 2
+        },
+        {
+          "tip": "fereastra",
+          "la": 4.6,
+          "l": 1.6
+        }
+      ]
+    },
+    {
+      "a": [
+        8.8,
+        7
+      ],
+      "b": [
+        0,
+        7
+      ],
+      "ext": true,
+      "goluri": []
+    },
+    {
+      "a": [
+        0,
+        7
+      ],
+      "b": [
+        0,
+        0
+      ],
+      "ext": true,
+      "goluri": [
+        {
+          "tip": "usa",
+          "la": 2.7,
+          "l": 0.9,
+          "intrare": true
+        }
+      ]
+    },
+    {
+      "a": [
+        3.2,
+        0
+      ],
+      "b": [
+        3.2,
+        7
+      ],
+      "goluri": [
+        {
+          "tip": "usa",
+          "la": 2.8,
+          "l": 0.8
+        },
+        {
+          "tip": "usa",
+          "la": 4,
+          "l": 0.8
+        }
+      ]
+    },
+    {
+      "a": [
+        0,
+        2.6
+      ],
+      "b": [
+        3.2,
+        2.6
+      ],
+      "goluri": [
+        {
+          "tip": "usa",
+          "la": 2.2,
+          "l": 0.8
+        }
+      ]
+    },
+    {
+      "a": [
+        0,
+        5
+      ],
+      "b": [
+        3.2,
+        5
+      ],
+      "goluri": [
+        {
+          "tip": "usa",
+          "la": 2.2,
+          "l": 0.8
+        }
+      ]
+    },
+    {
+      "a": [
+        3.2,
+        3.8
+      ],
+      "b": [
+        8.8,
+        3.8
+      ],
+      "goluri": []
+    }
+  ]
+}

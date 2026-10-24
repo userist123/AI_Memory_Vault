@@ -60,11 +60,12 @@ namespace LogAnalyzer.UI.Tests
         }
 
         [Fact]
-        public void Command_ok_but_rule_absent_is_not_verified()
+        public void Command_ok_but_rule_absent_is_failed()
         {
+            // R22.6 contract: the re-read shows the old state, so the action did not take effect (FAILED, never VERIFIED).
             var r = SystemDefenseExecutionService.IsolateHostFromNetwork(new FakeNetsh { AddCreatesRule = false });
             Assert.False(r.Success);
-            Assert.Equal(DefenseActionResult.NotVerified, r.Status);
+            Assert.Equal(DefenseActionResult.Failed, r.Status);
         }
 
         [Fact]
@@ -78,7 +79,7 @@ namespace LogAnalyzer.UI.Tests
             SystemDefenseExecutionService.IsolateHostFromNetwork(stuck);
             var r = SystemDefenseExecutionService.RestoreNetworkAccess(stuck);
             Assert.False(r.Success);
-            Assert.Equal(DefenseActionResult.NotVerified, r.Status);
+            Assert.Equal(DefenseActionResult.Failed, r.Status);   // the re-read shows the rule still there
         }
 
         [Fact]

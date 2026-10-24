@@ -1,0 +1,30 @@
+{
+ "fields": {
+  "incomplete": false,
+  "usage_complete": false,
+  "tokens_complete": false,
+  "total_tokens_lower_bound": true,
+  "missing_fields": [
+   "input_tokens",
+   "cache_read_input_tokens",
+   "cache_creation_input_tokens",
+   "output_tokens"
+  ],
+  "requests": 3,
+  "usage_mismatch": true,
+  "usage_mismatch_fields": [
+   "cache_read_input_tokens",
+   "cache_creation_input_tokens"
+  ]
+ },
+ "rows": {
+  "main|claude-sonnet-5-5": {
+   "input_tokens": 3,
+   "cache_read_input_tokens": 300,
+   "cache_creation_input_tokens": 0,
+   "output_tokens": 15,
+   "usage_complete": false,
+   "requests": 3
+  }
+ }
+}

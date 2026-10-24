@@ -65,7 +65,7 @@ namespace LogAnalyzer.Core.Services.Edition
 
         // Tab indexes of the main window (MainWindow.xaml TabControl order; Home was appended last, WP5).
         public const int TabTimeline = 4, TabChainOfCustody = 9, TabContainment = 13, TabStationControl = 14, TabDomainMail = 15,
-            TabInvestigation = 16, TabPolicies = 17, TabProcedureProfile = 18, TabMediaRegister = 19, TabUsersRegister = 20, TabAccounts = 21, TabHome = 22;
+            TabInvestigation = 16, TabPolicies = 17, TabProcedureProfile = 18, TabMediaRegister = 19, TabUsersRegister = 20, TabAccounts = 21, TabHome = 22, TabTransferRegister = 23;
 
         public const string NeedsNetworkReason = "necesită modul conectat; această stație este izolată (air-gap)";
 
@@ -140,7 +140,7 @@ namespace LogAnalyzer.Core.Services.Edition
                         "Rulează controlul de conformitate pe perioada aleasă. Aplicația doar citește; nu modifică nimic pe stație.",
                         TabStationControl)),
                     A(new("check_media", "Verifică un suport (USB, CD/DVD)",
-                        "Ce suporturi au fost conectate la stație și dacă sunt în registrul de medii.",
+                        "Monitorul în timp real: tot ce se conectează la stație (stick-uri, telefoane, Bluetooth, rețea, imprimante…), cu numărul de înregistrare al fiecărui mediu.",
                         TabMediaRegister)),
                     A(new("who_worked", "Cine a lucrat și când",
                         "Conturi, autentificări locale și RDP, sesiuni privilegiate, pe utilizator, cu dovada fiecăreia.",
@@ -158,13 +158,14 @@ namespace LogAnalyzer.Core.Services.Edition
                         "Import de jurnale și artefacte dintr-un folder sau de pe un suport.", TabInvestigation, IntentSource.ImportEvidence)),
                     A(new("procedure_profile", "Profilul de proceduri",
                         "Orele de lucru, rotația jurnalelor, software aprobat, zone și transferuri, după care se judecă controlul.", TabProcedureProfile)),
-                    A(new("users_register", "Registrul utilizatorilor", "Persoanele cu acces la stație și autorizațiile lor, introduse de organizație.", TabUsersRegister)),
+                    A(new("users_register", "Registrul utilizatorilor", "Persoanele cu acces la stație: conturile se preiau de pe stație cu un clic, organizația adaugă autorizațiile.", TabUsersRegister)),
                     A(new("accounts", "Persoane și carduri", "Conturile aplicației și cardurile înregistrate (numai administratorul).", TabAccounts)),
                 };
                 var nav = new[]
                 {
                     N("Control stație", TabStationControl),
-                    N("Registru medii", TabMediaRegister),
+                    N("Monitor dispozitive", TabMediaRegister),   // owner decision 2026-10-16: the media register page became the real-time device monitor
+                    N("Registrul de transferuri", TabTransferRegister),
                     N("Registru utilizatori", TabUsersRegister),
                     N("Profil de proceduri", TabProcedureProfile),
                     N("Investigație completă (caz)", TabInvestigation),
@@ -183,7 +184,7 @@ namespace LogAnalyzer.Core.Services.Edition
             if (p.PrimaryIntents.Count > MaxPrimary) yield return $"{p.PrimaryIntents.Count} intenții principale (maxim {MaxPrimary})";
             if (edition.Kind == EditionKind.Classified)
                 foreach (var i in p.PrimaryIntents.Concat(p.MoreIntents).Where(i => i.Enabled && (i.Intent.RequiresNetwork || i.Intent.RequiresFeature is not null)))
-                    yield return $"intenția „{i.Title}” este activă în ediția clasificată";
+                    yield return $"intenția „{i.Title}” este activă în ediția Standalone";
         }
     }
 }
