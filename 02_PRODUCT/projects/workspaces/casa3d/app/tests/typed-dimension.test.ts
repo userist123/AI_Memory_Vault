@@ -1,7 +1,8 @@
 // UI/UX P1-6: cote tastate în timpul desenării (modelul SketchUp „desenezi aproximativ, tastezi exact”).
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
-import { parseTypedLength, parseTypedSize, typedEndpoint, typedRect, acceptsTypedKey } from '../core/typed-dimension';
+// capătul segmentului tastat vine din core/snap.ts pointAtLength (testat în snap.test.ts)
+import { parseTypedLength, parseTypedSize, typedRect, acceptsTypedKey } from '../core/typed-dimension';
 const near = (a: number | null | undefined, b: number) => assert.ok(a != null && Math.abs(a - b) < 1e-9, `${a} ≈ ${b}`);
 
 test('lungime: întreg = cm, zecimală = m, sufixele au prioritate; virgula e zecimală', () => {
@@ -14,11 +15,6 @@ test('dimensiunile camerei: „lățime;adâncime”, „x”, „×” sau spa�
   for (const s of ['4,5;3,2', '450x320', '450 × 320', '4,5 3,2', '450*320', '4.5m;320']) { const r = parseTypedSize(s, 'metric'); near(r?.w, 4.5); near(r?.d, 3.2); }
   assert.equal(parseTypedSize('450', 'metric'), null); assert.equal(parseTypedSize('450;abc', 'metric'), null); assert.equal(parseTypedSize('1;2;3', 'metric'), null);
   assert.equal(parseTypedSize('50;300', 'metric'), null, 'sub 0,6 m, ca la camera trasă'); near(parseTypedSize('60;300', 'metric')?.w, .6);
-});
-test('capătul peretelui: pe direcția mouse-ului, la lungimea exactă; fără direcție, spre dreapta', () => {
-  const b = typedEndpoint([1, 1], [1, 5], 3.2); near(b[0], 1); near(b[1], 4.2);
-  const c = typedEndpoint([1, 1], [-4, 1], 2); near(c[0], -1); near(c[1], 1);
-  const d = typedEndpoint([1, 1], [1, 1], 2); near(d[0], 3); near(d[1], 1);
 });
 test('camera: din colțul fixat, spre cadranul în care e mouse-ul', () => {
   assert.deepEqual(typedRect([2, 2], [5, 6], { w: 4, d: 3 }), { x0: 2, z0: 2, x1: 6, z1: 5 });
