@@ -750,4 +750,7 @@ export const en: Dict = {
   "tex.rugSofa": "The moved rug no longer runs under the front legs of the sofa (at least 10 cm).",
   "tex.rugBed": "The moved rug no longer sits under the lower two thirds of the bed with a margin at the sides.",
   "issue.CHIMNEY": "A wood-burning stove needs a chimney and a technical inspection (chimney sweep, fire safety) before it is installed.",
+  "railing.product": "Product (verified price)", "railing.productHint": "The quantity comes from the length: whole pieces of profile, panel or set, or posts at most 1.2 m apart. The rest of the system and the installation stay in the unpriced list.",
+  "radiator.product": "Product (verified price)", "hvac.product": "Split unit (verified price)",
+  "sched.el.radiator": "Radiator", "sched.el.hvac": "Air conditioning", "sched.el.railing": "Railing",
 };

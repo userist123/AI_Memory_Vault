@@ -750,4 +750,7 @@ export const ro: Dict = {
   "tex.rugSofa": "Covorul mutat nu mai trece pe sub picioarele din față ale canapelei (cel puțin 10 cm).",
   "tex.rugBed": "Covorul mutat nu mai stă sub cele două treimi de jos ale patului, cu margine în lateral.",
   "issue.CHIMNEY": "Focarul pe lemne cere coș de fum și verificare tehnică (coșar, pompieri) înainte de montaj.",
+  "railing.product": "Produs (preț verificat)", "railing.productHint": "Cantitatea vine din lungime: bucăți întregi de profil, panou sau set, ori stâlpi la cel mult 1,2 m. Restul sistemului și montajul rămân în lista fără preț.",
+  "radiator.product": "Produs (preț verificat)", "hvac.product": "Aparat split (preț verificat)",
+  "sched.el.radiator": "Calorifer", "sched.el.hvac": "Aer condiționat", "sched.el.railing": "Balustradă",
 };

@@ -30,6 +30,9 @@ export interface TechPoint {
   widthM?: number;
   heightM?: number;
   model?: RadiatorModel;
+  /** produsul ales (id de material): calorifer cu panouri (`panel_radiator`), port-prosop (`towel_radiator`) sau aparat split
+   *  (`hvac_split`); lipsă = fără preț în deviz, ca până acum */
+  product?: string;
 }
 export const TECH_KINDS: Record<TechKind, { category: 'electric' | 'plumbing' | 'hvac'; height: number; label: { ro: string; en: string } }> = {
   outlet: { category: 'electric', height: 0.3, label: { ro: 'Priză simplă', en: 'Single socket' } },
@@ -153,14 +156,16 @@ export function sanitizeTech(x: unknown, snap: Pick<Snapshot, 'floor'>): TechPoi
 }
 /** Mărimile corpului (calorifer, aer condiționat), curățate: numerele finite se aduc în interval; NaN, Infinity și șirurile se
  *  resping (PlanLimitError → 400), ca un client vechi să poată salva, dar o valoare stricată să nu ajungă în 3D și în deviz. */
-export function techBodyFields(q: any): Pick<TechPoint, 'widthM' | 'heightM' | 'model'> {
+export function techBodyFields(q: any): Pick<TechPoint, 'widthM' | 'heightM' | 'model' | 'product'> {
+  // produsul (id de material) doar la calorifer și la aerul condiționat; un id stricat se elimină, nu blochează salvarea
+  const product = (q.kind === 'radiator' || q.kind === 'hvac_split') && typeof q.product === 'string' && /^[\w-]{1,80}$/.test(q.product) ? { product: q.product } : {};
   const R = PLAN_LIMITS.radiator, H = PLAN_LIMITS.hvac;
   if (q.kind === 'radiator'){
     if (q.model != null && !(RADIATOR_MODELS as readonly string[]).includes(q.model)) throw new PlanLimitError('Tipul caloriferului este invalid.');
     const w = q.widthM != null ? clampNum(q.widthM, R.widthMinM, R.widthMaxM, 'Lățimea caloriferului este invalidă.') : null;
     const h = q.heightM != null ? clampNum(q.heightM, R.heightMinM, R.heightMaxM, 'Înălțimea caloriferului este invalidă.') : null;
-    return { ...(w != null ? { widthM: w } : {}), ...(h != null ? { heightM: h } : {}), ...(q.model ? { model: q.model } : {}) }; }
-  if (q.kind === 'hvac_split' && q.widthM != null) return { widthM: clampNum(q.widthM, H.widthMinM, H.widthMaxM, 'Lățimea unității de aer condiționat este invalidă.') };
+    return { ...(w != null ? { widthM: w } : {}), ...(h != null ? { heightM: h } : {}), ...(q.model ? { model: q.model } : {}), ...product }; }
+  if (q.kind === 'hvac_split') return { ...(q.widthM != null ? { widthM: clampNum(q.widthM, H.widthMinM, H.widthMaxM, 'Lățimea unității de aer condiționat este invalidă.') } : {}), ...product };
   return {};
 }
 /** Punctul plasat manual: pe peretele cel mai apropiat al camerei în care s-a dat clic. */

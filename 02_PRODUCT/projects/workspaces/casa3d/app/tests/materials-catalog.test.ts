@@ -21,3 +21,9 @@ test('produsele noi au dovadă (preț + specificații citite de pe pagină)', ()
     assert.ok(mc.materials.filter(m => m.category === c).length >= 4, c);
   for (const m of mc.materials.filter(x => x.category === 'led_mirror')) assert.equal(m.specs?.ip, 'IP44', m.id);
 });
+test('produsele din 2026-10-24 au dovadă; sistemele de ușă, caloriferele, balustrada și aerul condiționat au destule variante', async () => {
+  const ev24 = new Map(((await import('../data/materials-evidence.2026-10-24.json')).default as any).items.map((x: any) => [x.id, x]));
+  for (const m of mc.materials.filter(x => x.verifiedAt === '2026-10-24')){ const e: any = ev24.get(m.id); assert.ok(e && e.sourceUrl === m.sourceUrl && e.evidence, m.id); }
+  for (const [c, n] of [['door_system', 4], ['panel_radiator', 4], ['railing', 3], ['hvac_split', 3]] as const) assert.ok(mc.materials.filter(m => m.category === c).length >= n, c);
+  for (const m of mc.materials.filter(x => x.category === 'door_system')) assert.ok(['sliding', 'pocket', 'folding'].includes(m.specs?.system as string), m.id);
+});
