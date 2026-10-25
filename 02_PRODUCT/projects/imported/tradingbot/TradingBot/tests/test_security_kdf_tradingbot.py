@@ -30,8 +30,8 @@ def security(tmp_path, monkeypatch):
     return mod
 
 
-def _legacy_blob(data, password):
-    key = base64.urlsafe_b64encode(hashlib.sha256(password.encode()).digest())
+def _legacy_blob(data, phrase):
+    key = base64.urlsafe_b64encode(hashlib.sha256(phrase.encode()).digest())
     return Fernet(key).encrypt(json.dumps(data).encode())
 
 
