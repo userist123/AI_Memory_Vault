@@ -9,17 +9,24 @@
 - Secret scanning #1-#15 resolved on GitHub: all were third-party examples/placeholders/public keys
   in vendored skills from commit a09e298cf3, files removed from main in 2dc9b2be7
   (#1, #9 used_in_tests; the rest false_positive).
+- CodeQL fixes (f9ef99def): hud.js XSS, voice_server.py ReDoS, auditor secret logging,
+  TradingBot salted PBKDF2 with legacy migration, SRI on the GSAP CDN scripts, hostname checks, mock sanitizer.
+- Dependabot fixes (b31702405): bumps, overrides and lockfile regen in the imported apps and skill templates;
+  0 alerts left in a vulnerable range per the reviewer's mapping.
+- Review round 1 (vault-reviewer): no blockers. Fixed after it: speech input bound raised so text after a
+  long code block is still spoken (+ regression test); KDF iteration count bounded when read; failed
+  legacy migration is logged.
 
 ## Next
-1. CodeQL in code: #556 hud.js XSS, #554 voice_server.py ReDoS, #32 audit_checks.py logging,
-   #562/#563 TradingBot password KDF, #592/#593 SRI, #577-#586 + #35 + #551-#553 hostname checks, #555 mock sanitizer.
-2. Dependabot: bumps + lockfile regen in imported apps (site/frontend, site/backend, trading-journal x3,
-   jarvis-trader-ui, rizz-coach, .agents/skills beautiful-article, loki-mode example); xlsx via the SheetJS CDN tarball.
-3. 28 alerts on RAW_IMPORTS uv.lock files that no longer exist: dismiss as inaccurate after the PR.
-4. vault-reviewer pass, PR, CI once.
+1. Delta review, PR, CI once.
+2. After merge: dismiss the 28 Dependabot alerts on the removed 06_INBOX/RAW_IMPORTS uv.lock files as inaccurate,
+   and confirm the remaining alerts closed.
+
+## Residuals (owner informed)
+- bot/trading-journal-COMPLET-v2 and nu-sterge/trading1 did not `next build` before this change either
+  (duplicate /pricing route, typed-route errors); no lockfile in either.
+- site/frontend forces webpack-dev-server 6, svgo 2 and postcss-selector-parser 7 past what CRA declares;
+  the build was checked by the worker only.
 
 ## Blockers
 - none
-
-## Key files
-- see the alert lists in the PR description
