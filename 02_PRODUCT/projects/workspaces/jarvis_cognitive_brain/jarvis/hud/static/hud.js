@@ -403,8 +403,20 @@
   function addLog(message, isHighlight) {
     if (!elLog) return;
     const li = document.createElement('li');
-    li.innerHTML = '<span class="ts">' + formatTime() + '</span>' +
-      (isHighlight ? '<span class="highlight">' + message + '</span>' : message);
+    // Build with DOM nodes + textContent: messages can carry WebSocket-sourced
+    // text (e.g. state.principal) and must never be parsed as HTML.
+    const ts = document.createElement('span');
+    ts.className = 'ts';
+    ts.textContent = formatTime();
+    li.appendChild(ts);
+    if (isHighlight) {
+      const hl = document.createElement('span');
+      hl.className = 'highlight';
+      hl.textContent = String(message);
+      li.appendChild(hl);
+    } else {
+      li.appendChild(document.createTextNode(String(message)));
+    }
     elLog.prepend(li);
     while (elLog.children.length > 60) {
       elLog.removeChild(elLog.lastChild);

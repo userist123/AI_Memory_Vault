@@ -84,7 +84,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = ChatRequestSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid', details: parsed.error.errors }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid', details: parsed.error.issues }, { status: 400 });
     }
 
     const { message, history, year } = parsed.data;

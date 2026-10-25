@@ -39,7 +39,7 @@ export async function PATCH(req: NextRequest) {
   const body = await req.json();
   const parsed = UpdateSchema.safeParse(body);
   if (!parsed.success) {
-    return NextResponse.json({ error: 'Invalid', details: parsed.error.errors }, { status: 400 });
+    return NextResponse.json({ error: 'Invalid', details: parsed.error.issues }, { status: 400 });
   }
 
   const updated = await updateNotificationPrefs(user._id!, parsed.data as Parameters<typeof updateNotificationPrefs>[1]);
