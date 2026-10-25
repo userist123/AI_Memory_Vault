@@ -57,3 +57,26 @@ def test_legacy_file_still_decrypts_and_is_migrated(security):
     assert security.load_credentials("pw") == data
     assert security.CREDENTIALS_FILE.read_bytes().startswith(b"tbkdf2$")
     assert security.load_credentials("pw") == data
+
+
+@pytest.mark.parametrize("rounds", [b"99999", b"10000001", b"999999999999", b"-5", b"abc"])
+def test_tampered_iteration_count_is_rejected(security, rounds):
+    security.save_credentials({"api_key": "k"}, "pw")
+    magic, _, salt_b64, token = security.CREDENTIALS_FILE.read_bytes().split(b"$", 3)
+    security.CREDENTIALS_FILE.write_bytes(b"$".join([magic, rounds, salt_b64, token]))
+    assert security.load_credentials("pw") == {}
+
+
+def test_failed_migration_is_logged_and_keeps_legacy_file(security, monkeypatch, caplog):
+    data = {"api_key": "abc"}
+    blob = _legacy_blob(data, "pw")
+    security.CREDENTIALS_FILE.write_bytes(blob)
+
+    def fail(*_args, **_kwargs):
+        raise OSError("disk full")
+
+    monkeypatch.setattr(security, "save_credentials", fail)
+    with caplog.at_level("WARNING"):
+        assert security.load_credentials("pw") == data
+    assert "migration failed" in caplog.text
+    assert security.CREDENTIALS_FILE.read_bytes() == blob
