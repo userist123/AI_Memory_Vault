@@ -57,9 +57,14 @@ def ensure_voice_model() -> None:
     subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=300, check=True)
 
 
+MAX_SPEECH_INPUT = 100_000
+
+
 def speech_text(text: str) -> str:
-    # Cap the input BEFORE any regex so the work below is bounded.
-    value = str(text or "")[:6000]
+    # Bound the input BEFORE any regex so the work below is bounded. The bound is
+    # generous so text after a long code block still survives the cleanup; the
+    # spoken output is capped separately below.
+    value = str(text or "")[:MAX_SPEECH_INPUT]
     value = re.sub(r"```.*?```", " ", value, flags=re.S)
     value = re.sub(r"`([^`]*)`", r"\1", value)
     value = re.sub(r"https?://\S+", "", value)

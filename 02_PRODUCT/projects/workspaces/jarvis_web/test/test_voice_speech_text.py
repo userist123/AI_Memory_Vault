@@ -29,9 +29,15 @@ def test_output_capped():
     assert len(speech_text("a" * 20000)) == 6000
 
 
-def test_input_capped_before_processing():
-    # Content past the first 6000 characters is never processed or returned.
-    assert speech_text("a" * 6000 + "TAIL") == "a" * 6000
+def test_text_after_long_code_block_is_spoken():
+    code = "```\n" + "x = 1\n" * 1200 + "```"
+    assert speech_text("Here is the code: " + code + " Summary: done.") == "Here is the code: Summary: done."
+
+
+def test_input_bounded_before_processing():
+    # Content past MAX_SPEECH_INPUT is never processed.
+    limit = voice_server.MAX_SPEECH_INPUT
+    assert "TAIL" not in speech_text("```" + "a" * limit + "TAIL")
 
 
 def _timed(text: str) -> float:

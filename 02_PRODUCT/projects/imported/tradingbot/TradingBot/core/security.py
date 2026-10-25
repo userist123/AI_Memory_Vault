@@ -13,6 +13,7 @@ SHA-256 of the password) are still readable; after a successful legacy decrypt
 the file is re-encrypted in the new format.
 """
 import json
+import logging
 import base64
 import hashlib
 import os
@@ -25,6 +26,9 @@ from core.config import CREDENTIALS_FILE
 KDF_MAGIC = b"tbkdf2"
 KDF_ITERATIONS = 600_000
 SALT_BYTES = 16
+# Accepted iteration counts when reading a file; bounds a tampered header.
+KDF_MIN_ITERATIONS = 100_000
+KDF_MAX_ITERATIONS = 10_000_000
 
 
 def _derive_key(master_password: str, salt: bytes, iterations: int = KDF_ITERATIONS) -> bytes:
@@ -68,7 +72,10 @@ def load_credentials(master_password: str) -> dict:
         if blob.startswith(KDF_MAGIC + b"$"):
             _, iterations, salt_b64, token = blob.split(b"$", 3)
             salt = base64.urlsafe_b64decode(salt_b64)
-            fernet = Fernet(_derive_key(master_password, salt, int(iterations)))
+            rounds = int(iterations)
+            if not KDF_MIN_ITERATIONS <= rounds <= KDF_MAX_ITERATIONS:
+                return {}
+            fernet = Fernet(_derive_key(master_password, salt, rounds))
             return json.loads(fernet.decrypt(token).decode("utf-8"))
         # Legacy format: bare Fernet token keyed by unsalted SHA-256.
         fernet = Fernet(_legacy_derive_key(master_password))
@@ -80,8 +87,10 @@ def load_credentials(master_password: str) -> dict:
     # the original file is left untouched, so nothing is lost.
     try:
         save_credentials(data, master_password)
-    except OSError:
-        pass
+    except OSError as exc:
+        logging.getLogger(__name__).warning(
+            "Credentials stay in the legacy format; migration failed: %s", exc
+        )
     return data
 
 
