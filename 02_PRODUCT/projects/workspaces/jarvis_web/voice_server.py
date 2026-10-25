@@ -58,13 +58,16 @@ def ensure_voice_model() -> None:
 
 
 def speech_text(text: str) -> str:
-    value = str(text or "")
+    # Cap the input BEFORE any regex so the work below is bounded.
+    value = str(text or "")[:6000]
     value = re.sub(r"```.*?```", " ", value, flags=re.S)
     value = re.sub(r"`([^`]*)`", r"\1", value)
     value = re.sub(r"https?://\S+", "", value)
     value = re.sub(r"^\s{0,3}#{1,6}\s*", "", value, flags=re.M)
-    value = re.sub(r"^\s*[-*+]\s+", "", value, flags=re.M)
-    value = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", value)
+    value = re.sub(r"^[ \t]*[-*+][ \t]+", "", value, flags=re.M)
+    # Non-overlapping character classes (no brackets inside the label or the
+    # target) keep this linear instead of polynomial on inputs like "[[[[...".
+    value = re.sub(r"\[([^\[\]]+)\]\([^()\[\]]+\)", r"\1", value)
     value = re.sub(r"[*_~]+", "", value)
     value = re.sub(r"\s+", " ", value).strip()
     return value[:6000]

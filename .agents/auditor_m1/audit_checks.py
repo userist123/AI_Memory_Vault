@@ -21,6 +21,9 @@ secret_pats = [
     re.compile(r'xox[baprs]-[a-zA-Z0-9]{10,}'),
 ]
 
+# Rule names for secret_pats, by index. Findings report only path:line and the
+# rule name, never the matched value or the line that contains it.
+secret_rule_names = ["assigned-credential", "openai-style-key", "google-api-key", "github-pat", "slack-token"]
 secret_findings = []
 for root, dirs, files in os.walk(PROJECT_DIR):
     if "__pycache__" in root or ".git" in root or ".pytest_cache" in root:
@@ -30,19 +33,19 @@ for root, dirs, files in os.walk(PROJECT_DIR):
             filepath = os.path.join(root, f)
             with open(filepath, "r", encoding="utf-8", errors="ignore") as fh:
                 for line_idx, line in enumerate(fh, 1):
-                    for pat in secret_pats:
+                    for rule_idx, pat in enumerate(secret_pats):
                         m = pat.search(line)
                         if m:
                             # ignore fixture mock tokens like test_mock_bearer_token
                             val = m.group(0)
                             if "test_mock" in val or "mock" in val:
                                 continue
-                            secret_findings.append((filepath, line_idx, line.strip()))
+                            secret_findings.append((filepath, line_idx, secret_rule_names[rule_idx]))
 
 if secret_findings:
     print(f"FAILED: Found {len(secret_findings)} secret leaks:")
     for sf in secret_findings:
-        print(f"  {sf[0]}:{sf[1]} -> {sf[2]}")
+        print(f"  {sf[0]}:{sf[1]} [rule: {sf[2]}]")
 else:
     print("PASSED: 0 hardcoded secrets / API keys detected.")
 
