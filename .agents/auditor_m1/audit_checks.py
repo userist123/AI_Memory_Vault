@@ -13,7 +13,7 @@ print("=" * 80)
 
 # Check 1: Secret Leaks Scan
 print("\n--- 1. SECRET LEAKS SCAN ---")
-secret_pats = [
+leak_patterns = [
     re.compile(r'(?i)(api[_-]?key|secret|password|passwd|bearer|auth[_-]?token)\s*[:=]\s*["\']([a-zA-Z0-9_\-\.]{10,})["\']'),
     re.compile(r'sk-[a-zA-Z0-9]{20,}'),
     re.compile(r'AIza[a-zA-Z0-9_\-]{35}'),
@@ -21,10 +21,10 @@ secret_pats = [
     re.compile(r'xox[baprs]-[a-zA-Z0-9]{10,}'),
 ]
 
-# Rule names for secret_pats, by index. Findings report only path:line and the
+# Rule names for leak_patterns, by index. Findings report only path:line and the
 # rule name, never the matched value or the line that contains it.
-secret_rule_names = ["assigned-credential", "openai-style-key", "google-api-key", "github-pat", "slack-token"]
-secret_findings = []
+leak_rule_names = ["assigned-credential", "openai-style-key", "google-api-key", "github-pat", "slack-token"]
+leak_findings = []
 for root, dirs, files in os.walk(PROJECT_DIR):
     if "__pycache__" in root or ".git" in root or ".pytest_cache" in root:
         continue
@@ -33,19 +33,19 @@ for root, dirs, files in os.walk(PROJECT_DIR):
             filepath = os.path.join(root, f)
             with open(filepath, "r", encoding="utf-8", errors="ignore") as fh:
                 for line_idx, line in enumerate(fh, 1):
-                    for rule_idx, pat in enumerate(secret_pats):
+                    for rule_idx, pat in enumerate(leak_patterns):
                         m = pat.search(line)
                         if m:
                             # ignore fixture mock tokens like test_mock_bearer_token
                             val = m.group(0)
                             if "test_mock" in val or "mock" in val:
                                 continue
-                            secret_findings.append((filepath, line_idx, secret_rule_names[rule_idx]))
+                            leak_findings.append((filepath, line_idx, leak_rule_names[rule_idx]))
 
-if secret_findings:
-    print(f"FAILED: Found {len(secret_findings)} secret leaks:")
-    for sf in secret_findings:
-        print(f"  {sf[0]}:{sf[1]} [rule: {sf[2]}]")
+if leak_findings:
+    print(f"FAILED: Found {len(leak_findings)} secret leaks:")
+    for path, line_no, rule in leak_findings:
+        print(f"  {path}:{line_no} [rule: {rule}]")
 else:
     print("PASSED: 0 hardcoded secrets / API keys detected.")
 
