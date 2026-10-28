@@ -1,0 +1,21 @@
+{
+  "total_cost_usd": 0.1771049,
+  "num_turns": 2,
+  "duration_ms": 62528,
+  "is_error": false,
+  "subtype": "success",
+  "init_skills_design": [
+    "design",
+    "design-sync",
+    "frontend-design:frontend-design"
+  ],
+  "skill_invoked": [],
+  "tool_calls": {
+    "Write": 1
+  },
+  "exit_code": 0,
+  "task": "T2",
+  "arm": "director_official",
+  "index_exists": true,
+  "index_bytes": 18820
+}

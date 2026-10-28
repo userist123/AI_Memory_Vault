@@ -1,0 +1,72 @@
+{
+  "task": "T1",
+  "arm": "baseline",
+  "static": {
+    "generic_font": false,
+    "cream_bg": true,
+    "terracotta": false,
+    "near_black_tint": false,
+    "purple_gradient": false,
+    "middot_meta": 4,
+    "arrow_ctas": 0,
+    "numbered_markers": 5,
+    "soft_shadow": 0,
+    "radius_values": 3,
+    "gradients": 0,
+    "fade_reveal": false,
+    "has_focus_visible": false,
+    "has_reduced_motion": true,
+    "tell_score": 3.0
+  },
+  "viewports": {
+    "desktop": {
+      "h1_font": "Bricolage Grotesque",
+      "body_font": "Hanken Grotesk",
+      "horizontal_overflow": false,
+      "overflow_px": 0,
+      "scroll_width": 1440,
+      "inner_width": 1440,
+      "max_element_right_px": 1440,
+      "zero_opacity_text_elements": 0,
+      "min_text_contrast_reason": null,
+      "unparsed_text_elements": 0,
+      "unparsed_color_formats": {},
+      "bg_image_skipped": 0,
+      "prefers_dark": false,
+      "upper_tracked_labels": 9,
+      "min_text_contrast": 4.286114060981208,
+      "median_text_contrast": 8.661466824731335,
+      "has_lang": true,
+      "page_height": 2997,
+      "dark_scheme": {
+        "prefers_dark": true,
+        "min_text_contrast": 5.399193747141334,
+        "median_text_contrast": 10.37716590777687,
+        "min_text_contrast_reason": null,
+        "unparsed_text_elements": 0
+      },
+      "console_errors": []
+    },
+    "mobile": {
+      "h1_font": "Bricolage Grotesque",
+      "body_font": "Hanken Grotesk",
+      "horizontal_overflow": false,
+      "overflow_px": 0,
+      "scroll_width": 390,
+      "inner_width": 390,
+      "max_element_right_px": 390,
+      "zero_opacity_text_elements": 0,
+      "min_text_contrast_reason": null,
+      "unparsed_text_elements": 0,
+      "unparsed_color_formats": {},
+      "bg_image_skipped": 0,
+      "prefers_dark": false,
+      "upper_tracked_labels": 9,
+      "min_text_contrast": 4.286114060981208,
+      "median_text_contrast": 5.8081421914088365,
+      "has_lang": true,
+      "page_height": 4544,
+      "console_errors": []
+    }
+  }
+}
