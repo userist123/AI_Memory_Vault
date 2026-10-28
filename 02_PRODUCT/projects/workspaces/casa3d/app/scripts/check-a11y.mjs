@@ -29,6 +29,9 @@ const cdp = await launch(); let failures = 0;
 try {
   const p = await page(cdp); await view(p, DESKTOP);
   const { id, token } = await makeShare(p, BASE);
+  // etichetele căutate mai jos („Lățime calorifer, …”) sunt în română, iar Chrome-ul de pe runner-ul CI e în engleză:
+  // fără limba fixată, aplicația pornește în engleză și câmpurile par să lipsească
+  await p.go(`${BASE}/`); await p.evaluate(() => { localStorage.setItem('casa3d.lang', 'ro'); return true; });
   await p.go(`${BASE}/`); failures += await audit(p, 'home');
   await p.go(`${BASE}/accesibilitate`); failures += await audit(p, 'declaratie');
   // un element care lipsește (planul, o etapă, lista) e un eșec, nu o stare sărită: altfel CI ar rămâne verde verificând mai puțin
