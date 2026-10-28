@@ -1,0 +1,158 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spițerul — Atelier de biciclete cooperativ, Cluj-Napoca</title>
+<meta name="description" content="Spițerul: cooperativă independentă de reparații biciclete în Cluj-Napoca, cu cursuri de reparații seara.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600;9..144,800&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#f4efe4;--ink:#1f2a24;--muted:#5b6560;--green:#1f4d3a;--accent:#d9541e;--card:#fffaf0;--line:#d8cfba}
+@media (prefers-color-scheme:dark){:root{--bg:#161c18;--ink:#efe9da;--muted:#a3aca5;--green:#7cc3a0;--accent:#f0875a;--card:#202823;--line:#34403a}}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font:17px/1.6 "Work Sans",system-ui,sans-serif}
+h1,h2,h3{font-family:Fraunces,Georgia,serif;line-height:1.1;margin:0}
+a{color:inherit}
+.wrap{max-width:1040px;margin:0 auto;padding:0 16px}
+header.nav{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:5}
+.nav .wrap{display:flex;justify-content:space-between;align-items:center;height:60px;gap:12px}
+.logo{font-family:Fraunces,serif;font-weight:800;font-size:1.4rem;text-decoration:none;color:var(--green)}
+.nav nav{display:flex;gap:18px;font-size:.95rem;font-weight:500}
+.nav nav a{text-decoration:none}.nav nav a:hover{color:var(--accent)}
+.hero{padding:72px 0 56px;display:grid;gap:32px;grid-template-columns:1.3fr 1fr;align-items:center}
+.hero h1{font-size:clamp(2.4rem,6vw,4.4rem);font-weight:800;color:var(--green)}
+.hero h1 em{color:var(--accent);font-style:normal}
+.hero p{max-width:34em;color:var(--muted);font-size:1.1rem}
+.btns{display:flex;gap:12px;flex-wrap:wrap;margin-top:24px}
+.btn{display:inline-block;padding:12px 22px;border-radius:999px;background:var(--accent);color:#fff;font-weight:600;text-decoration:none;border:2px solid var(--accent)}
+.btn.alt{background:transparent;color:var(--ink);border-color:var(--ink)}
+.btn:hover{transform:translateY(-2px)}
+.wheel{width:100%;max-width:340px;justify-self:center;color:var(--green)}
+.wheel svg{width:100%;height:auto;animation:spin 40s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.wheel svg{animation:none}html{scroll-behavior:auto}}
+section{padding:56px 0;border-top:1px solid var(--line)}
+section h2{font-size:clamp(1.8rem,4vw,2.5rem);color:var(--green);margin-bottom:8px}
+.lead{color:var(--muted);margin:0 0 28px;max-width:40em}
+.prices{list-style:none;margin:0;padding:0;background:var(--card);border:1px solid var(--line);border-radius:14px}
+.prices li{display:flex;justify-content:space-between;gap:16px;padding:16px 20px;border-bottom:1px dashed var(--line)}
+.prices li:last-child{border:0}
+.prices b{display:block;font-weight:600}
+.prices span.d{color:var(--muted);font-size:.9rem}
+.prices .p{font-family:Fraunces,serif;font-weight:800;color:var(--accent);white-space:nowrap;font-size:1.15rem}
+.note{font-size:.9rem;color:var(--muted);margin-top:14px}
+.sched{width:100%;border-collapse:collapse;background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.sched th,.sched td{text-align:left;padding:14px 18px;border-bottom:1px solid var(--line);vertical-align:top}
+.sched th{background:var(--green);color:var(--bg);font-weight:600;font-size:.9rem}
+.sched tr:last-child td{border:0}
+.tag{display:inline-block;font-size:.75rem;padding:2px 10px;border-radius:99px;border:1px solid var(--accent);color:var(--accent)}
+.cols{display:grid;grid-template-columns:1fr 1fr;gap:32px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:24px}
+.card h3{font-size:1.3rem;margin-bottom:10px}
+.card p{margin:6px 0}
+.hours{width:100%;border-collapse:collapse}.hours td{padding:3px 0}.hours td:last-child{text-align:right}
+#status{font-weight:600}
+.open{color:var(--green)}.closed{color:var(--accent)}
+footer{padding:32px 0;border-top:1px solid var(--line);color:var(--muted);font-size:.9rem}
+@media (max-width:720px){.hero,.cols{grid-template-columns:1fr}.wheel{max-width:220px}.nav nav{gap:12px;font-size:.85rem}.sched th:nth-child(3),.sched td:nth-child(3){display:none}}
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+<a class="logo" href="#top">Spițerul</a>
+<nav><a href="#servicii">Servicii</a><a href="#cursuri">Cursuri</a><a href="#contact">Contact</a></nav>
+</div></header>
+
+<main id="top">
+<div class="wrap">
+<div class="hero">
+<div>
+<h1>Bicicleta ta, <em>pusă pe roate</em> de oameni, nu de corporații.</h1>
+<p>Spițerul este o cooperativă independentă de reparații biciclete din Cluj-Napoca. Reparăm cinstit, la prețuri afișate, și îți arătăm cum să o faci singur la cursurile noastre de seară.</p>
+<div class="btns"><a class="btn" href="#servicii">Vezi prețurile</a><a class="btn alt" href="#cursuri">Cursuri de seară</a></div>
+</div>
+<div class="wheel" aria-hidden="true">
+<svg viewBox="0 0 200 200" fill="none" stroke="currentColor" stroke-width="2">
+<circle cx="100" cy="100" r="92" stroke-width="7"/><circle cx="100" cy="100" r="84"/><circle cx="100" cy="100" r="12" stroke-width="4"/>
+<g id="sp"><line x1="100" y1="88" x2="100" y2="16"/><line x1="100" y1="112" x2="100" y2="184"/><line x1="88" y1="100" x2="16" y2="100"/><line x1="112" y1="100" x2="184" y2="100"/></g>
+<use href="#sp" transform="rotate(30 100 100)"/><use href="#sp" transform="rotate(60 100 100)"/>
+</svg>
+</div>
+</div>
+</div>
+
+<section id="servicii"><div class="wrap">
+<h2>Servicii și prețuri</h2>
+<p class="lead">Prețurile includ manopera. Piesele se plătesc separat, iar înainte de orice lucrare îți spunem exact cât costă.</p>
+<ul class="prices">
+<li><div><b>Verificare de siguranță</b><span class="d">Frâne, transmisie, presiune, strângeri. Gata în 20 de minute.</span></div><span class="p">30 lei</span></li>
+<li><div><b>Reglaj frâne și schimbătoare</b><span class="d">Reglaj complet față și spate.</span></div><span class="p">60 lei</span></li>
+<li><div><b>Schimb cameră sau anvelopă</b><span class="d">Per roată, inclusiv demontare și montare.</span></div><span class="p">25 lei</span></li>
+<li><div><b>Centrat roată</b><span class="d">Corectarea spițelor și a planeității.</span></div><span class="p">50 lei</span></li>
+<li><div><b>Schimb lanț și caseta</b><span class="d">Manoperă pentru lanț, caseta sau ambele.</span></div><span class="p">45 lei</span></li>
+<li><div><b>Curățare și ungere transmisie</b><span class="d">Degresare completă și lubrifiere.</span></div><span class="p">70 lei</span></li>
+<li><div><b>Revizie completă</b><span class="d">Demontare, curățare, ungere rulmenți, reglaje, test pe traseu.</span></div><span class="p">250 lei</span></li>
+<li><div><b>Montaj bicicletă din cutie</b><span class="d">Asamblare și reglaj final.</span></div><span class="p">120 lei</span></li>
+</ul>
+<p class="note">Diagnosticul este gratuit dacă repari la noi. Prețuri orientative, în lei, cu TVA inclus.</p>
+</div></section>
+
+<section id="cursuri"><div class="wrap">
+<h2>Cursuri de reparații, seara</h2>
+<p class="lead">Grupe de maximum 8 persoane, unelte la dispoziție. Vii cu bicicleta ta și pleci știind să o repari. Nu e nevoie de experiență.</p>
+<table class="sched">
+<thead><tr><th>Ziua</th><th>Ora</th><th>Curs</th><th>Preț</th></tr></thead>
+<tbody>
+<tr><td>Luni</td><td>18:30–20:30</td><td>Bazele mecanicii <span class="tag">începători</span></td><td>90 lei</td></tr>
+<tr><td>Marți</td><td>18:30–20:30</td><td>Frâne și schimbătoare</td><td>90 lei</td></tr>
+<tr><td>Miercuri</td><td>19:00–21:00</td><td>Roți și spițe</td><td>110 lei</td></tr>
+<tr><td>Joi</td><td>18:30–20:30</td><td>Atelier liber: lucrezi la bicicleta ta cu ajutor <span class="tag">toate nivelurile</span></td><td>40 lei</td></tr>
+</tbody>
+</table>
+<p class="note">Luni, marți și miercuri sunt serii de câte 4 săptămâni. Atelierul liber de joi se plătește la fiecare vizită. Membrii cooperativei au 20% reducere. Înscrieri prin telefon sau e-mail.</p>
+</div></section>
+
+<section id="contact"><div class="wrap">
+<h2>Locație și contact</h2>
+<p class="lead">Ne găsești într-un atelier din curtea interioară, la parter. Ai loc de parcare pentru biciclete chiar la ușă.</p>
+<div class="cols">
+<div class="card">
+<h3>Atelierul</h3>
+<p>Strada Memorandumului 21<br>400114 Cluj-Napoca, Cluj</p>
+<p><a href="https://www.openstreetmap.org/search?query=Strada%20Memorandumului%2021%20Cluj-Napoca" target="_blank" rel="noopener">Deschide pe hartă →</a></p>
+<p>Tel: <a href="tel:+40264000000">0264 000 000</a><br>E-mail: <a href="mailto:salut@spiterul.example">salut@spiterul.example</a></p>
+</div>
+<div class="card">
+<h3>Program</h3>
+<table class="hours">
+<tr><td>Luni – Vineri</td><td>10:00 – 18:00</td></tr>
+<tr><td>Sâmbătă</td><td>10:00 – 14:00</td></tr>
+<tr><td>Duminică</td><td>Închis</td></tr>
+<tr><td>Cursuri (L–J)</td><td>seara, vezi mai sus</td></tr>
+</table>
+<p id="status" aria-live="polite"></p>
+</div>
+</div>
+</div></section>
+</main>
+
+<footer><div class="wrap">© <span id="yr"></span> Spițerul — cooperativă de reparații biciclete, Cluj-Napoca.</div></footer>
+
+<script>
+document.getElementById('yr').textContent=new Date().getFullYear();
+(function(){
+  var el=document.getElementById('status');
+  var parts=new Intl.DateTimeFormat('en-GB',{timeZone:'Europe/Bucharest',weekday:'short',hour:'2-digit',minute:'2-digit',hourCycle:'h23'}).formatToParts(new Date());
+  var g=function(t){return parts.find(function(p){return p.type===t}).value};
+  var day=g('weekday'),m=+g('hour')*60+ +g('minute');
+  var h={Mon:[600,1080],Tue:[600,1080],Wed:[600,1080],Thu:[600,1080],Fri:[600,1080],Sat:[600,840]}[day];
+  var open=h&&m>=h[0]&&m<h[1];
+  el.className=open?'open':'closed';
+  el.textContent=open?'● Deschis acum':'● Închis acum';
+})();
+</script>
+</body>
+</html>
