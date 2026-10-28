@@ -52,6 +52,13 @@ Origin: todo-claude-frontend-design.md -> owner picked A2 (2026-10-22, chat).
       README.md/README.en.md; checkpoint + design-system PLAN/README have no note frontmatter -> added to
       20_TESTS/fixtures/unreadable_notes_allowlist.json (repo convention for plain documents). Re-run: 12 + 10 passed.
 
+- [x] 2026-10-28 claude: CI #312 red after 6 days (npm lockfiles critical = repo-wide audit, fixed on main by #355;
+      regression-and-heldout cancelled at the old 20/30 min limit, main now 45). Merged origin/main 5dd73609f.
+      The merge exposed a real guard hit: main added a 2nd :root block to Casa3D globals.css (--dur-fast/base/slow,
+      --ease-out/std, UI/UX P2-13). Moved those values unchanged into tokens/brands/casa3d/motion.json + brand.json
+      aliases; block removed from globals.css; new parity test pins the 5 values (fails on a 120->130 ms mutation).
+      npm test 14/14; Chromium dev server: computed 0.12s/0.2s/0.32s + both cubic-beziers equal, 0 console errors.
+
 ## Next
 - CI on #312 once; then mark ready for review on owner ask (merge = owner).
 - Phase 2 (new session): see PLAN.md "Phase 2".

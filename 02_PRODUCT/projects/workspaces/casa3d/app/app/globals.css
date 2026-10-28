@@ -1284,10 +1284,10 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
   .deck .linkish, .cco .linkish{display:inline-flex;align-items:center;padding:0 6px}
 }
 
-/* Mișcare (UI/UX P2-13): tokeni de durată și curbe; dialogurile și mesajele intră cu @starting-style (fără JavaScript);
+/* Mișcare (UI/UX P2-13): tokenii de durată și curbe (--dur-*, --ease-*) vin din tokens.css (design-system,
+   brands/casa3d/motion.json); dialogurile și mesajele intră cu @starting-style (fără JavaScript);
    la schimbarea etapei se animă doar panoul lateral (View Transition), iar planul și canvasul 3D se schimbă direct,
    fără un instantaneu înghețat; suprapunerea tranziției nu oprește clicurile. Totul se oprește la mișcare redusă. */
-:root{--dur-fast:120ms;--dur-base:200ms;--dur-slow:320ms;--ease-out:cubic-bezier(.2,.8,.2,1);--ease-std:cubic-bezier(.4,0,.2,1)}
 ::view-transition{pointer-events:none}
 ::view-transition-old(root),::view-transition-new(root){animation:none}
 .side.studio-inspector{view-transition-name:stage-panel}
