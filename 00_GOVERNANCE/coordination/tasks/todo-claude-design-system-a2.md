@@ -59,6 +59,11 @@ Origin: todo-claude-frontend-design.md -> owner picked A2 (2026-10-22, chat).
       aliases; block removed from globals.css; new parity test pins the 5 values (fails on a 120->130 ms mutation).
       npm test 14/14; Chromium dev server: computed 0.12s/0.2s/0.32s + both cubic-beziers equal, 0 console errors.
 
+- [x] 2026-10-28 claude: CI then red only on Casa3D check-a11y radiator state - pre-existing on main since #352.
+      Root cause: on Linux `--lang=ro-RO` does not change navigator.language, app rendered in English, script looks
+      for Romanian labels. Fixed in PR #353 (localStorage casa3d.lang=ro; reproduced with Chrome --lang=en-US: old
+      3 FAIL like CI, new 21/21), CI 38/38, merged c27908caa. PR #310 merged a9dd6e4fa. main merged here again.
+
 ## Next
 - CI on #312 once; then mark ready for review on owner ask (merge = owner).
 - Phase 2 (new session): see PLAN.md "Phase 2".
