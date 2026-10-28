@@ -1,0 +1,57 @@
+name: Design System Tokens
+
+# The shared DTCG tokens (02_PRODUCT/projects/workspaces/design-system) and the files generated from them.
+# The tests check token shapes, OKLCH <-> hex consistency, that Casa3D's old CSS custom properties keep their
+# values, and that every committed tokens.css equals a fresh build (drift gate). No network access beyond npm ci.
+
+on:
+  push:
+    branches:
+      - main
+      - 'codex/casa3d-**'
+      - 'casa3d/**'
+    paths:
+      - '02_PRODUCT/projects/workspaces/design-system/**'
+      - '02_PRODUCT/projects/workspaces/casa3d/app/app/tokens.css'
+      - '02_PRODUCT/projects/workspaces/casa3d/app/app/globals.css'
+      - '02_PRODUCT/projects/workspaces/casa3d/app/app/layout.tsx'
+      - '.github/workflows/design-system-build.yml'
+  pull_request:
+    paths:
+      - '02_PRODUCT/projects/workspaces/design-system/**'
+      - '02_PRODUCT/projects/workspaces/casa3d/app/app/tokens.css'
+      - '02_PRODUCT/projects/workspaces/casa3d/app/app/globals.css'
+      - '02_PRODUCT/projects/workspaces/casa3d/app/app/layout.tsx'
+      - '.github/workflows/design-system-build.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  tokens:
+    name: tokens test + drift gate (${{ matrix.os }})
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: 02_PRODUCT/projects/workspaces/design-system
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4.4.0
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: 02_PRODUCT/projects/workspaces/design-system/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm test
