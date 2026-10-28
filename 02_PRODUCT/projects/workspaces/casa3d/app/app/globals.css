@@ -1233,3 +1233,230 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .import-existing .issue{margin-top:12px}
 @media(max-width:760px){.import-existing{grid-template-columns:52px minmax(0,1fr);gap:18px 22px;margin:28px 0 38px;padding:28px 22px;border-radius:34px 6px 34px 6px}.import-existing-mark>span{font-size:64px}.import-existing-mark>i{font-size:8px}.import-existing-copy h2{font-size:clamp(30px,8vw,42px)}.import-existing-note{grid-column:2;display:flex;gap:8px;border-left:0;border-top:1px solid rgb(246 240 232 / .22);padding:16px 0 0}.import-existing-note p{margin-right:12px;font-size:12px}.import-existing-note span:not(:first-child){margin-left:4px}}
 @media(max-width:440px){.import-existing{grid-template-columns:minmax(0,1fr);gap:20px}.import-existing-mark{flex-direction:row;align-items:center}.import-existing-mark>span{font-size:54px}.import-existing-mark>i{writing-mode:horizontal-tb;transform:none}.import-existing-note{grid-column:1}.import-existing-actions{align-items:flex-start;flex-direction:column}.import-existing-actions .btn{width:100%}}
+/* UI/UX P1-4: confirmarea „Aprobați tot” cu listă bifabilă pe camere și istoricul deciziilor de pe linkul clientului */
+.dlg-check{border:0;margin:0 0 var(--s-3);padding:0;min-width:0}
+.dlg-check legend{display:flex;gap:var(--s-2);align-items:baseline;justify-content:space-between;width:100%;font-size:var(--fs-sm);color:var(--lead);padding:0 0 6px}
+.dlg-check-list{max-height:min(46vh,420px);overflow:auto;border:1px solid var(--rule);border-radius:8px;padding:4px 12px;background:var(--surface)}
+.dlg-check-group h3{font:600 var(--fs-xs) var(--sans);text-transform:uppercase;letter-spacing:.08em;color:var(--lead);margin:12px 0 4px}
+.dlg-check-group label{display:flex;gap:10px;align-items:center;min-height:44px;font-size:var(--fs-sm);cursor:pointer}
+.dlg-check-group input{width:20px;height:20px;flex:none;accent-color:var(--accent)}
+.fb-log{width:min(1280px,100%);box-sizing:border-box;margin:0 auto var(--s-4);padding:var(--s-3) var(--s-4);background:var(--surface);border:1px solid var(--rule)}
+.fb-log summary{cursor:pointer;font-weight:500;min-height:44px;display:flex;align-items:center}
+.fb-log ol{list-style:none;margin:var(--s-2) 0 0;padding:0;display:grid;gap:6px;font-size:var(--fs-sm)}
+.fb-log li{display:grid;grid-template-columns:9.5em 1fr;gap:var(--s-2)} .fb-log time{color:var(--lead);font-variant-numeric:tabular-nums}
+@media (max-width:700px){ .fb-log li{grid-template-columns:1fr} }
+/* WCAG 2.2 2.5.7: butoane de rotire/zoom în vederea 3D (alternativă la tragere); ținte de 40 px */
+.v3nudge{position:absolute;right:10px;bottom:10px;display:grid;grid-template-columns:repeat(3,40px);gap:4px;z-index:2}
+.v3nudge .btn{min-height:40px;min-width:40px;padding:0;justify-content:center;font-size:15px;line-height:1}
+.v3nudge .btn:nth-child(1){grid-column:1;grid-row:2} .v3nudge .btn:nth-child(2){grid-column:2;grid-row:1} .v3nudge .btn:nth-child(3){grid-column:2;grid-row:2} .v3nudge .btn:nth-child(4){grid-column:3;grid-row:2}
+.v3nudge .btn:nth-child(5){grid-column:1;grid-row:1} .v3nudge .btn:nth-child(6){grid-column:3;grid-row:1}
+@media (max-width:700px){ .v3nudge{grid-template-columns:repeat(3,44px)} .v3nudge .btn{min-height:44px;min-width:44px} }
+/* WCAG 2.2 2.5.7: zoom și deplasare în plan cu un clic (sus-dreapta; jos-dreapta e ocupat de coordonate) */
+.toolgroup{position:relative;display:flex;flex-direction:column}
+.toolgroup>button{position:relative}
+.toolgroup .tg-caret{position:absolute;right:3px;bottom:2px;font-size:9px;line-height:1}
+.tools .toolgroup>button.is-active,.ws .tools .toolgroup>button.is-active{background:var(--t1,#1A141C);color:var(--c0,#fff);border-color:var(--t1,#1A141C)}
+.toolgroup-menu{position:absolute;left:calc(100% + 8px);top:0;z-index:40;display:flex;gap:4px;padding:6px;background:var(--surface,#fff);border:1px solid var(--line-strong,#bbb);border-radius:12px;box-shadow:0 8px 24px rgb(30 28 25 / .18)}
+.toolgroup-menu button{min-width:64px}
+.plan-text-input{min-width:200px;font:500 14px/1.3 var(--sans);padding:6px 8px;border:2px solid #7A5A36;border-radius:6px;background:#fff;color:#1A141C;transform:translateY(-50%)}
+.plan-nudge{position:absolute;right:10px;top:10px;display:grid;grid-template-columns:repeat(4,36px);gap:4px;z-index:2}
+.plan-nudge .btn.btn{min-height:36px;min-width:36px;padding:0;justify-content:center;font-size:15px;line-height:1;background:rgba(255,255,255,.92);color:#2a2320;border:1px solid rgba(60,45,30,.22);box-shadow:0 1px 2px rgba(0,0,0,.06)}
+.plan-nudge .btn.btn:hover{background:#fff;border-color:rgba(60,45,30,.45)}
+@media (max-width:700px){ .plan-nudge{grid-template-columns:repeat(4,44px)} .plan-nudge .btn{min-height:44px;min-width:44px} }
+/* meniul contextual al planului (PlanContextMenu) și cota editată pe loc: fixe pe ecran, deasupra planului */
+.plan-menu{position:fixed;z-index:40;min-width:200px;max-width:min(320px,calc(100vw - 32px));padding:4px;background:var(--surface);color:var(--ink);border:1px solid var(--line-strong);border-radius:var(--r-md);box-shadow:0 12px 32px rgb(30 28 25 / .22)}
+.plan-menu [role=menuitem]{display:flex;align-items:center;justify-content:space-between;gap:16px;width:100%;min-height:var(--hit);padding:0 10px;border:0;border-radius:var(--r-sm);background:transparent;color:inherit;font:500 var(--fs-sm)/1.2 var(--sans);text-align:left;cursor:pointer}
+.plan-menu [role=menuitem]:hover,.plan-menu [role=menuitem]:focus-visible{background:var(--accent-soft);outline:none}
+.plan-menu [role=menuitem]:focus-visible{box-shadow:inset 0 0 0 2px var(--focus)}
+.plan-menu [role=menuitem].danger{color:var(--err)}
+.plan-dim-input{position:fixed;z-index:40;width:96px;height:32px;transform:translate(-50%,-50%);padding:0 8px;border:2px solid #B8432C;border-radius:var(--r-sm);background:#FFFDF8;color:#1A141C;font:600 var(--fs-sm)/1 var(--sans);text-align:center}
+.plan-dim-input[aria-invalid=true]{border-color:#B3261E;background:#FCEBEA;color:#B3261E}
+.plan-dim-input:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+@media print{ .plan-nudge,.v3nudge{display:none} }
+/* WCAG 2.2 2.3.3 (UI/UX P1-7): cu „mișcare redusă” din sistem, nicio animație sau tranziție decorativă nu mai rulează;
+   starea finală apare imediat. Motorul 3D ascultă separat aceeași preferință pentru zborurile camerei. */
+@media (prefers-reduced-motion:reduce){ *,*::before,*::after{animation-duration:.01ms!important;animation-iteration-count:1!important;transition-duration:.01ms!important;transition-delay:0s!important;scroll-behavior:auto!important} }
+/* WCAG 2.2 2.5.8: casetele de bifat din editor au cel puțin 24 px de țintă (eticheta e și ea clicabilă) */
+label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{width:20px;height:20px;flex:none}
+/* WCAG 2.2 / recomandarea pentru telefon (UI/UX P1-7): pe ecrane tactile, țintele de pe linkul clientului au 44 px */
+@media (pointer:coarse), (max-width:700px){
+  .deck .btn, .deck-bar .btn, .deck .linkish, .cco .linkish, .fb-log summary{min-height:44px}
+  .deck .linkish, .cco .linkish{display:inline-flex;align-items:center;padding:0 6px}
+}
+
+/* Mișcare (UI/UX P2-13): tokeni de durată și curbe; dialogurile și mesajele intră cu @starting-style (fără JavaScript);
+   la schimbarea etapei se animă doar panoul lateral (View Transition), iar planul și canvasul 3D se schimbă direct,
+   fără un instantaneu înghețat; suprapunerea tranziției nu oprește clicurile. Totul se oprește la mișcare redusă. */
+:root{--dur-fast:120ms;--dur-base:200ms;--dur-slow:320ms;--ease-out:cubic-bezier(.2,.8,.2,1);--ease-std:cubic-bezier(.4,0,.2,1)}
+::view-transition{pointer-events:none}
+::view-transition-old(root),::view-transition-new(root){animation:none}
+.side.studio-inspector{view-transition-name:stage-panel}
+::view-transition-old(stage-panel){animation:var(--dur-fast) var(--ease-std) both vt-out}
+::view-transition-new(stage-panel){animation:var(--dur-base) var(--ease-out) both vt-in}
+@keyframes vt-out{to{opacity:0}} @keyframes vt-in{from{opacity:0;transform:translateY(6px)}}
+@media (prefers-reduced-motion:no-preference){
+  .dlg:not(.cmdk)[open]{transition:opacity var(--dur-base) var(--ease-out),transform var(--dur-base) var(--ease-out)}
+  @starting-style{.dlg:not(.cmdk)[open]{opacity:0;transform:translateY(8px) scale(.985)}}
+  .dlg:not(.cmdk)[open]::backdrop{transition:background-color var(--dur-base) var(--ease-out)}
+  @starting-style{.dlg:not(.cmdk)[open]::backdrop{background-color:transparent}}
+  .toast{transition:opacity var(--dur-base) var(--ease-out),translate var(--dur-base) var(--ease-out)}
+  @starting-style{.toast{opacity:0;translate:0 8px}}
+}
+@media (prefers-reduced-motion:reduce){ ::view-transition-group(*),::view-transition-old(*),::view-transition-new(*){animation:none!important} }
+/* rândul de cameră din „Finisaje”: numele are cel puțin 7em (nu se mai rupe „Livi/ng”), iar materialul se împachetează
+   în coloana lui, aliniat la dreapta, în loc să ceară toată lățimea pe un singur rând */
+.roomrow{grid-template-columns:28px minmax(7em,1fr) minmax(0,auto)} .roomrow > small{min-width:0;text-align:right;overflow-wrap:anywhere;line-height:1.3}
+/* meniul „Vederi” (UI/UX P2-11): presetări, vederile salvate cu ștergere, „Salvează vederea curentă” */
+.v3pop{position:relative;flex:0 0 auto} .v3menu.v3menu-l{left:0;right:auto;min-width:220px;max-height:min(60vh,420px);overflow:auto}
+.v3menu-h{padding:8px 14px 4px;font:500 var(--fs-xs) var(--sans);text-transform:uppercase;letter-spacing:.1em;color:var(--lead);border-top:1px solid var(--rule)}
+.v3menu-row{display:grid;grid-template-columns:minmax(0,1fr) auto;border-bottom:1px solid var(--rule)} .v3menu-row button[role=menuitem]{border-bottom:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.v3menu .v3menu-x{min-width:38px;padding:0;text-align:center;font-size:18px;color:var(--lead);border-bottom:0} .v3menu .v3menu-x:hover{color:var(--err,#a33)}
+.v3menu .v3menu-add{color:var(--accent);border-top:1px solid var(--rule)}
+/* panoul „Afișare” coboară de sub bara 3D (lângă butonul lui), nu din colțul de jos unde sunt butoanele de mișcare */
+.view3d .v3light{top:56px;bottom:auto;left:10px;right:auto;max-width:calc(100% - 20px);align-items:center;z-index:7}
+.ws .view3d .v3light{border-radius:22px}
+/* selectorul compact de etape (UI/UX P2-9): doar între 1024 și 1499 px, unde bara cu 10 etape nu încape; bara rămâne
+   în pagină (măsurătorile ei), dar ascunsă */
+.stagepick{display:none;position:relative;flex:1 1 auto;min-width:0;justify-content:center}
+.stagepick-btn{display:inline-flex;align-items:center;gap:8px;min-height:44px;padding:0 14px;border:0;border-radius:999px;background:transparent;color:inherit;font:500 var(--fs-sm) var(--sans);cursor:pointer}
+.stagepick-btn:hover{background:rgba(255,255,255,.06)} .stagepick-btn i{font-style:normal;color:var(--accent);font-size:var(--fs-xs)} .stagepick-btn b{font-weight:600}
+.stagepick-btn small{color:var(--ink-num,#9b8f9a);font-size:var(--fs-xs)}
+.stagepick-menu{position:absolute;top:calc(100% + 4px);left:50%;translate:-50% 0;z-index:30;display:grid;grid-template-columns:repeat(4,minmax(150px,auto));gap:4px 14px;padding:12px;background:var(--surface);color:var(--ink);border:1px solid var(--rule);border-radius:14px;box-shadow:0 18px 44px rgba(25,20,27,.22)}
+.stagepick-phase{display:grid;align-content:start;gap:2px} .stagepick-phase > span{font:500 10px var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--lead);padding:4px 8px}
+.stagepick-phase button{display:grid;grid-template-columns:auto 1fr auto auto;align-items:center;gap:8px;min-height:40px;padding:0 8px;border:0;border-radius:8px;background:transparent;color:var(--ink);text-align:left;font:500 var(--fs-sm) var(--sans);cursor:pointer}
+.stagepick-phase button:hover,.stagepick-phase button:focus-visible{background:var(--paper-2,#f1ece4)} .stagepick-phase button[aria-checked=true]{background:var(--accent-soft,#f6e2dc);color:var(--accent-ink,#8c2a1b)}
+.stagepick-phase button i{font-style:normal;font-size:var(--fs-xs);color:var(--ink-num,#9b8f9a)} .stagepick-phase em{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--lead)} .stagepick-phase em.ok{background:#4f8a5b;border-color:#4f8a5b}
+.stagepick-phase .count{font:600 var(--fs-xs) var(--sans);background:var(--warn-soft);color:var(--warn);border-radius:8px;padding:1px 6px}
+@media (min-width:1024px) and (max-width:1499px){
+  .stagewrap .stagepick{display:flex}
+  .stagewrap .stagebar{position:absolute;visibility:hidden;pointer-events:none;width:100%;height:0;overflow:hidden}
+  .stagewrap{position:relative;justify-content:space-between}
+}
+@media (prefers-reduced-motion:no-preference){ .stagepick-menu{transition:opacity var(--dur-base) var(--ease-out),translate var(--dur-base) var(--ease-out)} @starting-style{.stagepick-menu{opacity:0;translate:-50% -6px}} }
+/* secțiunile pliabile ale etapei (UI/UX P2-9): titlul în <summary>, cu un marcaj care se rotește; starea e ținută minte */
+.fold{margin:14px 0 0;border-top:1px solid var(--rule);padding-top:10px}
+.fold > summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:8px;min-height:44px;border-radius:8px}
+.fold > summary::-webkit-details-marker{display:none}
+.fold > summary::before{content:'';width:8px;height:8px;border-right:1.5px solid currentColor;border-bottom:1.5px solid currentColor;rotate:-45deg;flex:none;opacity:.6;transition:rotate var(--dur-fast) var(--ease-std)}
+.fold[open] > summary::before{rotate:45deg}
+.fold > summary h3{display:flex;gap:8px;align-items:center;margin:0;flex:1}
+.fold > summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.fold > .timep,.fold > .survey,.fold > .tasks.in-project{margin:6px 0 0;border-top:0;padding-top:0}
+.fold > .ctr-panel{margin-top:6px}
+/* modul „document lat”: panoul lateral are loc pentru formulare pe două coloane */
+.body.wide-side{grid-template-columns:64px minmax(0,1fr) clamp(480px,42vw,760px)}
+@media (max-width:1439px){ .body.wide-side{grid-template-columns:60px minmax(0,1fr) clamp(440px,46vw,640px)} }
+.side-wide[aria-pressed=true]{color:var(--accent)}
+.ws .stagepick-phase button[aria-checked=true]{background:#C63C29;color:#FFF8F1} .ws .stagepick-phase button[aria-checked=true] i{color:#FFE3DA}
+.ws .stagepick-phase button[aria-checked=true] em{border-color:#FFF8F1}
+
+/* ===== UI/UX P2-8: cromatica editorului recalibrată (după Linear 2026 / Geist) =====
+   În locul vinetei saturate, un neutru cald, desaturat, în OKLCH, generat din trei intrări: bază (nuanță + cromă),
+   accent și contrast. Terracotta rămâne doar pentru acțiunea principală, selecție și focus; stările „apăsat” ale
+   comutatoarelor și uneltelor devin neutre. Serif doar în conținut (planșe, documente), nu în cromatica aplicației.
+   Blocul suprascrie regulile mai vechi cu aceleași selectoare: ștergerea lui readuce tema de dinainte. */
+.ws{
+  --base-h:70; --base-c:.009; --contrast:.5; --accent-in:oklch(.555 .18 33);
+  --c0:oklch(calc(.205 - var(--contrast) * .03) var(--base-c) var(--base-h));
+  --c1:oklch(calc(.25 - var(--contrast) * .02) var(--base-c) var(--base-h));
+  --c2:oklch(.305 var(--base-c) var(--base-h));
+  --c3:oklch(.40 calc(var(--base-c) * 1.3) var(--base-h));
+  --cl:oklch(.335 var(--base-c) var(--base-h));
+  --t1:oklch(calc(.95 + var(--contrast) * .03) .008 var(--base-h));
+  --t2:oklch(calc(.80 + var(--contrast) * .05) .01 var(--base-h));
+  --t3:oklch(calc(.68 + var(--contrast) * .07) .012 var(--base-h));
+  --bg:var(--c0); --bg-2:var(--c2); --surface:var(--c1); --surface-2:var(--c2);
+  --ink:var(--t1); --ink-2:var(--t2); --ink-3:var(--t3); --ink-num:var(--t3);
+  --line:var(--cl); --line-strong:var(--c3);
+  --accent:var(--accent-in); --accent-hover:#A82F1F; --accent-soft:#4A2C32; --focus:#FF8C78;
+  background:var(--c0);
+}
+/* nuanțele derivate din accent (sintaxa relativă OKLCH) doar unde browserul o are; altfel rămân valorile fixe de mai sus */
+@supports (color: oklch(from red l c h)){
+  .ws{--accent-hover:oklch(from var(--accent-in) calc(l - .07) c h);--accent-soft:oklch(from var(--accent-in) .33 calc(c * .35) h);--focus:oklch(from var(--accent-in) calc(l + .14) c h)}
+}
+.ws .topbar{border-bottom:1px solid var(--line)} .ws .topbar:after{display:none}
+.ws .topbar .name{font:600 18px/1.15 var(--sans);letter-spacing:-.01em}
+.ws .topbar .btn:hover:not(:disabled),.ws .tb-actions .btn:hover:not(:disabled){border-color:var(--c3);background:var(--c2);color:var(--t1)}
+.ws .topbar .tb-save,.ws .topbar .btn.primary{background:var(--accent);border-color:var(--accent);color:#FFF8F1}
+.ws .topbar .tb-save:hover:not(:disabled),.ws .topbar .btn.primary:hover:not(:disabled){background:var(--accent-hover);border-color:var(--accent-hover);color:#fff}
+.ws .topbar .status{background:var(--c2);color:var(--t2);border-color:var(--c3)}
+.ws .topbar .seg{background:var(--c0);border-color:var(--c3)}
+.ws .topbar .seg button{color:var(--t2)} .ws .topbar .seg button:hover{color:var(--t1)}
+.ws .topbar .seg button[aria-pressed=true]{background:var(--t1);color:var(--c0)}
+.ws .stagebar .phase-label{color:var(--t3)}
+.ws .stagebar button{color:var(--t2)} .ws .stagebar button:hover,.ws .stagebar button[aria-current=step]{color:var(--t1)}
+.ws .stagebar button[aria-current=step]:after{background:var(--accent)}
+.ws .stagebar button i,.ws .stagebar button[aria-current=step] i{color:var(--t3)}
+.ws .stage-step{color:var(--t2)} .ws .stage-step:hover:not(:disabled){background:var(--c2);color:var(--t1)}
+.ws .stagepick-btn:hover{background:var(--c2)} .ws .stagepick-btn i{color:var(--t3)} .ws .stagepick-btn small{color:var(--t3)}
+.ws .body,.ws .view3d{background:var(--c0)}
+.ws .tools button{color:var(--t2)}
+.ws .tools button:hover{background:var(--c2);color:var(--t1);border-color:var(--c3)}
+.ws .tools button[aria-pressed=true]{background:var(--t1);color:var(--c0);border-color:var(--t1)}
+.ws .v3bar .btn,.ws .v3light{border-color:var(--c3);background:color-mix(in oklch,var(--c1) 94%,transparent);color:var(--t1);box-shadow:0 10px 28px oklch(.15 .01 70 / .22)}
+.ws .v3bar .btn:hover:not(:disabled),.ws .v3light .btn:hover:not(:disabled){background:var(--c2);color:var(--t1)}
+.ws .v3bar .btn[aria-pressed=true],.ws .v3light .btn[aria-pressed=true]{background:var(--t1);border-color:var(--t1);color:var(--c0)}
+.ws .side .stage-title{font:600 20px/1.15 var(--sans);letter-spacing:-.01em}
+.ws .side .stage-title i{background:oklch(.27 .01 70);color:oklch(.96 .01 70)}
+.ws .side h3,.ws .side h2,.ws .fold > summary h3,.ws .ctr-panel h3{font-family:var(--sans);font-weight:600;letter-spacing:-.005em}
+.ws :focus-visible{outline-color:var(--focus)}
+/* panoul lateral și bara de niveluri: aceeași bază caldă (cerneala închisă fără tentă violet) */
+.ws .side{--ink:oklch(.22 .012 var(--base-h));--ink-2:oklch(.33 .012 var(--base-h));--ink-3:oklch(.42 .012 var(--base-h));--ink-num:oklch(.42 .012 var(--base-h));--lead:oklch(.42 .012 var(--base-h));--graphite:oklch(.22 .012 var(--base-h));color:var(--ink)}
+.ws .side h3,.ws .side h2,.ws .side h4,.ws .side .stage-title{color:var(--ink)}
+.ws .side .prov,.ws .side .muted,.ws .side small,.ws .side label.f,.ws .side label.f>span,.ws .side .sm-phase{color:var(--ink-3)}
+.ws .levelbar{color:oklch(.25 .01 var(--base-h))} .ws .levelbar .btn{color:oklch(.42 .012 var(--base-h))}
+.ws .levelbar .btn[aria-selected=true],.ws .levelbar .btn[aria-pressed=true]{background:oklch(.25 .01 var(--base-h));color:oklch(.97 .008 var(--base-h))}
+.ws .levelbar .btn:hover:not(:disabled){background:oklch(.90 .012 var(--base-h));color:oklch(.25 .01 var(--base-h))}
+.ws .pcard-ed summary b{font:600 var(--fs-md) var(--sans)}
+/* restul suprafețelor închise ale editorului (paleta Ctrl+K, mesaje, previzualizare, avertismente) pe aceeași bază */
+.ws .cmdk-kbd,.ws kbd{border-color:var(--c3);background:var(--c2);color:var(--t2)}
+.ws .cmdk-card,.ws .cmdk-search,.ws .cmdk-list,.ws .previewbar,.ws .pending{background:var(--c1);color:var(--t1);border-color:var(--c3)}
+.ws .cmdk-opt{color:var(--t2)} .ws .cmdk-opt[aria-selected=true]{background:var(--accent-soft);color:var(--t1)}
+.ws .cmdk-foot{background:var(--c0);border-color:var(--cl);color:var(--t3)}
+.ws .side .toast,.ws .toast{border-color:var(--c3);background:var(--c2);color:var(--t1)}
+.ws .topbar .status{border-color:var(--c3)}
+.ws :focus-visible{outline-color:var(--focus)}
+/* bara panoramei are fundal deschis și în editorul cu temă închisă: text închis (titlul era aproape invizibil) */
+.panobar{color:#1F1A17} .panobar .muted{color:#5A524C}
+
+/* paginile întregi din editor (Comenzi, Șantier) au fundal de hârtie: aceleași culori de text ca panoul lateral (cu
+   cerneala închisă a temei .ws textul ieșea aproape invizibil — găsit de verificarea axe, UI/UX P3-17) */
+.ws .pagebody{--ink:#1F1720;--ink-2:#3B2F3A;--ink-3:#4B3D4A;--ink-num:#4B3D4A;--lead:#4B3D4A;--graphite:#1F1720;--rule:#D6C9C0;--paper:#F7F2E9;--paper-2:#EEE6DC;--surface:#F7F2E9;--surface-2:#FFFCF6;--line:#E1D6CC;--line-strong:#BFB0A7;--accent:#C63C29;--accent-soft:#F7E3DC;--focus:#A82F1F;--ok:#245842;--ok-soft:#E0EEE5;--warn:#7A4A0A;--warn-soft:#F5E8CE;--err:#9A2C22;--err-soft:#F6E2DF;color:var(--ink);color-scheme:light}
+.ws .pagebody{--ink:oklch(.22 .012 var(--base-h));--ink-2:oklch(.33 .012 var(--base-h));--ink-3:oklch(.42 .012 var(--base-h));--ink-num:oklch(.42 .012 var(--base-h));--lead:oklch(.42 .012 var(--base-h));--graphite:oklch(.22 .012 var(--base-h))}
+/* titlurile de grup din Ctrl+K: accentul deschis (contrast pe fundalul închis al paletei) */
+.ws .cmdk-gname{color:var(--focus)}
+/* linkurile de pe hârtie (pagini întregi, panoul lateral): accentul închis, nu cel deschis al cromaticii */
+.ws .pagebody a,.ws .side a{color:#A82F1F} .ws .pagebody a.btn:not(.primary),.ws .side a.btn:not(.primary){color:var(--ink)}
+/* legătura spre declarația de accesibilitate (subsolul paginii principale și al linkului clientului) */
+.a11y-foot{margin:var(--s-5) auto 0;width:min(1280px,94vw);font-size:var(--fs-sm);color:var(--ink-3)} .a11y-foot a{color:inherit;text-decoration:underline;text-underline-offset:3px}
+.deck .a11y-foot{margin:0 auto}
+.statement h2{font:600 var(--fs-lg) var(--sans);margin:var(--s-5) 0 var(--s-2)} .statement ul{display:grid;gap:8px;padding-left:1.2em} .statement p,.statement li{line-height:1.6;max-width:68ch}
+.home.statement section{margin:0;padding:0;border:0;background:none;box-shadow:none}
+/* lista obiectelor planului (UI/UX P3-16): ascunsă vizual până primește focus, apoi panou peste plan */
+.plan-mirror:not(:focus-within){position:absolute!important;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+.plan-mirror:focus-within{position:absolute;left:12px;top:12px;z-index:20;width:min(380px,calc(100% - 24px));max-height:calc(100% - 24px);overflow:auto;padding:12px 14px;background:var(--surface-2,#fffcf6);color:var(--ink,#1f1a17);border:1px solid var(--line-strong,#bfb0a7);border-radius:14px;box-shadow:0 18px 44px rgb(25 20 27 / .22)}
+.ws .plan-mirror:focus-within{--ink:oklch(.22 .012 70);--ink-3:oklch(.42 .012 70);background:#FFFCF6;color:var(--ink);border-color:#BFB0A7}
+.plan-mirror h2{font:600 var(--fs-sm) var(--sans);margin:0 0 4px} .plan-mirror h3{font:600 var(--fs-xs) var(--sans);text-transform:uppercase;letter-spacing:.1em;margin:12px 0 4px;color:var(--ink-3)}
+.plan-mirror .muted{margin:0;font-size:var(--fs-xs);color:var(--ink-3)}
+.plan-mirror ul{list-style:none;margin:0;padding:0;display:grid}
+.plan-mirror button{width:100%;min-height:36px;padding:6px 8px;border:0;border-radius:8px;background:transparent;color:inherit;text-align:left;font:400 var(--fs-sm)/1.35 var(--sans);cursor:pointer}
+.plan-mirror button:hover,.plan-mirror button:focus-visible{background:#EEE6DC} .plan-mirror button[aria-current=true]{background:#F7E3DC;color:#8C2A1B;font-weight:600}
+/* Placare / Pe perete: alegerea tipului lângă plan (vizibilă și pe telefon, spre deosebire de hintbar); legenda finisajelor de perete */
+.planwrap .toolopts{position:absolute;left:10px;top:10px;z-index:3;display:flex;gap:8px;align-items:center;background:var(--surface-2,#fffcf6);border:1px solid var(--line-strong,#d5c9be);border-radius:10px;padding:4px 8px;font-size:var(--fs-sm);color:var(--ink,#1f1a17)}
+.planwrap .toolopts select{min-height:32px}
+.planwrap .plan-legend{position:absolute;left:10px;bottom:44px;z-index:2;max-width:min(340px,calc(100% - 20px));max-height:40%;overflow:auto;background:var(--surface-2,#fffcf6);border:1px solid var(--line-strong,#d5c9be);border-radius:10px;padding:4px 10px;font-size:var(--fs-xs);color:var(--ink,#1f1a17)}
+.planwrap .plan-legend summary{cursor:pointer;min-height:24px;line-height:24px}
+.planwrap .plan-legend ul{margin:4px 0;padding-left:0;list-style:none}
+.planwrap .plan-legend b{display:inline-block;min-width:2.4em;color:inherit;font-weight:700}
+.planwrap .toolopts,.planwrap .plan-legend,.ws .planwrap .toolopts,.ws .planwrap .plan-legend{background:rgba(255,251,244,.97);color:#3d343b;border:1px solid #D5C9BE;box-shadow:0 4px 14px rgba(36,27,36,.08)}
+.planwrap .toolopts select{background:#fff;color:#1f1a17;border:1px solid #cbbfb2;border-radius:8px;padding:2px 6px}
+/* laptop 1024–1599 px: bara de sus pe un singur rând (altfel „Salvează revizia” trecea singur pe al doilea rând la 1366 px).
+   Limba și unitățile intră în meniul „Mai multe”, Anulează / Refă rămân doar cu pictograma (numele e în aria-label și title);
+   sub 1440 px și „Proiecte” rămâne doar pictogramă. */
+@media (min-width:1024px) and (max-width:1599px){
+  .prefs-inline{display:none} .tb-more{display:block}
+  .tb-actions .icon-btn .lbl{display:none}
+  .ws .topbar .name{min-width:140px}
+}
+@media (min-width:1024px) and (max-width:1439px){ .topbar > .icon-btn .lbl{display:none} }

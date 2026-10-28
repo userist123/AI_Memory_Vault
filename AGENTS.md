@@ -49,7 +49,7 @@ CLASSIFY
 
 1. Select agents before loading skills.
 2. Agent profiles are identity/persona manifests only.
-3. Capability mappings are authoritative in the current governance/agent configuration; do not rely on retired `99_SYSTEM/*` paths.
+3. Skill ids per agent profile are listed in `00_GOVERNANCE/protocols/Agent_Capability_Registry.md` (metadata; the code router uses `04_CONFIG/agent_router.json`). The council limits above win over the copy and rationale in `00_GOVERNANCE/protocols/Council_Context_Budget.md`. Both were restored from the retired `99_SYSTEM/*` paths, which must not be used.
 4. Assigned capabilities MUST NOT be loaded wholesale.
 5. Load full `SKILL.md` only after selecting the skill for the current task.
 6. Select at most two skills per agent and four skills across the council unless the task is explicitly staged.

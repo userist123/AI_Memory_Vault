@@ -61,6 +61,7 @@ public static partial class Wp14Rules
         Channels(c, found);
         PayloadFindings(c, found);        // P1: shortcuts and hidden folders on media, execution from media, Startup folder, Run-dialog commands
         ClassifiedFindings(c, found);     // classified folders: accesses and exits against the transfer register
+        UserActivityFindings(c, found);   // E7: ShellBags / RecentDocs / Office MRU / Recycle Bin against the classified folders and removable volumes
         return found;
     }
 

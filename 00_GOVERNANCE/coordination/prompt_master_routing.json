@@ -1,0 +1,343 @@
+{
+  "schema_version": 1,
+  "description": "Machine-readable form of the 'Rutare' table in PROMPT_MASTER_TABLE.md. Keywords are matched on lower-cased text with Romanian diacritics stripped; a keyword ending in '*' is a prefix, otherwise a whole word or phrase. The rule with the most keyword hits wins; ties go to the higher priority. A rule marked override wins whenever one of its keywords hits. No hit at all routes to the fallback rule.",
+  "fallback": "ambiguous",
+  "rules": [
+    {
+      "id": "prompt_for_tool",
+      "label": "Prompt pentru alt instrument AI",
+      "mode": "prompt_for_tool",
+      "templates": [],
+      "priority": 100,
+      "keywords": [
+        "scrie un prompt",
+        "scrie-mi un prompt",
+        "fa-mi un prompt",
+        "prompt pentru",
+        "write a prompt",
+        "imbunatateste promptul",
+        "improve this prompt",
+        "adapteaza promptul"
+      ]
+    },
+    {
+      "id": "mvp",
+      "label": "Site / aplicație / MVP nou",
+      "mode": "execute",
+      "templates": [
+        2,
+        13,
+        8
+      ],
+      "priority": 90,
+      "keywords": [
+        "site",
+        "website",
+        "aplicati*",
+        "app",
+        "mvp",
+        "platform*",
+        "saas",
+        "magazin online",
+        "startup",
+        "marketplace"
+      ]
+    },
+    {
+      "id": "ui",
+      "label": "Doar UI / o componentă",
+      "mode": "execute",
+      "templates": [
+        13,
+        8
+      ],
+      "priority": 80,
+      "keywords": [
+        "componenta",
+        "component",
+        "ui",
+        "interfata",
+        "landing page",
+        "buton",
+        "formular",
+        "card",
+        "navbar",
+        "design system"
+      ]
+    },
+    {
+      "id": "backend",
+      "label": "Backend / API / infrastructură",
+      "mode": "execute",
+      "templates": [
+        7
+      ],
+      "priority": 70,
+      "keywords": [
+        "backend",
+        "api",
+        "server",
+        "baza de date",
+        "microservici*",
+        "cache",
+        "coada de mesaje",
+        "webhook*"
+      ]
+    },
+    {
+      "id": "audit",
+      "label": "Cod existent – audit / refactor",
+      "mode": "execute",
+      "templates": [
+        3,
+        6
+      ],
+      "priority": 60,
+      "keywords": [
+        "audit",
+        "refactor*",
+        "codebase",
+        "cod existent",
+        "cod vechi",
+        "cod haotic",
+        "curata codul",
+        "arhitectura codului"
+      ]
+    },
+    {
+      "id": "bug",
+      "label": "Bug / incident",
+      "mode": "execute",
+      "templates": [
+        4
+      ],
+      "priority": 85,
+      "keywords": [
+        "bug",
+        "eroare",
+        "erori",
+        "crapa",
+        "crash*",
+        "nu merge",
+        "nu functioneaza",
+        "exceptie",
+        "incident",
+        "stack trace"
+      ]
+    },
+    {
+      "id": "perf",
+      "label": "Performanță",
+      "mode": "execute",
+      "templates": [
+        5
+      ],
+      "priority": 75,
+      "keywords": [
+        "lent",
+        "lenta",
+        "greu",
+        "performant*",
+        "optimiz*",
+        "memorie",
+        "viteza",
+        "se incarca greu"
+      ]
+    },
+    {
+      "id": "security",
+      "label": "Securitate",
+      "mode": "execute",
+      "templates": [
+        10
+      ],
+      "priority": 95,
+      "keywords": [
+        "securitate",
+        "audit de securitate",
+        "vulnerabil*",
+        "pentest",
+        "owasp",
+        "xss",
+        "sql injection",
+        "csrf"
+      ]
+    },
+    {
+      "id": "devops",
+      "label": "Deploy / CI/CD",
+      "mode": "execute",
+      "templates": [
+        11
+      ],
+      "priority": 65,
+      "keywords": [
+        "deploy*",
+        "ci/cd",
+        "pipeline",
+        "docker*",
+        "kubernetes",
+        "k8s",
+        "hosting",
+        "monitorizare"
+      ]
+    },
+    {
+      "id": "whitepaper",
+      "label": "White paper",
+      "mode": "execute",
+      "templates": [
+        12
+      ],
+      "priority": 50,
+      "keywords": [
+        "white paper",
+        "whitepaper"
+      ]
+    },
+    {
+      "id": "social",
+      "label": "Social media",
+      "mode": "execute",
+      "templates": [
+        14
+      ],
+      "priority": 50,
+      "keywords": [
+        "social media",
+        "postari",
+        "postare",
+        "instagram",
+        "tiktok",
+        "linkedin",
+        "facebook",
+        "thread"
+      ]
+    },
+    {
+      "id": "presentation",
+      "label": "Prezentare",
+      "mode": "execute",
+      "templates": [
+        15
+      ],
+      "priority": 50,
+      "keywords": [
+        "prezentare",
+        "pitch deck",
+        "slide*",
+        "keynote"
+      ]
+    },
+    {
+      "id": "longform",
+      "label": "Articol / blog / newsletter",
+      "mode": "execute",
+      "templates": [
+        16
+      ],
+      "priority": 45,
+      "keywords": [
+        "articol",
+        "blog",
+        "newsletter",
+        "script video"
+      ]
+    },
+    {
+      "id": "learning",
+      "label": "Învățare",
+      "mode": "execute",
+      "templates": [
+        17
+      ],
+      "priority": 45,
+      "keywords": [
+        "sa invat",
+        "invat",
+        "plan de invatare",
+        "curs",
+        "learn"
+      ]
+    },
+    {
+      "id": "research",
+      "label": "Cercetare",
+      "mode": "execute",
+      "templates": [
+        1
+      ],
+      "priority": 40,
+      "keywords": [
+        "cercetare",
+        "research",
+        "studiu de piata",
+        "trenduri",
+        "tendinte"
+      ]
+    },
+    {
+      "id": "competitor",
+      "label": "Analiză concurență",
+      "mode": "execute",
+      "templates": [
+        18
+      ],
+      "priority": 55,
+      "keywords": [
+        "concurent*",
+        "competitor*",
+        "concurenta"
+      ]
+    },
+    {
+      "id": "stock",
+      "label": "Acțiuni / investiții",
+      "mode": "execute",
+      "templates": [
+        19
+      ],
+      "priority": 55,
+      "keywords": [
+        "actiune",
+        "actiuni",
+        "ticker",
+        "bursa",
+        "investitie",
+        "investitii"
+      ]
+    },
+    {
+      "id": "taxes",
+      "label": "Taxe",
+      "mode": "execute",
+      "templates": [
+        20
+      ],
+      "priority": 55,
+      "keywords": [
+        "taxe",
+        "impozit*",
+        "anaf",
+        "declaratia unica",
+        "deduceri",
+        "fiscal*"
+      ]
+    },
+    {
+      "id": "ambiguous",
+      "label": "Cerință ambiguă cu decizii critice",
+      "mode": "clarify",
+      "templates": [
+        9
+      ],
+      "priority": 0,
+      "keywords": [
+        "nu stiu ce stack",
+        "nu stiu ce arhitectura",
+        "ce tehnologie sa aleg"
+      ],
+      "override": true
+    }
+  ]
+}

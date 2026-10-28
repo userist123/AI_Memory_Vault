@@ -12,10 +12,10 @@
         <!-- Header -->
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
             <StackPanel DockPanel.Dock="Left">
-                <TextBlock Text="Explainable Risk Analysis" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="Analiza riscului" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock Text="Heuristic entropy scoring, masquerading detection &amp; ISO/IEC 27042 traceable factor ledger" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
-            <Button DockPanel.Dock="Right" Content="Run AI &amp; Heuristic Evaluation" Command="{Binding RunAiAnalysisCommand}" Style="{StaticResource AccentButtonStyle}" Padding="16,8"/>
+            <Button DockPanel.Dock="Right" Content="Rulează evaluarea de risc" Command="{Binding RunAiAnalysisCommand}" Style="{StaticResource AccentButtonStyle}" Padding="16,8"/>
         </DockPanel>
 
         <!-- KPI Cards -->

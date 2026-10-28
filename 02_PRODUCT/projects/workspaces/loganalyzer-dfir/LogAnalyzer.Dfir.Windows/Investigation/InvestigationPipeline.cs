@@ -39,6 +39,23 @@ public sealed class InvestigationResult
     public List<AntiForensicCheck> AntiForensics { get; } = [];
     /// <summary>The procedure profile used by this run (null = none: log clears stay NotAssessed). Its snapshot is Analysis/procedure_profile.json.</summary>
     public ProcedureProfile? Procedure { get; set; }
+    /// <summary>E7: drive letters the station facts tie to removable media (a reopened case gets them back from Analysis/user_activity.json).</summary>
+    public List<string> FactsRemovableLetters { get; } = [];
+    /// <summary>E7: the classified folders of the profile this run used (Analysis/user_activity.json); null = take them from <see cref="Procedure"/>. A reopened case gets them from the file.</summary>
+    public List<LogAnalyzer.Dfir.Profile.ClassifiedFolderRow>? ActivityFolders { get; set; }
+    /// <summary>E7: set by the case loader for a reopened case that has user-activity rows but no saved context (written before it existed): the view then says it cannot be evaluated.</summary>
+    public string ActivityUnevaluable { get; set; } = "";
+    /// <summary>E7: ShellBags / RecentDocs / Office MRU / Recycle Bin rows of the timeline read against the profile's classified folders and the removable volumes (same view as the USER-ACTIVITY-* rules).</summary>
+    public LogAnalyzer.Dfir.Analysis.UserActivityReport UserActivityView()
+    {
+        if (ActivityUnevaluable.Length > 0)
+        {
+            // rows are listed, but none is read against folders or letters that were not saved: no relevance, no "nedefinite în profil"
+            var plain = LogAnalyzer.Dfir.Analysis.UserActivityAnalysis.Analyze(Timeline, [], [], evaluate: false);
+            return plain.Total == 0 ? plain : new LogAnalyzer.Dfir.Analysis.UserActivityReport { Items = plain.Items, Unevaluable = ActivityUnevaluable };
+        }
+        return LogAnalyzer.Dfir.Analysis.Wp14Rules.UserActivityForCase(Timeline, ActivityFolders ?? Procedure?.ClassifiedFolders, FactsRemovableLetters);
+    }
     /// <summary>WP15b: policy change timeline, configured/applied/enforced/observed levels, control gaps and unreliable-time windows (Analysis/policy_timeline.json).</summary>
     public PolicyTimelineResult? PolicyTimeline { get; set; }
     public string PolicyTimelineLine => PolicyTimeline is null ? "Cronologie politici: nedefinită (nu a fost calculată)."
@@ -77,7 +94,7 @@ public sealed class InvestigationPipeline
     public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
 
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
-        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector()];
+        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -113,6 +130,9 @@ public sealed class InvestigationPipeline
     /// <summary>The evidence type <see cref="Import"/> gives a file. Every file is evidence; one with no known type is "file" (hash IOCs, YARA). WP18: the intake screen uses the same rule.</summary>
     public static string ImportType(string f)
     {
+            // A Recycle Bin $I record keeps the original extension ($IAB12CD.lnk, $IAB12CD.evtx): it is checked before the extension, by name and
+            // content, or a deleted shortcut or event log would be typed by its extension and its deletion record lost (review round 2).
+            if (Path.GetFileName(f).StartsWith("$I", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "recycle_info") return "recycle_info";
             var ext = Path.GetExtension(f).ToLowerInvariant();
             return ext switch
             {
@@ -139,6 +159,7 @@ public sealed class InvestigationPipeline
         var n = name.ToUpperInvariant();
         if (n is "NTUSER.DAT" or "HKCU.HIV" || n.StartsWith("NTUSER", StringComparison.Ordinal) && n.EndsWith(".HIV", StringComparison.Ordinal)) return "ntuser_hive";
         if (n is "SOFTWARE" or "SOFTWARE.HIV" || n.EndsWith("_SOFTWARE.HIV", StringComparison.Ordinal)) return "software_hive";
+        if (n is "USRCLASS.DAT" or "USRCLASS.HIV" || n.StartsWith("USRCLASS", StringComparison.Ordinal) && n.EndsWith(".HIV", StringComparison.Ordinal)) return "usrclass_hive";
         return null;
     }
 
@@ -357,7 +378,9 @@ public sealed class InvestigationPipeline
         // WP14a: removable media against the media register, CD/DVD, and NIC / Wi-Fi / Bluetooth / DHCP on an air-gapped or standalone scope.
         progress?.Report("Suporturi de stocare amovibile și integritate air-gap");
         int wp14No = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n0) ? n0 : 0).DefaultIfEmpty(0).Max();
-        var wp14 = Wp14Analysis.Run(ws, r.Timeline, () => $"F-{++wp14No:D4}", mediaRegister, usersRegister, procedureProfile, systemZone, facts: LoadAirGapFacts(ws, r));
+        var airGapFacts = LoadAirGapFacts(ws, r);
+        r.FactsRemovableLetters.AddRange(airGapFacts?.RemovableLetters ?? []);
+        var wp14 = Wp14Analysis.Run(ws, r.Timeline, () => $"F-{++wp14No:D4}", mediaRegister, usersRegister, procedureProfile, systemZone, facts: airGapFacts);
         found.AddRange(wp14.Findings);
         r.MediaRegisterSha256 = wp14.MediaSha256; r.UsersRegisterSha256 = wp14.UsersSha256; r.RegisterLine = wp14.Line;
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))
@@ -409,6 +432,10 @@ public sealed class InvestigationPipeline
         r.TimelineCsv = Path.Combine(analysisDir, "timeline.csv");
         TimelineCsv.Write(r.TimelineCsv, r.Timeline);
         ws.RecordOutput("Analysis/timeline.csv", Producer, DfirInfo.ApplicationVersion, evidenceIds);
+        // E7: what the user-activity view needs after the case is reopened (timeline.csv does not keep the parser fields, the profile or the station's removable letters).
+        r.ActivityFolders = [.. r.Procedure?.ClassifiedFolders.Select(f => new LogAnalyzer.Dfir.Profile.ClassifiedFolderRow { Path = f.Path, Note = f.Note }) ?? []];
+        LogAnalyzer.Dfir.Analysis.UserActivityContext.From(r.Timeline, r.ActivityFolders, r.FactsRemovableLetters).Write(Path.Combine(analysisDir, "user_activity.json"));
+        ws.RecordOutput(LogAnalyzer.Dfir.Analysis.UserActivityContext.RelPath, Producer, DfirInfo.ApplicationVersion, evidenceIds);
         r.FindingsJson = Path.Combine(analysisDir, "findings.json");
         File.WriteAllText(r.FindingsJson, SchemaVersions.WithVersion(new { r.Findings, r.Gaps, r.Collection, RejectedFindings = r.RejectedFindings.Select(x => new { x.Finding.FindingId, x.Finding.RuleId, x.Finding.Title, x.Reason }) }, SchemaVersions.Findings));
         ws.RecordOutput("Analysis/findings.json", Producer, DfirInfo.ApplicationVersion, evidenceIds);

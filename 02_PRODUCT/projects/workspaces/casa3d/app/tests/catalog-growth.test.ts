@@ -66,3 +66,54 @@ test('baia completă (2026-10-11): cadă, bideu, walk-in, calorifer, coloană, d
   for (const o of cat.offers) if (o.provenance.verifiedAt === '2026-10-11') assert.equal(byUrl.get(o.provenance.sourceUrl!), o.price, o.id);
   assert.ok(WALL_HIGH.has('dulapOglinda') && WALL_HIGH.has('boiler'));
 });
+test('decor (2026-10-24): plante, lampadar, veioză, șemineu electric, focar pe lemne — model 3D, simbol, cameră, preț citit pe pagină', async () => {
+  const { planSymbol } = await import('../core/plan-symbols');
+  const { ON_SURFACE, NEEDS_CHIMNEY } = await import('../core/rules');
+  const { groupsForRoom } = await import('../core/furniture-fit');
+  const { validatePlacement, surfaceUnder } = await import('../core/validate');
+  const ev24 = (await import('../data/catalog-evidence.2026-10-24.json')).default as { items: { url: string; price: number; dimensionsCm: { w: number; d: number; h: number } | null }[] };
+  const g = groups(cat), eng = toEngineCatalog(cat), keys = Object.keys(g);
+  const NEW = { plantaArtificiala: 'plant', plantaNaturala: 'plant', lampadar: 'floorlamp', veioza: 'tablelamp', semineu: 'fireplace', focarLemne: 'stove' } as const;
+  for (const [k, model] of Object.entries(NEW)){ assert.ok(g[k]!.variants.length >= 2, k); assert.equal(eng[k]!.model, model, k); assert.ok(FRONT_CLEARANCE[k] !== undefined, k);
+    for (const v of g[k]!.variants){ const dm = v.dimensionsCm!; assert.ok(dm && dm.w > 0 && dm.d > 0 && dm.h > 0, v.id); const s = planSymbol(k, dm.w / 100, dm.d / 100); assert.ok(s.outline && s.detail, v.id); }
+    // fiecare grup nou e propus în cel puțin o cameră
+    assert.ok(['living', 'dormitor', 'birou', 'hol', 'bucatarie'].some(r => groupsForRoom(r, keys).suggested.includes(k)), k); }
+  // șemineul și focarul nu se propun în baie și nici în bucătărie
+  for (const k of ['semineu', 'focarLemne']) for (const r of ['baie', 'bucatarie']){ const f = groupsForRoom(r, keys); assert.ok(!f.suggested.includes(k) && !f.others.includes(k), `${k} în ${r}`); }
+  assert.ok(FRONT_CLEARANCE.focarLemne! > 0 && FRONT_CLEARANCE.semineu! > 0);
+  // fiecare ofertă din 2026-10-24 are dovada ei: același URL, același preț, aceleași dimensiuni declarate; URL-urile sunt unice
+  const byUrl = new Map(ev24.items.map(x => [x.url, x])), seen = new Set<string>();
+  const offers24 = cat.offers.filter(o => o.provenance.verifiedAt === '2026-10-24'); assert.equal(offers24.length, ev24.items.length);
+  for (const o of offers24){ const u = o.provenance.sourceUrl!, e = byUrl.get(u); assert.ok(e, o.id); assert.equal(e!.price, o.price, o.id); assert.ok(!seen.has(u), u); seen.add(u);
+    assert.equal(o.provenance.verificationType, 'product_page', o.id); assert.deepEqual(cat.variants.find(v => v.id === o.variantId)!.dimensionsCm, e!.dimensionsCm, o.id);
+    assert.ok(Object.keys(NEW).includes(o.variantId.slice(0, o.variantId.lastIndexOf('-'))), o.id); }
+  // focarul pe lemne primește avertismentul de coș de fum; veioza pusă pe noptieră stă pe ea (fără suprapunere, ridicată în 3D)
+  assert.ok(NEEDS_CHIMNEY.has('focarLemne') && ON_SURFACE.has('veioza'));
+  const snap = { floor: { id: 'f', name: 'P', ceilingHeight: 2.6, walls: [], rooms: [{ id: 'r', name: 'Living', type: 'living', rect: { x0: 0, z0: 0, x1: 5, z1: 4 } }] },
+    placements: [{ id: 'f1', roomId: 'r', group: 'focarLemne', variantId: 'focarLemne-0', x: 2.5, z: .5, rotation: 0, source: 'manual' },
+      { id: 'n1', roomId: 'r', group: 'noptiera', variantId: 'noptiera-0', x: 1, z: 3, rotation: 0, source: 'manual' },
+      { id: 'v1', roomId: 'r', group: 'veioza', variantId: 'veioza-0', x: 1, z: 3, rotation: 0, source: 'manual' }], selections: {}, picked: [], name: 't' } as any;
+  assert.ok(validatePlacement(snap, cat, snap.placements[0]).some((i: any) => i.code === 'CHIMNEY' && i.severity === 'WARNING' && i.key === 'issue.CHIMNEY'));
+  assert.ok(!validatePlacement(snap, cat, snap.placements[2]).some((i: any) => i.code === 'OVERLAP'));
+  const nh = cat.variants.find(v => v.id === 'noptiera-0')!.dimensionsCm!.h / 100; assert.equal(surfaceUnder(snap, cat, snap.placements[2]), nh);
+  assert.equal(surfaceUnder(snap, cat, { ...snap.placements[2], x: 4, z: 3 }), 0);
+});
+test('veioza ieșită 2 cm peste marginea noptierei: rămâne OVERLAP și stă pe podea (review PR #352)', async () => {
+  const { validatePlacement, surfaceUnder, surfaceSupport } = await import('../core/validate');
+  const nd = cat.variants.find(v => v.id === 'noptiera-0')!.dimensionsCm!, vd = cat.variants.find(v => v.id === 'veioza-0')!.dimensionsCm!;
+  // noptiera centrată în (1, 3); veioza cu centrul pe noptieră, dar marginea dreaptă la 2 cm în afara ei
+  const vx = 1 + nd.w / 200 - vd.w / 200 + .02;
+  const mk = (x: number) => ({ floor: { id: 'f', name: 'P', ceilingHeight: 2.6, walls: [], rooms: [{ id: 'r', name: 'Dormitor', type: 'dormitor', rect: { x0: 0, z0: 0, x1: 5, z1: 4 } }] },
+    placements: [{ id: 'n1', roomId: 'r', group: 'noptiera', variantId: 'noptiera-0', x: 1, z: 3, rotation: 0, source: 'manual' },
+      { id: 'v1', roomId: 'r', group: 'veioza', variantId: 'veioza-0', x, z: 3, rotation: 0, source: 'manual' }], selections: {}, picked: [], name: 't' } as any);
+  const out = mk(vx), v = out.placements[1], n = out.placements[0];
+  assert.ok(vx > 1 - nd.w / 200 && vx < 1 + nd.w / 200, 'centrul e pe noptieră');
+  assert.equal(surfaceSupport(out, cat, v), null); assert.equal(surfaceUnder(out, cat, v), 0, 'în 3D stă pe podea');
+  assert.ok(validatePlacement(out, cat, v).some((i: any) => i.code === 'OVERLAP' && i.with === 'n1'), 'veioza: OVERLAP');
+  assert.ok(validatePlacement(out, cat, n).some((i: any) => i.code === 'OVERLAP' && i.with === 'v1'), 'noptiera mutată sub veioză: OVERLAP');
+  // la 2 cm înăuntru încape: suprapunerea e permisă și veioza stă pe noptieră
+  const ok = mk(vx - .04), v2 = ok.placements[1];
+  assert.deepEqual(surfaceSupport(ok, cat, v2), { id: 'n1', h: nd.h / 100 });
+  assert.ok(!validatePlacement(ok, cat, v2).some((i: any) => i.code === 'OVERLAP'));
+  assert.ok(!validatePlacement(ok, cat, ok.placements[0]).some((i: any) => i.code === 'OVERLAP'));
+});

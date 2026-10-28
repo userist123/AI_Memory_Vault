@@ -1,6 +1,7 @@
 'use client';
 // Releveu pe șantier (de pe telefon): pe camera aleasă, laturile N/E/S/V și cele două diagonale, în cm. Rezultatul se vede
 // imediat (laturi opuse, echer, față de plan) și se salvează cu data măsurării.
+import FoldSection from './FoldSection';
 import { useEffect, useMemo, useState } from 'react';
 import type { Room } from '@/core/types';
 import { analyzeSurvey, type RoomSurvey } from '@/core/survey';
@@ -25,7 +26,7 @@ export default function SurveyPanel({ id, rooms, say }: { id: string; rooms: Roo
   const absTxt = (v: number) => `${String(v).replace('.', lang === 'ro' ? ',' : '.')} cm`;
   const cmTxt = (v: number) => `${v > 0 ? '+' : ''}${String(v).replace('.', lang === 'ro' ? ',' : '.')} cm`;
   if (!rooms.length) return null;
-  return (<section className="survey"><h3>{t('sv.title')}<span className="pill">{t('sv.done', { n: list.length, total: rooms.length })}</span></h3>
+  return (<FoldSection id="survey" className="survey" title={<h3>{t('sv.title')}<span className="pill">{t('sv.done', { n: list.length, total: rooms.length })}</span></h3>}>
     <p className="muted">{t('sv.sub')}</p>
     <label className="f"><span>{t('sv.room')}</span><select value={roomId} onChange={e => setRoomId(e.target.value)}>{rooms.map(r => <option key={r.id} value={r.id}>{r.name}{list.some(s => s.roomId === r.id) ? ' ✓' : ''}</option>)}</select></label>
     <div className="grid2">{field('n', t('sv.n'))}{field('s', t('sv.s'))}{field('w', t('sv.w'))}{field('e', t('sv.e'))}{field('d1', t('sv.d1'))}{field('d2', t('sv.d2'))}</div>
@@ -36,5 +37,5 @@ export default function SurveyPanel({ id, rooms, say }: { id: string; rooms: Roo
         <li>{t('sv.vsPlan', { w: cmTxt(a.vsPlan.width), d: cmTxt(a.vsPlan.depth), pw: a.planW, pd: a.planD })}</li></ul></div>}
     <label className="f"><span>{t('sv.note')}</span><input value={f.note} maxLength={500} onChange={e => setF(x => ({ ...x, note: e.target.value }))} /></label>
     <div className="oedit-act">{saved && <small className="muted">{t('sv.measuredAt', { d: new Date(saved.measuredAt).toLocaleDateString(intlLocale(lang)) })}</small>}<button className="btn primary" disabled={busy || !complete} onClick={save}>{t('sv.save')}</button></div>
-  </section>);
+  </FoldSection>);
 }

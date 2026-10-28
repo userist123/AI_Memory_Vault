@@ -102,5 +102,6 @@ export default function Home(){
     </section>
     <section className="studio-settings"><StudioProfileForm /></section>
     {!demo && <PhoneAccess />}
+    <p className="a11y-foot"><a href="/accesibilitate">{t('a11y.link')}</a></p>
   </main>);
 }

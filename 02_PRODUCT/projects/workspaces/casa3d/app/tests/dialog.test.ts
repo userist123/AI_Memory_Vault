@@ -3,7 +3,7 @@ import { test } from 'vitest';
 import assert from 'node:assert/strict';
 import { readFileSync, readdirSync } from 'node:fs';
 import path from 'node:path';
-import { askConfirm, askPrompt, answerDialog, currentDialog, subscribeDialogs, canConfirm, trapFocusIndex, dialogKey, cancelAllDialogs, focusMemory } from '../lib/dialog';
+import { askConfirm, askPrompt, askReview, answerDialog, currentDialog, subscribeDialogs, canConfirm, trapFocusIndex, dialogKey, cancelAllDialogs, focusMemory } from '../lib/dialog';
 
 test('askConfirm: true doar pe butonul principal; orice alt răspuns înseamnă „nu”', async () => {
   let calls = 0; const off = subscribeDialogs(() => calls++);
@@ -50,4 +50,14 @@ test('focusul revine la elementul de dinaintea primului dialog, după ce coada s
   m.show('buton-șterge'); m.show('butonul OK din primul dialog');   // al doilea dialog din coadă: focusul e deja în dialog
   assert.equal(m.hide(), 'buton-șterge'); assert.equal(m.hide(), null, 'o singură dată');
   m.show(null); assert.equal(m.hide(), null); m.show('alt buton'); assert.equal(m.hide(), 'alt buton', 'o coadă nouă ține minte din nou');
+});
+test('askReview (UI/UX P1-4): numele și elementele rămase bifate; anularea dă null; fără nume sau fără bife nu se confirmă', async () => {
+  const checklist = [{ heading: 'Living', items: [{ key: 'a', label: 'Canapea' }, { key: 'b', label: 'Covor' }] }];
+  const p = askReview({ title: 'T', input: { label: 'Nume', minLength: 2 }, checklist });
+  assert.equal(currentDialog()?.kind, 'review'); answerDialog({ text: 'Ana', keys: ['a'] }); assert.deepEqual(await p, { text: 'Ana', keys: ['a'] });
+  const q = askReview({ title: 'T', input: { label: 'Nume' }, checklist }); answerDialog(null); assert.equal(await q, null);
+  const r = askReview({ title: 'T', input: { label: 'Nume' }, checklist }); answerDialog(true); assert.equal(await r, null, 'un răspuns de alt tip nu trece drept confirmare');
+  const req = { kind: 'review' as const, title: 'T', input: { label: 'Nume', minLength: 2 }, checklist };
+  assert.equal(canConfirm(req, 'A', 2), false, 'nume prea scurt'); assert.equal(canConfirm(req, 'Ana', 0), false, 'nimic bifat'); assert.equal(canConfirm(req, 'Ana', 1), true);
+  const c = askConfirm({ title: 'C' }); cancelAllDialogs(); assert.equal(await c, false);
 });

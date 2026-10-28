@@ -36,7 +36,11 @@ export async function listShares(owner: string, id: string){
 export async function revokeShare(owner: string, id: string, token: unknown){
   await getProject(owner, id); if (typeof token !== 'string' || !TOKEN_RE.test(token)) throw new HttpError(404, 'Link inexistent.');
   const { q } = await getDb(); const { rows } = await q('update shares set revoked_at = coalesce(revoked_at, now()) where token=$1 and project_id=$2 returning revoked_at', [token, id]);
-  if (!rows[0]) throw new HttpError(404, 'Link inexistent.'); return { ok: true, revokedAt: rows[0].revoked_at };
+  if (!rows[0]) throw new HttpError(404, 'Link inexistent.');
+  // imaginile 3D gata randate ale reviziei (lib/share-renders.ts) nu mai trebuie dacă niciun alt link activ nu o arată
+  await q(`delete from revision_renders rr where rr.project_id=$1 and rr.revision_number=(select revision_number from shares where token=$2)
+    and not exists (select 1 from shares s where s.project_id=$1 and s.revision_number=rr.revision_number and ${shareActive('s')})`, [id, token]);
+  return { ok: true, revokedAt: rows[0].revoked_at };
 }
 export interface SharedView { projectName: string; revisionNumber: number; note: string; createdAt: string; snapshot: Snapshot; readOnly: true }
 /** Public: un token necunoscut, revocat, expirat sau fără revizie dă același 404, fără alte detalii.
