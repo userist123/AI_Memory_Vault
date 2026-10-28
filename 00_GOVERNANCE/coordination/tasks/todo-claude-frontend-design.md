@@ -122,3 +122,9 @@ Head at start: 2c72a7228. Started: 2026-10-21.
   on the AGENTS.md list (reviewer note only). Re-run the same check on the STAGED diff + commit message at commit time.
 - Pending owner: (1) accept or close the synthetic-turn residual; (2) ask to commit (dedicated branch suggested; files
   of other sessions in install_design_stack.py / hook_prompt_route.py are mixed with mine -> stage hunks carefully).
+
+## 2026-10-28 claude: CI #310
+- [x] enforce + regression-and-heldout red for one reason: this checkpoint has no note frontmatter
+      (test_notes_strict_yaml::test_no_unlisted_unreadable_file) -> added to 20_TESTS/fixtures/unreadable_notes_allowlist.json
+      (repo convention for checkpoints). Merged origin/main 5dd73609f (branch was 6 days behind).
+- Next: CI once; ready for review / merge on owner ask.
