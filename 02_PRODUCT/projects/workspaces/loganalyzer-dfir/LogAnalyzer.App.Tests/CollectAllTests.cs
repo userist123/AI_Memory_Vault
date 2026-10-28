@@ -42,7 +42,7 @@ public sealed class CollectAllTests : IDisposable
     {
         CollectAllState.Instance.Clear();
         Assert.True(CollectAllState.Instance.IsEmpty);
-        Assert.Equal(CollectAllState.EmptyText, CollectAllState.Instance.Status);
+        Assert.Equal(CollectAllState.EmptySubtitle, CollectAllState.Instance.Status);   // was EmptyText: the subtitle now says what the button collects
         int runs = 0;
         CollectAllState.Handler = () => { runs++; return Task.CompletedTask; };
         Assert.True(CollectAllState.Command.CanExecute(null));
@@ -90,7 +90,11 @@ public sealed class CollectAllTests : IDisposable
         foreach (var view in new[] { "HomeView.xaml", "InvestigationView.xaml", "MediaCenterView.xaml", "StationControlView.xaml" })
             Assert.Contains("NoDataPanel", File.ReadAllText(Path.Combine(dir, "Views", view)));
         var panel = XDocument.Load(Path.Combine(dir, "Views", "Controls", "NoDataPanel.xaml")).ToString();
-        Assert.Contains("CollectAllState.EmptyText", panel);
+        Assert.Contains("CollectAllState.EmptyTitle", panel);
+        Assert.Contains("Text=\"{Binding Status}\"", panel);   // the subtitle is the status line, which starts as EmptySubtitle
+        Assert.NotEqual(CollectAllState.EmptyTitle, CollectAllState.EmptySubtitle);
+        Assert.Contains("Colectează acum", CollectAllState.EmptySubtitle);
+        Assert.Contains("doar citire", CollectAllState.EmptySubtitle);
         Assert.Contains("CollectAllState.Command", panel);
         Assert.Contains("IsEmpty", panel);
         Assert.Equal("Nu există încă date — Colectează acum", CollectAllState.EmptyText);

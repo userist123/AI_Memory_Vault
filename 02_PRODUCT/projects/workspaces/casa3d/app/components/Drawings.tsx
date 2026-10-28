@@ -4,11 +4,15 @@ import type { Catalog, Floor, MaterialsCatalog, Room, Snapshot } from '@/core/ty
 import { ceilingPlan, lightingLegend, floorPlan, wallElevations, type Elevation } from '@/core/drawings';
 import { formatArea, formatLength, type Units } from '@/core/format';
 import type { Lang, Translate } from '@/lib/i18n';
+import { isDemolished } from '@/core/renovation';
 
 type Box = { x0: number; z0: number; w: number; d: number };
 const INK = '#2a2d31', LIGHT = '#8A5A00', LED = '#d98a00';
-const Walls = ({ fl }: { fl: Floor }) => <>{fl.walls.map(w => <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" />)}
-  {fl.walls.flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
+// starea peretelui, ca în PrintView: nou = hașurat, de demolat = contur punctat (fără goluri), existent = plin
+export const Walls = ({ fl }: { fl: Floor }) => <>{fl.walls.map(w => w.status === 'demolish' ? <line key={w.id} data-status="demolish" x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#B3261E" strokeWidth={.02} strokeDasharray=".08 .05" />
+    : w.status === 'new' ? <g key={w.id} data-status="new"><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" /><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#fff" strokeWidth={w.thickness * .7} strokeDasharray=".03 .03" /></g>
+    : <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" />)}
+  {fl.walls.filter(w => !isDemolished(w)).flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
     return w.openings.map(o => <line key={o.id} x1={w.a[0] + ux * o.offset} y1={w.a[1] + uz * o.offset} x2={w.a[0] + ux * (o.offset + o.width)} y2={w.a[1] + uz * (o.offset + o.width)} stroke={o.kind === 'door' ? '#fff' : '#5b8fb9'} strokeWidth={w.thickness * .8} />); })}</>;
 /** Simbolurile de iluminat (aceleași ca pe planul din editor), cu `r` = raza în metri de plan. */
 export function FixtureSymbol({ kind, x, z, r, nx = 0, nz = 0, len, alongX }: { kind: string; x: number; z: number; r: number; nx?: number; nz?: number; len?: number; alongX?: boolean }){
@@ -81,24 +85,30 @@ export function ElevationSheet({ elevs, t, units, locale }: { elevs: Elevation[]
       <svg viewBox={`${-pad} ${-pad} ${W + 2 * pad} ${H + 2 * pad}`} width={`${(W + 2 * pad) * k}mm`} height={`${(H + 2 * pad) * k}mm`} role="img" aria-label={`${t('draw.wall', { side: e.side })}`}>
         <g transform={`translate(0 ${H}) scale(1 -1)`}>
           <rect x={0} y={0} width={W} height={H} fill="#faf9f6" stroke={INK} strokeWidth={.02} />
-          {e.bands.map((b, i) => <rect key={i} x={0} y={b.y0} width={W} height={Math.max(.01, b.y1 - b.y0)} fill={b.color ?? BAND_FILL[b.kind] ?? '#eee'} fillOpacity={.85} stroke="#8a857a" strokeWidth={.006} />)}
+          {e.bands.map((b, i) => b.frames ? <g key={i} data-elev="frames">{b.frames.map(([u0, y0, u1, y1], k) => <rect key={k} x={u0} y={y0} width={u1 - u0} height={y1 - y0} fill="none" stroke="#6b5a45" strokeWidth={.012} />)}</g>
+            : <rect key={i} x={b.u0} y={b.y0} width={Math.max(.01, b.u1 - b.u0)} height={Math.max(.01, b.y1 - b.y0)} fill={b.color ?? BAND_FILL[b.kind] ?? '#eee'} fillOpacity={.85} stroke="#8a857a" strokeWidth={.006} />)}
           {e.baseboardM && <rect x={0} y={0} width={W} height={e.baseboardM} fill="#fff" stroke="#8a857a" strokeWidth={.006} />}
           {e.ceilingDropM > 0 && <line x1={0} y1={H - e.ceilingDropM} x2={W} y2={H - e.ceilingDropM} stroke={INK} strokeWidth={.01} strokeDasharray=".06 .04" />}
           {e.openings.map((o, i) => <g key={i}><rect x={o.u0} y={o.y0} width={o.u1 - o.u0} height={o.y1 - o.y0} fill="#fff" stroke={INK} strokeWidth={.015} />
             {o.kind === 'window' ? <path d={`M${(o.u0 + o.u1) / 2} ${o.y0}L${(o.u0 + o.u1) / 2} ${o.y1}`} stroke="#5b8fb9" strokeWidth={.01} /> : <path d={`M${o.u0} ${o.y0}L${o.u1} ${(o.y0 + o.y1) / 2}L${o.u0} ${o.y1}`} fill="none" stroke="#999" strokeWidth={.008} strokeDasharray=".04 .03" />}</g>)}
           {e.sconces.map((s, i) => <circle key={i} cx={s.u} cy={s.y} r={.07} fill="#fff" stroke={LIGHT} strokeWidth={.015} />)}
+          {/* obiectele de pe perete: dreptunghiul lor și cota până la centru („tablou centrat la 145 cm”) */}
+          {e.items.map(it => <g key={it.id}><rect x={it.u - it.w / 2} y={it.y - it.h / 2} width={it.w} height={it.h} fill={it.kind === 'mirror' ? '#e6eef2' : it.kind === 'tv' ? '#2b2b2b' : '#fff'} fillOpacity={.9} stroke={INK} strokeWidth={.012} />
+            <line x1={it.u} y1={0} x2={it.u} y2={it.y} stroke={INK} strokeWidth={.005} strokeDasharray=".03 .02" /><circle cx={it.u} cy={it.y} r={.015} fill={INK} /></g>)}
         </g>
         {/* cote: lungimea jos, înălțimea în dreapta, marginile benzilor și ale golurilor */}
         <g fontSize={fsz} fill={INK} stroke="none">
           <line x1={0} y1={H + .15} x2={W} y2={H + .15} stroke={INK} strokeWidth={.006} /><text x={W / 2} y={H + .28} textAnchor="middle">{formatLength(W, units, locale)}</text>
           <line x1={W + .15} y1={0} x2={W + .15} y2={H} stroke={INK} strokeWidth={.006} /><text x={W + .2} y={H / 2} transform={`rotate(-90 ${W + .2} ${H / 2})`} textAnchor="middle" dy={-.03}>{formatLength(H, units, locale)}</text>
           {[...new Set(e.bands.flatMap(b => [b.y0, b.y1]).filter(y => y > .01 && y < H - .01).map(y => Math.round(y * 100) / 100))].sort((a, b) => a - b).filter((y, i, a) => i === 0 || y - a[i - 1]! > .08).map(y => <g key={y}><line x1={W} y1={H - y} x2={W + .1} y2={H - y} stroke={INK} strokeWidth={.006} /><text x={-.04} y={H - y + .03} textAnchor="end">{formatLength(y, units, locale)}</text></g>)}
+          {e.items.map(it => <text key={it.id} x={it.u + .03} y={H - it.y / 2} fontSize={fsz * .8}>{formatLength(it.y, units, locale)}</text>)}
           {e.openings.map((o, i) => <text key={i} x={(o.u0 + o.u1) / 2} y={H - o.y1 - .04} textAnchor="middle" fontSize={fsz * .85}>{formatLength(o.u1 - o.u0, units, locale)}{o.kind === 'window' ? ` · ${t('draw.sill')} ${formatLength(o.y0, units, locale)}` : ''}</text>)}
         </g>
       </svg>
-      <ul className="print-elev-legend">{e.bands.map((b, i) => <li key={i}><i style={{ background: b.color ?? BAND_FILL[b.kind] ?? '#eee' }} />{t(b.kind === 'walltile' ? 'sched.el.walltile' : `fin.kind.${b.kind}`)} {formatLength(b.y0, units, locale)}–{formatLength(b.y1, units, locale)}: {b.name}{b.color ? ` (${b.color})` : ''}</li>)}
+      <ul className="print-elev-legend">{e.bands.map((b, i) => <li key={i}><i style={{ background: b.color ?? BAND_FILL[b.kind] ?? '#eee' }} />{t(b.kind === 'walltile' ? 'sched.el.walltile' : `fin.kind.${b.kind}`)} {formatLength(b.y0, units, locale)}–{formatLength(b.y1, units, locale)}{b.u0 > .005 || b.u1 < W - .005 ? ` · ${t('draw.along', { a: formatLength(b.u0, units, locale), b: formatLength(b.u1, units, locale) })}` : ''}: {b.name}{b.color ? ` (${b.color})` : ''}</li>)}
         {e.baseboardM ? <li><i style={{ background: '#fff' }} />{t('sched.el.baseboard')} {formatLength(e.baseboardM, units, locale)}</li> : null}
-        {e.sconces.length > 0 && <li>{t('draw.sconces', { n: e.sconces.length, h: formatLength(e.sconces[0]!.y, units, locale) })}</li>}</ul>
+        {e.sconces.length > 0 && <li>{t('draw.sconces', { n: e.sconces.length, h: formatLength(e.sconces[0]!.y, units, locale) })}</li>}
+        {e.items.map(it => <li key={it.id}>{t('draw.wallItem', { kind: t(`wallItem.kind.${it.kind}`), w: formatLength(it.w, units, locale), h: formatLength(it.h, units, locale), y: formatLength(it.y, units, locale) })}</li>)}</ul>
     </figure>); })}</div>);
 }
 export const roomElevations = (snap: Snapshot, mc: MaterialsCatalog, cat: Catalog, fl: Floor, room: Room) => wallElevations(snap, mc, cat, fl, room);

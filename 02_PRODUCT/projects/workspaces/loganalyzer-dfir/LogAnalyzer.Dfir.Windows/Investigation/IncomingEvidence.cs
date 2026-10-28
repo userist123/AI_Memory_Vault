@@ -32,10 +32,11 @@ public static class IncomingEvidence
         ("prefetch", "Istoricul pornirii programelor (Prefetch)", ["prefetch"]),
         ("srum", "Consumul de rețea al programelor (SRUM)", ["srum"]),
         ("pcapng", "Captură de rețea", ["pcapng"]),
-        ("hives", "Registrul Windows (SYSTEM, SOFTWARE, NTUSER, Amcache)", ["system_hive", "software_hive", "ntuser_hive", "amcache"]),
+        ("hives", "Registrul Windows (SYSTEM, SOFTWARE, NTUSER, UsrClass, Amcache)", ["system_hive", "software_hive", "ntuser_hive", "usrclass_hive", "amcache"]),
         ("tasks", "Sarcini programate", ["task_xml"]),
         ("usn", "Jurnalul modificărilor de fișiere (USN)", ["usn_journal"]),
         ("lnk", "Scurtături și liste de documente recente", ["lnk", "jumplist_auto"]),
+        ("recycle", "Metadate Coș de reciclare ($I)", ["recycle_info"]),
         ("browser", "Istoric de navigare", ["chromium_history", "firefox_places"]),
         (OtherFamily, "Alte fișiere (inclusiv exporturi de control)", ["file"]),
     ];

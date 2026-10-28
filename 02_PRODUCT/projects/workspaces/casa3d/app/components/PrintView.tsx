@@ -25,8 +25,11 @@ import { formatMoney, formatLength, formatArea, formatDimsCm, formatQty, type Un
 import { intlLocale, translator, type Lang, type Translate } from '@/lib/i18n';
 import { suggestTechPoints, techCounts, TECH_KINDS, type TechKind } from '@/core/technical';
 import { TECH_SYMBOL } from './TechPanel';
+import { nicheGeometry } from '@/core/niches';
+import { dimGeometry, textHeight } from '@/core/annotations';
 import { floors, levelView, stairGeometry, stairwells, SLAB } from '@/core/levels';
 import { profileLine, type StudioProfile } from '@/core/studio-profile';
+import { localizeSnapshotRoomNames } from '@/core/templates';
 
 interface ProjectDto { id: string; name: string; currentRevision: number | null; draft: Snapshot }
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
@@ -38,9 +41,21 @@ export function PlanSvg({ snap, catalog, box, widthMm, heightMm, mm, units, loca
   const f = snap.floor, fs = (v: number) => v * mm, dims = showDims ? wallDimensions(f) : [], rooms = roomId ? f.rooms.filter(r => r.id === roomId) : f.rooms, pls = roomId ? snap.placements.filter(pl => pl.roomId === roomId) : snap.placements;
   return (<svg viewBox={`${box.x0} ${box.z0} ${box.w} ${box.d}`} width={`${widthMm}mm`} height={`${heightMm}mm`} overflow={roomId ? 'hidden' : 'visible'} role="img" aria-label={aria} style={{ background: '#fbfaf7' }}>
     {f.rooms.map(r => <rect key={r.id} x={r.rect.x0} y={r.rect.z0} width={r.rect.x1 - r.rect.x0} height={r.rect.z1 - r.rect.z0} fill={roomId && r.id !== roomId ? '#f6f4ef' : ROOM_FILL[r.type] || '#f3f1ec'} stroke="#c9c4b8" strokeWidth={fs(0.2)} />)}
-    {f.walls.map(w => <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" />)}
-    {f.walls.flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
+    {/* starea peretelui: nou = hașurat (linii la 45°), de demolat = contur punctat; existent = plin, ca înainte */}
+    {f.walls.map(w => w.status === 'demolish' ? <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#B3261E" strokeWidth={.02} strokeDasharray=".08 .05" />
+      : w.status === 'new' ? <g key={w.id}><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" /><line x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#fff" strokeWidth={w.thickness * .7} strokeDasharray=".03 .03" /></g>
+      : <line key={w.id} x1={w.a[0]} y1={w.a[1]} x2={w.b[0]} y2={w.b[1]} stroke="#333" strokeWidth={w.thickness} strokeLinecap="square" />)}
+    {(f.zones ?? []).filter(z => !roomId || z.roomId === roomId).map(z => <rect key={z.id} x={z.rect.x0} y={z.rect.z0} width={z.rect.x1 - z.rect.x0} height={z.rect.z1 - z.rect.z0} fill="#e7dccb" fillOpacity={.6} stroke="#8B6A45" strokeWidth={fs(0.15)} />)}
+    {f.walls.filter(w => w.status !== 'demolish').flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
       return w.openings.map(o => <line key={o.id} x1={w.a[0] + ux * o.offset} y1={w.a[1] + uz * o.offset} x2={w.a[0] + ux * (o.offset + o.width)} y2={w.a[1] + uz * (o.offset + o.width)} stroke={o.kind === 'door' ? '#B7791F' : '#5b8fb9'} strokeWidth={w.thickness + 0.02} />); })}
+    {(f.columns ?? []).filter(c => c.role === 'shaft' || c.role === 'boxing').map(c => <g key={c.id} stroke="#333" strokeWidth={fs(0.2)} fill="#f4f1ea"><rect x={c.x - c.w / 2} y={c.z - c.d / 2} width={c.w} height={c.d} />
+      {c.role === 'shaft' && <path d={`M${c.x - c.w / 2} ${c.z - c.d / 2}L${c.x + c.w / 2} ${c.z + c.d / 2}M${c.x + c.w / 2} ${c.z - c.d / 2}L${c.x - c.w / 2} ${c.z + c.d / 2}`} strokeWidth={fs(0.12)} />}</g>)}
+    {(f.niches ?? []).map(n => { const g = nicheGeometry(f, n); return g ? <path key={n.id} d={`M${g.quad.map(q => q.join(' ')).join('L')}Z`} fill="#fbfaf7" stroke="#333" strokeWidth={fs(0.15)} strokeDasharray={`${fs(0.8)} ${fs(0.5)}`} /> : null; })}
+    {!roomId && (f.annotations ?? []).map(an => { if (an.kind === 'text') return <text key={an.id} x={an.at[0]} y={an.at[1]} fontSize={textHeight(an)} fill="#222" transform={an.rotation ? `rotate(${an.rotation} ${an.at[0]} ${an.at[1]})` : undefined}>{an.text}</text>;
+      const g = dimGeometry(an), [nx, nz] = g.n, s = Math.sign(an.offset) || 1, tk = fs(1.2), m = [g.mid[0] + nx * s * fs(2), g.mid[1] + nz * s * fs(2)];
+      return <g key={an.id} stroke="#666" strokeWidth={fs(0.15)}><line x1={an.a[0]} y1={an.a[1]} x2={g.p1[0]} y2={g.p1[1]} /><line x1={an.b[0]} y1={an.b[1]} x2={g.p2[0]} y2={g.p2[1]} /><line x1={g.p1[0]} y1={g.p1[1]} x2={g.p2[0]} y2={g.p2[1]} />
+        {[g.p1, g.p2].map((q, k) => <line key={k} x1={q[0] - (g.u[0] + nx) * tk / 2} y1={q[1] - (g.u[1] + nz) * tk / 2} x2={q[0] + (g.u[0] + nx) * tk / 2} y2={q[1] + (g.u[1] + nz) * tk / 2} />)}
+        <text x={m[0]} y={m[1]} fontSize={fs(2.4)} fill="#333" stroke="none" textAnchor="middle" dominantBaseline="central" transform={`rotate(${g.rot} ${m[0]} ${m[1]})`}>{units === 'imperial' ? formatLength(g.value, 'imperial', locale) : String(Math.round(g.value * 100))}</text></g>; })}
     {voids.map((v, k) => <g key={'v' + k} stroke="#666" strokeWidth={fs(0.2)} fill="none"><rect x={v.x0} y={v.z0} width={v.x1 - v.x0} height={v.z1 - v.z0} strokeDasharray={`${fs(1.2)} ${fs(0.8)}`} /><path d={`M${v.x0} ${v.z0}L${v.x1} ${v.z1}M${v.x1} ${v.z0}L${v.x0} ${v.z1}`} /></g>)}
     {(f.stairs ?? []).map(st => { const g = stairGeometry(st, f.ceilingHeight + SLAB), r = g.rect, [dx, dz] = g.dir, px = -dz, pz = dx, hw = st.width / 2;
       const treads = Array.from({ length: g.steps - 1 }, (_, k) => { const cx = g.bottom[0] + dx * g.going * (k + 1), cz = g.bottom[1] + dz * g.going * (k + 1); return `M${cx - px * hw} ${cz - pz * hw}L${cx + px * hw} ${cz + pz * hw}`; }).join('');
@@ -71,7 +86,8 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
   useEffect(() => {
     setToday(new Date().toLocaleDateString(intlLocale(locale)));
     Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/materials').then(r => r.ok ? r.json() : Promise.reject(r))])
-      .then(([p, catalog, mc]) => setData({ p, catalog, mc })).catch(() => { setErr(true); setBusy(false); });
+      // numele implicite ale camerelor în limba documentului („Kitchen” → „Bucătărie”); numele personalizate rămân
+      .then(([p, catalog, mc]) => setData({ p: { ...p, draft: localizeSnapshotRoomNames(p.draft, locale) }, catalog, mc })).catch(() => { setErr(true); setBusy(false); });
     fetch(`/api/projects/${id}/revisions`).then(r => r.ok ? r.json() : []).then(setRevs).catch(() => {});
     fetch(`/api/projects/${id}/survey`).then(r => r.ok ? r.json() : []).then(setSurveys).catch(() => {});
   }, [id, locale]);
@@ -226,7 +242,7 @@ export default function PrintView({ id, locale = 'ro', units = 'metric' }: { id:
     {tilePlans.length > 0 && <section className="print-sec print-break" data-testid="setting-out"><h2>{t('so.title')}</h2><p className="muted">{t('so.intro')}</p>
       <table className="so-table"><thead><tr><th>{t('so.col.where')}</th><th>{t('so.col.tile')}</th><th>{t('so.col.size')}</th><th>{t('so.col.across')}</th><th>{t('so.col.along')}</th><th>{t('so.col.tiles')}</th></tr></thead>
         <tbody>{tilePlans.map((x, k) => { const ax = (a: AxisPlan, vertical: boolean) => <>{t(`so.start.${a.start}${vertical && a.start === 'edge' ? 'Floor' : ''}`)}<small>{a.cuts.length ? t('so.cuts', { list: [...new Set(a.cuts.map(c => Math.round(c * 1000) / 10))].join(' / ') }) : t('so.noCuts')}{a.sliver ? ' · ' + t('so.sliver') : ''}</small></>;
-          return <tr key={k} className={x.sliver ? 'warn' : ''}><td>{x.room}<small>{t(`so.surface.${x.surface}`)}</small></td><td>{x.material}<small>{x.tileCm[0]}×{x.tileCm[1]} cm · {t('so.grout', { mm: x.groutMm })}</small></td>
+          return <tr key={k} className={x.sliver ? 'warn' : ''}><td>{x.room}<small>{t(`so.surface.${x.surface}`)}{x.span ? ` · ${formatLength(x.span[0], units, locale)}–${formatLength(x.span[1], units, locale)}` : ''}</small></td><td>{x.material}<small>{x.tileCm[0]}×{x.tileCm[1]} cm · {t('so.grout', { mm: x.groutMm })}</small></td>
             <td>{formatLength(x.widthM, units, locale)} × {formatLength(x.heightM, units, locale)}</td><td>{ax(x.across, false)}</td><td>{ax(x.along, x.surface !== 'floor')}</td><td><b>{x.tiles}</b><small>{t('so.tilesSub', { full: x.across.full * x.along.full })}</small></td></tr>; })}</tbody></table>
       <p className="muted small">{t('so.note')}</p>{renderTitleBlock(t('so.title'))}</section>}
 

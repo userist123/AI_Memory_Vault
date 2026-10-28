@@ -27,6 +27,7 @@ public static class EvidenceFingerprint
         if (IsTaskXml(path)) return "task_xml";
         if (IsUsnExport(path)) return "usn_fsutil";
         if (IsFirewallLog(path)) return "pfirewall";
+        if (IsRecycleInfo(path)) return "recycle_info";
         var t = h.TrimStart(" \t\r\n﻿"u8);
         if (t.Length > 0 && (t[0] == (byte)'{' || t[0] == (byte)'[') || StartsWith(h, 0, [0xEF, 0xBB, 0xBF, (byte)'{'])) return "json";
         return "unknown";
@@ -57,6 +58,20 @@ public static class EvidenceFingerprint
         return head.TrimStart('\uFEFF').StartsWith("USN Journal ID", StringComparison.Ordinal);
     }
 
+    /// <summary>Recycle Bin metadata ($I): version 1 or 2 and the fixed part present; see <see cref="LogAnalyzer.Dfir.FileSystem.RecycleBinInfoParser.LooksLikeInfo"/>.</summary>
+    private static bool IsRecycleInfo(string path)
+    {
+        var buf = new byte[64];
+        int n;
+        long length;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+        {
+            length = fs.Length;
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        }
+        return LogAnalyzer.Dfir.FileSystem.RecycleBinInfoParser.LooksLikeInfo(buf.AsSpan(0, n), length, Path.GetFileName(path));
+    }
+
     /// <summary>Windows Firewall text log: "#Version:" then "#Software: Microsoft Windows Firewall".</summary>
     private static bool IsFirewallLog(string path)
     {
@@ -75,12 +90,13 @@ public static class EvidenceFingerprint
         if (t == "evtx" || t.StartsWith("EventLog:", StringComparison.Ordinal) || name.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase)) return ["evtx"];
         if (t == "prefetch" || name.EndsWith(".pf", StringComparison.OrdinalIgnoreCase)) return ["prefetch", "prefetch_mam"];
         if (t == "srum" || name.Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase)) return ["ese"];
-        if (t is "system_hive" or "amcache" or "ntuser_hive" or "software_hive") return ["regf"];
+        if (t is "system_hive" or "amcache" or "ntuser_hive" or "usrclass_hive" or "software_hive") return ["regf"];
         if (t == "pcapng" || name.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase)) return ["pcapng"];
         if (t is "live_snapshot" or "airgap_facts") return ["json"];
         if (t == "task_xml") return ["task_xml"];
         if (t == LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName) return ["pfirewall"];
         if (t == "usn_journal") return ["usn_fsutil"];
+        if (t == LogAnalyzer.Dfir.FileSystem.RecycleBinInfoParser.SourceTypeName) return ["recycle_info"];
         if (t is "chromium_history" or "firefox_places") return ["sqlite"];
         if (t == "jumplist_auto" || name.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase)) return ["cfb"];
         if (t == "lnk" || name.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase)) return ["lnk"];

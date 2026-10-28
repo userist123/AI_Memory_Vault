@@ -4,6 +4,7 @@ import { autoLayout } from './project';
 import { validatePlacement, validateFloor, severityOf } from './validate';
 import { floors, levelView } from './levels';
 import { computeBudget, finishesOf } from './boq';
+import { roomCeilingDropCm } from './finishes';
 import { resolve, groupOf, groups } from './catalog';
 import type { DesignBrief } from './brief';
 
@@ -68,7 +69,7 @@ export function evaluateVariant(snap: Snapshot, cat: Catalog, mc: MaterialsCatal
   for (const k of before) if (!after.has(k)){ const [rid, g] = k.split(':'); if (!lay.notFit.some(n => n.key === g)) issues.push({ code: 'DOES_NOT_FIT', severity: 'ERROR', message: `${G[g]?.label || g}: varianta aleasă nu încape în ${cand.floor.rooms.find(r => r.id === rid)?.name}.` }); }
   // fiecare nivel cu piesele lui (camerele de la etaj nu sunt în `cand.floor`)
   const views = floors(cand).map((_, k) => levelView(cand, k));
-  for (const v of views) for (const i of validateFloor(v.floor)) issues.push({ code: 'FLOOR', severity: i.severity, message: i.message });
+  for (const v of views) for (const i of validateFloor(v.floor, id => roomCeilingDropCm(cand, id))) issues.push({ code: 'FLOOR', severity: i.severity, message: i.message });
   const seen = new Set<string>();
   for (const v of views) for (const p of v.placements) for (const i of validatePlacement(v, cat, p)){ const m = `${resolve(cat, p.variantId)?.product.name}: ${i.message}`; if (!seen.has(m)){ seen.add(m); issues.push({ code: 'PLACEMENT', severity: i.severity, message: m }); } }
   // buget

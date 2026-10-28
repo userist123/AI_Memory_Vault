@@ -10,9 +10,10 @@
 // Funcții pure: aceleași reguli de circulație ca motorul și validatorul (core/rules.ts), fără nicio piesă inventată în afara catalogului.
 import type { Catalog, Floor, FurniturePlacement, Room, RoomRect } from './types';
 import { resolve, groupOf } from './catalog';
-import { openingsOnSide, doorZones } from './validate';
+import { openingsOnSide, doorZones, doorZoneDepth } from './validate';
 import { rectHit, insideRect, r3 } from './geometry';
 import { DINING_CLEARANCE } from './rules';
+import { activeOpenings } from './renovation';
 
 type Side = 'N' | 'S' | 'W' | 'E';
 const SIDES: Side[] = ['N', 'E', 'S', 'W'];
@@ -65,10 +66,12 @@ export function blocksWindow(floor: Floor, room: Room, group: string, h: number,
   const near: [Side, number][] = [['N', fp.z0 - r.z0], ['S', r.z1 - fp.z1], ['W', fp.x0 - r.x0], ['E', r.x1 - fp.x1]];
   return near.some(([s, gap]) => gap <= .35 && windowOverlap(floor, room, s, horizontal(s) ? fp.x0 : fp.z0, horizontal(s) ? fp.x1 : fp.z1));
 }
-/** Zona în care se deschide o ușă (lățimea golului ± 5 cm, adâncimea = lățimea foii + 5 cm, cel puțin cât zona motorului). */
+/** Zona în care se deschide o ușă (lățimea golului ± 5 cm, adâncimea = cât mătură foaia + 5 cm, cel puțin cât zona motorului).
+ *  Pe tip: batanta mătură lățimea golului, dubla și pliantele jumătate, pivotanta trei sferturi, glisantele nimic (rămâne zona de circulație). */
 export function doorSwingZones(floor: Floor, room: Room): RoomRect[] {
   const r = room.rect, out: RoomRect[] = [];
-  for (const s of SIDES) for (const o of openingsOnSide(floor, room, s)){ if (o.kind !== 'door') continue; const depth = Math.max(.95, o.b - o.a + .05);
+  for (const s of SIDES) for (const o of openingsOnSide(floor, room, s)){ if (o.kind !== 'door') continue; const len = o.b - o.a, t = o.doorType;
+    const reach = o.passage || !t || t === 'swing' ? len : t === 'double' || t === 'folding' ? len / 2 : t === 'pivot' ? len * .75 : 0, depth = o.passage || !t ? Math.max(.95, len + .05) : Math.max(doorZoneDepth(o, len), reach > 0 ? reach + .05 : 0);
     if (s === 'N') out.push({ x0: o.a - .05, x1: o.b + .05, z0: r.z0, z1: r.z0 + depth }); else if (s === 'S') out.push({ x0: o.a - .05, x1: o.b + .05, z0: r.z1 - depth, z1: r.z1 });
     else if (s === 'W') out.push({ z0: o.a - .05, z1: o.b + .05, x0: r.x0, x1: r.x0 + depth }); else out.push({ z0: o.a - .05, z1: o.b + .05, x0: r.x1 - depth, x1: r.x1 }); }
   return out;
@@ -473,7 +476,7 @@ export function refineFurnishing(cat: Catalog, inp: RefineInput): RefineResult {
   function furnishHall(ctx: Ctx): boolean {
     const r = ctx.r, low = (v: string) => (dims(v)?.h ?? 9) <= FURNISH_RULES.hallMaxH + 1e-9;
     // în fața ușii de intrare rămâne un spațiu liber mai adânc decât zona ușii
-    const entrance: RoomRect[] = []; for (const w of floor.walls) for (const o of w.openings){ if (!o.entrance) continue;
+    const entrance: RoomRect[] = []; for (const w of floor.walls) for (const o of activeOpenings(w)){ if (!o.entrance) continue;
       for (const s of SIDES){ const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]), ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L, mx = w.a[0] + ux * (o.offset + o.width / 2), mz = w.a[1] + uz * (o.offset + o.width / 2);
         const onSide = s === 'N' ? Math.abs(mz - r.z0) < 1e-6 : s === 'S' ? Math.abs(mz - r.z1) < 1e-6 : s === 'W' ? Math.abs(mx - r.x0) < 1e-6 : Math.abs(mx - r.x1) < 1e-6;
         if (!onSide || mx < r.x0 - 1e-6 || mx > r.x1 + 1e-6 || mz < r.z0 - 1e-6 || mz > r.z1 + 1e-6) continue; const k = FURNISH_RULES.entranceKeepOut, h = o.width / 2 + .05;

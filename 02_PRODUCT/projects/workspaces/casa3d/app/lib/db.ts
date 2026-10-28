@@ -49,7 +49,7 @@ async function seedCatalog(q: Query){
 async function seedOutbound(q: Query){
   // retaileri (unul pentru fiecare furnizor) + linkuri directe (fără afiliere în modul de testare) + istoricul prețurilor;
   // fiecare pas adaugă doar ce lipsește, ca pornirile repetate să nu dubleze nimic.
-  const c = catalogSeed as any, m = materialsSeed as any, slug = (s: string) => s === 'IKEA' ? 'ikea-ro' : 'dedeman';
+  const c = catalogSeed as any, m = materialsSeed as any, slug = (s: string) => c.suppliers.find((x: any) => x.name === s)?.id ?? (s === 'IKEA' ? 'ikea-ro' : 'dedeman');
   const names: Record<string, string> = { 'ikea-ro': 'IKEA România' };
   for (const s of c.suppliers) await q('insert into retailers(slug, name, website) values($1,$2,$3) on conflict do nothing', [s.id, names[s.id] ?? s.name, s.website]);
   const linked = new Set((await q("select target_kind || ':' || target_id as k from offer_links")).rows.map((r: any) => r.k));
@@ -67,7 +67,9 @@ async function migrate(q: Query){
   // datele tehnice noi (specs) se adaugă doar unde lipsesc
   const m = materialsSeed as any;
   for (const x of m.materials){ await q('insert into materials values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15) on conflict do nothing', [x.id, x.category, x.name, x.supplier, x.unit, x.unitPrice, x.pack ? JSON.stringify(x.pack) : null, x.coverage ?? null, x.consumption ?? null, x.sourceUrl, x.verifiedAt ?? m.verifiedAt, x.verificationType, x.confidence, x.note ?? null, x.specs ? JSON.stringify(x.specs) : null]);
-    if (x.specs) await q('update materials set specs=$1 where id=$2 and specs is null', [JSON.stringify(x.specs), x.id]); }
+    if (x.specs) await q('update materials set specs=$1 where id=$2 and specs is null', [JSON.stringify(x.specs), x.id]);
+    // kitul de start (Catumia) a fost trecut întâi ca „panel”: devizul l-ar înmulți pe lungime; corectat o dată, la pornire
+    if (x.specs?.railPart === 'start') await q(`update materials set specs=$1 where id=$2 and coalesce(specs->>'railPart', '') <> 'start'`, [JSON.stringify(x.specs), x.id]); }
   for (const x of m.labor) await q('insert into labor_rates values($1,$2,$3,$4,$5,$6,$7,$8,$9) on conflict do nothing', [x.id, x.label, x.unit, x.low, x.expected, x.high, JSON.stringify(x.sources), x.confidence, m.verifiedAt]);
   for (const x of m.services) await q('insert into services values($1,$2,$3,$4,$5,$6,$7,$8,$9,$10) on conflict do nothing', [x.id, x.label, x.supplier, x.price ?? null, x.pricePerMeter ?? null, x.sourceUrl, x.verificationType, x.confidence, x.note ?? null, m.verifiedAt]);
   await seedCatalog(q);

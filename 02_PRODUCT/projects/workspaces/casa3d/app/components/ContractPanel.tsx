@@ -1,5 +1,6 @@
 'use client';
 // Contract și ofertă în editor: tipul și suma onorariului, etapele, avansul, rundele de modificări, TVA; se salvează singură, separat de plan.
+import FoldSection from './FoldSection';
 import { useEffect, useRef, useState } from 'react';
 import { ListSkeleton } from './Skeleton';
 import { PHASE_IDS, FEE_HINTS, DEFAULT_CONTRACT, CONTRACT_LIMITS, hintPosition, type ContractData, type FeeKind, type PayRow } from '@/core/contract';
@@ -23,8 +24,8 @@ export default function ContractPanel({ id, meta, say }: { id: string; meta: Pro
   const set = (p: Partial<ContractData>) => { dirty.current = true; setD(x => ({ ...(x ?? DEFAULT_CONTRACT), ...p })); };
   const fee = d.fee, setFee = (p: Partial<NonNullable<ContractData['fee']>>) => set({ fee: { kind: 'fixed', amount: 0, ...fee, ...p } });
   const hint = fee ? FEE_HINTS[fee.kind] : null, pos = hintPosition(fee), num = (v: string) => { const n = Number(v); return Number.isFinite(n) && n >= 0 ? n : null; };
-  return (<div className="ctr-panel">
-    <h3>{t('ctr.title')}</h3><p className="notice">{t('ctr.notice')}</p>
+  return (<FoldSection id="contract" className="ctr-panel" title={<h3>{t('ctr.title')}</h3>}>
+    <p className="notice">{t('ctr.notice')}</p>
     <div className="grid2">
       <label className="f"><span>{t('ctr.feeKind')}</span><select value={fee?.kind ?? ''} onChange={e => e.target.value ? setFee({ kind: e.target.value as FeeKind }) : set({ fee: undefined })}>
         <option value="">{t('pcard.noFee')}</option>{FEE_KINDS.map(k => <option key={k} value={k}>{t(`ctr.fee.${k}`)}</option>)}</select></label>
@@ -45,5 +46,5 @@ export default function ContractPanel({ id, meta, say }: { id: string; meta: Pro
     {sched.length > 0 && <ul className="hint">{sched.map((p, k) => <li key={k}>{t(`ctr.pay.${p.key}`, { n: p.n })}: {money(p.amount)}</li>)}</ul>}
     <small className={`prov ${state === 'error' ? 'err' : ''}`}>{t(`ctr.state.${state}`)}</small>
     <div className="pcard-act"><a className="btn" href={`/p/${id}/contract`} target="_blank" rel="noopener">{t('ctr.openContract')}</a><a className="btn" href={`/p/${id}/offer`} target="_blank" rel="noopener">{t('ctr.openOffer')}</a></div>
-  </div>);
+  </FoldSection>);
 }

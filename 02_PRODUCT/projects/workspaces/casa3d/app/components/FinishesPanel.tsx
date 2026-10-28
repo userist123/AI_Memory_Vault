@@ -1,15 +1,18 @@
 'use client';
 // Finisajele unei camere, ca la un designer: pardoseala și modul ei de așezare, pereții (vopsea, faianță, placări pe fiecare latură),
 // tavanul (drept, fals, scafă luminoasă, cornișă, spoturi), plinta și iluminatul — cu costul camerei și avertismentele tehnice.
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import type { Snapshot, MaterialsCatalog, RoomFinishes, Room, Material, WallFeature, WallFeatureKind, FloorPattern, Catalog, WindowTreatment } from '@/core/types';
 import { finishesOf, roomGeometry, computeBOQ } from '@/core/boq';
 import { floorOfRoom } from '@/core/levels';
-import { bandsOverlap, defaultLayout, PATTERNS, SIDES, FEATURE_CATEGORY, layoutOf, materialOf, sideGeometry, ceilingOf, clearHeight, finishIssues, pieceSizeCm, FINISH_RULES } from '@/core/finishes';
+import { bandsOverlap, sideSpan, PLASTER_EFFECTS, defaultLayout, PATTERNS, SIDES, FEATURE_CATEGORY, layoutOf, materialOf, sideGeometry, ceilingOf, clearHeight, finishIssues, pieceSizeCm, FINISH_RULES } from '@/core/finishes';
 import { formatMoney, formatArea, formatLength } from '@/core/format';
 import { normalizeHex } from '@/core/appearance';
 import { lightReport } from '@/core/light-design';
-import { roomWindows, curtainPlan, blindPlan, TEXTILE_RULES } from '@/core/textiles';
+import { roomWindows, curtainPlan, blindPlan, TEXTILE_RULES, RUG_EXTRA_MAX } from '@/core/textiles';
+import { frameRects, frameMoulding, FRAME_RULES } from '@/core/finishes';
+import { rugHints } from '@/core/decor';
+import type { RugChoice } from '@/core/types';
 import { kitchenOf, kitchenRun, kitchenQuantities, kitchenIssues } from '@/core/kitchen';
 import KitchenModules from './KitchenModules';
 import MaterialPicker from './MaterialPicker';
@@ -20,17 +23,36 @@ import { usePrefs } from '@/lib/prefs';
 
 const KINDS = Object.keys(FEATURE_CATEGORY) as WallFeatureKind[];
 
+/** Poziția unui covor: centrul, măsurat de la peretele de vest și de la cel de nord (m); „Centrează” șterge poziția (covorul revine în
+ *  mijlocul camerei, ca înainte). Câmpuri numerice, fără tragere (WCAG 2.5.7). `n` = numărul covorului, în numele butonului
+ *  (cu două covoare, cititorul de ecran deosebește butoanele; textul vizibil rămâne la începutul numelui, WCAG 2.5.3). */
+function RugPosition({ room, rug, n, onChange }: { room: Room; rug: RugChoice; n: number; onChange(q: RugChoice): void }){
+  const { t } = usePrefs(), r = room.rect, r2 = (v: number) => Math.round(v * 100) / 100, cx = rug.x ?? (r.x0 + r.x1) / 2, cz = rug.z ?? (r.z0 + r.z1) / 2;
+  const set = (k: 'x' | 'z', v: string) => { const n = Number(v); if (v === '' || !Number.isFinite(n)) return; const lo = k === 'x' ? r.x0 : r.z0, hi = k === 'x' ? r.x1 : r.z1;
+    onChange({ ...rug, x: r2(cx), z: r2(cz), [k]: r2(Math.max(lo, Math.min(hi, lo + n))) }); };
+  return <div className="grid2" data-rug-pos>
+    <label className="f"><span>{t('tex.rugX')}</span><input type="number" step={.05} value={r2(cx - r.x0)} onChange={e => set('x', e.target.value)} /></label>
+    <label className="f"><span>{t('tex.rugZ')}</span><input type="number" step={.05} value={r2(cz - r.z0)} onChange={e => set('z', e.target.value)} /></label>
+    {(rug.x != null || rug.z != null) && <button type="button" className="btn" style={{ alignSelf: 'end' }} aria-label={t('tex.rugCenterN', { n })} onClick={() => { const q: RugChoice = { ...rug }; delete q.x; delete q.z; onChange(q); }}>{t('tex.rugCenter')}</button>}
+  </div>;
+}
+
 /** Piesele unei băi, în ordinea în care le alege un designer; fiecare se schimbă cu orice produs real din grupa ei. */
 const BATH_GROUPS = ['wc', 'lavoar', 'dus', 'cada', 'bideu', 'dulapOglinda', 'caloriferBaie', 'coloanaBaie', 'boiler'];
 
-export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSwap, onAdd }: { room: Room; snap: Snapshot; cat: Catalog; mc: MaterialsCatalog; cur: string; onFinish(p: Partial<RoomFinishes>): void; onSwap?(placementId: string, variantId: string): void; onAdd?(variantId: string): void }){
+export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSwap, onAdd, focusFeature }: { room: Room; snap: Snapshot; cat: Catalog; mc: MaterialsCatalog; cur: string; onFinish(p: Partial<RoomFinishes>): void; onSwap?(placementId: string, variantId: string): void; onAdd?(variantId: string): void;
+  /** placarea tocmai pusă cu unealta „Placare”: rândul ei se aduce în vedere și primește focusul */ focusFeature?: { i: number; n: number } | null }){
   const { t, lang, units } = usePrefs();
   const f = finishesOf(snap, room), g = roomGeometry(snap, room), fl = floorOfRoom(snap, room.id), wet = room.type === 'baie' || room.type === 'bucatarie';
   const by = (...c: Material['category'][]) => mc.materials.filter(m => c.includes(m.category));
   const fm = materialOf(mc, f.floor), lay = layoutOf(f, fm), tile = fm?.category === 'floor_tile', c = ceilingOf(f);
   const setLayout = (p: Partial<typeof lay>) => onFinish({ floorLayout: { ...lay, ...p } });
   const features = f.wallFeatures || [];
-  const setFeature = (i: number, p: Partial<WallFeature>) => onFinish({ wallFeatures: features.map((w, k) => k === i ? { ...w, ...p } : w) });
+  // câmpurile cu `undefined` în patch se șterg (porțiunea „toată latura”, orientarea implicită a lamelelor)
+  const setFeature = (i: number, p: Partial<WallFeature>) => onFinish({ wallFeatures: features.map((w, k) => { if (k !== i) return w; const q: any = { ...w, ...p }; for (const key of Object.keys(p)) if ((p as any)[key] === undefined) delete q[key]; return q as WallFeature; }) });
+  const rows = useRef<HTMLDivElement>(null);
+  useEffect(() => { if (!focusFeature) return; const el = rows.current?.querySelector<HTMLElement>(`[data-feature="${focusFeature.i}"]`); el?.scrollIntoView?.({ block: 'nearest' }); el?.querySelector<HTMLElement>('select')?.focus({ preventScroll: true }); }, [focusFeature?.n]); // eslint-disable-line
+  const r2 = (v: number) => Math.round(v * 100) / 100;
   const firstOf = (kind: WallFeatureKind) => by(FEATURE_CATEGORY[kind])[0]?.id || '';
   const freeSide = SIDES.find(s => !features.some(w => w.side === s));
   const setCeiling = (p: Partial<NonNullable<RoomFinishes['ceiling']>>) => onFinish({ ceiling: { type: c.type, ...(f.ceiling || {}), ...p } });
@@ -78,11 +100,11 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSw
     <fieldset className="fin-group"><legend>{t('fin.walls')}</legend>
       <label className="f"><span>{t('editor.wallPaint')}</span><MaterialPicker cur={cur} value={f.wallPaint} options={by('paint')} onChange={v => onFinish({ wallPaint: v })} /></label>
       {wet && <label className="f"><span>{t('editor.wallTile')}</span><MaterialPicker cur={cur} value={f.wallTile || ''} options={by('wall_tile')} none={t('editor.noTile')} onChange={v => onFinish({ wallTile: v || null })} /></label>}
-      {features.map((w, i) => <div key={i} className="fin-row">
+      <div ref={rows} style={{ display: 'contents' }}>{features.map((w, i) => { const len = sideSpan(room, w.side), partial = w.alongFromM != null || w.alongToM != null; return <div key={i} className="fin-row" data-feature={i}>
         <div className="grid2">
           <label className="f"><span>{t('fin.side')}</span><select value={w.side} onChange={e => setFeature(i, { side: e.target.value as WallFeature['side'] })}>
             {SIDES.map(s => <option key={s} value={s}>{t(`fin.side.${s}`)} · {sideLen(s)}</option>)}</select></label>
-          <label className="f"><span>{t('fin.kind')}</span><select value={w.kind} onChange={e => { const k = e.target.value as WallFeatureKind; setFeature(i, { kind: k, material: firstOf(k) }); }}>
+          <label className="f"><span>{t('fin.kind')}</span><select value={w.kind} onChange={e => { const k = e.target.value as WallFeatureKind; setFeature(i, { kind: k, material: firstOf(k), vertical: undefined, effect: undefined }); }}>
             {KINDS.filter(k => by(FEATURE_CATEGORY[k]).length).map(k => <option key={k} value={k}>{t(`fin.kind.${k}`)}</option>)}</select></label>
         </div>
         <label className="f"><span>{t('fin.product')}</span><MaterialPicker cur={cur} value={w.material} options={by(FEATURE_CATEGORY[w.kind])} onChange={v => setFeature(i, { material: v })} /></label>
@@ -94,7 +116,25 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSw
           {(w.kind === 'paint' || w.kind === 'panel' || w.kind === 'rail') && <label className="f"><span>{t('fin.color')}</span><input type="color" value={w.color || '#f3f1ec'} onChange={e => { const h = normalizeHex(e.target.value); if (h) setFeature(i, { color: h }); }} /></label>}
           <button className="btn" style={{ alignSelf: 'end' }} onClick={() => onFinish({ wallFeatures: features.filter((_, k) => k !== i) })}>{t('fin.remove')}</button>
         </div>
-      </div>)}
+        {/* porțiunea pe lungime, de la colțul din stânga-sus al planului (x0 pe N/S, z0 pe V/E); goale = toată latura */}
+        <div className="grid2">
+          <label className="f"><span>{t('fin.alongFrom')}</span><input type="number" min={0} max={len} step={.05} value={w.alongFromM ?? ''} placeholder="0"
+            onChange={e => { const v = e.target.value === '' ? undefined : r2(Math.max(0, Math.min((w.alongToM ?? len) - .05, Number(e.target.value) || 0))); setFeature(i, { alongFromM: v, ...(v != null && w.alongToM == null ? { alongToM: r2(len) } : {}) }); }} /></label>
+          <label className="f"><span>{t('fin.alongTo')}</span><input type="number" min={0} max={len} step={.05} value={w.alongToM ?? ''} placeholder={String(r2(len))}
+            onChange={e => { const v = e.target.value === '' ? undefined : r2(Math.max((w.alongFromM ?? 0) + .05, Math.min(len, Number(e.target.value) || len))); setFeature(i, { alongToM: v, ...(v != null && w.alongFromM == null ? { alongFromM: 0 } : {}) }); }} /></label>
+          {partial && <button type="button" className="btn" style={{ alignSelf: 'end' }} onClick={() => setFeature(i, { alongFromM: undefined, alongToM: undefined })}>{t('fin.wholeSide')}</button>}
+          {w.kind === 'plaster' && <label className="f"><span>{t('fin.effect')}</span><select value={w.effect ?? ''} onChange={e => setFeature(i, { effect: (e.target.value || undefined) as WallFeature['effect'] })}>
+            <option value="">{t('fin.effect.none')}</option>{PLASTER_EFFECTS.map(x => <option key={x} value={x}>{t(`fin.effect.${x}`)}</option>)}</select></label>}
+          {w.kind === 'slats' && <label className="f" style={{ alignSelf: 'end' }}><span><input type="checkbox" checked={w.vertical !== false} onChange={e => setFeature(i, { vertical: e.target.checked ? undefined : false })} /> {t('fin.slatsVertical')}</span></label>}
+        </div>
+        {/* boiseria: numărul de casete (gol = calculat din lungime), marginea și distanța; sub ele câte casete ies și câtă baghetă */}
+        {w.kind === 'frames' && (() => { const fr = w.frames ?? {}, rects = frameRects(fl, room, w), mo = frameMoulding(rects), setFr = (p: Partial<NonNullable<WallFeature['frames']>>) => { const q: any = { ...fr, ...p }; for (const k of Object.keys(p)) if ((p as any)[k] === undefined) delete q[k]; setFeature(i, { frames: Object.keys(q).length ? q : undefined }); };
+          return <><div className="grid2">
+            <label className="f"><span>{t('fin.frames.count')}</span><input type="number" min={1} max={FRAME_RULES.countMax} step={1} value={fr.count ?? ''} placeholder={String(rects.length)} onChange={e => setFr({ count: e.target.value === '' ? undefined : Math.max(1, Math.min(FRAME_RULES.countMax, Math.round(Number(e.target.value) || 1))) })} /></label>
+            <label className="f"><span>{t('fin.frames.margin')}</span><input type="number" min={0} max={FRAME_RULES.marginMaxM} step={.05} value={fr.marginM ?? ''} placeholder={String(FRAME_RULES.marginM)} onChange={e => setFr({ marginM: e.target.value === '' ? undefined : r2(Math.max(0, Math.min(FRAME_RULES.marginMaxM, Number(e.target.value) || 0))) })} /></label>
+            <label className="f"><span>{t('fin.frames.gap')}</span><input type="number" min={0} max={FRAME_RULES.gapMaxM} step={.05} value={fr.gapM ?? ''} placeholder={String(FRAME_RULES.gapM)} onChange={e => setFr({ gapM: e.target.value === '' ? undefined : r2(Math.max(0, Math.min(FRAME_RULES.gapMaxM, Number(e.target.value) || 0))) })} /></label>
+          </div><div className="prov" data-frames={rects.length}>{t('fin.frames.auto', { n: rects.length, ml: formatLength(mo.ml, units, lang) })}</div></>; })()}
+      </div>; })}</div>
       {features.length < 24 && <button className="btn" onClick={() => onFinish({ wallFeatures: [...features, { side: freeSide ?? 'N', kind: 'wallpaper', material: firstOf('wallpaper'), ...(freeSide ? {} : { fromM: Math.min(fl.ceilingHeight - .3, 1.2) }) }] })}>{t('fin.addFeature')}</button>}
       {bandsOverlap(features, fl.ceilingHeight) && <div className="issue WARNING">{t('fin.bandsOverlap')}</div>}
       {room.type !== 'baie' && room.type !== 'bucatarie' && <label className="f"><span>{t('editor.baseboard')}</span><MaterialPicker cur={cur} value={f.baseboard || ''} options={by('baseboard')} none={t('editor.noBaseboard')} onChange={v => onFinish({ baseboard: v || null })} /></label>}
@@ -204,9 +244,18 @@ export default function FinishesPanel({ room, snap, cat, mc, cur, onFinish, onSw
           {bp && <div className="prov">{t('tex.blindPlan', { n: bp.count, cover: formatLength(bp.coverM, units, lang) })}</div>}
         </div>; })}
       <div className="grid2">
-        <label className="f"><span>{t('tex.rug')}</span><MaterialPicker cur={cur} value={f.rug?.material || ''} options={by('rug')} none={t('fin.none')} onChange={v => onFinish({ rug: v ? { material: v, ...(f.rug?.rotate ? { rotate: true } : {}) } : null })} /></label>
-        {f.rug && <label className="f"><span>{t('tex.rugRotate')}</span><input type="checkbox" checked={!!f.rug.rotate} onChange={e => onFinish({ rug: { material: f.rug!.material, ...(e.target.checked ? { rotate: true } : {}) } })} /></label>}
+        <label className="f"><span>{t('tex.rug')}</span><MaterialPicker cur={cur} value={f.rug?.material || ''} options={by('rug')} none={t('fin.none')} onChange={v => onFinish({ rug: v ? { ...(f.rug || {}), material: v } : null })} /></label>
+        {f.rug && <label className="f"><span>{t('tex.rugRotate')}</span><input type="checkbox" checked={!!f.rug.rotate} onChange={e => { const q: RugChoice = { ...f.rug! }; if (e.target.checked) q.rotate = true; else delete q.rotate; onFinish({ rug: q }); }} /></label>}
       </div>
+      {f.rug && <RugPosition room={room} rug={f.rug} n={1} onChange={q => onFinish({ rug: q })} />}
+      {rugHints(snap, cat, mc, room, f).map((h, k) => <div key={k} className="issue WARNING">{t(h.key)}</div>)}
+      {/* covoarele în plus (al doilea covor, sub masă): fiecare cu produsul, rotirea și poziția lui */}
+      {(f.rugs ?? []).map((rc, i) => { const set = (q: RugChoice | null) => { const all = [...(f.rugs ?? [])]; if (q) all[i] = q; else all.splice(i, 1); onFinish({ rugs: all.length ? all : undefined }); };
+        return <div key={i} className="fin-row" data-rug-extra={i + 2}><div className="grid2">
+          <label className="f"><span>{t('tex.rugN', { n: i + 2 })}</span><MaterialPicker cur={cur} value={rc.material} options={by('rug')} onChange={v => { if (v) set({ ...rc, material: v }); }} /></label>
+          <label className="f"><span>{t('tex.rugRotate')}</span><input type="checkbox" checked={!!rc.rotate} onChange={e => { const q: RugChoice = { ...rc }; if (e.target.checked) q.rotate = true; else delete q.rotate; set(q); }} /></label>
+        </div><RugPosition room={room} rug={rc} n={i + 2} onChange={set} /><button type="button" className="btn" aria-label={t('tex.rugRemoveN', { n: i + 2 })} onClick={() => set(null)}>{t('tex.rugRemove')}</button></div>; })}
+      {by('rug').length > 0 && (f.rugs?.length ?? 0) < RUG_EXTRA_MAX && <button type="button" className="btn" onClick={() => { const r = room.rect; onFinish({ rugs: [...(f.rugs ?? []), { material: by('rug')[0]!.id, x: r2((r.x0 + r.x1) / 2), z: r2(r.z0 + (r.z1 - r.z0) * .3) }] }); }}>{t('tex.rugAdd')}</button>}
     </fieldset>
   </div>);
 }

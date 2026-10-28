@@ -4,16 +4,18 @@
 
 /** Grupele potrivite, în ordinea în care le alege un designer, pe tip de cameră. */
 export const ROOM_GROUPS: Record<string, string[]> = {
-  dormitor: ['pat', 'dulap', 'noptiera', 'comoda', 'oglinda', 'birou', 'scaunBirou', 'fotoliu', 'biblioteca', 'comodaTv'],
-  living: ['canapea', 'fotoliu', 'masuta', 'comodaTv', 'biblioteca', 'comoda', 'masa', 'dulap'],
-  bucatarie: ['bucatarie', 'frigider', 'plita', 'cuptor', 'hota', 'masa', 'boiler'],
+  dormitor: ['pat', 'dulap', 'noptiera', 'comoda', 'oglinda', 'birou', 'scaunBirou', 'fotoliu', 'biblioteca', 'comodaTv', 'veioza', 'lampadar', 'plantaNaturala', 'plantaArtificiala'],
+  living: ['canapea', 'fotoliu', 'masuta', 'comodaTv', 'biblioteca', 'comoda', 'masa', 'dulap', 'lampadar', 'plantaArtificiala', 'plantaNaturala', 'veioza', 'semineu', 'focarLemne'],
+  bucatarie: ['bucatarie', 'frigider', 'plita', 'cuptor', 'hota', 'masa', 'boiler', 'plantaNaturala'],
   baie: ['lavoar', 'wc', 'dus', 'cada', 'dulapOglinda', 'oglinda', 'coloanaBaie', 'caloriferBaie', 'bideu', 'boiler'],
-  hol: ['pantofar', 'dulap', 'oglinda', 'comoda'],
-  birou: ['birou', 'scaunBirou', 'biblioteca', 'dulap', 'fotoliu', 'comoda'],
+  hol: ['pantofar', 'dulap', 'oglinda', 'comoda', 'plantaArtificiala', 'veioza'],
+  birou: ['birou', 'scaunBirou', 'biblioteca', 'dulap', 'fotoliu', 'comoda', 'veioza', 'lampadar', 'plantaNaturala', 'plantaArtificiala'],
 };
 /** Grupele care țin de baie sau de bucătărie: nu se propun în alte camere (doar dacă designerul le alege explicit din „Toate”). */
 const WET_ONLY = new Set(['lavoar', 'wc', 'dus', 'cada', 'dulapOglinda', 'coloanaBaie', 'caloriferBaie', 'bideu']);
 const KITCHEN_ONLY = new Set(['bucatarie', 'frigider', 'plita', 'cuptor', 'hota']);
+/** Șemineul și focarul nu se propun în baie sau în bucătărie (umezeală, gaze, materiale combustibile din jur). */
+const NOT_WET = new Set(['semineu', 'focarLemne']);
 
 /**
  * Grupele pentru „Adaugă mobilier” într-o cameră: întâi cele potrivite tipului ei (în ordine), apoi restul care nu sunt
@@ -22,7 +24,7 @@ const KITCHEN_ONLY = new Set(['bucatarie', 'frigider', 'plita', 'cuptor', 'hota'
 export function groupsForRoom(roomType: string | undefined, available: string[]): { suggested: string[]; others: string[] } {
   const want = ROOM_GROUPS[roomType ?? ''] ?? [], have = new Set(available);
   const suggested = want.filter(g => have.has(g));
-  const fits = (g: string) => roomType === 'baie' ? !KITCHEN_ONLY.has(g) : roomType === 'bucatarie' ? !WET_ONLY.has(g) : !WET_ONLY.has(g) && !KITCHEN_ONLY.has(g);
+  const fits = (g: string) => (roomType === 'baie' || roomType === 'bucatarie') && NOT_WET.has(g) ? false : roomType === 'baie' ? !KITCHEN_ONLY.has(g) : roomType === 'bucatarie' ? !WET_ONLY.has(g) : !WET_ONLY.has(g) && !KITCHEN_ONLY.has(g);
   return { suggested, others: available.filter(g => !suggested.includes(g) && fits(g)) };
 }
 export const defaultGroupForRoom = (roomType: string | undefined, available: string[]) => { const g = groupsForRoom(roomType, available); return g.suggested[0] ?? g.others[0] ?? available[0] ?? null; };

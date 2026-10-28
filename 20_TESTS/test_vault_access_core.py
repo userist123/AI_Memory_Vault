@@ -311,7 +311,8 @@ def test_unknown_principals_get_the_interface_default(vault):
     ("Upper.MD", "---\nclassification: RESTRICTED\n---\n# Upper\n"),
     ("Superseded.md", "---\nlifecycle: SUPERSEDED\n---\n# Old\n"),
     ("ListYaml.md", "---\n- a\n- b\n---\n# List\n"),
-])
+], ids=lambda v: v if v.endswith((".md", ".MD")) else "")  # id = file name: the generated id carried
+# Long.md's whole text, and pytest's PYTEST_CURRENT_TEST env var then exceeds Windows' 32,767-char limit
 def test_unreadable_or_unusual_frontmatter_fails_closed(vault, name, text):
     root = vault[0]
     (root / "10_DOCUMENTATION/procedures" / name).write_text(text, encoding="utf-8")

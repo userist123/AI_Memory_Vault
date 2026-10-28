@@ -95,6 +95,9 @@ public static class RemovableMediaInspector
     /// Read-only listing of a removable volume for the P1 rules (MEDIA-LNK-PAYLOAD, MEDIA-HIDDEN-MAILBOX, MEDIA-SAME-DROP): root and two levels, names,
     /// attributes, sizes and times; SHA-256 of files up to <paramref name="hashMaxBytes"/>; shortcuts decoded by <see cref="FileSystem.LnkParser.Decode"/>
     /// (read as bytes, never opened by the shell, never run). Reparse points are listed but not followed; Windows' own folders are not entered.
+    /// Read-only does not mean access-time neutral: hashing and reading shortcuts open files, which can update last-access times (FAT/exFAT, NTFS when enabled).
+    /// Each entry's times are captured before that entry is opened, and callers should list BEFORE anything else (e.g. <see cref="Inspect"/>) reads file contents;
+    /// even so, a last-access time may reflect an earlier read by this tool. Pass <c>maxHashed: 0</c> when hashes are not needed.
     /// </summary>
     /// <param name="maxDepth">Folder levels entered below the root (2 = root, its folders and their folders; the facts collector uses 1).</param>
     public static LogAnalyzer.Dfir.Analysis.MediaListingFact List(string root, string volumeLabel = "", int maxEntries = 3000, long hashMaxBytes = 16 * 1024 * 1024, int maxHashed = 300, int maxDepth = 2)
@@ -108,7 +111,7 @@ public static class RemovableMediaInspector
         void Walk(string dir, string rel, int depth)
         {
             List<FileSystemInfo> items;
-            try { items = Read(dir); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return; }
+            try { items = Read(dir); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { listing.AccessErrors++; return; }
             foreach (var e in items)
             {
                 if (listing.Entries.Count >= maxEntries) { listing.Truncated = true; return; }
@@ -116,8 +119,9 @@ public static class RemovableMediaInspector
                 {
                     RelativePath = rel.Length == 0 ? e.Name : rel + "\\" + e.Name, IsDirectory = e is DirectoryInfo,
                     Hidden = e.Attributes.HasFlag(FileAttributes.Hidden), System = e.Attributes.HasFlag(FileAttributes.System),
-                    CreatedUtc = Utc(e.CreationTimeUtc), LastWriteUtc = Utc(e.LastWriteTimeUtc),
+                    CreatedUtc = Utc(e.CreationTimeUtc), LastWriteUtc = Utc(e.LastWriteTimeUtc), LastAccessUtc = Utc(e.LastAccessTimeUtc),
                 };
+                if (e.Attributes.HasFlag(FileAttributes.ReparsePoint)) listing.LinksNotFollowed++;
                 if (e is FileInfo fi)
                 {
                     entry.Size = fi.Length;
@@ -128,7 +132,7 @@ public static class RemovableMediaInspector
                             entry.Sha256 = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
                             hashed++;
                         }
-                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { listing.AccessErrors++; }
                     if (fi.Extension.Equals(".lnk", StringComparison.OrdinalIgnoreCase) && fi.Length is > 0 and <= MaxLinkBytes && ReadLink(fi.FullName) is { } link)
                     { entry.LnkTarget = link.Target; entry.LnkArguments = link.Arguments; entry.LnkWorkingDir = link.WorkingDir; }
                 }

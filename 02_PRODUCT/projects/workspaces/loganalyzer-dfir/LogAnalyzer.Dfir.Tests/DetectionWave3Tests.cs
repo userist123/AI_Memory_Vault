@@ -81,8 +81,8 @@ public class DetectionWave3Tests
     [Fact]
     public void Every_suspicious_script_block_is_its_own_finding_and_an_AMSI_bypass_is_High()
     {
-        var found = Corr(Block(0, "[Ref].Assembly.GetType('System.Management.Automation.AmsiUtils').GetField('amsiInitFailed','NonPublic,Static').SetValue($null,$true)", "b1"),
-                         Block(1, "$b=[Convert]::FromBase64String($s); iex ($x)", "b2"));
+        var found = Corr(Block(0, TestFixtureText.AmsiReflectionBypass, "b1"),
+                         Block(1, TestFixtureText.EncodedIexBlock, "b2"));
         var ps = found.Where(x => x.RuleId == "PS-SUSPICIOUS").ToList();
         Assert.Equal(2, ps.Count);
         Assert.Single(ps, x => x.Severity == Severity.High && x.MitreTechniqueId == "T1562.001");
@@ -237,12 +237,12 @@ public class DetectionWave3Tests
     [Fact]
     public void A_package_manager_style_download_cradle_is_at_most_Medium_and_one_weak_keyword_is_nothing()
     {
-        var choco = Corr(Block(0, "iex ((New-Object System.Net.WebClient).DownloadString('https://community.example/install.ps1'))", "c1"));
+        var choco = Corr(Block(0, TestFixtureText.DownloadCradle, "c1"));
         Assert.True(One(choco, "PS-SUSPICIOUS").Severity <= Severity.Medium);
-        var two = Corr(Block(0, "iex ((New-Object Net.WebClient).Proxy)", "c2"));
+        var two = Corr(Block(0, TestFixtureText.WebClientProxyIex, "c2"));
         Assert.True(One(two, "PS-SUSPICIOUS").Severity <= Severity.Medium);
         Assert.DoesNotContain(Corr(Block(0, "$w = New-Object Net.WebClient", "c3")), x => x.RuleId == "PS-SUSPICIOUS");
-        Assert.Equal(Severity.High, One(Corr(Block(0, "[Ref].Assembly.GetType('x.AmsiUtils')", "c4")), "PS-SUSPICIOUS").Severity);
+        Assert.Equal(Severity.High, One(Corr(Block(0, TestFixtureText.ReflectionTypeProbe, "c4")), "PS-SUSPICIOUS").Severity);
     }
 
     [Fact]

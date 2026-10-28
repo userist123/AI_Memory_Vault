@@ -9,11 +9,14 @@ import { floors } from '@/core/levels';
 import { usePrefs } from '@/lib/prefs';
 import LoadError from './LoadError';
 import { intlLocale } from '@/lib/i18n';
+import { localizeSnapshotRoomNames } from '@/core/templates';
 
 export default function SiteReport({ id }: { id: string }){
   const { t, lang } = usePrefs(), [d, setD] = useState<{ snap: Snapshot; meta: ProjectMeta; items: Snag[] } | null>(null), [err, setErr] = useState(false), [open, setOpen] = useState(true);
   useEffect(() => { Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject()), fetch(`/api/projects/${id}/site`).then(r => r.ok ? r.json() : Promise.reject())])
     .then(([p, items]) => setD({ snap: p.draft, meta: p.meta, items })).catch(() => setErr(true)); }, [id]);
+  // numele implicite ale camerelor în limba cititorului („Kitchen” → „Bucătărie”), doar la afișare; numele personalizate rămân
+  useEffect(() => { setD(x => { if (!x) return x; const snap = localizeSnapshotRoomNames(x.snap, lang); return snap === x.snap ? x : { ...x, snap }; }); }, [d, lang]);
   if (err) return <LoadError />;
   if (!d) return <main className="report"><DocSkeleton label={t('print.loading')} /></main>;
   const rooms = floors(d.snap).flatMap(f => f.rooms), list = d.items.filter(s => !open || s.status === 'open');
