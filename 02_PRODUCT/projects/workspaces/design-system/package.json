@@ -1,0 +1,17 @@
+{
+  "name": "@vault/design-system",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "DTCG design tokens shared by the Vault's projects; Style Dictionary builds one CSS file per brand.",
+  "scripts": {
+    "build": "node build.mjs",
+    "test": "node --test \"test/*.test.mjs\""
+  },
+  "devDependencies": {
+    "style-dictionary": "5.6.0"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}
