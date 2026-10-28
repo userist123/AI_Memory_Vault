@@ -1,6 +1,7 @@
 ﻿using System.Globalization;
 using System.Text.RegularExpressions;
 using LogAnalyzer.Core.Services.Edition;
+using LogAnalyzer.Dfir.Devices;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Windows.Native;
 using Ro = LogAnalyzer.Dfir.Language.RoText;
@@ -41,6 +42,8 @@ public sealed class ControlReport
     public List<ActionEntry> Actions { get; } = [];
     /// <summary>Accesses to the classified folders' files and their exits (A15); null when the profile defines no classified folders.</summary>
     public LogAnalyzer.Dfir.Analysis.ClassifiedAccessReport? Classified { get; set; }
+    /// <summary>E7: user-activity traces (ShellBags, RecentDocs, Office MRU, Recycle Bin) of the station, when the caller has them from an investigation of the same station; null = this control did not evaluate them (the report says so, never "none found").</summary>
+    public LogAnalyzer.Dfir.Analysis.UserActivityReport? UserActivity { get; set; }
     public int Count(ControlStatus s) => Checks.Count(c => c.Status == s);
     /// <summary>The checks that apply to the posture (every status except NU SE APLICĂ): the only ones counted in summaries and verdicts.</summary>
     public int Applicable => Checks.Count(c => c.Status != ControlStatus.NuSeAplica);
@@ -74,6 +77,7 @@ public static partial class ControlEvaluator
         Logons(f, r);
         Devices(f, r);
         SignedMediaRegisterCheck(f, r);
+        DeviceMonitorCheck(f, r);
         Network(f, r);
         Software(f, r);
         StationHardening(f, r);
@@ -580,11 +584,15 @@ public static partial class ControlEvaluator
 
     // ---- devices / network / software ----------------------------------------------------------------------
 
+    /// <summary>The disk connections of the Partition/Diagnostic log (event 1006): removable media only (D01, and D05 for the intervals the monitor did not run).</summary>
+    private static List<LogFact> PartitionConnections(StationFacts f) =>
+        // BusType: 7 = USB, 12 = SD, 13 = MMC (STORAGE_BUS_TYPE). Internal NVMe/SATA disks are not removable media.
+        Logs(f, "Microsoft-Windows-Partition/Diagnostic", 1006)
+            .Where(l => V(l, "Capacity") is not ("0" or "") && V(l, "BusType") is "7" or "12" or "13" or "").ToList();
+
     private static void Devices(StationFacts f, ControlReport r)
     {
-        // BusType: 7 = USB, 12 = SD, 13 = MMC (STORAGE_BUS_TYPE). Internal NVMe/SATA disks are not removable media.
-        var partition = Logs(f, "Microsoft-Windows-Partition/Diagnostic", 1006)
-            .Where(l => V(l, "Capacity") is not ("0" or "") && V(l, "BusType") is "7" or "12" or "13" or "").ToList();
+        var partition = PartitionConnections(f);
         foreach (var l in partition)
             r.Actions.Add(new ActionEntry(l.TimeUtc, "", "dispozitiv de stocare conectat", $"{Clean(V(l, "Manufacturer"))} {Clean(V(l, "Model"))} SN {Clean(V(l, "SerialNumber"))} ({FormatBytes(V(l, "Capacity"))})", Ev(l)));
         var pnp = Logs(f, "Security", 6416).ToList();

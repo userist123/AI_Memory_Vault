@@ -4,6 +4,7 @@ import type { Catalog, MaterialsCatalog, Snapshot } from './types';
 import { resolve } from './catalog';
 import { area } from './geometry';
 import { footprintOf, validateFloor, validatePlacement } from './validate';
+import { roomCeilingDropCm } from './finishes';
 import { computeBudget } from './boq';
 
 export interface SpatialMetrics {
@@ -81,7 +82,7 @@ export function evaluateDesignOption(
   // 3. Validare erori / avertismente
   let errCount = 0;
   let warnCount = 0;
-  const floorIssues = validateFloor(snap.floor);
+  const floorIssues = validateFloor(snap.floor, id => roomCeilingDropCm(snap, id));
   for (const fi of floorIssues) {
     if (fi.severity === 'ERROR') errCount++;
     else if (fi.severity === 'WARNING') warnCount++;

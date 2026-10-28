@@ -646,7 +646,7 @@ The workflows in [`.github/workflows/`](.github/workflows/), grouped by what the
 
 | What it checks | Workflows |
 |---|---|
-| the full test suite and repository structure | `r001-enforcement.yml`, `memory-v6-tests.yml`, `security-boundary.yml`, `context-token-economy-gate.yml`, `ai-security-update-watch.yml` |
+| the full test suite and repository structure | `r001-enforcement.yml`, `memory-v6-tests.yml`, `security-boundary.yml`, `context-token-economy-gate.yml`, `ai-security-update-watch.yml`, `prompt-master-eval.yml` |
 | repository hygiene: absolute paths, disallowed root files, personal data | `repository-hygiene.yml` |
 | retrieval on the held-out benchmark, frozen by SHA-256 | `r009b-heldout-benchmark.yml` |
 | LogAnalyzer DFIR (.NET): build, tests and the editions' win-x64 packages | `loganalyzer-dfir-build.yml` |

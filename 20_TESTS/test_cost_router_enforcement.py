@@ -13,6 +13,9 @@ from pathlib import Path
 
 import pytest
 
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+import cost_router_isolation as iso  # noqa: E402
+
 ROOT = Path(__file__).resolve().parents[1]
 SKILL = ROOT / ".claude" / "skills" / "cost-router"
 PROMPT_HOOK = SKILL / "hook_prompt_route.py"
@@ -21,6 +24,13 @@ AGENT_HOOK = SKILL / "hook_agent_model.py"
 SID = "test-session-1"
 IMPLEMENT = "implement the bounded change in the parser module and add tests"
 EXPLORE = "find which files import the router module"
+
+
+@pytest.fixture(autouse=True)
+def _isolated_claude_lib():
+    iso.enter(SKILL / "lib")
+    yield
+    iso.leave(SKILL / "lib")
 
 
 @pytest.fixture
@@ -60,14 +70,17 @@ def _prompt(home, prompt, sid=SID):
     return _run(PROMPT_HOOK, {"session_id": sid, "prompt": prompt}, home)
 
 
-def _tool(home, tool="Read", tool_input=None, sid=SID, extra=None, **env):
-    payload = {"session_id": sid, "tool_name": tool, "tool_input": tool_input or {"file_path": "/x"}, **(extra or {})}
+def _tool(home, tool="Edit", tool_input=None, sid=SID, extra=None, **env):
+    # default tool is Edit: read-only tools (Read/Grep/Glob) are never denied by default (see the DENY_READS tests)
+    payload = {"session_id": sid, "tool_name": tool,
+               "tool_input": tool_input or {"file_path": "/x", "old_string": "a", "new_string": "b"}, **(extra or {})}
     r = _run(ENFORCE_HOOK, payload, home, **env)
     return json.loads(r.stdout)["hookSpecificOutput"] if r.stdout.strip() else None
 
 
 def _agent(home, prompt=IMPLEMENT, project: Path = ROOT, sid=SID, tool_name="Agent", **tool_extra):
     r = _run(AGENT_HOOK, {"session_id": sid, "tool_name": tool_name,
+                          "model": "opus",
                           "tool_input": {"description": "worker", "prompt": prompt, **tool_extra}}, home, project)
     return json.loads(r.stdout)["hookSpecificOutput"] if r.stdout.strip() else None
 
@@ -147,14 +160,24 @@ def test_route_cli_bash_marks_vault_routed_and_is_always_allowed(home):
     assert _tool(home, "Bash", {"command": "python -m routing.route_cli dispatch --goal x --execute"}) is None
 
 
-def test_agent_hook_requires_the_vault_router_for_implement_in_the_vault(home):
+def test_agent_hook_requires_the_vault_router_for_implement_in_the_vault(home, tmp_path):
+    # a Vault whose router is unavailable (crashes): the in-hook router fails, so the gate denies with the
+    # fallback text; a Bash receipt then lets the spawn through without running the router again
+    proj = tmp_path / "proj"
+    cli = proj / "03_IMPLEMENTATION" / "packages" / "routing" / "route_cli.py"
+    cli.parent.mkdir(parents=True)
+    # a regular package (like the real one): with `pip install -e .` (CI) the real `routing` is a regular package
+    # and would win over a namespace-only fake, so the real router would run instead of this crashing one
+    (cli.parent / "__init__.py").write_text("", encoding="utf-8")
+    cli.write_text("import sys; sys.exit(1)", encoding="utf-8")
     _prompt(home, IMPLEMENT)
-    out = _agent(home)
+    out = _agent(home, project=proj)
     assert out["permissionDecision"] == "deny"
     assert "python -m routing.route_cli route --goal" in out["permissionDecisionReason"]
+    assert "in-hook router unavailable: exit 1" in out["permissionDecisionReason"]
     assert _state(home)["delegated"] is False
     _tool(home, "Bash", {"command": "python -m routing.route_cli route --goal x"})
-    out = _agent(home)
+    out = _agent(home, project=proj)
     assert out is None or out["permissionDecision"] == "allow"
     assert _state(home)["delegated"] is True
 
@@ -207,11 +230,7 @@ def test_subagent_tool_calls_are_never_counted_or_blocked(home, field):
 
 def test_delegated_survives_a_concurrent_counter_write(home):
     """Lost update: a counter write based on a pre-spawn read must not clear `delegated`."""
-    sys.path.insert(0, str(SKILL / "lib"))
-    try:
-        import route_state
-    finally:
-        sys.path.remove(str(SKILL / "lib"))
+    import route_state  # the autouse fixture put the .claude lib on sys.path
     _prompt(home, EXPLORE)
     stale = _state(home)               # the enforce hook read this before the spawn
     _agent(home, EXPLORE)              # the spawn marks delegated
@@ -222,11 +241,7 @@ def test_delegated_survives_a_concurrent_counter_write(home):
 
 
 def test_vault_routed_survives_a_concurrent_counter_write(home):
-    sys.path.insert(0, str(SKILL / "lib"))
-    try:
-        import route_state
-    finally:
-        sys.path.remove(str(SKILL / "lib"))
+    import route_state  # the autouse fixture put the .claude lib on sys.path
     _prompt(home, IMPLEMENT)
     stale = _state(home)
     _tool(home, "Bash", {"command": "python -m routing.route_cli route --goal x"})
@@ -300,11 +315,7 @@ def test_policy_doc_states_the_opus_ceiling():
 # -- re-review fixes ---------------------------------------------------------------
 
 def _route_state():
-    sys.path.insert(0, str(SKILL / "lib"))
-    try:
-        import route_state
-    finally:
-        sys.path.remove(str(SKILL / "lib"))
+    import route_state  # the autouse fixture put the .claude lib on sys.path
     return route_state
 
 

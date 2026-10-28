@@ -17,8 +17,24 @@ export function createLimiter(o: { windowMs: number; max: number; maxKeys?: numb
   };
 }
 
-/** Adresa clientului: tunelul (cloudflared) pune cf-connecting-ip; pe calculatorul designerului nu există. */
-export const clientIp = (h: { get(k: string): string | null }) => h.get('cf-connecting-ip')?.trim() || 'local';
+/** Adresa clientului, din antetul pus de proxy-ul din față: implicit cf-connecting-ip (tunelul cloudflared; pe
+ *  calculatorul designerului lipsește). Pe un server găzduit, CASA3D_CLIENT_IP_HEADER numește antetul pe care proxy-ul
+ *  îl suprascrie mereu (ex. x-real-ip la Caddy/nginx); altfel clientul și-ar putea alege singur adresa.
+ *  IPv6 se grupează pe prefixul /64: o singură conexiune primește de obicei un /64 întreg, deci rotația în interiorul
+ *  lui nu ocolește limitele. */
+export function clientIp(h: { get(k: string): string | null }){
+  const name = (process.env.CASA3D_CLIENT_IP_HEADER || 'cf-connecting-ip').toLowerCase();
+  const raw = h.get(name)?.split(',')[0]?.trim(); if (!raw) return 'local';
+  return ipv6Prefix64(raw) ?? raw.slice(0, 64);
+}
+/** Primele 4 grupuri ale unei adrese IPv6 (prefixul /64), sau null dacă nu e IPv6. */
+export function ipv6Prefix64(ip: string){
+  if (!ip.includes(':') || /^::ffff:\d+\.\d+\.\d+\.\d+$/i.test(ip)) return null;
+  const [head, tail] = ip.toLowerCase().split('::'); const a = head ? head.split(':') : [], b = tail != null ? (tail ? tail.split(':') : []) : null;
+  const full = b ? [...a, ...Array(Math.max(0, 8 - a.length - b.length)).fill('0'), ...b] : a;
+  if (full.length !== 8 || !full.every(g => /^[0-9a-f]{1,4}$/.test(g))) return null;
+  return full.slice(0, 4).map(g => g.replace(/^0+(?=.)/, '')).join(':') + '::/64';
+}
 
 export type ShareAction = 'feedback' | 'choices' | 'changes' | 'pin';
 const WINDOW = 10 * 60e3;

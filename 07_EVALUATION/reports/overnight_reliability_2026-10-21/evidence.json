@@ -1,0 +1,754 @@
+{
+ "mission": "overnight_reliability_2026-10-21",
+ "branch": "gemini/casa3d-nextgen-functionality-uiux",
+ "head_at_start": "2c72a7228",
+ "head_at_gate": "d0e31c2f7",
+ "verdict": {
+  "value": "SAFE FOR CONTROLLED LOCAL TESTING",
+  "source": "independent vault-reviewer round 2 (delta-only), 2026-10-22",
+  "conditions": "Conditions (independent round-2 review, 2026-10-22): (1) the global self-update hook stays unregistered (user hooks = 0) and HIGH-2 (unpinned/unsigned remote installer) remains an owner-accepted residual until signing is implemented; (2) repo-root sessions run with COST_ROUTER_NO_SELF_INSTALL=1 or the owner accepts the global skill refresh; (3) accepted residuals recorded with the owner: MED-B (state-file forgery of escalation_authorized; hooks are a cost-policy aid, not a boundary against an agent with arbitrary write), R2-1 LOW-MED user-level/plugin agent defaults above the session tier are not capped, R2-2 LOW unrecognised model strings pass through on non-review briefs, R2-3 LOW settings-file model still drives the same-tier advisory (never escalation), RT03/RT15/RT16 xfail residuals; (4) the loosened pre-W7 assertions in 20_TESTS/test_cost_router_enforce.py are reviewed before any merge; (5) nothing is committed, pushed or installed globally without owner authorization. TOKEN SAVINGS NOT DEMONSTRATED (unchanged)."
+ },
+ "findings": [
+  {
+   "id": "C-HIGH-1",
+   "area": "router review bypass by subagent_type",
+   "severity": "HIGH",
+   "status": "fixed",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/hook_agent_model.py"
+   ],
+   "tests": [
+    "20_TESTS/test_cost_router_escalation_matrix.py",
+    "20_TESTS/redteam/test_redteam_runtime.py::test_rt12_*"
+   ]
+  },
+  {
+   "id": "C-HIGH-2",
+   "area": "risk never persisted; advisory dead",
+   "severity": "HIGH",
+   "status": "fixed",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/hook_prompt_route.py"
+   ],
+   "tests": [
+    "test_cost_router_escalation_matrix.py::test_f2_sonnet_session_implement_high_is_denied_on_the_fourth_edit"
+   ],
+   "note": "hook_enforce_route.py was not changed by the mission (mtime before mission start, other agent)"
+  },
+  {
+   "id": "C-MED-1",
+   "area": "silent escalation",
+   "severity": "MED",
+   "status": "fixed (after W7 HIGH-A fix)",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/hook_agent_model.py"
+   ],
+   "tests": [
+    "test_cost_router_escalation_matrix.py::test_pinned_*"
+   ]
+  },
+  {
+   "id": "C-MED-2",
+   "area": "stale stored session model",
+   "severity": "MED",
+   "status": "fixed",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/lib/route_state.py"
+   ],
+   "tests": [
+    "test_cost_router_escalation_matrix.py::test_f4_*"
+   ]
+  },
+  {
+   "id": "C-MED-3",
+   "area": "install --session-start ignores COST_ROUTER_OFF",
+   "severity": "MED",
+   "status": "fixed",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/install.py"
+   ],
+   "tests": [
+    "test_cost_router_escalation_matrix.py::test_f5_*"
+   ]
+  },
+  {
+   "id": "C-LOW-1",
+   "area": "unknown explicit model leaves floor",
+   "severity": "LOW",
+   "status": "fixed",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/hook_agent_model.py"
+   ],
+   "tests": [
+    "redteam::test_rt13_*"
+   ]
+  },
+  {
+   "id": "B-HIGH-1",
+   "area": "self-update ignores NO_SELF_INSTALL",
+   "severity": "HIGH",
+   "status": "fixed",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/hook_self_update.py",
+    ".claude/skills/cost-router/install.py"
+   ],
+   "tests": [
+    "20_TESTS/test_cost_router_self_update.py",
+    "redteam::test_rt01_*"
+   ]
+  },
+  {
+   "id": "B-HIGH-2",
+   "area": "self-update runs unpinned unsigned main",
+   "severity": "HIGH",
+   "status": "open (proposal only)",
+   "evidence_level": "SOURCE_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/hook_self_update.py"
+   ],
+   "tests": []
+  },
+  {
+   "id": "B-MED-3",
+   "area": "HMAC key exported to children",
+   "severity": "MED",
+   "status": "partial",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    "03_IMPLEMENTATION/packages/interfaces/vault_runtime.py"
+   ],
+   "tests": [
+    "redteam::test_rt02_*"
+   ]
+  },
+  {
+   "id": "B-MED-4",
+   "area": "proposal poisoning by repetition",
+   "severity": "MED",
+   "status": "partial (exact-repeat dedup only, no rate cap; dedup reply hardcodes REVIEW/unverified)",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    "03_IMPLEMENTATION/packages/interfaces/memory_access.py"
+   ],
+   "tests": [
+    "redteam::test_rt06_*"
+   ]
+  },
+  {
+   "id": "B-MED-5",
+   "area": "retrieval text without review flag",
+   "severity": "MED",
+   "status": "partial (vault_read unflagged)",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    "03_IMPLEMENTATION/packages/interfaces/memory_access.py"
+   ],
+   "tests": [
+    "redteam::test_rt05_*"
+   ]
+  },
+  {
+   "id": "B-LOW-6",
+   "area": "resume counter race / fail-open",
+   "severity": "LOW",
+   "status": "fixed in .claude copy only",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/lib/route_state.py",
+    ".claude/skills/cost-router/hook_resume_guard.py"
+   ],
+   "tests": [
+    "redteam::test_rt11_*",
+    "redteam::test_rt14_*"
+   ]
+  },
+  {
+   "id": "A-D1",
+   "area": "ASCII-only tokenizer",
+   "severity": "MED",
+   "status": "fixed",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    "03_IMPLEMENTATION/packages/retrieval/hybrid_retrieval.py"
+   ],
+   "tests": [
+    "20_TESTS/regression/test_retrieval_correctness_overnight.py"
+   ]
+  },
+  {
+   "id": "A-D2",
+   "area": "corrupt note skipped silently",
+   "severity": "LOW-MED",
+   "status": "fixed",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    "03_IMPLEMENTATION/packages/memory/storage/file_engine.py",
+    "03_IMPLEMENTATION/packages/memory/controller.py"
+   ],
+   "tests": [
+    "20_TESTS/regression/test_retrieval_correctness_overnight.py"
+   ]
+  },
+  {
+   "id": "A-R1",
+   "area": "candidate window before scoring",
+   "severity": "n/a",
+   "status": "refuted",
+   "evidence_level": "SOURCE_VERIFIED",
+   "files": [
+    "candidate_generation.py:178-180"
+   ],
+   "tests": []
+  },
+  {
+   "id": "D-T1..T6",
+   "area": "telemetry: missing=0, incomplete, failed pooling, flags",
+   "severity": "MED",
+   "status": "fixed",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    "30_SCRIPTS/evaluation/claude_cost_router_benchmark.py",
+    "30_SCRIPTS/evaluation/token_accounting_check.py",
+    ".claude/skills/cost-router/hook_agent_usage.py"
+   ],
+   "tests": [
+    "20_TESTS/test_claude_cost_router_benchmark.py",
+    "20_TESTS/fixtures/telemetry/"
+   ]
+  },
+  {
+   "id": "RT03/15/16",
+   "area": "summarised-doc injection, forged telemetry, evaluator instruction",
+   "severity": "LOW-MED",
+   "status": "open (xfail residual)",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [],
+   "tests": [
+    "redteam::test_redteam_residuals.py"
+   ]
+  },
+  {
+   "id": "GATE-D1",
+   "area": "test leaks sys.modules, breaks antigravity test",
+   "severity": "LOW",
+   "status": "open defect (mission test)",
+   "evidence_level": "RUNTIME_VERIFIED",
+   "files": [
+    "20_TESTS/test_cost_router_escalation_matrix.py:322-325"
+   ],
+   "tests": [
+    "20_TESTS/test_hook_antigravity.py::test_send_message_resume_idempotent_on_same_step"
+   ]
+  },
+  {
+   "id": "GATE-D2",
+   "area": "propose() calls storage.get; test stub lacks it",
+   "severity": "LOW",
+   "status": "open defect (mission code vs old test stub)",
+   "evidence_level": "RUNTIME_VERIFIED",
+   "files": [
+    "03_IMPLEMENTATION/packages/interfaces/memory_access.py:304"
+   ],
+   "tests": [
+    "20_TESTS/test_book_to_memory_lifecycle_gates.py::test_16_helper_function_bypass_rejected"
+   ]
+  },
+  {
+   "id": "GATE-D3",
+   "area": "tokenizer experiment baseline follows production tokenizer",
+   "severity": "LOW",
+   "status": "open defect (mission code vs experiment test)",
+   "evidence_level": "RUNTIME_VERIFIED",
+   "files": [
+    "30_SCRIPTS/evaluation/eval_tokenizer_experiment.py:79"
+   ],
+   "tests": [
+    "20_TESTS/test_tokenizer_experiment_accuracy.py::test_tokenizer_behaviors"
+   ]
+  },
+  {
+   "id": "GATE-O1",
+   "area": "corpus health duplicate group (Casa3D node_modules symlink)",
+   "severity": "n/a",
+   "status": "other agent",
+   "evidence_level": "RUNTIME_VERIFIED",
+   "files": [],
+   "tests": [
+    "20_TESTS/test_corpus_health_gate.py"
+   ]
+  },
+  {
+   "id": "GATE-O2",
+   "area": "notes_strict_yaml red (108 non-mission notes)",
+   "severity": "n/a",
+   "status": "other agents",
+   "evidence_level": "RUNTIME_VERIFIED",
+   "files": [],
+   "tests": [
+    "20_TESTS/test_notes_strict_yaml.py"
+   ]
+  },
+  {
+   "id": "W7-HIGH-A",
+   "area": "unclassified brief let an explicit model above the session tier through silently; agent-definition default not capped",
+   "severity": "HIGH",
+   "status": "fixed",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/hook_agent_model.py (choose, apply_session_policy, _agent_default_model, main)"
+   ],
+   "tests": [
+    "20_TESTS/test_cost_router_escalation_matrix.py::test_w7_high_a_*"
+   ],
+   "note": "explicit model on any class now goes through the session policy (cap + visible note R3, unknown session fail-closed R5, #escalate allows with note); an unclassified brief without explicit model gets the session tier when the agent default (frontmatter model or CLAUDE_CODE_SUBAGENT_MODEL) is dearer. 19 of 24 new W7 tests fail on the previous file (the 5 that pass are the unchanged-behaviour cases)."
+  },
+  {
+   "id": "W7-MED-C",
+   "area": "session model guessed from a settings file used for escalation decisions",
+   "severity": "MED",
+   "status": "fixed",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/lib/route_state.py (resolve_session_model_ex)",
+    ".claude/skills/cost-router/hook_agent_model.py (main)"
+   ],
+   "tests": [
+    "test_cost_router_escalation_matrix.py::test_w7_med_c_*"
+   ],
+   "note": "resolve_session_model_ex returns (model, source in payload|transcript|stored|env|settings|none); the Agent hook treats settings/none as unknown (fail closed); env ANTHROPIC_MODEL stays trusted. Residual: hook_prompt_route.resolve_model still uses the settings guess for the same-tier delegation ADVISORY only (never for escalation or denial); file not owned by this task."
+  },
+  {
+   "id": "W7-MED-B",
+   "area": "hook state in user-writable files can be altered by an agent with arbitrary file write",
+   "severity": "MED",
+   "status": "ACCEPTED RESIDUAL (not fixed)",
+   "evidence_level": "DOCUMENT_VERIFIED",
+   "files": [
+    "SECURITY_REDTEAM_RESULTS.md"
+   ],
+   "tests": [],
+   "note": "Rationale: a model with arbitrary write access can equally remove hooks from settings.json or set COST_ROUTER_OFF; hooks are policy aids, not a boundary against an agent with unrestricted file write. Mitigation: tool permissions (deny Write/Bash outside the project). Owner decision."
+  },
+  {
+   "id": "R2-1",
+   "area": "cost-router",
+   "severity": "LOW-MED",
+   "status": "fixed (2026-10-22: user/plugin defaults capped; F1-F3 parse bypasses fixed)",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/hook_agent_model.py"
+   ],
+   "tests": [
+    "20_TESTS/test_cost_router_escalation_matrix.py"
+   ],
+   "summary": "user-level (~/.claude/agents) and plugin agent default models above the session tier are not capped (_agent_default_model reads only project .claude/agents)"
+  },
+  {
+   "id": "R2-2",
+   "area": "cost-router",
+   "severity": "LOW",
+   "status": "fixed (unrecognised models capped)",
+   "evidence_level": "TEST_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/hook_agent_model.py"
+   ],
+   "tests": [
+    "20_TESTS/test_cost_router_escalation_matrix.py"
+   ],
+   "summary": "unrecognised explicit model strings (e.g. opus[1m], older ids) pass through on non-review briefs"
+  },
+  {
+   "id": "R2-3",
+   "area": "cost-router",
+   "severity": "LOW",
+   "status": "accepted residual",
+   "evidence_level": "SOURCE_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/hook_prompt_route.py"
+   ],
+   "tests": [],
+   "summary": "settings-file model guess still drives the same-tier enforcement advisory (never escalation)"
+  },
+  {
+   "id": "R2-4",
+   "area": "cost-router",
+   "severity": "INFO",
+   "status": "pre-existing",
+   "evidence_level": "SOURCE_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/hook_agent_model.py"
+   ],
+   "tests": [],
+   "summary": "if policy loading raises, main() lets the spawn through unchanged (fail-open, pre-W7)"
+  },
+  {
+   "id": "R3-F4",
+   "area": "cost-router",
+   "severity": "LOW",
+   "status": "accepted residual",
+   "evidence_level": "SOURCE_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/hook_agent_model.py"
+   ],
+   "tests": [],
+   "summary": "agent files are matched by filename, not by frontmatter `name:`; only exploitable if Claude Code lets a name override a built-in"
+  },
+  {
+   "id": "R3-CHEAP",
+   "area": "cost-router",
+   "severity": "LOW",
+   "status": "accepted residual",
+   "evidence_level": "SOURCE_VERIFIED",
+   "files": [
+    ".claude/skills/cost-router/hook_agent_model.py"
+   ],
+   "tests": [],
+   "summary": "a cheaper but unrecognised model id is raised to the session tier: cost only, never above the session"
+  }
+ ],
+ "changed_files": [
+  {
+   "path": "30_SCRIPTS/evaluation/eval_tokenizer_experiment.py",
+   "ownership": "MISSION (D3)",
+   "tracked": true
+  },
+  {
+   "path": ".claude/skills/cost-router/hook_agent_model.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": ".claude/skills/cost-router/hook_prompt_route.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": ".claude/skills/cost-router/hook_resume_guard.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": ".claude/skills/cost-router/hook_self_update.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": ".claude/skills/cost-router/install.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": ".claude/skills/cost-router/lib/route_state.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": ".claude/skills/cost-router/SKILL.md",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": "03_IMPLEMENTATION/packages/interfaces/memory_access.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": "03_IMPLEMENTATION/packages/interfaces/vault_runtime.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": "03_IMPLEMENTATION/packages/memory/controller.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": "03_IMPLEMENTATION/packages/memory/storage/file_engine.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": "03_IMPLEMENTATION/packages/retrieval/hybrid_retrieval.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": "20_TESTS/test_cost_router_enforcement.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": "20_TESTS/test_cost_router_self_update.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": "20_TESTS/test_cost_router_skill.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": "20_TESTS/test_cost_router_token_waste.py",
+   "ownership": "MISSION",
+   "tracked": true
+  },
+  {
+   "path": "20_TESTS/redteam/",
+   "ownership": "MISSION",
+   "tracked": false
+  },
+  {
+   "path": "20_TESTS/regression/test_retrieval_correctness_overnight.py",
+   "ownership": "MISSION",
+   "tracked": false
+  },
+  {
+   "path": "20_TESTS/test_cost_router_escalation_matrix.py",
+   "ownership": "MISSION",
+   "tracked": false
+  },
+  {
+   "path": "20_TESTS/fixtures/telemetry/",
+   "ownership": "MISSION",
+   "tracked": false
+  },
+  {
+   "path": "30_SCRIPTS/evaluation/token_accounting_check.py",
+   "ownership": "MISSION",
+   "tracked": false
+  },
+  {
+   "path": "07_EVALUATION/reports/overnight_reliability_2026-10-21/",
+   "ownership": "MISSION",
+   "tracked": false
+  },
+  {
+   "path": ".claude/skills/cost-router/hook_agent_usage.py",
+   "ownership": "MISSION (W4; file existed untracked from earlier phases)",
+   "tracked": false
+  },
+  {
+   "path": "30_SCRIPTS/evaluation/claude_cost_router_benchmark.py",
+   "ownership": "MISSION (W4; file existed untracked from earlier phases)",
+   "tracked": false
+  },
+  {
+   "path": "20_TESTS/test_claude_cost_router_benchmark.py",
+   "ownership": "MISSION (W4; file existed untracked from earlier phases)",
+   "tracked": false
+  },
+  {
+   "path": "20_TESTS/test_cost_router_claude_hooks.py",
+   "ownership": "MISSION (W4; file existed untracked from earlier phases)",
+   "tracked": false
+  },
+  {
+   "path": "00_GOVERNANCE/coordination/tasks/todo-claude-overnight-reliability.md",
+   "ownership": "MISSION (frontmatter added at G7)",
+   "tracked": false
+  },
+  {
+   "path": "00_GOVERNANCE/coordination/tasks/todo-claude-cost-router-native.md",
+   "ownership": "MISSION (frontmatter added at G7)",
+   "tracked": false
+  },
+  {
+   "path": "00_GOVERNANCE/coordination/tasks/todo-claude-cost-router-phase2.md",
+   "ownership": "MISSION (frontmatter added at G7)",
+   "tracked": false
+  },
+  {
+   "path": "00_GOVERNANCE/coordination/tasks/todo-claude-cost-router-phase3.md",
+   "ownership": "MISSION (frontmatter added at G7)",
+   "tracked": false
+  },
+  {
+   "path": "00_GOVERNANCE/coordination/tasks/todo-claude-cost-router-phase4.md",
+   "ownership": "MISSION (frontmatter added at G7)",
+   "tracked": false
+  },
+  {
+   "path": "20_TESTS/test_frontend_design_benchmark.py",
+   "ownership": "OTHER AGENT (frontend-design session)",
+   "tracked": false
+  },
+  {
+   "path": "30_SCRIPTS/evaluation/frontend_design_benchmark.py",
+   "ownership": "OTHER AGENT (frontend-design session)",
+   "tracked": false
+  },
+  {
+   "path": "docs/reports/FRONTEND_DESIGN_PLUGIN_REPORT.md",
+   "ownership": "OTHER AGENT (frontend-design session)",
+   "tracked": false
+  },
+  {
+   "path": "00_GOVERNANCE/coordination/tasks/todo-claude-frontend-design.md",
+   "ownership": "OTHER AGENT (frontend-design session)",
+   "tracked": false
+  },
+  {
+   "path": "07_EVALUATION/reports/frontend_design_ab_benchmark_2026-10-21/",
+   "ownership": "OTHER AGENT (frontend-design session)",
+   "tracked": false
+  },
+  {
+   "path": "scratch_crlf.py",
+   "ownership": "UNKNOWN (0 bytes, 23:51; probable worker scratch, INFERRED)",
+   "tracked": false
+  },
+  {
+   "path": ".agents/skills/cost-router/hook_antigravity.py",
+   "ownership": "OTHER AGENT / earlier phase (mtime before mission start; not written by the mission per mtime)",
+   "tracked": true
+  },
+  {
+   "path": ".agents/skills/cost-router/lib/route_state.py",
+   "ownership": "OTHER AGENT / earlier phase (mtime before mission start; not written by the mission per mtime)",
+   "tracked": true
+  },
+  {
+   "path": ".agents/skills/cost-router/lib/transcript_usage.py",
+   "ownership": "OTHER AGENT / earlier phase (mtime before mission start; not written by the mission per mtime)",
+   "tracked": true
+  },
+  {
+   "path": "20_TESTS/test_hook_antigravity.py",
+   "ownership": "OTHER AGENT / earlier phase (mtime before mission start; not written by the mission per mtime)",
+   "tracked": true
+  },
+  {
+   "path": ".claude/skills/cost-router/hook_enforce_route.py",
+   "ownership": "OTHER AGENT / earlier phase (mtime before mission start; not written by the mission per mtime)",
+   "tracked": true
+  },
+  {
+   "path": ".claude/skills/cost-router/hook_repo_map.py",
+   "ownership": "OTHER AGENT / earlier phase (mtime before mission start; not written by the mission per mtime)",
+   "tracked": true
+  },
+  {
+   "path": ".claude/skills/cost-router/lib/transcript_usage.py",
+   "ownership": "OTHER AGENT / earlier phase (mtime before mission start; not written by the mission per mtime)",
+   "tracked": true
+  },
+  {
+   "path": "04_CONFIG/claude_model_routing.json",
+   "ownership": "OTHER AGENT / earlier phase (mtime before mission start; not written by the mission per mtime)",
+   "tracked": true
+  },
+  {
+   "path": "CLAUDE.md",
+   "ownership": "OTHER AGENT / earlier phase (mtime before mission start; not written by the mission per mtime)",
+   "tracked": true
+  },
+  {
+   "path": ".claude/settings.json",
+   "ownership": "OTHER AGENT / earlier phase (mtime before mission start; not written by the mission per mtime)",
+   "tracked": true
+  },
+  {
+   "path": "03_IMPLEMENTATION/packages/interfaces/skill_router.py",
+   "ownership": "OTHER AGENT / earlier phase (mtime before mission start; not written by the mission per mtime)",
+   "tracked": true
+  },
+  {
+   "path": "20_TESTS/test_cost_router_enforce.py",
+   "ownership": "MISSION (W7: _agent helper pins the session model via the hook payload, because a settings-file model is now unknown for escalation)",
+   "tracked": true
+  }
+ ],
+ "test_runs": [
+  {
+   "id": "G1",
+   "command": "python -m pytest 20_TESTS security/tests -q -p no:cacheprovider -rfE --continue-on-collection-errors (temp HOME, user site, COST_ROUTER_NO_SELF_INSTALL=1)",
+   "exit": 1,
+   "counts": "34 failed, 4728 passed, 51 skipped, 9 xfailed, 6 errors in 1219 s",
+   "baseline": "54 failed, 4454 passed, 51 skipped, 6 xfailed, 6 errors",
+   "newly_failing": 5,
+   "newly_passing": 25,
+   "unchanged": 34
+  },
+  {
+   "id": "G2a",
+   "command": "pytest test_hook_antigravity.py test_cost_router_claude_hooks.py",
+   "exit": 0,
+   "counts": "112 passed"
+  },
+  {
+   "id": "G2b",
+   "command": "pytest test_cost_router_claude_hooks.py test_hook_antigravity.py",
+   "exit": 0,
+   "counts": "112 passed"
+  },
+  {
+   "id": "G2c",
+   "command": "pytest test_cost_router_escalation_matrix.py test_hook_antigravity.py",
+   "exit": 1,
+   "counts": "1 failed, 166 passed (sys.modules leak, GATE-D1)"
+  },
+  {
+   "id": "G2d",
+   "command": "pytest 20_TESTS/redteam test_hook_antigravity.py",
+   "exit": 0,
+   "counts": "57 passed, 3 xfailed"
+  },
+  {
+   "id": "G3",
+   "command": "git diff --check over 16 tracked mission files + grep untracked",
+   "exit": 0,
+   "counts": "no findings"
+  },
+  {
+   "id": "G7",
+   "command": "pytest 20_TESTS/test_notes_strict_yaml.py (before and after frontmatter)",
+   "exit": 1,
+   "counts": "1 failed, 9 passed both times; unlisted unreadable 113 -> 108; ours 0 remaining"
+  },
+  {
+   "id": "mission-suites",
+   "command": "redteam; escalation_matrix; retrieval regression; benchmark; self_update; skill; token_waste; enforcement",
+   "exit": 0,
+   "counts": "39 passed+3 xfailed; 149; 11; 68; 17; 17; 51; 57 passed"
+  },
+  {
+   "id": "token_accounting_check",
+   "command": "token_accounting_check.py on phase3_final, phase4_pilot_haiku, phase4_pilot_sonnet",
+   "exit": 0,
+   "counts": "37/37, 46/46, 11/11 ok"
+  }
+ ],
+ "global_state_checks": {
+  "claude_settings_hooks_count": 0,
+  "claude_settings_mtime": "2026-10-21T23:37:01+03:00",
+  "enabled_plugins": [
+   "superpowers@anthropic-plugin-directory",
+   "frontend-design@anthropic-plugin-directory"
+  ],
+  "global_cost_router_VERSION_mtime": "2026-10-21T23:32:44+03:00",
+  "global_cost_router_VERSION_content": "2c72a722897efc5d1119c01a9cedde5de3cf9dcc+dirty plus manifest sha256",
+  "claude_skills": [
+   "cost-router",
+   "synced"
+  ],
+  "frontend_design_installedAt": "2026-10-21T23:37:05+03:00",
+  "frontend_design_scope": "user",
+  "frontend_design_cause": "separate frontend-design session (owner-approved per its checkpoint); RUNTIME_VERIFIED by plugin installedAt 20:37:05Z; not a gate command",
+  "gemini_cost_router_mtime": "2026-10-17T22:42:51+03:00",
+  "gate_wrote_global_state": false,
+  "home": "<HOME>",
+  "global_change_attribution": "RUNTIME_VERIFIED: the 23:32:44 (20:32:44Z) global cost-router rewrite is the SessionStart hook of Claude Code session 9eb044d1 (its recorded SessionStart at 20:32:44Z); the frontend-design plugin installedAt 2026-10-21T20:37:05Z (23:37:05+03:00) is the separate frontend-design session. Neither is a gate command."
+ },
+ "budget": {
+  "paid_spend_usd_this_mission": 0,
+  "claude_runs": 0,
+  "network": false
+ }
+}

@@ -7,7 +7,7 @@ import path from 'node:path';
 process.env.PGLITE_MEMORY = '1'; delete process.env.DATABASE_URL;
 process.env.CASA3D_AUTH_FILE = path.join(import.meta.dirname, '__no_auth_file__.json');
 import { NextRequest } from 'next/server';
-import { middleware } from '../middleware';
+import { proxy as middleware } from '../proxy';   // Next.js 16: middleware.ts → proxy.ts
 import { resetDbForTests } from '../lib/db';
 import { resetShareLimits, createLimiter, shareLimitMessage } from '../lib/rate-limit';
 beforeAll(() => resetDbForTests());
@@ -19,8 +19,8 @@ const routes = walk(path.join(root, 'app', 'api', 'share')).map(f => ({ file: f,
 const remote = (url: string, method = 'GET', extra: Record<string, string> = {}) => new NextRequest(`http://localhost:3123${url}`, { method, headers: { host: 'localhost:3123', 'cf-connecting-ip': '203.0.113.7', ...extra } });
 const passes = (res: Response) => res.headers.get('x-middleware-next') === '1';
 
-test('toate rutele /api/share/** găsite pe disc (cel puțin share, feedback, choices, changes, changes/[change], pin, pins)', () => {
-  assert.deepEqual(routes.map(r => r.url.replace(tok, 'T').replace(uuid, 'U')).sort(), ['/api/share/T', '/api/share/T/changes', '/api/share/T/changes/U', '/api/share/T/choices', '/api/share/T/feedback', '/api/share/T/pin', '/api/share/T/pins']);
+test('toate rutele /api/share/** găsite pe disc (cel puțin share, feedback, choices, changes, changes/[change], pin, pins, render/[key])', () => {
+  assert.deepEqual(routes.map(r => r.url.replace(tok, 'T').replace(uuid, 'U')).sort(), ['/api/share/T', '/api/share/T/changes', '/api/share/T/changes/U', '/api/share/T/choices', '/api/share/T/feedback', '/api/share/T/pin', '/api/share/T/pins', '/api/share/T/render/U']);
 });
 
 test('prin tunel, fără sesiune: fiecare metodă exportată de fiecare rută share trece de poartă', async () => {

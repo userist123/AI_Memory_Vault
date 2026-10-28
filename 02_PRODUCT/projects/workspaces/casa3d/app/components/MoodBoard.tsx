@@ -11,6 +11,7 @@ import { swatchStyle } from './MaterialPicker';
 import { usePrefs } from '@/lib/prefs';
 import LoadError from './LoadError';
 import EmptyState from './EmptyState';
+import { localizeSnapshotRoomNames } from '@/core/templates';
 
 export default function MoodBoard({ id }: { id: string }){
   const { t, lang, units } = usePrefs(), [d, setD] = useState<{ name: string; draft: Snapshot; cat: Catalog; mc: MaterialsCatalog; renders: Record<string, string> } | null>(null), [err, setErr] = useState(false);
@@ -19,6 +20,8 @@ export default function MoodBoard({ id }: { id: string }){
     .then(([p, cat, mc, rj]) => { const renders: Record<string, string> = {}; // cea mai nouă imagine a fiecărei camere
       for (const j of rj.jobs ?? []) if (j.status === 'done') for (const f of j.images) { const room = f.replace(/(-2)?\.png$/, ''); if (!renders[room] && !f.endsWith('-2.png')) renders[room] = `/api/projects/${id}/renders/${j.job}/${f}`; }
       setD({ name: p.name, draft: p.draft, cat, mc, renders }); }).catch(() => setErr(true)); }, [id]);
+  // numele implicite ale camerelor în limba cititorului („Kitchen” → „Bucătărie”), doar la afișare; numele personalizate rămân
+  useEffect(() => { setD(x => { if (!x) return x; const draft = localizeSnapshotRoomNames(x.draft, lang); return draft === x.draft ? x : { ...x, draft }; }); }, [d, lang]);
   const boards = useMemo(() => d ? floors(d.draft).flatMap(f => f.rooms).map(r => roomBoard(d.draft, d.cat, d.mc, r)).filter(b => b.materials.length || b.pieces.length) : [], [d]);
   if (err) return <LoadError />;
   if (!d) return <main className="report"><DocSkeleton label={t('print.loading')} /></main>;
