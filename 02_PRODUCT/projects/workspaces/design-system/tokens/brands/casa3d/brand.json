@@ -13,7 +13,9 @@
     "shadow-1": "shadow.1", "shadow-2": "shadow.2",
     "fs-xs": "font.size.xs", "fs-sm": "font.size.sm", "fs-md": "font.size.md", "fs-lg": "font.size.lg", "fs-xl": "font.size.xl", "fs-2xl": "font.size.2xl",
     "serif": "font.family.serif", "sans": "font.family.sans", "mono": "font.family.sans",
-    "h-sm": "size.control.sm", "h-md": "size.control.md", "h-lg": "size.control.lg", "hit": "size.hit", "sheet-peek": "size.sheet-peek"
+    "h-sm": "size.control.sm", "h-md": "size.control.md", "h-lg": "size.control.lg", "hit": "size.hit", "sheet-peek": "size.sheet-peek",
+    "dur-fast": "motion.duration.fast", "dur-base": "motion.duration.base", "dur-slow": "motion.duration.slow",
+    "ease-out": "motion.easing.out", "ease-std": "motion.easing.standard"
   },
   "copyTo": ["../casa3d/app/app/tokens.css"]
 }

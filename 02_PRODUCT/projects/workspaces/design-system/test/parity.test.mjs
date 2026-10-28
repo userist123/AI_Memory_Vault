@@ -47,6 +47,20 @@ test('later :root blocks in globals.css only override --hit', () => {
   }
 });
 
+test('motion tokens keep the values globals.css had before they moved to tokens.css', () => {
+  // Added to globals.css on main after the baseline (UI/UX P2-13), then moved into brands/casa3d/motion.json.
+  const motion = {
+    '--dur-fast': '120ms', '--dur-base': '200ms', '--dur-slow': '320ms',
+    '--ease-out': 'cubic-bezier(.2,.8,.2,1)', '--ease-std': 'cubic-bezier(.4,0,.2,1)',
+  };
+  const merged = new Map([...generated, ...kept]);
+  for (const [name, old] of Object.entries(motion)) {
+    const now = resolve(merged, name);
+    assert.notEqual(now, undefined, `${name} is no longer defined`);
+    assert.equal(normalize(now).replace(/\s/g, ''), normalize(old).replace(/\s/g, ''), `${name} changed (was ${old})`);
+  }
+});
+
 test('migrated values live in tokens.css, not in globals.css', () => {
   const legacy = ['--paper', '--paper-2', '--graphite', '--lead', '--rule'];
   assert.deepEqual([...kept.keys()].sort(), legacy.sort());
