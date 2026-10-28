@@ -29,7 +29,7 @@ export async function POST(req: NextRequest) {
     const parsed = ScanRequestSchema.safeParse(body);
     if (!parsed.success) {
       return NextResponse.json(
-        { error: 'Invalid request', details: parsed.error.errors },
+        { error: 'Invalid request', details: parsed.error.issues },
         { status: 400 }
       );
     }

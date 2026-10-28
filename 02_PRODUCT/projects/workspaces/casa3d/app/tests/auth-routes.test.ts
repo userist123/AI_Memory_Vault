@@ -30,6 +30,19 @@ test('login blocat: 429 cu minutele rămase și Retry-After', async () => {
   assert.equal(r.headers.get('retry-after'), String(j.retryAfter));
 });
 
+test('login reușit: cookie-urile primesc Secure prin tunel (fără x-forwarded-proto), nu și local pe http în dev', async () => {
+  setPassword('parola-de-test-2', '77777777-7777-4777-8777-777777777777');
+  const body = JSON.stringify({ password: 'parola-de-test-2' }), h = { 'sec-fetch-site': 'same-origin', 'content-type': 'application/json' };
+  const cookies = (r: Response) => r.headers.getSetCookie().filter(c => /^(casa_session|casa_owner)=/.test(c));
+  const prev = process.env.NODE_ENV; (process.env as any).NODE_ENV = 'development';
+  try {
+    const tun = await login(req('/api/auth/login', { ...h, 'cf-connecting-ip': '203.0.113.10' }, body)); assert.equal(tun.status, 200);
+    assert.equal(cookies(tun).length, 2); for (const c of cookies(tun)) assert.match(c, /;\s*Secure/i, c);
+    const loc = await login(req('/api/auth/login', h, body)); assert.equal(loc.status, 200);
+    assert.equal(cookies(loc).length, 2); for (const c of cookies(loc)) assert.doesNotMatch(c, /;\s*Secure/i, c);
+  } finally { if (prev === undefined) delete (process.env as any).NODE_ENV; else (process.env as any).NODE_ENV = prev; }
+});
+
 test('timpul rămas scade odată cu fereastra; 0 cât timp mai sunt încercări', () => {
   assert.equal(loginRetryAfterMs('ip', 0), 0); for (let i = 0; i < 5; i++) takeLoginAttempt('ip', i * 1000);
   assert.equal(loginRetryAfterMs('ip', 5000), 15 * 60e3 - 5000); assert.equal(loginRetryAfterMs('ip', 15 * 60e3 + 1), 0);

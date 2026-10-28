@@ -49,9 +49,22 @@ export function projectLang(requested: unknown, acceptLanguage?: string | null):
   const first = (acceptLanguage ?? '').split(',')[0]!.trim().toLowerCase();
   return /^en\b/.test(first) ? 'en' : 'ro';
 }
-/** Traduce numele implicite ale camerelor (de ex. „Dormitor 2” → „Bedroom 2”); numele personalizate (de ex. „WC”) rămân. */
+/** Traduce numele implicite ale camerelor (de ex. „Dormitor 2” → „Bedroom 2”, „Kitchen” → „Bucătărie”) din oricare limbă a
+ *  aplicației în `lang`; numele personalizate (de ex. „WC”, „Camera lui Andrei”) rămân. Fără nicio schimbare se întoarce
+ *  același obiect, ca apelantul să știe că nu e nimic de salvat. */
 export function localizeRoomNames(floor: Floor, lang: 'ro' | 'en'): Floor {
-  if (lang === 'ro') return floor;
-  return { ...floor, rooms: floor.rooms.map(r => { const base = ROOM_NAMES.ro[r.type], m = base ? new RegExp(`^${base}( \\d+)?$`).exec(r.name) : null;
-    return m ? { ...r, name: ROOM_NAMES[lang][r.type] + (m[1] ?? '') } : r; }) };
+  let changed = false;
+  const rooms = floor.rooms.map(r => {
+    for (const from of Object.keys(ROOM_NAMES) as ('ro' | 'en')[]){
+      const base = ROOM_NAMES[from][r.type], m = base ? new RegExp(`^${base}( \\d+)?$`).exec(r.name) : null;
+      if (m){ const name = ROOM_NAMES[lang][r.type] + (m[1] ?? ''); if (name === r.name) return r; changed = true; return { ...r, name }; }
+    }
+    return r; });
+  return changed ? { ...floor, rooms } : floor;
+}
+/** Același lucru pe tot proiectul (parter și etaje). Pentru afișare (link client, documente) și la deschiderea editorului. */
+export function localizeSnapshotRoomNames<S extends { floor: Floor; levels?: Floor[] }>(snap: S, lang: 'ro' | 'en'): S {
+  const floor = localizeRoomNames(snap.floor, lang), levels = snap.levels?.map(f => localizeRoomNames(f, lang));
+  const levelsChanged = !!levels && levels.some((f, i) => f !== snap.levels![i]);
+  return floor === snap.floor && !levelsChanged ? snap : { ...snap, floor, ...(levels ? { levels } : {}) };
 }

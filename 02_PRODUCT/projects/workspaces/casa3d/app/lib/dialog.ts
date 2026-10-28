@@ -3,7 +3,7 @@
 // DOM; components/DialogHost.tsx le afișează. Oricine poate cere un dialog și primește un Promise cu răspunsul.
 
 export interface DialogRequest {
-  kind: 'confirm' | 'prompt';
+  kind: 'confirm' | 'prompt' | 'review';
   title: string;
   body?: string;
   /** eticheta butonului principal; implicit „Confirmă” / „OK” din dicționar */
@@ -14,9 +14,14 @@ export interface DialogRequest {
   /** pentru prompt: câmpul de text */
   input?: { label: string; placeholder?: string; initial?: string; maxLength?: number; multiline?: boolean;
     /** confirmarea prin tastare: butonul principal se activează doar când textul e exact acesta */
-    mustEqual?: string };
+    mustEqual?: string; minLength?: number };
+  /** pentru review: elementele de confirmat, pe grupuri (ex. pe camere), toate bifate la deschidere; omul poate scoate excepții */
+  checklist?: { heading: string; items: { key: string; label: string }[] }[];
 }
-type Pending = DialogRequest & { id: number; resolve(v: boolean | string | null): void };
+/** Răspunsul unui dialog review: textul (de ex. numele) și cheile rămase bifate. */
+export interface ReviewAnswer { text: string; keys: string[] }
+type Answer = boolean | string | null | ReviewAnswer;
+type Pending = DialogRequest & { id: number; resolve(v: Answer): void };
 let queue: Pending[] = [], seq = 0;
 const listeners = new Set<() => void>();
 const emit = () => { for (const l of listeners) l(); };
@@ -24,10 +29,10 @@ const emit = () => { for (const l of listeners) l(); };
 /** Dialogul afișat acum (primul din coadă) sau null. */
 export const currentDialog = (): Pending | null => queue[0] ?? null;
 export function subscribeDialogs(l: () => void){ listeners.add(l); return () => { listeners.delete(l); }; }
-function open(r: DialogRequest): Promise<boolean | string | null> { return new Promise(resolve => { queue = [...queue, { ...r, id: ++seq, resolve }]; emit(); }); }
+function open(r: DialogRequest): Promise<Answer> { return new Promise(resolve => { queue = [...queue, { ...r, id: ++seq, resolve }]; emit(); }); }
 /** Răspunsul la dialogul curent: true/false la confirmare, textul sau null la prompt. Trece la următorul din coadă. */
-export function answerDialog(value: boolean | string | null){ const c = queue[0]; if (!c) return; queue = queue.slice(1);
-  c.resolve(c.kind === 'confirm' ? value === true : typeof value === 'string' ? value : null); emit(); }
+export function answerDialog(value: Answer){ const c = queue[0]; if (!c) return; queue = queue.slice(1);
+  c.resolve(c.kind === 'confirm' ? value === true : c.kind === 'review' ? (value && typeof value === 'object' ? value : null) : typeof value === 'string' ? value : null); emit(); }
 
 /**
  * Anulează tot ce e în coadă (confirmare = false, prompt = null), de ex. la schimbarea paginii: un dialog cerut de pagina
@@ -53,9 +58,14 @@ export function focusMemory<T>(){ let saved: T | null = null, open = false;
 export const askConfirm = (r: Omit<DialogRequest, 'kind' | 'input'>) => open({ ...r, kind: 'confirm' }) as Promise<boolean>;
 /** În locul lui prompt(): textul scris sau null dacă s-a anulat. */
 export const askPrompt = (r: Omit<DialogRequest, 'kind'> & { input: NonNullable<DialogRequest['input']> }) => open({ ...r, kind: 'prompt' }) as Promise<string | null>;
+/** Confirmare cu listă: textul cerut (de ex. numele) și elementele rămase bifate; null dacă s-a anulat. */
+export const askReview = (r: Omit<DialogRequest, 'kind'> & { input: NonNullable<DialogRequest['input']>; checklist: NonNullable<DialogRequest['checklist']> }) => open({ ...r, kind: 'review' }) as Promise<ReviewAnswer | null>;
 
 /** Butonul principal e activ? La confirmarea prin tastare, doar când textul se potrivește exact (fără spațiile de la capete). */
-export function canConfirm(r: DialogRequest, text: string){ return !(r.kind === 'prompt' && r.input?.mustEqual != null && text.trim() !== r.input.mustEqual.trim()); }
+export function canConfirm(r: DialogRequest, text: string, checked = 1){
+  if (r.input?.minLength != null && text.trim().length < r.input.minLength) return false;
+  if (r.kind === 'review' && checked < 1) return false;
+  return !(r.kind === 'prompt' && r.input?.mustEqual != null && text.trim() !== r.input.mustEqual.trim()); }
 
 /** Capcana de focus: indexul elementului care primește focusul la Tab (Shift+Tab), cu trecere de la ultimul la primul. */
 export function trapFocusIndex(count: number, current: number, shift: boolean): number {

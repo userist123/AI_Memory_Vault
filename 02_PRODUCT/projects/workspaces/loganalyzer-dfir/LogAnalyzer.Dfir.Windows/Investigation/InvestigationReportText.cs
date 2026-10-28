@@ -55,6 +55,9 @@ public static class InvestigationReportText
         GenericPrefixes.Any(p => limitation.StartsWith(p, StringComparison.Ordinal))
         || Enum.GetValues<SemanticType>().Any(t => FindingContract.SemanticLimitation(t) is { Length: > 0 } s && s == limitation);
 
+    /// <summary>The user-activity part of the report (E7): counts, the strongest rows with the meaning of their time, the limits. Pure, so the tests read it without parsing the PDF.</summary>
+    public static List<(string Text, bool Head)> UserActivityLines(InvestigationResult r) => UserActivityAnalysis.ReportLines(r.UserActivityView());
+
     /// <summary>The general limitations present in these findings, each once.</summary>
     public static IReadOnlyList<string> GenericLimitations(IEnumerable<Finding> findings) =>
         findings.SelectMany(f => f.Limitations).Where(IsGenericLimitation).Distinct(StringComparer.Ordinal).ToList();

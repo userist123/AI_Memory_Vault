@@ -40,6 +40,70 @@ public static class PnpEnumerator
         return res;
     }
 
+    private const uint DN_HAS_PROBLEM = 0x400;
+
+    /// <summary>
+    /// Every present device of every class, for the real-time device monitor: id, name, setup class, manufacturer, hardware ids, service and the Configuration
+    /// Manager problem code (the value Win32_PnPEntity.ConfigManagerErrorCode reports: 0 when the device has no problem, -1 when the status was not readable).
+    /// </summary>
+    public static List<LogAnalyzer.Dfir.Devices.PnpSnapshotEntry> Snapshot()
+    {
+        var res = new List<LogAnalyzer.Dfir.Devices.PnpSnapshotEntry>();
+        var set = SetupDiGetClassDevsW(IntPtr.Zero, null, IntPtr.Zero, DIGCF_ALLCLASSES | DIGCF_PRESENT);
+        if (set == InvalidHandle) throw new IOException("SetupAPI: lista dispozitivelor nu a putut fi deschisă (cod " + Marshal.GetLastWin32Error() + ")");
+        try
+        {
+            var data = new SP_DEVINFO_DATA { cbSize = (uint)Marshal.SizeOf<SP_DEVINFO_DATA>() };
+            for (uint i = 0; SetupDiEnumDeviceInfo(set, i, ref data); i++)
+            {
+                var name = Text(set, ref data, SPDRP_FRIENDLYNAME);
+                if (name.Length == 0) name = Text(set, ref data, SPDRP_DEVICEDESC);
+                int code = CM_Get_DevNode_Status(out var status, out var problem, data.DevInst, 0) == 0 ? ((status & DN_HAS_PROBLEM) != 0 ? (int)problem : 0) : -1;
+                res.Add(new(InstanceId(set, ref data), name, Text(set, ref data, SPDRP_CLASS), Text(set, ref data, SPDRP_MFG),
+                    string.Join(" ", Multi(set, ref data, SPDRP_HARDWAREID)), Text(set, ref data, SPDRP_SERVICE), code, Container(set, ref data), Parent(set, ref data), Removable(set, ref data)));
+            }
+        }
+        finally { SetupDiDestroyDeviceInfoList(set); }
+        return res;
+    }
+
+    private static readonly Guid ContainerKeyFmt = new("8c7ed206-3f8a-4827-b3ab-ae9e1faefc6c");
+
+    /// <summary>
+    /// DEVPKEY_Device_ContainerId (pid 2): all the nodes of one physical device share it. DEVPKEY_Device_InLocalMachineContainer (pid 4) true = a component of the
+    /// station itself, reported as the local machine container (see <see cref="LogAnalyzer.Dfir.Devices.DeviceScope.LocalMachineContainer"/>). "" = not readable.
+    /// </summary>
+    private static string Container(IntPtr set, ref SP_DEVINFO_DATA d)
+    {
+        var inLocal = new DEVPROPKEY { fmtid = ContainerKeyFmt, pid = 4 };
+        var buf = new byte[4];
+        if (SetupDiGetDevicePropertyW(set, ref d, ref inLocal, out var t, buf, (uint)buf.Length, out _, 0) && t == 0x11 && buf[0] != 0)
+            return LogAnalyzer.Dfir.Devices.DeviceScope.LocalMachineContainer;
+        var key = new DEVPROPKEY { fmtid = ContainerKeyFmt, pid = 2 };
+        var g = new byte[16];
+        return SetupDiGetDevicePropertyW(set, ref d, ref key, out t, g, 16, out _, 0) && t == 0x0D ? "{" + new Guid(g).ToString().ToUpperInvariant() + "}" : "";
+    }
+
+    /// <summary>
+    /// DEVPKEY_Device_Capabilities (pid 17), CM_DEVCAP_REMOVABLE (0x4): what the PnP stack says about the port the device hangs off (a hub's removable bit, ACPI _UPC/_PLD),
+    /// never a string the device reports. null = not readable (treated as external by the scope).
+    /// </summary>
+    private static bool? Removable(IntPtr set, ref SP_DEVINFO_DATA d)
+    {
+        var key = new DEVPROPKEY { fmtid = new Guid("a45c254e-df1c-4efd-8020-67d146a850e0"), pid = 17 };
+        var buf = new byte[4];
+        return SetupDiGetDevicePropertyW(set, ref d, ref key, out var t, buf, (uint)buf.Length, out _, 0) && t == 0x07 ? (BitConverter.ToUInt32(buf, 0) & 0x4) != 0 : null;
+    }
+
+    /// <summary>DEVPKEY_Device_Parent: the instance id of the parent node (a USB Attached SCSI disk hangs off a USB node whose service is UASPStor); "" = not readable.</summary>
+    private static string Parent(IntPtr set, ref SP_DEVINFO_DATA d)
+    {
+        var key = new DEVPROPKEY { fmtid = new Guid("4340a6c5-93fa-4706-972c-7b648008a5a7"), pid = 8 };
+        var buf = new byte[1024];
+        return SetupDiGetDevicePropertyW(set, ref d, ref key, out var t, buf, (uint)buf.Length, out var required, 0) && t == 0x12
+            ? Encoding.Unicode.GetString(buf, 0, (int)Math.Min(required, (uint)buf.Length)).TrimEnd('\0') : "";
+    }
+
     private static byte[]? Raw(IntPtr set, ref SP_DEVINFO_DATA d, uint prop)
     {
         SetupDiGetDeviceRegistryPropertyW(set, ref d, prop, out _, null, 0, out var size);
@@ -61,6 +125,12 @@ public static class PnpEnumerator
 
     [StructLayout(LayoutKind.Sequential)]
     private struct SP_DEVINFO_DATA { public uint cbSize; public Guid ClassGuid; public uint DevInst; public IntPtr Reserved; }
+
+    [StructLayout(LayoutKind.Sequential)]
+    private struct DEVPROPKEY { public Guid fmtid; public uint pid; }
+
+    [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Unicode)]
+    private static extern bool SetupDiGetDevicePropertyW(IntPtr set, ref SP_DEVINFO_DATA data, ref DEVPROPKEY key, out uint propertyType, byte[]? buffer, uint size, out uint required, uint flags);
 
     [DllImport("setupapi.dll", SetLastError = true, CharSet = CharSet.Unicode)]
     private static extern IntPtr SetupDiGetClassDevsW(IntPtr classGuid, string? enumerator, IntPtr hwndParent, uint flags);

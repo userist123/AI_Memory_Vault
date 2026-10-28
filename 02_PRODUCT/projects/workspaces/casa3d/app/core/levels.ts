@@ -5,6 +5,7 @@
 import type { Catalog, Floor, Issue, RoomRect, Snapshot, Stair } from './types';
 import { footprintAt, insideRect, rectHit } from './geometry';
 import { footprintOf, doorZones } from './validate';
+import { isDemolished } from './renovation';
 
 /** Grosimea plăcii dintre niveluri (m); cota unui nivel = înălțimile de sub el + câte o placă. */
 export const SLAB = 0.2;
@@ -46,17 +47,23 @@ export function mergeLevel(full: Snapshot, i: number, view: Snapshot): Snapshot 
 }
 
 /** Adaugă un nivel deasupra celui mai de sus, cu aceiași pereți, goluri și camere (id-uri noi), fără mobilier; ușa de la
- *  intrare nu urcă (sus ar da în gol), celelalte uși și ferestrele rămân. */
+ *  intrare nu urcă (sus ar da în gol), celelalte uși și ferestrele rămân. Pereții de demolat nu urcă (nici golurile și
+ *  nișele lor); pereții noi se copiază ca ceilalți. */
 export function addLevel(s: Snapshot, o: { name: string; id?: () => string }): Snapshot {
   const fl = floors(s); if (fl.length >= MAX_LEVELS) throw new RangeError(`Cel mult ${MAX_LEVELS} niveluri.`);
   const id = o.id ?? (() => globalThis.crypto.randomUUID().slice(0, 8)), top = fl[fl.length - 1];
+  // pereții primesc id-uri noi; nișele îi urmează pe pereții lor; cotele și textele țin de planșa nivelului, nu se copiază
+  const kept = top.walls.filter(w => !isDemolished(w)), wallIds = new Map(kept.map(w => [w.id, `wall-${id()}`]));
   const floor: Floor = { id: `nivel-${id()}`, name: o.name, ceilingHeight: top.ceilingHeight,
     rooms: top.rooms.map(r => ({ ...r, id: `camera-${id()}`, rect: { ...r.rect }, ...(r.boundary ? { boundary: r.boundary.map(pt => [...pt] as [number, number]) } : {}) })),
-    walls: top.walls.map(w => ({ ...w, id: `wall-${id()}`, a: [...w.a] as [number, number], b: [...w.b] as [number, number],
+    walls: kept.map(w => ({ ...w, id: wallIds.get(w.id)!, a: [...w.a] as [number, number], b: [...w.b] as [number, number],
       openings: w.openings.filter(op => !op.entrance).map(op => ({ ...op, id: `gol-${id()}` })) })),
     ...(top.columns?.length ? { columns: top.columns.map(c => ({ ...c, id: `col-${id()}` })) } : {}),
     ...(top.beams?.length ? { beams: top.beams.map(b => ({ ...b, id: `bm-${id()}`, a: [...b.a] as [number, number], b: [...b.b] as [number, number] })) } : {}),
-    ...(top.glassWalls?.length ? { glassWalls: top.glassWalls.map(gw => ({ ...gw, id: `gw-${id()}`, a: [...gw.a] as [number, number], b: [...gw.b] as [number, number] })) } : {}) };
+    ...(top.glassWalls?.length ? { glassWalls: top.glassWalls.map(gw => ({ ...gw, id: `gw-${id()}`, a: [...gw.a] as [number, number], b: [...gw.b] as [number, number] })) } : {}),
+    // balustradele urcă la fel ca structura (balcoanele suprapuse); tavanele false pe zonă țin de camere (id-uri noi), deci nu se copiază
+    ...(top.railings?.length ? { railings: top.railings.map(r => ({ ...r, id: `bal-${id()}`, a: [...r.a] as [number, number], b: [...r.b] as [number, number] })) } : {}),
+    ...(top.niches?.some(n => wallIds.has(n.wallId)) ? { niches: top.niches.filter(n => wallIds.has(n.wallId)).map(n => ({ ...n, id: `nisa-${id()}`, wallId: wallIds.get(n.wallId)! })) } : {}) };
   return { ...s, levels: [...(s.levels ?? []), floor] };
 }
 /** Șterge un etaj (nu parterul) cu tot ce ține de el; scările care urcau la el dispar dacă era ultimul. */

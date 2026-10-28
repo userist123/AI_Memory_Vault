@@ -35,6 +35,28 @@
         ]
       }
     ],
+    "PostToolUse": [
+      {
+        "matcher": "Agent|Task",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "for py in python3 python; do if \"$py\" -c \"import sys\" >/dev/null 2>&1; then \"$py\" \"${CLAUDE_PROJECT_DIR:-.}/.claude/skills/cost-router/hook_agent_usage.py\"; exit 0; fi; done; exit 0",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "WebFetch|WebSearch|Read|Grep|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "for py in python3 python; do if \"$py\" -c \"import sys\" >/dev/null 2>&1; then \"$py\" \"${CLAUDE_PROJECT_DIR:-.}/.claude/skills/agent-integrity-guard/hook_scan_output.py\"; exit 0; fi; done; exit 0",
+            "timeout": 10
+          }
+        ]
+      }
+    ],
     "PreToolUse": [
       {
         "matcher": "Agent|Task",
@@ -62,6 +84,16 @@
           {
             "type": "command",
             "command": "for py in python3 python; do if \"$py\" -c \"import sys\" >/dev/null 2>&1; then \"$py\" \"${CLAUDE_PROJECT_DIR:-.}/.claude/skills/cost-router/hook_resume_guard.py\"; exit 0; fi; done; exit 0",
+            "timeout": 10
+          }
+        ]
+      },
+      {
+        "matcher": "Bash|PowerShell|Edit|Write|NotebookEdit|WebFetch|WebSearch|mcp__.*",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "for py in python3 python; do if \"$py\" -c \"import sys\" >/dev/null 2>&1; then \"$py\" \"${CLAUDE_PROJECT_DIR:-.}/.claude/skills/agent-integrity-guard/hook_guard.py\"; exit 0; fi; done; exit 0",
             "timeout": 10
           }
         ]

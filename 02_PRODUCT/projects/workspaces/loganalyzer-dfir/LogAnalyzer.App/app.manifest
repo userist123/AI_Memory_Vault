@@ -16,7 +16,10 @@
             Remove this element if your application requires this virtualization for backwards
             compatibility.
         -->
-        <requestedExecutionLevel level="highestAvailable" uiAccess="false" />
+        <!-- Owner, 2026-10-21: LogAnalyzer always runs elevated. The device monitor can seal nothing without administrator rights
+             (the audit key is readable only by Administrators and SYSTEM), and live collection needs them too. A standard user is
+             asked for administrator credentials by UAC instead of running a monitor that cannot seal. -->
+        <requestedExecutionLevel level="requireAdministrator" uiAccess="false" />
       </requestedPrivileges>
     </security>
   </trustInfo>

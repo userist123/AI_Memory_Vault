@@ -2,16 +2,26 @@
 // printr-un tunel (ex. cloudflared). Prin tunel se ajunge numai la linkurile pentru client și la ce le trebuie lor;
 // editorul, proiectele, randările Blender și administrarea rămân doar pe acest calculator.
 const LOCAL_HOST = /^(localhost|127\.\d+\.\d+\.\d+|\[::1\])(:\d+)?$/i;
+const LOOPBACK_IP = /^(127\.\d+\.\d+\.\d+|::1|::ffff:127\.\d+\.\d+\.\d+)$/i;
 const PUBLIC_PATHS = [
   /^\/share\/[A-Za-z0-9_-]{43}\/?$/,                 // prezentarea pentru client
-  /^\/api\/share\/[A-Za-z0-9_-]{43}(\/feedback|\/choices|\/changes(\/[0-9a-f-]{36})?|\/pins?)?$/,  // revizia partajată, părerile, alegerea variantelor pe cameră, modificările de aprobat, PIN-ul și pinii pe imagine
+  /^\/api\/share\/[A-Za-z0-9_-]{43}(\/feedback|\/choices|\/changes(\/[0-9a-f-]{36})?|\/pins?|\/render\/[A-Za-z0-9_-]{1,80})?$/,  // revizia partajată, părerile, alegerea variantelor pe cameră, modificările de aprobat, PIN-ul, pinii pe imagine și imaginile 3D gata randate
+  /^\/accesibilitate\/?$/,                             // declarația de accesibilitate (Legea 232/2022), legată din linkul clientului
   /^\/_next\//, /^\/tex\//, /^\/models\//, /^\/favicon\.(ico|svg)$/,
 ];
-/** Cererea vine de pe acest calculator (nu prin tunel): gazda e locală, fără antetul pus de tunel; x-forwarded-host
- *  (Next.js îl completează singur din Host) trebuie să fie și el local, dacă există. */
+/** Încrederea „local” e opt-in: o pornesc doar `npm start` / `npm run dev` (scripts/run-local.mjs), care ascultă numai pe
+ *  127.0.0.1. Antetul Host îl alege clientul, deci pe un server accesibil direct (VPS, rețea locală) „Host: localhost” nu
+ *  dovedește nimic; acolo variabila lipsește și totul cere login, iar administrarea rămâne închisă. Pe Vercel nu se activează. */
+export const localTrustEnabled = () => process.env.CASA3D_LOCAL_TRUST === '1' && !process.env.VERCEL;
+/** Cererea vine de pe acest calculator (nu prin tunel): încrederea locală e activă, gazda e locală, fără antetul pus de
+ *  tunel; x-forwarded-host (Next.js îl completează singur din Host) trebuie să fie și el local, dacă există. */
 export function isLocalRequest(host: string | null, headers: { get(k: string): string | null }){
   const fwd = headers.get('x-forwarded-host');
-  return !!host && LOCAL_HOST.test(host) && !headers.get('cf-connecting-ip') && (!fwd || fwd.split(',').every(h => LOCAL_HOST.test(h.trim())));
+  // un proxy local (ngrok, caddy) care rescrie Host în localhost lasă totuși adresa clientului în x-forwarded-for;
+  // Next.js însuși pune aici doar adresa socket-ului (loopback pentru cererile de pe acest calculator)
+  const xff = headers.get('x-forwarded-for');
+  if (xff && !xff.split(',').every(a => LOOPBACK_IP.test(a.trim()))) return false;
+  return localTrustEnabled() && !!host && LOCAL_HOST.test(host) && !headers.get('cf-connecting-ip') && (!fwd || fwd.split(',').every(h => LOCAL_HOST.test(h.trim())));
 }
 /** Numele gazdei din bara de adresă (location.hostname, fără port) e al acestui calculator; aceeași regulă ca LOCAL_HOST. */
 export const isLocalHostname = (h: string) => LOCAL_HOST.test(h) || h === '::1';
@@ -34,6 +44,17 @@ export function gate(o: { local: boolean; path: string; method: string; session:
 /** Unde se întoarce după login: doar o cale din aplicație (nu alt site). */
 export const safeNext = (v: unknown) => typeof v === 'string' && /^\/(?![/\\])[\w\-./%?=&]*$/.test(v) && !v.startsWith('/login') ? v : '/';
 
+/** CSRF: o scriere (alt verb decât GET/HEAD/OPTIONS) venită de pe altă origine. Browserul pune Sec-Fetch-Site și Origin
+ *  pe orice cerere POST/PUT/PATCH/DELETE și o pagină străină nu le poate falsifica; fără ele cererea nu vine dintr-un
+ *  browser (curl, scripturi), deci nu poate purta cookie-urile victimei. Se aplică indiferent de tipul corpului, deci
+ *  și pentru formularele text/plain sau multipart pe care SameSite=Lax le lasă să treacă de pe un subdomeniu-frate. */
+export function isCrossSiteWrite(method: string, headers: { get(k: string): string | null }){
+  if (['GET', 'HEAD', 'OPTIONS'].includes(method.toUpperCase())) return false;
+  const site = headers.get('sec-fetch-site'); if (site && site !== 'same-origin' && site !== 'none') return true;
+  const origin = headers.get('origin'), host = headers.get('host');
+  if (origin){ if (origin === 'null') return true; try { if (new URL(origin).host !== host) return true; } catch { return true; } }
+  return false;
+}
 /** Cerere trimisă de aplicația însăși (fetch din aceeași origine), nu de o pagină străină: Sec-Fetch-Site (pus de
  *  browser, nu se poate falsifica dintr-o pagină) trebuie să fie same-origin când există, Origin (dacă există) trebuie
  *  să fie aceeași gazdă, iar corpul JSON (un formular străin nu poate trimite application/json fără preflight CORS). */

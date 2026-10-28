@@ -57,14 +57,22 @@ def ensure_voice_model() -> None:
     subprocess.run(command, stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, timeout=300, check=True)
 
 
+MAX_SPEECH_INPUT = 100_000
+
+
 def speech_text(text: str) -> str:
-    value = str(text or "")
+    # Bound the input BEFORE any regex so the work below is bounded. The bound is
+    # generous so text after a long code block still survives the cleanup; the
+    # spoken output is capped separately below.
+    value = str(text or "")[:MAX_SPEECH_INPUT]
     value = re.sub(r"```.*?```", " ", value, flags=re.S)
     value = re.sub(r"`([^`]*)`", r"\1", value)
     value = re.sub(r"https?://\S+", "", value)
     value = re.sub(r"^\s{0,3}#{1,6}\s*", "", value, flags=re.M)
-    value = re.sub(r"^\s*[-*+]\s+", "", value, flags=re.M)
-    value = re.sub(r"\[([^\]]+)\]\([^\)]+\)", r"\1", value)
+    value = re.sub(r"^[ \t]*[-*+][ \t]+", "", value, flags=re.M)
+    # Non-overlapping character classes (no brackets inside the label or the
+    # target) keep this linear instead of polynomial on inputs like "[[[[...".
+    value = re.sub(r"\[([^\[\]]+)\]\([^()\[\]]+\)", r"\1", value)
     value = re.sub(r"[*_~]+", "", value)
     value = re.sub(r"\s+", " ", value).strip()
     return value[:6000]

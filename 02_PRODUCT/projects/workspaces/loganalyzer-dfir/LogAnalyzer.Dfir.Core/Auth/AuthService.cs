@@ -125,6 +125,24 @@ public sealed partial class AuthService
     public AuthAccount? Find(string account) => ReadAccounts()?.Accounts.FirstOrDefault(a => SameName(a.Account, account));
     public AuthAccount? PrimaryAdmin => ReadAccounts()?.Accounts.FirstOrDefault(a => a.IsPrimaryAdmin);
     public ChainVerification VerifyAudit() => new HashChain(AuditPath).Verify();
+
+    /// <summary>
+    /// Reads the audit file ONCE and verifies the chain on those bytes; the caller reads the records it needs from the same <paramref name="content"/>, so the
+    /// verdict and the records cannot be about two different versions of the file (review finding m5). <paramref name="content"/> is empty when there is no file.
+    /// </summary>
+    public ChainVerification VerifyAuditSnapshot(out byte[] content)
+    {
+        content = [];
+        if (File.Exists(AuditPath))
+        {
+            using var fs = new FileStream(AuditPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var ms = new MemoryStream();
+            fs.CopyTo(ms);
+            content = ms.ToArray();
+            return new HashChain(AuditPath).Verify(content);
+        }
+        return new HashChain(AuditPath).Verify();
+    }
     public string AccountsSha256 => File.Exists(AccountsPath) ? Hashing.Sha256File(AccountsPath) : "";
 
     /// <summary>

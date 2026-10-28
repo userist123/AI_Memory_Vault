@@ -17,9 +17,10 @@ export const storedLang = (): Lang => { const l = read(LANG_KEY); return isLang(
 const fallback: Prefs = { lang: 'en', units: 'metric', ready: false, setLang: () => {}, setUnits: () => {}, t: translator('en'), tp: pluralTranslator('en') };
 const Ctx = createContext<Prefs>(fallback);
 
-export function PrefsProvider({ children }: { children: ReactNode }){
-  // pe server și la prima randare clientul pornește cu valorile implicite (fără nepotriviri la hidratare); preferința reală se citește după montare
-  const [lang, setLangState] = useState<Lang>('en'), [units, setUnitsState] = useState<Units>('metric'), [ready, setReady] = useState(false);
+export function PrefsProvider({ children, initialLang = 'en' }: { children: ReactNode; initialLang?: Lang }){
+  // pe server și la prima randare clientul pornește cu valorile implicite (fără nepotriviri la hidratare); preferința reală se citește după montare.
+  // initialLang: pagina randată pe server o poate alege (linkul clientului, din Accept-Language), ca textul să nu clipească din engleză
+  const [lang, setLangState] = useState<Lang>(initialLang), [units, setUnitsState] = useState<Units>('metric'), [ready, setReady] = useState(false);
   useEffect(() => {
     const u = read(UNITS_KEY);
     setLangState(storedLang());

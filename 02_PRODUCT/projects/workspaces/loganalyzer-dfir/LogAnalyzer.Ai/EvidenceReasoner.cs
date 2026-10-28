@@ -19,6 +19,8 @@ public sealed record Citation(string Item, string Kind, IReadOnlyList<EvidenceRe
 public sealed record AiStatement(string Section, string Text, IReadOnlyList<Citation> Citations)
 {
     public string Classification => "UNPROVEN";
+    /// <summary>The case-level validation of this statement (R22.5). Null only before validation; nothing is shown or written without it.</summary>
+    public ValidatedClaim? Validation { get; init; }
 }
 
 public sealed record RejectedStatement(string Section, string Text, IReadOnlyList<string> Cites, string Reason);
@@ -26,7 +28,11 @@ public sealed record RejectedStatement(string Section, string Text, IReadOnlyLis
 /// <summary>The model's output after validation, with everything needed to reproduce and audit the call.</summary>
 public sealed record AiReasoning(
     string Model, string ModelDigest, string Endpoint, string CatalogSha256, string PromptSha256, string ResponseSha256, DateTimeOffset CreatedUtc,
-    IReadOnlyList<AiStatement> Accepted, IReadOnlyList<RejectedStatement> Rejected, int CatalogItems, int OmittedItems, string RawResponse);
+    IReadOnlyList<AiStatement> Accepted, IReadOnlyList<RejectedStatement> Rejected, int CatalogItems, int OmittedItems, string RawResponse)
+{
+    /// <summary>The case-level validation of every statement (Analysis/ai_validation.json); set by <c>AiCaseAnalysis</c>.</summary>
+    public AiValidationResult? Validation { get; init; }
+}
 
 /// <summary>
 /// Evidence-constrained reasoning (master spec §25). The model is not a parser and sees no raw evidence: it receives a numbered

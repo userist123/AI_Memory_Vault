@@ -172,7 +172,19 @@ public sealed class HostChangeRoleGateTests : IDisposable
         Assert.Empty(fw.Rules);
         Assert.Empty(suspended);
         Assert.False(Directory.Exists(svc.IncidentsDir));
-        Assert.Equal(before, Snapshot(root));
+        // Nothing is written except the refusal itself, which the case audit must record (who was refused, which action): outside Logs nothing
+        // changes, and under Logs only the two files CaseWorkspace.Audit writes (the hash chain and its plain-text mirror) may change.
+        var logs = Path.Combine(root, "Logs") + Path.DirectorySeparatorChar;
+        var after = Snapshot(root);
+        Assert.Equal(before.Where(f => !f.StartsWith(logs, StringComparison.OrdinalIgnoreCase)), after.Where(f => !f.StartsWith(logs, StringComparison.OrdinalIgnoreCase)));
+        var changedInLogs = after.Except(before).Concat(before.Except(after)).Where(f => f.StartsWith(logs, StringComparison.OrdinalIgnoreCase))
+            .Select(f => Path.GetFileName(f.Split('|')[0])).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n).ToArray();
+        Assert.Equal(new[] { "audit_chain.jsonl", "LogAnalyzer_Audit.log" }.OrderBy(n => n).ToArray(), changedInLogs);
+        var audit = File.ReadAllText(ws.AuditChainPath);
+        Assert.Contains("containment.refused", audit);
+        Assert.Contains("contain ", audit);
+        Assert.Contains("release INC-X", audit);
+        Assert.Contains("NOT_AUTHORIZED", audit);
     }
 
     private sealed class CountingRunner : IFirewallCommandRunner
@@ -193,9 +205,11 @@ public sealed class HostChangeRoleGateTests : IDisposable
             Assert.Contains("administrator", iso.Message);
             Assert.Equal(DefenseActionResult.NotAuthorized, SystemDefenseExecutionService.RestoreNetworkAccess(runner).Status);
             Assert.Equal(DefenseActionResult.NotAuthorized, SystemDefenseExecutionService.BlockMaliciousIoC("10.0.0.1", runner).Status);
-            var (ok, detail) = AuditPolicyChange.EnableBlockedConnectionFailureAudit();
+            var audited = new List<string>();
+            var (ok, detail) = AuditPolicyChange.EnableBlockedConnectionFailureAudit((a, d) => audited.Add($"{a} {d}"), apply: () => throw new InvalidOperationException("must not run"));
             Assert.False(ok);
             Assert.Contains("administrator", detail);
+            Assert.Contains(audited, l => l.Contains("NOT_AUTHORIZED"));   // the refusal is in the case audit too
         }
         Assert.Equal(0, runner.Calls);
     }

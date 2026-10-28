@@ -12,25 +12,15 @@ namespace LogAnalyzer.UI.Views
         public GlossaryWindow(string? initialSearch = null)
         {
             InitializeComponent();
-            SearchBox.Text = initialSearch ?? "";
-            Refresh();
+            DataContext = new LogAnalyzer.UI.ViewModels.GlossarySearch(initialSearch);
             SearchBox.Focus();
         }
 
-        private void SearchBox_TextChanged(object sender, TextChangedEventArgs e) => Refresh();
-
-        private void Refresh()
+        /// <summary>Reopens the three-screen guide: this window closes first (it is modal), then the guide opens beside the main window.</summary>
+        private void Guide_Click(object sender, RoutedEventArgs e)
         {
-            var q = SearchBox.Text.Trim();
-            // usability 2026-10-16: the whole catalogue (technical words, results, severity words and every control check id)
-            var all = TermCatalog.All;
-            Grid.ItemsSource = string.IsNullOrEmpty(q)
-                ? all.OrderBy(t => t.Romanian).ToList()
-                : all.Where(t => t.Spellings.Any(s => string.Equals(s, q, System.StringComparison.OrdinalIgnoreCase))).Concat(
-                  all.Where(t => t.Romanian.Contains(q, System.StringComparison.OrdinalIgnoreCase) || t.Technical.Contains(q, System.StringComparison.OrdinalIgnoreCase)
-                                 || t.Spellings.Any(s => s.Contains(q, System.StringComparison.OrdinalIgnoreCase))
-                                 || t.Explanation.Contains(q, System.StringComparison.OrdinalIgnoreCase) || t.English.Contains(q, System.StringComparison.OrdinalIgnoreCase))
-                     .OrderBy(t => t.Romanian)).Distinct().ToList();
+            Close();
+            LogAnalyzer.UI.ViewModels.FirstRunGuideLauncher.Show();
         }
     }
 }

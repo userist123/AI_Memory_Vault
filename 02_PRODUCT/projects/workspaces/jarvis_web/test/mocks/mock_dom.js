@@ -93,7 +93,15 @@ export class MockHTMLElement {
 
   set innerHTML(html) {
     this._innerHTML = String(html);
-    this._textContent = String(html).replace(/<[^>]*>?/gm, '');
+    // Strip tags until stable so nested input like '<scr<script>ipt>' cannot
+    // reassemble into a tag after a single pass.
+    let text = String(html);
+    let previous;
+    do {
+      previous = text;
+      text = text.replace(/<[^>]*>?/gm, '');
+    } while (text !== previous);
+    this._textContent = text;
     this.children = [];
 
     const tagRegex = /<([a-zA-Z0-9_-]+)([^>]*)>([\s\S]*?)<\/\1>|<([a-zA-Z0-9_-]+)([^>]*)\/?>/g;

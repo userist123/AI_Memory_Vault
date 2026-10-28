@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Collections.ObjectModel;
 using System.IO;
 using System.Linq;
@@ -47,7 +48,9 @@ namespace LogAnalyzer.UI.ViewModels
             Profile = profile ?? RoleProfiles.For(StationRoleContext.Role, new UnclassifiedEditionProfile(), AppModeContext.Current.Mode);
             foreach (var i in Profile.PrimaryIntents) PrimaryIntents.Add(new HomeIntentView(i));
             foreach (var i in Profile.MoreIntents) MoreIntents.Add(new HomeIntentView(i));
-            _investigation.StateChanged += (_, _) => Refresh();
+            RefreshShownIntents();
+            System.ComponentModel.PropertyChangedEventManager.AddHandler(LogAnalyzer.UI.Services.LanguageLevelState.Instance, OnLanguageLevelChanged, nameof(LogAnalyzer.UI.Services.LanguageLevelState.IsSimple));
+            _investigation.StateChanged += (_, _) => { Refresh(); RecordSessionCase(); };
             ClockMemory.WarningChanged += () =>
             {
                 var d = System.Windows.Application.Current?.Dispatcher;
@@ -108,6 +111,45 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<HomeIntentView> PrimaryIntents { get; } = new();
         /// <summary>The rest, under "Mai multe".</summary>
         public ObservableCollection<HomeIntentView> MoreIntents { get; } = new();
+        /// <summary>„Alte acțiuni” as the level shows it: Simplu drops the entries that only repeat a main-menu page of this role and the expert-only ones.</summary>
+        public ObservableCollection<HomeIntentView> ShownMoreIntents { get; } = new();
+        public bool HasShownMoreIntents => ShownMoreIntents.Count > 0;
+        /// <summary>Expert-only „Alte acțiuni” entries (not a menu page, but a hand-off outside the control or investigation itself).</summary>
+        private static readonly string[] ExpertOnlyMoreIntents = ["send_to_vault"];
+        /// <summary>Simplu hides an „Alte acțiuni” entry that opens a page the role's main menu already lists (no extra import/collect action) or is expert-only.</summary>
+        internal static bool HiddenInSimple(IntentAvailability i, IReadOnlyList<NavigationEntry> mainMenu) =>
+            ExpertOnlyMoreIntents.Contains(i.Key) || (i.Intent.Source == IntentSource.None && mainMenu.Any(n => n.Tab == i.TargetTab));
+
+        /// <summary>
+        /// What Home shows as the big actions. Owner decision 2026-10-22: in „Simplu” the big „Fă controlul stației” button is the one main action, so the card
+        /// „Verifică această stație” (the same action) is left out while that button exists; Expert shows both, as before. Without the quick control the card is the only way
+        /// to the control and stays. <see cref="PrimaryIntents"/> keeps the role's full data.
+        /// </summary>
+        public ObservableCollection<HomeIntentView> ShownPrimaryIntents { get; } = new();
+
+        private void RefreshShownIntents()
+        {
+            var simple = !LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert;
+            var moreWanted = MoreIntents.Where(i => !(simple && HiddenInSimple(i.Availability, Profile.Navigation))).ToList();
+            if (!moreWanted.SequenceEqual(ShownMoreIntents))
+            {
+                ShownMoreIntents.Clear();
+                foreach (var i in moreWanted) ShownMoreIntents.Add(i);
+                OnPropertyChanged(nameof(HasShownMoreIntents));
+            }
+            bool dropControlCard = simple && ShowQuickControl;
+            var wanted = PrimaryIntents.Where(i => !(dropControlCard && i.Key == "check_station")).ToList();
+            if (wanted.SequenceEqual(ShownPrimaryIntents)) return;
+            ShownPrimaryIntents.Clear();
+            foreach (var i in wanted) ShownPrimaryIntents.Add(i);
+        }
+
+        /// <summary>The one line under the big button: what happens when it is pressed.</summary>
+        public const string WhatHappensQuickControlText = "Ce se întâmplă: verifică stația pe perioada afișată mai sus și arată rezultatul aici. Aplicația doar citește; nu modifică nimic pe stație.";
+        public string WhatHappensQuickControl => WhatHappensQuickControlText;
+
+        /// <summary>„Ghidul de început” (3 ecrane): reopened from Home at any time.</summary>
+        [RelayCommand] private void OpenGuide() => FirstRunGuideLauncher.Show();
 
         /// <summary>
         /// Titles of the primary intents (U22, now per role). The question chooser ("A rulat un program?") belongs to WP7; its hook is
@@ -136,6 +178,16 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>The station control the Home panel drives; null when the page was built without it (tests, other roles).</summary>
         public IStationQuickControl? QuickControl { get; }
 
+        // a named method, not a lambda: the weak event manager keeps only a weak reference to the handler's target, and a lambda may live in a compiler-made closure that is collected at once
+        private void OnLanguageLevelChanged(object? sender, System.ComponentModel.PropertyChangedEventArgs e)
+        {
+            // the level changes from the header switch or at sign-in (the UI thread); a change from another thread is handed to the thread that owns the bound collection
+            if (_ownerDispatcher is { } d && !d.CheckAccess()) d.BeginInvoke(new Action(RefreshShownIntents));
+            else RefreshShownIntents();
+        }
+
+        private readonly System.Windows.Threading.Dispatcher? _ownerDispatcher = System.Windows.Threading.Dispatcher.FromThread(System.Threading.Thread.CurrentThread);
+
         /// <summary>The one-click panel shows when this PC offers „Verifică această stație” and the control is wired.</summary>
         public bool ShowQuickControl => QuickControl is not null && Profile.PrimaryIntents.Concat(Profile.MoreIntents).Any(i => i.Key == "check_station" && i.Enabled);
 
@@ -146,10 +198,11 @@ namespace LogAnalyzer.UI.ViewModels
             if (QuickGate() is not { } q || q.IsBusy) return;
             OpenStatus = "";
             await q.RunQuickAsync();
+            RecordLiveCase();
         }
 
         /// <summary>„Deschide raportul” (Ctrl+O).</summary>
-        [RelayCommand] private void OpenControlReport() { if (QuickGate() is { } q) q.OpenReport(); }
+        [RelayCommand] private void OpenControlReport() { if (QuickGate() is { } q) { q.OpenReport(); RecordLiveCase(); } }
         /// <summary>„Semnează ca ofițer” (Ctrl+Shift+S): an authority action; Windows asks the card PIN.</summary>
         [RelayCommand] private void SignControlReport() { if (QuickGate() is { } q) q.SignAsOfficer(); }
         /// <summary>„Exportă pentru ofițer” (Ctrl+E).</summary>
@@ -192,6 +245,37 @@ namespace LogAnalyzer.UI.ViewModels
             CoverageLine = h.CoverageLine;
             NextSteps.Clear(); foreach (var s in h.NextSteps) NextSteps.Add(s);
             CoverageRows.Clear(); foreach (var row in h.Coverage.Rows) CoverageRows.Add(row);
+        }
+
+        /// <summary>
+        /// 2026-10-22 PC walkthrough: a case created in this session (by an investigation) is listed under „Cazuri recente” like one opened from disk.
+        /// A case opened from disk is already recorded by <see cref="CaseLoader"/>; this only handles the freshly created one.
+        /// </summary>
+        private void RecordSessionCase()
+        {
+            if (_investigation.CurrentResult is { } r && _investigation.Loaded is null) RecordCase(r.Case);
+        }
+
+        /// <summary>The station's LIVE case (where a control saves its report and anchor) is listed once it exists on disk.</summary>
+        private void RecordLiveCase()
+        {
+            // the LIVE case is not opened here: opening it would open the case, may confirm a scope (case.json + audit) and start a background re-check
+            try
+            {
+                var root = LogAnalyzer.UI.Services.LiveCase.Root;
+                var file = System.IO.Path.Combine(root, "case.json");
+                if (!System.IO.File.Exists(file)) return;
+                var info = LogAnalyzer.Dfir.IO.Json.Read<LogAnalyzer.Dfir.Model.CaseInfo>(file);
+                _recent.Record(root, string.IsNullOrWhiteSpace(info.Name) ? info.CaseId : info.Name, CaseLifecycle.Active);
+                ReloadRecent();
+            }
+            catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidDataException or IOException or UnauthorizedAccessException or InvalidOperationException) { /* the list is a convenience */ }
+        }
+
+        private void RecordCase(CaseWorkspace ws)
+        {
+            _recent.Record(ws.Root, string.IsNullOrWhiteSpace(ws.Info.Name) ? ws.Info.CaseId : ws.Info.Name, CaseLifecycle.Active);
+            ReloadRecent();
         }
 
         public void ReloadRecent()

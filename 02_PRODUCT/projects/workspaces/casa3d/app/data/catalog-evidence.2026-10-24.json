@@ -1,0 +1,367 @@
+{
+  "note": "Prețuri citite pe pagina produsului pe 2026-10-24 (Dedeman: itemprop=price; IKEA România: „Preț …lei”), cu dimensiunile declarate pe pagină. Produsele fără dimensiuni complete pe pagină (doar înălțimea sau valori incoerente) au rămas deoparte.",
+  "items": [
+    {
+      "url": "https://www.ikea.com/ro/ro/p/fejka-planta-artificiala-interior-exterior-palmier-areca-00600894/",
+      "name": "FEJKA plantă artificială, interior/exterior Palmier Areca, 19 cm",
+      "price": 199.9,
+      "readAt": "2026-10-24",
+      "field": "Preț …lei (pagina produsului)",
+      "store": "IKEA",
+      "verifiedAt": "2026-10-24",
+      "evidence": "Preț 199,90lei; Diametru ghiveci 19 cm; Înălţimea plantei 120 cm",
+      "dimensionsCm": {
+        "w": 19,
+        "d": 19,
+        "h": 120
+      },
+      "note": "fără ghiveci decorativ"
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/fejka-planta-artificiala-interior-exterior-ficus-benjamina-10610604/",
+      "name": "FEJKA plantă artificială, interior/exterior/Ficus Benjamina, 23 cm",
+      "price": 349,
+      "readAt": "2026-10-24",
+      "field": "Preț …lei (pagina produsului)",
+      "store": "IKEA",
+      "verifiedAt": "2026-10-24",
+      "evidence": "Preț 349lei; Diametru ghiveci 23 cm; Înălţimea plantei 210 cm",
+      "dimensionsCm": {
+        "w": 23,
+        "d": 23,
+        "h": 210
+      },
+      "note": "vândută fără ghiveci decorativ (23 cm = diametrul vasului); lățimea frunzișului nu e declarată"
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/fejka-planta-artificiala-interior-exterior-strelizia-nikolai-70610601/",
+      "name": "FEJKA plantă artificială, interior/exterior/Strelizia Nikolai, 23 cm",
+      "price": 349,
+      "readAt": "2026-10-24",
+      "field": "Preț …lei (pagina produsului)",
+      "store": "IKEA",
+      "verifiedAt": "2026-10-24",
+      "evidence": "Preț 349lei; Diametru ghiveci 23 cm; Înălţimea plantei 180 cm",
+      "dimensionsCm": {
+        "w": 23,
+        "d": 23,
+        "h": 180
+      },
+      "note": "fără ghiveci decorativ; lățimea frunzișului nedeclarată"
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/calathea-planta-naturala-calathea-asortate-10258829/",
+      "name": "CALATHEA plantă naturală, Calathea/asortate, 19 cm",
+      "price": 89.9,
+      "readAt": "2026-10-24",
+      "field": "Preț …lei (pagina produsului)",
+      "store": "IKEA",
+      "verifiedAt": "2026-10-24",
+      "evidence": "Preț 89,90lei; Diametru ghiveci 19 cm; Înălţimea plantei 85 cm",
+      "dimensionsCm": {
+        "w": 19,
+        "d": 19,
+        "h": 85
+      },
+      "note": "specii asortate"
+    },
+    {
+      "url": "https://www.dedeman.ro/ro/planta-interior-codiaeum-petra-croton-h-70-cm-d-21-cm/p/7016732",
+      "name": "Planta interior - Codiaeum Petra (croton), H 70 cm, D 21 cm",
+      "price": 189.9,
+      "readAt": "2026-10-24",
+      "field": "itemprop=price",
+      "store": "Dedeman",
+      "verifiedAt": "2026-10-24",
+      "evidence": "189.90 lei/bucată; Inaltime (cm) 70; Diametru (cm) 21",
+      "dimensionsCm": {
+        "w": 21,
+        "d": 21,
+        "h": 70
+      },
+      "note": "pagina nu spune dacă diametrul e al ghiveciului sau al plantei"
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/dypsis-lutescens-planta-naturala-palmier-areca-46804005/",
+      "name": "DYPSIS LUTESCENS plantă naturală, Palmier Areca, 24 cm",
+      "price": 199.9,
+      "readAt": "2026-10-24",
+      "field": "Preț …lei (pagina produsului)",
+      "store": "IKEA",
+      "verifiedAt": "2026-10-24",
+      "evidence": "Preț 199,90lei; Diametru ghiveci 24 cm; Înălţimea plantei 120 cm",
+      "dimensionsCm": {
+        "w": 24,
+        "d": 24,
+        "h": 120
+      },
+      "note": "ghiveci de cultură din plastic; plantă vie — disponibilitatea online variază pe magazin"
+    },
+    {
+      "url": "https://www.dedeman.ro/ro/planta-interior-ficus-ginseng-s-shape-h-55-cm-d-22-cm/p/7036495",
+      "name": "Planta interior - Ficus ginseng, S Shape, H 55 cm, D 22 cm",
+      "price": 299.98,
+      "readAt": "2026-10-24",
+      "field": "itemprop=price",
+      "store": "Dedeman",
+      "verifiedAt": "2026-10-24",
+      "evidence": "299.98 lei/bucată; Inaltime (cm) 55; Diametru (cm) 22; Tip ambalaj: ghiveci",
+      "dimensionsCm": {
+        "w": 22,
+        "d": 22,
+        "h": 55
+      },
+      "note": "bonsai, piesă de masă, nu de podea"
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/barlast-lampadar-negru-alb-10430368/",
+      "name": "BARLAST lampadar, negru/alb, 150 cm",
+      "price": 49.9,
+      "readAt": "2026-10-24",
+      "field": "Preț …lei (pagina produsului)",
+      "store": "IKEA",
+      "verifiedAt": "2026-10-24",
+      "evidence": "Preț 49,90lei; Înălțime 150 cm; Diametru bazei 34 cm; Diametru abajur 30 cm",
+      "dimensionsCm": {
+        "w": 34,
+        "d": 34,
+        "h": 150
+      },
+      "note": "lățime = diametrul bazei (cel mai mare declarat)"
+    },
+    {
+      "url": "https://www.dedeman.ro/ro/lampadar-action-pro-74103-e27-e14-1800-mm-bej-alb-modern/p/1118888",
+      "name": "Lampadar Action Pro 74103, E27 + E14, 1800 mm, bej + alb, modern",
+      "price": 142,
+      "readAt": "2026-10-24",
+      "field": "itemprop=price",
+      "store": "Dedeman",
+      "verifiedAt": "2026-10-24",
+      "evidence": "142.00 lei/bucată; Lungime 400 / Latime 400 / Inaltime 1800 mm",
+      "dimensionsCm": {
+        "w": 40,
+        "d": 40,
+        "h": 180
+      },
+      "note": "câmpul „Dimensiuni Lxlxh” spune 250 x 400 x 1800 mm (250 = diametru abajur)"
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/kinnahult-lampadar-frasin-alb-10559257/",
+      "name": "KINNAHULT lampadar, frasin/alb, 150 cm",
+      "price": 279,
+      "readAt": "2026-10-24",
+      "field": "Preț …lei (pagina produsului)",
+      "store": "IKEA",
+      "verifiedAt": "2026-10-24",
+      "evidence": "Preț 279lei; Înălțime 150 cm; Diametru bazei 30 cm; Diametru abajur 37 cm",
+      "dimensionsCm": {
+        "w": 37,
+        "d": 37,
+        "h": 150
+      },
+      "note": "lățime = diametrul abajurului"
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/evedal-lampadar-marmura-gri-40358592/",
+      "name": "EVEDAL Lampadar, gri marmură, gri",
+      "price": 1799,
+      "readAt": "2026-10-24",
+      "field": "Preț …lei (pagina produsului)",
+      "store": "IKEA",
+      "verifiedAt": "2026-10-24",
+      "evidence": "Preț 1799lei; Înălțime 145 cm; Diametru bazei 34 cm; Diametru abajur 41 cm",
+      "dimensionsCm": {
+        "w": 41,
+        "d": 41,
+        "h": 145
+      },
+      "note": "varianta scumpă"
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/lampan-veioza-alb-20046988/",
+      "name": "LAMPAN Veioză, alb, 29 cm",
+      "price": 24.9,
+      "readAt": "2026-10-24",
+      "field": "Preț …lei (pagina produsului)",
+      "store": "IKEA",
+      "verifiedAt": "2026-10-24",
+      "evidence": "Preț 24,90lei; Înălțime 29 cm; Diametru bazei 13 cm; Diametru abajur 19 cm",
+      "dimensionsCm": {
+        "w": 19,
+        "d": 19,
+        "h": 29
+      }
+    },
+    {
+      "url": "https://www.dedeman.ro/ro/veioza-four-01-1375-1-x-e14-lemn-bej-modern/p/1049349",
+      "name": "Veioza Four 01-1375, 1 x E14, lemn + bej, modern",
+      "price": 66.91,
+      "readAt": "2026-10-24",
+      "field": "itemprop=price",
+      "store": "Dedeman",
+      "verifiedAt": "2026-10-24",
+      "evidence": "66.91 lei/bucată; Lungime 120 / Latime 120 / Inaltime 250 mm",
+      "dimensionsCm": {
+        "w": 12,
+        "d": 12,
+        "h": 25
+      }
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/arstid-veioza-alama-alb-30321373/",
+      "name": "ÅRSTID Veioză, alama, alb",
+      "price": 119.9,
+      "readAt": "2026-10-24",
+      "field": "Preț …lei (pagina produsului)",
+      "store": "IKEA",
+      "verifiedAt": "2026-10-24",
+      "evidence": "Preț 119,90lei; Înălțime 55 cm; Diametru bazei 15 cm; Diametru abajur 22 cm",
+      "dimensionsCm": {
+        "w": 22,
+        "d": 22,
+        "h": 55
+      }
+    },
+    {
+      "url": "https://www.dedeman.ro/ro/veioza-dalton-15885t-1-x-e27-negru-fumuriu-modern/p/1086837",
+      "name": "Veioza Dalton 15885T, 1 x E27, negru + fumuriu, modern",
+      "price": 263,
+      "readAt": "2026-10-24",
+      "field": "itemprop=price",
+      "store": "Dedeman",
+      "verifiedAt": "2026-10-24",
+      "evidence": "263.00 lei/bucată; Lungime 225 / Latime 180 / Inaltime 575 mm",
+      "dimensionsCm": {
+        "w": 22.5,
+        "d": 18,
+        "h": 57.5
+      }
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/snoebyar-veioza-gri-turcoaz-ceramica-gri-50450401/",
+      "name": "SNÖBYAR veioză, gri-turcoaz ceramică/gri, 52 cm",
+      "price": 349,
+      "readAt": "2026-10-24",
+      "field": "Preț …lei (pagina produsului)",
+      "store": "IKEA",
+      "verifiedAt": "2026-10-24",
+      "evidence": "Preț 349lei; Lăţime abajur 33 cm; Înălțime 52 cm; Diametru bazei 15 cm",
+      "dimensionsCm": {
+        "w": 33,
+        "d": 33,
+        "h": 52
+      }
+    },
+    {
+      "url": "https://www.dedeman.ro/ro/focar-semineu-electric-de-perete-art-flame-madrid-negru-metal-efect-flacara-telecomanda-1-5-kw-1280-x-550-x-140-mm/p/2023436",
+      "name": "Focar semineu electric, de perete, Art Flame Madrid, negru, metal, efect flacara, telecomanda, 1.5 kW, 1280 x 550 x 140 mm",
+      "price": 1429,
+      "readAt": "2026-10-24",
+      "field": "itemprop=price",
+      "store": "Dedeman",
+      "verifiedAt": "2026-10-24",
+      "evidence": "1429.00 lei/bucată; Latime 1280 / Inaltime 550 / Adancime 140 mm; Putere 1.5 kW",
+      "dimensionsCm": {
+        "w": 128,
+        "d": 14,
+        "h": 55
+      },
+      "note": "electric, de perete"
+    },
+    {
+      "url": "https://www.dedeman.ro/ro/semineu-electric-decorativ-de-perete-london-negru-2-kw-1000-x-450-x-130-mm/p/2021008",
+      "name": "Semineu electric decorativ, de perete, London, negru, 2 kW, 1000 x 450 x 130 mm",
+      "price": 1449,
+      "readAt": "2026-10-24",
+      "field": "itemprop=price",
+      "store": "Dedeman",
+      "verifiedAt": "2026-10-24",
+      "evidence": "1449.00 lei/bucată; Latime 1000 / Inaltime 450 / Adancime 130 mm; Putere 2 kW",
+      "dimensionsCm": {
+        "w": 100,
+        "d": 13,
+        "h": 45
+      },
+      "note": "electric, de perete"
+    },
+    {
+      "url": "https://www.dedeman.ro/ro/semineu-electric-decorativ-de-perete-safecare-5201-wi-fi-alb-din-metal-2-kw-1240-x-540-x-187-mm/p/2038192",
+      "name": "Semineu electric decorativ, de perete, Safecare 5201, Wi-Fi, alb, din metal, 2 kW, 1240 x 540 x 187 mm",
+      "price": 2199,
+      "readAt": "2026-10-24",
+      "field": "itemprop=price",
+      "store": "Dedeman",
+      "verifiedAt": "2026-10-24",
+      "evidence": "2199.00 lei/bucată; Latime 1240 / Inaltime 540 / Adancime 187 mm",
+      "dimensionsCm": {
+        "w": 124,
+        "d": 18.7,
+        "h": 54
+      },
+      "note": "electric, de perete"
+    },
+    {
+      "url": "https://www.dedeman.ro/ro/focar-semineu-electric-incorporabil-paxton-a-801-65-negru-1-5-kw-3d-efect-12-culori-2-trepte-1500-x-240-x-500-mm/p/2035689",
+      "name": "Focar semineu electric, incorporabil, Paxton A-801-65, negru, 1.5 kW, 3D efect, 12 culori, 2 trepte, 1500 x 240 x 500 mm",
+      "price": 2448.11,
+      "readAt": "2026-10-24",
+      "field": "itemprop=price",
+      "store": "Dedeman",
+      "verifiedAt": "2026-10-24",
+      "evidence": "2448.11 lei/bucată; Latime 1500 / Inaltime 500 / Adancime 240 mm",
+      "dimensionsCm": {
+        "w": 150,
+        "d": 24,
+        "h": 50
+      },
+      "note": "electric, încastrabil"
+    },
+    {
+      "url": "https://www.dedeman.ro/ro/focar-semineu-electric-incorporabil-safecare-yfg-5001werb-negru-metal-1-8-kw-3d-sunet-wi-fi-7-culori-1250-x-320-x-555-mm/p/2033641",
+      "name": "Focar semineu electric, incorporabil, Safecare, YFG-5001WERB, negru, metal, 1.8 kW, 3D, sunet, Wi-Fi, 7 culori, 1250 x 320 x 555 mm",
+      "price": 2919,
+      "readAt": "2026-10-24",
+      "field": "itemprop=price",
+      "store": "Dedeman",
+      "verifiedAt": "2026-10-24",
+      "evidence": "2919.00 lei/bucată; Latime 1250 / Inaltime 555 / Adancime 320 mm",
+      "dimensionsCm": {
+        "w": 125,
+        "d": 32,
+        "h": 55.5
+      },
+      "note": "electric, încastrabil"
+    },
+    {
+      "url": "https://www.dedeman.ro/ro/focar-semineu-etna-a-din-fonta-cu-regulator-tiraj-66-x-62-2-x-35-5-cm/p/2033911",
+      "name": "Focar semineu Etna A+, din fonta, cu regulator tiraj, 66 x 62.2 x 35.5 cm",
+      "price": 2249,
+      "readAt": "2026-10-24",
+      "field": "itemprop=price",
+      "store": "Dedeman",
+      "verifiedAt": "2026-10-24",
+      "evidence": "2249.00 lei/bucată; Latime 660 / Adancime 355 / Inaltime 622 mm; Putere 11.3 kW; Combustibil: lemn foioase",
+      "dimensionsCm": {
+        "w": 66,
+        "d": 35.5,
+        "h": 62.2
+      },
+      "note": "burlan Ø180 superior"
+    },
+    {
+      "url": "https://www.dedeman.ro/ro/focar-semineu-remus-din-fonta-cu-regulator-tiraj-830-x-750-x-432-mm/p/2024736",
+      "name": "Focar semineu Remus, din fonta, cu regulator tiraj, 830 x 750 x 432 mm",
+      "price": 3698.99,
+      "readAt": "2026-10-24",
+      "field": "itemprop=price",
+      "store": "Dedeman",
+      "verifiedAt": "2026-10-24",
+      "evidence": "3698.99 lei/bucată; Latime 750 / Adancime 432 / Inaltime 830 mm; Putere 16 kW",
+      "dimensionsCm": {
+        "w": 75,
+        "d": 43.2,
+        "h": 83
+      }
+    }
+  ]
+}

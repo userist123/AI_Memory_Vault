@@ -8,7 +8,7 @@ namespace LogAnalyzer.Dfir.Registers;
 /// </summary>
 public static class SignedMediaEnrollment
 {
-    public static bool IsRemovableMedium(DeviceRecord d) => d.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard;
+    public static bool IsRemovableMedium(DeviceRecord d) => d.Kind is DeviceKind.UsbStorage or DeviceKind.MemoryCard or DeviceKind.ExternalDisk;
 
     /// <summary>"criptat" / "necriptat" / "necunoscut" from the inventory's encryption text ("E: criptat BitLocker", "E: necriptat", …).</summary>
     public static string BitLockerStatus(string encryption)
