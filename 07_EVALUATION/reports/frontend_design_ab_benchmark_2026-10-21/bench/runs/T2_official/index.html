@@ -1,0 +1,254 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pharmacy Stock Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f4f6f5;--surface:#fff;--ink:#16221f;--muted:#5d6b67;--line:#dde4e1;
+  --brand:#0f6b5c;--brand-soft:#e1f1ed;
+  --crit:#b3261e;--crit-soft:#fbe7e5;--warn:#9a5b00;--warn-soft:#fdf0d8;--ok:#1d7a3e;--ok-soft:#e2f3e8;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f1514;--surface:#172120;--ink:#e6efec;--muted:#93a39e;--line:#2a3836;
+  --brand:#4cc2ab;--brand-soft:#173a34;
+  --crit:#ff8a80;--crit-soft:#3d1c1a;--warn:#f2b45a;--warn-soft:#3a2b10;--ok:#6fd195;--ok-soft:#173523;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 "IBM Plex Sans",system-ui,sans-serif}
+.mono{font-family:"IBM Plex Mono",monospace}
+header{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;padding:16px 24px;background:var(--surface);border-bottom:1px solid var(--line)}
+h1{font-size:18px;margin:0;font-weight:600}
+header small{color:var(--muted)}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+input,select,button{font:inherit;color:var(--ink);background:var(--surface);border:1px solid var(--line);border-radius:6px;padding:7px 10px}
+button{cursor:pointer}
+button:hover{border-color:var(--brand)}
+button.primary{background:var(--brand);color:var(--bg);border-color:var(--brand);font-weight:500}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+main{padding:20px 24px;max-width:1500px;margin:0 auto;display:grid;gap:16px}
+.kpis{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:8px;padding:14px 16px;border-left:4px solid var(--brand)}
+.kpi.crit{border-left-color:var(--crit)}.kpi.warn{border-left-color:var(--warn)}
+.kpi .n{font-size:28px;font-weight:600;line-height:1.1}
+.kpi .l{color:var(--muted);font-size:13px}
+.kpi .s{font-size:12px;color:var(--muted);margin-top:4px}
+.grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:16px;align-items:start}
+@media(max-width:1000px){.grid{grid-template-columns:1fr}}
+section{background:var(--surface);border:1px solid var(--line);border-radius:8px;overflow:hidden}
+section>h2{margin:0;padding:12px 16px;font-size:14px;font-weight:600;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+section>h2 span{font-weight:400;color:var(--muted);font-size:12px}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 14px;border-bottom:1px solid var(--line);white-space:nowrap}
+th{font-size:12px;color:var(--muted);font-weight:500;background:var(--bg);cursor:pointer;user-select:none}
+th[aria-sort]::after{content:" ▲";font-size:9px}
+th[aria-sort=descending]::after{content:" ▼"}
+tr:last-child td{border-bottom:0}
+td.num,th.num{text-align:right}
+.bar{display:inline-block;width:80px;height:6px;background:var(--line);border-radius:3px;vertical-align:middle;margin-right:8px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--ok)}
+.bar.low i{background:var(--warn)}.bar.crit i{background:var(--crit)}
+.tag{display:inline-block;padding:1px 8px;border-radius:10px;font-size:12px;font-weight:500}
+.t-crit{background:var(--crit-soft);color:var(--crit)}.t-warn{background:var(--warn-soft);color:var(--warn)}.t-ok{background:var(--ok-soft);color:var(--ok)}.t-info{background:var(--brand-soft);color:var(--brand)}
+.sub{color:var(--muted);font-size:12px}
+.list{list-style:none;margin:0;padding:0}
+.list li{padding:11px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:12px;align-items:center}
+.list li:last-child{border-bottom:0}
+.empty{padding:20px 16px;color:var(--muted)}
+.right{text-align:right}
+.seg{display:flex;gap:4px}
+.seg button{padding:3px 10px;font-size:12px}
+.seg button[aria-pressed=true]{background:var(--brand-soft);border-color:var(--brand);color:var(--brand)}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:9px 16px;border-radius:6px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.on{opacity:1}
+@media(max-width:600px){header,main{padding-left:14px;padding-right:14px}}
+</style>
+</head>
+<body>
+<header>
+  <div><h1>Pharmacy Stock Control</h1><small>St. Aldric General Hospital · Central Pharmacy · <span id="today"></span></small></div>
+  <div class="tools">
+    <input id="q" type="search" placeholder="Search medicine or code…" aria-label="Search medicines">
+    <select id="cat" aria-label="Filter category"><option value="">All categories</option></select>
+    <button class="primary" id="reorder">Create reorder list</button>
+  </div>
+</header>
+<main>
+  <div class="kpis" id="kpis"></div>
+  <div class="grid">
+    <section>
+      <h2>Stock levels <span id="stockCount"></span></h2>
+      <div class="scroll"><table id="stock"><thead><tr>
+        <th data-k="name">Medicine</th><th data-k="cat">Category</th><th data-k="onHand" class="num">On hand</th>
+        <th data-k="pct">vs. par level</th><th data-k="days" class="num">Days left</th><th data-k="status">Status</th>
+      </tr></thead><tbody></tbody></table></div>
+    </section>
+    <div style="display:grid;gap:16px">
+      <section>
+        <h2>Batches nearing expiry
+          <span class="seg" id="expSeg" role="group" aria-label="Expiry window">
+            <button data-d="30" aria-pressed="false">30 d</button><button data-d="60" aria-pressed="true">60 d</button><button data-d="90" aria-pressed="false">90 d</button>
+          </span></h2>
+        <ul class="list" id="expiry"></ul>
+      </section>
+      <section>
+        <h2>Pending ward orders <span id="ordCount"></span></h2>
+        <ul class="list" id="orders"></ul>
+      </section>
+    </div>
+  </div>
+</main>
+<div class="toast" id="toast" role="status"></div>
+<script>
+const TODAY = new Date(2026,9,21);
+const DAY = 864e5;
+const d = (s)=>{const [y,m,dd]=s.split('-').map(Number);return new Date(y,m-1,dd)};
+const daysTo = (s)=>Math.round((d(s)-TODAY)/DAY);
+const fmt = (s)=>d(s).toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+
+// onHand/par in units; use = average daily use
+const meds = [
+ {code:'AMX500',name:'Amoxicillin 500 mg caps',cat:'Antibiotics',onHand:1840,par:3000,use:120,unit:'caps'},
+ {code:'CTX1G',name:'Ceftriaxone 1 g inj',cat:'Antibiotics',onHand:210,par:800,use:45,unit:'vials'},
+ {code:'PIP45',name:'Piperacillin/Tazobactam 4.5 g',cat:'Antibiotics',onHand:96,par:400,use:30,unit:'vials'},
+ {code:'MER1G',name:'Meropenem 1 g inj',cat:'Antibiotics',onHand:340,par:500,use:22,unit:'vials'},
+ {code:'ENX40',name:'Enoxaparin 40 mg syringe',cat:'Anticoagulants',onHand:620,par:900,use:48,unit:'syr'},
+ {code:'WAR5',name:'Warfarin 5 mg tabs',cat:'Anticoagulants',onHand:1500,par:1600,use:35,unit:'tabs'},
+ {code:'MOR10',name:'Morphine sulfate 10 mg/mL',cat:'Controlled drugs',onHand:58,par:200,use:14,unit:'amps'},
+ {code:'FEN100',name:'Fentanyl 100 mcg/2 mL',cat:'Controlled drugs',onHand:140,par:240,use:9,unit:'amps'},
+ {code:'MID5',name:'Midazolam 5 mg/mL',cat:'Controlled drugs',onHand:75,par:150,use:6,unit:'amps'},
+ {code:'INS-R',name:'Insulin human soluble 100 IU/mL',cat:'Endocrine',onHand:132,par:260,use:11,unit:'vials'},
+ {code:'INS-G',name:'Insulin glargine pen',cat:'Endocrine',onHand:88,par:240,use:15,unit:'pens'},
+ {code:'MET500',name:'Metformin 500 mg tabs',cat:'Endocrine',onHand:6200,par:6000,use:210,unit:'tabs'},
+ {code:'SAL100',name:'Salbutamol 100 mcg inhaler',cat:'Respiratory',onHand:410,par:500,use:18,unit:'inh'},
+ {code:'IPR500',name:'Ipratropium 500 mcg nebules',cat:'Respiratory',onHand:960,par:1200,use:40,unit:'neb'},
+ {code:'NS1000',name:'Sodium chloride 0.9% 1 L',cat:'IV fluids',onHand:2100,par:3200,use:150,unit:'bags'},
+ {code:'HAR1000',name:"Hartmann's solution 1 L",cat:'IV fluids',onHand:780,par:1400,use:70,unit:'bags'},
+ {code:'GLU5',name:'Glucose 5% 500 mL',cat:'IV fluids',onHand:1250,par:1200,use:45,unit:'bags'},
+ {code:'PCM1G',name:'Paracetamol 1 g IV',cat:'Analgesics',onHand:1380,par:1500,use:95,unit:'vials'},
+ {code:'IBU400',name:'Ibuprofen 400 mg tabs',cat:'Analgesics',onHand:3400,par:4000,use:140,unit:'tabs'},
+ {code:'ADR1',name:'Adrenaline 1 mg/mL',cat:'Emergency',onHand:64,par:200,use:7,unit:'amps'},
+ {code:'ATR600',name:'Atropine 600 mcg/mL',cat:'Emergency',onHand:150,par:180,use:3,unit:'amps'},
+ {code:'OND4',name:'Ondansetron 4 mg inj',cat:'Antiemetics',onHand:520,par:600,use:26,unit:'amps'},
+ {code:'FUR40',name:'Furosemide 40 mg tabs',cat:'Cardiovascular',onHand:2300,par:2500,use:88,unit:'tabs'},
+ {code:'AML5',name:'Amlodipine 5 mg tabs',cat:'Cardiovascular',onHand:4100,par:4000,use:130,unit:'tabs'},
+];
+meds.forEach(m=>{
+  m.pct=Math.round(m.onHand/m.par*100);
+  m.days=Math.floor(m.onHand/m.use);
+  m.status = (m.pct<40||m.days<7)?'Critical':(m.pct<70||m.days<14)?'Low':'OK';
+});
+const batches = [
+ {code:'FEN100',batch:'FN2407B',exp:'2026-11-03',qty:40,loc:'CD cabinet 2'},
+ {code:'INS-R',batch:'HI88213',exp:'2026-11-12',qty:36,loc:'Fridge 1'},
+ {code:'OND4',batch:'OS5517A',exp:'2026-11-19',qty:120,loc:'Shelf C4'},
+ {code:'CTX1G',batch:'CF90321',exp:'2026-12-01',qty:64,loc:'Shelf A2'},
+ {code:'ENX40',batch:'EN66012',exp:'2026-12-09',qty:180,loc:'Shelf B1'},
+ {code:'ADR1',batch:'AD30145',exp:'2026-12-14',qty:24,loc:'Emergency stock'},
+ {code:'GLU5',batch:'GL11809',exp:'2027-01-05',qty:300,loc:'Store 3'},
+ {code:'SAL100',batch:'SB77420',exp:'2027-01-11',qty:90,loc:'Shelf D2'},
+ {code:'INS-G',batch:'IG20954',exp:'2027-01-17',qty:30,loc:'Fridge 2'},
+];
+const orders = [
+ {id:'WO-48213',ward:'ICU',code:'MER1G',qty:60,pri:'STAT',at:'2026-10-21T07:42'},
+ {id:'WO-48215',ward:'A&E Resus',code:'ADR1',qty:20,pri:'STAT',at:'2026-10-21T08:05'},
+ {id:'WO-48209',ward:'Ward 7 Surgical',code:'MOR10',qty:15,pri:'Urgent',at:'2026-10-21T06:50'},
+ {id:'WO-48206',ward:'Ward 3 Medical',code:'ENX40',qty:80,pri:'Urgent',at:'2026-10-20T16:30'},
+ {id:'WO-48201',ward:'Paediatrics',code:'SAL100',qty:30,pri:'Routine',at:'2026-10-20T14:10'},
+ {id:'WO-48198',ward:'Maternity',code:'OND4',qty:50,pri:'Routine',at:'2026-10-20T11:25'},
+ {id:'WO-48190',ward:'Ward 5 Cardiology',code:'FUR40',qty:400,pri:'Routine',at:'2026-10-20T09:00'},
+];
+const byCode = Object.fromEntries(meds.map(m=>[m.code,m]));
+const $=(s)=>document.querySelector(s);
+const esc=(s)=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const n=(x)=>x.toLocaleString('en-GB');
+let sortK='pct',sortDir=1,expWin=60;
+
+$('#today').textContent=TODAY.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+[...new Set(meds.map(m=>m.cat))].sort().forEach(c=>$('#cat').insertAdjacentHTML('beforeend',`<option>${esc(c)}</option>`));
+
+function kpis(){
+  const crit=meds.filter(m=>m.status==='Critical').length, low=meds.filter(m=>m.status==='Low').length;
+  const exp30=batches.filter(b=>daysTo(b.exp)<=30).length, exp60=batches.filter(b=>daysTo(b.exp)<=60).length;
+  const stat=orders.filter(o=>o.pri==='STAT').length;
+  const k=[
+   ['crit',crit,'Critical stock lines',`${low} more running low`],
+   ['warn',exp30,'Batches expiring ≤ 30 days',`${exp60} within 60 days`],
+   [orders.some(o=>o.pri==='STAT')?'crit':'',orders.length,'Pending ward orders',`${stat} STAT awaiting dispatch`],
+   ['',meds.length,'Tracked medicine lines',`${meds.filter(m=>m.status==='OK').length} at healthy levels`],
+  ];
+  $('#kpis').innerHTML=k.map(([c,v,l,s])=>`<div class="kpi ${c}"><div class="n">${v}</div><div class="l">${l}</div><div class="s">${s}</div></div>`).join('');
+}
+function stock(){
+  const q=$('#q').value.trim().toLowerCase(), cat=$('#cat').value;
+  let rows=meds.filter(m=>(!cat||m.cat===cat)&&(!q||(m.name+m.code).toLowerCase().includes(q)));
+  const rank={Critical:0,Low:1,OK:2};
+  rows.sort((a,b)=>{const x=sortK==='status'?rank[a.status]:a[sortK],y=sortK==='status'?rank[b.status]:b[sortK];
+    return (typeof x==='string'?x.localeCompare(y):x-y)*sortDir});
+  $('#stockCount').textContent=`${rows.length} of ${meds.length} lines`;
+  const cls={Critical:'t-crit',Low:'t-warn',OK:'t-ok'};
+  $('#stock tbody').innerHTML=rows.length?rows.map(m=>{
+    const bc=m.status==='Critical'?'crit':m.status==='Low'?'low':'';
+    return `<tr><td>${esc(m.name)}<div class="sub mono">${m.code}</div></td><td>${esc(m.cat)}</td>
+    <td class="num mono">${n(m.onHand)} <span class="sub">${m.unit}</span></td>
+    <td><span class="bar ${bc}"><i style="width:${Math.min(100,m.pct)}%"></i></span><span class="mono">${m.pct}%</span></td>
+    <td class="num mono">${m.days}</td><td><span class="tag ${cls[m.status]}">${m.status}</span></td></tr>`}).join('')
+    :`<tr><td colspan="6" class="empty">No medicines match your filters.</td></tr>`;
+  document.querySelectorAll('#stock th').forEach(th=>{
+    if(th.dataset.k===sortK)th.setAttribute('aria-sort',sortDir>0?'ascending':'descending');else th.removeAttribute('aria-sort')});
+}
+function expiry(){
+  const rows=batches.filter(b=>daysTo(b.exp)<=expWin).sort((a,b)=>d(a.exp)-d(b.exp));
+  $('#expiry').innerHTML=rows.length?rows.map(b=>{
+    const dd=daysTo(b.exp),m=byCode[b.code],c=dd<=30?'t-crit':dd<=60?'t-warn':'t-info';
+    return `<li><div><strong>${esc(m.name)}</strong><div class="sub"><span class="mono">${b.batch}</span> · ${n(b.qty)} ${m.unit} · ${esc(b.loc)}</div></div>
+    <div class="right"><span class="tag ${c}">${dd} days</span><div class="sub">${fmt(b.exp)}</div></div></li>`}).join('')
+    :`<li class="empty">No batches expire within ${expWin} days.</li>`;
+}
+function ord(){
+  const w={STAT:0,Urgent:1,Routine:2};
+  orders.sort((a,b)=>w[a.pri]-w[b.pri]||a.at.localeCompare(b.at));
+  $('#ordCount').textContent=`${orders.length} open`;
+  const c={STAT:'t-crit',Urgent:'t-warn',Routine:'t-info'};
+  $('#orders').innerHTML=orders.length?orders.map(o=>{
+    const m=byCode[o.code],short=m.onHand<o.qty;
+    const t=new Date(o.at).toLocaleString('en-GB',{day:'2-digit',month:'short',hour:'2-digit',minute:'2-digit'});
+    return `<li><div><span class="tag ${c[o.pri]}">${o.pri}</span> <strong>${esc(o.ward)}</strong>
+    <div>${o.qty} × ${esc(m.name)}</div>
+    <div class="sub"><span class="mono">${o.id}</span> · ${t}${short?' · <span style="color:var(--crit)">insufficient stock</span>':''}</div></div>
+    <button data-id="${o.id}" ${short?'disabled title="Insufficient stock"':''}>Dispatch</button></li>`}).join('')
+    :`<li class="empty">All ward orders have been dispatched.</li>`;
+}
+function toast(t){const e=$('#toast');e.textContent=t;e.classList.add('on');clearTimeout(toast.t);toast.t=setTimeout(()=>e.classList.remove('on'),2200)}
+function render(){kpis();stock();expiry();ord()}
+
+$('#q').addEventListener('input',stock);
+$('#cat').addEventListener('change',stock);
+document.querySelector('#stock thead').addEventListener('click',e=>{
+  const th=e.target.closest('th');if(!th)return;
+  sortDir=sortK===th.dataset.k?-sortDir:1;sortK=th.dataset.k;stock();
+});
+$('#expSeg').addEventListener('click',e=>{
+  const b=e.target.closest('button');if(!b)return;expWin=+b.dataset.d;
+  document.querySelectorAll('#expSeg button').forEach(x=>x.setAttribute('aria-pressed',x===b));expiry();
+});
+$('#orders').addEventListener('click',e=>{
+  const b=e.target.closest('button[data-id]');if(!b)return;
+  const i=orders.findIndex(o=>o.id===b.dataset.id),o=orders[i],m=byCode[o.code];
+  m.onHand-=o.qty;m.pct=Math.round(m.onHand/m.par*100);m.days=Math.floor(m.onHand/m.use);
+  m.status=(m.pct<40||m.days<7)?'Critical':(m.pct<70||m.days<14)?'Low':'OK';
+  orders.splice(i,1);render();toast(`${o.id} dispatched to ${o.ward}`);
+});
+$('#reorder').addEventListener('click',()=>{
+  const l=meds.filter(m=>m.status!=='OK');
+  toast(`Reorder list drafted: ${l.length} lines below threshold`);
+});
+render();
+</script>
+</body>
+</html>

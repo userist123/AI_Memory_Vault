@@ -1,0 +1,305 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pharmacy Stock Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:oklch(97.5% .006 190);
+  --surface:oklch(100% 0 0);
+  --sunken:oklch(95.5% .008 190);
+  --line:oklch(90% .01 195);
+  --ink:oklch(24% .025 220);
+  --ink-2:oklch(46% .02 215);
+  --ink-3:oklch(60% .015 215);
+  --brand:oklch(46% .09 195);
+  --brand-soft:oklch(94% .035 195);
+  --ok:oklch(52% .12 155);   --ok-bg:oklch(95% .045 155);
+  --warn:oklch(58% .13 75);  --warn-bg:oklch(95.5% .06 85);
+  --crit:oklch(53% .19 28);  --crit-bg:oklch(95% .035 25);
+  --sans:"Public Sans",system-ui,sans-serif;
+  --mono:"IBM Plex Mono",ui-monospace,monospace;
+  --r:8px;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 var(--sans);-webkit-font-smoothing:antialiased}
+button,input,select{font:inherit;color:inherit}
+.num{font-family:var(--mono);font-variant-numeric:tabular-nums}
+header{display:flex;align-items:center;gap:20px;padding:14px 28px;background:var(--surface);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5}
+.logo{display:flex;align-items:center;gap:10px;font-weight:700;letter-spacing:-.01em}
+.logo i{width:28px;height:28px;border-radius:7px;background:var(--brand);position:relative;display:block}
+.logo i::before,.logo i::after{content:"";position:absolute;background:#fff;border-radius:1px}
+.logo i::before{left:12px;top:6px;width:4px;height:16px}.logo i::after{left:6px;top:12px;width:16px;height:4px}
+.logo small{display:block;font-weight:500;font-size:12px;color:var(--ink-3);letter-spacing:0}
+header .meta{margin-left:auto;text-align:right;font-size:12.5px;color:var(--ink-2)}
+header .meta b{color:var(--ink);font-weight:600}
+main{max-width:1440px;margin:0 auto;padding:24px 28px 48px}
+h1{font-size:22px;letter-spacing:-.02em;margin:0 0 2px}
+.sub{color:var(--ink-2);margin:0 0 20px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:14px 16px;border-left:4px solid var(--line)}
+.kpi.crit{border-left-color:var(--crit)}.kpi.warn{border-left-color:var(--warn)}.kpi.ok{border-left-color:var(--ok)}.kpi.info{border-left-color:var(--brand)}
+.kpi span{font-size:12px;color:var(--ink-2);text-transform:uppercase;letter-spacing:.06em;font-weight:600}
+.kpi strong{display:block;font:500 30px/1.15 var(--mono);margin:4px 0 2px}
+.kpi em{font-style:normal;font-size:12.5px;color:var(--ink-2)}
+.grid{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:20px;align-items:start}
+.col{display:grid;gap:20px;min-width:0}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);overflow:hidden}
+.card>header{position:static;padding:14px 16px;border-bottom:1px solid var(--line);gap:12px;flex-wrap:wrap}
+.card h2{font-size:15px;margin:0;letter-spacing:-.005em}
+.card h2 small{font-weight:400;color:var(--ink-3);margin-left:6px}
+.tools{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+input[type=search],select{background:var(--sunken);border:1px solid var(--line);border-radius:6px;padding:6px 10px;min-height:32px}
+input[type=search]{width:180px}
+:focus-visible{outline:2px solid var(--brand);outline-offset:2px}
+.seg{display:inline-flex;background:var(--sunken);border:1px solid var(--line);border-radius:6px;padding:2px}
+.seg button{border:0;background:none;padding:4px 10px;border-radius:4px;cursor:pointer;color:var(--ink-2);font-size:13px}
+.seg button[aria-pressed=true]{background:var(--surface);color:var(--ink);font-weight:600;box-shadow:0 1px 2px oklch(30% .03 220/.18)}
+.scroll{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th{text-align:left;font-size:11.5px;text-transform:uppercase;letter-spacing:.06em;color:var(--ink-3);font-weight:600;padding:9px 16px;background:var(--sunken);white-space:nowrap}
+th button{all:unset;cursor:pointer}th button:hover{color:var(--ink)}
+td{padding:10px 16px;border-top:1px solid var(--line);vertical-align:middle}
+tbody tr:hover{background:oklch(98% .01 195)}
+td.r,th.r{text-align:right}
+.drug b{font-weight:600;display:block}.drug span{color:var(--ink-3);font-size:12.5px}
+.bar{position:relative;height:8px;border-radius:4px;background:var(--sunken);min-width:120px}
+.bar i{position:absolute;inset:0 auto 0 0;border-radius:4px}
+.bar u{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);opacity:.55}
+.pill{display:inline-flex;align-items:center;gap:6px;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:600;white-space:nowrap}
+.pill::before{content:"";width:6px;height:6px;border-radius:50%;background:currentColor}
+.pill.crit{background:var(--crit-bg);color:var(--crit)}.pill.warn{background:var(--warn-bg);color:var(--warn)}.pill.ok{background:var(--ok-bg);color:var(--ok)}.pill.info{background:var(--brand-soft);color:var(--brand)}
+.foot{padding:10px 16px;border-top:1px solid var(--line);color:var(--ink-3);font-size:12.5px;display:flex;justify-content:space-between}
+.empty{padding:28px;text-align:center;color:var(--ink-3)}
+.days{font:500 13px var(--mono);padding:3px 8px;border-radius:5px;display:inline-block;min-width:54px;text-align:center}
+.days.crit{background:var(--crit-bg);color:var(--crit)}.days.warn{background:var(--warn-bg);color:var(--warn)}.days.ok{background:var(--sunken);color:var(--ink-2)}
+.orders{list-style:none;margin:0;padding:0}
+.order{padding:14px 16px;border-top:1px solid var(--line);display:grid;grid-template-columns:1fr auto;gap:4px 12px}
+.order:first-child{border-top:0}
+.order h3{margin:0;font-size:14px;display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.order p{margin:0;color:var(--ink-2);font-size:13px;grid-column:1}
+.order .age{font:12.5px var(--mono);color:var(--ink-3);text-align:right}
+.order .age.late{color:var(--crit);font-weight:500}
+.act{grid-column:2;grid-row:2/4;align-self:end}
+.btn{border:1px solid var(--brand);background:var(--brand);color:#fff;border-radius:6px;padding:6px 12px;cursor:pointer;font-weight:600;font-size:13px;min-height:32px}
+.btn:hover{background:oklch(40% .09 195)}
+.btn.ghost{background:none;color:var(--brand)}.btn.ghost:hover{background:var(--brand-soft)}
+.done{color:var(--ok);font-weight:600;font-size:13px}
+.warnline{color:var(--crit);font-size:12.5px;font-weight:600}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){main{padding:16px}header{padding:12px 16px}header .meta{display:none}.kpis{gap:10px}.kpi strong{font-size:24px}input[type=search]{width:100%}.tools{width:100%}}
+@media (prefers-reduced-motion:no-preference){.bar i{transition:width .4s}}
+</style>
+</head>
+<body>
+<header>
+  <div class="logo"><i aria-hidden="true"></i><div>Pharmacy Stock Desk<small>St. Aldric General Hospital · Central Pharmacy</small></div></div>
+  <div class="meta"><b id="today"></b><br>Last stock sync <span class="num" id="sync"></span> · Pharmacist on duty: <b>R. Okafor</b></div>
+</header>
+<main>
+  <h1>Today's overview</h1>
+  <p class="sub">What needs action before the 14:00 ward round.</p>
+
+  <section class="kpis" id="kpis" aria-label="Key figures"></section>
+
+  <div class="grid">
+    <div class="col">
+      <section class="card" aria-labelledby="stk">
+        <header>
+          <h2 id="stk">Stock levels <small id="stkCount"></small></h2>
+          <div class="tools">
+            <input type="search" id="q" placeholder="Search medicine…" aria-label="Search medicine">
+            <select id="cat" aria-label="Category"></select>
+            <div class="seg" role="group" aria-label="Status filter" id="stFilter">
+              <button data-v="all" aria-pressed="true">All</button>
+              <button data-v="low" aria-pressed="false">Needs reorder</button>
+            </div>
+          </div>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr>
+            <th><button data-s="name">Medicine ↕</button></th>
+            <th>Level <span style="text-transform:none;letter-spacing:0;font-weight:400">(| = reorder point)</span></th>
+            <th class="r"><button data-s="onHand">On hand ↕</button></th>
+            <th class="r"><button data-s="cover">Cover ↕</button></th>
+            <th>Status</th>
+          </tr></thead>
+          <tbody id="stockBody"></tbody>
+        </table></div>
+        <div class="foot"><span>Cover = days of stock at the last 14-day average usage.</span><span id="stkFoot"></span></div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section class="card" aria-labelledby="exp">
+        <header>
+          <h2 id="exp">Batches close to expiry</h2>
+          <div class="tools"><div class="seg" role="group" aria-label="Expiry window" id="expWin">
+            <button data-v="30" aria-pressed="false">30 d</button>
+            <button data-v="60" aria-pressed="true">60 d</button>
+            <button data-v="90" aria-pressed="false">90 d</button>
+          </div></div>
+        </header>
+        <div class="scroll"><table>
+          <thead><tr><th>Medicine / batch</th><th class="r">Qty</th><th>Expires</th><th class="r">Left</th></tr></thead>
+          <tbody id="expBody"></tbody>
+        </table></div>
+        <div class="foot"><span>Oldest first. Return to supplier or relocate to high-use wards.</span></div>
+      </section>
+
+      <section class="card" aria-labelledby="ord">
+        <header>
+          <h2 id="ord">Pending ward orders <small id="ordCount"></small></h2>
+        </header>
+        <ul class="orders" id="orders"></ul>
+      </section>
+    </div>
+  </div>
+</main>
+
+<script>
+const NOW = new Date();
+const fmtDate = d => d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+const addDays = n => { const d=new Date(NOW); d.setDate(d.getDate()+n); return d; };
+document.getElementById('today').textContent = NOW.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+document.getElementById('sync').textContent = '07:42';
+
+/* name, strength/form, category, onHand, reorderPoint, max, dailyUse, location */
+const stock = [
+ ['Amoxicillin','500 mg capsules ×21','Antibiotics',1840,1200,3600,92,'A-03'],
+ ['Co-amoxiclav','625 mg tablets ×21','Antibiotics',310,900,2400,64,'A-04'],
+ ['Piperacillin/tazobactam','4.5 g vial','Antibiotics',148,220,600,19,'IV-01'],
+ ['Metformin','500 mg tablets ×84','Diabetes',2150,1000,3000,55,'B-11'],
+ ['Insulin glargine','100 U/mL pen ×5','Diabetes',96,120,320,9,'FR-02'],
+ ['Apixaban','5 mg tablets ×56','Cardiovascular',420,300,900,18,'B-02'],
+ ['Bisoprolol','2.5 mg tablets ×28','Cardiovascular',1260,600,1800,41,'B-05'],
+ ['Furosemide','40 mg tablets ×28','Cardiovascular',74,500,1500,38,'B-07'],
+ ['Morphine sulfate','10 mg/mL ampoule','Controlled drugs',185,150,400,12,'CD-01'],
+ ['Oxycodone','5 mg capsules ×56','Controlled drugs',232,120,360,6,'CD-03'],
+ ['Paracetamol IV','10 mg/mL 100 mL','Analgesia',1120,800,2400,70,'IV-06'],
+ ['Ondansetron','4 mg/2 mL ampoule','Antiemetics',390,250,700,17,'C-02'],
+ ['Sodium chloride 0.9%','1 L infusion bag','Fluids',2480,1500,4800,210,'F-01'],
+ ['Heparin sodium','5,000 IU/mL ampoule','Cardiovascular',64,150,450,11,'FR-04'],
+ ['Salbutamol','100 mcg inhaler','Respiratory',515,300,900,22,'C-09'],
+ ['Dexamethasone','3.3 mg/mL ampoule','Antiemetics',205,160,480,10,'C-05'],
+];
+const S = stock.map(([name,form,cat,onHand,rop,max,use,loc])=>({name,form,cat,onHand,rop,max,use,loc,cover:Math.round(onHand/use)}));
+const status = s => s.onHand<s.rop*.5 || s.cover<=3 ? 'crit' : s.onHand<s.rop ? 'warn' : 'ok';
+const statusLabel = {crit:'Critical',warn:'Reorder',ok:'In range'};
+
+/* medicine, batch, qty, days to expiry */
+const batches = [
+ ['Insulin glargine','LG24-0617',18,9],
+ ['Ondansetron','OD25-0231',120,14],
+ ['Piperacillin/tazobactam','PT25-1190',46,21],
+ ['Heparin sodium','HS25-0442',40,27],
+ ['Salbutamol','SB25-0873',160,38],
+ ['Dexamethasone','DX25-0315',85,44],
+ ['Co-amoxiclav','CA25-1021',140,52],
+ ['Paracetamol IV','PI25-0764',380,58],
+ ['Apixaban','AP25-0912',96,71],
+ ['Morphine sulfate','MS25-0188',60,84],
+ ['Furosemide','FU25-0629',48,89],
+ ['Metformin','MF25-0410',600,118],
+].map(([med,batch,qty,d])=>({med,batch,qty,d,date:addDays(d)}));
+
+const wards = [
+ {id:'WO-48213',ward:'Emergency Dept',pri:'STAT',mins:12,lines:['Morphine sulfate 10 mg/mL ×10','Ondansetron 4 mg ×20','Sodium chloride 0.9% ×40'],st:'pending'},
+ {id:'WO-48209',ward:'ICU (Ward 7)',pri:'STAT',mins:38,lines:['Heparin sodium 5,000 IU ×15','Piperacillin/tazobactam 4.5 g ×24'],st:'picking',note:'Heparin: only 64 in stock'},
+ {id:'WO-48198',ward:'Cardiology (Ward 3)',pri:'Urgent',mins:75,lines:['Furosemide 40 mg ×56','Apixaban 5 mg ×28'],st:'pending'},
+ {id:'WO-48187',ward:'Medical Ward 5',pri:'Urgent',mins:130,lines:['Insulin glargine pen ×12','Metformin 500 mg ×84'],st:'pending'},
+ {id:'WO-48174',ward:'Surgical Ward 2',pri:'Routine',mins:210,lines:['Paracetamol IV ×60','Oxycodone 5 mg ×28'],st:'picking'},
+ {id:'WO-48160',ward:'Paediatrics',pri:'Routine',mins:285,lines:['Amoxicillin 500 mg ×21','Salbutamol inhaler ×6'],st:'pending'},
+];
+const priClass = {STAT:'crit',Urgent:'warn',Routine:'info'};
+const ageText = m => m<60 ? m+' min ago' : Math.floor(m/60)+' h '+String(m%60).padStart(2,'0')+' min ago';
+const slaLate = o => (o.pri==='STAT'&&o.mins>30)||(o.pri==='Urgent'&&o.mins>120)||(o.pri==='Routine'&&o.mins>240);
+
+const $ = id => document.getElementById(id);
+const esc = s => String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+let state = {q:'',cat:'All categories',st:'all',sort:'status',dir:1,win:60};
+
+function kpis(){
+  const crit = S.filter(s=>status(s)==='crit').length;
+  const reorder = S.filter(s=>status(s)!=='ok').length;
+  const exp30 = batches.filter(b=>b.d<=30);
+  const open = wards.filter(o=>o.st!=='ready');
+  const late = open.filter(slaLate).length;
+  $('kpis').innerHTML = `
+   <div class="kpi crit"><span>Critical stock</span><strong>${crit}</strong><em>of ${S.length} lines · ${reorder} at or below reorder point</em></div>
+   <div class="kpi warn"><span>Expiring ≤ 30 days</span><strong>${exp30.length}</strong><em>${exp30.reduce((a,b)=>a+b.qty,0)} units across batches</em></div>
+   <div class="kpi info"><span>Open ward orders</span><strong>${open.length}</strong><em>${open.filter(o=>o.pri==='STAT').length} STAT · ${late} past target time</em></div>
+   <div class="kpi ok"><span>Dispatched today</span><strong>${42+wards.filter(o=>o.st==='ready').length}</strong><em>median turnaround 46 min</em></div>`;
+}
+
+function renderStock(){
+  const ord = {crit:0,warn:1,ok:2};
+  let rows = S.filter(s=>(state.cat==='All categories'||s.cat===state.cat) &&
+    (state.st==='all'||status(s)!=='ok') &&
+    (s.name+' '+s.form).toLowerCase().includes(state.q.toLowerCase()));
+  rows.sort((a,b)=>{
+    const k = state.sort;
+    let r = k==='status' ? ord[status(a)]-ord[status(b)] || a.cover-b.cover
+          : k==='name' ? a.name.localeCompare(b.name) : a[k]-b[k];
+    return r*state.dir;
+  });
+  $('stockBody').innerHTML = rows.length ? rows.map(s=>{
+    const st = status(s), pct = Math.min(100,s.onHand/s.max*100), rp = s.rop/s.max*100;
+    const col = {crit:'var(--crit)',warn:'var(--warn)',ok:'var(--ok)'}[st];
+    return `<tr>
+     <td class="drug"><b>${esc(s.name)}</b><span>${esc(s.form)} · ${s.loc}</span></td>
+     <td><div class="bar" role="img" aria-label="${s.onHand} of ${s.max} max, reorder at ${s.rop}"><i style="width:${pct}%;background:${col}"></i><u style="left:${rp}%"></u></div></td>
+     <td class="r num">${s.onHand.toLocaleString('en-GB')}</td>
+     <td class="r num">${s.cover} d</td>
+     <td><span class="pill ${st}">${statusLabel[st]}</span></td></tr>`;
+  }).join('') : `<tr><td colspan="5" class="empty">No medicines match these filters.</td></tr>`;
+  $('stkCount').textContent = rows.length+' of '+S.length;
+  $('stkFoot').textContent = rows.length ? '' : '';
+}
+
+function renderExpiry(){
+  const rows = batches.filter(b=>b.d<=state.win).sort((a,b)=>a.d-b.d);
+  $('expBody').innerHTML = rows.length ? rows.map(b=>{
+    const c = b.d<=30?'crit':b.d<=60?'warn':'ok';
+    return `<tr><td class="drug"><b>${esc(b.med)}</b><span class="num">${b.batch}</span></td>
+      <td class="r num">${b.qty}</td><td class="num">${fmtDate(b.date)}</td>
+      <td class="r"><span class="days ${c}">${b.d} d</span></td></tr>`;
+  }).join('') : `<tr><td colspan="4" class="empty">No batches expire within ${state.win} days.</td></tr>`;
+}
+
+function renderOrders(){
+  const rank = {STAT:0,Urgent:1,Routine:2};
+  const list = [...wards].sort((a,b)=>(a.st==='ready')-(b.st==='ready') || rank[a.pri]-rank[b.pri] || b.mins-a.mins);
+  $('ordCount').textContent = wards.filter(o=>o.st!=='ready').length+' open';
+  $('orders').innerHTML = list.map(o=>`
+    <li class="order">
+      <h3>${o.ward} <span class="pill ${priClass[o.pri]}">${o.pri}</span></h3>
+      <div class="age ${slaLate(o)&&o.st!=='ready'?'late':''}">${o.id}<br>${ageText(o.mins)}${slaLate(o)&&o.st!=='ready'?' · late':''}</div>
+      <p>${o.lines.map(esc).join('<br>')}</p>
+      ${o.note?`<p class="warnline">${esc(o.note)}</p>`:''}
+      <div class="act">${o.st==='pending'?`<button class="btn ghost" data-id="${o.id}">Start picking</button>`
+        : o.st==='picking'?`<button class="btn" data-id="${o.id}">Mark ready</button>`
+        : `<span class="done">✓ Ready for porter</span>`}</div>
+    </li>`).join('');
+}
+
+$('q').addEventListener('input',e=>{state.q=e.target.value;renderStock()});
+$('cat').innerHTML = ['All categories',...new Set(S.map(s=>s.cat))].map(c=>`<option>${c}</option>`).join('');
+$('cat').addEventListener('change',e=>{state.cat=e.target.value;renderStock()});
+function seg(id,fn){ $(id).addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
+  $(id).querySelectorAll('button').forEach(x=>x.setAttribute('aria-pressed',x===b)); fn(b.dataset.v); }); }
+seg('stFilter',v=>{state.st=v;renderStock()});
+seg('expWin',v=>{state.win=+v;renderExpiry()});
+document.querySelectorAll('th [data-s]').forEach(b=>b.addEventListener('click',()=>{
+  const k=b.dataset.s; state.dir = state.sort===k ? -state.dir : 1; state.sort=k; renderStock(); }));
+$('orders').addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b) return;
+  const o=wards.find(x=>x.id===b.dataset.id); o.st = o.st==='pending'?'picking':'ready'; renderOrders(); kpis(); });
+
+kpis(); renderStock(); renderExpiry(); renderOrders();
+</script>
+</body>
+</html>
