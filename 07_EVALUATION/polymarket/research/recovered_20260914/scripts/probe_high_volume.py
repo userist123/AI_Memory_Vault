@@ -5,7 +5,7 @@ import json
 
 orig_getaddrinfo = socket.getaddrinfo
 def patched_getaddrinfo(host, port, *args, **kwargs):
-    if "polymarket.com" in host:
+    if isinstance(host, str) and (host == "polymarket.com" or host.endswith(".polymarket.com")):
         return orig_getaddrinfo("172.64.153.51", port, *args, **kwargs)
     return orig_getaddrinfo(host, port, *args, **kwargs)
 socket.getaddrinfo = patched_getaddrinfo
