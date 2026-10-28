@@ -1,0 +1,17 @@
+{
+  "T1": {
+    "A": "baseline",
+    "B": "official",
+    "C": "vault"
+  },
+  "T2": {
+    "A": "baseline",
+    "B": "official",
+    "C": "vault"
+  },
+  "T3": {
+    "A": "baseline",
+    "B": "vault",
+    "C": "official"
+  }
+}
