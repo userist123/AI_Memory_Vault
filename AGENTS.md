@@ -166,7 +166,7 @@ When multiple AI development environments/agents (Antigravity, Claude Code, Chat
 1. **Single Source of Truth**: `00_GOVERNANCE/coordination/` is the canonical coordination layer for active and completed work.
 2. **Pre-flight Check**: Before touching any code or files, inspect the current coordination state to ensure another AI session is not actively executing or has not already resolved the task.
 3. **Execution Ownership**: When starting a task, claim it or check for an active owner. When completing a task, record ownership and timestamp in the current coordination state.
-4. **Protected Core Invariant**: Never modify frozen cognitive core modules (`Planner`, `PlanComplexityAnalyzer`, `CouncilBudgetController`, `Council_Orchestrator.py`, `ContextPackBuilder`, `council_token_telemetry.py`) unless explicitly required by an audited specification. All core contracts are validated against the cognitive-core protected-boundary tests.
+4. **Protected Core Invariant**: Never modify frozen cognitive core modules unless explicitly required by an audited specification. Enforced by `20_TESTS/test_protected_core_boundaries.py`: `cognitive_core/model_provider.py`, `fake_model_provider.py`, `model_tier_router.py`, `actual_usage_telemetry.py`, `council_model_execution.py`, `executive_model_execution_bridge.py`. Frozen by rule, not yet covered by that test: `Planner`, `PlanComplexityAnalyzer`, `CouncilBudgetController`, `Council_Orchestrator.py`, `ContextPackBuilder`, `council_token_telemetry.py`.
 5. **No Speculation**: Never mark tasks done without attaching empirical execution proof (passing `pytest` suite output).
 
 ## Agent checkpoints and token economy
