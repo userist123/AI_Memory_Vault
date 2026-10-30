@@ -1,0 +1,20 @@
+{
+ "case": "T3",
+ "condition": "B",
+ "repeat": 2,
+ "run_id": "r004",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.1531123,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 955,
+  "cache_read_input_tokens": 113303,
+  "cache_creation_input_tokens": 33055
+ },
+ "verdict": "The current config loads 3 plugins (auth, cache, metrics), but the only startup time on record, 9.2 s, is from v1.2 with 14 plugins, so the current startup time is unknown.",
+ "answer": "The current config lists 3 plugins. I could not find a current startup time.\n\n**Plugin count**\n- `config.yaml` (version 2.0.0) lists three plugins under `plugins:`: `auth`, `cache` and `metrics`.\n- `CHANGELOG.md` agrees. The 2.0.0 entry (2026-06-12) says \"Removed 11 legacy plugins; three remain\". 14 minus 11 is 3.\n- `docs/PERFORMANCE.md` says 14 plugins, but that was measured on v1.2 on 2026-01-05, so it is out of date.\n\n**Startup time**\n- The only figure in the repo is 9.2 s, from `docs/PERFORMANCE.md`. It was measured on v1.2 with 14 plugins.\n- That figure predates the 2.0.0 plugin removal and the loader rewrite in 1.2.0. I would not quote it as the current startup time. The repo has no 2.0.0 measurement.\n\n**Checked and not checked**\n- Checked: every file in the repo, which is `config.yaml`, `CHANGELOG.md` and `docs/PERFORMANCE.md`, on the single commit on `main`.\n- Not checked: there is no application source here, so I did not confirm that the loader actually loads exactly these three plugins at runtime. I also did not run the app to time it.\n- To get a current number, time a cold start of v2.0.0.\n\nVERDICT: The current config loads 3 plugins (auth, cache, metrics), but the only startup time on record, 9.2 s, is from v1.2 with 14 plugins, so the current startup time is unknown.",
+ "stderr_tail": null
+}

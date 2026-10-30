@@ -1,0 +1,20 @@
+{
+ "case": "T8",
+ "condition": "A",
+ "repeat": 1,
+ "run_id": "r078",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 5,
+ "total_cost_usd": 0.1353529,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1250,
+  "cache_read_input_tokens": 104969,
+  "cache_creation_input_tokens": 28086
+ },
+ "verdict": "Yes, `services/legacy/payments_client.py:3` hardcodes a Stripe-style `sk_live_` key (possibly a dummy value), so the scanner's 0 findings is a false negative.",
+ "answer": "Yes, one hardcoded API key is in the codebase, so the scan's 0 findings looks like a miss.\n\n**Finding:** `services/legacy/payments_client.py:3` has `API_KEY = \"sk_live_51HxQe2Yb7fake0000000000000000\"`. It's passed as the basic-auth username in `requests.post(...)` on line 7.\n\n- **Format:** `sk_live_` is the Stripe live secret key prefix. A scanner with a Stripe rule should flag it.\n- **Possibly a placeholder:** the body contains `fake0000…`, and the URL is `pay.example.invalid`. It may be a dummy value, but a live-style literal committed in source still needs a decision.\n- **Why the scan may have missed it:** I can't tell from here. It may be excluding `legacy/` paths. It may also be filtering out values containing \"fake\" or low-entropy strings. Check the scanner's path excludes and allowlists.\n- **Coverage:** I searched all files for common patterns: key, secret, token and password assignments, `sk-`, `AKIA`, `ghp_`, `xox`, `AIza`, private key headers, and `sk_live`, `sk_test`, `pk_live` and `rk_live`. Only this one matched. A custom or oddly formatted credential could still slip past those patterns. I didn't look at git history, which only has one commit (`a34ce5b`).\n\n**Recommended next steps:**\n1. If the key is real, rotate it, since it's in git history.\n2. Load the key from an environment variable or secret manager instead of the source file.\n3. Find out why the scanner skipped it, so the same gap doesn't hide other secrets.\n\nVERDICT: Yes, `services/legacy/payments_client.py:3` hardcodes a Stripe-style `sk_live_` key (possibly a dummy value), so the scanner's 0 findings is a false negative.",
+ "stderr_tail": null
+}

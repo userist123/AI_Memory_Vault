@@ -1,0 +1,20 @@
+{
+ "case": "T5",
+ "condition": "B",
+ "repeat": 0,
+ "run_id": "r008",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 8,
+ "total_cost_usd": 0.1698636,
+ "usage": {
+  "input_tokens": 10,
+  "output_tokens": 1732,
+  "cache_read_input_tokens": 209676,
+  "cache_creation_input_tokens": 32889
+ },
+ "verdict": "Yes — by static reading, PR 42 adds `docs/internal/runbooks` to a public domain's roots, so the exporter would publish that internal runbook, which contradicts \"no visibility change\".",
+ "answer": "Yes. Merging PR 42 changes what the public site exports, despite the \"No visibility change\" claim.\n\n**Why**\n- `site/export.py:5-6` returns every root of every domain whose `visibility == 'public'`. Its comment says it \"publishes every file\" under those roots.\n- `config/domains.yaml` puts `docs` at `visibility: public`. `pr.diff` changes its roots from `[docs/public]` to `[docs/public, docs/internal/runbooks]`.\n- After the merge, `exported_roots` returns `docs/internal/runbooks` as well.\n- Before the merge, that path was covered only by the `ops` domain, which is `private`, with root `docs/internal`.\n- The file `docs/internal/runbooks/db_failover.md` would go public. Its content is \"Rotate the root credential, then promote the replica.\" It is labelled internal and describes credential handling.\n\nThe PR's wording is literally true: the `visibility:` field is unchanged. But visibility is set per domain, and the exporter applies it to all of that domain's roots. Adding a root to a public domain makes that directory public.\n\n**Claim card**\n- CONCLUSION: Merging PR 42 makes `docs/internal/runbooks/*` exported by the public site, so the PR does change public exports.\n- CHECKED: `pr.diff`, `PR.md`, `config/domains.yaml`, `site/export.py`, and the tree of the single commit `13a214f`, which has only `main`. I read these by static reading only.\n- NOT CHECKED:\n  - I did not run the exporter.\n  - There may be other code that consumes `exported_roots`, such as an allow/deny filter, path exclusions, or a CI/deploy step. Only `site/export.py` exists in this repo.\n  - I did not look at the live site.\n  - The real PR 42 may differ from `pr.diff`.\n  - I did not check whether the `ops` domain's private status overrides the public one. The code has no such precedence logic.\n- ALTERNATIVES:\n  - (a) A downstream filter blocks `internal` paths. The separating observation is a filter in code outside this repo. I made no such observation, and nothing in this repo suggests one.\n  - (b) The exporter dedupes against private domains. The code shows it doesn't, since it only filters on `visibility == 'public'`. This one was checked.\n- FALSIFIER: Running `exported_roots` on the post-PR config and seeing that `docs/internal/runbooks` is absent would disprove this. Searched: no, only by reading.\n- CONFIDENCE: medium. It is capped there because I did not run the exporter and there is no integrated-path check.\n\nThe cheapest next check is to apply the diff and run `exported_roots(yaml.safe_load(...))`. A better fix is to keep runbooks out of the public domain, for example by adding a separate searchable domain with `visibility: private` or an internal-search index.\n\nVERDICT: Yes — by static reading, PR 42 adds `docs/internal/runbooks` to a public domain's roots, so the exporter would publish that internal runbook, which contradicts \"no visibility change\".",
+ "stderr_tail": null
+}
