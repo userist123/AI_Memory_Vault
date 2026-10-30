@@ -46,6 +46,10 @@ conclusion claims more than the facts support.**
 
 **Tier 1 — light** (routine "done", "fixed", "passing", "not found" inside ordinary work): state what was
 checked and what was not (`CHECKED` / `NOT CHECKED`), and do not let the headline exceed it.
+`NOT CHECKED` names only what bears on the question that was asked. When what you checked answers the
+question completely, answer it plainly: a caveat about a question nobody asked (is the log current, does
+runtime match the config, would a re-run agree) is noise, not care. Measured on 2026-10-30: that noise
+appeared in 8 of 18 simple answers with this protocol and in 0 of 18 without it.
 
 **Tier 2 — full card and challenge**, mandatory before:
 1. a universal verdict: safe / compromised / clean / none / all / unique / always / never;
@@ -135,6 +139,13 @@ error class, answered with the protocol off and on, scored blind by a different 
 rates over the total number of claims (overreach rate, post-challenge owner reversal rate =
 owner reversals / challenged verdicts) with the pre-protocol baseline. Until that runs, this file makes
 no claim that the protocol reduces errors.
+
+First run, 2026-10-30 (`07_EVALUATION/critical_review_benchmark/`, pre-registered; Sonnet, 9 trap and 6
+control cases, 3 repeats, graded blind by Codex): **benchmark not discriminating** — without the protocol the
+model overclaimed in 0 of 27 trap runs, so there was no overreach for the protocol to remove. The run did
+measure a cost: unneeded caveats on 8 of 18 control answers with the protocol, 0 of 18 without (the Tier 1
+scope sentence above is the response). Still UNVERIFIED for benefit; next step: traps that a baseline
+actually fails (larger repositories, partial tool output, time pressure) and a second model.
 
 ## Limits and deferred work
 
