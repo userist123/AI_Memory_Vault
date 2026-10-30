@@ -2,7 +2,7 @@
 id: "bfbcb997-28eb-45a4-ae52-3954b8bce6fa"
 title: "Checkpoint: Claude Code - vault map and critical review"
 type: "project"
-lifecycle: "ACTIVE"
+lifecycle: "REVIEW"
 created: "2026-10-30T00:00:00Z"
 updated: "2026-10-30T15:30:00Z"
 verification: "unverified"
