@@ -2,6 +2,8 @@
 
 Follow `AGENTS.md` in full; it is the canonical operating contract for every agent in this repository.
 Read `00_GOVERNANCE/VAULT_STATE.md` first.
+Before any verdict, comparison, root cause or irreversible action, apply
+`00_GOVERNANCE/protocols/Critical_Review_Protocol_V1.md` (claim card; headline never stronger than the evidence).
 Owner privacy: never commit or publish anything about the owner's own machine or material the owner
 hands over; see the "Owner privacy" section of `AGENTS.md`.
 
