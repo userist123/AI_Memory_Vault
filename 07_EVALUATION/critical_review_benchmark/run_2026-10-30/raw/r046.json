@@ -1,0 +1,20 @@
+{
+ "case": "T7",
+ "condition": "B",
+ "repeat": 1,
+ "run_id": "r046",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 8,
+ "total_cost_usd": 0.16373759999999998,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 1528,
+  "cache_read_input_tokens": 161496,
+  "cache_creation_input_tokens": 33073
+ },
+ "verdict": "No — CI's \"PASSED\" came from a run where pytest collected no tests (likely because `parser_check.py` doesn't match the `test_*.py` pattern), so the parser is effectively untested.",
+ "answer": "**No. The green CI doesn't verify the parser, because the CI run executed zero tests.**\n\n- `ci/ci_run.log` shows `python -m pytest -q tests/` printing `no tests ran in 0.01s`, followed by `CI status: PASSED`.\n- The only test is `test_iso` in `tests/parser_check.py`. Pytest's default discovery only collects `test_*.py` and `*_test.py`, so it never loads a file named `parser_check.py`. This is my reading of pytest's defaults. I didn't run pytest here, and I found no pytest config in the repo that changes the patterns.\n- Pytest normally exits non-zero (code 5) when nothing is collected. The \"PASSED\" in the log doesn't match that, so the CI step probably doesn't fail on an empty run.\n- Even if the test did run, it would cover little. `src/parser.py` is `date(*map(int, s.split('-')))`, and `test_iso` checks one valid date and only its `.day`. There are no tests for invalid input, other formats, zero-padding or errors. The parser also does no validation of its own.\n\n```\nCONCLUSION:   The new parser is not verified by CI; the green status reflects an empty test run.\nCHECKED:      ci/ci_run.log (\"no tests ran\"), tests/parser_check.py (1 test, 1 valid input), src/parser.py (6 lines), PR.md, git ls-files at 34bcfc2 (4 files, single commit)\nNOT CHECKED:  Actual pytest run or collection locally; CI config or workflow (none in repo); pytest config files (none found); whether test_iso passes if invoked directly; other branches\nALTERNATIVES: (a) Collection misses the file because of its name — consistent with the log and the filename, but I haven't run `pytest --collect-only`. (b) CI collected but skipped the test — the log says \"no tests ran\", which fits (a) better.\nFALSIFIER:    `pytest tests/parser_check.py` collecting and passing, with CI configured to run that file — searched: no\nCONFIDENCE:   medium (high that CI ran no tests, from the log itself; medium on the cause)\n```\n\nCheapest fix: rename the file to `tests/test_parser.py`, make CI fail when no tests are collected, and add edge-case tests for bad input, padding and non-ISO strings.\n\nVERDICT: No — CI's \"PASSED\" came from a run where pytest collected no tests (likely because `parser_check.py` doesn't match the `test_*.py` pattern), so the parser is effectively untested.",
+ "stderr_tail": null
+}

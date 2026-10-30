@@ -1,0 +1,20 @@
+{
+ "case": "T5",
+ "condition": "A",
+ "repeat": 0,
+ "run_id": "r051",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 5,
+ "total_cost_usd": 0.0305297,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 887,
+  "cache_read_input_tokens": 180477,
+  "cache_creation_input_tokens": 899
+ },
+ "verdict": "Yes — adding `docs/internal/runbooks` to the public `docs` domain makes `export.py` publish the internal DB failover runbook, so the \"no visibility change\" claim is wrong.",
+ "answer": "Yes. Merging PR 42 changes what the public site exports, even though the description says it doesn't.\n\n- **What the PR does:** `pr.diff` changes the `docs` domain in `config/domains.yaml` from `roots: [docs/public]` to `roots: [docs/public, docs/internal/runbooks]`. The domain's `visibility: public` is unchanged.\n- **How export works:** `site/export.py` publishes every file under the roots of every domain whose visibility is `public`. `exported_roots` returns those roots without any other filtering. Visibility belongs to the domain, so adding a root to `docs` makes that directory public.\n- **What leaks:** `docs/internal/runbooks/db_failover.md` is currently in the private `ops` domain (root `docs/internal`). After the merge it would be exported by the public `docs` domain. The file is titled \"DB failover (internal)\" and describes rotating the root credential and promoting the replica. The `ops` domain still lists it as private, but export doesn't check that, so it ends up published.\n- **Why the PR text is misleading:** no `visibility:` line is edited. The effective visibility of the runbooks still goes from private to public.\n\nThe simplest fix is to keep the runbooks out of the public domain. If search needs to find them, add a separate search index that is not part of the export. If they are ever meant to be public, review them first, since they mention the root credential, and put them in `docs/public`.\n\nVERDICT: Yes — adding `docs/internal/runbooks` to the public `docs` domain makes `export.py` publish the internal DB failover runbook, so the \"no visibility change\" claim is wrong.",
+ "stderr_tail": null
+}

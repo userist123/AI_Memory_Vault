@@ -1,0 +1,20 @@
+{
+ "case": "C1",
+ "condition": "B",
+ "repeat": 0,
+ "run_id": "r023",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.014781200000000001,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 419,
+  "cache_read_input_tokens": 95312,
+  "cache_creation_input_tokens": 263
+ },
+ "verdict": "config/plugins.yaml` lists 3 enabled plugins (auth, cache, metrics); this is the file's content only, not a check of runtime behaviour.",
+ "answer": "`config/plugins.yaml` enables 3 plugins: `auth`, `cache` and `metrics`.\n\nThe file is five lines long and I read all of it. It has a single `enabled:` list and no disabled section. It also has no overrides, no per-environment variants and no comments. The only file matching `*plugins*` in the repo is this one.\n\nCHECKED: the full contents of `config/plugins.yaml` in the working tree on `main`, which git reports as clean.\nNOT CHECKED: whether other config layers (environment variables, CLI flags, other YAML files) enable or disable plugins at runtime. I also didn't check whether the code loads these three names successfully.\n\nVERDICT: `config/plugins.yaml` lists 3 enabled plugins (auth, cache, metrics); this is the file's content only, not a check of runtime behaviour.",
+ "stderr_tail": null
+}
