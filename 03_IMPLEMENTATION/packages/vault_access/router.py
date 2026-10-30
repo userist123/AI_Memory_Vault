@@ -242,7 +242,14 @@ class DomainRouter:
                     within, best = rel, 0
             elif rel == anchor_dir:
                 if len(anchor_dir) > best:
-                    within, best = PurePosixPath(rel).name, len(anchor_dir)
+                    p_rel = PurePosixPath(rel)
+                    # A root naming one SKILL.md: the skill is its folder, as under `<dir>/*/SKILL.md`
+                    # (otherwise every such root would get the slug "skill" and collide).
+                    if p_rel.stem.lower() == "skill" and p_rel.parent.name:
+                        within = f"{p_rel.parent.name}/{p_rel.name}"
+                    else:
+                        within = p_rel.name
+                    best = len(anchor_dir)
             elif rel.startswith(anchor_dir + "/") and len(anchor_dir) > best:
                 within, best = rel[len(anchor_dir) + 1:], len(anchor_dir)
         p = PurePosixPath(within)

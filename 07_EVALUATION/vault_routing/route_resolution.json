@@ -1,15 +1,15 @@
 {
   "schema": "vault-route-resolution.v1",
-  "commit": "d8f978fad42417b2512e09b29a681e8f38324e9e",
-  "routes": 4734,
-  "domains": 125,
+  "commit": "715ce9869006037842b0aebc2f4132b73dbf6099",
+  "routes": 4749,
+  "domains": 128,
   "by_uri": {
-    "self": 4734
+    "self": 4749
   },
   "by_name": {
-    "ambiguous": 471,
-    "ambiguous_self_in_candidates": 329,
-    "self": 4263
+    "ambiguous": 480,
+    "ambiguous_self_in_candidates": 335,
+    "self": 4269
   },
   "wrong_resolutions": [],
   "most_shared_names": [
@@ -27,11 +27,11 @@
     ],
     [
       "preregistration",
-      6
+      8
     ],
     [
       "summary",
-      5
+      6
     ],
     [
       "gaps",
@@ -74,5 +74,5 @@
       2
     ]
   ],
-  "seconds": 614.2
+  "seconds": 637.3
 }
