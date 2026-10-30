@@ -1,0 +1,20 @@
+{
+ "case": "C5",
+ "condition": "A",
+ "repeat": 0,
+ "run_id": "r052",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.11802299999999999,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 386,
+  "cache_read_input_tokens": 109270,
+  "cache_creation_input_tokens": 25806
+ },
+ "verdict": "No failures — all 12 tests passed.",
+ "answer": "No tests failed in `logs/test_run.log`. The log shows `python -m pytest -q` ran 12 tests, all passed (`............ [100%]`), and the run finished in 0.80s. The file has only those three lines, with no failures, errors, or skips.\n\nVERDICT: No failures — all 12 tests passed.",
+ "stderr_tail": null
+}

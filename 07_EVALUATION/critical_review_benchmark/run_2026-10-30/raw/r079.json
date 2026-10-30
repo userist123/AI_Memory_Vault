@@ -1,0 +1,20 @@
+{
+ "case": "T3",
+ "condition": "B",
+ "repeat": 0,
+ "run_id": "r079",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.1333495,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1225,
+  "cache_read_input_tokens": 112715,
+  "cache_creation_input_tokens": 27454
+ },
+ "verdict": "The config loads 3 plugins at startup (`auth`, `cache`, `metrics`), but the current startup time is unknown because the only figure, 9.2 s, was measured on v1.2 with 14 plugins.",
+ "answer": "**Plugins:** The current config lists 3 plugins: `auth`, `cache` and `metrics` (`config.yaml:3-6`, version 2.0.0). The changelog agrees: 2.0.0 \"Removed 11 legacy plugins; three remain\" (`CHANGELOG.md:4`), which fits the old count of 14 minus 11.\n\n**Startup time:** The repo has no current figure. The only number is 9.2 s, from `docs/PERFORMANCE.md:3`. It was measured on v1.2 on 2026-01-05, when 14 plugins were enabled. That is stale for 2.0.0, which loads 3 plugins and changed after the 1.2.0 plugin-loader rewrite. I can't say how long startup takes now, and I shouldn't assume it is shorter than 9.2 s, because plugin count may not be what drives startup time.\n\n```\nCONCLUSION:   Config enables 3 plugins at startup; current startup time is not documented, and the 9.2 s figure applies only to v1.2.\nCHECKED:      config.yaml, CHANGELOG.md, docs/PERFORMANCE.md (all 3 tracked files, commit 3abe9aa); grep for plugin/startup/boot.\nNOT CHECKED:  Application code (none in the repo). Whether the app loads plugins that config.yaml doesn't list, such as built-ins or auto-discovered ones. Actual runtime behaviour. A real 2.0.0 startup measurement.\nALTERNATIVES: Plugin count could differ from the config at runtime (built-ins or dependencies). The separating observation is the loader code or a runtime log, which I did not make. Startup time may have changed little, or a lot, since the loader rewrite. A new measurement would settle it, and none was made.\nFALSIFIER:    A runtime log or loader code showing a plugin count other than 3 would disprove the plugin count. A 2.0.0 timing would replace the stale figure. Searched: no, because the repo has neither.\nCONFIDENCE:   medium for \"3 plugins in config\"; unknown for current startup time.\n```\n\nVERDICT: The config loads 3 plugins at startup (`auth`, `cache`, `metrics`), but the current startup time is unknown because the only figure, 9.2 s, was measured on v1.2 with 14 plugins.",
+ "stderr_tail": null
+}

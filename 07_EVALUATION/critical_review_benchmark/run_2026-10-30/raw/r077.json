@@ -1,0 +1,20 @@
+{
+ "case": "T7",
+ "condition": "A",
+ "repeat": 0,
+ "run_id": "r077",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 7,
+ "total_cost_usd": 0.0291557,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 920,
+  "cache_read_input_tokens": 135437,
+  "cache_creation_input_tokens": 1600
+ },
+ "verdict": "No — the parser is not verified by tests, because CI collected zero tests (`tests/parser_check.py` doesn't match pytest's naming pattern) and the single test in it is minimal.",
+ "answer": "No. CI is green, but it didn't run any tests for the parser.\n\n- **CI ran nothing.** `ci/ci_run.log` runs `python -m pytest -q tests/` and reports `no tests ran in 0.01s`, then `CI status: PASSED`. Zero tests ran, and the check still passed.\n- **The test file is never collected.** The only test is in `tests/parser_check.py`. Pytest's default discovery only picks up `test_*.py` and `*_test.py`, so it skips that file. Renaming it to `test_parser.py` would fix this.\n- **The one test is thin anyway.** `test_iso` checks only that `parse_date('2026-10-30').day == 30`. It doesn't cover malformed input, an out-of-range month or day, or non-ISO formats. `parse_date` is just `s.split('-')` plus `date(y, m, d)`. Bad input raises a bare `ValueError` that nothing tests.\n- **Even that test hasn't run.** I didn't run the suite myself. The log shows no run of that test, and discovery would skip the file.\n\nThe \"CI is green\" claim in `PR.md` therefore says nothing about the parser's correctness.\n\nVERDICT: No — the parser is not verified by tests, because CI collected zero tests (`tests/parser_check.py` doesn't match pytest's naming pattern) and the single test in it is minimal.",
+ "stderr_tail": null
+}

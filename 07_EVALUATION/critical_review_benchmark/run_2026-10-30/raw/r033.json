@@ -1,0 +1,20 @@
+{
+ "case": "C1",
+ "condition": "A",
+ "repeat": 1,
+ "run_id": "r033",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 2,
+ "total_cost_usd": 0.11153640000000001,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 158,
+  "cache_read_input_tokens": 55484,
+  "cache_creation_input_tokens": 26100
+ },
+ "verdict": "Three plugins are enabled: auth, cache and metrics.",
+ "answer": "There are 3 plugins enabled in `config/plugins.yaml`: `auth`, `cache` and `metrics`.\n\nVERDICT: Three plugins are enabled: auth, cache and metrics.",
+ "stderr_tail": null
+}
