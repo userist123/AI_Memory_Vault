@@ -2,7 +2,7 @@
 
 **Document:** `docs/reports/COST_ROUTER_REMEDIATION_REPORT.md`
 **Date:** 2026-10-20T04:45:00Z
-**Repository:** `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY`
+**Repository:** `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY`
 **Audited Report:** `docs/reports/COST_ROUTER_FINAL_ACCEPTANCE_AUDIT.md`
 **Remediation Target:** `.agents/skills/cost-router/hook_antigravity.py`, `.agents/hooks.json`, `20_TESTS/test_hook_antigravity.py`, `docs/reports/ANTIGRAVITY_SKILL_COMPLETION_REPORT.md`
 **Status:** **ACCEPTED (100% PASS, EMPIRICALLY VERIFIED)**
@@ -88,7 +88,7 @@ When Antigravity processes `.agents/hooks.json` on Windows:
   ```text
   ============================= test session starts =============================
   platform win32 -- Python 3.14.0a4, pytest-9.0.2, pluggy-1.6.0
-  rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY
+  rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
   configfile: pytest.ini
   collected 161 items
 
