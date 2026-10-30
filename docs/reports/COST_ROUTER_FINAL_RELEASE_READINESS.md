@@ -2,7 +2,7 @@
 
 **Date:** 2026-10-20
 **Repository:** `AI_Memory_Vault_CODEX_READY`
-**Active Workspace:** `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY`
+**Active Workspace:** `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY`
 **Auditor / Release Engineer:** Principal AI Systems Engineer, Release Engineer & Independent Technical Auditor
 **Runtime:** Google Antigravity 2.0 (Windows 11)
 
@@ -24,7 +24,7 @@
 ## 2. Worktree Inventory Relevant to the Integration
 
 A complete audit of `git worktree list` identified 16 active worktrees:
-- `C:/Users/Marius/Documents/Codex/AI_Memory_Vault_CODEX_READY` (`d878acd48`, `gemini/casa3d-nextgen-functionality-uiux` — primary workspace)
+- `C:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY` (`d878acd48`, `gemini/casa3d-nextgen-functionality-uiux` — primary workspace)
 - `.../.claude/worktrees/p0a-no-autoallow` (`17adb7237`, `fix/cost-router-antigravity-no-autoallow` — historical branch from earlier Phase 4 work)
 - `.../.claude/worktrees/ai-memory-vault-pr-230-7e65a0` (`21da5bbf2`)
 - `.../.claude/worktrees/casa3d-opinion-52d7cf` (`1867d8bfe`, `claude/casa3d-opinion-52d7cf`)
@@ -85,15 +85,15 @@ The following files are actively present in the working tree but belong to paral
 ## 4. Actual Runtime Configuration and Resolved Script Paths
 
 ### 4.1 Manifest Resolution
-- **Project Configuration**: `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\hooks.json`
+- **Project Configuration**: `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\hooks.json`
 - **Authority**: Antigravity runtime documentation (`hooks.md`) specifies that `hooks.json` in `.agents/` governs the project workspace.
-- **Working Directory Semantics**: Per `hooks.md` line 131, the working directory for hook execution is set to the directory containing `hooks.json` (i.e. `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents`).
+- **Working Directory Semantics**: Per `hooks.md` line 131, the working directory for hook execution is set to the directory containing `hooks.json` (i.e. `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents`).
 - **Command Construction**:
   - `SessionStart`: `python skills/cost-router/hook_antigravity.py --event SessionStart`
   - `PreInvocation`: `python skills/cost-router/hook_antigravity.py --event PreInvocation`
   - `PreToolUse`: `python skills/cost-router/hook_antigravity.py --event PreToolUse` (matcher: `invoke_subagent|send_message|run_command`)
 - **Resolved Absolute Script Path**:
-  `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\cost-router\hook_antigravity.py`
+  `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\skills\cost-router\hook_antigravity.py`
 - **Resolved Python Executable**:
   `C:\Python314\python.exe` (Python 3.14.2 64-bit on Windows 11).
 
