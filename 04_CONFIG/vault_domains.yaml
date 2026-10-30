@@ -133,6 +133,11 @@ domains:
     expand: subdirs
     trust: unverified
     keywords: [importat, imported, bot, site, tradingbot, eventloganalyzer, market analysis]
+  projects.casa3d:
+    title: Casa3D — cerințe, audituri, cercetare și prompturi de produs (codul e în projects.workspaces)
+    roots: ["02_PRODUCT/projects/Casa3D"]
+    trust: unverified
+    keywords: [casa3d, casa 3d, design interior, interior design, amenajare, mobilier, finisaje, cercetare casa3d]
 
   # ── 03 Implementation ────────────────────────────────────────────────────────────────────
   implementation:
@@ -239,6 +244,28 @@ domains:
     roots: [".agents/skills/*/SKILL.md"]
     classification: PUBLIC
     keywords: [skill, skills, abilitate, SKILL.md]
+  # Nested SKILL.md files (sub-skills of a skill, mostly imported). Kept out of `skills` on purpose:
+  # `skills` is PUBLIC + verified and is what cloud_web.export publishes; these are not reviewed, so
+  # they stay INTERNAL + unverified. `templates/` holds scaffolds named SKILL.md, not skills.
+  skills_nested:
+    title: Sub-skill-uri imbricate (SKILL.md sub un skill) - nerevizuite, doar intern
+    roots: [".agents/skills/*/*/**/SKILL.md"]
+    exclude: ["**/templates/**"]
+    trust: unverified
+    keywords: [sub-skill, skill imbricat, nested skill, SKILL.md]
+  claude_config:
+    title: Configurația Claude Code — subagenți (.claude/agents) și skill-uri locale (.claude/skills)
+    roots: [".claude/agents", ".claude/skills"]
+    keywords: [claude code, subagent, vault-worker, vault-reviewer, explore, cost-router, vault-agent-contract, critical-review, skill claude]
+  entry:
+    title: Fișierele de intrare ale repo-ului — contractele agenților și README
+    roots: ["AGENTS.md", "CLAUDE.md", "GEMINI.md", "README.md", "README.en.md"]
+    keywords: [agents.md, claude.md, gemini.md, readme, contract agent, intrare, entry point, reguli agenti]
+
+  tests_docs:
+    title: Documentația suitei de teste - cum rulezi testele și planurile de test
+    roots: ["20_TESTS/README.md", "20_TESTS/OUTCOME_CLI_TEST_PLAN.md"]
+    keywords: [teste, tests, pytest, test plan, suita de teste, cum rulez testele]
 
   # ── Private overlay (outside git; only local principals) ─────────────────────────────────
   private:
@@ -247,3 +274,42 @@ domains:
     roots: ["."]
     classification: SENSITIVE
     keywords: [privat, private, sensitive, overlay]
+
+# ── Notes deliberately without a route ──────────────────────────────────────────────────────
+# `build_route_manifest.py --check` requires every tracked .md to be routed, excluded by the domain that
+# covers it, denylisted, or listed here WITH a reason (NOTE_WITHOUT_ROUTE otherwise). An entry that no longer
+# matches any tracked note fails as UNROUTED_GLOB_UNUSED, so dead rules do not accumulate. Adding a glob
+# here is a decision that agents cannot reach those notes by route: write why.
+unrouted:
+  - glob: ".agents/skills/ralph-loop/**"
+    reason: "imported Claude Code plugin (commands + hooks), not a skill: it has no SKILL.md, so nothing routes to it; read by path"
+  - glob: ".agents/skills/**"
+    reason: "skill support files (references, playbooks, examples); progressive disclosure: an agent reaches them through the skill's routed SKILL.md"
+  - glob: ".agents/ORIGINAL_REQUEST.md"
+    reason: "scratch request of an orchestration run; excluded by default (AGENTS.md rule 10)"
+  - glob: ".agents/auditor*/**"
+    reason: "agent run logs (BRIEFING/DISPATCH/handoff/progress/report); excluded by default (AGENTS.md rule 10)"
+  - glob: ".agents/challenger*/**"
+    reason: "agent run logs (BRIEFING/DISPATCH/handoff/progress/report); excluded by default (AGENTS.md rule 10)"
+  - glob: ".agents/explorer*/**"
+    reason: "agent run logs (BRIEFING/DISPATCH/handoff/progress/report); excluded by default (AGENTS.md rule 10)"
+  - glob: ".agents/reviewer*/**"
+    reason: "agent run logs (BRIEFING/DISPATCH/handoff/progress/report); excluded by default (AGENTS.md rule 10)"
+  - glob: ".agents/worker*/**"
+    reason: "agent run logs (BRIEFING/DISPATCH/handoff/progress/report); excluded by default (AGENTS.md rule 10)"
+  - glob: ".agents/orchestrator*/**"
+    reason: "agent run logs (BRIEFING/DISPATCH/handoff/progress/report); excluded by default (AGENTS.md rule 10)"
+  - glob: ".agents/sentinel*/**"
+    reason: "agent run logs (BRIEFING/DISPATCH/handoff/progress/report); excluded by default (AGENTS.md rule 10)"
+  - glob: ".agents/survey*/**"
+    reason: "agent run logs (BRIEFING/DISPATCH/handoff/progress/report); excluded by default (AGENTS.md rule 10)"
+  - glob: ".agents/spec_miner*/**"
+    reason: "agent run logs (BRIEFING/DISPATCH/handoff/progress/report); excluded by default (AGENTS.md rule 10)"
+  - glob: ".agents/*test_writer*/**"
+    reason: "agent run logs (BRIEFING/DISPATCH/handoff/progress/report); excluded by default (AGENTS.md rule 10)"
+  - glob: ".agents/m[0-9]*/**"
+    reason: "agent run logs of milestone runs (m1_worker_1 etc.); excluded by default (AGENTS.md rule 10)"
+  - glob: "20_TESTS/fixtures/**"
+    reason: "test fixtures (sample notes the tests read); not knowledge, and 20_TESTS is exempt from domains (see EXEMPT_ROOTS)"
+  - glob: "20_TESTS/OUTCOME_CLI_TEST_MARKER.md"
+    reason: "one-line marker pointing at test_label_council_outcome.py; the plan next to it is routed (tests_docs)"
