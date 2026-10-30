@@ -1,0 +1,18 @@
+{
+ "q": "N20",
+ "condition": "G",
+ "repeat": 1,
+ "run_id": "n128",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.017940900000000003,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 460,
+  "cache_read_input_tokens": 44889,
+  "cache_creation_input_tokens": 2210
+ },
+ "answer": "Six of the 20 declared sources had dedicated research maps. The other 14 were inventory-only.\n\nANSWER_PATH: 08_RESEARCH/BOOK_TO_MEMORY/SOURCE-INVENTORY-AUDIT.md\nANSWER: \"Six of the 20 manifest entries have dedicated maps in PR #206\" (7688_jkt_au / Soar, why_we_forget, squire_kandel_mind_to_molecules, schacter_tulving_memory_systems_1994, laird_soar_cognitive_architecture, newell_unified_theories_of_cognition); the remaining 14 are inventory-only."
+}

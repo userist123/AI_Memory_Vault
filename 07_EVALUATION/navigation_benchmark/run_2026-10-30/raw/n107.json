@@ -1,0 +1,18 @@
+{
+ "q": "N13",
+ "condition": "G",
+ "repeat": 1,
+ "run_id": "n107",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 2,
+ "total_cost_usd": 0.011788,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 267,
+  "cache_read_input_tokens": 29580,
+  "cache_creation_input_tokens": 1538
+ },
+ "answer": "The corpus health check found 5 exact-duplicate groups covering 13 notes. The baseline report states this directly, and two other files (the dependency DAG and a coordination note) repeat the same figures.\n\nANSWER_PATH: 00_GOVERNANCE/phase_0/CORPUS_HEALTH_BASELINE.md\nANSWER: 5 groups of exact duplicates, covering 13 notes, by SHA-256 over whitespace-normalized content."
+}

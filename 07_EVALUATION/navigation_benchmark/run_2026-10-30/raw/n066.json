@@ -1,0 +1,18 @@
+{
+ "q": "N02",
+ "condition": "V",
+ "repeat": 0,
+ "run_id": "n066",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.030666500000000003,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 527,
+  "cache_read_input_tokens": 42285,
+  "cache_creation_input_tokens": 5289
+ },
+ "answer": "After PRs #176, #177 and #178, the full suite measured 2482 passed, 13 skipped and 9 xfailed, in 264.79s. There were no collection errors and no regression against the 2444 passed that followed the shim fix.\n\nPR #178's own report states 2485 passed and 10 skipped. On the same commit, in a clean worktree, the note measures 2482 passed and 13 skipped. The difference is three tests counted as passed in the PR report and skipped in the re-run, not a failure on either side.\n\nANSWER_PATH: 00_GOVERNANCE/phase_0/TEST_BASELINE.md\nANSWER: 2482 passed, 13 skipped, 9 xfailed in 264.79s"
+}

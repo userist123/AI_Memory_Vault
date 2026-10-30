@@ -1,0 +1,18 @@
+{
+ "q": "N12",
+ "condition": "V",
+ "repeat": 1,
+ "run_id": "n087",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 17,
+ "total_cost_usd": 0.16116909999999998,
+ "usage": {
+  "input_tokens": 24,
+  "output_tokens": 2951,
+  "cache_read_input_tokens": 297951,
+  "cache_creation_input_tokens": 25454
+ },
+ "answer": "Rule 11 of the app's non-negotiable rules (`CONSTITUTION.md`, \"Casa mea 3D — reguli nenegociabile\") names the infrastructure that stays out of the early phases. It bars complex infrastructure without real need, and the examples it gives are:\n\n- **PostGIS**\n- **IFC**\n- **AR**\n- **OCR**\n- **multi-country support** (România is the first jurisdiction under rule 12)\n\nRule 13 backs this up: AR, IFC and enterprise come only after commercial validation.\n\nANSWER_PATH: 02_PRODUCT/projects/workspaces/casa3d/app/CONSTITUTION.md\nANSWER: \"Fără infrastructură complexă fără nevoie reală (fără PostGIS, IFC, AR, OCR, multi-țară în fazele timpurii).\" (No complex infrastructure without real need: no PostGIS, IFC, AR, OCR or multi-country in the early phases.)"
+}

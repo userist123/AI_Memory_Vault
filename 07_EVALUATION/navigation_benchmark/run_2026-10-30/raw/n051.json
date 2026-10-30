@@ -1,0 +1,18 @@
+{
+ "q": "N01",
+ "condition": "V",
+ "repeat": 0,
+ "run_id": "n051",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 10,
+ "total_cost_usd": 0.0790468,
+ "usage": {
+  "input_tokens": 14,
+  "output_tokens": 1860,
+  "cache_read_input_tokens": 120788,
+  "cache_creation_input_tokens": 12085
+ },
+ "answer": "The council budget gate (`memory/council_budget_controller.py`) chooses from four tiers: NONE, LIGHT, STANDARD and HIGH_RISK. No, it doesn't read the documented numeric council limits. The protocol doc says the gate \"reads none of these values\". The controller code agrees: a search for `max_`/`MAX_` in it found no matches, and it picks a tier without referencing any limit.\n\nWhat each tier does, from the controller:\n- **NONE:** the council is skipped entirely.\n- **LIGHT:** verifier only, no retrieval.\n- **STANDARD:** retrieval plus verifier.\n- **HIGH_RISK:** retrieval plus verifier, with forced review.\n\nThe limits are enforced elsewhere, according to the doc. `max_memory_results` is enforced in `memory/executive.py`, and `max_skills_per_agent` and `max_graph_hops` in `routing/agent_router.py`. Since 2026-10-24 the router also enforces `max_council_agents` and `max_total_selected_skills`. The two token caps are not enforced at all.\n\nI took the \"enforced elsewhere\" claims from the doc and did not check those files.\n\nANSWER_PATH: 00_GOVERNANCE/protocols/Council_Context_Budget.md\nANSWER: The council gate `memory/council_budget_controller.py` picks a tier (NONE / LIGHT / STANDARD / HIGH_RISK) and reads none of these values."
+}

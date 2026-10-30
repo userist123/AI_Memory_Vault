@@ -1,0 +1,18 @@
+{
+ "q": "N22",
+ "condition": "I",
+ "repeat": 1,
+ "run_id": "n111",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.02695,
+ "usage": {
+  "input_tokens": 10,
+  "output_tokens": 1020,
+  "cache_read_input_tokens": 77100,
+  "cache_creation_input_tokens": 2255
+ },
+ "answer": "When Redis is unreachable, the Upstash rate-limit skill fails open. Requests are let through rather than blocked. The default `timeout` is 5 s, after which the request is allowed with `reason: \"timeout\"`.\n\nANSWER_PATH: .agents/skills/upstash-ratelimit/SKILL.md\nANSWER: If Redis is unreachable, the default `timeout` (5 s) lets requests through (`reason: \"timeout\"`); this fails open, not closed."
+}

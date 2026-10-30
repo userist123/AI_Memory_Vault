@@ -258,7 +258,8 @@ def cmd_report(work: Path, gold_file: Path, out: Path) -> None:
     lines += ["", f"Better baseline: {best}. Per-question V better / worse: {wins}/{losses}, sign test p = {p:.3f}."]
     diff = acc["V"] - acc[best]
     token_saving = 1 - med_tok["V"] / med_tok[best] if med_tok[best] else float("nan")
-    lines.append(f"V - {best}: {diff:+.0%} accuracy; V median tokens {token_saving:+.0%} lower than {best}.")
+    lines.append(f"V - {best}: {diff:+.0%} accuracy; V median tokens "
+                 + (f"{token_saving:.0%} lower than {best}." if token_saving >= 0 else f"{-token_saving:.0%} higher than {best}."))
     if not recs:
         verdict = "no complete repeat"
     elif min(acc.values()) >= 0.95:
@@ -275,6 +276,33 @@ def cmd_report(work: Path, gold_file: Path, out: Path) -> None:
                                                                          "path_ok", "fact_ok", "correct", "num_turns",
                                                                          "total_cost_usd")} for r in recs], indent=1),
                                      encoding="utf-8")
+    print("\n".join(lines))
+
+
+SENSITIVITY_REGEX = {"N06": r"(?<!\d)3(?!\d)"}  # the pre-registered regex rejected "3." at the end of a sentence
+
+
+def cmd_sensitivity(gold_file: Path, out: Path) -> None:
+    """Post-hoc, NOT the pre-registered decision: count an answer as correct when it states the gold fact, whatever
+    file it names (the run showed facts that also live, reworded, in other files: N13, N17, and N06 in code)."""
+    gold = {g["id"]: g for g in json.loads(gold_file.read_text(encoding="utf-8"))}
+    recs = json.loads((out / "grades.json").read_text(encoding="utf-8"))
+    raw = {p.stem: json.loads(p.read_text(encoding="utf-8")) for p in (out / "raw").glob("n*.json")}
+    lines = ["# Navigation benchmark — post-hoc sensitivity (not the pre-registered result)", "",
+             "Correct = the ANSWER line states the gold fact, whatever file is named; N06 regex fixed to accept '3.'.",
+             "", "| condition | fact stated | median tokens |", "|---|---:|---:|"]
+    acc = {}
+    for c in CONDITIONS:
+        rs = [r for r in recs if r["condition"] == c]
+        ok = 0
+        for r in rs:
+            am = ANSWER.findall(raw[r["run_id"]].get("answer") or "")
+            rx = SENSITIVITY_REGEX.get(r["q"], gold[r["q"]]["fact_regex"])
+            ok += bool(am) and re.search(rx, am[-1], re.IGNORECASE) is not None
+        acc[c] = ok / (len(rs) or 1)
+        toks = statistics.median([_tokens(raw[r["run_id"]]) for r in rs]) if rs else float("nan")
+        lines.append(f"| {c} | {ok}/{len(rs)} ({acc[c]:.0%}) | {toks:,.0f} |")
+    (out / "SENSITIVITY.md").write_text("\n".join(lines) + "\n", encoding="utf-8")
     print("\n".join(lines))
 
 
@@ -297,7 +325,13 @@ def main(argv: Optional[List[str]] = None) -> int:
     s.add_argument("--work", type=Path, required=True)
     s.add_argument("--gold", type=Path, required=True)
     s.add_argument("--out", type=Path, required=True)
+    t = sub.add_parser("sensitivity")
+    t.add_argument("--gold", type=Path, required=True)
+    t.add_argument("--out", type=Path, required=True)
     a = ap.parse_args(argv)
+    if a.cmd == "sensitivity":
+        cmd_sensitivity(a.gold, a.out)
+        return 0
     if a.cmd == "prepare":
         cmd_prepare(a.work, a.ref)
     elif a.cmd == "run":

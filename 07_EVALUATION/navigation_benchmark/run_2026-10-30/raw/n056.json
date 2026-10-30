@@ -1,0 +1,18 @@
+{
+ "q": "N13",
+ "condition": "G",
+ "repeat": 0,
+ "run_id": "n056",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 2,
+ "total_cost_usd": 0.0287039,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 255,
+  "cache_read_input_tokens": 25819,
+  "cache_creation_input_tokens": 5891
+ },
+ "answer": "The corpus health check found 5 exact-duplicate groups covering 13 notes. The baseline file says they were found by SHA-256 over whitespace-normalised content.\n\nANSWER_PATH: 00_GOVERNANCE/phase_0/CORPUS_HEALTH_BASELINE.md\nANSWER: 5 groups of exact duplicates, covering 13 notes"
+}

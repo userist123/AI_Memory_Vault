@@ -1,0 +1,18 @@
+{
+ "q": "N11",
+ "condition": "V",
+ "repeat": 1,
+ "run_id": "n085",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.023109300000000003,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 419,
+  "cache_read_input_tokens": 48553,
+  "cache_creation_input_tokens": 3513
+ },
+ "answer": "The tokenizer A/B experiment (EXP-TOKEN-001) was marked \"INVALID - NULL MEASUREMENT\", recorded 2026-10-22. The arm tokenizers never reached `MemoryController.search`, so all three arms gave identical results and the run could not tell them apart.\n\nANSWER_PATH: 07_EVALUATION/tokenizer_experiment/VALIDITY_NOTICE.md\nANSWER: Status: **INVALID - NULL MEASUREMENT** (recorded 2026-10-22)"
+}

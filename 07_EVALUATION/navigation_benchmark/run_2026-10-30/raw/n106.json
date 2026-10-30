@@ -1,0 +1,18 @@
+{
+ "q": "N04",
+ "condition": "G",
+ "repeat": 1,
+ "run_id": "n106",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.0306375,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 316,
+  "cache_read_input_tokens": 49655,
+  "cache_creation_input_tokens": 5625
+ },
+ "answer": "The profile says the reviewer must not certify its own work. It is an independent reviewer and should not be the primary implementer. It also should not modify code unless the dispatched work packet explicitly grants write authority.\n\nANSWER_PATH: 00_GOVERNANCE/agents/engineering_reviewer.md\nANSWER: \"Do not certify your own work.\""
+}
