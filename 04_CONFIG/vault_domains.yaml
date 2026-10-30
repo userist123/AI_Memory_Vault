@@ -239,14 +239,33 @@ domains:
     roots: [".agents/tasks"]
     trust: unverified
     keywords: [todo, task ledger, lessons, lectii agent]
+  # Top-level skills. Almost all of .agents/skills was imported in bulk from third-party collections
+  # (PROVENANCE.json, or a source/source_repo/author/license field, or a bulk-import commit) and none
+  # of that was reviewed, so the domain is UNVERIFIED: cloud_web.export (trust [verified]) does not
+  # publish it. Fail-closed: a new skill folder lands here, never in `skills.reviewed`.
   skills:
-    title: Skill-uri operaționale promovate (un SKILL.md per skill)
+    title: Skill-uri operaționale (un SKILL.md per skill) - în mare parte importate, nerevizuite
     roots: [".agents/skills/*/SKILL.md"]
     classification: PUBLIC
+    trust: unverified
     keywords: [skill, skills, abilitate, SKILL.md]
-  # Nested SKILL.md files (sub-skills of a skill, mostly imported). Kept out of `skills` on purpose:
-  # `skills` is PUBLIC + verified and is what cloud_web.export publishes; these are not reviewed, so
-  # they stay INTERNAL + unverified. `templates/` holds scaffolds named SKILL.md, not skills.
+  # Skills written in this vault for the vault, named one by one (literal paths, never a glob, so no
+  # new folder can join by itself). The more specific domain claims these files before `skills`.
+  # Adding a skill here is the review: check it is not an import (no PROVENANCE.json, no upstream
+  # fields) and read it first. 20_TESTS/test_skill_trust.py pins both rules.
+  skills.reviewed:
+    title: Skill-uri scrise în vault și revizuite - singurele publicate în exportul public
+    roots:
+      - ".agents/skills/cost-router/SKILL.md"
+      - ".agents/skills/global-skill-registry-router/SKILL.md"
+      - ".agents/skills/jarvis-command-center/SKILL.md"
+      - ".agents/skills/vault-operations/SKILL.md"
+      - ".agents/skills/vault-security-audit/SKILL.md"
+    classification: PUBLIC
+    trust: verified
+    keywords: [skill, skills, skill revizuit, reviewed skill, vault skill, SKILL.md]
+  # Nested SKILL.md files (sub-skills of a skill, mostly imported): not reviewed, so they stay
+  # INTERNAL + unverified. `templates/` holds scaffolds named SKILL.md, not skills.
   skills_nested:
     title: Sub-skill-uri imbricate (SKILL.md sub un skill) - nerevizuite, doar intern
     roots: [".agents/skills/*/*/**/SKILL.md"]
