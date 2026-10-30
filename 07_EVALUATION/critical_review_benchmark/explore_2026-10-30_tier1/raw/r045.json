@@ -1,0 +1,20 @@
+{
+ "case": "C1",
+ "condition": "B",
+ "repeat": 2,
+ "run_id": "r045",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.0183658,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 293,
+  "cache_read_input_tokens": 144198,
+  "cache_creation_input_tokens": 251
+ },
+ "verdict": "Three plugins (auth, cache, metrics) are enabled in config/plugins.yaml.",
+ "answer": "`config/plugins.yaml` has 3 plugins in its `enabled` list: `auth`, `cache` and `metrics`. The file is 5 lines long and has no other keys, such as a `disabled` list or per-plugin flags.\n\nI only read the file. I didn't check whether the application loads other plugins from somewhere else.\n\nVERDICT: Three plugins (auth, cache, metrics) are enabled in config/plugins.yaml.",
+ "stderr_tail": null
+}
