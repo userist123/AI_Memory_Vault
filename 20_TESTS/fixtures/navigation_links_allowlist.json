@@ -1,0 +1,80 @@
+{
+  "description": "Dead paths in navigation files that are kept on purpose. Checked by 30_SCRIPTS/verification/navigation_links.py; an entry that no longer matches fails as stale.",
+  "entries": [
+    {
+      "file": "00_GOVERNANCE/protocols/Agent_Capability_Registry.md",
+      "target": "99_SYSTEM/Agent_Capability_Registry.md",
+      "reason": "provenance note: says where the file came from before commit dbcfbc502 deleted 99_SYSTEM; historical, not a path to follow"
+    },
+    {
+      "file": "00_GOVERNANCE/protocols/Agent_Capability_Registry.md",
+      "target": "99_SYSTEM/",
+      "reason": "provenance note: says where the file came from before commit dbcfbc502 deleted 99_SYSTEM; historical, not a path to follow"
+    },
+    {
+      "file": "00_GOVERNANCE/protocols/Council_Context_Budget.md",
+      "target": "99_SYSTEM/Council_Context_Budget.md",
+      "reason": "provenance note: says where the file came from before commit dbcfbc502 deleted 99_SYSTEM; historical, not a path to follow"
+    },
+    {
+      "file": "00_GOVERNANCE/protocols/Council_Context_Budget.md",
+      "target": "99_SYSTEM/",
+      "reason": "provenance note: says where the file came from before commit dbcfbc502 deleted 99_SYSTEM; historical, not a path to follow"
+    },
+    {
+      "file": "AGENTS.md",
+      "target": "99_SYSTEM/",
+      "reason": "rule text: 'the previous 99_SYSTEM/ paths are retired and must not be used'; names a retired root on purpose (explains that it is gone or where the old layout lives); not a path to follow"
+    },
+    {
+      "file": "README.md",
+      "target": "00_CORE",
+      "reason": "folder table row / note on the old Obsidian layout: names a retired root on purpose (explains that it is gone or where the old layout lives); not a path to follow"
+    },
+    {
+      "file": "README.md",
+      "target": "99_SYSTEM",
+      "reason": "folder table row / note on the old Obsidian layout: names a retired root on purpose (explains that it is gone or where the old layout lives); not a path to follow"
+    },
+    {
+      "file": "README.md",
+      "target": "00_CORE/",
+      "reason": "folder table row / note on the old Obsidian layout: names a retired root on purpose (explains that it is gone or where the old layout lives); not a path to follow"
+    },
+    {
+      "file": "README.md",
+      "target": "09_COORDINATION/",
+      "reason": "folder table row / note on the old Obsidian layout: names a retired root on purpose (explains that it is gone or where the old layout lives); not a path to follow"
+    },
+    {
+      "file": "README.md",
+      "target": "99_SYSTEM/",
+      "reason": "folder table row / note on the old Obsidian layout: names a retired root on purpose (explains that it is gone or where the old layout lives); not a path to follow"
+    },
+    {
+      "file": "README.en.md",
+      "target": "00_CORE",
+      "reason": "folder table row / note on the old Obsidian layout: names a retired root on purpose (explains that it is gone or where the old layout lives); not a path to follow"
+    },
+    {
+      "file": "README.en.md",
+      "target": "99_SYSTEM",
+      "reason": "folder table row / note on the old Obsidian layout: names a retired root on purpose (explains that it is gone or where the old layout lives); not a path to follow"
+    },
+    {
+      "file": "README.en.md",
+      "target": "00_CORE/",
+      "reason": "folder table row / note on the old Obsidian layout: names a retired root on purpose (explains that it is gone or where the old layout lives); not a path to follow"
+    },
+    {
+      "file": "README.en.md",
+      "target": "09_COORDINATION/",
+      "reason": "folder table row / note on the old Obsidian layout: names a retired root on purpose (explains that it is gone or where the old layout lives); not a path to follow"
+    },
+    {
+      "file": "README.en.md",
+      "target": "99_SYSTEM/",
+      "reason": "folder table row / note on the old Obsidian layout: names a retired root on purpose (explains that it is gone or where the old layout lives); not a path to follow"
+    }
+  ]
+}
