@@ -1,0 +1,18 @@
+{
+ "q": "N17",
+ "condition": "V",
+ "repeat": 1,
+ "run_id": "n129",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.0342041,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 698,
+  "cache_read_input_tokens": 50841,
+  "cache_creation_input_tokens": 5532
+ },
+ "answer": "The first version (v1) of the held-out retrieval benchmark had 36 held-out cases and 12 dev cases. The CI workflow comment says every one of them pointed to one of two gold notes that don't exist in the vault, so recall was structurally zero. `VAULT_STATE.md` marks v1 as INVALID. I read the counts from that workflow comment, which cites `07_EVALUATION/heldout_retrieval_benchmark_v2/CONTRACT.md` as the record. I did not open `CONTRACT.md` itself.\n\nANSWER_PATH: .github/workflows/r009b-heldout-benchmark.yml\nANSWER: 36 held-out cases and 12 dev cases (\"every one of v1's 36 held-out and 12 dev cases referenced one of two gold notes that do not exist in the vault\")"
+}

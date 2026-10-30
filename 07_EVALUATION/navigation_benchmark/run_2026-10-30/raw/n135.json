@@ -1,0 +1,18 @@
+{
+ "q": "N01",
+ "condition": "G",
+ "repeat": 1,
+ "run_id": "n135",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.0579104,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 1010,
+  "cache_read_input_tokens": 69624,
+  "cache_creation_input_tokens": 10208
+ },
+ "answer": "The gate picks from four tiers: NONE, LIGHT, STANDARD and HIGH_RISK. It does not read the documented numeric council limits.\n\n- **Tiers:** `CouncilTier` in `03_IMPLEMENTATION/packages/observability/council_budget_controller.py` defines exactly these four values.\n- **Gate inputs:** `decide()` uses only the query's risky keywords, a caller-supplied `complexity` compared against `complexity_threshold`, and `require_review`. The constructor takes only `complexity_threshold` and `risky_keywords`, so nothing from `max_council_agents`, `max_memory_results`, the token caps or the other limits ever reaches it.\n- **Docs agree:** `00_GOVERNANCE/protocols/Council_Context_Budget.md` says the gate picks a tier \"and reads none of these values.\" It places enforcement of the limits elsewhere (`agent_router.py`, `executive.py`), with the two token caps not enforced at all.\n- **Path discrepancy:** The protocol note says the gate lives at `memory/council_budget_controller.py`. The only copy I found is under `packages/observability/`, and I did not look for a `packages/memory/` copy.\n\nANSWER_PATH: 00_GOVERNANCE/protocols/Council_Context_Budget.md\nANSWER: The council gate picks a tier (NONE / LIGHT / STANDARD / HIGH_RISK) and reads none of these values (the documented numeric limits)."
+}

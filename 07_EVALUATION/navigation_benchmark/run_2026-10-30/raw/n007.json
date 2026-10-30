@@ -1,0 +1,18 @@
+{
+ "q": "N07",
+ "condition": "G",
+ "repeat": 0,
+ "run_id": "n007",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 8,
+ "total_cost_usd": 0.0786898,
+ "usage": {
+  "input_tokens": 14,
+  "output_tokens": 1382,
+  "cache_read_input_tokens": 124778,
+  "cache_creation_input_tokens": 13091
+ },
+ "answer": "The vault recorded this as a lesson: after changing any limit, re-run everything downstream that derives a value from it, not just what references it by name. Its reasoning is that arithmetic on a constant is a dependency no import graph shows. It adds that an impossible metric should be treated as a bug in the measurement before you believe it.\n\nThe case behind it: the expansion budget was `min(2*len(notes), 20) - len(notes)`. Raising the lexical candidate limit to 200 made that expression negative. Expansion still reported `ok` while adding zero nodes.\n\nANSWER_PATH: 01_ARCHITECTURE/memory/Lessons/Two_Correct_Changes_Can_Cancel.md\nANSWER: After changing any limit, re-run everything downstream that **derives** a value from it, not just what references it by name. Arithmetic on a constant is a dependency that no import graph shows. And treat an impossible metric as a bug in the measurement before believing it."
+}

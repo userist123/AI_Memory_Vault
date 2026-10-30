@@ -1,0 +1,18 @@
+{
+ "q": "N21",
+ "condition": "V",
+ "repeat": 1,
+ "run_id": "n119",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 7,
+ "total_cost_usd": 0.0365156,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 874,
+  "cache_read_input_tokens": 81236,
+  "cache_creation_input_tokens": 4909
+ },
+ "answer": "The performance rules in the JARVIS Command Center Design System permit only a static Node server. The same rules also exclude external fonts or UI frameworks, and a continuous canvas/WebGL dependency for the core dashboard. They require CSS-first visuals, with animations limited to low-cost transforms and opacity.\n\nSource: `vault://projects.workspaces.jarvis_web/design_system` (sha256:bf148c03afe8, L1-L66). The \"Performance Rules\" section is near the end of that range.\n\nANSWER_PATH: vault://projects.workspaces.jarvis_web/design_system\nANSWER: Static Node server only (\"Static Node server only.\" under Performance Rules)."
+}

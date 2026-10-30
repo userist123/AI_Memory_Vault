@@ -1,0 +1,18 @@
+{
+ "q": "N16",
+ "condition": "V",
+ "repeat": 0,
+ "run_id": "n000",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.04085080000000001,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 630,
+  "cache_read_input_tokens": 60268,
+  "cache_creation_input_tokens": 7127
+ },
+ "answer": "The pre-registration says a gain of exactly one measurable case would be inconclusive: A1's held-out context_recall at 5/27 (0.185), up from the 4/27 baseline. In that case the flag stays off pending more data. The file notes that a ±1 case is inside the noise band at this n.\n\nANSWER_PATH: 07_EVALUATION/r025_wp8_a1_heldout/WP8_PREREGISTRATION.md\nANSWER: A move of exactly +1 measurable case (5/27, 0.185) over the 4/27 baseline was pre-declared inconclusive, to be reported as such with the flag staying off pending more data."
+}

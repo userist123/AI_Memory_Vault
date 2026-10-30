@@ -1,0 +1,18 @@
+{
+ "q": "N12",
+ "condition": "I",
+ "repeat": 0,
+ "run_id": "n015",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 9,
+ "total_cost_usd": 0.0859261,
+ "usage": {
+  "input_tokens": 14,
+  "output_tokens": 1642,
+  "cache_read_input_tokens": 127581,
+  "cache_creation_input_tokens": 14180
+ },
+ "answer": "Rule 11 of the Casa mea 3D constitution (\"reguli nenegociabile\") keeps these out of the early phases: PostGIS, IFC, AR, OCR and multi-country support. The rule bans complex infrastructure without a real need.\n\nRule 13 adds that AR, IFC and enterprise features come only after commercial validation.\n\nANSWER_PATH: 02_PRODUCT/projects/workspaces/casa3d/app/CONSTITUTION.md\nANSWER: Rule 11: \"Fără infrastructură complexă fără nevoie reală (fără PostGIS, IFC, AR, OCR, multi-țară în fazele timpurii).\" — i.e., no PostGIS, IFC, AR, OCR, or multi-country support in the early phases."
+}
