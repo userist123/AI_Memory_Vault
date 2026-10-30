@@ -419,6 +419,7 @@ def plan_runs(case_ids: List[str], repeats: int) -> List[Dict[str, object]]:
 
 def cmd_run(fixtures: Path, out: Path, case_ids: List[str], repeats: int, model: str, max_turns: int,
             budget: float) -> None:
+    fixtures, out = fixtures.resolve(), out.resolve()  # the subject runs with cwd = fixture: paths must be absolute
     raw = out / "raw"
     raw.mkdir(parents=True, exist_ok=True)
     prompts = out / "prompts"
@@ -426,6 +427,7 @@ def cmd_run(fixtures: Path, out: Path, case_ids: List[str], repeats: int, model:
     for cond in CONDITIONS:
         (prompts / f"system_{cond}.txt").write_text(system_prompt(cond), encoding="utf-8")
     exe = shutil.which("claude") or "claude"
+    consecutive_errors = 0
     for run in plan_runs(case_ids, repeats):
         target = raw / f"{run['run_id']}.json"
         if target.exists():
@@ -447,7 +449,21 @@ def cmd_run(fixtures: Path, out: Path, case_ids: List[str], repeats: int, model:
                   "num_turns": data.get("num_turns"), "total_cost_usd": data.get("total_cost_usd"),
                   "usage": {k: (data.get("usage") or {}).get(k) for k in ("input_tokens", "output_tokens",
                             "cache_read_input_tokens", "cache_creation_input_tokens")},
-                  "verdict": verdict_line(text), "answer": text}
+                  "verdict": verdict_line(text), "answer": text,
+                  "stderr_tail": None if proc.returncode == 0 else
+                  re.sub(r"(?i)[a-z]:[\\/]+users[\\/]+[^\\/\s\"']+", "<HOME>", proc.stderr[-400:])}
+        if proc.returncode != 0 and not text:
+            # a process failure is not a subject answer: keep it apart so a restart retries it, and stop early
+            errors = out / "errors"
+            errors.mkdir(exist_ok=True)
+            (errors / f"{run['run_id']}.json").write_text(json.dumps(record, indent=1, ensure_ascii=False),
+                                                         encoding="utf-8")
+            consecutive_errors += 1
+            print(run["run_id"], "PROCESS ERROR:", (record["stderr_tail"] or "")[-200:])
+            if consecutive_errors >= 3:
+                raise SystemExit("3 process errors in a row: stopping (see <out>/errors/)")
+            continue
+        consecutive_errors = 0
         target.write_text(json.dumps(record, indent=1, ensure_ascii=False), encoding="utf-8")
         print(run["run_id"], run["case"], run["condition"], "verdict:", (record["verdict"] or "<none>")[:90])
 
