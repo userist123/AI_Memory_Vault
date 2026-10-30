@@ -76,8 +76,8 @@ def staged_added_text(cwd: Path) -> Dict[str, str]:
                 files.setdefault(current, [])
         elif current and line.startswith("+") and not line.startswith("+++"):
             files[current].append(line[1:])
-    # a new file's NAME can carry an identifier too
-    for name in _git(["-c", "core.quotepath=off", "diff", "--cached", "--name-only"], cwd).splitlines():
+    # a new file's NAME can carry an identifier too; a deleted file cannot publish anything (deleting is the fix)
+    for name in _git(["-c", "core.quotepath=off", "diff", "--cached", "--name-only", "--diff-filter=d"], cwd).splitlines():
         files.setdefault(name, [])
     return {k: "\n".join(v) for k, v in files.items()}
 
