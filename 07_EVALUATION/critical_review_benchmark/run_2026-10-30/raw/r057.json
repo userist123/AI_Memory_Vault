@@ -1,0 +1,20 @@
+{
+ "case": "T6",
+ "condition": "A",
+ "repeat": 1,
+ "run_id": "r057",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.1347668,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1230,
+  "cache_read_input_tokens": 109628,
+  "cache_creation_input_tokens": 27873
+ },
+ "verdict": "The crash was a disk-full (ENOSPC on /var) failure about an hour after a healthy v2.3 deploy, so the evidence points to disk exhaustion rather than the deploy, though what filled the disk is not shown in the logs.",
+ "answer": "The 14:02 crash was caused by the disk filling up, and the evidence doesn't support blaming the v2.3 deploy.\n\n**Timeline from `logs/app.log`:**\n- 13:00:02–13:00:40: v2.3 deploys and the health check passes.\n- 13:05–13:55: ten consecutive `GET /api/items` entries, all with p50 at 41 ms.\n- 13:58:12: `WARN disk usage /var 96%`.\n- 14:00:00: p50 rises slightly to 44 ms.\n- 14:01:10: `write failed /var/log/app/trace.log: [Errno 28] No space left on device`.\n- 14:01:55: `checkpoint write failed: [Errno 28] No space left on device`.\n- 14:02:03: `FATAL unrecoverable I/O error, exiting`.\n\n**Why the deploy looks unlikely to be the cause:**\n- The crash came about 61 minutes after the deploy finished, not \"right after\" it. Service was stable for that whole hour.\n- Every error in the chain is `ENOSPC` on `/var`, and the FATAL is a direct result of the failed checkpoint write.\n- `DEPLOY_NOTES.md` says v2.3 is a cache layer refactor with \"No logging or storage changes.\"\n\n**Caveats:**\n- The log doesn't show what filled `/var`, or how fast. It only shows 96% at 13:58, so I can't say whether usage was growing steadily or jumped.\n- I can't fully exclude the deploy. If the cache refactor writes to `/var` despite the notes, it could contribute. That would need a check of the v2.3 diff or `du` output from the host, and neither is in this repo.\n- The service's own logging (`/var/log/app/trace.log`) is on the full disk. Unbounded growth there is a plausible candidate, but nothing here confirms it.\n\n**Recommendation:** Don't roll back on the strength of this evidence. A rollback likely wouldn't prevent a recurrence, because the disk would still be nearly full. Free up space on `/var` and find what consumed it, for example with `du -xh /var | sort -h`, and check log rotation. Add a disk alert at around 80%.\n\nVERDICT: The crash was a disk-full (ENOSPC on /var) failure about an hour after a healthy v2.3 deploy, so the evidence points to disk exhaustion rather than the deploy, though what filled the disk is not shown in the logs.",
+ "stderr_tail": null
+}

@@ -344,11 +344,11 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   (NECONFORM not red); H. dialog title „Scopul cazului LIVE” vs heading „Scopul cazului stației”.
 - Next: owner scope values -> PDF + investigation screenshots; fix A-H (needs reading HomeViewModel/StationControlViewModel); CI read once on #308.
 - Owner 2026-10-22: test values allowed („după testări facem clean”) -> scope confirmed with the prefilled „Test” values; CLEAN the LIVE case
-  and the investigation case of MARIUS-PC after testing (owner's request).
+  and the investigation case of LAB-PC after testing (owner's request).
 - PDF (CONTROL_20261022_175407, 29 A4 pages): VERIFIED - Segoe UI only, no cedilla/mojibake, counts 35/23/24/5/3 consistent in summary, tiles,
   section 1; section 6 carries the anchor LTR5T… nr. 530 + install date; layout clean. Footer audit „nr. 113” is the case audit, the anchor
   „nr. 530” the app log: same word „înregistrare” for two journals (finding I, wording only).
-- Investigation (Colectează acum, case CASE-MARIUS-PC-20261022-180157): 257,033 events, 1 critical, 130 raised, 316 findings, 6 gaps;
+- Investigation (Colectează acum, case CASE-LAB-PC-20261022-180157): 257,033 events, 1 critical, 130 raised, 316 findings, 6 gaps;
   re-verification valid (624 probes). More findings: J. two parallel forms (wizard „Pasul 1 din 3” + full form with the scope fields);
   K. empty grey panels before a run; N. „257,033” English thousands separator; O. „analiză: Parțial (…)” capital mid-sentence;
   P. chain severities „[CRITICAL]/[HIGH]” in English; Q. status bar still „Nicio analiză încă.” after the investigation (confirms B).
@@ -371,7 +371,7 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
   (02_PRODUCT/projects/imported/nu-sterge/trading-journal…, critical in `next`) - not LogAnalyzer.
 - OWNER RULES: (1) no demos ever (memory `no-demos-real-apps-only`); the real app is `C:\Program Files\LogAnalyzer` (old Demo folder deleted
   with owner approval). (2) „Totul se curăță înainte să dăm aplicația gata de folosire”: BEFORE declaring the app ready, clean ALL test data
-  (LIVE-MARIUS-PC case + controls/reports, CASE-MARIUS-PC-20261022-180157, the „Test” scope, test entries in registers/journals as the app
+  (LIVE-LAB-PC case + controls/reports, CASE-LAB-PC-20261022-180157, the „Test” scope, test entries in registers/journals as the app
   allows) - show the owner the exact list (what is deleted / what stays: licence, accounts, sealed audit chain?) and get his OK first.
   (3) Test account administrator.principal may be used for testing; the password is NOT stored anywhere - ask the owner in chat.
 - Next: Opus vault-reviewer pass on 850a92c19..99dc8dd4d (UI text + CollectAllState/RecentCases/StatusMessage wiring); publish Release Standalone
@@ -467,7 +467,7 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
 - CLEANUP DONE 2026-10-23 with owner OK ("Continuă, ai ok-ul meu"; policies are user-loaded, no predefined set -> test; accounts stay, they are test accounts
   for now). MOVED (not deleted) to D:\w\la-cleanup-20261023 (Local\Cases 5694 files 2,944.5 MB = before; Local\Policies 45 files; recent_cases.json;
   preferences\first-run-guide.seen; ProgramData\registers\transfers.json + register_audit.jsonl moved together = "no register", no chain finding).
-  First run stopped on a locked file (test report PDF open in Adobe Reader): 15 cases moved, LIVE-MARIUS-PC partly; finished file by file (copy + SHA-256
+  First run stopped on a locked file (test report PDF open in Adobe Reader): 15 cases moved, LIVE-LAB-PC partly; finished file by file (copy + SHA-256
   compare + delete), Reader closed with CloseMainWindow. Kept: licence, auth (accounts incl. test person name), sealed AuditLogs, provenance ledger, device monitor
   journal, LogAnalyzer.db/.key (NOT in the approved list - ask owner). C: free 2 -> 6.8 GB. Verified in app: guide shows again, recent cases empty, transfers
   empty (next TR-2026-0001), Control "Niciun raport de control salvat; ultimul control terminat 22.10.2026 21:44" (sealed audit kept).
@@ -494,7 +494,7 @@ Pending screens (not yet seen): control step 3 + result, PDF report, investigati
 - (old) OPEN QUESTION to owner: move LogAnalyzer.db/.key (+ .bak-20261016) from %LOCALAPPDATA%\LogAnalyzer too (not in the approved cleanup list)?
 - send.ps1 now recreates cmd/ and out/ (the scratchpad cleaner removed them twice).
 - (old) CLEANUP list given to owner 2026-10-23, waiting for OK + answers (person name "Eu Mister" -> ?, Policies 45 files test or keep?): delete Cases (16, 2.9 GB incl.
-  LIVE-MARIUS-PC with 14 controls and the "Test" scope), transfers TR-2026-0001/0002, first-run-guide.seen; keep licence, accounts/password, sealed audit chain,
+  LIVE-LAB-PC with 14 controls and the "Test" scope), transfers TR-2026-0001/0002, first-run-guide.seen; keep licence, accounts/password, sealed audit chain,
   provenance ledger, device monitor journal.
 - UIA driver notes: `type`/`key` call Focus() = main window; for a secondary window use `rxy`/`rtype`/`rkey` (no focus change). Driver must be started BEFORE send.ps1 (creates cmd/).
 - After that: C/D items of PORNIRE_INCEPATOR (table rows 4,7-10,12-20), publish + reinstall + real-PC screenshots (do NOT send `max` before sign-in), CI once, cleanup list for owner.

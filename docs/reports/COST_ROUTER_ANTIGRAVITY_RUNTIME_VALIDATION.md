@@ -2,7 +2,7 @@
 
 **Document:** `docs/reports/COST_ROUTER_ANTIGRAVITY_RUNTIME_VALIDATION.md`
 **Date:** 2026-10-20T06:45:00Z
-**Repository:** `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY`
+**Repository:** `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY`
 **Platform:** Windows 11 / Python 3.14.2 / Antigravity Native Engine
 **Configuration File:** `.agents/hooks.json`
 **Hook Adapter:** `.agents/skills/cost-router/hook_antigravity.py`
@@ -24,7 +24,7 @@
 
 ## 1. AUTHORITATIVE SPECIFICATION AUDIT (`hooks.md`)
 
-According to the local specification at `C:\Users\Marius\.gemini\antigravity\builtin\skills\agy-customizations\docs\hooks.md`:
+According to the local specification at `C:\Users\user\.gemini\antigravity\builtin\skills\agy-customizations\docs\hooks.md`:
 
 ### 1.1. Discovery and Scope
 - Project-level hooks are placed in `.agents/hooks.json`.
@@ -49,7 +49,7 @@ According to the local specification at `C:\Users\Marius\.gemini\antigravity\bui
 In previous audit runs, enabling hooks on Windows resulted in:
 ```text
 JSON hook "jsonhook__cost-router_PreToolUse_0_0" failed: command failed: exit status 2,
-stderr: python: can't open file 'c:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\".agents\skills\cost-router\hook_antigravity.py"': [Errno 22] Invalid argument
+stderr: python: can't open file 'C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\".agents\skills\cost-router\hook_antigravity.py"': [Errno 22] Invalid argument
 ```
 
 ### Exact Mechanism of the Defect:

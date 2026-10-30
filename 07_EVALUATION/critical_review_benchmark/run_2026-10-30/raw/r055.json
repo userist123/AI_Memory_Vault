@@ -1,0 +1,20 @@
+{
+ "case": "T7",
+ "condition": "B",
+ "repeat": 0,
+ "run_id": "r055",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 7,
+ "total_cost_usd": 0.1348475,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1375,
+  "cache_read_input_tokens": 110255,
+  "cache_creation_input_tokens": 27515
+ },
+ "verdict": "No — CI's \"green\" is vacuous (\"no tests ran\", because `parser_check.py` doesn't match pytest's collection pattern), so src/parser.py is not verified by any executed test.",
+ "answer": "**No. The green CI doesn't show the parser is tested, because the CI run executed zero tests.**\n\n```\nCONCLUSION:   The parser is not verified by CI. The log shows no tests ran, so \"green\" says nothing about parse_date.\nCHECKED:      ci/ci_run.log says `python -m pytest -q tests/` printed \"no tests ran in 0.01s\", then \"CI status: PASSED\".\n              tests/parser_check.py has one test, test_iso, which asserts parse_date('2026-10-30').day == 30.\n              src/parser.py is 3 lines: split on '-', map to int, build a date.\n              The repo has one commit (34bcfc2) and no CI config file, only the log.\nNOT CHECKED:  I did not run pytest myself.\n              I did not look at the real CI workflow, because none is in the repo.\n              I did not confirm whether the log came from this commit.\nALTERNATIVES: (a) The test file isn't collected. pytest's default patterns are `test_*.py` and `*_test.py`, and `parser_check.py` matches neither.\n                  That fits \"no tests ran\" exactly.\n              (b) The CI step doesn't fail on exit code 5 (no tests collected), so it reports PASSED anyway.\n              Both are probably true. Separating observation: run `pytest tests/parser_check.py` directly. Made: no.\nFALSIFIER:    Evidence that test_iso actually runs and passes in CI, such as a log line like \"1 passed\". Searched: yes, and the only log says \"no tests ran\".\nCONFIDENCE:   high that CI doesn't verify the parser. The log states it directly.\n```\n\nEven if the file were collected, the coverage would be thin. There is one happy-path ISO case. The only thing it checks is `.day`, not the year or month. Nothing covers malformed input (`'2026/10/30'`, `''`), invalid dates like `'2026-02-30'`, or unpadded values. PR.md's \"adds src/parser.py with tests. CI is green\" is accurate as text but misleading as evidence.\n\n**Cheapest fixes:**\n- Rename the file to `tests/test_parser.py`.\n- Make CI fail when pytest collects nothing.\n- Add edge-case tests.\n\nVERDICT: No — CI's \"green\" is vacuous (\"no tests ran\", because `parser_check.py` doesn't match pytest's collection pattern), so src/parser.py is not verified by any executed test.",
+ "stderr_tail": null
+}

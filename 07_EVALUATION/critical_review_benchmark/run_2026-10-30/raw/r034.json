@@ -1,0 +1,20 @@
+{
+ "case": "T2",
+ "condition": "A",
+ "repeat": 0,
+ "run_id": "r034",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.13933459999999998,
+ "usage": {
+  "input_tokens": 10,
+  "output_tokens": 1075,
+  "cache_read_input_tokens": 195966,
+  "cache_creation_input_tokens": 27242
+ },
+ "verdict": "A WIP `export_pdf(rows, path)` exists on branch `feature/pdf-export` (commit 2e35b49, `src/pdf.py`), but it only writes a fake PDF header plus plain text, so it needs a real implementation and is not on `main`.",
+ "answer": "Yes, a partial implementation already exists on the `feature/pdf-export` branch. It is not on `main`, where only `README.md` mentions it (\"PDF export: not implemented yet\").\n\nThe branch has one commit, `2e35b49` (\"wip: pdf export\"), which adds `src/pdf.py`:\n\n```python\nfrom report import build_report\n\ndef export_pdf(rows, path):\n    \"\"\"Render the report to a PDF file.\"\"\"\n    text = build_report(rows)\n    with open(path, 'wb') as fh:\n        fh.write(b'%PDF-1.4\\n' + text.encode())\n```\n\nThis is a stub and won't produce a valid PDF. It writes a `%PDF-1.4` header followed by the report text, with no objects, xref table or trailer. PDF viewers will reject the file. It does show the intended signature, `export_pdf(rows, path)`, and that it builds on `build_report`.\n\nYou don't need to start from scratch. I'd build on this branch: keep the signature and `build_report` call, and replace the body with real PDF rendering, for example with reportlab or fpdf2. I did not run or test the stub.\n\nVERDICT: A WIP `export_pdf(rows, path)` exists on branch `feature/pdf-export` (commit 2e35b49, `src/pdf.py`), but it only writes a fake PDF header plus plain text, so it needs a real implementation and is not on `main`.",
+ "stderr_tail": null
+}
