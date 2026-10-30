@@ -58,7 +58,7 @@ KEY FILES:
 VERIFICATION SO FAR: targeted tests 74 passed before challenge edits; mutation check (bad ledger line) fails as expected.
 Full suite on this branch: 5071 passed, 4 failed (test_owner_authority_gate.py, WSL bash ERROR_PATH_NOT_FOUND;
 the same 4 fail on clean d8f978fad, so environmental, not this change).
-Gap 3 (branch claude/link-check, worktree ../AI_Memory_Vault_wt_links): navigation_links.py + test, 14 dead paths
-fixed, 16 deliberate mentions allowlisted; the TOC half is already vault_list("*") (ledger). Gap 2 premise stale
+Gap 3 (branch claude/link-check, worktree ../AI_Memory_Vault_wt_links): navigation_links.py + test, 6 dead paths
+fixed, 16 deliberate mentions allowlisted (wikilinks resolved like VaultIndex.resolve); the TOC half is already vault_list("*") (ledger). Gap 2 premise stale
 (ledger): CLAUDE.md is 13,479 chars now, low duplication, AGENTS.md not loaded beside it; owner to pick an option.
 Gap 4 deferred: FastMCP 1.30 templates match one segment, slugs have several; agents already have vault_read.
