@@ -1,0 +1,20 @@
+{
+ "case": "T6",
+ "condition": "A",
+ "repeat": 2,
+ "run_id": "r028",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.1434191,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1117,
+  "cache_read_input_tokens": 107011,
+  "cache_creation_input_tokens": 30384
+ },
+ "verdict": "The crash was caused by the `/var` disk filling up (ENOSPC), not by the v2.3 deploy, which ran healthy for about an hour and made no storage or logging changes, so a rollback isn't justified by this evidence.",
+ "answer": "**Root cause:** the disk filled up. `/var` hit 96% at 13:58:12 and ran out of space shortly afterwards. The app then hit `[Errno 28] No space left on device` twice: once writing `/var/log/app/trace.log` (14:01:10) and once on a checkpoint write (14:01:55). At 14:02:03 it logged `FATAL unrecoverable I/O error, exiting`.\n\n**Was it the v2.3 deploy?** The logs don't support that.\n- The deploy finished at 13:00:40 and the health check passed. For the next ~58 minutes the service ran normally, with `/api/items` p50 steady at 41 ms.\n- The first sign of trouble is the disk warning at 13:58, about an hour after the deploy.\n- The v2.3 notes (`DEPLOY_NOTES.md`) describe a cache layer refactor with \"no logging or storage changes\". That fits the logs, since nothing points to the deploy as a source of disk growth.\n- \"Right after the deploy\" in `incident.md` is about an hour off. That's a timing coincidence, not evidence of cause.\n\n**Limits of what I can see:** the logs don't show what consumed the disk. Candidates are `/var/log/app/trace.log` growing without rotation, other `/var` consumers, or something else. I also can't rule out that v2.3's cache refactor indirectly increased disk use, but nothing in the repo suggests it, and the notes say it didn't touch storage.\n\n**Recommendation:**\n- Don't roll back on this evidence. Rolling back v2.3 likely won't prevent a recurrence.\n- Check what is using `/var` (`du` on `/var/log/app` first) and free up space or add log rotation.\n- Add a disk-usage alert below 96%.\n- If you still want to rule out v2.3, compare `/var` growth rate before and after the deploy.\n\nVERDICT: The crash was caused by the `/var` disk filling up (ENOSPC), not by the v2.3 deploy, which ran healthy for about an hour and made no storage or logging changes, so a rollback isn't justified by this evidence.",
+ "stderr_tail": null
+}

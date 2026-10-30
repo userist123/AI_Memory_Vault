@@ -119,6 +119,16 @@ def test_the_public_export_cannot_read_the_domains_added_for_coverage():
     assert all(r.path.count("/") == 3 for r in by_domain["skills"]), "skills is top-level SKILL.md only"
 
 
+def test_the_telegram_bot_cannot_read_the_claude_code_configuration():
+    import sys
+    sys.path.insert(0, str(REPO / "03_IMPLEMENTATION" / "packages"))
+    from vault_access.policy import AccessPolicy
+    policy = AccessPolicy.load(REPO / "04_CONFIG" / "access_policy.yaml")
+    bot = policy.principal("telegram.bot", "ollama")
+    assert not policy.domain_allowed(bot.domains, "claude_config")
+    assert policy.domain_allowed(bot.domains, "procedures")  # the exclusion is narrow
+
+
 def test_the_real_registry_lists_a_reason_for_every_unrouted_glob():
     import yaml
     raw = yaml.safe_load((REPO / "04_CONFIG" / "vault_domains.yaml").read_text(encoding="utf-8"))

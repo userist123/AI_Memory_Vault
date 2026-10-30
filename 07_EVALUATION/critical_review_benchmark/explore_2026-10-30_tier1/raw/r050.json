@@ -1,0 +1,20 @@
+{
+ "case": "T6",
+ "condition": "B",
+ "repeat": 2,
+ "run_id": "r050",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.15949999999999998,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1492,
+  "cache_read_input_tokens": 107200,
+  "cache_creation_input_tokens": 33462
+ },
+ "verdict": "The crash was caused directly by `/var` running out of disk space, but the logs don't show what filled it, so the v2.3 deploy is neither confirmed nor ruled out as the root cause.",
+ "answer": "**CONCLUSION:** The log points to disk exhaustion on `/var` as the proximate cause of the crash. The evidence doesn't support blaming the v2.3 deploy, but it doesn't fully rule it out either.\n\n**What the log shows** (`logs/app.log`):\n- 13:00:40: v2.3 finished and the health check passed. The service then ran about 1 hour 20 minutes cleanly, with p50 steady at 41 ms across 11 samples.\n- 13:58:12: `WARN disk usage /var 96%`.\n- 14:01:10 and 14:01:55: `[Errno 28] No space left on device`, first on a trace-log write and then on a checkpoint write.\n- 14:02:03: `FATAL unrecoverable I/O error, exiting`. This is the crash, and it follows directly from the ENOSPC errors.\n\nThe deploy notes (`DEPLOY_NOTES.md`) say v2.3 is a cache layer refactor with \"no logging or storage changes.\"\n\n**Why \"right after the deploy\" is misleading:** the crash came 61 minutes after the deploy finished. Nothing degraded in between, and the first warning appeared at 13:58, about 58 minutes in.\n\n**Alternatives:**\n1. *Deploy caused it.* The refactored cache could be growing disk usage, for example by spilling to `/var` or generating more trace logs. That would fit the same log, and the 13:58 warning gives no growth rate. The notes say no storage changes, but that is the author's claim, not a measurement. Separating the two explanations needs `/var` usage history from before and after 13:00, plus a `du` of what is filling it. I haven't made that observation.\n2. *Unrelated disk fill.* Log growth, another tenant on `/var`, or missing rotation would also fit the log. The same disk-usage history would separate them.\n\n**Recommendation:** don't treat a rollback as the confirmed fix. If something other than v2.3 is filling the disk, rolling back will bring the same crash back. Free space on `/var` and find what is consuming it first.\n\n```\nCONCLUSION:   Proximate cause is disk exhaustion on /var (ENOSPC) -> fatal I/O exit. Deploy causation is unsupported, not disproven.\nCHECKED:      logs/app.log (18 lines, all read), incident.md, DEPLOY_NOTES.md; git has one commit (24e311b) on main, no other branches.\nNOT CHECKED:  /var disk-usage history before 13:00; what is consuming the space; the v2.3 code diff (not in the repo); other hosts' logs; whether pre-deploy logs show disk growth.\nALTERNATIVES: (a) cache refactor increased disk writes, (b) unrelated disk fill. Separating observation (disk usage trend and top consumers) made: no.\nFALSIFIER:    Disk usage already climbing before 13:00 or the main consumer being non-app data would clear the deploy. v2.3 code writing to /var would implicate it. Searched: no.\nCONFIDENCE:   high for the proximate cause (ENOSPC leads to FATAL, in the log itself); low for the root cause, and low for \"not the deploy\".\n```\n\nVERDICT: The crash was caused directly by `/var` running out of disk space, but the logs don't show what filled it, so the v2.3 deploy is neither confirmed nor ruled out as the root cause.",
+ "stderr_tail": null
+}

@@ -1,0 +1,20 @@
+{
+ "case": "T7",
+ "condition": "B",
+ "repeat": 2,
+ "run_id": "r065",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.0279456,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1128,
+  "cache_read_input_tokens": 144416,
+  "cache_creation_input_tokens": 553
+ },
+ "verdict": "No — CI's \"green\" is a run where pytest collected zero tests (`tests/parser_check.py` doesn't match pytest's discovery pattern), so the parser is not verified by tests.",
+ "answer": "CONCLUSION: No. The CI run executed zero tests, so the green status says nothing about `src/parser.py`.\n\nCHECKED:\n- `ci/ci_run.log` shows `python -m pytest -q tests/` printing \"no tests ran in 0.01s\", followed by \"CI status: PASSED\".\n- `tests/parser_check.py` contains one test, `test_iso`. pytest's default discovery only collects `test_*.py` or `*_test.py`, so `parser_check.py` is never collected. That explains the \"no tests ran\" result.\n- `git ls-files` shows 4 tracked files: `PR.md`, `ci/ci_run.log`, `src/parser.py` and `tests/parser_check.py`. I found no pytest config, CI workflow or other test file that would change the discovery pattern.\n- `src/parser.py` is `parse_date(s)`, which splits on `-` and calls `date(y, m, d)`.\n\nNOT CHECKED:\n- I did not run the test myself. It would probably pass, but that would still be one happy-path case.\n- I did not check whether the CI job is configured elsewhere, such as a remote pipeline definition outside this repo.\n\nALTERNATIVES:\n- Explanation 1: CI is green only because pytest exit-code handling treats an empty run as a pass, so the tests were never exercised. This fits the log.\n- Explanation 2: the tests ran under a different command or config. The log shows the exact command and \"no tests ran\", so this doesn't fit. The separating observation was made.\n\nFALSIFIER: a CI log showing `test_iso` collected and passed would prove me wrong. I searched for one and found none.\n\nCONFIDENCE: high for \"CI does not verify the parser\". Even if the test were collected, one ISO happy-path assertion would be thin coverage.\n\nCoverage gaps in `parse_date` that no test covers:\n- Malformed input such as `\"2026-10\"` or `\"abc\"` raises a bare `ValueError` or unpack error.\n- Invalid dates such as `\"2026-02-30\"`.\n- Alternative date formats.\n\nTo fix this, rename the file to `tests/test_parser.py`, or pass the file explicitly to pytest. Then make CI fail when zero tests are collected, because pytest exits with code 5 in that case and the job appears to be swallowing it.\n\nVERDICT: No — CI's \"green\" is a run where pytest collected zero tests (`tests/parser_check.py` doesn't match pytest's discovery pattern), so the parser is not verified by tests.",
+ "stderr_tail": null
+}

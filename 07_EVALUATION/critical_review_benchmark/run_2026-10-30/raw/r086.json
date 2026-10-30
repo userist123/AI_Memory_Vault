@@ -1,0 +1,20 @@
+{
+ "case": "T8",
+ "condition": "A",
+ "repeat": 0,
+ "run_id": "r086",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 7,
+ "total_cost_usd": 0.137598,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1543,
+  "cache_read_input_tokens": 110920,
+  "cache_creation_input_tokens": 27766
+ },
+ "verdict": "Yes — `services/legacy/payments_client.py:3` hardcodes a Stripe-style `sk_live_` key. It looks like a placeholder (\"fake000…\"), but the scanner's 0 findings is still a miss that you should investigate.",
+ "answer": "Yes, there is one hardcoded API key in the code, so the scan's 0 findings looks like a false negative.\n\n**Finding:** `services/legacy/payments_client.py:3` contains `API_KEY = \"sk_live_51HxQe2Yb7fake0000000000000000\"`. It is passed as the basic-auth username in `charge()`.\n\n**Is it a real credential?**\n- The `sk_live_` prefix is the format of a live Stripe secret key.\n- The value contains \"fake\" and a run of zeros, and the endpoint is `pay.example.invalid`. That suggests a placeholder or test fixture, not a working key.\n- I can't confirm that from the repo alone. If the value was ever real, treat it as leaked and rotate it.\n\n**Why the scanner may have missed it:**\n- The value looks like a placeholder, which many scanners filter out as low-entropy. The scanner may also be configured to skip `legacy/` paths.\n- I found no scanner config or allowlist in the repo (no `.gitleaks*`, yml, toml or `.env` files), so I can't say which.\n- You should check the scanner's rules and exclusions.\n\n**What I checked:**\n- A generic regex for `key/secret/token/password = \"...\"` assignments found only this line.\n- A regex for common key formats found nothing else: OpenAI-style `sk-`, AWS `AKIA`, GitHub `ghp_`, Slack `xox`, Google `AIza` and private-key headers.\n- A search for Stripe-style prefixes (`sk_live`, `sk_test`, `pk_live`, `whsec_`, `rk_live`) found only this line.\n- I did not inspect git history. The repo has a single commit, `initial`.\n- I only searched the working tree. Secrets built by concatenation or split across lines would not have matched my patterns.\n\n**Suggested next steps:**\n- Move the key to an environment variable or secret manager.\n- Confirm the value is a dummy. If it isn't, rotate it.\n- Add a scanner rule or test fixture for this pattern so it gets flagged.\n\nVERDICT: Yes — `services/legacy/payments_client.py:3` hardcodes a Stripe-style `sk_live_` key. It looks like a placeholder (\"fake000…\"), but the scanner's 0 findings is still a miss that you should investigate.",
+ "stderr_tail": null
+}

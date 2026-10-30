@@ -1,0 +1,20 @@
+{
+ "case": "T5",
+ "condition": "A",
+ "repeat": 2,
+ "run_id": "r014",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 9,
+ "total_cost_usd": 0.149054,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 1168,
+  "cache_read_input_tokens": 152420,
+  "cache_creation_input_tokens": 30529
+ },
+ "verdict": "Yes — adding `docs/internal/runbooks` to the public `docs` domain's roots makes `site/export.py` publish the internal runbooks, so the \"no visibility change\" claim is wrong in effect.",
+ "answer": "Yes. Merging PR 42 changes what the public site exports, even though the `visibility` field is untouched.\n\n- **How export works:** `site/export.py:6` returns every root of every domain whose `visibility` is `public`. It publishes every file under those roots.\n- **What the diff does:** it changes the `docs` domain in `config/domains.yaml`. That domain is `visibility: public`. The roots go from `[docs/public]` to `[docs/public, docs/internal/runbooks]`.\n- **Effect:** `docs/internal/runbooks` is now exported with the public docs. That directory currently holds `db_failover.md`, an internal operations runbook.\n- **Existing config:** `ops` already marks `docs/internal` as `private`. The PR moves a subtree of it into a public domain, so the two settings now conflict. Nothing in `export.py` resolves that conflict. The public domain wins.\n- **Why the description is misleading:** the PR does not edit any `visibility` value. But visibility applies per domain, and adding a root to a public domain makes that root public. The description's claim of \"No visibility change\" is wrong in effect.\n- **Search:** if the aim is only to make runbooks searchable, use a separate domain. For example, add a `runbooks` domain with `visibility: private` and have the search indexer read it. Alternatively, add the root only to a search-specific config. Don't put it in the exported public domain.\n\nI read the diff and the code only. I did not run the export.\n\nVERDICT: Yes — adding `docs/internal/runbooks` to the public `docs` domain's roots makes `site/export.py` publish the internal runbooks, so the \"no visibility change\" claim is wrong in effect.",
+ "stderr_tail": null
+}
