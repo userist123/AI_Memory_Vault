@@ -1,7 +1,7 @@
 # COST-ROUTER — FINAL INDEPENDENT ACCEPTANCE AUDIT REPORT
 
 **Date:** 2026-10-20T04:36:00Z
-**Repository:** `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY`
+**Repository:** `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY`
 **Target Report Audited:** `docs/reports/ANTIGRAVITY_SKILL_COMPLETION_REPORT.md`
 **Supporting Evidence Audited:** `D:\AI_Memory_Vault_Benchmark\reports\cost_router_audit\` (`01_inventory.md` through `06_validation_protocol.md`, `FINAL_COST_ROUTER_AUDIT.md`)
 **Audit Mode:** STRICT READ-ONLY (No files modified, no git commit/push, no installers executed, no remote state altered)
@@ -81,7 +81,7 @@ python -m pytest 20_TESTS/test_cost_router_skill.py 20_TESTS/test_cost_router_re
   import sys
   sys.exit(0)
   ```
-  The full implementation (330 lines) exists in `C:\Users\Marius\.gemini\config\skills\cost-router\hook_antigravity.py`, but was overwritten in the repository workspace.
+  The full implementation (330 lines) exists in `C:\Users\user\.gemini\config\skills\cost-router\hook_antigravity.py`, but was overwritten in the repository workspace.
 - **Verification Method:** Inspect file content; run `python -m pytest 20_TESTS/test_hook_antigravity.py`.
 - **Impact:** Any test or runtime mechanism attempting to execute this hook receives a blank response, completely nullifying model rewriting, ephemeral notifications, and security checks.
 - **Remediation:** Restore the full `hook_antigravity.py` implementation into `.agents/skills/cost-router/` and update `test_hook_antigravity.py` to match its exact output contract.
@@ -91,7 +91,7 @@ python -m pytest 20_TESTS/test_cost_router_skill.py 20_TESTS/test_cost_router_re
 ### FINDING 2: RUNTIME PATH PARSING CRASH IN ANTIGRAVITY HOOK RUNNER (SEVERITY: CRITICAL)
 - **Location:** `.agents/hooks.json` (and `.gemini/config/hooks.json`).
 - **Evidence:** When `.agents/hooks.json` was enabled, tool calls in Antigravity failed with:
-  `JSON hook "jsonhook__cost-router_PreToolUse_0_0" failed: command failed: exit status 2, stderr: python: can't open file 'c:\\Users\\Marius\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\.agents\\".agents\\skills\\cost-router\\hook_antigravity.py"': [Errno 22] Invalid argument`
+  `JSON hook "jsonhook__cost-router_PreToolUse_0_0" failed: command failed: exit status 2, stderr: python: can't open file 'c:\\Users\\user\\Documents\\Codex\\AI_Memory_Vault_CODEX_READY\\.agents\\".agents\\skills\\cost-router\\hook_antigravity.py"': [Errno 22] Invalid argument`
 - **Verification Method:** Enable `.agents/hooks.json` and execute any tool call (`run_command` or `invoke_subagent`).
 - **Impact:** Total failure of the agent execution loop; tool calls cannot proceed when hooks crash.
 - **Root Cause:** Antigravity's internal hook runner prepends the workspace root to the command arguments and mishandles double quotes on Windows.

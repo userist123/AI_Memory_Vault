@@ -2,7 +2,7 @@
 
 **Document:** `docs/reports/COST_ROUTER_POST_ACTIVATION_HARDENING.md`
 **Date:** 2026-10-20T07:18:00Z
-**Repository:** `C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY`
+**Repository:** `C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY`
 **Runtime:** Google Antigravity Native Engine / Windows 11 / Python 3.14.2
 **Configuration:** `.agents/hooks.json`
 **Implementation:** `.agents/skills/cost-router/hook_antigravity.py`
@@ -162,7 +162,7 @@ python -m pytest 20_TESTS/test_hook_antigravity.py 20_TESTS/test_cost_router_ski
 ```text
 ============================= test session starts =============================
 platform win32 -- Python 3.14.2, pytest-9.0.2, pluggy-1.6.0
-rootdir: C:\Users\Marius\Documents\Codex\AI_Memory_Vault_CODEX_READY
+rootdir: C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY
 configfile: pytest.ini
 plugins: anyio-4.15.1, asyncio-1.4.0
 collected 167 items
