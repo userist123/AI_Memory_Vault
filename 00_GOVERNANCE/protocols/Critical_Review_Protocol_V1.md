@@ -48,8 +48,8 @@ conclusion claims more than the facts support.**
 checked and what was not (`CHECKED` / `NOT CHECKED`), and do not let the headline exceed it.
 `NOT CHECKED` names only what bears on the question that was asked. When what you checked answers the
 question completely, answer it plainly: a caveat about a question nobody asked (is the log current, does
-runtime match the config, would a re-run agree) is noise, not care. Measured on 2026-10-30: that noise
-appeared in 8 of 18 simple answers with this protocol and in 0 of 18 without it.
+runtime match the config, would a re-run agree) is noise, not care. Observed on 2026-10-30 (exploratory,
+n = 18): such caveats in 8 of 18 simple answers with this protocol, 0 of 18 without it.
 
 **Tier 2 — full card and challenge**, mandatory before:
 1. a universal verdict: safe / compromised / clean / none / all / unique / always / never;
@@ -142,9 +142,10 @@ no claim that the protocol reduces errors.
 
 First run, 2026-10-30 (`07_EVALUATION/critical_review_benchmark/`, pre-registered; Sonnet, 9 trap and 6
 control cases, 3 repeats, graded blind by Codex): **benchmark not discriminating** — without the protocol the
-model overclaimed in 0 of 27 trap runs, so there was no overreach for the protocol to remove. The run did
-measure a cost: unneeded caveats on 8 of 18 control answers with the protocol, 0 of 18 without (the Tier 1
-scope sentence above is the response). Still UNVERIFIED for benefit; next step: traps that a baseline
+model overclaimed in 0 of 27 trap runs (several traps put the answer in plain sight), so it shows no
+reduction for this model on these traps. Exploratory observation, not an established cost: caveats outside
+the question on 8 of 18 control answers with the protocol, 0 of 18 without (n = 18, style-dependent
+grading); the Tier 1 scope sentence above is a hypothesis under test. Still UNVERIFIED for benefit; next step: traps that a baseline
 actually fails (larger repositories, partial tool output, time pressure) and a second model.
 
 ## Limits and deferred work
