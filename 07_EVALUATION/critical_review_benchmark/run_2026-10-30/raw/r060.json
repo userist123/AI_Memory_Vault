@@ -1,0 +1,20 @@
+{
+ "case": "T5",
+ "condition": "A",
+ "repeat": 1,
+ "run_id": "r060",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.123734,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 629,
+  "cache_read_input_tokens": 102720,
+  "cache_creation_input_tokens": 26790
+ },
+ "verdict": "Yes — adding `docs/internal/runbooks` to the public `docs` domain's roots makes the exporter publish internal runbooks, despite the \"no visibility change\" claim.",
+ "answer": "Yes. Merging PR 42 changes what the public site exports. It would publish the internal runbooks.\n\n- `site/export.py` publishes every root of every domain whose `visibility` is `public`.\n- The `docs` domain is `public`, and the PR adds `docs/internal/runbooks` to its `roots`.\n- `exported_roots` would then return `['docs/public', 'docs/internal/runbooks']`. Before the PR it returns only `['docs/public']`.\n- Those runbooks, such as `docs/internal/runbooks/db_failover.md`, currently belong to the `ops` domain. That domain is `private` and has `docs/internal` as its root.\n- The PR doesn't edit any `visibility` line, so the description is literally true. But roots are what decide what gets exported, and visibility comes from whichever domain lists the root. Moving a path into a public domain makes it public.\n\nThe goal is search over runbooks. If that's meant to be internal search, a safer fix is a separate search-index configuration, or a new domain with `visibility: private` that search also reads. The change shouldn't go into the public domain's roots.\n\nI read the files in the repo and did not run the export.\n\nVERDICT: Yes — adding `docs/internal/runbooks` to the public `docs` domain's roots makes the exporter publish internal runbooks, despite the \"no visibility change\" claim.",
+ "stderr_tail": null
+}

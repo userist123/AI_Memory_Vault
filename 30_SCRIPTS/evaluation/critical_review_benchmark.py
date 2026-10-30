@@ -418,7 +418,7 @@ def plan_runs(case_ids: List[str], repeats: int) -> List[Dict[str, object]]:
 
 
 def cmd_run(fixtures: Path, out: Path, case_ids: List[str], repeats: int, model: str, max_turns: int,
-            budget: float) -> None:
+            budget: float, conditions: tuple = CONDITIONS) -> None:
     fixtures, out = fixtures.resolve(), out.resolve()  # the subject runs with cwd = fixture: paths must be absolute
     raw = out / "raw"
     raw.mkdir(parents=True, exist_ok=True)
@@ -430,7 +430,7 @@ def cmd_run(fixtures: Path, out: Path, case_ids: List[str], repeats: int, model:
     consecutive_errors = 0
     for run in plan_runs(case_ids, repeats):
         target = raw / f"{run['run_id']}.json"
-        if target.exists():
+        if target.exists() or run["condition"] not in conditions:
             continue
         case = CASE_BY_ID[run["case"]]
         cwd = fixtures / case.id
@@ -487,6 +487,7 @@ ITEMS:
 
 
 def cmd_grade(out: Path) -> None:
+    out = out.resolve()  # codex runs with cwd=out: a relative -o path would land in out/out/
     runs = _load_runs(out)
     items, key = [], {}
     order = list(range(len(runs)))
@@ -617,6 +618,8 @@ def main(argv: Optional[List[str]] = None) -> int:
     r.add_argument("--model", default="sonnet")
     r.add_argument("--max-turns", type=int, default=25)
     r.add_argument("--max-budget-usd", type=float, default=1.0)
+    r.add_argument("--conditions", default=",".join(CONDITIONS),
+                   help="subset for an exploratory re-run (e.g. B after a protocol change); not the pre-registered run")
     for name in ("grade", "report"):
         s = sub.add_parser(name)
         s.add_argument("--out", type=Path, required=True)
@@ -625,7 +628,7 @@ def main(argv: Optional[List[str]] = None) -> int:
         cmd_build(a.fixtures)
     elif a.cmd == "run":
         cmd_run(a.fixtures, a.out, [c.strip() for c in a.cases.split(",") if c.strip()], a.repeats, a.model,
-                a.max_turns, a.max_budget_usd)
+                a.max_turns, a.max_budget_usd, tuple(c for c in a.conditions.split(",") if c))
     elif a.cmd == "grade":
         cmd_grade(a.out)
     else:

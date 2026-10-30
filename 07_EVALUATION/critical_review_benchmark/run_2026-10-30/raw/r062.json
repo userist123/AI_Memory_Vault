@@ -1,0 +1,20 @@
+{
+ "case": "T6",
+ "condition": "A",
+ "repeat": 0,
+ "run_id": "r062",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.033187999999999995,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1185,
+  "cache_read_input_tokens": 135460,
+  "cache_creation_input_tokens": 1945
+ },
+ "verdict": "The 14:02 crash was most likely caused by `/var` running out of disk space, not the v2.3 deploy, which ran cleanly for about an hour first and made no logging or storage changes.",
+ "answer": "The root cause was most likely the `/var` disk filling up (`ENOSPC`, \"No space left on device\"). The evidence doesn't support blaming the v2.3 deploy.\n\n**Timeline from `logs/app.log`:**\n- 13:00:02–13:00:40: v2.3 deploys and the health check passes.\n- 13:05–13:55: about an hour of normal operation, with `/api/items` p50 steady at 41 ms.\n- 13:58:12: `WARN disk usage /var 96%`.\n- 14:01:10: `ERROR write failed /var/log/app/trace.log: [Errno 28] No space left on device`.\n- 14:01:55: `ERROR checkpoint write failed: [Errno 28] No space left on device`.\n- 14:02:03: `FATAL unrecoverable I/O error, exiting`.\n\n**Why the deploy looks like the wrong target:**\n- The crash came about 62 minutes after the deploy finished, and the service was healthy for that whole time.\n- The crash chain is disk full, then failed writes, then a fatal I/O error. Nothing in the log points to the cache refactor.\n- `DEPLOY_NOTES.md` says v2.3 is a cache-layer refactor with \"No logging or storage changes.\"\n- A rollback would probably not fix this. The disk would still be full.\n\n**What the logs can't tell us:**\n- They don't show what consumed the disk. `/var/log/app/trace.log` is a candidate, since a write to it failed first, but that is a guess.\n- They don't show when disk usage started climbing, because there is no disk data before 13:58.\n- I can't rule out a minor v2.3 contribution, such as a cache change that writes more data. The deploy notes say there are no storage changes, but the notes aren't proof.\n\n**Suggested next steps:**\n1. Free space on `/var`, then check what is using it (`du -xh /var | sort -h`, and the size and rotation settings of `/var/log/app/`).\n2. Compare `/var` growth rate before and after 13:00 to test any v2.3 link.\n3. Hold off on rolling back until that comparison is done.\n\nVERDICT: The 14:02 crash was most likely caused by `/var` running out of disk space, not the v2.3 deploy, which ran cleanly for about an hour first and made no logging or storage changes.",
+ "stderr_tail": null
+}
