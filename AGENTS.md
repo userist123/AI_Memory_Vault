@@ -11,6 +11,10 @@ This repository is the persistent memory and knowledge base for the user's AI sy
 
 When information conflicts, prefer: user-confirmed facts, direct execution/test evidence, official documentation, project documentation, repeated successful experience, external sources, then inference. Never silently replace stronger evidence with weaker evidence.
 
+## Critical review
+
+Apply `00_GOVERNANCE/protocols/Critical_Review_Protocol_V1.md`. Tier 1 (routine done/fixed/not found): say what was and was not checked. Tier 2 (universal verdict such as safe/none/all/unique, comparison, root cause, irreversible action, anything entering `VAULT_STATE.md` or verified memory): run the five checks (scope, search space, alternatives, disconfirmation, confidence), state the claim card and get a read-only challenge from a different model family. The headline is never stronger than the evidence. Every conclusion changed by an objection or a retraction is logged in `00_GOVERNANCE/review/CORRECTIONS_LEDGER.jsonl`.
+
 ## Runtime Context Contract
 
 The runtime MUST use sparse context. Current configuration and governance are organized under the numbered repository spine:
