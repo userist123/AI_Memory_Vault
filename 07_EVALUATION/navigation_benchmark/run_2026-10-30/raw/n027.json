@@ -1,0 +1,18 @@
+{
+ "q": "N07",
+ "condition": "V",
+ "repeat": 0,
+ "run_id": "n027",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 24,
+ "total_cost_usd": 0.20610220000000004,
+ "usage": {
+  "input_tokens": 34,
+  "output_tokens": 4275,
+  "cache_read_input_tokens": 474642,
+  "cache_creation_input_tokens": 28955
+ },
+ "answer": "The vault recorded this as a lesson. The note is marked `unverified` and `REVIEW`, so it isn't attested. Its \"Reuse this when\" section (vault://memory.lessons/two_correct_changes_can_cancel sha256:3646e73cab99 L1-L42) says:\n\nAfter changing any limit, re-run everything downstream that derives a value from it, not just what references it by name. Arithmetic on a constant is a dependency that no import graph shows. Also treat an impossible metric as a bug in the measurement before believing it.\n\nThe case behind it: the expansion budget was `min(2*len(notes), 20) - len(notes)`. A separate, correct change raised the lexical candidate limit to 200, which made that expression negative. Expansion still reported status `ok` while adding zero nodes.\n\nANSWER_PATH: vault://memory.lessons/two_correct_changes_can_cancel\nANSWER: After changing any limit, re-run everything downstream that derives a value from it, not just what references it by name. Arithmetic on a constant is a dependency that no import graph shows. Treat an impossible metric as a bug in the measurement before believing it."
+}

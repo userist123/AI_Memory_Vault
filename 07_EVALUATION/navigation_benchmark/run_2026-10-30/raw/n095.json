@@ -1,0 +1,18 @@
+{
+ "q": "N08",
+ "condition": "V",
+ "repeat": 1,
+ "run_id": "n095",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 23,
+ "total_cost_usd": 0.18442470000000005,
+ "usage": {
+  "input_tokens": 30,
+  "output_tokens": 4398,
+  "cache_read_input_tokens": 483767,
+  "cache_creation_input_tokens": 23002
+ },
+ "answer": "The scanner's most severe verdict is `BLOCK`, with a score of 95. It has two triggers, and both need active (non-educational) findings.\n\n1. **Browser credentials plus a network sink.** An active `browser_credentials` data finding (cookies, Login Data, DPAPI, passwords and similar) together with any active network finding returns `BLOCK`. The network finding can be an HTTP request, a webhook, an upload or send, or an external URL or email destination. No line-distance requirement applies here.\n2. **A source-to-sink chain plus explicit data access or a token.** An active data finding and an active network finding within 30 lines of each other form a chain. That chain returns `BLOCK` if either of these also holds:\n   - an active data line uses a verb such as read, collect, copy, extract, access, retrieve or harvest;\n   - an active `secrets` line mentions API keys, access tokens, auth tokens or session tokens.\n\nFindings in educational or example context in prose files don't count as active. Override or concealment phrases combined with a network finding only reach `REVIEW` (score 80).\n\nANSWER_PATH: security/skill_exfiltration_scanner.py\nANSWER: `BLOCK` (score 95) is returned when an active browser-credential data finding co-occurs with an active network/destination finding, or when an active data→network source-sink chain (within 30 lines) is combined with explicit data access (read/collect/copy/extract/access/retrieve/harvest) or an API key/access/auth/session token secret."
+}

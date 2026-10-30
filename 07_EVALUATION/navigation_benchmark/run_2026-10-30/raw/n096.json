@@ -1,0 +1,18 @@
+{
+ "q": "N09",
+ "condition": "I",
+ "repeat": 1,
+ "run_id": "n096",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.0266142,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 362,
+  "cache_read_input_tokens": 48182,
+  "cache_creation_input_tokens": 4541
+ },
+ "answer": "No. The boundary document says a component from a blacklisted origin stays blocked even if its package hash and signature are valid, and even if a human approves it. A newer version doesn't change that either.\n\nANSWER_PATH: security/SUPPLY_CHAIN_BOUNDARY.md\nANSWER: \"A blocked origin cannot be overridden by a valid package hash, a valid signature, human approval, or a newer version.\""
+}

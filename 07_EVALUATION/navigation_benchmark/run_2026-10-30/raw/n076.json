@@ -1,0 +1,18 @@
+{
+ "q": "N14",
+ "condition": "V",
+ "repeat": 1,
+ "run_id": "n076",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.0417722,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 635,
+  "cache_read_input_tokens": 52742,
+  "cache_creation_input_tokens": 7534
+ },
+ "answer": "`async void` is acceptable only for View-level event handlers. The playbook says to avoid it otherwise, because errors raised inside an `async void` crash the process.\n\nANSWER_PATH: 01_ARCHITECTURE/knowledge/domain_packs/07_dotnet_wpf_desktop/playbooks/desktop_async_threading.md\nANSWER: \"Evită async void cu excepția handlerelor de evenimente la nivel de View.\" (Avoid async void except for View-level event handlers.)"
+}

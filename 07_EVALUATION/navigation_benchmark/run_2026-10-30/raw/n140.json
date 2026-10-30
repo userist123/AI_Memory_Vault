@@ -1,0 +1,18 @@
+{
+ "q": "N07",
+ "condition": "I",
+ "repeat": 1,
+ "run_id": "n140",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.048562999999999995,
+ "usage": {
+  "input_tokens": 10,
+  "output_tokens": 1028,
+  "cache_read_input_tokens": 87670,
+  "cache_creation_input_tokens": 7374
+ },
+ "answer": "The vault's lesson note says that after you change any limit, you should re-run everything downstream that derives a value from it, not just the code that references it by name. Raising the lexical candidate limit to 200 made the expansion budget `min(2*len(notes), 20) - len(notes)` negative. Graph expansion then reported `ok` while adding zero nodes, and no test failed. The note also says to treat an impossible metric as a bug in the measurement before believing it. Here the impossible metric was context recall above candidate recall.\n\nANSWER_PATH: 01_ARCHITECTURE/memory/Lessons/Two_Correct_Changes_Can_Cancel.md\nANSWER: After changing any limit, re-run everything downstream that derives a value from it, not just what references it by name. Arithmetic on a constant is a dependency that no import graph shows. Treat an impossible metric as a bug in the measurement before believing it."
+}
