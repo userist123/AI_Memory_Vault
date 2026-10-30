@@ -31,7 +31,7 @@ SHARED_RULES = {
     "not_found_is_answer": r"NOT_FOUND",
     "trust_invariants": r"I-001\.\.I-012",
     "secrets_never_stored": r"secrets (must never be|are never) stored",
-    "privacy_identifiers_grep": r"%APPDATA%\\ai-memory-vault\\private_identifiers\.txt",
+    "privacy_identifiers_grep": r"%APPDATA%\\ai-memory-vault\\private_identifiers\.txt",  # hygiene: intentional-absolute-path
     "privacy_hit_blocks": r"a hit blocks the commit",
     "history_visibility_owner": r"Rewriting Git history and changing repository visibility are the owner's decision",
     "critical_review": r"Critical_Review_Protocol_V1\.md",
