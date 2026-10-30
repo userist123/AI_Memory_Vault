@@ -62,20 +62,36 @@ def _git(args: List[str], cwd: Path) -> str:
 def cmd_prepare(work: Path, ref: str) -> None:
     work = work.resolve()
     work.mkdir(parents=True, exist_ok=True)
+    # plain folders from `git archive`, not checkouts: with a .git the agent could read removed files from
+    # history (`git show HEAD:CLAUDE.md`) and Claude Code shows them as deleted in its git-status context
+    archive = work / "snapshot.tar"
+    _git(["archive", "--format=tar", "-o", str(archive), ref], REPO)
     for name in ("plain", "index"):
         target = work / name
+        for wt in (target,):
+            listed = _git(["worktree", "list", "--porcelain"], REPO)
+            if str(wt).replace("\\", "/").lower() in listed.replace("\\", "/").lower():
+                _git(["worktree", "remove", "--force", str(wt)], REPO)
         if target.exists():
-            _git(["worktree", "remove", "--force", str(target)], REPO)
-        _git(["worktree", "add", "--detach", str(target), ref], REPO)
+            shutil.rmtree(target)
+        target.mkdir()
+        subprocess.run(["tar", "-xf", str(archive), "-C", str(target)], check=True, capture_output=True)
         for rel in REMOVED:
             p = target / rel
             if p.is_dir():
                 shutil.rmtree(p)
             elif p.exists():
                 p.unlink()
+        assert not (target / ".git").exists()
+    archive.unlink()
     routes_file = work / "routes.json"
+    if routes_file.exists():
+        routes_file.unlink()
+    # no git here, so --check's coverage gate reports COVERAGE_UNCHECKED; the route table is still written
     subprocess.run([sys.executable, "30_SCRIPTS/routing/build_route_manifest.py", "--json", str(routes_file)],
-                   cwd=work / "plain", check=True, capture_output=True)
+                   cwd=work / "plain", capture_output=True)
+    if not routes_file.exists():
+        raise SystemExit("route table was not written")
     routes = json.loads(routes_file.read_text(encoding="utf-8"))
     lines = ["# Index of every note", ""]
     for r in sorted((r for r in routes if r.get("base") == "repo"), key=lambda r: r["path"]):
@@ -119,6 +135,7 @@ def cmd_run(work: Path, gold_file: Path, out: Path, repeats: int, model: str, ma
         tools = BASE_TOOLS + ("," + VAULT_TOOLS if cond == "V" else "")
         cmd = [exe, "-p", "--model", model, "--max-turns", str(max_turns), "--max-budget-usd", str(budget),
                "--setting-sources", "project", "--strict-mcp-config", "--allowedTools", tools,
+               "--disallowedTools", "Bash,WebFetch,WebSearch,Task,Agent,Write,Edit,NotebookEdit",
                "--append-system-prompt", BASE_INSTRUCTION + EXTRA[cond],
                "--output-format", "json", "--no-session-persistence"]
         if cond == "V":
