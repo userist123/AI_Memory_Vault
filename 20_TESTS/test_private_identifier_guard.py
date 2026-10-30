@@ -67,6 +67,15 @@ def test_a_short_name_does_not_hit_a_longer_word_and_removals_do_not_count(tmp_p
     capsys.readouterr()
 
 
+def test_deleting_a_file_that_carries_an_identifier_is_not_blocked(tmp_path, capsys):
+    lst = _repo(tmp_path)
+    _stage(tmp_path, "imported/Routine_Zorvan.ics", "BEGIN:VCALENDAR Zorvan\n")
+    subprocess.run(["git", "commit", "-q", "-m", "x"], cwd=tmp_path, check=True)
+    subprocess.run(["git", "rm", "-q", "imported/Routine_Zorvan.ics"], cwd=tmp_path, check=True)
+    assert pig.main(["--staged", "--list", str(lst), "--repo", str(tmp_path)]) == 0
+    capsys.readouterr()
+
+
 def test_without_the_list_the_guard_skips_unless_required(tmp_path, capsys):
     _repo(tmp_path)
     missing = tmp_path / "nope.txt"
