@@ -2,11 +2,6 @@
   "description": "Dead paths in navigation files that are kept on purpose. Checked by 30_SCRIPTS/verification/navigation_links.py; an entry that no longer matches fails as stale.",
   "entries": [
     {
-      "file": ".claude/skills/cost-router/SKILL.md",
-      "target": "07_EVALUATION/reports/cost_router_claude_ab_benchmark_2026-10-21_phase2_final/SUMMARY.md",
-      "reason": "evidence report exists only uncommitted in the main working copy (kept for inspection, 2026-10-30); remove this entry when it is committed or the citation is dropped"
-    },
-    {
       "file": "00_GOVERNANCE/protocols/Agent_Capability_Registry.md",
       "target": "99_SYSTEM/Agent_Capability_Registry.md",
       "reason": "provenance note: says where the file came from before commit dbcfbc502 deleted 99_SYSTEM; historical, not a path to follow"
