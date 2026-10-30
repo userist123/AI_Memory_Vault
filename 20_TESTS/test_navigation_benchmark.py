@@ -26,7 +26,7 @@ def test_every_repeat_0_run_comes_before_any_repeat_1_run():
 def test_a_path_or_a_vault_uri_both_grade_as_the_gold_file():
     by_path = {"answer": "text\nANSWER_PATH: `10_DOCUMENTATION/procedures/Backup.md`\nANSWER: kept for 7 days"}
     by_uri = {"answer": "ANSWER_PATH: vault://procedures/backup\nANSWER: Backups are kept 7 days."}
-    with_repo = {"answer": "ANSWER_PATH: <REPO>\\10_DOCUMENTATION\\procedures\\Backup.md:12\nANSWER: 7 days"}
+    with_repo = {"answer": "ANSWER_PATH: <REPO>\\10_DOCUMENTATION\\procedures\\Backup.md:12\nANSWER: 7 days"}  # hygiene: intentional-absolute-path
     for rec in (by_path, by_uri, with_repo):
         g = navb.grade(rec, GOLD, URIS)
         assert g["correct"], (rec, g)
