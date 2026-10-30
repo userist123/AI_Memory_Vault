@@ -63,6 +63,29 @@ def context_tokens(path) -> Optional[int]:
     return None
 
 
+def last_step_index(path) -> Optional[int]:
+    """Extract the latest step_index from an Antigravity or Claude Code transcript tail."""
+    tail = _read_tail(path)
+    if not tail:
+        return None
+    for line in reversed(tail.splitlines()):
+        if '"step_index"' not in line and '"stepIdx"' not in line:
+            continue
+        try:
+            rec = json.loads(line)
+        except ValueError:
+            continue
+        if not isinstance(rec, dict):
+            continue
+        idx = rec.get("step_index") if rec.get("step_index") is not None else rec.get("stepIdx")
+        if idx is not None:
+            try:
+                return int(idx)
+            except (ValueError, TypeError):
+                pass
+    return None
+
+
 def last_user_prompt(path) -> str:
     """Extract the latest user prompt from an Antigravity or Claude Code transcript tail."""
     tail = _read_tail(path)
