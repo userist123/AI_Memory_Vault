@@ -1,0 +1,18 @@
+{
+ "q": "N21",
+ "condition": "V",
+ "repeat": 0,
+ "run_id": "n049",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 7,
+ "total_cost_usd": 0.0772775,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 872,
+  "cache_read_input_tokens": 70735,
+  "cache_creation_input_tokens": 15367
+ },
+ "answer": "The Performance Rules in the JARVIS Command Center Design System permit a static Node server only. The same rules also say there is no external font or UI framework dependency, the visual system is CSS-first, and there is no continuous canvas/WebGL dependency for the core dashboard. Animations are limited to low-cost transforms and opacity.\n\nSource: `vault://projects.workspaces.jarvis_web/design_system` sha256:bf148c03afe8, Performance Rules section, about L47-L53. I counted those lines from the file's structure rather than reading exact numbers from the tool output.\n\nANSWER_PATH: vault://projects.workspaces.jarvis_web/design_system\nANSWER: Static Node server only (\"Static Node server only.\")"
+}

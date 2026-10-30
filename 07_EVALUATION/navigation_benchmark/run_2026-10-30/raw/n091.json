@@ -1,0 +1,18 @@
+{
+ "q": "N01",
+ "condition": "I",
+ "repeat": 1,
+ "run_id": "n091",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.0288763,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 581,
+  "cache_read_input_tokens": 44943,
+  "cache_creation_input_tokens": 4640
+ },
+ "answer": "The council budget gate picks from four tiers: NONE, LIGHT, STANDARD and HIGH_RISK. It does not read the documented numeric council limits. The Council Context Budget note says the gate, `memory/council_budget_controller.py`, \"reads none of these values\". I did not open the controller code itself, so this rests on the note's own enforcement-status paragraph.\n\nANSWER_PATH: 00_GOVERNANCE/protocols/Council_Context_Budget.md\nANSWER: The council gate `memory/council_budget_controller.py` picks a tier (NONE / LIGHT / STANDARD / HIGH_RISK) and reads none of these values."
+}

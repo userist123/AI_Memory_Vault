@@ -1,0 +1,18 @@
+{
+ "q": "N07",
+ "condition": "I",
+ "repeat": 0,
+ "run_id": "n013",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 7,
+ "total_cost_usd": 0.069245,
+ "usage": {
+  "input_tokens": 12,
+  "output_tokens": 1168,
+  "cache_read_input_tokens": 104130,
+  "cache_creation_input_tokens": 11782
+ },
+ "answer": "The vault's lesson note says that after you change any limit, you should re-run everything downstream that derives a value from it, not only what references it by name. Here the candidate limit was raised to 200. The expansion budget was `min(2*len(notes), 20) - len(notes)`, and that went negative. Expansion therefore reported `ok` while adding zero nodes. The note adds that arithmetic on a constant is a dependency no import graph shows. It also says an impossible metric, such as context recall above candidate recall, should be treated as a bug in the measurement before you believe it.\n\nANSWER_PATH: 01_ARCHITECTURE/memory/Lessons/Two_Correct_Changes_Can_Cancel.md\nANSWER: After changing any limit, re-run everything downstream that derives a value from it, not just what references it by name. Arithmetic on a constant is a dependency that no import graph shows. Treat an impossible metric as a bug in the measurement before believing it."
+}

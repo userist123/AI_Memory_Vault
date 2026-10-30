@@ -1,0 +1,18 @@
+{
+ "q": "N01",
+ "condition": "V",
+ "repeat": 1,
+ "run_id": "n109",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 7,
+ "total_cost_usd": 0.11197110000000002,
+ "usage": {
+  "input_tokens": 10,
+  "output_tokens": 1135,
+  "cache_read_input_tokens": 122291,
+  "cache_creation_input_tokens": 22093
+ },
+ "answer": "The council budget gate can choose from four tiers: **NONE** (council skipped), **LIGHT** (verifier only, no retrieval), **STANDARD** (retrieval plus verifier) and **HIGH_RISK** (retrieval plus verifier, with forced review). I confirmed these in the `CouncilTier` enum in `03_IMPLEMENTATION/packages/memory/council_budget_controller.py`.\n\nNo, the gate doesn't read the documented numeric council limits. The protocol doc says the gate picks a tier and \"reads none of these values\". Other code does enforce most of those limits: the agent router enforces the agent, skill, memory-result and graph-hop limits. The two token caps (600 and 2500) aren't enforced anywhere. I didn't read the gate's code for numeric limits myself. I only grepped it for `max_`/`MAX_` and found none.\n\nANSWER_PATH: 00_GOVERNANCE/protocols/Council_Context_Budget.md\nANSWER: The council gate `memory/council_budget_controller.py` picks a tier (NONE / LIGHT / STANDARD / HIGH_RISK) and reads none of these values (the documented numeric limits)."
+}

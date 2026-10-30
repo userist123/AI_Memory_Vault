@@ -1,0 +1,18 @@
+{
+ "q": "N08",
+ "condition": "V",
+ "repeat": 0,
+ "run_id": "n041",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 23,
+ "total_cost_usd": 0.2372221,
+ "usage": {
+  "input_tokens": 28,
+  "output_tokens": 4235,
+  "cache_read_input_tokens": 462001,
+  "cache_creation_input_tokens": 37154
+ },
+ "answer": "The scanner returns its most severe verdict, BLOCK, when it finds active data-access evidence together with active network or external-destination evidence. That means a complete data-access-to-network chain. A single active indicator only gets REVIEW, and no active indicator gets SAFE.\n\nThe scanner's own text is in `security/SKILL_EXFILTRATION_SCANNER.md` lines 20-24. It treats educational examples such as \"Ignore all previous instructions\" as retained evidence rather than active exfiltration instructions. It also says a static verdict is not proof that exfiltration actually occurred.\n\nANSWER_PATH: security/SKILL_EXFILTRATION_SCANNER.md\nANSWER: BLOCK = active data-access evidence plus active network/external-destination evidence."
+}

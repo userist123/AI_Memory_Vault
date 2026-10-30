@@ -1,0 +1,18 @@
+{
+ "q": "N07",
+ "condition": "V",
+ "repeat": 1,
+ "run_id": "n102",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 12,
+ "total_cost_usd": 0.11323060000000001,
+ "usage": {
+  "input_tokens": 20,
+  "output_tokens": 1943,
+  "cache_read_input_tokens": 238406,
+  "cache_creation_input_tokens": 17480
+ },
+ "answer": "The vault's lesson says that after you change any limit, you should re-run everything downstream that derives a value from it. Re-running only what references it by name isn't enough. The expansion budget was `min(2*len(notes), 20) - len(notes)`, and raising the candidate limit to 200 made it negative. The lesson calls arithmetic on a constant \"a dependency that no import graph shows\". It adds that an impossible metric should be treated as a bug in the measurement before you believe it.\n\nANSWER_PATH: 01_ARCHITECTURE/memory/Lessons/Two_Correct_Changes_Can_Cancel.md\nANSWER: \"After changing any limit, re-run everything downstream that **derives** a value from it, not just what references it by name. Arithmetic on a constant is a dependency that no import graph shows. And treat an impossible metric as a bug in the measurement before believing it.\""
+}

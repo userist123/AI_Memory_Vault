@@ -1,0 +1,18 @@
+{
+ "q": "N16",
+ "condition": "G",
+ "repeat": 0,
+ "run_id": "n028",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.0392168,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 643,
+  "cache_read_input_tokens": 58748,
+  "cache_creation_input_tokens": 6724
+ },
+ "answer": "A1 held-out context_recall rising by exactly one measurable case (5/27, 0.185) over the 4/27 baseline was declared inconclusive in advance. The flag stays off pending more data. The file also says a rise to 6/27 or more would confirm the dev result, and 4/27 or lower would disconfirm it.\n\nANSWER_PATH: 07_EVALUATION/r025_wp8_a1_heldout/WP8_PREREGISTRATION.md\nANSWER: A move of exactly +1 measurable case (5/27, 0.185) over the 4/27 baseline was pre-declared inconclusive: \"reported as such, flag stays off pending more data\"."
+}

@@ -1,0 +1,18 @@
+{
+ "q": "N13",
+ "condition": "V",
+ "repeat": 1,
+ "run_id": "n124",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.0202706,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 444,
+  "cache_read_input_tokens": 47306,
+  "cache_creation_input_tokens": 2772
+ },
+ "answer": "The corpus health check found 5 exact-duplicate groups covering 13 files, measured across the 957 indexed notes. None of the 13 files is a duplicated knowledge note.\n\nANSWER_PATH: 07_EVALUATION/corpus_health/EXACT_DUPLICATES.md\nANSWER: \"5 groups, 13 files.\" (SHA-256 over whitespace-normalised lowercase content, across the 957 indexed notes)"
+}

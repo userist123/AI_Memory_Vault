@@ -1,0 +1,18 @@
+{
+ "q": "N15",
+ "condition": "I",
+ "repeat": 0,
+ "run_id": "n011",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.0484705,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 634,
+  "cache_read_input_tokens": 64945,
+  "cache_creation_input_tokens": 8905
+ },
+ "answer": "The B5 baseline report gives a context-to-input ratio of 0.934. It appears twice, once as `context_to_input_ratio` and once as \"Context/input ratio\". The same report lists an output-to-input ratio of 0.024.\n\nANSWER_PATH: 07_EVALUATION/reports/b5_baseline/B5_TOKEN_EFFICIENCY_REPORT.md\nANSWER: 0.934"
+}
