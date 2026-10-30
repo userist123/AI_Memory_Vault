@@ -1,0 +1,20 @@
+{
+ "case": "T5",
+ "condition": "B",
+ "repeat": 2,
+ "run_id": "r043",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 5,
+ "total_cost_usd": 0.04614050000000001,
+ "usage": {
+  "input_tokens": 10,
+  "output_tokens": 1649,
+  "cache_read_input_tokens": 240585,
+  "cache_creation_input_tokens": 1393
+ },
+ "verdict": "Yes — merging PR 42 would publish `docs/internal/runbooks` (including the internal DB-failover runbook) because export is driven by domain visibility, so the \"no visibility change\" claim is false.",
+ "answer": "Yes. Merging PR 42 changes what the public site exports, so the \"no visibility change\" claim in the PR description is wrong.\n\n**Why:**\n- `site/export.py:4` publishes every root of every domain whose `visibility` is `public`. It looks only at the domain's flag and never at the individual path.\n- `config/domains.yaml` defines `docs` as `public` and `ops` as `private`. `ops` has the root `docs/internal`.\n- PR 42 (`pr.diff`) adds `docs/internal/runbooks` to the `docs` roots. `docs` keeps its `public` visibility, so the new root is exported along with `docs/public`.\n- `docs/internal/runbooks/db_failover.md` sits under that root. It says \"Rotate the root credential, then promote the replica.\" That is an internal runbook, and it would become public.\n- The `visibility:` line is not edited. Visibility is inherited from the domain, so the change still moves content from private to public.\n\n**Claim card**\n- CONCLUSION: Merging would add `docs/internal/runbooks` (currently `db_failover.md`) to the public export. This contradicts the PR's \"No visibility change\" statement.\n- CHECKED: I read `PR.md`, `pr.diff`, `config/domains.yaml`, `site/export.py` and the two docs files at commit 13a214f. A repo-wide grep found no other users of `exported_roots` or `domains.yaml`.\n- NOT CHECKED:\n  - I did not run the exporter. The Bash call that would have run it was blocked pending approval.\n  - I did not look at any real CI or deploy pipeline, since none is in this repo.\n  - I did not look for other filters, such as a path allowlist applied downstream of `exported_roots`.\n  - I did not look at the upstream PR or branch, only the `pr.diff` file.\n- ALTERNATIVES:\n  - A hidden downstream filter might exclude internal paths. The separating observation is a caller of `exported_roots` that filters. I grepped and found no caller in this repo, so I saw no such filter, but the real pipeline is outside the repo.\n  - The `ops` domain might override `docs`. The code has no override logic, and the `ops` root is a different path string.\n- FALSIFIER: Running `exported_roots` on the patched config and getting no `docs/internal/runbooks` in the result would disprove this. Searched: partly. I traced the code by reading it but did not execute it.\n- CONFIDENCE: high. It is capped below very_high because I did not run the code and could not see the real pipeline.\n\n**Cheapest next check:** run `exported_roots` on the patched config. Alternatively, fix the PR by keeping the runbooks under a private domain, or by adding a per-path visibility rule.\n\nVERDICT: Yes — merging PR 42 would publish `docs/internal/runbooks` (including the internal DB-failover runbook) because export is driven by domain visibility, so the \"no visibility change\" claim is false.",
+ "stderr_tail": null
+}

@@ -1,0 +1,20 @@
+{
+ "case": "T2",
+ "condition": "B",
+ "repeat": 2,
+ "run_id": "r064",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.13871709999999998,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 1520,
+  "cache_read_input_tokens": 167771,
+  "cache_creation_input_tokens": 26681
+ },
+ "verdict": "export_pdf` exists only as an invalid-PDF stub on local branch `feature/pdf-export` (commit 2e35b49) and not on `main`, so build on or finish that stub rather than starting from nothing.",
+ "answer": "Yes, an `export_pdf` already exists, but only on the local branch `feature/pdf-export`, in commit `2e35b49` (\"wip: pdf export\"). It is not on `main`, so you don't need to write it from scratch.\n\nThe file is `src/pdf.py`:\n```python\nfrom report import build_report\n\ndef export_pdf(rows, path):\n    \"\"\"Render the report to a PDF file.\"\"\"\n    text = build_report(rows)\n    with open(path, 'wb') as fh:\n        fh.write(b'%PDF-1.4\\n' + text.encode())\n```\n\n- **It is a stub, not a working PDF exporter.** It writes a `%PDF-1.4` header followed by the plain report text. That is not a valid PDF, because it has no objects, xref table or trailer, so PDF readers will reject it.\n- **It still gives you a start.** The function signature and the use of `build_report` are reusable. The actual PDF rendering still has to be written, for example with reportlab or fpdf2.\n- **`main` has no PDF code.** The README on `main` says \"PDF export: not implemented yet.\"\n\n```\nCONCLUSION:   An export_pdf exists only as a WIP stub on local branch feature/pdf-export (2e35b49); nothing on main, nothing found in any other ref.\nCHECKED:      `git branch -a` (2 branches: main, feature/pdf-export, no remotes); `git log --all` (2 commits total); `git log --all -S\"export_pdf\"` and `--grep=pdf` (both hit only 2e35b49); `git grep` for export_pdf variants over every commit from `git rev-list --all` (1 hit: src/pdf.py:4); `git stash list` (empty); reflog (no dangling or orphaned commits); main's tracked files (README.md, src/report.py).\nNOT CHECKED:  Other clones or machines, unpushed work elsewhere, and non-git copies. There are no remotes configured, so nothing can be fetched. Unreachable objects were not scanned with `git fsck`. Whether the stub's output opens in a PDF reader was inferred from its code, not run.\nALTERNATIVES: A fuller implementation might live outside this repo or under a different name such as render_pdf. The `-i --grep=pdf` and `-S` searches found nothing besides the stub, and the repo's only tracked files are the two on main and the stub. The other-machine case was not tested.\nFALSIFIER:    Another branch or commit with an export_pdf, or a differently named PDF function. Searched: yes, across all refs and history.\nCONFIDENCE:   high for this repository; unknown beyond it.\n```\n\nVERDICT: `export_pdf` exists only as an invalid-PDF stub on local branch `feature/pdf-export` (commit 2e35b49) and not on `main`, so build on or finish that stub rather than starting from nothing.",
+ "stderr_tail": null
+}

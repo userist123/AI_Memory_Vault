@@ -1,0 +1,20 @@
+{
+ "case": "T3",
+ "condition": "B",
+ "repeat": 1,
+ "run_id": "r040",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.032805799999999996,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1276,
+  "cache_read_input_tokens": 143818,
+  "cache_creation_input_tokens": 1413
+ },
+ "verdict": "The config loads 3 plugins (auth, cache, metrics), but the only startup figure, 9.2 s with 14 plugins on v1.2, is stale, so the current startup time is unknown.",
+ "answer": "The repo has no source code, so I can't confirm a runtime plugin count. The config enables 3 plugins. No current startup time exists.\n\nThe plugin count is consistent across two sources. The startup time is stale.\n\n**Plugins: 3 (`auth`, `cache`, `metrics`).**\n- `config.yaml:3-6` lists those three plugins for version 2.0.0.\n- `CHANGELOG.md` for 2.0.0 (2026-06-12) says \"Removed 11 legacy plugins; three remain.\" That matches 14 − 11 = 3.\n- `docs/PERFORMANCE.md` says 14 plugins, but it was measured on v1.2 on 2026-01-05, so it is out of date.\n\n**Startup time: unknown for the current version.**\n- The only figure is 9.2 s, from `docs/PERFORMANCE.md`. It was measured on v1.2 with 14 plugins.\n- v1.2 predates the plugin removal in 2.0.0. It also predates the loader rewrite, if that rewrite shipped in 1.2.0 after the measurement. The 9.2 s figure therefore doesn't describe the current app.\n- With 11 fewer plugins, startup is probably faster. That is a guess, because nothing here measures it.\n\n```\nCONCLUSION:   Config enables 3 plugins at 2.0.0; startup time for 2.0.0 is not documented (9.2 s is a v1.2 figure).\nCHECKED:      All 3 tracked files (config.yaml, CHANGELOG.md, docs/PERFORMANCE.md) at commit 3abe9aa; repo has no source files.\nNOT CHECKED:  Actual runtime loading (no code to read or run), other branches (only \"initial\" commit seen), any plugin auto-discovery or defaults beyond config.yaml, real startup timing.\nALTERNATIVES: Plugins might be loaded from outside config.yaml (built-ins, auto-discovery) — separating observation: loader code, absent here (made: no).\nFALSIFIER:    A run or loader code showing a different plugin count or a measured startup time — searched: no (no code to run).\nCONFIDENCE:   medium for \"3 plugins in config\" (config and changelog agree); unknown for startup time.\n```\n\nThe cheapest next check is to run the app and time its startup, or to find the loader source and measure it.\n\nVERDICT: The config loads 3 plugins (auth, cache, metrics), but the only startup figure, 9.2 s with 14 plugins on v1.2, is stale, so the current startup time is unknown.",
+ "stderr_tail": null
+}

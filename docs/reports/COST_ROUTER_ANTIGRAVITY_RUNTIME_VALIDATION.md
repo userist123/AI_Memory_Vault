@@ -49,7 +49,7 @@ According to the local specification at `C:\Users\user\.gemini\antigravity\built
 In previous audit runs, enabling hooks on Windows resulted in:
 ```text
 JSON hook "jsonhook__cost-router_PreToolUse_0_0" failed: command failed: exit status 2,
-stderr: python: can't open file 'c:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\".agents\skills\cost-router\hook_antigravity.py"': [Errno 22] Invalid argument
+stderr: python: can't open file 'C:\Users\user\Documents\Codex\AI_Memory_Vault_CODEX_READY\.agents\".agents\skills\cost-router\hook_antigravity.py"': [Errno 22] Invalid argument
 ```
 
 ### Exact Mechanism of the Defect:

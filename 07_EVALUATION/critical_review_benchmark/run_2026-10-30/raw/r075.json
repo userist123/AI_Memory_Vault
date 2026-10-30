@@ -1,0 +1,20 @@
+{
+ "case": "T4",
+ "condition": "A",
+ "repeat": 0,
+ "run_id": "r075",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.0186073,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 317,
+  "cache_read_input_tokens": 134653,
+  "cache_creation_input_tokens": 490
+ },
+ "verdict": "data/users.csv contains 119 users (120 lines including the header).",
+ "answer": "`data/users.csv` has 119 users. The file has 120 lines, and the first is the header (`id,name,email,created`). The last row has id 119, and there are no blank lines.\n\nVERDICT: data/users.csv contains 119 users (120 lines including the header).",
+ "stderr_tail": null
+}

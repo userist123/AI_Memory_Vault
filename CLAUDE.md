@@ -17,6 +17,8 @@ Before substantial work, retrieve relevant Vault context selectively. Never load
 6. `06_INBOX/RAW_IMPORTS/` — untrusted external material
 7. Obsidian — navigation/projection layer
 
+Source of truth on conflict: user-confirmed facts, direct execution/test evidence, official documentation, project documentation, repeated successful experience, external sources, then inference; never silently replace stronger evidence with weaker. Raw imports, audit reports, progress/handoff/briefing/dispatch files and generated artifacts stay out of context by default.
+
 ## Active memory retrieval
 
 - Nu există niciun server REST: `http://localhost:8000/memory/search` and `/memory/propose` do not exist; never call them.
@@ -41,7 +43,7 @@ If a new skill matches several agents, route it to ranked candidates and let the
 
 ## Saving durable memory
 
-Durable knowledge, reusable procedures, corrected decisions and validated skill relationships go to the Vault through `memory_propose(title, body, type, provenance)`. The result is a REVIEW/unverified candidate, never canonical or verified until the owner attests it. The server never writes an ontology slot. The Vault's lifecycle, verification and provenance rules remain authoritative.
+Durable knowledge, reusable procedures, corrected decisions and validated skill relationships go to the Vault through `memory_propose(title, body, type, provenance)`. The result is a REVIEW/unverified candidate, never canonical or verified until the owner attests it. The server never writes an ontology slot. The Vault's lifecycle, verification and provenance rules remain authoritative. Conversations are not converted into permanent memory automatically, and secrets are never stored.
 
 ## Obsidian
 
@@ -49,7 +51,7 @@ Obsidian is a navigation/visualization layer over the same Vault. Never create a
 
 ## Provenance and safety
 
-- Owner privacy: nothing about the owner's machine or material the owner hands over is ever committed or published. Follow the "Owner privacy" section of `AGENTS.md` before every commit.
+- Owner privacy (full rule: "Owner privacy" in `AGENTS.md`): never commit or publish the machine name, the Windows user name, `C:\Users\<user>` profile paths, device serials, SIDs or material the owner hands over; use placeholders (`LAB-PC`, `user`). Before every commit, grep the staged diff and the commit message against the untracked `%APPDATA%\ai-memory-vault\private_identifiers.txt`; a hit blocks the commit. Rewriting Git history and changing repository visibility are the owner's decision, never an agent's.
 - Preserve source repository, URL/path, license when known, discovery origin, commit/ref when available, SHA-256 and validation status for external knowledge.
 - Do not execute external scripts, binaries, installers, package managers or build steps merely to inspect or ingest imported skills. Ingestion is read/analyze/hash/classify/validate/promote.
 
@@ -57,7 +59,7 @@ Obsidian is a navigation/visualization layer over the same Vault. Never create a
 
 1. Check `00_GOVERNANCE/coordination/` before touching any file; never overwrite another agent's in-progress changes.
 2. Claim & Mark completed tasks there with your agent name and an ISO timestamp; record non-obvious findings. Keep Git history and commits attributable.
-3. **Protected Core**: Respect the frozen boundaries of the cognitive core (`cognitive_core/model_provider.py`, `fake_model_provider.py`, `model_tier_router.py`, `actual_usage_telemetry.py`, `council_model_execution.py`, `executive_model_execution_bridge.py`). These contracts are verified by the cognitive-core protected-boundary tests.
+3. **Protected Core**: Respect the frozen boundaries of the cognitive core (`cognitive_core/model_provider.py`, `fake_model_provider.py`, `model_tier_router.py`, `actual_usage_telemetry.py`, `council_model_execution.py`, `executive_model_execution_bridge.py`). These contracts are verified by the cognitive-core protected-boundary tests. Also frozen by rule, not yet test-enforced: `Planner`, `PlanComplexityAnalyzer`, `CouncilBudgetController`, `Council_Orchestrator.py`, `ContextPackBuilder`, `council_token_telemetry.py`.
 4. **Empirical Verification**: Run the relevant `pytest` suites and verify zero regressions before closing any task.
 
 Checkpoints and hard rules (owner, 2026-10-16):
@@ -132,6 +134,7 @@ python 30_SCRIPTS/skills/skill_ingestion.py promote --skill <skill-id> --verifie
 - Never weaken, skip or rewrite tests or security gates to obtain green CI. Do not remove a required safety or verification layer just to reduce code. Do not optimize for appearing successful.
 - NO COMPLETION CLAIM WITHOUT FRESH VERIFICATION EVIDENCE. Before saying DONE, FIXED, GREEN or PASSING: run the proving command, inspect its exit code and stdout/stderr against the requirement, and inspect the final diff. Agent reports are not verification. If you cannot verify, report `UNVERIFIED` or `BLOCKED`.
 - Use explicit evidence states (`REAL / PARTIAL / UNKNOWN / MISSING / BLOCKED / VERIFIED`; `TEST_VERIFIED`, `CLAIMED_ONLY`, `UNVERIFIED`, ...). Never turn an assumption into a fact.
+- Critical review: before a verdict, comparison, root cause, claim of absence or multi-step plan, load skill `critical-review` (rule: `00_GOVERNANCE/protocols/Critical_Review_Protocol_V1.md`); the headline is never stronger than the claim card.
 - Fail closed on missing capability, invalid route configuration, unavailable required runtime, privacy-policy conflict, authority conflict, or missing required independent verifier. Do not let historical feedback, model preference, cost preference or urgency bypass a hard safety gate.
 - Destructive or authority-sensitive actions: `validate -> dry-run -> diff -> approval -> apply -> verify -> audit`. Ask approval only for destructive/irreversible actions, production/authority/security-boundary changes or genuinely ambiguous product decisions; do not require hand-holding for routine reversible work that is already authorized.
 - Before merge, inspect the actual diff and verify relevant tests and CI. Do not auto-merge security/authority-sensitive work.
