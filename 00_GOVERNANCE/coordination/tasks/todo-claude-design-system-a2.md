@@ -67,3 +67,28 @@ Origin: todo-claude-frontend-design.md -> owner picked A2 (2026-10-22, chat).
 ## Next
 - CI on #312 once; then mark ready for review on owner ask (merge = owner).
 - Phase 2 (new session): see PLAN.md "Phase 2".
+
+## Phase 2 (2026-10-22, claude main session) - scopes .home / .ws / .ws .side
+- Work clone: D:\claude-work\ds-tokens (C: 6 GB free), branch `claude/design-system-scopes` from f76cdbc7c (PR #312 head).
+- [x] Inventory: 3 scopes redeclare colours (.home 24, .ws 24, .ws .side 22 props; .ws .side is the light inspector,
+      not in the old plan). Only other custom props in globals.css: component-level --btn-h (not tokens).
+- [x] Tests first: test/scopes.test.mjs + fixture test/fixtures/casa3d-scopes-baseline.css (frozen from e5e62ac53),
+      lib computed() models CSS inheritance + var() substitution at the declaring element. Red before (4 fail), green after.
+- [x] Tokens: scopes/{home,ws,ws-side}/color.json (OKLCH from hex via colorjs.io, one-off script outside repo);
+      color.paper.{default,sunken} + color.border.rule as references; aliases paper/paper-2/graphite/lead/rule;
+      brand.json scopes. build.mjs: in-memory DTCG merge, scope emits declared + changed-vs-parent, repeats aliases.
+- [x] globals.css: scope custom props + :root legacy aliases removed (CRLF kept). Raw literals 477 -> 415.
+- [x] Verify: npm test 22/22; 9 mutation probes (8 caught, 1 equivalent); Casa3D tsc 0, next build 0, Vitest
+      108/108 files 651 tests; Chromium CDP props equal on 4 cases, pixels editor 0, home = null-control noise.
+      Screenshots sent to owner. Evidence numbers in design-system/PLAN.md "Phase 2".
+- [x] vault-reviewer (opus): APPROVE WITH NOTES, VERIFIED (own postcss cascade check, 9 mutation probes, fixture vs
+      e5e62ac53, 477->415, CRLF). LOW 1-2 fixed: build throws on missing selector, duplicate scope name, scope dir not in
+      brand.json (each mutation caught). Accepted LOW 3 (merge replaces SD collision error; types uniqueness test covers it),
+      LOW 4 (ruleProps misses minified one-liners; the global no-generated-property test covers it).
+- [ ] Commit on claude/design-system-scopes, push, draft PR stacked on #312 (base claude/design-system-tokens).
+- Note: .claude/launch.json in the C: tree got a local `casa3d-ds-scopes` entry (dev server of the D: clone); not committed.
+
+## Next (phase 3, NEW session: read only this file + design-system/PLAN.md "Phase 3")
+- Branch from claude/design-system-scopes (or main once #312 and the phase-2 PR merge); work in D:\claude-work\ds-tokens.
+- Replace raw literals (415) page by page, same Chromium parity (script pattern: CDP + CSSOM put-back + null and
+  positive controls; one-off script lived in D:\claude-work\generify.mjs, outside the repo).

@@ -116,6 +116,10 @@
           ],
           "hex": "#CFC6B8"
         }
+      },
+      "rule": {
+        "$description": "Old `--rule`; the light inspector (.ws .side) draws it darker than its border.",
+        "$value": "{color.border.default}"
       }
     },
     "accent": {
@@ -221,6 +225,15 @@
           ],
           "hex": "#5E3F1D"
         }
+      }
+    },
+    "paper": {
+      "$description": "Drawing paper (old `--paper`, `--paper-2`): the canvas colour, except in the editor where the plan stays light.",
+      "default": {
+        "$value": "{color.bg.canvas}"
+      },
+      "sunken": {
+        "$value": "{color.bg.sunken}"
       }
     }
   }

@@ -40,6 +40,7 @@
   --color-fg-numeric: #6F675D;
   --color-border-default: #E3DDD3;
   --color-border-strong: #CFC6B8;
+  --color-border-rule: #E3DDD3;
   --color-accent-default: #7A5A36;
   --color-accent-soft: #F1E9DE;
   --color-status-ok: #3F5F41;
@@ -49,6 +50,8 @@
   --color-status-err: #9E3A2F;
   --color-status-err-soft: #F7E8E4;
   --color-focus-ring: #5E3F1D;
+  --color-paper-default: #F6F3EE;
+  --color-paper-sunken: #EEE9E1;
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-full: 999px;
@@ -82,6 +85,11 @@
   --err: var(--color-status-err);
   --err-soft: var(--color-status-err-soft);
   --focus: var(--color-focus-ring);
+  --paper: var(--color-paper-default);
+  --paper-2: var(--color-paper-sunken);
+  --graphite: var(--color-fg-default);
+  --lead: var(--color-fg-muted);
+  --rule: var(--color-border-rule);
   --s-1: var(--space-1);
   --s-2: var(--space-2);
   --s-3: var(--space-3);
@@ -111,4 +119,153 @@
   --dur-slow: var(--motion-duration-slow);
   --ease-out: var(--motion-easing-out);
   --ease-std: var(--motion-easing-standard);
+}
+
+/* scope home: brands/casa3d/scopes/home */
+.home {
+  --color-bg-canvas: #F1EDE5;
+  --color-bg-sunken: #E7E0D6;
+  --color-bg-surface: #FBF8F1;
+  --color-bg-raised: #FFFDF8;
+  --color-fg-default: #241B24;
+  --color-fg-secondary: #4C404B;
+  --color-fg-muted: #62545F;
+  --color-fg-numeric: #655962;
+  --color-border-default: #DCD1C8;
+  --color-border-strong: #BEB0A7;
+  --color-border-rule: #DCD1C8;
+  --color-accent-default: #F06A53;
+  --color-accent-soft: #F7E3DC;
+  --color-status-ok: #2F6853;
+  --color-status-ok-soft: #E0EEE5;
+  --color-status-warn: #86551D;
+  --color-status-warn-soft: #F5E8CE;
+  --color-status-err: #A33E3A;
+  --color-status-err-soft: #F6E2DF;
+  --color-focus-ring: #B83B2C;
+  --color-paper-default: #F1EDE5;
+  --color-paper-sunken: #E7E0D6;
+  /* names the app already uses */
+  --bg: var(--color-bg-canvas);
+  --bg-2: var(--color-bg-sunken);
+  --surface: var(--color-bg-surface);
+  --surface-2: var(--color-bg-raised);
+  --ink: var(--color-fg-default);
+  --ink-2: var(--color-fg-secondary);
+  --ink-3: var(--color-fg-muted);
+  --ink-num: var(--color-fg-numeric);
+  --line: var(--color-border-default);
+  --line-strong: var(--color-border-strong);
+  --accent: var(--color-accent-default);
+  --accent-soft: var(--color-accent-soft);
+  --ok: var(--color-status-ok);
+  --ok-soft: var(--color-status-ok-soft);
+  --warn: var(--color-status-warn);
+  --warn-soft: var(--color-status-warn-soft);
+  --err: var(--color-status-err);
+  --err-soft: var(--color-status-err-soft);
+  --focus: var(--color-focus-ring);
+  --paper: var(--color-paper-default);
+  --paper-2: var(--color-paper-sunken);
+  --graphite: var(--color-fg-default);
+  --lead: var(--color-fg-muted);
+  --rule: var(--color-border-rule);
+}
+
+/* scope ws: brands/casa3d/scopes/ws */
+.ws {
+  --color-bg-canvas: #211A23;
+  --color-bg-sunken: #302630;
+  --color-bg-surface: #28212B;
+  --color-bg-raised: #342B36;
+  --color-fg-default: #F6F0E9;
+  --color-fg-secondary: #D8CDD5;
+  --color-fg-muted: #A99BA8;
+  --color-fg-numeric: #C7B9C5;
+  --color-border-default: #453745;
+  --color-border-strong: #655264;
+  --color-border-rule: #453745;
+  --color-accent-default: #F06A53;
+  --color-accent-soft: #4A2C32;
+  --color-status-ok: #9AD1A9;
+  --color-status-ok-soft: #203B30;
+  --color-status-warn: #EFC777;
+  --color-status-warn-soft: #49381E;
+  --color-status-err: #FF9D95;
+  --color-status-err-soft: #4B272D;
+  --color-focus-ring: #FF8C78;
+  --color-paper-default: #F2EEE6;
+  --color-paper-sunken: #E6DED3;
+  /* names the app already uses */
+  --bg: var(--color-bg-canvas);
+  --bg-2: var(--color-bg-sunken);
+  --surface: var(--color-bg-surface);
+  --surface-2: var(--color-bg-raised);
+  --ink: var(--color-fg-default);
+  --ink-2: var(--color-fg-secondary);
+  --ink-3: var(--color-fg-muted);
+  --ink-num: var(--color-fg-numeric);
+  --line: var(--color-border-default);
+  --line-strong: var(--color-border-strong);
+  --accent: var(--color-accent-default);
+  --accent-soft: var(--color-accent-soft);
+  --ok: var(--color-status-ok);
+  --ok-soft: var(--color-status-ok-soft);
+  --warn: var(--color-status-warn);
+  --warn-soft: var(--color-status-warn-soft);
+  --err: var(--color-status-err);
+  --err-soft: var(--color-status-err-soft);
+  --focus: var(--color-focus-ring);
+  --paper: var(--color-paper-default);
+  --paper-2: var(--color-paper-sunken);
+  --graphite: var(--color-fg-default);
+  --lead: var(--color-fg-muted);
+  --rule: var(--color-border-rule);
+}
+
+/* scope ws-side: brands/casa3d/scopes/ws-side */
+.ws .side {
+  --color-bg-surface: #F7F2E9;
+  --color-bg-raised: #FFFCF6;
+  --color-fg-default: #1F1720;
+  --color-fg-secondary: #3B2F3A;
+  --color-fg-muted: #4B3D4A;
+  --color-fg-numeric: #4B3D4A;
+  --color-border-default: #E1D6CC;
+  --color-border-strong: #BFB0A7;
+  --color-border-rule: #D6C9C0;
+  --color-accent-default: #C63C29;
+  --color-accent-soft: #F7E3DC;
+  --color-status-ok: #245842;
+  --color-status-ok-soft: #E0EEE5;
+  --color-status-warn: #7A4A0A;
+  --color-status-warn-soft: #F5E8CE;
+  --color-status-err: #9A2C22;
+  --color-status-err-soft: #F6E2DF;
+  --color-focus-ring: #A82F1F;
+  --color-paper-default: #F7F2E9;
+  --color-paper-sunken: #EEE6DC;
+  /* names the app already uses */
+  --surface: var(--color-bg-surface);
+  --surface-2: var(--color-bg-raised);
+  --ink: var(--color-fg-default);
+  --ink-2: var(--color-fg-secondary);
+  --ink-3: var(--color-fg-muted);
+  --ink-num: var(--color-fg-numeric);
+  --line: var(--color-border-default);
+  --line-strong: var(--color-border-strong);
+  --accent: var(--color-accent-default);
+  --accent-soft: var(--color-accent-soft);
+  --ok: var(--color-status-ok);
+  --ok-soft: var(--color-status-ok-soft);
+  --warn: var(--color-status-warn);
+  --warn-soft: var(--color-status-warn-soft);
+  --err: var(--color-status-err);
+  --err-soft: var(--color-status-err-soft);
+  --focus: var(--color-focus-ring);
+  --paper: var(--color-paper-default);
+  --paper-2: var(--color-paper-sunken);
+  --graphite: var(--color-fg-default);
+  --lead: var(--color-fg-muted);
+  --rule: var(--color-border-rule);
 }

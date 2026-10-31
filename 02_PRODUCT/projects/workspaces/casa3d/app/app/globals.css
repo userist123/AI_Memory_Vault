@@ -1,11 +1,10 @@
 /* ===================== Sistemul de design Casa3D (audit UI §b): tokeni, butoane, câmpuri =====================
    Valorile (culori, distanțe, raze, umbre, mărimi de text, înălțimi de control) vin din tokens.css, generat de
    02_PRODUCT/projects/workspaces/design-system din tokenii DTCG; nu le scrie aici, schimbă JSON-ul și rulează
-   `npm run build` acolo. Aici rămân doar aliasurile vechi (--paper, --lead, --rule…) și color-scheme.
+   `npm run build` acolo, inclusiv aliasurile vechi (--paper, --lead, --rule…) și re-temele .home, .ws, .ws .side
+   (tokens/brands/casa3d/scopes). Aici rămâne doar color-scheme.
    Contrast verificat AA pe --surface și --bg. */
 :root{
-  /* alias pentru regulile mai vechi */
-  --paper:var(--bg); --paper-2:var(--bg-2); --graphite:var(--ink); --lead:var(--ink-3); --rule:var(--line);
   color-scheme: light;
 }
 @media (pointer:coarse){ :root{ --hit:44px; } }
@@ -947,12 +946,6 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
    Palette: aubergine ink, mineral paper, oxidised vermilion. The plan remains a quiet technical surface.
    The selected object/active mode uses the single brand accent; semantic status colours remain separate. */
 .home{
-  --bg:#F1EDE5;--bg-2:#E7E0D6;--surface:#FBF8F1;--surface-2:#FFFDF8;
-  --ink:#241B24;--ink-2:#4C404B;--ink-3:#62545F;--ink-num:#655962;
-  --line:#DCD1C8;--line-strong:#BEB0A7;--accent:#F06A53;--accent-soft:#F7E3DC;
-  --ok:#2F6853;--ok-soft:#E0EEE5;--warn:#86551D;--warn-soft:#F5E8CE;
-  --err:#A33E3A;--err-soft:#F6E2DF;--focus:#B83B2C;
-  --paper:var(--bg);--paper-2:var(--bg-2);--graphite:var(--ink);--lead:var(--ink-3);--rule:var(--line);
   width:100%;max-width:1720px;min-height:100dvh;margin:0 auto;padding:26px clamp(20px,4.4vw,76px) 88px;
   background:var(--bg);color:var(--ink);font-family:var(--sans);isolation:isolate;
 }
@@ -1050,12 +1043,6 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 
 /* Editor chrome: dark aubergine instrument; light mineral inspector; paper drawing canvas. */
 .ws{
-  --bg:#211A23;--bg-2:#302630;--surface:#28212B;--surface-2:#342B36;
-  --ink:#F6F0E9;--ink-2:#D8CDD5;--ink-3:#A99BA8;--ink-num:#C7B9C5;
-  --line:#453745;--line-strong:#655264;--accent:#F06A53;--accent-soft:#4A2C32;
-  --ok:#9AD1A9;--ok-soft:#203B30;--warn:#EFC777;--warn-soft:#49381E;
-  --err:#FF9D95;--err-soft:#4B272D;--focus:#FF8C78;
-  --paper:#F2EEE6;--paper-2:#E6DED3;--graphite:var(--ink);--lead:var(--ink-3);--rule:var(--line);
   background:#19141B;color:var(--ink);color-scheme:dark;
 }
 .ws .topbar,.ws .stagewrap,.ws .stagebar,.ws .tools,.ws .levelbar{background:var(--surface);color:var(--ink);border-color:var(--line)}
@@ -1100,7 +1087,7 @@ label.f select,label.f input,label.f textarea,.side select{color:var(--ink);font
 .ws .v3bar .btn:hover:not(:disabled),.ws .v3light .btn:hover:not(:disabled){background:#4A3447;color:#fff}
 .ws .v3bar .btn[aria-pressed=true],.ws .v3light .btn[aria-pressed=true]{background:#C63C29;border-color:#C63C29;color:#FFF8F1}
 .ws .hintbar{border:1px solid #D5C9BE;border-radius:999px;background:rgba(255,251,244,.96);color:#574653;box-shadow:0 4px 14px rgba(36,27,36,.08)}
-.ws .side{--ink:#1F1720;--ink-2:#3B2F3A;--ink-3:#4B3D4A;--ink-num:#4B3D4A;--lead:#4B3D4A;--graphite:#1F1720;--rule:#D6C9C0;--paper:#F7F2E9;--paper-2:#EEE6DC;--surface:#F7F2E9;--surface-2:#FFFCF6;--line:#E1D6CC;--line-strong:#BFB0A7;--accent:#C63C29;--accent-soft:#F7E3DC;--focus:#A82F1F;--ok:#245842;--ok-soft:#E0EEE5;--warn:#7A4A0A;--warn-soft:#F5E8CE;--err:#9A2C22;--err-soft:#F6E2DF;
+.ws .side{
   padding:18px;gap:15px;border-left:1px solid #D6C9C0;box-shadow:-12px 0 32px rgba(25,20,27,.08);background:#F7F2E9;color:#1F1720;color-scheme:light}
 .ws .side h3,.ws .side h2,.ws .side h4{color:#1F1720}
 .ws .side .sidetabs{border-bottom-color:#D8CCC2;padding-bottom:12px}

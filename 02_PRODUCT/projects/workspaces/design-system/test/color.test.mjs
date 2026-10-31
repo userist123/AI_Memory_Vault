@@ -1,7 +1,7 @@
 // OKLCH is the design source and hex the exact output; this keeps the two from drifting apart.
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { allTokens } from './tokens.mjs';
+import { allTokens, refTarget } from './tokens.mjs';
 
 // Björn Ottosson, "A perceptual color space for image processing" (OKLab -> linear sRGB).
 function oklchToSrgb([L, C, H]) {
@@ -22,7 +22,7 @@ function oklchToSrgb([L, C, H]) {
 function colours() {
   const out = [];
   for (const t of allTokens()) {
-    if (t.type === 'color') out.push([t.path, t.value]);
+    if (t.type === 'color' && !refTarget(t.value)) out.push([`${t.scope ?? ''}:${t.path}`, t.value]);
     if (t.type === 'shadow') for (const s of [t.value].flat()) out.push([`${t.path}.color`, s.color]);
   }
   return out;

@@ -1,5 +1,5 @@
 {
-  "$description": "Build settings for the Casa3D brand. aliases keeps the CSS names the app already uses (old name -> token path); copyTo lists files the build also writes, relative to the design-system directory.",
+  "$description": "Build settings for the Casa3D brand. aliases keeps the CSS names the app already uses (old name -> token path); scopes re-theme a selector from tokens/brands/<brand>/scopes/<name> (nested under parent when given); copyTo lists files the build also writes, relative to the design-system directory.",
   "name": "casa3d",
   "aliases": {
     "bg": "color.bg.canvas", "bg-2": "color.bg.sunken", "surface": "color.bg.surface", "surface-2": "color.bg.raised",
@@ -8,6 +8,7 @@
     "accent": "color.accent.default", "accent-soft": "color.accent.soft",
     "ok": "color.status.ok", "ok-soft": "color.status.ok-soft", "warn": "color.status.warn", "warn-soft": "color.status.warn-soft",
     "err": "color.status.err", "err-soft": "color.status.err-soft", "focus": "color.focus.ring",
+    "paper": "color.paper.default", "paper-2": "color.paper.sunken", "graphite": "color.fg.default", "lead": "color.fg.muted", "rule": "color.border.rule",
     "s-1": "space.1", "s-2": "space.2", "s-3": "space.3", "s-4": "space.4", "s-5": "space.5", "s-6": "space.6", "s-7": "space.7",
     "r-sm": "radius.sm", "r-md": "radius.md", "r-full": "radius.full",
     "shadow-1": "shadow.1", "shadow-2": "shadow.2",
@@ -17,5 +18,10 @@
     "dur-fast": "motion.duration.fast", "dur-base": "motion.duration.base", "dur-slow": "motion.duration.slow",
     "ease-out": "motion.easing.out", "ease-std": "motion.easing.standard"
   },
+  "scopes": [
+    { "name": "home", "selector": ".home" },
+    { "name": "ws", "selector": ".ws" },
+    { "name": "ws-side", "selector": ".ws .side", "parent": "ws" }
+  ],
   "copyTo": ["../casa3d/app/app/tokens.css"]
 }
