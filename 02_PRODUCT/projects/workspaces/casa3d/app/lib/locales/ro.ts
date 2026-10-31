@@ -753,4 +753,11 @@ export const ro: Dict = {
   "railing.product": "Produs (preț verificat)", "railing.productHint": "Cantitatea vine din lungime: bucăți întregi de profil, panou sau set, stâlpi la cel mult 1,2 m, ori un singur kit de start (panourile de extensie pentru restul lungimii rămân fără preț). Restul sistemului și montajul rămân în lista fără preț.",
   "radiator.productAria": "Produs calorifer, {room}", "radiator.unspecified": "Nespecificat", "radiator.productCleared": "Produsul ales ({name}) are altă mărime și a fost scos; alege un produs de mărimea nouă sau lasă nespecificat.", "radiator.noFit": "Nu e niciun produs cu preț verificat de mărimea aceasta; mărimi disponibile: {sizes} cm.", "hvac.productAria": "Produs aer condiționat, {room}", "railing.productAria": "Produs balustradă, {len}", "radiator.product": "Produs (preț verificat)", "hvac.product": "Aparat split (preț verificat)",
   "sched.el.radiator": "Calorifer", "sched.el.hvac": "Aer condiționat", "sched.el.railing": "Balustradă",
+  // spațiul de lucru (PLAN_A1_3)
+  "ws.focus": "Mod Focus (ascunde panourile)", "ws.focusExit": "Ieși din Focus", "ws.outliner": "Arată sau ascunde structura",
+  "ws.classic": "Layout clasic", "ws.studio": "Layout nou (structură și inspector)", "ws.classicOn": "Layout clasic activ.", "ws.studioOn": "Layout nou activ.",
+  "ws.resizeLeft": "Lățimea panoului Structură", "ws.resizeRight": "Lățimea inspectorului", "ws.sheetAria": "Ce arată foaia", "ws.sheetStructure": "Structură",
+  "outliner.aria": "Structura proiectului", "outliner.title": "Structură", "outliner.hide": "Ascunde structura", "outliner.show": "Arată structura",
+  "outliner.empty": "Planul e gol. Desenează o cameră sau un perete.",
+  "outliner.keys": "Săgețile sus și jos trec prin arbore, dreapta și stânga deschid și închid, Enter alege și încadrează, Escape revine în plan",
 };
