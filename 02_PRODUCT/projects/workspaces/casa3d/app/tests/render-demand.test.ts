@@ -1,7 +1,7 @@
 // Plan A1, rândul 5: randarea la cerere: ce ține bucla pornită, când se oprește și cum se reia fără salt.
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
-import { isNavKey, stillMoving, settled, wakeDt, SETTLE_M, type Demand } from '../core/render-demand';
+import { isNavKey, releasedKeys, stillMoving, settled, wakeDt, SETTLE_M, type Demand } from '../core/render-demand';
 
 const rest: Demand = { keys: {}, joyF: 0, joyS: 0, doorsMoving: false, glide: false, camGap: 0, targetGap: 0 };
 
@@ -18,6 +18,12 @@ test('tastele eliberate sau fără rol în navigare nu țin bucla pornită', () 
 test('tastele de navigare sunt cele citite de motor', () => {
   for (const k of ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', '+', '=', '-', '_', '0']) assert.ok(isNavKey(k), k);
   for (const k of ['x', 'enter', 'escape', 'delete', 'tab']) assert.equal(isNavKey(k), false, k);
+});
+test('eliberarea cu Shift ridicat primul oprește și perechea tastei', () => {
+  assert.deepEqual(releasedKeys('='), ['=', '+']); assert.deepEqual(releasedKeys('+'), ['+', '=']); assert.deepEqual(releasedKeys('-'), ['-', '_']); assert.deepEqual(releasedKeys('_'), ['_', '-']);
+  assert.deepEqual(releasedKeys('w'), ['w']); assert.deepEqual(releasedKeys('constructor'), ['constructor']);
+  const keys: Record<string, boolean> = { '+': true }; for (const k of releasedKeys('=')) keys[k] = false;
+  assert.equal(stillMoving({ ...rest, keys }), false);
 });
 test('camera se oprește sub 1 mm, inclusiv când abia a ajuns la prag', () => {
   assert.equal(settled(SETTLE_M - 1e-6, 0), true); assert.equal(settled(0, SETTLE_M - 1e-6), true);

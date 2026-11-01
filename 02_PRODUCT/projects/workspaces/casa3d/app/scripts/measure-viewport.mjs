@@ -1,6 +1,6 @@
 // Măsoară viewport-ul 3D pe aplicația reală (plan A1, rândul 5): cadre randate în repaus și timpul de cadru în timpul orbitării.
 // Numărătoarea nu depinde de motor: un cadru = un apel requestAnimationFrame în care s-a desenat ceva în WebGL.
-//   node scripts/measure-viewport.mjs http://127.0.0.1:3214 --profile desktop --quality high --out D:/w/m/base.json
+//   node scripts/measure-viewport.mjs http://127.0.0.1:3214 --profile desktop --tier desktop --out D:/w/m/base.json
 // --profile desktop|laptop|phone; --tier auto|desktop|laptop|phone (nivelul din viewport); --gpu hw (GPU real, fără plafonul de 60 Hz)|sw (SwiftShader,
 // aproximează un GPU slab); ieșirea nu conține numele GPU-ului, doar clasa lui (hardware/software).
 import { writeFileSync } from 'node:fs';
@@ -54,6 +54,7 @@ try {
     res.walkMove = summarize(await window_(async () => { const key = type => p.s('Input.dispatchKeyEvent', { type, key: 'w', code: 'KeyW', windowsVirtualKeyCode: 87 }); await key('keyDown'); await sleep(orbitS * 1000); await key('keyUp'); }));
     res.statsWalk = await p.evaluate(() => { const s = window.__casa3dViewer.getStats(); return { calls: s.calls, triangles: s.triangles, callsWithShadow: s.callsWithShadow, pointLights: s.pointLights }; }); }
   res.tierAtEnd = await p.evaluate(() => window.__casa3dViewer.tierNow?.() ?? null);
+  await p.evaluate(id => fetch(`/api/projects/${id}`, { method: 'DELETE' }).then(() => {}), id).catch(() => {});   // proiectul de măsurare nu rămâne în listă
   console.log(JSON.stringify(res, null, 1));
   if (out) writeFileSync(out, JSON.stringify(res, null, 1));
 } catch (e){ console.error(e); failed = true; }

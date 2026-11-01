@@ -22,7 +22,7 @@ const LI = Math.PI;
 // randării e ±4), căldura culorilor (R − B) în ±3 față de r128.
 const EXPOSURE_GAIN = .8, PL = 4;
 import { glideStep, dampFactor } from '../core/camera-glide';
-import { isNavKey, stillMoving, settled, wakeDt } from '../core/render-demand';
+import { isNavKey, releasedKeys, stillMoving, settled, wakeDt } from '../core/render-demand';
 import { TIER_PARAMS, adaptTier, ADAPT_SAMPLES } from '../core/viewport-tiers';
 import { batchStatic, HIDDEN_LAYER } from './static-batch.js';
 // orice încărcare terminată (texturile de la nivel de modul, HDRI, modelele) cere un cadru fiecărui vizualizator activ
@@ -1309,7 +1309,7 @@ function model(it){
     cam.updateProjectionMatrix(); applyBackdrop(); if (changed){ R.shadowMap.needsUpdate = true; assignLights(true); } }
   const keys = {}; const joy = { f: 0, s: 0 }; // joystick virtual: axe în [-1, 1], însumate cu tastele
   // cu Ctrl/Cmd/Alt tasta e o scurtătură, nu navigare; pe macOS keyup-ul ei nici nu sosește, iar tasta ar ține bucla pornită
-  const kd = e => { if (e.ctrlKey || e.metaKey || e.altKey || (e.target.closest && e.target.closest('input,select,textarea'))) return; const k = e.key.toLowerCase(); keys[k] = true; if (isNavKey(k)) invalidate(); }, ku = e => { const k = e.key.toLowerCase(); keys[k] = false; if (isNavKey(k)) invalidate(); };
+  const kd = e => { if (e.ctrlKey || e.metaKey || e.altKey || (e.target.closest && e.target.closest('input,select,textarea'))) return; const k = e.key.toLowerCase(); keys[k] = true; if (isNavKey(k)) invalidate(); }, ku = e => { const k = e.key.toLowerCase(); for (const r of releasedKeys(k)) keys[r] = false; if (isNavKey(k)) invalidate(); };
   // fereastra pierde focusul cu o tastă apăsată: keyup-ul nu mai vine
   const onBlur = () => { for (const k in keys) keys[k] = false; };
   addEventListener('keydown', kd); addEventListener('keyup', ku); addEventListener('blur', onBlur);

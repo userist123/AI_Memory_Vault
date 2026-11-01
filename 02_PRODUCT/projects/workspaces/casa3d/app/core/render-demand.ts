@@ -6,6 +6,9 @@ export const SETTLE_M = .001;
 const NAV_KEYS = new Set(['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', '+', '=', '-', '_', '0']);
 /** Tastele citite de bucla motorului (`e.key` cu litere mici). */
 export const isNavKey = (key: string) => NAV_KEYS.has(key);
+const SHIFT_PAIR: Record<string, string> = { '+': '=', '=': '+', '_': '-', '-': '_' };
+/** Tastele eliberate de un keyup: cu Shift ridicat primul, apăsarea vine ca „+” și eliberarea ca „=”; altfel „+” ar rămâne apăsat. */
+export const releasedKeys = (key: string) => (Object.hasOwn(SHIFT_PAIR, key) ? [key, SHIFT_PAIR[key]] : [key]);
 
 export type Demand = { keys: Record<string, boolean>; joyF: number; joyS: number; doorsMoving: boolean; glide: boolean; camGap: number; targetGap: number };
 /** `camGap` și `targetGap` sub prag; o valoare nefinită nu se consideră oprită, ca o eroare să nu înghețe imaginea pe tăcute. */

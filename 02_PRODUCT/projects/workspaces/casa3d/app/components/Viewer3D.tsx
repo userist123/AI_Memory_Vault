@@ -129,7 +129,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       {mode === 'house' && <label className="f" style={{ minWidth: 160 }} title={t('viewer.cutTitle')}><span>{t('viewer.cut', { pct: cutPct })}</span><input type="range" min={12} max={100} value={cutPct} onChange={e => { const n = Number(e.target.value); setCutPct(n); v.current?.setCut?.(clampCut(n / 100)); }} /></label>}
       {(['day', 'evening', 'night'] as const).map(tod => <button key={tod} className="btn" aria-pressed={time === tod} onClick={() => setTime(tod)}>{t(tod === 'day' ? 'viewer.day' : tod === 'evening' ? 'viewer.evening' : 'viewer.night')}</button>)}
       <label className="f" style={{ minWidth: 160 }} title={t('viewer.qualityTitle')}><span>{t('viewer.quality')}</span><select value={tierPick} onChange={e => setTierPick(parseTierPick(e.target.value))}>
-        <option value="auto">{tierNow ? t('viewer.tierAutoNow', { tier: t(`viewer.tier.${tierNow}`) }) : t('viewer.tierAuto')}</option>
+        <option value="auto">{tierPick === 'auto' && tierNow ? t('viewer.tierAutoNow', { tier: t(`viewer.tier.${tierNow}`) }) : t('viewer.tierAuto')}</option>
         {(['desktop', 'laptop', 'phone'] as const).map(k => <option key={k} value={k}>{t(`viewer.tier.${k}`)}</option>)}
       </select></label>
       <label className="f" style={{ minWidth: 160 }}><span>{t('viewer.sun', { deg: Math.round(azimuth) })}</span><input type="range" min={0} max={359} value={azimuth} onChange={e => setAzimuth(Number(e.target.value))} /></label>
