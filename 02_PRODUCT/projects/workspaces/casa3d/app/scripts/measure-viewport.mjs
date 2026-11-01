@@ -3,14 +3,18 @@
 //   node scripts/measure-viewport.mjs http://127.0.0.1:3214 --profile desktop --tier desktop --out D:/w/m/base.json
 // --profile desktop|laptop|phone; --tier auto|desktop|laptop|phone (nivelul din viewport); --gpu hw (GPU real, fără plafonul de 60 Hz)|sw (SwiftShader,
 // aproximează un GPU slab); ieșirea nu conține numele GPU-ului, doar clasa lui (hardware/software).
+// --cdp PORT măsoară un Chrome care rulează deja, fără emulare (telefon real: adb reverse pentru server, adb forward pentru
+// chrome_devtools_remote); tragerea devine atingere. Numele și seria dispozitivului nu se înregistrează. --viewport 1600x1000
+// randează pe același GPU o fereastră de laptop, ca să încarce GPU-ul cât un ecran mare.
 import { writeFileSync } from 'node:fs';
-import { launch, page, sleep } from './lib/cdp.mjs';
+import { attach, launch, page, sleep } from './lib/cdp.mjs';
 
 const argv = process.argv.slice(2), BASE = (argv.find(a => a.startsWith('http')) || 'http://127.0.0.1:3214').replace(/\/$/, '');
 const opt = (k, d) => { const i = argv.indexOf(`--${k}`); return i >= 0 ? argv[i + 1] : d; };
 const PROFILES = { desktop: { width: 1600, height: 1000, deviceScaleFactor: 1, mobile: false }, laptop: { width: 1440, height: 900, deviceScaleFactor: 2, mobile: false }, phone: { width: 390, height: 844, deviceScaleFactor: 3, mobile: true } };
 const name = opt('profile', 'desktop'), prof = PROFILES[name], tier = opt('tier', 'auto'), gpu = opt('gpu', 'hw'), settle = Number(opt('settle', 10)), idleS = Number(opt('idle', 5)), orbitS = Number(opt('orbit', 6)), out = opt('out', '');
 if (!prof){ console.error('Profil necunoscut:', name); process.exit(2); }
+const cdpPort = opt('cdp', ''), real = !!cdpPort, vp = opt('viewport', '').split('x').map(Number);
 const GPU_ARGS = { hw: ['--enable-gpu', '--ignore-gpu-blocklist', '--use-angle=default', '--disable-gpu-vsync', '--disable-frame-rate-limit'], sw: ['--use-angle=swiftshader', '--enable-unsafe-swiftshader', '--disable-gpu-vsync', '--disable-frame-rate-limit'] };
 
 const INSTRUMENT = `(() => { const T = window.__v3m = { frames: [], cur: 0 };
@@ -22,11 +26,12 @@ const pct = (a, p) => { if (!a.length) return null; const s = [...a].sort((x, y)
 function summarize(frames){ const dt = frames.slice(1).map((f, i) => f.at - frames[i].at);
   return { frames: frames.length, fps: dt.length ? +(1000 / (dt.reduce((a, b) => a + b, 0) / dt.length)).toFixed(1) : 0, p50ms: pct(dt, .5), p95ms: pct(dt, .95), cpuP95ms: pct(frames.map(f => f.cpu), .95), drawsP50: pct(frames.map(f => f.draws), .5) }; }
 
-const cdp = await launch(1, GPU_ARGS[gpu]); let failed = false; const res = { profile: name, tier, gpu, viewport: prof };
+const cdp = real ? await attach(Number(cdpPort)) : await launch(1, GPU_ARGS[gpu]); let failed = false, tab = null; const res = real ? { profile: 'real', tier } : { profile: name, tier, gpu, viewport: prof };
 try {
-  const p = await page(cdp);
-  await p.s('Emulation.setDeviceMetricsOverride', prof);
-  if (prof.mobile) await p.s('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
+  const p = await page(cdp); tab = p.targetId;
+  if (!real) await p.s('Emulation.setDeviceMetricsOverride', prof);
+  else if (vp.length === 2) await p.s('Emulation.setDeviceMetricsOverride', { width: vp[0], height: vp[1], deviceScaleFactor: 1, mobile: false });
+  if (!real && prof.mobile) await p.s('Emulation.setTouchEmulationEnabled', { enabled: true, maxTouchPoints: 5 });
   await p.s('Page.addScriptToEvaluateOnNewDocument', { source: INSTRUMENT });
   await p.go(`${BASE}/`); await sleep(1500);
   await p.evaluate(t => { localStorage.setItem('casa3d.viewerTier', t); }, tier);
@@ -39,7 +44,8 @@ try {
   const box = await p.evaluate(() => { const r = document.querySelector('.view3d canvas').getBoundingClientRect(); return { x: r.left + r.width / 2, y: r.top + r.height / 2, w: r.width, h: r.height, dw: document.querySelector('.view3d canvas').width, dh: document.querySelector('.view3d canvas').height }; });
   res.canvas = box;
   const window_ = async fn => { await p.evaluate(() => { window.__v3m.frames = []; }); await fn(); return p.evaluate(() => window.__v3m.frames); };
-  const drag = async s => { const mouse = (type, x, y, extra = {}) => p.s('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mouseReleased' ? 0 : 1, ...extra });
+  const touchDrag = async s => { const at = (x, y) => [{ x, y, id: 1 }]; await p.s('Input.dispatchTouchEvent', { type: 'touchStart', touchPoints: at(box.x, box.y) }); const t0 = Date.now(), r = Math.min(box.w, box.h) * .3; while (Date.now() - t0 < s * 1000){ const a = (Date.now() - t0) / 1000 * 2; await p.s('Input.dispatchTouchEvent', { type: 'touchMove', touchPoints: at(box.x + Math.cos(a) * r, box.y + Math.sin(a) * r * .4) }); await sleep(16); } await p.s('Input.dispatchTouchEvent', { type: 'touchEnd', touchPoints: [] }); };
+  const drag = real ? touchDrag : async s => { const mouse = (type, x, y, extra = {}) => p.s('Input.dispatchMouseEvent', { type, x, y, button: 'left', buttons: type === 'mouseReleased' ? 0 : 1, ...extra });
     await mouse('mousePressed', box.x, box.y, { clickCount: 1 }); const t0 = Date.now(), r = Math.min(box.w, box.h) * .3; while (Date.now() - t0 < s * 1000){ const a = (Date.now() - t0) / 1000 * 2; await mouse('mouseMoved', box.x + Math.cos(a) * r, box.y + Math.sin(a) * r * .4); await sleep(8); } await mouse('mouseReleased', box.x, box.y, { clickCount: 1 }); };
   await sleep(settle * 1000);
   const idle = await window_(() => sleep(idleS * 1000));
@@ -58,5 +64,5 @@ try {
   console.log(JSON.stringify(res, null, 1));
   if (out) writeFileSync(out, JSON.stringify(res, null, 1));
 } catch (e){ console.error(e); failed = true; }
-finally { await cdp.close(); }
+finally { if (real && tab) await cdp.send('Target.closeTarget', { targetId: tab }).catch(() => {}); await cdp.close(); }
 process.exit(failed ? 1 : 0);

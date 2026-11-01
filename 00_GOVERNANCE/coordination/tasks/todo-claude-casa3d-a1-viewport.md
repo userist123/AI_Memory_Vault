@@ -17,4 +17,5 @@ REVIEW: 2 vault-reviewer rounds done. Round 1: stuck shifted keys, auto label. R
 FOLLOW-UP: exportGLB passes options as onError (three r186 signature), a pre-existing bug that downloads a bad .glb; UNVERIFIED in a browser.
 PR: #369 (draft), CI pending at the last check. NEXT: read CI once -> ready -> merge when green -> STATUS DONE. Baseline worktree removed.
 KEY FILES: app/components/viewer3d-engine.js, app/components/Viewer3D.tsx, app/scripts/measure-viewport.mjs.
-BLOCKERS: none. Real phone and integrated GPU behaviour cannot be measured here: UNVERIFIED.
+S9 (owner's request): real Mali-G72 measured over adb, numbers in the research; integrated GPU now maps to the laptop tier.
+BLOCKERS: none. Integrated-GPU laptops are still UNVERIFIED. The on-device AI session did not get the coordination message (held and expired, different permission modes).

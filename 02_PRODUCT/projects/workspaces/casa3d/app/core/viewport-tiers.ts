@@ -13,10 +13,17 @@ export const TIER_PARAMS: Record<Tier, TierParams> = {
 /** Numărul de cadre din bucla continuă după care se decide și pragul medianei lor: 40 ms lasă în pace un ecran de 30 Hz (33,3 ms). */
 export const ADAPT_SAMPLES = 60, SLOW_MEDIAN_MS = 40;
 
-export type TierSignals = { coarse: boolean; shortSide: number; cores?: number; memoryGb?: number; softwareGpu: boolean };
+export type TierSignals = { coarse: boolean; shortSide: number; cores?: number; memoryGb?: number; softwareGpu: boolean; integratedGpu?: boolean };
+/** Tipul GPU-ului din numele raportat de browser. Se citește doar local, nu se trimite și nu se memorează; unele browsere îl ascund (`unknown`). */
+export function gpuKind(name: string): 'software' | 'integrated' | 'dedicated' | 'unknown' {
+  if (/swiftshader|llvmpipe|software|basic render/i.test(name)) return 'software';
+  if (/intel(?!.*\barc\b.*\ba\d)|mali|adreno|powervr|radeon\(tm\) graphics|vega \d+ graphics/i.test(name)) return 'integrated';
+  return /nvidia|geforce|radeon|\barc\b|apple/i.test(name) ? 'dedicated' : 'unknown';
+}
 export function classifyTier(s: TierSignals): Tier {
   if (s.softwareGpu) return 'phone';
   if (s.coarse) return s.shortSide < 600 ? 'phone' : 'laptop';
+  if (s.integratedGpu) return 'laptop';
   // `deviceMemory` lipsește în unele browsere: lipsa lui nu coboară nivelul (`hardwareConcurrency` e disponibil peste tot)
   return (s.cores ?? 0) >= 8 && (s.memoryGb === undefined || s.memoryGb >= 8) ? 'desktop' : 'laptop';
 }

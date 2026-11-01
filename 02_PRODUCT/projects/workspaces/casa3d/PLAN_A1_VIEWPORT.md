@@ -36,7 +36,7 @@ Bază: `origin/main` `07ad1e1c0`. Ramura `claude/casa3d-a1-viewport`, worktree `
   | `laptop` | 1,5 | doar în repaus | 2048 | 4 |
   | `phone` | 1,5 | oprit | 1024 | 2 |
 
-- **Clasarea e locală:** tactil pe ecran sub 600 px → `phone`; randator software → `phone`; tactil mai mare → `laptop`; altfel
+- **Clasarea e locală:** tactil pe ecran sub 600 px → `phone`; randator software → `phone`; tactil mai mare → `laptop`; GPU integrat → `laptop` (măsurat pe S9: nivelul desktop sacadează pe o placă slabă); altfel
   `desktop` de la 8 nuclee (și, când există, 8 GB), altfel `laptop`. Fără `detect-gpu`: ar face cereri către terți (rândul 16).
 - **Adaptare doar în jos:** eșantioane de cadre consecutive în mișcare; mediana peste 40 ms pe 60 de cadre coboară un nivel
   (33 ms ar pedepsi un ecran de 30 Hz; p95 a coborât pe nedrept nivelul la măsurare, din cauza compilării shaderelor). Se numără doar cadrele din bucla continuă, nu cele trezite de un mouse lent. Nu urcă singur în aceeași sesiune, deci nu poate oscila (rândul 14). Alegerea manuală oprește adaptarea.

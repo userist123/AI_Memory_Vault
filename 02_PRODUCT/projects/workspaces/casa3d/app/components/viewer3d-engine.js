@@ -23,7 +23,7 @@ const LI = Math.PI;
 const EXPOSURE_GAIN = .8, PL = 4;
 import { glideStep, dampFactor } from '../core/camera-glide';
 import { isNavKey, pressKey, releaseKey, stillMoving, settled, wakeDt } from '../core/render-demand';
-import { TIER_PARAMS, adaptTier, ADAPT_SAMPLES } from '../core/viewport-tiers';
+import { TIER_PARAMS, adaptTier, gpuKind, ADAPT_SAMPLES } from '../core/viewport-tiers';
 import { batchStatic, HIDDEN_LAYER } from './static-batch.js';
 // orice încărcare terminată (texturile de la nivel de modul, HDRI, modelele) cere un cadru fiecărui vizualizator activ
 const assetListeners = new Set(); THREE.DefaultLoadingManager.onProgress = () => { assetListeners.forEach(f => f()); };
@@ -1467,8 +1467,8 @@ function model(it){
   }
   const api = {
     setState(p, items){ plan = p; rebuildHouse(p); buildFurniture(items); },
-    // randatorul software se clasează local (nu se trimite nicăieri); un nivel ales manual oprește adaptarea
-    softwareGpu(){ try { const gl = R.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return !!e && /swiftshader|llvmpipe|software/i.test(String(gl.getParameter(e.UNMASKED_RENDERER_WEBGL))); } catch { return false; } },
+    // tipul GPU-ului se citește local (nu se trimite nicăieri); un nivel ales manual oprește adaptarea
+    gpuKind(){ try { const gl = R.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return gpuKind(e ? String(gl.getParameter(e.UNMASKED_RENDERER_WEBGL)) : ''); } catch { return 'unknown'; } },
     setTier(t, adapt = false){ autoDrop = !!adapt; slowMs = []; return applyTier(t); },
     tierNow(){ return tier; },
     getStats,
@@ -1501,7 +1501,7 @@ function model(it){
     dispose(){ alive = false; for (const mk of [selMark, hovMark]){ mk.geometry.dispose(); mk.material.dispose(); } for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); raf = 0; clearTimeout(restTimer); assetListeners.delete(invalidate); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); removeEventListener('blur', onBlur); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('pointerleave', hoverOut); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (furnBatch) disposeGroup(furnBatch); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); finish.dispose(); composer.dispose(); composer = null; } R.dispose(); }
   };
   // orice comandă primită din afară poate schimba imaginea: un singur loc, ca să nu se poată uita una (citirile nu desenează)
-  for (const k of Object.keys(api)){ if (k === 'dispose' || k === 'getMode' || k === 'getView' || k === 'softwareGpu' || k === 'tierNow') continue; const fn = api[k];
+  for (const k of Object.keys(api)){ if (k === 'dispose' || k === 'getMode' || k === 'getView' || k === 'gpuKind' || k === 'tierNow') continue; const fn = api[k];
     api[k] = function(...a){ const r = fn.apply(api, a); if (r && typeof r.then === 'function') return r.finally(invalidate); invalidate(); return r; }; }
   return api;
 }

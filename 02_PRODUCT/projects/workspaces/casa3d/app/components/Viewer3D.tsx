@@ -38,7 +38,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   const [tierPick, setTierPick] = useState<TierPick>(() => { try { return parseTierPick(localStorage.getItem(TIER_KEY)); } catch { return 'auto'; } }), tierRef = useRef(tierPick); tierRef.current = tierPick;
   const [tierNow, setTierNow] = useState<Tier | null>(null), autoTier = useRef<Tier | null>(null);
   function applyTier(){ if (!v.current?.setTier) return; const pick = tierRef.current, coarse = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
-    autoTier.current ||= classifyTier({ coarse, shortSide: Math.min(screen.width, screen.height), cores: navigator.hardwareConcurrency, memoryGb: (navigator as Navigator & { deviceMemory?: number }).deviceMemory, softwareGpu: !!v.current.softwareGpu?.() });
+    const gpu = v.current.gpuKind?.(); autoTier.current ||= classifyTier({ coarse, shortSide: Math.min(screen.width, screen.height), cores: navigator.hardwareConcurrency, memoryGb: (navigator as Navigator & { deviceMemory?: number }).deviceMemory, softwareGpu: gpu === 'software', integratedGpu: gpu === 'integrated' });
     const tier = pick === 'auto' ? autoTier.current : pick; v.current.setTier(tier, pick === 'auto'); setTierNow(tier); }
   useEffect(() => { setTouch(matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0); }, []);
   pickRef.current = onPick;

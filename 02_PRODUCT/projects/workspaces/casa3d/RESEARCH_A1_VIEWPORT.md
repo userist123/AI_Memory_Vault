@@ -68,7 +68,7 @@ WebGL, numărat independent de motor. Numele GPU-ului nu se înregistrează.
 - **Timpul e pe CPU:** CPU p95 e 95–96 % din cadru pe GPU real. O densitate dublă (laptop) nu l-a încetinit, iar SSAO costă
   aproape doar prin dublarea apelurilor. Deci apelurile de desen contează mai mult aici decât rezoluția.
 - **Limită:** telefonul emulat rulează pe GPU-ul mașinii de test. Nu arată cât durează pe un telefon adevărat. GPU-ul software
-  e doar un reper de tip „foarte slab”, iar percentilele lui sunt distorsionate de cadrele blocate. **Telefon real: UNVERIFIED.**
+  e doar un reper de tip „foarte slab”, iar percentilele lui sunt distorsionate de cadrele blocate. Telefonul real e măsurat mai jos.
 
 ## Tone mapping: comparația pe imaginile noastre
 Același proiect demo, aceleași cadre (`capture-renders.mjs`). Vopseaua implicită a pereților e `#ddd3c3` = 221, 211, 195, deci **R−B = 26**.
@@ -101,9 +101,28 @@ Același script, același proiect demo, GPU real fără plafonul de 60 Hz, `main
 - Unirea mobilierului a redus singură apelurile cu ~29 % (898 → 638 fără SSAO); restul sunt mai ales pereți, uși și obiecte transparente.
 - Imaginile de prezentare, comparate cu `compare-renders.mjs`: luminozitate ΔL între −1 și 0, 0,1–4,2 % pixeli diferiți.
 
+## Telefon real, ca reper pentru o placă slabă
+Samsung S9 cu LineageOS, Chrome 156, GPU Mali-G72, prin `scripts/measure-viewport.mjs --cdp`. Ecranul limitează la 60 Hz, deci 16,7 ms e cel mai
+bun cadru posibil. „Fereastră de laptop” (`--viewport 1600x1000`) randează pe același GPU pânza de 896×818 pe care o are un laptop.
+
+| Pe același GPU | Repaus, cadre/s | Orbitare, cadre/s | Orbitare p50 / p95 | CPU p95 | Apeluri de desen |
+|---|---|---|---|---|---|
+| `main`, telefon (fără SSAO), pânză 616×412 | 60 | 59,8 | 16,6 / 18,6 ms | 16,3 ms | 901 |
+| ramura, nivel telefon, pânză 616×412 | **0** | 58,3 | 16,7 / 18,8 ms | 12,1 ms | 638 |
+| `main`, fereastră de laptop, cu SSAO (implicit fără ecran tactil) | 44 | 42,8 | 22,9 / 26,4 ms | 25,1 ms | 1799 |
+| ramura, fereastră de laptop, nivel desktop | **0** | 47,4 | 18,5 / 32,7 ms | 20,3 ms | 1273 |
+| ramura, fereastră de laptop, nivel laptop | **0** | 58,4 | 16,7 / 17,8 ms | 11,8 ms | 638 |
+
+- **Repausul e câștigul sigur:** 60, respectiv 44 de cadre/s degeaba devin 0. Telefonul a urcat de la ~33 °C la ~45–49 °C în rulările succesive; nu am izolat cât vine din repaus.
+- **Nivelul desktop nu e potrivit pe o placă slabă:** mediana e mai bună decât pe `main`, dar p95 e mai rău (32,7 față de 26,4 ms), deci sacadează când ratează sincronizarea cu ecranul. Nivelul laptop e fluid.
+- **Decizie din măsurare:** GPU-ul integrat, citit local din browser, merge pe nivelul laptop, oricâte nuclee are mașina. Adaptarea după mediană n-ar fi prins cazul (18,5 ms e sub prag).
+- **Limita reperului:** S9 nu e un laptop. Procesorul lui e mult mai slab, iar aici apelurile de desen apasă pe CPU, deci un laptop cu placă integrată ar putea sta altfel. Laptop real: **UNVERIFIED**.
+- O rulare la 45–49 °C a dat aproape aceleași cifre ca la rece (p95 33,3 și 27,9 ms), deci nu am văzut o încetinire termică mare în rulări scurte.
+- Pe nivelul telefon, p95 la orbitare variază între rulări: 18,8 ms și, într-o rulare de 5 s pe telefon deja încălzit, 37 ms; repausul a rămas 0 în toate.
+
 ## Lipsuri
 - Paginile `threejs.org/manual/en/...` și sursele lor `raw.githubusercontent.com/.../manual/en/...` au dat 404. Tiparul de
   randare la cerere vine din documentația R3F și din specificația WebGL.
 - N-am găsit benchmark independent WebGPU contra WebGL pe GPU integrat, nici costuri în ms pentru SSAO sau GTAO pe GPU-uri concrete.
-- Comportamentul pe telefoane reale și laptopuri cu GPU integrat nu e măsurat.
+- Laptopurile reale cu GPU integrat nu sunt măsurate; telefonul real (S9) e secțiunea de mai sus. Încălzirea și bateria în utilizare lungă nu sunt măsurate.
 - `powerPreference: 'high-performance'` apare doar ca sfat pe forum. **UNVERIFIED**, deci nu-l schimbăm.

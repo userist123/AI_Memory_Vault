@@ -1,7 +1,7 @@
 // Plan A1, rândul 5: nivelurile de calitate: clasare locală, parametri, adaptare doar în jos, preferință validată.
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
-import { TIER_PARAMS, classifyTier, adaptTier, lowerTier, parseTierPick, median, ADAPT_SAMPLES, SLOW_MEDIAN_MS } from '../core/viewport-tiers';
+import { TIER_PARAMS, classifyTier, gpuKind, adaptTier, lowerTier, parseTierPick, median, ADAPT_SAMPLES, SLOW_MEDIAN_MS } from '../core/viewport-tiers';
 
 const pc = { coarse: false, shortSide: 1080, cores: 12, memoryGb: 16, softwareGpu: false };
 
@@ -21,6 +21,17 @@ test('clasare: desktop de la 8 nuclee și, când se știe, 8 GB', () => {
   assert.equal(classifyTier({ ...pc, memoryGb: undefined }), 'desktop');
   assert.equal(classifyTier({ ...pc, cores: 7 }), 'laptop'); assert.equal(classifyTier({ ...pc, memoryGb: 4 }), 'laptop');
   assert.equal(classifyTier({ ...pc, cores: undefined }), 'laptop');
+});
+test('clasare: placa integrată stă pe laptop, oricâte nuclee ar avea (măsurat pe un GPU slab: desktop sacadează, laptop nu)', () => {
+  assert.equal(classifyTier({ ...pc, integratedGpu: true }), 'laptop');
+  assert.equal(classifyTier({ ...pc, integratedGpu: false }), 'desktop');
+  assert.equal(classifyTier({ ...pc, integratedGpu: true, coarse: true, shortSide: 390 }), 'phone');
+});
+test('tipul GPU-ului din numele raportat de browser', () => {
+  for (const n of ['ANGLE (Intel, Intel(R) UHD Graphics 620 Direct3D11 vs_5_0 ps_5_0)', 'ANGLE (Intel, Intel(R) Iris(R) Xe Graphics Direct3D11)', 'Mali-G72', 'Adreno (TM) 640', 'ANGLE (AMD, AMD Radeon(TM) Graphics Direct3D11)', 'ANGLE (AMD, Radeon Vega 8 Graphics Direct3D11)']) assert.equal(gpuKind(n), 'integrated', n);
+  for (const n of ['ANGLE (NVIDIA, NVIDIA GeForce RTX 3060 Direct3D11)', 'ANGLE (AMD, AMD Radeon RX 6600 Direct3D11)', 'ANGLE (Intel, Intel(R) Arc(TM) A770 Graphics Direct3D11)', 'Apple M2']) assert.equal(gpuKind(n), 'dedicated', n);
+  for (const n of ['ANGLE (Google, Vulkan 1.3.0 (SwiftShader Device), SwiftShader driver)', 'llvmpipe (LLVM 15)', 'Microsoft Basic Render Driver']) assert.equal(gpuKind(n), 'software', n);
+  assert.equal(gpuKind(''), 'unknown'); assert.equal(gpuKind('WebKit WebGL'), 'unknown');
 });
 test('coborârea are capăt', () => { assert.equal(lowerTier('desktop'), 'laptop'); assert.equal(lowerTier('laptop'), 'phone'); assert.equal(lowerTier('phone'), null); });
 test('mediana', () => {

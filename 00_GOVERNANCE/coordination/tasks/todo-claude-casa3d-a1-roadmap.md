@@ -21,7 +21,7 @@ PHASES (in order; mark each DONE with PR + merge commit):
 3. DONE 2026-11-01: PR #369, branch claude/casa3d-a1-viewport (2 review rounds), checkpoint todo-claude-casa3d-a1-viewport.md, RESEARCH_A1_VIEWPORT.md,
    PLAN_A1_VIEWPORT.md. Viewport 3D (row 5): render on demand (idle 0), tiers phone/laptop/desktop, static furniture batching.
    Research changed the plan: ACES kept (Neutral yellows the paint), no pre-baked light (editable plans), path tracing skipped
-   (three-gpu-pathtracer requires WebGPU since 0.0.25). Real phones and integrated GPUs: UNVERIFIED.
+   (three-gpu-pathtracer requires WebGPU since 0.0.25). Measured on a real S9 (Mali-G72); integrated-GPU laptops: UNVERIFIED.
 4. Drawing sheet ISO 7200 (row 6): title block as object, ISO 5457 formats, viewports from saved views at declared
    scale, revision/status fields, vector PDF + DXF with named layers (walls, openings, dimensions, MEP, annotations).
    ISO 7200 mandatory-field list is UNVERIFIED until checked against the purchased standard: phase 4 needs the owner's purchased
