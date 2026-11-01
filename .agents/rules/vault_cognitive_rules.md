@@ -7,7 +7,7 @@ description: Cognitive Core and Memory Controller operating rules and trust boun
 
 ## Security Model Nomenclature
 - **`P0`**: Phase 4.3 Priority-0 Security Hardening designation.
-- **`P0-001..P0-015`**: 15 adversarial test contracts defined in `99_SYSTEM/Phase43_P0_Implementation_Contract.md`.
+- **`P0-001..P0-015`**: 15 adversarial test contracts defined in `80_ARCHIVE/legacy_obsidian_vault/99_SYSTEM/Phase43_P0_Implementation_Contract.md`.
 - **`I-001..I-012`**: Canonical Phase 4.3 memory security invariants.
 - **`I-RETRIEVAL`**: Unified secure retrieval invariant introduced subsequently.
 - **`P1 / P2 / P3`**: Forensic priority tiers (correctness, architecture, maintainability).

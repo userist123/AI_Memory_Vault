@@ -1,0 +1,18 @@
+{
+ "q": "N17",
+ "condition": "I",
+ "repeat": 0,
+ "run_id": "n057",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 2,
+ "total_cost_usd": 0.0359287,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 439,
+  "cache_read_input_tokens": 25867,
+  "cache_creation_input_tokens": 7236
+ },
+ "answer": "The first version (v1) had 36 held-out cases and 12 dev cases. The CI workflow comment says every one of them referenced gold ids that resolve to nothing, which is why v1 was invalidated. I took the counts from that comment and did not open the v1 README or the forensics note to cross-check them.\n\nANSWER_PATH: .github/workflows/r009b-heldout-benchmark.yml\nANSWER: 36 held-out cases and 12 dev cases (\"every one of v1's 36 held-out and 12 dev cases referenced…\")"
+}

@@ -1,0 +1,18 @@
+{
+ "q": "N13",
+ "condition": "I",
+ "repeat": 0,
+ "run_id": "n052",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.0377397,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 571,
+  "cache_read_input_tokens": 42297,
+  "cache_creation_input_tokens": 6947
+ },
+ "answer": "The corpus health check found 5 exact-duplicate groups covering 13 files, among the 957 indexed notes. It matched them by SHA-256 over whitespace-normalised lowercase content.\n\nNone of the 13 is a duplicated knowledge note. They are project files that the index picks up because it scans those directories.\n\nANSWER_PATH: 07_EVALUATION/corpus_health/EXACT_DUPLICATES.md\nANSWER: 5 groups, 13 files"
+}

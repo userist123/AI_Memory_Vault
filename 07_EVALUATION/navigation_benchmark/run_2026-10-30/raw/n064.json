@@ -1,0 +1,18 @@
+{
+ "q": "N11",
+ "condition": "I",
+ "repeat": 0,
+ "run_id": "n064",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 5,
+ "total_cost_usd": 0.04867070000000001,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 730,
+  "cache_read_input_tokens": 63267,
+  "cache_creation_input_tokens": 8757
+ },
+ "answer": "The experiment was marked INVALID, as a null measurement. The arm tokenizers never reached `MemoryController.search` because the `memory_controller.*` shim aliases weren't patched. All three arms therefore gave identical results (21/130 hits, p = 1.000000), so the run couldn't tell the tokenizers apart. Its verdict (maintain baseline) must not be cited as evidence about tokenizers.\n\nThe notice says the harness was fixed on 2026-10-22 and that no rerun has been done. Whether to rerun is left to the owner.\n\nANSWER_PATH: 07_EVALUATION/tokenizer_experiment/VALIDITY_NOTICE.md\nANSWER: Status: INVALID - NULL MEASUREMENT (recorded 2026-10-22)"
+}

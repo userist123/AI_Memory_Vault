@@ -1,0 +1,18 @@
+{
+ "q": "N11",
+ "condition": "G",
+ "repeat": 0,
+ "run_id": "n070",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.0390982,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 396,
+  "cache_read_input_tokens": 43742,
+  "cache_creation_input_tokens": 7688
+ },
+ "answer": "The experiment (EXP-TOKEN-001) was marked invalid. The validity notice gives its status as \"INVALID - NULL MEASUREMENT\", recorded 2026-10-22. The arm tokenizers never reached `MemoryController.search`, so all three arms reported identical results.\n\nANSWER_PATH: 07_EVALUATION/tokenizer_experiment/VALIDITY_NOTICE.md\nANSWER: Status: **INVALID - NULL MEASUREMENT** (recorded 2026-10-22)"
+}

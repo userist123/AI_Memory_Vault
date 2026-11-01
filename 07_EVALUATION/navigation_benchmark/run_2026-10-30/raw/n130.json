@@ -1,0 +1,18 @@
+{
+ "q": "N15",
+ "condition": "I",
+ "repeat": 1,
+ "run_id": "n130",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.0216501,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 420,
+  "cache_read_input_tokens": 47061,
+  "cache_creation_input_tokens": 3183
+ },
+ "answer": "The B5 baseline report gives a context-to-input ratio of 0.934. The JSON version of the report has the unrounded value, 0.933758….\n\nANSWER_PATH: 07_EVALUATION/reports/b5_baseline/B5_TOKEN_EFFICIENCY_REPORT.md\nANSWER: 0.934 (context_to_input_ratio)"
+}

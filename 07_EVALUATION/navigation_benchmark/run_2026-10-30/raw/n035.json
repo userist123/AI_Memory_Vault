@@ -1,0 +1,18 @@
+{
+ "q": "N22",
+ "condition": "G",
+ "repeat": 0,
+ "run_id": "n035",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 9,
+ "total_cost_usd": 0.0837641,
+ "usage": {
+  "input_tokens": 12,
+  "output_tokens": 1436,
+  "cache_read_input_tokens": 117761,
+  "cache_creation_input_tokens": 14401
+ },
+ "answer": "When Redis can't be reached, the skill fails open: incoming requests are let through, not blocked. This comes from the Upstash rate-limit skill, which is the serverless, Redis-backed rate limiter in the repo. The other Redis rate-limiting skill, `skill-distributed-rate-limiting`, says nothing about outages.\n\nThe default `timeout` is 5 seconds. After that, the request is allowed with `reason: \"timeout\"`.\n\nANSWER_PATH: .agents/skills/upstash-ratelimit/SKILL.md\nANSWER: \"If Redis is unreachable, the default `timeout` (5 s) lets requests through (`reason: \"timeout\"`); this fails open, not closed.\""
+}

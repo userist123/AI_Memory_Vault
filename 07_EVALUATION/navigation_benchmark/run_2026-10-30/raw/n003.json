@@ -1,0 +1,18 @@
+{
+ "q": "N08",
+ "condition": "I",
+ "repeat": 0,
+ "run_id": "n003",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.028848,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 478,
+  "cache_read_input_tokens": 41280,
+  "cache_creation_input_tokens": 4982
+ },
+ "answer": "The scanner's most severe verdict is BLOCK. It requires active data-access evidence together with active network or external-destination evidence. Data-access evidence covers browser or session credentials, secret or environment access, and file collection. Network evidence covers requests, uploads, webhooks, and external destinations. Data access alone, or prompt override or concealment alone, only produces REVIEW. Educational examples such as \"Ignore all previous instructions\" are kept as evidence but don't count as active.\n\nANSWER_PATH: security/SKILL_EXFILTRATION_SCANNER.md\nANSWER: BLOCK = active data-access evidence plus active network/external-destination evidence."
+}

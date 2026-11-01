@@ -1,0 +1,20 @@
+{
+ "case": "T7",
+ "condition": "A",
+ "repeat": 1,
+ "run_id": "r027",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 7,
+ "total_cost_usd": 0.1413692,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1065,
+  "cache_read_input_tokens": 106952,
+  "cache_creation_input_tokens": 30003
+ },
+ "verdict": "No — CI ran zero tests (`no tests ran`) because `tests/parser_check.py` doesn't match pytest's discovery pattern, so the parser is not verified by CI, and the one test in that file only covers a single happy-path case.",
+ "answer": "No. The green CI doesn't show that the parser is tested, because CI ran no tests.\n\n- **CI log:** `ci/ci_run.log` shows `python -m pytest -q tests/` printing `no tests ran in 0.01s`, then `CI status: PASSED`. Zero tests ran, and the job still passed.\n- **Why nothing was collected:** the only test file is `tests/parser_check.py`. Pytest's default discovery only picks up `test_*.py` or `*_test.py`, so `parser_check.py` is never collected. The `test_iso` function inside it has never been run by CI.\n- **What the test would cover:** `test_iso` makes one assertion, that `parse_date('2026-10-30').day == 30`. It covers the happy path only. It doesn't check the year or month, and it doesn't check malformed input, wrong separators, out-of-range dates such as `2026-02-30`, or whitespace. `parse_date` is `date(*map(int, s.split('-')))`, so bad input would raise a raw `ValueError`. Nothing tests that behaviour.\n- **PR description:** `PR.md` says \"with tests. CI is green\", which is misleading. The green status comes from an empty test run.\n\nTo fix it, rename the file to `tests/test_parser.py`, or point pytest at it explicitly. Add edge-case tests, and make CI fail when no tests are collected (pytest exits with code 5 in that case, so the pipeline is probably swallowing that exit code). I haven't run anything myself. This is based on reading the files and the CI log.\n\nVERDICT: No — CI ran zero tests (`no tests ran`) because `tests/parser_check.py` doesn't match pytest's discovery pattern, so the parser is not verified by CI, and the one test in that file only covers a single happy-path case.",
+ "stderr_tail": null
+}

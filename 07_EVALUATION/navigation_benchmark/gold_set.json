@@ -1,0 +1,346 @@
+[
+ {
+  "id": "N01",
+  "question": "Which tiers can the council budget gate choose from, and does that gate actually read the documented numeric council limits?",
+  "answer_path": "00_GOVERNANCE/protocols/Council_Context_Budget.md",
+  "answer_fact": "(NONE / LIGHT / STANDARD / HIGH_RISK) and reads none of these values",
+  "fact_regex": "(?=.*NONE.{0,25}LIGHT.{0,25}STANDARD.{0,25}HIGH)(?=.*(reads? none|does(n't| not) read|not read|ignores?|none of))",
+  "domain": "governance",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"(NONE / LIGHT / STANDARD / HIGH_RISK) and reads none of these values\"  ->  1 file(s): 00_GOVERNANCE/protocols/Council_Context_Budget.md",
+  "codex_fact_regex": "(?=.*NONE.{0,15}LIGHT.{0,15}STANDARD.{0,15}HIGH.?RISK)(?=.*reads? none of)",
+  "validation": {
+   "codex": "FIX",
+   "reason": "The regex can accept only the tier list or only the fact that the limits are not read, while the question asks for both."
+  }
+ },
+ {
+  "id": "N02",
+  "question": "When the full test suite was re-run after pull requests 176, 177 and 178 during the phase-zero reconciliation, what totals were measured?",
+  "answer_path": "00_GOVERNANCE/phase_0/TEST_BASELINE.md",
+  "answer_fact": "2482 passed, 13 skipped, 9 xfailed in 264.79s",
+  "fact_regex": "(?=.*2,?482)(?=.*\\b13\\b)(?=.*\\b9\\b)",
+  "domain": "governance.phase0",
+  "difficulty": "hard",
+  "uniqueness_check": "git grep -l -F -i -e \"2482 passed, 13 skipped, 9 xfailed in 264.79s\"  ->  1 file(s): 00_GOVERNANCE/phase_0/TEST_BASELINE.md",
+  "codex_fact_regex": "2,482\\s+passed,\\s+13\\s+skipped,\\s+9\\s+xfailed\\s+in\\s+264\\.79s",
+  "validation": {
+   "codex": "FIX",
+   "reason": "The regex checks only 2,482 passed and does not require the skipped, xfailed, and duration totals requested."
+  }
+ },
+ {
+  "id": "N03",
+  "question": "When the vault's route resolver reports that nothing matches a request, what is an agent instructed to do?",
+  "answer_path": "00_GOVERNANCE/skills/vault-navigation/SKILL.md",
+  "answer_fact": "say it is not in the vault; do not answer from memory",
+  "fact_regex": "(?=.*not in the vault)(?=.*(memory|own knowledge|from knowledge|guess))",
+  "domain": "skills.governance",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"say it is not in the vault; do not answer from memory\"  ->  1 file(s): 00_GOVERNANCE/skills/vault-navigation/SKILL.md",
+  "codex_fact_regex": "not in the vault.{0,40}(do not|don't|never) answer from memory",
+  "validation": {
+   "codex": "FIX",
+   "reason": "The regex accepts either directive independently, but the answer contains both required instructions."
+  }
+ },
+ {
+  "id": "N04",
+  "question": "What does the independent engineering-review agent profile say about signing off on work it produced itself?",
+  "answer_path": "00_GOVERNANCE/agents/engineering_reviewer.md",
+  "answer_fact": "Do not certify your own work.",
+  "fact_regex": "(not|never|must not|cannot) certify (its|your|their) own",
+  "domain": "agents",
+  "difficulty": "easy",
+  "uniqueness_check": "git grep -l -F -i -e \"Do not certify your own work.\"  ->  1 file(s): 00_GOVERNANCE/agents/engineering_reviewer.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question is specific and the regex identifies the prohibition against certifying one's own work."
+  }
+ },
+ {
+  "id": "N05",
+  "question": "Under the rules for keeping verbatim book excerpts in this public repository, how many quotes and how many characters does the Cryptoassets evidence hold after redaction?",
+  "answer_path": "10_DOCUMENTATION/procedures/Quoting_From_Copyrighted_Sources.md",
+  "answer_fact": "sits at 31 quotes and 5,013 characters after redaction",
+  "fact_regex": "31 quotes.{0,40}5[,.]?013|5[,.]?013.{0,40}31",
+  "domain": "procedures",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"sits at 31 quotes and 5,013 characters after redaction\"  ->  1 file(s): 10_DOCUMENTATION/procedures/Quoting_From_Copyrighted_Sources.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question directly asks for both figures and the regex requires both values in either order."
+  }
+ },
+ {
+  "id": "N06",
+  "question": "When the Telegram/Ollama vault bot is tested locally with --ask, which exit code means the answer could not be grounded in the vault?",
+  "answer_path": "10_DOCUMENTATION/procedures/Connecting_Every_AI_To_The_Vault.md",
+  "answer_fact": "Iese cu 0 doar dacă răspunsul e ancorat (citire verbatim sau citate verificate), altfel cu 3.",
+  "fact_regex": "(?<![\\d.])3(?![\\d.])",
+  "domain": "procedures",
+  "difficulty": "hard",
+  "uniqueness_check": "git grep -l -F -i -e \"Iese cu 0 doar dac\"  ->  1 file(s): 10_DOCUMENTATION/procedures/Connecting_Every_AI_To_The_Vault.md",
+  "codex_fact_regex": "0.{0,100}ancorat.{0,100}altfel cu 3",
+  "validation": {
+   "codex": "FIX",
+   "reason": "The regex checks for code 3 but does not require the associated condition that code 0 is used only for grounded answers."
+  }
+ },
+ {
+  "id": "N07",
+  "question": "After a raised candidate limit silently made graph expansion add zero nodes, what general warning about derived values did the vault record for reuse?",
+  "answer_path": "01_ARCHITECTURE/memory/Lessons/Two_Correct_Changes_Can_Cancel.md",
+  "answer_fact": "Arithmetic on a constant is a dependency that no import graph shows.",
+  "fact_regex": "arithmetic on a constant|no import graph",
+  "domain": "memory.lessons",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"Arithmetic on a constant is a dependency that no import graph shows.\"  ->  1 file(s): 01_ARCHITECTURE/memory/Lessons/Two_Correct_Changes_Can_Cancel.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question naturally targets the stated reusable warning, and the regex captures its distinctive wording."
+  }
+ },
+ {
+  "id": "N08",
+  "question": "Which combination of findings makes the static scanner for skill and prompt data leaks return its most severe verdict?",
+  "answer_path": "security/SKILL_EXFILTRATION_SCANNER.md",
+  "answer_fact": "BLOCK = active data-access evidence plus active network/external-destination evidence.",
+  "fact_regex": "(?=.*BLOCK)(?=.*data)(?=.*(network|external|exfil|egress|send))",
+  "domain": "security",
+  "difficulty": "easy",
+  "uniqueness_check": "git grep -l -F -i -e \"BLOCK = active data-access evidence plus active network/external-destination evidence.\"  ->  1 file(s): security/SKILL_EXFILTRATION_SCANNER.md",
+  "codex_fact_regex": "BLOCK.{0,100}active data.access.{0,100}(network|external)|active data.access.{0,100}(network|external).{0,100}BLOCK",
+  "validation": {
+   "codex": "FIX",
+   "reason": "The regex accepts BLOCK alone without requiring the two evidence categories that define that verdict."
+  }
+ },
+ {
+  "id": "N09",
+  "question": "Can a component whose declared origin is on the default deployment blacklist still be admitted if its package hash and signature are valid or a human approves it?",
+  "answer_path": "security/SUPPLY_CHAIN_BOUNDARY.md",
+  "answer_fact": "A blocked origin cannot be overridden by a valid package hash",
+  "fact_regex": "(cannot|can ?not|can't|not) be overrid|\\bno\\b.{0,80}(hash|signature|approv)",
+  "domain": "security",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"A blocked origin cannot be overridden by a valid package hash\"  ->  1 file(s): security/SUPPLY_CHAIN_BOUNDARY.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question is unambiguous and the regex captures that a blocked origin cannot be overridden."
+  }
+ },
+ {
+  "id": "N10",
+  "question": "In the market prediction record contract, what ordering between the information cutoff and the prediction timestamp makes a record invalid?",
+  "answer_path": "07_EVALUATION/polymarket/PREDICTION_LEDGER_CONTRACT.md",
+  "answer_fact": "`known_as_of > predicted_at` is invalid",
+  "fact_regex": "known_as_of\\s*(>|is after|later than|after)|cutoff.{0,40}(after|later)",
+  "domain": "evaluation.polymarket",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"`known_as_of > predicted_at` is invalid\"  ->  1 file(s): 07_EVALUATION/polymarket/PREDICTION_LEDGER_CONTRACT.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question precisely asks for the ordering rule, and the regex identifies the invalid greater-than relationship."
+  }
+ },
+ {
+  "id": "N11",
+  "question": "What status was given to the tokenizer A/B experiment once it emerged that the arm tokenizers never reached the search call?",
+  "answer_path": "07_EVALUATION/tokenizer_experiment/VALIDITY_NOTICE.md",
+  "answer_fact": "INVALID - NULL MEASUREMENT",
+  "fact_regex": "(?=.*INVALID)(?=.*NULL)",
+  "domain": "evaluation.tokenizer_experiment",
+  "difficulty": "easy",
+  "uniqueness_check": "git grep -l -F -i -e \"INVALID - NULL MEASUREMENT\"  ->  1 file(s): 07_EVALUATION/tokenizer_experiment/VALIDITY_NOTICE.md",
+  "codex_fact_regex": "INVALID.{0,20}NULL MEASUREMENT",
+  "validation": {
+   "codex": "FIX",
+   "reason": "The regex accepts either word independently, while the declared status is the compound phrase INVALID - NULL MEASUREMENT."
+  }
+ },
+ {
+  "id": "N12",
+  "question": "Which pieces of heavy infrastructure do the non-negotiable rules of the 3D home-design app keep out of the early phases?",
+  "answer_path": "02_PRODUCT/projects/workspaces/casa3d/app/CONSTITUTION.md",
+  "answer_fact": "fără PostGIS, IFC, AR, OCR, multi-țară în fazele timpurii",
+  "fact_regex": "(?=.*PostGIS)(?=.*IFC)(?=.*\\bAR\\b)(?=.*OCR)(?=.*multi)",
+  "domain": "projects.workspaces.casa3d",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"PostGIS, IFC, AR, OCR\"  ->  1 file(s): 02_PRODUCT/projects/workspaces/casa3d/app/CONSTITUTION.md",
+  "codex_fact_regex": "PostGIS.{0,80}IFC.{0,80}AR.{0,80}OCR.{0,80}multi-",
+  "validation": {
+   "codex": "FIX",
+   "reason": "The regex accepts PostGIS alone and therefore does not require the complete list of infrastructure excluded from early phases."
+  }
+ },
+ {
+  "id": "N13",
+  "question": "How many exact-duplicate groups, covering how many files, did the corpus health check find among the indexed notes?",
+  "answer_path": "07_EVALUATION/corpus_health/EXACT_DUPLICATES.md",
+  "answer_fact": "5 groups, 13 files.",
+  "fact_regex": "\\b(5|five) groups?.{0,30}\\b13\\b|\\b13 files",
+  "domain": "evaluation.corpus_health",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"5 groups, 13 files.\"  ->  1 file(s): 07_EVALUATION/corpus_health/EXACT_DUPLICATES.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question directly asks for the two exact counts and the regex requires both."
+  }
+ },
+ {
+  "id": "N14",
+  "question": "In the WPF desktop knowledge pack's concurrency guidance, in which one case is async void still acceptable?",
+  "answer_path": "01_ARCHITECTURE/knowledge/domain_packs/07_dotnet_wpf_desktop/playbooks/desktop_async_threading.md",
+  "answer_fact": "Evită async void cu excepția handlerelor de evenimente la nivel de View.",
+  "fact_regex": "event.?handler|handler\\w* de evenimente",
+  "domain": "domain_packs.07_dotnet_wpf_desktop",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"async void cu excep\"  ->  1 file(s): 01_ARCHITECTURE/knowledge/domain_packs/07_dotnet_wpf_desktop/playbooks/desktop_async_threading.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question is natural and the regex identifies the sole permitted async void case."
+  }
+ },
+ {
+  "id": "N15",
+  "question": "In the B5 baseline measurement of council token usage, what was the context-to-input ratio?",
+  "answer_path": "07_EVALUATION/reports/b5_baseline/B5_TOKEN_EFFICIENCY_REPORT.md",
+  "answer_fact": "context_to_input_ratio: 0.934",
+  "fact_regex": "0?\\.934",
+  "domain": "evaluation.reports",
+  "difficulty": "easy",
+  "uniqueness_check": "git grep -l -F -i -e \"context_to_input_ratio: 0.934\"  ->  1 file(s): 07_EVALUATION/reports/b5_baseline/B5_TOKEN_EFFICIENCY_REPORT.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question directly asks for the explicitly labeled ratio, and the regex matches its exact numeric value."
+  }
+ },
+ {
+  "id": "N16",
+  "question": "Before the held-out check of the fused-score ranking arm (A1) was run, which result was pre-declared as inconclusive?",
+  "answer_path": "07_EVALUATION/r025_wp8_a1_heldout/WP8_PREREGISTRATION.md",
+  "answer_fact": "move of exactly +1 measurable case (5/27, 0.185)",
+  "fact_regex": "5/27|0?\\.185|\\+ ?1 (measurable )?case",
+  "domain": "evaluation.r025_wp8_a1_heldout",
+  "difficulty": "hard",
+  "uniqueness_check": "git grep -l -F -i -e \"(5/27, 0.185)\"  ->  1 file(s): 07_EVALUATION/r025_wp8_a1_heldout/WP8_PREREGISTRATION.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question is specific and each accepted form identifies the exact inconclusive result."
+  }
+ },
+ {
+  "id": "N17",
+  "question": "How many held-out and how many dev cases did the first, later invalidated, version of the held-out retrieval benchmark contain?",
+  "answer_path": "07_EVALUATION/heldout_retrieval_benchmark_v2/CONTRACT.md",
+  "answer_fact": "36 held-out cases and 12 dev cases",
+  "fact_regex": "36.{0,40}\\b12\\b|\\b12\\b.{0,40}36",
+  "domain": "evaluation.heldout_retrieval_benchmark_v2",
+  "difficulty": "hard",
+  "uniqueness_check": "git grep -l -F -i -e \"36 held-out cases and 12 dev cases\"  ->  1 file(s): 07_EVALUATION/heldout_retrieval_benchmark_v2/CONTRACT.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question is unambiguous and the regex requires both requested case counts."
+  }
+ },
+ {
+  "id": "N18",
+  "question": "How many corpus notes were in the index when the graph-expansion budget arms were measured?",
+  "answer_path": "07_EVALUATION/graph_budget/GRAPH_BUDGET_REPORT.md",
+  "answer_fact": "Corpus notes: 926.",
+  "fact_regex": "\\b926\\b",
+  "domain": "evaluation.graph_budget",
+  "difficulty": "hard",
+  "uniqueness_check": "git grep -l -F -i -e \"Corpus notes: 926.\"  ->  1 file(s): 07_EVALUATION/graph_budget/GRAPH_BUDGET_REPORT.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question directly targets the corpus-note count and the regex matches the stated value."
+  }
+ },
+ {
+  "id": "N19",
+  "question": "In the September 2026 controlled memory-ablation benchmark, by how many percentage points did the with-memory arm's success rate exceed the no-memory arm's?",
+  "answer_path": "07_EVALUATION/memory_ablation_2026-09.md",
+  "answer_fact": "+10.0 pp",
+  "fact_regex": "10(\\.0)?\\s*(pp|percentage|points)|25(\\.0)?\\s*%.{0,40}35(\\.0)?\\s*%",
+  "domain": "evaluation",
+  "difficulty": "hard",
+  "uniqueness_check": "git grep -l -F -i -e \"+10.0 pp\"  ->  1 file(s): 07_EVALUATION/memory_ablation_2026-09.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question asks for the delta, and the regex matches the explicit percentage-point difference or its component rates."
+  }
+ },
+ {
+  "id": "N20",
+  "question": "In the reconciliation of the book-to-memory source manifest, how many of the declared sources had dedicated research maps?",
+  "answer_path": "08_RESEARCH/BOOK_TO_MEMORY/SOURCE-INVENTORY-AUDIT.md",
+  "answer_fact": "Six of the 20 manifest entries have dedicated maps",
+  "fact_regex": "(?=.*\\b(six|6)\\b)(?=.*\\b20\\b)",
+  "domain": "research",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"Six of the 20 manifest entries have dedicated maps\"  ->  1 file(s): 08_RESEARCH/BOOK_TO_MEMORY/SOURCE-INVENTORY-AUDIT.md",
+  "codex_fact_regex": "Six of the 20 manifest entries have dedicated maps",
+  "validation": {
+   "codex": "FIX",
+   "reason": "The regex accepts any occurrence of six, including unrelated values; it should bind the count to the 20 manifest entries and dedicated maps."
+  }
+ },
+ {
+  "id": "N21",
+  "question": "What kind of server do the performance rules of the JARVIS browser command center permit?",
+  "answer_path": "02_PRODUCT/projects/workspaces/jarvis_web/DESIGN_SYSTEM.md",
+  "answer_fact": "Static Node server only.",
+  "fact_regex": "static\\s+node",
+  "domain": "projects.workspaces.jarvis_web",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"Static Node server only.\"  ->  1 file(s): 02_PRODUCT/projects/workspaces/jarvis_web/DESIGN_SYSTEM.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question is specific and the regex identifies the permitted server type."
+  }
+ },
+ {
+  "id": "N22",
+  "question": "With the Redis-backed serverless rate-limiting skill, what happens to incoming requests when Redis cannot be reached?",
+  "answer_path": ".agents/skills/upstash-ratelimit/SKILL.md",
+  "answer_fact": "the default `timeout` (5 s) lets requests through",
+  "fact_regex": "fail(s|ing)? open|let(s)? (the )?requests? through|requests? (are|get) (allowed|let through)",
+  "domain": "skills",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"the default `timeout` (5 s) lets requests through\"  ->  1 file(s): .agents/skills/upstash-ratelimit/SKILL.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question is natural and the regex captures the fail-open behavior that lets requests through."
+  }
+ },
+ {
+  "id": "N23",
+  "question": "Which role is proposed as technical owner of the analysis of the EU AI Act human-oversight obligation?",
+  "answer_path": "01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_AIACT_Art14_Supraveghere_Umana.md",
+  "answer_fact": "AI_Safety_Officer",
+  "fact_regex": "AI.?Safety.?Officer",
+  "domain": "knowledge.legal",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"AI_Safety_Officer\"  ->  1 file(s): 01_ARCHITECTURE/knowledge/legal/atomic/ATOMIC_AIACT_Art14_Supraveghere_Umana.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question directly asks for the proposed technical owner and the regex matches the exact role name."
+  }
+ },
+ {
+  "id": "N24",
+  "question": "After rewriting git history to purge leaked secret material, what must a gitleaks scan over all refs and tags return?",
+  "answer_path": "09_SECURITY/incident_register/R001_HISTORY_REWRITE_PROCEDURE.md",
+  "answer_fact": "Gitleaks scans all refs/tags and returns zero findings.",
+  "fact_regex": "\\bzero\\b|\\b0 findings|no findings",
+  "domain": "security",
+  "difficulty": "medium",
+  "uniqueness_check": "git grep -l -F -i -e \"Gitleaks scans all refs/tags and returns zero findings.\"  ->  1 file(s): 09_SECURITY/incident_register/R001_HISTORY_REWRITE_PROCEDURE.md",
+  "validation": {
+   "codex": "KEEP",
+   "reason": "The question is specific and the regex identifies the required zero-findings outcome."
+  }
+ }
+]

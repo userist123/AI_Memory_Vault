@@ -1,0 +1,18 @@
+{
+ "q": "N12",
+ "condition": "I",
+ "repeat": 1,
+ "run_id": "n081",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 16,
+ "total_cost_usd": 0.16096999999999997,
+ "usage": {
+  "input_tokens": 26,
+  "output_tokens": 3414,
+  "cache_read_input_tokens": 323700,
+  "cache_creation_input_tokens": 23602
+ },
+ "answer": "The app's non-negotiable rules (rule 11) keep PostGIS, IFC, AR, OCR and multi-country support out of the early phases. The rule says no complex infrastructure without a real need.\n\nRule 13 separately defers AR, IFC and enterprise features until after commercial validation.\n\nANSWER_PATH: 02_PRODUCT/projects/workspaces/casa3d/app/CONSTITUTION.md\nANSWER: \"Fără infrastructură complexă fără nevoie reală (fără PostGIS, IFC, AR, OCR, multi-țară în fazele timpurii).\""
+}

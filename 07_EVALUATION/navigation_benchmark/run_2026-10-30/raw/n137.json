@@ -1,0 +1,18 @@
+{
+ "q": "N18",
+ "condition": "G",
+ "repeat": 1,
+ "run_id": "n137",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.026677400000000004,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 521,
+  "cache_read_input_tokens": 65354,
+  "cache_creation_input_tokens": 3729
+ },
+ "answer": "There were 926 corpus notes in the index when the graph-expansion budget arms were measured. The report states this in its header, next to the 32-case held-out benchmark.\n\nANSWER_PATH: 07_EVALUATION/graph_budget/GRAPH_BUDGET_REPORT.md\nANSWER: Corpus notes: 926."
+}

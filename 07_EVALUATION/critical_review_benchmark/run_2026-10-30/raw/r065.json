@@ -1,0 +1,20 @@
+{
+ "case": "T7",
+ "condition": "B",
+ "repeat": 2,
+ "run_id": "r065",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 8,
+ "total_cost_usd": 0.1433039,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 1582,
+  "cache_read_input_tokens": 162239,
+  "cache_creation_input_tokens": 27811
+ },
+ "verdict": "No. CI passed only because `parser_check.py` isn't collected and 0 tests ran, so `src/parser.py` has no test verification.",
+ "answer": "No. The green CI doesn't show that `src/parser.py` is tested, because the CI run executed zero tests.\n\n**Evidence**\n- `ci/ci_run.log` shows the command `python -m pytest -q tests/`. Its output is `no tests ran in 0.01s`, followed by `CI status: PASSED`. The pass is vacuous.\n- The only test is `test_iso` in `tests/parser_check.py`. pytest's default discovery only collects `test_*.py` or `*_test.py`, so `parser_check.py` is never collected. I inferred this from pytest's defaults. No pytest config in the repo overrides them, and I didn't run it here.\n- Even if it were collected, it would only check one happy-path case: `parse_date('2026-10-30').day == 30`.\n- `parse_date` in `src/parser.py` is `date(*map(int, s.split('-')))`. Nothing tests malformed input, an invalid date like `2026-02-30`, non-zero-padded input, or other formats.\n- `PR.md` says \"with tests. CI is green\", which is true in the letter but misleading.\n\n```\nCONCLUSION:   The parser is not verified by CI; the green run executed 0 tests.\nCHECKED:      ci/ci_run.log, tests/parser_check.py, src/parser.py, PR.md, git ls-files (1 commit, 34bcfc2, branch main only)\nNOT CHECKED:  I did not run pytest myself. I did not look for other CI configs or a pytest.ini, and none are in the repo. I did not check whether `parse_date` works on its input.\nALTERNATIVES: (a) The test is collected under a non-default config. Nothing in the repo suggests this, and the log's \"no tests ran\" contradicts it. (b) The log is stale or from another commit. Not separable from the repo alone.\nFALSIFIER:    A log showing `1 passed` for test_iso. The log shows the opposite. Searched: yes.\nCONFIDENCE:   high that CI proves nothing about the parser. The parser's actual correctness is unknown.\n```\n\n**Cheapest fix:** rename the file to `tests/test_parser.py`, or run `pytest tests/parser_check.py` explicitly. Add failure cases, and make CI fail when no tests are collected (pytest exits with code 5 in that case).\n\nVERDICT: No. CI passed only because `parser_check.py` isn't collected and 0 tests ran, so `src/parser.py` has no test verification.",
+ "stderr_tail": null
+}

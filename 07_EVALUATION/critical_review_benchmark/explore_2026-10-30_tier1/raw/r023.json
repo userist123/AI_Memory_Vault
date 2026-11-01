@@ -1,0 +1,20 @@
+{
+ "case": "C1",
+ "condition": "B",
+ "repeat": 0,
+ "run_id": "r023",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 2,
+ "total_cost_usd": 0.0125726,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 235,
+  "cache_read_input_tokens": 96066,
+  "cache_creation_input_tokens": 152
+ },
+ "verdict": "The `enabled` list in `config/plugins.yaml` has 3 plugins: auth, cache and metrics.",
+ "answer": "`config/plugins.yaml` has 3 plugins under `enabled:`: `auth`, `cache` and `metrics`.\n\nThis is a plain count of the file as it stands in the working copy (the git status was clean). I didn't check whether anything else overrides this list at runtime, such as environment variables or other config files.\n\nVERDICT: The `enabled` list in `config/plugins.yaml` has 3 plugins: auth, cache and metrics.",
+ "stderr_tail": null
+}

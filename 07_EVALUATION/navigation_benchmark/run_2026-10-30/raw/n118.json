@@ -1,0 +1,18 @@
+{
+ "q": "N11",
+ "condition": "I",
+ "repeat": 1,
+ "run_id": "n118",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.0251377,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 466,
+  "cache_read_input_tokens": 47577,
+  "cache_creation_input_tokens": 3927
+ },
+ "answer": "The tokenizer A/B experiment (EXP-TOKEN-001) was marked invalid, recorded as a null measurement on 2026-10-22. The arm tokenizers never reached `MemoryController.search` because the `memory_controller.*` shim aliases weren't patched. All three arms therefore gave identical results, which shows the measurement couldn't discriminate between them. It doesn't show the tokenizers are equivalent. The earlier verdict (keep baseline) must not be cited as evidence about tokenizers.\n\nANSWER_PATH: 07_EVALUATION/tokenizer_experiment/VALIDITY_NOTICE.md\nANSWER: INVALID - NULL MEASUREMENT (recorded 2026-10-22)"
+}

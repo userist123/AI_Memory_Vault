@@ -1,0 +1,18 @@
+{
+ "q": "N03",
+ "condition": "G",
+ "repeat": 1,
+ "run_id": "n138",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 5,
+ "total_cost_usd": 0.046519200000000004,
+ "usage": {
+  "input_tokens": 10,
+  "output_tokens": 711,
+  "cache_read_input_tokens": 88452,
+  "cache_creation_input_tokens": 7636
+ },
+ "answer": "When `vault_resolve` returns `NOT_FOUND` (nothing matches), the agent is told to say the item is not in the vault. It must not answer from memory.\n\nANSWER_PATH: 00_GOVERNANCE/skills/vault-navigation/SKILL.md\nANSWER: `NOT_FOUND` → say it is not in the vault; do not answer from memory."
+}

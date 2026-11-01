@@ -1,0 +1,20 @@
+{
+ "case": "C1",
+ "condition": "B",
+ "repeat": 2,
+ "run_id": "r045",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 2,
+ "total_cost_usd": 0.0130544,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 350,
+  "cache_read_input_tokens": 95464,
+  "cache_creation_input_tokens": 0
+ },
+ "verdict": "config/plugins.yaml` lists 3 enabled plugins (auth, cache, metrics).",
+ "answer": "Three plugins are enabled in `config/plugins.yaml`: `auth`, `cache` and `metrics`. They are listed under the `enabled:` key on lines 2–4.\n\n- **Checked:** I read the whole file, which is 4 lines. There is no `disabled:` section and no other keys.\n- **Not checked:** I did not look for overrides elsewhere, such as environment variables, other config files or other branches. I also did not check whether the code actually loads these three plugins at runtime. The count is what this file declares.\n\nVERDICT: `config/plugins.yaml` lists 3 enabled plugins (auth, cache, metrics).",
+ "stderr_tail": null
+}

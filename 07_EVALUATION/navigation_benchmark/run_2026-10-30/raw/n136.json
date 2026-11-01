@@ -1,0 +1,18 @@
+{
+ "q": "N16",
+ "condition": "V",
+ "repeat": 1,
+ "run_id": "n136",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 7,
+ "total_cost_usd": 0.061240800000000005,
+ "usage": {
+  "input_tokens": 12,
+  "output_tokens": 1105,
+  "cache_read_input_tokens": 112588,
+  "cache_creation_input_tokens": 9727
+ },
+ "answer": "The pre-registration says a move of exactly +1 measurable case was the inconclusive result. That is 5/27 (0.185) context_recall, against a 4/27 baseline. The flag would then stay off pending more data. The same file confirms A1 at +2 or more (6/27 or higher) and disconfirms it at 4/27 or lower. The held-out run then gave 6/27, so A1 was confirmed and the default was flipped to `fused_score`.\n\nANSWER_PATH: 07_EVALUATION/r025_wp8_a1_heldout/WP8_PREREGISTRATION.md\nANSWER: A move of exactly +1 measurable case (5/27, 0.185) over the 4/27 baseline was pre-declared inconclusive, reported as such, with the flag staying off pending more data."
+}

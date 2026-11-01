@@ -1,0 +1,20 @@
+{
+ "case": "C5",
+ "condition": "A",
+ "repeat": 1,
+ "run_id": "r054",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.12079680000000001,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 442,
+  "cache_read_input_tokens": 108888,
+  "cache_creation_input_tokens": 26369
+ },
+ "verdict": "No failures — all 12 tests passed in 0.80s.",
+ "answer": "No, no test failed in `logs/test_run.log`. The log is four lines long. It records `python -m pytest -q`, a progress line of 12 dots with no `F` or `E` marks, and the summary `12 passed in 0.80s`. Nothing in it mentions a failure, error or exception.\n\nVERDICT: No failures — all 12 tests passed in 0.80s.",
+ "stderr_tail": null
+}

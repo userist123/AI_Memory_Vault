@@ -619,6 +619,7 @@ Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce 
 | regăsirea pe benchmark-ul reținut, înghețat prin SHA-256 | `r009b-heldout-benchmark.yml` |
 | LogAnalyzer DFIR (.NET): build, teste și pachetele win-x64 ale edițiilor | `loganalyzer-dfir-build.yml` |
 | Casa3D: typecheck, Vitest și build Next.js pentru aplicație și twin-core | `casa3d-build.yml` |
+| Tokenii de design (DTCG): tipuri, OKLCH↔hex, paritatea Casa3D și poarta de drift a `tokens.css` generat | `design-system-build.yml` |
 | Audit de dependențe (npm, .NET) pe fiecare manifest; pică la CRITICAL | `dependency-audit.yml` |
 | materialul importat, scanat pentru instrucțiuni injectate | `untrusted-content-guard.yml` |
 | aprobarea owner-ului pentru PR-uri (mediu GitHub; efectiv abia după ce owner-ul îi setează revieweri) | `owner-approval-gate.yml` |

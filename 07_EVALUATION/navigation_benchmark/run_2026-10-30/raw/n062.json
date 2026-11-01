@@ -1,0 +1,18 @@
+{
+ "q": "N05",
+ "condition": "V",
+ "repeat": 0,
+ "run_id": "n062",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.09044169999999999,
+ "usage": {
+  "input_tokens": 10,
+  "output_tokens": 802,
+  "cache_read_input_tokens": 101217,
+  "cache_creation_input_tokens": 18070
+ },
+ "answer": "Under the quota rules (at most 180 characters per quote, and at most 40 distinct quotes and 6,000 characters per work), the *Cryptoassets* evidence holds 31 quotes and 5,013 characters after redaction.\n\nANSWER_PATH: 10_DOCUMENTATION/procedures/Quoting_From_Copyrighted_Sources.md\nANSWER: \"The *Cryptoassets* evidence sits at 31 quotes and 5,013 characters after redaction.\""
+}

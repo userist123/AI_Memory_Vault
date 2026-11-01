@@ -1,0 +1,39 @@
+{
+  "size": {
+    "$description": "Control heights and hit targets. The fine-pointer hit target is 36 px; brands raise it to 44 px for coarse pointers in their own CSS.",
+    "$type": "dimension",
+    "control": {
+      "sm": {
+        "$value": {
+          "value": 32,
+          "unit": "px"
+        }
+      },
+      "md": {
+        "$value": {
+          "value": 36,
+          "unit": "px"
+        }
+      },
+      "lg": {
+        "$value": {
+          "value": 44,
+          "unit": "px"
+        }
+      }
+    },
+    "hit": {
+      "$value": {
+        "value": 36,
+        "unit": "px"
+      }
+    },
+    "sheet-peek": {
+      "$value": {
+        "value": 64,
+        "unit": "px"
+      },
+      "$description": "Visible height of a collapsed bottom sheet."
+    }
+  }
+}

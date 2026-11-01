@@ -4,7 +4,7 @@
   "evaluator_kind": "independent model: wrote neither the notes, the proposer, nor the sampling script",
   "evaluated_at": "2026-09-20",
   "sample_file": "07_EVALUATION/edge_audit_v2/audit_sample_declared_50.json",
-  "sample_sha256": "815d00d131297670533ae2a6ac207b78f45333415c13612909ef271136ba1c1b",
+  "sample_sha256": "58ba53e1a4932cabaacf497fb0f1f6b6bedd14caf8cdf570b87b2a17ac5b160f",
   "deviations": [
     "The evaluator was shown 700-character excerpts, not the 1,200 in the frozen sample: the 128 KB file did not fit in its chat, so the rows were sent as five batches of ten.",
     "Row 50 came back without a verdict. 49 of 50 rows are judged; the missing one is counted as unjudged, not as either outcome."

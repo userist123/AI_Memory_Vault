@@ -1,0 +1,18 @@
+{
+ "q": "N16",
+ "condition": "I",
+ "repeat": 1,
+ "run_id": "n073",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.0540064,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 720,
+  "cache_read_input_tokens": 52064,
+  "cache_creation_input_tokens": 10397
+ },
+ "answer": "The pre-registration declared a gain of exactly +1 measurable case inconclusive. It was committed before the measurement ran, and the pre-registered thresholds were:\n\n- **Confirm and flip:** a gain of +2 or more measurable cases.\n- **Leave alone:** a gain of 0 or less.\n- **Inconclusive:** a gain of exactly +1.\n\nA1 gained +2 (4/27 to 6/27), so it met the confirm threshold and the default was flipped. I read this from the WP-8 validation note, not from `WP8_PREREGISTRATION.md` itself.\n\nANSWER_PATH: 07_EVALUATION/r025_wp8_a1_heldout/WP8_A1_HELDOUT_VALIDATION.md\nANSWER: A result of exactly +1 measurable case was pre-registered as inconclusive (+2 or more confirms and flips the default, 0 or less leaves it alone)."
+}

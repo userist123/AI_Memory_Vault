@@ -1,0 +1,137 @@
+{
+ "duration_api_ms": 95640,
+ "stop_reason": "end_turn",
+ "total_cost_usd": 0.3640215,
+ "usage": {
+  "input_tokens": 14,
+  "cache_creation_input_tokens": 49774,
+  "cache_read_input_tokens": 575843,
+  "output_tokens": 3134,
+  "output_tokens_details": {
+   "thinking_tokens": 26
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 2631,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 361,
+    "cache_read_input_tokens": 92921,
+    "cache_creation_input_tokens": 360,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 360
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "modelUsage": {
+  "claude-sonnet-5-5": {
+   "inputTokens": 22,
+   "outputTokens": 4672,
+   "cacheReadInputTokens": 649240,
+   "cacheCreationInputTokens": 71069,
+   "webSearchRequests": 0,
+   "costUSD": 0.3640215,
+   "contextWindow": 1000000,
+   "maxOutputTokens": 128000,
+   "thinkingTokens": 150,
+   "canonicalModel": "claude-sonnet-5-5",
+   "provider": "firstParty",
+   "costBasis": "list"
+  }
+ },
+ "terminal_reason": "completed",
+ "fast_mode_state": "off",
+ "fast_mode_disabled_reason": "sdk_opt_in_required",
+ "origin": {
+  "kind": "task-notification",
+  "producer": "session-task",
+  "runId": "0mvi1scwb-5a9e949c"
+ },
+ "subagent_stats": {
+  "spawned": 1,
+  "requested": {
+   "background": 0,
+   "foreground": 0,
+   "unset": 1
+  },
+  "started_in_background": 1,
+  "max_depth": 1,
+  "spawned_by_subagents": 0,
+  "completed": 1,
+  "failed": 0,
+  "killed": {
+   "parent": 0,
+   "user": 0,
+   "system": 0
+  },
+  "refused": {
+   "depth_limit": 0,
+   "concurrency_limit": 0,
+   "budget": 0
+  },
+  "by_type": {
+   "vault-worker": 1
+  }
+ },
+ "safety_stops": 0,
+ "is_error": false,
+ "num_turns": 12,
+ "subtype": "success",
+ "api_error_status": null,
+ "result": "`MARKER_NAME` este acum `MARKER_FILENAME` peste tot, iar testele trec: `python -m pytest 20_TESTS/test_install_design_stack.py -q` d\u0103 **8 passed, 4 skipped** \u00een 0,29 s.\n\n- **Fi\u0219iere modificate:** `30_SCRIPTS/setup/install_design_stack.py` (defini\u021bia de la linia 33 \u0219i folosirea de la linia ~126) \u0219i `20_TESTS/test_install_design_stack.py` (liniile 40 \u0219i 121). C\u0103utarea \u00een tot depozitul nu mai g\u0103se\u0219te `MARKER_NAME` nic\u0103ieri, iar \u00eenainte de redenumire nu ap\u0103rea \u00een alt fi\u0219ier.\n- **Teste s\u0103rite:** cele 4 `skipped` nu sunt cauzate de redenumire \u0219i nu am verificat de ce sunt s\u0103rite.\n- **Commit:** nu am f\u0103cut.\n- **Comand\u0103 pytest:** am rulat-o eu, nu `vault-worker`, fiindc\u0103 agentul nu a primit permisiunea pentru Bash.",
+ "ttft_ms": 4096,
+ "type": "result",
+ "duration_ms": 45024,
+ "ttft_stream_ms": 3586,
+ "time_to_request_ms": 360,
+ "time_to_request_phases_ms": {
+  "other": 4,
+  "system_prompt": 1,
+  "resume_other": 0,
+  "process_user_input": 1,
+  "input_attachments": 7,
+  "input_hooks": 335,
+  "tool_pool_refresh": 3,
+  "init_message": 2,
+  "engine_pickup": 0,
+  "message_prep": 0,
+  "model_config_wait": 0,
+  "autocompact": 1,
+  "query_setup": 0,
+  "model_gates": 0,
+  "tool_schema_build": 2,
+  "message_normalization": 1,
+  "client_creation": 1,
+  "request_build": 2
+ },
+ "turn_start_resume_kind": "none",
+ "process_turn_index": 1,
+ "time_to_request_loop_lag_ms": 4,
+ "time_to_request_cpu_ms": 31,
+ "time_to_request_major_faults": 1717,
+ "input_attachments_detail": {
+  "slowest_producer": "changed_files",
+  "slowest_producer_ms": 5,
+  "cpu_ms": 0,
+  "major_faults": 243,
+  "changed_files_reread": 1
+ },
+ "first_content_frame_ms": 3587,
+ "queued_turn_count": 0,
+ "result_index": 1,
+ "permission_denials_n": 1,
+ "n_results": 2
+}

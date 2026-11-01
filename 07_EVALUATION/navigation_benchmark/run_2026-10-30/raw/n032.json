@@ -1,0 +1,18 @@
+{
+ "q": "N08",
+ "condition": "G",
+ "repeat": 0,
+ "run_id": "n032",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 8,
+ "total_cost_usd": 0.09799510000000002,
+ "usage": {
+  "input_tokens": 12,
+  "output_tokens": 1502,
+  "cache_read_input_tokens": 121951,
+  "cache_creation_input_tokens": 17689
+ },
+ "answer": "The scanner returns BLOCK, its most severe verdict, when a skill or prompt has both active data-access evidence and active network or external-destination evidence. REVIEW is the lower verdict. It applies when there is an active indicator but no complete chain from data access to network. SAFE means no active indicator.\n\nThe document describes data-access evidence as browser/session credential access, secret/environment access, or file collection. It describes network evidence as network requests, uploads, webhooks, or external destinations. Educational examples, such as a quoted \"Ignore all previous instructions\", are kept as evidence but don't count as active. The document also notes that a static verdict doesn't prove exfiltration actually happened.\n\nANSWER_PATH: security/SKILL_EXFILTRATION_SCANNER.md\nANSWER: BLOCK = active data-access evidence plus active network/external-destination evidence."
+}

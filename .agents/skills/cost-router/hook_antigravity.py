@@ -11,6 +11,7 @@ import hashlib
 import json
 import os
 import re
+import shlex
 import sys
 from pathlib import Path
 
@@ -255,7 +256,10 @@ def _handle_send_message(payload: dict, tool_args: dict) -> dict | None:
             agent_key, sub_jsonl = resolved
             tok = transcript_usage.context_tokens(sub_jsonl)
 
-    used = route_state.resume_count(session_id, agent_key) if session_id else 0
+    step_idx = payload.get("stepIdx")
+    if step_idx is None:
+        step_idx = payload.get("step_index")
+    used = route_state.resume_count(session_id, agent_key, current_step_idx=step_idx) if session_id else 0
     if tok is not None and tok > MAX_SUBAGENT_CONTEXT_TOKENS:
         return {
             "decision": "deny",
@@ -275,7 +279,7 @@ def _handle_send_message(payload: dict, tool_args: dict) -> dict | None:
             ),
         }
     if session_id:
-        route_state.record_resume(session_id, agent_key)
+        route_state.record_resume(session_id, agent_key, step_idx=step_idx)
     return {"decision": "allow"}
 
 
@@ -308,6 +312,127 @@ def handle_pre_tool_use(payload: dict) -> dict | None:
     return {"decision": "allow"}
 
 
+
+def _is_redundant_global_hook(payload: dict, event: str) -> bool:
+    """Returns True ONLY if this script is genuinely executing as the global hook
+    (~/.gemini/config/...) AND the current workspace contains a verified, structurally
+    valid, and runnable local .agents/hooks.json cost-router configuration FOR THE
+    SPECIFIC EVENT BEING PROCESSED.
+    """
+    try:
+        config_dir = Path.home() / ".gemini" / "config"
+        this_file = Path(__file__).resolve()
+
+        # Gate 1.1: Must genuinely run from global config directory
+        config_resolved = config_dir.resolve()
+        try:
+            if not this_file.is_relative_to(config_resolved):
+                return False
+        except (ValueError, AttributeError):
+            cfg_prefix = config_resolved.as_posix().rstrip("/") + "/"
+            if not this_file.as_posix().lower().startswith(cfg_prefix.lower()):
+                return False
+
+        # Gate 1.2: Workspace path resolved safely
+        raw_ws = _workspace_cwd(payload)
+        if not raw_ws or not isinstance(raw_ws, str):
+            return False
+        ws_path = Path(raw_ws).resolve()
+        if not ws_path.is_dir():
+            return False
+
+        # Gate 1.3: .agents/hooks.json must be a file and parse as valid JSON dict
+        local_hooks_path = ws_path / ".agents" / "hooks.json"
+        if not local_hooks_path.is_file():
+            return False
+
+        try:
+            data = json.loads(local_hooks_path.read_text(encoding="utf-8"))
+        except Exception:
+            return False
+
+        if not isinstance(data, dict):
+            return False
+
+        cr_config = data.get("cost-router")
+        if not isinstance(cr_config, dict):
+            return False
+
+        # Gate 1.4: Check ONLY the active lifecycle event (Event-Aware Scoping)
+        event_handlers = cr_config.get(event)
+        if not isinstance(event_handlers, list) or not event_handlers:
+            return False
+
+        # Gate 1.5: Tool matcher verification for PreToolUse
+        active_tool = ""
+        if event == "PreToolUse":
+            tool_call = payload.get("toolCall") or payload.get("tool_call")
+            if isinstance(tool_call, dict):
+                active_tool = str(tool_call.get("name") or "").strip()
+            else:
+                active_tool = str(payload.get("tool_name") or payload.get("tool") or "").strip()
+
+        ws_prefix = ws_path.as_posix().rstrip("/") + "/"
+        valid_script_found = False
+
+        for item in event_handlers:
+            if not isinstance(item, dict):
+                continue
+
+            commands_to_check = []
+            if event == "PreToolUse":
+                matcher = item.get("matcher")
+                if matcher and active_tool and not re.search(matcher, active_tool):
+                    continue  # Local hook will not intercept this tool; do NOT yield!
+
+                hooks_list = item.get("hooks")
+                if isinstance(hooks_list, list):
+                    for h in hooks_list:
+                        if isinstance(h, dict) and h.get("type", "command") == "command" and h.get("command"):
+                            commands_to_check.append(str(h["command"]))
+                elif item.get("type", "command") == "command" and item.get("command"):
+                    commands_to_check.append(str(item["command"]))
+            else:
+                if item.get("type", "command") == "command" and item.get("command"):
+                    commands_to_check.append(str(item["command"]))
+
+            for cmd in commands_to_check:
+                try:
+                    parts = shlex.split(cmd, posix=(os.name != "nt"))
+                except Exception:
+                    parts = cmd.split()
+
+                for part in parts:
+                    cleaned = part.strip("'\" \t")
+                    if cleaned.endswith("hook_antigravity.py"):
+                        # Check BOTH workspace root AND .agents/ subpath
+                        candidates = [
+                            (ws_path / cleaned).resolve(),
+                            (ws_path / ".agents" / cleaned).resolve(),
+                        ]
+                        for script_candidate in candidates:
+                            try:
+                                is_rel = script_candidate.is_relative_to(ws_path)
+                            except (ValueError, AttributeError):
+                                is_rel = script_candidate.as_posix().lower().startswith(ws_prefix.lower())
+
+                            # Ensure file exists, is inside ws, and is non-empty (> 50 bytes)
+                            if is_rel and script_candidate.is_file() and script_candidate.stat().st_size > 50:
+                                valid_script_found = True
+                                break
+                    if valid_script_found:
+                        break
+                if valid_script_found:
+                    break
+            if valid_script_found:
+                break
+
+        return valid_script_found
+
+    except Exception:
+        return False
+
+
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
     event_arg = ""
@@ -325,6 +450,14 @@ def main(argv: list[str] | None = None) -> int:
         return 0
 
     event = event_arg or str(payload.get("event") or payload.get("hook_event_name") or "").strip()
+
+    # Precedence: If running as global hook for a workspace that already declares
+    # a local project hook (.agents/hooks.json), yield to project hook to prevent duplicate execution
+    if _is_redundant_global_hook(payload, event):
+        if event == "PreToolUse":
+            sys.stdout.write(json.dumps({"decision": "allow"}))
+        return 0
+
     # Controlled diagnostic audit trail for live runtime verification
     try:
         audit_log = Path.home() / ".gemini" / "config" / "cache" / "cost-router" / "hook_invocations.log"

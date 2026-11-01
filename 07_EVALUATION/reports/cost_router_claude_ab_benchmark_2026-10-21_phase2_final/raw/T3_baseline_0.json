@@ -1,0 +1,129 @@
+{
+ "duration_api_ms": 25757,
+ "stop_reason": "end_turn",
+ "total_cost_usd": 0.23857119999999998,
+ "usage": {
+  "input_tokens": 10,
+  "cache_creation_input_tokens": 46640,
+  "cache_read_input_tokens": 333212,
+  "output_tokens": 1867,
+  "output_tokens_details": {
+   "thinking_tokens": 88
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 46640,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 415,
+    "cache_read_input_tokens": 79853,
+    "cache_creation_input_tokens": 624,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 624
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "modelUsage": {
+  "claude-sonnet-5-5": {
+   "inputTokens": 10,
+   "outputTokens": 1867,
+   "cacheReadInputTokens": 333212,
+   "cacheCreationInputTokens": 46640,
+   "webSearchRequests": 0,
+   "costUSD": 0.23857119999999998,
+   "contextWindow": 1000000,
+   "maxOutputTokens": 128000,
+   "thinkingTokens": 88,
+   "canonicalModel": "claude-sonnet-5-5",
+   "provider": "firstParty",
+   "costBasis": "list"
+  }
+ },
+ "terminal_reason": "completed",
+ "fast_mode_state": "off",
+ "fast_mode_disabled_reason": "sdk_opt_in_required",
+ "subagent_stats": {
+  "spawned": 0,
+  "requested": {
+   "background": 0,
+   "foreground": 0,
+   "unset": 0
+  },
+  "started_in_background": 0,
+  "max_depth": 0,
+  "spawned_by_subagents": 0,
+  "completed": 0,
+  "failed": 0,
+  "killed": {
+   "parent": 0,
+   "user": 0,
+   "system": 0
+  },
+  "refused": {
+   "depth_limit": 0,
+   "concurrency_limit": 0,
+   "budget": 0
+  },
+  "by_type": {}
+ },
+ "safety_stops": 0,
+ "is_error": false,
+ "num_turns": 8,
+ "subtype": "success",
+ "api_error_status": null,
+ "result": "Func\u021bia `mcp_env_pairs()` e ad\u0103ugat\u0103 \u0219i testul trece: rularea `python -m pytest 20_TESTS/test_install_design_stack.py -q` d\u0103 **9 passed, 4 skipped**. Cele 4 teste s\u0103rite nu \u021bin de modificarea mea. Dintre ele, am v\u0103zut doar `test_plugin_clones_use_https_without_touching_git_config`, care sare pe Windows pentru c\u0103 folose\u0219te un script shell POSIX.\n\n- **Func\u021bia:** \u00een `30_SCRIPTS/setup/install_design_stack.py`, \u00eenainte de `mcp_command`. Desparte fiecare intrare din `MCP_ENV` la primul `=`, deci o valoare care con\u021bine `=` r\u0103m\u00e2ne \u00eentreag\u0103.\n- **Testul:** `test_mcp_env_pairs_split_key_and_value`, la finalul `20_TESTS/test_install_design_stack.py`. Verific\u0103 c\u0103 rezultatul este `[(\"CHROME_DEVTOOLS_MCP_NO_USAGE_STATISTICS\", \"1\")]`.\n\nTestul acoper\u0103 doar intrarea curent\u0103 din `MCP_ENV`, nu cazul cu `=` \u00een valoare. Nu am f\u0103cut commit.",
+ "ttft_ms": 6084,
+ "type": "result",
+ "duration_ms": 29920,
+ "ttft_stream_ms": 5122,
+ "time_to_request_ms": 81,
+ "time_to_request_phases_ms": {
+  "other": 12,
+  "system_prompt": 12,
+  "resume_other": 0,
+  "process_user_input": 2,
+  "input_attachments": 15,
+  "input_hooks": 1,
+  "tool_pool_refresh": 2,
+  "init_message": 11,
+  "engine_pickup": 1,
+  "message_prep": 0,
+  "model_config_wait": 1,
+  "autocompact": 2,
+  "query_setup": 0,
+  "model_gates": 0,
+  "tool_schema_build": 13,
+  "message_normalization": 2,
+  "client_creation": 2,
+  "request_build": 5
+ },
+ "turn_start_resume_kind": "none",
+ "process_turn_index": 0,
+ "time_to_request_loop_lag_ms": 31,
+ "time_to_request_cpu_ms": 141,
+ "time_to_request_major_faults": 4917,
+ "input_attachments_detail": {
+  "slowest_producer": "deferred_tools_delta",
+  "slowest_producer_ms": 9,
+  "cpu_ms": 15,
+  "major_faults": 733
+ },
+ "first_content_frame_ms": 5122,
+ "queued_turn_count": 0,
+ "result_index": 0,
+ "permission_denials_n": 1,
+ "n_results": 1
+}

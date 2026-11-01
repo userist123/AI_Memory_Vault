@@ -1,0 +1,20 @@
+{
+ "case": "T2",
+ "condition": "A",
+ "repeat": 2,
+ "run_id": "r036",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 5,
+ "total_cost_usd": 0.031501400000000006,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 913,
+  "cache_read_input_tokens": 180234,
+  "cache_creation_input_tokens": 1083
+ },
+ "verdict": "A stub `export_pdf(rows, path)` exists on branch `feature/pdf-export` (commit 2e35b49), but it writes an invalid PDF and isn't on main, so the real implementation still needs writing, ideally starting from that signature.",
+ "answer": "Yes, a partial implementation exists. It is not on `main`.\n\n- **Where:** branch `feature/pdf-export`, commit `2e35b49` (\"wip: pdf export\"). It adds `src/pdf.py` with `export_pdf(rows, path)`.\n- **What it does:** it calls `build_report(rows)`, then writes `%PDF-1.4\\n` followed by the report text to the file.\n- **Why it's only a stub:** that output is not a valid PDF. There is no object structure, xref table or trailer, so PDF viewers will probably reject it. It is a placeholder, as the \"wip\" in the commit message suggests.\n- **Elsewhere:** `main` has no `export_pdf`. The only PDF reference there is the README line \"PDF export: not implemented yet.\" I found no other branches. The stash list is empty.\n\nI'd build on that branch's signature and its `build_report` hook rather than start from nothing. Replace the fake PDF body with real rendering, for example through a PDF library.\n\nVERDICT: A stub `export_pdf(rows, path)` exists on branch `feature/pdf-export` (commit 2e35b49), but it writes an invalid PDF and isn't on main, so the real implementation still needs writing, ideally starting from that signature.",
+ "stderr_tail": null
+}

@@ -2,6 +2,7 @@
 // și politica CSP rămâne 'self'. Aceleași nume de familie ca înainte („Instrument Sans”, „Newsreader”).
 import '@fontsource/instrument-sans/400.css'; import '@fontsource/instrument-sans/500.css'; import '@fontsource/instrument-sans/600.css';
 import '@fontsource/newsreader/400.css'; import '@fontsource/newsreader/500.css';
+import './tokens.css';
 import './globals.css';
 import { headers } from 'next/headers';
 import { PrefsProvider } from '@/lib/prefs';

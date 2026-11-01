@@ -1,0 +1,18 @@
+{
+ "q": "N18",
+ "condition": "G",
+ "repeat": 0,
+ "run_id": "n037",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.0366425,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 435,
+  "cache_read_input_tokens": 43445,
+  "cache_creation_input_tokens": 6984
+ },
+ "answer": "The graph-budget report records 926 corpus notes in the index when the budget arms were measured. The same figure appears as `corpus_notes` in `graph_budget_results.json`.\n\nANSWER_PATH: 07_EVALUATION/graph_budget/GRAPH_BUDGET_REPORT.md\nANSWER: Corpus notes: 926."
+}

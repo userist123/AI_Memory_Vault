@@ -1,0 +1,20 @@
+{
+ "case": "T2",
+ "condition": "B",
+ "repeat": 1,
+ "run_id": "r072",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.1459092,
+ "usage": {
+  "input_tokens": 10,
+  "output_tokens": 1624,
+  "cache_read_input_tokens": 208972,
+  "cache_creation_input_tokens": 27188
+ },
+ "verdict": "A WIP stub of `export_pdf` already exists on the `feature/pdf-export` branch (`src/pdf.py`, commit `2e35b49`) and writes an invalid PDF, so build on that branch rather than from scratch.",
+ "answer": "Yes, a partial implementation already exists, so you shouldn't start from scratch.\n\n**Where it is:** the `feature/pdf-export` branch, commit `2e35b49` (\"wip: pdf export\"), in `src/pdf.py`. It is not on `main`. It's the only commit on that branch beyond `main`'s `eaffe53`.\n\n```python\nfrom report import build_report\n\ndef export_pdf(rows, path):\n    \"\"\"Render the report to a PDF file.\"\"\"\n    text = build_report(rows)\n    with open(path, 'wb') as fh:\n        fh.write(b'%PDF-1.4\\n' + text.encode())\n```\n\n**What it does and doesn't do:**\n- It is a stub, not a working exporter. It writes a `%PDF-1.4` header followed by raw text. That is not a valid PDF, because it has no objects, xref table or trailer, so PDF viewers will likely reject the file. I did not run it or open its output.\n- It already has the right signature, `export_pdf(rows, path)`, and calls the `build_report` that `main` already has in `src/report.py`.\n- The branch README still says \"PDF export: not implemented yet.\"\n- The `from report import build_report` import assumes `src/` is on the path. Check that against how you run the code.\n\n**Suggested approach:** start from that branch, keep the signature, and replace the body with a real PDF writer such as reportlab or fpdf2. Don't write from scratch on `main`.\n\n```\nCONCLUSION:   No finished export_pdf exists. A non-functional WIP stub exists on branch feature/pdf-export (2e35b49).\nCHECKED:      git branch -a (2 local branches: main, feature/pdf-export); git log --all (2 commits total); grep of the working tree for export_pdf (case-insensitive, no hits); git grep of commit 2e35b49 for \"pdf\"; git log --all -S export_pdf (only 2e35b49); git ls-files on main (README.md, src/report.py); git stash list (empty); git remote -v (no remotes).\nNOT CHECKED:  Remote branches (none are configured, so none could be fetched); dangling or unreachable objects (reflog, git fsck); untracked or ignored files (git status was clean at the start, but I did not check ignored files); other names or libraries for the same feature (for example \"render_pdf\" or \"to_pdf\"); I did not run the stub.\nALTERNATIVES: Another implementation under a different name, such as \"to_pdf\". Observation that would separate it: a search by name or content for \"pdf\" across all refs. I grepped for \"pdf\" only in commit 2e35b49, and only did the full-history search for \"export_pdf\", so this is partly done.\nFALSIFIER:    A second definition of export_pdf on another ref or an unreachable object would disprove \"only one exists\". The -S search over --all found only 2e35b49. Searched: yes, but not unreachable objects.\nCONFIDENCE:   medium\n```\n\nVERDICT: A WIP stub of `export_pdf` already exists on the `feature/pdf-export` branch (`src/pdf.py`, commit `2e35b49`) and writes an invalid PDF, so build on that branch rather than from scratch.",
+ "stderr_tail": null
+}

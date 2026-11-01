@@ -1,0 +1,19 @@
+{
+  "font": {
+    "family": {
+      "$type": "fontFamily",
+      "serif": { "$value": ["Newsreader", "Georgia", "Times New Roman", "serif"] },
+      "sans": { "$value": ["Instrument Sans", "Segoe UI", "system-ui", "sans-serif"] }
+    },
+    "size": {
+      "$type": "dimension",
+      "$description": "Six sizes instead of more than twenty (UI audit §b).",
+      "xs": { "$value": { "value": 12, "unit": "px" } },
+      "sm": { "$value": { "value": 14, "unit": "px" } },
+      "md": { "$value": { "value": 16, "unit": "px" } },
+      "lg": { "$value": { "value": 20, "unit": "px" } },
+      "xl": { "$value": { "value": 28, "unit": "px" } },
+      "2xl": { "$value": { "value": 40, "unit": "px" } }
+    }
+  }
+}

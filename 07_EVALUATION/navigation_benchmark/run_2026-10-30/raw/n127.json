@@ -1,0 +1,18 @@
+{
+ "q": "N22",
+ "condition": "V",
+ "repeat": 1,
+ "run_id": "n127",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 5,
+ "total_cost_usd": 0.0475787,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 791,
+  "cache_read_input_tokens": 75167,
+  "cache_creation_input_tokens": 8034
+ },
+ "answer": "When Redis can't be reached, the skill fails open. Requests are let through after the default 5-second `timeout`, and the result comes back with `reason: \"timeout\"`. The skill says this \"fails open, not closed.\"\n\nANSWER_PATH: .agents/skills/upstash-ratelimit/SKILL.md\nANSWER: If Redis is unreachable, the default `timeout` (5 s) lets requests through (`reason: \"timeout\"`); this fails open, not closed."
+}
