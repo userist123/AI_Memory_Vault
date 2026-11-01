@@ -1,5 +1,5 @@
 # todo-claude-casa3d-a1-roadmap
-STATUS: IN_PROGRESS        UPDATED: 2026-10-24T23:00:00+03:00
+STATUS: IN_PROGRESS        UPDATED: 2026-11-01
 TASK: Casa3D plan A1 (research docs/research/UI_UX_MOTION_APLICATII_COMPLEXE_2026.md §A1, in draft PR #318), the rest
   after A1.1 (#323 merged c2a04d4d8). OWNER DECISION 2026-10-23: "Toate pe rand" = all phases below, in order,
   one phase per session (CLAUDE.md), each its own branch/worktree/PR, owner rule: no red at merge.
@@ -18,11 +18,14 @@ PHASES (in order; mark each DONE with PR + merge commit):
    right, phone Structure/Panel switch; checkpoint todo-claude-casa3d-a1-3.md). A1.3 workspace layout (row 4): outliner left (levels -> rooms -> walls/openings/furniture, toggles with catalog),
    contextual inspector right, docked resizable panels with persisted sizes, Focus toggle; behind a feature flag with
    "classic layout" preference; inspector field-order snapshot test.
-3. Viewport 3D (row 5): render on demand (0 frames idle), quality tiers phone/laptop/desktop, WebGL2 base, baked
-   light + IBL + NeutralToneMapping, progressive path tracing only when idle; measure p95 frame time while orbiting.
+3. DONE 2026-11-01: branch claude/casa3d-a1-viewport, checkpoint todo-claude-casa3d-a1-viewport.md, RESEARCH_A1_VIEWPORT.md,
+   PLAN_A1_VIEWPORT.md. Viewport 3D (row 5): render on demand (idle 0), tiers phone/laptop/desktop, static furniture batching.
+   Research changed the plan: ACES kept (Neutral yellows the paint), no pre-baked light (editable plans), path tracing skipped
+   (three-gpu-pathtracer requires WebGPU since 0.0.25). Real phones and integrated GPUs: UNVERIFIED.
 4. Drawing sheet ISO 7200 (row 6): title block as object, ISO 5457 formats, viewports from saved views at declared
    scale, revision/status fields, vector PDF + DXF with named layers (walls, openings, dimensions, MEP, annotations).
-   ISO 7200 mandatory-field list is UNVERIFIED until checked against the purchased standard: ask owner.
+   ISO 7200 mandatory-field list is UNVERIFIED until checked against the purchased standard: phase 4 needs the owner's purchased
+   ISO 7200 text for its mandatory-field list; NOT started.
 NOT HERE: row 8 accessibility = other session (todo-claude-casa3d-a11y-p3.md, PR #331); rows 7 and 9 after phase 4,
   ask owner then.
 PER PHASE: read PLAN_A1.md style -> write PLAN_A1_<n>.md (inventory on main, decisions, slices test-first) -> owner
@@ -31,7 +34,7 @@ PER PHASE: read PLAN_A1.md style -> write PLAN_A1_<n>.md (inventory on main, dec
   RO+EN, text fit, contrast) -> vault-reviewer Opus on the diff (max 2 rounds) -> PR -> CI once -> merge.
 ENV NOTES: npm ci needed in each new worktree (app/); vitest default workers OOM with dev server -> --maxWorkers=2;
   local full pytest has env-only failures from node_modules/.next (strict_yaml etc.), CI is the reference.
-NEXT: phase 3 (viewport 3D, row 5) in a new session: new branch + worktree from main (npm ci in app/).
+NEXT: phase 4 only once the purchased ISO 7200 text is available: new branch + worktree from main (npm ci in app/).
   Notes from A1.2/A1.3: every new plan selection kind needs a context menu entry (lib/commands.ts CONTEXT) and an
   `inspector:<kind>` marker in Editor.tsx (tests/inspector-order.test.ts lists the kinds); new casa3d .md docs and
   checkpoints need an entry in 20_TESTS/fixtures/unreadable_notes_allowlist.json (insert next to related entries, not at

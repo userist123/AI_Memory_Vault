@@ -22,6 +22,11 @@ const LI = Math.PI;
 // randării e ±4), căldura culorilor (R − B) în ±3 față de r128.
 const EXPOSURE_GAIN = .8, PL = 4;
 import { glideStep, dampFactor } from '../core/camera-glide';
+import { isNavKey, stillMoving, settled, wakeDt } from '../core/render-demand';
+import { TIER_PARAMS, adaptTier, ADAPT_SAMPLES } from '../core/viewport-tiers';
+import { batchStatic, HIDDEN_LAYER } from './static-batch.js';
+// orice încărcare terminată (texturile de la nivel de modul, HDRI, modelele) cere un cadru fiecărui vizualizator activ
+const assetListeners = new Set(); THREE.DefaultLoadingManager.onProgress = () => { assetListeners.forEach(f => f()); };
 
 // Pasul final al calității înalte (r186): OutputPass aplică tone mapping-ul (ACES) și conversia sRGB din setările
 // renderer-ului; din r153 randarea în texturi (SSAO) rămâne liniară și fără tone mapping, deci acest pas le face pe amândouă.
@@ -30,15 +35,20 @@ import { glideStep, dampFactor } from '../core/camera-glide';
 const texLoader = typeof document !== 'undefined' ? new THREE.TextureLoader() : null;
 const normalTex = (src, rep) => { if (!texLoader) return null; const t = texLoader.load(src); t.wrapS = t.wrapT = THREE.RepeatWrapping; t.repeat.set(rep, rep); t.anisotropy = 8; return t; };
 const linenN = normalTex('/tex/rough_linen_nor_gl_web.jpg', 5), boucleN = normalTex('/tex/wool_boucle_nor_gl_web.jpg', 4), plasterN = normalTex('/tex/white_plaster_rough_02_nor_gl_web.jpg', 2);
-export function createViewer(canvas, { onPick, onHover, onContextLost, onContextRestored } = {}){
+export function createViewer(canvas, { onPick, onHover, onContextLost, onContextRestored, onTierDrop } = {}){
   let raf = 0, last = performance.now(), alive = true, contextLost = false;
+  // randare la cerere (plan A1, rândul 5): un cadru doar când e cerut; bucla cere altul doar cât timp ceva încă se mișcă
+  let asleep = true, inputAt = 0, restTimer = 0;
+  function invalidate(){ if (alive && !raf) raf = requestAnimationFrame(frame); }
+  // nivelul de calitate; fără nivel (exporturi, prezentare, tipar) motorul rămâne pe parametrii desktop, ca până acum
+  let tier = null, autoDrop = false, motion = false, slowMs = []; const P = () => TIER_PARAMS[tier || 'desktop'];
   const mql = typeof matchMedia === 'function' ? matchMedia('(prefers-reduced-motion: reduce)') : null;
   let reduce = !!(mql && mql.matches);
   const R = new THREE.WebGLRenderer({ canvas, antialias: true });
   R.setPixelRatio(Math.min(devicePixelRatio, 2)); R.outputColorSpace = THREE.SRGBColorSpace; R.toneMapping = THREE.ACESFilmicToneMapping; R.toneMappingExposure = .78 * EXPOSURE_GAIN;
   // umbrele soarelui se recalculează doar când se schimbă ceva (planul, lumina, modul, o ușă), nu la fiecare cadru
   R.shadowMap.enabled = true; R.shadowMap.type = THREE.PCFShadowMap; R.shadowMap.autoUpdate = false; R.shadowMap.needsUpdate = true;
-  let mirrorsDirty = true; const dirty = () => { R.shadowMap.needsUpdate = true; mirrorsDirty = true; };
+  let mirrorsDirty = true; const dirty = () => { R.shadowMap.needsUpdate = true; mirrorsDirty = true; invalidate(); };
   const scene = new THREE.Scene(); scene.background = new THREE.Color('#d9d3c8'); scene.fog = new THREE.Fog('#d9d3c8', 25, 60);
   // regula comună a cadrelor (imaginile de prezentare și intrarea în tur): ochiul la 1,5 m, FOV vertical 52°,
   // aparatul ținut drept (verticalele rămân verticale), privirea coborâtă cu o deplasare a obiectivului (setViewOffset)
@@ -48,7 +58,7 @@ export function createViewer(canvas, { onPick, onHover, onContextLost, onContext
   // calitate înaltă: ocluzie ambientală (umbre de contact în colțuri și sub mobilă). Distanțele SSAO sunt în adâncime
   // normalizată la (far - near) = ~200 m: 0.0015 ≈ 0,3 m, 0.0001 ≈ 2 cm (sub atât, suprafețele plane s-ar umbri singure); raza nucleului e în metri.
   let quality = 'normal', composer = null, ssao = null, finish = null;
-  function setupComposer(){ const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; composer = new EffectComposer(R); composer.setPixelRatio(Math.min(devicePixelRatio, 1.5)); composer.setSize(w, h);
+  function setupComposer(){ const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; composer = new EffectComposer(R); composer.setPixelRatio(Math.min(devicePixelRatio, P().composerDpr)); composer.setSize(w, h);
     // r186: SSAOPass doar înmulțește ocluzia peste imaginea existentă (în r128 randa și scena), deci scena vine dintr-un RenderPass
     composer.addPass(new RenderPass(scene, cam));
     ssao = new SSAOPass(scene, cam, w, h); ssao.kernelRadius = .45; ssao.minDistance = .0001; ssao.maxDistance = .002; composer.addPass(ssao);
@@ -57,15 +67,21 @@ export function createViewer(canvas, { onPick, onHover, onContextLost, onContext
   // altfel umbrele de contact folosesc un aspect/fov vechi (după redimensionare sau în imaginile de export)
   const syncSsao = () => { const u = ssao.ssaoMaterial.uniforms; u.cameraProjectionMatrix.value.copy(cam.projectionMatrix); u.cameraInverseProjectionMatrix.value.copy(cam.projectionMatrixInverse);
     u.cameraNear.value = cam.near; u.cameraFar.value = cam.far; ssao.depthRenderMaterial.uniforms.cameraNear.value = cam.near; ssao.depthRenderMaterial.uniforms.cameraFar.value = cam.far; };
-  const draw = () => { if (contextLost) return; if (quality === 'high' && composer){ syncSsao(); composer.render(); } else R.render(scene, cam); };
-  const pm = new THREE.PMREMGenerator(R); scene.environment = pm.fromScene(new RoomEnvironment(), .04).texture; 
+  // laptop: ocluzia doar pe imaginea din repaus. Cele două căi tratează diferit fundalul și cerul, deci comutarea le reface
+  const aoNow = () => quality === 'high' && !!composer && !(motion && P().ao === 'rest');
+  function setMotion(m){ if (m === motion) return; const was = aoNow(); motion = m; if (aoNow() !== was){ applyBackdrop(); paintSky(skyKey); } }
+  const draw = () => { if (contextLost) return; if (aoNow()){ syncSsao(); composer.render(); } else R.render(scene, cam); };
+  let pm = new THREE.PMREMGenerator(R);
+  // mediul e o țintă de randare: la pierderea contextului conținutul ei dispare, deci se generează din nou la refacere
+  function loadEnv(){ const stale = scene.environment; scene.environment = pm.fromScene(new RoomEnvironment(), .04).texture; stale?.dispose?.();
   // lumina de mediu dintr-un interior real (HDRI CC0, public/tex): reflexii și umbre moi credibile; până se încarcă rămâne camera sintetică
-  try { new HDRLoader().setDataType(THREE.HalfFloatType).load('/tex/lebombo_1k.hdr', t => { if (!alive) { t.dispose(); return; } const env = pm.fromEquirectangular(t).texture; t.dispose(); const old = scene.environment; scene.environment = env; old?.dispose?.(); }, undefined, () => {}); } catch { /* fără HDRI: rămâne mediul sintetic */ }
+  try { new HDRLoader().setDataType(THREE.HalfFloatType).load('/tex/lebombo_1k.hdr', t => { if (!alive) { t.dispose(); return; } const env = pm.fromEquirectangular(t).texture; t.dispose(); const old = scene.environment; scene.environment = env; old?.dispose?.(); invalidate(); }, undefined, () => {}); } catch { /* fără HDRI: rămâne mediul sintetic */ } }
+  loadEnv();
   const hemi = new THREE.HemisphereLight(0xfff6ea, 0x8f8272, .3 * LI); scene.add(hemi);
   let light = null; const interiorLights = []; // parametrii de iluminare primiți din core/lighting.ts
   // luminile camerelor: una pe încăpere în plan (roomLights), dar cel mult MAX_PL PointLight-uri active în scenă, mutate la
   // camerele cele mai apropiate de jucător (în tur) sau la cele mai mari (machetă)
-  const roomLights = [], MAX_PL = 4; let lightRoom = null;
+  const roomLights = []; let lightRoom = null;
   function assignLights(force, px = player.x, pz = player.z){ if (!interiorLights.length) return; const walk = mode === 'walk';
     const here = walk && plan ? (plan.camere.find(r => px > r.x0 && px < r.x1 && pz > r.z0 && pz < r.z1) || {}).id || null : '__house';
     if (!force && here === lightRoom) return; lightRoom = here;
@@ -83,7 +99,7 @@ export function createViewer(canvas, { onPick, onHover, onContextLost, onContext
   let skyKey = 'day';
   // cerul nu trece prin tone mapping pe ecran (toneMapped: false), dar trece prin ACES când imaginea vine dintr-o țintă (panorama,
   // compozitorul din calitatea înaltă): atunci culorile se pre-inversează (untoneLin), ca cerul să arate la fel
-  const skyPre = () => quality === 'high' && !!composer;
+  const skyPre = () => aoNow();
   function paintSky(key, pre = skyPre()){ skyKey = SKY[key] ? key : 'day'; const [hz, lo, zen, gr] = SKY[skyKey].map(lin), p = skyGeo.attributes.position, c = new THREE.Color();
     for (let i = 0; i < p.count; i++){ const t = p.getY(i) / 110; if (t < 0) c.copy(hz).lerp(gr, Math.min(1, -t * 4)); else if (t < .25) c.copy(hz).lerp(lo, t / .25); else c.copy(lo).lerp(zen, Math.min(1, (t - .25) / .6)); if (pre) c.copy(untoneLin(c, R.toneMappingExposure)); skyCol.set([c.r, c.g, c.b], i * 3); }
     skyGeo.attributes.color.needsUpdate = true; }
@@ -659,7 +675,7 @@ function model(it){
       const w = r.x1 - r.x0, d = r.z1 - r.z0;
       roomLights.push({ id: r.id, x: (r.x0 + r.x1) / 2, y: H - .3, z: (r.z0 + r.z1) / 2, area: w * d }); void w; void d; });
     // cel mult MAX_PL lumini punctuale active (numărul rămâne fix, deci shaderele nu se recompilează): cele mai apropiate de jucător în tur
-    for (let i = 0; i < Math.min(MAX_PL, roomLights.length); i++){ const pl = new THREE.PointLight(0xfff0dc, (light ? light.interior : .35) * LI * PL, 7, 2); interiorLights.push(pl); ceilings.add(pl); } lightRoom = null; assignLights(true);
+    for (let i = 0; i < Math.min(P().maxLights, roomLights.length); i++){ const pl = new THREE.PointLight(0xfff0dc, (light ? light.interior : .35) * LI * PL, 7, 2); interiorLights.push(pl); ceilings.add(pl); } lightRoom = null; assignLights(true);
     // zonele de pardoseală (Floor.zones): pardoseala zonei la +1 mm peste cea a camerei, cu modelul ei (sau textura generică de gresie)
     (p.zonePardoseala || []).forEach(z => { const w = z.x1 - z.x0, d = z.z1 - z.z0; if (w < .01 || d < .01) return; const ff = z.fin, ft = ff ? floorTexture(ff, w, d, z.id) : null;
       const t = (ft || tiles).clone(); t.userData = { owned: true }; t.needsUpdate = true; if (!ft) t.repeat.set(w / .9, d / .9);
@@ -1022,10 +1038,11 @@ function model(it){
       vertexShader: 'varying vec2 vUv; void main(){ vUv = uv; gl_Position = projectionMatrix * modelViewMatrix * vec4(position, 1.0); }',
       fragmentShader: 'uniform sampler2D map; uniform float strength; varying vec2 vUv; void main(){ gl_FragColor = vec4(0.0, 0.0, 0.0, texture2D(map, vUv).a * strength); }' });
     contact = new THREE.Mesh(g, mat); contact.name = 'contact'; contact.userData = { noExport: true }; contact.matrixAutoUpdate = false; contact.renderOrder = 1; scene.add(contact); }
+  let furnBatch = null;   // mobilierul unit pe material (static-batch.js); originalele rămân pentru selecție și export
   function buildFurniture(items){ disposeGroup(furniture); scene.remove(furniture); furniture = new THREE.Group(); scene.add(furniture); pickables = []; blockers = [];
     for (const it of items){ if (!it.variant || !it.variant.w) continue; const m = model(it.variant); m.position.set(it.x, it.y || 0, it.z); m.rotation.y = it.rotation; m.userData = { pid: it.id }; m.traverse(o => { o.userData.item = m; }); furniture.add(m); pickables.push(m);
       if (it.group !== 'scaunBirou' && it.fp) blockers.push(it.fp); }
-    lastItems = items; freeze(furniture); buildContact(); buildDecor(items); refreshMarks(); dirty(); }
+    lastItems = items; freeze(furniture); if (furnBatch){ disposeGroup(furnBatch); scene.remove(furnBatch); } furnBatch = batchStatic(furniture, { cell: 4 }); scene.add(furnBatch); buildContact(); buildDecor(items); refreshMarks(); dirty(); }
 
   // soarele stă pe direcția dată (azimut, înălțime), la ~14 m de centrul casei; implicit ca în prototip
   function placeSun(){ const dir = light && light.dir ? light.dir : null; if (dir) sun.position.set(C.x + dir[0] * 14, dir[1] * 14, C.z + dir[2] * 14); else sun.position.set(C.x + 6, 11, C.z - 8); }
@@ -1048,10 +1065,10 @@ function model(it){
   function untoneLin(t, exposure){ const y = mul(ACES_OUT_INV, [t.r, t.g, t.b].map(v => Math.min(.98, v))).map(unfit), v = mul(ACES_IN_INV, y).map(x => Math.max(0, x * .6 / (exposure || 1)));
     return new THREE.Color(v[0], v[1], v[2]); }
   function applyBackdrop(){ const walk = mode === 'walk', bg = new THREE.Color(light ? light.background : '#d9d3c8'), hz = lin(SKY[skyKey][0]);
-    sky.visible = walk; scene.background = walk ? new THREE.Color(SKY[skyKey][0]) : quality === 'high' && composer ? untone(bg, R.toneMappingExposure) : bg; scene.fog.color.copy(walk ? hz : bg); scene.fog.near = walk ? 35 : 25; scene.fog.far = walk ? 105 : 60;
+    sky.visible = walk; scene.background = walk ? new THREE.Color(SKY[skyKey][0]) : aoNow() ? untone(bg, R.toneMappingExposure) : bg; scene.fog.color.copy(walk ? hz : bg); scene.fog.near = walk ? 35 : 25; scene.fog.far = walk ? 105 : 60;
     ground.material.color.copy(walk ? lin(SKY[skyKey][3]) : groundHouse); }
   // captură PNG: randează cadrul curent și îl citește imediat (fără preserveDrawingBuffer)
-  function capture(){ draw(); return canvas.toDataURL('image/png'); }
+  function capture(){ setMotion(false); draw(); return canvas.toDataURL('image/png'); }
   // Cadrul unei camere (imaginile de prezentare și intrarea în tur, aceeași regulă — SHOT): ochiul la 1,5 m, FOV vertical 52°,
   // aparatul orizontal (verticale drepte) cu obiectivul deplasat în jos, privirea spre piesele principale. Candidați: colțurile
   // și pereții camerei, departe de uși (≥ 1 m de mijlocul golului) și de piese; câștigă poziția din care intră cele mai multe
@@ -1062,7 +1079,7 @@ function model(it){
   const SHOT_HERO = ['pat', 'canapea', 'bucatarie'];
   const SHOT_KEY = { bucatarie: 3, pat: 3, canapea: 3, wc: 2.5, lavoar: 2.5, dus: 2, masa: 1.5, dulap: 1.5, frigider: 1, birou: 1.2, comodaTv: 1, pantofar: 1, oglinda: .8, biblioteca: .6, masuta: .8, noptiera: .4 };
   const doorSpots = () => plan.pereti.flatMap(w => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1; return w.goluri.filter(g => g.tip === 'usa').map(g => { const t = g.la + g.l / 2; return [w.a[0] + (w.b[0] - w.a[0]) / L * t, w.a[1] + (w.b[1] - w.a[1]) / L * t, g.l, !!g.intrare]; }); });
-  const shotCam = new THREE.PerspectiveCamera(SHOT.fov, 1.5, .05, 50), shotRay = new THREE.Raycaster();
+  const shotCam = new THREE.PerspectiveCamera(SHOT.fov, 1.5, .05, 50), shotRay = new THREE.Raycaster(); shotRay.layers.enable(HIDDEN_LAYER);
   function lensFor(c, asp){ const Wp = 1000, Hp = Math.max(1, Math.round(Wp / asp)); c.setViewOffset(Wp, Hp, 0, Math.round(SHOT.shift * Hp), Wp, Hp); }
   // obstacolele pentru raze: piesele vizibile (pereți, uși, perdele, mobilier, decor), cu sfera lor în lume (pentru o preselecție rapidă)
   function obstacles(){ const out = [], sp = new THREE.Sphere(); const vis = o => { for (let a = o; a; a = a.parent) if (!a.visible) return false; return true; };
@@ -1185,7 +1202,7 @@ function model(it){
   // ușile, imediat (fără animație): închise pentru imaginile fixe, apoi starea de dinainte
   function doorsNow(open){ doorLeaves.forEach((d, i) => { const v = Array.isArray(open) ? open[i] : (open ? 1 : 0); d.open = d.target = v; setLeaf(d, v * v * (3 - 2 * v)); }); R.shadowMap.needsUpdate = true; }
   // imagini fixe pentru export: ansamblu (machetă) sau o cameră după regula SHOT, cu ușile închise
-  function renderView(view, w = 1200, h = 800){ if (!plan) return null;
+  function renderView(view, w = 1200, h = 800){ if (!plan) return null; setMotion(false);
     const prevMode = mode, prevDoors = doorLeaves.map(d => d.target);
     const restore = () => { if (doorLeaves.length === prevDoors.length) doorsNow(prevDoors); resize(); setMode(prevMode); };   // resize: dimensiunile reale ale pânzei (aspectul de dinainte poate fi cel de la pornire)
     R.setSize(w, h, false); if (composer) composer.setSize(w, h); cam.aspect = w / h; cam.updateProjectionMatrix();
@@ -1227,7 +1244,7 @@ function model(it){
       #include <colorspace_fragment>
       }` };
   function renderPanorama(roomId, w = 2048){ if (!plan) return null; const r = plan.camere.find(x => x.id === roomId); if (!r) return null;
-    const prevMode = mode, prevSize = new THREE.Vector2(), prevRatio = R.getPixelRatio(); R.getSize(prevSize); setMode('walk');
+    setMotion(false); const prevMode = mode, prevSize = new THREE.Vector2(), prevRatio = R.getPixelRatio(); R.getSize(prevSize); setMode('walk');
     const rt = new THREE.WebGLCubeRenderTarget(Math.min(2048, w / 2), { type: THREE.HalfFloatType, generateMipmaps: false }), cc = new THREE.CubeCamera(.05, 200, rt);
     const mat = new THREE.ShaderMaterial({ ...EquiShader, uniforms: { tCube: { value: rt.texture } }, depthTest: false, depthWrite: false, toneMapped: true }), quad = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), mat), qs = new THREE.Scene(); qs.add(quad);
     // orice excepție lasă randatorul cum era (mărime, densitate, mod) și eliberează resursele GPU ale panoramei
@@ -1249,10 +1266,10 @@ function model(it){
   function refreshMarks(){ placeMark(selMark, selPid, .06); if (hovPid && hovPid !== selPid) placeMark(hovMark, hovPid, .03); else hovMark.visible = false; }
   function drawOverlay(){ if (contextLost || (!selMark.visible && !hovMark.visible)) return; const cp = R.clippingPlanes, ac = R.autoClear;
     R.clippingPlanes = []; R.autoClear = false; R.clearDepth(); R.render(overlay, cam); R.autoClear = ac; R.clippingPlanes = cp; }
-  function hoverOut(){ if (hovPid === null || !onHover) return; hovPid = null; refreshMarks(); onHover(null); }
+  function hoverOut(){ if (hovPid === null || !onHover) return; hovPid = null; refreshMarks(); invalidate(); onHover(null); }
   function hoverAt(e){ if (!onHover || e.pointerType !== 'mouse' || ptrs.size > 1) return; const now = performance.now(); if (now - hoverT < 50) return; hoverT = now;
     const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
-    const h = ray.intersectObjects(pickables, true)[0], pid = h ? h.object.userData.item.userData.pid : null; if (pid !== hovPid){ hovPid = pid; refreshMarks(); onHover(pid); } }
+    const h = ray.intersectObjects(pickables, true)[0], pid = h ? h.object.userData.item.userData.pid : null; if (pid !== hovPid){ hovPid = pid; refreshMarks(); invalidate(); onHover(pid); } }
   // X-Ray: pereții (cu ușile, ferestrele, perdelele) devin transparenți; materialele lor pot fi folosite și de mobilier,
   // deci pereții primesc copii transparente (în cache), iar originalele rămân neatinse
   // xray = starea aplicată pe pereți; xrayWant = ce a cerut utilizatorul (în timpul unui export pot diferi)
@@ -1291,37 +1308,44 @@ function model(it){
     if (m === 'walk'){ cam.fov = walkFov(); lensFor(cam, cam.aspect || 1.5); } else { cam.fov = 68; cam.clearViewOffset(); }
     cam.updateProjectionMatrix(); applyBackdrop(); if (changed){ R.shadowMap.needsUpdate = true; assignLights(true); } }
   const keys = {}; const joy = { f: 0, s: 0 }; // joystick virtual: axe în [-1, 1], însumate cu tastele
-  const kd = e => { if (e.target.closest && e.target.closest('input,select,textarea')) return; keys[e.key.toLowerCase()] = true; }, ku = e => { keys[e.key.toLowerCase()] = false; };
-  addEventListener('keydown', kd); addEventListener('keyup', ku);
-  let drag = false, lx = 0, ly = 0, moved = 0; const ray = new THREE.Raycaster(), ndc = new THREE.Vector2();
+  // cu Ctrl/Cmd/Alt tasta e o scurtătură, nu navigare; pe macOS keyup-ul ei nici nu sosește, iar tasta ar ține bucla pornită
+  const kd = e => { if (e.ctrlKey || e.metaKey || e.altKey || (e.target.closest && e.target.closest('input,select,textarea'))) return; const k = e.key.toLowerCase(); keys[k] = true; if (isNavKey(k)) invalidate(); }, ku = e => { const k = e.key.toLowerCase(); keys[k] = false; if (isNavKey(k)) invalidate(); };
+  // fereastra pierde focusul cu o tastă apăsată: keyup-ul nu mai vine
+  const onBlur = () => { for (const k in keys) keys[k] = false; };
+  addEventListener('keydown', kd); addEventListener('keyup', ku); addEventListener('blur', onBlur);
+  // intrare directă (tragere, ciupire, roată): un cadru acum și, pe nivelul cu ocluzie în repaus, imaginea finală când se oprește
+  function touchInput(){ inputAt = performance.now(); invalidate(); if (P().ao === 'rest'){ clearTimeout(restTimer); restTimer = setTimeout(invalidate, 160); } }
+  let drag = false, lx = 0, ly = 0, moved = 0; const ray = new THREE.Raycaster(), ndc = new THREE.Vector2(); ray.layers.enable(HIDDEN_LAYER);
   // două degete: ciupire = zoom (machetă) sau pas înainte/înapoi (tur); nu se rotește și nu se alege nimic în timpul gestului
   const ptrs = new Map(); let pinchD = 0;
   const pdist = () => { const [a, b] = [...ptrs.values()]; return Math.hypot(a.x - b.x, a.y - b.y); };
   const pd = e => { ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY }); canvas.setPointerCapture(e.pointerId);
     if (ptrs.size === 2){ pinchD = pdist(); drag = false; moved = 99; return; } drag = true; lx = e.clientX; ly = e.clientY; moved = 0; };
   const pmv = e => { if (ptrs.has(e.pointerId)) ptrs.set(e.pointerId, { x: e.clientX, y: e.clientY });
-    if (ptrs.size >= 2 && pinchD > 0){ const d = pdist(), k = pinchD / Math.max(1, d); pinchD = d;
+    if (ptrs.size >= 2 && pinchD > 0){ touchInput(); const d = pdist(), k = pinchD / Math.max(1, d); pinchD = d;
       if (mode === 'house') orbit.r = Math.max(4, Math.min(40, orbit.r * k)); else { glide = null; const step = (1 - k) * 2.2, [x, z] = collide(player.x - Math.sin(yaw) * step, player.z - Math.cos(yaw) * step); player.x = x; player.z = z; } return; }
-    if (!drag){ hoverAt(e); return; } const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
+    if (!drag){ hoverAt(e); return; } touchInput(); const dx = e.clientX - lx, dy = e.clientY - ly; lx = e.clientX; ly = e.clientY; moved += Math.abs(dx) + Math.abs(dy);
     if (mode === 'walk'){ glide = null; yaw -= dx * .0045; pitch = Math.max(-1.2, Math.min(1.1, pitch - dy * .0035)); } else { orbit.th -= dx * .006; orbit.ph = Math.max(.12, Math.min(1.45, orbit.ph - dy * .005)); } };
-  const pu = e => { const wasPinch = ptrs.size >= 2 || pinchD > 0; ptrs.delete(e.pointerId); if (ptrs.size < 2) pinchD = 0; if (wasPinch){ drag = false; return; }
+  const pu = e => { touchInput(); const wasPinch = ptrs.size >= 2 || pinchD > 0; ptrs.delete(e.pointerId); if (ptrs.size < 2) pinchD = 0; if (wasPinch){ drag = false; return; }
     drag = false; if (moved >= 6) return; const r = canvas.getBoundingClientRect(); ndc.set((e.clientX - r.left) / r.width * 2 - 1, -((e.clientY - r.top) / r.height) * 2 + 1); ray.setFromCamera(ndc, cam);
     // clic pe o ușă: se deschide sau se închide (înaintea mobilierului, ca într-un tur real)
     const dh = ray.intersectObjects(doorLeaves.map(d => d.pivot), true)[0], fh = onPick ? ray.intersectObjects(pickables, true)[0] : null;
     if (dh && (!fh || dh.distance <= fh.distance)){ const d = doorLeaves[dh.object.userData.door]; if (d) d.target = d.target > .5 ? 0 : 1; return; }
     if (onPick) onPick(fh ? fh.object.userData.item.userData.pid : null); };
-  const wh = e => { if (mode === 'house'){ orbit.r = Math.max(4, Math.min(40, orbit.r + e.deltaY * .01)); e.preventDefault(); } };
+  const wh = e => { if (mode === 'house'){ touchInput(); orbit.r = Math.max(4, Math.min(40, orbit.r + e.deltaY * .01)); e.preventDefault(); } };
   const onCtxLost = e => { e.preventDefault(); contextLost = true; if (onContextLost) onContextLost(); };
-  const onCtxRestored = () => { contextLost = false; R.shadowMap.needsUpdate = true; mirrorsDirty = true; if (plan) { rebuildHouse(plan); buildFurniture(lastItems); } if (onContextRestored) onContextRestored(); };
-  const onMql = e => { reduce = !!e.matches; if (reduce) doorsNow(doorsOpen); };
+  const onCtxRestored = () => { contextLost = false; dirty(); pm.dispose(); pm = new THREE.PMREMGenerator(R); loadEnv(); if (plan) { rebuildHouse(plan); buildFurniture(lastItems); } if (onContextRestored) onContextRestored(); };
+  const onMql = e => { reduce = !!e.matches; if (reduce) doorsNow(doorsOpen); invalidate(); };
   if (mql && mql.addEventListener) mql.addEventListener('change', onMql);
   canvas.addEventListener('webglcontextlost', onCtxLost); canvas.addEventListener('webglcontextrestored', onCtxRestored);
   canvas.addEventListener('pointerdown', pd); canvas.addEventListener('pointermove', pmv); canvas.addEventListener('pointerup', pu); canvas.addEventListener('pointercancel', pu); canvas.addEventListener('pointerleave', hoverOut); canvas.style.touchAction = 'none'; canvas.addEventListener('wheel', wh, { passive: false });
   // fibra fotografică a parchetului sosește după prima construire: reconstruim casa o singură dată
-  const unTex = onTexturesReady(() => { if (alive && plan) rebuildHouse(plan); });
+  const unTex = onTexturesReady(() => { if (alive && plan){ rebuildHouse(plan); invalidate(); } });
   function resize(){ const w = canvas.clientWidth || 1, h = canvas.clientHeight || 1; R.setSize(w, h, false); if (composer) composer.setSize(w, h); cam.aspect = w / h; if (mode === 'walk'){ cam.fov = walkFov(); lensFor(cam, cam.aspect); } cam.updateProjectionMatrix(); }
-  const ro = new ResizeObserver(resize); ro.observe(canvas);
-  (function loop(){ if (!alive) return; raf = requestAnimationFrame(loop); const now = performance.now(), dt = Math.min(.05, (now - last) / 1000); last = now;
+  // setSize golește bufferul pânzei, iar requestAnimationFrame din acest cadru a trecut deja: desenăm pe loc, altfel apare un cadru gol
+  const ro = new ResizeObserver(() => { if (!alive) return; resize(); if (plan){ draw(); drawOverlay(); } else invalidate(); }); ro.observe(canvas);
+  assetListeners.add(invalidate);
+  function frame(){ raf = 0; if (!alive) return; const now = performance.now(), dt = wakeDt(now, last, asleep); if (!asleep && tier && autoDrop) sampleFrame(now - last); last = now; let camGap = 0, targetGap = 0;
     for (const d of doorLeaves) if (d.open !== d.target){ d.open = reduce ? d.target : (d.target > d.open ? Math.min(d.target, d.open + dt * 1.4) : Math.max(d.target, d.open - dt * 1.4));
       const e = d.open * d.open * (3 - 2 * d.open); setLeaf(d, e); R.shadowMap.needsUpdate = true; }
     if (mode === 'walk'){ let f = 0, s = 0; if (keys.w || keys.arrowup) f += 1; if (keys.s || keys.arrowdown) f -= 1; if (keys.a || keys.arrowleft) s -= 1; if (keys.d || keys.arrowright) s += 1; f = Math.max(-1, Math.min(1, f + joy.f)); s = Math.max(-1, Math.min(1, s + joy.s));
@@ -1338,9 +1362,19 @@ function model(it){
       if (keys['-'] || keys['_']) orbit.r = Math.min(40, orbit.r + 6 * dt);
       if (keys['0']) { framed = false; FT.copy(C); orbit.th = -.7; orbit.ph = .95; orbit.r = Math.max(W, D, 4) * 1.15; }
       F.lerp(FT, reduce ? 1 : dampFactor(5, dt));
-      const t = new THREE.Vector3(F.x + Math.sin(orbit.th) * Math.sin(orbit.ph) * orbit.r, F.y + Math.cos(orbit.ph) * orbit.r, F.z + Math.cos(orbit.th) * Math.sin(orbit.ph) * orbit.r); cam.position.lerp(t, reduce ? 1 : dampFactor(5, dt)); cam.lookAt(F);
+      const t = new THREE.Vector3(F.x + Math.sin(orbit.th) * Math.sin(orbit.ph) * orbit.r, F.y + Math.cos(orbit.ph) * orbit.r, F.z + Math.cos(orbit.th) * Math.sin(orbit.ph) * orbit.r); cam.position.lerp(t, reduce ? 1 : dampFactor(5, dt));
+      camGap = cam.position.distanceTo(t); targetGap = F.distanceTo(FT); if (settled(camGap, targetGap)){ F.copy(FT); cam.position.copy(t); }   // ultima imagine e exact pe destinație
+      cam.lookAt(F);
     }
-    draw(); drawOverlay(); })();
+    const moving = stillMoving({ keys, joyF: joy.f, joyS: joy.s, doorsMoving: doorLeaves.some(d => d.open !== d.target), glide: !!glide, camGap, targetGap });
+    setMotion(moving || now - inputAt < 150); draw(); drawOverlay(); asleep = !moving; if (moving) invalidate(); }
+  // cadre consecutive din bucla continuă (nu cele trezite de un mouse lent): dacă sunt lente, coboară un nivel; o singură direcție
+  function sampleFrame(ms){ slowMs.push(ms); if (slowMs.length < ADAPT_SAMPLES) return; const down = adaptTier(slowMs, tier); slowMs = []; if (down){ applyTier(down); if (onTierDrop) onTierDrop(down); } }
+  function applyTier(t){ if (!TIER_PARAMS[t]) return null; const prevLights = P().maxLights; tier = t; const p = P(); R.setPixelRatio(Math.min(devicePixelRatio, p.maxDpr)); if (composer) composer.setPixelRatio(Math.min(devicePixelRatio, p.composerDpr));
+    if (sun.shadow.mapSize.x !== p.shadow){ sun.shadow.mapSize.set(p.shadow, p.shadow); sun.shadow.map?.dispose(); sun.shadow.map = null; }
+    quality = p.ao === 'off' ? 'normal' : 'high'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } }
+    resize(); if (plan && p.maxLights !== prevLights) rebuildHouse(plan); applyBackdrop(); paintSky(skyKey); dirty(); return t; }
+  invalidate();
   // ---------- scena pentru randarea fotorealistă (tools/blender/casa3d_render.py) ----------
   // Aceleași primitive ca vederea 3D (cutii, cutii rotunjite, cilindri, plăci, tor), cu poziția în lume și materialul
   // lor: tipul (lemn, textil, sticlă...) se deduce din textura și parametrii PBR, iar valorile brute merg și ele.
@@ -1412,7 +1446,7 @@ function model(it){
   // contoare pentru diagnostic (ochiurile, materialele, apelurile de desen ale unui cadru, luminile punctuale active)
   function getStats(){ const ar = R.info.autoReset, count = () => { R.info.reset(); draw(); return { calls: R.info.render.calls, triangles: R.info.render.triangles }; };
     R.info.autoReset = false; const steady = count(); R.shadowMap.needsUpdate = true; const sh = count(); R.info.autoReset = ar; const mats = new Set(); let meshes = 0, pl = 0; const vis = o => { for (let a = o; a; a = a.parent) if (!a.visible) return false; return true; };
-    scene.traverse(o => { if (o.isMesh && vis(o)){ meshes++; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => mats.add(m)); } if (o.isPointLight && vis(o)) pl++; });
+    scene.traverse(o => { if (o.isMesh && vis(o) && o.layers.test(cam.layers)){ meshes++; (Array.isArray(o.material) ? o.material : [o.material]).forEach(m => mats.add(m)); } if (o.isPointLight && vis(o)) pl++; });
     return { calls: steady.calls, triangles: steady.triangles, callsWithShadow: sh.calls, geometries: R.info.memory.geometries, textures: R.info.memory.textures, programs: R.info.programs ? R.info.programs.length : 0, meshes, materials: mats.size, pointLights: pl, mode, shot: lastShot }; }
   function setCameraPreset(preset){
     if (mode === 'walk') setMode('house'); framed = false; FT.copy(C);
@@ -1431,8 +1465,12 @@ function model(it){
     }
     dirty();
   }
-  return {
+  const api = {
     setState(p, items){ plan = p; rebuildHouse(p); buildFurniture(items); },
+    // randatorul software se clasează local (nu se trimite nicăieri); un nivel ales manual oprește adaptarea
+    softwareGpu(){ try { const gl = R.getContext(), e = gl.getExtension('WEBGL_debug_renderer_info'); return !!e && /swiftshader|llvmpipe|software/i.test(String(gl.getParameter(e.UNMASKED_RENDERER_WEBGL))); } catch { return false; } },
+    setTier(t, adapt = false){ autoDrop = !!adapt; slowMs = []; return applyTier(t); },
+    tierNow(){ return tier; },
     getStats,
     setDecor(on){ decorOn = !!on; buildDecor(lastItems); },
     setDoors(open){ doorsOpen = !!open; doorsNow(doorsOpen); },
@@ -1460,6 +1498,10 @@ function model(it){
       dirty(); },
     setQuality(q){ quality = q === 'high' ? 'high' : 'normal'; if (quality === 'high' && !composer){ try { setupComposer(); } catch (e){ quality = 'normal'; composer = null; } } applyBackdrop(); dirty(); paintSky(skyKey); return quality; },
     setMove(forward, strafe){ joy.f = Number.isFinite(forward) ? Math.max(-1, Math.min(1, forward)) : 0; joy.s = Number.isFinite(strafe) ? Math.max(-1, Math.min(1, strafe)) : 0; },
-    dispose(){ alive = false; for (const mk of [selMark, hovMark]){ mk.geometry.dispose(); mk.material.dispose(); } for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('pointerleave', hoverOut); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); finish.dispose(); composer.dispose(); composer = null; } R.dispose(); }
+    dispose(){ alive = false; for (const mk of [selMark, hovMark]){ mk.geometry.dispose(); mk.material.dispose(); } for (const c of xrayMats.values()) c.dispose(); xrayMats.clear(); unTex(); if (mql && mql.removeEventListener) mql.removeEventListener('change', onMql); cancelAnimationFrame(raf); raf = 0; clearTimeout(restTimer); assetListeners.delete(invalidate); ro.disconnect(); removeEventListener('keydown', kd); removeEventListener('keyup', ku); removeEventListener('blur', onBlur); canvas.removeEventListener('webglcontextlost', onCtxLost); canvas.removeEventListener('webglcontextrestored', onCtxRestored); canvas.removeEventListener('pointerdown', pd); canvas.removeEventListener('pointermove', pmv); canvas.removeEventListener('pointerup', pu); canvas.removeEventListener('pointercancel', pu); canvas.removeEventListener('pointerleave', hoverOut); canvas.removeEventListener('wheel', wh); disposeGroup(house); disposeGroup(furniture); if (furnBatch) disposeGroup(furnBatch); if (contact){ contact.geometry.dispose(); if (contact.material.uniforms.map.value) contact.material.uniforms.map.value.dispose(); contact.material.dispose(); contact = null; } probes.forEach(p => { p.rt.dispose(); p.mats.forEach(m => m.dispose()); }); probes.length = 0; ground.geometry.dispose(); ground.material.dispose(); skyGeo.dispose(); sky.material.dispose(); parquet.dispose(); tiles.dispose(); wallMat.dispose(); extMat.dispose(); glass.dispose(); frameMat.dispose(); ceilMat.dispose(); skirtMat.dispose(); Object.values(lookCache).forEach(m => m.dispose()); scene.environment?.dispose?.(); pm.dispose(); if (composer){ ssao.dispose(); finish.dispose(); composer.dispose(); composer = null; } R.dispose(); }
   };
+  // orice comandă primită din afară poate schimba imaginea: un singur loc, ca să nu se poată uita una (citirile nu desenează)
+  for (const k of Object.keys(api)){ if (k === 'dispose' || k === 'getMode' || k === 'getView' || k === 'softwareGpu' || k === 'tierNow') continue; const fn = api[k];
+    api[k] = function(...a){ const r = fn.apply(api, a); if (r && typeof r.then === 'function') return r.finally(invalidate); invalidate(); return r; }; }
+  return api;
 }

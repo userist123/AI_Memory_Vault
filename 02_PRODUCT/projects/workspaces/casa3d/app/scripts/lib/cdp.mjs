@@ -12,14 +12,15 @@ export function chromePath(){
   const p = c.find(x => x && existsSync(x)); if (!p) throw new Error('Chrome negăsit; setați CHROME_PATH.'); return p;
 }
 // Chrome poate porni greu la prima rulare pe un runner curat (CI): așteptăm până la 45 s și reîncercăm o dată
-export async function launch(attempt = 1){
-  try { return await launchOnce(); }
-  catch (e){ if (attempt >= 2) throw e; console.error(`Chrome n-a pornit (${e.message}); reîncerc o dată.`); return launch(attempt + 1); }
+export async function launch(attempt = 1, extra = []){
+  try { return await launchOnce(extra); }
+  catch (e){ if (attempt >= 2) throw e; console.error(`Chrome n-a pornit (${e.message}); reîncerc o dată.`); return launch(attempt + 1, extra); }
 }
-async function launchOnce(){
+async function launchOnce(extra = []){
   const dir = mkdtempSync(join(tmpdir(), 'casa3d-cdp-'));
   const args = ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${dir}`, '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--disable-component-update', '--disable-background-networking', '--lang=ro-RO'];   // româna: limba principală a clienților (pe link, prima randare urmează Accept-Language)
   if (process.platform === 'linux') args.push('--no-sandbox');   // runner-ele CI rulează fără user namespaces
+  args.push(...extra);
   const proc = spawn(chromePath(), [...args, 'about:blank'], { stdio: 'ignore' });
   const portFile = join(dir, 'DevToolsActivePort');
   for (let i = 0; i < 450 && !existsSync(portFile); i++) await sleep(100);
