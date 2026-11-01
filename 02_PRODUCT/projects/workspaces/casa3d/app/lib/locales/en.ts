@@ -753,4 +753,11 @@ export const en: Dict = {
   "railing.product": "Product (verified price)", "railing.productHint": "The quantity comes from the length: whole pieces of profile, panel or set, posts at most 1.2 m apart, or a single starter kit (the extension panels for the rest of the length stay unpriced). The rest of the system and the installation stay in the unpriced list.",
   "radiator.productAria": "Radiator product, {room}", "radiator.unspecified": "Unspecified", "radiator.productCleared": "The chosen product ({name}) has a different size and was removed; pick a product of the new size or leave it unspecified.", "radiator.noFit": "No product with a verified price has this size; available sizes: {sizes} cm.", "hvac.productAria": "Air conditioning product, {room}", "railing.productAria": "Railing product, {len}", "radiator.product": "Product (verified price)", "hvac.product": "Split unit (verified price)",
   "sched.el.radiator": "Radiator", "sched.el.hvac": "Air conditioning", "sched.el.railing": "Railing",
+  // workspace (PLAN_A1_3)
+  "ws.focus": "Focus mode (hide panels)", "ws.focusExit": "Exit Focus", "ws.outliner": "Show or hide structure",
+  "ws.classic": "Classic layout", "ws.studio": "New layout (structure and inspector)", "ws.classicOn": "Classic layout on.", "ws.studioOn": "New layout on.",
+  "ws.resizeLeft": "Structure panel width", "ws.resizeRight": "Inspector width", "ws.sheetAria": "Sheet content", "ws.sheetStructure": "Structure",
+  "outliner.aria": "Project structure", "outliner.title": "Structure", "outliner.hide": "Hide structure", "outliner.show": "Show structure",
+  "outliner.empty": "The plan is empty. Draw a room or a wall.",
+  "outliner.keys": "Up and down arrows move through the tree, right and left open and close, Enter selects and frames, Escape returns to the plan",
 };

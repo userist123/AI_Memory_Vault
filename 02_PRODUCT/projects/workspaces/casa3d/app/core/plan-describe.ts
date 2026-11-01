@@ -14,7 +14,7 @@ import { activeOpenings } from './renovation';
 import { railingHeight, railingKind } from './railings';
 
 type T = (key: string, vars?: Record<string, string | number>) => string;
-export type MirrorItem = { kind: 'room' | 'placement' | 'wall' | 'opening' | 'column' | 'beam' | 'stair' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item' | 'floor_zone' | 'ceiling_zone' | 'railing'; id: string; wallId?: string; label: string };
+export type MirrorItem = { kind: 'room' | 'placement' | 'wall' | 'opening' | 'column' | 'beam' | 'stair' | 'glass_wall' | 'niche' | 'annotation' | 'wall_item' | 'floor_zone' | 'ceiling_zone' | 'railing'; id: string; wallId?: string; parent?: string; label: string };
 export type MirrorGroup = { id: string; title: string; items: MirrorItem[] };
 
 const ord = (a: { x: number; z: number; id: string }, b: { x: number; z: number; id: string }) => (Math.abs(a.z - b.z) > .05 ? a.z - b.z : a.x - b.x) || a.id.localeCompare(b.id);
@@ -69,12 +69,12 @@ export function describePlan(snap: Pick<Snapshot, 'floor' | 'placements'>, cat: 
     // starea peretelui (nou / de demolat) la finalul descrierii; peretele existent rămâne ca înainte
     struct.push({ kind: 'wall', id: wl.id, label: t(wl.exterior ? 'mirror.wallExt' : 'mirror.wall', { len: L(len(wl)), rooms: where }) + (wl.status === 'new' || wl.status === 'demolish' ? ` · ${t(`wallStatus.${wl.status}`)}` : '') });
     for (const op of [...activeOpenings(wl)].sort((a, b) => a.offset - b.offset))
-      { const at = roomsAtOpening(snap, wl, op); struct.push({ kind: 'opening', id: op.id, wallId: wl.id, label: t(op.kind === 'door' ? (op.passage ? 'mirror.passage' : op.entrance ? 'mirror.entrance' : 'mirror.door') : 'mirror.window', { w: L(op.width), rooms: at.length ? at.join(', ') : where }) + (op.kind === 'door' && !op.passage && (op.doorType && op.doorType !== 'swing' || op.flush) ? ` · ${[op.doorType && op.doorType !== 'swing' ? t(`door.type.${op.doorType}`) : '', op.flush ? t('door.flushShort') : ''].filter(Boolean).join(', ')}` : '') }); }
+      { const at = roomsAtOpening(snap, wl, op); struct.push({ kind: 'opening', id: op.id, wallId: wl.id, parent: wl.id, label: t(op.kind === 'door' ? (op.passage ? 'mirror.passage' : op.entrance ? 'mirror.entrance' : 'mirror.door') : 'mirror.window', { w: L(op.width), rooms: at.length ? at.join(', ') : where }) + (op.kind === 'door' && !op.passage && (op.doorType && op.doorType !== 'swing' || op.flush) ? ` · ${[op.doorType && op.doorType !== 'swing' ? t(`door.type.${op.doorType}`) : '', op.flush ? t('door.flushShort') : ''].filter(Boolean).join(', ')}` : '') }); }
     // nișele peretelui, după poziție, cu camera în care dau
     for (const n of (f.niches ?? []).filter(x => x.wallId === wl.id).sort((a, b) => a.offset - b.offset))
-      struct.push({ kind: 'niche', id: n.id, label: t('mirror.niche', { w: L(n.width), h: L(n.height), d: L(n.depth), rooms: nicheRoom(f, n)?.name ?? where }) });
+      struct.push({ kind: 'niche', id: n.id, parent: wl.id, label: t('mirror.niche', { w: L(n.width), h: L(n.height), d: L(n.depth), rooms: nicheRoom(f, n)?.name ?? where }) });
     // obiectele de pe perete care nu dau în nicio cameră rămân lângă peretele lor
-    for (const it of (f.wallItems ?? []).filter(x => x.wallId === wl.id && !wallItemRoom(f, x)).sort((a, b) => a.offset - b.offset)) struct.push(wallItemEntry(it));
+    for (const it of (f.wallItems ?? []).filter(x => x.wallId === wl.id && !wallItemRoom(f, x)).sort((a, b) => a.offset - b.offset)) struct.push({ ...wallItemEntry(it), parent: wl.id });
   }
   for (const c of f.columns ?? []) struct.push({ kind: 'column', id: c.id, label: t(c.role === 'shaft' ? 'mirror.shaft' : c.role === 'boxing' ? 'mirror.boxing' : 'mirror.column', { w: L(c.w), d: L(c.d) }) });
   for (const b of f.beams ?? []) struct.push({ kind: 'beam', id: b.id, label: t('mirror.beam', { len: L(len(b)) }) });
