@@ -18,7 +18,7 @@ PHASES (in order; mark each DONE with PR + merge commit):
    right, phone Structure/Panel switch; checkpoint todo-claude-casa3d-a1-3.md). A1.3 workspace layout (row 4): outliner left (levels -> rooms -> walls/openings/furniture, toggles with catalog),
    contextual inspector right, docked resizable panels with persisted sizes, Focus toggle; behind a feature flag with
    "classic layout" preference; inspector field-order snapshot test.
-3. DONE 2026-11-01: branch claude/casa3d-a1-viewport, checkpoint todo-claude-casa3d-a1-viewport.md, RESEARCH_A1_VIEWPORT.md,
+3. DONE 2026-11-01: PR #369, branch claude/casa3d-a1-viewport (2 review rounds), checkpoint todo-claude-casa3d-a1-viewport.md, RESEARCH_A1_VIEWPORT.md,
    PLAN_A1_VIEWPORT.md. Viewport 3D (row 5): render on demand (idle 0), tiers phone/laptop/desktop, static furniture batching.
    Research changed the plan: ACES kept (Neutral yellows the paint), no pre-baked light (editable plans), path tracing skipped
    (three-gpu-pathtracer requires WebGPU since 0.0.25). Real phones and integrated GPUs: UNVERIFIED.

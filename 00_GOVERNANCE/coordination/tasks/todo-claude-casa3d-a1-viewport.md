@@ -15,6 +15,6 @@ DECISIONS (no owner question, standing rule): path tracing skipped (three-gpu-pa
   session, not vault-worker: all in one dense engine file, a worker would have re-read it for each small edit.
 REVIEW: 2 vault-reviewer rounds done. Round 1: stuck shifted keys, auto label. Round 2: same bug on other layouts, fixed by tracking e.code; verified by tests, no third round (hard rule). Accepted residual: measure-viewport.mjs leaves its project if it throws before the DELETE (dev tool, soft delete).
 FOLLOW-UP: exportGLB passes options as onError (three r186 signature), a pre-existing bug that downloads a bad .glb; UNVERIFIED in a browser.
-NEXT: push -> draft PR -> CI once -> merge -> remove worktree D:/w/a3d-base and launch config casa3d-a3d-base.
+PR: #369 (draft), CI pending at the last check. NEXT: read CI once -> ready -> merge when green -> STATUS DONE. Baseline worktree removed.
 KEY FILES: app/components/viewer3d-engine.js, app/components/Viewer3D.tsx, app/scripts/measure-viewport.mjs.
 BLOCKERS: none. Real phone and integrated GPU behaviour cannot be measured here: UNVERIFIED.
