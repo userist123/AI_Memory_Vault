@@ -1,7 +1,7 @@
 // Plan A1, rândul 5: randarea la cerere: ce ține bucla pornită, când se oprește și cum se reia fără salt.
 import { test } from 'vitest';
 import assert from 'node:assert/strict';
-import { isNavKey, releasedKeys, stillMoving, settled, wakeDt, SETTLE_M, type Demand } from '../core/render-demand';
+import { isNavKey, pressKey, releaseKey, stillMoving, settled, wakeDt, SETTLE_M, type Demand } from '../core/render-demand';
 
 const rest: Demand = { keys: {}, joyF: 0, joyS: 0, doorsMoving: false, glide: false, camGap: 0, targetGap: 0 };
 
@@ -19,11 +19,17 @@ test('tastele de navigare sunt cele citite de motor', () => {
   for (const k of ['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', '+', '=', '-', '_', '0']) assert.ok(isNavKey(k), k);
   for (const k of ['x', 'enter', 'escape', 'delete', 'tab']) assert.equal(isNavKey(k), false, k);
 });
-test('eliberarea cu Shift ridicat primul oprește și perechea tastei', () => {
-  assert.deepEqual(releasedKeys('='), ['=', '+']); assert.deepEqual(releasedKeys('+'), ['+', '=']); assert.deepEqual(releasedKeys('-'), ['-', '_']); assert.deepEqual(releasedKeys('_'), ['_', '-']);
-  assert.deepEqual(releasedKeys('w'), ['w']); assert.deepEqual(releasedKeys('constructor'), ['constructor']);
-  const keys: Record<string, boolean> = { '+': true }; for (const k of releasedKeys('=')) keys[k] = false;
-  assert.equal(stillMoving({ ...rest, keys }), false);
+test('caracterul de la apăsare se eliberează oricare ar fi caracterul de la ridicare', () => {
+  for (const [code, down, up] of [['Equal', '+', '='], ['Minus', '_', '-'], ['Digit0', '0', ')'], ['Numpad0', '0', 'insert'], ['Digit0', '=', '0'], ['BracketRight', '+', '*'], ['Digit0', '0', 'à']]){
+    const m = { keys: {} as Record<string, boolean>, held: new Map<string, string>() }; pressKey(m, code, down); assert.equal(stillMoving({ ...rest, keys: m.keys }), true, down);
+    releaseKey(m, code, up); assert.equal(stillMoving({ ...rest, keys: m.keys }), false, `${down} → ${up}`); assert.equal(m.held.size, 0); }
+});
+test('Shift apăsat cât tasta e ținută nu lasă în urmă caracterul vechi', () => {
+  const m = { keys: {} as Record<string, boolean>, held: new Map<string, string>() }; pressKey(m, 'Digit0', '0'); pressKey(m, 'Digit0', ')'); assert.equal(m.keys['0'], false);
+  releaseKey(m, 'Digit0', ')'); assert.equal(stillMoving({ ...rest, keys: m.keys }), false);
+});
+test('fără cod fizic se folosește caracterul', () => {
+  const m = { keys: {} as Record<string, boolean>, held: new Map<string, string>() }; pressKey(m, '', 'w'); assert.equal(m.keys.w, true); releaseKey(m, '', 'w'); assert.equal(m.keys.w, false); assert.equal(m.held.size, 0);
 });
 test('camera se oprește sub 1 mm, inclusiv când abia a ajuns la prag', () => {
   assert.equal(settled(SETTLE_M - 1e-6, 0), true); assert.equal(settled(0, SETTLE_M - 1e-6), true);

@@ -6,9 +6,11 @@ export const SETTLE_M = .001;
 const NAV_KEYS = new Set(['w', 'a', 's', 'd', 'arrowup', 'arrowdown', 'arrowleft', 'arrowright', '+', '=', '-', '_', '0']);
 /** Tastele citite de bucla motorului (`e.key` cu litere mici). */
 export const isNavKey = (key: string) => NAV_KEYS.has(key);
-const SHIFT_PAIR: Record<string, string> = { '+': '=', '=': '+', '_': '-', '-': '_' };
-/** Tastele eliberate de un keyup: cu Shift ridicat primul, apăsarea vine ca „+” și eliberarea ca „=”; altfel „+” ar rămâne apăsat. */
-export const releasedKeys = (key: string) => (Object.hasOwn(SHIFT_PAIR, key) ? [key, SHIFT_PAIR[key]] : [key]);
+// Tasta fizică (`e.code`) ține minte ce caracter a pornit. Caracterul de la eliberare poate fi altul (Shift apăsat sau ridicat între
+// timp, orice aranjament de tastatură), iar caracterul de la apăsare ar rămâne altfel activ și ar ține bucla pornită.
+export type KeyMaps = { keys: Record<string, boolean>; held: Map<string, string> };
+export function pressKey(m: KeyMaps, code: string, key: string){ const id = code || key, was = m.held.get(id); if (was !== undefined && was !== key) m.keys[was] = false; m.held.set(id, key); m.keys[key] = true; }
+export function releaseKey(m: KeyMaps, code: string, key: string){ const id = code || key, was = m.held.get(id); if (was !== undefined) m.keys[was] = false; m.keys[key] = false; m.held.delete(id); }
 
 export type Demand = { keys: Record<string, boolean>; joyF: number; joyS: number; doorsMoving: boolean; glide: boolean; camGap: number; targetGap: number };
 /** `camGap` și `targetGap` sub prag; o valoare nefinită nu se consideră oprită, ca o eroare să nu înghețe imaginea pe tăcute. */
