@@ -12,14 +12,15 @@ export function chromePath(){
   const p = c.find(x => x && existsSync(x)); if (!p) throw new Error('Chrome negăsit; setați CHROME_PATH.'); return p;
 }
 // Chrome poate porni greu la prima rulare pe un runner curat (CI): așteptăm până la 45 s și reîncercăm o dată
-export async function launch(attempt = 1){
-  try { return await launchOnce(); }
-  catch (e){ if (attempt >= 2) throw e; console.error(`Chrome n-a pornit (${e.message}); reîncerc o dată.`); return launch(attempt + 1); }
+export async function launch(attempt = 1, extra = []){
+  try { return await launchOnce(extra); }
+  catch (e){ if (attempt >= 2) throw e; console.error(`Chrome n-a pornit (${e.message}); reîncerc o dată.`); return launch(attempt + 1, extra); }
 }
-async function launchOnce(){
+async function launchOnce(extra = []){
   const dir = mkdtempSync(join(tmpdir(), 'casa3d-cdp-'));
   const args = ['--headless=new', '--remote-debugging-port=0', `--user-data-dir=${dir}`, '--no-first-run', '--no-default-browser-check', '--hide-scrollbars', '--disable-component-update', '--disable-background-networking', '--lang=ro-RO'];   // româna: limba principală a clienților (pe link, prima randare urmează Accept-Language)
   if (process.platform === 'linux') args.push('--no-sandbox');   // runner-ele CI rulează fără user namespaces
+  args.push(...extra);
   const proc = spawn(chromePath(), [...args, 'about:blank'], { stdio: 'ignore' });
   const portFile = join(dir, 'DevToolsActivePort');
   for (let i = 0; i < 450 && !existsSync(portFile); i++) await sleep(100);
@@ -36,6 +37,15 @@ async function launchOnce(){
     for (let i = 0; i < 10; i++){ try { rmSync(dir, { recursive: true, force: true }); return; } catch { await sleep(300); } } };
   return { send, close };
 }
+/** Un Chrome care rulează deja (de exemplu pe un telefon, prin `adb forward`): doar conexiunea, browserul rămâne pornit. */
+export async function attach(port){
+  const { webSocketDebuggerUrl: url } = await (await fetch(`http://127.0.0.1:${port}/json/version`)).json();
+  const ws = new WebSocket(url); await new Promise((ok, ko) => { ws.onopen = ok; ws.onerror = ko; });
+  let seq = 0; const waiting = new Map();
+  ws.onmessage = m => { const d = JSON.parse(m.data); if (d.id && waiting.has(d.id)){ const w = waiting.get(d.id); waiting.delete(d.id); d.error ? w.ko(new Error(d.error.message)) : w.ok(d.result); } };
+  const send = (method, params = {}, sessionId) => new Promise((ok, ko) => { const id = ++seq; waiting.set(id, { ok, ko }); ws.send(JSON.stringify({ id, method, params, sessionId })); });
+  return { send, close: async () => { try { ws.close(); } catch {} } };
+}
 export async function page(cdp){
   const { targetId } = await cdp.send('Target.createTarget', { url: 'about:blank' });
   const { sessionId } = await cdp.send('Target.attachToTarget', { targetId, flatten: true });
@@ -45,7 +55,7 @@ export async function page(cdp){
     if (r.exceptionDetails) throw new Error(r.exceptionDetails.exception?.description || r.exceptionDetails.text); return r.result.value; };
   const script = async src => { const r = await s('Runtime.evaluate', { expression: src }); if (r.exceptionDetails) throw new Error(r.exceptionDetails.text); };
   const go = async url => { await s('Page.navigate', { url }); for (let i = 0; i < 200; i++){ await sleep(100); if (await evaluate(() => document.readyState === 'complete').catch(() => false)) return; } };
-  return { s, evaluate, script, go };
+  return { s, evaluate, script, go, targetId };
 }
 /** În pagină (aceeași origine, cookie-ul de proprietar): proiect demo → revizie → link pentru client. */
 export async function makeShare(p, base, name = 'Verificare automată', roomNames = []){
