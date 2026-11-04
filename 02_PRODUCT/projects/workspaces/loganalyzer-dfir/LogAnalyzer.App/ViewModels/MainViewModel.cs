@@ -145,7 +145,7 @@ namespace LogAnalyzer.UI.ViewModels
         public System.Collections.Generic.IReadOnlyList<LogAnalyzer.Core.Services.Edition.NavigationEntry> RoleNavigation => RoleProfile.Navigation;
         /// <summary>The „Avansat” menu: sections and pages from <see cref="LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu"/> for this module, the current mode and the role's main pages.</summary>
         public System.Collections.Generic.IReadOnlyList<LogAnalyzer.Core.Services.Edition.ModuleCatalog.MenuSection> AdvancedMenu =>
-            LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(StationPostureContext.Current, AppModeContext.IsAirGapped ? AppMode.AirGapped : AppMode.Network, RoleNavigation.Select(n => n.Tab).ToList());
+            LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(StationPostureContext.Current, AppModeContext.IsAirGapped ? AppMode.AirGapped : AppMode.Network, RoleNavigation.Select(n => n.Tab).ToList(), HasRight);
 
         /// <summary>Control audit of this station ("Control stație" tab).</summary>
         public StationControlViewModel StationControl { get; } = new();
@@ -175,7 +175,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ShowMediaCenter()
         {
-            SelectedTabIndex = LogAnalyzer.Core.Services.Edition.RoleProfiles.TabMediaRegister;
+            if (!OpenTab(LogAnalyzer.Core.Services.Edition.RoleProfiles.TabMediaRegister)) return;
             MediaCenter.SelectedTab = 0;
         }
         public UsersRegisterViewModel UsersRegister { get; }
@@ -657,9 +657,15 @@ namespace LogAnalyzer.UI.ViewModels
             IDatabaseService databaseService, IAuditCollectionService collectionService, EvidenceIntakeService evidenceIntake,
             IEditionProfile edition, IFeatureViewFactory featureViews, IHostDefense hostDefense,
             ILiveEventSourceFactory liveSourceFactory, IConnectivityWatcher connectivityWatcher,
-            LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null)
+            LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null,
+            LogAnalyzer.Core.Services.LicenseService? license = null)
         {
             Edition = edition;
+            // The licence was verified before sign-in (App.xaml.cs); its rights are read ONCE here and drive the menu, the role pages and every navigation.
+            // Review of R2b: the rights are those VERIFIED at start (or at activation), never a fallback: a licence that expired, was renamed or is half-written
+            // by the end of sign-in keeps exactly the verified rights; a licence service with nothing verified grants no capability. Without a licence service at all
+            // (a test host; production always registers it) the module base set applies.
+            _licenseRights = RightsFrom(license);
             // the timeline side panel is recomputed from the events shown whenever they change (never fixed sample text)
             TimelineItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(TimelineSummary));
             // a failure to write the sealed audit is never silent: banner (AuditHealth) and the status line (weak: the health object lives for the process)
@@ -674,16 +680,17 @@ namespace LogAnalyzer.UI.ViewModels
             // The account's language level (default Simple) before any page reads a glossary term.
             LogAnalyzer.Dfir.Language.LanguageLevelContext.Set(_languagePreferences.Load(PreferenceAccount));
             IsExpertLevel = LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert;
-            RoleProfile = LogAnalyzer.Core.Services.Edition.RoleProfiles.For(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role, edition, AppModeContext.Current.Mode);
-            Home = new HomeViewModel(Investigation, tab => SelectedTabIndex = tab, profile: RoleProfile, quickControl: StationControl);
+            RoleProfile = LogAnalyzer.Core.Services.Edition.RoleProfiles.For(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role, edition, AppModeContext.Current.Mode, HasRight);
+            Home = new HomeViewModel(Investigation, tab => OpenTab(tab), profile: RoleProfile, quickControl: StationControl);
             // 2026-10-22 PC walkthrough: the status bar follows the last control or investigation instead of staying on „Nicio analiză încă.”
             LogAnalyzer.UI.Services.CollectAllState.Instance.ActivityRecorded += line => StatusMessage = ActivityStatusLine(line, AuditHealth.HasWarning ? AuditHealth.Warning : null);
             // G3: „Colectează tot” anywhere in the window runs the complete collection and analysis for the role; the control station also runs its control.
             LogAnalyzer.UI.Services.CollectAllState.Handler = async () =>
             {
-                SelectedTabIndex = HomeViewModel.InvestigationTabIndex;
+                if (!OpenTab(HomeViewModel.InvestigationTabIndex)) return;
                 await Investigation.CollectAllCommand.ExecuteAsync(null);
-                if (LogAnalyzer.UI.Services.CollectAllState.Plan(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role).RunStationControl)
+                if (LogAnalyzer.UI.Services.CollectAllState.Plan(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role).RunStationControl
+                    && CanOpenTab(LogAnalyzer.Core.Services.Edition.RoleProfiles.TabStationControl))
                     await StationControl.RunCommand.ExecuteAsync(null);
             };
             Policy = new PolicyViewModel(registryWriter);
@@ -691,7 +698,7 @@ namespace LogAnalyzer.UI.ViewModels
             MediaRegister = new MediaRegisterViewModel();
             MediaCenter = new MediaCenterViewModel(MediaRegister);
             Transfer = new TransferViewModel(MediaCenter);
-            MediaCenter.NavigateToTransferRegister = () => SelectedTabIndex = LogAnalyzer.Core.Services.Edition.RoleProfiles.TabTransferRegister;
+            MediaCenter.NavigateToTransferRegister = () => OpenTab(LogAnalyzer.Core.Services.Edition.RoleProfiles.TabTransferRegister);
             UsersRegister = new UsersRegisterViewModel();
             Auth = new AuthViewModel();
             _eventParser = eventParser;
@@ -866,10 +873,34 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void Navigate(string indexStr)
         {
-            if (int.TryParse(indexStr, out int index))
-            {
-                SelectedTabIndex = index;
-            }
+            if (int.TryParse(indexStr, out int index)) OpenTab(index);
+        }
+
+        /// <summary>The message shown when a function is not part of the station's licence (or of its module).</summary>
+        public const string NotLicensedMessage = "Această funcție nu este inclusă în licența acestei stații.";
+
+        private readonly System.Collections.Generic.IReadOnlyList<string> _licenseRights;
+
+        /// <summary>The licence capabilities read once at start (see the constructor).</summary>
+        public System.Collections.Generic.IReadOnlyList<string> LicenseRights => _licenseRights;
+
+        private bool HasRight(string capability) => _licenseRights.Contains(capability, System.StringComparer.Ordinal);
+
+        /// <summary>The module has a page for the tab and the licence allows it (a tab outside the page catalogue is not decided here).</summary>
+        /// <summary>The rights of the main window: those verified at start / activation; none when the service verified nothing; the module base set without a licence service.</summary>
+        internal static System.Collections.Generic.IReadOnlyList<string> RightsFrom(LogAnalyzer.Core.Services.LicenseService? license) =>
+            license is null ? LogAnalyzer.Core.Services.LicenseFeatures.DefaultFor(StationPostureContext.Current)
+                : license.VerifiedClaims?.Features ?? (System.Collections.Generic.IReadOnlyList<string>)Array.Empty<string>();
+
+        internal bool CanOpenTab(int tab) => LogAnalyzer.Core.Services.Edition.ModuleCatalog.CanOpenTab(tab, StationPostureContext.Current, HasRight,
+            LogAnalyzer.Core.Services.Connectivity.AppModeContext.IsAirGapped ? LogAnalyzer.Core.Services.Connectivity.AppMode.AirGapped : LogAnalyzer.Core.Services.Connectivity.AppMode.Network);
+
+        /// <summary>The single door to a page: refuses a tab the licence or the module does not allow (message in the status line) instead of opening it.</summary>
+        internal bool OpenTab(int tab)
+        {
+            if (!CanOpenTab(tab)) { StatusMessage = NotLicensedMessage; return false; }
+            SelectedTabIndex = tab;
+            return true;
         }
 
         [RelayCommand] private void NextEvtxPage() { if (EvtxCurrentPage < EvtxTotalPages) EvtxCurrentPage++; }
@@ -2084,7 +2115,7 @@ namespace LogAnalyzer.UI.ViewModels
             // Killing every process with a guessed name (the former behaviour) is not acceptable on evidence.
             // The suspicious program is contained individually, scanned and documented in the containment tab.
             IsCountermeasureModalVisible = false;
-            SelectedTabIndex = 13;
+            if (!OpenTab(13)) return;
             StatusMessage = "Selectați programul în „Izolare procese suspecte”: i se blochează doar lui rețeaua, este scanat, iar incidentul se salvează cu probe.";
         }
 

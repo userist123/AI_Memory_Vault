@@ -69,7 +69,18 @@ namespace LogAnalyzer.Core.Services.Edition
 
         public const string NeedsNetworkReason = "necesită modul conectat; această stație este izolată (air-gap)";
 
+        /// <summary>The profile with the base rights of the compiled module (<see cref="LicenseFeatures.DefaultFor(StationPosture)"/>).</summary>
         public static RoleProfile For(StationRole role, IEditionProfile edition, AppMode mode)
+        {
+            var basics = LicenseFeatures.DefaultFor(edition.Posture);
+            return For(role, edition, mode, f => basics.Contains(f));
+        }
+
+        /// <summary>
+        /// The profile for the rights of the licence (<paramref name="has"/>): an intent or sidebar entry whose page needs a capability the licence lacks is left out
+        /// (like a page the module does not have), never shown disabled.
+        /// </summary>
+        public static RoleProfile For(StationRole role, IEditionProfile edition, AppMode mode, Func<string, bool> has)
         {
             // plan 2026-11-04 (ModuleCatalog): what the edition can NEVER have is left out (null, filtered below), never shown disabled; what it has but cannot use now
             // (a network page while a network station runs isolated) stays, disabled, with the reason
@@ -77,13 +88,13 @@ namespace LogAnalyzer.Core.Services.Edition
                 feature is { } f && !edition.Has(f) || network && edition.Kind == EditionKind.Classified;
             IntentAvailability? A(HomeIntent i)
             {
-                if (Never(i.RequiresFeature, i.RequiresNetwork)) return null;
+                if (Never(i.RequiresFeature, i.RequiresNetwork) || !ModuleCatalog.IsTabLicensed(i.TargetTab, has)) return null;
                 if (i.RequiresNetwork && mode == AppMode.AirGapped) return new(i, false, NeedsNetworkReason);
                 return new(i, true, "");
             }
             NavigationEntry? N(string title, int tab, EditionFeature? feature = null, bool network = false)
             {
-                if (Never(feature, network)) return null;
+                if (Never(feature, network) || !ModuleCatalog.IsTabLicensed(tab, has)) return null;
                 if (network && mode == AppMode.AirGapped) return new(title, tab, false, NeedsNetworkReason);
                 return new(title, tab, true, "");
             }

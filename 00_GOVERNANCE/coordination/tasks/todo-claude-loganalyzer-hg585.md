@@ -61,6 +61,13 @@
   LA1 licence pasted into the new build -> "Activare reușită" (legacy LA1 accepted). CI on 5ef49dab3: 32 pending / 1 pass / 0 fail when read
   (just pushed) -> read once more next session.
 
+- R6 DONE aa2719286 (Avansat menu generated from ModuleCatalog sections; verified on screen).
+- R2b DONE (2026-11-05): licence capabilities drive menu, role pages and every navigation (MainViewModel.OpenTab gate; --tab start argument too);
+  LicenseService.Has re-reads/re-verifies the file. Opus review CHANGES_REQUIRED -> fixed: rights = VerifiedClaims from the start-up check
+  (never a fallback to the module set; nothing verified = no capability), tab 8 gate is mode-aware (AD needs auth.ad), --tab via OpenTab.
+  App 940/0, UI 354/0/1, Edition 45/0. OPEN (low): capability checks only at navigation, not inside StationControl.Run / CollectAll /
+  transfer save / containment (all current callers gated); report.pv / intel.online / update.online not enforced anywhere; tab 7 has no capability.
+
 ## Next
 1. Read CI on #370 once (head 5ef49dab3 or later).
 2. R6 navigation by case flow (plan section 5), R2b read-only on expiry + capability enforcement (fix Has() cache), R7 DFIR (collection

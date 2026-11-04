@@ -267,7 +267,7 @@ namespace LogAnalyzer.UI
                 // --tab=<n> opens a given tab at startup (e.g. 13 = "Izolare procese suspecte").
                 var tabArg = Array.Find(e.Args, a => a.StartsWith("--tab=", StringComparison.OrdinalIgnoreCase));
                 if (tabArg is not null && int.TryParse(tabArg[6..], out var tab) && mainWindow.DataContext is MainViewModel mvm)
-                    mvm.SelectedTabIndex = tab;
+                    mvm.OpenTab(tab);   // review of R2b: the start argument goes through the same licence / module gate as every navigation
                 Step(debugLogPath, "MainWindow shown. Closing SplashWindow...\n");
                 splash.Close();
                 Step(debugLogPath, "Startup complete.\n");

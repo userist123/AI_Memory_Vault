@@ -295,12 +295,12 @@ namespace LogAnalyzer.Core.Services
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return _savedClaims = null; }
         }
 
-        /// <summary>True when the saved licence is valid now and grants the capability. Uses the licence read last (re-checking its expiry); <see cref="CurrentLicense"/> re-reads it.</summary>
-        public bool Has(string feature)
-        {
-            var c = _savedClaims ?? CurrentLicense();
-            return c is not null && DateTime.UtcNow < c.ExpiresUtcDate.Date.AddDays(1) && c.Has(feature);
-        }
+        /// <summary>
+        /// True when the licence file as it is NOW is valid for this PC and grants the capability. The file is read and its signature and expiry verified at every
+        /// call (cheap), so a deleted, replaced or expired license.lic is never answered from memory; a missing or unreadable file grants nothing (false for every
+        /// capability, fail closed: the running window decides from the rights it read at start, see MainViewModel).
+        /// </summary>
+        public bool Has(string feature) => CurrentLicense() is { } c && c.Has(feature);
 
         private static bool VerifyWith(string publicKeyBase64, byte[] payload, byte[] sig)
         {
@@ -358,7 +358,7 @@ namespace LogAnalyzer.Core.Services
             result = Check(hw, fullInput, DateTime.UtcNow, out var claims);
             LastClaims = claims;
             if (result != LicenseCheck.Valid) return false;
-            try { File.WriteAllText(_licenseFilePath, fullInput.Trim()); _savedClaims = null; return true; }
+            try { File.WriteAllText(_licenseFilePath, fullInput.Trim()); _savedClaims = null; VerifiedClaims = claims; return true; }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { result = LicenseCheck.Malformed; return false; }
         }
 
@@ -371,10 +371,19 @@ namespace LogAnalyzer.Core.Services
             {
                 if (!File.Exists(_licenseFilePath)) return LicenseCheck.Malformed;
                 if (TryHardwareId() is not { } hw) return LicenseCheck.HardwareIdUnavailable;
-                return Check(hw, File.ReadAllText(_licenseFilePath), DateTime.UtcNow, out _);
+                var r = Check(hw, File.ReadAllText(_licenseFilePath), DateTime.UtcNow, out var claims);
+                if (r == LicenseCheck.Valid) VerifiedClaims = claims;
+                return r;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return LicenseCheck.Malformed; }
         }
+
+        /// <summary>
+        /// The claims of the licence verified at start (<see cref="CheckSaved"/>) or just activated (<see cref="ValidateAndSaveKey(string, out LicenseCheck)"/>); null when no licence
+        /// was verified in this process. Review of R2b: the main window takes its rights from here, so a licence that expires, is renamed or is half-written between the
+        /// start and the end of sign-in never turns into the module's full set; it keeps exactly the rights that were verified.
+        /// </summary>
+        public LicenseClaims? VerifiedClaims { get; private set; }
 
         private static string B64Url(byte[] b) => Convert.ToBase64String(b).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 
