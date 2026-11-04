@@ -35,12 +35,19 @@
                     <Button Content="Copiază Hardware ID" Click="CopyHwid_Click" HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,6,0" Padding="10,4" FontSize="10" Style="{StaticResource ActionButtonStyle}"/>
                 </Grid>
 
-                <TextBlock Text="LICENȚA (începe cu „LA1.”; se lipește întreagă):" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="2,0,0,6"/>
+                <TextBlock Text="Licența (începe cu „LA2.” sau, pentru licențele vechi, „LA1.”; se lipește întreagă):" FontSize="9.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="2,0,0,6"/>
                 <TextBox x:Name="TxtLicenseKey" Height="64" Padding="8,4" TextWrapping="Wrap" AcceptsReturn="False" FontFamily="{StaticResource CodeFontFamily}" FontSize="11" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderBrush="{StaticResource BorderBrush}" Margin="0,0,0,16"/>
+
+                <WrapPanel Margin="0,0,0,12" HorizontalAlignment="Center">
+                    <Button Content="Salvează cererea de licență…" Click="SaveRequest_Click" Margin="0,0,8,0" Padding="10,4" FontSize="10.5" Style="{StaticResource ActionButtonStyle}"
+                            ToolTip="Scrie un fișier cu Hardware ID-ul, modulul programului și data cererii; îl duceți celui care emite licența. Nu conține nimic altceva."/>
+                    <Button Content="Importă fișierul de licență…" Click="ImportLicense_Click" Padding="10,4" FontSize="10.5" Style="{StaticResource ActionButtonStyle}"
+                            ToolTip="Citește un fișier .lic sau .txt primit și îl verifică la fel ca licența lipită."/>
+                </WrapPanel>
 
                 <TextBlock x:Name="TxtStatus" Text="" FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource CriticalBrush}" HorizontalAlignment="Center" Margin="0,0,0,8"/>
                 <TextBlock x:Name="TxtLegacyNotice" FontSize="10.5" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"
-                           Text="Cheile din schema veche (20 de caractere, „|” și o dată) nu mai sunt valabile. Pentru o licență nouă, trimiteți Hardware ID-ul de mai sus celui care v-a dat licența; veți primi o licență semnată care începe cu „LA1.”."/>
+                           Text="Cheile din schema veche (20 de caractere, „|” și o dată) nu mai sunt valabile. Pentru o licență nouă, salvați cererea de licență (sau trimiteți Hardware ID-ul de mai sus) celui care emite licențele; veți primi o licență semnată pentru acest modul, care începe cu „LA2.”."/>
             </StackPanel>
 
             <!-- Actions -->

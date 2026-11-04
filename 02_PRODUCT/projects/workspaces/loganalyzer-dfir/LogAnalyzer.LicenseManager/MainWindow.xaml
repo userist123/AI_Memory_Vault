@@ -1,7 +1,7 @@
 <Window x:Class="LogAnalyzer.LicenseManager.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="LogAnalyzer — Manager Licențe" Height="720" Width="880" MinWidth="760" MinHeight="600"
+        Title="LogAnalyzer — Manager Licențe" Height="860" Width="880" MinWidth="760" MinHeight="600"
         Background="{StaticResource Bg}" WindowStartupLocation="CenterScreen">
     <Grid Margin="24">
         <Grid.RowDefinitions>
@@ -30,6 +30,9 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
                 </Grid.RowDefinitions>
 
                 <TextBlock Text="Client / stație" VerticalAlignment="Center"/>
@@ -37,6 +40,8 @@
 
                 <TextBlock Grid.Row="1" Text="Hardware ID" VerticalAlignment="Center"/>
                 <DockPanel Grid.Row="1" Grid.Column="1" Margin="0,0,0,10">
+                    <Button DockPanel.Dock="Right" Content="Încarcă cerere…" Margin="8,0,0,0" Click="LoadRequest_Click"
+                            ToolTip="Citește fișierul cerere_licenta_*.json adus de la client: precompletează Hardware ID-ul și modulul"/>
                     <Button DockPanel.Dock="Right" Content="Acest PC" Margin="8,0,0,0" Click="UseLocalHwid_Click"
                             ToolTip="Hardware ID-ul calculat exact ca în aplicație, pentru stația curentă"/>
                     <TextBox x:Name="TxtHwid" CharacterCasing="Upper" MaxLength="64"/>
@@ -51,11 +56,34 @@
                     <DatePicker x:Name="DpCustom" Width="140" SelectedDateFormat="Short"/>
                 </StackPanel>
 
-                <TextBlock Grid.Row="3" Text="Note" VerticalAlignment="Center"/>
-                <TextBox x:Name="TxtNotes" Grid.Row="3" Grid.Column="1" Margin="0,0,0,14" FontFamily="Segoe UI"/>
+                <TextBlock Grid.Row="3" Text="Modul" VerticalAlignment="Center"/>
+                <ComboBox x:Name="CmbModule" Grid.Row="3" Grid.Column="1" Margin="0,0,0,10" SelectionChanged="Module_Changed" SelectedIndex="0">
+                    <ComboBoxItem Content="insula"/>
+                    <ComboBoxItem Content="arhipelag"/>
+                    <ComboBoxItem Content="continent"/>
+                </ComboBox>
 
-                <TextBlock Grid.Row="4" Text="Cheie privată licență" VerticalAlignment="Center"/>
-                <DockPanel Grid.Row="4" Grid.Column="1" Margin="0,0,0,14">
+                <TextBlock Grid.Row="4" Text="Titular" VerticalAlignment="Center"/>
+                <TextBox x:Name="TxtHolder" Grid.Row="4" Grid.Column="1" Margin="0,0,0,10" FontFamily="Segoe UI" MaxLength="120"/>
+
+                <TextBlock Grid.Row="5" Text="Capabilități" VerticalAlignment="Top"/>
+                <WrapPanel x:Name="PnlFeatures" Grid.Row="5" Grid.Column="1" Margin="0,0,0,10">
+                    <CheckBox x:Name="Chk0" Content="control.station" Tag="control.station" Margin="0,0,14,4"/>
+                    <CheckBox x:Name="Chk1" Content="case.local" Tag="case.local" Margin="0,0,14,4"/>
+                    <CheckBox x:Name="Chk2" Content="report.pv" Tag="report.pv" Margin="0,0,14,4"/>
+                    <CheckBox x:Name="Chk3" Content="registers" Tag="registers" Margin="0,0,14,4"/>
+                    <CheckBox x:Name="Chk4" Content="collect.lan" Tag="collect.lan" Margin="0,0,14,4"/>
+                    <CheckBox x:Name="Chk5" Content="auth.ad" Tag="auth.ad" Margin="0,0,14,4"/>
+                    <CheckBox x:Name="Chk6" Content="intel.online" Tag="intel.online" Margin="0,0,14,4"/>
+                    <CheckBox x:Name="Chk7" Content="update.online" Tag="update.online" Margin="0,0,14,4"/>
+                    <CheckBox x:Name="Chk8" Content="response.host" Tag="response.host" Margin="0,0,14,4"/>
+                </WrapPanel>
+
+                <TextBlock Grid.Row="6" Text="Note" VerticalAlignment="Center"/>
+                <TextBox x:Name="TxtNotes" Grid.Row="6" Grid.Column="1" Margin="0,0,0,14" FontFamily="Segoe UI"/>
+
+                <TextBlock Grid.Row="7" Text="Cheie privată licență" VerticalAlignment="Center"/>
+                <DockPanel Grid.Row="7" Grid.Column="1" Margin="0,0,0,14">
                     <Button DockPanel.Dock="Right" Content="Alege…" Margin="8,0,0,0" Click="BrowseKey_Click"
                             ToolTip="Fișierul creat cu LogAnalyzer.KeyGen license-keygen, de pe mediul offline"/>
                     <PasswordBox x:Name="PwdKey" DockPanel.Dock="Right" Width="160" Margin="8,0,0,0"
@@ -63,7 +91,7 @@
                     <TextBox x:Name="TxtKeyPath" FontFamily="Segoe UI"/>
                 </DockPanel>
 
-                <StackPanel Grid.Row="5" Grid.Column="1" Orientation="Horizontal">
+                <StackPanel Grid.Row="8" Grid.Column="1" Orientation="Horizontal">
                     <Button Content="Generează licența" Background="{StaticResource Accent}" BorderBrush="{StaticResource Accent}" Click="Generate_Click"/>
                     <Button x:Name="BtnCopy" Content="Copiază" IsEnabled="False" Click="Copy_Click"/>
                     <Button x:Name="BtnSave" Content="Salvează license.lic…" IsEnabled="False" Click="Save_Click"/>

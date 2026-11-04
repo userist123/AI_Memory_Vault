@@ -42,8 +42,20 @@
   (dotnet publish ...App.Classified -p:PublishProfile=win-x64-singlefile -> publish/LogAnalyzer.Standalone/win-x64, gitignored) installed to
   C:\Program Files\LogAnalyzer Insula (R1) (protected folder required by the app; the owner's C:\Program Files\LogAnalyzer untouched) + license.lic
   copied from the installed app; LogAnalyzer.Core/Licensing/license-public-keys.txt copied from la-rel (excluded via .git/info/exclude).
-- In progress: worker = Romanian text + no static decor on advanced pages (+ RomanianUiTextTests); main = R3 sign-in window two columns
-  (identity: module, purpose, station, level, version, licence; notice), ModuleCatalog.Purpose/DefaultNotice, tests in ModuleCatalogTests.
+- R3 + R5 DONE 999f70784 / 6e1ed6159, VERIFIED ON SCREEN (installed R1 folder): sign-in two columns (module, purpose, station, level, version,
+  licence, notice); advanced pages Romanian, fixed ATT&CK grid -> techniques of loaded alerts, fixed attack-stage strip removed, false claims
+  removed (CRYPTOGRAPHICALLY SEALED, 12 ARTIFACTS, AES-256, 88.4%). App 848/0, UI 354/0/1, Edition 45/0. Tests RomanianUiTextTests, ModuleCatalogTests.
+- R2 DONE (2026-11-05): LA2 = ECDSA-signed JSON with mod/feat/holder; a build accepts only its own module (WrongModule), catalogue
+  capabilities only (FeatureNotAllowed / Malformed), LA1 still valid as legacy with DefaultFor(module); offline request file (4 keys) +
+  import in ActivationWindow; KeyGen --module/--holder/--feature; LicenseManager issues LA2. Tests LicenseV2Tests (P1-P9).
+  Opus review CHANGES_REQUIRED (minor) -> fixed: request recorded audit-first in the APP LOG (license.request_saved) before writing;
+  size test now uses a long id (mutation without the size check -> test fails, verified); strictness cases (comment, case-variant key,
+  numeric exp/hw). Depth limit (MaxDepth=8) not separately observable: deep nesting is refused by the feat type check anyway (noted).
+  RESIDUAL for the owner: the request is in the plain app log, not in the sealed chain (the sign-in service opens it only after the licence).
+  LATENT: Has()/CurrentLicense() have no production consumer yet; Has() caches claims for the process (re-checks expiry only) - fix when
+  enforcing capabilities (R2b, together with read-only mode on expiry). App 919/0, UI 354/0/1, Edition 45/0.
+- Re-publish/reinstall recipe: kill old instances (elevated Stop-Process), dotnet publish (profile win-x64-singlefile), copy license.lic,
+  elevated robocopy to C:\Program Files\LogAnalyzer Insula (R1); UIA driver in scratchpad\uia (driver.ps1 elevated, send.ps1).
 
 ## Next
 1. Read CI on #370 once.
