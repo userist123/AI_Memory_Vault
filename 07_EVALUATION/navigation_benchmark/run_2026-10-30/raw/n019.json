@@ -1,0 +1,18 @@
+{
+ "q": "N01",
+ "condition": "I",
+ "repeat": 0,
+ "run_id": "n019",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.044280299999999995,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 655,
+  "cache_read_input_tokens": 41183,
+  "cache_creation_input_tokens": 8400
+ },
+ "answer": "The council budget gate picks one of four tiers, and it does not read the documented numeric council limits.\n\nThe budget note says the gate is `memory/council_budget_controller.py`. It \"picks a tier (NONE / LIGHT / STANDARD / HIGH_RISK) and reads none of these values.\" The numbers it ignores are the limits in the note's \"Default Runtime Limits\" block, such as `max_council_agents: 3` and `max_memory_results: 5`.\n\nI did not open the controller code itself. This rests on the note's own \"Enforcement status\" paragraph, which was measured when the note was restored.\n\nANSWER_PATH: 00_GOVERNANCE/protocols/Council_Context_Budget.md\nANSWER: The council gate `memory/council_budget_controller.py` picks a tier (NONE / LIGHT / STANDARD / HIGH_RISK) and reads none of these values."
+}

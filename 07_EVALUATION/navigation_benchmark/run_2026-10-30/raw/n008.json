@@ -1,0 +1,18 @@
+{
+ "q": "N14",
+ "condition": "V",
+ "repeat": 0,
+ "run_id": "n008",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.0584554,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 746,
+  "cache_read_input_tokens": 65834,
+  "cache_creation_input_tokens": 11099
+ },
+ "answer": "In the WPF desktop pack's async and threading playbook, `async void` is acceptable only for event handlers at the View level. The playbook gives the reason: errors in an `async void` method crash the process. The citation is `vault://domain_packs.07_dotnet_wpf_desktop/playbooks/desktop_async_threading sha256:12c7f01c439b`, in the \"Capcane de Evitat\" section near the end of the 39-line file.\n\nANSWER_PATH: vault://domain_packs.07_dotnet_wpf_desktop/playbooks/desktop_async_threading\nANSWER: \"Evită async void cu excepția handlerelor de evenimente la nivel de View.\" In English, avoid `async void` except for View-level event handlers."
+}

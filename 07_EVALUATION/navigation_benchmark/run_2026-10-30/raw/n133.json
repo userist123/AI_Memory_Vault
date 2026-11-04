@@ -1,0 +1,18 @@
+{
+ "q": "N16",
+ "condition": "G",
+ "repeat": 1,
+ "run_id": "n133",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.026237299999999998,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 692,
+  "cache_read_input_tokens": 62293,
+  "cache_creation_input_tokens": 3268
+ },
+ "answer": "A move of exactly +1 measurable case was pre-declared inconclusive. That means held-out context_recall of 5/27 (0.185), against the 4/27 baseline. The preregistration treats a single case as inside the noise band at this sample size. The flag stays off pending more data. The preregistration also set the other two outcomes: +2 or more cases confirms, and 4/27 or lower disconfirms.\n\nANSWER_PATH: 07_EVALUATION/r025_wp8_a1_heldout/WP8_PREREGISTRATION.md\nANSWER: A move of exactly +1 measurable case (5/27, 0.185 vs. the 4/27 baseline) was pre-declared inconclusive. It would be reported as such, with the flag staying off pending more data."
+}

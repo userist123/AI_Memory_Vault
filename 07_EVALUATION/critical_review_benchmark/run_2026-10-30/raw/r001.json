@@ -1,0 +1,20 @@
+{
+ "case": "C3",
+ "condition": "A",
+ "repeat": 2,
+ "run_id": "r001",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.1236596,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 263,
+  "cache_read_input_tokens": 61216,
+  "cache_creation_input_tokens": 28725
+ },
+ "verdict": "Yes, `parse_date` is defined at `src/utils.py:5`.",
+ "answer": "Yes. `src/utils.py` defines `parse_date(s)` at line 5. It's the only `def parse_date` in the repository.\n\nVERDICT: Yes, `parse_date` is defined at `src/utils.py:5`.",
+ "stderr_tail": null
+}

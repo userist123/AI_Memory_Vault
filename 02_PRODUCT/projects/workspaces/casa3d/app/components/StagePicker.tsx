@@ -16,8 +16,8 @@ export default function StagePicker({ stages, phases, current, done, warn, onPic
     box.current?.querySelector<HTMLElement>('[aria-checked=true]')?.focus(); addEventListener('pointerdown', out); return () => removeEventListener('pointerdown', out); }, [open]);
   const pick = (id: string) => { setOpen(false); onPick(id); box.current?.querySelector<HTMLElement>('.stagepick-btn')?.focus(); };
   return (<div className="stagepick" ref={box} onKeyDown={e => { if (e.key === 'Escape' && open){ e.stopPropagation(); setOpen(false); box.current?.querySelector<HTMLElement>('.stagepick-btn')?.focus(); } }}>
-    <button type="button" className="stagepick-btn" aria-haspopup="menu" aria-expanded={open} aria-label={t('stage.pickAria', { stage: `${num(current)} ${t(`stage.${current}`)}` })} onClick={() => setOpen(o => !o)}>
-      <i>{num(current)}</i><b>{t(`stage.${current}`)}</b><small>{t('stage.progress', { n, total: stages.length })}</small><Icon name="chevronDown" size={16} />
+    <button type="button" className="stagepick-btn" aria-haspopup="menu" aria-expanded={open} onClick={() => setOpen(o => !o)}>
+      <i>{num(current)}</i><b>{t(`stage.${current}`)}</b><small>{t('stage.progress', { n, total: stages.length })}</small><span className="sr-only">{t('stage.pickHint')}</span><Icon name="chevronDown" size={16} />
     </button>
     {open && <div className="stagepick-menu" role="menu" aria-label={t('stage.aria')}>
       {phases.map(ph => <div key={ph.id} role="group" aria-label={t(`phase.${ph.id}`)} className="stagepick-phase"><span aria-hidden="true">{t(`phase.${ph.id}`)}</span>

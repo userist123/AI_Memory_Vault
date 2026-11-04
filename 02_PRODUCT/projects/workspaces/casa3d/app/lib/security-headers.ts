@@ -1,4 +1,4 @@
-// P0 (SALES_READINESS_PLAN 3.1.3): antete de securitate pe toate răspunsurile, puse din middleware.ts.
+// P0 (SALES_READINESS_PLAN 3.1.3): antete de securitate pe toate răspunsurile, puse din proxy.ts.
 // CSP cu nonce per cerere și 'strict-dynamic': rulează doar scripturile Next.js marcate cu nonce-ul cererii.
 // Stilurile rămân 'unsafe-inline' (React folosește atributul style peste tot); asta nu permite execuție de cod.
 
@@ -9,6 +9,8 @@ export function contentSecurityPolicy(nonce: string, dev = process.env.NODE_ENV 
   return [
     "default-src 'self'",
     // în dezvoltare Next.js are nevoie de eval pentru reîncărcarea la cald
+    // decizie UI/UX P3-18 (2026-10-23): fără 'wasm-unsafe-eval' — browserul nu încarcă WASM (PGlite rulează doar pe server,
+    // modelele 3D nu folosesc Draco/KTX2). Dacă apar decodoare WASM, se adaugă doar atunci, cu fișierele găzduite local.
     `script-src 'self' 'nonce-${nonce}' 'strict-dynamic'${dev ? " 'unsafe-eval'" : ''}`,
     "style-src 'self' 'unsafe-inline'",
     "img-src 'self' data: blob:",                 // previzualizări locale (fotografii de șantier, randări, planuri importate)

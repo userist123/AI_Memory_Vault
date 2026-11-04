@@ -2,6 +2,7 @@
 // Fără scoruri arbitrare sau inventate: doar fapte calculate determinist din geometrie, instalații, prețuri și decizii.
 import type { Catalog, MaterialsCatalog, Snapshot } from './types';
 import { validateFloor, validatePlacement } from './validate';
+import { roomCeilingDropCm } from './finishes';
 import { resolve } from './catalog';
 
 export type HealthSeverity = 'BLOCKER' | 'WARNING' | 'TIP';
@@ -43,7 +44,7 @@ export function evaluateProjectHealth(
   let warningsCount = 0;
 
   // 1. Erori / Avertismente etaj și pereți
-  const floorIssues = validateFloor(snap.floor);
+  const floorIssues = validateFloor(snap.floor, id => roomCeilingDropCm(snap, id));
   for (const fi of floorIssues) {
     if (fi.severity === 'ERROR') {
       errorsCount++;

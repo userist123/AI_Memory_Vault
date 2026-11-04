@@ -1,0 +1,264 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dispensary Ledger — Pharmacy Stock Desk</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600&family=IBM+Plex+Mono:wght@400;500&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+/* Direction: "Dispensary Ledger" — industrial/utilitarian with an editorial serif.
+   Paper stock, pharmacy-green ink, a single vermilion for anything that needs hands now. */
+:root{
+  --paper:#f3efe4; --paper-2:#e9e4d5; --card:#faf7ef;
+  --ink:#16251f; --ink-2:#4a5a52; --rule:#c9c3b0;
+  --green:#1d4a3a; --green-soft:#cfdccf;
+  --alert:#d2401f; --alert-soft:#f3d3c6;
+  --amber:#b7791f; --amber-soft:#efdcae;
+  --display:'Fraunces',Georgia,serif;
+  --sans:'IBM Plex Sans',sans-serif;
+  --mono:'IBM Plex Mono',monospace;
+  --s:8px;
+}
+*{box-sizing:border-box;margin:0}
+body{background:var(--paper);color:var(--ink);font:400 14px/1.45 var(--sans);
+  background-image:radial-gradient(rgba(22,37,31,.05) 1px,transparent 1px);background-size:4px 4px;}
+:focus-visible{outline:2px solid var(--alert);outline-offset:2px}
+.wrap{max-width:1360px;margin:0 auto;padding:calc(var(--s)*3) calc(var(--s)*4) calc(var(--s)*6)}
+
+header{display:flex;justify-content:space-between;align-items:flex-end;gap:24px;border-bottom:3px double var(--ink);padding-bottom:16px;flex-wrap:wrap}
+.brand small{font:500 11px var(--mono);letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+h1{font:600 clamp(34px,5vw,56px)/1 var(--display);letter-spacing:-.02em;margin-top:4px}
+h1 em{font-weight:400;color:var(--green)}
+.meta{font:400 12px/1.6 var(--mono);text-align:right;color:var(--ink-2)}
+.meta b{color:var(--ink);font-weight:500}
+
+/* KPI strip: big ledger figures separated by rules, no cards */
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:1px solid var(--ink)}
+.kpi{padding:20px 20px 18px 0;border-right:1px solid var(--rule);animation:rise .6s both}
+.kpi+.kpi{padding-left:20px}.kpi:last-child{border:0}
+.kpi:nth-child(2){animation-delay:.07s}.kpi:nth-child(3){animation-delay:.14s}.kpi:nth-child(4){animation-delay:.21s}
+.kpi span{font:500 11px var(--mono);letter-spacing:.12em;text-transform:uppercase;color:var(--ink-2)}
+.kpi strong{display:block;font:400 64px/1 var(--display);margin:6px 0 4px;font-variant-numeric:tabular-nums}
+.kpi.hot strong{color:var(--alert)}
+.kpi p{font-size:12.5px;color:var(--ink-2)}
+@keyframes rise{from{opacity:0;transform:translateY(10px)}}
+
+h2{font:600 22px var(--display);display:flex;align-items:baseline;gap:12px}
+h2 i{font:500 11px var(--mono);font-style:normal;letter-spacing:.1em;color:var(--ink-2);text-transform:uppercase}
+section{margin-top:40px}
+
+/* Shelf-life ruler — the signature element */
+.ruler-box{margin-top:16px;background:var(--card);border:1px solid var(--ink);padding:20px 20px 12px;position:relative;box-shadow:6px 6px 0 var(--green-soft)}
+.ruler{position:relative;height:150px;border-bottom:2px solid var(--ink);
+  background:repeating-linear-gradient(90deg,transparent 0 calc(100%/90 - 1px),rgba(22,37,31,.12) calc(100%/90 - 1px) calc(100%/90))}
+.zone{position:absolute;top:0;bottom:0;pointer-events:none}
+.zone.z30{left:0;width:33.33%;background:linear-gradient(90deg,var(--alert-soft),transparent)}
+.zone.z60{left:33.33%;width:33.33%;background:linear-gradient(90deg,var(--amber-soft),transparent);opacity:.55}
+.pin{position:absolute;bottom:0;width:0;border-left:2px solid var(--ink);cursor:pointer;background:none;padding:0;border-top:0;border-right:0;border-bottom:0}
+.pin::after{content:"";position:absolute;top:-6px;left:-6px;width:10px;height:10px;background:var(--green);border:2px solid var(--card);border-radius:50%;outline:1px solid var(--ink)}
+.pin.w60::after{background:var(--amber)}.pin.w30::after{background:var(--alert)}
+.pin.w30{border-color:var(--alert)}
+.pin:hover,.pin:focus-visible,.pin.on{border-left-width:3px}
+.pin:hover::after,.pin:focus-visible::after,.pin.on::after{transform:scale(1.5)}
+.pin .tag{position:absolute;left:8px;top:-12px;white-space:nowrap;font:500 10.5px var(--mono);background:var(--ink);color:var(--paper);padding:1px 6px;display:none;z-index:3}
+.pin:hover .tag,.pin:focus-visible .tag,.pin.on .tag{display:block}
+.axis{display:flex;justify-content:space-between;font:400 11px var(--mono);color:var(--ink-2);padding-top:6px;position:relative}
+.axis b{font-weight:500;color:var(--ink)}
+.today{position:absolute;left:0;top:-4px;font:500 10px var(--mono);color:var(--alert);letter-spacing:.1em}
+
+.batches{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:0 32px;margin-top:20px}
+.batch{display:grid;grid-template-columns:1fr auto;gap:2px 12px;padding:10px 0;border-bottom:1px dotted var(--ink-2);transition:background .15s}
+.batch.on{background:var(--amber-soft)}
+.batch b{font-weight:600}.batch .lot{font:400 11.5px var(--mono);color:var(--ink-2)}
+.days{grid-row:span 2;align-self:center;font:400 30px/1 var(--display);text-align:right}
+.days small{display:block;font:500 10px var(--mono);letter-spacing:.1em;color:var(--ink-2)}
+.days.w30{color:var(--alert)}.days.w60{color:var(--amber)}
+
+/* Two-column lower area, deliberately unequal */
+.cols{display:grid;grid-template-columns:minmax(0,1.55fr) minmax(0,1fr);gap:48px;align-items:start}
+.tools{display:flex;gap:8px;flex-wrap:wrap;margin:16px 0 8px}
+input[type=search]{font:400 13px var(--mono);padding:7px 10px;border:1px solid var(--ink);background:var(--card);color:var(--ink);min-width:200px;flex:1}
+.chip{font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;padding:7px 12px;border:1px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+.chip[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+table{width:100%;border-collapse:collapse}
+th{font:500 10.5px var(--mono);letter-spacing:.1em;text-transform:uppercase;text-align:left;color:var(--ink-2);padding:8px 8px 8px 0;border-bottom:1px solid var(--ink)}
+td{padding:11px 8px 11px 0;border-bottom:1px solid var(--rule);vertical-align:middle}
+td.n,th.n{text-align:right;font-family:var(--mono);font-variant-numeric:tabular-nums}
+.drug b{display:block;font-weight:600}.drug span{font-size:12px;color:var(--ink-2)}
+.level{position:relative;height:10px;background:var(--paper-2);min-width:120px;border:1px solid var(--ink)}
+.level i{position:absolute;inset:0 auto 0 0;background:var(--green)}
+.level.low i{background:var(--amber)}.level.crit i{background:var(--alert)}
+.level u{position:absolute;top:-4px;bottom:-4px;width:2px;background:var(--ink)} /* reorder point */
+.st{font:500 10.5px var(--mono);letter-spacing:.08em;text-transform:uppercase;padding:2px 7px;border:1px solid currentColor;white-space:nowrap}
+.st.ok{color:var(--green)}.st.low{color:var(--amber)}.st.crit{color:var(--alert);background:var(--alert-soft)}
+.empty{padding:24px 0;color:var(--ink-2);font-style:italic}
+
+.order{padding:14px 0;border-bottom:1px solid var(--rule);display:grid;grid-template-columns:auto 1fr auto;gap:4px 14px;align-items:start}
+.pri{font:600 11px var(--mono);letter-spacing:.08em;padding:3px 7px;grid-row:span 2;color:var(--paper);background:var(--green)}
+.pri.stat{background:var(--alert)}.pri.urgent{background:var(--amber)}
+.order h3{font:600 15px var(--sans)}
+.order .items{grid-column:2;font-size:12.5px;color:var(--ink-2)}
+.order .when{font:400 11.5px var(--mono);color:var(--ink-2);text-align:right}
+button.go{grid-column:3;grid-row:2;font:500 11px var(--mono);letter-spacing:.06em;text-transform:uppercase;border:1px solid var(--ink);background:var(--card);padding:5px 9px;cursor:pointer}
+button.go:hover{background:var(--green);color:var(--paper)}
+.order.done{opacity:.45}.order.done h3{text-decoration:line-through}
+.note{font:400 11.5px var(--mono);color:var(--ink-2);margin-top:12px}
+
+@media (max-width:980px){.cols{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.kpi:nth-child(2){border-right:0}.kpi:nth-child(3){padding-left:0}}
+@media (max-width:640px){.wrap{padding:16px}.meta{text-align:left}.hide-s{display:none}.kpi strong{font-size:48px}}
+@media (prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand"><small>St. Aldric General · Central Pharmacy</small><h1>Dispensary <em>Ledger</em></h1></div>
+    <div class="meta">Wed 21 Oct 2026 · <b id="clock">07:42</b><br>Shift: <b>Day · Lead P. Okafor</b><br>Last stock count: <b>20 Oct 22:10</b></div>
+  </header>
+
+  <div class="kpis" id="kpis"></div>
+
+  <section aria-labelledby="exp-h">
+    <h2 id="exp-h">Shelf-life ruler <i>Next 90 days · one pin per batch</i></h2>
+    <div class="ruler-box">
+      <div class="ruler" id="ruler"><div class="zone z30"></div><div class="zone z60"></div></div>
+      <div class="axis"><span class="today">TODAY</span><span style="padding-top:12px"><b>0</b> d</span><span style="padding-top:12px">30 d</span><span style="padding-top:12px">60 d</span><span style="padding-top:12px"><b>90</b> d</span></div>
+    </div>
+    <div class="batches" id="batches"></div>
+  </section>
+
+  <div class="cols">
+    <section aria-labelledby="stk-h">
+      <h2 id="stk-h">Stock on hand <i>Tick mark = reorder point</i></h2>
+      <div class="tools">
+        <input type="search" id="q" placeholder="Search drug or class…" aria-label="Search stock">
+        <button class="chip" data-f="all" aria-pressed="true">All</button>
+        <button class="chip" data-f="crit" aria-pressed="false">Critical</button>
+        <button class="chip" data-f="low" aria-pressed="false">Low</button>
+      </div>
+      <table>
+        <thead><tr><th>Medicine</th><th class="n">On hand</th><th>Level</th><th class="n hide-s">Cover</th><th>Status</th></tr></thead>
+        <tbody id="stock"></tbody>
+      </table>
+      <p class="note">Cover = days of supply at the trailing 14-day average ward draw.</p>
+    </section>
+
+    <section aria-labelledby="ord-h">
+      <h2 id="ord-h">Ward orders <i id="ordcount"></i></h2>
+      <div id="orders" style="margin-top:8px"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const TODAY = new Date('2026-10-21T00:00:00');
+const stock = [
+  {n:'Meropenem 1 g',f:'IV powder · Antibiotic',oh:42,rp:120,u:'vials',draw:18},
+  {n:'Insulin glargine 100 U/mL',f:'Pen 3 mL · Endocrine',oh:96,rp:80,u:'pens',draw:7},
+  {n:'Enoxaparin 40 mg',f:'Syringe · Anticoagulant',oh:310,rp:250,u:'syr',draw:34},
+  {n:'Morphine sulfate 10 mg/mL',f:'Amp 1 mL · CD Sch. 2',oh:58,rp:60,u:'amps',draw:9},
+  {n:'Salbutamol 2.5 mg',f:'Nebule · Respiratory',oh:480,rp:400,u:'nebs',draw:41},
+  {n:'Noradrenaline 4 mg/4 mL',f:'Amp · Vasopressor',oh:14,rp:40,u:'amps',draw:6},
+  {n:'Paracetamol 1 g/100 mL',f:'IV bag · Analgesic',oh:620,rp:300,u:'bags',draw:52},
+  {n:'Furosemide 20 mg/2 mL',f:'Amp · Diuretic',oh:75,rp:100,u:'amps',draw:11},
+  {n:'Ondansetron 4 mg',f:'Amp · Antiemetic',oh:210,rp:120,u:'amps',draw:15},
+  {n:'Vancomycin 500 mg',f:'IV powder · Antibiotic',oh:88,rp:90,u:'vials',draw:12},
+  {n:'Heparin 5,000 IU/mL',f:'Vial 5 mL · Anticoagulant',oh:0,rp:30,u:'vials',draw:4},
+  {n:'Atorvastatin 40 mg',f:'Tablet · Lipid',oh:1840,rp:900,u:'tabs',draw:96}
+];
+const batches = [
+  {d:'Heparin 5,000 IU/mL',lot:'HP-7731',qty:12,exp:'2026-10-27'},
+  {d:'Ondansetron 4 mg',lot:'OD-2208',qty:64,exp:'2026-11-04'},
+  {d:'Meropenem 1 g',lot:'MR-5190',qty:20,exp:'2026-11-12'},
+  {d:'Furosemide 20 mg/2 mL',lot:'FU-0412',qty:30,exp:'2026-11-18'},
+  {d:'Insulin glargine',lot:'IG-8845',qty:26,exp:'2026-11-29'},
+  {d:'Salbutamol 2.5 mg',lot:'SA-3317',qty:140,exp:'2026-12-09'},
+  {d:'Vancomycin 500 mg',lot:'VA-6602',qty:40,exp:'2026-12-21'},
+  {d:'Morphine 10 mg/mL',lot:'MO-1174',qty:18,exp:'2027-01-06'}
+];
+const orders = [
+  {id:1,ward:'ICU 2',pri:'stat',items:'Noradrenaline 4 mg ×6, Meropenem 1 g ×10',at:'07:31'},
+  {id:2,ward:'Emergency',pri:'stat',items:'Morphine 10 mg ×8, Ondansetron 4 mg ×20',at:'07:36'},
+  {id:3,ward:'Surgical 4B',pri:'urgent',items:'Enoxaparin 40 mg ×40, Paracetamol IV ×30',at:'06:58'},
+  {id:4,ward:'Cardiology',pri:'urgent',items:'Furosemide 20 mg ×24, Heparin 5,000 IU ×6',at:'06:40'},
+  {id:5,ward:'Paediatrics',pri:'routine',items:'Salbutamol 2.5 mg ×60',at:'06:15'},
+  {id:6,ward:'Oncology 3A',pri:'routine',items:'Ondansetron 4 mg ×30, Vancomycin 500 mg ×12',at:'05:50'},
+  {id:7,ward:'Medical 5C',pri:'routine',items:'Insulin glargine ×12, Atorvastatin 40 mg ×200',at:'05:20'}
+];
+const $ = s => document.querySelector(s);
+const nf = new Intl.NumberFormat('en-GB');
+const status = s => s.oh===0 || s.oh < s.rp*.5 ? 'crit' : s.oh < s.rp ? 'low' : 'ok';
+const label = {crit:'Critical',low:'Low',ok:'OK'};
+const daysLeft = b => Math.round((new Date(b.exp+'T00:00:00')-TODAY)/864e5);
+const wk = d => d<=30?'w30':d<=60?'w60':'';
+const fmtDate = b => new Date(b.exp+'T00:00:00').toLocaleDateString('en-GB',{day:'2-digit',month:'short'});
+
+function kpis(){
+  const crit=stock.filter(s=>status(s)==='crit').length, low=stock.filter(s=>status(s)==='low').length;
+  const exp30=batches.filter(b=>daysLeft(b)<=30).length;
+  const open=orders.filter(o=>!o.done), stat=open.filter(o=>o.pri==='stat').length;
+  $('#kpis').innerHTML = `
+   <div class="kpi hot"><span>Critical stock</span><strong>${crit}</strong><p>Below half of reorder point, ${low} more low</p></div>
+   <div class="kpi hot"><span>Expiring ≤ 30 d</span><strong>${exp30}</strong><p>${batches.filter(b=>daysLeft(b)<=30).reduce((a,b)=>a+b.qty,0)} units to rotate or return</p></div>
+   <div class="kpi"><span>Open ward orders</span><strong>${open.length}</strong><p>${stat} STAT awaiting dispatch</p></div>
+   <div class="kpi"><span>Lines in catalogue</span><strong>${stock.length}</strong><p>${stock.filter(s=>status(s)==='ok').length} within par</p></div>`;
+}
+
+function ruler(){
+  $('#ruler').insertAdjacentHTML('beforeend', batches.map((b,i)=>{
+    const d=daysLeft(b), h=28+((i*37)%5)*20;
+    return `<button class="pin ${wk(d)}" data-i="${i}" style="left:${d/90*100}%;height:${h}px" aria-label="${b.d}, batch ${b.lot}, ${d} days left"><span class="tag">${b.d.split(' ')[0]} · ${d}d</span></button>`;
+  }).join(''));
+  $('#batches').innerHTML = batches.map((b,i)=>{
+    const d=daysLeft(b);
+    return `<div class="batch" data-i="${i}"><b>${b.d}</b><div class="days ${wk(d)}">${d}<small>DAYS</small></div><span class="lot">Lot ${b.lot} · ${b.qty} units · exp ${fmtDate(b)}</span></div>`;
+  }).join('');
+  const hl=(i,on)=>document.querySelectorAll(`[data-i="${i}"]`).forEach(e=>e.classList.toggle('on',on));
+  document.querySelectorAll('.pin,.batch').forEach(e=>{
+    e.addEventListener('mouseenter',()=>hl(e.dataset.i,true));
+    e.addEventListener('mouseleave',()=>hl(e.dataset.i,false));
+    e.addEventListener('focus',()=>hl(e.dataset.i,true));
+    e.addEventListener('blur',()=>hl(e.dataset.i,false));
+  });
+}
+
+let filter='all', term='';
+function renderStock(){
+  const rows = stock.filter(s=>(filter==='all'||status(s)===filter)&&(s.n+s.f).toLowerCase().includes(term))
+    .sort((a,b)=>['crit','low','ok'].indexOf(status(a))-['crit','low','ok'].indexOf(status(b)));
+  $('#stock').innerHTML = rows.length ? rows.map(s=>{
+    const st=status(s), max=s.rp*2, pct=Math.min(100,s.oh/max*100), cover=s.oh/s.draw;
+    return `<tr><td class="drug"><b>${s.n}</b><span>${s.f}</span></td>
+      <td class="n">${nf.format(s.oh)}</td>
+      <td><div class="level ${st}" role="img" aria-label="${s.oh} of reorder point ${s.rp}"><i style="width:${pct}%"></i><u style="left:50%"></u></div></td>
+      <td class="n hide-s">${cover<1?'<1':Math.round(cover)} d</td>
+      <td><span class="st ${st}">${label[st]}</span></td></tr>`;
+  }).join('') : '<tr><td colspan="5" class="empty">No medicines match.</td></tr>';
+}
+document.querySelectorAll('.chip').forEach(c=>c.onclick=()=>{
+  filter=c.dataset.f;
+  document.querySelectorAll('.chip').forEach(x=>x.setAttribute('aria-pressed',x===c));
+  renderStock();
+});
+$('#q').oninput=e=>{term=e.target.value.toLowerCase().trim();renderStock();};
+
+function renderOrders(){
+  const rank={stat:0,urgent:1,routine:2};
+  const list=[...orders].sort((a,b)=>(a.done?1:0)-(b.done?1:0)||rank[a.pri]-rank[b.pri]||a.at.localeCompare(b.at));
+  $('#ordcount').textContent = `${orders.filter(o=>!o.done).length} pending`;
+  $('#orders').innerHTML = list.map(o=>`
+    <article class="order ${o.done?'done':''}">
+      <span class="pri ${o.pri}">${o.pri.toUpperCase()}</span>
+      <h3>${o.ward}</h3><span class="when">${o.at}</span>
+      <p class="items">${o.items}</p>
+      ${o.done?'':`<button class="go" data-id="${o.id}">Dispatch</button>`}
+    </article>`).join('');
+  document.querySelectorAll('.go').forEach(b=>b.onclick=()=>{orders.find(o=>o.id==b.dataset.id).done=true;renderOrders();kpis();});
+}
+
+kpis();ruler();renderStock();renderOrders();
+</script>
+</body>
+</html>

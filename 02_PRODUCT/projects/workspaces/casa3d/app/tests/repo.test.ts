@@ -9,7 +9,7 @@ const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-2
 
 test('catalogul e încărcat în baza de date cu proveniență', async () => {
   const c = await repo.getCatalog(); assert.equal(c.variants.length, catalogSeed.variants.length); assert.equal(c.offers.length, catalogSeed.offers.length);
-  assert.ok(c.offers.every(o => o.provenance.sourceUrl && ['2026-09-30', '2026-10-10', '2026-10-11'].includes(o.provenance.verifiedAt!) && o.availability === 'UNKNOWN'));
+  assert.ok(c.offers.every(o => o.provenance.sourceUrl && ['2026-09-30', '2026-10-10', '2026-10-11', '2026-10-24'].includes(o.provenance.verifiedAt!) && o.availability === 'UNKNOWN'));
 });
 test('flux complet: proiect nou → salvare → reîncărcare → revizie → modificare → restaurare', async () => {
   const id = await repo.createProject(A, 'Apartament test', 'demo');

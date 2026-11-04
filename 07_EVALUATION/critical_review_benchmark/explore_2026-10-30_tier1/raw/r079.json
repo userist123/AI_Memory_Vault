@@ -1,0 +1,20 @@
+{
+ "case": "T3",
+ "condition": "B",
+ "repeat": 0,
+ "run_id": "r079",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.0575822,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1127,
+  "cache_read_input_tokens": 132842,
+  "cache_creation_input_tokens": 8254
+ },
+ "verdict": "The current config loads 3 plugins (auth, cache, metrics), and startup time for this version is unmeasured: the only figure, 9.2 s, is for v1.2 with 14 plugins.",
+ "answer": "The repo's own files give a plugin count for the current version. They give no startup time for it.\n\n**Plugins:** `config.yaml` (version 2.0.0) lists 3 plugins: `auth`, `cache` and `metrics`. `CHANGELOG.md` agrees: 2.0.0 (2026-06-12) says \"Removed 11 legacy plugins; three remain.\" That fits `docs/PERFORMANCE.md`, which says 14 plugins on v1.2 (14 − 11 = 3).\n\n**Startup time:** the only figure is 9.2 s, from `docs/PERFORMANCE.md`. It was measured on 2026-01-05 on v1.2, when 14 plugins were loaded. That predates the 2.0.0 plugin removal, so it doesn't describe the current app. I found no measurement for 2.0.0. I didn't run the app, so I can't give a current number. The 9.2 s figure is also not a basis for estimating one.\n\n```\nCONCLUSION:   v2.0.0 config enables 3 plugins; no current startup time is recorded (last figure, 9.2 s, is for v1.2 with 14 plugins).\nCHECKED:      config.yaml, CHANGELOG.md, docs/PERFORMANCE.md (all 3 non-git files in the repo, commit 3abe9aa)\nNOT CHECKED:  whether the code loads plugins beyond config.yaml (no source files exist in the repo); actual runtime startup; any 2.0.0 timing\nALTERNATIVES: stale doc vs. still-valid timing — separated by a fresh measurement on 2.0.0; made: no\nFALSIFIER:    a source file or a default list loading extra plugins, or a 2.0.0 benchmark — searched: yes for files (none found), no for running the app\nCONFIDENCE:   medium for the plugin count (config and changelog agree); unknown for current startup time\n```\n\nVERDICT: The current config loads 3 plugins (auth, cache, metrics), and startup time for this version is unmeasured: the only figure, 9.2 s, is for v1.2 with 14 plugins.",
+ "stderr_tail": null
+}

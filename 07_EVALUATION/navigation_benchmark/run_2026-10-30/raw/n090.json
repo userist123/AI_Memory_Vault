@@ -1,0 +1,18 @@
+{
+ "q": "N02",
+ "condition": "G",
+ "repeat": 1,
+ "run_id": "n090",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.0265798,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 479,
+  "cache_read_input_tokens": 48338,
+  "cache_creation_input_tokens": 4236
+ },
+ "answer": "After PRs #176, #177 and #178, the full test suite re-run on 2026-09-20 measured 2482 passed, 13 skipped and 9 xfailed, in 264.79s.\n\nANSWER_PATH: 00_GOVERNANCE/phase_0/TEST_BASELINE.md\nANSWER: 2482 passed, 13 skipped, 9 xfailed in 264.79s"
+}

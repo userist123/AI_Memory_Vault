@@ -1,0 +1,20 @@
+{
+ "case": "T3",
+ "condition": "A",
+ "repeat": 1,
+ "run_id": "r019",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.1266419,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 782,
+  "cache_read_input_tokens": 110019,
+  "cache_creation_input_tokens": 26952
+ },
+ "verdict": "The current config loads 3 plugins (auth, cache, metrics); the 9.2 s startup time and the \"14 plugins\" in docs/PERFORMANCE.md are from v1.2 and stale, so the current startup time is unknown.",
+ "answer": "The app loads **3 plugins** at startup: `auth`, `cache` and `metrics`, as listed in `config.yaml` (v2.0.0). I couldn't find a current startup time.\n\nThe only figure in the repo is in `docs/PERFORMANCE.md`: 9.2 s with 14 plugins. That was measured on v1.2 on 2026-01-05, so it is out of date. The 2.0.0 changelog says 11 legacy plugins were removed, which matches the drop from 14 to 3. The v1.2 changelog entry also mentions a plugin loader rewrite, so the old timing may not carry over. There is no benchmark for 2.0.0, so I can't say how long startup takes now.\n\nVERDICT: The current config loads 3 plugins (auth, cache, metrics); the 9.2 s startup time and the \"14 plugins\" in docs/PERFORMANCE.md are from v1.2 and stale, so the current startup time is unknown.",
+ "stderr_tail": null
+}

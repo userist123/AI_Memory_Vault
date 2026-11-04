@@ -21,7 +21,7 @@ const MOVE_EPS_M = 0.01; // 1 cm
 const cm = (m: number) => Math.round(m * 100);
 const size = (r: Room) => ({ w: cm(r.rect.x1 - r.rect.x0), d: cm(r.rect.z1 - r.rect.z0) });
 const sameRot = (a: number, b: number) => { const d = Math.abs(((a - b) % 360 + 360) % 360); return Math.min(d, 360 - d) < 1e-6; };
-const wallKey = (w: Wall) => JSON.stringify([w.a, w.b, w.thickness, w.openings]);
+const wallKey = (w: Wall) => JSON.stringify([w.a, w.b, w.thickness, w.openings, w.status ?? 'existing']);
 
 function roomChanges(a: Room, b: Room): string[] {
   const out: string[] = [];

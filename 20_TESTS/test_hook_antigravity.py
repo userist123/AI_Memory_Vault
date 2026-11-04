@@ -408,3 +408,222 @@ def test_hook_send_message_rejects_self_as_parent(tmp_path):
 
     # Directly verify is_parent_session returns False when recipient equals current conversationId
     assert transcript_usage.is_parent_session(str(conv_log), "sess-self-123") is False
+
+
+
+
+import json
+import uuid
+from pathlib import Path
+
+def test_is_redundant_global_hook_logic(tmp_path, monkeypatch):
+    from hook_antigravity import _is_redundant_global_hook
+    import hook_antigravity
+
+    fake_home = tmp_path / "home"
+    global_config = fake_home / ".gemini" / "config"
+    global_hook = global_config / "skills" / "cost-router" / "hook_antigravity.py"
+    global_hook.parent.mkdir(parents=True)
+    global_hook.touch()
+
+    monkeypatch.setattr(Path, "home", lambda: fake_home)
+
+    # 1. Running from repo path: should NOT yield (returns False)
+    monkeypatch.setattr(hook_antigravity, "__file__", str(tmp_path / "repo" / "hook.py"))
+    payload = {"workspacePaths": [str(tmp_path / "repo")]}
+    assert _is_redundant_global_hook(payload, "PreToolUse") is False
+
+    # 2. Running from global config path:
+    monkeypatch.setattr(hook_antigravity, "__file__", str(global_hook))
+
+    # 2a. Neutral workspace without .agents/hooks.json -> returns False (must execute)
+    neutral_ws = tmp_path / "neutral_ws"
+    neutral_ws.mkdir()
+    assert _is_redundant_global_hook({"workspacePaths": [str(neutral_ws)]}, "PreToolUse") is False
+
+    # 2b. Workspace with .agents/hooks.json lacking cost-router -> returns False
+    ws_other = tmp_path / "ws_other"
+    (ws_other / ".agents").mkdir(parents=True)
+    (ws_other / ".agents" / "hooks.json").write_text(json.dumps({"other-hook": {}}), encoding="utf-8")
+    assert _is_redundant_global_hook({"workspacePaths": [str(ws_other)]}, "PreToolUse") is False
+
+    # 2c. Empty cost-router dictionary -> returns False (active global fallback)
+    ws_empty = tmp_path / "ws_empty"
+    (ws_empty / ".agents").mkdir(parents=True)
+    (ws_empty / ".agents" / "hooks.json").write_text(json.dumps({"cost-router": {}}), encoding="utf-8")
+    assert _is_redundant_global_hook({"workspacePaths": [str(ws_empty)]}, "PreToolUse") is False
+
+    # 2d. Invalid types: null, list, string -> returns False
+    ws_null = tmp_path / "ws_null"
+    (ws_null / ".agents").mkdir(parents=True)
+    (ws_null / ".agents" / "hooks.json").write_text(json.dumps({"cost-router": None}), encoding="utf-8")
+    assert _is_redundant_global_hook({"workspacePaths": [str(ws_null)]}, "PreToolUse") is False
+
+    ws_list = tmp_path / "ws_list"
+    (ws_list / ".agents").mkdir(parents=True)
+    (ws_list / ".agents" / "hooks.json").write_text(json.dumps({"cost-router": ["PreToolUse"]}), encoding="utf-8")
+    assert _is_redundant_global_hook({"workspacePaths": [str(ws_list)]}, "PreToolUse") is False
+
+    ws_str = tmp_path / "ws_str"
+    (ws_str / ".agents").mkdir(parents=True)
+    (ws_str / ".agents" / "hooks.json").write_text(json.dumps("cost-router"), encoding="utf-8")
+    assert _is_redundant_global_hook({"workspacePaths": [str(ws_str)]}, "PreToolUse") is False
+
+    # 2e. Malformed JSON -> returns False
+    ws_corrupt = tmp_path / "ws_corrupt"
+    (ws_corrupt / ".agents").mkdir(parents=True)
+    (ws_corrupt / ".agents" / "hooks.json").write_text("{ CORRUPT JSON", encoding="utf-8")
+    assert _is_redundant_global_hook({"workspacePaths": [str(ws_corrupt)]}, "PreToolUse") is False
+
+    # 2f. Declared handler with missing local script on disk -> returns False
+    ws_missing_script = tmp_path / "ws_missing_script"
+    (ws_missing_script / ".agents").mkdir(parents=True)
+    (ws_missing_script / ".agents" / "hooks.json").write_text(json.dumps({
+        "cost-router": {
+            "SessionStart": [{"type": "command", "command": "python skills/cost-router/hook_antigravity.py --event SessionStart"}]
+        }
+    }), encoding="utf-8")
+    assert _is_redundant_global_hook({"workspacePaths": [str(ws_missing_script)]}, "SessionStart") is False
+
+    # 2g. Invalid event-handler structure (string instead of list of dicts) -> returns False
+    ws_bad_struct = tmp_path / "ws_bad_struct"
+    (ws_bad_struct / ".agents").mkdir(parents=True)
+    (ws_bad_struct / ".agents" / "hooks.json").write_text(json.dumps({
+        "cost-router": {
+            "SessionStart": "python skills/cost-router/hook_antigravity.py"
+        }
+    }), encoding="utf-8")
+    assert _is_redundant_global_hook({"workspacePaths": [str(ws_bad_struct)]}, "SessionStart") is False
+
+    # 2h. Path traversal attempt in command escaping workspace -> returns False
+    outside_script = tmp_path / "outside_script" / "hook_antigravity.py"
+    outside_script.parent.mkdir(parents=True)
+    outside_script.write_text("#!/usr/bin/env python\n# Traversal dummy script\n" * 10, encoding="utf-8")
+    ws_traversal = tmp_path / "ws_traversal"
+    (ws_traversal / ".agents").mkdir(parents=True)
+    (ws_traversal / ".agents" / "hooks.json").write_text(json.dumps({
+        "cost-router": {
+            "SessionStart": [{"type": "command", "command": "python ../outside_script/hook_antigravity.py --event SessionStart"}]
+        }
+    }), encoding="utf-8")
+    assert _is_redundant_global_hook({"workspacePaths": [str(ws_traversal)]}, "SessionStart") is False
+
+    # 2i. Real repository layout (.agents/skills/...) with valid script > 50 bytes -> returns True
+    ws_repo_layout = tmp_path / "ws_repo_layout"
+    (ws_repo_layout / ".agents" / "skills" / "cost-router").mkdir(parents=True)
+    (ws_repo_layout / ".agents" / "skills" / "cost-router" / "hook_antigravity.py").write_text(
+        "#!/usr/bin/env python\n# Full active hook implementation\n" * 10,
+        encoding="utf-8"
+    )
+    (ws_repo_layout / ".agents" / "hooks.json").write_text(json.dumps({
+        "cost-router": {
+            "PreToolUse": [{
+                "matcher": "invoke_subagent|send_message",
+                "hooks": [{"type": "command", "command": "python skills/cost-router/hook_antigravity.py --event PreToolUse"}]
+            }]
+        }
+    }), encoding="utf-8")
+    payload_valid = {
+        "workspacePaths": [str(ws_repo_layout)],
+        "toolCall": {"name": "invoke_subagent"}
+    }
+    assert _is_redundant_global_hook(payload_valid, "PreToolUse") is True
+
+    # 2j. Cross-event scoping: Workspace defines ONLY SessionStart -> PreToolUse MUST return False
+    ws_session_only = tmp_path / "ws_session_only"
+    (ws_session_only / ".agents" / "skills" / "cost-router").mkdir(parents=True)
+    (ws_session_only / ".agents" / "skills" / "cost-router" / "hook_antigravity.py").write_text(
+        "#!/usr/bin/env python\n# Full active hook implementation\n" * 10,
+        encoding="utf-8"
+    )
+    (ws_session_only / ".agents" / "hooks.json").write_text(json.dumps({
+        "cost-router": {
+            "SessionStart": [{"type": "command", "command": "python skills/cost-router/hook_antigravity.py --event SessionStart"}]
+        }
+    }), encoding="utf-8")
+    assert _is_redundant_global_hook({"workspacePaths": [str(ws_session_only)]}, "SessionStart") is True
+    assert _is_redundant_global_hook({"workspacePaths": [str(ws_session_only)]}, "PreToolUse") is False, "Must NOT yield on PreToolUse when only SessionStart is registered!"
+
+    # 2k. Tool matcher filtering: If PreToolUse matcher does not match active tool -> returns False
+    payload_unmatched_tool = {
+        "workspacePaths": [str(ws_repo_layout)],
+        "toolCall": {"name": "run_command"}
+    }
+    assert _is_redundant_global_hook(payload_unmatched_tool, "PreToolUse") is False, "Must NOT yield when tool matcher does not match active tool!"
+
+    # 2l. Zero-byte script on disk -> returns False
+    ws_zero_byte = tmp_path / "ws_zero_byte"
+    (ws_zero_byte / ".agents" / "skills" / "cost-router").mkdir(parents=True)
+    (ws_zero_byte / ".agents" / "skills" / "cost-router" / "hook_antigravity.py").touch()
+    (ws_zero_byte / ".agents" / "hooks.json").write_text(json.dumps({
+        "cost-router": {
+            "PreToolUse": [{
+                "matcher": "invoke_subagent",
+                "hooks": [{"type": "command", "command": "python skills/cost-router/hook_antigravity.py --event PreToolUse"}]
+            }]
+        }
+    }), encoding="utf-8")
+    assert _is_redundant_global_hook({"workspacePaths": [str(ws_zero_byte)], "toolCall": {"name": "invoke_subagent"}}, "PreToolUse") is False
+
+    # 2m. Quoted path with spaces in command -> correctly parsed and yields True
+    ws_spaces = tmp_path / "ws_spaces"
+    (ws_spaces / "my custom skills" / "cost-router").mkdir(parents=True)
+    (ws_spaces / "my custom skills" / "cost-router" / "hook_antigravity.py").write_text(
+        "#!/usr/bin/env python\n# Custom spaced path script\n" * 10,
+        encoding="utf-8"
+    )
+    (ws_spaces / ".agents").mkdir(parents=True)
+    (ws_spaces / ".agents" / "hooks.json").write_text(json.dumps({
+        "cost-router": {
+            "PreToolUse": [{
+                "matcher": "invoke_subagent",
+                "hooks": [{"type": "command", "command": 'python "my custom skills/cost-router/hook_antigravity.py" --event PreToolUse'}]
+            }]
+        }
+    }), encoding="utf-8")
+    assert _is_redundant_global_hook({"workspacePaths": [str(ws_spaces)], "toolCall": {"name": "invoke_subagent"}}, "PreToolUse") is True
+
+
+def test_send_message_resume_idempotent_on_same_step(tmp_path):
+    from hook_antigravity import _handle_send_message
+    from lib import route_state
+
+    sess_id = f"test-idemp-{uuid.uuid4().hex[:8]}"
+    agent_id = "worker-subagent-1"
+
+    # Mock transcript with step_index 5
+    trans_file = tmp_path / "trans.jsonl"
+    trans_file.write_text(
+        json.dumps({"step_index": 5, "source": "USER", "type": "USER_INPUT", "content": "Please run worker"}) + "\n",
+        encoding="utf-8"
+    )
+
+    payload = {
+        "conversationId": sess_id,
+        "transcriptPath": str(trans_file),
+        "stepIdx": 5,
+    }
+    tool_args = {
+        "Recipient": agent_id,
+        "Message": "Do next task",
+    }
+
+    # First invocation on step 5 (e.g. Project Hook)
+    res1 = _handle_send_message(payload, tool_args)
+    assert res1.get("decision") == "allow"
+    assert route_state.resume_count(sess_id, agent_id) == 1
+
+    # Second invocation on the exact same step 5 (e.g. duplicate Global Hook)
+    res2 = _handle_send_message(payload, tool_args)
+    assert res2.get("decision") == "allow", "Duplicate hook on same step must be idempotent and allow"
+    assert route_state.resume_count(sess_id, agent_id) == 1, "Resume count must NOT be incremented twice on same step"
+
+    # Third invocation on a new step 8 (Round 2)
+    payload["stepIdx"] = 8
+    trans_file.write_text(
+        json.dumps({"step_index": 8, "source": "USER", "type": "USER_INPUT", "content": "Next turn"}) + "\n",
+        encoding="utf-8"
+    )
+    res3 = _handle_send_message(payload, tool_args)
+    assert res3.get("decision") == "deny"
+    assert "was already resumed 1 time(s)" in res3.get("reason", "")

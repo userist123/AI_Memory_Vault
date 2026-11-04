@@ -184,16 +184,28 @@ def class_routed(session_id, task_class) -> bool:
     return bool(task_class) and task_class in _read_json(_session_json(session_id, ".routed_classes"), [])
 
 
-def resume_count(session_id, agent_id: str) -> int:
+def resume_count(session_id, agent_id: str, current_step_idx: Optional[int] = None) -> int:
     try:
-        return int(_read_json(_session_json(session_id, ".resumes"), {}).get(agent_id, 0))
+        data = _read_json(_session_json(session_id, ".resumes"), {})
+        if current_step_idx is not None:
+            step_key = f"{agent_id}:{current_step_idx}"
+            if step_key in data.get("_steps", {}):
+                return max(0, int(data.get(agent_id, 0)) - 1)
+        return int(data.get(agent_id, 0))
     except (TypeError, ValueError):
         return 0
 
 
-def record_resume(session_id, agent_id: str) -> bool:
+def record_resume(session_id, agent_id: str, step_idx: Optional[int] = None) -> bool:
     path = _session_json(session_id, ".resumes")
     counts = _read_json(path, {})
+    if step_idx is not None:
+        step_key = f"{agent_id}:{step_idx}"
+        recorded_steps = counts.get("_steps", {})
+        if step_key in recorded_steps:
+            return True
+        recorded_steps[step_key] = True
+        counts["_steps"] = recorded_steps
     try:
         counts[agent_id] = int(counts.get(agent_id, 0)) + 1
     except (TypeError, ValueError):

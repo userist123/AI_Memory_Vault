@@ -1,0 +1,18 @@
+{
+ "q": "N04",
+ "condition": "V",
+ "repeat": 1,
+ "run_id": "n072",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.0359902,
+ "usage": {
+  "input_tokens": 10,
+  "output_tokens": 817,
+  "cache_read_input_tokens": 87442,
+  "cache_creation_input_tokens": 4764
+ },
+ "answer": "The independent engineering-review agent profile says: \"Do not certify your own work.\" It also says the agent shouldn't modify code unless the dispatched work packet explicitly grants write authority. The profile describes the agent as one that reviews implementation and evidence \"without being the primary implementer.\"\n\nANSWER_PATH: 00_GOVERNANCE/agents/engineering_reviewer.md\nANSWER: \"Do not certify your own work.\""
+}

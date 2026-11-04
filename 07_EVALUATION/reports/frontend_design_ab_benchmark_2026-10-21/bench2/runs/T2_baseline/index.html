@@ -1,0 +1,292 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Pharmacy Dashboard · Central Hospital Pharmacy</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#f3f5f7;--surface:#fff;--surface2:#f8fafb;--line:#dde3e8;--text:#17222b;--muted:#5c6b78;
+  --accent:#0b6e7f;--accent-bg:#e1f1f4;
+  --ok:#1b7a4b;--ok-bg:#e1f4ea;--warn:#a35a00;--warn-bg:#fdf0d9;--crit:#b3261e;--crit-bg:#fbe5e3;
+  --bar:#0b6e7f;
+  --sans:'IBM Plex Sans',system-ui,sans-serif;--mono:'IBM Plex Mono',ui-monospace,monospace;
+}
+@media (prefers-color-scheme:dark){:root{
+  --bg:#0f161c;--surface:#171f27;--surface2:#1c2630;--line:#2a3743;--text:#e6ecf1;--muted:#93a3b1;
+  --accent:#4fc1d3;--accent-bg:#17353c;
+  --ok:#5ccb90;--ok-bg:#16352a;--warn:#f0b35a;--warn-bg:#3a2c12;--crit:#ff8a80;--crit-bg:#41201d;--bar:#4fc1d3;
+}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.45 var(--sans)}
+header{background:var(--surface);border-bottom:1px solid var(--line);padding:12px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;position:sticky;top:0;z-index:5}
+.brand{display:flex;align-items:center;gap:10px;font-weight:600;font-size:16px}
+.brand i{width:28px;height:28px;border-radius:7px;background:var(--accent);display:grid;place-items:center;color:#fff;font-style:normal;font-weight:600}
+.brand small{display:block;font-weight:400;color:var(--muted);font-size:12px}
+.spacer{flex:1}
+.meta{color:var(--muted);font-size:12.5px;text-align:right}
+.meta b{color:var(--text);font-weight:500}
+main{max-width:1440px;margin:0 auto;padding:20px 24px 40px;display:grid;gap:20px}
+.kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:16px}
+.kpi{background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:14px 16px;border-left:4px solid var(--line)}
+.kpi.crit{border-left-color:var(--crit)}.kpi.warn{border-left-color:var(--warn)}.kpi.ok{border-left-color:var(--ok)}.kpi.info{border-left-color:var(--accent)}
+.kpi .l{color:var(--muted);font-size:12.5px}
+.kpi .v{font-size:30px;font-weight:600;line-height:1.15;font-variant-numeric:tabular-nums}
+.kpi .s{color:var(--muted);font-size:12.5px}
+.grid{display:grid;grid-template-columns:minmax(0,1.6fr) minmax(0,1fr);gap:20px;align-items:start}
+.col{display:grid;gap:20px;min-width:0}
+section{background:var(--surface);border:1px solid var(--line);border-radius:10px;min-width:0}
+section>header{position:static;border:0;padding:14px 16px 10px;gap:10px}
+h2{font-size:15px;margin:0;font-weight:600}
+h2 span{color:var(--muted);font-weight:400;margin-left:6px;font-size:13px}
+.tools{display:flex;gap:8px;flex-wrap:wrap}
+input,select,button{font:inherit;color:var(--text)}
+input[type=search],select{background:var(--surface2);border:1px solid var(--line);border-radius:7px;padding:6px 10px}
+input[type=search]{width:170px}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.tablewrap{overflow-x:auto}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:9px 16px;border-top:1px solid var(--line);white-space:nowrap;vertical-align:middle}
+th{font-weight:500;color:var(--muted);font-size:12px;background:var(--surface2);cursor:default}
+th.sort{cursor:pointer}th.sort:hover{color:var(--text)}
+td.n,th.n{text-align:right;font-variant-numeric:tabular-nums}
+.mono{font-family:var(--mono);font-size:12.5px}
+.name b{font-weight:500}.name div{color:var(--muted);font-size:12px}
+.lvl{display:flex;align-items:center;gap:8px;min-width:150px}
+.track{flex:1;height:8px;background:var(--line);border-radius:4px;position:relative;overflow:hidden}
+.track span{position:absolute;inset:0 auto 0 0;border-radius:4px;background:var(--bar)}
+.track.warn span{background:var(--warn)}.track.crit span{background:var(--crit)}
+.lvl em{font-style:normal;font-variant-numeric:tabular-nums;width:76px;text-align:right}
+.chip{display:inline-block;padding:2px 9px;border-radius:99px;font-size:12px;font-weight:500}
+.chip.ok{background:var(--ok-bg);color:var(--ok)}.chip.warn{background:var(--warn-bg);color:var(--warn)}.chip.crit{background:var(--crit-bg);color:var(--crit)}.chip.info{background:var(--accent-bg);color:var(--accent)}
+.btn{background:var(--accent);color:#fff;border:0;border-radius:7px;padding:5px 12px;cursor:pointer;font-weight:500}
+@media (prefers-color-scheme:dark){.btn{color:#08222a}}
+.btn.ghost{background:transparent;color:var(--accent);border:1px solid var(--line)}
+.btn:disabled{opacity:.5;cursor:default}
+.foot{padding:10px 16px;color:var(--muted);font-size:12.5px;border-top:1px solid var(--line)}
+.empty{padding:24px 16px;text-align:center;color:var(--muted)}
+.seg{display:flex;border:1px solid var(--line);border-radius:7px;overflow:hidden}
+.seg button{background:var(--surface2);border:0;padding:5px 11px;cursor:pointer;color:var(--muted)}
+.seg button[aria-pressed=true]{background:var(--accent-bg);color:var(--accent);font-weight:500}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:var(--text);color:var(--bg);padding:9px 16px;border-radius:8px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+@media (max-width:1100px){.grid{grid-template-columns:1fr}.kpis{grid-template-columns:repeat(2,1fr)}}
+@media (max-width:560px){main{padding:14px 12px}header{padding:10px 12px}.kpis{grid-template-columns:1fr 1fr;gap:10px}.kpi .v{font-size:24px}.meta{text-align:left}input[type=search]{width:130px}}
+</style>
+</head>
+<body>
+<header>
+  <div class="brand"><i>Rx</i><div>Pharmacy Operations<small>St. Aldric Hospital · Central Pharmacy</small></div></div>
+  <div class="spacer"></div>
+  <div class="meta"><b id="today"></b><br>Stock count synced <span id="sync"></span> · On duty: <b>R. Okafor, PharmD</b></div>
+</header>
+
+<main>
+  <div class="kpis" id="kpis"></div>
+
+  <div class="grid">
+    <div class="col">
+      <section aria-labelledby="h-stock">
+        <header>
+          <h2 id="h-stock">Stock levels<span id="stock-count"></span></h2>
+          <div class="spacer"></div>
+          <div class="tools">
+            <input type="search" id="q" placeholder="Search medicine…" aria-label="Search medicine">
+            <select id="cat" aria-label="Filter by category"></select>
+            <div class="seg" role="group" aria-label="Filter by status">
+              <button data-s="all" aria-pressed="true">All</button>
+              <button data-s="low" aria-pressed="false">Low / out</button>
+            </div>
+          </div>
+        </header>
+        <div class="tablewrap"><table>
+          <thead><tr>
+            <th class="sort" data-k="name">Medicine ⇅</th><th>Category</th>
+            <th class="sort" data-k="ratio">On hand vs. par level ⇅</th>
+            <th class="n sort" data-k="days">Days cover ⇅</th><th>Status</th>
+          </tr></thead>
+          <tbody id="stock"></tbody>
+        </table></div>
+        <div class="foot">Par level = target stock. Low = below reorder point; days cover uses 30-day average usage.</div>
+      </section>
+    </div>
+
+    <div class="col">
+      <section aria-labelledby="h-exp">
+        <header>
+          <h2 id="h-exp">Batches nearing expiry<span id="exp-count"></span></h2>
+          <div class="spacer"></div>
+          <select id="win" aria-label="Expiry window">
+            <option value="30">Within 30 days</option><option value="90" selected>Within 90 days</option><option value="180">Within 180 days</option>
+          </select>
+        </header>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Medicine / batch</th><th class="n">Qty</th><th>Expires</th><th>Action</th></tr></thead>
+          <tbody id="exp"></tbody>
+        </table></div>
+      </section>
+
+      <section aria-labelledby="h-ord">
+        <header>
+          <h2 id="h-ord">Pending ward orders<span id="ord-count"></span></h2>
+        </header>
+        <div class="tablewrap"><table>
+          <thead><tr><th>Ward</th><th>Items</th><th>Priority</th><th>Due</th><th></th></tr></thead>
+          <tbody id="ord"></tbody>
+        </table></div>
+      </section>
+    </div>
+  </div>
+</main>
+<div class="toast" id="toast" role="status"></div>
+
+<script>
+const DAY=864e5, now=new Date();
+const plus=d=>new Date(now.getTime()+d*DAY);
+const fmtDate=d=>d.toLocaleDateString('en-GB',{day:'2-digit',month:'short',year:'numeric'});
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+// name, strength/form, category, on hand, par, reorder point, avg daily use
+const stock=[
+ ['Amoxicillin 500 mg','Capsule','Antibiotics',1840,3000,1200,96],
+ ['Ceftriaxone 1 g','Vial','Antibiotics',420,1500,600,58],
+ ['Piperacillin/Tazobactam 4.5 g','Vial','Antibiotics',215,800,300,31],
+ ['Vancomycin 500 mg','Vial','Antibiotics',690,900,300,22],
+ ['Morphine sulfate 10 mg/mL','Ampoule','Controlled',160,400,150,12],
+ ['Fentanyl 100 mcg/2 mL','Ampoule','Controlled',95,300,120,14],
+ ['Midazolam 5 mg/mL','Ampoule','Controlled',260,300,100,7],
+ ['Paracetamol 1 g/100 mL','IV bag','Analgesics',1320,2000,800,64],
+ ['Ibuprofen 400 mg','Tablet','Analgesics',5200,6000,2000,140],
+ ['Enoxaparin 40 mg/0.4 mL','Syringe','Anticoagulants',380,900,400,35],
+ ['Heparin 5,000 IU/mL','Vial','Anticoagulants',510,600,200,18],
+ ['Insulin glargine 100 U/mL','Pen 3 mL',  'Endocrine',72,240,100,9],
+ ['Insulin aspart 100 U/mL','Pen 3 mL','Endocrine',188,240,100,11],
+ ['Metformin 850 mg','Tablet','Endocrine',7400,8000,3000,210],
+ ['Salbutamol 100 mcg','Inhaler','Respiratory',0,300,100,10],
+ ['Ipratropium 0.5 mg/2 mL','Nebule','Respiratory',640,800,300,26],
+ ['Furosemide 20 mg/2 mL','Ampoule','Cardiovascular',305,700,300,29],
+ ['Amlodipine 5 mg','Tablet','Cardiovascular',4100,5000,1800,120],
+ ['Noradrenaline 4 mg/4 mL','Ampoule','Cardiovascular',64,200,80,8],
+ ['Ondansetron 4 mg/2 mL','Ampoule','Gastro',870,1000,350,30],
+ ['Omeprazole 40 mg','Vial','Gastro',150,500,200,19],
+ ['Sodium chloride 0.9% 1 L','IV bag','Fluids',2150,4000,1500,125],
+ ['Glucose 5% 500 mL','IV bag','Fluids',900,1500,600,40],
+].map(([name,form,cat,qty,par,rop,use])=>({name,form,cat,qty,par,rop,use,ratio:qty/par,days:use?Math.round(qty/use):999,
+  status:qty===0?'out':qty<rop?'low':'ok'}));
+
+// medicine, batch, qty, days to expiry, location
+const batches=[
+ ['Ceftriaxone 1 g','CF24-0871',120,9,'Bay A2'],
+ ['Insulin aspart 100 U/mL','IA25-0233',48,17,'Fridge 2'],
+ ['Ondansetron 4 mg/2 mL','OD24-5510',210,26,'Bay C1'],
+ ['Heparin 5,000 IU/mL','HP25-0142',140,38,'Bay B3'],
+ ['Amoxicillin 500 mg','AM25-3318',900,52,'Bay D4'],
+ ['Midazolam 5 mg/mL','MZ25-0907',60,61,'CD cabinet'],
+ ['Omeprazole 40 mg','OM25-1180',85,74,'Bay C2'],
+ ['Glucose 5% 500 mL','GL25-2204',320,88,'Store 1'],
+ ['Enoxaparin 40 mg/0.4 mL','EN25-0619',150,121,'Bay B1'],
+ ['Furosemide 20 mg/2 mL','FU25-0472',110,147,'Bay B4'],
+ ['Vancomycin 500 mg','VA25-0388',200,172,'Bay A3'],
+].map(([name,batch,qty,d,loc])=>({name,batch,qty,d,loc,date:plus(d)}));
+
+const orders=[
+ ['ICU-2','Noradrenaline 4 mg/4 mL ×20; Fentanyl 100 mcg ×30; Midazolam 5 mg ×20','Urgent',1],
+ ['ED','Ceftriaxone 1 g ×60; Ondansetron 4 mg ×40; Salbutamol inhaler ×10','Urgent',2],
+ ['Ward 4B – Surgical','Paracetamol IV ×80; Enoxaparin 40 mg ×50; Morphine 10 mg ×20','High',4],
+ ['Theatre 3','Heparin 5,000 IU ×30; Sodium chloride 0.9% ×120','High',5],
+ ['Ward 6A – Medical','Furosemide 20 mg ×40; Insulin glargine ×12; Amlodipine 5 mg ×300','Routine',9],
+ ['Paediatrics','Amoxicillin susp. ×24; Paracetamol susp. ×30','Routine',20],
+ ['Oncology Day Unit','Ondansetron 4 mg ×60; Glucose 5% ×40','Routine',26],
+].map(([ward,items,pri,h],i)=>({id:i,ward,items,pri,due:new Date(now.getTime()+h*36e5)}));
+
+// ---- header
+document.getElementById('today').textContent=now.toLocaleDateString('en-GB',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+document.getElementById('sync').textContent=new Date(now.getTime()-12*6e4).toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
+
+// ---- KPIs
+function kpis(){
+  const low=stock.filter(s=>s.status!=='ok'), out=stock.filter(s=>s.status==='out').length;
+  const exp30=batches.filter(b=>b.d<=30), qty30=exp30.reduce((a,b)=>a+b.qty,0);
+  const urgent=orders.filter(o=>o.pri==='Urgent').length;
+  document.getElementById('kpis').innerHTML=[
+   ['crit','Below reorder point',low.length,`${out} out of stock · ${stock.length} lines tracked`],
+   ['warn','Batches expiring ≤ 30 days',exp30.length,`${qty30.toLocaleString()} units at risk`],
+   ['info','Pending ward orders',orders.length,`${urgent} urgent`],
+   ['ok','Lines fully stocked',stock.length-low.length,`${Math.round((stock.length-low.length)/stock.length*100)}% of formulary tracked`]
+  ].map(([c,l,v,s])=>`<div class="kpi ${c}"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`).join('');
+}
+
+// ---- stock table
+let sortK='ratio',sortDir=1,statusF='all';
+const cats=['All categories',...[...new Set(stock.map(s=>s.cat))].sort()];
+const catEl=document.getElementById('cat');
+catEl.innerHTML=cats.map((c,i)=>`<option value="${i?esc(c):''}">${esc(c)}</option>`).join('');
+function renderStock(){
+  const q=document.getElementById('q').value.trim().toLowerCase(), c=catEl.value;
+  let rows=stock.filter(s=>(!q||s.name.toLowerCase().includes(q))&&(!c||s.cat===c)&&(statusF==='all'||s.status!=='ok'));
+  rows.sort((a,b)=>(a[sortK]>b[sortK]?1:a[sortK]<b[sortK]?-1:0)*sortDir);
+  document.getElementById('stock-count').textContent=`${rows.length} of ${stock.length}`;
+  document.getElementById('stock').innerHTML=rows.length?rows.map(s=>{
+    const cls=s.status==='out'?'crit':s.status==='low'?'warn':'';
+    const chip=s.status==='out'?'<span class="chip crit">Out of stock</span>':s.status==='low'?'<span class="chip warn">Reorder</span>':'<span class="chip ok">OK</span>';
+    return `<tr><td class="name"><b>${esc(s.name)}</b><div>${esc(s.form)}</div></td><td>${esc(s.cat)}</td>
+    <td><div class="lvl"><div class="track ${cls}"><span style="width:${Math.min(100,s.ratio*100)}%"></span></div><em>${s.qty.toLocaleString()} / ${s.par.toLocaleString()}</em></div></td>
+    <td class="n">${s.days>=999?'–':s.days+' d'}</td><td>${chip}</td></tr>`}).join('')
+   :'<tr><td colspan="5" class="empty">No medicines match these filters.</td></tr>';
+}
+document.getElementById('q').oninput=renderStock;
+catEl.onchange=renderStock;
+document.querySelectorAll('th.sort').forEach(th=>th.onclick=()=>{
+  const k=th.dataset.k; sortDir=sortK===k?-sortDir:1; sortK=k; renderStock();
+});
+document.querySelectorAll('.seg button').forEach(b=>b.onclick=()=>{
+  statusF=b.dataset.s;
+  document.querySelectorAll('.seg button').forEach(x=>x.setAttribute('aria-pressed',x===b));
+  renderStock();
+});
+
+// ---- expiry
+function renderExp(){
+  const w=+document.getElementById('win').value;
+  const rows=batches.filter(b=>b.d<=w).sort((a,b)=>a.d-b.d);
+  document.getElementById('exp-count').textContent=rows.length;
+  document.getElementById('exp').innerHTML=rows.length?rows.map(b=>{
+    const c=b.d<=30?'crit':b.d<=90?'warn':'info';
+    const act=b.d<=30?'Return / use first':b.d<=90?'Rotate to front':'Monitor';
+    return `<tr><td class="name"><b>${esc(b.name)}</b><div class="mono">${b.batch} · ${esc(b.loc)}</div></td>
+    <td class="n">${b.qty.toLocaleString()}</td>
+    <td>${fmtDate(b.date)}<div><span class="chip ${c}">${b.d} days</span></div></td><td>${act}</td></tr>`}).join('')
+   :'<tr><td colspan="4" class="empty">No batches expire in this window.</td></tr>';
+}
+document.getElementById('win').onchange=renderExp;
+
+// ---- orders
+function due(o){
+  const m=Math.round((o.due-now)/6e4), h=Math.floor(m/60);
+  return `${o.due.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'})}<div class="mono" style="color:var(--muted)">in ${h?h+' h ':''}${m%60} min</div>`;
+}
+const order={Urgent:0,High:1,Routine:2};
+function renderOrd(){
+  const rows=[...orders].sort((a,b)=>order[a.pri]-order[b.pri]||a.due-b.due);
+  document.getElementById('ord-count').textContent=rows.length;
+  document.getElementById('ord').innerHTML=rows.length?rows.map(o=>{
+    const c=o.pri==='Urgent'?'crit':o.pri==='High'?'warn':'info';
+    return `<tr><td class="name"><b>${esc(o.ward)}</b></td>
+    <td style="white-space:normal;min-width:200px;max-width:280px;color:var(--muted)">${esc(o.items)}</td>
+    <td><span class="chip ${c}">${o.pri}</span></td><td>${due(o)}</td>
+    <td><button class="btn" data-id="${o.id}">Dispatch</button></td></tr>`}).join('')
+   :'<tr><td colspan="5" class="empty">All ward orders have been dispatched. 🎉</td></tr>';
+  document.querySelectorAll('#ord .btn').forEach(b=>b.onclick=()=>{
+    const i=orders.findIndex(o=>o.id==b.dataset.id), o=orders.splice(i,1)[0];
+    toast(`${o.ward} order marked dispatched`); kpis(); renderOrd();
+  });
+}
+let tt;function toast(m){const t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('show'),2200)}
+
+kpis();renderStock();renderExp();renderOrd();
+</script>
+</body>
+</html>

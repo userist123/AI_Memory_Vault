@@ -9,7 +9,7 @@ import type { Catalog, Floor, FurniturePlacement, LightFixture, MaterialsCatalog
 import { defaultFinishes } from './boq';
 import { footprintOf } from './validate';
 import { backSide } from './fixtures';
-import { roomWindows, rugSize, TEXTILE_RULES } from './textiles';
+import { roomWindows, rugSize, rugRectAt, rugCentred, TEXTILE_RULES } from './textiles';
 import { materialOf } from './finishes';
 import { kitchenOf } from './kitchen';
 import { floors } from './levels';
@@ -27,10 +27,9 @@ export const DECOR = {
 export const RUG_RULES = { underSofaM: .1, bedSideM: .3, bedHeadFraction: 1 / 3, bedHeadMin: 1 / 5 };
 
 type Axis = { lo: number; hi: number };
-/** Dreptunghiul covorului centrat în cameră. */
-export function rugRect(room: Room, size: { w: number; d: number }): RoomRect {
-  const r = room.rect, cx = (r.x0 + r.x1) / 2, cz = (r.z0 + r.z1) / 2; return { x0: cx - size.w / 2, x1: cx + size.w / 2, z0: cz - size.d / 2, z1: cz + size.d / 2 };
-}
+/** Dreptunghiul covorului: centrat în cameră, sau în jurul poziției alese (RugChoice x / z); regulile de canapea și de pat
+ *  (rugUnderSofa, rugUnderBed) se aplică pe dreptunghiul real. */
+export function rugRect(room: Room, size: { w: number; d: number }, at?: { x?: number; z?: number } | null): RoomRect { return rugRectAt(room, size, at); }
 const fits = (room: Room, s: { w: number; d: number }) => { const g = TEXTILE_RULES.rugWallGapM; return s.w <= room.rect.x1 - room.rect.x0 - 2 * g + 1e-9 && s.d <= room.rect.z1 - room.rect.z0 - 2 * g + 1e-9; };
 /** Pe axa adâncimii piesei: [spate, față]; pe axa lățimii: [stânga, dreapta]. Cu `rug` pe aceleași axe. */
 function axes(side: 'N' | 'S' | 'W' | 'E', fp: RoomRect, rug: RoomRect){
@@ -112,5 +111,17 @@ export function decorateSnapshot(snap: Snapshot, cat: Catalog, mc: MaterialsCata
   const out: Snapshot = { ...snap };
   if (Object.keys(finishes).length) out.finishes = finishes;
   if (Object.keys(appearanceRooms).length) out.appearance = { ...(snap.appearance || {}), rooms: appearanceRooms };
+  return out;
+}
+/** Covorul principal mutat din centru (RugChoice x / z): regulile de canapea și de pat se verifică pe poziția reală.
+ *  `tex.rugSofa` = nu mai trece pe sub picioarele din față ale canapelei; `tex.rugBed` = nu mai stă sub cele două treimi de jos ale
+ *  patului. Covorul centrat (proiectele de până acum) nu primește sfaturi noi. */
+export function rugHints(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, room: Room, f: Pick<RoomFinishes, 'rug'>): { key: string; roomId: string }[] {
+  const c = f.rug; if (!c || rugCentred(room, c)) return [];
+  const m = materialOf(mc, c.material), s = m ? rugSize(room, m, c.rotate) : null; if (!s) return [];
+  const rug = rugRect(room, s, c), pieces = snap.placements.filter(p => p.roomId === room.id).flatMap(p => { const fp = footprintOf(cat, p); return fp ? [{ p, fp }] : []; });
+  const sofa = pieces.find(x => x.p.group === 'canapea'), bed = pieces.find(x => x.p.group === 'pat'), out: { key: string; roomId: string }[] = [];
+  if (room.type === 'living' && sofa && !rugUnderSofa({ fp: sofa.fp, rotation: sofa.p.rotation }, rug)) out.push({ key: 'tex.rugSofa', roomId: room.id });
+  if (room.type === 'dormitor' && bed && !rugUnderBed({ fp: bed.fp, rotation: bed.p.rotation }, rug)) out.push({ key: 'tex.rugBed', roomId: room.id });
   return out;
 }

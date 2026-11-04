@@ -10,6 +10,7 @@ Comprehensive empirical test suite targeting:
 """
 
 import pytest
+from urllib.parse import urlparse
 import asyncio
 import time
 import threading
@@ -272,7 +273,8 @@ def test_chunker_urls_and_file_paths():
     chunks.extend(chunker.flush())
 
     assert len(chunks) >= 2
-    assert any("https://api.vault.local" in c for c in chunks)
+    parsed_tokens = [urlparse(tok) for c in chunks for tok in c.split()]
+    assert any(p.scheme == "https" and p.hostname == "api.vault.local" for p in parsed_tokens)
     assert any("config.json" in c for c in chunks)
 
 

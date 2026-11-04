@@ -3,6 +3,7 @@
 // fără a pretinde conformitate legală certificată pentru instalații sau structură.
 import type { Catalog, MaterialsCatalog, Snapshot } from './types';
 import { validateFloor, validatePlacement, issueTarget } from './validate';
+import { roomCeilingDropCm } from './finishes';
 import { floors } from './levels';
 import { buildTechnicalSchedule } from './technical';
 import { resolve } from './catalog';
@@ -23,7 +24,7 @@ export function reviewProjectCoordination(snap: Snapshot, cat: Catalog, _mc?: Ma
 
   // 1. Geometria pereților, golurilor și plasărilor pe fiecare nivel
   for (const fl of allFloors) {
-    for (const iss of validateFloor(fl)) {
+    for (const iss of validateFloor(fl, id => roomCeilingDropCm(snap, id))) {
       const tg = issueTarget(iss, fl, snap.placements);
       findings.push({
         code: iss.code,

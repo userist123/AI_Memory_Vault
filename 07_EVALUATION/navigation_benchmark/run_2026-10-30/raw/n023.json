@@ -1,0 +1,18 @@
+{
+ "q": "N17",
+ "condition": "V",
+ "repeat": 0,
+ "run_id": "n023",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.044476400000000006,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 501,
+  "cache_read_input_tokens": 26384,
+  "cache_creation_input_tokens": 9205
+ },
+ "answer": "The v1 benchmark had 36 held-out cases and 12 dev cases. This comes from the v2 contract (`07_EVALUATION/heldout_retrieval_benchmark_v2/CONTRACT.md`, line 8) and is repeated in the CI workflow comment. `00_GOVERNANCE/VAULT_STATE.md` line 68 records v1 as invalid, because its gold ids resolve to nothing.\n\nANSWER_PATH: 07_EVALUATION/heldout_retrieval_benchmark_v2/CONTRACT.md\nANSWER: v1 had 36 held-out cases and 12 dev cases (\"Every one of v1's 36 held-out cases and 12 dev cases referenced one of two…\"), and v1 was later invalidated."
+}

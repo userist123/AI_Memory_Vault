@@ -1,0 +1,20 @@
+{
+ "case": "T3",
+ "condition": "B",
+ "repeat": 2,
+ "run_id": "r004",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.15354530000000002,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1155,
+  "cache_read_input_tokens": 112553,
+  "cache_creation_input_tokens": 32682
+ },
+ "verdict": "The app loads 3 plugins (auth, cache, metrics) at startup, and its current startup time is unmeasured, because the only figure, 9.2 s, is from v1.2 with 14 plugins.",
+ "answer": "The app loads 3 plugins at startup. I couldn't find a current startup time.\n\n**Plugins:** `config.yaml` (v2.0.0) lists three: `auth`, `cache` and `metrics`. `CHANGELOG.md` agrees: 2.0.0 (2026-06-12) \"Removed 11 legacy plugins; three remain.\"\n\n**Startup time:** The only figure in the repo is in `docs/PERFORMANCE.md`: 9.2 s, measured 2026-01-05 on v1.2. That measurement is stale for two reasons:\n- It predates 2.0.0, which dropped 11 of the 14 plugins it measured. The doc says 14 were enabled then, and 14 − 11 = 3 matches the current config.\n- It also predates the loader rewrite in 1.2.0, which the changelog dates 2026-01-02. The doc doesn't say whether the 9.2 s run included the rewrite.\n\nSo 9.2 s describes the old 14-plugin configuration, not the current one. With far fewer plugins it is probably faster, but I have no measurement and won't guess a number.\n\n```\nCONCLUSION:   Current config loads 3 plugins; current startup time is unknown (9.2 s applies only to v1.2 with 14 plugins).\nCHECKED:      config.yaml, CHANGELOG.md, docs/PERFORMANCE.md (the only 3 files in the repo besides .git); single commit 3abe9aa.\nNOT CHECKED:  Actual loader code (none in repo), runtime or env overrides, whether the config is the one the app really reads, any live startup timing.\nALTERNATIVES: Plugins could be loaded from elsewhere than config.yaml (separation: loader code, not present); I did not run the app, so no.\nFALSIFIER:    A run of the app logging loaded plugins and startup time — searched: no.\nCONFIDENCE:   medium for the plugin count (config and changelog agree); unknown for the current startup time.\n```\n\nVERDICT: The app loads 3 plugins (auth, cache, metrics) at startup, and its current startup time is unmeasured, because the only figure, 9.2 s, is from v1.2 with 14 plugins.",
+ "stderr_tail": null
+}

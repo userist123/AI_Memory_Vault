@@ -48,6 +48,18 @@ const webpackConfig = {
     },
     configure: (webpackConfig) => {
 
+      // webpack-dev-server >= 6 ships a client made of .cjs modules. The
+      // catch-all asset rule of react-scripts 5 does not exclude .cjs, so
+      // those files would be emitted as assets instead of being bundled.
+      const oneOfRule = webpackConfig.module.rules.find((rule) => rule.oneOf);
+      if (oneOfRule) {
+        oneOfRule.oneOf.forEach((rule) => {
+          if (rule.type === "asset/resource" && Array.isArray(rule.exclude)) {
+            rule.exclude.push(/\.cjs$/);
+          }
+        });
+      }
+
       // Add ignored patterns to reduce watched directories
         webpackConfig.watchOptions = {
           ...webpackConfig.watchOptions,
@@ -78,6 +90,23 @@ if (config.enableVisualEdits && babelMetadataPlugin) {
 }
 
 webpackConfig.devServer = (devServerConfig) => {
+  // react-scripts 5 still emits the webpack-dev-server 4 option names, which
+  // webpack-dev-server >= 5 rejects (onBefore/AfterSetupMiddleware, https).
+  // Translate them to the current API (setupMiddlewares, server).
+  const {
+    onBeforeSetupMiddleware,
+    onAfterSetupMiddleware,
+    https: httpsOptions,
+    ...modernDevServerConfig
+  } = devServerConfig;
+  devServerConfig = modernDevServerConfig;
+  if (httpsOptions) {
+    devServerConfig.server = {
+      type: "https",
+      options: typeof httpsOptions === "object" ? httpsOptions : {},
+    };
+  }
+
   // Apply visual edits dev server setup only if enabled
   if (config.enableVisualEdits && setupDevServer) {
     devServerConfig = setupDevServer(devServerConfig);
@@ -96,6 +125,18 @@ webpackConfig.devServer = (devServerConfig) => {
       // Setup health endpoints
       setupHealthEndpoints(devServer, healthPluginInstance);
 
+      return middlewares;
+    };
+  }
+
+  if (onBeforeSetupMiddleware || onAfterSetupMiddleware) {
+    const innerSetupMiddlewares = devServerConfig.setupMiddlewares;
+    devServerConfig.setupMiddlewares = (middlewares, devServer) => {
+      if (onBeforeSetupMiddleware) onBeforeSetupMiddleware(devServer);
+      if (innerSetupMiddlewares) {
+        middlewares = innerSetupMiddlewares(middlewares, devServer);
+      }
+      if (onAfterSetupMiddleware) onAfterSetupMiddleware(devServer);
       return middlewares;
     };
   }

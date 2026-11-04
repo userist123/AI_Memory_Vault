@@ -57,6 +57,22 @@ export function planSymbol(group: string, w: number, d: number, chairs = 4): Pla
     case 'dulapOglinda': case 'boiler': // pe perete, deasupra altor piese: doar conturul punctat
       return { outline: '', detail: fmt(box), fill: 'none' };
     case 'caloriferBaie': return { outline: fmt(box), detail: '' };
+    case 'plantaArtificiala': case 'plantaNaturala': { // ghiveciul (cerc) și frunzele din jur, ca în planurile de amenajare
+      const r = Math.min(X, Y), leaf = r * 1.7;
+      for (let i = 0; i < 6; i++){ const a = i * Math.PI / 3 + .3, cx = Math.cos(a) * leaf * .55, cy = Math.sin(a) * leaf * .55;
+        parts.push(`M${cx * .25} ${cy * .25}Q${cx + Math.sin(a) * r * .35} ${cy - Math.cos(a) * r * .35} ${cx * 1.25} ${cy * 1.25}Q${cx - Math.sin(a) * r * .35} ${cy + Math.cos(a) * r * .35} ${cx * .25} ${cy * .25}Z`); }
+      return { outline: fmt(circle(0, 0, r)), detail: fmt(parts.join('')), fill: 'soft' }; }
+    case 'lampadar': case 'veioza': { // corpul de iluminat: cercul abajurului cu crucea (simbolul de lampă din planuri)
+      const r = Math.min(X, Y), q = r * .72;
+      parts.push(circle(0, 0, r * .55), line(-q, -q, q, q), line(-q, q, q, -q));
+      return { outline: fmt(circle(0, 0, r)), detail: fmt(parts.join('')) }; }
+    case 'semineu': { // focarul (deschiderea cu flacăra) pe fața piesei
+      const fy = Math.max(-Y + .02, Y - Math.min(.06, d * .45));
+      parts.push(rect(-X * .8, fy, X * .8, Y - .01), `M${-X * .3} ${Y - .01}L${-X * .15} ${fy}L0 ${Y - .01}L${X * .15} ${fy}L${X * .3} ${Y - .01}`);
+      return { outline: fmt(box), detail: fmt(parts.join('')) }; }
+    case 'focarLemne': { // corpul din fontă, ușa cu geam în față și burlanul (coșul) la spate
+      parts.push(rrect(-X * .7, Y - .06, X * .7, Y - .01, .01), circle(0, -Y * .35, Math.min(.09, X * .4)), circle(0, -Y * .35, Math.min(.05, X * .25)));
+      return { outline: fmt(rrect(-X, -Y, X, Y, .03)), detail: fmt(parts.join('')) }; }
     case 'birou': return { outline: fmt(box), detail: fmt(line(-X, Y - .03, X, Y - .03)) };
     case 'scaunBirou': { const r = Math.min(X, Y); parts.push(circle(0, .03, r * .78), `M${-r * .7} ${-r * .55}Q0 ${-r * 1.05} ${r * .7} ${-r * .55}`); return { outline: '', detail: fmt(parts.join('')) }; }
     case 'oglinda': return { outline: fmt(box), detail: '' };

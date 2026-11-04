@@ -1,0 +1,20 @@
+{
+ "case": "C1",
+ "condition": "B",
+ "repeat": 1,
+ "run_id": "r007",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 2,
+ "total_cost_usd": 0.1362523,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 263,
+  "cache_read_input_tokens": 64423,
+  "cache_creation_input_tokens": 31793
+ },
+ "verdict": "Three plugins (auth, cache, metrics) are enabled in config/plugins.yaml.",
+ "answer": "`config/plugins.yaml` lists 3 enabled plugins under `enabled:`: `auth`, `cache` and `metrics`.\n\nCHECKED: I read the whole file, which is 4 lines, at the working-copy path.\nNOT CHECKED: I did not look for other config files, such as environment overrides, or for what is loaded at runtime. You asked only about this file, so that doesn't change the answer.\n\nVERDICT: Three plugins (auth, cache, metrics) are enabled in config/plugins.yaml.",
+ "stderr_tail": null
+}

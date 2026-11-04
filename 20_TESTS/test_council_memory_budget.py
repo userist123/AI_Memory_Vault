@@ -24,7 +24,7 @@ def _make_note(note_id, verification="verified"):
 def test_executive_exposes_confirmed_memory_budget_constant():
     # Regression test for the reviewer-raised mismatch: WorkingMemory(capacity=10)
     # vs Council's max_memory_results (confirmed real value from
-    # 99_SYSTEM/Council_Context_Budget.md: `max_memory_results: 5`).
+    # 00_GOVERNANCE/protocols/Council_Context_Budget.md: `max_memory_results: 5`).
     assert Executive.MAX_COUNCIL_MEMORY_RESULTS == 5
 
 

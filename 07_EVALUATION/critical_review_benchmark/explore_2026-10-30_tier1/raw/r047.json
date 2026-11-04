@@ -1,0 +1,20 @@
+{
+ "case": "T2",
+ "condition": "B",
+ "repeat": 0,
+ "run_id": "r047",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 7,
+ "total_cost_usd": 0.1655256,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 1495,
+  "cache_read_input_tokens": 156476,
+  "cache_creation_input_tokens": 33728
+ },
+ "verdict": "A WIP `export_pdf` exists only on local branch `feature/pdf-export` (commit 2e35b49) and emits an invalid PDF, so build on that branch and replace the body rather than starting from zero.",
+ "answer": "An `export_pdf` already exists, but only on the local branch `feature/pdf-export`, so don't write it from scratch. It is a WIP stub that doesn't produce a valid PDF.\n\nCONCLUSION: `export_pdf(rows, path)` exists at `src/pdf.py` in commit `2e35b49` (\"wip: pdf export\") on `feature/pdf-export`. It is not on `main`.\nCHECKED: All refs in this repo. There are 2 branches (`main`, `feature/pdf-export`), no remotes, no stash entries, and 2 commits in total. `git log --all -S\"export_pdf\"` finds only `2e35b49`. `main` has only `README.md` and `src/report.py`; the README says \"PDF export: not implemented yet.\"\nNOT CHECKED: Other clones or machines, and unreachable or dangling objects (reflog and `git fsck`). I also didn't check untracked files outside git, or other repositories.\nALTERNATIVES: The branch could hold only a stub that has to be rewritten, or it could be reusable. I read the diff, and it is a stub (see below).\nFALSIFIER: A different `export_pdf` on another ref or in history. I searched with `git log --all -S`, `git for-each-ref` and `git ls-files`, and found none. It could still exist in places I didn't search.\nCONFIDENCE: high for this repo's refs; medium for \"nowhere else\", since the remote-less clone could be a partial copy.\n\nWhat the implementation does (8 lines):\n- It calls `build_report(rows)`, then writes `b'%PDF-1.4\\n' + text.encode()` to `path`.\n- That is a PDF header followed by plain text. It has no objects, xref table or trailer, so PDF readers will reject the file as invalid.\n- Nothing has been tested or reviewed, and the commit message says \"wip\".\n- Its `from report import build_report` import is untested against the `src/` layout.\n\nSuggested approach: start from `feature/pdf-export`, keeping the signature and the `build_report` hookup. Replace the fake PDF body with a real renderer such as reportlab or fpdf2. I haven't made any changes.\n\nVERDICT: A WIP `export_pdf` exists only on local branch `feature/pdf-export` (commit 2e35b49) and emits an invalid PDF, so build on that branch and replace the body rather than starting from zero.",
+ "stderr_tail": null
+}

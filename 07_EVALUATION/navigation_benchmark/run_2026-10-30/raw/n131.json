@@ -1,0 +1,18 @@
+{
+ "q": "N06",
+ "condition": "I",
+ "repeat": 1,
+ "run_id": "n131",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.0211405,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 500,
+  "cache_read_input_tokens": 47005,
+  "cache_creation_input_tokens": 2857
+ },
+ "answer": "Exit code 3 means the answer could not be grounded in the vault. `--ask` exits 0 only when the answer is grounded, meaning a verbatim read or verified quotes. Otherwise it exits 3. The procedure doc says this, and `telegram_vault_bot.py:209` returns `0 if grounded else 3`.\n\nANSWER_PATH: 10_DOCUMENTATION/procedures/Connecting_Every_AI_To_The_Vault.md\nANSWER: Exit code 3. It exits 0 only if the answer is grounded (verbatim read or verified quotes), otherwise 3."
+}

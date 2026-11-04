@@ -1,0 +1,137 @@
+{
+ "duration_api_ms": 141774,
+ "stop_reason": "end_turn",
+ "total_cost_usd": 0.43541589999999997,
+ "usage": {
+  "input_tokens": 16,
+  "cache_creation_input_tokens": 60052,
+  "cache_read_input_tokens": 649269,
+  "output_tokens": 3399,
+  "output_tokens_details": {
+   "thinking_tokens": 40
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 3030,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 546,
+    "cache_read_input_tokens": 92458,
+    "cache_creation_input_tokens": 898,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 898
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "modelUsage": {
+  "claude-sonnet-5-5": {
+   "inputTokens": 32,
+   "outputTokens": 5520,
+   "cacheReadInputTokens": 830989,
+   "cacheCreationInputTokens": 82790,
+   "webSearchRequests": 0,
+   "costUSD": 0.43541589999999997,
+   "contextWindow": 1000000,
+   "maxOutputTokens": 128000,
+   "thinkingTokens": 291,
+   "canonicalModel": "claude-sonnet-5-5",
+   "provider": "firstParty",
+   "costBasis": "list"
+  }
+ },
+ "terminal_reason": "completed",
+ "fast_mode_state": "off",
+ "fast_mode_disabled_reason": "sdk_opt_in_required",
+ "origin": {
+  "kind": "task-notification",
+  "producer": "session-task",
+  "runId": "0mvi1gboh-f788b181"
+ },
+ "subagent_stats": {
+  "spawned": 1,
+  "requested": {
+   "background": 0,
+   "foreground": 0,
+   "unset": 1
+  },
+  "started_in_background": 1,
+  "max_depth": 1,
+  "spawned_by_subagents": 0,
+  "completed": 1,
+  "failed": 0,
+  "killed": {
+   "parent": 0,
+   "user": 0,
+   "system": 0
+  },
+  "refused": {
+   "depth_limit": 0,
+   "concurrency_limit": 0,
+   "budget": 0
+  },
+  "by_type": {
+   "vault-worker": 1
+  }
+ },
+ "safety_stops": 0,
+ "is_error": false,
+ "num_turns": 13,
+ "subtype": "success",
+ "api_error_status": null,
+ "result": "`MARKER_NAME` este redenumit \u00een `MARKER_FILENAME`, iar testele trec: `8 passed, 4 skipped in 0.30s` la `python -m pytest 20_TESTS/test_install_design_stack.py -q -rs`.\n\n**Modific\u0103ri** (4 apari\u021bii \u00een 2 fi\u0219iere):\n- `30_SCRIPTS/setup/install_design_stack.py`: defini\u021bia (linia 33) \u0219i utilizarea (linia 126).\n- `20_TESTS/test_install_design_stack.py`: liniile 40 \u0219i 121 (`mod.MARKER_FILENAME`).\n\n**Cele 4 teste s\u0103rite** au cauze legate de Windows, nu de redenumire:\n- 3 teste folosesc un \u201efake claude\u201d care e script shell POSIX (liniile 61, 117, 178).\n- 1 test cere simlink-uri, care au nevoie de privilegii pe Windows (linia 136).\n\n**Neverificat:** nu am reu\u0219it o c\u0103utare final\u0103 a `MARKER_NAME` \u00een tot repo-ul. Hook-ul cost-router a blocat Grep-ul \u0219i `git grep` a fost refuzat la aprobare. Singura verificare e a subagentului `vault-worker`, care a raportat c\u0103 nu mai exist\u0103 apari\u021bii \u00een afara `.agents/`, `07_EVALUATION/` \u0219i `02_PRODUCT/`. Acele trei directoare nu au fost c\u0103utate deloc. Dac\u0103 vrei certitudine, ruleaz\u0103 `git grep -n MARKER_NAME` sau spune-mi s\u0103 o fac cu `#direct`.\n\nNu am f\u0103cut commit.",
+ "ttft_ms": 1951,
+ "type": "result",
+ "duration_ms": 56698,
+ "ttft_stream_ms": 1288,
+ "time_to_request_ms": 370,
+ "time_to_request_phases_ms": {
+  "other": 4,
+  "system_prompt": 1,
+  "resume_other": 0,
+  "process_user_input": 1,
+  "input_attachments": 4,
+  "input_hooks": 349,
+  "tool_pool_refresh": 2,
+  "init_message": 2,
+  "engine_pickup": 0,
+  "message_prep": 1,
+  "model_config_wait": 0,
+  "autocompact": 1,
+  "query_setup": 0,
+  "model_gates": 0,
+  "tool_schema_build": 1,
+  "message_normalization": 2,
+  "client_creation": 0,
+  "request_build": 2
+ },
+ "turn_start_resume_kind": "none",
+ "process_turn_index": 1,
+ "time_to_request_loop_lag_ms": 14,
+ "time_to_request_cpu_ms": 63,
+ "time_to_request_major_faults": 1417,
+ "input_attachments_detail": {
+  "slowest_producer": "queued_commands",
+  "slowest_producer_ms": 3,
+  "cpu_ms": 0,
+  "major_faults": 174,
+  "changed_files_reread": 0
+ },
+ "first_content_frame_ms": 1288,
+ "queued_turn_count": 0,
+ "result_index": 1,
+ "permission_denials_n": 4,
+ "n_results": 2
+}

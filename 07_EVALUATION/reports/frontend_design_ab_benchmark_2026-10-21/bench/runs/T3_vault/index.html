@@ -1,0 +1,320 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Corp — Contemporary Dance Festival, Timișoara</title>
+<meta name="description" content="Corp is a three-day contemporary dance festival in Timișoara, 14–16 May 2027. Programme, venues and tickets.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,400;12..96,600;12..96,800&family=Instrument+Serif:ital@0;1&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:#f1ece3; --ink:#15120f; --muted:#6b645a; --line:#15120f26;
+  --accent:#e2381d; --accent-ink:#fff; --card:#f8f4ec;
+  --sans:"Bricolage Grotesque",system-ui,sans-serif; --serif:"Instrument Serif",Georgia,serif;
+}
+@media (prefers-color-scheme:dark){
+  :root{--paper:#14110e;--ink:#f1ece3;--muted:#a39b8e;--line:#f1ece32e;--card:#1c1814;--accent:#ff5a3c;--accent-ink:#14110e}
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:17px;line-height:1.5}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+header.top{position:sticky;top:0;z-index:10;background:var(--paper);border-bottom:1px solid var(--line)}
+header.top .wrap{display:flex;align-items:center;justify-content:space-between;height:58px}
+.logo{font-weight:800;font-size:1.4rem;letter-spacing:-.04em;text-decoration:none}
+.logo span{color:var(--accent)}
+nav a{margin-left:20px;text-decoration:none;font-size:.95rem;font-weight:600}
+nav a:hover{color:var(--accent)}
+nav a.cta{background:var(--ink);color:var(--paper);padding:7px 14px;border-radius:99px}
+nav a.cta:hover{background:var(--accent);color:var(--accent-ink)}
+@media(max-width:620px){nav a:not(.cta){display:none}}
+
+.hero{padding:56px 0 40px;border-bottom:1px solid var(--line);overflow:hidden}
+.hero .meta{display:flex;flex-wrap:wrap;gap:8px 28px;font-weight:600;text-transform:uppercase;letter-spacing:.08em;font-size:.8rem;color:var(--muted)}
+.hero h1{margin:10px 0 0;font-size:clamp(7rem,30vw,22rem);line-height:.78;letter-spacing:-.07em;font-weight:800;display:flex;align-items:flex-end;gap:.02em}
+.hero h1 .o{display:inline-block;width:.62em;height:.62em;border-radius:50%;background:var(--accent);animation:sway 5s ease-in-out infinite alternate;margin:0 .02em .02em}
+@keyframes sway{from{transform:translateX(-.06em) scaleX(1)}to{transform:translateX(.08em) scaleX(.82)}}
+@media(prefers-reduced-motion:reduce){.hero h1 .o{animation:none}}
+.hero .lede{display:grid;grid-template-columns:1.2fr 1fr;gap:32px;margin-top:36px;align-items:end}
+.hero .lede p{margin:0;font-family:var(--serif);font-size:clamp(1.5rem,3.2vw,2.3rem);line-height:1.12}
+.hero .lede em{color:var(--accent)}
+.btns{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end}
+.btn{display:inline-block;border:2px solid var(--ink);padding:12px 22px;border-radius:99px;font-weight:700;text-decoration:none;background:transparent;color:var(--ink);font:inherit;font-weight:700;cursor:pointer}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.btn:hover{transform:translateY(-2px)}
+@media(max-width:760px){.hero .lede{grid-template-columns:1fr}.btns{justify-content:flex-start}}
+
+section{padding:72px 0;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:.8rem;font-weight:700;text-transform:uppercase;letter-spacing:.12em;color:var(--accent)}
+h2{font-size:clamp(2.2rem,6vw,4rem);line-height:1;letter-spacing:-.04em;margin:8px 0 28px;font-weight:800}
+h2 i{font-family:var(--serif);font-weight:400;letter-spacing:-.01em}
+
+.tabs{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.tabs button{font:inherit;font-weight:700;padding:10px 18px;border-radius:99px;border:2px solid var(--ink);background:transparent;color:var(--ink);cursor:pointer}
+.tabs button[aria-selected="true"]{background:var(--ink);color:var(--paper)}
+.filters{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin-bottom:20px;color:var(--muted);font-size:.9rem}
+.filters select{font:inherit;padding:6px 10px;background:var(--card);color:var(--ink);border:1px solid var(--line);border-radius:8px}
+.dayhead{font-family:var(--serif);font-size:1.5rem;margin:0 0 6px}
+.ev{display:grid;grid-template-columns:96px 1fr auto;gap:20px;padding:22px 0;border-top:1px solid var(--line);align-items:start}
+.ev:last-child{border-bottom:1px solid var(--line)}
+.ev time{font-weight:800;font-size:1.7rem;letter-spacing:-.03em}
+.ev h3{margin:0;font-size:1.5rem;letter-spacing:-.02em;line-height:1.15}
+.ev .by{font-family:var(--serif);font-style:italic;font-size:1.15rem;color:var(--muted)}
+.ev p{margin:8px 0 0;max-width:60ch}
+.tag{display:inline-block;margin-top:10px;margin-right:6px;font-size:.75rem;font-weight:700;padding:3px 10px;border:1px solid var(--line);border-radius:99px;text-transform:uppercase;letter-spacing:.06em}
+.ev .where{text-align:right;font-weight:600;font-size:.9rem;white-space:nowrap}
+.ev .where small{display:block;color:var(--muted);font-weight:400}
+@media(max-width:640px){.ev{grid-template-columns:1fr;gap:6px}.ev .where{text-align:left}}
+.empty{color:var(--muted);padding:20px 0}
+
+.venues{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:18px}
+.venue{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:24px;display:flex;flex-direction:column}
+.venue .n{font-family:var(--serif);font-size:3rem;line-height:1;color:var(--accent)}
+.venue h3{margin:6px 0 4px;font-size:1.35rem;letter-spacing:-.02em}
+.venue address{font-style:normal;color:var(--muted);font-size:.95rem}
+.venue p{margin:12px 0}
+.venue ul{margin:auto 0 0;padding:0;list-style:none;font-size:.88rem;color:var(--muted)}
+.venue li::before{content:"→ ";color:var(--accent)}
+.note{margin-top:22px;color:var(--muted);font-size:.95rem}
+
+.tickets{display:grid;grid-template-columns:1.3fr 1fr;gap:32px;align-items:start}
+@media(max-width:860px){.tickets{grid-template-columns:1fr}}
+.tk{display:grid;grid-template-columns:1fr auto;gap:6px 16px;align-items:center;padding:18px 0;border-top:1px solid var(--line)}
+.tk:last-of-type{border-bottom:1px solid var(--line)}
+.tk h3{margin:0;font-size:1.2rem}
+.tk p{margin:2px 0 0;color:var(--muted);font-size:.92rem;grid-column:1}
+.tk .price{font-weight:800;font-size:1.3rem;text-align:right}
+.qty{display:flex;align-items:center;gap:0;justify-self:end;grid-column:2;grid-row:2}
+.qty button{width:36px;height:36px;border-radius:50%;border:2px solid var(--ink);background:transparent;color:var(--ink);font-size:1.2rem;font-weight:700;cursor:pointer;line-height:1}
+.qty button:hover{background:var(--ink);color:var(--paper)}
+.qty output{min-width:34px;text-align:center;font-weight:700}
+.cart{background:var(--ink);color:var(--paper);border-radius:18px;padding:28px;position:sticky;top:78px}
+.cart h3{margin:0 0 14px;font-size:1.4rem}
+.cart ul{list-style:none;margin:0 0 14px;padding:0;min-height:48px}
+.cart li{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid #8884}
+.cart .total{display:flex;justify-content:space-between;font-size:1.6rem;font-weight:800;margin:14px 0 18px}
+.cart .btn{width:100%;background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+.cart .btn[disabled]{opacity:.4;cursor:not-allowed;transform:none}
+.cart .msg{margin:14px 0 0;font-size:.92rem}
+.cart .none{opacity:.6}
+
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px}
+.info h3{margin:0 0 6px;font-size:1.1rem}
+.info p{margin:0;color:var(--muted)}
+footer{padding:40px 0 60px;color:var(--muted);font-size:.9rem}
+footer .big{font-weight:800;font-size:2rem;letter-spacing:-.04em;color:var(--ink)}
+footer .big span{color:var(--accent)}
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Corp, back to top">Corp<span>.</span></a>
+    <nav aria-label="Main">
+      <a href="#programme">Programme</a>
+      <a href="#venues">Venues</a>
+      <a href="#info">Visit</a>
+      <a class="cta" href="#tickets">Tickets</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+<div class="hero">
+  <div class="wrap">
+    <div class="meta"><span>14 – 16 May 2027</span><span>Timișoara, Romania</span><span>Contemporary dance festival · 4th edition</span></div>
+    <h1 aria-label="Corp"><span aria-hidden="true">C</span><span class="o" aria-hidden="true"></span><span aria-hidden="true">rp</span></h1>
+    <div class="lede">
+      <p>Three days, four stages, twelve works. A festival about the <em>body</em> in a city that keeps reinventing itself.</p>
+      <div class="btns">
+        <a class="btn primary" href="#tickets">Get tickets</a>
+        <a class="btn" href="#programme">See the programme</a>
+      </div>
+    </div>
+  </div>
+</div>
+
+<section id="programme">
+  <div class="wrap">
+    <div class="eyebrow">Programme</div>
+    <h2>Twelve works, <i>three days</i></h2>
+    <div class="tabs" role="tablist" aria-label="Festival days">
+      <button role="tab" id="tab-0" aria-selected="true" aria-controls="list" data-day="0">Fri 14 May</button>
+      <button role="tab" id="tab-1" aria-selected="false" aria-controls="list" data-day="1">Sat 15 May</button>
+      <button role="tab" id="tab-2" aria-selected="false" aria-controls="list" data-day="2">Sun 16 May</button>
+    </div>
+    <div class="filters">
+      <label for="vf">Venue:</label>
+      <select id="vf"><option value="all">All venues</option></select>
+    </div>
+    <p class="dayhead" id="dayhead"></p>
+    <div id="list" role="tabpanel" aria-live="polite"></div>
+    <p class="note">Programme is subject to change. Times are local (EEST). Running times are approximate.</p>
+  </div>
+</section>
+
+<section id="venues">
+  <div class="wrap">
+    <div class="eyebrow">Venues</div>
+    <h2>Four rooms, <i>one walkable centre</i></h2>
+    <div class="venues" id="venueGrid"></div>
+    <p class="note">All venues lie within a 15-minute walk of Piața Victoriei. Step-free access is available at every venue; write to access@corpfestival.example to reserve a space.</p>
+  </div>
+</section>
+
+<section id="tickets">
+  <div class="wrap">
+    <div class="eyebrow">Tickets</div>
+    <h2>Choose your <i>way in</i></h2>
+    <div class="tickets">
+      <div id="tkList"></div>
+      <aside class="cart" aria-label="Your order">
+        <h3>Your order</h3>
+        <ul id="cartList"></ul>
+        <div class="total"><span>Total</span><span id="total">0 lei</span></div>
+        <button class="btn" id="reserve" disabled>Reserve tickets</button>
+        <p class="msg" id="msg" role="status"></p>
+      </aside>
+    </div>
+    <p class="note">Student, pensioner and under-18 tickets require ID at the door. Single-show tickets are valid for the named performance only. Children under 6 are not admitted to evening shows.</p>
+  </div>
+</section>
+
+<section id="info">
+  <div class="wrap">
+    <div class="eyebrow">Visit</div>
+    <h2>Good to <i>know</i></h2>
+    <div class="info">
+      <div><h3>Getting here</h3><p>Timișoara Traian Vuia airport is 12 km from the centre (bus line 6 and taxis). Timișoara Nord station is a 10-minute tram ride from Piața Victoriei.</p></div>
+      <div><h3>Language</h3><p>Most works are non-verbal. Spoken pieces and talks are in English or Romanian, as marked in the programme.</p></div>
+      <div><h3>Late arrivals</h3><p>Doors close when the performance starts. Latecomers are admitted at the stage manager's discretion.</p></div>
+      <div><h3>Contact</h3><p>hello@corpfestival.example<br>Festival office: Str. Alba Iulia 2, Timișoara</p></div>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div class="big">Corp<span>.</span></div>
+    <p>Contemporary dance festival · Timișoara · 14–16 May 2027</p>
+  </div>
+</footer>
+
+<script>
+const VENUES = {
+  tn:{name:"Teatrul Național",full:"Teatrul Național „Mihai Eminescu”",addr:"Str. Mărășești 2",cap:"Main hall · 640 seats",txt:"The grand 19th-century-style hall on the city's central axis hosts our largest productions.",f:["Cloakroom","Bar in foyer","Step-free entrance"]},
+  td:{name:"Teatrul German",full:"Teatrul German de Stat",addr:"Str. Marasesti 2",cap:"Studio hall · 220 seats",txt:"An intimate house for chamber works and duets, where the audience sits close enough to hear the breath.",f:["Bar","Induction loop","Step-free entrance"]},
+  fb:{name:"Fabrica de Pensule",full:"Fabrica / Industrial Hall",addr:"Str. Gheorghe Lazăr (former factory quarter)",cap:"Black box · 300 standing",txt:"A raw industrial space for durational work, club nights and late-night sets.",f:["Late bar","Standing only","Open until 02:00"]},
+  pv:{name:"Piața Victoriei",full:"Piața Victoriei (open air)",addr:"Central square, in front of the Cathedral",cap:"Outdoor stage · free entry",txt:"Free open-air performances and the opening and closing parties, weather permitting.",f:["Free entry","Weather permitting","No seats provided"]}
+};
+const DAYS = [
+ {label:"Friday 14 May",items:[
+  {t:"17:00",title:"Opening Procession",by:"Collective Mers",v:"pv",dur:"45 min",tags:["Free","Outdoor"],d:"Forty amateur and professional dancers cross the square in a slow, accumulating walk. Everyone is welcome to join."},
+  {t:"19:00",title:"Anatomy of a Crowd",by:"Ilinca Dragomir",v:"tn",dur:"70 min",tags:["Premiere","Group piece"],d:"Eleven bodies, one rhythm, and the slow collapse of consensus. A new commission for Corp."},
+  {t:"21:30",title:"Salt",by:"Marek Sobol & Ana Rusu",v:"td",dur:"50 min",tags:["Duet"],d:"A duet about two people sharing a flat and a silence."},
+  {t:"23:00",title:"Corp After: Low Ceiling",by:"DJ Vera K + dancers",v:"fb",dur:"Until 02:00",tags:["Club","Free with any ticket"],d:"The opening party, with improvised interventions from the festival's artists."}]},
+ {label:"Saturday 15 May",items:[
+  {t:"11:00",title:"Open Class: Floorwork",by:"Teodor Banciu",v:"fb",dur:"90 min",tags:["Workshop","All levels"],d:"A morning class on weight, gravity and getting up again. Wear clothes you can roll in."},
+  {t:"16:00",title:"Talk: Bodies in Post-Industrial Cities",by:"Panel, moderated by Sorina Pop",v:"td",dur:"60 min",tags:["Talk","In English"],d:"Choreographers and urbanists discuss how dance can occupy buildings that used to make things."},
+  {t:"19:00",title:"Ghost Limb",by:"Compagnie Aubier (FR)",v:"tn",dur:"65 min",tags:["Romanian premiere"],d:"A solo for a dancer and a body that is not quite there. Sparse, precise and unexpectedly funny."},
+  {t:"21:30",title:"Factory Songs",by:"Radu Vlad & Studio 9",v:"fb",dur:"75 min",tags:["Site-specific","Standing"],d:"Live percussion built from found metal, with eight dancers in the old production hall."}]},
+ {label:"Sunday 16 May",items:[
+  {t:"12:00",title:"Small Bodies",by:"Mara Ionescu",v:"td",dur:"40 min",tags:["Family","Ages 6+"],d:"A playful piece for children and the adults who bring them. Followed by a short Q&A with the dancers."},
+  {t:"15:00",title:"Fieldwork",by:"Nora Lindqvist (SE)",v:"tn",dur:"60 min",tags:["Group piece"],d:"Six dancers map an invisible territory, one gesture at a time."},
+  {t:"18:00",title:"Closing Piece: We, Still",by:"All festival artists",v:"pv",dur:"50 min",tags:["Free","Outdoor"],d:"A collective improvisation across the square, scored live and open to the public."},
+  {t:"20:00",title:"Closing Party",by:"Corp & friends",v:"pv",dur:"Until 23:00",tags:["Free"],d:"Last drinks, last dances, first plans for next year."}]}
+];
+const TICKETS = [
+  {id:"single",name:"Single show",price:60,desc:"One performance of your choice at a seated venue."},
+  {id:"day",name:"Day pass",price:150,desc:"All seated performances on one day, plus the open class or talk."},
+  {id:"fest",name:"Festival pass",price:350,desc:"Every performance across the three days, including Corp After. Best value."},
+  {id:"red",name:"Reduced",price:35,desc:"Students, pensioners, under-18s. Valid as a single show ticket."}
+];
+const $ = s => document.querySelector(s);
+const esc = s => s.replace(/[&<>"]/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* Programme */
+let day = 0, venue = "all";
+const vf = $("#vf");
+Object.entries(VENUES).forEach(([k,v]) => vf.insertAdjacentHTML("beforeend", `<option value="${k}">${esc(v.name)}</option>`));
+function renderProg(){
+  const d = DAYS[day];
+  $("#dayhead").textContent = d.label;
+  const items = d.items.filter(e => venue === "all" || e.v === venue);
+  $("#list").innerHTML = items.length ? items.map(e => `
+    <article class="ev">
+      <time>${e.t}</time>
+      <div>
+        <h3>${esc(e.title)}</h3>
+        <div class="by">${esc(e.by)}</div>
+        <p>${esc(e.d)}</p>
+        ${e.tags.map(t => `<span class="tag">${esc(t)}</span>`).join("")}
+      </div>
+      <div class="where">${esc(VENUES[e.v].name)}<small>${esc(e.dur)}</small></div>
+    </article>`).join("") : `<p class="empty">Nothing at this venue on this day. Try another venue or day.</p>`;
+}
+document.querySelectorAll(".tabs button").forEach(b => b.addEventListener("click", () => {
+  day = +b.dataset.day;
+  document.querySelectorAll(".tabs button").forEach(x => x.setAttribute("aria-selected", x === b));
+  $("#list").setAttribute("aria-labelledby", b.id);
+  renderProg();
+}));
+vf.addEventListener("change", () => { venue = vf.value; renderProg(); });
+renderProg();
+
+/* Venues */
+$("#venueGrid").innerHTML = Object.values(VENUES).map((v,i) => `
+  <article class="venue">
+    <div class="n">0${i+1}</div>
+    <h3>${esc(v.full)}</h3>
+    <address>${esc(v.addr)}, Timișoara</address>
+    <p><strong>${esc(v.cap)}</strong><br>${esc(v.txt)}</p>
+    <ul>${v.f.map(x => `<li>${esc(x)}</li>`).join("")}</ul>
+  </article>`).join("");
+
+/* Tickets */
+const qty = {};
+TICKETS.forEach(t => qty[t.id] = 0);
+$("#tkList").innerHTML = TICKETS.map(t => `
+  <div class="tk">
+    <h3>${t.name}</h3><div class="price">${t.price} lei</div>
+    <p>${t.desc}</p>
+    <div class="qty">
+      <button type="button" data-id="${t.id}" data-d="-1" aria-label="Remove one ${t.name} ticket">−</button>
+      <output id="q-${t.id}" aria-live="polite">0</output>
+      <button type="button" data-id="${t.id}" data-d="1" aria-label="Add one ${t.name} ticket">+</button>
+    </div>
+  </div>`).join("");
+function renderCart(){
+  let total = 0, rows = "";
+  TICKETS.forEach(t => {
+    const n = qty[t.id];
+    $("#q-"+t.id).textContent = n;
+    if(n){ total += n*t.price; rows += `<li><span>${n} × ${t.name}</span><span>${n*t.price} lei</span></li>`; }
+  });
+  $("#cartList").innerHTML = rows || `<li class="none">No tickets selected yet.</li>`;
+  $("#total").textContent = total + " lei";
+  $("#reserve").disabled = !total;
+}
+$("#tkList").addEventListener("click", e => {
+  const b = e.target.closest("button[data-id]"); if(!b) return;
+  qty[b.dataset.id] = Math.max(0, Math.min(10, qty[b.dataset.id] + +b.dataset.d));
+  $("#msg").textContent = "";
+  renderCart();
+});
+$("#reserve").addEventListener("click", () => {
+  const code = "CORP-" + Math.random().toString(36).slice(2,8).toUpperCase();
+  $("#msg").textContent = `Reserved. Your code is ${code}. Pay at the box office on arrival or within 48 hours; this is a demo, so no payment is taken.`;
+  TICKETS.forEach(t => qty[t.id] = 0);
+  renderCart();
+});
+renderCart();
+</script>
+</body>
+</html>

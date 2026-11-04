@@ -2,6 +2,9 @@
 // apropie astfel încât obiectul selectat să fie în centru, cu margine. Funcții pure; PlanView doar aplică viewBox-ul.
 import type { Catalog, Snapshot } from './types';
 import { footprintOf } from './validate';
+import { nicheGeometry } from './niches';
+import { wallItemGeometry, wallItemDepth } from './wall-items';
+import { annotationBox } from './annotations';
 
 export type Box = { x0: number; z0: number; x1: number; z1: number };
 export type FrameSel = { kind: string; id: string; wallId?: string } | null;
@@ -14,12 +17,19 @@ export function selectionBox(snap: Snapshot, cat: Catalog, sel: FrameSel): Box |
   if (!sel) return null; const f = snap.floor;
   switch (sel.kind){
     case 'room': { const r = f.rooms.find(x => x.id === sel.id); return r ? { ...r.rect } : null; }
+    case 'floor_zone': { const z = f.zones?.find(x => x.id === sel.id); return z ? { ...z.rect } : null; }
+    case 'ceiling_zone': { const z = f.ceilingZones?.find(x => x.id === sel.id); return z ? { ...z.rect } : null; }
+    case 'railing': { const r = f.railings?.find(x => x.id === sel.id); return r ? seg(r.a, r.b, .05) : null; }
     case 'placement': { const p = snap.placements.find(x => x.id === sel.id); return p ? footprintOf(cat, p) : null; }
     case 'wall': { const w = f.walls.find(x => x.id === sel.id); return w ? seg(w.a, w.b, w.thickness) : null; }
     case 'opening': { const w = f.walls.find(x => x.id === sel.wallId); return w ? seg(w.a, w.b, w.thickness) : null; }
     case 'beam': { const b = f.beams?.find(x => x.id === sel.id); return b ? seg(b.a, b.b, b.width) : null; }
     case 'glass_wall': { const g = f.glassWalls?.find(x => x.id === sel.id); return g ? seg(g.a, g.b, g.thickness) : null; }
     case 'column': { const c = f.columns?.find(x => x.id === sel.id); return c ? { x0: c.x - c.w / 2, x1: c.x + c.w / 2, z0: c.z - c.d / 2, z1: c.z + c.d / 2 } : null; }
+    case 'niche': { const n = f.niches?.find(x => x.id === sel.id), g = n && nicheGeometry(f, n); if (!g) return null; const xs = g.quad.map(p => p[0]), zs = g.quad.map(p => p[1]); return { x0: Math.min(...xs), x1: Math.max(...xs), z0: Math.min(...zs), z1: Math.max(...zs) }; }
+    case 'annotation': { const a = f.annotations?.find(x => x.id === sel.id); return a ? annotationBox(a) : null; }
+    case 'wall_item': { const it = f.wallItems?.find(x => x.id === sel.id), g = it && wallItemGeometry(f, it); if (!it || !g) return null; const d = wallItemDepth(it), pts = [...g.face, ...g.face.map(p => [p[0] + g.nx * d, p[1] + g.nz * d])], xs = pts.map(p => p[0]!), zs = pts.map(p => p[1]!);
+      return { x0: Math.min(...xs), x1: Math.max(...xs), z0: Math.min(...zs), z1: Math.max(...zs) }; }
     case 'stair': { const s = f.stairs?.find(x => x.id === sel.id); if (!s) return null; const r = Math.hypot(s.width, s.length) / 2; return { x0: s.x - r, x1: s.x + r, z0: s.z - r, z1: s.z + r }; }
     default: return null;
   }

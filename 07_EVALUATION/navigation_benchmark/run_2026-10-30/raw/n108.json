@@ -1,0 +1,18 @@
+{
+ "q": "N10",
+ "condition": "I",
+ "repeat": 1,
+ "run_id": "n108",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.030870100000000004,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 720,
+  "cache_read_input_tokens": 64661,
+  "cache_creation_input_tokens": 4297
+ },
+ "answer": "A record is invalid when the information cutoff (`known_as_of`) is later than the prediction timestamp (`predicted_at`), i.e. `known_as_of > predicted_at`. The contract says such a record \"would use information learned after the prediction.\" A cutoff equal to the prediction timestamp is allowed, because the rule is `known_as_of <= predicted_at`.\n\nANSWER_PATH: 07_EVALUATION/polymarket/PREDICTION_LEDGER_CONTRACT.md\nANSWER: `known_as_of > predicted_at` is invalid because it would use information learned after the prediction. The information cutoff `known_as_of` MUST be `<= predicted_at`."
+}

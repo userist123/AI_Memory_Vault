@@ -1,0 +1,346 @@
+<!doctype html>
+<html lang="ro">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Spițerul – cooperativă de reparat biciclete, Cluj-Napoca</title>
+<meta name="description" content="Spițerul este o cooperativă independentă de reparat biciclete din Cluj-Napoca. Prețuri clare, cursuri de reparații seara, atelier deschis vineri.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,500;12..96,800&family=Literata:ital,opsz,wght@0,7..72,400;0,7..72,600;1,7..72,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --paper:oklch(94% .015 160);
+  --paper-2:oklch(89% .025 165);
+  --ink:oklch(24% .045 170);
+  --glass:oklch(46% .09 168);
+  --patch:oklch(55% .19 28);
+  --patch-ink:oklch(98% .01 90);
+  --hi:oklch(87% .15 95);
+  --line:color-mix(in oklch,var(--ink) 22%,transparent);
+  --d:'Bricolage Grotesque',system-ui,sans-serif;
+  --b:'Literata',Georgia,serif;
+  --s1:.5rem;--s2:1rem;--s3:1.5rem;--s4:2.5rem;--s5:4.5rem;--s6:8rem;
+  --pad:clamp(1rem,4vw,3rem);
+}
+*{box-sizing:border-box;margin:0}
+html{scroll-behavior:smooth}
+body{background:var(--paper);color:var(--ink);font:400 1.0625rem/1.65 var(--b);-webkit-font-smoothing:antialiased}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--patch);outline-offset:3px}
+h1,h2,h3{font-family:var(--d);font-weight:800;line-height:.95;letter-spacing:-.02em;font-stretch:75%}
+.wrap{padding-inline:var(--pad);max-width:78rem;margin-inline:auto}
+section{padding-block:var(--s5)}
+p{max-width:62ch}
+
+/* header */
+header{position:sticky;top:0;z-index:5;background:color-mix(in oklch,var(--paper) 90%,transparent);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+header .wrap{display:flex;align-items:center;justify-content:space-between;gap:var(--s2);padding-block:.7rem}
+.logo{font:800 1.5rem/1 var(--d);text-decoration:none;letter-spacing:-.02em;display:flex;align-items:center;gap:.5rem}
+.logo svg{width:1.7rem;height:1.7rem}
+nav{display:flex;gap:clamp(.8rem,2.5vw,2rem);font:500 .95rem var(--d)}
+nav a{text-decoration:none;padding:.3rem 0;background:linear-gradient(var(--patch),var(--patch)) 0 100%/0 2px no-repeat;transition:background-size .25s}
+nav a:hover{background-size:100% 2px}
+@media(max-width:560px){nav a:nth-child(n+3){display:none}}
+
+/* hero */
+.hero{padding-block:var(--s4) var(--s5)}
+.hero .wrap{display:grid;grid-template-columns:minmax(0,1.25fr) minmax(0,.9fr);gap:var(--s4);align-items:center}
+.hero h1{font-size:clamp(3.4rem,9.5vw,8rem);font-stretch:75%}
+.hero h1 span{display:block;color:var(--glass)}
+.hero p.lead{margin-top:var(--s3);font-size:1.25rem;line-height:1.55}
+.cta{display:flex;flex-wrap:wrap;gap:var(--s2);margin-top:var(--s3)}
+.btn{font:800 1rem var(--d);text-decoration:none;padding:.85rem 1.4rem;border-radius:999px;border:2px solid var(--ink);transition:transform .15s,background .2s,color .2s;display:inline-block;cursor:pointer;background:none;color:var(--ink)}
+.btn:hover{transform:translateY(-2px) rotate(-1deg)}
+.btn.p{background:var(--patch);border-color:var(--patch);color:var(--patch-ink)}
+.btn.p:hover{background:var(--ink);border-color:var(--ink)}
+
+/* prescription */
+.rx{background:#fff9;background:color-mix(in oklch,white 70%,var(--paper));border:2px solid var(--ink);border-radius:.4rem;padding:var(--s3);position:relative;transform:rotate(1.2deg);box-shadow:8px 8px 0 var(--glass);transition:transform .4s}
+.rx:hover{transform:rotate(0)}
+.rx::before{content:"";position:absolute;inset:.45rem;border:1px dashed var(--line);border-radius:.2rem;pointer-events:none}
+.rx-h{display:flex;justify-content:space-between;align-items:baseline;font:500 .9rem var(--d);border-bottom:1px solid var(--line);padding-bottom:.6rem;margin-bottom:var(--s2)}
+.rx-sym{font:800 4rem/1 var(--d);color:var(--patch);float:left;margin:-.1rem .8rem 0 0}
+.rx h2{font-size:1.8rem;margin-bottom:.4rem}
+.rx dl{display:grid;grid-template-columns:auto 1fr;gap:.2rem 1rem;clear:both;margin-top:var(--s2);font-size:.98rem}
+.rx dt{font:500 .9rem var(--d);opacity:.7}
+.rx dd{font-weight:600}
+.rx .price{font:800 2.6rem/1 var(--d);text-align:right;margin-top:var(--s2);border-top:1px solid var(--line);padding-top:.6rem}
+.rx .price small{font-size:1rem;font-weight:500}
+@media(max-width:820px){.hero .wrap{grid-template-columns:1fr}.rx{transform:none}}
+
+/* symptom chooser */
+.diag{background:var(--ink);color:var(--paper)}
+.diag .wrap{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.3fr);gap:var(--s4)}
+.diag h2{font-size:clamp(2.4rem,5vw,4rem)}
+.diag p{margin-top:var(--s2);opacity:.85}
+.sym{display:flex;flex-wrap:wrap;gap:.6rem;border:0;padding:0}
+.sym legend{font:500 .95rem var(--d);margin-bottom:.8rem;padding:0}
+.sym label{cursor:pointer}
+.sym input{position:absolute;opacity:0}
+.sym span{display:inline-block;border:1.5px solid color-mix(in oklch,var(--paper) 50%,transparent);border-radius:999px;padding:.5rem 1rem;font:500 .98rem var(--d);transition:background .2s,color .2s,transform .15s}
+.sym label:hover span{transform:translateY(-2px)}
+.sym input:checked+span{background:var(--hi);color:var(--ink);border-color:var(--hi)}
+.sym input:focus-visible+span{outline:3px solid var(--hi);outline-offset:3px}
+.answer{margin-top:var(--s3);padding:var(--s3);border-left:6px solid var(--hi);background:color-mix(in oklch,var(--paper) 8%,transparent);min-height:9rem}
+.answer h3{font-size:1.9rem;margin-bottom:.4rem}
+.answer b{font:800 1.6rem var(--d);color:var(--hi)}
+@media(max-width:820px){.diag .wrap{grid-template-columns:1fr}}
+
+/* services */
+h2.sec{font-size:clamp(2.4rem,5.5vw,4.5rem);margin-bottom:var(--s3)}
+.svc-grid{display:grid;grid-template-columns:minmax(0,.7fr) minmax(0,1.3fr);gap:var(--s4)}
+.svc-grid>div:first-child p+p{margin-top:var(--s2)}
+.tabs{display:flex;gap:.5rem;margin-bottom:var(--s2)}
+.tabs button{font:500 .95rem var(--d);padding:.4rem .9rem;border-radius:999px;border:1.5px solid var(--ink);background:none;color:var(--ink);cursor:pointer;transition:background .2s}
+.tabs button[aria-pressed=true]{background:var(--ink);color:var(--paper)}
+.list{list-style:none;padding:0}
+.list li{display:grid;grid-template-columns:1fr auto;gap:.2rem 1rem;padding:.9rem 0;border-bottom:1px solid var(--line);transition:padding .2s,background .2s}
+.list li:hover{padding-inline:.7rem;background:var(--paper-2)}
+.list h3{font-size:1.25rem;line-height:1.1;font-stretch:100%}
+.list .pr{font:800 1.35rem var(--d);white-space:nowrap}
+.list p{grid-column:1/2;font-size:.95rem;opacity:.8}
+.list li[hidden]{display:none}
+.note{margin-top:var(--s2);font-size:.92rem;font-style:italic}
+
+/* classes */
+.classes{background:var(--paper-2)}
+.cl{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:var(--s2);margin-top:var(--s3)}
+.day{background:var(--paper);border:2px solid var(--ink);border-radius:.4rem;padding:var(--s2) var(--s2) var(--s3);display:flex;flex-direction:column;gap:.4rem;position:relative;transition:transform .2s}
+.day:nth-child(2){margin-top:1.2rem}.day:nth-child(4){margin-top:2.4rem}
+.day:hover{transform:translateY(-4px)}
+.day .dn{font:800 2rem/1 var(--d)}
+.day .tm{font:500 1rem var(--d);color:var(--glass)}
+.day h3{font-size:1.3rem;font-stretch:100%;line-height:1.1;margin-top:.4rem}
+.day p{font-size:.95rem}
+.day.next{background:var(--hi)}
+.day.next::after{content:"următoarea";position:absolute;top:-.8rem;right:.8rem;background:var(--patch);color:var(--patch-ink);font:500 .8rem var(--d);padding:.15rem .7rem;border-radius:999px}
+.facts{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s4);margin-top:var(--s4);font-size:1rem}
+.facts div{max-width:20rem}
+.facts strong{font:800 1.4rem var(--d);display:block}
+@media(max-width:900px){.cl{grid-template-columns:repeat(2,minmax(0,1fr))}.day:nth-child(n){margin-top:0}}
+@media(max-width:520px){.cl{grid-template-columns:1fr}}
+
+/* contact */
+.contact .wrap{display:grid;grid-template-columns:minmax(0,1.1fr) minmax(0,1fr);gap:var(--s4)}
+.big{font:800 clamp(1.6rem,3.4vw,2.6rem)/1.05 var(--d);font-stretch:75%;display:block;margin-block:.4rem;text-decoration:none;overflow-wrap:anywhere}
+a.big:hover{color:var(--patch)}
+.hours{border-collapse:collapse;width:100%;max-width:26rem;margin-top:var(--s2)}
+.hours td{padding:.45rem 0;border-bottom:1px solid var(--line)}
+.hours td:last-child{text-align:right;font-weight:600}
+.hours tr.today td{background:var(--hi);padding-inline:.5rem}
+.map{border:2px solid var(--ink);border-radius:.4rem;background:var(--paper-2);aspect-ratio:4/3;position:relative;overflow:hidden}
+.map svg{width:100%;height:100%;display:block}
+@media(max-width:820px){.contact .wrap{grid-template-columns:1fr}}
+footer{border-top:1px solid var(--line);padding-block:var(--s3);font-size:.9rem}
+footer .wrap{display:flex;flex-wrap:wrap;justify-content:space-between;gap:var(--s1)}
+
+@media(prefers-reduced-motion:no-preference){
+  .hero h1 span,.hero .lead,.hero .cta{animation:up .8s cubic-bezier(.2,.7,.2,1) both}
+  .hero h1 span{animation-delay:.15s}.hero .lead{animation-delay:.3s}.hero .cta{animation-delay:.4s}
+  .rx{animation:stamp .7s .3s cubic-bezier(.2,.9,.3,1.2) both}
+}
+@keyframes up{from{opacity:0;transform:translateY(24px)}}
+@keyframes stamp{from{opacity:0;transform:rotate(6deg) scale(1.08)}}
+@media(prefers-reduced-motion:reduce){*{transition:none!important;scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <a class="logo" href="#top" aria-label="Spițerul, acasă">
+      <svg viewBox="0 0 32 32" aria-hidden="true"><circle cx="16" cy="16" r="14" fill="none" stroke="currentColor" stroke-width="2.5"/><g stroke="currentColor" stroke-width="1.6"><path d="M16 2v28M2 16h28M6 6l20 20M26 6L6 26"/></g><circle cx="16" cy="16" r="4" fill="oklch(55% .19 28)"/></svg>
+      Spițerul
+    </a>
+    <nav aria-label="Principal">
+      <a href="#diagnostic">Diagnostic</a><a href="#servicii">Servicii</a><a href="#cursuri">Cursuri</a><a href="#contact">Contact</a>
+    </nav>
+  </div>
+</header>
+
+<main id="top">
+<section class="hero">
+  <div class="wrap">
+    <div>
+      <h1>Bicicleta ta<span>are nevoie de un spițer.</span></h1>
+      <p class="lead">Suntem o cooperativă mică din Cluj-Napoca. Reparăm biciclete cu prețuri afișate dinainte, iar seara te învățăm să le repari singur.</p>
+      <div class="cta">
+        <a class="btn p" href="#diagnostic">Ce are bicicleta mea?</a>
+        <a class="btn" href="#cursuri">Vezi cursurile de seară</a>
+      </div>
+    </div>
+    <aside class="rx" aria-label="Exemplu de rețetă">
+      <div class="rx-h"><span>Rețetă pentru bicicletă</span><span>Nr. 0417</span></div>
+      <div class="rx-sym" aria-hidden="true">℞</div>
+      <h2>Revizie completă</h2>
+      <p>Demontat, curățat, gresat, reglat. Primești lista pieselor uzate înainte să decizi ceva.</p>
+      <dl>
+        <dt>Durată</dt><dd>2 zile lucrătoare</dd>
+        <dt>Garanție</dt><dd>30 de zile la manoperă</dd>
+        <dt>Piese</dt><dd>doar cu acordul tău</dd>
+      </dl>
+      <div class="price">250 <small>lei, manoperă</small></div>
+    </aside>
+  </div>
+</section>
+
+<section class="diag" id="diagnostic">
+  <div class="wrap">
+    <div>
+      <h2>Spune-ne ce simți, îți scriem rețeta.</h2>
+      <p>Alege ce se întâmplă cu bicicleta. Îți arătăm ce lucrare se potrivește și cât costă manopera.</p>
+    </div>
+    <div>
+      <fieldset class="sym" id="sym">
+        <legend>Bicicleta mea…</legend>
+        <label><input type="radio" name="s" value="pana"><span>a rămas fără aer</span></label>
+        <label><input type="radio" name="s" value="frana"><span>frânează slab sau scârțâie</span></label>
+        <label><input type="radio" name="s" value="vit"><span>sare din viteze</span></label>
+        <label><input type="radio" name="s" value="roata"><span>are roata strâmbă</span></label>
+        <label><input type="radio" name="s" value="lant"><span>face zgomot la pedalat</span></label>
+        <label><input type="radio" name="s" value="nu"><span>nu știu, e doar obosită</span></label>
+      </fieldset>
+      <div class="answer" id="ans" aria-live="polite">
+        <h3>Alege un simptom.</h3>
+        <p>Rețeta apare aici.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section id="servicii">
+  <div class="wrap">
+    <h2 class="sec">Servicii și prețuri</h2>
+    <div class="svc-grid">
+      <div>
+        <p>Prețurile de mai jos sunt pentru manoperă și sunt fixe. Piesele se plătesc separat, la prețul din factura furnizorului plus 10%, ca să rămânem corecți și ca să rămânem deschiși.</p>
+        <p>Dacă diagnosticul iese altfel decât ne-am așteptat, te sunăm înainte să facem orice.</p>
+        <p class="note">Prețuri în lei, TVA inclus. Cooperatorii și elevii care au făcut cursul au 10% reducere.</p>
+      </div>
+      <div>
+        <div class="tabs" role="group" aria-label="Filtrează serviciile">
+          <button aria-pressed="true" data-f="all">Toate</button>
+          <button aria-pressed="false" data-f="rapid">Rapide</button>
+          <button aria-pressed="false" data-f="mare">Ample</button>
+        </div>
+        <ul class="list" id="list">
+          <li data-t="rapid"><h3>Reparat pană</h3><span class="pr">30 lei</span><p>Cameră nouă sau petic, verificat anvelopa și jantă.</p></li>
+          <li data-t="rapid"><h3>Reglaj frâne</h3><span class="pr">40 lei</span><p>Prețul e pe roată. Include înlocuirea plăcuțelor, fără piesa.</p></li>
+          <li data-t="rapid"><h3>Reglaj schimbătoare</h3><span class="pr">50 lei</span><p>Față și spate, cablu întins, limitatoare reglate.</p></li>
+          <li data-t="rapid"><h3>Verificare de siguranță</h3><span class="pr">60 lei</span><p>Treizeci de puncte controlate, în 30 de minute, cât aștepți.</p></li>
+          <li data-t="mare"><h3>Centrat roată</h3><span class="pr">70 lei</span><p>Spițe întinse și echilibrate. Spiță ruptă: 15 lei bucata.</p></li>
+          <li data-t="mare"><h3>Schimb lanț și casetă</h3><span class="pr">80 lei</span><p>Măsurăm uzura întâi, ca să nu schimbi mai mult decât trebuie.</p></li>
+          <li data-t="mare"><h3>Montaj bicicletă din cutie</h3><span class="pr">120 lei</span><p>Asamblare, reglaj final și test pe stradă.</p></li>
+          <li data-t="mare"><h3>Revizie rulmenți</h3><span class="pr">180 lei</span><p>Butuc, monoblock, pedalier și caseta de direcție, curățate și gresate.</p></li>
+          <li data-t="mare"><h3>Revizie completă</h3><span class="pr">250 lei</span><p>Totul demontat, curățat și reglat. Garanție 30 de zile.</p></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="classes" id="cursuri">
+  <div class="wrap">
+    <h2 class="sec">Cursuri de reparații, seara</h2>
+    <p>Lucrezi pe bicicleta ta, cu unelte de atelier și cu un cooperator lângă tine. Grupe de maximum șase persoane.</p>
+    <div class="cl" id="cl">
+      <article class="day" data-d="1"><span class="dn">Luni</span><span class="tm">18:30 – 21:00</span><h3>Pană și cameră</h3><p>Pentru începători. Scoți roata, schimbi camera, pui aerul corect.</p></article>
+      <article class="day" data-d="2"><span class="dn">Marți</span><span class="tm">19:00 – 21:30</span><h3>Frâne și schimbătoare</h3><p>Reglezi singur frâna pe disc și pe patină, apoi vitezele.</p></article>
+      <article class="day" data-d="4"><span class="dn">Joi</span><span class="tm">18:30 – 21:30</span><h3>Roți și centrat</h3><p>Pentru cei care știu deja bazele. Spițe, jantă, cheia de centrat.</p></article>
+      <article class="day" data-d="5"><span class="dn">Vineri</span><span class="tm">18:00 – 21:00</span><h3>Atelier deschis</h3><p>Vii cu bicicleta, folosești standul și ne întrebi ce nu știi. Fără program fix.</p></article>
+    </div>
+    <div class="facts">
+      <div><strong>80 lei pe seară</strong>Uneltele și uleiurile sunt incluse. Piesele sunt separat.</div>
+      <div><strong>Pachet de 4 seri: 280 lei</strong>Poți alege orice combinație de cursuri, în 2 luni.</div>
+      <div><strong>Atelierul deschis: 30 lei</strong>Plătești pe loc, fără înscriere.</div>
+    </div>
+    <div class="cta"><a class="btn p" href="mailto:salut@spiterul.example?subject=Înscriere%20curs">Înscrie-te prin email</a><a class="btn" href="tel:+40264000000">Sună-ne: 0264 000 000</a></div>
+  </div>
+</section>
+
+<section class="contact" id="contact">
+  <div class="wrap">
+    <div>
+      <h2 class="sec">Unde ne găsești</h2>
+      <p>Atelierul e într-un fost depozit, în curtea interioară. Intri pe poarta mare și o iei la stânga, după rafturile cu biciclete.</p>
+      <a class="big" href="https://www.google.com/maps/search/?api=1&query=Strada+Paris+14+Cluj-Napoca" rel="noopener">Str. Paris nr. 14,<br>Cluj-Napoca</a>
+      <a class="big" href="tel:+40264000000">0264 000 000</a>
+      <a class="big" href="mailto:salut@spiterul.example">salut@spiterul.example</a>
+      <table class="hours" aria-label="Program">
+        <tbody>
+          <tr data-d="1"><td>Luni</td><td>10:00 – 21:00</td></tr>
+          <tr data-d="2"><td>Marți</td><td>10:00 – 21:30</td></tr>
+          <tr data-d="3"><td>Miercuri</td><td>10:00 – 18:00</td></tr>
+          <tr data-d="4"><td>Joi</td><td>10:00 – 21:30</td></tr>
+          <tr data-d="5"><td>Vineri</td><td>10:00 – 21:00</td></tr>
+          <tr data-d="6"><td>Sâmbătă</td><td>10:00 – 14:00</td></tr>
+          <tr data-d="0"><td>Duminică</td><td>închis</td></tr>
+        </tbody>
+      </table>
+    </div>
+    <div>
+      <div class="map" role="img" aria-label="Schiță simplă a drumului spre atelier, în curtea interioară de pe Strada Paris">
+        <svg viewBox="0 0 400 300" preserveAspectRatio="xMidYMid slice">
+          <rect width="400" height="300" fill="oklch(89% .025 165)"/>
+          <g fill="none" stroke="oklch(24% .045 170)" stroke-width="2" opacity=".45"><path d="M0 210h400M120 0v300M300 0v300"/></g>
+          <path d="M0 210h400" stroke="oklch(98% .01 90)" stroke-width="22" fill="none" opacity=".9"/>
+          <text x="20" y="206" font-family="Bricolage Grotesque,sans-serif" font-weight="800" font-size="16" fill="oklch(24% .045 170)">Str. Paris</text>
+          <rect x="150" y="60" width="130" height="120" fill="oklch(46% .09 168)" opacity=".25" stroke="oklch(24% .045 170)" stroke-width="2" stroke-dasharray="6 4"/>
+          <text x="162" y="82" font-family="Bricolage Grotesque,sans-serif" font-size="13" fill="oklch(24% .045 170)">curte interioară</text>
+          <path d="M215 210v-30" stroke="oklch(24% .045 170)" stroke-width="3"/>
+          <path d="M215 180V120h-40" stroke="oklch(55% .19 28)" stroke-width="3" stroke-dasharray="2 6" stroke-linecap="round" fill="none"/>
+          <circle cx="170" cy="120" r="11" fill="oklch(55% .19 28)"/>
+          <text x="170" y="125" text-anchor="middle" font-family="Bricolage Grotesque,sans-serif" font-weight="800" font-size="14" fill="white">S</text>
+          <text x="226" y="198" font-family="Bricolage Grotesque,sans-serif" font-size="12" fill="oklch(24% .045 170)">poarta mare</text>
+        </svg>
+      </div>
+      <p class="note">Schiță orientativă, nu la scară. Parcarea pentru biciclete e în curte; mașinile parchează pe stradă.</p>
+    </div>
+  </div>
+</section>
+</main>
+
+<footer>
+  <div class="wrap"><span>© Spițerul, cooperativă de reparat biciclete, Cluj-Napoca</span><span>Spițe întinse, prețuri la vedere.</span></div>
+</footer>
+
+<script>
+(function(){
+  var rx={
+    pana:["Reparat pană","30 lei","Cameră nouă sau petic, plus un control al anvelopei. Gata cât aștepți. Dacă vrei să înveți, vino luni la cursul „Pană și cameră”."],
+    frana:["Reglaj frâne","40 lei pe roată","Reglăm frâna și schimbăm plăcuțele dacă e nevoie. Plăcuțele se plătesc separat. Marțea poți învăța să o faci singur."],
+    vit:["Reglaj schimbătoare","50 lei","Cablu întins, limitatoare și ghidaj reglate. Dacă lanțul sau caseta sunt uzate, îți spunem înainte (schimb: 80 lei)."],
+    roata:["Centrat roată","70 lei","Întindem și echilibrăm spițele. O spiță ruptă se înlocuiește cu 15 lei. Joia poți învăța centratul."],
+    lant:["Schimb lanț și casetă","de la 80 lei","Un zgomot la pedalat vine de obicei de la lanț uscat sau uzat. Măsurăm uzura și schimbăm doar ce trebuie."],
+    nu:["Verificare de siguranță","60 lei","Controlăm treizeci de puncte în 30 de minute și îți dăm o listă scrisă. Tu decizi ce se face mai departe."]
+  };
+  var ans=document.getElementById('ans');
+  document.getElementById('sym').addEventListener('change',function(e){
+    var r=rx[e.target.value];if(!r)return;
+    ans.innerHTML='';
+    var h=document.createElement('h3');h.textContent=r[0];
+    var b=document.createElement('b');b.textContent=r[1];
+    var p=document.createElement('p');p.textContent=r[2];
+    ans.append(h,b,p);
+  });
+
+  var btns=document.querySelectorAll('.tabs button'),items=document.querySelectorAll('#list li');
+  btns.forEach(function(b){b.addEventListener('click',function(){
+    btns.forEach(function(x){x.setAttribute('aria-pressed',x===b)});
+    items.forEach(function(li){li.hidden=b.dataset.f!=='all'&&li.dataset.t!==b.dataset.f});
+  })});
+
+  var now=new Date(),dow=now.getDay(),mins=now.getHours()*60+now.getMinutes();
+  var row=document.querySelector('.hours tr[data-d="'+dow+'"]');if(row)row.classList.add('today');
+  var days=[].slice.call(document.querySelectorAll('#cl .day'));
+  var best=null,bd=99;
+  days.forEach(function(d){
+    var diff=(+d.dataset.d-dow+7)%7;
+    if(diff===0&&mins>18*60+30)diff=7;
+    if(diff<bd){bd=diff;best=d}
+  });
+  if(best)best.classList.add('next');
+})();
+</script>
+</body>
+</html>

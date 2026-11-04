@@ -1,0 +1,18 @@
+{
+ "q": "N09",
+ "condition": "G",
+ "repeat": 1,
+ "run_id": "n126",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.0163819,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 373,
+  "cache_read_input_tokens": 45599,
+  "cache_creation_input_tokens": 2020
+ },
+ "answer": "No. A component whose declared origin is on the default blacklist (Russia, China, India, North Korea) stays blocked. A valid package hash, a valid signature or human approval doesn't change that, and neither does a newer version.\n\nANSWER_PATH: security/SUPPLY_CHAIN_BOUNDARY.md\nANSWER: \"A blocked origin cannot be overridden by a valid package hash, a valid signature, human approval, or a newer version.\""
+}

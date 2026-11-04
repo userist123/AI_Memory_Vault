@@ -1,0 +1,18 @@
+{
+ "q": "N06",
+ "condition": "G",
+ "repeat": 0,
+ "run_id": "n039",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 2,
+ "total_cost_usd": 0.0326689,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 303,
+  "cache_read_input_tokens": 25829,
+  "cache_creation_input_tokens": 6762
+ },
+ "answer": "Exit code 3 means the answer could not be grounded in the vault. The procedure doc says `--ask` exits with 0 only when the answer is anchored, either as a verbatim read or as verified quotes. In every other case it exits with 3.\n\nANSWER_PATH: 10_DOCUMENTATION/procedures/Connecting_Every_AI_To_The_Vault.md\nANSWER: \"Iese cu 0 doar dacă răspunsul e ancorat (citire verbatim sau citate verificate), altfel cu 3.\" (It exits 0 only if the answer is grounded, otherwise 3.)"
+}

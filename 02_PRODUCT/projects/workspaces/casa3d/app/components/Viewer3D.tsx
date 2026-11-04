@@ -11,6 +11,7 @@ import { toEngineCatalog } from '@/core/catalog';
 import { lighting, sunDirection, captureFileName, type TimeOfDay } from '@/core/lighting';
 import { parseViews, addView, removeView, viewsKey, clampCut, type SavedView } from '@/core/saved-views';
 import { askPrompt } from '@/lib/dialog';
+import { classifyTier, parseTierPick, TIER_KEY, type Tier, type TierPick } from '@/core/viewport-tiers';
 
 export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_VOIDS, projectId, selectedId = null, hoverId = null, onHover, frame, onFrameOther }: { snap: Snapshot; catalog: Catalog; mc?: MaterialsCatalog | null; onPick(id: string | null): void; voids?: PlateVoid[]; projectId?: string;
   /** selecția comună cu planul (UI/UX P2-10): piesa selectată și cea de sub mouse (aici sau în plan); `frame.n` crește la fiecare cerere de încadrare */
@@ -33,13 +34,19 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
     if (name && name.trim()) keepViews(addView(views, name, view, typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : String(Date.now()))); }
   function openView(sv: SavedView){ setViewsOpen(false); setMode(sv.view.mode); if (sv.view.mode !== 'walk') setRoom(null); setCutPct(Math.round(sv.view.cut * 100)); v.current?.setView?.(sv.view); }
   const preset = (k: 'top' | 'iso' | 'front') => { setViewsOpen(false); go('house'); v.current?.setCameraPreset(k); };
-  // calitate înaltă (ocluzie ambientală) implicit pe desktop; pe telefon rămâne normală, pentru fluiditate și baterie
-  const [quality, setQuality] = useState<'normal' | 'high'>('normal'), qRef = useRef(quality); qRef.current = quality;
-  useEffect(() => { const t = typeof window !== 'undefined' && (matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0); setTouch(t); if (!t) setQuality('high'); }, []);
+  // nivelul de calitate (plan A1): „Automat” clasează local și poate coborî singur într-o sesiune; o alegere manuală e respectată și memorată
+  const [tierPick, setTierPick] = useState<TierPick>(() => { try { return parseTierPick(localStorage.getItem(TIER_KEY)); } catch { return 'auto'; } }), tierRef = useRef(tierPick); tierRef.current = tierPick;
+  const [tierNow, setTierNow] = useState<Tier | null>(null), autoTier = useRef<Tier | null>(null);
+  function applyTier(){ if (!v.current?.setTier) return; const pick = tierRef.current, coarse = matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0;
+    const gpu = v.current.gpuKind?.(); autoTier.current ||= classifyTier({ coarse, shortSide: Math.min(screen.width, screen.height), cores: navigator.hardwareConcurrency, memoryGb: (navigator as Navigator & { deviceMemory?: number }).deviceMemory, softwareGpu: gpu === 'software', integratedGpu: gpu === 'integrated' });
+    const tier = pick === 'auto' ? autoTier.current : pick; v.current.setTier(tier, pick === 'auto'); setTierNow(tier); }
+  useEffect(() => { setTouch(matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0); }, []);
   pickRef.current = onPick;
   const [doorsOpen, setDoorsOpen] = useState(true);
+  // la refacerea contextului se aplică starea de acum (lumina, planul), nu cea de la montare
+  const restoreRef = useRef(() => {}); restoreRef.current = () => { applyLight(); applyTier(); push(); };
   useEffect(() => { let alive = true;
-    import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id), onHover: (id: string | null) => hoverRef.current?.(id), onContextLost: () => setErr('context-lost'), onContextRestored: () => { setErr(''); applyLight(); v.current?.setQuality?.(qRef.current); push(); } }); if (process.env.NODE_ENV !== 'production') (window as any).__casa3dViewer = v.current; applyLight(); v.current.setQuality?.(qRef.current); push(); syncSel.current(); } catch (e){ console.error('3D', e); setErr('webgl'); } });
+    import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id), onHover: (id: string | null) => hoverRef.current?.(id), onContextLost: () => setErr('context-lost'), onContextRestored: () => { setErr(''); restoreRef.current(); }, onTierDrop: (d: Tier) => { autoTier.current = d; setTierNow(d); } }); if (process.env.NODE_ENV !== 'production') (window as any).__casa3dViewer = v.current; applyLight(); applyTier(); push(); syncSel.current(); } catch (e){ console.error('3D', e); setErr('webgl'); } });
     return () => { alive = false; v.current?.dispose(); v.current = null; hoverRef.current?.(null); }; }, []); // eslint-disable-line
   const engineCat = useRef<ReturnType<typeof toEngineCatalog> | null>(null);
   function push(){ if (!v.current) return; engineCat.current ||= toEngineCatalog(catalog);
@@ -51,7 +58,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   useEffect(() => { v.current?.setXray?.(xray); }, [xray]);
   function applyLight(){ const p = lighting(time, azimuth); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
   useEffect(applyLight, [time, azimuth]); // eslint-disable-line
-  useEffect(() => { const q = v.current?.setQuality?.(quality); if (q && q !== quality) setQuality(q); }, [quality]); // eslint-disable-line
+  useEffect(() => { applyTier(); try { localStorage.setItem(TIER_KEY, tierPick); } catch { /* stocare plină sau blocată */ } }, [tierPick]); // eslint-disable-line
   // panoramă 360° a camerei curente, randată din mijlocul ei; se deschide în vizualizator și se poate descărca
   function openPano(){ if (!room || !v.current?.renderPanorama) return; setPanoBusy(true); setPanoMsg('');
     setTimeout(() => { try { const rn = snap.floor.rooms.find(r => r.id === room)?.name;
@@ -108,7 +115,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       <button className="btn" aria-expanded={lightOpen} onClick={() => { setLightOpen(o => !o); setViewsOpen(false); }} title={t('viewer.displayTitle')} aria-label={t('viewer.displayTitle')}><Icon name="sun" size={16} /><span className="v3lbl" aria-hidden="true">{t('viewer.display')}</span></button>
       {selectedId && onFrameOther && <button className="btn" title={t('viewer.showInPlanTitle')} onClick={() => onFrameOther(selectedId)}><Icon name="plan" size={16} /><span className="v3lbl">{t('viewer.showInPlan')}</span></button>}
       <div className="v3exp">
-        <button className="btn" aria-expanded={exportOpen} aria-haspopup="menu" disabled={!!err} onClick={() => setExportOpen(o => !o)} title={t('viewer.exportTitle')} aria-label={t('viewer.exportTitle')}><Icon name="download" size={16} /><span className="v3lbl" aria-hidden="true">{t('viewer.export')}</span><Icon name={exportOpen ? 'chevronUp' : 'chevronDown'} size={14} /></button>
+        <button className="btn" aria-expanded={exportOpen} aria-haspopup="menu" disabled={!!err} onClick={() => setExportOpen(o => !o)} title={t('viewer.exportTitle')} aria-label={`${t('viewer.export')}: ${t('viewer.exportTitle')}`}><Icon name="download" size={16} /><span className="v3lbl" aria-hidden="true">{t('viewer.export')}</span><Icon name={exportOpen ? 'chevronUp' : 'chevronDown'} size={14} /></button>
         {exportOpen && <div className="v3menu" role="menu" onKeyDown={e => { if (e.key === 'Escape') setExportOpen(false); }}>
           <button role="menuitem" onClick={() => { setExportOpen(false); capture(); }} title={t('viewer.captureTitle')}>{t('viewer.capture')}</button>
           <button role="menuitem" onClick={() => { setExportOpen(false); exportBlender(); }} title={t('viewer.blenderTitle')}>{t('viewer.blender')}</button>
@@ -121,7 +128,10 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
       <button className="btn" aria-pressed={xray} title={t('viewer.xrayTitle')} onClick={() => setXray(x => !x)}>{t('viewer.xray')}</button>
       {mode === 'house' && <label className="f" style={{ minWidth: 160 }} title={t('viewer.cutTitle')}><span>{t('viewer.cut', { pct: cutPct })}</span><input type="range" min={12} max={100} value={cutPct} onChange={e => { const n = Number(e.target.value); setCutPct(n); v.current?.setCut?.(clampCut(n / 100)); }} /></label>}
       {(['day', 'evening', 'night'] as const).map(tod => <button key={tod} className="btn" aria-pressed={time === tod} onClick={() => setTime(tod)}>{t(tod === 'day' ? 'viewer.day' : tod === 'evening' ? 'viewer.evening' : 'viewer.night')}</button>)}
-      <button className="btn" aria-pressed={quality === 'high'} onClick={() => setQuality(q => q === 'high' ? 'normal' : 'high')} title={t('viewer.qualityTitle')}>{t('viewer.quality')}</button>
+      <label className="f" style={{ minWidth: 160 }} title={t('viewer.qualityTitle')}><span>{t('viewer.quality')}</span><select value={tierPick} onChange={e => setTierPick(parseTierPick(e.target.value))}>
+        <option value="auto">{tierPick === 'auto' && tierNow ? t('viewer.tierAutoNow', { tier: t(`viewer.tier.${tierNow}`) }) : t('viewer.tierAuto')}</option>
+        {(['desktop', 'laptop', 'phone'] as const).map(k => <option key={k} value={k}>{t(`viewer.tier.${k}`)}</option>)}
+      </select></label>
       <label className="f" style={{ minWidth: 160 }}><span>{t('viewer.sun', { deg: Math.round(azimuth) })}</span><input type="range" min={0} max={359} value={azimuth} onChange={e => setAzimuth(Number(e.target.value))} /></label>
     </div>}
     <div className="hintbar">{err ? t('viewer.noWebgl') : (mode === 'walk' ? (touch ? t('viewer.hintWalkTouch') : t('viewer.hintWalk')) : (touch ? t('viewer.hintHouseTouch') : t('viewer.hintHouse')))}</div>

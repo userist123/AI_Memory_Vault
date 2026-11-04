@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const parsed = CreateTicketSchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid', details: parsed.error.errors }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid', details: parsed.error.issues }, { status: 400 });
     }
 
     const ticketId = await createTicket({
@@ -115,7 +115,7 @@ export async function PATCH(req: NextRequest) {
     const body = await req.json();
     const parsed = ReplySchema.safeParse(body);
     if (!parsed.success) {
-      return NextResponse.json({ error: 'Invalid', details: parsed.error.errors }, { status: 400 });
+      return NextResponse.json({ error: 'Invalid', details: parsed.error.issues }, { status: 400 });
     }
 
     const ticket = await getTicket(parsed.data.ticketId);

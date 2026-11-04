@@ -12,6 +12,8 @@ Key invariants verified here:
 
 from __future__ import annotations
 
+from urllib.parse import urlparse
+
 import pytest
 
 from flight_engine.deep_links import build_deep_link
@@ -59,7 +61,9 @@ def test_ryanair_no_bbu() -> None:
 
 def test_wizzair_url() -> None:
     url = build_deep_link("Wizz Air", "OTP", "BCN", "2026-11-15")
-    assert url.startswith("https://wizzair.com"), f"Unexpected base URL: {url}"
+    parsed = urlparse(url)
+    assert parsed.scheme == "https", f"Unexpected scheme: {url}"
+    assert parsed.hostname == "wizzair.com", f"Unexpected host: {url}"
     assert "OTP" in url
     assert "BCN" in url
 
@@ -112,7 +116,9 @@ def test_all_airlines() -> None:
 
 def test_blue_air_url_structure() -> None:
     url = build_deep_link("Blue Air", "OTP", "ATH", "2026-09-20")
-    assert "blueairweb.com" in url
+    parsed = urlparse(url)
+    assert parsed.scheme == "https"
+    assert parsed.hostname == "blueairweb.com" or parsed.hostname.endswith(".blueairweb.com")
     assert "from=OTP" in url
     assert "to=ATH" in url
 

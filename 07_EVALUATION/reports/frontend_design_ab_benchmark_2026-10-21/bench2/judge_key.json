@@ -1,0 +1,17 @@
+{
+  "T1": {
+    "A": "baseline",
+    "B": "official_forced",
+    "C": "vault_forced"
+  },
+  "T2": {
+    "A": "baseline",
+    "B": "vault_forced",
+    "C": "official_forced"
+  },
+  "T3": {
+    "A": "official_forced",
+    "B": "baseline",
+    "C": "vault_forced"
+  }
+}

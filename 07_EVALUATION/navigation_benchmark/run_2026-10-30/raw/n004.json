@@ -1,0 +1,18 @@
+{
+ "q": "N01",
+ "condition": "G",
+ "repeat": 0,
+ "run_id": "n004",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.059983400000000006,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 636,
+  "cache_read_input_tokens": 44994,
+  "cache_creation_input_tokens": 12278
+ },
+ "answer": "The council budget gate, `memory/council_budget_controller.py`, picks one of four tiers: NONE, LIGHT, STANDARD or HIGH_RISK. It does not read the documented numeric council limits. The note says it \"reads none of these values.\"\n\nThose limits are enforced elsewhere. `routing/agent_router.py` and `memory/executive.py` enforce `max_memory_results`, `max_skills_per_agent`, `max_graph_hops`, `max_council_agents` and `max_total_selected_skills`. The two token caps are not enforced by code anywhere.\n\nANSWER_PATH: 00_GOVERNANCE/protocols/Council_Context_Budget.md\nANSWER: The council gate `memory/council_budget_controller.py` picks a tier (NONE / LIGHT / STANDARD / HIGH_RISK) and reads none of these values."
+}

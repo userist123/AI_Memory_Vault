@@ -1,0 +1,18 @@
+{
+ "q": "N13",
+ "condition": "I",
+ "repeat": 1,
+ "run_id": "n125",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 2,
+ "total_cost_usd": 0.0132662,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 380,
+  "cache_read_input_tokens": 29622,
+  "cache_creation_input_tokens": 1624
+ },
+ "answer": "The corpus health baseline found 5 exact-duplicate groups covering 13 notes. The match is by SHA-256 over whitespace-normalised content. The other files I found (the dependency DAG and the Antigravity status note) give the same 5 and 13. The baseline's later table lists the count as unchanged, as classified.\n\nANSWER_PATH: 00_GOVERNANCE/phase_0/CORPUS_HEALTH_BASELINE.md\nANSWER: 5 groups of exact duplicates, covering 13 notes"
+}

@@ -353,11 +353,11 @@ for ag_id, ag_title, ag_desc, ag_skills in agents:
     ag_obj = {
         "id": ag_id,
         "type": "AGENT",
-        "path": "99_SYSTEM/Agent_Capability_Registry.md",
+        "path": "00_GOVERNANCE/protocols/Agent_Capability_Registry.md",
         "title": ag_title,
         "lifecycle": "ACTIVE",
         "verification": "verified",
-        "provenance": {"source_type": "official", "source_ref": "99_SYSTEM/Agent_Capability_Registry.md"},
+        "provenance": {"source_type": "official", "source_ref": "00_GOVERNANCE/protocols/Agent_Capability_Registry.md"},
         "created": "2026-08-17T00:00:00Z",
         "updated": "2026-09-02T00:00:00Z",
     }
@@ -403,7 +403,7 @@ for sk_id, sk_path, sk_title in skills_to_register:
 
 for ag_id, _, _, ag_skills in agents:
     for sk in ag_skills:
-        edges.append({"source": ag_id, "relation": "uses", "target": sk, "evidence": "99_SYSTEM/Agent_Capability_Registry.md", "confidence": "high"})
+        edges.append({"source": ag_id, "relation": "uses", "target": sk, "evidence": "00_GOVERNANCE/protocols/Agent_Capability_Registry.md", "confidence": "high"})
 
 # 2.6 Canonical Markdown Notes
 scan_dirs = {
@@ -583,7 +583,7 @@ The mesh defines a strict, non-overlapping 11-type taxonomy:
 | `MEMORY` | Episodic memory items (Decisions, Errors, Experiences, Lessons, Preferences) | `04_MEMORY/` | `derived_from`, `references`, `superseded_by` |
 | `SKILL` | Reusable procedural capabilities and execution runbooks | `.agents/skills/` | `requires`, `tested_by`, `implements` |
 | `PROCEDURE` | Operational runbooks and step-by-step standards | `03_PROCEDURES/` | `requires`, `implements`, `references` |
-| `AGENT` | Specialized persona manifests and capability boundaries | `99_SYSTEM/Agent_Capability_Registry.md` | `uses`, `implements`, `observed_by` |
+| `AGENT` | Specialized persona manifests and capability boundaries | `00_GOVERNANCE/protocols/Agent_Capability_Registry.md` | `uses`, `implements`, `observed_by` |
 | `EXPERIMENT` | Empirical evaluation harnesses and diagnostic labs | `evaluation/` | `produced_by`, `tested_by`, `references` |
 | `EVIDENCE` | Measured benchmark outputs, audit reports, and logs | `evaluation/reports/` | `supports`, `derived_from` |
 | `OUTCOME` | Ground-truth labels and verified post-execution results | `evaluation/` | `supports`, `contradicts`, `derived_from` |

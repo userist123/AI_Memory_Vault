@@ -6,8 +6,8 @@
     python 30_SCRIPTS/setup/install_design_stack.py --apply --force   # again, ignoring the marker
 
 Scope is exactly what 07_EVALUATION/reports/external_skill_intake_design_stack_2026-10-11.md
-cleared: enable frontend-design and ralph-loop (already installed from the official
-marketplace), confirm superpowers, add chrome-devtools-mcp pinned to 1.9.0 (the version the
+cleared: install and enable frontend-design and ralph-loop from the official
+marketplace (`claude plugin install` is idempotent; never assume they are already present), confirm superpowers, add chrome-devtools-mcp pinned to 1.9.0 (the version the
 official marketplace pins) with telemetry and CrUX off and an isolated browser profile, and copy
 the owner's standing directives (creative-web-director, security-lockdown, graph-orchestrator)
 and motion-director, plus 5 Replica skills (vendored at a pinned commit, triggers narrowed), to

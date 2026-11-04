@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-import hashlib, re, uuid
+import dataclasses, hashlib, re, uuid
 from pathlib import Path
 from typing import Any
 
@@ -116,10 +116,11 @@ class AgentRouter:
             status=RouteStatus.ROUTED if (not needs_verifier or (verifier and verifier.runtime_id in runtime_available and runtime_available.get(verifier.runtime_id,False))) else RouteStatus.BLOCKED
         if request.requested_runtime and primary is None: status=RouteStatus.BLOCKED
         task_fp=qp
+        support=self._council_support(primary,verifier,candidates,request,rejected)
         receipt=RouteDecision(
             decision_id=f"dec_{uuid.uuid4().hex[:12]}",route_id=f"route_{uuid.uuid4().hex[:12]}",
             status=status,primary=primary,verifier=verifier,
-            support=tuple(candidates[1:3] if request.allow_parallel else ()),
+            support=support,
             alternatives=tuple(candidates[1:6]),memory_plan=memory,
             candidate_count=len(candidates),rejected=tuple(rejected),
             policy_gates=("risk_gate","privacy_gate","capability_gate","authority_gate","verifier_gate"),
@@ -129,6 +130,42 @@ class AgentRouter:
             registry_fingerprint=self.registry.fingerprint,task_fingerprint=task_fp,
             execution_contract=self._execution_contract(primary,verifier))
         return receipt
+
+    def _council_support(self, primary:RouteCandidate|None, verifier:VerifierDescriptor|None,
+                         candidates:list[RouteCandidate], request:TaskRequest, rejected:list[str])->tuple[RouteCandidate,...]:
+        """Support agents within the council limits (AGENTS.md "Runtime Context Contract").
+
+        Agents: primary + support + verifier <= max_council_agents (and support <= max_support_agents).
+        Skills: primary keeps its own; support agents share what is left of max_total_selected_skills.
+        Before this, support was `candidates[1:3]` unconditionally: with a verifier a route carried 4
+        agents, and when the primary came from the available runtimes rather than candidates[0] the
+        primary itself could reappear as support. Support agents are distinct specialists: never
+        the primary's agent (on any runtime) and never the same agent twice.
+        """
+        if not request.allow_parallel or primary is None:
+            return ()
+        d=self.registry.defaults
+        max_council=int(d.get("max_council_agents",3)); max_support=int(d.get("max_support_agents",2))
+        max_skills=int(d.get("max_total_selected_skills",4))
+        slots=max(0,min(max_support,max_council-1-(1 if verifier is not None else 0)))
+        # Owner decision 2026-10-24: support is a different specialist from the primary and from
+        # each other -- the same agent on another runtime is a duplicate, not a second opinion.
+        pool,seen=[],{primary.agent_id}
+        for c in candidates:
+            if c.agent_id not in seen:
+                seen.add(c.agent_id); pool.append(c)
+        wanted=min(len(pool),max_support)
+        if wanted>slots:
+            rejected.append(f"support:capped:{wanted}->{slots}:max_council_agents={max_council}")
+        remaining=max(0,max_skills-len(primary.selected_skills))
+        support=[]
+        for c in pool[:slots]:
+            keep=c.selected_skills[:remaining]
+            if len(keep)<len(c.selected_skills):
+                rejected.append(f"support:{c.agent_id}:skills_capped:max_total_selected_skills={max_skills}")
+            remaining-=len(keep)
+            support.append(dataclasses.replace(c,selected_skills=keep))
+        return tuple(support)
 
     def _subagent_reviewer_fallback(self, primary:RouteCandidate, pool:list[RouteCandidate])->VerifierDescriptor|None:
         """Owner rule 2026-10-16: when no vendor-independent verifier exists (e.g. the only one left is

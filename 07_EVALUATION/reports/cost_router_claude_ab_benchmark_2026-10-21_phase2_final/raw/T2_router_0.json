@@ -1,0 +1,130 @@
+{
+ "duration_api_ms": 15586,
+ "stop_reason": "end_turn",
+ "total_cost_usd": 0.2426372,
+ "usage": {
+  "input_tokens": 4,
+  "cache_creation_input_tokens": 54944,
+  "cache_read_input_tokens": 105732,
+  "output_tokens": 1228,
+  "output_tokens_details": {
+   "thinking_tokens": 218
+  },
+  "server_tool_use": {
+   "web_search_requests": 0,
+   "web_fetch_requests": 0
+  },
+  "service_tier": "standard",
+  "cache_creation": {
+   "ephemeral_1h_input_tokens": 54944,
+   "ephemeral_5m_input_tokens": 0
+  },
+  "inference_geo": "global",
+  "iterations": [
+   {
+    "input_tokens": 2,
+    "output_tokens": 803,
+    "cache_read_input_tokens": 72428,
+    "cache_creation_input_tokens": 15820,
+    "cache_creation": {
+     "ephemeral_5m_input_tokens": 0,
+     "ephemeral_1h_input_tokens": 15820
+    },
+    "type": "message"
+   }
+  ],
+  "speed": "standard",
+  "fallback_credit": null
+ },
+ "modelUsage": {
+  "claude-sonnet-5-5": {
+   "inputTokens": 4,
+   "outputTokens": 1228,
+   "cacheReadInputTokens": 105732,
+   "cacheCreationInputTokens": 54944,
+   "webSearchRequests": 0,
+   "costUSD": 0.2426372,
+   "contextWindow": 1000000,
+   "maxOutputTokens": 128000,
+   "thinkingTokens": 218,
+   "canonicalModel": "claude-sonnet-5-5",
+   "provider": "firstParty",
+   "costBasis": "list"
+  }
+ },
+ "terminal_reason": "completed",
+ "fast_mode_state": "off",
+ "fast_mode_disabled_reason": "sdk_opt_in_required",
+ "subagent_stats": {
+  "spawned": 0,
+  "requested": {
+   "background": 0,
+   "foreground": 0,
+   "unset": 0
+  },
+  "started_in_background": 0,
+  "max_depth": 0,
+  "spawned_by_subagents": 0,
+  "completed": 0,
+  "failed": 0,
+  "killed": {
+   "parent": 0,
+   "user": 0,
+   "system": 0
+  },
+  "refused": {
+   "depth_limit": 0,
+   "concurrency_limit": 0,
+   "budget": 0
+  },
+  "by_type": {}
+ },
+ "safety_stops": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "subtype": "success",
+ "api_error_status": null,
+ "result": "Nu exist\u0103 un astfel de test, pentru c\u0103 premisa \u00eentreb\u0103rii nu se potrive\u0219te cu codul.\n\n- **`PLUGINS_DIRECTORY` nu exist\u0103.** Un grep \u00een `30_SCRIPTS/setup/install_design_stack.py` \u0219i \u00een `20_TESTS/test_install_design_stack.py` nu g\u0103se\u0219te simbolul, nici sufixul `@anthropic-plugin-directory`.\n- **Scriptul folose\u0219te deja `@claude-plugins-official`.** La `install_design_stack.py:36-37`, constanta se nume\u0219te `PLUGINS_ENABLE` \u0219i con\u021bine `frontend-design@claude-plugins-official`, `ralph-loop@claude-plugins-official` \u0219i `superpowers@claude-plugins-official`.\n- **Testul cere exact acest sufix.** `test_plan_installs_only_what_the_review_cleared` (`test_install_design_stack.py:19-20`) verific\u0103 `assert ok in text`, cu `ok` luat din `\"frontend-design@claude-plugins-official\"`, `\"ralph-loop@claude-plugins-official\"` \u0219i `\"chrome-devtools-mcp@1.9.0\"`.\n\nDac\u0103 ai \u00eenlocui sufixul `@claude-plugins-official` cu `@anthropic-plugin-directory` \u00een `PLUGINS_ENABLE`, ar pica `test_plan_installs_only_what_the_review_cleared`, la linia 20 (`assert ok in text`). Aceast\u0103 concluzie vine din citirea codului; n-am rulat testul.\n\nNu am verificat dac\u0103 `PLUGINS_DIRECTORY` exist\u0103 \u00een alt fi\u0219ier sau pe alt\u0103 ramur\u0103. Poate te g\u00e2nde\u0219ti la alt\u0103 ramur\u0103 sau la un alt fi\u0219ier.",
+ "ttft_ms": 6688,
+ "type": "result",
+ "duration_ms": 19213,
+ "ttft_stream_ms": 5578,
+ "time_to_request_ms": 507,
+ "time_to_request_phases_ms": {
+  "other": 19,
+  "system_prompt": 18,
+  "resume_other": 0,
+  "process_user_input": 2,
+  "input_attachments": 19,
+  "input_hooks": 394,
+  "tool_pool_refresh": 5,
+  "system_prompt_rebuild": 1,
+  "init_message": 16,
+  "engine_pickup": 9,
+  "message_prep": 0,
+  "model_config_wait": 1,
+  "autocompact": 2,
+  "query_setup": 0,
+  "model_gates": 0,
+  "tool_schema_build": 13,
+  "message_normalization": 2,
+  "client_creation": 2,
+  "request_build": 4
+ },
+ "turn_start_resume_kind": "none",
+ "process_turn_index": 0,
+ "time_to_request_loop_lag_ms": 37,
+ "time_to_request_cpu_ms": 407,
+ "time_to_request_major_faults": 15086,
+ "input_attachments_detail": {
+  "slowest_producer": "deferred_tools_delta",
+  "slowest_producer_ms": 12,
+  "cpu_ms": 32,
+  "major_faults": 1096
+ },
+ "first_content_frame_ms": 5578,
+ "queued_turn_count": 0,
+ "result_index": 0,
+ "permission_denials_n": 0,
+ "n_results": 1
+}

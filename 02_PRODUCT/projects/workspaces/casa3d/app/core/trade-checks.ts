@@ -3,6 +3,7 @@
 // I7 (volumele din baie, din surse secundare: rămâne avertisment de verificat cu electricianul).
 import type { Catalog, FurniturePlacement, Room, RoomRect, Snapshot } from './types';
 import type { Advice } from './advisor';
+import { activeOpenings } from './renovation';
 
 export const NKBA = {
   triangleLegMin: 1.2, triangleLegMax: 2.7, triangleSumMax: 7.9,     // G3: fiecare latură 1,2–2,7 m, suma ≤ 7,9 m
@@ -59,7 +60,7 @@ export function tradeChecks(snap: Snapshot, cat: Catalog, fps: Map<string, RoomR
         if (sh) out.push({ rule: `BATH_ZONE:${t.id}`, a: { severity: 'WARNING', category: 'siguranta', refs: { roomId: room.id, placementIds: [sh.id] }, code: 'BATH_ZONE', vars: { rn, d_m: r2(distToRect(t.x, t.z, fps.get(sh.id)!)), min_m: BATH_ZONE2_M } } });
       }
       // baie fără fereastră: ventilator de evacuare cu debitul din I5-2022
-      const windowless = !snap.floor.walls.some(w => w.openings.some(o => o.kind === 'window' && openingInRoom(w, o, room)));
+      const windowless = !snap.floor.walls.some(w => activeOpenings(w).some(o => o.kind === 'window' && openingInRoom(w, o, room)));
       if (windowless) out.push({ rule: 'VENT_BATH', a: { severity: 'WARNING', category: 'instalatii', refs: { roomId: room.id }, code: 'VENT_BATH', vars: { rn, flow: i5ExtractFlow(mainRooms).bath } } });
     }
   }

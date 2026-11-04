@@ -29,9 +29,11 @@ default shadcn look, emoji as icons, stock 3D blobs.
 Required: a deliberate type pairing, asymmetric CSS Grid compositions, one memorable signature
 element per page, micro-interactions on every control, depth (texture, grain, glass, light)
 used with intent, calibrated contrast, `prefers-reduced-motion` respected.
-Use the `frontend-design` skill for craft and the Vault's `impeccable` skill as the critique
-checklist. When something looks generic, run the critique on it yourself and redo it bolder
-before showing it.
+Before writing any UI code, invoke the `frontend-design` skill with the Skill tool (listed as
+`frontend-design:frontend-design` when the plugin is installed) and follow its plan → review →
+build passes; naming it is not enough, it must be loaded (benchmark 2026-10-22: 0/3 loaded
+without this). Use the Vault's `impeccable` skill as the critique checklist. When something
+looks generic, run the critique on it yourself and redo it bolder before showing it.
 
 ## 2b. Desktop and mobile apps
 

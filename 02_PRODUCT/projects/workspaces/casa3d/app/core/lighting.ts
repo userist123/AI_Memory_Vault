@@ -4,7 +4,7 @@ export interface LightingParams { background: string; hemi: number; sunColor: st
 const PRESETS: Record<TimeOfDay, Omit<LightingParams, 'azimuthDeg'>> = {
   day: { background: '#d9d3c8', hemi: 0.3, sunColor: '#fff0dc', sun: 1.5, interior: 0.35, exposure: 0.66, elevationDeg: 50 },
   evening: { background: '#e7d3c0', hemi: 0.12, sunColor: '#ffb070', sun: 0.7, interior: 0.6, exposure: 0.85, elevationDeg: 12 },
-  night: { background: '#1b2029', hemi: 0.04, sunColor: '#9fb3d9', sun: 0.08, interior: 0.9, exposure: 1.0, elevationDeg: 35 },
+  night: { background: '#1b2029', hemi: 0.04, sunColor: '#9fb3d9', sun: 0.08, interior: 0.9, exposure: 0.8, elevationDeg: 35 },
 };
 /** Parametrii pentru momentul zilei; azimutul (0 = nord, 90 = est) mută soarele în jurul casei. */
 export function lighting(time: TimeOfDay, azimuthDeg = 135): LightingParams {

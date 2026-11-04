@@ -1,0 +1,18 @@
+{
+ "q": "N15",
+ "condition": "G",
+ "repeat": 0,
+ "run_id": "n042",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 5,
+ "total_cost_usd": 0.0575702,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 580,
+  "cache_read_input_tokens": 67902,
+  "cache_creation_input_tokens": 11241
+ },
+ "answer": "The B5 baseline report, which covers 30 council runs, gives a context-to-input ratio of 0.934. The same section lists an output-to-input ratio of 0.024.\n\nANSWER_PATH: 07_EVALUATION/reports/b5_baseline/B5_TOKEN_EFFICIENCY_REPORT.md\nANSWER: context_to_input_ratio: 0.934"
+}

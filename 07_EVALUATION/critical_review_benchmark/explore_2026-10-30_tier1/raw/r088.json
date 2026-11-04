@@ -1,0 +1,20 @@
+{
+ "case": "T5",
+ "condition": "B",
+ "repeat": 1,
+ "run_id": "r088",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 9,
+ "total_cost_usd": 0.15026150000000002,
+ "usage": {
+  "input_tokens": 10,
+  "output_tokens": 1919,
+  "cache_read_input_tokens": 218075,
+  "cache_creation_input_tokens": 27311
+ },
+ "verdict": "Yes — the PR adds `docs/internal/runbooks` to a public domain's roots, and `export.py` publishes all roots of public domains, so merging would export the internal DB failover runbook despite the \"no visibility change\" claim.",
+ "answer": "Yes. Merging PR 42 changes what the public site exports, even though its description says it changes no visibility.\n\n**Why**\n- `site/export.py:5-6` publishes every root of every domain whose `visibility` is `public`. It doesn't look at where a root lives.\n- The PR (`pr.diff`) changes `docs.roots` in `config/domains.yaml` from `[docs/public]` to `[docs/public, docs/internal/runbooks]`. The `docs` domain is `visibility: public`.\n- `exported_roots` therefore returns `docs/internal/runbooks` after the merge. Before the merge it returned only `docs/public` for that domain.\n- `docs/internal/runbooks` is currently covered by the `ops` domain (`roots: [docs/internal]`, `visibility: private`). The PR adds the same path to a public domain, so the path would be exported publicly.\n- The only file there is `docs/internal/runbooks/db_failover.md`. It says \"Rotate the root credential, then promote the replica.\" That is operational content, so it would be published.\n\nThe PR does not edit any `visibility:` line. The effective visibility of that directory still changes, because visibility is set per domain and the PR moves the directory between domains.\n\n**Card**\n- CONCLUSION: After merge, `exported_roots` includes `docs/internal/runbooks`, so `db_failover.md` becomes publicly exported.\n- CHECKED: I read `PR.md`, `pr.diff`, `config/domains.yaml`, `site/export.py`, and the docs tree (2 public and internal files in total) at commit 13a214f. I traced the config through `exported_roots` by hand.\n- NOT CHECKED:\n  - I did not run the exporter.\n  - The repo has no other code, such as a deploy step or CI filter, that might exclude `internal` paths after `exported_roots`. I only saw this one function and cannot rule out something outside the repo.\n  - `domains.yaml` may be overlaid or overridden in production.\n  - The PR diff is a hand-written stub (`@@` with no line numbers), so I did not verify it applies cleanly to the real file.\n- ALTERNATIVES:\n  - A downstream filter strips internal paths. This is not observed in the repo, and I did not look for one outside it.\n  - The `ops` domain's private status takes precedence over the public one. `exported_roots` has no such logic.\n- FALSIFIER: Run `exported_roots(yaml.safe_load(open('config/domains.yaml')))` on the PR's config and look for `docs/internal/runbooks` in the output. I did not run it. The reading is direct from six lines of code. Searched: no.\n- CONFIDENCE: medium for runtime behaviour. The falsifier was not run, which caps it at medium. The logic reading itself is straightforward and high confidence.\n\n**Suggestion:** keep the runbooks searchable without making them public. Either put the search roots in a separate private or internal-search domain, or add the path to an exclude list in the exporter. Don't add it to the public `docs` roots.\n\nVERDICT: Yes — the PR adds `docs/internal/runbooks` to a public domain's roots, and `export.py` publishes all roots of public domains, so merging would export the internal DB failover runbook despite the \"no visibility change\" claim.",
+ "stderr_tail": null
+}

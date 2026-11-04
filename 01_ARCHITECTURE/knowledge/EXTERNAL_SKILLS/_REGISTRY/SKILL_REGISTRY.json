@@ -1,5 +1,9 @@
 {
+  "registry_kind": "provenance",
+  "note": "Provenance record of external skills imported into .agents/skills (source repository, URL, license). It is not the list of skills currently available: entries whose skill was later removed from the repo have status 'removed' and 'removed_in' (commit that deleted it). No code reads this file; the current set is .agents/skills/ itself.",
   "total_skills": 251,
+  "active_skills": 210,
+  "removed_skills": 41,
   "skills": [
     {
       "id": "skill-0001",
@@ -115,7 +119,12 @@
       ],
       "related_skills": [],
       "content_sha256": "1787eba87fef34cf72219d0016de89910e19e383f6b01d250a11e9490a93018e",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0005",
@@ -405,7 +414,12 @@
       ],
       "related_skills": [],
       "content_sha256": "c902c2b2b8182b4738c7e6a93d5a33fe62a495844c2e0b4a7b0152812b93cd76",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0015",
@@ -579,7 +593,12 @@
       ],
       "related_skills": [],
       "content_sha256": "07c155855b67a96cbb4d51d82696fe9550c2670a13a30fb6b71506d5c0685457",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0021",
@@ -637,7 +656,12 @@
       ],
       "related_skills": [],
       "content_sha256": "10b6cc0964919118218ffe0845e4a00954f39788d89d4ec29827d100f254e135",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0023",
@@ -666,7 +690,12 @@
       ],
       "related_skills": [],
       "content_sha256": "212618080012349f13e1c8819048e62e9c6193b8b2d2a5e33d219ce487c5e305",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0024",
@@ -724,7 +753,12 @@
       ],
       "related_skills": [],
       "content_sha256": "d53a95a47bb0fc7b047445a15e59a2b4bb126d6c8d9caac163378b19bf3948be",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0026",
@@ -1449,7 +1483,12 @@
       ],
       "related_skills": [],
       "content_sha256": "675e5d268ae36ae4aa59ff06cdaf19f67169defedc7a2cf5e7ca03a8f3eadb05",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0051",
@@ -1565,7 +1604,12 @@
       ],
       "related_skills": [],
       "content_sha256": "d089dd870e8f4012acc3bc1bf55855346a7e39fa4e975868f6ed2d495eb82729",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0055",
@@ -1594,7 +1638,12 @@
       ],
       "related_skills": [],
       "content_sha256": "b2eb19356c14c034d8e077452ede319835b841b7aa046ec3cd0a4460cc7911b6",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0056",
@@ -1739,7 +1788,12 @@
       ],
       "related_skills": [],
       "content_sha256": "ffb61cc0a8fae762d6ff59e526aa26e7b18349ae040f125502811b63c289a310",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0061",
@@ -1768,7 +1822,12 @@
       ],
       "related_skills": [],
       "content_sha256": "7a6766480ca8f5aa98d7f8dd92ccd378c8b32db139cb5ef0f3fd1c9930aee565",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0062",
@@ -1884,7 +1943,12 @@
       ],
       "related_skills": [],
       "content_sha256": "6c5e1924a7ec55044aca52801cd30efb06cb922fa47e4c4b85d16b39471c922a",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0066",
@@ -2522,7 +2586,12 @@
       ],
       "related_skills": [],
       "content_sha256": "aa6520dc7dcb8dc3dc9a382a4363b57cad01a6745fbc05ce609539d38663c40b",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0088",
@@ -2551,7 +2620,12 @@
       ],
       "related_skills": [],
       "content_sha256": "afbf1b3161ea8c5b92f69fef0abdeb299f128aaa055730998cae32d1896d7e57",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0089",
@@ -2725,7 +2799,12 @@
       ],
       "related_skills": [],
       "content_sha256": "9f032de321c81b2e7ae7fa451d6b3c7bdb7dfbf082ff735e5af4868e3a0b9300",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0095",
@@ -2812,7 +2891,12 @@
       ],
       "related_skills": [],
       "content_sha256": "066b56c8711ebf935222b4f02f7c67485e88299574a5dc6f1d4347cfefb86196",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0098",
@@ -2957,7 +3041,12 @@
       ],
       "related_skills": [],
       "content_sha256": "0888e311ada1a4d8967a26a3650b5a521cce54bb2aad627f6c32ff12b3b03da9",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0103",
@@ -3189,7 +3278,12 @@
       ],
       "related_skills": [],
       "content_sha256": "7be1a8d076cd1e940f33ae6a6f5b9aaaa91c1078c15b511623a38da30b3397ce",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0111",
@@ -3305,7 +3399,12 @@
       ],
       "related_skills": [],
       "content_sha256": "b29b372a1790954ea97746dc1ca62d82cc605c00ba4b88d95c3a1f0dcba4e171",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0115",
@@ -3334,7 +3433,12 @@
       ],
       "related_skills": [],
       "content_sha256": "48cef691946621cb90b0891a19b9bf9076fddfe54961847f78223515475894bd",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0116",
@@ -3363,7 +3467,12 @@
       ],
       "related_skills": [],
       "content_sha256": "eb9a0a84f0747fa19ce693cf776328945aebee1205ddc42c518c133c2ab6cb42",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0117",
@@ -3392,7 +3501,12 @@
       ],
       "related_skills": [],
       "content_sha256": "c388738853064f4bbb4293b910efc0fb82f957298a49c94214c2522b138ae939",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0118",
@@ -3479,7 +3593,12 @@
       ],
       "related_skills": [],
       "content_sha256": "6381a8257a1a42df490a12ce0902fb7b70acd50c8d231e86aaaed29d33fdee81",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0121",
@@ -3537,7 +3656,12 @@
       ],
       "related_skills": [],
       "content_sha256": "76aa7e263f9c5b81920622c6c9e175a09eef10bf3d8c11a7d3edf5c95fe58abf",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0123",
@@ -3769,7 +3893,12 @@
       ],
       "related_skills": [],
       "content_sha256": "f09d5b7cb8263b19d0aecc2e305a4d5f249a71187004860b8ff72272026a3f31",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0131",
@@ -3885,7 +4014,12 @@
       ],
       "related_skills": [],
       "content_sha256": "53f705e5f245f414d4e88b88e5f997b3201d8f782d407a2f2b5794e7b2aea8ed",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0135",
@@ -3914,7 +4048,12 @@
       ],
       "related_skills": [],
       "content_sha256": "a3e4fb96f6092ac382530db24fdd15da559e959c5b7e02d0503918c1358dcf03",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0136",
@@ -4001,7 +4140,12 @@
       ],
       "related_skills": [],
       "content_sha256": "4c91c0ba4ccd73389f6bd0fc15b5065dc6c64866ee829249f98fb669c152ce33",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0139",
@@ -4117,7 +4261,12 @@
       ],
       "related_skills": [],
       "content_sha256": "99a761f4c95316a649b54782bbb23666882c98ec2eddce393f86a5601c270e23",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0143",
@@ -4146,7 +4295,12 @@
       ],
       "related_skills": [],
       "content_sha256": "02fde1df60f9d13015a4a25a2d935831da78f665c263b5d166117e1889c151b0",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0144",
@@ -4233,7 +4387,12 @@
       ],
       "related_skills": [],
       "content_sha256": "bd526d953244b8f05a578892640a86e550d062094866e4d9958b538313ef271a",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0147",
@@ -4436,7 +4595,12 @@
       ],
       "related_skills": [],
       "content_sha256": "4f532470971c92edd7407dfba5ec6656e0377c213903bd68bd82281b7ea39788",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0154",
@@ -4494,7 +4658,12 @@
       ],
       "related_skills": [],
       "content_sha256": "453f8037a53cd5a682a81f1355719bc960e8cc74e0fa8d5c114910b99e04e5d5",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "d699e9f52",
+        "date": "2026-09-06",
+        "reason": "chore(security): purge offensive exploit and attack skills"
+      }
     },
     {
       "id": "skill-0156",
@@ -4784,7 +4953,12 @@
       ],
       "related_skills": [],
       "content_sha256": "202004db5ff37fb8add044cf00288d984c9a680c2fb07e4bb2dacc3df90ac2a1",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0166",
@@ -5277,7 +5451,12 @@
       ],
       "related_skills": [],
       "content_sha256": "2de1673864f136b05b10a17fcf987f39864f30a716250b98e09ce669525292e4",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0183",
@@ -5915,7 +6094,12 @@
       ],
       "related_skills": [],
       "content_sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196) [last commit touching the path]"
+      }
     },
     {
       "id": "skill-0205",
@@ -5944,7 +6128,12 @@
       ],
       "related_skills": [],
       "content_sha256": "fd99604acf317b21dea735558e3ac9ae98ab5751d4addbffe640bde79da41b51",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0206",
@@ -5973,7 +6162,12 @@
       ],
       "related_skills": [],
       "content_sha256": "ae8e02a4461773e0d4c04a3ef367cad1a7b6933565549d3296e4a0e54a8b1c0b",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0207",
@@ -6176,7 +6370,12 @@
       ],
       "related_skills": [],
       "content_sha256": "1960e7805000cece8f3d5edd87d89232e31caa5d43a9000842bb29cad4de5597",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0214",
@@ -7075,7 +7274,12 @@
       ],
       "related_skills": [],
       "content_sha256": "8b4c8fca568309a6156389bb21b7077a27abe24213789d7f1b2c7d5ab79f3e45",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0245",
@@ -7133,7 +7337,12 @@
       ],
       "related_skills": [],
       "content_sha256": "da5aef6c1b15ae0a98b545a5d51ac323c4614484e7faaa2346ec15d2b76dc21e",
-      "status": "active"
+      "status": "removed",
+      "removed_in": {
+        "commit": "ea93ec3d2",
+        "date": "2026-09-21",
+        "reason": "chore(agents): prune .agents/skills (duplicate verificate, conectori Rube, tipuri riscante) (#196)"
+      }
     },
     {
       "id": "skill-0247",

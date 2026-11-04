@@ -164,7 +164,7 @@ class ResourceHTMLParser(HTMLParser):
             self.inline_styles.append(attrs["style"])
 
         if tag == "link" and href:
-            if "fonts.googleapis.com" in href:
+            if urlparse(href).hostname == "fonts.googleapis.com":
                 self.google_font_links.append(href)
             if "stylesheet" in rel or href.lower().split("?")[0].endswith(".css"):
                 self.css_links.append(href)

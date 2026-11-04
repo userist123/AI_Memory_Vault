@@ -20,11 +20,6 @@ export function parseTypedSize(text: string, units: Units): { w: number; d: numb
   const w = parseTypedLength(parts[0]!, units), d = parseTypedLength(parts[1]!, units);
   return w != null && d != null && w >= ROOM_MIN_M - 1e-9 && d >= ROOM_MIN_M - 1e-9 ? { w, d } : null;
 }
-/** Capătul peretelui: din `a`, pe direcția spre `toward` (mouse-ul), la lungimea `len`; fără direcție, spre dreapta. */
-export function typedEndpoint(a: [number, number], toward: [number, number], len: number): [number, number] {
-  const dx = toward[0] - a[0], dz = toward[1] - a[1], l = Math.hypot(dx, dz);
-  return l < 1e-9 ? [a[0] + len, a[1]] : [a[0] + dx / l * len, a[1] + dz / l * len];
-}
 /** Camera tastată: din colțul fixat `a`, spre cadranul în care e mouse-ul. */
 export function typedRect(a: [number, number], toward: [number, number], s: { w: number; d: number }){
   const sx = toward[0] < a[0] ? -1 : 1, sz = toward[1] < a[1] ? -1 : 1, x1 = a[0] + sx * s.w, z1 = a[1] + sz * s.d;

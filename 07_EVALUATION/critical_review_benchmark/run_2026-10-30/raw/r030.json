@@ -1,0 +1,20 @@
+{
+ "case": "C2",
+ "condition": "A",
+ "repeat": 0,
+ "run_id": "r030",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 2,
+ "total_cost_usd": 0.11135679999999999,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 229,
+  "cache_read_input_tokens": 64228,
+  "cache_creation_input_tokens": 25659
+ },
+ "verdict": "According to README.md, the project is released under the MIT License.",
+ "answer": "README.md has a \"License\" section that reads \"Licensed under the MIT License.\"\n\nVERDICT: According to README.md, the project is released under the MIT License.",
+ "stderr_tail": null
+}

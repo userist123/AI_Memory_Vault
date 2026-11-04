@@ -1,0 +1,76 @@
+{
+  "task": "T3",
+  "arm": "director_official",
+  "static": {
+    "generic_font": false,
+    "cream_bg": true,
+    "terracotta": false,
+    "near_black_tint": false,
+    "purple_gradient": false,
+    "middot_meta": 11,
+    "arrow_ctas": 0,
+    "numbered_markers": 0,
+    "soft_shadow": 0,
+    "radius_values": 3,
+    "gradients": 0,
+    "fade_reveal": false,
+    "has_focus_visible": true,
+    "has_reduced_motion": true,
+    "tell_score": 2.0
+  },
+  "viewports": {
+    "desktop": {
+      "h1_font": "Bricolage Grotesque",
+      "body_font": "Newsreader",
+      "horizontal_overflow": false,
+      "overflow_px": 0,
+      "scroll_width": 1440,
+      "inner_width": 1440,
+      "max_element_right_px": 1440,
+      "zero_opacity_text_elements": 0,
+      "min_text_contrast_reason": null,
+      "unparsed_text_elements": 0,
+      "unparsed_color_formats": {},
+      "bg_image_skipped": 0,
+      "prefers_dark": false,
+      "upper_tracked_labels": 0,
+      "min_text_contrast": 2.860878585208441,
+      "median_text_contrast": 12.522351616068295,
+      "has_lang": true,
+      "page_height": 5411,
+      "dark_scheme": {
+        "prefers_dark": true,
+        "min_text_contrast": 1.2442931791633218,
+        "median_text_contrast": 12.933097164832827,
+        "min_text_contrast_reason": null,
+        "unparsed_text_elements": 0
+      },
+      "console_errors": [
+        "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+      ]
+    },
+    "mobile": {
+      "h1_font": "Bricolage Grotesque",
+      "body_font": "Newsreader",
+      "horizontal_overflow": false,
+      "overflow_px": 0,
+      "scroll_width": 390,
+      "inner_width": 390,
+      "max_element_right_px": 390,
+      "zero_opacity_text_elements": 0,
+      "min_text_contrast_reason": null,
+      "unparsed_text_elements": 0,
+      "unparsed_color_formats": {},
+      "bg_image_skipped": 0,
+      "prefers_dark": false,
+      "upper_tracked_labels": 0,
+      "min_text_contrast": 2.860878585208441,
+      "median_text_contrast": 12.522351616068295,
+      "has_lang": true,
+      "page_height": 7797,
+      "console_errors": [
+        "Failed to load resource: net::ERR_NAME_NOT_RESOLVED"
+      ]
+    }
+  }
+}

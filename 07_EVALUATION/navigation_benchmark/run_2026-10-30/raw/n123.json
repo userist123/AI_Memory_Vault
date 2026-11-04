@@ -1,0 +1,18 @@
+{
+ "q": "N14",
+ "condition": "I",
+ "repeat": 1,
+ "run_id": "n123",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 2,
+ "total_cost_usd": 0.017556600000000002,
+ "usage": {
+  "input_tokens": 4,
+  "output_tokens": 373,
+  "cache_read_input_tokens": 29626,
+  "cache_creation_input_tokens": 2714
+ },
+ "answer": "The WPF pack's concurrency guidance is the playbook `desktop_async_threading.md`, in the `07_dotnet_wpf_desktop` domain pack. It says to avoid `async void`, with one exception. The exception is event handlers at the View level. The playbook gives the reason: errors thrown inside an `async void` method crash the process.\n\nANSWER_PATH: 01_ARCHITECTURE/knowledge/domain_packs/07_dotnet_wpf_desktop/playbooks/desktop_async_threading.md\nANSWER: Event handlers at the View level. The line reads \"Evită async void cu excepția handlerelor de evenimente la nivel de View. Erorile dintr-un async void provoacă prăbușirea procesului.\""
+}

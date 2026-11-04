@@ -1,0 +1,20 @@
+{
+ "case": "T7",
+ "condition": "A",
+ "repeat": 2,
+ "run_id": "r049",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 7,
+ "total_cost_usd": 0.13023679999999999,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 958,
+  "cache_read_input_tokens": 104248,
+  "cache_creation_input_tokens": 27555
+ },
+ "verdict": "No — the pytest run collected zero tests because `tests/parser_check.py` doesn't match pytest's naming pattern, so the green CI says nothing about `src/parser.py`.",
+ "answer": "No, the new date parser isn't verified by tests. CI is green only because it ran zero tests.\n\n- **CI log:** `ci/ci_run.log` shows `python -m pytest -q tests/` printing \"no tests ran in 0.01s\", and the job was still marked \"CI status: PASSED\". An empty run counts as a pass.\n- **Why nothing was collected:** the only test file is `tests/parser_check.py`. Pytest's default discovery only picks up files named `test_*.py` or `*_test.py`, so it skipped this one. The file was never run, so I can't say whether its test passes.\n- **Coverage if it did run:** it has one test, `test_iso`, which checks that `'2026-10-30'` gives day 30. Nothing covers invalid input, a bad format, whitespace, or out-of-range dates.\n- **The parser itself:** `src/parser.py` is `y, m, d = map(int, s.split('-'))` followed by `date(y, m, d)`. It raises `ValueError` on malformed input, and that behaviour is untested.\n\nTo fix it, rename the file to `tests/test_parser.py` and add edge-case tests. You could also make CI fail when pytest collects no tests, for example by checking its exit code 5.\n\nVERDICT: No — the pytest run collected zero tests because `tests/parser_check.py` doesn't match pytest's naming pattern, so the green CI says nothing about `src/parser.py`.",
+ "stderr_tail": null
+}

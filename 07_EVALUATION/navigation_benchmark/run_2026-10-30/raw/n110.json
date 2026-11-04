@@ -1,0 +1,18 @@
+{
+ "q": "N05",
+ "condition": "G",
+ "repeat": 1,
+ "run_id": "n110",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.0340929,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 409,
+  "cache_read_input_tokens": 49149,
+  "cache_creation_input_tokens": 6269
+ },
+ "answer": "After redaction, the *Cryptoassets* evidence holds 31 quotes and 5,013 characters, according to the procedure on quoting from copyrighted sources. That is within the per-work quota of 40 quotes and 6,000 characters in total.\n\nANSWER_PATH: 10_DOCUMENTATION/procedures/Quoting_From_Copyrighted_Sources.md\nANSWER: The *Cryptoassets* evidence sits at 31 quotes and 5,013 characters after redaction."
+}

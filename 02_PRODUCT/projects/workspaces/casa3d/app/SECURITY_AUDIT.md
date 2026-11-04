@@ -1,5 +1,7 @@
 # Security audit - Casa3D (casa-mea-3d) - 2026-10-22
 Scope: `02_PRODUCT/projects/workspaces/casa3d` (app: Next.js 15.5.28, React 19, PGlite/Postgres; packages/twin-core), branch `claude/casa3d-p0-hardening`, base `origin/main` f0ee40d6. Phase P0 of `../SALES_READINESS_PLAN.md` §3.1.
+
+> Note (2026-10-23, PR #334): the app is now on Next.js 16.4.3; `middleware.ts` was renamed to `proxy.ts` (same gate, CSRF and security headers). References to `middleware.ts` below describe the audited state.
 Method: security-lockdown skill; three independent read-only auditors (zones: secrets/history/logging, authn/authz/share routes, input/XSS/SQL/errors) plus runtime checks; fixes reviewed by an independent reviewer.
 
 Commands run (exit codes):

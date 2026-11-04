@@ -5,6 +5,7 @@ import { emptyTwin, linkWalls, normalize, fingerprint, type Twin, type Room, typ
 import type { Catalog, Snapshot, FurniturePlacement } from '../core/types';
 import { resolve, groupOf } from '../core/catalog';
 import { r3 } from '../core/geometry';
+import { activeOpenings } from '../core/renovation';
 import { ALLOWED_OVERLAP, FRONT_CLEARANCE } from '../core/rules';
 
 // Aceleași valori ca doorZones() din core/validate.ts (0.95 m în fața ușii), ca aplicarea să treacă și validatorul aplicației.
@@ -21,7 +22,8 @@ export function snapshotToTwin(snap: Snapshot, cat: Catalog, twinId = 'project')
   t.rooms = snap.floor.rooms.map((r): Room => ({ id: r.id, name: r.name, height: h,
     polygon: (r.boundary && r.boundary.length >= 3 ? r.boundary.map(([x, z]) => ({ x, y: z })) : [{ x: r.rect.x0, y: r.rect.z0 }, { x: r.rect.x1, y: r.rect.z0 }, { x: r.rect.x1, y: r.rect.z1 }, { x: r.rect.x0, y: r.rect.z1 }]) }));
   t.walls = snap.floor.walls.map((w): Wall => ({ id: w.id, a: { x: w.a[0], y: w.a[1] }, b: { x: w.b[0], y: w.b[1] }, thickness: w.thickness, roomIds: [] }));
-  t.openings = snap.floor.walls.flatMap(w => w.openings.map((o): Opening => ({ id: o.id, kind: o.kind, wallId: w.id, offset: o.offset, width: o.width,
+  // golurile unui perete de demolat nu mai contează
+  t.openings = snap.floor.walls.flatMap(w => activeOpenings(w).map((o): Opening => ({ id: o.id, kind: o.kind, wallId: w.id, offset: o.offset, width: o.width,
     clearDepth: o.kind === 'door' ? DOOR_CLEAR_DEPTH : 0, sillHeight: o.kind === 'window' ? WINDOW_SILL : 0 })));
   t.placements = snap.placements.flatMap((p): Placement[] => {
     const rv = resolve(cat, p.variantId); if (!rv || !rv.w || !rv.d) return [];

@@ -1,0 +1,20 @@
+{
+ "case": "T3",
+ "condition": "B",
+ "repeat": 1,
+ "run_id": "r040",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 6,
+ "total_cost_usd": 0.1320246,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1121,
+  "cache_read_input_tokens": 113746,
+  "cache_creation_input_tokens": 27357
+ },
+ "verdict": "The config enables 3 plugins (auth, cache, metrics), but startup time for the current 2.0.0 is unmeasured; the 9.2 s and 14-plugin figures describe v1.2 only.",
+ "answer": "The repo has no source code, so this comes from three documents only.\n\n**Plugins:** `config.yaml` (version 2.0.0) lists 3 plugins: `auth`, `cache` and `metrics`. `CHANGELOG.md` agrees: 2.0.0 (2026-06-12) \"Removed 11 legacy plugins; three remain.\" That matches the old count, since 14 − 11 = 3. The \"14 plugins\" in `docs/PERFORMANCE.md` describes v1.2 and is out of date.\n\n**Startup time:** The only figure is 9.2 s in `docs/PERFORMANCE.md`. It was measured on 2026-01-05 on v1.2 with 14 plugins, so it doesn't describe the current version. Eleven fewer plugins and a loader rewrite (1.2.0) would likely change it, but there is no measurement for 2.0.0. I couldn't find the current startup time in this repo, and I didn't run the app, because there is no code here to run.\n\n```\nCONCLUSION:   The config enables 3 plugins; the current startup time is unknown (9.2 s was measured on v1.2 with 14 plugins).\nCHECKED:      config.yaml, CHANGELOG.md, docs/PERFORMANCE.md (all 3 tracked files, commit 3abe9aa)\nNOT CHECKED:  Runtime behaviour, since there is no source code. Whether other plugins load by default or from other config sources. Any 2.0.0 benchmark.\nALTERNATIVES: The plugin count at runtime could differ from the config, for example through auto-loaded built-ins. Not separable here (observation made: no).\nFALSIFIER:    Running the app and counting loaded plugins, or a 2.0.0 timing — searched: no\nCONFIDENCE:   medium for the 3 plugins (config and changelog agree); unknown for the startup time\n```\n\nVERDICT: The config enables 3 plugins (auth, cache, metrics), but startup time for the current 2.0.0 is unmeasured; the 9.2 s and 14-plugin figures describe v1.2 only.",
+ "stderr_tail": null
+}

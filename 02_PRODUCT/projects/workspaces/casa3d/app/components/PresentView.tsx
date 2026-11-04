@@ -181,6 +181,7 @@ export default function PresentView({ id, share }: { id?: string; share?: Shared
         <span><b>{e.author}</b> · {e.verdict === 'like' ? t('fb.logLiked') : e.verdict === 'change' ? t('fb.logChange') : t('fb.logQuestion')} · {e.count > 1
           ? t('fb.logGroup', { n: e.count, rooms: e.rooms.map(r => `${r.name} ${r.count}`).join(', ') })
           : `${e.rooms[0]!.name}${e.label ? ` · ${e.label}` : ''}`}{e.text ? `: „${e.text}”` : ''}</span></li>)}</ol></details>}
+    {share && <p className="a11y-foot no-print"><a href="/accesibilitate" target="_blank" rel="noopener">{t('a11y.link')}</a></p>}
     {share && apTotal > 0 && <div className="decide-bar no-print" role="region" aria-label={t('fb.decideAria')}>
       <div className="decide-progress"><b>{t('fb.progress', { n: apDone, total: apTotal })}</b><span className="decide-track" aria-hidden="true"><i style={{ width: `${Math.round(apDone / apTotal * 100)}%` }} /></span>
         {bulk.msg && <small role="status">{bulk.msg}</small>}</div>

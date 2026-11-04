@@ -1,0 +1,20 @@
+{
+ "case": "T2",
+ "condition": "B",
+ "repeat": 0,
+ "run_id": "r047",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.0375251,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 1421,
+  "cache_read_input_tokens": 191511,
+  "cache_creation_input_tokens": 1037
+ },
+ "verdict": "A stub `export_pdf` exists only on the `feature/pdf-export` branch (commit 2e35b49), and it is not a valid PDF writer, so you would still need to write the real implementation, ideally starting from that stub's signature.",
+ "answer": "An `export_pdf` already exists, but only on the `feature/pdf-export` branch. It is a stub, so you may still want to write your own.\n\n**Where it is:** `src/pdf.py` on `feature/pdf-export`, in commit `2e35b49` (\"wip: pdf export\"). `main` doesn't have it, and its README still says \"PDF export: not implemented yet\".\n\n```python\nfrom report import build_report\n\ndef export_pdf(rows, path):\n    \"\"\"Render the report to a PDF file.\"\"\"\n    text = build_report(rows)\n    with open(path, 'wb') as fh:\n        fh.write(b'%PDF-1.4\\n' + text.encode())\n```\n\n**Why it is not a working implementation:**\n- It writes a `%PDF-1.4` header followed by the plain report text. There is no object table, xref or trailer, so PDF readers will most likely reject or repair the file. I did not run it or open its output in a reader.\n- It uses `from report import build_report`, which only resolves if `src/` is on the path. I did not check whether `src/report.py` has a `build_report` with this signature.\n- The commit message says \"wip\", and the README on that branch was not updated.\n\n**Recommendation:** Don't write from scratch without looking at this branch. Take its `export_pdf(rows, path)` signature and the `build_report` wiring, and replace the body with real PDF generation, for example with a PDF library.\n\n**Claim card**\n- CONCLUSION: A WIP `export_pdf` exists on `feature/pdf-export` and nowhere else I could see. It is a stub and not a usable implementation.\n- CHECKED: `git branch -a`, `git for-each-ref`, `git log --all`, `git remote -v` and `git stash list`. The repo has 2 branches, 2 commits, no remotes and no stashes. I diffed `main` against `feature/pdf-export` and grepped \"pdf\" on both branches.\n- NOT CHECKED: other clones or machines, the owner's untracked or uncommitted files elsewhere, and unreachable objects (`git fsck --lost-found`). I did not run the stub, and I did not read `src/report.py`.\n- ALTERNATIVES: The function could exist under another name such as `to_pdf` or `render_pdf`. I grepped \"pdf\" case-insensitively on both branches, and the only hits are the README lines and `src/pdf.py`, so I consider that unlikely. It could also live in a repo outside this one, which I did not check.\n- FALSIFIER: A grep for \"pdf\" across all refs. It found nothing beyond the above. Searched: yes.\n- CONFIDENCE: high that nothing else exists in this repo's refs and working tree. Medium that it does not exist anywhere at all.\n\nVERDICT: A stub `export_pdf` exists only on the `feature/pdf-export` branch (commit 2e35b49), and it is not a valid PDF writer, so you would still need to write the real implementation, ideally starting from that stub's signature.",
+ "stderr_tail": null
+}

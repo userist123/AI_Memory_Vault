@@ -1,0 +1,42 @@
+{
+ "judge": "Opus subagent, blind, 2026-10-22",
+ "overall": {
+  "T1": {
+   "A": 5,
+   "B": 7.5,
+   "C": 8
+  },
+  "T2": {
+   "A": 5,
+   "B": 8.5,
+   "C": 6.5
+  },
+  "T3": {
+   "A": 7.5,
+   "B": 5.5,
+   "C": 8
+  }
+ },
+ "key": {
+  "T1": {
+   "A": "baseline",
+   "B": "official_forced",
+   "C": "vault_forced"
+  },
+  "T2": {
+   "A": "baseline",
+   "B": "vault_forced",
+   "C": "official_forced"
+  },
+  "T3": {
+   "A": "official_forced",
+   "B": "baseline",
+   "C": "vault_forced"
+  }
+ },
+ "means": {
+  "baseline": 5.17,
+  "official_forced": 7.17,
+  "vault_forced": 8.17
+ }
+}

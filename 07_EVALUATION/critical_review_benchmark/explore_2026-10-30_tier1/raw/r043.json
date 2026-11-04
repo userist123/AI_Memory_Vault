@@ -1,0 +1,20 @@
+{
+ "case": "T5",
+ "condition": "B",
+ "repeat": 2,
+ "run_id": "r043",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 3,
+ "total_cost_usd": 0.1316616,
+ "usage": {
+  "input_tokens": 6,
+  "output_tokens": 1210,
+  "cache_read_input_tokens": 118776,
+  "cache_creation_input_tokens": 26918
+ },
+ "verdict": "Yes — PR 42 puts `docs/internal/runbooks` into the public `docs` domain's roots, so the public export would include the internal DB-failover runbook, despite the \"no visibility change\" claim.",
+ "answer": "Yes. Merging PR 42 would make the public site export an internal runbook, despite the \"No visibility change\" claim in `PR.md`.\n\n- **Exporter:** `site/export.py` publishes every root of every domain whose `visibility` is `public`. It does not look at the visibility of individual paths.\n- **Current state:** In `config/domains.yaml`, `docs` is public with roots `[docs/public]`. `ops` is private with root `docs/internal`.\n- **The diff:** `pr.diff` changes `docs` roots to `[docs/public, docs/internal/runbooks]`, and `docs` stays `visibility: public`. The `docs/internal/runbooks` path is then exported through the public domain, even though `ops` still marks it private.\n- **What leaks:** `docs/internal/runbooks/db_failover.md` is the only file there. Its text is \"Rotate the root credential, then promote the replica.\" The PR description's claim of no visibility change is true of the `visibility:` fields, but not of what actually gets published.\n\n```\nCONCLUSION:   Merging PR 42 would add docs/internal/runbooks/db_failover.md to the public export, contradicting the PR description.\nCHECKED:      pr.diff, PR.md, config/domains.yaml, site/export.py, and the file list at commit 13a214f (6 tracked files). I traced exported_roots by reading it, not by running it.\nNOT CHECKED:  I did not run exported_roots on the patched config. I did not check whether a publishing step outside this repo filters paths after export. I did not check that pr.diff matches the real PR 42 on the remote (only PR.md and pr.diff are local). I did not check other branches.\nALTERNATIVES: (a) A downstream filter strips internal paths. This would separate the two readings, and I did not find one in the repo. (b) The ops domain overrides the docs domain for overlapping paths. exported_roots has no such logic, so no.\nFALSIFIER:    If exported_roots(patched cfg) lacked docs/internal/runbooks, or a path-level deny existed, the claim would be wrong. I searched the repo's only code file for either and found neither. Searched: yes (by reading, not by running).\nCONFIDENCE:   high\n```\n\nThe cheapest next check is to run `exported_roots` on the patched YAML and confirm that `docs/internal/runbooks` appears in the output. If search is the goal, give runbooks their own non-public search index instead of adding them to a public root.\n\nVERDICT: Yes — PR 42 puts `docs/internal/runbooks` into the public `docs` domain's roots, so the public export would include the internal DB-failover runbook, despite the \"no visibility change\" claim.",
+ "stderr_tail": null
+}

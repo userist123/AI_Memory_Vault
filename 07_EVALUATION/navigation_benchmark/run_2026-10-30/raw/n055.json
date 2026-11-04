@@ -1,0 +1,18 @@
+{
+ "q": "N19",
+ "condition": "I",
+ "repeat": 0,
+ "run_id": "n055",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 4,
+ "total_cost_usd": 0.0485609,
+ "usage": {
+  "input_tokens": 8,
+  "output_tokens": 481,
+  "cache_read_input_tokens": 59989,
+  "cache_creation_input_tokens": 9434
+ },
+ "answer": "The with-memory arm's success rate was 10.0 percentage points higher than the no-memory arm's: 35.0% (7 of 20 trials) against 25.0% (5 of 20). The report also gives this as a +40.0% relative improvement.\n\nANSWER_PATH: 07_EVALUATION/memory_ablation_2026-09.md\nANSWER: +10.0 percentage points (Control 25.0% vs Treatment 35.0%)"
+}

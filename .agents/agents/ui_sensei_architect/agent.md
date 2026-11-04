@@ -6,8 +6,8 @@ description: UI design specialist. Capabilities are resolved on demand by the Co
 # Agent Profile: UI Sensei Architect
 
 ## Runtime Contract
-- Capability source: `99_SYSTEM/Agent_Capability_Registry.md`
+- Capability source: `00_GOVERNANCE/protocols/Agent_Capability_Registry.md`
 - Capabilities are metadata only; never load the complete capability set.
 - Load only router-selected skills, maximum 2 by default.
-- Follow `99_SYSTEM/Council_Context_Budget.md` and `AGENTS.md`.
+- Follow `00_GOVERNANCE/protocols/Council_Context_Budget.md` and `AGENTS.md`.
 - Return compact evidence without repeating shared context.

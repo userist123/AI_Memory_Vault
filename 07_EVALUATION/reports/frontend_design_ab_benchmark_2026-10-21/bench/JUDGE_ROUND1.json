@@ -1,0 +1,6 @@
+{"judge":"Opus subagent, blind (only judge/ PNGs + BRIEFS.md), 2026-10-21",
+ "overall":{"T1":{"A":6,"B":7,"C":6.5,"ranking":["B","C","A"]},"T2":{"A":5.5,"B":7.5,"C":6.5,"ranking":["B","C","A"]},"T3":{"A":7.5,"B":7,"C":5,"ranking":["A","B","C"]}},
+ "unblinded_means":{"baseline":6.33,"official":6.5,"vault":6.67},
+ "notes":["T3-C (official) programme and tickets sections render empty; measure recorded 2 console errors for it",
+          "position caveat: baseline landed on letter A in all 3 tasks",
+          "skill auto-invoked 0/6 in round 1: differences are run-to-run noise, not skill effect"]}

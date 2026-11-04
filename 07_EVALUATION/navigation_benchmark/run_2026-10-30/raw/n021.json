@@ -1,0 +1,18 @@
+{
+ "q": "N03",
+ "condition": "V",
+ "repeat": 0,
+ "run_id": "n021",
+ "model": "sonnet",
+ "exit_code": 0,
+ "is_error": false,
+ "num_turns": 15,
+ "total_cost_usd": 0.14613900000000002,
+ "usage": {
+  "input_tokens": 20,
+  "output_tokens": 2404,
+  "cache_read_input_tokens": 258830,
+  "cache_creation_input_tokens": 24044
+ },
+ "answer": "The instruction is in the vault-navigation skill, which tells an agent to say the item is not in the vault and not to answer from memory. I read it through grep output, so I have no sha256 or `cite_as` for it.\n\nThe skill's `RESOLVED` and `AMBIGUOUS` lines sit alongside it, but the question only asks about the no-match case.\n\nANSWER_PATH: 00_GOVERNANCE/skills/vault-navigation/SKILL.md\nANSWER: `NOT_FOUND` → say it is not in the vault; do not answer from memory."
+}

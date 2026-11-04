@@ -1,0 +1,413 @@
+{
+  "note": "Dovezi pentru materialele și sistemele adăugate la 2026-10-24: preț și specificații citite pe pagina produsului (Dedeman: itemprop=price și „Specificații tehnice”; Hornbach: „preț — … lei * Toate prețurile conțin TVA”). Prețuri publice cu TVA; montajul nu e inclus.",
+  "items": [
+    {
+      "id": "dedeman-caseta-cu-sistem-culisare-megadoor-140-x-205-cm",
+      "sourceUrl": "https://www.dedeman.ro/ro/caseta-cu-sistem-culisare-megadoor-140-x-205-cm/p/6071737",
+      "evidence": "1135.00 lei/bucată; Lungime (m) 1.4; Grosime usa (cm) 4.2; Material: metal",
+      "specsRaw": {
+        "system": "pocket",
+        "material": "metal",
+        "sizeCm": [
+          140,
+          205
+        ],
+        "thicknessMm": 42
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-caseta-cu-sistem-culisare-megadoor-160-x-205-cm",
+      "sourceUrl": "https://www.dedeman.ro/ro/caseta-cu-sistem-culisare-megadoor-160-x-205-cm/p/6071738",
+      "evidence": "1135.00 lei/bucată; Lungime (m) 1.6; Grosime usa (cm) 4.2",
+      "specsRaw": {
+        "system": "pocket",
+        "material": "metal",
+        "sizeCm": [
+          160,
+          205
+        ],
+        "thicknessMm": 42
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-caseta-cu-sistem-culisare-megadoor-180-x-205-cm",
+      "sourceUrl": "https://www.dedeman.ro/ro/caseta-cu-sistem-culisare-megadoor-180-x-205-cm/p/6071739",
+      "evidence": "1255.00 lei/bucată; Lungime (m) 1.8; Grosime usa (cm) 4.2",
+      "specsRaw": {
+        "system": "pocket",
+        "material": "metal",
+        "sizeCm": [
+          180,
+          205
+        ],
+        "thicknessMm": 42
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "hornbach-sistem-eclisse-cu-dimensiunea-exterioara-174-6x212-cm-pentru-usi-glisa",
+      "sourceUrl": "https://www.hornbach.ro/p/sistem-eclisse-cu-dimensiunea-exterioara-174-6x212-cm-pentru-usi-glisante-84-4x204-cm/10727684/",
+      "evidence": "preț — 1210,00 lei * Toate prețurile conțin TVA și costurile DEEE și DBA pe buc.; Variantă: Set complet ușă glisantă",
+      "specsRaw": {
+        "system": "pocket",
+        "sizeCm": [
+          174.6,
+          212
+        ]
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-sistem-culisare-usa-interior-unic-spot-l200-otel-2-m",
+      "sourceUrl": "https://www.dedeman.ro/ro/sistem-culisare-usa-interior-unic-spot-l200-otel-2-m/p/6076049",
+      "evidence": "254.99 lei/bucată (preț vechi afișat 301.00 lei); Lungime (m) 2; Latime maxima usa (cm) 100; Grosime usa (cm) 3.5-4.5",
+      "specsRaw": {
+        "system": "sliding",
+        "material": "otel",
+        "pieceM": 2
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-sistem-culisare-usa-interior-midica-otel-zincat-1-85-m-60-kg",
+      "sourceUrl": "https://www.dedeman.ro/ro/sistem-culisare-usa-interior-midica-otel-zincat-1-85-m-60-kg/p/6009418",
+      "evidence": "319.90 lei/bucată (preț vechi afișat 357.00 lei); Lungime (m) 1.85",
+      "specsRaw": {
+        "system": "sliding",
+        "material": "otel zincat",
+        "pieceM": 1.85
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-sistem-culisare-usa-interior-aluminiu-5-orificii-montare-1-9-m-60-kg",
+      "sourceUrl": "https://www.dedeman.ro/ro/sistem-culisare-usa-interior-aluminiu-5-orificii-montare-1-9-m-60-kg/p/6038599",
+      "evidence": "423.00 lei/set; Lungime (m) 1.9; Latime maxima usa (cm) 100; Grosime usa (cm) 4",
+      "specsRaw": {
+        "system": "sliding",
+        "material": "aluminiu",
+        "pieceM": 1.9
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-sistem-culisare-usa-interior-loft-otel-2-m-100-kg",
+      "sourceUrl": "https://www.dedeman.ro/ro/sistem-culisare-usa-interior-loft-otel-2-m-100-kg/p/6065029",
+      "evidence": "459.99 lei/bucată; Lungime (m) 2; Latime maxima usa (cm) 103; amortizare la inchidere, otel negru vopsit",
+      "specsRaw": {
+        "system": "sliding",
+        "material": "otel",
+        "finish": "negru",
+        "pieceM": 2
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-sistem-culisare-usa-interior-megadoor-2-m-2-3-kg",
+      "sourceUrl": "https://www.dedeman.ro/ro/sistem-culisare-usa-interior-megadoor-2-m-2-3-kg/p/6071712",
+      "evidence": "610.00 lei/bucată; Lungime (m) 2; Material: aluminiu; Latime maxima usa (cm) 95",
+      "specsRaw": {
+        "system": "sliding",
+        "material": "aluminiu",
+        "pieceM": 2
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-usa-de-interior-plianta-italbox-alb-85-x-203-cm",
+      "sourceUrl": "https://www.dedeman.ro/ro/usa-de-interior-plianta-italbox-alb-85-x-203-cm/p/6002984",
+      "evidence": "226.00 lei/bucată; Dimensiuni (cm) 85 x 203; Material: PVC; accesoriile de prindere nu sunt incluse",
+      "specsRaw": {
+        "door": "plain",
+        "doorTypes": [
+          "folding"
+        ],
+        "material": "PVC",
+        "color": "#f4f4f2",
+        "sizeCm": [
+          85,
+          203
+        ]
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-usa-de-interior-plianta-italbox-alb-100-x-203-cm",
+      "sourceUrl": "https://www.dedeman.ro/ro/usa-de-interior-plianta-italbox-alb-100-x-203-cm/p/6009737",
+      "evidence": "271.00 lei/bucată; Dimensiuni (cm) 100 x 203; Material: PVC; accesoriile de prindere nu sunt incluse",
+      "specsRaw": {
+        "door": "plain",
+        "doorTypes": [
+          "folding"
+        ],
+        "material": "PVC",
+        "color": "#f4f4f2",
+        "sizeCm": [
+          100,
+          203
+        ]
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-usa-de-interior-plianta-italbox-frasin-85-x-203-cm",
+      "sourceUrl": "https://www.dedeman.ro/ro/usa-de-interior-plianta-italbox-frasin-85-x-203-cm/p/6006162",
+      "evidence": "231.00 lei/bucată; Dimensiuni (cm) 85 x 203; Culoare: frasin; Material: PVC",
+      "specsRaw": {
+        "door": "plain",
+        "doorTypes": [
+          "folding"
+        ],
+        "material": "PVC",
+        "sizeCm": [
+          85,
+          203
+        ]
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-calorifer-otel-mastas-22pkkp-600-x-800-mm-accesorii-incluse",
+      "sourceUrl": "https://www.dedeman.ro/ro/calorifer-otel-mastas-22pkkp-600-x-800-mm-accesorii-incluse/p/2002705",
+      "evidence": "269.00 lei/bucată; Inaltime 600 / Latime 800 / Adancime 104 mm; Putere 1679 W (Δt=60°C)",
+      "specsRaw": {
+        "sizeCm": [
+          80,
+          60
+        ],
+        "thicknessMm": 104,
+        "material": "otel",
+        "color": "#f4f4f2"
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-calorifer-otel-pekpan-22k-600-x-800-accesorii-incluse",
+      "sourceUrl": "https://www.dedeman.ro/ro/calorifer-otel-pekpan-22k-600-x-800-accesorii-incluse/p/2014131",
+      "evidence": "269.00 lei/bucată; Inaltime 600 / Latime 800 / Adancime 103 mm; Putere 1673.1 W (Δt=60°C)",
+      "specsRaw": {
+        "sizeCm": [
+          80,
+          60
+        ],
+        "thicknessMm": 103,
+        "material": "otel",
+        "color": "#f4f4f2"
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-calorifer-otel-ferroli-gr-f-22k-600-x-800-mm-accesorii-incluse",
+      "sourceUrl": "https://www.dedeman.ro/ro/calorifer-otel-ferroli-gr-f-22k-600-x-800-mm-accesorii-incluse/p/2002546",
+      "evidence": "358.99 lei/bucată; Inaltime 600 / Latime 800 / Adancime 103 mm; Putere 1692 W (Δt=60°C)",
+      "specsRaw": {
+        "sizeCm": [
+          80,
+          60
+        ],
+        "thicknessMm": 103,
+        "material": "otel",
+        "color": "#f4f4f2"
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-calorifer-otel-purmo-c22-600-x-800-mm-accesorii-incluse",
+      "sourceUrl": "https://www.dedeman.ro/ro/calorifer-otel-purmo-c22-600-x-800-mm-accesorii-incluse/p/2017063",
+      "evidence": "409.00 lei/bucată; Inaltime 600 / Latime 800 / Adancime 102 mm; Putere 1367 W",
+      "specsRaw": {
+        "sizeCm": [
+          80,
+          60
+        ],
+        "thicknessMm": 102,
+        "material": "otel",
+        "color": "#f4f4f2"
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-calorifer-baie-hirapan-hs4001000wf-portprosop-drept-alb-400-x-1000-mm-",
+      "sourceUrl": "https://www.dedeman.ro/ro/calorifer-baie-hirapan-hs4001000wf-portprosop-drept-alb-400-x-1000-mm-accesorii-incluse/p/2036213",
+      "evidence": "143.00 lei/bucată; Latime 400 / Inaltime 1000 mm; Putere 339 W",
+      "specsRaw": {
+        "sizeCm": [
+          40,
+          100
+        ],
+        "color": "#f4f4f2"
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-calorifer-baie-hirapan-hs5001200wf-portprosop-drept-alb-500-x-1200-mm-",
+      "sourceUrl": "https://www.dedeman.ro/ro/calorifer-baie-hirapan-hs5001200wf-portprosop-drept-alb-500-x-1200-mm-accesorii-incluse/p/2036218",
+      "evidence": "175.00 lei/bucată; Latime 500 / Inaltime 1200 mm; Putere 493 W",
+      "specsRaw": {
+        "sizeCm": [
+          50,
+          120
+        ],
+        "color": "#f4f4f2"
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-calorifer-baie-ferroli-talia-portprosop-curbat-alb-600-x-1170-mm-acces",
+      "sourceUrl": "https://www.dedeman.ro/ro/calorifer-baie-ferroli-talia-portprosop-curbat-alb-600-x-1170-mm-accesorii-montaj/p/2019177",
+      "evidence": "310.00 lei/bucată; Latime 600 / Inaltime 1170 mm; Putere 567 W; Material: otel",
+      "specsRaw": {
+        "sizeCm": [
+          60,
+          117
+        ],
+        "color": "#f4f4f2",
+        "material": "otel"
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-mana-curenta-balustrada-akdemir-aluminiu-eloxat-gri-antracit-2000-x-60",
+      "sourceUrl": "https://www.dedeman.ro/ro/mana-curenta-balustrada-akdemir-aluminiu-eloxat-gri-antracit-2000-x-60-x-20-mm/p/6074052",
+      "evidence": "71.50 lei/bucată (preț vechi afișat 89.01 lei); Lungime 2000 mm; Latime 60 mm; Grosime 20 mm; Pachetul include: 1 profil 2 ml",
+      "specsRaw": {
+        "pieceM": 2,
+        "material": "aluminiu eloxat",
+        "color": "#383e42",
+        "finish": "RAL 7016"
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-kit-stalp-balcon-akdemir-p5-aluminiu-eloxat-gri-antracit-1010-x-60-x-6",
+      "sourceUrl": "https://www.dedeman.ro/ro/kit-stalp-balcon-akdemir-p5-aluminiu-eloxat-gri-antracit-1010-x-60-x-60-mm/p/6074047",
+      "evidence": "364.00 lei/bucată; Lungime 1010 mm; Latime 60 mm; Grosime 60 mm; Pachetul include: kit asamblare, 1 stalp",
+      "specsRaw": {
+        "material": "aluminiu eloxat",
+        "color": "#383e42",
+        "sizeCm": [
+          6,
+          101
+        ]
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-kit-panou-balustrada-catumia-aluminiu-negru-1000-x-1000-x-110-mm",
+      "sourceUrl": "https://www.dedeman.ro/ro/kit-panou-balustrada-catumia-aluminiu-negru-1000-x-1000-x-110-mm/p/6077743",
+      "evidence": "975.00 lei/bucată; Lungime 1000 mm; Latime 1000 mm; Grosime 110 mm; kit complet pentru inceperea balustradei",
+      "specsRaw": {
+        "pieceM": 1,
+        "material": "aluminiu",
+        "color": "#1f1f1f",
+        "sizeCm": [
+          100,
+          100
+        ]
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "hornbach-balustrada-pertura-din-otel-inoxidabil-2-m-40-mm",
+      "sourceUrl": "https://www.hornbach.ro/p/balustrada-pertura-din-otel-inoxidabil-2-m-o40-mm/7512021/",
+      "evidence": "preț — 229,00 lei * Toate prețurile conțin TVA; Culoare de bază: Oţel inoxidabil; Tip produs: Mână curentă",
+      "specsRaw": {
+        "pieceM": 2,
+        "material": "otel inoxidabil",
+        "diameterCm": 4
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "hornbach-balustrada-pertura-forma-g-1-5-m-prindere-podea",
+      "sourceUrl": "https://www.hornbach.ro/p/balustrada-pertura-forma-g-1-5-m-prindere-podea/6762473/",
+      "evidence": "preț — 2199,00 lei * Toate prețurile conțin TVA; Tip produs: Set de montaj, Set balustradă; Culoare de bază: Oţel inoxidabil",
+      "specsRaw": {
+        "pieceM": 1.5,
+        "material": "otel inoxidabil"
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-bagheta-decorativa-polistiren-a40-clasic-alb-200-x-3-x-3-cm",
+      "sourceUrl": "https://www.dedeman.ro/ro/bagheta-decorativa-polistiren-a40-clasic-alb-200-x-3-x-3-cm/p/4002646",
+      "evidence": "5.90 lei/bucată; Lungime (cm) 200; Latime 3; Grosime 3; Material: polistiren",
+      "specsRaw": {
+        "color": "#f4f4f2",
+        "sizeCm": [
+          200,
+          3
+        ],
+        "thicknessMm": 30,
+        "material": "polistiren",
+        "pieceM": 2
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-bagheta-decorativa-polimer-chp7050-clasic-alb-200-x-7-x-5-cm",
+      "sourceUrl": "https://www.dedeman.ro/ro/bagheta-decorativa-polimer-chp7050-clasic-alb-200-x-7-x-5-cm/p/8117734",
+      "evidence": "32.49 lei/bucată; Lungime (cm) 200; Inaltime 7; Latime 5; Material: polimer dur",
+      "specsRaw": {
+        "color": "#f4f4f2",
+        "sizeCm": [
+          200,
+          7
+        ],
+        "material": "polimer dur",
+        "pieceM": 2
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-bagheta-decorativa-polimer-chp4545-modern-alb-200-x-4-5-x-4-5-cm",
+      "sourceUrl": "https://www.dedeman.ro/ro/bagheta-decorativa-polimer-chp4545-modern-alb-200-x-4-5-x-4-5-cm/p/8117733",
+      "evidence": "37.90 lei/bucată; Lungime (cm) 200; Latime 4.5; Inaltime 4.5; Material: polimer dur",
+      "specsRaw": {
+        "color": "#f4f4f2",
+        "sizeCm": [
+          200,
+          4.5
+        ],
+        "material": "polimer dur",
+        "pieceM": 2
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "hornbach-aparat-aer-conditionat-chigo-12000-btu-alb-incl-kit-de-instalare-3m",
+      "sourceUrl": "https://www.hornbach.ro/p/aparat-aer-conditionat-chigo-12000-btu-alb-incl-kit-de-instalare-3m/10692498/",
+      "evidence": "preț — 1299,00 lei * Toate prețurile conțin TVA; Aparat de climatizare tip „split”; montajul nu este inclus",
+      "specsRaw": {},
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "hornbach-aparat-aer-conditionat-bosch-ac-climate-2000-12000-btu-fara-kit-de-ins",
+      "sourceUrl": "https://www.hornbach.ro/p/aparat-aer-conditionat-bosch-ac-climate-2000-12000-btu-fara-kit-de-instalare/12418274/",
+      "evidence": "preț — 1739,00 lei * Toate prețurile conțin TVA; Aparat de climatizare tip „split”; montajul nu este inclus",
+      "specsRaw": {},
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "dedeman-aparat-aer-conditionat-ariston-nevis-12000-btu-a-a-inverter-wi-fi-r32-",
+      "sourceUrl": "https://www.dedeman.ro/ro/aparat-aer-conditionat-ariston-nevis-12000-btu-a-a-inverter-wi-fi-r32-ionizare-filtru-aer-mod-de-noapte-mod-eco-follow-me-ventilare-dezumidificare-alb/p/2035393",
+      "evidence": "2199.00 lei/bucată; Capacitate racire (BTU/h) 12000; Kit instalare: Nu; Dimensiuni unitate interioara 920 x 305 x 370 mm",
+      "specsRaw": {
+        "sizeCm": [
+          92,
+          30.5
+        ]
+      },
+      "verifiedAt": "2026-10-24"
+    },
+    {
+      "id": "hornbach-aparat-aer-conditionat-mitsubishi-nioko-12000-btu-wifi-ready-fara-kit-",
+      "sourceUrl": "https://www.hornbach.ro/p/aparat-aer-conditionat-mitsubishi-nioko-12000-btu-wifi-ready-fara-kit-de-instalare/12524978/",
+      "evidence": "preț — 2640,00 lei * Toate prețurile conțin TVA; Aparat de climatizare tip „split”",
+      "specsRaw": {},
+      "verifiedAt": "2026-10-24"
+    }
+  ]
+}
