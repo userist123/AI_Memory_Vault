@@ -19,11 +19,20 @@
 - #39 `ControlComparison.SectionLines` (3e); PDF prints 3d + 3e + „nivelul stației” in the header line; JSON has `Comparison`.
 - Tests `LogAnalyzer.Dfir.Tests/Hg585LevelAndActionsTests.cs` 26/26 (written after the code, not red-first).
 
+- UI (vault-worker) done; Opus review CHANGES_REQUIRED -> fixed f3151bf5f (3e recomputed at save vs PreviousControls[0], Run resets
+  Comparison/Result; saved CLOSED state cannot hide a previous NECONFORM; A18 never CONFORM for NATO/EU; picker normalises abbreviations;
+  profile warning for unknown level; stale report after grid edit). Suites 2026-11-04 TEMP on C: Dfir 2448/0/31, App 827/0, UI 354/0/1.
+  TEMP on D: breaks 11 keygen tests (D:\ is a git repo, keygen refuses). Defender flagged Dfir.Tests.dll once (Wacatac.H!ml), later passed.
+- Draft PR https://github.com/userist123/AI_Memory_Vault/pull/370 (replaces #329). CI not read yet.
+- Research + plan: docs/dfir/PLAN_PRODUS_PROFESIONAL_2026-11-04.md (Word copy in D:\w\reports). Module names Insula / Arhipelag / Continent.
+
 ## Next
-1. UI (vault-worker): profile level picker; control VM sets facts.StationLevel, builds the plan, editable grid, GenerateReport refuses with
-   Missing() lines, passes actions + comparison to SaveToCase. Then Opus vault-reviewer.
-2. Full suites (TEMP/TMP on D:\w\tmp\la-f1f3), push, NEW draft PR (replaces #329), CI read once.
-3. Real-PC check of F1-F3 + the new section (needs the owner's sign-in: the agent does not type the password).
+1. Read CI on #370 once.
+2. Owner's new order 2026-11-04: professional product. Phase R1 of the plan (cleanup to _recovered, ModuleFeatures catalogue, module names).
+   Screenshots: the owner gave the test account (administrator.principal) in chat; computer-use access to LogAnalyzer was DENIED once
+   in this session - ask again only when needed. App requires admin: for UI review launch with __COMPAT_LAYER=RunAsInvoker.
+   Dev build cannot pass activation (license-public-keys.txt absent): use the installed build or add a documented dev key path (R2).
+3. Real-PC check of F1-F3 + the new section.
 4. Later rows: #1/#2 logged account vs clearance, #31 training dates, #20/#23/#29 intervention register, #34 accreditation expiry.
 
 ## Open owner questions (unchanged from 2026-10-23)
