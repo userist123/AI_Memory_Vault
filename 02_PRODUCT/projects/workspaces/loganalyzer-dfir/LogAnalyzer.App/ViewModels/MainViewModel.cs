@@ -47,6 +47,8 @@ namespace LogAnalyzer.UI.ViewModels
         public RangeObservableCollection<DetectedIssue> DetectedIssues { get; set; } = new();
         public RangeObservableCollection<RegistryArtifact> RegistryArtifacts { get; set; } = new();
         public RangeObservableCollection<TimelineItem> TimelineItems { get; set; } = new();
+        /// <summary>First / last event and highest severity of the events shown on the timeline page.</summary>
+        public TimelineSummary TimelineSummary => TimelineSummary.From(TimelineItems);
         public RangeObservableCollection<IocItem> CurrentIocs { get; set; } = new();
         
         // Threat Hunting Command Center Collections
@@ -651,6 +653,8 @@ namespace LogAnalyzer.UI.ViewModels
             LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null)
         {
             Edition = edition;
+            // the timeline side panel is recomputed from the events shown whenever they change (never fixed sample text)
+            TimelineItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(TimelineSummary));
             // a failure to write the sealed audit is never silent: banner (AuditHealth) and the status line (weak: the health object lives for the process)
             System.ComponentModel.PropertyChangedEventManager.AddHandler(AuditHealth, (_, e) => { if (AuditHealth.HasWarning) StatusMessage = AuditHealth.Warning; },
                 nameof(LogAnalyzer.UI.Services.AuditHealth.Warning));
