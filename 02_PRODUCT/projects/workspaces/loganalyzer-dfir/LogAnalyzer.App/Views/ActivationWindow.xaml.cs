@@ -16,6 +16,9 @@ namespace LogAnalyzer.UI.Views
             InitializeComponent();
             _licenseService = licenseService;
             _audit = audit;
+            var posture = LogAnalyzer.Core.Services.Edition.StationPostureContext.Current;
+            ModuleText.Text = LogAnalyzer.Core.Services.Edition.ModuleCatalog.DisplayName(posture);
+            ModulePurposeText.Text = LogAnalyzer.Core.Services.Edition.ModuleCatalog.Purpose(posture);
 
             try { TxtHardwareId.Text = _licenseService.GetHardwareId(); }
             catch (LogAnalyzer.Core.Services.HardwareIdUnavailableException ex)
