@@ -275,7 +275,7 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _workbenchRuleContent = "title: Execuție PowerShell Codificat\nlogsource:\n  category: process_creation\ndetection:\n  selection:\n    CommandLine|contains:\n      - '-enc'\n      - 'bypass'\n      - 'downloadstring'\n  condition: selection";
         // Command Palette & Global Search
         [ObservableProperty] private bool _isCommandPaletteVisible = false;
-        [ObservableProperty] private string _workbenchStatusMessage = "Ready to compile and evaluate rules against ingested events.";
+        [ObservableProperty] private string _workbenchStatusMessage = "Gata de compilare: regulile se evaluează pe evenimentele încărcate.";
         [ObservableProperty] private string _workbenchCompileResult = "Introduceți o regulă Sigma YAML sau YARA și apăsați 'Compilează & Evaluează'.";
         [ObservableProperty] private int _workbenchMatchCount = 0;
 
@@ -2439,12 +2439,12 @@ namespace LogAnalyzer.UI.ViewModels
                             {
                                 if (sRule.MatchCount > 0)
                                 {
-                                    matchInUi.Status = $"MATCHED ({sRule.MatchCount})";
+                                    matchInUi.Status = $"{sRule.MatchCount} potriviri";
                                     matchInUi.RuleStatusColor = "#ef4444";
                                 }
                                 else
                                 {
-                                    matchInUi.Status = "Active";
+                                    matchInUi.Status = "Activă";
                                     matchInUi.RuleStatusColor = "#22c55e";
                                 }
                             }
@@ -2544,7 +2544,7 @@ namespace LogAnalyzer.UI.ViewModels
                     SigmaRules.Add(new SigmaRule
                     {
                         RuleName = r.Title,
-                        Status = r.MatchCount > 0 ? $"MATCHED ({r.MatchCount})" : "Active",
+                        Status = r.MatchCount > 0 ? $"{r.MatchCount} potriviri" : "Activă",
                         RuleStatusColor = r.MatchCount > 0 ? "#ef4444" : "#22c55e",
                         FilePath = r.FilePath,
                         RuleContent = r.YamlContent
@@ -3423,7 +3423,7 @@ namespace LogAnalyzer.UI.ViewModels
     {
         public string RuleName { get; set; } = string.Empty;
         
-        private string _status = "Active";
+        private string _status = "Activă";
         public string Status
         {
             get => _status;
