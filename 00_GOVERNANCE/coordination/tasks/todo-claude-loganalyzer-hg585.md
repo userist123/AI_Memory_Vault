@@ -57,8 +57,14 @@
 - Re-publish/reinstall recipe: kill old instances (elevated Stop-Process), dotnet publish (profile win-x64-singlefile), copy license.lic,
   elevated robocopy to C:\Program Files\LogAnalyzer Insula (R1); UIA driver in scratchpad\uia (driver.ps1 elevated, send.ps1).
 
+- 5ef49dab3: activation window redesigned (identity column + step 1 request / step 2 licence), VERIFIED ON SCREEN; the owner's installed
+  LA1 licence pasted into the new build -> "Activare reușită" (legacy LA1 accepted). CI on 5ef49dab3: 32 pending / 1 pass / 0 fail when read
+  (just pushed) -> read once more next session.
+
 ## Next
-1. Read CI on #370 once.
+1. Read CI on #370 once (head 5ef49dab3 or later).
+2. R6 navigation by case flow (plan section 5), R2b read-only on expiry + capability enforcement (fix Has() cache), R7 DFIR (collection
+   records, unified timeline, hash sets).
 2. Owner's new order 2026-11-04: professional product. Phase R1 of the plan (cleanup to _recovered, ModuleFeatures catalogue, module names).
    Screenshots: the owner gave the test account (administrator.principal) in chat; computer-use access to LogAnalyzer was DENIED once
    in this session - ask again only when needed. App requires admin: for UI review launch with __COMPAT_LAYER=RunAsInvoker.
