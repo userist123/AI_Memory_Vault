@@ -34,7 +34,7 @@ Legendă acoperire: **DA** = verificare automată existentă; **MANUAL** = exist
 | 6 | Separarea rolurilor; nimeni nu deține toate parolele | HG 585 art. 275–276 | V | Rol în Autentificare și conturi | DOC | — |
 | **Jurnalizare și audit** |
 | 7 | Evidența automată a accesului, ținută necondiționat prin software | HG 585 art. 291(1) | V | A01, A10 (SACL), A11, A14, A15 | DA | — |
-| 8 | Retenția registrelor de acces: ≥3 ani (S/SS), ≥10 ani (SSID) | HG 585 art. 291(2)-(3) | V | A02, A03–A04 (acoperirea perioadei controlate) | PARȚIAL | Verificare a arhivei exportate: există jurnale salvate care acoperă ultimii 3/10 ani (registrul exporturilor M06 → verificare automată) |
+| 8 | Retenția registrelor de acces: ≥3 ani (S/SS), ≥10 ani (SSID) | HG 585 art. 291(2)-(3) | V | A02, A03–A04 (acoperirea perioadei controlate); A18 retenția cerută de nivelul stației (2026-11-04) | PARȚIAL | Verificare a arhivei exportate: există jurnale salvate care acoperă ultimii 3/10 ani (registrul exporturilor M06 → verificare automată) |
 | 9 | Tentativele și încălcările înregistrate și analizate periodic | Model pct. 58 | M | U04 (parole greșite), A05 (jurnale șterse), A06, A12 | DA | — |
 | 10 | Ceasul stației verificat | Model pct. 4.5.8 | M | A07, S05, M10 | DA | — |
 | 11 | Tipărire/copiere auditate + registru de multiplicare | Model pct. 132 | M | P29, A08, M12 | PARȚIAL | Registru de multiplicare ↔ jurnal de tipărire (ca la transferuri) |
@@ -56,7 +56,7 @@ Legendă acoperire: **DA** = verificare automată existentă; **MANUAL** = exist
 | 24 | AV rezident, scanare la introducere, scanare periodică, semnături actualizate | HG 585 art. 312–313; Model pct. 143–147 | V/M | P08–P10, P38, P39, S06, D03, M05 | DA | — |
 | 25 | Patch-uri OS | INFOSEC 2 art. 45 | V\* | S03, S04 | DA | — |
 | **Conectivitate și periferice** |
-| 26 | Fără internet / interconectare doar aprobată | INFOSEC 2 art. 37–39; HG 585 art. 248 | V\*/V | N01–N13 | DA | — |
+| 26 | Fără internet / interconectare doar aprobată | INFOSEC 2 art. 37–39; HG 585 art. 248 | V\*/V | N01–N13; N14 internet după nivelul stației (2026-11-04) | DA | — |
 | 27 | Wireless, Bluetooth, camere, microfoane | HG 585 art. 105; DS 2 art. 17, 25 | V/V\* | N03, N04, P19, P31, M09 | DA | — |
 | **Registre și marcare** |
 | 28 | Banner/marcaj de clasificare | HG 585 art. 59 | V | P26 | DA | — |
@@ -74,8 +74,8 @@ Legendă acoperire: **DA** = verificare automată existentă; **MANUAL** = exist
 | 36 | Ștergere/distrugere doar conform PrOpSec, cu PV semnat de 2 persoane | HG 585 art. 79, 296–298 | V | M14; P25 | MANUAL | PV de distrugere generat din registrul de medii |
 | **Control periodic — documentul de constatare** |
 | 37 | Control intern anual și ori de câte ori e nevoie; „document de constatare” | HG 585 art. 193–197 | V | ControlReportPdf + semnătura ofițerului + ancoră | DA | — |
-| 38 | Fiecare neconformitate cu **măsură concretă și termen** | SRI Q&A 2020 | S | — | **LIPSĂ** | Registru de neconformități (responsabil, măsură, termen, stare, dovada închiderii) inclus în PV |
-| 39 | Comparația cu controlul anterior (ce s-a remediat, ce e nou) | bună practică (art. 197, analiză anuală) | — | Controlul anterior servește doar la alegerea perioadei | **LIPSĂ** | Secțiune „față de controlul din dd.MM.yyyy”: nou neconform / remediat / la fel |
+| 38 | Fiecare neconformitate cu **măsură concretă și termen** | SRI Q&A 2020 | S | Registrul de neconformități (secțiunea 3d a PV, 2026-11-04): măsură, responsabil, termen; închidere doar când verificarea iese CONFORMĂ | DA (nucleu) | Editarea în pagina de control (în lucru) |
+| 39 | Comparația cu controlul anterior (ce s-a remediat, ce e nou) | bună practică (art. 197, analiză anuală) | — | Comparația cu controlul anterior pe ecran și, din 2026-11-04, în PV (secțiunea 3e) | DA | Secțiune „față de controlul din dd.MM.yyyy”: nou neconform / remediat / la fel |
 
 ## 2. Concluzie
 

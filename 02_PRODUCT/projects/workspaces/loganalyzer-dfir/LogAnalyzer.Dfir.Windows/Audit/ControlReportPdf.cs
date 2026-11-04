@@ -25,7 +25,7 @@ public static class ControlReportPdf
     /// <param name="result">WP18 S5: the five answers, printed on the first page before the checks, together with the evidence gaps.</param>
     public static void Write(ControlReport r, string path, string inspector, string notes = "", VerificationReport? verification = null, LogAnalyzer.Dfir.Case.ReportSeal? seal = null,
         ControlReportHeader? header = null, ControlResultScreen? result = null, IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null, string authorizingAct = "",
-        LogAnalyzer.Dfir.Case.PreReportCheck? preCheck = null)
+        LogAnalyzer.Dfir.Case.PreReportCheck? preCheck = null, IReadOnlyList<CorrectiveAction>? actions = null, ControlComparison? comparison = null)
     {
         QuestPDF.Settings.License = LicenseType.Community;
         var f = r.Facts;
@@ -47,7 +47,7 @@ public static class ControlReportPdf
                 h.Item().AlignCenter().Text(OfficialLabel).Bold().FontSize(9).FontColor("#b91c1c");
                 h.Item().Text(header is null ? $"Raport de control — stația {f.Host}" : $"Raport de control pentru proces-verbal — stația {f.Host}").Bold().FontSize(14).FontColor(Ink);
                 h.Item().Text($"Perioada controlată: {L(f.PeriodStartUtc)} – {L(f.PeriodEndUtc)} (ora locală) · colectat {L(f.CollectedUtc)} · " +
-                              $"Ediția: {LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(f.Posture)} · drepturi de administrator: {(f.IsAdministrator ? "da" : "NU (rezultate incomplete)")}")
+                              $"Ediția: {LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(f.Posture)} · nivelul stației: {LogAnalyzer.Dfir.Profile.StationLevelRules.Describe(f.StationLevel)} · drepturi de administrator: {(f.IsAdministrator ? "da" : "NU (rezultate incomplete)")}")
                     .FontSize(7.5f).FontColor(Muted);
                 h.Item().Text($"Verificator: {inspector}").FontSize(7.5f).FontColor(Muted);
                 h.Item().PaddingTop(4).LineHorizontal(1).LineColor(Ink);
@@ -197,6 +197,21 @@ public static class ControlReportPdf
                     if (head) t.Bold();
                 }
 
+                // matrix HG 585 rows 38 and 39: the measures with their deadlines and the difference from the previous control belong to the "document de constatare"
+                var today = DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(f.CollectedUtc, TimeZoneInfo.Local).DateTime);
+                P(col, CorrectiveActions.SectionTitle).Bold().FontSize(11).FontColor(Ink);
+                foreach (var (text, head, color) in CorrectiveActions.SectionLines(actions, today))
+                {
+                    var t = P(col, W(text)).FontSize(head ? 8.5f : 7.5f).FontColor(color);
+                    if (head) t.Bold();
+                }
+                P(col, ControlComparison.SectionTitle).Bold().FontSize(11).FontColor(Ink);
+                foreach (var (text, head, color) in ControlComparison.SectionLines(comparison))
+                {
+                    var t = P(col, W(text)).FontSize(head ? 8.5f : 7.5f).FontColor(color);
+                    if (head) t.Bold();
+                }
+
                 col.Item().Text("4. Acoperirea jurnalelor și surse lipsă sau incomplete").Bold().FontSize(11).FontColor(Ink);
                 foreach (var c in f.Coverage)
                     col.Item().Text($"{c.Channel}: {(c.Readable ? $"{LogAnalyzer.Dfir.Language.RoText.Count(c.Records, "eveniment", "evenimente")} citite, cel mai vechi {L(c.OldestUtc)}" : "NECITIT")} {c.Note}").FontSize(7.5f);
@@ -210,7 +225,7 @@ public static class ControlReportPdf
                 foreach (var lim in Limitations(f))
                     col.Item().Text("• " + lim).FontSize(7.5f);
                 // usability 2026-10-16: every technical word, result and check id printed in this report, explained in plain Romanian (only those that appear)
-                var terms = TermCatalog.AppendixLines(Corpus(r, inspector, notes, header, result, manual));
+                var terms = TermCatalog.AppendixLines(Corpus(r, inspector, notes, header, result, manual, actions, comparison));
                 if (terms.Count > 0)
                 {
                     P(col, TermCatalog.AppendixTitle).Bold().FontSize(11).FontColor(Ink);
@@ -245,7 +260,7 @@ public static class ControlReportPdf
     /// the signature page): what the „Ce înseamnă termenii” appendix is built from, so it lists only the terms that appear in this report.
     /// </summary>
     public static string Corpus(ControlReport r, string inspector = "", string notes = "", ControlReportHeader? header = null, ControlResultScreen? result = null,
-        IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null)
+        IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null, IReadOnlyList<CorrectiveAction>? actions = null, ControlComparison? comparison = null)
     {
         var f = r.Facts;
         var sb = new System.Text.StringBuilder();
@@ -270,6 +285,8 @@ public static class ControlReportPdf
         foreach (var a in r.Actions.Take(1500)) { A(a.Action); A(a.Detail); A(a.Source); }
         foreach (var (text, _, _) in ClassifiedSectionLines(r)) A(text);
         foreach (var (text, _, _) in DeviceSectionLines(r)) A(text);
+        foreach (var (text, _, _) in CorrectiveActions.SectionLines(actions, DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(f.CollectedUtc, TimeZoneInfo.Local).DateTime))) A(text);
+        foreach (var (text, _, _) in ControlComparison.SectionLines(comparison)) A(text);
         foreach (var lim in Limitations(f)) A(lim);
         foreach (var line in OfficerSectionLines(r)) A(line);
         return sb.ToString();
@@ -444,16 +461,16 @@ public static class ControlReportPdf
 
     /// <summary>Saves the report (JSON) and its PDF in the case, registered as evidence with SHA-256.</summary>
     public static (string Json, string Pdf) SaveToCase(ControlReport r, CaseWorkspace ws, string inspector, string notes = "", ControlReportHeader? header = null, ControlResultScreen? result = null,
-        IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null)
+        IReadOnlyList<LogAnalyzer.Dfir.Flow.ManualCheckResult>? manual = null, IReadOnlyList<CorrectiveAction>? actions = null, ControlComparison? comparison = null)
     {
         var dir = Path.Combine(ws.Root, "Control", $"CONTROL_{r.Facts.CollectedUtc:yyyyMMdd_HHmmss}");
         Directory.CreateDirectory(dir);
         var json = Path.Combine(dir, "control_report.json");
-        File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions, Classified = ClassifiedJson(r), UserActivity = UserActivityJson(r), ManualChecks = manual ?? [] },
+        File.WriteAllText(json, JsonSerializer.Serialize(new { r.Facts, r.Checks, r.Users, r.Actions, Classified = ClassifiedJson(r), UserActivity = UserActivityJson(r), ManualChecks = manual ?? [], CorrectiveActions = actions, Comparison = comparison },
             new JsonSerializerOptions { WriteIndented = true, Converters = { new JsonStringEnumConverter() } }));
         var pdf = Path.Combine(dir, $"Raport_control_{r.Facts.Host}_{r.Facts.CollectedUtc:yyyyMMdd}.pdf");
         var pre = LogAnalyzer.Dfir.Case.PreReportCheck.ForCase(ws);   // F2: re-verify the case evidence first; its audit entry is inside the printed chain heads
-        Write(r, pdf, inspector, notes, Investigation.InvestigationReportPdf.ReadVerification(ws.Root), LogAnalyzer.Dfir.Case.ReportSeal.For(ws), header, result, manual, ws.Info.Scope.AuthorizingAct, pre);
+        Write(r, pdf, inspector, notes, Investigation.InvestigationReportPdf.ReadVerification(ws.Root), LogAnalyzer.Dfir.Case.ReportSeal.For(ws), header, result, manual, ws.Info.Scope.AuthorizingAct, pre, actions, comparison);
         ws.RegisterStored(json, "live:" + r.Facts.Host, "control", "control_report", TemporalType.CurrentSnapshot, "StationFactCollector", DfirInfo.ApplicationVersion);
         ws.RegisterStored(pdf, "live:" + r.Facts.Host, "control", "control_report_pdf", TemporalType.Derived, "ControlReportPdf", DfirInfo.ApplicationVersion);
         // WP3b: the report files are also outputs in the custody chain, listed with the chain heads in a manifest next to them.

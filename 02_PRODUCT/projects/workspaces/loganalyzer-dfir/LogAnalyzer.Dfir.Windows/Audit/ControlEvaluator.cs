@@ -86,6 +86,7 @@ public static partial class ControlEvaluator
         InternetEgress(f, r);
         DomainMembership(f, r);
         OwnActivityCheck(f, r);
+        LevelRules(f, r);
         // The posture of the executable decides which rules apply: the rest become "Nu se aplică" (never counted as findings).
         for (var i = 0; i < r.Checks.Count; i++) r.Checks[i] = ControlApplicability.Resolve(r.Checks[i], f.Posture);
         r.Actions.Sort((a, b) => a.TimeUtc.CompareTo(b.TimeUtc));

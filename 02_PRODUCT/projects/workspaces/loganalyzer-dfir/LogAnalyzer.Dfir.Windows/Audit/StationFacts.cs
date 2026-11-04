@@ -62,6 +62,8 @@ public sealed class StationFacts
     public bool IsAdministrator { get; init; }
     /// <summary>The edition's compile-time posture; decides which checks apply (see ControlApplicability). Default: the strictest, so a forgotten value never relaxes a rule.</summary>
     public LogAnalyzer.Core.Services.Edition.StationPosture Posture { get; init; } = LogAnalyzer.Core.Services.Edition.StationPosture.Standalone;
+    /// <summary>The station's classification level from the procedure profile (checks A18, N14); empty = not defined, never guessed.</summary>
+    public string StationLevel { get; set; } = "";
     public List<LocalAccount> Accounts { get; init; } = [];
     public PasswordPolicy? PasswordPolicy { get; set; }
     public Dictionary<string, AuditSetting>? AuditPolicy { get; set; }

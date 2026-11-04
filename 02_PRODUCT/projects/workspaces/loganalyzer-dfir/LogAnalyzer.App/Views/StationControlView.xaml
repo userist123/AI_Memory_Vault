@@ -172,6 +172,30 @@
                     <TextBox Text="{Binding SavedReportInfo, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="Transparent" MinHeight="0"
                              Foreground="{StaticResource TextPrimaryBrush}" AutomationProperties.Name="Confirmarea salvării raportului: loc, amprentă și pașii următori"/>
                 </Border>
+                <!-- matrix HG 585 row 38: every non-conformity needs a measure, a responsible person and a deadline before the proces-verbal (visible in Simplu and Expert) -->
+                <StackPanel Margin="0,10,0,0">
+                    <TextBlock Text="Neconformități: măsuri, responsabili și termene" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="Pentru fiecare neconformitate scrieți măsura, cine răspunde și până când (zz.ll.aaaa). Fără acestea raportul pentru procesul-verbal nu se salvează." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,4"/>
+                    <DataGrid x:Name="CorrectiveActionsGrid" AutomationProperties.Name="Neconformități: măsuri, responsabili și termene" ItemsSource="{Binding CorrectiveActionItems}" AutoGenerateColumns="False"
+                              CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column" MaxHeight="320">
+                        <DataGrid.Columns>
+                            <DataGridTemplateColumn Header="Verificarea" Width="2*" IsReadOnly="True">
+                                <DataGridTemplateColumn.CellTemplate><DataTemplate><TextBlock TextWrapping="Wrap" Margin="4,2"><Run Text="{Binding CheckId, Mode=OneWay}"/><Run Text=" "/><Run Text="{Binding Title, Mode=OneWay}"/></TextBlock></DataTemplate></DataGridTemplateColumn.CellTemplate>
+                            </DataGridTemplateColumn>
+                            <DataGridTextColumn Header="Măsura" Binding="{Binding Measure, UpdateSourceTrigger=LostFocus}" Width="2*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                                <DataGridTextColumn.EditingElementStyle><Style TargetType="TextBox"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="AcceptsReturn" Value="False"/></Style></DataGridTextColumn.EditingElementStyle>
+                            </DataGridTextColumn>
+                            <DataGridTextColumn Header="Responsabil" Binding="{Binding Responsible, UpdateSourceTrigger=LostFocus}" Width="*"/>
+                            <DataGridTextColumn Header="Termen (zz.ll.aaaa)" Binding="{Binding Deadline, UpdateSourceTrigger=LostFocus}" Width="120"/>
+                            <DataGridTextColumn Header="Stare" Binding="{Binding State, Mode=OneWay}" IsReadOnly="True" Width="80"/>
+                            <DataGridTextColumn Header="Notă" Binding="{Binding Note, Mode=OneWay}" IsReadOnly="True" Width="2*">
+                                <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                            </DataGridTextColumn>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <TextBlock Text="{Binding CorrectiveActionsMissing}" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,4,0,0"/>
+                </StackPanel>
                 <Expander Header="Diferențe față de controlul anterior" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,0">
                     <DataGrid AutomationProperties.Name="Diferențe față de controlul anterior" ItemsSource="{Binding ComparisonChanges}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220">
                         <DataGrid.Columns>

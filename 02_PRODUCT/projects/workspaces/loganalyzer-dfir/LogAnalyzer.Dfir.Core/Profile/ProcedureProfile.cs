@@ -15,6 +15,12 @@ public sealed class ProcedureProfile
     public string Name { get; set; } = "";
     public DateTimeOffset? UpdatedUtc { get; set; }
 
+    /// <summary>
+    /// The highest classification level the station processes (owner decision 2026-10-23: from "secret de serviciu" upward), as a marking that
+    /// <see cref="LogAnalyzer.Dfir.Model.SecrecyLevels"/> knows; empty = not defined. The rules that differ per level follow it (<see cref="StationLevelRules"/>).
+    /// </summary>
+    public string StationLevel { get; set; } = "";
+
     // Working hours
     public List<WorkingHoursRow> WorkingHours { get; set; } = [];
     public List<HolidayRow> Holidays { get; set; } = [];
