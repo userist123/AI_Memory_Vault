@@ -13,7 +13,7 @@
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
             <StackPanel DockPanel.Dock="Left">
                 <TextBlock Text="Analiza riscului" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Heuristic entropy scoring, masquerading detection &amp; ISO/IEC 27042 traceable factor ledger" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                <TextBlock Text="Scor euristic după entropie, detectarea deghizării proceselor și factorii de risc, cu trasabilitate" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
             <Button DockPanel.Dock="Right" Content="Rulează evaluarea de risc" Command="{Binding RunAiAnalysisCommand}" Style="{StaticResource AccentButtonStyle}" Padding="16,8"/>
         </DockPanel>
@@ -22,30 +22,30 @@
         <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16">
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,8,0">
                 <StackPanel>
-                    <TextBlock Text="OVERALL RISK SCORE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="Scor total de risc" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
                     <TextBlock Text="{Binding AiRiskScore, StringFormat='{}{0}/100'}" Foreground="{Binding AiRiskColor}" FontSize="26" FontWeight="Bold" Margin="0,4,0,0"/>
                     <TextBlock Text="{Binding AiRiskLevel}" Foreground="{Binding AiRiskColor}" FontSize="11" FontWeight="Bold" Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="4,0,4,0">
                 <StackPanel>
-                    <TextBlock Text="SHANNON ENTROPY (H &gt; 4.8)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="Entropie Shannon (H &gt; 4,8)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
                     <TextBlock Text="{Binding AiHighEntropyCount}" Foreground="{StaticResource HighBrush}" FontSize="26" FontWeight="Bold" Margin="0,4,0,0"/>
-                    <TextBlock Text="Obfuscated script payloads" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
+                    <TextBlock Text="Conținut de script ofuscat" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="4,0,4,0">
                 <StackPanel>
-                    <TextBlock Text="PROCESS MASQUERADING" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="Procese deghizate" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
                     <TextBlock Text="{Binding AiMasqueradingCount}" Foreground="{StaticResource CriticalBrush}" FontSize="26" FontWeight="Bold" Margin="0,4,0,0"/>
-                    <TextBlock Text="Execution from %TEMP%/AppData" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
+                    <TextBlock Text="Rulate din %TEMP% / AppData" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="8,0,0,0">
                 <StackPanel>
-                    <TextBlock Text="YARA MATCHES &amp; OFF-HOURS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="Potriviri YARA și activitate în afara programului" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
                     <TextBlock Text="{Binding AiYaraMatchesCount}" Foreground="{StaticResource PrimaryAccentBrush}" FontSize="26" FontWeight="Bold" Margin="0,4,0,0"/>
-                    <TextBlock Text="Malicious pattern alignments" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
+                    <TextBlock Text="Tipare suspecte potrivite" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
         </UniformGrid>
@@ -53,7 +53,7 @@
         <!-- Executive Summary Box -->
         <Border Grid.Row="2" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
             <StackPanel>
-                <TextBlock Text="Executive Synthesis &amp; Tactical Guidance:" FontSize="12" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,4"/>
+                <TextBlock Text="Sinteză și recomandări:" FontSize="12" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,4"/>
                 <TextBlock Text="{Binding AiExecutiveSummary}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
             </StackPanel>
         </Border>
@@ -65,14 +65,14 @@
                     <RowDefinition Height="Auto"/>
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
-                <TextBlock Text="Weighted Risk Breakdown (ISO/IEC 27042 Forensic Audit Trail)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,10"/>
+                <TextBlock Text="Factorii de risc și ponderea lor" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,10"/>
                 <DataGrid Grid.Row="1" ItemsSource="{Binding ExplainableRiskFactors}" AutoGenerateColumns="False" IsReadOnly="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Points" Binding="{Binding WeightPoints, StringFormat='+{0} pts'}" Width="85" FontWeight="Bold" Foreground="{StaticResource CriticalBrush}"/>
-                        <DataGridTextColumn Header="Risk Category" Binding="{Binding Category}" Width="180" FontWeight="SemiBold"/>
-                        <DataGridTextColumn Header="MITRE ID" Binding="{Binding MitreTechniqueId}" Width="100"/>
-                        <DataGridTextColumn Header="Evidence Source" Binding="{Binding EvidenceSource}" Width="150"/>
-                        <DataGridTextColumn Header="Forensic Rationale / Justification" Binding="{Binding LegalJustification}" Width="*"/>
+                        <DataGridTextColumn Header="Puncte" Binding="{Binding WeightPoints, StringFormat='+{0} pts'}" Width="85" FontWeight="Bold" Foreground="{StaticResource CriticalBrush}"/>
+                        <DataGridTextColumn Header="Categoria de risc" Binding="{Binding Category}" Width="180" FontWeight="SemiBold"/>
+                        <DataGridTextColumn Header="ID MITRE" Binding="{Binding MitreTechniqueId}" Width="100"/>
+                        <DataGridTextColumn Header="Sursa probei" Binding="{Binding EvidenceSource}" Width="150"/>
+                        <DataGridTextColumn Header="Motivație" Binding="{Binding LegalJustification}" Width="*"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

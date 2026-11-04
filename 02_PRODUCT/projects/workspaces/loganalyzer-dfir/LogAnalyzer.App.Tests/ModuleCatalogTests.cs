@@ -69,6 +69,27 @@ public sealed class ModuleCatalogTests
         Assert.True(AdvancedNavVisibilityConverter.IsVisible(null, "7", StationPosture.IsolatedNetwork, AppMode.AirGapped));
     }
 
+    [Theory]
+    [InlineData(StationPosture.Standalone, true)]
+    [InlineData(StationPosture.IsolatedNetwork, true)]
+    [InlineData(StationPosture.Internet, false)]
+    public void The_sign_in_notice_states_only_what_the_application_does(StationPosture p, bool classified)
+    {
+        var n = ModuleCatalog.DefaultNotice(p);
+        Assert.Equal(classified, n.Contains("informații clasificate"));
+        Assert.Contains("numai persoanelor autorizate", n);
+        Assert.Contains("jurnalul sigilat", n);
+        Assert.False(string.IsNullOrWhiteSpace(ModuleCatalog.Purpose(p)));
+    }
+
+    [Fact]
+    public void The_sign_in_identity_lists_station_level_version_and_licence_in_order()
+    {
+        var rows = SignInWindow.IdentityRows("LAB-PC", "SECRET (S)", "0.1.0-dfir");
+        Assert.Equal(["Stația", "Nivelul stației", "Versiunea", "Licența"], rows.Select(r => r.Label));
+        Assert.Equal(["LAB-PC", "SECRET (S)", "0.1.0-dfir", "verificată la pornire"], rows.Select(r => r.Value));
+    }
+
     [Fact]
     public void An_unknown_menu_key_is_never_shown() =>
         Assert.False(AdvancedNavVisibilityConverter.IsVisible(null, "99", StationPosture.Internet, AppMode.Network));

@@ -5,21 +5,21 @@
         <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1.5" CornerRadius="10" Width="600" Padding="20" HorizontalAlignment="Center" VerticalAlignment="Top" Margin="0,100,0,0" Effect="{StaticResource ModalShadow}">
             <StackPanel>
                 <DockPanel LastChildFill="False" Margin="0,0,0,12">
-                    <TextBlock DockPanel.Dock="Left" Text="COMMAND PALETTE (CTRL+K)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                    <TextBlock DockPanel.Dock="Left" Text="Salt rapid (Ctrl+K)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                     <Button DockPanel.Dock="Right" Content="✕" Command="{Binding CloseCommandPaletteCommand}" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}" BorderThickness="0" FontWeight="Bold" Width="24" Height="24" Cursor="Hand"/>
                 </DockPanel>
                 
                 <TextBox x:Name="PaletteSearchInput" Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Height="38" FontSize="13" Margin="0,0,0,12"/>
                 
-                <TextBlock Text="QUICK JUMP &amp; PIVOTS:" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
+                <TextBlock Text="Salt rapid la pagină:" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
                 <StackPanel>
-                    <Button Content="📊 Command Dashboard" Command="{Binding NavigateCommand}" CommandParameter="0" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
-                    <Button Content="📁 EVTX Windows Event Explorer" Command="{Binding NavigateCommand}" CommandParameter="1" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
-                    <Button Content="🔑 Offline Registry Hive Forensics" Command="{Binding NavigateCommand}" CommandParameter="2" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
-                    <Button Content="🚨 Threat Alerts &amp; Sigma Workbench" Command="{Binding NavigateCommand}" CommandParameter="3" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
-                    <Button Content="⏱ Incident Forensic Timeline" Command="{Binding NavigateCommand}" CommandParameter="4" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
-                    <Button Content="🎯 MITRE ATT&amp;CK Tactic Matrix" Command="{Binding NavigateCommand}" CommandParameter="10" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
-                    <Button Content="🔴 Live Real-Time SOC Stream" Command="{Binding NavigateCommand}" CommandParameter="11" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
+                    <Button Content="📊 Panou general" Command="{Binding NavigateCommand}" CommandParameter="0" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
+                    <Button Content="📁 Explorator de evenimente EVTX" Command="{Binding NavigateCommand}" CommandParameter="1" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
+                    <Button Content="🔑 Analiza registrului offline" Command="{Binding NavigateCommand}" CommandParameter="2" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
+                    <Button Content="🚨 Amenințări și detecții (Sigma)" Command="{Binding NavigateCommand}" CommandParameter="3" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
+                    <Button Content="⏱ Cronologia incidentului" Command="{Binding NavigateCommand}" CommandParameter="4" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
+                    <Button Content="🎯 Tehnici de atac MITRE ATT&amp;CK" Command="{Binding NavigateCommand}" CommandParameter="10" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
+                    <Button Content="🔴 Flux în timp real" Command="{Binding NavigateCommand}" CommandParameter="11" Style="{StaticResource ActionButtonStyle}" HorizontalContentAlignment="Left" Margin="0,2"/>
                 </StackPanel>
             </StackPanel>
         </Border>

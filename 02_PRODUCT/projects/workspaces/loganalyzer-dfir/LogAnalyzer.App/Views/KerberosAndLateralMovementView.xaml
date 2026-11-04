@@ -14,14 +14,14 @@
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                     <TextBlock Text="Conturi locale și USB" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <Border Margin="12,0,0,0" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
-                        <TextBlock Text="AIR-GAPPED STANDALONE EDITION" FontSize="9" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                        <TextBlock Text="Ediția Standalone, fără rețea" FontSize="9" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                     </Border>
                 </StackPanel>
                 <TextBlock Text="Auditare specializată pentru PC-uri izolate (fără conexiune la rețea / domeniu): Bază SAM, Medii USB, Politici de Audit, Sesiuni Locale &amp; Conformitate HG 585/2002" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
             </StackPanel>
 
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="📄 Export CSV" Command="{Binding ExportAdAuditReportCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,6" Margin="0,0,8,0"/>
+                <Button Content="📄 Exportă CSV" Command="{Binding ExportAdAuditReportCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,6" Margin="0,0,8,0"/>
                 <Button Content="📑 Raport Executiv PDF" Command="{Binding ExportAdAuditPdfReportCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,6" Margin="0,0,8,0"/>
                 <Button Content="🌐 Raport Executiv HTML" Command="{Binding ExportAdAuditHtmlReportCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="14,6"/>
             </StackPanel>
@@ -109,7 +109,7 @@
                                 <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85"/>
                                 <DataGridTextColumn Header="Proces / Dispozitiv Sursă" Binding="{Binding SourceProcessOrDevice}" Width="160"/>
                                 <DataGridTextColumn Header="Descriere &amp; Acțiune Recomandată" Binding="{Binding Description}" Width="*"/>
-                                <DataGridTextColumn Header="Timestamp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="140"/>
+                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="140"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -219,7 +219,7 @@
                                 <DataGridTextColumn Header="Standard / Cadru" Binding="{Binding Framework}" Width="170"/>
                                 <DataGridTextColumn Header="Articol / Control" Binding="{Binding ArticleOrControl}" Width="140"/>
                                 <DataGridTextColumn Header="Titlu Control" Binding="{Binding ControlTitle}" Width="200"/>
-                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="100"/>
+                                <DataGridTextColumn Header="Stare" Binding="{Binding Status}" Width="100"/>
                                 <DataGridTextColumn Header="Evidență Forensică Corelată" Binding="{Binding EvidenceSummary}" Width="*"/>
                                 <DataGridTextColumn Header="Măsură Corectivă Impusă" Binding="{Binding RequiredAction}" Width="260"/>
                             </DataGrid.Columns>

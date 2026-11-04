@@ -331,6 +331,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private int _lowAlertsCount;
         [ObservableProperty] private int _totalRegistryCount;
         [ObservableProperty] private int _totalHostsCount;
+        /// <summary>Techniques actually present in the loaded (non-test) alerts, with their alert counts. Empty when none are loaded.</summary>
+        [ObservableProperty] private IReadOnlyList<AlertTechniqueCount> _loadedAlertTechniques = Array.Empty<AlertTechniqueCount>();
 
         // Paging properties
         [ObservableProperty] private int _evtxCurrentPage = 1;
@@ -833,6 +835,12 @@ namespace LogAnalyzer.UI.ViewModels
                 HighAlertsCount = distribution.High;
                 MediumAlertsCount = distribution.Medium;
                 LowAlertsCount = distribution.LowOrInfo;
+                LoadedAlertTechniques = DetectedIssues
+                    .Where(i => !i.IsTestAlert && !string.IsNullOrWhiteSpace(i.MitreTechniqueId))
+                    .GroupBy(i => i.MitreTechniqueId.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .Select(g => new AlertTechniqueCount(g.Key, g.Count()))
+                    .OrderByDescending(t => t.Count).ThenBy(t => t.TechId, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
 
                 PopulateMitreMatrix();
             }
@@ -3432,6 +3440,9 @@ namespace LogAnalyzer.UI.ViewModels
         public string FilePath { get; set; } = string.Empty;
         public string RuleContent { get; set; } = string.Empty;
     }
+
+    /// <summary>A technique id found in loaded alerts and how many alerts carry it.</summary>
+    public sealed record AlertTechniqueCount(string TechId, int Count);
 
     public class MitreTechnique
     {

@@ -32,6 +32,22 @@ namespace LogAnalyzer.Core.Services.Edition
         /// <summary>"Insula — Stație izolată": the module name always shown with its descriptor.</summary>
         public static string DisplayName(StationPosture p) => $"{ModuleName(p)} — {Descriptor(p)}";
 
+        /// <summary>One sentence: what the module is for (sign-in screen).</summary>
+        public static string Purpose(StationPosture p) => p switch
+        {
+            StationPosture.Standalone => "Control de conformitate și investigație pe un calculator izolat, fără nicio conexiune de rețea.",
+            StationPosture.IsolatedNetwork => "Control de conformitate și investigație pe stațiile unei rețele închise, cu domeniu, fără internet.",
+            _ => "Control de conformitate și investigație pe stații conectate, cu interconectare aprobată.",
+        };
+
+        /// <summary>
+        /// The notice shown before sign-in (plan R3, model: notice and consent). It states only what the application really does (sign-ins and actions go to its
+        /// sealed audit). The unit's own approved wording, from its security officer, replaces it when the procedure profile carries one.
+        /// </summary>
+        public static string DefaultNotice(StationPosture p) =>
+            (p == StationPosture.Internet ? "Acest sistem este destinat activității de securitate a organizației. " : "Acest sistem prelucrează informații clasificate. ") +
+            "Accesul este permis numai persoanelor autorizate. Autentificările și acțiunile sunt înregistrate în jurnalul sigilat al aplicației și pot fi verificate la control.";
+
         /// <summary>One page of the main window: its tab, the modules that have it, whether it needs the network mode, and its variant (one tab, two pages by mode).</summary>
         /// <param name="Variant">"" for a page that is the same in every mode; "local" / "ad" for tab 8 (local accounts and USB when isolated, Active Directory on a network).</param>
         public sealed record PageEntry(string Key, int Tab, string Title, IReadOnlyList<StationPosture> Modules, bool NeedsNetworkMode, string Variant = "");

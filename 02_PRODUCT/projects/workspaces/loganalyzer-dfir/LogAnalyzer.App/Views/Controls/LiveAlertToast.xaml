@@ -36,7 +36,7 @@
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <Button Grid.Column="1" Content="Inspect Playbook" Command="{Binding OpenAlertModalCommand}" CommandParameter="{Binding CurrentLiveToastAlert}" Style="{StaticResource DangerButtonStyle}" Padding="12,4" FontSize="11"/>
+                <Button Grid.Column="1" Content="Vezi procedura" Command="{Binding OpenAlertModalCommand}" CommandParameter="{Binding CurrentLiveToastAlert}" Style="{StaticResource DangerButtonStyle}" Padding="12,4" FontSize="11"/>
             </Grid>
         </Grid>
     </Border>

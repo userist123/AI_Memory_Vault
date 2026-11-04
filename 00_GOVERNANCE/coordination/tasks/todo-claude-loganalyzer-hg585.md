@@ -36,6 +36,15 @@
       fixed times and "EDR Shield active: C2 beacon isolated" -> FIXED now (TimelineSummary computed + guard test NoFixedSampleEvidenceTests),
       also fake fallbacks in LiveAlertToast removed. App 830/0.
 
+- R1 DONE d757f426b: ModuleCatalog (Core/Services/Edition) = single source of pages per module; RoleProfiles leaves out what the edition can
+  never have; ;air/;net gone; title "LogAnalyzer DFIR · Insula — Stație izolată"; legacy root UI tree moved to _recovered/legacy_root_ui_2026-11-04
+  (root Services/ KEPT: UI.Tests compiles ..\Services\*.cs; old UI LicenseService kept for R2). VERIFIED ON SCREEN with an official publish
+  (dotnet publish ...App.Classified -p:PublishProfile=win-x64-singlefile -> publish/LogAnalyzer.Standalone/win-x64, gitignored) installed to
+  C:\Program Files\LogAnalyzer Insula (R1) (protected folder required by the app; the owner's C:\Program Files\LogAnalyzer untouched) + license.lic
+  copied from the installed app; LogAnalyzer.Core/Licensing/license-public-keys.txt copied from la-rel (excluded via .git/info/exclude).
+- In progress: worker = Romanian text + no static decor on advanced pages (+ RomanianUiTextTests); main = R3 sign-in window two columns
+  (identity: module, purpose, station, level, version, licence; notice), ModuleCatalog.Purpose/DefaultNotice, tests in ModuleCatalogTests.
+
 ## Next
 1. Read CI on #370 once.
 2. Owner's new order 2026-11-04: professional product. Phase R1 of the plan (cleanup to _recovered, ModuleFeatures catalogue, module names).

@@ -27,9 +27,36 @@ namespace LogAnalyzer.UI.Views
         {
             InitializeComponent();
             _mode = mode; _locked = lockedSession;
+            ShowIdentity();
             Configure();
             ShowStoreProtection();
             Loaded += async (_, _) => await RefreshCardsAsync();
+        }
+
+        public sealed record IdentityRow(string Label, string Value);
+
+        /// <summary>
+        /// Plan 2026-11-04 (R3): the left column says what the person signs in to before anything else. Only facts the application knows at this point:
+        /// the licence was verified before this window opens (App startup order), the level comes from the procedure profile ("nedefinit" otherwise).
+        /// </summary>
+        internal static IReadOnlyList<IdentityRow> IdentityRows(string station, string stationLevelText, string version) =>
+        [
+            new("Stația", station),
+            new("Nivelul stației", stationLevelText),
+            new("Versiunea", version),
+            new("Licența", "verificată la pornire"),
+        ];
+
+        private void ShowIdentity()
+        {
+            var posture = LogAnalyzer.Core.Services.Edition.StationPostureContext.Current;
+            ModuleText.Text = LogAnalyzer.Core.Services.Edition.ModuleCatalog.DisplayName(posture);
+            ModulePurposeText.Text = LogAnalyzer.Core.Services.Edition.ModuleCatalog.Purpose(posture);
+            NoticeText.Text = LogAnalyzer.Core.Services.Edition.ModuleCatalog.DefaultNotice(posture);
+            string level = LogAnalyzer.Dfir.Profile.StationLevelRules.UndefinedText;
+            try { level = LogAnalyzer.Dfir.Profile.StationLevelRules.Describe(LogAnalyzer.Dfir.Profile.ProfileProvider.Shared.Current?.StationLevel); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { }
+            IdentityList.ItemsSource = IdentityRows(Environment.MachineName, level, LogAnalyzer.Dfir.Model.DfirInfo.ApplicationVersion);
         }
 
         private void Configure()
