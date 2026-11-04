@@ -90,13 +90,14 @@ public sealed class UiWalkthrough20261022Tests
     }
 
     [Fact]
-    public void The_window_title_is_short_romanian_with_the_edition_suffix()
+    public void The_window_title_is_short_romanian_with_the_module_name()
     {
         var main = File.ReadAllText(Path.Combine(AppDir(), "MainWindow.xaml"));
         Assert.Contains("Title=\"LogAnalyzer\"", main);
         Assert.DoesNotContain("Threat Triage", main);
         var code = File.ReadAllText(Path.Combine(AppDir(), "MainWindow.xaml.cs"));
-        Assert.Contains("Title += \" — Ediția: \" + LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(", code);
+        // plan 2026-11-04: product · module — descriptor ("LogAnalyzer DFIR · Insula — Stație izolată"), computed for the compiled module
+        Assert.Contains("Title = LogAnalyzer.Core.Services.Edition.ModuleCatalog.ProductName + \" · \" + LogAnalyzer.Core.Services.Edition.ModuleCatalog.DisplayName(", code);
     }
 
     [Fact]

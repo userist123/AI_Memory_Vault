@@ -53,7 +53,7 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <StackPanel VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="LogAnalyzer" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{Binding ProductName}" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
                         <TextBlock Text="{Binding StationSubtitle}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,1,0,0"/>
                     </StackPanel>
@@ -182,7 +182,7 @@
                             <!-- GROUP 1: OPERATIONS -->
                             <TextBlock Text="Operațiuni" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
                             <RadioButton Content="Panou general" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="0" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=0}"/>
-                            <RadioButton Content="Monitorizare în timp real" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="11" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=11;net}"/>
+                            <RadioButton Content="Monitorizare în timp real" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="11" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=11}"/>
                             <RadioButton Content="Amenințări și detecții" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="3" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=3}"/>
                             <RadioButton Content="Cronologia evenimentelor" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="4" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=4}"/>
 
@@ -196,8 +196,8 @@
                             <!-- GROUP 3: DETECTION & INTEL -->
                             <TextBlock Text="Detecție și informații" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
                             <RadioButton Content="Informații despre amenințări" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="7" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=7}"/>
-                            <RadioButton Content="Conturi locale și USB" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=8;air}"/>
-                            <RadioButton Content="Active Directory" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=8;net}"/>
+                            <RadioButton Content="Conturi locale și USB" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=8.local}"/>
+                            <RadioButton Content="Active Directory" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="8" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=8.ad}"/>
                             <RadioButton Content="Istoricul probelor" ToolTip="{views:Term chain_of_custody, Tooltip=True}" AutomationProperties.Name="Istoricul probelor" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="9" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=9}"/>
                             <RadioButton Content="Tehnici de atac (MITRE ATT&amp;CK)" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="10" Visibility="{Binding RoleNavigation, Converter={StaticResource AdvancedNavVisibility}, ConverterParameter=10}"/>
 

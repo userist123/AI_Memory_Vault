@@ -73,12 +73,14 @@ namespace LogAnalyzer.UI.Tests
         }
 
         [Fact]
-        public void Classified_edition_disables_host_and_network_intents_with_the_edition_text()
+        public void Classified_edition_leaves_out_host_and_network_intents_and_pages()
         {
+            // plan 2026-11-04 (ModuleCatalog): what the Standalone module can never have is not offered at all, not even disabled
             var p = RoleProfiles.For(StationRole.Csirt, P1, AppMode.AirGapped);   // the resolver never yields this, the profile must still be safe
-            var whatNow = Assert.Single(p.PrimaryIntents, i => i.Key == "what_now");
-            Assert.False(whatNow.Enabled);
-            Assert.Equal(EditionText.NotAvailableClassified, whatNow.Reason);
+            Assert.DoesNotContain(p.PrimaryIntents, i => i.Key == "what_now");
+            Assert.DoesNotContain(p.MoreIntents, i => i.Key == "domain_mail");
+            Assert.DoesNotContain(p.Navigation, n => n.Tab == RoleProfiles.TabContainment || n.Tab == RoleProfiles.TabDomainMail);
+            Assert.All(p.PrimaryIntents.Concat(p.MoreIntents), i => Assert.True(i.Enabled));
             Assert.Empty(RoleProfiles.Violations(p, P1));
         }
     }

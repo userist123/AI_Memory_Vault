@@ -27,17 +27,20 @@ namespace LogAnalyzer.UI.Views
     }
 
     /// <summary>
-    /// Visibility of an „Avansat” entry: <c>Binding RoleNavigation</c>, <c>ConverterParameter</c> = the tab, optionally <c>;air</c> / <c>;net</c> for the entries that exist in one
-    /// operating mode only (the mode is fixed at start-up, like the view model's IsAirGappedMode / IsNetworkMode).
+    /// Visibility of an „Avansat” entry: <c>Binding RoleNavigation</c>, <c>ConverterParameter</c> = the page key of <see cref="ModuleCatalog"/> (the tab, or "8.local" / "8.ad").
+    /// The catalog decides whether the module has the page at all and which variant the mode shows; the role decides whether it is already a main page.
+    /// An unknown key is never shown (fail closed), so a page missing from the catalog cannot leak into a module.
     /// </summary>
     public sealed class AdvancedNavVisibilityConverter : IValueConverter
     {
-        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            IsVisible(value as IReadOnlyList<NavigationEntry>, parameter as string ?? "", StationPostureContext.Current,
+                      AppModeContext.IsAirGapped ? AppMode.AirGapped : AppMode.Network) ? Visibility.Visible : Visibility.Collapsed;
+
+        public static bool IsVisible(IReadOnlyList<NavigationEntry>? roleNavigation, string key, StationPosture module, AppMode mode)
         {
-            var parts = (parameter as string ?? "").Split(';');
-            if (!int.TryParse(parts[0], NumberStyles.Integer, CultureInfo.InvariantCulture, out var tab)) return Visibility.Visible;
-            if (parts.Length > 1 && ((parts[1] == "air") != AppModeContext.IsAirGapped)) return Visibility.Collapsed;
-            return value is IReadOnlyList<NavigationEntry> nav && !AdvancedNav.IsShown(nav, tab) ? Visibility.Collapsed : Visibility.Visible;
+            if (ModuleCatalog.Find(key) is not { } page || !ModuleCatalog.IsListed(page, module, mode)) return false;
+            return roleNavigation is null || AdvancedNav.IsShown(roleNavigation, page.Tab);
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
