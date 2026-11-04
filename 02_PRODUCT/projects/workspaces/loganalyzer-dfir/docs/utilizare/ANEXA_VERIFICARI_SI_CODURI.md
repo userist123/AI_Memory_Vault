@@ -501,6 +501,14 @@
 - **Sursa tehnică:** `Jurnalul de audit al aplicației (collector.exec, collector.exec_done, control.started, control.finished, audit.anchor); Security 4688, Sysmon 1, PowerShell 4104`
 - **Cum se citește rezultatul:** Conform = toate comenzile aplicației găsite în jurnale sunt consemnate (numărul lor apare în rezultat; nu sunt constatări). De verificat = evenimente care se potrivesc cu o comandă din jurnalul aplicației care nu trece verificarea („activitate pretinsă a aplicației, neconfirmată”, de exemplu scrisă în afara unui control sau pentru un program din afara inventarului): ele rămân și la celelalte verificări. Fără jurnalul aplicației verificarea nu apare și niciun eveniment nu este recunoscut. Limită: un administrator care deține cheia de sigilare poate adăuga după ultimul cod de ancorare înregistrări false pentru programele din inventarul aplicației și poate ascunde astfel orice număr de rulări ale acelor programe la controlul următor; A11 nu detectează intrările adăugate după ancorare; ofițerul compară lista din A17 cu ce a rulat operatorul. Între verificarea amprentei scriptului și citirea lui de către PowerShell există un interval scurt în care un administrator cu drept de scriere în folderul aplicației poate înlocui scriptul; cu jurnalizarea blocurilor de script (4104) activă, conținutul înlocuit apare ca nepotrivit; fără ea, se vede doar pornirea PowerShell, recunoscută ca proprie. Un script PowerShell lung, împărțit de Windows în mai multe evenimente 4104 (același ScriptBlockId), este reasamblat în ordine înainte de comparare; un set incomplet sau cu o parte dublată nu este confirmat și rămâne DE VERIFICAT, cu motivul. Comenzile pornite în afara unui control (investigație, izolare) își primesc propria fereastră de acțiune în jurnalul sigilat și sunt confirmate la fel.
 
+### A18
+
+- **Ce verificăm:** Dacă înregistrările de acces (jurnalul Security) sunt păstrate atât cât cere nivelul de clasificare al stației.
+- **De ce contează:** HG 585 art. 291 cere păstrarea registrelor de acces cel puțin 3 ani la secret și strict secret și cel puțin 10 ani la strict secret de importanță deosebită; la secret de serviciu durata o fixează documentația de acreditare.
+- **Cum verifică aplicația:** A citit nivelul stației din Profilul de proceduri și data celui mai vechi eveniment din jurnalul Security, apoi a comparat-o cu începutul perioadei cerute de nivel.
+- **Sursa tehnică:** `Profilul de proceduri (Nivelul stației); jurnalul Security, primul eveniment`
+- **Cum se citește rezultatul:** Conform = jurnalul de pe stație acoperă singur durata cerută. De verificat = jurnalul începe mai târziu: înregistrările mai vechi trebuie să fie în arhivele exportate, pe care aplicația nu le vede. Nedeterminat = nivelul nu este definit în profil sau jurnalul nu a putut fi citit.
+
 ### U01
 
 - **Ce verificăm:** Cine a fost adăugat sau scos din grupul administratorilor în perioada controlată.
@@ -868,6 +876,14 @@
 - **Cum verifică aplicația:** Doar în ediția Rețea, doar pe o stație membră a domeniului și doar dacă modul de lucru permite traficul. Localizarea controlerului folosește traficul obișnuit al Windows, cel de la fiecare autentificare în domeniu: localizatorul (DsGetDcName, Netlogon) întreabă serverul DNS configurat de înregistrarea _ldap._tcp.dc._msdcs a domeniului, trimite controlerelor găsite pingul UDP Netlogon (389), iar numele controlerului se rezolvă prin același server DNS; acest trafic pleacă înainte să se cunoască vreo adresă. Conexiunea proprie a aplicației este una singură, TCP la LDAP (389), numai spre o adresă privată, fără autentificare și fără date trimise. Dacă vreo adresă rezolvată este publică, aplicația nu deschide nicio conexiune TCP. Totul are o limită de timp de 10 secunde.
 - **Sursa tehnică:** `DsGetDcName (netapi32) → numele și adresa controlerului; rezolvarea numelui; conexiune TCP la portul 389`
 - **Cum se citește rezultatul:** Conform = controler găsit la o adresă privată, LDAP răspunde. Neconform = controlerul se rezolvă la o adresă publică (aplicația nu deschide conexiunea TCP). De verificat = controlerul nu a răspuns, nu a fost găsit sau limita de timp a trecut. Nedeterminat = stația nu este membră a unui domeniu (N12), verificarea nu a rulat sau a fost anulată. Nu se aplică pe Standalone și Internet.
+
+### N14
+
+- **Ce verificăm:** Dacă stația are voie să fie conectată la internet la nivelul ei de clasificare.
+- **De ce contează:** La strict secret de importanță deosebită conectarea la internet este interzisă; la celelalte niveluri interconectarea se face doar cu aprobarea agenției de acreditare.
+- **Cum verifică aplicația:** A citit nivelul stației din Profilul de proceduri și ediția aplicației (doar ediția Internet are acces la internet).
+- **Sursa tehnică:** `Profilul de proceduri (Nivelul stației); ediția aplicației`
+- **Cum se citește rezultatul:** Neconform = nivel strict secret de importanță deosebită pe ediția Internet. De verificat = alt nivel: confirmați aprobarea interconectării. Nedeterminat = nivelul nu este definit. Nu se aplică pe Standalone și Rețea izolată.
 
 ### EM01
 

@@ -181,6 +181,38 @@ public class Hg585LevelAndActionsTests
     }
 
     [Fact]
+    public void A_saved_closed_state_never_hides_a_check_that_was_neconform_in_the_same_previous_report()
+    {
+        var tampered = Open("N03"); tampered.State = CorrectiveState.Inchisa;
+        var prev = new PreviousControl("x", Now.AddDays(-90), "LAB-PC", [C("N03", ControlStatus.Neconform), C("N04", ControlStatus.Neconform)], [tampered]);
+        var plan = CorrectiveActions.Plan([C("N03", ControlStatus.Nedeterminat)], Now, prev);
+        var n03 = plan.Single(a => a.CheckId == "N03");
+        Assert.Equal(CorrectiveState.Deschisa, n03.State);
+        Assert.Equal("măsura N03", n03.Measure);
+        Assert.StartsWith("Starea salvată nu corespunde", n03.Note);
+        var n04 = plan.Single(a => a.CheckId == "N04");            // NECONFORM before, with no action at all: carried open
+        Assert.Equal(CorrectiveState.Deschisa, n04.State);
+        Assert.Contains("nu a fost evaluată", n04.Note);
+    }
+
+    [Fact]
+    public void A_report_saved_before_the_register_existed_does_not_invent_actions()
+    {
+        var old = new PreviousControl("x", Now.AddDays(-90), "LAB-PC", [C("N03", ControlStatus.Neconform)]);
+        Assert.Empty(CorrectiveActions.Plan([C("N03", ControlStatus.Conform)], Now, old));
+    }
+
+    [Theory]
+    [InlineData("NATO SECRET")]
+    [InlineData("SECRET UE/EU SECRET")]
+    public void A18_is_never_conform_for_a_NATO_or_EU_level(string level)
+    {
+        var a18 = Check(ControlEvaluator.Evaluate(Facts(level, Now.AddYears(-20))), "A18");
+        Assert.Equal(ControlStatus.DeVerificat, a18.Status);
+        Assert.Contains("nu este un nivel național", a18.Detail);
+    }
+
+    [Fact]
     public void Overdue_open_actions_are_printed_first_and_in_red()
     {
         var plan = CorrectiveActions.Plan([C("N03", ControlStatus.Neconform), C("N04", ControlStatus.Neconform)], Now,

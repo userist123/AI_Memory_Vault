@@ -51,7 +51,24 @@ public static class CorrectiveActions
         var now = current.GroupBy(c => c.Id).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
         var list = new List<CorrectiveAction>();
         var carried = new HashSet<string>(StringComparer.Ordinal);
-        foreach (var old in previous?.Actions ?? [])
+        // An action is closed only at a LATER control, so a check that was NECONFORM in the previous control must have had an open action there. A saved
+        // "closed" state (or a missing action) for such a check contradicts the same report: it is carried as open, never trusted to hide the non-conformity.
+        var prevNeconform = previous?.Actions is null ? new HashSet<string>(StringComparer.Ordinal)
+            : previous.Checks.Where(c => c.Status == ControlStatus.Neconform).Select(c => c.Id).ToHashSet(StringComparer.Ordinal);
+        var previousActions = (previous?.Actions ?? []).ToList();
+        var reopened = new HashSet<CorrectiveAction>(ReferenceEqualityComparer.Instance);
+        foreach (var id in prevNeconform.Where(id => !previousActions.Any(a => a.CheckId == id && a.State == CorrectiveState.Deschisa)))
+        {
+            var known = previousActions.FirstOrDefault(a => a.CheckId == id);
+            var title = known?.Title ?? previous!.Checks.First(c => c.Id == id).Title;
+            var guard = new CorrectiveAction
+            {
+                CheckId = id, Title = title, OpenedUtc = known?.OpenedUtc ?? previous!.CollectedUtc, Measure = known?.Measure ?? "", Responsible = known?.Responsible ?? "",
+                Deadline = known?.Deadline ?? "", Note = "Starea salvată nu corespunde verificării NECONFORME din același control; măsura este tratată ca deschisă.",
+            };
+            previousActions.Insert(0, guard); reopened.Add(guard);
+        }
+        foreach (var old in previousActions)
         {
             if (old.State != CorrectiveState.Deschisa || !carried.Add(old.CheckId)) continue;
             var a = new CorrectiveAction
@@ -68,6 +85,7 @@ public static class CorrectiveActions
                 a.Note = c is null ? $"Rămâne deschisă: verificarea {old.CheckId} nu a fost evaluată la acest control, deci remedierea nu se poate constata."
                      : c.Status == ControlStatus.Neconform ? $"Rămâne deschisă: verificarea {c.Id} este tot NECONFORMĂ."
                      : $"Rămâne deschisă: verificarea {c.Id} este {ControlReportPdf.StatusText(c.Status)} la acest control, nu CONFORMĂ, deci remedierea nu se poate constata.";
+            if (reopened.Contains(old)) a.Note = old.Note + " " + a.Note;
             list.Add(a);
         }
         foreach (var c in current.Where(c => c.Status == ControlStatus.Neconform && !carried.Contains(c.Id)).GroupBy(c => c.Id).Select(g => g.First()))

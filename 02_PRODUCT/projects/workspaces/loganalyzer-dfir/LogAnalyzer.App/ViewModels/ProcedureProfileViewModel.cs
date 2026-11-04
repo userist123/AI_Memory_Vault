@@ -197,7 +197,8 @@ namespace LogAnalyzer.UI.ViewModels
         private void Push()
         {
             foreach (var t in Tables) t.Load(_profile);
-            StationLevel = _profile.StationLevel ?? "";
+            // an imported or hand-written marking ("SSID", "secret") is shown as the level's name, so the picker finds it and never clears it
+            StationLevel = LogAnalyzer.Dfir.Profile.StationLevelRules.Resolve(_profile.StationLevel)?.Name ?? _profile.StationLevel ?? "";
             Refresh();
             OnPropertyChanged(nameof(IsEmpty));
         }

@@ -30,6 +30,28 @@ public sealed class CorrectiveActionsUiTests : IDisposable
     }
 
     [Fact]
+    public void A_level_written_as_an_abbreviation_is_shown_as_the_choice_name()
+    {
+        var path = Path.Combine(_dir, "procedure_profile.json");
+        File.WriteAllText(path, "{\"schema_version\":\"1.0\",\"stationLevel\":\"SSID\"}");
+        var vm = new ProcedureProfileViewModel(new ProfileProvider(path));
+        Assert.Equal("STRICT SECRET DE IMPORTANȚĂ DEOSEBITĂ", vm.StationLevel);
+        Assert.Contains(ProcedureProfileViewModel.StationLevelChoices, c => c.Name == vm.StationLevel);
+    }
+
+    [Fact]
+    public void The_report_comparison_is_against_the_most_recent_saved_control_whatever_the_period()
+    {
+        var facts = new StationFacts { Host = "H", CollectedUtc = DateTimeOffset.UtcNow };
+        var report = new ControlReport { Facts = facts };
+        report.Checks.Add(Check("N03", ControlStatus.Neconform));
+        Assert.Null(StationControlViewModel.ReportComparison(report, null));
+        var prev = new PreviousControl("p", DateTimeOffset.UtcNow.AddDays(-10), "H", [Check("N03", ControlStatus.Conform)]);
+        var cmp = StationControlViewModel.ReportComparison(report, prev)!;
+        Assert.Equal("N03", Assert.Single(cmp.Worse).Id);
+    }
+
+    [Fact]
     public void Station_level_choices_start_with_nedefinit_then_national_then_nato_and_eu()
     {
         var c = ProcedureProfileViewModel.StationLevelChoices;

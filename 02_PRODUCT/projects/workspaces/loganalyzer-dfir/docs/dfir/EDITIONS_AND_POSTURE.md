@@ -104,7 +104,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | A15 | Classified files: access and exits without approval | Review; non-conform on any exit not in the transfer register | Review; non-conform on any exit not in the transfer register (network shares included) | n/a | Classified folders exist only in the controlled editions. |
 | A16 | Application installation date versus the previous control (paper anchor) | Unchanged | Unchanged | Unchanged |  |
 | A17 | The application's own commands recognised from its sealed audit | All recorded | All recorded | All recorded |  |
-| A18 | Access-record retention required by the station level | Covers the level's retention or archives confirmed | Covers the level's retention or archives confirmed | Covers the level's retention or archives confirmed |  |
+| A18 | Access-record retention required by the station level | Live log covers the level's retention; otherwise review the archives | Live log covers the level's retention; otherwise review the archives | Live log covers the level's retention; otherwise review the archives |  |
 | U01 | Changes to the Administrators group | Review | Review | Review |  |
 | U02 | Accounts created, deleted, enabled, disabled or reset | Review | Review | Review |  |
 | U03 | Remote (RDP) logons | Review | Review (administration over the LAN is normal) | Review |  |

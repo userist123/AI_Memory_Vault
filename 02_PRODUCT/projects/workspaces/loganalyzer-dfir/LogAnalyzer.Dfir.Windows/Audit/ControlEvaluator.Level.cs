@@ -44,6 +44,15 @@ public static partial class ControlEvaluator
             return;
         }
         var required = f.CollectedUtc.AddYears(-years);
+        // the rank only compares levels across schemes: for a NATO / EU station the national rule is an equivalence, not its legal basis, so it is never CONFORM
+        if (rules.Level.Scheme != LogAnalyzer.Dfir.Model.SecrecyScheme.National)
+        {
+            Add(r, id, area, title, ControlStatus.DeVerificat,
+                $"{lvl} Nivelul {rules.Level.Name} nu este un nivel național: s-a aplicat regula nivelului național echivalent (tabelul de echivalență HG 585), care nu este neapărat baza legală a stației. " +
+                $"Jurnalul Security de pe stație începe la {oldest:yyyy-MM-dd} (UTC). Confirmați durata cerută din documentația de acreditare.",
+                [$"Security, cel mai vechi eveniment {oldest:yyyy-MM-dd HH:mm} UTC"], rec);
+            return;
+        }
         if (oldest <= required)
             Add(r, id, area, title, ControlStatus.Conform,
                 $"{lvl} Jurnalul Security de pe stație începe la {oldest:yyyy-MM-dd} (UTC), deci acoperă singur ultimii {years} ani (de la {required:yyyy-MM-dd}).",

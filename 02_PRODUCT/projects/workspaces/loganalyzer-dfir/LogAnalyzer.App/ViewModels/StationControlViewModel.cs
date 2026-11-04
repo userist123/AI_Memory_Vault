@@ -197,9 +197,16 @@ namespace LogAnalyzer.UI.ViewModels
             RefreshCorrectiveActionsMissing();
         }
 
-        /// <summary>Called by the page after a cell of the actions grid was edited.</summary>
-        public void RefreshCorrectiveActionsMissing() =>
+        /// <summary>The comparison printed in the proces-verbal: against the most recent saved control (the one the measures come from), or null when there is none.</summary>
+        internal static ControlComparison? ReportComparison(ControlReport report, PreviousControl? previous) =>
+            previous is null ? null : ControlComparison.Compare(previous, report.Checks);
+
+        /// <summary>Called by the page after a cell of the actions grid was edited. A report saved before the edit no longer matches: it is generated again when needed.</summary>
+        public void RefreshCorrectiveActionsMissing()
+        {
             CorrectiveActionsMissing = string.Join(Environment.NewLine, CorrectiveActions.Missing(CorrectiveActionItems));
+            if (_lastReportPdf is not null) { _lastReportPdf = null; Status = "Măsurile s-au schimbat după salvarea raportului; raportul se generează din nou la următoarea deschidere, semnare sau copiere."; }
+        }
 
         private void ClearCorrectiveActions() { CorrectiveActionItems.Clear(); CorrectiveActionsMissing = ""; }
         // WP18 S5: the "proces-verbal" fields (decision D3) and the manual marking (decision D4).
@@ -387,6 +394,8 @@ namespace LogAnalyzer.UI.ViewModels
                 var previousAnchor = PreviousAnchorCode;
                 var previousFromStation = PreviousCodeIsStationHint();
                 _lastReportPdf = null;
+                // a comparison or result left from the previous run never reaches this run's report
+                Comparison = null; ComparisonChanges.Clear(); Result = null;
                 _controlFinishAudited = false;
                 bool auditedStart = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlStarted,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail(LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(posture), posture.ToString(),
@@ -614,7 +623,9 @@ namespace LogAnalyzer.UI.ViewModels
             RefreshCorrectiveActionsMissing();
             if (gate is not null) { Status = gate; return null; }
             if (Result is null) BuildResult();
-            var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result, ManualItems.Select(m => m.ToResult()).ToList(), CorrectiveActionItems.ToList(), Comparison);
+            // section 3e is always against the same previous control the measures (3d) were carried from, whatever period was chosen
+            var comparison = ReportComparison(_report, PreviousControls.FirstOrDefault());
+            var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result, ManualItems.Select(m => m.ToResult()).ToList(), CorrectiveActionItems.ToList(), comparison);
             string sha;
             using (var fs = File.OpenRead(pdf)) sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
             LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ReportGenerated, LogAnalyzer.Dfir.Auth.OperationAudit.ReportGeneratedDetail(Path.GetFileName(pdf), sha));
