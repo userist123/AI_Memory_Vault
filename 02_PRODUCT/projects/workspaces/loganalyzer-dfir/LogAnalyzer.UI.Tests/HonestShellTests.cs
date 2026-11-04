@@ -279,7 +279,8 @@ namespace LogAnalyzer.UI.Tests
             Assert.Contains("<views:HomeView DataContext=\"{Binding Home}\"/>", main);
             Assert.Contains("private int _selectedTabIndex = HomeViewModel.HomeTabIndex", vm);
             Assert.Contains("Command Dashboard", main);          // the existing pages are still there
-            Assert.Contains("Investigație completă (caz)", main);
+            Assert.Contains(LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(LogAnalyzer.Core.Services.Edition.StationPosture.Standalone, LogAnalyzer.Core.Services.Connectivity.AppMode.AirGapped, []).SelectMany(s => s.Pages),
+                            p => p.Title == "Investigație completă (caz)");   // 2026-11-05: the Avansat menu comes from the catalog
         }
 
         [Fact]

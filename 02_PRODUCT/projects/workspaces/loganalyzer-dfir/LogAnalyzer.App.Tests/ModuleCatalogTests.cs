@@ -1,4 +1,5 @@
 using System.IO;
+using System.Linq;
 using System.Text.RegularExpressions;
 using LogAnalyzer.Core.Services.Connectivity;
 using LogAnalyzer.Core.Services.Edition;
@@ -32,9 +33,9 @@ public sealed class ModuleCatalogTests
         var xaml = MainWindow();
         Assert.DoesNotContain(";air}", xaml);
         Assert.DoesNotContain(";net}", xaml);
-        var keys = Regex.Matches(xaml, @"AdvancedNavVisibility\}, ConverterParameter=([^}]+)\}").Select(m => m.Groups[1].Value).ToList();
-        Assert.NotEmpty(keys);
-        foreach (var k in keys) Assert.True(ModuleCatalog.Find(k) is not null, $"cheia de meniu „{k}” lipsește din ModuleCatalog");
+        // since 2026-11-05 the Avansat menu is generated from ModuleCatalog.Menu: every page it can list is a catalog page with a section
+        foreach (var p in ModuleCatalog.Pages.Where(p => p.Tab != RoleProfiles.TabHome))
+            Assert.True(ModuleCatalog.SectionOf(p.Key) is not null, $"pagina „{p.Key}” nu are secțiune în meniul Avansat");
         for (var tab = 0; tab <= RoleProfiles.TabTransferRegister; tab++)
             Assert.Contains(ModuleCatalog.Pages, p => p.Tab == tab);
         Assert.Equal(ModuleCatalog.Pages.Count, ModuleCatalog.Pages.Select(p => p.Key).Distinct().Count());
@@ -88,6 +89,88 @@ public sealed class ModuleCatalogTests
         var rows = SignInWindow.IdentityRows("LAB-PC", "SECRET (S)", "0.1.0-dfir");
         Assert.Equal(["Stația", "Nivelul stației", "Versiunea", "Licența"], rows.Select(r => r.Label));
         Assert.Equal(["LAB-PC", "SECRET (S)", "0.1.0-dfir", "verificată la pornire"], rows.Select(r => r.Value));
+    }
+
+    private static readonly int[] NoMainTabs = [];
+
+    private static IEnumerable<StationPosture> Modules => [StationPosture.Standalone, StationPosture.IsolatedNetwork, StationPosture.Internet];
+
+    [Fact]
+    public void Menu_of_Insula_has_none_of_the_network_or_response_pages()
+    {
+        foreach (var mode in new[] { AppMode.AirGapped, AppMode.Network })
+        {
+            var tabs = ModuleCatalog.Menu(StationPosture.Standalone, mode, NoMainTabs).SelectMany(s => s.Pages).ToList();
+            foreach (var t in new[] { 7, 11, 13, 15 }) Assert.DoesNotContain(tabs, p => p.Tab == t);
+            Assert.DoesNotContain(tabs, p => p.Key == "8.ad");
+        }
+    }
+
+    [Fact]
+    public void Menu_never_repeats_a_page_and_never_repeats_a_main_page_of_the_role()
+    {
+        int[] role = [14, 19, 17, 4];
+        foreach (var module in Modules)
+            foreach (var mode in new[] { AppMode.AirGapped, AppMode.Network })
+            {
+                var pages = ModuleCatalog.Menu(module, mode, role).SelectMany(s => s.Pages).ToList();
+                Assert.Equal(pages.Count, pages.Select(p => p.Key).Distinct().Count());
+                Assert.Equal(pages.Count, pages.Select(p => p.Tab).Distinct().Count());
+                Assert.DoesNotContain(pages, p => role.Contains(p.Tab));
+            }
+    }
+
+    [Fact]
+    public void Menu_leaves_out_empty_sections()
+    {
+        foreach (var mode in new[] { AppMode.AirGapped, AppMode.Network })
+        {
+            var names = ModuleCatalog.Menu(StationPosture.Standalone, mode, NoMainTabs).Select(s => s.Name).ToList();
+            Assert.DoesNotContain("Rețea și domeniu", names);
+            Assert.DoesNotContain("Amenințări", names);
+            Assert.Contains("Examinare", names);
+        }
+        var control = ModuleCatalog.Menu(StationPosture.Standalone, AppMode.AirGapped, [14, 19]).Select(s => s.Name);
+        Assert.DoesNotContain("Control stație", control);
+        foreach (var module in Modules)
+            Assert.All(ModuleCatalog.Menu(module, AppMode.Network, NoMainTabs), s => Assert.NotEmpty(s.Pages));
+        var net = ModuleCatalog.Menu(StationPosture.IsolatedNetwork, AppMode.Network, NoMainTabs).Select(s => s.Name).ToList();
+        Assert.Contains("Rețea și domeniu", net);
+        Assert.Contains("Amenințări", net);
+    }
+
+    [Fact]
+    public void Menu_sections_and_order_follow_the_flow_of_a_case()
+    {
+        var all = ModuleCatalog.Menu(StationPosture.Internet, AppMode.Network, NoMainTabs);
+        Assert.Equal(["Examinare", "Probe și colectare", "Control stație", "Registre", "Rețea și domeniu", "Amenințări", "Administrare"], all.Select(s => s.Name));
+        Assert.Equal([0, 4, 1, 2, 3, 5, 6, 10], all[0].Pages.Select(p => p.Tab));
+        Assert.Equal([16, 12, 9], all[1].Pages.Select(p => p.Tab));
+    }
+
+    [Fact]
+    public void Every_tab_except_Acasa_is_in_exactly_one_menu_section()
+    {
+        foreach (var p in ModuleCatalog.Pages)
+        {
+            if (p.Tab == RoleProfiles.TabHome) { Assert.Null(ModuleCatalog.SectionOf(p.Key)); continue; }
+            Assert.NotNull(ModuleCatalog.SectionOf(p.Key));
+        }
+        // across the two modes of the biggest module every tab 0-23 except Acasă is listed, and within one menu no page twice
+        var net = ModuleCatalog.Menu(StationPosture.Internet, AppMode.Network, NoMainTabs).SelectMany(s => s.Pages).Select(p => p.Tab).ToList();
+        var air = ModuleCatalog.Menu(StationPosture.Internet, AppMode.AirGapped, NoMainTabs).SelectMany(s => s.Pages).Select(p => p.Tab).ToList();
+        Assert.Equal(net.Count, net.Distinct().Count());
+        Assert.Equal(Enumerable.Range(0, RoleProfiles.TabTransferRegister + 1).Where(t => t != RoleProfiles.TabHome), net.Union(air).Order());
+    }
+
+    [Fact]
+    public void The_window_has_no_static_advanced_radio_buttons_and_binds_the_generated_menu()
+    {
+        var xaml = MainWindow();
+        Assert.DoesNotContain("AdvancedNavVisibility", xaml);
+        Assert.Contains("ItemsSource=\"{Binding AdvancedMenu}\"", xaml);
+        Assert.Contains("AutomationProperties.Name=\"{Binding Title}\" Style=\"{StaticResource SidebarTabStyle}\"", xaml);
+        Assert.Contains("CommandParameter=\"{Binding TabText}\"", xaml);
     }
 
     [Fact]

@@ -836,7 +836,10 @@ public sealed class DeviceMonitorTests
     {
         var main = File.ReadAllText(Path.Combine(AppDir(), "MainWindow.xaml"));
         Assert.DoesNotContain("Content=\"Registru medii\"", main);
-        Assert.Contains($"Content=\"Monitor dispozitive\" GroupName=\"Sidebar\" Style=\"{{StaticResource SidebarTabStyle}}\" Command=\"{{Binding NavigateCommand}}\" CommandParameter=\"{RoleProfiles.TabMediaRegister}\"", main);
+        // 2026-11-05: the Avansat menu is generated from the catalog; the monitor page is a catalog entry listed in it
+        Assert.Contains(LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(LogAnalyzer.Core.Services.Edition.StationPosture.Standalone, AppMode.AirGapped, []).SelectMany(s => s.Pages),
+                        p => p.Title == "Monitor dispozitive" && p.Tab == RoleProfiles.TabMediaRegister);
+        Assert.Contains("ItemsSource=\"{Binding AdvancedMenu}\"", main);
         Assert.Contains("MediaCenter.AlertIsCritical", main);
         foreach (var role in new[] { StationRole.Control })
         {

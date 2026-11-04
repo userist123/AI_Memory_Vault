@@ -143,6 +143,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>WP18 S2: the role profile (intents and sidebar entries) of this PC. Data from the role, the edition and the mode.</summary>
         public LogAnalyzer.Core.Services.Edition.RoleProfile RoleProfile { get; }
         public System.Collections.Generic.IReadOnlyList<LogAnalyzer.Core.Services.Edition.NavigationEntry> RoleNavigation => RoleProfile.Navigation;
+        /// <summary>The „Avansat” menu: sections and pages from <see cref="LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu"/> for this module, the current mode and the role's main pages.</summary>
+        public System.Collections.Generic.IReadOnlyList<LogAnalyzer.Core.Services.Edition.ModuleCatalog.MenuSection> AdvancedMenu =>
+            LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(StationPostureContext.Current, AppModeContext.IsAirGapped ? AppMode.AirGapped : AppMode.Network, RoleNavigation.Select(n => n.Tab).ToList());
 
         /// <summary>Control audit of this station ("Control stație" tab).</summary>
         public StationControlViewModel StationControl { get; } = new();

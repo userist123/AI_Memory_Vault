@@ -50,7 +50,14 @@ namespace LogAnalyzer.Core.Services.Edition
 
         /// <summary>One page of the main window: its tab, the modules that have it, whether it needs the network mode, and its variant (one tab, two pages by mode).</summary>
         /// <param name="Variant">"" for a page that is the same in every mode; "local" / "ad" for tab 8 (local accounts and USB when isolated, Active Directory on a network).</param>
-        public sealed record PageEntry(string Key, int Tab, string Title, IReadOnlyList<StationPosture> Modules, bool NeedsNetworkMode, string Variant = "");
+        public sealed record PageEntry(string Key, int Tab, string Title, IReadOnlyList<StationPosture> Modules, bool NeedsNetworkMode, string Variant = "")
+        {
+            /// <summary>The tab as the text the navigation command takes as its parameter.</summary>
+            public string TabText => Tab.ToString(System.Globalization.CultureInfo.InvariantCulture);
+        }
+
+        /// <summary>One section of the „Avansat” menu with the pages it lists now.</summary>
+        public sealed record MenuSection(string Name, IReadOnlyList<PageEntry> Pages);
 
         private static readonly StationPosture[] All = [StationPosture.Standalone, StationPosture.IsolatedNetwork, StationPosture.Internet];
         private static readonly StationPosture[] Networked = [StationPosture.IsolatedNetwork, StationPosture.Internet];
@@ -86,6 +93,42 @@ namespace LogAnalyzer.Core.Services.Edition
             new("22", 22, "Acasă", All, false),
             new("23", 23, "Registrul de transferuri", All, false),
         ];
+
+        /// <summary>
+        /// The „Avansat” menu layout, the single source of the sections and of the order inside them (the flow of a case). Page keys are those of <see cref="Pages"/>.
+        /// Acasă (22) is not in it: it is the fixed first entry of the sidebar.
+        /// </summary>
+        private static readonly (string Section, string[] Keys)[] MenuLayout =
+        [
+            ("Examinare", ["0", "4", "1", "2", "3", "5", "6", "10", "8.local"]),
+            ("Probe și colectare", ["16", "12", "9"]),
+            ("Control stație", ["14", "19"]),
+            ("Registre", ["23", "20"]),
+            ("Rețea și domeniu", ["8.ad", "11", "13", "15"]),
+            ("Amenințări", ["7"]),
+            ("Administrare", ["17", "18", "21"]),
+        ];
+
+        /// <summary>The section names of the „Avansat” menu, in order.</summary>
+        public static IEnumerable<string> MenuSectionNames => MenuLayout.Select(l => l.Section);
+
+        /// <summary>The section of the „Avansat” menu a page key belongs to, or null (Acasă).</summary>
+        public static string? SectionOf(string key) => MenuLayout.FirstOrDefault(l => l.Keys.Contains(key)).Section;
+
+        /// <summary>
+        /// The „Avansat” menu for a module and mode: the non-empty sections in order, each with the pages that are listed (<see cref="IsListed"/>) and are not
+        /// already main pages of the role (<paramref name="roleMainTabs"/>). A section without pages is left out.
+        /// </summary>
+        public static IReadOnlyList<MenuSection> Menu(StationPosture module, AppMode mode, IReadOnlyList<int> roleMainTabs)
+        {
+            var sections = new List<MenuSection>();
+            foreach (var (name, keys) in MenuLayout)
+            {
+                var pages = keys.Select(Find).OfType<PageEntry>().Where(p => IsListed(p, module, mode) && !roleMainTabs.Contains(p.Tab)).ToList();
+                if (pages.Count > 0) sections.Add(new MenuSection(name, pages));
+            }
+            return sections;
+        }
 
         public static PageEntry? Find(string key) => Pages.FirstOrDefault(p => p.Key == key);
 
