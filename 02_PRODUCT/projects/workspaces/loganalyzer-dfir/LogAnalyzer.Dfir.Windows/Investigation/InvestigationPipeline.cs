@@ -419,6 +419,10 @@ public sealed class InvestigationPipeline
         // R7a: fingerprint sets imported by the operator. Known-bad -> high finding; known-good -> label only (Analysis/known_hashes.json), the item stays in the case.
         var hashSetList = (hashSets ?? new LogAnalyzer.Dfir.HashSets.HashSetLibrary()).Load(out var hashSetProblems);
         foreach (var hp in hashSetProblems) { r.Gaps.Add(new EvidenceGap("Set de amprente", EvidenceStatus.Failed, hp, "Setul nu a fost folosit la potrivire", "Reimportați setul", "Da")); ws.Audit("hashset.problem", hp); }
+        // Coverage, said plainly: the case's samples are compared by SHA-256 only; a set of MD5 / SHA-1 only reaches the event fields that carry those hashes.
+        foreach (var hs in hashSetList.Where(h => !h.Info.CoversEvidenceSamples))
+            r.Gaps.Add(new EvidenceGap("Set de amprente", EvidenceStatus.Partial, $"Setul „{hs.Info.Name}” conține doar {string.Join(", ", hs.Info.Algorithms)}. {LogAnalyzer.Dfir.HashSets.HashSetMatcher.CoverageNote}",
+                "Probele din caz (fișierele importate) nu sunt comparate cu acest set", "Folosiți un set cu SHA-256 pentru probele din caz", "Da"));
         var hashMatches = LogAnalyzer.Dfir.HashSets.HashSetMatcher.Match(hashSetList, ws.LoadEvidence(), r.Timeline);
         int hashFindingNo = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n2) ? n2 : 0).DefaultIfEmpty(0).Max();
         found.AddRange(LogAnalyzer.Dfir.HashSets.HashSetMatcher.ToFindings(hashMatches, () => $"F-{++hashFindingNo:D4}"));

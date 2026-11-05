@@ -139,7 +139,8 @@ public static class SelfTest
                 Network = NetworkCategory.StandalonePc, Classification = ClassificationLevel.Unclassified,
             });
             InvestigationPipeline.Import(ws, new[] { task }.Concat(extraFiles ?? []));
-            var r = new InvestigationPipeline().Run(ws, CollectionProfile.Quick, collect: false);
+            // An empty library: the self-test must never read (or depend on) the fingerprint sets of the station.
+            var r = new InvestigationPipeline().Run(ws, CollectionProfile.Quick, collect: false, hashSets: new LogAnalyzer.Dfir.HashSets.HashSetLibrary(Path.Combine(root, "hashsets-empty")));
             var sig = string.Join("\n", r.Findings.Select(f => $"{f.RuleId}|{f.Severity}|{f.Title}|{f.Description}").OrderBy(x => x, StringComparer.Ordinal));
             return (r.Timeline.Count, r.Findings.Count, Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(Encoding.UTF8.GetBytes(sig))));
         }

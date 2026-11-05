@@ -68,6 +68,15 @@
   App 940/0, UI 354/0/1, Edition 45/0. OPEN (low): capability checks only at navigation, not inside StationControl.Run / CollectAll /
   transfer save / containment (all current callers gated); report.pv / intel.online / update.online not enforced anywhere; tab 7 has no capability.
 
+- R7a DONE (6ca070792 + fixes): known-file hash sets (import text/CSV incl. NSRL CSV, known-bad -> high finding with full evidence,
+  known-good = label only), card in Profil de proceduri (verified on screen). Opus round 1: null-id crash, planted/altered sets, Sysmon
+  Hashes ignored, 839 MiB -> fixed by worker (strict per-set validation + visible problems/EvidenceGap, audit-matched stored SHA, SafePath,
+  binary sorted storage ~30 MiB/1M, cache, SelfTest empty library, Hashes parser, coverage note). Round 2 (delta): folder pre-created by a
+  standard user defeats the unkeyed audit -> fixed in main session: FolderTrustProblem (owner + no non-admin write ACE + file owners; repair
+  when elevated) on the station folder, audited-but-missing sets reported, memo key includes the trust flag. Suites: Dfir 2448/0/31,
+  App 979/0, UI 354/0/1, Edition 45/0. RESIDUAL (owner): audit chain is unkeyed (folder ACL is the barrier); sets imported before the fix
+  must be re-imported; import/remove still synchronous in the page; rejected sets cannot be removed from the page; load peak ~850 MiB at 10M.
+
 ## Next
 1. Read CI on #370 once (head 5ef49dab3 or later).
 2. R6 navigation by case flow (plan section 5), R2b read-only on expiry + capability enforcement (fix Has() cache), R7 DFIR (collection

@@ -34,15 +34,35 @@ public static class HashSetMatcher
             Try(e.Sha256, e.EvidenceId, string.IsNullOrEmpty(e.OriginalPath) ? e.OriginalName : e.OriginalPath, "file", "probă", e.Sha256);
         if (timeline is not null)
             foreach (var ev in timeline)
-                foreach (var h in new[] { ev.Hash, ev.Fields.GetValueOrDefault("SHA256", ""), ev.Fields.GetValueOrDefault("SHA1", ""), ev.Fields.GetValueOrDefault("MD5", "") })
+                foreach (var h in new[] { ev.Hash, ev.Fields.GetValueOrDefault("SHA256", ""), ev.Fields.GetValueOrDefault("SHA1", ""), ev.Fields.GetValueOrDefault("MD5", "") }
+                    .Concat(ParseHashesField(ev.Fields.GetValueOrDefault("Hashes", ""))))
                     if (!string.IsNullOrEmpty(h)) Try(h.Trim(), ev.EvidenceId, ev.Path, ev.Locator, "cronologie", ev.SourceSha256);
         return res;
+    }
+
+    /// <summary>What a set can and cannot match, shown in the card and in the investigation result.</summary>
+    public const string CoverageNote = "Probele din caz se compară după SHA-256; seturile doar MD5 / SHA-1 potrivesc doar câmpurile de eveniment care au acele amprente (Sysmon, Amcache).";
+
+    /// <summary>
+    /// The Sysmon <c>Hashes</c> field (<c>SHA1=…,MD5=…,SHA256=…,IMPHASH=…</c>, same separators as the parser of the remote-tool rules): each value is taken by its
+    /// algorithm name and length; IMPHASH (also 32 hex characters) is not an MD5 and is left out.
+    /// </summary>
+    public static IEnumerable<string> ParseHashesField(string hashes)
+    {
+        foreach (var part in hashes.Split([',', ';', ' '], StringSplitOptions.RemoveEmptyEntries))
+        {
+            var eq = part.IndexOf('=');
+            if (eq <= 0) continue;
+            var value = part[(eq + 1)..];
+            var ok = part[..eq].ToUpperInvariant().Replace("-", "") switch { "SHA256" => value.Length == 64, "SHA1" => value.Length == 40, "MD5" => value.Length == 32, _ => false };
+            if (ok) yield return value;
+        }
     }
 
     /// <summary>Detection results for the known-bad matches only (same <see cref="DetectionKind.Hash"/> kind as the hash IOCs).</summary>
     public static IEnumerable<DetectionResult> ToDetections(IEnumerable<HashSetMatch> matches) =>
         matches.Where(m => m.IsKnownBad).Select(m => new DetectionResult(
-            $"HASHSET:{m.SetId}:{m.Hash}", m.SetSourceSha256.Length >= 12 ? m.SetSourceSha256[..12] : m.SetSourceSha256, m.SetSourceSha256, DetectionKind.Hash,
+            $"HASHSET:{m.SetId}", m.SetSourceSha256.Length >= 12 ? m.SetSourceSha256[..12] : m.SetSourceSha256, m.SetSourceSha256, DetectionKind.Hash,
             $"Amprentă din setul cunoscut-rău „{m.SetName}”", m.EvidenceId, m.Locator, m.EvidenceSha256,
             $"{m.Algorithm} {m.Hash} ({m.Path})", Classification.Direct, Confidence.High,
             $"Amprenta {m.Algorithm} {m.Hash} a {m.Path} apare în setul „{m.SetName}” (categoria cunoscut-rău, sursa {m.SetSourceFile}, SHA-256 al sursei {m.SetSourceSha256}). " +

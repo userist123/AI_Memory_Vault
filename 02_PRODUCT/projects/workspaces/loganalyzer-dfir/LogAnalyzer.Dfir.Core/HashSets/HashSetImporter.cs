@@ -42,9 +42,11 @@ public static class HashSetImporter
             var len = new FileInfo(path).Length;
             if (len > options.MaxFileBytes)
                 return new HashSetImportResult { Error = $"Fișierul are {len:N0} octeți, peste limita de {options.MaxFileBytes:N0}. Împărțiți lista în fișiere mai mici sau măriți limita." };
-            var sourceSha = Hashing.Sha256File(path);
-            using var reader = new StreamReader(path, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
-            return Parse(reader, name, cat, Path.GetFileName(path), sourceSha, options, importedBy);
+            // One read: the SHA-256 of the source is computed from the very bytes that are parsed (no second read that could see another file).
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 1 << 20, FileOptions.SequentialScan);
+            using var hashing = new HashingStream(fs);
+            using var reader = new StreamReader(hashing, Encoding.UTF8, detectEncodingFromByteOrderMarks: true);
+            return Parse(reader, name, cat, Path.GetFileName(path), hashing.FinishHex, options, importedBy);
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
         {
@@ -53,10 +55,16 @@ public static class HashSetImporter
     }
 
     public static HashSetImportResult Parse(TextReader reader, string name, string category, string sourceFileName, string sourceSha256,
+        HashSetImportOptions? options = null, string importedBy = "") =>
+        Parse(reader, name, category, sourceFileName, () => sourceSha256, options, importedBy);
+
+    /// <param name="sourceSha256">Evaluated once the reader has been read to its end.</param>
+    public static HashSetImportResult Parse(TextReader reader, string name, string category, string sourceFileName, Func<string> sourceSha256,
         HashSetImportOptions? options = null, string importedBy = "")
     {
         options ??= new();
-        var hashes = new HashSet<string>(StringComparer.Ordinal);
+        var builder = new CompactHashes.Builder();
+        int raw = 0, nextCheck = options.MaxEntries;
         var issues = new List<HashSetLineIssue>();
         int invalid = 0, duplicates = 0, lineNo = 0;
         int iSha256 = -1, iSha1 = -1, iMd5 = -1;
@@ -66,10 +74,14 @@ public static class HashSetImporter
         void Bad(string reason) { invalid++; if (issues.Count < MaxListedIssues) issues.Add(new HashSetLineIssue(lineNo, reason)); }
         bool Add(string hex)
         {
-            var h = hex.ToUpperInvariant();
-            if (hashes.Contains(h)) { duplicates++; return true; }
-            if (hashes.Count >= options.MaxEntries) return false;
-            hashes.Add(h);
+            if (!builder.Add(hex)) return true;      // callers have checked the shape
+            raw++;
+            if (builder.Count > nextCheck)
+            {
+                builder.Compact();                    // duplicates do not count against the limit
+                if (builder.Count > options.MaxEntries) return false;
+                nextCheck = Math.Max(builder.Count * 2, options.MaxEntries);
+            }
             return true;
         }
         HashSetImportResult Over() => new() { Error = $"Lista depășește limita de {options.MaxEntries:N0} intrări (oprit la linia {lineNo}). Nu s-a importat nimic; împărțiți lista sau măriți limita.", LinesRead = lineNo };
@@ -115,16 +127,19 @@ public static class HashSetImporter
             }
         }
         if (first) return new HashSetImportResult { Error = "Fișierul este gol: nu conține nicio linie.", LinesRead = lineNo };
-        if (hashes.Count == 0)
+        var set = builder.Build();
+        duplicates = raw - set.Count;
+        if (set.Count > options.MaxEntries) return Over();
+        if (set.Count == 0)
             return new HashSetImportResult { Error = "Fișierul nu conține nicio amprentă validă.", InvalidLineCount = invalid, InvalidLines = issues, LinesRead = lineNo };
 
         var info = new KnownHashSetInfo
         {
-            Id = Guid.NewGuid().ToString("N")[..12], Name = name.Trim(), Category = HashSetCategory.Normalize(category), EntryCount = hashes.Count,
-            Algorithms = new[] { (64, "SHA-256"), (40, "SHA-1"), (32, "MD5") }.Where(a => hashes.Any(h => h.Length == a.Item1)).Select(a => a.Item2).ToList(),
-            SourceFileName = sourceFileName, SourceSha256 = sourceSha256, ImportedUtc = DateTimeOffset.UtcNow, ImportedBy = importedBy,
+            Id = Guid.NewGuid().ToString("N")[..12], Name = name.Trim(), Category = HashSetCategory.Normalize(category), EntryCount = set.Count,
+            Algorithms = set.Algorithms().ToList(),
+            SourceFileName = sourceFileName, SourceSha256 = sourceSha256(), ImportedUtc = DateTimeOffset.UtcNow, ImportedBy = importedBy,
         };
-        return new HashSetImportResult { Set = new KnownHashSet(info, hashes), InvalidLineCount = invalid, InvalidLines = issues, DuplicateCount = duplicates, LinesRead = lineNo };
+        return new HashSetImportResult { Set = new KnownHashSet(info, set), InvalidLineCount = invalid, InvalidLines = issues, DuplicateCount = duplicates, LinesRead = lineNo };
     }
 
     private static string Norm(string c) => c.Trim().Trim('"').Replace("-", "").Replace("_", "").Replace(" ", "").ToLowerInvariant();
@@ -147,4 +162,31 @@ public static class HashSetImporter
         res.Add(sb.ToString());
         return res;
     }
+}
+
+/// <summary>Read-through stream that feeds every byte read into a SHA-256, so the digest is that of the bytes the parser saw.</summary>
+internal sealed class HashingStream(Stream inner) : Stream
+{
+    private readonly System.Security.Cryptography.IncrementalHash _h = System.Security.Cryptography.IncrementalHash.CreateHash(System.Security.Cryptography.HashAlgorithmName.SHA256);
+    private string? _final;
+
+    /// <summary>Drains whatever the parser did not read (it stops at the end of the lines) and returns the upper-case hex digest.</summary>
+    public string FinishHex()
+    {
+        if (_final is not null) return _final;
+        var buf = new byte[81920];
+        while (Read(buf, 0, buf.Length) > 0) { }
+        return _final = Convert.ToHexString(_h.GetHashAndReset());
+    }
+
+    public override int Read(byte[] buffer, int offset, int count) { var n = inner.Read(buffer, offset, count); if (n > 0) _h.AppendData(buffer, offset, n); return n; }
+    public override int Read(Span<byte> buffer) { var n = inner.Read(buffer); if (n > 0) _h.AppendData(buffer[..n]); return n; }
+    protected override void Dispose(bool disposing) { if (disposing) _h.Dispose(); base.Dispose(disposing); }
+    public override bool CanRead => true; public override bool CanSeek => false; public override bool CanWrite => false;
+    public override long Length => throw new NotSupportedException();
+    public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+    public override void Flush() { }
+    public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+    public override void SetLength(long value) => throw new NotSupportedException();
+    public override void Write(byte[] buffer, int offset, int count) => throw new NotSupportedException();
 }

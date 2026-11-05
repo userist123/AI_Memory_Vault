@@ -156,6 +156,10 @@
                     <Button Content="Importă set…" Command="{Binding ImportCommand}" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="Importă set de amprente" Margin="0,0,8,0"/>
                     <Button Content="Elimină setul" Command="{Binding RemoveCommand}" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="Elimină setul de amprente ales"/>
                 </StackPanel>
+                <TextBlock DockPanel.Dock="Top" Text="{x:Static vmx:HashSetsViewModel.CoverageNote}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" AutomationProperties.Name="Acoperirea seturilor de amprente"/>
+                <ListBox DockPanel.Dock="Bottom" AutomationProperties.Name="Seturi de amprente nefolosite și probleme" ItemsSource="{Binding Problems}" MaxHeight="90" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextPrimaryBrush}">
+                    <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap"/></DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
                 <TextBlock DockPanel.Dock="Bottom" Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,0"/>
                 <ListBox AutomationProperties.Name="Seturi de amprente" ItemsSource="{Binding Sets}" SelectedItem="{Binding SelectedSet, Mode=TwoWay}" DisplayMemberPath="Display" MaxHeight="110" Background="Transparent" BorderThickness="0"/>
             </DockPanel>
