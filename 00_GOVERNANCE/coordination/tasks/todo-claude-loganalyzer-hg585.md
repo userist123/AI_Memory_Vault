@@ -100,8 +100,14 @@
   Recheck); PDF export hashes on the UI thread (as the existing pre-report check); tab not refreshed after an export.
   FOUND: tab 9 „Istoricul probelor” shows the in-memory AI provenance ledger, not the case custody chain - misleading name, fix later.
 
+- 2026-11-05 screens attempt (R1 folder reinstalled with b48433824): sign-in OK (one failed attempt first - my extraction error, it is in
+  the app log); „Colectează acum” refused to collect without a confirmed case purpose + approver („Colectarea nu a produs date: Neînceput”)
+  - correct; I did not invent a purpose/approver. Station control ran (NECONFORM 25 · DE VERIFICAT 25 · NEDETERMINAT 6 · CONFORM 32 ·
+  NU SE APLICĂ 4). „Colectări” tab NOT verified on screen (results area below the fold, UIA tree too large); app closed.
+  To verify: owner confirms a real purpose once, or a test case with a recorded run is opened.
+
 ## Next
-0. Screens of the „Colectări” tab (publish + install R1 folder); then tab 9 rename/rewire to the case custody; then unified timeline.
+0. „Colectări” tab on screen (see above); then tab 9 rename/rewire to the case custody; then unified timeline.
 1. Read CI on #370 once (head 5ef49dab3 or later).
 2. R6 navigation by case flow (plan section 5), R2b read-only on expiry + capability enforcement (fix Has() cache), R7 DFIR (collection
    records, unified timeline, hash sets).
