@@ -55,6 +55,9 @@ namespace LogAnalyzer.Core.Services.Edition
         {
             /// <summary>The tab as the text the navigation command takes as its parameter.</summary>
             public string TabText => Tab.ToString(System.Globalization.CultureInfo.InvariantCulture);
+
+            /// <summary>The glossary key whose technical name and explanation are the entry's tooltip (WP6a); null = no glossary term.</summary>
+            public string? Term { get; init; }
         }
 
         /// <summary>One section of the „Avansat” menu with the pages it lists now.</summary>
@@ -67,7 +70,7 @@ namespace LogAnalyzer.Core.Services.Edition
         public static IReadOnlyList<PageEntry> Pages { get; } =
         [
             new("0", 0, "Panou general", All, false),
-            new("1", 1, "Jurnale Windows (EVTX)", All, false),
+            new("1", 1, "Jurnale Windows (EVTX)", All, false) { Term = "evtx" },
             new("2", 2, "Analiza registrului Windows", All, false),
             new("3", 3, "Amenințări și detecții", All, false),
             new("4", 4, "Cronologia evenimentelor", All, false),
@@ -77,7 +80,7 @@ namespace LogAnalyzer.Core.Services.Edition
             new("7", 7, "Informații despre amenințări", Networked, false),
             new("8.local", 8, "Conturi locale și USB", All, false, "local"),
             new("8.ad", 8, "Active Directory", Networked, true, "ad", Capability: LicenseFeatures.AuthAd),
-            new("9", 9, "Istoricul probelor", All, false, Capability: LicenseFeatures.CaseLocal),
+            new("9", 9, "Istoricul probelor", All, false, Capability: LicenseFeatures.CaseLocal) { Term = "chain_of_custody" },
             new("10", 10, "Tehnici de atac (MITRE ATT&CK)", All, false),
             new("11", 11, "Monitorizare în timp real", Networked, true, Capability: LicenseFeatures.CollectLan),
             new("12", 12, "Colectare date", All, false, Capability: LicenseFeatures.CaseLocal),

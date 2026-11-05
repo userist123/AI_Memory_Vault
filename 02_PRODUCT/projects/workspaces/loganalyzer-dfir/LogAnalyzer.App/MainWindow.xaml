@@ -11,6 +11,7 @@
         WindowStartupLocation="CenterScreen" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}">
 
     <Window.Resources>
+        <views:GlossaryTooltipConverter x:Key="GlossaryTooltip"/>
     </Window.Resources>
 
     <Window.InputBindings>
@@ -187,7 +188,7 @@
                                             <ItemsControl ItemsSource="{Binding Pages}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
-                                                        <RadioButton Content="{Binding Title}" GroupName="Sidebar" AutomationProperties.Name="{Binding Title}" Style="{StaticResource SidebarTabStyle}"
+                                                        <RadioButton Content="{Binding Title}" ToolTip="{Binding Term, Converter={StaticResource GlossaryTooltip}}" GroupName="Sidebar" AutomationProperties.Name="{Binding Title}" Style="{StaticResource SidebarTabStyle}"
                                                                      Command="{Binding DataContext.NavigateCommand, RelativeSource={RelativeSource AncestorType=Window}}" CommandParameter="{Binding TabText}"/>
                                                     </DataTemplate>
                                                 </ItemsControl.ItemTemplate>

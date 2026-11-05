@@ -98,6 +98,8 @@ namespace LogAnalyzer.UI.ViewModels
         private ProcedureProfile _profile = new();
         private readonly ProfileProvider _provider;
 
+        /// <summary>R7a: the library of known-good / known-bad fingerprint sets, shown under the tables.</summary>
+        public HashSetsViewModel HashSets { get; } = new();
         public ObservableCollection<ProfileTableViewModel> Tables { get; } = new();
         public ObservableCollection<string> Issues { get; } = new();
         public ObservableCollection<string> SectionLines { get; } = new();

@@ -47,9 +47,12 @@ public class Wp6aXamlTests
         var main = Read("MainWindow.xaml");
         Assert.DoesNotContain("Content=\"Event Explorer (EVTX)\"", main);
         Assert.DoesNotContain("Content=\"Chain of Custody (NIS2)\"", main);
-        Assert.Matches(@"Content=""\{views:Term evtx\}""[^>]*ToolTip=""\{views:Term evtx, Tooltip=True\}""", main);
-        Assert.Matches(@"Content=""Istoricul probelor""[^>]*ToolTip=""{views:Term chain_of_custody, Tooltip=True}""", main);   // 2026-10-22: menu name = page title
-        Assert.Contains("Investigație completă (caz)", main);   // no page was removed or renamed
+        // R6 (2026-11-05): the „Avansat” menu is generated from ModuleCatalog; the glossary term of a page is its tooltip (technical name + explanation)
+        Assert.Matches(@"ToolTip=""\{Binding Term, Converter=\{StaticResource GlossaryTooltip\}\}""", main);
+        Assert.Equal("evtx", LogAnalyzer.Core.Services.Edition.ModuleCatalog.Find("1")!.Term);
+        Assert.Equal("chain_of_custody", LogAnalyzer.Core.Services.Edition.ModuleCatalog.Find("9")!.Term);
+        Assert.Equal("Istoricul probelor", LogAnalyzer.Core.Services.Edition.ModuleCatalog.Find("9")!.Title);   // 2026-10-22: menu name = page title
+        Assert.Contains(LogAnalyzer.Core.Services.Edition.ModuleCatalog.Pages, pg => pg.Title == "Investigație completă (caz)");   // no page was removed or renamed
     }
 
     [Fact]

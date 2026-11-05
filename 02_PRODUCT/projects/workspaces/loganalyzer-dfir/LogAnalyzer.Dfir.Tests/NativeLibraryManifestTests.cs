@@ -243,7 +243,9 @@ public sealed class NativeLibraryManifestTests : IDisposable
     public void Legacy_root_projects_no_longer_ask_for_elevation()
     {
         var root = Path.GetFullPath(Path.Combine(AppContext.BaseDirectory, "..", "..", "..", ".."));
-        var manifest = File.ReadAllText(Path.Combine(root, "app.manifest"));
+        // R1 (2026-11-04): the legacy root UI projects were archived under _recovered and the root holds no buildable UI project any more
+        Assert.Empty(Directory.GetFiles(root, "*.csproj"));
+        var manifest = File.ReadAllText(Path.Combine(root, "_recovered", "legacy_root_ui_2026-11-04", "app.manifest"));
         var active = System.Text.RegularExpressions.Regex.Replace(manifest, "<!--.*?-->", "", System.Text.RegularExpressions.RegexOptions.Singleline);
         Assert.Contains("level=\"asInvoker\"", active);
         Assert.DoesNotContain("requireAdministrator", active);

@@ -33,6 +33,8 @@ public sealed class InvestigationResult
     public EvidenceGraph? Graph { get; set; }
     /// <summary>Rule matches (IOC, Sigma, YARA) with rule identity and evidence (Analysis/detections.json).</summary>
     public List<DetectionResult> Detections { get; } = [];
+    /// <summary>R7a: hashes of the case found in an operator-imported fingerprint set, known-good (label only) and known-bad (also a finding), Analysis/known_hashes.json.</summary>
+    public List<LogAnalyzer.Dfir.HashSets.HashSetMatch> KnownHashMatches { get; } = [];
     /// <summary>Rules that were loaded for this run (Analysis/rules.json).</summary>
     public List<DetectionRule> RulesUsed { get; } = [];
     /// <summary>Anti-forensics checks: DETECTED / NOT_DETECTED / UNDETERMINED per technique (Analysis/anti_forensics.json).</summary>
@@ -170,10 +172,10 @@ public sealed class InvestigationPipeline
     /// <param name="procedureProfile">The procedure profile to use. When null the profile installed on this machine (%PROGRAMDATA%\LogAnalyzer\profile) is loaded
     /// if there is one; with none, behaviour is exactly as before the profile existed (log clears are NotAssessed).</param>
     public InvestigationResult Run(CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress = null, CancellationToken ct = default, ProcedureProfile? procedureProfile = null,
-        MediaRegister? mediaRegister = null, UsersRegister? usersRegister = null, string systemZone = "")
+        MediaRegister? mediaRegister = null, UsersRegister? usersRegister = null, string systemZone = "", LogAnalyzer.Dfir.HashSets.HashSetLibrary? hashSets = null)
     {
         var r = new InvestigationResult { Case = ws, State = OperationState.Running, StateReason = "Analiza rulează." };
-        try { return RunCore(r, ws, profile, collect, progress, ct, procedureProfile, mediaRegister, usersRegister, systemZone); }
+        try { return RunCore(r, ws, profile, collect, progress, ct, procedureProfile, mediaRegister, usersRegister, systemZone, hashSets); }
         catch (OperationCanceledException) { MarkEnded(r, ws, OperationState.Cancelled, "Oprit de operator; rezultatele parțiale nu sunt complete."); throw; }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { MarkEnded(r, ws, OperationState.Failed, ex.Message); throw; }
     }
@@ -240,7 +242,7 @@ public sealed class InvestigationPipeline
     }
 
     private InvestigationResult RunCore(InvestigationResult r, CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress, CancellationToken ct, ProcedureProfile? procedureProfile = null,
-        MediaRegister? mediaRegister = null, UsersRegister? usersRegister = null, string systemZone = "")
+        MediaRegister? mediaRegister = null, UsersRegister? usersRegister = null, string systemZone = "", LogAnalyzer.Dfir.HashSets.HashSetLibrary? hashSets = null)
     {
         bool elevated = OperatingSystem.IsWindows() && IsAdministrator();
         ws.Audit("investigation.start", $"profile={profile} collect={collect} elevated={elevated}");
@@ -414,6 +416,13 @@ public sealed class InvestigationPipeline
         int sequenceNo = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n1) ? n1 : 0).DefaultIfEmpty(0).Max();
         var sequences = SequenceRules.Run(r.Timeline, found, () => $"F-{++sequenceNo:D4}", new SequenceInput { Scope = ws.Info.Scope });
         found.AddRange(sequences);
+        // R7a: fingerprint sets imported by the operator. Known-bad -> high finding; known-good -> label only (Analysis/known_hashes.json), the item stays in the case.
+        var hashSetList = (hashSets ?? new LogAnalyzer.Dfir.HashSets.HashSetLibrary()).Load(out var hashSetProblems);
+        foreach (var hp in hashSetProblems) { r.Gaps.Add(new EvidenceGap("Set de amprente", EvidenceStatus.Failed, hp, "Setul nu a fost folosit la potrivire", "Reimportați setul", "Da")); ws.Audit("hashset.problem", hp); }
+        var hashMatches = LogAnalyzer.Dfir.HashSets.HashSetMatcher.Match(hashSetList, ws.LoadEvidence(), r.Timeline);
+        int hashFindingNo = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n2) ? n2 : 0).DefaultIfEmpty(0).Max();
+        found.AddRange(LogAnalyzer.Dfir.HashSets.HashSetMatcher.ToFindings(hashMatches, () => $"F-{++hashFindingNo:D4}"));
+        r.KnownHashMatches.AddRange(hashMatches);
         var (kept, rejected) = ProvenanceBinder.BindFindings(found, ws.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal));
         LogAnalyzer.Dfir.Case.ClockMemory.Refresh();
         TimeReliability.Apply(kept, r.Timeline, LogAnalyzer.Dfir.Case.ClockMemory.StartupWarning.Length > 0);
@@ -451,6 +460,7 @@ public sealed class InvestigationPipeline
         // Detection: rules shipped with the application plus the case's own Rules folder (ioc / yara / sigma).
         progress?.Report("Detecție (IOC, Sigma, YARA)");
         var engine = DetectionEngine.Load(Path.Combine(AppContext.BaseDirectory, "Rules"), Path.Combine(ws.Root, "Rules"));
+        engine.KnownHashSets = hashSetList;
         var evidenceItems = ws.LoadEvidence();
         var scannable = new List<EvidenceItem>();
         foreach (var e in evidenceItems)
@@ -466,6 +476,8 @@ public sealed class InvestigationPipeline
         r.Gaps.AddRange(engine.LoadErrors);
         File.WriteAllText(Path.Combine(analysisDir, "detections.json"), JsonSerializer.Serialize(r.Detections, new JsonSerializerOptions { WriteIndented = true }));
         File.WriteAllText(Path.Combine(analysisDir, "rules.json"), JsonSerializer.Serialize(r.RulesUsed, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(Path.Combine(analysisDir, "known_hashes.json"), JsonSerializer.Serialize(r.KnownHashMatches.Select(m => new { m.SetName, m.Category, m.Label, m.SetSourceFile, m.SetSourceSha256, m.EvidenceId, m.Path, m.Algorithm, m.Hash, m.Source }), new JsonSerializerOptions { WriteIndented = true }));
+        ws.RecordOutput("Analysis/known_hashes.json", "HashSetMatcher", "1.0", evidenceIds);
         ws.RecordOutput("Analysis/detections.json", "DetectionEngine", "1.0", evidenceIds);
         ws.RecordOutput("Analysis/rules.json", "DetectionEngine", "1.0");
         ws.RecordTransformation("CASE", "DetectionEngine", "1.0", "Analysis/detections.json", $"{r.Detections.Count} potriviri, {r.RulesUsed.Count} reguli");
