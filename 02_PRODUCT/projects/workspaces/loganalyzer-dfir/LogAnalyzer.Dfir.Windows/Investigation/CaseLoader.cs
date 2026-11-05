@@ -140,6 +140,7 @@ public static class CaseLoader
             result.LoadAcquisitionRuns(ws, ct, known, registeredMap);
         }
         else result.LoadAcquisitionRuns(ws, ct);
+        result.LoadCustody(ws, ct);
         result.Parsing.AddRange(parsing);
         result.Timeline.AddRange(timeline);
         if (activityRestored)

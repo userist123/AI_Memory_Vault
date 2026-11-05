@@ -106,9 +106,22 @@
   NU SE APLICĂ 4). „Colectări” tab NOT verified on screen (results area below the fold, UIA tree too large); app closed.
   To verify: owner confirms a real purpose once, or a test case with a recorded run is opened.
 
+- 2026-11-05 tab 9 „Istoricul probelor” rewired (claude, main session): CI #370 head 55da7a3da read once = 42/42 pass/skip.
+  New Dfir.Core/Case/CustodyOverview.cs reads Logs/chain_of_custody.jsonl ONCE into bytes (cap 256 MB), verifies with HashChain.Verify(byte[])
+  and parses rows from the same lines (HashChain.Lines = File.ReadLines split: BOM dropped, \r\n|\r|\n); pre-WP3 CSV-only = Legacy; lines
+  without chain fields in front of the chain = PROBLEMĂ + row marked „neverificat”, no hash; non-JSON / null lines = unreadable rows; newest
+  20 000 rows first. Loaded by CaseLoader and at the very end of RunCore (CancellationToken.None, after investigation.end); VM
+  InvestigationViewModel.CustodyRows/CustodyLine/RefreshCustodyCommand; view binds Investigation.*, session AI ledger kept in an Expander
+  labelled „nu face parte din caz”; misleading „Exportă pachetul de probe” (ExportCsvCommand) removed. HashChain: JSON `null` line no
+  longer throws NullReferenceException (4 parse sites). Opus round 1 (planted legacy prefix shown verified, null-line crash, tab empty/stale
+  after a run, TOCTOU) and round 2 (late cancel rewrote a finished run, lone \r / BOM read differently) all fixed. Dfir 2499/0/31,
+  App 987/0, UI 354/0/1. RESIDUAL: Load holds the log open while copying (an Append waits up to ~2 s, as Recheck already does); CsvRows
+  read separately (legacy cases only); FillCustody adds up to 20 000 rows on the UI thread; pre-WP3 CSV rows are not listed (line says so).
+  Not verified on screen.
+
 ## Next
-0. „Colectări” tab on screen (see above); then tab 9 rename/rewire to the case custody; then unified timeline.
-1. Read CI on #370 once (head 5ef49dab3 or later).
+0. „Colectări” + tab 9 on screen (needs a case with a confirmed purpose); then unified timeline (filters, export); then reconcile the two custody stores (ProvenanceLedgerService vs case chain).
+1. Read CI on #370 once on the head after the tab 9 commit.
 2. R6 navigation by case flow (plan section 5), R2b read-only on expiry + capability enforcement (fix Has() cache), R7 DFIR (collection
    records, unified timeline, hash sets).
 2. Owner's new order 2026-11-04: professional product. Phase R1 of the plan (cleanup to _recovered, ModuleFeatures catalogue, module names).

@@ -39,6 +39,38 @@ namespace LogAnalyzer.UI.ViewModels
                 : $"{LogAnalyzer.Dfir.Language.RoText.Count(rows.Count, "colectare înregistrată", "colectări înregistrate")}, {LogAnalyzer.Dfir.Language.RoText.Count(bad, "cu problemă", "cu probleme")}";
         }
 
+        /// <summary>Tab 9 "Istoricul probelor": the custody chain of the open case (Logs/chain_of_custody.jsonl), newest first, with the chain verdict.</summary>
+        public ObservableCollection<LogAnalyzer.Dfir.Case.CustodyRow> CustodyRows { get; } = new();
+        [ObservableProperty] private string _custodyLine = NoCaseCustodyLine;
+        [ObservableProperty] private bool _custodyProblem;
+        [ObservableProperty] private bool _custodyLoading;
+        internal const string NoCaseCustodyLine = "Niciun caz deschis: deschideți sau creați un caz în „Investigație completă” ca să vedeți cine a avut fiecare probă și ce s-a făcut cu ea.";
+
+        internal void FillCustody(LogAnalyzer.Dfir.Case.CustodyLedger? ledger, string error = "")
+        {
+            CustodyRows.Clear();
+            if (ledger is not null) foreach (var r in ledger.Rows) CustodyRows.Add(r);
+            CustodyProblem = error.Length > 0 || ledger is null || ledger.ChainProblem || ledger.Rows.Any(r => r.Unreadable);
+            CustodyLine = error.Length > 0 ? "Lanțul de custodie nu a putut fi citit: " + LogAnalyzer.Dfir.Case.AcquisitionRunOverview.Clean(error, 240)
+                : ledger is null ? NoCaseCustodyLine
+                : ledger.ChainLine + (ledger.Rows.Any(r => r.Unreadable) ? " · există linii ilizibile în jurnal" : "");
+        }
+
+        /// <summary>Reads the custody chain of the open case again (after an export or a state change), off the UI thread.</summary>
+        [RelayCommand]
+        private async Task RefreshCustody()
+        {
+            if (_result?.Case is not { } ws || CustodyLoading) { if (_result is null) FillCustody(null); return; }
+            CustodyLoading = true;
+            try
+            {
+                var ledger = await Task.Run(() => LogAnalyzer.Dfir.Case.CustodyOverview.Load(ws));
+                if (ReferenceEquals(_result?.Case, ws)) FillCustody(ledger);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException) { if (ReferenceEquals(_result?.Case, ws)) FillCustody(null, ex.Message); }
+            finally { CustodyLoading = false; }
+        }
+
         // WP6a (U4): the finding chosen in the grid and its card. The card is built from the finding and the case data by LogAnalyzer.Dfir.Presentation; selecting changes nothing in the case.
         private LogAnalyzer.Dfir.Presentation.EvidenceContext _evidenceContext = LogAnalyzer.Dfir.Presentation.EvidenceContext.Empty;
         [ObservableProperty] private Finding? _selectedFinding;
@@ -468,6 +500,7 @@ namespace LogAnalyzer.UI.ViewModels
             Findings.Clear();
             foreach (var f in _result.Findings) Findings.Add(f);
             FillAcquisitionRuns(_result.AcquisitionRuns, _result.AcquisitionRunsError);
+            FillCustody(_result.Custody, _result.CustodyError);
             AirGapFindings.Clear();
             foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.Wp14Rules.Category)) AirGapFindings.Add(f);
             SequenceFindings.Clear();

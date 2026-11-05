@@ -33,6 +33,15 @@ public static class InvestigationResultAcquisitionExtensions
         try { r.AcquisitionRuns.AddRange(AcquisitionRunOverview.Load(ws, ct, knownActualHashes, registeredOutputs)); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { r.AcquisitionRunsError = ex.Message; }
     }
+
+    /// <summary>Fills <see cref="InvestigationResult.Custody"/> (tab 9) from the case custody chain. Cancellation propagates; an IO error is kept in <see cref="InvestigationResult.CustodyError"/>.</summary>
+    public static void LoadCustody(this InvestigationResult r, CaseWorkspace ws, CancellationToken ct = default)
+    {
+        r.Custody = null;
+        r.CustodyError = "";
+        try { r.Custody = CustodyOverview.Load(ws, ct); }
+        catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException) { r.CustodyError = ex.Message; }   // review: never stop the case from opening
+    }
 }
 
 public sealed class InvestigationResult
@@ -43,6 +52,9 @@ public sealed class InvestigationResult
     public List<AcquisitionRunRow> AcquisitionRuns { get; } = [];
     /// <summary>Why <see cref="AcquisitionRuns"/> could not be read ("" = it was read; an empty list then really means no records).</summary>
     public string AcquisitionRunsError { get; set; } = "";
+    /// <summary>The case custody chain with its verdict (tab 9 "Istoricul probelor"); null until read or when <see cref="CustodyError"/> says why it could not be.</summary>
+    public CustodyLedger? Custody { get; set; }
+    public string CustodyError { get; set; } = "";
     public List<ParseResult> Parsing { get; } = [];
     public List<TimelineEvent> Timeline { get; } = [];
     public List<Finding> Findings { get; } = [];
@@ -588,6 +600,7 @@ public sealed class InvestigationPipeline
         schemaManifest.Write(Path.Combine(analysisDir, SchemaVersions.ManifestFile));
         ws.RecordOutput("Analysis/" + SchemaVersions.ManifestFile, Producer, DfirInfo.ApplicationVersion);
         ws.Audit("investigation.end", $"{r.Timeline.Count} events, {r.Findings.Count} findings, {r.Gaps.Count} gaps, state {state.ToSpec()}");
+        r.LoadCustody(ws, CancellationToken.None);   // review round 2: never cancelled after investigation.end (a late cancel would rewrite a finished run as cancelled). Last: the tab shows every custody entry of this run (outputs, parsing), with or without collection
         return r;
     }
 }
