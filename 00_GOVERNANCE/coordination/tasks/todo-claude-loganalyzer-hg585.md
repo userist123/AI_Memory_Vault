@@ -77,7 +77,20 @@
   App 979/0, UI 354/0/1, Edition 45/0. RESIDUAL (owner): audit chain is unkeyed (folder ACL is the barrier); sets imported before the fix
   must be re-imported; import/remove still synchronous in the page; rejected sets cannot be removed from the page; load peak ~850 MiB at 10M.
 
+- CI #370 on 21671b335: 1 fail (zero-regression-gate: test_notes_strict_yaml, this checkpoint + MATRICE + PLAN docs without frontmatter) ->
+  fixed 41b4808af (allowlist entries with reason). Read CI once more on the next head.
+- R7b DONE (2026-11-05): per-run acquisition record Logs/acquisition_runs/<RunId>.json (operator, station, app version, profile,
+  collectors with tool/version/errors, every item with size + SHA-256, canonical-JSON manifest hash per collector, also in the formerly
+  empty collection_audit.csv SHA256 column); atomic write, RecordOutput + audit acquisition.run_recorded; AcquisitionRunVerifier in Recheck
+  (only registered records trusted, findings escalate the verdict, never crash Open). Opus round 1 (8 findings: null records crash Open,
+  planted record trusted, silent Complete failure, interrupted collector missing, double hashing, manifest collision, junction, O(n^2))
+  fixed by worker; round 2: leftover unregistered record on a read-only case / failed RecordOutput + two catch gaps -> fixed in main
+  session (read-only guard, delete on RecordOutput failure, unexpected collector exception recorded, audit catch widened). Dfir 2470/0/31,
+  App 979/0. Defender quarantines the fresh Dfir.Tests.dll intermittently (PUA heuristic); later builds passed; not touched.
+  RESIDUAL: EvidenceSince relies on the wall clock (clock stepped back -> items missed / earlier run pulled); record not shown in the UI yet.
+
 ## Next
+0. R7c: show the acquisition records in the UI (tab 9 / case page) + include them in the case report; then unified timeline.
 1. Read CI on #370 once (head 5ef49dab3 or later).
 2. R6 navigation by case flow (plan section 5), R2b read-only on expiry + capability enforcement (fix Has() cache), R7 DFIR (collection
    records, unified timeline, hash sets).

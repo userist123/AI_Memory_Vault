@@ -26,6 +26,8 @@ public static class SchemaVersions
     public const string Verification = "1.0";
     /// <summary>WP15b: Analysis/policy_timeline.json.</summary>
     public const string PolicyTimeline = "1.0";
+    /// <summary>R7b: Logs/acquisition_runs/&lt;RunId&gt;.json.</summary>
+    public const string AcquisitionRun = "1.0";
     /// <summary>Files that stay a bare JSON array (existing consumers index into them): their version lives in the manifest.</summary>
     public const string ParsersInventory = "1.1";
     public const int SupportedMajor = 2;

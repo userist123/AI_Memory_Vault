@@ -241,33 +241,76 @@ public sealed class InvestigationPipeline
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* the original failure is what the caller must see */ }
     }
 
+    /// <summary>
+    /// Writes the acquisition run record. A failure is audited and shown as a gap; it never throws, so it can neither mask the exception that ended
+    /// the run nor fail an otherwise good run.
+    /// </summary>
+    internal static void CompleteRunRecord(AcquisitionRunRecorder recorder, CaseWorkspace ws, InvestigationResult r, OperationState state, string reason)
+    {
+        try { recorder.Complete(state, reason); }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            try { ws.Audit("acquisition.run_record_failed", $"run={recorder.RunId} {ex.GetType().Name}: {ex.Message}"); }
+            catch (Exception ex2) when (ex2 is not OutOfMemoryException) { /* audit unavailable: the gap below still tells the operator; nothing may escape the finally */ }
+            r.Gaps.Add(new EvidenceGap("Fișa colectării", EvidenceStatus.Failed, ex.Message, "Fișa colectării nu a putut fi scrisă; colectarea nu are înregistrare per rulare",
+                "Repetarea colectării sau a scrierii fișei", "Posibil"));
+        }
+    }
+
     private InvestigationResult RunCore(InvestigationResult r, CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress, CancellationToken ct, ProcedureProfile? procedureProfile = null,
         MediaRegister? mediaRegister = null, UsersRegister? usersRegister = null, string systemZone = "", LogAnalyzer.Dfir.HashSets.HashSetLibrary? hashSets = null)
     {
         bool elevated = OperatingSystem.IsWindows() && IsAdministrator();
-        ws.Audit("investigation.start", $"profile={profile} collect={collect} elevated={elevated}");
+        var recorder = collect ? AcquisitionRunRecorder.Begin(ws, profile.ToString(), elevated) : null;
+        ws.Audit("investigation.start", $"profile={profile} collect={collect} elevated={elevated}" + (recorder is null ? "" : $" run={recorder.RunId}"));
 
-        // 1. Acquisition.
-        if (collect)
-            foreach (var c in AllCollectors.Where(c => (c.Profiles & profile) != 0))
+        // 1. Acquisition. The run record is written when the loop ends, whatever way it ends.
+        if (recorder is not null)
+        {
+            var runState = OperationState.Completed;
+            var runReason = "";
+            try
             {
-                ct.ThrowIfCancellationRequested();
-                progress?.Report($"Colectare: {c.Name}");
-                var start = DateTimeOffset.UtcNow;
-                CollectorOutcome o;
-                try { o = c.Collect(new CollectorContext { Case = ws, IsElevated = elevated }, ct); }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
-                { o = new CollectorOutcome { Status = EvidenceStatus.Failed, Errors = { ex.Message } }; }
-                var end = DateTimeOffset.UtcNow;
-                r.Collection.Add(new CollectionRow(c.Name, o.Status, o.Evidence.Count, string.Join("; ", o.Errors), start, end));
-                ws.RecordCollection(new CollectionAuditRecord(c.Name, start, end, o.Status, o.ExitCode, o.Source, ws.Root, o.Evidence.Sum(e => e.Size),
-                    "", o.Tool, o.ToolVersion, string.Join(" && ", o.Commands), string.Join("; ", o.Errors)));
-                if (o.Status is EvidenceStatus.NotAvailable or EvidenceStatus.Failed)
-                    r.Gaps.Add(new EvidenceGap(c.Name, o.Status, string.Join("; ", o.Errors), "Sursa lipsește din analiză",
-                        c.RequiresElevation ? "Rulare ca administrator" : "Import manual al probei", elevated ? "Posibil" : "Cu drepturi de administrator"));
-                else if (o.Errors.Count > 0)
-                    r.Gaps.Add(new EvidenceGap(c.Name, EvidenceStatus.Partial, string.Join("; ", o.Errors.Take(8)), "Unele surse lipsesc", "Rulare ca administrator / import", "Posibil"));
+                foreach (var c in AllCollectors.Where(c => (c.Profiles & profile) != 0))
+                {
+                    ct.ThrowIfCancellationRequested();
+                    progress?.Report($"Colectare: {c.Name}");
+                    var start = DateTimeOffset.UtcNow;
+                    CollectorOutcome o;
+                    try { o = c.Collect(new CollectorContext { Case = ws, IsElevated = elevated }, ct); }
+                    catch (OperationCanceledException)
+                    {
+                        // Whatever the collector had already stored belongs to the record even though it never returned an outcome.
+                        recorder.AddInterrupted(c.Name, c.Version, EvidenceStatus.Partial, "colectare întreruptă (anulată)", start, DateTimeOffset.UtcNow);
+                        throw;
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+                    {
+                        o = new CollectorOutcome { Status = EvidenceStatus.Failed, Errors = { ex.Message } };
+                        o.Evidence.AddRange(AcquisitionRunRecorder.EvidenceSince(ws, c.Name, start));
+                    }
+                    catch (Exception ex) when (ex is not OutOfMemoryException)
+                    {
+                        // Review round 2: an unexpected failure still ends the run, but the evidence already stored is not left out of the record.
+                        recorder.AddInterrupted(c.Name, c.Version, EvidenceStatus.Failed, $"{ex.GetType().Name}: {ex.Message}", start, DateTimeOffset.UtcNow);
+                        throw;
+                    }
+                    var end = DateTimeOffset.UtcNow;
+                    var manifest = recorder.Add(c.Name, c.Version, o.Tool, o.ToolVersion, o.Status, o.Errors, o.Commands, o.Evidence, start, end);
+                    r.Collection.Add(new CollectionRow(c.Name, o.Status, o.Evidence.Count, string.Join("; ", o.Errors), start, end));
+                    ws.RecordCollection(new CollectionAuditRecord(c.Name, start, end, o.Status, o.ExitCode, o.Source, ws.Root, o.Evidence.Sum(e => e.Size),
+                        manifest, o.Tool, o.ToolVersion, string.Join(" && ", o.Commands), string.Join("; ", o.Errors)));
+                    if (o.Status is EvidenceStatus.NotAvailable or EvidenceStatus.Failed)
+                        r.Gaps.Add(new EvidenceGap(c.Name, o.Status, string.Join("; ", o.Errors), "Sursa lipsește din analiză",
+                            c.RequiresElevation ? "Rulare ca administrator" : "Import manual al probei", elevated ? "Posibil" : "Cu drepturi de administrator"));
+                    else if (o.Errors.Count > 0)
+                        r.Gaps.Add(new EvidenceGap(c.Name, EvidenceStatus.Partial, string.Join("; ", o.Errors.Take(8)), "Unele surse lipsesc", "Rulare ca administrator / import", "Posibil"));
+                }
             }
+            catch (OperationCanceledException) { runState = OperationState.Cancelled; runReason = "colectare anulată de operator"; throw; }
+            catch (Exception ex) { runState = OperationState.Failed; runReason = ex.GetType().Name + ": " + ex.Message; throw; }
+            finally { CompleteRunRecord(recorder, ws, r, runState, runReason); }
+        }
 
         // 2. Parsing into one timeline.
         var analysisDir = Path.Combine(ws.Root, "Analysis");
