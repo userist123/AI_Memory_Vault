@@ -19,10 +19,30 @@ namespace LogAnalyzer.Dfir.Windows.Investigation;
 
 public sealed record CollectionRow(string Collector, EvidenceStatus Status, int EvidenceCount, string Errors, DateTimeOffset StartUtc, DateTimeOffset EndUtc);
 
+public static class InvestigationResultAcquisitionExtensions
+{
+    /// <summary>
+    /// Fills <see cref="InvestigationResult.AcquisitionRuns"/> from the case. Cancellation propagates; an IO error is kept in
+    /// <see cref="InvestigationResult.AcquisitionRunsError"/> (shown instead of "no records"), never turned into an empty list.
+    /// </summary>
+    public static void LoadAcquisitionRuns(this InvestigationResult r, CaseWorkspace ws, CancellationToken ct = default,
+        IReadOnlyDictionary<string, string>? knownActualHashes = null, IReadOnlyDictionary<string, string>? registeredOutputs = null)
+    {
+        r.AcquisitionRuns.Clear();
+        r.AcquisitionRunsError = "";
+        try { r.AcquisitionRuns.AddRange(AcquisitionRunOverview.Load(ws, ct, knownActualHashes, registeredOutputs)); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { r.AcquisitionRunsError = ex.Message; }
+    }
+}
+
 public sealed class InvestigationResult
 {
     public required CaseWorkspace Case { get; init; }
     public List<CollectionRow> Collection { get; } = [];
+    /// <summary>R7c: the acquisition run records of the case with the verdict of their re-check (Logs/acquisition_runs); filled after the acquisition ended and when a case is opened.</summary>
+    public List<AcquisitionRunRow> AcquisitionRuns { get; } = [];
+    /// <summary>Why <see cref="AcquisitionRuns"/> could not be read ("" = it was read; an empty list then really means no records).</summary>
+    public string AcquisitionRunsError { get; set; } = "";
     public List<ParseResult> Parsing { get; } = [];
     public List<TimelineEvent> Timeline { get; } = [];
     public List<Finding> Findings { get; } = [];
@@ -310,6 +330,7 @@ public sealed class InvestigationPipeline
             catch (OperationCanceledException) { runState = OperationState.Cancelled; runReason = "colectare anulată de operator"; throw; }
             catch (Exception ex) { runState = OperationState.Failed; runReason = ex.GetType().Name + ": " + ex.Message; throw; }
             finally { CompleteRunRecord(recorder, ws, r, runState, runReason); }
+            r.LoadAcquisitionRuns(ws, ct);   // after the finally: a cancelled or failed run keeps its own exception
         }
 
         // 2. Parsing into one timeline.

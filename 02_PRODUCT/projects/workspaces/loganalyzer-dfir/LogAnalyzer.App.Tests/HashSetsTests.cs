@@ -12,8 +12,12 @@ using Xunit;
 namespace LogAnalyzer.App.Tests;
 
 /// <summary>R7a: fingerprint sets (known-good / known-bad): offline import, library persistence, matching in the investigation. Small synthetic lists only.</summary>
+[Collection(HashSetsTests.Serial)]
 public sealed class HashSetsTests : IDisposable
 {
+    /// <summary>F4 measures memory with GC.GetTotalMemory, which counts the whole process: tests running in parallel made it fail now and then.</summary>
+    public const string Serial = "Hash set memory measurement";
+
     private readonly GapsTestKit _kit = new();
     public void Dispose() => _kit.Dispose();
 
@@ -518,3 +522,6 @@ public sealed class HashSetsTests : IDisposable
         Assert.DoesNotContain("Run(ws, CollectionProfile.Quick, collect: false);", src);
     }
 }
+
+[CollectionDefinition(HashSetsTests.Serial, DisableParallelization = true)]
+public sealed class HashSetsSerialCollection { }

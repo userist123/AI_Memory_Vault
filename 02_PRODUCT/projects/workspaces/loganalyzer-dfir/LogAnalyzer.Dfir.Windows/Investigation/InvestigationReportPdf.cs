@@ -36,6 +36,17 @@ public static class InvestigationReportPdf
         var chains = r.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
         var others = r.Findings.Where(f => f.RuleId != "INCIDENT-CHAIN").ToList();
         var pre = preCheck ?? LogAnalyzer.Dfir.Case.PreReportCheck.ForCase(r.Case);   // F2: re-verify every evidence hash before anything is printed
+        // R7c: the verdict printed is the one of this moment, not of when the case was opened. When the check above ran here, its Recheck has just hashed
+        // every evidence file: reuse those hashes instead of hashing the case a second time (review round 2); a check passed in by the caller may be older.
+        if (S(LogAnalyzer.Dfir.Reporting.ReportSection.EvidenceCollected))
+        {
+            if (preCheck is null && r.Case.LastRecheck is { } fresh)
+            {
+                var (known, registered) = LogAnalyzer.Dfir.Case.AcquisitionRunVerifier.MapsFrom(r.Case, fresh);
+                r.LoadAcquisitionRuns(r.Case, default, known, registered);
+            }
+            else r.LoadAcquisitionRuns(r.Case);
+        }
         var integrity = ReportIntegrity.Check(r);
         if (pre.BlocksConfirmed && integrity.AllIntact) integrity = integrity with { AllIntact = false, Banner = integrity.Banner + " " + pre.Line };
         string W(string text) { var t = pre.Unconfirm(text); return masker is null ? t : masker.Mask(t); }
@@ -224,6 +235,20 @@ public static class InvestigationReportPdf
                 Head("Elemente de probă colectate și citite");
                 foreach (var c in r.Collection)
                     P(col, $"{c.Collector}: {RoLabels.Source(c.Status)}, {RoText.Count(c.EvidenceCount, "element de probă", "elemente de probă")} ({L(c.StartUtc)} – {L(c.EndUtc)}) {InvestigationReportText.GroupErrors(c.Errors)}").FontSize(7.5f);
+                P(col, "Fișele colectării").Bold().FontSize(9).FontColor(Ink);
+                if (r.AcquisitionRunsError.Length > 0)
+                    P(col, RoText.CleanPathsInText("Fișele de colectare nu au putut fi citite: " + r.AcquisitionRunsError)).FontSize(7.5f).Bold();
+                else if (r.AcquisitionRuns.Count == 0)
+                    P(col, "Nicio fișă de colectare (cazul nu are colectare făcută de aplicație)").FontSize(7.5f).FontColor(Muted);
+                foreach (var run in r.AcquisitionRuns)
+                {
+                    var runLine = P(col, RoText.CleanPathsInText(run.IsTrusted
+                        ? $"{run.ShortId}: {L(run.StartUtc)} – {L(run.EndUtc)} · operator {run.Operator} · stație {run.Station} · versiune {run.ApplicationVersion} · {run.StateText} · {RoText.Count(run.ItemCount, "fișier", "fișiere")} · {run.VerificationText}"
+                        : $"{run.ShortId}: {run.VerificationText}")).FontSize(7.5f);
+                    if (run.HasProblem) runLine.Bold();
+                    foreach (var rc in run.Collectors)
+                        P(col, RoText.CleanPathsInText($"    {rc.Name} {rc.Version}: {rc.StatusText}, {RoText.Count(rc.ItemCount, "fișier", "fișiere")}, amprentă listă {rc.ManifestShort}" + (rc.FirstError.Length > 0 ? $", eroare: {rc.FirstError}" : ""))).FontSize(7f).FontColor(Muted);
+                }
                 foreach (var g in r.Parsing.Where(p => p.Status != EvidenceStatus.SkippedByDesign).GroupBy(p => (p.Parser, p.ParserVersion, p.ParserStatus)))
                     P(col, $"{g.Key.Parser} {g.Key.ParserVersion} ({(g.Key.ParserStatus.Length > 0 ? InvestigationReportText.ParserStatusRomanian(g.Key.ParserStatus) : "—")}): {RoText.Count(g.Count(), "fișier", "fișiere")}, {RoText.Count(g.Sum(p => p.Records), "înregistrare", "înregistrări")}, stări: {string.Join(", ", g.Select(p => RoLabels.Source(p.Status)).Distinct())}").FontSize(7.5f);
                 foreach (var s in r.Parsing.Where(p => p.Status == EvidenceStatus.SkippedByDesign))

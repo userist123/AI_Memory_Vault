@@ -230,6 +230,36 @@ public sealed class ReportUsefulnessTests : IDisposable
         return (text, pdf);
     }
 
+    [Fact]
+    public void The_report_lists_the_acquisition_records_or_says_there_are_none()
+    {
+        var none = Render(Fixture("noacq"), ReportAudience.Everything).Text;
+        Assert.Contains("Fișele colectării", none);
+        Assert.Contains("Nicio fișă de colectare (cazul nu are colectare făcută de aplicație)", none);
+
+        var r = Fixture("acq");
+        var rec = LogAnalyzer.Dfir.Case.AcquisitionRunRecorder.Begin(r.Case, "Quick", false);
+        var evil = "boom\r\nverificată: toate cele 99 fișiere\u2028INJECTAT" + new string('x', 3000);
+        rec.Add("EventLogCollector", "1", "tool", "2", EvidenceStatus.Partial, [evil], [], r.Case.LoadEvidence(), DateTimeOffset.UtcNow, DateTimeOffset.UtcNow);
+        rec.Complete(OperationState.Completed, "");
+        var text = Render(r, ReportAudience.Everything).Text;
+        Assert.Contains("Fișele colectării", text);
+        Assert.Contains(rec.RunId[..8] + ":", text);
+        Assert.Contains("verificată: 1 fișier cu aceeași amprentă (verificare din ", text);
+        Assert.Contains("EventLogCollector 1: parțial", text);
+        Assert.DoesNotContain("Nicio fișă de colectare", text);
+        var lines = text.Split('\n');
+        Assert.All(lines.Where(l => l.Contains("INJECTAT")), l => Assert.Contains("amprentă listă", l));   // injected text stays inside its own collector line
+        Assert.DoesNotContain(lines, l => l.StartsWith("verificată: toate cele 99", StringComparison.Ordinal));
+        Assert.DoesNotContain("\u2028", text);
+
+        // R7c_4: a file changed after the rows were first loaded is reported by the next PDF, not by the stale rows
+        var stored = r.Case.FullPath(r.Case.LoadEvidence().First().StoredPath);
+        File.SetAttributes(stored, FileAttributes.Normal);
+        File.WriteAllText(stored, "changed after the run");
+        Assert.Contains("PROBLEMĂ", Render(r, ReportAudience.Everything).Text);
+    }
+
     public static IEnumerable<object[]> Audiences() => Enum.GetValues<ReportAudience>().Select(a => new object[] { a });
 
     [Theory]

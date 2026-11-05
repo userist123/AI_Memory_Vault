@@ -89,8 +89,19 @@
   App 979/0. Defender quarantines the fresh Dfir.Tests.dll intermittently (PUA heuristic); later builds passed; not touched.
   RESIDUAL: EvidenceSince relies on the wall clock (clock stepped back -> items missed / earlier run pulled); record not shown in the UI yet.
 
+- R7c DONE (2026-11-05): tab „Colectări” in Investigație completă (summary line + grid + collectors in row details) and PDF section
+  „Fișele colectării” (reloaded at export, „verificare din …”). AcquisitionRunOverview; verifier reads record bytes once and compares the
+  record hash with the registered SHA (RecordModified, closes an R7b gap); „verificată” only on a positive result; record text cleaned
+  (controls, Format chars, bidi, 120 chars, no split surrogate). Opus round 1 (edited record shown verified, PDF injection, unreadable
+  registry verified, stale PDF, double hashing at open, wording) fixed by worker; round 2 (overflow crash at open, PDF hashing twice,
+  surrogate split, Format chars) fixed in main session. App HashSetsTests moved to a non-parallel collection (F4 memory test was flaky
+  under parallel load; assertions unchanged). Dfir 2483/0/31, App 982/0, UI 354/0/1.
+  RESIDUAL (owner): the custody chain has no key - a record planted AND registered through it reads „verificată” (same trust root as
+  Recheck); PDF export hashes on the UI thread (as the existing pre-report check); tab not refreshed after an export.
+  FOUND: tab 9 „Istoricul probelor” shows the in-memory AI provenance ledger, not the case custody chain - misleading name, fix later.
+
 ## Next
-0. R7c: show the acquisition records in the UI (tab 9 / case page) + include them in the case report; then unified timeline.
+0. Screens of the „Colectări” tab (publish + install R1 folder); then tab 9 rename/rewire to the case custody; then unified timeline.
 1. Read CI on #370 once (head 5ef49dab3 or later).
 2. R6 navigation by case flow (plan section 5), R2b read-only on expiry + capability enforcement (fix Has() cache), R7 DFIR (collection
    records, unified timeline, hash sets).

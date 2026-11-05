@@ -160,7 +160,15 @@ public enum AcquisitionFindingKind
 {
     ItemIntact, ItemMissing, ItemModified, ItemUnreadable, ItemOutsideCase,
     EvidenceNotInStore, EvidenceStoreMismatch, ManifestMismatch, RecordInvalid, Unregistered,
+    /// <summary>The record file differs from the SHA-256 the custody chain registered for it (edited after the run ended).</summary>
+    RecordModified,
 }
+
+/// <summary>One record file with what the checks found. <see cref="Record"/> is null for a record that is not to be trusted (unregistered, modified, invalid, unreadable).</summary>
+public sealed record AcquisitionRunInspection(string RunFile, string RunId, AcquisitionRunRecord? Record, IReadOnlyList<AcquisitionRunFinding> Findings);
+
+/// <summary><see cref="FolderProblem"/> is set when nothing in the folder could be verified (junction, unreadable folder or custody registry).</summary>
+public sealed record AcquisitionRunInspectionResult(string? FolderProblem, IReadOnlyList<AcquisitionRunInspection> Runs);
 
 public sealed record AcquisitionRunFinding(string RunFile, string RunId, string EvidenceId, AcquisitionFindingKind Kind, string Detail)
 {
@@ -182,15 +190,42 @@ public static class AcquisitionRunVerifier
     }
 
     /// <param name="knownActualHashes">Full path to SHA-256 already computed by the caller (the re-check); those files are not hashed again.</param>
-    /// <param name="registeredOutputs">Output paths registered in the custody chain; when null they are read from the case.</param>
+    /// <param name="registeredOutputs">Output path to the SHA-256 registered in the custody chain; when null they are read from the case.</param>
     public static IReadOnlyList<AcquisitionRunFinding> Verify(CaseWorkspace ws, CancellationToken ct = default,
-        IReadOnlyDictionary<string, string>? knownActualHashes = null, IReadOnlyCollection<string>? registeredOutputs = null)
+        IReadOnlyDictionary<string, string>? knownActualHashes = null, IReadOnlyDictionary<string, string>? registeredOutputs = null)
     {
-        var findings = new List<AcquisitionRunFinding>();
+        var r = Inspect(ws, ct, knownActualHashes, registeredOutputs);
+        if (r.FolderProblem is not null) return [Bad("", "", r.FolderProblem)];
+        return r.Runs.SelectMany(x => x.Findings).ToList();
+    }
+
+    /// <summary>Known hashes (full path to SHA-256 of the evidence files the re-check computed) and the registered outputs (path to registered SHA-256) of a finished re-check.</summary>
+    public static (IReadOnlyDictionary<string, string> Known, IReadOnlyDictionary<string, string> Registered) MapsFrom(CaseWorkspace ws, RecheckResult r)
+    {
+        var known = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var c in r.Evidence)
+            if (c.ActualSha256 is not null && ws.TryFullPath(c.StoredPath, out var cf)) known[cf] = c.ActualSha256;
+        var registered = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var o in r.Outputs) registered[o.Path] = o.ExpectedSha256;
+        return (known, registered);
+    }
+
+    /// <summary>
+    /// Same checks as <see cref="Verify"/>, but keeps the record the checks were made on: <see cref="AcquisitionRunInspection.Record"/> is the record that was
+    /// read once, hashed (same bytes) against the registered SHA-256 and found well-formed; null when it is not to be trusted.
+    /// </summary>
+    public static AcquisitionRunInspectionResult Inspect(CaseWorkspace ws, CancellationToken ct = default,
+        IReadOnlyDictionary<string, string>? knownActualHashes = null, IReadOnlyDictionary<string, string>? registeredOutputs = null)
+    {
+        var runs = new List<AcquisitionRunInspection>();
         var dir = Path.Combine(ws.Root, "Logs", "acquisition_runs");
-        if (!Directory.Exists(dir)) return findings;
+        if (!Directory.Exists(dir)) return new(null, runs);
         if (IsReparsePoint(Path.Combine(ws.Root, "Logs")) || IsReparsePoint(dir))
-            return [Bad("", "", "folderul fișelor de colectare este o legătură (junction/symlink) și nu a fost urmat")];
+            return new("folderul fișelor de colectare este o legătură (junction/symlink) și nu a fost urmat", runs);
+
+        string[] files;
+        try { files = Directory.EnumerateFiles(dir, "*.json", SearchOption.TopDirectoryOnly).OrderBy(f => f, StringComparer.Ordinal).ToArray(); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return new("folderul fișelor de colectare nu a putut fi citit: " + ex.Message, runs); }
 
         IReadOnlyList<EvidenceItem>? store = null;
         string? storeProblem = null;
@@ -200,22 +235,29 @@ public static class AcquisitionRunVerifier
         var byId = new Dictionary<string, EvidenceItem>(StringComparer.Ordinal);
         foreach (var e in store ?? []) if (e.EvidenceId is not null) byId.TryAdd(e.EvidenceId, e);
 
-        HashSet<string> registered;
-        try { registered = new HashSet<string>(registeredOutputs ?? ws.RegisteredOutputPaths(), StringComparer.OrdinalIgnoreCase); }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return [Bad("", "", "registrul rezultatelor nu a putut fi citit: " + ex.Message)]; }
-
-        string[] files;
-        try { files = Directory.EnumerateFiles(dir, "*.json", SearchOption.TopDirectoryOnly).OrderBy(f => f, StringComparer.Ordinal).ToArray(); }
-        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return [Bad("", "", "folderul fișelor de colectare nu a putut fi citit: " + ex.Message)]; }
+        Dictionary<string, string> registered;
+        try
+        {
+            registered = registeredOutputs is not null ? new(registeredOutputs, StringComparer.OrdinalIgnoreCase)
+                : ws.RegisteredOutputs().ToDictionary(o => o.Path, o => o.Sha256, StringComparer.OrdinalIgnoreCase);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        {
+            foreach (var f in files) runs.Add(new(Path.GetFileName(f), Path.GetFileNameWithoutExtension(f), null, []));
+            return new("registrul rezultatelor nu a putut fi citit: " + ex.Message, runs);
+        }
 
         foreach (var file in files)
         {
             ct.ThrowIfCancellationRequested();
-            try { VerifyOne(ws, file, store is null ? null : byId, storeProblem, registered, knownActualHashes, findings, ct); }
+            var findings = new List<AcquisitionRunFinding>();
+            AcquisitionRunRecord? rec = null;
+            try { rec = VerifyOne(ws, file, store is null ? null : byId, storeProblem, registered, knownActualHashes, findings, ct); }
             catch (OperationCanceledException) { throw; }
-            catch (Exception ex) { findings.Add(Bad(Path.GetFileName(file), Path.GetFileNameWithoutExtension(file), "verificarea fișei a eșuat neașteptat: " + ex.GetType().Name)); }
+            catch (Exception ex) { rec = null; findings.Add(Bad(Path.GetFileName(file), Path.GetFileNameWithoutExtension(file), "verificarea fișei a eșuat neașteptat: " + ex.GetType().Name)); }
+            runs.Add(new(Path.GetFileName(file), Path.GetFileNameWithoutExtension(file), rec, findings));
         }
-        return findings;
+        return new(null, runs);
     }
 
     private static AcquisitionRunFinding Bad(string file, string runId, string detail) =>
@@ -242,7 +284,33 @@ public static class AcquisitionRunVerifier
         return null;
     }
 
-    private static void VerifyOne(CaseWorkspace ws, string file, IReadOnlyDictionary<string, EvidenceItem>? byId, string? storeProblem, HashSet<string> registered,
+    /// <summary>
+    /// The one safe way to read a record file (no symlink, size cap, schema check). The bytes are read once; the SHA-256 returned and the record parsed
+    /// are both of those bytes, so the hash that is compared with the registered one is the hash of what is displayed.
+    /// </summary>
+    private static AcquisitionRunRecord? ReadRecord(string file, string name, out string sha256, out string problem)
+    {
+        problem = ""; sha256 = "";
+        try
+        {
+            var fi = new FileInfo(file);
+            if (fi.Attributes.HasFlag(FileAttributes.ReparsePoint)) { problem = "fișa este o legătură simbolică și nu a fost urmată"; return null; }
+            if (fi.Length > MaxRecordBytes) { problem = "fișa depășește dimensiunea maximă acceptată"; return null; }
+            var bytes = File.ReadAllBytes(file);
+            sha256 = Convert.ToHexStringLower(SHA256.HashData(bytes));
+            var text = Encoding.UTF8.GetString(bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF ? bytes.AsSpan(3) : bytes);
+            var rec = JsonSerializer.Deserialize<AcquisitionRunRecord>(text, Json.Options) ?? throw new InvalidDataException("fișă goală");
+            SchemaVersions.Accept(rec.SchemaVersion, name);
+            return rec;
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidDataException or NotSupportedException or IOException or UnauthorizedAccessException)
+        {
+            problem = "fișa nu a putut fi citită: " + ex.Message;
+            return null;
+        }
+    }
+
+    private static AcquisitionRunRecord? VerifyOne(CaseWorkspace ws, string file, IReadOnlyDictionary<string, EvidenceItem>? byId, string? storeProblem, Dictionary<string, string> registered,
                                   IReadOnlyDictionary<string, string>? knownHashes, List<AcquisitionRunFinding> findings, CancellationToken ct)
     {
         var name = Path.GetFileName(file);
@@ -250,40 +318,33 @@ public static class AcquisitionRunVerifier
         if (!AcquisitionRunRecord.IsValidRunId(stem))
         {
             findings.Add(Bad(name, "", "numele fișei nu este un identificator de rulare valid (32 de caractere hexazecimale mici); fișa nu a fost citită"));
-            return;
+            return null;
         }
-        if (!registered.Contains($"{AcquisitionRunRecord.Folder}/{name}"))
+        if (!registered.TryGetValue($"{AcquisitionRunRecord.Folder}/{name}", out var registeredSha))
         {
             findings.Add(new(name, stem, "", AcquisitionFindingKind.Unregistered, "fișă necunoscută lanțului de custodie; conținutul ei nu este de încredere"));
-            return;
+            return null;
         }
 
-        AcquisitionRunRecord rec;
-        try
+        var rec = ReadRecord(file, name, out var actualSha, out var readProblem);
+        if (rec is null) { findings.Add(Bad(name, stem, readProblem)); return null; }
+        if (!string.Equals(actualSha, registeredSha, StringComparison.OrdinalIgnoreCase))
         {
-            var fi = new FileInfo(file);
-            if (fi.Attributes.HasFlag(FileAttributes.ReparsePoint)) { findings.Add(Bad(name, stem, "fișa este o legătură simbolică și nu a fost urmată")); return; }
-            if (fi.Length > MaxRecordBytes) { findings.Add(Bad(name, stem, "fișa depășește dimensiunea maximă acceptată")); return; }
-            rec = JsonSerializer.Deserialize<AcquisitionRunRecord>(File.ReadAllText(file), Json.Options) ?? throw new InvalidDataException("fișă goală");
-            SchemaVersions.Accept(rec.SchemaVersion, name);
-        }
-        catch (Exception ex) when (ex is JsonException or InvalidDataException or NotSupportedException or IOException or UnauthorizedAccessException)
-        {
-            findings.Add(Bad(name, stem, "fișa nu a putut fi citită: " + ex.Message));
-            return;
+            findings.Add(new(name, stem, "", AcquisitionFindingKind.RecordModified, "fișă modificată după înregistrare; conținutul ei nu este de încredere"));
+            return null;
         }
 
         if (!string.Equals(rec.RunId, stem, StringComparison.Ordinal))
         {
             findings.Add(Bad(name, stem, "identificatorul din fișă nu corespunde numelui fișierului"));
-            return;
+            return null;
         }
         if (!string.Equals(rec.CaseId, ws.Info.CaseId, StringComparison.Ordinal))
         {
             findings.Add(Bad(name, stem, "fișa aparține altui caz"));
-            return;
+            return null;
         }
-        if (Structure(rec) is { } bad) { findings.Add(Bad(name, stem, "fișă invalidă: " + bad)); return; }
+        if (Structure(rec) is { } bad) { findings.Add(Bad(name, stem, "fișă invalidă: " + bad)); return null; }
         if (storeProblem is not null) findings.Add(Bad(name, stem, storeProblem));
 
         foreach (var c in rec.Collectors)
@@ -302,6 +363,7 @@ public static class AcquisitionRunVerifier
                     findings.Add(new(name, stem, i.EvidenceId, AcquisitionFindingKind.EvidenceStoreMismatch, $"{i.EvidenceId}: indexul probelor diferă de fișa colectării (sumă, dimensiune sau cale)"));
             }
         }
+        return rec;
     }
 
     private static AcquisitionRunFinding CheckItem(CaseWorkspace ws, string file, string runId, string collector, AcquisitionItem i,

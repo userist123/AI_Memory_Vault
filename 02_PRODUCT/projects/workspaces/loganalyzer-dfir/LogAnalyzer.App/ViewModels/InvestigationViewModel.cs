@@ -25,6 +25,20 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<string> ImportFiles { get; } = new();
         public ObservableCollection<Finding> Findings { get; } = new();
 
+        /// <summary>R7c: the acquisition run records of the case ("Colectări" tab), read with their integrity verdict by the pipeline or the case loader (no second hashing here).</summary>
+        public ObservableCollection<LogAnalyzer.Dfir.Case.AcquisitionRunRow> AcquisitionRuns { get; } = new();
+        [ObservableProperty] private string _acquisitionRunsLine = "Nicio fișă de colectare în acest caz";
+
+        internal void FillAcquisitionRuns(IReadOnlyList<LogAnalyzer.Dfir.Case.AcquisitionRunRow> rows, string error = "")
+        {
+            AcquisitionRuns.Clear();
+            foreach (var r in rows) AcquisitionRuns.Add(r);
+            var bad = rows.Count(r => r.HasProblem);
+            AcquisitionRunsLine = error.Length > 0 ? "Fișele de colectare nu au putut fi citite: " + error
+                : rows.Count == 0 ? "Nicio fișă de colectare în acest caz"
+                : $"{LogAnalyzer.Dfir.Language.RoText.Count(rows.Count, "colectare înregistrată", "colectări înregistrate")}, {LogAnalyzer.Dfir.Language.RoText.Count(bad, "cu problemă", "cu probleme")}";
+        }
+
         // WP6a (U4): the finding chosen in the grid and its card. The card is built from the finding and the case data by LogAnalyzer.Dfir.Presentation; selecting changes nothing in the case.
         private LogAnalyzer.Dfir.Presentation.EvidenceContext _evidenceContext = LogAnalyzer.Dfir.Presentation.EvidenceContext.Empty;
         [ObservableProperty] private Finding? _selectedFinding;
@@ -453,6 +467,7 @@ namespace LogAnalyzer.UI.ViewModels
             _evidenceContext = BuildEvidenceContext(result);
             Findings.Clear();
             foreach (var f in _result.Findings) Findings.Add(f);
+            FillAcquisitionRuns(_result.AcquisitionRuns, _result.AcquisitionRunsError);
             AirGapFindings.Clear();
             foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.Wp14Rules.Category)) AirGapFindings.Add(f);
             SequenceFindings.Clear();

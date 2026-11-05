@@ -248,6 +248,49 @@
                              Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12" FontSize="12.5"/>
                 </DockPanel>
             </TabItem>
+            <TabItem Header="Colectări" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Colectări: fișele colectării din caz">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding AcquisitionRunsLine}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                    <DataGrid AutomationProperties.Name="Fișele colectării" ItemsSource="{Binding AcquisitionRuns}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single"
+                              RowDetailsVisibilityMode="VisibleWhenSelected">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasProblem}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Începută" Binding="{Binding StartLocalText}" Width="120"/>
+                            <DataGridTextColumn Header="Încheiată" Binding="{Binding EndLocalText}" Width="120"/>
+                            <DataGridTextColumn Header="Stare" Binding="{Binding StateText}" Width="90"/>
+                            <DataGridTextColumn Header="Operator" Binding="{Binding Operator}" Width="1.2*"/>
+                            <DataGridTextColumn Header="Stație" Binding="{Binding Station}" Width="1.2*"/>
+                            <DataGridTextColumn Header="Versiune" Binding="{Binding ApplicationVersion}" Width="90"/>
+                            <DataGridTextColumn Header="Colectori" Binding="{Binding CollectorCount}" Width="75"/>
+                            <DataGridTextColumn Header="Fișiere" Binding="{Binding ItemCount}" Width="70"/>
+                            <DataGridTextColumn Header="Verificare" Binding="{Binding VerificationText}" Width="3*"/>
+                        </DataGrid.Columns>
+                        <DataGrid.RowDetailsTemplate>
+                            <DataTemplate>
+                                <DataGrid AutomationProperties.Name="Colectorii colectării" ItemsSource="{Binding Collectors}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="24,4,4,8" CanUserAddRows="False">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Colector" Binding="{Binding Name}" Width="1.5*"/>
+                                        <DataGridTextColumn Header="Versiune" Binding="{Binding Version}" Width="80"/>
+                                        <DataGridTextColumn Header="Stare" Binding="{Binding StatusText}" Width="90"/>
+                                        <DataGridTextColumn Header="Fișiere" Binding="{Binding ItemCount}" Width="70"/>
+                                        <DataGridTextColumn Header="Amprentă manifest" Binding="{Binding ManifestShort}" Width="130"/>
+                                        <DataGridTextColumn Header="Eroare" Binding="{Binding FirstError}" Width="3*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </DataTemplate>
+                        </DataGrid.RowDetailsTemplate>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
             <TabItem Header="Constatări" Style="{StaticResource InspectorTabItemStyle}">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>

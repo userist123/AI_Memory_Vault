@@ -54,6 +54,13 @@ public sealed class AcquisitionRunTests : IDisposable
         return rec.RunId;
     }
 
+    /// <summary>Edits a record and registers the edited file again, as a record that was genuinely registered in that (inconsistent) form: the deeper checks are then reached, not RecordModified.</summary>
+    private static void RewriteRegistered(CaseWorkspace ws, string runId, Action<JsonNode> edit)
+    {
+        Rewrite(RecordPath(ws, runId), edit);
+        ws.RecordOutput($"Logs/acquisition_runs/{runId}.json", "planted", "0");
+    }
+
     private static void Rewrite(string path, Action<JsonNode> edit)
     {
         var n = JsonNode.Parse(File.ReadAllText(path))!;
@@ -388,7 +395,7 @@ public sealed class AcquisitionRunTests : IDisposable
         var ws = NewCase();
         var a = Store(ws, "a.txt", "alpha");
         var id = Finish(ws, a);
-        Rewrite(RecordPath(ws, id), n =>
+        RewriteRegistered(ws, id, n =>
         {
             var it = n["collectors"]![0]!["items"]![0]!;
             it["evidenceId"] = "EV-999999";
@@ -399,7 +406,7 @@ public sealed class AcquisitionRunTests : IDisposable
         var b = Store(ws2, "b.txt", "beta");
         var id2 = Finish(ws2, b);
         var fake = new string('0', 64);
-        Rewrite(RecordPath(ws2, id2), n =>
+        RewriteRegistered(ws2, id2, n =>
         {
             var c = n["collectors"]![0]!;
             c["items"]![0]!["sha256"] = fake;
@@ -415,12 +422,12 @@ public sealed class AcquisitionRunTests : IDisposable
     {
         var ws = NewCase();
         var id = Finish(ws, Store(ws, "a.txt", "alpha"));
-        Rewrite(RecordPath(ws, id), n => n["collectors"]![0]!["manifestSha256"] = new string('1', 64));
+        RewriteRegistered(ws, id, n => n["collectors"]![0]!["manifestSha256"] = new string('1', 64));
         Assert.Contains(AcquisitionRunVerifier.Verify(ws), f => f.Kind == AcquisitionFindingKind.ManifestMismatch);
 
         var ws2 = NewCase();
         var id2 = Finish(ws2, Store(ws2, "a.txt", "alpha"));
-        Rewrite(RecordPath(ws2, id2), n => n["collectors"]![0]!["items"]![0]!["storedPath"] = @"..\..\secret.txt");
+        RewriteRegistered(ws2, id2, n => n["collectors"]![0]!["items"]![0]!["storedPath"] = @"..\..\secret.txt");
         Assert.Contains(AcquisitionRunVerifier.Verify(ws2), f => f.Kind == AcquisitionFindingKind.ItemOutsideCase);
     }
 

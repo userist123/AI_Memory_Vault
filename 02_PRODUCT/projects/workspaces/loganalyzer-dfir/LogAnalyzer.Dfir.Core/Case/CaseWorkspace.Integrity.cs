@@ -161,10 +161,8 @@ public sealed partial class CaseWorkspace
         int acqModified = 0, acqMissing = 0, acqUnverified = 0;
         try
         {
-            var known = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var c in r.Evidence)
-                if (c.ActualSha256 is not null && TryFullPath(c.StoredPath, out var cf)) known[cf] = c.ActualSha256;
-            foreach (var f in AcquisitionRunVerifier.Verify(this, ct, known, r.Outputs.Select(o => o.Path).ToList()).Where(f => f.IsProblem))
+            var (known, registeredMap) = AcquisitionRunVerifier.MapsFrom(this, r);
+            foreach (var f in AcquisitionRunVerifier.Verify(this, ct, known, registeredMap).Where(f => f.IsProblem))
             {
                 r.Notes.Add($"fișa colectării {f.RunId}: {f.Detail}");
                 if (f.Kind == AcquisitionFindingKind.ItemMissing) acqMissing++;
