@@ -38,11 +38,15 @@ public sealed class SrumNetworkParser : EvidenceParserBase
 
     public static IEnumerable<SrumNetRow> Read(string srudbPath, CancellationToken ct = default) => ReadAll(srudbPath, ct).Network;
 
+    /// <summary>Set when the working copy was a "dirty shutdown" database recovered with the collected ESE logs; "" when it opened as copied.</summary>
+    [ThreadStatic] private static string? _lastRecovery;
+
     /// <summary>Both SRUM network tables. <c>ConnectivityError</c> is "" when the Network Connectivity table was read, else why not (the usage rows are still returned).</summary>
     public static (List<SrumNetRow> Network, List<SrumConnRow> Connectivity, string ConnectivityError) ReadAll(string srudbPath, CancellationToken ct = default)
     {
         var conn = new List<SrumConnRow>();
         string connError = "";
+        _lastRecovery = "";
         var rows = ReadCore(srudbPath, ct, db =>
         {
             try
@@ -71,7 +75,7 @@ public sealed class SrumNetworkParser : EvidenceParserBase
             File.Copy(srudbPath, copy);
             File.SetAttributes(copy, FileAttributes.Normal);
             var rows = new List<SrumNetRow>();
-            using (var db = new EseReadOnlyDatabase(copy))
+            using (var db = OpenOrRecover(copy, Path.GetDirectoryName(Path.GetFullPath(srudbPath))!, work, ct))
             {
                 var idmap = new Dictionary<int, string>();
                 using (var t = db.OpenTable("SruDbIdMapTable"))
@@ -108,9 +112,78 @@ public sealed class SrumNetworkParser : EvidenceParserBase
         }
     }
 
+    /// <summary>
+    /// Opens the working copy; a "dirty shutdown" database (JET -550, the snapshot caught SRUM mid-write) is recovered first with the ESE logs
+    /// collected beside it: only the srum_log items of the case evidence index whose SHA-256 still matches (review 2026-11-05: an unchecked
+    /// planted .log would have changed the recovered rows), copied into the working folder and replayed there by esentutl /r with every path
+    /// (logs, system files, database) pointing to that folder, so nothing outside it is touched. Outside a case there is no index: no recovery.
+    /// </summary>
+    private static EseReadOnlyDatabase OpenOrRecover(string copy, string evidenceDir, string work, CancellationToken ct)
+    {
+        try { return new EseReadOnlyDatabase(copy); }
+        catch (InvalidOperationException ex) when (ex.Message.Contains("JET error -550", StringComparison.Ordinal))
+        {
+            var (logs, problem) = VerifiedSrumLogs(evidenceDir, ct);
+            if (problem.Length > 0 || logs.Count == 0)
+                throw new InvalidOperationException(ex.Message + " Baza SRUM copiată este „murdară” și nu poate fi recuperată: " +
+                    (problem.Length > 0 ? problem : "jurnalele ESE nu au fost colectate lângă ea."));
+            foreach (var l in logs)
+            {
+                var d = Path.Combine(work, Path.GetFileName(l.Path));
+                File.Copy(l.Path, d, overwrite: true);
+                File.SetAttributes(d, FileAttributes.Normal);
+                // review round 2 LOW-3: the copy that is replayed is the one checked (no window between the hash and the copy)
+                using var fs = new FileStream(d, FileMode.Open, FileAccess.Read, FileShare.Read);
+                if (!Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs)).Equals(l.Sha256, StringComparison.OrdinalIgnoreCase))
+                    throw new InvalidOperationException(ex.Message + $" Baza SRUM copiată este „murdară” și nu poate fi recuperată: jurnalul {l.EvidenceId} s-a schimbat în timpul copierii.");
+            }
+            var run = LogAnalyzer.Dfir.Windows.Acquisition.ToolRunner.Run(LogAnalyzer.Dfir.Windows.Acquisition.ToolRunner.System32("esentutl.exe"),
+                ["/r", "SRU", "/l", work, "/s", work, "/d", work, "/i", "/o"], work, "esentutl_srum_recovery", TimeSpan.FromMinutes(5), ct);
+            try
+            {
+                var db = new EseReadOnlyDatabase(copy);
+                _lastRecovery = $"baza SRUM copiată era „murdară” (JET -550); recuperată pe copia de lucru cu jurnalele ESE {string.Join(", ", logs.Select(l => l.EvidenceId))} " +
+                                $"(amprente verificate; {run.CommandLine}, cod {run.ExitCode}); originalul din caz nu a fost modificat";
+                return db;
+            }
+            catch (InvalidOperationException again)
+            {
+                throw new InvalidOperationException($"{again.Message} Recuperarea cu jurnalele ESE colectate (esentutl /r, cod {run.ExitCode}) nu a reușit: probabil lipsesc generațiile de jurnal cerute de bază.");
+            }
+        }
+    }
+
+    /// <summary>The srum_log items of the case that sit beside the database and still have their acquisition hash; a changed one stops the recovery.</summary>
+    internal static (List<(string Path, string EvidenceId, string Sha256)> Logs, string Problem) VerifiedSrumLogs(string evidenceDir, CancellationToken ct)
+    {
+        var logs = new List<(string, string, string)>();
+        if (LogAnalyzer.Dfir.IO.WorkFolders.CaseRootOf(Path.Combine(evidenceDir, "SRUDB.dat")) is not { } root) return (logs, "copia nu este într-un caz, deci jurnalele nu pot fi verificate.");
+        var index = Path.Combine(root, "Evidence", "evidence_index.jsonl");
+        if (!File.Exists(index)) return (logs, "indexul probelor cazului lipsește.");
+        var dir = Path.GetFullPath(evidenceDir).TrimEnd(Path.DirectorySeparatorChar);
+        foreach (var e in LogAnalyzer.Dfir.IO.Json.ReadLines<EvidenceItem>(index).Where(e => e.SourceType == LogAnalyzer.Dfir.Windows.Acquisition.SrumCollector.SrumLogSourceType))
+        {
+            ct.ThrowIfCancellationRequested();
+            string full;
+            try { full = Path.GetFullPath(Path.Combine(root, e.StoredPath)); }
+            catch (Exception pex) when (pex is ArgumentException or NotSupportedException or PathTooLongException) { continue; }
+            if (!full.StartsWith(root + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase)) continue;   // never outside the case
+            if (!string.Equals(Path.GetDirectoryName(full), dir, StringComparison.OrdinalIgnoreCase)) continue;
+            if (!File.Exists(full)) return (logs, $"jurnalul {e.EvidenceId} lipsește din caz.");
+            string sha;
+            using (var fs = new FileStream(full, FileMode.Open, FileAccess.Read, FileShare.Read)) sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
+            if (!sha.Equals(e.Sha256, StringComparison.OrdinalIgnoreCase)) return (logs, $"jurnalul {e.EvidenceId} ({Path.GetFileName(full)}) a fost modificat după colectare (SHA-256 diferit).");
+            logs.Add((full, e.EvidenceId, sha));
+        }
+        return (logs, "");
+    }
+
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
         var (network, connectivity, connError) = ReadAll(fullPath, ct);
+        if (_lastRecovery is { Length: > 0 } recovered)
+            result.Gaps.Add(new EvidenceGap("SRUM (recuperare)", EvidenceStatus.Partial, recovered,
+                "Înregistrările necomise la momentul copierii pot lipsi dacă jurnalele copiate nu le conțin", "o copie SRUDB.dat cu oprire curată", "Posibil"));
         foreach (var c in connectivity)
         {
             sink.Add(new TimelineEvent

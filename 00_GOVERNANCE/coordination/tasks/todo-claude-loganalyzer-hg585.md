@@ -138,6 +138,23 @@
   with empty name; leftover English (High, Removable Media, DETECTED, SUCCESS, Evidence Graph, Show Calendar); wizard + expert form
   duplicated; userpath rules flag signed per-user apps (Chrome, Claude) - calibrate by signature.
 
+- 2026-11-05 batch 2 ("Repara tot"): all open items of the evaluation addressed. (A) advanced pages read the OPEN CASE: MainViewModel.
+  CaseWorkspace.cs (StateChanged -> LoadCaseIntoWorkspaceAsync: working DB refilled from the case's own EVTX copies via the extracted
+  IngestEvtxFile, alerts = case findings, banner WorkspaceSourceLine in MainWindow, tab 8 added to LegacyDataTabs) - VERIFIED ON SCREEN
+  (Panou general 49.411 events / 310 alerts / recheck valid; Firul atacului from the case). (B) SRUM: collector copies SRU.chk/SRU*.log/
+  *.jrs/SRUDB.jfm (srum_log); parser recovers a JET -550 copy with esentutl /r confined to its work folder (manual probe: live DB untouched);
+  ESE ctor frees the instance on failure. (C) "Alte N" summaries carry evidence (0 rejected on screen). (D) SignatureCalibration +
+  ArtifactPathResolver (\device\harddiskvolumeN, \VOLUME{..-serial}, \users) + Finding.WithSeverity: live run lowered 22 signed per-user
+  programs, high 123 -> 102. (E) Amcache valueless keys named from the key; Romanian severity/category converters on the old pages,
+  DatePicker automation names, ScopeDialog names, custody texts; wizard says "Analiza rulează…" while busy (verified); AttackStoryline only
+  High/Critical, no "atacatorul a parcurs cu succes", level from max severity. Tests Dfir 2543/0/31, App 1005/0, UI 354/0/1, Edition 45/0.
+  TEST cases now also -201142, -202410. Opus round 1 CHANGES_REQUIRED (10: case/import mixing in the working DB -> SemaphoreSlim gate +
+  token per batch; calibration of imported evidence -> only live-collected-here evidence; -CORRELATED excluded (side-loading), one level,
+  revocation stated, audit trail; silent load failure; SRUM logs only from the evidence index with SHA-256; analysis rerun; volume serial
+  removed from tests; skip attribute; Esent JetTerm) all fixed; round 2 APPROVE; its 3 LOW residuals also fixed (AcquisitionMethod/remote
+  package excluded, ClearCache behind the gate with Wait(0), SRUM log hashed on the work copy). RecentCaseView ToString (a11y). Gate READY
+  3951/0/33; EVAL-* register entries resolved. NOT covered by tests: the gate/cancel/rerun concurrency (code reading only).
+
 ## Next
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.
 0b. Advanced pages on the open case (one data source) - biggest product gap found; SRUM: recover the dirty ESE copy (esentutl /r with the

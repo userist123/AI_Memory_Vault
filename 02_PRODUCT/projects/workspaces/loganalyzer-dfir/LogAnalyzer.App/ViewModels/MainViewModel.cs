@@ -323,7 +323,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <summary>G3: the older pages under "Avansat" that load their own events (dashboard, events, registry, alerts, timeline, risk, attack chain,
         /// threat intelligence, MITRE); on them the window shows the empty offer while neither "Colectează tot" nor the page has data.</summary>
-        public static readonly int[] LegacyDataTabs = [0, 1, 2, 3, 4, 5, 6, 7, 10];
+        public static readonly int[] LegacyDataTabs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10];   // 8 (Conturi locale și USB) reads the same events (evaluation 2026-11-05)
         public bool IsLegacyDataPage => LegacyDataTabs.Contains(SelectedTabIndex);
         [ObservableProperty] private int _totalEventsCount;
         [ObservableProperty] private int _totalAlertsCount;
@@ -677,6 +677,7 @@ namespace LogAnalyzer.UI.ViewModels
             Containment = featureViews.CreateViewModel(FeatureKeys.Containment);
             DomainInvestigation = featureViews.CreateViewModel(FeatureKeys.DomainInvestigation);
             Investigation = new InvestigationViewModel(inv => featureViews.CreateViewModel(FeatureKeys.AiAnalysis, inv));
+            Investigation.StateChanged += OnInvestigationStateChanged;   // evaluation 2026-11-05: the advanced pages show the open case
             // The account's language level (default Simple) before any page reads a glossary term.
             LogAnalyzer.Dfir.Language.LanguageLevelContext.Set(_languagePreferences.Load(PreferenceAccount));
             IsExpertLevel = LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert;
@@ -1004,9 +1005,14 @@ namespace LogAnalyzer.UI.ViewModels
 
             if (result == MessageBoxResult.Yes)
             {
+                // review 2026-11-05: never while a case load or an import writes the store (Wait(0): the UI thread must not block on a load whose
+                // continuation needs it)
+                _caseWorkspaceCts?.Cancel();
+                if (!_workspaceGate.Wait(0)) { StatusMessage = "Datele se încarcă încă în paginile avansate; reîncercați curățarea peste câteva secunde."; return; }
                 try
                 {
                     _databaseService.ClearDatabase();
+                    _workspaceCaseId = ""; WorkspaceSourceLine = NoCaseSourceLine;
                     
                     Events.Clear();
                     RegistryArtifacts.Clear();
@@ -1021,6 +1027,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     MessageBox.Show($"Eroare la ștergerea bazei de date: {ex.Message}", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+                finally { _workspaceGate.Release(); }
             }
         }
 
@@ -2161,7 +2168,16 @@ namespace LogAnalyzer.UI.ViewModels
             ".evtx", ".reg", ".dat", ".csv", ".json", ".log", ".lnk", ".pf", ".hve", ".txt", ".bin", ".bmc"
         };
 
+        /// <summary>Review 2026-11-05: a manual import and a case load never run at the same time on the shared working database.</summary>
         private async Task ProcessFilesAsync(string[] allFiles)
+        {
+            _caseWorkspaceCts?.Cancel();
+            await _workspaceGate.WaitAsync();
+            try { await ProcessFilesCoreAsync(allFiles); }
+            finally { _workspaceGate.Release(); }
+        }
+
+        private async Task ProcessFilesCoreAsync(string[] allFiles)
         {
             IsLoading = true;
             LoadingProgress = 0;
@@ -2169,6 +2185,7 @@ namespace LogAnalyzer.UI.ViewModels
             LoadingSubDetail = "Filtrare artefacte forenzice relevante...";
             StatusMessage = "Inițializare sesiune de investigație...";
 
+            _workspaceCaseId = ""; WorkspaceSourceLine = NoCaseSourceLine;
             Events.Clear(); RegistryArtifacts.Clear(); DetectedIssues.Clear(); TimelineItems.Clear();
             _databaseService.ClearDatabase();
 
@@ -2257,58 +2274,7 @@ namespace LogAnalyzer.UI.ViewModels
                         LoadingSubDetail = $"Procesare EVTX: {Path.GetFileName(file)} ({totalEvtxProcessed:N0} evenimente)";
                     });
 
-                    try 
-                    {
-                        var batch = new List<ParsedEvent>();
-                        var timelineBatch = new List<TimelineItem>();
-                        
-                        foreach (var ev in _eventParser.ParseEvtxFile(file)) 
-                        {
-                            // The knowledge base describes Security-log events only; its "EventExample" is a sample event from another computer
-                            // and must never be shown as if it came from this station (owner 2026-10-11).
-                            var kbDetails = (ev.ProviderName ?? "").Contains("Security-Auditing", StringComparison.OrdinalIgnoreCase) ? _kbService.GetDetails(ev.EventId) : null;
-                            if (kbDetails != null)
-                            {
-                                ev.OfficialDescription = kbDetails.ExtendedDescription;
-                                ev.ReferenceUrl = kbDetails.ReferenceUrl;
-                                if (string.IsNullOrWhiteSpace(ev.PotentialCriticality)) ev.PotentialCriticality = kbDetails.PotentialCriticality;
-                            }
-                            batch.Add(ev);
-                            
-                            timelineBatch.Add(new TimelineItem 
-                            { 
-                                Timestamp = ev.TimeCreated, 
-                                Source = "EVTX", 
-                                Category = $"EID {ev.EventId}", 
-                                Description = ev.Message ?? "-", 
-                                UserOrHost = ev.MachineName ?? "-" 
-                            });
-
-                            if (batch.Count >= 5000)
-                            {
-                                _databaseService.SaveEvents(batch);
-                                _databaseService.SaveTimeline(timelineBatch);
-                                totalEvtxProcessed += batch.Count;
-                                batch.Clear();
-                                timelineBatch.Clear();
-                            }
-                        }
-                        if (batch.Count > 0)
-                        {
-                            _databaseService.SaveEvents(batch);
-                            _databaseService.SaveTimeline(timelineBatch);
-                            totalEvtxProcessed += batch.Count;
-                        }
-                        if (_eventParser is EvtxParser repairedBy && repairedBy.LastRepairNote.Length > 0)
-                            importErrors.Add($"{Path.GetFileName(file)} (EVTX): {repairedBy.LastRepairNote}.");
-                        if (_eventParser is EvtxParser legacy && legacy.LastMalformedRecords > 0)
-                            importErrors.Add($"{Path.GetFileName(file)} (EVTX): {legacy.LastMalformedRecords} înregistrări ilizibile au fost sărite; restul fișierului a fost importat.");
-                    } 
-                    catch (Exception ex)
-                    {
-                        // Never skip a file silently: the operator must know what is missing from the analysis.
-                        importErrors.Add($"{Path.GetFileName(file)} (EVTX): {ex.Message}");
-                    }
+                    totalEvtxProcessed += IngestEvtxFile(file, importErrors);
                 }
 
                 // 2.2 Parsare Registru .REG
@@ -2530,6 +2496,68 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
+
+        /// <summary>Parses one EVTX file into the working database (events + timeline); a problem is added to <paramref name="importErrors"/>, never skipped silently. Returns the events saved.</summary>
+        private int IngestEvtxFile(string file, List<string> importErrors, System.Threading.CancellationToken ct = default)
+        {
+            int n = 0;
+            try 
+            {
+                var batch = new List<ParsedEvent>();
+                var timelineBatch = new List<TimelineItem>();
+                
+                foreach (var ev in _eventParser.ParseEvtxFile(file)) 
+                {
+                    // The knowledge base describes Security-log events only; its "EventExample" is a sample event from another computer
+                    // and must never be shown as if it came from this station (owner 2026-10-11).
+                    var kbDetails = (ev.ProviderName ?? "").Contains("Security-Auditing", StringComparison.OrdinalIgnoreCase) ? _kbService.GetDetails(ev.EventId) : null;
+                    if (kbDetails != null)
+                    {
+                        ev.OfficialDescription = kbDetails.ExtendedDescription;
+                        ev.ReferenceUrl = kbDetails.ReferenceUrl;
+                        if (string.IsNullOrWhiteSpace(ev.PotentialCriticality)) ev.PotentialCriticality = kbDetails.PotentialCriticality;
+                    }
+                    batch.Add(ev);
+                    
+                    timelineBatch.Add(new TimelineItem 
+                    { 
+                        Timestamp = ev.TimeCreated, 
+                        Source = "EVTX", 
+                        Category = $"EID {ev.EventId}", 
+                        Description = ev.Message ?? "-", 
+                        UserOrHost = ev.MachineName ?? "-" 
+                    });
+    
+                    if (batch.Count >= 5000)
+                    {
+                        ct.ThrowIfCancellationRequested();   // review 2026-11-05: a newer case load or import must not wait for, or mix with, this file
+                        _databaseService.SaveEvents(batch);
+                        _databaseService.SaveTimeline(timelineBatch);
+                        n += batch.Count;
+                        batch.Clear();
+                        timelineBatch.Clear();
+                    }
+                }
+                if (batch.Count > 0)
+                {
+                    _databaseService.SaveEvents(batch);
+                    _databaseService.SaveTimeline(timelineBatch);
+                    n += batch.Count;
+                }
+                if (_eventParser is EvtxParser repairedBy && repairedBy.LastRepairNote.Length > 0)
+                    importErrors.Add($"{Path.GetFileName(file)} (EVTX): {repairedBy.LastRepairNote}.");
+                if (_eventParser is EvtxParser legacy && legacy.LastMalformedRecords > 0)
+                    importErrors.Add($"{Path.GetFileName(file)} (EVTX): {legacy.LastMalformedRecords} înregistrări ilizibile au fost sărite; restul fișierului a fost importat.");
+            } 
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
+            {
+                // Never skip a file silently: the operator must know what is missing from the analysis.
+                importErrors.Add($"{Path.GetFileName(file)} (EVTX): {ex.Message}");
+            }
+            return n;
+        }
+
         private bool FilterIssues(object obj) => !(HideVerifiedAlerts && ((DetectedIssue)obj).IsVerified);
 
         private async void InitializeProcessTree()
@@ -2736,7 +2764,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// </summary>
         private async Task RunAnalysisAsync(bool announce)
         {
-            if (_analysisEngine is not AnalysisEngine ae || _aiRunning) return;
+            if (_analysisEngine is not AnalysisEngine ae) return;
+            // review 2026-11-05: a call while one runs is not dropped (the panels would keep the previous data set): it runs right after
+            if (_aiRunning) { _analysisRerun = true; _analysisRerunAnnounce |= announce; return; }
             _aiRunning = true;
             try
             {
@@ -2996,7 +3026,11 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 StatusMessage = "Analiza nu a putut fi făcută: " + ex.Message;
             }
-            finally { _aiRunning = false; }
+            finally
+            {
+                _aiRunning = false;
+                if (_analysisRerun) { _analysisRerun = false; var again = _analysisRerunAnnounce; _analysisRerunAnnounce = false; _ = RunAnalysisAsync(again); }
+            }
         }
 
         [RelayCommand]

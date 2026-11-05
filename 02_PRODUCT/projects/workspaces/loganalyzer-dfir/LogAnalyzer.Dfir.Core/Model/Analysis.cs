@@ -54,7 +54,21 @@ public sealed class Finding
     public required string FindingId { get; init; }
     public required string RuleId { get; init; }
     public required string Title { get; init; }
-    public Severity Severity { get; init; }
+    private Severity _severity;
+    public Severity Severity { get => _severity; init => _severity = value; }
+
+    /// <summary>
+    /// A copy with another severity and the reason written into its limitations, so a recalibration is visible in the finding itself
+    /// (evaluation 2026-11-05: programs signed by their publisher and installed in the profile were raised as high).
+    /// </summary>
+    public Finding WithSeverity(Severity severity, string reason)
+    {
+        var copy = (Finding)MemberwiseClone();
+        copy._severity = severity;
+        copy.Limitations = [.. Limitations, reason];   // new lists: the shallow copy shares the others with the original, which the caller replaces
+        copy.AuditTrail = [.. AuditTrail, new FindingAuditEntry("severity.calibrated", "LogAnalyzer", $"{_severity} -> {severity}: {reason}", DateTimeOffset.UtcNow)];
+        return copy;
+    }
     public string Category { get; init; } = "";
     public Classification Classification { get; init; }
     public Confidence Confidence { get; set; }

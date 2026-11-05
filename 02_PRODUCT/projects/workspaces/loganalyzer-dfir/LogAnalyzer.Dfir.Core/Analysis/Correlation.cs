@@ -521,7 +521,7 @@ public static class Correlation
         var psBlocks = events.Where(e => Ev(e, "Microsoft-Windows-PowerShell/Operational", 4104))
             .GroupBy(e => F(e, "ScriptBlockId") is { Length: > 0 } sid ? "id:" + sid : "ev:" + e.EvidenceId + e.Locator).ToList();
         // The id is given only to the blocks that are listed (top 100): giving one to every block left holes in the numbering (evaluation 2026-11-05).
-        var psFindings = new List<(int Score, DateTimeOffset? First, Func<string, Finding> Make)>();
+        var psFindings = new List<(int Score, DateTimeOffset? First, EvidenceRef FirstRef, Func<string, Finding> Make)>();
         foreach (var blk in psBlocks)
         {
             var parts = blk.OrderBy(e => int.TryParse(F(e, "MessageNumber"), out var mn) ? mn : 0).ToList();
@@ -534,7 +534,7 @@ public static class Correlation
             bool amsi = hitKw.Any(k => k.High);
             var first = parts[0];
             var mitre = hitKw.OrderByDescending(k => k.Weight).Select(k => k.Mitre).FirstOrDefault(m => m.Length > 0) ?? "T1059.001";
-            psFindings.Add((score, first.Time.Utc, id => new Finding
+            psFindings.Add((score, first.Time.Utc, Ref(first, "4104"), id => new Finding
             {
                 FindingId = id, RuleId = "PS-SUSPICIOUS",
                 Title = hitKw.Count > 0 ? $"Bloc PowerShell suspect: {string.Join(", ", hitKw.OrderByDescending(k => k.Weight).Take(4).Select(k => k.Text.Trim()))}" : "Bloc PowerShell marcat de Windows ca suspect (nivel Avertisment)",
@@ -548,7 +548,8 @@ public static class Correlation
                 RecommendedNextSteps = ["Citiți scriptul complet și identificați contul și procesul care l-au lansat."],
             }));
         }
-        foreach (var (_, _, make) in psFindings.OrderByDescending(x => x.Score).ThenBy(x => x.First).Take(100)) f.Add(make(Id()));
+        var psOrdered = psFindings.OrderByDescending(x => x.Score).ThenBy(x => x.First).ToList();
+        foreach (var (_, _, _, make) in psOrdered.Take(100)) f.Add(make(Id()));
         if (psFindings.Count > 100)
             f.Add(new Finding
             {
@@ -556,6 +557,8 @@ public static class Correlation
                 Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "T1059.001",
                 Description = "Raportul listează primele 100 de blocuri după scor; restul sunt în cronologie (evenimente 4104).",
                 ClassificationReason = "Limită de afișare, nu o concluzie.",
+                // evaluation 2026-11-05: without evidence the summary was rejected by the provenance binding and never reached the report
+                SupportingEvidence = psOrdered.Skip(100).Take(20).Select(x => x.FirstRef).ToList(),
             });
 
         // 7a. Suspicious PowerShell command line from the classic "Windows PowerShell" log (400, engine start): HostApplication carries the full
@@ -567,7 +570,7 @@ public static class Correlation
             .GroupBy(x => x.cmd, StringComparer.OrdinalIgnoreCase);
         // Review 2026-11-05: the short forms (-e, -ec) and the decoded text count too; attacker text is shown with invisible / direction
         // characters made visible; at most 100 command lines are listed (same cap as the script blocks), the rest in one summary.
-        var cmdLines = new List<(int Score, DateTimeOffset? First, Func<string, Finding> Make)>();
+        var cmdLines = new List<(int Score, DateTimeOffset? First, EvidenceRef FirstRef, Func<string, Finding> Make)>();
         foreach (var g in hostApps)
         {
             var decoded = DecodedCommand(g.Key);
@@ -585,7 +588,7 @@ public static class Correlation
             var mitre = decoded.Length > 0 ? "T1027" : hitKw.OrderByDescending(k => k.Weight).Select(k => k.Mitre).FirstOrDefault(m => m.Length > 0) ?? "T1059.001";
             var shownCmd = Visible(Trunc(g.Key, 300));
             var shownDecoded = Visible(Trunc(decoded, 300));
-            cmdLines.Add((score, runs[0].Time.Utc, id => new Finding
+            cmdLines.Add((score, runs[0].Time.Utc, Ref(runs[0], "Windows PowerShell 400 HostApplication"), id => new Finding
             {
                 FindingId = id, RuleId = "PS-CMDLINE-SUSPICIOUS",
                 Title = $"PowerShell pornit cu o linie de comandă suspectă: {string.Join(", ", labels.Take(4))}",
@@ -601,7 +604,8 @@ public static class Correlation
                 RecommendedNextSteps = ["Identificați procesul care a pornit PowerShell (Prefetch, BAM, 4688 dacă există) și verificați comanda decodată."],
             }));
         }
-        foreach (var (_, _, make) in cmdLines.OrderByDescending(x => x.Score).ThenBy(x => x.First).Take(100)) f.Add(make(Id()));
+        var cmdOrdered = cmdLines.OrderByDescending(x => x.Score).ThenBy(x => x.First).ToList();
+        foreach (var (_, _, _, make) in cmdOrdered.Take(100)) f.Add(make(Id()));
         if (cmdLines.Count > 100)
             f.Add(new Finding
             {
@@ -609,6 +613,7 @@ public static class Correlation
                 Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "T1059.001",
                 Description = "Raportul listează primele 100 de linii de comandă după scor; restul sunt în cronologie (evenimente 400 din jurnalul Windows PowerShell).",
                 ClassificationReason = "Limită de afișare, nu o concluzie.",
+                SupportingEvidence = cmdOrdered.Skip(100).Take(20).Select(x => x.FirstRef).ToList(),
             });
 
         // 7b. WP11 Tier 1: SMB shares, account lifecycle, remote administration, security agents, snapshot deletion, DNS, remote-access tools.

@@ -264,7 +264,7 @@ namespace LogAnalyzer.UI.ViewModels
         public string ReportAudienceDescription => LogAnalyzer.Dfir.Reporting.ReportAudiences.Description((LogAnalyzer.Dfir.Reporting.ReportAudience)Math.Clamp(ReportAudienceIndex, 0, ReportAudienceLabels.Length - 1));
         partial void OnReportAudienceIndexChanged(int value) => OnPropertyChanged(nameof(ReportAudienceDescription));
         [ObservableProperty] private string _log = "";
-        [ObservableProperty] private bool _isBusy;
+        [ObservableProperty, NotifyPropertyChangedFor(nameof(IntakeProgress))] private bool _isBusy;
         /// <summary>True once a result (a run, or a case opened from disk) is shown; before it, „Simplu” shows one sentence instead of empty result tabs.</summary>
         [ObservableProperty] private bool _hasResult;
         /// <summary>Operation state of the last run (UX contract §20), in Romanian. "Finalizat" does not mean any finding is verified.</summary>
@@ -333,7 +333,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _intakeError = "";
         public ObservableCollection<IncomingFamily> IntakeFamilies { get; } = new();
         public string IntakeTitle => _intake.Title;
-        public string IntakeProgress => _intake.ProgressText;
+        /// <summary>Evaluation 2026-11-05: the wizard said „Gata” while the analysis was still running.</summary>
+        public string IntakeProgress => IsBusy ? "Analiza rulează…" : _intake.ProgressText;
         public int IntakeStepIndex => _intake.StepIndex;
         public string IntakeStepTitle => _intake.Current.Title;
         public string IntakeQuestion => _intake.Current.Question;

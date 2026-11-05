@@ -1,4 +1,4 @@
-<UserControl x:Class="LogAnalyzer.UI.Views.KerberosAndLateralMovementView"
+<UserControl xmlns:sevc="clr-namespace:LogAnalyzer.UI.Views" x:Class="LogAnalyzer.UI.Views.KerberosAndLateralMovementView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid Margin="24">
@@ -102,9 +102,9 @@
                         </DockPanel>
                         <DataGrid Grid.Row="1" ItemsSource="{Binding StandaloneSamFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Categorie" Binding="{Binding Category}" Width="160"/>
+                                <DataGridTextColumn Header="Categorie" Binding="{Binding Category, Converter={x:Static sevc:CategoryTextConverter.Instance}}" Width="160"/>
                                 <DataGridTextColumn Header="Tip Detecție Standalone" Binding="{Binding FindingType}" Width="210"/>
-                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="90"/>
+                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="90"/>
                                 <DataGridTextColumn Header="Cont / Resursă Țintă" Binding="{Binding TargetAccountOrResource}" Width="150"/>
                                 <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85"/>
                                 <DataGridTextColumn Header="Proces / Dispozitiv Sursă" Binding="{Binding SourceProcessOrDevice}" Width="160"/>
@@ -133,7 +133,7 @@
                         <DataGrid Grid.Row="1" ItemsSource="{Binding StandaloneSamFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Tip Dispozitiv / Eveniment" Binding="{Binding FindingType}" Width="220"/>
-                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="90"/>
+                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="90"/>
                                 <DataGridTextColumn Header="Identificator Hardware / Serial" Binding="{Binding TargetAccountOrResource}" Width="200"/>
                                 <DataGridTextColumn Header="Driver / Serviciu Sursă" Binding="{Binding SourceProcessOrDevice}" Width="170"/>
                                 <DataGridTextColumn Header="Diagnostic &amp; Măsură Conformitate HG 585" Binding="{Binding Description}" Width="*"/>
@@ -192,7 +192,7 @@
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Binar Sistem" Binding="{Binding BinaryName}" Width="120"/>
                                 <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85"/>
-                                <DataGridTextColumn Header="Categorie Comportament" Binding="{Binding Category}" Width="150"/>
+                                <DataGridTextColumn Header="Categorie Comportament" Binding="{Binding Category, Converter={x:Static sevc:CategoryTextConverter.Instance}}" Width="150"/>
                                 <DataGridTextColumn Header="Linie de Comandă Executată" Binding="{Binding CommandLine}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>

@@ -261,6 +261,15 @@ public sealed class InvestigationPipeline
         }
     }
 
+    /// <summary>Why a transaction-log companion is not parsed on its own (evaluation 2026-11-05: „niciun parser înregistrat” read like a defect).</summary>
+    internal static string? AuxiliaryNote(string sourceType) => sourceType switch
+    {
+        LogAnalyzer.Dfir.Windows.Acquisition.SrumCollector.SrumLogSourceType =>
+            "jurnal de tranzacții ESE al bazei SRUM: nu se citește separat; parserul SRUM îl folosește la recuperarea unei copii „murdare”",
+        "amcache_log" => "jurnal de tranzacții al hive-ului Amcache: păstrat în caz ca probă; reaplicarea lui pe hive nu este încă implementată (intrările scrise doar în jurnal pot lipsi)",
+        _ => null,
+    };
+
     private static void MarkEnded(InvestigationResult r, CaseWorkspace ws, OperationState state, string reason)
     {
         r.State = state;
@@ -375,7 +384,7 @@ public sealed class InvestigationPipeline
                     r.Parsing.Add(new ParseResult
                     {
                         EvidenceId = ev.EvidenceId, Parser = "-", ParserVersion = "-", Status = EvidenceStatus.SkippedByDesign,
-                        Error = sel.Problem, ExpectedSha256 = ev.Sha256,
+                        Error = AuxiliaryNote(ev.SourceType) ?? sel.Problem, ExpectedSha256 = ev.Sha256,
                     });
                 continue;
             }
@@ -426,7 +435,7 @@ public sealed class InvestigationPipeline
                 else
                     ProvenanceBinder.BindEvents(sink.Events.Skip(mark), ev, parser.Descriptor.ParserId, parser.Descriptor.Version);
                 r.Parsing.Add(pr);
-                ws.RecordTransformation(ev.EvidenceId, parser.Descriptor.ParserId, parser.Descriptor.Version, "Analysis/timeline.csv", $"{LogAnalyzer.Dfir.Language.RoText.Count(pr.Records, "înregistrare", "înregistrări")}, status {pr.Status.ToSpec()}");
+                ws.RecordTransformation(ev.EvidenceId, parser.Descriptor.ParserId, parser.Descriptor.Version, "Analysis/timeline.csv", $"{LogAnalyzer.Dfir.Language.RoText.Count(pr.Records, "înregistrare", "înregistrări")}, stare {LogAnalyzer.Dfir.Language.RoLabels.Source(pr.Status)} ({pr.Status.ToSpec()})");
                 r.Gaps.AddRange(pr.Gaps);
                 if (pr.Status is EvidenceStatus.Failed or EvidenceStatus.Partial)
                     r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), pr.Status, pr.Error.Length > 0 ? pr.Error : $"{LogAnalyzer.Dfir.Language.RoText.Count(pr.MalformedRecords, "înregistrare", "înregistrări")} corupte",
@@ -506,6 +515,20 @@ public sealed class InvestigationPipeline
         int hashFindingNo = LiveStateAnalyzer.MaxFindingNo(found);
         found.AddRange(LogAnalyzer.Dfir.HashSets.HashSetMatcher.ToFindings(hashMatches, () => $"F-{++hashFindingNo:D4}"));
         r.KnownHashMatches.AddRange(hashMatches);
+        if (collect)
+        {
+            // evaluation 2026-11-05: a signed per-user program is checked on this station before it is reported as high (see SignatureCalibration)
+            // review 2026-11-05: only findings whose every piece of evidence was collected live on this host (not imported, not remote)
+            var liveHere = ws.LoadEvidence().Where(e => e.Collector is { Length: > 0 } c && c != "Import" && !c.Contains("remote package", StringComparison.OrdinalIgnoreCase)
+                                                 && !string.Equals(e.AcquisitionMethod, "imported", StringComparison.OrdinalIgnoreCase)   // review round 2 LOW-1: Host is the case host for every item
+                                                 && string.Equals(e.Host, Environment.MachineName, StringComparison.OrdinalIgnoreCase))
+                             .Select(e => e.EvidenceId).ToHashSet(StringComparer.Ordinal);
+            var calibrated = SignatureCalibration.Apply(found, File.Exists, Native.Authenticode.Verify, ArtifactPathResolver.ForThisStation().Resolve,
+                f => f.SupportingEvidence.Count > 0 && f.SupportingEvidence.All(e => liveHere.Contains(e.EvidenceId))).ToList();
+            int lowered = calibrated.Where((x, i) => x.Severity != found[i].Severity).Count();
+            if (lowered > 0) ws.Audit("finding.severity_calibrated", $"{lowered} constatări din locații în care utilizatorii pot scrie coborâte cu un nivel: fișier semnat valid, verificat pe stație, probe colectate pe stație");
+            found = calibrated;
+        }
         var (kept, rejected) = ProvenanceBinder.BindFindings(found, ws.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal));
         LogAnalyzer.Dfir.Case.ClockMemory.Refresh();
         TimeReliability.Apply(kept, r.Timeline, LogAnalyzer.Dfir.Case.ClockMemory.StartupWarning.Length > 0);
@@ -576,7 +599,7 @@ public sealed class InvestigationPipeline
         File.WriteAllText(Path.Combine(analysisDir, "anti_forensics.json"), JsonSerializer.Serialize(r.AntiForensics, new JsonSerializerOptions { WriteIndented = true }));
         ws.RecordOutput("Analysis/anti_forensics.json", "AntiForensics", "1.0", evidenceIds);
         ws.RecordTransformation("CASE", "AntiForensics", "1.0", "Analysis/anti_forensics.json",
-            $"{r.AntiForensics.Count(c => c.Result == AntiForensicResult.Detected)} DETECTED, {r.AntiForensics.Count(c => c.Result == AntiForensicResult.Undetermined)} UNDETERMINED");
+            $"{r.AntiForensics.Count(c => c.Result == AntiForensicResult.Detected)} detectate, {r.AntiForensics.Count(c => c.Result == AntiForensicResult.Undetermined)} nedeterminate (verificări de ascundere a urmelor)");
         File.WriteAllText(Path.Combine(analysisDir, "policy_timeline.json"), policyTimeline.ToJson());
         ws.RecordOutput("Analysis/policy_timeline.json", "PolicyTimeline", "1.0", evidenceIds);
         ws.RecordTransformation("CASE", "PolicyTimeline", "1.0", "Analysis/policy_timeline.json",

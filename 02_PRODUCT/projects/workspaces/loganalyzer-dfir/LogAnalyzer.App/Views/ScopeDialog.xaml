@@ -16,25 +16,25 @@
                 <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Text="Scop:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
-            <TextBox Grid.Row="0" Grid.Column="1" x:Name="PurposeBox" Margin="0,4"/>
+            <TextBox Grid.Row="0" Grid.Column="1" x:Name="PurposeBox" AutomationProperties.Name="Scopul cazului" Margin="0,4"/>
             <TextBlock Grid.Row="1" Text="Aprobator:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
-            <TextBox Grid.Row="1" Grid.Column="1" x:Name="ApproverBox" Margin="0,4"/>
+            <TextBox Grid.Row="1" Grid.Column="1" x:Name="ApproverBox" AutomationProperties.Name="Aprobator" Margin="0,4"/>
             <TextBlock Grid.Row="2" Text="Sisteme în scop:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
-            <TextBox Grid.Row="2" Grid.Column="1" x:Name="SystemsBox" Margin="0,4" ToolTip="Separate prin virgulă sau punct și virgulă"/>
+            <TextBox Grid.Row="2" Grid.Column="1" x:Name="SystemsBox" AutomationProperties.Name="Sisteme în scop" Margin="0,4" ToolTip="Separate prin virgulă sau punct și virgulă"/>
             <TextBlock Grid.Row="3" Text="Perioada de la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
-            <DatePicker Grid.Row="3" Grid.Column="1" x:Name="FromPicker" Margin="0,4" HorizontalAlignment="Left" Width="160"/>
+            <DatePicker Grid.Row="3" Grid.Column="1" x:Name="FromPicker" AutomationProperties.Name="Perioada de la" Margin="0,4" HorizontalAlignment="Left" Width="160"/>
             <TextBlock Grid.Row="4" Text="până la:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
-            <DatePicker Grid.Row="4" Grid.Column="1" x:Name="ToPicker" Margin="0,4" HorizontalAlignment="Left" Width="160"/>
+            <DatePicker Grid.Row="4" Grid.Column="1" x:Name="ToPicker" AutomationProperties.Name="Perioada până la" Margin="0,4" HorizontalAlignment="Left" Width="160"/>
             <TextBlock Grid.Row="5" Text="Temei:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
-            <ComboBox Grid.Row="5" Grid.Column="1" x:Name="LegalBox" Margin="0,4" HorizontalAlignment="Left" Width="160"/>
+            <ComboBox Grid.Row="5" Grid.Column="1" x:Name="LegalBox" AutomationProperties.Name="Temei legal" Margin="0,4" HorizontalAlignment="Left" Width="160"/>
             <TextBlock Grid.Row="6" Text="Categoria sistemului:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
-            <ComboBox Grid.Row="6" Grid.Column="1" x:Name="NetworkBox" Margin="0,4" HorizontalAlignment="Left" Width="200"/>
+            <ComboBox Grid.Row="6" Grid.Column="1" x:Name="NetworkBox" AutomationProperties.Name="Categoria sistemului" Margin="0,4" HorizontalAlignment="Left" Width="200"/>
             <TextBlock Grid.Row="7" Text="Clasificare:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
-            <ComboBox Grid.Row="7" Grid.Column="1" x:Name="ClassBox" Margin="0,4" HorizontalAlignment="Left" Width="200"/>
+            <ComboBox Grid.Row="7" Grid.Column="1" x:Name="ClassBox" AutomationProperties.Name="Nivel de clasificare" Margin="0,4" HorizontalAlignment="Left" Width="200"/>
             <TextBlock Grid.Row="8" Text="Observații:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
-            <TextBox Grid.Row="8" Grid.Column="1" x:Name="NotesBox" Margin="0,4"/>
+            <TextBox Grid.Row="8" Grid.Column="1" x:Name="NotesBox" AutomationProperties.Name="Observații" Margin="0,4"/>
             <TextBlock Grid.Row="9" Text="Actul care autorizează:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
-            <TextBox Grid.Row="9" Grid.Column="1" x:Name="ActBox" Margin="0,4" ToolTip="Numărul, data și emitentul documentului care dispune controlul sau investigația (apare în raport)"/>
+            <TextBox Grid.Row="9" Grid.Column="1" x:Name="ActBox" AutomationProperties.Name="Actul care autorizează" Margin="0,4" ToolTip="Numărul, data și emitentul documentului care dispune controlul sau investigația (apare în raport)"/>
         </Grid>
         <TextBlock x:Name="ErrorText" Foreground="{StaticResource CriticalBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,14,0,0">

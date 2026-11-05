@@ -85,7 +85,8 @@ public class PowerShellCommandLineTests
         var starts = Enumerable.Range(0, 130).Select(i => Start(i, $"powershell.exe -w hidden -enc {B64("Get-Item " + i)}")).ToArray();
         var cmd = Correlation.Run(starts).Where(x => x.RuleId == "PS-CMDLINE-SUSPICIOUS").ToList();
         Assert.Equal(101, cmd.Count);
-        Assert.Contains(cmd, x => x.Title.StartsWith("Alte 30 linii", StringComparison.Ordinal));
+        var summary = Assert.Single(cmd, x => x.Title.StartsWith("Alte 30 linii", StringComparison.Ordinal));
+        Assert.Equal(20, summary.SupportingEvidence.Count);   // evaluation 2026-11-05: a summary without evidence was rejected and never reported
     }
 
     [Fact]
@@ -125,5 +126,6 @@ public class PowerShellCommandLineTests
         var found = Correlation.Run(blocks);
         var numbers = found.Select(x => int.Parse(x.FindingId.AsSpan(2))).OrderBy(n => n).ToList();
         Assert.Equal(Enumerable.Range(1, numbers.Count), numbers);
+        Assert.Equal(5, Assert.Single(found, x => x.Title.StartsWith("Alte 5 blocuri", StringComparison.Ordinal)).SupportingEvidence.Count);
     }
 }

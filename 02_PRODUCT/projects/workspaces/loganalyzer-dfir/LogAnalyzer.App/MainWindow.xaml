@@ -275,6 +275,12 @@
                 <!-- G3: the older pages under "Avansat" load their own events; the offer shows there while neither "Colectează tot" nor the page has data -->
                 <ctrl:NoDataPanel Margin="20,12,20,0" PageItemCount="{Binding Events.Count}"
                                   Visibility="{Binding IsLegacyDataPage, Converter={StaticResource BooleanToVisibilityConverter}}"/>
+                <!-- Evaluation 2026-11-05: which data these pages show (the open case, or files loaded by hand), so one data set is never read as another -->
+                <Border Margin="20,8,20,0" Padding="10,6" CornerRadius="4" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1"
+                        Visibility="{Binding IsLegacyDataPage, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <TextBlock Text="{Binding WorkspaceSourceLine}" TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"
+                               AutomationProperties.Name="Sursa datelor din paginile avansate"/>
+                </Border>
                 </StackPanel>
                 <!-- TabControl Region Host (Bound to SelectedTabIndex & SelectedModuleIndex) -->
                 <TabControl Grid.Row="1" SelectedIndex="{Binding SelectedTabIndex}" BorderThickness="0" Background="Transparent">

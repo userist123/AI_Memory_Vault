@@ -121,7 +121,41 @@ public sealed class SrumCollector : ICollector
         var o = new CollectorOutcome { Tool = "esentutl.exe", ToolVersion = ToolRunner.FileVersion(ToolRunner.System32("esentutl.exe")), Source = src, ExitCode = run.ExitCode, Commands = { run.CommandLine } };
         if (run.ExitCode != 0 || !File.Exists(dest)) { o.Status = EvidenceStatus.Failed; o.Errors.Add($"esentutl exit {run.ExitCode}"); return o; }
         o.Evidence.Add(ctx.Case.RegisterStored(dest, src, "SRUM", "srum", TemporalType.Historical, Name, Version));
+        // Evaluation 2026-11-05: the snapshot copy is sometimes a "dirty shutdown" database (JET -550) and SRUM-network was then lost, which
+        // changed the conclusions from one run to the next. The ESE transaction logs, checkpoint and reserve logs are copied right after the
+        // database (they are readable with sharing, no second snapshot), so the parser can replay them on its working copy.
+        foreach (var aux in SrumAuxiliaryFiles(Path.GetDirectoryName(src)!))
+        {
+            ct.ThrowIfCancellationRequested();
+            var auxDest = Path.Combine(dir, Path.GetFileName(aux));
+            try
+            {
+                using (var from = new FileStream(aux, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                using (var to = new FileStream(auxDest, FileMode.CreateNew, FileAccess.Write, FileShare.None))
+                    from.CopyTo(to);
+                o.Evidence.Add(ctx.Case.RegisterStored(auxDest, aux, "SRUM", SrumLogSourceType, TemporalType.Historical, Name, Version));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                o.Errors.Add($"jurnalul SRUM {Path.GetFileName(aux)} nu a putut fi copiat: {ex.Message} (o bază „murdară” nu mai poate fi recuperată complet)");
+                if (o.Status == EvidenceStatus.Success) o.Status = EvidenceStatus.Partial;
+            }
+        }
         return o;
+    }
+
+    public const string SrumLogSourceType = "srum_log";
+
+    /// <summary>The ESE files beside SRUDB.dat that a recovery needs: SRU.chk, SRU*.log, SRU*.jrs (reserve logs) and SRUDB.jfm.</summary>
+    internal static IReadOnlyList<string> SrumAuxiliaryFiles(string sruDir)
+    {
+        if (!Directory.Exists(sruDir)) return [];
+        return Directory.EnumerateFiles(sruDir).Where(f =>
+        {
+            var n = Path.GetFileName(f);
+            return n.Equals("SRU.chk", StringComparison.OrdinalIgnoreCase) || n.Equals("SRUDB.jfm", StringComparison.OrdinalIgnoreCase)
+                || n.StartsWith("SRU", StringComparison.OrdinalIgnoreCase) && (n.EndsWith(".log", StringComparison.OrdinalIgnoreCase) || n.EndsWith(".jrs", StringComparison.OrdinalIgnoreCase));
+        }).OrderBy(f => f, StringComparer.OrdinalIgnoreCase).ToList();
     }
 }
 

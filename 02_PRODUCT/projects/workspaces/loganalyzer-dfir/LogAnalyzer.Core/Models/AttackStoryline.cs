@@ -20,7 +20,7 @@ namespace LogAnalyzer.Core.Models
 
     public class AttackStoryline
     {
-        public string IncidentTitle { get; set; } = "Campanie de Atac Detectată (Multi-Stage Kill Chain)";
+        public string IncidentTitle { get; set; } = "Etape posibile ale unui atac (corelare automată, nevalidată)";
         public string OverallSummary { get; set; } = string.Empty;
         public int TotalStagesDetected { get; set; }
         public double ThreatSeverityScore { get; set; } // 0-100

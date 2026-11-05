@@ -147,6 +147,9 @@
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
+                    <!-- Evaluation 2026-11-05: wizard and form side by side read as two different flows; they edit the same case -->
+                    <TextBlock Text="Formularul complet (aceleași câmpuri ca asistentul de mai sus, plus sursele istorice și copiile de umbră); oricare dintre ele pornește aceeași analiză"
+                               TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
                     <WrapPanel Margin="0,0,0,6">
                         <TextBlock Text="Nume caz:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox AutomationProperties.Name="Nume caz" Text="{Binding CaseName, UpdateSourceTrigger=PropertyChanged}" Width="280" Margin="0,0,10,0"/>
@@ -340,7 +343,7 @@
                     <TextBlock DockPanel.Dock="Top" Text="{Binding RegisterLine}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
                     <DataGrid AutomationProperties.Name="Constatări de integritate air-gap" ItemsSource="{Binding AirGapFindings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="80"/>
+                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static local:SeverityTextConverter.Instance}}" Width="80"/>
                             <DataGridTextColumn Header="Subcategorie" Binding="{Binding AirGap.Subcategory}" Width="110"/>
                             <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="170"/>
                             <DataGridTextColumn Header="Canal" Binding="{Binding AirGap.Channel}" Width="150"/>
@@ -368,7 +371,7 @@
                     <TextBlock Grid.Row="0" Text="{Binding SequenceSummary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
                     <DataGrid AutomationProperties.Name="Constatări de tip secvență" Grid.Row="1" ItemsSource="{Binding SequenceFindings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="0,0,0,6">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="80"/>
+                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static local:SeverityTextConverter.Instance}}" Width="80"/>
                             <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="200"/>
                             <DataGridTextColumn Header="Prima (UTC)" Binding="{Binding FirstSeenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>
                             <DataGridTextColumn Header="Cine (din dovezi)" Binding="{Binding User}" Width="*"/>

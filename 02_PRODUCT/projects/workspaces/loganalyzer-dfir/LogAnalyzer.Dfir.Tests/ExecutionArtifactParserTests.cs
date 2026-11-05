@@ -144,6 +144,23 @@ public sealed class ExecutionArtifactParserTests : IDisposable
         Assert.Contains(r.Gaps, g => g.Artifact == "Amcache transaction logs");
     }
 
+    [Fact]
+    public void Amcache_key_without_values_is_named_from_the_key_and_says_why()
+    {
+        // evaluation 2026-11-05: such keys printed "Amcache:  ( ) prezent la "
+        var path = Path.Combine(_dir, "Amcache.hve");
+        using (var fs = new FileStream(path, FileMode.Create, FileAccess.ReadWrite))
+        using (var hive = RegistryHive.Create(fs))
+            hive.Root.CreateSubKey(@"Root\InventoryApplicationFile\whoami.exe|7380676a876ce9b1");
+        var sink = new ListSink();
+        var r = new AmcacheParser().Parse(Item(path, "amcache"), path, sink, default);
+        var e = Assert.Single(sink.Events);
+        Assert.Equal("whoami.exe", e.Process);
+        Assert.StartsWith("Amcache: whoami.exe — intrare fără valori", e.Summary);
+        Assert.DoesNotContain("( )", e.Summary);
+        Assert.Contains(r.Gaps, g => g.Artifact == "Amcache InventoryApplicationFile" && g.Reason.StartsWith("1 intrări fără valori"));
+    }
+
     /// <summary>
     /// Real SYSTEM hive (reg save, 22:15:43) against two outputs taken from the live registry by reg query: BAM at 22:15:36,
     /// AppCompatCache at 22:15:43. Each BAM value and each ShimCache entry must match exactly.
