@@ -119,9 +119,30 @@
   read separately (legacy cases only); FillCustody adds up to 20 000 rows on the UI thread; pre-WP3 CSV rows are not listed (line says so).
   Not verified on screen.
 
+- 2026-11-05 FULL TEST-EVALUATION (owner: "testare-evaluare, completezi cu lucruri de test, facem curățenie la final"). Report:
+  D:\w\reports\LogAnalyzer DFIR - testare si evaluare 2026-11-05.{md,docx}. Method: installed Standalone build driven by the elevated UIA
+  driver (scratchpad\uia: driver.ps1, send.ps1, walk.ps1, scope.ps1 fills the scope dialog with TEST values, plant.ps1 = benign ground
+  truth: eventcreate LA_EVAL_TEST 999, powershell -w hidden -enc, whoami, net localgroup, temp file). Test cases on disk:
+  CASE-<LAB-PC>-20261105-184516 (crashed run), -190251, -193400 (+ event source LA_EVAL_TEST) -> CLEANUP LIST in the report.
+  FIXED (Opus 2 rounds, round-2 findings fixed by main session): EvidenceGraph crash on duplicate F-ids (LiveState numbered from Count;
+  PS-SUSPICIOUS consumed ids for unlisted blocks) -> MaxFindingNo everywhere, ids only for listed blocks, graph GroupBy, duplicate =
+  audit+gap; RunCore any non-OOM failure writes run_state Failed; VM catches pipeline-only failures (pipelineDone flag; after that the
+  fail-closed global handler still applies - owner decision recorded here); new rule PS-CMDLINE-SUSPICIOUS (Windows PowerShell 400
+  HostApplication, -e/-ec/-enc//enc/quoted base64 decoded+scored, Visible() escapes Cc/Cf/separators by code point, cap 100); Trunc never
+  splits a surrogate pair; investigation PDF prints the case scope (ScopeForm.ReportLines); a11y: NavigationEntry/MenuSection/PageEntry
+  ToString; PrivateIdentifiersGuard skips transient *_wpftmp.csproj (+.gitignore). VERIFIED ON SCREEN: tab 9 (1.259 entries verified),
+  Colectări, PDF scope block, planted encoded PowerShell -> F-0172 decoded.
+  OPEN (see report §5): advanced pages (Panou general, Firul atacului, Conturi locale) do not read the open case (16.161 events / 0 alerts
+  vs 67.123 / 237 / critical chain); SRUM network parse intermittent (JET -550 dirty DB) -> conclusions differ run to run (63 vs 129 high);
+  the "Alte N blocuri" summaries are always rejected (no evidence) so never reach the report; amcache_log has no parser and Amcache rows
+  with empty name; leftover English (High, Removable Media, DETECTED, SUCCESS, Evidence Graph, Show Calendar); wizard + expert form
+  duplicated; userpath rules flag signed per-user apps (Chrome, Claude) - calibrate by signature.
+
 ## Next
-0. „Colectări” + tab 9 on screen (needs a case with a confirmed purpose); then unified timeline (filters, export); then reconcile the two custody stores (ProvenanceLedgerService vs case chain).
-1. Read CI on #370 once on the head after the tab 9 commit.
+0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.
+0b. Advanced pages on the open case (one data source) - biggest product gap found; SRUM: recover the dirty ESE copy (esentutl /r with the
+   SRU logs) or mark the result as depending on it; route the "Alte N" summaries to the report.
+1. Read CI on #370 once on the head after the evaluation commit.
 2. R6 navigation by case flow (plan section 5), R2b read-only on expiry + capability enforcement (fix Has() cache), R7 DFIR (collection
    records, unified timeline, hash sets).
 2. Owner's new order 2026-11-04: professional product. Phase R1 of the plan (cleanup to _recovered, ModuleFeatures catalogue, module names).

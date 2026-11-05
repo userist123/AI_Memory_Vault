@@ -12,6 +12,30 @@ public sealed class ScopeForm
     public static readonly string[] NetworkCategories = ["Rețea air-gapped", "PC standalone", "Conectat"];
     public static readonly string[] ClassificationLevels = ["Clasificat", "Neclasificat"];
 
+    /// <summary>
+    /// The scope as printed at the top of a report (evaluation 2026-11-05: the investigation PDF had no purpose, approver, legal basis,
+    /// period, category or authorising act). Every mandatory field is printed, an empty one as "nespecificat"; the first line says whether
+    /// the scope is confirmed. Text the operator typed is printed as typed (the PDF writer escapes it).
+    /// </summary>
+    public static IReadOnlyList<string> ReportLines(CaseScope? s)
+    {
+        if (s is null) return ["Scopul cazului: lipsește (caz creat înaintea scopului obligatoriu); rezultatele nu au un scop confirmat."];
+        static string Or(string v) => string.IsNullOrWhiteSpace(v) ? "nespecificat" : v.Trim();
+        static string Day(DateTimeOffset? d) => d is { } x ? x.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) : "nespecificat";
+        string Pick(string[] labels, int i) => i >= 0 && i < labels.Length ? labels[i] : "nespecificat";
+        var f = FromScope(s);
+        return
+        [
+            s.IsConfirmed ? "Scopul cazului: confirmat de operator." : "Scopul cazului: PROVIZORIU, NECONFIRMAT" + (s.MissingFields().Count > 0 ? " (lipsesc: " + string.Join(", ", s.MissingFields()) + ")" : "") + " — concluziile nu pot fi folosite ca bază a unei decizii.",
+            "Scop: " + Or(s.Purpose),
+            $"Perioada: {Day(s.PeriodFromUtc)} – {Day(s.PeriodToUtc)}",
+            "Sisteme în scop: " + Or(string.Join(", ", s.SystemsInScope.Where(x => !string.IsNullOrWhiteSpace(x)))),
+            "Aprobator: " + Or(s.Approver),
+            "Temei: " + Pick(LegalBases, f.LegalBasisIndex) + " · Categoria sistemului: " + Pick(NetworkCategories, f.NetworkIndex) + " · " + Pick(ClassificationLevels, f.ClassificationIndex),
+            "Actul care autorizează: " + Or(s.AuthorizingAct),
+        ];
+    }
+
     public string Purpose { get; set; } = "";
     public string Approver { get; set; } = "";
     /// <summary>Systems in scope separated by comma or semicolon.</summary>

@@ -85,6 +85,15 @@ public static class InvestigationReportPdf
                 // F2: the result of the re-verification made just before this report, first on page 1.
                 var preColor = pre.BlocksConfirmed ? "#b91c1c" : pre.Applicable && pre.Unverified == 0 ? "#065f46" : "#78350f";
                 P(col, pre.Line).FontSize(8).Bold().FontColor(preColor);
+                // Evaluation 2026-11-05: the scope (why, period, systems, approver, legal basis, category, act) was missing from the report.
+                var scopeLines = LogAnalyzer.Dfir.Case.ScopeForm.ReportLines(info.Scope);
+                bool scopeOk = info.Scope?.IsConfirmed == true;
+                col.Item().Border(1).BorderColor(scopeOk ? "#cbd5e1" : "#b45309").Padding(6).Column(sc =>
+                {
+                    sc.Spacing(1);
+                    P(sc, scopeLines[0]).Bold().FontSize(8.5f).FontColor(scopeOk ? Ink : "#b45309");
+                    foreach (var l in scopeLines.Skip(1)) P(sc, l).FontSize(8);
+                });
                 col.Item().Background("#f8fafc").Border(1.2f).BorderColor(Ink).Padding(8).Column(sc =>
                 {
                     sc.Spacing(3);

@@ -21,6 +21,17 @@ public sealed class ModuleCatalogTests
         throw new DirectoryNotFoundException("LogAnalyzer.slnx");
     }
 
+    [Fact]
+    public void A_menu_item_is_announced_by_its_title_not_by_the_record_text()
+    {
+        // evaluation 2026-11-05: UI Automation read "NavigationEntry { Title = Politici, Tab = 17, Enabled = True, Reason = }" for every menu item
+        Assert.Equal("Politici", new NavigationEntry("Politici", 17, true, "").ToString());
+        Assert.Equal("Politici: nu este disponibil", new NavigationEntry("Politici", 17, false, "nu este disponibil").ToString());
+        var menu = ModuleCatalog.Menu(StationPosture.Standalone, AppMode.AirGapped, Enumerable.Range(0, 24).ToList());
+        Assert.All(menu, s => Assert.Equal(s.Name, s.ToString()));
+        Assert.All(menu.SelectMany(s => s.Pages), p => Assert.Equal(p.Title, p.ToString()));
+    }
+
     [Theory]
     [InlineData(StationPosture.Standalone, "Insula — Stație izolată")]
     [InlineData(StationPosture.IsolatedNetwork, "Arhipelag — Rețea izolată")]

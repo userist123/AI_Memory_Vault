@@ -210,6 +210,9 @@ public sealed class InvestigationPipeline
         try { return RunCore(r, ws, profile, collect, progress, ct, procedureProfile, mediaRegister, usersRegister, systemZone, hashSets); }
         catch (OperationCanceledException) { MarkEnded(r, ws, OperationState.Cancelled, "Oprit de operator; rezultatele parțiale nu sunt complete."); throw; }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { MarkEnded(r, ws, OperationState.Failed, ex.Message); throw; }
+        // evaluation 2026-11-05: a defect (ArgumentException in the evidence graph) left the case without run_state.json, read later as
+        // "starea analizei este necunoscută"; the run is recorded as failed with what happened, then the exception goes on to the caller
+        catch (Exception ex) when (ex is not OutOfMemoryException) { MarkEnded(r, ws, OperationState.Failed, $"Eroare internă în analiză ({ex.GetType().Name}): {ex.Message}"); throw; }
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
@@ -455,7 +458,7 @@ public sealed class InvestigationPipeline
         var found = new List<Finding>(Correlation.Run(r.Timeline, maintenance, procedureProfile));
         // WP14a: removable media against the media register, CD/DVD, and NIC / Wi-Fi / Bluetooth / DHCP on an air-gapped or standalone scope.
         progress?.Report("Suporturi de stocare amovibile și integritate air-gap");
-        int wp14No = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n0) ? n0 : 0).DefaultIfEmpty(0).Max();
+        int wp14No = LiveStateAnalyzer.MaxFindingNo(found);
         var airGapFacts = LoadAirGapFacts(ws, r);
         r.FactsRemovableLetters.AddRange(airGapFacts?.RemovableLetters ?? []);
         var wp14 = Wp14Analysis.Run(ws, r.Timeline, () => $"F-{++wp14No:D4}", mediaRegister, usersRegister, procedureProfile, systemZone, facts: airGapFacts);
@@ -472,7 +475,7 @@ public sealed class InvestigationPipeline
                 ws.Audit(pre.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{live.EvidenceId} {pre.Code} {pre.Detail}");
                 continue;
             }
-            found.AddRange(LiveStateAnalyzer.Analyze(live, liveFull, found.Count));
+            found.AddRange(LiveStateAnalyzer.Analyze(live, liveFull, LiveStateAnalyzer.MaxFindingNo(found)).ToList());   // evaluation 2026-11-05: found.Count collided with a reserved id (F-0305 twice -> EvidenceGraph crash)
         }
         // WP15b: policy change timeline, configured/applied/enforced/observed and control gaps, from the case timeline alone (EVTX is enough; the expected policy comes from the profile link).
         progress?.Report("Cronologie politici");
@@ -484,12 +487,12 @@ public sealed class InvestigationPipeline
             Expected = expectedSettings, ExpectedIssues = expectedIssues, Maintenance = maintenance,
             HighFindingTimesUtc = found.Where(x => x.Severity >= Severity.High && (x.FirstSeenUtc ?? x.LastSeenUtc) is not null).Select(x => (x.FirstSeenUtc ?? x.LastSeenUtc)!.Value).ToList(),
         });
-        int lastFindingNo = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n) ? n : 0).DefaultIfEmpty(0).Max();
+        int lastFindingNo = LiveStateAnalyzer.MaxFindingNo(found);
         found.AddRange(policyTimeline.ToFindings(() => $"F-{++lastFindingNo:D4}"));
         r.PolicyTimeline = policyTimeline;
         // WP14b: combined sequences (control gap + media, SMB + staging + USB, portable software + archive + USB) over the findings and rows above; they add no second detection.
         progress?.Report("Secvențe combinate");
-        int sequenceNo = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n1) ? n1 : 0).DefaultIfEmpty(0).Max();
+        int sequenceNo = LiveStateAnalyzer.MaxFindingNo(found);
         var sequences = SequenceRules.Run(r.Timeline, found, () => $"F-{++sequenceNo:D4}", new SequenceInput { Scope = ws.Info.Scope });
         found.AddRange(sequences);
         // R7a: fingerprint sets imported by the operator. Known-bad -> high finding; known-good -> label only (Analysis/known_hashes.json), the item stays in the case.
@@ -500,7 +503,7 @@ public sealed class InvestigationPipeline
             r.Gaps.Add(new EvidenceGap("Set de amprente", EvidenceStatus.Partial, $"Setul „{hs.Info.Name}” conține doar {string.Join(", ", hs.Info.Algorithms)}. {LogAnalyzer.Dfir.HashSets.HashSetMatcher.CoverageNote}",
                 "Probele din caz (fișierele importate) nu sunt comparate cu acest set", "Folosiți un set cu SHA-256 pentru probele din caz", "Da"));
         var hashMatches = LogAnalyzer.Dfir.HashSets.HashSetMatcher.Match(hashSetList, ws.LoadEvidence(), r.Timeline);
-        int hashFindingNo = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n2) ? n2 : 0).DefaultIfEmpty(0).Max();
+        int hashFindingNo = LiveStateAnalyzer.MaxFindingNo(found);
         found.AddRange(LogAnalyzer.Dfir.HashSets.HashSetMatcher.ToFindings(hashMatches, () => $"F-{++hashFindingNo:D4}"));
         r.KnownHashMatches.AddRange(hashMatches);
         var (kept, rejected) = ProvenanceBinder.BindFindings(found, ws.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal));
@@ -511,6 +514,13 @@ public sealed class InvestigationPipeline
                                          .GroupBy(p => p.EvidenceId, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Select(p => p.Parser).Distinct().ToList(), StringComparer.Ordinal);
         kept = FindingContract.Enrich(kept, new FindingContractContext { ParsersOf = e => parsersByEvidence.GetValueOrDefault(e) ?? [], NowUtc = DateTimeOffset.UtcNow }).ToList();
         r.Findings.AddRange(kept);
+        foreach (var dup in kept.GroupBy(x => x.FindingId, StringComparer.Ordinal).Where(x => x.Count() > 1))
+        {
+            // numbering defect, said plainly instead of crashing later (EvidenceGraph, report): the findings stay, the id is ambiguous
+            ws.Audit("finding.duplicate_id", $"{dup.Key} x{dup.Count()}: {string.Join(", ", dup.Select(x => x.RuleId))}");
+            r.Gaps.Add(new EvidenceGap("Numerotarea constatărilor", EvidenceStatus.Partial, $"Identificatorul {dup.Key} a fost dat la {dup.Count()} constatări ({string.Join(", ", dup.Select(x => x.RuleId))})",
+                "Trimiterile între constatări după acest identificator pot fi ambigue", "Raportați defectul; reluați analiza după actualizare", "Da"));
+        }
         r.RejectedFindings.AddRange(rejected);
         foreach (var x in rejected) ws.Audit("finding.rejected", $"{x.Finding.FindingId} {x.Finding.RuleId}: {x.Reason}");
 
@@ -608,6 +618,11 @@ public sealed class InvestigationPipeline
 /// <summary>Findings from the live-state snapshot: what is running or set to start from user-writable locations, and unsigned.</summary>
 public static class LiveStateAnalyzer
 {
+    /// <summary>Highest number among the "F-nnnn" ids already given; the next stage numbers from here. Correlation reserves ids ahead of
+    /// building some findings, so the count of findings is not the next free number.</summary>
+    public static int MaxFindingNo(IEnumerable<Finding> found) =>
+        found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n) ? n : 0).DefaultIfEmpty(0).Max();
+
     public static IEnumerable<Finding> Analyze(EvidenceItem item, string path, int offset)
     {
         var snap = JsonSerializer.Deserialize<LiveStateCollector.Snapshot>(File.ReadAllText(path));

@@ -444,6 +444,7 @@ namespace LogAnalyzer.UI.ViewModels
             bool collect = CollectFromThisStation;
             var name = CaseName;
             var zone = SystemZone.Trim();
+            bool pipelineDone = false;
             try
             {
                 _result = await Task.Run(() =>
@@ -465,6 +466,7 @@ namespace LogAnalyzer.UI.ViewModels
                     }
                     return new InvestigationPipeline().Run(ws, profile, collect, progress, _cts.Token, mediaRegister: signedMedia, systemZone: zone);
                 });
+                pipelineDone = true;
                 ShowResult(_result);
                 var checkedCase = _result.Case;
                 var ct = _cts.Token;
@@ -481,6 +483,15 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[OperationState.Failed] + " — " + ex.Message;
                 Log += "Eroare: " + ex.Message + Environment.NewLine;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException && !pipelineDone)
+            {
+                // evaluation 2026-11-05: a defect inside the analysis (ArgumentException from the evidence graph) reached the dispatcher and
+                // closed the whole application; the run is what failed, the window is in a known state, so the run is marked failed instead.
+                // Only the pipeline call (review: an error after a finished run still takes the fail-closed path of the global handler).
+                OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[OperationState.Failed] + " — eroare internă în analiză";
+                Log += $"Eroare internă în analiză ({ex.GetType().Name}): {ex.Message}. Cazul, dacă a apucat să fie creat, rămâne pe disc incomplet; rezultatele afișate acum, dacă există, sunt ale cazului anterior; detaliile sunt în jurnalul de pornire." + Environment.NewLine;
+                LogAnalyzer.UI.Services.StartupLog.Append(LogAnalyzer.UI.Services.StartupLog.PathIn(null, "startup_debug.log"), $"{DateTime.Now:o}  Investigation run failed: {LogAnalyzer.UI.Services.StartupLog.Redact(ex.ToString())}{Environment.NewLine}");
             }
             finally { IsBusy = false; }
         }

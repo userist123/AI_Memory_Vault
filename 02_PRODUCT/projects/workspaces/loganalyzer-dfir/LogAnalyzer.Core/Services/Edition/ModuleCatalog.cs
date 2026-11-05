@@ -55,13 +55,19 @@ namespace LogAnalyzer.Core.Services.Edition
         {
             /// <summary>The tab as the text the navigation command takes as its parameter.</summary>
             public string TabText => Tab.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            /// <summary>Name announced by a screen reader for the page item.</summary>
+            public override string ToString() => Title;
 
             /// <summary>The glossary key whose technical name and explanation are the entry's tooltip (WP6a); null = no glossary term.</summary>
             public string? Term { get; init; }
         }
 
         /// <summary>One section of the „Avansat” menu with the pages it lists now.</summary>
-        public sealed record MenuSection(string Name, IReadOnlyList<PageEntry> Pages);
+        public sealed record MenuSection(string Name, IReadOnlyList<PageEntry> Pages)
+        {
+            /// <summary>Name announced by a screen reader for the section (evaluation 2026-11-05: the record text with the list type was announced).</summary>
+            public override string ToString() => Name;
+        }
 
         private static readonly StationPosture[] All = [StationPosture.Standalone, StationPosture.IsolatedNetwork, StationPosture.Internet];
         private static readonly StationPosture[] Networked = [StationPosture.IsolatedNetwork, StationPosture.Internet];

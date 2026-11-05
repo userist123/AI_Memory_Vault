@@ -24,3 +24,6 @@ license.lic
 
 # CycloneDX SBOM output (CI artefact, security audit #9)
 sbom/
+
+# WPF markup-compile temporary project (written next to the .csproj during a build, holds absolute paths)
+*_wpftmp.csproj

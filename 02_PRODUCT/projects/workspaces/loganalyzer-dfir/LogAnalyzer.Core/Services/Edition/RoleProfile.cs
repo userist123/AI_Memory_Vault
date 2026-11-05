@@ -45,6 +45,9 @@ namespace LogAnalyzer.Core.Services.Edition
     {
         public string TabText => Tab.ToString(System.Globalization.CultureInfo.InvariantCulture);
         public string Tooltip => Enabled ? Title : $"{Title}: {Reason}";
+        /// <summary>The name a screen reader announces for the menu item (WPF uses ToString when the item has no name of its own);
+        /// the record's default text "NavigationEntry { Title = …, Tab = 21, … }" was announced (evaluation 2026-11-05).</summary>
+        public override string ToString() => Tooltip;
     }
 
     /// <summary>

@@ -520,7 +520,8 @@ public static class Correlation
         var psCfg = Wp11Data.Default.Lists.Powershell;
         var psBlocks = events.Where(e => Ev(e, "Microsoft-Windows-PowerShell/Operational", 4104))
             .GroupBy(e => F(e, "ScriptBlockId") is { Length: > 0 } sid ? "id:" + sid : "ev:" + e.EvidenceId + e.Locator).ToList();
-        var psFindings = new List<(int Score, Finding Finding)>();
+        // The id is given only to the blocks that are listed (top 100): giving one to every block left holes in the numbering (evaluation 2026-11-05).
+        var psFindings = new List<(int Score, DateTimeOffset? First, Func<string, Finding> Make)>();
         foreach (var blk in psBlocks)
         {
             var parts = blk.OrderBy(e => int.TryParse(F(e, "MessageNumber"), out var mn) ? mn : 0).ToList();
@@ -533,9 +534,9 @@ public static class Correlation
             bool amsi = hitKw.Any(k => k.High);
             var first = parts[0];
             var mitre = hitKw.OrderByDescending(k => k.Weight).Select(k => k.Mitre).FirstOrDefault(m => m.Length > 0) ?? "T1059.001";
-            psFindings.Add((score, new Finding
+            psFindings.Add((score, first.Time.Utc, id => new Finding
             {
-                FindingId = Id(), RuleId = "PS-SUSPICIOUS",
+                FindingId = id, RuleId = "PS-SUSPICIOUS",
                 Title = hitKw.Count > 0 ? $"Bloc PowerShell suspect: {string.Join(", ", hitKw.OrderByDescending(k => k.Weight).Take(4).Select(k => k.Text.Trim()))}" : "Bloc PowerShell marcat de Windows ca suspect (nivel Avertisment)",
                 Severity = amsi || score >= psCfg.HighScore ? Severity.High : Severity.Medium, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Medium, MitreTechniqueId = mitre,
                 FirstSeenUtc = first.Time.Utc, LastSeenUtc = parts[^1].Time.Utc, User = first.User,
@@ -547,13 +548,66 @@ public static class Correlation
                 RecommendedNextSteps = ["Citiți scriptul complet și identificați contul și procesul care l-au lansat."],
             }));
         }
-        foreach (var (_, pf) in psFindings.OrderByDescending(x => x.Score).ThenBy(x => x.Finding.FirstSeenUtc).Take(100)) f.Add(pf);
+        foreach (var (_, _, make) in psFindings.OrderByDescending(x => x.Score).ThenBy(x => x.First).Take(100)) f.Add(make(Id()));
         if (psFindings.Count > 100)
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "PS-SUSPICIOUS", Title = $"Alte {psFindings.Count - 100} blocuri PowerShell suspecte nu au fost listate individual",
                 Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "T1059.001",
                 Description = "Raportul listează primele 100 de blocuri după scor; restul sunt în cronologie (evenimente 4104).",
+                ClassificationReason = "Limită de afișare, nu o concluzie.",
+            });
+
+        // 7a. Suspicious PowerShell command line from the classic "Windows PowerShell" log (400, engine start): HostApplication carries the full
+        // command line even when Script Block Logging and process auditing are off (evaluation 2026-11-05: "-WindowStyle Hidden -EncodedCommand"
+        // was in the log and gave no finding). Same keyword list and threshold as the script blocks; one finding per distinct command line.
+        var hostApps = events.Where(e => Ev(e, "Windows PowerShell", 400))
+            .Select(e => (e, cmd: HostApplication(F(e, "Data2", "HostApplication"))))
+            .Where(x => x.cmd.Length > 0)
+            .GroupBy(x => x.cmd, StringComparer.OrdinalIgnoreCase);
+        // Review 2026-11-05: the short forms (-e, -ec) and the decoded text count too; attacker text is shown with invisible / direction
+        // characters made visible; at most 100 command lines are listed (same cap as the script blocks), the rest in one summary.
+        var cmdLines = new List<(int Score, DateTimeOffset? First, Func<string, Finding> Make)>();
+        foreach (var g in hostApps)
+        {
+            var decoded = DecodedCommand(g.Key);
+            var hay = decoded.Length > 0 ? g.Key + " " + decoded : g.Key;
+            var hitKw = psCfg.Keywords.Where(k => k.Text.Length > 0 && hay.Contains(k.Text, StringComparison.OrdinalIgnoreCase)).ToList();
+            var labels = hitKw.OrderByDescending(k => k.Weight).Select(k => k.Text.Trim()).ToList();
+            int score = hitKw.Sum(k => k.Weight), indicators = hitKw.Count;
+            if (decoded.Length > 0 && !hitKw.Any(k => k.Text.Contains("enc", StringComparison.OrdinalIgnoreCase)))
+            {
+                indicators++; score += 2; labels.Add("comandă codificată");
+            }
+            if (indicators < 2 && score < psCfg.MinScore) continue;
+            var runs = g.Select(x => x.e).OrderBy(e => e.Time.Utc).ToList();
+            var high = hitKw.Any(k => k.High) || score >= psCfg.HighScore;
+            var mitre = decoded.Length > 0 ? "T1027" : hitKw.OrderByDescending(k => k.Weight).Select(k => k.Mitre).FirstOrDefault(m => m.Length > 0) ?? "T1059.001";
+            var shownCmd = Visible(Trunc(g.Key, 300));
+            var shownDecoded = Visible(Trunc(decoded, 300));
+            cmdLines.Add((score, runs[0].Time.Utc, id => new Finding
+            {
+                FindingId = id, RuleId = "PS-CMDLINE-SUSPICIOUS",
+                Title = $"PowerShell pornit cu o linie de comandă suspectă: {string.Join(", ", labels.Take(4))}",
+                Severity = high ? Severity.High : Severity.Medium, Category = "Execution",
+                Classification = Classification.Candidate, Confidence = Confidence.Medium, MitreTechniqueId = mitre,
+                FirstSeenUtc = runs[0].Time.Utc, LastSeenUtc = runs[^1].Time.Utc, User = runs[0].User,
+                Description = $"Ce s-a întâmplat: PowerShell a pornit de {LogAnalyzer.Dfir.Language.RoText.Count(runs.Count, "dată", "ori")} cu linia de comandă: {shownCmd}." +
+                              (shownDecoded.Length > 0 ? $" Comanda codificată, decodată: {shownDecoded}." : "") +
+                              " De ce contează: fereastra ascunsă și comanda codificată sunt folosite ca să nu se vadă ce rulează; apar și în instrumente de administrare. Ce verificați: procesul părinte, contul și scopul comenzii.",
+                ClassificationReason = $"Cuvinte-cheie ponderate în linia de comandă din evenimentul 400 și în comanda decodată (scor {score}); evenimentul arată pornirea, nu rezultatul.",
+                SupportingEvidence = runs.Take(5).Select(e => Ref(e, "Windows PowerShell 400 HostApplication")).ToList(),
+                AlternativeExplanations = ["Instrumente de administrare sau de instalare care pornesc PowerShell ascuns."],
+                RecommendedNextSteps = ["Identificați procesul care a pornit PowerShell (Prefetch, BAM, 4688 dacă există) și verificați comanda decodată."],
+            }));
+        }
+        foreach (var (_, _, make) in cmdLines.OrderByDescending(x => x.Score).ThenBy(x => x.First).Take(100)) f.Add(make(Id()));
+        if (cmdLines.Count > 100)
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "PS-CMDLINE-SUSPICIOUS", Title = $"Alte {cmdLines.Count - 100} linii de comandă PowerShell suspecte nu au fost listate individual",
+                Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "T1059.001",
+                Description = "Raportul listează primele 100 de linii de comandă după scor; restul sunt în cronologie (evenimente 400 din jurnalul Windows PowerShell).",
                 ClassificationReason = "Limită de afișare, nu o concluzie.",
             });
 
@@ -776,5 +830,60 @@ public static class Correlation
         return p.ToUpperInvariant();
     }
 
-    private static string Trunc(string s, int n) { s = s.ReplaceLineEndings(" "); return s.Length <= n ? s : s[..n] + "…"; }
+    /// <summary>The "HostApplication=" line of a classic PowerShell 400/600 event (the third data string is a block of "Name=Value" lines).</summary>
+    internal static string HostApplication(string data)
+    {
+        foreach (var line in data.Split('\n'))
+        {
+            var l = line.Trim();
+            if (l.StartsWith("HostApplication=", StringComparison.OrdinalIgnoreCase)) return l["HostApplication=".Length..].Trim();
+        }
+        return "";
+    }
+
+    /// <summary>The text of "-EncodedCommand / -enc / -e &lt;base64&gt;" (UTF-16LE, as PowerShell expects), or "" when there is none or it does not decode.</summary>
+    internal static string DecodedCommand(string commandLine)
+    {
+        // the command line comes from the log, i.e. from whoever ran PowerShell: bounded input, bounded match time, bounded output
+        if (commandLine.Length > 32_768) commandLine = commandLine[..32_768];
+        System.Text.RegularExpressions.Match m;
+        try
+        {
+            m = System.Text.RegularExpressions.Regex.Match(commandLine, @"\s[-/](?:e|en|enc|enco|encod|encode|encoded|encodedc|encodedco|encodedcom|encodedcomm|encodedcomma|encodedcomman|encodedcommand|ec)\s+[""']?([A-Za-z0-9+/=]{8,})",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
+        }
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return ""; }
+        if (!m.Success) return "";
+        try
+        {
+            var text = System.Text.Encoding.Unicode.GetString(Convert.FromBase64String(m.Groups[1].Value));
+            if (text.Length > 2_000) text = text[..2_000];
+            // shown to the operator: control characters out, so a crafted payload cannot break the report layout
+            return new string(text.Select(c => char.IsControl(c) ? ' ' : c).ToArray()).Trim();
+        }
+        catch (FormatException) { return ""; }
+    }
+
+    /// <summary>Text written by whoever ran a command, made safe to show: control, format (bidi overrides, zero-width) and line/paragraph
+    /// separator characters become a visible "⟨U+XXXX⟩", so "‮gnp.exe" cannot pass for another file name in the UI, PDF or HTML.</summary>
+    internal static string Visible(string s)
+    {
+        // by code point (review round 2: tag characters U+E0000-E007F are Format but outside the BMP); a lone surrogate is shown too
+        var sb = new System.Text.StringBuilder(s.Length + 16);
+        for (int i = 0; i < s.Length;)
+        {
+            if (System.Text.Rune.DecodeFromUtf16(s.AsSpan(i), out var r, out var used) != System.Buffers.OperationStatus.Done)
+            {
+                sb.Append($"⟨U+{(int)s[i]:X4}⟩"); i++; continue;
+            }
+            if (System.Text.Rune.GetUnicodeCategory(r) is System.Globalization.UnicodeCategory.Control or System.Globalization.UnicodeCategory.Format
+                or System.Globalization.UnicodeCategory.LineSeparator or System.Globalization.UnicodeCategory.ParagraphSeparator)
+                sb.Append($"⟨U+{r.Value:X4}⟩");
+            else sb.Append(s, i, used);
+            i += used;
+        }
+        return sb.ToString();
+    }
+
+    private static string Trunc(string s, int n) { s = s.ReplaceLineEndings(" "); if (s.Length <= n) return s; if (char.IsHighSurrogate(s[n - 1])) n--; return s[..n] + "…"; }   // never splits a surrogate pair (review round 2)
 }

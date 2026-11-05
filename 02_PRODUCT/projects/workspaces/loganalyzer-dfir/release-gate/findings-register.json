@@ -534,6 +534,58 @@
         "note": "THIRD_PARTY_NOTICES.md QuestPDF entry: owner checks eligibility against the licence terms or buys a commercial licence.",
         "tests": ""
       }
+    },
+    {
+      "id": "EVAL-ADVANCED-PAGES-NOT-CASE",
+      "severity": "high",
+      "status": "open",
+      "disposition": "fix-before-release",
+      "title": "Advanced pages (Panou general, Firul atacului, Conturi locale si USB) show a separately loaded data set, not the open case: 16.161 events / 0 alerts / no attack next to a case with 67.123 events, 237 findings and a critical incident chain.",
+      "source": "end-to-end evaluation 2026-11-05 (installed Standalone build, real station)",
+      "evidence": {
+        "commits": [],
+        "note": "Report D:/w/reports LogAnalyzer DFIR - testare si evaluare 2026-11-05, section 5.1. Fix: one data source (the open case) or a banner on those pages.",
+        "tests": ""
+      }
+    },
+    {
+      "id": "EVAL-SRUM-NETWORK-INTERMITTENT",
+      "severity": "high",
+      "status": "open",
+      "disposition": "fix-before-release",
+      "title": "SRUM network usage parse fails intermittently on a live copy (JetAttachDatabase2 JET -550, dirty ESE database); with it the same station gives 129 high findings instead of 63.",
+      "source": "end-to-end evaluation 2026-11-05 (installed Standalone build, real station)",
+      "evidence": {
+        "commits": [],
+        "note": "Recover the copied ESE database (esentutl /r with the SRU logs) or state in the conclusion that it depends on the missing source. Section 5.2.",
+        "tests": ""
+      }
+    },
+    {
+      "id": "EVAL-SUMMARY-FINDINGS-REJECTED",
+      "severity": "medium",
+      "status": "open",
+      "disposition": "fix-before-release",
+      "title": "The overflow summaries (Alte N blocuri PowerShell / linii de comanda) carry no supporting evidence, are rejected by ProvenanceBinder and never reach the report.",
+      "source": "end-to-end evaluation 2026-11-05 (installed Standalone build, real station)",
+      "evidence": {
+        "commits": [],
+        "note": "Section 5.3.",
+        "tests": ""
+      }
+    },
+    {
+      "id": "EVAL-USERPATH-CALIBRATION",
+      "severity": "medium",
+      "status": "open",
+      "disposition": "fix-before-release",
+      "title": "Userpath execution/upload rules raise high findings for signed per-user applications (browser, AI clients) installed in the profile.",
+      "source": "end-to-end evaluation 2026-11-05 (installed Standalone build, real station)",
+      "evidence": {
+        "commits": [],
+        "note": "Calibrate by Authenticode signer; section 5.4.",
+        "tests": ""
+      }
     }
   ]
 }
