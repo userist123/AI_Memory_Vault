@@ -187,6 +187,16 @@ public class DetectionWave3Tests
         var backslash = One(Corr(Block(0, CimModule.Replace("'ROOT/Microsoft/Windows/Storage/MSFT_Disk'", @"'ROOT\Microsoft\Windows\Defender\MSFT_MpRollback'"), "cim2", ("_xLevel", "3"))), "PS-SUSPICIOUS");
         Assert.Equal(Severity.Low, backslash.Severity);
         Assert.EndsWith(@"ROOT\Microsoft\Windows\Defender\MSFT_MpRollback", backslash.Title);
+        // and the lower-case form Windows Server generates (lab SRV01: root/StandardCimv2/MSFT_NetAdapterRssSettingData), 41 of 168 modules there
+        var lower = One(Corr(Block(0, CimModule.Replace("'ROOT/Microsoft/Windows/Storage/MSFT_Disk'", "'root/StandardCimv2/MSFT_NetAdapterRssSettingData'"), "cim3", ("_xLevel", "3"))), "PS-SUSPICIOUS");
+        Assert.Equal(Severity.Low, lower.Severity);
+        Assert.EndsWith("root/StandardCimv2/MSFT_NetAdapterRssSettingData", lower.Title);
+        // over the cap of 100 the CIM modules go into the summary, never a Warning block that is not one, even when it ran last (lab SRV01: 98 CIM rows)
+        var many = Enumerable.Range(0, 105).Select(i => Block(i, CimModule.Replace("MSFT_Disk'", $"MSFT_Disk{i}'"), $"cimN{i}", ("_xLevel", "3")))
+            .Append(Block(200, "auditpol /set /subcategory:\"Process Creation\" /success:enable", "other", ("_xLevel", "3"))).ToList();
+        var listed = Corr(many.ToArray()).Where(x => x.RuleId == "PS-SUSPICIOUS").ToList();
+        Assert.Contains(listed, x => x.Title == "Bloc PowerShell marcat de Windows ca suspect (nivel Avertisment)");
+        Assert.Contains(listed, x => x.Title.StartsWith("Alte 6 scripturi", StringComparison.Ordinal));
         // review round 2: a payload without any listed API behind the pasted prologue is listed on its own (Low), with its own evidence
         var sneaky = CimModule + "$p=[Runtime.InteropServices.Marshal]::AllocHGlobal(4096); $d=[scriptblock]::Create($s); $d.Invoke()";
         var own = Assert.Single(Corr(Block(0, sneaky, "sneaky", ("_xLevel", "3"))), x => x.RuleId == "PS-SUSPICIOUS");

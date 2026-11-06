@@ -120,7 +120,8 @@ public static class Correlation
         // the generated prologue is fixed and comes first: the markers must sit at its head, not anywhere (a comment) in a pasted script (review round 1)
         var head = t.Length > 600 ? t[..600] : t;
         if (!head.Contains(@"try { Microsoft.PowerShell.Core\Set-StrictMode -Off } catch { }", StringComparison.Ordinal) ||
-            !(head.Contains("$script:ClassName = 'ROOT/", StringComparison.Ordinal) || head.Contains("$script:ClassName = 'ROOT\\", StringComparison.Ordinal)) ||   // both forms are generated (lab VM: ROOT\Microsoft\Windows\Defender\MSFT_MpRollback)
+            // both separators and both cases are generated (lab VMs: ROOT\Microsoft\Windows\Defender\MSFT_MpRollback; Server 2025: root/StandardCimv2/MSFT_NetAdapter...)
+            !(head.Contains("$script:ClassName = 'ROOT/", StringComparison.OrdinalIgnoreCase) || head.Contains("$script:ClassName = 'ROOT\\", StringComparison.OrdinalIgnoreCase)) ||
             !t.Contains("Microsoft.PowerShell.Cmdletization", StringComparison.Ordinal)) return false;
         // a generated CIM wrapper never loads native code or decodes payloads: any listed text (data, rule_lists.json) means foreign content; an empty list
         // (data not loaded) treats nothing as the generated module, so nothing is summarised away
@@ -549,7 +550,7 @@ public static class Correlation
         var psBlocks = events.Where(e => Ev(e, "Microsoft-Windows-PowerShell/Operational", 4104))
             .GroupBy(e => F(e, "ScriptBlockId") is { Length: > 0 } sid ? "id:" + sid : "ev:" + e.EvidenceId + e.Locator).ToList();
         // The id is given only to the blocks that are listed (top 100): giving one to every block left holes in the numbering (evaluation 2026-11-05).
-        var psFindings = new List<(int Score, DateTimeOffset? First, EvidenceRef FirstRef, Func<string, Finding> Make)>();
+        var psFindings = new List<(int Score, bool Cim, DateTimeOffset? First, EvidenceRef FirstRef, Func<string, Finding> Make)>();
         var psSuspect = new List<(List<TimelineEvent> Parts, string Text, List<PowerShellKeyword> HitKw, int Score, bool Cim)>();
         foreach (var blk in psBlocks)
         {
@@ -579,7 +580,7 @@ public static class Correlation
             var first = parts[0];
             var last = runStarts[^1].Time.Utc;
             var mitre = hitKw.OrderByDescending(k => k.Weight).Select(k => k.Mitre).FirstOrDefault(m => m.Length > 0) ?? "T1059.001";
-            psFindings.Add((score, first.Time.Utc, Ref(first, "4104"), id => new Finding
+            psFindings.Add((score, cim, first.Time.Utc, Ref(first, "4104"), id => new Finding
             {
                 FindingId = id, RuleId = "PS-SUSPICIOUS",
                 Title = hitKw.Count > 0 ? $"Bloc PowerShell suspect: {string.Join(", ", hitKw.OrderByDescending(k => k.Weight).Take(4).Select(k => k.Text.Trim()))}"
@@ -597,8 +598,9 @@ public static class Correlation
                 RecommendedNextSteps = ["Citiți scriptul complet și identificați contul și procesul care l-au lansat."],
             }));
         }
-        var psOrdered = psFindings.OrderByDescending(x => x.Score).ThenBy(x => x.First).ToList();
-        foreach (var (_, _, _, make) in psOrdered.Take(100)) f.Add(make(Id()));
+        // within the cap a Warning block that is not the generated CIM module comes before the CIM modules (lab SRV01: 98 CIM rows pushed others into the summary)
+        var psOrdered = psFindings.OrderByDescending(x => x.Score).ThenBy(x => x.Cim).ThenBy(x => x.First).ToList();
+        foreach (var (_, _, _, _, make) in psOrdered.Take(100)) f.Add(make(Id()));
         if (psFindings.Count > 100)
             f.Add(new Finding
             {
