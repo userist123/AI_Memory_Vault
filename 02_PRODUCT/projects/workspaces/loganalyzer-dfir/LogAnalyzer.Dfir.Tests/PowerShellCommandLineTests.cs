@@ -126,6 +126,6 @@ public class PowerShellCommandLineTests
         var found = Correlation.Run(blocks);
         var numbers = found.Select(x => int.Parse(x.FindingId.AsSpan(2))).OrderBy(n => n).ToList();
         Assert.Equal(Enumerable.Range(1, numbers.Count), numbers);
-        Assert.Equal(5, Assert.Single(found, x => x.Title.StartsWith("Alte 5 blocuri", StringComparison.Ordinal)).SupportingEvidence.Count);
+        Assert.Equal(5, Assert.Single(found, x => x.Title.StartsWith("Alte 5 scripturi", StringComparison.Ordinal)).SupportingEvidence.Count);
     }
 }

@@ -113,7 +113,8 @@ public static partial class Wp11Rules
             if (!sidMatched && sev == Severity.High) sev = Severity.Medium;   // a name-only match cannot exclude a reused name
             // created by SYSTEM / the machine (Windows setup: defaultuser0, the unattended administrator) and used only locally: provisioning, Low
             // (lab VM 2026-11-06: every freshly installed station showed Medium "created then used" for its setup accounts)
-            if (provisioning && remoteUses.Count == 0) sev = Severity.Low;
+            // never for a privileged account: an attacker running as SYSTEM creating a local administrator looks the same (review round 1)
+            if (provisioning && !privileged && remoteUses.Count == 0) sev = Severity.Low;
             var types = uses.Where(u => u.EventId == "4624").GroupBy(u => F(u, "LogonType")).Select(g => $"tip {g.Key}: {g.Count()}").ToList();
             o.Add(new Finding
             {
@@ -126,7 +127,7 @@ public static partial class Wp11Rules
                               (remoteUses.Count > 0 ? $" Folosit de la distanță din {Join(remoteUses.Select(u => F(u, "IpAddress")))}." : " Nicio autentificare de la distanță în dovezile colectate.") +
                               (privileged ? $" Apartenență privilegiată în caz: {Join(privAdds.Where(e => { var m = Member(e); return SameAccount(name, sid, m.Name, m.Sid); }).Select(e => F(e, "TargetUserName")))}." : "") +
                               (sidMatched ? "" : " Legătura s-a făcut doar după nume (SID indisponibil), deci nu exclude refolosirea numelui.") +
-                              (provisioning && remoteUses.Count == 0 ? $" Creat de {by} (aprovizionare: instalarea Windows sau un serviciu) și folosit doar local, de aceea Low." : ""),
+                              (provisioning && !privileged && remoteUses.Count == 0 ? $" Creat de {by} (aprovizionare: instalarea Windows sau un serviciu), neprivilegiat și folosit doar local, de aceea Low." : ""),
                 ClassificationReason = sidMatched ? "Aceeași SID în 4720 și într-un 4624 ulterior; High doar pentru cont privilegiat folosit de la distanță." : "Același nume în 4720 și într-un 4624/4648 ulterior; SID indisponibil, deci limitat la Medium.",
                 SemanticType = SemanticType.Observation,
                 SupportingEvidence = [Ref(cr, "4720 cont creat"), .. uses.Take(8).Select(u => Ref(u, $"{u.EventId} folosire")), .. privAdds.Where(e => { var m = Member(e); return SameAccount(name, sid, m.Name, m.Sid); }).Take(2).Select(e => Ref(e, "grup privilegiat"))],

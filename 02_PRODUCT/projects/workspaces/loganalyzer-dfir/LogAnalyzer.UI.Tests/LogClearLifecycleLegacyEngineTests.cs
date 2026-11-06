@@ -51,7 +51,9 @@ namespace LogAnalyzer.UI.Tests
         {
             // lab VM 2026-11-06: wevtutil cl "Windows PowerShell" was reported as "System golit"
             var ev = Ev(104);
-            ev.XmlData = "<Event><UserData><LogFileCleared><SubjectUserName>it.admin</SubjectUserName><SubjectDomainName>LAB</SubjectDomainName>" +
+            // the full record as EventRecord.ToXml() gives it: <System><Channel>System</Channel> comes first (review round 1)
+            ev.XmlData = "<Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='Microsoft-Windows-Eventlog'/><EventID>104</EventID>" +
+                         "<Channel>System</Channel><Computer>WS-01</Computer></System><UserData><LogFileCleared><SubjectUserName>it.admin</SubjectUserName><SubjectDomainName>LAB</SubjectDomainName>" +
                          "<Channel>Windows PowerShell</Channel><BackupPath></BackupPath></LogFileCleared></UserData></Event>";
             var live = new LiveSecurityMonitoringEngine().EvaluateLiveEvent(ev)!;
             Assert.Contains("(Windows PowerShell)", live.Explanation);

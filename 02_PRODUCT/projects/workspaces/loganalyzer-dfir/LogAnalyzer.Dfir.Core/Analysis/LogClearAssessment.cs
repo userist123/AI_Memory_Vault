@@ -85,7 +85,14 @@ public static class LogClearAssessment
     /// The log that was cleared: Security for 1102; for System 104 the &lt;Channel&gt; of LogFileCleared (104 is WRITTEN in System whatever log was
     /// cleared: the lab VM's "wevtutil cl \"Windows PowerShell\"" was reported as "System golit", 2026-11-06); "" when the event does not say.
     /// </summary>
-    public static string ClearedChannel(int eventId, string? xml) => eventId == 1102 ? "Security" : eventId == 104 ? Field(xml, "Channel") : "";
+    public static string ClearedChannel(int eventId, string? xml)
+    {
+        if (eventId == 1102) return "Security";
+        if (eventId != 104 || string.IsNullOrEmpty(xml)) return "";
+        // only inside LogFileCleared: the full record (ToXml) carries <System><Channel>System</Channel> first (review round 1)
+        int at = xml.IndexOf("<LogFileCleared", StringComparison.OrdinalIgnoreCase);
+        return at < 0 ? "" : Field(xml[at..], "Channel");
+    }
 
     private static string Field(string? x, string name)
     {

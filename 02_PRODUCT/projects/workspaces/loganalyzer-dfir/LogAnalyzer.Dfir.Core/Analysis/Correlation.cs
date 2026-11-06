@@ -85,7 +85,7 @@ public static class Correlation
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
     private static readonly System.Text.RegularExpressions.Regex DefenderWeakeningValue = new(
-        @"\\Exclusions\\|\bDisable(?:RealtimeMonitoring|BehaviorMonitoring|IOAVProtection|ScriptScanning|OnAccessProtection|AntiSpyware|AntiVirus|BlockAtFirstSeen|ArchiveScanning)\s*=\s*(?:0x)?0*1\b|TamperProtection\s*=\s*(?:0x)?0*4\b|SpynetReporting\s*=\s*(?:0x)?0+\b",
+        @"\\(?:ASROnly(?:PerRule)?)?Exclusions(?:\\|_)|\bDisable(?:RealtimeMonitoring|BehaviorMonitoring|IOAVProtection|ScriptScanning|OnAccessProtection|AntiSpyware|AntiVirus|BlockAtFirstSeen|ArchiveScanning)\s*=\s*(?:0x)?0*1\b|TamperProtection\s*=\s*(?:0x)?0*4\b|SpynetReporting\s*=\s*(?:0x)?0+\b",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
     private static readonly System.Text.RegularExpressions.Regex WmiTypedName = new(
@@ -116,10 +116,16 @@ public static class Correlation
     internal static bool IsGeneratedCimModule(string text)
     {
         var t = text.TrimStart();
-        return t.StartsWith("#requires -version 3.0", StringComparison.OrdinalIgnoreCase)
-               && t.Contains(@"try { Microsoft.PowerShell.Core\Set-StrictMode -Off } catch { }", StringComparison.Ordinal)
-               && t.Contains("$script:ClassName = 'ROOT/", StringComparison.Ordinal)
-               && t.Contains("Microsoft.PowerShell.Cmdletization", StringComparison.Ordinal);
+        if (!t.StartsWith("#requires -version 3.0", StringComparison.OrdinalIgnoreCase)) return false;
+        // the generated prologue is fixed and comes first: the markers must sit at its head, not anywhere (a comment) in a pasted script (review round 1)
+        var head = t.Length > 600 ? t[..600] : t;
+        if (!head.Contains(@"try { Microsoft.PowerShell.Core\Set-StrictMode -Off } catch { }", StringComparison.Ordinal) ||
+            !head.Contains("$script:ClassName = 'ROOT/", StringComparison.Ordinal) ||
+            !t.Contains("Microsoft.PowerShell.Cmdletization", StringComparison.Ordinal)) return false;
+        // a generated CIM wrapper never loads native code or decodes payloads: any listed text (data, rule_lists.json) means foreign content; an empty list
+        // (data not loaded) treats nothing as the generated module, so nothing is summarised away
+        var foreign = Wp11Data.Default.Lists.Powershell.CimForeignContent;
+        return foreign.Count > 0 && !foreign.Any(k => k.Length > 0 && t.Contains(k, StringComparison.OrdinalIgnoreCase));
     }
 
     /// <summary>A Defender 5007 "new value" that weakens protection: an exclusion (a value under an ...\Exclusions\ key; Features\TPExclusions is a Tamper
@@ -539,6 +545,7 @@ public static class Correlation
         // The id is given only to the blocks that are listed (top 100): giving one to every block left holes in the numbering (evaluation 2026-11-05).
         var psFindings = new List<(int Score, DateTimeOffset? First, EvidenceRef FirstRef, Func<string, Finding> Make)>();
         var psSuspect = new List<(List<TimelineEvent> Parts, string Text, List<PowerShellKeyword> HitKw, int Score)>();
+        var cimModules = new List<TimelineEvent>();
         foreach (var blk in psBlocks)
         {
             var parts = blk.OrderBy(e => int.TryParse(F(e, "MessageNumber"), out var mn) ? mn : 0).ToList();
@@ -550,18 +557,22 @@ public static class Correlation
             if (hitKw.Count < 2 && score < psCfg.MinScore && !warned) continue;
             // Windows' Warning flag alone on the module Windows generates for every CIM cmdlet (Get-Disk, Get-NetAdapter...) is administration, not a
             // finding: one lab VM gave 87 such blocks (2026-11-06). A keyword hit in the same text still counts.
-            if (hitKw.Count == 0 && IsGeneratedCimModule(text)) continue;
+            // Not dropped: listed together in one Low finding, so a script hidden behind the prologue still reaches the report (review round 1).
+            if (hitKw.Count == 0 && IsGeneratedCimModule(text)) { cimModules.Add(parts[0]); continue; }
             psSuspect.Add((parts, text, hitKw, score));
         }
-        // The same script text run again (a helper every remote copy loads, a scheduled script) is one finding with the count, not one per run.
-        foreach (var same in psSuspect.GroupBy(b => b.Text, StringComparer.Ordinal))
+        // The same script text run again by the same account on the same host (a helper every remote copy loads, a scheduled script) is one finding
+        // with the count, not one per run; another account or host is its own finding (review round 1).
+        foreach (var same in psSuspect.GroupBy(b => (b.Text, b.Parts[0].User.ToLowerInvariant(), b.Parts[0].Host.ToLowerInvariant())))
         {
             var (parts, text, hitKw, score) = same.OrderBy(b => b.Parts[0].Time.Utc).First();
             int runs = same.Count();
-            var allParts = same.OrderBy(b => b.Parts[0].Time.Utc).Select(b => b.Parts[0]).ToList();   // the first record of every run
+            var runStarts = same.OrderBy(b => b.Parts[0].Time.Utc).Select(b => b.Parts[0]).ToList();
+            // the first record of every run, always including the last run (LastSeen points at it)
+            var allParts = runStarts.Count <= 11 ? runStarts : [.. runStarts.Take(10), runStarts[^1]];
             bool amsi = hitKw.Any(k => k.High);
             var first = parts[0];
-            var last = same.Max(b => b.Parts[^1].Time.Utc);
+            var last = runStarts[^1].Time.Utc;
             var mitre = hitKw.OrderByDescending(k => k.Weight).Select(k => k.Mitre).FirstOrDefault(m => m.Length > 0) ?? "T1059.001";
             psFindings.Add((score, first.Time.Utc, Ref(first, "4104"), id => new Finding
             {
@@ -573,7 +584,7 @@ public static class Correlation
                               (runs > 1 ? $"; același text a rulat de {runs} ori (prima {first.Time.Utc:yyyy-MM-dd HH:mm}, ultima {last:yyyy-MM-dd HH:mm} UTC)" : "") + ". " +
                               $"De ce contează: aceste tehnici apar în atacuri fără fișiere, dar și în scripturi de administrare. Ce verificați: contul, procesul părinte și scopul scriptului. Începutul: {Trunc(text, 200)}",
                 ClassificationReason = hitKw.Count > 0 ? $"Cuvinte-cheie ponderate în textul scriptului (scor {score}); Script Block Logging nu arată rezultatul execuției." : "Evenimentul 4104 are nivelul Warning, setat de Windows pentru conținut suspect.",
-                SupportingEvidence = parts.Take(5).Concat(allParts.Skip(1).Take(10)).Distinct().Take(15).Select(e => Ref(e, "4104")).ToList(),
+                SupportingEvidence = parts.Take(5).Concat(allParts.Skip(1)).Distinct().Select(e => Ref(e, "4104")).ToList(),
                 AlternativeExplanations = ["Scripturi de administrare sau de instalare legitime."],
                 RecommendedNextSteps = ["Citiți scriptul complet și identificați contul și procesul care l-au lansat."],
             }));
@@ -583,12 +594,26 @@ public static class Correlation
         if (psFindings.Count > 100)
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "PS-SUSPICIOUS", Title = $"Alte {psFindings.Count - 100} blocuri PowerShell suspecte nu au fost listate individual",
+                FindingId = Id(), RuleId = "PS-SUSPICIOUS", Title = $"Alte {psFindings.Count - 100} scripturi PowerShell suspecte nu au fost listate individual",
                 Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "T1059.001",
-                Description = "Raportul listează primele 100 de blocuri după scor; restul sunt în cronologie (evenimente 4104).",
+                Description = "Raportul listează primele 100 de scripturi după scor (un script rulat de mai multe ori de același cont este unul); restul sunt în cronologie (evenimente 4104).",
                 ClassificationReason = "Limită de afișare, nu o concluzie.",
                 // evaluation 2026-11-05: without evidence the summary was rejected by the provenance binding and never reached the report
                 SupportingEvidence = psOrdered.Skip(100).Take(20).Select(x => x.FirstRef).ToList(),
+            });
+        if (cimModules.Count > 0)
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "PS-SUSPICIOUS", Title = $"{cimModules.Count} module PowerShell generate de Windows pentru comenzi CIM (marcate Avertisment de Windows)",
+                Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "T1059.001",
+                FirstSeenUtc = cimModules.Min(e => e.Time.Utc), LastSeenUtc = cimModules.Max(e => e.Time.Utc),
+                Description = "Ce s-a întâmplat: Windows a generat și a rulat modulele pentru comenzi precum Get-Disk, Get-Volume sau Get-NetAdapter și le-a marcat singur ca Warning. " +
+                              "Textul lor începe cu prologul fix al modulelor generate și nu conține cuvinte-cheie sau apeluri de cod nativ, de aceea nu sunt listate unul câte unul. " +
+                              "Ce verificați: dacă cineva a rulat aceste comenzi și de ce (administrare obișnuită, în general).",
+                ClassificationReason = "Doar indicatorul Warning al Windows, pe textul unui modul CDXML generat (prolog fix, Microsoft.PowerShell.Cmdletization, fără cod nativ sau descărcări).",
+                SupportingEvidence = cimModules.OrderBy(e => e.Time.Utc).Take(20).Select(e => Ref(e, "4104 modul CIM")).ToList(),
+                AlternativeExplanations = ["Administrare obișnuită: comenzile CIM sunt folosite de Windows și de administratori zilnic."],
+                RecommendedNextSteps = ["Deschideți câteva blocuri din cronologie și confirmați că sunt modulele generate."],
             });
 
         // 7a. Suspicious PowerShell command line from the classic "Windows PowerShell" log (400, engine start): HostApplication carries the full

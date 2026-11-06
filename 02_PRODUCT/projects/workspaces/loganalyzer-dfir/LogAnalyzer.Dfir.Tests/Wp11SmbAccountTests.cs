@@ -175,12 +175,15 @@ public class Wp11AccountTests
     }
 
     [Fact]
-    public void A_setup_account_created_by_SYSTEM_and_used_only_locally_is_Low_even_when_privileged()
+    public void A_setup_account_created_by_SYSTEM_and_used_only_locally_is_Low_unless_privileged()
     {
-        // lab VM 2026-11-06: defaultuser0 and the unattended administrator of every fresh install were Medium "created then used"
-        var local = One(Run([Created(0, by: "SYSTEM"), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10)]), "ACCOUNT-CREATED-THEN-USED");
+        // lab VM 2026-11-06: setup accounts of every fresh install were Medium "created then used"
+        var local = One(Run([Created(0, by: "SYSTEM"), Logon(10)]), "ACCOUNT-CREATED-THEN-USED");
         Assert.Equal(Severity.Low, local.Severity);
         Assert.Contains("aprovizionare", local.Description);
+        // review round 1: SYSTEM creating a local administrator is also what an attacker running as SYSTEM does
+        var admin = One(Run([Created(0, by: "SYSTEM"), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10)]), "ACCOUNT-CREATED-THEN-USED");
+        Assert.Equal(Severity.Medium, admin.Severity);
         // the same account used from another host keeps its severity
         var remote = One(Run([Created(0, by: "SYSTEM"), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10, type: "10", ip: "10.0.0.7")]), "ACCOUNT-CREATED-THEN-USED");
         Assert.Equal(Severity.High, remote.Severity);

@@ -51,6 +51,22 @@ public sealed class ModuleCatalogTests
     }
 
     [Fact]
+    public void The_quick_jump_palette_finds_any_page_of_the_module_by_part_of_its_name_without_diacritics()
+    {
+        // lab VM 2026-11-06: the palette listed seven fixed old pages and could not reach Active Directory
+        var menu = ModuleCatalog.Menu(StationPosture.IsolatedNetwork, AppMode.Network, [], _ => true);   // no main pages of a role, a licence with every right
+        var pages = menu.SelectMany(s => s.Pages).Select(p => new NavigationEntry(p.Title, p.Tab, true, "")).ToList();
+        Assert.Contains(LogAnalyzer.UI.ViewModels.MainViewModel.PaletteFilter(pages, "active"), p => p.Title == "Active Directory");
+        Assert.All(LogAnalyzer.UI.ViewModels.MainViewModel.PaletteFilter(pages, "amenintari detectii"), p => Assert.Contains("Amenințări", p.Title));
+        Assert.NotEmpty(LogAnalyzer.UI.ViewModels.MainViewModel.PaletteFilter(pages, "amenintari detectii"));
+        Assert.Empty(LogAnalyzer.UI.ViewModels.MainViewModel.PaletteFilter(pages, "nu exista asa ceva"));
+        Assert.True(LogAnalyzer.UI.ViewModels.MainViewModel.PaletteFilter(pages, "").Count <= LogAnalyzer.UI.ViewModels.MainViewModel.PaletteMaxMatches);
+        // Insula (Standalone) has no Active Directory page to jump to
+        var insula = ModuleCatalog.Menu(StationPosture.Standalone, AppMode.AirGapped, [], _ => true).SelectMany(s => s.Pages).Select(p => new NavigationEntry(p.Title, p.Tab, true, "")).ToList();
+        Assert.Empty(LogAnalyzer.UI.ViewModels.MainViewModel.PaletteFilter(insula, "active directory"));
+    }
+
+    [Fact]
     public void A_home_button_is_announced_by_its_title_not_the_type_name()
     {
         // lab VM 2026-11-06: UI Automation read "LogAnalyzer.UI.ViewModels.HomeIntentView" for every Home button

@@ -139,6 +139,28 @@ public class DetectionWave3Tests
         Assert.Equal("", Wp11Rules.DiscoveryKey(@"C:\Windows\System32\ipconfig.exe", "ipconfig"));
         Assert.Equal("", Wp11Rules.DiscoveryKey(@"C:\Windows\System32\net.exe", @"net use \\srv\ipc$"));
         Assert.Equal("net group", Wp11Rules.DiscoveryKey(@"C:\Windows\System32\net1.exe", @"C:\Windows\system32\net1 group x /domain"));
+        // review round 1: creating an account is not looking around
+        Assert.Equal("", Wp11Rules.DiscoveryKey(@"C:\Windows\System32\net.exe", "net user labbackup$ P@ss /add"));
+        Assert.Equal("", Wp11Rules.DiscoveryKey(@"C:\Windows\System32\net.exe", "net localgroup administrators labbackup$ /add"));
+    }
+
+    [Fact]
+    public void Discovery_is_one_finding_across_4688_and_Sysmon_ignores_the_stations_own_accounts_and_is_capped()
+    {
+        TimelineEvent Sm(double minute, string image, string cl) => Ev("Microsoft-Windows-Sysmon/Operational", 1, minute, "", ("Image", image), ("CommandLine", cl), ("User", @"LAB\it.admin"), ("LogonId", "0x1"));
+        var both = Wp11Rules.Run([
+            Proc(0, "whoami.exe", "whoami /all"), Proc(0.1, "nltest.exe", "nltest /dclist:x"), Proc(0.2, "systeminfo.exe", "systeminfo"),
+            Sm(0, "whoami.exe", "whoami /all"), Sm(0.1, "nltest.exe", "nltest /dclist:x"), Sm(0.2, "systeminfo.exe", "systeminfo")], [], () => "F-1");
+        Assert.Single(both, x => x.RuleId == "DISCOVERY-BURST");
+        // an inventory agent running as SYSTEM every hour is not a finding
+        var system = Enumerable.Range(0, 48).SelectMany(h => new[] { Proc(h * 60, "whoami.exe", "whoami", "SYSTEM"), Proc(h * 60 + 0.1, "ipconfig.exe", "ipconfig /all", "SYSTEM"), Proc(h * 60 + 0.2, "systeminfo.exe", "systeminfo", "LAB-WS01$") });
+        Assert.DoesNotContain(Wp11Rules.Run(system.ToList(), [], () => "F-1"), x => x.RuleId == "DISCOVERY-BURST");
+        // a person doing it every hour for two days: 20 listed, the rest in one Low summary
+        int n = 0;
+        var person = Enumerable.Range(0, 48).SelectMany(h => new[] { Proc(h * 60, "whoami.exe", "whoami"), Proc(h * 60 + 0.1, "ipconfig.exe", "ipconfig /all"), Proc(h * 60 + 0.2, "systeminfo.exe", "systeminfo") }).ToList();
+        var capped = Wp11Rules.Run(person, [], () => "F-" + ++n).Where(x => x.RuleId == "DISCOVERY-BURST").ToList();
+        Assert.Equal(Wp11Rules.DiscoveryMaxFindings + 1, capped.Count);
+        Assert.Single(capped, x => x.Severity == Severity.Low && x.Title.StartsWith("Alte 28 serii", StringComparison.Ordinal));
     }
 
     private const string CimModule = "#requires -version 3.0\r\ntry { Microsoft.PowerShell.Core\\Set-StrictMode -Off } catch { }\r\n" +
@@ -148,8 +170,18 @@ public class DetectionWave3Tests
     [Fact]
     public void The_module_Windows_generates_for_a_CIM_cmdlet_is_not_suspicious_by_its_Warning_flag_alone()
     {
-        // lab VM 2026-11-06: Get-Disk / Get-Volume / Get-NetAdapter gave 87 "suspicious" blocks out of 100 listed
-        Assert.DoesNotContain(Corr(Block(0, CimModule, "cim1", ("_xLevel", "3"))), x => x.RuleId == "PS-SUSPICIOUS");
+        // lab VM 2026-11-06: Get-Disk / Get-Volume / Get-NetAdapter gave 87 "suspicious" blocks out of 100 listed; now one Low summary lists them
+        var cim = Corr(Block(0, CimModule, "cim1", ("_xLevel", "3")), Block(1, CimModule.Replace("MSFT_Disk", "MSFT_Volume"), "cim1b", ("_xLevel", "3")));
+        var summary = Assert.Single(cim, x => x.RuleId == "PS-SUSPICIOUS");
+        Assert.Equal(Severity.Low, summary.Severity);
+        Assert.StartsWith("2 module PowerShell generate de Windows", summary.Title);
+        Assert.Equal(2, summary.SupportingEvidence.Count);
+        // review round 1: the prologue pasted in front of a native-code loader (no listed keyword) is NOT the generated module
+        var loader = CimModule + "Add-Type -TypeDefinition '[DllImport(\"kernel32\")] public static extern IntPtr CreateThread(...)'";
+        Assert.Contains(Corr(Block(0, loader, "evil", ("_xLevel", "3"))), x => x.RuleId == "PS-SUSPICIOUS" && x.Severity >= Severity.Medium);
+        // nor are markers that only appear further down (in a comment) instead of at the head
+        var buried = "#requires -version 3.0\r\n" + new string('#', 700) + "\r\n# try { Microsoft.PowerShell.Core\\Set-StrictMode -Off } catch { } $script:ClassName = 'ROOT/x' Microsoft.PowerShell.Cmdletization";
+        Assert.Contains(Corr(Block(0, buried, "evil2", ("_xLevel", "3"))), x => x.RuleId == "PS-SUSPICIOUS" && x.Severity >= Severity.Medium);
         // a keyword in the same text still counts; the prologue alone without the cmdletization adapter is not the generated module
         Assert.Contains(Corr(Block(0, CimModule + TestFixtureText.EncodedIexBlock, "cim2", ("_xLevel", "3"))), x => x.RuleId == "PS-SUSPICIOUS");
         Assert.Contains(Corr(Block(0, "#requires -version 3.0\r\ntry { Microsoft.PowerShell.Core\\Set-StrictMode -Off } catch { }\r\n$script:ClassName = 'ROOT/x'\r\nGet-Date", "cim3", ("_xLevel", "3"))), x => x.RuleId == "PS-SUSPICIOUS");
@@ -163,6 +195,24 @@ public class DetectionWave3Tests
         Assert.Contains("de 7 ori", f.Description);
         Assert.Equal(7, f.SupportingEvidence.Count);
         Assert.True(f.LastSeenUtc > f.FirstSeenUtc);
+        // review round 1: the same text run by ANOTHER account is its own finding; with many runs the last one is still in the evidence
+        var other = Block(500, "function PSCopyFromSessionHelper { param() }", "copyX", ("_xLevel", "3"));
+        var mixed = Corr([.. runs, new TimelineEvent { Time = other.Time, Source = other.Source, EventId = other.EventId, EvidenceId = other.EvidenceId, Locator = other.Locator, Fields = other.Fields, Summary = other.Summary, User = "intrus" }]);
+        Assert.Equal(2, mixed.Count(x => x.RuleId == "PS-SUSPICIOUS"));
+        Assert.Contains(mixed, x => x.RuleId == "PS-SUSPICIOUS" && x.User == "intrus");
+        var many = Enumerable.Range(0, 30).Select(i => Block(i * 10, "function H { }", "h" + i, ("_xLevel", "3"))).ToArray();
+        var g = One(Corr(many), "PS-SUSPICIOUS");
+        Assert.Contains(g.SupportingEvidence, r => r.Locator == many[^1].Locator);
+        Assert.Equal(many[^1].Time.Utc, g.LastSeenUtc);
+    }
+
+    [Fact]
+    public void An_ASR_only_exclusion_is_still_a_Defender_exclusion()
+    {
+        // review round 1: "\Exclusions\" alone missed the ASR exclusion keys the old "exclusions" caught
+        Assert.Contains(Corr(Ev(Defender, 5007, 0, "", ("New Value", @"HKLM\SOFTWARE\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR\ASROnlyExclusions\C:\Tools = 0x0"))), x => x.RuleId == "DEF-TAMPER");
+        Assert.Contains(Corr(Ev(Defender, 5007, 0, "", ("New Value", @"HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Windows Defender Exploit Guard\ASR\ASROnlyExclusions\C:\Tools = 0x0"))), x => x.RuleId == "DEF-TAMPER");
+        Assert.DoesNotContain(Corr(Ev(Defender, 5007, 0, "", ("New Value", @"HKLM\SOFTWARE\Microsoft\Windows Defender\Features\TPExclusions = 0x0"))), x => x.RuleId == "DEF-TAMPER");
     }
 
     // ---- D14 WMI persistence ----
