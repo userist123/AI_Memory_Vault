@@ -52,6 +52,14 @@ public sealed class PlainStoryReviewTests
         Assert.Equal(@"a scris pe stick fișierul „Plan.docx”, probabil copiat din C:\Users\ion\Desktop (același nume, scris după)",
             Wp14Rules.FilesStory("SanDisk", "E", Wp14Rules.ActivityOn(events, "E"), events));
 
+        // the same two writes two days apart are not a copy (round-2 review: no time limit)
+        events =
+        [
+            Trace("USN", 0, @"C:\Users\ion\Desktop\Plan.docx", "", ("Reason", "FILE_CREATE")),
+            Trace("EventLog:Security", 2 * 24 * 60, "", "4663", ("ObjectName", @"E:\Plan.docx"), ("AccessMask", "0x2"), ("SubjectUserName", "ion.popescu")),
+        ];
+        Assert.DoesNotContain("copiat", Wp14Rules.FilesStory("SanDisk", "E", Wp14Rules.ActivityOn(events, "E"), events));
+
         // copy from the stick: opened on the stick, then written on the computer
         events =
         [

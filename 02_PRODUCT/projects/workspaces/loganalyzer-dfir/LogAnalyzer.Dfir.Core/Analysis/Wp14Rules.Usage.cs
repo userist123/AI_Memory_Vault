@@ -44,7 +44,7 @@ public static partial class Wp14Rules
         var sessions = MediaUsageRules.PairSessions(c.Events.Where(e => Ev(e, "Security", 4624, 4634, 4647) && T(e) is not null).Select(e =>
         {
             var name = F(e, "TargetUserName");
-            return new LogonRecord(F(e, "TargetLogonId", "LogonId"), name.Length > 0 && !IsMachineAccount(name) ? name : "", F(e, "LogonType"), T(e)!.Value, e.EventId == "4624");
+            return new LogonRecord(F(e, "TargetLogonId", "LogonId"), name.Length > 0 && !PlainPhrases.IsOwnMachineOrWindows(name, e.Host) ? name : "", F(e, "LogonType"), T(e)!.Value, e.EventId == "4624");
         })).ToList();
         var arrivals = m.Events.Where(e => Ev(e, "Microsoft-Windows-Partition/Diagnostic", 1006) && T(e) is not null).Select(e => T(e)!.Value).Distinct().OrderBy(t => t).ToList();
         if (arrivals.Count == 0) arrivals = m.Times.Distinct().OrderBy(t => t).ToList();
@@ -68,7 +68,7 @@ public static partial class Wp14Rules
         var sessions = MediaUsageRules.PairSessions(logonEvents.Select(e =>
         {
             var name = F(e, "TargetUserName");
-            return new LogonRecord(F(e, "TargetLogonId", "LogonId"), name.Length > 0 && !IsMachineAccount(name) ? name : "", F(e, "LogonType"), T(e)!.Value, e.EventId == "4624");
+            return new LogonRecord(F(e, "TargetLogonId", "LogonId"), name.Length > 0 && !PlainPhrases.IsOwnMachineOrWindows(name, e.Host) ? name : "", F(e, "LogonType"), T(e)!.Value, e.EventId == "4624");
         })).ToList();
         var files = c.Events.Where(e => e.Source is "LNK" or "JumpList")
             .Select(e => new LinkedFile<TimelineEvent>(e, e.Path, F(e, "VolumeSerial"), F(e, "DriveType"), e.Source == "LNK" ? ParseIso(F(e, "LnkFileModifiedUtc")) : T(e)))

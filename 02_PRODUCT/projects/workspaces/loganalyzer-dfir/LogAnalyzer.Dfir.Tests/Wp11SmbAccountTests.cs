@@ -182,6 +182,30 @@ public class Wp11AccountTests
         Assert.Equal(Severity.Medium, localOnly.Severity);
     }
 
+    private static TimelineEvent At(TimelineEvent e, long record) => new()
+    {
+        Time = e.Time, Source = e.Source, EventId = e.EventId, Provider = e.Provider, EvidenceId = e.EvidenceId, Summary = e.Summary, Fields = e.Fields, Locator = $"EventRecordID={record}",
+    };
+
+    [Fact]
+    public void An_administrator_Windows_made_while_it_was_being_installed_is_Low_and_said_so_but_not_after_a_clear_or_later()
+    {
+        // lab WS02 2026-11-06: labadmin and defaultuser0, made administrators by Windows at setup, were Medium „created in this case and made admin”
+        var setup = Run([At(Created(0, by: "SYSTEM"), 40), At(AddedToGroup(1, "Administrators", "S-1-5-32-544") is var g ? new TimelineEvent { Time = g.Time, Source = g.Source, EventId = g.EventId, EvidenceId = "EV", Summary = "x",
+            Fields = new Dictionary<string, string>(g.Fields, StringComparer.OrdinalIgnoreCase) { ["SubjectUserName"] = "WS02$" } } : null!, 41), At(Logon(10), 300)]);
+        var used = One(setup, "ACCOUNT-CREATED-THEN-USED");
+        Assert.Equal(Severity.Low, used.Severity);
+        Assert.Contains("creat de Windows la instalare", used.PlainWhat);
+        var group = One(setup, "ACCOUNT-ADDED-PRIVILEGED-GROUP");
+        Assert.Equal(Severity.Low, group.Severity);
+        Assert.Contains("Windows la instalare", group.PlainWhat);
+        // the same, later in the log (record 9000) or in a log that was cleared: an attacker running as SYSTEM looks like this
+        Assert.Equal(Severity.Medium, One(Run([At(Created(0, by: "SYSTEM"), 9000), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10)]), "ACCOUNT-CREATED-THEN-USED").Severity);
+        Assert.Equal(Severity.Medium, One(Run([Sec(1102, -1), At(Created(0, by: "SYSTEM"), 40), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10)]), "ACCOUNT-CREATED-THEN-USED").Severity);
+        // made by a person, even at setup time: never lowered
+        Assert.Equal(Severity.Medium, One(Run([At(Created(0, by: "admin1"), 40), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10)]), "ACCOUNT-CREATED-THEN-USED").Severity);
+    }
+
     [Fact]
     public void A_setup_account_created_by_SYSTEM_and_used_only_locally_is_Low_unless_privileged()
     {

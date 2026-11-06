@@ -17,10 +17,11 @@ public static class PlainStory
     private static readonly CultureInfo Ro = CultureInfo.GetCultureInfo("ro-RO");
 
     /// <summary>Windows' own sessions and services (the account AFTER its domain is stripped): never "who did it" (lab WS02: DWM-1, UMFD-0 and defaultuser0 were listed as candidates for a USB stick).</summary>
-    private static readonly Regex StationAccount = new(@"^(?:DWM-\d+|UMFD-\d+|defaultuser\d*|SYSTEM|LOCAL\s*SYSTEM|LOCAL\s*SERVICE|NETWORK\s*SERVICE|ANONYMOUS LOGON|NT AUTHORITY|S-1-5-(?:18|19|20)|-)$",
+    private static readonly Regex StationAccount = new(@"^(?:DWM-\d+|UMFD-\d+|defaultuser\d*|SYSTEM|LOCAL\s*SYSTEM|LOCAL\s*SERVICE|NETWORK\s*SERVICE|ANONYMOUS LOGON|NT AUTHORITY|IUSR|TrustedInstaller|WDAGUtilityAccount|S-1-5-(?:18|19|20)|-)$",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
-    private static readonly string[] StationDomains = ["NT AUTHORITY", "Window Manager", "Font Driver Host"];
+    // NT SERVICE\<service> and IIS APPPOOL\<pool> are per-service virtual accounts Windows makes (round-2 review residual)
+    private static readonly string[] StationDomains = ["NT AUTHORITY", "Window Manager", "Font Driver Host", "NT SERVICE", "IIS APPPOOL", "NT VIRTUAL MACHINE"];
 
     /// <summary>True for Windows' own accounts. The match is made on the name AFTER the domain is removed („NT AUTHORITY\SYSTEM”, „Window Manager\DWM-1”); any „NT AUTHORITY” account counts.</summary>
     public static bool IsStationAccount(string account)

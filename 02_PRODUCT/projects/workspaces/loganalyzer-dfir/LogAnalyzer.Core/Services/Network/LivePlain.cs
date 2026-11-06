@@ -51,7 +51,11 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 var member = f("MemberName") is { } mn && !AccountResolver.IsSid(mn) ? Short(mn) : null;
                 var group = f("TargetUserName");
-                return $"{who} a pus {(member is not null ? $"contul „{member}”" : "un cont local")} {(group is not null ? $"în grupul „{group}”" : "într-un grup")}";
+                // without a name the SID tells only whether the account is of a domain or of this computer; neither is guessed (round-2 review: a domain member was "un cont local")
+                var known = member is not null ? $"contul „{member}”"
+                    : f("MemberSid") is { } ms && LogAnalyzer.Dfir.Analysis.Wp11Rules.DomainGroupOfSid(ms) is { Length: > 0 } dg ? $"grupul de domeniu „{dg}”"
+                    : "un cont al cărui nume nu apare în eveniment";
+                return $"{who} a pus {known} {(group is not null ? $"în grupul „{group}”" : "într-un grup")}";
             }
             if (ev.EventId == 4720)
                 return $"{who} a creat {(f("TargetUserName") is { } t ? $"contul nou „{t}”" : "un cont nou")}";

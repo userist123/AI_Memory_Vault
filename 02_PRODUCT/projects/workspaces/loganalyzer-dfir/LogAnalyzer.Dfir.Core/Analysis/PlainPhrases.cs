@@ -29,6 +29,13 @@ internal static class PlainPhrases
         return LogAnalyzer.Dfir.Language.PlainStory.IsOwnMachineAccount(account, host);
     }
 
+    /// <summary>
+    /// This computer's own machine account („HOST$”), which the media and session rules leave out. Any other name ending in $ is kept: an attacker can
+    /// name an account so (lab S5: „labbackup$”, round-2 review). Without a host nothing is left out (a real machine account is then named, with its note).
+    /// </summary>
+    internal static bool IsOwnMachineOrWindows(string account, string host) =>
+        ShortAccount(account).EndsWith('$') && LogAnalyzer.Dfir.Language.PlainStory.IsOwnMachineAccount(account, host);
+
     /// <summary>The computer the events come from (the most frequent Host), "" when none says; used to tell this computer's own „HOST$” account from an account named like it.</summary>
     internal static string HostOf(IEnumerable<LogAnalyzer.Dfir.Model.TimelineEvent> events) =>
         events.Select(e => e.Host ?? "").Where(h => h.Length > 0 && h != "-").GroupBy(h => h, StringComparer.OrdinalIgnoreCase).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault() ?? "";

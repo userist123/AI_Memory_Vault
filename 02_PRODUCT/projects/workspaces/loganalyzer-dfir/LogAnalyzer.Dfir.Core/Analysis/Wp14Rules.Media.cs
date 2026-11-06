@@ -72,7 +72,7 @@ public static partial class Wp14Rules
                 var serial = UsbstorSerial(id);
                 if (serial.Length == 0) continue;
                 var name = F(e, "SubjectUserName");
-                var user = name.Length > 0 && !IsMachineAccount(name) ? Account(name, F(e, "SubjectDomainName")) : "";
+                var user = name.Length > 0 && !PlainPhrases.IsOwnMachineOrWindows(name, e.Host) ? Account(name, F(e, "SubjectDomainName")) : "";
                 AddObs(map, e, serial, "", F(e, "DeviceDescription"), "", "Security 6416", user);
             }
             else if (InChannel(e, "Kernel-PnP", 400, 410) || InChannel(e, "DriverFrameworks-UserMode", 2003, 2100, 2102))
@@ -225,6 +225,9 @@ public static partial class Wp14Rules
     /// after the disk write: onto the stick; the disk write after the stick open: from the stick), it says „probabil copiat din/în … (același nume, scris după)”.
     /// Folder-shell files (desktop.ini, thumbs.db) are not content.
     /// </summary>
+    /// <summary>The two writes of a „probabil copiat” must be this close: a file of the same name written days apart is not a copy (round-2 review).</summary>
+    internal static readonly TimeSpan CopyWindow = TimeSpan.FromMinutes(30);
+
     internal static string FilesStory(string stick, string letter, List<Activity> activity, IReadOnlyList<TimelineEvent> events)
     {
         var prefix = letter + ":\\";
@@ -245,13 +248,13 @@ public static partial class Wp14Rules
                 if (stickWrite)
                 {
                     // onto the stick: a write on the computer BEFORE the write on the stick
-                    var before = hits.Where(h => h.Write && h.Time is { } t && t < st).OrderByDescending(h => h.Time).FirstOrDefault();
+                    var before = hits.Where(h => h.Write && h.Time is { } t && t < st && st - t <= CopyWindow).OrderByDescending(h => h.Time).FirstOrDefault();
                     if (before.Dir is { Length: > 0 }) return $"„{file}”, probabil copiat din {before.Dir} (același nume, scris după)";
                 }
                 else
                 {
                     // from the stick: a write on the computer AFTER the open on the stick
-                    var after = hits.Where(h => h.Write && h.Time is { } t && t > st).OrderBy(h => h.Time).FirstOrDefault();
+                    var after = hits.Where(h => h.Write && h.Time is { } t && t > st && t - st <= CopyWindow).OrderBy(h => h.Time).FirstOrDefault();
                     if (after.Dir is { Length: > 0 }) return $"„{file}”, probabil copiat în {after.Dir} (același nume, scris după)";
                 }
             }

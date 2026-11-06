@@ -52,7 +52,7 @@ public static class AfterConnect
             if (e.EventId == "4624")
             {
                 var user = F(e, "TargetUserName");
-                if (user.Length == 0 || IsMachineAccount(user) || SystemAccounts.Contains(user)) continue;
+                if (user.Length == 0 || PlainPhrases.IsStationAccount(user, e.Host, F(e, "TargetUserSid")) || SystemAccounts.Contains(user)) continue;   // a name ending in $ is kept unless it is this computer's own (round-2 review)
                 if (F(e, "LogonType") is not ("2" or "10" or "11")) continue;
                 open[id.Length > 0 ? id : Guid.NewGuid().ToString()] = (user, T(e)!.Value);
             }
@@ -78,7 +78,7 @@ public static class AfterConnect
             var user = Bare(e.User.Length > 0 ? e.User : F(e, "SubjectUserName", "TargetUserName", "User", "UserName"));
             if (sessionUser.Length > 0 && user.Length > 0)
             {
-                bool system = IsMachineAccount(user) || SystemAccounts.Contains(user);
+                bool system = PlainPhrases.IsStationAccount(user, e.Host) || SystemAccounts.Contains(user);
                 if (system || !user.Equals(Bare(sessionUser), StringComparison.OrdinalIgnoreCase)) { excluded++; continue; }
             }
             int score = kind == AfterConnectKind.Download ? 2 : 3;
@@ -124,9 +124,13 @@ public static partial class Wp14Rules
 {
     internal const string AfterConnectRuleId = "MEDIA-AFTER-CONNECT";
 
+    private static readonly HashSet<string> KernelProcesses = new(StringComparer.OrdinalIgnoreCase) { "Registry", "MemCompression", "Memory Compression", "System", "Secure System", "System Idle Process", "vmmem", "vmmemWSL" };
+
     private static bool IsWindowsOwn(string path)
     {
         var p = path.Replace('/', '\\');
+        // the kernel's own processes have no file on disk: Registry, MemCompression, System, Secure System (lab WS02: "a pornit programul Registry")
+        if (!p.Contains('\\') && KernelProcesses.Contains(p.Trim())) return true;
         return p.Contains("\\Windows\\", StringComparison.OrdinalIgnoreCase) || p.Contains("\\Program Files", StringComparison.OrdinalIgnoreCase) || p.Contains("\\ProgramData\\Microsoft\\", StringComparison.OrdinalIgnoreCase)
             || PlainPhrases.Leaf(p).Equals("desktop.ini", StringComparison.OrdinalIgnoreCase);
     }

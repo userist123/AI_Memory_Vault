@@ -128,7 +128,10 @@ namespace LogAnalyzer.UI.Tests
         public void Finding12_a_group_member_without_a_name_is_a_local_account_never_a_sid()
         {
             var noName = Tell(Ev(4732, D("MemberName", "-") + D("MemberSid", "S-1-5-21-1-2-3-1105") + D("TargetUserName", "Administrators") + D("SubjectUserName", "labadmin")));
-            Assert.Contains("a pus un cont local în grupul „Administrators”", noName);
+            // the SID alone does not say local or domain: neither is guessed (round-2 review); a well-known domain group is named
+            Assert.Contains("a pus un cont al cărui nume nu apare în eveniment în grupul „Administrators”", noName);
+            var domainAdmins = Tell(Ev(4732, D("MemberName", "-") + D("MemberSid", "S-1-5-21-1-2-3-512") + D("TargetUserName", "Administrators") + D("SubjectUserName", "labadmin")));
+            Assert.Contains("a pus grupul de domeniu „Domain Admins” în grupul „Administrators”", domainAdmins);
             Assert.DoesNotContain("S-1-5", noName);
             var sidOnly = Tell(Ev(4732, D("MemberSid", "S-1-5-21-1-2-3-1105") + D("TargetUserName", "Administrators") + D("SubjectUserName", "labadmin")));
             Assert.DoesNotContain("S-1-5", sidOnly);

@@ -180,10 +180,10 @@
   PlainStory (Dfir.Core/Language), person from the users register, SID resolved from the case events, card/grids/PDF lead with the sentence,
   live alerts (LivePlain) in status bar/toast/grid; codes kept under "Detalii tehnice"/"Pentru specialiști" (custody). Commits 1dd1682d4,
   8b40f0fb2, b34490adc, 1c8f616a2 + round-2 fixes. Opus review: round 1 REJECTED (13, fixed), round 2 REJECTED-PARTIAL (5 fixed by the main
-  session; no round 3 per the 2-round rule). Accepted residuals: $ sessions still dropped in Usage/AfterConnect session lists; NT SERVICE\* and
-  IUSR not recognised as Windows; 4732 domain member told as "un cont local"; FilesStory "probabil copiat" has no time limit between traces;
-  ACCOUNT-CREATED-THEN-USED Medium for install-time accounts (labadmin/defaultuser0) contradicts the Info "creat de Windows" line; the
-  "Registry" process listed as a user program after a stick; stored Plain does not change when the register changes (re-analyse).
+  session; no round 3 per the 2-round rule). Residuals fixed after round 2 (same night): $ sessions kept unless this computer's own; NT SERVICE\*, IIS APPPOOL, IUSR are Windows;
+  4732 member without a name not guessed local/domain; "probabil copiat" only within 30 min; accounts Windows made at setup (SYSTEM/machine
+  creator, record <= 500 of a never-cleared Security log) are Low and told "creat de Windows la instalare"; kernel processes (Registry…) are
+  not user programs. Still open: stored Plain does not change when the users register changes (re-analyse the case).
   Lab report generator: scratch worktree wt-pdf + ZzLabReportTests (never committed); reports in E:\LA-Lab\reports.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); Control stație should flag the
