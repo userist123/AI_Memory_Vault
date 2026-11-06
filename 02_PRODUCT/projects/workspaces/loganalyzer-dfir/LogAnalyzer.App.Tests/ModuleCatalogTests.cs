@@ -40,6 +40,17 @@ public sealed class ModuleCatalogTests
     }
 
     [Fact]
+    public void Enter_in_the_password_field_signs_in_and_while_setting_a_password_moves_to_the_confirmation_first()
+    {
+        // lab VM 2026-11-06: sign-in and unlock answered only to the mouse
+        Assert.True(LogAnalyzer.UI.Views.SignInWindow.EnterSubmits(LogAnalyzer.UI.Views.SignInWindowMode.SignIn, fromConfirm: false));
+        Assert.True(LogAnalyzer.UI.Views.SignInWindow.EnterSubmits(LogAnalyzer.UI.Views.SignInWindowMode.Unlock, fromConfirm: false));
+        Assert.False(LogAnalyzer.UI.Views.SignInWindow.EnterSubmits(LogAnalyzer.UI.Views.SignInWindowMode.FirstRun, fromConfirm: false));
+        Assert.False(LogAnalyzer.UI.Views.SignInWindow.EnterSubmits(LogAnalyzer.UI.Views.SignInWindowMode.Recovery, fromConfirm: false));
+        Assert.True(LogAnalyzer.UI.Views.SignInWindow.EnterSubmits(LogAnalyzer.UI.Views.SignInWindowMode.FirstRun, fromConfirm: true));
+    }
+
+    [Fact]
     public void A_home_button_is_announced_by_its_title_not_the_type_name()
     {
         // lab VM 2026-11-06: UI Automation read "LogAnalyzer.UI.ViewModels.HomeIntentView" for every Home button

@@ -31,6 +31,22 @@ namespace LogAnalyzer.UI.Views
             Configure();
             ShowStoreProtection();
             Loaded += async (_, _) => await RefreshCardsAsync();
+            // Enter in the password field signs in / unlocks (lab VM 2026-11-06: only the mouse could); while a new password is set, Enter first
+            // moves to the confirmation and submits from there.
+            PasswordBox.KeyDown += (_, e) => OnPasswordEnter(e, fromConfirm: false);
+            ConfirmBox.KeyDown += (_, e) => OnPasswordEnter(e, fromConfirm: true);
+        }
+
+        /// <summary>What Enter does in a password field: true = submit, false = move on to the confirmation field.</summary>
+        public static bool EnterSubmits(SignInWindowMode mode, bool fromConfirm) =>
+            fromConfirm || mode is not (SignInWindowMode.FirstRun or SignInWindowMode.Recovery);
+
+        private void OnPasswordEnter(System.Windows.Input.KeyEventArgs e, bool fromConfirm)
+        {
+            if (e.Key != System.Windows.Input.Key.Enter) return;
+            e.Handled = true;
+            if (!EnterSubmits(_mode, fromConfirm)) { ConfirmBox.Focus(); return; }
+            if (PasswordButton.IsEnabled && PasswordButton.IsVisible) Password_Click(PasswordButton, new RoutedEventArgs());
         }
 
         public sealed record IdentityRow(string Label, string Value)
