@@ -49,8 +49,21 @@ namespace LogAnalyzer.UI.Views
     }
 
     /// <summary>Severity as icon + Romanian word („▲ Ridicată”), so it is never only a colour or an English enum name.</summary>
-    public sealed class SeverityTextConverter : IValueConverter
+    /// <summary>
+    /// The plain sentence of a finding (owner 2026-11-06: who, what, with what, when; no codes). A case saved before the sentence existed gets it told now,
+    /// by account (the users register is applied when the case is analysed).
+    /// </summary>
+    public sealed class PlainStoryConverter : IValueConverter
     {
+        public static readonly PlainStoryConverter Instance = new();
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is LogAnalyzer.Dfir.Model.Finding f ? (f.Plain.Length > 0 ? f.Plain : LogAnalyzer.Dfir.Language.PlainStory.Tell(f, null, TimeZoneInfo.Local)) : "";
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
+
+    public sealed class SeverityTextConverter : IValueConverter    {
         public static readonly SeverityTextConverter Instance = new();
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>

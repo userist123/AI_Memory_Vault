@@ -158,7 +158,8 @@ public class Wp6aXamlTests
         Assert.Contains("ItemsSource=\"{Binding Findings}\"", inv);
         Assert.Contains("SelectedItem=\"{Binding SelectedFinding}\"", inv);
         Assert.Contains("<ctrl:FindingCard DataContext=\"{Binding SelectedCard}\"", inv);
-        foreach (var header in new[] { "Severitate", "Clasificare", "Stare", "Verificare", "Prima (UTC)", "Regulă", "Constatare", "Detalii" })
+        // owner 2026-11-06: the plain sentence first, the technical columns kept and labelled as such
+        foreach (var header in new[] { "Severitate", "Ce s-a întâmplat", "Clasificare", "Stare", "Verificare", "Prima (UTC)", "Tehnic: regulă", "Tehnic: titlu", "Tehnic: detalii" })
             Assert.Contains($"Header=\"{header}\"", inv);
     }
 }

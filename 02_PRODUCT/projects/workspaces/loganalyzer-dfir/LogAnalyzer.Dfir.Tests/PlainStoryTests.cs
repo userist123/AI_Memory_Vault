@@ -1,0 +1,95 @@
+using LogAnalyzer.Dfir.Analysis;
+using LogAnalyzer.Dfir.Language;
+using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.Registers;
+using Xunit;
+
+namespace LogAnalyzer.Dfir.Tests;
+
+/// <summary>
+/// The plain sentence of a finding (owner 2026-11-06): who (the person from the users register), what, with what, when in Romanian time, on which
+/// computer; never an event code, a rule id, a SID or a technique id.
+/// </summary>
+public sealed class PlainStoryTests
+{
+    private static readonly TimeZoneInfo Bucharest = TimeZoneInfo.FindSystemTimeZoneById("GTB Standard Time");
+    private static readonly DateTimeOffset T0 = new(2026, 11, 6, 13, 15, 0, TimeSpan.Zero);
+
+    private static Finding F(string rule, string title, string user = "", string plainWhat = "", string host = "", DateTimeOffset? last = null) => new()
+    {
+        FindingId = "F-1", RuleId = rule, Title = title, Description = "x", Severity = Severity.Medium, User = user, Host = host, PlainWhat = plainWhat,
+        FirstSeenUtc = T0, LastSeenUtc = last ?? T0,
+    };
+
+    private static UsersRegister Register() => new() { Rows = [new UserRow { Person = "Popescu Ion", Accounts = "LAB\\ion.popescu; ipopescu", Sids = "S-1-5-21-1-2-3-1105" }] };
+
+    [Fact]
+    public void The_sentence_says_when_in_Romanian_time_where_who_by_name_and_what()
+    {
+        var f = F("MEDIA-UNREGISTERED", "Suport de stocare amovibil 4C53: NEÎNREGISTRAT", user: "ion.popescu", host: "LAB-WS02",
+            plainWhat: "a conectat stick-ul „SanDisk Cruzer Blade”; acest stick NU este trecut în registrul de medii");
+        Assert.Equal("Pe 6 noiembrie 2026, la ora 15:15, pe calculatorul LAB-WS02, Popescu Ion (contul ion.popescu) a conectat stick-ul „SanDisk Cruzer Blade”; acest stick NU este trecut în registrul de medii.",
+            PlainStory.Tell(f, Register().PersonOf, Bucharest));
+    }
+
+    [Fact]
+    public void Without_the_register_the_account_is_named_and_Windows_own_sessions_are_never_the_culprit()
+    {
+        // lab WS02: DWM-1, UMFD-0 and defaultuser0 were listed as who used a USB stick beside the real account
+        Assert.Equal("utilizatorul cu contul „labadmin”", PlainStory.Who("defaultuser0, DWM-1, DWM-2, labadmin, UMFD-0", null));
+        Assert.Equal("Windows (un serviciu al sistemului, nu o persoană)", PlainStory.Who("S-1-5-18", null));
+        Assert.Equal("cineva (probele nu arată contul)", PlainStory.Who("", null));
+        Assert.Equal("Popescu Ion (contul ion.popescu)", PlainStory.Who("LAB\\ion.popescu", Register().PersonOf));
+        Assert.Equal("Popescu Ion (contul ion.popescu)", PlainStory.Who("ion.popescu@lab.local", Register().PersonOf));
+        Assert.StartsWith("una dintre persoanele conectate atunci (", PlainStory.Who("ion.popescu, ana.pop", Register().PersonOf));
+    }
+
+    [Fact]
+    public void A_span_of_time_is_told_as_one_day_or_from_one_day_to_another()
+    {
+        Assert.Equal("Pe 6 noiembrie 2026, între orele 15:15 și 16:45", PlainStory.When(T0, T0.AddMinutes(90), Bucharest));
+        Assert.Equal("Între 6 noiembrie 2026, ora 15:15, și 7 noiembrie 2026, ora 15:15", PlainStory.When(T0, T0.AddDays(1), Bucharest));
+        Assert.Equal("", PlainStory.When(null, null, Bucharest));
+    }
+
+    [Theory]
+    [InlineData("Jurnale șterse (Security 1100) de admin, eveniment 4719, T1070.001")]
+    [InlineData("Cont adăugat într-un grup privilegiat: S-1-5-21-1061555764-450217201-3444499901-512 → Administrators (vezi MEDIA-FILE-ACTIVITY)")]
+    [InlineData("Sesiune {48d281bc-8d6c-4a04-bfe1-ee6b131599b1} la 13:15 UTC")]
+    public void A_rule_without_its_own_story_is_told_from_its_title_without_codes(string title)
+    {
+        var s = PlainStory.Tell(F("ANY-RULE", title, user: "admin"), null, Bucharest);
+        Assert.DoesNotMatch(@"\b(?:1100|4719|T1070|S-1-5-21|MEDIA-FILE-ACTIVITY|UTC|48d281bc)\b", s);
+        Assert.StartsWith("Pe 6 noiembrie 2026, la ora 15:15, s-a observat:", s);
+    }
+
+    [Fact]
+    public void A_file_written_on_the_stick_says_where_it_was_copied_from_and_one_opened_from_it_where_it_went()
+    {
+        var events = new List<TimelineEvent>
+        {
+            Ev("LNK", path: @"C:\Users\ion\Documents\Plan.docx"),
+            Ev("EventLog:Security", eventId: "4663", fields: new() { ["ObjectName"] = @"E:\Plan.docx", ["AccessMask"] = "0x2", ["SubjectUserName"] = "ion.popescu" }),
+            Ev("LNK", path: @"E:\Oferta.pdf", fields: new() { ["DriveType"] = "REMOVABLE" }),
+            Ev("USN", path: @"C:\Users\ion\Desktop\Oferta.pdf", fields: new() { ["Reason"] = "FILE_CREATE" }),
+        };
+        var activity = Wp14Rules.ActivityOn(events, "E");
+        Assert.Equal(@"a scris pe stick fișierul „Plan.docx” (copiat din C:\Users\ion\Documents) și a deschis de pe stick fișierul „Oferta.pdf” (copiat apoi pe calculator, în C:\Users\ion\Desktop)",
+            Wp14Rules.FilesStory("SanDisk", "E", activity, events));
+        Assert.Equal("SanDisk Cruzer Blade", Wp14Rules.PlainName("SanDisk Cruzer Blade USB Device"));
+    }
+
+    [Fact]
+    public void The_contract_writes_the_sentence_on_every_finding_with_the_register_names()
+    {
+        var f = F("MEDIA-UNREGISTERED", "Suport de stocare amovibil 4C53: NEÎNREGISTRAT", user: "ipopescu", plainWhat: "a conectat stick-ul „X”");
+        var done = Assert.Single(FindingContract.Enrich([f], new FindingContractContext { NowUtc = T0, PersonOf = Register().PersonOf, Zone = Bucharest }));
+        Assert.Equal("Pe 6 noiembrie 2026, la ora 15:15, Popescu Ion (contul ipopescu) a conectat stick-ul „X”.", done.Plain);
+    }
+
+    private static TimelineEvent Ev(string source, string eventId = "", string path = "", Dictionary<string, string>? fields = null) => new()
+    {
+        Time = new Timestamp(T0, "", "test"), Source = source, EvidenceId = "EV", EventId = eventId, Path = path, Summary = "x",
+        Fields = fields ?? [],
+    };
+}

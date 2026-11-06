@@ -38,6 +38,26 @@ public sealed class UsersRegister : IRegisterData
     public List<UserRow> Rows { get; set; } = [];
 
     [JsonIgnore] public string Kind => "users";
+
+    /// <summary>
+    /// The person an account or SID belongs to („LAB\ion.popescu”, „ion.popescu@lab.local” and „ion.popescu” are the same account), or null. Used to name
+    /// people in the plain sentence of a finding; the logs show the account, the register says whose it is.
+    /// </summary>
+    public string? PersonOf(string account)
+    {
+        static string Short(string a)
+        {
+            var s = a.Trim();
+            if (s.Contains('\\')) s = s[(s.LastIndexOf('\\') + 1)..];
+            if (s.Contains('@')) s = s[..s.IndexOf('@')];
+            return s;
+        }
+        if (string.IsNullOrWhiteSpace(account)) return null;
+        var key = Short(account);
+        return Rows.FirstOrDefault(r => r.Person.Trim().Length > 0 &&
+                (r.AccountList.Any(a => Short(a).Equals(key, StringComparison.OrdinalIgnoreCase)) || r.SidList.Any(s => s.Equals(account.Trim(), StringComparison.OrdinalIgnoreCase))))
+            ?.Person.Trim();
+    }
     [JsonIgnore] public string Title => "Registru utilizatori";
     [JsonIgnore] public string FileName => DefaultFileName;
     [JsonIgnore] public IReadOnlyList<string> Columns => ColumnNames;

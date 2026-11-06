@@ -310,7 +310,8 @@ public sealed class ReportUsefulnessTests : IDisposable
         Assert.Contains("5 canale: Canal1, Canal2", text);
         // two vendor tasks of the same rule and reason: one finding listing both, evidence references kept
         Assert.Contains("(și încă una de același fel)", text);
-        Assert.Contains("F-0003 · Activitate planificată Lenovo B", text);
+        // the finding is told in plain words first, its id beside it (owner 2026-11-06)
+        Assert.Matches(new Regex("activitate planificată Lenovo B[^\n]*F-0003", RegexOptions.IgnoreCase), text);
         Assert.Contains("activitatea nr. 3", text);
         // Romanian labels in the body; the English codes only in the legend (the last two sections)
         var body = text[..text.IndexOf("Legendă coduri", StringComparison.Ordinal)];
@@ -504,7 +505,7 @@ public sealed class ReportUsefulnessTests : IDisposable
         var (all, _) = Render(Fixture("p1"), ReportAudience.Everything);
         Assert.DoesNotContain("Cele mai importante constatări", all);
         string page1 = all[..all.IndexOf("Integritatea elementelor de probă verificată", StringComparison.Ordinal)];
-        Assert.Equal(1, Regex.Count(page1, "Activitate planificată care rulează dintr-o locație"));
+        Assert.Equal(1, Regex.Count(page1, "Activitate planificată care rulează dintr-o locație", RegexOptions.IgnoreCase));
         Assert.Equal(1, Regex.Count(all, Regex.Escape(InvestigationReportText.CannotProveText)));
         Assert.Contains("vezi caseta „Concluzie pe scurt” de pe prima pagină", all);
         var (legal, _) = Render(Fixture("p1l"), ReportAudience.Legal);

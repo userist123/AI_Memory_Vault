@@ -165,8 +165,8 @@ public static class InvestigationReportPdf
                 foreach (var c in chains)
                     col.Item().Border(0.8f).BorderColor("#7f1d1d").Padding(6).Column(cc =>
                     {
-                        P(cc, $"{RoText.StripVolumes(c.Title)}  [{RoLabels.Severity(c.Severity)} · {RoLabels.Classification(c.Classification)}]").Bold();
-                        foreach (var step in c.Description.Split(" → ")) P(cc, "→ " + RoText.StripVolumes(step)).FontSize(8);
+                        P(cc, $"{InvestigationReportText.Plain(c)}  [{RoLabels.Severity(c.Severity)} · {RoLabels.Classification(c.Classification)}]").Bold();
+                        foreach (var step in c.Description.Split(" → ")) P(cc, "→ " + LogAnalyzer.Dfir.Language.PlainStory.WithoutTechnicalTerms(RoText.StripVolumes(step))).FontSize(8);
                         P(cc, "Atenție: " + string.Join(" ", c.AlternativeExplanations)).FontSize(7).Italic().FontColor(Muted);
                     });
 
@@ -188,7 +188,7 @@ public static class InvestigationReportPdf
                         col.Item().Column(sc =>
                         {
                             var f = g.Lead;
-                            P(sc, $"{f.FindingId} · {RoText.StripVolumes(f.Title)}{(g.Members.Count > 1 ? $" (și {RoText.MoreOfSameKind(g.Members.Count - 1)})" : "")} — {RoLabels.Severity(f.Severity)} · {StateLabels.Romanian(f.Status)}").FontSize(8);
+                            P(sc, $"{InvestigationReportText.Plain(f)}{(g.Members.Count > 1 ? $" (și {RoText.MoreOfSameKind(g.Members.Count - 1)})" : "")} — {RoLabels.Severity(f.Severity)} · {StateLabels.Romanian(f.Status)} · {f.FindingId}").FontSize(8);
                             foreach (var m in f.MissingEvidence) P(sc, "Lipsește: " + m).FontSize(7).Italic();
                             foreach (var c in f.ContradictingEvidence) P(sc, "Contrazice: " + c).FontSize(7).Italic().FontColor("#92400e");
                             foreach (var l in InvestigationReportText.SpecificLimitations(f, 2).Specific.Take(3)) P(sc, "Limită: " + l).FontSize(7).Italic().FontColor(Muted);
@@ -198,7 +198,8 @@ public static class InvestigationReportPdf
                     col.Item().Border(0.5f).BorderColor(Line).Padding(5).Column(cc =>
                     {
                         var f = g.Lead;
-                        P(cc, $"{f.FindingId} · {RoText.StripVolumes(f.Title)}{(g.Members.Count > 1 ? $" (și {RoText.MoreOfSameKind(g.Members.Count - 1)})" : "")}").Bold();
+                        P(cc, $"{InvestigationReportText.Plain(f)}{(g.Members.Count > 1 ? $" (și {RoText.MoreOfSameKind(g.Members.Count - 1)})" : "")}").Bold();
+                        P(cc, $"Pentru specialiști: {f.FindingId} · {RoText.StripVolumes(f.Title)}").FontSize(7).FontColor(Muted);
                         P(cc, $"{RoLabels.Severity(f.Severity)} · {RoLabels.Classification(f.Classification)} · {RoLabels.Confidence(f.Confidence)} · {RoLabels.Category(f.Category)}{(f.MitreTechniqueId.Length > 0 ? " · MITRE " + f.MitreTechniqueId : "")} · {L(f.FirstSeenUtc)} – {L(f.LastSeenUtc)}")
                             .FontSize(7.5f).FontColor(Muted);
                         P(cc, $"Stare: {StateLabels.Romanian(f.Status)} · tip: {RoLabels.Semantic(f.SemanticType)} · verificare automată: {StateLabels.Romanian(f.Verification.State)}")
@@ -209,7 +210,7 @@ public static class InvestigationReportPdf
                         if (g.Members.Count > 1)
                         {
                             P(cc, $"Constatări de același fel ({g.Members.Count}):").FontSize(7.5f).Bold();
-                            foreach (var m in g.Members.Take(15)) P(cc, $"{m.FindingId} · {RoText.StripVolumes(m.Title)}").FontSize(7);
+                            foreach (var m in g.Members.Take(15)) P(cc, $"{InvestigationReportText.Plain(m)} ({m.FindingId})").FontSize(7);
                             if (g.Members.Count > 15) P(cc, $"… încă {g.Members.Count - 15} (lista completă în Analysis/findings.json)").FontSize(7).Italic().FontColor(Muted);
                         }
                         var refs = InvestigationReportText.GroupEvidence(g);

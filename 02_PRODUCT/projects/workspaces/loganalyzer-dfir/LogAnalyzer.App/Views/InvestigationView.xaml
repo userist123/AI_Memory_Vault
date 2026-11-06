@@ -305,13 +305,14 @@
                     <DataGrid AutomationProperties.Name="Constatări" Grid.Row="0" ItemsSource="{Binding Findings}" SelectedItem="{Binding SelectedFinding}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static local:SeverityTextConverter.Instance}}" Width="110"/>
+                            <DataGridTextColumn Header="Ce s-a întâmplat" Binding="{Binding Converter={x:Static local:PlainStoryConverter.Instance}}" Width="5*"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
                             <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification, Converter={x:Static local:ClassificationWordingConverter.Instance}}" Width="100"/>
                             <DataGridTextColumn Header="Stare" Binding="{Binding Status, Converter={x:Static local:StandardStateLabelConverter.Instance}}" Width="130"/>
                             <DataGridTextColumn Header="Verificare" Binding="{Binding Verification.State, Converter={x:Static local:StandardStateLabelConverter.Instance}}" Width="120"/>
                             <DataGridTextColumn Header="Prima (UTC)" Binding="{Binding FirstSeenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>
-                            <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="170"/>
-                            <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="2*"/>
-                            <DataGridTextColumn Header="Detalii" Binding="{Binding Description}" Width="3*"/>
+                            <DataGridTextColumn Header="Tehnic: regulă" Binding="{Binding RuleId}" Width="170"/>
+                            <DataGridTextColumn Header="Tehnic: titlu" Binding="{Binding Title}" Width="2*"/>
+                            <DataGridTextColumn Header="Tehnic: detalii" Binding="{Binding Description}" Width="3*"/>
                         </DataGrid.Columns>
                     </DataGrid>
                     <GridSplitter Grid.Row="1" Height="8" HorizontalAlignment="Stretch" AutomationProperties.Name="Separator între lista de constatări și fișa constatării" Focusable="False"/>
@@ -344,8 +345,9 @@
                     <DataGrid AutomationProperties.Name="Constatări de integritate air-gap" ItemsSource="{Binding AirGapFindings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static local:SeverityTextConverter.Instance}}" Width="80"/>
+                            <DataGridTextColumn Header="Ce s-a întâmplat" Binding="{Binding Converter={x:Static local:PlainStoryConverter.Instance}}" Width="5*"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
                             <DataGridTextColumn Header="Subcategorie" Binding="{Binding AirGap.Subcategory}" Width="110"/>
-                            <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="170"/>
+                            <DataGridTextColumn Header="Tehnic: regulă" Binding="{Binding RuleId}" Width="170"/>
                             <DataGridTextColumn Header="Canal" Binding="{Binding AirGap.Channel}" Width="150"/>
                             <DataGridTextColumn Header="Autorizat?" Binding="{Binding AirGap.Authorized}" Width="95"/>
                             <DataGridTextColumn Header="Când (UTC)" Binding="{Binding AirGap.WhenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="115"/>
@@ -355,8 +357,8 @@
                             <DataGridTextColumn Header="Registru" Binding="{Binding AirGap.RegisterClassification}" Width="*"/>
                             <DataGridTextColumn Header="Direcție" Binding="{Binding AirGap.TransferDirection}" Width="*"/>
                             <DataGridTextColumn Header="Destinație" Binding="{Binding AirGap.Destination}" Width="*"/>
-                            <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="2*"/>
-                            <DataGridTextColumn Header="Detalii" Binding="{Binding Description}" Width="3*"/>
+                            <DataGridTextColumn Header="Tehnic: titlu" Binding="{Binding Title}" Width="2*"/>
+                            <DataGridTextColumn Header="Tehnic: detalii" Binding="{Binding Description}" Width="3*"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -372,10 +374,11 @@
                     <DataGrid AutomationProperties.Name="Constatări de tip secvență" Grid.Row="1" ItemsSource="{Binding SequenceFindings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="0,0,0,6">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static local:SeverityTextConverter.Instance}}" Width="80"/>
-                            <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="200"/>
+                            <DataGridTextColumn Header="Ce s-a întâmplat" Binding="{Binding Converter={x:Static local:PlainStoryConverter.Instance}}" Width="5*"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
+                            <DataGridTextColumn Header="Tehnic: regulă" Binding="{Binding RuleId}" Width="200"/>
                             <DataGridTextColumn Header="Prima (UTC)" Binding="{Binding FirstSeenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>
                             <DataGridTextColumn Header="Cine (din dovezi)" Binding="{Binding User}" Width="*"/>
-                            <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="3*"/>
+                            <DataGridTextColumn Header="Tehnic: titlu" Binding="{Binding Title}" Width="3*"/>
                         </DataGrid.Columns>
                     </DataGrid>
                     <TextBox AutomationProperties.Name="Pașii secvențelor" Grid.Row="2" Text="{Binding SequenceSteps, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"

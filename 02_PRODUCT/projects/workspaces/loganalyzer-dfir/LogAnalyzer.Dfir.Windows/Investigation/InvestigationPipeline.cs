@@ -535,7 +535,9 @@ public sealed class InvestigationPipeline
         // Finding contract: semantic type, standard state, limitations, provenance, audit trail (added beside Classification).
         var parsersByEvidence = r.Parsing.Where(p => p.Parser != "-" && p.Status is EvidenceStatus.Success or EvidenceStatus.Partial or EvidenceStatus.Empty)
                                          .GroupBy(p => p.EvidenceId, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Select(p => p.Parser).Distinct().ToList(), StringComparer.Ordinal);
-        kept = FindingContract.Enrich(kept, new FindingContractContext { ParsersOf = e => parsersByEvidence.GetValueOrDefault(e) ?? [], NowUtc = DateTimeOffset.UtcNow }).ToList();
+        // the plain sentence names the person an account belongs to (users register) and tells the time in the station's zone
+        kept = FindingContract.Enrich(kept, new FindingContractContext { ParsersOf = e => parsersByEvidence.GetValueOrDefault(e) ?? [], NowUtc = DateTimeOffset.UtcNow,
+            PersonOf = usersRegister is { } ur ? ur.PersonOf : null, Zone = TimeZoneInfo.Local }).ToList();
         r.Findings.AddRange(kept);
         foreach (var dup in kept.GroupBy(x => x.FindingId, StringComparer.Ordinal).Where(x => x.Count() > 1))
         {

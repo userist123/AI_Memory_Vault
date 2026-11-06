@@ -8,6 +8,10 @@ public sealed class FindingContractContext
     public Func<string, IEnumerable<string>> ParsersOf { get; init; } = _ => [];
     public DateTimeOffset? NowUtc { get; init; }
     public string ApplicationVersion { get; init; } = DfirInfo.ApplicationVersion;
+    /// <summary>The person an account belongs to (the users register), for the plain sentence; null = accounts only.</summary>
+    public Func<string, string?>? PersonOf { get; init; }
+    /// <summary>The time zone the plain sentence is told in (the station's); null = the local one.</summary>
+    public TimeZoneInfo? Zone { get; init; }
 }
 
 /// <summary>
@@ -130,6 +134,7 @@ public static class FindingContract
         var rule = RuleContracts.For(f.RuleId);
         var viol = AntiOverclaim.Violations(f);
         f.AuditTrail.Add(new("anti_overclaim.check", Actor, viol.Count == 0 ? "fără încălcări" : string.Join("; ", viol)));
+        f.Plain = LogAnalyzer.Dfir.Language.PlainStory.Tell(f, ctx.PersonOf, ctx.Zone ?? TimeZoneInfo.Local);
         f.HumanSummary = $"{f.Title}. {rule?.Meaning ?? "Regulă fără descriere în catalog."} Stare: {StateLabels.Romanian(f.Status)}.";
         f.TechnicalSummary = $"{f.RuleId} v{RuleContract.RuleVersion} · severitate {f.Severity.ToSpec()} · încredere {f.Confidence.ToSpec()} · " +
                              $"{f.Classification.ToSpec()} → {f.Status.ToSpec()} · {f.SemanticType.ToSpec()} · {f.SupportingEvidence.Count} referințe de probă" +
