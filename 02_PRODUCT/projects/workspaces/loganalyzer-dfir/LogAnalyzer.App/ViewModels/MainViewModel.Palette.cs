@@ -58,7 +58,8 @@ namespace LogAnalyzer.UI.ViewModels
         private void PaletteOpen(int tab)
         {
             IsCommandPaletteVisible = false;
-            if (!RoleNavigation.Any(n => n.Tab == tab)) { IsExpertLevel = true; AdvancedPagesOpen = true; }
+            // the level changes only for a page that will open (review round 2: a refused page left Expert switched on and saved)
+            if (CanOpenTab(tab) && !RoleNavigation.Any(n => n.Tab == tab)) { IsExpertLevel = true; AdvancedPagesOpen = true; }
             OpenTab(tab);
         }
 

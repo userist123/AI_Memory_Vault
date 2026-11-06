@@ -155,7 +155,23 @@
   package excluded, ClearCache behind the gate with Wait(0), SRUM log hashed on the work copy). RecentCaseView ToString (a11y). Gate READY
   3951/0/33; EVAL-* register entries resolved. NOT covered by tests: the gate/cancel/rerun concurrency (code reading only).
 
+- 2026-11-06 LA-Lab (Hyper-V, isolated switch, owner's second SSD): DC (Server 2025) + file server + WS01 (Win11, domain, Arhipelag and
+  Continent) + WS02 (Win11, no NIC, Insula); lab-only licence key (fingerprint 37A204D85F7BF5CF, private key DPAPI on the lab disk, lab builds
+  never leave it). Scenarios with ground truth: media R1-R7 on WS02 (hot-added SCSI disks, CD, NIC, printer, synthetic USBSTOR, clock +2 h),
+  attack S1-S8 on WS01 -> SRV01. Result vs truth: WS02 R3/R4/R5/R6 detected, R7 in AF05; R1/R2 Hyper-V SCSI disks are internal by design
+  (lab limit, not a defect). WS01 S3/S4/S5/S6/S7(client)/S8 + incident chain detected; S2 had no rule -> DISCOVERY-BURST added. Defects
+  found on real data and fixed (commits c2e0fc094..f66dfffde): WMI built-in subscription logged as Type="name" (High FP), TPExclusions
+  read as an exclusion, live "Potato" CRITICAL on every SYSTEM 4672, BadUSB on any keyboard, 104 cleared log named "System", 87 CIM
+  module blocks flooding PS-SUSPICIOUS, Burn desktop.ini, setup accounts Medium, SIDs in titles, Enter does not submit sign-in/unlock,
+  a11y names (IdentityRow, HomeIntentView, ParsedEvent, DetectedIssue), Ctrl+K palette (fixed old list, shared text, no focus).
+  Opus round 1 RESPINS (8, all fixed in f66dfffde); round 2 pending. Tests Dfir 2556/0/32, App 1010/0, UI 357/0/1, Edition 45/0.
+  Not yet fixed (UX, report): live feed rows show the whole multi-line message; page header text squeezed at 1024 px; wizard says
+  "Completați scopul" while the analysis already runs; Arhipelag first run needs the documented icacls on ProgramData\LogAnalyzer\auth.
+  Lab state and scripts: E:\LA-Lab (plan-teste-module.md, evidence\truth.jsonl, evidence\LAB-WS0*-case). Lab cleanup = whole E:\LA-Lab.
+
 ## Next
+00. LA-Lab continue: round 2 review; rebuild lab apps (build-lab-apps.ps1) + update-app.ps1; rerun WS01/WS02 investigations and compare
+   with truth; Continent on WS01; remote collection WS01 -> SRV01, AD page, containment, export-evidence.ps1 + import on host; lab report .docx.
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.
 0b. Advanced pages on the open case (one data source) - biggest product gap found; SRUM: recover the dirty ESE copy (esentutl /r with the
    SRU logs) or mark the result as depending on it; route the "Alte N" summaries to the report.

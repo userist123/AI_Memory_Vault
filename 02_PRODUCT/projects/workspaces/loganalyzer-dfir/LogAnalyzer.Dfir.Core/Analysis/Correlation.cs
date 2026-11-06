@@ -128,6 +128,12 @@ public static class Correlation
         return foreign.Count > 0 && !foreign.Any(k => k.Length > 0 && t.Contains(k, StringComparison.OrdinalIgnoreCase));
     }
 
+    private static readonly System.Text.RegularExpressions.Regex CimClassNameRx = new(@"\$script:ClassName\s*=\s*'(?<c>[^'\r\n]{1,200})'",
+        System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>The CIM class a generated module wraps (ROOT/Microsoft/Windows/Storage/MSFT_Disk), shown made visible; "clasă necunoscută" otherwise.</summary>
+    internal static string CimClassName(string text) => CimClassNameRx.Match(text) is { Success: true } m ? Visible(m.Groups["c"].Value) : "clasă necunoscută";
+
     /// <summary>A Defender 5007 "new value" that weakens protection: an exclusion (a value under an ...\Exclusions\ key; Features\TPExclusions is a Tamper
     /// Protection flag Defender writes itself, not an exclusion), a protection-disabling switch (explicit list) set to 1, Tamper Protection off, cloud reporting off.</summary>
     private static bool WeakensDefender(string newValue) => newValue.Length > 0 && DefenderWeakeningValue.IsMatch(newValue);
@@ -544,8 +550,7 @@ public static class Correlation
             .GroupBy(e => F(e, "ScriptBlockId") is { Length: > 0 } sid ? "id:" + sid : "ev:" + e.EvidenceId + e.Locator).ToList();
         // The id is given only to the blocks that are listed (top 100): giving one to every block left holes in the numbering (evaluation 2026-11-05).
         var psFindings = new List<(int Score, DateTimeOffset? First, EvidenceRef FirstRef, Func<string, Finding> Make)>();
-        var psSuspect = new List<(List<TimelineEvent> Parts, string Text, List<PowerShellKeyword> HitKw, int Score)>();
-        var cimModules = new List<TimelineEvent>();
+        var psSuspect = new List<(List<TimelineEvent> Parts, string Text, List<PowerShellKeyword> HitKw, int Score, bool Cim)>();
         foreach (var blk in psBlocks)
         {
             var parts = blk.OrderBy(e => int.TryParse(F(e, "MessageNumber"), out var mn) ? mn : 0).ToList();
@@ -557,15 +562,15 @@ public static class Correlation
             if (hitKw.Count < 2 && score < psCfg.MinScore && !warned) continue;
             // Windows' Warning flag alone on the module Windows generates for every CIM cmdlet (Get-Disk, Get-NetAdapter...) is administration, not a
             // finding: one lab VM gave 87 such blocks (2026-11-06). A keyword hit in the same text still counts.
-            // Not dropped: listed together in one Low finding, so a script hidden behind the prologue still reaches the report (review round 1).
-            if (hitKw.Count == 0 && IsGeneratedCimModule(text)) { cimModules.Add(parts[0]); continue; }
-            psSuspect.Add((parts, text, hitKw, score));
+            // Never summarised away (review rounds 1-2: a deny-list cannot prove a pasted prologue is the generated module): each distinct text stays
+            // its own finding with its evidence, only Low; the same module run again is one finding with the count (87 blocks -> a few rows).
+            psSuspect.Add((parts, text, hitKw, score, hitKw.Count == 0 && IsGeneratedCimModule(text)));
         }
         // The same script text run again by the same account on the same host (a helper every remote copy loads, a scheduled script) is one finding
         // with the count, not one per run; another account or host is its own finding (review round 1).
         foreach (var same in psSuspect.GroupBy(b => (b.Text, b.Parts[0].User.ToLowerInvariant(), b.Parts[0].Host.ToLowerInvariant())))
         {
-            var (parts, text, hitKw, score) = same.OrderBy(b => b.Parts[0].Time.Utc).First();
+            var (parts, text, hitKw, score, cim) = same.OrderBy(b => b.Parts[0].Time.Utc).First();
             int runs = same.Count();
             var runStarts = same.OrderBy(b => b.Parts[0].Time.Utc).Select(b => b.Parts[0]).ToList();
             // the first record of every run, always including the last run (LastSeen points at it)
@@ -577,13 +582,16 @@ public static class Correlation
             psFindings.Add((score, first.Time.Utc, Ref(first, "4104"), id => new Finding
             {
                 FindingId = id, RuleId = "PS-SUSPICIOUS",
-                Title = hitKw.Count > 0 ? $"Bloc PowerShell suspect: {string.Join(", ", hitKw.OrderByDescending(k => k.Weight).Take(4).Select(k => k.Text.Trim()))}" : "Bloc PowerShell marcat de Windows ca suspect (nivel Avertisment)",
-                Severity = amsi || score >= psCfg.HighScore ? Severity.High : Severity.Medium, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Medium, MitreTechniqueId = mitre,
+                Title = hitKw.Count > 0 ? $"Bloc PowerShell suspect: {string.Join(", ", hitKw.OrderByDescending(k => k.Weight).Take(4).Select(k => k.Text.Trim()))}"
+                        : cim ? $"Modul PowerShell cu prologul modulelor CIM generate de Windows, marcat Avertisment: {CimClassName(text)}" : "Bloc PowerShell marcat de Windows ca suspect (nivel Avertisment)",
+                Severity = cim ? Severity.Low : amsi || score >= psCfg.HighScore ? Severity.High : Severity.Medium, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Medium, MitreTechniqueId = mitre,
                 FirstSeenUtc = first.Time.Utc, LastSeenUtc = last, User = first.User,
                 Description = $"Ce s-a întâmplat: un script PowerShell conține {(hitKw.Count > 0 ? "tehnici folosite des la descărcare, ofuscare sau dezactivarea protecției (" + string.Join(", ", hitKw.Select(k => k.Text.Trim())) + ")" : "apeluri pe care Windows însuși le marchează ca suspecte (nivel Warning)")}" +
                               (runs > 1 ? $"; același text a rulat de {runs} ori (prima {first.Time.Utc:yyyy-MM-dd HH:mm}, ultima {last:yyyy-MM-dd HH:mm} UTC)" : "") + ". " +
                               $"De ce contează: aceste tehnici apar în atacuri fără fișiere, dar și în scripturi de administrare. Ce verificați: contul, procesul părinte și scopul scriptului. Începutul: {Trunc(text, 200)}",
-                ClassificationReason = hitKw.Count > 0 ? $"Cuvinte-cheie ponderate în textul scriptului (scor {score}); Script Block Logging nu arată rezultatul execuției." : "Evenimentul 4104 are nivelul Warning, setat de Windows pentru conținut suspect.",
+                ClassificationReason = hitKw.Count > 0 ? $"Cuvinte-cheie ponderate în textul scriptului (scor {score}); Script Block Logging nu arată rezultatul execuției."
+                    : cim ? "Doar nivelul Warning al Windows, pe un text care începe ca modulele CDXML generate pentru comenzile CIM (Get-Disk, Get-NetAdapter...): de obicei administrare, de aceea Low; prologul poate fi copiat, deci textul se citește."
+                    : "Evenimentul 4104 are nivelul Warning, setat de Windows pentru conținut suspect.",
                 SupportingEvidence = parts.Take(5).Concat(allParts.Skip(1)).Distinct().Select(e => Ref(e, "4104")).ToList(),
                 AlternativeExplanations = ["Scripturi de administrare sau de instalare legitime."],
                 RecommendedNextSteps = ["Citiți scriptul complet și identificați contul și procesul care l-au lansat."],
@@ -601,21 +609,6 @@ public static class Correlation
                 // evaluation 2026-11-05: without evidence the summary was rejected by the provenance binding and never reached the report
                 SupportingEvidence = psOrdered.Skip(100).Take(20).Select(x => x.FirstRef).ToList(),
             });
-        if (cimModules.Count > 0)
-            f.Add(new Finding
-            {
-                FindingId = Id(), RuleId = "PS-SUSPICIOUS", Title = $"{cimModules.Count} module PowerShell generate de Windows pentru comenzi CIM (marcate Avertisment de Windows)",
-                Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "T1059.001",
-                FirstSeenUtc = cimModules.Min(e => e.Time.Utc), LastSeenUtc = cimModules.Max(e => e.Time.Utc),
-                Description = "Ce s-a întâmplat: Windows a generat și a rulat modulele pentru comenzi precum Get-Disk, Get-Volume sau Get-NetAdapter și le-a marcat singur ca Warning. " +
-                              "Textul lor începe cu prologul fix al modulelor generate și nu conține cuvinte-cheie sau apeluri de cod nativ, de aceea nu sunt listate unul câte unul. " +
-                              "Ce verificați: dacă cineva a rulat aceste comenzi și de ce (administrare obișnuită, în general).",
-                ClassificationReason = "Doar indicatorul Warning al Windows, pe textul unui modul CDXML generat (prolog fix, Microsoft.PowerShell.Cmdletization, fără cod nativ sau descărcări).",
-                SupportingEvidence = cimModules.OrderBy(e => e.Time.Utc).Take(20).Select(e => Ref(e, "4104 modul CIM")).ToList(),
-                AlternativeExplanations = ["Administrare obișnuită: comenzile CIM sunt folosite de Windows și de administratori zilnic."],
-                RecommendedNextSteps = ["Deschideți câteva blocuri din cronologie și confirmați că sunt modulele generate."],
-            });
-
         // 7a. Suspicious PowerShell command line from the classic "Windows PowerShell" log (400, engine start): HostApplication carries the full
         // command line even when Script Block Logging and process auditing are off (evaluation 2026-11-05: "-WindowStyle Hidden -EncodedCommand"
         // was in the log and gave no finding). Same keyword list and threshold as the script blocks; one finding per distinct command line.

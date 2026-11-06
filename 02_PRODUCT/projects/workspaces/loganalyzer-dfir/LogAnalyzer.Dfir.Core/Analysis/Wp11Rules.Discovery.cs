@@ -55,6 +55,9 @@ public static partial class Wp11Rules
     /// <summary>At most this many series are listed one by one; the rest are one Low summary (an hourly inventory would give hundreds).</summary>
     internal const int DiscoveryMaxFindings = 20;
 
+    /// <summary>The actor name of the station's own accounts (SYSTEM, LOCAL / NETWORK SERVICE, machine account): their series are Low.</summary>
+    internal const string StationActorPrefix = "contul stației: ";
+
     private static void Discovery(Ctx c, List<Finding> o)
     {
         var hits = ProcessStarts(c.Events)
@@ -86,8 +89,14 @@ public static partial class Wp11Rules
                 i++;
             }
         }
-        foreach (var (who, burst, _) in bursts.OrderBy(b => T(b.Items[0].Start.Event)).Take(DiscoveryMaxFindings))
+        // listed: the first series of EVERY actor (a newcomer is never buried under an hourly inventory, review round 2), then the earliest others up to the cap
+        var ordered = bursts.OrderBy(b => T(b.Items[0].Start.Event)).ToList();
+        var firstPerActor = ordered.GroupBy(b => b.Who, StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
+        var listed = firstPerActor.Concat(ordered.Except(firstPerActor).Take(Math.Max(0, DiscoveryMaxFindings - firstPerActor.Count)))
+            .OrderBy(b => T(b.Items[0].Start.Event)).ToList();
+        foreach (var (who, burst, _) in listed)
         {
+                bool station = who.StartsWith(StationActorPrefix, StringComparison.Ordinal);
                 var keys = burst.Select(x => x.Key).Distinct(StringComparer.Ordinal).ToList();
                 bool domain = keys.Any(k => DomainDiscovery.Any(d => k.StartsWith(d, StringComparison.Ordinal)));
                 var first = burst[0].Start; var last = burst[^1].Start;
@@ -95,7 +104,8 @@ public static partial class Wp11Rules
                 {
                     FindingId = c.NextId(), RuleId = "DISCOVERY-BURST",
                     Title = $"Serie de comenzi de recunoaștere: {Join(keys, 6)}",
-                    Severity = Severity.Medium, Category = "Discovery", Classification = Classification.Correlated, Confidence = Confidence.Medium,
+                    // the station's own accounts (SYSTEM, services, machine account) run these all day: Low, still listed (psexec -s / potato reconnaissance)
+                    Severity = station ? Severity.Low : Severity.Medium, Category = "Discovery", Classification = Classification.Correlated, Confidence = Confidence.Medium,
                     MitreTechniqueId = domain ? "T1087.002" : "T1082", SemanticType = SemanticType.Observation,
                     FirstSeenUtc = T(first.Event), LastSeenUtc = T(last.Event), User = who,
                     Description = $"{keys.Count} comenzi de recunoaștere diferite rulate de {who} între {Time(T(first.Event))} și {Time(T(last.Event))}" +
@@ -110,9 +120,9 @@ public static partial class Wp11Rules
                     RecommendedNextSteps = ["Identificați sesiunea (LogonId) și sursa ei (4624).", "Căutați în fereastra următoare autentificări spre alte stații și programe noi."],
                 });
         }
-        if (bursts.Count > DiscoveryMaxFindings)
+        if (ordered.Count > listed.Count)
         {
-            var rest = bursts.OrderBy(b => T(b.Items[0].Start.Event)).Skip(DiscoveryMaxFindings).ToList();
+            var rest = ordered.Except(listed).ToList();
             o.Add(new Finding
             {
                 FindingId = c.NextId(), RuleId = "DISCOVERY-BURST", Title = $"Alte {rest.Count} serii de comenzi de recunoaștere nu au fost listate individual",
@@ -137,11 +147,12 @@ public static partial class Wp11Rules
     private static string DiscoveryActor(ProcStart p)
     {
         var sid = F(p.Event, "SubjectUserSid") is { Length: > 0 } s && s != "-" ? s : "";
-        if (sid is "S-1-5-18" or "S-1-5-19" or "S-1-5-20") return "";
         var name = p.User.Length > 0 && p.User != "-" ? p.User.Split('\\')[^1] : "";
-        if (name.Length > 0)
-            return IsMachineAccount(name) || name.Equals("SYSTEM", StringComparison.OrdinalIgnoreCase) || name.Equals("LOCAL SERVICE", StringComparison.OrdinalIgnoreCase)
-                   || name.Equals("NETWORK SERVICE", StringComparison.OrdinalIgnoreCase) ? "" : name.ToLowerInvariant();
+        // the station's own accounts are one actor, kept (Low): reconnaissance run as SYSTEM (psexec -s, a potato) is not a blind spot (review round 2)
+        if (sid is "S-1-5-18" or "S-1-5-19" or "S-1-5-20" || IsMachineAccount(name) || name.Equals("SYSTEM", StringComparison.OrdinalIgnoreCase) ||
+            name.Equals("LOCAL SERVICE", StringComparison.OrdinalIgnoreCase) || name.Equals("NETWORK SERVICE", StringComparison.OrdinalIgnoreCase))
+            return StationActorPrefix + "SYSTEM / servicii / contul mașinii";
+        if (name.Length > 0) return name.ToLowerInvariant();
         if (sid.Length > 0) return sid;
         return p.LogonId is { Length: > 0 } l && l != "0x0" ? "sesiunea " + l : "";
     }

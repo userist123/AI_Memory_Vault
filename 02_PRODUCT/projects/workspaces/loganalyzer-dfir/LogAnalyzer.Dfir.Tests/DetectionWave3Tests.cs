@@ -152,9 +152,15 @@ public class DetectionWave3Tests
             Proc(0, "whoami.exe", "whoami /all"), Proc(0.1, "nltest.exe", "nltest /dclist:x"), Proc(0.2, "systeminfo.exe", "systeminfo"),
             Sm(0, "whoami.exe", "whoami /all"), Sm(0.1, "nltest.exe", "nltest /dclist:x"), Sm(0.2, "systeminfo.exe", "systeminfo")], [], () => "F-1");
         Assert.Single(both, x => x.RuleId == "DISCOVERY-BURST");
-        // an inventory agent running as SYSTEM every hour is not a finding
-        var system = Enumerable.Range(0, 48).SelectMany(h => new[] { Proc(h * 60, "whoami.exe", "whoami", "SYSTEM"), Proc(h * 60 + 0.1, "ipconfig.exe", "ipconfig /all", "SYSTEM"), Proc(h * 60 + 0.2, "systeminfo.exe", "systeminfo", "LAB-WS01$") });
-        Assert.DoesNotContain(Wp11Rules.Run(system.ToList(), [], () => "F-1"), x => x.RuleId == "DISCOVERY-BURST");
+        // an inventory agent running as SYSTEM every hour is Low (review round 2: SYSTEM is not a blind spot) and a person who appears among it
+        // on day 2 is listed Medium, never buried in the summary
+        var system = Enumerable.Range(0, 48).SelectMany(h => new[] { Proc(h * 60, "whoami.exe", "whoami", "SYSTEM"), Proc(h * 60 + 0.1, "ipconfig.exe", "ipconfig /all", "SYSTEM"), Proc(h * 60 + 0.2, "systeminfo.exe", "systeminfo", "LAB-WS01$") }).ToList();
+        system.AddRange([Proc(40 * 60 + 30, "whoami.exe", "whoami /all", "intrus"), Proc(40 * 60 + 31, "nltest.exe", "nltest /dclist:x", "intrus"), Proc(40 * 60 + 32, "net.exe", "net group x /domain", "intrus")]);
+        int k = 0;
+        var inv = Wp11Rules.Run(system, [], () => "F-" + ++k).Where(x => x.RuleId == "DISCOVERY-BURST").ToList();
+        Assert.Single(inv, x => x.User == "intrus" && x.Severity == Severity.Medium);
+        Assert.All(inv.Where(x => x.User.StartsWith(Wp11Rules.StationActorPrefix, StringComparison.Ordinal)), x => Assert.Equal(Severity.Low, x.Severity));
+        Assert.Contains(inv, x => x.Title.StartsWith("Alte ", StringComparison.Ordinal));
         // a person doing it every hour for two days: 20 listed, the rest in one Low summary
         int n = 0;
         var person = Enumerable.Range(0, 48).SelectMany(h => new[] { Proc(h * 60, "whoami.exe", "whoami"), Proc(h * 60 + 0.1, "ipconfig.exe", "ipconfig /all"), Proc(h * 60 + 0.2, "systeminfo.exe", "systeminfo") }).ToList();
@@ -170,12 +176,17 @@ public class DetectionWave3Tests
     [Fact]
     public void The_module_Windows_generates_for_a_CIM_cmdlet_is_not_suspicious_by_its_Warning_flag_alone()
     {
-        // lab VM 2026-11-06: Get-Disk / Get-Volume / Get-NetAdapter gave 87 "suspicious" blocks out of 100 listed; now one Low summary lists them
-        var cim = Corr(Block(0, CimModule, "cim1", ("_xLevel", "3")), Block(1, CimModule.Replace("MSFT_Disk", "MSFT_Volume"), "cim1b", ("_xLevel", "3")));
-        var summary = Assert.Single(cim, x => x.RuleId == "PS-SUSPICIOUS");
-        Assert.Equal(Severity.Low, summary.Severity);
-        Assert.StartsWith("2 module PowerShell generate de Windows", summary.Title);
-        Assert.Equal(2, summary.SupportingEvidence.Count);
+        // lab VM 2026-11-06: Get-Disk / Get-Volume / Get-NetAdapter gave 87 Medium "suspicious" blocks out of 100 listed; now each module text is one
+        // Low finding with its run count, still listed with its evidence (review round 2: never summarised away)
+        var cim = Corr(Block(0, CimModule, "cim1", ("_xLevel", "3")), Block(1, CimModule, "cim1a", ("_xLevel", "3")), Block(2, CimModule.Replace("MSFT_Disk", "MSFT_Volume"), "cim1b", ("_xLevel", "3")));
+        var rows = cim.Where(x => x.RuleId == "PS-SUSPICIOUS").ToList();
+        Assert.Equal(2, rows.Count);
+        Assert.All(rows, r => Assert.Equal(Severity.Low, r.Severity));
+        Assert.Contains(rows, r => r.Title.EndsWith("ROOT/Microsoft/Windows/Storage/MSFT_Disk", StringComparison.Ordinal) && r.Description.Contains("de 2 ori"));
+        // review round 2: a payload without any listed API behind the pasted prologue is listed on its own (Low), with its own evidence
+        var sneaky = CimModule + "$p=[Runtime.InteropServices.Marshal]::AllocHGlobal(4096); $d=[scriptblock]::Create($s); $d.Invoke()";
+        var own = Assert.Single(Corr(Block(0, sneaky, "sneaky", ("_xLevel", "3"))), x => x.RuleId == "PS-SUSPICIOUS");
+        Assert.Contains(own.SupportingEvidence, r => r.Locator.Length > 0);
         // review round 1: the prologue pasted in front of a native-code loader (no listed keyword) is NOT the generated module
         var loader = CimModule + "Add-Type -TypeDefinition '[DllImport(\"kernel32\")] public static extern IntPtr CreateThread(...)'";
         Assert.Contains(Corr(Block(0, loader, "evil", ("_xLevel", "3"))), x => x.RuleId == "PS-SUSPICIOUS" && x.Severity >= Severity.Medium);
