@@ -183,7 +183,7 @@
   session; no round 3 per the 2-round rule). Residuals fixed after round 2 (same night): $ sessions kept unless this computer's own; NT SERVICE\*, IIS APPPOOL, IUSR are Windows;
   4732 member without a name not guessed local/domain; "probabil copiat" only within 30 min; accounts Windows made at setup (SYSTEM/machine
   creator, record <= 500 of a never-cleared Security log) are Low and told "creat de Windows la instalare"; kernel processes (Registry…) are
-  not user programs. Still open: stored Plain does not change when the users register changes (re-analyse the case).
+  not user programs. Then: the app never passed the users register to the analysis (no person was named in the real app) -> the pipeline loads the saved one; the card, grids and report re-tell the sentence with the register the app holds now (PlainStory.CurrentPersonOf, set when the register loads/saves); a task definition is no longer "Windows are…" and its name loses the user SID.
   Lab report generator: scratch worktree wt-pdf + ZzLabReportTests (never committed); reports in E:\LA-Lab\reports.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); Control stație should flag the

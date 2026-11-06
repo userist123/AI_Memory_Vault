@@ -39,6 +39,6 @@ public sealed record FindingCardModel(
             WhyExplainer.Build(f, ctx, verificationChecks, legacyScore), EvidenceLevels.Build(f, ctx), KnowThinkDontKnow.Build(f, ctx),
             f.RecommendedNextSteps.Count > 0 ? f.RecommendedNextSteps.ToList() : [NoNextStep], f.TechnicalSummary,
             // the plain sentence comes first on the card (owner 2026-11-06); a case saved before it existed gets it told now, by account
-            f.Plain.Length > 0 ? f.Plain : LogAnalyzer.Dfir.Language.PlainStory.Tell(f, null, TimeZoneInfo.Local));
+            LogAnalyzer.Dfir.Language.PlainStory.Current(f));
     }
 }

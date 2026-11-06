@@ -76,6 +76,20 @@ public static class PlainStory
         return UpperFirst(sentence.TrimEnd('.', ' ')) + ".";
     }
 
+    /// <summary>The users register the application holds now (account → person); set by the application when the register loads or is saved. Null = none.</summary>
+    public static Func<string, string?>? CurrentPersonOf { get; set; }
+
+    /// <summary>
+    /// The sentence as it should read NOW: told again with the current users register, so a person added to the register after the analysis is named on the
+    /// card and in the report. The stored sentence is kept when there is no register, or when the finding's account is a SID (the analysis resolved it from
+    /// the case's events, which are not at hand here).
+    /// </summary>
+    public static string Current(Finding f)
+    {
+        if (f.Plain.Length > 0 && (CurrentPersonOf is null || AccountResolver.IsSid(f.User))) return f.Plain;
+        return Tell(f, CurrentPersonOf, TimeZoneInfo.Local);
+    }
+
     /// <summary>Who did it, in words: the person and the account, the account alone, or that the logs do not say.</summary>
     public static string Who(string users, Func<string, string?>? personOf, string host = "")
     {

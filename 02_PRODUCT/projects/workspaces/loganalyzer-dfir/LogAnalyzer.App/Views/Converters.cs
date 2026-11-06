@@ -58,7 +58,7 @@ namespace LogAnalyzer.UI.Views
         public static readonly PlainStoryConverter Instance = new();
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
-            value is LogAnalyzer.Dfir.Model.Finding f ? (f.Plain.Length > 0 ? f.Plain : LogAnalyzer.Dfir.Language.PlainStory.Tell(f, null, TimeZoneInfo.Local)) : "";
+            value is LogAnalyzer.Dfir.Model.Finding f ? LogAnalyzer.Dfir.Language.PlainStory.Current(f) : "";
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }

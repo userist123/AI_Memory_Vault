@@ -27,7 +27,7 @@ public static class InvestigationReportText
 
     /// <summary>"A: x; B: x; C: y" → "x — 2 canale: A, B; C: y". Identical messages become one line with the list of channels.</summary>
     /// <summary>The finding told in plain words (who, what, with what, when; owner 2026-11-06), the first thing the report says about it; codes stay in the technical lines.</summary>
-    public static string Plain(Finding f) => RoText.StripVolumes(f.Plain.Length > 0 ? f.Plain : LogAnalyzer.Dfir.Language.PlainStory.Tell(f, null, TimeZoneInfo.Local));
+    public static string Plain(Finding f) => RoText.StripVolumes(LogAnalyzer.Dfir.Language.PlainStory.Current(f));
     public static string GroupErrors(string errors)
     {
         if (string.IsNullOrWhiteSpace(errors)) return "";

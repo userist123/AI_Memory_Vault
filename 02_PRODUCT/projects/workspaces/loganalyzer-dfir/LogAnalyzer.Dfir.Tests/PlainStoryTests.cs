@@ -117,6 +117,21 @@ public sealed class PlainStoryTests
         Assert.Equal("ana", resolve("S-1-5-21-1-2-3-1002"));
     }
 
+    [Fact]
+    public void A_task_definition_is_not_credited_to_Windows_and_its_name_loses_the_users_sid()
+    {
+        // lab WS02: „Windows are o activitate programată „OneDrive Standalone Update Task-S-1-5-21-…-1000”…”
+        var task = new TimelineEvent
+        {
+            Time = new Timestamp(T0, "", "test"), Source = "ScheduledTask", EvidenceId = "EV", Summary = "x", User = "labadmin",
+            Task = @"\OneDrive Standalone Update Task-S-1-5-21-2015769729-1107540261-47266587-1000", Path = @"C:\Users\labadmin\AppData\Local\Microsoft\OneDrive\OneDriveStandaloneUpdater.exe",
+        };
+        var f = Assert.Single(Correlation.Run([task]), x => x.RuleId == "PERSIST-TASK-CONFIG");
+        Assert.StartsWith("Există pe calculator activitatea programată „OneDrive Standalone Update Task”, care rulează sub contul „labadmin”, care pornește singură programul „OneDriveStandaloneUpdater.exe”", f.PlainWhat);
+        Assert.DoesNotContain("S-1-5", f.PlainWhat);
+        Assert.Contains("există pe calculator", PlainStory.Tell(f, null, Bucharest));
+    }
+
     private static TimelineEvent Ev(string source, string eventId = "", string path = "", Dictionary<string, string>? fields = null) => new()
     {
         Time = new Timestamp(T0, "", "test"), Source = source, EvidenceId = "EV", EventId = eventId, Path = path, Summary = "x",

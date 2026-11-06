@@ -113,6 +113,10 @@ public static class Correlation
     /// The script PowerShell generates from a CDXML module for every CIM cmdlet (Storage, NetAdapter, NetTCPIP...): it starts with the fixed prologue
     /// and drives Microsoft.PowerShell.Cmdletization. Windows logs it as Warning by itself; only the Warning flag is discounted, never a keyword hit.
     /// </summary>
+    /// <summary>„OneDrive Standalone Update Task-S-1-5-21-…-1000” → „OneDrive Standalone Update Task” (a per-user task carries its user's SID in the name).</summary>
+    internal static string TaskNameWithoutSid(string name) =>
+        System.Text.RegularExpressions.Regex.Replace(name ?? "", @"-?S-1-5-21(?:-\d+){3,4}$", "", System.Text.RegularExpressions.RegexOptions.CultureInvariant).Trim();
+
     internal static bool IsGeneratedCimModule(string text)
     {
         var t = text.TrimStart();
@@ -334,7 +338,11 @@ public static class Correlation
                 FindingId = Id(), RuleId = "PERSIST-TASK-CONFIG", Title = $"Activitate planificată{(hidden ? " ascunsă" : "")} care rulează dintr-o locație în care utilizatorii pot scrie: {e.Task}",
                 Severity = hidden ? Severity.High : Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
                 MitreTechniqueId = "T1053.005", FirstSeenUtc = e.Time.Utc, File = e.Path, Process = e.Process, User = e.User,
-                PlainWhat = $"Windows are o activitate programată {PlainPhrases.Q(PlainPhrases.Leaf(e.Task))}{(hidden ? " (ascunsă)" : "")} care pornește singură programul {PlainPhrases.Q(PlainPhrases.Leaf(e.Path))}, dintr-un folder în care orice utilizator poate scrie",
+                // the definition says what is configured, not who made it or that Windows owns it (lab WS02: a user's OneDrive task was told as „Windows are…”);
+                // a per-user task name ends in the user's SID, which never reaches the sentence
+                PlainWhat = $"Există pe calculator activitatea programată {PlainPhrases.Q(TaskNameWithoutSid(PlainPhrases.Leaf(e.Task)))}{(hidden ? " (ascunsă)" : "")}" +
+                            (e.User.Length > 0 && !LogAnalyzer.Dfir.Language.AccountResolver.IsSid(e.User) && !PlainPhrases.IsStationAccount(e.User) ? $", care rulează sub contul {PlainPhrases.Q(PlainPhrases.ShortAccount(e.User))}" : "") +
+                            $", care pornește singură programul {PlainPhrases.Q(PlainPhrases.Leaf(e.Path))}, dintr-un folder în care orice utilizator poate scrie",
                 Description = $"{e.Task} rulează {F(e, "Command")} {F(e, "Arguments")} ca {e.User} ({F(e, "RunLevel")}); declanșatori: {F(e, "Triggers")}; autor {F(e, "Author")}.",
                 ClassificationReason = "Definiția activității planificate (XML din System32\\Tasks) indică o cale în care utilizatorii pot scrie. Arată configurația, nu o rulare.",
                 SupportingEvidence = [Ref(e, "definiția activității planificate")],

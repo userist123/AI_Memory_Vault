@@ -123,6 +123,12 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var i in issues) Issues.Add(i.ToString());
         }
 
+        /// <summary>The users register as the findings are told now: a person added after an analysis is named on the card and in the report (owner 2026-11-06).</summary>
+        private void Announce()
+        {
+            if (_register is UsersRegister u) LogAnalyzer.Dfir.Language.PlainStory.CurrentPersonOf = u.PersonOf;
+        }
+
         private void LoadFrom(string path, bool startup = false)
         {
             var r = RegisterStore.Load<T>(path);
@@ -135,6 +141,7 @@ namespace LogAnalyzer.UI.ViewModels
                 return;
             }
             _register = r.Register;
+            Announce();
             Push();
             ShowIssues(r.Issues);
             Status = $"Registru încărcat din {path}." + (r.HasErrors ? " Unele rânduri sunt invalide (vezi lista); ele nu sunt folosite la analiză." : "");
@@ -163,6 +170,7 @@ namespace LogAnalyzer.UI.ViewModels
                 ShowIssues(issues);
                 if (issues.Any(i => i.IsError)) { Status = $"Nu s-a salvat nimic: {issues.Count(i => i.IsError)} erori (vezi lista, pe linii)."; return; }
                 Sha256 = sha;
+                Announce();
                 Definition = DefinitionText();
                 Status = $"Registru salvat în {RegisterPath} (SHA-256 {sha}). Se folosește la următoarea analiză; fiecare caz își păstrează o copie și hash-ul în custodie. Modificarea este în jurnalul de audit al registrelor.";
             }
@@ -185,6 +193,7 @@ namespace LogAnalyzer.UI.ViewModels
             ShowIssues(r.Issues);
             if (r.Register is null) { Status = $"Importul din {source} a eșuat; nimic nu s-a schimbat."; return; }
             _register = r.Register;
+            Announce();
             Push();
             Status = $"Importat din {source}: {r.RowsAccepted} rânduri valide, {r.RowsRejected} cu erori (rămân în tabel, marcate în listă; nu se salvează până nu sunt corectate).";
         }
