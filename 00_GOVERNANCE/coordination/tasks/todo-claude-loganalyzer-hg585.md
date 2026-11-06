@@ -176,6 +176,15 @@
   copy not auditable (no 5140/5145). Lab VM clocks start 4 h ahead (records at 21:57 UTC on the same day) -> TimeReliability lowers
   confidence, correct. Cases: evidence\LAB-SRV01-case-v2 (new build), DC01 export in evidence\LAB-DC01.
 
+- 2026-11-06 night: owner asked for findings and reports "ca la prosti" (who did what, no event codes). Done: Finding.PlainWhat/Plain +
+  PlainStory (Dfir.Core/Language), person from the users register, SID resolved from the case events, card/grids/PDF lead with the sentence,
+  live alerts (LivePlain) in status bar/toast/grid; codes kept under "Detalii tehnice"/"Pentru specialiști" (custody). Commits 1dd1682d4,
+  8b40f0fb2, b34490adc, 1c8f616a2 + round-2 fixes. Opus review: round 1 REJECTED (13, fixed), round 2 REJECTED-PARTIAL (5 fixed by the main
+  session; no round 3 per the 2-round rule). Accepted residuals: $ sessions still dropped in Usage/AfterConnect session lists; NT SERVICE\* and
+  IUSR not recognised as Windows; 4732 domain member told as "un cont local"; FilesStory "probabil copiat" has no time limit between traces;
+  ACCOUNT-CREATED-THEN-USED Medium for install-time accounts (labadmin/defaultuser0) contradicts the Info "creat de Windows" line; the
+  "Registry" process listed as a user program after a stick; stored Plain does not change when the register changes (re-analyse).
+  Lab report generator: scratch worktree wt-pdf + ZzLabReportTests (never committed); reports in E:\LA-Lab\reports.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); Control stație should flag the
    missing DC failure auditing; rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).

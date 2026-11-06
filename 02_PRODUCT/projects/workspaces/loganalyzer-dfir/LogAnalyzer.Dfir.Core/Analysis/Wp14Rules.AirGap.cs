@@ -298,10 +298,11 @@ public static partial class Wp14Rules
                 "profilul de proceduri nu conține o listă de adaptoare autorizate", $"{kind} configurat ({items.Count}×)", items, g.Key, "necunoscută: adaptorul nu indică o destinație", desc,
                 "Eveniment Kernel-PnP 400 pentru un dispozitiv din clasa Net (sau radio Bluetooth) pe un sistem air-gapped sau autonom.",
                 ["Reinstalarea driverului, o actualizare Windows sau prima pornire a unui adaptor integrat produc același eveniment.", "Adaptorul poate fi dezactivat în BIOS sau în Windows fără a lăsa alte urme în aceste surse."],
-                plain: "Windows a configurat " + (radio ? "un adaptor Bluetooth (radio fără fir)" : virt ? "o placă de rețea virtuală, care nu iese neapărat din calculator"
+                // the name first, then what kind of card it is (lab WS02: „…care nu iese neapărat din calculator „kdnic.inf” pe calculatorul izolat”)
+                plain: "Windows a configurat pe calculatorul izolat " + (name.Length > 0 ? $"placa {PlainPhrases.Q(name)}: " : "") + (radio ? "un adaptor Bluetooth (radio fără fir)" : virt ? "o placă de rețea virtuală, care nu iese neapărat din calculator"
                         : outbound ? "o placă de rețea de tip telefon sau modem celular, care poate da calculatorului acces la Internet pe lângă rețeaua lui"
                         : kindOf == AdapterKind.UsbEthernet ? "o placă de rețea pe USB, care poate lega un cablu de rețea fără să treacă prin placa obișnuită" : "o placă de rețea nouă sau reinstalată") +
-                       (name.Length > 0 ? $" {PlainPhrases.Q(name)}" : "") + " pe calculatorul izolat"));
+                       ""));
         }
     }
 }

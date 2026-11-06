@@ -21,7 +21,11 @@ public static partial class Wp14Rules
         if (real.Count == 1 && !ambiguous) return $"a folosit stick-ul {PlainPhrases.Q(stick)}" + (direct ? "" : " (după toate semnele, dar nesigur)") + files;
         if (real.Count == 0) return $"Stick-ul {PlainPhrases.Q(stick)} a fost conectat, dar nu se poate stabili cine l-a folosit" + files;
         // one real account beside Windows' own sessions: it is named, but not as the certain user (lab WS02: „conturile „labadmin”; care dintre ele”)
-        if (real.Count == 1) return $"Stick-ul {PlainPhrases.Q(stick)} a fost conectat când era deschis doar contul {PlainPhrases.Q(real[0])} (în afara sesiunilor Windows); probele nu arată sigur că el l-a folosit" + files;
+        // a profile that mounted it (MountPoints2) is not a session open at the connection: say which the evidence is (round-2 review)
+        if (real.Count == 1) return direct
+            ? $"Stick-ul {PlainPhrases.Q(stick)} a fost deschis din profilul contului {PlainPhrases.Q(real[0])}; probele nu arată sigur că el l-a folosit la această conectare" + files
+            : $"Stick-ul {PlainPhrases.Q(stick)} a fost conectat când era deschis doar contul {PlainPhrases.Q(real[0])} (în afara sesiunilor Windows); probele nu arată sigur că el l-a folosit" + files;
+        if (direct) return $"Stick-ul {PlainPhrases.Q(stick)} a fost deschis din profilurile conturilor {PlainPhrases.List(real.Select(PlainPhrases.Q).ToList(), 5)}; nu se poate stabili sigur care dintre ele l-a folosit la această conectare" + files;
         return $"Stick-ul {PlainPhrases.Q(stick)} a fost conectat când erau deschise conturile {PlainPhrases.List(real.Select(PlainPhrases.Q).ToList(), 5)}; nu se poate stabili sigur care dintre ele l-a folosit" + files;
     }
 

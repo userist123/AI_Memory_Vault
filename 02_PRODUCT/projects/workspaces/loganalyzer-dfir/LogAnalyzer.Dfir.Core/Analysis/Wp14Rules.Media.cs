@@ -199,7 +199,8 @@ public static partial class Wp14Rules
     {
         var name = PlainName(Kind(m));
         var head = openAccounts is { Count: > 0 }
-            ? $"Stick-ul {PlainPhrases.Q(name)} a fost conectat când {(openAccounts.Count == 1 ? "era deschis contul " : "erau deschise conturile ")}{PlainPhrases.List(openAccounts.Select(PlainPhrases.Q).ToList(), 5, ("cont", "conturi"))}"
+            // neutral: the accounts come from a profile that mounted it or from the sessions open then; neither proves who connected it (round-2 review)
+            ? $"Stick-ul {PlainPhrases.Q(name)} a fost conectat; probele îl leagă de {(openAccounts.Count == 1 ? "contul " : "conturile ")}{PlainPhrases.List(openAccounts.Select(PlainPhrases.Q).ToList(), 5, ("cont", "conturi"))}, fără să arate sigur cine l-a conectat"
             : $"a conectat stick-ul {PlainPhrases.Q(name)}";
         var s = head + (m.Letter.Length > 0 ? $" (apărut în calculator ca unitatea {m.Letter}:)" : "");
         s += status switch

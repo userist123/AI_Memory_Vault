@@ -95,13 +95,13 @@ namespace LogAnalyzer.UI.Tests
             Assert.DoesNotContain("?", full + onlyName + onlyImage + none);
         }
 
-        // finding 3: PsExec direction is unknown
+        // finding 3: PsExec started here names who started it and the direction (out); the service side credits no one; no tool name (round-2 review)
         [Fact]
-        public void Finding3_PsExec_is_a_neutral_sentence_with_no_person()
+        public void Finding3_PsExec_started_here_names_its_account_and_the_service_side_names_no_one()
         {
             var cmd = Tell(Ev(4688, D("SubjectUserName", "labadmin"), @"C:\Tools\PsExec.exe \\LAB-WS02 cmd"));
-            Assert.Contains("s-a folosit pe acest calculator un program de pornit comenzi pe alt calculator sau de pe alt calculator (PsExec); verificați de unde și spre unde", cmd);
-            Assert.DoesNotContain("labadmin", cmd);
+            Assert.Contains("utilizatorul cu contul „labadmin” a pornit aici un program care rulează comenzi pe alt calculator, prin rețea", cmd);
+            Assert.DoesNotContain("PsExec", cmd);
             var install = Tell(Ev(7045, D("ServiceName", "PSEXESVC") + D("ImagePath", @"%SystemRoot%\PSEXESVC.exe") + D("AccountName", "LocalSystem"), "PSEXESVC"));
             Assert.Contains("a fost instalat serviciul nou „PSEXESVC”, care pornește singur programul", install);
             Assert.DoesNotContain("LocalSystem", install);

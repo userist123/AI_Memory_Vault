@@ -269,7 +269,8 @@ public sealed class PlainStoryReviewTests
         var found = Go(StickWithSessions("defaultuser0", "labadmin", "ana.pop"), Unclassified());
         var presence = Assert.Single(found, f => f.RuleId == "MEDIA-UNKNOWN");
         var told = PlainStory.Tell(presence, null, Bucharest);
-        Assert.Contains("stick-ul „SanDisk Cruzer Blade” a fost conectat când erau deschise conturile „ana.pop” și „labadmin”", told);
+        // round-2 review: the accounts link the stick to people, they do not prove who connected it
+        Assert.Contains("stick-ul „SanDisk Cruzer Blade” a fost conectat; probele îl leagă de conturile „ana.pop” și „labadmin”, fără să arate sigur cine l-a conectat", told);
         Assert.DoesNotContain("cineva", told, StringComparison.OrdinalIgnoreCase);
     }
 

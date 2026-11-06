@@ -143,7 +143,7 @@ public class PlainWhatRulesTests
         Assert.Equal("Calculatorul izolat a fost conectat la rețeaua „lab.local”", c.PlainWhat);
         NoJargon(c.PlainWhat);
         var n = One(found, "AIRGAP-NIC-ADDED");
-        Assert.Equal("Windows a configurat o placă de rețea nouă sau reinstalată „Intel Ethernet Connection” pe calculatorul izolat", n.PlainWhat);
+        Assert.Equal("Windows a configurat pe calculatorul izolat placa „Intel Ethernet Connection”: o placă de rețea nouă sau reinstalată", n.PlainWhat);
         NoJargon(n.PlainWhat);
     }
 
@@ -153,7 +153,7 @@ public class PlainWhatRulesTests
         var virt = Ev("Microsoft-Windows-Kernel-PnP/Configuration", 400, 2, "Microsoft-Windows-Kernel-PnP", ("DeviceInstanceId", @"ROOT\VMS_MP\0000"),
             ("ClassGuid", "{4d36e972-e325-11ce-bfc1-08002be10318}"), ("DriverDescription", "Hyper-V Virtual Ethernet Adapter"));
         var n = One(Go([virt], Classified()), "AIRGAP-NIC-ADDED");
-        Assert.Equal("Windows a configurat o placă de rețea virtuală, care nu iese neapărat din calculator „Hyper-V Virtual Ethernet Adapter” pe calculatorul izolat", n.PlainWhat);
+        Assert.Equal("Windows a configurat pe calculatorul izolat placa „Hyper-V Virtual Ethernet Adapter”: o placă de rețea virtuală, care nu iese neapărat din calculator", n.PlainWhat);
     }
 
     [Fact]

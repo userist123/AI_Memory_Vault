@@ -98,6 +98,22 @@ public sealed class PlainStoryTests
         Assert.Equal("Pe 6 noiembrie 2026, la ora 15:15, există urme de CD/DVD pe calculator.", PlainStory.Tell(f, null, Bucharest));
     }
 
+    [Fact]
+    public void A_shared_or_well_known_sid_is_never_resolved_to_one_computers_account()
+    {
+        // round-2 review: S-1-5-18 named after another computer's account; cloned computers sharing a SID named the wrong person
+        TimelineEvent Logon(string host, string sid, string name) => new()
+        {
+            Time = new Timestamp(T0, "", "test"), Source = "EventLog:Security", EvidenceId = "EV", EventId = "4624", Host = host, Summary = "x",
+            Fields = new() { ["TargetUserSid"] = sid, ["TargetUserName"] = name },
+        };
+        var resolve = AccountResolver.FromEvents([Logon("LAB-WS01", "S-1-5-18", "LAB-WS01$"), Logon("LAB-WS01", "S-1-5-21-1-2-3-1001", "ion"),
+            Logon("LAB-WS02", "S-1-5-21-1-2-3-1001", "maria"), Logon("LAB-WS02", "S-1-5-21-1-2-3-1002", "ana")]);
+        Assert.Null(resolve("S-1-5-18"));
+        Assert.Null(resolve("S-1-5-21-1-2-3-1001"));
+        Assert.Equal("ana", resolve("S-1-5-21-1-2-3-1002"));
+    }
+
     private static TimelineEvent Ev(string source, string eventId = "", string path = "", Dictionary<string, string>? fields = null) => new()
     {
         Time = new Timestamp(T0, "", "test"), Source = source, EvidenceId = "EV", EventId = eventId, Path = path, Summary = "x",

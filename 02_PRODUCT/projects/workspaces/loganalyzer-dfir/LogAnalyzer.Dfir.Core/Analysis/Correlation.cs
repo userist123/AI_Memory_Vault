@@ -956,7 +956,9 @@ public static class Correlation
             parts.Add((subjectsOf(policyEvents), "schimbat regulile după care Windows notează ce se întâmplă pe calculator", "au fost schimbate regulile după care Windows notează ce se întâmplă pe calculator"));
         if (parts.Count == 0) return "a umblat la jurnalele calculatorului";
         var allSubjects = parts.SelectMany(p => p.Who).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        bool sameForAll = allSubjects.Count <= 1 && parts.All(p => p.Who.Count == allSubjects.Count);
+        // no person among the subjects (Windows itself, or none recorded): the passive clauses, never „cineva (probele nu arată contul)” when the events name Windows (round-2 review)
+        if (allSubjects.Count == 0) { var passive = string.Join("; ", parts.Select(p => p.Passive)); return char.ToUpperInvariant(passive[0]) + passive[1..]; }
+        bool sameForAll = allSubjects.Count == 1 && parts.All(p => p.Who.Count == 1);
         if (sameForAll) return string.Join(" și ", parts.Select(p => "a " + p.Active));
         // different or unknown accounts: never one account credited with another's part
         string Accounts(List<string> who) => (who.Count == 1 ? "contul " : "conturile ") + PlainPhrases.List(who.Select(PlainPhrases.Q).ToList(), 4, ("cont", "conturi"));

@@ -34,7 +34,7 @@ namespace LogAnalyzer.Core.Services.Network
                 "T1033" => $"{who} a verificat ce drepturi are și cine sunt administratorii",
                 "T1136.001" => NewAccount(ev, F, msg, who),
                 "T1070.001" => ClearedLog(issue, ev, msg, F),
-                "T1543.003" => ServiceOrPsExec(ev, F, msg),
+                "T1543.003" => ServiceOrPsExec(ev, F, msg, who),
                 "T1110.001" => $"Cineva a greșit de mai multe ori parola {(F("TargetUserName") is { } t ? $"contului „{t}”" : "unui cont")}, de la {Source(F)} (poate titularul și-a uitat parola, poate cineva o ghicește)",
                 "T1110.003" => $"Cineva a încercat parole pe multe conturi diferite, de la {Source(F)}",
                 _ => $"calculatorul a semnalat: {Plainer(issue.Title)}",
@@ -77,13 +77,16 @@ namespace LogAnalyzer.Core.Services.Network
         }
 
         // 7045: the account is the run-as account of the service, not who installed it: no one is credited; PsExec: the direction is unknown
-        private static string ServiceOrPsExec(ParsedEvent ev, Func<string, string?> f, string msg)
+        private static string ServiceOrPsExec(ParsedEvent ev, Func<string, string?> f, string msg, string who)
         {
             var name = f("ServiceName"); var image = f("ImagePath");
             bool psexecInstall = ev.EventId == 7045 && ((name ?? "").Contains("PSEXESVC", StringComparison.OrdinalIgnoreCase) || (image ?? "").Contains("PSEXESVC", StringComparison.OrdinalIgnoreCase));
             bool psexec = psexecInstall || msg.Contains("psexec", StringComparison.OrdinalIgnoreCase) || msg.Contains("psexesvc", StringComparison.OrdinalIgnoreCase);
+            // the program started here (a process start names its account): who started it, and that it runs commands on ANOTHER computer (round-2 review)
+            if (psexec && !psexecInstall && ev.EventId is 4688 or 1)
+                return $"{who} a pornit aici un program care rulează comenzi pe alt calculator, prin rețea; verificați pe care calculator și ce comenzi";
             if (psexec && !psexecInstall)
-                return "S-a folosit pe acest calculator un program de pornit comenzi pe alt calculator sau de pe alt calculator (PsExec); verificați de unde și spre unde";
+                return "S-a folosit pe acest calculator un program care rulează comenzi de la un calculator la altul, prin rețea; verificați de unde și spre unde";
             var s = "A fost instalat " + (name is not null ? $"serviciul nou „{name}”" : "un serviciu nou");
             if (image is not null) s += $", care pornește singur programul {image}";
             return s;
