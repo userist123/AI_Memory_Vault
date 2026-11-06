@@ -189,7 +189,23 @@ public sealed class DeviceMonitorTests
         public DateTimeOffset Now = T0;
         public string User = "";
 
-        public DeviceMonitorViewModel Create(bool isolated, DeviceJournal? journal = null, bool owner = true) => new(
+        /// <summary>
+        /// Built on a fresh thread that has no dispatcher, so the monitor runs its posted work directly. CI 2026-11-06: built on the test's pool thread, the monitor
+        /// took the dispatcher an earlier WPF test had left on that thread, which never pumps: the posted rescan never ran and the test timed out after 60 s.
+        /// </summary>
+        public DeviceMonitorViewModel Create(bool isolated, DeviceJournal? journal = null, bool owner = true)
+        {
+            DeviceMonitorViewModel? vm = null;
+            Exception? error = null;
+            var t = new Thread(() => { try { vm = CreateHere(isolated, journal, owner); } catch (Exception e) { error = e; } }) { IsBackground = true };
+            t.Start();
+            t.Join();
+            if (error is not null) System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(error).Throw();
+            return vm!;
+        }
+
+        /// <summary>Built on the calling thread (a test that owns the thread's dispatcher on purpose).</summary>
+        public DeviceMonitorViewModel CreateHere(bool isolated, DeviceJournal? journal = null, bool owner = true) => new(
             () => Present.ToList(),
             _ => new Dictionary<string, MediumInfo>(Media, StringComparer.OrdinalIgnoreCase),
             (ev, detail) => { lock (Audited) { if (AuditRefusal is null) Audited.Add((ev, detail)); } AfterAudit?.Invoke(ev); return AuditRefusal is null ? null : new LogAnalyzer.Dfir.Devices.AuditRefusal(AuditRefusal, KeyRefusal); },
@@ -364,7 +380,7 @@ public sealed class DeviceMonitorTests
         var owner = new System.Threading.Thread(() =>
         {
             _ = System.Windows.Threading.Dispatcher.CurrentDispatcher;
-            vm = f.Create(isolated: true);
+            vm = f.CreateHere(isolated: true);
             created.Set();
             release.Wait();
         }) { IsBackground = true };
