@@ -87,7 +87,7 @@ public static partial class Wp11Rules
                 PlainWhat = $"Contul {(name.Length > 0 ? PlainPhrases.Q(name) : "(necunoscut după nume)")} a fost pus în grupul {PlainPhrases.Q(group)} " +
                             (group.Equals("Administrators", StringComparison.OrdinalIgnoreCase) || group.Equals("Administratori", StringComparison.OrdinalIgnoreCase)
                                 ? "(administratori: control total asupra calculatorului)" : "(un grup cu drepturi mari)") +
-                            (PlainPhrases.IsStationAccount(F(first, "SubjectUserName")) ? "" : $", de către contul {PlainPhrases.Q(F(first, "SubjectUserName"))}") +
+                            (PlainPhrases.IsStationAccount(F(first, "SubjectUserName"), first.Host, F(first, "SubjectUserSid")) ? "" : $", de către contul {PlainPhrases.Q(F(first, "SubjectUserName"))}") +
                             (inCase is not null ? "; contul fusese creat chiar în acest caz" : ""),
                 Description = $"{who} ({sid}) a fost adăugat în grupul {group} ({F(first, "TargetSid")}) de {by}, eveniment {first.EventId}, {Time(T(first))}." +
                               (inCase is not null ? $" Contul a fost creat în același caz ({Time(T(inCase))})." : ""),

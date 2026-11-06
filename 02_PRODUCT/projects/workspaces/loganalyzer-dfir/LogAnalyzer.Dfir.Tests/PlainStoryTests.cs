@@ -68,7 +68,7 @@ public sealed class PlainStoryTests
     }
 
     [Fact]
-    public void A_file_written_on_the_stick_says_where_it_was_copied_from_and_one_opened_from_it_where_it_went()
+    public void A_file_written_on_the_stick_and_one_opened_from_it_say_only_that_a_file_of_the_same_name_is_elsewhere()
     {
         var events = new List<TimelineEvent>
         {
@@ -78,7 +78,7 @@ public sealed class PlainStoryTests
             Ev("USN", path: @"C:\Users\ion\Desktop\Oferta.pdf", fields: new() { ["Reason"] = "FILE_CREATE" }),
         };
         var activity = Wp14Rules.ActivityOn(events, "E");
-        Assert.Equal(@"a scris pe stick fișierul „Plan.docx” (copiat din C:\Users\ion\Documents) și a deschis de pe stick fișierul „Oferta.pdf” (copiat apoi pe calculator, în C:\Users\ion\Desktop)",
+        Assert.Equal(@"a scris pe stick fișierul „Plan.docx” (un fișier cu același nume se află și în C:\Users\ion\Documents) și a deschis de pe stick fișierul „Oferta.pdf” (un fișier cu același nume se află și în C:\Users\ion\Desktop)",
             Wp14Rules.FilesStory("SanDisk", "E", activity, events));
         Assert.Equal("SanDisk Cruzer Blade", Wp14Rules.PlainName("SanDisk Cruzer Blade USB Device"));
     }

@@ -44,7 +44,8 @@ namespace LogAnalyzer.UI.Tests
             NoCodes(s1);
             var svc = Ev(7045, D("ServiceName", "UpdSvc") + D("ImagePath", @"C:\ProgramData\upd\updsvc.exe") + D("AccountName", "LocalSystem"));
             var s2 = LivePlain.Tell(e.EvaluateLiveEvent(svc)!, svc, Bucharest);
-            Assert.Contains(@"a instalat serviciul nou „UpdSvc”, care pornește singur programul C:\ProgramData\upd\updsvc.exe", s2);
+            Assert.Contains(@"a fost instalat serviciul nou „UpdSvc”, care pornește singur programul C:\ProgramData\upd\updsvc.exe", s2);
+            Assert.DoesNotContain("LocalSystem", s2);   // the run-as account is not the installer
         }
 
         [Fact]
@@ -56,6 +57,86 @@ namespace LogAnalyzer.UI.Tests
             var s = LivePlain.Tell(a!, last!, Bucharest);
             Assert.Contains("cineva a greșit de mai multe ori parola contului „ion”, de la calculatorul LAB-WS02 (adresa 10.0.0.5)", s);
             NoCodes(s.Replace("10.0.0.5", ""));
+        }
+
+        private static ParsedEvent UserDataEv(int id, string inner) => new()
+        {
+            EventId = id, MachineName = "LAB-WS01", TimeCreated = T0, Message = "",
+            XmlData = $"<Event xmlns=\"{Ns}\"><UserData>{inner}</UserData></Event>",
+        };
+
+        private static string Tell(ParsedEvent ev) => LivePlain.Tell(new LiveSecurityMonitoringEngine().EvaluateLiveEvent(ev)!, ev, Bucharest);
+
+        // finding 1: 1102 / 104 keep the account in <UserData><LogFileCleared>, not in <Data Name=...>
+        [Fact]
+        public void Finding1_a_cleared_log_1102_and_104_name_the_account_from_UserData()
+        {
+            const string Ns2 = "http://schemas.microsoft.com/win/2004/08/events/eventlog";
+            var s1102 = Tell(UserDataEv(1102, $"<LogFileCleared xmlns=\"{Ns2}\"><SubjectUserSid>S-1-5-21-1-2-3-1000</SubjectUserSid><SubjectUserName>labadmin</SubjectUserName><SubjectDomainName>LAB</SubjectDomainName><SubjectLogonId>0x1</SubjectLogonId></LogFileCleared>"));
+            Assert.Contains("utilizatorul cu contul „labadmin” a șters jurnalul „Security”", s1102);
+            Assert.DoesNotContain("cineva", s1102);
+            var s104 = Tell(UserDataEv(104, $"<LogFileCleared xmlns=\"{Ns2}\"><SubjectUserName>labadmin</SubjectUserName><SubjectDomainName>LAB</SubjectDomainName><Channel>Windows PowerShell</Channel><BackupPath></BackupPath></LogFileCleared>"));
+            Assert.Contains("utilizatorul cu contul „labadmin” a șters jurnalul „Windows PowerShell”", s104);
+        }
+
+        // finding 2: AccountName of a 7045 is the run-as account; missing parts are left out, never „?”
+        [Fact]
+        public void Finding2_a_new_service_credits_nobody_and_leaves_out_missing_parts()
+        {
+            var full = Tell(Ev(7045, D("ServiceName", "UpdSvc") + D("ImagePath", @"C:\x\u.exe") + D("AccountName", "LocalSystem") + D("SubjectUserName", "labadmin")));
+            Assert.Contains(@"a fost instalat serviciul nou „UpdSvc”, care pornește singur programul C:\x\u.exe", full);
+            Assert.DoesNotContain("labadmin", full);
+            var onlyName = Tell(Ev(7045, D("ServiceName", "UpdSvc")));
+            Assert.EndsWith("a fost instalat serviciul nou „UpdSvc”.", onlyName);
+            var onlyImage = Tell(Ev(7045, D("ImagePath", @"C:\x\u.exe")));
+            Assert.EndsWith(@"a fost instalat un serviciu nou, care pornește singur programul C:\x\u.exe.", onlyImage);
+            var none = Tell(Ev(7045, ""));
+            Assert.EndsWith("a fost instalat un serviciu nou.", none);
+            Assert.DoesNotContain("?", full + onlyName + onlyImage + none);
+        }
+
+        // finding 3: PsExec direction is unknown
+        [Fact]
+        public void Finding3_PsExec_is_a_neutral_sentence_with_no_person()
+        {
+            var cmd = Tell(Ev(4688, D("SubjectUserName", "labadmin"), @"C:\Tools\PsExec.exe \\LAB-WS02 cmd"));
+            Assert.Contains("s-a folosit pe acest calculator un program de pornit comenzi pe alt calculator sau de pe alt calculator (PsExec); verificați de unde și spre unde", cmd);
+            Assert.DoesNotContain("labadmin", cmd);
+            var install = Tell(Ev(7045, D("ServiceName", "PSEXESVC") + D("ImagePath", @"%SystemRoot%\PSEXESVC.exe") + D("AccountName", "LocalSystem"), "PSEXESVC"));
+            Assert.Contains("a fost instalat serviciul nou „PSEXESVC”, care pornește singur programul", install);
+            Assert.DoesNotContain("LocalSystem", install);
+        }
+
+        // finding 4: a typed command is told as a typed command
+        [Fact]
+        public void Finding4_a_typed_command_says_what_was_typed_and_that_the_result_is_not_in_the_event()
+        {
+            var add = Tell(Ev(4688, D("SubjectUserName", "labadmin"), "net user labbackup$ P@ssw0rd1 /add"));
+            Assert.Contains("utilizatorul cu contul „labadmin” a dat comanda de creare a unui cont nou „labbackup$” („net user … /add”); rezultatul nu se vede în acest eveniment", add);
+            Assert.DoesNotContain("P@ssw0rd1", add);
+            var noName = Tell(Ev(4688, D("SubjectUserName", "labadmin"), "net user /add"));
+            Assert.Contains("a dat comanda de creare a unui cont nou („net user … /add”)", noName);
+            Assert.DoesNotContain("?", noName);
+            var wipe = Tell(Ev(4688, D("SubjectUserName", "labadmin"), "wevtutil cl \"Windows PowerShell\""));
+            Assert.Contains("utilizatorul cu contul „labadmin” a dat comanda de golire a jurnalului „Windows PowerShell”", wipe);
+            var wipe2 = Tell(Ev(4688, D("SubjectUserName", "labadmin"), "wevtutil.exe cl Security"));
+            Assert.Contains("a dat comanda de golire a jurnalului „Security”", wipe2);
+        }
+
+        // finding 12: no raw SID, no „?”
+        [Fact]
+        public void Finding12_a_group_member_without_a_name_is_a_local_account_never_a_sid()
+        {
+            var noName = Tell(Ev(4732, D("MemberName", "-") + D("MemberSid", "S-1-5-21-1-2-3-1105") + D("TargetUserName", "Administrators") + D("SubjectUserName", "labadmin")));
+            Assert.Contains("a pus un cont local în grupul „Administrators”", noName);
+            Assert.DoesNotContain("S-1-5", noName);
+            var sidOnly = Tell(Ev(4732, D("MemberSid", "S-1-5-21-1-2-3-1105") + D("TargetUserName", "Administrators") + D("SubjectUserName", "labadmin")));
+            Assert.DoesNotContain("S-1-5", sidOnly);
+            var named = Tell(Ev(4732, D("MemberName", "CN=ana,CN=Users,DC=lab") + D("TargetUserName", "Administrators") + D("SubjectUserName", "labadmin")));
+            Assert.Contains("a pus contul „ana” în grupul „Administrators”", named);
+            var noGroup = Tell(Ev(4732, D("MemberName", "ana") + D("SubjectUserName", "labadmin")));
+            Assert.Contains("a pus contul „ana” într-un grup", noGroup);
+            Assert.DoesNotContain("?", noName + sidOnly + named + noGroup);
         }
     }
 }

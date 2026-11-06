@@ -287,7 +287,7 @@ public static class Correlation
                 FindingId = Id(), RuleId = "PERSIST-SERVICE-USERPATH", Title = $"Serviciu instalat dintr-o locație în care utilizatorii pot scrie: {F(e, "ServiceName")}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1543.003",
                 FirstSeenUtc = e.Time.Utc, File = F(e, "ImagePath") + F(e, "ServiceFileName"), User = F(e, "AccountName"),
-                PlainWhat = (PlainPhrases.IsStationAccount(F(e, "SubjectUserName")) ? "A fost instalat" : $"Contul {PlainPhrases.Q(PlainPhrases.ShortAccount(F(e, "SubjectUserName")))} a instalat") +
+                PlainWhat = (PlainPhrases.IsStationAccount(F(e, "SubjectUserName"), e.Host, F(e, "SubjectUserSid")) ? "A fost instalat" : $"Contul {PlainPhrases.Q(PlainPhrases.ShortAccount(F(e, "SubjectUserName")))} a instalat") +
                             $" serviciul {PlainPhrases.Q(F(e, "ServiceName"))}, care pornește programul {PlainPhrases.Q(PlainPhrases.Leaf(F(e, "ImagePath") + F(e, "ServiceFileName")))} " +
                             (F(e, "StartType").Contains("auto", StringComparison.OrdinalIgnoreCase) ? "singur, la fiecare pornire a calculatorului, " : "") + "dintr-un folder în care orice utilizator poate scrie",
                 Description = $"Serviciul {F(e, "ServiceName")} rulează {F(e, "ImagePath")}{F(e, "ServiceFileName")} ca {F(e, "AccountName")}{F(e, "ServiceAccount")}.",
@@ -873,7 +873,9 @@ public static class Correlation
         var lines = clears.OrderBy(e => e.Time.Utc).Take(15).Select(e =>
             $"{e.Time.Utc:yyyy-MM-dd HH:mm} {e.Source[9..]} {e.EventId} {(e.EventId == "1102" ? "de " + F(e, "SubjectUserName") : F(e, "Channel"))}").ToList();
         var verdict = assessed.Select(a => a.Reason).Distinct().ToList();
-        var subjects = clears.Select(e => F(e, "SubjectUserName")).Where(u => !PlainPhrases.IsStationAccount(u)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        List<string> SubjectsOf(IEnumerable<TimelineEvent> evs) => evs.Where(e => !PlainPhrases.IsStationAccount(F(e, "SubjectUserName"), e.Host, F(e, "SubjectUserSid")))
+            .Select(e => PlainPhrases.ShortAccount(F(e, "SubjectUserName"))).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var subjects = SubjectsOf(clears);
         // Only Security 1100 records, each next to a System 1074/6006/6005: the logging service stopped because Windows shut down.
         // Nothing was cleared, so the finding must not say so (no "logs cleared" title, no T1070.001, no "activity before the clear").
         var stops = clears.Where(e => e.EventId == "1100").ToList();
@@ -900,7 +902,7 @@ public static class Correlation
             Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1070.001",
             FirstSeenUtc = clears.Min(e => e.Time.Utc), LastSeenUtc = clears.Max(e => e.Time.Utc),
             User = subjects.Count == 1 ? subjects[0] : "",
-            PlainWhat = LogTamperPlain(clears, logClears.Select(e => e.EventId == "1102" ? "Security" : F(e, "Channel") is { Length: > 0 } ch ? ch : "System").ToList()),
+            PlainWhat = LogTamperPlain(clears, logClears.Select(e => e.EventId == "1102" ? "Security" : F(e, "Channel") is { Length: > 0 } ch ? ch : "System").ToList(), SubjectsOf),
             Description = string.Join("; ", lines) + (verdict.Count > 0 ? ". Evaluare: " + string.Join(" ", verdict.Take(5)) : ""),
             ClassificationReason = "Evenimente 1102/104/1100/4719 înregistrate de Windows. Severitatea ține de ciclul de viață al golirii (planificată / neașteptată / neevaluată) și de factori de corelare, nu de ora din zi.",
             SupportingEvidence = clears.Take(30).Select(e => new EvidenceRef(e.EvidenceId, e.Locator, $"{e.Source} {e.EventId}")).ToList(),
@@ -915,8 +917,8 @@ public static class Correlation
         string One(Finding x)
         {
             var what = x.PlainWhat.Length > 0 ? x.PlainWhat : LogAnalyzer.Dfir.Language.PlainStory.Fallback(x);
-            var clause = what.Length > 0 && char.IsUpper(what[0]) ? what : $"{LogAnalyzer.Dfir.Language.PlainStory.Who(x.User, null)} {what}";
-            return clause.Length > 1 && char.IsUpper(clause[0]) && !char.IsUpper(clause[1]) && !clause.StartsWith("Windows", StringComparison.Ordinal) ? char.ToLowerInvariant(clause[0]) + clause[1..] : clause;
+            // the same Who() rendering as the finding's own sentence (the users register is not available here: accounts are named)
+            return what.Length > 0 && char.IsUpper(what[0]) ? LogAnalyzer.Dfir.Language.PlainStory.LowerFirst(what) : $"{LogAnalyzer.Dfir.Language.PlainStory.Who(x.User, null, x.Host)} {what}";
         }
         var shown = steps.Take(8).Select(One).ToList();
         var words = new[] { "întâi", "apoi", "apoi", "apoi", "apoi", "apoi", "apoi", "la sfârșit" };
@@ -934,15 +936,35 @@ public static class Correlation
         _ => $"„{channel}” (un jurnal al Windows)",
     };
 
-    /// <summary>LOG-TAMPER in plain words: which logs were deleted, whether the logging service was stopped, whether the rules for what Windows notes were changed.</summary>
-    private static string LogTamperPlain(List<TimelineEvent> clears, List<string> clearedChannels)
+    /// <summary>
+    /// LOG-TAMPER in plain words: which logs were deleted, whether the logging service was stopped, whether the rules for what Windows notes were changed.
+    /// Each part is told with ITS OWN accounts: when all parts have the same single account the sentence needs a subject (the person from the register is
+    /// added by <see cref="LogAnalyzer.Dfir.Language.PlainStory.Tell"/>); otherwise each part names its accounts or is a subject-less clause.
+    /// </summary>
+    private static string LogTamperPlain(List<TimelineEvent> clears, List<string> clearedChannels, Func<IEnumerable<TimelineEvent>, List<string>> subjectsOf)
     {
-        var parts = new List<string>();
         var names = clearedChannels.Distinct(StringComparer.OrdinalIgnoreCase).Select(PlainLogName).ToList();
-        if (names.Count > 0) parts.Add((names.Count == 1 ? "a șters jurnalul " : "a șters jurnalele ") + PlainPhrases.List(names, 4));
-        if (clears.Any(e => e.EventId == "1100")) parts.Add("a oprit serviciul care ține jurnalele");
-        if (clears.Any(e => e.EventId == "4719")) parts.Add("a schimbat regulile după care Windows notează ce se întâmplă pe calculator");
-        return parts.Count == 0 ? "a umblat la jurnalele calculatorului" : string.Join(" și ", parts);
+        var clearEvents = clears.Where(e => e.EventId is "1102" or "104").ToList();
+        var stopEvents = clears.Where(e => e.EventId == "1100").ToList();
+        var policyEvents = clears.Where(e => e.EventId == "4719").ToList();
+        var parts = new List<(List<string> Who, string Active, string Passive)>();
+        if (names.Count > 0)
+            parts.Add((subjectsOf(clearEvents), (names.Count == 1 ? "șters jurnalul " : "șters jurnalele ") + PlainPhrases.List(names, 4),
+                (names.Count == 1 ? "a fost șters jurnalul " : "au fost șterse jurnalele ") + PlainPhrases.List(names, 4)));
+        if (stopEvents.Count > 0) parts.Add((subjectsOf(stopEvents), "oprit serviciul care ține jurnalele", "a fost oprit serviciul care ține jurnalele"));
+        if (policyEvents.Count > 0)
+            parts.Add((subjectsOf(policyEvents), "schimbat regulile după care Windows notează ce se întâmplă pe calculator", "au fost schimbate regulile după care Windows notează ce se întâmplă pe calculator"));
+        if (parts.Count == 0) return "a umblat la jurnalele calculatorului";
+        var allSubjects = parts.SelectMany(p => p.Who).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        bool sameForAll = allSubjects.Count <= 1 && parts.All(p => p.Who.Count == allSubjects.Count);
+        if (sameForAll) return string.Join(" și ", parts.Select(p => "a " + p.Active));
+        // different or unknown accounts: never one account credited with another's part
+        string Accounts(List<string> who) => (who.Count == 1 ? "contul " : "conturile ") + PlainPhrases.List(who.Select(PlainPhrases.Q).ToList(), 4, ("cont", "conturi"));
+        var told = parts.Select(p => p.Who.Count == 0
+            ? p.Passive
+            : $"{Accounts(p.Who)} {(p.Who.Count == 1 ? "a" : "au")} {p.Active}").ToList();
+        var text = string.Join("; ", told.Select((t, i) => i == 0 ? char.ToUpperInvariant(t[0]) + t[1..] : t));
+        return text;
     }
 
     /// <summary>"containerfile:_C:\x.zip; file:_C:\x.zip->inner" → "C:\x.zip".</summary>

@@ -16,13 +16,22 @@ internal static class PlainPhrases
         return a.Contains('\\') ? a[(a.LastIndexOf('\\') + 1)..] : a;
     }
 
-    /// <summary>A Windows or machine account is not a person: "labbackup$", SYSTEM, DWM-1…</summary>
-    internal static bool IsStationAccount(string account)
+    /// <summary>
+    /// A Windows account is not a person: SYSTEM, DWM-1, NT AUTHORITY\… A name ending in $ is the station only when it is this computer's own account
+    /// (<paramref name="host"/> + "$") or the event's subject SID is a machine-account SID (S-1-5-18/19/20); „labbackup$” made by an attacker stays an actor.
+    /// </summary>
+    internal static bool IsStationAccount(string account, string host = "", string sid = "")
     {
         var a = ShortAccount(account);
-        return a.Length == 0 || a == "-" || a.EndsWith('$') || a.Equals("SYSTEM", StringComparison.OrdinalIgnoreCase) || a.StartsWith("DWM-", StringComparison.OrdinalIgnoreCase)
-            || a.StartsWith("UMFD-", StringComparison.OrdinalIgnoreCase) || a.Equals("LOCAL SERVICE", StringComparison.OrdinalIgnoreCase) || a.Equals("NETWORK SERVICE", StringComparison.OrdinalIgnoreCase);
+        if (a.Length == 0 || a == "-") return true;
+        if (LogAnalyzer.Dfir.Language.PlainStory.IsStationAccount(account)) return true;
+        if (sid is "S-1-5-18" or "S-1-5-19" or "S-1-5-20") return true;
+        return LogAnalyzer.Dfir.Language.PlainStory.IsOwnMachineAccount(account, host);
     }
+
+    /// <summary>The computer the events come from (the most frequent Host), "" when none says; used to tell this computer's own „HOST$” account from an account named like it.</summary>
+    internal static string HostOf(IEnumerable<LogAnalyzer.Dfir.Model.TimelineEvent> events) =>
+        events.Select(e => e.Host ?? "").Where(h => h.Length > 0 && h != "-").GroupBy(h => h, StringComparer.OrdinalIgnoreCase).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault() ?? "";
 
     /// <summary>The last segment of a path ("C:\x\updsvc.exe" → "updsvc.exe").</summary>
     internal static string Leaf(string path)
@@ -40,12 +49,13 @@ internal static class PlainPhrases
     }
 
     /// <summary>"a, b și c", at most <paramref name="max"/> items, then "și alte N".</summary>
-    internal static string List(IReadOnlyList<string> items, int max = 5)
+    internal static string List(IReadOnlyList<string> items, int max = 5, (string Singular, string Plural)? moreNoun = null)
     {
         var shown = items.Take(max).ToList();
         var more = items.Count - shown.Count;
+        var noun = moreNoun ?? ("element", "elemente");
         if (shown.Count == 0) return "";
         var head = shown.Count == 1 ? shown[0] : string.Join(", ", shown.Take(shown.Count - 1)) + " și " + shown[^1];
-        return more > 0 ? $"{head} și alte {more}" : head;
+        return more > 0 ? $"{head} și încă {LogAnalyzer.Dfir.Language.RoText.Count(more, noun.Singular, noun.Plural)}" : head;
     }
 }

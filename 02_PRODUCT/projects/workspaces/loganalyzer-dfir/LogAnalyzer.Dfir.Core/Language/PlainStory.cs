@@ -1,5 +1,6 @@
 using System.Globalization;
 using System.Text.RegularExpressions;
+using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Language;
@@ -15,32 +16,73 @@ public static class PlainStory
 {
     private static readonly CultureInfo Ro = CultureInfo.GetCultureInfo("ro-RO");
 
-    /// <summary>Windows' own sessions and services: never "who did it" (lab WS02: DWM-1, UMFD-0 and defaultuser0 were listed as candidates for a USB stick).</summary>
-    private static readonly Regex StationAccount = new(@"^(?:DWM-\d+|UMFD-\d+|defaultuser\d*|SYSTEM|LOCAL SERVICE|NETWORK SERVICE|ANONYMOUS LOGON|S-1-5-(?:18|19|20)|-)$",
+    /// <summary>Windows' own sessions and services (the account AFTER its domain is stripped): never "who did it" (lab WS02: DWM-1, UMFD-0 and defaultuser0 were listed as candidates for a USB stick).</summary>
+    private static readonly Regex StationAccount = new(@"^(?:DWM-\d+|UMFD-\d+|defaultuser\d*|SYSTEM|LOCAL\s*SYSTEM|LOCAL\s*SERVICE|NETWORK\s*SERVICE|ANONYMOUS LOGON|NT AUTHORITY|S-1-5-(?:18|19|20)|-)$",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    private static readonly string[] StationDomains = ["NT AUTHORITY", "Window Manager", "Font Driver Host"];
+
+    /// <summary>True for Windows' own accounts. The match is made on the name AFTER the domain is removed („NT AUTHORITY\SYSTEM”, „Window Manager\DWM-1”); any „NT AUTHORITY” account counts.</summary>
+    public static bool IsStationAccount(string account)
+    {
+        var a = (account ?? "").Trim();
+        var slash = a.LastIndexOf('\\');
+        if (slash >= 0 && StationDomains.Contains(a[..slash].Trim(), StringComparer.OrdinalIgnoreCase)) return true;
+        var shortName = slash >= 0 ? a[(slash + 1)..].Trim() : a;
+        return StationAccount.IsMatch(shortName);
+    }
+
+    /// <summary>A name ending in $ is the station only when it is this computer's own account (Host + "$"); an attacker can name an account „labbackup$”.</summary>
+    public static bool IsOwnMachineAccount(string account, string host)
+    {
+        var a = account ?? "";
+        var slash = a.LastIndexOf('\\');
+        var shortName = (slash >= 0 ? a[(slash + 1)..] : a).Trim();
+        if (string.IsNullOrWhiteSpace(host) || host == "-" || !shortName.EndsWith('$')) return false;
+        var h = host.Trim();
+        var dot = h.IndexOf('.');
+        if (dot > 0) h = h[..dot];
+        return shortName.Equals(h + "$", StringComparison.OrdinalIgnoreCase);
+    }
 
     /// <summary>The sentence: „Pe 6 noiembrie 2026, la ora 15:15, pe calculatorul LAB-WS02, Popescu Ion (contul ion.popescu) a introdus stick-ul «SanDisk Cruzer Blade».”</summary>
     /// <param name="personOf">The person an account belongs to (users register), or null when the register does not know it.</param>
     /// <param name="zone">The time zone the reader lives in (the station's); times are never shown in UTC here.</param>
-    public static string Tell(Finding f, Func<string, string?>? personOf, TimeZoneInfo zone)
+    public static string Tell(Finding f, Func<string, string?>? personOf, TimeZoneInfo zone, Func<string, string?>? accountOfSid = null)
     {
+        // a SID in User becomes the account's name when the case's events give it (and the register is then tried with the name first, then with the SID)
+        var users = f.User ?? "";
+        if (users.Length > 0 && accountOfSid is not null)
+        {
+            var nameToSid = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            users = string.Join(", ", users.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Select(u =>
+            {
+                if (!AccountResolver.IsSid(u) || accountOfSid(u) is not { Length: > 0 } n) return u;
+                nameToSid[n] = u;
+                return n;
+            }));
+            var basePerson = personOf;
+            if (nameToSid.Count > 0) personOf = a => basePerson?.Invoke(a) ?? (nameToSid.TryGetValue(a, out var sid) ? basePerson?.Invoke(sid) : null);
+        }
         var what = f.PlainWhat.Length > 0 ? f.PlainWhat : Fallback(f);
         var when = When(f.FirstSeenUtc, f.LastSeenUtc, zone);
         var where = f.Host.Length > 0 && f.Host != "-" ? $"pe calculatorul {f.Host}" : "";
         var lead = string.Join(", ", new[] { when, where }.Where(s => s.Length > 0));
         // a PlainWhat that starts with a capital letter is a whole clause with its own subject („Windows a oprit…”, „Cineva a încercat…”)
-        var clause = what.Length > 0 && char.IsUpper(what[0]) ? what : $"{Who(f.User, personOf)} {what}";
-        var sentence = lead.Length > 0 ? $"{lead}, {LowerFirst(clause)}" : UpperFirst(clause);
+        var wholeClause = what.Length > 0 && char.IsUpper(what[0]);
+        var clause = wholeClause ? (lead.Length > 0 ? LowerFirst(what) : what) : $"{Who(users, personOf, f.Host)} {what}";
+        var sentence = lead.Length > 0 ? $"{lead}, {clause}" : UpperFirst(clause);
         return UpperFirst(sentence.TrimEnd('.', ' ')) + ".";
     }
 
     /// <summary>Who did it, in words: the person and the account, the account alone, or that the logs do not say.</summary>
-    public static string Who(string users, Func<string, string?>? personOf)
+    public static string Who(string users, Func<string, string?>? personOf, string host = "")
     {
-        var people = users.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
-            .Where(u => !StationAccount.IsMatch(u)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        users ??= "";
+        var all = users.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        var people = all.Where(u => !IsStationAccount(u) && !IsOwnMachineAccount(u, host)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
         if (people.Count == 0)
-            return users.Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).Any(u => u != "-")
+            return all.Any(u => u != "-")
                 ? "Windows (un serviciu al sistemului, nu o persoană)"
                 : "cineva (probele nu arată contul)";
         var named = people.Select(u => Name(u, personOf)).ToList();
@@ -49,6 +91,9 @@ public static class PlainStory
 
     private static string Name(string account, Func<string, string?>? personOf)
     {
+        // only the SID is known: never printed; the register may still know whose it is
+        if (AccountResolver.IsSid(account))
+            return personOf?.Invoke(account) is { Length: > 0 } sidPerson ? sidPerson : "un cont pe care probele îl arată doar prin identificatorul lui";
         var shortName = account.Contains('\\') ? account[(account.LastIndexOf('\\') + 1)..] : account;
         if (shortName.Contains('@')) shortName = shortName[..shortName.IndexOf('@')];
         var person = personOf?.Invoke(account) ?? personOf?.Invoke(shortName);
@@ -72,41 +117,69 @@ public static class PlainStory
 
     // ---- fallback for a rule that does not tell its own story yet: the title without the technical words ----
 
-    private static readonly (Regex Pattern, string With)[] Technical =
-    [
-        (new(@"\s*\((?:[^()]*\b(?:Security|System|Application|PowerShell|Sysmon|eveniment(?:ul)?|EventRecordID|evt)\b[^()]*)\)", RegexOptions.IgnoreCase), ""),
-        (new(@"\b(?:evenimentul|evenimentele|eveniment|event|ID)\s+\d{2,5}\b", RegexOptions.IgnoreCase), ""),
-        (new(@"\b(?:Security|System|Sysmon|PowerShell|Application)\s+\d{2,5}\b"), ""),
-        (new(@"\bT\d{4}(?:\.\d{3})?\b"), ""),
-        (new(@"\bS-1-\d+(?:-\d+)+\b"), "un cont"),
-        (new(@"\b[A-Z]{2,}(?:-[A-Z0-9]{2,})+\b"), ""),
-        (new(@"\{?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}?"), ""),
-        (new(@"\bUTC\b"), ""),
-        (new(@"\s{2,}"), " "),
-        (new(@"\s+([,.;:])"), "$1"),
-        (new(@"[:;,]\s*$"), ""),
-    ];
+    private const string LogNames = "Security|System|Sysmon|PowerShell|Application";
+    private static readonly Regex EventWord = new(@"\b(?:evenimentul|evenimentele|eveniment|event|ID)\s+(\d{3,5})\b", RegexOptions.IgnoreCase);
+    private static readonly Regex LogAndNumber = new(@"\b(?:" + LogNames + @")\s+(\d{3,5})\b");
+    private static readonly Regex ParenGroup = new(@"\s*\(([^()]*)\)");
+    private static readonly Regex TechnicalId = new(@"^T\d{4}(?:\.\d{3})?$");
+    private static readonly Regex AnyRuleShape = new(@"\b[A-Z]{2,}(?:-[A-Z0-9]{2,})+\b");
+    private static readonly Regex TechnicalWord = new(@"^(?:" + LogNames + @"|eveniment(?:ul|ele)?|event|EventRecordID|evt|EID|ID|vezi|și|sau|cu|UTC)$", RegexOptions.IgnoreCase);
+    private static readonly Regex Sid = new(@"^S-1-\d+(?:-\d+)+$");
+    private static readonly Regex GuidTok = new(@"^\{?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}?$");
+
+    private static bool IsYear(string digits) => int.TryParse(digits, out var n) && n is >= 1900 and <= 2100;
+
+    private static bool IsRuleId(string token) => RuleContracts.For(token) is not null;
+
+    // a parenthesis goes only when every word in it is technical: „(Security 1100)”, „(eveniment 4688)”, „(vezi MEDIA-FILE-ACTIVITY)”; never „(fișier Application.docx)”, „(copie eveniment 2026)”
+    private static bool WholeParenthesisIsTechnical(string content)
+    {
+        var words = content.Split([' ', ',', ';', '/', '+', '·'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        if (words.Length == 0) return false;
+        return words.All(w => TechnicalWord.IsMatch(w) || TechnicalId.IsMatch(w) || Sid.IsMatch(w) || GuidTok.IsMatch(w) || IsRuleId(w)
+            || (w.All(char.IsDigit) && w.Length is >= 3 and <= 5 && !IsYear(w)));
+    }
 
     /// <summary>The title of a finding without event codes, technique ids, SIDs and rule ids, as a sentence about what was seen.</summary>
     public static string Fallback(Finding f)
     {
         var t = WithoutTechnicalTerms(f.Title);
-        return t.Length == 0 ? "S-a observat ceva ce trebuie verificat" : "S-a observat: " + LowerFirst(t);
+        return t.Length == 0 ? "S-a observat ceva ce trebuie verificat" : "S-a observat: " + t;
     }
 
     public static string WithoutTechnicalTerms(string text)
     {
         var t = text ?? "";
-        foreach (var (p, w) in Technical) t = p.Replace(t, w);
+        t = ParenGroup.Replace(t, m => WholeParenthesisIsTechnical(m.Groups[1].Value) ? "" : m.Value);
+        t = EventWord.Replace(t, m => IsYear(m.Groups[1].Value) ? m.Value : "");
+        t = LogAndNumber.Replace(t, m => IsYear(m.Groups[1].Value) ? m.Value : "");
+        t = Regex.Replace(t, @"\bT\d{4}(?:\.\d{3})?\b", "");
+        t = Regex.Replace(t, @"\bS-1-\d+(?:-\d+)+\b", "un cont");
+        // only real rule ids go; computer names (LAB-WS05) and document names (RAPORT-2026, NATO-SECRET) are content
+        t = AnyRuleShape.Replace(t, m => IsRuleId(m.Value) ? "" : m.Value);
+        t = Regex.Replace(t, @"\{?[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}\}?", "");
+        t = Regex.Replace(t, @"\bUTC\b", "");
+        t = Regex.Replace(t, @"\s{2,}", " ");
+        t = Regex.Replace(t, @"\s+([,.;:])", "$1");
+        t = Regex.Replace(t, @",(?:\s*,)+", ",");
+        t = Regex.Replace(t, @"[:;,]\s*$", "");
         return t.Trim().Trim(':', ';', ',', '·', '—', '-').Trim();
     }
 
     private static string UpperFirst(string s) => s.Length == 0 ? s : char.ToUpper(s[0], Ro) + s[1..];
 
-    // a clause that starts with a proper name or an acronym keeps its capital (only a leading ordinary word is lowered)
-    private static string LowerFirst(string s) =>
-        s.Length > 1 && char.IsUpper(s[0]) && !char.IsUpper(s[1]) && !s.StartsWith("Windows", StringComparison.Ordinal) && !LooksLikeName(s) ? char.ToLower(s[0], Ro) + s[1..] : s;
+    // the fixed openings of the clauses this product writes; only these lose their capital inside a sentence (never „Microsoft”, „PowerShell”, „Windows”, a computer or a person)
+    private static readonly string[] LowerablePrefixes =
+    [
+        "S-a ", "Cineva", "Contul", "Conturile", "Calculatorul", "Programul", "Programele", "Stick-ul", "Serviciul", "A fost", "A rulat", "A sosit", "După ce", "Mai multe", "Au fost",
+    ];
 
-    // a person's name from the register („Popescu Ion (contul ion.popescu) a …”): the only subject Who() writes with a capital
-    private static bool LooksLikeName(string s) => s.IndexOf(" (contul ", StringComparison.Ordinal) is > 0 and < 80;
+    /// <summary>A whole clause put after „Pe 6 noiembrie, la ora 15:15,”: lowers the capital of the fixed openings only.</summary>
+    public static string LowerFirst(string s)
+    {
+        foreach (var p in LowerablePrefixes)
+            if (s.StartsWith(p, StringComparison.Ordinal) && (p.EndsWith(' ') || s.Length == p.Length || !char.IsLetterOrDigit(s[p.Length])))
+                return char.ToLower(s[0], Ro) + s[1..];
+        return s;
+    }
 }

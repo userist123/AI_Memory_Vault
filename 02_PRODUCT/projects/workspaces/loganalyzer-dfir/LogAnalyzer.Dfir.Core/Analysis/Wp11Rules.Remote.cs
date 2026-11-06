@@ -63,7 +63,7 @@ public static partial class Wp11Rules
             User = groups[0].First().User, Ip = groups[0].Key.Ip,
             PlainWhat = "a lucrat de la distanță pe acest calculator, din rețeaua internă (ecranul calculatorului a fost preluat prin rețea)" +
                         (groups[0].Key.Ip.StartsWith('(') ? "" : $", de la adresa {groups[0].Key.Ip}") +
-                        (groups.Count > 1 ? $"; s-au mai făcut conectări de același fel cu {groups.Count - 1} alte conturi sau adrese" : ""),
+                        (groups.Count > 1 ? $"; s-au mai făcut conectări de același fel cu încă {LogAnalyzer.Dfir.Language.RoText.Count(groups.Count - 1, "cont sau adresă", "conturi sau adrese")}" : ""),
             Description = string.Join("; ", groups.Take(15).Select(g => $"{g.First().User} de la {g.Key.Ip} ({string.Join(", ", g.GroupBy(x => x.Source).Select(s => $"{s.Count()} × {s.Key}"))})")) +
                           (loopback ? ". O sursă este adresa locală (loopback): RDP prin tunel este o posibilitate, nu o concluzie." : ""),
             ClassificationReason = correlated ? "Aceeași sesiune apare în Security 4624 tip 10 și în TerminalServices, apropiate în timp." : "Eveniment de autentificare RDP (4624 tip 10) sau TerminalServices 21/22/25/1149 dintr-o adresă care nu este publică.",

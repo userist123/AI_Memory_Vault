@@ -142,9 +142,10 @@ public static partial class Wp14Rules
         if (programs.Count > 0) parts.Add($"a pornit {(programs.Count == 1 ? "programul" : "programele")} {PlainPhrases.List(programs)}");
         if (files.Count > 0) parts.Add($"a deschis {(files.Count == 1 ? "fișierul" : "fișierele")} {PlainPhrases.List(files)}");
         if (downloads.Count > 0) parts.Add($"a descărcat {PlainPhrases.List(downloads)}");
-        var head = $"după ce a fost conectat stick-ul {PlainPhrases.Q(stick)}, ";
-        return parts.Count == 0 ? head + "pe calculator au mai fost doar activități ale Windows; nimic al utilizatorului nu a putut fi legat de stick"
-            : head + string.Join(" și ", parts) + "; legătura este doar în timp și nu dovedește că aceste lucruri au de-a face cu stick-ul";
+        var after = $"după ce a fost conectat stick-ul {PlainPhrases.Q(stick)}";
+        // nothing of the user: a whole clause of its own (capital letter, no account needed); otherwise the account's actions come first and need the subject
+        return parts.Count == 0 ? $"După ce a fost conectat stick-ul {PlainPhrases.Q(stick)}, pe calculator au mai fost doar activități ale Windows; nimic al utilizatorului nu a putut fi legat de stick"
+            : string.Join(" și ", parts) + " " + after + "; legătura este doar în timp și nu dovedește că aceste lucruri au de-a face cu stick-ul";
     }
 
     internal static IEnumerable<AfterConnectWindow> AfterConnectWindows(IReadOnlyList<TimelineEvent> events, Observed m)

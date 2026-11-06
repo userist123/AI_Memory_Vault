@@ -194,10 +194,14 @@ public static partial class Wp14Rules
     /// <summary>„SanDisk Cruzer Blade USB Device” → „SanDisk Cruzer Blade”.</summary>
     internal static string PlainName(string label) => System.Text.RegularExpressions.Regex.Replace(label, @"\s+(?:USB\s+)?Device$", "", System.Text.RegularExpressions.RegexOptions.IgnoreCase).Trim();
 
-    private static string MediaStory(Observed m, ObservedMediaStatus status, List<Activity> activity, IReadOnlyList<TimelineEvent> events)
+    /// <param name="openAccounts">Real accounts open when the stick was connected, when the traces do not say who connected it: the sentence then is a clause of its own, never „cineva”.</param>
+    private static string MediaStory(Observed m, ObservedMediaStatus status, List<Activity> activity, IReadOnlyList<TimelineEvent> events, IReadOnlyList<string>? openAccounts = null)
     {
         var name = PlainName(Kind(m));
-        var s = $"a conectat stick-ul „{name}”" + (m.Letter.Length > 0 ? $" (apărut în calculator ca unitatea {m.Letter}:)" : "");
+        var head = openAccounts is { Count: > 0 }
+            ? $"Stick-ul {PlainPhrases.Q(name)} a fost conectat când {(openAccounts.Count == 1 ? "era deschis contul " : "erau deschise conturile ")}{PlainPhrases.List(openAccounts.Select(PlainPhrases.Q).ToList(), 5, ("cont", "conturi"))}"
+            : $"a conectat stick-ul {PlainPhrases.Q(name)}";
+        var s = head + (m.Letter.Length > 0 ? $" (apărut în calculator ca unitatea {m.Letter}:)" : "");
         s += status switch
         {
             ObservedMediaStatus.Unregistered => "; acest stick NU este trecut în registrul de medii",
@@ -215,35 +219,56 @@ public static partial class Wp14Rules
     private static string PathOf(TimelineEvent e) => e.Source is "LNK" or "JumpList" ? (e.Path.Length > 0 ? e.Path : F(e, "LnkTarget")) : Ev(e, "Security", 4663) ? F(e, "ObjectName") : e.Path;
 
     /// <summary>
-    /// What was written on the stick and what was opened from it, with where a file of the same name was on the computer: „a scris pe stick «Plan.docx»
-    /// (copiat din C:\Users\ion\Documents)”, „a deschis de pe stick «Oferta.pdf»”. Same name is what the traces give, not the content: the sentence says
-    /// „un fișier cu același nume” only through the word „copiat” when both ends are seen.
+    /// What was written on the stick and what was opened from it, and where a file of the same name is on the computer. A matching name does NOT prove a copy:
+    /// the sentence says „un fișier cu același nume se află și în …”; only when both sides are writes with known times, and the order fits (the stick write
+    /// after the disk write: onto the stick; the disk write after the stick open: from the stick), it says „probabil copiat din/în … (același nume, scris după)”.
+    /// Folder-shell files (desktop.ini, thumbs.db) are not content.
     /// </summary>
     internal static string FilesStory(string stick, string letter, List<Activity> activity, IReadOnlyList<TimelineEvent> events)
     {
         var prefix = letter + ":\\";
         string Name(string p) => WinPath.GetFileName(p.TrimEnd('\\'));
-        // where else a file of that name appears on the computer (not on the stick), from the same kinds of traces
-        var elsewhere = events.Where(e => e.Source is "LNK" or "JumpList" or "USN" || Ev(e, "Security", 4663))
-            .Select(e => PathOf(e)).Where(p => p.Length > 3 && p[1] == ':' && !p.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            .GroupBy(p => Name(p), StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => WinPath.GetDirectoryName(g.First()) ?? "", StringComparer.OrdinalIgnoreCase);
-        // a file of that name WRITTEN on the computer (USN creation, 4663 write): what came from the stick onto the computer
-        var writtenHere = events.Where(e => (e.Source == "USN" && UsnWrite.Any(x => F(e, "Reason").Contains(x, StringComparison.OrdinalIgnoreCase))) || (Ev(e, "Security", 4663) && Write4663(e)))
-            .Select(e => PathOf(e)).Where(p => p.Length > 3 && p[1] == ':' && !p.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
-            .GroupBy(p => Name(p), StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => WinPath.GetDirectoryName(g.First()) ?? "", StringComparer.OrdinalIgnoreCase);
-        string With(string file, string verb) => elsewhere.TryGetValue(file, out var dir) && dir.Length > 0 ? $"„{file}” ({verb} {dir})" : $"„{file}”";
-        string Opened(string file) => writtenHere.TryGetValue(file, out var dir) && dir.Length > 0 ? $"„{file}” (copiat apoi pe calculator, în {dir})" : $"„{file}”";
-        var written = activity.Where(a => a.Write).Select(a => Name(PathOf(a.Event))).Where(n => n.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-        var opened = activity.Where(a => !a.Write).Select(a => Name(PathOf(a.Event))).Where(n => n.Length > 0 && !written.Contains(n, StringComparer.OrdinalIgnoreCase))
-            .Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        bool IsWrite(TimelineEvent e) => (e.Source == "USN" && UsnWrite.Any(x => F(e, "Reason").Contains(x, StringComparison.OrdinalIgnoreCase))) || (Ev(e, "Security", 4663) && Write4663(e));
+        // traces of the same file names on the computer (not on the stick): where, when, and whether the trace is a write
+        var disk = events.Where(e => e.Source is "LNK" or "JumpList" or "USN" || Ev(e, "Security", 4663))
+            .Select(e => (Path: PathOf(e), Time: T(e), Write: IsWrite(e)))
+            .Where(t => t.Path.Length > 3 && t.Path[1] == ':' && !t.Path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) && !IsFolderShellFile(Name(t.Path)))
+            .Select(t => (Name: Name(t.Path), Dir: WinPath.GetDirectoryName(t.Path) ?? "", t.Time, t.Write))
+            .Where(t => t.Name.Length > 0 && t.Dir.Length > 0).ToList();
+        string Same(string file, DateTimeOffset? stickTime, bool stickWrite)
+        {
+            var hits = disk.Where(d => d.Name.Equals(file, StringComparison.OrdinalIgnoreCase)).ToList();
+            if (hits.Count == 0) return $"„{file}”";
+            if (stickTime is { } st)
+            {
+                if (stickWrite)
+                {
+                    // onto the stick: a write on the computer BEFORE the write on the stick
+                    var before = hits.Where(h => h.Write && h.Time is { } t && t < st).OrderByDescending(h => h.Time).FirstOrDefault();
+                    if (before.Dir is { Length: > 0 }) return $"„{file}”, probabil copiat din {before.Dir} (același nume, scris după)";
+                }
+                else
+                {
+                    // from the stick: a write on the computer AFTER the open on the stick
+                    var after = hits.Where(h => h.Write && h.Time is { } t && t > st).OrderBy(h => h.Time).FirstOrDefault();
+                    if (after.Dir is { Length: > 0 }) return $"„{file}”, probabil copiat în {after.Dir} (același nume, scris după)";
+                }
+            }
+            return $"„{file}” (un fișier cu același nume se află și în {hits[0].Dir})";
+        }
+        var written = activity.Where(a => a.Write).Select(a => (Name: Name(PathOf(a.Event)), Time: T(a.Event))).Where(n => n.Name.Length > 0 && !IsFolderShellFile(n.Name))
+            .GroupBy(n => n.Name, StringComparer.OrdinalIgnoreCase).Select(g => (Name: g.Key, Time: g.Select(x => x.Time).Where(t => t is not null).OrderBy(t => t).FirstOrDefault())).ToList();
+        var opened = activity.Where(a => !a.Write).Select(a => (Name: Name(PathOf(a.Event)), Time: T(a.Event))).Where(n => n.Name.Length > 0 && !IsFolderShellFile(n.Name)
+                && !written.Any(w => w.Name.Equals(n.Name, StringComparison.OrdinalIgnoreCase)))
+            .GroupBy(n => n.Name, StringComparer.OrdinalIgnoreCase).Select(g => (Name: g.Key, Time: g.Select(x => x.Time).Where(t => t is not null).OrderBy(t => t).FirstOrDefault())).ToList();
         var parts = new List<string>();
-        if (written.Count > 0) parts.Add($"a scris pe stick {Files(written.Select(w => With(w, "copiat din")).ToList())}");
-        if (opened.Count > 0) parts.Add($"a deschis de pe stick {Files(opened.Select(Opened).ToList())}");
+        if (written.Count > 0) parts.Add($"a scris pe stick {Files(written.Select(w => Same(w.Name, w.Time, true)).ToList())}");
+        if (opened.Count > 0) parts.Add($"a deschis de pe stick {Files(opened.Select(w => Same(w.Name, w.Time, false)).ToList())}");
         return string.Join(" și ", parts);
     }
 
     private static string Files(List<string> names) =>
-        names.Count == 1 ? $"fișierul {names[0]}" : $"fișierele {string.Join(", ", names.Take(8))}{(names.Count > 8 ? $" și încă {names.Count - 8}" : "")}";
+        names.Count == 1 ? $"fișierul {names[0]}" : $"fișierele {string.Join(", ", names.Take(8))}{(names.Count > 8 ? $" și încă {LogAnalyzer.Dfir.Language.RoText.Count(names.Count - 8, "fișier", "fișiere")}" : "")}";
 
     // ---- findings ----
 
@@ -284,14 +309,21 @@ public static partial class Wp14Rules
             var desc = $"{Kind(m)} (seria {(m.Serial.Length > 0 ? m.Serial : "necunoscută")}{(m.VidPid.Length > 0 ? ", " + m.VidPid : "")}): {LogAnalyzer.Dfir.Language.RoText.Count(m.Events.Count, "observație", "observații")} în {string.Join(", ", m.Channels)}; " +
                        $"{(times.Count > 0 ? Time(times[0]) + " – " + Time(times[^1]) : "oră necunoscută")}. Stare: {word}. " +
                        (v.Reasons.Count > 0 ? string.Join("; ", v.Reasons) + ". " : "") + regLine + clearanceNote + " " + copyLine;
-            var users = m.Users.Count > 0 ? string.Join(", ", m.Users) : "";
+            // who: the accounts the traces of the medium itself carry; when none is a real account, the accounts MEDIA-USAGE lists for the same stick
+            var hostName = PlainPhrases.HostOf(c.Events);
+            var realOwn = m.Users.Where(u => !PlainPhrases.IsStationAccount(u, hostName)).ToList();
+            var (usageAccounts, usageDirect) = realOwn.Count == 0 ? UsageAccounts(c, m) : ([], false);
+            var realUsage = usageAccounts.Where(u => !PlainPhrases.IsStationAccount(u, hostName)).ToList();
+            var openAccounts = realOwn.Count == 0 && realUsage.Count > 0 && !(usageDirect && realUsage.Count == 1) ? realUsage.Select(PlainPhrases.ShortAccount).Distinct(StringComparer.OrdinalIgnoreCase).ToList() : null;
+            var users = realOwn.Count == 0 && usageDirect && realUsage.Count == 1 ? realUsage[0]
+                : string.Join(", ", m.Users.Concat(openAccounts is null ? [] : usageAccounts).Distinct(StringComparer.OrdinalIgnoreCase));
             var auth = status == ObservedMediaStatus.Authorized ? AirGapAuthorization.Authorized : status == ObservedMediaStatus.Unknown ? AirGapAuthorization.Undefined : AirGapAuthorization.NotAuthorized;
             o.Add(new Finding
             {
                 FindingId = c.NextId(), RuleId = status switch { ObservedMediaStatus.Authorized => "MEDIA-AUTHORIZED", ObservedMediaStatus.Registered => "MEDIA-REGISTERED", ObservedMediaStatus.Unregistered => "MEDIA-UNREGISTERED", ObservedMediaStatus.Unauthorized => "MEDIA-UNAUTHORIZED", _ => "MEDIA-UNKNOWN" },
                 Title = $"Suport de stocare amovibil {(m.Serial.Length > 0 ? m.Serial : Kind(m))}: {status switch { ObservedMediaStatus.Authorized => "AUTORIZAT", ObservedMediaStatus.Registered => "ÎNREGISTRAT", ObservedMediaStatus.Unregistered => "NEÎNREGISTRAT", ObservedMediaStatus.Unauthorized => "NEAUTORIZAT", _ => "NEDETERMINAT" }}",
                 Severity = sev, Category = c.FindingCategory, Classification = Classification.Direct, Confidence = Confidence.High,
-                PlainWhat = MediaStory(m, status, activity, c.Events),
+                PlainWhat = MediaStory(m, status, activity, c.Events, openAccounts),
                 // T1052.001 (exfiltration over a physical medium) only for statuses that indicate it; presence of an UNKNOWN / AUTHORIZED medium is not exfiltration.
                 MitreTechniqueId = status is ObservedMediaStatus.Registered or ObservedMediaStatus.Unregistered or ObservedMediaStatus.Unauthorized ? "T1052.001" : "",
                 FirstSeenUtc = times.Count > 0 ? times[0] : null, LastSeenUtc = times.Count > 0 ? times[^1] : null, User = users,
@@ -323,8 +355,8 @@ public static partial class Wp14Rules
                 o.Add(new Finding
                 {
                     FindingId = c.NextId(), RuleId = "MEDIA-FILE-ACTIVITY",
-                    // who: the medium's users, else the account of the 4663 accesses (the only file trace that carries one)
-                    User = users.Length > 0 ? users : string.Join(", ", activity.Select(a => F(a.Event, "SubjectUserName")).Where(u => u.Length > 0 && u != "-").Distinct(StringComparer.OrdinalIgnoreCase)),
+                    // who: the account of the 4663 accesses (the file trace that names the account that acted), and only when no trace carries one the medium's session users
+                    User = string.Join(", ", activity.Select(a => F(a.Event, "SubjectUserName")).Where(u => u.Length > 0 && u != "-" && !PlainPhrases.IsStationAccount(u, hostName)).Distinct(StringComparer.OrdinalIgnoreCase)) is { Length: > 0 } fileUsers ? fileUsers : users,
                     PlainWhat = FilesStory(Kind(m), m.Letter, activity, c.Events) is { Length: > 0 } fs ? fs : $"a lucrat cu fișiere pe stick-ul „{PlainName(Kind(m))}”",
                     Title = $"Urme de activitate pe unitatea {m.Letter}: a mediului {(m.Serial.Length > 0 ? m.Serial : Kind(m))}",
                     Severity = strong ? Severity.High : write ? Severity.Medium : Severity.Low,

@@ -537,7 +537,8 @@ public sealed class InvestigationPipeline
                                          .GroupBy(p => p.EvidenceId, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Select(p => p.Parser).Distinct().ToList(), StringComparer.Ordinal);
         // the plain sentence names the person an account belongs to (users register) and tells the time in the station's zone
         kept = FindingContract.Enrich(kept, new FindingContractContext { ParsersOf = e => parsersByEvidence.GetValueOrDefault(e) ?? [], NowUtc = DateTimeOffset.UtcNow,
-            PersonOf = usersRegister is { } ur ? ur.PersonOf : null, Zone = TimeZoneInfo.Local }).ToList();
+            PersonOf = usersRegister is { } ur ? ur.PersonOf : null, Zone = TimeZoneInfo.Local,
+            AccountOfSid = LogAnalyzer.Dfir.Language.AccountResolver.FromEvents(r.Timeline) }).ToList();
         r.Findings.AddRange(kept);
         foreach (var dup in kept.GroupBy(x => x.FindingId, StringComparer.Ordinal).Where(x => x.Count() > 1))
         {
