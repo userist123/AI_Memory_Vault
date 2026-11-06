@@ -39,6 +39,19 @@ public sealed class ModuleCatalogTests
         Assert.Equal("Stația: LAB-PC", new LogAnalyzer.UI.Views.SignInWindow.IdentityRow("Stația", "LAB-PC").ToString());
     }
 
+    [Fact]
+    public void A_home_button_is_announced_by_its_title_not_the_type_name()
+    {
+        // lab VM 2026-11-06: UI Automation read "LogAnalyzer.UI.ViewModels.HomeIntentView" for every Home button
+        var p = LogAnalyzer.Core.Services.Edition.RoleProfiles.For(LogAnalyzer.Core.Services.Edition.StationRole.Control,
+            new LogAnalyzer.Core.Services.Edition.ClassifiedEditionProfile(), AppMode.AirGapped);
+        Assert.All(p.PrimaryIntents.Concat(p.MoreIntents).Select(i => new LogAnalyzer.UI.ViewModels.HomeIntentView(i)), v =>
+        {
+            Assert.StartsWith(v.Title, v.ToString());
+            Assert.DoesNotContain("HomeIntentView", v.ToString());
+        });
+    }
+
     [Theory]
     [InlineData(StationPosture.Standalone, "Insula — Stație izolată")]
     [InlineData(StationPosture.IsolatedNetwork, "Arhipelag — Rețea izolată")]

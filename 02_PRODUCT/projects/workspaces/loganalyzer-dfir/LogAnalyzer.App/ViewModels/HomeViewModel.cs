@@ -414,5 +414,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>What the screen reader and the tooltip say: the description, or the reason when the button is disabled.</summary>
         public string Tooltip => Enabled ? Description : $"Nu este disponibil: {Reason}";
         public string ReasonLine => Enabled ? "" : $"Nu este disponibil: {Reason}";
+        /// <summary>The list item's name for UI Automation (lab VM 2026-11-06 read „LogAnalyzer.UI.ViewModels.HomeIntentView”).</summary>
+        public override string ToString() => Enabled ? Title : $"{Title}: {ReasonLine}";
     }
 }

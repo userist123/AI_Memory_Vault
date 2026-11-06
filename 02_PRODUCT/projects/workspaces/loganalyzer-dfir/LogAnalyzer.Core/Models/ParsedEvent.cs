@@ -16,5 +16,8 @@ namespace LogAnalyzer.Core.Models
         public string? TacticalExample { get; set; }
         public string? ReferenceUrl { get; set; }
         public string? PotentialCriticality { get; set; }
+
+        /// <summary>A grid row's name for UI Automation: time, event id, source and host, never the type name.</summary>
+        public override string ToString() => $"{TimeCreated:yyyy-MM-dd HH:mm:ss} · {EventId} · {ProviderName} · {MachineName}";
     }
 }

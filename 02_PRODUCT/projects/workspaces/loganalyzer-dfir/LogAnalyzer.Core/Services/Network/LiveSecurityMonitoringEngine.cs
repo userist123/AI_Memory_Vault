@@ -217,7 +217,8 @@ namespace LogAnalyzer.Core.Services.Network
             }
 
             // 11. Atac Fizic / Hardware (BadUSB / Rubber Ducky HID Injection T1052)
-            if (msg.Contains("rubber ducky") || msg.Contains("badusb") || msg.Contains("hid keyboard") ||
+            // never "hid keyboard": that is the name Windows gives every ordinary keyboard ("HID Keyboard Device")
+            if (msg.Contains("rubber ducky") || msg.Contains("badusb") ||
                 (msg.Contains("usb") && (msg.Contains("keystroke") || msg.Contains("payload injection"))))
             {
                 return new DetectedIssue
@@ -265,8 +266,8 @@ namespace LogAnalyzer.Core.Services.Network
             }
 
             // 14. Abuz de Token-uri & Escaladare Privilegii (PrintSpoofer / Potato Exploits T1134)
-            if (msg.Contains("printspoofer") || msg.Contains("juicypotato") || msg.Contains("godpotato") ||
-                (msg.Contains("seimpersonateprivilege") && (msg.Contains("escalat") || msg.Contains("system"))))
+            // the tool names only: SeImpersonatePrivilege with SYSTEM is every Security 4672 Windows writes for its own service logons (lab VM 2026-11-06)
+            if (msg.Contains("printspoofer") || msg.Contains("juicypotato") || msg.Contains("godpotato") || msg.Contains("roguepotato") || msg.Contains("sweetpotato"))
             {
                 return new DetectedIssue
                 {

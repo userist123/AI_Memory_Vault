@@ -12,6 +12,14 @@ namespace LogAnalyzer.UI.Tests
         private static readonly IEditionProfile P1 = new ClassifiedEditionProfile();
         private static readonly IEditionProfile P23 = new UnclassifiedEditionProfile();
 
+        [Fact]
+        public void A_live_event_row_is_announced_by_its_text_not_the_type_name()
+        {
+            // lab VM 2026-11-06: UI Automation read "LogAnalyzer.Core.Models.ParsedEvent" for every row of the live feed
+            var ev = new LogAnalyzer.Core.Models.ParsedEvent { EventId = 4688, TimeCreated = new DateTime(2026, 11, 6, 15, 43, 24), ProviderName = "Microsoft-Windows-Security-Auditing", MachineName = "WS-01" };
+            Assert.Equal("2026-11-06 15:43:24 · 4688 · Microsoft-Windows-Security-Auditing · WS-01", ev.ToString());
+        }
+
         [Theory]
         [InlineData(StationRole.Control, EditionKind.Classified, AppMode.AirGapped)]
         [InlineData(StationRole.Control, EditionKind.Unclassified, AppMode.AirGapped)]
