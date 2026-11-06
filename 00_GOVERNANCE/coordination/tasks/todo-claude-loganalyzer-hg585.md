@@ -168,10 +168,17 @@
   Not yet fixed (UX, report): live feed rows show the whole multi-line message; page header text squeezed at 1024 px; wizard says
   "Completați scopul" while the analysis already runs; Arhipelag first run needs the documented icacls on ProgramData\LogAnalyzer\auth.
   Lab state and scripts: E:\LA-Lab (plan-teste-module.md, evidence\truth.jsonl, evidence\LAB-WS0*-case). Lab cleanup = whole E:\LA-Lab.
+- 2026-11-06 evening (round 2 done, CI read once on d16d1cc47: rule PS-CMDLINE-SUSPICIOUS had no contract entry + DeviceMonitor test hung on a
+  dispatcher left on its pool thread -> e652210d6). SRV01 evidence exported (export-evidence.ps1) and imported on WS01 through "Un folder adus
+  de la stația afectată" (works: 291 files, 24 846 events): found CIM modules in lower case root/ (Server 2025) -> c3bc7d58f, Domain Admins
+  as bare SID -> 41260a2ff, scope dialog showed "period.to". S1 NOT in any evidence: DC01 does not audit Kerberos failures (no 4771/4768
+  for ana.pop), SRV01 has one NTLM 4625 -> audit gap of the lab, the control page should say it. S7 server side: REMOTE-WINRM seen; zip/C$
+  copy not auditable (no 5140/5145). Lab VM clocks start 4 h ahead (records at 21:57 UTC on the same day) -> TimeReliability lowers
+  confidence, correct. Cases: evidence\LAB-SRV01-case-v2 (new build), DC01 export in evidence\LAB-DC01.
 
 ## Next
-00. LA-Lab continue: round 2 review; rebuild lab apps (build-lab-apps.ps1) + update-app.ps1; rerun WS01/WS02 investigations and compare
-   with truth; Continent on WS01; remote collection WS01 -> SRV01, AD page, containment, export-evidence.ps1 + import on host; lab report .docx.
+00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); Control stație should flag the
+   missing DC failure auditing; rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.
 0b. Advanced pages on the open case (one data source) - biggest product gap found; SRUM: recover the dirty ESE copy (esentutl /r with the
    SRU logs) or mark the result as depending on it; route the "Alte N" summaries to the report.
