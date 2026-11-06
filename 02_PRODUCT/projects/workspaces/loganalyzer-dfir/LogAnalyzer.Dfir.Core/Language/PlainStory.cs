@@ -16,7 +16,7 @@ public static class PlainStory
     private static readonly CultureInfo Ro = CultureInfo.GetCultureInfo("ro-RO");
 
     /// <summary>Windows' own sessions and services: never "who did it" (lab WS02: DWM-1, UMFD-0 and defaultuser0 were listed as candidates for a USB stick).</summary>
-    private static readonly Regex StationAccount = new(@"^(?:DWM-\d+|UMFD-\d+|defaultuser\d*|SYSTEM|LOCAL SERVICE|NETWORK SERVICE|ANONYMOUS LOGON|S-1-5-(?:18|19|20)|-|.*\$)$",
+    private static readonly Regex StationAccount = new(@"^(?:DWM-\d+|UMFD-\d+|defaultuser\d*|SYSTEM|LOCAL SERVICE|NETWORK SERVICE|ANONYMOUS LOGON|S-1-5-(?:18|19|20)|-)$",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     /// <summary>The sentence: „Pe 6 noiembrie 2026, la ora 15:15, pe calculatorul LAB-WS02, Popescu Ion (contul ion.popescu) a introdus stick-ul «SanDisk Cruzer Blade».”</summary>
@@ -52,7 +52,9 @@ public static class PlainStory
         var shortName = account.Contains('\\') ? account[(account.LastIndexOf('\\') + 1)..] : account;
         if (shortName.Contains('@')) shortName = shortName[..shortName.IndexOf('@')];
         var person = personOf?.Invoke(account) ?? personOf?.Invoke(shortName);
-        return person is { Length: > 0 } p ? $"{p} (contul {shortName})" : $"utilizatorul cu contul „{shortName}”";
+        if (person is { Length: > 0 } p) return $"{p} (contul {shortName})";
+        // a name ending in $ is usually a computer's own account, but an attacker can name an account so (lab S5: „labbackup$”): never hidden as „Windows”
+        return shortName.EndsWith('$') ? $"contul „{shortName}” (nume de cont de calculator: verificați că este un calculator real)" : $"utilizatorul cu contul „{shortName}”";
     }
 
     /// <summary>„Pe 6 noiembrie 2026, la ora 15:15”, „între 15:10 și 15:20”, or from one day to another; "" when the time is unknown.</summary>

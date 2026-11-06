@@ -84,6 +84,11 @@ public static partial class Wp11Rules
                 FindingId = c.NextId(), RuleId = "ACCOUNT-ADDED-PRIVILEGED-GROUP", Title = $"Cont adăugat într-un grup privilegiat: {who} → {group}",
                 Severity = Severity.Medium, Category = "Privilege Escalation", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1098",
                 FirstSeenUtc = T(g.First()), LastSeenUtc = T(g.Last()), User = who,
+                PlainWhat = $"Contul {(name.Length > 0 ? PlainPhrases.Q(name) : "(necunoscut după nume)")} a fost pus în grupul {PlainPhrases.Q(group)} " +
+                            (group.Equals("Administrators", StringComparison.OrdinalIgnoreCase) || group.Equals("Administratori", StringComparison.OrdinalIgnoreCase)
+                                ? "(administratori: control total asupra calculatorului)" : "(un grup cu drepturi mari)") +
+                            (PlainPhrases.IsStationAccount(F(first, "SubjectUserName")) ? "" : $", de către contul {PlainPhrases.Q(F(first, "SubjectUserName"))}") +
+                            (inCase is not null ? "; contul fusese creat chiar în acest caz" : ""),
                 Description = $"{who} ({sid}) a fost adăugat în grupul {group} ({F(first, "TargetSid")}) de {by}, eveniment {first.EventId}, {Time(T(first))}." +
                               (inCase is not null ? $" Contul a fost creat în același caz ({Time(T(inCase))})." : ""),
                 ClassificationReason = "Eveniment Security 4728/4732/4756 pentru un grup din lista de grupuri privilegiate (după nume sau SID). Arată apartenența acordată, nu folosirea ei.",
@@ -122,6 +127,11 @@ public static partial class Wp11Rules
                 FindingId = c.NextId(), RuleId = "ACCOUNT-CREATED", Title = $"Cont creat: {name}",
                 Severity = provisioning ? Severity.Info : Severity.Low, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1136",
                 FirstSeenUtc = createdAt, User = name,
+                PlainWhat = $"Contul {PlainPhrases.Q(name)} a fost creat " +
+                            (provisioning ? "de Windows (la instalare sau printr-un serviciu)" : $"de contul {PlainPhrases.Q(F(cr, "SubjectUserName"))}") +
+                            (uses.Count > 0 ? ", apoi a fost folosit pentru a intra pe calculator"
+                                : allLogonEvents == 0 ? "; nu se știe dacă a fost folosit, pentru că nu s-a colectat lista cu cine a intrat pe calculator"
+                                : "; după creare nu apare nicio intrare cu acest cont în probele colectate"),
                 Description = $"{Account(name, F(cr, "TargetDomainName"))} ({sid}) creat de {by}, {Time(createdAt)}." +
                               (lifeText.Length > 0 ? $" Alte evenimente de ciclu de viață: {lifeText}." : "") +
                               (myGroups.Count > 0 ? $" Grupuri în care a fost adăugat: {Join(myGroups)}." : "") + " " + usage,
@@ -146,6 +156,9 @@ public static partial class Wp11Rules
                 Severity = sev, Category = "Persistence", Classification = sidMatched ? Classification.Correlated : Classification.Candidate,
                 Confidence = sidMatched ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1078",
                 FirstSeenUtc = createdAt, LastSeenUtc = T(uses[^1]), User = name, Ip = remoteUses.Count > 0 ? F(remoteUses[0], "IpAddress") : "",
+                PlainWhat = $"Contul {PlainPhrases.Q(name)}, creat în acest caz, a fost folosit după aceea pentru a intra pe calculator ({PlainPhrases.Times(uses.Count)})" +
+                            (remoteUses.Count > 0 ? $", inclusiv de la distanță, de la adresa {F(remoteUses[0], "IpAddress")}" : "") +
+                            (privileged ? "; contul a fost pus și într-un grup cu drepturi mari" : ""),
                 Description = $"{name} creat {Time(createdAt)}; prima folosire {Time(T(firstUse))} ({firstUse.EventId}); {LogAnalyzer.Dfir.Language.RoText.Count(uses.Count, "eveniment", "evenimente")} 4624/4648 ulterioare" +
                               (types.Count > 0 ? $" ({string.Join(", ", types)})" : "") + "." +
                               (remoteUses.Count > 0 ? $" Folosit de la distanță din {Join(remoteUses.Select(u => F(u, "IpAddress")))}." : " Nicio autentificare de la distanță în dovezile colectate.") +

@@ -99,6 +99,14 @@ public static partial class Wp11Rules
                 Severity = sev, Category = "Defense Evasion", Classification = corroborating.Count > 0 ? Classification.Correlated : Classification.Direct,
                 Confidence = Confidence.High, MitreTechniqueId = "T1562.001",
                 FirstSeenUtc = T(items[0].Event), LastSeenUtc = T(items[^1].Event), User = F(items[0].Event, "AccountName", "SubjectUserName"),
+                PlainWhat = $"Programul de securitate {PlainPhrases.Q(agent.Name)} " + action switch
+                {
+                    AgentAction.Stopped => allExcused ? "s-a oprit odată cu oprirea sau repornirea calculatorului (normal)" : "a fost oprit",
+                    AgentAction.Disabled => "a fost setat să nu mai pornească singur",
+                    AgentAction.Installed => "a apărut ca serviciu nou cu același nume",
+                    AgentAction.ConfigChanged => "și-a schimbat configurația",
+                    _ => "a fost dezinstalat",
+                } + (items.Count > 1 ? $" ({PlainPhrases.Times(items.Count)})" : "") + (corroborating.Count > 0 ? "; în aceeași perioadă au apărut și alte lucruri grave" : ""),
                 Description = $"{agent.Name}: {ActionText(action)} — {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "eveniment", "evenimente")}, {Time(T(items[0].Event))}" + (items.Count > 1 ? $" – {Time(T(items[^1].Event))}" : "") + $". Detalii: {Join(items.Select(h => h.Detail), 4)}." +
                               (action == AgentAction.Installed && sev == Severity.Medium ? " Imaginea serviciului este într-o locație în care utilizatorii pot scrie: posibilă suprapunere de nume (nu s-a verificat semnătura)." : "") +
                               (corroborating.Count > 0 ? $" Constatări High în ±{c.Options.CorroborationWindow.TotalMinutes:0} min: {Join(corroborating.Select(f => f.Title), 3)}." : "") +

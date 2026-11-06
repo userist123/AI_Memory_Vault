@@ -38,6 +38,13 @@ namespace LogAnalyzer.Core.Services.Network
         /// </summary>
         public DetectedIssue? EvaluateLiveEvent(ParsedEvent ev)
         {
+            var issue = Evaluate(ev);
+            if (issue is not null && issue.Plain.Length == 0) issue.Plain = LivePlain.Tell(issue, ev, TimeZoneInfo.Local);
+            return issue;
+        }
+
+        private DetectedIssue? Evaluate(ParsedEvent ev)
+        {
             if (ev == null) return null;
 
             string msg = (ev.Message ?? string.Empty).ToLowerInvariant();

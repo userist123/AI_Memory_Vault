@@ -80,7 +80,7 @@ public static partial class Wp14Rules
     }
 
     private static Finding Net(Ctx c, string ruleId, string title, Severity sev, string subcategory, string channel, AirGapAuthorization auth, string basis, string observed, List<TimelineEvent> evs,
-        string obj, string destination, string description, string reason, string[] alternatives, NetEvidence? extra = null)
+        string obj, string destination, string description, string reason, string[] alternatives, NetEvidence? extra = null, string plain = "")
     {
         var times = evs.Select(T).Where(t => t is not null).Select(t => t!.Value).OrderBy(t => t).ToList();
         var refs = evs.Take(20).Select(e => Ref(e, $"{e.EventId} {e.Summary}".Trim())).ToList();
@@ -90,7 +90,7 @@ public static partial class Wp14Rules
         {
             FindingId = c.NextId(), RuleId = ruleId, Title = title, Severity = sev, Category = Category, Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1599",
             FirstSeenUtc = times.Count > 0 ? times[0] : null, LastSeenUtc = times.Count > 0 ? times[^1] : null, User = WhoOf(evs) == UnknownWho ? "" : WhoOf(evs),
-            Description = description, ClassificationReason = reason, SemanticType = SemanticType.Observation,
+            Description = description, ClassificationReason = reason, SemanticType = SemanticType.Observation, PlainWhat = plain,
             SupportingEvidence = refs,
             MissingEvidence = extra is null ? [] : [.. extra.Missing, .. RuleContracts.For(ruleId)?.MissingEvidence ?? []],
             AlternativeExplanations = [.. alternatives],
@@ -168,7 +168,8 @@ public static partial class Wp14Rules
                 (c.Standalone ? "; în postura Standalone orice conectare după instalarea aplicației este NECONFORMĂ." : "."),
                 // The alternatives below are about an approved network; on a Standalone station no network is approved, so they do not apply there.
                 c.Standalone ? [] : ["Sistemul poate fi legat temporar la o rețea aprobată de procedură (mentenanță, transfer autorizat) neînregistrată în profil.", "Evenimentul 10000 apare și pentru rețele fără acces în afară (rețea locală, adaptor virtual)."],
-                ev));
+                ev, plain: (c.Standalone ? "Calculatorul autonom, care nu trebuia conectat la nicio rețea, a fost conectat la rețeaua " : "Calculatorul izolat a fost conectat la rețeaua ") +
+                            PlainPhrases.Q(g.Key) + (items.Count > 1 ? $" ({PlainPhrases.Times(items.Count)})" : "")));
         }
     }
 
@@ -296,7 +297,11 @@ public static partial class Wp14Rules
             o.Add(Net(c, "AIRGAP-NIC-ADDED", $"{(radio ? "Adaptor Bluetooth" : "Adaptor de rețea")} configurat pe un sistem izolat: {(name.Length > 0 ? name : g.Key)}{(outbound || kindOf == AdapterKind.UsbEthernet && !radio ? " (" + AdapterKinds.Describe(kindOf) + ")" : "")}", sev, radio ? "BLUETOOTH" : kindOf == AdapterKind.PhoneTethering && !radio ? "PHONE" : "NETWORK INTERFACE", "Kernel-PnP/Configuration 400", AirGapAuthorization.Undefined,
                 "profilul de proceduri nu conține o listă de adaptoare autorizate", $"{kind} configurat ({items.Count}×)", items, g.Key, "necunoscută: adaptorul nu indică o destinație", desc,
                 "Eveniment Kernel-PnP 400 pentru un dispozitiv din clasa Net (sau radio Bluetooth) pe un sistem air-gapped sau autonom.",
-                ["Reinstalarea driverului, o actualizare Windows sau prima pornire a unui adaptor integrat produc același eveniment.", "Adaptorul poate fi dezactivat în BIOS sau în Windows fără a lăsa alte urme în aceste surse."]));
+                ["Reinstalarea driverului, o actualizare Windows sau prima pornire a unui adaptor integrat produc același eveniment.", "Adaptorul poate fi dezactivat în BIOS sau în Windows fără a lăsa alte urme în aceste surse."],
+                plain: "Windows a configurat " + (radio ? "un adaptor Bluetooth (radio fără fir)" : virt ? "o placă de rețea virtuală, care nu iese neapărat din calculator"
+                        : outbound ? "o placă de rețea de tip telefon sau modem celular, care poate da calculatorului acces la Internet pe lângă rețeaua lui"
+                        : kindOf == AdapterKind.UsbEthernet ? "o placă de rețea pe USB, care poate lega un cablu de rețea fără să treacă prin placa obișnuită" : "o placă de rețea nouă sau reinstalată") +
+                       (name.Length > 0 ? $" {PlainPhrases.Q(name)}" : "") + " pe calculatorul izolat"));
         }
     }
 }

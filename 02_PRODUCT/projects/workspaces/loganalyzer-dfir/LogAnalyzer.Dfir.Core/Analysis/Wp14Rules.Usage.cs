@@ -13,6 +13,16 @@ public static partial class Wp14Rules
 {
     internal const string UsageRuleId = "MEDIA-USAGE";
 
+    /// <summary>MEDIA-USAGE in plain words: who used the stick (only real accounts are named; Windows' own sessions are left out), or that this cannot be told.</summary>
+    internal static string UsageStory(string stick, IReadOnlyList<string> accounts, bool ambiguous, bool direct, int openedFromStick)
+    {
+        var real = accounts.Where(a => !PlainPhrases.IsStationAccount(a)).Select(PlainPhrases.ShortAccount).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var files = openedFromStick > 0 ? $"; de pe el s-au deschis {LogAnalyzer.Dfir.Language.RoText.Count(openedFromStick, "fișier", "fișiere")}" : "";
+        if (real.Count == 1 && !ambiguous) return $"a folosit stick-ul {PlainPhrases.Q(stick)}" + (direct ? "" : " (după toate semnele, dar nesigur)") + files;
+        if (real.Count == 0) return $"Stick-ul {PlainPhrases.Q(stick)} a fost conectat, dar nu se poate stabili cine l-a folosit" + files;
+        return $"Stick-ul {PlainPhrases.Q(stick)} a fost conectat când erau deschise conturile {PlainPhrases.List(real.Select(PlainPhrases.Q).ToList(), 5)}; nu se poate stabili sigur care dintre ele l-a folosit" + files;
+    }
+
     internal static void MediaUsageFindings(Ctx c, List<Finding> o)
     {
         var media = ObservedUsb(c.Events).Where(m => m.Serial.Length > 0).OrderBy(m => m.Times.DefaultIfEmpty(DateTimeOffset.MaxValue).Min()).ToList();
@@ -86,6 +96,7 @@ public static partial class Wp14Rules
                 Severity = verdicts.Any(v => v.Status == UsageStatus.Ambiguous) ? Sev(c, Severity.Medium) : Severity.Low,
                 Category = c.FindingCategory, Classification = Classification.Correlated, Confidence = Confidence.Medium,
                 FirstSeenUtc = arrivals[0], LastSeenUtc = arrivals[^1], User = string.Join(", ", accounts),
+                PlainWhat = UsageStory(PlainName(Kind(m)), accounts, verdicts.Any(v => v.Status == UsageStatus.Ambiguous), verdicts.Any(v => v.Status == UsageStatus.Direct), strong),
                 Description = desc,
                 ClassificationReason = "Corelație între registrul fiecărui profil (MountPoints2), MountedDevices, sesiunile de logon și scurtăturile LNK. " +
                                        "Nicio sursă nu spune singură cine a conectat stick-ul; regula arată ce se poate afirma și ce nu.",

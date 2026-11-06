@@ -124,6 +124,29 @@ public static partial class Wp14Rules
 {
     internal const string AfterConnectRuleId = "MEDIA-AFTER-CONNECT";
 
+    private static bool IsWindowsOwn(string path)
+    {
+        var p = path.Replace('/', '\\');
+        return p.Contains("\\Windows\\", StringComparison.OrdinalIgnoreCase) || p.Contains("\\Program Files", StringComparison.OrdinalIgnoreCase) || p.Contains("\\ProgramData\\Microsoft\\", StringComparison.OrdinalIgnoreCase)
+            || PlainPhrases.Leaf(p).Equals("desktop.ini", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>MEDIA-AFTER-CONNECT in plain words: at most 5 programs and 5 files of the user (Windows' own left out), named as they were; the link is only in time.</summary>
+    internal static string AfterConnectStory(string stick, IReadOnlyList<AfterConnectWindow> windows)
+    {
+        var items = windows.SelectMany(w => w.Items).OrderByDescending(i => i.Score).ToList();
+        List<string> Names(AfterConnectKind k) => items.Where(i => i.Kind == k && !IsWindowsOwn(i.What)).Select(i => PlainPhrases.Leaf(i.What)).Where(n => n.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase).Take(5).Select(PlainPhrases.Q).ToList();
+        var programs = Names(AfterConnectKind.Execution); var files = Names(AfterConnectKind.FileTouched); var downloads = Names(AfterConnectKind.Download);
+        var parts = new List<string>();
+        if (programs.Count > 0) parts.Add($"a pornit {(programs.Count == 1 ? "programul" : "programele")} {PlainPhrases.List(programs)}");
+        if (files.Count > 0) parts.Add($"a deschis {(files.Count == 1 ? "fișierul" : "fișierele")} {PlainPhrases.List(files)}");
+        if (downloads.Count > 0) parts.Add($"a descărcat {PlainPhrases.List(downloads)}");
+        var head = $"după ce a fost conectat stick-ul {PlainPhrases.Q(stick)}, ";
+        return parts.Count == 0 ? head + "pe calculator au mai fost doar activități ale Windows; nimic al utilizatorului nu a putut fi legat de stick"
+            : head + string.Join(" și ", parts) + "; legătura este doar în timp și nu dovedește că aceste lucruri au de-a face cu stick-ul";
+    }
+
     internal static IEnumerable<AfterConnectWindow> AfterConnectWindows(IReadOnlyList<TimelineEvent> events, Observed m)
     {
         var arrivals = m.Events.Where(e => Ev(e, "Microsoft-Windows-Partition/Diagnostic", 1006) && T(e) is not null).Select(e => T(e)!.Value).Distinct().OrderBy(t => t).ToList();
@@ -160,6 +183,7 @@ public static partial class Wp14Rules
                 Category = c.FindingCategory, Classification = Classification.Correlated, Confidence = Confidence.Low,
                 FirstSeenUtc = windows[0].ConnectUtc, LastSeenUtc = windows[^1].Items.Max(i => i.WhenUtc),
                 User = string.Join(", ", windows.Select(w => w.SessionUser).Where(u => u.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase)),
+                PlainWhat = AfterConnectStory(PlainName(Kind(m)), windows),
                 Description = desc,
                 ClassificationReason = "Asociere în timp între ora conectării (Partition/Diagnostic 1006 sau registrul USB) și execuțiile, fișierele deschise și descărcările din fereastră.",
                 SemanticType = SemanticType.Observation,

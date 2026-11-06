@@ -61,6 +61,9 @@ public static partial class Wp11Rules
             Severity = Severity.Low, Category = "Lateral Movement", Classification = correlated ? Classification.Correlated : Classification.Direct,
             Confidence = Confidence.High, MitreTechniqueId = "T1021.001", FirstSeenUtc = ordered.FirstOrDefault(), LastSeenUtc = ordered.LastOrDefault(),
             User = groups[0].First().User, Ip = groups[0].Key.Ip,
+            PlainWhat = "a lucrat de la distanță pe acest calculator, din rețeaua internă (ecranul calculatorului a fost preluat prin rețea)" +
+                        (groups[0].Key.Ip.StartsWith('(') ? "" : $", de la adresa {groups[0].Key.Ip}") +
+                        (groups.Count > 1 ? $"; s-au mai făcut conectări de același fel cu {groups.Count - 1} alte conturi sau adrese" : ""),
             Description = string.Join("; ", groups.Take(15).Select(g => $"{g.First().User} de la {g.Key.Ip} ({string.Join(", ", g.GroupBy(x => x.Source).Select(s => $"{s.Count()} × {s.Key}"))})")) +
                           (loopback ? ". O sursă este adresa locală (loopback): RDP prin tunel este o posibilitate, nu o concluzie." : ""),
             ClassificationReason = correlated ? "Aceeași sesiune apare în Security 4624 tip 10 și în TerminalServices, apropiate în timp." : "Eveniment de autentificare RDP (4624 tip 10) sau TerminalServices 21/22/25/1149 dintr-o adresă care nu este publică.",
@@ -108,6 +111,11 @@ public static partial class Wp11Rules
             Confidence = pairs.Count > 0 ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1021.006",
             FirstSeenUtc = times.FirstOrDefault(), LastSeenUtc = times.LastOrDefault(),
             User = pairs.Count > 0 ? Account(F(pairs[0].Logon, "TargetUserName"), F(pairs[0].Logon, "TargetDomainName")) : "", Ip = pairs.Count > 0 ? F(pairs[0].Logon, "IpAddress") : "",
+            PlainWhat = sessionHost
+                ? "a lucrat de la distanță pe acest calculator (comenzi trimise prin rețea)" +
+                  (pairs.Count > 0 && F(pairs[0].Logon, "IpAddress") is { Length: > 0 } ip && ip != "-" ? $", de la adresa {ip}" : "; nu se știe de la ce adresă")
+                : n6 + n91 > 0 ? "Windows a înregistrat lucru de la distanță, cu comenzi trimise prin rețea, între acest calculator și altul"
+                : "Windows a înregistrat încercări nereușite de lucru de la distanță, cu comenzi trimise prin rețea",
             Description = $"WinRM/Operational: {n6} × 6 (sesiune inițiată de această stație), {n91} × 91 (shell creat pe această stație), {n142} × 142 (operații eșuate); " +
                           $"wsmprovhost.exe: {LogAnalyzer.Dfir.Language.RoText.Count(starts.Count, "pornire", "porniri")} 4688/Sysmon 1, {LogAnalyzer.Dfir.Language.RoText.Count(prefetch.Count, "intrare", "intrări")} Prefetch." + pairText,
             ClassificationReason = pairs.Count > 0 ? "wsmprovhost.exe pornit în sesiunea unei autentificări de tip 3 (LogonId sau utilizator+timp)." : "Evenimente WinRM/Operational și/sau pornirea gazdei de sesiune WinRM.",

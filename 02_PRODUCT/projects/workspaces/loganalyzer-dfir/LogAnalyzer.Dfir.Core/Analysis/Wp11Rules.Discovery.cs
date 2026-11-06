@@ -108,6 +108,7 @@ public static partial class Wp11Rules
                     Severity = station ? Severity.Low : Severity.Medium, Category = "Discovery", Classification = Classification.Correlated, Confidence = Confidence.Medium,
                     MitreTechniqueId = domain ? "T1087.002" : "T1082", SemanticType = SemanticType.Observation,
                     FirstSeenUtc = T(first.Event), LastSeenUtc = T(last.Event), User = who,
+                    PlainWhat = $"a rulat rapid {burst.Count} comenzi prin care a aflat cine este, ce drepturi are și ce calculatoare sunt în rețea ({Join(burst.Select(x => PlainPhrases.Cut(x.Start.CommandLine.Length > 0 ? x.Start.CommandLine : WinPath.GetFileName(x.Start.Image), 40)), 4)})",
                     Description = $"{keys.Count} comenzi de recunoaștere diferite rulate de {who} între {Time(T(first.Event))} și {Time(T(last.Event))}" +
                                   (domain ? ", inclusiv enumerarea domeniului (grupuri, controlere, stații)" : "") +
                                   $": {Join(burst.Select(x => Trunc(x.Start.CommandLine.Length > 0 ? x.Start.CommandLine : WinPath.GetFileName(x.Start.Image), 120)), 8)}. " +

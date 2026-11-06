@@ -46,7 +46,8 @@ public static partial class Wp14Rules
                 $"{staged.Count} fișiere în folderul de pregătire", times.Count > 0 ? times[0] : null, times.Count > 0 ? times[^1] : null, "necunoscut: folderul este al unui profil, fișierele nu poartă contul", "folderul Burn", "scriere pe disc probabilă, neconfirmată", "disc CD/DVD", desc,
                 "Fișiere în folderul de pregătire a inscripționării din Explorer, cu data ultimei modificări în perioada cazului sau necunoscută.",
                 ["Fișierele pot fi rămase dintr-o inscripționare anulată sau terminată, curățate doar la ejectarea discului.", "Un utilizator poate fi pregătit un disc de instalare sau de arhivă aprobat."],
-                staged.Take(10).Select(f => FactRef(c, $"burn/staging/{f.Name}", $"{f.Name}, {f.Size} octeți")).ToList(), staged.Take(5).Select(f => $"airgap_facts burn/staging/{f.Name}").ToList(), "T1052", SemanticType.Presence));
+                staged.Take(10).Select(f => FactRef(c, $"burn/staging/{f.Name}", $"{f.Name}, {f.Size} octeți")).ToList(), staged.Take(5).Select(f => $"airgap_facts burn/staging/{f.Name}").ToList(), "T1052", SemanticType.Presence,
+                plain: $"a pregătit {(staged.Count == 1 ? "fișierul" : "fișierele")} {PlainPhrases.List(staged.Select(f => PlainPhrases.Q(f.Name)).ToList(), 5)} pentru a fi scris{(staged.Count == 1 ? "" : "e")} pe un CD/DVD; nu se știe dacă discul a fost scris până la capăt"));
         }
         foreach (var log in b.ToolLogs.Where(l => PeriodOrUnset(c, l.LastWriteUtc)))
         {

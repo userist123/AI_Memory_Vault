@@ -39,6 +39,10 @@ public sealed class PlainStoryTests
         Assert.Equal("utilizatorul cu contul „labadmin”", PlainStory.Who("defaultuser0, DWM-1, DWM-2, labadmin, UMFD-0", null));
         Assert.Equal("Windows (un serviciu al sistemului, nu o persoană)", PlainStory.Who("S-1-5-18", null));
         Assert.Equal("cineva (probele nu arată contul)", PlainStory.Who("", null));
+        // lab S5: the attacker named the new account like a computer's; it is named, never hidden as „Windows”
+        Assert.Equal("contul „labbackup$” (nume de cont de calculator: verificați că este un calculator real)", PlainStory.Who("LAB-WS01\\labbackup$", null));
+        Assert.Equal("o dată", PlainPhrases.Times(1));
+        Assert.Equal("de 21 de ori", PlainPhrases.Times(21));
         Assert.Equal("Popescu Ion (contul ion.popescu)", PlainStory.Who("LAB\\ion.popescu", Register().PersonOf));
         Assert.Equal("Popescu Ion (contul ion.popescu)", PlainStory.Who("ion.popescu@lab.local", Register().PersonOf));
         Assert.StartsWith("una dintre persoanele conectate atunci (", PlainStory.Who("ion.popescu, ana.pop", Register().PersonOf));
