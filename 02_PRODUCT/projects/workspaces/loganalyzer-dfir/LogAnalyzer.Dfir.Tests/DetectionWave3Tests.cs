@@ -106,6 +106,30 @@ public class DetectionWave3Tests
         Assert.DoesNotContain(Corr(Block(0, "Get-ChildItem | Out-File -Encoding utf8 out.txt", "w3")), x => x.RuleId == "PS-SUSPICIOUS");
     }
 
+    private const string CimModule = "#requires -version 3.0\r\ntry { Microsoft.PowerShell.Core\\Set-StrictMode -Off } catch { }\r\n" +
+        "$script:MyModule = $MyInvocation.MyCommand.ScriptBlock.Module\r\n$script:ClassName = 'ROOT/Microsoft/Windows/Storage/MSFT_Disk'\r\n" +
+        "$script:ObjectModelWrapper = [Microsoft.PowerShell.Cmdletization.Cim.CimCmdletAdapter]\r\n";
+
+    [Fact]
+    public void The_module_Windows_generates_for_a_CIM_cmdlet_is_not_suspicious_by_its_Warning_flag_alone()
+    {
+        // lab VM 2026-11-06: Get-Disk / Get-Volume / Get-NetAdapter gave 87 "suspicious" blocks out of 100 listed
+        Assert.DoesNotContain(Corr(Block(0, CimModule, "cim1", ("_xLevel", "3"))), x => x.RuleId == "PS-SUSPICIOUS");
+        // a keyword in the same text still counts; the prologue alone without the cmdletization adapter is not the generated module
+        Assert.Contains(Corr(Block(0, CimModule + TestFixtureText.EncodedIexBlock, "cim2", ("_xLevel", "3"))), x => x.RuleId == "PS-SUSPICIOUS");
+        Assert.Contains(Corr(Block(0, "#requires -version 3.0\r\ntry { Microsoft.PowerShell.Core\\Set-StrictMode -Off } catch { }\r\n$script:ClassName = 'ROOT/x'\r\nGet-Date", "cim3", ("_xLevel", "3"))), x => x.RuleId == "PS-SUSPICIOUS");
+    }
+
+    [Fact]
+    public void The_same_script_text_run_many_times_is_one_finding_with_the_count()
+    {
+        var runs = Enumerable.Range(0, 7).Select(i => Block(i * 10, "function PSCopyFromSessionHelper { param() }", "copy" + i, ("_xLevel", "3"))).ToArray();
+        var f = One(Corr(runs), "PS-SUSPICIOUS");
+        Assert.Contains("de 7 ori", f.Description);
+        Assert.Equal(7, f.SupportingEvidence.Count);
+        Assert.True(f.LastSeenUtc > f.FirstSeenUtc);
+    }
+
     // ---- D14 WMI persistence ----
 
     [Fact]
