@@ -161,5 +161,8 @@ public class Wp6aXamlTests
         // owner 2026-11-06: the plain sentence first, the technical columns kept and labelled as such
         foreach (var header in new[] { "Severitate", "Ce s-a întâmplat", "Clasificare", "Stare", "Verificare", "Prima (UTC)", "Tehnic: regulă", "Tehnic: titlu", "Tehnic: detalii" })
             Assert.Contains($"Header=\"{header}\"", inv);
+        // lab WS02 2026-11-06: a star-sized sentence column in a grid that scrolls sideways collapsed to a few pixels (one letter per line)
+        Assert.DoesNotMatch(@"PlainStoryConverter\.Instance\}\}"" Width=""\d*\*""", inv);
+        Assert.Matches(@"PlainStoryConverter\.Instance\}\}"" Width=""\d{3}"" MinWidth=""\d{3}""", inv);
     }
 }
