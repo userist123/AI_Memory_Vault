@@ -147,6 +147,14 @@ public class Wp11AccountTests
         Assert.Equal(Severity.Medium, bySid.Severity);
         var domainAdmins = One(Run([AddedToGroup(1, "Grup necunoscut", "S-1-5-21-1-2-3-512", id: 4728)]), "ACCOUNT-ADDED-PRIVILEGED-GROUP");
         Assert.Equal(Severity.Medium, domainAdmins.Severity);
+        // lab SRV01 2026-11-06: the domain join adds Domain Admins (RID 512, member "-") to the local Administrators; the title names it, the
+        // alternative explanation says what Windows does at the join
+        var join = One(Run([Sec(4732, 1, ("MemberName", "-"), ("MemberSid", "S-1-5-21-1061-450-3444-512"), ("TargetUserName", "Administrators"), ("TargetSid", "S-1-5-32-544"),
+            ("SubjectUserName", "Administrator"), ("SubjectDomainName", "LAB-SRV01"))]), "ACCOUNT-ADDED-PRIVILEGED-GROUP");
+        Assert.Equal("Cont adăugat într-un grup privilegiat: Domain Admins → Administrators", join.Title);
+        Assert.Contains(join.AlternativeExplanations, a => a.Contains("alăturarea stației în domeniu", StringComparison.Ordinal));
+        Assert.Equal("", Wp11Rules.DomainGroupOfSid("S-1-5-21-1-2-3-1105"));
+        Assert.Equal("", Wp11Rules.DomainGroupOfSid("S-1-5-32-544"));
         Assert.DoesNotContain(Run([AddedToGroup(1, "Users", "S-1-5-32-545")]), x => x.RuleId == "ACCOUNT-ADDED-PRIVILEGED-GROUP");
         One(Run([AddedToGroup(1, "Remote Desktop Users", "S-1-5-32-555", id: 4756)]), "ACCOUNT-ADDED-PRIVILEGED-GROUP");
     }

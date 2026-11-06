@@ -25,7 +25,29 @@ public static partial class Wp11Rules
             var hit = c.Events.FirstOrDefault(e => Ev(e, "Security", ids) && F(e, idKey).Equals(sid, StringComparison.OrdinalIgnoreCase) && F(e, nameKey) is { Length: > 0 } n && n != "-");
             if (hit is not null) return F(hit, nameKey);
         }
-        return "";
+        return DomainGroupOfSid(sid);
+    }
+
+    /// <summary>
+    /// The well-known groups of a domain by their relative id (S-1-5-21-&lt;domain&gt;-512 is Domain Admins in every domain), or "". No event names them:
+    /// lab SRV01 2026-11-06 showed "S-1-5-21-…-512 → Administrators", which is Windows adding Domain Admins at the domain join.
+    /// </summary>
+    internal static string DomainGroupOfSid(string sid)
+    {
+        var m = System.Text.RegularExpressions.Regex.Match(sid, @"^S-1-5-21-\d+-\d+-\d+-(?<rid>\d+)$", System.Text.RegularExpressions.RegexOptions.CultureInvariant);
+        if (!m.Success) return "";
+        return m.Groups["rid"].Value switch
+        {
+            "512" => "Domain Admins",
+            "513" => "Domain Users",
+            "514" => "Domain Guests",
+            "515" => "Domain Computers",
+            "516" => "Domain Controllers",
+            "518" => "Schema Admins",
+            "519" => "Enterprise Admins",
+            "520" => "Group Policy Creator Owners",
+            _ => "",
+        };
     }
 
     private static bool SameAccount(string name, string sid, string otherName, string otherSid)
@@ -67,7 +89,9 @@ public static partial class Wp11Rules
                 ClassificationReason = "Eveniment Security 4728/4732/4756 pentru un grup din lista de grupuri privilegiate (după nume sau SID). Arată apartenența acordată, nu folosirea ei.",
                 SemanticType = SemanticType.Observation,
                 SupportingEvidence = g.Take(10).Select(e => Ref(e, $"{e.EventId} {group}")).ToList(),
-                AlternativeExplanations = ["Administrare planificată (cont de serviciu, administrator nou, grup de acces la distanță).", "Subiectul evenimentului poate fi un administrator autorizat."],
+                AlternativeExplanations = DomainGroupOfSid(sid) == "Domain Admins" && group.Equals("Administrators", StringComparison.OrdinalIgnoreCase)
+                    ? ["La alăturarea stației în domeniu, Windows adaugă singur Domain Admins în grupul local Administrators; verificați dacă momentul coincide cu alăturarea.", "Administrare planificată."]
+                    : ["Administrare planificată (cont de serviciu, administrator nou, grup de acces la distanță).", "Subiectul evenimentului poate fi un administrator autorizat."],
             });
         }
 
