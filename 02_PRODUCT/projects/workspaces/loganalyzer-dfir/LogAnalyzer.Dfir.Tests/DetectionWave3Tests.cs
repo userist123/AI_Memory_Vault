@@ -183,6 +183,10 @@ public class DetectionWave3Tests
         Assert.Equal(2, rows.Count);
         Assert.All(rows, r => Assert.Equal(Severity.Low, r.Severity));
         Assert.Contains(rows, r => r.Title.EndsWith("ROOT/Microsoft/Windows/Storage/MSFT_Disk", StringComparison.Ordinal) && r.Description.Contains("de 2 ori"));
+        // the backslash form Windows also generates (lab VM: ROOT\Microsoft\Windows\Defender\MSFT_MpRollback) is the same module
+        var backslash = One(Corr(Block(0, CimModule.Replace("'ROOT/Microsoft/Windows/Storage/MSFT_Disk'", @"'ROOT\Microsoft\Windows\Defender\MSFT_MpRollback'"), "cim2", ("_xLevel", "3"))), "PS-SUSPICIOUS");
+        Assert.Equal(Severity.Low, backslash.Severity);
+        Assert.EndsWith(@"ROOT\Microsoft\Windows\Defender\MSFT_MpRollback", backslash.Title);
         // review round 2: a payload without any listed API behind the pasted prologue is listed on its own (Low), with its own evidence
         var sneaky = CimModule + "$p=[Runtime.InteropServices.Marshal]::AllocHGlobal(4096); $d=[scriptblock]::Create($s); $d.Invoke()";
         var own = Assert.Single(Corr(Block(0, sneaky, "sneaky", ("_xLevel", "3"))), x => x.RuleId == "PS-SUSPICIOUS");

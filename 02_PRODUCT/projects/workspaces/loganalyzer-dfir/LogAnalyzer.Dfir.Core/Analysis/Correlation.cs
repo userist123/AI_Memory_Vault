@@ -120,7 +120,7 @@ public static class Correlation
         // the generated prologue is fixed and comes first: the markers must sit at its head, not anywhere (a comment) in a pasted script (review round 1)
         var head = t.Length > 600 ? t[..600] : t;
         if (!head.Contains(@"try { Microsoft.PowerShell.Core\Set-StrictMode -Off } catch { }", StringComparison.Ordinal) ||
-            !head.Contains("$script:ClassName = 'ROOT/", StringComparison.Ordinal) ||
+            !(head.Contains("$script:ClassName = 'ROOT/", StringComparison.Ordinal) || head.Contains("$script:ClassName = 'ROOT\\", StringComparison.Ordinal)) ||   // both forms are generated (lab VM: ROOT\Microsoft\Windows\Defender\MSFT_MpRollback)
             !t.Contains("Microsoft.PowerShell.Cmdletization", StringComparison.Ordinal)) return false;
         // a generated CIM wrapper never loads native code or decodes payloads: any listed text (data, rule_lists.json) means foreign content; an empty list
         // (data not loaded) treats nothing as the generated module, so nothing is summarised away
