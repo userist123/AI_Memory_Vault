@@ -106,6 +106,41 @@ public class DetectionWave3Tests
         Assert.DoesNotContain(Corr(Block(0, "Get-ChildItem | Out-File -Encoding utf8 out.txt", "w3")), x => x.RuleId == "PS-SUSPICIOUS");
     }
 
+    // ---- DISCOVERY-BURST (lab VM 2026-11-06, scenario S2) ----
+
+    private static TimelineEvent Proc(double minute, string image, string cl, string user = "it.admin") =>
+        Sec(4688, minute, ("NewProcessName", image), ("CommandLine", cl), ("SubjectUserName", user), ("SubjectLogonId", "0x1"));
+
+    [Fact]
+    public void Three_different_discovery_commands_by_one_account_in_ten_minutes_are_one_discovery_finding()
+    {
+        var found = Wp11Rules.Run([
+            Proc(0, @"C:\Windows\System32\whoami.exe", "whoami /all"),
+            Proc(0.1, @"C:\Windows\System32\net.exe", "net group \"Domain Admins\" /domain"),
+            Proc(0.1, @"C:\Windows\System32\net1.exe", "C:\\Windows\\system32\\net1 group \"Domain Admins\" /domain"),
+            Proc(0.2, @"C:\Windows\System32\nltest.exe", "nltest /dclist:lab.local"),
+            Proc(0.3, @"C:\Windows\System32\net.exe", "net view \\\\LAB-SRV01")], [], () => "F-1");
+        var f = Assert.Single(found, x => x.RuleId == "DISCOVERY-BURST");
+        Assert.Equal("T1087.002", f.MitreTechniqueId);
+        Assert.Equal(Severity.Medium, f.Severity);
+        Assert.Contains("nltest", f.Title);
+        Assert.Equal(5, f.SupportingEvidence.Count);
+    }
+
+    [Fact]
+    public void Discovery_needs_three_distinct_commands_in_the_window_and_one_account()
+    {
+        // the same command repeated, two commands, or three commands spread over an hour are administration
+        Assert.DoesNotContain(Wp11Rules.Run([Proc(0, "whoami.exe", "whoami"), Proc(1, "whoami.exe", "whoami /all"), Proc(2, "whoami.exe", "whoami /priv")], [], () => "F-1"), x => x.RuleId == "DISCOVERY-BURST");
+        Assert.DoesNotContain(Wp11Rules.Run([Proc(0, "whoami.exe", "whoami"), Proc(1, "nltest.exe", "nltest /dclist:x")], [], () => "F-1"), x => x.RuleId == "DISCOVERY-BURST");
+        Assert.DoesNotContain(Wp11Rules.Run([Proc(0, "whoami.exe", "whoami"), Proc(20, "nltest.exe", "nltest /dclist:x"), Proc(40, "systeminfo.exe", "systeminfo")], [], () => "F-1"), x => x.RuleId == "DISCOVERY-BURST");
+        Assert.DoesNotContain(Wp11Rules.Run([Proc(0, "whoami.exe", "whoami", "ana"), Proc(1, "nltest.exe", "nltest /dclist:x", "ion"), Proc(2, "systeminfo.exe", "systeminfo", "dan")], [], () => "F-1"), x => x.RuleId == "DISCOVERY-BURST");
+        // plain ipconfig / net use are not discovery
+        Assert.Equal("", Wp11Rules.DiscoveryKey(@"C:\Windows\System32\ipconfig.exe", "ipconfig"));
+        Assert.Equal("", Wp11Rules.DiscoveryKey(@"C:\Windows\System32\net.exe", @"net use \\srv\ipc$"));
+        Assert.Equal("net group", Wp11Rules.DiscoveryKey(@"C:\Windows\System32\net1.exe", @"C:\Windows\system32\net1 group x /domain"));
+    }
+
     private const string CimModule = "#requires -version 3.0\r\ntry { Microsoft.PowerShell.Core\\Set-StrictMode -Off } catch { }\r\n" +
         "$script:MyModule = $MyInvocation.MyCommand.ScriptBlock.Module\r\n$script:ClassName = 'ROOT/Microsoft/Windows/Storage/MSFT_Disk'\r\n" +
         "$script:ObjectModelWrapper = [Microsoft.PowerShell.Cmdletization.Cim.CimCmdletAdapter]\r\n";

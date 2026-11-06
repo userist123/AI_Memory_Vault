@@ -14,7 +14,7 @@ public class Wp11ContractTests
     [
         "SMB-ADMIN-SHARE", "SMB-SHARE-PERMS-CHANGED", "ACCOUNT-CREATED", "ACCOUNT-ADDED-PRIVILEGED-GROUP", "ACCOUNT-CREATED-THEN-USED",
         "REMOTE-RDP-INTERNAL", "REMOTE-WINRM", "REMOTE-PSEXEC", "REMOTE-SSH", "SECURITY-AGENT-STOPPED", "VSS-SNAPSHOT-DELETED",
-        "DNS-RARE-DOMAIN", "DNS-SERVER-CHANGED", "REMOTE-TOOL-PRESENT", "REMOTE-TOOL-EXECUTED",
+        "DNS-RARE-DOMAIN", "DNS-SERVER-CHANGED", "REMOTE-TOOL-PRESENT", "REMOTE-TOOL-EXECUTED", "DISCOVERY-BURST",
     ];
 
     /// <summary>A timeline in which every rule fires at least once.</summary>
@@ -37,6 +37,9 @@ public class Wp11ContractTests
         Row("SystemConfig", 13, f: [("Interface", "{A}"), ("NameServer", "8.8.8.8")]),
         Row("Amcache", 14, "teamviewer.exe", @"C:\Users\bob\Downloads\TeamViewer.exe", "abc"),
         Row("Prefetch", 15, "ANYDESK.EXE", @"C:\Program Files (x86)\AnyDesk\AnyDesk.exe", f: [("RunCount", "2")]),
+        Sec(4688, 16, ("NewProcessName", @"C:\Windows\System32\whoami.exe"), ("CommandLine", "whoami /all"), ("SubjectUserName", "bob")),
+        Sec(4688, 16.1, ("NewProcessName", @"C:\Windows\System32\nltest.exe"), ("CommandLine", "nltest /dclist:corp"), ("SubjectUserName", "bob")),
+        Sec(4688, 16.2, ("NewProcessName", @"C:\Windows\System32\net.exe"), ("CommandLine", "net group \"Domain Admins\" /domain"), ("SubjectUserName", "bob")),
     ];
 
     private static List<Finding> Enriched() => FindingContract.Enrich(Correlation.Run(Everything())).ToList();

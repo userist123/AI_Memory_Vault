@@ -157,6 +157,8 @@ public class AirGapChannelTests
         Assert.DoesNotContain("vechi.docx", f.Description);
         Assert.Contains("Nu arată dacă discul a fost scris", f.Description);
         None(Go([], BurnFacts(b => b.StagingFolderExists = true), scope), "MEDIA-OPTICAL-STAGING");
+        // lab VMs 2026-11-06: the folder's own desktop.ini (present in every profile) was reported as a file prepared for a disc
+        None(Go([], BurnFacts(b => { b.StagingFolderExists = true; b.StagingFiles.Add(new() { Name = "desktop.ini", Size = 174, LastWriteUtc = P0 }); b.StagingFiles.Add(new() { Name = "Thumbs.db", Size = 9, LastWriteUtc = P0 }); }), scope), "MEDIA-OPTICAL-STAGING");
     }
 
     [Fact]

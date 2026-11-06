@@ -17,6 +17,17 @@ public static partial class Wp11Rules
         return (name, sid is "-" ? "" : sid);
     }
 
+    /// <summary>The account name the evidence gives a SID (4720 TargetSid, 4624 TargetUserSid, 4688 SubjectUserSid), or "" when none does.</summary>
+    private static string NameOfSid(Ctx c, string sid)
+    {
+        foreach (var (idKey, nameKey, ids) in new[] { ("TargetSid", "TargetUserName", new[] { 4720, 4722, 4738 }), ("TargetUserSid", "TargetUserName", new[] { 4624 }), ("SubjectUserSid", "SubjectUserName", new[] { 4688, 4672 }) })
+        {
+            var hit = c.Events.FirstOrDefault(e => Ev(e, "Security", ids) && F(e, idKey).Equals(sid, StringComparison.OrdinalIgnoreCase) && F(e, nameKey) is { Length: > 0 } n && n != "-");
+            if (hit is not null) return F(hit, nameKey);
+        }
+        return "";
+    }
+
     private static bool SameAccount(string name, string sid, string otherName, string otherSid)
     {
         if (sid.Length > 0 && otherSid.Length > 0 && sid != "-" && otherSid != "-") return sid.Equals(otherSid, StringComparison.OrdinalIgnoreCase);
@@ -40,6 +51,8 @@ public static partial class Wp11Rules
         {
             var first = g.First();
             var (name, sid) = Member(first);
+            // a local group (4732) logs the member as "-" with its SID: take the name from the account's own 4720 or logons (lab VM 2026-11-06 titles showed bare SIDs)
+            if (name.Length == 0 && sid.Length > 0) name = NameOfSid(c, sid);
             var who = name.Length > 0 ? name : sid;
             var group = F(first, "TargetUserName");
             var by = Account(F(first, "SubjectUserName"), F(first, "SubjectDomainName"));
@@ -98,6 +111,9 @@ public static partial class Wp11Rules
             var firstUse = uses[0];
             var sev = privileged && remoteUses.Count > 0 ? Severity.High : privileged || remoteUses.Count > 0 ? Severity.Medium : Severity.Low;
             if (!sidMatched && sev == Severity.High) sev = Severity.Medium;   // a name-only match cannot exclude a reused name
+            // created by SYSTEM / the machine (Windows setup: defaultuser0, the unattended administrator) and used only locally: provisioning, Low
+            // (lab VM 2026-11-06: every freshly installed station showed Medium "created then used" for its setup accounts)
+            if (provisioning && remoteUses.Count == 0) sev = Severity.Low;
             var types = uses.Where(u => u.EventId == "4624").GroupBy(u => F(u, "LogonType")).Select(g => $"tip {g.Key}: {g.Count()}").ToList();
             o.Add(new Finding
             {
@@ -109,7 +125,8 @@ public static partial class Wp11Rules
                               (types.Count > 0 ? $" ({string.Join(", ", types)})" : "") + "." +
                               (remoteUses.Count > 0 ? $" Folosit de la distanță din {Join(remoteUses.Select(u => F(u, "IpAddress")))}." : " Nicio autentificare de la distanță în dovezile colectate.") +
                               (privileged ? $" Apartenență privilegiată în caz: {Join(privAdds.Where(e => { var m = Member(e); return SameAccount(name, sid, m.Name, m.Sid); }).Select(e => F(e, "TargetUserName")))}." : "") +
-                              (sidMatched ? "" : " Legătura s-a făcut doar după nume (SID indisponibil), deci nu exclude refolosirea numelui."),
+                              (sidMatched ? "" : " Legătura s-a făcut doar după nume (SID indisponibil), deci nu exclude refolosirea numelui.") +
+                              (provisioning && remoteUses.Count == 0 ? $" Creat de {by} (aprovizionare: instalarea Windows sau un serviciu) și folosit doar local, de aceea Low." : ""),
                 ClassificationReason = sidMatched ? "Aceeași SID în 4720 și într-un 4624 ulterior; High doar pentru cont privilegiat folosit de la distanță." : "Același nume în 4720 și într-un 4624/4648 ulterior; SID indisponibil, deci limitat la Medium.",
                 SemanticType = SemanticType.Observation,
                 SupportingEvidence = [Ref(cr, "4720 cont creat"), .. uses.Take(8).Select(u => Ref(u, $"{u.EventId} folosire")), .. privAdds.Where(e => { var m = Member(e); return SameAccount(name, sid, m.Name, m.Sid); }).Take(2).Select(e => Ref(e, "grup privilegiat"))],

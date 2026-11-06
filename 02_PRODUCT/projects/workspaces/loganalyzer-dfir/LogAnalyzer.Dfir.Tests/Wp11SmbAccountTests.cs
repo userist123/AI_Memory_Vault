@@ -175,6 +175,31 @@ public class Wp11AccountTests
     }
 
     [Fact]
+    public void A_setup_account_created_by_SYSTEM_and_used_only_locally_is_Low_even_when_privileged()
+    {
+        // lab VM 2026-11-06: defaultuser0 and the unattended administrator of every fresh install were Medium "created then used"
+        var local = One(Run([Created(0, by: "SYSTEM"), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10)]), "ACCOUNT-CREATED-THEN-USED");
+        Assert.Equal(Severity.Low, local.Severity);
+        Assert.Contains("aprovizionare", local.Description);
+        // the same account used from another host keeps its severity
+        var remote = One(Run([Created(0, by: "SYSTEM"), AddedToGroup(5, "Administrators", "S-1-5-32-544"), Logon(10, type: "10", ip: "10.0.0.7")]), "ACCOUNT-CREATED-THEN-USED");
+        Assert.Equal(Severity.High, remote.Severity);
+    }
+
+    [Fact]
+    public void A_local_group_member_logged_as_a_bare_SID_is_named_from_the_accounts_own_events()
+    {
+        // lab VM 2026-11-06: 4732 logs MemberName "-" for a local account; the title showed "S-1-5-21-…-1002 → Administrators"
+        var add = Sec(4732, 5, ("MemberName", "-"), ("MemberSid", "S-1-5-21-1-2-3-1002"), ("TargetUserName", "Administrators"), ("TargetSid", "S-1-5-32-544"), ("SubjectUserName", "it.admin"), ("SubjectDomainName", "LAB"));
+        var f = One(Run([Created(0, name: "labbackup$", sid: "S-1-5-21-1-2-3-1002"), add]), "ACCOUNT-ADDED-PRIVILEGED-GROUP");
+        Assert.Equal("Cont adăugat într-un grup privilegiat: labbackup$ → Administrators", f.Title);
+        Assert.Contains("S-1-5-21-1-2-3-1002", f.Description);
+        // no event names the SID: the title keeps the SID rather than inventing a name
+        var unknown = Sec(4732, 5, ("MemberName", "-"), ("MemberSid", "S-1-5-21-9-9-9-1003"), ("TargetUserName", "Administrators"), ("TargetSid", "S-1-5-32-544"), ("SubjectUserName", "it.admin"), ("SubjectDomainName", "LAB"));
+        Assert.Contains("S-1-5-21-9-9-9-1003", One(Run([unknown]), "ACCOUNT-ADDED-PRIVILEGED-GROUP").Title);
+    }
+
+    [Fact]
     public void Logon_before_creation_or_by_another_account_does_not_count()
     {
         Assert.DoesNotContain(Run([Logon(-30), Created(0)]), x => x.RuleId == "ACCOUNT-CREATED-THEN-USED");
