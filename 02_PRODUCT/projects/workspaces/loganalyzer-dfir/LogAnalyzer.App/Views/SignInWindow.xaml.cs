@@ -33,7 +33,11 @@ namespace LogAnalyzer.UI.Views
             Loaded += async (_, _) => await RefreshCardsAsync();
         }
 
-        public sealed record IdentityRow(string Label, string Value);
+        public sealed record IdentityRow(string Label, string Value)
+        {
+            /// <summary>What a screen reader announces for the row (the list item's name): never the record's „IdentityRow { Label = … }” form.</summary>
+            public override string ToString() => $"{Label}: {Value}";
+        }
 
         /// <summary>
         /// Plan 2026-11-04 (R3): the left column says what the person signs in to before anything else. Only facts the application knows at this point:

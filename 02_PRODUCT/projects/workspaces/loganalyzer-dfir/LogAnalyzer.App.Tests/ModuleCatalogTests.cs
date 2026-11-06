@@ -32,6 +32,13 @@ public sealed class ModuleCatalogTests
         Assert.All(menu.SelectMany(s => s.Pages), p => Assert.Equal(p.Title, p.ToString()));
     }
 
+    [Fact]
+    public void A_sign_in_identity_row_is_announced_as_label_and_value()
+    {
+        // lab evaluation 2026-11-06 (Windows 11 VM): UI Automation read "IdentityRow { Label = …, Value = … }" in the sign-in window
+        Assert.Equal("Stația: LAB-PC", new LogAnalyzer.UI.Views.SignInWindow.IdentityRow("Stația", "LAB-PC").ToString());
+    }
+
     [Theory]
     [InlineData(StationPosture.Standalone, "Insula — Stație izolată")]
     [InlineData(StationPosture.IsolatedNetwork, "Arhipelag — Rețea izolată")]

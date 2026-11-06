@@ -85,16 +85,17 @@ public static class Correlation
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
     private static readonly System.Text.RegularExpressions.Regex DefenderWeakeningValue = new(
-        @"exclusions|\bDisable(?:RealtimeMonitoring|BehaviorMonitoring|IOAVProtection|ScriptScanning|OnAccessProtection|AntiSpyware|AntiVirus|BlockAtFirstSeen|ArchiveScanning)\s*=\s*(?:0x)?0*1\b|TamperProtection\s*=\s*(?:0x)?0*4\b|SpynetReporting\s*=\s*(?:0x)?0+\b",
+        @"\\Exclusions\\|\bDisable(?:RealtimeMonitoring|BehaviorMonitoring|IOAVProtection|ScriptScanning|OnAccessProtection|AntiSpyware|AntiVirus|BlockAtFirstSeen|ArchiveScanning)\s*=\s*(?:0x)?0*1\b|TamperProtection\s*=\s*(?:0x)?0*4\b|SpynetReporting\s*=\s*(?:0x)?0+\b",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
     private static readonly System.Text.RegularExpressions.Regex WmiTypedName = new(
-        @"^\s*(?:(?<type>[A-Za-z_]+)\.)?Name\s*=\s*""(?<name>[^""]*)""\s*$",
+        @"^\s*(?:(?:(?<type>[A-Za-z_]+)\.)?Name|(?<type>[A-Za-z_]+))\s*=\s*""(?<name>[^""]*)""\s*$",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
     /// <summary>
     /// True only for the subscription Windows registers itself: the consumer / filter NAME field is exactly "SCM Event Log Consumer" / "SCM Event Log Filter"
-    /// (an NTEventLogEventConsumer / __EventFilter). A command line or script that merely mentions the phrase is not built-in.
+    /// (an NTEventLogEventConsumer / __EventFilter), written as Type.Name="..." or, as WMI-Activity 5861 logs it, Type="...". A command line or script that
+    /// merely mentions the phrase is not built-in.
     /// </summary>
     private static bool IsBuiltInWmiSubscription(string consumer)
     {
@@ -108,7 +109,8 @@ public static class Correlation
         return false;
     }
 
-    /// <summary>A Defender 5007 "new value" that weakens protection: an exclusion, a protection-disabling switch (explicit list) set to 1, Tamper Protection off, cloud reporting off.</summary>
+    /// <summary>A Defender 5007 "new value" that weakens protection: an exclusion (a value under an ...\Exclusions\ key; Features\TPExclusions is a Tamper
+    /// Protection flag Defender writes itself, not an exclusion), a protection-disabling switch (explicit list) set to 1, Tamper Protection off, cloud reporting off.</summary>
     private static bool WeakensDefender(string newValue) => newValue.Length > 0 && DefenderWeakeningValue.IsMatch(newValue);
 
     private static readonly System.Text.RegularExpressions.Regex CommandExecutableRx = new(
@@ -473,7 +475,8 @@ public static class Correlation
             var inWindow = ordered.Skip(b.Start).Take(b.End - b.Start + 1).ToList();
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "CRED-BRUTEFORCE", Title = $"{inWindow.Count} autentificări eșuate pentru {g.Key.Item2} de la {g.Key.Item1}",
+                FindingId = Id(), RuleId = "CRED-BRUTEFORCE", Title = $"{inWindow.Count} autentificări eșuate pentru {g.Key.Item2} " +
+                        (g.Key.Item1.Trim() is "" or "-" ? "fără adresă de rețea (autentificare locală sau prin serviciu)" : $"de la {g.Key.Item1}"),
                 Severity = Severity.Medium, Category = "Credential Access", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1110",
                 FirstSeenUtc = inWindow[0].Time.Utc, LastSeenUtc = inWindow[^1].Time.Utc, Ip = g.Key.Item1, User = g.Key.Item2,
                 Description = $"Între {inWindow[0].Time.Utc:yyyy-MM-dd HH:mm} și {inWindow[^1].Time.Utc:yyyy-MM-dd HH:mm} UTC (cel puțin {CredentialThreshold} încercări în {CredentialWindow.TotalMinutes:0} minute; în total {g.Count()} în probe).",

@@ -73,6 +73,15 @@ public class DetectionWave3Tests
         Assert.DoesNotContain(Corr(Enumerable.Range(0, 10).Select(i => Fail(i * 120, "alice"))), x => x.RuleId == "CRED-BRUTEFORCE");
     }
 
+    [Fact]
+    public void Brute_force_without_a_network_address_says_so_instead_of_from_dash()
+    {
+        var f = One(Corr(Enumerable.Range(0, 10).Select(i => Fail(i, "alice", "-"))), "CRED-BRUTEFORCE");
+        Assert.DoesNotContain("de la -", f.Title);
+        Assert.Contains("fără adresă de rețea", f.Title);
+        Assert.Contains("de la 203.0.113.9", One(Corr(Enumerable.Range(0, 10).Select(i => Fail(i, "alice"))), "CRED-BRUTEFORCE").Title);
+    }
+
     // ---- D13 PowerShell ----
 
     private static TimelineEvent Block(double minute, string text, string id, params (string K, string V)[] extra) =>
@@ -266,6 +275,15 @@ public class DetectionWave3Tests
     }
 
     [Fact]
+    public void A_Defender_exclusion_is_a_value_under_an_Exclusions_key_not_the_Tamper_Protection_flag()
+    {
+        // seen on a clean Windows 11 lab VM: Defender writes this itself at startup
+        Assert.DoesNotContain(Corr(Ev(Defender, 5007, 0, "", ("New Value", @"HKLM\SOFTWARE\Microsoft\Windows Defender\Features\TPExclusions = 0x0"))), x => x.RuleId == "DEF-TAMPER");
+        Assert.Contains(Corr(Ev(Defender, 5007, 0, "", ("New Value", @"HKLM\SOFTWARE\Microsoft\Windows Defender\Exclusions\Paths\C:\Users\Public\x = 0x0"))), x => x.RuleId == "DEF-TAMPER");
+        Assert.Contains(Corr(Ev(Defender, 5007, 0, "", ("New Value", @"HKLM\SOFTWARE\Policies\Microsoft\Windows Defender\Exclusions\Processes\evil.exe = 0x0"))), x => x.RuleId == "DEF-TAMPER");
+    }
+
+    [Fact]
     public void A_generic_executable_name_is_a_remote_tool_only_with_the_vendor_path()
     {
         Assert.DoesNotContain(Run([Prefetch(0, "LEVEL.EXE", @"C:\Users\bob\Downloads\level.exe")]), x => x.RuleId == "REMOTE-TOOL-EXECUTED");
@@ -282,5 +300,8 @@ public class DetectionWave3Tests
         Assert.DoesNotContain(Corr(Sysmon(19, 0, ("Name", "SCM Event Log Filter"))), x => x.RuleId == "PERSIST-WMI");
         Assert.Contains(Corr(Ev(Wmi, 5861, 0, "", ("CONSUMER", "CommandLineEventConsumer.Name=\"Updater\""), ("CommandLineTemplate", "cmd /c echo SCM Event Log & payload.exe"))), x => x.RuleId == "PERSIST-WMI");
         Assert.Contains(Corr(Ev(Wmi, 5861, 0, "", ("CONSUMER", "CommandLineEventConsumer.Name=\"SCM Event Log Consumer\""))), x => x.RuleId == "PERSIST-WMI");
+        // the form WMI-Activity 5861 really logs (clean Windows 11 lab VM): Type="name", no .Name
+        Assert.DoesNotContain(Corr(Ev(Wmi, 5861, 0, "", ("CONSUMER", "NTEventLogEventConsumer=\"SCM Event Log Consumer\""))), x => x.RuleId == "PERSIST-WMI");
+        Assert.Contains(Corr(Ev(Wmi, 5861, 0, "", ("CONSUMER", "CommandLineEventConsumer=\"SCM Event Log Consumer\""))), x => x.RuleId == "PERSIST-WMI");
     }
 }
