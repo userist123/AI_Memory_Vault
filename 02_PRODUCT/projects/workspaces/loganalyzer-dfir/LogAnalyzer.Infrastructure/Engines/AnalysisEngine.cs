@@ -48,7 +48,7 @@ namespace LogAnalyzer.Infrastructure
                 else if (ev.EventId == 1102 || ev.EventId == 104)
                 {
                     var (clearUser, clearDomain) = LogClearAssessment.SubjectFromXml(ev.XmlData);
-                    var clear = LogClearAssessment.AssessUnscheduled(ev.EventId == 1102 ? "Security" : "System", new DateTimeOffset(ev.TimeCreated.ToUniversalTime()), MaintenancePolicy, clearUser, clearDomain);
+                    var clear = LogClearAssessment.AssessUnscheduled(LogClearAssessment.ClearedChannel(ev.EventId, ev.XmlData) is { Length: > 0 } ch ? ch : "jurnal nenumit în eveniment", new DateTimeOffset(ev.TimeCreated.ToUniversalTime()), MaintenancePolicy, clearUser, clearDomain);
                     issues.Add(new DetectedIssue
                     {
                         Title = "Jurnal de evenimente golit",

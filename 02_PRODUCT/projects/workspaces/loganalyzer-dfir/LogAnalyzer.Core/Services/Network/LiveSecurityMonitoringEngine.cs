@@ -143,7 +143,9 @@ namespace LogAnalyzer.Core.Services.Network
             // 6. Curățare Jurnal de Securitate (Anti-Forensics EID 1102 / 104)
             if (ev.EventId == 1102 || ev.EventId == 104 || LogClearCommand.IsMatch(msg))
             {
-                string channel = ev.EventId == 1102 ? "Security" : ev.EventId == 104 ? "System" : "indicat în linia de comandă wevtutil";
+                string channel = ev.EventId is 1102 or 104
+                    ? LogClearAssessment.ClearedChannel(ev.EventId, ev.XmlData) is { Length: > 0 } c ? c : "jurnal nenumit în eveniment"
+                    : "indicat în linia de comandă wevtutil";
                 var (clearUser, clearDomain) = LogClearAssessment.SubjectFromXml(ev.XmlData);
                 var clear = LogClearAssessment.AssessUnscheduled(channel, new DateTimeOffset(ev.TimeCreated.ToUniversalTime()), MaintenancePolicy, clearUser, clearDomain);
                 return new DetectedIssue

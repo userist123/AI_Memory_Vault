@@ -22,5 +22,8 @@ namespace LogAnalyzer.Core.Models
         [ObservableProperty] private bool _isTestAlert;
         
         public List<ParsedEvent> RelatedEvents { get; set; } = new();
+
+        /// <summary>A grid row's name for UI Automation (lab VM 2026-11-06 read „LogAnalyzer.Core.Models.DetectedIssue”).</summary>
+        public override string ToString() => $"{Severity}: {Title}";
     }
 }

@@ -79,21 +79,25 @@ public static class LogClearAssessment
         Assess([new LogClearEvent(channel, timeUtc, subjectUser, subjectDomain)], policy, [])[0];
 
     /// <summary>SubjectUserName / SubjectDomainName from the &lt;EventData&gt; XML of a Security 1102 or System 104 event ("" when absent).</summary>
-    public static (string User, string Domain) SubjectFromXml(string? xml)
+    public static (string User, string Domain) SubjectFromXml(string? xml) => (Field(xml, "SubjectUserName"), Field(xml, "SubjectDomainName"));
+
+    /// <summary>
+    /// The log that was cleared: Security for 1102; for System 104 the &lt;Channel&gt; of LogFileCleared (104 is WRITTEN in System whatever log was
+    /// cleared: the lab VM's "wevtutil cl \"Windows PowerShell\"" was reported as "System golit", 2026-11-06); "" when the event does not say.
+    /// </summary>
+    public static string ClearedChannel(int eventId, string? xml) => eventId == 1102 ? "Security" : eventId == 104 ? Field(xml, "Channel") : "";
+
+    private static string Field(string? x, string name)
     {
-        static string Field(string? x, string name)
+        if (string.IsNullOrEmpty(x)) return "";
+        var n = System.Text.RegularExpressions.Regex.Escape(name);
+        try
         {
-            if (string.IsNullOrEmpty(x)) return "";
-            var n = System.Text.RegularExpressions.Regex.Escape(name);
-            try
-            {
-                var m = System.Text.RegularExpressions.Regex.Match(x, $"(?:<Data\\s+Name=\"{n}\"\\s*>|<{n}>)([^<]*)<", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.NonBacktracking,
-                    RegexDefaults.RuleMatchTimeout);   // linear engine; a timeout leaves the subject unknown (""), it is not a detection decision
-                return m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim() : "";
-            }
-            catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return ""; }
+            var m = System.Text.RegularExpressions.Regex.Match(x, $"(?:<Data\\s+Name=\"{n}\"\\s*>|<{n}>)([^<]*)<", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.NonBacktracking,
+                RegexDefaults.RuleMatchTimeout);   // linear engine; a timeout leaves the field unknown (""), it is not a detection decision
+            return m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim() : "";
         }
-        return (Field(xml, "SubjectUserName"), Field(xml, "SubjectDomainName"));
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return ""; }
     }
 
     /// <summary>Highest severity of the assessed clears; Info when there is none.</summary>
