@@ -11,6 +11,9 @@ import { FRONT_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M } from './rules';
 import { WINDOW_HEIGHT, LIGHTS_EXTRA_PER_M2 } from './rules.boq';
 import { tradeChecks } from './trade-checks';
 import { activeOpenings } from './renovation';
+import { insolationStudy, NORM_HOURS, NORM_REFERENCE_DATE } from './insolation';
+import { readSite } from './site-location';
+import { localToUtc } from './solar';
 import { contrastRatio, hexToRgb, hueDistance, isNeutral, relativeLuminance, rgbToHsl } from './color';
 
 export type AdviceSeverity = 'BLOCKER' | 'WARNING' | 'TIP';
@@ -92,6 +95,13 @@ export const TECH_NEAR_M = 1.5;
 function doorTouches(w: { a: [number, number]; b: [number, number] }, o: { offset: number; width: number }, room: Room){
   const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, m = o.offset + o.width / 2, x = w.a[0] + (w.b[0] - w.a[0]) / L * m, z = w.a[1] + (w.b[1] - w.a[1]) / L * m, r = room.rect;
   return x >= r.x0 - 0.2 && x <= r.x1 + 0.2 && z >= r.z0 - 0.2 && z <= r.z1 + 0.2;
+}
+// studiul normei se reface doar când se schimbă geometria care umbrește sau amplasamentul (nu la mutarea mobilierului)
+let sunCache: { key: string; st: ReturnType<typeof insolationStudy> } | null = null;
+function normStudy(snap: Snapshot, site: NonNullable<ReturnType<typeof readSite>>){
+  const f = snap.floor, key = JSON.stringify([site, f.ceilingHeight, f.walls, f.rooms.map(r => [r.id, r.name, r.type, r.rect, r.boundary, r.spaceKind])]);
+  if (sunCache?.key !== key) sunCache = { key, st: insolationStudy(f, site, (d, m) => localToUtc(d, m, site.tz), { date: NORM_REFERENCE_DATE, stepMin: 5, floorGrid: false }) };
+  return sunCache.st;
 }
 export function adviseProject(snap: Snapshot, cat: Catalog, opts: AdvisorOptions = {}): Advice[] {
   const out: Advice[] = [], seen = new Set<string>();
@@ -231,6 +241,11 @@ export function adviseProject(snap: Snapshot, cat: Catalog, opts: AdvisorOptions
       if (!near(p, ['drain'])) add('TECH_NO_DRAIN', { severity: 'WARNING', category: 'instalatii', refs: { roomId: p.roomId, placementIds: [p.id] }, code: 'TECH_NO_DRAIN', vars: { nm: nameOf(p), rn: roomOf(p.roomId)?.name ?? '' } });
   }
   for (const c of tradeChecks(snap, cat, fps, nameOf)) add(c.rule, c.a);
+  // însorirea (doar când proiectul are amplasament): camerele de zi și dormitoarele sub 1½ h la solstițiul de iarnă
+  const site = readSite(snap.site);
+  if (site){ const st = normStudy(snap, site);
+    const hm = (h: number) => { const m = Math.round(h * 60); return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`; };
+    for (const r of st.rooms) if (r.verdict === 'low') add('SUN_LOW', { severity: 'WARNING', category: 'lumina', refs: { roomId: r.roomId }, code: 'SUN_LOW', vars: { rn: r.name, got: hm(r.hours), min: hm(NORM_HOURS) } }); }
   const b = opts.budget, cur = opts.currency ?? 'RON';
   if (b){
     if (b.total != null && b.target != null && b.total > b.target) add('OVER_BUDGET', { severity: 'WARNING', category: 'buget', refs: {}, code: 'OVER_BUDGET', vars: { cur, total_money: b.total, over_money: b.total - b.target, target_money: b.target } });

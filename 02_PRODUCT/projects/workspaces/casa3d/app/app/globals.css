@@ -1501,3 +1501,22 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 .side.pane-structure > :not(.sidetabs):not(.sheet-pane):not(.outliner){display:none}
 .side.pane-structure .outliner{margin:0 -14px}
 @media (prefers-reduced-motion:reduce){ .splitter::after{transition:none} }
+/* studiul de însorire (components/SunStudy.tsx) */
+.sunstudy{display:grid;gap:8px;margin-bottom:12px;padding-bottom:12px;border-bottom:1px solid var(--rule)}
+.sunstudy h3{margin:0}
+.sun-grid{display:grid;gap:8px}
+.sun-row{display:flex;gap:8px;align-items:flex-end}
+.sun-row .f{flex:1;min-width:0}
+.sun-presets{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sun-presets input[type=date]{min-height:32px;font:inherit;font-size:var(--fs-sm)}
+.sun-check{display:flex;gap:6px;align-items:center;font-size:var(--fs-sm)}
+.sun-now{margin:0;font-size:var(--fs-sm);color:var(--ink)}
+.sun-table{width:100%;border-collapse:collapse;font-size:var(--fs-xs)}
+.sun-table th,.sun-table td{text-align:left;padding:5px 4px;border-bottom:1px solid var(--rule);vertical-align:top}
+.sun-table thead th{color:var(--ink-3);font-weight:600}
+.sun-table small{display:block;color:var(--ink-3);font-weight:400}
+.sun-badge{display:inline-block;border-radius:3px;padding:1px 6px;font-weight:600;white-space:nowrap}
+.sun-badge-ok{background:#EDF2EA;color:var(--ok)} .sun-badge-low{background:#F7E8E4;color:var(--err)} .sun-badge-none{background:#FAF1E3;color:#7a5418} .sun-badge-na{background:transparent;color:var(--ink-3)}
+.sun-note{margin:0;font-size:var(--fs-xs)}
+.sun-legend{display:flex;gap:6px;align-items:center;font-size:var(--fs-xs);color:var(--ink-3)}
+.sun-legend i{flex:1;height:8px;border-radius:4px;opacity:.75}

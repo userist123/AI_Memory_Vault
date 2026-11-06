@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Catalog, Floor, Snapshot, Severity, Wall } from '@/core/types';
 import { footprintOf } from '@/core/validate';
 import { resolve } from '@/core/catalog';
@@ -82,7 +82,9 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   /** golurile din placă ale acestui nivel (scările care urcă de dedesubt) */
   voids?: { x0: number; z0: number; x1: number; z1: number }[];
   /** tastatura cu planul în focus: mută / rotește / șterge / renunță (Tab alege direct, prin onSelect) */
-  onKey?(a: PlanKeyAction): void; }
+  onKey?(a: PlanKeyAction): void;
+  /** strat suplimentar în coordonatele planului (studiul de însorire), desenat peste plan, fără evenimente */
+  overlay?: ReactNode; }
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
 const SEV: Record<Severity, string> = { PASS: '#8B6A45', WARNING: '#B7791F', ERROR: '#B3261E' };
 const G = .05;
@@ -444,6 +446,8 @@ export default function PlanView(p: Props){
           {sym.detail && <path d={sym.detail} strokeWidth={sw * .8} />}</g>
         <rect data-k="placement" data-id={pl.id} x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill={on ? '#8B6A45' : sv === 'PASS' ? 'transparent' : SEV[sv]} fillOpacity={on ? .12 : sv === 'PASS' ? 0 : .12} stroke={on ? '#8B6A45' : hov ? '#C63C29' : 'none'} strokeOpacity={hov && !on ? .7 : 1} strokeWidth={.02} strokeDasharray={on || hov ? '.06 .04' : undefined} style={{ cursor: 'move' }}
           onPointerEnter={p.onHover ? () => p.onHover!(pl.id) : undefined} onPointerLeave={p.onHover ? () => p.onHover!(null) : undefined} /></g>); })}
+    {/* studiul de însorire: harta orelor de soare și petele de lumină, peste pardoseală și sub mobilier */}
+    {p.overlay}
     {/* covoarele camerelor (stratul de finisaje): dreptunghi textil punctat sub piese, cu numărul covorului când sunt mai multe */}
     {p.showFinishes && p.mc && floor.rooms.flatMap(r => { const rugs = roomRugs(finishesOf(p.snap, r));
       return rugs.map((c, i) => { const m = p.mc!.materials.find(x => x.id === c.material), s = m ? rugSize(r, m, c.rotate) : null; if (!s) return null; const q = rugRectAt(r, s, c);
