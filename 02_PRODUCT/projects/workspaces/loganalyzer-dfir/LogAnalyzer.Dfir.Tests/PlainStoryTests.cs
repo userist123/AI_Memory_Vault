@@ -91,6 +91,13 @@ public sealed class PlainStoryTests
         Assert.Equal("Pe 6 noiembrie 2026, la ora 15:15, Popescu Ion (contul ipopescu) a conectat stick-ul „X”.", done.Plain);
     }
 
+    [Fact]
+    public void A_clause_starting_with_Exista_is_lowered_after_the_time()
+    {
+        var f = F("MEDIA-OPTICAL-ACTIVITY", "CD/DVD", plainWhat: "Există urme de CD/DVD pe calculator");
+        Assert.Equal("Pe 6 noiembrie 2026, la ora 15:15, există urme de CD/DVD pe calculator.", PlainStory.Tell(f, null, Bucharest));
+    }
+
     private static TimelineEvent Ev(string source, string eventId = "", string path = "", Dictionary<string, string>? fields = null) => new()
     {
         Time = new Timestamp(T0, "", "test"), Source = source, EvidenceId = "EV", EventId = eventId, Path = path, Summary = "x",

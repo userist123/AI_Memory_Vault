@@ -171,7 +171,7 @@ public static class PlainStory
     // the fixed openings of the clauses this product writes; only these lose their capital inside a sentence (never „Microsoft”, „PowerShell”, „Windows”, a computer or a person)
     private static readonly string[] LowerablePrefixes =
     [
-        "S-a ", "Cineva", "Contul", "Conturile", "Calculatorul", "Programul", "Programele", "Stick-ul", "Serviciul", "A fost", "A rulat", "A sosit", "După ce", "Mai multe", "Au fost",
+        "S-a ", "Cineva", "Contul", "Conturile", "Calculatorul", "Programul", "Programele", "Stick-ul", "Serviciul", "A fost", "A rulat", "A sosit", "După ce", "Mai multe", "Au fost", "Există ", "Nu ",
     ];
 
     /// <summary>A whole clause put after „Pe 6 noiembrie, la ora 15:15,”: lowers the capital of the fixed openings only.</summary>

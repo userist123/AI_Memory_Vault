@@ -20,6 +20,8 @@ public static partial class Wp14Rules
         var files = openedFromStick > 0 ? $"; de pe el {(openedFromStick == 1 ? "s-a deschis" : "s-au deschis")} {LogAnalyzer.Dfir.Language.RoText.Count(openedFromStick, "fișier", "fișiere")}" : "";
         if (real.Count == 1 && !ambiguous) return $"a folosit stick-ul {PlainPhrases.Q(stick)}" + (direct ? "" : " (după toate semnele, dar nesigur)") + files;
         if (real.Count == 0) return $"Stick-ul {PlainPhrases.Q(stick)} a fost conectat, dar nu se poate stabili cine l-a folosit" + files;
+        // one real account beside Windows' own sessions: it is named, but not as the certain user (lab WS02: „conturile „labadmin”; care dintre ele”)
+        if (real.Count == 1) return $"Stick-ul {PlainPhrases.Q(stick)} a fost conectat când era deschis doar contul {PlainPhrases.Q(real[0])} (în afara sesiunilor Windows); probele nu arată sigur că el l-a folosit" + files;
         return $"Stick-ul {PlainPhrases.Q(stick)} a fost conectat când erau deschise conturile {PlainPhrases.List(real.Select(PlainPhrases.Q).ToList(), 5)}; nu se poate stabili sigur care dintre ele l-a folosit" + files;
     }
 
