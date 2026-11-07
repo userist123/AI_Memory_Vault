@@ -255,6 +255,12 @@
   station is trusted as-is (no integrity check). P1 complete. Tests: Dfir 2689, App 1018, UI 366, Edition 45.
   Next: P2 of the research plan (WPD/MTP channel + rule, BTHPORT paired devices, setupapi.dev.log parser, N03 SSIDs, P20 all profiles, P14/P28
   verdicts from the procedure profile).
+- 2026-11-07T21:30+02:00 P2.1 done: AIRGAP-PORTABLE-DEVICE (Kernel-PnP 400 with WPD class {eec5ad98-…}, not SWD\WPDBUSENUM; or WPD-MTPClassDriver /
+  WPD-ClassInstaller events), T1052.001, Medium on classified, authorised only by a profile transfer channel (telefon/phone/MTP/PTP/camer),
+  never on Standalone; PlainWhat "A fost conectat un telefon…; … nu se poate spune din jurnale ce s-a copiat" (=> NoAuthor in PeopleStory).
+  WPD-MTPClassDriver/Operational + WPD-ClassInstaller/Operational added to the DFIR EVTX export; ParserCapabilities entry; contract + test.
+  Residual: no real phone in the lab (Hyper-V has no USB passthrough) - field names rely on the Kernel-PnP 400 fields the Bluetooth rule already uses.
+  Tests: Dfir 2693, App 1018, UI 366, Edition 45. Next P2.2 BTHPORT paired devices.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.

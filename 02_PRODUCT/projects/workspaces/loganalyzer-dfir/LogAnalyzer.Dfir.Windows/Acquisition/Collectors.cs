@@ -23,7 +23,7 @@ public sealed class EventLogCollector : ICollector
         "Microsoft-Windows-WinRM/Operational", "OpenSSH/Operational",
         "Microsoft-Windows-NetworkProfile/Operational", "Microsoft-Windows-WLAN-AutoConfig/Operational", "Microsoft-Windows-DNS-Client/Operational",
         // WP14a: removable media, CD/DVD and network adapters on air-gapped systems. A channel that does not exist on this system is "indisponibil", not a failure.
-        "Microsoft-Windows-Kernel-PnP/Configuration", "Microsoft-Windows-DriverFrameworks-UserMode/Operational", "Microsoft-Windows-Dhcp-Client/Operational",
+        "Microsoft-Windows-Kernel-PnP/Configuration", "Microsoft-Windows-DriverFrameworks-UserMode/Operational", "Microsoft-Windows-WPD-MTPClassDriver/Operational", "Microsoft-Windows-WPD-ClassInstaller/Operational", "Microsoft-Windows-Dhcp-Client/Operational",
         "Microsoft-Windows-VHDMP-Operational", "Microsoft-Windows-PrintService/Operational",
         // Owner directive 2026-10-16: the adapter, the lease and the internet capability of a network connection (DHCP-Client/Admin, NCSI 4042, NlaSvc).
         "Microsoft-Windows-Dhcp-Client/Admin", "Microsoft-Windows-NCSI/Operational", "Microsoft-Windows-NlaSvc/Operational",

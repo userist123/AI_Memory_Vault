@@ -80,7 +80,7 @@ public static partial class Wp14Rules
     }
 
     private static Finding Net(Ctx c, string ruleId, string title, Severity sev, string subcategory, string channel, AirGapAuthorization auth, string basis, string observed, List<TimelineEvent> evs,
-        string obj, string destination, string description, string reason, string[] alternatives, NetEvidence? extra = null, string plain = "")
+        string obj, string destination, string description, string reason, string[] alternatives, NetEvidence? extra = null, string plain = "", string mitre = "T1599")
     {
         var times = evs.Select(T).Where(t => t is not null).Select(t => t!.Value).OrderBy(t => t).ToList();
         var refs = evs.Take(20).Select(e => Ref(e, $"{e.EventId} {e.Summary}".Trim())).ToList();
@@ -88,7 +88,7 @@ public static partial class Wp14Rules
             refs.AddRange(extra.Refs.Where(e => !evs.Contains(e)).Distinct().Take(15).Select(e => Ref(e, $"{(e.Source.StartsWith("EventLog:", StringComparison.Ordinal) ? e.Source[9..] + " " + e.EventId : e.Source)}: {e.Summary}".Trim())));
         return new Finding
         {
-            FindingId = c.NextId(), RuleId = ruleId, Title = title, Severity = sev, Category = Category, Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1599",
+            FindingId = c.NextId(), RuleId = ruleId, Title = title, Severity = sev, Category = Category, Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = mitre,
             FirstSeenUtc = times.Count > 0 ? times[0] : null, LastSeenUtc = times.Count > 0 ? times[^1] : null, User = WhoOf(evs) == UnknownWho ? "" : WhoOf(evs),
             Description = description, ClassificationReason = reason, SemanticType = SemanticType.Observation, PlainWhat = plain,
             SupportingEvidence = refs,
@@ -107,6 +107,7 @@ public static partial class Wp14Rules
         NetworkConnected(c, o);
         Wifi(c, o);
         Bluetooth(c, o);
+        PortableDevices(c, o);
         Dhcp(c, o);
         NicAdded(c, o);
     }
@@ -239,6 +240,56 @@ public static partial class Wp14Rules
                 ["Dispozitive de intrare (tastatură, mouse) asociate legitim produc același nod.", "Nodul poate rămâne în urma unei descoperiri fără asociere finalizată."]));
         }
     }
+
+    // ---- Phones, cameras and players over MTP / PTP (research 2026-11-07, plan P2.1): no drive letter, so no Removable Storage audit and no USBSTOR ----
+
+    /// <summary>The Windows Portable Devices setup class.</summary>
+    internal const string WpdClassGuid = "{eec5ad98-8080-425f-922a-dabf3de3f69a}";
+
+    private static readonly Regex VidPidRx = new(@"VID_(?<v>[0-9A-Fa-f]{4})&PID_(?<p>[0-9A-Fa-f]{4})(?:[^\\]*)\\(?<s>[^\\\s""]+)", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>A portable device node: WPD class, and not the SWD\WPDBUSENUM view of a disk or volume (a stick also appears there, already told by MEDIA-*).</summary>
+    internal static bool IsPortableDeviceNode(string instance, string classGuid) =>
+        classGuid.Equals(WpdClassGuid, StringComparison.OrdinalIgnoreCase) && !instance.StartsWith(@"SWD\WPDBUSENUM\", StringComparison.OrdinalIgnoreCase);
+
+    private static void PortableDevices(Ctx c, List<Finding> o)
+    {
+        var hits = new List<(TimelineEvent E, string Key, string Name)>();
+        foreach (var e in c.Events)
+        {
+            if (InChannel(e, "Kernel-PnP", 400))
+            {
+                var inst = Instance(e);
+                if (IsPortableDeviceNode(inst, F(e, "ClassGuid")))
+                    hits.Add((e, VidPidRx.Match(inst) is { Success: true } m ? $"VID_{m.Groups["v"].Value.ToUpperInvariant()}&PID_{m.Groups["p"].Value.ToUpperInvariant()} {m.Groups["s"].Value}" : inst,
+                              F(e, "DriverDescription", "DeviceDescription")));
+            }
+            else if (InChannel(e, "WPD-MTPClassDriver") || InChannel(e, "WPD-ClassInstaller"))
+                hits.Add((e, F(e, "DeviceId", "DeviceInstanceId", "InstanceId", "DeviceName", "FriendlyName") is { Length: > 0 } k ? k : "(dispozitiv nespecificat)", F(e, "FriendlyName", "DeviceName")));
+        }
+        foreach (var g in hits.GroupBy(h => h.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            var items = g.OrderBy(h => T(h.E)).ToList();
+            var evs = items.Select(h => h.E).ToList();
+            var name = items.Select(h => h.Name).FirstOrDefault(n => n.Length > 0) ?? "";
+            var (auth, basis) = Authorize(c, [g.Key, name], PortableKeywords);
+            var shown = name.Length > 0 ? $"„{name}”" : g.Key;
+            var desc = $"Dispozitiv portabil (telefon, cameră sau player, prin MTP/PTP) {shown}: {LogAnalyzer.Dfir.Language.RoText.Count(evs.Count, "eveniment", "evenimente")} " +
+                       $"({string.Join(", ", evs.Select(e => e.Source.StartsWith("EventLog:") ? e.Source[9..] + " " + e.EventId : e.Source).Distinct())}), {Time(T(evs[0]))} – {Time(T(evs[^1]))} pe un sistem " +
+                       (c.Scope.Network == NetworkCategory.StandalonePc ? "autonom" : "air-gapped") + ". Un astfel de dispozitiv nu primește literă de disc: Windows nu ține evidența fișierelor copiate pe el, " +
+                       "iar auditul „Removable Storage” nu îl acoperă. Constatarea arată că dispozitivul a fost conectat, nu ce s-a copiat." +
+                       (auth == AirGapAuthorization.Authorized ? $" Autorizat: {basis}." : $" Necesită explicație: {basis}.");
+            o.Add(Net(c, "AIRGAP-PORTABLE-DEVICE", $"Telefon sau cameră conectat(ă) pe un sistem izolat: {(name.Length > 0 ? name : g.Key)}", NetSeverity(c, auth, Severity.Medium), "PORTABLE DEVICE",
+                "Kernel-PnP/Configuration 400 / WPD", auth, basis, $"dispozitiv portabil {shown} conectat ({LogAnalyzer.Dfir.Language.RoText.Count(evs.Count, "eveniment", "evenimente")})", evs,
+                $"dispozitiv portabil {shown}", g.Key, desc,
+                "Nod de dispozitiv din clasa Windows Portable Devices (WPD) creat de Kernel-PnP, sau eveniment al driverului MTP, pe un sistem air-gapped sau autonom.",
+                ["Un telefon conectat doar la încărcat poate crea același nod dacă a fost deblocat în modul de transfer.", "Un aparat foto sau un cititor aprobat poate fi un mijloc de lucru legitim al stației."],
+                plain: $"A fost conectat un telefon, o cameră sau un player ({shown}) prin cablu USB; Windows nu ține evidența fișierelor copiate pe un astfel de dispozitiv, deci nu se poate spune din jurnale ce s-a copiat",
+                mitre: "T1052.001"));
+        }
+    }
+
+    private static readonly IReadOnlyList<string> PortableKeywords = ["telefon", "phone", "MTP", "PTP", "camer", "cameră"];
 
     // ---- DHCP-Client: 50036 / 50037 / 50065 / 1103 ----
 
