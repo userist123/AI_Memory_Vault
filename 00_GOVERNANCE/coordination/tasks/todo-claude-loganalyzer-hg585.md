@@ -301,6 +301,12 @@
   archives excluded, newest 200 read + count, "integritatea nu este verificată"; A19 unread role => NEDETERMINAT; setupapi live file first;
   Windows-made instance ("7&…") is no serial; WPD channel events need a non-stick device id; "prin cablu USB" removed. Parser count 21.
   Lab rerun consistent. Tests: Dfir 2722, App 1018, UI 366, Edition 45. Round 2 review of this delta pending.
+- 2026-11-08T04:00+02:00 Round 2 REJECT (narrow) fixed - review closed by the main session (2-round rule): P14 storage words widened (pendrive,
+  hard*, disc dur, stocare, storage, mediu de stocare) so a mixed phrase never yields "no storage channel"; RecentItemsCollector checks reparse
+  points on AutomaticDestinations/CustomDestinations too (junction test with mklink /J), per-profile logic in CollectProfile; A18 unread archives
+  counted in StationFacts.SecurityArchivesNotRead (not as a fake archive); foreign archive worded "alt nume de calculator (… sau redenumire)";
+  doc comments fixed. Lab apps rebuilt and redeployed (WS02 insula, WS01 arhipelag+continent); WS01 starts to the sign-in screen.
+  Tests: Dfir 2727, App 1018, UI 366, Edition 45.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.

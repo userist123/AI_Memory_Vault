@@ -32,7 +32,7 @@ public sealed class CustomJumpListParser : EvidenceParserBase
             "Arată că un fișier sau o comandă apare în lista aplicației, nu că fișierul a fost copiat.",
         ],
         Status = ParserMaturity.Tested,
-        Validation = "CustomJumpListParserTests: fișier construit din linkuri LNK în formatul documentat; verificat pe fișierele reale ale unui PC (numărul de linkuri găsite = numărul de antete LNK)",
+        Validation = "NewSourcesRoutingTests: fișier construit din linkuri LNK în formatul documentat; verificat pe fișierele reale ale unui PC (numărul de linkuri găsite = numărul de antete LNK)",
     };
 
     private static readonly byte[] LinkHeader = [0x4C, 0, 0, 0, 0x01, 0x14, 0x02, 0x00, 0, 0, 0, 0, 0xC0, 0, 0, 0, 0, 0, 0, 0x46];

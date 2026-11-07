@@ -88,6 +88,8 @@ public sealed class StationFacts
     public List<LogFact> Logs { get; init; } = [];
     public List<ChannelCoverage> Coverage { get; init; } = [];
     public List<SecurityArchiveFact> SecurityArchives { get; init; } = [];
+    /// <summary>Older archives left unread because of the read limit (check A18 says so; they never count as read or unreadable archives).</summary>
+    public int SecurityArchivesNotRead { get; set; }
     public List<EvidenceGap> Gaps { get; init; } = [];
 
     // Air-gap station requirements (comparison 2026-10-12, rows A2-A16, B8, C8). For every list, null = the source could not be read.
@@ -1060,8 +1062,7 @@ public static class StationFactCollector
                 f.SecurityArchives.Add(new SecurityArchiveFact(Path.GetFileName(file), null, null, ex is UnauthorizedAccessException ? "acces refuzat (necesită administrator)" : ex.Message));
             }
         }
-        if (all.Count > maxArchives)
-            f.SecurityArchives.Add(new SecurityArchiveFact($"încă {all.Count - maxArchives} arhive mai vechi", null, null, "necitite (limita de citire)"));
+        f.SecurityArchivesNotRead = Math.Max(0, all.Count - maxArchives);
     }
 
     private static (DateTimeOffset? Time, string Computer) EdgeEvent(string file, bool reverse)

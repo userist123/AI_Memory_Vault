@@ -47,7 +47,6 @@ public static class EvidenceFingerprint
         return head.Contains("<Task", StringComparison.Ordinal) && head.Contains("schemas.microsoft.com/windows/2004/02/mit/task", StringComparison.Ordinal);
     }
 
-    /// <summary>Text written by <c>fsutil usn readjournal … csv</c>: it starts with the "USN Journal ID" line.</summary>
     /// <summary>setupapi.dev.log: starts with "[Device Install Log]" (UTF-8, ANSI or UTF-16 LE with a BOM).</summary>
     private static bool IsSetupApiLog(string path)
     {
@@ -70,6 +69,7 @@ public static class EvidenceFingerprint
         return fs.ReadAtLeast(tail, 4, throwOnEndOfStream: false) == 4 && BinaryPrimitives.ReadUInt32LittleEndian(tail) == 0xBABFFBAB;
     }
 
+    /// <summary>Text written by <c>fsutil usn readjournal … csv</c>: it starts with the "USN Journal ID" line.</summary>
     private static bool IsUsnExport(string path)
     {
         var buf = new byte[64];

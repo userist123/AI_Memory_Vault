@@ -54,8 +54,9 @@ public static partial class ControlEvaluator
             : $"Pe stație există {LogAnalyzer.Dfir.Language.RoText.CountFem(f.SecurityArchives.Count, "arhivă", "arhive")} a jurnalului Security" +
               (chain.Used > 0 ? $", dintre care {chain.Used} se leagă fără întrerupere de jurnalul curent, deci înregistrările încep la {chain.Start:yyyy-MM-dd}" : ", dar niciuna nu se leagă fără întrerupere de jurnalul curent") +
               (unreadable > 0 ? $"; {unreadable} nu au putut fi citite" : "") +
-              (foreign.Count > 0 ? $"; {foreign.Count} sunt scrise de alt calculator ({string.Join(", ", foreign.Select(a => a.Computer).Distinct(StringComparer.OrdinalIgnoreCase))}) și nu se iau în seamă" : "") +
+              (foreign.Count > 0 ? $"; {foreign.Count} sunt scrise sub alt nume de calculator ({string.Join(", ", foreign.Select(a => a.Computer).Distinct(StringComparer.OrdinalIgnoreCase))}: alt calculator sau stația înainte de o redenumire) și nu se iau în seamă" : "") +
               (chain.Used > 0 ? "; arhivele de pe stație sunt luate așa cum sunt, integritatea lor nu este verificată aici" : "") +
+              (f.SecurityArchivesNotRead > 0 ? $"; alte {f.SecurityArchivesNotRead} arhive mai vechi nu au fost citite (limita de citire)" : "") +
               (chain.Gap.Length > 0 ? $"; lipsesc înregistrări {chain.Gap} (poate fi și o perioadă în care stația a fost oprită)" : "") + ".";
         oldest = chain.Start;
         // the rank only compares levels across schemes: for a NATO / EU station the national rule is an equivalence, not its legal basis, so it is never CONFORM

@@ -305,7 +305,7 @@ public static partial class ControlEvaluator
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
     private static readonly System.Text.RegularExpressions.Regex RemovableMedium = new(
-        @"(?<![\p{L}\d])(?:usb|stick|amovibil\w*|removable|flash|card|sd|microsd|hdd|ssd|disc extern|disk\w*|portabil\w*|extern\w*|suport de stocare|memorie|cheie de memorie)(?![\p{L}\d])",
+        @"(?<![\p{L}\d])(?:usb|stick|pendrive|amovibil\w*|removable|flash|card|sd|microsd|hdd|ssd|hard\w*|disc dur|disc extern|disk\w*|portabil\w*|extern\w*|stocare|storage|suport de stocare|mediu de stocare|memorie|cheie de memorie)(?![\p{L}\d])",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
     private static readonly System.Text.RegularExpressions.Regex NonStorageMedium = new(

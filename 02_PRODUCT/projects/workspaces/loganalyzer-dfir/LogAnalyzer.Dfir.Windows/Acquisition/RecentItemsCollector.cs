@@ -39,35 +39,43 @@ public sealed class RecentItemsCollector : ICollector
         foreach (var p in profiles.Where(p => UserArtifactsCollector.IsSid(p.KeyName) && !ServiceSids.Contains(p.KeyName, StringComparer.OrdinalIgnoreCase)).Take(MaxProfiles))
         {
             ct.ThrowIfCancellationRequested();
-            if (UserArtifactsCollector.UnsafeProfilePath(p.ProfilePath) is { Length: > 0 } why) { o.Errors.Add($"{p.KeyName}: {why}"); continue; }
-            var recent = Path.Combine(p.ProfilePath, "AppData", "Roaming", "Microsoft", "Windows", "Recent");
-            if (UserArtifactsCollector.ReparseOnPath(recent) is { Length: > 0 } link) { o.Errors.Add($"{p.KeyName}: legătura „{link}” pe drumul spre Recent nu este urmată"); continue; }
-            foreach (var (folder, pattern, sourceType, maxBytes, maxCount) in Sets)
-            {
-                var dir = folder.Length == 0 ? recent : Path.Combine(recent, folder);
-                List<FileInfo> files;
-                try
-                {
-                    if (!Directory.Exists(dir)) continue;
-                    files = new DirectoryInfo(dir).EnumerateFiles(pattern, new EnumerationOptions { RecurseSubdirectories = false, IgnoreInaccessible = false, AttributesToSkip = FileAttributes.ReparsePoint })
-                        .OrderByDescending(f => f.LastWriteTimeUtc).ToList();
-                }
-                catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or System.Security.SecurityException)
-                {
-                    o.Errors.Add($"{p.KeyName}: {(folder.Length == 0 ? "Recent" : folder)} nu a putut fi citit ({(ex is UnauthorizedAccessException ? "necesită administrator" : ex.Message)})");
-                    continue;
-                }
-                if (files.Count > maxCount) o.Errors.Add($"{p.KeyName}: {(folder.Length == 0 ? "Recent" : folder)} are {files.Count} fișiere; s-au copiat cele mai noi {maxCount}");
-                foreach (var f in files.Take(maxCount))
-                {
-                    ct.ThrowIfCancellationRequested();
-                    if (f.Length == 0 || f.Length > maxBytes) { if (f.Length > maxBytes) o.Errors.Add($"{p.KeyName}: {f.Name} depășește limita de citire, necopiat"); continue; }
-                    try { o.Evidence.Add(ctx.Case.ImportFile(f.FullName, "Recent:" + p.KeyName, sourceType, TemporalType.Historical, Name, Version)); }
-                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { o.Errors.Add($"{p.KeyName}: {f.Name}: {ex.Message}"); }
-                }
-            }
+            CollectProfile(ctx.Case, p.KeyName, p.ProfilePath, o, ct);
         }
         o.Status = o.Evidence.Count == 0 ? (o.Errors.Count > 0 ? EvidenceStatus.Failed : EvidenceStatus.Empty) : o.Errors.Count > 0 ? EvidenceStatus.Partial : EvidenceStatus.Success;
         return o;
+    }
+
+    /// <summary>One profile's Recent folder and its two Jump List folders; refusals go to <paramref name="o"/>.Errors. Internal for the tests.</summary>
+    internal void CollectProfile(LogAnalyzer.Dfir.Case.CaseWorkspace ws, string sid, string profilePath, CollectorOutcome o, CancellationToken ct)
+    {
+        if (UserArtifactsCollector.UnsafeProfilePath(profilePath) is { Length: > 0 } why) { o.Errors.Add($"{sid}: {why}"); return; }
+        var recent = Path.Combine(profilePath, "AppData", "Roaming", "Microsoft", "Windows", "Recent");
+        if (UserArtifactsCollector.ReparseOnPath(recent) is { Length: > 0 } link) { o.Errors.Add($"{sid}: legătura „{link}” pe drumul spre Recent nu este urmată"); return; }
+        foreach (var (folder, pattern, sourceType, maxBytes, maxCount) in Sets)
+        {
+            var dir = folder.Length == 0 ? recent : Path.Combine(recent, folder);
+            // review round 2: a user can make AutomaticDestinations a junction to another user's folder; the files would then be filed under the wrong SID
+            if (folder.Length > 0 && UserArtifactsCollector.ReparseOnPath(dir) is { Length: > 0 } sub) { o.Errors.Add($"{sid}: legătura „{sub}” nu este urmată"); continue; }
+            List<FileInfo> files;
+            try
+            {
+                if (!Directory.Exists(dir)) continue;
+                files = new DirectoryInfo(dir).EnumerateFiles(pattern, new EnumerationOptions { RecurseSubdirectories = false, IgnoreInaccessible = false, AttributesToSkip = FileAttributes.ReparsePoint })
+                    .OrderByDescending(f => f.LastWriteTimeUtc).ToList();
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or System.Security.SecurityException)
+            {
+                o.Errors.Add($"{sid}: {(folder.Length == 0 ? "Recent" : folder)} nu a putut fi citit ({(ex is UnauthorizedAccessException ? "necesită administrator" : ex.Message)})");
+                continue;
+            }
+            if (files.Count > maxCount) o.Errors.Add($"{sid}: {(folder.Length == 0 ? "Recent" : folder)} are {files.Count} fișiere; s-au copiat cele mai noi {maxCount}");
+            foreach (var f in files.Take(maxCount))
+            {
+                ct.ThrowIfCancellationRequested();
+                if (f.Length == 0 || f.Length > maxBytes) { if (f.Length > maxBytes) o.Errors.Add($"{sid}: {f.Name} depășește limita de citire, necopiat"); continue; }
+                try { o.Evidence.Add(ws.ImportFile(f.FullName, "Recent:" + sid, sourceType, TemporalType.Historical, Name, Version)); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { o.Errors.Add($"{sid}: {f.Name}: {ex.Message}"); }
+            }
+        }
     }
 }
