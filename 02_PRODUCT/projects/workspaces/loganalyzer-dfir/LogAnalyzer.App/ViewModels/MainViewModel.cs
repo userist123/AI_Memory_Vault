@@ -1486,7 +1486,8 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 try
                 {
-                    var matches = Regex.Matches(value.XmlData, @"<Data Name=""([^""]+)"">([^<]*)</Data>");
+                    // EventRecord.ToXml writes Name='…' (apostrophes): both quote styles are read (2026-11-08: only "…" was, so no field of a real event showed)
+                    var matches = Regex.Matches(value.XmlData, @"<Data Name=[""']([^""']+)[""']>([^<]*)</Data>", RegexOptions.None, LogAnalyzer.Dfir.RegexDefaults.RuleMatchTimeout);
                     foreach (Match match in matches)
                     {
                         var name = match.Groups[1].Value;
