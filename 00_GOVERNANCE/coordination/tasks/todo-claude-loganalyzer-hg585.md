@@ -204,6 +204,10 @@
 - 2026-11-07T12:40+02:00 LA-Lab: build 1ced11c8b redeployed (insula WS02, arhipelag + continent WS01). Station control re-run in the real UI:
   Arhipelag WS01 92 checks (14 NECONFORM), Insula WS02 90 checks (17 NECONFORM). Lab evaluation report (.docx, outside the repo) sent to the owner.
   Open UX items: English Yes/No buttons; Control stație wider than 1024 px; Arhipelag shows „Mod: conectat” on a closed LAN; AF05 without a plain sentence.
+- 2026-11-07T13:20+02:00 127f56ba7: all four fixed (RomanianMessageBox CBT hook; LazyPage.MinPageWidth 740 + WrapPanel toolbars + 1024 px render test;
+  ModuleCatalog.ModeBadge; AF05 Plain in PDF/grid). vault-reviewer 2 rounds, all issues resolved (OK-only box id 2, modal-safe test, KG twin delta).
+  Tests: Dfir 2629, App 1014, UI 366, Edition 45. Verified on WS01 (1024 px): no sideways scroll, „Da / Nu”, „Mod: rețea locală, fără Internet”.
+  Next: read CI once on #370.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); Control stație should flag the
    missing DC failure auditing; rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
