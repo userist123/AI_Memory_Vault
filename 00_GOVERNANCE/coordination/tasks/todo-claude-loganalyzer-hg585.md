@@ -201,6 +201,9 @@
   absent logs (Sysmon) no longer "failed" (ee2e032c0). Open: MessageBox Yes/No in English; pages slide under the sidebar after an
   off-screen button is brought into view (1024 px).
   Next: Arhipelag redeploy on WS01, Insula rerun, lab report .docx (scratchpad md2docx).
+- 2026-11-07T12:40+02:00 LA-Lab: build 1ced11c8b redeployed (insula WS02, arhipelag + continent WS01). Station control re-run in the real UI:
+  Arhipelag WS01 92 checks (14 NECONFORM), Insula WS02 90 checks (17 NECONFORM). Lab evaluation report (.docx, outside the repo) sent to the owner.
+  Open UX items: English Yes/No buttons; Control stație wider than 1024 px; Arhipelag shows „Mod: conectat” on a closed LAN; AF05 without a plain sentence.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); Control stație should flag the
    missing DC failure auditing; rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
