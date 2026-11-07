@@ -293,7 +293,8 @@ public static class RuleContracts
             ["Comparați cu jurnalele de întreținere și cu dezinstalările cunoscute.", "Căutați jurnalele de tranzacții (.LOG1/.LOG2) și copii ale hive-ului pentru versiuni mai vechi.", "Verificați dacă dispozitivul apare în registrul de medii."]),
         R("MEDIA-OPTICAL-ACTIVITY", W14, SemanticType.Presence, "Există urme de CD/DVD (unitate optică, IMAPI, LNK cu volum CDROM, imagine .iso montată, instrument de inscripționare); tratat separat de USB.",
             ["Prezența unei unități, a unei imagini sau a unui instrument nu arată că s-a scris un disc; inscripționarea se susține doar din IMAPI sau dintr-un instrument executat.", "Un disc optic nu are serie în aceste surse: nu se poate compara cu registrul.",
-             "ID-urile evenimentelor de montare (VHDMP / Storage) variază cu versiunea Windows și nu sunt fixate; sunt citite după extensia imaginii."],
+             "ID-urile evenimentelor de montare (VHDMP / Storage) variază cu versiunea Windows și nu sunt fixate; sunt citite după extensia imaginii.",
+             "Pe Windows 11 (verificat pe build-ul 26300, 2026-11-08) nu este înregistrat niciun furnizor de evenimente IMAPI, iar canalul CDROM/Operational este doar de diagnostic (alimentarea unității), oprit implicit: o inscripționare făcută din Explorer nu lasă eveniment în jurnale. Rămân folderul de pregătire Burn, jurnalele și execuția instrumentelor de inscripționare și scurtăturile spre volumul CDROM."],
             ["Conținutul discului, jurnalele instrumentului de inscripționare, registrul discurilor (serie imposibilă)."],
             ["Verificați dacă discul a fost predat și înregistrat.", "Obțineți jurnalele instrumentului de inscripționare."]),
         // Owner directive 2026-10-16: the adapter (WLAN-AutoConfig, DHCP-Client, NetworkList), the volume (SRUM, Security 5156/5157, pfirewall.log), the internet egress (NCSI 4042)

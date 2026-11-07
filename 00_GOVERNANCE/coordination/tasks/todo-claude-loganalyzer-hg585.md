@@ -309,6 +309,10 @@
   Tests: Dfir 2727, App 1018, UI 366, Edition 45. CI on 8a267d5ea: 42 pass.
 - 2026-11-08T05:00+02:00 P3.3: AIRGAP-PRINT-JOB on a virtual printer names PDF/XPS files created (USN File create, LNK/JumpList) within 10 min
   after the job as the probable output (inference by time, stated in text, PlainWhat and contract). Tests: Dfir 2729.
+- 2026-11-08T05:20+02:00 P3.4: on Windows 11 (build 26300) no IMAPI event provider is registered and CDROM/Operational is an analytic
+  power log, disabled: MEDIA-OPTICAL-ACTIVITY contract now says an Explorer burn leaves no event; evidence = Burn staging, burn-tool logs/
+  execution, LNK to CDROM. P3.2 (spool SPL/SHD) NOT done: files are deleted after printing unless KeepPrintedJobs; low yield. P3.5 partly
+  done (lab harness on 4 VMs; physical USB stick NTFS + MTP phone still untested - needs the owner to plug them in).
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.
