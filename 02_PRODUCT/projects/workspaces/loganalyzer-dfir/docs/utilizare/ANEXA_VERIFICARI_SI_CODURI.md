@@ -161,9 +161,9 @@
 
 - **Ce verificăm:** Dacă folosirea stick-urilor și discurilor USB este blocată prin politică.
 - **De ce contează:** Stick-urile sunt principala cale prin care datele ies de pe o stație izolată sau prin care intră viruși.
-- **Cum verifică aplicația:** A citit pornirea componentei USBSTOR și politica „interzice orice acces la stocare amovibilă”.
-- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\USBSTOR → Start; HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices → Deny_All`
-- **Cum se citește rezultatul:** Conform = blocat. De verificat = permis: atunci trebuie folosite doar suporturi aprobate și înregistrate.
+- **Cum verifică aplicația:** A citit pornirea componentei USBSTOR și politica „interzice orice acces la stocare amovibilă”, apoi canalele de transfer aprobate în Profilul de proceduri.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\USBSTOR → Start; HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices → Deny_All; Profilul de proceduri → Canale de transfer`
+- **Cum se citește rezultatul:** Conform = blocat. Neconform = permis, deși profilul de proceduri nu aprobă niciun canal de transfer pe USB sau pe suport amovibil. De verificat = permis și profilul aprobă un astfel de canal (atunci trebuie folosite doar suporturile din registrul mediilor, D01–D04), sau profilul nu definește canalele.
 
 ### P15
 

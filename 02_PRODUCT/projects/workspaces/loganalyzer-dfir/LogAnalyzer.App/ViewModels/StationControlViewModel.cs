@@ -296,6 +296,17 @@ namespace LogAnalyzer.UI.ViewModels
             return (folders, updates, transfers);
         }
 
+        /// <summary>The media of the profile's approved transfer channels; null when the profile is unreadable or defines none (check P14).</summary>
+        internal static List<string>? CurrentTransferMedia()
+        {
+            try
+            {
+                var ch = ProfileProvider.Shared.Current?.TransferChannels;
+                return ch is { Count: > 0 } ? ch.Select(c => $"{c.Name} {c.Medium}".Trim()).ToList() : null;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return null; }
+        }
+
         /// <summary>The station level written in the procedure profile ("" = nedefinit or the profile is unreadable).</summary>
         internal static string CurrentStationLevel()
         {
@@ -421,6 +432,7 @@ namespace LogAnalyzer.UI.ViewModels
                                                              auditPath: auditPath, auditChainValid: deviceChainValid, auditBytes: deviceAuditBytes);
                     // the station's level comes only from the procedure profile; without it the level-dependent checks (A18, N14) stay NEDETERMINAT
                     facts.StationLevel = CurrentStationLevel();
+        facts.ApprovedTransferMedia = CurrentTransferMedia();
                     // Time memory (S05): the latest time the application recorded, read BEFORE this report adds its own "clock.seen" entry.
                     // D04 and the transfer register: the officer-signed media register in force (re-verified; compared with the last install in the sealed audit)
                     // owner decision 2026-10-16: with the register switched off (MediaRegisterFeature) it is not read; D04 is "Nu se aplică" and the transfer

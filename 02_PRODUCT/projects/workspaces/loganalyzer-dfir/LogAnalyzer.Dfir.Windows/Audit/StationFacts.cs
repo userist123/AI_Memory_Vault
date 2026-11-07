@@ -67,6 +67,10 @@ public sealed class StationFacts
     public LogAnalyzer.Core.Services.Edition.StationPosture Posture { get; init; } = LogAnalyzer.Core.Services.Edition.StationPosture.Standalone;
     /// <summary>The station's classification level from the procedure profile (checks A18, N14); empty = not defined, never guessed.</summary>
     public string StationLevel { get; set; } = "";
+    /// <summary>
+    /// The media of the transfer channels the procedure profile approves (check P14); null = the profile is unreadable or defines no channel, never guessed.
+    /// </summary>
+    public List<string>? ApprovedTransferMedia { get; set; }
     public List<LocalAccount> Accounts { get; init; } = [];
     public PasswordPolicy? PasswordPolicy { get; set; }
     public Dictionary<string, AuditSetting>? AuditPolicy { get; set; }

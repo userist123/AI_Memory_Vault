@@ -276,6 +276,10 @@
   connections in the period, N02 lists networks - the research code inventory missed them) and mapped NameType 23 as mobile broadband (23 = VPN,
   243 = mobile broadband). Now N03 only names the Wi-Fi entries of f.NetworkProfiles and is DE VERIFICAT (not CONFORM) when Wi-Fi history exists.
   Tests: Dfir 2702, App 1018, UI 366, Edition 45.
+- 2026-11-08T00:20+02:00 P2.8 (P14) done: StationFacts.ApprovedTransferMedia (from ProcedureProfile.TransferChannels via StationControlViewModel;
+  null = no channels / unreadable). P14 unblocked USB: no USB/removable channel in the profile => NECONFORM; a USB channel => DE VERIFICAT (media
+  register D01-D04 decides); no channels => DE VERIFICAT. Words: usb, stick, amovibil, removable, flash, disc/hdd/ssd extern, suport de stocare.
+  P28 (optical) not changed yet. Lesson: verify the research's "gap" claims in code before building (N03 duplicate). Tests: Dfir 2705.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.

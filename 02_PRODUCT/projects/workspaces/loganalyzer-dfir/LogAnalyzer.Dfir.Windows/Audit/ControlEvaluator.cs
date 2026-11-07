@@ -282,9 +282,21 @@ public static partial class ControlEvaluator
             S("WDigest.UseLogonCredential") == "1" ? "UseLogonCredential=1: parolele în clar pot fi extrase din memorie." : "Configurare implicită sigură.");
 
         bool usbBlocked = S("USBSTOR.Start") == "4" || S("RemovableStorage.DenyAll") == "1";
-        Add(r, "P14", "Politici", "Stocare USB blocată prin politică", usbBlocked ? ControlStatus.Conform : f.Posture == StationPosture.Standalone ? ControlStatus.DeVerificat : ControlStatus.DeVerificat,
-            usbBlocked ? "Accesul la stocare amovibilă este blocat." : "Stocarea USB este permisă.", rec: "Pe stațiile izolate, permiteți doar suporturi aprobate și înregistrate.");
+        // research 2026-11-07 plan P2.8: the verdict follows the procedure profile. A profile that approves no transfer over USB / removable media while the
+        // station lets any stick be used is NECONFORM; one that approves such a channel leaves the media register (D01–D04) to decide; no profile: DE VERIFICAT
+        var usbChannel = f.ApprovedTransferMedia?.FirstOrDefault(m => UsbMediumWords.Any(w => m.Contains(w, StringComparison.OrdinalIgnoreCase)));
+        Add(r, "P14", "Politici", "Stocare USB blocată prin politică",
+            usbBlocked ? ControlStatus.Conform : f.ApprovedTransferMedia is null ? ControlStatus.DeVerificat : usbChannel is null ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+            usbBlocked ? "Accesul la stocare amovibilă este blocat."
+                : f.ApprovedTransferMedia is null ? "Stocarea USB este permisă. Profilul de proceduri nu definește canalele de transfer aprobate, deci nu se poate spune dacă stația are voie să folosească stick-uri."
+                : usbChannel is null ? $"Stocarea USB este permisă, dar profilul de proceduri nu aprobă niciun canal de transfer pe USB sau pe suport amovibil (canale aprobate: {string.Join("; ", f.ApprovedTransferMedia)}). Orice stick poate fi folosit fără să existe o procedură pentru el."
+                : $"Stocarea USB este permisă, iar profilul de proceduri aprobă transferul pe suport amovibil („{usbChannel}”). Verificați că se folosesc doar suporturile din registrul mediilor (D01–D04).",
+            f.ApprovedTransferMedia is null ? [] : f.ApprovedTransferMedia.Select(m => "Profil, canal aprobat: " + m),
+            rec: "Pe stațiile izolate, permiteți doar suporturi aprobate și înregistrate; dacă procedura nu prevede transfer pe USB, blocați stocarea USB (USBSTOR Start = 4 sau politica Removable Storage Access).");
     }
+
+    /// <summary>Words of a transfer channel's medium that mean USB / removable media (check P14).</summary>
+    private static readonly string[] UsbMediumWords = ["usb", "stick", "amovibil", "removable", "flash", "disc extern", "hdd extern", "ssd extern", "suport de stocare"];
 
     // ---- audit and logs ---------------------------------------------------------------------------------------
 
