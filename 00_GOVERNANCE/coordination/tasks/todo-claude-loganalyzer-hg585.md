@@ -208,6 +208,13 @@
   ModuleCatalog.ModeBadge; AF05 Plain in PDF/grid). vault-reviewer 2 rounds, all issues resolved (OK-only box id 2, modal-safe test, KG twin delta).
   Tests: Dfir 2629, App 1014, UI 366, Edition 45. Verified on WS01 (1024 px): no sideways scroll, „Da / Nu”, „Mod: rețea locală, fără Internet”.
   Next: read CI once on #370.
+- 2026-11-07T14:30+02:00 a009fc238: PlainWhat for 28 more rules (worker, 2 vault-reviewer rounds: no claims beyond evidence — „a scris un fișier cu același nume”,
+  never „a copiat documentul”; impersonal when the account is not the actor). CRED-BRUTEFORCE/SPRAY now read DC-side 4771 (0x18/0x6) and 4776
+  (0xC000006A/0xC0000064), one attempt in two logs counted once, `$` accounts excluded, not split by client-declared workstation.
+  DC promotion (krbtgt by S-1-5-7, ±10 min, same host, no 1102) => Windows, Info/Low. Lab: DC01 auditpol Kerberos AS + Credential Validation
+  failure ENABLED (lab change, add to owner cleanup list); S1 re-run as S1b: 14 wrong passwords for ana.pop now detected from DC01's log.
+  Known limits (accepted): NTLM spray without a logged address is not detected; generated-CIM PS modules stay one row each (earlier review decision).
+  Tests: Dfir 2656, App 1014, UI 366, catalog 3.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); Control stație should flag the
    missing DC failure auditing; rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
