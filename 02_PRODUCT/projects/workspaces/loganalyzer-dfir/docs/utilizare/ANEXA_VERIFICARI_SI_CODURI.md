@@ -815,11 +815,11 @@
 
 ### N04
 
-- **Ce verificăm:** Dacă stația are componente Bluetooth și dacă serviciul Bluetooth poate porni.
+- **Ce verificăm:** Dacă stația are componente Bluetooth, dacă serviciul Bluetooth poate porni și ce dispozitive au fost asociate cu ea.
 - **De ce contează:** Prin Bluetooth se pot trimite fișiere fără cablu, fără ca stația să fie conectată la vreo rețea.
-- **Cum verifică aplicația:** A căutat dispozitivele Bluetooth cunoscute de Windows și a citit modul de pornire al serviciului Bluetooth.
-- **Sursa tehnică:** `WMI Win32_PnPEntity (clasa Bluetooth); HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start`
-- **Cum se citește rezultatul:** Conform = nu există Bluetooth. Neconform = pe stația izolată Bluetooth există și serviciul poate porni. De verificat = există dar serviciul este oprit; opriți-l sau cereți aprobarea scrisă.
+- **Cum verifică aplicația:** A căutat componentele Bluetooth cunoscute de Windows, a citit modul de pornire al serviciului Bluetooth și lista dispozitivelor asociate (adresă și nume; cheile de legătură nu se citesc).
+- **Sursa tehnică:** `WMI Win32_PnPEntity (clasa Bluetooth); HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start; HKLM\SYSTEM\CurrentControlSet\Services\BTHPORT\Parameters\Devices (subchei = adrese, valoarea Name)`
+- **Cum se citește rezultatul:** Conform = nu există Bluetooth și niciun dispozitiv asociat. Neconform = pe stația izolată Bluetooth există și serviciul poate porni, sau există un dispozitiv asociat (chiar dacă radioul a fost scos sau serviciul oprit între timp). De verificat = există dar serviciul este oprit; opriți-l sau cereți aprobarea scrisă.
 
 ### N05
 

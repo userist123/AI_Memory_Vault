@@ -261,6 +261,9 @@
   WPD-MTPClassDriver/Operational + WPD-ClassInstaller/Operational added to the DFIR EVTX export; ParserCapabilities entry; contract + test.
   Residual: no real phone in the lab (Hyper-V has no USB passthrough) - field names rely on the Kernel-PnP 400 fields the Bluetooth rule already uses.
   Tests: Dfir 2693, App 1018, UI 366, Edition 45. Next P2.2 BTHPORT paired devices.
+- 2026-11-07T22:00+02:00 P2.2 done: N04 reads BTHPORT\Parameters\Devices (address + UTF-8 Name; Parameters\Keys never read); a paired device on
+  an isolated station => NECONFORM even with the service disabled or the radio removed. Format verified on the host (2 real pairings; names
+  not printed). Guide + annex updated. Tests: Dfir 2697, App 1018, UI 366, Edition 45. Next P2.3 setupapi.dev.log parser, P2.6 N03 SSIDs.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.

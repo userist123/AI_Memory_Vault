@@ -477,6 +477,16 @@ public static class StationFactCollector
 
     private static string Hklm(string key, string name) => RegRead(Registry.LocalMachine, key, name);
 
+    /// <summary>„Telefonul lui X (AA:BB:CC:DD:EE:FF)” from a BTHPORT\Parameters\Devices subkey: the name is UTF-8 bytes ended by a zero. Pure.</summary>
+    public static string BluetoothPairedText(string macKey, byte[]? name)
+    {
+        var mac = macKey.Length == 12 && macKey.All(char.IsAsciiHexDigit)
+            ? string.Join(":", Enumerable.Range(0, 6).Select(i => macKey.Substring(i * 2, 2).ToUpperInvariant())) : macKey;
+        var n = name is null ? "" : System.Text.Encoding.UTF8.GetString(name).Split('\0')[0].Trim();
+        n = new string(n.Where(ch => !char.IsControl(ch)).ToArray());
+        return n.Length > 0 ? $"{n} ({mac})" : mac;
+    }
+
     /// <summary>Windows install date (HKLM\...\CurrentVersion\InstallDate, Unix seconds); null when it cannot be read.</summary>
     public static DateTimeOffset? ReadInstallDate() =>
         long.TryParse(Hklm(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion", "InstallDate"), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var secs) && secs > 0
@@ -619,6 +629,20 @@ public static class StationFactCollector
             s["Bluetooth.Components"] = string.Join("; ", names.Take(5));
         });
         s["Bluetooth.ServiceStart"] = Hklm(@"SYSTEM\CurrentControlSet\Services\bthserv", "Start");
+        // research 2026-11-07 plan P2.2: the paired devices Windows remembers (address and name only; the link keys under Parameters\Keys are never read)
+        Guard(() =>
+        {
+            using var devs = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\BTHPORT\Parameters\Devices");
+            if (devs is null) { s["Bluetooth.PairedCount"] = "0"; return; }
+            var paired = new List<string>();
+            foreach (var mac in devs.GetSubKeyNames())
+            {
+                using var d = devs.OpenSubKey(mac);
+                paired.Add(BluetoothPairedText(mac, d?.GetValue("Name") as byte[]));
+            }
+            s["Bluetooth.PairedCount"] = paired.Count.ToString();
+            s["Bluetooth.Paired"] = string.Join("; ", paired.Take(10)) + (paired.Count > 10 ? $"; … încă {paired.Count - 10}" : "");
+        });
 
         // Boot.
         s["SecureBoot.Enabled"] = Hklm(@"SYSTEM\CurrentControlSet\Control\SecureBoot\State", "UEFISecureBootEnabled");

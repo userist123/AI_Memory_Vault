@@ -1034,12 +1034,14 @@ public static partial class ControlEvaluator
             int bt = int.TryParse(btCount, out var bc) ? bc : 0;
             var svc = S("Bluetooth.ServiceStart");
             bool svcOff = svc is "4" or Absent;
-            var status = bt == 0 ? ControlStatus.Conform : noInternet && !svcOff ? ControlStatus.Neconform : ControlStatus.DeVerificat;
+            int paired = int.TryParse(S("Bluetooth.PairedCount"), out var pc) ? pc : 0;
+            // a paired device on an isolated station means a pairing was made there: NECONFORM, whatever the service setting is now
+            var status = bt == 0 && paired == 0 ? ControlStatus.Conform : noInternet && (!svcOff || paired > 0) ? ControlStatus.Neconform : ControlStatus.DeVerificat;
+            var pairedText = paired > 0 ? $" Windows are {Ro.CountMasc(paired, "dispozitiv asociat", "dispozitive asociate")} (perechi salvate): {S("Bluetooth.Paired")}; o asociere înseamnă că dispozitivul a fost legat de stație, nu ce s-a transmis." : "";
             Add(r, "N04", "Rețea", "Bluetooth", status,
-                bt == 0 ? "Stația nu are componente Bluetooth."
-                    : $"Stația are Bluetooth ({Ro.CountFem(bt, "componentă", "componente")}: {S("Bluetooth.Components")}); serviciul Bluetooth este {(svcOff ? "dezactivat" : svc == "" ? "într-o stare necitită" : "permis să pornească")}." +
-                      (noInternet ? " Prin Bluetooth se pot trimite fișiere fără cablu." : ""),
-                [@"HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start = " + Shown(svc)],
+                (bt == 0 ? "Stația nu are acum componente Bluetooth." : $"Stația are Bluetooth ({Ro.CountFem(bt, "componentă", "componente")}: {S("Bluetooth.Components")}); serviciul Bluetooth este {(svcOff ? "dezactivat" : svc == "" ? "într-o stare necitită" : "permis să pornească")}.") +
+                pairedText + (noInternet && (bt > 0 || paired > 0) ? " Prin Bluetooth se pot trimite fișiere fără cablu." : ""),
+                [@"HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start = " + Shown(svc), @"HKLM\SYSTEM\CurrentControlSet\Services\BTHPORT\Parameters\Devices → " + (S("Bluetooth.PairedCount") is { Length: > 0 } pcs ? pcs + " dispozitive" : "necitit")],
                 "Bluetooth trebuie oprit dacă organizația nu l-a aprobat în scris.");
         }
 
