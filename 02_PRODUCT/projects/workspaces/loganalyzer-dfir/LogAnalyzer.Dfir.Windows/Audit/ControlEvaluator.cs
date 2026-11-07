@@ -296,7 +296,11 @@ public static partial class ControlEvaluator
     }
 
     /// <summary>Words of a transfer channel's medium that mean USB / removable media (check P14).</summary>
-    private static readonly string[] UsbMediumWords = ["usb", "stick", "amovibil", "removable", "flash", "disc extern", "hdd extern", "ssd extern", "suport de stocare"];
+    // whole words only: "cd" must not match inside another word
+    private static readonly System.Text.RegularExpressions.Regex DiscMedium = new(@"(?<![\p{L}\d])(?:cd|dvd|blu-ray|bd-r|disc optic|disc inscripționat)(?![\p{L}\d])",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    private static readonly string[] UsbMediumWords =["usb", "stick", "amovibil", "removable", "flash", "disc extern", "hdd extern", "ssd extern", "suport de stocare"];
 
     // ---- audit and logs ---------------------------------------------------------------------------------------
 
@@ -943,13 +947,19 @@ public static partial class ControlEvaluator
             bool explorerOnly = S("Optical.NoCDBurningMachine") == "1" || S("Optical.NoCDBurningUser") == "1";
             var ev = new[] { @"HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices\{53f56308-b6bf-11d0-94f2-00a0c91efb8b} → Deny_Write = " + Shown(S("Optical.DenyWrite")),
                              @"Policies\Explorer → NoCDBurning (mașină) = " + Shown(S("Optical.NoCDBurningMachine")) + "; (utilizator) = " + Shown(S("Optical.NoCDBurningUser")), "WMI Win32_CDROMDrive → Capabilities (4 = scrie discuri)" + (S("Optical.WriterSource") is { Length: > 0 } src ? "; surse citite: " + src : ""), "IMAPI2 MsftDiscRecorder2 → SupportedProfiles (profiluri inscriptibile: CD-R, DVD+R, BD-R ...)" };
+            // research 2026-11-07 plan P2.8: a disc channel approved in the procedure profile turns the isolated station's NECONFORM into DE VERIFICAT (the
+            // discs written must then be the registered ones); without such a channel, an unblocked writer on an isolated station stays NECONFORM
+            var discChannel = f.ApprovedTransferMedia?.FirstOrDefault(m => DiscMedium.IsMatch(m));
+            if (discChannel is not null) ev = [.. ev, "Profil, canal aprobat: " + discChannel];
             Add(r, "P28", "Politici", "Inscripționarea de CD/DVD blocată",
-                writers == 0 || denyWrite ? ControlStatus.Conform : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+                writers == 0 || denyWrite ? ControlStatus.Conform : isolated && discChannel is null ? ControlStatus.Neconform : ControlStatus.DeVerificat,
                 writers == 0 ? $"Stația nu are nicio unitate optică cu capacitate de scriere ({Ro.CountFem(N("Optical.DriveCount"), "unitate optică", "unități optice")})."
                     : denyWrite ? $"Scrierea pe CD/DVD este refuzată prin politica de stocare amovibilă (unități cu scriere: {S("Optical.WriterNames")})."
                     : explorerOnly ? $"ATENȚIE: stația are {Ro.CountFem(writers, "unitate care scrie discuri", "unități care scriu discuri")} ({S("Optical.WriterNames")}), iar politica NoCDBurning blochează doar inscripționarea din Explorer. Un program de inscripționare sau serviciul IMAPI pot scrie în continuare; blocarea reală este politica „CD și DVD: refuzare scriere”, care nu este setată."
                     : $"Stația are {Ro.CountFem(writers, "unitate care scrie discuri", "unități care scriu discuri")} ({S("Optical.WriterNames")}) și nicio politică nu oprește scrierea (nici NoCDBurning, nici „CD și DVD: refuzare scriere”).",
-                ev, "Setați politica „CD și DVD: refuzare scriere” (Deny_Write); NoCDBurning singur nu este suficient.");
+                ev, discChannel is not null
+                    ? $"Profilul de proceduri aprobă transferul pe disc („{discChannel}”): verificați că discurile inscripționate sunt cele din registrul mediilor; în rest, setați politica „CD și DVD: refuzare scriere” (Deny_Write)."
+                    : "Setați politica „CD și DVD: refuzare scriere” (Deny_Write); NoCDBurning singur nu este suficient.");
         }
 
         // P29 printing recorded

@@ -280,6 +280,11 @@
   null = no channels / unreadable). P14 unblocked USB: no USB/removable channel in the profile => NECONFORM; a USB channel => DE VERIFICAT (media
   register D01-D04 decides); no channels => DE VERIFICAT. Words: usb, stick, amovibil, removable, flash, disc/hdd/ssd extern, suport de stocare.
   P28 (optical) not changed yet. Lesson: verify the research's "gap" claims in code before building (N03 duplicate). Tests: Dfir 2705.
+- 2026-11-08T00:50+02:00 P28: an approved disc channel in the profile (whole-word cd/dvd/blu-ray/bd-r/disc optic/disc inscripționat) turns the
+  isolated NECONFORM into DE VERIFICAT (discs must be the registered ones). P2.7 DEFERRED with reason: TurnOffWindowsCopilot (per-user) is a legacy
+  policy the new Copilot app ignores, Snipping Tool paths are forum-sourced and conflicting, Recall's real control (HKLM AllowRecallEnablement /
+  DisableAIDataAnalysis) is already read by P20. Tests: Dfir 2706, App 1018, UI 366, Edition 45.
+  Next: redeploy the current build to the lab VMs and run Control stație to see A19/A20/N03/N04/P14/P28 on real stations.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.

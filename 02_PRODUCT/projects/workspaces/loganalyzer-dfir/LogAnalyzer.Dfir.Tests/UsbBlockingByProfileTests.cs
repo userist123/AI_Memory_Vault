@@ -42,4 +42,24 @@ public sealed class UsbBlockingByProfileTests
         Assert.Equal(ControlStatus.Conform, P14(true, null).Status);
         Assert.Equal(ControlStatus.Conform, P14(true, ["Imprimantă"]).Status);
     }
+
+    private static ControlCheck P28(List<string>? media, bool deny = false)
+    {
+        var f = new StationFacts { Posture = StationPosture.Standalone, IsAdministrator = true, ApprovedTransferMedia = media };
+        f.Settings["Optical.WriterCount"] = "1"; f.Settings["Optical.WriterNames"] = "DVD-RW Test"; f.Settings["Optical.DriveCount"] = "1";
+        f.Settings["Optical.DenyWrite"] = deny ? "1" : "0";
+        return ControlEvaluator.Evaluate(f).Checks.Single(c => c.Id == "P28");
+    }
+
+    [Fact]
+    public void An_unblocked_disc_writer_is_non_conform_unless_the_profile_approves_a_disc_channel()
+    {
+        Assert.Equal(ControlStatus.Neconform, P28(null).Status);
+        Assert.Equal(ControlStatus.Neconform, P28(["Stick USB marcat", "Procedură abcd"]).Status);   // "cd" inside a word is not a disc channel
+        var approved = P28(["Export pe CD inscripționat aprobat"]);
+        Assert.Equal(ControlStatus.DeVerificat, approved.Status);
+        Assert.Contains("registrul mediilor", approved.Recommendation);
+        Assert.Contains(approved.Evidence, e => e.StartsWith("Profil, canal aprobat: Export pe CD"));
+        Assert.Equal(ControlStatus.Conform, P28(null, deny: true).Status);
+    }
 }

@@ -275,7 +275,7 @@
 - **De ce contează:** Un disc inscripționat este un mod simplu de a scoate date și nu apare ca stick USB; politica NoCDBurning oprește doar inscripționarea din Explorer, nu un program de inscripționare.
 - **Cum verifică aplicația:** A căutat unitățile optice cu capacitate de scriere, din două surse: ce raportează driverul prin WMI și lista de tipuri de disc pe care unitatea însăși spune că le poate scrie (IMAPI2, interfața Windows de inscripționare, doar citită). Apoi a citit politica de refuzare a scrierii pe CD/DVD și politica NoCDBurning.
 - **Sursa tehnică:** `WMI Win32_CDROMDrive → Capabilities; IMAPI2 MsftDiscRecorder2 → SupportedProfiles; HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices\{53f56308-b6bf-11d0-94f2-00a0c91efb8b} → Deny_Write; ...\Policies\Explorer → NoCDBurning`
-- **Cum se citește rezultatul:** Conform = nicio unitate nu scrie, sau scrierea este refuzată prin politică. Neconform = unitatea poate scrie și nu există blocare (sau doar NoCDBurning, care nu este suficient). De verificat = la o stație neizolată.
+- **Cum se citește rezultatul:** Conform = nicio unitate nu scrie, sau scrierea este refuzată prin politică. Neconform = unitatea poate scrie și nu există blocare (sau doar NoCDBurning, care nu este suficient), iar profilul de proceduri nu aprobă transfer pe disc. De verificat = la o stație neizolată, sau profilul aprobă transferul pe CD/DVD (atunci discurile trebuie să fie cele din registrul mediilor).
 
 ### P29
 
