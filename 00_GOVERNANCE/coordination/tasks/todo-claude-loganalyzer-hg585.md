@@ -268,6 +268,10 @@
   NetworkList\Profiles (NameType 71 Wi-Fi / 23 mobile broadband; ProfileName, DateCreated/DateLastConnected local SYSTEMTIME -> UTC).
   N03 NECONFORM on an isolated station when the last wireless join is inside the controlled period (even with no adapter now). Format verified
   elevated on the host (7 wireless profiles, names not printed). Tests: Dfir 2700, App 1018, UI 366, Edition 45. Next P2.3 setupapi.dev.log.
+- 2026-11-07T23:20+02:00 P2.3 done: SetupApiLogParser (Dfir.Core/Devices; "Device Install (Hardware initiated)" sections only; local time ->
+  UTC with the evidence time zone; serial from USBSTOR / USB ids that carry one; exit status) registered (parser count 19 -> 20) and
+  SetupApiLogCollector (live %SystemRoot%\INF\setupapi.dev*.log, QuickAndUp, no elevation). Host file: 27 installs, 0 malformed, all timed.
+  FirewallLogParser.ReadBoundedLine made internal and shared. Tests: Dfir 2703. Remaining P2: P2.7 Recall/Snipping all profiles, P2.8 P14/P28.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.
