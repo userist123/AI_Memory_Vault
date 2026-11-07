@@ -306,7 +306,9 @@
   points on AutomaticDestinations/CustomDestinations too (junction test with mklink /J), per-profile logic in CollectProfile; A18 unread archives
   counted in StationFacts.SecurityArchivesNotRead (not as a fake archive); foreign archive worded "alt nume de calculator (… sau redenumire)";
   doc comments fixed. Lab apps rebuilt and redeployed (WS02 insula, WS01 arhipelag+continent); WS01 starts to the sign-in screen.
-  Tests: Dfir 2727, App 1018, UI 366, Edition 45.
+  Tests: Dfir 2727, App 1018, UI 366, Edition 45. CI on 8a267d5ea: 42 pass.
+- 2026-11-08T05:00+02:00 P3.3: AIRGAP-PRINT-JOB on a virtual printer names PDF/XPS files created (USN File create, LNK/JumpList) within 10 min
+  after the job as the probable output (inference by time, stated in text, PlainWhat and contract). Tests: Dfir 2729.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.

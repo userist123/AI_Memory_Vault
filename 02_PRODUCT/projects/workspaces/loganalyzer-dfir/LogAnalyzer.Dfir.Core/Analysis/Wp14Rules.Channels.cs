@@ -59,6 +59,31 @@ public static partial class Wp14Rules
         return users.Count > 0 ? string.Join(", ", users) : UnknownWho;
     }
 
+    /// <summary>How long after a job sent to a virtual printer a new PDF/XPS file is taken as its probable output.</summary>
+    internal static readonly TimeSpan PrintOutputWindow = TimeSpan.FromMinutes(10);
+
+    private static readonly string[] PrintOutputExtensions = [".pdf", ".xps", ".oxps"];
+
+    /// <summary>
+    /// Research 2026-11-07 plan P3.3: event 307 of "Microsoft Print to PDF" names the document but not the file written. A PDF/XPS file created (USN „File
+    /// create”) or first seen in a shortcut / Jump List within <see cref="PrintOutputWindow"/> after a job is listed as its probable output: an inference
+    /// from time, never a proof.
+    /// </summary>
+    internal static List<(string Path, DateTimeOffset At)> PrintOutputCandidates(Ctx c, IEnumerable<TimelineEvent> jobs)
+    {
+        var times = jobs.Select(T).Where(t => t is not null).Select(t => t!.Value).ToList();
+        if (times.Count == 0) return [];
+        bool Near(DateTimeOffset t) => times.Any(j => t >= j && t <= j + PrintOutputWindow);
+        static bool IsOutput(string p) => PrintOutputExtensions.Any(x => p.EndsWith(x, StringComparison.OrdinalIgnoreCase));
+        return c.Events
+            .Where(e => T(e) is { } t && Near(t) && (
+                e.Source == "USN" && F(e, "Reason").Contains("File create", StringComparison.Ordinal) && IsOutput(e.Path.Length > 0 ? e.Path : F(e, "FileName")) ||
+                e.Source is "LNK" or "JumpList" && IsOutput(e.Path)))
+            .Select(e => (Path: e.Path.Length > 0 ? e.Path : F(e, "FileName"), At: T(e)!.Value))
+            .GroupBy(x => x.Path, StringComparer.OrdinalIgnoreCase).Select(g => g.OrderBy(x => x.At).First())
+            .OrderBy(x => x.At).Take(5).ToList();
+    }
+
     private static void Printing(Ctx c, List<Finding> o)
     {
         const string Ch = "Microsoft-Windows-PrintService/Operational";
@@ -76,10 +101,12 @@ public static partial class Wp14Rules
             int pages = items.Sum(e => int.TryParse(F(e, "Param8", "Pages", "TotalPages"), NumberStyles.Integer, CultureInfo.InvariantCulture, out var n) ? n : 0);
             var docs = items.Take(6).Select(e => $"„{Shorten(F(e, "Param2", "DocumentName", "Document"))}” ({Time(T(e))}, utilizator {(F(e, "Param3", "UserName", "User") is { Length: > 0 } u ? u : "necunoscut")}, {F(e, "Param8", "Pages", "TotalPages") switch { "" => "pagini necunoscute", var p => p + " pagini" }})");
             var times = items.Select(T).Where(t => t is not null).Select(t => t!.Value).ToList();
+            var outputs = toFile ? PrintOutputCandidates(c, items) : [];
             var kind = toFile ? "imprimantă virtuală care scrie un fișier (PDF/XPS): documentul nu iese pe hârtie, ci devine un fișier nou" : network ? "imprimantă de rețea" : "imprimantă locală";
             var desc = $"{LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "document trimis", "documente trimise")} la imprimanta „{printer}” ({kind}) pe un sistem {ScopeWord(c)}, {Time(times.Count > 0 ? times[0] : null)} – {Time(times.Count > 0 ? times[^1] : null)}; {pages} pagini în total. " +
                        "Documente: " + string.Join("; ", docs) + (items.Count > 6 ? $" … (+{items.Count - 6})" : "") + ". " +
-                       "Evenimentul 307 arată că un document a fost trimis la imprimantă; nu arată conținutul, nivelul de clasificare și nu dovedește că foaia a fost predată sau că ieșirea a fost înregistrată în registrul de tipărire.";
+                       "Evenimentul 307 arată că un document a fost trimis la imprimantă; nu arată conținutul, nivelul de clasificare și nu dovedește că foaia a fost predată sau că ieșirea a fost înregistrată în registrul de tipărire." +
+                       (outputs.Count > 0 ? $" Fișiere PDF/XPS apărute în cele {PrintOutputWindow.TotalMinutes:0} minute de după (legătură probabilă după oră, nedovedită): {string.Join("; ", outputs.Select(x => $"„{x.Path}” ({Time(x.At)})"))}." : "");
             o.Add(Chan(c, "AIRGAP-PRINT-JOB", $"Tipărire pe un sistem izolat: {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "document", "documente")} la „{printer}”", toFile || network ? Sev(c, Severity.Medium) : Sev(c, Severity.Low),
                 "PRINT/SCAN", "PrintService/Operational 307", $"{LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "document", "documente")} la „{printer}”", times.Count > 0 ? times[0] : null, times.Count > 0 ? times[^1] : null,
                 PrintUsers(items),
@@ -88,10 +115,11 @@ public static partial class Wp14Rules
                 ["Tipărirea documentelor este o activitate normală a unei stații de lucru, dacă procedura o permite și foile sunt înregistrate.", "Un test de imprimantă sau o pagină de probă produce același eveniment.",
                  toFile ? "Imprimanta virtuală PDF este instalată implicit de Windows și este folosită și pentru a păstra o copie a unui document." : "Imprimanta poate fi cea aprobată a încăperii."],
                 items.Select(e => Ref(e, $"307 {Shorten(F(e, "Param2", "DocumentName", "Document"))}")).ToList(), items.Select(e => $"{e.Source} {e.EventId} {e.Locator}".Trim()).ToList(), "", SemanticType.Observation,
-                plain: items.Count == 1
+                plain: (items.Count == 1
                     ? $"a tipărit documentul {PlainPhrases.Q(Shorten(F(items[0], "Param2", "DocumentName", "Document")))}" + (pages > 0 ? $" ({LogAnalyzer.Dfir.Language.RoText.Count(pages, "pagină", "pagini")})" : "") + $" la imprimanta {PlainPhrases.Q(printer)}"
                     : $"a tipărit {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "document", "documente")}" + (pages > 0 ? $" ({LogAnalyzer.Dfir.Language.RoText.Count(pages, "pagină", "pagini")} în total)" : "") + $" la imprimanta {PlainPhrases.Q(printer)}, între ele {PlainPhrases.Q(Shorten(F(items[0], "Param2", "DocumentName", "Document")))}" +
-                      (toFile ? "; imprimanta este virtuală: documentul nu iese pe hârtie, ci devine un fișier" : "")));
+                      (toFile ? "; imprimanta este virtuală: documentul nu iese pe hârtie, ci devine un fișier" : "")) +
+                    (outputs.Count > 0 ? $"; în minutele următoare a apărut fișierul {PlainPhrases.Q(WinPath.GetFileName(outputs[0].Path))}{(outputs.Count > 1 ? $" (și încă {outputs.Count - 1})" : "")}, probabil documentul tipărit" : "")));
         }
         if (facts is null) return;
         foreach (var p in facts.Printers.Where(p => p.IsNetwork))

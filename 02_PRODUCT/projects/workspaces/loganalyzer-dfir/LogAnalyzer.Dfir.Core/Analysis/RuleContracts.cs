@@ -352,7 +352,7 @@ public static class RuleContracts
             ["Folosirea (Capability Access Manager, jurnalul aplicațiilor), starea din BIOS, acoperirea fizică a camerei."],
             ["Verificați politica P19 și acoperirea fizică (M09).", "Dezactivați dispozitivele neaprobate în BIOS."]),
         R("AIRGAP-PRINT-JOB", W14, SemanticType.Observation, "Windows a înregistrat (PrintService 307) trimiterea unor documente la o imprimantă în perioada cazului.",
-            ["Arată trimiterea documentului la imprimantă, nu conținutul, nivelul de clasificare sau predarea foii.", "Fără jurnalul PrintService/Operational pornit nu există evenimente: absența lor nu dovedește că nu s-a tipărit.", "O imprimantă virtuală PDF scrie un fișier, nu hârtie."],
+            ["Arată trimiterea documentului la imprimantă, nu conținutul, nivelul de clasificare sau predarea foii.", "Fără jurnalul PrintService/Operational pornit nu există evenimente: absența lor nu dovedește că nu s-a tipărit.", "O imprimantă virtuală PDF scrie un fișier, nu hârtie.", "Fișierul PDF/XPS numit după o tipărire virtuală este legat doar după oră (creat în cele 10 minute de după): o legătură probabilă, nu o dovadă."],
             ["Foile tipărite și registrul de tipărire, fișierele PDF produse, jurnalul serverului de tipărire."],
             ["Comparați documentele cu registrul de tipărire.", "Căutați fișierele PDF create, dacă imprimanta scrie fișiere."]),
         R("AIRGAP-PRINT-NETWORK-PRINTER", W14, SemanticType.Configuration, "O imprimantă cu port de rețea este instalată pe un sistem air-gapped sau autonom.",
