@@ -112,7 +112,9 @@ public static class PlainStory
         var shortName = account.Contains('\\') ? account[(account.LastIndexOf('\\') + 1)..] : account;
         if (shortName.Contains('@')) shortName = shortName[..shortName.IndexOf('@')];
         var person = personOf?.Invoke(account) ?? personOf?.Invoke(shortName);
-        if (person is { Length: > 0 } p) return $"{p} (contul {shortName})";
+        // „Preia de pe stație” fills the person column with the account name until someone writes the person: that is no person yet (lab VM 2026-11-07)
+        if (person is { Length: > 0 } p && !p.Trim().Equals(shortName.Trim(), StringComparison.OrdinalIgnoreCase) && !p.Trim().Equals(account.Trim(), StringComparison.OrdinalIgnoreCase))
+            return $"{p} (contul {shortName})";
         // a name ending in $ is usually a computer's own account, but an attacker can name an account so (lab S5: „labbackup$”): never hidden as „Windows”
         return shortName.EndsWith('$') ? $"contul „{shortName}” (nume de cont de calculator: verificați că este un calculator real)" : $"utilizatorul cu contul „{shortName}”";
     }
