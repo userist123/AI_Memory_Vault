@@ -1,0 +1,63 @@
+using LogAnalyzer.Core.Services.Edition;
+using LogAnalyzer.Dfir.Windows.Audit;
+using LogAnalyzer.Dfir.Windows.Native;
+using Xunit;
+
+namespace LogAnalyzer.Dfir.Tests;
+
+/// <summary>
+/// A19 (LA-Lab 2026-11-07): DC01 audited only Kerberos successes, so wrong passwords for a domain account left no trace on any computer and the
+/// password guessing could not be found. The station control says so on a domain controller, and only there.
+/// </summary>
+public sealed class DomainControllerFailureAuditTests
+{
+    private static StationFacts Station(string productType, Dictionary<string, AuditSetting>? audit, StationPosture posture = StationPosture.IsolatedNetwork)
+    {
+        var f = new StationFacts { Posture = posture, IsAdministrator = true, AuditPolicy = audit };
+        f.Settings["OS.ProductType"] = productType;
+        return f;
+    }
+
+    private static ControlCheck? A19(StationFacts f) => ControlEvaluator.Evaluate(f).Checks.SingleOrDefault(c => c.Id == "A19");
+
+    [Fact]
+    public void A_domain_controller_that_does_not_record_refused_passwords_is_non_conform_and_says_why_in_plain_words()
+    {
+        // the lab DC01 before the fix: Kerberos successes only
+        var c = A19(Station("LanmanNT", new() { ["Kerberos Authentication Service"] = AuditSetting.Success, ["Credential Validation"] = AuditSetting.Success | AuditSetting.Failure }));
+        Assert.NotNull(c);
+        Assert.Equal(ControlStatus.Neconform, c.Status);
+        Assert.Contains("Kerberos Authentication Service", c.Detail);
+        Assert.DoesNotContain("Credential Validation (", c.Detail);
+        Assert.Contains("nu rămâne nicio urmă", c.Detail);
+
+        var none = A19(Station("LanmanNT", new()));   // nothing audited at all
+        Assert.Equal(ControlStatus.Neconform, none!.Status);
+        Assert.Contains("Credential Validation", none.Detail);
+    }
+
+    [Fact]
+    public void A_domain_controller_that_records_both_is_conform_and_an_unreadable_policy_is_never_conform()
+    {
+        var ok = A19(Station("LanmanNT", new() { ["Kerberos Authentication Service"] = AuditSetting.Success | AuditSetting.Failure, ["Credential Validation"] = AuditSetting.Failure }));
+        Assert.Equal(ControlStatus.Conform, ok!.Status);
+        Assert.Equal(ControlStatus.Nedeterminat, A19(Station("LanmanNT", null))!.Status);
+    }
+
+    [Fact]
+    public void Workstations_member_servers_and_an_unknown_role_get_no_A19_line()
+    {
+        foreach (var t in new[] { "WinNT", "ServerNT", "", StationFactCollector.Absent })
+            Assert.Null(A19(Station(t, new())));
+    }
+
+    [Fact]
+    public void A19_has_a_guide_and_an_applicability_row()
+    {
+        var g = CheckGuides.For("A19");
+        Assert.Contains("controler de domeniu", g.What);
+        var row = Assert.Single(ControlApplicability.All, e => e.Id == "A19");
+        Assert.False(row.Standalone.Applies);
+        Assert.True(row.IsolatedNetwork.Applies);
+    }
+}

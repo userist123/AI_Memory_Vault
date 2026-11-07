@@ -643,6 +643,8 @@ public static class StationFactCollector
         s["OS.DisplayVersion"] = Hklm(cv, "DisplayVersion");
         s["OS.Build"] = Hklm(cv, "CurrentBuild");
         s["OS.UBR"] = Hklm(cv, "UBR");
+        // WinNT = workstation, ServerNT = member server, LanmanNT = domain controller (check A19)
+        s["OS.ProductType"] = Hklm(@"SYSTEM\CurrentControlSet\Control\ProductOptions", "ProductType");
         s["OS.InstallDate"] = ReadInstallDate() is { } inst ? inst.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture) : Absent;
         Guard(() =>
         {

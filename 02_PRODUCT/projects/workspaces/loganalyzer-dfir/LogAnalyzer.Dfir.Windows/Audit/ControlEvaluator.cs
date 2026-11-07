@@ -297,6 +297,31 @@ public static partial class ControlEvaluator
         ("Security State Change", AuditSetting.Success), ("Other Object Access Events", AuditSetting.Success),
     ];
 
+    // on a domain controller a wrong password for a domain account is refused here, by Kerberos (4771) or NTLM (4776), never on the workstation
+    private static readonly string[] DcFailureAudit = ["Kerberos Authentication Service", "Credential Validation"];
+
+    /// <summary>
+    /// A19 (LA-Lab 2026-11-07): DC01 audited only Kerberos successes, so 17 wrong passwords for a domain account left no trace anywhere and the password
+    /// guessing could not be detected. Only on a domain controller; any other station gets no A19 line.
+    /// </summary>
+    private static void DomainControllerFailureAudit(StationFacts f, ControlReport r)
+    {
+        if (!f.Settings.GetValueOrDefault("OS.ProductType", "").Equals("LanmanNT", StringComparison.OrdinalIgnoreCase)) return;
+        const string title = "Controlerul de domeniu notează parolele greșite";
+        if (f.AuditPolicy is not { } ap)
+        {
+            Add(r, "A19", "Audit", title, ControlStatus.Nedeterminat, "Politica de audit nu a putut fi citită." + NoRead);
+            return;
+        }
+        var missing = DcFailureAudit.Where(n => (ap.GetValueOrDefault(n) & AuditSetting.Failure) != AuditSetting.Failure).ToList();
+        Add(r, "A19", "Audit", title, missing.Count == 0 ? ControlStatus.Conform : ControlStatus.Neconform,
+            missing.Count == 0
+                ? "Controlerul notează încercările de autentificare refuzate (parolă greșită, cont inexistent), deci ghicirea parolelor pe conturile de domeniu lasă urme."
+                : $"Controlerul NU notează încercările refuzate pentru: {string.Join(", ", missing.Select(m => $"{m} ({ap.GetValueOrDefault(m)})"))}. Parola greșită a unui cont de domeniu este refuzată aici, nu pe stație: dacă cineva încearcă parole, nu rămâne nicio urmă nicăieri.",
+            DcFailureAudit.Select(n => $"{n}: {ap.GetValueOrDefault(n)}"),
+            "Cereți administratorului să pornească auditarea eșecurilor pentru „Kerberos Authentication Service” și „Credential Validation” (GPO-ul controlerelor de domeniu sau auditpol).");
+    }
+
     private static void AuditAndLogs(StationFacts f, ControlReport r)
     {
         if (f.AuditPolicy is { } ap)
@@ -308,6 +333,8 @@ public static partial class ControlEvaluator
                 ap.Select(kv => $"{kv.Key}: {kv.Value}"), "Activați auditul pentru subcategoriile lipsă (GPO sau auditpol).");
         }
         else Add(r, "A01", "Audit", "Politica de audit", ControlStatus.Nedeterminat, "Nu a putut fi citită (necesită administrator).");
+
+        DomainControllerFailureAudit(f, r);
 
         if (int.TryParse(f.Settings.GetValueOrDefault("SecurityLog.MaxSizeMB"), out var mb))
             Add(r, "A02", "Audit", "Dimensiunea jurnalului Security", mb >= 128 ? ControlStatus.Conform : ControlStatus.Neconform,

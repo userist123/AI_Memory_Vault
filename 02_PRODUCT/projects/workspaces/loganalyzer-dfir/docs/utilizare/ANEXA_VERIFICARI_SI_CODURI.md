@@ -509,6 +509,14 @@
 - **Sursa tehnică:** `Profilul de proceduri (Nivelul stației); jurnalul Security, primul eveniment`
 - **Cum se citește rezultatul:** Conform = jurnalul de pe stație acoperă singur durata cerută. De verificat = jurnalul începe mai târziu: înregistrările mai vechi trebuie să fie în arhivele exportate, pe care aplicația nu le vede. Nedeterminat = nivelul nu este definit în profil sau jurnalul nu a putut fi citit.
 
+### A19
+
+- **Ce verificăm:** Dacă, pe un controler de domeniu, se notează încercările de autentificare refuzate (parolă greșită, cont inexistent).
+- **De ce contează:** Parola greșită a unui cont de domeniu este refuzată de controlerul de domeniu, nu de stația pe care s-a tastat: dacă controlerul nu notează refuzurile, ghicirea parolelor nu lasă nicio urmă și nu poate fi descoperită.
+- **Cum verifică aplicația:** A citit din registru rolul calculatorului și, dacă este controler de domeniu, politica de audit pentru autentificarea Kerberos și pentru validarea parolelor.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions → ProductType (LanmanNT = controler de domeniu); auditpol: Kerberos Authentication Service, Credential Validation`
+- **Cum se citește rezultatul:** Conform = ambele subcategorii notează eșecurile. Neconform = cel puțin una nu le notează. Nedeterminat = politica de audit nu a putut fi citită. Pe o stație care nu este controler de domeniu verificarea nu apare.
+
 ### U01
 
 - **Ce verificăm:** Cine a fost adăugat sau scos din grupul administratorilor în perioada controlată.
