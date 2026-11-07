@@ -84,7 +84,7 @@ namespace LogAnalyzer.UI.ViewModels
         // Operating mode: decided once at startup from the station's connectivity (or forced), see App.OnStartup.
         [ObservableProperty] private bool _isAirGappedMode = AppModeContext.IsAirGapped;
         [ObservableProperty] private bool _isNetworkMode = !AppModeContext.IsAirGapped;
-        [ObservableProperty] private string _systemModeBadgeText = AppModeContext.IsAirGapped ? "Mod: izolat (fără rețea)" : "Mod: conectat";
+        [ObservableProperty] private string _systemModeBadgeText = LogAnalyzer.Core.Services.Edition.ModuleCatalog.ModeBadge(StationPostureContext.Current, AppModeContext.IsAirGapped);
         /// <summary>Header subtitle: the station this application runs on.</summary>
         /// <summary>The module with its descriptor (plan 2026-11-04): "Insula — Stație izolată".</summary>
         public string StationSubtitle => LogAnalyzer.Core.Services.Edition.ModuleCatalog.DisplayName(LogAnalyzer.Core.Services.Edition.StationPostureContext.Current);

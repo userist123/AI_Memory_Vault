@@ -142,6 +142,8 @@ namespace LogAnalyzer.UI
             {
                 StartupLog.Append(debugLogPath, "OnStartup starting...\n", reset: true);
                 base.OnStartup(e);
+                if (!LogAnalyzer.UI.Services.RomanianMessageBox.Install())                             // Da / Nu / Anulare on an English Windows
+                    Step(debugLogPath, "Message box hook not installed: confirmation buttons stay in the language of Windows.\n");
                 LogAnalyzer.UI.Services.LiveCase.ScopePrompt = LogAnalyzer.UI.Views.ScopeDialog.Ask;   // owner decision 28
                 LogAnalyzer.UI.Services.DataPackTrust.Apply();                                         // keys for offline detection data packs
                 if (LogAnalyzer.UI.Services.StartupNotices.Initialize() is { Length: > 0 } runtimeNotice) Step(debugLogPath, runtimeNotice + "\n");   // B10: non-blocking banner in the main window

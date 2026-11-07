@@ -63,6 +63,50 @@ public sealed class SmallMonitorScrollTests
     }
 
     [Fact]
+    public void At_1024_px_no_visible_button_of_any_page_is_cut_off_or_pushed_past_the_right_edge()
+    {
+        // lab VM 2026-11-07 (review): with the page as wide as the viewport, a toolbar wider than the page is clipped instead of scrolled
+        const double W = 1024 - 16 - 248, H = 540;   // window borders and the menu
+        var found = Wp18AccessibilityTests.OnSta(() =>
+        {
+            var problems = new List<string>();
+            foreach (var type in PageViews())
+            {
+                Window? window = null;
+                try
+                {
+                    var page = new LazyPage { Page = new DataTemplate { VisualTree = new FrameworkElementFactory(type) } };
+                    window = new Window { Content = new Border { Width = W, Height = H, Child = page }, Width = W, Height = H, Left = -20000, Top = -20000, ShowInTaskbar = false, ShowActivated = false, WindowStyle = WindowStyle.None };
+                    window.Show();
+                    window.UpdateLayout();
+                    if (page.View is not { } view) continue;
+                    foreach (var b in Descendants(view).OfType<Button>().Where(b => b.IsVisible && b.ActualWidth > 0))
+                    {
+                        var right = b.TransformToAncestor(view).Transform(new Point(b.ActualWidth, 0)).X;
+                        string name = b.Content as string ?? b.Name;
+                        if (right > view.ActualWidth + 0.5) problems.Add($"{type.Name}: „{name}” ends at {right:0} px, past the page ({view.ActualWidth:0})");
+                        else if (b.ActualWidth + b.Margin.Left + b.Margin.Right + 0.5 < b.DesiredSize.Width) problems.Add($"{type.Name}: „{name}” is cut to {b.ActualWidth:0} of {b.DesiredSize.Width:0} px");
+                    }
+                }
+                catch (Exception ex) { problems.Add($"{type.Name}: {ex.GetType().Name} {ex.Message}"); }
+                finally { window?.Close(); }
+            }
+            return problems;
+        });
+        Assert.True(found.Count == 0, string.Join("\n", found));
+    }
+
+    private static IEnumerable<DependencyObject> Descendants(DependencyObject root)
+    {
+        for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
+        {
+            var c = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+            yield return c;
+            foreach (var d in Descendants(c)) yield return d;
+        }
+    }
+
+    [Fact]
     public void A_page_that_fits_the_viewport_does_not_scroll_and_a_smaller_viewport_scrolls_instead_of_squeezing()
     {
         var big = LazyPage.PageSize(1500, 900);
@@ -70,6 +114,8 @@ public sealed class SmallMonitorScrollTests
         var small = LazyPage.PageSize(700, 400);
         Assert.True(small.Width >= LazyPage.MinPageWidth && small.Height >= LazyPage.MinPageHeight);   // the page keeps its minimum size and the host scrolls
         Assert.True(LazyPage.PageSize(ViewportW, ViewportH).Height >= LazyPage.MinPageHeight);
+        // lab VM 2026-11-07: a 1024 px window leaves a 768 px page beside the 248 px menu; with the vertical bar the page must still fit, without sideways scrolling
+        Assert.True(LazyPage.PageSize(768, 540).Width <= 768, "a 1024 px window scrolls its pages sideways");
     }
 
     [Fact]

@@ -10,7 +10,7 @@
 
         <!-- 1. Header with Title & Standalone Report Export Actions -->
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,16">
-            <StackPanel DockPanel.Dock="Left">
+            <StackPanel DockPanel.Dock="Top">
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
                     <TextBlock Text="Conturi locale și USB" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <Border Margin="12,0,0,0" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
@@ -20,11 +20,12 @@
                 <TextBlock Text="Auditare specializată pentru PC-uri izolate (fără conexiune la rețea / domeniu): Bază SAM, Medii USB, Politici de Audit, Sesiuni Locale &amp; Conformitate HG 585/2002" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
             </StackPanel>
 
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <!-- lab 2026-11-07: under the title and wrapping, so at 1024 px no button is cut off -->
+            <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
                 <Button Content="📄 Exportă CSV" Command="{Binding ExportAdAuditReportCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,6" Margin="0,0,8,0"/>
                 <Button Content="📑 Raport Executiv PDF" Command="{Binding ExportAdAuditPdfReportCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,6" Margin="0,0,8,0"/>
                 <Button Content="🌐 Raport Executiv HTML" Command="{Binding ExportAdAuditHtmlReportCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="14,6"/>
-            </StackPanel>
+            </WrapPanel>
         </DockPanel>
 
         <!-- 2. Standalone PC Specific KPI Ribbon -->

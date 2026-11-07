@@ -60,7 +60,8 @@ public sealed class BeginnerRound4Tests
         var inv = Src("Views", "InvestigationView.xaml");
         Assert.Contains("<ctrl:NoDataPanel HideInSimpleLevel=\"True\"/>", inv);
         var doc = XDocument.Parse(inv);
-        var right = doc.Descendants().First(e => e.Name.LocalName == "StackPanel" && e.Elements().Any(c => (string?)c.Attribute("Content") == "Folder caz"));
+        // the case buttons' container (a WrapPanel since lab 2026-11-07, so it wraps at 1024 px)
+        var right = doc.Descendants().First(e => e.Name.LocalName is "StackPanel" or "WrapPanel" && e.Elements().Any(c => (string?)c.Attribute("Content") == "Folder caz"));
         var xml = right.ToString();
         Assert.Contains("IsSimple", xml);
         Assert.Contains("Binding HasResult", xml);

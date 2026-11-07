@@ -107,13 +107,14 @@
             <!-- Incident detail -->
             <Border Grid.Row="0" Grid.RowSpan="3" Grid.Column="2" Style="{StaticResource ObsidianCardStyle}">
                 <DockPanel>
-                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8" LastChildFill="False">
-                        <TextBlock DockPanel.Dock="Left" Text="Detalii incident" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                        <Button DockPanel.Dock="Right" Content="Export PDF" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}" Margin="6,0,0,0"/>
-                        <Button DockPanel.Dock="Right" Content="Ridică izolarea" Command="{Binding ReleaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="6,0,0,0"/>
-                        <Button DockPanel.Dock="Right" Content="Reîmprospătează încercările blocate" Command="{Binding RefreshBlockedCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="6,0,0,0"/>
-                        <Button DockPanel.Dock="Right" Content="Folder" Command="{Binding OpenIncidentFolderCommand}" Style="{StaticResource OutlineButtonStyle}"/>
-                    </DockPanel>
+                    <!-- lab 2026-11-07: at 1024 px „Reîmprospătează încercările blocate” was cut to „Reîmp”; the buttons now wrap under the title -->
+                    <TextBlock DockPanel.Dock="Top" Text="Detalii incident" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6"/>
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                        <Button Content="Folder" Command="{Binding OpenIncidentFolderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,6"/>
+                        <Button Content="Reîmprospătează încercările blocate" Command="{Binding RefreshBlockedCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,6"/>
+                        <Button Content="Ridică izolarea" Command="{Binding ReleaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,6"/>
+                        <Button Content="Export PDF" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,0,6"/>
+                    </WrapPanel>
                     <TextBox Text="{Binding IncidentDetail, Mode=OneWay}" IsReadOnly="True" TextWrapping="NoWrap" FontFamily="Consolas" FontSize="11.5"
                              VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" AcceptsReturn="True"
                              Background="{StaticResource Surface2Brush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0"/>

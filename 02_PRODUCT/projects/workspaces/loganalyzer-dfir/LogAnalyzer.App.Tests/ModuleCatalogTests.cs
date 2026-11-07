@@ -22,6 +22,17 @@ public sealed class ModuleCatalogTests
     }
 
     [Fact]
+    public void The_mode_badge_never_says_connected_on_the_closed_network_of_Arhipelag()
+    {
+        // lab WS01 2026-11-07: Arhipelag on its domain LAN showed „Mod: conectat”, read as Internet access
+        Assert.Equal("Mod: rețea locală, fără Internet", ModuleCatalog.ModeBadge(StationPosture.IsolatedNetwork, airGapped: false));
+        Assert.Equal("Mod: izolat (fără rețea)", ModuleCatalog.ModeBadge(StationPosture.IsolatedNetwork, airGapped: true));
+        Assert.Equal("Mod: izolat (fără rețea)", ModuleCatalog.ModeBadge(StationPosture.Standalone, airGapped: true));
+        Assert.Equal("Mod: izolat (fără rețea)", ModuleCatalog.ModeBadge(StationPosture.Standalone, airGapped: false));   // Insula has no network code at all
+        Assert.Equal("Mod: conectat", ModuleCatalog.ModeBadge(StationPosture.Internet, airGapped: false));
+    }
+
+    [Fact]
     public void A_menu_item_is_announced_by_its_title_not_by_the_record_text()
     {
         // evaluation 2026-11-05: UI Automation read "NavigationEntry { Title = Politici, Tab = 17, Enabled = True, Reason = }" for every menu item

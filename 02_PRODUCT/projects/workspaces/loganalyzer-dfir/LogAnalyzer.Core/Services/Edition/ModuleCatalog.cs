@@ -32,6 +32,13 @@ namespace LogAnalyzer.Core.Services.Edition
         /// <summary>"Insula — Stație izolată": the module name always shown with its descriptor.</summary>
         public static string DisplayName(StationPosture p) => $"{ModuleName(p)} — {Descriptor(p)}";
 
+        /// <summary>
+        /// The mode badge of the main window. The runtime mode has two values (air-gapped or not); a not-air-gapped Arhipelag is on its closed LAN,
+        /// never on the Internet (lab 2026-11-07: „Mod: conectat” on a closed network read as Internet access).
+        /// </summary>
+        public static string ModeBadge(StationPosture p, bool airGapped) =>
+            airGapped || p == StationPosture.Standalone ? "Mod: izolat (fără rețea)" : p == StationPosture.IsolatedNetwork ? "Mod: rețea locală, fără Internet" : "Mod: conectat";
+
         /// <summary>One sentence: what the module is for (sign-in screen).</summary>
         public static string Purpose(StationPosture p) => p switch
         {

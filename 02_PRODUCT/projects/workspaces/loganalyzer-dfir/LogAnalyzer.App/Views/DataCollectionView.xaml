@@ -10,15 +10,16 @@
 
         <!-- Header -->
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
-            <StackPanel DockPanel.Dock="Left">
+            <StackPanel DockPanel.Dock="Top">
                 <TextBlock Text="Colectare date" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock Text="Triaj în timp real al stației țintă, furnizori ETW, telemetrie din memoria volatilă și împachetare cu lanț de custodie" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <!-- lab 2026-11-07: under the title and wrapping, so at 1024 px no button is cut off -->
+            <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
                 <Button Content="🛡️ Sanitizare Mediu &amp; Certificat PDF" Command="{Binding SanitizeMediaAndGenerateCertPdfCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="14,8" Margin="0,0,8,0"/>
                 <Button Content="⚡ Execută Live Triage" Command="{Binding StartCollectionCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,8" Margin="0,0,8,0"/>
                 <Button Content="🔒 Sigilează Pachet Caz" Command="{Binding SealDfirCaseBundleCommand}" Padding="14,8"/>
-            </StackPanel>
+            </WrapPanel>
         </DockPanel>
 
         <!-- Status Cards -->

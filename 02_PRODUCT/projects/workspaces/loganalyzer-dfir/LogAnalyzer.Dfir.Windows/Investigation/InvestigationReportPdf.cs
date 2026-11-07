@@ -284,8 +284,17 @@ public static class InvestigationReportPdf
                 {
                 Head("Ascunderea sau ștergerea urmelor (anti-forensics)");
                 foreach (var a in r.AntiForensics.OrderBy(a => a.Result).ThenBy(a => a.Id))
-                    P(col, RoText.FixSentences($"{a.Id} {a.Technique}{(a.Attack.Length > 0 ? $" ({a.Attack})" : "")} — {a.ResultRomanian}: {RoText.CleanPathsInText(a.Reason)}")).FontSize(7.5f)
-                       .FontColor(a.Result == AntiForensicResult.Detected ? "#b91c1c" : a.Result == AntiForensicResult.Undetermined ? "#92400e" : "#1e293b");
+                {
+                    string color = a.Result == AntiForensicResult.Detected ? "#b91c1c" : a.Result == AntiForensicResult.Undetermined ? "#92400e" : "#1e293b";
+                    if (a.Plain.Length > 0)
+                    {
+                        // the plain sentence leads; the codes stay below for the specialist (owner 2026-11-06)
+                        P(col, a.Plain).FontSize(8f).FontColor(color);
+                        P(col, RoText.FixSentences($"Pentru specialiști: {a.Id} {a.Technique}{(a.Attack.Length > 0 ? $" ({a.Attack})" : "")} — {a.ResultRomanian}: {RoText.CleanPathsInText(a.Reason)}")).FontSize(6.5f).FontColor(Muted);
+                    }
+                    else
+                        P(col, RoText.FixSentences($"{a.Id} {a.Technique}{(a.Attack.Length > 0 ? $" ({a.Attack})" : "")} — {a.ResultRomanian}: {RoText.CleanPathsInText(a.Reason)}")).FontSize(7.5f).FontColor(color);
+                }
                 P(col, "DETECTAT = urmă observată în elementele de probă (nu dovedește singură intenția); NEDETECTAT = sursa relevantă a fost analizată și nu arată urma; NEDETERMINAT = sursa lipsește sau nu a fost citită. Nicio verificare nu înseamnă „curat”.").FontSize(7).Italic().FontColor(Muted);
 
                 }

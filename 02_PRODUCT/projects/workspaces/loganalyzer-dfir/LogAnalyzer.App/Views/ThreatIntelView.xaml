@@ -9,14 +9,15 @@
 
         <!-- Header -->
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
-            <StackPanel DockPanel.Dock="Left">
+            <StackPanel DockPanel.Dock="Top">
                 <TextBlock Text="Informații despre amenințări" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock Text="Suprapunerea tehnicilor observate cu profile publice de actori. NU este atribuire: aceleași tehnici sunt folosite de mulți actori, iar atribuirea cere dovezi separate (infrastructură, malware, context)." FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <!-- lab 2026-11-07: under the title and wrapping, so at 1024 px no button is cut off -->
+            <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
                 <Button Content="Exportă STIX 2.1" Command="{Binding ExportStixJsonCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,8,0"/>
                 <Button Content="Exportă MISP JSON" Command="{Binding ExportMispJsonCommand}" Style="{StaticResource ActionButtonStyle}"/>
-            </StackPanel>
+            </WrapPanel>
         </DockPanel>
 
         <!-- Main 2-Pane Split: Left APT Profiles, Right Extracted IOC Knowledge Base -->
