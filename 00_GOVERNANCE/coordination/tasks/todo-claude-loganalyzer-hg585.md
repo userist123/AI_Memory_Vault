@@ -185,6 +185,17 @@
   creator, record <= 500 of a never-cleared Security log) are Low and told "creat de Windows la instalare"; kernel processes (Registry…) are
   not user programs. Then: the app never passed the users register to the analysis (no person was named in the real app) -> the pipeline loads the saved one; the card, grids and report re-tell the sentence with the register the app holds now (PlainStory.CurrentPersonOf, set when the register loads/saves); a task definition is no longer "Windows are…" and its name loses the user SID.
   Lab report generator: scratch worktree wt-pdf + ZzLabReportTests (never committed); reports in E:\LA-Lab\reports.
+- 2026-11-07 morning, real app on the VMs: users register filled through the UI (rows table had no height at 1024x720 -> fixed
+  05b4041f8; "Preia de pe stație" puts the account name as person -> not a person, d7b6222db), names shown in grid and PDF from the app.
+  Continent on WS01: connected mode needs a SIGNED edition policy (by design); lab policy key = E:\LA-Lab\secrets\lab_policy_*.{bin,b64}
+  (private DPAPI), build-lab-apps.ps1 writes the public key into LogAnalyzer.App\Edition\Unclassified\edition-policy-public-key.b64 only for
+  the build and deletes it; policy signed for LAB-WS01 role csirt in C:\ProgramData\LogAnalyzer\LogAnalyzer.policy. WS01 now auto-logs on
+  as LAB\it.admin (scripts\domain-desktop.ps1) so the elevated app runs under a domain account. Fixed: AD inventory closed the app
+  (dynamic COM on maxPwdAge -> 4d858a877), AD error message in English / no hint (e5cf9fd61), XML entities in live alerts, DC box a11y.
+  AD inventory verified vs lab: 7 users, 3 computers, Domain Admins, no lockout (explains S1), 7 NECONFORM.
+  Incident: after a reboot the Start search had focus and the sign-in script typed the LAB password there (screenshot deleted, VM search
+  cleared); the UIA driver now refuses to type unless the app is in front. The lab password is lab-only and goes with the lab cleanup.
+  Next: containment of updsvc.exe, remote collection WS01 -> SRV01, Arhipelag redeploy on WS01, lab report .docx.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); Control stație should flag the
    missing DC failure auditing; rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
