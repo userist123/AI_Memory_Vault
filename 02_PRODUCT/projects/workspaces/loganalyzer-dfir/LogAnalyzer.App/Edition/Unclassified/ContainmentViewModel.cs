@@ -218,8 +218,9 @@ namespace LogAnalyzer.UI.ViewModels
                     "Ridicare izolare", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
             Status = ContainmentRelease.Run(_service, inc, "ridicată de operator");
             IncidentDetail = IncidentDetailFormatter.Format(inc);
+            // the same object put back in its own place is not a change for the grid (lab VM 2026-11-07: the row still said „IZOLAT” after the release)
             var idx = Incidents.IndexOf(inc);
-            if (idx >= 0) { Incidents[idx] = inc; SelectedIncident = inc; }
+            if (idx >= 0) { Incidents.RemoveAt(idx); Incidents.Insert(idx, inc); SelectedIncident = inc; }
         }
 
         [RelayCommand]
