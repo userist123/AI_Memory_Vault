@@ -316,6 +316,10 @@ public static partial class ControlEvaluator
     // on a domain controller a wrong password for a domain account is refused here, by Kerberos (4771) or NTLM (4776), never on the workstation
     private static readonly string[] DcFailureAudit = ["Kerberos Authentication Service", "Credential Validation"];
 
+    /// <summary>Every audit subcategory a check reads by name; each must be in the list AuditPolicy.Query reads, or it would always look „None”.</summary>
+    internal static IEnumerable<string> AuditSubcategoriesUsed() =>
+        RequiredAudit.Select(x => x.Name).Concat(DcFailureAudit).Concat(["Removable Storage", "File System", "Handle Manipulation", "Detailed File Share", "Process Creation"]).Distinct();
+
     /// <summary>
     /// A19 (LA-Lab 2026-11-07): DC01 audited only Kerberos successes, so 17 wrong passwords for a domain account left no trace anywhere and the password
     /// guessing could not be detected. Only on a domain controller; any other station gets no A19 line.
@@ -327,6 +331,13 @@ public static partial class ControlEvaluator
         if (f.AuditPolicy is not { } ap)
         {
             Add(r, "A19", "Audit", title, ControlStatus.Nedeterminat, "Politica de audit nu a putut fi citită." + NoRead);
+            return;
+        }
+        // a subcategory that was not read is unknown, never "None" (lab DC01 2026-11-08: Kerberos was not in the read list and showed as not audited)
+        var unread = DcFailureAudit.Where(n => !ap.ContainsKey(n)).ToList();
+        if (unread.Count > 0)
+        {
+            Add(r, "A19", "Audit", title, ControlStatus.Nedeterminat, $"Setarea de audit pentru {string.Join(", ", unread)} nu a fost citită, deci nu se poate spune dacă se notează parolele greșite." + NoRead);
             return;
         }
         var missing = DcFailureAudit.Where(n => (ap.GetValueOrDefault(n) & AuditSetting.Failure) != AuditSetting.Failure).ToList();
@@ -1068,7 +1079,7 @@ public static partial class ControlEvaluator
             var status = bt == 0 && paired == 0 ? ControlStatus.Conform : noInternet && (!svcOff || paired > 0) ? ControlStatus.Neconform : ControlStatus.DeVerificat;
             var pairedText = paired > 0 ? $" Windows are {Ro.CountMasc(paired, "dispozitiv asociat", "dispozitive asociate")} (perechi salvate): {S("Bluetooth.Paired")}; o asociere înseamnă că dispozitivul a fost legat de stație, nu ce s-a transmis." : "";
             Add(r, "N04", "Rețea", "Bluetooth", status,
-                (bt == 0 ? "Stația nu are acum componente Bluetooth." : $"Stația are Bluetooth ({Ro.CountFem(bt, "componentă", "componente")}: {S("Bluetooth.Components")}); serviciul Bluetooth este {(svcOff ? "dezactivat" : svc == "" ? "într-o stare necitită" : "permis să pornească")}.") +
+                (bt == 0 ? (paired > 0 ? "Stația nu are acum componente Bluetooth." : "Stația nu are componente Bluetooth.") : $"Stația are Bluetooth ({Ro.CountFem(bt, "componentă", "componente")}: {S("Bluetooth.Components")}); serviciul Bluetooth este {(svcOff ? "dezactivat" : svc == "" ? "într-o stare necitită" : "permis să pornească")}.") +
                 pairedText + (noInternet && (bt > 0 || paired > 0) ? " Prin Bluetooth se pot trimite fișiere fără cablu." : ""),
                 [@"HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start = " + Shown(svc), @"HKLM\SYSTEM\CurrentControlSet\Services\BTHPORT\Parameters\Devices → " + (S("Bluetooth.PairedCount") is { Length: > 0 } pcs ? pcs + " dispozitive" : "necitit")],
                 "Bluetooth trebuie oprit dacă organizația nu l-a aprobat în scris.");

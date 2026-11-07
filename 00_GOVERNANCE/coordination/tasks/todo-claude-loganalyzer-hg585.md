@@ -285,6 +285,13 @@
   policy the new Copilot app ignores, Snipping Tool paths are forum-sourced and conflicting, Recall's real control (HKLM AllowRecallEnablement /
   DisableAIDataAnalysis) is already read by P20. Tests: Dfir 2706, App 1018, UI 366, Edition 45.
   Next: redeploy the current build to the lab VMs and run Control stație to see A19/A20/N03/N04/P14/P28 on real stations.
+- 2026-11-08T01:40+02:00 LAB VERIFICATION (scratchpad\labcheck harness: StationFactCollector.Collect + ControlEvaluator.Evaluate, self-contained,
+  run elevated on the 4 VMs via E:\LA-Lab\scripts\lab-check.ps1; outputs E:\LA-Lab\reports\labcheck-*.txt). FOUND A REAL BUG in A19 (6153f049d):
+  "Kerberos Authentication Service" was not in AuditPolicy.Subcategories (the list AuditQuerySystemPolicy reads), so DC01 showed NECONFORM while
+  auditpol said Success and Failure. Fixed: added G(0x42); A19 now NEDETERMINAT when a subcategory was not read; guard test
+  AuditSubcategoriesUsed() ⊆ AuditPolicy.Subcategories. After the fix: DC01 A19 CONFORM; SRV01 (member) no A19; A20 DE VERIFICAT on all 4 (the
+  Windows default); N03/N04/P28 CONFORM; P14 DE VERIFICAT (no profile on the VMs); A01 NECONFORM where Removable Storage/PnP are not audited.
+  Tests: Dfir 2708, App 1018, UI 366, Edition 45.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.
