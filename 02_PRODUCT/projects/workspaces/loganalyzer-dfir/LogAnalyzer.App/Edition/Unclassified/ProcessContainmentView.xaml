@@ -16,18 +16,20 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
-            <StackPanel DockPanel.Dock="Left">
+        <!-- lab VM 2026-11-07 (1024 px): in a DockPanel the long subtitle did not wrap and pushed „Caută procese suspecte” out of the window -->
+        <Grid Grid.Row="0" Margin="0,0,0,12">
+            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+            <StackPanel Grid.Column="0" Margin="0,0,12,0">
                 <TextBlock Text="Izolare procese suspecte" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock Text="Taie accesul la rețea doar programului suspect (nu întregului PC), îl scanează și păstrează totul în incident, cu export PDF."
                            FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
             </StackPanel>
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                 <CheckBox Content="Izolare automată (încredere mare)" IsChecked="{Binding AutoContainEnabled}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"
                           ToolTip="La fiecare minut: programele nesemnate, din locații în care orice utilizator poate scrie și cu conexiuni în Internet sunt izolate de rețea automat (nu sunt suspendate)."/>
                 <Button Content="Caută procese suspecte" Command="{Binding ScanSuspectsCommand}" Style="{StaticResource AccentButtonStyle}"/>
             </StackPanel>
-        </DockPanel>
+        </Grid>
 
         <!-- Warnings: admin rights, audit of blocked connections -->
         <StackPanel Grid.Row="1" Margin="0,0,0,12">
