@@ -562,6 +562,7 @@ namespace LogAnalyzer.UI.ViewModels
                 : $"Integritate air-gap: {AirGapFindings.Count} constatări ({AirGapFindings.Count(a => a.Severity >= Severity.High)} ridicate).";
             ResultChanged?.Invoke(this, EventArgs.Empty);
             LogAnalyzer.UI.Services.CollectAllState.Instance.Publish(result, opened);   // G3: one result, reused by every page
+            RefreshTimelineNotes();
             FillTimeline();
             var chains = _result.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
             Chains = chains.Count == 0 ? "Niciun lanț de incident (constatări grave grupate în timp)." :
@@ -592,13 +593,10 @@ namespace LogAnalyzer.UI.ViewModels
         {
             Timeline.Clear();
             if (_result is null) return;
-            IEnumerable<TimelineEvent> q = _result.Timeline;
-            var flt = TimelineFilter.Trim();
-            if (flt.Length > 0)
-                q = q.Where(e => e.Summary.Contains(flt, StringComparison.OrdinalIgnoreCase) || e.Path.Contains(flt, StringComparison.OrdinalIgnoreCase) ||
-                                 e.Process.Contains(flt, StringComparison.OrdinalIgnoreCase) || e.User.Contains(flt, StringComparison.OrdinalIgnoreCase) ||
-                                 e.EventId == flt || e.RemoteIp.Contains(flt, StringComparison.OrdinalIgnoreCase) || e.Dns.Contains(flt, StringComparison.OrdinalIgnoreCase));
-            foreach (var e in q.Take(20000)) Timeline.Add(e);
+            // master plan 6.9: one filter for the page and the saved views (text, source, interval, bookmarks); an unreadable date keeps the text filter only
+            if (_suppressFill) return;
+            var spec = CurrentSpec(strict: false)!;
+            foreach (var e in LogAnalyzer.Dfir.Case.TimelineNotebook.Apply(_result.Timeline, spec, Views.BookmarkMarkConverter.Marked).Take(20000)) Timeline.Add(e);
         }
 
         [RelayCommand]

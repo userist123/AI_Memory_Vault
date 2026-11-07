@@ -218,7 +218,7 @@
                 </Style>
             </TextBlock.Style>
         </TextBlock>
-        <TabControl AutomationProperties.Name="Rezultatele investigației" Grid.Row="2" ctrl:PageFill.MinHeight="360" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+        <TabControl AutomationProperties.Name="Rezultatele investigației" Grid.Row="2" ctrl:PageFill.MinHeight="560" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
             <TabControl.Style>
                 <Style TargetType="TabControl">
                     <Style.Triggers>
@@ -622,14 +622,52 @@
                     </DataGrid>
                 </DockPanel>
             </TabItem>
-            <TabItem Header="Cronologie" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Cronologie" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Cronologia cazului: evenimente, marcaje, note și vederi salvate">
                 <DockPanel Margin="8">
-                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,8">
+                    <DockPanel DockPanel.Dock="Top" Margin="0,0,0,4">
                         <TextBlock Text="Filtru (text, proces, cale, utilizator, IP, ID eveniment):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                         <TextBox AutomationProperties.Name="Filtru cronologie" Text="{Binding TimelineFilter, UpdateSourceTrigger=PropertyChanged, Delay=400}"/>
                     </DockPanel>
-                    <DataGrid AutomationProperties.Name="Cronologie" ItemsSource="{Binding Timeline}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" EnableRowVirtualization="True">
+                    <!-- master plan 6.9: source, interval, bookmarks, saved views and their comparison; notes on the chosen event -->
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+                        <ComboBox ItemsSource="{Binding TimelineSources}" SelectedItem="{Binding SelectedTimelineSource}" MinWidth="150" Margin="0,0,6,0" AutomationProperties.Name="Sursa evenimentelor"/>
+                        <TextBlock Text="de la" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBox Text="{Binding TimelineFromText, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,4,0" AutomationProperties.Name="De la (UTC, aaaa-ll-zz hh:mm)"/>
+                        <TextBlock Text="până la" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBox Text="{Binding TimelineToText, UpdateSourceTrigger=PropertyChanged}" Width="120" Margin="0,0,6,0" AutomationProperties.Name="Până la (UTC, aaaa-ll-zz hh:mm)"/>
+                        <Button Content="Aplică" Command="{Binding ApplyTimelineFilterCommand}" Padding="10,4" Margin="0,0,8,0" AutomationProperties.Name="Aplică filtrul cronologiei"/>
+                        <CheckBox Content="Doar marcate" IsChecked="{Binding TimelineOnlyBookmarked}" VerticalAlignment="Center" Margin="0,0,8,0"/>
+                    </WrapPanel>
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+                        <TextBox Text="{Binding NewViewName, UpdateSourceTrigger=PropertyChanged}" Width="150" Margin="0,0,4,0" AutomationProperties.Name="Numele vederii noi"/>
+                        <Button Content="Salvează vederea" Command="{Binding SaveTimelineViewCommand}" Padding="10,4" Margin="0,0,10,0"/>
+                        <ComboBox ItemsSource="{Binding SavedViewNames}" SelectedItem="{Binding SelectedSavedView}" MinWidth="140" Margin="0,0,4,0" AutomationProperties.Name="Vederi salvate"/>
+                        <Button Content="Aplică vederea" Command="{Binding ApplySavedViewCommand}" Padding="10,4" Margin="0,0,4,0"/>
+                        <Button Content="Șterge" Command="{Binding DeleteSavedViewCommand}" Padding="10,4" Margin="0,0,10,0" AutomationProperties.Name="Șterge vederea salvată"/>
+                        <ComboBox ItemsSource="{Binding SavedViewNames}" SelectedItem="{Binding CompareViewName}" MinWidth="140" Margin="0,0,4,0" AutomationProperties.Name="Vederea de comparat"/>
+                        <Button Content="Compară vederile" Command="{Binding CompareViewsCommand}" Padding="10,4"/>
+                    </WrapPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding TimelineNotesLine}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource EvidenceAccentBrush}" Margin="0,0,0,4"
+                               AutomationProperties.Name="Starea notițelor cronologiei" AutomationProperties.LiveSetting="Polite"/>
+                    <Grid DockPanel.Dock="Bottom" Margin="0,6,0,0">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="2*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="3*"/></Grid.ColumnDefinitions>
+                        <StackPanel Grid.Column="0">
+                            <TextBox Text="{Binding AnnotationText, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Nota analistului sau eticheta marcajului" Margin="0,0,0,4"/>
+                            <WrapPanel>
+                                <Button Content="{Binding BookmarkButtonText}" Command="{Binding ToggleBookmarkCommand}" Padding="10,4" Margin="0,0,6,0" AutomationProperties.Name="Marchează sau scoate marcajul evenimentului ales"/>
+                                <Button Content="Adaugă nota" Command="{Binding AddAnnotationCommand}" Padding="10,4" AutomationProperties.Name="Adaugă nota la evenimentul ales"/>
+                            </WrapPanel>
+                        </StackPanel>
+                        <ListBox Grid.Column="2" ItemsSource="{Binding SelectedEventNotes}" MaxHeight="80" AutomationProperties.Name="Marcajul și notele evenimentului ales"/>
+                    </Grid>
+                    <DataGrid AutomationProperties.Name="Cronologie" ItemsSource="{Binding Timeline}" SelectedItem="{Binding SelectedTimelineEvent}" SelectionMode="Single" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" EnableRowVirtualization="True">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                <Setter Property="AutomationProperties.Name" Value="{Binding Summary}"/>
+                            </Style>
+                        </DataGrid.RowStyle>
                         <DataGrid.Columns>
+                            <DataGridTextColumn Header="★" Binding="{Binding Converter={x:Static local:BookmarkMarkConverter.Instance}}" Width="34"/>
                             <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding Time.Utc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
                             <DataGridTextColumn Header="Sursă" Binding="{Binding Source}" Width="1.3*"/>
                             <DataGridTextColumn Header="ID" Binding="{Binding EventId}" Width="55"/>

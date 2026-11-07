@@ -63,6 +63,26 @@ namespace LogAnalyzer.UI.Views
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
 
+    /// <summary>
+    /// Master plan 6.9: „★” for a bookmarked timeline event, „✎” for one with analyst notes. The sets are the notes of the open case, replaced by
+    /// the view model when the notes are read again (the timeline is then refilled, so the rows are rebound).
+    /// </summary>
+    public sealed class BookmarkMarkConverter : IValueConverter
+    {
+        public static readonly BookmarkMarkConverter Instance = new();
+        public static IReadOnlySet<string> Marked { get; set; } = new HashSet<string>();
+        public static IReadOnlySet<string> Annotated { get; set; } = new HashSet<string>();
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            if (value is not LogAnalyzer.Dfir.Model.TimelineEvent e) return "";
+            var k = LogAnalyzer.Dfir.Case.TimelineNotebook.EventKey(e);
+            return (Marked.Contains(k) ? "★" : "") + (Annotated.Contains(k) ? "✎" : "");
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
+
     /// <summary>Closure checklist result in words („îndeplinit”, „atenție”, „blochează”).</summary>
     public sealed class ChecklistStatusTextConverter : IValueConverter
     {
