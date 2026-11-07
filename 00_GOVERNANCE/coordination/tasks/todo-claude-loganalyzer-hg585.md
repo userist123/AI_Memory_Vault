@@ -235,6 +235,14 @@
   and 6416 (subject is usually SYSTEM) corrected; LnkParser stale Jump List text fixed. Behaviour change: lab stations with Removable Storage
   success-only now get A01 NECONFORM. Next P1: P1.4 automatic USN export of NTFS removable volumes, P1.3 archive inventory for A18, P1.5
   DriverFrameworks channel check. Tests: Dfir 2674, App 1018, UI 366, Edition 45.
+- 2026-11-07T19:30+02:00 P1.4 done: UsnJournalCollector (Standard/Full, elevated) reads the USN journal of every external NTFS volume
+  (removable, or USB disk by MSFT_Disk BusType=7 / Win32_DiskDrive USB) directly via FSCTL_READ_USN_JOURNAL (UsnJournalNative), never the
+  system, case or application drive; writes fsutil-layout CSV + "Time stamp UTC" (parser prefers it) + Volume/serial + "Read complete".
+  fsutil rejected: redirected output lost ș/ț/ă. Lab VHD (elevated): 91/91 records, 0 field differences vs fsutil, Romanian names kept.
+  vault-reviewer 2 rounds: R1 REJECT (FILETIME > 9999 threw and failed the run, case drive not excluded, silent truncation, UASP, provenance),
+  R2 REJECT (volume label with CR/LF could fake the CSV column line) -> all fixed with tests. Accepted residuals: CR inside a file name lost by
+  the existing parser; Source info shown as hex when nonzero; a case folder on a folder-mounted volume is not excluded. Host C: had 199 MB
+  free (4 tests failed on space) -> moved generated lab cases to E:\LA-Lab\reports\scratch-cases-2026-11-07. Tests: Dfir 2681, App 1018, UI 366, Edition 45.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.
