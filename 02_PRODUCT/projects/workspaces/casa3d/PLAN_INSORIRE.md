@@ -59,9 +59,41 @@ Ramura `claude/casa3d-insorire`, worktree `D:/w/sun`, bază `origin/main` `0d97d
   Runda 2 PARTIAL — nișele adăugate după căutare; reparat (cheia de recalcul și verificarea la aplicare le includ), cu teste.
   Suita: 144 fișiere / 1002 teste; next build reușit.
 
+## Etapa 3 — conformare: corecturile din cercetare, vecinii, vara, raportul (cerința „hai să le facem, fii ambițios”, 2026-11-07)
+Sursa: raportul `D:/w/reports/Casa3D lumină naturală și confort solar.md` (art. 3 consolidat la 05.05.2026, EN 17037, AD O).
+- **Corecturi de metodă**: punctul de calcul e afișat ca *convenție Casa3D* (norma nu îl definește); durata = totalul zilei,
+  cel mai lung interval separat; fusul orar se deduce din coordonate (`guessTz`: RO, MD, HU, BG, RS, UA pe zone; în rest
+  Etc/GMT±n, fără oră de vară, spus în interfață); pragul de 0,2 kWh/m²/zi a fost scos ca verdict.
+- **Două mesaje distincte** (art. 3): declanșatorul alin. (2) — *D ≤ H max: proiectul necesită studiu de însorire întocmit
+  de proiectant* — și verificarea de fond alin. (1) pe camerele de zi și dormitoare, plus un al treilea pentru vecini.
+- **Vecinii** (`app/core/neighbours.ts`, `Snapshot.site.neighbors`, max. 12): volume dreptunghiulare cu direcția adevărată,
+  distanța liberă față de casă, înălțime, lățime, adâncime, folosință (locuințe / altele), *amplasament mai vechi* și
+  *calcan*. În ambele sensuri: umbresc casa (obstacole extrudate în aceeași rază, `seesSky(..., obs)`) și sunt verificați
+  invers — o grilă de ferestre-țintă pe fațada spre noi (la ~2,5 m, la mijlocul fiecărui etaj de 3 m), cu orele fără și cu
+  casa (masa casei = camerele tuturor nivelurilor, extrudate). Calcanul și clădirea fără locuințe nu se verifică (alin. 3);
+  efectul asupra unui amplasament mai vechi e avertisment (`SUN_NEIGHBOUR`), asupra unuia mai nou doar sfat.
+  Vecinii apar pe plan (fațada spre noi colorată după verdict, „Încadrează tot” îi cuprinde) și în 3D (volume gri care aruncă
+  umbră; camera de umbră și soarele se îndepărtează cât să-i cuprindă; în machetă sunt tăiați ca pereții).
+- **Etajele de deasupra umbresc** acum nivelul curent (consola peste terasă, `obstaclesFor`).
+- **SR EN 17037 (voluntar)**: 21 martie, punctul la 1,2 m / 0,3 m peste parapet, niveluri 1,5 / 3 / 4 h, etichetat voluntar.
+- **Vara** (`app/core/overheating.ts`): metoda simplificată AD O (sticla ca % din pardoseală, orientarea dominantă, tabelele
+  cu / fără ventilare transversală detectată automat, coloana *risc ridicat* ca alegere a noastră pentru România), cerința de
+  protecție pentru vitrajele NE→S→NV (Fc ≤ 0,3 sau g ≤ 0,4), tipul de geam al proiectului și un **comparator de umbrire**
+  pe cameră: rulou PVC / aluminiu / motorizat (preț din brig.ro, singura sursă), raffstore și marchiză (fără preț: „cere
+  ofertă”), cu kWh evitați într-o zi tipică de iulie și aplicare pe ferestre (`Snapshot.site.shades`). Câștigul solar are
+  acum difuza (Liu–Jordan) și reflexia solului, g × Fc, „zi tipică” ≈ 0,6 × directă + difuză și „cer senin” ca limită.
+- **Raportul de însorire** (`/p/[id]/sun`, PDF din browser): amplasament, verdictele art. 3, tabel pe camere pe fiecare nivel
+  (total, cel mai lung interval, EN 17037, AD O), harta orelor cu vecinii și nordul, vecinii afectați, metodologie și surse.
+- Revizie etapa 3 (2 runde, vault-reviewer): runda 1 PARTIAL — distanța 0 punea vecinul peste casă, valorile „toString” /
+  „constructor” treceau validarea și blocau verificarea de vară, conturul fusului orar al României acoperea estul Ungariei și
+  Serbiei, un vecin sub 1,8 m nu avea puncte verificate; toate reparate cu teste. Runda 2 PASS; rezidual acceptat: conturul
+  fusului orar e aproximativ (±10–20 km la granițe), deci fusul se poate alege manual.
+- Teste: `app/tests/neighbours.test.ts` (16); suita 145 fișiere / 1018 teste; `next build` reușit. Rămase deschise din cercetare: vecinii din OpenStreetMap, harta factorului de
+  lumină naturală, vederea spre exterior, orbirea, calendarul anual.
+
 ## Limite (scrise și în interfață)
-Vecinii, streașina, balcoanele de deasupra, copacii, relieful și mobila nu sunt modelați; nivelurile de deasupra nu umbresc
-nivelul curent. Petele de soare (momentul ales) se taie la dreptunghiul camerelor cu contur poligonal și nu țin cont de umbra altor
+Streașina, copacii, relieful și mobila nu sunt modelate; vecinii sunt dreptunghiuri cu acoperiș plat, iar casa e aproximată
+prin camerele ei extrudate când umbrește vecinii. Ferestrele vecinilor nu sunt cunoscute (grilă pe fațadă). Petele de soare (momentul ales) se taie la dreptunghiul camerelor cu contur poligonal și nu țin cont de umbra altor
 aripi; harta orelor (raze) e cea corectă. Calculul e orientativ și nu înlocuiește studiul de însorire semnat, cerut la autorizare.
 
 ## Verificare
@@ -78,5 +110,5 @@ teste de regresie. Rezidual acceptat: petele de soare aproximative pentru camere
 
 ## Surse
 - Ordinul MS nr. 119/2014, art. 3 (textul publicat, ex.: https://www.sannicolau-mare.ro/wp-content/uploads/2017/03/ORDIN-NR.119-DIN-04.02.2014-al-MINISTERULUI-SĂNĂTĂȚII-pentru-aprobarea-Normelor-de-igienă-şi-sănătate-publică-privind-mediul-de-viaţă-al-populaţiei.pdf);
-  modificarea prin Ordinul nr. 994/2018 citată în studiile de însorire publicate de primării. Textul consolidat în vigoare: NEVERIFICAT.
+  forma consolidată (legislatie.just.ro, 05.05.2026) are alin. (1)–(3); Ordinul nr. 994/2018 a adăugat doar alin. (3), calcanul.
 - NOAA Solar Calculator (algoritmul, după J. Meeus, „Astronomical Algorithms”).

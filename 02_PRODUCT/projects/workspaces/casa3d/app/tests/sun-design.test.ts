@@ -77,7 +77,9 @@ test('câștigul solar: soarele direct pe cer senin, iarna sudul câștigă, var
   assert.equal(clearSkyDni(-1), 0); assert.ok(clearSkyDni(60) > 850 && clearSkyDni(60) < 1000, String(clearSkyDni(60))); assert.ok(clearSkyDni(5) < clearSkyDni(30));
   const g = (side: 'S' | 'N' | 'E' | 'W', date: string) => solarGain(box(side), site(), toUtc, date).rooms[0]!;
   const sWin = g('S', '2026-12-21'), nWin = g('N', '2026-12-21');
-  assert.ok(sWin.kwh > 2, `sud iarna ${sWin.kwh}`); assert.equal(nWin.kwh, 0);
+  assert.ok(sWin.kwh > 2, `sud iarna ${sWin.kwh}`);
+  // nordul nu are soare direct iarna, doar difuza cerului și reflexia solului: puțin, dar nu zero
+  assert.ok(nWin.kwh > 0 && nWin.kwh < sWin.kwh / 4, `nord iarna ${nWin.kwh}`); assert.ok(sWin.kwhTypical < sWin.kwh);
   assert.ok(g('W', '2026-06-21').kwh > g('N', '2026-06-21').kwh);
   // geamul mai mare primește proporțional mai mult
   const big = solarGain(box('S', .3, { width: 2.8, offset: 1.1 }), site(), toUtc, '2026-12-21').rooms[0]!; assert.ok(big.kwh > sWin.kwh * 1.6);

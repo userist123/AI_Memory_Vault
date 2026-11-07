@@ -1532,4 +1532,23 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 .sun-rem-actions{display:flex;gap:6px;flex-wrap:wrap}
 .sun-allok{margin:0;font-size:var(--fs-sm);color:var(--ok)}
 .sun-pieces ul{margin:0;padding-left:18px;font-size:var(--fs-xs);display:grid;gap:4px}
-.sun-hot{color:var(--err)!important;font-weight:600}
+.sun-verdicts{display:grid;gap:4px}
+.sun-verdict{margin:0;padding:6px 8px;border-radius:4px;border-left:3px solid var(--rule);background:var(--surface);font-size:var(--fs-xs)}
+.sun-verdict.is-ok{border-left-color:var(--ok)} .sun-verdict.is-bad{border-left-color:var(--err)} .sun-verdict.is-warn{border-left-color:#C98A00}
+.sun-nb,.sun-en,.sun-summer{display:grid;gap:6px}
+.sun-nb h4,.sun-en h4,.sun-summer h4{margin:6px 0 0}
+.sun-nb-item{display:grid;gap:6px;margin:0;padding:8px;border:1px solid var(--rule);border-left:3px solid var(--ok);border-radius:6px;min-width:0}
+.sun-nb-item.sun-nb-affected{border-left-color:var(--err)} .sun-nb-item.sun-nb-already{border-left-color:#C98A00} .sun-nb-item.sun-nb-calcan,.sun-nb-item.sun-nb-other{border-left-color:var(--ink-3)}
+.sun-nb-item legend{padding:0 4px}
+.sun-nb-name{font:inherit;font-weight:600;border:1px solid transparent;border-radius:3px;padding:2px 4px;background:transparent;max-width:100%}
+.sun-nb-name:hover,.sun-nb-name:focus{border-color:var(--rule);background:var(--paper,#fff)}
+.sun-nb-res{margin:0;font-size:var(--fs-xs)} .sun-nb-res-affected{color:var(--err);font-weight:600}
+.sun-nb-item .sun-row{flex-wrap:wrap} .sun-nb-item .sun-row .f{min-width:88px}
+.sun-en ul{margin:0;padding-left:18px;font-size:var(--fs-xs);display:grid;gap:4px}
+.sun-en-0{background:#F7E8E4;color:var(--err)} .sun-en-1{background:#FAF1E3;color:#7a5418} .sun-en-2,.sun-en-3{background:#EDF2EA;color:var(--ok)}
+.sun-shades{margin:6px 0 0;padding:0;list-style:none;display:grid;gap:4px}
+.sun-shades li{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px;border-radius:4px;background:var(--surface);border-left:3px solid var(--rule)}
+.sun-shades li.is-ok{border-left-color:var(--ok)} .sun-shades li.sun-note{display:block;background:transparent;border:0;padding:0}
+.sun-sum-act td{border-bottom:1px solid var(--rule)}
+.sun-report .sun-r-plan{margin:8px 0;break-inside:avoid} .sun-report .sun-r-plan svg{width:100%;max-height:420px;border:1px solid #ddd}
+.sun-report .sun-r-plan figcaption{font-size:11px;color:#555}

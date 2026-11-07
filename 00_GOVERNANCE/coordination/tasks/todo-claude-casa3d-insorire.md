@@ -12,8 +12,17 @@ REVIEW: runda 1 (4 defecte reproduse: terasă, DST/fusuri, fus invalid tăcut, h
 ETAPA 2 (owner: „mai inovator”): core/sun-design.ts (remedii generative pe front Pareto, applyRemedyWall, swapIdeas),
   core/sun-effects.ts (soare pe TV/birou/pat, câștig solar Meinel), panou: propuneri cu previzualizare/aplicare, mobilier,
   coloana kWh. Revizie 2 runde (FAIL apoi PARTIAL, toate reparate cu regresii). vitest 1002; build OK; verificat în aplicație.
+ETAPA 3 (owner: „hai să le facem, fii ambițios”, după raportul de cercetare): corecturi de metodă (convenție, total + interval,
+  fus orar din coordonate, fără prag 0,2), cele două mesaje art. 3 (D ≤ H max separat de verdict), vecinii în ambele sensuri
+  (core/neighbours.ts: calcan, amplasament mai vechi, advisor SUN_NEIGHBOUR), etajele de deasupra umbresc, SR EN 17037, vara
+  după AD O + comparator de umbrire în lei (core/overheating.ts), raport /p/[id]/sun, vecini pe plan și în 3D (engine setContext).
+  Revizie etapa 3: runda 1 PARTIAL (distanța 0 punea vecinul în casă; „toString”/„constructor” trecute drept geam/protecție și
+  crash în summerCheck; fusul României peste estul Ungariei/Serbiei; vecin < 1,8 m fără puncte) -> toate reparate cu regresii;
+  runda 2 PASS. Rezidual acceptat: conturul fusului orar ±10–20 km la granițe (fusul se poate alege manual).
+  vitest 145 fișiere / 1018 teste; next build reușit; verificat în aplicație (vecin pe plan, în 3D, raportul /sun).
 NEXT: CI pe PR #371 o dată -> merge e decizia proprietarului.
-IDEAS AFTER: remediu pentru supraîncălzire (umbrire exterioară din catalog), obstrucții exterioare (clădiri vecine ca prisme), umbrirea de la nivelul de deasupra/balcoane, raport PDF
-  „studiu de însorire” pe planșe, harta anuală (ore pe lună), partajarea studiului pe linkul clientului.
-KEY FILES: app/core/{solar,site-location,insolation}.ts, app/components/SunStudy.tsx, app/tests/insolation.test.ts.
-BLOCKERS: none. Textul consolidat al Ordinului 119/2014 după 994/2018: NEVERIFICAT (citat după surse secundare).
+IDEAS AFTER: vecinii din OpenStreetMap (Overpass, de măsurat acoperirea înălțimilor), harta factorului de lumină naturală,
+  vederea spre exterior și orbirea (EN 17037), calendarul anual pe fereastră, umbrirea ca variabilă în frontul Pareto.
+KEY FILES: app/core/{solar,site-location,insolation,neighbours,overheating,sun-design,sun-effects}.ts, app/components/{SunStudy,SunReport}.tsx,
+  app/tests/{insolation,sun-design,neighbours}.test.ts.
+BLOCKERS: none. Art. 3 consolidat verificat în cercetare (legislatie.just.ro, forma din 05.05.2026); valorile AD O și g: de verificat în PDF.

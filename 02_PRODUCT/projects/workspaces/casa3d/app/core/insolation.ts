@@ -6,15 +6,18 @@
 //   prin grosimea peretelui rămâne în golul unei ferestre (sau al unui pasaj): glaful și buiandrugul umbresc corect;
 // - ușile sunt considerate închise (opace), pereții de sticlă transparenți, pereții de demolat lipsesc (starea propusă);
 // - tavanul e opac: o rază care urcă la înălțimea tavanului deasupra unei camere a nivelului e oprită;
-// - corpurile clădirii (aripi, pereți exteriori) se umbresc între ele; vecinii, streașina și mobila NU sunt modelați.
+// - corpurile clădirii (aripi, pereți exteriori) se umbresc între ele; vecinii și nivelurile de deasupra intră ca volume
+//   opace (`obs`, core/neighbours.ts); streașina, copacii și mobila NU sunt modelate.
 // Verificarea normei e orientativă: Ordinul MS nr. 119/2014, art. 3 (modificat prin Ordinul nr. 994/2018), cere minimum
-// 1½ ore de însorire la solstițiul de iarnă pentru încăperile de locuit (camere de zi și dormitoare). Calculul nostru
-// ia punctul din centrul ferestrei (planul geamului, la mijlocul grosimii peretelui); nu înlocuiește studiul de însorire
-// semnat, cerut la autorizare.
+// 1½ ore de însorire la solstițiul de iarnă pentru încăperile de locuit (camere de zi și dormitoare). Norma nu definește
+// punctul de calcul; convenția noastră e centrul ferestrei (planul geamului, la mijlocul grosimii peretelui). Modul
+// SR EN 17037 (`point: 'en17037'`) ia centrul orizontal, la cel puțin 1,2 m de pardoseală și 0,3 m peste parapet.
+// Nu înlocuiește studiul de însorire semnat, cerut la autorizare.
 import type { Floor, Room, Wall } from './types';
 import { roomBoundary, pointInRoom } from './room-geometry';
 import { sunPosition, sunDay, utcToLocalMin } from './solar';
 import { sunVector, facing, type SiteInfo } from './site-location';
+import { blocked, type Obstacle } from './neighbours';
 
 export type { Slab };
 export const WINDOW_SILL = .9, WINDOW_HEIGHT = 1.3, DOOR_H = 2.1;
@@ -23,6 +26,11 @@ export const NORM_HOURS = 1.5;
 export const NORM_REFERENCE_DATE = '2026-12-21';
 /** Tipurile de cameră care sunt „încăperi de locuit” în sensul normei (camere de zi și dormitoare). */
 export const HABITABLE = new Set(['living', 'dormitor']);
+/** SR EN 17037 (voluntar), expunerea la soare: ore pe o zi între 1 februarie și 21 martie; niveluri minim / mediu / ridicat. */
+export const EN17037_DATE = '2026-03-21', EN17037_LEVELS = [1.5, 3, 4] as const;
+export const en17037Level = (h: number): 0 | 1 | 2 | 3 => (EN17037_LEVELS.filter(v => h + 1e-9 >= v).length) as 0 | 1 | 2 | 3;
+/** Punctul de calcul pe înălțimea ferestrei. */
+export function pointY(sill: number, top: number, mode: 'center' | 'en17037' = 'center'){ return mode === 'center' ? (sill + top) / 2 : Math.min(top - .05, Math.max(1.2, sill + .3)); }
 /** Spațiile fără acoperiș (terasa, balconul deschis, curtea): nu opresc razele și sunt „afară” pentru ferestre. */
 const OPEN_KINDS = new Set(['open_balcony', 'terrace', 'outdoor']);
 /** Spațiile din afara anvelopei (inclusiv balconul acoperit): o fereastră spre ele e o fereastră exterioară. */
@@ -51,7 +59,7 @@ export function slabsOf(fl: Floor): Slab[] {
 }
 
 /** True dacă raza din `p` (x, y, z) pe direcția `d` (spre soare, dy > 0) ajunge la cer. `skip` = peretele de pornire. */
-export function seesSky(p: V3, d: V3, slabs: Slab[], rooms: Room[], H: number, skip?: Slab): boolean {
+export function seesSky(p: V3, d: V3, slabs: Slab[], rooms: Room[], H: number, skip?: Slab, obs?: readonly Obstacle[]): boolean {
   if (d[1] <= 1e-4) return false;
   const tTop = (H - p[1]) / d[1]; if (tTop <= 0) return true; // deasupra tavanului (nu apare în practică)
   const ex = p[0] + d[0] * tTop, ez = p[2] + d[2] * tTop;
@@ -72,10 +80,11 @@ export function seesSky(p: V3, d: V3, slabs: Slab[], rooms: Room[], H: number, s
     const u0 = pu + du * t0, u1 = pu + du * t1, y0 = p[1] + d[1] * t0, y1 = p[1] + d[1] * t1, e = 1e-6;
     const ok = s.aps.some(a => Math.min(u0, u1) >= a.u0 - e && Math.max(u0, u1) <= a.u1 + e && Math.min(y0, y1) >= a.y0 - e && Math.max(y0, y1) <= a.y1 + e);
     if (!ok) return false; }
-  return true;
+  return !obs?.length || !blocked(p, d, obs);
 }
 
-export interface StudyOptions { date: string; /** doar ferestrele acestei camere (căutarea de remedii) */ roomId?: string; /** pasul de timp, minute */ stepMin?: number; /** latura celulei de pardoseală, m */ cellM?: number; floorGrid?: boolean }
+export interface StudyOptions { date: string; /** volumele din afara nivelului (vecini, etajele de deasupra), în cotele nivelului */ obs?: readonly Obstacle[];
+  /** punctul de calcul pe fereastră: centrul (convenția noastră pentru normă) sau cel din SR EN 17037 */ point?: 'center' | 'en17037'; /** doar ferestrele acestei camere (căutarea de remedii) */ roomId?: string; /** pasul de timp, minute */ stepMin?: number; /** latura celulei de pardoseală, m */ cellM?: number; floorGrid?: boolean }
 export interface WindowSun { wallId: string; openingId: string; roomId: string; facing: string; hours: number; longestH: number; first: string | null; last: string | null; litMask: boolean[] }
 export interface RoomSun { roomId: string; name: string; type: string; habitable: boolean; hours: number; longestH: number; windows: number; verdict: 'ok' | 'low' | 'none' | 'na';
   /** fracția medie a pardoselii însorite cât e soare pe cer (0–1) și cea mai bună oră */ floorShare: number; peak: string | null }
@@ -126,8 +135,8 @@ export function insolationStudy(fl: Floor, site: SiteInfo, toUtc: (date: string,
   const st = sunSteps(site, toUtc, opts.date, step), day = st.day, dirs = st.dirs, times = st.times.slice(), sun = st.sun.slice(); // copii: cache-ul nu se modifică din afară
   const stepH = step / 60, slabByWall = slabMap(fl, slabs);
   const windows: WindowSun[] = wins.map(({ wall, o, room, c, nOut }) => {
-    const sill = o.sill ?? WINDOW_SILL, top = Math.min(H - .05, sill + (o.height ?? WINDOW_HEIGHT)), p: V3 = [c[0], (sill + top) / 2, c[1]];
-    const litMask = dirs.map(d => !!d && d[0] * nOut[0] + d[2] * nOut[1] > 1e-4 && seesSky(p, d, slabs, rooms, H, slabByWall.get(wall.id)));
+    const sill = o.sill ?? WINDOW_SILL, top = Math.min(H - .05, sill + (o.height ?? WINDOW_HEIGHT)), p: V3 = [c[0], pointY(sill, top, opts.point), c[1]];
+    const litMask = dirs.map(d => !!d && d[0] * nOut[0] + d[2] * nOut[1] > 1e-4 && seesSky(p, d, slabs, rooms, H, slabByWall.get(wall.id), opts.obs));
     const fi = litMask.indexOf(true), li = litMask.lastIndexOf(true);
     return { wallId: wall.id, openingId: o.id, roomId: room.id, facing: facing(nOut[0], nOut[1], site), hours: round2(litMask.filter(Boolean).length * stepH), longestH: round2(runs(litMask) * stepH),
       first: fi >= 0 ? edge(times[fi]!, -step / 2) : null, last: li >= 0 ? edge(times[li]!, step / 2) : null, litMask }; });
@@ -136,7 +145,7 @@ export function insolationStudy(fl: Floor, site: SiteInfo, toUtc: (date: string,
     const lit = new Array(dirs.length).fill(0); let n = 0;
     for (let x = Math.min(...xs) + cellM / 2; x < Math.max(...xs); x += cellM) for (let z = Math.min(...zs) + cellM / 2; z < Math.max(...zs); z += cellM){
       if (!pointInRoom(r, x, z)) continue; n++; let k = 0;
-      dirs.forEach((d, i) => { if (d && seesSky([x, .01, z], d, slabs, rooms, H)){ k++; lit[i]++; } });
+      dirs.forEach((d, i) => { if (d && seesSky([x, .01, z], d, slabs, rooms, H, undefined, opts.obs)){ k++; lit[i]++; } });
       cells.push({ x: round2(x), z: round2(z), hours: round2(k * stepH), roomId: r.id }); }
     share.set(r.id, n ? lit.map(v => v / n) : []); }
   const roomsOut: RoomSun[] = rooms.filter(x => !opts.roomId || x.id === opts.roomId).map(r => {

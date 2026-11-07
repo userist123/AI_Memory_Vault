@@ -2,6 +2,7 @@
 // variante de ferestre (lărgire, parapet coborât, fereastră nouă pe orice perete exterior al camerei), le simulează pe
 // toate cu motorul de însorire și le păstrează pe cele mai eficiente. Pur și determinist; aplicarea e un Floor nou.
 import type { Floor, Opening, Room, Wall } from './types';
+import type { Obstacle } from './neighbours';
 import { insolationStudy, windowsOf, NORM_HOURS, NORM_REFERENCE_DATE, WINDOW_SILL, WINDOW_HEIGHT } from './insolation';
 import { pointInRoom, roomArea } from './room-geometry';
 import { facing, type SiteInfo } from './site-location';
@@ -51,10 +52,10 @@ export function applyRemedyWall(current: Floor, r: Pick<Remedy, 'wall' | 'baseOp
 const withOpening = (fl: Floor, wallId: string, fn: (w: Wall) => Wall): Floor => ({ ...fl, walls: fl.walls.map(w => w.id === wallId ? fn(w) : w) });
 
 /** Cele mai bune `max` remedii pentru camera dată, simulate pe ziua normei. `newId` dă id-ul ferestrei noi. */
-export function sunRemedies(fl: Floor, site: SiteInfo, toUtc: (d: string, m: number) => Date, roomId: string, opts: { max?: number; date?: string; newId?: () => string } = {}): Remedy[] {
+export function sunRemedies(fl: Floor, site: SiteInfo, toUtc: (d: string, m: number) => Date, roomId: string, opts: { max?: number; date?: string; newId?: () => string; obs?: readonly Obstacle[] } = {}): Remedy[] {
   const room = fl.rooms.find(r => r.id === roomId); if (!room) return [];
   const date = opts.date ?? NORM_REFERENCE_DATE, H = fl.ceilingHeight, newId = opts.newId ?? (() => `op-sun-${Math.random().toString(36).slice(2, 8)}`);
-  const hoursOf = (f: Floor) => insolationStudy(f, site, toUtc, { date, stepMin: 5, floorGrid: false, roomId }).rooms[0]?.hours ?? 0;
+  const hoursOf = (f: Floor) => insolationStudy(f, site, toUtc, { date, stepMin: 5, floorGrid: false, roomId, obs: opts.obs }).rooms[0]?.hours ?? 0;
   const before = hoursOf(fl), cands: Omit<Remedy, 'afterH' | 'meets' | 'id' | 'wall' | 'baseOpenings'>[] = [];
   // 1) ferestrele existente: mai late (centrate, cât permite peretele) sau cu parapet coborât („fereastră franceză”)
   for (const { wall, o, nOut } of windowsOf(fl).filter(x => x.room.id === roomId)){ const face = facing(nOut[0], nOut[1], site), sill = o.sill ?? WINDOW_SILL, t = top(o, H);
@@ -97,9 +98,9 @@ export function sunRemedies(fl: Floor, site: SiteInfo, toUtc: (d: string, m: num
  *  mare poate primi funcțiunea camerei umbrite. Doar o idee de reorganizare (mobilierul trebuie refăcut), fără aplicare automată. */
 export interface UseSwap { roomId: string; withRoomId: string; withName: string; withType: string; hours: number; areaM2: number }
 export const SWAP_FROM = new Set(['bucatarie', 'birou']);
-export function swapIdeas(fl: Floor, site: SiteInfo, toUtc: (d: string, m: number) => Date, roomId: string): UseSwap[] {
+export function swapIdeas(fl: Floor, site: SiteInfo, toUtc: (d: string, m: number) => Date, roomId: string, obs?: readonly Obstacle[]): UseSwap[] {
   const room = fl.rooms.find(r => r.id === roomId); if (!room) return [];
-  const st = insolationStudy(fl, site, toUtc, { date: NORM_REFERENCE_DATE, stepMin: 5, floorGrid: false }), area = (r: Room) => roomArea(r), need = area(room) * .9;
+  const st = insolationStudy(fl, site, toUtc, { date: NORM_REFERENCE_DATE, stepMin: 5, floorGrid: false, obs }), area = (r: Room) => roomArea(r), need = area(room) * .9;
   return st.rooms.filter(r => r.roomId !== roomId && SWAP_FROM.has(r.type) && r.hours + 1e-9 >= NORM_HOURS)
     .map(r => { const x = fl.rooms.find(q => q.id === r.roomId)!; return { roomId, withRoomId: x.id, withName: x.name, withType: x.type, hours: r.hours, areaM2: r2(area(x)) }; })
     .filter(x => x.areaM2 >= need).sort((a, b) => b.hours - a.hours);

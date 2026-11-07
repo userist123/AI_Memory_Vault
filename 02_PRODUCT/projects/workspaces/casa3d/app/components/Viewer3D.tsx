@@ -13,11 +13,13 @@ import { parseViews, addView, removeView, viewsKey, clampCut, type SavedView } f
 import { askPrompt } from '@/lib/dialog';
 import { classifyTier, parseTierPick, TIER_KEY, type Tier, type TierPick } from '@/core/viewport-tiers';
 
-export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_VOIDS, projectId, selectedId = null, hoverId = null, onHover, frame, onFrameOther, sun = null }: { snap: Snapshot; catalog: Catalog; mc?: MaterialsCatalog | null; onPick(id: string | null): void; voids?: PlateVoid[]; projectId?: string;
+export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_VOIDS, projectId, selectedId = null, hoverId = null, onHover, frame, onFrameOther, sun = null, context = null }: { snap: Snapshot; catalog: Catalog; mc?: MaterialsCatalog | null; onPick(id: string | null): void; voids?: PlateVoid[]; projectId?: string;
   /** selecția comună cu planul (UI/UX P2-10): piesa selectată și cea de sub mouse (aici sau în plan); `frame.n` crește la fiecare cerere de încadrare */
   selectedId?: string | null; hoverId?: string | null; onHover?(id: string | null): void; frame?: { id: string; n: number; at: number }; onFrameOther?(id: string): void;
   /** studiul de însorire: soarele real (azimut față de plan, înălțime); când e dat, înlocuiește momentul zilei ales aici */
-  sun?: { azimuthDeg: number; elevationDeg: number } | null }){
+  sun?: { azimuthDeg: number; elevationDeg: number } | null;
+  /** clădirile vecine din studiul de însorire, ca volume (cotele relative la nivelul afișat) */
+  context?: { pts: [number, number][]; y0: number; h: number }[] | null }){
   const { t, lang } = usePrefs();
   const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string } | null>(null), [panoBusy, setPanoBusy] = useState(false), [panoMsg, setPanoMsg] = useState('');
   const ref = useRef<HTMLCanvasElement>(null), v = useRef<any>(null), pickRef = useRef(onPick), hoverRef = useRef(onHover); hoverRef.current = onHover;
@@ -46,9 +48,9 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   pickRef.current = onPick;
   const [doorsOpen, setDoorsOpen] = useState(true);
   // la refacerea contextului se aplică starea de acum (lumina, planul), nu cea de la montare
-  const restoreRef = useRef(() => {}); restoreRef.current = () => { applyLight(); applyTier(); push(); };
+  const restoreRef = useRef(() => {}); restoreRef.current = () => { applyLight(); applyTier(); push(); v.current?.setContext?.(ctxRef.current ?? null); };
   useEffect(() => { let alive = true;
-    import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id), onHover: (id: string | null) => hoverRef.current?.(id), onContextLost: () => setErr('context-lost'), onContextRestored: () => { setErr(''); restoreRef.current(); }, onTierDrop: (d: Tier) => { autoTier.current = d; setTierNow(d); } }); if (process.env.NODE_ENV !== 'production') (window as any).__casa3dViewer = v.current; applyLight(); applyTier(); push(); syncSel.current(); } catch (e){ console.error('3D', e); setErr('webgl'); } });
+    import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id), onHover: (id: string | null) => hoverRef.current?.(id), onContextLost: () => setErr('context-lost'), onContextRestored: () => { setErr(''); restoreRef.current(); }, onTierDrop: (d: Tier) => { autoTier.current = d; setTierNow(d); } }); if (process.env.NODE_ENV !== 'production') (window as any).__casa3dViewer = v.current; applyLight(); applyTier(); push(); v.current.setContext?.(ctxRef.current ?? null); syncSel.current(); } catch (e){ console.error('3D', e); setErr('webgl'); } });
     return () => { alive = false; v.current?.dispose(); v.current = null; hoverRef.current?.(null); }; }, []); // eslint-disable-line
   const engineCat = useRef<ReturnType<typeof toEngineCatalog> | null>(null);
   function push(){ if (!v.current) return; engineCat.current ||= toEngineCatalog(catalog);
@@ -60,6 +62,8 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   useEffect(() => { v.current?.setXray?.(xray); }, [xray]);
   function applyLight(){ const p = sun ? solarLighting(sun.elevationDeg, sun.azimuthDeg) : lighting(time, azimuth); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
   useEffect(applyLight, [time, azimuth, sun?.azimuthDeg, sun?.elevationDeg]); // eslint-disable-line
+  const ctxKey = JSON.stringify(context ?? null), ctxRef = useRef(context); ctxRef.current = context;
+  useEffect(() => { v.current?.setContext?.(ctxRef.current ?? null); }, [ctxKey]);
   useEffect(() => { applyTier(); try { localStorage.setItem(TIER_KEY, tierPick); } catch { /* stocare plină sau blocată */ } }, [tierPick]); // eslint-disable-line
   // panoramă 360° a camerei curente, randată din mijlocul ei; se deschide în vizualizator și se poate descărca
   function openPano(){ if (!room || !v.current?.renderPanorama) return; setPanoBusy(true); setPanoMsg('');
