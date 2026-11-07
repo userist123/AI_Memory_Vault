@@ -34,8 +34,24 @@
                        Text="Stări: CIORNĂ (DRAFT) → VALIDATĂ (VALIDATED) → TESTATĂ (TESTED) → APROBATĂ (APPROVED) → APLICATĂ (DEPLOYED) → VERIFICATĂ (VERIFIED). Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată.">
                 <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
             </TextBlock>
-            <StackPanel Visibility="{Binding NothingOpen, Converter={StaticResource BooleanToVisibilityConverter}}">
+            <StackPanel Visibility="{Binding NothingOpenAndLibraryEmpty, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ctrl:EmptyStateCard What="{x:Static vmx:EmptyStates.PolicyWhat}" Why="{x:Static vmx:EmptyStates.PolicyWhy}" Step="{x:Static vmx:EmptyStates.PolicyStep}"/>
+            </StackPanel>
+            <!-- 2026-10-23: policies registered earlier (an import before a restart) are listed, so a beginner sees the import was kept -->
+            <StackPanel Margin="0,8,0,0" Visibility="{Binding HasLibrary, Converter={StaticResource BooleanToVisibilityConverter}}" AutomationProperties.Name="Politici din bibliotecă">
+                <TextBlock Text="Politici din bibliotecă" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock Text="{Binding LibraryNote}" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,4"/>
+                <ItemsControl ItemsSource="{Binding Library}">
+                    <ItemsControl.ItemTemplate>
+                        <DataTemplate>
+                            <DockPanel Margin="0,2,0,2">
+                                <Button DockPanel.Dock="Right" Content="Deschide" Command="{Binding DataContext.OpenLibraryEntryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                                        CommandParameter="{Binding}" Style="{StaticResource OutlineButtonStyle}" Margin="12,0,0,0" AutomationProperties.Name="Deschide politica din bibliotecă"/>
+                                <TextBlock Text="{Binding Summary}" TextWrapping="Wrap" VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            </DockPanel>
+                        </DataTemplate>
+                    </ItemsControl.ItemTemplate>
+                </ItemsControl>
             </StackPanel>
         </StackPanel>
 

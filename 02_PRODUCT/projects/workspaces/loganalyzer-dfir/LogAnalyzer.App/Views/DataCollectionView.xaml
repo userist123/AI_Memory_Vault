@@ -10,45 +10,32 @@
 
         <!-- Header -->
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
-            <StackPanel DockPanel.Dock="Left">
+            <StackPanel DockPanel.Dock="Top">
                 <TextBlock Text="Colectare date" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Target endpoint live triage, ETW providers, volatile memory telemetry and chain of custody packaging" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                <TextBlock Text="Triaj în timp real al stației țintă, furnizori ETW, telemetrie din memoria volatilă și împachetare cu lanț de custodie" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <!-- lab 2026-11-07: under the title and wrapping, so at 1024 px no button is cut off -->
+            <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
                 <Button Content="🛡️ Sanitizare Mediu &amp; Certificat PDF" Command="{Binding SanitizeMediaAndGenerateCertPdfCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="14,8" Margin="0,0,8,0"/>
                 <Button Content="⚡ Execută Live Triage" Command="{Binding StartCollectionCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,8" Margin="0,0,8,0"/>
                 <Button Content="🔒 Sigilează Pachet Caz" Command="{Binding SealDfirCaseBundleCommand}" Padding="14,8"/>
-            </StackPanel>
+            </WrapPanel>
         </DockPanel>
 
         <!-- Status Cards -->
-        <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16">
+        <UniformGrid Grid.Row="1" Columns="2" Margin="0,0,0,16">
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,8,0">
                 <StackPanel>
-                    <TextBlock Text="COLLECTION TARGET" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="{Binding LiveRemoteTargetHost, FallbackValue='LOCAL-HOST'}" Foreground="{StaticResource PrimaryAccentBrush}" FontSize="18" FontWeight="Bold" Margin="0,4,0,0"/>
-                    <TextBlock Text="Agentless ETW / RPC Triage" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
+                    <TextBlock Text="Ținta colectării" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="{Binding LiveRemoteTargetHost, FallbackValue='Nespecificată'}" Foreground="{StaticResource PrimaryAccentBrush}" FontSize="18" FontWeight="Bold" Margin="0,4,0,0"/>
+                    <TextBlock Text="Triaj fără agent (ETW / RPC)" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="4,0,4,0">
                 <StackPanel>
-                    <TextBlock Text="INGESTED SENSORS" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="12 ARTIFACTS" Foreground="{StaticResource SuccessBrush}" FontSize="18" FontWeight="Bold" Margin="0,4,0,0"/>
-                    <TextBlock Text="EVTX, Hives, Sockets, DNS" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource ObsidianCardStyle}" Margin="4,0,4,0">
-                <StackPanel>
-                    <TextBlock Text="CLASSIFICATION" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="Clasificare" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
                     <TextBlock Text="NESETATĂ" Foreground="{StaticResource TextSecondaryBrush}" FontSize="16" FontWeight="Bold" Margin="0,4,0,0"/>
                     <TextBlock Text="Aplicația nu a primit o clasificare pentru acest caz" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
-                </StackPanel>
-            </Border>
-            <Border Style="{StaticResource ObsidianCardStyle}" Margin="8,0,0,0">
-                <StackPanel>
-                    <TextBlock Text="EVIDENCE VAULT" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="LOCKED (SQLCIPHER)" Foreground="{StaticResource EvidenceAccentBrush}" FontSize="16" FontWeight="Bold" Margin="0,4,0,0"/>
-                    <TextBlock Text="AES-256 HMAC-SHA512" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
         </UniformGrid>
@@ -68,19 +55,19 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <TextBlock Text="Forensic Acquisition Scope" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,12"/>
+                    <TextBlock Text="Ce se colectează" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,12"/>
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
-                            <CheckBox Content="Security EVTX (Event IDs 4624, 4625, 4672, 4688, 4720, 4732)" IsChecked="True" Margin="0,4"/>
-                            <CheckBox Content="System &amp; Application EVTX (Service Installations 7045, Errors)" IsChecked="True" Margin="0,4"/>
-                            <CheckBox Content="Sysmon / Microsoft-Windows-Sysmon/Operational (Process Guid, Network)" IsChecked="True" Margin="0,4"/>
-                            <CheckBox Content="PowerShell ScriptBlock Logging (EID 4104) &amp; Command History" IsChecked="True" Margin="0,4"/>
-                            <CheckBox Content="Offline Registry Hives (SYSTEM, SOFTWARE, SAM, NTUSER.DAT)" IsChecked="True" Margin="0,4"/>
-                            <CheckBox Content="Volatile Network Sockets (Active TCP/UDP connections &amp; listening ports)" IsChecked="True" Margin="0,4"/>
-                            <CheckBox Content="DNS Resolver Cache &amp; Route Table Forensics" IsChecked="True" Margin="0,4"/>
-                            <CheckBox Content="Loaded Kernel Drivers &amp; Unsigned Code Signatures" IsChecked="True" Margin="0,4"/>
-                            <CheckBox Content="Local User Accounts, Groups &amp; Privilege Attributes" IsChecked="True" Margin="0,4"/>
-                            <CheckBox Content="Windows Defender Real-time Protection &amp; Exclusion Paths" IsChecked="True" Margin="0,4"/>
+                            <CheckBox Content="EVTX Security (ID-uri de eveniment 4624, 4625, 4672, 4688, 4720, 4732)" IsChecked="True" Margin="0,4"/>
+                            <CheckBox Content="EVTX System și Application (instalări de servicii 7045, erori)" IsChecked="True" Margin="0,4"/>
+                            <CheckBox Content="Sysmon / Microsoft-Windows-Sysmon/Operational (Process Guid, rețea)" IsChecked="True" Margin="0,4"/>
+                            <CheckBox Content="PowerShell ScriptBlock Logging (EID 4104) și istoricul comenzilor" IsChecked="True" Margin="0,4"/>
+                            <CheckBox Content="Fișiere de registru offline (SYSTEM, SOFTWARE, SAM, NTUSER.DAT)" IsChecked="True" Margin="0,4"/>
+                            <CheckBox Content="Conexiuni de rețea volatile (conexiuni TCP/UDP active și porturi în ascultare)" IsChecked="True" Margin="0,4"/>
+                            <CheckBox Content="Cache-ul DNS și tabela de rutare" IsChecked="True" Margin="0,4"/>
+                            <CheckBox Content="Drivere de kernel încărcate și semnături de cod lipsă" IsChecked="True" Margin="0,4"/>
+                            <CheckBox Content="Conturi locale, grupuri și privilegii" IsChecked="True" Margin="0,4"/>
+                            <CheckBox Content="Protecția în timp real Windows Defender și căile excluse" IsChecked="True" Margin="0,4"/>
                         </StackPanel>
                     </ScrollViewer>
                 </Grid>
@@ -96,11 +83,11 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
-                        <TextBlock DockPanel.Dock="Left" Text="Acquisition Output &amp; Integrity Hashes" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource SuccessBrush}"/>
+                        <TextBlock DockPanel.Dock="Left" Text="Rezultatul colectării și sumele de control" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource SuccessBrush}"/>
                         <TextBlock DockPanel.Dock="Right" Text="ISO/IEC 27037" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </DockPanel>
                     <TextBox Grid.Row="1" IsReadOnly="True" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource CodeTextBrush}" BorderBrush="{StaticResource BorderBrush}" FontFamily="{StaticResource CodeFontFamily}" FontSize="11.5" Padding="12" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
-                             Text="{Binding CollectionLogs, FallbackValue='[+] Acquisition Engine Ready. Select Scope and execute Triage.'}"/>
+                             Text="{Binding CollectionLogs, FallbackValue='Colectarea nu a fost pornită. Alegeți ce se colectează și rulați triajul.'}"/>
                 </Grid>
             </Border>
         </Grid>

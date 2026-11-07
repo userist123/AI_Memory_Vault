@@ -316,9 +316,17 @@ public sealed class BeginnerPolish20261022Tests : IDisposable
     {
         var doc = Xaml("MainWindow.xaml");
         var expander = doc.Descendants().First(e => e.Name.LocalName == "Expander" && Attr(e, "Header").StartsWith("Avansat"));
+        // 2026-11-05: the entries come from ModuleCatalog.Menu through one template (no static list); the template carries name, style, group and command
         var buttons = expander.Descendants().Where(e => e.Name.LocalName == "RadioButton").ToList();
-        Assert.True(buttons.Count >= 20);
-        foreach (var b in buttons) Assert.Contains("AdvancedNav", Attr(b, "Visibility") + b.ToString(), StringComparison.Ordinal);
+        var template = Assert.Single(buttons);
+        Assert.Equal("{Binding Title}", Attr(template, "AutomationProperties.Name"));
+        Assert.Equal("Sidebar", Attr(template, "GroupName"));
+        Assert.Contains("NavigateCommand", Attr(template, "Command"));
+        Assert.Equal("{Binding TabText}", Attr(template, "CommandParameter"));
+        Assert.Contains(expander.Descendants(), e => e.Name.LocalName == "ItemsControl" && Attr(e, "ItemsSource") == "{Binding AdvancedMenu}");
+        var menu = LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(LogAnalyzer.Core.Services.Edition.StationPosture.Internet, AppMode.Network, []).SelectMany(s => s.Pages).ToList();
+        Assert.True(menu.Count >= 20);
+        foreach (var page in menu) Assert.False(string.IsNullOrWhiteSpace(page.Title));
         Assert.Contains(expander.Descendants(), e => e.Name.LocalName == "ScrollViewer" && Attr(e, "MaxHeight").Length > 0);
         var nav = Src("Themes", "Components", "Navigation.xaml");
         Assert.Contains("TextTrimming", nav);

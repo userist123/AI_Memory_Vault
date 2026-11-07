@@ -13,13 +13,26 @@
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
                 <TextBlock Text="Firul atacului" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <Border Margin="14,0,0,0" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource CriticalBrush}" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
-                    <TextBlock Text="{Binding CurrentStoryline.RiskLevel, StringFormat='SEVERITY: {0}', FallbackValue='CRITICAL INTRUSION'}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource CriticalBrush}"/>
+                    <Border.Style>
+                        <Style TargetType="Border">
+                            <Setter Property="Visibility" Value="Visible"/>
+                            <Style.Triggers>
+                                <DataTrigger Binding="{Binding CurrentStoryline}" Value="{x:Null}">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                                <DataTrigger Binding="{Binding StorylineNodes.Count}" Value="0">
+                                    <Setter Property="Visibility" Value="Collapsed"/>
+                                </DataTrigger>
+                            </Style.Triggers>
+                        </Style>
+                    </Border.Style>
+                    <TextBlock Text="{Binding CurrentStoryline.RiskLevel, StringFormat='Gravitate: {0}'}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource CriticalBrush}"/>
                 </Border>
             </StackPanel>
-            <Button DockPanel.Dock="Right" Content="Export Incident PDF Report" Command="{Binding ExportPdfReportCommand}" Style="{StaticResource AccentButtonStyle}" Padding="16,8"/>
+            <Button DockPanel.Dock="Right" Content="Exportă raportul de incident (PDF)" Command="{Binding ExportPdfReportCommand}" Style="{StaticResource AccentButtonStyle}" Padding="16,8"/>
         </DockPanel>
 
-        <!-- Summary & Kill Chain Stage Progression Breadcrumbs -->
+        <!-- Summary (the former fixed stage rail was removed: it showed sample techniques not computed from data) -->
         <Border Grid.Row="1" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,16">
             <StackPanel>
                 <DockPanel LastChildFill="False" Margin="0,0,0,8">
@@ -27,40 +40,6 @@
                     <TextBlock DockPanel.Dock="Right" Text="Corelare automată, nevalidată" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
                 </DockPanel>
                 <TextBlock Text="{Binding CurrentStoryline.OverallSummary, FallbackValue='Nu există încă un rezumat: rulați analiza pentru a construi povestea atacului.'}" FontSize="12" LineHeight="18" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,12"/>
-                
-                <!-- Visual Stage Progression Rail -->
-                <Border Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,8">
-                    <Grid>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                            <ColumnDefinition Width="Auto"/>
-                            <ColumnDefinition Width="*"/>
-                        </Grid.ColumnDefinitions>
-                        <StackPanel Grid.Column="0" HorizontalAlignment="Center">
-                            <TextBlock Text="01. INITIAL ACCESS" FontSize="9" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" HorizontalAlignment="Center"/>
-                            <TextBlock Text="T1110 (Brute Force)" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                        </StackPanel>
-                        <TextBlock Grid.Column="1" Text="→" FontSize="14" FontWeight="Bold" Foreground="{StaticResource BorderBrush}" VerticalAlignment="Center"/>
-                        <StackPanel Grid.Column="2" HorizontalAlignment="Center">
-                            <TextBlock Text="02. EXECUTION" FontSize="9" FontWeight="Bold" Foreground="{StaticResource CyanAccentBrush}" HorizontalAlignment="Center"/>
-                            <TextBlock Text="T1059 (PowerShell)" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                        </StackPanel>
-                        <TextBlock Grid.Column="3" Text="→" FontSize="14" FontWeight="Bold" Foreground="{StaticResource BorderBrush}" VerticalAlignment="Center"/>
-                        <StackPanel Grid.Column="4" HorizontalAlignment="Center">
-                            <TextBlock Text="03. PERSISTENCE" FontSize="9" FontWeight="Bold" Foreground="{StaticResource HighBrush}" HorizontalAlignment="Center"/>
-                            <TextBlock Text="T1547 (Run Keys)" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                        </StackPanel>
-                        <TextBlock Grid.Column="5" Text="→" FontSize="14" FontWeight="Bold" Foreground="{StaticResource BorderBrush}" VerticalAlignment="Center"/>
-                        <StackPanel Grid.Column="6" HorizontalAlignment="Center">
-                            <TextBlock Text="04. LATERAL MOVE" FontSize="9" FontWeight="Bold" Foreground="{StaticResource CriticalBrush}" HorizontalAlignment="Center"/>
-                            <TextBlock Text="T1021 (WinRM/SMB)" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}" HorizontalAlignment="Center"/>
-                        </StackPanel>
-                    </Grid>
-                </Border>
             </StackPanel>
         </Border>
 
@@ -72,8 +51,8 @@
                     <RowDefinition Height="*"/>
                 </Grid.RowDefinitions>
                 <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
-                    <TextBlock DockPanel.Dock="Left" Text="Chronological Intrusion Stages Identified" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
-                    <TextBlock DockPanel.Dock="Right" Text="Click row to pivot to raw telemetry" FontSize="10.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock DockPanel.Dock="Left" Text="Etapele atacului identificate, în ordine cronologică" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                    <TextBlock DockPanel.Dock="Right" Text="Apăsați pe un rând pentru a vedea evenimentele brute" FontSize="10.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                 </DockPanel>
                 <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                     <ItemsControl ItemsSource="{Binding StorylineNodes}">

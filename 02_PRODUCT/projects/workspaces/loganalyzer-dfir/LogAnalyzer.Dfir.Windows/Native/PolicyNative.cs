@@ -16,6 +16,8 @@ public static class AuditPolicy
         ["Process Creation"] = G(0x2B), ["Audit Policy Change"] = G(0x2F),
         ["User Account Management"] = G(0x35), ["Security Group Management"] = G(0x37),
         ["Credential Validation"] = G(0x3F), ["Removable Storage"] = G(0x45), ["Plug and Play Events"] = G(0x48),
+        // A19 (domain controller): wrong passwords for domain accounts are refused here (lab DC01 2026-11-08: missing from this list, so it read as None)
+        ["Kerberos Authentication Service"] = G(0x42),
         // classified folders (A10, A14): file access, handle open/close, shares
         ["File System"] = G(0x1D), ["Handle Manipulation"] = G(0x23), ["File Share"] = G(0x24), ["Detailed File Share"] = G(0x44),
     };

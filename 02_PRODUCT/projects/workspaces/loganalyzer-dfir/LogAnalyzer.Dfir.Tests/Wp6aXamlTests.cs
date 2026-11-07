@@ -47,9 +47,12 @@ public class Wp6aXamlTests
         var main = Read("MainWindow.xaml");
         Assert.DoesNotContain("Content=\"Event Explorer (EVTX)\"", main);
         Assert.DoesNotContain("Content=\"Chain of Custody (NIS2)\"", main);
-        Assert.Matches(@"Content=""\{views:Term evtx\}""[^>]*ToolTip=""\{views:Term evtx, Tooltip=True\}""", main);
-        Assert.Matches(@"Content=""Istoricul probelor""[^>]*ToolTip=""{views:Term chain_of_custody, Tooltip=True}""", main);   // 2026-10-22: menu name = page title
-        Assert.Contains("Investigație completă (caz)", main);   // no page was removed or renamed
+        // R6 (2026-11-05): the „Avansat” menu is generated from ModuleCatalog; the glossary term of a page is its tooltip (technical name + explanation)
+        Assert.Matches(@"ToolTip=""\{Binding Term, Converter=\{StaticResource GlossaryTooltip\}\}""", main);
+        Assert.Equal("evtx", LogAnalyzer.Core.Services.Edition.ModuleCatalog.Find("1")!.Term);
+        Assert.Equal("chain_of_custody", LogAnalyzer.Core.Services.Edition.ModuleCatalog.Find("9")!.Term);
+        Assert.Equal("Istoricul probelor", LogAnalyzer.Core.Services.Edition.ModuleCatalog.Find("9")!.Title);   // 2026-10-22: menu name = page title
+        Assert.Contains(LogAnalyzer.Core.Services.Edition.ModuleCatalog.Pages, pg => pg.Title == "Investigație completă (caz)");   // no page was removed or renamed
     }
 
     [Fact]
@@ -155,7 +158,20 @@ public class Wp6aXamlTests
         Assert.Contains("ItemsSource=\"{Binding Findings}\"", inv);
         Assert.Contains("SelectedItem=\"{Binding SelectedFinding}\"", inv);
         Assert.Contains("<ctrl:FindingCard DataContext=\"{Binding SelectedCard}\"", inv);
-        foreach (var header in new[] { "Severitate", "Clasificare", "Stare", "Verificare", "Prima (UTC)", "Regulă", "Constatare", "Detalii" })
+        // owner 2026-11-06: the plain sentence first, the technical columns kept and labelled as such
+        foreach (var header in new[] { "Severitate", "Ce s-a întâmplat", "Clasificare", "Stare", "Verificare", "Prima (UTC)", "Tehnic: regulă", "Tehnic: titlu", "Tehnic: detalii" })
             Assert.Contains($"Header=\"{header}\"", inv);
+        // lab WS02 2026-11-06: a star-sized sentence column in a grid that scrolls sideways collapsed to a few pixels (one letter per line)
+        Assert.DoesNotMatch(@"PlainStoryConverter\.Instance\}\}"" Width=""\d*\*""", inv);
+        Assert.Matches(@"PlainStoryConverter\.Instance\}\}"" Width=""\d{3}"" MinWidth=""\d{3}""", inv);
+    }
+
+    [Fact]
+    public void The_register_rows_table_is_always_visible_on_a_small_screen()
+    {
+        // lab VM 2026-11-07 (1024x720): the rows table had no height left, so no person could be written into the users register
+        var reg = Read("Views", "RegisterView.xaml");
+        Assert.Contains("<ScrollViewer VerticalScrollBarVisibility=\"Auto\"", reg);
+        Assert.Matches(@"<DataGrid ItemsSource=""\{Binding View\}"" MinHeight=""\d{3}""", reg);
     }
 }

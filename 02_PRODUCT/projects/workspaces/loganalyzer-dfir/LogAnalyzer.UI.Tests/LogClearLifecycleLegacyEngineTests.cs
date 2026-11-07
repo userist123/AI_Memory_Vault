@@ -47,6 +47,24 @@ namespace LogAnalyzer.UI.Tests
         }
 
         [Fact]
+        public void A_104_names_the_log_that_was_cleared_not_the_System_log_it_is_written_in()
+        {
+            // lab VM 2026-11-06: wevtutil cl "Windows PowerShell" was reported as "System golit"
+            var ev = Ev(104);
+            // the full record as EventRecord.ToXml() gives it: <System><Channel>System</Channel> comes first (review round 1)
+            ev.XmlData = "<Event xmlns='http://schemas.microsoft.com/win/2004/08/events/event'><System><Provider Name='Microsoft-Windows-Eventlog'/><EventID>104</EventID>" +
+                         "<Channel>System</Channel><Computer>WS-01</Computer></System><UserData><LogFileCleared><SubjectUserName>it.admin</SubjectUserName><SubjectDomainName>LAB</SubjectDomainName>" +
+                         "<Channel>Windows PowerShell</Channel><BackupPath></BackupPath></LogFileCleared></UserData></Event>";
+            var live = new LiveSecurityMonitoringEngine().EvaluateLiveEvent(ev)!;
+            Assert.Contains("(Windows PowerShell)", live.Explanation);
+            Assert.DoesNotContain("(System)", live.Explanation);
+            Assert.Contains("Windows PowerShell", Assert.Single(new AnalysisEngine().AnalyzeEvents([ev])).Explanation);
+            Assert.Equal("Security", LogClearAssessment.ClearedChannel(1102, null));
+            Assert.Equal("", LogClearAssessment.ClearedChannel(104, null));
+            Assert.Equal("Medium: x", new LogAnalyzer.Core.Models.DetectedIssue { Severity = "Medium", Title = "x" }.ToString());
+        }
+
+        [Fact]
         public void Sigma_event_log_cleared_rule_is_Medium()
         {
             var engine = new SigmaRuleEngine();

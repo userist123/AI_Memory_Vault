@@ -15,10 +15,11 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
         <DockPanel Grid.Row="0" Margin="0,0,0,12">
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
+            <!-- lab 2026-11-07: a WrapPanel under the title, so at 1024 px the report button wraps instead of being cut off -->
+            <WrapPanel DockPanel.Dock="Bottom" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,8,0,0">
                 <!-- round 4 2026-10-23: in Simplu the case buttons wait for a case (a result); Expert unchanged -->
-                <StackPanel.Style>
-                    <Style TargetType="StackPanel">
+                <WrapPanel.Style>
+                    <Style TargetType="WrapPanel">
                         <Style.Triggers>
                             <MultiDataTrigger>
                                 <MultiDataTrigger.Conditions>
@@ -29,14 +30,14 @@
                             </MultiDataTrigger>
                         </Style.Triggers>
                     </Style>
-                </StackPanel.Style>
-                <Button Content="Folder caz" Command="{Binding OpenCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                <Button Content="Închidere caz" Command="{Binding CloseCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"
+                </WrapPanel.Style>
+                <Button Content="Folder caz" Command="{Binding OpenCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,6"/>
+                <Button Content="Închidere caz" Command="{Binding CloseCaseCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,6"
                         ToolTip="Afișează capetele lanțurilor de custodie și de audit, de înscris în registrul de custodie cu semnătură și dată"/>
-                <TextBlock Text="Pentru cine este raportul?" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                <ComboBox AutomationProperties.Name="Pentru cine este raportul" ItemsSource="{Binding ReportAudienceLabels}" SelectedIndex="{Binding ReportAudienceIndex}" ToolTip="{Binding ReportAudienceDescription}" Width="230" Margin="0,0,6,0"/>
-                <Button Content="Raport de incident (PDF)" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}" ToolTip="{Binding ReportAudienceDescription}"/>
-            </StackPanel>
+                <TextBlock Text="Pentru cine este raportul?" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,6"/>
+                <ComboBox AutomationProperties.Name="Pentru cine este raportul" ItemsSource="{Binding ReportAudienceLabels}" SelectedIndex="{Binding ReportAudienceIndex}" ToolTip="{Binding ReportAudienceDescription}" Width="230" Margin="0,0,6,6"/>
+                <Button Content="Raport de incident (PDF)" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}" ToolTip="{Binding ReportAudienceDescription}" Margin="0,0,0,6"/>
+            </WrapPanel>
             <StackPanel>
                 <TextBlock Text="Investigație completă (caz)" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock Text="Colectează (sau importă) probele, le parsează, construiește cronologia, corelează și reconstituie lanțul incidentului. Totul se păstrează într-un caz cu amprente de integritate (SHA-256) și cu istoricul fiecărei probe (lanț de custodie)."
@@ -147,6 +148,9 @@
             <Grid>
                 <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="12"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
                 <StackPanel Grid.Column="0">
+                    <!-- Evaluation 2026-11-05: wizard and form side by side read as two different flows; they edit the same case -->
+                    <TextBlock Text="Formularul complet (aceleași câmpuri ca asistentul de mai sus, plus sursele istorice și copiile de umbră); oricare dintre ele pornește aceeași analiză"
+                               TextWrapping="Wrap" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,0,0,6"/>
                     <WrapPanel Margin="0,0,0,6">
                         <TextBlock Text="Nume caz:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                         <TextBox AutomationProperties.Name="Nume caz" Text="{Binding CaseName, UpdateSourceTrigger=PropertyChanged}" Width="280" Margin="0,0,10,0"/>
@@ -248,6 +252,83 @@
                              Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}" BorderThickness="0" Padding="12" FontSize="12.5"/>
                 </DockPanel>
             </TabItem>
+            <TabItem Header="Cine ce a făcut" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Cine ce a făcut: constatările pe persoane, în ordinea timpului">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding PeopleIntro}" TextWrapping="Wrap" FontStyle="Italic" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,8"/>
+                    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                        <ItemsControl ItemsSource="{Binding PeopleStories}" AutomationProperties.Name="Persoanele și ce arată jurnalele pentru fiecare">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <Border BorderThickness="1" BorderBrush="{StaticResource BorderBrush}" CornerRadius="4" Padding="10,8" Margin="0,0,0,8">
+                                        <StackPanel>
+                                            <TextBlock Text="{Binding Title}" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+                                            <ItemsControl ItemsSource="{Binding Lines}">
+                                                <ItemsControl.ItemTemplate>
+                                                    <DataTemplate>
+                                                        <TextBlock Text="{Binding Sentence, StringFormat='• {0}'}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,1,0,1"/>
+                                                    </DataTemplate>
+                                                </ItemsControl.ItemTemplate>
+                                            </ItemsControl>
+                                            <TextBlock Text="{Binding OmittedLine}" FontStyle="Italic" TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0">
+                                                <TextBlock.Style>
+                                                    <Style TargetType="TextBlock">
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding OmittedLine}" Value=""><Setter Property="Visibility" Value="Collapsed"/></DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </TextBlock.Style>
+                                            </TextBlock>
+                                        </StackPanel>
+                                    </Border>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </TabItem>
+            <TabItem Header="Colectări" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Colectări: fișele colectării din caz">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding AcquisitionRunsLine}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
+                    <DataGrid AutomationProperties.Name="Fișele colectării" ItemsSource="{Binding AcquisitionRuns}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single"
+                              RowDetailsVisibilityMode="VisibleWhenSelected">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding HasProblem}" Value="True">
+                                        <Setter Property="Foreground" Value="{StaticResource WarningBrush}"/>
+                                        <Setter Property="FontWeight" Value="SemiBold"/>
+                                    </DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Începută" Binding="{Binding StartLocalText}" Width="120"/>
+                            <DataGridTextColumn Header="Încheiată" Binding="{Binding EndLocalText}" Width="120"/>
+                            <DataGridTextColumn Header="Stare" Binding="{Binding StateText}" Width="90"/>
+                            <DataGridTextColumn Header="Operator" Binding="{Binding Operator}" Width="1.2*"/>
+                            <DataGridTextColumn Header="Stație" Binding="{Binding Station}" Width="1.2*"/>
+                            <DataGridTextColumn Header="Versiune" Binding="{Binding ApplicationVersion}" Width="90"/>
+                            <DataGridTextColumn Header="Colectori" Binding="{Binding CollectorCount}" Width="75"/>
+                            <DataGridTextColumn Header="Fișiere" Binding="{Binding ItemCount}" Width="70"/>
+                            <DataGridTextColumn Header="Verificare" Binding="{Binding VerificationText}" Width="3*"/>
+                        </DataGrid.Columns>
+                        <DataGrid.RowDetailsTemplate>
+                            <DataTemplate>
+                                <DataGrid AutomationProperties.Name="Colectorii colectării" ItemsSource="{Binding Collectors}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="24,4,4,8" CanUserAddRows="False">
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Colector" Binding="{Binding Name}" Width="1.5*"/>
+                                        <DataGridTextColumn Header="Versiune" Binding="{Binding Version}" Width="80"/>
+                                        <DataGridTextColumn Header="Stare" Binding="{Binding StatusText}" Width="90"/>
+                                        <DataGridTextColumn Header="Fișiere" Binding="{Binding ItemCount}" Width="70"/>
+                                        <DataGridTextColumn Header="Amprentă manifest" Binding="{Binding ManifestShort}" Width="130"/>
+                                        <DataGridTextColumn Header="Eroare" Binding="{Binding FirstError}" Width="3*"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                            </DataTemplate>
+                        </DataGrid.RowDetailsTemplate>
+                    </DataGrid>
+                </DockPanel>
+            </TabItem>
             <TabItem Header="Constatări" Style="{StaticResource InspectorTabItemStyle}">
                 <Grid Margin="8">
                     <Grid.RowDefinitions>
@@ -259,13 +340,14 @@
                     <DataGrid AutomationProperties.Name="Constatări" Grid.Row="0" ItemsSource="{Binding Findings}" SelectedItem="{Binding SelectedFinding}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static local:SeverityTextConverter.Instance}}" Width="110"/>
+                            <DataGridTextColumn Header="Ce s-a întâmplat" Binding="{Binding Converter={x:Static local:PlainStoryConverter.Instance}}" Width="460" MinWidth="320"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
                             <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification, Converter={x:Static local:ClassificationWordingConverter.Instance}}" Width="100"/>
                             <DataGridTextColumn Header="Stare" Binding="{Binding Status, Converter={x:Static local:StandardStateLabelConverter.Instance}}" Width="130"/>
                             <DataGridTextColumn Header="Verificare" Binding="{Binding Verification.State, Converter={x:Static local:StandardStateLabelConverter.Instance}}" Width="120"/>
                             <DataGridTextColumn Header="Prima (UTC)" Binding="{Binding FirstSeenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>
-                            <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="170"/>
-                            <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="2*"/>
-                            <DataGridTextColumn Header="Detalii" Binding="{Binding Description}" Width="3*"/>
+                            <DataGridTextColumn Header="Tehnic: regulă" Binding="{Binding RuleId}" Width="170"/>
+                            <DataGridTextColumn Header="Tehnic: titlu" Binding="{Binding Title}" Width="2*"/>
+                            <DataGridTextColumn Header="Tehnic: detalii" Binding="{Binding Description}" Width="3*"/>
                         </DataGrid.Columns>
                     </DataGrid>
                     <GridSplitter Grid.Row="1" Height="8" HorizontalAlignment="Stretch" AutomationProperties.Name="Separator între lista de constatări și fișa constatării" Focusable="False"/>
@@ -297,9 +379,10 @@
                     <TextBlock DockPanel.Dock="Top" Text="{Binding RegisterLine}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
                     <DataGrid AutomationProperties.Name="Constatări de integritate air-gap" ItemsSource="{Binding AirGapFindings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="80"/>
+                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static local:SeverityTextConverter.Instance}}" Width="80"/>
+                            <DataGridTextColumn Header="Ce s-a întâmplat" Binding="{Binding Converter={x:Static local:PlainStoryConverter.Instance}}" Width="460" MinWidth="320"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
                             <DataGridTextColumn Header="Subcategorie" Binding="{Binding AirGap.Subcategory}" Width="110"/>
-                            <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="170"/>
+                            <DataGridTextColumn Header="Tehnic: regulă" Binding="{Binding RuleId}" Width="170"/>
                             <DataGridTextColumn Header="Canal" Binding="{Binding AirGap.Channel}" Width="150"/>
                             <DataGridTextColumn Header="Autorizat?" Binding="{Binding AirGap.Authorized}" Width="95"/>
                             <DataGridTextColumn Header="Când (UTC)" Binding="{Binding AirGap.WhenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="115"/>
@@ -309,8 +392,8 @@
                             <DataGridTextColumn Header="Registru" Binding="{Binding AirGap.RegisterClassification}" Width="*"/>
                             <DataGridTextColumn Header="Direcție" Binding="{Binding AirGap.TransferDirection}" Width="*"/>
                             <DataGridTextColumn Header="Destinație" Binding="{Binding AirGap.Destination}" Width="*"/>
-                            <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="2*"/>
-                            <DataGridTextColumn Header="Detalii" Binding="{Binding Description}" Width="3*"/>
+                            <DataGridTextColumn Header="Tehnic: titlu" Binding="{Binding Title}" Width="2*"/>
+                            <DataGridTextColumn Header="Tehnic: detalii" Binding="{Binding Description}" Width="3*"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -325,11 +408,12 @@
                     <TextBlock Grid.Row="0" Text="{Binding SequenceSummary}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,6"/>
                     <DataGrid AutomationProperties.Name="Constatări de tip secvență" Grid.Row="1" ItemsSource="{Binding SequenceFindings}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Margin="0,0,0,6">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="80"/>
-                            <DataGridTextColumn Header="Regulă" Binding="{Binding RuleId}" Width="200"/>
+                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static local:SeverityTextConverter.Instance}}" Width="80"/>
+                            <DataGridTextColumn Header="Ce s-a întâmplat" Binding="{Binding Converter={x:Static local:PlainStoryConverter.Instance}}" Width="460" MinWidth="320"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
+                            <DataGridTextColumn Header="Tehnic: regulă" Binding="{Binding RuleId}" Width="200"/>
                             <DataGridTextColumn Header="Prima (UTC)" Binding="{Binding FirstSeenUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="120"/>
                             <DataGridTextColumn Header="Cine (din dovezi)" Binding="{Binding User}" Width="*"/>
-                            <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="3*"/>
+                            <DataGridTextColumn Header="Tehnic: titlu" Binding="{Binding Title}" Width="3*"/>
                         </DataGrid.Columns>
                     </DataGrid>
                     <TextBox AutomationProperties.Name="Pașii secvențelor" Grid.Row="2" Text="{Binding SequenceSteps, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" VerticalScrollBarVisibility="Auto" VerticalContentAlignment="Top"
@@ -411,12 +495,15 @@
             <TabItem Header="Ascunderea sau ștergerea urmelor" Style="{StaticResource InspectorTabItemStyle}">
                 <DataGrid AutomationProperties.Name="Verificări anti-forensics" Margin="8" ItemsSource="{Binding AntiForensics}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
+                        <DataGridTextColumn Header="Ce s-a întâmplat" Binding="{Binding Plain}" Width="2*">
+                            <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
+                        </DataGridTextColumn>
                         <DataGridTextColumn Header="Id" Binding="{Binding Id}" Width="55"/>
                         <DataGridTextColumn Header="Tehnică" Binding="{Binding Technique}" Width="1.6*"/>
                         <DataGridTextColumn Header="ATT&amp;CK" Binding="{Binding Attack}" Width="80"/>
                         <DataGridTextColumn Header="Rezultat" Binding="{Binding ResultText}" Width="115"/>
                         <DataGridTextColumn Header="Probe" Binding="{Binding Evidence.Count}" Width="55"/>
-                        <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="4*">
+                        <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="4*" MinWidth="180">
                             <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                         </DataGridTextColumn>
                     </DataGrid.Columns>

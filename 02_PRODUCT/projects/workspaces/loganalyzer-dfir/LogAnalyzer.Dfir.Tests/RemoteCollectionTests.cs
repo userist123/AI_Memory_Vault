@@ -86,6 +86,19 @@ public sealed class RemoteCollectionTests : IDisposable
     }
 
     [Fact]
+    public void A_log_that_does_not_exist_on_the_target_is_absent_not_a_failed_step()
+    {
+        // lab SRV01 2026-11-07: Sysmon is not installed, wevtutil exit 15007 was reported as „pas eșuat”
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["evtx:Microsoft-Windows-Sysmon/Operational"]);
+        var check = RemoteCollection.Verify(ws, RunPackage(RemoteCollection.PackageScript(req, sha)));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var step = check.Manifest!.Steps.Single();
+        Assert.Contains(step.Status, new[] { "ok", "absent" });   // ok where Sysmon is installed
+        if (step.Status == "absent") Assert.Contains("nu exista pe statie", step.Error);
+    }
+
+    [Fact]
     public void Tampered_missing_extra_unauthorized_or_foreign_packages_are_refused()
     {
         var ws = NewCase();

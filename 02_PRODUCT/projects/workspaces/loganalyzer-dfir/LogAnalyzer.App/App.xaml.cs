@@ -142,6 +142,8 @@ namespace LogAnalyzer.UI
             {
                 StartupLog.Append(debugLogPath, "OnStartup starting...\n", reset: true);
                 base.OnStartup(e);
+                if (!LogAnalyzer.UI.Services.RomanianMessageBox.Install())                             // Da / Nu / Anulare on an English Windows
+                    Step(debugLogPath, "Message box hook not installed: confirmation buttons stay in the language of Windows.\n");
                 LogAnalyzer.UI.Services.LiveCase.ScopePrompt = LogAnalyzer.UI.Views.ScopeDialog.Ask;   // owner decision 28
                 LogAnalyzer.UI.Services.DataPackTrust.Apply();                                         // keys for offline detection data packs
                 if (LogAnalyzer.UI.Services.StartupNotices.Initialize() is { Length: > 0 } runtimeNotice) Step(debugLogPath, runtimeNotice + "\n");   // B10: non-blocking banner in the main window
@@ -180,6 +182,9 @@ namespace LogAnalyzer.UI
                 // Double-click on a row of ANY grid opens the full detail of that item (event, artifact, incident…).
                 EventManager.RegisterClassHandler(typeof(System.Windows.Controls.DataGridRow), System.Windows.Controls.Control.MouseDoubleClickEvent,
                     new System.Windows.Input.MouseButtonEventHandler(OnGridRowDoubleClick));
+                // Evaluation 2026-11-05: the calendar button of every date field was announced in English ("Show Calendar", the WPF default).
+                EventManager.RegisterClassHandler(typeof(System.Windows.Controls.DatePicker), FrameworkElement.LoadedEvent,
+                    new RoutedEventHandler((s, _) => LogAnalyzer.UI.Services.DatePickerNames.Apply((System.Windows.Controls.DatePicker)s)));
                 AppComposition.RegisterMeaningExplainers();
 
                 var services = AppComposition.BuildServices();
@@ -267,7 +272,7 @@ namespace LogAnalyzer.UI
                 // --tab=<n> opens a given tab at startup (e.g. 13 = "Izolare procese suspecte").
                 var tabArg = Array.Find(e.Args, a => a.StartsWith("--tab=", StringComparison.OrdinalIgnoreCase));
                 if (tabArg is not null && int.TryParse(tabArg[6..], out var tab) && mainWindow.DataContext is MainViewModel mvm)
-                    mvm.SelectedTabIndex = tab;
+                    mvm.OpenTab(tab);   // review of R2b: the start argument goes through the same licence / module gate as every navigation
                 Step(debugLogPath, "MainWindow shown. Closing SplashWindow...\n");
                 splash.Close();
                 Step(debugLogPath, "Startup complete.\n");

@@ -134,8 +134,10 @@ public static class RemoteCollection
                 $start = (Get-Date).ToUniversalTime().ToString('o')
                 $err = ''
                 $global:LASTEXITCODE = 0
-                try { & $action; if ($LASTEXITCODE -ne 0) { $err = "cod de iesire $LASTEXITCODE" } } catch { $err = $_.Exception.Message }
-                $steps.Add([ordered]@{ artifact = $name; startUtc = $start; endUtc = (Get-Date).ToUniversalTime().ToString('o'); status = $(if ($err) { 'failed' } else { 'ok' }); error = $err })
+                $absent = $false
+                # wevtutil 15007: the channel does not exist on this station (Sysmon not installed): absent, not a failure (lab SRV01 2026-11-07)
+                try { & $action; if ($LASTEXITCODE -eq 15007) { $absent = $true; $err = 'jurnalul nu exista pe statie (componenta nu este instalata)' } elseif ($LASTEXITCODE -ne 0) { $err = "cod de iesire $LASTEXITCODE" } } catch { $err = $_.Exception.Message }
+                $steps.Add([ordered]@{ artifact = $name; startUtc = $start; endUtc = (Get-Date).ToUniversalTime().ToString('o'); status = $(if ($absent) { 'absent' } elseif ($err) { 'failed' } else { 'ok' }); error = $err })
             }
             foreach ($a in $Artifacts) {
                 if ($a.StartsWith('evtx:')) {
@@ -247,7 +249,7 @@ public static class RemoteCollection
                 $"{m.Host}:{f.Path}", item.StoredPath, f.Sha256.ToUpperInvariant(), CollectorName, DfirInfo.ApplicationVersion, "", $"cererea {m.RequestId}"));
             items.Add(item);
         }
-        var failed = m.Steps.Where(s => s.Status != "ok").Select(s => $"{s.Artifact}: {s.Error}").ToList();
+        var failed = m.Steps.Where(s => s.Status is not ("ok" or "absent")).Select(s => $"{s.Artifact}: {s.Error}").ToList();
         ws.Audit("remote.imported", $"{m.RequestId} host={m.Host} files={m.Files.Count} failed_steps={failed.Count} {string.Join(" | ", failed)}");
         return items;
     }

@@ -117,7 +117,7 @@ public static class CaseLoader
         CaseWorkspace ws;
         try { ws = CaseWorkspace.Open(full, recheck: false); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException) { return Refuse("cazul nu poate fi deschis: " + ex.Message); }
-        if (recheck) ws.Recheck(ct);
+        var rechecked = recheck ? ws.Recheck(ct) : null;
 
         var (lifecycle, reasons) = Classify(ws);
         if (reasons.Count > 0)
@@ -134,6 +134,13 @@ public static class CaseLoader
             result.FindingsJson = Path.Combine(analysis, "findings.json");
         }
         result.Collection.AddRange(collection);
+        if (rechecked is not null)
+        {
+            var (known, registeredMap) = AcquisitionRunVerifier.MapsFrom(ws, rechecked);   // the re-check already hashed everything: no second pass
+            result.LoadAcquisitionRuns(ws, ct, known, registeredMap);
+        }
+        else result.LoadAcquisitionRuns(ws, ct);
+        result.LoadCustody(ws, ct);
         result.Parsing.AddRange(parsing);
         result.Timeline.AddRange(timeline);
         if (activityRestored)

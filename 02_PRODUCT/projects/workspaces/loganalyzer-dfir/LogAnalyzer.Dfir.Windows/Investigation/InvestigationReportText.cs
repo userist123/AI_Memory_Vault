@@ -26,6 +26,8 @@ public static class InvestigationReportText
     private static readonly Regex ChannelError = new(@"^(?<ch>[^:]{1,80}): (?<rest>.+)$", RegexOptions.Singleline | RegexOptions.Compiled);
 
     /// <summary>"A: x; B: x; C: y" → "x — 2 canale: A, B; C: y". Identical messages become one line with the list of channels.</summary>
+    /// <summary>The finding told in plain words (who, what, with what, when; owner 2026-11-06), the first thing the report says about it; codes stay in the technical lines.</summary>
+    public static string Plain(Finding f) => RoText.StripVolumes(LogAnalyzer.Dfir.Language.PlainStory.Current(f));
     public static string GroupErrors(string errors)
     {
         if (string.IsNullOrWhiteSpace(errors)) return "";
@@ -131,7 +133,7 @@ public static class InvestigationReportText
 
         var serious = new List<string>();
         foreach (var f in graveF.OrderByDescending(f => f.Severity).ThenByDescending(Solid).GroupBy(f => f.Title).Select(g => g.First()).Take(5))
-            serious.Add($"{f.FindingId} · {RoText.StripVolumes(f.Title)} ({RoLabels.Severity(f.Severity).ToLowerInvariant()}, {(Solid(f) ? "confirmată" : "doar indicativă")})");
+            serious.Add($"{Plain(f)} ({RoLabels.Severity(f.Severity).ToLowerInvariant()}, {(Solid(f) ? "confirmată" : "doar indicativă")}; {f.FindingId})");
         int detected = r.AntiForensics.Count(a => a.Result == AntiForensicResult.Detected);
         if (detected > 0) serious.Add($"{RoText.Capitalize(RoText.CountFem(detected, "verificare", "verificări"))} de ascundere sau ștergere a urmelor {(detected == 1 ? "a găsit" : "au găsit")} o urmă observată (nu dovada intenției).");
 

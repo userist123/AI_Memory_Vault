@@ -88,7 +88,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | P38 | Last full and quick antivirus scan | Recent | Recent | Recent |  |
 | P39 | Antivirus registered in Security Center | Registered | Registered | Registered |  |
 | A01 | Audit policy records the required activity | Required categories on | Required categories on | Required categories on |  |
-| A02 | Security log size | At least 128 MB | At least 128 MB | At least 128 MB |  |
+| A02 | Security log size | At least 192 MB | At least 192 MB | At least 192 MB |  |
 | A03 | Security log covers the audited period | Covers the period | Covers the period | Covers the period |  |
 | A04 | Other logs cover the audited period | Cover the period | Cover the period | Cover the period |  |
 | A05 | Logs cleared in the period | None | None | None |  |
@@ -104,6 +104,9 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | A15 | Classified files: access and exits without approval | Review; non-conform on any exit not in the transfer register | Review; non-conform on any exit not in the transfer register (network shares included) | n/a | Classified folders exist only in the controlled editions. |
 | A16 | Application installation date versus the previous control (paper anchor) | Unchanged | Unchanged | Unchanged |  |
 | A17 | The application's own commands recognised from its sealed audit | All recorded | All recorded | All recorded |  |
+| A18 | Access-record retention required by the station level | Live log covers the level's retention; otherwise review the archives | Live log covers the level's retention; otherwise review the archives | Live log covers the level's retention; otherwise review the archives |  |
+| A19 | A domain controller records refused logons (wrong passwords) | n/a | Failures audited for Kerberos Authentication Service and Credential Validation | Failures audited for Kerberos Authentication Service and Credential Validation | A standalone station has no domain controller. Checked only when the station itself is a domain controller. |
+| A20 | Logs that record device connections are on | Partition/Diagnostic and DriverFrameworks-UserMode on | Partition/Diagnostic and DriverFrameworks-UserMode on | Partition/Diagnostic and DriverFrameworks-UserMode on |  |
 | U01 | Changes to the Administrators group | Review | Review | Review |  |
 | U02 | Accounts created, deleted, enabled, disabled or reset | Review | Review | Review |  |
 | U03 | Remote (RDP) logons | Review | Review (administration over the LAN is normal) | Review |  |
@@ -128,6 +131,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | N11 | No path to the internet (passive configuration check) | No gateway, DNS, proxy, VPN, radio, cellular or ICS configuration found; non-conform on any | Only internal gateway and DNS; non-conform on proxy, VPN, radio, cellular or ICS leading outside the internal ranges | n/a | Reads local configuration only (registry, adapter properties, Plug and Play device list, local files; no WMI) and never opens a socket. Any source it cannot read makes it NEDETERMINAT (never CONFORM) and is named in the detail. An internet station is connected by design. |
 | N12 | Domain membership | n/a | Member of the domain | n/a | Only a station on an isolated domain LAN is expected to be a domain member. |
 | N13 | Domain controller reachable (active, read-only check) | n/a | Located at an internal address and LDAP answers; non-conform on a public address | n/a | Active check: Windows' domain locator (DNS SRV query to the configured DNS server, Netlogon UDP ping) plus one TCP connection to LDAP 389 at a private address only, no credentials; it sends traffic, so it exists only in the Network edition. |
+| N14 | Internet allowed at the station level | n/a | n/a | Review (forbidden at the highest level) | Only the Internet edition can reach the internet; at strict secret de importanta deosebita the internet is forbidden. |
 | S01 | Programs installed or uninstalled | Review | Review | Review |  |
 | S02 | New services and scheduled tasks | Review | Review | Review |  |
 | S03 | Windows version and last update | Known and documented | Known and documented | Recent |  |

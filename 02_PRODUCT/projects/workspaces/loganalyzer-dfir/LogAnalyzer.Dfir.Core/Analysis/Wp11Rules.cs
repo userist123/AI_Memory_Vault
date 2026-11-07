@@ -28,6 +28,7 @@ public static partial class Wp11Rules
         Vss(c, found);
         Dns(c, found);
         Tools(c, found);
+        Discovery(c, found);
         return found;
     }
 

@@ -18,8 +18,58 @@ namespace LogAnalyzer.UI.ViewModels
     /// applies an approved policy only after the operator confirms the exact plan. Every step runs as the Windows account
     /// of this process; approval must come from another account using the same policy store.
     /// </summary>
+    /// <summary>One registered policy as the library list shows it (2026-10-23: an earlier import must stay visible after a restart).</summary>
+    public sealed record PolicyLibraryItem(string Id, string Version, string Title, string StateText, string DateText, string? LibraryPath)
+    {
+        public bool CanOpen => LibraryPath is not null;
+        public string Name => string.IsNullOrWhiteSpace(Title) ? Id : Title;
+        public string Summary => $"{Name} · versiunea {Version} · {StateText} · {DateText}";
+
+        public static string StateName(PolicyStatus s) => s switch
+        {
+            PolicyStatus.Draft => "CIORNĂ (DRAFT)",
+            PolicyStatus.Validated => "VALIDATĂ (VALIDATED)",
+            PolicyStatus.Tested => "TESTATĂ (TESTED)",
+            PolicyStatus.Approved => "APROBATĂ (APPROVED)",
+            PolicyStatus.Deployed => "APLICATĂ (DEPLOYED)",
+            PolicyStatus.Verified => "VERIFICATĂ (VERIFIED)",
+            PolicyStatus.Retired => "RETRASĂ (RETIRED)",
+            _ => s.ToString().ToUpperInvariant(),
+        };
+    }
+
     public partial class PolicyViewModel : ObservableObject
     {
+        /// <summary>The policies registered in the store, newest first; filled from the store at start and after every step.</summary>
+        public ObservableCollection<PolicyLibraryItem> Library { get; } = new();
+        public bool HasLibrary => Library.Count > 0;
+        /// <summary>The „Ce este / de ce contează / primul pas” card: only when nothing is open and the library is empty.</summary>
+        public bool NothingOpenAndLibraryEmpty => NothingOpen && !HasLibrary;
+        [ObservableProperty] private string _libraryNote = "";
+
+        private void RefreshLibrary()
+        {
+            Library.Clear();
+            try
+            {
+                foreach (var e in _bench.LibraryEntries())
+                    Library.Add(new PolicyLibraryItem(e.Id, e.Version, e.Title, PolicyLibraryItem.StateName(e.Status),
+                        e.LastChangeUtc is { } at ? at.ToLocalTime().ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.GetCultureInfo("ro-RO")) : "—", e.LibraryPath));
+                LibraryNote = Library.Count == 0 ? "" : $"Biblioteca are {Library.Count} politici înregistrate. Alegeți una ca să o redeschideți.";
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { LibraryNote = "Biblioteca de politici nu a putut fi citită: " + ex.Message; }
+            OnPropertyChanged(nameof(HasLibrary));
+            OnPropertyChanged(nameof(NothingOpenAndLibraryEmpty));
+        }
+
+        [RelayCommand]
+        private void OpenLibraryEntry(PolicyLibraryItem? item)
+        {
+            if (item is null) return;
+            if (item.LibraryPath is null) { Status = $"Copia din bibliotecă a politicii {item.Id} nu mai există; deschideți din nou fișierul sau backup-ul."; return; }
+            Open(item.LibraryPath);
+        }
+
         private readonly LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? _registryWriter;
         private PolicyWorkbench _bench;
         private PolicyDocument? _policy;
@@ -94,6 +144,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             _registryWriter = registryWriter;
             _bench = NewBench(null);
+            try { RefreshLibrary(); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* the list is a convenience */ }
         }
 
         private PolicyWorkbench NewBench(string? root) =>
@@ -286,6 +337,7 @@ namespace LogAnalyzer.UI.ViewModels
             UpdateNextStep();
             History.Clear();
             OnPropertyChanged(nameof(NothingOpen));
+            RefreshLibrary();
             if (_policy is null) { PolicyInfo = "Nicio politică deschisă."; return; }
             var rec = _bench.Store.Get(_policy);
             if (rec is not null) foreach (var h in rec.History) History.Add(h);

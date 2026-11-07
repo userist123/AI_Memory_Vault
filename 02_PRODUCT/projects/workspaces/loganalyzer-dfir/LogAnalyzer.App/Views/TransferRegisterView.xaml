@@ -137,13 +137,13 @@
             </ScrollViewer>
             <GridSplitter Grid.Column="1" Width="6" HorizontalAlignment="Center" VerticalAlignment="Stretch" Background="Transparent"/>
             <DockPanel Grid.Column="2" Margin="8,0,0,0">
-                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">
                     <TextBlock Text="Raport din" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,6,0"/>
                     <DatePicker SelectedDate="{Binding ReportFrom}" AutomationProperties.Name="Raport de la data" Margin="0,0,6,0"/>
                     <TextBlock Text="până la" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,6,0"/>
                     <DatePicker SelectedDate="{Binding ReportTo}" AutomationProperties.Name="Raport până la data" Margin="0,0,10,0"/>
                     <Button Content="Raportul registrului (PDF)" Command="{Binding ReportCommand}"/>
-                </StackPanel>
+                </WrapPanel>
                 <StackPanel DockPanel.Dock="Top" Margin="0,0,0,8">
                     <TextBlock Text="Conectări fără transfer înregistrat" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <TextBlock Text="{Binding UnregisteredSummary}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,4"/>
@@ -165,12 +165,12 @@
                 <StackPanel>
                     <TextBlock Text="Verifică transferul după conținut" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <TextBlock Text="Alegeți un transfer din listă (sau niciunul = toate) și un folder sau mediul conectat. Se compară amprentele SHA-256; suportul nu este modificat." TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,4"/>
-                    <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
+                    <WrapPanel Margin="0,0,0,4">
                         <Button Content="Verifică un folder…" Command="{Binding VerifyFolderCommand}" Margin="0,0,8,0" AutomationProperties.Name="Verifică transferul după conținut într-un folder"/>
                         <Button Content="Verifică mediul conectat" Command="{Binding VerifyMediumCommand}" Margin="0,0,8,0" AutomationProperties.Name="Verifică transferul după conținut pe mediul ales"/>
                         <Button Content="Oprește" Command="{Binding CancelVerifyCommand}" Margin="0,0,12,0" AutomationProperties.Name="Oprește verificarea"/>
                         <CheckBox Content="arată și fișierele de pe suport care nu sunt în niciun transfer" IsChecked="{Binding ReportUnlisted}" VerticalAlignment="Center"/>
-                    </StackPanel>
+                    </WrapPanel>
                     <ProgressBar IsIndeterminate="True" Height="4" Visibility="{Binding IsVerifying, Converter={StaticResource BoolToVis}}"/>
                     <TextBlock Text="{Binding VerifyProgress}" FontSize="11" TextTrimming="CharacterEllipsis" Foreground="{StaticResource TextMutedBrush}"/>
                     <TextBlock Text="{Binding VerifySummary}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,4"/>

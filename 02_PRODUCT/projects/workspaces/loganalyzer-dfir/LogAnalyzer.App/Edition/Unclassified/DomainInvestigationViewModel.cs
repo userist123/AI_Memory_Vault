@@ -74,9 +74,15 @@ namespace LogAnalyzer.UI.ViewModels
                          $"Graf: {graph.Entities.Count} entități, {graph.Relationships.Count} relații.";
             }
             catch (NetworkBlockedException ex) { Status = ex.Message + " " + ModeNote; }
-            catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+            // any failure of the collector is a message on the page, never a closed application (lab VM 2026-11-07: an unbindable COM call closed it)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
-                Status = "Active Directory nu a putut fi citit: " + ex.Message;
+                // lab VM 2026-11-07: the English Windows message alone did not say what to do; the usual cause is the app running under a local account
+                bool local = Environment.UserDomainName.Equals(Environment.MachineName, StringComparison.OrdinalIgnoreCase);
+                Status = "Active Directory nu a putut fi citit. " +
+                         (local ? $"Aplicația citește domeniul cu contul Windows cu care rulează, iar „{Environment.UserName}” este un cont local al acestui calculator, nu al domeniului: porniți aplicația cu un cont al domeniului (clic dreapta pe aplicație, „Executare ca alt utilizator”). "
+                                : "Verificați că stația vede controlerul de domeniu (rețea, DNS) sau scrieți numele lui în câmpul de mai sus. ") +
+                         $"Detaliu tehnic: {ex.Message}";
             }
             finally { IsBusy = false; }
         }

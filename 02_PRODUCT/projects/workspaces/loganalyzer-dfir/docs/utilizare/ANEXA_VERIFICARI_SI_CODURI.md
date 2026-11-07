@@ -161,9 +161,9 @@
 
 - **Ce verificăm:** Dacă folosirea stick-urilor și discurilor USB este blocată prin politică.
 - **De ce contează:** Stick-urile sunt principala cale prin care datele ies de pe o stație izolată sau prin care intră viruși.
-- **Cum verifică aplicația:** A citit pornirea componentei USBSTOR și politica „interzice orice acces la stocare amovibilă”.
-- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\USBSTOR → Start; HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices → Deny_All`
-- **Cum se citește rezultatul:** Conform = blocat. De verificat = permis: atunci trebuie folosite doar suporturi aprobate și înregistrate.
+- **Cum verifică aplicația:** A citit pornirea componentei USBSTOR și politica „interzice orice acces la stocare amovibilă”, apoi canalele de transfer aprobate în Profilul de proceduri.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\USBSTOR → Start; HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices → Deny_All; Profilul de proceduri → Canale de transfer`
+- **Cum se citește rezultatul:** Conform = blocat. Neconform = permis, deși profilul de proceduri nu aprobă niciun canal de transfer pe USB sau pe suport amovibil. De verificat = permis și profilul aprobă un astfel de canal (atunci trebuie folosite doar suporturile din registrul mediilor, D01–D04), sau profilul nu definește canalele.
 
 ### P15
 
@@ -275,7 +275,7 @@
 - **De ce contează:** Un disc inscripționat este un mod simplu de a scoate date și nu apare ca stick USB; politica NoCDBurning oprește doar inscripționarea din Explorer, nu un program de inscripționare.
 - **Cum verifică aplicația:** A căutat unitățile optice cu capacitate de scriere, din două surse: ce raportează driverul prin WMI și lista de tipuri de disc pe care unitatea însăși spune că le poate scrie (IMAPI2, interfața Windows de inscripționare, doar citită). Apoi a citit politica de refuzare a scrierii pe CD/DVD și politica NoCDBurning.
 - **Sursa tehnică:** `WMI Win32_CDROMDrive → Capabilities; IMAPI2 MsftDiscRecorder2 → SupportedProfiles; HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices\{53f56308-b6bf-11d0-94f2-00a0c91efb8b} → Deny_Write; ...\Policies\Explorer → NoCDBurning`
-- **Cum se citește rezultatul:** Conform = nicio unitate nu scrie, sau scrierea este refuzată prin politică. Neconform = unitatea poate scrie și nu există blocare (sau doar NoCDBurning, care nu este suficient). De verificat = la o stație neizolată.
+- **Cum se citește rezultatul:** Conform = nicio unitate nu scrie, sau scrierea este refuzată prin politică. Neconform = unitatea poate scrie și nu există blocare (sau doar NoCDBurning, care nu este suficient), iar profilul de proceduri nu aprobă transfer pe disc. De verificat = la o stație neizolată, sau profilul aprobă transferul pe CD/DVD (atunci discurile trebuie să fie cele din registrul mediilor).
 
 ### P29
 
@@ -379,7 +379,7 @@
 - **De ce contează:** Un jurnal mic se umple în câteva zile și evenimentele vechi dispar.
 - **Cum verifică aplicația:** A citit dimensiunea maximă și modul jurnalului.
 - **Sursa tehnică:** `Configurația jurnalului Security (EventLogConfiguration)`
-- **Cum se citește rezultatul:** Conform = cel puțin 128 MB. Mod Circular = suprascrie cele mai vechi evenimente.
+- **Cum se citește rezultatul:** Conform = cel puțin 192 MB (pragul CIS pentru Windows 11; DISA STIG cere cât să încapă cel puțin o săptămână de evenimente, deci pe o stație cu audit bogat poate fi nevoie de mai mult). Mod Circular = suprascrie cele mai vechi evenimente.
 
 ### A03
 
@@ -500,6 +500,30 @@
 - **Cum verifică aplicația:** Înainte de fiecare pornire aplicația scrie în jurnalul ei sigilat „collector.exec” (controlul în curs, calea completă și amprenta SHA-256 a programului, linia de comandă exactă, amprenta scriptului, procesul aplicației), iar la sfârșit „collector.exec_done” (procesul pornit, codul de ieșire). Un eveniment 4688, Sysmon 1 sau PowerShell 4104 este socotit al aplicației doar dacă se potrivește exact cu o astfel de înregistrare: același proces (sau procesul aplicației ca părinte) în cel mult 10 minute de la pornire, aceeași cale, aceeași linie de comandă sau aceeași amprentă a scriptului, aceeași amprentă a programului când evenimentul o conține; programul trebuie să fie unul din inventarul fix al aplicației (reg.exe, esentutl.exe, bcdedit.exe și auditpol.exe din System32, MpCmdRun.exe al Defender, din Program Files sau exact din folderul Platform al Defender sub ProgramData; în edițiile care pot izola stația și colecta prin script, și programul de firewall și PowerShell din System32, acesta doar cu linia de comandă exactă a scriptului de colectare și amprenta lui din build), iar fișierul lui trebuie să aibă acum amprenta consemnată; scriptul de colectare pornește doar dacă are amprenta fixată la construirea aplicației; înregistrarea trebuie să fie în interiorul unui control valid (început și sfârșit consemnate, după ancorarea care îl precede, scris de același executabil al aplicației, lanț nealterat). Evenimentele potrivite sunt scoase din celelalte verificări și listate aici; cele care doar seamănă rămân constatări obișnuite.
 - **Sursa tehnică:** `Jurnalul de audit al aplicației (collector.exec, collector.exec_done, control.started, control.finished, audit.anchor); Security 4688, Sysmon 1, PowerShell 4104`
 - **Cum se citește rezultatul:** Conform = toate comenzile aplicației găsite în jurnale sunt consemnate (numărul lor apare în rezultat; nu sunt constatări). De verificat = evenimente care se potrivesc cu o comandă din jurnalul aplicației care nu trece verificarea („activitate pretinsă a aplicației, neconfirmată”, de exemplu scrisă în afara unui control sau pentru un program din afara inventarului): ele rămân și la celelalte verificări. Fără jurnalul aplicației verificarea nu apare și niciun eveniment nu este recunoscut. Limită: un administrator care deține cheia de sigilare poate adăuga după ultimul cod de ancorare înregistrări false pentru programele din inventarul aplicației și poate ascunde astfel orice număr de rulări ale acelor programe la controlul următor; A11 nu detectează intrările adăugate după ancorare; ofițerul compară lista din A17 cu ce a rulat operatorul. Între verificarea amprentei scriptului și citirea lui de către PowerShell există un interval scurt în care un administrator cu drept de scriere în folderul aplicației poate înlocui scriptul; cu jurnalizarea blocurilor de script (4104) activă, conținutul înlocuit apare ca nepotrivit; fără ea, se vede doar pornirea PowerShell, recunoscută ca proprie. Un script PowerShell lung, împărțit de Windows în mai multe evenimente 4104 (același ScriptBlockId), este reasamblat în ordine înainte de comparare; un set incomplet sau cu o parte dublată nu este confirmat și rămâne DE VERIFICAT, cu motivul. Comenzile pornite în afara unui control (investigație, izolare) își primesc propria fereastră de acțiune în jurnalul sigilat și sunt confirmate la fel.
+
+### A18
+
+- **Ce verificăm:** Dacă înregistrările de acces (jurnalul Security) sunt păstrate atât cât cere nivelul de clasificare al stației.
+- **De ce contează:** HG 585 art. 291 cere păstrarea registrelor de acces cel puțin 3 ani la secret și strict secret și cel puțin 10 ani la strict secret de importanță deosebită; la secret de serviciu durata o fixează documentația de acreditare.
+- **Cum verifică aplicația:** A citit nivelul stației din Profilul de proceduri, data celui mai vechi eveniment din jurnalul Security și intervalul fiecărei arhive Archive-Security-*.evtx lăsate de Windows pe stație; arhivele care se leagă fără întrerupere (cel mult o zi) de jurnalul curent prelungesc acoperirea. A comparat începutul acoperirii cu începutul perioadei cerute de nivel.
+- **Sursa tehnică:** `Profilul de proceduri (Nivelul stației); jurnalul Security, primul eveniment; %SystemRoot%\System32\winevt\Logs\Archive-Security-*.evtx (primul și ultimul eveniment)`
+- **Cum se citește rezultatul:** Conform = jurnalul de pe stație, singur sau împreună cu arhivele lui de pe stație, acoperă fără întrerupere durata cerută. De verificat = acoperirea începe mai târziu sau are o întrerupere (spusă în constatare): înregistrările mai vechi trebuie să fie în arhivele exportate pe alte suporturi, pe care aplicația nu le vede. Nedeterminat = nivelul nu este definit în profil sau jurnalul nu a putut fi citit.
+
+### A19
+
+- **Ce verificăm:** Dacă, pe un controler de domeniu, se notează încercările de autentificare refuzate (parolă greșită, cont inexistent).
+- **De ce contează:** Parola greșită a unui cont de domeniu este refuzată de controlerul de domeniu, nu de stația pe care s-a tastat: dacă controlerul nu notează refuzurile, ghicirea parolelor nu lasă nicio urmă și nu poate fi descoperită.
+- **Cum verifică aplicația:** A citit din registru rolul calculatorului și, dacă este controler de domeniu, politica de audit pentru autentificarea Kerberos și pentru validarea parolelor.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions → ProductType (LanmanNT = controler de domeniu); auditpol: Kerberos Authentication Service, Credential Validation`
+- **Cum se citește rezultatul:** Conform = ambele subcategorii notează eșecurile. Neconform = cel puțin una nu le notează. Nedeterminat = politica de audit nu a putut fi citită. Pe o stație care nu este controler de domeniu verificarea nu apare.
+
+### A20
+
+- **Ce verificăm:** Dacă sunt pornite jurnalele Windows care notează conectarea stick-urilor și a discurilor externe.
+- **De ce contează:** Partition/Diagnostic (pornit implicit) notează fiecare dispozitiv conectat, cu producătorul și seria; DriverFrameworks-UserMode (oprit implicit) notează și conectările și deconectările. Un jurnal implicit pornit, găsit oprit, înseamnă că cineva l-a oprit.
+- **Cum verifică aplicația:** A citit configurația celor două canale de jurnal (dacă sunt activate).
+- **Sursa tehnică:** `Microsoft-Windows-Partition/Diagnostic; Microsoft-Windows-DriverFrameworks-UserMode/Operational (EventLogConfiguration.IsEnabled)`
+- **Cum se citește rezultatul:** Conform = ambele pornite. De verificat = doar Partition/Diagnostic pornit (situația implicită). Neconform = Partition/Diagnostic oprit. Nedeterminat = nu au putut fi citite. Niciunul nu arată ce fișiere s-au copiat (vezi A01, A08).
 
 ### U01
 
@@ -785,17 +809,17 @@
 
 - **Ce verificăm:** Dacă stația are adaptor Wi-Fi, dacă serviciul Wi-Fi poate porni și câte rețele Wi-Fi sunt salvate.
 - **De ce contează:** Un adaptor Wi-Fi poate crea o legătură cu exteriorul și strică izolarea stației.
-- **Cum verifică aplicația:** A căutat adaptoarele de rețea fără fir, a citit modul de pornire al serviciului Wi-Fi și a numărat fișierele de profil Wi-Fi salvate (fără să le deschidă).
+- **Cum verifică aplicația:** A căutat adaptoarele de rețea fără fir, a citit modul de pornire al serviciului Wi-Fi și a numărat fișierele de profil Wi-Fi salvate (fără să le deschidă: pot conține parole) și a numit rețelele Wi-Fi ținute minte în NetworkList, cu ultima conectare.
 - **Sursa tehnică:** `Adaptoare de rețea Windows (tip 802.11); HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc → Start; ProgramData\Microsoft\Wlansvc\Profiles\Interfaces`
-- **Cum se citește rezultatul:** Conform = nu există adaptor Wi-Fi. Neconform = pe stația izolată există un adaptor Wi-Fi pornit. De verificat = adaptor prezent dar oprit, sau stație neizolată; cereți aprobarea scrisă sau scoaterea plăcii.
+- **Cum se citește rezultatul:** Conform = nu există adaptor Wi-Fi și nicio rețea Wi-Fi ținută minte. Neconform = pe stația izolată există un adaptor Wi-Fi pornit (conectările din perioada controlată sunt judecate la N01). De verificat = adaptor prezent dar oprit, sau stație neizolată; cereți aprobarea scrisă sau scoaterea plăcii.
 
 ### N04
 
-- **Ce verificăm:** Dacă stația are componente Bluetooth și dacă serviciul Bluetooth poate porni.
+- **Ce verificăm:** Dacă stația are componente Bluetooth, dacă serviciul Bluetooth poate porni și ce dispozitive au fost asociate cu ea.
 - **De ce contează:** Prin Bluetooth se pot trimite fișiere fără cablu, fără ca stația să fie conectată la vreo rețea.
-- **Cum verifică aplicația:** A căutat dispozitivele Bluetooth cunoscute de Windows și a citit modul de pornire al serviciului Bluetooth.
-- **Sursa tehnică:** `WMI Win32_PnPEntity (clasa Bluetooth); HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start`
-- **Cum se citește rezultatul:** Conform = nu există Bluetooth. Neconform = pe stația izolată Bluetooth există și serviciul poate porni. De verificat = există dar serviciul este oprit; opriți-l sau cereți aprobarea scrisă.
+- **Cum verifică aplicația:** A căutat componentele Bluetooth cunoscute de Windows, a citit modul de pornire al serviciului Bluetooth și lista dispozitivelor asociate (adresă și nume; cheile de legătură nu se citesc).
+- **Sursa tehnică:** `WMI Win32_PnPEntity (clasa Bluetooth); HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start; HKLM\SYSTEM\CurrentControlSet\Services\BTHPORT\Parameters\Devices (subchei = adrese, valoarea Name)`
+- **Cum se citește rezultatul:** Conform = nu există Bluetooth și niciun dispozitiv asociat. Neconform = pe stația izolată Bluetooth există și serviciul poate porni, sau există un dispozitiv asociat (chiar dacă radioul a fost scos sau serviciul oprit între timp). De verificat = există dar serviciul este oprit; opriți-l sau cereți aprobarea scrisă.
 
 ### N05
 
@@ -868,6 +892,14 @@
 - **Cum verifică aplicația:** Doar în ediția Rețea, doar pe o stație membră a domeniului și doar dacă modul de lucru permite traficul. Localizarea controlerului folosește traficul obișnuit al Windows, cel de la fiecare autentificare în domeniu: localizatorul (DsGetDcName, Netlogon) întreabă serverul DNS configurat de înregistrarea _ldap._tcp.dc._msdcs a domeniului, trimite controlerelor găsite pingul UDP Netlogon (389), iar numele controlerului se rezolvă prin același server DNS; acest trafic pleacă înainte să se cunoască vreo adresă. Conexiunea proprie a aplicației este una singură, TCP la LDAP (389), numai spre o adresă privată, fără autentificare și fără date trimise. Dacă vreo adresă rezolvată este publică, aplicația nu deschide nicio conexiune TCP. Totul are o limită de timp de 10 secunde.
 - **Sursa tehnică:** `DsGetDcName (netapi32) → numele și adresa controlerului; rezolvarea numelui; conexiune TCP la portul 389`
 - **Cum se citește rezultatul:** Conform = controler găsit la o adresă privată, LDAP răspunde. Neconform = controlerul se rezolvă la o adresă publică (aplicația nu deschide conexiunea TCP). De verificat = controlerul nu a răspuns, nu a fost găsit sau limita de timp a trecut. Nedeterminat = stația nu este membră a unui domeniu (N12), verificarea nu a rulat sau a fost anulată. Nu se aplică pe Standalone și Internet.
+
+### N14
+
+- **Ce verificăm:** Dacă stația are voie să fie conectată la internet la nivelul ei de clasificare.
+- **De ce contează:** La strict secret de importanță deosebită conectarea la internet este interzisă; la celelalte niveluri interconectarea se face doar cu aprobarea agenției de acreditare.
+- **Cum verifică aplicația:** A citit nivelul stației din Profilul de proceduri și ediția aplicației (doar ediția Internet are acces la internet).
+- **Sursa tehnică:** `Profilul de proceduri (Nivelul stației); ediția aplicației`
+- **Cum se citește rezultatul:** Neconform = nivel strict secret de importanță deosebită pe ediția Internet. De verificat = alt nivel: confirmați aprobarea interconectării. Nedeterminat = nivelul nu este definit. Nu se aplică pe Standalone și Rețea izolată.
 
 ### EM01
 

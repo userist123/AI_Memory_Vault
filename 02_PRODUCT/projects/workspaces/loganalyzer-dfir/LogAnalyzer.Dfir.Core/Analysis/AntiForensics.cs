@@ -10,6 +10,9 @@ public enum AntiForensicResult { Detected, NotDetected, Undetermined }
 
 public sealed record AntiForensicCheck(string Id, string Technique, string Attack, AntiForensicResult Result, string Reason, IReadOnlyList<EvidenceRef> Evidence, string Detail = "")
 {
+    /// <summary>What happened, in plain Romanian without codes (owner 2026-11-06); empty when the check has no sentence of its own yet.</summary>
+    public string Plain { get; init; } = "";
+
     /// <summary>Reader-facing result (DETECTAT / NEDETECTAT / NEDETERMINAT); <see cref="ResultText"/> keeps the spec code for data and the legend.</summary>
     [System.Text.Json.Serialization.JsonIgnore] public string ResultRomanian => LogAnalyzer.Dfir.Language.RoLabels.AntiForensic(Result);
     public string ResultText => Result switch { AntiForensicResult.Detected => "DETECTED", AntiForensicResult.NotDetected => "NOT_DETECTED", _ => "UNDETERMINED" };
@@ -164,6 +167,7 @@ public static class AntiForensics
             string inversions = tm.Inversions.Count == 0 ? "" : $" Ordinea înregistrărilor contrazice ora: {tm.Inversions.Count} ({string.Join("; ", tm.Inversions.Take(5).Select(v => $"{v.Source["EventLog:".Length..]} RecordID {v.PreviousRecordId} → {v.RecordId}, ora înapoi cu {TimeManipulation.Human(v.Back)}"))}).";
             var refs = manual.Select(e => Ref(e, "schimbare a orei sistemului")).Concat(tm.Inversions.Select(v => v.Evidence)).ToList();
             if (manual.Count > 0 || tm.Inversions.Count > 0)
+            {
                 Add("AF05", "Manipularea orei sistemului", "", AntiForensicResult.Detected,
                     (manual.Count > 0
                         ? $"{manual.Count(e => e.EventId == "4616")} în Security 4616 și {manual.Count(e => e.EventId == "1")} în Kernel-General 1 (aceeași schimbare apare în ambele jurnale), făcute de alt proces decât sincronizarea (svchost): " +
@@ -172,6 +176,9 @@ public static class AntiForensics
                               : $"Kernel-General {F(e, "OldTime")} → {F(e, "NewTime")}{Mag(e)} ({WinPath.GetFileName(F(e, "ProcessName"))})")) + "."
                         : "Nicio schimbare manuală a ceasului în Security 4616 / Kernel-General 1.") + inversions + zones,
                     refs);
+                var jumps = manual.Select(e => tm.Jumps.FirstOrDefault(j => j.Evidence.EvidenceId == e.EvidenceId && j.Evidence.Locator == e.Locator && j.EventId == e.EventId)).OfType<ClockJump>().ToList();
+                checks[^1] = checks[^1] with { Plain = ClockPlain(jumps, tm.Inversions.Count, TimeZoneInfo.Local) };
+            }
             else if (Has(System))
                 Add("AF05", "Manipularea orei sistemului", "", AntiForensicResult.NotDetected,
                     "System analizat: schimbările de oră (Kernel-General 1) sunt doar sincronizări, ceasul hardware sau fusul orar." + zones);
@@ -355,6 +362,39 @@ public static class AntiForensics
             else Add("AF16", "Manipularea firewall-ului", "T1562.004", AntiForensicResult.Undetermined, "Lipsește jurnalul Windows Firewall With Advanced Security/Firewall.");
         }
         return checks;
+    }
+
+    /// <summary>
+    /// AF05 in plain words: who moved the clock, which way, by how much, with what program and when. The Security and Kernel-General records of one
+    /// change are told once (Security names the account); records whose order contradicts their time are told as such.
+    /// </summary>
+    internal static string ClockPlain(IReadOnlyList<ClockJump> jumps, int inversions, TimeZoneInfo zone)
+    {
+        var security = jumps.Where(j => j.EventId == "4616").ToList();
+        // both records of one change are written at the same moment; a 4616 without its new time is still matched by when it was written
+        static bool SameProcess(ClockJump s, ClockJump k) => s.Process.Length == 0 || k.Process.Length == 0 || s.Process.Equals(k.Process, StringComparison.OrdinalIgnoreCase);
+        bool Same(ClockJump s, ClockJump k) => (s.TimeUtc - k.TimeUtc).Duration() <= TimeSpan.FromSeconds(5) && SameProcess(s, k) || s.New is { } n && k.New is { } m && (n - m).Duration() <= TimeSpan.FromSeconds(2);
+        // a 4616 without its times takes the size and direction from its Kernel-General twin; the account stays the 4616's
+        var kernel = jumps.Where(j => j.EventId != "4616").ToList();
+        security = security.Select(s => s.Delta is null && kernel.FirstOrDefault(k => Same(s, k) && k.Delta is not null) is { } twin
+            ? s with { Delta = twin.Delta, Direction = twin.Direction, Previous = twin.Previous, New = twin.New } : s).ToList();
+        var told = security.Concat(kernel.Where(j => !security.Any(s => Same(s, j))))
+                           .OrderBy(j => j.TimeUtc).ToList();
+        var sentences = told.Take(3).Select(j =>
+        {
+            var who = LogAnalyzer.Dfir.Language.PlainStory.Who(j.Actor, null);
+            var how = j.Delta is { } d && d.Duration() >= TimeSpan.FromSeconds(1)
+                ? $"a mutat ceasul calculatorului {j.Direction} cu {PlainPhrases.Duration(d)}"
+                : "a schimbat ora calculatorului";
+            var tool = j.Process.Length > 0 ? $", cu programul {PlainPhrases.Q(WinPath.GetFileName(j.Process))}" : "";
+            return $"{LogAnalyzer.Dfir.Language.PlainStory.When(j.TimeUtc, j.TimeUtc, zone)}, {who} {how}{tool}.";
+        }).ToList();
+        if (told.Count > 3) sentences.Add($"Ceasul a mai fost schimbat {PlainPhrases.Times(told.Count - 3)}.");
+        if (inversions > 0)
+            sentences.Add($"În jurnale, {(inversions == 1 ? "o înregistrare are" : LogAnalyzer.Dfir.Language.RoText.Count(inversions, "înregistrare are", "înregistrări au"))} o oră mai veche decât cele scrise înaintea lor: ceasul a fost dat înapoi.");
+        if (sentences.Count == 0) return "";
+        sentences.Add(told.Count + inversions == 1 ? "Orele evenimentelor din jurul acestui moment nu sunt sigure." : "Orele evenimentelor din jurul acestor momente nu sunt sigure.");
+        return string.Join(" ", sentences);
     }
 
     /// <summary>True when the file name is a core Windows process and the folder is not where Windows keeps it.</summary>

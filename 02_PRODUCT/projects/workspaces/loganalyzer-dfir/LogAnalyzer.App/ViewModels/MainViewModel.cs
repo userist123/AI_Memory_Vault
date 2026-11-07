@@ -47,6 +47,8 @@ namespace LogAnalyzer.UI.ViewModels
         public RangeObservableCollection<DetectedIssue> DetectedIssues { get; set; } = new();
         public RangeObservableCollection<RegistryArtifact> RegistryArtifacts { get; set; } = new();
         public RangeObservableCollection<TimelineItem> TimelineItems { get; set; } = new();
+        /// <summary>First / last event and highest severity of the events shown on the timeline page.</summary>
+        public TimelineSummary TimelineSummary => TimelineSummary.From(TimelineItems);
         public RangeObservableCollection<IocItem> CurrentIocs { get; set; } = new();
         
         // Threat Hunting Command Center Collections
@@ -82,9 +84,11 @@ namespace LogAnalyzer.UI.ViewModels
         // Operating mode: decided once at startup from the station's connectivity (or forced), see App.OnStartup.
         [ObservableProperty] private bool _isAirGappedMode = AppModeContext.IsAirGapped;
         [ObservableProperty] private bool _isNetworkMode = !AppModeContext.IsAirGapped;
-        [ObservableProperty] private string _systemModeBadgeText = AppModeContext.IsAirGapped ? "Mod: izolat (fără rețea)" : "Mod: conectat";
+        [ObservableProperty] private string _systemModeBadgeText = LogAnalyzer.Core.Services.Edition.ModuleCatalog.ModeBadge(StationPostureContext.Current, AppModeContext.IsAirGapped);
         /// <summary>Header subtitle: the station this application runs on.</summary>
-        public string StationSubtitle => "Analiză de jurnale și probe";
+        /// <summary>The module with its descriptor (plan 2026-11-04): "Insula — Stație izolată".</summary>
+        public string StationSubtitle => LogAnalyzer.Core.Services.Edition.ModuleCatalog.DisplayName(LogAnalyzer.Core.Services.Edition.StationPostureContext.Current);
+        public string ProductName => LogAnalyzer.Core.Services.Edition.ModuleCatalog.ProductName;
         /// <summary>The name of this PC, shown in the header instead of the station role (owner, 2026-10-11).</summary>
         public string StationName => Environment.MachineName;
         [ObservableProperty] private string _securityShieldStatusText = AppModeContext.IsAirGapped
@@ -139,6 +143,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>WP18 S2: the role profile (intents and sidebar entries) of this PC. Data from the role, the edition and the mode.</summary>
         public LogAnalyzer.Core.Services.Edition.RoleProfile RoleProfile { get; }
         public System.Collections.Generic.IReadOnlyList<LogAnalyzer.Core.Services.Edition.NavigationEntry> RoleNavigation => RoleProfile.Navigation;
+        /// <summary>The „Avansat” menu: sections and pages from <see cref="LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu"/> for this module, the current mode and the role's main pages.</summary>
+        public System.Collections.Generic.IReadOnlyList<LogAnalyzer.Core.Services.Edition.ModuleCatalog.MenuSection> AdvancedMenu =>
+            LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(StationPostureContext.Current, AppModeContext.IsAirGapped ? AppMode.AirGapped : AppMode.Network, RoleNavigation.Select(n => n.Tab).ToList(), HasRight);
 
         /// <summary>Control audit of this station ("Control stație" tab).</summary>
         public StationControlViewModel StationControl { get; } = new();
@@ -168,7 +175,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ShowMediaCenter()
         {
-            SelectedTabIndex = LogAnalyzer.Core.Services.Edition.RoleProfiles.TabMediaRegister;
+            if (!OpenTab(LogAnalyzer.Core.Services.Edition.RoleProfiles.TabMediaRegister)) return;
             MediaCenter.SelectedTab = 0;
         }
         public UsersRegisterViewModel UsersRegister { get; }
@@ -271,7 +278,7 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _workbenchRuleContent = "title: Execuție PowerShell Codificat\nlogsource:\n  category: process_creation\ndetection:\n  selection:\n    CommandLine|contains:\n      - '-enc'\n      - 'bypass'\n      - 'downloadstring'\n  condition: selection";
         // Command Palette & Global Search
         [ObservableProperty] private bool _isCommandPaletteVisible = false;
-        [ObservableProperty] private string _workbenchStatusMessage = "Ready to compile and evaluate rules against ingested events.";
+        [ObservableProperty] private string _workbenchStatusMessage = "Gata de compilare: regulile se evaluează pe evenimentele încărcate.";
         [ObservableProperty] private string _workbenchCompileResult = "Introduceți o regulă Sigma YAML sau YARA și apăsați 'Compilează & Evaluează'.";
         [ObservableProperty] private int _workbenchMatchCount = 0;
 
@@ -316,7 +323,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <summary>G3: the older pages under "Avansat" that load their own events (dashboard, events, registry, alerts, timeline, risk, attack chain,
         /// threat intelligence, MITRE); on them the window shows the empty offer while neither "Colectează tot" nor the page has data.</summary>
-        public static readonly int[] LegacyDataTabs = [0, 1, 2, 3, 4, 5, 6, 7, 10];
+        public static readonly int[] LegacyDataTabs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10];   // 8 (Conturi locale și USB) reads the same events (evaluation 2026-11-05)
         public bool IsLegacyDataPage => LegacyDataTabs.Contains(SelectedTabIndex);
         [ObservableProperty] private int _totalEventsCount;
         [ObservableProperty] private int _totalAlertsCount;
@@ -327,6 +334,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private int _lowAlertsCount;
         [ObservableProperty] private int _totalRegistryCount;
         [ObservableProperty] private int _totalHostsCount;
+        /// <summary>Techniques actually present in the loaded (non-test) alerts, with their alert counts. Empty when none are loaded.</summary>
+        [ObservableProperty] private IReadOnlyList<AlertTechniqueCount> _loadedAlertTechniques = Array.Empty<AlertTechniqueCount>();
 
         // Paging properties
         [ObservableProperty] private int _evtxCurrentPage = 1;
@@ -648,9 +657,17 @@ namespace LogAnalyzer.UI.ViewModels
             IDatabaseService databaseService, IAuditCollectionService collectionService, EvidenceIntakeService evidenceIntake,
             IEditionProfile edition, IFeatureViewFactory featureViews, IHostDefense hostDefense,
             ILiveEventSourceFactory liveSourceFactory, IConnectivityWatcher connectivityWatcher,
-            LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null)
+            LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null,
+            LogAnalyzer.Core.Services.LicenseService? license = null)
         {
             Edition = edition;
+            // The licence was verified before sign-in (App.xaml.cs); its rights are read ONCE here and drive the menu, the role pages and every navigation.
+            // Review of R2b: the rights are those VERIFIED at start (or at activation), never a fallback: a licence that expired, was renamed or is half-written
+            // by the end of sign-in keeps exactly the verified rights; a licence service with nothing verified grants no capability. Without a licence service at all
+            // (a test host; production always registers it) the module base set applies.
+            _licenseRights = RightsFrom(license);
+            // the timeline side panel is recomputed from the events shown whenever they change (never fixed sample text)
+            TimelineItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(TimelineSummary));
             // a failure to write the sealed audit is never silent: banner (AuditHealth) and the status line (weak: the health object lives for the process)
             System.ComponentModel.PropertyChangedEventManager.AddHandler(AuditHealth, (_, e) => { if (AuditHealth.HasWarning) StatusMessage = AuditHealth.Warning; },
                 nameof(LogAnalyzer.UI.Services.AuditHealth.Warning));
@@ -660,19 +677,21 @@ namespace LogAnalyzer.UI.ViewModels
             Containment = featureViews.CreateViewModel(FeatureKeys.Containment);
             DomainInvestigation = featureViews.CreateViewModel(FeatureKeys.DomainInvestigation);
             Investigation = new InvestigationViewModel(inv => featureViews.CreateViewModel(FeatureKeys.AiAnalysis, inv));
+            Investigation.StateChanged += OnInvestigationStateChanged;   // evaluation 2026-11-05: the advanced pages show the open case
             // The account's language level (default Simple) before any page reads a glossary term.
             LogAnalyzer.Dfir.Language.LanguageLevelContext.Set(_languagePreferences.Load(PreferenceAccount));
             IsExpertLevel = LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert;
-            RoleProfile = LogAnalyzer.Core.Services.Edition.RoleProfiles.For(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role, edition, AppModeContext.Current.Mode);
-            Home = new HomeViewModel(Investigation, tab => SelectedTabIndex = tab, profile: RoleProfile, quickControl: StationControl);
+            RoleProfile = LogAnalyzer.Core.Services.Edition.RoleProfiles.For(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role, edition, AppModeContext.Current.Mode, HasRight);
+            Home = new HomeViewModel(Investigation, tab => OpenTab(tab), profile: RoleProfile, quickControl: StationControl);
             // 2026-10-22 PC walkthrough: the status bar follows the last control or investigation instead of staying on „Nicio analiză încă.”
             LogAnalyzer.UI.Services.CollectAllState.Instance.ActivityRecorded += line => StatusMessage = ActivityStatusLine(line, AuditHealth.HasWarning ? AuditHealth.Warning : null);
             // G3: „Colectează tot” anywhere in the window runs the complete collection and analysis for the role; the control station also runs its control.
             LogAnalyzer.UI.Services.CollectAllState.Handler = async () =>
             {
-                SelectedTabIndex = HomeViewModel.InvestigationTabIndex;
+                if (!OpenTab(HomeViewModel.InvestigationTabIndex)) return;
                 await Investigation.CollectAllCommand.ExecuteAsync(null);
-                if (LogAnalyzer.UI.Services.CollectAllState.Plan(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role).RunStationControl)
+                if (LogAnalyzer.UI.Services.CollectAllState.Plan(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role).RunStationControl
+                    && CanOpenTab(LogAnalyzer.Core.Services.Edition.RoleProfiles.TabStationControl))
                     await StationControl.RunCommand.ExecuteAsync(null);
             };
             Policy = new PolicyViewModel(registryWriter);
@@ -680,7 +699,7 @@ namespace LogAnalyzer.UI.ViewModels
             MediaRegister = new MediaRegisterViewModel();
             MediaCenter = new MediaCenterViewModel(MediaRegister);
             Transfer = new TransferViewModel(MediaCenter);
-            MediaCenter.NavigateToTransferRegister = () => SelectedTabIndex = LogAnalyzer.Core.Services.Edition.RoleProfiles.TabTransferRegister;
+            MediaCenter.NavigateToTransferRegister = () => OpenTab(LogAnalyzer.Core.Services.Edition.RoleProfiles.TabTransferRegister);
             UsersRegister = new UsersRegisterViewModel();
             Auth = new AuthViewModel();
             _eventParser = eventParser;
@@ -827,6 +846,12 @@ namespace LogAnalyzer.UI.ViewModels
                 HighAlertsCount = distribution.High;
                 MediumAlertsCount = distribution.Medium;
                 LowAlertsCount = distribution.LowOrInfo;
+                LoadedAlertTechniques = DetectedIssues
+                    .Where(i => !i.IsTestAlert && !string.IsNullOrWhiteSpace(i.MitreTechniqueId))
+                    .GroupBy(i => i.MitreTechniqueId.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .Select(g => new AlertTechniqueCount(g.Key, g.Count()))
+                    .OrderByDescending(t => t.Count).ThenBy(t => t.TechId, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
 
                 PopulateMitreMatrix();
             }
@@ -849,10 +874,34 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void Navigate(string indexStr)
         {
-            if (int.TryParse(indexStr, out int index))
-            {
-                SelectedTabIndex = index;
-            }
+            if (int.TryParse(indexStr, out int index)) OpenTab(index);
+        }
+
+        /// <summary>The message shown when a function is not part of the station's licence (or of its module).</summary>
+        public const string NotLicensedMessage = "Această funcție nu este inclusă în licența acestei stații.";
+
+        private readonly System.Collections.Generic.IReadOnlyList<string> _licenseRights;
+
+        /// <summary>The licence capabilities read once at start (see the constructor).</summary>
+        public System.Collections.Generic.IReadOnlyList<string> LicenseRights => _licenseRights;
+
+        private bool HasRight(string capability) => _licenseRights.Contains(capability, System.StringComparer.Ordinal);
+
+        /// <summary>The module has a page for the tab and the licence allows it (a tab outside the page catalogue is not decided here).</summary>
+        /// <summary>The rights of the main window: those verified at start / activation; none when the service verified nothing; the module base set without a licence service.</summary>
+        internal static System.Collections.Generic.IReadOnlyList<string> RightsFrom(LogAnalyzer.Core.Services.LicenseService? license) =>
+            license is null ? LogAnalyzer.Core.Services.LicenseFeatures.DefaultFor(StationPostureContext.Current)
+                : license.VerifiedClaims?.Features ?? (System.Collections.Generic.IReadOnlyList<string>)Array.Empty<string>();
+
+        internal bool CanOpenTab(int tab) => LogAnalyzer.Core.Services.Edition.ModuleCatalog.CanOpenTab(tab, StationPostureContext.Current, HasRight,
+            LogAnalyzer.Core.Services.Connectivity.AppModeContext.IsAirGapped ? LogAnalyzer.Core.Services.Connectivity.AppMode.AirGapped : LogAnalyzer.Core.Services.Connectivity.AppMode.Network);
+
+        /// <summary>The single door to a page: refuses a tab the licence or the module does not allow (message in the status line) instead of opening it.</summary>
+        internal bool OpenTab(int tab)
+        {
+            if (!CanOpenTab(tab)) { StatusMessage = NotLicensedMessage; return false; }
+            SelectedTabIndex = tab;
+            return true;
         }
 
         [RelayCommand] private void NextEvtxPage() { if (EvtxCurrentPage < EvtxTotalPages) EvtxCurrentPage++; }
@@ -956,9 +1005,14 @@ namespace LogAnalyzer.UI.ViewModels
 
             if (result == MessageBoxResult.Yes)
             {
+                // review 2026-11-05: never while a case load or an import writes the store (Wait(0): the UI thread must not block on a load whose
+                // continuation needs it)
+                _caseWorkspaceCts?.Cancel();
+                if (!_workspaceGate.Wait(0)) { StatusMessage = "Datele se încarcă încă în paginile avansate; reîncercați curățarea peste câteva secunde."; return; }
                 try
                 {
                     _databaseService.ClearDatabase();
+                    _workspaceCaseId = ""; WorkspaceSourceLine = NoCaseSourceLine;
                     
                     Events.Clear();
                     RegistryArtifacts.Clear();
@@ -973,6 +1027,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     MessageBox.Show($"Eroare la ștergerea bazei de date: {ex.Message}", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+                finally { _workspaceGate.Release(); }
             }
         }
 
@@ -1321,6 +1376,7 @@ namespace LogAnalyzer.UI.ViewModels
                     CollectionHostname,
                     log => App.Current.Dispatcher.Invoke(() => CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, log))
                 )) is { } refused) ShowExportRefused(refused);
+                else Home.NoteLiveCaseUsed();   // 2026-10-23: the live collection is exported for the station's LIVE case: it is listed in „Cazuri recente”
             }
             catch (Exception ex)
             {
@@ -1953,7 +2009,7 @@ namespace LogAnalyzer.UI.ViewModels
             IsAutoShieldTriggered = false;
             CurrentLiveToastAlert = loudest;
             IsLiveToastVisible = true;
-            StatusMessage = $"🚨 ALERTĂ LIVE: {loudest.Title}";
+            StatusMessage = $"🚨 ALERTĂ LIVE: {(loudest.Plain.Length > 0 ? loudest.Plain : loudest.Title)}";
             if (SeverityRank(loudest.Severity) >= 3)
                 try { System.Media.SystemSounds.Exclamation.Play(); } catch (InvalidOperationException) { /* sound is optional */ }
             _toastAutoDismissTimer?.Stop();
@@ -2066,7 +2122,7 @@ namespace LogAnalyzer.UI.ViewModels
             // Killing every process with a guessed name (the former behaviour) is not acceptable on evidence.
             // The suspicious program is contained individually, scanned and documented in the containment tab.
             IsCountermeasureModalVisible = false;
-            SelectedTabIndex = 13;
+            if (!OpenTab(13)) return;
             StatusMessage = "Selectați programul în „Izolare procese suspecte”: i se blochează doar lui rețeaua, este scanat, iar incidentul se salvează cu probe.";
         }
 
@@ -2112,7 +2168,16 @@ namespace LogAnalyzer.UI.ViewModels
             ".evtx", ".reg", ".dat", ".csv", ".json", ".log", ".lnk", ".pf", ".hve", ".txt", ".bin", ".bmc"
         };
 
+        /// <summary>Review 2026-11-05: a manual import and a case load never run at the same time on the shared working database.</summary>
         private async Task ProcessFilesAsync(string[] allFiles)
+        {
+            _caseWorkspaceCts?.Cancel();
+            await _workspaceGate.WaitAsync();
+            try { await ProcessFilesCoreAsync(allFiles); }
+            finally { _workspaceGate.Release(); }
+        }
+
+        private async Task ProcessFilesCoreAsync(string[] allFiles)
         {
             IsLoading = true;
             LoadingProgress = 0;
@@ -2120,6 +2185,7 @@ namespace LogAnalyzer.UI.ViewModels
             LoadingSubDetail = "Filtrare artefacte forenzice relevante...";
             StatusMessage = "Inițializare sesiune de investigație...";
 
+            _workspaceCaseId = ""; WorkspaceSourceLine = NoCaseSourceLine;
             Events.Clear(); RegistryArtifacts.Clear(); DetectedIssues.Clear(); TimelineItems.Clear();
             _databaseService.ClearDatabase();
 
@@ -2208,58 +2274,7 @@ namespace LogAnalyzer.UI.ViewModels
                         LoadingSubDetail = $"Procesare EVTX: {Path.GetFileName(file)} ({totalEvtxProcessed:N0} evenimente)";
                     });
 
-                    try 
-                    {
-                        var batch = new List<ParsedEvent>();
-                        var timelineBatch = new List<TimelineItem>();
-                        
-                        foreach (var ev in _eventParser.ParseEvtxFile(file)) 
-                        {
-                            // The knowledge base describes Security-log events only; its "EventExample" is a sample event from another computer
-                            // and must never be shown as if it came from this station (owner 2026-10-11).
-                            var kbDetails = (ev.ProviderName ?? "").Contains("Security-Auditing", StringComparison.OrdinalIgnoreCase) ? _kbService.GetDetails(ev.EventId) : null;
-                            if (kbDetails != null)
-                            {
-                                ev.OfficialDescription = kbDetails.ExtendedDescription;
-                                ev.ReferenceUrl = kbDetails.ReferenceUrl;
-                                if (string.IsNullOrWhiteSpace(ev.PotentialCriticality)) ev.PotentialCriticality = kbDetails.PotentialCriticality;
-                            }
-                            batch.Add(ev);
-                            
-                            timelineBatch.Add(new TimelineItem 
-                            { 
-                                Timestamp = ev.TimeCreated, 
-                                Source = "EVTX", 
-                                Category = $"EID {ev.EventId}", 
-                                Description = ev.Message ?? "-", 
-                                UserOrHost = ev.MachineName ?? "-" 
-                            });
-
-                            if (batch.Count >= 5000)
-                            {
-                                _databaseService.SaveEvents(batch);
-                                _databaseService.SaveTimeline(timelineBatch);
-                                totalEvtxProcessed += batch.Count;
-                                batch.Clear();
-                                timelineBatch.Clear();
-                            }
-                        }
-                        if (batch.Count > 0)
-                        {
-                            _databaseService.SaveEvents(batch);
-                            _databaseService.SaveTimeline(timelineBatch);
-                            totalEvtxProcessed += batch.Count;
-                        }
-                        if (_eventParser is EvtxParser repairedBy && repairedBy.LastRepairNote.Length > 0)
-                            importErrors.Add($"{Path.GetFileName(file)} (EVTX): {repairedBy.LastRepairNote}.");
-                        if (_eventParser is EvtxParser legacy && legacy.LastMalformedRecords > 0)
-                            importErrors.Add($"{Path.GetFileName(file)} (EVTX): {legacy.LastMalformedRecords} înregistrări ilizibile au fost sărite; restul fișierului a fost importat.");
-                    } 
-                    catch (Exception ex)
-                    {
-                        // Never skip a file silently: the operator must know what is missing from the analysis.
-                        importErrors.Add($"{Path.GetFileName(file)} (EVTX): {ex.Message}");
-                    }
+                    totalEvtxProcessed += IngestEvtxFile(file, importErrors);
                 }
 
                 // 2.2 Parsare Registru .REG
@@ -2424,12 +2439,12 @@ namespace LogAnalyzer.UI.ViewModels
                             {
                                 if (sRule.MatchCount > 0)
                                 {
-                                    matchInUi.Status = $"MATCHED ({sRule.MatchCount})";
+                                    matchInUi.Status = $"{sRule.MatchCount} potriviri";
                                     matchInUi.RuleStatusColor = "#ef4444";
                                 }
                                 else
                                 {
-                                    matchInUi.Status = "Active";
+                                    matchInUi.Status = "Activă";
                                     matchInUi.RuleStatusColor = "#22c55e";
                                 }
                             }
@@ -2481,6 +2496,68 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
+
+        /// <summary>Parses one EVTX file into the working database (events + timeline); a problem is added to <paramref name="importErrors"/>, never skipped silently. Returns the events saved.</summary>
+        private int IngestEvtxFile(string file, List<string> importErrors, System.Threading.CancellationToken ct = default)
+        {
+            int n = 0;
+            try 
+            {
+                var batch = new List<ParsedEvent>();
+                var timelineBatch = new List<TimelineItem>();
+                
+                foreach (var ev in _eventParser.ParseEvtxFile(file)) 
+                {
+                    // The knowledge base describes Security-log events only; its "EventExample" is a sample event from another computer
+                    // and must never be shown as if it came from this station (owner 2026-10-11).
+                    var kbDetails = (ev.ProviderName ?? "").Contains("Security-Auditing", StringComparison.OrdinalIgnoreCase) ? _kbService.GetDetails(ev.EventId) : null;
+                    if (kbDetails != null)
+                    {
+                        ev.OfficialDescription = kbDetails.ExtendedDescription;
+                        ev.ReferenceUrl = kbDetails.ReferenceUrl;
+                        if (string.IsNullOrWhiteSpace(ev.PotentialCriticality)) ev.PotentialCriticality = kbDetails.PotentialCriticality;
+                    }
+                    batch.Add(ev);
+                    
+                    timelineBatch.Add(new TimelineItem 
+                    { 
+                        Timestamp = ev.TimeCreated, 
+                        Source = "EVTX", 
+                        Category = $"EID {ev.EventId}", 
+                        Description = ev.Message ?? "-", 
+                        UserOrHost = ev.MachineName ?? "-" 
+                    });
+    
+                    if (batch.Count >= 5000)
+                    {
+                        ct.ThrowIfCancellationRequested();   // review 2026-11-05: a newer case load or import must not wait for, or mix with, this file
+                        _databaseService.SaveEvents(batch);
+                        _databaseService.SaveTimeline(timelineBatch);
+                        n += batch.Count;
+                        batch.Clear();
+                        timelineBatch.Clear();
+                    }
+                }
+                if (batch.Count > 0)
+                {
+                    _databaseService.SaveEvents(batch);
+                    _databaseService.SaveTimeline(timelineBatch);
+                    n += batch.Count;
+                }
+                if (_eventParser is EvtxParser repairedBy && repairedBy.LastRepairNote.Length > 0)
+                    importErrors.Add($"{Path.GetFileName(file)} (EVTX): {repairedBy.LastRepairNote}.");
+                if (_eventParser is EvtxParser legacy && legacy.LastMalformedRecords > 0)
+                    importErrors.Add($"{Path.GetFileName(file)} (EVTX): {legacy.LastMalformedRecords} înregistrări ilizibile au fost sărite; restul fișierului a fost importat.");
+            } 
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
+            {
+                // Never skip a file silently: the operator must know what is missing from the analysis.
+                importErrors.Add($"{Path.GetFileName(file)} (EVTX): {ex.Message}");
+            }
+            return n;
+        }
+
         private bool FilterIssues(object obj) => !(HideVerifiedAlerts && ((DetectedIssue)obj).IsVerified);
 
         private async void InitializeProcessTree()
@@ -2529,7 +2606,7 @@ namespace LogAnalyzer.UI.ViewModels
                     SigmaRules.Add(new SigmaRule
                     {
                         RuleName = r.Title,
-                        Status = r.MatchCount > 0 ? $"MATCHED ({r.MatchCount})" : "Active",
+                        Status = r.MatchCount > 0 ? $"{r.MatchCount} potriviri" : "Activă",
                         RuleStatusColor = r.MatchCount > 0 ? "#ef4444" : "#22c55e",
                         FilePath = r.FilePath,
                         RuleContent = r.YamlContent
@@ -2687,7 +2764,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// </summary>
         private async Task RunAnalysisAsync(bool announce)
         {
-            if (_analysisEngine is not AnalysisEngine ae || _aiRunning) return;
+            if (_analysisEngine is not AnalysisEngine ae) return;
+            // review 2026-11-05: a call while one runs is not dropped (the panels would keep the previous data set): it runs right after
+            if (_aiRunning) { _analysisRerun = true; _analysisRerunAnnounce |= announce; return; }
             _aiRunning = true;
             try
             {
@@ -2947,7 +3026,11 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 StatusMessage = "Analiza nu a putut fi făcută: " + ex.Message;
             }
-            finally { _aiRunning = false; }
+            finally
+            {
+                _aiRunning = false;
+                if (_analysisRerun) { _analysisRerun = false; var again = _analysisRerunAnnounce; _analysisRerunAnnounce = false; _ = RunAnalysisAsync(again); }
+            }
         }
 
         [RelayCommand]
@@ -3408,7 +3491,7 @@ namespace LogAnalyzer.UI.ViewModels
     {
         public string RuleName { get; set; } = string.Empty;
         
-        private string _status = "Active";
+        private string _status = "Activă";
         public string Status
         {
             get => _status;
@@ -3425,6 +3508,9 @@ namespace LogAnalyzer.UI.ViewModels
         public string FilePath { get; set; } = string.Empty;
         public string RuleContent { get; set; } = string.Empty;
     }
+
+    /// <summary>A technique id found in loaded alerts and how many alerts carry it.</summary>
+    public sealed record AlertTechniqueCount(string TechId, int Count);
 
     public class MitreTechnique
     {

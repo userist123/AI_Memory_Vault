@@ -29,7 +29,8 @@ namespace LogAnalyzer.Core.Services.Network
         {
             if (string.IsNullOrEmpty(xml)) return null;
             var m = Regex.Match(xml, "<Data Name=[\"']" + Regex.Escape(name) + "[\"']>([^<]*)</Data>");
-            var v = m.Success ? m.Groups[1].Value.Trim() : null;
+            // the XML keeps „<” as „&lt;” (lab VM: „?&lt;PSDirectVMLegacy>” in a live alert)
+            var v = m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim() : null;
             return string.IsNullOrEmpty(v) || v == "-" ? null : v;
         }
 
@@ -37,6 +38,13 @@ namespace LogAnalyzer.Core.Services.Network
         /// Evaluează în memorie un eveniment nou sosit în timp real și returnează o alertă dacă se detectează un atac sau anomalie.
         /// </summary>
         public DetectedIssue? EvaluateLiveEvent(ParsedEvent ev)
+        {
+            var issue = Evaluate(ev);
+            if (issue is not null && issue.Plain.Length == 0) issue.Plain = LivePlain.Tell(issue, ev, TimeZoneInfo.Local);
+            return issue;
+        }
+
+        private DetectedIssue? Evaluate(ParsedEvent ev)
         {
             if (ev == null) return null;
 
@@ -143,7 +151,9 @@ namespace LogAnalyzer.Core.Services.Network
             // 6. Curățare Jurnal de Securitate (Anti-Forensics EID 1102 / 104)
             if (ev.EventId == 1102 || ev.EventId == 104 || LogClearCommand.IsMatch(msg))
             {
-                string channel = ev.EventId == 1102 ? "Security" : ev.EventId == 104 ? "System" : "indicat în linia de comandă wevtutil";
+                string channel = ev.EventId is 1102 or 104
+                    ? LogClearAssessment.ClearedChannel(ev.EventId, ev.XmlData) is { Length: > 0 } c ? c : "jurnal nenumit în eveniment"
+                    : "indicat în linia de comandă wevtutil";
                 var (clearUser, clearDomain) = LogClearAssessment.SubjectFromXml(ev.XmlData);
                 var clear = LogClearAssessment.AssessUnscheduled(channel, new DateTimeOffset(ev.TimeCreated.ToUniversalTime()), MaintenancePolicy, clearUser, clearDomain);
                 return new DetectedIssue
@@ -217,7 +227,8 @@ namespace LogAnalyzer.Core.Services.Network
             }
 
             // 11. Atac Fizic / Hardware (BadUSB / Rubber Ducky HID Injection T1052)
-            if (msg.Contains("rubber ducky") || msg.Contains("badusb") || msg.Contains("hid keyboard") ||
+            // never "hid keyboard": that is the name Windows gives every ordinary keyboard ("HID Keyboard Device")
+            if (msg.Contains("rubber ducky") || msg.Contains("badusb") ||
                 (msg.Contains("usb") && (msg.Contains("keystroke") || msg.Contains("payload injection"))))
             {
                 return new DetectedIssue
@@ -265,8 +276,8 @@ namespace LogAnalyzer.Core.Services.Network
             }
 
             // 14. Abuz de Token-uri & Escaladare Privilegii (PrintSpoofer / Potato Exploits T1134)
-            if (msg.Contains("printspoofer") || msg.Contains("juicypotato") || msg.Contains("godpotato") ||
-                (msg.Contains("seimpersonateprivilege") && (msg.Contains("escalat") || msg.Contains("system"))))
+            // the tool names only: SeImpersonatePrivilege with SYSTEM is every Security 4672 Windows writes for its own service logons (lab VM 2026-11-06)
+            if (msg.Contains("printspoofer") || msg.Contains("juicypotato") || msg.Contains("godpotato") || msg.Contains("roguepotato") || msg.Contains("sweetpotato"))
             {
                 return new DetectedIssue
                 {

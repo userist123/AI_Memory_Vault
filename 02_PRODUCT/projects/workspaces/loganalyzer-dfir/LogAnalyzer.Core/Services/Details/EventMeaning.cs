@@ -165,6 +165,8 @@ namespace LogAnalyzer.Core.Services.Details
             [1116] = "Microsoft Defender a detectat malware.",
             [1117] = "Microsoft Defender a acționat împotriva malware-ului.",
             [5001] = "Protecția în timp real a Microsoft Defender a fost DEZACTIVATĂ.",
+            [5010] = "Căutarea programelor spion și a programelor nedorite de către Microsoft Defender a fost DEZACTIVATĂ.",
+            [5012] = "Căutarea virușilor de către Microsoft Defender a fost DEZACTIVATĂ.",
             [5007] = "Configurația Microsoft Defender a fost modificată (verificați excluderile).",
             [1] = "Sysmon: proces creat (cu hash și linie de comandă).",
             [3] = "Sysmon: conexiune de rețea inițiată de un proces.",

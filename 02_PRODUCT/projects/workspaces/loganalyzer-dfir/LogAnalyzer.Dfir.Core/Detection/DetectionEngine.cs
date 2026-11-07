@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.HashSets;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Detection;
@@ -14,12 +15,16 @@ public sealed class DetectionEngine
     private readonly List<IocMatcher> _iocs = [];
     private readonly List<YaraLite> _yara = [];
     private readonly List<SigmaLite> _sigma = [];
+    /// <summary>Fingerprint sets imported by the operator (HashSetLibrary). Known-bad matches become hash detections in <see cref="Run"/>; known-good ones are labels, kept out of the detections.</summary>
+    public IReadOnlyList<KnownHashSet> KnownHashSets { get; set; } = [];
     public List<EvidenceGap> LoadErrors { get; } = [];
     /// <summary>Rule evaluations that hit a regex match timeout in <see cref="Run"/>. Each is also in <see cref="LoadErrors"/> as a FAILED gap.</summary>
     public List<RuleTimeout> Timeouts { get; } = [];
 
     public IReadOnlyList<DetectionRule> Rules =>
         _iocs.Select(i => i.RuleSet)
+            .Concat(KnownHashSets.Where(h => h.Info.Category == HashSetCategory.KnownBad).Select(h => new DetectionRule($"HASHSET:{h.Info.Id}", h.Info.Version, DetectionKind.Hash,
+                $"Set de amprente {h.Info.Name} ({h.Info.EntryCount} intrări)", h.Info.SourceSha256, h.Info.SourceFileName)))
             .Concat(_yara.SelectMany(y => y.Rules.Select(r => r.Identity)))
             .Concat(_sigma.SelectMany(s => s.Rules.Select(r => r.Identity))).ToList();
 
@@ -63,6 +68,7 @@ public sealed class DetectionEngine
             results.AddRange(i.MatchEvents(timeline));
             results.AddRange(i.MatchEvidence(evidence));
         }
+        if (KnownHashSets.Count > 0) results.AddRange(HashSetMatcher.ToDetections(HashSetMatcher.Match(KnownHashSets, evidence, timeline)));
         if (_yara.Count > 0)
             foreach (var e in evidence.Where(e => e.SourceType == "file"))
             {

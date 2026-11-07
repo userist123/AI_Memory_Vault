@@ -156,13 +156,35 @@ public sealed partial class CaseWorkspace
         r.Invalidations = ComputeInvalidations(index, r.Evidence);
         r.InvalidatedCount = r.Invalidations.Count;
 
+        // R7b: acquisition run records are outputs (covered above); the verifier adds what they promise about the evidence files and refuses
+        // records the custody chain does not know. Its problems only ever raise the verdict.
+        int acqModified = 0, acqMissing = 0, acqUnverified = 0;
+        try
+        {
+            var (known, registeredMap) = AcquisitionRunVerifier.MapsFrom(this, r);
+            foreach (var f in AcquisitionRunVerifier.Verify(this, ct, known, registeredMap).Where(f => f.IsProblem))
+            {
+                r.Notes.Add($"fișa colectării {f.RunId}: {f.Detail}");
+                if (f.Kind == AcquisitionFindingKind.ItemMissing) acqMissing++;
+                else if (f.Kind == AcquisitionFindingKind.ItemUnreadable) acqUnverified++;
+                else acqModified++;
+            }
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            r.Notes.Add("fișele colectării nu au putut fi verificate: " + ex.Message);
+            acqModified++;
+        }
+        r.AcquisitionProblemsCount = acqModified + acqMissing + acqUnverified;
+
         bool brokenChain = r.Chains.Custody.Status == ChainStatus.Broken || r.Chains.Audit.Status == ChainStatus.Broken;
         bool legacy = r.Chains.Custody.Status == ChainStatus.Legacy || r.Chains.Audit.Status == ChainStatus.Legacy
                       || r.Chains.Custody.LegacyLines > 0 || r.Chains.Audit.LegacyLines > 0;
         r.Verdict = brokenChain ? RecheckVerdict.ChainBroken
-                  : r.ModifiedCount + r.OutputsModifiedCount > 0 ? RecheckVerdict.Modified
-                  : r.MissingCount + r.OutputsMissingCount > 0 ? RecheckVerdict.Missing
-                  : r.UnverifiedCount > 0 ? RecheckVerdict.Unverified
+                  : r.ModifiedCount + r.OutputsModifiedCount + acqModified > 0 ? RecheckVerdict.Modified
+                  : r.MissingCount + r.OutputsMissingCount + acqMissing > 0 ? RecheckVerdict.Missing
+                  : r.UnverifiedCount + acqUnverified > 0 ? RecheckVerdict.Unverified
                   : legacy ? RecheckVerdict.Legacy : RecheckVerdict.Valid;
         r.Summary = Summarize(r, legacy);
 
@@ -211,8 +233,10 @@ public sealed partial class CaseWorkspace
         { return new(o.Path, o.Producer, o.Sha256, null, OutputCheckStatus.Unreadable, deps); }
     }
 
+    internal List<string> RegisteredOutputPaths() => RegisteredOutputs().Select(o => o.Path).ToList();
+
     /// <summary>Latest <c>output.written</c> custody entry per path. Lines that are not JSON are skipped here; <see cref="VerifyChains"/> reports them.</summary>
-    private List<OutputRecord> RegisteredOutputs()
+    internal List<OutputRecord> RegisteredOutputs()
     {
         var latest = new Dictionary<string, OutputRecord>(StringComparer.OrdinalIgnoreCase);
         if (!File.Exists(CustodyJsonlPath)) return [];
@@ -315,6 +339,7 @@ public sealed partial class CaseWorkspace
         if (r.MissingCount > 0) parts.Add($"Lipsă: {r.MissingCount}");
         if (r.OutputsModifiedCount > 0) parts.Add($"rezultate modificate: {r.OutputsModifiedCount}");
         if (r.OutputsMissingCount > 0) parts.Add($"rezultate lipsă: {r.OutputsMissingCount}");
+        if (r.AcquisitionProblemsCount > 0) parts.Add($"probleme în fișele colectării: {r.AcquisitionProblemsCount}");
         if (r.UnverifiedCount > 0) parts.Add($"neverificabile: {r.UnverifiedCount}");
         if (r.InvalidatedCount > 0) parts.Add($"invalidate: {r.InvalidatedCount}");
         if (legacy) parts.Add(HashChain.LegacyMessage);

@@ -9,14 +9,15 @@
 
         <!-- Header -->
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
-            <StackPanel DockPanel.Dock="Left">
+            <StackPanel DockPanel.Dock="Top">
                 <TextBlock Text="Informații despre amenințări" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock Text="Suprapunerea tehnicilor observate cu profile publice de actori. NU este atribuire: aceleași tehnici sunt folosite de mulți actori, iar atribuirea cere dovezi separate (infrastructură, malware, context)." FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
-            <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="Export STIX 2.1" Command="{Binding ExportStixJsonCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,8,0"/>
-                <Button Content="Export MISP JSON" Command="{Binding ExportMispJsonCommand}" Style="{StaticResource ActionButtonStyle}"/>
-            </StackPanel>
+            <!-- lab 2026-11-07: under the title and wrapping, so at 1024 px no button is cut off -->
+            <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
+                <Button Content="Exportă STIX 2.1" Command="{Binding ExportStixJsonCommand}" Style="{StaticResource ActionButtonStyle}" Margin="0,0,8,0"/>
+                <Button Content="Exportă MISP JSON" Command="{Binding ExportMispJsonCommand}" Style="{StaticResource ActionButtonStyle}"/>
+            </WrapPanel>
         </DockPanel>
 
         <!-- Main 2-Pane Split: Left APT Profiles, Right Extracted IOC Knowledge Base -->
@@ -36,7 +37,7 @@
                     </Grid.RowDefinitions>
                     <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
                         <TextBlock DockPanel.Dock="Left" Text="Profile de actori cu tehnici comune (nu este atribuire)" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock DockPanel.Dock="Right" Text="{Binding AptAttributionProfiles.Count, StringFormat='{}{0} Profiles'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding AptAttributionProfiles.Count, StringFormat='{}{0} profile'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </DockPanel>
                     
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
@@ -51,10 +52,10 @@
                                                     <TextBlock Text="{Binding Origin}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource HighBrush}"/>
                                                 </Border>
                                             </DockPanel>
-                                            <TextBlock Text="{Binding TargetSectors, StringFormat='Targets: {0}'}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                            <TextBlock Text="{Binding KnownTools, StringFormat='Tools: {0}'}" FontSize="11" Foreground="{StaticResource SuccessBrush}" Margin="0,0,0,6"/>
+                                            <TextBlock Text="{Binding TargetSectors, StringFormat='Ținte: {0}'}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                                            <TextBlock Text="{Binding KnownTools, StringFormat='Instrumente: {0}'}" FontSize="11" Foreground="{StaticResource SuccessBrush}" Margin="0,0,0,6"/>
                                             <DockPanel LastChildFill="False">
-                                                <TextBlock DockPanel.Dock="Left" Text="{Binding Aliases, StringFormat='Aliases: {0}'}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"/>
+                                                <TextBlock DockPanel.Dock="Left" Text="{Binding Aliases, StringFormat='Alte nume: {0}'}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"/>
                                                 <TextBlock DockPanel.Dock="Right" ToolTip="{Binding MatchLevel}" Text="{Binding MatchScore, StringFormat='Suprapunere tehnici: {0:F0}% (nu este atribuire)'}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource CyanAccentBrush}"/>
                                             </DockPanel>
                                         </StackPanel>
@@ -76,19 +77,19 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
-                        <TextBlock DockPanel.Dock="Left" Text="Extracted Indicators of Compromise (IOC)" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                        <TextBlock DockPanel.Dock="Left" Text="Indicatori de compromitere (IOC) extrași" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                         <TextBlock DockPanel.Dock="Right" Text="{Binding CurrentIocs.Count, StringFormat='{}{0} IOCs'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </DockPanel>
                     <DataGrid Grid.Row="1" ItemsSource="{Binding CurrentIocs}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                         <DataGrid.ContextMenu>
                             <ContextMenu Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
-                                <MenuItem Header="Copy IOC Value" Command="{Binding CopyIocValueCommand}" CommandParameter="{Binding SelectedItem.Value, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
-                                <MenuItem Header="Pivot to Event Explorer" Command="{Binding PivotIocCommand}" CommandParameter="{Binding SelectedItem.Value, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                <MenuItem Header="Copiază valoarea IOC" Command="{Binding CopyIocValueCommand}" CommandParameter="{Binding SelectedItem.Value, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
+                                <MenuItem Header="Caută în explorator de evenimente" Command="{Binding PivotIocCommand}" CommandParameter="{Binding SelectedItem.Value, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
                             </ContextMenu>
                         </DataGrid.ContextMenu>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Type" Binding="{Binding Type}" Width="90"/>
-                            <DataGridTextColumn Header="Indicator Value (IP / Hash / Domain)" Binding="{Binding Value}" Width="*"/>
+                            <DataGridTextColumn Header="Tip" Binding="{Binding Type}" Width="90"/>
+                            <DataGridTextColumn Header="Valoare indicator (IP / hash / domeniu)" Binding="{Binding Value}" Width="*"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>

@@ -22,7 +22,9 @@ public sealed class TransferRegisterPageTests
         var pages = Regex.Matches(xaml, @"<TabItem><ctrl:LazyPage>").Count;
         Assert.Equal(RoleProfiles.TabTransferRegister, pages - 1);
         Assert.Contains("<views:TransferRegisterView DataContext=\"{Binding Transfer}\"/>", xaml);
-        Assert.Contains($"CommandParameter=\"{RoleProfiles.TabTransferRegister}\"", xaml);
+        // 2026-11-05: the Avansat menu is generated from the catalog, so the sidebar entry is a catalog page listed in it
+        Assert.Contains(LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(LogAnalyzer.Core.Services.Edition.StationPosture.Standalone, LogAnalyzer.Core.Services.Connectivity.AppMode.AirGapped, []).SelectMany(s => s.Pages),
+                        p => p.Tab == RoleProfiles.TabTransferRegister);
     }
 
     [Fact]

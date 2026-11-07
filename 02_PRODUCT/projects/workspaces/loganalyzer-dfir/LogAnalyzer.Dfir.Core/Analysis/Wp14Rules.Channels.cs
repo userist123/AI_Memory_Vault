@@ -20,11 +20,11 @@ public static partial class Wp14Rules
     /// <summary>A finding of the air-gap category that is not about a connection: no authorised-list basis exists for it, so the authorisation stays undefined.</summary>
     private static Finding Chan(Ctx c, string ruleId, string title, Severity sev, string subcategory, string channel, string observed, DateTimeOffset? first, DateTimeOffset? last,
         string who, string obj, string direction, string destination, string description, string reason, string[] alternatives, IReadOnlyList<EvidenceRef> evidence,
-        IReadOnlyList<string> evidenceText, string mitre, SemanticType semantic, Confidence confidence = Confidence.Medium, Classification classification = Classification.Direct) => new()
+        IReadOnlyList<string> evidenceText, string mitre, SemanticType semantic, Confidence confidence = Confidence.Medium, Classification classification = Classification.Direct, string plain = "") => new()
     {
         FindingId = c.NextId(), RuleId = ruleId, Title = title, Severity = sev, Category = c.FindingCategory, Classification = classification, Confidence = confidence, MitreTechniqueId = mitre,
         FirstSeenUtc = first, LastSeenUtc = last ?? first, User = who.StartsWith("necunoscut", StringComparison.Ordinal) ? "" : who,
-        Description = description, ClassificationReason = reason, SemanticType = semantic,
+        Description = description, ClassificationReason = reason, SemanticType = semantic, PlainWhat = plain,
         SupportingEvidence = [.. evidence.Take(20)], AlternativeExplanations = [.. alternatives],
         AirGap = new AirGapDetail(subcategory, channel, AirGapAuthorization.Undefined, "profilul de proceduri nu conține o listă aprobată pentru acest canal: constatarea cere explicație", observed, first,
             who, obj, c.CaseClassText, "nu se aplică (nu este un mediu registrat)", direction, destination, [.. evidenceText.Take(5)]),
@@ -87,7 +87,11 @@ public static partial class Wp14Rules
                 "Evenimente PrintService/Operational 307 (document tipărit) în perioada cazului, grupate pe imprimantă.",
                 ["Tipărirea documentelor este o activitate normală a unei stații de lucru, dacă procedura o permite și foile sunt înregistrate.", "Un test de imprimantă sau o pagină de probă produce același eveniment.",
                  toFile ? "Imprimanta virtuală PDF este instalată implicit de Windows și este folosită și pentru a păstra o copie a unui document." : "Imprimanta poate fi cea aprobată a încăperii."],
-                items.Select(e => Ref(e, $"307 {Shorten(F(e, "Param2", "DocumentName", "Document"))}")).ToList(), items.Select(e => $"{e.Source} {e.EventId} {e.Locator}".Trim()).ToList(), "", SemanticType.Observation));
+                items.Select(e => Ref(e, $"307 {Shorten(F(e, "Param2", "DocumentName", "Document"))}")).ToList(), items.Select(e => $"{e.Source} {e.EventId} {e.Locator}".Trim()).ToList(), "", SemanticType.Observation,
+                plain: items.Count == 1
+                    ? $"a tipărit documentul {PlainPhrases.Q(Shorten(F(items[0], "Param2", "DocumentName", "Document")))}" + (pages > 0 ? $" ({LogAnalyzer.Dfir.Language.RoText.Count(pages, "pagină", "pagini")})" : "") + $" la imprimanta {PlainPhrases.Q(printer)}"
+                    : $"a tipărit {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "document", "documente")}" + (pages > 0 ? $" ({LogAnalyzer.Dfir.Language.RoText.Count(pages, "pagină", "pagini")} în total)" : "") + $" la imprimanta {PlainPhrases.Q(printer)}, între ele {PlainPhrases.Q(Shorten(F(items[0], "Param2", "DocumentName", "Document")))}" +
+                      (toFile ? "; imprimanta este virtuală: documentul nu iese pe hârtie, ci devine un fișier" : "")));
         }
         if (facts is null) return;
         foreach (var p in facts.Printers.Where(p => p.IsNetwork))

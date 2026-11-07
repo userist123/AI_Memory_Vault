@@ -5,6 +5,8 @@
              xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
              xmlns:vmx="clr-namespace:LogAnalyzer.UI.ViewModels"
              xmlns:views="clr-namespace:LogAnalyzer.UI.Views">
+    <!-- lab VM 2026-11-07 (1024x720): the cards above took all the height and the rows table got none, so no person could be written in: the page scrolls and the table keeps a minimum height -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -86,7 +88,7 @@
             <DockPanel Margin="8">
                 <TextBlock DockPanel.Dock="Top" Text="{Binding Columns}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock DockPanel.Dock="Top" Text="{Binding Hint}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,8"/>
-                <DataGrid ItemsSource="{Binding View}" AutoGenerateColumns="True" AutoGeneratingColumn="Grid_AutoGeneratingColumn" CanUserAddRows="True" CanUserDeleteRows="True"
+                <DataGrid ItemsSource="{Binding View}" MinHeight="220" AutoGenerateColumns="True" AutoGeneratingColumn="Grid_AutoGeneratingColumn" CanUserAddRows="True" CanUserDeleteRows="True"
                           HeadersVisibility="Column" SelectionUnit="CellOrRowHeader" ClipboardCopyMode="IncludeHeader"/>
             </DockPanel>
         </Border>
@@ -98,4 +100,5 @@
             </DockPanel>
         </Border>
     </Grid>
+    </ScrollViewer>
 </UserControl>

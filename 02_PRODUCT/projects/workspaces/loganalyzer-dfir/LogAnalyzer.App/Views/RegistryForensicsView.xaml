@@ -16,7 +16,7 @@
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
                 <TextBox Text="{Binding SearchArtifactsText, UpdateSourceTrigger=PropertyChanged}" Margin="0,0,10,0"/>
-                <Button Grid.Column="1" Content="Clear Filter" Command="{Binding ClearRegistryFilterCommand}" Width="100"/>
+                <Button Grid.Column="1" Content="Șterge filtrul" Command="{Binding ClearRegistryFilterCommand}" Width="100"/>
             </Grid>
         </Border>
 
@@ -25,19 +25,19 @@
                   VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
             <DataGrid.ContextMenu>
                 <ContextMenu Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
-                    <MenuItem Header="Inspect Registry Key Details" Command="{Binding OpenGenericDetailCommand}" CommandParameter="{Binding SelectedArtifact}"/>
+                    <MenuItem Header="Vezi detaliile cheii de registru" Command="{Binding OpenGenericDetailCommand}" CommandParameter="{Binding SelectedArtifact}"/>
                     <Separator Background="{StaticResource BorderBrush}"/>
-                    <MenuItem Header="Filter by Category" Command="{Binding PivotRegistryCategoryCommand}" CommandParameter="{Binding SelectedArtifact}"/>
-                    <MenuItem Header="Filter by Key Path" Command="{Binding PivotRegistryKeyPathCommand}" CommandParameter="{Binding SelectedArtifact}"/>
+                    <MenuItem Header="Filtrează după categorie" Command="{Binding PivotRegistryCategoryCommand}" CommandParameter="{Binding SelectedArtifact}"/>
+                    <MenuItem Header="Filtrează după calea cheii" Command="{Binding PivotRegistryKeyPathCommand}" CommandParameter="{Binding SelectedArtifact}"/>
                     <Separator Background="{StaticResource BorderBrush}"/>
-                    <MenuItem Header="Copy Value Data" Command="{Binding CopyRegistryValueDataCommand}" CommandParameter="{Binding SelectedArtifact}"/>
+                    <MenuItem Header="Copiază datele valorii" Command="{Binding CopyRegistryValueDataCommand}" CommandParameter="{Binding SelectedArtifact}"/>
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Category" Binding="{Binding Category}" Width="140"/>
-                <DataGridTextColumn Header="Key Path" Binding="{Binding KeyPath}" Width="280"/>
-                <DataGridTextColumn Header="Value Name" Binding="{Binding ValueName}" Width="160"/>
-                <DataGridTextColumn Header="Value Data" Binding="{Binding ValueData}" Width="*"/>
+                <DataGridTextColumn Header="Categorie" Binding="{Binding Category}" Width="140"/>
+                <DataGridTextColumn Header="Calea cheii" Binding="{Binding KeyPath}" Width="280"/>
+                <DataGridTextColumn Header="Numele valorii" Binding="{Binding ValueName}" Width="160"/>
+                <DataGridTextColumn Header="Datele valorii" Binding="{Binding ValueData}" Width="*"/>
             </DataGrid.Columns>
             <DataGrid.InputBindings>
                 <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding OpenGenericDetailCommand}" CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
@@ -51,13 +51,13 @@
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="Auto"/>
             </Grid.ColumnDefinitions>
-            <TextBlock Text="Registry Hives: 100 entries / page" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"/>
+            <TextBlock Text="Registru: 100 de intrări pe pagină" VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11"/>
             <StackPanel Grid.Column="2" Orientation="Horizontal">
-                <Button Content="◀ Prev" Command="{Binding PrevRegistryPageCommand}" Width="80" Margin="2,0"/>
+                <Button Content="◀ Înapoi" Command="{Binding PrevRegistryPageCommand}" Width="80" Margin="2,0"/>
                 <TextBlock Text="{Binding RegistryCurrentPage}" VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}" Margin="8,0" FontWeight="Bold"/>
                 <TextBlock Text=" / " VerticalAlignment="Center" Foreground="{StaticResource TextSecondaryBrush}"/>
                 <TextBlock Text="{Binding RegistryTotalPages}" VerticalAlignment="Center" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,8,0"/>
-                <Button Content="Next ▶" Command="{Binding NextRegistryPageCommand}" Width="80" Margin="2,0"/>
+                <Button Content="Înainte ▶" Command="{Binding NextRegistryPageCommand}" Width="80" Margin="2,0"/>
             </StackPanel>
         </Grid>
     </Grid>

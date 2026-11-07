@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Language;
 using LogAnalyzer.Dfir.Model;
 using static LogAnalyzer.Dfir.Analysis.Wp11Rules;
 
@@ -49,11 +50,13 @@ public static partial class Wp14Rules
         string.Join(", ", items.GroupBy(i => i.Source).OrderBy(g => g.Key, StringComparer.Ordinal).Select(g => $"{UserActivityAnalysis.ShortLabel(g.Key)} {g.Count()}"));
 
     private static Finding UserActivityFinding(Ctx c, string rule, string title, Severity sev, Confidence conf, SemanticType semantic, IReadOnlyList<UserActivityItem> items,
-        string description, string reason, string file, params string[] missing)
+        string description, string reason, string file, Func<bool, string> plain, params string[] missing)
     {
         Times(items, out var first, out var last);
+        var who = string.Join(", ", items.Select(i => i.Who).Distinct(StringComparer.OrdinalIgnoreCase).Take(5));
         return new Finding
         {
+            PlainWhat = plain(PlainPhrases.KnownActor(who)),
             FindingId = c.NextId(), RuleId = rule, Title = title, Severity = sev, Category = c.FindingCategory, Classification = Classification.Candidate, Confidence = conf,
             FirstSeenUtc = first, LastSeenUtc = last, File = file,
             User = string.Join(", ", items.Select(i => i.Who).Distinct(StringComparer.OrdinalIgnoreCase).Take(5)),
@@ -79,7 +82,10 @@ public static partial class Wp14Rules
                 $"{items.Count} urme ({SourcesOf(items)}) pentru căi din {g.Key}, în perioada {when}. ShellBags arată că Explorer a afișat folderul (sau un subfolder) în profilul utilizatorului, nu că un fișier a fost citit; " +
                 $"Office MRU arată ultima deschidere a unui fișier de către aplicația Office; RecentDocs păstrează doar numele. {Listing(items)}",
                 "Urme ale profilului utilizatorului (ShellBags / Office MRU / RecentDocs) potrivite după cale cu un folder clasificat al profilului de proceduri; slabe și indirecte: arată navigarea sau deschiderea, nu accesul la conținut, și nu spun dacă a fost autorizată. DE VERIFICAT.",
-                g.Key, "Auditul accesului la fișiere (4663) pentru aceeași perioadă", "Confirmarea că utilizatorul era autorizat pentru folder", "Conținutul fișierelor deschise"));
+                g.Key, known => known
+                    ? $"are în profil {RoText.CountFem(items.Count, "urmă", "urme")} de navigare sau de deschidere în folderul clasificat {PlainPhrases.Q(g.Key)}; ele arată că folderul a fost afișat sau un document deschis, nu ce s-a făcut cu conținutul"
+                    : $"Există pe calculator {RoText.CountFem(items.Count, "urmă", "urme")} de navigare sau de deschidere în folderul clasificat {PlainPhrases.Q(g.Key)}; ele arată că folderul a fost afișat sau un document deschis, nu ce s-a făcut cu conținutul",
+                "Auditul accesului la fișiere (4663) pentru aceeași perioadă", "Confirmarea că utilizatorul era autorizat pentru folder", "Conținutul fișierelor deschise"));
         }
 
         // 2. removable volumes (one finding per drive letter; confirmed by the device facts or only possible)
@@ -98,7 +104,11 @@ public static partial class Wp14Rules
                 $"{items.Count} urme ({SourcesOf(items)}), în perioada {when}. ShellBags arată că Explorer a afișat folderul, nu că un fișier a fost citit sau copiat. {Listing(items)}",
                 confirmed ? "Urme ale profilului utilizatorului pe o cale cu litera unui suport amovibil cunoscut din caz (potrivire după literă, nu după seria volumului); slabe, DE VERIFICAT."
                           : "Urme ale profilului utilizatorului pe o literă de unitate fără suport amovibil cunoscut în caz; potrivire doar după literă, cu incertitudinea declarată; DE VERIFICAT.",
-                g.Key.DriveLetter + @"\", "Seria volumului din urmele LNK / ShellBags (legătura sigură cu un suport)", "Registrul de medii", "Conținutul și destinația oricărei copieri"));
+                g.Key.DriveLetter + @"\", known => (known ? "are în profil " : "Există pe calculator ") +
+                    $"{RoText.CountFem(items.Count, "urmă", "urme")} de navigare sau de deschidere pe unitatea {g.Key.DriveLetter}" +
+                    (confirmed ? ", care apare în istoricul calculatorului ca suport amovibil" : ", despre care probele nu spun dacă este un suport amovibil, un disc al calculatorului sau o unitate de rețea") +
+                    "; urmele arată afișarea unui folder, nu citirea sau copierea unui fișier",
+                "Seria volumului din urmele LNK / ShellBags (legătura sigură cu un suport)", "Registrul de medii", "Conținutul și destinația oricărei copieri"));
         }
 
         // 3. Recycle Bin records: deleted from a classified folder or from a removable volume (one finding per folder / letter)
@@ -123,7 +133,14 @@ public static partial class Wp14Rules
                 $"Ștergerea nu dovedește scoaterea de informații și poate fi legitimă (distrugere aprobată). {Listing(items)}",
                 classified ? "Înregistrarea Coșului ($I) spune direct calea originală și ora ștergerii; faptul că ștergerea a fost nepermisă se vede doar din documentele organizației. DE VERIFICAT."
                            : "Înregistrarea Coșului ($I) spune direct calea originală și ora ștergerii; legătura cu un suport amovibil este după litera unității. DE VERIFICAT.",
-                classified ? first.ClassifiedRoot : first.DriveLetter + @"\", "Procesul-verbal de distrugere", "Conținutul elementului (dacă $R lipsește, din copii de umbră sau backup)", "Evenimentele de audit ale ștergerii (4660), dacă auditul era pornit"));
+                classified ? first.ClassifiedRoot : first.DriveLetter + @"\", known =>
+                {
+                    var place = classified ? $"din folderul clasificat {PlainPhrases.Q(first.ClassifiedRoot)}" : removable ? $"de pe suportul amovibil {first.DriveLetter}" : $"de pe unitatea {first.DriveLetter} (probele nu spun dacă este un suport amovibil)";
+                    var head = known ? $"a șters {(items.Count == 1 ? "un element" : RoText.Count(items.Count, "element", "elemente"))} {place}"
+                                     : items.Count == 1 ? $"A fost șters un element {place}" : $"Au fost șterse {RoText.Count(items.Count, "element", "elemente")} {place}";
+                    return head + "; Coșul de reciclare păstrează calea și ora ștergerii, iar o ștergere poate fi legitimă (distrugere aprobată)";
+                },
+                "Procesul-verbal de distrugere", "Conținutul elementului (dacă $R lipsește, din copii de umbră sau backup)", "Evenimentele de audit ale ștergerii (4660), dacă auditul era pornit"));
         }
     }
 }

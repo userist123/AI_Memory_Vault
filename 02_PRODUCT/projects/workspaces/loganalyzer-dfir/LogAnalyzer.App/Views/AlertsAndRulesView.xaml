@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="LogAnalyzer.UI.Views.AlertsAndRulesView"
+<UserControl xmlns:sevc="clr-namespace:LogAnalyzer.UI.Views" x:Class="LogAnalyzer.UI.Views.AlertsAndRulesView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid Margin="20">
@@ -11,11 +11,11 @@
         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,16">
             <StackPanel DockPanel.Dock="Left">
                 <TextBlock Text="Amenințări și detecții" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Correlated threat queue and interactive Sigma / YARA rule compiler" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                <TextBlock Text="Alerte corelate și compilator interactiv de reguli Sigma / YARA" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
             </StackPanel>
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
-                <Button Content="Compile &amp; Evaluate Rules" Command="{Binding CompileAndEvaluateWorkbenchCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,6" Margin="0,0,8,0"/>
-                <Button Content="Transpile to KQL/SPL" Command="{Binding TranspileWorkbenchRuleCommand}" Padding="14,6"/>
+                <Button Content="Compilează și evaluează regulile" Command="{Binding CompileAndEvaluateWorkbenchCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,6" Margin="0,0,8,0"/>
+                <Button Content="Convertește în KQL/SPL" Command="{Binding TranspileWorkbenchRuleCommand}" Padding="14,6"/>
             </StackPanel>
         </DockPanel>
 
@@ -35,15 +35,15 @@
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
                     <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,10">
-                        <TextBlock DockPanel.Dock="Left" Text="Active Incident Alerts" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock DockPanel.Dock="Right" Text="{Binding IssuesView.Count, StringFormat='{}{0} detections'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock DockPanel.Dock="Left" Text="Alerte de incident active" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock DockPanel.Dock="Right" Text="{Binding IssuesView.Count, StringFormat='{}{0} detecții'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
                     </DockPanel>
                     <DataGrid Grid.Row="1" ItemsSource="{Binding IssuesView}" SelectedItem="{Binding SelectedIssue}" AutoGenerateColumns="False" IsReadOnly="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Severity" Binding="{Binding Severity}" Width="85"/>
-                            <DataGridTextColumn Header="Technique" Binding="{Binding MitreTechniqueId}" Width="85"/>
-                            <DataGridTextColumn Header="Alert Title" Binding="{Binding Title}" Width="160"/>
-                            <DataGridTextColumn Header="Analysis / Context" Binding="{Binding Explanation}" Width="*"/>
+                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="85"/>
+                            <DataGridTextColumn Header="Tehnică" Binding="{Binding MitreTechniqueId}" Width="85"/>
+                            <DataGridTextColumn Header="Titlul alertei" Binding="{Binding Title}" Width="160"/>
+                            <DataGridTextColumn Header="Analiză și context" Binding="{Binding Explanation}" Width="*"/>
                         </DataGrid.Columns>
                         <DataGrid.InputBindings>
                             <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding OpenAlertModalCommand}" CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
@@ -64,19 +64,19 @@
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
                     <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,10">
-                        <TextBlock DockPanel.Dock="Left" Text="Sigma / YARA Rule Workbench" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                        <TextBlock DockPanel.Dock="Left" Text="Editor de reguli Sigma / YARA" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                         <ComboBox DockPanel.Dock="Right" ItemsSource="{Binding SigmaRules}" SelectedItem="{Binding SelectedSigmaRule}" DisplayMemberPath="Title" Width="200"/>
                     </DockPanel>
 
-                    <TextBlock Grid.Row="1" Text="RULE SOURCE (YAML / YARA):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Grid.Row="1" Text="Sursa regulii (YAML / YARA):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                     
                     <TextBox Grid.Row="2" Text="{Binding WorkbenchRuleContent, UpdateSourceTrigger=PropertyChanged}" FontFamily="{StaticResource CodeFontFamily}" FontSize="12" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource CodeTextBrush}" BorderBrush="{StaticResource BorderBrush}" Padding="10"/>
 
                     <!-- Compile Output Console -->
                     <Border Grid.Row="3" Background="{StaticResource CanvasBrush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,10,0,0">
                         <StackPanel>
-                            <TextBlock Text="COMPILER STATUS &amp; TEST MATCHES:" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                            <TextBlock Text="{Binding WorkbenchStatusMessage, FallbackValue='Ready to compile and evaluate rules against ingested events.'}" Foreground="{StaticResource SuccessBrush}" FontFamily="{StaticResource CodeFontFamily}" FontSize="11" TextWrapping="Wrap"/>
+                            <TextBlock Text="Starea compilării și potriviri de test:" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                            <TextBlock Text="{Binding WorkbenchStatusMessage, FallbackValue='Regula nu a fost încă compilată sau evaluată.'}" Foreground="{StaticResource SuccessBrush}" FontFamily="{StaticResource CodeFontFamily}" FontSize="11" TextWrapping="Wrap"/>
                         </StackPanel>
                     </Border>
                 </Grid>
