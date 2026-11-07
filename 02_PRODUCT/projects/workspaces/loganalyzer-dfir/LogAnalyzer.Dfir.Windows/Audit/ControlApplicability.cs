@@ -97,6 +97,7 @@ public static class ControlApplicability
         Row("A17", "The application's own commands recognised from its sealed audit", Yes("All recorded"), Yes("All recorded"), Yes("All recorded"), null),
         Row("A18", "Access-record retention required by the station level", Yes("Live log covers the level's retention; otherwise review the archives"), Yes("Live log covers the level's retention; otherwise review the archives"), Yes("Live log covers the level's retention; otherwise review the archives"), null),
         Row("A19", "A domain controller records refused logons (wrong passwords)", No, Yes("Failures audited for Kerberos Authentication Service and Credential Validation"), Yes("Failures audited for Kerberos Authentication Service and Credential Validation"), "A standalone station has no domain controller. Checked only when the station itself is a domain controller."),
+        Row("A20", "Logs that record device connections are on", Yes("Partition/Diagnostic and DriverFrameworks-UserMode on"), Yes("Partition/Diagnostic and DriverFrameworks-UserMode on"), Yes("Partition/Diagnostic and DriverFrameworks-UserMode on"), null),
         Row("U01","Changes to the Administrators group", Yes("Review"), Yes("Review"), Yes("Review"), null),
         Row("U02", "Accounts created, deleted, enabled, disabled or reset", Yes("Review"), Yes("Review"), Yes("Review"), null),
         Row("U03", "Remote (RDP) logons", Yes("Review"), Yes("Review (administration over the LAN is normal)"), Yes("Review"), null),

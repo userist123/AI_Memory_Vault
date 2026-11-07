@@ -527,6 +527,17 @@ public static class StationFactCollector
             using var cfg = new System.Diagnostics.Eventing.Reader.EventLogConfiguration("Microsoft-Windows-PrintService/Operational");
             s["Print.LogEnabled"] = cfg.IsEnabled ? "1" : "0";
         });
+        // A20: the logs that record a device being connected (Partition/Diagnostic is on by default, DriverFrameworks-UserMode off)
+        Guard(() =>
+        {
+            using var cfg = new System.Diagnostics.Eventing.Reader.EventLogConfiguration("Microsoft-Windows-Partition/Diagnostic");
+            s["DeviceLog.PartitionEnabled"] = cfg.IsEnabled ? "1" : "0";
+        });
+        Guard(() =>
+        {
+            using var cfg = new System.Diagnostics.Eventing.Reader.EventLogConfiguration("Microsoft-Windows-DriverFrameworks-UserMode/Operational");
+            s["DeviceLog.DriverFrameworksEnabled"] = cfg.IsEnabled ? "1" : "0";
+        });
         Guard(() =>
         {
             using var pr = new ManagementObjectSearcher("SELECT Name, PortName, Network FROM Win32_Printer");

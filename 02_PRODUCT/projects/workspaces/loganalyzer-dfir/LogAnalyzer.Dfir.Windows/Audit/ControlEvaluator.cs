@@ -325,6 +325,35 @@ public static partial class ControlEvaluator
     // research 2026-11-07 (Acoperirea auditului pe stații izolate): CIS Windows 11 v5.0.1 asks at least 196,608 KB; the old 128 MB was below it
     internal const int SecurityLogMinMB = 192;
 
+    /// <summary>
+    /// A20 (research 2026-11-07, plan P1.5): the logs that record that a stick or disk was connected, with its serial. Partition/Diagnostic (event 1006) is on
+    /// by default, so finding it off means someone turned it off; DriverFrameworks-UserMode/Operational is off by default and adds every connection and
+    /// disconnection. Neither shows which files were copied: that is Removable Storage auditing (A01/A08) and the medium's own journal.
+    /// </summary>
+    private static void DeviceConnectionLogs(StationFacts f, ControlReport r)
+    {
+        const string title = "Jurnalele care notează conectarea dispozitivelor sunt pornite";
+        var part = f.Settings.GetValueOrDefault("DeviceLog.PartitionEnabled", "");
+        var dfw = f.Settings.GetValueOrDefault("DeviceLog.DriverFrameworksEnabled", "");
+        string Shown(string v) => v == "1" ? "pornit" : v == "0" ? "OPRIT" : "necitit";
+        IEnumerable<string> ev = [$"Microsoft-Windows-Partition/Diagnostic → {Shown(part)}", $"Microsoft-Windows-DriverFrameworks-UserMode/Operational → {Shown(dfw)}"];
+        if (part == "" && dfw == "") { Add(r, "A20", "Audit", title, ControlStatus.Nedeterminat, "Starea jurnalelor de dispozitive nu a putut fi citită." + NoRead, ev); return; }
+        if (part == "0")
+        {
+            Add(r, "A20", "Audit", title, ControlStatus.Neconform,
+                "Jurnalul Partition/Diagnostic este OPRIT. În Windows el este pornit implicit și notează fiecare stick sau disc conectat, cu producătorul și seria; oprit, conectările nu mai lasă această urmă. Aflați cine l-a oprit și când.",
+                ev, "Reporniți jurnalul Microsoft-Windows-Partition/Diagnostic și porniți și DriverFrameworks-UserMode/Operational.");
+            return;
+        }
+        Add(r, "A20", "Audit", title, dfw == "1" && part == "1" ? ControlStatus.Conform : ControlStatus.DeVerificat,
+            dfw == "1" && part == "1"
+                ? "Ambele jurnale sunt pornite: fiecare conectare și deconectare a unui dispozitiv lasă urme cu seria lui. Ce fișiere s-au copiat nu se vede aici (vezi A01 și A08)."
+                : dfw == "0"
+                    ? "Jurnalul Partition/Diagnostic este pornit (conectările se văd, cu seria), dar DriverFrameworks-UserMode/Operational este oprit (cum este implicit în Windows), deci deconectările și conectările repetate ale aceluiași dispozitiv nu au urmă separată."
+                    : "Starea unuia dintre jurnale nu a putut fi citită." + NoRead,
+            ev, "Porniți jurnalul Microsoft-Windows-DriverFrameworks-UserMode/Operational (de exemplu cu wevtutil sl … /e:true sau prin GPO).");
+    }
+
     private static void AuditAndLogs(StationFacts f, ControlReport r)
     {
         if (f.AuditPolicy is { } ap)
@@ -338,6 +367,7 @@ public static partial class ControlEvaluator
         else Add(r, "A01", "Audit", "Politica de audit", ControlStatus.Nedeterminat, "Nu a putut fi citită (necesită administrator).");
 
         DomainControllerFailureAudit(f, r);
+        DeviceConnectionLogs(f, r);
 
         if (int.TryParse(f.Settings.GetValueOrDefault("SecurityLog.MaxSizeMB"), out var mb))
             Add(r, "A02", "Audit", "Dimensiunea jurnalului Security", mb >= SecurityLogMinMB ? ControlStatus.Conform : ControlStatus.Neconform,

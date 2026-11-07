@@ -517,6 +517,14 @@
 - **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Control\ProductOptions → ProductType (LanmanNT = controler de domeniu); auditpol: Kerberos Authentication Service, Credential Validation`
 - **Cum se citește rezultatul:** Conform = ambele subcategorii notează eșecurile. Neconform = cel puțin una nu le notează. Nedeterminat = politica de audit nu a putut fi citită. Pe o stație care nu este controler de domeniu verificarea nu apare.
 
+### A20
+
+- **Ce verificăm:** Dacă sunt pornite jurnalele Windows care notează conectarea stick-urilor și a discurilor externe.
+- **De ce contează:** Partition/Diagnostic (pornit implicit) notează fiecare dispozitiv conectat, cu producătorul și seria; DriverFrameworks-UserMode (oprit implicit) notează și conectările și deconectările. Un jurnal implicit pornit, găsit oprit, înseamnă că cineva l-a oprit.
+- **Cum verifică aplicația:** A citit configurația celor două canale de jurnal (dacă sunt activate).
+- **Sursa tehnică:** `Microsoft-Windows-Partition/Diagnostic; Microsoft-Windows-DriverFrameworks-UserMode/Operational (EventLogConfiguration.IsEnabled)`
+- **Cum se citește rezultatul:** Conform = ambele pornite. De verificat = doar Partition/Diagnostic pornit (situația implicită). Neconform = Partition/Diagnostic oprit. Nedeterminat = nu au putut fi citite. Niciunul nu arată ce fișiere s-au copiat (vezi A01, A08).
+
 ### U01
 
 - **Ce verificăm:** Cine a fost adăugat sau scos din grupul administratorilor în perioada controlată.

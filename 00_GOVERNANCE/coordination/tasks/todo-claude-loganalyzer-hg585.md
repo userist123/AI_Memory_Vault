@@ -243,6 +243,11 @@
   R2 REJECT (volume label with CR/LF could fake the CSV column line) -> all fixed with tests. Accepted residuals: CR inside a file name lost by
   the existing parser; Source info shown as hex when nonzero; a case folder on a folder-mounted volume is not excluded. Host C: had 199 MB
   free (4 tests failed on space) -> moved generated lab cases to E:\LA-Lab\reports\scratch-cases-2026-11-07. Tests: Dfir 2681, App 1018, UI 366, Edition 45.
+  CI on d81606972: all green.
+- 2026-11-07T20:10+02:00 P1.5 done: A20 „Jurnalele care notează conectarea dispozitivelor sunt pornite” (Partition/Diagnostic default ON:
+  off => NECONFORM; DriverFrameworks-UserMode/Operational default OFF: off => DE VERIFICAT; both on => CONFORM; unreadable never CONFORM).
+  Host check: Partition on, DFW off (=> DE VERIFICAT), channel names verified. Guide, applicability, docs, annex updated.
+  Next P1: P1.3 archive inventory for A18 (retention 3/10 years). Tests: Dfir 2685, App 1018, UI 366, Edition 45.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.

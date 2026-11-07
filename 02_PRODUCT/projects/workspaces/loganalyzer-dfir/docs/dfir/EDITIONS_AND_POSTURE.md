@@ -106,6 +106,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | A17 | The application's own commands recognised from its sealed audit | All recorded | All recorded | All recorded |  |
 | A18 | Access-record retention required by the station level | Live log covers the level's retention; otherwise review the archives | Live log covers the level's retention; otherwise review the archives | Live log covers the level's retention; otherwise review the archives |  |
 | A19 | A domain controller records refused logons (wrong passwords) | n/a | Failures audited for Kerberos Authentication Service and Credential Validation | Failures audited for Kerberos Authentication Service and Credential Validation | A standalone station has no domain controller. Checked only when the station itself is a domain controller. |
+| A20 | Logs that record device connections are on | Partition/Diagnostic and DriverFrameworks-UserMode on | Partition/Diagnostic and DriverFrameworks-UserMode on | Partition/Diagnostic and DriverFrameworks-UserMode on |  |
 | U01 | Changes to the Administrators group | Review | Review | Review |  |
 | U02 | Accounts created, deleted, enabled, disabled or reset | Review | Review | Review |  |
 | U03 | Remote (RDP) logons | Review | Review (administration over the LAN is normal) | Review |  |
