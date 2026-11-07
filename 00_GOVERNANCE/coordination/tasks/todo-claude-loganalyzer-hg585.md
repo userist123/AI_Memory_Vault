@@ -319,7 +319,23 @@
   a planned clear was always High. Replaced by an ordinal search reading both quote styles; tests added. Tests: Dfir 2729, App 1018, UI 366, Ed 45.
   Same apostrophe bug fixed in MainViewModel (event detail fields never shown for real events) and ForensicEventKnowledgeService.ExtractXmlField
   (RDP logon type 10 never "Atenție" on real events); RealEventXmlQuotesTests. LiveSecurityMonitoringEngine.Field already read both. UI 368.
+- 2026-11-08T00:10+02:00 MASTER PLAN (owner: „LogAnalyzer_DFIR_Master_Research_and_Implementation_Plan.docx”, every module 6.1-6.17 with
+  its sub-modules, lab screenshots on Insula/Arhipelag/Continent). Plan text: scratchpad\plan\plan.txt. Phase-0 inventory (Explore, grep):
+  REAL: 6.2 custody/integrity, 6.3 Windows parsers, 6.4 log clear + coverage matrix + gaps, 6.5 PCAP/flows/DNS/SNI, 6.11 graph + contradiction
+  rules (LogAnalyzer.Verification), 6.13 policy/compliance, 6.15 manifest + report verifier, 6.17 citations + AiClaimValidator.
+  PARTIAL: 6.4 timestomp, heatmap UI; 6.6 Volatility text only; 6.7 entropy (Core), no PE parser; 6.8 Sigma correlation outside Dfir;
+  6.10 AD; 6.14 dry-run/approval binding; 6.15 redaction; 6.16 only TimelineDiffEngine. MISSING: 6.1 workflow (DONE now), 6.9 bookmarks /
+  saved views, 6.12 signed TI packages, 6.16 AnalysisRun manifest + run diff, 6.5 JA3/Zeek, 6.7 PE parser, 6.8 rule test lab, graph view.
+- 6.1 DONE: Case/CaseWorkflow.cs (stages, roles, tasks, finding review, closure checklist, chained Logs/workflow.jsonl cross-checked with the
+  case audit), tab „Flux de lucru”, docs/dfir/CASE_WORKFLOW.md. Opus review 2 rounds: round 1 found 4 HIGH bypasses (self-approver, remove
+  reviewer then solo close, review before submit, delete/truncate log) - fixed with Probe_A..E tests; round 2 found a read race with the audit
+  (fixed, Probe_H) + probe K (investigator reviewing own work after a colleague submitted; fixed). ACCEPTED RESIDUALS (main session, recorded
+  in the doc): same-length truncation of BOTH workflow and case audit (case audit not sealed - owner decision), identity = OperatorIdentity.
+  Lab: Insula WS02, Arhipelag + Continent WS01 screenshots (E:\LA-Lab\shots\LAB-WS0x\ws0x-*wf*). Suites: Dfir 2749, App 1020, UI 368, Ed 45.
 ## Next
+-1. MASTER PLAN order after 6.1: 6.16 AnalysisRun manifest + immutable runs + diff; 6.9 bookmarks/saved views; 6.12 signed offline TI
+   packages (staging/approval/rollback); 6.7 PE triage; 6.5 JA3; 6.8 rule test lab; 6.11 graph view; 6.4 coverage heatmap; 6.14 target-bound
+   approval. Each: tests, Opus review for risky code, lab screenshots on the three editions.
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.
 0b. Advanced pages on the open case (one data source) - biggest product gap found; SRUM: recover the dirty ESE copy (esentutl /r with the

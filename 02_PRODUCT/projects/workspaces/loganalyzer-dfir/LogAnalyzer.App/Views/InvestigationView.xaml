@@ -369,6 +369,140 @@
                     </ScrollViewer>
                 </Grid>
             </TabItem>
+            <!-- Master plan 6.1: the case workflow (stage, people and roles, tasks, decisions on important findings, closure checklist).
+                 Every button goes to CaseWorkflow, which checks the role and writes Logs/workflow.jsonl; the status line shows its answer. -->
+            <TabItem Header="Flux de lucru" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Flux de lucru: etapa cazului, roluri, sarcini, revizuire și închidere">
+                <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                    <StackPanel Margin="8">
+                        <TextBlock Text="{Binding WorkflowStageText}" FontSize="15" FontWeight="SemiBold" TextWrapping="Wrap" AutomationProperties.Name="Etapa cazului">
+                            <TextBlock.Style>
+                                <Style TargetType="TextBlock">
+                                    <Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding WorkflowProblem}" Value="True"><Setter Property="Foreground" Value="{StaticResource DangerBrush}"/></DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </TextBlock.Style>
+                        </TextBlock>
+                        <TextBlock Text="{Binding WorkflowMe}" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,8"/>
+                        <TextBlock Text="Motiv, justificare sau notă (cerut la returnare, redeschidere, anulare și la orice decizie)" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBox Text="{Binding WorkflowReason, UpdateSourceTrigger=PropertyChanged}" MinHeight="44" TextWrapping="Wrap" AcceptsReturn="True" Margin="0,2,0,8"
+                                 AutomationProperties.Name="Motiv sau notă"/>
+
+                        <WrapPanel Margin="0,0,0,12">
+                            <TextBlock Text="Etapa următoare:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <ComboBox ItemsSource="{Binding WorkflowNextStages}" SelectedItem="{Binding SelectedNextStage}" MinWidth="140" Margin="0,0,8,0" AutomationProperties.Name="Etapa următoare"/>
+                            <Button Content="Mută cazul" Command="{Binding WorkflowMoveCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,6" Margin="0,0,8,0" AutomationProperties.Name="Mută cazul în etapa aleasă"/>
+                            <Button Content="Închide cazul" Command="{Binding WorkflowCloseCommand}" Padding="14,6" Margin="0,0,8,0" AutomationProperties.Name="Închide cazul după lista de închidere"/>
+                            <Button Content="Adaugă nota" Command="{Binding WorkflowAddNoteCommand}" Padding="14,6" Margin="0,0,8,0"/>
+                            <Button Content="Reîncarcă" Command="{Binding WorkflowRefreshCommand}" Padding="14,6" AutomationProperties.Name="Reîncarcă fluxul de lucru"/>
+                        </WrapPanel>
+                        <!-- the answer sits right under the buttons (lab 2026-11-07: above the reason box it scrolled out of view at 1024 px) -->
+                        <TextBlock Text="{Binding WorkflowStatus}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource EvidenceAccentBrush}" Margin="0,-4,0,12"
+                                   AutomationProperties.Name="Răspunsul fluxului de lucru" AutomationProperties.LiveSetting="Polite"/>
+
+                        <TextBlock Text="Lista de închidere" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Text="{Binding WorkflowChecklistLine}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,4"/>
+                        <DataGrid AutomationProperties.Name="Lista de închidere" ItemsSource="{Binding WorkflowChecklist}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="260" Margin="0,0,0,12">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                    <Setter Property="AutomationProperties.Name" Value="{Binding Title}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Status}" Value="Fail"><Setter Property="Foreground" Value="{StaticResource DangerBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger>
+                                        <DataTrigger Binding="{Binding Status}" Value="Warn"><Setter Property="Foreground" Value="{StaticResource WarningBrush}"/></DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Status, Converter={x:Static local:ChecklistStatusTextConverter.Instance}}" Width="90"/>
+                                <DataGridTextColumn Header="Condiție" Binding="{Binding Title}" Width="2*"/>
+                                <DataGridTextColumn Header="Detalii" Binding="{Binding Detail}" Width="3*"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <TextBlock Text="Constatări importante: decizia revizorului" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <WrapPanel Margin="0,4,0,4">
+                            <ComboBox ItemsSource="{Binding WorkflowDecisionNames}" SelectedIndex="{Binding SelectedDecision}" MinWidth="200" Margin="0,0,8,0" AutomationProperties.Name="Decizia pentru constatare"/>
+                            <Button Content="Înregistrează decizia" Command="{Binding WorkflowReviewCommand}" Padding="14,6" AutomationProperties.Name="Înregistrează decizia pentru constatarea aleasă"/>
+                        </WrapPanel>
+                        <DataGrid AutomationProperties.Name="Constatări de revizuit" ItemsSource="{Binding WorkflowReviews}" SelectedItem="{Binding SelectedWorkflowReview}" AutoGenerateColumns="False" IsReadOnly="True"
+                                  HeadersVisibility="Column" SelectionMode="Single" MaxHeight="260" Margin="0,0,0,12">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                    <Setter Property="AutomationProperties.Name" Value="{Binding Title}"/>
+                                    <Style.Triggers>
+                                        <DataTrigger Binding="{Binding Pending}" Value="True"><Setter Property="Foreground" Value="{StaticResource WarningBrush}"/></DataTrigger>
+                                    </Style.Triggers>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Severitate" Binding="{Binding SeverityText}" Width="90"/>
+                                <DataGridTextColumn Header="Constatare" Binding="{Binding Title}" Width="2*"/>
+                                <DataGridTextColumn Header="Decizie" Binding="{Binding DecisionText}" Width="2*"/>
+                                <DataGridTextColumn Header="Revizor" Binding="{Binding Reviewer}" Width="110"/>
+                                <DataGridTextColumn Header="Cod" Binding="{Binding FindingId}" Width="110"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+
+                        <Grid Margin="0,0,0,12">
+                            <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="16"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions>
+                            <StackPanel Grid.Column="0">
+                                <TextBlock Text="Participanți și roluri" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <ItemsControl ItemsSource="{Binding WorkflowParticipants}" Margin="0,4,0,6" AutomationProperties.Name="Participanții cazului">
+                                    <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ItemsControl.ItemTemplate>
+                                </ItemsControl>
+                                <TextBlock Text="Cont (gol = contul dumneavoastră)" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                <TextBox Text="{Binding NewParticipantAccount, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,4" AutomationProperties.Name="Contul participantului"/>
+                                <WrapPanel>
+                                    <ComboBox ItemsSource="{Binding WorkflowRoleNames}" SelectedIndex="{Binding NewParticipantRole}" MinWidth="120" Margin="0,0,8,0" AutomationProperties.Name="Rolul participantului"/>
+                                    <Button Content="Adaugă participant" Command="{Binding WorkflowAddParticipantCommand}" Padding="12,6"/>
+                                </WrapPanel>
+                            </StackPanel>
+                            <StackPanel Grid.Column="2">
+                                <TextBlock Text="Sarcini" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <DataGrid AutomationProperties.Name="Sarcinile cazului" ItemsSource="{Binding WorkflowTasks}" SelectedItem="{Binding SelectedWorkflowTask}" AutoGenerateColumns="False" IsReadOnly="True"
+                                          HeadersVisibility="Column" SelectionMode="Single" MaxHeight="200" Margin="0,4,0,4">
+                                    <DataGrid.RowStyle>
+                                        <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                            <Setter Property="AutomationProperties.Name" Value="{Binding Title}"/>
+                                        </Style>
+                                    </DataGrid.RowStyle>
+                                    <DataGrid.Columns>
+                                        <DataGridTextColumn Header="Cod" Binding="{Binding TaskId}" Width="55"/>
+                                        <DataGridTextColumn Header="Sarcina" Binding="{Binding Title}" Width="3*"/>
+                                        <DataGridTextColumn Header="Atribuită" Binding="{Binding Assignee}" Width="*"/>
+                                        <DataGridTextColumn Header="Stare" Binding="{Binding Status, Converter={x:Static local:TaskStatusTextConverter.Instance}}" Width="80"/>
+                                    </DataGrid.Columns>
+                                </DataGrid>
+                                <Grid>
+                                    <Grid.ColumnDefinitions><ColumnDefinition Width="3*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                                    <TextBox Grid.Column="0" Text="{Binding NewTaskTitle, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Titlul sarcinii noi"/>
+                                    <TextBox Grid.Column="2" Text="{Binding NewTaskAssignee, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Cui se atribuie sarcina"/>
+                                </Grid>
+                                <WrapPanel Margin="0,4,0,0">
+                                    <Button Content="Adaugă sarcina" Command="{Binding WorkflowAddTaskCommand}" Padding="12,6" Margin="0,0,8,0"/>
+                                    <Button Content="Sarcină făcută" Command="{Binding WorkflowTaskDoneCommand}" Padding="12,6" Margin="0,0,8,0"/>
+                                    <Button Content="Anulează sarcina" Command="{Binding WorkflowTaskCancelCommand}" Padding="12,6"/>
+                                </WrapPanel>
+                            </StackPanel>
+                        </Grid>
+
+                        <TextBlock Text="Istoricul fluxului (din jurnalul înlănțuit, cel mai nou primul)" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <DataGrid AutomationProperties.Name="Istoricul fluxului de lucru" ItemsSource="{Binding WorkflowHistory}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="240" Margin="0,4,0,0">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                    <Setter Property="AutomationProperties.Name" Value="{Binding What}"/>
+                                </Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Când" Binding="{Binding WhenLocal}" Width="120"/>
+                                <DataGridTextColumn Header="Cine" Binding="{Binding Actor}" Width="110"/>
+                                <DataGridTextColumn Header="Ce" Binding="{Binding What}" Width="*"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                    </StackPanel>
+                </ScrollViewer>
+            </TabItem>
             <TabItem Header="Integritate air-gap" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">

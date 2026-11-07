@@ -537,6 +537,8 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var f in _result.Findings) Findings.Add(f);
             FillAcquisitionRuns(_result.AcquisitionRuns, _result.AcquisitionRunsError);
             FillCustody(_result.Custody, _result.CustodyError);
+            WorkflowStatus = "";
+            RefreshWorkflow();
             AirGapFindings.Clear();
             foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.Wp14Rules.Category)) AirGapFindings.Add(f);
             SequenceFindings.Clear();

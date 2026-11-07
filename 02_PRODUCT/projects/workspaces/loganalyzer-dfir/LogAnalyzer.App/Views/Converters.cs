@@ -63,6 +63,37 @@ namespace LogAnalyzer.UI.Views
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
 
+    /// <summary>Closure checklist result in words („îndeplinit”, „atenție”, „blochează”).</summary>
+    public sealed class ChecklistStatusTextConverter : IValueConverter
+    {
+        public static readonly ChecklistStatusTextConverter Instance = new();
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value switch
+        {
+            LogAnalyzer.Dfir.Case.ChecklistStatus.Pass => "✓ îndeplinit",
+            LogAnalyzer.Dfir.Case.ChecklistStatus.Warn => "⚠ atenție",
+            LogAnalyzer.Dfir.Case.ChecklistStatus.Fail => "✗ blochează",
+            _ => value?.ToString() ?? "",
+        };
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
+
+    public sealed class TaskStatusTextConverter : IValueConverter
+    {
+        public static readonly TaskStatusTextConverter Instance = new();
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value switch
+        {
+            LogAnalyzer.Dfir.Case.CaseTaskStatus.Open => "deschisă",
+            LogAnalyzer.Dfir.Case.CaseTaskStatus.Done => "făcută",
+            LogAnalyzer.Dfir.Case.CaseTaskStatus.Cancelled => "anulată",
+            _ => value?.ToString() ?? "",
+        };
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
+
     public sealed class SeverityTextConverter : IValueConverter    {
         public static readonly SeverityTextConverter Instance = new();
 
