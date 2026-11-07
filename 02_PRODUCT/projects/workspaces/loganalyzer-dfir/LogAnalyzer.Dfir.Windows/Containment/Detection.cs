@@ -11,6 +11,9 @@ public sealed record SuspectProcess(int Pid, string Name, string Path, IReadOnly
 {
     /// <summary>Only these may be contained without asking: high confidence and not vouched for by the operator.</summary>
     public bool EligibleForAutoContainment => HighConfidence && !Trusted;
+
+    /// <summary>The grid row's name for a screen reader (lab VM 2026-11-07: „SuspectProcess { Pid = …, Reasons = System.Collections.Generic.List`1… }”).</summary>
+    public override string ToString() => $"{Name} (PID {Pid}): {string.Join("; ", Reasons)}";
 }
 
 /// <summary>

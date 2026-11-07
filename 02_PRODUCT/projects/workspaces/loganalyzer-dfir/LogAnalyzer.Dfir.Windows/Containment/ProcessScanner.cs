@@ -98,7 +98,8 @@ public sealed class ProcessScanner
         if (pid is not int p) return new ProcessIdentity(null, System.IO.Path.GetFileName(programPath), programPath, "", null, "", "", null, "");
         try
         {
-            using var searcher = new ManagementObjectSearcher($"SELECT Name, ExecutablePath, CommandLine, ParentProcessId, CreationDate FROM Win32_Process WHERE ProcessId = {p}");
+            // the whole object: a subset of columns has no __PATH and GetOwner on it throws InvalidOperationException (lab VM 2026-11-07, containment lost its incident)
+            using var searcher = new ManagementObjectSearcher($"SELECT * FROM Win32_Process WHERE ProcessId = {p}");
             foreach (ManagementObject mo in searcher.Get())
             {
                 string name = mo["Name"] as string ?? "";
@@ -121,7 +122,7 @@ public sealed class ProcessScanner
             var outParams = mo.InvokeMethod("GetOwner", null, null);
             return outParams?["User"] is string u ? $"{outParams["Domain"]}\\{u}" : "";
         }
-        catch (ManagementException) { return ""; }
+        catch (Exception ex) when (ex is ManagementException or InvalidOperationException or System.Runtime.InteropServices.COMException) { return ""; }
     }
 
     private static (string, string) ParentOf(int ppid)
