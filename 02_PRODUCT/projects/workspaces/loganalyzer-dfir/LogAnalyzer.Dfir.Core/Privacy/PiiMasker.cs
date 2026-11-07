@@ -77,6 +77,21 @@ public sealed class PiiMasker
         return p;
     }
 
+    /// <summary>
+    /// A person from the users register (the sentences name the person beside the account): the whole name and each of its name-like words are learned, so
+    /// „Popescu Ion (contul ion)” is masked in every sentence. The register is not in the timeline, so the masker would not know these names otherwise.
+    /// </summary>
+    public PiiMasker KnownPerson(string person)
+    {
+        person = (person ?? "").Trim();
+        if (person.Length < 2) return this;
+        var p = User(person);
+        foreach (var t in person.Split([' ', '(', ')', ','], StringSplitOptions.RemoveEmptyEntries).Where(t => t.Length >= 3 && NameToken.IsMatch(t) && !OrgWords.Contains(t, StringComparer.OrdinalIgnoreCase)))
+            _users.TryAdd(t, p);
+        _known = null;
+        return this;
+    }
+
     public static bool IsBuiltIn(string name) => BuiltIn.Contains(name.Trim());
 
     public string User(string name) => Pseudo(_users, name, "Utilizator");

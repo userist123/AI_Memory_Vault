@@ -17,7 +17,7 @@ public static class PlainStory
     private static readonly CultureInfo Ro = CultureInfo.GetCultureInfo("ro-RO");
 
     /// <summary>Windows' own sessions and services (the account AFTER its domain is stripped): never "who did it" (lab WS02: DWM-1, UMFD-0 and defaultuser0 were listed as candidates for a USB stick).</summary>
-    private static readonly Regex StationAccount = new(@"^(?:DWM-\d+|UMFD-\d+|defaultuser\d*|SYSTEM|LOCAL\s*SYSTEM|LOCAL\s*SERVICE|NETWORK\s*SERVICE|ANONYMOUS LOGON|NT AUTHORITY|IUSR|TrustedInstaller|WDAGUtilityAccount|S-1-5-(?:18|19|20)|-)$",
+    private static readonly Regex StationAccount = new(@"^(?:DWM-\d+|UMFD-\d+|defaultuser\d*|SYSTEM|LOCAL\s*SYSTEM|LOCAL\s*SERVICE|NETWORK\s*SERVICE|ANONYMOUS LOGON|NT AUTHORITY|IUSR|TrustedInstaller|WDAGUtilityAccount|S-1-5-(?:18|19|20)|S-1-5-(?:90|96)-\d+(?:-\d+)*|-)$",
         RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
 
     // NT SERVICE\<service> and IIS APPPOOL\<pool> are per-service virtual accounts Windows makes (round-2 review residual)
@@ -77,7 +77,15 @@ public static class PlainStory
     }
 
     /// <summary>The users register the application holds now (account → person); set by the application when the register loads or is saved. Null = none.</summary>
-    public static Func<string, string?>? CurrentPersonOf { get; set; }
+    public static Func<string, string?>? CurrentPersonOf
+    {
+        get => _currentPersonOf;
+        set { _currentPersonOf = value; CurrentPersonOfChanged?.Invoke(); }
+    }
+    private static Func<string, string?>? _currentPersonOf;
+
+    /// <summary>Raised when the users register changes, so a screen that groups by person („Cine ce a făcut”) tells its sentences again.</summary>
+    public static event Action? CurrentPersonOfChanged;
 
     /// <summary>
     /// The sentence as it should read NOW: told again with the current users register, so a person added to the register after the analysis is named on the

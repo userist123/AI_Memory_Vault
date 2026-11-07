@@ -49,6 +49,22 @@ public static class InvestigationReportPdf
         }
         var integrity = ReportIntegrity.Check(r);
         if (pre.BlocksConfirmed && integrity.AllIntact) integrity = integrity with { AllIntact = false, Banner = integrity.Banner + " " + pre.Line };
+        // the sentences name the users register's people beside the accounts; the register is not in the timeline, so a masked export learns them first
+        var personOf = LogAnalyzer.Dfir.Language.PlainStory.CurrentPersonOf;
+        var accountOfSid = LogAnalyzer.Dfir.Language.AccountResolver.FromEvents(r.Timeline);
+        if (masker is not null && personOf is not null)
+            foreach (var raw in r.Findings.SelectMany(f => (f.User ?? "").Split([',', ';'], StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)).Distinct(StringComparer.OrdinalIgnoreCase))
+            {
+                // a SID is asked as itself and as the account the case's events give it (review round 2: a SID-only finding printed the register's surname in clear)
+                var names = new List<string> { raw };
+                if (LogAnalyzer.Dfir.Language.AccountResolver.IsSid(raw) && accountOfSid(raw) is { Length: > 0 } resolved) names.Add(resolved);
+                foreach (var account in names)
+                {
+                    var shortName = account.Contains('\\') ? account[(account.LastIndexOf('\\') + 1)..] : account;
+                    if ((personOf(account) ?? personOf(shortName)) is { Length: > 0 } person) masker.KnownPerson(person);
+                }
+            }
+        var stories = LogAnalyzer.Dfir.Language.PeopleStory.Build(others, personOf, InvestigationReportText.Plain, accountOfSid);
         string W(string text) { var t = pre.Unconfirm(text); return masker is null ? t : masker.Mask(t); }
         var footprint = LogAnalyzer.Dfir.Case.AnalysisFootprint.ForCase(r.Case);
         var seal = LogAnalyzer.Dfir.Case.ReportSeal.For(r.Case);   // chain heads at the moment the report is printed (decision 30)
@@ -181,6 +197,21 @@ public static class InvestigationReportPdf
                 }
                 if (S(LogAnalyzer.Dfir.Reporting.ReportSection.Findings))
                 {
+                // owner 2026-11-06 („cine se face vinovat”): the same findings regrouped by person, each in the order it happened; never a verdict of guilt
+                if (stories.Count > 0)
+                {
+                    Head("Cine ce a făcut (pe persoane, în ordinea timpului)");
+                    P(col, LogAnalyzer.Dfir.Language.PeopleStory.Intro).FontSize(7.5f).Italic().FontColor(Muted);
+                    foreach (var s in stories)
+                        col.Item().Border(0.5f).BorderColor(s.Serious > 0 ? "#b45309" : Line).Padding(5).Column(pc =>
+                        {
+                            pc.Spacing(1);
+                            P(pc, s.Title).Bold().FontSize(8.5f).FontColor(Ink);
+                            foreach (var l in s.Lines)
+                                P(pc, $"• {l.Sentence}{(l.Severity >= Severity.High ? $" ({RoLabels.Severity(l.Severity).ToLowerInvariant()})" : "")}").FontSize(7.5f);
+                            if (s.Omitted > 0) P(pc, s.OmittedLine).FontSize(7).Italic().FontColor(Muted);
+                        });
+                }
                 Head("Constatări");
                 var groups = InvestigationReportText.GroupFindings(others);
                 if (!fullFindings)

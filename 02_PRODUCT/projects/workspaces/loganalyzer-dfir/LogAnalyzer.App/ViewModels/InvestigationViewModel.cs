@@ -92,6 +92,19 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _airGapSummary = "Integritate air-gap: nedefinită (nicio analiză încă).";
         /// <summary>WP14b: the findings of the "Combined sequences" category (control gap + media, SMB + staging + USB, portable software + archive + USB); Finding.Sequence carries the ordered steps.</summary>
         public ObservableCollection<Finding> SequenceFindings { get; } = new();
+        /// <summary>„Cine ce a făcut”: the findings regrouped by person, in the order they happened (the same list the report prints).</summary>
+        public ObservableCollection<LogAnalyzer.Dfir.Language.PersonStory> PeopleStories { get; } = new();
+        public string PeopleIntro => LogAnalyzer.Dfir.Language.PeopleStory.Intro;
+
+        /// <summary>Tells „Cine ce a făcut” again from the result and the users register of this moment (the report builds it the same way when printed).</summary>
+        internal void RefreshPeopleStories()
+        {
+            PeopleStories.Clear();
+            if (_result is null) return;
+            foreach (var s in LogAnalyzer.Dfir.Language.PeopleStory.Build(_result.Findings, LogAnalyzer.Dfir.Language.PlainStory.CurrentPersonOf,
+                         LogAnalyzer.Dfir.Windows.Investigation.InvestigationReportText.Plain, LogAnalyzer.Dfir.Language.AccountResolver.FromEvents(_result.Timeline)))
+                PeopleStories.Add(s);
+        }
         [ObservableProperty] private string _sequenceSummary = "Secvențe combinate: nedefinite (nicio analiză încă).";
         [ObservableProperty] private string _sequenceSteps = "";
         /// <summary>E7: "Activitatea utilizatorului" tab: ShellBags, RecentDocs, Office MRU and Recycle Bin ($I) rows, the ones in classified folders or on removable volumes first.</summary>
@@ -200,6 +213,17 @@ namespace LogAnalyzer.UI.ViewModels
         public InvestigationViewModel(Func<InvestigationViewModel, object?>? aiFactory = null)
         {
             AiAnalysis = aiFactory?.Invoke(this);
+            // a person written in the users register after the analysis is named in „Cine ce a făcut” too (review 2026-11-07); weak, so a closed screen is not kept alive
+            var weak = new WeakReference<InvestigationViewModel>(this);
+            Action? onRegister = null;
+            onRegister = () =>
+            {
+                if (!weak.TryGetTarget(out var vm)) { LogAnalyzer.Dfir.Language.PlainStory.CurrentPersonOfChanged -= onRegister; return; }
+                // only the running application has a screen to refresh; without one (tests in parallel) another test's view model is never touched (review round 2, R3)
+                if (System.Windows.Application.Current?.Dispatcher is not { } d) return;
+                if (d.CheckAccess()) vm.RefreshPeopleStories(); else d.BeginInvoke(vm.RefreshPeopleStories);
+            };
+            LogAnalyzer.Dfir.Language.PlainStory.CurrentPersonOfChanged += onRegister;
         }
 
         [ObservableProperty] private string _remoteHost = "";
@@ -517,6 +541,7 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.Wp14Rules.Category)) AirGapFindings.Add(f);
             SequenceFindings.Clear();
             foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.SequenceRules.Category)) SequenceFindings.Add(f);
+            RefreshPeopleStories();
             SequenceSummary = SequenceFindings.Count == 0
                 ? "Secvențe combinate: nicio secvență observată în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (o sursă necolectată dă „pas neobservat”, nu absență)."
                 : $"Secvențe combinate: {SequenceFindings.Count} ({SequenceFindings.Count(a => a.Severity >= Severity.High)} ridicate). Fiecare arată faptele observate, în ordine, și pașii neobservați; nu stabilește scopul.";

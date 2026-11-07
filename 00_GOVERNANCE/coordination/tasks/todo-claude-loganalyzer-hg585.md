@@ -214,7 +214,17 @@
   DC promotion (krbtgt by S-1-5-7, ±10 min, same host, no 1102) => Windows, Info/Low. Lab: DC01 auditpol Kerberos AS + Credential Validation
   failure ENABLED (lab change, add to owner cleanup list); S1 re-run as S1b: 14 wrong passwords for ana.pop now detected from DC01's log.
   Known limits (accepted): NTLM spray without a logged address is not detected; generated-CIM PS modules stay one row each (earlier review decision).
-  Tests: Dfir 2656, App 1014, UI 366, catalog 3.
+  Tests: Dfir 2656, App 1014, UI 366, catalog 3. CI on 7d0405d81: all green (build, tests, 3 packages, CodeQL, Gitleaks).
+- 2026-11-07T15:50+02:00 „Cine ce a făcut” (PeopleStory, Dfir.Core/Language): findings regrouped by person, time order, serious first; PDF section
+  before Constatări + InvestigationView tab. Attributed to a person ONLY when the sentence makes the account the subject (lower-case PlainWhat, same
+  test as PlainStory.Tell); whole clauses (account as object/victim) => „Fără un autor anume”; several accounts => own group; Windows group.
+  Accounts kept apart as logged (domain\user, local per host, upn, SID resolved via AccountResolver.FromEvents); only the register joins accounts.
+  PiiMasker.KnownPerson: masked PDF masks register people (also via resolved SIDs). S-1-5-90/96 = Windows. vault-reviewer 2 rounds: round 1 REJECT
+  (merged same-name accounts, SID split, register names unmasked, stale tab), round 2 REJECT (SID-only masked leak) -> fixed + test.
+  Accepted residuals: R1 a register row naming a built-in account („Administrator”) joins every computer's Administrator (register's statement);
+  R2 another computer's local account seen here is labelled „domeniul X”; R3 tab refresh on register change runs only with a WPF Application.
+  Lab (scratch wt-pdf, LAB-WS02/DC01/SRV01 evidence): WS02 labadmin 10, DC01/SRV01 Administrator 1/2, rest NoAuthor/Windows (CIM modules).
+  Tests: Dfir 2664, App 1018, UI 366, Edition 45.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); Control stație should flag the
    missing DC failure auditing; rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
