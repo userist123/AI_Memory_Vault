@@ -23,7 +23,7 @@
                 <DockPanel Margin="8">
                     <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">
                         <TextBlock Text="Controler de domeniu (opțional):" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
-                        <TextBox Text="{Binding DomainServer, UpdateSourceTrigger=PropertyChanged}" Width="200" Margin="0,0,10,0"/>
+                        <TextBox Text="{Binding DomainServer, UpdateSourceTrigger=PropertyChanged}" Width="200" Margin="0,0,10,0" AutomationProperties.Name="Controler de domeniu"/>
                         <Button Content="Inventar și verificări domeniu" Command="{Binding InventoryDomainCommand}" Style="{StaticResource AccentButtonStyle}"/>
                         <TextBlock Text="{Binding DomainStatus}" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="12,0,0,0"/>
                     </WrapPanel>

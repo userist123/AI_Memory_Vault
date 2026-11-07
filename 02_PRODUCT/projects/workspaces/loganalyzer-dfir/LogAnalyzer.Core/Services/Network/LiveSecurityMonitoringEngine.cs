@@ -29,7 +29,8 @@ namespace LogAnalyzer.Core.Services.Network
         {
             if (string.IsNullOrEmpty(xml)) return null;
             var m = Regex.Match(xml, "<Data Name=[\"']" + Regex.Escape(name) + "[\"']>([^<]*)</Data>");
-            var v = m.Success ? m.Groups[1].Value.Trim() : null;
+            // the XML keeps „<” as „&lt;” (lab VM: „?&lt;PSDirectVMLegacy>” in a live alert)
+            var v = m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim() : null;
             return string.IsNullOrEmpty(v) || v == "-" ? null : v;
         }
 

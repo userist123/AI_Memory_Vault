@@ -59,6 +59,13 @@ namespace LogAnalyzer.UI.Tests
             NoCodes(s.Replace("10.0.0.5", ""));
         }
 
+        [Fact]
+        public void An_xml_escaped_value_is_shown_decoded()
+        {
+            // lab VM 2026-11-07: „?&lt;PSDirectVMLegacy>” in the status bar
+            Assert.Equal("?<PSDirectVMLegacy>", LiveSecurityMonitoringEngine.Field($"<Event xmlns=\"{Ns}\"><EventData><Data Name=\"TargetUserName\">?&lt;PSDirectVMLegacy&gt;</Data></EventData></Event>", "TargetUserName"));
+        }
+
         private static ParsedEvent UserDataEv(int id, string inner) => new()
         {
             EventId = id, MachineName = "LAB-WS01", TimeCreated = T0, Message = "",
