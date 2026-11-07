@@ -165,4 +165,13 @@ public class Wp6aXamlTests
         Assert.DoesNotMatch(@"PlainStoryConverter\.Instance\}\}"" Width=""\d*\*""", inv);
         Assert.Matches(@"PlainStoryConverter\.Instance\}\}"" Width=""\d{3}"" MinWidth=""\d{3}""", inv);
     }
+
+    [Fact]
+    public void The_register_rows_table_is_always_visible_on_a_small_screen()
+    {
+        // lab VM 2026-11-07 (1024x720): the rows table had no height left, so no person could be written into the users register
+        var reg = Read("Views", "RegisterView.xaml");
+        Assert.Contains("<ScrollViewer VerticalScrollBarVisibility=\"Auto\"", reg);
+        Assert.Matches(@"<DataGrid ItemsSource=""\{Binding View\}"" MinHeight=""\d{3}""", reg);
+    }
 }
