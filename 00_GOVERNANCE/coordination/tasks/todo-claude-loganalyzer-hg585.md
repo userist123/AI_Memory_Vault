@@ -272,6 +272,10 @@
   UTC with the evidence time zone; serial from USBSTOR / USB ids that carry one; exit status) registered (parser count 19 -> 20) and
   SetupApiLogCollector (live %SystemRoot%\INF\setupapi.dev*.log, QuickAndUp, no elevation). Host file: 27 installs, 0 malformed, all timed.
   FirewallLogParser.ReadBoundedLine made internal and shared. Tests: Dfir 2703. Remaining P2: P2.7 Recall/Snipping all profiles, P2.8 P14/P28.
+- 2026-11-07T23:50+02:00 CORRECTION of befc37492 (reverted): it re-read NetworkList that StationFacts.NetworkProfiles already reads (N01 judges
+  connections in the period, N02 lists networks - the research code inventory missed them) and mapped NameType 23 as mobile broadband (23 = VPN,
+  243 = mobile broadband). Now N03 only names the Wi-Fi entries of f.NetworkProfiles and is DE VERIFICAT (not CONFORM) when Wi-Fi history exists.
+  Tests: Dfir 2702, App 1018, UI 366, Edition 45.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.

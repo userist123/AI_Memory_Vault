@@ -807,11 +807,11 @@
 
 ### N03
 
-- **Ce verificăm:** Dacă stația are adaptor Wi-Fi, dacă serviciul Wi-Fi poate porni, câte rețele Wi-Fi sunt salvate și la ce rețele fără fir s-a conectat.
+- **Ce verificăm:** Dacă stația are adaptor Wi-Fi, dacă serviciul Wi-Fi poate porni și câte rețele Wi-Fi sunt salvate.
 - **De ce contează:** Un adaptor Wi-Fi poate crea o legătură cu exteriorul și strică izolarea stației.
-- **Cum verifică aplicația:** A căutat adaptoarele de rețea fără fir, a citit modul de pornire al serviciului Wi-Fi și a numărat fișierele de profil Wi-Fi salvate (fără să le deschidă: pot conține parole) și a citit din registru rețelele fără fir ținute minte de Windows, cu numele și data primei și a ultimei conectări (acolo nu se păstrează parole).
-- **Sursa tehnică:** `Adaptoare de rețea Windows (tip 802.11); HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc → Start; ProgramData\Microsoft\Wlansvc\Profiles\Interfaces; HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles (NameType 71 Wi-Fi, 23 bandă largă mobilă; ProfileName, DateCreated, DateLastConnected în ora locală)`
-- **Cum se citește rezultatul:** Conform = nu există adaptor Wi-Fi și nicio rețea fără fir ținută minte. Neconform = pe stația izolată există un adaptor Wi-Fi pornit sau ultima conectare la o rețea fără fir este din perioada controlată. De verificat = adaptor prezent dar oprit, sau stație neizolată; cereți aprobarea scrisă sau scoaterea plăcii.
+- **Cum verifică aplicația:** A căutat adaptoarele de rețea fără fir, a citit modul de pornire al serviciului Wi-Fi și a numărat fișierele de profil Wi-Fi salvate (fără să le deschidă: pot conține parole) și a numit rețelele Wi-Fi ținute minte în NetworkList, cu ultima conectare.
+- **Sursa tehnică:** `Adaptoare de rețea Windows (tip 802.11); HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc → Start; ProgramData\Microsoft\Wlansvc\Profiles\Interfaces`
+- **Cum se citește rezultatul:** Conform = nu există adaptor Wi-Fi și nicio rețea Wi-Fi ținută minte. Neconform = pe stația izolată există un adaptor Wi-Fi pornit (conectările din perioada controlată sunt judecate la N01). De verificat = adaptor prezent dar oprit, sau stație neizolată; cereți aprobarea scrisă sau scoaterea plăcii.
 
 ### N04
 

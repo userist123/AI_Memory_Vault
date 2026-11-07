@@ -477,28 +477,6 @@ public static class StationFactCollector
 
     private static string Hklm(string key, string name) => RegRead(Registry.LocalMachine, key, name);
 
-    /// <summary>A NetworkList SYSTEMTIME (16 bytes, LOCAL time of the station) as UTC; null when missing or not a valid date. Pure.</summary>
-    public static DateTimeOffset? ParseSystemTime(byte[]? b, TimeZoneInfo? zone = null)
-    {
-        if (b is null || b.Length < 16) return null;
-        int U(int i) => BitConverter.ToUInt16(b, i);
-        try
-        {
-            var local = new DateTime(U(0), U(2), U(6), U(8), U(10), U(12), DateTimeKind.Unspecified);
-            return new DateTimeOffset(TimeZoneInfo.ConvertTimeToUtc(local, zone ?? TimeZoneInfo.Local), TimeSpan.Zero);
-        }
-        catch (ArgumentException) { return null; }
-    }
-
-    /// <summary>„„Hotspot-Ion” (Wi-Fi; prima conectare 2026-10-01, ultima 2026-11-06)”. Pure.</summary>
-    public static string KnownNetworkText(string name, int nameType, DateTimeOffset? created, DateTimeOffset? last)
-    {
-        var n = new string((name ?? "").Where(ch => !char.IsControl(ch)).ToArray()).Trim();
-        var kind = nameType == 0x17 ? "bandă largă mobilă" : "Wi-Fi";
-        string D(DateTimeOffset? t) => t is { } v ? v.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture) : "necunoscută";
-        return $"„{(n.Length > 0 ? n : "fără nume")}” ({kind}; prima conectare {D(created)}, ultima {D(last)})";
-    }
-
     /// <summary>„Telefonul lui X (AA:BB:CC:DD:EE:FF)” from a BTHPORT\Parameters\Devices subkey: the name is UTF-8 bytes ended by a zero. Pure.</summary>
     public static string BluetoothPairedText(string macKey, byte[]? name)
     {
@@ -642,27 +620,6 @@ public static class StationFactCollector
             // Directory.Exists says false on "access denied": a folder is "0 profiles" only when confirmed missing, otherwise the count stays unread.
             if (EgressPathCollector.CountWifiProfiles(dir, out var why) is { } n) s["Wlan.ProfileCount"] = n.ToString();
             else s["Wlan.ProfileUnread"] = why;
-        });
-        // research 2026-11-07 plan P2.6: the networks Windows remembers, by name and with the first and last connection, from NetworkList (no password is
-        // stored there; the Wi-Fi profile files, which can hold keys, stay unopened)
-        Guard(() =>
-        {
-            using var profiles = Registry.LocalMachine.OpenSubKey(@"SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles");
-            if (profiles is null) { s["Network.KnownWireless"] = ""; s["Network.KnownWirelessCount"] = "0"; return; }
-            var rows = new List<(string Text, DateTimeOffset? Last)>();
-            foreach (var id in profiles.GetSubKeyNames())
-            {
-                using var p = profiles.OpenSubKey(id);
-                if (p is null) continue;
-                var kind = p.GetValue("NameType") is int t ? t : -1;
-                if (kind is not (0x47 or 0x17)) continue;   // 71 = wireless, 23 = mobile broadband
-                var last = ParseSystemTime(p.GetValue("DateLastConnected") as byte[]);
-                rows.Add((KnownNetworkText(p.GetValue("ProfileName") as string ?? "", kind, ParseSystemTime(p.GetValue("DateCreated") as byte[]), last), last));
-            }
-            var ordered = rows.OrderByDescending(x => x.Last ?? DateTimeOffset.MinValue).ToList();
-            s["Network.KnownWirelessCount"] = ordered.Count.ToString();
-            s["Network.KnownWireless"] = string.Join("; ", ordered.Take(10).Select(x => x.Text)) + (ordered.Count > 10 ? $"; … încă {ordered.Count - 10}" : "");
-            s["Network.KnownWirelessLastUtc"] = ordered.FirstOrDefault().Last is { } l ? l.ToString("o", System.Globalization.CultureInfo.InvariantCulture) : "";
         });
         Guard(() =>
         {

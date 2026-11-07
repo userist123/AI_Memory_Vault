@@ -1017,18 +1017,18 @@ public static partial class ControlEvaluator
             var svcText = svc switch { "" => "starea serviciului Wi-Fi nu a putut fi citită", Absent => "serviciul Wi-Fi nu există pe această stație", "4" => "serviciul Wi-Fi este dezactivat", "2" => "serviciul Wi-Fi pornește singur", _ => "serviciul Wi-Fi poate porni la cerere" };
             int profN = int.TryParse(profiles, out var profParsed) ? profParsed : 0;
             var profText = profiles == "" ? $"profilurile Wi-Fi salvate nu au putut fi numărate ({(S("Wlan.ProfileUnread") is { Length: > 0 } why ? why : "sursa nu a fost citită")})" : profN == 1 ? "un profil Wi-Fi salvat" : $"{Ro.Count(profN, "profil", "profiluri")} Wi-Fi salvate";
-            int known = int.TryParse(S("Network.KnownWirelessCount"), out var kn) ? kn : 0;
-            // a wireless network last joined inside the controlled period, on an isolated station, is a connection that happened: NECONFORM
-            bool joinedInPeriod = DateTimeOffset.TryParse(S("Network.KnownWirelessLastUtc"), System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out var lastJoin) && lastJoin >= f.PeriodStartUtc;
-            var status = wifi == 0 && known == 0 ? ControlStatus.Conform : noInternet && (wifiUp > 0 || joinedInPeriod) ? ControlStatus.Neconform : ControlStatus.DeVerificat;
-            var knownText = known > 0 ? $" Windows ține minte {Ro.CountFem(known, "rețea fără fir", "rețele fără fir")} la care stația s-a conectat: {S("Network.KnownWireless")}." +
-                                        (joinedInPeriod ? " Ultima conectare este din perioada controlată." : "") : "";
+            // research 2026-11-07 plan P2.6: the Wi-Fi networks NetworkList remembers (the same facts as N01/N02, which judge the connections themselves):
+            // with no adapter now, a remembered Wi-Fi network still means the station had one, so the check is not CONFORM
+            var wifiKnown = f.NetworkProfiles.Where(np => np.Kind == "Wi-Fi").OrderByDescending(np => np.LastConnectedLocal).ToList();
+            var knownText = wifiKnown.Count == 0 ? "" : $" Windows ține minte {Ro.CountFem(wifiKnown.Count, "rețea Wi-Fi", "rețele Wi-Fi")}: " +
+                string.Join("; ", wifiKnown.Take(10).Select(np => $"„{np.Name}” (ultima conectare {np.LastConnectedLocal:yyyy-MM-dd})")) + (wifiKnown.Count > 10 ? $"; … încă {wifiKnown.Count - 10}" : "") +
+                " (conectările din perioada controlată sunt judecate la N01).";
+            var status = wifi == 0 && wifiKnown.Count == 0 ? ControlStatus.Conform : noInternet && wifiUp > 0 ? ControlStatus.Neconform : ControlStatus.DeVerificat;
             Add(r, "N03", "Rețea", "Adaptor Wi-Fi (rețea fără fir)", status,
-                knownText.Length > 0 && wifi == 0 ? $"Stația nu are acum niciun adaptor Wi-Fi; {profText}.{knownText}" :
+                wifi == 0 && wifiKnown.Count > 0 ? $"Stația nu are acum niciun adaptor Wi-Fi; {profText}.{knownText}" :
                 wifi == 0 ? $"Stația nu are niciun adaptor Wi-Fi; {profText}."
                     : $"Stația are {Ro.CountMasc(wifi, "adaptor Wi-Fi", "adaptoare Wi-Fi")} ({(wifiUp == 0 ? "niciunul pornit acum" : wifiUp == 1 ? (wifi == 1 ? "pornit acum" : "unul pornit acum") : $"{wifiUp} pornite acum")}); {svcText}; {profText}." + (noInternet ? " Pe o stație izolată un adaptor Wi-Fi poate crea o legătură cu exteriorul." : "") + knownText,
-                (wifi > 0 ? S("Wifi.Adapters").Split("; ", StringSplitOptions.RemoveEmptyEntries) : []).Concat([@"HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc → Start = " + Shown(svc),
-                    @"HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\NetworkList\Profiles (Wi-Fi și bandă largă mobilă) → " + (int.TryParse(S("Network.KnownWirelessCount"), out var kcn) ? Ro.CountFem(kcn, "rețea", "rețele") : "necitit")]),
+                (wifi > 0 ? S("Wifi.Adapters").Split("; ", StringSplitOptions.RemoveEmptyEntries) : []).Concat([@"HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc → Start = " + Shown(svc)]),
                 "Adaptorul Wi-Fi se scoate fizic sau se dezactivează din BIOS; dacă este aprobat, notați documentul de aprobare.");
         }
 
