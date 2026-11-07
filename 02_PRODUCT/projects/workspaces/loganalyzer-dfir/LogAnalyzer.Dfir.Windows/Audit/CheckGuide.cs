@@ -107,7 +107,7 @@ public static class CheckGuides
           "A citit politica de audit avansat a stației și a comparat-o cu cele 10 categorii necesare controlului.", "auditpol /get /category:* (AuditQuerySystemPolicy)",
           "Conform = toate categoriile necesare sunt auditate. Neconform = lipsesc categorii; sunt numite în constatare."),
         G("A02", "Cât de mare poate fi jurnalul Security înainte să se suprascrie.", "Un jurnal mic se umple în câteva zile și evenimentele vechi dispar.", "A citit dimensiunea maximă și modul jurnalului.",
-          "Configurația jurnalului Security (EventLogConfiguration)", "Conform = cel puțin 128 MB. Mod Circular = suprascrie cele mai vechi evenimente."),
+          "Configurația jurnalului Security (EventLogConfiguration)", "Conform = cel puțin 192 MB (pragul CIS pentru Windows 11; DISA STIG cere cât să încapă cel puțin o săptămână de evenimente, deci pe o stație cu audit bogat poate fi nevoie de mai mult). Mod Circular = suprascrie cele mai vechi evenimente."),
         G("A03", "Dacă jurnalul Security mai conține evenimente din toată perioada controlată.", "Dacă cel mai vechi eveniment e mai nou decât începutul perioadei, activitatea de dinainte nu mai poate fi verificată.",
           "A citit data celui mai vechi eveniment din jurnal și a comparat-o cu începutul perioadei.", "Jurnalul Security, primul eveniment", "Conform = acoperă perioada. Neconform = jurnalul începe după începutul perioadei."),
         G("A04", "Dacă jurnalul System mai conține evenimente din toată perioada controlată.", "La fel ca pentru Security.", "La fel ca pentru Security, pe jurnalul System.", "Jurnalul System, primul eveniment",

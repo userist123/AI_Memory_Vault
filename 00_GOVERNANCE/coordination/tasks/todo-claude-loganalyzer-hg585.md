@@ -229,6 +229,12 @@
   must record Failure for Kerberos Authentication Service and Credential Validation, else NECONFORM in plain words; no A19 line on other stations;
   n/a on Standalone. CheckGuide, ControlApplicability, EDITIONS_AND_POSTURE.md and the annex (LA_UPDATE_DOCS=1) updated. Verified on LAB-DC01:
   ProductType=LanmanNT, both subcategories Success and Failure (after the lab change) => CONFORM. Tests: Dfir 2668, App 1018, UI 366, Edition 45.
+- 2026-11-07T18:00+02:00 Research „Acoperirea auditului pe stații izolate” (defensive; report D:\w\reports\*.docx/.md, notes outside git in
+  research_notes/ and reports/ of the worktree - NEVER commit them). Plan P1 started: A01 now requires Removable Storage Success+Failure (STIG
+  WN11-AU-000085/-000090); A02 threshold 128 -> 192 MB (CIS 196,608 KB, SecurityLogMinMB); ParserCapabilities 4663 (no SACL on removable volumes)
+  and 6416 (subject is usually SYSTEM) corrected; LnkParser stale Jump List text fixed. Behaviour change: lab stations with Removable Storage
+  success-only now get A01 NECONFORM. Next P1: P1.4 automatic USN export of NTFS removable volumes, P1.3 archive inventory for A18, P1.5
+  DriverFrameworks channel check. Tests: Dfir 2674, App 1018, UI 366, Edition 45.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.

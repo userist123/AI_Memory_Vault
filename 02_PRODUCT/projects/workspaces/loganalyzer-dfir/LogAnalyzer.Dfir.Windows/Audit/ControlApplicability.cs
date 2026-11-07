@@ -79,7 +79,7 @@ public static class ControlApplicability
         Row("P38", "Last full and quick antivirus scan", Yes("Recent"), Yes("Recent"), Yes("Recent"), null),
         Row("P39", "Antivirus registered in Security Center", Yes("Registered"), Yes("Registered"), Yes("Registered"), null),
         Row("A01", "Audit policy records the required activity", Yes("Required categories on"), Yes("Required categories on"), Yes("Required categories on"), null),
-        Row("A02", "Security log size", Yes("At least 128 MB"), Yes("At least 128 MB"), Yes("At least 128 MB"), null),
+        Row("A02", "Security log size", Yes("At least 192 MB"), Yes("At least 192 MB"), Yes("At least 192 MB"), null),
         Row("A03", "Security log covers the audited period", Yes("Covers the period"), Yes("Covers the period"), Yes("Covers the period"), null),
         Row("A04", "Other logs cover the audited period", Yes("Cover the period"), Yes("Cover the period"), Yes("Cover the period"), null),
         Row("A05", "Logs cleared in the period", Yes("None"), Yes("None"), Yes("None"), null),

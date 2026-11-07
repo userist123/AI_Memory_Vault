@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using LogAnalyzer.Core.Services.Edition;
 using LogAnalyzer.Dfir.Devices;
@@ -293,7 +293,7 @@ public static partial class ControlEvaluator
         ("Logon", AuditSetting.Success | AuditSetting.Failure), ("Special Logon", AuditSetting.Success),
         ("User Account Management", AuditSetting.Success), ("Security Group Management", AuditSetting.Success),
         ("Audit Policy Change", AuditSetting.Success), ("Process Creation", AuditSetting.Success),
-        ("Removable Storage", AuditSetting.Success), ("Plug and Play Events", AuditSetting.Success),
+        ("Removable Storage", AuditSetting.Success | AuditSetting.Failure), ("Plug and Play Events", AuditSetting.Success),
         ("Security State Change", AuditSetting.Success), ("Other Object Access Events", AuditSetting.Success),
     ];
 
@@ -322,6 +322,9 @@ public static partial class ControlEvaluator
             "Cereți administratorului să pornească auditarea eșecurilor pentru „Kerberos Authentication Service” și „Credential Validation” (GPO-ul controlerelor de domeniu sau auditpol).");
     }
 
+    // research 2026-11-07 (Acoperirea auditului pe stații izolate): CIS Windows 11 v5.0.1 asks at least 196,608 KB; the old 128 MB was below it
+    internal const int SecurityLogMinMB = 192;
+
     private static void AuditAndLogs(StationFacts f, ControlReport r)
     {
         if (f.AuditPolicy is { } ap)
@@ -337,8 +340,8 @@ public static partial class ControlEvaluator
         DomainControllerFailureAudit(f, r);
 
         if (int.TryParse(f.Settings.GetValueOrDefault("SecurityLog.MaxSizeMB"), out var mb))
-            Add(r, "A02", "Audit", "Dimensiunea jurnalului Security", mb >= 128 ? ControlStatus.Conform : ControlStatus.Neconform,
-                $"{mb} MB, mod {f.Settings.GetValueOrDefault("SecurityLog.Mode")}.", rec: "Minimum 128 MB; arhivare înainte de suprascriere pe stațiile care nu trimit jurnalele centralizat.");
+            Add(r, "A02", "Audit", "Dimensiunea jurnalului Security", mb >= SecurityLogMinMB ? ControlStatus.Conform : ControlStatus.Neconform,
+                $"{mb} MB, mod {f.Settings.GetValueOrDefault("SecurityLog.Mode")}.", rec: $"Minimum {SecurityLogMinMB} MB (CIS: 196.608 KB; DISA STIG cere cât să încapă cel puțin o săptămână de evenimente); arhivare înainte de suprascriere pe stațiile care nu trimit jurnalele centralizat.");
 
         foreach (var c in f.Coverage.Where(c => c.Channel is "Security" or "System"))
             Add(r, c.Channel == "Security" ? "A03" : "A04", "Audit", $"Jurnalul {c.Channel} acoperă perioada controlată",

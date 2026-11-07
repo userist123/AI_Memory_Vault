@@ -379,7 +379,7 @@
 - **De ce contează:** Un jurnal mic se umple în câteva zile și evenimentele vechi dispar.
 - **Cum verifică aplicația:** A citit dimensiunea maximă și modul jurnalului.
 - **Sursa tehnică:** `Configurația jurnalului Security (EventLogConfiguration)`
-- **Cum se citește rezultatul:** Conform = cel puțin 128 MB. Mod Circular = suprascrie cele mai vechi evenimente.
+- **Cum se citește rezultatul:** Conform = cel puțin 192 MB (pragul CIS pentru Windows 11; DISA STIG cere cât să încapă cel puțin o săptămână de evenimente, deci pe o stație cu audit bogat poate fi nevoie de mai mult). Mod Circular = suprascrie cele mai vechi evenimente.
 
 ### A03
 

@@ -88,7 +88,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | P38 | Last full and quick antivirus scan | Recent | Recent | Recent |  |
 | P39 | Antivirus registered in Security Center | Registered | Registered | Registered |  |
 | A01 | Audit policy records the required activity | Required categories on | Required categories on | Required categories on |  |
-| A02 | Security log size | At least 128 MB | At least 128 MB | At least 128 MB |  |
+| A02 | Security log size | At least 192 MB | At least 192 MB | At least 192 MB |  |
 | A03 | Security log covers the audited period | Covers the period | Covers the period | Covers the period |  |
 | A04 | Other logs cover the audited period | Cover the period | Cover the period | Cover the period |  |
 | A05 | Logs cleared in the period | None | None | None |  |
