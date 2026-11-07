@@ -207,6 +207,36 @@ public class Wp11AccountTests
     }
 
     [Fact]
+    public void What_Windows_does_when_a_server_becomes_a_domain_controller_is_Windows_not_an_attacker()
+    {
+        // lab DC01 2026-11-07: „krbtgt was created by ANONYMOUS LOGON” and the Administrator's Domain/Enterprise/Schema Admins memberships were
+        // reported as account activity (records ~1400, past the setup range)
+        TimelineEvent Anon(TimelineEvent e) => new()
+        {
+            Time = e.Time, Source = e.Source, EventId = e.EventId, EvidenceId = "EV", Summary = "x",
+            Fields = new Dictionary<string, string>(e.Fields, StringComparer.OrdinalIgnoreCase) { ["SubjectUserName"] = "ANONYMOUS LOGON", ["SubjectDomainName"] = "NT AUTHORITY", ["SubjectUserSid"] = "S-1-5-7" },
+        };
+        var krbtgt = At(Anon(Created(0, name: "krbtgt", sid: "S-1-5-21-1-2-3-502")), 1401);
+        var addAdmin = AddedToGroup(1, "Domain Admins", "S-1-5-21-1-2-3-512", member: "Administrator", memberSid: "S-1-5-21-1-2-3-500", id: 4728);
+        var bySystem = new TimelineEvent { Time = addAdmin.Time, Source = addAdmin.Source, EventId = addAdmin.EventId, EvidenceId = "EV", Summary = "x",
+            Fields = new Dictionary<string, string>(addAdmin.Fields, StringComparer.OrdinalIgnoreCase) { ["SubjectUserName"] = "DC01$" } };
+        var dc = Run([krbtgt, At(bySystem, 1450)]);
+        var created = One(dc, "ACCOUNT-CREATED");
+        Assert.Equal(Severity.Info, created.Severity);
+        Assert.Contains("de Windows, când serverul a fost transformat în controler de domeniu", created.PlainWhat);
+        var group = One(dc, "ACCOUNT-ADDED-PRIVILEGED-GROUP");
+        Assert.Equal(Severity.Low, group.Severity);
+        Assert.Contains("controler de domeniu", group.PlainWhat);
+
+        // a person adding an account to Domain Admins in the same minutes is never lowered; neither is anything after a log clear
+        Assert.Equal(Severity.Medium, One(Run([krbtgt, AddedToGroup(2, "Domain Admins", "S-1-5-21-1-2-3-512")]), "ACCOUNT-ADDED-PRIVILEGED-GROUP").Severity);
+        Assert.Equal(Severity.Medium, One(Run([Sec(1102, -5), krbtgt, At(bySystem, 1450)]), "ACCOUNT-ADDED-PRIVILEGED-GROUP").Severity);
+        // the same SYSTEM action an hour after the promotion is not part of it
+        var late = new TimelineEvent { Time = AddedToGroup(60, "x", "y").Time, Source = bySystem.Source, EventId = bySystem.EventId, EvidenceId = "EV", Summary = "x", Fields = bySystem.Fields };
+        Assert.Equal(Severity.Medium, One(Run([krbtgt, At(late, 3000)]), "ACCOUNT-ADDED-PRIVILEGED-GROUP").Severity);
+    }
+
+    [Fact]
     public void A_setup_account_created_by_SYSTEM_and_used_only_locally_is_Low_unless_privileged()
     {
         // lab VM 2026-11-06: setup accounts of every fresh install were Medium "created then used"

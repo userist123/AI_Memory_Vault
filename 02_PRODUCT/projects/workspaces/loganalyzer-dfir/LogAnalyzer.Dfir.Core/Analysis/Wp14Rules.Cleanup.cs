@@ -60,9 +60,15 @@ public static partial class Wp14Rules
         refs.AddRange(missing.SelectMany(x => x.Logged.Take(3)).Take(10).Select(e => Ref(e, "Partition/Diagnostic 1006 (dispozitiv fără cheie în registry)")));
         var allTimes = deleted.Select(T).Concat(missing.SelectMany(x => x.Logged.Select(T))).Where(t => t is not null).Select(t => t!.Value).OrderBy(t => t).ToList();
 
+        var plainParts = new List<string>();
+        if (deleted.Count > 0) plainParts.Add($"{LogAnalyzer.Dfir.Language.RoText.CountFem(deleted.Count, "înregistrare ștearsă", "înregistrări șterse")} despre dispozitive USB");
+        if (missing.Count > 0) plainParts.Add((missing.Count == 1 ? "un dispozitiv USB pe care Windows l-a văzut conectat, dar care nu mai are nicio urmă în registrul calculatorului" : $"{LogAnalyzer.Dfir.Language.RoText.CountMasc(missing.Count, "dispozitiv USB", "dispozitive USB")} pe care Windows le-a văzut conectate, dar care nu mai au nicio urmă în registrul calculatorului"));
+        var plain = "Există în registrul calculatorului " + string.Join(" și ", plainParts) +
+                    "; poate fi o curățare a urmelor sau o dezinstalare obișnuită a dispozitivului, iar registrul nu arată cine a șters și de ce";
+
         o.Add(new Finding
         {
-            FindingId = c.NextId(), RuleId = DeletedTracesRuleId,
+            FindingId = c.NextId(), RuleId = DeletedTracesRuleId, PlainWhat = plain,
             Title = "Urme de dispozitive șterse din registry",
             Severity = missing.Count > 0 ? Sev(c, Severity.Medium) : Severity.Low,
             Category = c.FindingCategory,

@@ -61,7 +61,28 @@ public static partial class Wp11Rules
     /// </summary>
     private static bool CreatedAtSetup(Ctx c, TimelineEvent e, string creator) =>
         (IsMachineAccount(creator) || creator.Equals("SYSTEM", StringComparison.OrdinalIgnoreCase)) &&
-        EvtxCompleteness.RecordId(e) is > 0 and <= SetupRecordLimit && !c.Events.Any(x => Ev(x, "Security", 1102));
+        EvtxCompleteness.RecordId(e) is > 0 and <= SetupRecordLimit && !c.Events.Any(x => Ev(x, "Security", 1102))
+        || AtDomainControllerPromotion(c, e, creator);
+
+    /// <summary>Margin around the creation of krbtgt in which the promotion of the server to domain controller writes its own accounts and groups.</summary>
+    internal static readonly TimeSpan PromotionWindow = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// The promotion of a server to domain controller (lab DC01 2026-11-07): Windows creates krbtgt as ANONYMOUS LOGON (S-1-5-7), then its built-in
+    /// accounts and the Administrator's memberships in Domain Admins / Enterprise Admins / Schema Admins, all within minutes. Only an action of
+    /// ANONYMOUS LOGON, SYSTEM or the machine account in that window, on the host where krbtgt was created, in a Security log with no clear (1102).
+    /// An account created by a person is never lowered here.
+    /// </summary>
+    private static bool AtDomainControllerPromotion(Ctx c, TimelineEvent e, string creator)
+    {
+        bool windows = IsMachineAccount(creator) || creator.Equals("SYSTEM", StringComparison.OrdinalIgnoreCase) || creator.Equals("ANONYMOUS LOGON", StringComparison.OrdinalIgnoreCase)
+                       || creator.Length == 0 || creator == "-";
+        if (!windows || e.Time.Utc is not { } at || c.Events.Any(x => Ev(x, "Security", 1102))) return false;
+        return c.Events.Any(k => Ev(k, "Security", 4720) && k.Time.Utc is { } kt && (kt - at).Duration() <= PromotionWindow
+                                 && F(k, "TargetUserName").Equals("krbtgt", StringComparison.OrdinalIgnoreCase)
+                                 && F(k, "SubjectUserSid").Equals("S-1-5-7", StringComparison.OrdinalIgnoreCase)
+                                 && k.Host.Equals(e.Host, StringComparison.OrdinalIgnoreCase));
+    }
 
     private static bool SameAccount(string name, string sid, string otherName, string otherSid)
     {
@@ -103,10 +124,15 @@ public static partial class Wp11Rules
                             (group.Equals("Administrators", StringComparison.OrdinalIgnoreCase) || group.Equals("Administratori", StringComparison.OrdinalIgnoreCase)
                                 ? "(administratori: control total asupra calculatorului)" : "(un grup cu drepturi mari)") +
                             (PlainPhrases.IsStationAccount(F(first, "SubjectUserName"), first.Host, F(first, "SubjectUserSid")) ? "" : $", de către contul {PlainPhrases.Q(F(first, "SubjectUserName"))}") +
-                            (atSetup ? "; asta a făcut Windows la instalare (printre primele înregistrări ale jurnalului de securitate)" : inCase is not null ? "; contul fusese creat chiar în acest caz" : ""),
+                            (atSetup ? (AtDomainControllerPromotion(c, first, F(first, "SubjectUserName"))
+                                    ? "; asta a făcut Windows când serverul a fost transformat în controler de domeniu"
+                                    : "; asta a făcut Windows la instalare (printre primele înregistrări ale jurnalului de securitate)")
+                             : inCase is not null ? "; contul fusese creat chiar în acest caz" : ""),
                 Description = $"{who} ({sid}) a fost adăugat în grupul {group} ({F(first, "TargetSid")}) de {by}, eveniment {first.EventId}, {Time(T(first))}." +
                               (inCase is not null ? $" Contul a fost creat în același caz ({Time(T(inCase))})." : "") +
-                              (atSetup ? $" Adăugat de SYSTEM / contul mașinii printre primele {SetupRecordLimit} înregistrări ale jurnalului Security, care nu a fost golit: instalarea Windows, de aceea Low." : ""),
+                              (atSetup ? AtDomainControllerPromotion(c, first, F(first, "SubjectUserName"))
+                                  ? $" Adăugat de Windows în cel mult {PromotionWindow.TotalMinutes:0} minute de la crearea krbtgt de către ANONYMOUS LOGON (promovarea în controler de domeniu), jurnal Security negolit: de aceea Low."
+                                  : $" Adăugat de SYSTEM / contul mașinii printre primele {SetupRecordLimit} înregistrări ale jurnalului Security, care nu a fost golit: instalarea Windows, de aceea Low." : ""),
                 ClassificationReason = "Eveniment Security 4728/4732/4756 pentru un grup din lista de grupuri privilegiate (după nume sau SID). Arată apartenența acordată, nu folosirea ei.",
                 SemanticType = SemanticType.Observation,
                 SupportingEvidence = g.Take(10).Select(e => Ref(e, $"{e.EventId} {group}")).ToList(),
@@ -122,7 +148,8 @@ public static partial class Wp11Rules
             var name = F(cr, "TargetUserName"); var sid = F(cr, "TargetSid");
             var createdAt = T(cr);
             var by = Account(F(cr, "SubjectUserName"), F(cr, "SubjectDomainName"));
-            bool provisioning = IsMachineAccount(F(cr, "SubjectUserName")) || F(cr, "SubjectUserName").Equals("SYSTEM", StringComparison.OrdinalIgnoreCase);
+            bool promotion = AtDomainControllerPromotion(c, cr, F(cr, "SubjectUserName"));
+            bool provisioning = IsMachineAccount(F(cr, "SubjectUserName")) || F(cr, "SubjectUserName").Equals("SYSTEM", StringComparison.OrdinalIgnoreCase) || promotion;
 
             var lifecycle = c.Events.Where(e => Ev(e, "Security", 4722, 4724, 4738) && SameAccount(name, sid, F(e, "TargetUserName"), F(e, "TargetSid"))).ToList();
             var lifeText = string.Join(", ", lifecycle.GroupBy(e => e.EventId).OrderBy(g => g.Key).Select(g => $"{g.Count()} × {g.Key}"));
@@ -144,7 +171,8 @@ public static partial class Wp11Rules
                 Severity = provisioning ? Severity.Info : Severity.Low, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1136",
                 FirstSeenUtc = createdAt, User = name,
                 PlainWhat = $"Contul {PlainPhrases.Q(name)} a fost creat " +
-                            (provisioning ? "de Windows (la instalare sau printr-un serviciu)" : $"de contul {PlainPhrases.Q(F(cr, "SubjectUserName"))}") +
+                            (promotion ? "de Windows, când serverul a fost transformat în controler de domeniu"
+                                : provisioning ? "de Windows (la instalare sau printr-un serviciu)" : $"de contul {PlainPhrases.Q(F(cr, "SubjectUserName"))}") +
                             (uses.Count > 0 ? ", apoi a fost folosit pentru a intra pe calculator"
                                 : allLogonEvents == 0 ? "; nu se știe dacă a fost folosit, pentru că nu s-a colectat lista cu cine a intrat pe calculator"
                                 : "; după creare nu apare nicio intrare cu acest cont în probele colectate"),

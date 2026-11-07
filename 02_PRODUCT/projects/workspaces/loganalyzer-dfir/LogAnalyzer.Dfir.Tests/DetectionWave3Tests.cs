@@ -82,6 +82,39 @@ public class DetectionWave3Tests
         Assert.Contains("de la 203.0.113.9", One(Corr(Enumerable.Range(0, 10).Select(i => Fail(i, "alice"))), "CRED-BRUTEFORCE").Title);
     }
 
+    [Fact]
+    public void Wrong_passwords_refused_by_the_domain_controller_are_brute_force_too()
+    {
+        // lab DC01 2026-11-07: 14 wrong passwords for a domain account left 14 × 4771 on the domain controller and nothing on the target server
+        static TimelineEvent Kerb(double m, string user, string status = "0x18") =>
+            Sec(4771, m, ("TargetUserName", user), ("IpAddress", "::ffff:10.10.10.101"), ("Status", status));
+        var f = One(Corr(Enumerable.Range(0, 14).Select(i => Kerb(i * 0.1, "ana.pop"))), "CRED-BRUTEFORCE");
+        Assert.Equal("10.10.10.101", f.Ip);
+        Assert.Equal("ana.pop", f.User);
+        Assert.Equal(14, f.SupportingEvidence.Count(e => e.Description == "4771"));
+        Assert.Contains("controlerul de domeniu a refuzat parola", f.PlainWhat);
+        // a computer account out of sync with the domain is not someone guessing (review 2026-11-07)
+        Assert.DoesNotContain(Corr(Enumerable.Range(0, 14).Select(i => Kerb(i * 0.1, "LAB-WS01$"))), x => x.RuleId == "CRED-BRUTEFORCE");
+        Assert.Contains(f.AlternativeExplanations, a => a.Contains("parolă veche rămasă salvată"));
+        // an expired or revoked account (other Kerberos statuses) is not password guessing
+        Assert.DoesNotContain(Corr(Enumerable.Range(0, 14).Select(i => Kerb(i * 0.1, "ana.pop", "0x12"))), x => x.RuleId == "CRED-BRUTEFORCE");
+        // NTLM: the same attempt in the controller's log (4776) and in the server's (4625) is counted once
+        var both = Enumerable.Range(0, 10).SelectMany(i => new[]
+        {
+            Sec(4776, i, ("TargetUserName", "ana.pop"), ("Workstation", "LAB-WS01"), ("Status", "0xC000006A")),
+            Sec(4625, i + 0.005, ("TargetUserName", "ana.pop"), ("WorkstationName", "LAB-WS01"), ("IpAddress", "-")),
+        });
+        var ntlm = One(Corr(both), "CRED-BRUTEFORCE");
+        Assert.StartsWith("10 autentificări eșuate", ntlm.Title);
+        Assert.Contains("de la calculatorul „LAB-WS01”", ntlm.PlainWhat);
+        // review round 2: a computer name changed at every attempt (the client declares it) does not split the series below the threshold
+        var renamed = One(Corr(Enumerable.Range(0, 10).Select(i => Sec(4776, i, ("TargetUserName", "ana.pop"), ("Workstation", "PC" + i), ("Status", "0xC000006A")))), "CRED-BRUTEFORCE");
+        Assert.Contains("cu 10 nume diferite", renamed.PlainWhat);
+        Assert.Contains("(controlerul de domeniu nu a înregistrat adresa)", renamed.Title);
+        // a successful NTLM validation (status 0x0) is not a failure
+        Assert.DoesNotContain(Corr(Enumerable.Range(0, 12).Select(i => Sec(4776, i, ("TargetUserName", "ana.pop"), ("Status", "0x0")))), x => x.RuleId == "CRED-BRUTEFORCE");
+    }
+
     // ---- D13 PowerShell ----
 
     private static TimelineEvent Block(double minute, string text, string id, params (string K, string V)[] extra) =>

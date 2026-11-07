@@ -159,6 +159,13 @@ public sealed class PolicyTimelineResult
         Severity = g.Severity, Category = "Control gap", Classification = Classification.Correlated,
         Confidence = g.Evidence.Count > 0 ? Confidence.Medium : Confidence.Low,
         FirstSeenUtc = g.WindowStart, LastSeenUtc = g.WindowEnd,
+        PlainWhat = $"Există o diferență între ce cere politica de securitate și ce se vede pe calculator: setarea {PlainPhrases.Q(g.Title)} este configurată, dar " + g.BrokenLevel switch
+        {
+            "applied" => "nu se vede că a fost preluată de calculator",
+            "enforced" => "starea efectivă a calculatorului nu o arată activă",
+            _ => "în jurnale nu apar evenimentele pe care ar trebui să le producă",
+        } + (g.DisablesAuditing ? "; astfel jurnalele pot să nu mai arate o parte din activitate" : "") +
+        "; probele nu arată de ce (poate fi o întârziere de aplicare, o filtrare sau un calculator oprit)",
         Description = g.Summary,
         ClassificationReason = "Politica așteptată (nivelul configurat) comparată cu probele de aplicare, de stare efectivă și de evenimente; fiecare nivel este observat, neobservat sau nedeterminat, iar un nivel nedeterminat nu produce decalaj.",
         SupportingEvidence = g.Evidence.Take(30).ToList(),

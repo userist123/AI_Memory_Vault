@@ -57,6 +57,12 @@ public static partial class Wp11Rules
                 FindingId = c.NextId(), RuleId = "SMB-ADMIN-SHARE", Title = $"Acces la partajare administrativă ({string.Join(", ", shares)}) de la {g.Key.Ip}: {acc}",
                 Severity = sev, Category = "Lateral Movement", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1021.002",
                 FirstSeenUtc = T(items[0].E), LastSeenUtc = T(items[^1].E), User = acc, Ip = g.Key.Ip, Description = desc,
+                // review 2026-11-07: an anonymous null session or a service account is not a person to put as the subject
+                PlainWhat = (PlainPhrases.KnownActor(acc) && !items[0].User.Equals("ANONYMOUS LOGON", StringComparison.OrdinalIgnoreCase) ? "a accesat" :
+                                items[0].User.Equals("ANONYMOUS LOGON", StringComparison.OrdinalIgnoreCase) ? "Cineva, fără cont (sesiune anonimă), a accesat" : "Cineva a accesat") +
+                            $" {PlainPhrases.Times(items.Count)}, de la adresa {g.Key.Ip}, {(shares.Count == 1 ? "partajarea administrativă" : "partajările administrative")} {PlainPhrases.List(shares.Select(PlainPhrases.Q).ToList())} {(shares.Count == 1 ? "a" : "ale")} acestui calculator" +
+                            (exeTargets.Count > 0 ? $", atingând fișiere executabile sau script ({PlainPhrases.List(exeTargets.Select(t => PlainPhrases.Q(PlainPhrases.Leaf(t))).ToList(), 3)})" : "") +
+                            (pipeHits.Contains("winreg", StringComparer.OrdinalIgnoreCase) ? ", inclusiv acces la registrul calculatorului de la distanță" : ""),
                 ClassificationReason = "Evenimente Security 5140/5145 care arată accesul la o partajare administrativă dintr-o adresă care nu este locală. Numărătoare, nu prag de volum.",
                 SemanticType = SemanticType.Observation,
                 SupportingEvidence = items.Take(20).Select(x => Ref(x.E, $"{x.E.EventId} {F(x.E, "ShareName")} {F(x.E, "RelativeTargetName")}".Trim())).ToList(),
@@ -80,6 +86,9 @@ public static partial class Wp11Rules
                 Title = $"Permisiuni modificate pe {LogAnalyzer.Dfir.Language.RoText.Count(names.Count, "obiect", "obiecte")} de fișier/director de {acc}" + (broad ? " (acces nou pentru Everyone/Authenticated Users)" : ""),
                 Severity = broad ? Severity.Medium : Severity.Low, Category = "Defense Evasion", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1222.001",
                 FirstSeenUtc = T(items[0]), LastSeenUtc = T(items[^1]), User = acc, Process = WinPath.GetFileName(F(items[0], "ProcessName")),
+                PlainWhat = $"a schimbat permisiunile (cine are voie să citească sau să scrie) pentru {LogAnalyzer.Dfir.Language.RoText.CountMasc(names.Count, "obiect", "obiecte")} de tip fișier sau director" +
+                            (names.Count > 0 ? $", printre care {PlainPhrases.List(names.Select(n => PlainPhrases.Q(PlainPhrases.Leaf(n))).Distinct().ToList(), 3)}" : "") +
+                            (broad ? "; noile permisiuni dau drepturi de scriere sau control total tuturor utilizatorilor (Everyone sau Authenticated Users)" : ""),
                 Description = $"{LogAnalyzer.Dfir.Language.RoText.Count(names.Count, "obiect", "obiecte")}, {LogAnalyzer.Dfir.Language.RoText.Count(items.Count, "eveniment", "evenimente")} 4670 de {acc} prin {F(items[0], "ProcessName")}: {Join(names, 8)}." +
                               (broad ? " Descriptorul nou acordă drepturi de scriere/control total pentru Everyone sau Authenticated Users, absente din cel vechi." : ""),
                 ClassificationReason = "Evenimente Security 4670 (permisiuni schimbate) pe obiecte de tip fișier/director/partajare; descriptorii vechi și noi sunt comparați doar pentru acordări largi noi.",

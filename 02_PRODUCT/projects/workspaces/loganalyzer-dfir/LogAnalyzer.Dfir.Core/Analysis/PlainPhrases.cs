@@ -53,6 +53,15 @@ internal static class PlainPhrases
     internal static string HostOf(IEnumerable<LogAnalyzer.Dfir.Model.TimelineEvent> events) =>
         events.Select(e => e.Host ?? "").Where(h => h.Length > 0 && h != "-").GroupBy(h => h, StringComparer.OrdinalIgnoreCase).OrderByDescending(g => g.Count()).Select(g => g.Key).FirstOrDefault() ?? "";
 
+    /// <summary>True when <paramref name="who"/> is ONE real account (not empty, „necunoscut”, a list, or a Windows service): the sentence can then use the account as its subject.</summary>
+    internal static bool KnownActor(string who)
+    {
+        var w = (who ?? "").Trim();
+        if (w.Contains("S-1-", StringComparison.Ordinal) && !LogAnalyzer.Dfir.Language.AccountResolver.IsSid(w)) return false;   // a SID inside a label would be printed by Who()
+        return w.Length > 0 && w != "-" && !w.Equals("necunoscut", StringComparison.OrdinalIgnoreCase) && !w.Contains(',') && !w.Contains(';') &&
+               !LogAnalyzer.Dfir.Language.PlainStory.IsStationAccount(w);
+    }
+
     /// <summary>The last segment of a path ("C:\x\updsvc.exe" → "updsvc.exe").</summary>
     internal static string Leaf(string path)
     {

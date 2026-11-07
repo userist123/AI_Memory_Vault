@@ -77,6 +77,7 @@ public static class HashSetMatcher
             {
                 FindingId = nextId(), RuleId = "HASHSET-KNOWN-BAD", Title = $"Amprentă cunoscut-rău (set „{m.SetName}”): {System.IO.Path.GetFileName(m.Path)}",
                 Severity = Severity.High, Category = "KnownBadHash", Classification = Classification.Direct, Confidence = Confidence.High, File = m.Path,
+                PlainWhat = $"Există în probe fișierul {LogAnalyzer.Dfir.Analysis.PlainPhrases.Q(LogAnalyzer.Dfir.Analysis.PlainPhrases.Leaf(m.Path))}, a cărui amprentă (identificatorul unic al conținutului) se găsește în lista de fișiere periculoase „{m.SetName}”, importată de operator; lista poate conține și un fișier legitim, deci sursa ei trebuie verificată",
                 Description = $"{m.Algorithm} {m.Hash} apare în setul „{m.SetName}” (categoria cunoscut-rău; sursa {m.SetSourceFile}, SHA-256 {m.SetSourceSha256}). Proba: {m.EvidenceId}, {m.Path}.",
                 ClassificationReason = "Potrivire exactă de amprentă cu o listă importată de operator.",
                 SupportingEvidence = [new EvidenceRef(m.EvidenceId, m.Locator, $"{m.Algorithm} {m.Hash} în setul „{m.SetName}” ({m.SetSourceFile})", m.EvidenceSha256)],
