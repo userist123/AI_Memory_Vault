@@ -8,14 +8,16 @@ import type { Catalog, Snapshot, MaterialsCatalog } from '@/core/types';
 import { viewerInput, type PlateVoid } from '@/lib/viewer-input';
 const NO_VOIDS: PlateVoid[] = [];
 import { toEngineCatalog } from '@/core/catalog';
-import { lighting, sunDirection, captureFileName, type TimeOfDay } from '@/core/lighting';
+import { lighting, solarLighting, sunDirection, captureFileName, type TimeOfDay } from '@/core/lighting';
 import { parseViews, addView, removeView, viewsKey, clampCut, type SavedView } from '@/core/saved-views';
 import { askPrompt } from '@/lib/dialog';
 import { classifyTier, parseTierPick, TIER_KEY, type Tier, type TierPick } from '@/core/viewport-tiers';
 
-export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_VOIDS, projectId, selectedId = null, hoverId = null, onHover, frame, onFrameOther }: { snap: Snapshot; catalog: Catalog; mc?: MaterialsCatalog | null; onPick(id: string | null): void; voids?: PlateVoid[]; projectId?: string;
+export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_VOIDS, projectId, selectedId = null, hoverId = null, onHover, frame, onFrameOther, sun = null }: { snap: Snapshot; catalog: Catalog; mc?: MaterialsCatalog | null; onPick(id: string | null): void; voids?: PlateVoid[]; projectId?: string;
   /** selecția comună cu planul (UI/UX P2-10): piesa selectată și cea de sub mouse (aici sau în plan); `frame.n` crește la fiecare cerere de încadrare */
-  selectedId?: string | null; hoverId?: string | null; onHover?(id: string | null): void; frame?: { id: string; n: number; at: number }; onFrameOther?(id: string): void }){
+  selectedId?: string | null; hoverId?: string | null; onHover?(id: string | null): void; frame?: { id: string; n: number; at: number }; onFrameOther?(id: string): void;
+  /** studiul de însorire: soarele real (azimut față de plan, înălțime); când e dat, înlocuiește momentul zilei ales aici */
+  sun?: { azimuthDeg: number; elevationDeg: number } | null }){
   const { t, lang } = usePrefs();
   const [room, setRoom] = useState<string | null>(null), [pano, setPano] = useState<{ url: string; title: string; file: string } | null>(null), [panoBusy, setPanoBusy] = useState(false), [panoMsg, setPanoMsg] = useState('');
   const ref = useRef<HTMLCanvasElement>(null), v = useRef<any>(null), pickRef = useRef(onPick), hoverRef = useRef(onHover); hoverRef.current = onHover;
@@ -56,8 +58,8 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   useEffect(() => { v.current?.setHover?.(hoverId); }, [hoverId]);
   useEffect(() => { if (frame && v.current?.frame?.(frame.id)){ setMode('house'); setRoom(null); } }, [frame?.n]); // eslint-disable-line
   useEffect(() => { v.current?.setXray?.(xray); }, [xray]);
-  function applyLight(){ const p = lighting(time, azimuth); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
-  useEffect(applyLight, [time, azimuth]); // eslint-disable-line
+  function applyLight(){ const p = sun ? solarLighting(sun.elevationDeg, sun.azimuthDeg) : lighting(time, azimuth); v.current?.setLighting({ ...p, dir: sunDirection(p.azimuthDeg, p.elevationDeg) }); }
+  useEffect(applyLight, [time, azimuth, sun?.azimuthDeg, sun?.elevationDeg]); // eslint-disable-line
   useEffect(() => { applyTier(); try { localStorage.setItem(TIER_KEY, tierPick); } catch { /* stocare plină sau blocată */ } }, [tierPick]); // eslint-disable-line
   // panoramă 360° a camerei curente, randată din mijlocul ei; se deschide în vizualizator și se poate descărca
   function openPano(){ if (!room || !v.current?.renderPanorama) return; setPanoBusy(true); setPanoMsg('');

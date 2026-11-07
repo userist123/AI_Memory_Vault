@@ -542,6 +542,18 @@
       "reason": "Casa3D research report for the A1 3D viewport phase, a plain markdown product document with its sources; it is not a memory note and therefore intentionally has no note frontmatter."
     },
     {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-casa3d-insorire.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent coordination checkpoint (protocol 00_GOVERNANCE/coordination/tasks/README.md), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/casa3d/PLAN_INSORIRE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Casa3D design document for the sunlight study (solar position, ray casting through windows, the winter-solstice rule), a plain markdown product document with its sources; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
       "path": "00_GOVERNANCE/coordination/tasks/README.md",
       "kind": "no_frontmatter",
       "category": "plain_document",

@@ -11,6 +11,16 @@ export function lighting(time: TimeOfDay, azimuthDeg = 135): LightingParams {
   const a = ((azimuthDeg % 360) + 360) % 360;
   return { ...PRESETS[time], azimuthDeg: a };
 }
+/** Lumina pentru o poziție reală a soarelui (studiul de însorire): sub orizont = noapte, aproape de orizont = seară,
+ *  apoi ziua cu intensitatea crescând cu înălțimea. `azimuthDeg` e deja față de plan (core/site-location.ts planAzimuth). */
+export function solarLighting(elevationDeg: number, azimuthDeg: number): LightingParams {
+  const a = ((azimuthDeg % 360) + 360) % 360;
+  if (elevationDeg <= 0) return { ...PRESETS.night, azimuthDeg: a };
+  const k = Math.min(1, elevationDeg / 15), d = PRESETS.day, e = PRESETS.evening, mix = (x: number, y: number) => x + (y - x) * k;
+  const hex = (x: string, y: string) => '#' + [1, 3, 5].map(i => Math.round(mix(parseInt(x.slice(i, i + 2), 16), parseInt(y.slice(i, i + 2), 16))).toString(16).padStart(2, '0')).join('');
+  return { background: hex(e.background, d.background), hemi: mix(e.hemi, d.hemi), sunColor: hex(e.sunColor, d.sunColor), sun: mix(e.sun, d.sun) * (0.55 + 0.45 * Math.sin(Math.min(90, elevationDeg) * Math.PI / 180)),
+    interior: mix(e.interior, d.interior), exposure: mix(e.exposure, d.exposure), elevationDeg: Math.max(1, elevationDeg), azimuthDeg: a };
+}
 /** Direcția spre soare în coordonatele scenei (x = est, y = sus, z = sud; planul are nordul spre -z). */
 export function sunDirection(azimuthDeg: number, elevationDeg: number): [number, number, number] {
   const az = azimuthDeg * Math.PI / 180, el = elevationDeg * Math.PI / 180;

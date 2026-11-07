@@ -17,6 +17,7 @@ import { floors, levelView, levelOfRoom, stairIssues, MAX_LEVELS } from '../core
 import type { Catalog, Snapshot, MaterialsCatalog, Underlay } from '../core/types';
 import { checkBrief } from '../core/brief';
 import { checkWardrobe } from '../core/joinery';
+import { checkSite, SiteError } from '../core/site-location';
 import { diffSnapshots } from '../core/diff';
 import { parseProposal, evaluateProposal, applyVariant, TIERS, type Tier, type RawProposal } from '../core/proposal';
 import { proposeByRules } from '../core/proposer-rules';
@@ -65,7 +66,7 @@ export function checkUnderlay(u: any): Underlay {
 /** Cheile de pe primul nivel ale modelului (core/types.ts, interfața Snapshot). Orice altă cheie se elimină la salvare,
  *  ca la scări: în proiect nu ajung câmpuri pe care nimic nu le validează. Testul din tests/audit-fixes.test.ts (C-2)
  *  compară lista cu interfața, ca o cheie nouă din model să nu fie ștearsă din greșeală. */
-export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary'] as const;
+export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary', 'site'] as const;
 /** Coordonatele (metri) rămân într-un pătrat de 2 km: valori uriașe (1e300) ar face suprafețele și bugetul Infinity. */
 export const COORD_MAX_M = 1000;
 /** `mc` (catalogul de materiale, la salvare): produsele alese la calorifer, aer condiționat și balustradă trebuie să existe în el, cu categoria potrivită. */
@@ -132,6 +133,8 @@ export function checkSnapshot(s: any, mc?: Pick<MaterialsCatalog, 'materials'>):
   if (s.joinery != null){ const out: Record<string, unknown> = {}, ids = new Set((s.placements as any[]).map(p => p?.id));
     if (typeof s.joinery === 'object' && !Array.isArray(s.joinery)) for (const [k, v] of Object.entries(s.joinery).slice(0, 200)){ if (!ids.has(k)) continue; try { out[k] = checkWardrobe(v); } catch (e: any){ throw new HttpError(400, e.message); } }
     if (Object.keys(out).length) s.joinery = out; else delete s.joinery; }
+  // amplasamentul (studiul de însorire): doar câmpurile modelului, coordonatele rotunjite la 0,01°
+  if (s.site != null){ try { s.site = checkSite(s.site); } catch (e){ if (e instanceof SiteError) throw new HttpError(400, e.message); throw e; } } else delete s.site;
   s.name = cleanName(s.name); s.picked = Array.isArray(s.picked) ? s.picked.filter((x: unknown) => typeof x === 'string') : [];
   for (const k of Object.keys(s)) if (!(SNAPSHOT_KEYS as readonly string[]).includes(k)) delete s[k];
   if (mc) pruneProducts(s as Snapshot, mc);
