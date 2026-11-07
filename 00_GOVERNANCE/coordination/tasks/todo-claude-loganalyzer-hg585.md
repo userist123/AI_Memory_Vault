@@ -224,10 +224,13 @@
   Accepted residuals: R1 a register row naming a built-in account („Administrator”) joins every computer's Administrator (register's statement);
   R2 another computer's local account seen here is labelled „domeniul X”; R3 tab refresh on register change runs only with a WPF Application.
   Lab (scratch wt-pdf, LAB-WS02/DC01/SRV01 evidence): WS02 labadmin 10, DC01/SRV01 Administrator 1/2, rest NoAuthor/Windows (CIM modules).
-  Tests: Dfir 2664, App 1018, UI 366, Edition 45.
+  Tests: Dfir 2664, App 1018, UI 366, Edition 45. CI on 0e2de293c: all green.
+- 2026-11-07T16:30+02:00 6153f049d A19 (new station check): on a domain controller (HKLM ProductOptions ProductType = LanmanNT) the audit policy
+  must record Failure for Kerberos Authentication Service and Credential Validation, else NECONFORM in plain words; no A19 line on other stations;
+  n/a on Standalone. CheckGuide, ControlApplicability, EDITIONS_AND_POSTURE.md and the annex (LA_UPDATE_DOCS=1) updated. Verified on LAB-DC01:
+  ProductType=LanmanNT, both subcategories Success and Failure (after the lab change) => CONFORM. Tests: Dfir 2668, App 1018, UI 366, Edition 45.
 ## Next
-00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); Control stație should flag the
-   missing DC failure auditing; rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
+00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.
 0b. Advanced pages on the open case (one data source) - biggest product gap found; SRUM: recover the dirty ESE copy (esentutl /r with the
    SRU logs) or mark the result as depending on it; route the "Alte N" summaries to the report.
