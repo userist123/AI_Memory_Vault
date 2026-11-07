@@ -264,6 +264,10 @@
 - 2026-11-07T22:00+02:00 P2.2 done: N04 reads BTHPORT\Parameters\Devices (address + UTF-8 Name; Parameters\Keys never read); a paired device on
   an isolated station => NECONFORM even with the service disabled or the radio removed. Format verified on the host (2 real pairings; names
   not printed). Guide + annex updated. Tests: Dfir 2697, App 1018, UI 366, Edition 45. Next P2.3 setupapi.dev.log parser, P2.6 N03 SSIDs.
+- 2026-11-07T22:40+02:00 P2.6 done (changed design): SSIDs NOT from the Wlansvc XML (earlier decision: never opened, can hold keys) but from
+  NetworkList\Profiles (NameType 71 Wi-Fi / 23 mobile broadband; ProfileName, DateCreated/DateLastConnected local SYSTEMTIME -> UTC).
+  N03 NECONFORM on an isolated station when the last wireless join is inside the controlled period (even with no adapter now). Format verified
+  elevated on the host (7 wireless profiles, names not printed). Tests: Dfir 2700, App 1018, UI 366, Edition 45. Next P2.3 setupapi.dev.log.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.
