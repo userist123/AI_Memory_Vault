@@ -175,6 +175,9 @@ namespace LogAnalyzer.UI.Tests
             Assert.Equal(("alice", "CORP"), LogClearAssessment.SubjectFromXml(Clear1102("alice").XmlData));
             Assert.Equal(("bob", "X"), LogClearAssessment.SubjectFromXml("<UserData><LogFileCleared><SubjectUserName>bob</SubjectUserName><SubjectDomainName>X</SubjectDomainName></LogFileCleared></UserData>"));
             Assert.Equal(("", ""), LogClearAssessment.SubjectFromXml(null));
+            // EventRecord.ToXml writes apostrophes; the subject must be read the same way, on any machine (CI 2026-11-08: a regex timeout made it "")
+            Assert.Equal(("carol", "LAB"), LogClearAssessment.SubjectFromXml("<EventData><Data Name='SubjectUserName'>carol</Data><Data Name='SubjectDomainName'>LAB</Data></EventData>"));
+            Assert.Equal(("a&b", ""), LogClearAssessment.SubjectFromXml("<UserData><LogFileCleared><SubjectUserName>a&amp;b</SubjectUserName></LogFileCleared></UserData>"));
         }
     }
 }

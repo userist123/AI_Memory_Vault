@@ -97,14 +97,22 @@ public static class LogClearAssessment
     private static string Field(string? x, string name)
     {
         if (string.IsNullOrEmpty(x)) return "";
-        var n = System.Text.RegularExpressions.Regex.Escape(name);
-        try
-        {
-            var m = System.Text.RegularExpressions.Regex.Match(x, $"(?:<Data\\s+Name=\"{n}\"\\s*>|<{n}>)([^<]*)<", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.NonBacktracking,
-                RegexDefaults.RuleMatchTimeout);   // linear engine; a timeout leaves the field unknown (""), it is not a detection decision
-            return m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim() : "";
-        }
-        catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return ""; }
+        // CI 2026-11-08: the regex with a match timeout sometimes timed out on a loaded runner, the subject came back "" and a planned clear by an
+        // approved account turned "Unexpected / High". A plain ordinal search has no timeout and gives the same answer on every machine.
+        // EventRecord.ToXml writes Name='…' with apostrophes, exports often Name="…": both are read
+        return ElementText(x, $"<Data Name=\"{name}\"") ?? ElementText(x, $"<Data Name='{name}'") ?? ElementText(x, $"<{name}>") ?? "";
+    }
+
+    /// <summary>The text after the first <paramref name="open"/> (case-insensitive) up to the next '&lt;', HTML-decoded and trimmed; null when absent.</summary>
+    private static string? ElementText(string x, string open)
+    {
+        int at = x.IndexOf(open, StringComparison.OrdinalIgnoreCase);
+        if (at < 0) return null;
+        int start = open.EndsWith('>') ? at + open.Length : x.IndexOf('>', at + open.Length) + 1;
+        if (start <= 0 || start > x.Length) return null;
+        int end = x.IndexOf('<', start);
+        if (end < 0) return null;
+        return System.Net.WebUtility.HtmlDecode(x[start..end]).Trim();
     }
 
     /// <summary>Highest severity of the assessed clears; Info when there is none.</summary>

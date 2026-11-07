@@ -313,6 +313,10 @@
   power log, disabled: MEDIA-OPTICAL-ACTIVITY contract now says an Explorer burn leaves no event; evidence = Burn staging, burn-tool logs/
   execution, LNK to CDROM. P3.2 (spool SPL/SHD) NOT done: files are deleted after printing unless KeepPrintedJobs; low yield. P3.5 partly
   done (lab harness on 4 VMs; physical USB stick NTFS + MTP phone still untested - needs the owner to plug them in).
+- 2026-11-08T05:50+02:00 CI fail on b77c8eca8 (UI LogClearLifecycleLegacyEngineTests: Info expected, High): LogClearAssessment.Field used a
+  NonBacktracking regex with a match timeout -> timed out on the runner -> subject "" -> Unexpected/High. REAL BUG too: the regex only matched
+  Name="…", but EventRecord.ToXml writes Name='…' (verified on a lab Security evtx), so live/legacy engines never read the clearing account and
+  a planned clear was always High. Replaced by an ordinal search reading both quote styles; tests added. Tests: Dfir 2729, App 1018, UI 366, Ed 45.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.
