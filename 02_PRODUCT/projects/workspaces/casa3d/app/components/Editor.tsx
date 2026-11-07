@@ -99,6 +99,7 @@ import { dimGeometry } from '@/core/annotations';
 import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
 import { flushSync } from 'react-dom';
 import { SunStudyPanel, SunOverlay, useStudy, defaultSunUi, sunAt, maxHours, type SunUi } from './SunStudy';
+import { applyRemedyWall } from '@/core/sun-design';
 import { readSite } from '@/core/site-location';
 const NO_FLOOR: Floor = { id: '-', name: '', ceilingHeight: 2.6, rooms: [], walls: [] };
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
@@ -485,8 +486,11 @@ export default function Editor({ id }: { id: string }){
   // studiul de însorire (etapa Concept): amplasamentul stă în proiect (revizii, link), ziua și ora doar în interfață
   const [sunUi, setSunUi] = useState<SunUi>(() => defaultSunUi());
   const siteKey = JSON.stringify(house?.site ?? null), site = useMemo(() => readSite(house?.site), [siteKey]); // eslint-disable-line react-hooks/exhaustive-deps
-  const sunActive = stage === 'concept' && !!site && !preview;
-  const sunStudy = useStudy(snap?.floor ?? NO_FLOOR, sunActive ? site : null, sunUi.date, sunUi.map);
+  // o propunere de lumină în previzualizare: planul, harta și 3D-ul arată varianta, studiul rămâne pornit
+  const sunPreview: Floor | null = preview?.pid === 'sun' ? preview.v.sunFloor : null;
+  const sunActive = stage === 'concept' && !!site && (!preview || !!sunPreview);
+  const sunStudy = useStudy(sunPreview ?? snap?.floor ?? NO_FLOOR, sunActive ? site : null, sunUi.date, sunUi.map);
+  const baseGeo = useStudy(snap?.floor ?? NO_FLOOR, null, sunUi.date, false).geo;
   const sun3d = useMemo(() => { if (!sunActive || !site) return null; const n = sunAt(site, sunUi); return { azimuthDeg: n.planAzimuthDeg, elevationDeg: n.elevationDeg }; }, [sunActive, site, sunUi.date, sunUi.minutes]); // eslint-disable-line react-hooks/exhaustive-deps
   if (!snap || !catalog || !mc) return toast ? <div className="home"><p className="muted" role="status">{toast}</p></div> : <EditorSkeleton label={t('editor.loading')} />;
   const G = groups(catalog);
@@ -794,7 +798,7 @@ export default function Editor({ id }: { id: string }){
           onSplitRoom={(roomId: string, axis: 'x' | 'z') => { const r = snap.floor.rooms.find(x => x.id === roomId); if (!r) return; try { const mid = axis === 'x' ? r3((r.rect.x0 + r.rect.x1) / 2) : r3((r.rect.z0 + r.rect.z1) / 2), nid = `room-${uid().slice(0, 8)}`, nf = splitRoom(snap.floor, r.id, axis, mid, { id: nid, name: `${r.name} B`, type: r.type }, newWallId()); mutate(s => { s.floor = nf; }); } catch (e: any) { say(e?.message || 'Error'); } }}
           calib={preview ? null : calib}
           onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })}
-          overlay={sunActive && site ? <SunOverlay floor={snap.floor} site={site} ui={sunUi} grid={sunStudy.grid} /> : undefined}
+          overlay={sunActive && site ? <SunOverlay floor={sunPreview ?? snap.floor} site={site} ui={sunUi} grid={sunStudy.grid} /> : undefined}
         />
           {!preview && !snap.floor.rooms.length && !snap.floor.walls.length && tool !== 'room' && tool !== 'wall' && <EmptyState className="plan-empty" title={t('empty.plan.title')} text={t('empty.plan.text')} action={{ label: t('empty.plan.action'), onClick: drawRooms }} />}
           {!preview && tool === 'wall_item' && <div className="toolopts" role="group" aria-label={t('tool.wall_item')}><label>{t('wallItem.kind')} <select value={wallItemKind} onChange={e => setWallItemKind(e.target.value as WallItemKind)}>
@@ -1101,6 +1105,13 @@ export default function Editor({ id }: { id: string }){
           {/* inspector:end */}
         </>}
         {stage === 'concept' && !showSel && <SunStudyPanel site={site} ui={sunUi} study={sunStudy.win} legendMax={sunStudy.grid ? maxHours(sunStudy.grid) : null} onUi={p => setSunUi(u => ({ ...u, ...p }))}
+          extras={site ? { geo: sunStudy.geo, base: baseGeo, norm: sunStudy.norm, gain: sunStudy.gain, placements: snap.placements, catalog, pieceName: p => resolve(catalog, p.variantId)?.product.name ?? p.group,
+            previewId: sunPreview ? preview!.v.remedyId : null,
+            onPreview: r => { const room = snap.floor.rooms.find(x => x.id === r?.roomId)?.name ?? '', f = r && applyRemedyWall(snap.floor, r);
+              if (r && !f){ say(t('sun.rem.stale')); return; }
+              setPreview(r && f ? { v: { candidate: mergeLevel(house!, L, { ...snap, floor: f }), title: t('sun.rem.previewTitle', { room }), tier: 'sun', sunFloor: f, remedyId: r.id }, pid: 'sun' } : null); },
+            // doar peretele schimbat intră în planul curent: scările, stâlpii, cotele, nișele adăugate între timp rămân
+            onApply: r => { setPreview(null); const f = applyRemedyWall(snap.floor, r); if (!f){ say(t('sun.rem.stale')); return; } commit({ ...snap, floor: f }); say(t('sun.rem.applied', { room: snap.floor.rooms.find(x => x.id === r.roomId)?.name ?? '', h: `${Math.floor(Math.round(r.afterH * 60) / 60)} h ${String(Math.round(r.afterH * 60) % 60).padStart(2, '0')}` })); } } : undefined}
           onSite={v => { mutate(s => { if (v) s.site = v; else delete s.site; }); if (v && !site) say(t('sun.enabled')); }} />}
         {stage === 'concept' && !showSel && <>
           <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>

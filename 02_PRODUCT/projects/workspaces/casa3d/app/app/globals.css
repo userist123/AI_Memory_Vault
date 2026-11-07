@@ -1520,3 +1520,16 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 .sun-note{margin:0;font-size:var(--fs-xs)}
 .sun-legend{display:flex;gap:6px;align-items:center;font-size:var(--fs-xs);color:var(--ink-3)}
 .sun-legend i{flex:1;height:8px;border-radius:4px;opacity:.75}
+.sun-rem,.sun-pieces{display:grid;gap:6px}
+.sun-rem h4,.sun-pieces h4{margin:6px 0 0}
+.sun-rem-room{display:grid;gap:6px;padding:8px;border:1px solid var(--rule);border-radius:6px}
+.sun-rem-head{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:var(--fs-sm)}
+.sun-rem-head .btn{margin-left:auto}
+.sun-rem-card{display:grid;gap:4px;padding:8px;border-radius:4px;background:var(--surface);font-size:var(--fs-sm);border-left:3px solid var(--rule)}
+.sun-rem-card.is-ok{border-left-color:var(--ok)}
+.sun-rem-card[aria-current]{outline:2px solid var(--accent);outline-offset:1px}
+.sun-rem-gain{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sun-rem-actions{display:flex;gap:6px;flex-wrap:wrap}
+.sun-allok{margin:0;font-size:var(--fs-sm);color:var(--ok)}
+.sun-pieces ul{margin:0;padding-left:18px;font-size:var(--fs-xs);display:grid;gap:4px}
+.sun-hot{color:var(--err)!important;font-weight:600}

@@ -67,8 +67,9 @@ export function sunDay(day: Date, lat: number, lon: number): SunDay {
 export function validTimeZone(tz: string): boolean { try { new Intl.DateTimeFormat('en-US', { timeZone: tz }); return true; } catch { return false; } }
 /** Diferența (minute) dintre ora locală din fusul `tz` și UTC la momentul dat. Fusul necunoscut aruncă RangeError (fără
  *  întoarcere tăcută la UTC: amplasamentul se validează la salvare cu validTimeZone). */
+const FMT = new Map<string, Intl.DateTimeFormat>();
 export function tzOffsetMin(when: Date, tz: string): number {
-  { const f = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  { let f = FMT.get(tz); if (!f){ f = new Intl.DateTimeFormat('en-US', { timeZone: tz, hourCycle: 'h23', year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }); FMT.set(tz, f); }
     const p: Record<string, number> = {}; for (const x of f.formatToParts(when)) if (x.type !== 'literal') p[x.type] = Number(x.value);
     return Math.round((Date.UTC(p.year!, p.month! - 1, p.day!, p.hour! % 24, p.minute!, p.second!) - Math.floor(when.getTime() / 1000) * 1000) / 6e4); }
 }

@@ -16,6 +16,7 @@ import { roomBoundary, pointInRoom } from './room-geometry';
 import { sunPosition, sunDay, utcToLocalMin } from './solar';
 import { sunVector, facing, type SiteInfo } from './site-location';
 
+export type { Slab };
 export const WINDOW_SILL = .9, WINDOW_HEIGHT = 1.3, DOOR_H = 2.1;
 export const NORM_HOURS = 1.5;
 /** Ziua de referință a normei (solstițiul de iarnă); declinația soarelui variază de la un an la altul cu sub 0,01°. */
@@ -74,7 +75,7 @@ export function seesSky(p: V3, d: V3, slabs: Slab[], rooms: Room[], H: number, s
   return true;
 }
 
-export interface StudyOptions { date: string; /** pasul de timp, minute */ stepMin?: number; /** latura celulei de pardoseală, m */ cellM?: number; floorGrid?: boolean }
+export interface StudyOptions { date: string; /** doar ferestrele acestei camere (căutarea de remedii) */ roomId?: string; /** pasul de timp, minute */ stepMin?: number; /** latura celulei de pardoseală, m */ cellM?: number; floorGrid?: boolean }
 export interface WindowSun { wallId: string; openingId: string; roomId: string; facing: string; hours: number; longestH: number; first: string | null; last: string | null; litMask: boolean[] }
 export interface RoomSun { roomId: string; name: string; type: string; habitable: boolean; hours: number; longestH: number; windows: number; verdict: 'ok' | 'low' | 'none' | 'na';
   /** fracția medie a pardoselii însorite cât e soare pe cer (0–1) și cea mai bună oră */ floorShare: number; peak: string | null }
@@ -83,8 +84,16 @@ export interface Study { date: string; times: string[]; /** pozițiile soarelui 
   sunrise: string | null; sunset: string | null; dayLengthH: number; noonElevationDeg: number; rooms: RoomSun[]; windows: WindowSun[]; cells: FloorCell[]; cellM: number; stepMin: number }
 
 const hhmm = (min: number) => { const m = ((Math.round(min) % 1440) + 1440) % 1440; return `${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`; };
+/** Ora de pe ceas mutată cu `d` minute (marginea unui pas al calculului). */
+const edge = (t: string, d: number) => { const [h, m] = t.split(':').map(Number); return hhmm(h! * 60 + m! + d); };
 function runs(mask: boolean[]){ let best = 0, cur = 0; for (const b of mask){ cur = b ? cur + 1 : 0; if (cur > best) best = cur; } return best; }
 
+/** Prisma fiecărui perete, după id (aceeași ordine de filtrare ca slabsOf). */
+export function slabMap(fl: Floor, slabs = slabsOf(fl)): Map<string, Slab> {
+  const m = new Map<string, Slab>(); let i = 0;
+  for (const w of fl.walls){ if (w.status === 'demolish') continue; if (Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) >= 1e-6) m.set(w.id, slabs[i++]!); }
+  return m;
+}
 /** Ferestrele nivelului, fiecare cu camera în care dă și normala spre exterior. */
 export function windowsOf(fl: Floor){
   const out: { wall: Wall; o: Wall['openings'][number]; room: Room; c: [number, number]; nOut: [number, number] }[] = [];
@@ -100,31 +109,37 @@ export function windowsOf(fl: Floor){
   return out;
 }
 
+// pașii soarelui depind doar de amplasament, zi și pas: căutarea de remedii simulează zeci de variante pe aceeași zi
+const STEPS = new Map<string, { day: ReturnType<typeof sunDay>; times: string[]; dirs: V3[]; sun: Study['sun'] }>();
+function sunSteps(site: SiteInfo, toUtc: (date: string, minutes: number) => Date, date: string, step: number){
+  const key = `${site.lat}|${site.lon}|${site.northDeg}|${site.tz}|${date}|${step}|${toUtc(date, 720).getTime()}`, hit = STEPS.get(key); if (hit) return hit;
+  const day = sunDay(toUtc(date, 720), site.lat, site.lon), times: string[] = [], dirs: V3[] = [], sun: Study['sun'] = [];
+  for (let m = step / 2; m < 1440; m += step){ const s = sunPosition(toUtc(date, m), site.lat, site.lon);
+    if (s.elevationDeg <= 0) continue; times.push(hhmm(m)); sun.push({ az: Math.round(s.azimuthDeg * 10) / 10, el: Math.round(s.elevationDeg * 10) / 10 });
+    dirs.push(sunVector(s.azimuthDeg, s.elevationDeg, site) as V3); }
+  if (STEPS.size > 32) STEPS.clear(); const v = { day, times, dirs, sun }; STEPS.set(key, v); return v;
+}
 /** Studiul complet pentru o zi. Momentele sunt în ora locală a amplasamentului. */
 export function insolationStudy(fl: Floor, site: SiteInfo, toUtc: (date: string, minutes: number) => Date, opts: StudyOptions): Study {
   const step = Math.max(2, Math.min(60, opts.stepMin ?? 10)), cellM = Math.max(.15, Math.min(1, opts.cellM ?? .3)), H = fl.ceilingHeight;
-  const slabs = slabsOf(fl), rooms = fl.rooms, wins = windowsOf(fl);
-  const day = sunDay(toUtc(opts.date, 720), site.lat, site.lon);
-  const times: string[] = [], dirs: (V3 | null)[] = [], sun: Study['sun'] = [];
-  for (let m = step / 2; m < 1440; m += step){ const s = sunPosition(toUtc(opts.date, m), site.lat, site.lon);
-    if (s.elevationDeg <= 0) continue; times.push(hhmm(m)); sun.push({ az: Math.round(s.azimuthDeg * 10) / 10, el: Math.round(s.elevationDeg * 10) / 10 });
-    dirs.push(sunVector(s.azimuthDeg, s.elevationDeg, site) as V3); }
-  const stepH = step / 60, slabByWall = new Map<string, Slab>(); { let i = 0; for (const w of fl.walls){ if (w.status === 'demolish') continue; if (Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) >= 1e-6) slabByWall.set(w.id, slabs[i++]!); } }
+  const slabs = slabsOf(fl), rooms = fl.rooms, wins = windowsOf(fl).filter(w => !opts.roomId || w.room.id === opts.roomId);
+  const st = sunSteps(site, toUtc, opts.date, step), day = st.day, dirs = st.dirs, times = st.times.slice(), sun = st.sun.slice(); // copii: cache-ul nu se modifică din afară
+  const stepH = step / 60, slabByWall = slabMap(fl, slabs);
   const windows: WindowSun[] = wins.map(({ wall, o, room, c, nOut }) => {
     const sill = o.sill ?? WINDOW_SILL, top = Math.min(H - .05, sill + (o.height ?? WINDOW_HEIGHT)), p: V3 = [c[0], (sill + top) / 2, c[1]];
     const litMask = dirs.map(d => !!d && d[0] * nOut[0] + d[2] * nOut[1] > 1e-4 && seesSky(p, d, slabs, rooms, H, slabByWall.get(wall.id)));
     const fi = litMask.indexOf(true), li = litMask.lastIndexOf(true);
     return { wallId: wall.id, openingId: o.id, roomId: room.id, facing: facing(nOut[0], nOut[1], site), hours: round2(litMask.filter(Boolean).length * stepH), longestH: round2(runs(litMask) * stepH),
-      first: fi >= 0 ? times[fi]! : null, last: li >= 0 ? times[li]! : null, litMask }; });
+      first: fi >= 0 ? edge(times[fi]!, -step / 2) : null, last: li >= 0 ? edge(times[li]!, step / 2) : null, litMask }; });
   const cells: FloorCell[] = [], share = new Map<string, number[]>();
-  if (opts.floorGrid !== false) for (const r of rooms){ const b = roomBoundary(r), xs = b.map(q => q[0]), zs = b.map(q => q[1]);
+  if (opts.floorGrid !== false) for (const r of rooms.filter(x => !opts.roomId || x.id === opts.roomId)){ const b = roomBoundary(r), xs = b.map(q => q[0]), zs = b.map(q => q[1]);
     const lit = new Array(dirs.length).fill(0); let n = 0;
     for (let x = Math.min(...xs) + cellM / 2; x < Math.max(...xs); x += cellM) for (let z = Math.min(...zs) + cellM / 2; z < Math.max(...zs); z += cellM){
       if (!pointInRoom(r, x, z)) continue; n++; let k = 0;
       dirs.forEach((d, i) => { if (d && seesSky([x, .01, z], d, slabs, rooms, H)){ k++; lit[i]++; } });
       cells.push({ x: round2(x), z: round2(z), hours: round2(k * stepH), roomId: r.id }); }
     share.set(r.id, n ? lit.map(v => v / n) : []); }
-  const roomsOut: RoomSun[] = rooms.map(r => {
+  const roomsOut: RoomSun[] = rooms.filter(x => !opts.roomId || x.id === opts.roomId).map(r => {
     const ws = windows.filter(w => w.roomId === r.id), any = dirs.map((_, i) => ws.some(w => w.litMask[i]));
     const hours = round2(any.filter(Boolean).length * stepH), longestH = round2(runs(any) * stepH), habitable = HABITABLE.has(r.type);
     const sh = share.get(r.id) ?? [], lit = sh.filter(v => v > 0), pi = sh.length ? sh.indexOf(Math.max(...sh)) : -1;
