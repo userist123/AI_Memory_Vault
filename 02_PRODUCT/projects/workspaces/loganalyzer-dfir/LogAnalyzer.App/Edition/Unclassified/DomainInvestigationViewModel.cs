@@ -74,7 +74,8 @@ namespace LogAnalyzer.UI.ViewModels
                          $"Graf: {graph.Entities.Count} entități, {graph.Relationships.Count} relații.";
             }
             catch (NetworkBlockedException ex) { Status = ex.Message + " " + ModeNote; }
-            catch (Exception ex) when (ex is InvalidOperationException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
+            // any failure of the collector is a message on the page, never a closed application (lab VM 2026-11-07: an unbindable COM call closed it)
+            catch (Exception ex) when (ex is not OperationCanceledException)
             {
                 // lab VM 2026-11-07: the English Windows message alone did not say what to do; the usual cause is the app running under a local account
                 bool local = Environment.UserDomainName.Equals(Environment.MachineName, StringComparison.OrdinalIgnoreCase);

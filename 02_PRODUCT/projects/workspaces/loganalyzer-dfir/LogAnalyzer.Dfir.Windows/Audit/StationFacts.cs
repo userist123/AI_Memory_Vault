@@ -412,7 +412,7 @@ public static class StationFactCollector
             s["Firewall.Private"] = ((bool)fw.FirewallEnabled[2]) ? "activ" : "inactiv";
             s["Firewall.Public"] = ((bool)fw.FirewallEnabled[4]) ? "activ" : "inactiv";
         }
-        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException) { }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException or NotImplementedException or NotSupportedException) { }   // a COM call that the published app cannot bind (lab VM 2026-11-07, AD) must not stop the collection
 
         try
         {
@@ -890,7 +890,7 @@ public static class StationFactCollector
             }
             return names.Count == 0 ? "nu" : "da: " + string.Join("; ", names);
         }
-        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException or InvalidCastException or UnauthorizedAccessException) { return ""; }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException or InvalidCastException or UnauthorizedAccessException or NotImplementedException or NotSupportedException) { return ""; }
     }
 
     // [NESIGUR] SystemDmaGuardPolicyInformation = 202, from the public Windows headers (phnt); it is the value msinfo32 shows as „Kernel DMA Protection”. Confirm in the lab.
