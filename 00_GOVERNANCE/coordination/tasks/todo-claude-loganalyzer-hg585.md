@@ -195,7 +195,12 @@
   AD inventory verified vs lab: 7 users, 3 computers, Domain Admins, no lockout (explains S1), 7 NECONFORM.
   Incident: after a reboot the Start search had focus and the sign-in script typed the LAB password there (screenshot deleted, VM search
   cleared); the UIA driver now refuses to type unless the app is in front. The lab password is lab-only and goes with the lab cleanup.
-  Next: containment of updsvc.exe, remote collection WS01 -> SRV01, Arhipelag redeploy on WS01, lab report .docx.
+  Containment verified end to end (scan found updsvc, isolate, firewall rules VERIFIED, scan tied it to Run+service, release VERIFIED):
+  fixed renamed-Windows-program detection (107cbbb8c), lost incident after GetOwner on a partial WMI object (3419a71c3), row refresh
+  (7b8dc5598). Remote collection = offline signed package: authorised on WS01, run on SRV01, 202 files imported with matching SHA-256;
+  absent logs (Sysmon) no longer "failed" (ee2e032c0). Open: MessageBox Yes/No in English; pages slide under the sidebar after an
+  off-screen button is brought into view (1024 px).
+  Next: Arhipelag redeploy on WS01, Insula rerun, lab report .docx (scratchpad md2docx).
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); Control stație should flag the
    missing DC failure auditing; rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
