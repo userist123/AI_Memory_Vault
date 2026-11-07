@@ -292,6 +292,15 @@
   AuditSubcategoriesUsed() ⊆ AuditPolicy.Subcategories. After the fix: DC01 A19 CONFORM; SRV01 (member) no A19; A20 DE VERIFICAT on all 4 (the
   Windows default); N03/N04/P28 CONFORM; P14 DE VERIFICAT (no profile on the VMs); A01 NECONFORM where Removable Storage/PnP are not audited.
   Tests: Dfir 2708, App 1018, UI 366, Edition 45.
+- 2026-11-08T03:00+02:00 (1) RecentItemsCollector (Recent\*.lnk, AutomaticDestinations, CustomDestinations of every ProfileList SID; StandardAndUp;
+  no elevation for own profile) + CustomJumpListParser (P3.1). Host run: 829 files, 0 malformed. (2) FOUND by routing test: the native USN export
+  started with "Exported by" -> preflight fingerprint "unknown" -> FORMAT_MISMATCH -> never parsed; fixed ("USN Journal ID" first) + new
+  fingerprints setupapi_dev / custom_destinations (SetupApiLogParser would also never have been selected). NewSourcesRoutingTests go through
+  WindowsParsers.Registry.Select. (3) vault-reviewer on the control batch REJECT, all fixed: P14 NECONFORM only when every channel is recognised
+  as non-storage (unknown medium => DE VERIFICAT); A20 no "pornit" when unread; N04 unread pairing list => NEDETERMINAT; A18 foreign-computer
+  archives excluded, newest 200 read + count, "integritatea nu este verificată"; A19 unread role => NEDETERMINAT; setupapi live file first;
+  Windows-made instance ("7&…") is no serial; WPD channel events need a non-stick device id; "prin cablu USB" removed. Parser count 21.
+  Lab rerun consistent. Tests: Dfir 2722, App 1018, UI 366, Edition 45. Round 2 review of this delta pending.
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.

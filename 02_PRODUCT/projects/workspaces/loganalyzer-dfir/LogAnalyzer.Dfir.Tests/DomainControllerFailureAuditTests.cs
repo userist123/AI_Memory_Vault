@@ -47,8 +47,10 @@ public sealed class DomainControllerFailureAuditTests
     [Fact]
     public void Workstations_member_servers_and_an_unknown_role_get_no_A19_line()
     {
-        foreach (var t in new[] { "WinNT", "ServerNT", "", StationFactCollector.Absent })
+        foreach (var t in new[] { "WinNT", "ServerNT", StationFactCollector.Absent })
             Assert.Null(A19(Station(t, new())));
+        // a role that could not be read: unknown, never silently "not a domain controller"
+        Assert.Equal(ControlStatus.Nedeterminat, A19(Station("", new()))!.Status);
     }
 
     [Fact]

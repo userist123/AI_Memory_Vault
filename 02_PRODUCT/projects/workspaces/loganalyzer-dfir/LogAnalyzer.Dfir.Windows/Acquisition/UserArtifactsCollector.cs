@@ -379,7 +379,7 @@ public sealed class UserArtifactsCollector : ICollector
 
     // ---- production defaults ----
 
-    private static IReadOnlyList<UserProfileEntry> ReadProfileList()
+    internal static IReadOnlyList<UserProfileEntry> ReadProfileList()
     {
         var list = new List<UserProfileEntry>();
         using var key = Registry.LocalMachine.OpenSubKey(ProfileListKey);

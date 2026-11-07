@@ -264,8 +264,12 @@ public static partial class Wp14Rules
                     hits.Add((e, VidPidRx.Match(inst) is { Success: true } m ? $"VID_{m.Groups["v"].Value.ToUpperInvariant()}&PID_{m.Groups["p"].Value.ToUpperInvariant()} {m.Groups["s"].Value}" : inst,
                               F(e, "DriverDescription", "DeviceDescription")));
             }
-            else if (InChannel(e, "WPD-MTPClassDriver") || InChannel(e, "WPD-ClassInstaller"))
-                hits.Add((e, F(e, "DeviceId", "DeviceInstanceId", "InstanceId", "DeviceName", "FriendlyName") is { Length: > 0 } k ? k : "(dispozitiv nespecificat)", F(e, "FriendlyName", "DeviceName")));
+            // review 2026-11-08: a WPD channel event counts only when it names a device that is not a stick's WPD view; events without a device id are not
+            // merged into one invented "phone"
+            else if ((InChannel(e, "WPD-MTPClassDriver") || InChannel(e, "WPD-ClassInstaller")) &&
+                     F(e, "DeviceId", "DeviceInstanceId", "InstanceId") is { Length: > 0 } k && !k.StartsWith(@"SWD\WPDBUSENUM\", StringComparison.OrdinalIgnoreCase) &&
+                     !k.Contains("USBSTOR", StringComparison.OrdinalIgnoreCase))
+                hits.Add((e, k, F(e, "FriendlyName", "DeviceName")));
         }
         foreach (var g in hits.GroupBy(h => h.Key, StringComparer.OrdinalIgnoreCase))
         {
@@ -284,7 +288,7 @@ public static partial class Wp14Rules
                 $"dispozitiv portabil {shown}", g.Key, desc,
                 "Nod de dispozitiv din clasa Windows Portable Devices (WPD) creat de Kernel-PnP, sau eveniment al driverului MTP, pe un sistem air-gapped sau autonom.",
                 ["Un telefon conectat doar la încărcat poate crea același nod dacă a fost deblocat în modul de transfer.", "Un aparat foto sau un cititor aprobat poate fi un mijloc de lucru legitim al stației."],
-                plain: $"A fost conectat un telefon, o cameră sau un player ({shown}) prin cablu USB; Windows nu ține evidența fișierelor copiate pe un astfel de dispozitiv, deci nu se poate spune din jurnale ce s-a copiat",
+                plain: $"A fost conectat un telefon, o cameră sau un player ({shown}); Windows nu ține evidența fișierelor copiate pe un astfel de dispozitiv, deci nu se poate spune din jurnale ce s-a copiat",
                 mitre: "T1052.001"));
         }
     }

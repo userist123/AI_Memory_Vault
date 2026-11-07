@@ -152,14 +152,16 @@ public static class UsnJournalNative
     /// </summary>
     public static void WriteCsv(TextWriter w, UsnJournalInfo info, IEnumerable<UsnRecord> records, TimeZoneInfo zone, string volume = "", string incomplete = "")
     {
+        // "USN Journal ID" must be the FIRST line: it is how the evidence preflight recognises the format (2026-11-08: with "Exported by" first, the
+        // collected journal was refused as a format mismatch and never parsed)
+        w.WriteLine($"USN Journal ID    : 0x{info.JournalId:x16}");
+        w.WriteLine($"First USN         : {info.FirstUsn.ToString(CultureInfo.InvariantCulture)}");
+        w.WriteLine($"Next USN          : {info.NextUsn.ToString(CultureInfo.InvariantCulture)}");
         w.WriteLine("Exported by       : LogAnalyzer (FSCTL_READ_USN_JOURNAL, citire directă; doar înregistrările v2/v3, convertite în formatul fsutil)");
         // review round 2: the volume label comes from the suspect medium; a line break in it would fake the CSV column line and drop the journal
         volume = OneLine(volume); incomplete = OneLine(incomplete);
         if (volume.Length > 0) w.WriteLine($"Volume            : {volume}");
         w.WriteLine($"Read complete     : {(incomplete.Length == 0 ? "da" : "NU - " + incomplete)}");
-        w.WriteLine($"USN Journal ID    : 0x{info.JournalId:x16}");
-        w.WriteLine($"First USN         : {info.FirstUsn.ToString(CultureInfo.InvariantCulture)}");
-        w.WriteLine($"Next USN          : {info.NextUsn.ToString(CultureInfo.InvariantCulture)}");
         w.WriteLine();
         w.WriteLine("Usn,File name,File name length,Reason #,Reason,Time stamp,File attributes #,File attributes,File ID,Parent file ID,Source info #,Source info,Security ID,Major version,Minor version,Record length,Time stamp UTC");
         foreach (var r in records)

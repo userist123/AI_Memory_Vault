@@ -22,7 +22,7 @@ public sealed class UsbBlockingByProfileTests
     {
         var c = P14(false, ["Imprimantă dedicată hârtie", "CD inscripționat aprobat"]);
         Assert.Equal(ControlStatus.Neconform, c.Status);
-        Assert.Contains("nu aprobă niciun canal de transfer pe USB", c.Detail);
+        Assert.Contains("toate canalele de transfer aprobate în profilul de proceduri sunt de alt tip decât un suport de stocare", c.Detail);
         Assert.Contains(c.Evidence, e => e == "Profil, canal aprobat: CD inscripționat aprobat");
     }
 

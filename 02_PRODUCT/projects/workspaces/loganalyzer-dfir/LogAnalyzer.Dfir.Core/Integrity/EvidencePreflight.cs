@@ -26,6 +26,8 @@ public static class EvidenceFingerprint
         if (n >= 4 && BinaryPrimitives.ReadUInt32LittleEndian(h) == 0x0A0D0D0A) return "pcapng";
         if (IsTaskXml(path)) return "task_xml";
         if (IsUsnExport(path)) return "usn_fsutil";
+        if (IsSetupApiLog(path)) return "setupapi_dev";
+        if (IsCustomDestinations(path, n, h)) return "custom_destinations";
         if (IsFirewallLog(path)) return "pfirewall";
         if (IsRecycleInfo(path)) return "recycle_info";
         var t = h.TrimStart(" \t\r\n﻿"u8);
@@ -46,6 +48,28 @@ public static class EvidenceFingerprint
     }
 
     /// <summary>Text written by <c>fsutil usn readjournal … csv</c>: it starts with the "USN Journal ID" line.</summary>
+    /// <summary>setupapi.dev.log: starts with "[Device Install Log]" (UTF-8, ANSI or UTF-16 LE with a BOM).</summary>
+    private static bool IsSetupApiLog(string path)
+    {
+        var buf = new byte[96];
+        int n;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        var head = n >= 2 && buf[0] == 0xFF && buf[1] == 0xFE ? System.Text.Encoding.Unicode.GetString(buf, 2, (n - 2) & ~1) : System.Text.Encoding.UTF8.GetString(buf, 0, n);
+        return head.TrimStart('﻿', ' ', '\r', '\n').StartsWith("[Device Install Log]", StringComparison.Ordinal);
+    }
+
+    /// <summary>A custom Jump List: version 2 in the first 4 bytes and the footer 0xBABFFBAB in the last 4.</summary>
+    private static bool IsCustomDestinations(string path, int n, ReadOnlySpan<byte> head)
+    {
+        if (n < 12 || BinaryPrimitives.ReadUInt32LittleEndian(head) != 2) return false;
+        using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        if (fs.Length < 12) return false;
+        fs.Seek(-4, SeekOrigin.End);
+        Span<byte> tail = stackalloc byte[4];
+        return fs.ReadAtLeast(tail, 4, throwOnEndOfStream: false) == 4 && BinaryPrimitives.ReadUInt32LittleEndian(tail) == 0xBABFFBAB;
+    }
+
     private static bool IsUsnExport(string path)
     {
         var buf = new byte[64];

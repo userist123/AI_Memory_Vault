@@ -45,13 +45,17 @@ public static partial class ControlEvaluator
         }
         var required = f.CollectedUtc.AddYears(-years);
         // research 2026-11-07 plan P1.3: the archives Windows left on the station (Archive-Security-*.evtx) extend the live log when they join it without a gap
-        var chain = ContinuousCoverage(oldest, f.SecurityArchives);
+        // review 2026-11-08: an archive written by another computer (its events name a different host) never extends this station's records
+        var foreign = f.SecurityArchives.Where(a => a.Computer.Length > 0 && f.Host.Length > 0 && !SameHost(a.Computer, f.Host)).ToList();
+        var chain = ContinuousCoverage(oldest, f.SecurityArchives.Except(foreign));
         var archEv = f.SecurityArchives.Select(a => a.Error.Length > 0 ? $"{a.File}: necitit ({a.Error})" : $"{a.File}: {a.OldestUtc:yyyy-MM-dd} – {a.NewestUtc:yyyy-MM-dd} UTC").ToList();
         var unreadable = f.SecurityArchives.Count(a => a.Error.Length > 0 || a.OldestUtc is null || a.NewestUtc is null);
         string archText = f.SecurityArchives.Count == 0 ? "Pe stație nu există arhive Archive-Security-*.evtx."
             : $"Pe stație există {LogAnalyzer.Dfir.Language.RoText.CountFem(f.SecurityArchives.Count, "arhivă", "arhive")} a jurnalului Security" +
               (chain.Used > 0 ? $", dintre care {chain.Used} se leagă fără întrerupere de jurnalul curent, deci înregistrările încep la {chain.Start:yyyy-MM-dd}" : ", dar niciuna nu se leagă fără întrerupere de jurnalul curent") +
               (unreadable > 0 ? $"; {unreadable} nu au putut fi citite" : "") +
+              (foreign.Count > 0 ? $"; {foreign.Count} sunt scrise de alt calculator ({string.Join(", ", foreign.Select(a => a.Computer).Distinct(StringComparer.OrdinalIgnoreCase))}) și nu se iau în seamă" : "") +
+              (chain.Used > 0 ? "; arhivele de pe stație sunt luate așa cum sunt, integritatea lor nu este verificată aici" : "") +
               (chain.Gap.Length > 0 ? $"; lipsesc înregistrări {chain.Gap} (poate fi și o perioadă în care stația a fost oprită)" : "") + ".";
         oldest = chain.Start;
         // the rank only compares levels across schemes: for a NATO / EU station the national rule is an equivalence, not its legal basis, so it is never CONFORM
@@ -59,8 +63,8 @@ public static partial class ControlEvaluator
         {
             Add(r, id, area, title, ControlStatus.DeVerificat,
                 $"{lvl} Nivelul {rules.Level.Name} nu este un nivel național: s-a aplicat regula nivelului național echivalent (tabelul de echivalență HG 585), care nu este neapărat baza legală a stației. " +
-                $"Jurnalul Security de pe stație începe la {oldest:yyyy-MM-dd} (UTC). Confirmați durata cerută din documentația de acreditare.",
-                [$"Security, cel mai vechi eveniment {oldest:yyyy-MM-dd HH:mm} UTC"], rec);
+                $"Înregistrările de acces de pe stație (jurnalul curent și arhivele legate de el) încep la {oldest:yyyy-MM-dd} (UTC). {archText} Confirmați durata cerută din documentația de acreditare.",
+                [$"Security (jurnal curent și arhive legate), primul eveniment {oldest:yyyy-MM-dd HH:mm} UTC", .. archEv], rec);
             return;
         }
         IEnumerable<string> ev = [$"Security (jurnal curent și arhive legate), primul eveniment {oldest:yyyy-MM-dd HH:mm} UTC", .. archEv];
@@ -73,6 +77,13 @@ public static partial class ControlEvaluator
                 $"{lvl} Înregistrările de acces de pe stație încep la {oldest:yyyy-MM-dd} (UTC); cele din {required:yyyy-MM-dd} până la {oldest:yyyy-MM-dd} trebuie să existe în arhivele exportate. {archText} " +
                 "Arhivele mutate pe alte suporturi nu se văd de aici: confirmați-le cu registrul exporturilor (întrebarea manuală M06).",
                 [.. ev, $"început cerut: {required:yyyy-MM-dd}"], rec);
+    }
+
+    /// <summary>„LAB-WS02” and „LAB-WS02.lab.local” are the same computer.</summary>
+    private static bool SameHost(string a, string b)
+    {
+        static string Short(string h) => (h.Contains('.') ? h[..h.IndexOf('.')] : h).Trim();
+        return Short(a).Equals(Short(b), StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

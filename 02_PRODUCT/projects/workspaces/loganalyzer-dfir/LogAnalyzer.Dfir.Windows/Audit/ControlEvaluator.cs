@@ -284,13 +284,17 @@ public static partial class ControlEvaluator
         bool usbBlocked = S("USBSTOR.Start") == "4" || S("RemovableStorage.DenyAll") == "1";
         // research 2026-11-07 plan P2.8: the verdict follows the procedure profile. A profile that approves no transfer over USB / removable media while the
         // station lets any stick be used is NECONFORM; one that approves such a channel leaves the media register (D01–D04) to decide; no profile: DE VERIFICAT
-        var usbChannel = f.ApprovedTransferMedia?.FirstOrDefault(m => UsbMediumWords.Any(w => m.Contains(w, StringComparison.OrdinalIgnoreCase)));
-        Add(r, "P14", "Politici", "Stocare USB blocată prin politică",
-            usbBlocked ? ControlStatus.Conform : f.ApprovedTransferMedia is null ? ControlStatus.DeVerificat : usbChannel is null ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+        // review 2026-11-08: NECONFORM only when EVERY approved channel is recognisably not a storage medium (paper, network, disc...); a channel whose
+        // medium is not recognised ("Card SD aprobat", "HDD portabil criptat") is never taken as "no USB channel"
+        var usbChannel = f.ApprovedTransferMedia?.FirstOrDefault(IsRemovableMedium);
+        var unknownChannel = f.ApprovedTransferMedia?.FirstOrDefault(m => !IsRemovableMedium(m) && !IsNonStorageMedium(m));
+        var p14 = usbBlocked ? ControlStatus.Conform : f.ApprovedTransferMedia is null || usbChannel is not null || unknownChannel is not null ? ControlStatus.DeVerificat : ControlStatus.Neconform;
+        Add(r, "P14", "Politici", "Stocare USB blocată prin politică", p14,
             usbBlocked ? "Accesul la stocare amovibilă este blocat."
                 : f.ApprovedTransferMedia is null ? "Stocarea USB este permisă. Profilul de proceduri nu definește canalele de transfer aprobate, deci nu se poate spune dacă stația are voie să folosească stick-uri."
-                : usbChannel is null ? $"Stocarea USB este permisă, dar profilul de proceduri nu aprobă niciun canal de transfer pe USB sau pe suport amovibil (canale aprobate: {string.Join("; ", f.ApprovedTransferMedia)}). Orice stick poate fi folosit fără să existe o procedură pentru el."
-                : $"Stocarea USB este permisă, iar profilul de proceduri aprobă transferul pe suport amovibil („{usbChannel}”). Verificați că se folosesc doar suporturile din registrul mediilor (D01–D04).",
+                : usbChannel is not null ? $"Stocarea USB este permisă, iar profilul de proceduri aprobă transferul pe suport amovibil („{usbChannel}”). Verificați că se folosesc doar suporturile din registrul mediilor (D01–D04)."
+                : unknownChannel is not null ? $"Stocarea USB este permisă. Profilul de proceduri aprobă canalul „{unknownChannel}”, al cărui mediu aplicația nu îl poate încadra: verificați dacă este un suport de stocare și, dacă da, că se folosesc doar suporturile din registrul mediilor (D01–D04)."
+                : $"Stocarea USB este permisă, dar toate canalele de transfer aprobate în profilul de proceduri sunt de alt tip decât un suport de stocare (canale aprobate: {string.Join("; ", f.ApprovedTransferMedia)}). Orice stick poate fi folosit fără să existe o procedură pentru el.",
             f.ApprovedTransferMedia is null ? [] : f.ApprovedTransferMedia.Select(m => "Profil, canal aprobat: " + m),
             rec: "Pe stațiile izolate, permiteți doar suporturi aprobate și înregistrate; dacă procedura nu prevede transfer pe USB, blocați stocarea USB (USBSTOR Start = 4 sau politica Removable Storage Access).");
     }
@@ -300,7 +304,19 @@ public static partial class ControlEvaluator
     private static readonly System.Text.RegularExpressions.Regex DiscMedium = new(@"(?<![\p{L}\d])(?:cd|dvd|blu-ray|bd-r|disc optic|disc inscripționat)(?![\p{L}\d])",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
-    private static readonly string[] UsbMediumWords =["usb", "stick", "amovibil", "removable", "flash", "disc extern", "hdd extern", "ssd extern", "suport de stocare"];
+    private static readonly System.Text.RegularExpressions.Regex RemovableMedium = new(
+        @"(?<![\p{L}\d])(?:usb|stick|amovibil\w*|removable|flash|card|sd|microsd|hdd|ssd|disc extern|disk\w*|portabil\w*|extern\w*|suport de stocare|memorie|cheie de memorie)(?![\p{L}\d])",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    private static readonly System.Text.RegularExpressions.Regex NonStorageMedium = new(
+        @"(?<![\p{L}\d])(?:hârtie|hartie|paper|imprimant\w*|tipărit\w*|tiparit\w*|print\w*|rețea\w*|retea\w*|network|lan|e-?mail|curier|fax|scanner|scanat\w*)(?![\p{L}\d])",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>A channel medium that is a storage device that can be carried (stick, card, external disk).</summary>
+    internal static bool IsRemovableMedium(string m) => RemovableMedium.IsMatch(m);
+
+    /// <summary>A channel medium that is recognisably not a carried storage device (paper, network, e-mail; a disc is told by P28).</summary>
+    internal static bool IsNonStorageMedium(string m) => NonStorageMedium.IsMatch(m) || DiscMedium.IsMatch(m);
 
     // ---- audit and logs ---------------------------------------------------------------------------------------
 
@@ -326,8 +342,14 @@ public static partial class ControlEvaluator
     /// </summary>
     private static void DomainControllerFailureAudit(StationFacts f, ControlReport r)
     {
-        if (!f.Settings.GetValueOrDefault("OS.ProductType", "").Equals("LanmanNT", StringComparison.OrdinalIgnoreCase)) return;
         const string title = "Controlerul de domeniu notează parolele greșite";
+        // review 2026-11-08: a role that was collected but could not be read is unknown (the station may be a domain controller), never "not a DC"
+        if (f.Settings.TryGetValue("OS.ProductType", out var role) && role == "")
+        {
+            Add(r, "A19", "Audit", title, ControlStatus.Nedeterminat, "Rolul calculatorului (controler de domeniu sau nu) nu a putut fi citit, deci nu se știe dacă verificarea se aplică." + NoRead);
+            return;
+        }
+        if (!(role ?? "").Equals("LanmanNT", StringComparison.OrdinalIgnoreCase)) return;
         if (f.AuditPolicy is not { } ap)
         {
             Add(r, "A19", "Audit", title, ControlStatus.Nedeterminat, "Politica de audit nu a putut fi citită." + NoRead);
@@ -375,8 +397,11 @@ public static partial class ControlEvaluator
         Add(r, "A20", "Audit", title, dfw == "1" && part == "1" ? ControlStatus.Conform : ControlStatus.DeVerificat,
             dfw == "1" && part == "1"
                 ? "Ambele jurnale sunt pornite: fiecare conectare și deconectare a unui dispozitiv lasă urme cu seria lui. Ce fișiere s-au copiat nu se vede aici (vezi A01 și A08)."
-                : dfw == "0"
+                // review 2026-11-08: the sentence about Partition/Diagnostic only when it was read as on
+                : dfw == "0" && part == "1"
                     ? "Jurnalul Partition/Diagnostic este pornit (conectările se văd, cu seria), dar DriverFrameworks-UserMode/Operational este oprit (cum este implicit în Windows), deci deconectările și conectările repetate ale aceluiași dispozitiv nu au urmă separată."
+                : dfw == "0"
+                    ? "DriverFrameworks-UserMode/Operational este oprit (cum este implicit în Windows), iar starea jurnalului Partition/Diagnostic nu a putut fi citită." + NoRead
                     : "Starea unuia dintre jurnale nu a putut fi citită." + NoRead,
             ev, "Porniți jurnalul Microsoft-Windows-DriverFrameworks-UserMode/Operational (de exemplu cu wevtutil sl … /e:true sau prin GPO).");
     }
@@ -1076,10 +1101,13 @@ public static partial class ControlEvaluator
             bool svcOff = svc is "4" or Absent;
             int paired = int.TryParse(S("Bluetooth.PairedCount"), out var pc) ? pc : 0;
             // a paired device on an isolated station means a pairing was made there: NECONFORM, whatever the service setting is now
-            var status = bt == 0 && paired == 0 ? ControlStatus.Conform : noInternet && (!svcOff || paired > 0) ? ControlStatus.Neconform : ControlStatus.DeVerificat;
-            var pairedText = paired > 0 ? $" Windows are {Ro.CountMasc(paired, "dispozitiv asociat", "dispozitive asociate")} (perechi salvate): {S("Bluetooth.Paired")}; o asociere înseamnă că dispozitivul a fost legat de stație, nu ce s-a transmis." : "";
+            // review 2026-11-08: no radio and an unread pairing list is unknown, never CONFORM
+            bool pairedUnread = S("Bluetooth.PairedCount") == "";
+            var status = bt == 0 && pairedUnread ? ControlStatus.Nedeterminat
+                : bt == 0 && paired == 0 ? ControlStatus.Conform : noInternet && (!svcOff || paired > 0) ? ControlStatus.Neconform : ControlStatus.DeVerificat;
+            var pairedText = paired > 0 ? $" Windows ține minte {Ro.CountMasc(paired, "dispozitiv Bluetooth", "dispozitive Bluetooth")} (de regulă asociate cu stația): {S("Bluetooth.Paired")}; o asociere înseamnă că dispozitivul a fost legat de stație, nu ce s-a transmis." : "";
             Add(r, "N04", "Rețea", "Bluetooth", status,
-                (bt == 0 ? (paired > 0 ? "Stația nu are acum componente Bluetooth." : "Stația nu are componente Bluetooth.") : $"Stația are Bluetooth ({Ro.CountFem(bt, "componentă", "componente")}: {S("Bluetooth.Components")}); serviciul Bluetooth este {(svcOff ? "dezactivat" : svc == "" ? "într-o stare necitită" : "permis să pornească")}.") +
+                (bt == 0 ? (paired > 0 ? "Stația nu are acum componente Bluetooth." : pairedUnread ? "Stația nu are componente Bluetooth, dar lista dispozitivelor ținute minte nu a putut fi citită." + NoRead : "Stația nu are componente Bluetooth.") : $"Stația are Bluetooth ({Ro.CountFem(bt, "componentă", "componente")}: {S("Bluetooth.Components")}); serviciul Bluetooth este {(svcOff ? "dezactivat" : svc == "" ? "într-o stare necitită" : "permis să pornească")}.") +
                 pairedText + (noInternet && (bt > 0 || paired > 0) ? " Prin Bluetooth se pot trimite fișiere fără cablu." : ""),
                 [@"HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start = " + Shown(svc), @"HKLM\SYSTEM\CurrentControlSet\Services\BTHPORT\Parameters\Devices → " + (S("Bluetooth.PairedCount") is { Length: > 0 } pcs ? pcs + " dispozitive" : "necitit")],
                 "Bluetooth trebuie oprit dacă organizația nu l-a aprobat în scris.");

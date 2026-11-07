@@ -47,7 +47,13 @@ public sealed class SetupApiLogParser : EvidenceParserBase
     public static string SerialOf(string deviceId)
     {
         var id = deviceId.Trim();
-        if (UsbstorSerial.Match(id) is { Success: true } m) return m.Groups["s"].Value;
+        // review 2026-11-08: a stick with no serial gets an instance made by Windows („7&1a2b3c4d&0”): the "7" before the ampersand is not a serial
+        if (UsbstorSerial.Match(id) is { Success: true } m)
+        {
+            var s = m.Groups["s"].Value;
+            var rest = id[(m.Index + m.Length)..];
+            return s.Length <= 2 && rest.StartsWith('&') ? "" : s;
+        }
         // an instance like 6&1a2b3c&0&1 is made by Windows for a device with no serial; an ampersand marks it
         if (UsbSerial.Match(id) is { Success: true } u && !u.Groups["s"].Value.Contains('&')) return u.Groups["s"].Value;
         return "";

@@ -22,7 +22,7 @@ public sealed record UsbDeviceFact(string Device, string Serial, string Friendly
 public sealed record ChannelCoverage(string Channel, DateTimeOffset? OldestUtc, long Records, bool Readable, string Note);
 
 /// <summary>An archived Security log Windows left on the station (Archive-Security-*.evtx, „archive when full”): the span of its events (check A18).</summary>
-public sealed record SecurityArchiveFact(string File, DateTimeOffset? OldestUtc, DateTimeOffset? NewestUtc, string Error);
+public sealed record SecurityArchiveFact(string File, DateTimeOffset? OldestUtc, DateTimeOffset? NewestUtc, string Error, string Computer = "");
 
 public enum VolumeKind { Sistem, Fix, Amovibil }
 
@@ -1039,36 +1039,42 @@ public static class StationFactCollector
     // ---- classified folders: audit rules (SACL) -----------------------------------------------------------------
 
     /// <summary>
-    /// Reads the audit rules of each folder. Reading a SACL needs the "Manage auditing and security log" right (administrators); the .NET call turns it
-    /// on in this process only, for the read, and nothing on the folder changes. Without the right the folder is reported as not read.
-    /// </summary>
-    /// <summary>
-    /// The archived Security logs in winevt\Logs (Archive-Security-*.evtx) with the time of their first and last event, read from the file only. Archives
-    /// kept elsewhere (exported to media) are not seen; check A18 says so.
+    /// The archived Security logs in winevt\Logs (Archive-Security-*.evtx) with the time of their first and last event and the computer that wrote them,
+    /// read from the file only; the newest <paramref name="maxArchives"/> (the file names carry the date), the rest counted. Archives kept elsewhere
+    /// (exported to media) are not seen; check A18 says so.
     /// </summary>
     internal static void ReadSecurityArchives(StationFacts f, int maxArchives = 200)
     {
         var logs = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32", "winevt", "Logs");
         if (!Directory.Exists(logs)) return;
-        foreach (var file in Directory.EnumerateFiles(logs, "Archive-Security-*.evtx").Order(StringComparer.OrdinalIgnoreCase).Take(maxArchives))
+        var all = Directory.EnumerateFiles(logs, "Archive-Security-*.evtx").OrderDescending(StringComparer.OrdinalIgnoreCase).ToList();
+        foreach (var file in all.Take(maxArchives))
         {
             try
             {
-                f.SecurityArchives.Add(new SecurityArchiveFact(Path.GetFileName(file), EdgeEvent(file, reverse: false), EdgeEvent(file, reverse: true), ""));
+                var (first, computer) = EdgeEvent(file, reverse: false);
+                f.SecurityArchives.Add(new SecurityArchiveFact(Path.GetFileName(file), first, EdgeEvent(file, reverse: true).Time, "", computer));
             }
             catch (Exception ex) when (ex is UnauthorizedAccessException or EventLogException or IOException)
             {
                 f.SecurityArchives.Add(new SecurityArchiveFact(Path.GetFileName(file), null, null, ex is UnauthorizedAccessException ? "acces refuzat (necesită administrator)" : ex.Message));
             }
         }
+        if (all.Count > maxArchives)
+            f.SecurityArchives.Add(new SecurityArchiveFact($"încă {all.Count - maxArchives} arhive mai vechi", null, null, "necitite (limita de citire)"));
     }
 
-    private static DateTimeOffset? EdgeEvent(string file, bool reverse)
+    private static (DateTimeOffset? Time, string Computer) EdgeEvent(string file, bool reverse)
     {
         using var reader = new EventLogReader(new EventLogQuery(file, PathType.FilePath) { ReverseDirection = reverse });
         using var rec = reader.ReadEvent();
-        return rec?.TimeCreated is { } t ? new DateTimeOffset(t.ToUniversalTime(), TimeSpan.Zero) : null;
+        return (rec?.TimeCreated is { } t ? new DateTimeOffset(t.ToUniversalTime(), TimeSpan.Zero) : null, rec?.MachineName ?? "");
     }
+
+    /// <summary>
+    /// Reads the audit rules of each folder. Reading a SACL needs the "Manage auditing and security log" right (administrators); the .NET call turns it
+    /// on in this process only, for the read, and nothing on the folder changes. Without the right the folder is reported as not read.
+    /// </summary>
     internal static List<FolderAuditFact> ReadFolderAudits(IEnumerable<string> folders)
     {
         var r = new List<FolderAuditFact>();

@@ -31,7 +31,7 @@ public sealed class LnkParser : EvidenceParserBase
             "Ținta este luată din LinkInfo (sau din RelativePath); lista de ID-uri shell (LinkTargetIDList) nu este decodată.",
             "Căile ANSI sunt decodate cu pagina de cod a stației de analiză; căile Unicode din LinkInfo au prioritate.",
             "Orele din antet sunt ale fișierului țintă la momentul scrierii linkului, nu ale linkului.",
-            "Jump Lists sunt citite separat (automaticDestinations); CustomDestinations nu sunt încă citite.",
+            "Jump Lists sunt citite separat (JumpListParser pentru automaticDestinations, CustomJumpListParser pentru customDestinations).",
         ],
         Status = ParserMaturity.Validated,
         Validation = "LnkParserTests: linkurile reale din Recent (corpus) comparate cu shell-ul Windows (WScript.Shell: țintă, argumente, folder de lucru) și link sintetic cu valori exacte",
