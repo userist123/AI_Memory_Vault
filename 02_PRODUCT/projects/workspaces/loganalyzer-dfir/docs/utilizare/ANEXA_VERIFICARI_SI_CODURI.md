@@ -505,9 +505,9 @@
 
 - **Ce verificăm:** Dacă înregistrările de acces (jurnalul Security) sunt păstrate atât cât cere nivelul de clasificare al stației.
 - **De ce contează:** HG 585 art. 291 cere păstrarea registrelor de acces cel puțin 3 ani la secret și strict secret și cel puțin 10 ani la strict secret de importanță deosebită; la secret de serviciu durata o fixează documentația de acreditare.
-- **Cum verifică aplicația:** A citit nivelul stației din Profilul de proceduri și data celui mai vechi eveniment din jurnalul Security, apoi a comparat-o cu începutul perioadei cerute de nivel.
-- **Sursa tehnică:** `Profilul de proceduri (Nivelul stației); jurnalul Security, primul eveniment`
-- **Cum se citește rezultatul:** Conform = jurnalul de pe stație acoperă singur durata cerută. De verificat = jurnalul începe mai târziu: înregistrările mai vechi trebuie să fie în arhivele exportate, pe care aplicația nu le vede. Nedeterminat = nivelul nu este definit în profil sau jurnalul nu a putut fi citit.
+- **Cum verifică aplicația:** A citit nivelul stației din Profilul de proceduri, data celui mai vechi eveniment din jurnalul Security și intervalul fiecărei arhive Archive-Security-*.evtx lăsate de Windows pe stație; arhivele care se leagă fără întrerupere (cel mult o zi) de jurnalul curent prelungesc acoperirea. A comparat începutul acoperirii cu începutul perioadei cerute de nivel.
+- **Sursa tehnică:** `Profilul de proceduri (Nivelul stației); jurnalul Security, primul eveniment; %SystemRoot%\System32\winevt\Logs\Archive-Security-*.evtx (primul și ultimul eveniment)`
+- **Cum se citește rezultatul:** Conform = jurnalul de pe stație, singur sau împreună cu arhivele lui de pe stație, acoperă fără întrerupere durata cerută. De verificat = acoperirea începe mai târziu sau are o întrerupere (spusă în constatare): înregistrările mai vechi trebuie să fie în arhivele exportate pe alte suporturi, pe care aplicația nu le vede. Nedeterminat = nivelul nu este definit în profil sau jurnalul nu a putut fi citit.
 
 ### A19
 

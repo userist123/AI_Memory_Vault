@@ -44,6 +44,16 @@ public static partial class ControlEvaluator
             return;
         }
         var required = f.CollectedUtc.AddYears(-years);
+        // research 2026-11-07 plan P1.3: the archives Windows left on the station (Archive-Security-*.evtx) extend the live log when they join it without a gap
+        var chain = ContinuousCoverage(oldest, f.SecurityArchives);
+        var archEv = f.SecurityArchives.Select(a => a.Error.Length > 0 ? $"{a.File}: necitit ({a.Error})" : $"{a.File}: {a.OldestUtc:yyyy-MM-dd} – {a.NewestUtc:yyyy-MM-dd} UTC").ToList();
+        var unreadable = f.SecurityArchives.Count(a => a.Error.Length > 0 || a.OldestUtc is null || a.NewestUtc is null);
+        string archText = f.SecurityArchives.Count == 0 ? "Pe stație nu există arhive Archive-Security-*.evtx."
+            : $"Pe stație există {LogAnalyzer.Dfir.Language.RoText.CountFem(f.SecurityArchives.Count, "arhivă", "arhive")} a jurnalului Security" +
+              (chain.Used > 0 ? $", dintre care {chain.Used} se leagă fără întrerupere de jurnalul curent, deci înregistrările încep la {chain.Start:yyyy-MM-dd}" : ", dar niciuna nu se leagă fără întrerupere de jurnalul curent") +
+              (unreadable > 0 ? $"; {unreadable} nu au putut fi citite" : "") +
+              (chain.Gap.Length > 0 ? $"; lipsesc înregistrări {chain.Gap} (poate fi și o perioadă în care stația a fost oprită)" : "") + ".";
+        oldest = chain.Start;
         // the rank only compares levels across schemes: for a NATO / EU station the national rule is an equivalence, not its legal basis, so it is never CONFORM
         if (rules.Level.Scheme != LogAnalyzer.Dfir.Model.SecrecyScheme.National)
         {
@@ -53,15 +63,35 @@ public static partial class ControlEvaluator
                 [$"Security, cel mai vechi eveniment {oldest:yyyy-MM-dd HH:mm} UTC"], rec);
             return;
         }
+        IEnumerable<string> ev = [$"Security (jurnal curent și arhive legate), primul eveniment {oldest:yyyy-MM-dd HH:mm} UTC", .. archEv];
         if (oldest <= required)
             Add(r, id, area, title, ControlStatus.Conform,
-                $"{lvl} Jurnalul Security de pe stație începe la {oldest:yyyy-MM-dd} (UTC), deci acoperă singur ultimii {years} ani (de la {required:yyyy-MM-dd}).",
-                [$"Security, cel mai vechi eveniment {oldest:yyyy-MM-dd HH:mm} UTC"], rec);
+                $"{lvl} {(chain.Used == 0 ? "Jurnalul Security de pe stație" : "Jurnalul Security de pe stație, împreună cu arhivele lui,")} începe la {oldest:yyyy-MM-dd} (UTC), deci acoperă ultimii {years} ani (de la {required:yyyy-MM-dd}). {archText}",
+                ev, rec);
         else
             Add(r, id, area, title, ControlStatus.DeVerificat,
-                $"{lvl} Jurnalul Security de pe stație începe la {oldest:yyyy-MM-dd} (UTC); înregistrările de acces din {required:yyyy-MM-dd} până la {oldest:yyyy-MM-dd} trebuie să existe în arhivele exportate. " +
-                "Aplicația nu vede arhivele: confirmați-le cu registrul exporturilor (întrebarea manuală M06).",
-                [$"Security, cel mai vechi eveniment {oldest:yyyy-MM-dd HH:mm} UTC", $"început cerut: {required:yyyy-MM-dd}"], rec);
+                $"{lvl} Înregistrările de acces de pe stație încep la {oldest:yyyy-MM-dd} (UTC); cele din {required:yyyy-MM-dd} până la {oldest:yyyy-MM-dd} trebuie să existe în arhivele exportate. {archText} " +
+                "Arhivele mutate pe alte suporturi nu se văd de aici: confirmați-le cu registrul exporturilor (întrebarea manuală M06).",
+                [.. ev, $"început cerut: {required:yyyy-MM-dd}"], rec);
+    }
+
+    /// <summary>
+    /// The earliest time from which the access records are continuous up to now: the live log's first event, moved back through every archive that reaches
+    /// it within <paramref name="tolerance"/>; the first break is reported as a gap. An archive that is unreadable or empty never extends the coverage. Pure.
+    /// </summary>
+    public static (DateTimeOffset Start, int Used, string Gap) ContinuousCoverage(DateTimeOffset liveOldest, IEnumerable<SecurityArchiveFact> archives, TimeSpan? tolerance = null)
+    {
+        var tol = tolerance ?? TimeSpan.FromDays(1);
+        var usable = archives.Where(a => a.Error.Length == 0 && a.OldestUtc is not null && a.NewestUtc is not null && a.OldestUtc <= a.NewestUtc).ToList();
+        var start = liveOldest; int used = 0;
+        while (usable.Where(a => a.NewestUtc >= start - tol && a.OldestUtc < start).MinBy(a => a.OldestUtc) is { } next)
+        {
+            start = next.OldestUtc!.Value;
+            used++;
+            usable.Remove(next);
+        }
+        var before = usable.Where(a => a.NewestUtc < start - tol).MaxBy(a => a.NewestUtc);
+        return (start, used, before is null ? "" : $"între {before.NewestUtc:yyyy-MM-dd} și {start:yyyy-MM-dd}");
     }
 
     /// <summary>N14 (Internet edition only): a station of a level where the internet is forbidden (SSID) must not run the Internet edition.</summary>

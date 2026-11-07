@@ -248,6 +248,13 @@
   off => NECONFORM; DriverFrameworks-UserMode/Operational default OFF: off => DE VERIFICAT; both on => CONFORM; unreadable never CONFORM).
   Host check: Partition on, DFW off (=> DE VERIFICAT), channel names verified. Guide, applicability, docs, annex updated.
   Next P1: P1.3 archive inventory for A18 (retention 3/10 years). Tests: Dfir 2685, App 1018, UI 366, Edition 45.
+- 2026-11-07T20:50+02:00 P1.3 done: StationFacts.SecurityArchives (winevt\Logs\Archive-Security-*.evtx, first/last event from the file);
+  ControlEvaluator.ContinuousCoverage chains archives to the live log (gap tolerance 1 day; unreadable/empty never extends); A18 CONFORM when
+  the chain covers the level's years, else DE VERIFICAT naming the gap ("poate fi și o perioadă în care stația a fost oprită") and that archives
+  on other media are not seen. Not reviewed by vault-reviewer (control logic, not a security boundary) - residual: an archive file left on the
+  station is trusted as-is (no integrity check). P1 complete. Tests: Dfir 2689, App 1018, UI 366, Edition 45.
+  Next: P2 of the research plan (WPD/MTP channel + rule, BTHPORT paired devices, setupapi.dev.log parser, N03 SSIDs, P20 all profiles, P14/P28
+  verdicts from the procedure profile).
 ## Next
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.

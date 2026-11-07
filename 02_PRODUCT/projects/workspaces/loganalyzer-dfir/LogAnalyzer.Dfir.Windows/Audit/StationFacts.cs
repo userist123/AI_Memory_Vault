@@ -21,6 +21,9 @@ public sealed record UsbDeviceFact(string Device, string Serial, string Friendly
 
 public sealed record ChannelCoverage(string Channel, DateTimeOffset? OldestUtc, long Records, bool Readable, string Note);
 
+/// <summary>An archived Security log Windows left on the station (Archive-Security-*.evtx, „archive when full”): the span of its events (check A18).</summary>
+public sealed record SecurityArchiveFact(string File, DateTimeOffset? OldestUtc, DateTimeOffset? NewestUtc, string Error);
+
 public enum VolumeKind { Sistem, Fix, Amovibil }
 
 /// <summary>
@@ -80,6 +83,7 @@ public sealed class StationFacts
     public List<UsbDeviceFact> UsbDevices { get; init; } = [];
     public List<LogFact> Logs { get; init; } = [];
     public List<ChannelCoverage> Coverage { get; init; } = [];
+    public List<SecurityArchiveFact> SecurityArchives { get; init; } = [];
     public List<EvidenceGap> Gaps { get; init; } = [];
 
     // Air-gap station requirements (comparison 2026-10-12, rows A2-A16, B8, C8). For every list, null = the source could not be read.
@@ -242,6 +246,7 @@ public static class StationFactCollector
         Try(facts, "Setări de securitate (extinse)", () => ReadSettingsWave2(facts));
         Try(facts, "Setări de securitate (stație izolată)", () => ReadSettingsWave3(facts));
         Try(facts, "Volume și BitLocker", () => ReadVolumes(facts));
+        Try(facts, "Arhivele jurnalului Security", () => ReadSecurityArchives(facts));
         Try(facts, "Căi spre internet (configurație locală)", () => facts.EgressPaths = EgressPathCollector.Collect(facts.EgressUnread));
         Try(facts, "Apartenența la domeniu", () => ReadDomainMembership(facts));
         if (dcProbe is not null && posture == LogAnalyzer.Core.Services.Edition.StationPosture.IsolatedNetwork
@@ -1009,6 +1014,33 @@ public static class StationFactCollector
     /// Reads the audit rules of each folder. Reading a SACL needs the "Manage auditing and security log" right (administrators); the .NET call turns it
     /// on in this process only, for the read, and nothing on the folder changes. Without the right the folder is reported as not read.
     /// </summary>
+    /// <summary>
+    /// The archived Security logs in winevt\Logs (Archive-Security-*.evtx) with the time of their first and last event, read from the file only. Archives
+    /// kept elsewhere (exported to media) are not seen; check A18 says so.
+    /// </summary>
+    internal static void ReadSecurityArchives(StationFacts f, int maxArchives = 200)
+    {
+        var logs = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32", "winevt", "Logs");
+        if (!Directory.Exists(logs)) return;
+        foreach (var file in Directory.EnumerateFiles(logs, "Archive-Security-*.evtx").Order(StringComparer.OrdinalIgnoreCase).Take(maxArchives))
+        {
+            try
+            {
+                f.SecurityArchives.Add(new SecurityArchiveFact(Path.GetFileName(file), EdgeEvent(file, reverse: false), EdgeEvent(file, reverse: true), ""));
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or EventLogException or IOException)
+            {
+                f.SecurityArchives.Add(new SecurityArchiveFact(Path.GetFileName(file), null, null, ex is UnauthorizedAccessException ? "acces refuzat (necesită administrator)" : ex.Message));
+            }
+        }
+    }
+
+    private static DateTimeOffset? EdgeEvent(string file, bool reverse)
+    {
+        using var reader = new EventLogReader(new EventLogQuery(file, PathType.FilePath) { ReverseDirection = reverse });
+        using var rec = reader.ReadEvent();
+        return rec?.TimeCreated is { } t ? new DateTimeOffset(t.ToUniversalTime(), TimeSpan.Zero) : null;
+    }
     internal static List<FolderAuditFact> ReadFolderAudits(IEnumerable<string> folders)
     {
         var r = new List<FolderAuditFact>();
