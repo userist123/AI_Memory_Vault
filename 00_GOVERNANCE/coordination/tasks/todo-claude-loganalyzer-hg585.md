@@ -332,8 +332,17 @@
   (fixed, Probe_H) + probe K (investigator reviewing own work after a colleague submitted; fixed). ACCEPTED RESIDUALS (main session, recorded
   in the doc): same-length truncation of BOTH workflow and case audit (case audit not sealed - owner decision), identity = OperatorIdentity.
   Lab: Insula WS02, Arhipelag + Continent WS01 screenshots (E:\LA-Lab\shots\LAB-WS0x\ws0x-*wf*). Suites: Dfir 2749, App 1020, UI 368, Ed 45.
+- 6.16 DONE (2026-11-08T01:00): Case/AnalysisRuns.cs (immutable Analysis/Runs/RUN-*/run_manifest.json + diff_previous.json, CreateNew +
+  read-only + custody + manifest sha in audit; List checks it against the VERIFIED audit chain by file position; stable finding key rule +
+  evidence locators + #n; diff source Inputs/Toolchain/Unexplained; collection settings recorded but not compared), recorded BEFORE the
+  schema-manifest anchor; tab „Rulări și diferențe” + „Reanalizează cazul deschis” (same signed media register, refused when read-only or
+  workflow-Closed, Recheck after); docs/dfir/ANALYSIS_RUNS.md. Opus review 2 rounds (round 1: duplicate rule id crash HIGH, hidden duplicate
+  findings, forged audit line, anchor order, missing folder, settings; round 2: forged line claiming seq 1, collection settings) all fixed
+  with tests (AnalysisRunsTests 16). Lab: WS02 two reanalyses 159 evidence/20,895 events -> „Aceleași constatări (83)”; WS01 Arhipelag then
+  Continent same case 188/50,943 -> „Aceleași constatări (74)”. NOTE: lab VMs' Windows evaluation expired -> each VM shuts down hourly
+  (WS01 ~:14, WS02 ~:20), watchdog restarts it; plan lab work inside the window, never touch licensing. Suites: Dfir 2765, App 1022, UI 368, Ed 45.
 ## Next
--1. MASTER PLAN order after 6.1: 6.16 AnalysisRun manifest + immutable runs + diff; 6.9 bookmarks/saved views; 6.12 signed offline TI
+-1. MASTER PLAN order after 6.1 + 6.16: 6.9 bookmarks/saved views; 6.12 signed offline TI
    packages (staging/approval/rollback); 6.7 PE triage; 6.5 JA3; 6.8 rule test lab; 6.11 graph view; 6.4 coverage heatmap; 6.14 target-bound
    approval. Each: tests, Opus review for risky code, lab screenshots on the three editions.
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).

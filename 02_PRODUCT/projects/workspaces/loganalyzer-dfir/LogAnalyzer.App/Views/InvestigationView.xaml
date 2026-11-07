@@ -503,6 +503,56 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
+            <!-- Master plan 6.16: immutable analysis runs (Analysis/Runs) and the difference between two of them, with the likely source of each change. -->
+            <TabItem Header="Rulări și diferențe" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Rulări și diferențe: analizele înregistrate și ce s-a schimbat între ele">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding RunsLine}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,4"
+                               AutomationProperties.Name="Starea rulărilor"/>
+                    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"
+                               Text="Fiecare analiză se înregistrează o singură dată, doar pentru citire, cu versiunile uneltelor și amprentele probelor. O analiză nouă nu o rescrie pe cea veche: diferențele se văd aici."/>
+                    <!-- lab 2026-11-08: the verdict sits at the top; at the bottom it fell outside the tab at 1024 px -->
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding RunDiffSummary}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,6" AutomationProperties.Name="Rezumatul diferenței">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource EvidenceAccentBrush}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding RunDiffNeedsReview}" Value="True"><Setter Property="Foreground" Value="{StaticResource WarningBrush}"/></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <DataGrid DockPanel.Dock="Top" AutomationProperties.Name="Rulările analizei" ItemsSource="{Binding AnalysisRunRows}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="170" Margin="0,0,0,6">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}">
+                                <Setter Property="AutomationProperties.Name" Value="{Binding RunId}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding IntegrityOk}" Value="False"><Setter Property="Foreground" Value="{StaticResource DangerBrush}"/><Setter Property="FontWeight" Value="SemiBold"/></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Rulare" Binding="{Binding RunId}" Width="190"/>
+                            <DataGridTextColumn Header="Încheiată (UTC)" Binding="{Binding FinishedUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
+                            <DataGridTextColumn Header="Versiune" Binding="{Binding ApplicationVersion}" Width="90"/>
+                            <DataGridTextColumn Header="Probe" Binding="{Binding Inputs}" Width="60"/>
+                            <DataGridTextColumn Header="Constatări" Binding="{Binding Findings}" Width="80"/>
+                            <DataGridTextColumn Header="Integritate" Binding="{Binding Integrity}" Width="*"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">
+                        <TextBlock Text="Compară" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <ComboBox ItemsSource="{Binding AnalysisRunRows}" SelectedItem="{Binding RunBefore}" DisplayMemberPath="RunId" MinWidth="200" Margin="0,0,6,0" AutomationProperties.Name="Rularea de dinainte"/>
+                        <TextBlock Text="cu" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <ComboBox ItemsSource="{Binding AnalysisRunRows}" SelectedItem="{Binding RunAfter}" DisplayMemberPath="RunId" MinWidth="200" Margin="0,0,8,0" AutomationProperties.Name="Rularea de după"/>
+                        <Button Content="Compară" Command="{Binding CompareRunsCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,6" Margin="0,0,8,0" AutomationProperties.Name="Compară rulările alese"/>
+                        <Button Content="Reanalizează cazul deschis" Command="{Binding ReanalyzeCommand}" Padding="14,6" AutomationProperties.Name="Reanalizează cazul deschis pe aceleași probe"
+                                ToolTip="Rulează din nou analiza pe probele deja din caz, fără colectare nouă; rularea veche rămâne înregistrată."/>
+                    </WrapPanel>
+                    <ListBox ItemsSource="{Binding RunDiffLines}" AutomationProperties.Name="Diferențele dintre rulări" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </TabItem>
             <TabItem Header="Integritate air-gap" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,6">

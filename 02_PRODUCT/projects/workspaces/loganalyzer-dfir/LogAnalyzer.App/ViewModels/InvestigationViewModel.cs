@@ -449,6 +449,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task Run()
         {
+            if (IsBusy) { Log += "O analiză rulează deja; așteptați să se încheie sau opriți-o." + Environment.NewLine; return; }   // review 2026-11-08, P7
             if (!CollectFromThisStation && ImportFiles.Count == 0) { Log += "Alegeți colectarea de pe această stație sau adăugați probe de importat." + Environment.NewLine; return; }
             if (BuildScope().MissingFields().Count > 0) AskScopeAtStart();
             var scope = BuildScope();
@@ -539,6 +540,7 @@ namespace LogAnalyzer.UI.ViewModels
             FillCustody(_result.Custody, _result.CustodyError);
             WorkflowStatus = "";
             RefreshWorkflow();
+            RefreshRuns();
             AirGapFindings.Clear();
             foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.Wp14Rules.Category)) AirGapFindings.Add(f);
             SequenceFindings.Clear();

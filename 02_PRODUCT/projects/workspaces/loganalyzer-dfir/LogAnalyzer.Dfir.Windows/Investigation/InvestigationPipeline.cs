@@ -1,4 +1,4 @@
-using System.Security.Principal;
+﻿using System.Security.Principal;
 using System.Text.Json;
 using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Case;
@@ -56,6 +56,9 @@ public sealed class InvestigationResult
     public CustodyLedger? Custody { get; set; }
     public string CustodyError { get; set; } = "";
     public List<ParseResult> Parsing { get; } = [];
+    /// <summary>Master plan 6.16: the immutable record of this run and its difference from the previous run (null for the first run or an opened case).</summary>
+    public AnalysisRunManifest? Run { get; set; }
+    public RunDiff? RunDiff { get; set; }
     public List<TimelineEvent> Timeline { get; } = [];
     public List<Finding> Findings { get; } = [];
     public List<EvidenceGap> Gaps { get; } = [];
@@ -306,6 +309,7 @@ public sealed class InvestigationPipeline
         MediaRegister? mediaRegister = null, UsersRegister? usersRegister = null, string systemZone = "", LogAnalyzer.Dfir.HashSets.HashSetLibrary? hashSets = null)
     {
         bool elevated = OperatingSystem.IsWindows() && IsAdministrator();
+        var startedUtc = DateTimeOffset.UtcNow;   // master plan 6.16: the run manifest records when the run began
         var recorder = collect ? AcquisitionRunRecorder.Begin(ws, profile.ToString(), elevated) : null;
         ws.Audit("investigation.start", $"profile={profile} collect={collect} elevated={elevated}" + (recorder is null ? "" : $" run={recorder.RunId}"));
 
@@ -633,6 +637,27 @@ public sealed class InvestigationPipeline
         ws.WriteManifest("Exports/export_manifest.json", ["Exports/vault_proposals.jsonl", "Exports/vault_refused.json", "Analysis/dependencies.json"], Producer, DfirInfo.ApplicationVersion);
         var (state, stateReason) = OperationStates.Summarize(r.Collection.Select(c => c.Status).ToList(), r.Parsing);
         MarkEnded(r, ws, state, stateReason);
+        // Master plan 6.16: the immutable run record (manifest, finding snapshot, diff with the previous run), BEFORE the anchor below so the anchor's
+        // chain heads cover it (review 2026-11-08, P4). A failure of any kind is a gap, never a failed run (review P2: a duplicate rule id threw).
+        try
+        {
+            static string Fingerprint(object? o) => o is null ? "nu" : "da " + Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(o))))[..16];
+            var settings = new Dictionary<string, string>
+            {
+                ["profil_colectare"] = profile.ToString(), ["colectare"] = collect ? "da" : "nu", ["fus_sistem"] = systemZone,
+                ["profil_proceduri"] = Fingerprint(r.Procedure), ["registru_medii"] = Fingerprint(mediaRegister), ["registru_utilizatori"] = usersRegister is null ? "nu" : "da",
+                ["seturi_amprente"] = hashSets is null ? "nu" : "da",
+            };
+            var manifest = AnalysisRuns.Build(ws, startedUtc, r.Findings, r.Parsing, r.RulesUsed, r.Timeline.Count, state.ToSpec(), LogAnalyzer.Dfir.Analysis.FindingContract.Version, settings);
+            (r.Run, r.RunDiff) = AnalysisRuns.Record(ws, manifest);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException and not OperationCanceledException)
+        {
+            try { ws.Audit("analysis.run_record_failed", $"{ex.GetType().Name}: {ex.Message}"); }
+            catch (Exception ex2) when (ex2 is not OutOfMemoryException) { /* the gap below still tells the operator */ }
+            r.Gaps.Add(new EvidenceGap("Fișa rulării analizei", EvidenceStatus.Failed, ex.Message, "Rularea nu are manifest imuabil; nu poate fi comparată cu altele",
+                "Reluarea analizei", "Da"));
+        }
         var schemaManifest = SchemaManifest.ForRun();
         schemaManifest.Anchor = ws.Anchor();   // chain heads: a copy held outside the case makes truncation at the end detectable
         schemaManifest.Write(Path.Combine(analysisDir, SchemaVersions.ManifestFile));
