@@ -630,9 +630,12 @@ namespace LogAnalyzer.UI.ViewModels
             if (!check.Ok) { RemoteStatus = "Pachetul NU a fost importat: " + string.Join("; ", check.Problems); return; }
             var items = RemoteCollection.Import(ws, check);
             foreach (var i in items.Skip(1)) { var f = ws.FullPath(i.StoredPath); if (!ImportFiles.Contains(f)) ImportFiles.Add(f); }
-            var failed = check.Manifest!.Steps.Where(s => s.Status != "ok").Select(s => $"{s.Artifact} ({s.Error})").ToList();
+            var failed = check.Manifest!.Steps.Where(s => s.Status is not ("ok" or "absent")).Select(s => $"{s.Artifact} ({s.Error})").ToList();
+            // a log that does not exist on the target (Sysmon not installed) is said as such, not as a failed step (lab SRV01 2026-11-07)
+            var absent = check.Manifest.Steps.Where(s => s.Status == "absent").Select(s => s.Artifact.StartsWith("evtx:", StringComparison.Ordinal) ? s.Artifact[5..] : s.Artifact).ToList();
             RemoteStatus = $"Importat: {items.Count - 1} fișiere de pe {check.Manifest.Host}, fiecare cu SHA-256 egal cu cel calculat pe țintă; adăugate la lista de probe." +
-                           (failed.Count > 0 ? " Pași eșuați pe țintă: " + string.Join("; ", failed) : "");
+                           (failed.Count > 0 ? " Pași eșuați pe țintă: " + string.Join("; ", failed) : "") +
+                           (absent.Count > 0 ? " Jurnale care nu există pe țintă (componenta nu e instalată): " + string.Join("; ", absent) + "." : "");
         }
 
         /// <summary>Text shown at case close (owner decision 30): the final chain heads to record in the custody register.</summary>
