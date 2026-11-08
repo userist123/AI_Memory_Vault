@@ -347,9 +347,17 @@
   with timeline.export_masked (fixed + test), silent filter widening on a bad date (fixed), ✎ refresh, missing saved source message, inclusive
   „până la”, MVVMTK0034. Lab: Arhipelag (1,347 x 4625, ★✎, saved view, compare 1 vs 1,346), Continent same notes, Insula bookmark. docs/dfir/TIMELINE_NOTES.md.
   Suites: Dfir 2772, App 1023, UI 368, Ed 45.
+- 6.12 DONE (2026-11-08T02:15): Detection/ThreatIntelPackages.cs (signed offline TI packages: manifest + detached CMS, same trust as the
+  signed media register: officer list, qualified chain/CRL; stage on copy -> approve (admin, reason) -> rollback; anti-rollback on highest
+  approved; LoadActive re-verifies everything incl. NO unlisted files, writes a private snapshot from verified bytes for the engine; sealed
+  history with the machine chain key; store ACL checked on every use, unsafe store refused), App/Services/ThreatIntelFlows.cs, Politici page
+  section, pipeline ThreatIntel property + gap + run setting pachet_ti. Opus review 2 rounds (HIGH unlisted file used, HIGH no ACL, truncation,
+  TOCTOU, NRE, id chars, core authz, expiry; round 2: ACL only on new folder, snapshots pile up, false "compromis" without key) fixed with tests.
+  ACCEPTED RESIDUAL (owner to confirm): an admin can restore an older complete sealed state (no monotonic counter). Lab: Insula refusal shown;
+  positive path only in ThreatIntelRealCmsTests (real SignedCms) - lab has no officer certificate yet. docs/dfir/THREAT_INTEL_PACKAGES.md.
+  Suites: Dfir 2784, App 1026, UI 368, Ed 45.
 ## Next
--1. MASTER PLAN order after 6.1 + 6.16 + 6.9: bookmarks/saved views; 6.12 signed offline TI
-   packages (staging/approval/rollback); 6.7 PE triage; 6.5 JA3; 6.8 rule test lab; 6.11 graph view; 6.4 coverage heatmap; 6.14 target-bound
+-1. MASTER PLAN order after 6.1 + 6.16 + 6.9 + 6.12: bookmarks/saved views; 6.7 PE triage; 6.5 JA3; 6.8 rule test lab; 6.11 graph view; 6.4 coverage heatmap; 6.14 target-bound
    approval. Each: tests, Opus review for risky code, lab screenshots on the three editions.
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.

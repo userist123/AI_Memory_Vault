@@ -53,6 +53,49 @@
                     </ItemsControl.ItemTemplate>
                 </ItemsControl>
             </StackPanel>
+            <!-- master plan 6.12: offline, signed threat-intelligence packages: stage (verified on the copy) -> approve with a reason (administrator) -> rollback -->
+            <Expander Header="Pachete de informații despre amenințări (offline, semnate)" DataContext="{Binding ThreatIntel}" Margin="0,10,0,0" Foreground="{StaticResource TextPrimaryBrush}"
+                      AutomationProperties.Name="Pachete de informații despre amenințări" Expanded="ThreatIntelExpanded">
+                <ScrollViewer MaxHeight="420" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+                <StackPanel Margin="0,6,0,0">
+                    <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"
+                               Text="Un pachet CERT (liste IOC, reguli YARA și Sigma) ajunge pe un mediu aprobat și este semnat pentru stație de ofițerul de securitate. Îl puneți în așteptare (se verifică semnătura, semnatarul și fiecare fișier, pe copie); un administrator îl aprobă cu un motiv și abia apoi analizele îl folosesc. Se poate reveni la o versiune aprobată anterior; o versiune veche nu se poate importa din nou."/>
+                    <TextBlock Text="{Binding ActiveLine}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,6" AutomationProperties.Name="Pachetul activ"/>
+                    <DockPanel Margin="0,0,0,4">
+                        <Button DockPanel.Dock="Right" Content="Pune în așteptare" Command="{Binding StageCommand}" Style="{StaticResource AccentButtonStyle}" Margin="6,0,0,0" Padding="12,4"
+                                AutomationProperties.Name="Pune pachetul în așteptare"/>
+                        <TextBox Text="{Binding SourceFolder, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Folderul pachetului"/>
+                    </DockPanel>
+                    <!-- lab 2026-11-08: the answer right under the button; the text itself is what a screen reader announces -->
+                    <TextBlock Text="{Binding Status}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource EvidenceAccentBrush}" Margin="0,0,0,4" AutomationProperties.LiveSetting="Polite"/>
+                    <ItemsControl ItemsSource="{Binding CheckLines}" AutomationProperties.Name="Verificarea pachetului" Margin="0,0,0,6">
+                        <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" FontSize="12"/></DataTemplate></ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <TextBlock Text="Motiv (cerut la aprobare, renunțare și revenire)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBox Text="{Binding Reason, UpdateSourceTrigger=PropertyChanged}" Margin="0,2,0,6" AutomationProperties.Name="Motivul deciziei asupra pachetului"/>
+                    <DataGrid ItemsSource="{Binding StagedRows}" SelectedItem="{Binding SelectedStaged}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single"
+                              MaxHeight="140" AutomationProperties.Name="Pachete în așteptare">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}"><Setter Property="AutomationProperties.Name" Value="{Binding Id}"/></Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="În așteptare" Binding="{Binding Id}" Width="170"/>
+                            <DataGridTextColumn Header="Pachet" Binding="{Binding PackageId}" Width="*"/>
+                            <DataGridTextColumn Header="Versiune" Binding="{Binding Version}" Width="70"/>
+                            <DataGridTextColumn Header="Pus de" Binding="{Binding StagedBy}" Width="110"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <WrapPanel Margin="0,6,0,6">
+                        <Button Content="Aprobă și activează" Command="{Binding ApproveCommand}" Style="{StaticResource AccentButtonStyle}" Padding="12,4" Margin="0,0,6,0" AutomationProperties.Name="Aprobă și activează pachetul ales"/>
+                        <Button Content="Renunță" Command="{Binding DiscardCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,4" Margin="0,0,16,0" AutomationProperties.Name="Renunță la pachetul ales"/>
+                        <TextBox Text="{Binding RollbackVersion, UpdateSourceTrigger=PropertyChanged}" Width="150" Margin="0,0,6,0" AutomationProperties.Name="Pachetul și versiunea pentru revenire, de exemplu CERT-RO v3"/>
+                        <Button Content="Revino la versiunea" Command="{Binding RollbackCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,4" AutomationProperties.Name="Revino la versiunea scrisă"/>
+                    </WrapPanel>
+                    <TextBlock Text="Istoricul pachetelor (înlănțuit, cel mai nou primul)" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,8,0,2"/>
+                    <ListBox ItemsSource="{Binding HistoryLines}" MaxHeight="140" AutomationProperties.Name="Istoricul pachetelor"/>
+                </StackPanel>
+                </ScrollViewer>
+            </Expander>
         </StackPanel>
 
         <Border Grid.Row="1" Style="{StaticResource ObsidianCardStyle}" Margin="0,0,0,8">

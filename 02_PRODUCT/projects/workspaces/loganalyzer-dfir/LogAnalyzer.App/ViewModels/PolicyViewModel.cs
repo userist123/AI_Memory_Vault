@@ -140,6 +140,9 @@ namespace LogAnalyzer.UI.ViewModels
         }
 
         /// <param name="registryWriter">Null in the classified edition: policies can be opened, validated and compared but not applied to the registry.</param>
+        /// <summary>Master plan 6.12: the offline threat-intelligence packages of the station, on this page because they are station configuration.</summary>
+        public ThreatIntelPackagesViewModel ThreatIntel { get; } = new();
+
         public PolicyViewModel(LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null)
         {
             _registryWriter = registryWriter;

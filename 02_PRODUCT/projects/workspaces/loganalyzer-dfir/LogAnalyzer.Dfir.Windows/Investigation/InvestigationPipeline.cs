@@ -126,6 +126,12 @@ public sealed class InvestigationResult
 public sealed class InvestigationPipeline
 {
     private const string Producer = "InvestigationPipeline";
+
+    /// <summary>
+    /// Master plan 6.12: the approved, verified offline threat-intelligence package of the station, loaded as one more rules root (null = none).
+    /// The caller verifies it (signature, signer, file hashes) right before the run; a package that did not verify arrives with only a Problem.
+    /// </summary>
+    public LogAnalyzer.Dfir.Detection.ActiveThreatIntel? ThreatIntel { get; init; }
     private readonly ParserRegistry _registry;
 
     public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
@@ -581,7 +587,17 @@ public sealed class InvestigationPipeline
 
         // Detection: rules shipped with the application plus the case's own Rules folder (ioc / yara / sigma).
         progress?.Report("Detecție (IOC, Sigma, YARA)");
-        var engine = DetectionEngine.Load(Path.Combine(AppContext.BaseDirectory, "Rules"), Path.Combine(ws.Root, "Rules"));
+        var engine = DetectionEngine.Load(Path.Combine(AppContext.BaseDirectory, "Rules"), Path.Combine(ws.Root, "Rules"), ThreatIntel?.RulesRoot ?? "");
+        if (ThreatIntel is { RulesRoot: null, Problem: { Length: > 0 } tiProblem } && !tiProblem.StartsWith("niciun pachet", StringComparison.Ordinal))
+            r.Gaps.Add(new EvidenceGap("Pachetul de informații despre amenințări", EvidenceStatus.Failed, tiProblem,
+                "Regulile pachetului nu au fost folosite la această analiză", "Verificați pachetul în pagina Politici și reluați analiza", "Da"));
+        else if (ThreatIntel?.RulesRoot is not null)
+        {
+            ws.Audit("threat_intel.used", $"{ThreatIntel.PackageId} v{ThreatIntel.Version}");
+            if (ThreatIntel.Problem.Length > 0)   // used, but said: an expired package
+                r.Gaps.Add(new EvidenceGap("Pachetul de informații despre amenințări", EvidenceStatus.Partial, ThreatIntel.Problem,
+                    "Regulile pachetului au fost folosite, dar pot fi depășite", "Un pachet nou de la publicator", "Da"));
+        }
         engine.KnownHashSets = hashSetList;
         var evidenceItems = ws.LoadEvidence();
         var scannable = new List<EvidenceItem>();
@@ -647,6 +663,7 @@ public sealed class InvestigationPipeline
                 ["profil_colectare"] = profile.ToString(), ["colectare"] = collect ? "da" : "nu", ["fus_sistem"] = systemZone,
                 ["profil_proceduri"] = Fingerprint(r.Procedure), ["registru_medii"] = Fingerprint(mediaRegister), ["registru_utilizatori"] = usersRegister is null ? "nu" : "da",
                 ["seturi_amprente"] = hashSets is null ? "nu" : "da",
+                ["pachet_ti"] = ThreatIntel?.RulesRoot is not null ? $"{ThreatIntel.PackageId} v{ThreatIntel.Version}" : "nu",
             };
             var manifest = AnalysisRuns.Build(ws, startedUtc, r.Findings, r.Parsing, r.RulesUsed, r.Timeline.Count, state.ToSpec(), LogAnalyzer.Dfir.Analysis.FindingContract.Version, settings);
             (r.Run, r.RunDiff) = AnalysisRuns.Record(ws, manifest);

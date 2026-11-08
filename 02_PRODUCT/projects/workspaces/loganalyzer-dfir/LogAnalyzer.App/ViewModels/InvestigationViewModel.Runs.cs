@@ -76,7 +76,7 @@ namespace LogAnalyzer.UI.ViewModels
                         ((IProgress<string>)progress).Report(signedInCase.Note);
                         if (signedInCase.Used) signedMedia = LogAnalyzer.Dfir.Registers.SignedMediaRegisterCase.ToMediaRegister(signedInCase.Active.Doc!);
                     }
-                    return new InvestigationPipeline().Run(ws, LogAnalyzer.Dfir.Windows.Acquisition.CollectionProfile.Standard, false, progress, ct, mediaRegister: signedMedia, systemZone: zone);
+                    return new InvestigationPipeline { ThreatIntel = LogAnalyzer.UI.Services.ThreatIntelFlows.Active() }.Run(ws, LogAnalyzer.Dfir.Windows.Acquisition.CollectionProfile.Standard, false, progress, ct, mediaRegister: signedMedia, systemZone: zone);
                 });
                 ShowResult(r);
                 IntegrityLine = (await System.Threading.Tasks.Task.Run(() => ws.Recheck(ct))).Summary;   // as after a first run: the rewritten outputs are re-checked

@@ -490,7 +490,7 @@ namespace LogAnalyzer.UI.ViewModels
                         ws.Audit(signedInCase.Used ? "register.signed_media_used" : "register.signed_media_refused", signedInCase.Note);
                         if (signedInCase.Used) signedMedia = LogAnalyzer.Dfir.Registers.SignedMediaRegisterCase.ToMediaRegister(signedInCase.Active.Doc!);
                     }
-                    return new InvestigationPipeline().Run(ws, profile, collect, progress, _cts.Token, mediaRegister: signedMedia, systemZone: zone);
+                    return new InvestigationPipeline { ThreatIntel = LogAnalyzer.UI.Services.ThreatIntelFlows.Active() }.Run(ws, profile, collect, progress, _cts.Token, mediaRegister: signedMedia, systemZone: zone);
                 });
                 pipelineDone = true;
                 ShowResult(_result);
