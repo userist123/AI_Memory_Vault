@@ -3,6 +3,12 @@ using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Privacy;
 
+/// <summary>What kind of personal data a pseudonym stands for (master plan 6.15: the redaction policy chooses which kinds are masked).</summary>
+public enum PiiCategory { Users, Hosts, Addresses, Emails, Sids, Serials }
+
+/// <summary>One replacement: the original value and its pseudonym.</summary>
+public sealed record PiiEntry(PiiCategory Category, string Original, string Pseudonym);
+
 /// <summary>
 /// F10: masks personal data in text meant for sharing (reports, timelines). User names, host names, IP addresses, e-mail addresses, SIDs and the user
 /// segment of paths are replaced by consistent pseudonyms: the same value always becomes the same pseudonym within one masker, so a shared timeline
@@ -178,8 +184,10 @@ public sealed class PiiMasker
     public static readonly string[] UserFields = ["TargetUserName", "SubjectUserName", "User", "UserName", "Account", "AccountName", "SamAccountName", "MemberName"];
     public static readonly string[] HostFields = ["Computer", "WorkstationName", "Workstation", "Hostname", "HostName", "ComputerName", "TargetServerName", "ClientName"];
 
-    /// <summary>Masks every personal identifier in <paramref name="text"/>. Idempotent: masking masked text changes nothing.</summary>
-    public string Mask(string text)
+    /// <summary>Masks every personal identifier in <paramref name="text"/>, except the categories in <see cref="Keep"/>. Idempotent: masking masked text changes nothing.</summary>
+    public string Mask(string text) => Restore(MaskAll(text));
+
+    private string MaskAll(string text)
     {
         if (string.IsNullOrEmpty(text)) return text;
         var s = Email.Replace(text, m => Pseudo(_mails, m.Value, "email", "@mascat.invalid"));
@@ -241,8 +249,25 @@ public sealed class PiiMasker
         return name;
     }
 
-    /// <summary>Masks every text field of a timeline row (summary, user, host, process path, IP, DNS, fields) into a new row.</summary>
+    /// <summary>Masks every text field of a timeline row (summary, user, host, process path, IP, DNS, fields) into a new row; the categories in <see cref="Keep"/> stay readable.</summary>
     public TimelineEvent Mask(TimelineEvent e)
+    {
+        var m = MaskRow(e);
+        if (Keep.Count == 0) return m;
+        var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        foreach (var (k, v) in m.Fields) fields[k] = Restore(v);
+        return new TimelineEvent
+        {
+            Time = m.Time, Source = m.Source, EvidenceId = m.EvidenceId, EventId = m.EventId, Provider = m.Provider, Host = Restore(m.Host), User = Restore(m.User),
+            Process = Restore(m.Process), Pid = m.Pid, Ppid = m.Ppid, Path = Restore(m.Path), RemoteIp = Restore(m.RemoteIp), RemotePort = m.RemotePort,
+            Dns = Restore(m.Dns), Task = Restore(m.Task), Service = Restore(m.Service), Hash = m.Hash, Summary = Restore(m.Summary), TimeSemantics = m.TimeSemantics,
+            TemporalType = m.TemporalType, Classification = m.Classification, Confidence = m.Confidence, Locator = Restore(m.Locator), Fields = fields,
+            Notes = Restore(m.Notes), SourceSha256 = m.SourceSha256, ParserId = m.ParserId, ParserVersion = m.ParserVersion, SemanticType = m.SemanticType,
+            TimeZoneBasis = m.TimeZoneBasis, TimeUncertainty = m.TimeUncertainty,
+        };
+    }
+
+    private TimelineEvent MaskRow(TimelineEvent e)
     {
         foreach (var h in HostFields.Except(RemoteHostFields).Select(k => e.Fields.TryGetValue(k, out var hv) ? hv : "").Append(e.Host))
             if (h.Contains('.') && !Ipv4.IsMatch(h) && !IsBuiltIn(h)) KnownDomain(h[(h.IndexOf('.') + 1)..]);
@@ -271,6 +296,45 @@ public sealed class PiiMasker
         var names = _users.Keys.Concat(_hosts.Keys).Where(n => n.Length >= 3).OrderByDescending(n => n.Length).Select(Regex.Escape).ToList();
         if (names.Count == 0) return null;
         return new Regex(@"(?<![\p{L}\p{N}_-])(?:" + string.Join("|", names) + @")(?![\p{L}\p{N}_-])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, Rx);
+    }
+
+    // ---- master plan 6.15: redaction policy (which categories are masked) and the record of what was replaced ----
+
+    /// <summary>Categories left readable in the output (policy „ce se mască”); empty = everything is masked.</summary>
+    public HashSet<PiiCategory> Keep { get; } = [];
+
+    private IEnumerable<(PiiCategory Category, Dictionary<string, string> Map)> Maps() =>
+    [
+        (PiiCategory.Users, _users), (PiiCategory.Hosts, _hosts), (PiiCategory.Hosts, _domains), (PiiCategory.Addresses, _ips), (PiiCategory.Addresses, _macs),
+        (PiiCategory.Emails, _mails), (PiiCategory.Sids, _sids), (PiiCategory.Serials, _serials),
+    ];
+
+    /// <summary>Every replacement so far: category, original value, pseudonym. The originals stay with the operator; they are never part of masked output.</summary>
+    public IReadOnlyList<PiiEntry> Entries => Maps().SelectMany(m => m.Map.Select(kv => new PiiEntry(m.Category, kv.Key, kv.Value))).ToList();
+
+    /// <summary>How many distinct pseudonyms of each category the output carries (a kept category carries none).</summary>
+    public IReadOnlyDictionary<PiiCategory, int> Counts =>
+        Enum.GetValues<PiiCategory>().ToDictionary(c => c, c => Keep.Contains(c) ? 0 : Maps().Where(m => m.Category == c).Sum(m => m.Map.Values.Distinct().Count()));
+
+    private Regex? _restoreRx;
+    private Dictionary<string, string>? _restoreMap;
+    private int _restoreVersion = -1;
+
+    /// <summary>Puts back the original of every pseudonym of a kept category. The masker works on everything first, so text that mixes categories stays consistent.</summary>
+    private string Restore(string s)
+    {
+        if (Keep.Count == 0 || string.IsNullOrEmpty(s)) return s;
+        int version = Maps().Sum(m => m.Map.Count) * 64 + Keep.Aggregate(0, (a, c) => a | 1 << (int)c);
+        if (version != _restoreVersion)
+        {
+            _restoreMap = new(StringComparer.Ordinal);
+            foreach (var (_, map) in Maps().Where(m => Keep.Contains(m.Category)))
+                foreach (var kv in map) _restoreMap.TryAdd(kv.Value, kv.Key);   // the first original given a pseudonym is the one restored
+            _restoreRx = _restoreMap.Count == 0 ? null
+                : new Regex(@"(?<![\p{L}\p{N}_-])(?:" + string.Join("|", _restoreMap.Keys.OrderByDescending(k => k.Length).Select(Regex.Escape)) + @")(?![\p{N}])", RegexOptions.CultureInvariant, Rx);
+            _restoreVersion = version;
+        }
+        return _restoreRx is null ? s : _restoreRx.Replace(s, m => _restoreMap!.TryGetValue(m.Value, out var o) ? o : m.Value);
     }
 
     private static readonly Regex PseudoRx = new(@"^(?:Utilizator|Statie|IP|SID|email|Serial|Domeniu|MAC)-\d+", RegexOptions.CultureInvariant, Rx);

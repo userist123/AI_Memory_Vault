@@ -922,9 +922,42 @@
                         <TextBlock Text="Export cu date personale mascate" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
                         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,6"
                                    Text="Nume de utilizatori, nume de stații, adrese IP, e-mailuri, SID-uri și segmentul de utilizator din căi sunt înlocuite cu pseudonime consecvente (aceeași valoare, același pseudonim în raport și în cronologie)."/>
+                        <!-- Master plan 6.15: the redaction policy (what is masked, reversible or not), a preview, and the record of each redacted export. -->
+                        <TextBlock Text="Ce se mască (politica de redactare):" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,2"/>
+                        <WrapPanel Margin="0,0,0,4" AutomationProperties.Name="Categoriile de date personale mascate">
+                            <CheckBox Content="Utilizatori" IsChecked="{Binding MaskUsers}" Margin="0,0,10,0" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <CheckBox Content="Stații și domenii" IsChecked="{Binding MaskHosts}" Margin="0,0,10,0" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <CheckBox Content="Adrese IP și MAC" IsChecked="{Binding MaskAddresses}" Margin="0,0,10,0" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <CheckBox Content="E-mailuri" IsChecked="{Binding MaskEmails}" Margin="0,0,10,0" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <CheckBox Content="SID-uri" IsChecked="{Binding MaskSids}" Margin="0,0,10,0" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <CheckBox Content="Numere de serie" IsChecked="{Binding MaskSerials}" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        </WrapPanel>
+                        <CheckBox Content="Reversibilă: păstrează tabela pseudonimelor, criptată pentru contul meu Windows (altfel mascarea nu se mai poate inversa)" IsChecked="{Binding RedactionReversible}"
+                                  Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4"/>
+                        <Button Content="Previzualizează redactarea" Command="{Binding PreviewRedactionCommand}" Style="{StaticResource OutlineButtonStyle}" HorizontalAlignment="Left" Margin="0,0,0,4"/>
+                        <TextBlock Text="{Binding RedactionPreviewLine}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,2" AutomationProperties.Name="Starea previzualizării"/>
+                        <DataGrid ItemsSource="{Binding RedactionPreviewRows}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="180" Margin="0,0,0,6"
+                                  AutomationProperties.Name="Previzualizarea redactării: înainte și după">
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Unde" Binding="{Binding Where}" Width="*"/>
+                                <DataGridTextColumn Header="În caz" Binding="{Binding Before}" Width="2*"/>
+                                <DataGridTextColumn Header="În export" Binding="{Binding After}" Width="2*"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
                         <WrapPanel Margin="0,0,0,12">
                             <Button Content="Raport mascat (PDF)…" Command="{Binding ExportMaskedPdfCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                             <Button Content="Cronologie mascată (CSV)…" Command="{Binding ExportMaskedTimelineCommand}" Style="{StaticResource OutlineButtonStyle}"/>
+                        </WrapPanel>
+                        <TextBlock Text="Redactări înregistrate în caz" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <ListBox ItemsSource="{Binding RedactionRecords}" MaxHeight="110" Margin="0,2,0,4" AutomationProperties.Name="Redactările înregistrate în caz" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ListBox.ItemTemplate>
+                        </ListBox>
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Text="Dezvăluirea unui pseudonim dintr-un export reversibil: doar contul care a făcut exportul, cu motiv; cererea se scrie în auditul cazului."/>
+                        <WrapPanel Margin="0,2,0,12">
+                            <TextBox Width="190" Margin="0,0,6,0" Text="{Binding RevealRecordId, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Înregistrarea redactării (RED-…)" FontFamily="Consolas"/>
+                            <TextBox Width="140" Margin="0,0,6,0" Text="{Binding RevealPseudonym, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Pseudonimul de dezvăluit"/>
+                            <TextBox Width="260" Margin="0,0,6,0" Text="{Binding RevealReason, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Motivul dezvăluirii"/>
+                            <Button Content="Dezvăluie" Command="{Binding RevealPseudonymValueCommand}" Style="{StaticResource OutlineButtonStyle}"/>
                         </WrapPanel>
                         <TextBox AutomationProperties.Name="Rezultatul ultimei operații pe raport sau arhivă" Text="{Binding ReportStatus, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0"
                                  Background="Transparent" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold"/>
