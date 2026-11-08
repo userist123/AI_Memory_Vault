@@ -535,6 +535,13 @@ public sealed class InvestigationPipeline
         var memFindings = LogAnalyzer.Dfir.Memory.MemoryFindings.Run(r.Timeline, () => $"F-{++memFindingNo:D4}");
         found.AddRange(memFindings.Findings);
         r.Gaps.AddRange(memFindings.Gaps);
+        // Master plan 6.5: beaconing and scan heuristics over the connections, and the endpoint process behind a sensor-observed connection.
+        int netFindingNo = LiveStateAnalyzer.MaxFindingNo(found);
+        var net = LogAnalyzer.Dfir.Network.NetworkHeuristics.Run(r.Timeline, () => $"F-{++netFindingNo:D4}");
+        found.AddRange(net.Findings);
+        r.Gaps.AddRange(net.Gaps);
+        LogAnalyzer.Dfir.IO.Json.Write(Path.Combine(analysisDir, "network_links.json"), net.Links);
+        ws.RecordOutput(LogAnalyzer.Dfir.Network.NetworkHeuristicsResult.LinksRelPath, "NetworkHeuristics", "1", net.Links.Select(l => l.NetworkEvidenceId).Concat(net.Links.Select(l => l.EndpointEvidenceId)).Distinct());
         if (collect)
         {
             // evaluation 2026-11-05: a signed per-user program is checked on this station before it is reported as high (see SignatureCalibration)
