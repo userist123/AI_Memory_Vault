@@ -437,3 +437,7 @@
   "după o înregistrare cu oră în urmă" — the WS02 audit has a clock step back of ~2 h on 2026-11-06 (line 14), so no own command after it is
   ever confirmed there; the inventory fix cannot be shown on that station (unit-test verified only). Owner question: a one-time clock
   correction disables A17 recognition for good on that station (by design today).
+  Lab Arhipelag (WS01, clean audit, 0 clock steps back): Volatility run, app killed + restarted, Control stație -> A17 CONFORM, 18 own
+  commands, 0 claimed; copied audit: 18 vol records VALID with the approved exe in the inventory, all 18 refused for inventory without it
+  (the pre-fix behaviour). WS01 process-creation audit was already on with command lines (left as is). Note: E:\LA-Lab\scripts\kill-stuck.ps1
+  stops a HOST pwsh running run-stage+install-app, not the app; use scripts\q10.ps1 (Stop-Process inside the VM) to close the app.

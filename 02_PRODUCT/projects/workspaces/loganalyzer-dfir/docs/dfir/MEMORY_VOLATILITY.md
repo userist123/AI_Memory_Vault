@@ -91,5 +91,7 @@ Comanda calculează amprentele SHA-256 ale executabilului, ale fiecărui fișier
 - Reziduuri acceptate (revizuire de securitate, 2 runde, 2026-11-08):
   - O rulare Volatility mai lungă de 10 minute poate apărea într-un control ulterior al stației ca program străin. Limita de 10 minute este regula proprietarului pentru orice program pornit de aplicație; avertismentul este fals pozitiv, nu o lipsă.
   - Rulările de dinainte de o repornire a aplicației rămân recunoscute (corectat 2026-11-08). Executabilul aprobat intră în inventarul programelor proprii doar cât profilul și folderul uneltei pot fi modificate numai de administratori și fișierul are amprenta fixată.
+    Laborator Arhipelag (LAB-WS01, 2026-11-08): rulare Volatility, aplicația închisă și repornită, apoi Control stație. A17 a ieșit CONFORM, cu 18 comenzi proprii și niciun eveniment neconfirmat. Jurnalul sigilat copiat de pe stație are 18 înregistrări Volatility acceptate; fără executabilul aprobat în inventar, toate 18 ar fi fost refuzate („nu face parte din inventarul fix”).
+    Pe Insula (LAB-WS02) scenariul nu poate fi arătat: jurnalul sigilat are o oră dată înapoi cu aproximativ 2 ore (2026-11-06), iar după ea nicio comandă proprie nu mai este confirmată, prin regula existentă împotriva falsificării.
   - La ieșirea normală, un jurnal de erori cu o linie foarte lungă se scrie linie cu linie.
 
