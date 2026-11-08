@@ -24,10 +24,10 @@ Planul este „LogAnalyzer DFIR Master Research and Implementation Plan”, sec�
 | 6.2 Integritate și custodie | REAL | REAL | — (hash la import, custodie înlănțuită, reverificare, read-only) | — |
 | 6.3 Artefacte Windows | REAL | REAL | — (EVTX, registru, Prefetch, Amcache/ShimCache, LNK/Jump Lists, SRUM, USN, browsere, sarcini, servicii, SetupAPI) | — |
 | 6.4 Anti-forensics și acoperire | PARTIAL | **REAL** | Acoperirea în timp: hartă sursă × zi, lacune doar CANDIDATE (`COVERAGE_TIMELINE.md`) | Insula, Continent |
-| 6.5 Rețea | PARTIAL | **REAL** | JA3 pe ClientHello, indicatori `ja3` (`NETWORK_JA3.md`); jurnalele Zeek conn/dns/http/ssl/notice, TSV și JSON, cu precizie de microsecunde și jurnal trunchiat semnalat (`NETWORK_ZEEK.md`) | JA3: test de unitate (laboratorul nu are trafic TLS); Zeek: Insula, cu jurnale sintetice |
+| 6.5 Rețea | PARTIAL | **REAL** | JA3 pe ClientHello, indicatori `ja3` (`NETWORK_JA3.md`); jurnalele Zeek conn/dns/http/ssl/notice, TSV și JSON, cu precizie de microsecunde și jurnal trunchiat semnalat (`NETWORK_ZEEK.md`); beaconing, scanări și procesul din spatele conexiunii prin tuplul exact cu Sysmon 3 (`NETWORK_HEURISTICS.md`) | JA3: test de unitate (laboratorul nu are trafic TLS); Zeek și euristicile: Insula, cu jurnale sintetice (beacon la 5,1 min, scanare de 30 de porturi) |
 | 6.6 Memorie | PARTIAL | **REAL (fără rularea Volatility)** | Parser pentru ieșirile JSON ale Volatility 3; reguli MEM-HIDDEN, MEM-INJECT, MEM-NETPROC, MEM-PATH; corelarea memorie–disc MEM-NODISK; o ieșire goală este „incompletă”, nu succes (`MEMORY_VOLATILITY.md`). Aplicația nu rulează Volatility și nu ține un depozit de simboluri. | Arhipelag și Continent (ieșiri sintetice) |
 | 6.7 Triaj binare | PARTIAL | **REAL** | Cititor PE mărginit, indicatori explicați, Authenticode al stației (`PE_TRIAGE.md`) | Arhipelag |
-| 6.8 Ingineria detecției | PARTIAL | **REAL** | Laboratorul de reguli: test pe caz, comparare cu referința, adăugare în caz (`RULE_LAB.md`). Pachetele semnate pentru toată stația sunt pachetele 6.12: `sigma/` și `yara/` din pachetul activ intră în motorul de detecție la fiecare analiză (`DetectionEngine.Load`). | Arhipelag |
+| 6.8 Ingineria detecției | PARTIAL | **REAL** | Laboratorul de reguli: test pe caz, comparare cu referința, adăugare în caz (`RULE_LAB.md`). Pachetele semnate pentru toată stația sunt pachetele 6.12: `sigma/` și `yara/` din pachetul activ intră în motorul de detecție la fiecare analiză (`DetectionEngine.Load`). Regulile de corelare Sigma (event_count, value_count, temporal, temporal_ordered), cu ferestre deterministe; absența („mai puțin de N”) și înlănțuirea sunt refuzate explicit. | Arhipelag și Continent: corelarea pe jurnalul real al DC01 găsește 3 rafale de autentificări eșuate pentru același cont |
 | 6.9 Cronologie avansată | PARTIAL | **REAL** | Marcaje, note, vederi salvate, compararea vederilor (`TIMELINE_NOTES.md`) | Insula, Arhipelag, Continent |
 | 6.10 Identitate și AD | PARTIAL | **REAL** | Identități după SID între controlere, servere și stații: redenumiri, istoric SID ca legătură, sesiuni pe stație, grupuri privilegiate, modificări de director și GPO legate de autor, lacune pe domeniu când lipsesc jurnalele DC (`IDENTITY_AD.md`) | Insula, Arhipelag, Continent (jurnalele Security reale ale DC01 și SRV01: 70 de identități, 5.762 de sesiuni) |
 | 6.11 Graf și contradicții | REAL | **REAL+** | Constatările contrazise intră obligatoriu în revizuire | test (laboratorul nu are constatări contrazise) |
@@ -50,6 +50,7 @@ Fiecare modul cu risc a avut un revizor separat, cu probe reproduse. Defectele g
 | 6.12 | două defecte HIGH: fișier de reguli nelistat folosit fără verificare; depozit fără ACL; plus trunchierea istoricului și TOCTOU |
 | 6.7 | o tabelă de importuri care producea un milion de funcții; după 12.000 de mutații, nicio excepție |
 | 6.10 | 3 defecte HIGH: un istoric SID plantat ascundea activitatea administratorului; deduplicarea pierdea evenimente după golirea jurnalului; un nume era atribuit SID-ului din alt domeniu. Runda 2: lacuna de controler ascunsă de un tichet cross-realm; privilegii 4672 puse pe o sesiune veche |
+| 6.5 / 6.8 (corelare, euristici) | HIGH: un `timespan` uriaș într-o regulă de caz oprea toată analiza. MEDIUM: beacon-ul numea un singur proces pentru conexiuni ale mai multor procese; un câmp group-by lipsă grupa toate conturile; fereastra scanării era pătratică; limita de constatări era tăcută. Runda 2: o oră lângă anul 9999 oprea corelarea. În laborator: avertisment fals despre câmpurile `product` și `service`; textele „cineva … a deschis” |
 | 6.15 | un nume de tabelă luat din înregistrare (cale UNC); UPN-ul și domeniul din cale scăpau nemascate; înregistrare în caz sigilat. În laborator: exportul mascat cădea când un UPN era învățat de două ori (corectat, cu test) |
 
 ## Reziduuri acceptate (de confirmat de proprietar)
@@ -59,6 +60,8 @@ Fiecare modul cu risc a avut un revizor separat, cu probe reproduse. Defectele g
 - **6.16:** deciziile din fluxul de lucru sunt legate de numărul constatării (F-nnnn), care se poate schimba la reanaliză.
 
 - **6.10:** același controler scris o dată cu numele scurt și altă dată cu FQDN apare ca două stații. Domeniile se compară după prima etichetă. Rândurile CSV identice din probe diferite se numără de două ori.
+- **6.8:** două reguli de bază fără `id` în același fișier au același RuleId (numele fișierului); amprentele diferă. `generate` este acceptat, dar regulile de bază raportează mereu și propriile potriviri.
+- **6.5:** pragurile euristicilor sunt fixe (8 conexiuni, ±20%, 20 de destinații în 60 s); un beacon cu jitter mare sau o scanare lentă nu se văd.
 - **6.15:** cu utilizatorii păstrați, o persoană din registru se pune la loc cu numele complet. Ordinea în care masca învață numele poate face ca un câmp și rezumatul aceluiași rând să difere. Lista redactărilor nu reverifică amprenta din audit.
 
 ## Laboratorul
@@ -72,7 +75,7 @@ Fiecare modul cu risc a avut un revizor separat, cu probe reproduse. Defectele g
 
 | Suită | Teste trecute |
 |---|---|
-| Dfir | 2.866 |
+| Dfir | 2.904 |
 | App | 1.026 |
 | UI | 368 |
 | Edition | 45 |

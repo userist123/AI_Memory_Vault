@@ -407,3 +407,6 @@
 - Suites: Dfir 2866, App 1026, UI 368, Edition 45.
 - Lab clean-up for the owner: new TEST cases on WS01/WS02 and C:\LA\{id-test,zeek-test} (kept).
 - Next: CI read once on the pushed head.
+- 2026-11-08 (continued, owner „Continua”): 6.5 beaconing/scan/endpoint-link heuristics (`Network/NetworkHeuristics.cs`, Analysis/network_links.json) and
+  6.8 Sigma correlation rules (`Detection/SigmaCorrelation.cs`), Opus review 2 rounds (1 HIGH + 5 MEDIUM, all fixed), lab: correlation on the real DC01 log
+  (3 hits, Arhipelag + Continent), beacon/scan on Insula. Lab-found: false RuleLab field note (logsource keys), „cineva … a deschis” texts; fixed. Suites: Dfir 2904.
