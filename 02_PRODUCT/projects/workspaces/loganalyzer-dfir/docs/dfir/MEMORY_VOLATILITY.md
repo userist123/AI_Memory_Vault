@@ -89,6 +89,7 @@ Comanda calculează amprentele SHA-256 ale executabilului, ale fiecărui fișier
 - Verificarea acoperă folderul uneltei și folderul simbolurilor. Ce extrage la pornire un executabil împachetat (PyInstaller) provine din fișierul verificat și ajunge într-un folder temporar privat.
 - Volatility rămâne o unealtă terță: ieșirea ei este citită, nu verificată independent.
 - Reziduuri acceptate (revizuire de securitate, 2 runde, 2026-11-08):
-  - O rulare Volatility mai lungă de 10 minute poate apărea într-un control ulterior al stației ca program străin. Fereastra de acțiune a auditului sigilat este de 10 minute. Avertismentul este fals pozitiv, nu o lipsă.
+  - O rulare Volatility mai lungă de 10 minute poate apărea într-un control ulterior al stației ca program străin. Limita de 10 minute este regula proprietarului pentru orice program pornit de aplicație; avertismentul este fals pozitiv, nu o lipsă.
+  - Rulările de dinainte de o repornire a aplicației rămân recunoscute (corectat 2026-11-08). Executabilul aprobat intră în inventarul programelor proprii doar cât profilul și folderul uneltei pot fi modificate numai de administratori și fișierul are amprenta fixată.
   - La ieșirea normală, un jurnal de erori cu o linie foarte lungă se scrie linie cu linie.
 

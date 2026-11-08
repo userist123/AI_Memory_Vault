@@ -112,6 +112,25 @@ public sealed class VolatilityRunnerTests : IDisposable
     }
 
     [Fact]
+    public void After_a_restart_the_approved_executable_is_recognised_only_while_the_profile_is_protected_and_the_file_has_the_pinned_hash()
+    {
+        var exe = Path.Combine(_tool, "vol.exe");
+        Assert.Null(VolatilityToolProfile.ApprovedExecutable(_profileDir, Protected));                  // no profile: nothing
+        foreach (var junk in new[] { """{"Volatility":{"Executable":null}}""", """{"Volatility":{"Executable":"C:\\x.exe","Sha256":null}}""", "{", """{"Volatility":{"Executable":"vol.exe"}}""" })
+        {
+            File.WriteAllText(Path.Combine(_profileDir, VolatilityToolProfile.FileName), junk);         // a file nobody vetted: never an exception
+            Assert.Null(VolatilityToolProfile.ApprovedExecutable(_profileDir, Protected));
+        }
+        VolatilityToolProfile.Save(Profile(), _profileDir);
+        Assert.Equal(exe, VolatilityToolProfile.ApprovedExecutable(_profileDir, Protected));
+        var open = new LogAnalyzer.Dfir.Auth.StoreAclResult(false, ["Users poate scrie"]);
+        Assert.Null(VolatilityToolProfile.ApprovedExecutable(_profileDir, d => d == _profileDir ? open : LogAnalyzer.Dfir.Auth.StoreAclResult.Ok));
+        Assert.Null(VolatilityToolProfile.ApprovedExecutable(_profileDir, d => d == _tool ? open : LogAnalyzer.Dfir.Auth.StoreAclResult.Ok));
+        File.WriteAllBytes(exe, [0x4D, 0x5A, 7, 7, 7, 7]);                                              // swapped after approval
+        Assert.Null(VolatilityToolProfile.ApprovedExecutable(_profileDir, Protected));
+    }
+
+    [Fact]
     public void A_swapped_executable_a_plugin_off_the_list_or_a_missing_profile_starts_nothing()
     {
         var fake = new FakeTool();

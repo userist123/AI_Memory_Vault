@@ -426,3 +426,9 @@
   VolatilityProfileCliTests 2. Lab with a TEST stand-in (E:\LA-Lab\fakevol, scripts fakevol-push/-tamper): 6 derived outputs, 8 events,
   3 MEM findings on Insula/Arhipelag/Continent; planted python311.dll refused. Residuals in MEMORY_VOLATILITY.md (10-min exec window false alarm).
   Not mine, left alone: untracked LogAnalyzer.App/Edition/Unclassified/edition-policy-public-key.b64.
+- 2026-11-08 (owner „Continua”, round 5): CI on 56027952b all green. Fixed a false positive found while closing the 10-min residual: the approved
+  Volatility exe joined CollectorExec.Inventory only in memory, so after an app restart every earlier run was refused as claimed activity.
+  `VolatilityToolProfile.ApprovedExecutable()` (profile + tool folder admin-only, local path, no link, pinned hash; cached by mtimes) now feeds
+  Inventory(). Test in VolatilityRunnerTests. The 10-min cap stays (owner rule, OperationAudit.MaxExecWindow).
+  Opus review r1: MEDIUM null fields in an unvetted tools.json threw out of Inventory() and broke the station control -> whole body caught,
+  returns null; LOW refusals no longer cached, drive root / non-fixed (mapped) drives refused. Suites: Dfir 2930, App 1028, UI 368, Edition 45.

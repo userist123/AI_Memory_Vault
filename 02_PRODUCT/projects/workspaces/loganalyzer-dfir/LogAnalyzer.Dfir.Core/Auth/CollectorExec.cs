@@ -190,6 +190,8 @@ public static class CollectorExec
         var sys = Environment.SystemDirectory;
         string[] extra;
         lock (Extra) extra = [.. Extra];
+        // master plan 6.6: the administrator-approved Volatility, so its runs are still recognised after the application restarted
+        if (Memory.VolatilityToolProfile.ApprovedExecutable() is { } vol && !extra.Contains(vol, StringComparer.OrdinalIgnoreCase)) extra = [.. extra, vol];
         return
         [
             .. new[] { "reg.exe", "esentutl.exe", "bcdedit.exe", "auditpol.exe" }.Select(n => Path.Combine(sys, n)),

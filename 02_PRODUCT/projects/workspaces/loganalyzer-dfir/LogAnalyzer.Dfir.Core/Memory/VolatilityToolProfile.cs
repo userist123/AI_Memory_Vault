@@ -41,6 +41,41 @@ public sealed class VolatilityToolProfile
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException) { problem = ex.Message; return null; }
     }
 
+    private static readonly object RecognisedGate = new();
+    private static (string Key, string? Exe) _recognised = ("", null);
+
+    /// <summary>
+    /// The approved executable for recognising its earlier runs in the sealed audit (a later control, after the application restarted): the profile folder and
+    /// the tool folder can be changed only by administrators, and the file has the pinned SHA-256 now. Null otherwise. The answer is kept until the profile
+    /// or the executable changes on disk. A run itself is always checked in full (VolatilityRunner.CheckTool); this only keeps a run already made from being
+    /// reported as a foreign program.
+    /// </summary>
+    public static string? ApprovedExecutable(string? dir = null, Func<string, Auth.StoreAclResult>? aclCheck = null)
+    {
+        if (!OperatingSystem.IsWindows() && aclCheck is null) return null;
+        // the caller is the station control: anything unexpected in a file it does not trust yet means "not recognised", never an exception (review 2026-11-08)
+        try
+        {
+            var d = dir ?? DefaultDir;
+            var profile = Load(d, out var problem);
+            if (problem is not null || profile is null || string.IsNullOrEmpty(profile.Executable) || profile.Sha256 is null
+                || !Path.IsPathFullyQualified(profile.Executable) || profile.Executable.StartsWith(@"\\", StringComparison.Ordinal)
+                || profile.Sha256.Trim().Length != 64 || !File.Exists(profile.Executable)) return null;
+            var exe = new FileInfo(profile.Executable);
+            if (exe.LinkTarget is not null || exe.DirectoryName is not { Length: > 3 } toolDir) return null;   // a drive root is never a tool folder
+            if (OperatingSystem.IsWindows() && new DriveInfo(Path.GetPathRoot(exe.FullName)!).DriveType != DriveType.Fixed) return null;   // mapped or removable
+            var key = string.Join("|", d, File.GetLastWriteTimeUtc(Path.Combine(d, FileName)).Ticks, exe.FullName, exe.Length, exe.LastWriteTimeUtc.Ticks, profile.Sha256.Trim());
+            bool cache = aclCheck is null;   // only the production rights check is remembered
+            if (cache) lock (RecognisedGate) if (_recognised.Key == key) return _recognised.Exe;
+            Func<string, Auth.StoreAclResult> acl = aclCheck ?? (OperatingSystem.IsWindows() ? Auth.AuthStoreProtection.CheckDirectory : _ => new Auth.StoreAclResult(false, []));
+            string? ok = acl(d).Protected && acl(toolDir).Protected
+                         && Hashing.Sha256File(exe.FullName).Equals(profile.Sha256.Trim(), StringComparison.OrdinalIgnoreCase) ? exe.FullName : null;
+            if (cache && ok is not null) lock (RecognisedGate) _recognised = (key, ok);   // a refusal is checked again next time
+            return ok;
+        }
+        catch (Exception) { return null; }
+    }
+
     public static void Save(VolatilityToolProfile v, string? dir)
     {
         var d = dir ?? DefaultDir;
