@@ -150,21 +150,7 @@ public sealed class TimelineNotebook
         return n;
     }
 
-    /// <summary>A chained log may be held exclusively by a writer for a moment: retried like <see cref="HashChain.Head"/>.</summary>
-    private static byte[] ReadShared(string path)
-    {
-        for (int attempt = 0; ; attempt++)
-        {
-            try
-            {
-                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-                using var ms = new MemoryStream();
-                fs.CopyTo(ms);
-                return ms.ToArray();
-            }
-            catch (IOException) when (attempt < 100 && File.Exists(path)) { Thread.Sleep(20); }
-        }
-    }
+    private static byte[] ReadShared(string path) => HashChain.ReadAllShared(path);
 
     private StateResult Write(string actor, string kind, string subject, string value, Func<TimelineNotebookState, StateResult> check)
     {

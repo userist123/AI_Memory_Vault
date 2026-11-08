@@ -248,7 +248,7 @@ public static class AnalysisRuns
         // The position decides, not the seq a line claims (review round 2: a forged line claiming seq 1 was accepted): walk the chained lines in
         // file order and stop at the first one that does not continue the previous (seq + 1, prevHash = previous hash) or lies past the verified part.
         long lastSeq = 0; string? lastHash = null;
-        foreach (var line in File.ReadLines(ws.AuditChainPath))
+        foreach (var line in System.Text.Encoding.UTF8.GetString(HashChain.ReadAllShared(ws.AuditChainPath)).Split('\n'))
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
             System.Text.Json.Nodes.JsonObject? node;

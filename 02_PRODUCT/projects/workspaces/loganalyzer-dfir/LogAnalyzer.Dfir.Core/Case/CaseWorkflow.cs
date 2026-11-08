@@ -164,21 +164,7 @@ public sealed class CaseWorkflow
         return s;
     }
 
-    /// <summary>Reads a chained log that a writer may hold exclusively for a moment (HashChain.Append opens with FileShare.None): retried like <see cref="HashChain.Head"/>.</summary>
-    private static byte[] ReadShared(string path)
-    {
-        for (int attempt = 0; ; attempt++)
-        {
-            try
-            {
-                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-                using var ms = new MemoryStream();
-                fs.CopyTo(ms);
-                return ms.ToArray();
-            }
-            catch (IOException) when (attempt < 100 && File.Exists(path)) { Thread.Sleep(20); }
-        }
-    }
+    private static byte[] ReadShared(string path) => HashChain.ReadAllShared(path);
 
     /// <summary>How many workflow events the case audit chain recorded (refusals excluded).</summary>
     private int AuditedEvents()

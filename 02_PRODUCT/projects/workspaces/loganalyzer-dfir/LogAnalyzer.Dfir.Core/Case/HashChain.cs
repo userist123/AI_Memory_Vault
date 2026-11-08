@@ -135,6 +135,25 @@ public sealed class HashChain(string path)
     }
 
     /// <summary>Whether an entry with this <paramref name="seq"/> and <paramref name="hash"/> is on the chain (a copy of the head held outside the case).</summary>
+    /// <summary>
+    /// Reads a whole chained log that a writer may hold exclusively (<see cref="Append"/> opens it with FileShare.None) — retried with a growing pause,
+    /// about 15 s in all (CI 2026-11-08: a busy writer kept a 2-second reader out on a slow runner). A file that disappears is not waited for.
+    /// </summary>
+    public static byte[] ReadAllShared(string path)
+    {
+        for (int attempt = 0; ; attempt++)
+        {
+            try
+            {
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var ms = new MemoryStream();
+                fs.CopyTo(ms);
+                return ms.ToArray();
+            }
+            catch (IOException) when (attempt < 400 && File.Exists(path)) { Thread.Sleep(Math.Min(5 + attempt, 50)); }
+        }
+    }
+
     public bool Contains(long seq, string hash) => File.Exists(Path) && ContainsIn(File.ReadLines(Path), seq, hash);
 
     private static bool ContainsIn(IEnumerable<string> lines, long seq, string hash)
@@ -157,7 +176,7 @@ public sealed class HashChain(string path)
         for (int attempt = 0; ; attempt++)
         {
             try { return new FileStream(Path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
-            catch (IOException) when (attempt < 100) { Thread.Sleep(20); }   // another writer holds the file; wait up to ~2 s
+            catch (IOException) when (attempt < 400) { Thread.Sleep(Math.Min(5 + attempt, 50)); }   // another writer holds the file; wait up to ~15 s (CI 2026-11-08: 2 s was not enough on a busy runner)
         }
     }
 
