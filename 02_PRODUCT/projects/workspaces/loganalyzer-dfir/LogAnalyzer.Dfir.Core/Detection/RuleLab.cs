@@ -75,7 +75,7 @@ public static class RuleLab
             {
                 // lab 2026-11-08: a reopened case reads its timeline from timeline.csv, which keeps no parser fields, so a rule on TargetUserName
                 // matched nothing and only "0" was shown. Fields no corpus event carries are named.
-                var missing = SigmaFields(string.Join("\n", SigmaLite.SplitDocuments(ruleText).Where(d => !SigmaCorrelation(d)))).Where(f => !timeline.Any(e => e.Fields.ContainsKey(f))).ToList();
+                var missing = SigmaLite.SplitDocuments(ruleText).Where(d => !SigmaCorrelation(d)).SelectMany(SigmaFields).Distinct(StringComparer.OrdinalIgnoreCase).Where(f => !timeline.Any(e => e.Fields.ContainsKey(f))).ToList();
                 if (missing.Count > 0)
                     run.Notes.Add($"niciun eveniment al cazului nu are câmpurile {string.Join(", ", missing)}, deci regula nu le poate potrivi; un caz redeschis are cronologia din timeline.csv, fără câmpurile parserelor: reanalizați cazul (tab „Rulări și diferențe”) și testați din nou.");
             }
@@ -89,11 +89,40 @@ public static class RuleLab
 
     private static readonly HashSet<string> ColumnFields = new(StringComparer.OrdinalIgnoreCase) { "EventID", "Channel", "Provider_Name", "Computer", "Image", "CommandLine", "User" };
 
-    /// <summary>Field names a Sigma rule tests (the keys inside its selections), minus those the engine reads from the event columns.</summary>
-    private static IEnumerable<string> SigmaFields(string yaml) =>
-        System.Text.RegularExpressions.Regex.Matches(yaml, @"^\s{2,}(?:-\s*)?([A-Za-z][A-Za-z0-9_]*)(?:\|[^:\s]*)?\s*:", System.Text.RegularExpressions.RegexOptions.Multiline)
-            .Select(m => m.Groups[1].Value).Where(f => f is not ("condition" or "sel" or "selection" or "filter") && !ColumnFields.Contains(f) && !f.StartsWith("sel", StringComparison.OrdinalIgnoreCase) && !f.StartsWith("filter", StringComparison.OrdinalIgnoreCase))
-            .Distinct(StringComparer.OrdinalIgnoreCase);
+    /// <summary>
+    /// Field names a Sigma rule tests: the keys of its detection selections (a map, or a list of maps), without the modifiers, minus those the engine
+    /// reads from the event columns. Read from the YAML structure, so logsource keys (product, service) are never taken for event fields (lab 2026-11-08).
+    /// </summary>
+    private static IEnumerable<string> SigmaFields(string yaml)
+    {
+        var fields = new List<string>();
+        try
+        {
+            var stream = new YamlDotNet.RepresentationModel.YamlStream();
+            stream.Load(new StringReader(yaml));
+            foreach (var doc in stream.Documents)
+            {
+                if (doc.RootNode is not YamlDotNet.RepresentationModel.YamlMappingNode root
+                    || !root.Children.TryGetValue(new YamlDotNet.RepresentationModel.YamlScalarNode("detection"), out var det)
+                    || det is not YamlDotNet.RepresentationModel.YamlMappingNode detection) continue;
+                foreach (var (k, v) in detection.Children)
+                {
+                    if ((k as YamlDotNet.RepresentationModel.YamlScalarNode)?.Value == "condition") continue;
+                    var maps = v switch
+                    {
+                        YamlDotNet.RepresentationModel.YamlMappingNode m => [m],
+                        YamlDotNet.RepresentationModel.YamlSequenceNode s => s.Children.OfType<YamlDotNet.RepresentationModel.YamlMappingNode>().ToList(),
+                        _ => new List<YamlDotNet.RepresentationModel.YamlMappingNode>(),
+                    };
+                    foreach (var m in maps)
+                        foreach (var key in m.Children.Keys.OfType<YamlDotNet.RepresentationModel.YamlScalarNode>())
+                            if ((key.Value ?? "").Split('|')[0] is { Length: > 0 } f && !ColumnFields.Contains(f)) fields.Add(f);
+                }
+            }
+        }
+        catch (YamlDotNet.Core.YamlException) { }   // the engine already reported the rule as not loading
+        return fields.Distinct(StringComparer.OrdinalIgnoreCase);
+    }
 
     /// <summary>Sigma correlation documents carry a top-level "correlation:" key and no "detection:".</summary>
     private static bool SigmaCorrelation(string yaml) =>

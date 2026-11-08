@@ -116,7 +116,7 @@ public static class MemoryFindings
             if (mzRows.Count > 0)
             {
                 var f = Make(nextId, "MEM-INJECT", $"Regiune executabilă și inscriptibilă cu antet MZ în {first.Process} (PID {pid})", Severity.High, Classification.Candidate, Confidence.Medium, first,
-                    $"malfind a semnalat {mzRows.Count} regiune(i) PAGE_EXECUTE_READWRITE al căror conținut începe cu antetul unui executabil (MZ) în procesul {first.Process} (PID {pid}). Aceasta este o urmă tipică de cod încărcat în memorie fără fișier pe disc, dar și unele programe legitime (încărcătoare, protecții de licență) o produc.",
+                    $"Unealta malfind (Volatility) a semnalat {mzRows.Count} regiune(i) PAGE_EXECUTE_READWRITE al căror conținut începe cu antetul unui executabil (MZ) în procesul {first.Process} (PID {pid}). Aceasta este o urmă tipică de cod încărcat în memorie fără fișier pe disc, dar și unele programe legitime (încărcătoare, protecții de licență) o produc.",
                     mzRows.Take(MaxEvidencePerFinding).Select(x => Ref(x, $"regiune malfind {x.Fields.GetValueOrDefault("Protection", "")} la {x.Fields.GetValueOrDefault("StartVpn", "")} cu antet MZ")).ToList(), "T1055",
                     ["Program legitim care încarcă module în memorie (protecții, încărcătoare)", "Fals pozitiv malfind"],
                     ["Extrageți regiunea cu malfind --dump și analizați-o în mediu izolat", "Comparați cu fișierele procesului de pe disc"]);
@@ -125,7 +125,7 @@ public static class MemoryFindings
             else if (hiddenByPid.ContainsKey(pid) || pathPids.Contains(pid))
             {
                 inject.Add(Make(nextId, "MEM-INJECT", $"Regiune executabilă și inscriptibilă în {first.Process} (PID {pid}), cu alt semnal de memorie", Severity.Low, Classification.Unproven, Confidence.Low, first,
-                    $"malfind a semnalat {rows.Count} regiune(i) PAGE_EXECUTE_READWRITE fără antet MZ în procesul {first.Process} (PID {pid}). Singură, o astfel de regiune apare des la programe legitime (JIT, .NET, browsere); este raportată doar pentru că același proces are și un alt semnal în memorie (proces ascuns sau cale într-o locație inscriptibilă).",
+                    $"Unealta malfind (Volatility) a semnalat {rows.Count} regiune(i) PAGE_EXECUTE_READWRITE fără antet MZ în procesul {first.Process} (PID {pid}). Singură, o astfel de regiune apare des la programe legitime (JIT, .NET, browsere); este raportată doar pentru că același proces are și un alt semnal în memorie (proces ascuns sau cale într-o locație inscriptibilă).",
                     rows.Take(MaxEvidencePerFinding).Select(x => Ref(x, $"regiune malfind {x.Fields.GetValueOrDefault("Protection", "")} la {x.Fields.GetValueOrDefault("StartVpn", "")} fără antet MZ")).ToList(), "T1055",
                     ["Compilare JIT sau runtime .NET/Java", "Fals pozitiv malfind"], ["Analizați regiunea împreună cu celălalt semnal al procesului"]));
             }
@@ -147,7 +147,7 @@ public static class MemoryFindings
             ev.AddRange(conns.Take(MaxEvidencePerFinding).Select(c => Ref(c, $"conexiune netscan către {c.RemoteIp}:{c.RemotePort}")));
             var why = string.Join(" și ", new[] { hiddenByPid.ContainsKey(pid) ? "găsit doar de psscan (MEM-HIDDEN)" : null, injectHigh.ContainsKey(pid) ? "cu regiune injectată MZ (MEM-INJECT)" : null }.Where(x => x is not null));
             var f = Make(nextId, "MEM-NETPROC", $"Conexiune de rețea a unui proces suspect: {proc} (PID {pid}) → {conns[0].RemoteIp}", Severity.High, Classification.Candidate, Confidence.Medium, conns[0],
-                $"netscan arată {conns.Count} conexiune(i) cu adresă la distanță deținute de procesul {proc} (PID {pid}), care este {why}. Combinația este mai puternică decât fiecare semnal separat, dar rămâne un candidat din ieșirea uneltei: netscan poate arăta și structuri rămase de conexiuni închise.",
+                $"Unealta netscan (Volatility) arată {conns.Count} conexiune(i) cu adresă la distanță deținute de procesul {proc} (PID {pid}), care este {why}. Combinația este mai puternică decât fiecare semnal separat, dar rămâne un candidat din ieșirea uneltei: netscan poate arăta și structuri rămase de conexiuni închise.",
                 ev, "T1071", ["Structură rămasă de la o conexiune închisă", "Fals pozitiv al semnalului de bază"],
                 ["Căutați adresa la distanță în jurnalele de rețea (Zeek, PCAP, firewall)", "Verificați procesul pe disc și în Prefetch"], related);
             findings.Add(f); netCount++;

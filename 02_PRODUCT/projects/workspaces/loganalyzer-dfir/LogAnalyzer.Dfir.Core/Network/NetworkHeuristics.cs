@@ -175,7 +175,7 @@ public static class NetworkHeuristics
                 var others = new[] { "Zeek", "PCAP", "Sysmon" }.Where(f => f != family && conns.Any(c => c.Family == f && c.Src == g.Key.Src && c.Dst == g.Key.Dst && c.DstPort == g.Key.DstPort)).ToList();
                 var ev = rows.Take(MaxEvidencePerFinding).Select(c => Ref(c.E, $"conexiune {family} la {c.T:yyyy-MM-dd HH:mm:ss.fff} UTC")).ToList();
                 foreach (var l in rowLinks.Take(MaxEvidencePerFinding)) ev.Add(new EvidenceRef(l.EndpointEvidenceId, l.EndpointLocator, $"procesul de pe stație (Sysmon 3): {l.Image}", ""));
-                string desc = $"{g.Key.Src} a deschis {times.Count} conexiuni către {g.Key.Dst}:{g.Key.DstPort} la intervale aproape egale: mediana {Human(median)}, "
+                string desc = $"Stația {g.Key.Src} a deschis {times.Count} conexiuni către {g.Key.Dst}:{g.Key.DstPort} la intervale aproape egale: mediana {Human(median)}, "
                     + $"{regular:P0} dintre intervale în ±{BeaconTolerance:P0} din mediană, abatere standard {Human(sd)}, între {times[0]:yyyy-MM-dd HH:mm} și {times[^1]:yyyy-MM-dd HH:mm} UTC (văzut de {family}"
                     + (others.Count > 0 ? $"; aceeași destinație apare și în {string.Join(", ", others)}" : "") + "). "
                     + (images.Count > 1 ? $"Conexiunile vin de la mai multe procese ({string.Join(", ", images.Take(5))}); niciunul nu este ales. "
@@ -228,7 +228,7 @@ public static class NetworkHeuristics
                     if (best.Distinct < ScanThreshold) continue;
                     reported.Add(key);
                     count++;
-                    var desc = $"{g.Src} a încercat {best.Distinct} {(kind == "porturi" ? $"porturi diferite pe {g.Target}" : $"stații diferite pe {g.Target}")} în {ScanWindow.TotalSeconds:0} de secunde "
+                    var desc = $"Stația {g.Src} a încercat {best.Distinct} {(kind == "porturi" ? $"porturi diferite pe {g.Target}" : $"stații diferite pe {g.Target}")} în {ScanWindow.TotalSeconds:0} de secunde "
                         + $"({best.Start:yyyy-MM-dd HH:mm:ss} UTC, văzut de {family}). Așa arată o scanare de {(kind == "porturi" ? "porturi" : "rețea")}; o fac și inventarierea, monitorizarea sau un scaner de vulnerabilități autorizat.";
                     findings.Add(new Finding
                     {

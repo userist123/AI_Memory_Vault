@@ -70,7 +70,8 @@ public static class PlainStory
         var where = f.Host.Length > 0 && f.Host != "-" ? $"pe calculatorul {f.Host}" : "";
         var lead = string.Join(", ", new[] { when, where }.Where(s => s.Length > 0));
         // a PlainWhat that starts with a capital letter is a whole clause with its own subject („Windows a oprit…”, „Cineva a încercat…”)
-        var wholeClause = what.Length > 0 && char.IsUpper(what[0]);
+        // a PlainWhat that starts with a digit (an address, a count) cannot follow „cineva”: it is read as a whole clause too
+        var wholeClause = what.Length > 0 && (char.IsUpper(what[0]) || char.IsDigit(what[0]));
         var clause = wholeClause ? (lead.Length > 0 ? LowerFirst(what) : what) : $"{Who(users, personOf, f.Host)} {what}";
         var sentence = lead.Length > 0 ? $"{lead}, {clause}" : UpperFirst(clause);
         return UpperFirst(sentence.TrimEnd('.', ' ')) + ".";

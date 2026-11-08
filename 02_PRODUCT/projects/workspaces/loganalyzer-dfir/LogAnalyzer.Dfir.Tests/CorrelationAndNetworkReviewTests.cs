@@ -107,6 +107,7 @@ public sealed class CorrelationAndNetworkReviewTests : IDisposable
         var run = RuleLab.Test(RuleLabKind.Sigma, "corr.yml", Base + "\n---\n" + Corr(), tl, [], _ => []);
         Assert.True(run.Valid, string.Join("; ", run.Errors));
         Assert.Contains(run.Notes, n => n.Contains("group-by"));
+        Assert.DoesNotContain(run.Notes, n => n.Contains("product") || n.Contains("service"));   // lab: logsource keys were taken for event fields
         Assert.Contains(run.Matches, m => m.RuleId.StartsWith("SIGMA-CORR:", StringComparison.Ordinal));
     }
 
