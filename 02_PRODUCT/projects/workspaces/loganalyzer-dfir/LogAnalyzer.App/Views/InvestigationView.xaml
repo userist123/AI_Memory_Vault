@@ -503,6 +503,28 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
+            <!-- Master plan 6.7: the evidence files that are Windows programs, read statically, with the station's signature check -->
+            <TabItem Header="Executabile" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Executabile: programele dintre probe, citite fără să fie rulate">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding PeLine}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6"/>
+                    <DataGrid DockPanel.Dock="Top" ItemsSource="{Binding PeRows}" SelectedItem="{Binding SelectedPe}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single"
+                              MaxHeight="160" Margin="0,0,0,6" AutomationProperties.Name="Executabilele dintre probe">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}"><Setter Property="AutomationProperties.Name" Value="{Binding OriginalName}"/></Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Fișier" Binding="{Binding OriginalName}" Width="2*"/>
+                            <DataGridTextColumn Header="Arhitectură" Binding="{Binding Report.Machine}" Width="80"/>
+                            <DataGridTextColumn Header="Semnătură" Binding="{Binding SignatureStatus}" Width="2*"/>
+                            <DataGridTextColumn Header="Indicatori" Binding="{Binding Report.Indicators.Count}" Width="75"/>
+                            <DataGridTextColumn Header="Probă" Binding="{Binding EvidenceId}" Width="90"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <ListBox ItemsSource="{Binding PeDetail}" AutomationProperties.Name="Fișa executabilului ales" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </TabItem>
             <!-- Master plan 6.16: immutable analysis runs (Analysis/Runs) and the difference between two of them, with the likely source of each change. -->
             <TabItem Header="Rulări și diferențe" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Rulări și diferențe: analizele înregistrate și ce s-a schimbat între ele">
                 <DockPanel Margin="8">

@@ -356,8 +356,14 @@
   ACCEPTED RESIDUAL (owner to confirm): an admin can restore an older complete sealed state (no monotonic counter). Lab: Insula refusal shown;
   positive path only in ThreatIntelRealCmsTests (real SignedCms) - lab has no officer certificate yet. docs/dfir/THREAT_INTEL_PACKAGES.md.
   Suites: Dfir 2784, App 1026, UI 368, Ed 45.
+- 6.7 DONE (2026-11-08T02:40): Detection/PeTriage.cs (bounded static PE reader: header, sections+entropy, imports+imphash with
+  untranslated ordinals, overlay, signature presence, TLS; explained indicators; notable imports as shipped data pe_notable_imports.json so the
+  DLL carries no detection names), pipeline -> Analysis/pe_triage.json with station Authenticode (cache only), MZ-but-unreadable = gap, tab
+  „Executabile”. Opus review: 12k mutations no throw; HIGH import blow-up (1M functions, 273 MB) capped + PE-IMPORTS-TRUNCATED; silent drop,
+  imphash vs pefile (documented, label), entropy cost, overlay lower bound fixed. Lab Arhipelag: adb valid, foreign notepad unsigned here,
+  overlay 20,000. docs/dfir/PE_TRIAGE.md. Suites: Dfir 2794, App 1026, UI 368, Ed 45.
 ## Next
--1. MASTER PLAN order after 6.1 + 6.16 + 6.9 + 6.12: bookmarks/saved views; 6.7 PE triage; 6.5 JA3; 6.8 rule test lab; 6.11 graph view; 6.4 coverage heatmap; 6.14 target-bound
+-1. MASTER PLAN order after 6.1 + 6.16 + 6.9 + 6.12 + 6.7: bookmarks/saved views; 6.7 PE triage; 6.5 JA3; 6.8 rule test lab; 6.11 graph view; 6.4 coverage heatmap; 6.14 target-bound
    approval. Each: tests, Opus review for risky code, lab screenshots on the three editions.
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.

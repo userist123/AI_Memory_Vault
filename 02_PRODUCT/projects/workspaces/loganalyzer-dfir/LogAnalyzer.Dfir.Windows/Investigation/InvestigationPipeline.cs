@@ -56,6 +56,8 @@ public sealed class InvestigationResult
     public CustodyLedger? Custody { get; set; }
     public string CustodyError { get; set; } = "";
     public List<ParseResult> Parsing { get; } = [];
+    /// <summary>Master plan 6.7: the evidence files that are Windows executables, read statically (Analysis/pe_triage.json).</summary>
+    public List<LogAnalyzer.Dfir.Detection.PeTriageRow> PeTriage { get; } = [];
     /// <summary>Master plan 6.16: the immutable record of this run and its difference from the previous run (null for the first run or an opened case).</summary>
     public AnalysisRunManifest? Run { get; set; }
     public RunDiff? RunDiff { get; set; }
@@ -619,6 +621,37 @@ public sealed class InvestigationPipeline
         ws.RecordOutput("Analysis/detections.json", "DetectionEngine", "1.0", evidenceIds);
         ws.RecordOutput("Analysis/rules.json", "DetectionEngine", "1.0");
         ws.RecordTransformation("CASE", "DetectionEngine", "1.0", "Analysis/detections.json", $"{r.Detections.Count} potriviri, {r.RulesUsed.Count} reguli");
+        // Master plan 6.7: every evidence file that is a Windows executable is read statically (never run) and its signature is checked on this
+        // station (embedded or catalog, cache only, no network). Observations with their reasons, not verdicts.
+        progress?.Report("Triaj executabile");
+        foreach (var e in evidenceItems)
+        {
+            if (!ws.TryFullPath(e.StoredPath, out var full) || !File.Exists(full)) continue;
+            try
+            {
+                using (var fs = new FileStream(full, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    if (fs.Length < 64 || fs.ReadByte() != 'M' || fs.ReadByte() != 'Z') continue;
+                var pe = LogAnalyzer.Dfir.Detection.PeTriage.Analyze(full);
+                if (!pe.IsPe)
+                {
+                    // starts like an executable but cannot be read as one: malformed programs are the interesting ones, so it is said, not dropped
+                    r.Gaps.Add(new EvidenceGap(e.OriginalName, EvidenceStatus.Partial, pe.Problem, "Fișierul începe ca un executabil Windows, dar nu a putut fi citit ca unul",
+                        "Analiză manuală într-un mediu izolat", "Posibil"));
+                    continue;
+                }
+                var sig = OperatingSystem.IsWindows() ? LogAnalyzer.Dfir.Windows.Native.Authenticode.Verify(full) : new LogAnalyzer.Dfir.Windows.Native.SignatureInfo(false, false, "none", "neverificat (nu este Windows)", "");
+                r.PeTriage.Add(new LogAnalyzer.Dfir.Detection.PeTriageRow(e.EvidenceId, e.OriginalName, pe, sig.Kind, sig.Status, sig.Signer, sig.IsValid));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                r.Gaps.Add(new EvidenceGap(e.OriginalName, EvidenceStatus.Failed, ex.Message, "Executabilul nu a putut fi citit pentru triaj", "Reachiziție", "Posibil"));
+            }
+        }
+        // written also when empty, so a run with no executables never leaves an earlier run's list behind
+        {
+            LogAnalyzer.Dfir.Detection.PeTriageFile.Write(Path.Combine(analysisDir, "pe_triage.json"), r.PeTriage);
+            ws.RecordOutput(LogAnalyzer.Dfir.Detection.PeTriageFile.RelPath, "PeTriage", "1", r.PeTriage.Select(p => p.EvidenceId));
+        }
         r.AntiForensics.AddRange(LogAnalyzer.Dfir.Analysis.AntiForensics.Evaluate(r.Timeline, r.Gaps, maintenance,
             found.Where(x => x.Severity >= Severity.High && x.RuleId != "LOG-TAMPER" && (x.FirstSeenUtc ?? x.LastSeenUtc) is not null).Select(x => (x.FirstSeenUtc ?? x.LastSeenUtc)!.Value).ToList()));
         File.WriteAllText(Path.Combine(analysisDir, "anti_forensics.json"), JsonSerializer.Serialize(r.AntiForensics, new JsonSerializerOptions { WriteIndented = true }));
