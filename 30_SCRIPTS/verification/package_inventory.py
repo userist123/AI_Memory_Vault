@@ -1,0 +1,649 @@
+#!/usr/bin/env python3
+"""AST inventory of the Python packages of the repository (WP-01, F0).
+
+Read-only: walks the tree, parses every ``.py`` file with ``ast`` and writes a
+JSON and a Markdown report. Standard library only. Anything the AST cannot
+resolve (dynamic imports, ``sys.path`` / ``__path__`` manipulation) is listed
+as UNKNOWN and never guessed.
+
+    python 30_SCRIPTS/verification/package_inventory.py --root . \
+        --out-json <path> --out-md <path>
+
+Units discovered (nothing hardcoded by name):
+  * every directory under ``03_IMPLEMENTATION/packages/``
+  * every directory under ``03_IMPLEMENTATION/products/``
+  * root-level directories whose name is an identifier and that contain .py files
+Imports are resolved with the ``pythonpath`` order of ``pytest.ini`` (first wins).
+"""
+from __future__ import annotations
+
+import argparse
+import ast
+import json
+import re
+import sys
+import warnings
+from collections import defaultdict
+from pathlib import Path
+
+PRUNE_DIRS = {
+    ".git", "node_modules", "80_ARCHIVE", "__pycache__", ".venv", "venv",
+    ".pytest_cache", ".mypy_cache", "site-packages", ".pnpm-store",
+}
+DEFAULT_PYTHONPATH = [".", "03_IMPLEMENTATION/packages", "03_IMPLEMENTATION"]
+UNIT_PARENTS = (("packages", "03_IMPLEMENTATION/packages"), ("products", "03_IMPLEMENTATION/products"))
+TEXT_EXT = {".py", ".yml", ".yaml", ".md", ".toml", ".json", ".txt", ".sh", ".ini", ".cfg", ".ps1", ".bat", ".cmd"}
+TEXT_NAMES = {"Makefile", "justfile"}
+TESTDIR_TOP = ["20_TESTS", "02_PRODUCT", "security", "07_EVALUATION", "03_IMPLEMENTATION", ".agents"]
+REQ_FILES = ["requirements.txt", "requirements-memory-v6.txt"]
+SELF_EXCLUDED_REF = ("07_EVALUATION/reports/modernization/", "30_SCRIPTS/verification/package_inventory.py",
+                     "20_TESTS/test_package_inventory.py", "00_GOVERNANCE/coordination/tasks/todo-claude-modernization")
+
+
+# ----------------------------------------------------------------------------- walking
+def walk_files(root: Path) -> list[str]:
+    out: list[str] = []
+    stack = [root]
+    while stack:
+        d = stack.pop()
+        try:
+            entries = list(d.iterdir())
+        except OSError:
+            continue
+        for e in entries:
+            if e.is_dir():
+                if e.name in PRUNE_DIRS or e.is_symlink():
+                    continue
+                stack.append(e)
+            elif e.is_file():
+                out.append(e.relative_to(root).as_posix())
+    return sorted(out)
+
+
+def is_test_path(rel: str) -> bool:
+    p = "/" + rel
+    base = p.rsplit("/", 1)[-1]
+    return "/20_TESTS/" in p or "/tests/" in p or base.startswith("test_") or base == "conftest.py"
+
+
+def is_bench_path(rel: str) -> bool:
+    return "/benchmarks/" in "/" + rel
+
+
+def loc_of(text: str) -> int:
+    return sum(1 for ln in text.splitlines() if ln.strip() and not ln.strip().startswith("#"))
+
+
+# ----------------------------------------------------------------------------- units
+def discover_units(root: Path, pyfiles: list[str]) -> dict[str, dict]:
+    units: dict[str, dict] = {}
+    for kind, parent in UNIT_PARENTS:
+        pdir = root / parent
+        if pdir.is_dir():
+            for d in sorted(pdir.iterdir()):
+                if d.is_dir() and d.name not in PRUNE_DIRS and not d.name.startswith("."):
+                    units[f"{kind}/{d.name}"] = {"id": f"{kind}/{d.name}", "kind": kind, "name": d.name,
+                                                 "dir": f"{parent}/{d.name}"}
+    top_with_py = {f.split("/", 1)[0] for f in pyfiles if "/" in f}
+    for d in sorted(root.iterdir()):
+        if (d.is_dir() and d.name.isidentifier() and d.name in top_with_py
+                and d.name not in PRUNE_DIRS and not d.name.startswith(".")):
+            units[f"root/{d.name}"] = {"id": f"root/{d.name}", "kind": "root", "name": d.name, "dir": d.name}
+    return units
+
+
+def unit_of_file(rel: str, units_by_dir_len: list[dict]) -> str | None:
+    for u in units_by_dir_len:
+        if rel.startswith(u["dir"] + "/"):
+            return u["id"]
+    return None
+
+
+def read_pythonpath(root: Path) -> list[str]:
+    ini = root / "pytest.ini"
+    if ini.is_file():
+        m = re.search(r"^pythonpath\s*=\s*(.+)$", ini.read_text("utf-8", "replace"), re.M)
+        if m:
+            return [p.strip("/") if p.strip() != "." else "." for p in m.group(1).split()]
+    return list(DEFAULT_PYTHONPATH)
+
+
+def read_testpaths(root: Path) -> list[str]:
+    ini = root / "pytest.ini"
+    if ini.is_file():
+        m = re.search(r"^testpaths\s*=\s*(.+)$", ini.read_text("utf-8", "replace"), re.M)
+        if m:
+            return m.group(1).split()
+    return []
+
+
+# ----------------------------------------------------------------------------- resolver
+class Resolver:
+    def __init__(self, root: Path, units: dict[str, dict], pythonpath: list[str]):
+        self.root = root
+        self.units = units
+        self.pythonpath = pythonpath
+        self.by_dir = {u["dir"]: u["id"] for u in units.values()}
+        self.shims: dict[str, dict] = {}
+        self._exists: dict[str, bool] = {}
+        self.collisions = self._find_collisions()
+        self.stats: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+
+    def exists(self, rel: str) -> bool:
+        if rel not in self._exists:
+            self._exists[rel] = (self.root / rel).exists()
+        return self._exists[rel]
+
+    def _join(self, base: str, *parts: str) -> str:
+        return "/".join(p for p in (base if base != "." else "", *parts) if p)
+
+    def candidates(self, name: str) -> list[str]:
+        out = []
+        for p in self.pythonpath:
+            uid = self.by_dir.get(self._join(p, name))
+            if uid:
+                out.append(uid)
+        return out
+
+    def _find_collisions(self) -> dict[str, list[str]]:
+        names = {u["name"] for u in self.units.values()}
+        res = {}
+        for n in sorted(names):
+            c = self.candidates(n)
+            if len(c) > 1:
+                res[n] = c
+        return res
+
+    def set_shim(self, uid: str, consts: set[str], has_path: bool) -> None:
+        """Record a ``__path__`` shim and which units it points to (from string constants)."""
+        if not has_path:
+            return
+        own_parent = self.units[uid]["dir"].rsplit("/", 1)[0].rsplit("/", 1)[-1] if "/" in self.units[uid]["dir"] else ""
+        parent_names = {u["dir"].rsplit("/", 1)[0].rsplit("/", 1)[-1] for u in self.units.values() if "/" in u["dir"]}
+        hints = [p for p in sorted(parent_names) if p in consts] or [own_parent]
+        targets: list[str] = []
+        for c in sorted(consts):
+            for h in hints:
+                for u in self.units.values():
+                    if u["name"] == c and u["id"] != uid and u["dir"].rsplit("/", 1)[0].endswith(h) and u["id"] not in targets:
+                        targets.append(u["id"])
+        self.shims[uid] = {"targets": targets}
+
+    def _served_by(self, unit_id: str, sub: list[str]) -> bool:
+        d = self.units[unit_id]["dir"]
+        return self.exists(f"{d}/{sub[0]}.py") or self.exists(f"{d}/{sub[0]}")
+
+    def resolve(self, parts: list[str]) -> set[str]:
+        """Units reached by ``import a.b.c`` (``parts`` = ['a','b','c']); empty = not a repo unit."""
+        for p in self.pythonpath:
+            base = self._join(p, parts[0])
+            uid = self.by_dir.get(base)
+            sub = parts[1:]
+            if uid is None and len(parts) > 1:
+                uid = self.by_dir.get(self._join(p, parts[0], parts[1]))
+                sub = parts[2:]
+                if uid is not None and parts[0] in self.units[uid]["name"]:
+                    uid = None
+            if uid is None:
+                continue
+            name = self.units[uid]["name"]
+            credits = {uid}
+            served = uid
+            if uid in self.shims and sub:
+                targets = self.shims[uid]["targets"]
+                served = None
+                if not self._served_by(uid, sub):
+                    for t in targets:
+                        if self._served_by(t, sub):
+                            served = t
+                            break
+                    if served is None and len(targets) == 1:
+                        served = targets[0]
+                else:
+                    served = uid
+                if served:
+                    credits.add(served)
+            if name in self.collisions and sub:
+                key = served or "UNSERVED"
+                if served is None:
+                    for loser in self.collisions[name][1:]:
+                        if self._served_by(loser, sub) or loser in self.shims:
+                            key = f"SHADOWED:{loser}"
+                            break
+                self.stats[name][key] += 1
+            return credits
+        return set()
+
+
+# ----------------------------------------------------------------------------- per-file analysis
+def _is_name(node: ast.AST, name: str) -> bool:
+    return isinstance(node, ast.Name) and node.id == name
+
+
+def _is_sys_path(node: ast.AST) -> bool:
+    return isinstance(node, ast.Attribute) and node.attr == "path" and _is_name(node.value, "sys")
+
+
+def _is_dunder_path(node: ast.AST) -> bool:
+    return _is_name(node, "__path__") or (isinstance(node, ast.Attribute) and node.attr == "__path__")
+
+
+def analyze_file(text: str) -> dict:
+    """Return imports (list of part-lists + from-aliases), unknowns, main-guard, __all__, constants."""
+    res = {"imports": [], "unknown": [], "has_main": False, "has_all": False, "consts": set(), "parse_error": None}
+    try:
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore")
+            tree = ast.parse(text)
+    except (SyntaxError, ValueError, RecursionError) as exc:
+        res["parse_error"] = type(exc).__name__
+        return res
+    for node in ast.walk(tree):
+        if isinstance(node, ast.Import):
+            for a in node.names:
+                res["imports"].append(([a.name.split(".")], node.lineno, False))
+        elif isinstance(node, ast.ImportFrom):
+            if node.level:
+                continue
+            mod = (node.module or "").split(".") if node.module else []
+            if not mod or mod == [""]:
+                continue
+            alts = [mod] + [mod + [a.name] for a in node.names if a.name != "*"]
+            res["imports"].append((alts, node.lineno, True))
+        elif isinstance(node, ast.If):
+            t = node.test
+            if (isinstance(t, ast.Compare) and _is_name(t.left, "__name__") and len(t.comparators) == 1
+                    and isinstance(t.comparators[0], ast.Constant) and t.comparators[0].value == "__main__"):
+                res["has_main"] = True
+        elif isinstance(node, (ast.Assign, ast.AnnAssign, ast.AugAssign)):
+            targets = node.targets if isinstance(node, ast.Assign) else [node.target]
+            for tg in targets:
+                if _is_name(tg, "__all__"):
+                    res["has_all"] = True
+                if _is_sys_path(tg) or _is_dunder_path(tg):
+                    res["unknown"].append({"line": node.lineno, "kind": "path_assign",
+                                           "detail": "sys.path" if _is_sys_path(tg) else "__path__"})
+                if isinstance(tg, ast.Subscript) and (_is_sys_path(tg.value) or _is_dunder_path(tg.value)):
+                    res["unknown"].append({"line": node.lineno, "kind": "path_assign", "detail": "path[...]"})
+        elif isinstance(node, ast.Constant) and isinstance(node.value, str):
+            res["consts"].add(node.value)
+        if isinstance(node, ast.Call):
+            f = node.func
+            fname = f.id if isinstance(f, ast.Name) else (f.attr if isinstance(f, ast.Attribute) else "")
+            if isinstance(f, ast.Attribute) and fname in {"insert", "append", "extend", "remove"} and \
+                    (_is_sys_path(f.value) or _is_dunder_path(f.value)):
+                res["unknown"].append({"line": node.lineno, "kind": "path_mutation",
+                                       "detail": ("sys.path." if _is_sys_path(f.value) else "__path__.") + fname})
+            elif fname in {"import_module", "__import__"} and (
+                    isinstance(f, ast.Name) or _is_name(getattr(f, "value", None), "importlib")):
+                arg = node.args[0] if node.args else None
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, str) and not arg.value.startswith("."):
+                    res["imports"].append(([arg.value.split(".")], node.lineno, False))
+                else:
+                    res["unknown"].append({"line": node.lineno, "kind": "dynamic_import", "detail": fname})
+            elif fname in {"spec_from_file_location", "run_module", "run_path", "extend_path"}:
+                res["unknown"].append({"line": node.lineno, "kind": "file_or_module_loader", "detail": fname})
+    return res
+
+
+# ----------------------------------------------------------------------------- text references
+def unit_patterns(u: dict, winner_names: set[str]) -> list[re.Pattern]:
+    n = re.escape(u["name"])
+    pats = []
+    if u["kind"] in ("packages", "products"):
+        pats.append(re.compile(rf"(?<!\w){u['kind']}[/\\]{n}(?!\w)"))
+    else:
+        pats.append(re.compile(rf"(?<![\w/\\.\-]){n}[/\\]"))
+    if u["id"] in winner_names:
+        pats.append(re.compile(rf"-m\s+{n}\."))
+    return pats
+
+
+def ci_config_files(root: Path, allfiles: list[str]) -> list[str]:
+    out = []
+    for f in allfiles:
+        if (f.startswith(".github/workflows/") and f.count("/") == 2 and f.endswith((".yml", ".yaml"))) \
+                or f in ("pytest.ini", "pyproject.toml") \
+                or (f.startswith("04_CONFIG/") and f.count("/") == 1 and f.endswith(".json")):
+            out.append(f)
+    return out
+
+
+def read_text(root: Path, rel: str, limit: int = 2_000_000) -> str:
+    p = root / rel
+    try:
+        if p.stat().st_size > limit:
+            return ""
+        return p.read_text("utf-8", "replace")
+    except OSError:
+        return ""
+
+
+# ----------------------------------------------------------------------------- requirements
+def parse_requirements(text: str) -> dict[str, str]:
+    out = {}
+    for ln in text.splitlines():
+        ln = ln.split("#", 1)[0].strip()
+        if not ln or ln.startswith("-"):
+            continue
+        m = re.match(r"^([A-Za-z0-9_.\-]+)(\[[^\]]*\])?\s*(.*)$", ln)
+        if m:
+            out[m.group(1).lower().replace("_", "-")] = m.group(3).strip() or "(fără versiune)"
+    return out
+
+
+# ----------------------------------------------------------------------------- main build
+def build_inventory(root: Path) -> dict:
+    root = root.resolve()
+    allfiles = walk_files(root)
+    pyfiles = [f for f in allfiles if f.endswith(".py")]
+    units = discover_units(root, pyfiles)
+    pythonpath = read_pythonpath(root)
+    res = Resolver(root, units, pythonpath)
+    by_len = sorted(units.values(), key=lambda u: -len(u["dir"]))
+
+    # pass 1: parse every file, remember per-file info
+    info: dict[str, dict] = {}
+    texts_loc: dict[str, int] = {}
+    for f in pyfiles:
+        text = read_text(root, f, limit=5_000_000)
+        info[f] = analyze_file(text)
+        texts_loc[f] = loc_of(text)
+
+    local_names = set()
+    for f in pyfiles:
+        parts = f.split("/")
+        local_names.add(parts[-1][:-3])
+        local_names.update(parts[:-1])
+
+    # shims (a unit __init__.py that assigns __path__)
+    for uid, u in units.items():
+        init = f"{u['dir']}/__init__.py"
+        if init in info and any(x["detail"] == "__path__" for x in info[init]["unknown"]):
+            res.set_shim(uid, info[init]["consts"], True)
+
+    # console_scripts
+    console: dict[str, list[str]] = defaultdict(list)
+    pp = root / "pyproject.toml"
+    if pp.is_file():
+        try:
+            import tomllib
+            data = tomllib.loads(pp.read_text("utf-8"))
+            scripts = dict(data.get("project", {}).get("scripts", {}))
+            scripts.update(data.get("tool", {}).get("poetry", {}).get("scripts", {}))
+            for sname, target in sorted(scripts.items()):
+                mod = str(target).split(":")[0].split(".")
+                for uid in sorted(res.resolve(mod)):
+                    console[uid].append(f"{sname} = {target}")
+        except Exception:  # noqa: BLE001 - malformed pyproject is reported as no scripts
+            pass
+
+    stdlib = set(sys.stdlib_module_names)
+    prod_cons: dict[str, set] = defaultdict(set)
+    test_cons: dict[str, set] = defaultdict(set)
+    bench_cons: dict[str, set] = defaultdict(set)
+    out_edges: dict[str, dict[str, set]] = defaultdict(lambda: defaultdict(set))
+    ext: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+    local_unres: dict[str, set] = defaultdict(set)
+    unknown: dict[str, list] = defaultdict(list)
+    unknown_outside: list[dict] = []
+    violations: list[dict] = []
+    parse_errors: list[str] = []
+    per_unit_files: dict[str, list[str]] = defaultdict(list)
+
+    for f in pyfiles:
+        fi = info[f]
+        src = unit_of_file(f, by_len)
+        if src:
+            per_unit_files[src].append(f)
+        if fi["parse_error"]:
+            parse_errors.append(f)
+        for uk in fi["unknown"]:
+            rec = {"file": f, **uk}
+            if rec["detail"] == "__path__" and src in res.shims and f.endswith("__init__.py"):
+                rec["detail"] = "__path__ shim -> " + ", ".join(res.shims[src]["targets"] or ["(neidentificat)"])
+            (unknown[src] if src else unknown_outside).append(rec)
+        seen_targets: set[str] = set()
+        for alts, line, is_from in fi["imports"]:
+            credits: set[str] = set()
+            for parts in alts:
+                credits |= res.resolve(parts)
+            if not credits:
+                top = alts[0][0]
+                if top in stdlib:
+                    continue
+                if top in local_names:
+                    if src:
+                        local_unres[src].add(top)
+                    continue
+                if src:
+                    ext[src][top] += 1
+                continue
+            for t in sorted(credits):
+                if t == src:
+                    continue
+                if t in seen_targets:
+                    continue
+                seen_targets.add(t)
+                if src:
+                    out_edges[src][t].add(f)
+                    if src.startswith("packages/") and t.startswith("products/"):
+                        violations.append({"from_unit": src, "file": f, "line": line, "to_unit": t,
+                                           "test_file": is_test_path(f)})
+                    # own-unit files are not consumers of the unit they live in
+                bucket = test_cons if is_test_path(f) else (bench_cons if is_bench_path(f) else prod_cons)
+                bucket[t].add(f)
+
+    # external deps: restrict to units own files only when counting top-level 3rd-party names
+    ci_files = ci_config_files(root, allfiles)
+    ci_texts = {f: read_text(root, f) for f in ci_files}
+    winner_names = {c[0] for c in (res.candidates(u["name"]) for u in units.values()) if c}
+
+    unit_rows = []
+    for uid in sorted(units):
+        u = units[uid]
+        files = sorted(per_unit_files.get(uid, []))
+        init = f"{u['dir']}/__init__.py"
+        mains = [f for f in files if info[f]["has_main"] and not f.endswith("/__main__.py")]
+        dunder = [f for f in files if f.endswith("/__main__.py")]
+        ci_refs: dict[str, int] = {}
+        pats = unit_patterns(u, winner_names)
+        for cf, ct in ci_texts.items():
+            n = sum(len(p.findall(ct)) for p in pats)
+            if n:
+                ci_refs[cf] = n
+        unit_rows.append({
+            "id": uid, "kind": u["kind"], "name": u["name"], "dir": u["dir"],
+            "py_files": len(files),
+            "loc": sum(texts_loc[f] for f in files),
+            "init_exists": init in info,
+            "has_all": bool(init in info and info[init]["has_all"]),
+            "shim_targets": res.shims.get(uid, {}).get("targets") if uid in res.shims else None,
+            "entry_points": {"main_guard": mains, "dunder_main": dunder, "console_scripts": console.get(uid, [])},
+            "imports_out": {t: len(fs) for t, fs in sorted(out_edges[uid].items())},
+            "consumers_prod": sorted(prod_cons[uid]),
+            "consumers_test": sorted(test_cons[uid]),
+            "consumers_bench_excluded": sorted(bench_cons[uid]),
+            "ci_config_refs": dict(sorted(ci_refs.items())),
+            "external_deps": dict(sorted(ext[uid].items())),
+            "local_unresolved_names": sorted(local_unres[uid]),
+            "unknown": sorted(unknown[uid], key=lambda r: (r["file"], r["line"])),
+            "import_name_winner": uid in winner_names,
+        })
+
+    # test counts per top-level dir
+    tests_by_top: dict[str, int] = defaultdict(int)
+    for f in allfiles:
+        base = f.rsplit("/", 1)[-1]
+        if base.startswith("test_") and base.endswith(".py"):
+            tests_by_top[f.split("/", 1)[0] if "/" in f else "(rădăcină)"] += 1
+    testpaths = read_testpaths(root)
+
+    # requirements
+    reqs = {n: parse_requirements(read_text(root, n)) for n in REQ_FILES if (root / n).is_file()}
+    names = sorted({k for v in reqs.values() for k in v})
+    req_rows = [{"name": n, **{fn: reqs[fn].get(n) for fn in reqs}} for n in names]
+    refs: dict[str, list[str]] = {n: [] for n in REQ_FILES}
+    ref_res = {
+        "requirements.txt": re.compile(r"(?<![\w\-])requirements\.txt"),
+        "requirements-memory-v6.txt": re.compile(r"requirements-memory-v6\.txt"),
+    }
+    for f in allfiles:
+        base = f.rsplit("/", 1)[-1]
+        ext_ = "." + base.rsplit(".", 1)[-1] if "." in base else ""
+        if (ext_ not in TEXT_EXT and base not in TEXT_NAMES) or f.startswith(SELF_EXCLUDED_REF) or f in REQ_FILES:
+            continue
+        t = read_text(root, f)
+        for rn, rx in ref_res.items():
+            if rx.search(t):
+                refs[rn].append(f)
+
+    collisions = []
+    for name, cands in res.collisions.items():
+        mods = {}
+        for c in cands:
+            d = root / units[c]["dir"]
+            mods[c] = sorted(p.stem if p.is_file() else p.name for p in d.iterdir()
+                             if (p.is_file() and p.suffix == ".py" and p.stem != "__init__")
+                             or (p.is_dir() and p.name not in PRUNE_DIRS)) if d.is_dir() else []
+        collisions.append({"name": name, "candidates_in_pythonpath_order": cands, "winner": cands[0],
+                           "shim_targets": {c: res.shims[c]["targets"] for c in cands if c in res.shims},
+                           "modules": mods, "imports_by_served_unit": dict(sorted(res.stats[name].items()))})
+
+    return {
+        "meta": {
+            "root": ".", "pythonpath_order": pythonpath, "testpaths": testpaths,
+            "py_files_scanned": len(pyfiles), "pruned_dirs": sorted(PRUNE_DIRS), "parse_errors": sorted(parse_errors),
+            "rules": {
+                "loc": "linii non-goale care nu încep cu #; docstring-urile se numără",
+                "consumers_prod": "fișiere .py în afara oricărui director de test/benchmark și în afara modulului",
+                "consumers_test": "fișiere sub 20_TESTS, /tests/, test_*.py sau conftest.py",
+                "shim_credit": "un import prin shim __path__ creditează și modulul servit",
+            },
+        },
+        "units": unit_rows,
+        "collisions": collisions,
+        "layer_violations_package_to_product": sorted(violations, key=lambda v: (v["file"], v["line"])),
+        "unknown_outside_units": sorted(unknown_outside, key=lambda r: (r["file"], r["line"])),
+        "tests_by_top_dir": dict(sorted(tests_by_top.items())),
+        "tests_focus_dirs": {d: tests_by_top.get(d, 0) for d in TESTDIR_TOP},
+        "requirements": {"files": list(reqs), "rows": req_rows, "referenced_by": {k: sorted(v) for k, v in refs.items()}},
+    }
+
+
+# ----------------------------------------------------------------------------- markdown
+def _short(items: list[str], n: int = 6) -> str:
+    items = list(items)
+    return ", ".join(items[:n]) + (f" +{len(items) - n}" if len(items) > n else "") if items else "-"
+
+
+def render_md(inv: dict) -> str:
+    L: list[str] = []
+    m = inv["meta"]
+    L += ["# F0 — Inventar pachete (generat automat)", "",
+          "Generat de `30_SCRIPTS/verification/package_inventory.py`; toate numerele provin din rularea scriptului.",
+          f"Fișiere .py analizate: {m['py_files_scanned']}; ordinea `pythonpath`: `{' '.join(m['pythonpath_order'])}` "
+          f"(primul câștigă); erori de parsare AST: {len(m['parse_errors'])}.", "",
+          "Reguli: LOC = linii non-goale fără comentariu-linie. Consumator prod = fișier .py în afara "
+          "20_TESTS, /tests/, /benchmarks/, test_*.py și în afara modulului. Consumator test = 20_TESTS, "
+          "/tests/, test_*.py, conftest.py. Un import prin shim `__path__` creditează și modulul servit.", "",
+          "## Tabel module", "",
+          "| Modul | Fișiere | LOC | Entry points | Consumatori prod | Consumatori test | CI/config | Ext deps | UNKNOWN |",
+          "|---|---|---|---|---|---|---|---|---|"]
+    for u in inv["units"]:
+        ep = u["entry_points"]
+        eps = f"main:{len(ep['main_guard'])} __main__:{len(ep['dunder_main'])} scripts:{len(ep['console_scripts'])}"
+        L.append(f"| `{u['id']}` | {u['py_files']} | {u['loc']} | {eps} | {len(u['consumers_prod'])} | "
+                 f"{len(u['consumers_test'])} | {sum(u['ci_config_refs'].values())} ({len(u['ci_config_refs'])} f.) | "
+                 f"{_short(list(u['external_deps']), 5)} | {len(u['unknown'])} |")
+    L += ["", "## `__all__`, importuri ieșite și shim-uri", "",
+          "| Modul | `__init__` | `__all__` | Importă (nr. fișiere) | Shim `__path__` către |", "|---|---|---|---|---|"]
+    for u in inv["units"]:
+        outs = ", ".join(f"{k}({v})" for k, v in u["imports_out"].items())
+        L.append(f"| `{u['id']}` | {'da' if u['init_exists'] else 'NU'} | {'da' if u['has_all'] else 'nu'} | "
+                 f"{outs or '-'} | {_short(u['shim_targets'] or [], 9) if u['shim_targets'] is not None else '-'} |")
+    L += ["", "Note: fișierele și LOC includ testele aflate în directorul modulului (ex. `security/test_*.py`). Nume locale nerezolvate (ex. module importate după manipulare `sys.path`) nu sunt numărate ca "
+          "dependențe externe; ele sunt în JSON (`local_unresolved_names`).", ""]
+
+    L += ["## Coliziunea `cognitive_core` (și alte nume duplicate)", ""]
+    for c in inv["collisions"]:
+        L.append(f"- `{c['name']}`: candidați în ordinea pythonpath: {' > '.join('`'+x+'`' for x in c['candidates_in_pythonpath_order'])}; "
+                 f"câștigă `{c['winner']}`.")
+        for k, v in c["shim_targets"].items():
+            L.append(f"  - `{k}` este shim `__path__` către: {_short(v, 12)}.")
+        for k, v in c["modules"].items():
+            L.append(f"  - module în `{k}`: {_short(v, 12)}.")
+        stats = ", ".join(f"{k}={v}" for k, v in c["imports_by_served_unit"].items()) or "niciun import `nume.submodul`"
+        L.append(f"  - importuri `{c['name']}.X` după unitatea care servește X: {stats}.")
+    L.append("")
+
+    L += ["## Încălcări pachet → produs", ""]
+    v = inv["layer_violations_package_to_product"]
+    if not v:
+        L.append("Niciuna găsită.")
+    else:
+        pairs = defaultdict(lambda: [0, 0])
+        for x in v:
+            pairs[(x["from_unit"], x["file"], x["to_unit"])][1 if x["test_file"] else 0] += 1
+        for (a, f, b), (np_, nt) in sorted(pairs.items()):
+            L.append(f"- `{f}` ({a}) → `{b}`: {np_ + nt} importuri (rânduri: "
+                     f"{_short([str(x['line']) for x in v if x['file'] == f and x['to_unit'] == b], 8)}).")
+    L += ["", "Notă: `packages/xau_kinetic` este un shim către `products/xau_kinetic/engine`; importul `xau_kinetic.*` "
+          "este creditat ambelor unități.", ""]
+
+    L += ["## Teste în afara testpaths", "",
+          f"`pytest.ini testpaths = {' '.join(m['testpaths']) or '(lipsește)'}`: pytest colectează doar acest director.", "",
+          "| Director de top | Fișiere test_*.py | Colectat |", "|---|---|---|"]
+    for d, n in inv["tests_focus_dirs"].items():
+        L.append(f"| `{d}` | {n} | {'da' if d in m['testpaths'] else 'nu'} |")
+    other = {d: n for d, n in inv["tests_by_top_dir"].items() if d not in inv["tests_focus_dirs"]}
+    if other:
+        L.append(f"| alte directoare | {sum(other.values())} ({_short([f'{d}:{n}' for d, n in other.items()], 8)}) | nu |")
+    L += ["", "## Requirements diff", ""]
+    r = inv["requirements"]
+    if len(r["files"]) == 2:
+        a, b = r["files"]
+        L += [f"| Pachet | `{a}` | `{b}` | Identic |", "|---|---|---|---|"]
+        for row in r["rows"]:
+            L.append(f"| {row['name']} | {row[a] or '-'} | {row[b] or '-'} | {'da' if row[a] == row[b] else 'NU'} |")
+    else:
+        L.append(f"Fișiere găsite: {', '.join(r['files']) or 'niciunul'}.")
+    L.append("")
+    for fn, fs in r["referenced_by"].items():
+        L.append(f"- Referit `{fn}` ({len(fs)} fișiere): {_short(fs, 14)}.")
+
+    unk_out = inv["unknown_outside_units"]
+    kinds: dict[str, int] = defaultdict(int)
+    for x in unk_out:
+        kinds[x["kind"]] += 1
+    tot = sum(len(u["unknown"]) for u in inv["units"])
+    L += ["", "## UNKNOWN (neinterpretabil de AST)", "",
+          f"În module: {tot} intrări (detaliu în JSON). În afara modulelor (teste, scripturi): {len(unk_out)} "
+          f"({', '.join(f'{k}={n}' for k, n in sorted(kinds.items())) or '-'}). Aceste fișiere pot importa module "
+          "prin căi runtime pe care inventarul nu le vede; numărul de consumatori este deci un minim.", ""]
+    return "\n".join(L)
+
+
+def main(argv: list[str] | None = None) -> int:
+    ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
+    ap.add_argument("--root", default=".")
+    ap.add_argument("--out-json", required=True)
+    ap.add_argument("--out-md", required=True)
+    args = ap.parse_args(argv)
+    root = Path(args.root)
+    if not root.is_dir():
+        print("root is not a directory", file=sys.stderr)
+        return 2
+    inv = build_inventory(root)
+    for p, content in ((args.out_json, json.dumps(inv, ensure_ascii=False, indent=2, sort_keys=True) + "\n"),
+                       (args.out_md, render_md(inv) + "\n")):
+        out = Path(p)
+        out.parent.mkdir(parents=True, exist_ok=True)
+        out.write_text(content, "utf-8", newline="\n")
+    print(f"units={len(inv['units'])} py_files={inv['meta']['py_files_scanned']} "
+          f"violations={len(inv['layer_violations_package_to_product'])}")
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main())
