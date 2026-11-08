@@ -42,13 +42,36 @@ public static class NetworkHeuristics
     private static int Port(string s) => int.TryParse(s, NumberStyles.Integer, CultureInfo.InvariantCulture, out var p) && p is >= 0 and <= 65535 ? p : -1;
     private static EvidenceRef Ref(TimelineEvent e, string why) => new(e.EvidenceId, e.Locator, why, e.SourceSha256);
 
+    /// <summary>One spelling per address (IPv4-mapped IPv6 as IPv4, IPv6 lower-case and compressed), so a sensor and Sysmon writing it differently still match.</summary>
+    private static string Norm(string ip)
+    {
+        if (!IPAddress.TryParse(ip.Trim(), out var a)) return ip.Trim();
+        if (a.IsIPv4MappedToIPv6) a = a.MapToIPv4();
+        return a.ToString().ToLowerInvariant();
+    }
+
+    /// <summary>
+    /// A destination worth counting: not loopback, unspecified, the limited broadcast, multicast or reserved. A subnet broadcast cannot be told from a host
+    /// without the netmask, so x.y.z.255 stays (a beacon to it is visible and explained, never hidden).
+    /// </summary>
     private static bool Unicastable(string ip)
     {
         if (!IPAddress.TryParse(ip, out var a)) return false;
+        if (a.IsIPv4MappedToIPv6) a = a.MapToIPv4();
         if (IPAddress.IsLoopback(a) || a.Equals(IPAddress.Any) || a.Equals(IPAddress.IPv6Any) || a.Equals(IPAddress.Broadcast)) return false;
         var b = a.GetAddressBytes();
-        if (a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) return b[0] is < 224 and not 0 && !(b[3] == 255 && b[0] is 10 or 192 or 172);
+        if (a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork) return b[0] is < 224 and not 0;
         return !a.IsIPv6Multicast;
+    }
+
+    private static bool IsPrivate(string ip)
+    {
+        if (!IPAddress.TryParse(ip, out var a)) return false;
+        if (a.IsIPv4MappedToIPv6) a = a.MapToIPv4();
+        var b = a.GetAddressBytes();
+        if (a.AddressFamily == System.Net.Sockets.AddressFamily.InterNetwork)
+            return b[0] == 10 || b[0] == 172 && b[1] is >= 16 and <= 31 || b[0] == 192 && b[1] == 168 || b[0] == 169 && b[1] == 254;
+        return a.IsIPv6LinkLocal || a.IsIPv6UniqueLocal || a.IsIPv6SiteLocal;
     }
 
     /// <summary>The connections of the timeline, one per sensor row, with the family that saw them. Rows without a usable time or address are skipped.</summary>
@@ -66,7 +89,7 @@ public static class NetworkHeuristics
                     => new Conn(t, "Sysmon", F(e, "SourceIp"), F(e, "SourcePort"), F(e, "DestinationIp"), Port(F(e, "DestinationPort")), e),
                 _ => null,
             };
-            if (c is not null && c.Src.Length > 0 && c.DstPort >= 0 && Unicastable(c.Dst)) list.Add(c);
+            if (c is not null && c.Src.Length > 0 && c.DstPort >= 0 && Unicastable(c.Dst)) list.Add(c with { Src = Norm(c.Src), Dst = Norm(c.Dst) });
         }
         return list.OrderBy(c => c.T).ThenBy(c => c.E.EvidenceId, StringComparer.Ordinal).ThenBy(c => c.E.Locator, StringComparer.Ordinal).ToList();
     }
@@ -80,8 +103,8 @@ public static class NetworkHeuristics
         if (conns.Count == 0) return new(findings, gaps, links);
 
         var linkByRow = links.GroupBy(l => (l.NetworkEvidenceId, l.NetworkLocator)).ToDictionary(g => g.Key, g => g.First());
-        Beacons(conns, linkByRow, findings, nextId);
-        Scans(conns, findings, nextId);
+        Beacons(conns, linkByRow, findings, gaps, nextId);
+        Scans(conns, findings, gaps, nextId);
 
         bool sensors = conns.Any(c => c.Family is "Zeek" or "PCAP"), sysmon = conns.Any(c => c.Family == "Sysmon");
         if (sensors && !sysmon)
@@ -119,7 +142,7 @@ public static class NetworkHeuristics
 
     // ---- beaconing ----
 
-    private static void Beacons(List<Conn> conns, Dictionary<(string, string), EndpointLink> linkByRow, List<Finding> findings, Func<string> nextId)
+    private static void Beacons(List<Conn> conns, Dictionary<(string, string), EndpointLink> linkByRow, List<Finding> findings, List<EvidenceGap> capGaps, Func<string> nextId)
     {
         var reported = new HashSet<(string, string, int)>();
         int count = 0;
@@ -127,7 +150,7 @@ public static class NetworkHeuristics
         foreach (var family in new[] { "Zeek", "PCAP", "Sysmon" })
             foreach (var g in conns.Where(c => c.Family == family).GroupBy(c => (c.Src, c.Dst, c.DstPort)).OrderBy(g => g.Key.Src, StringComparer.Ordinal).ThenBy(g => g.Key.Dst, StringComparer.Ordinal).ThenBy(g => g.Key.DstPort))
             {
-                if (count >= MaxPerRule) return;
+                if (count >= MaxPerRule) { capGaps.Add(Cap("NET-BEACON")); return; }
                 var times = g.Select(c => c.T).Distinct().Order().ToList();
                 if (times.Count < MinBeaconConnections || reported.Contains(g.Key)) continue;
                 var gaps = times.Zip(times.Skip(1), (a, b) => (b - a).TotalSeconds).ToList();
@@ -140,16 +163,22 @@ public static class NetworkHeuristics
                 reported.Add(g.Key);
                 count++;
                 var rows = g.ToList();
-                var link = rows.Select(c => linkByRow.GetValueOrDefault((c.E.EvidenceId, c.E.Locator))).FirstOrDefault(l => l is not null);
-                string process = family == "Sysmon" ? F(rows[0].E, "Image") : link?.Image ?? "";
-                bool infra = InfraPorts.Contains(g.Key.DstPort);
+                // a process is named only when every row that has one names the same; several processes are listed, none is chosen
+                var rowLinks = rows.Select(c => linkByRow.GetValueOrDefault((c.E.EvidenceId, c.E.Locator))).Where(l => l is not null).Select(l => l!).ToList();
+                var images = (family == "Sysmon" ? rows.Select(c => F(c.E, "Image")) : rowLinks.Select(l => l.Image)).Where(i => i.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+                var link = images.Count == 1 ? rowLinks.FirstOrDefault() : null;
+                string process = images.Count == 1 ? images[0] : "";
+                int linkedRows = family == "Sysmon" ? rows.Count : rowLinks.Count;
+                bool infra = InfraPorts.Contains(g.Key.DstPort) && IsPrivate(g.Key.Dst);   // DNS to a public address is not the domain controller
                 var others = new[] { "Zeek", "PCAP", "Sysmon" }.Where(f => f != family && conns.Any(c => c.Family == f && c.Src == g.Key.Src && c.Dst == g.Key.Dst && c.DstPort == g.Key.DstPort)).ToList();
                 var ev = rows.Take(MaxEvidencePerFinding).Select(c => Ref(c.E, $"conexiune {family} la {c.T:yyyy-MM-dd HH:mm:ss.fff} UTC")).ToList();
-                if (link is not null) ev.Add(new EvidenceRef(link.EndpointEvidenceId, link.EndpointLocator, $"procesul de pe stație (Sysmon 3): {link.Image}", ""));
+                foreach (var l in rowLinks.Take(MaxEvidencePerFinding)) ev.Add(new EvidenceRef(l.EndpointEvidenceId, l.EndpointLocator, $"procesul de pe stație (Sysmon 3): {l.Image}", ""));
                 string desc = $"{g.Key.Src} a deschis {times.Count} conexiuni către {g.Key.Dst}:{g.Key.DstPort} la intervale aproape egale: mediana {Human(median)}, "
                     + $"{regular:P0} dintre intervale în ±{BeaconTolerance:P0} din mediană, abatere standard {Human(sd)}, între {times[0]:yyyy-MM-dd HH:mm} și {times[^1]:yyyy-MM-dd HH:mm} UTC (văzut de {family}"
                     + (others.Count > 0 ? $"; aceeași destinație apare și în {string.Join(", ", others)}" : "") + "). "
-                    + (process.Length > 0 ? $"Procesul de pe stație: {process}. " : family == "Sysmon" ? "" : "Procesul nu se poate stabili fără Sysmon 3 cu același tuplu. ")
+                    + (images.Count > 1 ? $"Conexiunile vin de la mai multe procese ({string.Join(", ", images.Take(5))}); niciunul nu este ales. "
+                       : process.Length > 0 ? $"Procesul de pe stație: {process} ({linkedRows} din {rows.Count} conexiuni legate prin tuplu). "
+                       : family == "Sysmon" ? "" : "Procesul nu se poate stabili fără Sysmon 3 cu același tuplu. ")
                     + (infra ? "Portul este al unui serviciu de infrastructură care comunică periodic prin construcție (DNS, Kerberos, NTP, LDAP, SMB, RPC); regularitatea singură este de așteptat aici." : "Regularitatea este tipică pentru un program care „sună acasă” (beaconing), dar și pentru actualizări, sincronizări și monitorizare.");
                 findings.Add(new Finding
                 {
@@ -172,7 +201,10 @@ public static class NetworkHeuristics
 
     // ---- scans ----
 
-    private static void Scans(List<Conn> conns, List<Finding> findings, Func<string> nextId)
+    private static EvidenceGap Cap(string rule) => new($"Euristica {rule}", EvidenceStatus.Partial, $"limita de {MaxPerRule} constatări atinsă",
+        "Restul candidaților nu au fost raportați; lipsa lor nu înseamnă că nu există", "Restrângeți intervalul sau sursele analizate", "Posibil");
+
+    private static void Scans(List<Conn> conns, List<Finding> findings, List<EvidenceGap> capGaps, Func<string> nextId)
     {
         int count = 0;
         var reported = new HashSet<string>(StringComparer.Ordinal);
@@ -187,7 +219,7 @@ public static class NetworkHeuristics
             })
                 foreach (var g in groups.OrderBy(x => x.Src, StringComparer.Ordinal).ThenBy(x => x.Target, StringComparer.Ordinal))
                 {
-                    if (count >= MaxPerRule) return;
+                    if (count >= MaxPerRule) { capGaps.Add(Cap("NET-SCAN")); return; }
                     var key = $"{kind}|{g.Src}|{g.Target}";
                     if (reported.Contains(key)) continue;
                     var best = Window(g.Items, g.Distinct);
@@ -215,7 +247,7 @@ public static class NetworkHeuristics
     private static (int Distinct, DateTimeOffset Start, List<Conn> Rows) Window(List<Conn> items, Func<Conn, string> value)
     {
         var sorted = items.OrderBy(c => c.T).ToList();
-        (int Distinct, DateTimeOffset Start, List<Conn> Rows) best = (0, default, []);
+        int bestDistinct = 0, bestLo = 0, bestHi = -1;
         var counts = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);
         int lo = 0;
         for (int hi = 0; hi < sorted.Count; hi++)
@@ -228,8 +260,8 @@ public static class NetworkHeuristics
                 if (--counts[o] == 0) counts.Remove(o);
                 lo++;
             }
-            if (counts.Count > best.Distinct) best = (counts.Count, sorted[lo].T, sorted.GetRange(lo, hi - lo + 1));
+            if (counts.Count > bestDistinct) (bestDistinct, bestLo, bestHi) = (counts.Count, lo, hi);
         }
-        return best;
+        return bestHi < 0 ? (0, default, []) : (bestDistinct, sorted[bestLo].T, sorted.GetRange(bestLo, Math.Min(bestHi - bestLo + 1, MaxEvidencePerFinding)));
     }
 }

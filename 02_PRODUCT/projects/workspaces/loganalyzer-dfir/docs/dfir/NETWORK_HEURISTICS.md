@@ -7,13 +7,16 @@ Cod: `LogAnalyzer.Dfir.Core/Network/NetworkHeuristics.cs`, apelat la fiecare ana
 
 - **Conexiunile** se citesc din `Zeek:conn`, `PCAP:flow` și Sysmon 3 (conexiuni inițiate de stație).
 - **Fiecare familie de surse se evaluează separat.** Ordinea este Zeek, apoi PCAP, apoi Sysmon. Aceeași conexiune văzută de doi senzori dă o singură constatare; descrierea spune unde mai apare.
-- **Rânduri ignorate:** cele fără oră, adresele de difuzare (broadcast) și multicast, adresele loopback.
+- **Rânduri ignorate:** cele fără oră, difuzarea limitată 255.255.255.255, multicast, loopback și adresele rezervate. O adresă x.y.z.255 rămâne: fără mască de rețea nu se poate deosebi de o stație.
+- **Adresele** se scriu într-o singură formă (IPv4 mapat în IPv6 devine IPv4, IPv6 cu litere mici), ca senzorul și Sysmon să se potrivească.
+- **La limita de 200 de constatări pe regulă** apare o lacună: restul candidaților nu sunt raportați.
 
 ## Beaconing (`NET-BEACON`)
 
 - **Condiții:** cel puțin 8 conexiuni de la aceeași sursă către aceeași destinație și port; mediana intervalelor între 10 s și 6 h; cel puțin 80% dintre intervale în ±20% din mediană.
 - **Ce arată descrierea:** numărul de conexiuni, mediana, proporția de intervale regulate, abaterea standard, perioada, senzorul și procesul, dacă este cunoscut.
-- **Severitatea:** medie. Pentru porturile serviciilor de infrastructură, care comunică periodic prin construcție (DNS, Kerberos, NTP, LDAP, SMB, RPC, DHCP, GC), severitatea este scăzută și motivul este scris.
+- **Procesul** se numește doar dacă toate conexiunile care au un proces numesc același program. Dacă sunt mai multe, se listează toate și nu se alege niciunul.
+- **Severitatea:** medie. Pentru porturile serviciilor de infrastructură către adrese private, care comunică periodic prin construcție (DNS, Kerberos, NTP, LDAP, SMB, RPC, DHCP, GC), severitatea este scăzută și motivul este scris.
 - **Limită:** un beacon cu întârzieri aleatoare mari (jitter) poate să nu fie găsit.
 
 ## Scanări (`NET-SCAN`)

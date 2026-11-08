@@ -62,7 +62,7 @@ public sealed class DetectionEngine
     private void Try(string file, Action load)
     {
         try { load(); }
-        catch (Exception ex) when (ex is FormatException or InvalidDataException or IOException or YamlDotNet.Core.YamlException)
+        catch (Exception ex) when (ex is FormatException or InvalidDataException or IOException or YamlDotNet.Core.YamlException or OverflowException or ArgumentException)
         {
             LoadErrors.Add(new EvidenceGap($"Regulă {Path.GetFileName(file)}", EvidenceStatus.Failed, $"{ex.GetType().Name}: {ex.Message}",
                 "Regula nu a fost aplicată", "Corectați fișierul regulii", "Da"));

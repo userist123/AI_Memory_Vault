@@ -63,6 +63,7 @@ public sealed class SigmaCorrelation
             (title, id, name, level, description, type, refs, referenced, groupBy, timespan, field, gt, gte, eq, generate, identity);
     }
 
+    private const long MaxTimespanSeconds = 366L * 86400;
     private static readonly string[] TopLevelKnownKeys = ["title", "id", "name", "level", "description", "correlation", "status", "author", "date", "modified", "references", "tags", "falsepositives", "taxonomy", "license", "related", "generate"];
 
     /// <param name="file">File the document came from (names the rule in errors and as source).</param>
@@ -78,7 +79,10 @@ public sealed class SigmaCorrelation
         if (title.Length == 0) throw new FormatException($"{file}: lipsește title.");
         var who = $"{file} „{title}”";
         foreach (var k in root.Children.Keys.Select(k => (k as YamlScalarNode)?.Value ?? ""))
+        {
             if (k == "aliases") throw new FormatException($"{who}: aliases nu este acceptat (corelarea folosește câmpurile evenimentelor, aceleași în toate regulile referite).");
+            if (!TopLevelKnownKeys.Contains(k)) throw new FormatException($"{who}: cheia „{k}” nu este acceptată într-o regulă de corelare (action, scope și altele nu se aplică aici).");
+        }
         if (root.Children.ContainsKey(new YamlScalarNode("detection")) || root.Children.ContainsKey(new YamlScalarNode("logsource"))) throw new FormatException($"{who}: o regulă de corelare nu are detection sau logsource.");
         if (!root.Children.TryGetValue(new YamlScalarNode("correlation"), out var cn) || cn is not YamlMappingNode c) throw new FormatException($"{who}: correlation trebuie să fie o hartă.");
 
@@ -133,10 +137,13 @@ public sealed class SigmaCorrelation
             };
 
         var tsText = Scalar(c, "timespan") ?? throw new FormatException($"{who}: lipsește correlation.timespan.");
-        var tm = Regex.Match(tsText.Trim(), @"^(\d{1,9})([smhd])$");
+        var tm = Regex.Match(tsText.Trim(), @"^(\d{1,7})([smhd])$");
         if (!tm.Success || long.Parse(tm.Groups[1].Value, CultureInfo.InvariantCulture) == 0) throw new FormatException($"{who}: timespan „{tsText}” nu este acceptat (număr pozitiv urmat de s, m, h sau d).");
         var n = long.Parse(tm.Groups[1].Value, CultureInfo.InvariantCulture);
-        var timespan = tm.Groups[2].Value switch { "s" => TimeSpan.FromSeconds(n), "m" => TimeSpan.FromMinutes(n), "h" => TimeSpan.FromHours(n), _ => TimeSpan.FromDays(n) };
+        var seconds = tm.Groups[2].Value switch { "s" => n, "m" => n * 60, "h" => n * 3600, _ => n * 86400 };
+        // a window longer than a year is not a correlation over a case; it also keeps every window end inside DateTimeOffset
+        if (seconds > MaxTimespanSeconds) throw new FormatException($"{who}: timespan „{tsText}” depășește limita de 366 de zile.");
+        var timespan = TimeSpan.FromSeconds(seconds);
 
         string field = "";
         long? gt = null, gte = null, eq = null;
@@ -229,6 +236,10 @@ public sealed class SigmaCorrelation
         if (noField > 0)
             run.Gaps.Add($"corelarea „{Title}”: {RoText.Count(noField, "eveniment", "evenimente")} fără câmpul „{Field}” sau cu el gol {(noField == 1 ? "nu a fost numărat" : "nu au fost numărate")} la valori distincte.");
 
+        // as Sigma backends do, an event without a group-by value is not grouped (a reopened case keeps no parser fields: every user would fall in one group)
+        int noGroup = items.RemoveAll(it => GroupBy.Any(f => SigmaLite.Value(it.Ev, f).Length == 0));
+        if (noGroup > 0)
+            run.Gaps.Add($"corelarea „{Title}”: {RoText.Count(noGroup, "eveniment", "evenimente")} fără valoare pentru group-by ({string.Join(", ", GroupBy)}) {(noGroup == 1 ? "nu a fost luat" : "nu au fost luate")} în calcul.");
         var groups = items.GroupBy(it => string.Join("\u001f", GroupBy.Select(f => SigmaLite.Value(it.Ev, f).ToLowerInvariant())), StringComparer.Ordinal)
             .OrderBy(g => g.Key, StringComparer.Ordinal).ToList();
         foreach (var g in groups)

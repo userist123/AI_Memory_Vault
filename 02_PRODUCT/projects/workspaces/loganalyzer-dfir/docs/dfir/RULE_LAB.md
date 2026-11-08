@@ -43,7 +43,7 @@ correlation:
 **Semantică (deterministă)**
 
 - **Ferestre glisante.** Câte o fereastră ancorată la fiecare eveniment: `[t, t + timespan]`, ambele capete incluse (un eveniment exact la `timespan` după ancoră este în fereastră). Evenimentele se ordonează după (ora UTC, apoi id probă, apoi locator).
-- **Grupare.** `group-by` compară valorile fără să țină seama de majuscule. Un câmp lipsă are valoarea goală, iar valoarea goală este un grup de sine stătător. Fără `group-by` există un singur grup.
+- **Grupare.** `group-by` compară valorile fără să țină seama de majuscule. Ca în implementările Sigma, un eveniment fără valoare pentru un câmp din `group-by` nu intră în niciun grup. Câte evenimente au rămas pe dinafară se spune într-o notă. Un caz redeschis nu are câmpurile parserelor: fără nota asta, toate conturile ar fi căzut într-un singur grup. Fără `group-by` există un singur grup.
 - **event_count.** Numărul de evenimente distincte potrivite de regulile referite în fereastră, per grup, trebuie să satisfacă condiția. Un eveniment potrivit de două reguli referite se numără o dată.
 - **value_count.** Numărul de valori distincte (fără majuscule) ale `condition.field` în fereastră. Evenimentele fără câmpul respectiv nu se numără și apar ca lipsă (gap).
 - **temporal.** Fiecare regulă referită s-a potrivit cel puțin o dată în fereastră, în orice ordine (cel puțin două reguli). Nu are `condition`.
@@ -66,3 +66,6 @@ correlation:
 
 - **Ce nu există încă:** fluxul de aprobare a regulilor pentru toată stația (pachete de reguli semnate) și raportul de fals pozitive pe mai multe cazuri. Pachetele semnate pentru stație sunt cele din 6.12.
 - **Corelarea:** regulile Sigma de corelare au semantica din secțiunea „Corelarea Sigma”; regulile de secvență ale aplicației rămân separate.
+
+- **Limite de încărcare (revizuire 2026-11-08):** `timespan` are cel mult 366 de zile. Un document de corelare acceptă doar cheile cunoscute: `action`, `scope` și celelalte chei necunoscute sunt refuzate. Separatorul `---` poate fi urmat de un comentariu. În laboratorul de reguli, o notă parțială (evenimente fără câmp, o limită atinsă) apare ca ATENȚIE și nu refuză regula.
+- **Reziduu acceptat:** două reguli de bază fără `id` în același fișier au același RuleId (numele fișierului). Amprentele lor diferă. Dați fiecărei reguli un `id`.

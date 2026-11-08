@@ -63,12 +63,14 @@ public static class RuleLab
             Directory.CreateDirectory(Path.Combine(root, Folder(kind)));
             File.WriteAllText(Path.Combine(root, Folder(kind), file), ruleText);
             var engine = DetectionEngine.Load(root);
-            foreach (var g in engine.LoadErrors) run.Errors.Add(g.Reason);
+            foreach (var g in engine.LoadErrors) (g.Status == EvidenceStatus.Partial ? run.Notes : run.Errors).Add(g.Reason);
             if (!run.Valid) return run;
             if (engine.Rules.Count == 0) { run.Errors.Add("fișierul nu conține nicio regulă"); return run; }
+            int loadErrorsBefore = engine.LoadErrors.Count;
             foreach (var d in engine.Run(timeline, kind == RuleLabKind.Yara ? files : [], read))
                 run.Matches.Add(new RuleLabMatch(d.RuleId, d.EvidenceId, d.Locator, d.TimeUtc, d.Match));
-            foreach (var g in engine.LoadErrors) run.Errors.Add(g.Reason);   // a regex timeout during the run is an error of the rule too
+            // a regex timeout or a failure during the run is an error of the rule; a partial note (events without a field, a cap) is said, not a refusal
+            foreach (var g in engine.LoadErrors.Skip(loadErrorsBefore)) (g.Status == EvidenceStatus.Partial ? run.Notes : run.Errors).Add(g.Reason);
             if (kind == RuleLabKind.Sigma)
             {
                 // lab 2026-11-08: a reopened case reads its timeline from timeline.csv, which keeps no parser fields, so a rule on TargetUserName

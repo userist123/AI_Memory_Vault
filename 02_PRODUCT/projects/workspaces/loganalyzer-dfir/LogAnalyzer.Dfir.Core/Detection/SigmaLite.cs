@@ -66,6 +66,7 @@ public sealed class SigmaLite
     /// Splits a YAML text at lines that are exactly <c>---</c>; segments with no content (blank or comments only) are dropped.
     /// A text with one document is returned whole, so its SHA-256 is the hash of the file as before multi-document support.
     /// </summary>
+    private static readonly Regex DocSeparator = new(@"^---\s*(?:#.*)?$", RegexOptions.CultureInvariant);
     internal static List<string> SplitDocuments(string yaml)
     {
         var segments = new List<string>();
@@ -77,7 +78,7 @@ public sealed class SigmaLite
         }
         foreach (var line in yaml.Split('\n'))
         {
-            if (line.TrimEnd() == "---") Flush(); else cur.Add(line.TrimEnd('\r'));
+            if (DocSeparator.IsMatch(line.TrimEnd('\r'))) Flush(); else cur.Add(line.TrimEnd('\r'));
         }
         Flush();
         return segments.Count == 1 ? [yaml] : segments;
