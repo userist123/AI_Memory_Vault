@@ -83,6 +83,25 @@ namespace LogAnalyzer.UI.Views
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
 
+    /// <summary>Master plan 6.4: heatmap level 0..4 to a brush (the accent colour with growing opacity; 0 = the border tone, so an empty day stays visible).</summary>
+    public sealed class CoverageLevelBrushConverter : IValueConverter
+    {
+        public static readonly CoverageLevelBrushConverter Instance = new();
+        private static readonly byte[] Alpha = [0, 70, 120, 180, 255];
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            int level = value is int l ? Math.Clamp(l, 0, 4) : 0;
+            if (level == 0) return System.Windows.Application.Current?.TryFindResource("BorderBrush") as System.Windows.Media.Brush ?? System.Windows.Media.Brushes.LightGray;   // visible: an empty day is information
+            var c = System.Windows.Application.Current?.TryFindResource("EvidenceAccentColor") is System.Windows.Media.Color ac ? ac : System.Windows.Media.Color.FromRgb(0x1F, 0x6F, 0xB2);
+            var b = new System.Windows.Media.SolidColorBrush(System.Windows.Media.Color.FromArgb(Alpha[level], c.R, c.G, c.B));
+            b.Freeze();
+            return b;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
+
     /// <summary>Closure checklist result in words („îndeplinit”, „atenție”, „blochează”).</summary>
     public sealed class ChecklistStatusTextConverter : IValueConverter
     {

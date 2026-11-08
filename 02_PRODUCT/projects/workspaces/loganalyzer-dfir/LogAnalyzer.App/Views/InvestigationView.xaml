@@ -503,6 +503,48 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
+            <!-- Master plan 6.4: coverage in time: one row per source, one cell per day; silent stretches inside activity are candidate gaps -->
+            <TabItem Header="Acoperire în timp" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Acoperire în timp: ce sursă a scris în ce zi">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding CoverageLine}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,2"/>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding CoverageAxis}" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12" Margin="0,0,0,6"/>
+                    <ListBox DockPanel.Dock="Bottom" ItemsSource="{Binding CoverageGapLines}" MaxHeight="120" Margin="0,6,0,0" AutomationProperties.Name="Lacune posibile în acoperire">
+                        <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ListBox.ItemTemplate>
+                    </ListBox>
+                    <ScrollViewer HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Auto">
+                        <ItemsControl ItemsSource="{Binding CoverageRows}" AutomationProperties.Name="Harta acoperirii pe surse și zile">
+                            <ItemsControl.ItemTemplate>
+                                <DataTemplate>
+                                    <DockPanel Margin="0,1" AutomationProperties.Name="{Binding Source}">
+                                        <TextBlock DockPanel.Dock="Left" Text="{Binding Source}" Width="190" TextTrimming="CharacterEllipsis" Foreground="{StaticResource TextPrimaryBrush}" FontSize="12" ToolTip="{Binding Source}"/>
+                                        <TextBlock DockPanel.Dock="Left" Text="{Binding Totals}" Width="70" TextAlignment="Right" Margin="0,0,8,0" Foreground="{StaticResource TextSecondaryBrush}" FontSize="12"/>
+                                        <ItemsControl ItemsSource="{Binding Cells}">
+                                            <ItemsControl.ItemsPanel><ItemsPanelTemplate><StackPanel Orientation="Horizontal"/></ItemsPanelTemplate></ItemsControl.ItemsPanel>
+                                            <ItemsControl.ItemTemplate>
+                                                <DataTemplate>
+                                                    <Border Width="9" Height="16" Margin="0,0,1,0" ToolTip="{Binding Tooltip}"
+                                                            Background="{Binding Level, Converter={x:Static local:CoverageLevelBrushConverter.Instance}}">
+                                                        <Border.Style>
+                                                            <Style TargetType="Border">
+                                                                <Setter Property="BorderThickness" Value="0"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding IsGap}" Value="True">
+                                                                        <Setter Property="BorderBrush" Value="{StaticResource WarningBrush}"/><Setter Property="BorderThickness" Value="1.5"/>
+                                                                    </DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </Border.Style>
+                                                    </Border>
+                                                </DataTemplate>
+                                            </ItemsControl.ItemTemplate>
+                                        </ItemsControl>
+                                    </DockPanel>
+                                </DataTemplate>
+                            </ItemsControl.ItemTemplate>
+                        </ItemsControl>
+                    </ScrollViewer>
+                </DockPanel>
+            </TabItem>
             <!-- Master plan 6.8: rule lab: test a rule on this case as the engine would load it, compare with a reference version, add to the case's rules -->
             <TabItem Header="Laborator de reguli" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Laborator de reguli: testează o regulă pe acest caz">
                 <DockPanel Margin="8">
