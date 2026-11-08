@@ -362,8 +362,13 @@
   „Executabile”. Opus review: 12k mutations no throw; HIGH import blow-up (1M functions, 273 MB) capped + PE-IMPORTS-TRUNCATED; silent drop,
   imphash vs pefile (documented, label), entropy cost, overlay lower bound fixed. Lab Arhipelag: adb valid, foreign notepad unsigned here,
   overlay 20,000. docs/dfir/PE_TRIAGE.md. Suites: Dfir 2794, App 1026, UI 368, Ed 45.
+- 6.5 JA3 DONE (8d0358fe9): PacketDecoder.Ja3 + JA3/JA3Hash fields + ioc type ja3 (Ja3Tests); lab has no TLS traffic (said in docs/dfir/NETWORK_JA3.md).
+- 6.8 rule lab DONE (2adc6d213): Detection/RuleLab.cs (engine-identical load, test on case corpus, diff vs reference, add to case Rules/ audited
+  + custody, Sigma correlation refused, missing-field note), tab „Laborator de reguli”. Lab Arhipelag: 0 -> found reopened-case CSV has no
+  parser fields (note added), v2 1,322 new matches. No Opus review for 6.5/6.8 (low risk; main session decision). Lab UIA driver settext now
+  unescapes \n (scratchpad uia\driver.ps1, pushed to WS01/WS02).
 ## Next
--1. MASTER PLAN order after 6.1 + 6.16 + 6.9 + 6.12 + 6.7: bookmarks/saved views; 6.7 PE triage; 6.5 JA3; 6.8 rule test lab; 6.11 graph view; 6.4 coverage heatmap; 6.14 target-bound
+-1. MASTER PLAN order after 6.1 + 6.16 + 6.9 + 6.12 + 6.7 + 6.5 + 6.8 (remaining): bookmarks/saved views; 6.7 PE triage; 6.5 JA3; 6.8 rule test lab; 6.11 graph view; 6.4 coverage heatmap; 6.14 target-bound
    approval. Each: tests, Opus review for risky code, lab screenshots on the three editions.
 00. LA-Lab continue: Continent on WS01; remote collection WS01 -> SRV01; AD page; containment (updsvc.exe); (DC failure auditing: done as A19); rerun WS02 (Insula) on the new build; lab report .docx (scratchpad md2docx).
 0. Owner cleanup of the TEST cases (list in the report) when the evaluation is closed.
