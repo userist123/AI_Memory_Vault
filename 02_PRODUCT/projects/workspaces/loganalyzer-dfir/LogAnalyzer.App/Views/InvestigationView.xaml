@@ -503,6 +503,34 @@
                     </StackPanel>
                 </ScrollViewer>
             </TabItem>
+            <!-- Master plan 6.8: rule lab: test a rule on this case as the engine would load it, compare with a reference version, add to the case's rules -->
+            <TabItem Header="Laborator de reguli" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Laborator de reguli: testează o regulă pe acest caz">
+                <DockPanel Margin="8">
+                    <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,4">
+                        <ComboBox ItemsSource="{Binding RuleKinds}" SelectedIndex="{Binding RuleKindIndex}" MinWidth="140" Margin="0,0,6,0" AutomationProperties.Name="Tipul regulii"/>
+                        <TextBlock Text="Nume:" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBox Text="{Binding RuleName, UpdateSourceTrigger=PropertyChanged}" Width="180" Margin="0,0,8,0" AutomationProperties.Name="Numele regulii"/>
+                        <Button Content="Testează pe acest caz" Command="{Binding TestRuleCommand}" Style="{StaticResource AccentButtonStyle}" Padding="12,4" Margin="0,0,6,0" AutomationProperties.Name="Testează regula pe acest caz"/>
+                        <Button Content="Păstrează ca referință" Command="{Binding SaveRuleBaselineCommand}" Padding="12,4" Margin="0,0,6,0"/>
+                        <Button Content="Compară cu referința" Command="{Binding CompareRuleWithBaselineCommand}" Padding="12,4" Margin="0,0,6,0"/>
+                        <Button Content="Adaugă în regulile cazului" Command="{Binding AddRuleToCaseCommand}" Padding="12,4" AutomationProperties.Name="Adaugă regula în regulile cazului"/>
+                    </WrapPanel>
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding RuleLabSummary}" TextWrapping="Wrap" FontWeight="SemiBold" Margin="0,0,0,4" AutomationProperties.LiveSetting="Polite">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Foreground" Value="{StaticResource EvidenceAccentBrush}"/>
+                                <Style.Triggers><DataTrigger Binding="{Binding RuleLabProblem}" Value="True"><Setter Property="Foreground" Value="{StaticResource DangerBrush}"/></DataTrigger></Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="8"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
+                        <TextBox Grid.Column="0" Text="{Binding RuleText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" AcceptsTab="True" FontFamily="Consolas" TextWrapping="NoWrap"
+                                 VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto" MinHeight="200" AutomationProperties.Name="Textul regulii"/>
+                        <ListBox Grid.Column="2" ItemsSource="{Binding RuleLabLines}" AutomationProperties.Name="Rezultatul testului regulii"/>
+                    </Grid>
+                </DockPanel>
+            </TabItem>
             <!-- Master plan 6.7: the evidence files that are Windows programs, read statically, with the station's signature check -->
             <TabItem Header="Executabile" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Executabile: programele dintre probe, citite fără să fie rulate">
                 <DockPanel Margin="8">
