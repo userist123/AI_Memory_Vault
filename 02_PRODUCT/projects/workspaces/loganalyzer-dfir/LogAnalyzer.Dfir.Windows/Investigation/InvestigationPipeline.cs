@@ -530,6 +530,11 @@ public sealed class InvestigationPipeline
         int hashFindingNo = LiveStateAnalyzer.MaxFindingNo(found);
         found.AddRange(LogAnalyzer.Dfir.HashSets.HashSetMatcher.ToFindings(hashMatches, () => $"F-{++hashFindingNo:D4}"));
         r.KnownHashMatches.AddRange(hashMatches);
+        // Master plan 6.6: rules over Volatility rows and the memory/disk correlation, from the case timeline alone.
+        int memFindingNo = LiveStateAnalyzer.MaxFindingNo(found);
+        var memFindings = LogAnalyzer.Dfir.Memory.MemoryFindings.Run(r.Timeline, () => $"F-{++memFindingNo:D4}");
+        found.AddRange(memFindings.Findings);
+        r.Gaps.AddRange(memFindings.Gaps);
         if (collect)
         {
             // evaluation 2026-11-05: a signed per-user program is checked on this station before it is reported as high (see SignatureCalibration)

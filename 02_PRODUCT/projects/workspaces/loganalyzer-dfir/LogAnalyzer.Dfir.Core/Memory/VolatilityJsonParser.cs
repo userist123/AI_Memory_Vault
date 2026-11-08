@@ -44,7 +44,8 @@ public sealed class VolatilityJsonParser : EvidenceParserBase
         using var doc = JsonDocument.Parse(fs, new JsonDocumentOptions { MaxDepth = 64 });
         if (doc.RootElement.ValueKind != JsonValueKind.Array) { result.MalformedRecords++; return; }
         var rows = Flatten(doc.RootElement).ToList();
-        var plugin = rows.Count == 0 ? Plugin.Unknown : Detect(rows[0]);
+        if (rows.Count == 0) { result.Gaps.Add(NoRows(fullPath, "ieșirea JSON nu conține niciun rând")); return; }
+        var plugin = Detect(rows[0]);
         if (plugin == Plugin.Unknown) { result.MalformedRecords++; return; }
         bool scan = Path.GetFileName(fullPath).Contains("psscan", StringComparison.OrdinalIgnoreCase);
         int i = 0;
@@ -63,7 +64,14 @@ public sealed class VolatilityJsonParser : EvidenceParserBase
             sink.Add(e);
             result.Records++;
         }
+        if (result.Records == 0) result.Gaps.Add(NoRows(fullPath, $"niciunul dintre cele {rows.Count} rânduri nu a putut fi citit"));
     }
+
+    /// <summary>Master plan 6.6: a plugin that printed nothing is "incomplete", never "the image has no such data" (missing symbols make Volatility print an empty list).</summary>
+    private static EvidenceGap NoRows(string fullPath, string detail) => new(Path.GetFileName(fullPath), EvidenceStatus.Partial,
+        $"Pluginul Volatility nu a produs rânduri ({detail}): simboluri lipsă sau plugin eșuat. Aceasta nu înseamnă că imaginea nu conține astfel de date",
+        "Procesele, conexiunile, liniile de comandă sau regiunile acestui plugin lipsesc din cronologie",
+        "Rulați din nou pluginul cu simbolurile potrivite versiunii de Windows a imaginii (sau un alt plugin echivalent, de exemplu psscan în loc de pslist)", "Da, prin rularea pluginului pe imaginea originală");
 
     /// <summary>Rows and their __children (pstree), depth-first.</summary>
     private static IEnumerable<JsonElement> Flatten(JsonElement arr)

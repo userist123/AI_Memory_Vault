@@ -72,4 +72,18 @@ public sealed class VolatilityJsonParserTests : IDisposable
         Assert.DoesNotContain(r.Timeline, t => t.Source.StartsWith("Memory:", StringComparison.Ordinal));
         Assert.Contains(r.Parsing, x => x.Parser == "VolatilityJsonParser" && x.MalformedRecords > 0);
     }
+
+    [Theory]
+    [InlineData("[]")]
+    [InlineData("""[ { "PID": "x", "PPID": 0, "ImageFileName": "a.exe" } ]""")]
+    public void An_empty_or_unreadable_plugin_output_is_an_explicit_gap_not_a_success(string json)
+    {
+        var p = F("pslist.json", json);
+        var ws = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases3"), "mem3", TestScopes.Valid());
+        InvestigationPipeline.Import(ws, [p]);
+        var r = new InvestigationPipeline().Run(ws, CollectionProfile.Quick, collect: false);
+        Assert.DoesNotContain(r.Timeline, t => t.Source.StartsWith("Memory:", StringComparison.Ordinal));
+        var g = Assert.Single(r.Gaps, x => x.Reason.Contains("simboluri lipsă"));
+        Assert.Contains("nu înseamnă că imaginea nu conține", g.Reason);
+    }
 }
