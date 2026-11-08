@@ -273,7 +273,8 @@ public sealed class PiiMasker
             if (h.Contains('.') && !Ipv4.IsMatch(h) && !IsBuiltIn(h)) KnownDomain(h[(h.IndexOf('.') + 1)..]);
         var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
         foreach (var (k, v) in e.Fields)
-            fields[k] = UserFields.Contains(k, StringComparer.OrdinalIgnoreCase) && v.Length > 0 && !IsBuiltIn(v) && !v.EndsWith('$') ? User(v.Contains('\\') ? v[(v.LastIndexOf('\\') + 1)..] : v)
+            fields[k] = UserFields.Contains(k, StringComparer.OrdinalIgnoreCase) && v.Contains('@') ? Mask(v)   // a UPN is an e-mail-shaped value: masked as one, so the e-mail policy governs it
+                      : UserFields.Contains(k, StringComparer.OrdinalIgnoreCase) && v.Length > 0 && !IsBuiltIn(v) && !v.EndsWith('$') ? User(v.Contains('\\') ? v[(v.LastIndexOf('\\') + 1)..] : v)
                       : RemoteHostFields.Contains(k, StringComparer.OrdinalIgnoreCase) && v.Contains('.') && !Ipv4.IsMatch(v) && !IsOwnHost(v) ? Mask(v)   // a public host stays readable
                       : HostFields.Contains(k, StringComparer.OrdinalIgnoreCase) && v.Length > 0 && !IsBuiltIn(v) ? Mask(v.Contains('.') && !Ipv4.IsMatch(v) ? Host(v[..v.IndexOf('.')]) : v)
                       : k.Contains("serial", StringComparison.OrdinalIgnoreCase) && v.Trim().Length > 0 && !IsPseudonym(v) ? Pseudo(_serials, v, "Serial")
@@ -282,7 +283,7 @@ public sealed class PiiMasker
         {
             Time = e.Time, Source = e.Source, EvidenceId = e.EvidenceId, EventId = e.EventId, Provider = e.Provider,
             Host = e.Host.Length > 0 && !IsBuiltIn(e.Host) ? Host(e.Host.Contains('.') ? e.Host[..e.Host.IndexOf('.')] : e.Host) : e.Host,
-            User = e.User.Length > 0 && !IsBuiltIn(e.User) && !e.User.EndsWith('$') ? (e.User.Contains('\\') ? Mask(e.User) : User(e.User)) : e.User,
+            User = e.User.Length > 0 && !IsBuiltIn(e.User) && !e.User.EndsWith('$') ? (e.User.Contains('\\') || e.User.Contains('@') ? Mask(e.User) : User(e.User)) : e.User,
             Process = Mask(e.Process), Pid = e.Pid, Ppid = e.Ppid, Path = Mask(e.Path), RemoteIp = Mask(e.RemoteIp), RemotePort = e.RemotePort,
             Dns = Mask(e.Dns), Task = Mask(e.Task), Service = Mask(e.Service), Hash = e.Hash, Summary = Mask(e.Summary), TimeSemantics = e.TimeSemantics,
             TemporalType = e.TemporalType, Classification = e.Classification, Confidence = e.Confidence, Locator = Mask(e.Locator), Fields = fields,
@@ -334,7 +335,25 @@ public sealed class PiiMasker
                 : new Regex(@"(?<![\p{L}\p{N}_-])(?:" + string.Join("|", _restoreMap.Keys.OrderByDescending(k => k.Length).Select(Regex.Escape)) + @")(?![\p{N}])", RegexOptions.CultureInvariant, Rx);
             _restoreVersion = version;
         }
-        return _restoreRx is null ? s : _restoreRx.Replace(s, m => _restoreMap!.TryGetValue(m.Value, out var o) ? o : m.Value);
+        if (_restoreRx is null) return s;
+        // a restored original can carry a value of a category that stays masked (the domain in C:\Users\ion.CONTOSO): such names are masked again
+        var hostsStayMasked = !Keep.Contains(PiiCategory.Hosts);
+        return _restoreRx.Replace(s, m => !_restoreMap!.TryGetValue(m.Value, out var o) ? m.Value : hostsStayMasked ? RemaskHosts(o) : o);
+    }
+
+    private Regex? _hostRx;
+    private int _hostRxCount = -1;
+
+    private string RemaskHosts(string original)
+    {
+        if (_hostRxCount != _hosts.Count)
+        {
+            var names = _hosts.Keys.Where(n => n.Length >= 3).OrderByDescending(n => n.Length).Select(Regex.Escape).ToList();
+            _hostRx = names.Count == 0 ? null : new Regex(@"(?<![\p{L}\p{N}_-])(?:" + string.Join("|", names) + @")(?![\p{L}\p{N}_-])", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant, Rx);
+            _hostRxCount = _hosts.Count;
+        }
+        if (_hostRx is null) return original;
+        return _hostRx.Replace(original, m => _hosts.TryGetValue(m.Value, out var h) ? h : m.Value);
     }
 
     private static readonly Regex PseudoRx = new(@"^(?:Utilizator|Statie|IP|SID|email|Serial|Domeniu|MAC)-\d+", RegexOptions.CultureInvariant, Rx);

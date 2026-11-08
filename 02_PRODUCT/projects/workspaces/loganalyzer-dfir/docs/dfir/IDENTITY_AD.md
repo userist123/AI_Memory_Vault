@@ -7,18 +7,19 @@ Interfață: tab-ul „Identități” din „Investigație completă” (`Inves
 
 - **Cheia identității este SID-ul.**
   - O redenumire (4781) adaugă un nume aceleiași identități; nu creează un cont nou.
-  - Un SID vechi trecut în istoricul SID (4765, câmpul `SidHistory` din 4738) se leagă de identitatea care îl poartă acum.
-  - Evenimentele care au doar nume (4769, 4776) se leagă de un SID numai dacă același nume a apărut cu un singur SID. Un nume purtat de două SID-uri nu se atribuie niciunuia; contul rămâne „văzut doar după nume”.
+  - Istoricul SID (4765, câmpul `SidHistory` din 4738) este o **legătură, nu o contopire**. SID-ul vechi își păstrează evenimentele și arată la cine apare în istoric; identitatea nouă îl listează. Un SID privilegiat sau bine-cunoscut (SYSTEM, grupuri builtin, RID 500/502/512/518/519/526/527) apărut în istoricul cuiva îl marchează pe acela privilegiat, cu motivul „posibil abuz al istoricului SID (T1134.005)”. Contopirea ar fi permis ca un istoric plantat să ascundă activitatea administratorului sub alt nume.
+  - Evenimentele care au doar nume (4769, 4776) se leagă de un SID abia la final, după ce s-a văzut tot cazul, și numai dacă **domeniul și numele** au apărut cu un singur SID. Domeniul se compară după prima etichetă: LAB și LAB.LOCAL sunt considerate același domeniu. Un nume fără domeniu (4776 pe controler) nu se atribuie niciodată.
 - **Sesiunile sunt pe stație.** LogonId are sens doar pe stația care l-a emis, deci cheia este stație + LogonId.
   - 4624 deschide sesiunea; 4634 sau 4647 o închide (încredere ridicată).
   - Fără delogare: încredere medie. Delogare fără început: încredere scăzută.
   - Același LogonId reapărut înainte de delogare: încredere scăzută, cu motivul.
-  - 4672 marchează sesiunea cu privilegii speciale doar pe stația respectivă.
+  - 4672 marchează cu privilegii speciale doar o sesiune deschisă pe stația respectivă. Un 4672 scris înaintea lui 4624 (în aceeași secundă) se aplică logon-ului care urmează în cel mult 2 secunde, niciodată unei sesiuni închise mai devreme, cu același LogonId reutilizat.
+  - Sesiunile sunt limitate la 100.000; peste limită apare o lacună. Activitatea rămâne în cronologie.
 - **Grupuri și conturi:** creare, activare, dezactivare, ștergere, parole, blocare, redenumire; adăugări și scoateri din grupuri (4728/4732/4756 și perechile lor). Adăugarea într-un grup privilegiat (Administrators, Account/Server/Backup Operators, Domain/Schema/Enterprise/Key Admins, recunoscute după SID sau RID) marchează contul privilegiat. Autorul fiecărei modificări primește și el rândul în activitatea lui.
 - **Director și GPO:** 5136/5137/5141 de pe controler; o modificare pe un `groupPolicyContainer` este o modificare de GPO, legată de obiect (DN), atribut și autor (SID), cu locatorul evenimentului.
-- **Duplicate:** aceeași înregistrare (stație + EventRecordID) importată de două ori, de exemplu două exporturi ale aceluiași jurnal de pe controler, se numără o dată.
+- **Duplicate:** aceeași înregistrare (stația cu numele complet + EventRecordID + ora) importată de două ori, de exemplu două exporturi ale aceluiași jurnal de pe controler, se numără o dată. Ora face parte din cheie: după golirea jurnalului numerotarea reîncepe, iar o arhivă veche și jurnalul curent sunt evenimente diferite. web01.contoso și web01.fabrikam sunt stații diferite.
 - **Lacune, nu negative:**
-  - Conturi de domeniu fără jurnale de controler: lacună, nu „nu s-a întâmplat nimic”.
+  - Conturi de domeniu fără jurnale de controler **ale acelui domeniu**: lacună, nu „nu s-a întâmplat nimic”. Contul de domeniu se recunoaște după SID (S-1-5-21-…) și după un domeniu diferit de numele NetBIOS al stației (cel mult 15 caractere), indiferent de limba numelor de sistem.
   - Controler fără modificări de director: auditul „Directory Service Changes” poate fi neactivat.
   - Stație cu autentificări, dar fără nicio delogare.
   - Conturi văzute doar după nume.

@@ -89,6 +89,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void ExportMaskedPdf()
         {
             if (_result is null) { ReportStatus = "Rulați întâi o investigație sau deschideți un caz."; return; }
+            if (_result.Case.IsReadOnly && RedactionReversible) { ReportStatus = "Cazul este doar pentru citire: tabela unei pseudonimizări reversibile nu se poate păstra în el. Alegeți mascarea ireversibilă."; return; }
             var dlg = new SaveFileDialog { FileName = $"Raport_{_result.Case.Info.CaseId}_mascat.pdf", Filter = "PDF (*.pdf)|*.pdf", Title = "Raport cu date personale mascate (pentru partajare)" };
             if (dlg.ShowDialog() != true) return;
             var policy = CurrentRedactionPolicy();
@@ -113,6 +114,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void ExportMaskedTimeline()
         {
             if (_result is null) { ReportStatus = "Rulați întâi o investigație sau deschideți un caz."; return; }
+            if (_result.Case.IsReadOnly && RedactionReversible) { ReportStatus = "Cazul este doar pentru citire: tabela unei pseudonimizări reversibile nu se poate păstra în el. Alegeți mascarea ireversibilă."; return; }
             var dlg = new SaveFileDialog { FileName = $"Cronologie_{_result.Case.Info.CaseId}_mascata.csv", Filter = "CSV (*.csv)|*.csv", Title = "Cronologie cu date personale mascate" };
             if (dlg.ShowDialog() != true) return;
             var policy = CurrentRedactionPolicy();

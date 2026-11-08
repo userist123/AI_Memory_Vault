@@ -28,6 +28,8 @@ public sealed class IdentityRecord
     public string LastSeenUtc { get; set; } = "";
     public List<IdentityActivity> Activity { get; set; } = [];
     public bool ActivityTruncated { get; set; }
+    /// <summary>Identities whose SID history lists this SID. A link, not a merge: this identity keeps its own events.</summary>
+    public List<string> InSidHistoryOf { get; set; } = [];
     public string DisplayName => Names.Count == 0 ? Key : (Names[^1].Domain.Length > 0 ? $"{Names[^1].Domain}\\{Names[^1].Name}" : Names[^1].Name);
     public string NameHistory => string.Join(" → ", Names.Select(n => n.Name).Distinct(StringComparer.OrdinalIgnoreCase));
 }
@@ -53,6 +55,7 @@ public sealed class IdentityReport
     public List<IdentityGap> Gaps { get; set; } = [];
     public List<string> DomainControllers { get; set; } = [];
     public int DuplicatesDropped { get; set; }
+    public bool SessionsTruncated { get; set; }
     public int EventsUsed { get; set; }
 
     public static void Write(string path, IdentityReport r) => LogAnalyzer.Dfir.IO.Json.Write(path, r);
@@ -97,14 +100,25 @@ public static class IdentityReconstruction
     private static bool IsSecurity(TimelineEvent e) =>
         e.Source.StartsWith("EventLog:", StringComparison.OrdinalIgnoreCase) && Events.ContainsKey(e.EventId)
         && (e.Source.EndsWith("Security", StringComparison.OrdinalIgnoreCase) || e.Provider.Contains("Security-Auditing", StringComparison.OrdinalIgnoreCase));
-    private static string HostKey(string h) => h.Split('.')[0].ToUpperInvariant();
+    /// <summary>The host as the log names it (FQDN kept): web01.contoso and web01.fabrikam are two hosts.</summary>
+    private static string HostKey(string h) => h.Trim().ToUpperInvariant();
+    /// <summary>A domain compared by its first label: the NetBIOS name LAB and the Kerberos realm LAB.LOCAL are taken as one domain (an assumption, documented).</summary>
+    private static string NormDomain(string d) => d.Trim().Split('.')[0].ToUpperInvariant();
+    private static bool IsDomainSid(string sid) => sid.StartsWith("S-1-5-21-", StringComparison.OrdinalIgnoreCase);
+    /// <summary>A SID that should never appear in anyone's SID history: well-known accounts, builtin groups, and privileged domain RIDs (abuse: T1134.005).</summary>
+    private static bool IsSensitiveSid(string sid) =>
+        !IsDomainSid(sid) || PrivilegedRids.Contains(sid.Split('-')[^1]) || sid.EndsWith("-500", StringComparison.Ordinal) || sid.EndsWith("-502", StringComparison.Ordinal);
 
-    /// <summary>The same record of the same host imported twice (two exports of one DC log) is one event.</summary>
+    /// <summary>
+    /// The same record of the same host imported twice (two exports of one DC log) is one event. The time is part of the key: record ids restart
+    /// after a log is cleared, so an archive from before the clear and the live log are different events with the same id.
+    /// </summary>
     private static string DedupKey(TimelineEvent e)
     {
-        if (e.Locator.StartsWith("EventRecordID=", StringComparison.Ordinal)) return $"{HostKey(e.Host)}|{e.EventId}|{e.Locator}";
+        if (e.Locator.StartsWith("EventRecordID=", StringComparison.Ordinal)) return $"{HostKey(e.Host)}|{e.EventId}|{e.Locator}|{e.Time.Utc?.UtcTicks}";
         var fields = string.Join("\u001f", e.Fields.Where(kv => !kv.Key.StartsWith('_')).OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase).Select(kv => kv.Key + "=" + kv.Value));
-        return $"{HostKey(e.Host)}|{e.EventId}|{e.Time.UtcIso}|" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(fields)))[..24];
+        // without a record id two identical rows are two events unless they are the same row of the same evidence
+        return $"{HostKey(e.Host)}|{e.EventId}|{e.Time.Utc?.UtcTicks}|{e.EvidenceId}|{e.Locator}|" + Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(fields)))[..24];
     }
 
     private static (string Name, string Domain) SplitName(string name, string domain)
@@ -116,6 +130,8 @@ public static class IdentityReconstruction
         if (bs > 0) return (name[(bs + 1)..], name[..bs]);
         return (name, domain.Trim());
     }
+
+    public const int MaxSessions = 100_000;
 
     public static IdentityReport Build(IReadOnlyList<TimelineEvent> timeline)
     {
@@ -130,36 +146,31 @@ public static class IdentityReconstruction
         events = events.OrderBy(e => e.Time.Utc ?? DateTimeOffset.MaxValue).ThenBy(e => e.Host, StringComparer.OrdinalIgnoreCase).ToList();
         report.EventsUsed = events.Count;
 
-        // SID history first: an event under an old SID belongs to the identity that now carries it.
-        var alias = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        // SID history is a link, never a merge: events under an old SID stay with that SID, and the identity that carries it lists it. Folding them
+        // would let a planted history entry (an administrator's SID, SYSTEM) hide the real account's activity under another name.
+        var history = new List<(string Old, string Now, TimelineEvent E)>();
         foreach (var e in events.Where(e => e.EventId == "4765"))
-            if (F(e, "SourceSid") is { Length: > 0 } old && F(e, "TargetSid") is { Length: > 0 } now) alias[NormSid(old)] = NormSid(now);
+            if (F(e, "SourceSid") is { Length: > 0 } old && F(e, "TargetSid") is { Length: > 0 } now) history.Add((NormSid(old), NormSid(now), e));
         foreach (var e in events.Where(e => e.EventId == "4738"))
             foreach (var old in F(e, "SidHistory").Split([' ', ',', ';'], StringSplitOptions.RemoveEmptyEntries).Where(s => s.StartsWith("S-1-", StringComparison.OrdinalIgnoreCase)))
-                if (F(e, "TargetSid") is { Length: > 0 } now) alias[NormSid(old)] = NormSid(now);
+                if (F(e, "TargetSid") is { Length: > 0 } now) history.Add((NormSid(old), NormSid(now), e));
 
         var ids = new Dictionary<string, IdentityRecord>(StringComparer.OrdinalIgnoreCase);
-        var byName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);   // account name (no domain) -> SID key
-        var ambiguous = new HashSet<string>(StringComparer.OrdinalIgnoreCase);              // a name two SIDs carried: never resolved by name
+        var byName = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);   // DOMAIN\NAME -> SID key
+        var ambiguous = new HashSet<string>(StringComparer.OrdinalIgnoreCase);              // a DOMAIN\NAME two SIDs carried: never resolved by name
 
         IdentityRecord Id(string sid)
         {
             var key = NormSid(sid);
-            if (alias.TryGetValue(key, out var primary)) key = primary;
-            if (!ids.TryGetValue(key, out var r))
-            {
-                r = new IdentityRecord { Key = key, Sid = key };
-                ids[key] = r;
-                foreach (var a in alias.Where(a => a.Value == key)) r.SidHistory.Add(a.Key);
-            }
+            if (!ids.TryGetValue(key, out var r)) { r = new IdentityRecord { Key = key, Sid = key }; ids[key] = r; }
             return r;
         }
+        // Name-only accounts are kept apart during the pass and joined to a SID only at the end, when the whole case has been seen.
         IdentityRecord? ByNameOnly(string rawName, string domain)
         {
             var (n, d) = SplitName(rawName, domain);
             if (n.Length == 0 || n == "-") return null;
-            if (!ambiguous.Contains(n) && byName.TryGetValue(n, out var sidKey)) return ids[sidKey];
-            var key = "name:" + (d.Length > 0 ? d.ToUpperInvariant() + "\\" : "") + n.ToUpperInvariant();
+            var key = "name:" + (d.Length > 0 ? NormDomain(d) + "\\" : "") + n.ToUpperInvariant();
             if (!ids.TryGetValue(key, out var r)) { r = new IdentityRecord { Key = key, KnownByNameOnly = true }; ids[key] = r; AddName(r, n, d, "", "numele din eveniment (fără SID)"); }
             return r;
         }
@@ -169,9 +180,10 @@ public static class IdentityReconstruction
             if (r.Names.Count > 0 && string.Equals(r.Names[^1].Name, name, StringComparison.OrdinalIgnoreCase)) return;
             if (r.Names.Any(x => string.Equals(x.Name, name, StringComparison.OrdinalIgnoreCase)) && how.StartsWith("observat", StringComparison.Ordinal)) return;
             r.Names.Add(new IdentityName(name, domain, utc, how));
-            if (r.KnownByNameOnly) return;
-            if (byName.TryGetValue(name, out var other) && !string.Equals(other, r.Key, StringComparison.OrdinalIgnoreCase)) ambiguous.Add(name);
-            else byName[name] = r.Key;
+            if (r.KnownByNameOnly || domain.Trim().Length == 0) return;
+            var nk = NormDomain(domain) + "\\" + name.ToUpperInvariant();
+            if (byName.TryGetValue(nk, out var other) && !string.Equals(other, r.Key, StringComparison.OrdinalIgnoreCase)) ambiguous.Add(nk);
+            else byName[nk] = r.Key;
         }
         void Touch(IdentityRecord r, TimelineEvent e, string text, string actor = "")
         {
@@ -185,6 +197,7 @@ public static class IdentityReconstruction
         void Privilege(IdentityRecord r, string why) { if (!r.Privileged) { r.Privileged = true; r.PrivilegedReason = why; } }
 
         var open = new Dictionary<string, int>(StringComparer.OrdinalIgnoreCase);   // host|logonId -> index into sessions
+        var pendingElevation = new Dictionary<string, DateTimeOffset?>(StringComparer.OrdinalIgnoreCase); // a 4672 written before its 4624 (same second): applied when the logon arrives
         var sessions = new List<HostSession>();
 
         foreach (var e in events)
@@ -210,8 +223,9 @@ public static class IdentityReconstruction
                     var key = host + "|" + lid.ToLowerInvariant();
                     if (open.TryGetValue(key, out var prev) && sessions[prev].EndUtc.Length == 0)
                         sessions[prev] = sessions[prev] with { Confidence = "scăzută", Note = "același LogonId a apărut din nou pe stație înainte de delogare (repornire sau jurnal incomplet)" };
+                    if (sessions.Count >= MaxSessions) { report.SessionsTruncated = true; break; }
                     sessions.Add(new HostSession(host, lid, r.Key, r.DisplayName, F(e, "LogonType"), ip, F(e, "WorkstationName"), F(e, "AuthenticationPackageName"),
-                        e.Time.UtcIso, "", false, "medie", "fără delogare în jurnal", e.EvidenceId, e.Locator));
+                        e.Time.UtcIso, "", pendingElevation.Remove(key, out var pendingAt) && pendingAt is { } pa && e.Time.Utc is { } la && (la - pa).Duration() <= TimeSpan.FromSeconds(2), "medie", "fără delogare în jurnal", e.EvidenceId, e.Locator));
                     open[key] = sessions.Count - 1;
                     break;
                 }
@@ -222,7 +236,7 @@ public static class IdentityReconstruction
                     var key = host + "|" + F(e, "TargetLogonId").ToLowerInvariant();
                     if (open.TryGetValue(key, out var i) && sessions[i].EndUtc.Length == 0)
                         sessions[i] = sessions[i] with { EndUtc = e.Time.UtcIso, Confidence = sessions[i].Note.StartsWith("același", StringComparison.Ordinal) ? "scăzută" : "ridicată", Note = sessions[i].Note.StartsWith("același", StringComparison.Ordinal) ? sessions[i].Note : "" };
-                    else if (F(e, "TargetLogonId").Length > 0 && !open.ContainsKey(key))
+                    else if (F(e, "TargetLogonId").Length > 0 && !open.ContainsKey(key) && sessions.Count < MaxSessions)
                     {
                         sessions.Add(new HostSession(host, F(e, "TargetLogonId"), NotAccounts.Contains(sid) ? "" : Id(sid).Key, NotAccounts.Contains(sid) ? F(e, "TargetUserName") : Id(sid).DisplayName,
                             F(e, "LogonType"), "", "", "", "", e.Time.UtcIso, false, "scăzută", "începutul sesiunii nu este în jurnal", e.EvidenceId, e.Locator));
@@ -239,7 +253,9 @@ public static class IdentityReconstruction
                     Touch(r, e, $"{text} pe {host}");
                     if (!sid.Equals("S-1-5-18", StringComparison.OrdinalIgnoreCase)) Privilege(r, $"privilegii speciale la autentificare (4672) pe {host}");
                     var key = host + "|" + F(e, "SubjectLogonId").ToLowerInvariant();
-                    if (open.TryGetValue(key, out var i)) sessions[i] = sessions[i] with { Elevated = true };
+                    // only an open session takes the elevation; a closed one with the same reused LogonId is another logon
+                    if (open.TryGetValue(key, out var i) && sessions[i].EndUtc.Length == 0) sessions[i] = sessions[i] with { Elevated = true };
+                    else pendingElevation[key] = e.Time.Utc;
                     break;
                 }
                 case "4728" or "4732" or "4756" or "4729" or "4733" or "4757":
@@ -321,7 +337,9 @@ public static class IdentityReconstruction
         // A name seen without a SID before the same name was seen with one: fold it in now. A name never seen with a SID stays apart.
         foreach (var nameOnly in ids.Values.Where(r => r.KnownByNameOnly).ToList())
         {
-            if (ambiguous.Contains(nameOnly.Names[0].Name) || !byName.TryGetValue(nameOnly.Names[0].Name, out var sidKey)) continue;
+            if (!nameOnly.Key.Contains('\\')) continue;                                   // no domain: a name alone is never attributed
+            var nk = nameOnly.Key["name:".Length..];
+            if (ambiguous.Contains(nk) || !byName.TryGetValue(nk, out var sidKey)) continue;
             var target = ids[sidKey];
             target.Activity = target.Activity.Concat(nameOnly.Activity).OrderBy(a => a.Utc, StringComparer.Ordinal).Take(MaxActivityPerIdentity).ToList();
             target.ActivityTruncated |= nameOnly.ActivityTruncated || target.Activity.Count == MaxActivityPerIdentity;
@@ -330,6 +348,19 @@ public static class IdentityReconstruction
             if (string.CompareOrdinal(nameOnly.FirstSeenUtc, target.FirstSeenUtc) < 0 && nameOnly.FirstSeenUtc.Length > 0) target.FirstSeenUtc = nameOnly.FirstSeenUtc;
             if (string.CompareOrdinal(nameOnly.LastSeenUtc, target.LastSeenUtc) > 0) target.LastSeenUtc = nameOnly.LastSeenUtc;
             ids.Remove(nameOnly.Key);
+        }
+
+        foreach (var (old, now, e) in history)
+        {
+            var target = Id(now);
+            if (!target.SidHistory.Contains(old, StringComparer.OrdinalIgnoreCase)) target.SidHistory.Add(old);
+            if (IsSensitiveSid(old))
+            {
+                target.Privileged = true;
+                target.PrivilegedReason = $"istoricul SID conține un SID privilegiat sau bine-cunoscut ({old}, {e.EventId} pe {HostKey(e.Host)}): posibil abuz al istoricului SID (T1134.005)"
+                    + (target.PrivilegedReason.Length > 0 ? "; " + target.PrivilegedReason : "");
+            }
+            if (ids.TryGetValue(old, out var former) && !former.InSidHistoryOf.Contains(target.Key, StringComparer.OrdinalIgnoreCase)) former.InSidHistoryOf.Add(target.Key);
         }
 
         report.Identities = ids.Values.OrderByDescending(r => r.Privileged).ThenBy(r => r.KnownByNameOnly).ThenBy(r => r.DisplayName, StringComparer.OrdinalIgnoreCase).ToList();
@@ -349,20 +380,33 @@ public static class IdentityReconstruction
             gaps.Add(new IdentityGap("Nu există evenimente de securitate Windows în caz.", "Fără jurnalul Security (stații, servere, controlere de domeniu) identitățile nu se pot reconstitui; absența lor nu înseamnă că nu a existat activitate."));
             return gaps;
         }
-        bool domainLogons = events.Any(e => e.EventId == "4624" && !LocalDomains.Contains(F(e, "TargetDomainName"))
-            && !string.Equals(F(e, "TargetDomainName"), HostKey(e.Host), StringComparison.OrdinalIgnoreCase));
-        if (domainLogons && report.DomainControllers.Count == 0)
-            gaps.Add(new IdentityGap("Apar conturi de domeniu, dar lipsesc jurnalele unui controler de domeniu.",
+        // A domain logon: a domain-style SID whose domain is not the host's own NetBIOS name (15 characters at most), whatever language the
+        // built-in authority names are written in. Each domain seen in logons needs DC-side events of that domain, not of any domain.
+        static string NetBios(string host) { var h = host.Trim().Split('.')[0].ToUpperInvariant(); return h.Length > 15 ? h[..15] : h; }
+        var logonDomains = events.Where(e => e.EventId == "4624" && IsDomainSid(F(e, "TargetUserSid")) && F(e, "TargetDomainName").Length > 0
+                && !string.Equals(NormDomain(F(e, "TargetDomainName")), NetBios(e.Host), StringComparison.OrdinalIgnoreCase))
+            .Select(e => NormDomain(F(e, "TargetDomainName"))).Where(d => !LocalDomains.Contains(d)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var dcDomains = events.Where(e => DcSideEvents.Contains(e.EventId))
+            .SelectMany(e => new[] { F(e, "TargetDomainName"), F(e, "SubjectDomainName"), e.Host.Contains('.') ? e.Host.Trim().Split('.')[1] : "" })
+            .Where(d => d.Length > 0 && d != "-").Select(NormDomain).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var missing = logonDomains.Where(d => !dcDomains.Contains(d)).Order(StringComparer.OrdinalIgnoreCase).ToList();
+        if (missing.Count > 0)
+            gaps.Add(new IdentityGap($"Apar conturi de domeniu ({string.Join(", ", missing)}), dar lipsesc jurnalele unui controler al acelui domeniu.",
                 "Tichetele Kerberos, validările NTLM ale domeniului, modificările de grupuri și de obiecte de director se văd doar pe controler. Absența lor aici este o lipsă de date, nu o dovadă că nu au avut loc."));
         if (report.DomainControllers.Count > 0 && report.DirectoryChanges.Count == 0)
             gaps.Add(new IdentityGap("Pe controlerele de domeniu nu apare nicio modificare de obiect de director (5136/5137/5141).",
                 "Auditul „Directory Service Changes” poate fi neactivat sau SACL-urile lipsesc; modificările de GPO și de obiecte nu se pot reconstitui."));
-        foreach (var h in events.Where(e => e.EventId == "4624").Select(e => HostKey(e.Host)).Distinct())
-            if (!events.Any(e => e.EventId is "4634" or "4647" && HostKey(e.Host) == h))
-                gaps.Add(new IdentityGap($"Pe {h} apar autentificări, dar nicio delogare.", "Durata sesiunilor de pe această stație nu se poate stabili; auditul „Logoff” poate fi neactivat sau jurnalul a fost suprascris."));
+        var withLogoff = events.Where(e => e.EventId is "4634" or "4647").Select(e => HostKey(e.Host)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        var noLogoff = events.Where(e => e.EventId == "4624").Select(e => HostKey(e.Host)).Distinct(StringComparer.OrdinalIgnoreCase).Where(h => !withLogoff.Contains(h)).Order(StringComparer.OrdinalIgnoreCase).ToList();
+        foreach (var h in noLogoff.Take(20))
+            gaps.Add(new IdentityGap($"Pe {h} apar autentificări, dar nicio delogare.", "Durata sesiunilor de pe această stație nu se poate stabili; auditul „Logoff” poate fi neactivat sau jurnalul a fost suprascris."));
+        if (noLogoff.Count > 20)
+            gaps.Add(new IdentityGap($"Încă {noLogoff.Count - 20} stații au autentificări fără nicio delogare.", "Lista completă se obține din sesiunile cu „sfârșit necunoscut”."));
+        if (report.SessionsTruncated)
+            gaps.Add(new IdentityGap($"Sesiunile au fost limitate la {MaxSessions:N0}.", "Restul autentificărilor rămân în cronologie și în activitatea fiecărei identități; lista de sesiuni nu este completă."));
         if (report.Identities.Any(i => i.KnownByNameOnly))
             gaps.Add(new IdentityGap("Unele conturi apar doar după nume (4769, 4776 nu au SID).",
-                "Ele au fost legate de un SID numai când același nume a apărut cu SID în alt eveniment; altfel rămân separate, pentru că un nume se poate schimba sau repeta între domenii."));
+                "Ele au fost legate de un SID numai când același domeniu și nume au apărut cu un singur SID în alt eveniment; un nume fără domeniu (4776) nu se atribuie niciodată, pentru că un nume se poate schimba sau repeta între domenii și stații."));
         return gaps;
     }
 }

@@ -104,6 +104,28 @@ public sealed class RedactionPolicyTests : IDisposable
     }
 
     [Fact]
+    public void A_record_edited_to_point_at_another_table_or_path_is_not_followed()
+    {
+        if (!OperatingSystem.IsWindows()) return;
+        var ws = Case();
+        var policy = new RedactionPolicy(RedactionMode.Reversible, RedactionPolicy.All);
+        var masker = policy.Apply(PiiMasker.FromTimeline(Timeline()));
+        var u = masker.Mask(Timeline()[0]).User;
+        var outFile = Path.Combine(_dir, "o.csv"); File.WriteAllText(outFile, "x");
+        var a = Redactions.Record(ws, policy, masker, "k", outFile, "t");
+        var b = Redactions.Record(ws, policy, masker, "k", outFile, "t");
+        var json = Path.Combine(ws.Root, "Reports", "Redactions", a.Id + ".json");
+        foreach (var target in new[] { b.MappingFile, "..\\..\\Evidence\\evidence_index.jsonl" })
+        {
+            File.SetAttributes(json, FileAttributes.Normal);
+            File.WriteAllText(json, File.ReadAllText(json).Replace(File.ReadAllText(json).Contains(a.MappingFile) ? a.MappingFile : b.MappingFile, target.Replace("\\", "\\\\")));
+            var (orig, msg) = Redactions.Reveal(ws, a.Id, u, "motiv", "t");
+            Assert.Null(orig);
+            Assert.Contains("altă tabelă", msg);
+        }
+    }
+
+    [Fact]
     public void Redacting_never_changes_the_case_evidence_or_analysis_and_the_preview_does_not_touch_the_rows()
     {
         var ws = Case();
@@ -124,6 +146,35 @@ public sealed class RedactionPolicyTests : IDisposable
         Redactions.Record(ws, RedactionPolicy.Default, masker, "cronologie CSV", outFile, "tester");
         Assert.Equal(before, Snapshot());
         Assert.Single(Redactions.List(ws));
+    }
+
+    [Fact]
+    public void Keeping_users_never_reveals_an_email_or_a_domain_that_stays_masked()
+    {
+        var e = Timeline()[0];
+        var ev = new TimelineEvent { Time = e.Time, Source = e.Source, EvidenceId = "EV-2", Host = "WS01", User = "ion@contoso.com", Summary = @"Deschis C:\Users\ion.CONTOSO\doc.txt de LAB\ion", Locator = "x" };
+        ev.Fields["TargetUserName"] = "ion@contoso.com"; ev.Fields["TargetDomainName"] = "CONTOSO";
+        var masker = PiiMasker.FromTimeline([ev]);
+        masker.KnownHost("CONTOSO");
+        var m = new RedactionPolicy(RedactionMode.Irreversible, [PiiCategory.Hosts, PiiCategory.Emails, PiiCategory.Addresses, PiiCategory.Sids, PiiCategory.Serials]).Apply(masker).Mask(ev);
+        Assert.DoesNotContain("contoso.com", m.User);
+        Assert.DoesNotContain("contoso.com", m.Fields["TargetUserName"]);
+        Assert.DoesNotContain("CONTOSO", m.Summary);
+    }
+
+    [Fact]
+    public void A_read_only_case_takes_no_record_a_missing_output_is_refused_and_reveal_takes_only_a_pseudonym()
+    {
+        var ws = Case();
+        var masker = RedactionPolicy.Default.Apply(PiiMasker.FromTimeline(Timeline()));
+        Assert.Throws<InvalidOperationException>(() => Redactions.Record(ws, RedactionPolicy.Default, masker, "k", Path.Combine(_dir, "nu-exista.csv"), "t"));
+        var outFile = Path.Combine(_dir, "o.csv"); File.WriteAllText(outFile, "x");
+        var rec = Redactions.Record(ws, RedactionPolicy.Default, masker, "k", outFile, "t");
+        var (_, msg) = Redactions.Reveal(ws, rec.Id, "ion.popescu", "motiv", "t");
+        Assert.Contains("pseudonim din export", msg);
+        Assert.DoesNotContain("ion.popescu", File.ReadAllText(ws.AuditChainPath));
+        ws.MarkReadOnly("sigilat");
+        Assert.Throws<InvalidOperationException>(() => Redactions.Record(ws, RedactionPolicy.Default, masker, "k", outFile, "t"));
     }
 
     [Fact]

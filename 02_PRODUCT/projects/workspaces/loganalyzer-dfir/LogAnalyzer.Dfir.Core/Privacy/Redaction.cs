@@ -49,6 +49,13 @@ public static class Redactions
     public const string RelDir = "Reports/Redactions";
     public const string Version = "1.0";
     private static readonly Regex IdRx = new(@"^RED-\d{8}-\d{6}(?:-\d{1,3})?$", RegexOptions.CultureInvariant);
+    private static readonly Regex PseudonymRx = new(@"^(?:Utilizator|Statie|IP|SID|email|Serial|Domeniu|MAC)-\d{1,7}(?:@mascat\.invalid)?$", RegexOptions.CultureInvariant);
+    /// <summary>Free text for one audit field: no control characters, no quotes, bounded, so it cannot forge another field or line.</summary>
+    private static string Clean(string s)
+    {
+        var x = new string((s ?? "").Trim().Select(c => char.IsControl(c) || c == '"' ? ' ' : c).ToArray());
+        return x.Length > 300 ? x[..300] : x;
+    }
     private static byte[] Entropy(string id) => Encoding.UTF8.GetBytes("LogAnalyzer.Redaction.v1:" + id);
 
     /// <summary>The first rows whose text the policy changes, side by side: the operator sees what will leave before anything is written.</summary>
@@ -89,6 +96,8 @@ public static class Redactions
     /// </summary>
     public static RedactionRecord Record(CaseWorkspace ws, RedactionPolicy policy, PiiMasker masker, string kind, string outputPath, string operatorName)
     {
+        if (ws.IsReadOnly) throw new InvalidOperationException("Cazul este doar pentru citire (sigilat sau închis): înregistrarea redactării nu se scrie în el.");
+        if (!File.Exists(outputPath)) throw new InvalidOperationException("Fișierul exportat nu există; nu există ce înregistra.");
         if (policy.Mode == RedactionMode.Reversible && !OperatingSystem.IsWindows())
             throw new PlatformNotSupportedException("Pseudonimizarea reversibilă păstrează tabela criptată pentru contul Windows; pe acest sistem alegeți mascarea ireversibilă.");
         var dir = Path.Combine(ws.Root, "Reports", "Redactions");
@@ -108,7 +117,7 @@ public static class Redactions
             WriteOnce(Path.Combine(dir, mapFile), blob);
             mapSha = Convert.ToHexString(SHA256.HashData(blob));
         }
-        var outSha = File.Exists(outputPath) ? Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(outputPath))) : "";
+        var outSha = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(outputPath)));
         var rec = new RedactionRecord(id, stamp.ToString("o"), operatorName, policy.Mode, RedactionPolicy.All.Where(policy.Masked.Contains).ToList(), kind,
             Path.GetFileName(outputPath), outSha, masker.Counts.ToDictionary(kv => kv.Key, kv => kv.Value), CaseState(ws), mapFile, mapSha, Version);
         var bytes = JsonSerializer.SerializeToUtf8Bytes(rec, LogAnalyzer.Dfir.IO.Json.Options);
@@ -151,10 +160,14 @@ public static class Redactions
     {
         if (!IdRx.IsMatch(id ?? "")) return (null, "Identificatorul înregistrării nu este valid.");
         if (string.IsNullOrWhiteSpace(reason)) return (null, "Dezvăluirea cere un motiv; motivul se scrie în auditul cazului.");
+        // only a pseudonym is accepted (an original typed here would otherwise land in the audit)
+        if (!PseudonymRx.IsMatch(pseudonym.Trim())) return (null, "Scrieți un pseudonim din export (de exemplu Utilizator-3, IP-2, email-1@mascat.invalid).");
         var rec = List(ws).FirstOrDefault(r => r.Id == id);
         if (rec is null) return (null, $"Înregistrarea {id} nu există în caz.");
         if (rec.Mode != RedactionMode.Reversible || rec.MappingFile.Length == 0) return (null, $"Exportul {id} a fost mascat ireversibil: nu există o tabelă din care să se refacă valoarea.");
         if (!OperatingSystem.IsWindows()) return (null, "Tabela se poate deschide doar pe Windows, de contul care a făcut exportul.");
+        // the table's name is fixed by the record id: a record edited to point elsewhere is not followed
+        if (rec.MappingFile != rec.Id + ".map.dpapi") return (null, "Înregistrarea indică o altă tabelă decât a ei; nu se folosește.");
         var path = Path.Combine(ws.Root, "Reports", "Redactions", rec.MappingFile);
         if (!File.Exists(path)) return (null, "Tabela pseudonimelor lipsește din caz.");
         var blob = File.ReadAllBytes(path);
@@ -167,7 +180,7 @@ public static class Redactions
         {
             var entries = JsonSerializer.Deserialize<List<PiiEntry>>(plain, LogAnalyzer.Dfir.IO.Json.Options) ?? [];
             var hit = entries.FirstOrDefault(e => string.Equals(e.Pseudonym, pseudonym.Trim(), StringComparison.OrdinalIgnoreCase));
-            ws.Audit("redaction.revealed", $"{rec.Id} pseudonim={pseudonym.Trim()} gasit={(hit is null ? "nu" : "da")} operator={operatorName} motiv={reason.Trim()}");
+            ws.Audit("redaction.revealed", $"{rec.Id} pseudonim={pseudonym.Trim()} gasit={(hit is null ? "nu" : "da")} operator=\"{Clean(operatorName)}\" motiv=\"{Clean(reason)}\"");
             return hit is null ? (null, $"Pseudonimul „{pseudonym.Trim()}” nu apare în exportul {rec.Id}.") : (hit.Original, $"{hit.Pseudonym} = {hit.Original} (dezvăluire trecută în audit).");
         }
         finally { CryptographicOperations.ZeroMemory(plain); }
