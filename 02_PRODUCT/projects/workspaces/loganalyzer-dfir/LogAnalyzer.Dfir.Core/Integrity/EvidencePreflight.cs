@@ -29,6 +29,7 @@ public static class EvidenceFingerprint
         if (IsSetupApiLog(path)) return "setupapi_dev";
         if (IsCustomDestinations(path, n, h)) return "custom_destinations";
         if (IsFirewallLog(path)) return "pfirewall";
+        if (IsZeekTsv(path)) return LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint;
         if (IsRecycleInfo(path)) return "recycle_info";
         var t = h.TrimStart(" \t\r\n﻿"u8);
         if (t.Length > 0 && (t[0] == (byte)'{' || t[0] == (byte)'[') || StartsWith(h, 0, [0xEF, 0xBB, 0xBF, (byte)'{'])) return "json";
@@ -106,6 +107,16 @@ public static class EvidenceFingerprint
         return LogAnalyzer.Dfir.Network.FirewallLogParser.LooksLikeFirewallLog(System.Text.Encoding.UTF8.GetString(buf, 0, n));
     }
 
+    /// <summary>Zeek TSV log: the first line is "#separator".</summary>
+    private static bool IsZeekTsv(string path)
+    {
+        var buf = new byte[64];
+        int n;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        return LogAnalyzer.Dfir.Network.ZeekLogParser.LooksLikeZeekTsv(System.Text.Encoding.UTF8.GetString(buf, 0, n));
+    }
+
     /// <summary>Formats an evidence item may legitimately have, from its declared type or name; null when not checked.</summary>
     public static IReadOnlyCollection<string>? Expected(EvidenceItem item)
     {
@@ -119,6 +130,7 @@ public static class EvidenceFingerprint
         if (t is "live_snapshot" or "airgap_facts") return ["json"];
         if (t == "task_xml") return ["task_xml"];
         if (t == LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName) return ["pfirewall"];
+        if (t == LogAnalyzer.Dfir.Network.ZeekLogParser.SourceTypeName) return [LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint, "json"];
         if (t == "usn_journal") return ["usn_fsutil"];
         if (t == LogAnalyzer.Dfir.FileSystem.RecycleBinInfoParser.SourceTypeName) return ["recycle_info"];
         if (t is "chromium_history" or "firefox_places") return ["sqlite"];
