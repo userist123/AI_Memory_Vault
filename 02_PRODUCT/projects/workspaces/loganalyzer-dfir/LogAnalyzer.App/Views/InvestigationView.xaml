@@ -603,42 +603,46 @@
                         <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}"/></DataTemplate></ItemsControl.ItemTemplate>
                     </ItemsControl>
                     <CheckBox DockPanel.Dock="Top" Content="Doar conturile privilegiate" IsChecked="{Binding IdentityPrivilegedOnly}" Margin="0,0,0,4" Foreground="{StaticResource TextPrimaryBrush}"/>
-                    <DataGrid DockPanel.Dock="Top" ItemsSource="{Binding IdentityRows}" SelectedItem="{Binding SelectedIdentity}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single"
-                              MaxHeight="170" Margin="0,0,0,6" AutomationProperties.Name="Identitățile din caz">
-                        <DataGrid.RowStyle>
-                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}"><Setter Property="AutomationProperties.Name" Value="{Binding DisplayName}"/></Style>
-                        </DataGrid.RowStyle>
-                        <DataGrid.Columns>
-                            <DataGridTextColumn Header="Cont" Binding="{Binding DisplayName}" Width="2*"/>
-                            <DataGridTextColumn Header="Nume în timp" Binding="{Binding NameHistory}" Width="2*"/>
-                            <DataGridTextColumn Header="SID" Binding="{Binding Sid}" Width="3*"/>
-                            <DataGridCheckBoxColumn Header="Privilegiat" Binding="{Binding Privileged}" Width="75"/>
-                            <DataGridTextColumn Header="Reușite" Binding="{Binding Logons}" Width="60"/>
-                            <DataGridTextColumn Header="Eșuate" Binding="{Binding FailedLogons}" Width="60"/>
-                        </DataGrid.Columns>
-                    </DataGrid>
                     <Expander DockPanel.Dock="Bottom" Header="Modificări de director și de politici de grup (GPO)" Margin="0,6,0,0" AutomationProperties.Name="Modificări de director și de politici de grup (GPO)">
                         <ListBox ItemsSource="{Binding IdentityDirectory}" MaxHeight="140" AutomationProperties.Name="Lista modificărilor de director" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ListBox.ItemTemplate>
                         </ListBox>
                     </Expander>
-                    <Expander DockPanel.Dock="Top" Header="Calea contului: stație → sesiune → proces → resursă" IsExpanded="True" Margin="0,0,0,6" AutomationProperties.Name="Calea contului ales: stație, sesiune, proces, resursă">
-                        <DockPanel>
-                            <TextBlock DockPanel.Dock="Top" Text="{Binding IdentityPathLine}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,4" AutomationProperties.Name="Cum se fac legăturile căii"/>
-                            <TreeView ItemsSource="{Binding IdentityPathRoots}" MaxHeight="230" AutomationProperties.Name="Arborele căii contului">
-                                <TreeView.ItemTemplate>
-                                    <HierarchicalDataTemplate ItemsSource="{Binding Children}">
-                                        <TextBlock Foreground="{StaticResource TextPrimaryBrush}" ToolTip="{Binding Reason}" AutomationProperties.Name="{Binding Text}">
-                                            <Run Text="{Binding Text, Mode=OneWay}"/><Run Text="{Binding Suffix, Mode=OneWay}" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                        </TextBlock>
-                                    </HierarchicalDataTemplate>
-                                </TreeView.ItemTemplate>
-                            </TreeView>
+                    <Grid>
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="3*"/><ColumnDefinition Width="2*"/></Grid.ColumnDefinitions>
+                        <DockPanel Grid.Column="0" Margin="0,0,8,0">
+                            <DataGrid DockPanel.Dock="Top" ItemsSource="{Binding IdentityRows}" SelectedItem="{Binding SelectedIdentity}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single"
+                                  MaxHeight="170" Margin="0,0,0,6" AutomationProperties.Name="Identitățile din caz">
+                            <DataGrid.RowStyle>
+                                <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}"><Setter Property="AutomationProperties.Name" Value="{Binding DisplayName}"/></Style>
+                            </DataGrid.RowStyle>
+                            <DataGrid.Columns>
+                                <DataGridTextColumn Header="Cont" Binding="{Binding DisplayName}" Width="2*"/>
+                                <DataGridTextColumn Header="Nume în timp" Binding="{Binding NameHistory}" Width="2*"/>
+                                <DataGridTextColumn Header="SID" Binding="{Binding Sid}" Width="3*"/>
+                                <DataGridCheckBoxColumn Header="Privilegiat" Binding="{Binding Privileged}" Width="75"/>
+                                <DataGridTextColumn Header="Reușite" Binding="{Binding Logons}" Width="60"/>
+                                <DataGridTextColumn Header="Eșuate" Binding="{Binding FailedLogons}" Width="60"/>
+                            </DataGrid.Columns>
+                        </DataGrid>
+                        <ListBox ItemsSource="{Binding IdentityDetail}" AutomationProperties.Name="Fișa identității alese: nume, sesiuni și activitate" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ListBox.ItemTemplate>
+                        </ListBox>
                         </DockPanel>
-                    </Expander>
-                    <ListBox ItemsSource="{Binding IdentityDetail}" AutomationProperties.Name="Fișa identității alese: nume, sesiuni și activitate" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
-                        <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ListBox.ItemTemplate>
-                    </ListBox>
+                        <DockPanel Grid.Column="1" AutomationProperties.Name="Calea contului ales: stație, sesiune, proces, resursă">
+                            <TextBlock DockPanel.Dock="Top" Text="Calea contului: stație → sesiune → proces → resursă" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock DockPanel.Dock="Top" Text="{Binding IdentityPathLine}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,4" AutomationProperties.Name="Cum se fac legăturile căii"/>
+                            <TreeView ItemsSource="{Binding IdentityPathRoots}" FontFamily="{StaticResource UiFontFamily}" FontSize="{StaticResource FontSizeDense}" AutomationProperties.Name="Arborele căii contului">
+                            <TreeView.ItemTemplate>
+                                <HierarchicalDataTemplate ItemsSource="{Binding Children}">
+                                    <TextBlock Foreground="{StaticResource TextPrimaryBrush}" ToolTip="{Binding Reason}" AutomationProperties.Name="{Binding Text}">
+                                        <Run Text="{Binding Text, Mode=OneWay}"/><Run Text="{Binding Suffix, Mode=OneWay}" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                    </TextBlock>
+                                </HierarchicalDataTemplate>
+                            </TreeView.ItemTemplate>
+                        </TreeView>
+                        </DockPanel>
+                    </Grid>
                 </DockPanel>
             </TabItem>
             <!-- Master plan 6.16: immutable analysis runs (Analysis/Runs) and the difference between two of them, with the likely source of each change. -->

@@ -410,3 +410,11 @@
 - 2026-11-08 (continued, owner „Continua”): 6.5 beaconing/scan/endpoint-link heuristics (`Network/NetworkHeuristics.cs`, Analysis/network_links.json) and
   6.8 Sigma correlation rules (`Detection/SigmaCorrelation.cs`), Opus review 2 rounds (1 HIGH + 5 MEDIUM, all fixed), lab: correlation on the real DC01 log
   (3 hits, Arhipelag + Continent), beacon/scan on Insula. Lab-found: false RuleLab field note (logsource keys), „cineva … a deschis” texts; fixed. Suites: Dfir 2904.
+- 2026-11-08 (owner „Continua”, round 3): CI green on ab332a6ac (read once). 6.10 account path: `Dfir.Core/Identity/IdentityGraph.cs` ->
+  Analysis/identity_graph.json, tab „Identități” two-column layout with the path tree, PDF section „Conturi, sesiuni și căi”
+  (ReportSection.Identities: ItSecurity/IR/Audit/Everything). Links only host+LogonId in the session window and ProcessGuid; gaps counted.
+  Opus review 2 rounds (r1: 2 HIGH PID reuse / silent drops + 3 MEDIUM; r2: 3 MEDIUM capped PID, Sysmon+4688 exit, reboot bound) all fixed,
+  IdentityGraphTests 13. Real DC01/SRV01 logs: 133 processes linked, 292 system. Lab: identical on Insula, Arhipelag, Continent.
+  Note: C: had 0.17 GB free (scratchpad art* folders); cleaned to 4 GB.
+- Next optional: 6.6 controlled Volatility run (admin-pinned vol.exe SHA-256, plugin allowlist, --offline, symbol dir verified by a pinned
+  manifest hash; outputs imported as derived evidence) — security-sensitive: threat model + Opus review first.

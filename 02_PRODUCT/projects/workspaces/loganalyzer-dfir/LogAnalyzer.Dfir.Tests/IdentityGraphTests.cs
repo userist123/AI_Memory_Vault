@@ -222,4 +222,59 @@ public sealed class IdentityGraphTests
         Assert.Equal("CN={31B2F340},CN=Policies,CN=System (domeniu omis)",
             LogAnalyzer.Dfir.Windows.Investigation.InvestigationReportText.WithoutDomain("CN={31B2F340},CN=Policies,CN=System,DC=lab,DC=local"));
     }
+
+    // ---- independent review, round 2 (2026-11-08) ----
+
+    [Fact]
+    public void A_process_recorded_by_sysmon_and_4688_is_closed_by_its_4689_in_both_records()
+    {
+        var tl = new List<TimelineEvent>
+        {
+            Logon(0, "WS01", "0x1a2b"),
+            Sec(1, "4688", "WS01", ("TargetLogonId", "0x1a2b"), ("NewProcessName", @"C:\cmd.exe"), ("NewProcessId", "0x1f4")),
+            Sys(1, "1", "WS01", ("LogonId", "0x1a2b"), ("Image", @"C:\cmd.exe"), ("ProcessId", "500"), ("ProcessGuid", "{c}")),
+            Sec(3, "4689", "WS01", ("SubjectLogonId", "0x1a2b"), ("ProcessId", "0x1f4")),
+            Sec(4, "4663", "WS01", ("SubjectLogonId", "0x1a2b"), ("ProcessId", "0x1f4"), ("ObjectName", @"C:\after_exit.docx")),
+        };
+        var session = Assert.Single(Assert.Single(Build(tl).Paths[Sid]).Children);
+        Assert.All(session.Children.Where(c => c.Kind == "process"), p => Assert.Empty(p.Children));
+        Assert.Contains(session.Children, c => c.Kind == "resource" && c.Text.Contains("after_exit.docx"));
+    }
+
+    [Fact]
+    public void An_access_by_a_capped_process_reusing_a_pid_is_counted_as_capped_not_given_to_the_older_process()
+    {
+        var tl = new List<TimelineEvent> { Logon(0, "WS01", "0x1a2b") };
+        tl.Add(Sec(1, "4688", "WS01", ("TargetLogonId", "0x1a2b"), ("NewProcessName", @"C:\old.exe"), ("NewProcessId", "0x1f4")));
+        for (int i = 1; i < IdentityGraph.MaxProcessesPerSession; i++)
+            tl.Add(Sec(2, "4688", "WS01", ("TargetLogonId", "0x1a2b"), ("NewProcessName", $@"C:\p{i}.exe"), ("NewProcessId", $"0x{0x1000 + i:x}")));
+        tl.Add(Sec(5, "4688", "WS01", ("TargetLogonId", "0x1a2b"), ("NewProcessName", @"C:\capped.exe"), ("NewProcessId", "0x1f4")));    // over the cap, same PID, no 4689
+        tl.Add(Sec(6, "4663", "WS01", ("SubjectLogonId", "0x1a2b"), ("ProcessId", "0x1f4"), ("ObjectName", @"C:\secret.docx")));
+        var g = Build(tl);
+        var old = Assert.Single(All(g.Paths[Sid]), n => n.Text.Contains("old.exe"));
+        Assert.Empty(old.Children);
+        Assert.DoesNotContain(All(g.Paths[Sid]), n => n.Text.Contains("secret.docx"));
+        Assert.Contains(g.Gaps, x => x.What.StartsWith("2 legături nu au fost afișate", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_session_without_logoff_ends_at_the_next_boot_and_a_timeless_session_takes_nothing()
+    {
+        var tl = new List<TimelineEvent>
+        {
+            Logon(0, "WS01", "0x60"),
+            Sec(30, "4608", "WS01"),
+            Sec(40, "4688", "WS01", ("TargetLogonId", "0x60"), ("NewProcessName", @"C:\after_reboot.exe"), ("NewProcessId", "0x5")),
+        };
+        var g = Build(tl);
+        Assert.Equal(0, g.ProcessesLinked);
+        Assert.Contains(g.Gaps, x => x.What.Contains("în afara oricărei sesiuni"));
+
+        var timeless = new TimelineEvent { Time = Timestamp.Unknown("x"), Source = "EventLog:Security", Provider = "Microsoft-Windows-Security-Auditing", EvidenceId = "EV-1", EventId = "4624", Host = "WS02", Summary = "4624", Locator = "EventRecordID=tl" };
+        foreach (var (k, v) in new[] { ("TargetUserSid", "S-1-5-21-1-2-3-2001"), ("TargetUserName", "bob"), ("TargetDomainName", "LAB"), ("TargetLogonId", "0x70") }) timeless.Fields[k] = v;
+        var tl2 = new List<TimelineEvent> { timeless, Sec(5, "4688", "WS02", ("TargetLogonId", "0x70"), ("NewProcessName", @"C:\x.exe"), ("NewProcessId", "0x6")) };
+        var g2 = Build(tl2);
+        Assert.Equal(0, g2.ProcessesLinked);
+        Assert.Contains(g2.Gaps, x => x.What.Contains("nici oră de început"));
+    }
 }

@@ -88,6 +88,8 @@ public static class IdentityGraph
         /// <summary>The start used to bound the window when the log has no logon: the station's latest boot before the session ended, if the case has one.</summary>
         public DateTimeOffset? BoundStart;
         public DateTimeOffset? End;
+        /// <summary>For a session with no logoff: the station's first boot after it began (a logon id does not survive a restart).</summary>
+        public DateTimeOffset? BoundEnd;
         public required IdentityPathNode Node;
         public int Processes;
         public readonly Dictionary<string, IdentityPathNode> Resources = new(StringComparer.OrdinalIgnoreCase);
@@ -99,6 +101,8 @@ public static class IdentityGraph
         public required SessionSlot Session;
         public DateTimeOffset Created;
         public DateTimeOffset? Exited;
+        /// <summary>A process left out by the per-session cap: it still owns its PID, so an access with that PID is counted as capped, not given to an older process.</summary>
+        public bool Capped;
         public readonly Dictionary<string, IdentityPathNode> Resources = new(StringComparer.OrdinalIgnoreCase);
     }
 
@@ -116,7 +120,10 @@ public static class IdentityGraph
         var seen = new HashSet<string>(StringComparer.Ordinal);   // a log imported twice gives each process and access once (same key as identity.json)
         var unique = timeline.Where(e => seen.Add(IdentityReconstruction.DedupKey(e))).ToList();
         var ordered = unique.Where(e => e.Time.Utc is not null).OrderBy(e => e.Time.Utc).ToList();
-        int noTime = unique.Count(e => e.Time.Utc is null && (IsProcessEvent(e) || IsResourceEvent(e)));
+        int noTime = unique.Count(e => e.Time.Utc is null && (IsProcessEvent(e) || (IsResourceEvent(e) && !IsSysmon(e))));
+        var timelessSysmon = unique.Where(e => e.Time.Utc is null && IsResourceEvent(e) && IsSysmon(e)).ToList();   // they join by ProcessGuid, no time needed
+        var hostsWithExits = new HashSet<string>(ordered.Where(e => e.EventId == "4689" && IsSecurity(e)).Select(e => HostKey(e.Host)), StringComparer.Ordinal);
+        int timelessSessions = 0;
         var boots = ordered.Where(IsBoot).GroupBy(e => HostKey(e.Host)).ToDictionary(g => g.Key, g => g.Select(e => e.Time.Utc!.Value).ToList(), StringComparer.Ordinal);
 
         var hostsOf = new Dictionary<string, Dictionary<string, IdentityPathNode>>(StringComparer.Ordinal);   // identity → host → node
@@ -138,6 +145,7 @@ public static class IdentityGraph
                 Reason = $"autentificarea {s.Locator} pe {s.Host}",
             };
             hostNode.Children.Add(node);
+            if (ParseUtc(s.StartUtc) is null && ParseUtc(s.EndUtc) is null) { timelessSessions++; node.Reason += "; fără oră: nu i se leagă procese"; continue; }
             var key = s.Host + "|" + lid;
             (byKey.TryGetValue(key, out var list) ? list : byKey[key] = []).Add(new SessionSlot { S = s, Start = ParseUtc(s.StartUtc), End = ParseUtc(s.EndUtc), Node = node });
             (hostsOfLogon.TryGetValue(lid, out var hl) ? hl : hostsOfLogon[lid] = new(StringComparer.Ordinal)).Add(FirstLabel(s.Host));
@@ -147,9 +155,14 @@ public static class IdentityGraph
             l.Sort((a, b) => Nullable.Compare(a.Start ?? a.End, b.Start ?? b.End));
             // a session whose logon is not in the log reaches back only to the station's latest boot before it ended (a logon id does not survive a restart)
             var host = key[..key.IndexOf('|')];
+            if (!boots.TryGetValue(host, out var bs)) continue;
             foreach (var sl in l.Where(x => x.Start is null))
-                if (boots.TryGetValue(host, out var bs) && bs.Where(b => sl.End is not { } en || b <= en).Select(b => (DateTimeOffset?)b).Max() is { } boot)
+                if (bs.Where(b => sl.End is not { } en || b <= en).Select(b => (DateTimeOffset?)b).Max() is { } boot)
                     sl.BoundStart = boot;
+            // and a session without logoff ends at the first boot after it began
+            foreach (var sl in l.Where(x => x.End is null && (x.Start ?? x.BoundStart) is not null))
+                if (bs.Where(b => b > (sl.Start ?? sl.BoundStart)!.Value).Select(b => (DateTimeOffset?)b).Min() is { } next)
+                    sl.BoundEnd = next;
         }
 
         int noSession = 0, hostSpelling = 0, outsideWindow = 0, noProcess = 0, machine = 0, capped = 0, noLogon = 0, noGuid = 0;
@@ -174,7 +187,8 @@ public static class IdentityGraph
                 var sl = slots[i];
                 var start = sl.Start ?? sl.BoundStart;
                 if (start is { } st && t < st) continue;
-                var end = sl.End ?? (i + 1 < slots.Count ? slots[i + 1].Start ?? slots[i + 1].BoundStart : null);
+                var nextStart = i + 1 < slots.Count ? slots[i + 1].Start ?? slots[i + 1].BoundStart : null;
+                var end = sl.End ?? (nextStart is { } ns && sl.BoundEnd is { } be ? (ns < be ? ns : be) : nextStart ?? sl.BoundEnd);
                 if (end is { } en && t > en) break;
                 why = $"aceeași stație {HostKey(e.Host)} și același LogonId {lid}" + (sl.Start is not null ? ", în intervalul sesiunii"
                     : sl.BoundStart is { } b ? $" (începutul sesiunii nu este în jurnal; după pornirea stației din {b:yyyy-MM-ddTHH:mm:ssZ})"
@@ -206,9 +220,9 @@ public static class IdentityGraph
             if (e.EventId == "4689" && IsSecurity(e))
             {
                 // the end of a process closes its PID: a later access with the same PID belongs to another process
-                if (byPid.TryGetValue(PidKey(e, F(e, "SubjectLogonId"), NormPid(F(e, "ProcessId"))), out var ended)
-                    && ended.LastOrDefault(x => x.Created <= e.Time.Utc && x.Exited is null) is { } done)
-                    done.Exited = e.Time.Utc;
+                // (Sysmon 1 and 4688 may both record the same process: every open record of the PID is closed)
+                if (byPid.TryGetValue(PidKey(e, F(e, "SubjectLogonId"), NormPid(F(e, "ProcessId"))), out var ended))
+                    foreach (var done in ended.Where(x => x.Created <= e.Time.Utc && x.Exited is null)) done.Exited = e.Time.Utc;
                 continue;
             }
             if (!IsProcessEvent(e)) continue;
@@ -221,6 +235,9 @@ public static class IdentityGraph
             {
                 sl.Node.ChildrenTruncated = true; capped++;
                 if (sys1 && F(e, "ProcessGuid") is { Length: > 0 } cg) cappedGuids.Add(cg);
+                if (NormPid(sys1 ? F(e, "ProcessId") : F(e, "NewProcessId")) is { Length: > 0 } cpid)
+                    (byPid.TryGetValue(PidKey(e, rawLogon, cpid), out var cl) ? cl : byPid[PidKey(e, rawLogon, cpid)] = [])
+                        .Add(new ProcessSlot { Node = sl.Node, Session = sl, Created = e.Time.Utc!.Value, Capped = true });
                 continue;
             }
             var image = sys1 ? F(e, "Image") : F(e, "NewProcessName");
@@ -240,7 +257,7 @@ public static class IdentityGraph
             if (pid.Length > 0) (byPid.TryGetValue(PidKey(e, rawLogon, pid), out var pl) ? pl : byPid[PidKey(e, rawLogon, pid)] = []).Add(slot);
         }
 
-        foreach (var e in ordered)
+        foreach (var e in ordered.Concat(timelessSysmon))
         {
             if (!IsResourceEvent(e)) continue;
             if (IsSysmon(e))
@@ -271,14 +288,16 @@ public static class IdentityGraph
                 if (obj.Length == 0) continue;
                 var pid = NormPid(F(e, "ProcessId"));
                 var t = e.Time.Utc!.Value;
+                bool exitsAudited = hostsWithExits.Contains(HostKey(e.Host));
                 // the process that held this PID at the time of the access, in the same session; none → the access stays under the session
                 var parent = pid.Length > 0 && byPid.TryGetValue(PidKey(e, F(e, "SubjectLogonId"), pid), out var candidates)
                     ? candidates.LastOrDefault(x => x.Session == sl && x.Created <= t && (x.Exited is not { } ex || t <= ex)) : null;
+                if (parent is { Capped: true }) { capped++; continue; }
                 var resources = parent?.Resources ?? sl.Resources;
                 var r = Resource(resources, parent?.Node ?? sl.Node, "obiect|" + obj, () => new IdentityPathNode
                 {
                     Kind = "resource", Text = $"Obiect accesat: {obj}" + (parent is null && F(e, "ProcessName") is { Length: > 0 } pn ? $" (de {pn})" : ""), Utc = e.Time.UtcIso, EvidenceId = e.EvidenceId, Locator = e.Locator,
-                    Reason = parent is not null ? $"{why}; același PID {pid}, al procesului pornit în sesiune înainte de acces și neîncheiat (4663)" : $"{why} (4663)",
+                    Reason = parent is not null ? $"{why}; același PID {pid}, al procesului pornit în sesiune înainte de acces{(exitsAudited ? " și neîncheiat la acel moment" : "; stația nu are încheieri de proces (4689) în jurnal, deci PID-ul poate fi al unui proces pornit fără eveniment")} (4663)" : $"{why} (4663)",
                 }, ref capped);
                 if (r.Kind == "resource" && r.Count == 1) report.ResourcesLinked++;
             }
@@ -314,6 +333,7 @@ public static class IdentityGraph
             "Pornirea procesului (Sysmon 1) lipsește, sau procesul aparține unui cont de sistem.");
         Gap(capped, $"{{n}} legături nu au fost afișate (limita de {MaxProcessesPerSession} procese pe sesiune și {MaxResourcesPerParent} resurse pe nod).",
             "Toate evenimentele rămân în cronologie.");
+        Gap(timelessSessions, "{n} sesiuni nu au nici oră de început, nici oră de sfârșit.", "Fără interval, nu li se leagă procese sau resurse.");
         Gap(machine, "{n} evenimente aparțin conturilor de sistem ale stației (SYSTEM, LOCAL SERVICE, NETWORK SERVICE).", "Nu sunt puse sub contul unei persoane.");
         return report;
     }
