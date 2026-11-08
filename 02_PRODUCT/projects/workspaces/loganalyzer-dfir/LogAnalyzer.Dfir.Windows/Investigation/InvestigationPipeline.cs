@@ -58,6 +58,8 @@ public sealed class InvestigationResult
     public List<ParseResult> Parsing { get; } = [];
     /// <summary>Master plan 6.7: the evidence files that are Windows executables, read statically (Analysis/pe_triage.json).</summary>
     public List<LogAnalyzer.Dfir.Detection.PeTriageRow> PeTriage { get; } = [];
+    /// <summary>Master plan 6.10: identities rebuilt from the Security events of this run (Analysis/identity.json); null on a case analysed before it existed.</summary>
+    public LogAnalyzer.Dfir.Identity.IdentityReport? Identity { get; set; }
     /// <summary>Master plan 6.16: the immutable record of this run and its difference from the previous run (null for the first run or an opened case).</summary>
     public AnalysisRunManifest? Run { get; set; }
     public RunDiff? RunDiff { get; set; }
@@ -652,6 +654,14 @@ public sealed class InvestigationPipeline
             LogAnalyzer.Dfir.Detection.PeTriageFile.Write(Path.Combine(analysisDir, "pe_triage.json"), r.PeTriage);
             ws.RecordOutput(LogAnalyzer.Dfir.Detection.PeTriageFile.RelPath, "PeTriage", "1", r.PeTriage.Select(p => p.EvidenceId));
         }
+        // Master plan 6.10: identities by SID across DCs, servers and workstations, written always so a reopened case (whose timeline.csv has no
+        // event fields) still has them.
+        progress?.Report("Identități și sesiuni");
+        r.Identity = LogAnalyzer.Dfir.Identity.IdentityReconstruction.Build(r.Timeline);
+        LogAnalyzer.Dfir.Identity.IdentityReport.Write(Path.Combine(analysisDir, "identity.json"), r.Identity);
+        ws.RecordOutput(LogAnalyzer.Dfir.Identity.IdentityReport.RelPath, "IdentityReconstruction", LogAnalyzer.Dfir.Identity.IdentityReconstruction.Version, evidenceIds);
+        ws.RecordTransformation("CASE", "IdentityReconstruction", LogAnalyzer.Dfir.Identity.IdentityReconstruction.Version, LogAnalyzer.Dfir.Identity.IdentityReport.RelPath,
+            $"{r.Identity.Identities.Count} identități, {r.Identity.Sessions.Count} sesiuni, {r.Identity.DirectoryChanges.Count} modificări de director, {r.Identity.DuplicatesDropped} duplicate eliminate");
         r.AntiForensics.AddRange(LogAnalyzer.Dfir.Analysis.AntiForensics.Evaluate(r.Timeline, r.Gaps, maintenance,
             found.Where(x => x.Severity >= Severity.High && x.RuleId != "LOG-TAMPER" && (x.FirstSeenUtc ?? x.LastSeenUtc) is not null).Select(x => (x.FirstSeenUtc ?? x.LastSeenUtc)!.Value).ToList()));
         File.WriteAllText(Path.Combine(analysisDir, "anti_forensics.json"), JsonSerializer.Serialize(r.AntiForensics, new JsonSerializerOptions { WriteIndented = true }));

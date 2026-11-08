@@ -1314,6 +1314,12 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/IDENTITY_AD.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
     }
   ]
 }

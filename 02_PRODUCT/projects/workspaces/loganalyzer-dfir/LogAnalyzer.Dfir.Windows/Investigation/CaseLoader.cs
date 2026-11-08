@@ -134,6 +134,8 @@ public static class CaseLoader
             result.FindingsJson = Path.Combine(analysis, "findings.json");
             try { result.PeTriage.AddRange(LogAnalyzer.Dfir.Detection.PeTriageFile.Read(Path.Combine(analysis, "pe_triage.json"))); }
             catch (Exception ex) when (ex is JsonException or InvalidDataException or IOException) { notes.Add("Analysis/pe_triage.json nu a putut fi citit: " + ex.Message); }
+            try { result.Identity = LogAnalyzer.Dfir.Identity.IdentityReport.Read(Path.Combine(analysis, "identity.json")); }
+            catch (Exception ex) when (ex is JsonException or InvalidDataException or IOException) { notes.Add("Analysis/identity.json nu a putut fi citit: " + ex.Message); }
         }
         result.Collection.AddRange(collection);
         if (rechecked is not null)

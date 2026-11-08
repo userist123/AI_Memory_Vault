@@ -595,6 +595,38 @@
                     </ListBox>
                 </DockPanel>
             </TabItem>
+            <!-- Master plan 6.10: identities keyed by SID, host-scoped sessions, directory and GPO changes, and what the logs cannot show. -->
+            <TabItem Header="Identități" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Identități: conturile după SID, sesiunile lor, modificările de director și lacunele">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding IdentityLine}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,4" AutomationProperties.Name="Starea identităților"/>
+                    <ItemsControl DockPanel.Dock="Top" ItemsSource="{Binding IdentityGaps}" Margin="0,0,0,4" AutomationProperties.Name="Lacunele reconstituirii identităților">
+                        <ItemsControl.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource WarningBrush}"/></DataTemplate></ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                    <CheckBox DockPanel.Dock="Top" Content="Doar conturile privilegiate" IsChecked="{Binding IdentityPrivilegedOnly}" Margin="0,0,0,4" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <DataGrid DockPanel.Dock="Top" ItemsSource="{Binding IdentityRows}" SelectedItem="{Binding SelectedIdentity}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single"
+                              MaxHeight="170" Margin="0,0,0,6" AutomationProperties.Name="Identitățile din caz">
+                        <DataGrid.RowStyle>
+                            <Style TargetType="DataGridRow" BasedOn="{StaticResource {x:Type DataGridRow}}"><Setter Property="AutomationProperties.Name" Value="{Binding DisplayName}"/></Style>
+                        </DataGrid.RowStyle>
+                        <DataGrid.Columns>
+                            <DataGridTextColumn Header="Cont" Binding="{Binding DisplayName}" Width="2*"/>
+                            <DataGridTextColumn Header="Nume în timp" Binding="{Binding NameHistory}" Width="2*"/>
+                            <DataGridTextColumn Header="SID" Binding="{Binding Sid}" Width="3*"/>
+                            <DataGridCheckBoxColumn Header="Privilegiat" Binding="{Binding Privileged}" Width="75"/>
+                            <DataGridTextColumn Header="Reușite" Binding="{Binding Logons}" Width="60"/>
+                            <DataGridTextColumn Header="Eșuate" Binding="{Binding FailedLogons}" Width="60"/>
+                        </DataGrid.Columns>
+                    </DataGrid>
+                    <Expander DockPanel.Dock="Bottom" Header="Modificări de director și de politici de grup (GPO)" Margin="0,6,0,0" AutomationProperties.Name="Modificări de director și GPO">
+                        <ListBox ItemsSource="{Binding IdentityDirectory}" MaxHeight="140" AutomationProperties.Name="Lista modificărilor de director" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                            <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ListBox.ItemTemplate>
+                        </ListBox>
+                    </Expander>
+                    <ListBox ItemsSource="{Binding IdentityDetail}" AutomationProperties.Name="Fișa identității alese: nume, sesiuni și activitate" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </TabItem>
             <!-- Master plan 6.16: immutable analysis runs (Analysis/Runs) and the difference between two of them, with the likely source of each change. -->
             <TabItem Header="Rulări și diferențe" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Rulări și diferențe: analizele înregistrate și ce s-a schimbat între ele">
                 <DockPanel Margin="8">
