@@ -113,7 +113,10 @@ public static class IdentityReconstruction
     /// The same record of the same host imported twice (two exports of one DC log) is one event. The time is part of the key: record ids restart
     /// after a log is cleared, so an archive from before the clear and the live log are different events with the same id.
     /// </summary>
-    private static string DedupKey(TimelineEvent e)
+    /// <summary>A logon id in one spelling ("0x0050" and "0x50" pair a logon with its logoff); a value that is not a number is kept as written.</summary>
+    private static string LogonKey(string lid) => IdentityGraph.NormLogon(lid) is { Length: > 0 } n ? n : lid.Trim().ToLowerInvariant();
+
+    internal static string DedupKey(TimelineEvent e)
     {
         if (e.Locator.StartsWith("EventRecordID=", StringComparison.Ordinal)) return $"{HostKey(e.Host)}|{e.EventId}|{e.Locator}|{e.Time.Utc?.UtcTicks}";
         var fields = string.Join("\u001f", e.Fields.Where(kv => !kv.Key.StartsWith('_')).OrderBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase).Select(kv => kv.Key + "=" + kv.Value));
@@ -220,7 +223,7 @@ public static class IdentityReconstruction
                     r.Logons++;
                     var lid = F(e, "TargetLogonId");
                     if (lid.Length == 0) break;
-                    var key = host + "|" + lid.ToLowerInvariant();
+                    var key = host + "|" + LogonKey(lid);
                     if (open.TryGetValue(key, out var prev) && sessions[prev].EndUtc.Length == 0)
                         sessions[prev] = sessions[prev] with { Confidence = "scăzută", Note = "același LogonId a apărut din nou pe stație înainte de delogare (repornire sau jurnal incomplet)" };
                     if (sessions.Count >= MaxSessions) { report.SessionsTruncated = true; break; }
@@ -233,7 +236,7 @@ public static class IdentityReconstruction
                 {
                     var sid = F(e, "TargetUserSid");
                     if (!NotAccounts.Contains(sid)) Touch(Id(sid), e, $"{text} pe {host}");
-                    var key = host + "|" + F(e, "TargetLogonId").ToLowerInvariant();
+                    var key = host + "|" + LogonKey(F(e, "TargetLogonId"));
                     if (open.TryGetValue(key, out var i) && sessions[i].EndUtc.Length == 0)
                         sessions[i] = sessions[i] with { EndUtc = e.Time.UtcIso, Confidence = sessions[i].Note.StartsWith("același", StringComparison.Ordinal) ? "scăzută" : "ridicată", Note = sessions[i].Note.StartsWith("același", StringComparison.Ordinal) ? sessions[i].Note : "" };
                     else if (F(e, "TargetLogonId").Length > 0 && !open.ContainsKey(key) && sessions.Count < MaxSessions)
@@ -252,7 +255,7 @@ public static class IdentityReconstruction
                     AddName(r, F(e, "SubjectUserName"), F(e, "SubjectDomainName"), e.Time.UtcIso, "observat la privilegii");
                     Touch(r, e, $"{text} pe {host}");
                     if (!sid.Equals("S-1-5-18", StringComparison.OrdinalIgnoreCase)) Privilege(r, $"privilegii speciale la autentificare (4672) pe {host}");
-                    var key = host + "|" + F(e, "SubjectLogonId").ToLowerInvariant();
+                    var key = host + "|" + LogonKey(F(e, "SubjectLogonId"));
                     // only an open session takes the elevation; a closed one with the same reused LogonId is another logon
                     if (open.TryGetValue(key, out var i) && sessions[i].EndUtc.Length == 0 && string.Equals(sessions[i].Sid, NormSid(sid), StringComparison.OrdinalIgnoreCase))
                         sessions[i] = sessions[i] with { Elevated = true };

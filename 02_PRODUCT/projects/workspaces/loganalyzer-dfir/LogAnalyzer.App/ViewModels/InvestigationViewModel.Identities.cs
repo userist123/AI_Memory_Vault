@@ -12,6 +12,9 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<string> IdentityDetail { get; } = new();
         public ObservableCollection<string> IdentityGaps { get; } = new();
         public ObservableCollection<string> IdentityDirectory { get; } = new();
+        /// <summary>The selected account's path: host → session → process → resource (Analysis/identity_graph.json).</summary>
+        public ObservableCollection<IdentityPathNode> IdentityPathRoots { get; } = new();
+        [ObservableProperty] private string _identityPathLine = "";
         [ObservableProperty] private IdentityRecord? _selectedIdentity;
         [ObservableProperty] private string _identityLine = "Nicio identitate: cazul nu are evenimente de securitate Windows.";
         [ObservableProperty] private bool _identityPrivilegedOnly;
@@ -42,9 +45,19 @@ namespace LogAnalyzer.UI.ViewModels
 
         partial void OnSelectedIdentityChanged(IdentityRecord? value)
         {
-            IdentityDetail.Clear();
+            IdentityDetail.Clear(); IdentityPathRoots.Clear();
             var rep = _result?.Identity;
-            if (value is null || rep is null) return;
+            if (value is null || rep is null) { IdentityPathLine = ""; return; }
+            var graph = _result?.IdentityGraph;
+            if (graph is null) IdentityPathLine = "Calea contului nu a fost calculată pentru acest caz (analizat cu o versiune anterioară).";
+            else
+            {
+                foreach (var h in graph.Paths.GetValueOrDefault(value.Key) ?? []) IdentityPathRoots.Add(h);
+                IdentityPathLine = IdentityPathRoots.Count == 0
+                    ? "Nicio sesiune cu LogonId pentru acest cont: procesele și resursele nu pot fi legate de el."
+                    : "Legături doar prin aceeași stație și același LogonId (sesiune → proces) și prin ProcessGuid (proces → resursă); motivul este în dreptul fiecărui rând."
+                      + (graph.Gaps.Count > 0 ? " " + string.Join(" ", graph.Gaps.Select(g => "⚠ " + g.What)) : "");
+            }
             IdentityDetail.Add(value.KnownByNameOnly
                 ? $"{value.DisplayName}: văzut doar după nume, fără SID. Nu este legat de alt cont doar pentru că numele seamănă."
                 : $"{value.DisplayName} · SID {value.Sid}" + (value.SidHistory.Count > 0 ? $" · istoric SID: {string.Join(", ", value.SidHistory)}" : ""));

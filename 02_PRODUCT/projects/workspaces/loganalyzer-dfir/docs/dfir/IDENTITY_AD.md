@@ -24,6 +24,17 @@ Interfață: tab-ul „Identități” din „Investigație completă” (`Inves
   - Stație cu autentificări, dar fără nicio delogare.
   - Conturi văzute doar după nume.
 
+## Calea contului: stație → sesiune → proces → resursă
+
+Cod: `LogAnalyzer.Dfir.Core/Identity/IdentityGraph.cs`, ieșire `Analysis/identity_graph.json`. Interfață: fila „Identități”, arborele „Calea contului”. Raport: secțiunea „Conturi, sesiuni și căi” (publicurile IT/securitate, răspuns la incident, audit, criminalistică, complet). Teste: `IdentityGraphTests`.
+
+- **Sesiune → proces:** un proces (4688, Sysmon 1) intră într-o sesiune numai dacă are aceeași stație și același LogonId, iar ora lui este în intervalul sesiunii. O sesiune fără delogare durează până la următoarea sesiune cu același LogonId pe stație (repornire). La 4688 se folosește TargetLogonId (Windows 10 și mai nou), altfel SubjectLogonId.
+- **Proces → resursă:** Sysmon 3 (conexiune), 11 (fișier creat) și 22 (DNS) prin ProcessGuid; 4663 (obiect accesat) prin aceeași sesiune și același PID, altfel sub sesiune; 5140/5145 (partajări) sub sesiune. Aceeași resursă atinsă din nou se numără, nu se repetă.
+- **Fiecare rând își spune motivul** (cheile care s-au potrivit) și locatorul evenimentului.
+- **Ce nu se leagă se numără ca lacună:** LogonId fără autentificare pe aceeași stație, eveniment în afara oricărei sesiuni, ProcessGuid necunoscut, limitele de 300 de procese pe sesiune și 100 de resurse pe nod. Conturile de sistem (SYSTEM, LOCAL SERVICE, NETWORK SERVICE) nu sunt puse sub o persoană.
+- **Jurnal importat de două ori:** fiecare proces și acces se numără o dată (aceeași cheie ca la identități).
+- **Verificat pe jurnalele reale** ale DC01 și SRV01 (laborator, 2026-11-08): 133 de procese legate de sesiunile administratorilor (de exemplu powershell, auditpol, whoami), 292 de procese ale conturilor de sistem raportate separat, niciun proces cu LogonId fără sesiune. Jurnalele de laborator nu au Sysmon și nici audit de acces la obiecte, deci nu au resurse.
+
 ## Limite
 
 - Nu există o corecție automată a decalajului de ceas între stații; orele sunt cele din jurnale (UTC). Corelarea între stații se face pe SID și pe locator, nu pe potrivirea exactă a orei.

@@ -311,7 +311,15 @@ public static class InvestigationReportPdf
                 P(col, "O potrivire arată că elementul de probă îndeplinește criteriile regulii; nu dovedește singură intenția sau rezultatul unei activități.").FontSize(7).Italic().FontColor(Muted);
 
                 }
-                if (S(LogAnalyzer.Dfir.Reporting.ReportSection.AntiForensics))
+                if (S(LogAnalyzer.Dfir.Reporting.ReportSection.Identities))
+                {
+                Head("Conturi, sesiuni și căi (identități)");
+                foreach (var l in InvestigationReportText.IdentityLines(r.Identity, r.IdentityGraph, masked: masker is not null))
+                    P(col, l.Text).FontSize(l.Heading ? 8 : 7.5f).FontColor(l.Warn ? "#92400e" : "#1e293b");
+                P(col, "Un cont este cheia SID-ului lui, nu numele. Procesele și resursele sunt legate de un cont numai prin aceeași stație și același LogonId, în intervalul sesiunii; ce nu poate fi legat este numărat, nu ghicit. Detalii: Analysis/identity.json și Analysis/identity_graph.json.")
+                    .FontSize(7).Italic().FontColor(Muted);
+
+                }                if (S(LogAnalyzer.Dfir.Reporting.ReportSection.AntiForensics))
                 {
                 Head("Ascunderea sau ștergerea urmelor (anti-forensics)");
                 foreach (var a in r.AntiForensics.OrderBy(a => a.Result).ThenBy(a => a.Id))

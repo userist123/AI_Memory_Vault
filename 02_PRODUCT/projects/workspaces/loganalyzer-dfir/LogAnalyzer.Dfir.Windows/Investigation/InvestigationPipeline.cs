@@ -60,6 +60,7 @@ public sealed class InvestigationResult
     public List<LogAnalyzer.Dfir.Detection.PeTriageRow> PeTriage { get; } = [];
     /// <summary>Master plan 6.10: identities rebuilt from the Security events of this run (Analysis/identity.json); null on a case analysed before it existed.</summary>
     public LogAnalyzer.Dfir.Identity.IdentityReport? Identity { get; set; }
+    public LogAnalyzer.Dfir.Identity.IdentityGraphReport? IdentityGraph { get; set; }
     /// <summary>Master plan 6.16: the immutable record of this run and its difference from the previous run (null for the first run or an opened case).</summary>
     public AnalysisRunManifest? Run { get; set; }
     public RunDiff? RunDiff { get; set; }
@@ -674,6 +675,12 @@ public sealed class InvestigationPipeline
         ws.RecordOutput(LogAnalyzer.Dfir.Identity.IdentityReport.RelPath, "IdentityReconstruction", LogAnalyzer.Dfir.Identity.IdentityReconstruction.Version, evidenceIds);
         ws.RecordTransformation("CASE", "IdentityReconstruction", LogAnalyzer.Dfir.Identity.IdentityReconstruction.Version, LogAnalyzer.Dfir.Identity.IdentityReport.RelPath,
             $"{r.Identity.Identities.Count} identități, {r.Identity.Sessions.Count} sesiuni, {r.Identity.DirectoryChanges.Count} modificări de director, {r.Identity.DuplicatesDropped} duplicate eliminate");
+        // the account's path (account → session → host → process → resource), by exact host + logon id and ProcessGuid only
+        r.IdentityGraph = LogAnalyzer.Dfir.Identity.IdentityGraph.Build(r.Identity, r.Timeline);
+        LogAnalyzer.Dfir.Identity.IdentityGraphReport.Write(Path.Combine(analysisDir, "identity_graph.json"), r.IdentityGraph);
+        ws.RecordOutput(LogAnalyzer.Dfir.Identity.IdentityGraphReport.RelPath, "IdentityGraph", LogAnalyzer.Dfir.Identity.IdentityGraph.Version, evidenceIds);
+        ws.RecordTransformation("CASE", "IdentityGraph", LogAnalyzer.Dfir.Identity.IdentityGraph.Version, LogAnalyzer.Dfir.Identity.IdentityGraphReport.RelPath,
+            $"{r.IdentityGraph.ProcessesLinked} procese și {r.IdentityGraph.ResourcesLinked} resurse legate de sesiuni");
         r.AntiForensics.AddRange(LogAnalyzer.Dfir.Analysis.AntiForensics.Evaluate(r.Timeline, r.Gaps, maintenance,
             found.Where(x => x.Severity >= Severity.High && x.RuleId != "LOG-TAMPER" && (x.FirstSeenUtc ?? x.LastSeenUtc) is not null).Select(x => (x.FirstSeenUtc ?? x.LastSeenUtc)!.Value).ToList()));
         File.WriteAllText(Path.Combine(analysisDir, "anti_forensics.json"), JsonSerializer.Serialize(r.AntiForensics, new JsonSerializerOptions { WriteIndented = true }));

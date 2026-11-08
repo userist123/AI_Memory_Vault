@@ -179,6 +179,52 @@ public static class InvestigationReportText
         public int Count => _n;
     }
 
+    // ---- Identities (master plan 6.10) ----
+
+    public sealed record IdentityLine(string Text, bool Heading = false, bool Warn = false);
+    public const int MaxIdentityRows = 20;
+
+    /// <summary>
+    /// The identities section: the totals, every gap first (a missing DC log limits all that follows), the privileged accounts with their reason and
+    /// path (hosts, sessions, processes, resources) and the group policy changes. An old case without identity.json says so instead of printing nothing.
+    /// </summary>
+    public static IReadOnlyList<IdentityLine> IdentityLines(LogAnalyzer.Dfir.Identity.IdentityReport? rep, LogAnalyzer.Dfir.Identity.IdentityGraphReport? graph, bool masked = false)
+    {
+        var l = new List<IdentityLine>();
+        if (rep is null) { l.Add(new("Identitățile nu au fost reconstituite pentru acest caz (analizat cu o versiune anterioară); reanalizați cazul.", Warn: true)); return l; }
+        if (rep.Identities.Count == 0) { l.Add(new("Nicio identitate: cazul nu are evenimente de securitate Windows despre conturi.")); }
+        else
+            l.Add(new($"{RoText.Count(rep.Identities.Count, "identitate", "identități")}, dintre care {rep.Identities.Count(i => i.Privileged)} privilegiate; "
+                + $"{RoText.Count(rep.Sessions.Count, "sesiune", "sesiuni")}; {RoText.Count(rep.DirectoryChanges.Count, "modificare de director", "modificări de director")}"
+                + (rep.DomainControllers.Count > 0 ? $"; controlere de domeniu: {string.Join(", ", rep.DomainControllers)}." : "; fără jurnale de controler de domeniu.")));
+        foreach (var g in rep.Gaps) l.Add(new($"Lacună: {g.What} {g.Why}", Warn: true));
+        if (graph is not null) foreach (var g in graph.Gaps) l.Add(new($"Lacună în căi: {g.What} {g.Why}", Warn: true));
+
+        static int Count(IEnumerable<LogAnalyzer.Dfir.Identity.IdentityPathNode> nodes, string kind) =>
+            nodes.Sum(n => (n.Kind == kind ? 1 : 0) + Count(n.Children, kind));
+        var privileged = rep.Identities.Where(i => i.Privileged).OrderByDescending(i => i.Logons + i.FailedLogons).ThenBy(i => i.Key, StringComparer.Ordinal).ToList();
+        if (privileged.Count > 0) l.Add(new("Conturi privilegiate", Heading: true));
+        foreach (var i in privileged.Take(MaxIdentityRows))
+        {
+            var path = graph?.Paths.GetValueOrDefault(i.Key) ?? [];
+            l.Add(new($"{i.DisplayName}{(i.KnownByNameOnly ? " (doar după nume)" : $" · SID {i.Sid}")} · {i.PrivilegedReason} · {i.Logons} autentificări reușite, {i.FailedLogons} eșuate"
+                + (i.Hosts.Count > 0 ? $" · stații: {string.Join(", ", i.Hosts.Take(8))}{(i.Hosts.Count > 8 ? $" și încă {i.Hosts.Count - 8}" : "")}" : "")
+                + (graph is null ? "" : $" · cale: {RoText.Count(Count(path, "session"), "sesiune", "sesiuni")}, {RoText.Count(Count(path, "process"), "proces", "procese")}, {RoText.Count(Count(path, "resource"), "resursă", "resurse")}")
+                + (i.Names.Count > 1 ? $" · nume în timp: {i.NameHistory}" : "") + (i.SidHistory.Count > 0 ? $" · istoric SID: {string.Join(", ", i.SidHistory)}" : "")));
+        }
+        if (privileged.Count > MaxIdentityRows) l.Add(new($"… și încă {privileged.Count - MaxIdentityRows} conturi privilegiate, în Analysis/identity.json."));
+        var gpo = rep.DirectoryChanges.Where(c => c.IsGpo).OrderBy(c => c.Utc, StringComparer.Ordinal).ToList();
+        if (gpo.Count > 0) l.Add(new("Modificări ale politicilor de grup", Heading: true));
+        foreach (var c in gpo.Take(MaxIdentityRows))
+            l.Add(new($"{c.Utc} · {c.Dc} · {c.Operation} · {(masked ? WithoutDomain(c.ObjectDn) : c.ObjectDn)}{(c.Attribute.Length > 0 ? $" · {c.Attribute}" : "")} · de {(c.ActorName.Length > 0 ? c.ActorName : c.ActorSid)} · {c.EvidenceId} {c.Locator}"));
+        if (gpo.Count > MaxIdentityRows) l.Add(new($"… și încă {gpo.Count - MaxIdentityRows} modificări GPO, în Analysis/identity.json."));
+        return l;
+    }
+
+    /// <summary>A directory name without its DC= parts: the mask has no pattern for them, so a masked export leaves the domain out instead of printing it.</summary>
+    internal static string WithoutDomain(string dn) =>
+        string.Join(",", dn.Split(',').Where(p => !p.TrimStart().StartsWith("DC=", StringComparison.OrdinalIgnoreCase))) is { Length: > 0 } s ? s + " (domeniu omis)" : "(domeniu omis)";
+
     // ---- Legend of English codes ----
 
     public static IReadOnlyList<string> Legend()

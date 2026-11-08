@@ -136,6 +136,8 @@ public static class CaseLoader
             catch (Exception ex) when (ex is JsonException or InvalidDataException or IOException) { notes.Add("Analysis/pe_triage.json nu a putut fi citit: " + ex.Message); }
             try { result.Identity = LogAnalyzer.Dfir.Identity.IdentityReport.Read(Path.Combine(analysis, "identity.json")); }
             catch (Exception ex) when (ex is JsonException or InvalidDataException or IOException) { notes.Add("Analysis/identity.json nu a putut fi citit: " + ex.Message); }
+            try { result.IdentityGraph = LogAnalyzer.Dfir.Identity.IdentityGraphReport.Read(Path.Combine(analysis, "identity_graph.json")); }
+            catch (Exception ex) when (ex is JsonException or InvalidDataException or IOException) { notes.Add("Analysis/identity_graph.json nu a putut fi citit: " + ex.Message); }
         }
         result.Collection.AddRange(collection);
         if (rechecked is not null)
