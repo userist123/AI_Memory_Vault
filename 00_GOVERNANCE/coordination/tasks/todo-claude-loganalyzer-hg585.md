@@ -367,6 +367,12 @@
   + custody, Sigma correlation refused, missing-field note), tab „Laborator de reguli”. Lab Arhipelag: 0 -> found reopened-case CSV has no
   parser fields (note added), v2 1,322 new matches. No Opus review for 6.5/6.8 (low risk; main session decision). Lab UIA driver settext now
   unescapes \n (scratchpad uia\driver.ps1, pushed to WS01/WS02).
+- 2026-11-08T03:35 MASTER PLAN round 1 closed: 6.4 coverage-in-time (d3c1109d? see d3ec0c416), 6.11 contradicted findings in review (1486a5344),
+  6.6 Volatility 3 JSON parser (b2a76163e), CI flake fixed (Differential python probe, 07f81c709). 6.14 and 6.17 confirmed REAL by inspection.
+  Status table: docs/dfir/MASTER_PLAN_STATUS.md (Word copy D:\w\reports, outside the repo). Remaining PARTIAL: 6.10 AD, 6.15 redaction policy,
+  6.6 memory findings rules + memory/disk correlation, 6.5 Zeek, 6.8 station-wide signed rule packs. Accepted residuals listed in the status doc
+  (owner to confirm). Lab VMs shut down hourly (expired evaluation); owner cleanup list unchanged + new TEST cases on WS01 (executabile,
+  memorie) and C:\LA\{ti-test-pkg,pe-test,vol-test}.
 ## Next
 -1. MASTER PLAN order after 6.1 + 6.16 + 6.9 + 6.12 + 6.7 + 6.5 + 6.8 (remaining): bookmarks/saved views; 6.7 PE triage; 6.5 JA3; 6.8 rule test lab; 6.11 graph view; 6.4 coverage heatmap; 6.14 target-bound
    approval. Each: tests, Opus review for risky code, lab screenshots on the three editions.
