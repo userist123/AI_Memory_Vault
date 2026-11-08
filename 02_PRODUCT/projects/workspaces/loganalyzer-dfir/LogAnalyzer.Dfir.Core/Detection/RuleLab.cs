@@ -32,7 +32,7 @@ public sealed record RuleLabDiff(IReadOnlyList<RuleLabMatch> Added, IReadOnlyLis
 /// <summary>
 /// Master plan 6.8, the rule lab: a Sigma, YARA or IOC rule is loaded exactly as the detection engine loads it (same parser, same errors), run
 /// on the timeline and files of a case, compared with an earlier version of itself (matches added and lost) and, once it loads, added to the
-/// case's own Rules folder (audited, hashed into custody) so the next analysis of the case uses it. A rule is never changed or "fixed" here:
+/// case's own Rules folder (audited, hashed into custody) so the next analysis of the case uses it. A Sigma correlation (correlation:) is tested like a base rule, together with the base rules of the same text (multi-document, separated by ---; the lab has no other files). A rule is never changed or "fixed" here:
 /// what does not load is refused with the parser's reason.
 /// </summary>
 public static class RuleLab
@@ -56,7 +56,6 @@ public static class RuleLab
         var run = new RuleLabRun { CorpusEvents = timeline.Count, CorpusFiles = kind == RuleLabKind.Yara ? files.Count : 0 };
         if (file is null) { run.Errors.Add("numele regulii: litere, cifre, - și _, cel mult 64 de caractere"); return run; }
         if (string.IsNullOrWhiteSpace(ruleText)) { run.Errors.Add("regula este goală"); return run; }
-        if (kind == RuleLabKind.Sigma && SigmaCorrelation(ruleText)) { run.Errors.Add("regulile de corelare Sigma (correlation) nu sunt acceptate de motorul de reguli; secvențele se descriu în regulile de secvență"); return run; }
 
         var root = Path.Combine(Path.GetTempPath(), "LogAnalyzer-rulelab", Guid.NewGuid().ToString("N"));
         try
@@ -74,7 +73,7 @@ public static class RuleLab
             {
                 // lab 2026-11-08: a reopened case reads its timeline from timeline.csv, which keeps no parser fields, so a rule on TargetUserName
                 // matched nothing and only "0" was shown. Fields no corpus event carries are named.
-                var missing = SigmaFields(ruleText).Where(f => !timeline.Any(e => e.Fields.ContainsKey(f))).ToList();
+                var missing = SigmaFields(string.Join("\n", SigmaLite.SplitDocuments(ruleText).Where(d => !SigmaCorrelation(d)))).Where(f => !timeline.Any(e => e.Fields.ContainsKey(f))).ToList();
                 if (missing.Count > 0)
                     run.Notes.Add($"niciun eveniment al cazului nu are câmpurile {string.Join(", ", missing)}, deci regula nu le poate potrivi; un caz redeschis are cronologia din timeline.csv, fără câmpurile parserelor: reanalizați cazul (tab „Rulări și diferențe”) și testați din nou.");
             }
@@ -94,7 +93,7 @@ public static class RuleLab
             .Select(m => m.Groups[1].Value).Where(f => f is not ("condition" or "sel" or "selection" or "filter") && !ColumnFields.Contains(f) && !f.StartsWith("sel", StringComparison.OrdinalIgnoreCase) && !f.StartsWith("filter", StringComparison.OrdinalIgnoreCase))
             .Distinct(StringComparer.OrdinalIgnoreCase);
 
-    /// <summary>Sigma correlation rules carry a top-level "correlation:" key and no "detection:".</summary>
+    /// <summary>Sigma correlation documents carry a top-level "correlation:" key and no "detection:".</summary>
     private static bool SigmaCorrelation(string yaml) =>
         System.Text.RegularExpressions.Regex.IsMatch(yaml, @"^correlation\s*:", System.Text.RegularExpressions.RegexOptions.Multiline);
 

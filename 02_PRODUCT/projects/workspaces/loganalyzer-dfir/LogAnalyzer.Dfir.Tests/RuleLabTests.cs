@@ -56,8 +56,9 @@ public sealed class RuleLabTests : IDisposable
         var bad = Test(Sigma("x").Replace("Image|contains", "Image|base64offset"));
         Assert.False(bad.Valid);
         Assert.Contains("base64offset", bad.Summary);
-        var corr = Test("title: c\ncorrelation:\n  type: event_count\n  rules: [a]\n  timespan: 5m\n");
-        Assert.Contains("corelare Sigma", corr.Summary);
+        var corr = Test("title: c\ncorrelation:\n  type: event_count\n  rules: [a]\n  timespan: 5m\n  condition: { gte: 2 }\n");
+        Assert.False(corr.Valid);   // a correlation is now loaded like any rule (no longer refused as a kind); this one names a rule that does not exist
+        Assert.Contains("nu există printre regulile Sigma", corr.Summary);
         Assert.Contains("numele regulii", Test(Sigma("x"), name: "../evil").Summary);
     }
 

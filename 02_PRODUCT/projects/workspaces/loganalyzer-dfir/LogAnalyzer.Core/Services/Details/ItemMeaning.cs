@@ -172,7 +172,7 @@ namespace LogAnalyzer.Core.Services.Details
             ["T1053"] = "pornirea automată a unui program prin activitate planificată",
             ["T1053.002"] = "pornirea unui program la o oră fixă prin comanda „at”",
             ["T1053.005"] = "pornirea automată a unui program prin Task Scheduler",
-            ["T1055"] = "ascunderea codului în alt proces care rulează", ["T1014"] = "ascunderea unui program față de sistem (rootkit): procesul nu mai apare în lista obișnuită",
+            ["T1055"] = "ascunderea codului în alt proces care rulează", ["T1046"] = "căutarea serviciilor deschise în rețea (scanare de porturi sau de stații)", ["T1014"] = "ascunderea unui program față de sistem (rootkit): procesul nu mai apare în lista obișnuită",
             ["T1055.001"] = "injectarea unei biblioteci (DLL) în alt proces",
             ["T1055.002"] = "injectarea unui program portabil în alt proces",
             ["T1055.003"] = "deturnarea unui fir de execuție al altui proces",

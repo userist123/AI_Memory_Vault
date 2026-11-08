@@ -34,7 +34,14 @@ public sealed class SigmaLite
     private sealed record Selection(string Name, IReadOnlyList<IReadOnlyList<FieldTest>> Alternatives);   // OR of ANDs
 
     public sealed record SigmaRule(string Title, string Id, string Level, string Channel, string Condition,
-                                   IReadOnlyList<string> Tags, DetectionRule Identity, string Description);
+                                   IReadOnlyList<string> Tags, DetectionRule Identity, string Description, string Name = "");
+
+    /// <summary>A correlation document found in a loaded file; it is resolved against the base rules by <see cref="SigmaCorrelation.Parse"/> once every file is loaded.</summary>
+    public sealed record PendingCorrelation(string File, string Yaml, string Id, string Name);
+
+    private readonly List<PendingCorrelation> _correlations = [];
+    /// <summary>Correlation documents (top-level <c>correlation:</c>) seen in the loaded text. SigmaLite itself never evaluates them: <see cref="DetectionEngine"/> does.</summary>
+    public IReadOnlyList<PendingCorrelation> Correlations => _correlations;
 
     private readonly List<(SigmaRule Rule, Dictionary<string, Selection> Selections)> _rules = [];
     private readonly TimeSpan _matchTimeout;
@@ -55,7 +62,42 @@ public sealed class SigmaLite
         Load(Directory.GetFiles(dir, "*.yml").Concat(Directory.GetFiles(dir, "*.yaml")).Order(StringComparer.Ordinal)
              .Select(f => (Path.GetFileName(f), File.ReadAllText(f))).ToArray());
 
+    /// <summary>
+    /// Splits a YAML text at lines that are exactly <c>---</c>; segments with no content (blank or comments only) are dropped.
+    /// A text with one document is returned whole, so its SHA-256 is the hash of the file as before multi-document support.
+    /// </summary>
+    internal static List<string> SplitDocuments(string yaml)
+    {
+        var segments = new List<string>();
+        var cur = new List<string>();
+        void Flush()
+        {
+            if (cur.Any(l => l.Trim() is { Length: > 0 } t && !t.StartsWith('#'))) segments.Add(string.Join("\n", cur));
+            cur.Clear();
+        }
+        foreach (var line in yaml.Split('\n'))
+        {
+            if (line.TrimEnd() == "---") Flush(); else cur.Add(line.TrimEnd('\r'));
+        }
+        Flush();
+        return segments.Count == 1 ? [yaml] : segments;
+    }
+
     private void Add(string name, string yaml)
+    {
+        var segments = SplitDocuments(yaml);
+        if (segments.Count == 0) throw new FormatException($"{name}: nu este o regulă Sigma.");
+        foreach (var seg in segments) AddDocument(name, seg);
+    }
+
+    internal static string Value(TimelineEvent e, string field) => field switch
+    {
+        "EventID" => e.EventId,
+        "Provider_Name" => e.Provider,
+        _ => e.Fields.TryGetValue(field, out var v) ? v : "",
+    };
+
+    private void AddDocument(string name, string yaml)
     {
         var stream = new YamlStream();
         stream.Load(new StringReader(yaml));
@@ -63,6 +105,12 @@ public sealed class SigmaLite
         string S(YamlMappingNode m, string k) => m.Children.TryGetValue(new YamlScalarNode(k), out var v) && v is YamlScalarNode sc ? sc.Value ?? "" : "";
         var title = S(root, "title");
         if (title.Length == 0) throw new FormatException($"{name}: lipsește title.");
+        if (root.Children.ContainsKey(new YamlScalarNode("correlation")))
+        {
+            if (root.Children.ContainsKey(new YamlScalarNode("detection"))) throw new FormatException($"{name}: „{title}” are și correlation, și detection.");
+            _correlations.Add(new PendingCorrelation(name, yaml, S(root, "id"), S(root, "name")));
+            return;
+        }
         if (!root.Children.TryGetValue(new YamlScalarNode("logsource"), out var lsNode) || lsNode is not YamlMappingNode ls) throw new FormatException($"{name}: lipsește logsource.");
         if (S(ls, "product") is var product && product.Length > 0 && !product.Equals("windows", StringComparison.OrdinalIgnoreCase))
             throw new FormatException($"{name}: product „{product}” nu este acceptat.");
@@ -90,7 +138,7 @@ public sealed class SigmaLite
         var mitre = tags.FirstOrDefault(x => Regex.IsMatch(x, @"^attack\.t\d{4}", RegexOptions.IgnoreCase))?[7..].ToUpperInvariant() ?? "";
         var rule = new SigmaRule(title, S(root, "id"), S(root, "level"), channel, condition, tags,
             new DetectionRule($"SIGMA:{(S(root, "id") is { Length: > 0 } id ? id : name)}", S(root, "modified") is { Length: > 0 } mod ? mod : S(root, "date") is { Length: > 0 } d ? d : sha[..12],
-                DetectionKind.Sigma, title, sha, name, mitre, S(root, "level")), S(root, "description"));
+                DetectionKind.Sigma, title, sha, name, mitre, S(root, "level")), S(root, "description"), S(root, "name"));
         var entry = (rule, selections);
         _ = Evaluate(entry, null);                                     // condition syntax checked at load time
         _rules.Add(entry);
@@ -141,18 +189,13 @@ public sealed class SigmaLite
             timeouts!.Add(new RuleTimeout(rule.Identity.RuleId, rule.Title, $"{LogAnalyzer.Dfir.Language.RoText.Count(skipped, "eveniment", "evenimente")} ulterioare nu au fost evaluate cu această regulă după timeout"));
     }
 
-    public IEnumerable<DetectionResult> Detect(IEnumerable<TimelineEvent> events, ICollection<RuleTimeout>? timeouts = null) => Match(events, timeouts).Select(m => new DetectionResult(
-        m.Rule.Identity.RuleId, m.Rule.Identity.Version, m.Rule.Identity.Sha256, DetectionKind.Sigma, m.Rule.Title,
-        m.Event.EvidenceId, m.Event.Locator, m.Event.SourceSha256, $"{m.Event.Source} {m.Event.EventId}: {m.Event.Summary}",
-        Classification.Direct, m.Rule.Level is "high" or "critical" ? Confidence.High : Confidence.Medium,
-        $"Evenimentul îndeplinește regula Sigma „{m.Rule.Title}”. {m.Rule.Description}", m.Event.Time.Utc));
+    public IEnumerable<DetectionResult> Detect(IEnumerable<TimelineEvent> events, ICollection<RuleTimeout>? timeouts = null) => Match(events, timeouts).Select(m => ToResult(m.Rule, m.Event));
 
-    private static string Value(TimelineEvent e, string field) => field switch
-    {
-        "EventID" => e.EventId,
-        "Provider_Name" => e.Provider,
-        _ => e.Fields.TryGetValue(field, out var v) ? v : "",
-    };
+    public static DetectionResult ToResult(SigmaRule rule, TimelineEvent e) => new(
+        rule.Identity.RuleId, rule.Identity.Version, rule.Identity.Sha256, DetectionKind.Sigma, rule.Title,
+        e.EvidenceId, e.Locator, e.SourceSha256, $"{e.Source} {e.EventId}: {e.Summary}",
+        Classification.Direct, rule.Level is "high" or "critical" ? Confidence.High : Confidence.Medium,
+        $"Evenimentul îndeplinește regula Sigma „{rule.Title}”. {rule.Description}", e.Time.Utc);
 
     private static bool Test(TimelineEvent e, FieldTest t)
     {
