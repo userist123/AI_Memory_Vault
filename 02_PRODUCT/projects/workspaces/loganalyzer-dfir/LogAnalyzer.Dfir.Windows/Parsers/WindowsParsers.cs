@@ -13,5 +13,5 @@ public static class WindowsParsers
          new ScheduledTaskParser(), new UserHiveParser(), new SoftwareHiveParser(),
          new ServicesParser(), new BrowserHistoryParser(), new LnkParser(),
          new UsbDevicesParser(), new JumpListParser(), new FirefoxHistoryParser(), new UsnJournalParser(), new FirewallLogParser(),
-         new ShellBagsParser(), new RecycleBinInfoParser(), new LogAnalyzer.Dfir.Devices.SetupApiLogParser(), new CustomJumpListParser()]);
+         new ShellBagsParser(), new RecycleBinInfoParser(), new LogAnalyzer.Dfir.Devices.SetupApiLogParser(), new CustomJumpListParser(), new LogAnalyzer.Dfir.Memory.VolatilityJsonParser()]);
 }
