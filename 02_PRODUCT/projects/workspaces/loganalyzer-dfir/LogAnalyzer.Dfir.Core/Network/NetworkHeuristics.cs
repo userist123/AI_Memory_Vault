@@ -166,7 +166,9 @@ public static class NetworkHeuristics
                 // a process is named only when every row that has one names the same; several processes are listed, none is chosen
                 var rowLinks = rows.Select(c => linkByRow.GetValueOrDefault((c.E.EvidenceId, c.E.Locator))).Where(l => l is not null).Select(l => l!).ToList();
                 var images = (family == "Sysmon" ? rows.Select(c => F(c.E, "Image")) : rowLinks.Select(l => l.Image)).Where(i => i.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
-                var link = images.Count == 1 ? rowLinks.FirstOrDefault() : null;
+                // one program can run as several processes: a PID is given only when every link names the same process instance
+                var instances = rowLinks.Select(l => l.ProcessGuid.Length > 0 ? l.ProcessGuid : l.Pid?.ToString() ?? "").Distinct(StringComparer.OrdinalIgnoreCase).Count();
+                var link = images.Count == 1 && instances == 1 ? rowLinks.FirstOrDefault() : null;
                 string process = images.Count == 1 ? images[0] : "";
                 int linkedRows = family == "Sysmon" ? rows.Count : rowLinks.Count;
                 bool infra = InfraPorts.Contains(g.Key.DstPort) && IsPrivate(g.Key.Dst);   // DNS to a public address is not the domain controller

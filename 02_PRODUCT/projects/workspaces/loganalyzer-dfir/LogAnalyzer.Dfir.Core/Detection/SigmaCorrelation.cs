@@ -222,9 +222,12 @@ public sealed class SigmaCorrelation
 
         var items = new List<Item>();
         var noField = 0;
+        var farFuture = 0;
         foreach (var (ev, set) in perEvent)
         {
             if (ev.Time.Utc is not { } t) continue;
+            // a time so late that its window would pass the end of the calendar (a corrupt or crafted record) cannot be placed in a window
+            if (t > DateTimeOffset.MaxValue - Timespan) { farFuture++; continue; }
             var val = "";
             if (Type == SigmaCorrelationType.ValueCount)
             {
@@ -233,14 +236,16 @@ public sealed class SigmaCorrelation
             }
             items.Add(new Item(ev, t, [.. set], val));
         }
+        if (farFuture > 0)
+            run.Gaps.Add($"corelarea „{Title}”: {RoText.Count(farFuture, "eveniment", "evenimente")} cu o oră aproape de anul 9999 {(farFuture == 1 ? "a fost exclus" : "au fost excluse")}: o asemenea oră indică o înregistrare coruptă.");
         if (noField > 0)
             run.Gaps.Add($"corelarea „{Title}”: {RoText.Count(noField, "eveniment", "evenimente")} fără câmpul „{Field}” sau cu el gol {(noField == 1 ? "nu a fost numărat" : "nu au fost numărate")} la valori distincte.");
 
         // as Sigma backends do, an event without a group-by value is not grouped (a reopened case keeps no parser fields: every user would fall in one group)
-        int noGroup = items.RemoveAll(it => GroupBy.Any(f => SigmaLite.Value(it.Ev, f).Length == 0));
+        int noGroup = items.RemoveAll(it => GroupBy.Any(f => SigmaLite.Value(it.Ev, f).Trim().Length == 0));
         if (noGroup > 0)
             run.Gaps.Add($"corelarea „{Title}”: {RoText.Count(noGroup, "eveniment", "evenimente")} fără valoare pentru group-by ({string.Join(", ", GroupBy)}) {(noGroup == 1 ? "nu a fost luat" : "nu au fost luate")} în calcul.");
-        var groups = items.GroupBy(it => string.Join("\u001f", GroupBy.Select(f => SigmaLite.Value(it.Ev, f).ToLowerInvariant())), StringComparer.Ordinal)
+        var groups = items.GroupBy(it => string.Join("\u001f", GroupBy.Select(f => SigmaLite.Value(it.Ev, f).Trim().ToLowerInvariant())), StringComparer.Ordinal)
             .OrderBy(g => g.Key, StringComparer.Ordinal).ToList();
         foreach (var g in groups)
         {

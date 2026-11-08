@@ -70,6 +70,18 @@ public sealed class CorrelationAndNetworkReviewTests : IDisposable
     }
 
     [Fact]
+    public void An_event_dated_near_year_9999_is_excluded_with_a_note_and_never_stops_the_run()
+    {
+        var e = Engine(Base + "\n...\n" + Corr("2d"));                              // a document end marker also separates
+        var late = new TimelineEvent { Time = Timestamp.FromUtc(new DateTime(9999, 12, 31, 0, 0, 0, DateTimeKind.Utc), "x", "t"), Source = "EventLog:Security", EvidenceId = "EV-9", EventId = "4625", Summary = "4625", Locator = "EventRecordID=9" };
+        late.Fields["TargetUserName"] = "ana";
+        var r = e.Run([Fail(0, "ana"), Fail(1, "ana"), Fail(2, "ana"), late], [], _ => []);
+        Assert.Contains(r, x => x.RuleId.StartsWith("SIGMA-CORR:", StringComparison.Ordinal));
+        Assert.Contains(e.LoadErrors, g => g.Reason.Contains("9999"));
+        Assert.Empty(Engine(Base + "\n---\n" + Corr()).Run([Fail(0, " "), Fail(1, " "), Fail(2, " ")], [], _ => []).Where(x => x.RuleId.StartsWith("SIGMA-CORR:", StringComparison.Ordinal)));
+    }
+
+    [Fact]
     public void Events_without_the_group_by_value_are_not_grouped_together_and_this_is_said()
     {
         var e = Engine(Base + "\n---\n" + Corr());
