@@ -59,7 +59,9 @@ public sealed class PiiMasker
 
     /// <summary>The pseudonym given to each original value; kept by the operator, never part of the masked output.</summary>
     public IReadOnlyDictionary<string, string> Mapping =>
-        _users.Concat(_hosts).Concat(_ips).Concat(_mails).Concat(_sids).Concat(_serials).Concat(_domains).Concat(_macs).ToDictionary(kv => kv.Key, kv => kv.Value, StringComparer.OrdinalIgnoreCase);
+        // one value can sit in two maps (a UPN learned as an account and met as an e-mail): the first pseudonym wins, the mapping never throws
+        _users.Concat(_hosts).Concat(_ips).Concat(_mails).Concat(_sids).Concat(_serials).Concat(_domains).Concat(_macs)
+            .GroupBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase).ToDictionary(g => g.Key, g => g.First().Value, StringComparer.OrdinalIgnoreCase);
 
     private static readonly string[] OrgWords = ["laborator", "laboratorul", "echipa", "serviciul", "biroul", "departamentul", "directia", "direcția", "unitatea", "compartimentul", "institutul", "centrul", "autoritatea", "sectia", "secția",
         "lab", "team", "group", "department", "office", "unit", "security", "securitate", "forensics", "digital", "cyber", "investigations", "investigatii", "investigații"];
@@ -108,6 +110,7 @@ public sealed class PiiMasker
     {
         name = name.Trim();
         if (name.Contains('\\')) name = name[(name.LastIndexOf('\\') + 1)..];
+        if (name.Contains('@')) return this;   // a UPN is masked as an e-mail address (its own category), not learned as a bare account word
         if (name.Length >= 2 && !IsBuiltIn(name) && !name.EndsWith('$')) { User(name); _known = null; }
         return this;
     }

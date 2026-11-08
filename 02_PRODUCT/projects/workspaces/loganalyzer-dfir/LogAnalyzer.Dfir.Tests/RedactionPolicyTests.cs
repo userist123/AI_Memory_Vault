@@ -178,6 +178,23 @@ public sealed class RedactionPolicyTests : IDisposable
     }
 
     [Fact]
+    public void A_upn_seen_as_account_and_as_email_never_breaks_the_mapping_or_the_record()
+    {
+        // lab 2026-11-08 (Arhipelag, DC01 Security log): the export crashed on Administrator@LAB.LOCAL learned twice
+        var e = Timeline()[0];
+        var ev = new TimelineEvent { Time = e.Time, Source = e.Source, EvidenceId = "EV-3", Host = "DC01", User = "Administrator@LAB.LOCAL", Summary = "4769 Administrator@LAB.LOCAL", Locator = "y" };
+        ev.Fields["TargetUserName"] = "Administrator@LAB.LOCAL";
+        var masker = new RedactionPolicy(RedactionMode.Irreversible, [PiiCategory.Users, PiiCategory.Emails]).Apply(PiiMasker.FromTimeline([ev, .. Timeline()]));
+        masker.KnownUser("Administrator@LAB.LOCAL");
+        var m = masker.Mask(ev);
+        Assert.DoesNotContain("Administrator@LAB.LOCAL", m.Summary + m.User + m.Fields["TargetUserName"]);
+        Assert.NotEmpty(masker.Mapping);
+        var ws = Case();
+        var outFile = Path.Combine(_dir, "u.csv"); File.WriteAllText(outFile, m.Summary);
+        Assert.NotNull(Redactions.Record(ws, RedactionPolicy.Default, masker, "k", outFile, "t"));
+    }
+
+    [Fact]
     public void Two_records_in_the_same_second_get_distinct_ids_and_a_bad_id_is_refused()
     {
         var ws = Case();
