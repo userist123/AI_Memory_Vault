@@ -392,3 +392,18 @@
 
 ## Open owner questions (unchanged from 2026-10-23)
 - Unit thresholds from CSS/PrOpSec; PV form used in the unit; olographic vs electronic signature.
+
+## Master plan — closing the PARTIAL modules (2026-11-08, main session)
+- Owner 2026-11-08: „Hai sa facem ce nu este” = build the modules still PARTIAL after the 6.1-6.17 round.
+- Done, each with tests, Opus review (2 rounds where risky) and lab verification:
+  - 6.5 Zeek: `Dfir.Core/Network/ZeekLogParser.cs` (parser 23), lab Insula with synthetic logs (doc NETWORK_ZEEK.md).
+  - 6.6 memory rules: `Dfir.Core/Memory/MemoryFindings.cs` MEM-HIDDEN/INJECT/NETPROC/PATH/NODISK; lab Arhipelag + Continent.
+  - 6.10 identity: `Dfir.Core/Identity/IdentityReconstruction.cs`, Analysis/identity.json, tab „Identități”; lab on the real DC01/SRV01 Security
+    logs (C:\LA\id-test on WS01/WS02): 70 identities, 5,762 sessions, identical on Insula, Arhipelag and Continent.
+  - 6.15 redaction: `Dfir.Core/Privacy/Redaction.cs` + PiiMasker Keep/Restore; lab Continent reversible export + reveal; audit holds no original.
+    Lab found an export crash (UPN learned twice -> PiiMasker.Mapping duplicate key), fixed in 3c4025fff with a regression test.
+  - 6.8: station-wide signed rule packs = the 6.12 packages (sigma/yara loaded by DetectionEngine.Load); documented.
+- Accepted residuals are in docs/dfir/MASTER_PLAN_STATUS.md, IDENTITY_AD.md and REDACTION_POLICY.md; the owner confirms them.
+- Suites: Dfir 2866, App 1026, UI 368, Edition 45.
+- Lab clean-up for the owner: new TEST cases on WS01/WS02 and C:\LA\{id-test,zeek-test} (kept).
+- Next: CI read once on the pushed head.

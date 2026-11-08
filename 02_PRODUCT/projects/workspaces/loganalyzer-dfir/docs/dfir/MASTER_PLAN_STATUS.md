@@ -24,17 +24,17 @@ Planul este „LogAnalyzer DFIR Master Research and Implementation Plan”, sec�
 | 6.2 Integritate și custodie | REAL | REAL | — (hash la import, custodie înlănțuită, reverificare, read-only) | — |
 | 6.3 Artefacte Windows | REAL | REAL | — (EVTX, registru, Prefetch, Amcache/ShimCache, LNK/Jump Lists, SRUM, USN, browsere, sarcini, servicii, SetupAPI) | — |
 | 6.4 Anti-forensics și acoperire | PARTIAL | **REAL** | Acoperirea în timp: hartă sursă × zi, lacune doar CANDIDATE (`COVERAGE_TIMELINE.md`) | Insula, Continent |
-| 6.5 Rețea | PARTIAL | **REAL (fără Zeek)** | JA3 pe ClientHello, indicatori `ja3` (`NETWORK_JA3.md`) | test de unitate (laboratorul nu are trafic TLS) |
-| 6.6 Memorie | PARTIAL | **PARTIAL+** | Parser pentru ieșirile JSON ale Volatility 3, candidați psscan-only (`MEMORY_VOLATILITY.md`) | Arhipelag (ieșiri sintetice) |
+| 6.5 Rețea | PARTIAL | **REAL** | JA3 pe ClientHello, indicatori `ja3` (`NETWORK_JA3.md`); jurnalele Zeek conn/dns/http/ssl/notice, TSV și JSON, cu precizie de microsecunde și jurnal trunchiat semnalat (`NETWORK_ZEEK.md`) | JA3: test de unitate (laboratorul nu are trafic TLS); Zeek: Insula, cu jurnale sintetice |
+| 6.6 Memorie | PARTIAL | **REAL (fără rularea Volatility)** | Parser pentru ieșirile JSON ale Volatility 3; reguli MEM-HIDDEN, MEM-INJECT, MEM-NETPROC, MEM-PATH; corelarea memorie–disc MEM-NODISK; o ieșire goală este „incompletă”, nu succes (`MEMORY_VOLATILITY.md`). Aplicația nu rulează Volatility și nu ține un depozit de simboluri. | Arhipelag și Continent (ieșiri sintetice) |
 | 6.7 Triaj binare | PARTIAL | **REAL** | Cititor PE mărginit, indicatori explicați, Authenticode al stației (`PE_TRIAGE.md`) | Arhipelag |
-| 6.8 Ingineria detecției | PARTIAL | **REAL (laborator)** | Laboratorul de reguli: test pe caz, comparare cu referința, adăugare în caz (`RULE_LAB.md`) | Arhipelag |
+| 6.8 Ingineria detecției | PARTIAL | **REAL** | Laboratorul de reguli: test pe caz, comparare cu referința, adăugare în caz (`RULE_LAB.md`). Pachetele semnate pentru toată stația sunt pachetele 6.12: `sigma/` și `yara/` din pachetul activ intră în motorul de detecție la fiecare analiză (`DetectionEngine.Load`). | Arhipelag |
 | 6.9 Cronologie avansată | PARTIAL | **REAL** | Marcaje, note, vederi salvate, compararea vederilor (`TIMELINE_NOTES.md`) | Insula, Arhipelag, Continent |
-| 6.10 Identitate și AD | PARTIAL | PARTIAL | — (Kerberos/NTLM, A19 pe DC, delta AD în motorul vechi) | — |
+| 6.10 Identitate și AD | PARTIAL | **REAL** | Identități după SID între controlere, servere și stații: redenumiri, istoric SID ca legătură, sesiuni pe stație, grupuri privilegiate, modificări de director și GPO legate de autor, lacune pe domeniu când lipsesc jurnalele DC (`IDENTITY_AD.md`) | Insula, Arhipelag, Continent (jurnalele Security reale ale DC01 și SRV01: 70 de identități, 5.762 de sesiuni) |
 | 6.11 Graf și contradicții | REAL | **REAL+** | Constatările contrazise intră obligatoriu în revizuire | test (laboratorul nu are constatări contrazise) |
 | 6.12 TI offline | MISSING | **REAL** | Pachete semnate: așteptare, aprobare, revenire, reverificare la fiecare analiză (`THREAT_INTEL_PACKAGES.md`) | Insula (refuz); calea pozitivă în test cu CMS real |
 | 6.13 Politici și conformitate | REAL | REAL | — | — |
 | 6.14 Răspuns controlat | PARTIAL (inventar) | **REAL** | Confirmat: aprobare legată de amprenta textului (politici) și de identitatea exactă a procesului (izolare: PID, cale, pornire, SHA-256) | — |
-| 6.15 Raportare și export | PARTIAL | PARTIAL | — (manifest, verificator, mascare PII la export) | — |
+| 6.15 Raportare și export | PARTIAL | **REAL** | Politica de redactare pe categorii, reversibilă (tabela DPAPI a contului) sau ireversibilă; previzualizare; înregistrarea fiecărui export legată de starea cazului; dezvăluire cu motiv în audit (`REDACTION_POLICY.md`) | Insula (previzualizare), Arhipelag, Continent (export reversibil, înregistrare, dezvăluire, audit fără valoarea originală) |
 | 6.16 Reluare și diferențe | MISSING | **REAL** | Rulări imuabile, reanaliză, diferența cu sursa probabilă (`ANALYSIS_RUNS.md`) | Insula, Arhipelag, Continent |
 | 6.17 AI ancorat în probe | REAL | REAL | — (citări cu locator, UNPROVEN până la verificare, detectarea injecției din probe) | — |
 
@@ -49,12 +49,17 @@ Fiecare modul cu risc a avut un revizor separat, cu probe reproduse. Defectele g
 | 6.9 | coliziunea prefixului de audit cu exportul mascat |
 | 6.12 | două defecte HIGH: fișier de reguli nelistat folosit fără verificare; depozit fără ACL; plus trunchierea istoricului și TOCTOU |
 | 6.7 | o tabelă de importuri care producea un milion de funcții; după 12.000 de mutații, nicio excepție |
+| 6.10 | 3 defecte HIGH: un istoric SID plantat ascundea activitatea administratorului; deduplicarea pierdea evenimente după golirea jurnalului; un nume era atribuit SID-ului din alt domeniu. Runda 2: lacuna de controler ascunsă de un tichet cross-realm; privilegii 4672 puse pe o sesiune veche |
+| 6.15 | un nume de tabelă luat din înregistrare (cale UNC); UPN-ul și domeniul din cale scăpau nemascate; înregistrare în caz sigilat. În laborator: exportul mascat cădea când un UPN era învățat de două ori (corectat, cu test) |
 
 ## Reziduuri acceptate (de confirmat de proprietar)
 
 - **6.1:** trunchierea simultană, de aceeași lungime, a jurnalului fluxului și a auditului cazului nu se vede. Auditul cazului nu este sigilat cu cheie. Ce rămâne ca detecție: capătul fluxului trecut în registrul de închidere.
 - **6.12:** un administrator poate restaura o stare veche, completă și sigilată a depozitului de pachete; sigiliul nu are contor monoton.
 - **6.16:** deciziile din fluxul de lucru sunt legate de numărul constatării (F-nnnn), care se poate schimba la reanaliză.
+
+- **6.10:** același controler scris o dată cu numele scurt și altă dată cu FQDN apare ca două stații. Domeniile se compară după prima etichetă. Rândurile CSV identice din probe diferite se numără de două ori.
+- **6.15:** cu utilizatorii păstrați, o persoană din registru se pune la loc cu numele complet. Ordinea în care masca învață numele poate face ca un câmp și rezumatul aceluiași rând să difere. Lista redactărilor nu reverifică amprenta din audit.
 
 ## Laboratorul
 
@@ -67,7 +72,7 @@ Fiecare modul cu risc a avut un revizor separat, cu probe reproduse. Defectele g
 
 | Suită | Teste trecute |
 |---|---|
-| Dfir | 2.808 |
+| Dfir | 2.866 |
 | App | 1.026 |
 | UI | 368 |
 | Edition | 45 |

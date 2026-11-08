@@ -617,7 +617,7 @@
                             <DataGridTextColumn Header="Eșuate" Binding="{Binding FailedLogons}" Width="60"/>
                         </DataGrid.Columns>
                     </DataGrid>
-                    <Expander DockPanel.Dock="Bottom" Header="Modificări de director și de politici de grup (GPO)" Margin="0,6,0,0" AutomationProperties.Name="Modificări de director și GPO">
+                    <Expander DockPanel.Dock="Bottom" Header="Modificări de director și de politici de grup (GPO)" Margin="0,6,0,0" AutomationProperties.Name="Modificări de director și de politici de grup (GPO)">
                         <ListBox ItemsSource="{Binding IdentityDirectory}" MaxHeight="140" AutomationProperties.Name="Lista modificărilor de director" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
                             <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ListBox.ItemTemplate>
                         </ListBox>
