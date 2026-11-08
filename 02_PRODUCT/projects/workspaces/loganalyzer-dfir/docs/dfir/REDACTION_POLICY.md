@@ -40,3 +40,8 @@ Cod: `LogAnalyzer.Dfir.Core/Privacy/Redaction.cs` și `PiiMasker` (categoriile �
 
 - Detectarea datelor personale este cea a `PiiMasker`: numele învățate din câmpurile cunoscute ale cronologiei, plus tiparele (IP, e-mail, SID, căi de profil, seriale). Un nume scris doar în text liber, care nu apare nicăieri într-un câmp cunoscut, poate rămâne nemascat. Previzualizarea există ca să fie văzut.
 - O mascare ireversibilă păstrează egalitatea: două apariții ale aceleiași valori au același pseudonim. Aceasta este o alegere, pentru ca exportul să rămână corelabil.
+- **Reziduuri acceptate (revizuire independentă, 2 runde, 2026-11-08):**
+  - Cu utilizatorii păstrați, o persoană din registrul de utilizatori se pune la loc cu numele complet.
+  - Cu stațiile păstrate, sufixul DNS al unui nume complet poate lipsi.
+  - Dacă stațiile rămân mascate, un nume de stație care coincide cu o bucată a unui nume de utilizator păstrat (de exemplu stația „popescu” în ion.popescu) se mască în valoarea pusă la loc.
+  - Ordinea în care masca învață numele poate face ca un câmp și rezumatul aceluiași rând să difere. Previzualizarea arată asta.

@@ -254,7 +254,8 @@ public static class IdentityReconstruction
                     if (!sid.Equals("S-1-5-18", StringComparison.OrdinalIgnoreCase)) Privilege(r, $"privilegii speciale la autentificare (4672) pe {host}");
                     var key = host + "|" + F(e, "SubjectLogonId").ToLowerInvariant();
                     // only an open session takes the elevation; a closed one with the same reused LogonId is another logon
-                    if (open.TryGetValue(key, out var i) && sessions[i].EndUtc.Length == 0) sessions[i] = sessions[i] with { Elevated = true };
+                    if (open.TryGetValue(key, out var i) && sessions[i].EndUtc.Length == 0 && string.Equals(sessions[i].Sid, NormSid(sid), StringComparison.OrdinalIgnoreCase))
+                        sessions[i] = sessions[i] with { Elevated = true };
                     else pendingElevation[key] = e.Time.Utc;
                     break;
                 }
@@ -386,8 +387,10 @@ public static class IdentityReconstruction
         var logonDomains = events.Where(e => e.EventId == "4624" && IsDomainSid(F(e, "TargetUserSid")) && F(e, "TargetDomainName").Length > 0
                 && !string.Equals(NormDomain(F(e, "TargetDomainName")), NetBios(e.Host), StringComparison.OrdinalIgnoreCase))
             .Select(e => NormDomain(F(e, "TargetDomainName"))).Where(d => !LocalDomains.Contains(d)).ToHashSet(StringComparer.OrdinalIgnoreCase);
+        // a DC proves its own domain only: the domain of its host name, and the accounts it issued a TGT for or refused pre-authentication (4768/4771
+        // happen only on a DC of the account's domain). A 4769 can name a user of another realm (cross-realm ticket), so it proves nothing here.
         var dcDomains = events.Where(e => DcSideEvents.Contains(e.EventId))
-            .SelectMany(e => new[] { F(e, "TargetDomainName"), F(e, "SubjectDomainName"), e.Host.Contains('.') ? e.Host.Trim().Split('.')[1] : "" })
+            .SelectMany(e => new[] { e.EventId is "4768" or "4771" ? F(e, "TargetDomainName") : "", e.Host.Contains('.') ? e.Host.Trim().Split('.')[1] : "" })
             .Where(d => d.Length > 0 && d != "-").Select(NormDomain).ToHashSet(StringComparer.OrdinalIgnoreCase);
         var missing = logonDomains.Where(d => !dcDomains.Contains(d)).Order(StringComparer.OrdinalIgnoreCase).ToList();
         if (missing.Count > 0)

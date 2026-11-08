@@ -144,6 +144,14 @@ public sealed class IdentityReconstructionTests
         ]);
         Assert.False(r.Sessions.Single(s => s.Sid == Alice).Elevated);
         Assert.True(r.Sessions.Single(s => s.Sid == Bob).Elevated);
+
+        var stale = IdentityReconstruction.Build([                                 // alice never logged off; an hour later the id is reused by Admin
+            Logon("WS01", 0, Alice, "alice", "0x99"),
+            Ev("WS01", "4672", 60, ("SubjectUserSid", Admin), ("SubjectUserName", "Administrator"), ("SubjectLogonId", "0x99")),
+            Logon("WS01", 60, Admin, "Administrator", "0x99"),
+        ]);
+        Assert.False(stale.Sessions.Single(s => s.Sid == Alice).Elevated);
+        Assert.True(stale.Sessions.Single(s => s.Sid == Admin).Elevated);
     }
 
     [Fact]
@@ -159,6 +167,12 @@ public sealed class IdentityReconstructionTests
         var g = Assert.Single(two.Gaps, x => x.What.Contains("controler al acelui domeniu"));
         Assert.Contains("OTHER", g.What);
         Assert.DoesNotContain("LAB", g.What.Replace("OTHER", ""));
+
+        var crossRealm = IdentityReconstruction.Build([                          // a ticket for a FABRIKAM user on a CONTOSO DC is no FABRIKAM DC log
+            Ev("DC01.contoso.local", "4769", 0, ("TargetUserName", "carol@FABRIKAM.COM"), ("TargetDomainName", "FABRIKAM.COM"), ("ServiceName", "SRV01$")),
+            Logon("WS01", 1, "S-1-5-21-8-8-8-1107", "carol", "0x3", domain: "FABRIKAM"),
+        ]);
+        Assert.Contains(crossRealm.Gaps, x => x.What.Contains("FABRIKAM"));
     }
 
     [Fact]

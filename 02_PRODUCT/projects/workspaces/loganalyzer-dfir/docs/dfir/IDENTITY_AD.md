@@ -29,3 +29,7 @@ Interfață: tab-ul „Identități” din „Investigație completă” (`Inves
 - Nu există o corecție automată a decalajului de ceas între stații; orele sunt cele din jurnale (UTC). Corelarea între stații se face pe SID și pe locator, nu pe potrivirea exactă a orei.
 - Rolurile sunt deduse din evenimente: o stație este „controler” dacă are evenimente care apar doar pe controler (4768, 4769, 4771, 5136, 5137, 5141).
 - Nicio linie de aici nu dovedește singură tot traseul unui cont; fiecare duce la evenimentul din care provine.
+- **Reziduuri acceptate (revizuire independentă, 2 runde, 2026-11-08):**
+  - Același controler scris o dată cu numele scurt și altă dată cu FQDN apare ca două stații. Jurnalele EVTX scriu de obicei același `MachineName`.
+  - Domeniile se compară după prima etichetă: EMEA.contoso și EMEA.fabrikam se confundă.
+  - Același rând CSV importat ca două probe diferite se numără de două ori. Fără EventRecordID, două rânduri identice din probe diferite nu pot fi deosebite de două evenimente reale.
