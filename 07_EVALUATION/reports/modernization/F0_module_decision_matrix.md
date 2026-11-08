@@ -30,9 +30,15 @@ fără grep-ul de producție din CLAUDE.md (Global Production-Consumer Rule) rul
    în CLAUDE.md. Importurile `cognitive_core.X` sunt calea dominantă (memory 238, providers 173, learning 158,
    interfaces 144). Planul (WP-14) propunea mutarea lui în arhivă: **anulat**.
 2. **`packages/cognitive_core`, `packages/memory_vault`, `packages/memory_controller`** sunt și ele shim-uri
-   `__path__` (20, 32, 17 LOC), fără cod propriu. `packages/cognitive_core` e umbrit de cel din rădăcină
-   (pythonpath `.` primul) și nu poate fi importat după nume. `memory_controller` e numele folosit de 96 de
-   fișiere de producție, deci e o fațadă de compatibilitate activă.
+   `__path__` (20, 32, 17 LOC), fără cod propriu (`memory_vault` pune `__path__` pe tot `packages/`).
+   Umbrirea lui `packages/cognitive_core` depinde de context: din rădăcină (`pytest.ini:16`, `python -m` din
+   rădăcină) câștigă copia din rădăcină; cu `PYTHONPATH=03_IMPLEMENTATION/packages` fără `.` (de ex. din
+   `07_EVALUATION`) și în wheel-ul instalat (`pyproject.toml:13,16`) câștigă copia din `packages/`.
+   `memory_controller` e numele folosit de 96 de fișiere de producție, deci e o fațadă de compatibilitate activă.
+   Corecție WP-03 (H1): `memory_vault` NU are 0 consumatori — îl importă `.github/workflows/r001-enforcement.yml:96`
+   (`python -c "import memory_vault..."`), `20_TESTS/integration/test_memory_vault_import.py:14` (subprocess) și
+   îl publică `pyproject.toml:15`. AST-ul nu vede importurile din șiruri `-c`/subprocess; orice decizie de
+   arhivare cere și grep pe `.yml`, `.toml` și șiruri, nu doar grep-ul `*.py` din CLAUDE.md.
 3. **Coliziune `security`**: `root/security` (66 fișiere, 247 importuri `security.X`) câștigă asupra
    `packages/security` (9 module: authority, authorizer, mutation_gate, ...). Modulele din `packages/security`
    ajung la consumatori prin fațada `cognitive_core`. Două pachete cu același nume = risc real de import greșit.
@@ -55,13 +61,13 @@ fără grep-ul de producție din CLAUDE.md (Global Production-Consumer Rule) rul
 | `packages/interfaces` | 4959 | 25 / 45 / 0 | PĂSTREAZĂ; scoate `financial_ingestion` din nucleu | WP-12 | zero importuri pachet → produs |
 | `packages/providers` | 793 | 24 / 30 / 0 | PĂSTREAZĂ; implicit local/offline | WP-11 | apel extern doar cu configurare explicită |
 | `packages/observability` | 2932 | 14 / 32 / 0 | PĂSTREAZĂ | WP-11 | fără date personale în loguri |
-| `packages/routing` | 1433 | 2 / 9 / 5 | PĂSTREAZĂ — `route_cli` funcțional (verificat azi) | WP-11 | — |
+| `packages/routing` | 1433 | 3 / 9 / 5 (+ hook-ul cost-router `hook_agent_model.py:76`, `-m routing.route_cli`) | PĂSTREAZĂ — `route_cli` funcțional (verificat azi) | WP-11 | — |
 | `packages/security` | 629 | 76 / 89 / 0 | PĂSTREAZĂ; rezolvă coliziunea de nume cu `root/security` | WP-14 | un singur pachet servește `security.*` |
 | `packages/memory_controller` | 17 (shim) | 96 / 118 / 2 | PĂSTREAZĂ ca fațadă de compatibilitate | WP-06 | documentat ca alias, nu ca strat |
-| `packages/memory_vault` | 32 (shim) | 0 / 0 / 0 | ARHIVEAZĂ (reversibil) | WP-07 | grep prod + loader-e la runtime = 0 |
-| `packages/cognitive_core` | 20 (shim) | 0 / 0 / 0, umbrit | ARHIVEAZĂ (reversibil) | WP-07 | idem; suita trece după mutare |
+| `packages/memory_vault` | 32 (shim) | 0 AST / 1 test subprocess / 1 CI + `pyproject.toml:15` | [DECIZIE ÎN WP-06]: alias publicat în wheel — păstrare ca alias documentat sau retragere cu deprecare | WP-06/07 | pyproject, CI R001 și testul de integrare actualizate împreună; `pip install .` + import smoke |
+| `packages/cognitive_core` | 20 (shim) | 0 / 0 / 0; câștigă în wheel și fără `.` pe cale | [DECIZIE ÎN WP-06]: copia din wheel trebuie să rămână echivalentă cu cea din rădăcină | WP-06/07 | `pip install .` + `python -c "import cognitive_core.recall_cli"` din afara repo-ului |
 | `packages/agent_bridge` | 708 | 0 / 3 / 3 | [DECIZIE ÎN WP-11]: cablează în calea de dispatch a routerului, altfel arhivează | WP-11 | consumator prod real sau mutare în 80_ARCHIVE |
-| `packages/polymarket` | 4107 | 4 / 30 / 14 | MUTĂ ÎN PRODUCTS (14 workflow-uri de actualizat) | WP-12 | CI polymarket verde după mutare |
+| `packages/polymarket` | 4107 | 4 / 30 / 14 referințe în 8 workflow-uri (+ import inline `polymarket-phase11-tests.yml:52`) | MUTĂ ÎN PRODUCTS, condiționat | WP-12 | actualizate și cele 25 de fișiere `20_TESTS/polymarket` cu `from packages.polymarket` și `PYTHONPATH: 03_IMPLEMENTATION` din cele 19 workflow-uri polymarket; CI polymarket verde |
 | `packages/xau_kinetic` | 5 (shim) | 37 / 15 / 0 | PĂSTREAZĂ shim-ul ca fațadă a produsului | WP-12 | — |
 | `products/xau_kinetic` | 6485 | 3 / 1 / 1 | PĂSTREAZĂ în products (are `__init__` lipsă) | WP-12 | testele produsului colectate și verzi |
 | `root/cognitive_core` | 62 | 44 / 100 / 1 | PĂSTREAZĂ — fațada publică + CLI-uri | — | rămâne la rădăcină |
@@ -69,6 +75,12 @@ fără grep-ul de producție din CLAUDE.md (Global Production-Consumer Rule) rul
 | `root/scripts` | 1259 | 0 / 3 / 10 | MUTĂ în `30_SCRIPTS/` cu actualizarea căilor din CI | WP-14 | 10 referințe CI actualizate, testele trec |
 
 ## 3. Schimbări de plan care decurg
+
+- Regula de arhivare (după WP-03, H1): nicio mutare în `80_ARCHIVE` fără grep după `import\s+<n>\b`,
+  `-m <n>` și `<n>` în `.github/workflows/*.yml`, `pyproject.toml`, șiruri din `.py` (subprocess/`-c`) și
+  `.claude/`, pe lângă grep-ul `*.py` din CLAUDE.md. WP-04 extinde inventarul cu aceste tipare și cu teste
+  pentru shim-uri, coliziuni și încălcări (WP-03 L5).
+- Ciclu real confirmat în WP-03: `memory/data_router.py:13` → retrieval și `retrieval/financial_search.py:39` → memory.
 
 - WP-04: test de straturi ca ratchet (muchii existente datate în `04_CONFIG/architecture_layers.json`), nu
   ca interdicție totală; include coliziunile de nume (`cognitive_core`, `security`) ca verificare separată.

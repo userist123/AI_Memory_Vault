@@ -32,7 +32,7 @@ Ramură F0: `modernize/f0-inventory`, worktree `D:/w/mod-f0`, bază origin/main 
    07_EVALUATION 20, 03_IMPLEMENTATION 14 — baseline-ul le raportează separat.
 5. `products/` conține doar `xau_kinetic`; `polymarket` e în `packages/`. Încălcare existentă:
    `packages/interfaces/financial_ingestion.py` importă `xau_kinetic` (pachet → produs).
-6. `cognitive_core/` din rădăcină = shim de `__path__` + 4 CLI-uri, câștigă pe sys.path (pytest.ini:14).
+6. `cognitive_core/` din rădăcină = shim de `__path__` + 4 CLI-uri, câștigă pe sys.path (pytest.ini:16).
    Nu se mută înainte de graful de importuri complet (WP-14).
 7. `01_ARCHITECTURE` nu se redenumește (~767 fișiere referă). WP-15 decide doar 01_KNOWLEDGE (2 fișiere,
    182 referințe) și 08_RESEARCH (72 referințe, folosit de CI).
@@ -53,5 +53,15 @@ Ramură F0: `modernize/f0-inventory`, worktree `D:/w/mod-f0`, bază origin/main 
       `07_EVALUATION/reports/modernization/F0_package_inventory.{json,md}`, test 2 passed (rulat de mine).
       Observație ulterioară: testele scriu `audit_log.jsonl` în rădăcina repo-ului (ignorat de git, semnalat de hygiene).
       Notă: două rulări pytest simultane se ciocnesc pe `pytest-current` (WinError 5) — una singură o dată.
-- [ ] WP-02 matrice de decizie (design, eu)
-- [ ] WP-03 review F0 (vault-reviewer)
+- [x] WP-02 matrice de decizie (eu, 09c1c9860): `07_EVALUATION/reports/modernization/F0_module_decision_matrix.md`.
+- [x] WP-03 review F0 (vault-reviewer, Opus): ACCEPTAT CU REZERVE → `F0_review_report.md`.
+      Reparat: H1 (memory_vault are consumatori CI/test/pyproject), M1 (umbrirea cognitive_core depinde de
+      context), M2 (routing, polymarket), L1 (artefact regenerat), L3, L4. Reziduu → WP-04: L2, L5.
+- PR draft: userist123/AI_Memory_Vault#372 (ramura modernize/f0-inventory).
+
+## Următorul pas (sesiune nouă, F1)
+WP-04: test de straturi ca ratchet (`04_CONFIG/architecture_layers.json` cu muchiile existente datate +
+`20_TESTS/test_architecture_boundaries.py`, AST), verificare coliziuni de nume (`cognitive_core`, `security`),
+extinderea `package_inventory.py` cu importuri din șiruri/yml/toml și teste pentru shim-uri/coliziuni.
+Apoi WP-04b (nou): decizia pentru cele 129 de fișiere de test din afara `20_TESTS`, cu baseline propriu.
+WP-05: review F1 cu sonda de import interzis.

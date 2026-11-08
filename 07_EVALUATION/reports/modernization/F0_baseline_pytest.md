@@ -34,7 +34,8 @@ tags:
 `20_TESTS/test_notes_strict_yaml.py::TestVaultNotesAreReadable::test_no_unlisted_unreadable_file` —
 cauza a fost checkpoint-ul nou `00_GOVERNANCE/coordination/tasks/todo-claude-modernization.md`, creat fără
 frontmatter în timpul rulării (`kind: no_frontmatter`). După adăugarea frontmatter-ului testul trece.
-Codul de pe `main` nu are eșecuri: linia de bază efectivă este 5157 passed / 0 failed.
+După reparare am rulat doar testul afectat (trece), nu toată suita: linia de bază de 5158 passed / 0 failed
+pe codul de pe `main` este o inferență, NEVERIFICAT printr-o rulare completă.
 
 ## Ce nu acoperă linia de bază
 

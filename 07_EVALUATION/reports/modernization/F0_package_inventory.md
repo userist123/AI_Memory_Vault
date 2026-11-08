@@ -1,7 +1,7 @@
 # F0 — Inventar pachete (generat automat)
 
 Generat de `30_SCRIPTS/verification/package_inventory.py`; toate numerele provin din rularea scriptului.
-Fișiere .py analizate: 2194; ordinea `pythonpath`: `. 03_IMPLEMENTATION/packages 03_IMPLEMENTATION` (primul câștigă); erori de parsare AST: 28.
+Fișiere .py analizate: 2195; ordinea `pythonpath`: `. 03_IMPLEMENTATION/packages 03_IMPLEMENTATION` (primul câștigă); erori de parsare AST: 28.
 
 Reguli: LOC = linii non-goale fără comentariu-linie. Consumator prod = fișier .py în afara 20_TESTS, /tests/, /benchmarks/, test_*.py și în afara modulului. Consumator test = 20_TESTS, /tests/, test_*.py, conftest.py. Un import prin shim `__path__` creditează și modulul servit.
 
@@ -84,7 +84,7 @@ Notă: `packages/xau_kinetic` este un shim către `products/xau_kinetic/engine`;
 
 | Director de top | Fișiere test_*.py | Colectat |
 |---|---|---|
-| `20_TESTS` | 356 | da |
+| `20_TESTS` | 357 | da |
 | `02_PRODUCT` | 54 | nu |
 | `security` | 37 | nu |
 | `07_EVALUATION` | 20 | nu |
