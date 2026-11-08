@@ -645,6 +645,24 @@
                     </Grid>
                 </DockPanel>
             </TabItem>
+            <!-- Master plan 6.6: the approved Volatility 3 run on a memory image of the case (pinned executable and symbols, offline, outputs as derived evidence). -->
+            <TabItem Header="Memorie (Volatility)" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Memorie: rulează Volatility aprobat pe o imagine de memorie din caz">
+                <DockPanel Margin="8">
+                    <TextBlock DockPanel.Dock="Top" Text="{Binding MemoryToolLine}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,0,6" AutomationProperties.Name="Starea uneltei Volatility"/>
+                    <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                        <TextBlock Text="Imaginea de memorie:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <ComboBox ItemsSource="{Binding MemoryImages}" SelectedItem="{Binding SelectedMemoryImage}" MinWidth="320" AutomationProperties.Name="Imaginea de memorie din caz">
+                            <ComboBox.ItemTemplate><DataTemplate><TextBlock><Run Text="{Binding EvidenceId, Mode=OneWay}"/><Run Text=" · "/><Run Text="{Binding OriginalName, Mode=OneWay}"/></TextBlock></DataTemplate></ComboBox.ItemTemplate>
+                        </ComboBox>
+                        <Button Content="Rulează Volatility" Command="{Binding RunVolatilityCommand}" Margin="8,0,0,0" Padding="12,4" AutomationProperties.Name="Rulează Volatility pe imaginea aleasă"/>
+                    </StackPanel>
+                    <TextBlock DockPanel.Dock="Top" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6"
+                               Text="Ieșirile intră în caz ca probe derivate din imagine, cu amprenta uneltei și a simbolurilor în lanțul de custodie. Rândurile sunt ce a scris unealta, nu o verificare independentă a memoriei."/>
+                    <ListBox ItemsSource="{Binding MemoryRunLines}" AutomationProperties.Name="Rezultatul rulării Volatility" ScrollViewer.HorizontalScrollBarVisibility="Disabled">
+                        <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/></DataTemplate></ListBox.ItemTemplate>
+                    </ListBox>
+                </DockPanel>
+            </TabItem>
             <!-- Master plan 6.16: immutable analysis runs (Analysis/Runs) and the difference between two of them, with the likely source of each change. -->
             <TabItem Header="Rulări și diferențe" Style="{StaticResource InspectorTabItemStyle}" AutomationProperties.Name="Rulări și diferențe: analizele înregistrate și ce s-a schimbat între ele">
                 <DockPanel Margin="8">

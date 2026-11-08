@@ -418,3 +418,11 @@
   Note: C: had 0.17 GB free (scratchpad art* folders); cleaned to 4 GB.
 - Next optional: 6.6 controlled Volatility run (admin-pinned vol.exe SHA-256, plugin allowlist, --offline, symbol dir verified by a pinned
   manifest hash; outputs imported as derived evidence) — security-sensitive: threat model + Opus review first.
+- 2026-11-08 (owner „Continua”, round 4): 6.6 controlled Volatility run. `Dfir.Windows/Memory/VolatilityRunner.cs` (+ ToolRunner live output
+  cap, raw stdout/stderr), `Dfir.Core/Memory/VolatilityToolProfile.cs` (profile + FolderManifest in %PROGRAMDATA%\LogAnalyzer\tools, admin-only),
+  KeyGen `volatility-profile` (ToolsCli: admin only, refuses tool/symbol folders others can change, moves an untrusted profile folder aside, ACL at
+  creation), tab „Memorie (Volatility)” + Reanalyze. Opus security review 2 rounds (r1: 3 HIGH profile writable by users / owner ignored / only exe
+  hashed + output flood; r2: 2 MEDIUM KeyGen pre-created folder / unchecked tool folder) all fixed; tests VolatilityRunnerTests 12,
+  VolatilityProfileCliTests 2. Lab with a TEST stand-in (E:\LA-Lab\fakevol, scripts fakevol-push/-tamper): 6 derived outputs, 8 events,
+  3 MEM findings on Insula/Arhipelag/Continent; planted python311.dll refused. Residuals in MEMORY_VOLATILITY.md (10-min exec window false alarm).
+  Not mine, left alone: untracked LogAnalyzer.App/Edition/Unclassified/edition-policy-public-key.b64.

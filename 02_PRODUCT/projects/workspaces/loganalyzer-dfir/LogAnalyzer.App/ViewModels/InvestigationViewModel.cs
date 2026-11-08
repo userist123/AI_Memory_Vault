@@ -543,6 +543,7 @@ namespace LogAnalyzer.UI.ViewModels
             RefreshRuns();
             FillExecutables();
             FillIdentities();
+            FillMemoryImages();
             FillRedactionRecords();
             FillCoverageTimeline();
             AirGapFindings.Clear();
