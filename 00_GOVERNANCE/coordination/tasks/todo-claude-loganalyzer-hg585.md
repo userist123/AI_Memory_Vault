@@ -432,3 +432,8 @@
   Inventory(). Test in VolatilityRunnerTests. The 10-min cap stays (owner rule, OperationAudit.MaxExecWindow).
   Opus review r1: MEDIUM null fields in an unvetted tools.json threw out of Inventory() and broke the station control -> whole body caught,
   returns null; LOW refusals no longer cached, drive root / non-fixed (mapped) drives refused. Suites: Dfir 2930, App 1028, UI 368, Edition 45.
+  CI on dfa6ce9fb all green. Lab Insula (WS02, Process Creation audit enabled temporarily, then restored to No Auditing): new Volatility run,
+  app restarted, Control stație -> A17 DE VERIFICAT, 6 events claimed. Local ReadCollectorExecs on the copied audit: every record refused as
+  "după o înregistrare cu oră în urmă" — the WS02 audit has a clock step back of ~2 h on 2026-11-06 (line 14), so no own command after it is
+  ever confirmed there; the inventory fix cannot be shown on that station (unit-test verified only). Owner question: a one-time clock
+  correction disables A17 recognition for good on that station (by design today).
