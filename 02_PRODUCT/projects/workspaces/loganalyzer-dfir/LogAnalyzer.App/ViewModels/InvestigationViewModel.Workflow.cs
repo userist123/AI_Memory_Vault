@@ -78,10 +78,12 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var st in CaseWorkflow.NextStages(s.Stage)) WorkflowNextStages.Add(CaseWorkflow.Label(st));
             SelectedNextStage = WorkflowNextStages.FirstOrDefault();
 
-            foreach (var f in _result.Findings.Where(f => f.Severity >= wf.Policy.ReviewFrom).OrderByDescending(f => f.Severity))
+            foreach (var f in _result.Findings.Where(f => f.Severity >= wf.Policy.ReviewFrom || f.Verification?.State is StandardState.Contradicted or StandardState.Rejected)
+                                              .OrderByDescending(f => f.Verification?.State is StandardState.Contradicted or StandardState.Rejected).ThenByDescending(f => f.Severity))
             {
                 s.Reviews.TryGetValue(f.FindingId, out var r);
-                WorkflowReviews.Add(new WorkflowReviewRow(f.FindingId, LogAnalyzer.Dfir.Language.RoLabels.Severity(f.Severity), f.Title,
+                WorkflowReviews.Add(new WorkflowReviewRow(f.FindingId, LogAnalyzer.Dfir.Language.RoLabels.Severity(f.Severity),
+                    (f.Verification?.State is StandardState.Contradicted ? "[CONTRAZISĂ de verificare] " : f.Verification?.State is StandardState.Rejected ? "[RESPINSĂ de verificare] " : "") + f.Title,
                     r is null ? "fără decizie" : CaseWorkflow.Label(r.Decision) + (r.Reason.Length > 0 ? ": " + r.Reason : ""), r?.Reviewer ?? "",
                     r is null || r.Decision == FindingDecision.NeedsMoreEvidence));
             }

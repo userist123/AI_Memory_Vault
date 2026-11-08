@@ -64,3 +64,9 @@ Cod: `LogAnalyzer.Dfir.Core/Case/CaseWorkflow.cs`. Interfață: tab-ul „Flux d
   - După numirea aprobatorului, fondatorul nu mai poate adăuga participanți.
   - Returnarea cazului cere rolul de revizor.
 - **Continent, LAB-WS01:** același caz se citește identic: Revizuire, jurnal intact, constatările ridicate fără decizie. Închiderea este refuzată.
+
+## Contradicții (master plan 6.11, 2026-11-08)
+
+O constatare pe care modulul de verificare a CONTRAZIS-o sau a RESPINS-o intră în lista „Constatări importante”, indiferent de severitate. Ea apare prima, cu eticheta „[CONTRAZISĂ de verificare]”. Lista de închidere o blochează până când revizorul ia o decizie.
+
+Contradicția nu șterge și nu rescrie afirmația inițială. Rezultatul verificării rămâne, iar decizia îi aparține revizorului. Testul `A_low_finding_the_verification_contradicted_must_be_reviewed_before_closing_and_stays_as_it_was` verifică asta. În cazurile de laborator nu există constatări contrazise, așa că verificarea s-a făcut prin test.

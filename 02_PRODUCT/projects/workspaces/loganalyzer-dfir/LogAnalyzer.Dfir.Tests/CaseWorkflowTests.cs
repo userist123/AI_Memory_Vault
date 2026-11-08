@@ -335,4 +335,19 @@ public sealed class CaseWorkflowTests : IDisposable
         finally { stop.Cancel(); writer.Wait(); }
         Assert.Equal(60, wf.Load().Notes.Count);
     }
+
+    [Fact]
+    public void A_low_finding_the_verification_contradicted_must_be_reviewed_before_closing_and_stays_as_it_was()
+    {
+        var wf = Team(NewCase());
+        ToReview(wf);
+        var low = F("F9", Severity.Low);
+        low.Verification = new FindingVerification(StandardState.Contradicted, "execuția precede crearea fișierului", "CaseVerifier");
+        var (r, list, _) = wf.Close("ioana", [low]);
+        Assert.False(r.Ok);
+        Assert.Contains("F9", Assert.Single(list.Blocking).Detail);
+        Assert.True(wf.ReviewFinding("radu", "F9", FindingDecision.FalsePositive, "execuția precede crearea fișierului (CONTRA-EXEC-BEFORE-CREATION)").Ok);
+        Assert.True(wf.Close("ioana", [low]).Result.Ok);
+        Assert.Equal(StandardState.Contradicted, low.Verification.State);     // the decision is the reviewer's; the verification result is not rewritten
+    }
 }

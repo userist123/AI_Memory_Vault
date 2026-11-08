@@ -437,9 +437,11 @@ public sealed class CaseWorkflow
         Add("tasks", "Nu există sarcini deschise", open.Count == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,
             open.Count == 0 ? $"{s.Tasks.Count} sarcini, toate încheiate" : string.Join("; ", open.Select(t => $"{t.TaskId} {t.Title} ({(t.Assignee == "" ? "neatribuită" : t.Assignee)})")));
 
-        var mustReview = findings.Where(f => f.Severity >= Policy.ReviewFrom).ToList();
+        // master plan 6.11: a finding the verification contradicted or rejected is reviewed whatever its severity (a contradiction is a candidate
+        // for review, never an automatic verdict: the reviewer decides, and the original claim stays)
+        var mustReview = findings.Where(f => f.Severity >= Policy.ReviewFrom || f.Verification?.State is StandardState.Contradicted or StandardState.Rejected).ToList();
         var pending = mustReview.Where(f => !s.Reviews.TryGetValue(f.FindingId, out var r) || !Counts(s, r)).ToList();
-        Add("findings", $"Constatările de la {Policy.ReviewFrom} în sus au o decizie", pending.Count == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,
+        Add("findings", $"Constatările de la {Policy.ReviewFrom} în sus și cele contrazise de verificare au o decizie", pending.Count == 0 ? ChecklistStatus.Pass : ChecklistStatus.Fail,
             pending.Count == 0 ? $"{mustReview.Count} constatări revizuite" : $"{pending.Count} din {mustReview.Count} fără decizie: " + string.Join(", ", pending.Take(8).Select(f => f.FindingId)) + (pending.Count > 8 ? " …" : ""));
 
         var waived = s.Reviews.Values.Count(r => r.Decision == FindingDecision.Waived);
