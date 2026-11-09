@@ -4,7 +4,7 @@ title: "Checkpoint: Claude Code - modernizarea AI Memory Vault"
 type: "project"
 lifecycle: "REVIEW"
 created: "2026-11-08T21:00:00Z"
-updated: "2026-11-08T22:30:00Z"
+updated: "2026-11-09T12:00:00Z"
 verification: "unverified"
 provenance:
   source_type: "execution"
@@ -59,9 +59,21 @@ Ramură F0: `modernize/f0-inventory`, worktree `D:/w/mod-f0`, bază origin/main 
       context), M2 (routing, polymarket), L1 (artefact regenerat), L3, L4. Reziduu → WP-04: L2, L5.
 - PR draft: userist123/AI_Memory_Vault#372 (ramura modernize/f0-inventory).
 
-## Următorul pas (sesiune nouă, F1)
-WP-04: test de straturi ca ratchet (`04_CONFIG/architecture_layers.json` cu muchiile existente datate +
-`20_TESTS/test_architecture_boundaries.py`, AST), verificare coliziuni de nume (`cognitive_core`, `security`),
-extinderea `package_inventory.py` cu importuri din șiruri/yml/toml și teste pentru shim-uri/coliziuni.
-Apoi WP-04b (nou): decizia pentru cele 129 de fișiere de test din afara `20_TESTS`, cu baseline propriu.
-WP-05: review F1 cu sonda de import interzis.
+## F1 — ramura `modernize/f1-boundaries` (peste F0, același worktree D:/w/mod-f0)
+- [x] WP-04 (2026-11-09, claude-code; vault-worker Sonnet, 2 runde vault-reviewer Opus):
+      commit 3554fb79d + e8b4c3306 + documentare reziduuri. `04_CONFIG/architecture_layers.json`
+      (L0..L8, L8 = fațade; 31 muchii în sus în baseline, 2 hard_forbidden interfaces→xau_kinetic → WP-12),
+      `30_SCRIPTS/verification/architecture_boundaries.py` (ratchet: nou/creștere/stale/nealocat/coliziuni/
+      importuri dinamice; `--write-baseline` doar strânge, lărgirea cere `--allow-widen --owner-wp --reason`),
+      `package_inventory.py`: L2 reparat (memory_vault → 16 surori, `shim_target_source`), `string_import_refs`
+      (249), test-path importat de producție = producție. Teste: 50 passed (4 fișiere, rulat de mine).
+      Review r1: ACCEPTAT CU REZERVE (F1–F5, reparate). Review r2 (delta): ACCEPTAT CU REZERVE, nimic blocant;
+      R1–R6 (rezidual, fără instanțe în repo) documentate în `unenforced` din config.
+      Ordinea straturilor e decizia mea din dependențele reale (Masterplan-ul A3 negăsit pe disc) — de comparat.
+- Necunoscut: ce workflow CI rulează `20_TESTS/test_architecture_boundaries.py` pe PR (→ WP-05).
+- Notă: pytest pe Windows cere `--basetemp=<dir propriu>` dacă rulează alt pytest (WinError 5).
+
+## Următorul pas (sesiune nouă)
+WP-04b (nou): decizia pentru cele 129 de fișiere de test din afara `20_TESTS`, cu baseline propriu.
+WP-05: review F1 cu sonda de import interzis + legarea checker-ului într-un workflow CI (pas separat).
+Opțional: R1/R2 (argv `-c` și șiruri shell în .py) înainte de a te baza pe ratchet pentru importuri din șiruri.

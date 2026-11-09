@@ -2,13 +2,18 @@
   "schema_version": 1,
   "baseline_date": "2026-11-09",
   "baseline_commit": "0752ac2b7",
-  "rule": "Layers are ordered low to high. A unit may import units of the same or a LOWER layer only. An upward edge is allowed only while it is listed in baseline_edges. The check is a ratchet: new upward edges and growth fail, and so does a stale baseline (edge removed or count lower), so every gain must be locked by regenerating the baseline. Edge count = number of non-test files of the source unit importing the target unit. Non-test imports include `-m` argv lists and `python -c` strings in files inside a unit, and test-path files imported by production code. Non-literal import_module/__import__ calls are counted per unit in baseline_dynamic_imports (same ratchet semantics).",
+  "rule": "Layers are ordered low to high. A unit may import units of the same or a LOWER layer only. An upward edge is allowed only while it is listed in baseline_edges. The check is a ratchet: new upward edges and growth fail, and so does a stale baseline (edge removed or count lower), so every gain must be locked by regenerating the baseline. Edge count = number of non-test files of the source unit importing the target unit. Non-test imports include `-m` argv lists in .py files inside a unit, and test-path files imported by production code. Non-literal import_module/__import__ calls are counted per unit in baseline_dynamic_imports (same ratchet semantics).",
   "unenforced": [
     "Non-literal dynamic imports are counted per unit, not resolved to a target unit.",
     "Reassigning a unit to another layer in this config is caught only by diff review.",
     "benchmarks/ files count as production.",
     "Relative imports and same-directory sys.path imports are not resolved.",
-    "python -m strings in non-.py files inside a unit are not edges (only py_argv_m and python_c)."
+    "python -m strings in non-.py files inside a unit are not edges (only py_argv_m and python_c).",
+    "R1 (WP-04 review r2): `-c` argv in .py files ([sys.executable, '-c', 'import x']) is not parsed; python_c is read only from shell/yml-type files.",
+    "R2: shell command strings inside .py files (os.system('python -m x'), subprocess with shell=True) are not scanned.",
+    "R3: import_module aliased by assignment (im = importlib.import_module), getattr(importlib, 'import_module') and builtins.__import__ are not counted.",
+    "R4: transitive edges through .py files outside any unit (e.g. 03_IMPLEMENTATION/x.py) are not followed.",
+    "R5/R6 (low): a mixed refuse+tighten --write-baseline run writes the tightening and exits 1; --owner-wp format is not validated; a trailing '# python -m x' comment still yields a string ref; 'python -malpha' and 'pypy3 -m' are missed."
   ],
   "excluded": {
     "test_files": "Files matching package_inventory.is_test_path (under 20_TESTS/ or tests/, named test_*.py, or conftest.py) are not counted."
