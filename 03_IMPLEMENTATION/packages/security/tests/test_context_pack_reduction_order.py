@@ -5,7 +5,7 @@ from pathlib import Path
 
 
 PACK_BUILDER = (
-    Path(__file__).resolve().parents[2]
+    Path(__file__).resolve().parents[4]
     / "03_IMPLEMENTATION"
     / "packages"
     / "retrieval"

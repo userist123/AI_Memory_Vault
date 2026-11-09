@@ -9,10 +9,10 @@
         "packages/graph": 60,
         "packages/interfaces": 160,
         "packages/learning": 167,
-        "packages/lifecycle": 25,
+        "packages/lifecycle": 24,
         "packages/memory": 240,
         "packages/observability": 72,
-        "packages/providers": 174,
+        "packages/providers": 173,
         "packages/retrieval": 52,
         "packages/security": 16
       },
@@ -56,69 +56,6 @@
         ]
       },
       "winner": "root/cognitive_core"
-    },
-    {
-      "candidates_in_pythonpath_order": [
-        "root/security",
-        "packages/security"
-      ],
-      "imports_by_served_unit": {
-        "root/security": 247
-      },
-      "modules": {
-        "packages/security": [
-          "authority",
-          "authorized_verdict",
-          "authorizer",
-          "conflict_detector",
-          "git_hooks",
-          "mutation_gate",
-          "security",
-          "security",
-          "security_audit"
-        ],
-        "root/security": [
-          "audit_pipeline",
-          "audit_trail",
-          "catalog_provenance_policy",
-          "context_compression",
-          "handoff_benchmark",
-          "knowledge_handoff",
-          "loganalyzer_ui_sink",
-          "memory_adapter",
-          "memory_boundary",
-          "memory_integrity",
-          "prompt_compiler",
-          "runtime_adapter",
-          "runtime_enforcer",
-          "security_event",
-          "security_update_catalog",
-          "security_update_manager",
-          "security_update_policy",
-          "security_version",
-          "skill_exfiltration_scanner",
-          "supply_chain_policy",
-          "tests",
-          "tool_authorization",
-          "tool_capabilities",
-          "tool_integrity",
-          "tool_response_boundary",
-          "trust_gate",
-          "verified_reduction",
-          "verify_security_catalog"
-        ]
-      },
-      "name": "security",
-      "shim_target_source": {
-        "packages/security": "path_eval"
-      },
-      "shim_targets": {
-        "packages/security": [
-          "self",
-          "root/security"
-        ]
-      },
-      "winner": "root/security"
     }
   ],
   "layer_violations_package_to_product": [],
@@ -166,7 +103,7 @@
       "site-packages",
       "venv"
     ],
-    "py_files_scanned": 2203,
+    "py_files_scanned": 2204,
     "pythonpath_order": [
       ".",
       "03_IMPLEMENTATION/packages",
@@ -383,6 +320,7 @@
         "02_PRODUCT/projects/workspaces/registru-transferuri/INSTALARE.txt",
         "02_PRODUCT/projects/workspaces/registru-transferuri/PORNIRE.bat",
         "02_PRODUCT/projects/workspaces/registru-transferuri/pornire.sh",
+        "03_IMPLEMENTATION/packages/security/tests/test_pr209_final_security_gates.py",
         "03_IMPLEMENTATION/products/xau_kinetic/engine/README.md",
         "03_IMPLEMENTATION/products/xau_kinetic/standalone/README.md",
         "03_IMPLEMENTATION/products/xau_kinetic/standalone/xau_kinetic/README.md",
@@ -412,8 +350,7 @@
         "docs/security/RED_TEAM_ATTACK_SURFACE.md",
         "docs/security/RED_TEAM_FINAL_REPORT.md",
         "docs/security/RED_TEAM_UNKNOWN_FINDINGS.md",
-        "docs/security/TOOL_EXECUTION_BOUNDARY_AUDIT.md",
-        "security/tests/test_pr209_final_security_gates.py"
+        "docs/security/TOOL_EXECUTION_BOUNDARY_AUDIT.md"
       ]
     },
     "rows": [
@@ -2207,7 +2144,7 @@
       "kind": "toml_entry",
       "line": 26,
       "module": "security",
-      "unit": "root/security"
+      "unit": "packages/security"
     },
     {
       "file": "pyproject.toml",
@@ -2241,18 +2178,16 @@
   "tests_by_top_dir": {
     ".agents": 4,
     "02_PRODUCT": 54,
-    "03_IMPLEMENTATION": 14,
+    "03_IMPLEMENTATION": 51,
     "07_EVALUATION": 20,
-    "20_TESTS": 362,
-    "security": 37
+    "20_TESTS": 363
   },
   "tests_focus_dirs": {
     ".agents": 4,
     "02_PRODUCT": 54,
-    "03_IMPLEMENTATION": 14,
+    "03_IMPLEMENTATION": 51,
     "07_EVALUATION": 20,
-    "20_TESTS": 362,
-    "security": 37
+    "20_TESTS": 363
   },
   "units": [
     {
@@ -2512,6 +2447,7 @@
         "scripts/run_ablation_experiment.py"
       ],
       "consumers_test": [
+        "03_IMPLEMENTATION/packages/security/tests/test_audit_remediation.py",
         "20_TESTS/memory_controller/test_adversarial_p0_p15_invariants.py",
         "20_TESTS/memory_controller/test_api_server.py",
         "20_TESTS/memory_controller/test_milestone3_empirical_challenge.py",
@@ -2544,7 +2480,6 @@
         "20_TESTS/test_outcome_events.py",
         "20_TESTS/test_proposal_queue_attestation.py",
         "20_TESTS/test_protected_core_boundaries.py",
-        "20_TESTS/test_provider_offline_default.py",
         "20_TESTS/test_real_agent_execution_harness.py",
         "20_TESTS/test_reconciliation_boundary.py",
         "20_TESTS/test_reconsolidation.py",
@@ -2558,8 +2493,7 @@
         "20_TESTS/test_vault_access_ollama_telegram.py",
         "20_TESTS/test_vault_access_perf.py",
         "20_TESTS/test_vault_routes_quarantine_parity.py",
-        "20_TESTS/test_vault_runtime_secret.py",
-        "security/tests/test_audit_remediation.py"
+        "20_TESTS/test_vault_runtime_secret.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/interfaces",
       "dynamic_imports_nontest": 0,
@@ -2590,16 +2524,14 @@
         "packages/memory": 6,
         "packages/providers": 2,
         "packages/security": 8,
-        "packages/vault_access": 3,
-        "root/security": 1
+        "packages/vault_access": 3
       },
       "imports_out_nontest": {
         "packages/lifecycle": 2,
         "packages/memory": 6,
         "packages/providers": 2,
         "packages/security": 8,
-        "packages/vault_access": 3,
-        "root/security": 1
+        "packages/vault_access": 3
       },
       "init_exists": true,
       "kind": "packages",
@@ -2756,10 +2688,10 @@
         "07_EVALUATION/r025_wp6_edge_promotion/phase_a2_full_update_simulation.py",
         "10_DOCUMENTATION/resources/Examples/enterprise_memory_client.py",
         "30_SCRIPTS/knowledge/retroactive_update_openstax_provenance.py",
-        "30_SCRIPTS/knowledge/validate_bibliographic_provenance.py",
-        "security/trust_gate.py"
+        "30_SCRIPTS/knowledge/validate_bibliographic_provenance.py"
       ],
       "consumers_test": [
+        "03_IMPLEMENTATION/packages/security/tests/test_pr209_final_security_gates.py",
         "20_TESTS/test_book_to_memory_lifecycle_gates.py",
         "20_TESTS/test_book_to_memory_schema.py",
         "20_TESTS/test_dynamic_synapses.py",
@@ -2772,7 +2704,7 @@
         "20_TESTS/test_reconsolidation.py",
         "20_TESTS/test_rest_proposal_flow.py",
         "20_TESTS/test_reviewed_edge_promotion.py",
-        "security/tests/test_pr209_final_security_gates.py"
+        "20_TESTS/test_security_single_package.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/lifecycle",
       "dynamic_imports_nontest": 0,
@@ -2788,14 +2720,14 @@
       "id": "packages/lifecycle",
       "import_name_winner": true,
       "imports_out": {
-        "packages/security": 1
+        "packages/security": 2
       },
       "imports_out_nontest": {
-        "packages/security": 1
+        "packages/security": 2
       },
       "init_exists": true,
       "kind": "packages",
-      "loc": 1173,
+      "loc": 1155,
       "local_unresolved_names": [],
       "name": "lifecycle",
       "py_files": 13,
@@ -2877,6 +2809,8 @@
         "40_EXPERIMENTS/harnesses/real_execution_harness.py"
       ],
       "consumers_test": [
+        "03_IMPLEMENTATION/packages/security/tests/test_audit_remediation.py",
+        "03_IMPLEMENTATION/packages/security/tests/test_pr209_final_security_gates.py",
         "07_EVALUATION/tests/test_retrieval_diagnostic.py",
         "20_TESTS/adversarial/test_memory_content_is_not_authority.py",
         "20_TESTS/adversarial/test_review_memory_instruction_injection.py",
@@ -2978,9 +2912,7 @@
         "20_TESTS/test_vault_routes_quarantine_parity.py",
         "20_TESTS/test_version_parsing.py",
         "20_TESTS/test_working_memory.py",
-        "20_TESTS/test_working_memory_persistence.py",
-        "security/tests/test_audit_remediation.py",
-        "security/tests/test_pr209_final_security_gates.py"
+        "20_TESTS/test_working_memory_persistence.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/memory",
       "dynamic_imports_nontest": 0,
@@ -3123,6 +3055,8 @@
         "40_EXPERIMENTS/harnesses/real_execution_harness.py"
       ],
       "consumers_test": [
+        "03_IMPLEMENTATION/packages/security/tests/test_audit_remediation.py",
+        "03_IMPLEMENTATION/packages/security/tests/test_pr209_final_security_gates.py",
         "07_EVALUATION/tests/test_retrieval_diagnostic.py",
         "20_TESTS/adversarial/test_memory_content_is_not_authority.py",
         "20_TESTS/adversarial/test_review_memory_instruction_injection.py",
@@ -3239,9 +3173,7 @@
         "20_TESTS/test_tool_router_security.py",
         "20_TESTS/test_tot_and_formal_reflexion.py",
         "20_TESTS/test_vault_routes_quarantine_parity.py",
-        "20_TESTS/test_working_memory_persistence.py",
-        "security/tests/test_audit_remediation.py",
-        "security/tests/test_pr209_final_security_gates.py"
+        "20_TESTS/test_working_memory_persistence.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/memory_controller",
       "dynamic_imports_nontest": 2,
@@ -3496,7 +3428,6 @@
         "20_TESTS/test_outcome_events.py",
         "20_TESTS/test_proposal_queue_attestation.py",
         "20_TESTS/test_protected_core_boundaries.py",
-        "20_TESTS/test_provider_offline_default.py",
         "20_TESTS/test_recall.py",
         "20_TESTS/test_review_memory_injection.py"
       ],
@@ -3585,6 +3516,12 @@
         "30_SCRIPTS/verification/validate_corpus_index.py"
       ],
       "consumers_test": [
+        "03_IMPLEMENTATION/packages/security/tests/test_audit_remediation.py",
+        "03_IMPLEMENTATION/packages/security/tests/test_canonical_memory_data_route.py",
+        "03_IMPLEMENTATION/packages/security/tests/test_context_pack_progressive_disclosure.py",
+        "03_IMPLEMENTATION/packages/security/tests/test_context_pack_security_metadata.py",
+        "03_IMPLEMENTATION/packages/security/tests/test_context_token_economy_gate.py",
+        "03_IMPLEMENTATION/packages/security/tests/test_progressive_disclosure_security.py",
         "20_TESTS/adversarial/test_memory_content_is_not_authority.py",
         "20_TESTS/memory_controller/test_cache.py",
         "20_TESTS/memory_controller/test_classifier_filter_arms.py",
@@ -3621,13 +3558,7 @@
         "20_TESTS/test_reviewed_edge_promotion.py",
         "20_TESTS/test_storage_canonical_roots.py",
         "20_TESTS/test_vault_state_accuracy.py",
-        "20_TESTS/test_wikilink_synapse_ingestion.py",
-        "security/tests/test_audit_remediation.py",
-        "security/tests/test_canonical_memory_data_route.py",
-        "security/tests/test_context_pack_progressive_disclosure.py",
-        "security/tests/test_context_pack_security_metadata.py",
-        "security/tests/test_context_token_economy_gate.py",
-        "security/tests/test_progressive_disclosure_security.py"
+        "20_TESTS/test_wikilink_synapse_ingestion.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/retrieval",
       "dynamic_imports_nontest": 0,
@@ -3647,13 +3578,11 @@
       "import_name_winner": true,
       "imports_out": {
         "packages/graph": 1,
-        "packages/security": 1,
-        "root/security": 3
+        "packages/security": 4
       },
       "imports_out_nontest": {
         "packages/graph": 1,
-        "packages/security": 1,
-        "root/security": 3
+        "packages/security": 4
       },
       "init_exists": true,
       "kind": "packages",
@@ -3712,7 +3641,12 @@
       "unknown": []
     },
     {
-      "ci_config_refs": {},
+      "ci_config_refs": {
+        ".github/workflows/ai-security-update-watch.yml": 1,
+        ".github/workflows/context-token-economy-gate.yml": 5,
+        ".github/workflows/r001-enforcement.yml": 2,
+        ".github/workflows/security-boundary.yml": 4
+      },
       "consumers_bench_excluded": [],
       "consumers_prod": [
         ".agents/auditor_final/forensic_verification.py",
@@ -3755,6 +3689,7 @@
         "03_IMPLEMENTATION/packages/learning/deduplication.py",
         "03_IMPLEMENTATION/packages/learning/learning.py",
         "03_IMPLEMENTATION/packages/learning/reflection.py",
+        "03_IMPLEMENTATION/packages/lifecycle/proposal_queue.py",
         "03_IMPLEMENTATION/packages/lifecycle/validation/supersession.py",
         "03_IMPLEMENTATION/packages/memory/executive.py",
         "03_IMPLEMENTATION/packages/memory/orchestrator.py",
@@ -3762,6 +3697,9 @@
         "03_IMPLEMENTATION/packages/memory/recall.py",
         "03_IMPLEMENTATION/packages/memory/working_memory.py",
         "03_IMPLEMENTATION/packages/retrieval/cache/lru_cache.py",
+        "03_IMPLEMENTATION/packages/retrieval/context/pack_builder.py",
+        "03_IMPLEMENTATION/packages/retrieval/context/progressive_disclosure.py",
+        "03_IMPLEMENTATION/packages/retrieval/data_router.py",
         "07_EVALUATION/cognitive_core/evaluate_cognitive_core.py",
         "07_EVALUATION/cognitive_core/evaluate_modules_v3.py",
         "07_EVALUATION/heldout_retrieval_benchmark_v2/run_production_arms.py",
@@ -3789,6 +3727,8 @@
         "30_SCRIPTS/evaluation/run_retrieval_benchmark_v3.py",
         "30_SCRIPTS/knowledge/curriculum_ingestion.py",
         "30_SCRIPTS/knowledge/retroactive_update_openstax_provenance.py",
+        "30_SCRIPTS/prompt/compile_task_prompt.py",
+        "30_SCRIPTS/verification/import_external_skills.py",
         "30_SCRIPTS/verification/validate_blocker_registry.py",
         "40_EXPERIMENTS/harnesses/real_execution_harness.py"
       ],
@@ -3807,6 +3747,7 @@
         "20_TESTS/memory_controller/test_security_hardening.py",
         "20_TESTS/memory_controller/test_sqlite_storage.py",
         "20_TESTS/memory_controller/test_supersession_phase43.py",
+        "20_TESTS/redteam/redteam_support.py",
         "20_TESTS/redteam/test_redteam_memory.py",
         "20_TESTS/regression/test_phase6_stabilization.py",
         "20_TESTS/research/test_blocker_severity_downgrade.py",
@@ -3876,47 +3817,110 @@
         "20_TESTS/test_review_memory_injection.py",
         "20_TESTS/test_secure_recall_cli.py",
         "20_TESTS/test_security_audit.py",
+        "20_TESTS/test_security_single_package.py",
         "20_TESTS/test_specialized_agents.py",
         "20_TESTS/test_tool_router_security.py",
         "20_TESTS/test_tot_and_formal_reflexion.py",
-        "20_TESTS/test_working_memory_persistence.py",
-        "security/tests/test_audit_remediation.py",
-        "security/tests/test_pr209_final_security_gates.py"
+        "20_TESTS/test_working_memory_persistence.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/security",
       "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
-        "main_guard": []
+        "main_guard": [
+          "03_IMPLEMENTATION/packages/security/skill_exfiltration_scanner.py",
+          "03_IMPLEMENTATION/packages/security/tests/os_multiprocess_nonce_runner.py",
+          "03_IMPLEMENTATION/packages/security/verify_security_catalog.py"
+        ]
       },
-      "external_deps": {},
+      "external_deps": {
+        "packaging": 1,
+        "pytest": 6,
+        "yaml": 1
+      },
       "has_all": false,
       "id": "packages/security",
-      "import_name_winner": false,
+      "import_name_winner": true,
       "imports_out": {
-        "packages/interfaces": 1
+        "packages/interfaces": 2,
+        "packages/lifecycle": 1,
+        "packages/memory": 2,
+        "packages/retrieval": 6
       },
       "imports_out_nontest": {
         "packages/interfaces": 1
       },
       "init_exists": true,
       "kind": "packages",
-      "loc": 629,
-      "local_unresolved_names": [],
-      "name": "security",
-      "py_files": 12,
-      "shim_target_source": "path_eval",
-      "shim_targets": [
-        "self",
-        "root/security"
+      "loc": 7275,
+      "local_unresolved_names": [
+        "knowledge"
       ],
+      "name": "security",
+      "py_files": 78,
+      "shim_target_source": null,
+      "shim_targets": null,
       "unknown": [
         {
-          "detail": "__path__.append",
-          "file": "03_IMPLEMENTATION/packages/security/__init__.py",
+          "detail": "sys.path.insert",
+          "file": "03_IMPLEMENTATION/packages/security/tests/os_multiprocess_nonce_runner.py",
           "kind": "path_mutation",
-          "line": 11
+          "line": 22
+        },
+        {
+          "detail": "sys.path.insert",
+          "file": "03_IMPLEMENTATION/packages/security/tests/test_audit_remediation.py",
+          "kind": "path_mutation",
+          "line": 26
+        },
+        {
+          "detail": "spec_from_file_location",
+          "file": "03_IMPLEMENTATION/packages/security/tests/test_audit_remediation.py",
+          "kind": "file_or_module_loader",
+          "line": 430
+        },
+        {
+          "detail": "sys.path.append",
+          "file": "03_IMPLEMENTATION/packages/security/tests/test_canonical_memory_data_route.py",
+          "kind": "path_mutation",
+          "line": 8
+        },
+        {
+          "detail": "sys.path.insert",
+          "file": "03_IMPLEMENTATION/packages/security/tests/test_context_compression.py",
+          "kind": "path_mutation",
+          "line": 7
+        },
+        {
+          "detail": "sys.path.append",
+          "file": "03_IMPLEMENTATION/packages/security/tests/test_context_pack_progressive_disclosure.py",
+          "kind": "path_mutation",
+          "line": 8
+        },
+        {
+          "detail": "sys.path.insert",
+          "file": "03_IMPLEMENTATION/packages/security/tests/test_context_pack_security_metadata.py",
+          "kind": "path_mutation",
+          "line": 8
+        },
+        {
+          "detail": "sys.path.append",
+          "file": "03_IMPLEMENTATION/packages/security/tests/test_context_token_economy_gate.py",
+          "kind": "path_mutation",
+          "line": 8
+        },
+        {
+          "detail": "sys.path.insert",
+          "file": "03_IMPLEMENTATION/packages/security/tests/test_progressive_disclosure_security.py",
+          "kind": "path_mutation",
+          "line": 8
+        },
+        {
+          "detail": "spec_from_file_location",
+          "file": "03_IMPLEMENTATION/packages/security/tests/test_verified_reduction.py",
+          "kind": "file_or_module_loader",
+          "line": 14
         }
       ]
     },
@@ -4247,10 +4251,10 @@
         "40_EXPERIMENTS/harnesses/real_execution_harness.py",
         "40_EXPERIMENTS/harnesses/run_ablation_experiment.py",
         "scripts/generate_b4_baseline.py",
-        "scripts/run_ablation_experiment.py",
-        "security/trust_gate.py"
+        "scripts/run_ablation_experiment.py"
       ],
       "consumers_test": [
+        "03_IMPLEMENTATION/packages/security/tests/test_pr209_final_security_gates.py",
         "20_TESTS/memory_controller/test_adversarial_p0_p15_invariants.py",
         "20_TESTS/memory_controller/test_milestone2_empirical_challenge.py",
         "20_TESTS/memory_controller/test_milestone3_empirical_challenge.py",
@@ -4326,7 +4330,6 @@
         "20_TESTS/test_planning.py",
         "20_TESTS/test_proposal_queue_attestation.py",
         "20_TESTS/test_protected_core_boundaries.py",
-        "20_TESTS/test_provider_offline_default.py",
         "20_TESTS/test_qdrant_retrieval.py",
         "20_TESTS/test_ranked_search.py",
         "20_TESTS/test_real_agent_execution_harness.py",
@@ -4343,6 +4346,7 @@
         "20_TESTS/test_review_memory_injection.py",
         "20_TESTS/test_secure_recall_cli.py",
         "20_TESTS/test_security_audit.py",
+        "20_TESTS/test_security_single_package.py",
         "20_TESTS/test_skill_router.py",
         "20_TESTS/test_sleep_consolidation.py",
         "20_TESTS/test_specialized_agents.py",
@@ -4351,8 +4355,7 @@
         "20_TESTS/test_trading_decisions.py",
         "20_TESTS/test_version_parsing.py",
         "20_TESTS/test_working_memory.py",
-        "20_TESTS/test_working_memory_persistence.py",
-        "security/tests/test_pr209_final_security_gates.py"
+        "20_TESTS/test_working_memory_persistence.py"
       ],
       "dir": "cognitive_core",
       "dynamic_imports_nontest": 0,
@@ -4522,128 +4525,6 @@
           "file": "scripts/run_ablation_experiment.py",
           "kind": "path_mutation",
           "line": 20
-        }
-      ]
-    },
-    {
-      "ci_config_refs": {
-        ".github/workflows/ai-security-update-watch.yml": 1,
-        ".github/workflows/context-token-economy-gate.yml": 5,
-        ".github/workflows/r001-enforcement.yml": 2,
-        ".github/workflows/security-boundary.yml": 3
-      },
-      "consumers_bench_excluded": [],
-      "consumers_prod": [
-        "03_IMPLEMENTATION/packages/interfaces/vault_cli.py",
-        "03_IMPLEMENTATION/packages/retrieval/context/pack_builder.py",
-        "03_IMPLEMENTATION/packages/retrieval/context/progressive_disclosure.py",
-        "03_IMPLEMENTATION/packages/retrieval/data_router.py",
-        "30_SCRIPTS/prompt/compile_task_prompt.py",
-        "30_SCRIPTS/verification/import_external_skills.py",
-        "30_SCRIPTS/verification/validate_blocker_registry.py"
-      ],
-      "consumers_test": [
-        "20_TESTS/research/test_blocker_severity_downgrade.py"
-      ],
-      "dir": "security",
-      "dynamic_imports_nontest": 0,
-      "entry_points": {
-        "console_scripts": [],
-        "dunder_main": [],
-        "main_guard": [
-          "security/skill_exfiltration_scanner.py",
-          "security/tests/os_multiprocess_nonce_runner.py",
-          "security/verify_security_catalog.py"
-        ]
-      },
-      "external_deps": {
-        "packaging": 1,
-        "pytest": 6,
-        "yaml": 1
-      },
-      "has_all": false,
-      "id": "root/security",
-      "import_name_winner": true,
-      "imports_out": {
-        "packages/interfaces": 1,
-        "packages/lifecycle": 2,
-        "packages/memory": 2,
-        "packages/retrieval": 6,
-        "packages/security": 2
-      },
-      "imports_out_nontest": {
-        "packages/lifecycle": 1
-      },
-      "init_exists": true,
-      "kind": "root",
-      "loc": 6623,
-      "local_unresolved_names": [
-        "knowledge"
-      ],
-      "name": "security",
-      "py_files": 66,
-      "shim_target_source": null,
-      "shim_targets": null,
-      "unknown": [
-        {
-          "detail": "sys.path.insert",
-          "file": "security/tests/os_multiprocess_nonce_runner.py",
-          "kind": "path_mutation",
-          "line": 22
-        },
-        {
-          "detail": "sys.path.insert",
-          "file": "security/tests/test_audit_remediation.py",
-          "kind": "path_mutation",
-          "line": 26
-        },
-        {
-          "detail": "spec_from_file_location",
-          "file": "security/tests/test_audit_remediation.py",
-          "kind": "file_or_module_loader",
-          "line": 430
-        },
-        {
-          "detail": "sys.path.append",
-          "file": "security/tests/test_canonical_memory_data_route.py",
-          "kind": "path_mutation",
-          "line": 8
-        },
-        {
-          "detail": "sys.path.insert",
-          "file": "security/tests/test_context_compression.py",
-          "kind": "path_mutation",
-          "line": 7
-        },
-        {
-          "detail": "sys.path.append",
-          "file": "security/tests/test_context_pack_progressive_disclosure.py",
-          "kind": "path_mutation",
-          "line": 8
-        },
-        {
-          "detail": "sys.path.insert",
-          "file": "security/tests/test_context_pack_security_metadata.py",
-          "kind": "path_mutation",
-          "line": 8
-        },
-        {
-          "detail": "sys.path.append",
-          "file": "security/tests/test_context_token_economy_gate.py",
-          "kind": "path_mutation",
-          "line": 8
-        },
-        {
-          "detail": "sys.path.insert",
-          "file": "security/tests/test_progressive_disclosure_security.py",
-          "kind": "path_mutation",
-          "line": 8
-        },
-        {
-          "detail": "spec_from_file_location",
-          "file": "security/tests/test_verified_reduction.py",
-          "kind": "file_or_module_loader",
-          "line": 14
         }
       ]
     }
@@ -5766,12 +5647,6 @@
       "line": 20
     },
     {
-      "detail": "spec_from_file_location",
-      "file": "20_TESTS/redteam/redteam_support.py",
-      "kind": "file_or_module_loader",
-      "line": 32
-    },
-    {
       "detail": "sys.path.insert",
       "file": "20_TESTS/redteam/test_redteam_memory.py",
       "kind": "path_mutation",
@@ -6664,6 +6539,12 @@
       "file": "20_TESTS/test_route_coverage_gate.py",
       "kind": "path_mutation",
       "line": 124
+    },
+    {
+      "detail": "import_module",
+      "file": "20_TESTS/test_security_single_package.py",
+      "kind": "dynamic_import",
+      "line": 40
     },
     {
       "detail": "sys.path.insert",

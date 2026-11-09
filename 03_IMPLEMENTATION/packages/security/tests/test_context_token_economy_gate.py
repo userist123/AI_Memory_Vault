@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-PACKAGES = Path(__file__).resolve().parents[2] / "03_IMPLEMENTATION" / "packages"
+PACKAGES = Path(__file__).resolve().parents[4] / "03_IMPLEMENTATION" / "packages"
 if str(PACKAGES) not in sys.path:
     sys.path.append(str(PACKAGES))
 

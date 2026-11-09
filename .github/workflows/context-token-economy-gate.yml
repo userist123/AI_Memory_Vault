@@ -5,8 +5,8 @@ on:
 
     paths:
       - "03_IMPLEMENTATION/packages/retrieval/context/**"
-      - "security/context_compression.py"
-      - "security/tests/test_context_token_economy_gate.py"
+      - "03_IMPLEMENTATION/packages/security/context_compression.py"
+      - "03_IMPLEMENTATION/packages/security/tests/test_context_token_economy_gate.py"
       - ".github/workflows/context-token-economy-gate.yml"
   push:
     branches:
@@ -14,8 +14,8 @@ on:
       - "codex/skill-exfiltration-scanner"
     paths:
       - "03_IMPLEMENTATION/packages/retrieval/context/**"
-      - "security/context_compression.py"
-      - "security/tests/test_context_token_economy_gate.py"
+      - "03_IMPLEMENTATION/packages/security/context_compression.py"
+      - "03_IMPLEMENTATION/packages/security/tests/test_context_token_economy_gate.py"
       - ".github/workflows/context-token-economy-gate.yml"
 
 permissions:
@@ -49,5 +49,5 @@ jobs:
 
       - name: Run executable token economy gate
         env:
-          PYTHONPATH: .
-        run: python -m pytest security/tests/test_context_token_economy_gate.py -q
+          PYTHONPATH: .:03_IMPLEMENTATION/packages
+        run: python -m pytest 03_IMPLEMENTATION/packages/security/tests/test_context_token_economy_gate.py -q

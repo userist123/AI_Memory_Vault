@@ -1,7 +1,7 @@
 # F0 — Inventar pachete (generat automat)
 
 Generat de `30_SCRIPTS/verification/package_inventory.py`; toate numerele provin din rularea scriptului.
-Fișiere .py analizate: 2203; ordinea `pythonpath`: `. 03_IMPLEMENTATION/packages 03_IMPLEMENTATION` (primul câștigă); erori de parsare AST: 28.
+Fișiere .py analizate: 2204; ordinea `pythonpath`: `. 03_IMPLEMENTATION/packages 03_IMPLEMENTATION` (primul câștigă); erori de parsare AST: 28.
 
 Reguli: LOC = linii non-goale fără comentariu-linie. Consumator prod = fișier .py în afara 20_TESTS, /tests/, /benchmarks/, test_*.py și în afara modulului. Consumator test = 20_TESTS, /tests/, test_*.py, conftest.py. Un import prin shim `__path__` creditează și modulul servit.
 
@@ -13,24 +13,23 @@ Reguli: LOC = linii non-goale fără comentariu-linie. Consumator prod = fișier
 | `packages/book_to_memory` | 20 | 5859 | main:0 __main__:0 scripts:0 | 9 | 19 | 0 (0 f.) | jsonschema | 0 |
 | `packages/cognitive_core` | 1 | 20 | main:0 __main__:0 scripts:0 | 0 | 0 | 0 (0 f.) | - | 1 |
 | `packages/graph` | 8 | 1569 | main:0 __main__:0 scripts:0 | 17 | 22 | 0 (0 f.) | - | 0 |
-| `packages/interfaces` | 24 | 4541 | main:8 __main__:0 scripts:0 | 25 | 48 | 0 (0 f.) | jsonschema, mcp, pydantic | 8 |
+| `packages/interfaces` | 24 | 4541 | main:8 __main__:0 scripts:0 | 25 | 47 | 0 (0 f.) | jsonschema, mcp, pydantic | 8 |
 | `packages/learning` | 19 | 1496 | main:0 __main__:0 scripts:0 | 6 | 27 | 0 (0 f.) | yaml | 0 |
-| `packages/lifecycle` | 13 | 1173 | main:0 __main__:0 scripts:0 | 11 | 13 | 0 (0 f.) | jsonschema | 0 |
+| `packages/lifecycle` | 13 | 1155 | main:0 __main__:0 scripts:0 | 10 | 14 | 0 (0 f.) | jsonschema | 0 |
 | `packages/memory` | 26 | 4451 | main:0 __main__:0 scripts:0 | 65 | 104 | 3 (2 f.) | yaml | 0 |
 | `packages/memory_controller` | 2 | 151 | main:0 __main__:0 scripts:0 | 96 | 119 | 2 (1 f.) | - | 4 |
 | `packages/memory_vault` | 2 | 32 | main:0 __main__:0 scripts:0 | 0 | 0 | 0 (0 f.) | - | 2 |
 | `packages/observability` | 15 | 2932 | main:0 __main__:0 scripts:0 | 14 | 32 | 0 (0 f.) | - | 0 |
-| `packages/providers` | 9 | 793 | main:0 __main__:0 scripts:0 | 24 | 31 | 0 (0 f.) | - | 0 |
+| `packages/providers` | 9 | 793 | main:0 __main__:0 scripts:0 | 24 | 30 | 0 (0 f.) | - | 0 |
 | `packages/retrieval` | 26 | 4666 | main:2 __main__:0 scripts:0 | 53 | 43 | 4 (2 f.) | yaml | 0 |
 | `packages/routing` | 10 | 1433 | main:2 __main__:0 scripts:0 | 2 | 9 | 5 (1 f.) | - | 0 |
-| `packages/security` | 12 | 629 | main:0 __main__:0 scripts:0 | 76 | 89 | 0 (0 f.) | - | 1 |
+| `packages/security` | 78 | 7275 | main:3 __main__:0 scripts:0 | 82 | 89 | 12 (4 f.) | packaging, pytest, yaml | 10 |
 | `packages/vault_access` | 10 | 1912 | main:0 __main__:0 scripts:0 | 6 | 9 | 1 (1 f.) | yaml | 0 |
 | `packages/xau_kinetic` | 1 | 5 | main:0 __main__:0 scripts:0 | 36 | 15 | 0 (0 f.) | - | 1 |
 | `products/polymarket` | 27 | 4107 | main:1 __main__:0 scripts:0 | 0 | 30 | 14 (8 f.) | - | 0 |
 | `products/xau_kinetic` | 63 | 6485 | main:20 __main__:0 scripts:0 | 2 | 1 | 1 (1 f.) | MetaTrader5, numpy, pandas, pydantic, requests +2 | 0 |
-| `root/cognitive_core` | 5 | 62 | main:3 __main__:0 scripts:0 | 42 | 102 | 1 (1 f.) | - | 7 |
+| `root/cognitive_core` | 5 | 62 | main:3 __main__:0 scripts:0 | 41 | 102 | 1 (1 f.) | - | 7 |
 | `root/scripts` | 7 | 1260 | main:5 __main__:0 scripts:0 | 0 | 3 | 10 (1 f.) | yaml | 5 |
-| `root/security` | 66 | 6623 | main:3 __main__:0 scripts:0 | 7 | 1 | 11 (4 f.) | packaging, pytest, yaml | 10 |
 
 ## `__all__`, importuri ieșite și shim-uri
 
@@ -40,26 +39,25 @@ Reguli: LOC = linii non-goale fără comentariu-linie. Consumator prod = fișier
 | `packages/book_to_memory` | da | nu | packages/interfaces(1), packages/memory(2), packages/security(10) | - |
 | `packages/cognitive_core` | da | da | - | packages/graph, packages/memory, packages/learning, packages/observability, packages/providers, packages/interfaces, packages/security, packages/retrieval, packages/lifecycle (path_eval) |
 | `packages/graph` | da | da | packages/security(1) | - |
-| `packages/interfaces` | da | nu | packages/lifecycle(2), packages/memory(6), packages/providers(2), packages/security(8), packages/vault_access(3), root/security(1) | - |
+| `packages/interfaces` | da | nu | packages/lifecycle(2), packages/memory(6), packages/providers(2), packages/security(8), packages/vault_access(3) | - |
 | `packages/learning` | da | nu | packages/graph(1), packages/interfaces(6), packages/lifecycle(1), packages/memory(10), packages/observability(1), packages/providers(2), packages/security(11) | - |
-| `packages/lifecycle` | da | nu | packages/security(1) | - |
+| `packages/lifecycle` | da | nu | packages/security(2) | - |
 | `packages/memory` | da | nu | packages/graph(1), packages/lifecycle(1), packages/observability(3), packages/retrieval(1), packages/security(5) | - |
 | `packages/memory_controller` | da | da | - | packages/retrieval, packages/memory, packages/security, packages/lifecycle, packages/interfaces, packages/observability (path_eval) |
 | `packages/memory_vault` | da | da | - | packages/agent_bridge, packages/book_to_memory, packages/cognitive_core, packages/graph, packages/interfaces, packages/learning, packages/lifecycle, packages/memory, packages/memory_controller +7 (path_expression) |
 | `packages/observability` | da | da | packages/providers(1), packages/retrieval(4) | - |
 | `packages/providers` | da | nu | - | - |
-| `packages/retrieval` | da | nu | packages/graph(1), packages/security(1), root/security(3) | - |
+| `packages/retrieval` | da | nu | packages/graph(1), packages/security(4) | - |
 | `packages/routing` | da | nu | - | - |
-| `packages/security` | da | nu | packages/interfaces(1) | self, root/security (path_eval) |
+| `packages/security` | da | nu | packages/interfaces(2), packages/lifecycle(1), packages/memory(2), packages/retrieval(6) | - |
 | `packages/vault_access` | da | da | packages/interfaces(2) | - |
 | `packages/xau_kinetic` | da | da | - | products/xau_kinetic (path_eval) |
 | `products/polymarket` | da | da | - | - |
 | `products/xau_kinetic` | NU | nu | packages/lifecycle(1) | - |
 | `root/cognitive_core` | da | da | packages/interfaces(3), packages/learning(1) | self, packages/graph, packages/memory, packages/learning, packages/observability, packages/providers, packages/interfaces, packages/security, packages/retrieval +1 (path_eval) |
 | `root/scripts` | da | nu | packages/interfaces(2), packages/observability(1), packages/providers(2) | - |
-| `root/security` | da | nu | packages/interfaces(1), packages/lifecycle(2), packages/memory(2), packages/retrieval(6), packages/security(2) | - |
 
-Note: fișierele și LOC includ testele aflate în directorul modulului (ex. `security/test_*.py`). Nume locale nerezolvate (ex. module importate după manipulare `sys.path`) nu sunt numărate ca dependențe externe; ele sunt în JSON (`local_unresolved_names`).
+Note: fișierele și LOC includ testele aflate în directorul modulului (ex. `security/tests/test_*.py`). Nume locale nerezolvate (ex. module importate după manipulare `sys.path`) nu sunt numărate ca dependențe externe; ele sunt în JSON (`local_unresolved_names`).
 
 ## Coliziunea `cognitive_core` (și alte nume duplicate)
 
@@ -68,12 +66,7 @@ Note: fișierele și LOC includ testele aflate în directorul modulului (ex. `se
   - `packages/cognitive_core` este shim `__path__` către: packages/graph, packages/memory, packages/learning, packages/observability, packages/providers, packages/interfaces, packages/security, packages/retrieval, packages/lifecycle.
   - module în `root/cognitive_core`: closed_loop_learning, recall_cli, telegram_vault_bot, vault_cli.
   - module în `packages/cognitive_core`: -.
-  - importuri `cognitive_core.X` după unitatea care servește X: packages/graph=60, packages/interfaces=160, packages/learning=167, packages/lifecycle=25, packages/memory=240, packages/observability=72, packages/providers=174, packages/retrieval=52, packages/security=16.
-- `security`: candidați în ordinea pythonpath: `root/security` > `packages/security`; câștigă `root/security`.
-  - `packages/security` este shim `__path__` către: self, root/security.
-  - module în `root/security`: audit_pipeline, audit_trail, catalog_provenance_policy, context_compression, handoff_benchmark, knowledge_handoff, loganalyzer_ui_sink, memory_adapter, memory_boundary, memory_integrity, prompt_compiler, runtime_adapter +16.
-  - module în `packages/security`: authority, authorized_verdict, authorizer, conflict_detector, git_hooks, mutation_gate, security, security, security_audit.
-  - importuri `security.X` după unitatea care servește X: root/security=247.
+  - importuri `cognitive_core.X` după unitatea care servește X: packages/graph=60, packages/interfaces=160, packages/learning=167, packages/lifecycle=24, packages/memory=240, packages/observability=72, packages/providers=173, packages/retrieval=52, packages/security=16.
 
 ## Încălcări pachet → produs
 
@@ -87,11 +80,10 @@ Notă: `packages/xau_kinetic` este un shim către `products/xau_kinetic/engine`;
 
 | Director de top | Fișiere test_*.py | Colectat |
 |---|---|---|
-| `20_TESTS` | 362 | da |
+| `20_TESTS` | 363 | da |
 | `02_PRODUCT` | 54 | nu |
-| `security` | 37 | nu |
 | `07_EVALUATION` | 20 | nu |
-| `03_IMPLEMENTATION` | 14 | nu |
+| `03_IMPLEMENTATION` | 51 | nu |
 | `.agents` | 4 | nu |
 
 ## Requirements diff
@@ -116,7 +108,7 @@ Notă: `packages/xau_kinetic` este un shim către `products/xau_kinetic/engine`;
 
 ## UNKNOWN (neinterpretabil de AST)
 
-În module: 39 intrări (detaliu în JSON). În afara modulelor (teste, scripturi): 419 (dynamic_import=3, file_or_module_loader=95, path_assign=2, path_mutation=319). Aceste fișiere pot importa module prin căi runtime pe care inventarul nu le vede; numărul de consumatori este deci un minim.
+În module: 38 intrări (detaliu în JSON). În afara modulelor (teste, scripturi): 419 (dynamic_import=4, file_or_module_loader=94, path_assign=2, path_mutation=319). Aceste fișiere pot importa module prin căi runtime pe care inventarul nu le vede; numărul de consumatori este deci un minim.
 
 ## Importuri din șiruri de caractere
 
@@ -157,7 +149,7 @@ AST-ul nu vede importurile din șiruri: `python -m X`, `python -c "import X"`, i
 | `pyproject.toml:23` | toml_entry | `observability` | `packages/observability` |
 | `pyproject.toml:24` | toml_entry | `providers` | `packages/providers` |
 | `pyproject.toml:25` | toml_entry | `retrieval` | `packages/retrieval` |
-| `pyproject.toml:26` | toml_entry | `security` | `root/security` |
+| `pyproject.toml:26` | toml_entry | `security` | `packages/security` |
 | `pyproject.toml:27` | toml_entry | `routing` | `packages/routing` |
 | `pyproject.toml:28` | toml_entry | `agent_bridge` | `packages/agent_bridge` |
 | `pyproject.toml:29` | toml_entry | `vault_access` | `packages/vault_access` |

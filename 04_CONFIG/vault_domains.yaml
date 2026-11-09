@@ -182,7 +182,7 @@ domains:
     keywords: [cercetare, research, book to memory, h1, experiment, interference gate, blocker, ablation]
   security:
     title: Securitate — registru de incidente, carantină, granițe de încredere, lanț de aprovizionare
-    roots: ["09_SECURITY", "security/*.md"]
+    roots: ["09_SECURITY", "03_IMPLEMENTATION/packages/security/*.md"]
     exclude: ["09_SECURITY/quarantine/**"]
     keywords: [securitate, security, incident, r001, secret, trust boundary, supply chain, audit trail, runtime security]
   procedures:

@@ -24,17 +24,9 @@ def load_file(path: Path, name: str):
     return mod
 
 
-def load_root_security():
-    """The repository-root `security` package (03_IMPLEMENTATION/packages/security shares the name)."""
-    name = "_redteam_root_security"
-    if name in sys.modules:
-        return sys.modules[name]
-    spec = importlib.util.spec_from_file_location(name, REPO / "security" / "__init__.py",
-                                                  submodule_search_locations=[str(REPO / "security")])
-    pkg = importlib.util.module_from_spec(spec)
-    sys.modules[name] = pkg
-    spec.loader.exec_module(pkg)
-    return pkg
+def load_security():
+    """The single `security` package (03_IMPLEMENTATION/packages/security), imported by its real name."""
+    return importlib.import_module("security")
 
 
 def hook_env(home: Path, **extra) -> dict:

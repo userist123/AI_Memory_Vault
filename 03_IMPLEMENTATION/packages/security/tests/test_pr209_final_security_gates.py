@@ -11,7 +11,7 @@ from cognitive_core.proposal_queue import MemoryProposalQueue
 from cognitive_core.queue_promoter import QueuePromoter
 from security.runtime_enforcer import PersistentNonceStore
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[4]
 
 
 def _active_note(note_id: str, content: str = "original") -> dict:

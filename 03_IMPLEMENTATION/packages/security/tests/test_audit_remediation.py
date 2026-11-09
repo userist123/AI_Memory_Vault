@@ -17,7 +17,7 @@ from datetime import datetime, timezone, timedelta
 from pathlib import Path
 import pytest
 
-REPO = Path(__file__).resolve().parents[2]
+REPO = Path(__file__).resolve().parents[4]
 PACKAGES = REPO / "03_IMPLEMENTATION" / "packages"
 SCRIPTS = REPO / "30_SCRIPTS"
 

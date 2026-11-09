@@ -11,6 +11,8 @@ from __future__ import annotations
 from dataclasses import dataclass, field
 from enum import Enum
 
+from .owner_principal import require_owner_principal
+
 
 class TrustState(str, Enum):
     UNTRUSTED = "UNTRUSTED"
@@ -156,11 +158,6 @@ def verify_severity_attestation(
         raise SeverityAttestationError(
             "a severity downgrade needs an explicit owner attestation record"
         )
-    # Imported here: `security` is a leaf package and the vault's attestation rule lives with the
-    # proposal queue; loading it only when a downgrade is actually attested keeps the import graph
-    # of the rest of this module unchanged.
-    from cognitive_core.proposal_queue import require_owner_principal
-
     try:
         principal = require_owner_principal(attestation.principal)
     except PermissionError as exc:

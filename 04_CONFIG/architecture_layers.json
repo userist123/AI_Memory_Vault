@@ -6,7 +6,7 @@
   "unenforced": [
     "agent_bridge is dormant (no production consumer, WP-11); the layer test does not detect dormancy, 20_TESTS/test_vault_state_accuracy.py (zero production importers of agent_bridge) does",
     "Facade resolution follows the declared/real __path__ and the re-export line of root cognitive_core/<mod>.py (`from [packages.]X.<m> import *`); a facade submodule no __path__ entry serves keeps the edge on the facade, is listed in the inventory meta.facade_unresolved and FAILS the check (i) when the file is non-test.",
-    "`security.X` from the repository root is root/security; packages/security records its extended __path__ (self, root/security) but does not change how `security` resolves. The name collision itself is WP-14.",
+    "WP-14a: `security` is a single regular package (packages/security, L0); the former root/security layer (L2_policy_adapter) is gone. The remaining name collision (`cognitive_core`: root shim vs packages shim) is tracked in known_collisions.",
     "Layer membership of an alias (facade) is not checked: an edge to an unresolved facade is only judged by hard_forbidden.",
     "Non-literal dynamic imports are counted per unit, not resolved to a target unit.",
     "Reassigning a unit to another layer in this config is caught only by diff review.",
@@ -39,12 +39,6 @@
       "name": "L1_lifecycle",
       "units": [
         "packages/lifecycle"
-      ]
-    },
-    {
-      "name": "L2_policy_adapter",
-      "units": [
-        "root/security"
       ]
     },
     {
@@ -99,8 +93,7 @@
     ]
   },
   "known_collisions": [
-    "cognitive_core",
-    "security"
+    "cognitive_core"
   ],
   "baseline_dynamic_imports": {
     "packages/memory_controller": 2
@@ -186,13 +179,6 @@
       "__path__": [
         "products/xau_kinetic"
       ]
-    },
-    "packages/security": {
-      "__path__": [
-        "self",
-        "root/security"
-      ],
-      "also_unit": true
     }
   },
   "aliases_note": "Facades are __path__ shims, not layers: an import through one is an edge to the unit that serves the submodule (first match in __path__). `__path__` is the declared, ordered list of units; \"self\" = the shim's own directory. The check fails if the real __path__ (package_inventory shim_targets) differs."

@@ -134,15 +134,27 @@ def test_modules_the_card_calls_unwired_really_are(module, wired):
     )
 
 
+_SECURITY_PKG = ("03_IMPLEMENTATION", "packages", "security")
+_PRE_MERGE_SECURITY_MODULES = frozenset({
+    "authority.py", "authorized_verdict.py", "authorizer.py", "conflict_detector.py", "git_hooks.py",
+    "mutation_gate.py", "security.py", "security_audit.py", "__init__.py",
+})
+
+
 @pytest.fixture(scope="module")
 def production_python_sources():
     """(relative path, text) of every .py file that could be a production consumer: not a test,
-    not evaluation or imported material, not the root `security/` layer itself. One walk, shared."""
+    not evaluation or imported material, not the `security` package itself. One walk, shared."""
     skipped_parts = {"20_TESTS", "07_EVALUATION", "06_INBOX", "imported", "benchmarks", "tests", "node_modules", "__pycache__"}
     sources = []
     for path in REPO.rglob("*.py"):
         parts = path.relative_to(REPO).parts
-        if parts[0] in {"security", ".git", ".claude"} or skipped_parts & set(parts) or path.stem.startswith("test_"):
+        if parts[0] in {".git", ".claude"} or skipped_parts & set(parts) or path.stem.startswith("test_"):
+            continue
+        # The runtime-authority layer lives in the `security` package next to the modules that were
+        # already there before the merge (WP-14a); only the layer's own files are skipped, so those
+        # older modules and the nested `security/security/` package are still scanned as before.
+        if parts[:3] == _SECURITY_PKG and not (parts[3] in _PRE_MERGE_SECURITY_MODULES or len(parts) > 4):
             continue
         sources.append((path.relative_to(REPO).as_posix(), path.stem, path.read_text(encoding="utf-8", errors="ignore")))
     return sources

@@ -55,14 +55,14 @@ SLOTS_RELATIVE = "01_ARCHITECTURE/ontology/slots"
 
 #: Namespace for deterministic proposal ids: an identical proposal from the same principal maps to the same id.
 PROPOSAL_DEDUP_NAMESPACE = uuid.UUID("6f1d3c2e-9a4b-4c8e-b1f7-2d5e8a0c7b13")
-_SCANNER_FILE = Path(__file__).resolve().parents[3] / "security" / "skill_exfiltration_scanner.py"
+_SCANNER_FILE = Path(__file__).resolve().parents[1] / "security" / "skill_exfiltration_scanner.py"
 _SCANNER_MODULE = "_vault_memory_access_content_scanner"
 
 
 def _content_scanner():
     """The repository's existing content scanner (security/skill_exfiltration_scanner.scan_text, the one
-    security/tool_response_boundary.py applies to tool output), loaded by file path because the name
-    `security` is shadowed by 03_IMPLEMENTATION/packages/security on the package path."""
+    security/tool_response_boundary.py applies to tool output), loaded by file path under a
+    private module name (no import-time coupling to the `security` package namespace)."""
     mod = sys.modules.get(_SCANNER_MODULE)
     if mod is None:
         spec = importlib.util.spec_from_file_location(_SCANNER_MODULE, _SCANNER_FILE)
