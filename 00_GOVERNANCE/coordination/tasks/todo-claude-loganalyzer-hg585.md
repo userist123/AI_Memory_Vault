@@ -484,3 +484,13 @@
   DEF-HISTORY-ONLY High T1070.001 + LOG-TAMPER. Defender rewrote the record after the clear (FILETIME after the block +13 s); parser now falls
   back to ThreatTrackingStartTime when the FILETIME is >1 s later (second real fixture). Not done: RemoteCollection. Next: RMM pack, then
   Notepad TabState / MUICache. Suites: Dfir 3041, App 1028, UI 368, Edition 45.
+- 2026-11-09 (owner „Continua”): wave 5, RMM. A separate RMM-TOOL rule was built first and dropped: it duplicated the existing
+  REMOTE-TOOL-PRESENT / REMOTE-TOOL-EXECUTED (Wp11Rules.Tools.cs + Data/remote_access_tools.json; missed by a grep because the tool names are
+  data). Folded into them instead: 8 tools added, `domains` + DNS (Sysmon 22, DNS-Client 3006/3008) as presence, PRESENT Low->Medium for a
+  service in a user-writable folder or two distinct tools on one station within 24 h, Quick Assist (`common`) present Low / run Medium.
+  Opus r1: Chrome Remote Desktop lowered to Low (now High as before), name-only approval bypassable, cross-station correlation, DNS/approved
+  counting, cmd /c wrapper. r2: Windows\Temp, other drives, `..` traversal, %SystemRoot%/%ProgramFiles%, quoted paths with spaces, 32 K
+  ImagePath -> all fixed by main session (no round 3). Accepted residual: a case with no station names is one station; same NetBIOS name in
+  two domains is one station. Lab WS01 (renamed PING.EXE, removed after with rmm-lab.ps1 -Undo): AnyDesk service+process from C:\Users\Public
+  and RustDesk from Program Files -> two REMOTE-TOOL-EXECUTED High naming each other. Suites: Dfir 3090, App 1028, UI 368, Edition 45.
+  Next: Notepad TabState / MUICache.

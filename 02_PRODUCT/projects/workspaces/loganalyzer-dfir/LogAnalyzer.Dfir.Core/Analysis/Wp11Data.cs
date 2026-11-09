@@ -54,6 +54,10 @@ public sealed class RemoteToolRow
     public List<string> DisplayContains { get; set; } = [];
     public List<string> ProductContains { get; set; } = [];
     public List<string> LogMarkers { get; set; } = [];
+    /// <summary>DNS suffixes of the tool's service (matched at a label boundary: "x.anydesk.com" yes, "notanydesk.com" no). Optional.</summary>
+    public List<string> Domains { get; set; } = [];
+    /// <summary>Part of Windows (Quick Assist): present is Low, run from its normal place Medium, and it never counts toward the two-tools rule.</summary>
+    public bool Common { get; set; }
 }
 
 public sealed class RemoteToolCatalog
