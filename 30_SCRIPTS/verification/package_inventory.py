@@ -751,12 +751,18 @@ def promoted_test_files(info: dict[str, dict], pyfiles: list[str], pythonpath: l
 
 # ----------------------------------------------------------------------------- main build
 def default_also_units(root: Path) -> set[str]:
-    """``also_unit`` aliases of ``04_CONFIG/architecture_layers.json`` under ``root`` (empty if absent/invalid)."""
+    """``also_unit`` aliases of ``04_CONFIG/architecture_layers.json`` under ``root``.
+
+    A missing or invalid config is reported on stderr (never silent): every alias then resolves
+    through its ``__path__``, including ``also_unit`` ones such as packages/security.
+    """
     cfg = Path(root) / "04_CONFIG" / "architecture_layers.json"
     try:
         data = json.loads(cfg.read_text("utf-8"))
         return {a for a, d in data.get("aliases", {}).items() if d.get("also_unit")}
-    except (OSError, ValueError, AttributeError):
+    except (OSError, ValueError, AttributeError) as exc:
+        print(f"package_inventory: WARNING no also_unit aliases ({cfg.name}: {type(exc).__name__}); "
+              "also_unit facades resolve through __path__", file=sys.stderr)
         return set()
 
 

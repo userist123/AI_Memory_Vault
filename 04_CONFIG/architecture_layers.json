@@ -16,6 +16,7 @@
     "R2: shell command strings inside .py files (os.system('python -m x'), subprocess with shell=True) are not scanned.",
     "R3: import_module aliased by assignment (im = importlib.import_module), getattr(importlib, 'import_module') and builtins.__import__ are not counted.",
     "R4: transitive edges through .py files outside any unit (e.g. 03_IMPLEMENTATION/x.py) are not followed.",
+    "R7 (WP-07 PR A review r2): __path__ changed through an obfuscated reference (an alias such as `_p = __path__; _p.append(...)`, setattr on the module, globals()['__path__']) is not detected; same class as R3, caught only by diff review. A plain `import <facade>` without a submodule in non-test code fails check (j).",
     "L2 (WP-07 PR A review): the re-export follow for a facade's own modules (`cognitive_core/<mod>.py` of a facade that lists `self`) is a regex heuristic on `from [packages.]X.<m> import *`; an unusual re-export spelling keeps the edge on the facade (then reported in meta.facade_unresolved and failed by check (i)).",
     "A `__path__` move outside the unit's own __init__.py (e.g. `memory_controller.__path__.insert(...)` in another file) is listed in the inventory `unknown` but is not parsed or failed by the layer check; only the __init__ of a unit is evaluated.",
     "R5/R6 (low): a mixed refuse+tighten --write-baseline run writes the tightening and exits 1; --owner-wp format is not validated; a trailing '# python -m x' comment still yields a string ref; 'python -malpha' and 'pypy3 -m' are missed."
