@@ -99,6 +99,46 @@ public sealed class RemoteCollectionTests : IDisposable
     }
 
     [Fact]
+    public void Defender_history_files_in_a_package_are_typed_for_the_DetectionHistory_parser_only_with_a_GUID_name_and_matching_content()
+    {
+        const string id = "2169D50A-AB8F-4CC5-992A-DEAFEE4FAE82";
+        var dir = Path.Combine(_root, "pkg", "files", RemoteCollection.DefenderHistoryFolder, "17");
+        Directory.CreateDirectory(dir);
+        var real = Path.Combine(dir, id);
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Corpus", "DefenderDetectionHistory", id), real);
+        var notGuid = Path.Combine(dir, "readme.txt"); File.WriteAllText(notGuid, "x");
+        var junk = Path.Combine(dir, Guid.NewGuid().ToString().ToUpperInvariant()); File.WriteAllBytes(junk, new byte[64]);
+        string Rel(string p) => Path.GetRelativePath(Path.Combine(_root, "pkg"), p).Replace('\\', '/');
+        Assert.Equal(LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName, RemoteCollection.ImportKind(Rel(real), real));
+        Assert.Equal("file", RemoteCollection.ImportKind(Rel(notGuid), notGuid));
+        Assert.Equal("file", RemoteCollection.ImportKind(Rel(junk), junk));
+        // the same GUID file outside the Defender folder of a package is not taken for one
+        Assert.Equal("file", RemoteCollection.ImportKind("files/other/" + id, real));
+    }
+
+    [Fact]
+    public void The_package_collects_the_Defender_history_folder_or_records_why_not()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["defender-history"]);
+        var script = RemoteCollection.PackageScript(req, sha);
+        Assert.Contains(@"Microsoft\Windows Defender\Scans\History\Service\DetectionHistory", script);
+        var check = RemoteCollection.Verify(ws, RunPackage(script));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var step = check.Manifest!.Steps.Single();
+        Assert.Contains(step.Status, new[] { "ok", "absent", "failed" });
+        // the folder is readable by administrators only: without elevation the step fails and says why, it is never silently "ok" and empty
+        if (!check.Manifest.Elevated) Assert.NotEqual("ok", step.Status);
+        if (step.Status != "ok") Assert.False(string.IsNullOrWhiteSpace(step.Error));
+        if (step.Status == "ok")
+        {
+            var items = RemoteCollection.Import(ws, check);
+            Assert.All(items.Where(i => i.StoredPath.Contains(RemoteCollection.DefenderHistoryFolder, StringComparison.OrdinalIgnoreCase) && Guid.TryParse(Path.GetFileName(i.StoredPath), out _)),
+                i => Assert.Equal(LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName, i.SourceType));
+        }
+    }
+
+    [Fact]
     public void Tampered_missing_extra_unauthorized_or_foreign_packages_are_refused()
     {
         var ws = NewCase();

@@ -494,3 +494,9 @@
   two domains is one station. Lab WS01 (renamed PING.EXE, removed after with rmm-lab.ps1 -Undo): AnyDesk service+process from C:\Users\Public
   and RustDesk from Program Files -> two REMOTE-TOOL-EXECUTED High naming each other. Suites: Dfir 3090, App 1028, UI 368, Edition 45.
   Next: Notepad TabState / MUICache.
+- 2026-11-09 (owner: „rezolva dupa ce termini partea cu windows defender”): Defender gap closed: remote package artifact `defender-history`
+  (copies ProgramData\...\DetectionHistory; missing folder = step "absent"; RemoteCollection.ImportKind types a file for the DH parser only
+  with a GUID name + matching content inside files/DefenderDetectionHistory/). Lab WS01: package generated in a TEST case
+  (E:\LA-Lab\diag\remote), run as admin on WS01, Verify ok, Import typed the history file, DEF-HISTORY-ONLY produced (Low: package had no
+  evtx:System, so the 104 clear was not visible). Notepad TabState attempt paused: on WS01 (Notepad 11.2312) a scheduled task in the user
+  session ran but no TabState files appeared yet; the VM UI driver cannot see the Store Notepad window. Suites: Dfir 3092.

@@ -48,8 +48,11 @@ public static class RemoteCollection
         "evtx:Security", "evtx:System", "evtx:Application", "evtx:Microsoft-Windows-PowerShell/Operational",
         "evtx:Microsoft-Windows-Windows Defender/Operational", "evtx:Microsoft-Windows-TaskScheduler/Operational",
         "evtx:Microsoft-Windows-Sysmon/Operational", "evtx:Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
-        "hive:SYSTEM", "hive:SOFTWARE", "prefetch", "tasks",
+        "hive:SYSTEM", "hive:SOFTWARE", "prefetch", "tasks", "defender-history",
     ];
+
+    /// <summary>Package sub-folder for the Defender DetectionHistory files (ProgramData\Microsoft\Windows Defender\Scans\History\Service\DetectionHistory).</summary>
+    public const string DefenderHistoryFolder = "DefenderDetectionHistory";
 
     private static readonly Regex HostName = new("^[A-Za-z0-9][A-Za-z0-9-]{0,14}$");
     private static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };
@@ -136,7 +139,8 @@ public static class RemoteCollection
                 $global:LASTEXITCODE = 0
                 $absent = $false
                 # wevtutil 15007: the channel does not exist on this station (Sysmon not installed): absent, not a failure (lab SRV01 2026-11-07)
-                try { & $action; if ($LASTEXITCODE -eq 15007) { $absent = $true; $err = 'jurnalul nu exista pe statie (componenta nu este instalata)' } elseif ($LASTEXITCODE -ne 0) { $err = "cod de iesire $LASTEXITCODE" } } catch { $err = $_.Exception.Message }
+                # an action that returns '__absent__' found nothing to collect (a folder that does not exist on this station)
+                try { $res = @(& $action); if ($res -contains '__absent__') { $absent = $true; $err = 'folderul nu exista pe statie' } elseif ($LASTEXITCODE -eq 15007) { $absent = $true; $err = 'jurnalul nu exista pe statie (componenta nu este instalata)' } elseif ($LASTEXITCODE -ne 0) { $err = "cod de iesire $LASTEXITCODE" } } catch { $err = $_.Exception.Message }
                 $steps.Add([ordered]@{ artifact = $name; startUtc = $start; endUtc = (Get-Date).ToUniversalTime().ToString('o'); status = $(if ($absent) { 'absent' } elseif ($err) { 'failed' } else { 'ok' }); error = $err })
             }
             foreach ($a in $Artifacts) {
@@ -154,6 +158,10 @@ public static class RemoteCollection
                     Step $a { Copy-Item -Path (Join-Path $env:SystemRoot 'Prefetch\*.pf') -Destination $d -ErrorAction Stop }
                 } elseif ($a -eq 'tasks') {
                     Step $a { Copy-Item -Path (Join-Path $env:SystemRoot 'System32\Tasks') -Destination (Join-Path $files 'Tasks') -Recurse -ErrorAction Stop }
+                } elseif ($a -eq 'defender-history') {
+                    # one file per detection, kept after the Defender log is cleared; readable by administrators only
+                    $src = Join-Path $env:ProgramData 'Microsoft\Windows Defender\Scans\History\Service\DetectionHistory'
+                    Step $a { if (-not (Test-Path -LiteralPath $src)) { return '__absent__' }; Copy-Item -LiteralPath $src -Destination (Join-Path $files 'DefenderDetectionHistory') -Recurse -ErrorAction Stop }
                 }
             }
             try {
@@ -224,6 +232,17 @@ public static class RemoteCollection
         return new(problems.Count == 0, problems, m, r, packageDir);
     }
 
+    /// <summary>
+    /// The evidence type of a package file. A file of the Defender history folder is typed like a direct import (GUID name and matching content),
+    /// so anything else placed there stays "file" and never reaches the DetectionHistory parser.
+    /// </summary>
+    internal static string ImportKind(string relativePath, string fullPath) =>
+        relativePath.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase) ? "evtx" : relativePath.EndsWith(".hive", StringComparison.OrdinalIgnoreCase) ? "registry-hive"
+        : relativePath.EndsWith(".pf", StringComparison.OrdinalIgnoreCase) ? "prefetch" : relativePath.Contains("/Tasks/", StringComparison.OrdinalIgnoreCase) ? "task-xml"
+        : relativePath.Contains("/" + DefenderHistoryFolder + "/", StringComparison.OrdinalIgnoreCase)
+            && Investigation.InvestigationPipeline.ImportType(fullPath) is var t && t == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName ? t
+        : "file";
+
     /// <summary>Imports a verified package: the manifest, then every file with the manifest as parent and custody from the target.</summary>
     public static IReadOnlyList<EvidenceItem> Import(CaseWorkspace ws, RemotePackageCheck check)
     {
@@ -237,8 +256,7 @@ public static class RemoteCollection
         var items = new List<EvidenceItem> { manifest };
         foreach (var f in m.Files)
         {
-            var kind = f.Path.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase) ? "evtx" : f.Path.EndsWith(".hive", StringComparison.OrdinalIgnoreCase) ? "registry-hive"
-                     : f.Path.EndsWith(".pf", StringComparison.OrdinalIgnoreCase) ? "prefetch" : f.Path.Contains("/Tasks/", StringComparison.OrdinalIgnoreCase) ? "task-xml" : "file";
+            var kind = ImportKind(f.Path, Path.Combine(check.PackageDir, f.Path));
             var item = ws.ImportFile(Path.Combine(check.PackageDir, f.Path), source, kind,
                 kind is "registry-hive" or "task-xml" ? TemporalType.CurrentSnapshot : TemporalType.Historical,
                 CollectorName, DfirInfo.ApplicationVersion, parentEvidenceId: manifest.EvidenceId, notes: $"{m.Host}:{f.Path}; {notes}");
