@@ -658,6 +658,7 @@ The workflows in [`.github/workflows/`](.github/workflows/), grouped by what the
 | central agent router, dispatcher and secure bridge | `agent-routing-tests.yml` |
 | direct `vault://` routes, per-channel read policy, MCP/CLI/Ollama/Telegram adapters | `vault-access.yml` |
 | ACTIVE notes, checked against their recorded digests | `active-note-integrity.yml` |
+| architectural layer boundaries (import ratchet) | `architecture-boundaries.yml` |
 | the paths gitleaks skips, scanned for high-confidence secrets | `exempt-area-secret-scan.yml` |
 | runtime write paths | `write-path-audit.yml` |
 | security: secrets, static analysis | `secret-scan.yml`, `codeql.yml`, `codeql-csharp.yml`, `codeql-config-cleanup.yml`, `fortify.yml`, `apisec-scan.yml` |
