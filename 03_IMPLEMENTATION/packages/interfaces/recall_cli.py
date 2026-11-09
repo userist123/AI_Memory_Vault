@@ -5,17 +5,17 @@ import time
 from typing import List, Dict, Any, Optional
 from pathlib import Path
 
-# Asiguram ca radacina proiectului este corect detectata si in PYTHONPATH
-_REPO_ROOT = Path(__file__).resolve().parents[3]
-if (_REPO_ROOT / "AGENTS.md").exists():
-    VAULT_ROOT = str(_REPO_ROOT)
-else:
-    VAULT_ROOT = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+# The vault root, the HMAC minimum and the root resolution have one definition, in the memory
+# layer (WP-09); this CLI only re-exports them (WP-13 review L2: no duplicate that can drift).
+from memory_controller.controller_factory import (  # noqa: E402,F401
+    MIN_HMAC_SECRET_LENGTH,
+    VAULT_ROOT,
+    _effective_vault_root,
+)
 
+# Asiguram ca radacina proiectului este corect detectata si in PYTHONPATH
 if VAULT_ROOT not in sys.path:
     sys.path.insert(0, VAULT_ROOT)
-
-MIN_HMAC_SECRET_LENGTH = 32
 
 from interfaces import vault_runtime  # noqa: E402  (per-user secret + usage log, outside the repo)
 
@@ -28,13 +28,6 @@ from memory_controller.controller_factory import (  # noqa: E402,F401  (re-expor
 )
 from memory_controller.controller import MemoryController
 from memory_controller.authorizer import Principal
-
-def _effective_vault_root() -> str:
-    """Resolve the runtime vault root, allowing deterministic test/embedded deployments."""
-    configured = os.getenv("MEMORY_VAULT_ROOT")
-    root = Path(configured).expanduser() if configured else Path(VAULT_ROOT)
-    return str(root.resolve())
-
 
 def search_markdown_vault(
     query: str,
