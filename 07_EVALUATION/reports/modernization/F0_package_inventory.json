@@ -174,7 +174,7 @@
       "site-packages",
       "venv"
     ],
-    "py_files_scanned": 2198,
+    "py_files_scanned": 2200,
     "pythonpath_order": [
       ".",
       "03_IMPLEMENTATION/packages",
@@ -2251,7 +2251,7 @@
     "02_PRODUCT": 54,
     "03_IMPLEMENTATION": 14,
     "07_EVALUATION": 20,
-    "20_TESTS": 358,
+    "20_TESTS": 359,
     "security": 37
   },
   "tests_focus_dirs": {
@@ -2259,7 +2259,7 @@
     "02_PRODUCT": 54,
     "03_IMPLEMENTATION": 14,
     "07_EVALUATION": 20,
-    "20_TESTS": 358,
+    "20_TESTS": 359,
     "security": 37
   },
   "units": [
@@ -3225,7 +3225,7 @@
         "security/tests/test_pr209_final_security_gates.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/memory_controller",
-      "dynamic_imports_nontest": 0,
+      "dynamic_imports_nontest": 2,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -3239,10 +3239,10 @@
       "imports_out_nontest": {},
       "init_exists": true,
       "kind": "packages",
-      "loc": 17,
+      "loc": 123,
       "local_unresolved_names": [],
       "name": "memory_controller",
-      "py_files": 1,
+      "py_files": 2,
       "shim_target_source": "path_eval",
       "shim_targets": [
         "packages/retrieval",
@@ -3257,7 +3257,25 @@
           "detail": "__path__ shim -> packages/retrieval, packages/memory, packages/security, packages/lifecycle, packages/interfaces, packages/observability",
           "file": "03_IMPLEMENTATION/packages/memory_controller/__init__.py",
           "kind": "path_assign",
-          "line": 11
+          "line": 16
+        },
+        {
+          "detail": "spec_from_file_location",
+          "file": "03_IMPLEMENTATION/packages/memory_controller/__init__.py",
+          "kind": "file_or_module_loader",
+          "line": 38
+        },
+        {
+          "detail": "import_module",
+          "file": "03_IMPLEMENTATION/packages/memory_controller/_alias.py",
+          "kind": "dynamic_import",
+          "line": 56
+        },
+        {
+          "detail": "import_module",
+          "file": "03_IMPLEMENTATION/packages/memory_controller/_alias.py",
+          "kind": "dynamic_import",
+          "line": 86
         }
       ]
     },

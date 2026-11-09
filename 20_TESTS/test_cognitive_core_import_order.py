@@ -41,9 +41,10 @@ def test_there_are_modules_to_check():
 @pytest.mark.parametrize("dotted", [
     *(f"cognitive_core.{m}" for m in ("controller", "executive", "reasoning", "recall", "orchestrator",
                                       "working_memory", "global_workspace")),
-    # the namespace production code and most tests use for the controller; the other memory
-    # modules were never importable through `memory_controller` (its __path__ has no graph/ or
-    # learning/, so their relative imports fail regardless of order)
+    # the namespace production code and most tests use for the controller. Since WP-07 PR B it is
+    # an alias of `cognitive_core.controller` (same module object); before, it was a second copy.
+    # The other memory modules are not listed here: they were only ever import-order-checked
+    # through `cognitive_core`, and `memory_controller.<them>` now resolves to the same objects.
     "memory_controller.controller",
 ])
 def test_the_modules_that_used_to_cycle_import_first(dotted):

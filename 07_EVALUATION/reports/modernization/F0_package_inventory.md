@@ -1,7 +1,7 @@
 # F0 — Inventar pachete (generat automat)
 
 Generat de `30_SCRIPTS/verification/package_inventory.py`; toate numerele provin din rularea scriptului.
-Fișiere .py analizate: 2198; ordinea `pythonpath`: `. 03_IMPLEMENTATION/packages 03_IMPLEMENTATION` (primul câștigă); erori de parsare AST: 28.
+Fișiere .py analizate: 2200; ordinea `pythonpath`: `. 03_IMPLEMENTATION/packages 03_IMPLEMENTATION` (primul câștigă); erori de parsare AST: 28.
 
 Reguli: LOC = linii non-goale fără comentariu-linie. Consumator prod = fișier .py în afara 20_TESTS, /tests/, /benchmarks/, test_*.py și în afara modulului. Consumator test = 20_TESTS, /tests/, test_*.py, conftest.py. Un import prin shim `__path__` creditează și modulul servit.
 
@@ -16,7 +16,7 @@ Reguli: LOC = linii non-goale fără comentariu-linie. Consumator prod = fișier
 | `packages/learning` | 19 | 1496 | main:0 __main__:0 scripts:0 | 6 | 27 | 0 (0 f.) | yaml | 0 |
 | `packages/lifecycle` | 32 | 7029 | main:0 __main__:0 scripts:0 | 21 | 30 | 0 (0 f.) | jsonschema | 0 |
 | `packages/memory` | 26 | 4554 | main:0 __main__:0 scripts:0 | 68 | 104 | 3 (2 f.) | yaml | 0 |
-| `packages/memory_controller` | 1 | 17 | main:0 __main__:0 scripts:0 | 96 | 118 | 2 (1 f.) | - | 1 |
+| `packages/memory_controller` | 2 | 123 | main:0 __main__:0 scripts:0 | 96 | 118 | 2 (1 f.) | - | 4 |
 | `packages/memory_vault` | 2 | 32 | main:0 __main__:0 scripts:0 | 0 | 0 | 0 (0 f.) | - | 2 |
 | `packages/observability` | 15 | 2932 | main:0 __main__:0 scripts:0 | 14 | 32 | 0 (0 f.) | - | 0 |
 | `packages/polymarket` | 27 | 4107 | main:1 __main__:0 scripts:0 | 4 | 30 | 14 (8 f.) | - | 0 |
@@ -85,7 +85,7 @@ Notă: `packages/xau_kinetic` este un shim către `products/xau_kinetic/engine`;
 
 | Director de top | Fișiere test_*.py | Colectat |
 |---|---|---|
-| `20_TESTS` | 358 | da |
+| `20_TESTS` | 359 | da |
 | `02_PRODUCT` | 54 | nu |
 | `security` | 37 | nu |
 | `07_EVALUATION` | 20 | nu |
@@ -114,7 +114,7 @@ Notă: `packages/xau_kinetic` este un shim către `products/xau_kinetic/engine`;
 
 ## UNKNOWN (neinterpretabil de AST)
 
-În module: 35 intrări (detaliu în JSON). În afara modulelor (teste, scripturi): 416 (dynamic_import=3, file_or_module_loader=94, path_assign=2, path_mutation=317). Aceste fișiere pot importa module prin căi runtime pe care inventarul nu le vede; numărul de consumatori este deci un minim.
+În module: 38 intrări (detaliu în JSON). În afara modulelor (teste, scripturi): 416 (dynamic_import=3, file_or_module_loader=94, path_assign=2, path_mutation=317). Aceste fișiere pot importa module prin căi runtime pe care inventarul nu le vede; numărul de consumatori este deci un minim.
 
 ## Importuri din șiruri de caractere
 
