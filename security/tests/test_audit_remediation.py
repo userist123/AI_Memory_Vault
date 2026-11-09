@@ -379,7 +379,7 @@ def test_m04_m05_withheld_content_is_exactly_review_and_quarantined_for_agents()
 
 
 def test_m04_the_egress_gate_applies_the_same_rule_as_the_pack_builder():
-    from memory.data_router import MemoryDataEgressGate
+    from retrieval.data_router import MemoryDataEgressGate
 
     gate = MemoryDataEgressGate()
     # a pack the builder let through to an owner, then routed to an agent: the gate must
@@ -398,7 +398,7 @@ def test_m04_the_egress_gate_applies_the_same_rule_as_the_pack_builder():
 def test_m04_admin_and_human_are_treated_alike_by_the_builder_and_the_gate(owner):
     """The pack builder used to test `!= "human"` while the data router used {"human", "admin"}:
     ADMIN lost content in one layer and kept it in the other. One shared owner set now."""
-    from memory.data_router import MemoryDataEgressGate
+    from retrieval.data_router import MemoryDataEgressGate
     from security.verified_reduction import OWNER_PRINCIPALS, is_owner_principal
 
     assert OWNER_PRINCIPALS == {"human", "admin"}
