@@ -107,15 +107,6 @@
   },
   "baseline_edges": [
     {
-      "from": "packages/interfaces",
-      "to": "products/xau_kinetic",
-      "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-12",
-      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06)",
-      "hard_forbidden": true
-    },
-    {
       "from": "packages/security",
       "to": "packages/interfaces",
       "imports": 1,
