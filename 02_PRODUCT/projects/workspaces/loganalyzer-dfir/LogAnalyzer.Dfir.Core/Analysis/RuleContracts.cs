@@ -207,7 +207,7 @@ public static class RuleContracts
              "Sunt listate cel mult 20 de serii, cel puțin una pentru fiecare cont; restul sunt într-un rezumat."],
             ["Linia de comandă completă (auditul cu linia de comandă), procesul părinte, sesiunea de autentificare."],
             ["Identificați sesiunea și sursa ei (4624).", "Căutați ce a urmat: autentificări spre alte stații, unelte noi, persistență."]),
-        R("KERBEROAST", W11, SemanticType.Observation, "Același cont a primit în scurt timp tichete Kerberos de serviciu cu criptare RC4 pentru cel puțin trei servicii diferite (tiparul Kerberoasting): 5 sau mai multe High, 3-4 Medium.",
+        R("KERBEROAST-RC4", W11, SemanticType.Observation, "Același cont a primit în scurt timp tichete Kerberos de serviciu cu criptare RC4 pentru cel puțin trei servicii diferite (tiparul Kerberoasting): 5 sau mai multe High, 3-4 Medium.",
             ["Un singur tichet RC4 nu este constatare: conturile de serviciu vechi, fără AES, îl cer în mod normal; RC4 este încă implicit pentru conturile de serviciu de utilizator fără msDS-SupportedEncryptionTypes, de aceea 3-4 servicii sunt doar Medium.", "Evenimentul arată tichetele emise, nu spargerea lor.",
              "Fără auditul „Kerberos Service Ticket Operations” pe controlerul de domeniu (4769), regula nu vede nimic.", "Conturile de mașină și krbtgt sunt excluse; sunt listate cel mult 20 de serii, restul într-un rezumat."],
             ["Dacă hash-urile au fost sparte, stația sursă și procesele ei."],

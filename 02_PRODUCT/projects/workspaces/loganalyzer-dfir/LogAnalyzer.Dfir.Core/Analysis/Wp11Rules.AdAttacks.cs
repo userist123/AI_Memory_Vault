@@ -8,7 +8,7 @@ namespace LogAnalyzer.Dfir.Analysis;
 public static partial class Wp11Rules
 {
     // ---------------------------------------------------------------- attacks on Active Directory and silencing of the EDR
-    // Five rules over Security events a domain controller, a certification authority or a station writes: KERBEROAST (4769), ASREP-ROAST (4768),
+    // Five rules over Security events a domain controller, a certification authority or a station writes: KERBEROAST-RC4 (4769), ASREP-ROAST (4768),
     // ADCS-SAN (4886 / 4887), NTLM-RELAY-MACHINE (4624) and EDR-WFP-BLOCK (5441 / 5447 / 5157). Each states what the event shows (a ticket issued, a
     // certificate requested, a computer account that signed in by NTLM from another name, a filter or a blocked connection) and what no log shows
     // (cracked hashes, the template's settings, the tool behind the filter). A field that is missing or empty never produces a finding and never throws;
@@ -101,7 +101,7 @@ public static partial class Wp11Rules
         });
     }
 
-    // ---------------------------------------------------------------- KERBEROAST
+    // ---------------------------------------------------------------- KERBEROAST-RC4
     // One RC4 service ticket is a legacy service; the same account asking for RC4 tickets for several DIFFERENT services in a few minutes is how
     // Kerberoasting (T1558.003) collects hashes to crack offline.
 
@@ -138,7 +138,7 @@ public static partial class Wp11Rules
                 i++;
             }
         }
-        EmitCapped(c, o, items, "KERBEROAST", "Credential Access", "T1558.003", "serie de tichete Kerberos RC4", "serii de tichete Kerberos RC4");
+        EmitCapped(c, o, items, "KERBEROAST-RC4", "Credential Access", "T1558.003", "serie de tichete Kerberos RC4", "serii de tichete Kerberos RC4");
     }
 
     private static Finding MakeKerberoast(Ctx c, string user, List<(TimelineEvent E, string Svc)> win)
@@ -148,7 +148,7 @@ public static partial class Wp11Rules
         var first = win[0].E; var last = win[^1].E;
         return new Finding
         {
-            FindingId = c.NextId(), RuleId = "KERBEROAST",
+            FindingId = c.NextId(), RuleId = "KERBEROAST-RC4",
             Title = $"Tichete Kerberos RC4 pentru {RoT(services.Count, "serviciu", "servicii")} diferite cerute de {user}",
             Severity = services.Count >= KerberoastHighServices ? Severity.High : Severity.Medium, Category = "Credential Access", Classification = Classification.Correlated, Confidence = Confidence.Medium,
             MitreTechniqueId = "T1558.003", SemanticType = SemanticType.Observation,

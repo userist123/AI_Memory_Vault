@@ -65,7 +65,7 @@ Punctele 1 și 2 de mai sus sunt acum reguli în `Wp11Rules.AdAttacks.cs`. Fieca
 
 | Regulă | Ce vede | Ce trebuie auditat |
 |---|---|---|
-| `KERBEROAST` (T1558.003, High la 5 servicii, Medium la 3-4) | Același cont cu tichete RC4 (0x17 / 0x18) pentru cel puțin 3 servicii diferite în 10 minute (4769) | „Kerberos Service Ticket Operations” pe controlerul de domeniu |
+| `KERBEROAST-RC4` (T1558.003, High la 5 servicii, Medium la 3-4) | Același cont cu tichete RC4 (0x17 / 0x18) pentru cel puțin 3 servicii diferite în 10 minute (4769) | „Kerberos Service Ticket Operations” pe controlerul de domeniu |
 | `ASREP-ROAST` (T1558.004, Medium; High cu RC4) | Cont care a primit TGT fără pre-autentificare (4768, tip 0), un constat pe cont | „Kerberos Authentication Service” pe controlerul de domeniu |
 | `ADCS-SAN` (T1649, High la 4887, Medium la 4886) | Cerere sau certificat emis cu un SAN în atributele cererii (calea EDITF_ATTRIBUTESUBJECTALTNAME2, ESC6; ESC1 cu SAN doar în extensia cererii nu se vede) | Auditul autorității de certificare (oprit implicit) |
 | `NTLM-RELAY-MACHINE` (T1557.001, Medium) | Cont de calculator cu 4624 tip 3 prin NTLM de la o adresă IP absentă din cele de la care s-a autentificat prin Kerberos în același jurnal (fără bază Kerberos, fără constatare) | „Logon” pe serverul ținta |

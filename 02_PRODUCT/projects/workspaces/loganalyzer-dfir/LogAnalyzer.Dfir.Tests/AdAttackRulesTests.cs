@@ -5,13 +5,13 @@ using static LogAnalyzer.Dfir.Tests.W11;
 
 namespace LogAnalyzer.Dfir.Tests;
 
-/// <summary>Attacks on Active Directory and silencing of the EDR: KERBEROAST, ASREP-ROAST, ADCS-SAN, NTLM-RELAY-MACHINE, EDR-WFP-BLOCK.</summary>
+/// <summary>Attacks on Active Directory and silencing of the EDR: KERBEROAST-RC4, ASREP-ROAST, ADCS-SAN, NTLM-RELAY-MACHINE, EDR-WFP-BLOCK.</summary>
 public class AdAttackRulesTests
 {
     private static List<Finding> Of(string rule, params TimelineEvent[] events) => Run(events).Where(f => f.RuleId == rule).ToList();
     private static List<Finding> Of(string rule, IEnumerable<TimelineEvent> events) => Run(events).Where(f => f.RuleId == rule).ToList();
 
-    // ---- KERBEROAST ----
+    // ---- KERBEROAST-RC4 ----
 
     private static TimelineEvent Tgs(double minute, string user, string svc, string enc = "0x17", string status = "0x0", string ip = "::ffff:10.0.0.5") =>
         Sec(4769, minute, ("TargetUserName", user), ("ServiceName", svc), ("TicketEncryptionType", enc), ("Status", status), ("IpAddress", ip));
@@ -19,10 +19,10 @@ public class AdAttackRulesTests
     [Fact]
     public void Three_distinct_services_with_RC4_tickets_in_ten_minutes_are_one_KERBEROAST_Medium_and_five_are_High()
     {
-        var f = Assert.Single(Of("KERBEROAST", Tgs(0, "Ana@CORP.LOCAL", "svc_sql"), Tgs(1, "ana@corp.local", "svc_web"), Tgs(2, "ANA@CORP", "SVC_FILE", "0X18")));
+        var f = Assert.Single(Of("KERBEROAST-RC4", Tgs(0, "Ana@CORP.LOCAL", "svc_sql"), Tgs(1, "ana@corp.local", "svc_web"), Tgs(2, "ANA@CORP", "SVC_FILE", "0X18")));
         Assert.Equal(Severity.Medium, f.Severity);
-        Assert.Equal(Severity.Medium, Assert.Single(Of("KERBEROAST", Tgs(0, "ana", "a"), Tgs(1, "ana", "b"), Tgs(2, "ana", "c"), Tgs(3, "ana", "d"))).Severity);
-        var five = Assert.Single(Of("KERBEROAST", Enumerable.Range(0, 5).Select(i => Tgs(i, "ana", "svc" + i))));
+        Assert.Equal(Severity.Medium, Assert.Single(Of("KERBEROAST-RC4", Tgs(0, "ana", "a"), Tgs(1, "ana", "b"), Tgs(2, "ana", "c"), Tgs(3, "ana", "d"))).Severity);
+        var five = Assert.Single(Of("KERBEROAST-RC4", Enumerable.Range(0, 5).Select(i => Tgs(i, "ana", "svc" + i))));
         Assert.Equal(Severity.High, five.Severity);
         Assert.Contains("5 servicii", five.Title);
         Assert.Equal("T1558.003", f.MitreTechniqueId);
@@ -36,44 +36,44 @@ public class AdAttackRulesTests
     [Fact]
     public void Decimal_encryption_types_23_and_24_count_as_RC4()
     {
-        Assert.Single(Of("KERBEROAST", Tgs(0, "ana", "a", "23"), Tgs(1, "ana", "b", "24"), Tgs(2, "ana", "c", "0x17")));
+        Assert.Single(Of("KERBEROAST-RC4", Tgs(0, "ana", "a", "23"), Tgs(1, "ana", "b", "24"), Tgs(2, "ana", "c", "0x17")));
     }
 
     [Fact]
     public void A_single_ticket_the_same_service_many_times_or_two_services_are_not_findings()
     {
-        Assert.Empty(Of("KERBEROAST", Tgs(0, "ana", "svc_a")));
-        Assert.Empty(Of("KERBEROAST", Enumerable.Range(0, 20).Select(i => Tgs(i * 0.1, "ana", "SVC_A"))));
-        Assert.Empty(Of("KERBEROAST", Tgs(0, "ana", "a"), Tgs(1, "ana", "b")));
+        Assert.Empty(Of("KERBEROAST-RC4", Tgs(0, "ana", "svc_a")));
+        Assert.Empty(Of("KERBEROAST-RC4", Enumerable.Range(0, 20).Select(i => Tgs(i * 0.1, "ana", "SVC_A"))));
+        Assert.Empty(Of("KERBEROAST-RC4", Tgs(0, "ana", "a"), Tgs(1, "ana", "b")));
     }
 
     [Fact]
     public void AES_failed_machine_and_krbtgt_tickets_are_excluded()
     {
-        Assert.Empty(Of("KERBEROAST", Tgs(0, "ana", "a", "0x12"), Tgs(1, "ana", "b", "0x11"), Tgs(2, "ana", "c", "0x12")));
-        Assert.Empty(Of("KERBEROAST", Tgs(0, "ana", "a", status: "0x1B"), Tgs(1, "ana", "b", status: "0x1B"), Tgs(2, "ana", "c", status: "0x1B")));
-        Assert.Empty(Of("KERBEROAST", Tgs(0, "ana", "pc1$"), Tgs(1, "ana", "pc2$"), Tgs(2, "ana", "pc3$"), Tgs(3, "ana", "krbtgt"), Tgs(4, "ana", "KRBTGT")));
-        Assert.Empty(Of("KERBEROAST", Tgs(0, "pc1$@CORP", "a"), Tgs(1, "pc1$@CORP", "b"), Tgs(2, "pc1$@CORP", "c")));
+        Assert.Empty(Of("KERBEROAST-RC4", Tgs(0, "ana", "a", "0x12"), Tgs(1, "ana", "b", "0x11"), Tgs(2, "ana", "c", "0x12")));
+        Assert.Empty(Of("KERBEROAST-RC4", Tgs(0, "ana", "a", status: "0x1B"), Tgs(1, "ana", "b", status: "0x1B"), Tgs(2, "ana", "c", status: "0x1B")));
+        Assert.Empty(Of("KERBEROAST-RC4", Tgs(0, "ana", "pc1$"), Tgs(1, "ana", "pc2$"), Tgs(2, "ana", "pc3$"), Tgs(3, "ana", "krbtgt"), Tgs(4, "ana", "KRBTGT")));
+        Assert.Empty(Of("KERBEROAST-RC4", Tgs(0, "pc1$@CORP", "a"), Tgs(1, "pc1$@CORP", "b"), Tgs(2, "pc1$@CORP", "c")));
         // two real services plus excluded ones do not add up to three
-        Assert.Empty(Of("KERBEROAST", Tgs(0, "ana", "a"), Tgs(1, "ana", "b"), Tgs(2, "ana", "pc$"), Tgs(3, "ana", "krbtgt")));
+        Assert.Empty(Of("KERBEROAST-RC4", Tgs(0, "ana", "a"), Tgs(1, "ana", "b"), Tgs(2, "ana", "pc$"), Tgs(3, "ana", "krbtgt")));
     }
 
     [Fact]
     public void The_ten_minute_window_is_inclusive_and_one_second_more_is_out()
     {
-        Assert.Single(Of("KERBEROAST", Tgs(0, "ana", "a"), Tgs(5, "ana", "b"), Tgs(10, "ana", "c")));
-        Assert.Empty(Of("KERBEROAST", Tgs(0, "ana", "a"), Tgs(5, "ana", "b"), Tgs(10 + 1.0 / 60, "ana", "c")));
+        Assert.Single(Of("KERBEROAST-RC4", Tgs(0, "ana", "a"), Tgs(5, "ana", "b"), Tgs(10, "ana", "c")));
+        Assert.Empty(Of("KERBEROAST-RC4", Tgs(0, "ana", "a"), Tgs(5, "ana", "b"), Tgs(10 + 1.0 / 60, "ana", "c")));
     }
 
     [Fact]
     public void Services_are_counted_per_account_and_missing_fields_or_time_never_crash()
     {
-        Assert.Empty(Of("KERBEROAST", Tgs(0, "ana", "a"), Tgs(1, "ion", "b"), Tgs(2, "dan", "c")));
-        Assert.Empty(Of("KERBEROAST", Sec(4769, 0), Sec(4769, 1, ("TargetUserName", "ana")), Sec(4769, 2, ("TargetUserName", "ana"), ("ServiceName", "a")),
+        Assert.Empty(Of("KERBEROAST-RC4", Tgs(0, "ana", "a"), Tgs(1, "ion", "b"), Tgs(2, "dan", "c")));
+        Assert.Empty(Of("KERBEROAST-RC4", Sec(4769, 0), Sec(4769, 1, ("TargetUserName", "ana")), Sec(4769, 2, ("TargetUserName", "ana"), ("ServiceName", "a")),
             Sec(4769, 3, ("TargetUserName", "ana"), ("ServiceName", "b"), ("TicketEncryptionType", ""), ("Status", "0x0")), Tgs(4, "", "c"), Tgs(5, "ana", "")));
         var noTime = Tgs(1, "ana", "b"); var noTime2 = Tgs(2, "ana", "c");
         var untimed = new[] { Tgs(0, "ana", "a"), Untimed(noTime), Untimed(noTime2) };
-        Assert.Empty(Of("KERBEROAST", untimed));
+        Assert.Empty(Of("KERBEROAST-RC4", untimed));
     }
 
     private static TimelineEvent Untimed(TimelineEvent e) => new()
@@ -85,7 +85,7 @@ public class AdAttackRulesTests
     public void Many_accounts_are_listed_up_to_the_cap_and_one_Low_summary_holds_the_rest()
     {
         var events = Enumerable.Range(0, 30).SelectMany(u => Enumerable.Range(0, 5).Select(k => Tgs(u + k * 0.01, $"u{u:D2}", "s" + k))).ToList();
-        var found = Of("KERBEROAST", events);
+        var found = Of("KERBEROAST-RC4", events);
         Assert.Equal(Wp11Rules.AdMaxFindings + 1, found.Count);
         var summary = Assert.Single(found, x => x.Severity == Severity.Low);
         Assert.StartsWith("Neafișate individual: 10 serii", summary.Title);
