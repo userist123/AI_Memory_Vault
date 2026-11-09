@@ -29,6 +29,7 @@ public static partial class Wp11Rules
         Dns(c, found);
         Tools(c, found);
         Discovery(c, found);
+        AdAttacks(c, found);
         return found;
     }
 

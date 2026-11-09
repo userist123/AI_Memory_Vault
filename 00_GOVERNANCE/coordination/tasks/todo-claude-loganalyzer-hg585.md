@@ -460,3 +460,12 @@
   CaseWorkspace.CreateKeepingPreCaseFiles keeps only listed pre-case files (audited with SHA-256), anything else still refused. Verified on
   Insula: case created, journal kept. The .cklb itself is not yet produced in the lab: the officer export first requires measure/owner/deadline
   for each NECONFORM row (by design). Suites: Dfir 2994, App 1028, UI 368, Edition 45.
+- 2026-11-09 (owner „Continua”): wave 3, AD/EDR detection pack in the investigation pipeline (`Analysis/Wp11Rules.AdAttacks.cs`; the old
+  KerberosAdAttackEngine is only used by the legacy MainViewModel, the case pipeline had no Kerberos rules): KERBEROAST (RC4 TGS, 3-4 services
+  Medium, 5+ High), ASREP-ROAST, ADCS-SAN (request SAN attribute = ESC6 path), NTLM-RELAY-MACHINE (NTLM type 3 of a computer account from an
+  address with no EARLIER Kerberos sign-in of that account), EDR-WFP-BLOCK (5441/5447 "Custom Outbound Filter", 5157 blocks of EDR agents).
+  Opus review r1: relay rule compared WorkstationName (the victim's in a relay) -> IP baseline; Kerberoast threshold; ESC6 wording; r2: baseline
+  must be time-ordered (later PKINIT logon hid a relay) -> fixed by main session, IPv6 canonical. Lab: TEST SPN accounts on DC01 (removed after),
+  RC4 tickets from WS01; the real pipeline on the DC01 Security export (20,022 events) gave exactly one KERBEROAST and no false NTLM relay
+  (16,408 machine Kerberos logons, 0 machine NTLM). 5441/5447/5157/4886/4887 field names not seen in real logs yet (lab has no CA/EDR).
+  Suites: Dfir 3014, App 1028, UI 368, Edition 45.

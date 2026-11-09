@@ -15,6 +15,7 @@ public class Wp11ContractTests
         "SMB-ADMIN-SHARE", "SMB-SHARE-PERMS-CHANGED", "ACCOUNT-CREATED", "ACCOUNT-ADDED-PRIVILEGED-GROUP", "ACCOUNT-CREATED-THEN-USED",
         "REMOTE-RDP-INTERNAL", "REMOTE-WINRM", "REMOTE-PSEXEC", "REMOTE-SSH", "SECURITY-AGENT-STOPPED", "VSS-SNAPSHOT-DELETED",
         "DNS-RARE-DOMAIN", "DNS-SERVER-CHANGED", "REMOTE-TOOL-PRESENT", "REMOTE-TOOL-EXECUTED", "DISCOVERY-BURST",
+        "KERBEROAST", "ASREP-ROAST", "ADCS-SAN", "NTLM-RELAY-MACHINE", "EDR-WFP-BLOCK",
     ];
 
     /// <summary>A timeline in which every rule fires at least once.</summary>
@@ -40,6 +41,14 @@ public class Wp11ContractTests
         Sec(4688, 16, ("NewProcessName", @"C:\Windows\System32\whoami.exe"), ("CommandLine", "whoami /all"), ("SubjectUserName", "bob")),
         Sec(4688, 16.1, ("NewProcessName", @"C:\Windows\System32\nltest.exe"), ("CommandLine", "nltest /dclist:corp"), ("SubjectUserName", "bob")),
         Sec(4688, 16.2, ("NewProcessName", @"C:\Windows\System32\net.exe"), ("CommandLine", "net group \"Domain Admins\" /domain"), ("SubjectUserName", "bob")),
+        Sec(4769, 17, ("TargetUserName", "ana@CORP"), ("ServiceName", "svc_a"), ("TicketEncryptionType", "0x17"), ("Status", "0x0"), ("IpAddress", "10.0.0.5")),
+        Sec(4769, 17.1, ("TargetUserName", "ana@CORP"), ("ServiceName", "svc_b"), ("TicketEncryptionType", "0x17"), ("Status", "0x0"), ("IpAddress", "10.0.0.5")),
+        Sec(4769, 17.2, ("TargetUserName", "ana@CORP"), ("ServiceName", "svc_c"), ("TicketEncryptionType", "0x17"), ("Status", "0x0"), ("IpAddress", "10.0.0.5")),
+        Sec(4768, 18, ("TargetUserName", "svc_old"), ("PreAuthType", "0"), ("TicketEncryptionType", "0x17"), ("Status", "0x0"), ("IpAddress", "10.0.0.5")),
+        Sec(4887, 19, ("Attributes", "SAN:upn=administrator@corp"), ("RequestId", "5"), ("Requester", @"CORP\bob")),
+        Sec(4624, 19.5, ("TargetUserName", "DC02$"), ("WorkstationName", "DC02"), ("AuthenticationPackageName", "Kerberos"), ("LogonType", "3"), ("IpAddress", "10.0.0.20")),
+        Sec(4624, 20, ("TargetUserName", "DC02$"), ("WorkstationName", "DC02"), ("AuthenticationPackageName", "NTLM"), ("LogonType", "3"), ("IpAddress", "10.0.0.66")),
+        Sec(5441, 21, ("FilterName", "Custom Outbound Filter"), ("FilterId", "9")),
     ];
 
     private static List<Finding> Enriched() => FindingContract.Enrich(Correlation.Run(Everything())).ToList();

@@ -273,6 +273,7 @@ namespace LogAnalyzer.Core.Services.Details
             ["T1558.003"] = "cererea de bilete Kerberos pentru a sparge offline parolele conturilor de serviciu (Kerberoasting)",
             ["T1558.004"] = "obținerea datelor de spart pentru conturi fără pre-autentificare (AS-REP roasting)",
             ["T1560"] = "arhivarea datelor înainte de a fi scoase",
+            ["T1649"] = "obținerea sau falsificarea certificatelor de autentificare (de exemplu un certificat emis pe numele altui cont)",
             ["T1562"] = "slăbirea apărării",
             ["T1562.001"] = "dezactivarea sau modificarea antivirusului ori a altor protecții",
             ["T1562.002"] = "dezactivarea jurnalelor de evenimente Windows",

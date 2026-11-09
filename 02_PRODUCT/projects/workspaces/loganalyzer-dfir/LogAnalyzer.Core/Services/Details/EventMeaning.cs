@@ -69,6 +69,7 @@ namespace LogAnalyzer.Core.Services.Details
             [4740] = "Cont blocat după prea multe parole greșite.",
             [4768] = "Tichet Kerberos TGT cerut (autentificare în domeniu).",
             [4769] = "Tichet de serviciu Kerberos cerut. Cereri RC4 (0x17) către multe servicii pot indica Kerberoasting.",
+            [4887] = "Autoritatea de certificare a emis un certificat. Un nume alternativ (SAN) cerut de solicitant poate permite autentificarea ca alt cont.",
             [4771] = "Pre-autentificare Kerberos eșuată (parolă greșită în domeniu).",
             [4776] = "Validare de credențiale NTLM.",
             [4778] = "Sesiune (RDP) reconectată.",

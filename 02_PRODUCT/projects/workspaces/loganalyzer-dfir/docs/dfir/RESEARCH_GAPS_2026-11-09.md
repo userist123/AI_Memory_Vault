@@ -58,3 +58,17 @@ Lipsuri, în ordinea valorii:
 5. **Sesiunile RDP reconstruite.** Evenimentele 1149, 21, 22, 24 și 25, legate prin ID-ul sesiunii.
 6. **Artefacte mici.** Filele nesalvate din Notepad (TabState) și MUICache.
 7. **Lucrări mari (L).** Indexul Windows Search (ESE sau SQLite pe Windows 11), $I30 și $LogFile, copiile umbră VSS citite offline.
+
+### Detecții pentru domeniu și EDR — implementat
+
+Punctele 1 și 2 de mai sus sunt acum reguli în `Wp11Rules.AdAttacks.cs`. Fiecare cere ca auditul respectiv să fie pornit; fără el jurnalul nu conține evenimentul și regula nu vede nimic.
+
+| Regulă | Ce vede | Ce trebuie auditat |
+|---|---|---|
+| `KERBEROAST` (T1558.003, High la 5 servicii, Medium la 3-4) | Același cont cu tichete RC4 (0x17 / 0x18) pentru cel puțin 3 servicii diferite în 10 minute (4769) | „Kerberos Service Ticket Operations” pe controlerul de domeniu |
+| `ASREP-ROAST` (T1558.004, Medium; High cu RC4) | Cont care a primit TGT fără pre-autentificare (4768, tip 0), un constat pe cont | „Kerberos Authentication Service” pe controlerul de domeniu |
+| `ADCS-SAN` (T1649, High la 4887, Medium la 4886) | Cerere sau certificat emis cu un SAN în atributele cererii (calea EDITF_ATTRIBUTESUBJECTALTNAME2, ESC6; ESC1 cu SAN doar în extensia cererii nu se vede) | Auditul autorității de certificare (oprit implicit) |
+| `NTLM-RELAY-MACHINE` (T1557.001, Medium) | Cont de calculator cu 4624 tip 3 prin NTLM de la o adresă IP absentă din cele de la care s-a autentificat prin Kerberos în același jurnal (fără bază Kerberos, fără constatare) | „Logon” pe serverul ținta |
+| `EDR-WFP-BLOCK` (T1562.001, High) | Filtre „Custom Outbound Filter” (5441 / 5447) sau cel puțin 5 conexiuni blocate (5157) ale unui program de securitate în 10 minute | „Filtering Platform Policy Change” pentru 5441 / 5447; „Filtering Platform Connection” pentru 5157 (volum mare) |
+
+Limite: regulile nu văd dacă hash-urile au fost sparte, nici setările șablonului de certificate (ESC1), nici procesul care a creat filtrul WFP. Sunt listate cel mult 20 de constatări pe regulă, restul într-un rezumat Low. Încă lipsește legătura ADCS cu 4768 prin certificat.
