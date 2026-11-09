@@ -11,10 +11,17 @@ An edge count is the number of NON-TEST files of the source unit that import the
 
     python 30_SCRIPTS/verification/architecture_boundaries.py --root . \
         --config 04_CONFIG/architecture_layers.json [--write-baseline]
+
+``--write-baseline`` only TIGHTENS (drops gone edges, lowers counts). Widening the baseline needs
+``--allow-widen --owner-wp WP-xx --reason "..."`` and is reported pair by pair.
+Non-test imports include ``-m``/``python -c`` strings in files inside a unit and test-path files that
+production code imports. Non-literal ``import_module`` calls are counted per unit
+(``baseline_dynamic_imports``), not resolved.
 """
 from __future__ import annotations
 
 import argparse
+import datetime
 import json
 import sys
 from pathlib import Path
@@ -43,6 +50,10 @@ def edges_from_inventory(inv: dict) -> dict[tuple[str, str], int]:
 def current_edges(root: Path, inv: dict | None = None) -> dict[tuple[str, str], int]:
     """(from_unit, to_unit) -> number of non-test files importing it."""
     return edges_from_inventory(inv if inv is not None else _inventory(root))
+
+
+def dynamic_counts(inv: dict) -> dict[str, int]:
+    return {u["id"]: u["dynamic_imports_nontest"] for u in inv["units"] if u.get("dynamic_imports_nontest")}
 
 
 def layer_index(config: dict) -> dict[str, int]:
@@ -106,11 +117,21 @@ def check(root: Path, config: dict, inv: dict | None = None) -> list[str]:
             fails.append(f"(c) edge {a} -> {b} grew from {b_entry['imports']} to {n} files (above baseline)")
         elif n < b_entry["imports"]:
             fails.append(f"(d) STALE baseline: edge {a} -> {b} dropped from {b_entry['imports']} to {n}; "
-                         f"tighten the baseline (--write-baseline) to lock the gain")
+                         f"tighten the baseline with `--write-baseline` (tighten-only) to lock the gain")
     for (a, b), e in sorted(base.items()):
         if (a, b) not in current:
             fails.append(f"(d) STALE baseline: edge {a} -> {b} (baseline {e['imports']}) no longer exists; "
-                         f"remove it (--write-baseline) to lock the gain")
+                         f"remove it with `--write-baseline` (tighten-only) to lock the gain")
+    dyn_now = dynamic_counts(inv)
+    dyn_base = config.get("baseline_dynamic_imports", {})
+    for uid in sorted(set(dyn_now) | set(dyn_base)):
+        n, b = dyn_now.get(uid, 0), dyn_base.get(uid, 0)
+        if n > b:
+            fails.append(f"(g) unit {uid} has {n} non-literal dynamic imports, baseline {b} "
+                         f"({'new' if not b else 'above baseline'})")
+        elif n < b:
+            fails.append(f"(g) STALE baseline: unit {uid} dynamic imports dropped from {b} to {n}; "
+                         f"tighten the baseline with `--write-baseline` (tighten-only) to lock the gain")
     found = {c["name"] for c in inv["collisions"]}
     known = set(config.get("known_collisions", []))
     if found != known:
@@ -132,29 +153,68 @@ def owner_wp(a: str, b: str, hard: bool) -> str:
     return "WP-10"
 
 
-def build_baseline(config: dict, inv: dict) -> list[dict]:
+def plan_baseline(config: dict, inv: dict, allow_widen: bool = False, owner: str | None = None,
+                  reason: str | None = None, today: str | None = None) -> dict:
+    """Next baseline. Tighten-only unless ``allow_widen``; returns edges, dynamic counts and a report."""
+    today = today or datetime.date.today().isoformat()
     old = {(e["from"], e["to"]): e for e in config.get("baseline_edges", [])}
-    out = []
-    for (a, b), row in sorted(_classify(config, inv, edges_from_inventory(inv)).items()):
-        prev = old.get((a, b), {})
-        la, lb = layer_name(config, a), layer_name(config, b)
-        reason = prev.get("reason") or (
-            f"hard-forbidden package -> product edge ({la} -> {lb})" if row["hard"]
-            else f"upward edge {la} -> {lb} present at the baseline date")
-        e = {"from": a, "to": b, "imports": row["count"], "since": prev.get("since", DEFAULT_SINCE),
-             "owner_wp": prev.get("owner_wp") or owner_wp(a, b, row["hard"]), "reason": reason}
+    current = _classify(config, inv, edges_from_inventory(inv))
+    edges: list[dict] = []
+    tightened: list[str] = []
+    widened: list[str] = []
+    refused: list[str] = []
+    for key in sorted(set(old) | set(current)):
+        a, b = key
+        prev, row = old.get(key), current.get(key)
+        if row is None:
+            tightened.append(f"{a} -> {b}: removed (was {prev['imports']})")
+            continue
+        n = row["count"]
+        if prev is not None and n <= prev["imports"]:
+            e = dict(prev)
+            if n < prev["imports"]:
+                tightened.append(f"{a} -> {b}: {prev['imports']} -> {n}")
+            e["imports"] = n
+            edges.append(e)
+            continue
+        what = f"{a} -> {b}: {prev['imports'] if prev else 'new'} -> {n}"
+        if not allow_widen:
+            refused.append(what)
+            if prev is not None:
+                edges.append(dict(prev))
+            continue
+        widened.append(what)
+        e = {"from": a, "to": b, "imports": n, "since": today, "owner_wp": owner, "reason": reason}
         if row["hard"]:
             e["hard_forbidden"] = True
-        out.append(e)
-    return out
+        edges.append(e)
+    dyn_old = dict(config.get("baseline_dynamic_imports", {}))
+    dyn_now = dynamic_counts(inv)
+    dyn: dict[str, int] = {}
+    for uid in sorted(set(dyn_old) | set(dyn_now)):
+        n, b = dyn_now.get(uid, 0), dyn_old.get(uid, 0)
+        if n < b:
+            tightened.append(f"dynamic imports {uid}: {b} -> {n}")
+        elif n > b:
+            (widened if allow_widen else refused).append(f"dynamic imports {uid}: {b} -> {n}")
+        keep = n if (n <= b or allow_widen) else b
+        if keep:
+            dyn[uid] = keep
+    return {"edges": edges, "dynamic": dyn, "tightened": tightened, "widened": widened, "refused": refused}
 
 
 def main(argv: list[str] | None = None) -> int:
     ap = argparse.ArgumentParser(description=__doc__.split("\n")[0])
     ap.add_argument("--root", default=".")
     ap.add_argument("--config", default="04_CONFIG/architecture_layers.json")
-    ap.add_argument("--write-baseline", action="store_true")
+    ap.add_argument("--write-baseline", action="store_true", help="tighten-only regeneration of the baseline")
+    ap.add_argument("--allow-widen", action="store_true", help="with --write-baseline: also add/raise entries")
+    ap.add_argument("--owner-wp")
+    ap.add_argument("--reason")
     args = ap.parse_args(argv)
+    if args.allow_widen and not (args.write_baseline and args.owner_wp and args.reason):
+        print("--allow-widen needs --write-baseline, --owner-wp WP-xx and --reason", file=sys.stderr)
+        return 2
     root = Path(args.root)
     cfg_path = Path(args.config)
     if not cfg_path.is_absolute() and not cfg_path.exists():
@@ -162,9 +222,18 @@ def main(argv: list[str] | None = None) -> int:
     config = json.loads(cfg_path.read_text("utf-8"))
     inv = _inventory(root)
     if args.write_baseline:
-        config["baseline_edges"] = build_baseline(config, inv)
+        plan = plan_baseline(config, inv, args.allow_widen, args.owner_wp, args.reason)
+        for k in ("tightened", "widened", "refused"):
+            for line in plan[k]:
+                print(f"{k.upper()} {line}")
+        config["baseline_edges"] = plan["edges"]
+        config["baseline_dynamic_imports"] = plan["dynamic"]
         cfg_path.write_text(json.dumps(config, ensure_ascii=False, indent=2) + "\n", "utf-8", newline="\n")
-        print(f"baseline written: {len(config['baseline_edges'])} edges")
+        print(f"baseline written: {len(plan['edges'])} edges "
+              f"(tightened={len(plan['tightened'])} widened={len(plan['widened'])} refused={len(plan['refused'])})")
+        if plan["refused"]:
+            print('REFUSED: widening needs --allow-widen --owner-wp WP-xx --reason "..."')
+            return 1
     fails = check(root, config, inv)
     for f in fails:
         print("FAIL " + f)

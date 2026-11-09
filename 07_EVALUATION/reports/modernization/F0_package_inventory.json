@@ -179,6 +179,7 @@
       "loc": "linii non-goale care nu încep cu #; docstring-urile se numără",
       "shim_credit": "un import prin shim __path__ creditează și modulul servit"
     },
+    "test_paths_promoted_to_production": [],
     "testpaths": [
       "20_TESTS"
     ]
@@ -1522,50 +1523,8 @@
     {
       "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/VERIFICARE_COMPLETA.bat",
       "kind": "python_c",
-      "line": 143,
-      "module": "QChart",
-      "unit": null
-    },
-    {
-      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/VERIFICARE_COMPLETA.bat",
-      "kind": "python_c",
       "line": 152,
       "module": "PyQt6.QtCharts",
-      "unit": null
-    },
-    {
-      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/VERIFICARE_COMPLETA.bat",
-      "kind": "python_c",
-      "line": 152,
-      "module": "QChart",
-      "unit": null
-    },
-    {
-      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/VERIFICARE_COMPLETA.bat",
-      "kind": "python_c",
-      "line": 167,
-      "module": "form_widget",
-      "unit": null
-    },
-    {
-      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/VERIFICARE_COMPLETA.bat",
-      "kind": "python_c",
-      "line": 167,
-      "module": "settings_widget",
-      "unit": null
-    },
-    {
-      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/VERIFICARE_COMPLETA.bat",
-      "kind": "python_c",
-      "line": 167,
-      "module": "stats_widget",
-      "unit": null
-    },
-    {
-      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/VERIFICARE_COMPLETA.bat",
-      "kind": "python_c",
-      "line": 167,
-      "module": "table_widget",
       "unit": null
     },
     {
@@ -1585,22 +1544,8 @@
     {
       "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/fix_pyqt6.bat",
       "kind": "python_c",
-      "line": 20,
-      "module": "QApplication",
-      "unit": null
-    },
-    {
-      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/fix_pyqt6.bat",
-      "kind": "python_c",
       "line": 21,
       "module": "PyQt6.QtCharts",
-      "unit": null
-    },
-    {
-      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/fix_pyqt6.bat",
-      "kind": "python_c",
-      "line": 21,
-      "module": "QChart",
       "unit": null
     },
     {
@@ -1805,13 +1750,6 @@
       "line": 15,
       "module": "unittest",
       "unit": null
-    },
-    {
-      "file": "04_CONFIG/access_policy.yaml",
-      "kind": "python_m",
-      "line": 31,
-      "module": "cognitive_core.vault_cli",
-      "unit": "root/cognitive_core"
     },
     {
       "file": "07_EVALUATION/golden_memory_effectiveness_v1/run_benchmark.py",
@@ -2302,8 +2240,7 @@
   "units": [
     {
       "ci_config_refs": {
-        ".github/workflows/agent-routing-tests.yml": 3,
-        "04_CONFIG/architecture_layers.json": 1
+        ".github/workflows/agent-routing-tests.yml": 3
       },
       "consumers_bench_excluded": [],
       "consumers_prod": [],
@@ -2313,6 +2250,7 @@
         "20_TESTS/test_secure_bridge_handler.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/agent_bridge",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -2341,13 +2279,12 @@
       "unknown": []
     },
     {
-      "ci_config_refs": {
-        "04_CONFIG/architecture_layers.json": 1
-      },
+      "ci_config_refs": {},
       "consumers_bench_excluded": [],
       "consumers_prod": [],
       "consumers_test": [],
       "dir": "03_IMPLEMENTATION/packages/cognitive_core",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -2387,9 +2324,7 @@
       ]
     },
     {
-      "ci_config_refs": {
-        "04_CONFIG/architecture_layers.json": 3
-      },
+      "ci_config_refs": {},
       "consumers_bench_excluded": [],
       "consumers_prod": [
         "03_IMPLEMENTATION/packages/learning/agents/retrieval_agent.py",
@@ -2434,6 +2369,7 @@
         "20_TESTS/test_wikilink_synapse_ingestion.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/graph",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -2466,9 +2402,7 @@
       "unknown": []
     },
     {
-      "ci_config_refs": {
-        "04_CONFIG/architecture_layers.json": 10
-      },
+      "ci_config_refs": {},
       "consumers_bench_excluded": [],
       "consumers_prod": [
         ".agents/auditor_final/forensic_verification.py",
@@ -2545,6 +2479,7 @@
         "security/tests/test_audit_remediation.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/interfaces",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -2655,9 +2590,7 @@
       ]
     },
     {
-      "ci_config_refs": {
-        "04_CONFIG/architecture_layers.json": 3
-      },
+      "ci_config_refs": {},
       "consumers_bench_excluded": [],
       "consumers_prod": [
         ".agents/auditor_m3_1/verify_m3_forensics.py",
@@ -2696,6 +2629,7 @@
         "20_TESTS/test_tot_and_formal_reflexion.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/learning",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -2740,9 +2674,7 @@
       "unknown": []
     },
     {
-      "ci_config_refs": {
-        "04_CONFIG/architecture_layers.json": 5
-      },
+      "ci_config_refs": {},
       "consumers_bench_excluded": [],
       "consumers_prod": [
         ".agents/m1_auditor_1/verify_m1.py",
@@ -2800,6 +2732,7 @@
         "security/tests/test_pr209_final_security_gates.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/lifecycle",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -2838,8 +2771,7 @@
     {
       "ci_config_refs": {
         ".github/workflows/jarvis-command-center.yml": 2,
-        ".github/workflows/security-boundary.yml": 1,
-        "04_CONFIG/architecture_layers.json": 7
+        ".github/workflows/security-boundary.yml": 1
       },
       "consumers_bench_excluded": [],
       "consumers_prod": [
@@ -3018,6 +2950,7 @@
         "security/tests/test_pr209_final_security_gates.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/memory",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -3061,8 +2994,7 @@
     },
     {
       "ci_config_refs": {
-        ".github/workflows/jarvis-command-center.yml": 2,
-        "04_CONFIG/architecture_layers.json": 10
+        ".github/workflows/jarvis-command-center.yml": 2
       },
       "consumers_bench_excluded": [],
       "consumers_prod": [
@@ -3284,6 +3216,7 @@
         "security/tests/test_pr209_final_security_gates.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/memory_controller",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -3320,13 +3253,12 @@
       ]
     },
     {
-      "ci_config_refs": {
-        "04_CONFIG/architecture_layers.json": 1
-      },
+      "ci_config_refs": {},
       "consumers_bench_excluded": [],
       "consumers_prod": [],
       "consumers_test": [],
       "dir": "03_IMPLEMENTATION/packages/memory_vault",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -3379,9 +3311,7 @@
       ]
     },
     {
-      "ci_config_refs": {
-        "04_CONFIG/architecture_layers.json": 4
-      },
+      "ci_config_refs": {},
       "consumers_bench_excluded": [],
       "consumers_prod": [
         ".agents/auditor_final/forensic_verification.py",
@@ -3434,6 +3364,7 @@
         "20_TESTS/test_suite_does_not_write_telemetry.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/observability",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -3474,8 +3405,7 @@
         ".github/workflows/polymarket-phase3-tests.yml": 1,
         ".github/workflows/polymarket-phase4-tests.yml": 1,
         ".github/workflows/polymarket-phase5-tests.yml": 2,
-        ".github/workflows/polymarket-phase6-tests.yml": 2,
-        "04_CONFIG/architecture_layers.json": 1
+        ".github/workflows/polymarket-phase6-tests.yml": 2
       },
       "consumers_bench_excluded": [],
       "consumers_prod": [
@@ -3517,6 +3447,7 @@
         "20_TESTS/polymarket/test_temporal_provenance_contract.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/polymarket",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -3541,9 +3472,7 @@
       "unknown": []
     },
     {
-      "ci_config_refs": {
-        "04_CONFIG/architecture_layers.json": 1
-      },
+      "ci_config_refs": {},
       "consumers_bench_excluded": [],
       "consumers_prod": [
         ".agents/auditor_m4_3/run_probes.py",
@@ -3604,6 +3533,7 @@
         "20_TESTS/test_review_memory_injection.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/providers",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -3628,8 +3558,7 @@
     {
       "ci_config_refs": {
         ".github/workflows/context-token-economy-gate.yml": 2,
-        ".github/workflows/security-boundary.yml": 2,
-        "04_CONFIG/architecture_layers.json": 6
+        ".github/workflows/security-boundary.yml": 2
       },
       "consumers_bench_excluded": [],
       "consumers_prod": [
@@ -3736,6 +3665,7 @@
         "security/tests/test_progressive_disclosure_security.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/retrieval",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -3780,8 +3710,7 @@
     },
     {
       "ci_config_refs": {
-        ".github/workflows/agent-routing-tests.yml": 5,
-        "04_CONFIG/architecture_layers.json": 1
+        ".github/workflows/agent-routing-tests.yml": 5
       },
       "consumers_bench_excluded": [],
       "consumers_prod": [
@@ -3800,6 +3729,7 @@
         "20_TESTS/test_secure_bridge_handler.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/routing",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -3825,9 +3755,7 @@
       "unknown": []
     },
     {
-      "ci_config_refs": {
-        "04_CONFIG/architecture_layers.json": 3
-      },
+      "ci_config_refs": {},
       "consumers_bench_excluded": [],
       "consumers_prod": [
         ".agents/auditor_final/forensic_verification.py",
@@ -3999,6 +3927,7 @@
         "security/tests/test_pr209_final_security_gates.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/security",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -4035,7 +3964,6 @@
     },
     {
       "ci_config_refs": {
-        "04_CONFIG/architecture_layers.json": 2,
         "04_CONFIG/local_llm.json": 1
       },
       "consumers_bench_excluded": [],
@@ -4059,6 +3987,7 @@
         "20_TESTS/vault_access_fixture.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/vault_access",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -4087,9 +4016,7 @@
       "unknown": []
     },
     {
-      "ci_config_refs": {
-        "04_CONFIG/architecture_layers.json": 5
-      },
+      "ci_config_refs": {},
       "consumers_bench_excluded": [],
       "consumers_prod": [
         ".agents/auditor_final/forensic_verification.py",
@@ -4148,6 +4075,7 @@
         "20_TESTS/regression/test_indicators_series_length.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/xau_kinetic",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -4180,8 +4108,7 @@
     },
     {
       "ci_config_refs": {
-        ".github/workflows/r001-enforcement.yml": 1,
-        "04_CONFIG/architecture_layers.json": 4
+        ".github/workflows/r001-enforcement.yml": 1
       },
       "consumers_bench_excluded": [],
       "consumers_prod": [
@@ -4193,6 +4120,7 @@
         "20_TESTS/regression/test_indicators_series_length.py"
       ],
       "dir": "03_IMPLEMENTATION/products/xau_kinetic",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -4405,6 +4333,7 @@
         "security/tests/test_pr209_final_security_gates.py"
       ],
       "dir": "cognitive_core",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -4501,6 +4430,7 @@
         "20_TESTS/test_outcome_cli_smoke.py"
       ],
       "dir": "scripts",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -4590,6 +4520,7 @@
         "20_TESTS/research/test_blocker_severity_downgrade.py"
       ],
       "dir": "security",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -7111,7 +7042,7 @@
       "detail": "sys.path.insert",
       "file": "30_SCRIPTS/verification/architecture_boundaries.py",
       "kind": "path_mutation",
-      "line": 22
+      "line": 29
     },
     {
       "detail": "sys.path.insert",

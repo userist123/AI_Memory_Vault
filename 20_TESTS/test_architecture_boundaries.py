@@ -136,25 +136,106 @@ def test_f_hard_forbidden_edge_needs_baseline_even_within_a_layer(tmp_path):
     assert _fails(root, _cfg(layers, [_edge("packages/lib", "products/prod", 1)])) == []
 
 
-def test_build_baseline_preserves_metadata_and_assigns_owner(tmp_path):
+def test_owner_wp_rules():
+    assert ab.owner_wp("packages/a", "root/cognitive_core", False) == "WP-06"
+    assert ab.owner_wp("packages/a", "packages/polymarket", False) == "WP-12"
+    assert ab.owner_wp("packages/a", "root/security", False) == "WP-14"
+    assert ab.owner_wp("packages/a", "packages/b", False) == "WP-10"
+    assert ab.owner_wp("packages/a", "products/b", True) == "WP-12"
+
+
+def test_plan_baseline_only_tightens_and_keeps_metadata(tmp_path):
     files = _base_files() | {f"{PK}/low/b.py": "import mid\n"}
     root = _tree(tmp_path, files)
     prev = _edge("packages/low", "packages/mid", 9)
     prev.update({"since": "2020-01-01", "owner_wp": "WP-99", "reason": "kept"})
     cfg = _cfg(LAYERS, [prev, _edge("packages/gone", "packages/mid", 1)])
-    new = ab.build_baseline(cfg, ab._inventory(root))
-    assert new == [{"from": "packages/low", "to": "packages/mid", "imports": 1, "since": "2020-01-01",
-                    "owner_wp": "WP-99", "reason": "kept"}]
-    assert ab.owner_wp("packages/a", "root/cognitive_core", False) == "WP-06"
-    assert ab.owner_wp("packages/a", "packages/polymarket", False) == "WP-12"
-    assert ab.owner_wp("packages/a", "root/security", False) == "WP-14"
-    assert ab.owner_wp("packages/a", "packages/b", False) == "WP-10"
+    plan = ab.plan_baseline(cfg, ab._inventory(root))
+    assert plan["edges"] == [{"from": "packages/low", "to": "packages/mid", "imports": 1, "since": "2020-01-01",
+                              "owner_wp": "WP-99", "reason": "kept"}]
+    assert len(plan["tightened"]) == 2 and plan["widened"] == [] and plan["refused"] == []
 
 
-def test_cli_exit_codes(tmp_path):
+def test_plan_baseline_refuses_to_widen_without_flag(tmp_path):
+    files = _base_files() | {f"{PK}/low/b.py": "import mid\n", f"{PK}/low/c.py": "import mid\n",
+                             f"{PK}/low/d.py": "import mid2\n"}
+    root = _tree(tmp_path, files)
+    cfg = _cfg(LAYERS, [_edge("packages/low", "packages/mid", 1)])
+    plan = ab.plan_baseline(cfg, ab._inventory(root))
+    assert len(plan["refused"]) == 2 and plan["widened"] == []
+    assert plan["edges"] == [_edge("packages/low", "packages/mid", 1)]  # nothing silently added or raised
+    wide = ab.plan_baseline(cfg, ab._inventory(root), True, "WP-77", "because", today="2030-01-02")
+    assert len(wide["widened"]) == 2 and wide["refused"] == []
+    new = {(e["from"], e["to"]): e for e in wide["edges"]}
+    e = new[("packages/low", "packages/mid2")]
+    assert (e["imports"], e["since"], e["owner_wp"], e["reason"]) == (1, "2030-01-02", "WP-77", "because")
+    assert new[("packages/low", "packages/mid")]["imports"] == 2
+
+
+def test_cli_write_baseline_is_tighten_only(tmp_path, capsys):
     root = _tree(tmp_path, _base_files() | {f"{PK}/low/b.py": "import mid\n"})
     cfg = root / "cfg.json"
     cfg.write_text(json.dumps(_cfg(LAYERS)), "utf-8")
     assert ab.main(["--root", str(root), "--config", str(cfg)]) == 1
-    assert ab.main(["--root", str(root), "--config", str(cfg), "--write-baseline"]) == 0
+    assert ab.main(["--root", str(root), "--config", str(cfg), "--write-baseline"]) == 1
+    assert json.loads(cfg.read_text("utf-8"))["baseline_edges"] == []
+    assert "REFUSED" in capsys.readouterr().out
+    assert ab.main(["--root", str(root), "--config", str(cfg), "--write-baseline", "--allow-widen"]) == 2
+    args = ["--root", str(root), "--config", str(cfg), "--write-baseline", "--allow-widen",
+            "--owner-wp", "WP-10", "--reason", "test"]
+    assert ab.main(args) == 0
+    saved = json.loads(cfg.read_text("utf-8"))["baseline_edges"]
+    assert len(saved) == 1 and saved[0]["owner_wp"] == "WP-10" and saved[0]["reason"] == "test"
     assert ab.main(["--root", str(root), "--config", str(cfg)]) == 0
+    (root / PK / "low" / "b.py").unlink()  # the edge disappears: stale, then tightened away
+    assert ab.main(["--root", str(root), "--config", str(cfg)]) == 1
+    assert "tighten-only" in capsys.readouterr().out
+    assert ab.main(["--root", str(root), "--config", str(cfg), "--write-baseline"]) == 0
+    assert json.loads(cfg.read_text("utf-8"))["baseline_edges"] == []
+
+
+def test_g_dynamic_imports_are_ratcheted(tmp_path):
+    files = _base_files() | {f"{PK}/low/dyn.py": "import importlib\n\ndef f(n):\n    return importlib.import_module(n)\n",
+                             "20_TESTS/test_dyn.py": "import importlib\nimportlib.import_module(input())\n"}
+    root = _tree(tmp_path, files)
+    f = _fails(root, _cfg(LAYERS))
+    assert len(f) == 1 and f[0].startswith("(g)") and "packages/low" in f[0] and "new" in f[0]
+    cfg = _cfg(LAYERS) | {"baseline_dynamic_imports": {"packages/low": 1}}
+    assert _fails(root, cfg) == []
+    f = _fails(root, _cfg(LAYERS) | {"baseline_dynamic_imports": {"packages/low": 3}})
+    assert len(f) == 1 and "STALE" in f[0]
+    (root / PK / "low" / "dyn.py").write_text("X = 1\n", "utf-8")
+    f = _fails(root, cfg)
+    assert len(f) == 1 and "STALE" in f[0]
+
+
+def test_aliased_dynamic_imports_are_counted(tmp_path):
+    files = _base_files() | {
+        f"{PK}/low/d1.py": "from importlib import import_module as im\nim(name)\n",
+        f"{PK}/low/d2.py": "import importlib as il\nil.import_module(name)\n",
+        f"{PK}/low/d3.py": "__import__(name)\n",
+        f"{PK}/low/ok.py": "import importlib as il\nil.import_module('mid')\nil.reload(x)\n"}
+    inv = ab._inventory(_tree(tmp_path, files))
+    assert ab.dynamic_counts(inv) == {"packages/low": 3}
+    # the literal import_module('mid') is a real edge low -> mid
+    assert ab.current_edges(Path("."), inv)[("packages/low", "packages/mid")] == 1
+
+
+def test_string_argv_imports_are_edges(tmp_path):
+    files = _base_files() | {f"{PK}/low/run.py": 'import subprocess, sys\nsubprocess.run([sys.executable, "-m", "mid.a"])\n',
+                             "20_TESTS/test_run.py": 'x = ["-m", "mid.a"]\n'}
+    root = _tree(tmp_path, files)
+    f = _fails(root, _cfg(LAYERS))
+    assert len(f) == 1 and f[0].startswith("(b)") and "packages/low (L0) -> packages/mid (L1)" in f[0]
+
+
+def test_test_path_file_imported_by_production_counts_as_production(tmp_path):
+    files = _base_files() | {
+        f"{PK}/low/tests/__init__.py": "", f"{PK}/low/tests/helpers.py": "import mid\n",
+        f"{PK}/mid/use.py": "from low.tests import helpers\n"}
+    root = _tree(tmp_path, files)
+    f = _fails(root, _cfg(LAYERS))
+    assert len(f) == 1 and f[0].startswith("(b)") and "packages/low" in f[0] and "packages/mid " in f[0]
+    # the same file with no production importer stays excluded
+    files.pop(f"{PK}/mid/use.py")
+    assert _fails(_tree(tmp_path / "two", files), _cfg(LAYERS)) == []

@@ -37,6 +37,7 @@ TEXT_NAMES = {"Makefile", "justfile"}
 TESTDIR_TOP = ["20_TESTS", "02_PRODUCT", "security", "07_EVALUATION", "03_IMPLEMENTATION", ".agents"]
 REQ_FILES = ["requirements.txt", "requirements-memory-v6.txt"]
 SELF_EXCLUDED_REF = ("07_EVALUATION/reports/modernization/", "30_SCRIPTS/verification/package_inventory.py",
+                     "04_CONFIG/architecture_layers.json",
                      "20_TESTS/test_package_inventory.py", "00_GOVERNANCE/coordination/tasks/todo-claude-modernization")
 
 
@@ -128,6 +129,7 @@ class Resolver:
         self._exists: dict[str, bool] = {}
         self.collisions = self._find_collisions()
         self.stats: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        self.count_stats = True
 
     def exists(self, rel: str) -> bool:
         if rel not in self._exists:
@@ -227,7 +229,7 @@ class Resolver:
                     served = uid
                 if served:
                     credits.add(served)
-            if name in self.collisions and sub:
+            if name in self.collisions and sub and self.count_stats:
                 key = served or "UNSERVED"
                 if served is None:
                     for loser in self.collisions[name][1:]:
@@ -299,6 +301,17 @@ def analyze_file(text: str) -> dict:
             ups = _file_ups(stmt.value, varmap)
             if ups is not None and ups >= 1:
                 varmap[stmt.targets[0].id] = ups
+    fn_aliases: set[str] = set()   # names bound to importlib.import_module
+    mod_aliases: set[str] = {"importlib"}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module == "importlib" and not node.level:
+            for a in node.names:
+                if a.name in ("import_module", "__import__"):
+                    fn_aliases.add(a.asname or a.name)
+        elif isinstance(node, ast.Import):
+            for a in node.names:
+                if a.name == "importlib" and a.asname:
+                    mod_aliases.add(a.asname)
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for a in node.names:
@@ -335,13 +348,15 @@ def analyze_file(text: str) -> dict:
                     (_is_sys_path(f.value) or _is_dunder_path(f.value)):
                 res["unknown"].append({"line": node.lineno, "kind": "path_mutation",
                                        "detail": ("sys.path." if _is_sys_path(f.value) else "__path__.") + fname})
-            elif fname in {"import_module", "__import__"} and (
-                    isinstance(f, ast.Name) or _is_name(getattr(f, "value", None), "importlib")):
+            elif (isinstance(f, ast.Name) and (fname in {"import_module", "__import__"} or fname in fn_aliases)) or (
+                    isinstance(f, ast.Attribute) and fname in {"import_module", "__import__"}
+                    and isinstance(f.value, ast.Name) and f.value.id in mod_aliases):
                 arg = node.args[0] if node.args else None
                 if isinstance(arg, ast.Constant) and isinstance(arg.value, str) and not arg.value.startswith("."):
                     res["imports"].append(([arg.value.split(".")], node.lineno, False))
                 else:
-                    res["unknown"].append({"line": node.lineno, "kind": "dynamic_import", "detail": fname})
+                    res["unknown"].append({"line": node.lineno, "kind": "dynamic_import",
+                                           "detail": "import_module" if fname in fn_aliases else fname})
             elif fname in {"spec_from_file_location", "run_module", "run_path", "extend_path"}:
                 res["unknown"].append({"line": node.lineno, "kind": "file_or_module_loader", "detail": fname})
     return res
@@ -363,6 +378,8 @@ def unit_patterns(u: dict, winner_names: set[str]) -> list[re.Pattern]:
 def ci_config_files(root: Path, allfiles: list[str]) -> list[str]:
     out = []
     for f in allfiles:
+        if f.startswith(SELF_EXCLUDED_REF):
+            continue
         if (f.startswith(".github/workflows/") and f.count("/") == 2 and f.endswith((".yml", ".yaml"))) \
                 or f in ("pytest.ini", "pyproject.toml") \
                 or (f.startswith("04_CONFIG/") and f.count("/") == 1 and f.endswith(".json")):
@@ -396,8 +413,10 @@ def parse_requirements(text: str) -> dict[str, str]:
 # ----------------------------------------------------------------------------- string imports
 STR_TEXT_EXT = (".yml", ".yaml", ".toml", ".sh", ".ps1", ".bat", ".cmd", ".ini", ".cfg")
 _MOD = r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*"
-_PY_M = re.compile(rf"(?<![\w.\-])python[\w.\-]*(?:\s+-[A-Za-z]+)*\s+-m\s+({_MOD})")
-_PY_C = re.compile(r"(?<![\w.\-])python[\w.\-]*(?:\s+-[A-Za-z]+)*\s+-c\s+(.*)$")
+_INTERP = (r"(?:(?<![\w.\-])python[\w.\-]*|(?<![\w.\-/])py(?=\s)|\$\{?PYTHON\}?|%PYTHON%)[\"']?"
+           r"(?:\s+(?:-[XW]\s+\S+|-[A-Za-z0-9]+(?:\.\d+)?))*")
+_PY_M = re.compile(rf"{_INTERP}\s+-m\s+({_MOD})")
+_PY_C = re.compile(rf"{_INTERP}\s+-c\s+(.*)$")
 _IMP = re.compile(rf"(?<![\w.])import\s+({_MOD}(?:\s*,\s*{_MOD})*)")
 _FROM = re.compile(rf"(?<![\w.])from\s+({_MOD})\s+import\b")
 _TOML_EP = re.compile(rf'"({_MOD}):[A-Za-z_]\w*"')
@@ -418,6 +437,7 @@ def _unit_for_module(res: Resolver, module: str) -> str | None:
 def find_string_imports(root: Path, allfiles: list[str], res: Resolver) -> list[dict]:
     """Imports that live in strings: ``python -m``, ``python -c``, pyproject entry points, argv lists."""
     out: list[dict] = []
+    res.count_stats = False
 
     def add(f: str, line: int, kind: str, module: str) -> None:
         out.append({"file": f, "line": line, "kind": kind, "module": module,
@@ -457,16 +477,21 @@ def find_string_imports(root: Path, allfiles: list[str], res: Resolver) -> list[
             continue
         in_pkg = False
         for no, ln in enumerate(text.splitlines(), 1):
+            stripped = ln.strip()
+            if (re.match(r"(?i)(rem(\s|$)|::)", stripped) if f.endswith((".bat", ".cmd"))
+                    else stripped.startswith("#")):
+                continue
             for m in _PY_M.finditer(ln):
                 add(f, no, "python_m", m.group(1))
             mc = _PY_C.search(ln)
             if mc:
                 code = mc.group(1)
+                for m in _FROM.finditer(code):
+                    add(f, no, "python_c", m.group(1))
+                code = _FROM.sub(" ", code)  # the names after ``from x import`` are not modules
                 for m in _IMP.finditer(code):
                     for mod in re.split(r"\s*,\s*", m.group(1)):
                         add(f, no, "python_c", mod)
-                for m in _FROM.finditer(code):
-                    add(f, no, "python_c", m.group(1))
             if base == "pyproject.toml":
                 for m in _TOML_EP.finditer(ln):
                     add(f, no, "toml_entry", m.group(1))
@@ -478,7 +503,38 @@ def find_string_imports(root: Path, allfiles: list[str], res: Resolver) -> list[
                         add(f, no, "toml_entry", m.group(1))
                     if "]" in ln:
                         in_pkg = False
+    res.count_stats = True
     return sorted(out, key=lambda r: (r["file"], r["line"], r["kind"], r["module"]))
+
+
+def promoted_test_files(info: dict[str, dict], pyfiles: list[str], pythonpath: list[str]) -> set[str]:
+    """Test-path files that a non-test file (transitively) imports: they are production code in effect."""
+    test_set = {f for f in pyfiles if is_test_path(f)}
+    if not test_set:
+        return set()
+
+    def targets(f: str) -> set[str]:
+        out: set[str] = set()
+        for alts, _line, _is_from in info[f]["imports"]:
+            for parts in alts:
+                for p in pythonpath:
+                    for k in range(1, len(parts) + 1):
+                        stem = "/".join(x for x in ("" if p == "." else p, *parts[:k]) if x)
+                        for cand in (stem + ".py", stem + "/__init__.py"):
+                            if cand in test_set:
+                                out.add(cand)
+        return out
+
+    promoted: set[str] = set()
+    frontier = [f for f in pyfiles if f not in test_set]
+    seen = set(frontier)
+    while frontier:
+        for t in targets(frontier.pop()):
+            promoted.add(t)
+            if t not in seen:
+                seen.add(t)
+                frontier.append(t)
+    return promoted
 
 
 # ----------------------------------------------------------------------------- main build
@@ -510,6 +566,12 @@ def build_inventory(root: Path) -> dict:
         init = f"{u['dir']}/__init__.py"
         if init in info and any(x["detail"] == "__path__" for x in info[init]["unknown"]):
             res.set_shim(uid, info[init]["consts"], True, info[init]["path_ups"])
+
+    promoted = promoted_test_files(info, pyfiles, pythonpath)
+    string_refs = find_string_imports(root, allfiles, res)
+
+    def effective_test(f: str) -> bool:
+        return is_test_path(f) and f not in promoted
 
     # console_scripts
     console: dict[str, list[str]] = defaultdict(list)
@@ -583,6 +645,14 @@ def build_inventory(root: Path) -> dict:
                 bucket = test_cons if is_test_path(f) else (bench_cons if is_bench_path(f) else prod_cons)
                 bucket[t].add(f)
 
+    # imports that live in strings, from non-test files inside a unit, are edges for the ratchet
+    str_edges: dict[str, dict[str, set]] = defaultdict(lambda: defaultdict(set))
+    for r in string_refs:
+        if r["kind"] in ("py_argv_m", "python_c") and r["unit"] and not effective_test(r["file"]):
+            s_unit = unit_of_file(r["file"], by_len)
+            if s_unit and s_unit != r["unit"]:
+                str_edges[s_unit][r["unit"]].add(r["file"])
+
     # external deps: restrict to units own files only when counting top-level 3rd-party names
     ci_files = ci_config_files(root, allfiles)
     ci_texts = {f: read_text(root, f) for f in ci_files}
@@ -612,7 +682,10 @@ def build_inventory(root: Path) -> dict:
             "entry_points": {"main_guard": mains, "dunder_main": dunder, "console_scripts": console.get(uid, [])},
             "imports_out": {t: len(fs) for t, fs in sorted(out_edges[uid].items())},
             "imports_out_nontest": {t: n for t, n in sorted(
-                (t, sum(1 for f in fs if not is_test_path(f))) for t, fs in out_edges[uid].items()) if n},
+                (t, len({f for f in fs if not effective_test(f)} | str_edges[uid].get(t, set())))
+                for t in set(out_edges[uid]) | set(str_edges[uid]) for fs in [out_edges[uid].get(t, set())]) if n},
+            "dynamic_imports_nontest": sum(1 for x in unknown[uid]
+                                           if x["kind"] == "dynamic_import" and not effective_test(x["file"])),
             "consumers_prod": sorted(prod_cons[uid]),
             "consumers_test": sorted(test_cons[uid]),
             "consumers_bench_excluded": sorted(bench_cons[uid]),
@@ -666,7 +739,8 @@ def build_inventory(root: Path) -> dict:
     return {
         "meta": {
             "root": ".", "pythonpath_order": pythonpath, "testpaths": testpaths,
-            "py_files_scanned": len(pyfiles), "pruned_dirs": sorted(PRUNE_DIRS), "parse_errors": sorted(parse_errors),
+            "py_files_scanned": len(pyfiles), "pruned_dirs": sorted(PRUNE_DIRS),
+            "test_paths_promoted_to_production": sorted(promoted), "parse_errors": sorted(parse_errors),
             "rules": {
                 "loc": "linii non-goale care nu încep cu #; docstring-urile se numără",
                 "consumers_prod": "fișiere .py în afara oricărui director de test/benchmark și în afara modulului",
@@ -676,7 +750,7 @@ def build_inventory(root: Path) -> dict:
         },
         "units": unit_rows,
         "collisions": collisions,
-        "string_import_refs": find_string_imports(root, allfiles, res),
+        "string_import_refs": string_refs,
         "layer_violations_package_to_product": sorted(violations, key=lambda v: (v["file"], v["line"])),
         "unknown_outside_units": sorted(unknown_outside, key=lambda r: (r["file"], r["line"])),
         "tests_by_top_dir": dict(sorted(tests_by_top.items())),

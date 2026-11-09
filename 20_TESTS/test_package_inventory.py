@@ -187,3 +187,55 @@ def test_real_repo_string_imports_find_known_examples_and_memory_vault_shim(tmp_
     mv = _unit(data, "packages/memory_vault")
     assert mv["shim_target_source"] == "path_expression"
     assert {"packages/routing", "packages/polymarket", "packages/agent_bridge", "packages/vault_access"} <= set(mv["shim_targets"])
+
+
+def test_string_import_f4_from_import_comments_and_interpreter_forms(tmp_path):
+    root = _mk(tmp_path, {
+        f"{PK}/x/__init__.py": "", f"{PK}/x/memory.py": "", f"{PK}/alpha/__init__.py": "",
+        "a/from.sh": 'python -c "from x import memory"\n',
+        "a/comments.yml": "# python -m alpha.zz\nsteps:\n  # python -c \"import alpha\"\n",
+        "a/comments.sh": "  # python -m alpha.zz\n",
+        "a/c.bat": "REM python -m alpha.rem\n:: python -m alpha.colon\nrem\npython -m alpha.real\n",
+        "a/py.ps1": "py -3 -m alpha.pylauncher\npy -3.11 -m alpha.pylauncher2\n",
+        "a/opts.sh": "python -X utf8 -W ignore -u -m alpha.opts\n",
+        "a/env.sh": '$PYTHON -m alpha.d1\n"${PYTHON}" -m alpha.d2\n',
+        "a/env.cmd": "%PYTHON% -m alpha.d3\n",
+        "a/notmod.sh": "python script.py -m alpha.nope\ncopy -m alpha.nope2\n",
+    })
+    _, data, _ = _run(root, tmp_path)
+    got = sorted((r["file"], r["kind"], r["module"]) for r in data["string_import_refs"])
+    assert ("a/from.sh", "python_c", "x") in got
+    assert not any(k[2] in ("memory",) for k in got)  # the name after `from x import` is not a module
+    assert not any(k[0] in ("a/comments.yml", "a/comments.sh") for k in got)
+    assert [k[2] for k in got if k[0] == "a/c.bat"] == ["alpha.real"]
+    assert [k[2] for k in got if k[0] == "a/py.ps1"] == ["alpha.pylauncher", "alpha.pylauncher2"]
+    assert [k[2] for k in got if k[0] == "a/opts.sh"] == ["alpha.opts"]
+    assert [k[2] for k in got if k[0] == "a/env.sh"] == ["alpha.d1", "alpha.d2"]
+    assert [k[2] for k in got if k[0] == "a/env.cmd"] == ["alpha.d3"]
+    assert not any(k[0] == "a/notmod.sh" for k in got)
+
+
+def test_aliased_dynamic_import_is_reported_as_unknown(tmp_path):
+    root = _mk(tmp_path, {
+        f"{PK}/alpha/d.py": ("from importlib import import_module as im\nimport importlib as il\n"
+                             "im(a)\nil.import_module(b)\nil.reload(c)\n")})
+    _, data, _ = _run(root, tmp_path)
+    assert [(u["kind"], u["line"]) for u in _unit(data, "packages/alpha")["unknown"]] == [
+        ("dynamic_import", 3), ("dynamic_import", 4)]
+    assert _unit(data, "packages/alpha")["dynamic_imports_nontest"] == 2
+
+
+def test_architecture_config_is_not_counted_as_ci_reference(tmp_path):
+    root = _mk(tmp_path, {f"{PK}/alpha/__init__.py": "",
+                          "04_CONFIG/architecture_layers.json": '{"u": "packages/alpha"}',
+                          "04_CONFIG/other.json": '{"u": "packages/alpha"}'})
+    _, data, _ = _run(root, tmp_path)
+    assert _unit(data, "packages/alpha")["ci_config_refs"] == {"04_CONFIG/other.json": 1}
+
+
+def test_test_path_file_imported_by_production_is_promoted(tmp_path):
+    root = _mk(tmp_path, {f"{PK}/alpha/tests/__init__.py": "", f"{PK}/alpha/tests/helpers.py": "",
+                          f"{PK}/beta/use.py": "from alpha.tests import helpers\n"})
+    _, data, _ = _run(root, tmp_path)
+    assert data["meta"]["test_paths_promoted_to_production"] == [
+        f"{PK}/alpha/tests/__init__.py", f"{PK}/alpha/tests/helpers.py"]

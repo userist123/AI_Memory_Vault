@@ -9,24 +9,24 @@ Reguli: LOC = linii non-goale fără comentariu-linie. Consumator prod = fișier
 
 | Modul | Fișiere | LOC | Entry points | Consumatori prod | Consumatori test | CI/config | Ext deps | UNKNOWN |
 |---|---|---|---|---|---|---|---|---|
-| `packages/agent_bridge` | 9 | 708 | main:0 __main__:0 scripts:0 | 0 | 3 | 4 (2 f.) | cryptography | 0 |
-| `packages/cognitive_core` | 1 | 20 | main:0 __main__:0 scripts:0 | 0 | 0 | 1 (1 f.) | - | 1 |
-| `packages/graph` | 8 | 1562 | main:0 __main__:0 scripts:0 | 17 | 21 | 3 (1 f.) | - | 0 |
-| `packages/interfaces` | 25 | 4959 | main:8 __main__:0 scripts:0 | 25 | 45 | 10 (1 f.) | jsonschema, mcp, numpy, pandas, pydantic | 8 |
-| `packages/learning` | 19 | 1496 | main:0 __main__:0 scripts:0 | 6 | 26 | 3 (1 f.) | yaml | 0 |
-| `packages/lifecycle` | 32 | 7029 | main:0 __main__:0 scripts:0 | 21 | 30 | 5 (1 f.) | jsonschema | 0 |
-| `packages/memory` | 26 | 4554 | main:0 __main__:0 scripts:0 | 68 | 103 | 10 (3 f.) | yaml | 0 |
-| `packages/memory_controller` | 1 | 17 | main:0 __main__:0 scripts:0 | 96 | 118 | 12 (2 f.) | - | 1 |
-| `packages/memory_vault` | 2 | 32 | main:0 __main__:0 scripts:0 | 0 | 0 | 1 (1 f.) | - | 2 |
-| `packages/observability` | 15 | 2932 | main:0 __main__:0 scripts:0 | 14 | 32 | 4 (1 f.) | - | 0 |
-| `packages/polymarket` | 27 | 4107 | main:1 __main__:0 scripts:0 | 4 | 30 | 15 (9 f.) | - | 0 |
-| `packages/providers` | 9 | 793 | main:0 __main__:0 scripts:0 | 24 | 30 | 1 (1 f.) | - | 0 |
-| `packages/retrieval` | 26 | 5511 | main:2 __main__:0 scripts:0 | 56 | 43 | 10 (3 f.) | yaml | 0 |
-| `packages/routing` | 10 | 1433 | main:2 __main__:0 scripts:0 | 2 | 9 | 6 (2 f.) | - | 0 |
-| `packages/security` | 12 | 629 | main:0 __main__:0 scripts:0 | 76 | 89 | 3 (1 f.) | - | 1 |
-| `packages/vault_access` | 10 | 1912 | main:0 __main__:0 scripts:0 | 6 | 9 | 3 (2 f.) | yaml | 0 |
-| `packages/xau_kinetic` | 1 | 5 | main:0 __main__:0 scripts:0 | 37 | 15 | 5 (1 f.) | - | 1 |
-| `products/xau_kinetic` | 63 | 6485 | main:20 __main__:0 scripts:0 | 3 | 1 | 5 (2 f.) | MetaTrader5, numpy, pandas, pydantic, requests +2 | 0 |
+| `packages/agent_bridge` | 9 | 708 | main:0 __main__:0 scripts:0 | 0 | 3 | 3 (1 f.) | cryptography | 0 |
+| `packages/cognitive_core` | 1 | 20 | main:0 __main__:0 scripts:0 | 0 | 0 | 0 (0 f.) | - | 1 |
+| `packages/graph` | 8 | 1562 | main:0 __main__:0 scripts:0 | 17 | 21 | 0 (0 f.) | - | 0 |
+| `packages/interfaces` | 25 | 4959 | main:8 __main__:0 scripts:0 | 25 | 45 | 0 (0 f.) | jsonschema, mcp, numpy, pandas, pydantic | 8 |
+| `packages/learning` | 19 | 1496 | main:0 __main__:0 scripts:0 | 6 | 26 | 0 (0 f.) | yaml | 0 |
+| `packages/lifecycle` | 32 | 7029 | main:0 __main__:0 scripts:0 | 21 | 30 | 0 (0 f.) | jsonschema | 0 |
+| `packages/memory` | 26 | 4554 | main:0 __main__:0 scripts:0 | 68 | 103 | 3 (2 f.) | yaml | 0 |
+| `packages/memory_controller` | 1 | 17 | main:0 __main__:0 scripts:0 | 96 | 118 | 2 (1 f.) | - | 1 |
+| `packages/memory_vault` | 2 | 32 | main:0 __main__:0 scripts:0 | 0 | 0 | 0 (0 f.) | - | 2 |
+| `packages/observability` | 15 | 2932 | main:0 __main__:0 scripts:0 | 14 | 32 | 0 (0 f.) | - | 0 |
+| `packages/polymarket` | 27 | 4107 | main:1 __main__:0 scripts:0 | 4 | 30 | 14 (8 f.) | - | 0 |
+| `packages/providers` | 9 | 793 | main:0 __main__:0 scripts:0 | 24 | 30 | 0 (0 f.) | - | 0 |
+| `packages/retrieval` | 26 | 5511 | main:2 __main__:0 scripts:0 | 56 | 43 | 4 (2 f.) | yaml | 0 |
+| `packages/routing` | 10 | 1433 | main:2 __main__:0 scripts:0 | 2 | 9 | 5 (1 f.) | - | 0 |
+| `packages/security` | 12 | 629 | main:0 __main__:0 scripts:0 | 76 | 89 | 0 (0 f.) | - | 1 |
+| `packages/vault_access` | 10 | 1912 | main:0 __main__:0 scripts:0 | 6 | 9 | 1 (1 f.) | yaml | 0 |
+| `packages/xau_kinetic` | 1 | 5 | main:0 __main__:0 scripts:0 | 37 | 15 | 0 (0 f.) | - | 1 |
+| `products/xau_kinetic` | 63 | 6485 | main:20 __main__:0 scripts:0 | 3 | 1 | 1 (1 f.) | MetaTrader5, numpy, pandas, pydantic, requests +2 | 0 |
 | `root/cognitive_core` | 5 | 62 | main:3 __main__:0 scripts:0 | 44 | 100 | 1 (1 f.) | - | 7 |
 | `root/scripts` | 7 | 1259 | main:5 __main__:0 scripts:0 | 0 | 3 | 10 (1 f.) | yaml | 4 |
 | `root/security` | 66 | 6623 | main:3 __main__:0 scripts:0 | 7 | 1 | 11 (4 f.) | packaging, pytest, yaml | 10 |
@@ -117,7 +117,7 @@ Notă: `packages/xau_kinetic` este un shim către `products/xau_kinetic/engine`;
 
 ## Importuri din șiruri de caractere
 
-AST-ul nu vede importurile din șiruri: `python -m X`, `python -c "import X"`, intrări pyproject, liste argv `["-m", "X"]`. Total: 258 (py_argv_m=56, python_c=65, python_m=121, toml_entry=16); rezolvate la o unitate: 39.
+AST-ul nu vede importurile din șiruri: `python -m X`, `python -c "import X"`, intrări pyproject, liste argv `["-m", "X"]`. Total: 249 (py_argv_m=56, python_c=57, python_m=120, toml_entry=16); rezolvate la o unitate: 38.
 
 | Fișier:rând | Fel | Modul | Unitate |
 |---|---|---|---|
@@ -130,7 +130,6 @@ AST-ul nu vede importurile din șiruri: `python -m X`, `python -c "import X"`, i
 | `.github/workflows/r001-enforcement.yml:96` | python_c | `memory_vault.memory` | `packages/memory` |
 | `02_PRODUCT/projects/workspaces/jarvis_web/test/api_smoke_test.py:27` | py_argv_m | `interfaces.api_server` | `packages/interfaces` |
 | `03_IMPLEMENTATION/products/xau_kinetic/standalone/run_engine.bat:4` | python_m | `xau_kinetic.main` | `products/xau_kinetic` |
-| `04_CONFIG/access_policy.yaml:31` | python_m | `cognitive_core.vault_cli` | `root/cognitive_core` |
 | `20_TESTS/test_cost_router_token_waste.py:158` | py_argv_m | `routing.route_cli` | `packages/routing` |
 | `20_TESTS/test_memory_consolidation_command.py:24` | py_argv_m | `cognitive_core.memory_v6_cli` | `packages/interfaces` |
 | `20_TESTS/test_route_cli_exit_codes.py:44` | py_argv_m | `routing.route_cli` | `packages/routing` |
