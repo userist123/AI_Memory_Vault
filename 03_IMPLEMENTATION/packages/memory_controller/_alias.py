@@ -69,7 +69,9 @@ class _AliasLoader(importlib.abc.InspectLoader):
         return fn
 
     def is_package(self, fullname):
-        return self._delegate("is_package")(self._canonical_name)
+        # Answered from the spec, so it also works for namespace packages (``audit``),
+        # whose canonical loader has no ``is_package``.
+        return self._canonical_spec.submodule_search_locations is not None
 
     def get_code(self, fullname):
         return self._delegate("get_code")(self._canonical_name)
@@ -79,14 +81,19 @@ class _AliasLoader(importlib.abc.InspectLoader):
 
     def create_module(self, spec):
         # Any exception here propagates to the importer; there is no fallback.
-        return importlib.import_module(self._canonical_name)
+        module = importlib.import_module(self._canonical_name)
+        # The spec the canonical module was really loaded with (the one whose loader is
+        # ``__loader__`` and whose ``submodule_search_locations`` is ``__path__``), not the
+        # look-alike that ``find_spec`` built before the import.
+        self._loaded_spec = module.__spec__
+        return module
 
     def exec_module(self, module) -> None:
         # The canonical module is already executed. ``importlib`` assigns
         # ``module.__spec__ = <alias spec>`` unconditionally (``_init_module_attrs``
         # only guards the other attributes), which would rename the canonical module's
-        # spec to ``memory_controller.X``. Put the canonical spec back.
-        module.__spec__ = self._canonical_spec
+        # spec to ``memory_controller.X``. Put the real canonical spec object back.
+        module.__spec__ = getattr(self, "_loaded_spec", None) or self._canonical_spec
 
 
 class AliasFinder(importlib.abc.MetaPathFinder):

@@ -406,3 +406,27 @@ def test_p9_alias_spec_of_a_package_is_a_package_spec(tmp_path, with_root):
     assert out["module_locations"] is None
     assert out["has_get_code"] is True
     assert out["runpy_ok"] is True
+
+
+# ---- review r2 (L-a, L-b): the canonical module keeps the spec it was loaded with ----------------
+@ROOT_MODES
+def test_alias_import_keeps_the_real_canonical_spec_and_namespace_is_package(tmp_path, with_root):
+    out = _probe(tmp_path, """
+        import importlib.util
+        # import through the alias FIRST, so the alias loader is the one that triggers the load
+        a = importlib.import_module("memory_controller.authorizer")
+        s = importlib.import_module("memory_controller.storage")
+        ns = importlib.util.find_spec("memory_controller.audit")
+        try:
+            ns_pkg = ns.loader.is_package(ns.name)
+        except Exception as exc:  # reported, so each assertion below is checked on its own
+            ns_pkg = repr(exc)
+        print(json.dumps({"loader_is_spec_loader": a.__spec__.loader is a.__loader__,
+                          "spec_name": a.__spec__.name,
+                          "path_is_spec_locations": s.__path__ is s.__spec__.submodule_search_locations,
+                          "namespace_is_package": ns_pkg}))
+    """, with_root=with_root)
+    assert out["loader_is_spec_loader"] is True
+    assert out["spec_name"] == "cognitive_core.authorizer"
+    assert out["path_is_spec_locations"] is True
+    assert out["namespace_is_package"] is True
