@@ -251,6 +251,8 @@ public static class StationFactCollector
         Try(facts, "Setări de securitate", () => ReadSettings(facts));
         Try(facts, "Setări de securitate (extinse)", () => ReadSettingsWave2(facts));
         Try(facts, "Setări de securitate (stație izolată)", () => ReadSettingsWave3(facts));
+        Try(facts, "Setări de securitate (reguli STIG)", () => ReadStigSettings(facts));
+        Try(facts, "Drepturi de utilizator (LSA)", () => ReadUserRights(facts));
         Try(facts, "Volume și BitLocker", () => ReadVolumes(facts));
         Try(facts, "Arhivele jurnalului Security", () => ReadSecurityArchives(facts));
         Try(facts, "Căi spre internet (configurație locală)", () => facts.EgressPaths = EgressPathCollector.Collect(facts.EgressUnread));
@@ -865,6 +867,61 @@ public static class StationFactCollector
 
         // Installed Windows updates, compared with the register of offline updates.
         Guard(() => f.InstalledUpdates = ReadInstalledUpdates());
+    }
+
+    /// <summary>The user rights whose holders check P42 lists (STIG WN11-UR-000015, -000045, -000065).</summary>
+    internal static readonly string[] DangerousRights = ["SeTcbPrivilege", "SeCreateTokenPrivilege", "SeDebugPrivilege"];
+
+    /// <summary>Holders of the dangerous user rights (check P42): "UserRights.&lt;right&gt;" = "S-1-…;S-1-…", "(niciunul)", or "" when not readable; "UserRights.Names" = SID=name pairs.</summary>
+    private static void ReadUserRights(StationFacts f)
+    {
+        var (holders, names) = UserRights.Read(DangerousRights);
+        foreach (var (right, value) in holders) f.Settings["UserRights." + right] = value;
+        f.Settings["UserRights.Names"] = names;
+    }
+
+    /// <summary>"da" / "nu" when the registry key exists / does not; "" when it cannot be read.</summary>
+    private static string KeyExists(string key)
+    {
+        try { using var k = Registry.LocalMachine.OpenSubKey(key); return k is null ? "nu" : "da"; }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { return ""; }
+    }
+
+    /// <summary>Settings behind checks P40, P41, P43-P47 (STIG rules): registry values and DEP from WMI. A value that cannot be read stays "".</summary>
+    private static void ReadStigSettings(StationFacts f)
+    {
+        var s = f.Settings;
+        const string lsa = @"SYSTEM\CurrentControlSet\Control\Lsa";
+        s["Stig.RestrictAnonymousSAM"] = Hklm(lsa, "RestrictAnonymousSAM");
+        s["Stig.RestrictAnonymous"] = Hklm(lsa, "RestrictAnonymous");
+        s["Stig.EveryoneIncludesAnonymous"] = Hklm(lsa, "EveryoneIncludesAnonymous");
+        s["Stig.RestrictNullSessAccess"] = Hklm(@"SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters", "RestrictNullSessAccess");
+        s["Stig.NoLMHash"] = Hklm(lsa, "NoLMHash");
+        s["Stig.LmCompatibilityLevel"] = Hklm(lsa, "LmCompatibilityLevel");
+
+        const string installer = @"SOFTWARE\Policies\Microsoft\Windows\Installer";
+        s["Stig.AlwaysInstallElevatedHklm"] = Hklm(installer, "AlwaysInstallElevated");
+        s["Stig.AlwaysInstallElevatedHkcu"] = RegRead(Registry.CurrentUser, installer, "AlwaysInstallElevated");   // current user only
+
+        Guard(() =>
+        {
+            using var os = new ManagementObjectSearcher("SELECT DataExecutionPrevention_SupportPolicy FROM Win32_OperatingSystem");
+            foreach (ManagementBaseObject o in os.Get()) s["Stig.DepSupportPolicy"] = o["DataExecutionPrevention_SupportPolicy"]?.ToString() ?? "";
+        });
+        s["Stig.DisableExceptionChainValidation"] = Hklm(@"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", "DisableExceptionChainValidation");
+
+        const string winrm = @"SOFTWARE\Policies\Microsoft\Windows\WinRM";
+        s["Stig.WinRmClientAllowBasic"] = Hklm(winrm + @"\Client", "AllowBasic");
+        s["Stig.WinRmClientAllowUnencrypted"] = Hklm(winrm + @"\Client", "AllowUnencryptedTraffic");
+        s["Stig.WinRmServiceAllowBasic"] = Hklm(winrm + @"\Service", "AllowBasic");
+        s["Stig.WinRmServiceAllowUnencrypted"] = Hklm(winrm + @"\Service", "AllowUnencryptedTraffic");
+
+        s["Stig.LlmnrEnableMulticast"] = Hklm(@"SOFTWARE\Policies\Microsoft\Windows NT\DNSClient", "EnableMulticast");
+
+        s["Stig.W3svcKey"] = KeyExists(@"SYSTEM\CurrentControlSet\Services\W3SVC");
+        s["Stig.W3svcStart"] = Hklm(@"SYSTEM\CurrentControlSet\Services\W3SVC", "Start");
+        // IIS components without the web service (Hostable Web Core, management tools) still leave the IIS setup key (review 2026-11-09)
+        s["Stig.IisInetStpKey"] = KeyExists(@"SOFTWARE\Microsoft\InetStp");
     }
 
     /// <summary>The installed Windows updates (Win32_QuickFixEngineering), read-only. Throws ManagementException when WMI cannot be read.</summary>

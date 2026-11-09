@@ -441,3 +441,13 @@
   commands, 0 claimed; copied audit: 18 vol records VALID with the approved exe in the inventory, all 18 refused for inventory without it
   (the pre-fix behaviour). WS01 process-creation audit was already on with command lines (left as is). Note: E:\LA-Lab\scripts\kill-stuck.ps1
   stops a HOST pwsh running run-stage+install-app, not the app; use scripts\q10.ps1 (Stop-Process inside the VM) to close the app.
+- 2026-11-09 (owner „Mai fa un research de calitate si hai sa mai adaugam”): research (2 web agents) saved in
+  docs/dfir/RESEARCH_GAPS_2026-11-09.md, each item checked against the code. Wave 1 implemented: station-control checks P40–P47 from the
+  DISA STIG Windows 11 CAT I list (anonymous access, LM/NTLMv2, dangerous user rights via LSA P/Invoke `Audit/UserRights.cs`,
+  AlwaysInstallElevated, DEP/SEHOP, WinRM Basic/unencrypted, LLMNR, IIS) in `Audit/ControlEvaluator.StigChecks.cs`; tests
+  StationChecksStigTests (56). Opus review r1: MEDIUM false Conform for values other than 0/1 (P43, P45) and P45 Conform on unset policy
+  with the service off (STIG counts unset as a finding) -> both strict now; LOW IIS components without W3SVC (InetStp key) -> DeVerificat.
+  Suites: Dfir 2976, App 1028, UI 368, Edition 45. Lab Insula: control 99 checks; P40 Neconform (RestrictAnonymous 0), P41 Neconform
+  (LmCompatibilityLevel unset = 3), P42 Conform (LSA read live works), P43 Conform, P44 Neconform (DEP OptIn), P45 DeVerificat, P46
+  Neconform (isolated), P47 Conform. Next waves from the research doc: .cklb STIG checklist export; AD detection pack (ADCS 4886/4887,
+  NTLM relay); EDR tampering via WFP 5441/5447; Defender DetectionHistory; RMM pack; Notepad TabState / MUICache.

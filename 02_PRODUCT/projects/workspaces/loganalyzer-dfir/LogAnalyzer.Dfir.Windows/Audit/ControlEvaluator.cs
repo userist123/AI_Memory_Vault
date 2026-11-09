@@ -81,6 +81,7 @@ public static partial class ControlEvaluator
         Network(f, r);
         Software(f, r);
         StationHardening(f, r);
+        StigChecks(f, r);
         AirGapChannels(f, r);
         AirGapStation(f, r);
         InternetEgress(f, r);

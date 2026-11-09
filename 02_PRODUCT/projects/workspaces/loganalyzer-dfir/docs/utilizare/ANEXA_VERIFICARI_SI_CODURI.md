@@ -365,6 +365,70 @@
 - **Sursa tehnică:** `WMI root\SecurityCenter2 AntiVirusProduct → displayName, productState`
 - **Cum se citește rezultatul:** Conform = cel puțin un antivirus pornit, cu semnături la zi. Neconform = niciun antivirus înregistrat sau toate oprite. De verificat = pornit, dar cu semnături vechi. Decodarea stării nu este documentată oficial de Microsoft; confirmați vizual în consola antivirusului.
 
+### P40
+
+- **Ce verificăm:** Dacă un utilizator anonim (fără cont) poate afla din rețea lista conturilor și a folderelor partajate ale stației.
+- **De ce contează:** Lista conturilor și a partajărilor îi arată unui atacator ce să încerce; accesul anonim este una dintre cele mai vechi căi de recunoaștere a unei stații Windows.
+- **Cum verifică aplicația:** A citit patru valori din registru (RestrictAnonymousSAM, RestrictAnonymous, EveryoneIncludesAnonymous, RestrictNullSessAccess). Regulă STIG Windows 11 WN11-SO-000145, WN11-SO-000150 și WN11-SO-000165, categoria I. O valoare nesetată este socotită la implicitul Windows, iar constatarea spune acest lucru.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Control\Lsa → RestrictAnonymousSAM, RestrictAnonymous, EveryoneIncludesAnonymous; HKLM\SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters → RestrictNullSessAccess`
+- **Cum se citește rezultatul:** Conform = RestrictAnonymousSAM 1, RestrictAnonymous 1, EveryoneIncludesAnonymous 0, RestrictNullSessAccess 1. Neconform = cel puțin o valoare setată altfel. De verificat = RestrictAnonymous nesetat (implicitul Windows este 0, STIG cere 1). Nedeterminat = nu s-a putut citi.
+
+### P41
+
+- **Ce verificăm:** Dacă stația păstrează parolele în formatul vechi LAN Manager și dacă mai trimite răspunsuri de autentificare vechi (LM, NTLMv1).
+- **De ce contează:** Amprenta LAN Manager și răspunsurile NTLMv1 se sparg în minute dacă sunt interceptate sau furate.
+- **Cum verifică aplicația:** A citit NoLMHash (nesetat înseamnă 1, implicitul Windows 10/11) și LmCompatibilityLevel (nesetat înseamnă 3, implicitul Windows). Regulă STIG Windows 11 WN11-SO-000195 și WN11-SO-000205, categoria I.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Control\Lsa → NoLMHash, LmCompatibilityLevel`
+- **Cum se citește rezultatul:** Conform = NoLMHash 1 și LmCompatibilityLevel 5 (doar NTLMv2, refuză LM și NTLM). Neconform = amprenta veche se păstrează sau nivelul este sub 5 (0-2: se trimit răspunsuri LM sau NTLMv1; 3-4 sau nesetat: STIG cere 5). Nedeterminat = nu s-a putut citi.
+
+### P42
+
+- **Ce verificăm:** Ce conturi au drepturi care dau control deplin asupra stației: acționare ca parte a sistemului de operare, crearea de jetoane de acces, depanarea programelor.
+- **De ce contează:** Un cont cu aceste drepturi poate prelua orice alt cont sau poate citi parolele din memorie.
+- **Cum verifică aplicația:** A cerut Autorității de securitate locale (LSA) lista conturilor care au fiecare drept, fără a modifica nimic (poate necesita administrator). SeTcbPrivilege și SeCreateTokenPrivilege nu trebuie acordate nimănui, SeDebugPrivilege doar grupului Administrators. Regulă STIG Windows 11 WN11-UR-000015, WN11-UR-000045 și WN11-UR-000065, categoria I.
+- **Sursa tehnică:** `LSA LsaEnumerateAccountsWithUserRight → SeTcbPrivilege, SeCreateTokenPrivilege, SeDebugPrivilege`
+- **Cum se citește rezultatul:** Conform = niciun deținător pentru primele două și doar Administrators pentru SeDebugPrivilege. Neconform = cel puțin un cont în plus (sunt numite în constatare). Nedeterminat = lista nu s-a putut citi, de obicei fără drepturi de administrator.
+
+### P43
+
+- **Ce verificăm:** Dacă orice utilizator poate instala pachete MSI cu drepturi ridicate (AlwaysInstallElevated).
+- **De ce contează:** Cu această politică activată, un utilizator obișnuit instalează un pachet MSI cu drepturile sistemului și poate prelua stația.
+- **Cum verifică aplicația:** A citit politica în HKLM (stația) și în HKCU (doar utilizatorul care a pornit aplicația, nu toți utilizatorii). Regulă STIG Windows 11 WN11-CC-000315, categoria I.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer → AlwaysInstallElevated; HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer → AlwaysInstallElevated`
+- **Cum se citește rezultatul:** Conform = valoarea lipsește sau este 0, în ambele locuri. Neconform = 1 în HKLM sau în HKCU. Nedeterminat = nu s-a putut citi.
+
+### P44
+
+- **Ce verificăm:** Dacă protecțiile memoriei împotriva exploatării (DEP și SEHOP) sunt pornite.
+- **De ce contează:** DEP oprește rularea codului din zonele de date, iar SEHOP oprește o tehnică frecventă de exploatare a programelor; fără ele un defect al unui program se exploatează mai ușor.
+- **Cum verifică aplicația:** A cerut Windows politica DEP (Win32_OperatingSystem) și a citit valoarea SEHOP din registru. Regulă STIG Windows 11 WN11-00-000145 și WN11-00-000150, categoria I.
+- **Sursa tehnică:** `WMI Win32_OperatingSystem → DataExecutionPrevention_SupportPolicy; HKLM\SYSTEM\CurrentControlSet\Control\Session Manager\kernel → DisableExceptionChainValidation`
+- **Cum se citește rezultatul:** Conform = DEP AlwaysOn (1) sau OptOut (3) și DisableExceptionChainValidation 0. Neconform = DEP AlwaysOff (0) sau OptIn (2), sau SEHOP oprit (1). De verificat = SEHOP nesetat (STIG cere valoarea 0 setată explicit). Nedeterminat = nu s-a putut citi.
+
+### P45
+
+- **Ce verificăm:** Dacă administrarea la distanță WinRM acceptă autentificare Basic (parola trimisă aproape în clar) sau trafic necriptat.
+- **De ce contează:** Autentificarea Basic și traficul necriptat expun parolele și comenzile oricui ascultă rețeaua.
+- **Cum verifică aplicația:** A citit patru politici (AllowBasic și AllowUnencryptedTraffic, pentru clientul și serviciul WinRM) și modul de pornire al serviciului WinRM. Regulă STIG Windows 11 WN11-CC-000330 și WN11-CC-000345 (categoria I), WN11-CC-000335 și WN11-CC-000350 (categoria II).
+- **Sursa tehnică:** `HKLM\SOFTWARE\Policies\Microsoft\Windows\WinRM\Client → AllowBasic, AllowUnencryptedTraffic; HKLM\SOFTWARE\Policies\Microsoft\Windows\WinRM\Service → AllowBasic, AllowUnencryptedTraffic; HKLM\SYSTEM\CurrentControlSet\Services\WinRM → Start`
+- **Cum se citește rezultatul:** Conform = toate valorile 0, sau nesetate cât timp serviciul WinRM este oprit ori lipsește. Neconform = cel puțin o valoare 1. De verificat = nesetate și serviciul poate porni. Nedeterminat = nu s-a putut citi. Verificarea se face pe toate edițiile, chiar dacă contează mai ales în rețea.
+
+### P46
+
+- **Ce verificăm:** Dacă stația răspunde la întrebări de nume trimise prin difuzare în rețeaua locală (LLMNR).
+- **De ce contează:** Un atacator din aceeași rețea poate răspunde în locul unui server real și poate captura parole.
+- **Cum verifică aplicația:** A citit politica care oprește rezoluția numelor prin difuzare. Este o recomandare de întărire, fără regulă STIG.
+- **Sursa tehnică:** `HKLM\SOFTWARE\Policies\Microsoft\Windows NT\DNSClient → EnableMulticast`
+- **Cum se citește rezultatul:** Conform = EnableMulticast 0. Neconform = 1 sau nesetat, pe o stație izolată. De verificat = 1 sau nesetat, pe o stație neizolată (LLMNR rămâne activ implicit). Nedeterminat = nu s-a putut citi.
+
+### P47
+
+- **Ce verificăm:** Dacă serverul web Windows (IIS) este instalat pe stație.
+- **De ce contează:** Un server web deschide stația către conexiuni din rețea și mărește suprafața de atac; o stație de lucru nu are nevoie de el.
+- **Cum verifică aplicația:** A verificat dacă serviciul W3SVC există și cum pornește. Regulă STIG Windows 11 WN11-00-000100, categoria I.
+- **Sursa tehnică:** `HKLM\SYSTEM\CurrentControlSet\Services\W3SVC → Start`
+- **Cum se citește rezultatul:** Conform = IIS nu este instalat. Neconform = instalat, pe o stație izolată. De verificat = instalat, pe o stație neizolată; trebuie să fie aprobat. Nedeterminat = nu s-a putut citi.
+
 ### A01
 
 - **Ce verificăm:** Dacă stația înregistrează în jurnal tot ce are nevoie un control (autentificări, conturi, programe, USB etc.).
@@ -1102,6 +1166,20 @@
 | UsermodeCodeIntegrityPolicyEnforcementStatus | interogare Windows (WMI) | Cum aplică App Control (WDAC) lista albă pentru programe. | Doar modul de aplicare oprește programele neaprobate. | 0 = oprită, 1 = doar audit (notează), 2 = aplicată (blochează). |
 | FullScanEndTime | interogare Microsoft Defender | Data la care s-a terminat ultima scanare completă a stației. | O scanare veche poate lăsa nedescoperit un program adus înainte de ultima actualizare. | Gol = nicio scanare completă, niciodată. |
 | AntiVirusProduct | interogare Windows (WMI) | Antivirusurile înregistrate în Centrul de securitate Windows, inclusiv ale altor producători. | Arată ce antivirus protejează efectiv stația. | productState: un cod numeric; aplicația îl citește ca pornit/oprit și semnături la zi/vechi (decodare nedocumentată oficial). |
+| Lsa\\RestrictAnonymousSAM | valoare de registru | Interzice utilizatorilor anonimi să listeze conturile stației. | Lista conturilor îi arată unui atacator ce să încerce. | 1 = interzis (corect, implicit pe Windows 10/11), 0 = permis. |
+| Lsa\\RestrictAnonymous | valoare de registru | Interzice utilizatorilor anonimi să listeze conturile și folderele partajate. | Informațiile despre conturi și partajări ajută un atacator. | 1 = interzis (cerut de STIG), 0 = permis (implicit Windows). |
+| Lsa\\EveryoneIncludesAnonymous | valoare de registru | Dacă grupul „Toți” (Everyone) include și utilizatorii anonimi. | Cu valoarea 1, drepturile date grupului „Toți” se aplică și celor fără cont. | 0 = nu include (corect, implicit), 1 = include. |
+| LanmanServer\\Parameters\\RestrictNullSessAccess | valoare de registru | Limitează sesiunile anonime (null session) la partajările cu nume anume. | Sesiunile anonime permit citirea de informații din rețea fără cont. | 1 = limitat (corect, implicit), 0 = permis. |
+| Lsa\\NoLMHash | valoare de registru | Împiedică păstrarea parolei în formatul vechi LAN Manager. | Amprenta LAN Manager se sparge în câteva minute. | 1 = nu se păstrează (corect, implicit pe Windows 10/11), 0 = se păstrează. |
+| Lsa\\LmCompatibilityLevel | valoare de registru | Ce metode de autentificare în rețea trimite și acceptă stația (LM, NTLM, NTLMv2). | Metodele vechi se sparg ușor dacă sunt interceptate. | 5 = doar NTLMv2 (cerut de STIG); 0-2 = trimite și LM sau NTLMv1; 3 = implicit Windows; nesetat = 3. |
+| Installer\\AlwaysInstallElevated | valoare de registru | Politica „Instalează întotdeauna cu drepturi ridicate” pentru pachetele MSI. | Cu valoarea 1 orice utilizator instalează un pachet MSI cu drepturile sistemului. | 1 = activă (abatere gravă), 0 sau lipsă = oprită. |
+| kernel\\DisableExceptionChainValidation | valoare de registru | Oprește sau pornește protecția SEHOP (validarea lanțului de gestionare a excepțiilor). | SEHOP oprește o tehnică frecventă de exploatare a programelor. | 0 = SEHOP pornit (cerut de STIG), 1 = oprit. |
+| WinRM\\Client\\AllowBasic | valoare de registru | Politica care permite autentificarea Basic (parola trimisă aproape în clar) pentru clientul WinRM. | Parola poate fi citită de oricine ascultă rețeaua. | 0 = interzisă (corect), 1 = permisă. |
+| WinRM\\Client\\AllowUnencryptedTraffic | valoare de registru | Politica care permite clientului WinRM să trimită trafic necriptat. | Comenzile și datele pot fi citite de oricine ascultă rețeaua. | 0 = interzis (corect), 1 = permis. |
+| WinRM\\Service\\AllowBasic | valoare de registru | Politica care permite autentificarea Basic (parola trimisă aproape în clar) la serviciul WinRM. | Parola poate fi citită de oricine ascultă rețeaua. | 0 = interzisă (corect), 1 = permisă. |
+| WinRM\\Service\\AllowUnencryptedTraffic | valoare de registru | Politica care permite serviciului WinRM să accepte trafic necriptat. | Comenzile și datele pot fi citite de oricine ascultă rețeaua. | 0 = interzis (corect), 1 = permis. |
+| DNSClient\\EnableMulticast | valoare de registru | Politica „Oprește rezolvarea numelor prin difuzare” (LLMNR). | Un atacator din rețeaua locală poate răspunde în locul unui server real și captura parole. | 0 = oprită (recomandat), 1 sau lipsă = activă. |
+| Services\\W3SVC\\Start | valoare de registru | Modul de pornire al serviciului serverului web IIS. | Un server web deschide stația către conexiuni din rețea. | 4 = dezactivat, 3 = la cerere, 2 = automat; lipsa cheii înseamnă că IIS nu este instalat. |
 | Application 11707 | eveniment Windows | Windows Installer: un program a fost instalat cu succes. | Software-ul instalat trebuie să fie pe lista aprobată. |  |
 | Application 11724 | eveniment Windows | Windows Installer: un program a fost dezinstalat cu succes. | Dezinstalarea poate ascunde un program folosit anterior. |  |
 | Application 1033 | eveniment Windows | Windows Installer: instalare încheiată (cu codul de rezultat). | Software-ul instalat trebuie să fie pe lista aprobată. | Codul de stare 0 = reușit. |

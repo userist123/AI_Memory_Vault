@@ -87,6 +87,14 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | P37 | Application allow-list (App Control / WDAC) | Enforced or documented alternative | Enforced or documented alternative | Enforced or documented alternative |  |
 | P38 | Last full and quick antivirus scan | Recent | Recent | Recent |  |
 | P39 | Antivirus registered in Security Center | Registered | Registered | Registered |  |
+| P40 | Anonymous access to accounts and shares | Denied | Denied | Denied |  |
+| P41 | LM hash and old NTLM authentication | No LM hash; NTLMv2 only | No LM hash; NTLMv2 only | No LM hash; NTLMv2 only |  |
+| P42 | Dangerous user rights | None beyond the allowed holders | None beyond the allowed holders | None beyond the allowed holders |  |
+| P43 | MSI install with elevated rights (AlwaysInstallElevated) | Off | Off | Off |  |
+| P44 | Memory protection: DEP and SEHOP | DEP OptOut or AlwaysOn; SEHOP on | DEP OptOut or AlwaysOn; SEHOP on | DEP OptOut or AlwaysOn; SEHOP on |  |
+| P45 | WinRM Basic authentication and unencrypted traffic | Disabled | Disabled | Disabled |  |
+| P46 | Name resolution by broadcast (LLMNR) | Off; non-conform if on | Off; review if on | Off; review if on |  |
+| P47 | IIS web server installed | Not installed; non-conform if installed | Not installed; review if installed | Not installed; review if installed |  |
 | A01 | Audit policy records the required activity | Required categories on | Required categories on | Required categories on |  |
 | A02 | Security log size | At least 192 MB | At least 192 MB | At least 192 MB |  |
 | A03 | Security log covers the audited period | Covers the period | Covers the period | Covers the period |  |
