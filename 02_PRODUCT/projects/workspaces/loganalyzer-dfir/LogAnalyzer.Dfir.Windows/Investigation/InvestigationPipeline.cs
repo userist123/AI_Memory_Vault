@@ -142,7 +142,7 @@ public sealed class InvestigationPipeline
     public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
 
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
-        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector()];
+        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -188,6 +188,8 @@ public sealed class InvestigationPipeline
                 _ when f.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase) => "jumplist_auto",
                 _ when f.EndsWith(".customDestinations-ms", StringComparison.OrdinalIgnoreCase) => LogAnalyzer.Dfir.FileSystem.CustomJumpListParser.SourceTypeName,
                 _ when Path.GetFileName(f).Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase) => "srum",
+                // a Defender DetectionHistory file is named by a GUID, without extension: only a GUID name with the right content is typed
+                _ when Guid.TryParse(Path.GetFileName(f), out _) && EvidenceFingerprint.Detect(f) == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName => LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName,
                 _ when Path.GetFileName(f).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase)
                        || Path.GetFileName(f).EndsWith("SYSTEM.hiv", StringComparison.OrdinalIgnoreCase) => "system_hive",
                 _ when Path.GetFileName(f).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase) => "amcache",

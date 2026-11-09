@@ -15,7 +15,7 @@ public class Wp11ContractTests
         "SMB-ADMIN-SHARE", "SMB-SHARE-PERMS-CHANGED", "ACCOUNT-CREATED", "ACCOUNT-ADDED-PRIVILEGED-GROUP", "ACCOUNT-CREATED-THEN-USED",
         "REMOTE-RDP-INTERNAL", "REMOTE-WINRM", "REMOTE-PSEXEC", "REMOTE-SSH", "SECURITY-AGENT-STOPPED", "VSS-SNAPSHOT-DELETED",
         "DNS-RARE-DOMAIN", "DNS-SERVER-CHANGED", "REMOTE-TOOL-PRESENT", "REMOTE-TOOL-EXECUTED", "DISCOVERY-BURST",
-        "KERBEROAST-RC4", "ASREP-ROAST", "ADCS-SAN", "NTLM-RELAY-MACHINE", "EDR-WFP-BLOCK",
+        "KERBEROAST-RC4", "ASREP-ROAST", "ADCS-SAN", "NTLM-RELAY-MACHINE", "EDR-WFP-BLOCK", "DEF-HISTORY-ONLY",
     ];
 
     /// <summary>A timeline in which every rule fires at least once.</summary>
@@ -49,6 +49,9 @@ public class Wp11ContractTests
         Sec(4624, 19.5, ("TargetUserName", "DC02$"), ("WorkstationName", "DC02"), ("AuthenticationPackageName", "Kerberos"), ("LogonType", "3"), ("IpAddress", "10.0.0.20")),
         Sec(4624, 20, ("TargetUserName", "DC02$"), ("WorkstationName", "DC02"), ("AuthenticationPackageName", "NTLM"), ("LogonType", "3"), ("IpAddress", "10.0.0.66")),
         Sec(5441, 21, ("FilterName", "Custom Outbound Filter"), ("FilterId", "9")),
+        Ev("Microsoft-Windows-Windows Defender/Operational", 1150, 22, "Microsoft-Windows-Windows Defender"),   // the Defender channel was collected, with no 1116
+        Row("Artifact:DefenderDetectionHistory", 23, "powershell.exe", @"C:\LA\eicar\eicar-test.com", "275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f",
+            ("Detection ID", "{2169D50A-AB8F-4CC5-992A-DEAFEE4FAE82}"), ("Threat Name", "Virus:DOS/EICAR_Test_File"), ("Path", @"file:_C:\LA\eicar\eicar-test.com")),
     ];
 
     private static List<Finding> Enriched() => FindingContract.Enrich(Correlation.Run(Everything())).ToList();

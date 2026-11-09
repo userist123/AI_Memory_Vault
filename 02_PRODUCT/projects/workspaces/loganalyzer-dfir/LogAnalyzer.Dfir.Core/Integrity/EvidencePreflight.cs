@@ -28,6 +28,7 @@ public static class EvidenceFingerprint
         if (IsUsnExport(path)) return "usn_fsutil";
         if (IsSetupApiLog(path)) return "setupapi_dev";
         if (IsCustomDestinations(path, n, h)) return "custom_destinations";
+        if (IsDefenderHistory(path)) return LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName;
         if (IsFirewallLog(path)) return "pfirewall";
         if (IsZeekTsv(path)) return LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint;
         if (IsRecycleInfo(path)) return "recycle_info";
@@ -68,6 +69,20 @@ public static class EvidenceFingerprint
         fs.Seek(-4, SeekOrigin.End);
         Span<byte> tail = stackalloc byte[4];
         return fs.ReadAtLeast(tail, 4, throwOnEndOfStream: false) == 4 && BinaryPrimitives.ReadUInt32LittleEndian(tail) == 0xBABFFBAB;
+    }
+
+    /// <summary>A Defender DetectionHistory file: an 8-byte ThreatId record followed by a 16-byte GUID record; see <see cref="LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.LooksLikeHistory"/>.</summary>
+    private static bool IsDefenderHistory(string path)
+    {
+        var buf = new byte[0x18];
+        int n;
+        long length;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+        {
+            length = fs.Length;
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        }
+        return LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.LooksLikeHistory(buf.AsSpan(0, n), length);
     }
 
     /// <summary>Text written by <c>fsutil usn readjournal … csv</c>: it starts with the "USN Journal ID" line.</summary>
@@ -132,6 +147,7 @@ public static class EvidenceFingerprint
         if (t == LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName) return ["pfirewall"];
         if (t == LogAnalyzer.Dfir.Network.ZeekLogParser.SourceTypeName) return [LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint, "json"];
         if (t == "usn_journal") return ["usn_fsutil"];
+        if (t == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName];
         if (t == LogAnalyzer.Dfir.FileSystem.RecycleBinInfoParser.SourceTypeName) return ["recycle_info"];
         if (t is "chromium_history" or "firefox_places") return ["sqlite"];
         if (t == "jumplist_auto" || name.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase)) return ["cfb"];

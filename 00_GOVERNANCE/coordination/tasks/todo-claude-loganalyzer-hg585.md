@@ -469,3 +469,10 @@
   RC4 tickets from WS01; the real pipeline on the DC01 Security export (20,022 events) gave exactly one KERBEROAST and no false NTLM relay
   (16,408 machine Kerberos logons, 0 machine NTLM). 5441/5447/5157/4886/4887 field names not seen in real logs yet (lab has no CA/EDR).
   Suites: Dfir 3014, App 1028, UI 368, Edition 45.
+- 2026-11-09 (owner „Continua”): CI of 7d97d8df0 red: 20_TESTS/test_loganalyzer_rule_catalog.py only recognises hyphenated rule ids, so
+  KERBEROAST was a "dead" catalog entry -> renamed KERBEROAST-RC4 (f86da7731). Wave 4 started: Defender DetectionHistory. Real sample from
+  LAB-WS01 (EICAR test string written by PowerShell Direct; Defender RTP detected and blocked it) at E:\LA-Lab\diag\defender\dh (history file,
+  MPLog, Operational evtx). Format: 8-aligned TLV stream (u32 len, u32 type; 0x15 UTF-16 string, 0x06 u32, 0x0A FILETIME, 0x1E GUID, 0x28
+  key/value block with ThreatTracking* hashes); verified against the 1116 event (ID, time, user, process, path, SHA-256). Worker (Sonnet)
+  building DefenderDetectionHistoryParser + collector + rule DEF-HISTORY-ONLY (detection in history, missing from the collected 1116/1117);
+  Opus review next. Lab leftover: C:\LA\eicar and C:\LA\dh on WS01 (Defender quarantined/blocked the test file).

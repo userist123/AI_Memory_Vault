@@ -31,7 +31,7 @@ public sealed class ParserRegistryTests : IDisposable
     public void Every_registered_parser_describes_itself_completely()
     {
         var all = WindowsParsers.Registry.Descriptors;
-        Assert.Equal(23, all.Count);   // + FirewallLogParser (pfirewall.log, owner directive 2026-10-16); + ShellBagsParser and RecycleBinInfoParser (E7); + SetupApiLogParser (research P2.3); + CustomJumpListParser (P3.1); + VolatilityJsonParser (master plan 6.6); + ZeekLogParser (master plan 6.5)
+        Assert.Equal(24, all.Count);   // + FirewallLogParser (pfirewall.log, owner directive 2026-10-16); + ShellBagsParser and RecycleBinInfoParser (E7); + SetupApiLogParser (research P2.3); + CustomJumpListParser (P3.1); + VolatilityJsonParser (master plan 6.6); + ZeekLogParser (master plan 6.5); + DefenderDetectionHistoryParser (research gaps 2026-11-09, point 3)
         Assert.Equal(all.Count, all.Select(d => d.ParserId).Distinct().Count());
         Assert.All(all, d =>
         {
@@ -117,7 +117,7 @@ public sealed class ParserRegistryTests : IDisposable
         Assert.Contains("operator_notes", skipped.Error);
 
         var inventory = JsonDocument.Parse(File.ReadAllText(Path.Combine(ws.Root, "Analysis", "parsers.json"))).RootElement;
-        Assert.Equal(23, inventory.GetArrayLength());   // + FirewallLogParser, ShellBagsParser, RecycleBinInfoParser, SetupApiLogParser, CustomJumpListParser, VolatilityJsonParser, ZeekLogParser
+        Assert.Equal(24, inventory.GetArrayLength());   // + FirewallLogParser, ShellBagsParser, RecycleBinInfoParser, SetupApiLogParser, CustomJumpListParser, VolatilityJsonParser, ZeekLogParser, DefenderDetectionHistoryParser
         Assert.Contains(inventory.EnumerateArray(), d => d.GetProperty("ParserId").GetString() == "AmcacheParser");
     }
 }

@@ -53,6 +53,7 @@ Registrul refuză doi parseri cu același `ParserId`.
 | EvtxParser 1.0 | EVTX | EVTX 3.x | VALIDATED | corpus (Defender, Application), EvtxRepairTests |
 | PrefetchParser 1.0 | Prefetch | SCCA v30/v31, MAM | VALIDATED | corpus (SETUP.EXE, MSIEXEC.EXE) |
 | SrumNetworkParser 1.0 | SRUM Network Data Usage | ESE | VALIDATED | corpus (msbuild.exe, bytes exacți) |
+| DefenderDetectionHistoryParser 1.0 | Istoricul detecțiilor Defender (DetectionHistory) | TLV binar | TESTED | înregistrare reală EICAR din laborator + teste de input ostil |
 | PcapngParser 1.0 | PCAPNG | PCAPNG 1.0 | VALIDATED | corpus (fluxuri, DNS, SNI) |
 | SystemHiveExecutionParser 1.0 | BAM (inclusiv UWP), ShimCache | BAM Win10 1709+, ShimCache 10ts (inclusiv big-data) | VALIDATED | hive SYSTEM real vs `reg query`: 72 valori BAM, AppCompatCache identic octet cu octet |
 | AmcacheParser 1.0 | Amcache InventoryApplicationFile | Win10/11 | VALIDATED | Amcache.hve real (>6000 intrări) + sintetic |

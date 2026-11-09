@@ -30,6 +30,7 @@ public static partial class Wp11Rules
         Tools(c, found);
         Discovery(c, found);
         AdAttacks(c, found);
+        DefenderHistory(c, found);
         return found;
     }
 

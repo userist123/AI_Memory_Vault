@@ -52,6 +52,7 @@ public static class FindingContract
         "SoftwareHiveParser" => "Registry-ul SOFTWARE",
         "UsnJournalParser" => "Jurnalul USN",
         "SrumNetworkParser" => "SRUM (rețea)",
+        "DefenderDetectionHistoryParser" => "Istoricul detecțiilor Defender (DetectionHistory)",
         "PcapngParser" => "Captura de rețea (PCAPNG)",
         "FirewallLogParser" => "Jurnalul firewall-ului (pfirewall.log)",
         var p when p.EndsWith("Parser", StringComparison.Ordinal) => p[..^6],
