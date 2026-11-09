@@ -95,6 +95,25 @@ public sealed class DefenderDetectionHistoryTests : IDisposable
     }
 
     [Fact]
+    public void The_same_record_rewritten_by_Defender_after_the_log_was_cleared_keeps_the_detection_time_and_every_field()
+    {
+        // Real lab file: Defender rewrote the record (2360 -> 2400 bytes) after the Operational log was cleared; its FILETIME after the
+        // key block moved to 18:06:06.5, while ThreatTrackingStartTime stayed at the detection (18:05:53.6487535, 1116 says 18:05:53.649).
+        var bytes = File.ReadAllBytes(Fixture + ".after-log-clear");
+        var path = Write(RealId, bytes);
+        var sink = new ListSink();
+        new DefenderDetectionHistoryParser().Parse(Item(path), path, sink, default);
+        var e = Assert.Single(sink.Events);
+        Assert.Equal(new DateTimeOffset(DateTime.FromFileTimeUtc(134387211536487535)), e.Time.Utc);
+        Assert.Contains("ThreatTrackingStartTime", e.TimeSemantics);
+        Assert.Equal("{" + RealId + "}", e.Fields["Detection ID"]);
+        Assert.Equal("Virus:DOS/EICAR_Test_File", e.Fields["Threat Name"]);
+        Assert.Equal(@"LAB\Administrator", e.Fields["Detection User"]);
+        Assert.Equal("275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f", e.Fields["SHA256"]);
+        Assert.True(e.Time.Utc!.Value - new DateTimeOffset(2026, 11, 9, 18, 5, 53, 649, TimeSpan.Zero) < TimeSpan.FromMilliseconds(2));
+    }
+
+    [Fact]
     public void The_real_record_decodes_completely_with_the_file_ending_on_a_record_boundary()
     {
         var d = DefenderDetectionHistoryParser.Decode(Real);

@@ -202,7 +202,12 @@ public sealed class DefenderDetectionHistoryParser : EvidenceParserBase
             var post = recs.Skip(blockIdx + 1).ToList();
             int ftIdx = post.FindIndex(r => r.Type == TypeFileTime && r.Len >= 8);
             if (ftIdx >= 0 && FromFileTime(BinaryPrimitives.ReadInt64LittleEndian(d.AsSpan(post[ftIdx].Start))) is { } w) { when = w; timeSource = "FILETIME după blocul de chei"; }
-            if (when is null && keys.TryGetValue("ThreatTrackingStartTime", out var st) && long.TryParse(st, NumberStyles.None, CultureInfo.InvariantCulture, out var sti) && FromFileTime(sti) is { } w2) { when = w2; timeSource = "ThreatTrackingStartTime"; }
+            // Lab (EICAR, then the Defender log cleared): Defender rewrote the file and the FILETIME after the block moved 13 s later, while
+            // ThreatTrackingStartTime stayed within 1 ms of the 1116 Detection Time. In a fresh file the FILETIME is the exact 1116 time, so it is
+            // kept unless it lies more than a second after ThreatTrackingStartTime (a rewritten file).
+            if (keys.TryGetValue("ThreatTrackingStartTime", out var st) && long.TryParse(st, NumberStyles.None, CultureInfo.InvariantCulture, out var sti) && FromFileTime(sti) is { } w2
+                && (when is null || when.Value - w2 > TimeSpan.FromSeconds(1)))
+            { when = w2; timeSource = "ThreatTrackingStartTime"; }
             var strings = post.Where(r => r.Type == TypeString).Select(Str).ToList();
             int u = strings.FindIndex(s => s.Contains('\\') &&!s.Contains(':'));
             if (u >= 0) { user = strings[u]; if (u + 1 < strings.Count) process = strings[u + 1]; }

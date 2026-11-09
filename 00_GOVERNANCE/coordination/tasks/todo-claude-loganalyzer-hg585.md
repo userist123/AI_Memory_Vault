@@ -476,3 +476,11 @@
   key/value block with ThreatTracking* hashes); verified against the 1116 event (ID, time, user, process, path, SHA-256). Worker (Sonnet)
   building DefenderDetectionHistoryParser + collector + rule DEF-HISTORY-ONLY (detection in history, missing from the collected 1116/1117);
   Opus review next. Lab leftover: C:\LA\eicar and C:\LA\dh on WS01 (Defender quarantined/blocked the test file).
+  Done f7e826ff4: parser, collector (in InvestigationPipeline), rule DEF-HISTORY-ONLY. Opus r1: HIGH severity ignored the log window (old
+  detections and untimed ones were High), HIGH a log cleared and collected empty read as "not collected", MEDIUM only 1116/1117 matched ->
+  severity by window (High only cleared-after via System 104 or inside the log span; Low outside; Medium untimed / not in case), 1116-1119.
+  r2: MEDIUM contradictory text when only an earlier clear exists (new case ClearedBeforeOnly), LOW technique on the capped summary -> fixed.
+  Lab WS01 real run (parser + EvtxParser + Correlation): before clear only DEF-DETECTION; after `wevtutil cl` of the Defender log
+  DEF-HISTORY-ONLY High T1070.001 + LOG-TAMPER. Defender rewrote the record after the clear (FILETIME after the block +13 s); parser now falls
+  back to ThreatTrackingStartTime when the FILETIME is >1 s later (second real fixture). Not done: RemoteCollection. Next: RMM pack, then
+  Notepad TabState / MUICache. Suites: Dfir 3041, App 1028, UI 368, Edition 45.
