@@ -26,6 +26,7 @@ from __future__ import annotations
 import importlib
 import importlib.abc
 import importlib.machinery
+import importlib.util
 import os
 import sys
 
@@ -47,15 +48,38 @@ def _identity(spec):
     return None
 
 
-class _AliasLoader(importlib.abc.Loader):
-    def __init__(self, canonical_name: str) -> None:
-        self._canonical_name = canonical_name
+class _AliasLoader(importlib.abc.InspectLoader):
+    """Loader whose module is the canonical one; code access is delegated for ``runpy``.
+
+    ``python -m memory_controller.<X>`` goes through ``runpy._get_module_details``, which
+    needs ``is_package``/``get_code``. They delegate to the canonical spec's loader, asked
+    under the canonical name (file loaders refuse any other name). ``runpy`` then executes
+    that code as ``__main__`` in a fresh namespace, exactly as before the alias.
+    """
+
+    def __init__(self, canonical_spec) -> None:
+        self._canonical_spec = canonical_spec
+        self._canonical_name = canonical_spec.name
+
+    def _delegate(self, method: str):
+        fn = getattr(self._canonical_spec.loader, method, None)
+        if fn is None:
+            raise ImportError(
+                f"canonical loader of {self._canonical_name!r} has no {method}()", name=self._canonical_name)
+        return fn
+
+    def is_package(self, fullname):
+        return self._delegate("is_package")(self._canonical_name)
+
+    def get_code(self, fullname):
+        return self._delegate("get_code")(self._canonical_name)
+
+    def get_source(self, fullname):
+        return self._delegate("get_source")(self._canonical_name)
 
     def create_module(self, spec):
         # Any exception here propagates to the importer; there is no fallback.
-        module = importlib.import_module(self._canonical_name)
-        self._canonical_spec = module.__spec__
-        return module
+        return importlib.import_module(self._canonical_name)
 
     def exec_module(self, module) -> None:
         # The canonical module is already executed. ``importlib`` assigns
@@ -92,9 +116,17 @@ class AliasFinder(importlib.abc.MetaPathFinder):
         own_id, their_id = _identity(own), _identity(theirs)
         if own_id is None or own_id != their_id:
             return None
-        return importlib.machinery.ModuleSpec(
-            fullname, _AliasLoader(f"{_CANONICAL}.{rest}"), origin=getattr(theirs, "origin", None)
+        canonical_spec = importlib.util.find_spec(f"{_CANONICAL}.{rest}")
+        if canonical_spec is None:
+            return None  # same first component but the deeper name does not exist
+        spec = importlib.machinery.ModuleSpec(
+            fullname, _AliasLoader(canonical_spec), origin=canonical_spec.origin,
+            is_package=canonical_spec.submodule_search_locations is not None,
         )
+        if canonical_spec.submodule_search_locations is not None:
+            spec.submodule_search_locations = list(canonical_spec.submodule_search_locations)
+        spec.has_location = canonical_spec.has_location
+        return spec
 
 
 def install() -> AliasFinder:

@@ -338,3 +338,71 @@ def test_p7_without_a_canonical_namespace_the_finder_declines_instead_of_errorin
                           capture_output=True, text=True, timeout=60)
     assert proc.returncode == 0, proc.stderr
     assert json.loads(proc.stdout.strip().splitlines()[-1]) == [True, "legacy", "memory_controller.controller"]
+
+
+# ---- P8: `python -m memory_controller.<X>` (documented in the Browser AI agent runbook) ---------
+def _run_dash_m(tmp_path: Path, module: str, *args: str, with_root: bool = False):
+    import os
+    env = dict(os.environ)
+    paths = ([str(REPO)] if with_root else []) + [str(PACKAGES)]
+    env["PYTHONPATH"] = os.pathsep.join(paths)
+    return subprocess.run([sys.executable, "-m", module, *args], cwd=str(tmp_path), env=env,
+                          capture_output=True, text=True, timeout=120)
+
+
+@pytest.mark.parametrize("module", ["memory_controller.controller", "memory_controller.version"])
+def test_p8_dash_m_on_a_module_without_import_side_effects_exits_zero(tmp_path, module):
+    proc = _run_dash_m(tmp_path, module)
+    assert proc.returncode == 0, proc.stderr
+
+
+def test_p8_dash_m_runs_the_main_block_in_a_fresh_namespace(tmp_path):
+    """``vault_cli`` has an ``if __name__ == "__main__"`` block; ``--help`` must reach argparse."""
+    proc = _run_dash_m(tmp_path, "memory_controller.vault_cli", "--help")
+    assert proc.returncode == 0, proc.stderr
+    assert proc.stdout.lower().startswith("usage:"), proc.stdout[:200]
+
+
+@ROOT_MODES
+def test_p8_runpy_executes_as_main_and_does_not_reuse_the_canonical_module(tmp_path, with_root):
+    out = _probe(tmp_path, """
+        import runpy
+        canonical = importlib.import_module("cognitive_core.controller")
+        before = (canonical.__name__, canonical.__spec__.name)
+        ns = runpy.run_module("memory_controller.controller", run_name="__main__")
+        print(json.dumps({"name": ns["__name__"], "fresh": ns.get("MemoryController") is not canonical.MemoryController,
+                          "canonical_untouched": before == (canonical.__name__, canonical.__spec__.name),
+                          "same_registered": sys.modules["cognitive_core.controller"] is canonical}))
+    """, with_root=with_root)
+    assert out == {"name": "__main__", "fresh": True, "canonical_untouched": True, "same_registered": True}
+
+
+# ---- P9: the alias spec looks like the canonical one --------------------------------------------
+@ROOT_MODES
+def test_p9_alias_spec_of_a_package_is_a_package_spec(tmp_path, with_root):
+    out = _probe(tmp_path, """
+        import importlib.util, runpy
+        spec = importlib.util.find_spec("memory_controller.storage")
+        canon = importlib.util.find_spec("cognitive_core.storage")
+        mod_spec = importlib.util.find_spec("memory_controller.controller")
+        runpy_ok = True
+        for name in ("memory_controller.controller", "memory_controller.authorizer"):
+            try:
+                runpy._get_module_details(name)
+            except SystemExit:
+                pass
+            except BaseException as exc:
+                runpy_ok = repr(exc)
+        print(json.dumps({"locations": list(spec.submodule_search_locations or []),
+                          "canon_locations": list(canon.submodule_search_locations or []),
+                          "is_package": spec.loader.is_package(spec.name),
+                          "module_is_package": mod_spec.loader.is_package(mod_spec.name),
+                          "module_locations": mod_spec.submodule_search_locations,
+                          "has_get_code": hasattr(spec.loader, "get_code") and hasattr(spec.loader, "get_source"),
+                          "runpy_ok": runpy_ok}))
+    """, with_root=with_root)
+    assert out["locations"] and out["locations"] == out["canon_locations"]
+    assert out["is_package"] is True and out["module_is_package"] is False
+    assert out["module_locations"] is None
+    assert out["has_get_code"] is True
+    assert out["runpy_ok"] is True
