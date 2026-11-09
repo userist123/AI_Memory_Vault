@@ -15,13 +15,13 @@ from __future__ import annotations
 
 import pytest
 from memory_controller.authorizer import Principal
-from lifecycle.validation.book_to_memory_schema import (
+from book_to_memory.book_to_memory_schema import (
     ConflictSeverity,
     ConflictStatus,
     ProvenanceGateError,
     SecurityInjectionError,
 )
-from lifecycle.validation.book_to_memory_conflict import (
+from book_to_memory.book_to_memory_conflict import (
     ConflictRecord,
     ConflictRegistry,
     ConflictResolutionType,
@@ -31,7 +31,7 @@ from lifecycle.validation.book_to_memory_conflict import (
     ConflictPermissionError,
     DuplicateConflictError,
 )
-from lifecycle.validation.book_to_memory_lifecycle import (
+from book_to_memory.book_to_memory_lifecycle import (
     BookToMemoryLifecycleState,
     issue_owner_approval,
     transition_book_to_memory_lifecycle,

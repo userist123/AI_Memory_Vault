@@ -8,11 +8,11 @@ Tests strict compliance with:
 import pytest
 
 from memory_controller.authorizer import Principal
-from lifecycle.validation.book_to_memory_hypothesis import (
+from book_to_memory.book_to_memory_hypothesis import (
     BookToMemoryHypothesisRegistry,
     TrackState,
 )
-from lifecycle.validation.book_to_memory_experiment import (
+from book_to_memory.book_to_memory_experiment import (
     BookToMemoryExperimentHarness,
     ExperimentConfig,
     ExperimentValidationError,
@@ -374,7 +374,7 @@ def test_harness_full_lifecycle_multi_hypothesis(clean_registry, valid_sample_ca
 # =============================================================================
 
 def _config():
-    from lifecycle.validation.book_to_memory_run_config import RunConfig
+    from book_to_memory.book_to_memory_run_config import RunConfig
     return RunConfig.for_retrieval({"principal": "HUMAN", "page_size": 10})
 
 
@@ -393,7 +393,7 @@ def test_run_config_is_recorded_in_the_result(experiment_harness, valid_sample_c
 
 
 def test_malformed_run_config_is_refused_at_configuration(valid_sample_cases):
-    from lifecycle.validation.book_to_memory_run_config import RunConfigError
+    from book_to_memory.book_to_memory_run_config import RunConfigError
     with pytest.raises(RunConfigError):
         ExperimentConfig(
             experiment_id="EXP-H1-001-INTERFERENCE",

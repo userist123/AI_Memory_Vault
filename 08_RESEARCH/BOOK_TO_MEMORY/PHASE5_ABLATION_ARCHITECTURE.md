@@ -6,11 +6,11 @@
 **Governing Documents**:
 - `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md` (Secțiunea 7: Evaluare cu/fără notă)
 - `00_GOVERNANCE/protocols/Confidence_Model.md`
-- `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_schema.py`
-- `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py`
-- `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_conflict.py`
-- `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_usage_test.py`
-- `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_ablation.py`
+- `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_schema.py`
+- `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_lifecycle.py`
+- `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_conflict.py`
+- `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_usage_test.py`
+- `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_ablation.py`
 
 ---
 

@@ -3,11 +3,11 @@
 Implements the formal retrieval and working memory validation authority according to:
 - 00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md (Phase 6: Retrieval / Working Memory Validation)
 - 00_GOVERNANCE/protocols/Confidence_Model.md
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_schema.py (Phase 1)
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py (Phase 2)
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_conflict.py (Phase 3)
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_usage_test.py (Phase 4)
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_ablation.py (Phase 5)
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_schema.py (Phase 1)
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_lifecycle.py (Phase 2)
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_conflict.py (Phase 3)
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_usage_test.py (Phase 4)
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_ablation.py (Phase 5)
 """
 from __future__ import annotations
 

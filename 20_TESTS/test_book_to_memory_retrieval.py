@@ -17,7 +17,7 @@ from typing import Dict, Any, List
 import memory_controller.controller as mcc
 from memory_controller.controller import Lifecycle
 from memory_controller.authorizer import Principal
-from lifecycle.validation.book_to_memory_schema import (
+from book_to_memory.book_to_memory_schema import (
     BookToMemoryType,
     ConflictSeverity,
     ConflictStatus,
@@ -25,8 +25,8 @@ from lifecycle.validation.book_to_memory_schema import (
     SecurityInjectionError,
     ProvenanceGateError,
 )
-from lifecycle.validation.book_to_memory_conflict import ConflictRegistry
-from lifecycle.validation.book_to_memory_retrieval import (
+from book_to_memory.book_to_memory_conflict import ConflictRegistry
+from book_to_memory.book_to_memory_retrieval import (
     BookToMemoryRetrievalValidator,
     WorkingMemoryContextPack,
     LifecycleFilterError,

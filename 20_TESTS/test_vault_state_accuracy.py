@@ -311,7 +311,7 @@ def test_research_only_modules_stay_unwired():
         f"research-only modules gained production consumers {offenders}; update VAULT_STATE.md section 3"
     )
     # Inside the research modules, nothing may import the interference gate either.
-    for path in (REPO / "03_IMPLEMENTATION" / "packages" / "lifecycle" / "validation").glob("book_to_memory_*.py"):
+    for path in (REPO / "03_IMPLEMENTATION" / "packages" / "book_to_memory").glob("book_to_memory_*.py"):
         assert "interference_gate" not in path.read_text(encoding="utf-8", errors="ignore")
 
 

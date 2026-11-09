@@ -25,12 +25,12 @@ from typing import List
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "03_IMPLEMENTATION" / "packages"))
 
-from lifecycle.validation.book_to_memory_blind_packet import (  # noqa: E402
+from book_to_memory.book_to_memory_blind_packet import (  # noqa: E402
     build_blind_packet,
     items_from_b03_packet,
     scores_by_trial,
 )
-from lifecycle.validation.book_to_memory_raters import aggregate_ratings, load_ratings  # noqa: E402
+from book_to_memory.book_to_memory_raters import aggregate_ratings, load_ratings  # noqa: E402
 
 DEFAULT_SEED = 20261008
 

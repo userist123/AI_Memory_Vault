@@ -3,24 +3,24 @@
 Validates all contracts under:
 - 00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md (Section 7: Evaluare cu/fara nota)
 - 00_GOVERNANCE/protocols/Confidence_Model.md
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_ablation.py
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_ablation.py
 """
 import pytest
 from memory_controller.authorizer import Principal
-from lifecycle.validation.book_to_memory_schema import (
+from book_to_memory.book_to_memory_schema import (
     BookToMemoryType,
     EpistemicType,
     ProvenanceGateError,
     SecurityInjectionError,
 )
-from lifecycle.validation.book_to_memory_usage_test import (
+from book_to_memory.book_to_memory_usage_test import (
     RubricDimension,
     TaskSpecification,
     UsageTestStatus,
     UsageTestValidationError,
 )
-from lifecycle.validation.book_to_memory_run_config import ConfigMismatchError, RunConfig
-from lifecycle.validation.book_to_memory_ablation import (
+from book_to_memory.book_to_memory_run_config import ConfigMismatchError, RunConfig
+from book_to_memory.book_to_memory_ablation import (
     CONFIG_STATUS_RECORDED,
     CONFIG_STATUS_UNSPECIFIED,
     DATA_STATUS_COMPLETE,

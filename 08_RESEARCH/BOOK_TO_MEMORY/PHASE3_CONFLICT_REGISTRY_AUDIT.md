@@ -27,7 +27,7 @@
 - **Reguli:** Conflictele nerezolvate coboară nivelul de încredere al afirmației (`confidence`). O afirmație aflată în conflict activ nu poate beneficia de `confidence: very_high` sau `verification: verified` fără coroborare și arbitraj metodologic.
 
 ### 1.4 Porți de Ciclu de Viață (`GATE-06 Conflict`)
-- **Locație:** `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py`
+- **Locație:** `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_lifecycle.py`
 - **Regulă:** `GATE-06 Conflict` evaluează registrul de conflicte asociat notei. Orice conflict deschis (`status == "open"`) cu severitate `HIGH` sau `CRITICAL` blochează tranziția notei către starea `ACTIVE`.
 - **Demotare:** La apariția unui conflict nou de severitate `HIGH` raportat pe o notă `ACTIVE`, funcția `demote_active_note()` retrogradează starea în `UNVERIFIED` și atașează referința conflictului în `demotion_history`.
 
@@ -45,7 +45,7 @@
 ## 3. Planul de Implementare pentru Faza 3
 
 Pentru a închide aceste lacune, Faza 3 implementează:
-- Modulul dedicat: `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_conflict.py`
+- Modulul dedicat: `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_conflict.py`
 - Identificator determinist stabil: `CONFLICT-<domain>-<slug>` calculat din domeniul și cheile canonice ale afirmațiilor (invariant la ordinea A/B și spații albe).
 - Registru imutabil de conflicte: Conservă intacte Claim A, Sursa A, Evidența A, Claim B, Sursa B, Evidența B.
 - Porți de rezoluție controlate exclusiv de `Principal.HUMAN` / `Principal.ADMIN`.

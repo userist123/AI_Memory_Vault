@@ -25,39 +25,39 @@ from dataclasses import asdict
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from memory_controller.authorizer import Principal
-from lifecycle.validation.book_to_memory_schema import (
+from .book_to_memory_schema import (
     BookToMemoryValidationError,
     SecurityInjectionError,
     validate_book_to_memory_note,
     validate_untrusted_security,
 )
-from lifecycle.validation.book_to_memory_lifecycle import (
+from .book_to_memory_lifecycle import (
     BookToMemoryLifecycleState,
     OwnerApprovalToken,
 )
-from lifecycle.validation.book_to_memory_conflict import (
+from .book_to_memory_conflict import (
     ConflictRegistry,
     ConflictRecord,
 )
-from lifecycle.validation.book_to_memory_usage_test import (
+from .book_to_memory_usage_test import (
     TaskSpecification,
     EvaluationAttempt,
 )
-from lifecycle.validation.book_to_memory_pipeline import (
+from .book_to_memory_pipeline import (
     BookToMemoryPipeline,
     BookIngestionAuditReport,
 )
-from lifecycle.validation.book_to_memory_catalog import (
+from .book_to_memory_catalog import (
     BookToMemoryCatalog,
 )
-from lifecycle.validation.book_to_memory_hypothesis import (
+from .book_to_memory_hypothesis import (
     BookToMemoryHypothesisRegistry,
     HypothesisRecord,
     DecisionRecord,
     TrackState,
     CANONICAL_VAULT_PROBLEMS,
 )
-from lifecycle.validation.book_to_memory_experiment import (
+from .book_to_memory_experiment import (
     BookToMemoryExperimentHarness,
     ExperimentConfig,
     ExperimentResult,

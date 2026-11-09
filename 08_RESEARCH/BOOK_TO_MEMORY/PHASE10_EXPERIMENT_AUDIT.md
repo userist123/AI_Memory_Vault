@@ -42,7 +42,7 @@ Conform contractului `RESEARCH-TRACK-CONTRACT.md` (Secțiunile 88–148) și `PO
 
 ## 3. Planul de Implementare pentru Faza 10
 
-1. **Modul Implementare**: `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_experiment.py`
+1. **Modul Implementare**: `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_experiment.py`
    - Clasa `ExperimentConfig` cu validare strictă a cazurilor și parametrilor.
    - Clasa `ExperimentResult` cu metrici pereche, delte absolute/relative și calcul hash/digest.
    - Clasa `BookToMemoryExperimentHarness` orchestrând FSM-ul:

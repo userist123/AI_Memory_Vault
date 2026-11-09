@@ -1,7 +1,7 @@
 # F0 — Inventar pachete (generat automat)
 
 Generat de `30_SCRIPTS/verification/package_inventory.py`; toate numerele provin din rularea scriptului.
-Fișiere .py analizate: 2201; ordinea `pythonpath`: `. 03_IMPLEMENTATION/packages 03_IMPLEMENTATION` (primul câștigă); erori de parsare AST: 28.
+Fișiere .py analizate: 2202; ordinea `pythonpath`: `. 03_IMPLEMENTATION/packages 03_IMPLEMENTATION` (primul câștigă); erori de parsare AST: 28.
 
 Reguli: LOC = linii non-goale fără comentariu-linie. Consumator prod = fișier .py în afara 20_TESTS, /tests/, /benchmarks/, test_*.py și în afara modulului. Consumator test = 20_TESTS, /tests/, test_*.py, conftest.py. Un import prin shim `__path__` creditează și modulul servit.
 
@@ -10,11 +10,12 @@ Reguli: LOC = linii non-goale fără comentariu-linie. Consumator prod = fișier
 | Modul | Fișiere | LOC | Entry points | Consumatori prod | Consumatori test | CI/config | Ext deps | UNKNOWN |
 |---|---|---|---|---|---|---|---|---|
 | `packages/agent_bridge` | 9 | 708 | main:0 __main__:0 scripts:0 | 0 | 3 | 3 (1 f.) | cryptography | 0 |
+| `packages/book_to_memory` | 20 | 5859 | main:0 __main__:0 scripts:0 | 9 | 19 | 0 (0 f.) | jsonschema | 0 |
 | `packages/cognitive_core` | 1 | 20 | main:0 __main__:0 scripts:0 | 0 | 0 | 0 (0 f.) | - | 1 |
 | `packages/graph` | 8 | 1569 | main:0 __main__:0 scripts:0 | 17 | 22 | 0 (0 f.) | - | 0 |
 | `packages/interfaces` | 25 | 4912 | main:8 __main__:0 scripts:0 | 25 | 46 | 0 (0 f.) | jsonschema, mcp, numpy, pandas, pydantic | 8 |
 | `packages/learning` | 19 | 1496 | main:0 __main__:0 scripts:0 | 6 | 27 | 0 (0 f.) | yaml | 0 |
-| `packages/lifecycle` | 32 | 7029 | main:0 __main__:0 scripts:0 | 21 | 30 | 0 (0 f.) | jsonschema | 0 |
+| `packages/lifecycle` | 13 | 1173 | main:0 __main__:0 scripts:0 | 12 | 14 | 0 (0 f.) | jsonschema | 0 |
 | `packages/memory` | 27 | 4628 | main:0 __main__:0 scripts:0 | 66 | 105 | 3 (2 f.) | yaml | 0 |
 | `packages/memory_controller` | 2 | 151 | main:0 __main__:0 scripts:0 | 97 | 119 | 2 (1 f.) | - | 4 |
 | `packages/memory_vault` | 2 | 32 | main:0 __main__:0 scripts:0 | 0 | 0 | 0 (0 f.) | - | 2 |
@@ -36,14 +37,15 @@ Reguli: LOC = linii non-goale fără comentariu-linie. Consumator prod = fișier
 | Modul | `__init__` | `__all__` | Importă (nr. fișiere) | Shim `__path__` către (sursa) |
 |---|---|---|---|---|
 | `packages/agent_bridge` | da | nu | packages/routing(2) | - |
+| `packages/book_to_memory` | da | nu | packages/interfaces(1), packages/memory(2), packages/security(10) | - |
 | `packages/cognitive_core` | da | da | - | packages/graph, packages/memory, packages/learning, packages/observability, packages/providers, packages/interfaces, packages/security, packages/retrieval, packages/lifecycle (path_eval) |
 | `packages/graph` | da | da | packages/security(1) | - |
 | `packages/interfaces` | da | nu | packages/lifecycle(3), packages/memory(6), packages/providers(2), packages/security(8), packages/vault_access(3), products/xau_kinetic(1), root/security(1) | - |
 | `packages/learning` | da | nu | packages/graph(1), packages/interfaces(6), packages/lifecycle(1), packages/memory(10), packages/observability(1), packages/providers(2), packages/security(11) | - |
-| `packages/lifecycle` | da | nu | packages/interfaces(1), packages/memory(2), packages/security(11) | - |
+| `packages/lifecycle` | da | nu | packages/security(1) | - |
 | `packages/memory` | da | nu | packages/graph(1), packages/lifecycle(1), packages/observability(3), packages/retrieval(2), packages/security(5), root/security(1) | - |
 | `packages/memory_controller` | da | da | - | packages/retrieval, packages/memory, packages/security, packages/lifecycle, packages/interfaces, packages/observability (path_eval) |
-| `packages/memory_vault` | da | da | - | packages/agent_bridge, packages/cognitive_core, packages/graph, packages/interfaces, packages/learning, packages/lifecycle, packages/memory, packages/memory_controller, packages/observability +7 (path_expression) |
+| `packages/memory_vault` | da | da | - | packages/agent_bridge, packages/book_to_memory, packages/cognitive_core, packages/graph, packages/interfaces, packages/learning, packages/lifecycle, packages/memory, packages/memory_controller +8 (path_expression) |
 | `packages/observability` | da | da | packages/providers(1), packages/retrieval(4) | - |
 | `packages/polymarket` | da | da | - | - |
 | `packages/providers` | da | nu | - | - |

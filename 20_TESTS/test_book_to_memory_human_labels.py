@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from lifecycle.validation.book_to_memory_human_labels import (
+from book_to_memory.book_to_memory_human_labels import (
     ALLOWED,
     COLUMNS,
     MIN_LABELS,
@@ -27,7 +27,7 @@ from lifecycle.validation.book_to_memory_human_labels import (
     render_report_markdown,
     rows_to_csv,
 )
-from lifecycle.validation.book_to_memory_paired_stats import wilson_interval
+from book_to_memory.book_to_memory_paired_stats import wilson_interval
 
 REPO = Path(__file__).resolve().parents[1]
 PACKET_DIR = REPO / "08_RESEARCH" / "BOOK_TO_MEMORY" / "b06_labelling_packet"
