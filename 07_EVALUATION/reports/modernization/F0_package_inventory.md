@@ -36,24 +36,24 @@ Reguli: LOC = linii non-goale fără comentariu-linie. Consumator prod = fișier
 | Modul | `__init__` | `__all__` | Importă (nr. fișiere) | Shim `__path__` către (sursa) |
 |---|---|---|---|---|
 | `packages/agent_bridge` | da | nu | packages/routing(2) | - |
-| `packages/cognitive_core` | da | da | - | packages/graph, packages/memory, packages/learning, packages/observability, packages/providers, packages/interfaces, packages/security, packages/retrieval, packages/lifecycle (string_constants) |
+| `packages/cognitive_core` | da | da | - | packages/graph, packages/memory, packages/learning, packages/observability, packages/providers, packages/interfaces, packages/security, packages/retrieval, packages/lifecycle (path_eval) |
 | `packages/graph` | da | da | packages/memory(1), packages/security(1) | - |
 | `packages/interfaces` | da | nu | packages/lifecycle(3), packages/memory(6), packages/providers(2), packages/security(8), packages/vault_access(3), products/xau_kinetic(1), root/security(1) | - |
 | `packages/learning` | da | nu | packages/graph(1), packages/interfaces(6), packages/lifecycle(1), packages/memory(10), packages/observability(1), packages/providers(2), packages/security(11) | - |
 | `packages/lifecycle` | da | nu | packages/interfaces(1), packages/memory(2), packages/security(11) | - |
 | `packages/memory` | da | nu | packages/graph(1), packages/interfaces(1), packages/lifecycle(1), packages/observability(3), packages/retrieval(2), packages/security(5), root/security(1) | - |
-| `packages/memory_controller` | da | da | - | packages/retrieval, packages/memory, packages/security, packages/lifecycle, packages/interfaces, packages/observability (string_constants) |
+| `packages/memory_controller` | da | da | - | packages/retrieval, packages/memory, packages/security, packages/lifecycle, packages/interfaces, packages/observability (path_eval) |
 | `packages/memory_vault` | da | da | - | packages/agent_bridge, packages/cognitive_core, packages/graph, packages/interfaces, packages/learning, packages/lifecycle, packages/memory, packages/memory_controller, packages/observability +7 (path_expression) |
 | `packages/observability` | da | da | packages/providers(1), packages/retrieval(4) | - |
 | `packages/polymarket` | da | da | - | - |
 | `packages/providers` | da | nu | - | - |
 | `packages/retrieval` | da | nu | packages/graph(1), packages/interfaces(1), packages/memory(2), packages/security(1), root/security(2) | - |
 | `packages/routing` | da | nu | - | - |
-| `packages/security` | da | nu | packages/interfaces(1) | self, root/security (string_constants) |
+| `packages/security` | da | nu | packages/interfaces(1) | self, root/security (path_eval) |
 | `packages/vault_access` | da | da | packages/interfaces(2) | - |
-| `packages/xau_kinetic` | da | da | - | products/xau_kinetic (string_constants) |
+| `packages/xau_kinetic` | da | da | - | products/xau_kinetic (path_eval) |
 | `products/xau_kinetic` | NU | nu | packages/lifecycle(1) | - |
-| `root/cognitive_core` | da | da | packages/interfaces(3), packages/learning(1) | self, packages/graph, packages/memory, packages/learning, packages/observability, packages/providers, packages/interfaces, packages/security, packages/retrieval +1 (string_constants) |
+| `root/cognitive_core` | da | da | packages/interfaces(3), packages/learning(1) | self, packages/graph, packages/memory, packages/learning, packages/observability, packages/providers, packages/interfaces, packages/security, packages/retrieval +1 (path_eval) |
 | `root/scripts` | da | nu | packages/interfaces(2), packages/observability(1), packages/providers(2), packages/retrieval(1) | - |
 | `root/security` | da | nu | packages/interfaces(1), packages/lifecycle(2), packages/memory(3), packages/retrieval(5), packages/security(2) | - |
 

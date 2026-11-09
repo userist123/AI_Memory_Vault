@@ -27,8 +27,8 @@
       },
       "name": "cognitive_core",
       "shim_target_source": {
-        "packages/cognitive_core": "string_constants",
-        "root/cognitive_core": "string_constants"
+        "packages/cognitive_core": "path_eval",
+        "root/cognitive_core": "path_eval"
       },
       "shim_targets": {
         "packages/cognitive_core": [
@@ -110,7 +110,7 @@
       },
       "name": "security",
       "shim_target_source": {
-        "packages/security": "string_constants"
+        "packages/security": "path_eval"
       },
       "shim_targets": {
         "packages/security": [
@@ -186,7 +186,8 @@
       "consumers_test": "fișiere sub 20_TESTS, /tests/, test_*.py sau conftest.py",
       "facade_edges": "muchii (imports_out*): un import prin fațadă creditează DOAR unitatea care servește submodulul (ordinea din __path__); dacă nu se rezolvă, muchia rămâne pe fațadă și apare în meta.facade_unresolved",
       "loc": "linii non-goale care nu încep cu #; docstring-urile se numără",
-      "shim_credit": "consumatori: un import prin shim __path__ creditează fațada ȘI modulul servit"
+      "shim_credit": "consumatori: un import prin shim __path__ creditează fațada ȘI modulul servit",
+      "shim_target_source": "path_eval/path_expression = evaluatorul simbolic al __path__ (exact, în ordine); legacy_fallback = euristica pe constante-șir (sortat, nu ordinea __path__); un alias declarat care cade pe legacy_fallback pică în architecture_boundaries"
     },
     "test_paths_promoted_to_production": [],
     "testpaths": [
@@ -2326,7 +2327,7 @@
       "local_unresolved_names": [],
       "name": "cognitive_core",
       "py_files": 1,
-      "shim_target_source": "string_constants",
+      "shim_target_source": "path_eval",
       "shim_targets": [
         "packages/graph",
         "packages/memory",
@@ -3242,7 +3243,7 @@
       "local_unresolved_names": [],
       "name": "memory_controller",
       "py_files": 1,
-      "shim_target_source": "string_constants",
+      "shim_target_source": "path_eval",
       "shim_targets": [
         "packages/retrieval",
         "packages/memory",
@@ -3949,7 +3950,7 @@
       "local_unresolved_names": [],
       "name": "security",
       "py_files": 12,
-      "shim_target_source": "string_constants",
+      "shim_target_source": "path_eval",
       "shim_targets": [
         "self",
         "root/security"
@@ -4094,7 +4095,7 @@
       "local_unresolved_names": [],
       "name": "xau_kinetic",
       "py_files": 1,
-      "shim_target_source": "string_constants",
+      "shim_target_source": "path_eval",
       "shim_targets": [
         "products/xau_kinetic"
       ],
@@ -4358,7 +4359,7 @@
       "local_unresolved_names": [],
       "name": "cognitive_core",
       "py_files": 5,
-      "shim_target_source": "string_constants",
+      "shim_target_source": "path_eval",
       "shim_targets": [
         "self",
         "packages/graph",
@@ -6084,7 +6085,7 @@
       "line": 333
     },
     {
-      "detail": "path[...]",
+      "detail": "sys.path[...]",
       "file": "20_TESTS/test_cost_router_escalation_matrix.py",
       "kind": "path_assign",
       "line": 350

@@ -42,8 +42,13 @@ OWNER_TABLE = {
 EDGE_KEY = tuple  # (from_unit, to_unit)
 
 
-def _inventory(root: Path) -> dict:
-    return pi.build_inventory(Path(root))
+def also_units_of(config: dict) -> set[str]:
+    return {a for a, d in config.get("aliases", {}).items() if d.get("also_unit")}
+
+
+def _inventory(root: Path, config: dict | None = None) -> dict:
+    """``config`` given: its ``also_unit`` aliases are the only shims that keep resolving their own name."""
+    return pi.build_inventory(Path(root), also_units_of(config) if config is not None else None)
 
 
 def edges_from_inventory(inv: dict) -> dict[tuple[str, str], int]:
@@ -105,7 +110,7 @@ def _classify(config: dict, inv: dict, edges: dict[tuple[str, str], int]):
 
 
 def check(root: Path, config: dict, inv: dict | None = None) -> list[str]:
-    inv = inv if inv is not None else _inventory(root)
+    inv = inv if inv is not None else _inventory(root, config)
     fails: list[str] = []
     idx = layer_index(config)
     ids = {u["id"] for u in inv["units"]}
@@ -114,12 +119,29 @@ def check(root: Path, config: dict, inv: dict | None = None) -> list[str]:
         fails.append(f"(a) unit {uid} exists but is not assigned to any layer or alias in the config")
     for uid in sorted((set(idx) | set(aliases)) - ids):
         fails.append(f"(a) unit {uid} is assigned to a layer or alias but does not exist in the inventory")
+    by_id = {u["id"]: u for u in inv["units"]}
     for uid in sorted(set(aliases) & ids):
-        real = next(u["shim_targets"] for u in inv["units"] if u["id"] == uid)
+        real = by_id[uid]["shim_targets"]
         declared = aliases[uid].get("__path__")
         if real != declared:
             fails.append(f"(h) alias {uid}: real __path__ {real} differs from the declared {declared}")
+        elif by_id[uid].get("shim_target_source") == "legacy_fallback":
+            fails.append(f"(h) alias {uid}: its __path__ is not interpretable by the evaluator (legacy_fallback "
+                         f"heuristic, order not guaranteed); write it as a literal list of Path(__file__) expressions")
+    for uid in sorted(ids - set(aliases)):
+        if by_id[uid].get("shim_targets") is not None:
+            fails.append(f"(h) unit {uid} moves its __path__ (shim_targets {by_id[uid]['shim_targets']}) but is not "
+                         f"declared in aliases")
+    for r in inv["meta"].get("facade_unresolved", []):
+        if not r.get("test"):
+            fails.append(f"(i) non-test import {r['module']} ({r['file']}:{r['line']}) is not served by any entry of the "
+                         f"__path__ of facade {r['facade']}")
+    plain_aliases = set(aliases) - also_units_of(config)
     edges = edges_from_inventory(inv)
+    for (a, b), n in sorted(edges.items()):
+        if b in plain_aliases:
+            fails.append(f"(j) {a} has a non-test edge to facade {b} ({n} files): a facade is not a unit, "
+                         f"the import must resolve to the unit that serves it")
     current = _classify(config, inv, edges)
     base = {(e["from"], e["to"]): e for e in config.get("baseline_edges", [])}
     for (a, b), row in sorted(current.items()):
@@ -258,7 +280,7 @@ def main(argv: list[str] | None = None) -> int:
     if not cfg_path.is_absolute() and not cfg_path.exists():
         cfg_path = root / cfg_path
     config = json.loads(cfg_path.read_text("utf-8"))
-    inv = _inventory(root)
+    inv = _inventory(root, config)
     if args.write_baseline:
         plan = plan_baseline(config, inv, args.allow_widen, args.owner_wp, args.reason)
         for k in ("tightened", "widened", "refused"):

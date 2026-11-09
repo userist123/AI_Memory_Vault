@@ -325,3 +325,82 @@ def test_regenerated_baseline_takes_the_owner_from_the_table_and_refreshes_old_r
     cfg = _acfg(layers=[["packages/graph"], ["packages/memory"]], aliases={})
     plan = ab.plan_baseline(cfg, ab._inventory(_tree(tmp_path / "t", files)), True, "WP-07", "why")
     assert [(e["owner_wp"], e["widened_by"]) for e in plan["edges"]] == [("WP-10", "WP-07")]
+
+
+# ----------------------------------------------------------------------------- WP-07 PR A review round 1 (H1, H2, M1)
+_HDR = 'from pathlib import Path\n_B = Path(__file__).resolve().parents[1]\n'
+
+
+def test_h1_undeclared_unit_that_appends_to_its_path_fails(tmp_path):
+    """routing (L0) appends memory (L4) to its __path__: `import routing.controller` is really an L0 -> L4 edge."""
+    files = {
+        f"{PK}/routing/__init__.py": _HDR + '__path__.append(str(_B / "memory"))\n',
+        f"{PK}/memory/__init__.py": "", f"{PK}/memory/controller.py": "X = 1\n",
+        f"{PK}/graph/__init__.py": "", f"{PK}/graph/zz_probe.py": "import routing.controller\n"}
+    root = _tree(tmp_path, files)
+    f = _fails(root, _cfg([["packages/routing", "packages/graph"], ["packages/memory"]]))
+    assert any(m.startswith("(h)") and "packages/routing" in m and "not declared in aliases" in m for m in f), f
+    assert any(m.startswith("(b)") and "packages/graph" in m and "packages/memory" in m for m in f), f
+
+
+@pytest.mark.parametrize("mutation", [
+    '__path__.insert(0, str(_B / "high"))\n',
+    '__path__ += [str(_B / "high")]\n',
+    'def _late():\n    __path__.extend([str(_B / "high")])\n_late()\n',
+    'def _late():\n    __path__[:] = [str(_B / "high")]\n_late()\n',
+])
+def test_h2_unrecognised_path_mutation_on_a_declared_facade_fails(tmp_path, mutation):
+    files = _fac_files()
+    files[f"{PK}/fac/__init__.py"] += mutation
+    root = _tree(tmp_path, files)
+    f = _fails(root, _acfg())
+    assert any(m.startswith("(h)") and "packages/fac" in m for m in f), (mutation, f)
+
+
+def test_h2_insert_probe_with_a_graph_import_is_not_silent(tmp_path):
+    files = {
+        f"{PK}/agent_bridge/__init__.py": "", f"{PK}/agent_bridge/bridge.py": "X = 1\n",
+        f"{PK}/memory_controller/__init__.py": _HDR + '__path__ = [str(_B / "memory")]\n'
+                                              '__path__.insert(0, str(_B / "agent_bridge"))\n',
+        f"{PK}/memory/__init__.py": "",
+        f"{PK}/graph/__init__.py": "", f"{PK}/graph/zz_probe.py": "import memory_controller.bridge\n"}
+    root = _tree(tmp_path, files)
+    cfg = _cfg([["packages/graph"], ["packages/memory"], ["packages/agent_bridge"]])
+    cfg["aliases"] = {"packages/memory_controller": {"__path__": ["packages/memory"]}}  # what HEAD computes, insert ignored
+    assert any(m.startswith("(h)") for m in _fails(root, cfg))
+
+
+def test_h2_non_test_unresolved_facade_submodule_fails_but_test_code_is_only_reported(tmp_path):
+    files = _fac_files() | {f"{PK}/low/x.py": "import fac.nope_xyz\n"}
+    root = _tree(tmp_path, files)
+    f = _fails(root, _acfg())
+    assert any(m.startswith("(i)") and "fac.nope_xyz" in m for m in f), f
+    assert any(m.startswith("(j)") and "packages/fac" in m for m in f), f
+    files.pop(f"{PK}/low/x.py")
+    files["20_TESTS/test_x.py"] = "import fac.nope_xyz\n"
+    assert _fails(_tree(tmp_path / "t", files), _acfg()) == []
+
+
+def test_m1_alias_that_falls_back_to_the_legacy_heuristic_fails(tmp_path):
+    files = {
+        f"{PK}/alpha/__init__.py": "", f"{PK}/beta/__init__.py": "",
+        f"{PK}/fac/__init__.py": _HDR + 'def pick(x):\n    return x\n'
+                                 '__path__ = [str(_B / pick("alpha")), str(_B / "beta")]\n'}
+    root = _tree(tmp_path, files)
+    cfg = _cfg([["packages/alpha", "packages/beta"]])
+    cfg["aliases"] = {"packages/fac": {"__path__": ["packages/alpha", "packages/beta"]}}  # alphabetical, as the fallback
+    f = _fails(root, cfg)
+    assert any(m.startswith("(h)") and "legacy_fallback" in m for m in f), f
+
+
+def test_also_unit_alias_keeps_resolving_its_own_name_and_a_plain_alias_edge_is_checked(tmp_path):
+    files = {
+        f"{PK}/sec/__init__.py": _HDR + '__path__.append(str(_B / "extra"))\n',
+        f"{PK}/extra/__init__.py": "", f"{PK}/extra/y.py": "",
+        f"{PK}/user/__init__.py": "", f"{PK}/user/a.py": "import sec\n"}
+    root = _tree(tmp_path, files)
+    cfg = _cfg([["packages/extra", "packages/sec", "packages/user"]])
+    cfg["aliases"] = {"packages/sec": {"__path__": ["self", "packages/extra"], "also_unit": True}}
+    assert _fails(root, cfg) == []
+    del cfg["aliases"]["packages/sec"]["also_unit"]
+    assert any(m.startswith("(j)") for m in _fails(root, cfg))

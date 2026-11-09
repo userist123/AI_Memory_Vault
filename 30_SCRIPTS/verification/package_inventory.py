@@ -191,7 +191,10 @@ class Resolver:
         own directory. Without it (not interpretable) the legacy heuristics apply: ``path_ups`` (bare
         parent-directory expressions serve every sibling directly under that directory, ``path_expression``)
         or string constants (sorted; the order is NOT the ``__path__`` order).
-        ``resolves=False`` records the targets (``shim_targets``) but the shim does not change how imports of
+        ``shim_target_source``: ``path_eval`` / ``path_expression`` = the symbolic evaluator (exact, ordered);
+        ``legacy_fallback`` = the string-constant heuristic (sorted, NOT the ``__path__`` order; never trusted by
+        the layer check).
+        ``resolves=False`` (only the ``also_unit`` aliases of the layer config) records the targets (``shim_targets``) but the shim does not change how imports of
         its name are resolved (``packages/security``: ``security.X`` is the repository-root package).
         """
         if not has_path:
@@ -213,7 +216,7 @@ class Resolver:
                             dirs[t] = r[2]
             if targets:
                 self.shims[uid] = {"targets": targets, "resolves": resolves, "dirs": dirs,
-                                   "source": "path_expression" if expanded else "string_constants"}
+                                   "source": "path_expression" if expanded else "path_eval"}
                 return
         if path_ups:
             targets = []
@@ -236,7 +239,7 @@ class Resolver:
                 for u in self.units.values():
                     if u["name"] == c and u["id"] != uid and u["dir"].rsplit("/", 1)[0].endswith(h) and u["id"] not in targets:
                         targets.append(u["id"])
-        self.shims[uid] = {"targets": targets, "source": "string_constants", "resolves": resolves}
+        self.shims[uid] = {"targets": targets, "source": "legacy_fallback", "resolves": resolves}
 
     def _served_by(self, unit_id: str, sub: list[str]) -> bool:
         d = self.units[unit_id]["dir"]
@@ -436,10 +439,13 @@ def collect_path_elems(tree: ast.Module) -> list | None:
             else:
                 state["elems"].append(it)
 
+    handled: set[int] = set()
+
     def walk(stmts: list) -> None:
         for st in stmts:
             if isinstance(st, ast.Assign):
                 if any(_is_name(t, "__path__") for t in st.targets):
+                    handled.add(id(st))
                     state["elems"] = []
                     add(_flatten_path_value(st.value, env))
                 elif len(st.targets) == 1 and isinstance(st.targets[0], ast.Name):
@@ -449,6 +455,7 @@ def collect_path_elems(tree: ast.Module) -> list | None:
             elif (isinstance(st, ast.Expr) and isinstance(st.value, ast.Call)
                   and isinstance(st.value.func, ast.Attribute) and _is_name(st.value.func.value, "__path__")
                   and st.value.func.attr in ("append", "extend") and len(st.value.args) == 1):
+                handled.add(id(st.value))
                 need_init()
                 if st.value.func.attr == "append":
                     add([_pexpr(st.value.args[0], env, {})])
@@ -461,6 +468,20 @@ def collect_path_elems(tree: ast.Module) -> list | None:
                 walk(st.body)
 
     walk(tree.body)
+    # fail closed: any other way of moving ``__path__`` (insert, +=, subscript, del, attribute target, a function
+    # body, a handler, ...) makes the whole list uninterpretable instead of being ignored
+    for n in ast.walk(tree):
+        if isinstance(n, (ast.Assign, ast.AugAssign, ast.AnnAssign)) and id(n) not in handled:
+            tgs = n.targets if isinstance(n, ast.Assign) else [n.target]
+            if any(_is_dunder_path(t) or (isinstance(t, ast.Subscript) and _is_dunder_path(t.value)) for t in tgs):
+                state["ok"] = False
+        elif isinstance(n, ast.Delete):
+            if any(_is_dunder_path(t) or (isinstance(t, ast.Subscript) and _is_dunder_path(t.value))
+                   for t in n.targets):
+                state["ok"] = False
+        elif (isinstance(n, ast.Call) and id(n) not in handled and isinstance(n.func, ast.Attribute)
+              and _is_dunder_path(n.func.value) and n.func.attr not in ("index", "count", "copy")):
+            state["ok"] = False
     return state["elems"] if state["elems"] is not None and state["ok"] else None
 
 
@@ -527,7 +548,12 @@ def analyze_file(text: str) -> dict:
                     res["unknown"].append({"line": node.lineno, "kind": "path_assign",
                                            "detail": "sys.path" if _is_sys_path(tg) else "__path__"})
                 if isinstance(tg, ast.Subscript) and (_is_sys_path(tg.value) or _is_dunder_path(tg.value)):
-                    res["unknown"].append({"line": node.lineno, "kind": "path_assign", "detail": "path[...]"})
+                    res["unknown"].append({"line": node.lineno, "kind": "path_assign",
+                                           "detail": "sys.path[...]" if _is_sys_path(tg.value) else "__path__[...]"})
+        elif isinstance(node, ast.Delete):
+            for tg in node.targets:
+                if isinstance(tg, ast.Subscript) and _is_dunder_path(tg.value):
+                    res["unknown"].append({"line": node.lineno, "kind": "path_assign", "detail": "__path__[...]"})
         elif isinstance(node, ast.Constant) and isinstance(node.value, str):
             res["consts"].add(node.value)
         if isinstance(node, ast.Call):
@@ -724,7 +750,20 @@ def promoted_test_files(info: dict[str, dict], pyfiles: list[str], pythonpath: l
 
 
 # ----------------------------------------------------------------------------- main build
-def build_inventory(root: Path) -> dict:
+def default_also_units(root: Path) -> set[str]:
+    """``also_unit`` aliases of ``04_CONFIG/architecture_layers.json`` under ``root`` (empty if absent/invalid)."""
+    cfg = Path(root) / "04_CONFIG" / "architecture_layers.json"
+    try:
+        data = json.loads(cfg.read_text("utf-8"))
+        return {a for a, d in data.get("aliases", {}).items() if d.get("also_unit")}
+    except (OSError, ValueError, AttributeError):
+        return set()
+
+
+def build_inventory(root: Path, also_units: set[str] | None = None) -> dict:
+    """``also_units``: units whose ``__path__`` extension must not change how their own name resolves
+    (``None`` = read ``also_unit`` from the layer config under ``root``)."""
+    also = set(also_units) if also_units is not None else default_also_units(root)
     root = root.resolve()
     allfiles = walk_files(root)
     pyfiles = [f for f in allfiles if f.endswith(".py")]
@@ -753,11 +792,11 @@ def build_inventory(root: Path) -> dict:
         if init not in info:
             continue
         fi = info[init]
-        if any(x["detail"] == "__path__" for x in fi["unknown"]):
-            res.set_shim(uid, fi["consts"], True, fi["path_ups"], fi["path_elems"])
-        elif fi["path_elems"] and not fi["path_assigned"]:
-            # ``__path__.append(...)`` on the default path: targets are reported, import resolution is unchanged
-            res.set_shim(uid, fi["consts"], True, None, fi["path_elems"], resolves=False)
+        touches = any(x["detail"].startswith("__path__") for x in fi["unknown"])
+        if touches or fi["path_elems"]:
+            # any ``__path__`` move makes the unit a shim. Only an ``also_unit`` alias of the layer config keeps
+            # resolving its own name as before (``packages/security``); every other shim resolves through it
+            res.set_shim(uid, fi["consts"], True, fi["path_ups"], fi["path_elems"], resolves=uid not in also)
 
     promoted = promoted_test_files(info, pyfiles, pythonpath)
     string_refs = find_string_imports(root, allfiles, res)
@@ -825,7 +864,7 @@ def build_inventory(root: Path) -> dict:
             for parts, r in zip(alts, results):
                 if r["state"] == "unresolved" and r["facade"] not in served_f and src:
                     facade_unres.append({"file": f, "line": line, "from_unit": src, "module": ".".join(parts),
-                                         "facade": r["facade"]})
+                                         "facade": r["facade"], "test": effective_test(f)})
             if not credits:
                 top = alts[0][0]
                 if top in stdlib:
@@ -955,6 +994,9 @@ def build_inventory(root: Path) -> dict:
                 "consumers_prod": "fișiere .py în afara oricărui director de test/benchmark și în afara modulului",
                 "consumers_test": "fișiere sub 20_TESTS, /tests/, test_*.py sau conftest.py",
                 "shim_credit": "consumatori: un import prin shim __path__ creditează fațada ȘI modulul servit",
+                "shim_target_source": ("path_eval/path_expression = evaluatorul simbolic al __path__ (exact, în ordine); "
+                                       "legacy_fallback = euristica pe constante-șir (sortat, nu ordinea __path__); "
+                                       "un alias declarat care cade pe legacy_fallback pică în architecture_boundaries"),
                 "facade_edges": ("muchii (imports_out*): un import prin fațadă creditează DOAR unitatea care servește "
                                  "submodulul (ordinea din __path__); dacă nu se rezolvă, muchia rămâne pe fațadă și "
                                  "apare în meta.facade_unresolved"),

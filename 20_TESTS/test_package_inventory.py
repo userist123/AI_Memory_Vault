@@ -102,7 +102,7 @@ def test_shim_from_string_constants(tmp_path):
     })
     _, data, _ = _run(root, tmp_path)
     f = _unit(data, "packages/facade")
-    assert f["shim_target_source"] == "string_constants"
+    assert f["shim_target_source"] == "path_eval"
     assert f["shim_targets"] == ["packages/alpha", "packages/beta"]  # gamma is not named, so not a target
     assert _unit(data, "packages/alpha")["shim_target_source"] is None
 
@@ -357,3 +357,52 @@ def test_package_that_extends_its_own_path_records_targets_without_changing_reso
     assert _unit(data, "packages/sec")["shim_targets"] == ["self", "root/sec"]
     assert _edges(data, "packages/user") == {"root/sec": 1}  # root/sec wins on the path, as before
     assert data["meta"]["facade_unresolved"] == []
+
+
+_PH = 'from pathlib import Path\n_B = Path(__file__).resolve().parents[1]\n'
+
+
+def test_shim_sources_are_path_eval_versus_legacy_fallback(tmp_path):
+    root = _mk(tmp_path, {
+        f"{PK}/alpha/__init__.py": "", f"{PK}/beta/__init__.py": "",
+        f"{PK}/ev/__init__.py": _PH + '__path__ = [str(_B / "beta"), str(_B / "alpha")]\n',
+        f"{PK}/lg/__init__.py": _PH + 'def p(x):\n    return x\n__path__ = [str(_B / p("beta")), str(_B / "alpha")]\n'})
+    _, data, _ = _run(root, tmp_path)
+    assert _unit(data, "packages/ev")["shim_target_source"] == "path_eval"
+    assert _unit(data, "packages/ev")["shim_targets"] == ["packages/beta", "packages/alpha"]
+    assert _unit(data, "packages/lg")["shim_target_source"] == "legacy_fallback"
+
+
+def test_unrecognised_path_mutations_make_the_list_uninterpretable(tmp_path):
+    for i, mut in enumerate(['__path__.insert(0, str(_B / "beta"))\n', '__path__ += [str(_B / "beta")]\n',
+                             '__path__.extend(str(_B / n) for n in ["beta"])\n',
+                             'def f():\n    __path__.extend([str(_B / "beta")])\nf()\n',
+                             'def f():\n    __path__.append(str(_B / "beta"))\nf()\n']):
+        root = _mk(tmp_path / f"m{i}", {
+            f"{PK}/alpha/__init__.py": "", f"{PK}/beta/__init__.py": "",
+            f"{PK}/fac/__init__.py": _PH + '__path__ = [str(_B / "alpha")]\n' + mut})
+        _, data, _ = _run(root, tmp_path / f"m{i}")
+        assert _unit(data, "packages/fac")["shim_target_source"] == "legacy_fallback", mut
+
+
+def test_undeclared_append_only_shim_resolves_through_its_path_unless_also_unit(tmp_path):
+    files = {f"{PK}/memory/__init__.py": "", f"{PK}/memory/controller.py": "",
+             f"{PK}/routing/__init__.py": _PH + '__path__.append(str(_B / "memory"))\n',
+             f"{PK}/graph/__init__.py": "", f"{PK}/graph/zz.py": "import routing.controller\n"}
+    root = _mk(tmp_path / "plain", files)
+    _, data, _ = _run(root, tmp_path / "plain")
+    assert _edges(data, "packages/graph") == {"packages/memory": 1}
+    root = _mk(tmp_path / "also", files)
+    _write(root, "04_CONFIG/architecture_layers.json",
+           json.dumps({"aliases": {"packages/routing": {"__path__": [], "also_unit": True}}}))
+    _, data, _ = _run(root, tmp_path / "also")
+    assert _edges(data, "packages/graph") == {"packages/routing": 1}
+
+
+def test_facade_unresolved_records_carry_the_test_flag(tmp_path):
+    root = _mk(tmp_path, {
+        f"{PK}/alpha/__init__.py": "", f"{PK}/fac/__init__.py": _fac("alpha"),
+        f"{PK}/user/a.py": "import fac.nothing\n", f"{PK}/user/test_b.py": "import fac.nothing\n"})
+    _, data, _ = _run(root, tmp_path)
+    assert {(r["file"], r["test"]) for r in data["meta"]["facade_unresolved"]} == {
+        (f"{PK}/user/a.py", False), (f"{PK}/user/test_b.py", True)}
