@@ -2,8 +2,11 @@
   "schema_version": 1,
   "baseline_date": "2026-11-09",
   "baseline_commit": "0752ac2b7",
-  "rule": "Layers are ordered low to high. A unit may import units of the same or a LOWER layer only. An upward edge is allowed only while it is listed in baseline_edges. The check is a ratchet: new upward edges and growth fail, and so does a stale baseline (edge removed or count lower), so every gain must be locked by regenerating the baseline. Edge count = number of non-test files of the source unit importing the target unit. Non-test imports include `-m` argv lists in .py files inside a unit, and test-path files imported by production code. Non-literal import_module/__import__ calls are counted per unit in baseline_dynamic_imports (same ratchet semantics).",
+  "rule": "Layers are ordered low to high (WP-06/WP-07 order, F2_memory_core_contract.md section 1.2). A unit may import units of the same or a LOWER layer only. Facade packages are `aliases`, not layers: an import through a facade is an edge to the unit that owns the submodule (first match in the facade's declared __path__), and the real __path__ of every alias must equal the declared one. An upward edge is allowed only while it is listed in baseline_edges. hard_forbidden (package -> product, also through an alias) is enforced even when the edge no longer goes up. The check is a ratchet: new upward edges and growth fail, and so does a stale baseline (edge removed or count lower), so every gain must be locked by regenerating the baseline. Edge count = number of non-test files of the source unit importing the target unit. Non-test imports include `-m` argv lists in .py files inside a unit, and test-path files imported by production code. Non-literal import_module/__import__ calls are counted per unit in baseline_dynamic_imports (same ratchet semantics).",
   "unenforced": [
+    "Facade resolution follows the declared/real __path__ and the re-export line of root cognitive_core/<mod>.py (`from [packages.]X.<m> import *`); a facade submodule no __path__ entry serves keeps the edge on the facade and is listed in the inventory meta.facade_unresolved (reported, not failed).",
+    "`security.X` from the repository root is root/security; packages/security records its extended __path__ (self, root/security) but does not change how `security` resolves. The name collision itself is WP-14.",
+    "Layer membership of an alias (facade) is not checked: an edge to an unresolved facade is only judged by hard_forbidden.",
     "Non-literal dynamic imports are counted per unit, not resolved to a target unit.",
     "Reassigning a unit to another layer in this config is caught only by diff review.",
     "benchmarks/ files count as production.",
@@ -22,67 +25,63 @@
     {
       "name": "L0_foundation",
       "units": [
+        "packages/security",
         "packages/providers",
         "packages/routing",
-        "packages/observability"
+        "packages/graph"
       ]
     },
     {
-      "name": "L1_policy",
+      "name": "L1_lifecycle",
       "units": [
-        "packages/security"
+        "packages/lifecycle"
       ]
     },
     {
-      "name": "L2_contracts",
+      "name": "L2_policy_adapter",
       "units": [
-        "packages/interfaces"
+        "root/security"
       ]
     },
     {
-      "name": "L3_storage",
+      "name": "L3_retrieval",
       "units": [
-        "packages/memory",
-        "packages/graph",
-        "packages/vault_access"
-      ]
-    },
-    {
-      "name": "L4_retrieval",
-      "units": [
+        "packages/observability",
         "packages/retrieval"
       ]
     },
     {
-      "name": "L5_cognition",
+      "name": "L4_memory_core",
       "units": [
-        "packages/lifecycle",
-        "packages/learning"
+        "packages/memory",
+        "packages/vault_access"
       ]
     },
     {
-      "name": "L6_adapters",
-      "units": [
-        "packages/agent_bridge",
-        "root/security",
-        "root/scripts"
-      ]
-    },
-    {
-      "name": "L7_products",
+      "name": "L5_products",
       "units": [
         "products/xau_kinetic",
         "packages/polymarket"
       ]
     },
     {
-      "name": "L8_facades",
+      "name": "L6_entrypoints",
+      "units": [
+        "packages/interfaces",
+        "packages/agent_bridge"
+      ]
+    },
+    {
+      "name": "L7_cognition",
+      "units": [
+        "packages/learning"
+      ]
+    },
+    {
+      "name": "L8_apps",
       "units": [
         "root/cognitive_core",
-        "packages/cognitive_core",
-        "packages/memory_controller",
-        "packages/memory_vault",
-        "packages/xau_kinetic"
+        "root/scripts"
       ]
     }
   ],
@@ -102,60 +101,12 @@
   "baseline_edges": [
     {
       "from": "packages/graph",
-      "to": "packages/memory_controller",
-      "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L3_storage -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "packages/graph",
-      "to": "root/cognitive_core",
-      "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L3_storage -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "packages/interfaces",
-      "to": "packages/lifecycle",
-      "imports": 3,
-      "since": "2026-11-09",
-      "owner_wp": "WP-10",
-      "reason": "upward edge L2_contracts -> L5_cognition present at the baseline date"
-    },
-    {
-      "from": "packages/interfaces",
       "to": "packages/memory",
-      "imports": 6,
-      "since": "2026-11-09",
-      "owner_wp": "WP-10",
-      "reason": "upward edge L2_contracts -> L3_storage present at the baseline date"
-    },
-    {
-      "from": "packages/interfaces",
-      "to": "packages/memory_controller",
-      "imports": 9,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L2_contracts -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "packages/interfaces",
-      "to": "packages/vault_access",
-      "imports": 3,
-      "since": "2026-11-09",
-      "owner_wp": "WP-10",
-      "reason": "upward edge L2_contracts -> L3_storage present at the baseline date"
-    },
-    {
-      "from": "packages/interfaces",
-      "to": "packages/xau_kinetic",
       "imports": 1,
       "since": "2026-11-09",
-      "owner_wp": "WP-12",
-      "reason": "hard-forbidden package -> product edge (L2_contracts -> L8_facades)",
-      "hard_forbidden": true
+      "owner_wp": "WP-10",
+      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06)",
+      "widened_by": "WP-07"
     },
     {
       "from": "packages/interfaces",
@@ -163,144 +114,53 @@
       "imports": 1,
       "since": "2026-11-09",
       "owner_wp": "WP-12",
-      "reason": "hard-forbidden package -> product edge (L2_contracts -> L7_products)",
+      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06)",
       "hard_forbidden": true
     },
     {
-      "from": "packages/interfaces",
-      "to": "root/cognitive_core",
-      "imports": 3,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L2_contracts -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "packages/interfaces",
-      "to": "root/security",
+      "from": "packages/lifecycle",
+      "to": "packages/interfaces",
       "imports": 1,
       "since": "2026-11-09",
       "owner_wp": "WP-14",
-      "reason": "upward edge L2_contracts -> L6_adapters present at the baseline date"
-    },
-    {
-      "from": "packages/learning",
-      "to": "packages/memory_controller",
-      "imports": 11,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L5_cognition -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "packages/learning",
-      "to": "root/cognitive_core",
-      "imports": 6,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L5_cognition -> L8_facades present at the baseline date"
+      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06)",
+      "widened_by": "WP-07"
     },
     {
       "from": "packages/lifecycle",
-      "to": "packages/memory_controller",
-      "imports": 11,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L5_cognition -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "packages/lifecycle",
-      "to": "root/cognitive_core",
-      "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L5_cognition -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "packages/memory",
-      "to": "packages/lifecycle",
-      "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-10",
-      "reason": "upward edge L3_storage -> L5_cognition present at the baseline date"
-    },
-    {
-      "from": "packages/memory",
-      "to": "packages/memory_controller",
-      "imports": 8,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L3_storage -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "packages/memory",
-      "to": "packages/retrieval",
+      "to": "packages/memory",
       "imports": 2,
       "since": "2026-11-09",
       "owner_wp": "WP-10",
-      "reason": "upward edge L3_storage -> L4_retrieval present at the baseline date"
+      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06)",
+      "widened_by": "WP-07"
     },
     {
       "from": "packages/memory",
-      "to": "root/cognitive_core",
-      "imports": 2,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L3_storage -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "packages/memory",
-      "to": "root/security",
+      "to": "packages/interfaces",
       "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-14",
-      "reason": "upward edge L3_storage -> L6_adapters present at the baseline date"
-    },
-    {
-      "from": "packages/observability",
-      "to": "packages/memory_controller",
-      "imports": 3,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L0_foundation -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "packages/observability",
-      "to": "packages/retrieval",
-      "imports": 4,
       "since": "2026-11-09",
       "owner_wp": "WP-10",
-      "reason": "upward edge L0_foundation -> L4_retrieval present at the baseline date"
-    },
-    {
-      "from": "packages/observability",
-      "to": "root/cognitive_core",
-      "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L0_foundation -> L8_facades present at the baseline date"
+      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06)",
+      "widened_by": "WP-07"
     },
     {
       "from": "packages/retrieval",
-      "to": "packages/memory_controller",
+      "to": "packages/interfaces",
       "imports": 1,
       "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L4_retrieval -> L8_facades present at the baseline date"
+      "owner_wp": "WP-10",
+      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06)",
+      "widened_by": "WP-07"
     },
     {
       "from": "packages/retrieval",
-      "to": "root/cognitive_core",
-      "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L4_retrieval -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "packages/retrieval",
-      "to": "root/security",
+      "to": "packages/memory",
       "imports": 2,
       "since": "2026-11-09",
-      "owner_wp": "WP-14",
-      "reason": "upward edge L4_retrieval -> L6_adapters present at the baseline date"
+      "owner_wp": "WP-10",
+      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06)",
+      "widened_by": "WP-07"
     },
     {
       "from": "packages/security",
@@ -308,47 +168,88 @@
       "imports": 1,
       "since": "2026-11-09",
       "owner_wp": "WP-14",
-      "reason": "upward edge L1_policy -> L2_contracts present at the baseline date"
+      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06)"
     },
     {
-      "from": "packages/security",
-      "to": "packages/memory_controller",
-      "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L1_policy -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "products/xau_kinetic",
-      "to": "packages/memory_controller",
-      "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L7_products -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "products/xau_kinetic",
-      "to": "packages/xau_kinetic",
-      "imports": 34,
-      "since": "2026-11-09",
-      "owner_wp": "WP-12",
-      "reason": "upward edge L7_products -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "root/scripts",
-      "to": "root/cognitive_core",
+      "from": "packages/vault_access",
+      "to": "packages/interfaces",
       "imports": 2,
       "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L6_adapters -> L8_facades present at the baseline date"
-    },
-    {
-      "from": "root/security",
-      "to": "root/cognitive_core",
-      "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-06",
-      "reason": "upward edge L6_adapters -> L8_facades present at the baseline date"
+      "owner_wp": "WP-14",
+      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06)",
+      "widened_by": "WP-07"
     }
-  ]
+  ],
+  "aliases": {
+    "packages/memory_controller": {
+      "__path__": [
+        "packages/retrieval",
+        "packages/memory",
+        "packages/security",
+        "packages/lifecycle",
+        "packages/interfaces",
+        "packages/observability"
+      ]
+    },
+    "packages/cognitive_core": {
+      "__path__": [
+        "packages/graph",
+        "packages/memory",
+        "packages/learning",
+        "packages/observability",
+        "packages/providers",
+        "packages/interfaces",
+        "packages/security",
+        "packages/retrieval",
+        "packages/lifecycle"
+      ]
+    },
+    "root/cognitive_core": {
+      "__path__": [
+        "self",
+        "packages/graph",
+        "packages/memory",
+        "packages/learning",
+        "packages/observability",
+        "packages/providers",
+        "packages/interfaces",
+        "packages/security",
+        "packages/retrieval",
+        "packages/lifecycle"
+      ]
+    },
+    "packages/memory_vault": {
+      "__path__": [
+        "packages/agent_bridge",
+        "packages/cognitive_core",
+        "packages/graph",
+        "packages/interfaces",
+        "packages/learning",
+        "packages/lifecycle",
+        "packages/memory",
+        "packages/memory_controller",
+        "packages/observability",
+        "packages/polymarket",
+        "packages/providers",
+        "packages/retrieval",
+        "packages/routing",
+        "packages/security",
+        "packages/vault_access",
+        "packages/xau_kinetic"
+      ]
+    },
+    "packages/xau_kinetic": {
+      "__path__": [
+        "products/xau_kinetic"
+      ]
+    },
+    "packages/security": {
+      "__path__": [
+        "self",
+        "root/security"
+      ],
+      "also_unit": true
+    }
+  },
+  "aliases_note": "Facades are __path__ shims, not layers: an import through one is an edge to the unit that serves the submodule (first match in __path__). `__path__` is the declared, ordered list of units; \"self\" = the shim's own directory. The check fails if the real __path__ (package_inventory shim_targets) differs."
 }

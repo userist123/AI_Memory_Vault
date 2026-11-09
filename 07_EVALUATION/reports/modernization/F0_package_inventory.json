@@ -7,15 +7,14 @@
       ],
       "imports_by_served_unit": {
         "packages/graph": 59,
-        "packages/interfaces": 144,
-        "packages/learning": 158,
+        "packages/interfaces": 167,
+        "packages/learning": 167,
         "packages/lifecycle": 25,
-        "packages/memory": 238,
+        "packages/memory": 241,
         "packages/observability": 72,
         "packages/providers": 173,
         "packages/retrieval": 70,
-        "packages/security": 16,
-        "root/cognitive_core": 35
+        "packages/security": 16
       },
       "modules": {
         "packages/cognitive_core": [],
@@ -34,25 +33,26 @@
       "shim_targets": {
         "packages/cognitive_core": [
           "packages/graph",
-          "packages/interfaces",
-          "packages/learning",
-          "packages/lifecycle",
           "packages/memory",
+          "packages/learning",
           "packages/observability",
           "packages/providers",
+          "packages/interfaces",
+          "packages/security",
           "packages/retrieval",
-          "packages/security"
+          "packages/lifecycle"
         ],
         "root/cognitive_core": [
+          "self",
           "packages/graph",
-          "packages/interfaces",
-          "packages/learning",
-          "packages/lifecycle",
           "packages/memory",
+          "packages/learning",
           "packages/observability",
           "packages/providers",
+          "packages/interfaces",
+          "packages/security",
           "packages/retrieval",
-          "packages/security"
+          "packages/lifecycle"
         ]
       },
       "winner": "root/cognitive_core"
@@ -109,8 +109,15 @@
         ]
       },
       "name": "security",
-      "shim_target_source": {},
-      "shim_targets": {},
+      "shim_target_source": {
+        "packages/security": "string_constants"
+      },
+      "shim_targets": {
+        "packages/security": [
+          "self",
+          "root/security"
+        ]
+      },
       "winner": "root/security"
     }
   ],
@@ -124,6 +131,7 @@
     }
   ],
   "meta": {
+    "facade_unresolved": [],
     "parse_errors": [
       ".agents/reviewer_m1_1/write_handoff.py",
       ".agents/reviewer_m2_2/verify_m2.py",
@@ -166,7 +174,7 @@
       "site-packages",
       "venv"
     ],
-    "py_files_scanned": 2197,
+    "py_files_scanned": 2198,
     "pythonpath_order": [
       ".",
       "03_IMPLEMENTATION/packages",
@@ -176,8 +184,9 @@
     "rules": {
       "consumers_prod": "fișiere .py în afara oricărui director de test/benchmark și în afara modulului",
       "consumers_test": "fișiere sub 20_TESTS, /tests/, test_*.py sau conftest.py",
+      "facade_edges": "muchii (imports_out*): un import prin fațadă creditează DOAR unitatea care servește submodulul (ordinea din __path__); dacă nu se rezolvă, muchia rămâne pe fațadă și apare în meta.facade_unresolved",
       "loc": "linii non-goale care nu încep cu #; docstring-urile se numără",
-      "shim_credit": "un import prin shim __path__ creditează și modulul servit"
+      "shim_credit": "consumatori: un import prin shim __path__ creditează fațada ȘI modulul servit"
     },
     "test_paths_promoted_to_production": [],
     "testpaths": [
@@ -338,6 +347,7 @@
         ".agents/skills/wiki-onboarding/SKILL.md",
         ".github/workflows/active-note-integrity.yml",
         ".github/workflows/agent-routing-tests.yml",
+        ".github/workflows/architecture-boundaries.yml",
         ".github/workflows/polymarket-phase13-contract-tests.yml",
         ".github/workflows/polymarket-phase14-provenance-tests.yml",
         ".github/workflows/polymarket-phase15-provenance-adapter-tests.yml",
@@ -923,6 +933,20 @@
       "kind": "python_m",
       "line": 46,
       "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/architecture-boundaries.yml",
+      "kind": "python_m",
+      "line": 23,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/architecture-boundaries.yml",
+      "kind": "python_m",
+      "line": 27,
+      "module": "pytest",
       "unit": null
     },
     {
@@ -1931,21 +1955,21 @@
       "kind": "py_argv_m",
       "line": 210,
       "module": "cognitive_core.vault_cli",
-      "unit": "root/cognitive_core"
+      "unit": "packages/interfaces"
     },
     {
       "file": "20_TESTS/test_vault_access_clients.py",
       "kind": "py_argv_m",
       "line": 213,
       "module": "cognitive_core.vault_cli",
-      "unit": "root/cognitive_core"
+      "unit": "packages/interfaces"
     },
     {
       "file": "20_TESTS/test_vault_runtime_secret.py",
       "kind": "py_argv_m",
       "line": 22,
       "module": "cognitive_core.recall_cli",
-      "unit": "root/cognitive_core"
+      "unit": "packages/interfaces"
     },
     {
       "file": "30_SCRIPTS/evaluation/claude_cost_router_benchmark.py",
@@ -1994,49 +2018,49 @@
       "kind": "python_m",
       "line": 73,
       "module": "cognitive_core.vault_cli",
-      "unit": "root/cognitive_core"
+      "unit": "packages/interfaces"
     },
     {
       "file": "30_SCRIPTS/run/Verify-VaultOnWindows.ps1",
       "kind": "python_m",
       "line": 76,
       "module": "cognitive_core.vault_cli",
-      "unit": "root/cognitive_core"
+      "unit": "packages/interfaces"
     },
     {
       "file": "30_SCRIPTS/run/Verify-VaultOnWindows.ps1",
       "kind": "python_m",
       "line": 91,
       "module": "cognitive_core.telegram_vault_bot",
-      "unit": "root/cognitive_core"
+      "unit": "packages/interfaces"
     },
     {
       "file": "30_SCRIPTS/run/Verify-VaultOnWindows.ps1",
       "kind": "python_m",
       "line": 95,
       "module": "cognitive_core.telegram_vault_bot",
-      "unit": "root/cognitive_core"
+      "unit": "packages/interfaces"
     },
     {
       "file": "30_SCRIPTS/run/Verify-VaultOnWindows.ps1",
       "kind": "python_m",
       "line": 104,
       "module": "cognitive_core.telegram_vault_bot",
-      "unit": "root/cognitive_core"
+      "unit": "packages/interfaces"
     },
     {
       "file": "30_SCRIPTS/run/start_telegram_vault_bot.ps1",
       "kind": "python_m",
       "line": 34,
       "module": "cognitive_core.telegram_vault_bot",
-      "unit": "root/cognitive_core"
+      "unit": "packages/interfaces"
     },
     {
       "file": "30_SCRIPTS/run/start_telegram_vault_bot.ps1",
       "kind": "python_m",
       "line": 38,
       "module": "cognitive_core.telegram_vault_bot",
-      "unit": "root/cognitive_core"
+      "unit": "packages/interfaces"
     },
     {
       "file": "30_SCRIPTS/verification/release_readiness_gate.py",
@@ -2305,18 +2329,18 @@
       "shim_target_source": "string_constants",
       "shim_targets": [
         "packages/graph",
-        "packages/interfaces",
-        "packages/learning",
-        "packages/lifecycle",
         "packages/memory",
+        "packages/learning",
         "packages/observability",
         "packages/providers",
+        "packages/interfaces",
+        "packages/security",
         "packages/retrieval",
-        "packages/security"
+        "packages/lifecycle"
       ],
       "unknown": [
         {
-          "detail": "__path__ shim -> packages/graph, packages/interfaces, packages/learning, packages/lifecycle, packages/memory, packages/observability, packages/providers, packages/retrieval, packages/security",
+          "detail": "__path__ shim -> packages/graph, packages/memory, packages/learning, packages/observability, packages/providers, packages/interfaces, packages/security, packages/retrieval, packages/lifecycle",
           "file": "03_IMPLEMENTATION/packages/cognitive_core/__init__.py",
           "kind": "path_assign",
           "line": 11
@@ -2381,15 +2405,11 @@
       "import_name_winner": true,
       "imports_out": {
         "packages/memory": 1,
-        "packages/memory_controller": 1,
-        "packages/security": 1,
-        "root/cognitive_core": 1
+        "packages/security": 1
       },
       "imports_out_nontest": {
         "packages/memory": 1,
-        "packages/memory_controller": 1,
-        "packages/security": 1,
-        "root/cognitive_core": 1
+        "packages/security": 1
       },
       "init_exists": true,
       "kind": "packages",
@@ -2416,6 +2436,7 @@
         "03_IMPLEMENTATION/packages/learning/agents/router_agent.py",
         "03_IMPLEMENTATION/packages/learning/agents/verifier_agent.py",
         "03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py",
+        "03_IMPLEMENTATION/packages/memory/orchestrator.py",
         "03_IMPLEMENTATION/packages/retrieval/memory_ablation_benchmark.py",
         "03_IMPLEMENTATION/packages/security/git_hooks.py",
         "03_IMPLEMENTATION/packages/vault_access/audit.py",
@@ -2424,6 +2445,7 @@
         "30_SCRIPTS/evaluation/memory_usage_report.py",
         "40_EXPERIMENTS/harnesses/generate_b4_baseline.py",
         "40_EXPERIMENTS/harnesses/memory_ablation_benchmark.py",
+        "40_EXPERIMENTS/harnesses/real_execution_harness.py",
         "40_EXPERIMENTS/harnesses/run_ablation_experiment.py",
         "cognitive_core/recall_cli.py",
         "cognitive_core/telegram_vault_bot.py",
@@ -2469,9 +2491,9 @@
         "20_TESTS/test_rest_proposal_flow.py",
         "20_TESTS/test_retrieval_benchmark.py",
         "20_TESTS/test_review_memory_injection.py",
+        "20_TESTS/test_secure_recall_cli.py",
         "20_TESTS/test_skill_router.py",
         "20_TESTS/test_tool_router_security.py",
-        "20_TESTS/test_trading_decisions.py",
         "20_TESTS/test_vault_access_ollama_telegram.py",
         "20_TESTS/test_vault_access_perf.py",
         "20_TESTS/test_vault_routes_quarantine_parity.py",
@@ -2507,25 +2529,19 @@
       "imports_out": {
         "packages/lifecycle": 3,
         "packages/memory": 6,
-        "packages/memory_controller": 9,
         "packages/providers": 2,
         "packages/security": 8,
         "packages/vault_access": 3,
-        "packages/xau_kinetic": 1,
         "products/xau_kinetic": 1,
-        "root/cognitive_core": 3,
         "root/security": 1
       },
       "imports_out_nontest": {
         "packages/lifecycle": 3,
         "packages/memory": 6,
-        "packages/memory_controller": 9,
         "packages/providers": 2,
         "packages/security": 8,
         "packages/vault_access": 3,
-        "packages/xau_kinetic": 1,
         "products/xau_kinetic": 1,
-        "root/cognitive_core": 3,
         "root/security": 1
       },
       "init_exists": true,
@@ -2604,6 +2620,7 @@
         "20_TESTS/memory_controller/test_adversarial_p0_p15_invariants.py",
         "20_TESTS/memory_controller/test_milestone3_empirical_challenge.py",
         "20_TESTS/memory_controller/test_security_hardening.py",
+        "20_TESTS/test_closed_loop_learning.py",
         "20_TESTS/test_consolidation.py",
         "20_TESTS/test_continual_learning.py",
         "20_TESTS/test_controller_slot_path.py",
@@ -2646,22 +2663,18 @@
         "packages/interfaces": 6,
         "packages/lifecycle": 1,
         "packages/memory": 10,
-        "packages/memory_controller": 11,
         "packages/observability": 1,
         "packages/providers": 2,
-        "packages/security": 11,
-        "root/cognitive_core": 6
+        "packages/security": 11
       },
       "imports_out_nontest": {
         "packages/graph": 1,
         "packages/interfaces": 6,
         "packages/lifecycle": 1,
         "packages/memory": 10,
-        "packages/memory_controller": 11,
         "packages/observability": 1,
         "packages/providers": 2,
-        "packages/security": 11,
-        "root/cognitive_core": 6
+        "packages/security": 11
       },
       "init_exists": true,
       "kind": "packages",
@@ -2747,16 +2760,12 @@
       "imports_out": {
         "packages/interfaces": 1,
         "packages/memory": 2,
-        "packages/memory_controller": 11,
-        "packages/security": 11,
-        "root/cognitive_core": 1
+        "packages/security": 11
       },
       "imports_out_nontest": {
         "packages/interfaces": 1,
         "packages/memory": 2,
-        "packages/memory_controller": 11,
-        "packages/security": 11,
-        "root/cognitive_core": 1
+        "packages/security": 11
       },
       "init_exists": true,
       "kind": "packages",
@@ -2941,6 +2950,7 @@
         "20_TESTS/test_storage_no_write_relocation.py",
         "20_TESTS/test_tool_router_security.py",
         "20_TESTS/test_tot_and_formal_reflexion.py",
+        "20_TESTS/test_trading_decisions.py",
         "20_TESTS/test_vault_routes_quarantine_parity.py",
         "20_TESTS/test_version_parsing.py",
         "20_TESTS/test_working_memory.py",
@@ -2964,22 +2974,20 @@
       "import_name_winner": true,
       "imports_out": {
         "packages/graph": 1,
+        "packages/interfaces": 1,
         "packages/lifecycle": 1,
-        "packages/memory_controller": 8,
         "packages/observability": 3,
         "packages/retrieval": 2,
         "packages/security": 5,
-        "root/cognitive_core": 2,
         "root/security": 1
       },
       "imports_out_nontest": {
         "packages/graph": 1,
+        "packages/interfaces": 1,
         "packages/lifecycle": 1,
-        "packages/memory_controller": 8,
         "packages/observability": 3,
         "packages/retrieval": 2,
         "packages/security": 5,
-        "root/cognitive_core": 2,
         "root/security": 1
       },
       "init_exists": true,
@@ -3236,16 +3244,16 @@
       "py_files": 1,
       "shim_target_source": "string_constants",
       "shim_targets": [
-        "packages/interfaces",
-        "packages/lifecycle",
-        "packages/memory",
-        "packages/observability",
         "packages/retrieval",
-        "packages/security"
+        "packages/memory",
+        "packages/security",
+        "packages/lifecycle",
+        "packages/interfaces",
+        "packages/observability"
       ],
       "unknown": [
         {
-          "detail": "__path__ shim -> packages/interfaces, packages/lifecycle, packages/memory, packages/observability, packages/retrieval, packages/security",
+          "detail": "__path__ shim -> packages/retrieval, packages/memory, packages/security, packages/lifecycle, packages/interfaces, packages/observability",
           "file": "03_IMPLEMENTATION/packages/memory_controller/__init__.py",
           "kind": "path_assign",
           "line": 11
@@ -3375,16 +3383,12 @@
       "id": "packages/observability",
       "import_name_winner": true,
       "imports_out": {
-        "packages/memory_controller": 3,
         "packages/providers": 1,
-        "packages/retrieval": 4,
-        "root/cognitive_core": 1
+        "packages/retrieval": 4
       },
       "imports_out_nontest": {
-        "packages/memory_controller": 3,
         "packages/providers": 1,
-        "packages/retrieval": 4,
-        "root/cognitive_core": 1
+        "packages/retrieval": 4
       },
       "init_exists": true,
       "kind": "packages",
@@ -3684,18 +3688,14 @@
         "packages/graph": 1,
         "packages/interfaces": 1,
         "packages/memory": 2,
-        "packages/memory_controller": 1,
         "packages/security": 1,
-        "root/cognitive_core": 1,
         "root/security": 2
       },
       "imports_out_nontest": {
         "packages/graph": 1,
         "packages/interfaces": 1,
         "packages/memory": 2,
-        "packages/memory_controller": 1,
         "packages/security": 1,
-        "root/cognitive_core": 1,
         "root/security": 2
       },
       "init_exists": true,
@@ -3938,12 +3938,10 @@
       "id": "packages/security",
       "import_name_winner": false,
       "imports_out": {
-        "packages/interfaces": 1,
-        "packages/memory_controller": 1
+        "packages/interfaces": 1
       },
       "imports_out_nontest": {
-        "packages/interfaces": 1,
-        "packages/memory_controller": 1
+        "packages/interfaces": 1
       },
       "init_exists": true,
       "kind": "packages",
@@ -3951,8 +3949,11 @@
       "local_unresolved_names": [],
       "name": "security",
       "py_files": 12,
-      "shim_target_source": null,
-      "shim_targets": null,
+      "shim_target_source": "string_constants",
+      "shim_targets": [
+        "self",
+        "root/security"
+      ],
       "unknown": [
         {
           "detail": "__path__.append",
@@ -4160,14 +4161,10 @@
       "id": "products/xau_kinetic",
       "import_name_winner": false,
       "imports_out": {
-        "packages/lifecycle": 1,
-        "packages/memory_controller": 1,
-        "packages/xau_kinetic": 48
+        "packages/lifecycle": 1
       },
       "imports_out_nontest": {
-        "packages/lifecycle": 1,
-        "packages/memory_controller": 1,
-        "packages/xau_kinetic": 34
+        "packages/lifecycle": 1
       },
       "init_exists": false,
       "kind": "products",
@@ -4363,19 +4360,20 @@
       "py_files": 5,
       "shim_target_source": "string_constants",
       "shim_targets": [
+        "self",
         "packages/graph",
-        "packages/interfaces",
-        "packages/learning",
-        "packages/lifecycle",
         "packages/memory",
+        "packages/learning",
         "packages/observability",
         "packages/providers",
+        "packages/interfaces",
+        "packages/security",
         "packages/retrieval",
-        "packages/security"
+        "packages/lifecycle"
       ],
       "unknown": [
         {
-          "detail": "__path__ shim -> packages/graph, packages/interfaces, packages/learning, packages/lifecycle, packages/memory, packages/observability, packages/providers, packages/retrieval, packages/security",
+          "detail": "__path__ shim -> self, packages/graph, packages/memory, packages/learning, packages/observability, packages/providers, packages/interfaces, packages/security, packages/retrieval, packages/lifecycle",
           "file": "cognitive_core/__init__.py",
           "kind": "path_assign",
           "line": 21
@@ -4452,15 +4450,13 @@
         "packages/interfaces": 2,
         "packages/observability": 1,
         "packages/providers": 2,
-        "packages/retrieval": 1,
-        "root/cognitive_core": 2
+        "packages/retrieval": 1
       },
       "imports_out_nontest": {
         "packages/interfaces": 2,
         "packages/observability": 1,
         "packages/providers": 2,
-        "packages/retrieval": 1,
-        "root/cognitive_core": 2
+        "packages/retrieval": 1
       },
       "init_exists": true,
       "kind": "root",
@@ -4542,14 +4538,11 @@
         "packages/interfaces": 1,
         "packages/lifecycle": 2,
         "packages/memory": 3,
-        "packages/memory_controller": 2,
         "packages/retrieval": 5,
-        "packages/security": 2,
-        "root/cognitive_core": 2
+        "packages/security": 2
       },
       "imports_out_nontest": {
-        "packages/lifecycle": 1,
-        "root/cognitive_core": 1
+        "packages/lifecycle": 1
       },
       "init_exists": true,
       "kind": "root",
@@ -5585,6 +5578,12 @@
       "file": "07_EVALUATION/r025_wp9_classifier/phase_b_arms.py",
       "kind": "path_mutation",
       "line": 38
+    },
+    {
+      "detail": "sys.path.insert",
+      "file": "07_EVALUATION/reports/modernization/F2_layer_order_analysis.py",
+      "kind": "path_mutation",
+      "line": 29
     },
     {
       "detail": "sys.path.insert",
@@ -7042,7 +7041,7 @@
       "detail": "sys.path.insert",
       "file": "30_SCRIPTS/verification/architecture_boundaries.py",
       "kind": "path_mutation",
-      "line": 29
+      "line": 31
     },
     {
       "detail": "sys.path.insert",
