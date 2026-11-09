@@ -3,7 +3,7 @@ name: Polymarket Phase 19 Historical Calibration Holdout Tests
 on:
   pull_request:
     paths:
-      - '03_IMPLEMENTATION/packages/polymarket/historical_calibration_holdout.py'
+      - '03_IMPLEMENTATION/products/polymarket/historical_calibration_holdout.py'
       - '20_TESTS/polymarket/test_historical_calibration_holdout.py'
       - '.github/workflows/polymarket-phase19-historical-calibration-holdout.yml'
   workflow_dispatch:

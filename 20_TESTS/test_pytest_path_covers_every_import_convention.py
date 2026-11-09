@@ -1,6 +1,6 @@
 """A bare `pytest` must run the whole suite.
 
-Six polymarket modules import `from packages.polymarket.x` while the rest of
+Six polymarket modules import `from products.polymarket.x` while the rest of
 the repository imports `from polymarket.x`. Each convention needs a different
 sys.path root, and only one of them was in pytest.ini. The other was supplied
 by `PYTHONPATH: 03_IMPLEMENTATION` inside the phase 3-7 CI workflow files, so
@@ -28,7 +28,7 @@ def _pythonpath_roots() -> list[str]:
 def test_both_import_roots_are_configured():
     roots = _pythonpath_roots()
     assert "03_IMPLEMENTATION" in roots, (
-        "needed by `from packages.polymarket.x` imports"
+        "needed by `from products.polymarket.x` imports"
     )
     assert "03_IMPLEMENTATION/packages" in roots, (
         "needed by `from polymarket.x` and `from memory_controller.x` imports"

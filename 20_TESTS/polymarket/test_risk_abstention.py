@@ -1,8 +1,8 @@
 import pytest
 
-from packages.polymarket.historical_replay import HistoricalPricePoint
-from packages.polymarket.prediction_ledger import PredictionProvenance, build_prediction
-from packages.polymarket.risk_abstention import (
+from products.polymarket.historical_replay import HistoricalPricePoint
+from products.polymarket.prediction_ledger import PredictionProvenance, build_prediction
+from products.polymarket.risk_abstention import (
     DECISION_ABSTAIN,
     DECISION_BET,
     AbstentionDecision,

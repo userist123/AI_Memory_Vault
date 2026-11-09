@@ -50,8 +50,8 @@ for fname in sorted(os.listdir(scratch_dir)):
 
 # Check git diffs
 print("\n=== Git Invariants ===")
-diff1 = subprocess.check_output(["git", "diff", "--stat", "03_IMPLEMENTATION/packages/polymarket/"], cwd=base_dir).decode("utf-8")
-print(f"git diff --stat 03_IMPLEMENTATION/packages/polymarket/: '{diff1.strip()}' (Empty: {len(diff1.strip()) == 0})")
+diff1 = subprocess.check_output(["git", "diff", "--stat", "03_IMPLEMENTATION/products/polymarket/"], cwd=base_dir).decode("utf-8")
+print(f"git diff --stat 03_IMPLEMENTATION/products/polymarket/: '{diff1.strip()}' (Empty: {len(diff1.strip()) == 0})")
 
 diff2 = subprocess.check_output(["git", "diff", "--stat", "01_ARCHITECTURE/ontology/slots/"], cwd=base_dir).decode("utf-8")
 print(f"git diff --stat 01_ARCHITECTURE/ontology/slots/: '{diff2.strip()}' (Empty: {len(diff2.strip()) == 0})")

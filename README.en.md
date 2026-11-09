@@ -579,7 +579,7 @@ The limits are part of the result: one chapter, 12 questions, so a difference of
 
 # 📈 Polymarket forecasting
 
-`03_IMPLEMENTATION/packages/polymarket/` — market snapshots, a prediction
+`03_IMPLEMENTATION/products/polymarket/` — market snapshots, a prediction
 council, calibration, model-vs-market edge, risk abstention, Kelly sizing
 clamped last and unconditionally, backtest, benchmark, ablation with
 Holm-Bonferroni correction, and a temporal provenance contract.

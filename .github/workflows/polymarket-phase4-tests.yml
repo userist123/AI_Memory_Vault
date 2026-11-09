@@ -6,7 +6,7 @@ on:
     branches:
       - 'r050-pm-phase4-prediction-council'
     paths:
-      - '03_IMPLEMENTATION/packages/polymarket/**'
+      - '03_IMPLEMENTATION/products/polymarket/**'
       - '20_TESTS/polymarket/**'
       - '07_EVALUATION/polymarket/**'
       - '.github/workflows/polymarket-phase4-tests.yml'

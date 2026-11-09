@@ -65,7 +65,7 @@
       "name": "L5_products",
       "units": [
         "products/xau_kinetic",
-        "packages/polymarket"
+        "products/polymarket"
       ]
     },
     {
@@ -174,7 +174,6 @@
         "packages/memory",
         "packages/memory_controller",
         "packages/observability",
-        "packages/polymarket",
         "packages/providers",
         "packages/retrieval",
         "packages/routing",

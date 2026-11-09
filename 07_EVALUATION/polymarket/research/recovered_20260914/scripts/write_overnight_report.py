@@ -131,7 +131,7 @@ Controlul mecanic `run_mechanical_control` a fost executat pe fixtura reală `hi
 Comenzile executate pe rădăcina repozitoriului demonstrează că niciun modul de producție și nicio intrare din ontologie nu a fost atinsă:
 
 ```text
-$ git diff --stat 03_IMPLEMENTATION/packages/polymarket/
+$ git diff --stat 03_IMPLEMENTATION/products/polymarket/
 (output gol — 0 modificări, 0 fișiere atinse)
 
 $ git diff --stat 01_ARCHITECTURE/ontology/slots/

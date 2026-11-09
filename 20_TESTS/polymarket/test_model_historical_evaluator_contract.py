@@ -2,7 +2,7 @@ from dataclasses import replace
 
 import pytest
 
-from packages.polymarket.model_historical_evaluator_contract import (
+from products.polymarket.model_historical_evaluator_contract import (
     EvaluatorPrediction,
     TemporalTapePoint,
     evaluate_prediction,

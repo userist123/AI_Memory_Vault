@@ -188,7 +188,9 @@ def test_real_repo_string_imports_find_known_examples_and_memory_vault_shim(tmp_
                and r["module"] == "routing.route_cli" and r["unit"] == "packages/routing" for r in refs)
     mv = _unit(data, "packages/memory_vault")
     assert mv["shim_target_source"] == "path_expression"
-    assert {"packages/routing", "packages/polymarket", "packages/agent_bridge", "packages/vault_access"} <= set(mv["shim_targets"])
+    assert {"packages/routing", "packages/agent_bridge", "packages/vault_access"} <= set(mv["shim_targets"])
+    # WP-12: polymarket is a product now, so the packages facade no longer serves it.
+    assert not any(t.endswith("/polymarket") for t in mv["shim_targets"])
 
 
 def test_string_import_f4_from_import_comments_and_interpreter_forms(tmp_path):

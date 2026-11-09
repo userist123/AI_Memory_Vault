@@ -139,7 +139,7 @@ def test_f_hard_forbidden_edge_needs_baseline_even_within_a_layer(tmp_path):
 
 def test_owner_wp_rules():
     assert ab.owner_wp("packages/a", "root/cognitive_core", False) == "WP-06"
-    assert ab.owner_wp("packages/a", "packages/polymarket", False) == "WP-12"
+    assert ab.owner_wp("packages/a", "products/polymarket", False) == "WP-12"
     assert ab.owner_wp("packages/a", "root/security", False) == "WP-14"
     assert ab.owner_wp("packages/a", "packages/b", False) == "WP-10"
     assert ab.owner_wp("packages/a", "products/b", True) == "WP-12"
