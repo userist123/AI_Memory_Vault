@@ -101,7 +101,7 @@ import { flushSync } from 'react-dom';
 import { SunStudyPanel, SunOverlay, useStudy, useNeighbours, defaultSunUi, sunAt, maxHours, type SunUi } from './SunStudy';
 import { obstaclesFor, corners } from '@/core/neighbours';
 import { applyRemedyWall } from '@/core/sun-design';
-import { readSite } from '@/core/site-location';
+import { readSite, DEFAULT_SITE } from '@/core/site-location';
 const NO_FLOOR: Floor = { id: '-', name: '', ceilingHeight: 2.6, rooms: [], walls: [] };
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
@@ -667,6 +667,11 @@ export default function Editor({ id }: { id: string }){
     ...(!compact && mode === 'studio' && !stageDef.page ? [{ id: 'ws.focus', group: t('cmdk.group.settings'), label: focus ? t('ws.focusExit') : t('ws.focus'), hint: hint('ws.focus'), keywords: ['focus', 'zen'], run: toggleFocus },
       { id: 'ws.outliner', group: t('cmdk.group.settings'), label: t('ws.outliner'), keywords: [t('outliner.title'), 'outliner'], run: () => saveWs({ ...wsLay, outliner: !wsLay.outliner }) }] : []),
     ...(!compact ? [{ id: 'ws.classic', group: t('cmdk.group.settings'), label: mode === 'studio' ? t('ws.classic') : t('ws.studio'), keywords: ['layout'], run: () => setLayoutMode(mode === 'studio' ? 'classic' : 'studio') }] : []),
+    // studiul de însorire: fila potrivită din etapa Concept, harta luminii naturale, raportul
+    ...(['norm', 'nb', 'light', 'cal', 'summer'] as const).map(k => ({ id: `sun-${k}`, group: t('cmdk.group.tools'), label: t('cmdk.sun', { what: t(`sun.tab.${k}`) }), keywords: [t('sun.title'), t('cmdk.kw.sun')],
+      run: () => { setSel(null); const go = () => setSunUi(u => ({ ...u, tab: k, ...(k === 'light' ? { map: true, layer: 'df' as const } : {}) })); if (!site) mutate(x => { x.site = { ...DEFAULT_SITE }; });
+        if (stage !== 'concept') setStage('concept', go); else go(); } })),
+    { id: 'sun-report', group: t('cmdk.group.docs'), label: t('sun.report'), keywords: [t('cmdk.kw.print'), t('cmdk.kw.sun')], run: () => { window.open(`/p/${id}/sun`, '_blank', 'noopener'); } },
     { id: 'print', group: t('cmdk.group.docs'), label: t('cmdk.print'), keywords: [t('cmdk.kw.print')], run: () => { window.open(`/p/${id}/print`, '_blank', 'noopener'); } },
     { id: 'present', group: t('cmdk.group.docs'), label: t('cmdk.present'), run: () => { window.open(`/p/${id}/present`, '_blank', 'noopener'); } },
     { id: 'board', group: t('cmdk.group.docs'), label: t('cmdk.board'), run: () => { window.open(`/p/${id}/board`, '_blank', 'noopener'); } },
@@ -808,7 +813,7 @@ export default function Editor({ id }: { id: string }){
           calib={preview ? null : calib}
           onCalibPick={(a, b) => setCalib({ stage: 'enter', a, b })}
           fitExtra={sunActive && site?.neighbors?.length ? site.neighbors.flatMap(n => corners(n)) : undefined}
-          overlay={sunActive && site ? <SunOverlay floor={sunPreview ?? snap.floor} site={site} ui={sunUi} grid={sunStudy.grid} nb={sunNb.nb} /> : undefined}
+          overlay={sunActive && site ? <SunOverlay floor={sunPreview ?? snap.floor} site={site} ui={sunUi} grid={sunStudy.grid} nb={sunNb.nb} df={sunStudy.df} /> : undefined}
         />
           {!preview && !snap.floor.rooms.length && !snap.floor.walls.length && tool !== 'room' && tool !== 'wall' && <EmptyState className="plan-empty" title={t('empty.plan.title')} text={t('empty.plan.text')} action={{ label: t('empty.plan.action'), onClick: drawRooms }} />}
           {!preview && tool === 'wall_item' && <div className="toolopts" role="group" aria-label={t('tool.wall_item')}><label>{t('wallItem.kind')} <select value={wallItemKind} onChange={e => setWallItemKind(e.target.value as WallItemKind)}>
@@ -1115,7 +1120,7 @@ export default function Editor({ id }: { id: string }){
           {/* inspector:end */}
         </>}
         {stage === 'concept' && !showSel && <SunStudyPanel site={site} ui={sunUi} study={sunStudy.win} legendMax={sunStudy.grid ? maxHours(sunStudy.grid) : null} onUi={p => setSunUi(u => ({ ...u, ...p }))}
-          extras={site ? { house: house!, obs: sunObs, nb: sunNb.nb, triggers: sunNb.triggers, en: sunStudy.en, reportHref: `/p/${id}/sun`, geo: sunStudy.geo, base: baseGeo, norm: sunStudy.norm, gain: sunStudy.gain, placements: snap.placements, catalog, pieceName: p => resolve(catalog, p.variantId)?.product.name ?? p.group,
+          extras={site ? { house: house!, obs: sunObs, nb: sunNb.nb, triggers: sunNb.triggers, en: sunStudy.en, reportHref: `/p/${id}/sun`, df: sunStudy.df, summer: sunStudy.summer, open3d: () => setView(compact ? '3d' : 'split'), geo: sunStudy.geo, base: baseGeo, norm: sunStudy.norm, gain: sunStudy.gain, placements: snap.placements, catalog, pieceName: p => resolve(catalog, p.variantId)?.product.name ?? p.group,
             previewId: sunPreview ? preview!.v.remedyId : null,
             onPreview: r => { const room = snap.floor.rooms.find(x => x.id === r?.roomId)?.name ?? '', f = r && applyRemedyWall(snap.floor, r);
               if (r && !f){ say(t('sun.rem.stale')); return; }

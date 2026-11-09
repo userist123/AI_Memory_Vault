@@ -5,6 +5,8 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, Floor, FurniturePlacement, Snapshot } from '@/core/types';
 import { insolationStudy, sunPatches, NORM_HOURS, NORM_REFERENCE_DATE, EN17037_DATE, en17037Level, type Study } from '@/core/insolation';
 import { corners, gap, houseBox, moveTo, placeNeighbour, studyTriggers, neighbourStudy, MAX_NEIGHBOURS, type Neighbour, type NeighbourSun, type Obstacle, type Trigger } from '@/core/neighbours';
+import { daylightStudy, type Daylight } from '@/core/daylight';
+import { sunCalendar, lightScore, type LightScore } from '@/core/light-class';
 import { summerCheck, shadeOptions, GLAZING, type GlazingKind, type ShadeKind } from '@/core/overheating';
 import { sunRemedies, swapIdeas, type Remedy, type UseSwap } from '@/core/sun-design';
 import { solarGain, sunOnPieces, type PieceSun } from '@/core/sun-effects';
@@ -12,9 +14,11 @@ import { PLACES, DEFAULT_SITE, sunVector, planAzimuth, guessTz, TZ_CHOICES, type
 import { sunPosition, localToUtc } from '@/core/solar';
 import { usePrefs } from '@/lib/prefs';
 
-export interface SunUi { date: string; minutes: number; map: boolean; playing: boolean }
+export type SunTab = 'norm' | 'nb' | 'light' | 'cal' | 'summer' | 'furn';
+/** `layer`: ce arată harta de pe plan — orele de soare din ziua aleasă sau factorul de lumină naturală (cer acoperit). */
+export interface SunUi { date: string; minutes: number; map: boolean; playing: boolean; layer: 'sun' | 'df'; tab: SunTab }
 export const SUN_PRESETS = [['winter', '-12-21'], ['equinox', '-03-20'], ['summer', '-06-21']] as const;
-export function defaultSunUi(year = new Date().getFullYear()): SunUi { return { date: `${year}-12-21`, minutes: 12 * 60, map: true, playing: false }; }
+export function defaultSunUi(year = new Date().getFullYear()): SunUi { return { date: `${year}-12-21`, minutes: 12 * 60, map: true, playing: false, layer: 'sun', tab: 'norm' }; }
 const hhmm = (m: number) => `${String(Math.floor(m / 60) % 24).padStart(2, '0')}:${String(Math.round(m % 60)).padStart(2, '0')}`;
 const toMin = (s: string | null) => { if (!s) return null; const [h, m] = s.split(':').map(Number); return h! * 60 + m!; };
 
@@ -39,7 +43,10 @@ export function useStudy(floor: Floor, site: SiteInfo | null, date: string, map:
   const gain = useMemo(() => site ? solarGain(geo, site, toUtc(site.tz), date, 10, obs) : null, [geo, site, date, obs]); // eslint-disable-line
   // SR EN 17037 (voluntar): 21 martie, punctul la 1,2 m / 0,3 m peste parapet
   const en = useMemo(() => site ? insolationStudy(geo, site, toUtc(site.tz), { date: EN17037_DATE, stepMin: 5, floorGrid: false, obs, point: 'en17037' }) : null, [geo, site, obs]); // eslint-disable-line
-  return { win: merged, grid, norm, gain, en, geo };
+  // lumina naturală pe cer acoperit (nu depinde de zi, nici de nord) și vara după AD O
+  const df = useMemo(() => site ? daylightStudy(geo, { obs }) : null, [geo, site ? 1 : 0, obs]); // eslint-disable-line
+  const summer = useMemo(() => site ? summerCheck(geo, site) : null, [geo, site]); // eslint-disable-line
+  return { win: merged, grid, norm, gain, en, df, summer, geo };
 }
 /** Efectul casei asupra vecinilor și declanșatorul D ≤ H_max: depind de toată casa (toate nivelurile) și de vecini. */
 export function useNeighbours(house: Snapshot | null, site: SiteInfo | null){
@@ -49,7 +56,8 @@ export function useNeighbours(house: Snapshot | null, site: SiteInfo | null){
 }
 
 export interface SunExtras { /** casa întreagă (toate nivelurile), volumele care umbresc nivelul și rezultatele vecinilor */ house: Snapshot; obs: readonly Obstacle[]; nb: NeighbourSun[]; triggers: Trigger[]; en: Study | null;
-  /** linkul raportului de însorire (PDF din browser) */ reportHref: string; geo: Floor; /** planul real (fără previzualizare): pe el se caută propunerile */ base: Floor; norm: Study | null; gain: ReturnType<typeof solarGain> | null; placements: FurniturePlacement[]; catalog: Catalog; pieceName(p: FurniturePlacement): string;
+  /** linkul raportului de însorire (PDF din browser) */ reportHref: string; geo: Floor; df: Daylight | null; summer: ReturnType<typeof summerCheck> | null;
+  /** deschide vederea 3D (pentru înregistrarea zilei) */ open3d(): void; /** planul real (fără previzualizare): pe el se caută propunerile */ base: Floor; norm: Study | null; gain: ReturnType<typeof solarGain> | null; placements: FurniturePlacement[]; catalog: Catalog; pieceName(p: FurniturePlacement): string;
   /** previzualizarea unei propuneri (null = închide) și aplicarea ei (un singur pas de anulare) */
   previewId: string | null; onPreview(r: Remedy | null): void; onApply(r: Remedy): void }
 export function SunStudyPanel({ site, ui, study, legendMax = null, onSite, onUi, extras }: { site: SiteInfo | null; ui: SunUi; study: Study | null; legendMax?: number | null; onSite(s: SiteInfo | null): void; onUi(p: Partial<SunUi>): void; extras?: SunExtras }){
@@ -83,10 +91,20 @@ export function SunStudyPanel({ site, ui, study, legendMax = null, onSite, onUi,
         <button className="btn icon-btn" aria-label={ui.playing ? t('sun.pause') : t('sun.play')} aria-pressed={ui.playing} onClick={() => onUi({ playing: !ui.playing, ...(ui.playing ? {} : ui.minutes >= set || ui.minutes < rise ? { minutes: rise } : {}) })}>{ui.playing ? '❚❚' : '▶'}</button>
         <label className="f" style={{ flex: 1 }}><span>{t('sun.time', { time: hhmm(ui.minutes) })}</span><input type="range" min={0} max={1435} step={5} value={ui.minutes} aria-valuetext={hhmm(ui.minutes)} onChange={e => onUi({ minutes: Number(e.target.value), playing: false })} /></label></div>
       <label className="sun-check"><input type="checkbox" checked={ui.map} onChange={e => onUi({ map: e.target.checked })} /> {t('sun.map')}</label>
-      {ui.map && legendMax != null && <div className="sun-legend" aria-label={t('sun.legendAria', { max: fmtH(Math.max(2, legendMax)) })}><span>0 h</span><i style={{ background: `linear-gradient(90deg, ${HEAT_STOPS.map(c => `rgb(${c.join(',')})`).join(', ')})` }} /><span>{fmtH(Math.max(2, legendMax))}</span></div>}
+      {ui.map && <div className="sun-layer" role="radiogroup" aria-label={t('sun.layer')}>{(['sun', 'df'] as const).map(k => <label key={k} className="sun-check"><input type="radio" name="sun-layer" checked={ui.layer === k} onChange={() => onUi({ layer: k })} /> {t(`sun.layer.${k}`)}</label>)}</div>}
+      {ui.map && ui.layer === 'df' && <div className="sun-legend" aria-label={t('sun.dfLegendAria')}><span>0 %</span><i style={{ background: `linear-gradient(90deg, ${DF_STOPS.map(c => `rgb(${c.join(',')})`).join(', ')})` }} /><span>{DF_MAX} %+</span></div>}
+      {ui.map && ui.layer === 'sun' && legendMax != null && <div className="sun-legend" aria-label={t('sun.legendAria', { max: fmtH(Math.max(2, legendMax)) })}><span>0 h</span><i style={{ background: `linear-gradient(90deg, ${HEAT_STOPS.map(c => `rgb(${c.join(',')})`).join(', ')})` }} /><span>{fmtH(Math.max(2, legendMax))}</span></div>}
     </div>
     {now && study && <p className="sun-now" role="status">{now.elevationDeg > 0 ? t('sun.now', { az: Math.round(now.azimuthDeg), el: Math.round(now.elevationDeg) }) : t('sun.below')}
       {' · '}{study.sunrise && study.sunset ? t('sun.dayInfo', { rise: study.sunrise, set: study.sunset, len: fmtH(study.dayLengthH) }) : t('sun.polar')}</p>}
+    {extras && <LightCard site={site} extras={extras} />}
+    <div className="sun-tabs" role="tablist" aria-label={t('sun.tabs')}>{TABS.map(k => <button key={k} role="tab" id={`sun-tab-${k}`} aria-selected={ui.tab === k} aria-controls="sun-tabpanel"
+      className={`sun-tab ${ui.tab === k ? 'is-on' : ''}`} tabIndex={ui.tab === k ? 0 : -1} onClick={() => onUi({ tab: k })}
+      onKeyDown={e => { const d = e.key === 'ArrowRight' ? 1 : e.key === 'ArrowLeft' ? -1 : 0; if (!d) return; e.preventDefault(); const n = TABS[(TABS.indexOf(k) + d + TABS.length) % TABS.length]!;
+        onUi({ tab: n }); requestAnimationFrame(() => document.getElementById(`sun-tab-${n}`)?.focus()); }}>{t(`sun.tab.${k}`)}</button>)}</div>
+    <div id="sun-tabpanel" role="tabpanel" aria-labelledby={`sun-tab-${ui.tab}`} className="sun-tabpanel">
+    {ui.tab === 'norm' && <>
+    {extras && <DayRecorder date={ui.date} rise={rise} set={set} onUi={onUi} open3d={extras.open3d} />}
     {study && <table className="sun-table"><caption className="sr-only">{t('sun.tableCaption', { date: ui.date })}</caption>
       <thead><tr><th scope="col">{t('sun.col.room')}</th><th scope="col">{t('sun.col.hours')}</th><th scope="col">{t('sun.col.when')}</th>{extras?.gain && <th scope="col" title={t('sun.gainTitle')}>{t('sun.col.gain')}</th>}<th scope="col">{t('sun.col.verdict')}</th></tr></thead>
       <tbody>{study.rooms.map(r => { const ws = study.windows.filter(w => w.roomId === r.roomId), first = ws.map(w => w.first).filter(Boolean).sort()[0], last = ws.map(w => w.last).filter(Boolean).sort().at(-1);
@@ -97,12 +115,16 @@ export function SunStudyPanel({ site, ui, study, legendMax = null, onSite, onUi,
           <td><span className={`sun-badge sun-badge-${r.verdict}`}>{t(`sun.verdict.${r.verdict}`)}</span></td></tr>; })}</tbody></table>}
     {extras && <SunVerdicts site={site} extras={extras} />}
     {extras && <SunRemedies site={site} extras={extras} />}
-    {extras && <SunNeighbours site={site} extras={extras} onSite={onSite} />}
     {extras && <SunEn17037 extras={extras} />}
-    {extras && <SunSummer site={site} year={year} extras={extras} onSite={onSite} />}
-    {extras && <SunOnFurniture site={site} date={ui.date} extras={extras} />}
     {study && <p className="muted sun-note">{t('sun.norm', { h: fmtH(NORM_HOURS) })}</p>}
-    {study && <p className="muted sun-note">{t('sun.method')}</p>}
+    {study && <p className="muted sun-note">{t('sun.method')}</p>}</>}
+    {ui.tab === 'nb' && extras && <SunNeighbours site={site} extras={extras} onSite={onSite} />}
+    {ui.tab === 'light' && extras && <SunDaylight extras={extras} onLayer={() => onUi({ map: true, layer: 'df' })} />}
+    {ui.tab === 'cal' && extras && <SunCalendarView site={site} year={Number(year)} extras={extras} />}
+    {ui.tab === 'summer' && extras && <SunSummer site={site} year={year} extras={extras} onSite={onSite} />}
+    {ui.tab === 'furn' && extras && <SunOnFurniture site={site} date={ui.date} extras={extras} />}
+    {ui.tab === 'furn' && extras && !extras.placements.some(p => ['comodaTv', 'birou', 'pat'].includes(p.group)) && <p className="muted sun-note">{t('sun.pieces.none')}</p>}
+    </div>
     {extras && <a className="btn" href={extras.reportHref} target="_blank" rel="noopener">{t('sun.report')}</a>}
     <p className="muted sun-note">{t('sun.limits')}</p>
     <button className="btn ghost" onClick={() => onSite(null)}>{t('sun.disable')}</button>
@@ -215,7 +237,7 @@ function SunEn17037({ extras }: { extras: SunExtras }){
 /** Vara: aria de sticlă față de AD O, protecția solară lipsă și comparatorul de umbrire cu prețul în lei și căldura evitată. */
 function SunSummer({ site, year, extras, onSite }: { site: SiteInfo; year: string; extras: SunExtras; onSite(s: SiteInfo | null): void }){
   const { t, lang } = usePrefs(), loc = lang === 'en' ? 'en-GB' : 'ro-RO', [open, setOpen] = useState<string | null>(null);
-  const sc = useMemo(() => summerCheck(extras.geo, site), [extras.geo, site]);
+  const sc = useMemo(() => extras.summer ?? summerCheck(extras.geo, site), [extras.summer, extras.geo, site]);
   const july = useMemo(() => solarGain(extras.geo, site, (d, m) => localToUtc(d, m, site.tz), `${year}-07-21`, 10, extras.obs), [extras.geo, site, year, extras.obs]);
   const rooms = sc.rooms.filter(r => r.verdict !== 'na'); if (!rooms.length) return null;
   const setShades = (ids: string[], kind: ShadeKind | null) => { const m = { ...(site.shades ?? {}) }; for (const id of ids){ if (kind) m[id] = kind; else delete m[id]; }
@@ -241,6 +263,85 @@ function SunSummer({ site, year, extras, onSite }: { site: SiteInfo; year: strin
               <li className="muted sun-note">{t('sun.sum.fcNote')}</li></ul>}</td></tr>}</Fragment>; })}</tbody></table>
     <p className="muted sun-note">{t('sun.sum.note')}</p></section>);
 }
+const TABS: SunTab[] = ['norm', 'nb', 'light', 'cal', 'summer', 'furn'];
+/** Paleta factorului de lumină naturală: de la albastru deschis (0) la albastru închis (5 % și peste). */
+export const DF_STOPS = [[226, 238, 248], [120, 172, 222], [24, 78, 150]] as const, DF_MAX = 5;
+export function dfColor(df: number): string | null {
+  if (df <= .05) return null; const k = Math.min(1, df / DF_MAX), i = k < .5 ? 0 : 1, f = k < .5 ? k * 2 : (k - .5) * 2, a = DF_STOPS[i]!, b = DF_STOPS[i + 1]!;
+  return `rgb(${a.map((v, j) => Math.round(v + (b[j]! - v) * f)).join(',')})`;
+}
+/** Scorul de lumină al nivelului, din rezultatele deja calculate. */
+export function scoreOf(extras: Pick<SunExtras, 'norm' | 'en' | 'df' | 'summer' | 'nb'>, site: SiteInfo): LightScore | null {
+  if (!extras.norm || !extras.en || !extras.df || !extras.summer) return null;
+  return lightScore({ norm: extras.norm.rooms, en: extras.en.rooms, daylight: extras.df.rooms, summer: extras.summer.rooms, nb: site.neighbors?.length ? extras.nb : null });
+}
+/** Fișa de lumină: clasa A–E (indice Casa3D, nu certificare) și cele cinci verificări din care e făcută. */
+function LightCard({ site, extras }: { site: SiteInfo; extras: SunExtras }){
+  const { t } = usePrefs(), sc = scoreOf(extras, site); if (!sc?.cls) return null;
+  return (<div className={`sun-class sun-class-${sc.cls}`} role="group" aria-label={t('sun.cls.aria', { cls: sc.cls, p: sc.points, max: sc.max })}>
+    <div className="sun-class-badge" aria-hidden="true">{sc.cls}</div>
+    <div><b>{t('sun.cls.title', { cls: sc.cls })}</b> <span className="muted">{t('sun.cls.points', { p: sc.points, max: sc.max })}</span>{sc.capped && <span className="muted"> · {t('sun.cls.capped')}</span>}
+      <ul>{sc.parts.map(p => <li key={p.key} className={!p.known ? 'is-unknown' : p.got === p.max ? 'is-ok' : p.got ? 'is-mid' : 'is-bad'}>{t(`sun.cls.${p.key}`)} {p.got}/{p.max}{!p.known ? ` · ${t('sun.cls.unknown')}` : ''}</li>)}</ul>
+      <p className="muted sun-note">{t('sun.cls.note')}</p></div></div>);
+}
+/** „O zi în casa ta”: înregistrează vederea 3D cât soarele trece de la răsărit la apus (video WebM, în browser). */
+function DayRecorder({ date, rise, set, onUi, open3d }: { date: string; rise: number; set: number; onUi(p: Partial<SunUi>): void; open3d(): void }){
+  const { t } = usePrefs(), [busy, setBusy] = useState(false), [msg, setMsg] = useState<string | null>(null);
+  // o singură înregistrare odată; la demontare (altă filă, alt nivel) bucla se oprește
+  const running = useRef(false), alive = useRef(true); useEffect(() => { alive.current = true; return () => { alive.current = false; }; }, []); // repus la montare (StrictMode montează de două ori)
+  const wait = (ms: number) => new Promise(r => setTimeout(r, ms));
+  const run = async () => {
+    if (running.current) return; running.current = true; setBusy(true); setMsg(null);
+    let rec: MediaRecorder | null = null, ok = false; const chunks: Blob[] = [];
+    try {
+      let cv = document.querySelector<HTMLCanvasElement>('.view3d canvas');
+      if (!cv){ open3d(); for (let i = 0; i < 30 && !cv && alive.current; i++){ await wait(150); cv = document.querySelector<HTMLCanvasElement>('.view3d canvas'); } }
+      if (!cv || typeof cv.captureStream !== 'function' || typeof MediaRecorder === 'undefined'){ if (alive.current) setMsg(t('sun.rec.unsupported')); return; }
+      const type = ['video/webm;codecs=vp9', 'video/webm;codecs=vp8', 'video/webm'].find(x => MediaRecorder.isTypeSupported(x));
+      rec = new MediaRecorder(cv.captureStream(30), type ? { mimeType: type } : undefined);
+      rec.ondataavailable = e => { if (e.data.size) chunks.push(e.data); }; const done = new Promise(r => { rec!.onstop = r; });
+      rec.start();
+      for (let m = rise; m <= set && alive.current && cv.isConnected; m += 5){ onUi({ minutes: m, playing: false }); await wait(70); }
+      ok = alive.current && cv.isConnected; await wait(300);
+      if (rec.state !== 'inactive') rec.stop(); await done;
+    } catch { if (alive.current) setMsg(t('sun.rec.unsupported')); }
+    finally { if (rec && rec.state !== 'inactive') try { rec.stop(); } catch { /* deja oprit */ } running.current = false; if (alive.current) setBusy(false); }
+    if (!ok || !chunks.length) return;
+    const url = URL.createObjectURL(new Blob(chunks, { type: 'video/webm' })), a = document.createElement('a'); a.href = url; a.download = `casa3d-zi-${date}.webm`; a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 10000); if (alive.current) setMsg(t('sun.rec.done'));
+  };
+  return (<div className="sun-rec"><button className="btn sm" disabled={busy} onClick={run}>{busy ? t('sun.rec.busy') : t('sun.rec.start')}</button>
+    {msg && <span className="muted sun-note" role="status">{msg}</span>}</div>);
+}
+/** Lumina naturală pe cer acoperit: FLN mediu, minim și uniformitatea pe cameră, cu ținta orientativă. */
+function SunDaylight({ extras, onLayer }: { extras: SunExtras; onLayer(): void }){
+  const { t, lang } = usePrefs(), loc = lang === 'en' ? 'en-GB' : 'ro-RO', rooms = extras.df?.rooms.filter(r => r.target != null || r.mean > 0) ?? [];
+  const pct = (v: number) => `${v.toLocaleString(loc, { maximumFractionDigits: 1, minimumFractionDigits: 1 })} %`;
+  return (<section className="sun-df" aria-label={t('sun.df.title')}><h4>{t('sun.df.title')}</h4><p className="muted sun-note">{t('sun.df.intro')}</p>
+    <button className="btn sm" onClick={onLayer}>{t('sun.df.show')}</button>
+    {rooms.length > 0 && <table className="sun-table"><caption className="sr-only">{t('sun.df.title')}</caption>
+      <thead><tr><th scope="col">{t('sun.col.room')}</th><th scope="col">{t('sun.df.mean')}</th><th scope="col">{t('sun.df.min')}</th><th scope="col">{t('sun.df.target')}</th><th scope="col">{t('sun.df.col')}</th></tr></thead>
+      <tbody>{rooms.map(r => <tr key={r.roomId} className={`sun-${r.verdict}`}><th scope="row">{r.name}<small>{t('sun.df.split', { sky: pct(r.sky), irc: pct(r.irc) })}</small></th>
+        <td>{r.verdict === 'none' ? '—' : pct(r.mean)}</td><td>{r.verdict === 'none' ? '—' : pct(r.min)}<small>{r.verdict === 'none' ? '' : t('sun.df.uni', { u: r.uniformity.toLocaleString(loc) })}</small></td>
+        <td>{r.target != null ? pct(r.target) : '—'}</td><td><span className={`sun-badge sun-badge-${r.verdict}`}>{t(`sun.df.v.${r.verdict}`)}</span></td></tr>)}</tbody></table>}
+    <p className="muted sun-note">{t('sun.df.note')}</p></section>);
+}
+/** Calendarul anual pe cameră: lună × oră, minutele de soare direct în ziua de 21 a fiecărei luni. */
+function SunCalendarView({ site, year, extras }: { site: SiteInfo; year: number; extras: SunExtras }){
+  const { t, lang } = usePrefs(), cal = useMemo(() => sunCalendar(extras.geo, site, (d, m) => localToUtc(d, m, site.tz), { year, obs: extras.obs }), [extras.geo, site, year, extras.obs]);
+  const [pick, setPick] = useState<string | null>(null), c = cal.find(x => x.roomId === pick) ?? cal.find(x => x.type === 'living' || x.type === 'dormitor') ?? cal[0];
+  if (!c) return <p className="muted sun-note">{t('sun.cal.none')}</p>;
+  const months = Array.from({ length: 12 }, (_, i) => new Date(Date.UTC(2026, i, 15)).toLocaleDateString(lang === 'en' ? 'en-GB' : 'ro-RO', { month: 'short', timeZone: 'UTC' }));
+  // orele de la primul la ultimul soare din an, fără goluri între ele (o coloană lipsă ar sări peste amiază)
+  const used = Array.from({ length: 24 }, (_, h) => h).filter(h => cal.some(x => x.grid.some(m => m[h]! > 0))), hrs = used.length ? Array.from({ length: used.at(-1)! - used[0]! + 1 }, (_, i) => used[0]! + i) : [];
+  return (<section className="sun-cal" aria-label={t('sun.cal.title')}><h4>{t('sun.cal.title')}</h4>
+    <label className="f"><span>{t('sun.col.room')}</span><select value={c.roomId} onChange={e => setPick(e.target.value)}>{cal.map(x => <option key={x.roomId} value={x.roomId}>{x.name}</option>)}</select></label>
+    <table className="sun-cal-grid"><caption className="sr-only">{t('sun.cal.caption', { room: c.name })}</caption>
+      <thead><tr><th scope="col" />{hrs.map(h => <th key={h} scope="col">{h}</th>)}<th scope="col">{t('sun.cal.total')}</th></tr></thead>
+      <tbody>{c.grid.map((m, i) => <tr key={i}><th scope="row">{months[i]}</th>{hrs.map(h => <td key={h} title={`${months[i]} ${h}:00 · ${m[h]} min`} style={{ background: m[h]! ? `rgba(245,146,40,${(.15 + .85 * m[h]! / 60).toFixed(2)})` : undefined }} />)}
+        <td className="num">{fmtH(c.hours[i]!)}</td></tr>)}</tbody></table>
+    <p className="muted sun-note">{t('sun.cal.note')}</p></section>);
+}
 export const maxHours = (grid: Study | null) => grid ? grid.cells.reduce((m, c) => Math.max(m, c.hours), 0) : 0;
 const fmtH = (h: number) => { const m = Math.round(h * 60); return `${Math.floor(m / 60)} h ${String(m % 60).padStart(2, '0')}`; };
 
@@ -253,15 +354,18 @@ export function heatColor(hours: number, maxH = 6): string | null {
 }
 
 /** Stratul de pe plan (coordonate în metri, ca planul). Fără evenimente: nu încurcă selecția și desenarea. */
-export function SunOverlay({ floor, site, ui, grid, nb = [] }: { floor: Floor; site: SiteInfo; ui: SunUi; grid: Study | null; nb?: NeighbourSun[] }){
-  const { t } = usePrefs();
+export function SunOverlay({ floor, site, ui, grid, nb = [], df = null }: { floor: Floor; site: SiteInfo; ui: SunUi; grid: Study | null; nb?: NeighbourSun[]; df?: Daylight | null }){
+  const { t, lang } = usePrefs();
   const now = sunAt(site, ui), patches = now.elevationDeg > 0 ? sunPatches(floor, now.dir) : [];
   const xs = floor.walls.flatMap(w => [w.a[0], w.b[0]]).concat(floor.rooms.flatMap(r => [r.rect.x0, r.rect.x1])), zs = floor.walls.flatMap(w => [w.a[1], w.b[1]]).concat(floor.rooms.flatMap(r => [r.rect.z0, r.rect.z1]));
   const x1 = xs.length ? Math.max(...xs) : 6, z0 = zs.length ? Math.min(...zs) : 0, ax = x1 + .9, az = z0 - .2, rot = site.northDeg;
   const maxH = maxHours(grid);
   const sx = now.dir[0], sz = now.dir[2], sl = Math.hypot(sx, sz) || 1;
   return (<g className="sun-overlay" pointerEvents="none" aria-hidden="true" data-testid="sun-overlay">
-    {ui.map && grid?.cells.map((c, i) => { const col = heatColor(c.hours, maxH); return col ? <rect key={i} x={c.x - grid.cellM / 2} y={c.z - grid.cellM / 2} width={grid.cellM + .005} height={grid.cellM + .005} fill={col} fillOpacity={.62} /> : null; })}
+    {ui.map && ui.layer === 'df' && df?.cells.map((c, i) => { const col = dfColor(c.df); return col ? <rect key={`d${i}`} x={c.x - df.cellM / 2} y={c.z - df.cellM / 2} width={df.cellM + .005} height={df.cellM + .005} fill={col} fillOpacity={.7} /> : null; })}
+    {ui.map && ui.layer === 'df' && df?.rooms.filter(r => r.mean > 0).map(r => { const cs = df.cells.filter(c => c.roomId === r.roomId), x = cs.reduce((a, c) => a + c.x, 0) / cs.length, z = cs.reduce((a, c) => a + c.z, 0) / cs.length;
+      return <text key={`t${r.roomId}`} x={x} y={z + .55} textAnchor="middle" fontSize={.3} fontWeight={700} fill="#14365c" fontFamily="Instrument Sans, Segoe UI, sans-serif">{t('sun.dfLabel', { v: r.mean.toLocaleString(lang === 'en' ? 'en-GB' : 'ro-RO', { maximumFractionDigits: 1 }) })}</text>; })}
+    {ui.map && ui.layer === 'sun' && grid?.cells.map((c, i) => { const col = heatColor(c.hours, maxH); return col ? <rect key={i} x={c.x - grid.cellM / 2} y={c.z - grid.cellM / 2} width={grid.cellM + .005} height={grid.cellM + .005} fill={col} fillOpacity={.62} /> : null; })}
     {(site.neighbors ?? []).map(n => { const c = corners(n), r = nb.find(x => x.neighbourId === n.id), col = r?.status === 'affected' ? '#C62828' : r?.status === 'already' ? '#B26A00' : n.calcan || n.kind !== 'home' ? '#5E636B' : '#2E7D32';
       return <g key={n.id} data-testid="sun-neighbour"><polygon points={c.map(q => q.join(',')).join(' ')} fill="#8A8F98" fillOpacity={.25} stroke="#5E636B" strokeWidth={.04} strokeDasharray=".25 .12" />
         <line x1={c[0]![0]} y1={c[0]![1]} x2={c[1]![0]} y2={c[1]![1]} stroke={col} strokeWidth={.16} strokeDasharray={n.calcan ? '.35 .18' : undefined} strokeLinecap="round" />

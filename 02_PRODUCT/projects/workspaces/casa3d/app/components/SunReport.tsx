@@ -9,6 +9,8 @@ import { floors, levelView } from '@/core/levels';
 import { insolationStudy, NORM_HOURS, NORM_REFERENCE_DATE, EN17037_DATE, en17037Level, type Study } from '@/core/insolation';
 import { obstaclesFor, neighbourStudy, studyTriggers, corners } from '@/core/neighbours';
 import { summerCheck } from '@/core/overheating';
+import { daylightStudy } from '@/core/daylight';
+import { lightScore } from '@/core/light-class';
 import { readSite, PLACES, type SiteInfo } from '@/core/site-location';
 import { roomBoundary } from '@/core/room-geometry';
 import { localToUtc } from '@/core/solar';
@@ -38,16 +40,21 @@ export default function SunReport({ id }: { id: string }){
     {!site || !res ? <p>{t('sunr.noSite')}</p> : <>
       <section><h2>{t('sunr.site')}</h2>
         <p>{t('sunr.siteLine', { place: place ?? t('sun.custom').replace('…', ''), lat: num(site.lat, 2), lon: num(site.lon, 2), tz: site.tz, north: site.northDeg })}</p></section>
+      {res.score.cls && <section className={`sun-class sun-class-${res.score.cls}`}><div className="sun-class-badge" aria-hidden="true">{res.score.cls}</div>
+        <div><b>{t('sun.cls.title', { cls: res.score.cls })}</b> · {t('sun.cls.points', { p: res.score.points, max: res.score.max })}{res.score.capped ? ` · ${t('sun.cls.capped')}` : ''}
+          <ul>{res.score.parts.map(p => <li key={p.key}>{t(`sun.cls.${p.key}`)} {p.got}/{p.max}{!p.known ? ` · ${t('sun.cls.unknown')}` : ''}</li>)}</ul>
+          <p className="muted">{t('sunr.clsNote')}</p></div></section>}
       <section><h2>{t('sunr.verdicts')}</h2>
         <p><b>{t('sun.trig.title')}</b> {!site.neighbors?.length ? t('sun.trig.noNb') : res.triggers.some(x => x.required)
           ? (() => { const x = res.triggers.filter(q => q.required).sort((a, b) => a.distM - b.distM)[0]!; return t('sun.trig.yes', { d: `${num(x.distM)} m`, h: `${num(x.hMaxM)} m`, nm: x.name }); })() : t('sun.trig.no')}</p>
         <p><b>{t('sunr.normAll', { h: fmtH(NORM_HOURS) })}</b> {res.low.length ? t('sun.chk.fail', { n: res.low.length, rooms: res.low.join(', ') }) : res.habitable ? t('sun.chk.pass', { n: res.habitable }) : t('sun.chk.none')}</p></section>
       {res.levels.map(L => <section key={L.i} className="sun-r-level"><h2>{L.i === 0 ? t('level.ground') : L.name || t('level.n', { n: L.i })} · {t('sunr.date')}</h2>
-        <table className="print-table"><thead><tr><th>{t('sun.col.room')}</th><th>{t('sunr.total')}</th><th>{t('sunr.longest')}</th><th>{t('sun.col.when')}</th><th>{t('sun.col.verdict')}</th><th>{t('sunr.en')}</th><th>{t('sunr.summer')}</th></tr></thead>
+        <table className="print-table"><thead><tr><th>{t('sun.col.room')}</th><th>{t('sunr.total')}</th><th>{t('sunr.longest')}</th><th>{t('sun.col.when')}</th><th>{t('sun.col.verdict')}</th><th>{t('sunr.en')}</th><th>{t('sunr.df')}</th><th>{t('sunr.summer')}</th></tr></thead>
           <tbody>{L.norm.rooms.map(r => { const ws = L.norm.windows.filter(w => w.roomId === r.roomId), first = ws.map(w => w.first).filter(Boolean).sort()[0], last = ws.map(w => w.last).filter(Boolean).sort().at(-1);
-            const en = L.en.rooms.find(x => x.roomId === r.roomId), su = L.summer.rooms.find(x => x.roomId === r.roomId);
+            const en = L.en.rooms.find(x => x.roomId === r.roomId), su = L.summer.rooms.find(x => x.roomId === r.roomId), df = L.df.rooms.find(x => x.roomId === r.roomId);
             return <tr key={r.roomId}><td>{r.name}</td><td>{fmtH(r.hours)}</td><td>{fmtH(r.longestH)}</td><td>{first && last ? `${first}–${last}` : '—'}</td><td>{t(`sun.verdict.${r.verdict}`)}</td>
               <td>{en && r.habitable ? `${fmtH(en.hours)} · ${t(`sun.en.l${en.windows ? en17037Level(en.hours) : 0}`)}` : '—'}</td>
+              <td>{df && df.verdict !== 'none' && (df.target != null || df.mean > 0) ? `${num(df.mean)} %${df.target != null ? ` / ${num(df.target)} % · ${t(`sun.df.v.${df.verdict}`)}` : ''}` : '—'}</td>
               <td>{su && su.verdict !== 'na' ? `${num(su.pct)} % / ${num(su.limitPct ?? 0)} % · ${t(`sun.sum.v.${su.verdict}`)}` : '—'}</td></tr>; })}</tbody></table>
         <HeatPlan snap={snap} i={L.i} grid={L.grid} site={site} /></section>)}
       {res.nb.length > 0 && <section><h2>{t('sun.nb.title')}</h2>
@@ -57,7 +64,7 @@ export default function SunReport({ id }: { id: string }){
               <td>{n.targets.length ? `${fmtH(n.worstBefore)} → ${fmtH(n.worstAfter)}` : '—'}</td><td>{t(`sun.nb.st.${n.status}`, { was: fmtH(n.worstBefore), got: fmtH(n.worstAfter), n: n.affected, of: n.targets.length })}</td></tr>; })}</tbody></table>
         <p className="muted">{t('sun.nb.note')}</p></section>}
       <section><h2>{t('sunr.method')}</h2>
-        <p>{t('sun.norm', { h: fmtH(NORM_HOURS) })}</p><p>{t('sun.method')}</p><p>{t('sun.en.note')}</p><p>{t('sun.sum.intro')} {t('sun.sum.note')}</p><p>{t('sun.limits')}</p>
+        <p>{t('sun.norm', { h: fmtH(NORM_HOURS) })}</p><p>{t('sun.method')}</p><p>{t('sun.en.note')}</p><p>{t('sun.df.note')}</p><p>{t('sun.sum.intro')} {t('sun.sum.note')}</p><p>{t('sun.limits')}</p>
         <p className="muted">{t('sunr.sources')}</p></section>
     </>}
   </main>);
@@ -68,10 +75,12 @@ function compute(snap: Snapshot, site: SiteInfo){
   const levels = floors(snap).map((f, i) => { const v = levelView(snap, i), obs = obstaclesFor(snap, i, site);
     return { i, name: f.name, norm: insolationStudy(v.floor, site, toUtc, { date: NORM_REFERENCE_DATE, stepMin: 5, floorGrid: false, obs }),
       grid: insolationStudy(v.floor, site, toUtc, { date: NORM_REFERENCE_DATE, stepMin: 15, cellM: .3, obs }),
-      en: insolationStudy(v.floor, site, toUtc, { date: EN17037_DATE, stepMin: 5, floorGrid: false, obs, point: 'en17037' }), summer: summerCheck(v.floor, site) }; });
+      en: insolationStudy(v.floor, site, toUtc, { date: EN17037_DATE, stepMin: 5, floorGrid: false, obs, point: 'en17037' }), summer: summerCheck(v.floor, site), df: daylightStudy(v.floor, { obs }) }; });
   const hab = levels.flatMap(L => L.norm.rooms.filter(r => r.habitable));
-  return { levels, habitable: hab.length, low: hab.filter(r => r.verdict !== 'ok').map(r => r.name),
-    nb: neighbourStudy(snap, site, toUtc, NORM_REFERENCE_DATE, NORM_HOURS), triggers: studyTriggers(snap, site) };
+  const nb = neighbourStudy(snap, site, toUtc, NORM_REFERENCE_DATE, NORM_HOURS);
+  // clasa de lumină a casei: camerele tuturor nivelurilor puse împreună
+  const score = lightScore({ norm: levels.flatMap(L => L.norm.rooms), en: levels.flatMap(L => L.en.rooms), daylight: levels.flatMap(L => L.df.rooms), summer: levels.flatMap(L => L.summer.rooms), nb: site.neighbors?.length ? nb : null });
+  return { levels, habitable: hab.length, low: hab.filter(r => r.verdict !== 'ok').map(r => r.name), nb, triggers: studyTriggers(snap, site), score };
 }
 
 /** Planul nivelului cu harta orelor de soare la 21 decembrie și vecinii (SVG, metri). */

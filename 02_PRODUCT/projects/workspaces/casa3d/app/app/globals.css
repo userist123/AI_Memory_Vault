@@ -1550,5 +1550,23 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 .sun-shades li{display:flex;gap:8px;align-items:center;justify-content:space-between;padding:6px;border-radius:4px;background:var(--surface);border-left:3px solid var(--rule)}
 .sun-shades li.is-ok{border-left-color:var(--ok)} .sun-shades li.sun-note{display:block;background:transparent;border:0;padding:0}
 .sun-sum-act td{border-bottom:1px solid var(--rule)}
+.sun-layer{display:flex;gap:12px;flex-wrap:wrap}
+.sun-tabs{display:flex;gap:2px;flex-wrap:wrap;border-bottom:1px solid var(--rule);margin-top:4px}
+.sun-tab{font:inherit;font-size:var(--fs-sm);padding:6px 10px;border:0;border-bottom:2px solid transparent;background:transparent;color:var(--ink-3);cursor:pointer;margin-bottom:-1px}
+.sun-tab:hover{color:var(--ink)} .sun-tab.is-on{color:var(--ink);border-bottom-color:var(--accent);font-weight:600}
+.sun-tab:focus-visible{outline:2px solid var(--accent);outline-offset:-2px}
+.sun-tabpanel{display:grid;gap:8px}
+.sun-class{display:flex;gap:10px;align-items:flex-start;padding:8px;border-radius:6px;background:var(--surface);border:1px solid var(--rule)}
+.sun-class ul{margin:4px 0;padding:0;list-style:none;display:flex;flex-wrap:wrap;gap:4px;font-size:var(--fs-xs)}
+.sun-class li{padding:1px 6px;border-radius:3px;background:#F1EEE8} .sun-class li.is-ok{background:#EDF2EA;color:var(--ok)} .sun-class li.is-mid{background:#FAF1E3;color:#7a5418}
+.sun-class li.is-bad{background:#F7E8E4;color:var(--err)} .sun-class li.is-unknown{color:var(--ink-3);font-style:italic}
+.sun-class-badge{-webkit-print-color-adjust:exact;print-color-adjust:exact;flex:none;width:40px;height:40px;border-radius:6px;display:grid;place-items:center;font-size:24px;font-weight:700;color:#fff}
+.sun-class-A .sun-class-badge{background:#2E7D32} .sun-class-B .sun-class-badge{background:#689F38} .sun-class-C .sun-class-badge{background:#C9A227}
+.sun-class-D .sun-class-badge{background:#E07B24} .sun-class-E .sun-class-badge{background:#C62828}
+.sun-rec{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sun-df,.sun-cal{display:grid;gap:6px} .sun-df h4,.sun-cal h4{margin:6px 0 0}
+.sun-cal-grid{border-collapse:collapse;font-size:10px;width:100%;table-layout:fixed}
+.sun-cal-grid th{font-weight:500;color:var(--ink-3);padding:1px;text-align:center} .sun-cal-grid tbody th{text-align:left;width:34px}
+.sun-cal-grid td{height:12px;border:1px solid var(--paper,#fff);background:#F1EEE8} .sun-cal-grid td.num{background:transparent;width:46px;text-align:right;white-space:nowrap}
 .sun-report .sun-r-plan{margin:8px 0;break-inside:avoid} .sun-report .sun-r-plan svg{width:100%;max-height:420px;border:1px solid #ddd}
 .sun-report .sun-r-plan figcaption{font-size:11px;color:#555}

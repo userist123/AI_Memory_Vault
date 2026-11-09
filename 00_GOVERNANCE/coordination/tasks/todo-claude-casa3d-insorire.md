@@ -20,9 +20,15 @@ ETAPA 3 (owner: „hai să le facem, fii ambițios”, după raportul de cerceta
   crash în summerCheck; fusul României peste estul Ungariei/Serbiei; vecin < 1,8 m fără puncte) -> toate reparate cu regresii;
   runda 2 PASS. Rezidual acceptat: conturul fusului orar ±10–20 km la granițe (fusul se poate alege manual).
   vitest 145 fișiere / 1018 teste; next build reușit; verificat în aplicație (vecin pe plan, în 3D, raportul /sun).
+ETAPA 4 (owner 2026-11-09: „inovează și renovează platforma, conceptele și utilitarele”): core/daylight.ts (FLN pe cer CIE
+  acoperit + BRE split-flux, harta albastră), core/light-class.ts (calendarul anual, clasa de lumină A–E), înregistrarea zilei
+  în 3D (WebM), panoul pe file, comenzi Ctrl+K, raportul cu clasa și FLN. CI etapa 3 verde (b0f0e829f).
+  Revizie etapa 4: runda 1 PARTIAL (clasă A cu norma picată, transmisie dublă în CRI, -0,0 %, recorder fragil, C ≥ 14) și
+  runda 2 PARTIAL (clasă pe nivel fără camere de locuit, StrictMode) -> toate reparate cu regresii. vitest 1025; build OK;
+  verificat în aplicație (harta FLN, clasa B pe demo, calendarul, Ctrl+K, raportul, înregistrarea WebM).
 NEXT: CI pe PR #371 o dată -> merge e decizia proprietarului.
-IDEAS AFTER: vecinii din OpenStreetMap (Overpass, de măsurat acoperirea înălțimilor), harta factorului de lumină naturală,
-  vederea spre exterior și orbirea (EN 17037), calendarul anual pe fereastră, umbrirea ca variabilă în frontul Pareto.
-KEY FILES: app/core/{solar,site-location,insolation,neighbours,overheating,sun-design,sun-effects}.ts, app/components/{SunStudy,SunReport}.tsx,
+IDEAS AFTER: vecinii din OpenStreetMap (Overpass, de măsurat acoperirea înălțimilor), vederea spre exterior și orbirea
+  (EN 17037), umbrirea ca variabilă în frontul Pareto, validarea FLN pe cazurile CIE 171, mobilierul așezat după lumină.
+KEY FILES: app/core/{solar,site-location,insolation,neighbours,overheating,daylight,light-class,sun-design,sun-effects}.ts, app/components/{SunStudy,SunReport}.tsx,
   app/tests/{insolation,sun-design,neighbours}.test.ts.
 BLOCKERS: none. Art. 3 consolidat verificat în cercetare (legislatie.just.ro, forma din 05.05.2026); valorile AD O și g: de verificat în PDF.

@@ -91,6 +91,26 @@ Sursa: raportul `D:/w/reports/Casa3D lumină naturală și confort solar.md` (ar
 - Teste: `app/tests/neighbours.test.ts` (16); suita 145 fișiere / 1018 teste; `next build` reușit. Rămase deschise din cercetare: vecinii din OpenStreetMap, harta factorului de
   lumină naturală, vederea spre exterior, orbirea, calendarul anual.
 
+## Etapa 4 — lumina ca experiență completă (cerința „inovează și renovează platforma, conceptele și utilitarele”, 2026-11-09)
+- **Lumina naturală pe cer acoperit** (`app/core/daylight.ts`): factorul de lumină naturală pe planul de lucru (0,85 m), cerul
+  CIE acoperit în 145 de petice (benzile Tregenza), aceleași raze ca la soare (glaf, tavan, aripi, vecini, etajele de sus),
+  transmisia 0,7 × murdăria 0,9 × sticla 72 % din gol; partea reflectată după formula split-flux BRE, cu C între 14 și 39 după
+  cât din orizont văd ferestrele. Ținte orientative BS 8206-2 (standard retras): bucătărie 2 %, cameră de zi și birou 1,5 %,
+  dormitor 1 %. Harta pe plan (paletă albastră, FLN mediu pe cameră) e al doilea strat al hărții, lângă orele de soare.
+  8 ms pentru o cameră de 20 m²; nevalidat față de Radiance (scris în interfață).
+- **Calendarul anual** (`app/core/light-class.ts sunCalendar`): lună × oră, minutele de soare direct în ziua de 21, pe cameră.
+- **Clasa de lumină A–E** (`lightScore`): indice Casa3D, nu certificare — art. 3 (2 puncte), SR EN 17037 (3), FLN (2), vara (1),
+  vecinii (1); vecinii neintroduși apar „neverificat”. În panou pentru nivel și în raport pentru toată casa.
+- **„O zi în casa ta”**: înregistrarea vederii 3D de la răsărit la apus (MediaRecorder, WebM, local în browser).
+- **Panoul renovat pe file**: Normă · Vecini · Lumină · An · Vara · Mobilier, cu fișa de lumină deasupra; comenzi noi în paleta
+  Ctrl+K („Însorire: …”, raportul de însorire). Raportul are clasa casei și coloana FLN.
+- Revizie etapa 4 (2 runde): runda 1 PARTIAL — clasa putea ieși A cu norma legală picată (acum plafonată la C, iar
+  verificările neverificate nu mai dau puncte), transmisia geamului numărată de două ori în partea reflectată, „-0,0 %”,
+  înregistrarea video fără gardă de dublu clic și fără oprire la demontare, C blocat la 14 sub un orizont ascuns (acum 5–39,
+  cu aripile casei incluse). Runda 2 PARTIAL cu două reziduuri mici, reparate: clasa nu se mai afișează pe un nivel fără camere
+  de locuit și înregistrarea merge și sub StrictMode.
+- Teste: `app/tests/daylight.test.ts` (7); suita 146 fișiere / 1025 teste; `next build` reușit.
+
 ## Limite (scrise și în interfață)
 Streașina, copacii, relieful și mobila nu sunt modelate; vecinii sunt dreptunghiuri cu acoperiș plat, iar casa e aproximată
 prin camerele ei extrudate când umbrește vecinii. Ferestrele vecinilor nu sunt cunoscute (grilă pe fațadă). Petele de soare (momentul ales) se taie la dreptunghiul camerelor cu contur poligonal și nu țin cont de umbra altor
