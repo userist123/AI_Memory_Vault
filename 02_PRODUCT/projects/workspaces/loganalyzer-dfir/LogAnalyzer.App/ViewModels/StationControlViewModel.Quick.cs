@@ -171,6 +171,8 @@ namespace LogAnalyzer.UI.ViewModels
             var signedReports = Directory.EnumerateFiles(Path.GetDirectoryName(pdf)!, Path.GetFileNameWithoutExtension(pdf) + "*semnat*.pdf").ToList();
             var planned = new System.Collections.Generic.List<string> { Path.GetFileName(pdf) + " — raportul de control" };
             planned.AddRange(signedReports.Select(f => Path.GetFileName(f) + " — raportul semnat de ofițer"));
+            var stigFile = StigChecklist.FileName(_report.Facts.Host, now);
+            planned.Add(stigFile + " — lista de verificare STIG (Windows 11 V2R3) pentru STIG Viewer");
             if (log is not null) planned.Add(AuditAnchor.ExportFolderName(now) + " — copia jurnalului aplicației, pentru CD-R");
             planned.Add(OfficerExport.ReadmeFile + " — ce conține folderul");
             while (true)
@@ -182,6 +184,7 @@ namespace LogAnalyzer.UI.ViewModels
                 if (root is null) { Status = "Exportul pentru ofițer a fost anulat; nu s-a scris nimic."; return; }
             }
             var dest = Path.Combine(root, OfficerExport.FolderName(_report.Facts.Host, now));
+            var report = _report;
             var facts = _report.Facts;
             string anchorLine = AnchorLine;
             AnchorExport? anchorCopy = null;
@@ -192,6 +195,7 @@ namespace LogAnalyzer.UI.ViewModels
                     Directory.CreateDirectory(dest);
                     CopyWithSignature(pdf, Path.Combine(dest, Path.GetFileName(pdf)));
                     foreach (var signed in signedReports) File.Copy(signed, Path.Combine(dest, Path.GetFileName(signed)), overwrite: true);
+                    File.WriteAllText(Path.Combine(dest, stigFile), StigChecklist.Build(report, now), new System.Text.UTF8Encoding(false));
                     if (log is not null) { anchorCopy = AuditAnchor.Export(log, dest, Environment.MachineName, now); anchorLine = anchorCopy.Anchor.Line; }
                     File.WriteAllText(Path.Combine(dest, OfficerExport.ReadmeFile), OfficerExport.Readme(facts.Host, now, planned, anchorLine), new System.Text.UTF8Encoding(false));
                     return Directory.GetFiles(dest, "*", SearchOption.AllDirectories);   // a new folder: everything in it is this export

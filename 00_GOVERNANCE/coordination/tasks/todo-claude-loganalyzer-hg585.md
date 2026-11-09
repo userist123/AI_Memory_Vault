@@ -451,3 +451,12 @@
   (LmCompatibilityLevel unset = 3), P42 Conform (LSA read live works), P43 Conform, P44 Neconform (DEP OptIn), P45 DeVerificat, P46
   Neconform (isolated), P47 Conform. Next waves from the research doc: .cklb STIG checklist export; AD detection pack (ADCS 4886/4887,
   NTLM relay); EDR tampering via WFP 5441/5447; Defender DetectionHistory; RMM pack; Notepad TabState / MUICache.
+- 2026-11-09 (owner „Continua”): CI fix 32246dee4 (research doc added to the unreadable-notes allowlist). Wave 2: .cklb STIG Viewer 3 export
+  `Audit/StigChecklist.cs` (52 Windows 11 V2R3 rules, V-id/severity/title from stigaview, no SV ids), written by „Exportă pentru ofițer”.
+  Opus review r1 (HIGH): absent registry values counted as compliant (STIG text: absent = finding) and WDigest absent/unreadable -> not_a_finding;
+  fixed: absent = open, CC-000315 HKLM only, P13/P24/C01 evidence-only, posture NuSeAplica -> not_reviewed (never not_applicable), surrogate-safe
+  cap; r2: all fixed. Lab bug found and fixed: the device monitor writes media_live.jsonl into the LIVE case folder before the case exists, so
+  CaseWorkspace.Create refused it ("Case folder is not empty") and every report/officer export of that station failed; now
+  CaseWorkspace.CreateKeepingPreCaseFiles keeps only listed pre-case files (audited with SHA-256), anything else still refused. Verified on
+  Insula: case created, journal kept. The .cklb itself is not yet produced in the lab: the officer export first requires measure/owner/deadline
+  for each NECONFORM row (by design). Suites: Dfir 2994, App 1028, UI 368, Edition 45.

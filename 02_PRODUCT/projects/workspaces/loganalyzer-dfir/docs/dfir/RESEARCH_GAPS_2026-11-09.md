@@ -29,6 +29,16 @@ Ce nu se poate citi din Windows: parola BIOS și locul în care se păstrează c
 - „Nu se aplică” cu motiv scris, niciodată omis în tăcere. Exemple: Credential Guard și LAPS pe o stație fără domeniu.
 - Referința la procedurile de securitate (PrOpSec) și la certificatul de acreditare al stației, cu număr și dată de expirare. Ordinul ORNISS 16/2014 aprobă INFOSEC 2 (https://legeaz.net/monitorul-oficial-262-2014/ordinul-guvernului-romaniei-orniss-16-2014), iar Ordinul ORNISS 18/2014 este ghidul PrOpSec (https://legeaz.net/monitorul-oficial-242-2014/ordinul-guvernului-romaniei-orniss-18-2014/anexa-ghid). Un model oficial de raport nu a fost găsit (NEVERIFICAT).
 
+### Listă de verificare STIG (.cklb) — implementat
+
+„Exportă pentru ofițer” scrie acum și un fișier `.cklb` (STIG Viewer 3, JSON) pentru STIG Windows 11 V2R3, cu 52 de reguli. Starea unei reguli nu depășește ce a verificat aplicația:
+
+- **Evaluate una câte una** (P40–P45, P47): regula primește „Not a Finding” sau „Open” doar din valoarea exactă citită (de exemplu RestrictAnonymous = 0 dă „Open” pentru SO-000150, dar SO-000145 rămâne „Not a Finding”). O valoare necitită dă „Not Reviewed”.
+- **Preluate din verificarea întreagă** (C01, P07, P13, P15, P24): același criteriu ca regula; CONFORM → „Not a Finding”, NECONFORM → „Open”, DE VERIFICAT/NEDETERMINAT → „Not Reviewed”. Excepție: la P07 (firewall) un NECONFORM rămâne „Not Reviewed”, fiindcă un firewall terț ar putea îndeplini regula.
+- **Doar dovadă** (restul, inclusiv P08 și N07): întotdeauna „Not Reviewed”, cu detaliile și dovada verificării atașate, fiindcă verificarea aplicației diferă de criteriul STIG sau acoperă mai multe reguli (P08 verifică doar Defender; N07 acceptă și setarea din afara politicii). „Nu se aplică” la verificare dă „Not Applicable”; o verificare care nu a rulat dă „Not Reviewed”.
+
+Limite: ID-urile de regulă SV nu sunt completate (nu au putut fi verificate pe sursă); V2R3 nu este versiunea curentă (există V2R7), iar data lansării nu este verificată; textul de verificare și de remediere al STIG nu este inclus; fișierul nu este semnat. Evaluatorul decide starea finală în STIG Viewer.
+
 ## C. Analiza probelor față de uneltele de referință
 
 Există deja în cod:
