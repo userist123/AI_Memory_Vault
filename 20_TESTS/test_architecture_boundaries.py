@@ -239,3 +239,89 @@ def test_test_path_file_imported_by_production_counts_as_production(tmp_path):
     # the same file with no production importer stays excluded
     files.pop(f"{PK}/mid/use.py")
     assert _fails(_tree(tmp_path / "two", files), _cfg(LAYERS)) == []
+
+
+# ----------------------------------------------------------------------------- WP-07 PR A: aliases (facades)
+def _fac_files() -> dict[str, str]:
+    return {
+        f"{PK}/low/__init__.py": "", f"{PK}/low/a.py": "X = 1\n",
+        f"{PK}/high/__init__.py": "", f"{PK}/high/controller.py": "Y = 1\n",
+        f"{PK}/fac/__init__.py": ('from pathlib import Path\n_B = Path(__file__).resolve().parents[1]\n'
+                                  '__path__ = [str(_B / "low"), str(_B / "high")]\n'),
+    }
+
+
+FAC_LAYERS = [["packages/low"], ["packages/high"]]
+FAC_ALIASES = {"packages/fac": {"__path__": ["packages/low", "packages/high"]}}
+
+
+def _acfg(layers=FAC_LAYERS, aliases=FAC_ALIASES, baseline=None) -> dict:
+    cfg = _cfg(layers, baseline)
+    cfg["aliases"] = aliases
+    return cfg
+
+
+def test_alias_is_a_valid_unit_and_a_downward_import_through_it_passes(tmp_path):
+    files = _fac_files() | {f"{PK}/high/h.py": "import fac.a\n"}  # fac.a is packages/low: downward
+    root = _tree(tmp_path, files)
+    assert _fails(root, _acfg()) == []
+    assert ab.current_edges(root) == {("packages/high", "packages/low"): 1}  # no edge to the facade
+
+
+def test_f_new_upward_edge_introduced_through_a_facade_fails(tmp_path):
+    files = _fac_files() | {f"{PK}/low/up.py": "import fac.controller\n"}  # L0 -> high, spelled via the facade
+    root = _tree(tmp_path, files)
+    f = _fails(root, _acfg())
+    assert len(f) == 1 and f[0].startswith("(b)") and "packages/low (L0) -> packages/high (L1)" in f[0]
+    assert _fails(root, _acfg(baseline=[_edge("packages/low", "packages/high", 1)])) == []
+
+
+def test_g_alias_path_drift_fails(tmp_path):
+    root = _tree(tmp_path, _fac_files())
+    assert _fails(root, _acfg()) == []
+    for declared in (["packages/high", "packages/low"], ["packages/low"], ["packages/low", "packages/high", "self"]):
+        f = _fails(root, _acfg(aliases={"packages/fac": {"__path__": declared}}))
+        assert len(f) == 1 and f[0].startswith("(h)") and "packages/fac" in f[0], declared
+
+
+def test_h_unit_in_neither_a_layer_nor_an_alias_fails(tmp_path):
+    root = _tree(tmp_path, _fac_files())
+    f = _fails(root, _acfg(aliases={}))
+    assert any(m.startswith("(a)") and "packages/fac" in m and "not assigned" in m for m in f)
+    f = _fails(root, _acfg(aliases=FAC_ALIASES | {"packages/ghost": {"__path__": []}}))
+    assert any(m.startswith("(a)") and "packages/ghost" in m and "does not exist" in m for m in f)
+
+
+def test_i_hard_forbidden_through_an_alias_fails_even_when_the_edge_goes_down(tmp_path):
+    files = {f"{PK}/lib/__init__.py": "", f"{PK}/lib/a.py": "import xk.m\n",
+             f"{PK}/xk/__init__.py": ('from pathlib import Path\n_E = Path(__file__).resolve().parents[2] / "products" / "prod"\n'
+                                      '__path__ = [str(_E)]\n'),
+             f"{PD}/prod/__init__.py": "", f"{PD}/prod/m.py": "X = 1\n"}
+    root = _tree(tmp_path, files)
+    layers = [["products/prod"], ["packages/lib"]]  # lib above prod: not upward
+    aliases = {"packages/xk": {"__path__": ["products/prod"]}}
+    f = _fails(root, _acfg(layers, aliases))
+    assert len(f) == 1 and f[0].startswith("(f)") and "packages/lib -> products/prod" in f[0]
+    assert _fails(root, _acfg(layers, aliases, [_edge("packages/lib", "products/prod", 1)])) == []
+
+
+def test_owner_wp_follows_the_contract_table():
+    for a, b, wp in [("graph", "memory", "WP-10"), ("lifecycle", "memory", "WP-10"), ("memory", "interfaces", "WP-10"),
+                     ("retrieval", "memory", "WP-10"), ("retrieval", "interfaces", "WP-10"),
+                     ("lifecycle", "interfaces", "WP-14"), ("security", "interfaces", "WP-14"),
+                     ("vault_access", "interfaces", "WP-14")]:
+        assert ab.owner_wp(f"packages/{a}", f"packages/{b}", False) == wp, (a, b)
+    assert ab.owner_wp("packages/interfaces", "products/xau_kinetic", True) == "WP-12"
+
+
+def test_regenerated_baseline_takes_the_owner_from_the_table_and_refreshes_old_reasons(tmp_path):
+    files = _fac_files() | {f"{PK}/low/up.py": "import fac.controller\n"}
+    root = _tree(tmp_path, files)
+    old = _edge("packages/low", "packages/high", 1) | {"owner_wp": "WP-06", "reason": "old"}
+    plan = ab.plan_baseline(_acfg(baseline=[old]), ab._inventory(root), True, "WP-07", "reattributed")
+    # (low, high) is not a contract pair: the old owner is kept, only the reason is refreshed
+    assert [(e["owner_wp"], e["reason"]) for e in plan["edges"]] == [("WP-06", "reattributed")]
+    files = {f"{PK}/graph/__init__.py": "", f"{PK}/graph/a.py": "import memory\n", f"{PK}/memory/__init__.py": ""}
+    cfg = _acfg(layers=[["packages/graph"], ["packages/memory"]], aliases={})
+    plan = ab.plan_baseline(cfg, ab._inventory(_tree(tmp_path / "t", files)), True, "WP-07", "why")
+    assert [(e["owner_wp"], e["widened_by"]) for e in plan["edges"]] == [("WP-10", "WP-07")]
