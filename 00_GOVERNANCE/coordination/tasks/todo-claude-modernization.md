@@ -4,7 +4,7 @@ title: "Checkpoint: Claude Code - modernizarea AI Memory Vault"
 type: "project"
 lifecycle: "REVIEW"
 created: "2026-11-08T21:00:00Z"
-updated: "2026-11-09T12:00:00Z"
+updated: "2026-11-09T19:00:00Z"
 verification: "unverified"
 provenance:
   source_type: "execution"
@@ -85,9 +85,22 @@ Ramură F0: `modernize/f0-inventory`, worktree `D:/w/mod-f0`, bază origin/main 
       față de 31 / 124); `interfaces` pe L2 importă 8 unități superioare și are ciclu cu `security`. WP-06 decide ordinea
       pe aceste cifre (config sau A3 adaptat), nu pe preferință.
 
+## F2 — ramura `modernize/f2-memory-core` (peste F1, același worktree D:/w/mod-f0)
+- [x] WP-06 (2026-11-09, claude-code, design în sesiunea principală; 2 runde vault-reviewer Opus):
+      `07_EVALUATION/reports/modernization/F2_memory_core_contract.md` + `F2_layer_order_analysis.py` (dovezi, doar citire).
+      Decizii: (1) fațadele nu sunt straturi; pe graful real (fațade rezolvate) ordinea nouă L0..L8 dă 8 perechi /
+      11 fișiere în sus = minimul exact (config 11/25, A3 15/28, graful cu alias-uri 31/124). `interfaces` = puncte de
+      intrare (L6), nu contracte. (2) Contract v1 Memory Core: controller/storage/core.Lifecycle; canonic = reuniunea
+      `cognitive_core`, `memory_controller` devine alias `sys.modules` (azi 2 copii ale modulelor: api_server încarcă
+      `authorizer` de 2 ori). Numele fizice NU devin canonice: nucleul protejat folosește importuri relative peste
+      pachete (review r1 H1). (3) `memory_vault` = alias de suprafață, deprecat, nu șters; `packages/cognitive_core` păstrat.
+      `vault_runtime` rămâne în interfaces până la WP-14.
+- Decizia proprietarului (opțională): excepție Protected Core dacă vrea nume fizice canonice (§5 din document).
+
 ## Următorul pas (sesiune nouă)
-F2 / WP-06 (design, sesiunea principală): contractul Memory Core + decizia ordinii straturilor (L2 de mai sus) +
-decizia memory_vault / packages/cognitive_core (alias publicat în wheel). Apoi WP-07 (vault-worker), WP-08 (review).
+WP-07 PR A (vault-worker): rezolvarea fațadelor în `package_inventory.py` + config cu straturile/aliases din §1.2/§4 +
+baseline regenerat cu `--allow-widen --owner-wp WP-07`. Apoi WP-07 PR B (alias memory_controller→cognitive_core +
+`20_TESTS/test_memory_core_contract.py`, brief cu sondele din §2.1/§2.2/4), apoi WP-08 review.
 Ulterior (WP separat): job CI pentru jarvis_cognitive_brain și xau_kinetic după izolarea `.checkpoints`.
 
 ## Pași mai vechi (F1, închiși)
