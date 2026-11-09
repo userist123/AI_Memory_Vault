@@ -44,6 +44,17 @@ export interface Daylight { cells: DaylightCell[]; rooms: RoomDaylight[]; cellM:
 const indoor = (r: Room) => !r.spaceKind || r.spaceKind === 'interior';
 const r2 = (v: number) => Math.round(v * 100) / 100;
 
+/** Lumina la o piesă (centrul ei) față de pragul sfertului celui mai luminos al camerei (percentila 75); null dacă piesa nu
+ *  stă pe grila camerei (în afara ei sau cameră fără ferestre). */
+export function seatLight(df: Daylight, p: { x: number; z: number; roomId: string }){
+  const cs = df.cells.filter(c => c.roomId === p.roomId); if (!cs.length) return null;
+  const at = cs.reduce((b, c) => Math.hypot(c.x - p.x, c.z - p.z) < Math.hypot(b.x - p.x, b.z - p.z) ? c : b);
+  if (Math.hypot(at.x - p.x, at.z - p.z) > df.cellM * 1.5) return null;
+  const s = cs.map(c => c.df).sort((a, b) => a - b), best = s[Math.floor((s.length - 1) * .75)]!;
+  return { at: at.df, best, ratio: best ? at.df / best : 1 };
+}
+/** Biroul „departe de lumină”: sub 40 % din sfertul cel mai luminos, într-o cameră în care acesta are măcar 1,5 %. */
+export const darkSeat = (l: { at: number; best: number } | null) => !!l && l.best >= 1.5 && l.at < l.best * .4;
 /** FLN pe grila planului de lucru (0,85 m) a fiecărei camere interioare a nivelului. */
 export function daylightStudy(fl: Floor, opts: { obs?: readonly Obstacle[]; cellM?: number; roomId?: string } = {}): Daylight {
   const cellM = Math.max(.25, Math.min(1, opts.cellM ?? .4)), H = fl.ceilingHeight, slabs = slabsOf(fl), sky = TAU_GLASS * MAINTENANCE * GLASS_FRACTION * 100 / SKY.total;

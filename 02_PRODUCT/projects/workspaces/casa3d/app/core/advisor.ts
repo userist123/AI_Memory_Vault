@@ -16,6 +16,7 @@ import { readSite } from './site-location';
 import { localToUtc } from './solar';
 import { neighbourStudy, type Obstacle } from './neighbours';
 import { summerCheck } from './overheating';
+import { daylightStudy, seatLight, darkSeat } from './daylight';
 import { contrastRatio, hexToRgb, hueDistance, isNeutral, relativeLuminance, rgbToHsl } from './color';
 
 export type AdviceSeverity = 'BLOCKER' | 'WARNING' | 'TIP';
@@ -106,6 +107,12 @@ function normStudy(snap: Snapshot, site: NonNullable<ReturnType<typeof readSite>
   const f = snap.floor, key = JSON.stringify([site, f.ceilingHeight, f.walls, f.rooms.map(r => [r.id, r.name, r.type, r.rect, r.boundary, r.spaceKind]), obs ?? []]);
   if (sunCache?.key !== key) sunCache = { key, st: insolationStudy(f, site, (d, m) => localToUtc(d, m, site.tz), { date: NORM_REFERENCE_DATE, stepMin: 5, floorGrid: false, obs }) };
   return sunCache.st;
+}
+let dfCache: { key: string; st: ReturnType<typeof daylightStudy> } | null = null;
+function dfStudy(snap: Snapshot, obs?: readonly Obstacle[]){
+  const f = snap.floor, key = JSON.stringify([f.ceilingHeight, f.walls, f.rooms.map(r => [r.id, r.type, r.rect, r.boundary, r.spaceKind]), obs ?? []]);
+  if (dfCache?.key !== key) dfCache = { key, st: daylightStudy(f, { obs }) };
+  return dfCache.st;
 }
 let nbCache: { key: string; st: ReturnType<typeof neighbourStudy> } | null = null;
 function nbStudy(house: Snapshot, site: NonNullable<ReturnType<typeof readSite>>){
@@ -260,6 +267,10 @@ export function adviseProject(snap: Snapshot, cat: Catalog, opts: AdvisorOptions
     if (site.neighbors?.length) for (const n of nbStudy(opts.sun?.house ?? snap, site)) if (n.status === 'affected')
       add(`SUN_NEIGHBOUR:${n.neighbourId}`, { severity: n.older ? 'WARNING' : 'TIP', category: 'lumina', refs: {}, code: n.older ? 'SUN_NEIGHBOUR' : 'SUN_NEIGHBOUR_NEW', vars: { nm: n.name, n: n.affected, got: hm(n.worstAfter), was: hm(n.worstBefore), min: hm(NORM_HOURS) } });
     // vara: aria de sticlă față de metoda simplificată AD O (risc ridicat), cu protecția solară lipsă
+    // biroul departe de lumină: sub 40 % din sfertul cel mai luminos al camerei (percentila 75), dacă acesta are ≥ 1,5 %
+    const df = dfStudy(snap, opts.sun?.obs);
+    for (const p of snap.placements.filter(x => x.group === 'birou')){ const l = seatLight(df, p); if (!darkSeat(l)) continue;
+      add('DESK_DARK', { severity: 'TIP', category: 'lumina', refs: { roomId: p.roomId, placementIds: [p.id] }, code: 'DESK_DARK', vars: { nm: nameOf(p), at_n: Math.round(l!.at * 10) / 10, best_n: Math.round(l!.best * 10) / 10 } }); }
     for (const r of summerCheck(snap.floor, site).rooms) if (r.verdict === 'over')
       add('SUN_OVERHEAT', { severity: 'TIP', category: 'lumina', refs: { roomId: r.roomId }, code: 'SUN_OVERHEAT', vars: { rn: r.name, pct: r.pct, max: r.limitPct ?? 0, n: r.unshaded.length } }); }
   const b = opts.budget, cur = opts.currency ?? 'RON';

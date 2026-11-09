@@ -494,7 +494,7 @@ export default function Editor({ id }: { id: string }){
   // o propunere de lumină în previzualizare: planul, harta și 3D-ul arată varianta, studiul rămâne pornit
   const sunPreview: Floor | null = preview?.pid === 'sun' ? preview.v.sunFloor : null;
   const sunActive = stage === 'concept' && !!site && (!preview || !!sunPreview);
-  const sunStudy = useStudy(sunPreview ?? snap?.floor ?? NO_FLOOR, sunActive ? site : null, sunUi.date, sunUi.map, sunObs);
+  const sunStudy = useStudy(sunPreview ?? snap?.floor ?? NO_FLOOR, sunActive ? site : null, sunUi.date, sunUi.map, sunObs, house ? elevationOf(house, L) : 0);
   const sunNb = useNeighbours(house ?? null, sunActive ? site : null);
   const baseGeo = useStudy(snap?.floor ?? NO_FLOOR, null, sunUi.date, false).geo;
   // vecinii în 3D, cu baza la teren (nivelul afișat stă la cota 0 a scenei)
@@ -1120,7 +1120,7 @@ export default function Editor({ id }: { id: string }){
           {/* inspector:end */}
         </>}
         {stage === 'concept' && !showSel && <SunStudyPanel site={site} ui={sunUi} study={sunStudy.win} legendMax={sunStudy.grid ? maxHours(sunStudy.grid) : null} onUi={p => setSunUi(u => ({ ...u, ...p }))}
-          extras={site ? { house: house!, obs: sunObs, nb: sunNb.nb, triggers: sunNb.triggers, en: sunStudy.en, reportHref: `/p/${id}/sun`, df: sunStudy.df, summer: sunStudy.summer, open3d: () => setView(compact ? '3d' : 'split'), geo: sunStudy.geo, base: baseGeo, norm: sunStudy.norm, gain: sunStudy.gain, placements: snap.placements, catalog, pieceName: p => resolve(catalog, p.variantId)?.product.name ?? p.group,
+          extras={site ? { house: house!, obs: sunObs, nb: sunNb.nb, triggers: sunNb.triggers, en: sunStudy.en, reportHref: `/p/${id}/sun`, df: sunStudy.df, view: sunStudy.view, summer: sunStudy.summer, open3d: () => setView(compact ? '3d' : 'split'), geo: sunStudy.geo, base: baseGeo, norm: sunStudy.norm, gain: sunStudy.gain, placements: snap.placements, catalog, pieceName: p => resolve(catalog, p.variantId)?.product.name ?? p.group,
             previewId: sunPreview ? preview!.v.remedyId : null,
             onPreview: r => { const room = snap.floor.rooms.find(x => x.id === r?.roomId)?.name ?? '', f = r && applyRemedyWall(snap.floor, r);
               if (r && !f){ say(t('sun.rem.stale')); return; }

@@ -5,7 +5,8 @@ import { Fragment, useEffect, useMemo, useRef, useState } from 'react';
 import type { Catalog, Floor, FurniturePlacement, Snapshot } from '@/core/types';
 import { insolationStudy, sunPatches, NORM_HOURS, NORM_REFERENCE_DATE, EN17037_DATE, en17037Level, type Study } from '@/core/insolation';
 import { corners, gap, houseBox, moveTo, placeNeighbour, studyTriggers, neighbourStudy, MAX_NEIGHBOURS, type Neighbour, type NeighbourSun, type Obstacle, type Trigger } from '@/core/neighbours';
-import { daylightStudy, type Daylight } from '@/core/daylight';
+import { daylightStudy, seatLight, darkSeat, type Daylight } from '@/core/daylight';
+import { viewOut } from '@/core/view-out';
 import { sunCalendar, lightScore, type LightScore } from '@/core/light-class';
 import { summerCheck, shadeOptions, GLAZING, type GlazingKind, type ShadeKind } from '@/core/overheating';
 import { sunRemedies, swapIdeas, type Remedy, type UseSwap } from '@/core/sun-design';
@@ -28,7 +29,7 @@ export function sunAt(site: SiteInfo, ui: Pick<SunUi, 'date' | 'minutes'>){
   return { ...p, planAzimuthDeg: planAzimuth(p.azimuthDeg, site), dir: sunVector(p.azimuthDeg, p.elevationDeg, site) as [number, number, number] };
 }
 /** Două calcule: ferestrele la 5 minute (verdictul normei), harta pardoselii la 15 minute (mai grea). */
-export function useStudy(floor: Floor, site: SiteInfo | null, date: string, map: boolean, obs?: readonly Obstacle[]){
+export function useStudy(floor: Floor, site: SiteInfo | null, date: string, map: boolean, obs?: readonly Obstacle[], elev = 0){
   const toUtc = (tz: string) => (d: string, m: number) => localToUtc(d, m, tz);
   // doar geometria (pereți și goluri, camere, tavan, nișe și obiecte de perete) declanșează recalculul: mutarea mobilierului nu
   // nișele și obiectele de pe pereți nu umbresc, dar limitează unde poate apărea o fereastră propusă
@@ -46,7 +47,9 @@ export function useStudy(floor: Floor, site: SiteInfo | null, date: string, map:
   // lumina naturală pe cer acoperit (nu depinde de zi, nici de nord) și vara după AD O
   const df = useMemo(() => site ? daylightStudy(geo, { obs }) : null, [geo, site ? 1 : 0, obs]); // eslint-disable-line
   const summer = useMemo(() => site ? summerCheck(geo, site) : null, [geo, site]); // eslint-disable-line
-  return { win: merged, grid, norm, gain, en, df, summer, geo };
+  // vederea spre exterior (EN 17037): nu depinde de zi
+  const view = useMemo(() => site ? viewOut(geo, { obs, elev }) : null, [geo, site ? 1 : 0, obs, elev]); // eslint-disable-line
+  return { win: merged, grid, norm, gain, en, df, summer, view, geo };
 }
 /** Efectul casei asupra vecinilor și declanșatorul D ≤ H_max: depind de toată casa (toate nivelurile) și de vecini. */
 export function useNeighbours(house: Snapshot | null, site: SiteInfo | null){
@@ -56,7 +59,7 @@ export function useNeighbours(house: Snapshot | null, site: SiteInfo | null){
 }
 
 export interface SunExtras { /** casa întreagă (toate nivelurile), volumele care umbresc nivelul și rezultatele vecinilor */ house: Snapshot; obs: readonly Obstacle[]; nb: NeighbourSun[]; triggers: Trigger[]; en: Study | null;
-  /** linkul raportului de însorire (PDF din browser) */ reportHref: string; geo: Floor; df: Daylight | null; summer: ReturnType<typeof summerCheck> | null;
+  /** linkul raportului de însorire (PDF din browser) */ reportHref: string; geo: Floor; df: Daylight | null; view: ReturnType<typeof viewOut> | null; summer: ReturnType<typeof summerCheck> | null;
   /** deschide vederea 3D (pentru înregistrarea zilei) */ open3d(): void; /** planul real (fără previzualizare): pe el se caută propunerile */ base: Floor; norm: Study | null; gain: ReturnType<typeof solarGain> | null; placements: FurniturePlacement[]; catalog: Catalog; pieceName(p: FurniturePlacement): string;
   /** previzualizarea unei propuneri (null = închide) și aplicarea ei (un singur pas de anulare) */
   previewId: string | null; onPreview(r: Remedy | null): void; onApply(r: Remedy): void }
@@ -122,6 +125,7 @@ export function SunStudyPanel({ site, ui, study, legendMax = null, onSite, onUi,
     {ui.tab === 'light' && extras && <SunDaylight extras={extras} onLayer={() => onUi({ map: true, layer: 'df' })} />}
     {ui.tab === 'cal' && extras && <SunCalendarView site={site} year={Number(year)} extras={extras} />}
     {ui.tab === 'summer' && extras && <SunSummer site={site} year={year} extras={extras} onSite={onSite} />}
+    {ui.tab === 'furn' && extras && <FurnitureDaylight extras={extras} />}
     {ui.tab === 'furn' && extras && <SunOnFurniture site={site} date={ui.date} extras={extras} />}
     {ui.tab === 'furn' && extras && !extras.placements.some(p => ['comodaTv', 'birou', 'pat'].includes(p.group)) && <p className="muted sun-note">{t('sun.pieces.none')}</p>}
     </div>
@@ -163,6 +167,17 @@ function SunRemedies({ site, extras }: { site: SiteInfo; extras: SunExtras }){
   </section>);
 }
 
+/** Lumina naturală la locurile de lucru și de citit (birou, masă, fotoliu), față de sfertul cel mai luminos al camerei. */
+export const LIGHT_SEATS = ['birou', 'masa', 'fotoliu'];
+function FurnitureDaylight({ extras }: { extras: SunExtras }){
+  const { t, lang } = usePrefs(), loc = lang === 'en' ? 'en-GB' : 'ro-RO'; if (!extras.df) return null;
+  const rows = extras.placements.filter(p => LIGHT_SEATS.includes(p.group)).map(p => ({ p, l: seatLight(extras.df!, p) })).filter(x => x.l);
+  if (!rows.length) return null; const pct = (v: number) => `${v.toLocaleString(loc, { maximumFractionDigits: 1 })} %`;
+  return (<section className="sun-pieces" aria-label={t('sun.seat.title')}><h4>{t('sun.seat.title')}</h4>
+    <ul>{rows.map(({ p, l }) => <li key={p.id} className={darkSeat(l) ? 'sun-seat-dark' : ''}><b>{extras.pieceName(p)}</b>: {t('sun.seat.line', { at: pct(l!.at), best: pct(l!.best) })}
+      {darkSeat(l) ? ` ${t('sun.seat.move')}` : ''}</li>)}</ul>
+    <p className="muted sun-note">{t('sun.seat.note')}</p></section>);
+}
 /** Soarele direct pe televizor, birou și pat în ziua aleasă (și primul soare pe pat, care trezește). */
 function SunOnFurniture({ site, date, extras }: { site: SiteInfo; date: string; extras: SunExtras }){
   const { t } = usePrefs();
@@ -229,10 +244,16 @@ function SunNeighbours({ site, extras, onSite }: { site: SiteInfo; extras: SunEx
 }
 /** SR EN 17037 (voluntar): expunerea la soare pe 21 martie, niveluri minim / mediu / ridicat. */
 function SunEn17037({ extras }: { extras: SunExtras }){
-  const { t } = usePrefs(), rs = extras.en?.rooms.filter(r => r.habitable) ?? []; if (!rs.length) return null;
+  const { t, lang } = usePrefs(), rs = extras.en?.rooms.filter(r => r.habitable) ?? []; if (!rs.length) return null;
+  const loc = lang === 'en' ? 'en-GB' : 'ro-RO', badge = (L: number) => <span className={`sun-badge sun-en-${L}`}>{t(`sun.en.l${L}`)}</span>;
   return (<section className="sun-en" aria-label={t('sun.en.title')}><h4>{t('sun.en.title')}</h4>
-    <ul>{rs.map(r => { const L = r.windows ? en17037Level(r.hours) : 0; return <li key={r.roomId}><b>{r.name}</b> {fmtH(r.hours)} <span className={`sun-badge sun-en-${L}`}>{t(`sun.en.l${L}`)}</span></li>; })}</ul>
-    <p className="muted sun-note">{t('sun.en.note')}</p></section>);
+    <table className="sun-table"><caption className="sr-only">{t('sun.en.title')}</caption>
+      <thead><tr><th scope="col">{t('sun.col.room')}</th><th scope="col">{t('sun.en.sun')}</th><th scope="col">{t('sun.en.view')}</th><th scope="col">{t('sun.en.daylight')}</th></tr></thead>
+      <tbody>{rs.map(r => { const L = r.windows ? en17037Level(r.hours) : 0, v = extras.view?.rooms.find(x => x.roomId === r.roomId), d = extras.df?.rooms.find(x => x.roomId === r.roomId);
+        return <tr key={r.roomId}><th scope="row">{r.name}</th><td>{badge(L)}<small>{fmtH(r.hours)}</small></td>
+          <td>{v ? <>{badge(v.level)}<small>{t('sun.en.viewSub', { a: v.angle, d: v.dist >= 100 ? '100+' : v.dist.toLocaleString(loc), l: [v.layers.sky >= .5 && t('sun.en.sky'), v.layers.land >= .5 && t('sun.en.land'), v.layers.ground >= .5 && t('sun.en.ground')].filter(Boolean).join(', ') || '—' })}</small></> : '—'}</td>
+          <td>{d && d.mean > 0 ? <>{d.mean.toLocaleString(loc, { maximumFractionDigits: 1 })} %<small>{t('sun.en.dfApprox')}</small></> : '—'}</td></tr>; })}</tbody></table>
+    <p className="muted sun-note">{t('sun.en.note')} {t('sun.en.viewNote')} {t('sun.en.glare')}</p></section>);
 }
 /** Vara: aria de sticlă față de AD O, protecția solară lipsă și comparatorul de umbrire cu prețul în lei și căldura evitată. */
 function SunSummer({ site, year, extras, onSite }: { site: SiteInfo; year: string; extras: SunExtras; onSite(s: SiteInfo | null): void }){

@@ -37,7 +37,7 @@ const OPEN_KINDS = new Set(['open_balcony', 'terrace', 'outdoor']);
 const indoor = (r: Room) => !r.spaceKind || r.spaceKind === 'interior';
 const roofed = (r: Room) => !OPEN_KINDS.has(r.spaceKind ?? 'interior');
 type V3 = [number, number, number];
-interface Aperture { u0: number; u1: number; y0: number; y1: number }
+interface Aperture { u0: number; u1: number; y0: number; y1: number; /** fereastră (nu pasaj): doar prin ea se vede afară */ win: boolean }
 interface Slab { ax: number; az: number; ux: number; uz: number; nx: number; nz: number; len: number; half: number; e0: number; e1: number; aps: Aperture[]; bx0: number; bx1: number; bz0: number; bz1: number }
 
 /** Pereții nivelului ca prisme cu golurile prin care trece lumina. */
@@ -50,8 +50,8 @@ export function slabsOf(fl: Floor): Slab[] {
   for (const w of live){
     const dx = w.b[0] - w.a[0], dz = w.b[1] - w.a[1], len = Math.hypot(dx, dz); if (len < 1e-6) continue;
     const ux = dx / len, uz = dz / len, half = Math.max(.02, w.thickness / 2);
-    const aps: Aperture[] = w.openings.flatMap(o => o.kind === 'window' ? [{ u0: o.offset, u1: o.offset + o.width, y0: o.sill ?? WINDOW_SILL, y1: Math.min(H - .05, (o.sill ?? WINDOW_SILL) + (o.height ?? WINDOW_HEIGHT)) }]
-      : o.passage ? [{ u0: o.offset, u1: o.offset + o.width, y0: 0, y1: Math.min(H - .05, o.height ?? DOOR_H) }] : []);
+    const aps: Aperture[] = w.openings.flatMap((o): Aperture[] => o.kind === 'window' ? [{ u0: o.offset, u1: o.offset + o.width, y0: o.sill ?? WINDOW_SILL, y1: Math.min(H - .05, (o.sill ?? WINDOW_SILL) + (o.height ?? WINDOW_HEIGHT)), win: true }]
+      : o.passage ? [{ u0: o.offset, u1: o.offset + o.width, y0: 0, y1: Math.min(H - .05, o.height ?? DOOR_H), win: false }] : []);
     const ext = half + .01;
     out.push({ ax: w.a[0], az: w.a[1], ux, uz, nx: -uz, nz: ux, len, half, aps, e0: corner(w, w.a) ? half : 0, e1: corner(w, w.b) ? half : 0,
       bx0: Math.min(w.a[0], w.b[0]) - ext, bx1: Math.max(w.a[0], w.b[0]) + ext, bz0: Math.min(w.a[1], w.b[1]) - ext, bz1: Math.max(w.a[1], w.b[1]) + ext }); }
@@ -81,6 +81,24 @@ export function seesSky(p: V3, d: V3, slabs: Slab[], rooms: Room[], H: number, s
     const ok = s.aps.some(a => Math.min(u0, u1) >= a.u0 - e && Math.max(u0, u1) <= a.u1 + e && Math.min(y0, y1) >= a.y0 - e && Math.max(y0, y1) <= a.y1 + e);
     if (!ok) return false; }
   return !obs?.length || !blocked(p, d, obs);
+}
+
+/** True dacă segmentul p → p + d·tMax (orice direcție, și orizontală) trece de pereți doar prin goluri; `windowsOnly` = doar
+ *  prin ferestre (vederea spre exterior nu trece prin uși). Tavanul și volumele din afară nu sunt verificate aici. */
+export function clearOfWalls(p: V3, d: V3, slabs: Slab[], tMax: number, windowsOnly = false): boolean {
+  const ex = p[0] + d[0] * tMax, ez = p[2] + d[2] * tMax, lx0 = Math.min(p[0], ex), lx1 = Math.max(p[0], ex), lz0 = Math.min(p[2], ez), lz1 = Math.max(p[2], ez);
+  for (const s of slabs){
+    if (s.bx1 < lx0 || s.bx0 > lx1 || s.bz1 < lz0 || s.bz0 > lz1) continue;
+    const pu = (p[0] - s.ax) * s.ux + (p[2] - s.az) * s.uz, pv = (p[0] - s.ax) * s.nx + (p[2] - s.az) * s.nz;
+    const du = d[0] * s.ux + d[2] * s.uz, dv = d[0] * s.nx + d[2] * s.nz;
+    let t0 = 0, t1 = tMax;
+    const clip = (o: number, k: number, lo: number, hi: number) => { if (Math.abs(k) < 1e-12){ if (o < lo || o > hi) t1 = -1; return; }
+      let a = (lo - o) / k, b = (hi - o) / k; if (a > b) [a, b] = [b, a]; if (a > t0) t0 = a; if (b < t1) t1 = b; };
+    clip(pv, dv, -s.half, s.half); if (t1 <= t0) continue;
+    clip(pu, du, -s.e0, s.len + s.e1); if (t1 - t0 <= 1e-9) continue;
+    const u0 = pu + du * t0, u1 = pu + du * t1, y0 = p[1] + d[1] * t0, y1 = p[1] + d[1] * t1, e = 1e-6;
+    if (!s.aps.some(a => (!windowsOnly || a.win) && Math.min(u0, u1) >= a.u0 - e && Math.max(u0, u1) <= a.u1 + e && Math.min(y0, y1) >= a.y0 - e && Math.max(y0, y1) <= a.y1 + e)) return false; }
+  return true;
 }
 
 export interface StudyOptions { date: string; /** volumele din afara nivelului (vecini, etajele de deasupra), în cotele nivelului */ obs?: readonly Obstacle[];

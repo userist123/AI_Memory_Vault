@@ -111,6 +111,22 @@ Sursa: raportul `D:/w/reports/Casa3D lumină naturală și confort solar.md` (ar
   de locuit și înregistrarea merge și sub StrictMode.
 - Teste: `app/tests/daylight.test.ts` (7); suita 146 fișiere / 1025 teste; `next build` reușit.
 
+## Etapa 5 — SR EN 17037 complet și lumina la mobilier (cerința „continuă, nu te opri până nu termini”, 2026-11-09)
+- **Vederea spre exterior** (`app/core/view-out.ts`): din grila camerei, la 1,2 m (așezat), raze orizontale la 5° prin
+  ferestre (ușile și pasajele nu contează, `clearOfWalls(..., windowsOnly)` în insolation.ts): unghiul orizontal, distanța
+  mediană până la primul obstacol (vecin, etaj sau aripă a casei, plafonată la 100 m) și straturile cer / peisaj / sol (solul
+  doar cu parapetul sub ochi și numai dacă terenul — mai jos și deci mai departe la etaj — e atins înaintea primului obstacol). Praguri 14° / 28° / 54°, 6 / 20 / 50 m, 1 / 2 / 3 straturi, după
+  rezumate ale standardului (NEVERIFICAT în text); nivelul camerei = cel atins în 75 % din puncte.
+- **Tabelul SR EN 17037** din fila Normă: soarele (21 martie), vederea afară și lumina (FLN ca aproximare); orbirea e
+  declarată neevaluată. În raport, coloana „Vedere afară (EN)”.
+- **Lumina la mobilier** (fila Mobilier, `seatLight`): FLN la birou, masă, fotoliu față de sfertul cel mai luminos al camerei
+  (percentila 75); consilierul dă sfatul `DESK_DARK` când biroul are sub 40 % din acest prag.
+- Revizie etapa 5 (2 runde): runda 1 PARTIAL — ferestrele altor camere treceau drept „afară” și solul ignora vecinii și cota
+  etajului; reparate (raza se oprește într-o cameră a nivelului; solul doar dacă e atins înaintea primului obstacol), cu teste
+  care pică pe codul vechi. Runda 2 PARTIAL: testul curții în U întărit; rezidual acceptat — la etaj, solul poate apărea și
+  unde l-ar acoperi nivelul de jos sau o terasă (afectează doar indicația „sol”, nu nivelul camerei; scris în interfață).
+- Teste: `app/tests/view-out.test.ts` (5); suita 147 fișiere / 1030 teste; `next build` reușit.
+
 ## Limite (scrise și în interfață)
 Streașina, copacii, relieful și mobila nu sunt modelate; vecinii sunt dreptunghiuri cu acoperiș plat, iar casa e aproximată
 prin camerele ei extrudate când umbrește vecinii. Ferestrele vecinilor nu sunt cunoscute (grilă pe fațadă). Petele de soare (momentul ales) se taie la dreptunghiul camerelor cu contur poligonal și nu țin cont de umbra altor

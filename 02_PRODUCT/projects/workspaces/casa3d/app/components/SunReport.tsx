@@ -10,6 +10,8 @@ import { insolationStudy, NORM_HOURS, NORM_REFERENCE_DATE, EN17037_DATE, en17037
 import { obstaclesFor, neighbourStudy, studyTriggers, corners } from '@/core/neighbours';
 import { summerCheck } from '@/core/overheating';
 import { daylightStudy } from '@/core/daylight';
+import { viewOut } from '@/core/view-out';
+import { elevationOf } from '@/core/levels';
 import { lightScore } from '@/core/light-class';
 import { readSite, PLACES, type SiteInfo } from '@/core/site-location';
 import { roomBoundary } from '@/core/room-geometry';
@@ -49,11 +51,12 @@ export default function SunReport({ id }: { id: string }){
           ? (() => { const x = res.triggers.filter(q => q.required).sort((a, b) => a.distM - b.distM)[0]!; return t('sun.trig.yes', { d: `${num(x.distM)} m`, h: `${num(x.hMaxM)} m`, nm: x.name }); })() : t('sun.trig.no')}</p>
         <p><b>{t('sunr.normAll', { h: fmtH(NORM_HOURS) })}</b> {res.low.length ? t('sun.chk.fail', { n: res.low.length, rooms: res.low.join(', ') }) : res.habitable ? t('sun.chk.pass', { n: res.habitable }) : t('sun.chk.none')}</p></section>
       {res.levels.map(L => <section key={L.i} className="sun-r-level"><h2>{L.i === 0 ? t('level.ground') : L.name || t('level.n', { n: L.i })} · {t('sunr.date')}</h2>
-        <table className="print-table"><thead><tr><th>{t('sun.col.room')}</th><th>{t('sunr.total')}</th><th>{t('sunr.longest')}</th><th>{t('sun.col.when')}</th><th>{t('sun.col.verdict')}</th><th>{t('sunr.en')}</th><th>{t('sunr.df')}</th><th>{t('sunr.summer')}</th></tr></thead>
+        <table className="print-table"><thead><tr><th>{t('sun.col.room')}</th><th>{t('sunr.total')}</th><th>{t('sunr.longest')}</th><th>{t('sun.col.when')}</th><th>{t('sun.col.verdict')}</th><th>{t('sunr.en')}</th><th>{t('sunr.view')}</th><th>{t('sunr.df')}</th><th>{t('sunr.summer')}</th></tr></thead>
           <tbody>{L.norm.rooms.map(r => { const ws = L.norm.windows.filter(w => w.roomId === r.roomId), first = ws.map(w => w.first).filter(Boolean).sort()[0], last = ws.map(w => w.last).filter(Boolean).sort().at(-1);
-            const en = L.en.rooms.find(x => x.roomId === r.roomId), su = L.summer.rooms.find(x => x.roomId === r.roomId), df = L.df.rooms.find(x => x.roomId === r.roomId);
+            const en = L.en.rooms.find(x => x.roomId === r.roomId), su = L.summer.rooms.find(x => x.roomId === r.roomId), df = L.df.rooms.find(x => x.roomId === r.roomId), vw = L.view.rooms.find(x => x.roomId === r.roomId);
             return <tr key={r.roomId}><td>{r.name}</td><td>{fmtH(r.hours)}</td><td>{fmtH(r.longestH)}</td><td>{first && last ? `${first}–${last}` : '—'}</td><td>{t(`sun.verdict.${r.verdict}`)}</td>
               <td>{en && r.habitable ? `${fmtH(en.hours)} · ${t(`sun.en.l${en.windows ? en17037Level(en.hours) : 0}`)}` : '—'}</td>
+              <td>{vw && r.habitable && vw.windows ? `${t(`sun.en.l${vw.level}`)} · ${vw.angle}°, ${vw.dist >= 100 ? '100+' : num(vw.dist)} m` : '—'}</td>
               <td>{df && df.verdict !== 'none' && (df.target != null || df.mean > 0) ? `${num(df.mean)} %${df.target != null ? ` / ${num(df.target)} % · ${t(`sun.df.v.${df.verdict}`)}` : ''}` : '—'}</td>
               <td>{su && su.verdict !== 'na' ? `${num(su.pct)} % / ${num(su.limitPct ?? 0)} % · ${t(`sun.sum.v.${su.verdict}`)}` : '—'}</td></tr>; })}</tbody></table>
         <HeatPlan snap={snap} i={L.i} grid={L.grid} site={site} /></section>)}
@@ -64,7 +67,7 @@ export default function SunReport({ id }: { id: string }){
               <td>{n.targets.length ? `${fmtH(n.worstBefore)} → ${fmtH(n.worstAfter)}` : '—'}</td><td>{t(`sun.nb.st.${n.status}`, { was: fmtH(n.worstBefore), got: fmtH(n.worstAfter), n: n.affected, of: n.targets.length })}</td></tr>; })}</tbody></table>
         <p className="muted">{t('sun.nb.note')}</p></section>}
       <section><h2>{t('sunr.method')}</h2>
-        <p>{t('sun.norm', { h: fmtH(NORM_HOURS) })}</p><p>{t('sun.method')}</p><p>{t('sun.en.note')}</p><p>{t('sun.df.note')}</p><p>{t('sun.sum.intro')} {t('sun.sum.note')}</p><p>{t('sun.limits')}</p>
+        <p>{t('sun.norm', { h: fmtH(NORM_HOURS) })}</p><p>{t('sun.method')}</p><p>{t('sun.en.note')}</p><p>{t('sun.df.note')}</p><p>{t('sun.en.viewNote')} {t('sun.en.glare')}</p><p>{t('sun.sum.intro')} {t('sun.sum.note')}</p><p>{t('sun.limits')}</p>
         <p className="muted">{t('sunr.sources')}</p></section>
     </>}
   </main>);
@@ -75,7 +78,7 @@ function compute(snap: Snapshot, site: SiteInfo){
   const levels = floors(snap).map((f, i) => { const v = levelView(snap, i), obs = obstaclesFor(snap, i, site);
     return { i, name: f.name, norm: insolationStudy(v.floor, site, toUtc, { date: NORM_REFERENCE_DATE, stepMin: 5, floorGrid: false, obs }),
       grid: insolationStudy(v.floor, site, toUtc, { date: NORM_REFERENCE_DATE, stepMin: 15, cellM: .3, obs }),
-      en: insolationStudy(v.floor, site, toUtc, { date: EN17037_DATE, stepMin: 5, floorGrid: false, obs, point: 'en17037' }), summer: summerCheck(v.floor, site), df: daylightStudy(v.floor, { obs }) }; });
+      en: insolationStudy(v.floor, site, toUtc, { date: EN17037_DATE, stepMin: 5, floorGrid: false, obs, point: 'en17037' }), summer: summerCheck(v.floor, site), df: daylightStudy(v.floor, { obs }), view: viewOut(v.floor, { obs, elev: elevationOf(snap, i) }) }; });
   const hab = levels.flatMap(L => L.norm.rooms.filter(r => r.habitable));
   const nb = neighbourStudy(snap, site, toUtc, NORM_REFERENCE_DATE, NORM_HOURS);
   // clasa de lumină a casei: camerele tuturor nivelurilor puse împreună

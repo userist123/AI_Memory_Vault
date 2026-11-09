@@ -26,9 +26,13 @@ ETAPA 4 (owner 2026-11-09: „inovează și renovează platforma, conceptele și
   Revizie etapa 4: runda 1 PARTIAL (clasă A cu norma picată, transmisie dublă în CRI, -0,0 %, recorder fragil, C ≥ 14) și
   runda 2 PARTIAL (clasă pe nivel fără camere de locuit, StrictMode) -> toate reparate cu regresii. vitest 1025; build OK;
   verificat în aplicație (harta FLN, clasa B pe demo, calendarul, Ctrl+K, raportul, înregistrarea WebM).
+ETAPA 5 (owner: „continuă, nu te opri până nu termini”): core/view-out.ts (vederea spre exterior EN 17037), tabelul EN cu
+  soare / vedere / lumină (orbirea neevaluată), lumina la birou/masă/fotoliu + sfatul DESK_DARK, raportul cu vederea.
+  Revizie etapa 5: runda 1 PARTIAL (ferestrele altor camere „afară”, solul fără obstacole/etaj) și runda 2 PARTIAL (test U
+  slab) -> reparate; rezidual acceptat: solul la etaj peste nivelul de jos/terasă (doar indicația „sol”). vitest 1030; build OK.
+  CI etapa 4 (0cd6ad808) verde.
 NEXT: CI pe PR #371 o dată -> merge e decizia proprietarului.
-IDEAS AFTER: vecinii din OpenStreetMap (Overpass, de măsurat acoperirea înălțimilor), vederea spre exterior și orbirea
-  (EN 17037), umbrirea ca variabilă în frontul Pareto, validarea FLN pe cazurile CIE 171, mobilierul așezat după lumină.
+IDEAS AFTER: vecinii din OpenStreetMap (Overpass, de măsurat acoperirea înălțimilor), orbirea (EN 17037), umbrirea ca variabilă în frontul Pareto, validarea FLN pe cazurile CIE 171, mobilierul așezat după lumină.
 KEY FILES: app/core/{solar,site-location,insolation,neighbours,overheating,daylight,light-class,sun-design,sun-effects}.ts, app/components/{SunStudy,SunReport}.tsx,
-  app/tests/{insolation,sun-design,neighbours}.test.ts.
+  app/core/view-out.ts, app/tests/{insolation,sun-design,neighbours,daylight,view-out}.test.ts.
 BLOCKERS: none. Art. 3 consolidat verificat în cercetare (legislatie.just.ro, forma din 05.05.2026); valorile AD O și g: de verificat în PDF.
