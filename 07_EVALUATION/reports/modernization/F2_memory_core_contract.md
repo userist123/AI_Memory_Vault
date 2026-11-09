@@ -218,7 +218,9 @@ lui, plus 35 doar din teste. Cele mai folosite:
   - Merge doar la nivel de `__init__`; asta e tot ce verifică CI-ul R001 (`r001-enforcement.yml:96`) și
     `20_TESTS/integration/test_memory_vault_import.py:14`.
   - **Decizie:** îl păstrăm o versiune, ca alias de suprafață documentat, fără promisiunea că importurile
-    adânci merg. WP-07 adaugă un `DeprecationWarning` la import care trimite spre `cognitive_core`.
+    adânci merg. `DeprecationWarning`-ul la import (spre `cognitive_core`) e **amânat** (WP-08, M1) în WP-ul
+    care retrage alias-ul: un avertisment nou poate afecta linia CI R001 și `test_memory_vault_import.py`, care
+    trebuie actualizate împreună cu el.
   - Retragerea din `pyproject.toml:15` se face într-un WP ulterior, împreună cu linia CI R001 și testul de
     integrare, numai după grep-ul de consumatori pe `.py`/`.yml`/`.toml`/șiruri (regula din F0).
   - Variante respinse:
@@ -231,7 +233,9 @@ lui, plus 35 doar din teste. Cele mai folosite:
     același cod ca shim-ul din rădăcină, care face `from interfaces.recall_cli import *`.
   - **Decizie:** îl păstrăm, ca reuniunea canonică în wheel. WP-07 adaugă un test de echivalență: lista de
     pachete din `__path__` e aceeași în copia din rădăcină și în cea din `packages/`, în afară de directorul
-    rădăcinii.
+    rădăcinii. Făcut în WP-08 (M2): `test_cognitive_core_copies_declare_the_same_union` în
+    `20_TESTS/test_memory_core_contract.py` compară declarațiile din config; verificarea (h) leagă declarațiile de
+    `__path__`-ul real.
   - Cele 4 shim-uri CLI din rădăcină rămân, ca fațadă publică (decizia F0).
   - Notă (review r1, L5): `cognitive_core/closed_loop_learning.py` reexportă `packages.learning`, nu
     `interfaces`.

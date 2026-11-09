@@ -16,7 +16,7 @@ Reguli: LOC = linii non-goale fără comentariu-linie. Consumator prod = fișier
 | `packages/learning` | 19 | 1496 | main:0 __main__:0 scripts:0 | 6 | 27 | 0 (0 f.) | yaml | 0 |
 | `packages/lifecycle` | 32 | 7029 | main:0 __main__:0 scripts:0 | 21 | 30 | 0 (0 f.) | jsonschema | 0 |
 | `packages/memory` | 26 | 4554 | main:0 __main__:0 scripts:0 | 68 | 104 | 3 (2 f.) | yaml | 0 |
-| `packages/memory_controller` | 2 | 123 | main:0 __main__:0 scripts:0 | 96 | 118 | 2 (1 f.) | - | 4 |
+| `packages/memory_controller` | 2 | 151 | main:0 __main__:0 scripts:0 | 96 | 118 | 2 (1 f.) | - | 4 |
 | `packages/memory_vault` | 2 | 32 | main:0 __main__:0 scripts:0 | 0 | 0 | 0 (0 f.) | - | 2 |
 | `packages/observability` | 15 | 2932 | main:0 __main__:0 scripts:0 | 14 | 32 | 0 (0 f.) | - | 0 |
 | `packages/polymarket` | 27 | 4107 | main:1 __main__:0 scripts:0 | 4 | 30 | 14 (8 f.) | - | 0 |
@@ -114,7 +114,7 @@ Notă: `packages/xau_kinetic` este un shim către `products/xau_kinetic/engine`;
 
 ## UNKNOWN (neinterpretabil de AST)
 
-În module: 38 intrări (detaliu în JSON). În afara modulelor (teste, scripturi): 416 (dynamic_import=3, file_or_module_loader=94, path_assign=2, path_mutation=317). Aceste fișiere pot importa module prin căi runtime pe care inventarul nu le vede; numărul de consumatori este deci un minim.
+În module: 38 intrări (detaliu în JSON). În afara modulelor (teste, scripturi): 417 (dynamic_import=3, file_or_module_loader=95, path_assign=2, path_mutation=317). Aceste fișiere pot importa module prin căi runtime pe care inventarul nu le vede; numărul de consumatori este deci un minim.
 
 ## Importuri din șiruri de caractere
 

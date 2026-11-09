@@ -430,3 +430,18 @@ def test_alias_import_keeps_the_real_canonical_spec_and_namespace_is_package(tmp
     assert out["spec_name"] == "cognitive_core.authorizer"
     assert out["path_is_spec_locations"] is True
     assert out["namespace_is_package"] is True
+
+
+# ---- WP-08 M2: the two cognitive_core copies serve the same union -------------------------------
+def test_cognitive_core_copies_declare_the_same_union():
+    """The wheel copy (packages/) and the root copy must expose the same sibling packages.
+
+    The architecture check (h) already ties each declaration to the real ``__path__``; this ties
+    the two declarations together, so they cannot drift apart in one coordinated edit.
+    """
+    cfg = json.loads((REPO / "04_CONFIG" / "architecture_layers.json").read_text(encoding="utf-8"))
+    aliases = cfg["aliases"]
+    wheel = aliases["packages/cognitive_core"]["__path__"]
+    root = [p for p in aliases["root/cognitive_core"]["__path__"] if p != "self"]
+    assert wheel == root
+    assert aliases["root/cognitive_core"]["__path__"][0] == "self"
