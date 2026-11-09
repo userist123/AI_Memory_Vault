@@ -64,6 +64,9 @@ Clase: BLOCKED=3, CI_COVERED_GREEN=1, FIXTURE_OR_SAMPLE=6, NOT_COVERED_GREEN=13,
 - `02_PRODUCT/projects/imported/bot/trade/v1_snapshot/tests`: 1 failed: PermissionError WinError 32 pe j.sqlite in tempdir (sqlite deschis la cleanup), specific Windows; neverificat pe Linux.
 - `02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/registru-transferuri`: ModuleNotFoundError: No module named 'database'
 
+
+> **Avertisment (review F1, L1):** `jarvis/config.py:60-61` are `checkpoint_dir=Path(".checkpoints")` relativ la cwd. Rulate din directorul proiectului, testele jarvis_cognitive_brain suprascriu fișierul urmărit `.checkpoints/plan.json`; rulate din rădăcină creează `.checkpoints/` acolo. Un job CI pentru ele cere întâi un `checkpoint_dir` în `tmp_path`.
+
 ## 07_EVALUATION
 
 | dir | fisiere | workflow(s) | comanda | passed/failed/skipped/errors | exit | clasa |

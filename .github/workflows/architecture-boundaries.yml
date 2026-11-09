@@ -4,27 +4,7 @@ on:
   push:
     branches:
       - main
-    paths:
-      - '03_IMPLEMENTATION/**'
-      - 'cognitive_core/**'
-      - 'security/**'
-      - 'scripts/**'
-      - '04_CONFIG/architecture_layers.json'
-      - '30_SCRIPTS/verification/architecture_boundaries.py'
-      - '30_SCRIPTS/verification/package_inventory.py'
-      - '20_TESTS/test_architecture_boundaries.py'
-      - '.github/workflows/architecture-boundaries.yml'
   pull_request:
-    paths:
-      - '03_IMPLEMENTATION/**'
-      - 'cognitive_core/**'
-      - 'security/**'
-      - 'scripts/**'
-      - '04_CONFIG/architecture_layers.json'
-      - '30_SCRIPTS/verification/architecture_boundaries.py'
-      - '30_SCRIPTS/verification/package_inventory.py'
-      - '20_TESTS/test_architecture_boundaries.py'
-      - '.github/workflows/architecture-boundaries.yml'
 
 permissions:
   contents: read
@@ -44,4 +24,4 @@ jobs:
       - name: Check architecture layer boundaries (ratchet)
         run: python 30_SCRIPTS/verification/architecture_boundaries.py
       - name: Run architecture boundary tests
-        run: python -m pytest 20_TESTS/test_architecture_boundaries.py -q
+        run: python -m pytest 20_TESTS/test_architecture_boundaries.py 20_TESTS/test_package_inventory.py -q

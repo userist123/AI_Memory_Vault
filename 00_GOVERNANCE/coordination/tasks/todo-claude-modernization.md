@@ -73,7 +73,24 @@ Ramură F0: `modernize/f0-inventory`, worktree `D:/w/mod-f0`, bază origin/main 
 - Necunoscut: ce workflow CI rulează `20_TESTS/test_architecture_boundaries.py` pe PR (→ WP-05).
 - Notă: pytest pe Windows cere `--basetemp=<dir propriu>` dacă rulează alt pytest (WinError 5).
 
+- [x] WP-04b (vault-worker, 93ef32d94): `07_EVALUATION/reports/modernization/F1_tests_outside_testpaths.{md,json}`,
+      30 de grupuri: 1 CI verde, 13 neacoperite verzi, 7 neacoperite roșii, 3 blocate, 6 nu-sunt-teste. Nimic mutat.
+- [x] WP-05 CI: `.github/workflows/architecture-boundaries.yml` (93ef32d94 + 6eeb4ac9c deps + fără filtru `paths:`,
+      plus `test_package_inventory.py`). CI pe 6eeb4ac9c: success (17 passed).
+- [x] WP-05 review F1 (vault-reviewer, Opus): ACCEPTAT CU REZERVE. Probele de import interzis (L0→L4, hard_forbidden,
+      unitate nealocată) și refuzul lărgirii baseline-ului: toate pică corect. Reparat: M1 (trigger-e → fără `paths:`),
+      L1 (avertisment `.checkpoints` jarvis în raport/JSON), L3 (testul inventarului în workflow).
+      M2 — acțiunea proprietarului: `main` nu e protejat (404); `boundaries` trebuie făcut verificare obligatorie.
+      L2 — DESCHIS pentru WP-06: ordinea A3 din plan dă MAI PUȚINE muchii în sus decât config-ul (27 perechi / 70 fișiere
+      față de 31 / 124); `interfaces` pe L2 importă 8 unități superioare și are ciclu cu `security`. WP-06 decide ordinea
+      pe aceste cifre (config sau A3 adaptat), nu pe preferință.
+
 ## Următorul pas (sesiune nouă)
+F2 / WP-06 (design, sesiunea principală): contractul Memory Core + decizia ordinii straturilor (L2 de mai sus) +
+decizia memory_vault / packages/cognitive_core (alias publicat în wheel). Apoi WP-07 (vault-worker), WP-08 (review).
+Ulterior (WP separat): job CI pentru jarvis_cognitive_brain și xau_kinetic după izolarea `.checkpoints`.
+
+## Pași mai vechi (F1, închiși)
 WP-04b (nou): decizia pentru cele 129 de fișiere de test din afara `20_TESTS`, cu baseline propriu.
 WP-05: review F1 cu sonda de import interzis + legarea checker-ului într-un workflow CI (pas separat).
 Opțional: R1/R2 (argv `-c` și șiruri shell în .py) înainte de a te baza pe ratchet pentru importuri din șiruri.

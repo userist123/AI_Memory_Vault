@@ -36,7 +36,7 @@
       "errors": 0,
       "exit": 0,
       "classification": "NOT_COVERED_GREEN",
-      "note": "Din radacina repo (tests/ intreg, fara PYTHONPATH): 437 passed, exit 0.",
+      "note": "Din radacina repo (tests/ intreg, fara PYTHONPATH): 437 passed, exit 0. Efect secundar: checkpoint_dir=.checkpoints relativ la cwd suprascrie .checkpoints/plan.json urmarit; job CI doar cu checkpoint_dir in tmp_path.",
       "proposal": "add a CI job"
     },
     {
@@ -52,7 +52,7 @@
       "errors": 0,
       "exit": 0,
       "classification": "NOT_COVERED_GREEN",
-      "note": "tier1..tier4 + fisiere in e2e/.",
+      "note": "tier1..tier4 + fisiere in e2e/. Efect secundar: checkpoint_dir=.checkpoints relativ la cwd suprascrie .checkpoints/plan.json urmarit; job CI doar cu checkpoint_dir in tmp_path.",
       "proposal": "add a CI job (impreuna cu jcb_unit)"
     },
     {
