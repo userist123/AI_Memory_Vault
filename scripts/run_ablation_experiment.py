@@ -17,6 +17,7 @@ from pathlib import Path
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, ".")
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "40_EXPERIMENTS" / "harnesses"))
 
 # Setup environment. CI must provide a real secret; local ablation runs use a
 # deterministic low-entropy test value that cannot be mistaken for a secret.
@@ -24,7 +25,7 @@ os.environ.setdefault("MEMORY_CONTROLLER_HMAC_SECRET", "0" * 32)
 os.environ["GIT_COMMIT_SHA"] = "8a72389491dfe02fe3e48f2753e55378ce3ab85b"
 
 from cognitive_core.local_provider import LocalProvider
-from cognitive_core.memory_ablation_benchmark import (
+from memory_ablation_benchmark import (
     MemoryAblationExperimentRunner,
     export_ablation_artifacts,
     get_ablation_benchmark_tasks,

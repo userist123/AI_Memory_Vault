@@ -17,6 +17,7 @@ from pathlib import Path
 # Add project root to sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 sys.path.insert(0, ".")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 # Setup environment
 os.environ["MEMORY_CONTROLLER_HMAC_SECRET"] = os.getenv(
@@ -25,7 +26,7 @@ os.environ["MEMORY_CONTROLLER_HMAC_SECRET"] = os.getenv(
 os.environ["GIT_COMMIT_SHA"] = "8a72389491dfe02fe3e48f2753e55378ce3ab85b"
 
 from cognitive_core.local_provider import LocalProvider
-from cognitive_core.memory_ablation_benchmark import (
+from memory_ablation_benchmark import (
     MemoryAblationExperimentRunner,
     export_ablation_artifacts,
     get_ablation_benchmark_tasks,

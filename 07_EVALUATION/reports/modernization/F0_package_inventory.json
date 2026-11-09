@@ -6,14 +6,14 @@
         "packages/cognitive_core"
       ],
       "imports_by_served_unit": {
-        "packages/graph": 59,
-        "packages/interfaces": 167,
+        "packages/graph": 60,
+        "packages/interfaces": 160,
         "packages/learning": 167,
         "packages/lifecycle": 25,
-        "packages/memory": 241,
+        "packages/memory": 240,
         "packages/observability": 72,
         "packages/providers": 173,
-        "packages/retrieval": 70,
+        "packages/retrieval": 52,
         "packages/security": 16
       },
       "modules": {
@@ -174,7 +174,7 @@
       "site-packages",
       "venv"
     ],
-    "py_files_scanned": 2200,
+    "py_files_scanned": 2201,
     "pythonpath_order": [
       ".",
       "03_IMPLEMENTATION/packages",
@@ -2251,7 +2251,7 @@
     "02_PRODUCT": 54,
     "03_IMPLEMENTATION": 14,
     "07_EVALUATION": 20,
-    "20_TESTS": 359,
+    "20_TESTS": 360,
     "security": 37
   },
   "tests_focus_dirs": {
@@ -2259,7 +2259,7 @@
     "02_PRODUCT": 54,
     "03_IMPLEMENTATION": 14,
     "07_EVALUATION": 20,
-    "20_TESTS": 359,
+    "20_TESTS": 360,
     "security": 37
   },
   "units": [
@@ -2380,6 +2380,7 @@
         "20_TESTS/test_activation.py",
         "20_TESTS/test_attribution_plasticity.py",
         "20_TESTS/test_graph_expansion.py",
+        "20_TESTS/test_memory_controller_factory.py",
         "20_TESTS/test_memory_v6.py",
         "20_TESTS/test_multi_graph.py",
         "20_TESTS/test_neural_plasticity_search.py",
@@ -2405,16 +2406,14 @@
       "id": "packages/graph",
       "import_name_winner": true,
       "imports_out": {
-        "packages/memory": 1,
         "packages/security": 1
       },
       "imports_out_nontest": {
-        "packages/memory": 1,
         "packages/security": 1
       },
       "init_exists": true,
       "kind": "packages",
-      "loc": 1562,
+      "loc": 1569,
       "local_unresolved_names": [],
       "name": "graph",
       "py_files": 8,
@@ -2437,8 +2436,6 @@
         "03_IMPLEMENTATION/packages/learning/agents/router_agent.py",
         "03_IMPLEMENTATION/packages/learning/agents/verifier_agent.py",
         "03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py",
-        "03_IMPLEMENTATION/packages/memory/orchestrator.py",
-        "03_IMPLEMENTATION/packages/retrieval/memory_ablation_benchmark.py",
         "03_IMPLEMENTATION/packages/security/git_hooks.py",
         "03_IMPLEMENTATION/packages/vault_access/audit.py",
         "03_IMPLEMENTATION/packages/vault_access/router.py",
@@ -2473,6 +2470,7 @@
         "20_TESTS/test_executive_model_execution_bridge.py",
         "20_TESTS/test_memory_ablation.py",
         "20_TESTS/test_memory_access.py",
+        "20_TESTS/test_memory_controller_factory.py",
         "20_TESTS/test_memory_mcp_server.py",
         "20_TESTS/test_memory_usage_evidence.py",
         "20_TESTS/test_milestone4_adversarial_challenger.py",
@@ -2547,7 +2545,7 @@
       },
       "init_exists": true,
       "kind": "packages",
-      "loc": 4959,
+      "loc": 4912,
       "local_unresolved_names": [
         "build_route_manifest"
       ],
@@ -2795,7 +2793,6 @@
         ".agents/reviewer_m4_5/probe_verifier.py",
         "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/registru-transferuri/legacy/python/services/cognitive_bridge_service.py",
         "02_PRODUCT/projects/workspaces/registru-transferuri/legacy/python/services/cognitive_bridge_service.py",
-        "03_IMPLEMENTATION/packages/graph/activation.py",
         "03_IMPLEMENTATION/packages/interfaces/api_server.py",
         "03_IMPLEMENTATION/packages/interfaces/dispatch_cli.py",
         "03_IMPLEMENTATION/packages/interfaces/memory_v6_cli.py",
@@ -2815,7 +2812,6 @@
         "03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_pipeline.py",
         "03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_retrieval.py",
         "03_IMPLEMENTATION/packages/retrieval/financial_search.py",
-        "03_IMPLEMENTATION/packages/retrieval/memory_ablation_benchmark.py",
         "07_EVALUATION/cognitive_core/evaluate_cognitive_core.py",
         "07_EVALUATION/cognitive_core/evaluate_modules_v3.py",
         "07_EVALUATION/heldout_retrieval_benchmark_v2/run_production_arms.py",
@@ -2913,6 +2909,7 @@
         "20_TESTS/test_lifecycle_schema_parity.py",
         "20_TESTS/test_memory_access.py",
         "20_TESTS/test_memory_consolidation_command.py",
+        "20_TESTS/test_memory_controller_factory.py",
         "20_TESTS/test_memory_usage_report.py",
         "20_TESTS/test_memory_v6.py",
         "20_TESTS/test_milestone4_adversarial_challenger.py",
@@ -2975,7 +2972,6 @@
       "import_name_winner": true,
       "imports_out": {
         "packages/graph": 1,
-        "packages/interfaces": 1,
         "packages/lifecycle": 1,
         "packages/observability": 3,
         "packages/retrieval": 2,
@@ -2984,7 +2980,6 @@
       },
       "imports_out_nontest": {
         "packages/graph": 1,
-        "packages/interfaces": 1,
         "packages/lifecycle": 1,
         "packages/observability": 3,
         "packages/retrieval": 2,
@@ -2993,10 +2988,10 @@
       },
       "init_exists": true,
       "kind": "packages",
-      "loc": 4554,
+      "loc": 4628,
       "local_unresolved_names": [],
       "name": "memory",
-      "py_files": 26,
+      "py_files": 27,
       "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
@@ -3051,6 +3046,7 @@
         "03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_retrieval.py",
         "03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_usage_test.py",
         "03_IMPLEMENTATION/packages/lifecycle/validation/supersession.py",
+        "03_IMPLEMENTATION/packages/memory/controller_factory.py",
         "03_IMPLEMENTATION/packages/memory/core.py",
         "03_IMPLEMENTATION/packages/memory/executive.py",
         "03_IMPLEMENTATION/packages/memory/orchestrator.py",
@@ -3183,6 +3179,7 @@
         "20_TESTS/test_lifecycle_schema_parity.py",
         "20_TESTS/test_memory_access.py",
         "20_TESTS/test_memory_consolidation_command.py",
+        "20_TESTS/test_memory_controller_factory.py",
         "20_TESTS/test_memory_usage_report.py",
         "20_TESTS/test_milestone4_adversarial_challenger.py",
         "20_TESTS/test_milestone4_adversarial_challenger_m4_2.py",
@@ -3638,9 +3635,7 @@
         "30_SCRIPTS/prompt/compile_task_prompt.py",
         "30_SCRIPTS/verification/active_note_integrity.py",
         "30_SCRIPTS/verification/corpus_health_gate.py",
-        "30_SCRIPTS/verification/validate_corpus_index.py",
-        "40_EXPERIMENTS/harnesses/run_ablation_experiment.py",
-        "scripts/run_ablation_experiment.py"
+        "30_SCRIPTS/verification/validate_corpus_index.py"
       ],
       "consumers_test": [
         "20_TESTS/adversarial/test_memory_content_is_not_authority.py",
@@ -3669,7 +3664,6 @@
         "20_TESTS/test_export_residue_exclusion.py",
         "20_TESTS/test_graph_expansion_noop_status.py",
         "20_TESTS/test_interference_gate.py",
-        "20_TESTS/test_memory_ablation.py",
         "20_TESTS/test_neural_plasticity_search.py",
         "20_TESTS/test_plasticity_audit_purge_rollback.py",
         "20_TESTS/test_plasticity_remaining_65_purge_rollback.py",
@@ -3705,24 +3699,22 @@
       "import_name_winner": true,
       "imports_out": {
         "packages/graph": 1,
-        "packages/interfaces": 1,
-        "packages/memory": 2,
+        "packages/memory": 1,
         "packages/security": 1,
         "root/security": 2
       },
       "imports_out_nontest": {
         "packages/graph": 1,
-        "packages/interfaces": 1,
-        "packages/memory": 2,
+        "packages/memory": 1,
         "packages/security": 1,
         "root/security": 2
       },
       "init_exists": true,
       "kind": "packages",
-      "loc": 5511,
+      "loc": 4489,
       "local_unresolved_names": [],
       "name": "retrieval",
-      "py_files": 26,
+      "py_files": 25,
       "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
@@ -4221,9 +4213,7 @@
         "03_IMPLEMENTATION/packages/learning/agents/verifier_agent.py",
         "03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_retrieval.py",
         "03_IMPLEMENTATION/packages/memory/controller.py",
-        "03_IMPLEMENTATION/packages/memory/orchestrator.py",
         "03_IMPLEMENTATION/packages/observability/evaluation.py",
-        "03_IMPLEMENTATION/packages/retrieval/memory_ablation_benchmark.py",
         "07_EVALUATION/context_packing/experiment_runner.py",
         "07_EVALUATION/full_context_baseline.py",
         "07_EVALUATION/golden_memory_effectiveness_v1/run_benchmark.py",
@@ -4295,6 +4285,7 @@
         "20_TESTS/test_local_provider.py",
         "20_TESTS/test_memory_ablation.py",
         "20_TESTS/test_memory_consolidation_command.py",
+        "20_TESTS/test_memory_controller_factory.py",
         "20_TESTS/test_memory_v6.py",
         "20_TESTS/test_memory_v6_promotion.py",
         "20_TESTS/test_milestone4_adversarial_challenger.py",
@@ -4468,20 +4459,19 @@
       "imports_out": {
         "packages/interfaces": 2,
         "packages/observability": 1,
-        "packages/providers": 2,
-        "packages/retrieval": 1
+        "packages/providers": 2
       },
       "imports_out_nontest": {
         "packages/interfaces": 2,
         "packages/observability": 1,
-        "packages/providers": 2,
-        "packages/retrieval": 1
+        "packages/providers": 2
       },
       "init_exists": true,
       "kind": "root",
-      "loc": 1259,
+      "loc": 1260,
       "local_unresolved_names": [
-        "evaluation"
+        "evaluation",
+        "memory_ablation_benchmark"
       ],
       "name": "scripts",
       "py_files": 7,
@@ -4511,6 +4501,12 @@
           "file": "scripts/run_ablation_experiment.py",
           "kind": "path_mutation",
           "line": 19
+        },
+        {
+          "detail": "sys.path.insert",
+          "file": "scripts/run_ablation_experiment.py",
+          "kind": "path_mutation",
+          "line": 20
         }
       ]
     },
@@ -6344,6 +6340,12 @@
     },
     {
       "detail": "sys.path.insert",
+      "file": "20_TESTS/test_memory_ablation.py",
+      "kind": "path_mutation",
+      "line": 27
+    },
+    {
+      "detail": "sys.path.insert",
       "file": "20_TESTS/test_memory_access.py",
       "kind": "path_mutation",
       "line": 17
@@ -7139,6 +7141,12 @@
       "file": "40_EXPERIMENTS/harnesses/run_ablation_experiment.py",
       "kind": "path_mutation",
       "line": 19
+    },
+    {
+      "detail": "sys.path.insert",
+      "file": "40_EXPERIMENTS/harnesses/run_ablation_experiment.py",
+      "kind": "path_mutation",
+      "line": 20
     }
   ]
 }
