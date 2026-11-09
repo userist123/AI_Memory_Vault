@@ -190,6 +190,8 @@ public sealed class InvestigationPipeline
                 _ when Path.GetFileName(f).Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase) => "srum",
                 // a Defender DetectionHistory file is named by a GUID, without extension: only a GUID name with the right content is typed
                 _ when Guid.TryParse(Path.GetFileName(f), out _) && EvidenceFingerprint.Detect(f) == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName => LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName,
+                // a Notepad tab file (<guid>.bin / .0.bin / .1.bin): only a GUID name with tab content; WindowState files have the same names and stay "file"
+                _ when LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.TryTabFileName(Path.GetFileName(f), out _, out _) && EvidenceFingerprint.Detect(f) == LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.FingerprintName => LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.SourceTypeName,
                 _ when Path.GetFileName(f).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase)
                        || Path.GetFileName(f).EndsWith("SYSTEM.hiv", StringComparison.OrdinalIgnoreCase) => "system_hive",
                 _ when Path.GetFileName(f).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase) => "amcache",

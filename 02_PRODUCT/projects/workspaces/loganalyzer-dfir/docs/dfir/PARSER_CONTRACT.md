@@ -54,6 +54,7 @@ Registrul refuză doi parseri cu același `ParserId`.
 | PrefetchParser 1.0 | Prefetch | SCCA v30/v31, MAM | VALIDATED | corpus (SETUP.EXE, MSIEXEC.EXE) |
 | SrumNetworkParser 1.0 | SRUM Network Data Usage | ESE | VALIDATED | corpus (msbuild.exe, bytes exacți) |
 | DefenderDetectionHistoryParser 1.0 | Istoricul detecțiilor Defender (DetectionHistory) | TLV binar | TESTED | înregistrare reală EICAR din laborator + teste de input ostil |
+| NotepadTabStateParser 1.0 | Filele Notepad din Windows 11 (TabState) | „NP” + uLEB128 + UTF-16 + CRC32 | TESTED | două file reale din laborator (Notepad 11.2312.18.0, filă nesalvată și filă a unui fișier salvat) + teste de input ostil (uLEB128, lungimi, plafoane, UTF-16, FILETIME, CRC32, text ostil); WindowState neinterpretat |
 | PcapngParser 1.0 | PCAPNG | PCAPNG 1.0 | VALIDATED | corpus (fluxuri, DNS, SNI) |
 | SystemHiveExecutionParser 1.0 | BAM (inclusiv UWP), ShimCache | BAM Win10 1709+, ShimCache 10ts (inclusiv big-data) | VALIDATED | hive SYSTEM real vs `reg query`: 72 valori BAM, AppCompatCache identic octet cu octet |
 | AmcacheParser 1.0 | Amcache InventoryApplicationFile | Win10/11 | VALIDATED | Amcache.hve real (>6000 intrări) + sintetic |

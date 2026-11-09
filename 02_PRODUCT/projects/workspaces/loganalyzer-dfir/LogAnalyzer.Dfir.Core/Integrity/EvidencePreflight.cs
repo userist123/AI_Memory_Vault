@@ -29,6 +29,7 @@ public static class EvidenceFingerprint
         if (IsSetupApiLog(path)) return "setupapi_dev";
         if (IsCustomDestinations(path, n, h)) return "custom_destinations";
         if (IsDefenderHistory(path)) return LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName;
+        if (IsNotepadTab(path)) return LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.FingerprintName;
         if (IsFirewallLog(path)) return "pfirewall";
         if (IsZeekTsv(path)) return LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint;
         if (IsRecycleInfo(path)) return "recycle_info";
@@ -69,6 +70,21 @@ public static class EvidenceFingerprint
         fs.Seek(-4, SeekOrigin.End);
         Span<byte> tail = stackalloc byte[4];
         return fs.ReadAtLeast(tail, 4, throwOnEndOfStream: false) == 4 && BinaryPrimitives.ReadUInt32LittleEndian(tail) == 0xBABFFBAB;
+    }
+
+    /// <summary>A Notepad tab file: a GUID name ending in .bin / .0.bin / .1.bin and content "NP" + sequence + a "saved" byte of 0 or 1 (a WindowState file has another value there); see <see cref="LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.LooksLikeTab"/>.</summary>
+    private static bool IsNotepadTab(string path)
+    {
+        if (!LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.TryTabFileName(Path.GetFileName(path), out _, out _)) return false;
+        var buf = new byte[32];
+        int n;
+        long length;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+        {
+            length = fs.Length;
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        }
+        return LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.LooksLikeTab(buf.AsSpan(0, n), length);
     }
 
     /// <summary>A Defender DetectionHistory file: an 8-byte ThreatId record followed by a 16-byte GUID record; see <see cref="LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.LooksLikeHistory"/>.</summary>
@@ -147,6 +163,7 @@ public static class EvidenceFingerprint
         if (t == LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName) return ["pfirewall"];
         if (t == LogAnalyzer.Dfir.Network.ZeekLogParser.SourceTypeName) return [LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint, "json"];
         if (t == "usn_journal") return ["usn_fsutil"];
+        if (t == LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.FingerprintName];
         if (t == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName];
         if (t == LogAnalyzer.Dfir.FileSystem.RecycleBinInfoParser.SourceTypeName) return ["recycle_info"];
         if (t is "chromium_history" or "firefox_places") return ["sqlite"];

@@ -80,6 +80,18 @@ public class RemoteToolUpgradeTests
     }
 
     [Fact]
+    public void MuiCache_is_presence_evidence_for_a_remote_tool_never_execution()
+    {
+        var f = Assert.Single(Rt(Row("MUICache", 0, "anydesk.exe", @"C:\Users\ana\Downloads\AnyDesk.exe", "")));
+        Assert.Equal("REMOTE-TOOL-PRESENT", f.RuleId);
+        Assert.Contains("AnyDesk", f.Title);
+        Assert.Empty(Rt(Row("MUICache", 0, "notepad.exe", @"C:\Windows\System32\notepad.exe", "")));
+        // the same file name in MUICache and in Prefetch: execution comes from Prefetch only
+        var both = Rt(Row("MUICache", 0, "anydesk.exe", @"C:\Program Files\AnyDesk\AnyDesk.exe", ""), Row("Prefetch", 1, "ANYDESK.EXE", @"C:\Program Files\AnyDesk\AnyDesk.exe", ""));
+        Assert.Equal("REMOTE-TOOL-EXECUTED", Assert.Single(both).RuleId);
+    }
+
+    [Fact]
     public void Service_image_with_NT_prefix_quotes_and_arguments_names_the_executable()
     {
         var f = Assert.Single(Rt(Svc(0, "svc1", @"\??\C:\Users\ana\Downloads\AteraAgent.exe /x")));

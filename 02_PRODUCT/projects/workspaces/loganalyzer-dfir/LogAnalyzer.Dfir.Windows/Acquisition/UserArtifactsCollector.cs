@@ -147,7 +147,116 @@ public sealed class UserArtifactsCollector : ICollector
             taken++;
             CopyHive(ctx, o, sid, p.ProfilePath, ntuser, "NTUSER.DAT", "ntuser_hive", "NTUSER", logDir, vssUsed, ct);
             CopyHive(ctx, o, sid, p.ProfilePath, usrclass, "UsrClass.dat", "usrclass_hive", "UsrClass", logDir, vssUsed, ct);
+            CopyNotepadTabs(ctx, o, sid, p.ProfilePath, logDir, vssUsed, ct);
         }
+    }
+
+    // ---- Notepad tab state ----
+
+    /// <summary>Folder of the Windows 11 Notepad (Store app) tab files, below a profile.</summary>
+    public static readonly string[] NotepadTabStateRelative = ["AppData", "Local", "Packages", "Microsoft.WindowsNotepad_8wekyb3d8bbwe", "LocalState", "TabState"];
+    public const int MaxNotepadFilesPerProfile = 500;
+    public const long MaxNotepadFileBytes = NotepadTabStateParser.MaxFileBytes;
+    /// <summary>Directory entries looked at in one TabState folder before stopping.</summary>
+    public const int MaxNotepadEntries = 10_000;
+
+    /// <summary>
+    /// Copies the <c>*.bin</c> files of a profile's Notepad TabState folder: a missing folder is normal (Notepad from the Store not used) and gives no error; reparse
+    /// points (the folder path, the folder itself, a file) are not followed; at most <see cref="MaxNotepadFilesPerProfile"/> files of at most
+    /// <see cref="MaxNotepadFileBytes"/> bytes are taken, every cap reached is reported. The files are small and normally not locked, so they are read directly;
+    /// a file that cannot be opened is copied from a VSS snapshot (the same esentutl delegate as the hives).
+    /// </summary>
+    private void CopyNotepadTabs(CollectorContext ctx, CollectorOutcome o, string sid, string profilePath, string logDir,
+                                 System.Runtime.CompilerServices.StrongBox<bool> vssUsed, CancellationToken ct)
+    {
+        var folder = Path.Combine([profilePath, .. NotepadTabStateRelative]);
+        var probe = Probe(folder);
+        if (probe.State == ProbeState.Missing) return;
+        if (probe.State == ProbeState.Unreadable) { o.Errors.Add($"Notepad TabState ({sid}): folderul nu poate fi citit ({probe.Detail})."); return; }
+        if (!probe.IsDirectory) { o.Errors.Add($"Notepad TabState ({sid}): {folder} nu este un folder; omis."); return; }
+        var link = ReparseOnPath(folder);
+        if (link.Length > 0) { o.Errors.Add($"Notepad TabState ({sid}): calea trece printr-o legătură (reparse point: {link}), care nu este urmată; filele nu au fost colectate."); return; }
+
+        string? destDir = null;
+        int taken = 0, examined = 0;
+        try
+        {
+            // at most MaxNotepadEntries + 1 entries are read before sorting: a folder flooded with millions of files is never held in memory
+            var entries = new DirectoryInfo(folder).EnumerateFileSystemInfos("*.bin").Take(MaxNotepadEntries + 1).ToList();
+            foreach (var e in entries.OrderBy(x => x.Name, StringComparer.OrdinalIgnoreCase))
+            {
+                ct.ThrowIfCancellationRequested();
+                if (++examined > MaxNotepadEntries) { o.Errors.Add($"Notepad TabState ({sid}): peste {MaxNotepadEntries} de intrări; restul nu au fost cercetate."); break; }
+                if (e.Attributes.HasFlag(FileAttributes.ReparsePoint)) { o.Errors.Add($"Notepad TabState ({sid}): {Shorten(e.Name)} este o legătură (reparse point), nu este urmată."); continue; }
+                if (e is not FileInfo fi) continue;
+                if (!IsSafeChildName(fi.Name)) { o.Errors.Add($"Notepad TabState ({sid}): numele „{Shorten(fi.Name)}” nu este un nume de fișier permis; omis."); continue; }
+                // only tab file names (GUID .bin / .0.bin / .1.bin) are taken, as the import does
+                if (!LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.TryTabFileName(fi.Name, out _, out _)) continue;
+                if (taken >= MaxNotepadFilesPerProfile) { o.Errors.Add($"Notepad TabState ({sid}): limita de {MaxNotepadFilesPerProfile} de fișiere a fost atinsă; restul nu au fost colectate."); break; }
+                if (fi.Length > MaxNotepadFileBytes) { o.Errors.Add($"Notepad TabState ({sid}): {fi.Name} are {fi.Length} octeți, peste limita de {MaxNotepadFileBytes}; necopiat."); continue; }
+
+                destDir ??= CreateDir(Path.Combine(ctx.Case.RawDir("UserActivity"), "NotepadTabState", sid));
+                var dest = Unique(Path.Combine(destDir, CaseWorkspaceSafe(fi.Name)));
+                if (!Path.GetFullPath(dest).StartsWith(destDir + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase))
+                { o.Errors.Add($"Notepad TabState ({sid}): numele „{Shorten(fi.Name)}” ar ieși din folderul probei; omis."); continue; }
+                string how = "copiat direct";
+                try
+                {
+                    bool tooBig;
+                    using (var src = new FileStream(fi.FullName, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                    using (var dst = new FileStream(dest, FileMode.CreateNew, FileAccess.Write))
+                    {
+                        // capped copy: a file that grew after the size check is not copied past the limit
+                        var buf = new byte[81920]; long total = 0; int n;
+                        while ((n = src.Read(buf, 0, (int)Math.Min(buf.Length, MaxNotepadFileBytes + 1 - total))) > 0) { dst.Write(buf, 0, n); total += n; if (total > MaxNotepadFileBytes) break; }
+                        tooBig = total > MaxNotepadFileBytes;
+                    }
+                    if (tooBig) { TryDelete(dest); o.Errors.Add($"Notepad TabState ({sid}): {fi.Name} a crescut peste limita de {MaxNotepadFileBytes} octeți în timpul copierii; necopiat."); continue; }
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    TryDelete(dest);
+                    o.Errors.Add($"Notepad TabState ({sid}): {fi.Name} nu poate fi citit ({ex.Message}); accesul refuzat nu este ocolit prin copia de umbră.");
+                    continue;
+                }
+                // only a sharing violation (the tab is open in Notepad) falls back to the shadow copy: an access-denied file (deny ACE) is reported,
+                // so a user cannot force hundreds of VSS copies
+                catch (IOException ex) when (ex is not FileNotFoundException and not DirectoryNotFoundException && (ex.HResult & 0xFFFF) is 32 or 33)
+                {
+                    TryDelete(dest);
+                    vssUsed.Value = true;
+                    var run = _vssCopy(fi.FullName, dest, logDir, $"esentutl_notepad_{sid}_{taken}", ct);
+                    o.Commands.Add(run.CommandLine);
+                    if (run.ExitCode != 0 || !File.Exists(dest))
+                    {
+                        TryDelete(dest);
+                        o.Errors.Add($"Notepad TabState ({sid}): {fi.Name} nu a putut fi citit direct ({ex.Message}) și copierea din copia de umbră a eșuat (cod {run.ExitCode}).");
+                        continue;
+                    }
+                    if (new FileInfo(dest).Length > MaxNotepadFileBytes) { TryDelete(dest); o.Errors.Add($"Notepad TabState ({sid}): {fi.Name} din copia de umbră depășește limita de {MaxNotepadFileBytes} octeți; necopiat."); continue; }
+                    how = "copiat din copia de umbră VSS (citirea directă a eșuat)";
+                }
+                catch (IOException ex)
+                {
+                    TryDelete(dest);
+                    o.Errors.Add($"Notepad TabState ({sid}): {fi.Name} nu a putut fi copiat ({ex.Message}).");
+                    continue;
+                }
+                // the entry was checked before the open: a file swapped for a link meanwhile is dropped, never registered
+                if (ReparseOnPath(fi.FullName).Length > 0)
+                {
+                    TryDelete(dest);
+                    o.Errors.Add($"Notepad TabState ({sid}): {fi.Name} a devenit o legătură (reparse point) în timpul copierii; copia a fost eliminată.");
+                    continue;
+                }
+                try { File.SetLastWriteTimeUtc(dest, fi.LastWriteTimeUtc); } catch (IOException) { }
+                o.Evidence.Add(ctx.Case.RegisterStored(dest, fi.FullName, $"NotepadTabState:{sid}", NotepadTabStateParser.SourceTypeName, TemporalType.Historical, Name, Version,
+                    notes: $"Fila Notepad (TabState), profil {sid} ({profilePath}), {how}; SHA-256 calculat la colectare."));
+                taken++;
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
+        { o.Errors.Add($"Notepad TabState ({sid}): folderul nu poate fi citit ({ex.Message})."); }
     }
 
     private void CopyHive(CollectorContext ctx, CollectorOutcome o, string sid, string profilePath, string src, string fileName, string sourceType, string source,

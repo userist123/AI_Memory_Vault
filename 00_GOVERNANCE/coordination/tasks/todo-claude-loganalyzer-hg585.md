@@ -500,3 +500,13 @@
   (E:\LA-Lab\diag\remote), run as admin on WS01, Verify ok, Import typed the history file, DEF-HISTORY-ONLY produced (Low: package had no
   evtx:System, so the 104 clear was not visible). Notepad TabState attempt paused: on WS01 (Notepad 11.2312) a scheduled task in the user
   session ran but no TabState files appeared yet; the VM UI driver cannot see the Store Notepad window. Suites: Dfir 3092.
+- 2026-11-09: wave 6, Notepad TabState + MUICache. Real samples from LAB-WS01 (Notepad 11.2312 driven by an interactive scheduled task in
+  it.admin's session; the VM UI driver cannot see Store Notepad): unsaved tab + saved-file tab with an unsaved line; UsrClass.hiv via reg save.
+  Worker (Sonnet): NotepadTabStateParser (2 real fixtures; saved-content length is in bytes, CRC32 big-endian over bytes after "NP"+seq),
+  collection in UserArtifactsCollector, MUICache in ShellBagsParser (presence only, linked to REMOTE-TOOL as present). Real hive: 3 MUICache
+  entries found. Opus r1: oversized tab silently typed "file", 10,000-entry cap after a full OrderBy, first 300 chars (secrets) in Summary;
+  r2: unsalted hash + exact length in Summary lets short passwords be brute-forced, Tag block / U+2028 kept. Fixed by main session: no text
+  and no hash in Summary (length only), Content cleaned per code point and marked sensitive, VSS only on sharing violation, capped copy.
+  Accepted residual: Content stays in Fields (local AiCaseFacts blob; nothing leaves the station; exports with Fields not separately masked);
+  the base parser layer already rejects >4 MiB, so the parser's own oversize gap is a second guard; collector outer catch message wording.
+  Lab leftovers on WS01: C:\LA\np, C:\LA\remote, it.admin's Notepad tabs (TEST text). Suites: Dfir 3127, App 1028, UI 368, Edition 45.

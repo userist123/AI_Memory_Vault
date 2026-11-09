@@ -203,7 +203,7 @@ public static partial class Wp11Rules
                 {
                     if (IsExe(e.Process) || IsExe(e.Path)) exec.Add(new(e, e.Source, ExePath(e), ""));
                 }
-                else if (e.Source is "Amcache" or "ShimCache")
+                else if (e.Source is "Amcache" or "ShimCache" or "MUICache")
                 {
                     if (IsExe(e.Path) || IsExe(e.Process)) present.Add(new(e, e.Source, e.Path, e.Hash.Length == 64 ? e.Hash : ""));
                 }
@@ -225,7 +225,7 @@ public static partial class Wp11Rules
                     if (ToolDomainMatches(tool, F(e, "QueryName"))) present.Add(new(e, "interogare DNS", "", ""));
                 }
                 // The tool's own log files, seen as a path in any other collected source (file system, LNK, Jump Lists…).
-                bool artifactAlreadyRead = e.Source is "Prefetch" or "BAM" or "UserAssist" or "Amcache" or "ShimCache" || e.Source.StartsWith("EventLog:", StringComparison.Ordinal);
+                bool artifactAlreadyRead = e.Source is "Prefetch" or "BAM" or "UserAssist" or "Amcache" or "ShimCache" or "MUICache" || e.Source.StartsWith("EventLog:", StringComparison.Ordinal);
                 if (!artifactAlreadyRead && tool.LogMarkers.Any(m => e.Path.Replace('/', '\\').Contains(m, StringComparison.OrdinalIgnoreCase)))
                     present.Add(new(e, e.Source.Contains("Registry", StringComparison.OrdinalIgnoreCase) || e.Path.StartsWith("HK", StringComparison.OrdinalIgnoreCase) ? "cheie din registrul Windows (registry)" : "fișier de log al aplicației", e.Path, ""));
             }
@@ -305,7 +305,7 @@ public static partial class Wp11Rules
                               (approved is not null ? $" Software aprobat în profil: {ToolSafe(approved.Name)} ({ToolSafe(approved.PathPattern.Length > 0 ? approved.PathPattern : approved.Publisher)}); aprobat în profil, deci informativ." : "") + why +
                               " Identificarea este după nume (fișier, serviciu, domeniu), nu după semnătură: un alt producător poate folosi același nume." +
                               " Existența unei aplicații de acces de la distanță nu arată o sesiune sau cine s-a conectat.",
-                ClassificationReason = executed ? "Artefact de execuție (Prefetch/BAM/UserAssist/4688/Sysmon 1) pentru un executabil din lista de aplicații de acces de la distanță." : "Artefact de prezență (Amcache/ShimCache/serviciu/instalare/log/DNS) pentru o aplicație din lista de acces de la distanță.",
+                ClassificationReason = executed ? "Artefact de execuție (Prefetch/BAM/UserAssist/4688/Sysmon 1) pentru un executabil din lista de aplicații de acces de la distanță." : "Artefact de prezență (Amcache/ShimCache/MUICache/serviciu/instalare/log/DNS) pentru o aplicație din lista de acces de la distanță.",
                 SemanticType = executed ? SemanticType.Execution : SemanticType.Presence,
                 SupportingEvidence = evidence.Select(h => Ref(h.Event, $"{h.Kind} {tool.Name}")).ToList(),
                 AlternativeExplanations = ["Suport tehnic sau administrare legitimă; aplicația poate fi aprobată de organizație, dar netrecută în profil.", "O aplicație prezentă doar ca fișier descărcat sau instalată și nefolosită.", "Unealtă folosită legitim de departamentul IT.", "Software preinstalat pe stație."],

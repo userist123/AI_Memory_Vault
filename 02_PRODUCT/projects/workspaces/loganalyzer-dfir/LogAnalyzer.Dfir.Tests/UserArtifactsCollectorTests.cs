@@ -192,6 +192,109 @@ public sealed class UserArtifactsCollectorTests : IDisposable
         Assert.Equal(("present", "9"), RecycleBinInfoParser.CollectedRState(collected));
     }
 
+    // ---- Notepad TabState ----
+
+    private static byte[] NotepadFixture(string id) => File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Corpus", "NotepadTabState", id + ".bin"));
+
+    private string TabDir(string profile)
+    {
+        var d = Path.Combine([profile, .. UserArtifactsCollector.NotepadTabStateRelative]);
+        Directory.CreateDirectory(d);
+        return d;
+    }
+
+    [Fact]
+    public void Notepad_tab_files_are_collected_and_parsed_by_the_production_pipeline()
+    {
+        Profile(_profile);
+        var tabs = TabDir(_profile);
+        File.WriteAllBytes(Path.Combine(tabs, "0e735e0a-8148-44fb-8cea-7e15f4caa644.bin"), NotepadFixture("0e735e0a-8148-44fb-8cea-7e15f4caa644"));
+        File.WriteAllBytes(Path.Combine(tabs, "13aa65cf-6a0d-48a7-8f5c-e6ac4be9bafc.0.bin"), NotepadFixture("13aa65cf-6a0d-48a7-8f5c-e6ac4be9bafc"));
+        File.WriteAllText(Path.Combine(tabs, "readme.txt"), "not a tab");                       // only *.bin is taken
+
+        var o = Collect(Collector());
+
+        Assert.Empty(o.Errors);
+        var tabEvidence = o.Evidence.Where(e => e.SourceType == NotepadTabStateParser.SourceTypeName).ToList();
+        Assert.Equal(2, tabEvidence.Count);
+        Assert.All(tabEvidence, e => { Assert.Contains(Sid, e.Notes); Assert.Equal(Hashing.Sha256File(_ws.FullPath(e.StoredPath)), e.Sha256); });
+        Assert.Equal(2, _copies.Count);                                                       // direct copy: only the two hives used VSS
+
+        var r = new InvestigationPipeline().Run(_ws, CollectionProfile.FullForensic, collect: false);
+        Assert.All(tabEvidence, e => Assert.Equal("NotepadTabStateParser", r.Parsing.Single(p => p.EvidenceId == e.EvidenceId).Parser));
+        var events = r.Timeline.Where(e => e.Source == NotepadTabStateParser.EventSource).ToList();
+        Assert.Equal(2, events.Count);
+        Assert.Contains(events, e => e.Fields["Saved File Path"] == @"C:\LA\np\salvat-test.txt" && e.Fields["Copy Index"] == "0");
+        Assert.Contains(events, e => e.Fields["Content"].Contains("fila noua nesalvata"));
+    }
+
+    [Fact]
+    public void A_missing_TabState_folder_is_not_an_error()
+    {
+        Profile(_profile);
+        var o = Collect(Collector());
+        Assert.Empty(o.Errors);
+        Assert.DoesNotContain(o.Evidence, e => e.SourceType == NotepadTabStateParser.SourceTypeName);
+    }
+
+    [Fact]
+    public void Notepad_collection_stops_at_the_file_cap_and_skips_oversize_files()
+    {
+        Profile(_profile);
+        var tabs = TabDir(_profile);
+        for (int i = 0; i < UserArtifactsCollector.MaxNotepadFilesPerProfile + 3; i++)
+            File.WriteAllBytes(Path.Combine(tabs, $"{Guid.NewGuid()}.bin"), [0x4E, 0x50, 0, 0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0]);
+        File.WriteAllBytes(Path.Combine(tabs, "00000000-0000-0000-0000-000000000000.bin"), new byte[UserArtifactsCollector.MaxNotepadFileBytes + 1]);   // sorts first
+
+        var o = Collect(Collector());
+
+        Assert.Equal(UserArtifactsCollector.MaxNotepadFilesPerProfile, o.Evidence.Count(e => e.SourceType == NotepadTabStateParser.SourceTypeName));
+        Assert.Contains(o.Errors, e => e.Contains("00000000-0000-0000-0000-000000000000.bin") && e.Contains("necopiat"));
+        Assert.Contains(o.Errors, e => e.Contains("limita de 500"));
+    }
+
+    [Fact]
+    public void A_TabState_folder_behind_a_junction_is_not_followed()
+    {
+        Profile(_profile);
+        var target = Path.Combine(_dir, "elsewhere");
+        Directory.CreateDirectory(target);
+        File.WriteAllBytes(Path.Combine(target, "0e735e0a-8148-44fb-8cea-7e15f4caa644.bin"), NotepadFixture("0e735e0a-8148-44fb-8cea-7e15f4caa644"));
+        var link = Path.Combine([_profile, .. UserArtifactsCollector.NotepadTabStateRelative]);
+        Directory.CreateDirectory(Path.GetDirectoryName(link)!);
+        if (!MakeJunction(link, target)) return;                                               // junctions not available here
+
+        var o = Collect(Collector());
+
+        Assert.DoesNotContain(o.Evidence, e => e.SourceType == NotepadTabStateParser.SourceTypeName);
+        Assert.Contains(o.Errors, e => e.Contains("Notepad TabState") && e.Contains("reparse point"));
+        Directory.Delete(link);
+    }
+
+    [Fact]
+    public void A_locked_tab_file_is_copied_from_the_snapshot()
+    {
+        Profile(_profile);
+        var tabs = TabDir(_profile);
+        var locked = Path.Combine(tabs, "0e735e0a-8148-44fb-8cea-7e15f4caa644.bin");
+        File.WriteAllBytes(locked, NotepadFixture("0e735e0a-8148-44fb-8cea-7e15f4caa644"));
+        using var hold = new FileStream(locked, FileMode.Open, FileAccess.ReadWrite, FileShare.None);
+        var snapshotCopies = new List<string>();
+        VssCopyResult Vss(string src, string dest, string logDir, string label, CancellationToken ct)
+        {
+            if (!src.EndsWith(".bin", StringComparison.OrdinalIgnoreCase)) { File.Copy(src, dest); return new VssCopyResult(0, "esentutl hive"); }
+            snapshotCopies.Add(src);
+            File.WriteAllBytes(dest, NotepadFixture("0e735e0a-8148-44fb-8cea-7e15f4caa644"));
+            return new VssCopyResult(0, $"esentutl.exe /y {src} /vss /d {dest}");
+        }
+
+        var o = Collect(Collector(vss: Vss));
+
+        Assert.Empty(o.Errors);
+        Assert.Single(snapshotCopies);
+        Assert.Single(o.Evidence, e => e.SourceType == NotepadTabStateParser.SourceTypeName && e.Notes.Contains("copia de umbră"));
+    }
+
     // ---- gaps ----
 
     [Fact]
