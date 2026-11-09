@@ -938,6 +938,12 @@
       "reason": "Plain markdown research document (protection of classified information on standalone workstations, public sources); not a note. Frontmatter would require owner lifecycle/verification values."
     },
     {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_GAPS_2026-11-09.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research document (gaps against DFIR reference tools and the DISA STIG Windows 11 CAT I list, public sources); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
       "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PROVENANCE_2026-10-16_PDF_SIGNING_LIBRARIES.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
