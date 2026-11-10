@@ -22,7 +22,14 @@ public sealed class WindowsSearchGatherParser : EvidenceParserBase
     public const string DatabaseFileName = "Windows-gather.db";
     public const long MaxFileBytes = 2L * 1024 * 1024 * 1024;
 
-    /// <summary>To be written into the evidence notes when Windows-gather.db and its -wal come from one shadow copy (the collector and the remote package do not copy Windows-gather.db yet).</summary>
+    /// <summary>Evidence types of the -wal / -shm beside Windows-gather.db when the collector or the remote package copies them.</summary>
+    public const string WalSourceType = "windows_search_gather_wal", ShmSourceType = "windows_search_gather_shm";
+    /// <summary>
+    /// Written into the notes of Windows.db AND Windows-gather.db when both were copied from the same shadow copy (collector: the shadow copy id; remote package: the id of
+    /// the import folder), followed by the key. The rule that compares the two databases pairs them only by this key.
+    /// </summary>
+    public const string SnapshotKeyPrefix = "Moment index Windows Search: ";
+    /// <summary>To be written into the evidence notes when Windows-gather.db and its -wal come from one shadow copy (the collector and the remote package write it).</summary>
     public const string GatherSameSnapshotNote = "aceeași pentru Windows-gather.db și -wal";
     /// <summary>Written by the import when no Windows-gather.db-wal was beside the imported Windows-gather.db.</summary>
     public const string NoWalNote = "Lângă bază nu exista un jurnal Windows-gather.db-wal.";
@@ -64,7 +71,7 @@ public sealed class WindowsSearchGatherParser : EvidenceParserBase
         Limitations =
         [
             "Un rând înseamnă că indexatorul a cunoscut calea, nu că fișierul mai există, că a fost deschis sau că are acel conținut.",
-            "Un rând poate rămâne și după ștergerea fișierului (observat în laborator); nu se știe cât timp rămâne.",
+            "Un rând poate rămâne și după ștergerea fișierului (observat în laborator), dar puțin: în laborator rândul unui fișier șters a dispărut în mai puțin de o oră.",
             "TransactionFlags este afișat ca valoare brută: semnificația biților nu este documentată și nu este interpretată.",
             "Ora este ultima modificare a fișierului înregistrată de gatherer, nu ora indexării sau a ștergerii.",
             "Windows-usn.db nu este citit; Windows.edb (ESE) nu este citit de acest parser.",
@@ -83,6 +90,9 @@ public sealed class WindowsSearchGatherParser : EvidenceParserBase
         {
             var copy = SearchSqliteCopy.Prepare(Spec, item, fullPath, work, result);
             using var c = new SqliteConnection(SearchSqliteCopy.ConnectionString(copy));
+            // the moment key is stamped on the events only for a pair the application itself vouches for
+            var tap = new SearchSqliteCopy.MomentSink(sink, SearchSqliteCopy.SnapshotKey(Spec, item, fullPath));
+            sink = tap;
             try
             {
                 c.Open();

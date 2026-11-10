@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Model;
 using LogAnalyzer.Dfir.Parsing;
 using Microsoft.Data.Sqlite;
@@ -33,12 +34,7 @@ internal static class SearchSqliteCopy
         SQLitePCL.Batteries_V2.Init();
         // The database alone only has to be sound: its tables may still live in the journal (a database never checkpointed).
         bool baseOk = QuickCheckOk(spec, copy, requireTables: false);
-        // A pair is vouched for only when THIS application's collector copied it from one shadow copy (collector, action and note all match:
-        // an imported file's notes hold the operator's path, which could contain the note text).
-        bool samePair = item.Notes.Contains(spec.SameSnapshotNote, StringComparison.Ordinal) &&
-            (item.Collector == spec.Collector && item.AcquisitionMethod == "acquired"
-             // a verified remote package: its script takes both files from one shadow copy, or neither
-             || item.Collector == LogAnalyzer.Dfir.Windows.Acquisition.RemoteCollection.CollectorName && item.AcquisitionMethod == "imported");
+        bool samePair = VouchedPair(spec, item);
         var walPath = fullPath + "-wal";
         bool walThere = File.Exists(walPath);
         if (walThere && new FileInfo(walPath).Length > spec.MaxFileBytes)
@@ -79,6 +75,61 @@ internal static class SearchSqliteCopy
             result.Gaps.Add(new EvidenceGap(name, EvidenceStatus.Partial, "baza nu trece verificarea de integritate SQLite (quick_check)",
                 "Unele intrări pot lipsi sau pot fi citite greșit", "O copie a indexului făcută din aceeași copie de umbră cu jurnalul", "Posibil"));
         return copy;
+    }
+
+    /// <summary>
+    /// A pair is vouched for only when THIS application's collector copied it from one shadow copy (collector, action and note all match:
+    /// an imported file's notes hold the operator's path, which could contain the note text).
+    /// </summary>
+    public static bool VouchedPair(SearchSqliteSpec spec, EvidenceItem item) =>
+        item.Notes.Contains(spec.SameSnapshotNote, StringComparison.Ordinal) &&
+        (item.Collector == spec.Collector && item.AcquisitionMethod == "acquired"
+         // a verified remote package: its script takes both files from one shadow copy, or neither
+         || item.Collector == LogAnalyzer.Dfir.Windows.Acquisition.RemoteCollection.CollectorName && item.AcquisitionMethod == "imported");
+
+    private static readonly System.Text.RegularExpressions.Regex KeyAtEnd =
+        new(@"(?:^|[\s;])" + System.Text.RegularExpressions.Regex.Escape(WindowsSearchGatherParser.SnapshotKeyPrefix) + @"([0-9A-Za-z{}\-]{8,64})\.?\s*$",
+            System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>
+    /// The moment key written beside the same-snapshot note (the shadow copy id, or the id of the import folder), or null. Accepted only for a vouched-for
+    /// pair (same rule as <see cref="VouchedPair"/>), only once in the notes and only at their end; for an imported file it must also equal the id in the name of
+    /// the folder the application itself created (WindowsSearch_&lt;id&gt;), so a path or host name from the operator cannot name a key.
+    /// </summary>
+    public static string? SnapshotKey(SearchSqliteSpec spec, EvidenceItem item, string fullPath)
+    {
+        if (!VouchedPair(spec, item)) return null;
+        var notes = item.Notes;
+        int first = notes.IndexOf(WindowsSearchGatherParser.SnapshotKeyPrefix, StringComparison.Ordinal);
+        if (first < 0 || notes.IndexOf(WindowsSearchGatherParser.SnapshotKeyPrefix, first + 1, StringComparison.Ordinal) >= 0) return null;
+        try
+        {
+            var m = KeyAtEnd.Match(notes);
+            if (!m.Success) return null;
+            var key = m.Groups[1].Value;
+            if (item.AcquisitionMethod == "imported")
+            {
+                var folder = Path.GetFileName(Path.GetDirectoryName(fullPath) ?? "");
+                if (!folder.Equals("WindowsSearch_" + key, StringComparison.OrdinalIgnoreCase)) return null;
+            }
+            return key;
+        }
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return null; }
+    }
+
+    /// <summary>
+    /// Stamps the moment key on every event of a database read as part of a vouched-for pair, and lets the parser mark the read as incomplete (a cap, a damaged
+    /// page, a journal not applied): the rule that compares the two databases then does not use it. Without a key the events pass through unchanged.
+    /// </summary>
+    internal sealed class MomentSink(IEventSink inner, string? key) : IEventSink
+    {
+        private TimelineEvent? _first;
+        public void Add(TimelineEvent e)
+        {
+            if (key is not null) { e.Fields[Wp11Rules.SearchMomentField] = key; _first ??= e; }
+            inner.Add(e);
+        }
+        public void MarkIncomplete() { if (_first is not null) _first.Fields[Wp11Rules.SearchIncompleteField] = "da"; }
     }
 
     /// <summary>Connection string of a working copy (SQLite may write the copy when it replays the journal; the stored evidence is never opened).</summary>

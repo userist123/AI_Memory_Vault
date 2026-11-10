@@ -552,3 +552,15 @@
   without memo when a memoised node would pass MaxDepth), both with tests; LIMIT cap+1. r2 skipped by the main session (bounded delta, tests in
   both orders). Accepted LOW: collations now also registered on the Windows.db read connection (no collated column there); '..' / '\' inside
   names kept verbatim (raw Url kept). Lab rerun: a and b sets 1,175 rows, no gaps, deleted TEST file still present with path and time.
+- 2026-11-10: wave 8 phase 2 (worker, Sonnet): collector + remote package copy Windows-gather.db (+ -wal) from the same shadow copy as
+  Windows.db; parsers stamp a moment key (snapshot id / import folder id, vouched pairs only, once, at the end of the notes); rule
+  WSEARCH-GATHER-ONLY (Low, no MITRE) = gather DocumentID without a Windows.db WorkId at the same moment. Live on WS01 (remote package, import,
+  rules): step ok, shadow copies 0 -> 0, WSearch not stopped, 1,173 gather rows / 1,171 store entries, one finding = a real transient
+  __PSScriptPolicyTest_*.psm1 created and deleted by PowerShell (likely the package run itself). The TEST file deleted ~1 h earlier was already
+  gone from gather: retention is short (docs and limitation say so). Opus r1: MEDIUM a Windows.db whose -wal copy failed kept the note + key
+  -> registration deferred, key and same-snapshot note dropped when the planned journal was not copied; LOW pathless WorkIds look missing ->
+  the Windows.db read is marked incomplete when any WorkId has no path; LOW capped-summary text spoke of scanners -> own wording; text aligned.
+  All with tests. r2 skipped by the main session (bounded delta). Accepted LOW (pre-existing): the remote script checks reparse points only on
+  the gather files, not on folders on the way or Windows.db. Reviewer noted that host Defender blocked the test DLL in ITS run; main-session
+  runs were not blocked (Defender not touched). Suites: Dfir 3220, App 1028, UI 368, Edition 45, python catalog 3.
+  Lab leftovers added: WS01 C:\LA\remote4; host E:\LA-Lab\diag\remote4.

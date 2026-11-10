@@ -335,6 +335,8 @@ public sealed class InvestigationPipeline
             "jurnal de tranzacții ESE al bazei SRUM: nu se citește separat; parserul SRUM îl folosește la recuperarea unei copii „murdare”",
         LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.WalSourceType or LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.ShmSourceType =>
             "însoțitor (-wal / -shm) al indexului Windows Search: nu se citește separat; parserul îl pune lângă copia de lucru a bazei",
+        LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.WalSourceType or LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.ShmSourceType =>
+            "însoțitor (-wal / -shm) al bazei gather Windows Search: nu se citește separat; parserul îl pune lângă copia de lucru a bazei",
         LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.EdbSourceType =>
             "Windows.edb (ESE): păstrat doar ca probă; nu există parser pentru el",
         "amcache_log" => "jurnal de tranzacții al hive-ului Amcache: păstrat în caz ca probă; reaplicarea lui pe hive nu este încă implementată (intrările scrise doar în jurnal pot lipsi)",

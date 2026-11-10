@@ -31,6 +31,7 @@ public static partial class Wp11Rules
         Discovery(c, found);
         AdAttacks(c, found);
         DefenderHistory(c, found);
+        WindowsSearchGatherOnly(c, found);
         return found;
     }
 

@@ -145,7 +145,7 @@ public sealed class RemoteCollectionTests : IDisposable
     }
 
     /// <summary>A package folder with a small Windows Search index (three rows that live only in the journal when <paramref name="withWal"/>), as the script would leave it.</summary>
-    private string IndexPackage(RemoteCollectionRequest req, string requestSha, string stepStatus, bool withWal, string name)
+    private string IndexPackage(RemoteCollectionRequest req, string requestSha, string stepStatus, bool withWal, string name, bool withGather = false)
     {
         var pkg = Path.Combine(_root, name);
         var dir = Path.Combine(pkg, "files", RemoteCollection.SearchIndexFolder); Directory.CreateDirectory(dir);
@@ -167,6 +167,21 @@ public sealed class RemoteCollectionTests : IDisposable
             }
         }
         Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        if (withGather)
+        {
+            // a small Windows-gather.db: DocumentID 1 is also a WorkId of Windows.db, DocumentID 4 is not; no journal of its own beside it here
+            var g = Path.Combine(dir, "Windows-gather.db");
+            using (var c = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={g};Pooling=False"))
+            {
+                c.Open();
+                void X(string sql) { using var cmd = c.CreateCommand(); cmd.CommandText = sql; cmd.ExecuteNonQuery(); }
+                X("CREATE TABLE SystemIndex_Gthr (ScopeID INTEGER NOT NULL, FileName TEXT, DocumentID INTEGER NOT NULL, LastModified BLOB, DeletedCount, TransactionFlags, CrawlNumberCrawled, Priority, AppOwnerId, StorageProviderId, UserData)");
+                X("CREATE TABLE SystemIndex_GthrPth (Scope INTEGER, Parent INTEGER, Name TEXT)");
+                X("INSERT INTO SystemIndex_GthrPth VALUES(2, 1, 'file:'), (3, 2, 'C:'), (4, 3, '/'), (5, 4, 'a/')");
+                X("INSERT INTO SystemIndex_Gthr (ScopeID, FileName, DocumentID) VALUES (5, 'f1.txt', 1), (5, 'gone.txt', 4)");
+            }
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        }
         string Sha(string p) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(p)));
         var files = Directory.GetFiles(dir).Select(p => new { path = Path.GetRelativePath(pkg, p).Replace('\\', '/'), size = new FileInfo(p).Length, sha256 = Sha(p) }).ToArray();
         var manifest = new
@@ -210,6 +225,130 @@ public sealed class RemoteCollectionTests : IDisposable
         Assert.NotEqual(Path.GetDirectoryName(ws.FullPath(db1.StoredPath)), Path.GetDirectoryName(ws.FullPath(db2.StoredPath)));
         Assert.False(File.Exists(ws.FullPath(db2.StoredPath) + "-wal"));
         Assert.Contains(Parse(db2).Gaps, g => g.Artifact == "Windows.db-wal");
+    }
+
+    [Fact]
+    public void The_search_index_step_copies_Windows_gather_db_from_the_same_shadow_copy_in_the_same_block_and_the_script_parses()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["search-index"]);
+        var script = RemoteCollection.PackageScript(req, sha);
+        int made = script.IndexOf("Win32_ShadowCopy -MethodName Create", StringComparison.Ordinal);
+        int gdb = script.IndexOf("$root + 'Windows-gather.db'", StringComparison.Ordinal);
+        int gwal = script.IndexOf("$root + 'Windows-gather.db-wal'", StringComparison.Ordinal);
+        int fin = script.IndexOf("Remove-CimInstance", StringComparison.Ordinal);
+        Assert.True(made > 0 && made < gdb && gdb < fin && gwal < fin, "the gather copy must sit between the shadow copy creation and its deletion");
+        // both files or neither: a failed copy removes the database it just wrote; a refused or missing gather is reported as text, never a failed step
+        Assert.Contains("Remove-Item -LiteralPath $gdb, ($gdb + '-wal')", script);
+        Assert.Contains("gather: absent", script);
+        Assert.Contains("ReparsePoint", script);
+        Assert.Contains("2GB", script);
+        // PowerShell 5.1 itself must accept the generated script
+        var file = Path.Combine(_root, "syntax", "collect.ps1");
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        File.WriteAllText(file, script);
+        var check = Path.Combine(_root, "syntax", "check.ps1");
+        File.WriteAllText(check, "param([string]$f) $e = $null; [void][System.Management.Automation.Language.Parser]::ParseFile($f, [ref]$null, [ref]$e); if ($e.Count -gt 0) { $e | ForEach-Object { $_.Message }; exit 1 }");
+        var psi = new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{check}\" \"{file}\"")
+        { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
+        psi.Environment.Remove("PSModulePath");
+        using var pr = Process.Start(psi)!;
+        var outText = pr.StandardOutput.ReadToEnd(); pr.StandardError.ReadToEnd(); pr.WaitForExit();
+        Assert.True(pr.ExitCode == 0, outText);
+    }
+
+    [Fact]
+    public void Gather_database_and_journal_of_a_package_are_typed_only_by_their_exact_path_and_content()
+    {
+        var pkg = Path.Combine(_root, "pkg3");
+        var si = Path.Combine(pkg, "files", RemoteCollection.SearchIndexFolder); Directory.CreateDirectory(si);
+        var db = Path.Combine(si, "Windows-gather.db");
+        using (var c = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={db};Pooling=False"))
+        {
+            c.Open();
+            using var cmd = c.CreateCommand(); cmd.CommandText = "CREATE TABLE t(x INTEGER)"; cmd.ExecuteNonQuery();
+        }
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        var rel = "files/" + RemoteCollection.SearchIndexFolder + "/Windows-gather.db";
+        Assert.Equal(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName, RemoteCollection.ImportKind(rel, db));
+        Assert.Equal(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.WalSourceType, RemoteCollection.ImportKind(rel + "-wal", db));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/elsewhere/Windows-gather.db", db));
+        var notSqlite = Path.Combine(si, "x.bin"); File.WriteAllBytes(notSqlite, new byte[64]);
+        Assert.Equal("file", RemoteCollection.ImportKind(rel, notSqlite));
+    }
+
+    private List<TimelineEvent> ParseIndexPair(CaseWorkspace ws, EvidenceItem db, EvidenceItem gdb)
+    {
+        var events = new List<TimelineEvent>();
+        foreach (var (i, parser) in new (EvidenceItem, LogAnalyzer.Dfir.Parsing.IEvidenceParser)[] { (db, new LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser()), (gdb, new LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser()) })
+        {
+            var sink = new ListSink();
+            parser.Parse(i, ws.FullPath(i.StoredPath), sink, default);
+            events.AddRange(sink.Events);
+        }
+        return events;
+    }
+
+    [Fact]
+    public void A_package_with_an_ok_search_step_stores_gather_beside_Windows_db_with_a_common_moment_key_and_the_rule_finds_the_file_only_gather_knows()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["search-index"]);
+        var check = RemoteCollection.Verify(ws, IndexPackage(req, sha, "ok", withWal: true, "pk_g_ok", withGather: true));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var items = RemoteCollection.Import(ws, check);
+        var db = items.Single(i => i.SourceType == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName);
+        var gdb = items.Single(i => i.SourceType == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName);
+        Assert.Equal(Path.GetDirectoryName(ws.FullPath(db.StoredPath)), Path.GetDirectoryName(ws.FullPath(gdb.StoredPath)));
+        Assert.StartsWith("WindowsSearch_", Path.GetFileName(Path.GetDirectoryName(ws.FullPath(gdb.StoredPath))));
+        Assert.Contains(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.GatherSameSnapshotNote, gdb.Notes);
+        Assert.Contains(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SameSnapshotNote, db.Notes);
+        var key = Path.GetFileName(Path.GetDirectoryName(ws.FullPath(gdb.StoredPath)))!["WindowsSearch_".Length..];
+        Assert.EndsWith(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SnapshotKeyPrefix + key, gdb.Notes);
+        Assert.EndsWith(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SnapshotKeyPrefix + key, db.Notes);
+
+        var events = ParseIndexPair(ws, db, gdb);
+        Assert.Contains(events, e => e.Source == "WindowsSearch");
+        Assert.Contains(events, e => e.Source == "WindowsSearchGather");
+        Assert.All(events, e => Assert.Equal(key, e.Fields[LogAnalyzer.Dfir.Analysis.Wp11Rules.SearchMomentField]));
+        var found = LogAnalyzer.Dfir.Analysis.Wp11Rules.Run(events, [], () => "F-1").Where(f => f.RuleId == "WSEARCH-GATHER-ONLY").ToList();
+        var one = Assert.Single(found);
+        Assert.Contains("gone.txt", one.File);
+    }
+
+    [Fact]
+    public void A_package_whose_search_step_did_not_end_ok_gets_no_same_snapshot_note_no_key_and_no_finding()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["search-index"]);
+        var check = RemoteCollection.Verify(ws, IndexPackage(req, sha, "failed", withWal: false, "pk_g_failed", withGather: true));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var items = RemoteCollection.Import(ws, check);
+        var db = items.Single(i => i.SourceType == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName);
+        var gdb = items.Single(i => i.SourceType == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName);
+        Assert.DoesNotContain(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.GatherSameSnapshotNote, gdb.Notes);
+        Assert.DoesNotContain(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SnapshotKeyPrefix, gdb.Notes);
+        Assert.DoesNotContain(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SnapshotKeyPrefix, db.Notes);
+        var events = ParseIndexPair(ws, db, gdb);
+        Assert.NotEmpty(events);
+        Assert.All(events, e => Assert.False(e.Fields.ContainsKey(LogAnalyzer.Dfir.Analysis.Wp11Rules.SearchMomentField)));
+        Assert.DoesNotContain(LogAnalyzer.Dfir.Analysis.Wp11Rules.Run(events, [], () => "F-1"), f => f.RuleId == "WSEARCH-GATHER-ONLY");
+    }
+
+    [Fact]
+    public void A_gather_file_swapped_after_Verify_is_refused_at_import_and_nothing_stays_beside_Windows_db()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["search-index"]);
+        var pkg = IndexPackage(req, sha, "ok", withWal: false, "pk_g_swap", withGather: true);
+        var check = RemoteCollection.Verify(ws, pkg);
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        File.AppendAllText(Path.Combine(pkg, "files", RemoteCollection.SearchIndexFolder, "Windows-gather.db"), "tampered");
+        Assert.Throws<InvalidOperationException>(() => RemoteCollection.Import(ws, check));
+        // the folder of the pair is removed with everything in it
+        var raw = ws.RawDir("remote:PC01");
+        var left = Directory.Exists(raw) ? Directory.GetFiles(raw, "Windows*.db*", SearchOption.AllDirectories) : [];
+        Assert.Empty(left);
     }
 
     [Fact]

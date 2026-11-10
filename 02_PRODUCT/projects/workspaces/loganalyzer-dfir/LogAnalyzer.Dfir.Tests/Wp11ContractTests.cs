@@ -15,7 +15,7 @@ public class Wp11ContractTests
         "SMB-ADMIN-SHARE", "SMB-SHARE-PERMS-CHANGED", "ACCOUNT-CREATED", "ACCOUNT-ADDED-PRIVILEGED-GROUP", "ACCOUNT-CREATED-THEN-USED",
         "REMOTE-RDP-INTERNAL", "REMOTE-WINRM", "REMOTE-PSEXEC", "REMOTE-SSH", "SECURITY-AGENT-STOPPED", "VSS-SNAPSHOT-DELETED",
         "DNS-RARE-DOMAIN", "DNS-SERVER-CHANGED", "REMOTE-TOOL-PRESENT", "REMOTE-TOOL-EXECUTED", "DISCOVERY-BURST",
-        "KERBEROAST-RC4", "ASREP-ROAST", "ADCS-SAN", "NTLM-RELAY-MACHINE", "EDR-WFP-BLOCK", "DEF-HISTORY-ONLY",
+        "KERBEROAST-RC4", "ASREP-ROAST", "ADCS-SAN", "NTLM-RELAY-MACHINE", "EDR-WFP-BLOCK", "DEF-HISTORY-ONLY", "WSEARCH-GATHER-ONLY",
     ];
 
     /// <summary>A timeline in which every rule fires at least once.</summary>
@@ -52,6 +52,10 @@ public class Wp11ContractTests
         Ev("Microsoft-Windows-Windows Defender/Operational", 1150, 22, "Microsoft-Windows-Windows Defender"),   // the Defender channel was collected, with no 1116
         Row("Artifact:DefenderDetectionHistory", 23, "powershell.exe", @"C:\LA\eicar\eicar-test.com", "275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f",
             ("Detection ID", "{2169D50A-AB8F-4CC5-992A-DEAFEE4FAE82}"), ("Threat Name", "Virus:DOS/EICAR_Test_File"), ("Path", @"file:_C:\LA\eicar\eicar-test.com")),
+        // Windows Search: the store knows WorkId 1811, the gatherer also knows DocumentID 1827 (same shadow copy)
+        Row("WindowsSearch", 24, path: @"C:\LA\TEST-LA-gather-aste.txt", f: [("WorkId", "1811"), (Wp11Rules.SearchMomentField, "{SNAP-C}")]),
+        Row("WindowsSearchGather", 24.1, path: @"C:\LA\TEST-LA-gather-aste.txt", f: [("DocumentID", "1811"), ("IsScopePattern", "nu"), (Wp11Rules.SearchMomentField, "{SNAP-C}")]),
+        Row("WindowsSearchGather", 24.2, path: @"C:\LA\TEST-LA-gather-sters.txt", f: [("DocumentID", "1827"), ("IsScopePattern", "nu"), (Wp11Rules.SearchMomentField, "{SNAP-C}")]),
     ];
 
     private static List<Finding> Enriched() => FindingContract.Enrich(Correlation.Run(Everything())).ToList();

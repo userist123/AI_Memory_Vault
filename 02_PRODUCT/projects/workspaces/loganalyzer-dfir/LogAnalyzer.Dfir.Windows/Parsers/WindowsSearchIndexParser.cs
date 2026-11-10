@@ -80,11 +80,17 @@ public sealed class WindowsSearchIndexParser : EvidenceParserBase
         {
             var copy = SearchSqliteCopy.Prepare(Spec, item, fullPath, work, result);
             using var c = new SqliteConnection(SearchSqliteCopy.ConnectionString(copy));
+            // the moment key is stamped on the events only for a pair the application itself vouches for; any gap (cap, damage, journal not applied)
+            // marks the read incomplete, because the rule that compares this store with Windows-gather.db would then see rows missing that exist
+            var tap = new SearchSqliteCopy.MomentSink(sink, SearchSqliteCopy.SnapshotKey(Spec, item, fullPath));
+            sink = tap;
+            bool complete = false;
             try
             {
                 c.Open();
                 SearchSqliteCopy.RegisterSchemaCollations(c);
-                Read(c, item, sink, result, _maxEvents, ct);
+                // a WorkId without a path has no event: the gather rule would report its gatherer row as missing, so the moment is not comparable
+                complete = Read(c, item, sink, result, _maxEvents, ct) == 0;
             }
             catch (SqliteException ex)
             {
@@ -93,6 +99,10 @@ public sealed class WindowsSearchIndexParser : EvidenceParserBase
                 else result.MalformedRecords++;
                 result.Gaps.Add(new EvidenceGap("Windows.db", result.Records == 0 ? EvidenceStatus.Failed : EvidenceStatus.Partial, $"baza SQLite nu a putut fi citită până la capăt: {Clip(ex.Message)}",
                     "Intrările rămase din index nu au fost citite", "Windows.db recolectat din nou (cu -wal și -shm), sau Windows-gather.db cu altă unealtă", "Posibil"));
+            }
+            finally
+            {
+                if (!complete || result.Gaps.Count > 0 || result.MalformedRecords > 0 || result.Status == EvidenceStatus.Failed) tap.MarkIncomplete();
             }
         }
         finally
@@ -104,7 +114,8 @@ public sealed class WindowsSearchIndexParser : EvidenceParserBase
 
     private static readonly SearchSqliteSpec Spec = new(DatabaseFileName, [ValueTable, MetaTable], SameSnapshotNote, NoWalNote, CollectedBy, MaxFileBytes);
 
-    private static void Read(SqliteConnection c, EvidenceItem item, IEventSink sink, ParseResult result, int maxEvents, CancellationToken ct)
+    /// <summary>Returns the number of WorkIds read that have no path (no event): the gather comparison would wrongly see them as missing.</summary>
+    private static int Read(SqliteConnection c, EvidenceItem item, IEventSink sink, ParseResult result, int maxEvents, CancellationToken ct)
     {
         // table names are constants; the lookup values are parameters
         var tables = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
@@ -122,7 +133,7 @@ public sealed class WindowsSearchIndexParser : EvidenceParserBase
             result.Error = "Baza nu are tabelele SystemIndex_1_PropertyStore și SystemIndex_1_PropertyStore_Metadata: nu este un index Windows Search.";
             result.Gaps.Add(new EvidenceGap("Windows.db", EvidenceStatus.Failed, "nu este indexul Windows Search (tabelele SystemIndex_1_* lipsesc)",
                 "Fișierul nu a fost citit ca index", "Windows.db al indexului Windows Search din ProgramData\\Microsoft\\Search\\Data\\Applications\\Windows", "Nu"));
-            return;
+            return 0;
         }
 
         // column id -> slot, from the metadata table by name (the ids differ from one machine to another)
@@ -145,7 +156,7 @@ public sealed class WindowsSearchIndexParser : EvidenceParserBase
         {
             result.Gaps.Add(new EvidenceGap("Windows.db", EvidenceStatus.Failed, "tabela de metadate nu are System.ItemPathDisplay nici System.ItemUrl",
                 "Nicio intrare nu are cale, deci nu s-a produs niciun eveniment", "Windows.db recolectat din nou", "Posibil"));
-            return;
+            return 0;
         }
 
         var ids = slotOf.Keys.OrderBy(k => k).ToList();
@@ -163,21 +174,22 @@ public sealed class WindowsSearchIndexParser : EvidenceParserBase
         using var rd = q.ExecuteReader();
 
         var cur = new object?[Names.Length];
-        long curWork = 0; bool have = false;
+        long curWork = 0; bool have = false; int pathless = 0;
         while (rd.Read())
         {
             ct.ThrowIfCancellationRequested();
             if (rd.GetValue(0) is not long work || rd.GetValue(1) is not long col || !slotOf.TryGetValue(col, out var slot)) continue;
             if (!have || work != curWork)
             {
-                if (have && !Emit(curWork, cur, item, sink, result, maxEvents)) return;
+                if (have) { var n = result.Records; if (!Emit(curWork, cur, item, sink, result, maxEvents)) return pathless; if (result.Records == n) pathless++; }
                 Array.Clear(cur);
                 curWork = work; have = true;
             }
             var v = rd.GetValue(2);
             if (cur[slot] is null && v is not DBNull) cur[slot] = v;   // first value of a property wins
         }
-        if (have) Emit(curWork, cur, item, sink, result, maxEvents);
+        if (have) { var n = result.Records; if (Emit(curWork, cur, item, sink, result, maxEvents) && result.Records == n) pathless++; }
+        return pathless;
     }
 
     /// <summary>False when the event cap was reached (a gap is written, reading stops).</summary>

@@ -77,7 +77,8 @@ public static partial class Wp11Rules
     private sealed record AdItem(Severity Severity, DateTimeOffset? Start, DateTimeOffset? End, string Who, EvidenceRef? First, Func<Finding> Make);
 
     /// <summary>The most serious and earliest findings up to the cap, one by one; the rest are one Low summary (a spray over many accounts would give hundreds).</summary>
-    private static void EmitCapped(Ctx c, List<Finding> o, List<AdItem> items, string ruleId, string category, string mitre, string nounSg, string nounPl)
+    private static void EmitCapped(Ctx c, List<Finding> o, List<AdItem> items, string ruleId, string category, string mitre, string nounSg, string nounPl,
+        string? why = null, string? alternative = null)
     {
         var ordered = items.OrderByDescending(i => i.Severity).ThenBy(i => i.Start).ToList();
         var listed = ordered.Take(AdMaxFindings).OrderBy(i => i.Start).ToList();
@@ -92,10 +93,10 @@ public static partial class Wp11Rules
             User = Join(rest.Select(r => r.Who), 5),
             PlainWhat = $"mai sunt {RoT(rest.Count, nounSg, nounPl)} de același fel, neafișate una câte una",
             Description = $"Primele {RoT(AdMaxFindings, nounSg, nounPl)} (cele mai grave și cele mai vechi) sunt listate una câte una; restul de {rest.Count}, ale: {Join(rest.Select(r => r.Who), 5)}, sunt în cronologie. " +
-                          "Ce s-a întâmplat: tiparul s-a repetat la scară mare. De ce contează: o întindere atât de mare arată adesea o unealtă automată sau un scanner. Ce verificați: sursa comună a evenimentelor.",
+                          (why ?? "Ce s-a întâmplat: tiparul s-a repetat la scară mare. De ce contează: o întindere atât de mare arată adesea o unealtă automată sau un scanner. Ce verificați: sursa comună a evenimentelor."),
             ClassificationReason = "Limită de afișare, nu o concluzie.",
             SupportingEvidence = rest.Where(r => r.First is not null).Take(20).Select(r => r.First!).ToList(),
-            AlternativeExplanations = ["Un scanner de vulnerabilități sau o unealtă de inventar rulată pe scară largă."],
+            AlternativeExplanations = [alternative ?? "Un scanner de vulnerabilități sau o unealtă de inventar rulată pe scară largă."],
             MissingEvidence = ["Identificarea sursei comune a evenimentelor."],
             RecommendedNextSteps = ["Grupați evenimentele după adresa sursă și după oră."],
         });

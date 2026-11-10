@@ -141,10 +141,11 @@ public static class RemoteCollection
                 $err = ''
                 $global:LASTEXITCODE = 0
                 $absent = $false
+                $global:StepNote = ''
                 # wevtutil 15007: the channel does not exist on this station (Sysmon not installed): absent, not a failure (lab SRV01 2026-11-07)
                 # an action that returns '__absent__' found nothing to collect (a folder that does not exist on this station)
                 try { $res = @(& $action); if ($res -contains '__absent__') { $absent = $true; $err = 'folderul nu exista pe statie' } elseif ($LASTEXITCODE -eq 15007) { $absent = $true; $err = 'jurnalul nu exista pe statie (componenta nu este instalata)' } elseif ($LASTEXITCODE -ne 0) { $err = "cod de iesire $LASTEXITCODE" } } catch { $err = $_.Exception.Message }
-                $steps.Add([ordered]@{ artifact = $name; startUtc = $start; endUtc = (Get-Date).ToUniversalTime().ToString('o'); status = $(if ($absent) { 'absent' } elseif ($err) { 'failed' } else { 'ok' }); error = $err })
+                $steps.Add([ordered]@{ artifact = $name; startUtc = $start; endUtc = (Get-Date).ToUniversalTime().ToString('o'); status = $(if ($absent) { 'absent' } elseif ($err) { 'failed' } else { 'ok' }); error = $(if ($err) { $err } else { $global:StepNote }) })
             }
             foreach ($a in $Artifacts) {
                 if ($a.StartsWith('evtx:')) {
@@ -196,6 +197,8 @@ public static class RemoteCollection
                 } elseif ($a -eq 'search-index') {
                     # Windows.db and its -wal from ONE shadow copy, deleted afterwards: a journal from another moment would rebuild a state
                     # that never existed. The search service is not stopped. No shadow copy -> the step fails, nothing is copied.
+                    # Windows-gather.db and its -wal come from the SAME shadow copy (both or neither, independent of the Windows.db pair); a missing or
+                    # failed gather copy does not fail the step, it is reported as text in the step's error field ($global:StepNote).
                     Step $a {
                         $dir = Join-Path $env:ProgramData 'Microsoft\Search\Data\Applications\Windows'
                         if (-not (Test-Path -LiteralPath (Join-Path $dir 'Windows.db'))) { return '__absent__' }
@@ -215,6 +218,20 @@ public static class RemoteCollection
                             }
                             $free = (New-Object IO.DriveInfo ([IO.Path]::GetPathRoot($files))).AvailableFreeSpace
                             if ($need + 256MB -gt $free) { throw "spatiu liber insuficient pentru index ($need octeti); nu a fost copiat" }
+                            # Windows-gather.db and its -wal: size, link and free space (with the Windows.db pair) are checked here too; a gather refused
+                            # for any of these is left out and reported, it does not fail the step
+                            $gNote = 'gather: absent'; $gTake = $false; $gNeed = [long]0
+                            if ((New-Object IO.FileInfo ($root + 'Windows-gather.db')).Exists) {
+                                $gNote = ''; $gTake = $true
+                                foreach ($n in 'Windows-gather.db', 'Windows-gather.db-wal') {
+                                    $fi = New-Object IO.FileInfo ($root + $n)
+                                    if (-not $fi.Exists) { continue }
+                                    if ($fi.Attributes -band [IO.FileAttributes]::ReparsePoint) { $gTake = $false; $gNote = "gather: $n este o legatura, nu este urmata; necopiat" }
+                                    elseif ($fi.Length -gt 2GB) { $gTake = $false; $gNote = "gather: $n depaseste 2 GiB; necopiat" }
+                                    else { $gNeed += $fi.Length }
+                                }
+                                if ($gTake -and $need + $gNeed + 256MB -gt $free) { $gTake = $false; $gNote = "gather: spatiu liber insuficient ($gNeed octeti); necopiat" }
+                            }
                             New-Item -ItemType Directory -Path $d -Force | Out-Null
                             try {
                                 [IO.File]::Copy($root + 'Windows.db', (Join-Path $d 'Windows.db'), $false)
@@ -223,6 +240,20 @@ public static class RemoteCollection
                                 # both files or neither: a database left without the journal of its own snapshot would be read as a complete pair
                                 Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue
                                 throw
+                            }
+                            # Windows-gather.db: both files or neither, never a database left without the journal of its own snapshot; no link is followed
+                            # (the files are read in the shadow copy by full path). The gather copy never fails the step.
+                            $global:StepNote = $gNote
+                            if ($gTake) {
+                                $gdb = Join-Path $d 'Windows-gather.db'
+                                try {
+                                    [IO.File]::Copy($root + 'Windows-gather.db', $gdb, $false)
+                                    try { [IO.File]::Copy($root + 'Windows-gather.db-wal', ($gdb + '-wal'), $false) } catch [IO.FileNotFoundException] { }
+                                    $global:StepNote = ''
+                                } catch {
+                                    Remove-Item -LiteralPath $gdb, ($gdb + '-wal') -Force -ErrorAction SilentlyContinue
+                                    $global:StepNote = "gather: necopiat ($($_.Exception.Message))"
+                                }
                             }
                         } finally {
                             if ($sc) { $sc | Remove-CimInstance -ErrorAction Stop }
@@ -317,6 +348,9 @@ public static class RemoteCollection
         : relativePath.Equals("files/" + SearchIndexFolder + "/Windows.db", StringComparison.OrdinalIgnoreCase)
             && Investigation.InvestigationPipeline.ImportType(fullPath) is var s && s == Parsers.WindowsSearchIndexParser.SourceTypeName ? s
         : relativePath.Equals("files/" + SearchIndexFolder + "/Windows.db-wal", StringComparison.OrdinalIgnoreCase) ? WindowsSearchIndexCollector.WalSourceType
+        : relativePath.Equals("files/" + SearchIndexFolder + "/Windows-gather.db", StringComparison.OrdinalIgnoreCase)
+            && Investigation.InvestigationPipeline.ImportType(fullPath) is var g && g == Parsers.WindowsSearchGatherParser.SourceTypeName ? g
+        : relativePath.Equals("files/" + SearchIndexFolder + "/Windows-gather.db-wal", StringComparison.OrdinalIgnoreCase) ? Parsers.WindowsSearchGatherParser.WalSourceType
         : "file";
 
     /// <summary>Imports a verified package: the manifest, then every file with the manifest as parent and custody from the target.</summary>
@@ -334,16 +368,25 @@ public static class RemoteCollection
         // beside the database is the one of this package (never one left by an earlier import). The pair is vouched for as one shadow copy only
         // when the package's search-index step ended "ok": the script then copied both files, or the database alone when there was no journal.
         bool indexStepOk = m.Steps.Any(s => s.Artifact == "search-index" && s.Status == "ok");
-        string? indexDir = null;
+        // Windows-gather.db and its -wal go into the same folder; the folder id is the moment key written in the notes of both databases (the package script
+        // takes them from one shadow copy, and the step must be "ok" for the note and the key to be written)
+        string? indexDir = null, indexKey = null;
         foreach (var f in m.Files)
         {
             var full = Path.Combine(check.PackageDir, f.Path);
             var kind = ImportKind(f.Path, full);
             EvidenceItem item;
-            if (kind == Parsers.WindowsSearchIndexParser.SourceTypeName || kind == WindowsSearchIndexCollector.WalSourceType)
+            if (kind is Parsers.WindowsSearchIndexParser.SourceTypeName or WindowsSearchIndexCollector.WalSourceType
+                     or Parsers.WindowsSearchGatherParser.SourceTypeName or Parsers.WindowsSearchGatherParser.WalSourceType)
             {
-                if (indexDir is null) { indexDir = Path.Combine(ws.RawDir(source), "WindowsSearch_" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(indexDir); }
-                var dest = Path.Combine(indexDir, kind == WindowsSearchIndexCollector.WalSourceType ? "Windows.db-wal" : "Windows.db");
+                if (indexDir is null) { indexKey = Guid.NewGuid().ToString("N"); indexDir = Path.Combine(ws.RawDir(source), "WindowsSearch_" + indexKey); Directory.CreateDirectory(indexDir); }
+                var dest = Path.Combine(indexDir, kind switch
+                {
+                    WindowsSearchIndexCollector.WalSourceType => "Windows.db-wal",
+                    Parsers.WindowsSearchGatherParser.SourceTypeName => Parsers.WindowsSearchGatherParser.DatabaseFileName,
+                    Parsers.WindowsSearchGatherParser.WalSourceType => Parsers.WindowsSearchGatherParser.DatabaseFileName + "-wal",
+                    _ => "Windows.db",
+                });
                 File.Copy(full, dest);
                 // checked before the file is registered beside the database: a journal swapped after Verify must not stay next to a vouched-for database
                 var copied = Hashing.Sha256File(dest);
@@ -354,7 +397,8 @@ public static class RemoteCollection
                 }
                 File.SetLastWriteTimeUtc(dest, File.GetLastWriteTimeUtc(full));
                 item = ws.RegisterStored(dest, full, source, kind, TemporalType.Historical, CollectorName, DfirInfo.ApplicationVersion, action: "imported", parentEvidenceId: manifest.EvidenceId,
-                    notes: $"{m.Host}:{f.Path}; {notes}" + (indexStepOk && kind == Parsers.WindowsSearchIndexParser.SourceTypeName ? $"; copia de umbră a pachetului, {Parsers.WindowsSearchIndexParser.SameSnapshotNote}" : ""));
+                    notes: $"{m.Host}:{f.Path}; {notes}" + (indexStepOk && kind == Parsers.WindowsSearchIndexParser.SourceTypeName ? $"; copia de umbră a pachetului, {Parsers.WindowsSearchIndexParser.SameSnapshotNote}; {Parsers.WindowsSearchGatherParser.SnapshotKeyPrefix}{indexKey}"
+                        : indexStepOk && kind == Parsers.WindowsSearchGatherParser.SourceTypeName ? $"; copia de umbră a pachetului, {Parsers.WindowsSearchGatherParser.GatherSameSnapshotNote}; {Parsers.WindowsSearchGatherParser.SnapshotKeyPrefix}{indexKey}" : ""));
             }
             else
                 item = ws.ImportFile(full, source, kind,
