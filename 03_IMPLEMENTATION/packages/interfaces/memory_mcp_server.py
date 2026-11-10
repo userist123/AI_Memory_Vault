@@ -22,7 +22,7 @@ There is no attest tool: only the owner verifies a note. There is no tool that w
 ontology slot. Search uses the production defaults; nothing here turns the graph or spreading
 activation on.
 
-Every call appends one line to the per-user usage log (interfaces/vault_runtime.py): the
+Every call appends one line to the per-user usage log (security/vault_secret_runtime.py, also reachable as interfaces.vault_runtime): the
 tool, the client, the SHA-256 of the query (never its text), the number of results, their ids
 and the latency. stdout belongs to the protocol, so this module never prints to it.
 

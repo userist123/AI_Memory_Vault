@@ -79,8 +79,7 @@
     {
       "name": "L8_apps",
       "units": [
-        "root/cognitive_core",
-        "root/scripts"
+        "root/cognitive_core"
       ]
     }
   ],
@@ -98,25 +97,7 @@
   "baseline_dynamic_imports": {
     "packages/memory_controller": 2
   },
-  "baseline_edges": [
-    {
-      "from": "packages/security",
-      "to": "packages/interfaces",
-      "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-14",
-      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06)"
-    },
-    {
-      "from": "packages/vault_access",
-      "to": "packages/interfaces",
-      "imports": 2,
-      "since": "2026-11-09",
-      "owner_wp": "WP-14",
-      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06)",
-      "widened_by": "WP-07"
-    }
-  ],
+  "baseline_edges": [],
   "aliases": {
     "packages/memory_controller": {
       "__path__": [

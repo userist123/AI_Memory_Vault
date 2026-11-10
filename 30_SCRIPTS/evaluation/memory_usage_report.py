@@ -1,7 +1,7 @@
 """Report on real use of the vault's memory, from the per-user usage log.
 
 Every MCP or CLI call appends one line to `usage.jsonl` in the per-user vault directory
-(03_IMPLEMENTATION/packages/interfaces/vault_runtime.py). This script reads that log and
+(03_IMPLEMENTATION/packages/security/vault_secret_runtime.py). This script reads that log and
 reports, with numbers computed here and nothing typed by hand:
 
 * calls per day and per tool;

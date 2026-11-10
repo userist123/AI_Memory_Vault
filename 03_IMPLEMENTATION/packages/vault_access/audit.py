@@ -28,7 +28,7 @@ _LOCK = threading.Lock()
 
 def default_audit_path() -> Path:
     try:
-        from interfaces import vault_runtime
+        from security import vault_secret_runtime as vault_runtime
         return vault_runtime.state_dir() / "vault_access_audit.jsonl"
     except Exception:  # noqa: BLE001 - the runtime module may be unavailable in isolation
         return Path.home() / ".config" / "ai-memory-vault" / "vault_access_audit.jsonl"
