@@ -27,6 +27,10 @@
         ]
       },
       "name": "cognitive_core",
+      "shim_target_source": {
+        "packages/cognitive_core": "string_constants",
+        "root/cognitive_core": "string_constants"
+      },
       "shim_targets": {
         "packages/cognitive_core": [
           "packages/graph",
@@ -105,6 +109,7 @@
         ]
       },
       "name": "security",
+      "shim_target_source": {},
       "shim_targets": {},
       "winner": "root/security"
     }
@@ -161,7 +166,7 @@
       "site-packages",
       "venv"
     ],
-    "py_files_scanned": 2195,
+    "py_files_scanned": 2197,
     "pythonpath_order": [
       ".",
       "03_IMPLEMENTATION/packages",
@@ -174,6 +179,7 @@
       "loc": "linii non-goale care nu încep cu #; docstring-urile se numără",
       "shim_credit": "un import prin shim __path__ creditează și modulul servit"
     },
+    "test_paths_promoted_to_production": [],
     "testpaths": [
       "20_TESTS"
     ]
@@ -470,12 +476,1757 @@
       }
     ]
   },
+  "string_import_refs": [
+    {
+      "file": ".agents/skills/audio-transcriber/examples/basic-transcription.sh",
+      "kind": "python_c",
+      "line": 52,
+      "module": "faster_whisper",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/examples/basic-transcription.sh",
+      "kind": "python_c",
+      "line": 55,
+      "module": "whisper",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/scripts/install-requirements.sh",
+      "kind": "python_m",
+      "line": 28,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/scripts/install-requirements.sh",
+      "kind": "python_m",
+      "line": 72,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/scripts/install-requirements.sh",
+      "kind": "python_m",
+      "line": 74,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/scripts/install-requirements.sh",
+      "kind": "python_m",
+      "line": 79,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/scripts/install-requirements.sh",
+      "kind": "python_m",
+      "line": 81,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/scripts/install-requirements.sh",
+      "kind": "python_m",
+      "line": 88,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/scripts/install-requirements.sh",
+      "kind": "python_m",
+      "line": 91,
+      "module": "venv",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/scripts/install-requirements.sh",
+      "kind": "python_m",
+      "line": 106,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/scripts/install-requirements.sh",
+      "kind": "python_m",
+      "line": 108,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/scripts/install-requirements.sh",
+      "kind": "python_c",
+      "line": 140,
+      "module": "faster_whisper",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/scripts/install-requirements.sh",
+      "kind": "python_c",
+      "line": 143,
+      "module": "whisper",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/scripts/transcribe.py",
+      "kind": "py_argv_m",
+      "line": 39,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/audio-transcriber/scripts/transcribe.py",
+      "kind": "py_argv_m",
+      "line": 51,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/claude-monitor/scripts/api_bench.py",
+      "kind": "py_argv_m",
+      "line": 26,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/claude-monitor/scripts/health_check.py",
+      "kind": "py_argv_m",
+      "line": 29,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/claude-monitor/scripts/monitor.py",
+      "kind": "py_argv_m",
+      "line": 39,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/eval-driven-dev/resources/setup.sh",
+      "kind": "python_c",
+      "line": 25,
+      "module": "pixie",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/eval-driven-dev/resources/setup.sh",
+      "kind": "python_c",
+      "line": 27,
+      "module": "pixie",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/eval-driven-dev/resources/setup.sh",
+      "kind": "python_c",
+      "line": 29,
+      "module": "pixie",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/fedora-hyprland-installer/tests/test-detection.sh",
+      "kind": "python_c",
+      "line": 13,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/fedora-hyprland-installer/tests/test-detection.sh",
+      "kind": "python_c",
+      "line": 13,
+      "module": "sys",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/fedora-hyprland-installer/tests/test-detection.sh",
+      "kind": "python_c",
+      "line": 19,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/fedora-hyprland-installer/tests/test-detection.sh",
+      "kind": "python_c",
+      "line": 19,
+      "module": "sys",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/autonomy/run.sh",
+      "kind": "python_c",
+      "line": 351,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/autonomy/run.sh",
+      "kind": "python_c",
+      "line": 356,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/autonomy/run.sh",
+      "kind": "python_c",
+      "line": 357,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/autonomy/run.sh",
+      "kind": "python_c",
+      "line": 358,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/autonomy/run.sh",
+      "kind": "python_c",
+      "line": 359,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/autonomy/run.sh",
+      "kind": "python_c",
+      "line": 1307,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/autonomy/run.sh",
+      "kind": "python_c",
+      "line": 1423,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/benchmarks/prepare-submission.sh",
+      "kind": "python_m",
+      "line": 158,
+      "module": "json.tool",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/benchmarks/prepare-submission.sh",
+      "kind": "python_m",
+      "line": 163,
+      "module": "swebench.harness.run_evaluation",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/benchmarks/run-benchmarks.sh",
+      "kind": "python_m",
+      "line": 141,
+      "module": "venv",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/benchmarks/run-benchmarks.sh",
+      "kind": "python_m",
+      "line": 945,
+      "module": "swebench.harness.run_evaluation",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/benchmarks/run-benchmarks.sh",
+      "kind": "python_m",
+      "line": 991,
+      "module": "swebench.harness.run_evaluation",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/benchmarks/run-benchmarks.sh",
+      "kind": "python_c",
+      "line": 1008,
+      "module": "swebench",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/benchmarks/run-benchmarks.sh",
+      "kind": "python_m",
+      "line": 1182,
+      "module": "swebench.harness.run_evaluation",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/benchmarks/run-benchmarks.sh",
+      "kind": "python_m",
+      "line": 1195,
+      "module": "swebench.harness.run_evaluation",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/benchmarks/run-benchmarks.sh",
+      "kind": "python_c",
+      "line": 1218,
+      "module": "swebench",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/benchmarks/run-benchmarks.sh",
+      "kind": "python_m",
+      "line": 1758,
+      "module": "swebench.harness.run_evaluation",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/benchmarks/run-benchmarks.sh",
+      "kind": "python_m",
+      "line": 1850,
+      "module": "swebench.harness.run_evaluation",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/scripts/export-to-vibe-kanban.sh",
+      "kind": "python_c",
+      "line": 33,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/scripts/loki-wrapper.sh",
+      "kind": "python_c",
+      "line": 87,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/scripts/loki-wrapper.sh",
+      "kind": "python_c",
+      "line": 136,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/tests/test-bootstrap.sh",
+      "kind": "python_c",
+      "line": 134,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/tests/test-task-queue.sh",
+      "kind": "python_c",
+      "line": 84,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/tests/test-task-queue.sh",
+      "kind": "python_c",
+      "line": 97,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/tests/test-task-queue.sh",
+      "kind": "python_c",
+      "line": 212,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/loki-mode/tests/test-task-queue.sh",
+      "kind": "python_c",
+      "line": 334,
+      "module": "json",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/notebooklm/scripts/__init__.py",
+      "kind": "py_argv_m",
+      "line": 66,
+      "module": "patchright",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/notebooklm/scripts/setup_environment.py",
+      "kind": "py_argv_m",
+      "line": 76,
+      "module": "patchright",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/video-downloader/scripts/download_video.py",
+      "kind": "py_argv_m",
+      "line": 19,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/youtube-summarizer/scripts/install-dependencies.sh",
+      "kind": "python_c",
+      "line": 24,
+      "module": "youtube_transcript_api",
+      "unit": null
+    },
+    {
+      "file": ".agents/skills/youtube-summarizer/scripts/install-dependencies.sh",
+      "kind": "python_c",
+      "line": 26,
+      "module": "youtube_transcript_api",
+      "unit": null
+    },
+    {
+      "file": ".claude/skills/cost-router/hook_agent_model.py",
+      "kind": "py_argv_m",
+      "line": 76,
+      "module": "routing.route_cli",
+      "unit": "packages/routing"
+    },
+    {
+      "file": ".github/workflows/active-note-integrity.yml",
+      "kind": "python_m",
+      "line": 35,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/active-note-integrity.yml",
+      "kind": "python_m",
+      "line": 41,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/agent-routing-tests.yml",
+      "kind": "python_m",
+      "line": 53,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/agent-routing-tests.yml",
+      "kind": "python_m",
+      "line": 57,
+      "module": "compileall",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/agent-routing-tests.yml",
+      "kind": "python_m",
+      "line": 66,
+      "module": "routing.route_cli",
+      "unit": "packages/routing"
+    },
+    {
+      "file": ".github/workflows/agent-routing-tests.yml",
+      "kind": "python_m",
+      "line": 67,
+      "module": "routing.route_cli",
+      "unit": "packages/routing"
+    },
+    {
+      "file": ".github/workflows/ai-security-update-watch.yml",
+      "kind": "python_m",
+      "line": 46,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/context-token-economy-gate.yml",
+      "kind": "python_m",
+      "line": 48,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/context-token-economy-gate.yml",
+      "kind": "python_m",
+      "line": 53,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/jarvis-command-center.yml",
+      "kind": "python_m",
+      "line": 43,
+      "module": "compileall",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/jarvis-command-center.yml",
+      "kind": "python_m",
+      "line": 49,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/memory-consolidation.yml",
+      "kind": "python_m",
+      "line": 30,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/memory-consolidation.yml",
+      "kind": "python_m",
+      "line": 31,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/memory-consolidation.yml",
+      "kind": "python_m",
+      "line": 32,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/memory-consolidation.yml",
+      "kind": "python_m",
+      "line": 39,
+      "module": "cognitive_core.memory_v6_cli",
+      "unit": "packages/interfaces"
+    },
+    {
+      "file": ".github/workflows/memory-v6-tests.yml",
+      "kind": "python_m",
+      "line": 48,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/memory-v6-tests.yml",
+      "kind": "python_m",
+      "line": 49,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/planning-influence-mve.yml",
+      "kind": "python_m",
+      "line": 46,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase1-tests.yml",
+      "kind": "python_m",
+      "line": 33,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase1-tests.yml",
+      "kind": "python_m",
+      "line": 36,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase10-tests.yml",
+      "kind": "python_m",
+      "line": 43,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase10-tests.yml",
+      "kind": "python_m",
+      "line": 44,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase10-tests.yml",
+      "kind": "python_m",
+      "line": 47,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase11-tests.yml",
+      "kind": "python_m",
+      "line": 33,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase11-tests.yml",
+      "kind": "python_m",
+      "line": 36,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase12-tests.yml",
+      "kind": "python_m",
+      "line": 33,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase12-tests.yml",
+      "kind": "python_m",
+      "line": 36,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase13-contract-tests.yml",
+      "kind": "python_m",
+      "line": 30,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase13-contract-tests.yml",
+      "kind": "python_m",
+      "line": 32,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase13-tests.yml",
+      "kind": "python_m",
+      "line": 33,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase13-tests.yml",
+      "kind": "python_m",
+      "line": 36,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase14-provenance-tests.yml",
+      "kind": "python_m",
+      "line": 30,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase14-provenance-tests.yml",
+      "kind": "python_m",
+      "line": 32,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase15-provenance-adapter-tests.yml",
+      "kind": "python_m",
+      "line": 30,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase15-provenance-adapter-tests.yml",
+      "kind": "python_m",
+      "line": 32,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase16-historical-dataset-tests.yml",
+      "kind": "python_m",
+      "line": 30,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase16-historical-dataset-tests.yml",
+      "kind": "python_m",
+      "line": 32,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase17-historical-evaluation-runner-tests.yml",
+      "kind": "python_m",
+      "line": 30,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase17-historical-evaluation-runner-tests.yml",
+      "kind": "python_m",
+      "line": 32,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase18-historical-calibration-tests.yml",
+      "kind": "python_m",
+      "line": 30,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase18-historical-calibration-tests.yml",
+      "kind": "python_m",
+      "line": 32,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase19-historical-calibration-holdout.yml",
+      "kind": "python_m",
+      "line": 29,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase19-historical-calibration-holdout.yml",
+      "kind": "python_m",
+      "line": 31,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase19-historical-calibration-holdout.yml",
+      "kind": "python_m",
+      "line": 33,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase2-tests.yml",
+      "kind": "python_m",
+      "line": 32,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase2-tests.yml",
+      "kind": "python_m",
+      "line": 34,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase20-historical-calibration-fit.yml",
+      "kind": "python_m",
+      "line": 30,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase20-historical-calibration-fit.yml",
+      "kind": "python_m",
+      "line": 32,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase21-historical-calibration-holdout-evaluation.yml",
+      "kind": "python_m",
+      "line": 31,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase21-historical-calibration-holdout-evaluation.yml",
+      "kind": "python_m",
+      "line": 33,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase3-tests.yml",
+      "kind": "python_m",
+      "line": 40,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase3-tests.yml",
+      "kind": "python_m",
+      "line": 43,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase4-tests.yml",
+      "kind": "python_m",
+      "line": 40,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase4-tests.yml",
+      "kind": "python_m",
+      "line": 43,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase5-tests.yml",
+      "kind": "python_m",
+      "line": 43,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase5-tests.yml",
+      "kind": "python_m",
+      "line": 44,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase5-tests.yml",
+      "kind": "python_m",
+      "line": 47,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase6-tests.yml",
+      "kind": "python_m",
+      "line": 43,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase6-tests.yml",
+      "kind": "python_m",
+      "line": 44,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/polymarket-phase6-tests.yml",
+      "kind": "python_m",
+      "line": 47,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/prompt-master-eval.yml",
+      "kind": "python_m",
+      "line": 53,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/prompt-master-eval.yml",
+      "kind": "python_m",
+      "line": 59,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/r001-enforcement.yml",
+      "kind": "python_m",
+      "line": 80,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/r001-enforcement.yml",
+      "kind": "python_m",
+      "line": 81,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/r001-enforcement.yml",
+      "kind": "python_m",
+      "line": 82,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/r001-enforcement.yml",
+      "kind": "python_m",
+      "line": 83,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/r001-enforcement.yml",
+      "kind": "python_m",
+      "line": 84,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/r001-enforcement.yml",
+      "kind": "python_c",
+      "line": 96,
+      "module": "memory_vault",
+      "unit": "packages/memory_vault"
+    },
+    {
+      "file": ".github/workflows/r001-enforcement.yml",
+      "kind": "python_c",
+      "line": 96,
+      "module": "memory_vault.graph",
+      "unit": "packages/graph"
+    },
+    {
+      "file": ".github/workflows/r001-enforcement.yml",
+      "kind": "python_c",
+      "line": 96,
+      "module": "memory_vault.memory",
+      "unit": "packages/memory"
+    },
+    {
+      "file": ".github/workflows/r001-enforcement.yml",
+      "kind": "python_m",
+      "line": 136,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/r009b-heldout-benchmark.yml",
+      "kind": "python_m",
+      "line": 45,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/r009b-heldout-benchmark.yml",
+      "kind": "python_m",
+      "line": 52,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/r009b-heldout-benchmark.yml",
+      "kind": "python_m",
+      "line": 68,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/repository-hygiene.yml",
+      "kind": "python_m",
+      "line": 32,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/repository-hygiene.yml",
+      "kind": "python_m",
+      "line": 39,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/repository-hygiene.yml",
+      "kind": "python_m",
+      "line": 51,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/repository-hygiene.yml",
+      "kind": "python_m",
+      "line": 76,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/security-boundary.yml",
+      "kind": "python_m",
+      "line": 31,
+      "module": "compileall",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/security-boundary.yml",
+      "kind": "python_m",
+      "line": 33,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/security-boundary.yml",
+      "kind": "python_m",
+      "line": 37,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/security-boundary.yml",
+      "kind": "python_m",
+      "line": 55,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/security-boundary.yml",
+      "kind": "python_m",
+      "line": 59,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/untrusted-content-guard.yml",
+      "kind": "python_m",
+      "line": 38,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/untrusted-content-guard.yml",
+      "kind": "python_m",
+      "line": 41,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/vault-access.yml",
+      "kind": "python_m",
+      "line": 34,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/vault-access.yml",
+      "kind": "python_m",
+      "line": 42,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/write-path-audit.yml",
+      "kind": "python_m",
+      "line": 36,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": ".github/workflows/write-path-audit.yml",
+      "kind": "python_m",
+      "line": 42,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/START_APP_v2.bat",
+      "kind": "python_c",
+      "line": 45,
+      "module": "sqlite3",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/VERIFICARE_COMPLETA.bat",
+      "kind": "python_c",
+      "line": 141,
+      "module": "PyQt6",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/VERIFICARE_COMPLETA.bat",
+      "kind": "python_c",
+      "line": 143,
+      "module": "PyQt6.QtCharts",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/VERIFICARE_COMPLETA.bat",
+      "kind": "python_c",
+      "line": 152,
+      "module": "PyQt6.QtCharts",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/VERIFICARE_COMPLETA.bat",
+      "kind": "python_c",
+      "line": 167,
+      "module": "ui.widgets",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/fix_pyqt6.bat",
+      "kind": "python_c",
+      "line": 20,
+      "module": "PyQt6.QtWidgets",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/fix_pyqt6.bat",
+      "kind": "python_c",
+      "line": 21,
+      "module": "PyQt6.QtCharts",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/aplicatie-transfer/Aplicatie transfer/verificare_structura.bat",
+      "kind": "python_c",
+      "line": 99,
+      "module": "PyQt6",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/bot/TradingBot/TradingBot/INSTALL.bat",
+      "kind": "python_c",
+      "line": 25,
+      "module": "PyQt6",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/bot/TradingBot/TradingBot/INSTALL.bat",
+      "kind": "python_c",
+      "line": 25,
+      "module": "ccxt",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/bot/TradingBot/TradingBot/INSTALL.bat",
+      "kind": "python_c",
+      "line": 25,
+      "module": "ta",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/bot/TradingBot/TradingBot/INSTALL.bat",
+      "kind": "python_c",
+      "line": 25,
+      "module": "yfinance",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/bot/ZEUS_TradingSystem/trading_app/INSTALL.bat",
+      "kind": "python_m",
+      "line": 19,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/bot/ZEUS_TradingSystem/trading_app/INSTALL.bat",
+      "kind": "python_m",
+      "line": 22,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/bot/ZEUS_TradingSystem/trading_app/INSTALL.bat",
+      "kind": "python_c",
+      "line": 25,
+      "module": "PyQt6",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/bot/ZEUS_TradingSystem/trading_app/INSTALL.bat",
+      "kind": "python_c",
+      "line": 25,
+      "module": "pyqtgraph",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/bot/ZEUS_TradingSystem/trading_app/INSTALL.bat",
+      "kind": "python_c",
+      "line": 25,
+      "module": "ta",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/bot/ZEUS_TradingSystem/trading_app/INSTALL.bat",
+      "kind": "python_c",
+      "line": 25,
+      "module": "yfinance",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/bot/jarvis/jarvis.py",
+      "kind": "py_argv_m",
+      "line": 25,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/bot/trade/cerebras-agent/start.bat",
+      "kind": "python_c",
+      "line": 15,
+      "module": "cerebras",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/bot/trade/owner-agents/start.bat",
+      "kind": "python_c",
+      "line": 15,
+      "module": "google.generativeai",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/tradingbot/TradingBot/INSTALL.bat",
+      "kind": "python_c",
+      "line": 25,
+      "module": "PyQt6",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/tradingbot/TradingBot/INSTALL.bat",
+      "kind": "python_c",
+      "line": 25,
+      "module": "ccxt",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/tradingbot/TradingBot/INSTALL.bat",
+      "kind": "python_c",
+      "line": 25,
+      "module": "ta",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/imported/tradingbot/TradingBot/INSTALL.bat",
+      "kind": "python_c",
+      "line": 25,
+      "module": "yfinance",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/workspaces/jarvis_web/setup_jarvis_voice.ps1",
+      "kind": "python_m",
+      "line": 11,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/workspaces/jarvis_web/setup_jarvis_voice.ps1",
+      "kind": "python_m",
+      "line": 12,
+      "module": "pip",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/workspaces/jarvis_web/test/api_smoke_test.py",
+      "kind": "py_argv_m",
+      "line": 27,
+      "module": "interfaces.api_server",
+      "unit": "packages/interfaces"
+    },
+    {
+      "file": "02_PRODUCT/projects/workspaces/jarvis_web/voice_server.py",
+      "kind": "py_argv_m",
+      "line": 52,
+      "module": "piper.download_voices",
+      "unit": null
+    },
+    {
+      "file": "02_PRODUCT/projects/workspaces/jarvis_web/voice_server.py",
+      "kind": "py_argv_m",
+      "line": 92,
+      "module": "piper",
+      "unit": null
+    },
+    {
+      "file": "03_IMPLEMENTATION/packages/interfaces/real_execution_harness.py",
+      "kind": "py_argv_m",
+      "line": 651,
+      "module": "py_compile",
+      "unit": null
+    },
+    {
+      "file": "03_IMPLEMENTATION/packages/interfaces/real_execution_harness.py",
+      "kind": "py_argv_m",
+      "line": 658,
+      "module": "py_compile",
+      "unit": null
+    },
+    {
+      "file": "03_IMPLEMENTATION/packages/interfaces/real_execution_harness.py",
+      "kind": "py_argv_m",
+      "line": 887,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "03_IMPLEMENTATION/packages/interfaces/real_execution_harness.py",
+      "kind": "py_argv_m",
+      "line": 889,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "03_IMPLEMENTATION/products/xau_kinetic/standalone/run_engine.bat",
+      "kind": "python_m",
+      "line": 4,
+      "module": "xau_kinetic.main",
+      "unit": "products/xau_kinetic"
+    },
+    {
+      "file": "03_IMPLEMENTATION/products/xau_kinetic/standalone/run_tests.bat",
+      "kind": "python_m",
+      "line": 15,
+      "module": "unittest",
+      "unit": null
+    },
+    {
+      "file": "07_EVALUATION/golden_memory_effectiveness_v1/run_benchmark.py",
+      "kind": "py_argv_m",
+      "line": 80,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "07_EVALUATION/golden_memory_effectiveness_v1/run_benchmark.py",
+      "kind": "py_argv_m",
+      "line": 84,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "07_EVALUATION/luna/run_all_v3.py",
+      "kind": "py_argv_m",
+      "line": 50,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "07_EVALUATION/memory_trace/trace_examples.yaml",
+      "kind": "python_m",
+      "line": 41,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/regression/test_phase6_stabilization.py",
+      "kind": "py_argv_m",
+      "line": 91,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/research/test_blocker_severity_downgrade.py",
+      "kind": "py_argv_m",
+      "line": 278,
+      "module": "base",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/research/test_blocker_severity_downgrade.py",
+      "kind": "py_argv_m",
+      "line": 351,
+      "module": "base",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/research/test_blocker_severity_downgrade.py",
+      "kind": "py_argv_m",
+      "line": 367,
+      "module": "base",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_cost_router_pinned_update.py",
+      "kind": "py_argv_m",
+      "line": 202,
+      "module": "rewritten",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_cost_router_pinned_update.py",
+      "kind": "py_argv_m",
+      "line": 298,
+      "module": "symlink",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_cost_router_pinned_update.py",
+      "kind": "py_argv_m",
+      "line": 444,
+      "module": "crlf",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_cost_router_self_update.py",
+      "kind": "py_argv_m",
+      "line": 61,
+      "module": "v1",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_cost_router_token_waste.py",
+      "kind": "py_argv_m",
+      "line": 158,
+      "module": "routing.route_cli",
+      "unit": "packages/routing"
+    },
+    {
+      "file": "20_TESTS/test_git_hooks.py",
+      "kind": "py_argv_m",
+      "line": 30,
+      "module": "init",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_memory_consolidation_command.py",
+      "kind": "py_argv_m",
+      "line": 24,
+      "module": "cognitive_core.memory_v6_cli",
+      "unit": "packages/interfaces"
+    },
+    {
+      "file": "20_TESTS/test_model_agent_execution_harness.py",
+      "kind": "py_argv_m",
+      "line": 76,
+      "module": "py_compile",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_personal_data_guard_formats.py",
+      "kind": "py_argv_m",
+      "line": 151,
+      "module": "add",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_personal_data_guard_formats.py",
+      "kind": "py_argv_m",
+      "line": 153,
+      "module": "remove",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_personal_data_guard_formats.py",
+      "kind": "py_argv_m",
+      "line": 184,
+      "module": "add",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_personal_data_guard_formats.py",
+      "kind": "py_argv_m",
+      "line": 188,
+      "module": "remove",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_private_identifier_guard.py",
+      "kind": "py_argv_m",
+      "line": 59,
+      "module": "x",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_private_identifier_guard.py",
+      "kind": "py_argv_m",
+      "line": 62,
+      "module": "y",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_private_identifier_guard.py",
+      "kind": "py_argv_m",
+      "line": 73,
+      "module": "x",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_route_cli_exit_codes.py",
+      "kind": "py_argv_m",
+      "line": 44,
+      "module": "routing.route_cli",
+      "unit": "packages/routing"
+    },
+    {
+      "file": "20_TESTS/test_suite_does_not_write_telemetry.py",
+      "kind": "py_argv_m",
+      "line": 32,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "20_TESTS/test_vault_access_clients.py",
+      "kind": "py_argv_m",
+      "line": 210,
+      "module": "cognitive_core.vault_cli",
+      "unit": "root/cognitive_core"
+    },
+    {
+      "file": "20_TESTS/test_vault_access_clients.py",
+      "kind": "py_argv_m",
+      "line": 213,
+      "module": "cognitive_core.vault_cli",
+      "unit": "root/cognitive_core"
+    },
+    {
+      "file": "20_TESTS/test_vault_runtime_secret.py",
+      "kind": "py_argv_m",
+      "line": 22,
+      "module": "cognitive_core.recall_cli",
+      "unit": "root/cognitive_core"
+    },
+    {
+      "file": "30_SCRIPTS/evaluation/claude_cost_router_benchmark.py",
+      "kind": "py_argv_m",
+      "line": 168,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "30_SCRIPTS/evaluation/generate_plasticity_report.py",
+      "kind": "py_argv_m",
+      "line": 112,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "30_SCRIPTS/run/Verify-VaultOnWindows.ps1",
+      "kind": "python_c",
+      "line": 53,
+      "module": "sys",
+      "unit": null
+    },
+    {
+      "file": "30_SCRIPTS/run/Verify-VaultOnWindows.ps1",
+      "kind": "python_c",
+      "line": 58,
+      "module": "importlib.util",
+      "unit": null
+    },
+    {
+      "file": "30_SCRIPTS/run/Verify-VaultOnWindows.ps1",
+      "kind": "python_m",
+      "line": 64,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "30_SCRIPTS/run/Verify-VaultOnWindows.ps1",
+      "kind": "python_m",
+      "line": 67,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "30_SCRIPTS/run/Verify-VaultOnWindows.ps1",
+      "kind": "python_m",
+      "line": 73,
+      "module": "cognitive_core.vault_cli",
+      "unit": "root/cognitive_core"
+    },
+    {
+      "file": "30_SCRIPTS/run/Verify-VaultOnWindows.ps1",
+      "kind": "python_m",
+      "line": 76,
+      "module": "cognitive_core.vault_cli",
+      "unit": "root/cognitive_core"
+    },
+    {
+      "file": "30_SCRIPTS/run/Verify-VaultOnWindows.ps1",
+      "kind": "python_m",
+      "line": 91,
+      "module": "cognitive_core.telegram_vault_bot",
+      "unit": "root/cognitive_core"
+    },
+    {
+      "file": "30_SCRIPTS/run/Verify-VaultOnWindows.ps1",
+      "kind": "python_m",
+      "line": 95,
+      "module": "cognitive_core.telegram_vault_bot",
+      "unit": "root/cognitive_core"
+    },
+    {
+      "file": "30_SCRIPTS/run/Verify-VaultOnWindows.ps1",
+      "kind": "python_m",
+      "line": 104,
+      "module": "cognitive_core.telegram_vault_bot",
+      "unit": "root/cognitive_core"
+    },
+    {
+      "file": "30_SCRIPTS/run/start_telegram_vault_bot.ps1",
+      "kind": "python_m",
+      "line": 34,
+      "module": "cognitive_core.telegram_vault_bot",
+      "unit": "root/cognitive_core"
+    },
+    {
+      "file": "30_SCRIPTS/run/start_telegram_vault_bot.ps1",
+      "kind": "python_m",
+      "line": 38,
+      "module": "cognitive_core.telegram_vault_bot",
+      "unit": "root/cognitive_core"
+    },
+    {
+      "file": "30_SCRIPTS/verification/release_readiness_gate.py",
+      "kind": "py_argv_m",
+      "line": 129,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "30_SCRIPTS/verification/release_readiness_gate.py",
+      "kind": "py_argv_m",
+      "line": 162,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "30_SCRIPTS/verification/release_readiness_gate.py",
+      "kind": "py_argv_m",
+      "line": 194,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "30_SCRIPTS/verification/release_readiness_gate.py",
+      "kind": "py_argv_m",
+      "line": 226,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "30_SCRIPTS/verification/reproducibility_gate.py",
+      "kind": "py_argv_m",
+      "line": 164,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "30_SCRIPTS/verification/reproducibility_gate.py",
+      "kind": "py_argv_m",
+      "line": 247,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "40_EXPERIMENTS/harnesses/real_execution_harness.py",
+      "kind": "py_argv_m",
+      "line": 651,
+      "module": "py_compile",
+      "unit": null
+    },
+    {
+      "file": "40_EXPERIMENTS/harnesses/real_execution_harness.py",
+      "kind": "py_argv_m",
+      "line": 658,
+      "module": "py_compile",
+      "unit": null
+    },
+    {
+      "file": "40_EXPERIMENTS/harnesses/real_execution_harness.py",
+      "kind": "py_argv_m",
+      "line": 887,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "40_EXPERIMENTS/harnesses/real_execution_harness.py",
+      "kind": "py_argv_m",
+      "line": 889,
+      "module": "pytest",
+      "unit": null
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 15,
+      "module": "memory_vault",
+      "unit": "packages/memory_vault"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 16,
+      "module": "cognitive_core",
+      "unit": "root/cognitive_core"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 17,
+      "module": "memory_controller",
+      "unit": "packages/memory_controller"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 18,
+      "module": "graph",
+      "unit": "packages/graph"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 19,
+      "module": "interfaces",
+      "unit": "packages/interfaces"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 20,
+      "module": "learning",
+      "unit": "packages/learning"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 21,
+      "module": "lifecycle",
+      "unit": "packages/lifecycle"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 22,
+      "module": "memory",
+      "unit": "packages/memory"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 23,
+      "module": "observability",
+      "unit": "packages/observability"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 24,
+      "module": "providers",
+      "unit": "packages/providers"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 25,
+      "module": "retrieval",
+      "unit": "packages/retrieval"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 26,
+      "module": "security",
+      "unit": "root/security"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 27,
+      "module": "routing",
+      "unit": "packages/routing"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 28,
+      "module": "agent_bridge",
+      "unit": "packages/agent_bridge"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 29,
+      "module": "vault_access",
+      "unit": "packages/vault_access"
+    },
+    {
+      "file": "pyproject.toml",
+      "kind": "toml_entry",
+      "line": 30,
+      "module": "xau_kinetic",
+      "unit": "packages/xau_kinetic"
+    }
+  ],
   "tests_by_top_dir": {
     ".agents": 4,
     "02_PRODUCT": 54,
     "03_IMPLEMENTATION": 14,
     "07_EVALUATION": 20,
-    "20_TESTS": 357,
+    "20_TESTS": 358,
     "security": 37
   },
   "tests_focus_dirs": {
@@ -483,7 +2234,7 @@
     "02_PRODUCT": 54,
     "03_IMPLEMENTATION": 14,
     "07_EVALUATION": 20,
-    "20_TESTS": 357,
+    "20_TESTS": 358,
     "security": 37
   },
   "units": [
@@ -499,6 +2250,7 @@
         "20_TESTS/test_secure_bridge_handler.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/agent_bridge",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -513,12 +2265,16 @@
       "imports_out": {
         "packages/routing": 2
       },
+      "imports_out_nontest": {
+        "packages/routing": 2
+      },
       "init_exists": true,
       "kind": "packages",
       "loc": 708,
       "local_unresolved_names": [],
       "name": "agent_bridge",
       "py_files": 9,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
     },
@@ -528,6 +2284,7 @@
       "consumers_prod": [],
       "consumers_test": [],
       "dir": "03_IMPLEMENTATION/packages/cognitive_core",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -538,12 +2295,14 @@
       "id": "packages/cognitive_core",
       "import_name_winner": false,
       "imports_out": {},
+      "imports_out_nontest": {},
       "init_exists": true,
       "kind": "packages",
       "loc": 20,
       "local_unresolved_names": [],
       "name": "cognitive_core",
       "py_files": 1,
+      "shim_target_source": "string_constants",
       "shim_targets": [
         "packages/graph",
         "packages/interfaces",
@@ -610,6 +2369,7 @@
         "20_TESTS/test_wikilink_synapse_ingestion.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/graph",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -625,12 +2385,19 @@
         "packages/security": 1,
         "root/cognitive_core": 1
       },
+      "imports_out_nontest": {
+        "packages/memory": 1,
+        "packages/memory_controller": 1,
+        "packages/security": 1,
+        "root/cognitive_core": 1
+      },
       "init_exists": true,
       "kind": "packages",
       "loc": 1562,
       "local_unresolved_names": [],
       "name": "graph",
       "py_files": 8,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
     },
@@ -712,6 +2479,7 @@
         "security/tests/test_audit_remediation.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/interfaces",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -748,6 +2516,18 @@
         "root/cognitive_core": 3,
         "root/security": 1
       },
+      "imports_out_nontest": {
+        "packages/lifecycle": 3,
+        "packages/memory": 6,
+        "packages/memory_controller": 9,
+        "packages/providers": 2,
+        "packages/security": 8,
+        "packages/vault_access": 3,
+        "packages/xau_kinetic": 1,
+        "products/xau_kinetic": 1,
+        "root/cognitive_core": 3,
+        "root/security": 1
+      },
       "init_exists": true,
       "kind": "packages",
       "loc": 4959,
@@ -756,6 +2536,7 @@
       ],
       "name": "interfaces",
       "py_files": 25,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": [
         {
@@ -848,6 +2629,7 @@
         "20_TESTS/test_tot_and_formal_reflexion.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/learning",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -870,12 +2652,24 @@
         "packages/security": 11,
         "root/cognitive_core": 6
       },
+      "imports_out_nontest": {
+        "packages/graph": 1,
+        "packages/interfaces": 6,
+        "packages/lifecycle": 1,
+        "packages/memory": 10,
+        "packages/memory_controller": 11,
+        "packages/observability": 1,
+        "packages/providers": 2,
+        "packages/security": 11,
+        "root/cognitive_core": 6
+      },
       "init_exists": true,
       "kind": "packages",
       "loc": 1496,
       "local_unresolved_names": [],
       "name": "learning",
       "py_files": 19,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
     },
@@ -938,6 +2732,7 @@
         "security/tests/test_pr209_final_security_gates.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/lifecycle",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -956,12 +2751,20 @@
         "packages/security": 11,
         "root/cognitive_core": 1
       },
+      "imports_out_nontest": {
+        "packages/interfaces": 1,
+        "packages/memory": 2,
+        "packages/memory_controller": 11,
+        "packages/security": 11,
+        "root/cognitive_core": 1
+      },
       "init_exists": true,
       "kind": "packages",
       "loc": 7029,
       "local_unresolved_names": [],
       "name": "lifecycle",
       "py_files": 32,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
     },
@@ -1147,6 +2950,7 @@
         "security/tests/test_pr209_final_security_gates.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/memory",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -1168,12 +2972,23 @@
         "root/cognitive_core": 2,
         "root/security": 1
       },
+      "imports_out_nontest": {
+        "packages/graph": 1,
+        "packages/lifecycle": 1,
+        "packages/memory_controller": 8,
+        "packages/observability": 3,
+        "packages/retrieval": 2,
+        "packages/security": 5,
+        "root/cognitive_core": 2,
+        "root/security": 1
+      },
       "init_exists": true,
       "kind": "packages",
       "loc": 4554,
       "local_unresolved_names": [],
       "name": "memory",
       "py_files": 26,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
     },
@@ -1401,6 +3216,7 @@
         "security/tests/test_pr209_final_security_gates.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/memory_controller",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -1411,12 +3227,14 @@
       "id": "packages/memory_controller",
       "import_name_winner": true,
       "imports_out": {},
+      "imports_out_nontest": {},
       "init_exists": true,
       "kind": "packages",
       "loc": 17,
       "local_unresolved_names": [],
       "name": "memory_controller",
       "py_files": 1,
+      "shim_target_source": "string_constants",
       "shim_targets": [
         "packages/interfaces",
         "packages/lifecycle",
@@ -1440,6 +3258,7 @@
       "consumers_prod": [],
       "consumers_test": [],
       "dir": "03_IMPLEMENTATION/packages/memory_vault",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -1450,26 +3269,35 @@
       "id": "packages/memory_vault",
       "import_name_winner": true,
       "imports_out": {},
+      "imports_out_nontest": {},
       "init_exists": true,
       "kind": "packages",
       "loc": 32,
       "local_unresolved_names": [],
       "name": "memory_vault",
       "py_files": 2,
+      "shim_target_source": "path_expression",
       "shim_targets": [
+        "packages/agent_bridge",
+        "packages/cognitive_core",
         "packages/graph",
         "packages/interfaces",
         "packages/learning",
         "packages/lifecycle",
         "packages/memory",
+        "packages/memory_controller",
         "packages/observability",
+        "packages/polymarket",
         "packages/providers",
         "packages/retrieval",
-        "packages/security"
+        "packages/routing",
+        "packages/security",
+        "packages/vault_access",
+        "packages/xau_kinetic"
       ],
       "unknown": [
         {
-          "detail": "__path__ shim -> packages/graph, packages/interfaces, packages/learning, packages/lifecycle, packages/memory, packages/observability, packages/providers, packages/retrieval, packages/security",
+          "detail": "__path__ shim -> packages/agent_bridge, packages/cognitive_core, packages/graph, packages/interfaces, packages/learning, packages/lifecycle, packages/memory, packages/memory_controller, packages/observability, packages/polymarket, packages/providers, packages/retrieval, packages/routing, packages/security, packages/vault_access, packages/xau_kinetic",
           "file": "03_IMPLEMENTATION/packages/memory_vault/__init__.py",
           "kind": "path_assign",
           "line": 16
@@ -1536,6 +3364,7 @@
         "20_TESTS/test_suite_does_not_write_telemetry.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/observability",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -1551,12 +3380,19 @@
         "packages/retrieval": 4,
         "root/cognitive_core": 1
       },
+      "imports_out_nontest": {
+        "packages/memory_controller": 3,
+        "packages/providers": 1,
+        "packages/retrieval": 4,
+        "root/cognitive_core": 1
+      },
       "init_exists": true,
       "kind": "packages",
       "loc": 2932,
       "local_unresolved_names": [],
       "name": "observability",
       "py_files": 15,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
     },
@@ -1611,6 +3447,7 @@
         "20_TESTS/polymarket/test_temporal_provenance_contract.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/polymarket",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -1623,12 +3460,14 @@
       "id": "packages/polymarket",
       "import_name_winner": true,
       "imports_out": {},
+      "imports_out_nontest": {},
       "init_exists": true,
       "kind": "packages",
       "loc": 4107,
       "local_unresolved_names": [],
       "name": "polymarket",
       "py_files": 27,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
     },
@@ -1694,6 +3533,7 @@
         "20_TESTS/test_review_memory_injection.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/providers",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -1704,12 +3544,14 @@
       "id": "packages/providers",
       "import_name_winner": true,
       "imports_out": {},
+      "imports_out_nontest": {},
       "init_exists": true,
       "kind": "packages",
       "loc": 793,
       "local_unresolved_names": [],
       "name": "providers",
       "py_files": 9,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
     },
@@ -1823,6 +3665,7 @@
         "security/tests/test_progressive_disclosure_security.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/retrieval",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -1846,12 +3689,22 @@
         "root/cognitive_core": 1,
         "root/security": 2
       },
+      "imports_out_nontest": {
+        "packages/graph": 1,
+        "packages/interfaces": 1,
+        "packages/memory": 2,
+        "packages/memory_controller": 1,
+        "packages/security": 1,
+        "root/cognitive_core": 1,
+        "root/security": 2
+      },
       "init_exists": true,
       "kind": "packages",
       "loc": 5511,
       "local_unresolved_names": [],
       "name": "retrieval",
       "py_files": 26,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
     },
@@ -1876,6 +3729,7 @@
         "20_TESTS/test_secure_bridge_handler.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/routing",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -1889,12 +3743,14 @@
       "id": "packages/routing",
       "import_name_winner": true,
       "imports_out": {},
+      "imports_out_nontest": {},
       "init_exists": true,
       "kind": "packages",
       "loc": 1433,
       "local_unresolved_names": [],
       "name": "routing",
       "py_files": 10,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
     },
@@ -2071,6 +3927,7 @@
         "security/tests/test_pr209_final_security_gates.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/security",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -2084,12 +3941,17 @@
         "packages/interfaces": 1,
         "packages/memory_controller": 1
       },
+      "imports_out_nontest": {
+        "packages/interfaces": 1,
+        "packages/memory_controller": 1
+      },
       "init_exists": true,
       "kind": "packages",
       "loc": 629,
       "local_unresolved_names": [],
       "name": "security",
       "py_files": 12,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": [
         {
@@ -2125,6 +3987,7 @@
         "20_TESTS/vault_access_fixture.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/vault_access",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -2139,12 +4002,16 @@
       "imports_out": {
         "packages/interfaces": 2
       },
+      "imports_out_nontest": {
+        "packages/interfaces": 2
+      },
       "init_exists": true,
       "kind": "packages",
       "loc": 1912,
       "local_unresolved_names": [],
       "name": "vault_access",
       "py_files": 10,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
     },
@@ -2208,6 +4075,7 @@
         "20_TESTS/regression/test_indicators_series_length.py"
       ],
       "dir": "03_IMPLEMENTATION/packages/xau_kinetic",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -2218,12 +4086,14 @@
       "id": "packages/xau_kinetic",
       "import_name_winner": true,
       "imports_out": {},
+      "imports_out_nontest": {},
       "init_exists": true,
       "kind": "packages",
       "loc": 5,
       "local_unresolved_names": [],
       "name": "xau_kinetic",
       "py_files": 1,
+      "shim_target_source": "string_constants",
       "shim_targets": [
         "products/xau_kinetic"
       ],
@@ -2250,6 +4120,7 @@
         "20_TESTS/regression/test_indicators_series_length.py"
       ],
       "dir": "03_IMPLEMENTATION/products/xau_kinetic",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -2293,12 +4164,18 @@
         "packages/memory_controller": 1,
         "packages/xau_kinetic": 48
       },
+      "imports_out_nontest": {
+        "packages/lifecycle": 1,
+        "packages/memory_controller": 1,
+        "packages/xau_kinetic": 34
+      },
       "init_exists": false,
       "kind": "products",
       "loc": 6485,
       "local_unresolved_names": [],
       "name": "xau_kinetic",
       "py_files": 63,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": []
     },
@@ -2456,6 +4333,7 @@
         "security/tests/test_pr209_final_security_gates.py"
       ],
       "dir": "cognitive_core",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -2473,12 +4351,17 @@
         "packages/interfaces": 3,
         "packages/learning": 1
       },
+      "imports_out_nontest": {
+        "packages/interfaces": 3,
+        "packages/learning": 1
+      },
       "init_exists": true,
       "kind": "root",
       "loc": 62,
       "local_unresolved_names": [],
       "name": "cognitive_core",
       "py_files": 5,
+      "shim_target_source": "string_constants",
       "shim_targets": [
         "packages/graph",
         "packages/interfaces",
@@ -2547,6 +4430,7 @@
         "20_TESTS/test_outcome_cli_smoke.py"
       ],
       "dir": "scripts",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -2571,6 +4455,13 @@
         "packages/retrieval": 1,
         "root/cognitive_core": 2
       },
+      "imports_out_nontest": {
+        "packages/interfaces": 2,
+        "packages/observability": 1,
+        "packages/providers": 2,
+        "packages/retrieval": 1,
+        "root/cognitive_core": 2
+      },
       "init_exists": true,
       "kind": "root",
       "loc": 1259,
@@ -2579,6 +4470,7 @@
       ],
       "name": "scripts",
       "py_files": 7,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": [
         {
@@ -2628,6 +4520,7 @@
         "20_TESTS/research/test_blocker_severity_downgrade.py"
       ],
       "dir": "security",
+      "dynamic_imports_nontest": 0,
       "entry_points": {
         "console_scripts": [],
         "dunder_main": [],
@@ -2654,6 +4547,10 @@
         "packages/security": 2,
         "root/cognitive_core": 2
       },
+      "imports_out_nontest": {
+        "packages/lifecycle": 1,
+        "root/cognitive_core": 1
+      },
       "init_exists": true,
       "kind": "root",
       "loc": 6623,
@@ -2662,6 +4559,7 @@
       ],
       "name": "security",
       "py_files": 66,
+      "shim_target_source": null,
       "shim_targets": null,
       "unknown": [
         {
@@ -4032,6 +5930,12 @@
     },
     {
       "detail": "sys.path.insert",
+      "file": "20_TESTS/test_architecture_boundaries.py",
+      "kind": "path_mutation",
+      "line": 11
+    },
+    {
+      "detail": "sys.path.insert",
       "file": "20_TESTS/test_attribution_plasticity.py",
       "kind": "path_mutation",
       "line": 26
@@ -5131,6 +7035,12 @@
     {
       "detail": "sys.path.insert",
       "file": "30_SCRIPTS/verification/active_note_integrity.py",
+      "kind": "path_mutation",
+      "line": 29
+    },
+    {
+      "detail": "sys.path.insert",
+      "file": "30_SCRIPTS/verification/architecture_boundaries.py",
       "kind": "path_mutation",
       "line": 29
     },

@@ -37,6 +37,7 @@ TEXT_NAMES = {"Makefile", "justfile"}
 TESTDIR_TOP = ["20_TESTS", "02_PRODUCT", "security", "07_EVALUATION", "03_IMPLEMENTATION", ".agents"]
 REQ_FILES = ["requirements.txt", "requirements-memory-v6.txt"]
 SELF_EXCLUDED_REF = ("07_EVALUATION/reports/modernization/", "30_SCRIPTS/verification/package_inventory.py",
+                     "04_CONFIG/architecture_layers.json",
                      "20_TESTS/test_package_inventory.py", "00_GOVERNANCE/coordination/tasks/todo-claude-modernization")
 
 
@@ -128,6 +129,7 @@ class Resolver:
         self._exists: dict[str, bool] = {}
         self.collisions = self._find_collisions()
         self.stats: dict[str, dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        self.count_stats = True
 
     def exists(self, rel: str) -> bool:
         if rel not in self._exists:
@@ -154,20 +156,38 @@ class Resolver:
                 res[n] = c
         return res
 
-    def set_shim(self, uid: str, consts: set[str], has_path: bool) -> None:
-        """Record a ``__path__`` shim and which units it points to (from string constants)."""
+    def set_shim(self, uid: str, consts: set[str], has_path: bool, path_ups: list[int] | None = None) -> None:
+        """Record a ``__path__`` shim and which units it points to.
+
+        ``path_ups`` = for each ``__path__`` element that is a bare parent-directory expression of
+        ``Path(__file__)`` (``.parent`` / ``.parents[N]``), how many levels above the file it is
+        (1 = the unit directory itself). Such a shim serves every sibling directly under that
+        directory (``path_expression``); otherwise targets come from string constants.
+        """
         if not has_path:
+            return
+        if path_ups:
+            targets: list[str] = []
+            for ups in path_ups:
+                base = self.units[uid]["dir"]
+                for _ in range(ups - 1):
+                    base = base.rsplit("/", 1)[0] if "/" in base else ""
+                for u in sorted(self.units.values(), key=lambda x: x["id"]):
+                    parent = u["dir"].rsplit("/", 1)[0] if "/" in u["dir"] else ""
+                    if parent == base and u["id"] != uid and u["id"] not in targets:
+                        targets.append(u["id"])
+            self.shims[uid] = {"targets": targets, "source": "path_expression"}
             return
         own_parent = self.units[uid]["dir"].rsplit("/", 1)[0].rsplit("/", 1)[-1] if "/" in self.units[uid]["dir"] else ""
         parent_names = {u["dir"].rsplit("/", 1)[0].rsplit("/", 1)[-1] for u in self.units.values() if "/" in u["dir"]}
         hints = [p for p in sorted(parent_names) if p in consts] or [own_parent]
-        targets: list[str] = []
+        targets = []
         for c in sorted(consts):
             for h in hints:
                 for u in self.units.values():
                     if u["name"] == c and u["id"] != uid and u["dir"].rsplit("/", 1)[0].endswith(h) and u["id"] not in targets:
                         targets.append(u["id"])
-        self.shims[uid] = {"targets": targets}
+        self.shims[uid] = {"targets": targets, "source": "string_constants"}
 
     def _served_by(self, unit_id: str, sub: list[str]) -> bool:
         d = self.units[unit_id]["dir"]
@@ -193,7 +213,13 @@ class Resolver:
                 targets = self.shims[uid]["targets"]
                 served = None
                 if not self._served_by(uid, sub):
-                    for t in targets:
+                    if self.shims[uid].get("source") == "path_expression":
+                        # __path__ is the parent directory: ``shim.X`` is the sibling package X
+                        for t in targets:
+                            if self.units[t]["name"] == sub[0]:
+                                served = t
+                                break
+                    for t in ([] if served else targets):
                         if self._served_by(t, sub):
                             served = t
                             break
@@ -203,7 +229,7 @@ class Resolver:
                     served = uid
                 if served:
                     credits.add(served)
-            if name in self.collisions and sub:
+            if name in self.collisions and sub and self.count_stats:
                 key = served or "UNSERVED"
                 if served is None:
                     for loser in self.collisions[name][1:]:
@@ -228,9 +254,34 @@ def _is_dunder_path(node: ast.AST) -> bool:
     return _is_name(node, "__path__") or (isinstance(node, ast.Attribute) and node.attr == "__path__")
 
 
+def _file_ups(node: ast.AST, varmap: dict[str, int]) -> int | None:
+    """Levels above ``__file__`` for a bare ``Path(__file__)[.resolve()].parent/.parents[N]`` expression."""
+    if isinstance(node, ast.Name):
+        return varmap.get(node.id)
+    if isinstance(node, ast.Call):
+        f = node.func
+        if isinstance(f, ast.Name) and f.id == "str" and len(node.args) == 1 and not node.keywords:
+            return _file_ups(node.args[0], varmap)
+        if isinstance(f, ast.Attribute) and f.attr in ("resolve", "absolute") and not node.args:
+            return _file_ups(f.value, varmap)
+        name = f.id if isinstance(f, ast.Name) else (f.attr if isinstance(f, ast.Attribute) else "")
+        if name == "Path" and len(node.args) == 1 and _is_name(node.args[0], "__file__"):
+            return 0
+        return None
+    if isinstance(node, ast.Attribute) and node.attr == "parent":
+        base = _file_ups(node.value, varmap)
+        return None if base is None else base + 1
+    if (isinstance(node, ast.Subscript) and isinstance(node.value, ast.Attribute) and node.value.attr == "parents"
+            and isinstance(node.slice, ast.Constant) and isinstance(node.slice.value, int) and node.slice.value >= 0):
+        base = _file_ups(node.value.value, varmap)
+        return None if base is None else base + node.slice.value + 1
+    return None
+
+
 def analyze_file(text: str) -> dict:
     """Return imports (list of part-lists + from-aliases), unknowns, main-guard, __all__, constants."""
-    res = {"imports": [], "unknown": [], "has_main": False, "has_all": False, "consts": set(), "parse_error": None}
+    res = {"imports": [], "unknown": [], "has_main": False, "has_all": False, "consts": set(), "parse_error": None,
+           "path_ups": []}
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -238,6 +289,29 @@ def analyze_file(text: str) -> dict:
     except (SyntaxError, ValueError, RecursionError) as exc:
         res["parse_error"] = type(exc).__name__
         return res
+    varmap: dict[str, int] = {}
+    for stmt in tree.body:
+        if isinstance(stmt, ast.Assign) and any(_is_dunder_path(t) for t in stmt.targets):
+            elts = stmt.value.elts if isinstance(stmt.value, (ast.List, ast.Tuple)) else [stmt.value]
+            for e in elts:
+                ups = _file_ups(e, varmap)
+                if ups is not None and ups >= 1:
+                    res["path_ups"].append(ups)
+        elif isinstance(stmt, ast.Assign) and len(stmt.targets) == 1 and isinstance(stmt.targets[0], ast.Name):
+            ups = _file_ups(stmt.value, varmap)
+            if ups is not None and ups >= 1:
+                varmap[stmt.targets[0].id] = ups
+    fn_aliases: set[str] = set()   # names bound to importlib.import_module
+    mod_aliases: set[str] = {"importlib"}
+    for node in ast.walk(tree):
+        if isinstance(node, ast.ImportFrom) and node.module == "importlib" and not node.level:
+            for a in node.names:
+                if a.name in ("import_module", "__import__"):
+                    fn_aliases.add(a.asname or a.name)
+        elif isinstance(node, ast.Import):
+            for a in node.names:
+                if a.name == "importlib" and a.asname:
+                    mod_aliases.add(a.asname)
     for node in ast.walk(tree):
         if isinstance(node, ast.Import):
             for a in node.names:
@@ -274,13 +348,15 @@ def analyze_file(text: str) -> dict:
                     (_is_sys_path(f.value) or _is_dunder_path(f.value)):
                 res["unknown"].append({"line": node.lineno, "kind": "path_mutation",
                                        "detail": ("sys.path." if _is_sys_path(f.value) else "__path__.") + fname})
-            elif fname in {"import_module", "__import__"} and (
-                    isinstance(f, ast.Name) or _is_name(getattr(f, "value", None), "importlib")):
+            elif (isinstance(f, ast.Name) and (fname in {"import_module", "__import__"} or fname in fn_aliases)) or (
+                    isinstance(f, ast.Attribute) and fname in {"import_module", "__import__"}
+                    and isinstance(f.value, ast.Name) and f.value.id in mod_aliases):
                 arg = node.args[0] if node.args else None
                 if isinstance(arg, ast.Constant) and isinstance(arg.value, str) and not arg.value.startswith("."):
                     res["imports"].append(([arg.value.split(".")], node.lineno, False))
                 else:
-                    res["unknown"].append({"line": node.lineno, "kind": "dynamic_import", "detail": fname})
+                    res["unknown"].append({"line": node.lineno, "kind": "dynamic_import",
+                                           "detail": "import_module" if fname in fn_aliases else fname})
             elif fname in {"spec_from_file_location", "run_module", "run_path", "extend_path"}:
                 res["unknown"].append({"line": node.lineno, "kind": "file_or_module_loader", "detail": fname})
     return res
@@ -302,6 +378,8 @@ def unit_patterns(u: dict, winner_names: set[str]) -> list[re.Pattern]:
 def ci_config_files(root: Path, allfiles: list[str]) -> list[str]:
     out = []
     for f in allfiles:
+        if f.startswith(SELF_EXCLUDED_REF):
+            continue
         if (f.startswith(".github/workflows/") and f.count("/") == 2 and f.endswith((".yml", ".yaml"))) \
                 or f in ("pytest.ini", "pyproject.toml") \
                 or (f.startswith("04_CONFIG/") and f.count("/") == 1 and f.endswith(".json")):
@@ -332,6 +410,133 @@ def parse_requirements(text: str) -> dict[str, str]:
     return out
 
 
+# ----------------------------------------------------------------------------- string imports
+STR_TEXT_EXT = (".yml", ".yaml", ".toml", ".sh", ".ps1", ".bat", ".cmd", ".ini", ".cfg")
+_MOD = r"[A-Za-z_]\w*(?:\.[A-Za-z_]\w*)*"
+_INTERP = (r"(?:(?<![\w.\-])python[\w.\-]*|(?<![\w.\-/])py(?=\s)|\$\{?PYTHON\}?|%PYTHON%)[\"']?"
+           r"(?:\s+(?:-[XW]\s+\S+|-[A-Za-z0-9]+(?:\.\d+)?))*")
+_PY_M = re.compile(rf"{_INTERP}\s+-m\s+({_MOD})")
+_PY_C = re.compile(rf"{_INTERP}\s+-c\s+(.*)$")
+_IMP = re.compile(rf"(?<![\w.])import\s+({_MOD}(?:\s*,\s*{_MOD})*)")
+_FROM = re.compile(rf"(?<![\w.])from\s+({_MOD})\s+import\b")
+_TOML_EP = re.compile(rf'"({_MOD}):[A-Za-z_]\w*"')
+_TOML_PKG_START = re.compile(r"^\s*(include|packages)\s*=")
+_TOML_PKG_ITEM = re.compile(r'"([A-Za-z_][\w.]*)\*?"')
+_MODNAME = re.compile(rf"^{_MOD}$")
+
+
+def _unit_for_module(res: Resolver, module: str) -> str | None:
+    parts = module.split(".")
+    credits = res.resolve(parts)
+    if not credits:
+        return None
+    extra = sorted(credits - res.resolve(parts[:1]))
+    return extra[0] if extra else sorted(credits)[0]
+
+
+def find_string_imports(root: Path, allfiles: list[str], res: Resolver) -> list[dict]:
+    """Imports that live in strings: ``python -m``, ``python -c``, pyproject entry points, argv lists."""
+    out: list[dict] = []
+    res.count_stats = False
+
+    def add(f: str, line: int, kind: str, module: str) -> None:
+        out.append({"file": f, "line": line, "kind": kind, "module": module,
+                    "unit": _unit_for_module(res, module)})
+
+    for f in allfiles:
+        if f.startswith(SELF_EXCLUDED_REF):
+            continue
+        base = f.rsplit("/", 1)[-1]
+        if f.endswith(".py"):
+            text = read_text(root, f, limit=5_000_000)
+            if '"-m"' not in text and "'-m'" not in text:
+                continue
+            try:
+                with warnings.catch_warnings():
+                    warnings.simplefilter("ignore")
+                    tree = ast.parse(text)
+            except (SyntaxError, ValueError, RecursionError):
+                continue
+            for node in ast.walk(tree):
+                seqs = []
+                if isinstance(node, (ast.List, ast.Tuple)):
+                    seqs.append(node.elts)
+                elif isinstance(node, ast.Call):
+                    seqs.append(node.args)
+                for elts in seqs:
+                    for i, e in enumerate(elts[:-1]):
+                        nxt = elts[i + 1]
+                        if (isinstance(e, ast.Constant) and e.value == "-m" and isinstance(nxt, ast.Constant)
+                                and isinstance(nxt.value, str) and _MODNAME.match(nxt.value)):
+                            add(f, nxt.lineno, "py_argv_m", nxt.value)
+            continue
+        if not (f.endswith(STR_TEXT_EXT) or base in TEXT_NAMES):
+            continue
+        text = read_text(root, f)
+        if not text:
+            continue
+        in_pkg = False
+        for no, ln in enumerate(text.splitlines(), 1):
+            stripped = ln.strip()
+            if (re.match(r"(?i)(rem(\s|$)|::)", stripped) if f.endswith((".bat", ".cmd"))
+                    else stripped.startswith("#")):
+                continue
+            for m in _PY_M.finditer(ln):
+                add(f, no, "python_m", m.group(1))
+            mc = _PY_C.search(ln)
+            if mc:
+                code = mc.group(1)
+                for m in _FROM.finditer(code):
+                    add(f, no, "python_c", m.group(1))
+                code = _FROM.sub(" ", code)  # the names after ``from x import`` are not modules
+                for m in _IMP.finditer(code):
+                    for mod in re.split(r"\s*,\s*", m.group(1)):
+                        add(f, no, "python_c", mod)
+            if base == "pyproject.toml":
+                for m in _TOML_EP.finditer(ln):
+                    add(f, no, "toml_entry", m.group(1))
+                starts = bool(_TOML_PKG_START.match(ln))
+                if starts:
+                    in_pkg = True
+                if in_pkg:
+                    for m in _TOML_PKG_ITEM.finditer(ln.split("=", 1)[-1] if starts else ln):
+                        add(f, no, "toml_entry", m.group(1))
+                    if "]" in ln:
+                        in_pkg = False
+    res.count_stats = True
+    return sorted(out, key=lambda r: (r["file"], r["line"], r["kind"], r["module"]))
+
+
+def promoted_test_files(info: dict[str, dict], pyfiles: list[str], pythonpath: list[str]) -> set[str]:
+    """Test-path files that a non-test file (transitively) imports: they are production code in effect."""
+    test_set = {f for f in pyfiles if is_test_path(f)}
+    if not test_set:
+        return set()
+
+    def targets(f: str) -> set[str]:
+        out: set[str] = set()
+        for alts, _line, _is_from in info[f]["imports"]:
+            for parts in alts:
+                for p in pythonpath:
+                    for k in range(1, len(parts) + 1):
+                        stem = "/".join(x for x in ("" if p == "." else p, *parts[:k]) if x)
+                        for cand in (stem + ".py", stem + "/__init__.py"):
+                            if cand in test_set:
+                                out.add(cand)
+        return out
+
+    promoted: set[str] = set()
+    frontier = [f for f in pyfiles if f not in test_set]
+    seen = set(frontier)
+    while frontier:
+        for t in targets(frontier.pop()):
+            promoted.add(t)
+            if t not in seen:
+                seen.add(t)
+                frontier.append(t)
+    return promoted
+
+
 # ----------------------------------------------------------------------------- main build
 def build_inventory(root: Path) -> dict:
     root = root.resolve()
@@ -360,7 +565,13 @@ def build_inventory(root: Path) -> dict:
     for uid, u in units.items():
         init = f"{u['dir']}/__init__.py"
         if init in info and any(x["detail"] == "__path__" for x in info[init]["unknown"]):
-            res.set_shim(uid, info[init]["consts"], True)
+            res.set_shim(uid, info[init]["consts"], True, info[init]["path_ups"])
+
+    promoted = promoted_test_files(info, pyfiles, pythonpath)
+    string_refs = find_string_imports(root, allfiles, res)
+
+    def effective_test(f: str) -> bool:
+        return is_test_path(f) and f not in promoted
 
     # console_scripts
     console: dict[str, list[str]] = defaultdict(list)
@@ -434,6 +645,14 @@ def build_inventory(root: Path) -> dict:
                 bucket = test_cons if is_test_path(f) else (bench_cons if is_bench_path(f) else prod_cons)
                 bucket[t].add(f)
 
+    # imports that live in strings, from non-test files inside a unit, are edges for the ratchet
+    str_edges: dict[str, dict[str, set]] = defaultdict(lambda: defaultdict(set))
+    for r in string_refs:
+        if r["kind"] in ("py_argv_m", "python_c") and r["unit"] and not effective_test(r["file"]):
+            s_unit = unit_of_file(r["file"], by_len)
+            if s_unit and s_unit != r["unit"]:
+                str_edges[s_unit][r["unit"]].add(r["file"])
+
     # external deps: restrict to units own files only when counting top-level 3rd-party names
     ci_files = ci_config_files(root, allfiles)
     ci_texts = {f: read_text(root, f) for f in ci_files}
@@ -459,8 +678,14 @@ def build_inventory(root: Path) -> dict:
             "init_exists": init in info,
             "has_all": bool(init in info and info[init]["has_all"]),
             "shim_targets": res.shims.get(uid, {}).get("targets") if uid in res.shims else None,
+            "shim_target_source": res.shims[uid]["source"] if uid in res.shims else None,
             "entry_points": {"main_guard": mains, "dunder_main": dunder, "console_scripts": console.get(uid, [])},
             "imports_out": {t: len(fs) for t, fs in sorted(out_edges[uid].items())},
+            "imports_out_nontest": {t: n for t, n in sorted(
+                (t, len({f for f in fs if not effective_test(f)} | str_edges[uid].get(t, set())))
+                for t in set(out_edges[uid]) | set(str_edges[uid]) for fs in [out_edges[uid].get(t, set())]) if n},
+            "dynamic_imports_nontest": sum(1 for x in unknown[uid]
+                                           if x["kind"] == "dynamic_import" and not effective_test(x["file"])),
             "consumers_prod": sorted(prod_cons[uid]),
             "consumers_test": sorted(test_cons[uid]),
             "consumers_bench_excluded": sorted(bench_cons[uid]),
@@ -508,12 +733,14 @@ def build_inventory(root: Path) -> dict:
                              or (p.is_dir() and p.name not in PRUNE_DIRS)) if d.is_dir() else []
         collisions.append({"name": name, "candidates_in_pythonpath_order": cands, "winner": cands[0],
                            "shim_targets": {c: res.shims[c]["targets"] for c in cands if c in res.shims},
+                           "shim_target_source": {c: res.shims[c]["source"] for c in cands if c in res.shims},
                            "modules": mods, "imports_by_served_unit": dict(sorted(res.stats[name].items()))})
 
     return {
         "meta": {
             "root": ".", "pythonpath_order": pythonpath, "testpaths": testpaths,
-            "py_files_scanned": len(pyfiles), "pruned_dirs": sorted(PRUNE_DIRS), "parse_errors": sorted(parse_errors),
+            "py_files_scanned": len(pyfiles), "pruned_dirs": sorted(PRUNE_DIRS),
+            "test_paths_promoted_to_production": sorted(promoted), "parse_errors": sorted(parse_errors),
             "rules": {
                 "loc": "linii non-goale care nu încep cu #; docstring-urile se numără",
                 "consumers_prod": "fișiere .py în afara oricărui director de test/benchmark și în afara modulului",
@@ -523,6 +750,7 @@ def build_inventory(root: Path) -> dict:
         },
         "units": unit_rows,
         "collisions": collisions,
+        "string_import_refs": string_refs,
         "layer_violations_package_to_product": sorted(violations, key=lambda v: (v["file"], v["line"])),
         "unknown_outside_units": sorted(unknown_outside, key=lambda r: (r["file"], r["line"])),
         "tests_by_top_dir": dict(sorted(tests_by_top.items())),
@@ -557,11 +785,11 @@ def render_md(inv: dict) -> str:
                  f"{len(u['consumers_test'])} | {sum(u['ci_config_refs'].values())} ({len(u['ci_config_refs'])} f.) | "
                  f"{_short(list(u['external_deps']), 5)} | {len(u['unknown'])} |")
     L += ["", "## `__all__`, importuri ieșite și shim-uri", "",
-          "| Modul | `__init__` | `__all__` | Importă (nr. fișiere) | Shim `__path__` către |", "|---|---|---|---|---|"]
+          "| Modul | `__init__` | `__all__` | Importă (nr. fișiere) | Shim `__path__` către (sursa) |", "|---|---|---|---|---|"]
     for u in inv["units"]:
         outs = ", ".join(f"{k}({v})" for k, v in u["imports_out"].items())
         L.append(f"| `{u['id']}` | {'da' if u['init_exists'] else 'NU'} | {'da' if u['has_all'] else 'nu'} | "
-                 f"{outs or '-'} | {_short(u['shim_targets'] or [], 9) if u['shim_targets'] is not None else '-'} |")
+                 f"{outs or '-'} | {(_short(u['shim_targets'] or [], 9) + ' (' + u['shim_target_source'] + ')') if u['shim_targets'] is not None else '-'} |")
     L += ["", "Note: fișierele și LOC includ testele aflate în directorul modulului (ex. `security/test_*.py`). Nume locale nerezolvate (ex. module importate după manipulare `sys.path`) nu sunt numărate ca "
           "dependențe externe; ele sunt în JSON (`local_unresolved_names`).", ""]
 
@@ -621,6 +849,18 @@ def render_md(inv: dict) -> str:
           f"În module: {tot} intrări (detaliu în JSON). În afara modulelor (teste, scripturi): {len(unk_out)} "
           f"({', '.join(f'{k}={n}' for k, n in sorted(kinds.items())) or '-'}). Aceste fișiere pot importa module "
           "prin căi runtime pe care inventarul nu le vede; numărul de consumatori este deci un minim.", ""]
+    srefs = inv.get("string_import_refs", [])
+    by_kind: dict[str, int] = defaultdict(int)
+    for x in srefs:
+        by_kind[x["kind"]] += 1
+    L += ["## Importuri din șiruri de caractere", "",
+          "AST-ul nu vede importurile din șiruri: `python -m X`, `python -c \"import X\"`, intrări pyproject, liste argv "
+          f"`[\"-m\", \"X\"]`. Total: {len(srefs)} ({', '.join(f'{k}={n}' for k, n in sorted(by_kind.items())) or '-'}); "
+          f"rezolvate la o unitate: {sum(1 for x in srefs if x['unit'])}.", "",
+          "| Fișier:rând | Fel | Modul | Unitate |", "|---|---|---|---|"]
+    for x in [x for x in srefs if x["unit"]][:40]:
+        L.append(f"| `{x['file']}:{x['line']}` | {x['kind']} | `{x['module']}` | `{x['unit']}` |")
+    L.append("")
     return "\n".join(L)
 
 

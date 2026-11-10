@@ -626,6 +626,7 @@ Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce 
 | routerul central de agenți, dispatcher-ul și bridge-ul securizat | `agent-routing-tests.yml` |
 | rutele directe `vault://`, politica de acces pe canale, adaptoarele MCP/CLI/Ollama/Telegram | `vault-access.yml` |
 | notele ACTIVE, verificate față de amprentele înregistrate | `active-note-integrity.yml` |
+| limitele dintre straturile arhitecturale (ratchet de importuri) | `architecture-boundaries.yml` |
 | zonele scutite de gitleaks, scanate pentru secrete de mare încredere | `exempt-area-secret-scan.yml` |
 | căile de scriere ale runtime-ului | `write-path-audit.yml` |
 | securitate: secrete, analiză statică | `secret-scan.yml`, `codeql.yml`, `codeql-csharp.yml`, `codeql-config-cleanup.yml`, `fortify.yml`, `apisec-scan.yml` |

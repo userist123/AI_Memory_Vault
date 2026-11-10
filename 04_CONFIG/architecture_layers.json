@@ -1,0 +1,354 @@
+{
+  "schema_version": 1,
+  "baseline_date": "2026-11-09",
+  "baseline_commit": "0752ac2b7",
+  "rule": "Layers are ordered low to high. A unit may import units of the same or a LOWER layer only. An upward edge is allowed only while it is listed in baseline_edges. The check is a ratchet: new upward edges and growth fail, and so does a stale baseline (edge removed or count lower), so every gain must be locked by regenerating the baseline. Edge count = number of non-test files of the source unit importing the target unit. Non-test imports include `-m` argv lists in .py files inside a unit, and test-path files imported by production code. Non-literal import_module/__import__ calls are counted per unit in baseline_dynamic_imports (same ratchet semantics).",
+  "unenforced": [
+    "Non-literal dynamic imports are counted per unit, not resolved to a target unit.",
+    "Reassigning a unit to another layer in this config is caught only by diff review.",
+    "benchmarks/ files count as production.",
+    "Relative imports and same-directory sys.path imports are not resolved.",
+    "python -m strings in non-.py files inside a unit are not edges (only py_argv_m and python_c).",
+    "R1 (WP-04 review r2): `-c` argv in .py files ([sys.executable, '-c', 'import x']) is not parsed; python_c is read only from shell/yml-type files.",
+    "R2: shell command strings inside .py files (os.system('python -m x'), subprocess with shell=True) are not scanned.",
+    "R3: import_module aliased by assignment (im = importlib.import_module), getattr(importlib, 'import_module') and builtins.__import__ are not counted.",
+    "R4: transitive edges through .py files outside any unit (e.g. 03_IMPLEMENTATION/x.py) are not followed.",
+    "R5/R6 (low): a mixed refuse+tighten --write-baseline run writes the tightening and exits 1; --owner-wp format is not validated; a trailing '# python -m x' comment still yields a string ref; 'python -malpha' and 'pypy3 -m' are missed."
+  ],
+  "excluded": {
+    "test_files": "Files matching package_inventory.is_test_path (under 20_TESTS/ or tests/, named test_*.py, or conftest.py) are not counted."
+  },
+  "layers": [
+    {
+      "name": "L0_foundation",
+      "units": [
+        "packages/providers",
+        "packages/routing",
+        "packages/observability"
+      ]
+    },
+    {
+      "name": "L1_policy",
+      "units": [
+        "packages/security"
+      ]
+    },
+    {
+      "name": "L2_contracts",
+      "units": [
+        "packages/interfaces"
+      ]
+    },
+    {
+      "name": "L3_storage",
+      "units": [
+        "packages/memory",
+        "packages/graph",
+        "packages/vault_access"
+      ]
+    },
+    {
+      "name": "L4_retrieval",
+      "units": [
+        "packages/retrieval"
+      ]
+    },
+    {
+      "name": "L5_cognition",
+      "units": [
+        "packages/lifecycle",
+        "packages/learning"
+      ]
+    },
+    {
+      "name": "L6_adapters",
+      "units": [
+        "packages/agent_bridge",
+        "root/security",
+        "root/scripts"
+      ]
+    },
+    {
+      "name": "L7_products",
+      "units": [
+        "products/xau_kinetic",
+        "packages/polymarket"
+      ]
+    },
+    {
+      "name": "L8_facades",
+      "units": [
+        "root/cognitive_core",
+        "packages/cognitive_core",
+        "packages/memory_controller",
+        "packages/memory_vault",
+        "packages/xau_kinetic"
+      ]
+    }
+  ],
+  "hard_forbidden": {
+    "rule": "A package-kind unit must never import a product-kind unit, directly or through the packages/xau_kinetic alias.",
+    "from_kind": "packages",
+    "to_kind": "products",
+    "alias_units": [
+      "packages/xau_kinetic"
+    ]
+  },
+  "known_collisions": [
+    "cognitive_core",
+    "security"
+  ],
+  "baseline_dynamic_imports": {},
+  "baseline_edges": [
+    {
+      "from": "packages/graph",
+      "to": "packages/memory_controller",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L3_storage -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/graph",
+      "to": "root/cognitive_core",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L3_storage -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/interfaces",
+      "to": "packages/lifecycle",
+      "imports": 3,
+      "since": "2026-11-09",
+      "owner_wp": "WP-10",
+      "reason": "upward edge L2_contracts -> L5_cognition present at the baseline date"
+    },
+    {
+      "from": "packages/interfaces",
+      "to": "packages/memory",
+      "imports": 6,
+      "since": "2026-11-09",
+      "owner_wp": "WP-10",
+      "reason": "upward edge L2_contracts -> L3_storage present at the baseline date"
+    },
+    {
+      "from": "packages/interfaces",
+      "to": "packages/memory_controller",
+      "imports": 9,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L2_contracts -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/interfaces",
+      "to": "packages/vault_access",
+      "imports": 3,
+      "since": "2026-11-09",
+      "owner_wp": "WP-10",
+      "reason": "upward edge L2_contracts -> L3_storage present at the baseline date"
+    },
+    {
+      "from": "packages/interfaces",
+      "to": "packages/xau_kinetic",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-12",
+      "reason": "hard-forbidden package -> product edge (L2_contracts -> L8_facades)",
+      "hard_forbidden": true
+    },
+    {
+      "from": "packages/interfaces",
+      "to": "products/xau_kinetic",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-12",
+      "reason": "hard-forbidden package -> product edge (L2_contracts -> L7_products)",
+      "hard_forbidden": true
+    },
+    {
+      "from": "packages/interfaces",
+      "to": "root/cognitive_core",
+      "imports": 3,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L2_contracts -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/interfaces",
+      "to": "root/security",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-14",
+      "reason": "upward edge L2_contracts -> L6_adapters present at the baseline date"
+    },
+    {
+      "from": "packages/learning",
+      "to": "packages/memory_controller",
+      "imports": 11,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L5_cognition -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/learning",
+      "to": "root/cognitive_core",
+      "imports": 6,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L5_cognition -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/lifecycle",
+      "to": "packages/memory_controller",
+      "imports": 11,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L5_cognition -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/lifecycle",
+      "to": "root/cognitive_core",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L5_cognition -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/memory",
+      "to": "packages/lifecycle",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-10",
+      "reason": "upward edge L3_storage -> L5_cognition present at the baseline date"
+    },
+    {
+      "from": "packages/memory",
+      "to": "packages/memory_controller",
+      "imports": 8,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L3_storage -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/memory",
+      "to": "packages/retrieval",
+      "imports": 2,
+      "since": "2026-11-09",
+      "owner_wp": "WP-10",
+      "reason": "upward edge L3_storage -> L4_retrieval present at the baseline date"
+    },
+    {
+      "from": "packages/memory",
+      "to": "root/cognitive_core",
+      "imports": 2,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L3_storage -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/memory",
+      "to": "root/security",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-14",
+      "reason": "upward edge L3_storage -> L6_adapters present at the baseline date"
+    },
+    {
+      "from": "packages/observability",
+      "to": "packages/memory_controller",
+      "imports": 3,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L0_foundation -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/observability",
+      "to": "packages/retrieval",
+      "imports": 4,
+      "since": "2026-11-09",
+      "owner_wp": "WP-10",
+      "reason": "upward edge L0_foundation -> L4_retrieval present at the baseline date"
+    },
+    {
+      "from": "packages/observability",
+      "to": "root/cognitive_core",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L0_foundation -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/retrieval",
+      "to": "packages/memory_controller",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L4_retrieval -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/retrieval",
+      "to": "root/cognitive_core",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L4_retrieval -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "packages/retrieval",
+      "to": "root/security",
+      "imports": 2,
+      "since": "2026-11-09",
+      "owner_wp": "WP-14",
+      "reason": "upward edge L4_retrieval -> L6_adapters present at the baseline date"
+    },
+    {
+      "from": "packages/security",
+      "to": "packages/interfaces",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-14",
+      "reason": "upward edge L1_policy -> L2_contracts present at the baseline date"
+    },
+    {
+      "from": "packages/security",
+      "to": "packages/memory_controller",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L1_policy -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "products/xau_kinetic",
+      "to": "packages/memory_controller",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L7_products -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "products/xau_kinetic",
+      "to": "packages/xau_kinetic",
+      "imports": 34,
+      "since": "2026-11-09",
+      "owner_wp": "WP-12",
+      "reason": "upward edge L7_products -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "root/scripts",
+      "to": "root/cognitive_core",
+      "imports": 2,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L6_adapters -> L8_facades present at the baseline date"
+    },
+    {
+      "from": "root/security",
+      "to": "root/cognitive_core",
+      "imports": 1,
+      "since": "2026-11-09",
+      "owner_wp": "WP-06",
+      "reason": "upward edge L6_adapters -> L8_facades present at the baseline date"
+    }
+  ]
+}
