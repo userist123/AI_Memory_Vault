@@ -74,8 +74,12 @@ def test_smoke_on_the_real_repository(tmp_path):
     assert code == 0
     ids = {u["id"] for u in data["units"]}
     for d in (REPO / "03_IMPLEMENTATION" / "packages").iterdir():
-        if d.is_dir() and not d.name.startswith((".", "__")):
+        # Build metadata (`pip install -e .` in CI writes `ai_memory_vault.egg-info`) is not a
+        # unit; `test_build_metadata_directories_are_not_units` pins that it stays excluded.
+        if d.is_dir() and not d.name.startswith((".", "__")) and not d.name.endswith((".egg-info", ".dist-info")):
             assert f"packages/{d.name}" in ids
+        elif d.name.endswith((".egg-info", ".dist-info")):
+            assert f"packages/{d.name}" not in ids
     assert "root/cognitive_core" in ids
     assert data["meta"]["testpaths"] == ["20_TESTS"]
     assert not re.search(r"[A-Za-z]:[\/]", md)  # no absolute Windows paths
