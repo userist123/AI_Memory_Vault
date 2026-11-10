@@ -591,3 +591,13 @@
   Not fixed (owner design decision): at 1024 px the header needs about 1,150 px, so „Ce înseamnă?” and „Notițe” are reached only through the
   thin horizontal scrollbar. Suites: Dfir 3265, App 1035, UI 368, Edition 45, python catalog 3. Still to do in the lab: verify 10-14 on the VM,
   Continent (Internet edition) pages, remote collection WS01 -> SRV01 from the UI, live monitoring, PDF reports.
+- 2026-11-10 (lab pass, part 3): lot 2 verified on WS01 after redeploy (50 findings instead of 63; OneDrive Run value and PowerShell Direct Low;
+  one WSEARCH finding with 19 files; assistant shows "Această stație"). GridRowNames did nothing on the VM: a class handler for Loaded is never
+  called (WPF raises Loaded only where an instance handler exists) -> hook is SizeChanged; verified on the VM ("Incident: INC-0001; Stare: ...").
+  LESSON: a test that creates a window handle (Window.Show or HwndSource) ends the App.Tests host early and the run still prints "Passed" with
+  fewer tests (632 / 435 of 1,036) -> always read the TOTAL and the exit code; no HWND in tests. Continent on WS01: all 24 pages open. Fixed:
+  (15) plain list / tree items announced as class names (TimelineItem, MitreTechnique, AptActorProfile, ProcessNode) -> ToString texts;
+  (16) Cronologia evenimentelor: a raw Windows message made one card up to 1,900 px tall -> first lines + tooltip; (17) the live alert said
+  "cineva a greșit de mai multe ori parola contului „?<PSDirectVMLegacy>”" at every lab connection -> told as the Hyper-V host.
+  Suites: Dfir 3265, App 1037, UI 369, Edition 45. To verify on the VM after the next redeploy: 15, 16, 17. Still open in the lab: remote
+  collection WS01 -> SRV01 from the UI, live monitoring page, PDF reports, Insula device monitor with a hot-added disk.

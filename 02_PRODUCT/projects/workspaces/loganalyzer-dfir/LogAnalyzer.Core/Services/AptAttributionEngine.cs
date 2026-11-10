@@ -7,6 +7,8 @@ namespace LogAnalyzer.Core.Services
 {
     public class AptActorProfile
     {
+        /// <summary>What a screen reader announces for the item (the default was the class name, lab 2026-11-10).</summary>
+        public override string ToString() => $"{ActorName} · potrivire {MatchLevel} ({MatchScore:0}%)";
         public string ActorName { get; set; } = string.Empty; // ex: "APT29 (Cozy Bear / Nobelium)"
         public string Aliases { get; set; } = string.Empty;
         public string Origin { get; set; } = string.Empty; // ex: "Statul Rus (SVR)"

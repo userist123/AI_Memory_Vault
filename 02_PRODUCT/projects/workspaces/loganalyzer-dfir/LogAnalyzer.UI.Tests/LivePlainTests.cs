@@ -60,6 +60,19 @@ namespace LogAnalyzer.UI.Tests
         }
 
         [Fact]
+        public void Failed_logons_left_by_PowerShell_Direct_are_told_as_the_Hyper_V_host_not_as_a_guessed_password()
+        {
+            // lab VM 2026-11-10: the status bar said "cineva a greșit de mai multe ori parola contului „?<PSDirectVMLegacy>”" at every lab connection
+            var e = new LiveSecurityMonitoringEngine();
+            DetectedIssue? a = null; ParsedEvent? last = null;
+            for (int i = 0; i < 5; i++) a = e.EvaluateLiveEvent(last = Ev(4625, D("TargetUserName", "?&lt;PSDirectVMLegacy&gt;") + D("WorkstationName", "LAB-WS01")));
+            var s = LivePlain.Tell(a!, last!, Bucharest);
+            Assert.Contains("PowerShell Direct", s);
+            Assert.Contains("nu este o parolă ghicită", s);
+            Assert.DoesNotContain("a greșit de mai multe ori parola", s);
+        }
+
+        [Fact]
         public void An_xml_escaped_value_is_shown_decoded()
         {
             // lab VM 2026-11-07: „?&lt;PSDirectVMLegacy>” in the status bar

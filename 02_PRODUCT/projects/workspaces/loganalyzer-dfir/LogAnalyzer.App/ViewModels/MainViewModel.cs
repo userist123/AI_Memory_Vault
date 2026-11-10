@@ -3481,6 +3481,8 @@ namespace LogAnalyzer.UI.ViewModels
 
     public class ProcessNode
     {
+        /// <summary>What a screen reader announces for the tree item (the default was the class name, lab 2026-11-10).</summary>
+        public override string ToString() => $"{ProcessName} (PID {PID})";
         public string ProcessName { get; set; } = string.Empty;
         public int PID { get; set; }
         public string RiskColor { get; set; } = "#e1e7f0";
@@ -3515,6 +3517,8 @@ namespace LogAnalyzer.UI.ViewModels
 
     public class MitreTechnique
     {
+        /// <summary>What a screen reader announces for the item (the default was the class name, lab 2026-11-10).</summary>
+        public override string ToString() => string.IsNullOrWhiteSpace(Tactic) ? $"{TechId} {Name}" : $"{TechId} {Name} · {Tactic}";
         public string TechId { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
         public string DetectionColor { get; set; } = "#121622";

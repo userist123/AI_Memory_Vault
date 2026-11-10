@@ -63,7 +63,9 @@
                                     <Border Grid.Column="2" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12">
                                         <StackPanel>
                                             <TextBlock Text="{Binding Title}" FontSize="13" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                                            <TextBlock Text="{Binding Description}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,8"/>
+                                            <!-- lab 2026-11-10: a raw Windows message (logon 4624, a PowerShell error) made one card up to 1,900 px tall; the card shows the first lines, the tooltip the rest -->
+                                        <TextBlock Text="{Binding Description}" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,8"
+                                                   MaxHeight="112" TextTrimming="CharacterEllipsis" ToolTip="{Binding Description}" ToolTipService.ShowDuration="60000"/>
                                             <StackPanel Orientation="Horizontal">
                                                 <TextBlock Text="Tip: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
                                                 <TextBlock Text="{Binding Category}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,12,0"/>
