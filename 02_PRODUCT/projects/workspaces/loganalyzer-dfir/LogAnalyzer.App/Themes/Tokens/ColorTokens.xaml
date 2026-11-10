@@ -8,15 +8,15 @@
     -->
 
     <!-- Surfaces -->
-    <Color x:Key="CanvasColor">#F2F2EE</Color>
+    <Color x:Key="CanvasColor">#EEF1F4</Color>
     <SolidColorBrush x:Key="CanvasBrush" Color="{StaticResource CanvasColor}"/>
     <SolidColorBrush x:Key="BgBrush" Color="{StaticResource CanvasColor}"/>
 
-    <Color x:Key="WorkspaceColor">#F4F4F1</Color>
+    <Color x:Key="WorkspaceColor">#F3F5F8</Color>
     <SolidColorBrush x:Key="WorkspaceBrush" Color="{StaticResource WorkspaceColor}"/>
 
     <!-- sidebar and header bands -->
-    <Color x:Key="Surface1Color">#E9EAE4</Color>
+    <Color x:Key="Surface1Color">#E7EBF0</Color>
     <SolidColorBrush x:Key="Surface1Brush" Color="{StaticResource Surface1Color}"/>
     <SolidColorBrush x:Key="SurfaceBrush" Color="{StaticResource Surface1Color}"/>
 
@@ -25,18 +25,18 @@
     <SolidColorBrush x:Key="Surface2Brush" Color="{StaticResource Surface2Color}"/>
 
     <!-- hover, selected rows, pressed -->
-    <Color x:Key="Surface3Color">#E3E6EA</Color>
+    <Color x:Key="Surface3Color">#E1E7EF</Color>
     <SolidColorBrush x:Key="Surface3Brush" Color="{StaticResource Surface3Color}"/>
 
-    <Color x:Key="ElevatedPanelColor">#FBFBF9</Color>
+    <Color x:Key="ElevatedPanelColor">#F9FAFC</Color>
     <SolidColorBrush x:Key="ElevatedPanelBrush" Color="{StaticResource ElevatedPanelColor}"/>
 
     <!-- Borders -->
-    <Color x:Key="HairlineBorderColor">#D3D5CE</Color>
+    <Color x:Key="HairlineBorderColor">#D4DAE2</Color>
     <SolidColorBrush x:Key="BorderBrush" Color="{StaticResource HairlineBorderColor}"/>
     <SolidColorBrush x:Key="HairlineBorderBrush" Color="{StaticResource HairlineBorderColor}"/>
 
-    <Color x:Key="StrongBorderColor">#A9ADA5</Color>
+    <Color x:Key="StrongBorderColor">#9EA8B5</Color>
     <SolidColorBrush x:Key="StrongBorderBrush" Color="{StaticResource StrongBorderColor}"/>
 
     <!-- Text -->
@@ -74,7 +74,7 @@
     <SolidColorBrush x:Key="SuccessBrush" Color="{StaticResource SuccessColor}"/>
 
     <!-- Accent: one ink blue; the other accent keys map to quiet variants -->
-    <Color x:Key="PrimaryAccentColor">#1F4A73</Color>
+    <Color x:Key="PrimaryAccentColor">#1F56A3</Color>
     <SolidColorBrush x:Key="PrimaryAccentBrush" Color="{StaticResource PrimaryAccentColor}"/>
 
     <Color x:Key="EvidenceAccentColor">#4F4677</Color>
@@ -84,6 +84,33 @@
     <Color x:Key="CyanAccentColor">#285F7E</Color>
     <SolidColorBrush x:Key="CyanAccentBrush" Color="{StaticResource CyanAccentColor}"/>
     <SolidColorBrush x:Key="CyberBlueBrush" Color="{StaticResource CyanAccentColor}"/>
+
+    <!--
+        "Dosar" frame (design pass 2026-11-10, owner: „poți schimba stilul aplicației mai profi”): the header and the sidebar are a dark graphite-blue
+        frame with light text; the workspace stays cool paper. The frame says where you are, the paper what you read. Contrast of the frame pairs:
+        FrameText on Frame 14.9:1, FrameTextMuted on Frame 6.9:1, FrameAccent on Frame 7.6:1, FrameSuccess on FrameRaised 6.6:1.
+    -->
+    <Color x:Key="FrameColor">#18212C</Color>
+    <SolidColorBrush x:Key="FrameBrush" Color="{StaticResource FrameColor}"/>
+    <Color x:Key="FrameRaisedColor">#222D3A</Color>
+    <SolidColorBrush x:Key="FrameRaisedBrush" Color="{StaticResource FrameRaisedColor}"/>
+    <Color x:Key="FrameActiveColor">#2C3B50</Color>
+    <SolidColorBrush x:Key="FrameActiveBrush" Color="{StaticResource FrameActiveColor}"/>
+    <Color x:Key="FrameBorderColor">#334256</Color>
+    <SolidColorBrush x:Key="FrameBorderBrush" Color="{StaticResource FrameBorderColor}"/>
+    <Color x:Key="FrameTextColor">#E9EEF4</Color>
+    <SolidColorBrush x:Key="FrameTextBrush" Color="{StaticResource FrameTextColor}"/>
+    <Color x:Key="FrameTextMutedColor">#9DAABB</Color>
+    <SolidColorBrush x:Key="FrameTextMutedBrush" Color="{StaticResource FrameTextMutedColor}"/>
+    <Color x:Key="FrameAccentColor">#8DB8FF</Color>
+    <SolidColorBrush x:Key="FrameAccentBrush" Color="{StaticResource FrameAccentColor}"/>
+    <Color x:Key="FrameSuccessColor">#86CC95</Color>
+    <SolidColorBrush x:Key="FrameSuccessBrush" Color="{StaticResource FrameSuccessColor}"/>
+
+    <!-- the accent button (one main action per screen): pressed and hover shades of the accent -->
+    <SolidColorBrush x:Key="OnAccentBrush" Color="#FFFFFF"/>
+    <SolidColorBrush x:Key="AccentHoverBrush" Color="#1A4A8C"/>
+    <SolidColorBrush x:Key="AccentPressedBrush" Color="#153D74"/>
 
     <!-- Badge tints and overlays -->
     <SolidColorBrush x:Key="BadgeCriticalBgBrush" Color="#F6E1DF"/>

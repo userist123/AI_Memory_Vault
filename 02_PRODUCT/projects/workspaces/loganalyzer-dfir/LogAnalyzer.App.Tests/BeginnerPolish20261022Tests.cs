@@ -329,7 +329,13 @@ public sealed class BeginnerPolish20261022Tests : IDisposable
         var menu = LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(LogAnalyzer.Core.Services.Edition.StationPosture.Internet, AppMode.Network, []).SelectMany(s => s.Pages).ToList();
         Assert.True(menu.Count >= 20);
         foreach (var page in menu) Assert.False(string.IsNullOrWhiteSpace(page.Title));
-        Assert.Contains(expander.Descendants(), e => e.Name.LocalName == "ScrollViewer" && Attr(e, "MaxHeight").Length > 0);
+        // design pass 2026-11-10: ONE scroll in the sidebar (a nested scroll box with MaxHeight was the second scrollbar). The list still never slides under
+        // the buttons at the bottom left: the expander lives in the scrolled row (*) of the sidebar grid, the bottom actions in their own Auto row.
+        Assert.DoesNotContain(expander.Descendants(), e => e.Name.LocalName == "ScrollViewer");
+        var scroller = expander.Ancestors().First(e => e.Name.LocalName == "ScrollViewer");
+        Assert.Equal("0", Attr(scroller, "Grid.Row"));
+        var sidebarGrid = scroller.Parent!;
+        Assert.Contains(sidebarGrid.Elements(), e => Attr(e, "Grid.Row") == "1");
         var nav = Src("Themes", "Components", "Navigation.xaml");
         Assert.Contains("TextTrimming", nav);
         Assert.Contains("CharacterEllipsis", nav);

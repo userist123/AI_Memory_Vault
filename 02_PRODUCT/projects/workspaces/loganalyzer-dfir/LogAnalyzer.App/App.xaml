@@ -23,6 +23,7 @@
                 <ResourceDictionary Source="/Themes/Components/Navigation.xaml"/>
                 <ResourceDictionary Source="/Themes/Components/Cards.xaml"/>
                 <ResourceDictionary Source="/Themes/Components/Page.xaml"/>
+                <ResourceDictionary Source="/Themes/Components/Frame.xaml"/>
                 <ResourceDictionary Source="/Themes/Components/StatusBadges.xaml"/>
                 <ResourceDictionary Source="/Themes/Components/Inspector.xaml"/>
                 <ResourceDictionary Source="/Themes/Components/Dialogs.xaml"/>

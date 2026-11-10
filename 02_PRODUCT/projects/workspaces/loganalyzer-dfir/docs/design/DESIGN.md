@@ -1,18 +1,32 @@
-# LogAnalyzer DFIR — reguli de design (tema „Registru”)
+# LogAnalyzer DFIR — reguli de design (tema „Dosar”)
 
-Tema este decizia proprietarului din 2026-10-11: hârtie, cerneală, un singur albastru. Regulile de mai jos o fac consecventă; nu o schimbă.
+2026-11-10, proprietarul: „poți schimba stilul aplicației mai profi, nu trebuie să fii de acord cu mine”. Tema „Registru” (hârtie, cerneală,
+un albastru) era curată, dar ștearsă: totul la aceeași intensitate, fără cadru. „Dosar” păstrează hârtia pentru ce se citește și pune un
+**cadru închis** (antet și meniu lateral, grafit-albăstrui) pentru ce arată unde ești. Albastrul devine un cobalt limpede, folosit doar pentru
+acțiunea principală. Culorile de severitate nu se schimbă (contrast și tipărire).
+
+## Cadrul (Themes/Components/Frame.xaml)
+| Rol | Token | Valoare |
+|---|---|---|
+| Cadru | `FrameBrush` | #18212C |
+| Element ridicat / sub mouse | `FrameRaisedBrush` | #222D3A |
+| Element activ | `FrameActiveBrush` | #2C3B50 |
+| Linii | `FrameBorderBrush` | #334256 |
+| Text | `FrameTextBrush` | #E9EEF4 (14,9:1) |
+| Text estompat | `FrameTextMutedBrush` | #9DAABB (6,9:1) |
+| Accent pe cadru (șina paginii, focus) | `FrameAccentBrush` | #8DB8FF |
 
 ## Culoare (din `Themes/Tokens/ColorTokens.xaml`; nicio culoare scrisă direct în pagini sau în view-modele)
 
 | Rol | Token | Valoare |
 |---|---|---|
-| Fundal fereastră | `CanvasBrush` | #F2F2EE |
-| Benzi (antet, meniu) | `Surface1Brush` | #E9EAE4 |
+| Fundal fereastră | `CanvasBrush` | #EEF1F4 |
+| Benzi secundare | `Surface1Brush` | #E7EBF0 |
 | Carduri, câmpuri, tabele | `Surface2Brush` | #FFFFFF |
 | Text | `TextPrimaryBrush` | #1C2024 |
 | Text secundar | `TextSecondaryBrush` | #454B52 |
 | Text estompat | `TextMutedBrush` | #61676E |
-| Accent (o singură culoare de acțiune) | `PrimaryAccentBrush` | #1F4A73 |
+| Accent (o singură culoare de acțiune) | `PrimaryAccentBrush` | #1F56A3 |
 | Critic, ridicat, mediu, scăzut, în regulă | `CriticalBrush` … `SuccessBrush` | #A3201C, #A84B0C, #7A5D00, #285F7E, #2E6638 |
 
 Culorile de text și de stare sunt alese ca să treacă WCAG AA pe alb (testele de contrast existente rămân valabile). Starea se spune mereu

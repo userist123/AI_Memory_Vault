@@ -38,7 +38,7 @@
         </Grid.RowDefinitions>
 
         <!-- TOP 64PX COMMAND BAR -->
-        <Border Grid.Row="0" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,0,1" Padding="20,0">
+        <Border Grid.Row="0" Background="{StaticResource FrameBrush}" BorderBrush="{StaticResource FrameBorderBrush}" BorderThickness="0,0,0,1" Padding="20,0">
             <!-- small monitors (1280x720): the bar scrolls sideways instead of cutting off the buttons on the right -->
             <ScrollViewer x:Name="HeaderScroll" HorizontalScrollBarVisibility="Auto" VerticalScrollBarVisibility="Disabled" Focusable="False">
             <Grid MinWidth="{Binding ViewportWidth, ElementName=HeaderScroll}">
@@ -55,25 +55,23 @@
                 <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
                     <StackPanel VerticalAlignment="Center">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding ProductName}" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{Binding ProductName}" FontSize="17" FontWeight="SemiBold" Foreground="{StaticResource FrameTextBrush}"/>
                         </StackPanel>
-                        <TextBlock Text="{Binding StationSubtitle}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,1,0,0"/>
+                        <TextBlock Text="{Binding StationSubtitle}" FontSize="12" Foreground="{StaticResource FrameTextMutedBrush}" Margin="0,1,0,0"/>
                     </StackPanel>
                     
                     <!-- Environment Mode Badge -->
-                    <Border Margin="18,0,0,0" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,4" VerticalAlignment="Center"
-                            ToolTip="{Binding ModeReasonText}">
+                    <Border Margin="18,0,0,0" Style="{StaticResource FrameChipStyle}" ToolTip="{Binding ModeReasonText}">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="{Binding SystemModeBadgeText}" FontSize="12" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{Binding SystemModeBadgeText}" FontSize="12" Foreground="{StaticResource FrameTextBrush}"/>
                         </StackPanel>
                     </Border>
 
                     <!-- Station name (owner 2026-10-11: show the station's name, not its role) -->
-                    <Border Margin="8,0,0,0" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="3" Padding="10,4" VerticalAlignment="Center"
-                            AutomationProperties.Name="Numele acestei stații">
+                    <Border Margin="8,0,0,0" Style="{StaticResource FrameChipStyle}" AutomationProperties.Name="Numele acestei stații">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Stația: " FontSize="12" Foreground="{StaticResource TextMutedBrush}" Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=1280}"/>
-                            <TextBlock Text="{Binding StationName}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="Stația: " FontSize="12" Foreground="{StaticResource FrameTextMutedBrush}" Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=1280}"/>
+                            <TextBlock Text="{Binding StationName}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource FrameTextBrush}"/>
                         </StackPanel>
                     </Border>
 
@@ -88,7 +86,7 @@
                 <!-- Center: Global Command Palette Search -->
                 <!-- narrow window: the search box becomes one button that opens the same command palette (Ctrl+K) -->
                 <Button Grid.Column="1" HorizontalAlignment="Left" Margin="12,0" Padding="9,7" VerticalAlignment="Center" Command="{Binding ToggleCommandPaletteCommand}"
-                        Style="{StaticResource ActionButtonStyle}" ToolTip="Căutare în evenimente, reguli și artefacte (Ctrl+K)" AutomationProperties.Name="Căutare (Ctrl+K)"
+                        Style="{StaticResource FrameButtonStyle}" ToolTip="Căutare în evenimente, reguli și artefacte (Ctrl+K)" AutomationProperties.Name="Căutare (Ctrl+K)"
                         Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=&lt;1180}">
                     <TextBlock Text="&#xE721;" FontFamily="{StaticResource IconFontFamily}" FontSize="14"/>
                 </Button>
@@ -110,27 +108,27 @@
                             AutomationProperties.HelpText="Colectare și analiză completă pentru rolul acestei stații; rezultatul este folosit de toate paginile."
                             Visibility="{Binding IsExpertLevel, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     <!-- Operator -->
-                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="0,0,10,0">
+                    <Border Style="{StaticResource FrameChipStyle}" Padding="10,5" Margin="0,0,10,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Utilizator: " FontSize="12" Foreground="{StaticResource TextMutedBrush}" Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=1280}"/>
-                            <TextBlock Text="&#xE77B;" FontFamily="{StaticResource IconFontFamily}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,6,0" VerticalAlignment="Center"
+                            <TextBlock Text="Utilizator: " FontSize="12" Foreground="{StaticResource FrameTextMutedBrush}" Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=1280}"/>
+                            <TextBlock Text="&#xE77B;" FontFamily="{StaticResource IconFontFamily}" FontSize="12" Foreground="{StaticResource FrameTextMutedBrush}" Margin="0,2,6,0" VerticalAlignment="Center"
                                        Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=&lt;1280}"/>
-                            <TextBlock Text="{Binding OperatorName}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                            <TextBlock Text="{Binding OperatorName}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource FrameTextBrush}"/>
                         </StackPanel>
                     </Border>
 
                     <!-- WP18 S3: language level (Simple for everyone; Expert is a switch) and the glossary -->
-                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,3" Margin="0,0,10,0" VerticalAlignment="Center"
+                    <Border Style="{StaticResource FrameChipStyle}" Padding="4,3" Margin="0,0,10,0"
                             ToolTip="Simplu: cuvinte pe înțelesul tuturor, detaliile tehnice la un click distanță. Expert: numele tehnice rămân lângă cele simple. Datele sunt aceleași.">
                         <StackPanel Orientation="Horizontal" AutomationProperties.Name="Nivel de limbaj: Simplu sau Expert">
-                            <TextBlock Text="Limbaj: " FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=1280}"/>
-                            <RadioButton Content="Simplu" IsChecked="{Binding IsSimpleLevel}" Style="{StaticResource ChipTabStyle}" Padding="8,2" Margin="0,0,2,0" VerticalAlignment="Center"
+                            <TextBlock Text="Limbaj: " FontSize="12" Foreground="{StaticResource FrameTextMutedBrush}" Margin="6,0,2,0" VerticalAlignment="Center" Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=1280}"/>
+                            <RadioButton Content="Simplu" IsChecked="{Binding IsSimpleLevel}" Style="{StaticResource FrameChipTabStyle}" Padding="8,2" Margin="0,0,2,0" VerticalAlignment="Center"
                                          AutomationProperties.Name="Limbaj simplu" AutomationProperties.HelpText="Cuvinte pe înțelesul tuturor; detaliile tehnice la un click distanță."/>
-                            <RadioButton Content="Expert" IsChecked="{Binding IsExpertLevel}" Style="{StaticResource ChipTabStyle}" Padding="8,2" Margin="0" VerticalAlignment="Center"
+                            <RadioButton Content="Expert" IsChecked="{Binding IsExpertLevel}" Style="{StaticResource FrameChipTabStyle}" Padding="8,2" Margin="0" VerticalAlignment="Center"
                                          AutomationProperties.Name="Limbaj expert" AutomationProperties.HelpText="Numele tehnice rămân lângă cele simple."/>
                         </StackPanel>
                     </Border>
-                    <Button Command="{Binding OpenGlossaryCommand}" Style="{StaticResource ActionButtonStyle}" Padding="10,5" Margin="0,0,8,0"
+                    <Button Command="{Binding OpenGlossaryCommand}" Style="{StaticResource FrameButtonStyle}" Padding="10,5" Margin="0,0,8,0"
                             AutomationProperties.Name="Ce înseamnă?" ToolTip="Ce înseamnă? Glosarul termenilor (F1)"
                             AutomationProperties.HelpText="Deschide glosarul: fiecare termen tehnic, cu numele pe înțelesul tuturor și o explicație scurtă.">
                         <StackPanel Orientation="Horizontal">
@@ -140,7 +138,7 @@
                     </Button>
 
                     <!-- Analyst Scratchpad Toggle -->
-                    <Button Command="{Binding ToggleAnalystDrawerCommand}" Style="{StaticResource ActionButtonStyle}" Padding="10,5"
+                    <Button Command="{Binding ToggleAnalystDrawerCommand}" Style="{StaticResource FrameButtonStyle}" Padding="10,5"
                             AutomationProperties.Name="Notițe" ToolTip="Notițele investigatorului">
                         <StackPanel Orientation="Horizontal">
                             <TextBlock Text="&#xE70B;" FontFamily="{StaticResource IconFontFamily}" FontSize="14" VerticalAlignment="Center"/>
@@ -162,7 +160,7 @@
             </Grid.ColumnDefinitions>
 
             <!-- SIDEBAR NAVIGATION -->
-            <Border Grid.Column="0" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,0,1,0">
+            <Border Grid.Column="0" Background="{StaticResource FrameBrush}" BorderBrush="{StaticResource FrameBorderBrush}" BorderThickness="0,0,1,0">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="*"/>
@@ -172,11 +170,11 @@
                     <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Margin="8,10">
                         <StackPanel>
                             <!-- GROUP 0: HOME (WP5): the first page; the case answers, coverage matrix and the three starting intents -->
-                            <TextBlock Text="Acasă" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,10,0,6"/>
+                            <TextBlock Text="Acasă" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource FrameTextMutedBrush}" Margin="12,10,0,6"/>
                             <RadioButton Content="Acasă" GroupName="Sidebar" Style="{StaticResource SidebarTabStyle}" Command="{Binding NavigateCommand}" CommandParameter="22" IsChecked="True"/>
 
                             <!-- WP18 S2: the pages of this PC's role, from the role profile (data); unavailable ones stay visible, disabled, with the reason -->
-                            <TextBlock Text="Pagini principale" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6" TextWrapping="Wrap"/>
+                            <TextBlock Text="Pagini principale" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource FrameTextMutedBrush}" Margin="12,16,0,6" TextWrapping="Wrap"/>
                             <ItemsControl ItemsSource="{Binding RoleNavigation}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
@@ -193,21 +191,20 @@
                                     AutomationProperties.Name="Toate paginile, nivelul Expert" AutomationProperties.HelpText="Trece la nivelul Expert și deschide lista cu toate paginile aplicației.">
                                 <Button.Template>
                                     <ControlTemplate TargetType="Button">
-                                        <TextBlock Text="{TemplateBinding Content}" FontSize="12" TextDecorations="Underline" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                                        <TextBlock Text="{TemplateBinding Content}" FontSize="12" TextDecorations="Underline" Foreground="{StaticResource FrameTextMutedBrush}" TextWrapping="Wrap"/>
                                     </ControlTemplate>
                                 </Button.Template>
                             </Button>
-                            <Expander Header="Avansat (toate paginile)" views:SimpleLevel.HideInSimple="True" IsExpanded="{Binding AdvancedPagesOpen, Mode=TwoWay}" Foreground="{StaticResource TextMutedBrush}" FontSize="12" FontWeight="SemiBold" Margin="12,16,0,0"
+                            <Expander Header="Avansat (toate paginile)" views:SimpleLevel.HideInSimple="True" IsExpanded="{Binding AdvancedPagesOpen, Mode=TwoWay}" Style="{StaticResource FrameExpanderStyle}" Margin="12,16,0,0"
                                       AutomationProperties.Name="Avansat: toate paginile aplicației">
                             <!-- row 20: the expanded list scrolls inside its own box, so it never slides under the buttons at the bottom left -->
-                            <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled" MaxHeight="420" Focusable="False">
                             <StackPanel Margin="-12,0,0,0">
                             <!-- the sections and pages come from ModuleCatalog.Menu (MainViewModel.AdvancedMenu): one source, no parallel static list -->
                             <ItemsControl ItemsSource="{Binding AdvancedMenu}">
                                 <ItemsControl.ItemTemplate>
                                     <DataTemplate>
                                         <StackPanel>
-                                            <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="12,16,0,6"/>
+                                            <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource FrameTextMutedBrush}" Margin="12,16,0,6"/>
                                             <ItemsControl ItemsSource="{Binding Pages}">
                                                 <ItemsControl.ItemTemplate>
                                                     <DataTemplate>
@@ -221,7 +218,6 @@
                                 </ItemsControl.ItemTemplate>
                             </ItemsControl>
                             </StackPanel>
-                            </ScrollViewer>
                             </Expander>
                         </StackPanel>
                     </ScrollViewer>
@@ -238,13 +234,13 @@
 
                     <!-- Bottom Quick Actions (Network Live Mode) -->
                     <StackPanel Grid.Row="1" Margin="14,10" Visibility="{Binding IsNetworkMode, Converter={StaticResource BooleanToVisibilityConverter}}">
-                        <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10" Margin="0,0,0,8">
+                        <Border Background="{StaticResource FrameRaisedBrush}" BorderBrush="{StaticResource FrameBorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10" Margin="0,0,0,8">
                             <StackPanel>
                                 <StackPanel Orientation="Horizontal" Margin="0,0,0,2">
-                                    <Ellipse Width="6" Height="6" Fill="{StaticResource SuccessBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
-                                    <TextBlock Text="Monitorizare jurnale în timp real" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource SuccessBrush}"/>
+                                    <Ellipse Width="6" Height="6" Fill="{StaticResource FrameSuccessBrush}" Margin="0,0,6,0" VerticalAlignment="Center"/>
+                                    <TextBlock Text="Monitorizare jurnale în timp real" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource FrameSuccessBrush}"/>
                                 </StackPanel>
-                                <TextBlock Text="Urmărește jurnalele Windows ale stației (fără driver de kernel)." FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
+                                <TextBlock Text="Urmărește jurnalele Windows ale stației (fără driver de kernel)." FontSize="12" Foreground="{StaticResource FrameTextMutedBrush}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
                         <Button Content="Exportă raportul" Command="{Binding ExportCsvCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,2"
@@ -362,13 +358,14 @@
         </Grid>
 
         <!-- 32PX RESTRAINED BOTTOM STATUS BAR -->
-        <Border Grid.Row="2" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="20,0">
+        <Border Grid.Row="2" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="0,1,0,0" Padding="20,0">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                <TextBlock Text="{Binding StatusMessage, FallbackValue='Stare: nicio analiză rulată'}" Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Medium" VerticalAlignment="Center" FontSize="11"/>
+                <TextBlock Text="{Binding StatusMessage, FallbackValue='Stare: nicio analiză rulată'}" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" FontSize="11.5"
+                           TextTrimming="CharacterEllipsis" ToolTip="{Binding StatusMessage}"/>
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <StackPanel.Style>
                         <Style TargetType="StackPanel">
@@ -380,7 +377,7 @@
                     <Ellipse Width="6" Height="6" Fill="{StaticResource TextMutedBrush}" Margin="0,0,8,0"/>
                     <!-- Reports the real auto-containment switch; it says nothing about the host being safe. Row 8: an edition without containment shows nothing here (the permanent
                          „nu este disponibilă” was a negative message with no action); the reason is on the containment page and on the dashboard card. -->
-                    <TextBlock Foreground="{StaticResource TextSecondaryBrush}" FontWeight="Bold" FontSize="10.5" ToolTip="Starea comutatorului de izolare automată. Nu este o evaluare a siguranței stației.">
+                    <TextBlock Foreground="{StaticResource TextSecondaryBrush}" FontWeight="SemiBold" FontSize="11" ToolTip="Starea comutatorului de izolare automată. Nu este o evaluare a siguranței stației.">
                         <TextBlock.Style>
                             <Style TargetType="TextBlock">
                                 <Setter Property="Text" Value="Izolare automată: oprită (implicit)"/>
