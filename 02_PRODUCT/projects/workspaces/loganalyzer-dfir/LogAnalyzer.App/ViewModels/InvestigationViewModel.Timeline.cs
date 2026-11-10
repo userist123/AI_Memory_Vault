@@ -56,7 +56,7 @@ namespace LogAnalyzer.UI.ViewModels
             Views.BookmarkMarkConverter.Annotated = _notes.Annotations.Select(a => a.EventKey).ToHashSet(StringComparer.Ordinal);
             SavedViewNames.Clear();
             foreach (var n in _notes.Views.Keys) SavedViewNames.Add(n);
-            if (_notes.Chain is { Status: ChainStatus.Broken } c) TimelineNotesLine = "NOTIȚELE CRONOLOGIEI SUNT COMPROMISE: " + c.Reason + "; nu se mai scrie nimic în ele.";
+            if (_notes.Chain is { Status: ChainStatus.Broken } c) TimelineNotesLine = "Notițele cronologiei sunt compromise: " + c.Reason + "; nu se mai scrie nimic în ele.";
             else if (TimelineNotesLine.Length == 0 || TimelineNotesLine.StartsWith("Marcaje:", StringComparison.Ordinal))
                 TimelineNotesLine = $"Marcaje: {_notes.Bookmarks.Count} · note: {_notes.Annotations.Count} · vederi salvate: {_notes.Views.Count}";
         }

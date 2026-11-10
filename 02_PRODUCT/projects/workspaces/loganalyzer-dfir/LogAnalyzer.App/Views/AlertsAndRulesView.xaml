@@ -43,10 +43,10 @@
                     </DockPanel>
                     <DataGrid Grid.Row="1" ItemsSource="{Binding IssuesView}" SelectedItem="{Binding SelectedIssue}" AutoGenerateColumns="False" IsReadOnly="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="100" MinWidth="100"/>
-                            <DataGridTextColumn Header="Tehnică" Binding="{Binding MitreTechniqueId}" Width="85" MinWidth="85"/>
-                            <DataGridTextColumn Header="Titlul alertei" Binding="{Binding Title}" Width="160" MinWidth="160"/>
-                            <DataGridTextColumn Header="Analiză și context" Binding="{Binding Explanation}" Width="*"/>
+                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="100" MinWidth="100" ElementStyle="{StaticResource OneLineCellTextStyle}"/>
+                            <DataGridTextColumn Header="Tehnică" Binding="{Binding MitreTechniqueId}" Width="110" MinWidth="110" ElementStyle="{StaticResource OneLineCellTextStyle}"/>
+                            <DataGridTextColumn Header="Titlul alertei" Binding="{Binding Title}" Width="160" MinWidth="160" ElementStyle="{StaticResource OneLineCellTextStyle}"/>
+                            <DataGridTextColumn Header="Analiză și context" Binding="{Binding Explanation}" Width="*" MinWidth="160"/>
                         </DataGrid.Columns>
                         <DataGrid.InputBindings>
                             <MouseBinding MouseAction="LeftDoubleClick" Command="{Binding OpenAlertModalCommand}" CommandParameter="{Binding SelectedItem, RelativeSource={RelativeSource AncestorType=DataGrid}}"/>
@@ -66,12 +66,32 @@
                         <RowDefinition Height="*"/>
                         <RowDefinition Height="Auto"/>
                     </Grid.RowDefinitions>
-                    <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,10">
-                        <TextBlock DockPanel.Dock="Left" Text="Editor de reguli Sigma / YARA" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
-                        <ComboBox DockPanel.Dock="Right" ItemsSource="{Binding SigmaRules}" SelectedItem="{Binding SelectedSigmaRule}" DisplayMemberPath="Title" Width="200"/>
-                    </DockPanel>
+                    <!-- design pass 2026-11-11: the title and the rule picker stack (side by side the picker shrank to an empty square at 1024 px) -->
+                    <StackPanel Grid.Row="0" Margin="0,0,0,10">
+                        <TextBlock Text="Editor de reguli Sigma / YARA" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
+                        <!-- the rule picker: a label and a hint that shows while no rule is chosen, so the box is never an empty unlabelled field -->
+                        <DockPanel LastChildFill="True">
+                            <TextBlock DockPanel.Dock="Left" Text="Regulă de pornire:" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                            <Grid>
+                                <ComboBox x:Name="RulePicker" ItemsSource="{Binding SigmaRules}" SelectedItem="{Binding SelectedSigmaRule}" DisplayMemberPath="Title" MinWidth="180"
+                                          AutomationProperties.Name="Regulă de pornire" ToolTip="Alegeți o regulă deja încărcată ca punct de plecare; sursa ei apare în caseta de mai jos și o puteți modifica."/>
+                                <TextBlock Text="Alegeți o regulă…" Margin="8,0,28,0" VerticalAlignment="Center" IsHitTestVisible="False" Foreground="{StaticResource TextMutedBrush}">
+                                    <TextBlock.Style>
+                                        <Style TargetType="TextBlock">
+                                            <Setter Property="Visibility" Value="Collapsed"/>
+                                            <Style.Triggers>
+                                                <DataTrigger Binding="{Binding SelectedItem, ElementName=RulePicker}" Value="{x:Null}">
+                                                    <Setter Property="Visibility" Value="Visible"/>
+                                                </DataTrigger>
+                                            </Style.Triggers>
+                                        </Style>
+                                    </TextBlock.Style>
+                                </TextBlock>
+                            </Grid>
+                        </DockPanel>
+                    </StackPanel>
 
-                    <TextBlock Grid.Row="1" Text="Sursa regulii (YAML / YARA):" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
+                    <TextBlock Grid.Row="1" Text="Sursa regulii (Sigma în YAML sau YARA); alegeți o regulă de mai sus sau scrieți una nouă aici:" TextWrapping="Wrap" FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                     
                     <TextBox Grid.Row="2" Text="{Binding WorkbenchRuleContent, UpdateSourceTrigger=PropertyChanged}" FontFamily="{StaticResource CodeFontFamily}" FontSize="12" AcceptsReturn="True" VerticalScrollBarVisibility="Auto" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource CodeTextBrush}" BorderBrush="{StaticResource BorderBrush}" Padding="10"/>
 

@@ -71,7 +71,7 @@ namespace LogAnalyzer.UI.ViewModels
             bool broken = s.Chain is { Status: ChainStatus.Broken };
             WorkflowProblem = broken;
             WorkflowStageText = $"Etapa: {CaseWorkflow.Label(s.Stage)}" + (s.Reopened > 0 ? $" · redeschis de {s.Reopened} ori" : "") +
-                                (broken ? " · JURNALUL FLUXULUI ESTE COMPROMIS: " + s.Chain!.Reason : s.Chain is null ? " · flux nepornit (adăugați primul participant)" : " · jurnal înlănțuit, intact");
+                                (broken ? " · Jurnalul fluxului este compromis: " + s.Chain!.Reason : s.Chain is null ? " · flux nepornit (adăugați primul participant)" : " · jurnal înlănțuit, intact");
             foreach (var g in s.Participants.GroupBy(p => p.Account, StringComparer.OrdinalIgnoreCase))
                 WorkflowParticipants.Add($"{g.Key}: {string.Join(", ", g.Select(p => CaseWorkflow.Label(p.Role)))}");
             foreach (var t in s.Tasks.Values.OrderBy(t => t.Status).ThenBy(t => t.TaskId, StringComparer.Ordinal)) WorkflowTasks.Add(t);
@@ -82,7 +82,7 @@ namespace LogAnalyzer.UI.ViewModels
                                               .OrderByDescending(f => f.Verification?.State is StandardState.Contradicted or StandardState.Rejected).ThenByDescending(f => f.Severity))
             {
                 s.Reviews.TryGetValue(f.FindingId, out var r);
-                WorkflowReviews.Add(new WorkflowReviewRow(f.FindingId, LogAnalyzer.Dfir.Language.RoLabels.Severity(f.Severity),
+                WorkflowReviews.Add(new WorkflowReviewRow(f.FindingId, LogAnalyzer.Dfir.Presentation.SeverityLabels.Romanian(f.Severity),
                     (f.Verification?.State is StandardState.Contradicted ? "[CONTRAZISĂ de verificare] " : f.Verification?.State is StandardState.Rejected ? "[RESPINSĂ de verificare] " : "") + f.Title,
                     r is null ? "fără decizie" : CaseWorkflow.Label(r.Decision) + (r.Reason.Length > 0 ? ": " + r.Reason : ""), r?.Reviewer ?? "",
                     r is null || r.Decision == FindingDecision.NeedsMoreEvidence));

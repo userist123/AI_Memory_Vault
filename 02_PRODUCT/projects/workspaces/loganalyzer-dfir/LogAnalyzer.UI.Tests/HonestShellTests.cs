@@ -135,9 +135,9 @@ namespace LogAnalyzer.UI.Tests
 
             Assert.NotNull(alert);
             Assert.True(alert!.IsTestAlert);
-            Assert.StartsWith("[TEST", alert.Title);
-            Assert.Contains("NU ESTE O ALERTĂ REALĂ", alert.Title);
-            Assert.Contains("NU O DETECȚIE REALĂ", alert.Explanation);
+            Assert.StartsWith("[Test", alert.Title);
+            Assert.Contains("nu este o alertă reală", alert.Title);
+            Assert.Contains("nu o detecție reală", alert.Explanation);
         }
 
         [Fact]
@@ -213,7 +213,6 @@ namespace LogAnalyzer.UI.Tests
             Assert.DoesNotContain("APT Attribution", text);
             Assert.DoesNotContain("& Attribution", text);
             Assert.Contains("nu este atribuire", text);
-            Assert.Contains("NU este atribuire", text);
             Assert.DoesNotContain("Threat Intel &amp; APT\"", main);
         }
 

@@ -73,7 +73,7 @@ public class AirGapStationChecksTests
     {
         var off = Check(true, "P29", ("Print.LogEnabled", "0"), ("Print.PrinterCount", "2"), ("Print.PrinterNames", "A; B"), ("Print.NetworkPrinters", ""));
         Assert.Equal(ControlStatus.Neconform, off.Status);
-        Assert.Contains("OPRIT", off.Detail);
+        Assert.Contains("oprit", off.Detail);
         var net = Check(true, "P29", ("Print.LogEnabled", "1"), ("Print.PrinterCount", "2"), ("Print.NetworkPrinters", "Imprimanta de rețea"));
         Assert.Equal(ControlStatus.Neconform, net.Status);
         Assert.Contains("imprimante de rețea", net.Detail);

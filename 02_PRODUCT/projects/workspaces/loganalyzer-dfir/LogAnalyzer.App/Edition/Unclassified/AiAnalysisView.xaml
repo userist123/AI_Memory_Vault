@@ -16,10 +16,10 @@
             <DataGrid ItemsSource="{Binding AiRejected}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="180">
                 <DataGrid.Columns>
                     <DataGridTextColumn Header="Secțiune" Binding="{Binding Section}" Width="140" MinWidth="140"/>
-                    <DataGridTextColumn Header="Text (nu este constatare)" Binding="{Binding Text}" Width="3*">
+                    <DataGridTextColumn Header="Text (nu este constatare)" Binding="{Binding Text}" Width="3*" MinWidth="220">
                         <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextDecorations" Value="Strikethrough"/><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                     </DataGridTextColumn>
-                    <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="2*"/>
+                    <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="2*" MinWidth="70"/>
                 </DataGrid.Columns>
             </DataGrid>
         </Expander>
@@ -28,7 +28,7 @@
                 <DataGridTextColumn Header="Secțiune" Binding="{Binding Section}" Width="160" MinWidth="160"/>
                 <DataGridTextColumn Header="Clasificare" Binding="{Binding Classification}" Width="110" MinWidth="110"/>
                 <DataGridTextColumn Header="Validare (valori, nu sens)" Binding="{Binding State}" Width="220" MinWidth="220"/>
-                <DataGridTextColumn Header="Afirmație" Binding="{Binding Text}" Width="4*">
+                <DataGridTextColumn Header="Afirmație" Binding="{Binding Text}" Width="4*" MinWidth="100">
                     <DataGridTextColumn.ElementStyle>
                         <Style TargetType="TextBlock">
                             <Setter Property="TextWrapping" Value="Wrap"/>
@@ -36,7 +36,7 @@
                         </Style>
                     </DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
-                <DataGridTextColumn Header="Avertisment" Binding="{Binding Warning}" Width="2*">
+                <DataGridTextColumn Header="Avertisment" Binding="{Binding Warning}" Width="2*" MinWidth="110">
                     <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
                 <DataGridTextColumn Header="Citări" Binding="{Binding Citations}" Width="70" MinWidth="70"/>

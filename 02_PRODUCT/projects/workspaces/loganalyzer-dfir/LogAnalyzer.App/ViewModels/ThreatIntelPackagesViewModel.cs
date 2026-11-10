@@ -58,7 +58,7 @@ namespace LogAnalyzer.UI.ViewModels
                 foreach (var p in s.Staged()) StagedRows.Add(p);
                 HistoryLines.Clear();
                 var chain = s.VerifyHistory();
-                if (chain.Status == LogAnalyzer.Dfir.Case.ChainStatus.Broken) HistoryLines.Add("ISTORICUL ESTE COMPROMIS: " + chain.Reason);
+                if (chain.Status == LogAnalyzer.Dfir.Case.ChainStatus.Broken) HistoryLines.Add("Istoricul este compromis: " + chain.Reason);
                 foreach (var e in s.HistoryEvents().AsEnumerable().Reverse().Take(100))
                     HistoryLines.Add($"{e.TimestampUtc.ToLocalTime():yyyy-MM-dd HH:mm}  {e.Actor}  {Word(e.Kind)}  {e.PackageId} v{e.Version}  {e.Detail}");
             }

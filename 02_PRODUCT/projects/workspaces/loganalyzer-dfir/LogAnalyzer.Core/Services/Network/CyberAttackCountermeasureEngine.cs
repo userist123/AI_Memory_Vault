@@ -98,7 +98,7 @@ namespace LogAnalyzer.Core.Services.Network
 
                 playbook.Actions.Add(new CountermeasureAction
                 {
-                    Title = "IZOLEAZĂ GAZDA DIN REȚEA (TAIERE TRAFIC)",
+                    Title = "Izolează gazda din rețea (tăierea traficului)",
                     Description = "Blochează complet toate conexiunile de rețea de intrare și ieșire pentru a opri răspândirea ransomware-ului.",
                     ActionType = "Isolate",
                     PowerShellSnippet = "New-NetFirewallRule -DisplayName 'DFIR_EMERGENCY_ISOLATE' -Direction Inbound,Outbound -Action Block -Profile Any",

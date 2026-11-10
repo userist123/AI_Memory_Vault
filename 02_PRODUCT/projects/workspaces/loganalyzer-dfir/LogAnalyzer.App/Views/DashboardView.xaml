@@ -211,8 +211,8 @@
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="100" MinWidth="100"/>
                                 <DataGridTextColumn Header="Ce s-a întâmplat" Binding="{Binding Plain}" Width="420" MinWidth="300"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
-                                <DataGridTextColumn Header="Procedură și acțiune" Binding="{Binding Explanation}" Width="*"/>
-                                <DataGridTextColumn Header="Tehnic: tipul alertei" Binding="{Binding Title}" Width="180" MinWidth="180"/>
+                                <DataGridTextColumn Header="Procedură și acțiune" Binding="{Binding Explanation}" Width="*" MinWidth="180"/>
+                                <DataGridTextColumn Header="Tehnic: tipul alertei" Binding="{Binding Title}" Width="190" MinWidth="190"/>
                                 <DataGridTextColumn Header="Tehnic: tehnică" Binding="{Binding MitreTechniqueId}" Width="140" MinWidth="140"/>
                             </DataGrid.Columns>
                         </DataGrid>

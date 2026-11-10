@@ -327,6 +327,111 @@ public sealed class DesignSweepTests
         Assert.True(hits.Count == 0, string.Join("\n", hits));
     }
 
+    /// <summary>Control verdicts are report constants and stay in capitals wherever they are written.</summary>
+    private static readonly HashSet<string> VerdictWords = new(StringComparer.Ordinal) { "CONFORM", "NECONFORM", "VERIFICAT", "NEDETERMINAT", "APLICĂ", "NECONFIRMAT" };
+
+    /// <summary>Files whose string literals reach only the PDF / HTML / text reports and the certificates (report headings are constants), with the reason.</summary>
+    private static readonly Dictionary<string, string> CapitalLiteralFileExceptions = new(StringComparer.Ordinal)
+    {
+        ["AdAuditHtmlReportService.cs"] = "HTML report headings",
+        ["AdAuditPdfReportService.cs"] = "PDF report headings",
+        ["AdAuditReportService.cs"] = "text report headings",
+        ["AdSnapshotRollbackEngine.cs"] = "generated rollback script header, a file not a page",
+        ["DfirCasePackagingService.cs"] = "case certificate text, a report constant",
+        ["HtmlReportService.cs"] = "HTML report headings",
+        ["IncidentResponsePlaybookService.cs"] = "generated playbook file, a report",
+        ["Nis2NotificationService.cs"] = "NIS2 notification draft, an exported document with official headings",
+        ["PdfReportService.cs"] = "PDF report headings",
+        ["SanitizationCertificateGenerator.cs"] = "sanitization certificate, a report",
+        ["SanitizationPdfCertificateGenerator.cs"] = "sanitization certificate, a report",
+    };
+
+    /// <summary>Literals that are matched against data, not shown: built-in Windows account names.</summary>
+    private static readonly HashSet<string> CapitalLiteralExceptions = new(StringComparer.Ordinal)
+    {
+        "\"LOCAL SERVICE\"", "\"NETWORK SERVICE\"", "\"ANONYMOUS LOGON\"",
+        // example zone names the user types as values (the zone identifiers of the procedure profile), not page labels
+        "\"Zonele organizației (ex. ROSU, PUBLIC). Fără zone, orice conectivitate pe un sistem izolat (air-gap) este „conectivitate observată, necesită explicație”.\"",
+        "\"Zonele organizației (ex. ROSU, PUBLIC). Fără zone, orice conectivitate pe un sistem air-gapped este „conectivitate observată, necesită explicație”.\"",
+    };
+
+    [Fact]
+    public void No_string_literal_of_the_view_models_or_the_core_services_has_two_consecutive_all_capital_words()
+    {
+        var caps = new Regex("^[A-ZĂÂÎȘȚ]{4,}$");
+        var dirs = new[] { Path.Combine(AppDir(), "ViewModels"), Path.Combine(AppDir(), "Edition"), Path.Combine(RepoDir(), "LogAnalyzer.Core", "Services") };
+        var hits = new List<string>();
+        foreach (var f in dirs.SelectMany(d => Files(d, "*.cs")))
+        {
+            if (CapitalLiteralFileExceptions.ContainsKey(Path.GetFileName(f))) continue;
+            foreach (var lit in StringLiterals(Read(f)))
+            {
+                if (CapitalLiteralExceptions.Contains(lit)) continue;
+                var prev = false;
+                foreach (var w in Regex.Split(lit.Trim('"'), "\\s+"))
+                {
+                    var core = w.Trim('(', ')', ',', '.', ':', ';', '„', '”', '"', '[', ']');
+                    var isCaps = caps.IsMatch(core) && !Acronyms.Contains(core) && !VerdictWords.Contains(core);
+                    if (isCaps && prev) { hits.Add($"{Path.GetFileName(f)}: {lit}"); break; }
+                    prev = isCaps;
+                }
+            }
+        }
+        Assert.True(hits.Count == 0, string.Join(Environment.NewLine, hits));
+    }
+
+    [Fact]
+    public void Severity_and_state_words_shown_in_the_interface_are_sentences_while_the_report_labels_stay_in_capitals()
+    {
+        // the interface forms
+        Assert.Equal("Informativ — nu indică o problemă, doar descrie", LogAnalyzer.Core.Services.Details.ItemMeaning.Severity("info"));
+        Assert.Equal("Critic — se tratează imediat", LogAnalyzer.Core.Services.Details.ItemMeaning.Severity("critical"));
+        Assert.Equal("Critică", LogAnalyzer.Dfir.Presentation.SeverityLabels.Romanian(LogAnalyzer.Dfir.Model.Severity.Critical));
+        // the report label is untouched
+        Assert.Equal("CRITICĂ", LogAnalyzer.Dfir.Language.RoLabels.Severity(LogAnalyzer.Dfir.Model.Severity.Critical));
+        // the explanation sentences of the pages carry no capital "NU este" and no "AirGapped"
+        foreach (var f in new[] { "Views/ThreatIntelView.xaml", "Edition/Unclassified/ContainmentViewModel.cs", "Edition/Unclassified/DomainInvestigationViewModel.cs",
+                                  "ViewModels/DeviceMonitorViewModel.cs", "ViewModels/MediaCenterViewModel.cs" })
+        {
+            var t = Read(Path.Combine(AppDir(), f));
+            Assert.DoesNotContain("NU este", t);
+            Assert.DoesNotContain("Modul AirGapped", t);
+            Assert.DoesNotContain("PORNIT", t);
+            Assert.DoesNotContain("OPRIT", t);
+        }
+    }
+
+    [Fact]
+    public void The_alerts_table_trims_its_text_cells_so_a_long_title_never_runs_into_the_next_column()
+    {
+        Assert.Contains("x:Key=\"OneLineCellTextStyle\"", Read(Path.Combine(AppDir(), "Themes/Components/DataGrids.xaml")));
+        var alerts = StripXmlComments(Read(Path.Combine(AppDir(), "Views/AlertsAndRulesView.xaml")));
+        foreach (var header in new[] { "Severitate", "Tehnică", "Titlul alertei" })
+            Assert.Matches("<DataGridTextColumn Header=\"" + header + "\"[^>]*ElementStyle=\"\\{StaticResource OneLineCellTextStyle\\}\"", alerts);
+    }
+
+    [Fact]
+    public void The_event_table_keeps_the_elastic_row_and_the_process_tree_is_a_closed_capped_expander()
+    {
+        var x = StripXmlComments(Read(Path.Combine(AppDir(), "Views/EventExplorerView.xaml")));
+        Assert.Matches("<DataGrid Grid.Row=\"1\" MinHeight=\"260\" ItemsSource=\"\\{Binding Events\\}\"", x);
+        Assert.DoesNotContain("<RowDefinition Height=\"180\"/>", x);
+        Assert.Matches("<Expander[^>]*IsExpanded=\"False\"", x);
+        Assert.Contains("Text=\"Arborele proceselor\"", x);
+        Assert.Matches("<TreeView MaxHeight=\"240\"[^>]*ItemsSource=\"\\{Binding ProcessTreeNodes\\}\"", x);
+        // the label of the side panel wraps instead of being cut
+        Assert.Matches("Text=\"Tehnica de atac asociată \\(MITRE ATT&amp;CK\\)\" TextWrapping=\"Wrap\"", x);
+    }
+
+    [Fact]
+    public void The_rule_picker_of_the_rule_editor_has_a_visible_label_a_hint_and_an_accessible_name()
+    {
+        var x = StripXmlComments(Read(Path.Combine(AppDir(), "Views/AlertsAndRulesView.xaml")));
+        Assert.Contains("Text=\"Regulă de pornire:\"", x);
+        Assert.Contains("Text=\"Alegeți o regulă…\"", x);
+        Assert.Matches("<ComboBox x:Name=\"RulePicker\"[^>]*AutomationProperties.Name=\"Regulă de pornire\"", x);
+    }
+
     [Fact]
     public void The_English_button_labels_of_the_data_collection_page_are_Romanian_sentences()
     {
@@ -385,8 +490,8 @@ public sealed class DesignSweepTests
 
     // ---------------------------------------------------------------- step 6 (2026-11-11): table headers, long cells, cards, date fields
 
-    /// <summary>Header width estimate: 7.5 px per character at 12 SemiBold plus 20 px of padding, rounded up to a multiple of 10.</summary>
-    private static int HeaderEstimate(string header) => (int)Math.Ceiling((7.5 * header.Length + 20) / 10.0) * 10;
+    /// <summary>Header width estimate: 7.5 px per character at 12 SemiBold plus 24 px of padding and sort glyph, rounded up to a multiple of 10.</summary>
+    private static int HeaderEstimate(string header) => (int)Math.Ceiling((7.5 * header.Length + 24) / 10.0) * 10;
 
     [Fact]
     public void Every_fixed_width_table_column_is_at_least_as_wide_as_its_header()
@@ -411,7 +516,8 @@ public sealed class DesignSweepTests
                 if (!numeric && !minWidth.Success) continue;
                 double w = numeric ? double.Parse(width.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : 0;
                 double mw = minWidth.Success ? double.Parse(minWidth.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : 0;
-                if (Math.Max(w, mw) < HeaderEstimate(text))
+                // both the Width and the MinWidth must reach the estimate: MinWidth alone cannot help when the fixed Width is smaller than the header text
+                if ((numeric && w < HeaderEstimate(text)) || mw < HeaderEstimate(text))
                     problems.Add($"{Path.GetFileName(file)}: \"{text}\" Width={w} MinWidth={mw} needs {HeaderEstimate(text)}");
             }
         }

@@ -51,7 +51,7 @@ public sealed class NoFixedSampleEvidenceTests
         ]);
         Assert.Equal("04.11.2026 09:01:02 UTC", s.First);
         Assert.Equal("04.11.2026 11:30:00 UTC", s.Last);
-        Assert.Equal("MEDIU (2 evenimente)", s.Peak);
+        Assert.Equal("Mediu (2 evenimente)", s.Peak);
         Assert.Equal(3, s.Count);
     }
 }

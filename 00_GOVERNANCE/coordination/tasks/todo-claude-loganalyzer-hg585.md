@@ -621,3 +621,14 @@
   Wp18LanguageTests updated to the new form of the glossary button (name and visible text both still asserted).
   FLAKY (seen once in a full App.Tests run, 3/3 green alone): OfficerQualifiedSignatureTests.The_CMS_is_CAdES_baseline_signing_certificate_v2_
   present_and_no_signing_time - not investigated.
+- 2026-11-11 design pass DONE (owner: „ne axăm pe partea de design… poți schimba stilul aplicației mai profi”): theme "Dosar" (dark graphite
+  frame header+sidebar, cool paper workspace, cobalt accent; severity colours unchanged), rules in docs/design/{PRODUCT,DESIGN,PLAN}.md, steps
+  1-9 done and verified on the VMs at 1024 px, before/after captures in docs/design/capturi. Standing PLANNER agent (Plan subagent, resumed
+  with "done: … — next?") ranks the next work after each batch, at the owner's request („ține un agent on să îți spună ce să faci”).
+  Design tests in LogAnalyzer.App.Tests/DesignSweepTests.cs (page header, no emoji, no hex outside tokens, no old colours, no all-caps
+  labels / view-model strings, one accent per screen, column widths ≥ header). LESSON: a test that creates an HWND ends App.Tests early and
+  still prints "Passed" with fewer tests: always read the total and the exit code. AD page "50.000" events = the persisted event DB of earlier
+  sessions (real data, kept). Suites: App 1084, UI 370, Dfir 3298, Edition 45.
+  Next (planner, ranked): RMM session logs (AnyDesk ad.trace / connection_trace.txt, TeamViewer Connections_incoming.txt, ScreenConnect
+  events) with synthetic TEST logs on WS01; Windows-usn.db; Windows.edb ESE (needs Search on SRV01 = lab change); UI remote collection;
+  flaky OfficerQualifiedSignatureTests.

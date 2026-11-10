@@ -112,7 +112,7 @@
                                 <DataGridTextColumn Header="Cont țintă" Binding="{Binding TargetAccount}" Width="140" MinWidth="140"/>
                                 <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85" MinWidth="85"/>
                                 <DataGridTextColumn Header="Sursă / IP" Binding="{Binding ClientIp}" Width="100" MinWidth="100"/>
-                                <DataGridTextColumn Header="Sumar analiză și recomandare răspuns" Binding="{Binding Description}" Width="*"/>
+                                <DataGridTextColumn Header="Sumar analiză și recomandare răspuns" Binding="{Binding Description}" Width="*" MinWidth="300"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -135,14 +135,14 @@
                         </DockPanel>
                         <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" ItemsSource="{Binding AdAttributeDeltas}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Clasă obiect" Binding="{Binding ObjectClass}" Width="110" MinWidth="110"/>
+                                <DataGridTextColumn Header="Clasă obiect" Binding="{Binding ObjectClass}" Width="120" MinWidth="120"/>
                                 <DataGridTextColumn Header="DN obiect modificat" Binding="{Binding ObjectDn}" Width="220" MinWidth="220"/>
                                 <DataGridTextColumn Header="Nume atribut LDAP" Binding="{Binding AttributeName}" Width="160" MinWidth="160"/>
                                 <DataGridTextColumn Header="Valoare anterioară" Binding="{Binding OldValue}" Width="160" MinWidth="160"/>
                                 <DataGridTextColumn Header="Valoare nouă" Binding="{Binding NewValue}" Width="140" MinWidth="140"/>
                                 <DataGridTextColumn Header="Operațiune" Binding="{Binding Operation}" Width="110" MinWidth="110"/>
-                                <DataGridTextColumn Header="Impact securitate" Binding="{Binding SecurityImpact}" Width="*"/>
-                                <DataGridTextColumn Header="Modificat De" Binding="{Binding ModifiedBy}" Width="110" MinWidth="110"/>
+                                <DataGridTextColumn Header="Impact securitate" Binding="{Binding SecurityImpact}" Width="*" MinWidth="160"/>
+                                <DataGridTextColumn Header="Modificat De" Binding="{Binding ModifiedBy}" Width="120" MinWidth="120"/>
                                 <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="135" MinWidth="135"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -171,7 +171,7 @@
                                 <DataGridTextColumn Header="Cont UPN" Binding="{Binding UserPrincipalName}" Width="170" MinWidth="170"/>
                                 <DataGridTextColumn Header="Locație / sursă" Binding="{Binding SourceLocationOrIp}" Width="140" MinWidth="140"/>
                                 <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="80" MinWidth="80"/>
-                                <DataGridTextColumn Header="Descriere și impact" Binding="{Binding Description}" Width="*"/>
+                                <DataGridTextColumn Header="Descriere și impact" Binding="{Binding Description}" Width="*" MinWidth="170"/>
                                 <DataGridTextColumn Header="Măsură răspuns" Binding="{Binding RemediationActionRo}" Width="240" MinWidth="240"/>
                                 <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="135" MinWidth="135"/>
                             </DataGrid.Columns>
@@ -202,7 +202,7 @@
                                 <DataGridTextColumn Header="Server" Binding="{Binding ServerHost}" Width="110" MinWidth="110"/>
                                 <DataGridTextColumn Header="Utilizator" Binding="{Binding AccessedBy}" Width="130" MinWidth="130"/>
                                 <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="80" MinWidth="80"/>
-                                <DataGridTextColumn Header="Descriere și diagnostic" Binding="{Binding Description}" Width="*"/>
+                                <DataGridTextColumn Header="Descriere și diagnostic" Binding="{Binding Description}" Width="*" MinWidth="200"/>
                                 <DataGridTextColumn Header="Recomandare răspuns" Binding="{Binding RemediationActionRo}" Width="240" MinWidth="240"/>
                                 <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="135" MinWidth="135"/>
                             </DataGrid.Columns>
@@ -232,7 +232,7 @@
                                 <DataGridTextColumn Header="Nume înregistrare" Binding="{Binding RecordName}" Width="160" MinWidth="160"/>
                                 <DataGridTextColumn Header="Zonă DNS" Binding="{Binding ZoneName}" Width="150" MinWidth="150"/>
                                 <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85" MinWidth="85"/>
-                                <DataGridTextColumn Header="Descriere și impact" Binding="{Binding Description}" Width="*"/>
+                                <DataGridTextColumn Header="Descriere și impact" Binding="{Binding Description}" Width="*" MinWidth="170"/>
                                 <DataGridTextColumn Header="Acțiune recomandată" Binding="{Binding RemediationActionRo}" Width="250" MinWidth="250"/>
                                 <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="140" MinWidth="140"/>
                             </DataGrid.Columns>
@@ -260,8 +260,8 @@
                                 <DataGridTextColumn Header="Utilizator domeniu" Binding="{Binding Username}" Width="160" MinWidth="160"/>
                                 <DataGridTextColumn Header="Tip anomalie UBA" Binding="{Binding AnomalyType}" Width="210" MinWidth="210"/>
                                 <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="100" MinWidth="100"/>
-                                <DataGridTextColumn Header="Punctaj risc" Binding="{Binding RiskWeight, StringFormat='{}{0}/100'}" Width="110" MinWidth="110"/>
-                                <DataGridTextColumn Header="Descriere și diagnostic comportamental" Binding="{Binding Description}" Width="*"/>
+                                <DataGridTextColumn Header="Punctaj risc" Binding="{Binding RiskWeight, StringFormat='{}{0}/100'}" Width="120" MinWidth="120"/>
+                                <DataGridTextColumn Header="Descriere și diagnostic comportamental" Binding="{Binding Description}" Width="*" MinWidth="310"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -285,10 +285,10 @@
                         <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" ItemsSource="{Binding ComplianceResults}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Standard / cadru" Binding="{Binding Framework}" Width="170" MinWidth="170"/>
-                                <DataGridTextColumn Header="Articol / control" Binding="{Binding ArticleOrControl}" Width="150" MinWidth="150"/>
+                                <DataGridTextColumn Header="Articol / control" Binding="{Binding ArticleOrControl}" Width="160" MinWidth="160"/>
                                 <DataGridTextColumn Header="Titlu control" Binding="{Binding ControlTitle}" Width="200" MinWidth="200"/>
                                 <DataGridTextColumn Header="Stare" Binding="{Binding Status}" Width="100" MinWidth="100"/>
-                                <DataGridTextColumn Header="Evidență forensică corelată" Binding="{Binding EvidenceSummary}" Width="*"/>
+                                <DataGridTextColumn Header="Evidență forensică corelată" Binding="{Binding EvidenceSummary}" Width="*" MinWidth="230"/>
                                 <DataGridTextColumn Header="Măsură corectivă impusă" Binding="{Binding RequiredAction}" Width="260" MinWidth="260"/>
                             </DataGrid.Columns>
                         </DataGrid>

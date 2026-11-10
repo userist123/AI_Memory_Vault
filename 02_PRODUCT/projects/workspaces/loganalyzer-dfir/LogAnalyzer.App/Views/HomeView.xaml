@@ -196,13 +196,13 @@
                     <TextBlock Text="{Binding CoverageLine}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,8"/>
                     <DataGrid AutomationProperties.Name="Acoperirea surselor pe familii de artefacte" ItemsSource="{Binding CoverageRows}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="420">
                         <DataGrid.Columns>
-                            <DataGridTemplateColumn Header="Familie de artefacte" Width="2*">
+                            <DataGridTemplateColumn Header="Familie de artefacte" Width="2*" MinWidth="180">
                                 <DataGridTemplateColumn.CellTemplate>
                                     <DataTemplate><TextBlock Text="{Binding HumanFamily}" ToolTip="{Binding FamilyTooltip}" TextWrapping="Wrap"/></DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
                             <DataGridTextColumn Header="Stare" Binding="{Binding StateName}" Width="130" MinWidth="130"/>
-                            <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="3*"/>
+                            <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="3*" MinWidth="70"/>
                             <DataGridTextColumn Header="Parser" Binding="{Binding ParserStatus}" Width="110" MinWidth="110"/>
                         </DataGrid.Columns>
                     </DataGrid>

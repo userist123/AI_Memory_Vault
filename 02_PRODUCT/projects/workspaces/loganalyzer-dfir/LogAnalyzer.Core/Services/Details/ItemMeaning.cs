@@ -133,11 +133,11 @@ namespace LogAnalyzer.Core.Services.Details
         /// <summary>Severity words (English or Romanian, as the engines write them) in plain Romanian.</summary>
         public static string Severity(string s) => s.Trim().ToLowerInvariant() switch
         {
-            "critical" or "critic" or "critică" => "CRITIC — se tratează imediat",
-            "high" or "ridicat" or "ridicată" or "mare" => "RIDICAT — se verifică în aceeași zi",
-            "medium" or "moderate" or "mediu" or "medie" or "moderat" => "MEDIU — se verifică",
-            "low" or "scăzut" or "scăzută" or "redus" => "SCĂZUT — de obicei nu este o problemă",
-            "info" or "informational" or "informativ" => "INFORMATIV — nu indică o problemă, doar descrie",
+            "critical" or "critic" or "critică" => "Critic — se tratează imediat",
+            "high" or "ridicat" or "ridicată" or "mare" => "Ridicat — se verifică în aceeași zi",
+            "medium" or "moderate" or "mediu" or "medie" or "moderat" => "Mediu — se verifică",
+            "low" or "scăzut" or "scăzută" or "redus" => "Scăzut — de obicei nu este o problemă",
+            "info" or "informational" or "informativ" => "Informativ — nu indică o problemă, doar descrie",
             _ => s,
         };
 

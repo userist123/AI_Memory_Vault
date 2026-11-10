@@ -36,11 +36,11 @@
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110" MinWidth="110"/>
                             <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="55" MinWidth="55"/>
-                            <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*"/>
-                            <DataGridTextColumn Header="Constatare" Binding="{Binding Detail}" Width="4*">
+                            <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*" MinWidth="100"/>
+                            <DataGridTextColumn Header="Constatare" Binding="{Binding Detail}" Width="4*" MinWidth="100">
                                 <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Probe" Binding="{Binding Evidence.Count}" Width="60" MinWidth="60"/>
+                            <DataGridTextColumn Header="Probe" Binding="{Binding Evidence.Count}" Width="70" MinWidth="70"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -62,9 +62,9 @@
                     <DataGrid ItemsSource="{Binding UserTimeline}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140" MinWidth="140"/>
-                            <DataGridTextColumn Header="Ce" Binding="{Binding Action}" Width="1.5*"/>
-                            <DataGridTextColumn Header="Detalii" Binding="{Binding Detail}" Width="3*"/>
-                            <DataGridTextColumn Header="Probă" Binding="{Binding Source}" Width="2*"/>
+                            <DataGridTextColumn Header="Ce" Binding="{Binding Action}" Width="1.5*" MinWidth="40"/>
+                            <DataGridTextColumn Header="Detalii" Binding="{Binding Detail}" Width="3*" MinWidth="80"/>
+                            <DataGridTextColumn Header="Probă" Binding="{Binding Source}" Width="2*" MinWidth="70"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -94,8 +94,8 @@
                                   ToolTip="Dublu clic pe o verificare: ce verificăm, de ce contează și ce faceți, pe înțeles.">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110" MinWidth="110"/>
-                                <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*"/>
-                                <DataGridTextColumn Header="Constatare" Binding="{Binding Detail}" Width="4*">
+                                <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*" MinWidth="100"/>
+                                <DataGridTextColumn Header="Constatare" Binding="{Binding Detail}" Width="4*" MinWidth="100">
                                     <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
                             </DataGrid.Columns>
@@ -103,11 +103,11 @@
                         <DataGrid Grid.Row="2" ItemsSource="{Binding MailMessages}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140" MinWidth="140"/>
-                                <DataGridTextColumn Header="Expeditor" Binding="{Binding Sender}" Width="1.5*"/>
-                                <DataGridTextColumn Header="Destinatari" Binding="{Binding Recipients}" Width="2*"/>
-                                <DataGridTextColumn Header="Subiect" Binding="{Binding Subject}" Width="2*"/>
-                                <DataGridTextColumn Header="IP" Binding="{Binding ClientIp}" Width="*"/>
-                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*"/>
+                                <DataGridTextColumn Header="Expeditor" Binding="{Binding Sender}" Width="1.5*" MinWidth="100"/>
+                                <DataGridTextColumn Header="Destinatari" Binding="{Binding Recipients}" Width="2*" MinWidth="110"/>
+                                <DataGridTextColumn Header="Subiect" Binding="{Binding Subject}" Width="2*" MinWidth="80"/>
+                                <DataGridTextColumn Header="IP" Binding="{Binding ClientIp}" Width="*" MinWidth="40"/>
+                                <DataGridTextColumn Header="Status" Binding="{Binding Status}" Width="*" MinWidth="70"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>

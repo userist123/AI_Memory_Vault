@@ -12,7 +12,7 @@
         <DockPanel LastChildFill="False">
             <StackPanel DockPanel.Dock="Top">
                 <TextBlock Style="{StaticResource PageTitleStyle}" Text="Informații despre amenințări"/>
-                <TextBlock Style="{StaticResource PageLeadStyle}" Text="Suprapunerea tehnicilor observate cu profile publice de actori. NU este atribuire: aceleași tehnici sunt folosite de mulți actori, iar atribuirea cere dovezi separate (infrastructură, malware, context)."/>
+                <TextBlock Style="{StaticResource PageLeadStyle}" Text="Suprapunerea tehnicilor observate cu profile publice de actori. Nu este atribuire: aceleași tehnici sunt folosite de mulți actori, iar atribuirea cere dovezi separate (infrastructură, malware, context)."/>
             </StackPanel>
             <!-- lab 2026-11-07: under the title and wrapping, so at 1024 px no button is cut off -->
             <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
@@ -102,7 +102,7 @@
                         </DataGrid.ContextMenu>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Tip" Binding="{Binding Type}" Width="90" MinWidth="90"/>
-                            <DataGridTextColumn Header="Valoare indicator (IP / hash / domeniu)" Binding="{Binding Value}" Width="*"/>
+                            <DataGridTextColumn Header="Valoare indicator (IP / hash / domeniu)" Binding="{Binding Value}" Width="*" MinWidth="320"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Grid>

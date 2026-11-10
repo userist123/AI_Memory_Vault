@@ -77,9 +77,9 @@
                             <DataGridCheckBoxColumn Header="Aprobat" Binding="{Binding Trusted}" Width="Auto" MinWidth="80"/>
                             <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="Auto" MinWidth="50"/>
                             <DataGridTextColumn Header="Proces" Binding="{Binding Name}" Width="Auto" MinWidth="70"/>
-                            <DataGridTextColumn Header="Motive" Binding="{Binding Reasons, Converter={x:Static local:JoinConverter.Instance}}" Width="2*"/>
-                            <DataGridTextColumn Header="Conexiuni la internet" Binding="{Binding RemoteEndpoints, Converter={x:Static local:JoinConverter.Instance}}" Width="1.5*"/>
-                            <DataGridTextColumn Header="Cale" Binding="{Binding Path}" Width="2*"/>
+                            <DataGridTextColumn Header="Motive" Binding="{Binding Reasons, Converter={x:Static local:JoinConverter.Instance}}" Width="2*" MinWidth="70"/>
+                            <DataGridTextColumn Header="Conexiuni la internet" Binding="{Binding RemoteEndpoints, Converter={x:Static local:JoinConverter.Instance}}" Width="1.5*" MinWidth="190"/>
+                            <DataGridTextColumn Header="Cale" Binding="{Binding Path}" Width="2*" MinWidth="60"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>
@@ -98,10 +98,10 @@
                     </DockPanel>
                     <DataGrid ItemsSource="{Binding Incidents}" SelectedItem="{Binding SelectedIncident}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Incident" Binding="{Binding IncidentId}" Width="Auto" MinWidth="80"/>
-                            <DataGridTextColumn Header="Stare" Binding="{Binding StateDisplay}" Width="Auto" MinWidth="60"/>
+                            <DataGridTextColumn Header="Incident" Binding="{Binding IncidentId}" Width="Auto" MinWidth="90"/>
+                            <DataGridTextColumn Header="Stare" Binding="{Binding StateDisplay}" Width="Auto" MinWidth="70"/>
                             <DataGridTextColumn Header="Creat (UTC)" Binding="{Binding CreatedUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="Auto" MinWidth="110"/>
-                            <DataGridTextColumn Header="Program" Binding="{Binding ProgramPath}" Width="*"/>
+                            <DataGridTextColumn Header="Program" Binding="{Binding ProgramPath}" Width="*" MinWidth="80"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </DockPanel>

@@ -396,13 +396,13 @@ public static partial class ControlEvaluator
         const string title = "Jurnalele care notează conectarea dispozitivelor sunt pornite";
         var part = f.Settings.GetValueOrDefault("DeviceLog.PartitionEnabled", "");
         var dfw = f.Settings.GetValueOrDefault("DeviceLog.DriverFrameworksEnabled", "");
-        string Shown(string v) => v == "1" ? "pornit" : v == "0" ? "OPRIT" : "necitit";
+        string Shown(string v) => v == "1" ? "pornit" : v == "0" ? "oprit" : "necitit";
         IEnumerable<string> ev = [$"Microsoft-Windows-Partition/Diagnostic → {Shown(part)}", $"Microsoft-Windows-DriverFrameworks-UserMode/Operational → {Shown(dfw)}"];
         if (part == "" && dfw == "") { Add(r, "A20", "Audit", title, ControlStatus.Nedeterminat, "Starea jurnalelor de dispozitive nu a putut fi citită." + NoRead, ev); return; }
         if (part == "0")
         {
             Add(r, "A20", "Audit", title, ControlStatus.Neconform,
-                "Jurnalul Partition/Diagnostic este OPRIT. În Windows el este pornit implicit și notează fiecare stick sau disc conectat, cu producătorul și seria; oprit, conectările nu mai lasă această urmă. Aflați cine l-a oprit și când.",
+                "Jurnalul Partition/Diagnostic este oprit. În Windows el este pornit implicit și notează fiecare stick sau disc conectat, cu producătorul și seria; oprit, conectările nu mai lasă această urmă. Aflați cine l-a oprit și când.",
                 ev, "Reporniți jurnalul Microsoft-Windows-Partition/Diagnostic și porniți și DriverFrameworks-UserMode/Operational.");
             return;
         }
@@ -1022,7 +1022,7 @@ public static partial class ControlEvaluator
         {
             int printers = N("Print.PrinterCount");
             var issues = new List<string>();
-            if (printers > 0 && log == "0") issues.Add("jurnalul de tipărire (PrintService/Operational) este OPRIT, deci nu se înregistrează ce documente se tipăresc");
+            if (printers > 0 && log == "0") issues.Add("jurnalul de tipărire (PrintService/Operational) este oprit, deci nu se înregistrează ce documente se tipăresc");
             if (netPr.Length > 0) issues.Add($"există imprimante de rețea: {netPr}");
             Add(r, "P29", "Audit", "Tipărirea este înregistrată",
                 printers == 0 ? ControlStatus.Conform : log == "" ? ControlStatus.Nedeterminat : issues.Count == 0 ? ControlStatus.Conform : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
@@ -1045,7 +1045,7 @@ public static partial class ControlEvaluator
             bool actDefaultOn = cache == "da" && ap != "0" && ap != "1";
             Add(r, "P30", "Politici", "Istoric clipboard și istoric de activitate Windows oprite",
                 !clipOn && !actPolicyOn && !actDefaultOn ? ControlStatus.Conform : (clipOn || actPolicyOn) && isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
-                clipOn ? $"Istoricul clipboard este PORNIT (EnableClipboardHistory = 1): ultimele elemente copiate, inclusiv text dintr-un document clasificat, rămân pe disc. {(actPolicyOn ? "Istoricul de activitate este și el permis explicit prin politică." : "")}"
+                clipOn ? $"Istoricul clipboard este pornit (EnableClipboardHistory = 1): ultimele elemente copiate, inclusiv text dintr-un document clasificat, rămân pe disc. {(actPolicyOn ? "Istoricul de activitate este și el permis explicit prin politică." : "")}"
                     : actPolicyOn ? "Istoricul de activitate (Timeline) este permis explicit prin politică (EnableActivityFeed = 1)."
                     : actDefaultOn ? $"Istoricul clipboard este oprit, dar baza de activitate Windows (ActivitiesCache.db) există și politica EnableActivityFeed nu este setată ({Shown(ap)}), deci istoricul de activitate rămâne în regimul implicit al Windows. Opriți-l prin politică."
                     : $"Istoricul clipboard și cel de activitate sunt oprite (EnableClipboardHistory = {Shown(cu)}, AllowClipboardHistory = {Shown(cp)}, EnableActivityFeed = {Shown(ap)}).",
@@ -1138,7 +1138,7 @@ public static partial class ControlEvaluator
             sb == "" ? ControlStatus.Nedeterminat : sb == "1" ? ControlStatus.Conform : sb == "0" || fw == "1" ? ControlStatus.Neconform : ControlStatus.DeVerificat,
             sb == "" ? "Starea Secure Boot nu a putut fi citită." + NoRead
                 : sb == "1" ? $"Secure Boot este pornit. Mod de pornire: {fwText}."
-                : sb == "0" ? $"Secure Boot este OPRIT: stația poate fi pornită de pe un stick cu alt sistem. Mod de pornire: {fwText}."
+                : sb == "0" ? $"Secure Boot este oprit: stația poate fi pornită de pe un stick cu alt sistem. Mod de pornire: {fwText}."
                 : fw == "1" ? "Stația pornește în mod BIOS vechi (Legacy), care nu are Secure Boot."
                 : $"Nu s-a găsit informația Secure Boot în registru (stație veche sau fără UEFI). Mod de pornire: {fwText}.",
             [@"HKLM\SYSTEM\CurrentControlSet\Control\SecureBoot\State → UEFISecureBootEnabled = " + Shown(sb)],
@@ -1441,7 +1441,7 @@ public static partial class ControlEvaluator
             dma == "" ? ControlStatus.Nedeterminat : dma == "1" ? (dmaPol == "2" ? ControlStatus.DeVerificat : ControlStatus.Conform) : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
             dma == "" ? "Starea protecției DMA nu a putut fi citită." + NoRead
                 : dma == "1" ? $"Protecția DMA în nucleu este pornită; politica pentru dispozitivele externe incompatibile: {dmaPolText}."
-                : "Protecția DMA în nucleu este OPRITĂ sau stația nu o are: un dispozitiv conectat la un port Thunderbolt/USB4 poate citi memoria stației. Dacă stația nu are astfel de porturi, notați acest lucru în procesul-verbal.",
+                : "Protecția DMA în nucleu este oprită sau stația nu o are: un dispozitiv conectat la un port Thunderbolt/USB4 poate citi memoria stației. Dacă stația nu are astfel de porturi, notați acest lucru în procesul-verbal.",
             ["Windows (informația afișată de msinfo32 ca „Kernel DMA Protection”) = " + (dma == "1" ? "pornită" : dma == "0" ? "oprită" : "necitită"),
              @"HKLM\SOFTWARE\Policies\Microsoft\Windows\Kernel DMA Protection → DeviceEnumerationPolicy = " + Shown(dmaPol)],
             "Porniți protecția DMA din UEFI/BIOS (VT-d / IOMMU); dacă nu există, porturile Thunderbolt se dezactivează sau se sigilează.");
@@ -1548,7 +1548,7 @@ public static partial class ControlEvaluator
             Add(r, "P39", "Politici", "Antivirus înregistrat în Centrul de securitate Windows",
                 avs.Count == 0 || on.Count == 0 ? ControlStatus.Neconform : on.Any(Current) ? ControlStatus.Conform : ControlStatus.DeVerificat,
                 avs.Count == 0 ? "Niciun antivirus nu este înregistrat în Centrul de securitate Windows."
-                    : on.Count == 0 ? $"Antivirusurile înregistrate sunt OPRITE: {string.Join("; ", avs.Select(Line))}."
+                    : on.Count == 0 ? $"Antivirusurile înregistrate sunt oprite: {string.Join("; ", avs.Select(Line))}."
                     : on.Any(Current) ? $"Antivirus pornit: {string.Join("; ", on.Where(Current).Select(a => a.Name))}."
                     : $"Antivirusul este pornit, dar Windows raportează semnături vechi: {string.Join("; ", on.Select(Line))}.",
                 avs.Select(Line).Prepend(@"WMI root\SecurityCenter2 AntiVirusProduct (displayName, productState)"),
@@ -1616,7 +1616,7 @@ public static partial class ControlEvaluator
         Add(r, "N10", "Rețea", "Partajarea conexiunii la Internet (ICS)",
             ics == "" ? (icsPol == "0" ? ControlStatus.DeVerificat : ControlStatus.Nedeterminat) : ics.StartsWith("da", StringComparison.Ordinal) ? (noInternet ? ControlStatus.Neconform : ControlStatus.DeVerificat) : ControlStatus.Conform,
             ics == "" ? (icsPol == "0" ? "Starea partajării nu a putut fi citită; politica interzice activarea ei." : "Starea partajării conexiunii nu a putut fi citită." + NoRead)
-                : ics.StartsWith("da", StringComparison.Ordinal) ? $"Partajarea conexiunii la Internet este PORNITĂ ({ics[3..].Trim()}): stația face legătura între două rețele."
+                : ics.StartsWith("da", StringComparison.Ordinal) ? $"Partajarea conexiunii la Internet este pornită ({ics[3..].Trim()}): stația face legătura între două rețele."
                 : "Partajarea conexiunii la Internet nu este pornită pe nicio conexiune." + (icsPol == "0" ? " Politica interzice și activarea ei." : ""),
             ["Interfața Windows de partajare (HNetCfg.HNetShare) → " + Shown(ics), @"HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections → NC_ShowSharedAccessUI = " + Shown(icsPol),
              @"HKLM\SYSTEM\CurrentControlSet\Services\SharedAccess → Start = " + Shown(icsSvc)],

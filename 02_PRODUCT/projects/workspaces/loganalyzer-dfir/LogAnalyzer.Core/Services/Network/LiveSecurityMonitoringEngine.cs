@@ -9,7 +9,7 @@ namespace LogAnalyzer.Core.Services.Network
 {
     public class LiveSecurityMonitoringEngine
     {
-        public const string TestAlertTitle = "[TEST — NU ESTE O ALERTĂ REALĂ] Mesaj de test al căii de alertare";
+        public const string TestAlertTitle = "[Test — nu este o alertă reală] Mesaj de test al căii de alertare";
 
         /// <summary>Approved accounts and maintenance windows from the procedure profile (WP15a); <c>null</c> = no profile, log clears stay NotAssessed.</summary>
         public LogMaintenancePolicy? MaintenancePolicy { get; set; }
@@ -59,7 +59,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ MARE: Fișier adus din Internet sau script pornit din Descărcări",
+                    Title = "Alertă mare: Fișier adus din Internet sau script pornit din Descărcări",
                     Severity = "High",
                     MitreTechniqueId = mshtaUrl ? "T1218.005" : scriptFromDownload ? "T1204.002" : "T1105",
                     MitreTacticName = mshtaUrl ? "Defense Evasion" : scriptFromDownload ? "Execution" : "Command and Control",
@@ -76,7 +76,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ CRITICĂ: Tentativă Distrugere Shadow Copies (Ransomware)",
+                    Title = "Alertă critică: Tentativă Distrugere Shadow Copies (Ransomware)",
                     Severity = "Critical",
                     MitreTechniqueId = "T1490",
                     MitreTacticName = "Impact",
@@ -91,7 +91,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ MARE: Execuție PowerShell Codificat / Download Cradle",
+                    Title = "Alertă mare: Execuție PowerShell Codificat / Download Cradle",
                     Severity = "High",
                     MitreTechniqueId = "T1059.001",
                     MitreTacticName = "Execution",
@@ -106,7 +106,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ CRITICĂ: Tentativă Extragere Credențiale LSASS (Mimikatz / Dump)",
+                    Title = "Alertă critică: Tentativă Extragere Credențiale LSASS (Mimikatz / Dump)",
                     Severity = "Critical",
                     MitreTechniqueId = "T1003.001",
                     MitreTacticName = "Credential Access",
@@ -123,7 +123,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ MEDIE: Activitate de Recunoaștere & Enumerare Privilegii (Discovery)",
+                    Title = "Alertă medie: Activitate de Recunoaștere & Enumerare Privilegii (Discovery)",
                     Severity = "Medium",
                     MitreTechniqueId = "T1033",
                     MitreTacticName = "Discovery",
@@ -138,7 +138,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ MEDIE: Creare / Modificare Cont Utilizator sau Grup Privilegiat",
+                    Title = "Alertă medie: Creare / Modificare Cont Utilizator sau Grup Privilegiat",
                     Severity = "Medium",
                     MitreTechniqueId = "T1136.001",
                     MitreTacticName = "Persistence",
@@ -174,7 +174,7 @@ namespace LogAnalyzer.Core.Services.Network
                 bool isPsExec = msg.Contains("psexec") || msg.Contains("psexesvc");
                 return new DetectedIssue
                 {
-                    Title = isPsExec ? "ALERTĂ MARE: Serviciu de Execuție la Distanță (PsExec / Lateral Movement)" : "NOTIFICARE: Serviciu Nou Instalat în Sistem",
+                    Title = isPsExec ? "Alertă mare: Serviciu de Execuție la Distanță (PsExec / Lateral Movement)" : "NOTIFICARE: Serviciu Nou Instalat în Sistem",
                     Severity = isPsExec ? "High" : "Low",
                     MitreTechniqueId = "T1543.003",
                     MitreTacticName = "Persistence",
@@ -199,7 +199,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ CRITICĂ: Tentativă Încărcare Driver Kernel Vulnerabil (BYOVD / Ring 0)",
+                    Title = "Alertă critică: Tentativă Încărcare Driver Kernel Vulnerabil (BYOVD / Ring 0)",
                     Severity = "Critical",
                     MitreTechniqueId = "T1068",
                     MitreTacticName = "Privilege Escalation",
@@ -216,7 +216,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ CRITICĂ: Injecție Exclusivă în Memorie & Process Hollowing",
+                    Title = "Alertă critică: Injecție Exclusivă în Memorie & Process Hollowing",
                     Severity = "Critical",
                     MitreTechniqueId = "T1055.012",
                     MitreTacticName = "Defense Evasion",
@@ -233,7 +233,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ CRITICĂ: Atac Fizic BadUSB / Rubber Ducky (HID Keystroke Injection)",
+                    Title = "Alertă critică: Atac Fizic BadUSB / Rubber Ducky (HID Keystroke Injection)",
                     Severity = "Critical",
                     MitreTechniqueId = "T1200",
                     MitreTacticName = "Initial Access",
@@ -250,7 +250,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ CRITICĂ: Furt Token-uri Sesiune & Bypass MFA (Infostealer / AiTM)",
+                    Title = "Alertă critică: Furt Token-uri Sesiune & Bypass MFA (Infostealer / AiTM)",
                     Severity = "Critical",
                     MitreTechniqueId = "T1539",
                     MitreTacticName = "Credential Access",
@@ -265,7 +265,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ MARE: Otrăvire Rețea Locală & Captură NTLM (Responder / LLMNR Poisoning)",
+                    Title = "Alertă mare: Otrăvire Rețea Locală & Captură NTLM (Responder / LLMNR Poisoning)",
                     Severity = "High",
                     MitreTechniqueId = "T1557.001",
                     MitreTacticName = "Credential Access",
@@ -281,7 +281,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ CRITICĂ: Escaladare Privilegii prin Abuz Token-uri (Potato / SeImpersonate)",
+                    Title = "Alertă critică: Escaladare Privilegii prin Abuz Token-uri (Potato / SeImpersonate)",
                     Severity = "Critical",
                     MitreTechniqueId = "T1134.001",
                     MitreTacticName = "Privilege Escalation",
@@ -296,7 +296,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ MARE: Reguli Ascunse de Redirecționare Email & Exfiltrare Cloud",
+                    Title = "Alertă mare: Reguli Ascunse de Redirecționare Email & Exfiltrare Cloud",
                     Severity = "High",
                     MitreTechniqueId = "T1114.003",
                     MitreTacticName = "Collection",
@@ -346,7 +346,7 @@ namespace LogAnalyzer.Core.Services.Network
                     Severity = "High",
                     MitreTechniqueId = "T1059.001",
                     MitreTacticName = "Execution",
-                    Explanation = $"ALERTĂ DE TEST, NU O DETECȚIE REALĂ. Mesajul de test primit de pe [{ev.MachineName}] a declanșat calea de alertare; nu indică vreo activitate malițioasă.",
+                    Explanation = $"Alertă de test, nu o detecție reală. Mesajul de test primit de pe [{ev.MachineName}] a declanșat calea de alertare; nu indică vreo activitate malițioasă.",
                     IsTestAlert = true,
                     CreatedAt = DateTime.UtcNow,
                     RelatedEvents = new List<ParsedEvent> { ev }
@@ -372,7 +372,7 @@ namespace LogAnalyzer.Core.Services.Network
             if (accounts >= SprayAccountsThreshold)
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ MARE: Parole încercate pe multe conturi din aceeași sursă (password spraying)",
+                    Title = "Alertă mare: Parole încercate pe multe conturi din aceeași sursă (password spraying)",
                     Severity = "High",
                     MitreTechniqueId = "T1110.003",
                     MitreTacticName = "Credential Access",
@@ -400,7 +400,7 @@ namespace LogAnalyzer.Core.Services.Network
             if (same >= SameAccountThreshold)
                 return new DetectedIssue
                 {
-                    Title = "ALERTĂ MEDIE: Parolă greșită de mai multe ori pentru același cont",
+                    Title = "Alertă medie: Parolă greșită de mai multe ori pentru același cont",
                     Severity = "Medium",
                     MitreTechniqueId = "T1110.001",
                     MitreTacticName = "Credential Access",

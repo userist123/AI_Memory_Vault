@@ -18,11 +18,11 @@
         <DataGrid x:Name="Grid" AutomationProperties.Name="Glosarul termenilor" ItemsSource="{Binding Results}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
                   GridLinesVisibility="Horizontal" RowHeight="NaN" CanUserResizeRows="False">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Pe înțelesul tuturor" Binding="{Binding Romanian}" Width="1.4*">
+                <DataGridTextColumn Header="Pe înțelesul tuturor" Binding="{Binding Romanian}" Width="1.4*" MinWidth="180">
                     <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="FontWeight" Value="SemiBold"/></Style></DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
                 <DataGridTextColumn Header="Termenul tehnic" Binding="{Binding Technical}" Width="Auto" MinWidth="140"/>
-                <DataGridTextColumn Header="Ce înseamnă" Binding="{Binding Explanation}" Width="3*">
+                <DataGridTextColumn Header="Ce înseamnă" Binding="{Binding Explanation}" Width="3*" MinWidth="110">
                     <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                 </DataGridTextColumn>
             </DataGrid.Columns>

@@ -23,7 +23,7 @@
                 <RowDefinition Height="Auto"/>
                 <RowDefinition Height="*"/>
                 <RowDefinition Height="Auto"/>
-                <RowDefinition Height="180"/>
+                <RowDefinition Height="Auto"/>
             </Grid.RowDefinitions>
 
             <!-- Top Filter / Search Query Console -->
@@ -72,7 +72,7 @@
             </Border>
             
             <!-- Center Forensic DataGrid -->
-            <DataGrid Grid.Row="1" ItemsSource="{Binding Events}" SelectedItem="{Binding SelectedEvent}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True"
+            <DataGrid Grid.Row="1" MinHeight="260" ItemsSource="{Binding Events}" SelectedItem="{Binding SelectedEvent}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True"
                       VirtualizingStackPanel.IsVirtualizing="True" VirtualizingStackPanel.VirtualizationMode="Recycling" ScrollViewer.CanContentScroll="True">
                 <DataGrid.ContextMenu>
                     <ContextMenu Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
@@ -87,9 +87,9 @@
                     </ContextMenu>
                 </DataGrid.ContextMenu>
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Marcaj de timp (UTC)" Binding="{Binding TimeCreated, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="170" MinWidth="170"/>
+                    <DataGridTextColumn Header="Marcaj de timp (UTC)" Binding="{Binding TimeCreated, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="180" MinWidth="180"/>
                     <DataGridTextColumn Header="EID" Binding="{Binding EventId}" Width="60" MinWidth="60"/>
-                    <DataGridTextColumn Header="Nivel" Binding="{Binding Level, Converter={x:Static conv:LiveLevelLabelConverter.Instance}}" Width="90" MinWidth="90"/>
+                    <DataGridTextColumn Header="Nivel" Binding="{Binding Level, Converter={x:Static conv:LiveLevelLabelConverter.Instance}}" Width="100" MinWidth="100"/>
                     <DataGridTextColumn Header="Sursă" Binding="{Binding ProviderName}" Width="140" MinWidth="140"/>
                     <DataGridTextColumn Header="Stație" Binding="{Binding MachineName}" Width="110" MinWidth="110"/>
                     <DataGridTextColumn Header="Mesaj / rezumat" Binding="{Binding Message}" Width="*" MinWidth="200" ElementStyle="{StaticResource TwoLineCellTextStyle}"/>
@@ -117,14 +117,13 @@
             </Grid>
 
             <!-- Bottom Dockable Process Tree Visualizer -->
+            <!-- The process tree is closed by default so the event table keeps the room; its own scroll is capped at 240 -->
             <Border Grid.Row="3" Style="{StaticResource ObsidianCardStyle}" Padding="12">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-                    <TextBlock Text="Arborele proceselor" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,6"/>
-                    <TreeView Grid.Row="1" ItemsSource="{Binding ProcessTreeNodes}" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextPrimaryBrush}">
+                <Expander x:Name="ProcessTreeExpander" IsExpanded="False" Foreground="{StaticResource TextPrimaryBrush}">
+                    <Expander.Header>
+                        <TextBlock Text="Arborele proceselor" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                    </Expander.Header>
+                    <TreeView MaxHeight="240" Margin="0,6,0,0" ItemsSource="{Binding ProcessTreeNodes}" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextPrimaryBrush}">
                         <TreeView.Resources>
                             <HierarchicalDataTemplate DataType="{x:Type vm:ProcessNode}" ItemsSource="{Binding Children}">
                                 <StackPanel Orientation="Horizontal" Margin="2">
@@ -134,7 +133,7 @@
                             </HierarchicalDataTemplate>
                         </TreeView.Resources>
                     </TreeView>
-                </Grid>
+                </Expander>
             </Border>
         </Grid>
 
@@ -153,9 +152,9 @@
                     <ScrollViewer Margin="10" VerticalScrollBarVisibility="Auto">
                         <StackPanel>
                             <TextBlock Text="{Binding SelectedEventMeaning}" TextWrapping="Wrap" FontSize="13" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <TextBlock Text="Ce ar putea însemna" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,12,0,0"/>
+                            <TextBlock Text="Ce ar putea însemna" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,12,0,0"/>
                             <TextBlock Text="{Binding SelectedEventThreatScenario, TargetNullValue='—'}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
-                            <TextBlock Text="Tehnica de atac asociată (MITRE ATT&amp;CK)" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
+                            <TextBlock Text="Tehnica de atac asociată (MITRE ATT&amp;CK)" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" Margin="0,8,0,0"/>
                             <TextBlock Text="{Binding SelectedEventMitreMapping, TargetNullValue='—'}" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
                             <TextBlock Text="Asocierea nu înseamnă că a avut loc un atac; arată doar la ce să fiți atenți." TextWrapping="Wrap" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
                         </StackPanel>
@@ -173,7 +172,7 @@
                         <DataGrid Grid.Row="1" ItemsSource="{Binding SelectedEventProperties}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" Background="Transparent" BorderThickness="0" GridLinesVisibility="Horizontal" HorizontalScrollBarVisibility="Disabled">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Proprietate" Binding="{Binding Key}" Width="120" MinWidth="120" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                                <DataGridTextColumn Header="Valoare" Binding="{Binding Value}" Width="*" Foreground="{StaticResource TextPrimaryBrush}"/>
+                                <DataGridTextColumn Header="Valoare" Binding="{Binding Value}" Width="*" MinWidth="80" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>

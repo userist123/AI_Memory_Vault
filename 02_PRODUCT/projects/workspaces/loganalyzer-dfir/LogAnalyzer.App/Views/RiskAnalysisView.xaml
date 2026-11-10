@@ -121,7 +121,7 @@
                         <DataGridTextColumn Header="Categoria de risc" Binding="{Binding Category}" Width="180" MinWidth="180" FontWeight="SemiBold"/>
                         <DataGridTextColumn Header="ID MITRE" Binding="{Binding MitreTechniqueId}" Width="100" MinWidth="100"/>
                         <DataGridTextColumn Header="Sursa probei" Binding="{Binding EvidenceSource}" Width="150" MinWidth="150"/>
-                        <DataGridTextColumn Header="Motivație" Binding="{Binding LegalJustification}" Width="*"/>
+                        <DataGridTextColumn Header="Motivație" Binding="{Binding LegalJustification}" Width="*" MinWidth="100"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

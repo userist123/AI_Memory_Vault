@@ -121,7 +121,7 @@ public static partial class ControlEvaluator
                 : unknown.Count > 0 ? "Nu s-au putut citi: " + string.Join(", ", unknown.Select(x => x.Name)) + "." + NoRead
                 : "Toate sursele necesare sunt pornite: copierea pe suporturi, deschiderea și închiderea fișierelor, programele pornite cu linia lor de comandă și tipărirea se înregistrează"
                   + (f.Posture != StationPosture.Standalone ? ", la fel și citirea prin partajări de rețea." : "."),
-            items.Select(x => $"{x.Name}: {(x.On is null ? "necitit" : x.On.Value ? "pornit" : "OPRIT")}"),
+            items.Select(x => $"{x.Name}: {(x.On is null ? "necitit" : x.On.Value ? "pornit" : "oprit")}"),
             "Cereți administratorului să pornească sursele lipsă prin politica de grup; aplicația doar citește setările, nu le schimbă. Windows înregistrează doar de la pornire înainte, nu retroactiv.");
     }
 

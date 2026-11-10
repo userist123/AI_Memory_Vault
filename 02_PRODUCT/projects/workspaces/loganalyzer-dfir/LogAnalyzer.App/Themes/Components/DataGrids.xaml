@@ -76,4 +76,11 @@
         <Setter Property="ToolTipService.ShowDuration" Value="60000"/>
     </Style>
 
+    <!-- One-line cell text that never runs into the next column: trimmed with an ellipsis, the whole text in the tooltip. -->
+    <Style x:Key="OneLineCellTextStyle" TargetType="TextBlock">
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+    </Style>
+
 </ResourceDictionary>

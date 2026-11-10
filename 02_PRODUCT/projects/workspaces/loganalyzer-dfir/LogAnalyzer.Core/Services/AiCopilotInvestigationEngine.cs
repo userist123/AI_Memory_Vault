@@ -37,12 +37,12 @@ namespace LogAnalyzer.Core.Services
             if (sList.Any(s => s.Severity == "Critical") || kList.Any(k => k.Severity == "Critical") || uList.Any(u => u.Severity == "Critical"))
             {
                 result.RiskLevel = "Critic";
-                result.Title = "AMENINȚARE CRITICĂ — Tentativă Avansată de Compromitere";
+                result.Title = "Amenințare critică — tentativă avansată de compromitere";
             }
             else if (sList.Any(s => s.Severity == "High") || kList.Any(k => k.Severity == "High") || uList.Any(u => u.Severity == "High"))
             {
                 result.RiskLevel = "Ridicat";
-                result.Title = "RISC RIDICAT — Activitate Suspectă / Abatere de Securitate";
+                result.Title = "Risc ridicat — activitate suspectă sau abatere de securitate";
             }
             else
             {

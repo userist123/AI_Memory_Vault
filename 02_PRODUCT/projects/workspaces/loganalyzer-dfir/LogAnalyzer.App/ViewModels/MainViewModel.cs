@@ -297,7 +297,7 @@ namespace LogAnalyzer.UI.ViewModels
         // Analyst Triage Case Notes & Scratchpad
         [ObservableProperty] private bool _isAnalystDrawerOpen = false;
         [ObservableProperty] private string _analystCaseNotes = "Analyst notes initialized. Documenting forensic hypothesis and evidence correlation.";
-        [ObservableProperty] private string _analystCaseStatus = "UNDER TRIAGE";
+        [ObservableProperty] private string _analystCaseStatus = "În triere";
 
         [ObservableProperty] private string _searchText = string.Empty;
         partial void OnSearchTextChanged(string value) => SearchEventsText = value;
@@ -1306,7 +1306,7 @@ namespace LogAnalyzer.UI.ViewModels
             sb.AppendLine();
             sb.AppendLine($"IMPACT REGLEMENTAR:\n{inv.RegulatoryImpactRo}");
             sb.AppendLine();
-            sb.AppendLine("EVIDENȚE FORENSICE CORELATE:");
+            sb.AppendLine("Dovezi forensice corelate:");
             foreach (var ev in inv.ForensicEvidenceBullets) sb.AppendLine($" • {ev}");
             sb.AppendLine();
             sb.AppendLine("GHID DE IZOLARE & CONTAINMENT (HG 585 / NIS2):");
@@ -1389,7 +1389,7 @@ namespace LogAnalyzer.UI.ViewModels
             }
             catch (Exception ex)
             {
-                CollectionLogs += $"[FATAL ERROR] {ex.Message}" + Environment.NewLine;
+                CollectionLogs += $"[Eroare fatală] {ex.Message}" + Environment.NewLine;
             }
             finally
             {
@@ -1405,7 +1405,7 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 if (!System.Net.IPAddress.TryParse(SyslogBindAddress?.Trim(), out var bind))
                 {
-                    CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, $"[SYSLOG ERROR] Adresa de ascultare „{SyslogBindAddress}” nu este o adresă IP.");
+                    CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, $"[Eroare syslog] Adresa de ascultare „{SyslogBindAddress}” nu este o adresă IP.");
                     return;
                 }
                 var allowed = new System.Collections.Generic.List<System.Net.IPAddress>();
@@ -1413,7 +1413,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     if (!System.Net.IPAddress.TryParse(part, out var ip))
                     {
-                        CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, $"[SYSLOG ERROR] „{part}” din lista surselor permise nu este o adresă IP.");
+                        CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, $"[Eroare syslog] „{part}” din lista surselor permise nu este o adresă IP.");
                         return;
                     }
                     allowed.Add(ip);
@@ -2017,17 +2017,26 @@ namespace LogAnalyzer.UI.ViewModels
             if (loudest is null) return;
 
             IsAutoShieldTriggered = false;
-            CurrentLiveToastAlert = loudest;
-            IsLiveToastVisible = true;
+            // a low or informational alert goes to the status bar only; the card opens for medium and above
+            bool showToast = ShouldShowToast(loudest.Severity);
+            if (showToast)
+            {
+                CurrentLiveToastAlert = loudest;
+                IsLiveToastVisible = true;
+            }
             // design pass 2026-11-10: sentence case, and a low event is a notice, not an "ALERTĂ" in capitals
             StatusMessage = $"{(SeverityRank(loudest.Severity) >= 2 ? "Alertă" : "Notificare")} în timp real: {(loudest.Plain.Length > 0 ? loudest.Plain : loudest.Title)}";
             if (SeverityRank(loudest.Severity) >= 3)
                 try { System.Media.SystemSounds.Exclamation.Play(); } catch (InvalidOperationException) { /* sound is optional */ }
+            if (!showToast) return;
             _toastAutoDismissTimer?.Stop();
             _toastAutoDismissTimer = new System.Timers.Timer(7000) { AutoReset = false };
             _toastAutoDismissTimer.Elapsed += (s, e) => Application.Current?.Dispatcher?.Invoke(() => IsLiveToastVisible = false);
             _toastAutoDismissTimer.Start();
         }
+
+        /// <summary>The live notification card opens only for medium severity and above; low and informational alerts appear in the status bar.</summary>
+        internal static bool ShouldShowToast(string? severity) => SeverityRank(severity) >= 2;
 
         private static int SeverityRank(string? s) => s?.ToLowerInvariant() switch { "critical" => 4, "high" => 3, "medium" => 2, "low" => 1, _ => 0 };
 
@@ -3369,7 +3378,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var targets = transpiler.Transpile(title, eventId, image, cmd);
 
                 var sb = new StringBuilder();
-                sb.AppendLine($"[TRANSPILARE OFFLINE SIGMA]: {targets.RuleTitle}");
+                sb.AppendLine($"[Transpilare Sigma fără rețea]: {targets.RuleTitle}");
                 sb.AppendLine("--------------------------------------------------");
                 sb.AppendLine("SPLUNK SPL:");
                 sb.AppendLine(targets.SplunkSpl);
@@ -3377,7 +3386,7 @@ namespace LogAnalyzer.UI.ViewModels
                 sb.AppendLine("SENTINEL KQL:");
                 sb.AppendLine(targets.SentinelKql);
                 sb.AppendLine();
-                sb.AppendLine("POWERSHELL HUNTING SCRIPT:");
+                sb.AppendLine("Script PowerShell de vânătoare:");
                 sb.AppendLine(targets.PowerShellHunting);
 
                 WorkbenchCompileResult = sb.ToString();
@@ -3461,7 +3470,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var results = detector.AnalyzeConnections(networkList);
 
                 var sb = new StringBuilder();
-                sb.AppendLine("REZULTAT DETECȚIE STATISTICĂ C2 BEACONING:");
+                sb.AppendLine("Rezultatul detecției statistice a balizelor C2:");
                 sb.AppendLine("==================================================");
 
                 if (results.Count == 0)

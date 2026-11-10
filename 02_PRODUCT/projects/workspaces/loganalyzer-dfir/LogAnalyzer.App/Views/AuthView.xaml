@@ -39,9 +39,9 @@
                     </StackPanel>
                     <DataGrid AutomationProperties.Name="Cardurile detectate" ItemsSource="{Binding Detected}" SelectedItem="{Binding SelectedDetected}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="120">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Certificat" Binding="{Binding Subject}" Width="2*"/>
-                            <DataGridTextColumn Header="Cititor" Binding="{Binding Reader}" Width="*"/>
-                            <DataGridTextColumn Header="Serie" Binding="{Binding Serial}" Width="*"/>
+                            <DataGridTextColumn Header="Certificat" Binding="{Binding Subject}" Width="2*" MinWidth="100"/>
+                            <DataGridTextColumn Header="Cititor" Binding="{Binding Reader}" Width="*" MinWidth="80"/>
+                            <DataGridTextColumn Header="Serie" Binding="{Binding Serial}" Width="*" MinWidth="70"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </StackPanel>
@@ -70,12 +70,12 @@
                         <TextBlock Text="{Binding RegisterGap}" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,4" Foreground="{StaticResource TextSecondaryBrush}"/>
                         <DataGrid AutomationProperties.Name="Conturile aplicației" ItemsSource="{Binding Accounts}" SelectedItem="{Binding SelectedAccount}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="170">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Cont" Binding="{Binding Account}" Width="*"/>
-                                <DataGridTextColumn Header="Persoană" Binding="{Binding Person}" Width="*"/>
+                                <DataGridTextColumn Header="Cont" Binding="{Binding Account}" Width="*" MinWidth="60"/>
+                                <DataGridTextColumn Header="Persoană" Binding="{Binding Person}" Width="*" MinWidth="90"/>
                                 <DataGridTextColumn Header="Rol" Binding="{Binding Role}" Width="Auto" MinWidth="50"/>
-                                <DataGridTextColumn Header="Stare" Binding="{Binding State}" Width="Auto" MinWidth="60"/>
+                                <DataGridTextColumn Header="Stare" Binding="{Binding State}" Width="Auto" MinWidth="70"/>
                                 <DataGridTextColumn Header="Carduri" Binding="{Binding Cards}" Width="Auto" MinWidth="80"/>
-                                <DataGridTextColumn Header="Autentificare" Binding="{Binding Mode}" Width="*"/>
+                                <DataGridTextColumn Header="Autentificare" Binding="{Binding Mode}" Width="*" MinWidth="130"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <WrapPanel Margin="0,6,0,6">
@@ -86,10 +86,10 @@
                         <DataGrid AutomationProperties.Name="Cardurile contului selectat" ItemsSource="{Binding Cards}" SelectedItem="{Binding SelectedCard}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="130">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Amprenta cardului (SHA-256)" Binding="{Binding ShortThumbprint}" Width="Auto" MinWidth="230"/>
-                                <DataGridTextColumn Header="Subiect" Binding="{Binding Subject}" Width="2*"/>
-                                <DataGridTextColumn Header="Serie" Binding="{Binding Serial}" Width="Auto" MinWidth="60"/>
-                                <DataGridTextColumn Header="Stare" Binding="{Binding State}" Width="Auto" MinWidth="60"/>
-                                <DataGridTextColumn Header="Înrolat de" Binding="{Binding EnrolledBy}" Width="*"/>
+                                <DataGridTextColumn Header="Subiect" Binding="{Binding Subject}" Width="2*" MinWidth="80"/>
+                                <DataGridTextColumn Header="Serie" Binding="{Binding Serial}" Width="Auto" MinWidth="70"/>
+                                <DataGridTextColumn Header="Stare" Binding="{Binding State}" Width="Auto" MinWidth="70"/>
+                                <DataGridTextColumn Header="Înrolat de" Binding="{Binding EnrolledBy}" Width="*" MinWidth="100"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <Button Content="Dezactivează / reactivează cardul ales" Command="{Binding ToggleCardDisabledCommand}" Style="{StaticResource OutlineButtonStyle}" HorizontalAlignment="Left" Margin="0,6,0,8"/>

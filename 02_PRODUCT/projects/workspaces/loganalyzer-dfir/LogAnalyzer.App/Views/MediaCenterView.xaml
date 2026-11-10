@@ -174,13 +174,13 @@
                             <DataGridTextColumn Header="PID" views:SimpleLevel.HideInSimple="True" Binding="{Binding Pid, Mode=OneWay}" IsReadOnly="True" Width="64" MinWidth="64" ElementStyle="{StaticResource MonitorCellTrim}"/>
                             <DataGridTextColumn Header="Serie" Binding="{Binding Serial, Mode=OneWay}" IsReadOnly="True" Width="*" MinWidth="170" ElementStyle="{StaticResource MonitorCellTrim}"/>
                             <DataGridTextColumn Header="Capacitate" Binding="{Binding CapacityText, Mode=OneWay}" SortMemberPath="CapacityBytes" IsReadOnly="True" Width="130" MinWidth="130" ElementStyle="{StaticResource MonitorCellWrap}"/>
-                            <DataGridTextColumn Header="Literă" views:SimpleLevel.HideInSimple="True" Binding="{Binding Letter, Mode=OneWay}" IsReadOnly="True" Width="64" MinWidth="70" ElementStyle="{StaticResource MonitorCellTrim}"/>
+                            <DataGridTextColumn Header="Literă" views:SimpleLevel.HideInSimple="True" Binding="{Binding Letter, Mode=OneWay}" IsReadOnly="True" Width="70" MinWidth="70" ElementStyle="{StaticResource MonitorCellTrim}"/>
                             <DataGridTextColumn Header="Etichetă" views:SimpleLevel.HideInSimple="True" Binding="{Binding Label, Mode=OneWay}" IsReadOnly="True" Width="*" MinWidth="110" ElementStyle="{StaticResource MonitorCellTrim}"/>
                             <DataGridTextColumn Header="Utilizator" views:SimpleLevel.HideInSimple="True" Binding="{Binding ConnectedUser, Mode=OneWay}" IsReadOnly="True" Width="1.2*" MinWidth="150" ElementStyle="{StaticResource MonitorCellTrim}"/>
                             <DataGridTextColumn Header="Prima apariție" views:SimpleLevel.HideInSimple="True" Binding="{Binding FirstSeenText, Mode=OneWay}" SortMemberPath="FirstSeenUtc" IsReadOnly="True" Width="150" MinWidth="150" ElementStyle="{StaticResource MonitorCellTrim}"/>
                             <DataGridTextColumn Header="Ultima conectare" Binding="{Binding LastConnectedText, Mode=OneWay}" SortMemberPath="LastConnectedUtc" IsReadOnly="True" Width="150" MinWidth="150" ElementStyle="{StaticResource MonitorCellTrim}"/>
                             <DataGridTextColumn Header="Ultima deconectare" views:SimpleLevel.HideInSimple="True" Binding="{Binding LastDisconnectedText, Mode=OneWay}" SortMemberPath="LastDisconnectedUtc" IsReadOnly="True" Width="160" MinWidth="160" ElementStyle="{StaticResource MonitorCellTrim}"/>
-                            <DataGridTextColumn Header="Nr. de înregistrare" Binding="{Binding RegistrationNumber, UpdateSourceTrigger=LostFocus}" Width="160" MinWidth="170">
+                            <DataGridTextColumn Header="Nr. de înregistrare" Binding="{Binding RegistrationNumber, UpdateSourceTrigger=LostFocus}" Width="170" MinWidth="170">
                                 <!-- row 12: only storage media have a registration number; for a mouse, keyboard or Bluetooth device the cell is read-only with a tooltip -->
                                 <DataGridTextColumn.CellStyle>
                                     <Style TargetType="DataGridCell" BasedOn="{StaticResource {x:Type DataGridCell}}">
@@ -230,12 +230,12 @@
                     <Button Content="Verifică suportul introdus" Command="{Binding InspectMediaCommand}" HorizontalAlignment="Left" Margin="0,2,0,6" AutomationProperties.Name="Verifică stick-urile conectate (autorun, foldere ascunse, scurtături)"/>
                     <DataGrid AutomationProperties.Name="Dispozitive conectate acum" ItemsSource="{Binding ConnectedNow}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220" Margin="0,4,0,0">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Nume" Binding="{Binding Device.DisplayName}" Width="1.6*"/>
+                            <DataGridTextColumn Header="Nume" Binding="{Binding Device.DisplayName}" Width="1.6*" MinWidth="60"/>
                             <DataGridTextColumn Header="Față de registru" Binding="{Binding MatchText}" Width="170" MinWidth="170" Visibility="{x:Static views:MediaRegisterUi.Visibility}"/>
-                            <DataGridTextColumn Header="Ce este" Binding="{Binding Device.KindText}" Width="1.3*"/>
-                            <DataGridTextColumn Header="Serie" Binding="{Binding Device.Serial}" Width="*"/>
+                            <DataGridTextColumn Header="Ce este" Binding="{Binding Device.KindText}" Width="1.3*" MinWidth="80"/>
+                            <DataGridTextColumn Header="Serie" Binding="{Binding Device.Serial}" Width="*" MinWidth="70"/>
                             <DataGridTextColumn Header="Literă" Binding="{Binding Device.DriveLetters}" Width="80" MinWidth="80"/>
-                            <DataGridTextColumn Header="Etichetă" Binding="{Binding Device.VolumeLabel}" Width="*"/>
+                            <DataGridTextColumn Header="Etichetă" Binding="{Binding Device.VolumeLabel}" Width="*" MinWidth="90"/>
                             <DataGridTextColumn Header="Capacitate" Binding="{Binding Device.CapacityText}" Width="100" MinWidth="100"/>
                         </DataGrid.Columns>
                     </DataGrid>
@@ -249,10 +249,10 @@
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
                             <DataGridTextColumn Header="Ora" Binding="{Binding TimeText}" Width="80" MinWidth="80"/>
-                            <DataGridTextColumn Header="Ce s-a întâmplat" Binding="{Binding What}" Width="1.6*"/>
-                            <DataGridTextColumn Header="Dispozitiv" Binding="{Binding Device}" Width="1.6*"/>
-                            <DataGridTextColumn Header="Serie" Binding="{Binding Serial}" Width="*"/>
-                            <DataGridTextColumn Header="Verdict și ce faceți" Binding="{Binding Verdict}" Width="3*">
+                            <DataGridTextColumn Header="Ce s-a întâmplat" Binding="{Binding What}" Width="1.6*" MinWidth="150"/>
+                            <DataGridTextColumn Header="Dispozitiv" Binding="{Binding Device}" Width="1.6*" MinWidth="100"/>
+                            <DataGridTextColumn Header="Serie" Binding="{Binding Serial}" Width="*" MinWidth="70"/>
+                            <DataGridTextColumn Header="Verdict și ce faceți" Binding="{Binding Verdict}" Width="3*" MinWidth="180">
                                 <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
                         </DataGrid.Columns>
@@ -284,7 +284,7 @@
                                 <DataGridTextColumn Header="Ce este" Binding="{Binding Device.KindText}" Width="1.3*" MinWidth="130"/>
                                 <DataGridTextColumn Header="Serie" Binding="{Binding Device.Serial}" Width="*" MinWidth="120"/>
                                 <DataGridTextColumn Header="Stare" Binding="{Binding Device.ConnectedText}" Width="110" MinWidth="110"/>
-                                <DataGridTextColumn Header="Ultima conectare" Binding="{Binding Device.LastConnectedUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="130" MinWidth="140"/>
+                                <DataGridTextColumn Header="Ultima conectare" Binding="{Binding Device.LastConnectedUtc, StringFormat='yyyy-MM-dd HH:mm'}" Width="150" MinWidth="150"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </DockPanel>
@@ -321,13 +321,13 @@
                                Text="Ce blochează sau înregistrează Windows însuși pe această stație. Aplicația nu schimbă aceste setări; ele se aplică prin politica de grup (GPO) de către administrator."/>
                     <DataGrid AutomationProperties.Name="Protecțiile Windows pentru dispozitive" ItemsSource="{Binding Protections}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Protecție" Binding="{Binding Title}" Width="1.6*"/>
-                            <DataGridTextColumn Header="Protejat?" Binding="{Binding ProtectedText}" Width="90" MinWidth="90"/>
-                            <DataGridTextColumn Header="Stare pe stație" Binding="{Binding State}" Width="1.3*"/>
-                            <DataGridTextColumn Header="Ce înseamnă" Binding="{Binding Meaning}" Width="3*">
+                            <DataGridTextColumn Header="Protecție" Binding="{Binding Title}" Width="1.6*" MinWidth="100"/>
+                            <DataGridTextColumn Header="Protejat?" Binding="{Binding ProtectedText}" Width="100" MinWidth="100"/>
+                            <DataGridTextColumn Header="Stare pe stație" Binding="{Binding State}" Width="1.3*" MinWidth="140"/>
+                            <DataGridTextColumn Header="Ce înseamnă" Binding="{Binding Meaning}" Width="3*" MinWidth="110">
                                 <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
-                            <DataGridTextColumn Header="Unde (tehnic)" Binding="{Binding Source}" Width="1.6*">
+                            <DataGridTextColumn Header="Unde (tehnic)" Binding="{Binding Source}" Width="1.6*" MinWidth="130">
                                 <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
                         </DataGrid.Columns>
@@ -359,8 +359,8 @@
                         <DataGrid AutomationProperties.Name="Ciorna registrului de medii" ItemsSource="{Binding Draft}" AutoGenerateColumns="False" CanUserAddRows="False"
                                   HeadersVisibility="Column" Margin="0,6,0,0" MaxHeight="320">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Nr. inventar" Binding="{Binding InventoryNumber, UpdateSourceTrigger=PropertyChanged}" Width="110" MinWidth="110"/>
-                                <DataGridTextColumn Header="Nivel de clasificare" Binding="{Binding Classification, UpdateSourceTrigger=PropertyChanged}" Width="170" MinWidth="170"/>
+                                <DataGridTextColumn Header="Nr. inventar" Binding="{Binding InventoryNumber, UpdateSourceTrigger=PropertyChanged}" Width="120" MinWidth="120"/>
+                                <DataGridTextColumn Header="Nivel de clasificare" Binding="{Binding Classification, UpdateSourceTrigger=PropertyChanged}" Width="180" MinWidth="180"/>
                                 <DataGridTextColumn Header="Deținător" Binding="{Binding Holder, UpdateSourceTrigger=PropertyChanged}" Width="150" MinWidth="150"/>
                                 <DataGridComboBoxColumn Header="Stare" SelectedItemBinding="{Binding Status}" Width="90" MinWidth="90">
                                     <DataGridComboBoxColumn.ElementStyle>
@@ -370,8 +370,8 @@
                                         <Style TargetType="ComboBox"><Setter Property="ItemsSource" Value="{Binding DataContext.StatusChoices, RelativeSource={RelativeSource AncestorType=DataGrid}}"/></Style>
                                     </DataGridComboBoxColumn.EditingElementStyle>
                                 </DataGridComboBoxColumn>
-                                <DataGridTextColumn Header="Mediul" Binding="{Binding Identity, Mode=OneWay}" IsReadOnly="True" Width="2*"/>
-                                <DataGridTextColumn Header="Criptare" Binding="{Binding Encryption, Mode=OneWay}" IsReadOnly="True" Width="1.2*"/>
+                                <DataGridTextColumn Header="Mediul" Binding="{Binding Identity, Mode=OneWay}" IsReadOnly="True" Width="2*" MinWidth="70"/>
+                                <DataGridTextColumn Header="Criptare" Binding="{Binding Encryption, Mode=OneWay}" IsReadOnly="True" Width="1.2*" MinWidth="90"/>
                                 <DataGridTextColumn Header="Origine" Binding="{Binding Origin, Mode=OneWay}" IsReadOnly="True" Width="140" MinWidth="140"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -389,12 +389,12 @@
                         <TextBlock Text="Istoricul versiunilor pe această stație" FontSize="14" FontWeight="SemiBold" Margin="0,14,0,4" Foreground="{StaticResource TextPrimaryBrush}"/>
                         <DataGrid AutomationProperties.Name="Istoricul versiunilor registrului semnat" ItemsSource="{Binding History}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Versiune" Binding="{Binding Version}" Width="80" MinWidth="80"/>
+                                <DataGridTextColumn Header="Versiune" Binding="{Binding Version}" Width="90" MinWidth="90"/>
                                 <DataGridTextColumn Header="Verdict" Binding="{Binding Verdict}" Width="90" MinWidth="90"/>
-                                <DataGridCheckBoxColumn Header="Instalat" Binding="{Binding Installed}" Width="80" MinWidth="80"/>
+                                <DataGridCheckBoxColumn Header="Instalat" Binding="{Binding Installed}" Width="90" MinWidth="90"/>
                                 <DataGridTextColumn Header="Importat (UTC)" Binding="{Binding ImportedUtc}" Width="150" MinWidth="150"/>
-                                <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="3*"/>
-                                <DataGridTextColumn Header="SHA-256" Binding="{Binding Sha256}" Width="2*"/>
+                                <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="3*" MinWidth="70"/>
+                                <DataGridTextColumn Header="SHA-256" Binding="{Binding Sha256}" Width="2*" MinWidth="80"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>
@@ -439,7 +439,7 @@
                                 <DataGridTextColumn Header="Stația" Binding="{Binding Station}" Width="130" MinWidth="130"/>
                                 <DataGridTextColumn Header="Mediul" Binding="{Binding Medium}" Width="110" MinWidth="110"/>
                                 <DataGridTextColumn Header="Transferul" Binding="{Binding Transfer}" Width="110" MinWidth="110"/>
-                                <DataGridTextColumn Header="Constatarea" Binding="{Binding Text}" Width="*">
+                                <DataGridTextColumn Header="Constatarea" Binding="{Binding Text}" Width="*" MinWidth="110">
                                     <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
                             </DataGrid.Columns>
@@ -448,10 +448,10 @@
                         <DataGrid AutomationProperties.Name="Exporturile importate și verificarea lor" ItemsSource="{Binding Exports}" SelectedItem="{Binding SelectedExport}" AutoGenerateColumns="False"
                                   IsReadOnly="True" HeadersVisibility="Column" MaxHeight="200">
                             <DataGrid.Columns>
-                                <DataGridCheckBoxColumn Header="Acceptat" Binding="{Binding Accepted, Mode=OneWay}" Width="80" MinWidth="80"/>
+                                <DataGridCheckBoxColumn Header="Acceptat" Binding="{Binding Accepted, Mode=OneWay}" Width="90" MinWidth="90"/>
                                 <DataGridTextColumn Header="Stația" Binding="{Binding StationLabel, Mode=OneWay}" Width="140" MinWidth="140"/>
-                                <DataGridTextColumn Header="Fișierul" Binding="{Binding FileName}" Width="2*"/>
-                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Headline}" Width="3*"/>
+                                <DataGridTextColumn Header="Fișierul" Binding="{Binding FileName}" Width="2*" MinWidth="90"/>
+                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Headline}" Width="3*" MinWidth="90"/>
                             </DataGrid.Columns>
                         </DataGrid>
                         <TextBox Text="{Binding SelectedExportText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" Margin="0,4,0,0" MinHeight="40" AutomationProperties.Name="Verificarea exportului ales"/>

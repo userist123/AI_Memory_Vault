@@ -67,9 +67,9 @@
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding TimeCreated, StringFormat={}{0:HH:mm:ss.fff}}" Width="130" MinWidth="130"/>
                         <DataGridTextColumn Header="EID" Binding="{Binding EventId}" Width="60" MinWidth="60"/>
-                        <DataGridTextColumn Header="Nivel" Binding="{Binding Level, Converter={x:Static local:LiveLevelLabelConverter.Instance}}" Width="80" MinWidth="80"/>
+                        <DataGridTextColumn Header="Nivel" Binding="{Binding Level, Converter={x:Static local:LiveLevelLabelConverter.Instance}}" Width="100" MinWidth="100"/>
                         <DataGridTextColumn Header="Sursă" Binding="{Binding ProviderName}" Width="140" MinWidth="140"/>
-                        <DataGridTextColumn Header="Gazdă" Binding="{Binding MachineName}" Width="110" MinWidth="110"/>
+                        <DataGridTextColumn Header="Gazdă" Binding="{Binding MachineName}" Width="140" MinWidth="140"/>
                         <DataGridTextColumn Header="Conținut" Binding="{Binding Message}" Width="*" MinWidth="200" ElementStyle="{StaticResource TwoLineCellTextStyle}"/>
                     </DataGrid.Columns>
                 </DataGrid>
