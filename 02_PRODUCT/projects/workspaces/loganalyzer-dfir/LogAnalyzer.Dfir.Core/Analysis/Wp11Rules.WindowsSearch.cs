@@ -24,7 +24,6 @@ public static partial class Wp11Rules
         var tagged = c.Events.Where(e => (e.Source.Equals(SearchStoreSource, StringComparison.OrdinalIgnoreCase) || e.Source.Equals(SearchGatherSource, StringComparison.OrdinalIgnoreCase))
                                          && F(e, SearchMomentField).Length > 0).ToList();
         if (tagged.Count == 0) return;
-        var items = new List<AdItem>();
         // a moment key is only meaningful on one host: the same key on two hosts is two different moments
         foreach (var moment in tagged.GroupBy(e => (Host: e.Host.Trim().ToUpperInvariant(), Key: F(e, SearchMomentField)), new MomentComparer()))
         {
@@ -33,51 +32,56 @@ public static partial class Wp11Rules
             // one of the two missing, or the Windows.db read incomplete: no comparison
             if (store.Count == 0 || gather.Count == 0 || store.Any(e => F(e, SearchIncompleteField) == "da")) continue;
             var known = store.Select(e => F(e, "WorkId").Trim()).Where(s => s.Length > 0).ToHashSet(StringComparer.Ordinal);
-            foreach (var g in gather)
-            {
-                var doc = F(g, "DocumentID").Trim();
-                if (doc.Length == 0 || known.Contains(doc) || F(g, "IsScopePattern") == "da") continue;
-                var item = g;
-                items.Add(new AdItem(Severity.Low, T(g), T(g), string.IsNullOrEmpty(g.Path) ? doc : g.Path,
-                    Ref(g, "rând Windows-gather.db DocumentID " + doc), () => MakeSearchGatherOnly(c, item, store.Count)));
-            }
+            var only = gather.Where(g => F(g, "DocumentID").Trim() is { Length: > 0 } doc && !known.Contains(doc) && F(g, "IsScopePattern") != "da")
+                .OrderByDescending(g => T(g) ?? DateTimeOffset.MinValue).ToList();
+            // ONE finding per moment (lab 2026-11-10, a real station: 14 separate findings for ordinary churn, temporary and browser-profile files)
+            if (only.Count > 0) o.Add(MakeSearchGatherOnly(c, only, store.Count));
         }
-        EmitCapped(c, o, items, "WSEARCH-GATHER-ONLY", "File Activity", "", "fișier cunoscut doar de gatherer", "fișiere cunoscute doar de gatherer",
-            why: "Ce s-a întâmplat: multe rânduri Windows-gather.db nu au intrare în Windows.db din același moment. De ce contează: pot fi fișiere șterse sau mutate recent, ori fișiere noi încă neprocesate de indexator. Ce verificați: folderele comune ale căilor și $UsnJrnl pentru aceeași perioadă.",
-            alternative: "Indexatorul are mult de lucru în așteptare (fișiere noi încă neprocesate), de exemplu după o copiere mare.");
     }
-
     private sealed class MomentComparer : IEqualityComparer<(string Host, string Key)>
     {
         public bool Equals((string Host, string Key) x, (string Host, string Key) y) => x.Host == y.Host && x.Key.Equals(y.Key, StringComparison.OrdinalIgnoreCase);
         public int GetHashCode((string Host, string Key) v) => HashCode.Combine(v.Host, v.Key.ToUpperInvariant());
     }
 
-    private static Finding MakeSearchGatherOnly(Ctx c, TimelineEvent e, int storeRows)
+    /// <summary>How many paths the finding lists; the rest are counted (all rows stay in the timeline, source WindowsSearchGather).</summary>
+    public const int SearchGatherListed = 15;
+
+    private static Finding MakeSearchGatherOnly(Ctx c, List<TimelineEvent> rows, int storeRows)
     {
-        var path = e.Path; var doc = F(e, "DocumentID").Trim(); var when = T(e);
+        var first = rows[0];
+        var times = rows.Select(T).Where(t => t is not null).ToList();
+        string Line(TimelineEvent e) => $"{(string.IsNullOrEmpty(e.Path) ? "DocumentID " + F(e, "DocumentID").Trim() : e.Path)} (ultima modificare {Time(T(e))})";
+        var listed = rows.Take(SearchGatherListed).Select(Line).ToList();
+        var more = rows.Count - listed.Count;
         return new Finding
         {
             FindingId = c.NextId(), RuleId = "WSEARCH-GATHER-ONLY",
-            Title = $"Fișier cunoscut indexatorului Windows Search, fără intrare în magazinul de proprietăți: {PlainPhrases.Q(PlainPhrases.Leaf(path))}",
+            Title = rows.Count == 1
+                ? $"Fișier cunoscut indexatorului Windows Search, fără intrare în magazinul de proprietăți: {PlainPhrases.Q(PlainPhrases.Leaf(first.Path))}"
+                : $"{RoT(rows.Count, "fișier cunoscut", "fișiere cunoscute")} indexatorului Windows Search, fără intrare în magazinul de proprietăți",
             Severity = Severity.Low, Category = "File Activity",
             Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "", SemanticType = SemanticType.Observation,
-            FirstSeenUtc = when, LastSeenUtc = when, File = path,
-            PlainWhat = $"indexatorul Windows Search (gatherer) cunoștea fișierul {PlainPhrases.Q(PlainPhrases.Leaf(path))}, dar magazinul de proprietăți din același moment nu îl mai are",
-            Description = $"Rândul Windows-gather.db cu DocumentID {doc}: {path}, ultima modificare {Time(when)}. Același DocumentID nu apare ca WorkId între cele {storeRows} intrări ale Windows.db copiat în același moment. " +
-                          "Ce s-a întâmplat: fișierul era cunoscut indexatorului, dar nu mai are intrare în magazinul de proprietăți la același moment; posibil șters sau mutat după indexare, ori încă neprocesat de indexator. " +
+            FirstSeenUtc = times.Count > 0 ? times.Min() : null, LastSeenUtc = times.Count > 0 ? times.Max() : null, File = first.Path,
+            PlainWhat = rows.Count == 1
+                ? $"indexatorul Windows Search (gatherer) cunoștea fișierul {PlainPhrases.Q(PlainPhrases.Leaf(first.Path))}, dar magazinul de proprietăți din același moment nu îl mai are"
+                : $"indexatorul Windows Search (gatherer) cunoștea {RoT(rows.Count, "fișier", "fișiere")} pe care magazinul de proprietăți din același moment nu le mai are",
+            Description = $"Rânduri Windows-gather.db al căror DocumentID nu apare ca WorkId între cele {storeRows} intrări ale Windows.db copiat în același moment: " +
+                          string.Join("; ", listed) + (more > 0 ? $"; și încă {more} (toate sunt în cronologie, sursa WindowsSearchGather)" : "") + ". " +
+                          "Ce s-a întâmplat: fișierele erau cunoscute indexatorului, dar nu mai au intrare în magazinul de proprietăți la același moment; posibil șterse sau mutate după indexare, ori încă neprocesate de indexator. " +
                           "De ce contează: într-un experiment pe Windows 11, după ștergerea unui fișier rândul din Windows-gather.db a rămas, iar cele din Windows.db au dispărut; rândul rămâne însă puțin (în laborator a dispărut în mai puțin de o oră), deci arată mai ales ștergeri recente. " +
-                          "Ce verificați: $MFT, $UsnJrnl și Coșul de reciclare pentru această cale.",
+                          "Fișierele temporare și cele de stare ale aplicațiilor (Temp, profiluri de browser, OneDrive) apar aici în mod obișnuit. " +
+                          "Ce verificați: căile care nu sunt fișiere temporare obișnuite, în $MFT, $UsnJrnl și Coșul de reciclare.",
             ClassificationReason = "DocumentID din Windows-gather.db fără WorkId în Windows.db, ambele copiate din aceeași copie de umbră (cheie de moment comună); nu dovedește ștergerea.",
-            SupportingEvidence = [Ref(e, "rând Windows-gather.db")],
+            SupportingEvidence = rows.Take(20).Select(e => Ref(e, "rând Windows-gather.db DocumentID " + F(e, "DocumentID").Trim())).ToList(),
             AlternativeExplanations =
             [
+                "Fișiere temporare sau de stare ale aplicațiilor, create și șterse în mod obișnuit (Temp, profiluri de browser, OneDrive).",
                 "Fișierul a fost adăugat recent și indexatorul nu i-a scris încă proprietățile în Windows.db.",
                 "Fișierul a fost mutat sau redenumit; rândul vechi a rămas în gatherer.",
                 "Rândul poate fi plantat într-o bază gather modificată de un atacator; baza vine de pe stația analizată.",
             ],
             MissingEvidence = ["Dovada ștergerii sau mutării ($MFT, $UsnJrnl, Coșul de reciclare).", "Cât timp rămâne exact un rând gather după ștergere nu se știe (în laborator: mai puțin de o oră)."],
-            RecommendedNextSteps = ["Căutați calea în $MFT și $UsnJrnl și în Coșul de reciclare.", "Verificați dacă fișierul mai există sub alt nume sau în alt folder."],
+            RecommendedNextSteps = ["Căutați căile neobișnuite în $MFT și $UsnJrnl și în Coșul de reciclare.", "Verificați dacă fișierul mai există sub alt nume sau în alt folder."],
         };
-    }
-}
+    }}

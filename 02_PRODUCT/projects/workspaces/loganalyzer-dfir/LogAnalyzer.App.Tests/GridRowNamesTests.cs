@@ -39,7 +39,8 @@ public class GridRowNamesTests
     public void An_item_with_its_own_text_keeps_it()
     {
         Assert.Null(GridRowNames.NameFor(new OwnText(), Cols));
-        Assert.Null(GridRowNames.NameFor(new WithText("x"), Cols));   // a record prints its values
+        // a record prints "WithText { Name = x }": a dump, not a text for a person (lab: "ControlCheck { Id = DM10, ... List`1[System.String] }")
+        Assert.Equal("Proces: x", GridRowNames.NameFor(new WithText("x"), Cols));
         Assert.Null(GridRowNames.NameFor("text simplu", Cols));
     }
 

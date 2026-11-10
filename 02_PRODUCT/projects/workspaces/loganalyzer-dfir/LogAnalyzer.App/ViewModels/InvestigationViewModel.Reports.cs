@@ -301,6 +301,9 @@ namespace LogAnalyzer.UI.ViewModels
         {
             var plan = CollectAllState.Plan(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role);
             CollectFromThisStation = true;
+            // lab 2026-11-10: after "Colectează tot" the assistant still showed "Un folder adus de la stația afectată" (its default) with an empty folder,
+            // although the probes had just been collected from this station; the assistant now shows the source that was used
+            IntakeFromThisStation = true;
             ProfileIndex = plan.ProfileIndex;
             CollectAllState.Instance.IsRunning = true;
             CollectAllState.Instance.Status = "Colectează tot: " + plan.Description;

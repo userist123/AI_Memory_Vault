@@ -472,17 +472,24 @@ public static class Correlation
 
         // Registry autostarts (Run/RunOnce, Winlogon, IFEO) from saved hives.
         foreach (var e in events.Where(e => e.Source == "RunKey" && IsUserWritable(e.Path)))
+        {
+            // lab 2026-11-10: the default per-user OneDrive Run value was Medium persistence in every profile of every station
+            bool oneDrive = KnownDefaults.IsDefaultOneDrivePath(F(e, "Command"));
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "PERSIST-RUNKEY-USERPATH", Title = $"Pornire automată dintr-o locație în care utilizatorii pot scrie: {F(e, "ValueName")}",
-                Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
+                Severity = oneDrive ? Severity.Low : Severity.Medium, Category = "Persistence", Classification = oneDrive ? Classification.Candidate : Classification.Direct,
+                Confidence = oneDrive ? Confidence.Low : Confidence.High,
                 MitreTechniqueId = "T1547.001", FirstSeenUtc = e.Time.Utc, File = e.Path, Process = e.Process,
-                PlainWhat = $"Programul {PlainPhrases.Q(PlainPhrases.Leaf(e.Path))} este pus să pornească singur la fiecare logare, dintr-un folder în care orice utilizator poate scrie",
-                Description = $"{F(e, "Hive")}\\{F(e, "Key")}: {F(e, "ValueName")} = {F(e, "Command")}",
-                ClassificationReason = "Valoarea din cheia Run/RunOnce indică o cale în care utilizatorii pot scrie. Ora este LastWriteTime al cheii.",
+                PlainWhat = $"Programul {PlainPhrases.Q(PlainPhrases.Leaf(e.Path))} este pus să pornească singur la fiecare logare, dintr-un folder în care orice utilizator poate scrie" +
+                            (oneDrive ? "; este calea implicită a OneDrive din Windows" : ""),
+                Description = $"{F(e, "Hive")}\\{F(e, "Key")}: {F(e, "ValueName")} = {F(e, "Command")}" + (oneDrive ? " " + KnownDefaults.OneDriveNote : ""),
+                ClassificationReason = "Valoarea din cheia Run/RunOnce indică o cale în care utilizatorii pot scrie. Ora este LastWriteTime al cheii." + (oneDrive ? " Calea este cea implicită a OneDrive." : ""),
                 SupportingEvidence = [Ref(e, "valoare Run")],
-                AlternativeExplanations = ["Multe aplicații per utilizator (actualizatoare, sincronizare) pornesc legitim din AppData."],
+                AlternativeExplanations = [oneDrive ? KnownDefaults.OneDriveAlternative : "Multe aplicații per utilizator (actualizatoare, sincronizare) pornesc legitim din AppData."],
+                RecommendedNextSteps = oneDrive ? [KnownDefaults.OneDriveNextStep] : [],
             });
+        }
         foreach (var e in events.Where(e => e.Source == "IFEO"))
             f.Add(new Finding
             {
@@ -590,6 +597,7 @@ public static class Correlation
 
         // 6. Credential attacks and remote access.
         // Brute force: the same user failing from the same address CredentialThreshold times inside CredentialWindow.
+        const string PsDirectPlaceholderAccount = "?<PSDirectVMLegacy>";
         // A wrong password for a domain account never reaches the station: the domain controller refuses it and writes 4771 (Kerberos pre-authentication
         // failed) or 4776 (NTLM validation failed) in its own log (lab DC01 2026-11-07: 17 × 4771 for one guessing series, no 4625 anywhere).
         var failures = events.Where(e => e.Time.Utc is not null && (Ev(e, "Security", 4625) || IsDcPasswordFailure(e))).ToList();
@@ -602,14 +610,19 @@ public static class Correlation
             var inWindow = ordered.Skip(b.Start).Take(b.End - b.Start + 1).ToList();
             string account = F(inWindow[0], "TargetUserName");
             bool atDc = inWindow.Any(IsDcPasswordFailure);
+            // lab 2026-11-10: every PowerShell Direct connection from the Hyper-V host leaves failed logons for the placeholder account "?<PSDirectVMLegacy>"
+            // inside the virtual machine (309 in one lab case). It is the host probing the guest, not a person guessing a password: lower severity, said plainly.
+            bool psDirect = account.Equals(PsDirectPlaceholderAccount, StringComparison.OrdinalIgnoreCase);
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "CRED-BRUTEFORCE", Title = $"{inWindow.Count} autentificări eșuate pentru {account} " +
                         (g.Key.Item1.Trim() is not ("" or "-") ? $"de la {g.Key.Item1}"
                             : atDc ? "(controlerul de domeniu nu a înregistrat adresa)" : "fără adresă de rețea (autentificare locală sau prin serviciu)"),
-                Severity = Severity.Medium, Category = "Credential Access", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1110",
+                Severity = psDirect ? Severity.Low : Severity.Medium, Category = "Credential Access", Classification = psDirect ? Classification.Candidate : Classification.Direct,
+                Confidence = psDirect ? Confidence.Low : Confidence.High, MitreTechniqueId = "T1110",
                 FirstSeenUtc = inWindow[0].Time.Utc, LastSeenUtc = inWindow[^1].Time.Utc, Ip = g.Key.Item1, User = account,
-                PlainWhat = $"Cineva a încercat {PlainPhrases.Times(inWindow.Count)} o parolă greșită pentru contul {PlainPhrases.Q(account)}" +
+                PlainWhat = psDirect ? $"Gazda Hyper-V s-a conectat {PlainPhrases.Times(inWindow.Count)} la această mașină virtuală prin PowerShell Direct; fiecare conexiune lasă o autentificare eșuată pentru contul tehnic {PlainPhrases.Q(account)}"
+                    : $"Cineva a încercat {PlainPhrases.Times(inWindow.Count)} o parolă greșită pentru contul {PlainPhrases.Q(account)}" +
                             (inWindow.Select(FailWs).Where(w => w.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList() is { Count: > 0 } wss
                                 ? (wss.Count == 1 ? $", de la calculatorul {PlainPhrases.Q(wss[0])}"
                                     : $", de la calculatoare cu {wss.Count} nume diferite ({PlainPhrases.List(wss.Select(PlainPhrases.Q).ToList(), 3, ("nume", "nume"))}; numele îl declară cel care încearcă)") +
@@ -619,7 +632,9 @@ public static class Correlation
                 Description = $"Între {inWindow[0].Time.Utc:yyyy-MM-dd HH:mm} și {inWindow[^1].Time.Utc:yyyy-MM-dd HH:mm} UTC (cel puțin {CredentialThreshold} încercări în {CredentialWindow.TotalMinutes:0} minute; în total {g.Count()} în probe).",
                 ClassificationReason = "Autentificări eșuate repetate pentru același cont și aceeași adresă, într-o fereastră scurtă (4625 pe calculator; 4771 Kerberos sau 4776 NTLM pe controlerul de domeniu).",
                 SupportingEvidence = inWindow.Take(15).Select(e => Ref(e, e.EventId)).ToList(),
-                AlternativeExplanations = atDc
+                AlternativeExplanations = psDirect
+                    ? [$"Contul „{PsDirectPlaceholderAccount}” nu este un cont real: apare în mașinile virtuale Hyper-V la conexiunile PowerShell Direct făcute de pe gazdă (observat în laborator). Verificați cine administrează gazda și dacă aceste conexiuni erau așteptate."]
+                    : atDc
                     ? ["O parolă veche rămasă salvată (un serviciu, o unitate de rețea mapată, un telefon) încearcă singură, repetat, după schimbarea parolei.", "Utilizatorul și-a uitat parola."]
                     : ["Utilizatorul și-a uitat parola.", "Un serviciu sau o sarcină programată cu o parolă veche."],
             });

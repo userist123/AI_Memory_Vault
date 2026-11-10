@@ -83,6 +83,23 @@ public class DetectionWave3Tests
     }
 
     [Fact]
+    public void Failed_logons_of_the_PowerShell_Direct_placeholder_account_are_the_Hyper_V_host_not_a_password_guess()
+    {
+        // lab 2026-11-10: 309 failures for "?<PSDirectVMLegacy>" inside a virtual machine, one per PowerShell Direct connection from the host
+        var f = One(Corr(Enumerable.Range(0, 10).Select(i => Fail(i, "?<PSDirectVMLegacy>", "-"))), "CRED-BRUTEFORCE");
+        Assert.Equal(Severity.Low, f.Severity);
+        Assert.Equal(Classification.Candidate, f.Classification);
+        Assert.Contains("PowerShell Direct", f.PlainWhat);
+        Assert.DoesNotContain("parolă greșită", f.PlainWhat);
+        Assert.Contains(f.AlternativeExplanations, a => a.Contains("nu este un cont real"));
+        // a real account keeps the full verdict
+        var real = One(Corr(Enumerable.Range(0, 10).Select(i => Fail(i, "alice", "-"))), "CRED-BRUTEFORCE");
+        Assert.Equal(Severity.Medium, real.Severity);
+        Assert.Equal(Classification.Direct, real.Classification);
+        Assert.Contains("parolă greșită", real.PlainWhat);
+    }
+
+    [Fact]
     public void Wrong_passwords_refused_by_the_domain_controller_are_brute_force_too()
     {
         // lab DC01 2026-11-07: 14 wrong passwords for a domain account left 14 × 4771 on the domain controller and nothing on the target server

@@ -177,10 +177,10 @@ public sealed class WindowsSearchGatherPairTests : IDisposable
         Assert.Equal(Severity.Low, f.Severity);
         Assert.Equal("", f.MitreTechniqueId);
         Assert.Contains("TEST-LA-gather-sters.txt", f.File);
-        Assert.Contains("1827", f.Description);
-        Assert.Contains("posibil șters sau mutat", f.Description);
+        Assert.Contains("TEST-LA-gather-sters.txt", f.Description);
+        Assert.Contains("posibil șterse sau mutate", f.Description);
         Assert.Contains("$MFT", f.Description); Assert.Contains("$UsnJrnl", f.Description); Assert.Contains("Coșul de reciclare", f.Description);
-        Assert.Single(f.SupportingEvidence);
+        Assert.Contains("1827", Assert.Single(f.SupportingEvidence).ToString());   // the row is named in the evidence reference
     }
 
     [Fact]
@@ -219,17 +219,20 @@ public sealed class WindowsSearchGatherPairTests : IDisposable
         => Assert.Empty(Rule(Store("1811", "{S1}", incomplete: true), Store("1812", "{S1}"), Gather("1827", "{S1}")));
 
     [Fact]
-    public void Many_missing_rows_are_capped_one_by_one_and_summarised()
+    public void Many_missing_rows_are_one_finding_that_lists_the_first_and_counts_the_rest()
     {
+        // lab 2026-11-10 (a real station): 14 separate findings for ordinary churn -> one finding per moment
         var events = new List<TimelineEvent> { Store("1", "{S1}") };
         for (int i = 0; i < 30; i++) events.Add(Gather((100 + i).ToString(), "{S1}", $@"C:\LA\gone{i}.txt"));
-        var found = Rule(events.ToArray());
-        Assert.Equal(Wp11Rules.AdMaxFindings + 1, found.Count);
-        var summary = Assert.Single(found, f => f.Title.StartsWith("Neafișate individual"));
-        // its own wording, not the scanner text of the account rules
-        Assert.DoesNotContain("scanner", summary.Description, StringComparison.OrdinalIgnoreCase);
-        Assert.DoesNotContain(summary.AlternativeExplanations, a => a.Contains("scanner", StringComparison.OrdinalIgnoreCase));
-        Assert.All(found, f => Assert.Equal(Severity.Low, f.Severity));
+        var f = Assert.Single(Rule(events.ToArray()));
+        Assert.Equal(Severity.Low, f.Severity);
+        Assert.StartsWith("30 de fișiere cunoscute", f.Title);
+        Assert.Equal(Wp11Rules.SearchGatherListed, System.Text.RegularExpressions.Regex.Matches(f.Description, @"C:\\LA\\gone\d+\.txt").Count);
+        Assert.Contains("și încă 15", f.Description);
+        Assert.DoesNotContain("scanner", f.Description, StringComparison.OrdinalIgnoreCase);
+        // another moment is another finding
+        events.Add(Store("1", "{S2}")); events.Add(Gather("500", "{S2}", @"C:\LA\other.txt"));
+        Assert.Equal(2, Rule(events.ToArray()).Count);
     }
 
     // ---------------------------------------------------------------- the parsers stamp the key and flag incomplete reads

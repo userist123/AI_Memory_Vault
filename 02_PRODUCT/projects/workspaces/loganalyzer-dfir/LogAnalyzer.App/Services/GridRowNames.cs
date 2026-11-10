@@ -63,7 +63,9 @@ namespace LogAnalyzer.UI.Services
         {
             var text = item.ToString() ?? "";
             var type = item.GetType();
-            if (text.Length > 0 && text != type.FullName && text != type.Name && item is not System.Data.DataRowView) return null;
+            // a record prints "TypeName { A = 1, B = System.Collections.Generic.List`1[...] }" (lab: the domain checks grid): that is not a text for a person either
+            bool recordDump = text.StartsWith(type.Name + " {", System.StringComparison.Ordinal);
+            if (text.Length > 0 && text != type.FullName && text != type.Name && !recordDump && item is not System.Data.DataRowView) return null;
             var parts = new List<string>();
             foreach (var (header, path) in columns)
             {

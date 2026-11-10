@@ -579,3 +579,15 @@
   VM after redeploy: 1 and 9. Open, not fixed: header buttons „Ce înseamnă?” and „Notițe” fall outside a 1024 px window (thin horizontal
   scrollbar); users-register grid rows are announced as "System.Data.DataRowView". Suites: Dfir 3264, App 1030, UI 368, Edition 45.
   The lab VMs still shut down hourly (expired evaluation; watchdog restarts them): each UI session has about 55 minutes.
+- 2026-11-10 (lab pass, continued): fixes 1 and 9 verified on the VM after redeploy (UIA Select opens the page; OneDrive task / Run value Low).
+  Arhipelag on WS01: pages walked, domain inventory against LAB-DC01 (7 users, 3 computers, DM checks), Colectează tot (161,212 events, 63
+  findings: the lab attack is found - AnyDesk executed, UpdSvc service / task / Run value, discovery burst, incident chain; the masquerading
+  "OneDriveUpdate" Run value stays Medium / High). More fixes from this pass: (10) grid rows without their own text, DataRowView rows and
+  record dumps ("ControlCheck { Id = DM10, ... List`1[System.String] }") get an accessible name from their first columns (GridRowNames, global
+  class handler); (11) PERSIST-RUNKEY-USERPATH for the default OneDrive Run value -> Low (KnownDefaults in Dfir.Core, shared with the LIVE
+  rules); (12) WSEARCH-GATHER-ONLY gave 14 separate findings for ordinary churn on a real station -> ONE finding per moment that lists 15 paths
+  and counts the rest; (13) CRED-BRUTEFORCE for "?<PSDirectVMLegacy>" (failed logons left by PowerShell Direct from the Hyper-V host) -> Low,
+  candidate, said plainly; (14) after Colectează tot the intake assistant showed "Un folder adus de la stația afectată" -> shows this station.
+  Not fixed (owner design decision): at 1024 px the header needs about 1,150 px, so „Ce înseamnă?” and „Notițe” are reached only through the
+  thin horizontal scrollbar. Suites: Dfir 3265, App 1035, UI 368, Edition 45, python catalog 3. Still to do in the lab: verify 10-14 on the VM,
+  Continent (Internet edition) pages, remote collection WS01 -> SRV01 from the UI, live monitoring, PDF reports.

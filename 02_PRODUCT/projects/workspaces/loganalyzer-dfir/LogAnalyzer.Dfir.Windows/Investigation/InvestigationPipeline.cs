@@ -882,21 +882,8 @@ public static class LiveStateAnalyzer
         }
     }
 
-    internal const string DefaultOneDriveNote =
-        "Aceasta este calea implicită a componentei OneDrive, pe care Windows o instalează pentru fiecare utilizator. Locația poate fi însă scrisă de utilizator, deci un alt program poate purta același nume: verificați semnătura digitală Microsoft a fișierului.";
+    internal const string DefaultOneDriveNote = LogAnalyzer.Dfir.Analysis.KnownDefaults.OneDriveNote;
 
-    private static readonly System.Text.RegularExpressions.Regex DefaultOneDrive = new(
-        @"^""?(%localappdata%|[a-z]:\\users\\(?!\.{1,2}\\)[^\\/:*?""<>|]+\\appdata\\local)\\microsoft\\onedrive\\(onedrive|onedrivestandaloneupdater)\.exe""?(\s|$)",
-        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
-
-    /// <summary>
-    /// True only for the exact default per-user OneDrive executables (OneDrive.exe, OneDriveStandaloneUpdater.exe directly in ...\AppData\Local\Microsoft\OneDrive).
-    /// The location is user-writable, so this lowers the severity and asks for the signature to be checked; it never hides the finding.
-    /// </summary>
-    internal static bool IsDefaultOneDrivePath(string? command)
-    {
-        if (string.IsNullOrWhiteSpace(command) || command.Contains("..", StringComparison.Ordinal)) return false;
-        try { return DefaultOneDrive.IsMatch(command.Trim()); }
-        catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return false; }
-    }
+    /// <summary>See <see cref="LogAnalyzer.Dfir.Analysis.KnownDefaults.IsDefaultOneDrivePath"/> (shared with the registry Run rule).</summary>
+    internal static bool IsDefaultOneDrivePath(string? command) => LogAnalyzer.Dfir.Analysis.KnownDefaults.IsDefaultOneDrivePath(command);
 }
