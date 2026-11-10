@@ -36,10 +36,10 @@
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,8,0">
                     <StackPanel>
                         <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                            <TextBlock DockPanel.Dock="Left" Text="Evenimente încărcate" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock DockPanel.Dock="Left" Text="Evenimente încărcate" Foreground="{StaticResource TextMutedBrush}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap"/>
                         </DockPanel>
-                        <TextBlock Text="{Binding TotalEventsCount, FallbackValue=0}" Foreground="{StaticResource PrimaryAccentBrush}" FontSize="28" FontWeight="Bold"/>
-                        <TextBlock Text="Total înregistrări din cazul curent" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding TotalEventsCount, FallbackValue=0, StringFormat={}{0:N0}}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="28" FontWeight="SemiBold"/>
+                        <TextBlock Text="Total înregistrări din cazul curent" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
 
@@ -47,10 +47,10 @@
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="4,0,4,0">
                     <StackPanel>
                         <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                            <TextBlock DockPanel.Dock="Left" Text="Alerte corelate" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock DockPanel.Dock="Left" Text="Alerte corelate" Foreground="{StaticResource TextMutedBrush}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap"/>
                         </DockPanel>
-                        <TextBlock Text="{Binding TotalAlertsCount, FallbackValue=0}" Foreground="{StaticResource CriticalBrush}" FontSize="28" FontWeight="Bold"/>
-                        <TextBlock Text="Alerte generate din evenimentele încărcate" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding TotalAlertsCount, FallbackValue=0, StringFormat={}{0:N0}}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="28" FontWeight="SemiBold"/>
+                        <TextBlock Text="Alerte generate din evenimentele încărcate" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
 
@@ -58,10 +58,10 @@
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="4,0,4,0">
                     <StackPanel>
                         <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                            <TextBlock DockPanel.Dock="Left" Text="Artefacte de registru" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock DockPanel.Dock="Left" Text="Artefacte de registru" Foreground="{StaticResource TextMutedBrush}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap"/>
                         </DockPanel>
-                        <TextBlock Text="{Binding TotalRegistryCount, FallbackValue=0}" Foreground="{StaticResource SuccessBrush}" FontSize="28" FontWeight="Bold"/>
-                        <TextBlock Text="Chei de registru încărcate" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding TotalRegistryCount, FallbackValue=0, StringFormat={}{0:N0}}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="28" FontWeight="SemiBold"/>
+                        <TextBlock Text="Chei de registru încărcate" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
 
@@ -69,10 +69,10 @@
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="8,0,0,0">
                     <StackPanel>
                         <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                            <TextBlock DockPanel.Dock="Left" Text="Stații în analiză" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock DockPanel.Dock="Left" Text="Stații în analiză" Foreground="{StaticResource TextMutedBrush}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap"/>
                         </DockPanel>
-                        <TextBlock Text="{Binding TotalHostsCount, FallbackValue=0}" Foreground="{StaticResource HighBrush}" FontSize="28" FontWeight="Bold"/>
-                        <TextBlock Text="Stații distincte din evenimentele încărcate" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding TotalHostsCount, FallbackValue=0, StringFormat={}{0:N0}}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="28" FontWeight="SemiBold"/>
+                        <TextBlock Text="Stații distincte din evenimentele încărcate" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
             </UniformGrid>
@@ -83,10 +83,10 @@
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,8,0">
                     <StackPanel>
                         <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                            <TextBlock DockPanel.Dock="Left" Text="Evenimente primite" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock DockPanel.Dock="Left" Text="Evenimente primite" Foreground="{StaticResource TextMutedBrush}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap"/>
                         </DockPanel>
-                        <TextBlock Text="{Binding TotalLiveEventsCaptured, FallbackValue=0}" Foreground="{StaticResource PrimaryAccentBrush}" FontSize="28" FontWeight="Bold"/>
-                        <TextBlock Text="Primite în sesiunea curentă" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding TotalLiveEventsCaptured, FallbackValue=0}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="28" FontWeight="SemiBold"/>
+                        <TextBlock Text="Primite în sesiunea curentă" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
 
@@ -94,10 +94,10 @@
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="4,0,4,0">
                     <StackPanel>
                         <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                            <TextBlock DockPanel.Dock="Left" Text="Detecții active" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock DockPanel.Dock="Left" Text="Detecții active" Foreground="{StaticResource TextMutedBrush}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap"/>
                         </DockPanel>
-                        <TextBlock Text="{Binding LiveAlerts.Count, FallbackValue=0}" Foreground="{StaticResource CriticalBrush}" FontSize="28" FontWeight="Bold"/>
-                        <TextBlock Text="Alerte din fluxul în timp real" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding LiveAlerts.Count, FallbackValue=0}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="28" FontWeight="SemiBold"/>
+                        <TextBlock Text="Alerte din fluxul în timp real" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
 
@@ -105,9 +105,9 @@
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="4,0,4,0">
                     <StackPanel>
                         <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                            <TextBlock DockPanel.Dock="Left" Text="Izolare automată" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock DockPanel.Dock="Left" Text="Izolare automată" Foreground="{StaticResource TextMutedBrush}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap"/>
                         </DockPanel>
-                        <TextBlock Foreground="{StaticResource TextSecondaryBrush}" FontSize="24" FontWeight="Bold" Margin="0,2,0,2">
+                        <TextBlock Foreground="{StaticResource TextPrimaryBrush}" FontSize="24" FontWeight="SemiBold" Margin="0,2,0,2">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
                                     <Setter Property="Text" Value="OPRITĂ"/>
@@ -144,10 +144,10 @@
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="8,0,0,0">
                     <StackPanel>
                         <DockPanel LastChildFill="False" Margin="0,0,0,8">
-                            <TextBlock DockPanel.Dock="Left" Text="Gazdă monitorizată" Foreground="{StaticResource TextSecondaryBrush}" FontSize="11" FontWeight="Bold"/>
+                            <TextBlock DockPanel.Dock="Left" Text="Gazdă monitorizată" Foreground="{StaticResource TextMutedBrush}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap"/>
                         </DockPanel>
-                        <TextBlock Text="{Binding LiveRemoteTargetHost}" Foreground="{StaticResource HighBrush}" FontSize="18" FontWeight="Bold" TextTrimming="CharacterEllipsis" Margin="0,4,0,2"/>
-                        <TextBlock Text="Gazda țintă a monitorizării (nu confirmă un senzor activ)" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,4,0,0"/>
+                        <TextBlock Text="{Binding LiveRemoteTargetHost}" Foreground="{StaticResource TextPrimaryBrush}" FontSize="18" FontWeight="SemiBold" TextTrimming="CharacterEllipsis" Margin="0,4,0,2"/>
+                        <TextBlock Text="Gazda țintă a monitorizării (nu confirmă un senzor activ)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
                     </StackPanel>
                 </Border>
             </UniformGrid>
