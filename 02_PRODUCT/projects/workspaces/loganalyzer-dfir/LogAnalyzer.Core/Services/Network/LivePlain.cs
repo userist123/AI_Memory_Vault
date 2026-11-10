@@ -37,7 +37,7 @@ namespace LogAnalyzer.Core.Services.Network
                 "T1543.003" => ServiceOrPsExec(ev, F, msg, who),
                 // lab 2026-11-10: PowerShell Direct from the Hyper-V host leaves failed logons for this placeholder account inside the virtual machine
                 "T1110.001" when string.Equals(F("TargetUserName"), "?<PSDirectVMLegacy>", System.StringComparison.OrdinalIgnoreCase) =>
-                    "Gazda Hyper-V s-a conectat la această mașină virtuală prin PowerShell Direct; conexiunea lasă autentificări eșuate pentru contul tehnic „?<PSDirectVMLegacy>” (nu este o parolă ghicită; verificați dacă administrarea de pe gazdă era așteptată)",
+                    "gazda Hyper-V s-a conectat la această mașină virtuală prin PowerShell Direct; conexiunea lasă autentificări eșuate pentru contul tehnic „?<PSDirectVMLegacy>” (nu este o parolă ghicită; verificați dacă administrarea de pe gazdă era așteptată)",
                 "T1110.001" => $"Cineva a greșit de mai multe ori parola {(F("TargetUserName") is { } t ? $"contului „{t}”" : "unui cont")}, de la {Source(F)} (poate titularul și-a uitat parola, poate cineva o ghicește)",
                 "T1110.003" => $"Cineva a încercat parole pe multe conturi diferite, de la {Source(F)}",
                 _ => $"calculatorul a semnalat: {Plainer(issue.Title)}",
