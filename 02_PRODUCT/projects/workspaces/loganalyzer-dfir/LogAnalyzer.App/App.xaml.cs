@@ -182,6 +182,9 @@ namespace LogAnalyzer.UI
                 // Double-click on a row of ANY grid opens the full detail of that item (event, artifact, incident…).
                 EventManager.RegisterClassHandler(typeof(System.Windows.Controls.DataGridRow), System.Windows.Controls.Control.MouseDoubleClickEvent,
                     new System.Windows.Input.MouseButtonEventHandler(OnGridRowDoubleClick));
+                // Lab 2026-11-10: a row whose item has no text of its own was announced as its class name ("System.Data.DataRowView").
+                EventManager.RegisterClassHandler(typeof(System.Windows.Controls.DataGridRow), FrameworkElement.LoadedEvent,
+                    new RoutedEventHandler((s, _) => LogAnalyzer.UI.Services.GridRowNames.Apply((System.Windows.Controls.DataGridRow)s)));
                 // Evaluation 2026-11-05: the calendar button of every date field was announced in English ("Show Calendar", the WPF default).
                 EventManager.RegisterClassHandler(typeof(System.Windows.Controls.DatePicker), FrameworkElement.LoadedEvent,
                     new RoutedEventHandler((s, _) => LogAnalyzer.UI.Services.DatePickerNames.Apply((System.Windows.Controls.DatePicker)s)));
