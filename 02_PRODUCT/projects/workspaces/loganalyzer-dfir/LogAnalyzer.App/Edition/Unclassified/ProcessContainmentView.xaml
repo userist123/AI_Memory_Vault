@@ -17,12 +17,13 @@
 
         <!-- Header -->
         <!-- lab VM 2026-11-07 (1024 px): in a DockPanel the long subtitle did not wrap and pushed „Caută procese suspecte” out of the window -->
-        <Grid Grid.Row="0" Margin="0,0,0,12">
+        <StackPanel Grid.Row="0">
+        <Grid>
             <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
             <StackPanel Grid.Column="0" Margin="0,0,12,0">
-                <TextBlock Text="Izolare procese suspecte" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Taie accesul la rețea doar programului suspect (nu întregului PC), îl scanează și păstrează totul în incident, cu export PDF."
-                           FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Izolare procese suspecte"/>
+                <TextBlock Style="{StaticResource PageLeadStyle}" Text="Taie accesul la rețea doar programului suspect (nu întregului PC), îl scanează și păstrează totul în incident, cu export PDF."
+/>
             </StackPanel>
             <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top">
                 <CheckBox Content="Izolare automată (încredere mare)" IsChecked="{Binding AutoContainEnabled}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,16,0"
@@ -30,6 +31,8 @@
                 <Button Content="Caută procese suspecte" Command="{Binding ScanSuspectsCommand}" Style="{StaticResource AccentButtonStyle}"/>
             </StackPanel>
         </Grid>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <!-- Warnings: admin rights, audit of blocked connections -->
         <StackPanel Grid.Row="1" Margin="0,0,0,12">
@@ -75,7 +78,7 @@
                             <DataGridTextColumn Header="PID" Binding="{Binding Pid}" Width="Auto"/>
                             <DataGridTextColumn Header="Proces" Binding="{Binding Name}" Width="Auto"/>
                             <DataGridTextColumn Header="Motive" Binding="{Binding Reasons, Converter={x:Static local:JoinConverter.Instance}}" Width="2*"/>
-                            <DataGridTextColumn Header="Conexiuni Internet" Binding="{Binding RemoteEndpoints, Converter={x:Static local:JoinConverter.Instance}}" Width="1.5*"/>
+                            <DataGridTextColumn Header="Conexiuni la internet" Binding="{Binding RemoteEndpoints, Converter={x:Static local:JoinConverter.Instance}}" Width="1.5*"/>
                             <DataGridTextColumn Header="Cale" Binding="{Binding Path}" Width="2*"/>
                         </DataGrid.Columns>
                     </DataGrid>

@@ -37,7 +37,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "1. Acces Inițial (Initial Access)",
-                    StageIcon = "🚪",
                     TechniqueId = initialAccess.MitreTechniqueId ?? "T1110",
                     Title = initialAccess.Title,
                     Description = initialAccess.Explanation,
@@ -58,7 +57,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "2. Execuție Payload (Execution)",
-                    StageIcon = "⚡",
                     TechniqueId = execution.MitreTechniqueId ?? "T1059.001",
                     Title = execution.Title,
                     Description = execution.Explanation,
@@ -79,7 +77,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "3. Mecanisme Persistență (Persistence)",
-                    StageIcon = "⚓",
                     TechniqueId = persistence.MitreTechniqueId ?? "T1547.001",
                     Title = persistence.Title,
                     Description = persistence.Explanation,
@@ -100,7 +97,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "4. Escaladare Privilegii (Privilege Escalation)",
-                    StageIcon = "👑",
                     TechniqueId = privEsc.MitreTechniqueId ?? "T1548.002",
                     Title = privEsc.Title,
                     Description = privEsc.Explanation,
@@ -121,7 +117,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "5. Evaziune Defensivă (Defense Evasion)",
-                    StageIcon = "🛡️",
                     TechniqueId = defenseEvasion.MitreTechniqueId ?? "T1070.001",
                     Title = defenseEvasion.Title,
                     Description = defenseEvasion.Explanation,
@@ -142,7 +137,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "6. Acces Credențiale (Credential Access)",
-                    StageIcon = "🔑",
                     TechniqueId = credAccess.MitreTechniqueId ?? "T1003.001",
                     Title = credAccess.Title,
                     Description = credAccess.Explanation,
@@ -163,7 +157,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "7. Impact & C2 (Command and Control / Impact)",
-                    StageIcon = "💥",
                     TechniqueId = impact.MitreTechniqueId ?? "T1490",
                     Title = impact.Title,
                     Description = impact.Explanation,
@@ -196,10 +189,10 @@ namespace LogAnalyzer.Core.Services
 
         private string GetSeverityColor(string severity) => severity switch
         {
-            "Critical" => "#ef4444",
-            "High" => "#f97316",
-            "Medium" => "#f59e0b",
-            _ => "#38bdf8"
+            "Critical" => "#A3201C" /* Registru theme token Critical */,
+            "High" => "#A84B0C" /* Registru theme token High */,
+            "Medium" => "#7A5D00" /* Registru theme token Medium */,
+            _ => "#285F7E" /* Registru theme token Low */
         };
     }
 }

@@ -29,7 +29,7 @@ namespace LogAnalyzer.UI.ViewModels
                 return;
             }
             foreach (var i in rep.Identities.Where(i => !IdentityPrivilegedOnly || i.Privileged)) IdentityRows.Add(i);
-            foreach (var g in rep.Gaps) IdentityGaps.Add($"⚠ {g.What} {g.Why}");
+            foreach (var g in rep.Gaps) IdentityGaps.Add($"{g.What} {g.Why}");
             foreach (var c in rep.DirectoryChanges.OrderByDescending(c => c.IsGpo).Take(500))
                 IdentityDirectory.Add($"{(c.IsGpo ? "GPO · " : "")}{c.Utc} · {c.Dc} · {c.Operation} · {c.ObjectDn}{(c.Attribute.Length > 0 ? $" · {c.Attribute}" : "")} · de {c.ActorName} ({c.ActorSid}) · {c.EvidenceId} {c.Locator}");
             int gpo = rep.DirectoryChanges.Count(c => c.IsGpo);
@@ -56,13 +56,13 @@ namespace LogAnalyzer.UI.ViewModels
                 IdentityPathLine = IdentityPathRoots.Count == 0
                     ? "Nicio sesiune cu LogonId pentru acest cont: procesele și resursele nu pot fi legate de el."
                     : "Legături doar prin aceeași stație și același LogonId (sesiune → proces) și prin ProcessGuid (proces → resursă); motivul este în dreptul fiecărui rând."
-                      + (graph.Gaps.Count > 0 ? " " + string.Join(" ", graph.Gaps.Select(g => "⚠ " + g.What)) : "");
+                      + (graph.Gaps.Count > 0 ? " " + string.Join(" ", graph.Gaps.Select(g => g.What)) : "");
             }
             IdentityDetail.Add(value.KnownByNameOnly
                 ? $"{value.DisplayName}: văzut doar după nume, fără SID. Nu este legat de alt cont doar pentru că numele seamănă."
                 : $"{value.DisplayName} · SID {value.Sid}" + (value.SidHistory.Count > 0 ? $" · istoric SID: {string.Join(", ", value.SidHistory)}" : ""));
             if (value.Names.Count > 1) IdentityDetail.Add("Nume în timp (SID-ul rămâne cheia): " + string.Join(" → ", value.Names.Select(n => n.Name + (n.FirstSeenUtc.Length > 0 ? $" ({n.FirstSeenUtc[..16].Replace('T', ' ')})" : ""))));
-            if (value.Privileged) IdentityDetail.Add("★ Privilegiat: " + value.PrivilegedReason);
+            if (value.Privileged) IdentityDetail.Add("Privilegiat: " + value.PrivilegedReason);
             IdentityDetail.Add($"{value.Logons} autentificări reușite, {value.FailedLogons} eșuate · stații: {string.Join(", ", value.Hosts)} · între {value.FirstSeenUtc} și {value.LastSeenUtc}");
             foreach (var s in rep.Sessions.Where(s => s.Sid == value.Key).Take(60))
                 IdentityDetail.Add($"Sesiune pe {s.Host} (LogonId {s.LogonId}, tip {s.LogonType}{(s.SourceIp.Length > 0 ? ", din " + s.SourceIp : "")}): {(s.StartUtc.Length > 0 ? s.StartUtc : "început necunoscut")} → {(s.EndUtc.Length > 0 ? s.EndUtc : "sfârșit necunoscut")}"

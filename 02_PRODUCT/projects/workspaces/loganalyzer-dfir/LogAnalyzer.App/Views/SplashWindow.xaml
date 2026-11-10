@@ -12,7 +12,7 @@
                     <Path Data="M 12 2 L 2 7 L 2 13 C 2 19 6.5 24.5 12 26 C 17.5 24.5 22 19 22 13 L 22 7 Z"
                           Fill="{StaticResource PrimaryAccentBrush}" Stretch="Uniform" Width="16" Height="16" HorizontalAlignment="Center" VerticalAlignment="Center"/>
                 </Border>
-                <TextBlock Text="LOGANALYZER" FontSize="22" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                <TextBlock Text="LogAnalyzer" FontSize="22" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 <Border Margin="10,0,0,0" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="4" Padding="6,2" VerticalAlignment="Center">
                     <TextBlock Text="v2.5 PRO" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                 </Border>

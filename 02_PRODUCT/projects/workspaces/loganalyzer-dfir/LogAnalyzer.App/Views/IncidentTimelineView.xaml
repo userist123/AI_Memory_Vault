@@ -8,13 +8,8 @@
         </Grid.RowDefinitions>
 
         <!-- Page Header -->
-        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,20">
-            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Cronologia evenimentelor" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                <Border Margin="12,0,0,0" BorderBrush="{StaticResource PrimaryAccentBrush}" Background="{StaticResource Surface3Brush}" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
-                    <TextBlock Text="DIN JURNALE" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
-                </Border>
-            </StackPanel>
+        <StackPanel Grid.Row="0">
+        <DockPanel LastChildFill="False">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                 <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,6">
                     <StackPanel Orientation="Horizontal">
@@ -23,7 +18,15 @@
                     </StackPanel>
                 </Border>
             </StackPanel>
+            <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Cronologia evenimentelor" VerticalAlignment="Center"/>
+                <Border Margin="12,0,0,0" BorderBrush="{StaticResource PrimaryAccentBrush}" Background="{StaticResource Surface3Brush}" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
+                    <TextBlock Text="Din jurnale" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                </Border>
+            </StackPanel>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <!-- Main Timeline Content: Left Track + Right Summary Panel -->
         <Grid Grid.Row="1">
@@ -86,7 +89,7 @@
             <!-- Right: Chronological Summary & Metrics -->
             <Border Grid.Column="1" Style="{StaticResource ObsidianCardStyle}" Padding="16">
                 <StackPanel>
-                    <TextBlock Text="REZUMATUL PAGINII" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,14"/>
+                    <TextBlock Text="Rezumatul paginii" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,14"/>
 
                     <TextBlock Text="Evenimente afișate" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
                     <TextBlock Text="{Binding TimelineSummary.Count, FallbackValue=0}" FontSize="18" FontWeight="SemiBold" FontFamily="{StaticResource CodeFontFamily}" Foreground="{StaticResource CyanAccentBrush}" Margin="0,0,0,14"/>

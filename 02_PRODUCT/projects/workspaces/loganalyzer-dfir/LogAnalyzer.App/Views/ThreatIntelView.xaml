@@ -8,10 +8,11 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
+        <StackPanel Grid.Row="0">
+        <DockPanel LastChildFill="False">
             <StackPanel DockPanel.Dock="Top">
-                <TextBlock Text="Informații despre amenințări" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Suprapunerea tehnicilor observate cu profile publice de actori. NU este atribuire: aceleași tehnici sunt folosite de mulți actori, iar atribuirea cere dovezi separate (infrastructură, malware, context)." FontSize="13" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Informații despre amenințări"/>
+                <TextBlock Style="{StaticResource PageLeadStyle}" Text="Suprapunerea tehnicilor observate cu profile publice de actori. NU este atribuire: aceleași tehnici sunt folosite de mulți actori, iar atribuirea cere dovezi separate (infrastructură, malware, context)."/>
             </StackPanel>
             <!-- lab 2026-11-07: under the title and wrapping, so at 1024 px no button is cut off -->
             <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
@@ -19,6 +20,8 @@
                 <Button Content="Exportă MISP JSON" Command="{Binding ExportMispJsonCommand}" Style="{StaticResource ActionButtonStyle}"/>
             </WrapPanel>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <!-- Main 2-Pane Split: Left APT Profiles, Right Extracted IOC Knowledge Base -->
         <Grid Grid.Row="1">

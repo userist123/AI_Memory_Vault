@@ -146,8 +146,10 @@ public class Wp6aXamlTests
     public void The_know_think_dont_know_control_uses_the_three_documented_headings_and_marks_each_column_with_a_symbol()
     {
         var xaml = Read("Views", "Controls", "KnowThinkDontKnowPanel.xaml");
-        foreach (var h in new[] { KnowThinkDontKnow.KnowHeading, KnowThinkDontKnow.ThinkHeading, KnowThinkDontKnow.DontKnowHeading }) Assert.Contains(h, xaml);
-        foreach (var sym in new[] { "✓", "⚠", "?" }) Assert.Contains(sym, xaml);
+        // design plan step 5: the headings are written as sentences on screen ("Ce știm"), the documented words are the same
+        foreach (var h in new[] { KnowThinkDontKnow.KnowHeading, KnowThinkDontKnow.ThinkHeading, KnowThinkDontKnow.DontKnowHeading }) Assert.Contains(h, xaml, StringComparison.OrdinalIgnoreCase);
+        // design plan step 3: the symbols are icon-font glyphs (check E73E, warning E7BA, question mark E897), not emoji characters
+        foreach (var sym in new[] { "&#xE73E;", "&#xE7BA;", "&#xE897;" }) Assert.Contains(sym, xaml);
         foreach (var path in new[] { "Know", "Think", "DontKnow" }) Assert.Contains("ItemsSource=\"{Binding " + path + "}\"", xaml);
     }
 

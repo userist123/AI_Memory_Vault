@@ -10,13 +10,16 @@
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
-        <DockPanel Grid.Row="0" Margin="0,0,0,12">
+        <StackPanel Grid.Row="0">
+        <DockPanel>
             <Button DockPanel.Dock="Right" Content="Raport PDF" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Center"/>
             <StackPanel>
-                <TextBlock Text="Investigație domeniu și e-mail" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="{Binding ModeNote}" FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Investigație domeniu și e-mail"/>
+                <TextBlock Style="{StaticResource PageLeadStyle}" Text="{Binding ModeNote}"/>
             </StackPanel>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <TabControl Grid.Row="1" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
             <TabItem Header="Domeniu" Style="{StaticResource InspectorTabItemStyle}">

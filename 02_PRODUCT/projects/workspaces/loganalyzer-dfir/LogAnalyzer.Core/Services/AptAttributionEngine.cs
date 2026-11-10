@@ -17,7 +17,7 @@ namespace LogAnalyzer.Core.Services
         public List<string> SignatureTechniques { get; set; } = new();
         public double MatchScore { get; set; } // 0 - 100%
         public string MatchLevel { get; set; } = "Scăzut";
-        public string MatchColor { get; set; } = "#38bdf8";
+        public string MatchColor { get; set; } = "#285F7E" /* Registru theme token Low */;
         public List<string> MatchedTechniques { get; set; } = new();
     }
 
@@ -123,7 +123,7 @@ namespace LogAnalyzer.Core.Services
                     MatchedTechniques = matched,
                     MatchScore = Math.Round(score, 1),
                     MatchLevel = (score >= 70 ? "suprapunere mare" : score >= 40 ? "suprapunere moderată" : "suprapunere mică") + " de tehnici — NU este atribuire",
-                    MatchColor = score >= 70 ? "#ef4444" : score >= 40 ? "#f97316" : "#38bdf8"
+                    MatchColor = score >= 70 ? "#A3201C" /* Registru theme token Critical */ : score >= 40 ? "#A84B0C" /* Registru theme token High */ : "#285F7E" /* Registru theme token Low */
                 };
 
                 results.Add(profileCopy);

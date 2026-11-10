@@ -169,7 +169,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (r.Ok)
             {
                 var key = TimelineNotebook.EventKey(e);
-                AnnotationText = ""; RefreshTimelineNotes(); FillTimeline();   // refill so the ✎ mark shows at once
+                AnnotationText = ""; RefreshTimelineNotes(); FillTimeline();   // refill so the note mark shows at once
                 SelectedTimelineEvent = Timeline.FirstOrDefault(x => TimelineNotebook.EventKey(x) == key);
                 ShowEventNotes();
             }
@@ -181,7 +181,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (SelectedTimelineEvent is not { } e) { BookmarkButtonText = "Marchează evenimentul"; return; }
             var key = TimelineNotebook.EventKey(e);
             BookmarkButtonText = _notes.Bookmarks.ContainsKey(key) ? "Scoate marcajul" : "Marchează evenimentul";
-            if (_notes.Bookmarks.TryGetValue(key, out var b)) SelectedEventNotes.Add($"★ marcat de {b.By}, {b.AtUtc.ToLocalTime():yyyy-MM-dd HH:mm}" + (b.Label.Length > 0 ? ": " + b.Label : ""));
+            if (_notes.Bookmarks.TryGetValue(key, out var b)) SelectedEventNotes.Add($"Marcat de {b.By}, {b.AtUtc.ToLocalTime():yyyy-MM-dd HH:mm}" + (b.Label.Length > 0 ? ": " + b.Label : ""));
             foreach (var n in _notes.NotesOf(key)) SelectedEventNotes.Add($"{n.By}, {n.AtUtc.ToLocalTime():yyyy-MM-dd HH:mm}: {n.Text}");
         }
 

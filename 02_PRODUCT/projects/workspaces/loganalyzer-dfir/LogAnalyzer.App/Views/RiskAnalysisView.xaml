@@ -10,13 +10,16 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
-            <StackPanel DockPanel.Dock="Left">
-                <TextBlock Text="Analiza riscului" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Scor euristic după entropie, detectarea deghizării proceselor și factorii de risc, cu trasabilitate" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
-            </StackPanel>
+        <StackPanel Grid.Row="0">
+        <DockPanel LastChildFill="False">
             <Button DockPanel.Dock="Right" Content="Rulează evaluarea de risc" Command="{Binding RunAiAnalysisCommand}" Style="{StaticResource AccentButtonStyle}" Padding="16,8"/>
+            <StackPanel DockPanel.Dock="Left">
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Analiza riscului"/>
+                <TextBlock Style="{StaticResource PageLeadStyle}" Text="Scor euristic după entropie, detectarea deghizării proceselor și factorii de risc, cu trasabilitate"/>
+            </StackPanel>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <!-- KPI Cards -->
         <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16">

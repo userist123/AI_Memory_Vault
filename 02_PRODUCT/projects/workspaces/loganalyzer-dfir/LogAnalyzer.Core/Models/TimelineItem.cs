@@ -16,9 +16,9 @@ namespace LogAnalyzer.Core.Models
         public string Title { get; set; } = string.Empty;
         public string SeverityColor => Severity?.ToLowerInvariant() switch
         {
-            "critic" or "critical" or "high" => "#ef4444",
-            "avertizare" or "warning" or "medium" => "#fbbf24",
-            _ => "#22ff88"
+            "critic" or "critical" or "high" => "#A3201C" /* Registru theme token Critical */,
+            "avertizare" or "warning" or "medium" => "#7A5D00" /* Registru theme token Medium */,
+            _ => "#2E6638" /* Registru theme token Success */
         };
         public string DotColor => SeverityColor;
     }

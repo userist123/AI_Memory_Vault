@@ -20,10 +20,11 @@
     </UserControl.Resources>
     <ScrollViewer VerticalScrollBarVisibility="Auto">
         <StackPanel Margin="24,24,24,48">
-            <TextBlock Text="Autentificare și conturi" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+            <TextBlock Style="{StaticResource PageTitleStyle}" Text="Autentificare și conturi"/>
             <TextBlock Text="{Binding CurrentUser, StringFormat='Sesiune: {0}'}" FontSize="13" FontWeight="SemiBold" Margin="0,4,0,0" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
-            <TextBlock FontSize="12" Margin="0,4,0,8" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"
+            <TextBlock Style="{StaticResource PageLeadStyle}"
                        Text="Utilizatorii se autentifică cu cardul (smart card cu contacte, în slotul tastaturii) și PIN-ul, gestionate de SafeNet Authentication Client. Aplicația nu vede PIN-ul. Administratorul principal se poate autentifica oricând și cu cont + parolă. Fiecare acțiune de aici intră în auditul înlănțuit prin hash al autentificării."/>
+            <Border Style="{StaticResource PageRuleStyle}"/>
             <TextBlock Text="{Binding Status}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,0,0,8"/>
 
             <!-- Own card -->

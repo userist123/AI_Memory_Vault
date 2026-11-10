@@ -190,7 +190,7 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _aiRiskLevel = "NEDETERMINAT (analiza nu a fost rulată)";
         [ObservableProperty] private string _aiRiskColor = NeutralRiskColor;
         /// <summary>The colour of a risk level that was not computed (grey, never the green of „normal”).</summary>
-        public const string NeutralRiskColor = "#94a3b8";
+        public const string NeutralRiskColor = ThemeColors.TextMuted;
         /// <summary>The summary when there is no event to analyse (review finding 4, 2026-10-22).</summary>
         public const string NoDataSummary = "Nu există date analizate.";
         [ObservableProperty] private int _aiHighEntropyCount = 0;
@@ -414,7 +414,7 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<ParsedEvent> LiveStreamingEvents { get; } = new();
         public ObservableCollection<DetectedIssue> LiveAlerts { get; } = new();
         [ObservableProperty] private bool _isLiveMonitoringActive;
-        [ObservableProperty] private string _liveMonitoringStatusText = "⏹ Monitorizare oprită. Apăsați 'Pornește Monitorizare Live'.";
+        [ObservableProperty] private string _liveMonitoringStatusText = "Monitorizare oprită. Apăsați 'Pornește Monitorizare Live'.";
         [ObservableProperty] private int _totalLiveEventsCaptured = 0;
         [ObservableProperty] private string _liveRemoteTargetHost = "localhost";
         [ObservableProperty] private DetectedIssue? _selectedLiveAlert;
@@ -485,7 +485,7 @@ namespace LogAnalyzer.UI.ViewModels
                 try
                 {
                     if (!CopyAudited("raw_event", RawEventMessage)) return;
-                    StatusMessage = "📋 Detalii eveniment copiate în Clipboard.";
+                    StatusMessage = "Detalii eveniment copiate în Clipboard.";
                 }
                 catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or System.Runtime.InteropServices.ExternalException) { StatusMessage = $"Clipboard indisponibil: {ex.Message}"; }
             }
@@ -1291,16 +1291,16 @@ namespace LogAnalyzer.UI.ViewModels
             var sb = new StringBuilder();
             sb.AppendLine($"=== {inv.Title} (Risc: {inv.RiskLevel}) ===");
             sb.AppendLine();
-            sb.AppendLine($"📋 SUMAR EXECUTIV:\n{inv.ExecutiveSummaryRo}");
+            sb.AppendLine($"SUMAR EXECUTIV:\n{inv.ExecutiveSummaryRo}");
             sb.AppendLine();
-            sb.AppendLine($"⚔️ CARTOGRAFIERE MITRE ATT&CK:\n{inv.MitreKillChainMapping}");
+            sb.AppendLine($"CARTOGRAFIERE MITRE ATT&CK:\n{inv.MitreKillChainMapping}");
             sb.AppendLine();
-            sb.AppendLine($"⚖️ IMPACT REGLEMENTAR:\n{inv.RegulatoryImpactRo}");
+            sb.AppendLine($"IMPACT REGLEMENTAR:\n{inv.RegulatoryImpactRo}");
             sb.AppendLine();
-            sb.AppendLine("🔍 EVIDENȚE FORENSICE CORELATE:");
+            sb.AppendLine("EVIDENȚE FORENSICE CORELATE:");
             foreach (var ev in inv.ForensicEvidenceBullets) sb.AppendLine($" • {ev}");
             sb.AppendLine();
-            sb.AppendLine("🛡️ GHID DE IZOLARE & CONTAINMENT (HG 585 / NIS2):");
+            sb.AppendLine("GHID DE IZOLARE & CONTAINMENT (HG 585 / NIS2):");
             foreach (var st in inv.RecommendedContainmentSteps) sb.AppendLine($" {st}");
 
             MessageBox.Show(sb.ToString(), "AI Copilot DFIR Assistant — Analiză & Playbook", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -1658,7 +1658,7 @@ namespace LogAnalyzer.UI.ViewModels
                 LiveAlerts.Insert(0, newAlert);
                 IssuesView?.Refresh();
                 ReloadDashboardStats();
-                StatusMessage = "🚨 Alertă escaladată în Centrul de Combatere & Live SOC!";
+                StatusMessage = "Alertă escaladată în Centrul de Combatere & Live SOC!";
                 OpenAlertModal(newAlert, host, show: false);
             });
         }
@@ -1783,7 +1783,7 @@ namespace LogAnalyzer.UI.ViewModels
                         : "Integritate probatorie confirmată (Fără fișiere externe modificate).";
                     if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "pdf-forensic", DetectedIssues.Count, dialog.FileName,
                             () => PdfReportService.GenerateReport(dialog.FileName, DetectedIssues.ToList(), timeline, sessionHashes)) is { } refused) { ShowExportRefused(refused); return; }
-                    StatusMessage = $"✅ Raport PDF generat cu succes!";
+                    StatusMessage = $"Raport PDF generat cu succes!";
                 } 
                 catch (Exception ex) 
                 { 
@@ -1806,7 +1806,7 @@ namespace LogAnalyzer.UI.ViewModels
                         : "Integritate probatorie confirmată (Fără fișiere externe modificate).";
                     if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "html-forensic", DetectedIssues.Count, dialog.FileName,
                             () => HtmlReportService.GenerateReport(dialog.FileName, DetectedIssues.ToList(), timeline, sessionHashes, TotalEventsCount, TotalRegistryCount, TotalHostsCount, OperatorName)) is { } refused) { ShowExportRefused(refused); return; }
-                    StatusMessage = "✅ Raport HTML generat cu succes!";
+                    StatusMessage = "Raport HTML generat cu succes!";
                 }
                 catch (Exception ex)
                 {
@@ -1843,7 +1843,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "json-stix", DetectedIssues.Count, dialog.FileName,
                             () => StixMispExportService.ExportToStix21(dialog.FileName, DetectedIssues.ToList(), CurrentIocs.ToList(), _currentSessionHashes)) is { } refused) { ShowExportRefused(refused); return; }
-                    StatusMessage = "✅ Export STIX 2.1 generat cu succes!";
+                    StatusMessage = "Export STIX 2.1 generat cu succes!";
                 }
                 catch (Exception ex)
                 {
@@ -1862,7 +1862,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "json-misp", DetectedIssues.Count, dialog.FileName,
                             () => StixMispExportService.ExportToMispJson(dialog.FileName, DetectedIssues.ToList(), CurrentIocs.ToList(), OperatorName)) is { } refused) { ShowExportRefused(refused); return; }
-                    StatusMessage = "✅ Export MISP JSON generat cu succes!";
+                    StatusMessage = "Export MISP JSON generat cu succes!";
                 }
                 catch (Exception ex)
                 {
@@ -1881,7 +1881,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     string script = IncidentResponsePlaybookService.GenerateHostIsolationScript(CollectionHostname);
                     File.WriteAllText(dialog.FileName, script, Encoding.UTF8);
-                    StatusMessage = $"✅ Script de izolare rețea generat în: {dialog.FileName}";
+                    StatusMessage = $"Script de izolare rețea generat în: {dialog.FileName}";
                 }
                 catch (Exception ex)
                 {
@@ -1901,7 +1901,7 @@ namespace LogAnalyzer.UI.ViewModels
                     int targetPid = SelectedEvent != null ? SelectedEvent.EventId : 5124;
                     string script = IncidentResponsePlaybookService.GenerateKillProcessTreeScript(targetPid, "SuspiciousProcess.exe");
                     File.WriteAllText(dialog.FileName, script, Encoding.UTF8);
-                    StatusMessage = $"✅ Script de terminare procese generat în: {dialog.FileName}";
+                    StatusMessage = $"Script de terminare procese generat în: {dialog.FileName}";
                 }
                 catch (Exception ex)
                 {
@@ -1928,7 +1928,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Application.Current?.Dispatcher?.Invoke(() =>
                 {
                     ConnectivityWarningText = warning;
-                    StatusMessage = "⚠ " + warning;
+                    StatusMessage = warning;
                 });
             });
         }
@@ -2010,7 +2010,7 @@ namespace LogAnalyzer.UI.ViewModels
             IsAutoShieldTriggered = false;
             CurrentLiveToastAlert = loudest;
             IsLiveToastVisible = true;
-            StatusMessage = $"🚨 ALERTĂ LIVE: {(loudest.Plain.Length > 0 ? loudest.Plain : loudest.Title)}";
+            StatusMessage = $"ALERTĂ LIVE: {(loudest.Plain.Length > 0 ? loudest.Plain : loudest.Title)}";
             if (SeverityRank(loudest.Severity) >= 3)
                 try { System.Media.SystemSounds.Exclamation.Play(); } catch (InvalidOperationException) { /* sound is optional */ }
             _toastAutoDismissTimer?.Stop();
@@ -2029,8 +2029,8 @@ namespace LogAnalyzer.UI.ViewModels
             var tech = AttackTechniques.FirstOrDefault(t => t.TechId.Equals(id, StringComparison.OrdinalIgnoreCase))
                        ?? AttackTechniques.FirstOrDefault(t => t.TechId.Equals(id.Split('.')[0], StringComparison.OrdinalIgnoreCase));
             if (tech is null) return;
-            tech.DetectionColor = "#3f1218";
-            tech.BorderColor = "#ef4444";
+            tech.DetectionColor = ThemeColors.BadgeCriticalBg;
+            tech.BorderColor = ThemeColors.Critical;
             tech.Severity = alert.Severity;
         }
 
@@ -2044,7 +2044,7 @@ namespace LogAnalyzer.UI.ViewModels
             _liveDrainTimer?.Stop();
             do DrainLiveQueue(); while (!_liveQueue.IsEmpty);
             IsLiveMonitoringActive = false;
-            LiveMonitoringStatusText = "⏹ Monitorizare în timp real oprită.";
+            LiveMonitoringStatusText = "Monitorizare în timp real oprită.";
         }
 
         [RelayCommand]
@@ -2076,7 +2076,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (MessageBox.Show("Izolați ÎNTREAGA stație de rețea (tot traficul de ieșire blocat)?\n\nPentru un singur program suspect folosiți „Izolare procese suspecte”, care lasă restul PC-ului conectat.",
                     "Izolare stație", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
             var res = RecordResponse(_hostDefense.IsolateHostFromNetwork());
-            StatusMessage = $"🛡️ {res.Message}";
+            StatusMessage = $"{res.Message}";
             IsCountermeasureModalVisible = false;
             _auditService.LogAction("HOST_ISOLATION", $"{OperatorName} - {res.Status} - {res.Message}");
             MessageBox.Show(res.Message + (res.Success ? "\n\n(Puteți ridica izolarea oricând din bara laterală prin butonul de restaurare rețea)." : $"\n\n{res.ExecutionDetails}"),
@@ -2106,7 +2106,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void ExecuteRestoreNetwork()
         {
             var res = RecordResponse(_hostDefense.RestoreNetworkAccess());
-            StatusMessage = $"🌐 {res.Message}";
+            StatusMessage = $"{res.Message}";
             _auditService.LogAction("HOST_RESTORE_NETWORK", $"{OperatorName} - {res.Status} - {res.Message}");
             MessageBox.Show(res.Success ? res.Message : $"{res.Message}\n\n{res.ExecutionDetails}", $"Restaurare rețea — {res.Status}", MessageBoxButton.OK,
                 res.Success ? MessageBoxImage.Information : MessageBoxImage.Warning);
@@ -2441,12 +2441,12 @@ namespace LogAnalyzer.UI.ViewModels
                                 if (sRule.MatchCount > 0)
                                 {
                                     matchInUi.Status = $"{sRule.MatchCount} potriviri";
-                                    matchInUi.RuleStatusColor = "#ef4444";
+                                    matchInUi.RuleStatusColor = ThemeColors.Critical;
                                 }
                                 else
                                 {
                                     matchInUi.Status = "Activă";
-                                    matchInUi.RuleStatusColor = "#22c55e";
+                                    matchInUi.RuleStatusColor = ThemeColors.Success;
                                 }
                             }
                         }
@@ -2582,7 +2582,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     ProcessName = r.Path.Length > 0 ? $"{r.Name}  —  {r.Path}" : r.Name,
                     PID = r.Pid,
-                    RiskColor = LogAnalyzer.Dfir.Analysis.Correlation.IsUserWritable(r.Path) ? "#f59e0b" : "#a7adc2",
+                    RiskColor = LogAnalyzer.Dfir.Analysis.Correlation.IsUserWritable(r.Path) ? ThemeColors.Medium : ThemeColors.TextMuted,
                     ProcessIcon = "•",
                 });
                 foreach (var r in rows.OrderBy(r => r.Pid))
@@ -2608,7 +2608,7 @@ namespace LogAnalyzer.UI.ViewModels
                     {
                         RuleName = r.Title,
                         Status = r.MatchCount > 0 ? $"{r.MatchCount} potriviri" : "Activă",
-                        RuleStatusColor = r.MatchCount > 0 ? "#ef4444" : "#22c55e",
+                        RuleStatusColor = r.MatchCount > 0 ? ThemeColors.Critical : ThemeColors.Success,
                         FilePath = r.FilePath,
                         RuleContent = r.YamlContent
                     });
@@ -2828,7 +2828,7 @@ namespace LogAnalyzer.UI.ViewModels
                         Details = a.Explanation,
                         Score = score,
                         Severity = a.Severity,
-                        SeverityColor = a.Severity == "Critical" ? "#ef4444" : a.Severity == "High" ? "#f97316" : "#f59e0b",
+                        SeverityColor = a.Severity == "Critical" ? ThemeColors.Critical : a.Severity == "High" ? ThemeColors.High : ThemeColors.Medium,
                         MitreId = a.MitreTechniqueId ?? "T1027",
                         Timestamp = a.RelatedEvents.FirstOrDefault()?.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss") ?? ""
                     });
@@ -2843,7 +2843,7 @@ namespace LogAnalyzer.UI.ViewModels
                         Details = y.Explanation,
                         Score = 8.5,
                         Severity = y.Severity,
-                        SeverityColor = "#ef4444",
+                        SeverityColor = ThemeColors.Critical,
                         MitreId = y.MitreTechniqueId ?? "T1059",
                         Timestamp = y.RelatedEvents.FirstOrDefault()?.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss") ?? ""
                     });
@@ -3019,7 +3019,7 @@ namespace LogAnalyzer.UI.ViewModels
                 // 2026-10-22 round 2: nor right after sign-in, when only the data of an earlier session was re-read (announce = false)
                 StatusMessage = eventsForAnalysis.Count == 0 || !announce
                     ? NoAnalysisLine(LogAnalyzer.UI.Services.CollectAllState.Instance.LastActivity, LogAnalyzer.UI.Services.CollectAllState.Instance.HasEarlierControls, Home?.RecentList.Count ?? 0, SelectedTabIndex == HomeViewModel.HomeTabIndex)
-                    : (Edition.Has(LogAnalyzer.Core.Services.Edition.EditionFeature.AiAnalysis) ? "✅ Analiză AI finalizată" : "✅ Analiză finalizată")
+                    : (Edition.Has(LogAnalyzer.Core.Services.Edition.EditionFeature.AiAnalysis) ? "Analiză AI finalizată" : "Analiză finalizată")
                       + $": Risc {AiRiskScore}/100 | {kerbFindings.Count} Kerberos | {lolbas.Count} LOLBAS | {multiCorrelations.Count} Lanțuri Corelate";
                 UpdateStorylineAndAptAttribution();
             }
@@ -3056,7 +3056,7 @@ namespace LogAnalyzer.UI.ViewModels
                 if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "txt-nis2-24h", CurrentIocs.Count, dialog.FileName,
                         () => File.WriteAllText(dialog.FileName, draft, Encoding.UTF8)) is { } refused) { ShowExportRefused(refused); return; }
                 _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Salvat proiectul de avertizare timpurie NIS2 (24h); netransmis, de verificat și transmis prin PNRISC de entitate.");
-                StatusMessage = "✅ Draft Notificare Timpurie NIS2 (24h) exportat cu succes!";
+                StatusMessage = "Draft Notificare Timpurie NIS2 (24h) exportat cu succes!";
             }
         }
 
@@ -3082,7 +3082,7 @@ namespace LogAnalyzer.UI.ViewModels
                 if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "txt-nis2-72h", CurrentIocs.Count, dialog.FileName,
                         () => File.WriteAllText(dialog.FileName, draft, Encoding.UTF8)) is { } refused) { ShowExportRefused(refused); return; }
                 _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Salvat proiectul de notificare NIS2 (72h); netransmis, de verificat și transmis prin PNRISC de entitate.");
-                StatusMessage = "✅ Draft Notificare Incident NIS2 (72h) exportat cu succes!";
+                StatusMessage = "Draft Notificare Incident NIS2 (72h) exportat cu succes!";
             }
         }
 
@@ -3102,7 +3102,7 @@ namespace LogAnalyzer.UI.ViewModels
                 if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "json-case-uco", 0, dialog.FileName,
                         () => File.WriteAllText(dialog.FileName, json, Encoding.UTF8)) is { } refused) { ShowExportRefused(refused); return; }
                 _provenanceLedger.AppendEntry("CASE_UCO_EXPORTED", dialog.FileName, "-", "Exportat pachet CASE 1.3 / UCO JSON-LD pentru probatoriu legal.");
-                StatusMessage = "✅ Pachet CASE / UCO JSON-LD exportat cu succes!";
+                StatusMessage = "Pachet CASE / UCO JSON-LD exportat cu succes!";
             }
         }
 
@@ -3125,7 +3125,7 @@ namespace LogAnalyzer.UI.ViewModels
                 if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "csv-timeline", events.Count(), dialog.FileName,
                         () => _timelineExportService.ExportPlasoCsv(dialog.FileName, events, new List<ForensicArtifact>(), reg)) is { } refused) { ShowExportRefused(refused); return; }
                 _provenanceLedger.AppendEntry("SUPERTIMELINE_EXPORTED", dialog.FileName, "-", "Exportat Super-Timeline standardizat Plaso / Timesketch CSV.");
-                StatusMessage = "✅ Super-Timeline Plaso CSV exportat cu succes!";
+                StatusMessage = "Super-Timeline Plaso CSV exportat cu succes!";
             }
         }
 
@@ -3173,7 +3173,7 @@ namespace LogAnalyzer.UI.ViewModels
                             csvContent)) is { } refused) { ShowExportRefused(refused); return; }
 
                 _provenanceLedger.AppendEntry("CASE_SEALED_BUNDLE", dialog.FileName, zipSha, $"Pachet caz forenzic sigilat cu succes. SHA-256 Sigiliu: {zipSha}");
-                StatusMessage = $"🔒 Pachet Caz Sigilat cu Succes! Hash Sigiliu SHA-256: {zipSha.Substring(0, 16)}...";
+                StatusMessage = $"Pachet Caz Sigilat cu Succes! Hash Sigiliu SHA-256: {zipSha.Substring(0, 16)}...";
             }
         }
 
@@ -3209,10 +3209,10 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     try
                     {
-                        StatusMessage = "⚡ Inițializare procedură sanitizare NIST SP 800-88r2...";
+                        StatusMessage = "Inițializare procedură sanitizare NIST SP 800-88r2...";
                         var progress = new Progress<SanitizationProgress>(p =>
                         {
-                            StatusMessage = $"🛡️ Sanitizare în curs: {p.StatusMessage}";
+                            StatusMessage = $"Sanitizare în curs: {p.StatusMessage}";
                         });
 
                         var result = await _sanitizationEngine.SanitizeMediaAsync(targetFile, SanitizationMethod.NistClearZero, progress);
@@ -3315,7 +3315,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 WorkbenchMatchCount = matchCount;
-                WorkbenchCompileResult = $"✅ Regula a fost compilată cu succes! S-au identificat {matchCount} potriviri în jurnale.";
+                WorkbenchCompileResult = $"Regula a fost compilată cu succes! S-au identificat {matchCount} potriviri în jurnale.";
                 StatusMessage = $"Workbench: Regula a returnat {matchCount} potriviri.";
             }
             catch (Exception ex)
@@ -3331,7 +3331,7 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 if (string.IsNullOrWhiteSpace(WorkbenchRuleContent))
                 {
-                    WorkbenchCompileResult = "⚠️ Introduceți conținutul unei reguli Sigma în editor înainte de transpilare.";
+                    WorkbenchCompileResult = "Introduceți conținutul unei reguli Sigma în editor înainte de transpilare.";
                     return;
                 }
 
@@ -3358,15 +3358,15 @@ namespace LogAnalyzer.UI.ViewModels
                 var targets = transpiler.Transpile(title, eventId, image, cmd);
 
                 var sb = new StringBuilder();
-                sb.AppendLine($"⚡ [TRANSPILARE OFFLINE SIGMA]: {targets.RuleTitle}");
+                sb.AppendLine($"[TRANSPILARE OFFLINE SIGMA]: {targets.RuleTitle}");
                 sb.AppendLine("--------------------------------------------------");
-                sb.AppendLine("🔍 SPLUNK SPL:");
+                sb.AppendLine("SPLUNK SPL:");
                 sb.AppendLine(targets.SplunkSpl);
                 sb.AppendLine();
-                sb.AppendLine("🛡️ SENTINEL KQL:");
+                sb.AppendLine("SENTINEL KQL:");
                 sb.AppendLine(targets.SentinelKql);
                 sb.AppendLine();
-                sb.AppendLine("💻 POWERSHELL HUNTING SCRIPT:");
+                sb.AppendLine("POWERSHELL HUNTING SCRIPT:");
                 sb.AppendLine(targets.PowerShellHunting);
 
                 WorkbenchCompileResult = sb.ToString();
@@ -3450,7 +3450,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var results = detector.AnalyzeConnections(networkList);
 
                 var sb = new StringBuilder();
-                sb.AppendLine("📡 REZULTAT DETECȚIE STATISTICĂ C2 BEACONING:");
+                sb.AppendLine("REZULTAT DETECȚIE STATISTICĂ C2 BEACONING:");
                 sb.AppendLine("==================================================");
 
                 if (results.Count == 0)
@@ -3485,8 +3485,8 @@ namespace LogAnalyzer.UI.ViewModels
         public override string ToString() => $"{ProcessName} (PID {PID})";
         public string ProcessName { get; set; } = string.Empty;
         public int PID { get; set; }
-        public string RiskColor { get; set; } = "#e1e7f0";
-        public string ProcessIcon { get; set; } = "⚙️";
+        public string RiskColor { get; set; } = ThemeColors.TextPrimary;
+        public string ProcessIcon { get; set; } = string.Empty;
         public ObservableCollection<ProcessNode> Children { get; set; } = new();
     }
 
@@ -3501,7 +3501,7 @@ namespace LogAnalyzer.UI.ViewModels
             set => SetProperty(ref _status, value);
         }
 
-        private string _ruleStatusColor = "#00ff87";
+        private string _ruleStatusColor = ThemeColors.Success;
         public string RuleStatusColor
         {
             get => _ruleStatusColor;
@@ -3521,12 +3521,12 @@ namespace LogAnalyzer.UI.ViewModels
         public override string ToString() => string.IsNullOrWhiteSpace(Tactic) ? $"{TechId} {Name}" : $"{TechId} {Name} · {Tactic}";
         public string TechId { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
-        public string DetectionColor { get; set; } = "#121622";
-        public string BorderColor { get; set; } = "#1e2538";
+        public string DetectionColor { get; set; } = ThemeColors.Surface2;
+        public string BorderColor { get; set; } = ThemeColors.Border;
         public string Severity { get; set; } = "None";
         public string Tactic { get; set; } = string.Empty;
         public bool HasDot { get; set; } = false;
-        public string DotColor { get; set; } = "#ef4444";
+        public string DotColor { get; set; } = ThemeColors.Critical;
     }
 
     public class AiAnomalyItem
@@ -3536,7 +3536,7 @@ namespace LogAnalyzer.UI.ViewModels
         public string Details { get; set; } = string.Empty;
         public double Score { get; set; }
         public string Severity { get; set; } = "High";
-        public string SeverityColor { get; set; } = "#ef4444";
+        public string SeverityColor { get; set; } = ThemeColors.Critical;
         public string MitreId { get; set; } = "T1027";
         public string Timestamp { get; set; } = string.Empty;
     }

@@ -12,7 +12,7 @@ namespace LogAnalyzer.Core.Models
         public int DetectedCount { get; set; } = 0;
         public bool IsDetected => DetectedCount > 0;
         public bool IsCoveredByRules { get; set; } = true;
-        public string StatusColor => IsDetected ? "#ef4444" : IsCoveredByRules ? "#1e293b" : "#0f172a";
+        public string StatusColor => IsDetected ? "#A3201C" /* Registru theme token Critical */ : IsCoveredByRules ? "#E3E6EA" /* Registru theme token Surface3 */ : "#FFFFFF" /* Registru theme token Surface2 */;
         public string TooltipText => $"{TechniqueId}: {TechniqueName}\nDetecții în sesiune: {DetectedCount}\nAcoperire Sigma/YARA: {(IsCoveredByRules ? "Da" : "Nu")}";
     }
 

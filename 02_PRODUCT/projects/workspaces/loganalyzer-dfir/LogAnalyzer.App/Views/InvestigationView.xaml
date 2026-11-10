@@ -14,7 +14,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <DockPanel Grid.Row="0" Margin="0,0,0,12">
+        <StackPanel Grid.Row="0">
+        <DockPanel>
             <!-- lab 2026-11-07: a WrapPanel under the title, so at 1024 px the report button wraps instead of being cut off -->
             <WrapPanel DockPanel.Dock="Bottom" Orientation="Horizontal" VerticalAlignment="Center" Margin="0,8,0,0">
                 <!-- round 4 2026-10-23: in Simplu the case buttons wait for a case (a result); Expert unchanged -->
@@ -39,11 +40,13 @@
                 <Button Content="Raport de incident (PDF)" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}" ToolTip="{Binding ReportAudienceDescription}" Margin="0,0,0,6"/>
             </WrapPanel>
             <StackPanel>
-                <TextBlock Text="Investigație completă (caz)" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Colectează (sau importă) probele, le parsează, construiește cronologia, corelează și reconstituie lanțul incidentului. Totul se păstrează într-un caz cu amprente de integritate (SHA-256) și cu istoricul fiecărei probe (lanț de custodie)."
-                           FontSize="12.5" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Investigație completă (caz)"/>
+                <TextBlock Style="{StaticResource PageLeadStyle}" Text="Colectează (sau importă) probele, le parsează, construiește cronologia, corelează și reconstituie lanțul incidentului. Totul se păstrează într-un caz cu amprente de integritate (SHA-256) și cu istoricul fiecărei probe (lanț de custodie)."
+/>
             </StackPanel>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <StackPanel Grid.Row="1">
         <ctrl:NoDataPanel HideInSimpleLevel="True"/>
@@ -827,7 +830,7 @@
                             </Style>
                         </DataGrid.RowStyle>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="★" Binding="{Binding Converter={x:Static local:BookmarkMarkConverter.Instance}}" Width="34"/>
+                            <DataGridTextColumn Header="&#xE734;" Binding="{Binding Converter={x:Static local:BookmarkMarkConverter.Instance}}" Width="34"><DataGridTextColumn.HeaderTemplate><DataTemplate><TextBlock Text="{Binding}" FontFamily="{StaticResource IconFontFamily}" ToolTip="Marcat" AutomationProperties.Name="Marcaj"/></DataTemplate></DataGridTextColumn.HeaderTemplate><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="FontFamily" Value="{StaticResource IconFontFamily}"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
                             <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding Time.Utc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
                             <DataGridTextColumn Header="Sursă" Binding="{Binding Source}" Width="1.3*"/>
                             <DataGridTextColumn Header="ID" Binding="{Binding EventId}" Width="55"/>

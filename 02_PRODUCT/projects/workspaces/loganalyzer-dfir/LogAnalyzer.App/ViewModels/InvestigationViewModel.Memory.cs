@@ -63,12 +63,12 @@ namespace LogAnalyzer.UI.ViewModels
             catch (System.Exception ex) when (ex is System.IO.IOException or System.UnauthorizedAccessException or System.InvalidOperationException or System.ComponentModel.Win32Exception)
             { MemoryRunLines.Add("Eroare: " + ex.Message); IsBusy = false; return; }
             IsBusy = false;
-            foreach (var x in r.Refused) MemoryRunLines.Add("✗ " + x);
+            foreach (var x in r.Refused) MemoryRunLines.Add("Refuzat: " + x);
             if (r.Refused.Count > 0) MemoryToolLine = "Volatility nu poate rula acum (vezi motivele de mai jos); unealta sau profilul s-au schimbat după aprobare sau nu sunt protejate.";
             foreach (var p in r.Plugins)
                 MemoryRunLines.Add(p.OutputEvidenceId.Length > 0
-                    ? $"✓ {p.Plugin}: ieșire păstrată ca proba {p.OutputEvidenceId} (derivată din {image.EvidenceId}), {p.Duration.TotalSeconds:0} s"
-                    : $"⚠ {p.Plugin}: {p.Problem}");
+                    ? $"{p.Plugin}: ieșire păstrată ca proba {p.OutputEvidenceId} (derivată din {image.EvidenceId}), {p.Duration.TotalSeconds:0} s"
+                    : $"Problemă: {p.Plugin}: {p.Problem}");
             if (r.Plugins.Any(p => p.OutputEvidenceId.Length > 0))
             {
                 MemoryRunLines.Add("Reanalizez cazul ca ieșirile să intre în cronologie și în regulile de memorie …");

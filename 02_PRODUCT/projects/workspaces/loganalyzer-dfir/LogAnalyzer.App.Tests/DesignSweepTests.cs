@@ -1,0 +1,312 @@
+using System.IO;
+using System.Reflection;
+using System.Text.RegularExpressions;
+using System.Xml.Linq;
+using LogAnalyzer.UI.Services;
+using Xunit;
+
+namespace LogAnalyzer.App.Tests;
+
+/// <summary>
+/// Design plan steps 2-5 ("Registru" theme, docs/design/PLAN.md), enforced on the source text: one page header (title style + register rule),
+/// no pictographic characters, no colours outside the tokens, labels written as sentences and in Romanian. The checks read the files as text, so they
+/// need no window and no handle.
+/// </summary>
+public sealed class DesignSweepTests
+{
+    private static string RepoDir()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null)
+        {
+            if (File.Exists(Path.Combine(dir.FullName, "LogAnalyzer.App", "MainWindow.xaml"))) return dir.FullName;
+            dir = dir.Parent;
+        }
+        throw new DirectoryNotFoundException("LogAnalyzer.App not found above " + AppContext.BaseDirectory);
+    }
+
+    private static string AppDir() => Path.Combine(RepoDir(), "LogAnalyzer.App");
+
+    private static string Read(string path) => File.ReadAllText(path);
+
+    private static IEnumerable<string> Files(string dir, string pattern)
+    {
+        foreach (var f in Directory.GetFiles(dir, pattern, SearchOption.AllDirectories))
+        {
+            var n = f.Replace('\\', '/');
+            if (n.Contains("/obj/") || n.Contains("/bin/")) continue;
+            yield return f;
+        }
+    }
+
+    private static string StripXmlComments(string xaml) => Regex.Replace(xaml, "<!--.*?-->", "", RegexOptions.Singleline);
+
+    // ---------------------------------------------------------------- step 2: page header
+
+    /// <summary>The pages of the main menu (MainWindow tabs and the unclassified-edition feature pages) that start with a title.</summary>
+    private static readonly string[] TitledPages =
+    [
+        "Views/StationControlView.xaml", "Views/MediaCenterView.xaml", "Views/TransferRegisterView.xaml", "Views/RegisterView.xaml",
+        "Views/ProcedureProfileView.xaml", "Views/InvestigationView.xaml", "Views/PolicyView.xaml", "Views/IncidentTimelineView.xaml",
+        "Views/ChainOfCustodyView.xaml", "Views/DataCollectionView.xaml", "Views/DashboardView.xaml", "Views/AlertsAndRulesView.xaml",
+        "Views/RiskAnalysisView.xaml", "Views/AttackStorylineView.xaml", "Views/MitreMatrixView.xaml", "Views/ThreatIntelView.xaml",
+        "Views/ActiveDirectoryAuditView.xaml", "Views/KerberosAndLateralMovementView.xaml", "Views/AuthView.xaml",
+        "Edition/Unclassified/ProcessContainmentView.xaml", "Edition/Unclassified/DomainInvestigationView.xaml",
+    ];
+
+    [Fact]
+    public void Every_titled_page_uses_PageTitleStyle_and_has_exactly_one_register_rule()
+    {
+        var problems = new List<string>();
+        foreach (var rel in TitledPages)
+        {
+            var x = StripXmlComments(Read(Path.Combine(AppDir(), rel)));
+            if (!x.Contains("Style=\"{StaticResource PageTitleStyle}\"")) problems.Add(rel + ": no PageTitleStyle");
+            var rules = Regex.Matches(x, Regex.Escape("Style=\"{StaticResource PageRuleStyle}\"")).Count;
+            if (rules != 1) problems.Add($"{rel}: {rules} PageRuleStyle (expected 1)");
+            // the title must not carry a literal size any more: the style owns it
+            foreach (Match m in Regex.Matches(x, "<TextBlock[^>]*PageTitleStyle[^>]*>"))
+                if (Regex.IsMatch(m.Value, "FontSize=|FontWeight=|Foreground=")) problems.Add(rel + ": title with literal font attributes: " + m.Value);
+        }
+        Assert.True(problems.Count == 0, string.Join("\n", problems));
+    }
+
+    [Fact]
+    public void The_Home_question_stays_at_29_SemiBold_without_a_rule()
+    {
+        var x = StripXmlComments(Read(Path.Combine(AppDir(), "Views/HomeView.xaml")));
+        Assert.Matches("<TextBlock Text=\"Ce doriți să faceți\\?\"[^>]*FontSize=\"29\" FontWeight=\"SemiBold\"", x);
+        Assert.DoesNotContain("PageRuleStyle", x);
+    }
+
+    [Fact]
+    public void Page_xaml_defines_the_title_lead_and_rule_styles_and_App_xaml_merges_it()
+    {
+        XNamespace p = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        var doc = XDocument.Load(Path.Combine(AppDir(), "Themes/Components/Page.xaml"));
+        XElement StyleOf(string key) => doc.Root!.Elements(p + "Style").Single(s => (string?)s.Attribute(x + "Key") == key);
+        string Setter(XElement style, string prop) => style.Elements(p + "Setter").Single(s => (string?)s.Attribute("Property") == prop).Attribute("Value")!.Value;
+
+        var title = StyleOf("PageTitleStyle");
+        Assert.Equal("TextBlock", (string?)title.Attribute("TargetType"));
+        Assert.Equal("24", Setter(title, "FontSize"));
+        Assert.Equal("SemiBold", Setter(title, "FontWeight"));
+        Assert.Equal("{StaticResource TextPrimaryBrush}", Setter(title, "Foreground"));
+        Assert.Equal("Wrap", Setter(title, "TextWrapping"));
+        Assert.Equal("0,0,0,4", Setter(title, "Margin"));
+
+        var lead = StyleOf("PageLeadStyle");
+        Assert.Equal("TextBlock", (string?)lead.Attribute("TargetType"));
+        Assert.Equal("14", Setter(lead, "FontSize"));
+        Assert.Equal("{StaticResource TextSecondaryBrush}", Setter(lead, "Foreground"));
+        Assert.Equal("Wrap", Setter(lead, "TextWrapping"));
+        Assert.Equal("0,0,0,0", Setter(lead, "Margin"));
+
+        var rule = StyleOf("PageRuleStyle");
+        Assert.Equal("Border", (string?)rule.Attribute("TargetType"));
+        Assert.Equal("1", Setter(rule, "Height"));
+        Assert.Equal("{StaticResource StrongBorderBrush}", Setter(rule, "Background"));
+        Assert.Equal("0,12,0,16", Setter(rule, "Margin"));
+        Assert.Equal("True", Setter(rule, "SnapsToDevicePixels"));
+
+        var app = Read(Path.Combine(AppDir(), "App.xaml"));
+        Assert.True(app.IndexOf("Themes/Components/Cards.xaml", StringComparison.Ordinal) < app.IndexOf("Themes/Components/Page.xaml", StringComparison.Ordinal));
+    }
+
+    // ---------------------------------------------------------------- step 3: no pictographic characters
+
+    /// <summary>
+    /// Emoji and dingbat blocks plus the characters that were used as icons (gear, warning, info, check marks, star, pencil, dot, stop). Private-use glyphs
+    /// of Segoe Fluent Icons (U+E000-U+F8FF) are the replacement and are not listed. The first alternative is the surrogate range of U+1F000-U+1FBFF.
+    /// </summary>
+    private static readonly Regex Pictographic = new("[\uD83C-\uD83E][\uDC00-\uDFFF]|[\u2600-\u27BF\u2B00-\u2BFF\uFE0F\u2139\u25CF\u23E9-\u23FF]", RegexOptions.Compiled);
+    private static readonly Regex PictographicEscape = new("\\\\u(?:2[67][0-9a-fA-F]{2}|2[Bb][0-9a-fA-F]{2}|FE0F|fe0f|2139|25[Cc][Ff])|\\\\U0001[Ff][0-9a-fA-F]{3}", RegexOptions.Compiled);
+
+    /// <summary>
+    /// Data marks that may stay as characters, with the reason. Empty: the bookmark and note marks of the timeline table now come from the icon font
+    /// (private-use glyphs E734 / E70F) and the column header has an automation name.
+    /// </summary>
+    private static readonly string[] PictographicExceptions = [];
+
+    private static IEnumerable<string> StringLiterals(string cs)
+    {
+        // string literals only; comments are skipped so documentation may name a symbol
+        foreach (Match m in Regex.Matches(cs, "\"(?:[^\"\\\\\\r\\n]|\\\\.)*\"|//[^\\r\\n]*|/\\*.*?\\*/", RegexOptions.Singleline))
+            if (m.Value.StartsWith('"')) yield return m.Value;
+    }
+
+    [Fact]
+    public void No_xaml_file_contains_a_pictographic_character()
+    {
+        var hits = new List<string>();
+        foreach (var f in Files(AppDir(), "*.xaml"))
+        {
+            var t = Read(f);
+            foreach (Match m in Pictographic.Matches(t))
+            {
+                var rel = Path.GetRelativePath(AppDir(), f);
+                if (PictographicExceptions.Contains(rel)) continue;
+                hits.Add($"{rel}: U+{(int)m.Value[0]:X4}");
+            }
+        }
+        Assert.True(hits.Count == 0, string.Join("\n", hits.Distinct()));
+    }
+
+    [Fact]
+    public void No_string_literal_of_the_view_models_views_services_or_network_services_contains_a_pictographic_character()
+    {
+        var dirs = new[]
+        {
+            Path.Combine(AppDir(), "ViewModels"), Path.Combine(AppDir(), "Views"), Path.Combine(AppDir(), "Services"),
+            Path.Combine(RepoDir(), "LogAnalyzer.Core", "Services", "Network"),
+        };
+        var hits = new List<string>();
+        foreach (var dir in dirs)
+            foreach (var f in Files(dir, "*.cs"))
+                foreach (var lit in StringLiterals(Read(f)))
+                    if (Pictographic.IsMatch(lit) || PictographicEscape.IsMatch(lit))
+                    {
+                        var rel = Path.GetRelativePath(RepoDir(), f);
+                        if (!PictographicExceptions.Contains(rel)) hits.Add(rel + ": " + lit);
+                    }
+        Assert.True(hits.Count == 0, string.Join("\n", hits));
+    }
+
+    // ---------------------------------------------------------------- step 4: colours come from the tokens
+
+    private static readonly Dictionary<string, string> TokenKeyOf = new()
+    {
+        ["Critical"] = "CriticalColor", ["High"] = "HighColor", ["Medium"] = "MediumColor", ["Low"] = "LowColor", ["Success"] = "SuccessColor",
+        ["PrimaryAccent"] = "PrimaryAccentColor", ["EvidenceAccent"] = "EvidenceAccentColor", ["TextPrimary"] = "TextPrimaryColor",
+        ["TextSecondary"] = "TextSecondaryColor", ["TextMuted"] = "TextMutedColor", ["Surface1"] = "Surface1Color", ["Surface2"] = "Surface2Color",
+        ["Surface3"] = "Surface3Color", ["Border"] = "HairlineBorderColor", ["StrongBorder"] = "StrongBorderColor",
+    };
+
+    private static string TokenValue(string name)
+    {
+        var doc = XDocument.Load(Path.Combine(AppDir(), "Themes/Tokens/ColorTokens.xaml"));
+        XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
+        if (name == "BadgeCriticalBg")
+            return doc.Descendants().Single(e => (string?)e.Attribute(x + "Key") == "BadgeCriticalBgBrush").Attribute("Color")!.Value;
+        var key = TokenKeyOf[name];
+        return doc.Descendants().Single(e => (string?)e.Attribute(x + "Key") == key).Value.Trim();
+    }
+
+    [Fact]
+    public void ThemeColors_constants_equal_the_tokens_of_ColorTokens_xaml()
+    {
+        var fields = typeof(ThemeColors).GetFields(BindingFlags.Public | BindingFlags.Static).Where(f => f.IsLiteral).ToList();
+        Assert.Equal(16, fields.Count);
+        foreach (var f in fields)
+            Assert.Equal(TokenValue(f.Name), (string)f.GetRawConstantValue()!, ignoreCase: true);
+    }
+
+    [Fact]
+    public void Core_colour_literals_carry_the_token_they_copy_and_equal_it()
+    {
+        var core = Path.Combine(RepoDir(), "LogAnalyzer.Core");
+        var seen = 0;
+        foreach (var f in Files(core, "*.cs"))
+            foreach (Match m in Regex.Matches(Read(f), "\"(#[0-9A-Fa-f]{6})\"\\s*/\\*\\s*Registru theme token (\\w+)\\s*\\*/"))
+            {
+                seen++;
+                Assert.Equal(TokenValue(m.Groups[2].Value), m.Groups[1].Value, ignoreCase: true);
+            }
+        Assert.True(seen >= 12, "expected the Core engines to carry token-tagged colours, found " + seen);
+    }
+
+    /// <summary>Hex literals that may stay in a page, with the reason. None today.</summary>
+    private static readonly string[] HexExceptions = [];
+
+    [Fact]
+    public void No_xaml_outside_the_tokens_has_a_literal_hex_colour()
+    {
+        var hits = new List<string>();
+        foreach (var f in Files(AppDir(), "*.xaml"))
+        {
+            var rel = Path.GetRelativePath(AppDir(), f).Replace('\\', '/');
+            if (rel.StartsWith("Themes/Tokens/")) continue;
+            foreach (Match m in Regex.Matches(StripXmlComments(Read(f)), "[\"'>]#[0-9A-Fa-f]{3,8}[\"'<]"))
+                if (!HexExceptions.Contains(rel)) hits.Add(rel + ": " + m.Value);
+        }
+        Assert.True(hits.Count == 0, string.Join("\n", hits));
+    }
+
+    private static readonly string[] OldThemeColors =
+        ["#121622", "#1e2538", "#38bdf8", "#00ff87", "#ef4444", "#e1e7f0", "#0f172a", "#1e293b", "#22d3ee", "#a78bfa", "#f59e0b", "#10b981"];
+
+    [Fact]
+    public void View_models_and_the_APT_engine_use_none_of_the_old_dark_theme_colours()
+    {
+        var files = Files(Path.Combine(AppDir(), "ViewModels"), "*.cs").Append(Path.Combine(RepoDir(), "LogAnalyzer.Core", "Services", "AptAttributionEngine.cs")).ToList();
+        Assert.True(files.Count > 5);
+        var hits = new List<string>();
+        foreach (var f in files)
+        {
+            var t = Read(f);
+            foreach (var c in OldThemeColors)
+                if (t.Contains(c, StringComparison.OrdinalIgnoreCase)) hits.Add(Path.GetFileName(f) + ": " + c);
+        }
+        Assert.True(hits.Count == 0, string.Join("\n", hits));
+    }
+
+    // ---------------------------------------------------------------- step 5: sentences, Romanian
+
+    private static readonly HashSet<string> Acronyms = new(StringComparer.Ordinal)
+    {
+        "MITRE", "EVTX", "JSON", "YARA", "STIX", "MISP", "LOLBAS", "SHA", "NIST", "NTUSER", "SYSTEM", "SOFTWARE", "SECURITY", "USBSTOR",
+        "BUILTIN", "TEMP", "GDPR", "DRAFT", "VALIDATED", "TESTED", "APPROVED", "DEPLOYED", "VERIFIED", "CERT", "INFO", "LIVE",
+    };
+
+    [Fact]
+    public void No_literal_label_of_a_page_has_two_consecutive_all_capital_words()
+    {
+        var attr = new Regex("\\b(?:Text|Content|Header)=\"([^\"{][^\"]*)\"");
+        var caps = new Regex("^[A-ZĂÂÎȘȚ]{4,}$");
+        var hits = new List<string>();
+        foreach (var f in Files(AppDir(), "*.xaml"))
+        {
+            var rel = Path.GetRelativePath(AppDir(), f).Replace('\\', '/');
+            if (rel.StartsWith("Themes/")) continue;
+            foreach (Match m in attr.Matches(StripXmlComments(Read(f))))
+            {
+                var words = Regex.Split(m.Groups[1].Value.Replace("&amp;", "&"), "\\s+");
+                var prev = false;
+                foreach (var w in words)
+                {
+                    var core = w.Trim('(', ')', ',', '.', ':', ';', '„', '”');
+                    var isCaps = caps.IsMatch(core) && !Acronyms.Contains(core);
+                    if (isCaps && prev) { hits.Add($"{rel}: {m.Groups[1].Value}"); break; }
+                    prev = isCaps;
+                }
+            }
+        }
+        Assert.True(hits.Count == 0, string.Join("\n", hits));
+    }
+
+    [Fact]
+    public void The_English_button_labels_of_the_data_collection_page_are_Romanian_sentences()
+    {
+        var x = Read(Path.Combine(AppDir(), "Views/DataCollectionView.xaml"));
+        Assert.Contains("Rulează trierea pe loc", x);
+        Assert.Contains("Sanitizare mediu și certificat PDF", x);
+        Assert.Contains("Sigilează pachetul cazului", x);
+        Assert.DoesNotContain("Live Triage", x);
+        Assert.DoesNotContain("Pachet Caz", x);
+    }
+
+    [Fact]
+    public void No_page_label_is_written_in_Title_Case_Romanian_or_left_in_English()
+    {
+        var banned = new[] { "Before / After", "Timestamp", "Off-Hours", "Impossible Travel", "Conditional Access", "Live Triage" };
+        foreach (var f in Files(AppDir(), "*.xaml"))
+        {
+            var rel = Path.GetRelativePath(AppDir(), f).Replace('\\', '/');
+            if (rel.StartsWith("Themes/")) continue;
+            var t = StripXmlComments(Read(f));
+            foreach (var b in banned)
+                if (Regex.IsMatch(t, "(?:Text|Content|Header)=\"(?!\\{)[^\"]*" + Regex.Escape(b))) Assert.Fail(rel + " still has " + b);
+        }
+    }
+}

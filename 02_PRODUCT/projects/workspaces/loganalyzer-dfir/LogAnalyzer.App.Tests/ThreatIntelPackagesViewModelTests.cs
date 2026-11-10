@@ -40,7 +40,7 @@ public sealed class ThreatIntelPackagesViewModelTests : IDisposable
         vm.StageCommand.Execute(null);
         Assert.StartsWith("Refuzat:", vm.Status);
         Assert.Empty(vm.StagedRows);
-        Assert.Contains(vm.CheckLines, l => l.StartsWith("✗", StringComparison.Ordinal));
+        Assert.Contains(vm.CheckLines, l => l.StartsWith("Eșuat:", StringComparison.Ordinal));
         Assert.Contains(vm.HistoryLines, l => l.Contains("refuzat la verificare"));
 
         vm.SelectedStaged = new StagedPackage("ST-1", "CERT-X", 1, "", "ana", DateTimeOffset.UtcNow);

@@ -21,7 +21,7 @@
                         <TextBlock Text="{Binding CurrentLiveToastAlert.MitreTechniqueId, FallbackValue=''}" Foreground="{StaticResource PrimaryAccentBrush}" FontSize="9.5" FontWeight="Bold"/>
                     </Border>
                 </StackPanel>
-                <Button DockPanel.Dock="Right" Content="✕" Command="{Binding DismissLiveToastCommand}" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}" BorderThickness="0" FontWeight="Bold" Width="20" Height="20" Cursor="Hand"/>
+                <Button AutomationProperties.Name="Închide" ToolTip="Închide" DockPanel.Dock="Right" Command="{Binding DismissLiveToastCommand}" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}" BorderThickness="0" FontWeight="Bold" Width="20" Height="20" Cursor="Hand"><TextBlock Text="&#xE711;" FontFamily="{StaticResource IconFontFamily}" FontSize="12"/></Button>
             </DockPanel>
 
             <!-- Content Row -->

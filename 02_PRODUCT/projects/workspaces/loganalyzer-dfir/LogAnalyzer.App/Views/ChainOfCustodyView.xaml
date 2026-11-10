@@ -11,10 +11,11 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
+        <StackPanel Grid.Row="0">
+        <DockPanel LastChildFill="False">
             <StackPanel DockPanel.Dock="Top">
-                <TextBlock Text="Istoricul probelor" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Lanțul de custodie al cazului deschis: cine a avut fiecare probă, când și ce s-a făcut cu ea" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Istoricul probelor"/>
+                <TextBlock Style="{StaticResource PageLeadStyle}" Text="Lanțul de custodie al cazului deschis: cine a avut fiecare probă, când și ce s-a făcut cu ea"/>
             </StackPanel>
             <!-- lab 2026-11-07: under the title and wrapping, so at 1024 px no button is cut off -->
             <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
@@ -23,6 +24,8 @@
                 <Button Content="Deschide dosarul cazului" Command="{Binding Investigation.OpenCaseCommand}" Padding="16,8"/>
             </WrapPanel>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <!-- Case custody chain -->
         <Border Grid.Row="1" Style="{StaticResource ObsidianCardStyle}">

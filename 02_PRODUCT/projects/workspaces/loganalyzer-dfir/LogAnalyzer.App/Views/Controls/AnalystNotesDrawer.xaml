@@ -18,7 +18,7 @@
                     <TextBlock Text="Notele analistului" FontSize="12" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                     <TextBlock Text="Ipoteze și jurnalul investigației" FontSize="10.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                 </StackPanel>
-                <Button DockPanel.Dock="Right" Content="✕" Command="{Binding CloseAnalystDrawerCommand}" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}" BorderThickness="0" FontWeight="Bold" Width="24" Height="24" Cursor="Hand"/>
+                <Button AutomationProperties.Name="Închide" ToolTip="Închide" DockPanel.Dock="Right" Command="{Binding CloseAnalystDrawerCommand}" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}" BorderThickness="0" FontWeight="Bold" Width="24" Height="24" Cursor="Hand"><TextBlock Text="&#xE711;" FontFamily="{StaticResource IconFontFamily}" FontSize="12"/></Button>
             </DockPanel>
 
             <!-- Case Status Selector -->

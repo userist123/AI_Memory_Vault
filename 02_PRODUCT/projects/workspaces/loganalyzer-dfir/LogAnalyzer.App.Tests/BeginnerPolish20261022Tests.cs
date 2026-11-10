@@ -107,7 +107,9 @@ public sealed class BeginnerPolish20261022Tests : IDisposable
 
     private static string PageTitle(string file)
     {
-        var title = Xaml("Views", file).Descendants().First(e => e.Name.LocalName == "TextBlock" && double.TryParse(Attr(e, "FontSize"), System.Globalization.CultureInfo.InvariantCulture, out var s) && s >= 20 && Attr(e, "Text").Length > 0);
+        // the page title is the first TextBlock that uses the shared PageTitleStyle (24, SemiBold) or, on a page not yet converted, carries a literal size of 20 or more
+        var title = Xaml("Views", file).Descendants().First(e => e.Name.LocalName == "TextBlock" && Attr(e, "Text").Length > 0 && (Attr(e, "Style") == "{StaticResource PageTitleStyle}"
+            || (double.TryParse(Attr(e, "FontSize"), System.Globalization.CultureInfo.InvariantCulture, out var s) && s >= 20)));
         return Attr(title, "Text");
     }
 

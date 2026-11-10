@@ -8,16 +8,19 @@
         </Grid.RowDefinitions>
 
         <!-- Top Header & Action Controls -->
-        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,16">
-            <StackPanel DockPanel.Dock="Left">
-                <TextBlock Text="Amenințări și detecții" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Alerte corelate și compilator interactiv de reguli Sigma / YARA" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
-            </StackPanel>
+        <StackPanel Grid.Row="0">
+        <DockPanel LastChildFill="False">
             <StackPanel DockPanel.Dock="Right" Orientation="Horizontal" VerticalAlignment="Center">
                 <Button Content="Compilează și evaluează regulile" Command="{Binding CompileAndEvaluateWorkbenchCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,6" Margin="0,0,8,0"/>
                 <Button Content="Convertește în KQL/SPL" Command="{Binding TranspileWorkbenchRuleCommand}" Padding="14,6"/>
             </StackPanel>
+            <StackPanel DockPanel.Dock="Left">
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Amenințări și detecții"/>
+                <TextBlock Style="{StaticResource PageLeadStyle}" Text="Alerte corelate și compilator interactiv de reguli Sigma / YARA"/>
+            </StackPanel>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <!-- 2-Pane Split: Left Alert Queue, Right Sigma Workbench Editor -->
         <Grid Grid.Row="1">

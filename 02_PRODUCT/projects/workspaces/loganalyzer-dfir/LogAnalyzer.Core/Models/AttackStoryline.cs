@@ -7,13 +7,13 @@ namespace LogAnalyzer.Core.Models
     {
         public int StageIndex { get; set; }
         public string StageName { get; set; } = string.Empty; // ex: "Initial Access", "Execution", "Persistence"
-        public string StageIcon { get; set; } = "🎯";
+        public string StageIcon { get; set; } = string.Empty;
         public string TechniqueId { get; set; } = string.Empty; // ex: "T1110"
         public string Title { get; set; } = string.Empty;
         public string Description { get; set; } = string.Empty;
         public string TargetHost { get; set; } = string.Empty;
         public string Severity { get; set; } = "High";
-        public string SeverityColor { get; set; } = "#f97316";
+        public string SeverityColor { get; set; } = "#A84B0C" /* Registru theme token High */;
         public DateTime Timestamp { get; set; }
         public double ConfidenceScore { get; set; } = 85.0; // 0-100%
     }

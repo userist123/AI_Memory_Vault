@@ -64,7 +64,7 @@ namespace LogAnalyzer.UI.Views
     }
 
     /// <summary>
-    /// Master plan 6.9: „★” for a bookmarked timeline event, „✎” for one with analyst notes. The sets are the notes of the open case, replaced by
+    /// Master plan 6.9: a star glyph (Segoe icon E734) for a bookmarked timeline event, a pencil glyph (E70F) for one with analyst notes. The sets are the notes of the open case, replaced by
     /// the view model when the notes are read again (the timeline is then refilled, so the rows are rebound).
     /// </summary>
     public sealed class BookmarkMarkConverter : IValueConverter
@@ -77,7 +77,7 @@ namespace LogAnalyzer.UI.Views
         {
             if (value is not LogAnalyzer.Dfir.Model.TimelineEvent e) return "";
             var k = LogAnalyzer.Dfir.Case.TimelineNotebook.EventKey(e);
-            return (Marked.Contains(k) ? "★" : "") + (Annotated.Contains(k) ? "✎" : "");
+            return (Marked.Contains(k) ? "\uE734" : "") + (Annotated.Contains(k) ? "\uE70F" : "");
         }
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
@@ -109,9 +109,9 @@ namespace LogAnalyzer.UI.Views
 
         public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => value switch
         {
-            LogAnalyzer.Dfir.Case.ChecklistStatus.Pass => "✓ îndeplinit",
-            LogAnalyzer.Dfir.Case.ChecklistStatus.Warn => "⚠ atenție",
-            LogAnalyzer.Dfir.Case.ChecklistStatus.Fail => "✗ blochează",
+            LogAnalyzer.Dfir.Case.ChecklistStatus.Pass => "îndeplinit",
+            LogAnalyzer.Dfir.Case.ChecklistStatus.Warn => "atenție",
+            LogAnalyzer.Dfir.Case.ChecklistStatus.Fail => "blochează",
             _ => value?.ToString() ?? "",
         };
 

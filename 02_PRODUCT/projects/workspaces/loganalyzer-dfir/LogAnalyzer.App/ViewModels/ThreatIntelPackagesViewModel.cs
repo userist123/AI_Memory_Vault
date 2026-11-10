@@ -77,7 +77,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void Show(ThreatIntelCheck c)
         {
             CheckLines.Clear();
-            foreach (var l in c.Lines) CheckLines.Add((l.Passed switch { true => "✓ ", false => "✗ ", _ => "⚠ " }) + l.Text);
+            foreach (var l in c.Lines) CheckLines.Add((l.Passed switch { true => "Trecut: ", false => "Eșuat: ", _ => "Atenție: " }) + l.Text);
         }
 
         [RelayCommand]

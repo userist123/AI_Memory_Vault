@@ -6,7 +6,7 @@
             <StackPanel>
                 <DockPanel LastChildFill="False" Margin="0,0,0,12">
                     <TextBlock DockPanel.Dock="Left" Text="Salt rapid la o pagină (Ctrl+K)" FontSize="11" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
-                    <Button DockPanel.Dock="Right" Content="✕" Command="{Binding CloseCommandPaletteCommand}" AutomationProperties.Name="Închide saltul rapid" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}" BorderThickness="0" FontWeight="Bold" Width="24" Height="24" Cursor="Hand"/>
+                    <Button DockPanel.Dock="Right" Command="{Binding CloseCommandPaletteCommand}" AutomationProperties.Name="Închide saltul rapid" Background="Transparent" Foreground="{StaticResource TextSecondaryBrush}" BorderThickness="0" FontWeight="Bold" Width="24" Height="24" Cursor="Hand"><TextBlock Text="&#xE711;" FontFamily="{StaticResource IconFontFamily}" FontSize="12"/></Button>
                 </DockPanel>
 
                 <!-- its own text (not the event search); Enter opens the first page, Esc closes -->

@@ -9,40 +9,43 @@
         </Grid.RowDefinitions>
 
         <!-- 1. Header with Title & Standalone Report Export Actions -->
-        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,16">
+        <StackPanel Grid.Row="0">
+        <DockPanel LastChildFill="False">
             <StackPanel DockPanel.Dock="Top">
                 <StackPanel Orientation="Horizontal" Margin="0,0,0,4">
-                    <TextBlock Text="Conturi locale și USB" FontSize="20" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Style="{StaticResource PageTitleStyle}" Text="Conturi locale și USB"/>
                     <Border Margin="12,0,0,0" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
                         <TextBlock Text="Ediția Standalone, fără rețea" FontSize="9" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                     </Border>
                 </StackPanel>
-                <TextBlock Text="Auditare specializată pentru PC-uri izolate (fără conexiune la rețea / domeniu): Bază SAM, Medii USB, Politici de Audit, Sesiuni Locale &amp; Conformitate HG 585/2002" FontSize="11.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                <TextBlock Style="{StaticResource PageLeadStyle}" Text="Auditare specializată pentru PC-uri izolate (fără conexiune la rețea / domeniu): Bază SAM, Medii USB, Politici de Audit, Sesiuni Locale &amp; Conformitate HG 585/2002"/>
             </StackPanel>
 
             <!-- lab 2026-11-07: under the title and wrapping, so at 1024 px no button is cut off -->
             <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
-                <Button Content="📄 Exportă CSV" Command="{Binding ExportAdAuditReportCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,6" Margin="0,0,8,0"/>
-                <Button Content="📑 Raport Executiv PDF" Command="{Binding ExportAdAuditPdfReportCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,6" Margin="0,0,8,0"/>
-                <Button Content="🌐 Raport Executiv HTML" Command="{Binding ExportAdAuditHtmlReportCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="14,6"/>
+                <Button AutomationProperties.Name="Exportă CSV" Command="{Binding ExportAdAuditReportCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,6" Margin="0,0,8,0"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE896;" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Exportă CSV" VerticalAlignment="Center"/></StackPanel></Button>
+                <Button AutomationProperties.Name="Raport executiv PDF" Command="{Binding ExportAdAuditPdfReportCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,6" Margin="0,0,8,0"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE8A5;" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Raport executiv PDF" VerticalAlignment="Center"/></StackPanel></Button>
+                <Button AutomationProperties.Name="Raport executiv HTML" Command="{Binding ExportAdAuditHtmlReportCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="14,6"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE774;" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Raport executiv HTML" VerticalAlignment="Center"/></StackPanel></Button>
             </WrapPanel>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <!-- 2. Standalone PC Specific KPI Ribbon -->
         <UniformGrid Grid.Row="1" Columns="6" Margin="0,0,0,16">
             <!-- Metric 1: Total SAM & Local Events -->
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,6,0" Padding="10">
                 <StackPanel>
-                    <TextBlock Text="EVENIMENTE SAM / LOCALE" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
+                    <TextBlock Text="Evenimente SAM / locale" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
                     <TextBlock Text="{Binding AdEventsAnalyzedCount, FallbackValue=0}" FontSize="18" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,1"/>
-                    <TextBlock Text="Jurnale Securitate Stație" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="Jurnale de securitate stație" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                 </StackPanel>
             </Border>
 
             <!-- Metric 2: Local Administrators Changes -->
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,6,0" Padding="10">
                 <StackPanel>
-                    <TextBlock Text="ADMINISTRATORI LOCALI SAM" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource DangerBrush}"/>
+                    <TextBlock Text="Administratori locali SAM" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource DangerBrush}"/>
                     <TextBlock Text="{Binding SamAdminGroupModificationsCount, FallbackValue=0}" FontSize="18" FontWeight="Black" Foreground="{StaticResource DangerBrush}" Margin="0,3,0,1"/>
                     <TextBlock Text="BUILTIN\Administrators" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                 </StackPanel>
@@ -51,16 +54,16 @@
             <!-- Metric 3: Removable USB Storage Devices -->
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,6,0" Padding="10">
                 <StackPanel>
-                    <TextBlock Text="MEDII USB REMOVABILE" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource HighBrush}"/>
+                    <TextBlock Text="Medii USB removabile" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource HighBrush}"/>
                     <TextBlock Text="{Binding SamUsbStorageEventsCount, FallbackValue=0}" FontSize="18" FontWeight="Black" Foreground="{StaticResource HighBrush}" Margin="0,3,0,1"/>
-                    <TextBlock Text="USBSTOR / PnP Conectate" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="USBSTOR / PnP conectate" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                 </StackPanel>
             </Border>
 
             <!-- Metric 4: Audit Policy & Log Tampering -->
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,6,0" Padding="10">
                 <StackPanel>
-                    <TextBlock Text="ALTERARE POLITICI AUDIT" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource WarningBrush}"/>
+                    <TextBlock Text="Alterare politici de audit" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource WarningBrush}"/>
                     <TextBlock Text="{Binding SamAuditPolicyTamperingCount, FallbackValue=0}" FontSize="18" FontWeight="Black" Foreground="{StaticResource WarningBrush}" Margin="0,3,0,1"/>
                     <TextBlock Text="EID 4719 / 1102 (auditpol)" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                 </StackPanel>
@@ -69,7 +72,7 @@
             <!-- Metric 5: Special Privilege Abuse -->
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,6,0" Padding="10">
                 <StackPanel>
-                    <TextBlock Text="ABUZ DREPTURI SPECIALE" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                    <TextBlock Text="Abuz de drepturi speciale" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                     <TextBlock Text="{Binding SamHighPrivilegeAssignmentsCount, FallbackValue=0}" FontSize="18" FontWeight="Black" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,3,0,1"/>
                     <TextBlock Text="SeDebugPrivilege (EID 4672)" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                 </StackPanel>
@@ -78,9 +81,9 @@
             <!-- Metric 6: Local LOLBAS Executions -->
             <Border Style="{StaticResource ObsidianCardStyle}" Padding="10">
                 <StackPanel>
-                    <TextBlock Text="EXECUȚII LOCALE LOLBAS" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource CyanAccentBrush}"/>
+                    <TextBlock Text="Execuții locale LOLBAS" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource CyanAccentBrush}"/>
                     <TextBlock Text="{Binding LolbasFindings.Count, FallbackValue=0}" FontSize="18" FontWeight="Black" Foreground="{StaticResource CyanAccentBrush}" Margin="0,3,0,1"/>
-                    <TextBlock Text="Binare Sistem &amp; %TEMP%" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="Binare de sistem și %TEMP%" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
                 </StackPanel>
             </Border>
         </UniformGrid>
@@ -88,7 +91,7 @@
         <!-- 3. Dedicated Standalone PC TabControl (Zero Domain/Cloud Clutter) -->
         <TabControl Grid.Row="2" Background="Transparent" BorderThickness="0">
             <!-- TAB 1: Standalone PC & Local SAM Forensics -->
-            <TabItem Header="💻 Conturi SAM &amp; Administratori Locali" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Conturi SAM și administratori locali" Style="{StaticResource InspectorTabItemStyle}">
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,10,0,0">
                     <Grid Margin="4">
                         <Grid.RowDefinitions>
@@ -96,7 +99,7 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,10">
-                            <TextBlock DockPanel.Dock="Left" Text="Auditare Securitate Bază SAM Locală (Grupuri Administrative, Creare/Ștergere Conturi, SeDebugPrivilege)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                            <TextBlock DockPanel.Dock="Left" Text="Auditare securitate bază SAM locală (grupuri administrative, creare/ștergere conturi, SeDebugPrivilege)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                             <Border DockPanel.Dock="Right" Background="{StaticResource Surface3Brush}" CornerRadius="4" Padding="6,2">
                                 <TextBlock Text="{Binding StandaloneSamFindings.Count, StringFormat='{}{0} Detecții SAM'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
@@ -104,12 +107,12 @@
                         <DataGrid Grid.Row="1" ItemsSource="{Binding StandaloneSamFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
                                 <DataGridTextColumn Header="Categorie" Binding="{Binding Category, Converter={x:Static sevc:CategoryTextConverter.Instance}}" Width="160"/>
-                                <DataGridTextColumn Header="Tip Detecție Standalone" Binding="{Binding FindingType}" Width="210"/>
+                                <DataGridTextColumn Header="Tip detecție (stație izolată)" Binding="{Binding FindingType}" Width="210"/>
                                 <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="90"/>
-                                <DataGridTextColumn Header="Cont / Resursă Țintă" Binding="{Binding TargetAccountOrResource}" Width="150"/>
+                                <DataGridTextColumn Header="Cont / resursă țintă" Binding="{Binding TargetAccountOrResource}" Width="150"/>
                                 <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85"/>
-                                <DataGridTextColumn Header="Proces / Dispozitiv Sursă" Binding="{Binding SourceProcessOrDevice}" Width="160"/>
-                                <DataGridTextColumn Header="Descriere &amp; Acțiune Recomandată" Binding="{Binding Description}" Width="*"/>
+                                <DataGridTextColumn Header="Proces / dispozitiv sursă" Binding="{Binding SourceProcessOrDevice}" Width="160"/>
+                                <DataGridTextColumn Header="Descriere și acțiune recomandată" Binding="{Binding Description}" Width="*"/>
                                 <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="140"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -118,7 +121,7 @@
             </TabItem>
 
             <!-- TAB 2: Removable USB Media Forensics -->
-            <TabItem Header="🔌 Medii USB &amp; Hardware Removabil" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Medii USB și echipamente removabile" Style="{StaticResource InspectorTabItemStyle}">
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,10,0,0">
                     <Grid Margin="4">
                         <Grid.RowDefinitions>
@@ -126,19 +129,19 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,10">
-                            <TextBlock DockPanel.Dock="Left" Text="Auditare și Lanț de Custodie pentru Dispozitive USB și Medii Removabile (EID 20001, 6416)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource HighBrush}"/>
+                            <TextBlock DockPanel.Dock="Left" Text="Auditare și lanț de custodie pentru dispozitive USB și medii removabile (EID 20001, 6416)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource HighBrush}"/>
                             <Border DockPanel.Dock="Right" Background="{StaticResource Surface3Brush}" CornerRadius="4" Padding="6,2">
                                 <TextBlock Text="{Binding SamUsbStorageEventsCount, StringFormat='{}{0} Medii Detectate'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
                         <DataGrid Grid.Row="1" ItemsSource="{Binding StandaloneSamFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Tip Dispozitiv / Eveniment" Binding="{Binding FindingType}" Width="220"/>
+                                <DataGridTextColumn Header="Tip dispozitiv / eveniment" Binding="{Binding FindingType}" Width="220"/>
                                 <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="90"/>
-                                <DataGridTextColumn Header="Identificator Hardware / Serial" Binding="{Binding TargetAccountOrResource}" Width="200"/>
-                                <DataGridTextColumn Header="Driver / Serviciu Sursă" Binding="{Binding SourceProcessOrDevice}" Width="170"/>
+                                <DataGridTextColumn Header="Identificator hardware / serie" Binding="{Binding TargetAccountOrResource}" Width="200"/>
+                                <DataGridTextColumn Header="Driver / serviciu sursă" Binding="{Binding SourceProcessOrDevice}" Width="170"/>
                                 <DataGridTextColumn Header="Diagnostic &amp; Măsură Conformitate HG 585" Binding="{Binding Description}" Width="*"/>
-                                <DataGridTextColumn Header="Timestamp Conectare" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="145"/>
+                                <DataGridTextColumn Header="Ora conectării" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="145"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -146,7 +149,7 @@
             </TabItem>
 
             <!-- TAB 3: Employee Work Hours & Interactive Sessions -->
-            <TabItem Header="⏱️ Sesiuni &amp; Ore Lucru Stație" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Sesiuni și ore de lucru stație" Style="{StaticResource InspectorTabItemStyle}">
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,10,0,0">
                     <Grid Margin="4">
                         <Grid.RowDefinitions>
@@ -154,21 +157,21 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,10">
-                            <TextBlock DockPanel.Dock="Left" Text="Monitorizare Activitate Sesiuni Utilizatori Locali (Ore Active, Blocare / Deblocare Ecran)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                            <TextBlock DockPanel.Dock="Left" Text="Monitorizare activitate sesiuni utilizatori locali (ore active, blocare / deblocare ecran)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                             <Border DockPanel.Dock="Right" Background="{StaticResource Surface3Brush}" CornerRadius="4" Padding="6,2">
                                 <TextBlock Text="{Binding EmployeeActivities.Count, StringFormat='{}{0} Sesiuni Înregistrate'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
                         <DataGrid Grid.Row="1" ItemsSource="{Binding EmployeeActivities}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Utilizator Local" Binding="{Binding Username}" Width="140"/>
-                                <DataGridTextColumn Header="Nume Stație" Binding="{Binding Workstation}" Width="130"/>
-                                <DataGridTextColumn Header="Oră Logon" Binding="{Binding LogonTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="145"/>
-                                <DataGridTextColumn Header="Oră Logoff" Binding="{Binding LogoffTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="145"/>
-                                <DataGridTextColumn Header="Timp Activ (Ore)" Binding="{Binding ActiveHours}" Width="110"/>
-                                <DataGridTextColumn Header="Blocări Ecran" Binding="{Binding LockCount}" Width="100"/>
+                                <DataGridTextColumn Header="Utilizator local" Binding="{Binding Username}" Width="140"/>
+                                <DataGridTextColumn Header="Nume stație" Binding="{Binding Workstation}" Width="130"/>
+                                <DataGridTextColumn Header="Ora autentificării" Binding="{Binding LogonTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="145"/>
+                                <DataGridTextColumn Header="Ora deconectării" Binding="{Binding LogoffTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="145"/>
+                                <DataGridTextColumn Header="Timp activ (ore)" Binding="{Binding ActiveHours}" Width="110"/>
+                                <DataGridTextColumn Header="Blocări ecran" Binding="{Binding LockCount}" Width="100"/>
                                 <DataGridTextColumn Header="Deblocări" Binding="{Binding UnlockCount}" Width="90"/>
-                                <DataGridTextColumn Header="Status Sesiune" Binding="{Binding SessionStatus}" Width="110"/>
+                                <DataGridTextColumn Header="Stare sesiune" Binding="{Binding SessionStatus}" Width="110"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -176,7 +179,7 @@
             </TabItem>
 
             <!-- TAB 4: Local LOLBAS Executions -->
-            <TabItem Header="⚡ Execuții Locale LOLBAS" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Execuții locale LOLBAS" Style="{StaticResource InspectorTabItemStyle}">
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,10,0,0">
                     <Grid Margin="4">
                         <Grid.RowDefinitions>
@@ -184,17 +187,17 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,10">
-                            <TextBlock DockPanel.Dock="Left" Text="Auditare Execuții de Binare Legitime de Sistem Abuzate Local (Living-off-the-Land Binaries)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource CyanAccentBrush}"/>
+                            <TextBlock DockPanel.Dock="Left" Text="Auditare execuții de binare legitime de sistem folosite abuziv local („living off the land”)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource CyanAccentBrush}"/>
                             <Border DockPanel.Dock="Right" Background="{StaticResource Surface3Brush}" CornerRadius="4" Padding="6,2">
                                 <TextBlock Text="{Binding LolbasFindings.Count, StringFormat='{}{0} Execuții Detectate'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
                         <DataGrid Grid.Row="1" ItemsSource="{Binding LolbasFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Binar Sistem" Binding="{Binding BinaryName}" Width="120"/>
+                                <DataGridTextColumn Header="Binar sistem" Binding="{Binding BinaryName}" Width="120"/>
                                 <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85"/>
-                                <DataGridTextColumn Header="Categorie Comportament" Binding="{Binding Category, Converter={x:Static sevc:CategoryTextConverter.Instance}}" Width="150"/>
-                                <DataGridTextColumn Header="Linie de Comandă Executată" Binding="{Binding CommandLine}" Width="*"/>
+                                <DataGridTextColumn Header="Categorie comportament" Binding="{Binding Category, Converter={x:Static sevc:CategoryTextConverter.Instance}}" Width="150"/>
+                                <DataGridTextColumn Header="Linie de comandă executată" Binding="{Binding CommandLine}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -202,7 +205,7 @@
             </TabItem>
 
             <!-- TAB 5: Standalone Compliance (HG 585/2002 & ISO 27042) -->
-            <TabItem Header="⚖️ Conformitate Stație Izolată" Style="{StaticResource InspectorTabItemStyle}">
+            <TabItem Header="Conformitate stație izolată" Style="{StaticResource InspectorTabItemStyle}">
                 <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,10,0,0">
                     <Grid Margin="4">
                         <Grid.RowDefinitions>
@@ -217,12 +220,12 @@
                         </DockPanel>
                         <DataGrid Grid.Row="1" ItemsSource="{Binding ComplianceResults}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Standard / Cadru" Binding="{Binding Framework}" Width="170"/>
-                                <DataGridTextColumn Header="Articol / Control" Binding="{Binding ArticleOrControl}" Width="140"/>
-                                <DataGridTextColumn Header="Titlu Control" Binding="{Binding ControlTitle}" Width="200"/>
+                                <DataGridTextColumn Header="Standard / cadru" Binding="{Binding Framework}" Width="170"/>
+                                <DataGridTextColumn Header="Articol / control" Binding="{Binding ArticleOrControl}" Width="140"/>
+                                <DataGridTextColumn Header="Titlu control" Binding="{Binding ControlTitle}" Width="200"/>
                                 <DataGridTextColumn Header="Stare" Binding="{Binding Status}" Width="100"/>
-                                <DataGridTextColumn Header="Evidență Forensică Corelată" Binding="{Binding EvidenceSummary}" Width="*"/>
-                                <DataGridTextColumn Header="Măsură Corectivă Impusă" Binding="{Binding RequiredAction}" Width="260"/>
+                                <DataGridTextColumn Header="Evidență forensică corelată" Binding="{Binding EvidenceSummary}" Width="*"/>
+                                <DataGridTextColumn Header="Măsură corectivă impusă" Binding="{Binding RequiredAction}" Width="260"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>

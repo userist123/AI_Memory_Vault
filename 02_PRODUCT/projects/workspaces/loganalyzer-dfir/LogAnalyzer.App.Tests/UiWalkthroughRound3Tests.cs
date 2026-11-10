@@ -161,7 +161,8 @@ public sealed class UiWalkthroughRound3Tests
         Assert.Contains("AiExecutiveSummary = evidence ? explainableRisk.ExecutiveSummaryRo", vm);
         Assert.Contains("foreach (var factor in explainableRisk.Factors.Where(_ => evidence))", vm);
         Assert.Equal("Nu există date analizate.", MainViewModel.NoDataSummary);
-        Assert.Equal("#94a3b8", MainViewModel.NeutralRiskColor);
+        // the neutral grey is the muted text token of the Registru theme (was the old dark-theme slate #94a3b8)
+        Assert.Equal(LogAnalyzer.UI.Services.ThemeColors.TextMuted, MainViewModel.NeutralRiskColor);
         // the green „normal” summary of the engine is never assigned unconditionally
         Assert.DoesNotMatch(@"AiExecutiveSummary = explainableRisk\.ExecutiveSummaryRo;", vm);
         Assert.DoesNotMatch(@"AiRiskColor = explainableRisk\.LevelColor;", vm);

@@ -34,7 +34,7 @@ namespace LogAnalyzer.UI.ViewModels
             PeDetail.Add("Semnătura (verificată pe această stație, fără rețea): " + (value.SignatureValid ? "validă" : value.SignatureStatus) +
                          (value.SignatureKind is "none" or "" ? "" : $" · {value.SignatureKind}") + (value.Signer.Length > 0 ? $" · {value.Signer}" : ""));
             PeDetail.Add("Momentul compilării (scris de linker, se poate falsifica): " + (r.LinkerTimestampUtc is { } ts ? ts.ToString("yyyy-MM-dd HH:mm") + " UTC" : "lipsă"));
-            foreach (var i in r.Indicators) PeDetail.Add($"⚑ {i.Text} — {i.WhyItMatters}");
+            foreach (var i in r.Indicators) PeDetail.Add($"{i.Text} — {i.WhyItMatters}");
             PeDetail.Add("Secțiuni: " + string.Join("; ", r.Sections.Select(s => $"{s.Name} entropie {s.Entropy}{(s.Executable ? " X" : "")}{(s.Writable ? " W" : "")}")));
             foreach (var imp in r.Imports.Take(40)) PeDetail.Add($"Importă din {imp.Dll}: {string.Join(", ", imp.Functions.Take(25))}{(imp.Functions.Count > 25 ? $" … (+{imp.Functions.Count - 25})" : "")}");
             if (r.Imports.Count > 40) PeDetail.Add($"… încă {r.Imports.Count - 40} biblioteci importate");

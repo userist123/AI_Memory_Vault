@@ -36,12 +36,15 @@
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Margin="0,0,0,10">
-            <TextBlock Text="Monitor dispozitive" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-            <TextBlock views:SimpleLevel.OnlyInSimple="True" Text="Dispozitivele externe conectate la stație, câte un rând pe dispozitiv. Roșu = cere atenție."
-                       TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
-            <TextBlock views:SimpleLevel.HideInSimple="True" Text="Aici apar mediile de stocare (stick USB, card, disc extern, unitate optică) și dispozitivele conectate extern (telefon, cameră, scaner, imprimantă, adaptor de rețea sau Wi-Fi USB, Bluetooth, tastatură și mouse externe, cititor de carduri). Componentele interne nu se arată. Aplicația doar citește; nu blochează și nu modifică nimic."
-                       TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+        <StackPanel Grid.Row="0">
+        <StackPanel>
+            <TextBlock Style="{StaticResource PageTitleStyle}" Text="Monitor dispozitive"/>
+            <TextBlock Style="{StaticResource PageLeadStyle}" views:SimpleLevel.OnlyInSimple="True" Text="Dispozitivele externe conectate la stație, câte un rând pe dispozitiv. Roșu = cere atenție."
+/>
+            <TextBlock Style="{StaticResource PageLeadStyle}" views:SimpleLevel.HideInSimple="True" Text="Aici apar mediile de stocare (stick USB, card, disc extern, unitate optică) și dispozitivele conectate extern (telefon, cameră, scaner, imprimantă, adaptor de rețea sau Wi-Fi USB, Bluetooth, tastatură și mouse externe, cititor de carduri). Componentele interne nu se arată. Aplicația doar citește; nu blochează și nu modifică nimic."
+/>
+        </StackPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
         </StackPanel>
 
         <!-- alert + summary + live switch -->
@@ -50,9 +53,9 @@
                     Visibility="{Binding HasAlert, Converter={StaticResource BoolToVis}}">
                 <Border.Style>
                     <Style TargetType="Border">
-                        <Setter Property="Background" Value="#E8F1FB"/>
+                        <Setter Property="Background" Value="{StaticResource BadgeLowBgBrush}"/>
                         <Setter Property="BorderBrush" Value="{StaticResource TextSecondaryBrush}"/>
-                        <Style.Triggers><DataTrigger Binding="{Binding AlertIsCritical}" Value="True"><Setter Property="Background" Value="#FDECEA"/><Setter Property="BorderBrush" Value="{StaticResource CriticalBrush}"/></DataTrigger></Style.Triggers>
+                        <Style.Triggers><DataTrigger Binding="{Binding AlertIsCritical}" Value="True"><Setter Property="Background" Value="{StaticResource BadgeCriticalBgBrush}"/><Setter Property="BorderBrush" Value="{StaticResource CriticalBrush}"/></DataTrigger></Style.Triggers>
                     </Style>
                 </Border.Style>
                 <DockPanel>

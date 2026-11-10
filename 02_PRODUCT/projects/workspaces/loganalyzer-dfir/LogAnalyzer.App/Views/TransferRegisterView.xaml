@@ -28,12 +28,15 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
         </Grid.RowDefinitions>
-        <StackPanel Grid.Row="0" Margin="0,0,0,10">
-            <TextBlock Text="Registrul de transferuri" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-            <TextBlock Text="Transferurile de date pe medii de stocare: un singur formular, aproape totul completat. Mediile conectate și registrul de medii se citesc din pagina „Monitor dispozitive”; aici nu se modifică."
-                       local:SimpleLevel.HideInSimple="True" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
-            <TextBlock Text="Fiecare transfer de date pe un mediu de stocare se înregistrează aici."
-                       local:SimpleLevel.OnlyInSimple="True" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+        <StackPanel Grid.Row="0">
+        <StackPanel>
+            <TextBlock Style="{StaticResource PageTitleStyle}" Text="Registrul de transferuri"/>
+            <TextBlock Style="{StaticResource PageLeadStyle}" Text="Transferurile de date pe medii de stocare: un singur formular, aproape totul completat. Mediile conectate și registrul de medii se citesc din pagina „Monitor dispozitive”; aici nu se modifică."
+                       local:SimpleLevel.HideInSimple="True"/>
+            <TextBlock Style="{StaticResource PageLeadStyle}" Text="Fiecare transfer de date pe un mediu de stocare se înregistrează aici."
+                       local:SimpleLevel.OnlyInSimple="True"/>
+        </StackPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
         </StackPanel>
         <Grid Grid.Row="1" Margin="0">
             <Grid.ColumnDefinitions><ColumnDefinition Width="4*"/><ColumnDefinition Width="Auto"/><ColumnDefinition Width="5*"/></Grid.ColumnDefinitions>

@@ -27,13 +27,14 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="Politici" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-            <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
+            <TextBlock Style="{StaticResource PageTitleStyle}" Text="Politici"/>
+            <TextBlock Style="{StaticResource PageLeadStyle}"
                        Text="Importați, aprobați și aplicați politici de securitate Windows, cu verificare după aplicare."/>
-            <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
+            <TextBlock
                        Text="Stări: CIORNĂ (DRAFT) → VALIDATĂ (VALIDATED) → TESTATĂ (TESTED) → APROBATĂ (APPROVED) → APLICATĂ (DEPLOYED) → VERIFICATĂ (VERIFIED). Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată.">
-                <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource PageLeadStyle}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
             </TextBlock>
+            <Border Style="{StaticResource PageRuleStyle}"/>
             <StackPanel Visibility="{Binding NothingOpenAndLibraryEmpty, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ctrl:EmptyStateCard What="{x:Static vmx:EmptyStates.PolicyWhat}" Why="{x:Static vmx:EmptyStates.PolicyWhy}" Step="{x:Static vmx:EmptyStates.PolicyStep}"/>
             </StackPanel>

@@ -25,8 +25,8 @@
                     <TextBlock Text="Gazdă monitorizată:" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,8,0"/>
                     <TextBox Text="{Binding LiveRemoteTargetHost, UpdateSourceTrigger=PropertyChanged}" Width="160" Margin="0,0,14,0" VerticalAlignment="Center"/>
                     
-                    <Button Content="▶ Pornește fluxul" Command="{Binding StartLiveMonitoringCommand}" Style="{StaticResource SuccessButtonStyle}" Padding="12,5" Margin="0,0,8,0"/>
-                    <Button Content="⏹ Oprește" Command="{Binding StopLiveMonitoringCommand}" Style="{StaticResource DangerButtonStyle}" Padding="12,5" Margin="0,0,8,0"/>
+                    <Button Content="Pornește fluxul" Command="{Binding StartLiveMonitoringCommand}" Style="{StaticResource SuccessButtonStyle}" Padding="12,5" Margin="0,0,8,0"/>
+                    <Button Content="Oprește" Command="{Binding StopLiveMonitoringCommand}" Style="{StaticResource DangerButtonStyle}" Padding="12,5" Margin="0,0,8,0"/>
 
                     <!-- Attack Simulation Dropdown -->
 

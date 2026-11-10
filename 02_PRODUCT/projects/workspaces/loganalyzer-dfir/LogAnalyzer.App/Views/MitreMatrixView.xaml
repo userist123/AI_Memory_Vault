@@ -8,11 +8,14 @@
         </Grid.RowDefinitions>
 
         <!-- Title & Coverage Stats -->
-        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,16">
+        <StackPanel Grid.Row="0">
+        <DockPanel LastChildFill="False">
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Tehnici de atac (MITRE ATT&amp;CK)" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Tehnici de atac (MITRE ATT&amp;CK)" VerticalAlignment="Center"/>
             </StackPanel>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <!-- 7-Column Grid Matrix -->
         <Grid Grid.Row="1">

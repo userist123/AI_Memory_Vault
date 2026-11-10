@@ -16,13 +16,16 @@
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
-        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
+        <StackPanel Grid.Row="0">
+        <DockPanel LastChildFill="False">
             <StackPanel DockPanel.Dock="Left">
-                <TextBlock Text="Control stație" FontSize="28" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Conturi, politici, autentificări, suporturi USB, rețele și programe instalate. Aplicația doar citește; nu modifică nimic pe stație."
-                           FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Control stație"/>
+                <TextBlock Style="{StaticResource PageLeadStyle}" Text="Conturi, politici, autentificări, suporturi USB, rețele și programe instalate. Aplicația doar citește; nu modifică nimic pe stație."
+/>
             </StackPanel>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <StackPanel Grid.Row="1" MaxWidth="900" HorizontalAlignment="Left">
             <ctrl:NoDataPanel HideAfterControl="True" HideInSimpleLevel="True"/>

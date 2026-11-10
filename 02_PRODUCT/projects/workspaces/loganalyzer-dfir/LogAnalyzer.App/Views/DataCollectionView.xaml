@@ -9,18 +9,21 @@
         </Grid.RowDefinitions>
 
         <!-- Header -->
-        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,18">
+        <StackPanel Grid.Row="0">
+        <DockPanel LastChildFill="False">
             <StackPanel DockPanel.Dock="Top">
-                <TextBlock Text="Colectare date" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                <TextBlock Text="Triaj în timp real al stației țintă, furnizori ETW, telemetrie din memoria volatilă și împachetare cu lanț de custodie" FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Colectare date"/>
+                <TextBlock Style="{StaticResource PageLeadStyle}" Text="Triaj în timp real al stației țintă, furnizori ETW, telemetrie din memoria volatilă și împachetare cu lanț de custodie"/>
             </StackPanel>
             <!-- lab 2026-11-07: under the title and wrapping, so at 1024 px no button is cut off -->
             <WrapPanel DockPanel.Dock="Bottom" Margin="0,8,0,0">
-                <Button Content="🛡️ Sanitizare Mediu &amp; Certificat PDF" Command="{Binding SanitizeMediaAndGenerateCertPdfCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="14,8" Margin="0,0,8,0"/>
-                <Button Content="⚡ Execută Live Triage" Command="{Binding StartCollectionCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,8" Margin="0,0,8,0"/>
-                <Button Content="🔒 Sigilează Pachet Caz" Command="{Binding SealDfirCaseBundleCommand}" Padding="14,8"/>
+                <Button AutomationProperties.Name="Sanitizare mediu și certificat PDF" Command="{Binding SanitizeMediaAndGenerateCertPdfCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="14,8" Margin="0,0,8,0"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE83D;" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Sanitizare mediu și certificat PDF" VerticalAlignment="Center"/></StackPanel></Button>
+                <Button AutomationProperties.Name="Rulează trierea pe loc" Command="{Binding StartCollectionCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,8" Margin="0,0,8,0"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE945;" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Rulează trierea pe loc" VerticalAlignment="Center"/></StackPanel></Button>
+                <Button AutomationProperties.Name="Sigilează pachetul cazului" Command="{Binding SealDfirCaseBundleCommand}" Padding="14,8"><StackPanel Orientation="Horizontal"><TextBlock Text="&#xE72E;" FontFamily="{StaticResource IconFontFamily}" Margin="0,0,6,0" VerticalAlignment="Center"/><TextBlock Text="Sigilează pachetul cazului" VerticalAlignment="Center"/></StackPanel></Button>
             </WrapPanel>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
         <!-- Status Cards -->
         <UniformGrid Grid.Row="1" Columns="2" Margin="0,0,0,16">
@@ -34,7 +37,7 @@
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="4,0,4,0">
                 <StackPanel>
                     <TextBlock Text="Clasificare" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="NESETATĂ" Foreground="{StaticResource TextSecondaryBrush}" FontSize="16" FontWeight="Bold" Margin="0,4,0,0"/>
+                    <TextBlock Text="Nesetată" Foreground="{StaticResource TextSecondaryBrush}" FontSize="16" FontWeight="Bold" Margin="0,4,0,0"/>
                     <TextBlock Text="Aplicația nu a primit o clasificare pentru acest caz" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
