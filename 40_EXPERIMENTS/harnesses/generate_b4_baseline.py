@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""scripts/generate_b4_baseline.py — Generates B4 baseline audit reports using FakeModelProvider.
+"""40_EXPERIMENTS/harnesses/generate_b4_baseline.py — Generates B4 baseline audit reports using FakeModelProvider.
 
 Runs the Council (via B1 execute_council_models) N times using FakeModelProvider,
 generates individual B4 audit reports, aggregates them with B5, and exports:
