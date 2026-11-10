@@ -29,6 +29,18 @@
       "name": "Hornbach",
       "country": "RO",
       "website": "https://www.hornbach.ro/"
+    },
+    {
+      "id": "emag-ro",
+      "name": "eMAG",
+      "country": "RO",
+      "website": "https://www.emag.ro/"
+    },
+    {
+      "id": "termix",
+      "name": "Termix",
+      "country": "RO",
+      "website": "https://www.termix.ro/"
     }
   ],
   "products": [
@@ -1999,6 +2011,430 @@
       "brand": "Dedeman",
       "category": "Focar pe lemne",
       "model3d": "stove"
+    },
+    {
+      "id": "masinaSpalat-masina-de-spalat-rufe-lg-f4x1008nwk-8-kg-clasa-a-1400-rpm-6",
+      "group": "masinaSpalat",
+      "name": "Mașină de spălat rufe LG F4X1008NWK, 8 kg, Clasa A, 1400 RPM, 6 Motion, Inverter Direct Drive, Wi-Fi, Alb",
+      "brand": "LG",
+      "category": "Mașină de spălat rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "masinaSpalat-masina-de-spalat-rufe-samsung-ww90cgc04dable-9-kg-1400-rpm-c",
+      "group": "masinaSpalat",
+      "name": "Mașină de spălat rufe Samsung WW90CGC04DABLE, 9 kg, 1400 RPM, Clasa A, Motor Digital Inverter, Negru",
+      "brand": "Samsung",
+      "category": "Mașină de spălat rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "masinaSpalat-masina-de-spalat-rufe-bosch-wan2826sby-8-kg-1400-rpm-iron-as",
+      "group": "masinaSpalat",
+      "name": "Mașină de spălat rufe Bosch WAN2826SBY, 8 Kg, 1400 RPM, Iron Assist, Hygiene Plus, EcoSilence Drive, alb/antracit",
+      "brand": "Bosch",
+      "category": "Mașină de spălat rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "masinaSpalat-masina-de-spalat-rufe-electrolux-ew6f3484e-8-kg-1400-rpm-cla",
+      "group": "masinaSpalat",
+      "name": "Mașină de spălat rufe Electrolux EW6F3484E, 8 kg, 1400 rpm, Clasa A, motor Inverter, Display LED, Alb",
+      "brand": "Electrolux",
+      "category": "Mașină de spălat rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "masinaSpalat-masina-de-spalat-rufe-arctic-aplm2wfsu29412w-9-kg-1400-rpm-c",
+      "group": "masinaSpalat",
+      "name": "Mașină de spălat rufe Arctic APLM2WFSU29412W, 9 Kg, 1400 RPM, Clasa A, Motor Silent Inverter, ExtraSteam, IronExpress, Alb",
+      "brand": "Arctic",
+      "category": "Mașină de spălat rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "masinaSpalat-masina-de-spalat-rufe-incorporabila-whirlpool-bi-wmwg-81486e",
+      "group": "masinaSpalat",
+      "name": "Mașină de spălat rufe încorporabilă Whirlpool BI WMWG 81486E EU, 8 kg, 1400 rpm, Clasa A",
+      "brand": "Whirlpool",
+      "category": "Mașină de spălat rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "masinaSpalat-masina-de-spalat-rufe-cu-incarcare-verticala-aeg-ltr8e363e-6",
+      "group": "masinaSpalat",
+      "name": "Mașină de spălat rufe cu încărcare verticală AEG LTR8E363E, 6 kg, 1300 rpm, Clasa A, motor inverter cu magnet permanent",
+      "brand": "AEG",
+      "category": "Mașină de spălat rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "masinaSpalat-masina-de-spalat-rufe-cu-incarcare-verticala-whirlpool-tdlrb",
+      "group": "masinaSpalat",
+      "name": "Mașină de spălat rufe cu încărcare verticală Whirlpool TDLRBX6252BSEU, 6 kg, 1200 rpm, Clasa B, Alb",
+      "brand": "Whirlpool",
+      "category": "Mașină de spălat rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "masinaSpalat-masina-de-spalat-rufe-verticala-electrolux-perfectcare-700-e",
+      "group": "masinaSpalat",
+      "name": "Mașină de spălat rufe verticală Electrolux PerfectCare 700 EW7TN3272, 6 kg, 1251 rpm, clasa B, latime 40 cm",
+      "brand": "Electrolux",
+      "category": "Mașină de spălat rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "masinaSpalat-masina-de-spalat-rufe-cu-uscator-samsung-wd90hg6u94bbu4-spal",
+      "group": "masinaSpalat",
+      "name": "Mașină de spălat rufe cu uscător Samsung WD90HG6U94BBU4, Spalare 9 kg, Uscare 6 kg, 1400 rpm, Negru",
+      "brand": "Samsung",
+      "category": "Mașină de spălat rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "masinaSpalat-masina-de-spalat-rufe-cu-uscator-beko-b5dft510442m-10-kg-spa",
+      "group": "masinaSpalat",
+      "name": "Mașină de spălat rufe cu uscător BEKO B5DFT510442M, 10 kg spalare, 6 kg uscare, Clasa A, 1400 RPM, Gri",
+      "brand": "Beko",
+      "category": "Mașină de spălat rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "masinaSpalat-masina-de-spalat-rufe-frontala-cu-uscator-gorenje-wd2a164ads",
+      "group": "masinaSpalat",
+      "name": "Mașină de spălat rufe frontală CU USCĂTOR GORENJE WD2A164ADS/A, 10/6 KG, 1400RPM, Clasa A/D, ANTRACIT",
+      "brand": "Gorenje",
+      "category": "Mașină de spălat rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "uscator-uscator-de-rufe-samsung-dv90db7845gbu4-pompa-de-caldura-9-kg",
+      "group": "uscator",
+      "name": "Uscător de rufe Samsung DV90DB7845GBU4, pompă de căldură, 9 kg, Clasa A, AI Dry, WiFi, Negru",
+      "brand": "Samsung",
+      "category": "Uscător de rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "uscator-uscator-de-rufe-bosch-wth8520bby-pompa-de-caldura-8-kg-15-pr",
+      "group": "uscator",
+      "name": "Uscător de rufe Bosch WTH8520BBY, Pompa de căldură, 8 kg, 15 programe, AutoDry, Clasa D, Alb/Negru",
+      "brand": "Bosch",
+      "category": "Uscător de rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "uscator-uscator-rufe-lg-rhx5009tb-9kg-turbo-dryer-dual-inverter-wifi",
+      "group": "uscator",
+      "name": "Uscător rufe LG RHX5009TB, 9kg, Turbo Dryer, Dual Inverter, Wifi, Clasa B, Negru Mat",
+      "brand": "LG",
+      "category": "Uscător de rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "uscator-uscator-de-rufe-electrolux-ew7d384ae-pompa-de-caldura-8-kg-c",
+      "group": "uscator",
+      "name": "Uscător de rufe Electrolux EW7D384AE, Pompa de căldură, 8 kg, Clasa C, motor Inverter, DelicateCare, Alb",
+      "brand": "Electrolux",
+      "category": "Uscător de rufe",
+      "model3d": "washer"
+    },
+    {
+      "id": "masinaVase-masina-de-spalat-vase-bosch-sms4evw08e-14-seturi-6-programe",
+      "group": "masinaVase",
+      "name": "Mașină de spălat vase Bosch SMS4EVW08E, 14 seturi, 6 programe, EfficientDry, Rackmatic, Clasa B, 60 cm, Alb",
+      "brand": "Bosch",
+      "category": "Mașină de spălat vase",
+      "model3d": "dishwasher"
+    },
+    {
+      "id": "masinaVase-masina-de-spalat-vase-arctic-dfn363-14-seturi-6-programe-cla",
+      "group": "masinaVase",
+      "name": "Mașină de spălat vase Arctic DFN363, 14 seturi, 6 programe, Clasa D, Deschidere automata a usii, 60 cm, Alb",
+      "brand": "Arctic",
+      "category": "Mașină de spălat vase",
+      "model3d": "dishwasher"
+    },
+    {
+      "id": "masinaVase-lagan-masina-spalat-vase-autonoma-alb",
+      "group": "masinaVase",
+      "name": "LAGAN Mașină spălat vase autonomă, alb",
+      "brand": "IKEA",
+      "category": "Mașină de spălat vase",
+      "model3d": "dishwasher"
+    },
+    {
+      "id": "masinaVase-masina-de-spalat-vase-beko-bdfs26020xq-10-seturi-6-programe",
+      "group": "masinaVase",
+      "name": "Mașină de spălat vase Beko BDFS26020XQ, 10 seturi, 6 programe, Clasa E, ProSmart Inverter, 45 cm, Inox",
+      "brand": "Beko",
+      "category": "Mașină de spălat vase",
+      "model3d": "dishwasher"
+    },
+    {
+      "id": "masinaVase-masina-de-spalat-vase-incorporabila-bosch-smv4evx08e-14-setu",
+      "group": "masinaVase",
+      "name": "Mașină de spălat vase încorporabilă Bosch SMV4EVX08E, 14 seturi, 6 programe, EfficientDry, Silence Plus, 60 cm, Clasa B",
+      "brand": "Bosch",
+      "category": "Mașină de spălat vase",
+      "model3d": "dishwasher"
+    },
+    {
+      "id": "masinaVase-rengora-masina-spalat-vase-incorporata-ikea-300-60-cm",
+      "group": "masinaVase",
+      "name": "RENGÖRA Mașină spălat vase încorporată, IKEA 300, 60 cm",
+      "brand": "IKEA",
+      "category": "Mașină de spălat vase",
+      "model3d": "dishwasher"
+    },
+    {
+      "id": "microunde-cuptor-cu-microunde-heinner-hmw-md25mbk-25-l-control-mecanic",
+      "group": "microunde",
+      "name": "Cuptor cu microunde Heinner HMW-MD25MBK, 25 l, Control mecanic, 800 W, Negru",
+      "brand": "Heinner",
+      "category": "Cuptor cu microunde",
+      "model3d": "microwave"
+    },
+    {
+      "id": "microunde-cuptor-cu-microunde-gorenje-mo17e1w-17-l-5-nivele-700-w-alb",
+      "group": "microunde",
+      "name": "Cuptor cu microunde, Gorenje MO17E1W, 17 l, 5 nivele, 700 W, Alb",
+      "brand": "Gorenje",
+      "category": "Cuptor cu microunde",
+      "model3d": "microwave"
+    },
+    {
+      "id": "microunde-cuptor-cu-microunde-samsung-ms23k3513as-eo-23l-800w-digital",
+      "group": "microunde",
+      "name": "Cuptor cu microunde, Samsung, MS23K3513AS/EO, 23L, 800W, Digital, Inox, Negru",
+      "brand": "Samsung",
+      "category": "Cuptor cu microunde",
+      "model3d": "microwave"
+    },
+    {
+      "id": "microunde-cuptor-cu-microunde-incorporabil-bosch-bfl554mb0-25-l-900-w",
+      "group": "microunde",
+      "name": "Cuptor cu microunde încorporabil Bosch BFL554MB0, 25 l, 900 W, AutoPilot 7, Butoane retractabile, Control digital, Sticla neagra",
+      "brand": "Bosch",
+      "category": "Cuptor cu microunde",
+      "model3d": "microwave"
+    },
+    {
+      "id": "microunde-cuptor-cu-microunde-incorporabil-samsung-mg22m8254ak-e2-22-l",
+      "group": "microunde",
+      "name": "Cuptor cu microunde încorporabil Samsung MG22M8254AK/E2, 22 l, 850 W, Grill, Interior ceramic, Negru",
+      "brand": "Samsung",
+      "category": "Cuptor cu microunde",
+      "model3d": "microwave"
+    },
+    {
+      "id": "microunde-lagan-cuptor-cu-microunde-incorporabil-negru",
+      "group": "microunde",
+      "name": "LAGAN Cuptor cu microunde încorporabil, negru",
+      "brand": "IKEA",
+      "category": "Cuptor cu microunde",
+      "model3d": "microwave"
+    },
+    {
+      "id": "hota-hota-decorativa-heinner-hdch-md60tix-60cm-design-t-shape-800",
+      "group": "hota",
+      "name": "Hotă decorativă Heinner HDCH-MD60TIX, 60cm, design T-shape, 800 m³/h, inox+sticla neagra",
+      "brand": "Heinner",
+      "category": "Hotă",
+      "model3d": "none"
+    },
+    {
+      "id": "hota-hota-incorporabila-decorativa-bosch-dwk65dk60-3-trepte-inten",
+      "group": "hota",
+      "name": "Hotă încorporabilă decorativă Bosch DWK65DK60, 3 trepte + intensiv, 550 mc/h, 60 cm, Sticla neagra",
+      "brand": "Bosch",
+      "category": "Hotă",
+      "model3d": "none"
+    },
+    {
+      "id": "hota-stackbo-hota-perete-ikea-300-negru-55-cm",
+      "group": "hota",
+      "name": "STACKBO Hotă perete, IKEA 300 negru, 55 cm",
+      "brand": "IKEA",
+      "category": "Hotă",
+      "model3d": "none"
+    },
+    {
+      "id": "hota-hota-telescopica-incorporabila-electrolux-lfp616x-600-mc-h-1",
+      "group": "hota",
+      "name": "Hotă telescopică încorporabilă Electrolux LFP616X, 600 mc/h, 1 motor, 60 cm, Inox",
+      "brand": "Electrolux",
+      "category": "Hotă",
+      "model3d": "none"
+    },
+    {
+      "id": "hota-hota-incorporabila-telescopica-samsung-nk24m1030ib-ur-392-m3",
+      "group": "hota",
+      "name": "Hotă încorporabilă telescopică Samsung NK24M1030IB/UR, 392 m3/h, 60 cm, LED, Negru",
+      "brand": "Samsung",
+      "category": "Hotă",
+      "model3d": "none"
+    },
+    {
+      "id": "hota-hota-insula-pyramis-corso-90cm-704mc-h-43db-touch-control-in",
+      "group": "hota",
+      "name": "Hotă insulă Pyramis CORSO, 90cm, 704mc/h, 43dB, Touch Control, Inox și Sticla Neagra",
+      "brand": "Pyramis",
+      "category": "Hotă",
+      "model3d": "none"
+    },
+    {
+      "id": "hota-hota-de-tavan-klarstein-high-line-eco-578-m3-h-evacuare-sau",
+      "group": "hota",
+      "name": "Hotă de tavan Klarstein High Line Eco, 578 m³/h, evacuare sau recirculare, panou touch, telecomanda, inox și sticla, Alb, 77 cm",
+      "brand": "Klarstein",
+      "category": "Hotă",
+      "model3d": "none"
+    },
+    {
+      "id": "cuptor-cuptor-incorporabil-bosch-hba534eb3-71-l-electric-multifunct",
+      "group": "cuptor",
+      "name": "Cuptor încorporabil Bosch HBA534EB3, 71 L, Electric, Multifunctional, Grill, 7 funcții, EcoClean, 3D Hotair, Clasa A+, Negru",
+      "brand": "Bosch",
+      "category": "Cuptor",
+      "model3d": "none"
+    },
+    {
+      "id": "cuptor-cuptor-electric-pyramis-60in-2060-md-black-glass-10-functii",
+      "group": "cuptor",
+      "name": "Cuptor electric Pyramis 60IN 2060 MD Black Glass, 10 funcții, clasa A, 65 litri, Aqua Clean, finisaj sticla neagra",
+      "brand": "Pyramis",
+      "category": "Cuptor",
+      "model3d": "none"
+    },
+    {
+      "id": "cuptor-cuptor-incorporabil-beko-bbie12300xd-electric-72-l-grill-ste",
+      "group": "cuptor",
+      "name": "Cuptor încorporabil Beko BBIE12300XD, Electric, 72 l, Grill, SteamShine Cleaning, Timer, Clasa A, Inox",
+      "brand": "Beko",
+      "category": "Cuptor",
+      "model3d": "none"
+    },
+    {
+      "id": "cuptor-cuptor-electric-teka-neo-hsb-6350-ss-8-functii-thermoseal-hy",
+      "group": "cuptor",
+      "name": "Cuptor electric Teka NEO HSB 6350 SS, 8 funcții, ThermoSeal, HydroClean, 60 cm, 70l, A+, Inox anti-pata",
+      "brand": "Teka",
+      "category": "Cuptor",
+      "model3d": "none"
+    },
+    {
+      "id": "cuptor-stenaby-cuptor-cu-ventilatie-functie-grill-alb-ikea-300",
+      "group": "cuptor",
+      "name": "STENABY Cuptor cu ventilație, funcție grill alb/IKEA 300",
+      "brand": "IKEA",
+      "category": "Cuptor",
+      "model3d": "none"
+    },
+    {
+      "id": "plita-plita-incorporabila-samsung-nz64m3nm1bb-ol-inductie-4-zone-d",
+      "group": "plita",
+      "name": "Plită încorporabilă Samsung NZ64M3NM1BB/OL, Inducție, 4 zone de gatit, Control tactil, Power Boost, 60 cm, Negru",
+      "brand": "Samsung",
+      "category": "Plită",
+      "model3d": "none"
+    },
+    {
+      "id": "plita-vilsta-plita-cu-inductie-ikea-300-negru-59-cm",
+      "group": "plita",
+      "name": "VILSTA Plită cu inducție, IKEA 300 negru, 59 cm",
+      "brand": "IKEA",
+      "category": "Plită",
+      "model3d": "none"
+    },
+    {
+      "id": "plita-plita-incorporata-cu-inductie-electrolux-eis82453-senseboil",
+      "group": "plita",
+      "name": "Plită încorporată cu inducție Electrolux EIS82453 SenseBoil, Hob2Hood, functie Bridge, 80 cm",
+      "brand": "Electrolux",
+      "category": "Plită",
+      "model3d": "none"
+    },
+    {
+      "id": "plita-plita-incorporabila-beko-hilw64225s-gaz-4-arzatoare-arzator",
+      "group": "plita",
+      "name": "Plită încorporabilă Beko HILW64225S, Gaz, 4 Arzătoare, Arzator Wok, 60 cm, Sticla neagra",
+      "brand": "Beko",
+      "category": "Plită",
+      "model3d": "none"
+    },
+    {
+      "id": "plita-plita-incorporabila-whirlpool-gowl628nbee-gaz-4-arzatoare-gr",
+      "group": "plita",
+      "name": "Plită încorporabilă Whirlpool GOWL628NBEE, Gaz, 4 arzătoare, Gratare fonta, MultiStep, 60 cm, Negru",
+      "brand": "Whirlpool",
+      "category": "Plită",
+      "model3d": "none"
+    },
+    {
+      "id": "plita-plita-gaz-pyramis-4102-60x51cm-4-arzatoare-gratare-emailate",
+      "group": "plita",
+      "name": "Plită gaz Pyramis 4102, 60x51cm, 4 arzătoare, grătare emailate, butoane laterale, finisaj inox",
+      "brand": "Pyramis",
+      "category": "Plită",
+      "model3d": "none"
+    },
+    {
+      "id": "centrala-centrala-termica-pe-gaz-in-condensare-ariston-alteas-one-net",
+      "group": "centrala",
+      "name": "Centrală termică pe gaz in condensare Ariston Alteas One+ Net 24, murala, fără kit evacuare",
+      "brand": "Ariston",
+      "category": "Centrală termică",
+      "model3d": "gasboiler"
+    },
+    {
+      "id": "centrala-centrala-termica-pe-gaz-in-condensare-motan-komfort-24-mural",
+      "group": "centrala",
+      "name": "Centrală termică pe gaz in condensare Motan Komfort 24, murala, schimbator căldură inox, fără kit evacuare",
+      "brand": "Motan",
+      "category": "Centrală termică",
+      "model3d": "gasboiler"
+    },
+    {
+      "id": "centrala-centrala-termica-pe-gaz-in-condensatie-bosch-condens-gc5700i",
+      "group": "centrala",
+      "name": "Centrală termică pe gaz in condensație Bosch Condens GC5700iW 30/30 C 23, 30 kW, ACM 30 kW",
+      "brand": "Bosch",
+      "category": "Centrală termică",
+      "model3d": "gasboiler"
+    },
+    {
+      "id": "centrala-centrala-termica-in-condensare-vaillant-ecotec-pure-vuw-286",
+      "group": "centrala",
+      "name": "Centrală termică in condensare Vaillant ecoTEC pure VUW 286/7-2 (H-INT II)",
+      "brand": "Vaillant",
+      "category": "Centrală termică",
+      "model3d": "gasboiler"
+    },
+    {
+      "id": "boiler-boiler-electric-ariston-pro-1-eco-50v-slim-50-l-1800-w",
+      "group": "boiler",
+      "name": "Boiler electric Ariston Pro 1 Eco 50V slim, 50 L, 1800 W",
+      "brand": "Ariston",
+      "category": "Boiler",
+      "model3d": "boiler"
+    },
+    {
+      "id": "boiler-boiler-electric-ariston-lydos-eco-80-v-75-l-1800-w",
+      "group": "boiler",
+      "name": "Boiler electric Ariston Lydos Eco 80 V, 75 L, 1800 W",
+      "brand": "Ariston",
+      "category": "Boiler",
+      "model3d": "boiler"
+    },
+    {
+      "id": "boiler-boiler-electric-tesy-bilight-100-l-2000-w-termostat-reglabil",
+      "group": "boiler",
+      "name": "Boiler electric Tesy BiLight 100 l, 2000 W, termostat reglabil",
+      "brand": "Tesy",
+      "category": "Boiler",
+      "model3d": "boiler"
     }
   ],
   "variants": [
@@ -6126,6 +6562,868 @@
       "dimensionsConfidence": "HIGH",
       "style": {
         "col": "#2b2b2d"
+      }
+    },
+    {
+      "id": "masinaSpalat-0",
+      "productId": "masinaSpalat-masina-de-spalat-rufe-lg-f4x1008nwk-8-kg-clasa-a-1400-rpm-6",
+      "name": "Mașină de spălat rufe LG F4X1008NWK, 8 kg, Clasa A, 1400 RPM, 6 Motion, Inverter Direct Drive, Wi-Fi, Alb",
+      "legacyIndex": 0,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 59,
+        "h": 85
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "washer_front",
+        "col": "#f4f4f2"
+      }
+    },
+    {
+      "id": "masinaSpalat-1",
+      "productId": "masinaSpalat-masina-de-spalat-rufe-samsung-ww90cgc04dable-9-kg-1400-rpm-c",
+      "name": "Mașină de spălat rufe Samsung WW90CGC04DABLE, 9 kg, 1400 RPM, Clasa A, Motor Digital Inverter, Negru",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 63.5,
+        "h": 85
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "washer_front",
+        "col": "#1e1f21",
+        "ringDark": true
+      }
+    },
+    {
+      "id": "masinaSpalat-2",
+      "productId": "masinaSpalat-masina-de-spalat-rufe-bosch-wan2826sby-8-kg-1400-rpm-iron-as",
+      "name": "Mașină de spălat rufe Bosch WAN2826SBY, 8 Kg, 1400 RPM, Iron Assist, Hygiene Plus, EcoSilence Drive, alb/antracit",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 59.8,
+        "d": 59,
+        "h": 84.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "washer_front",
+        "col": "#f4f4f2",
+        "ringDark": true
+      }
+    },
+    {
+      "id": "masinaSpalat-3",
+      "productId": "masinaSpalat-masina-de-spalat-rufe-electrolux-ew6f3484e-8-kg-1400-rpm-cla",
+      "name": "Mașină de spălat rufe Electrolux EW6F3484E, 8 kg, 1400 rpm, Clasa A, motor Inverter, Display LED, Alb",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 59.6,
+        "d": 57.6,
+        "h": 84.7
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "washer_front",
+        "col": "#f4f4f2"
+      }
+    },
+    {
+      "id": "masinaSpalat-4",
+      "productId": "masinaSpalat-masina-de-spalat-rufe-arctic-aplm2wfsu29412w-9-kg-1400-rpm-c",
+      "name": "Mașină de spălat rufe Arctic APLM2WFSU29412W, 9 Kg, 1400 RPM, Clasa A, Motor Silent Inverter, ExtraSteam, IronExpress, Alb",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 54.6,
+        "h": 84.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "washer_front",
+        "col": "#f4f4f2"
+      }
+    },
+    {
+      "id": "masinaSpalat-5",
+      "productId": "masinaSpalat-masina-de-spalat-rufe-incorporabila-whirlpool-bi-wmwg-81486e",
+      "name": "Mașină de spălat rufe încorporabilă Whirlpool BI WMWG 81486E EU, 8 kg, 1400 rpm, Clasa A",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 59.5,
+        "d": 54.5,
+        "h": 81.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "washer_builtin",
+        "col": "#f4f4f2"
+      }
+    },
+    {
+      "id": "masinaSpalat-6",
+      "productId": "masinaSpalat-masina-de-spalat-rufe-cu-incarcare-verticala-aeg-ltr8e363e-6",
+      "name": "Mașină de spălat rufe cu încărcare verticală AEG LTR8E363E, 6 kg, 1300 rpm, Clasa A, motor inverter cu magnet permanent",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 40,
+        "d": 60,
+        "h": 89
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "washer_top",
+        "col": "#f4f4f2"
+      }
+    },
+    {
+      "id": "masinaSpalat-7",
+      "productId": "masinaSpalat-masina-de-spalat-rufe-cu-incarcare-verticala-whirlpool-tdlrb",
+      "name": "Mașină de spălat rufe cu încărcare verticală Whirlpool TDLRBX6252BSEU, 6 kg, 1200 rpm, Clasa B, Alb",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 40,
+        "d": 60,
+        "h": 90
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "washer_top",
+        "col": "#f4f4f2"
+      }
+    },
+    {
+      "id": "masinaSpalat-8",
+      "productId": "masinaSpalat-masina-de-spalat-rufe-verticala-electrolux-perfectcare-700-e",
+      "name": "Mașină de spălat rufe verticală Electrolux PerfectCare 700 EW7TN3272, 6 kg, 1251 rpm, clasa B, latime 40 cm",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 39.7,
+        "d": 59.9,
+        "h": 90.8
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "washer_top",
+        "col": "#f4f4f2"
+      }
+    },
+    {
+      "id": "masinaSpalat-9",
+      "productId": "masinaSpalat-masina-de-spalat-rufe-cu-uscator-samsung-wd90hg6u94bbu4-spal",
+      "name": "Mașină de spălat rufe cu uscător Samsung WD90HG6U94BBU4, Spalare 9 kg, Uscare 6 kg, 1400 rpm, Negru",
+      "legacyIndex": 9,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 59,
+        "h": 85
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "washer_dryer",
+        "col": "#1e1f21",
+        "ringDark": true
+      }
+    },
+    {
+      "id": "masinaSpalat-10",
+      "productId": "masinaSpalat-masina-de-spalat-rufe-cu-uscator-beko-b5dft510442m-10-kg-spa",
+      "name": "Mașină de spălat rufe cu uscător BEKO B5DFT510442M, 10 kg spalare, 6 kg uscare, Clasa A, 1400 RPM, Gri",
+      "legacyIndex": 10,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 60,
+        "h": 84.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "washer_dryer",
+        "col": "#4a4d52",
+        "ringDark": true
+      }
+    },
+    {
+      "id": "masinaSpalat-11",
+      "productId": "masinaSpalat-masina-de-spalat-rufe-frontala-cu-uscator-gorenje-wd2a164ads",
+      "name": "Mașină de spălat rufe frontală CU USCĂTOR GORENJE WD2A164ADS/A, 10/6 KG, 1400RPM, Clasa A/D, ANTRACIT",
+      "legacyIndex": 11,
+      "dimensionsCm": {
+        "w": 59.5,
+        "d": 61,
+        "h": 84.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "washer_dryer",
+        "col": "#4a4d52",
+        "ringDark": true
+      }
+    },
+    {
+      "id": "uscator-0",
+      "productId": "uscator-uscator-de-rufe-samsung-dv90db7845gbu4-pompa-de-caldura-9-kg",
+      "name": "Uscător de rufe Samsung DV90DB7845GBU4, pompă de căldură, 9 kg, Clasa A, AI Dry, WiFi, Negru",
+      "legacyIndex": 0,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 60,
+        "h": 85
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "dryer",
+        "col": "#1e1f21",
+        "ringDark": true
+      }
+    },
+    {
+      "id": "uscator-1",
+      "productId": "uscator-uscator-de-rufe-bosch-wth8520bby-pompa-de-caldura-8-kg-15-pr",
+      "name": "Uscător de rufe Bosch WTH8520BBY, Pompa de căldură, 8 kg, 15 programe, AutoDry, Clasa D, Alb/Negru",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 59.8,
+        "d": 61.3,
+        "h": 84.2
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "dryer",
+        "col": "#f4f4f2",
+        "ringDark": true
+      }
+    },
+    {
+      "id": "uscator-2",
+      "productId": "uscator-uscator-rufe-lg-rhx5009tb-9kg-turbo-dryer-dual-inverter-wifi",
+      "name": "Uscător rufe LG RHX5009TB, 9kg, Turbo Dryer, Dual Inverter, Wifi, Clasa B, Negru Mat",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 65,
+        "h": 85
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "dryer",
+        "col": "#1e1f21",
+        "ringDark": true
+      }
+    },
+    {
+      "id": "uscator-3",
+      "productId": "uscator-uscator-de-rufe-electrolux-ew7d384ae-pompa-de-caldura-8-kg-c",
+      "name": "Uscător de rufe Electrolux EW7D384AE, Pompa de căldură, 8 kg, Clasa C, motor Inverter, DelicateCare, Alb",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 59.6,
+        "d": 66.2,
+        "h": 85
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "dryer",
+        "col": "#f4f4f2"
+      }
+    },
+    {
+      "id": "masinaVase-0",
+      "productId": "masinaVase-masina-de-spalat-vase-bosch-sms4evw08e-14-seturi-6-programe",
+      "name": "Mașină de spălat vase Bosch SMS4EVW08E, 14 seturi, 6 programe, EfficientDry, Rackmatic, Clasa B, 60 cm, Alb",
+      "legacyIndex": 0,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 60,
+        "h": 84.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "dishwasher_60",
+        "col": "#f4f4f2"
+      }
+    },
+    {
+      "id": "masinaVase-1",
+      "productId": "masinaVase-masina-de-spalat-vase-arctic-dfn363-14-seturi-6-programe-cla",
+      "name": "Mașină de spălat vase Arctic DFN363, 14 seturi, 6 programe, Clasa D, Deschidere automata a usii, 60 cm, Alb",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 59.8,
+        "d": 60,
+        "h": 85
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "dishwasher_60",
+        "col": "#f4f4f2"
+      }
+    },
+    {
+      "id": "masinaVase-2",
+      "productId": "masinaVase-lagan-masina-spalat-vase-autonoma-alb",
+      "name": "LAGAN Mașină spălat vase autonomă, alb",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 60,
+        "h": 84.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "dishwasher_60",
+        "col": "#f4f4f2"
+      }
+    },
+    {
+      "id": "masinaVase-3",
+      "productId": "masinaVase-masina-de-spalat-vase-beko-bdfs26020xq-10-seturi-6-programe",
+      "name": "Mașină de spălat vase Beko BDFS26020XQ, 10 seturi, 6 programe, Clasa E, ProSmart Inverter, 45 cm, Inox",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 44.8,
+        "d": 60,
+        "h": 85
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "dishwasher_45",
+        "col": "#c8cacc",
+        "inox": true
+      }
+    },
+    {
+      "id": "masinaVase-4",
+      "productId": "masinaVase-masina-de-spalat-vase-incorporabila-bosch-smv4evx08e-14-setu",
+      "name": "Mașină de spălat vase încorporabilă Bosch SMV4EVX08E, 14 seturi, 6 programe, EfficientDry, Silence Plus, 60 cm, Clasa B",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 59.8,
+        "d": 55,
+        "h": 81.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "dishwasher_builtin"
+      }
+    },
+    {
+      "id": "masinaVase-5",
+      "productId": "masinaVase-rengora-masina-spalat-vase-incorporata-ikea-300-60-cm",
+      "name": "RENGÖRA Mașină spălat vase încorporată, IKEA 300, 60 cm",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 59.8,
+        "d": 55.5,
+        "h": 82
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "dishwasher_builtin"
+      }
+    },
+    {
+      "id": "microunde-0",
+      "productId": "microunde-cuptor-cu-microunde-heinner-hmw-md25mbk-25-l-control-mecanic",
+      "name": "Cuptor cu microunde Heinner HMW-MD25MBK, 25 l, Control mecanic, 800 W, Negru",
+      "legacyIndex": 0,
+      "dimensionsCm": {
+        "w": 47.2,
+        "d": 39.3,
+        "h": 28
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "microwave",
+        "col": "#1a1a1a"
+      }
+    },
+    {
+      "id": "microunde-1",
+      "productId": "microunde-cuptor-cu-microunde-gorenje-mo17e1w-17-l-5-nivele-700-w-alb",
+      "name": "Cuptor cu microunde, Gorenje MO17E1W, 17 l, 5 nivele, 700 W, Alb",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 45.1,
+        "d": 34.3,
+        "h": 25.7
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "microwave",
+        "col": "#f4f4f2"
+      }
+    },
+    {
+      "id": "microunde-2",
+      "productId": "microunde-cuptor-cu-microunde-samsung-ms23k3513as-eo-23l-800w-digital",
+      "name": "Cuptor cu microunde, Samsung, MS23K3513AS/EO, 23L, 800W, Digital, Inox, Negru",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 48.9,
+        "d": 37.4,
+        "h": 27.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "microwave",
+        "col": "#a8a9ad",
+        "inox": true
+      }
+    },
+    {
+      "id": "microunde-3",
+      "productId": "microunde-cuptor-cu-microunde-incorporabil-bosch-bfl554mb0-25-l-900-w",
+      "name": "Cuptor cu microunde încorporabil Bosch BFL554MB0, 25 l, 900 W, AutoPilot 7, Butoane retractabile, Control digital, Sticla neagra",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 59.4,
+        "d": 38.8,
+        "h": 38.2
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "microwave_builtin",
+        "col": "#121212"
+      }
+    },
+    {
+      "id": "microunde-4",
+      "productId": "microunde-cuptor-cu-microunde-incorporabil-samsung-mg22m8254ak-e2-22-l",
+      "name": "Cuptor cu microunde încorporabil Samsung MG22M8254AK/E2, 22 l, 850 W, Grill, Interior ceramic, Negru",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 59.5,
+        "d": 32,
+        "h": 38
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "microwave_builtin",
+        "col": "#1a1a1a"
+      }
+    },
+    {
+      "id": "microunde-5",
+      "productId": "microunde-lagan-cuptor-cu-microunde-incorporabil-negru",
+      "name": "LAGAN Cuptor cu microunde încorporabil, negru",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 59.5,
+        "d": 34.4,
+        "h": 39.4
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "microwave_builtin",
+        "col": "#1c1c1c"
+      }
+    },
+    {
+      "id": "hota-2",
+      "productId": "hota-hota-decorativa-heinner-hdch-md60tix-60cm-design-t-shape-800",
+      "name": "Hotă decorativă Heinner HDCH-MD60TIX, 60cm, design T-shape, 800 m³/h, inox+sticla neagra",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 50,
+        "h": 45
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "hood_chimney",
+        "col": "#9ea0a3",
+        "inox": true,
+        "glass": true
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "hota-3",
+      "productId": "hota-hota-incorporabila-decorativa-bosch-dwk65dk60-3-trepte-inten",
+      "name": "Hotă încorporabilă decorativă Bosch DWK65DK60, 3 trepte + intensiv, 550 mc/h, 60 cm, Sticla neagra",
+      "legacyIndex": 3,
+      "dimensionsCm": null,
+      "dimensionsConfidence": "UNKNOWN",
+      "style": {
+        "kind": "hood_chimney",
+        "col": "#111111",
+        "glass": true
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "hota-4",
+      "productId": "hota-stackbo-hota-perete-ikea-300-negru-55-cm",
+      "name": "STACKBO Hotă perete, IKEA 300 negru, 55 cm",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 54.5,
+        "d": 35.9,
+        "h": 34.0
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "hood_chimney",
+        "col": "#1c1c1c"
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "hota-5",
+      "productId": "hota-hota-telescopica-incorporabila-electrolux-lfp616x-600-mc-h-1",
+      "name": "Hotă telescopică încorporabilă Electrolux LFP616X, 600 mc/h, 1 motor, 60 cm, Inox",
+      "legacyIndex": 5,
+      "dimensionsCm": null,
+      "dimensionsConfidence": "UNKNOWN",
+      "style": {
+        "kind": "hood_telescopic",
+        "col": "#b4b6b8",
+        "inox": true
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "hota-6",
+      "productId": "hota-hota-incorporabila-telescopica-samsung-nk24m1030ib-ur-392-m3",
+      "name": "Hotă încorporabilă telescopică Samsung NK24M1030IB/UR, 392 m3/h, 60 cm, LED, Negru",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 59.8,
+        "d": 30.1,
+        "h": 18
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "hood_telescopic",
+        "col": "#1a1a1a"
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "hota-7",
+      "productId": "hota-hota-insula-pyramis-corso-90cm-704mc-h-43db-touch-control-in",
+      "name": "Hotă insulă Pyramis CORSO, 90cm, 704mc/h, 43dB, Touch Control, Inox și Sticla Neagra",
+      "legacyIndex": 7,
+      "dimensionsCm": null,
+      "dimensionsConfidence": "UNKNOWN",
+      "style": {
+        "kind": "hood_island",
+        "col": "#8e9093",
+        "inox": true,
+        "glass": true
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "hota-8",
+      "productId": "hota-hota-de-tavan-klarstein-high-line-eco-578-m3-h-evacuare-sau",
+      "name": "Hotă de tavan Klarstein High Line Eco, 578 m³/h, evacuare sau recirculare, panou touch, telecomanda, inox și sticla, Alb, 77 cm",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 77,
+        "d": 32,
+        "h": 40.67
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "hood_ceiling",
+        "col": "#f2f2f0",
+        "inox": true,
+        "glass": true
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "cuptor-2",
+      "productId": "cuptor-cuptor-incorporabil-bosch-hba534eb3-71-l-electric-multifunct",
+      "name": "Cuptor încorporabil Bosch HBA534EB3, 71 L, Electric, Multifunctional, Grill, 7 funcții, EcoClean, 3D Hotair, Clasa A+, Negru",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 59.5,
+        "d": 54.8,
+        "h": 59.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "oven_builtin",
+        "col": "#151515"
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "cuptor-3",
+      "productId": "cuptor-cuptor-electric-pyramis-60in-2060-md-black-glass-10-functii",
+      "name": "Cuptor electric Pyramis 60IN 2060 MD Black Glass, 10 funcții, clasa A, 65 litri, Aqua Clean, finisaj sticla neagra",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 59.5,
+        "d": 57.5,
+        "h": 59.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "oven_builtin",
+        "col": "#111111"
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "cuptor-4",
+      "productId": "cuptor-cuptor-incorporabil-beko-bbie12300xd-electric-72-l-grill-ste",
+      "name": "Cuptor încorporabil Beko BBIE12300XD, Electric, 72 l, Grill, SteamShine Cleaning, Timer, Clasa A, Inox",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 59.4,
+        "d": 56.7,
+        "h": 59.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "oven_builtin",
+        "col": "#b4b6b8",
+        "inox": true
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "cuptor-5",
+      "productId": "cuptor-cuptor-electric-teka-neo-hsb-6350-ss-8-functii-thermoseal-hy",
+      "name": "Cuptor electric Teka NEO HSB 6350 SS, 8 funcții, ThermoSeal, HydroClean, 60 cm, 70l, A+, Inox anti-pata",
+      "legacyIndex": 5,
+      "dimensionsCm": {
+        "w": 59.5,
+        "d": 55.9,
+        "h": 59.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "oven_builtin",
+        "col": "#b8babc",
+        "inox": true
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "cuptor-6",
+      "productId": "cuptor-stenaby-cuptor-cu-ventilatie-functie-grill-alb-ikea-300",
+      "name": "STENABY Cuptor cu ventilație, funcție grill alb/IKEA 300",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 59.5,
+        "d": 54.6,
+        "h": 59.0
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "oven_builtin",
+        "col": "#f4f4f2"
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "plita-3",
+      "productId": "plita-plita-incorporabila-samsung-nz64m3nm1bb-ol-inductie-4-zone-d",
+      "name": "Plită încorporabilă Samsung NZ64M3NM1BB/OL, Inducție, 4 zone de gatit, Control tactil, Power Boost, 60 cm, Negru",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 59,
+        "d": 52,
+        "h": 5.7
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "hob_induction",
+        "col": "#111111"
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "plita-4",
+      "productId": "plita-vilsta-plita-cu-inductie-ikea-300-negru-59-cm",
+      "name": "VILSTA Plită cu inducție, IKEA 300 negru, 59 cm",
+      "legacyIndex": 4,
+      "dimensionsCm": {
+        "w": 59.0,
+        "d": 52.0,
+        "h": 5.3
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "hob_induction",
+        "col": "#111111"
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "plita-5",
+      "productId": "plita-plita-incorporata-cu-inductie-electrolux-eis82453-senseboil",
+      "name": "Plită încorporată cu inducție Electrolux EIS82453 SenseBoil, Hob2Hood, functie Bridge, 80 cm",
+      "legacyIndex": 5,
+      "dimensionsCm": null,
+      "dimensionsConfidence": "UNKNOWN",
+      "style": {
+        "kind": "hob_induction",
+        "col": "#111111"
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "plita-6",
+      "productId": "plita-plita-incorporabila-beko-hilw64225s-gaz-4-arzatoare-arzator",
+      "name": "Plită încorporabilă Beko HILW64225S, Gaz, 4 Arzătoare, Arzator Wok, 60 cm, Sticla neagra",
+      "legacyIndex": 6,
+      "dimensionsCm": {
+        "w": 58.5,
+        "d": 52.4,
+        "h": 4.6
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "hob_gas",
+        "col": "#111111"
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "plita-7",
+      "productId": "plita-plita-incorporabila-whirlpool-gowl628nbee-gaz-4-arzatoare-gr",
+      "name": "Plită încorporabilă Whirlpool GOWL628NBEE, Gaz, 4 arzătoare, Gratare fonta, MultiStep, 60 cm, Negru",
+      "legacyIndex": 7,
+      "dimensionsCm": {
+        "w": 59,
+        "d": 51,
+        "h": 4.9
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "hob_gas",
+        "col": "#111111"
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "plita-8",
+      "productId": "plita-plita-gaz-pyramis-4102-60x51cm-4-arzatoare-gratare-emailate",
+      "name": "Plită gaz Pyramis 4102, 60x51cm, 4 arzătoare, grătare emailate, butoane laterale, finisaj inox",
+      "legacyIndex": 8,
+      "dimensionsCm": {
+        "w": 60,
+        "d": 51,
+        "h": 9.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "kind": "hob_gas",
+        "col": "#c0c2c4",
+        "inox": true
+      },
+      "includedWith": "bucatarie"
+    },
+    {
+      "id": "centrala-0",
+      "productId": "centrala-centrala-termica-pe-gaz-in-condensare-ariston-alteas-one-net",
+      "name": "Centrală termică pe gaz in condensare Ariston Alteas One+ Net 24, murala, fără kit evacuare",
+      "legacyIndex": 0,
+      "dimensionsCm": {
+        "w": 40,
+        "d": 31.5,
+        "h": 74.5
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#ffffff"
+      }
+    },
+    {
+      "id": "centrala-1",
+      "productId": "centrala-centrala-termica-pe-gaz-in-condensare-motan-komfort-24-mural",
+      "name": "Centrală termică pe gaz in condensare Motan Komfort 24, murala, schimbator căldură inox, fără kit evacuare",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 39.8,
+        "d": 34,
+        "h": 75
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#ffffff"
+      }
+    },
+    {
+      "id": "centrala-2",
+      "productId": "centrala-centrala-termica-pe-gaz-in-condensatie-bosch-condens-gc5700i",
+      "name": "Centrală termică pe gaz in condensație Bosch Condens GC5700iW 30/30 C 23, 30 kW, ACM 30 kW",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 44,
+        "d": 36,
+        "h": 78
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#ffffff"
+      }
+    },
+    {
+      "id": "centrala-3",
+      "productId": "centrala-centrala-termica-in-condensare-vaillant-ecotec-pure-vuw-286",
+      "name": "Centrală termică in condensare Vaillant ecoTEC pure VUW 286/7-2 (H-INT II)",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 44,
+        "d": 33.5,
+        "h": 72
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "col": "#ffffff"
+      }
+    },
+    {
+      "id": "boiler-1",
+      "productId": "boiler-boiler-electric-ariston-pro-1-eco-50v-slim-50-l-1800-w",
+      "name": "Boiler electric Ariston Pro 1 Eco 50V slim, 50 L, 1800 W",
+      "legacyIndex": 1,
+      "dimensionsCm": {
+        "w": 35,
+        "d": 35.3,
+        "h": 83.7
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "flat": false
+      }
+    },
+    {
+      "id": "boiler-2",
+      "productId": "boiler-boiler-electric-ariston-lydos-eco-80-v-75-l-1800-w",
+      "name": "Boiler electric Ariston Lydos Eco 80 V, 75 L, 1800 W",
+      "legacyIndex": 2,
+      "dimensionsCm": {
+        "w": 45,
+        "d": 45,
+        "h": 73.3
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "flat": false
+      }
+    },
+    {
+      "id": "boiler-3",
+      "productId": "boiler-boiler-electric-tesy-bilight-100-l-2000-w-termostat-reglabil",
+      "name": "Boiler electric Tesy BiLight 100 l, 2000 W, termostat reglabil",
+      "legacyIndex": 3,
+      "dimensionsCm": {
+        "w": 44,
+        "d": 46,
+        "h": 99
+      },
+      "dimensionsConfidence": "HIGH",
+      "style": {
+        "flat": false
       }
     }
   ],
@@ -10334,6 +11632,854 @@
         "source": "Dedeman",
         "sourceUrl": "https://www.dedeman.ro/ro/focar-semineu-remus-din-fonta-cu-regulator-tiraj-830-x-750-x-432-mm/p/2024736",
         "verifiedAt": "2026-10-24",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaSpalat-0",
+      "variantId": "masinaSpalat-0",
+      "supplierId": "emag-ro",
+      "price": 1699.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-rufe-lg-8-kg-clasa-a-1400-rpm-6-motion-inverter-direct-drive-wi-fi-alb-f4x1008nwk/pd/DR6QF5YBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaSpalat-1",
+      "variantId": "masinaSpalat-1",
+      "supplierId": "emag-ro",
+      "price": 1849.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-rufe-samsung-9-kg-1400-rpm-clasa-a-motor-digital-inverter-eco-bubble-wifi-smartthings-ai-energy-negru-ww90cgc04dable/pd/DCLH27YBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaSpalat-2",
+      "variantId": "masinaSpalat-2",
+      "supplierId": "emag-ro",
+      "price": 2311.45,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-rufe-bosch-8-kg-1400-rpm-iron-assist-hygiene-plus-ecosilence-drive-control-electronic-touch-speed-perfect-program-dark-colors-clasa-a-60-cm-alb-antracit-wan2826sby/pd/DGJ5KY2BM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaSpalat-3",
+      "variantId": "masinaSpalat-3",
+      "supplierId": "emag-ro",
+      "price": 2694.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-rufe-electrolux-8-kg-1400-rpm-clasa-a-motor-inverter-display-led-sensicare-timemanager-alb-ew6f3484e/pd/DTP13LYBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaSpalat-4",
+      "variantId": "masinaSpalat-4",
+      "supplierId": "emag-ro",
+      "price": 1429.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-rufe-arctic-9-kg-1400-rpm-clasa-a-motor-silent-inverter-extrasteam-ironexpress-fast-intensive-steam-child-lock-add-in-alb-aplm2wfsu29412w/pd/DKBLWFYBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaSpalat-5",
+      "variantId": "masinaSpalat-5",
+      "supplierId": "emag-ro",
+      "price": 3186.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-rufe-incorporabila-whirlpool-bi-wmwg-81486e-eu-8-kg-1400-rpm-clasa-a-motor-inverter-display-digital-tehnologia-al-6-lea-simt-alb-wmwg81486e/pd/D56FZD2BM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaSpalat-6",
+      "variantId": "masinaSpalat-6",
+      "supplierId": "emag-ro",
+      "price": 3699.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-rufe-cu-incarcare-verticala-aeg-6-kg-1300-rpm-clasa-a-motor-inverter-cu-magnet-permanent-powercare-okomix-prosteam-prosense-powerclean-alb-ltr8e363e/pd/D5DGX3YBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaSpalat-7",
+      "variantId": "masinaSpalat-7",
+      "supplierId": "emag-ro",
+      "price": 3336.55,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-rufe-cu-incarcare-verticala-whirlpool-6-kg-1200-rpm-tehnologia-al-6lea-simt-clasa-b-motor-inverter-zen-display-digital-alb-tdlrbx6252bseu/pd/DRGFQBYBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaSpalat-8",
+      "variantId": "masinaSpalat-8",
+      "supplierId": "dedeman",
+      "price": 2599.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/masina-de-spalat-rufe-verticala-electrolux-perfectcare-700-ew7tn3272-6-kg-1251-rpm-clasa-b-latime-40-cm-afisaj-lcd-motor-inverter-protectie-impotriva-scurgerilor-de-apa-alb/p/3043240",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaSpalat-9",
+      "variantId": "masinaSpalat-9",
+      "supplierId": "emag-ro",
+      "price": 3243.04,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-rufe-cu-uscator-samsung-spalare-9-kg-uscare-6-kg-1400-rpm-clasa-a-spalare-clasa-d-spalare-uscare-ai-wash-ai-ecobubble-auto-dispense-ai-control-wifi-negru-wd90hg6u94bbu4/pd/D01J2K2BM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaSpalat-10",
+      "variantId": "masinaSpalat-10",
+      "supplierId": "emag-ro",
+      "price": 2222.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-rufe-cu-uscator-beko-10-kg-spalare-6-kg-uscare-clasa-a-1400-rpm-motor-prosmart-inverter-homewhiz-steamcure-ultrafast-addxtra-gri-b5dft510442m/pd/DN3S3DYBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaSpalat-11",
+      "variantId": "masinaSpalat-11",
+      "supplierId": "emag-ro",
+      "price": 3099.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-rufe-frontala-cu-uscator-gorenje-wd2a164ads-a-10-6-kg-1400rpm-clasa-a-d-antracit-kxg0102091/pd/DDQZFGMBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-uscator-0",
+      "variantId": "uscator-0",
+      "supplierId": "emag-ro",
+      "price": 3560.84,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/uscator-de-rufe-samsung-pompa-de-caldura-9-kg-clasa-a-smartthings-ai-control-hygiene-care-ai-dry-wifi-negru-dv90db7845gbu4/pd/DP3VL93BM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-uscator-1",
+      "variantId": "uscator-1",
+      "supplierId": "emag-ro",
+      "price": 3099.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/uscator-de-rufe-bosch-pompa-de-caldura-8-kg-15-programe-autodry-technology-antivibration-filtru-easyclean-clasa-d-alb-negru-wth8520bby/pd/DK77M73BM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-uscator-2",
+      "variantId": "uscator-2",
+      "supplierId": "emag-ro",
+      "price": 4199.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/uscator-rufe-lg-rhx5009tb-9kg-turbo-dryer-dual-inverter-wifi-clasa-b-negru-mat-rhx5009tbb/pd/DSX15C2BM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-uscator-3",
+      "variantId": "uscator-3",
+      "supplierId": "emag-ro",
+      "price": 3749.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/uscator-de-rufe-electrolux-pompa-de-caldura-8-kg-clasa-c-motor-inverter-delicatecare-sensicare-display-led-iluminare-interioara-tambur-alb-ew7d384ae/pd/DYPDGCYBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaVase-0",
+      "variantId": "masinaVase-0",
+      "supplierId": "emag-ro",
+      "price": 3289.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-vase-bosch-14-seturi-6-programe-efficientdry-sistem-rackmatic-home-connect-ecosilence-drive-tab-count-clasa-b-60-cm-alb-sms4evw08e/pd/D5XMY5YBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaVase-1",
+      "variantId": "masinaVase-1",
+      "supplierId": "emag-ro",
+      "price": 1699.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-vase-arctic-14-seturi-6-programe-clasa-d-deschidere-automata-a-usii-aqua-protect-mini-35-60-cm-alb-dfn363/pd/DLD1BKMBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaVase-2",
+      "variantId": "masinaVase-2",
+      "supplierId": "ikea-ro",
+      "price": 1999.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/lagan-masina-spalat-vase-autonoma-alb-70576744/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaVase-3",
+      "variantId": "masinaVase-3",
+      "supplierId": "emag-ro",
+      "price": 1599.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-vase-beko-10-seturi-6-programe-clasa-e-motor-prosmart-inverter-hygiene-intense-fast-45-cm-inox-bdfs26020xq/pd/DVT2FVMBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaVase-4",
+      "variantId": "masinaVase-4",
+      "supplierId": "emag-ro",
+      "price": 2699.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/masina-de-spalat-vase-incorporabila-bosch-14-seturi-6-programe-efficientdry-tab-count-silence-plus-sistem-rackmatic-infolight-ecosilence-drive-home-connect-60-cm-clasa-b-smv4evx08e/pd/D79MY5YBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-masinaVase-5",
+      "variantId": "masinaVase-5",
+      "supplierId": "ikea-ro",
+      "price": 1999.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/rengoera-masina-spalat-vase-incorporata-ikea-300-40475572/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-microunde-0",
+      "variantId": "microunde-0",
+      "supplierId": "emag-ro",
+      "price": 381.43,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/cuptor-cu-microunde-heinner-25-l-control-mecanic-800-w-negru-hmw-md25mbk/pd/DQL0P4YBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-microunde-1",
+      "variantId": "microunde-1",
+      "supplierId": "emag-ro",
+      "price": 399.3,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/cuptor-cu-microunde-gorenje-17-l-5-nivele-700-w-alb-mo17e1w/pd/DC8JP1BBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-microunde-2",
+      "variantId": "microunde-2",
+      "supplierId": "emag-ro",
+      "price": 711.54,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/cuptor-cu-microunde-samsung-23l-800w-digital-inox-negru-ms23k3513as-eo/pd/DZZ53JBBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-microunde-3",
+      "variantId": "microunde-3",
+      "supplierId": "emag-ro",
+      "price": 1499.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/cuptor-cu-microunde-incorporabil-bosch-25-l-900-w-autopilot-7-butoane-retractabile-control-digital-sticla-neagra-bfl554mb0/pd/DMNDJFBBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-microunde-4",
+      "variantId": "microunde-4",
+      "supplierId": "emag-ro",
+      "price": 899.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/cuptor-cu-microunde-incorporabil-samsung-22-l-850-w-dezghetare-rapida-pastrare-la-cald-grill-mod-eco-interior-ceramic-negru-mg22m8254ak-e2/pd/DP3D54MBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-microunde-5",
+      "variantId": "microunde-5",
+      "supplierId": "ikea-ro",
+      "price": 899.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/lagan-cuptor-cu-microunde-incorporabil-negru-40600057/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-hota-2",
+      "variantId": "hota-2",
+      "supplierId": "emag-ro",
+      "price": 796.51,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/hota-decorativa-heinner-60cm-design-t-shape-800-m-h-4-trepte-de-viteza-motor-1-x-250w-lumina-led-2-x-1-5w-2-filtre-aluminiu-control-touch-senzor-miscare-diametru-tub-evacuare-150mm-inox-sticla-neagra-/pd/DNQ0PF3BM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-hota-3",
+      "variantId": "hota-3",
+      "supplierId": "emag-ro",
+      "price": 1049.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/hota-incorporabila-decorativa-bosch-3-trepte-intensiv-putere-de-absorbtie-550-mc-h-60-cm-sticla-neagra-dwk65dk60/pd/DJLF60YBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-hota-4",
+      "variantId": "hota-4",
+      "supplierId": "ikea-ro",
+      "price": 999.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/stackbo-hota-perete-ikea-300-negru-70602371/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-hota-5",
+      "variantId": "hota-5",
+      "supplierId": "emag-ro",
+      "price": 839.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/hota-telescopica-incorporabila-electrolux-putere-de-absorbtie-600-mc-h-1-motor-60-cm-inox-lfp616x/pd/DC7WGVMBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-hota-6",
+      "variantId": "hota-6",
+      "supplierId": "emag-ro",
+      "price": 499.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/hota-incorporabila-telescopica-samsung-putere-de-absorbtie-392-m3-h-60-cm-led-negru-nk24m1030ib-ur/pd/DSL9SSBBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-hota-7",
+      "variantId": "hota-7",
+      "supplierId": "emag-ro",
+      "price": 5417.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/hota-insula-pyramis-corso-90cm-704mc-h-43db-touch-control-inox-si-sticla-neagra-pyr-065021701/pd/DC0T5BBBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-hota-8",
+      "variantId": "hota-8",
+      "supplierId": "emag-ro",
+      "price": 1361.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/hota-de-tavan-klarstein-high-line-eco-578-m-h-cu-evacuare-sau-fara-evacuare-recirculare-3-trepte-de-putere-panou-touch-functie-turbo-telecomanda-filtru-de-carbon-inclus-inox-si-sticla-clasa-energetica/pd/D847TY2BM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-cuptor-2",
+      "variantId": "cuptor-2",
+      "supplierId": "emag-ro",
+      "price": 1899.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/cuptor-incorporabil-bosch-71-l-electric-multifunctional-grill-7-functii-autocuratare-ecoclean-hidrolitica-3d-hotair-suport-telescopic-clasa-a-negru-hba534eb3/pd/DDXMY5YBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-cuptor-3",
+      "variantId": "cuptor-3",
+      "supplierId": "emag-ro",
+      "price": 877.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/cuptor-electric-pyramis-60in-2060-md-black-glass-10-functii-clasa-a-volum-65-litri-aqua-clean-ghidaje-ambutisate-butoane-rotative-timer-digital-finisaj-sticla-neagra-pyr-202300655/pd/D8ZNP02BM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-cuptor-4",
+      "variantId": "cuptor-4",
+      "supplierId": "emag-ro",
+      "price": 1148.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/cuptor-incorporabil-beko-electric-72-l-grill-steamshine-cleaning-timer-clasa-a-inox-bbie12300xd/pd/D04J13MBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-cuptor-5",
+      "variantId": "cuptor-5",
+      "supplierId": "emag-ro",
+      "price": 1098.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/cuptor-electric-teka-neo-hsb-6350-ss-8-functii-thermoseal-hydrocleanr-60-cm-70l-a-inox-anti-pata-111010068/pd/D4F7FF3BM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-cuptor-6",
+      "variantId": "cuptor-6",
+      "supplierId": "ikea-ro",
+      "price": 1299.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/stenaby-cuptor-cu-ventilatie-functie-grill-alb-ikea-300-00600059/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-plita-3",
+      "variantId": "plita-3",
+      "supplierId": "emag-ro",
+      "price": 949.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/plita-incorporabila-samsung-inductie-4-zone-de-gatit-control-tactil-power-boost-indicator-caldura-reziduala-60-cm-negru-nz64m3nm1bb-ol/pd/DL2F5CMBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-plita-4",
+      "variantId": "plita-4",
+      "supplierId": "ikea-ro",
+      "price": 1199.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "IKEA",
+        "sourceUrl": "https://www.ikea.com/ro/ro/p/vilsta-plita-cu-inductie-ikea-300-negru-90557725/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-plita-5",
+      "variantId": "plita-5",
+      "supplierId": "emag-ro",
+      "price": 3673.29,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/plita-incorporata-cu-inductie-electrolux-senseboil-hob2hood-functie-bridge-80-cm-eis82453/pd/DY43RXYBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-plita-6",
+      "variantId": "plita-6",
+      "supplierId": "emag-ro",
+      "price": 779.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/plita-incorporabila-beko-gaz-4-arzatoare-arzator-wok-60-cm-sticla-neagra-hilw64225s/pd/DWWGCKBBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-plita-7",
+      "variantId": "plita-7",
+      "supplierId": "emag-ro",
+      "price": 699.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/plita-incorporabila-whirlpool-gaz-4-arzatoare-gratare-fonta-multistep-60-cm-negru-gowl628nbee/pd/D20X32MBM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-plita-8",
+      "variantId": "plita-8",
+      "supplierId": "emag-ro",
+      "price": 362.99,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "eMAG",
+        "sourceUrl": "https://www.emag.ro/plita-gaz-pyramis-4102-dimensiune-60x51cm-4-arzatoare-gratare-emailate-butoane-laterale-finisaj-inox-pyr-202300362/pd/DZL17P3BM/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-centrala-0",
+      "variantId": "centrala-0",
+      "supplierId": "dedeman",
+      "price": 5497.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/centrala-termica-pe-gaz-in-condensare-ariston-alteas-one-net-24-murala-afisaj-lcd-ipx5d-protectie-inghet-fara-kit-evacuare/p/2030928",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-centrala-1",
+      "variantId": "centrala-1",
+      "supplierId": "dedeman",
+      "price": 2974.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/centrala-termica-pe-gaz-in-condensare-motan-komfort-24-murala-afisaj-digital-ipx5d-protectie-inghet-schimbator-caldura-inox-fara-kit-evacuare/p/2031533",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-centrala-2",
+      "variantId": "centrala-2",
+      "supplierId": "hornbach",
+      "price": 7455.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Hornbach",
+        "sourceUrl": "https://www.hornbach.ro/p/centrala-termica-pe-gaz-in-condensatie-bosch-condens-gc5700iw-30-30-c-23-30-kw-acm-30-kw/12299061/",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-centrala-3",
+      "variantId": "centrala-3",
+      "supplierId": "termix",
+      "price": 5293.05,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Termix",
+        "sourceUrl": "https://www.termix.ro/en/cumpara/condensing-gas-boiler-ecotec-pure%20vuw-286-7-2-hint-ii-1281",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-boiler-1",
+      "variantId": "boiler-1",
+      "supplierId": "dedeman",
+      "price": 620.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/boiler-electric-ariston-pro-1-eco-50v-slim-50-l-1800-w/p/2023123",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-boiler-2",
+      "variantId": "boiler-2",
+      "supplierId": "dedeman",
+      "price": 849.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Dedeman",
+        "sourceUrl": "https://www.dedeman.ro/ro/boiler-electric-ariston-lydos-eco-80-v-75-l-1800-w/p/2023263",
+        "verifiedAt": "2026-11-10",
+        "verificationType": "product_page",
+        "confidence": "HIGH"
+      }
+    },
+    {
+      "id": "offer-boiler-3",
+      "variantId": "boiler-3",
+      "supplierId": "hornbach",
+      "price": 603.0,
+      "currency": "RON",
+      "availability": "UNKNOWN",
+      "affiliateUrl": null,
+      "provenance": {
+        "source": "Hornbach",
+        "sourceUrl": "https://www.hornbach.ro/p/boiler-electric-tesy-bilight-100-l-2000-w-termostat-reglabil/8861585/",
+        "verifiedAt": "2026-11-10",
         "verificationType": "product_page",
         "confidence": "HIGH"
       }

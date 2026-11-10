@@ -1,0 +1,81 @@
+// Renovarea completă (2026-11-10): ferestrele ca produse pe gol, aparatajul electric pe puncte, electrocasnicele noi (mașini de
+// spălat rufe și vase, uscătoare, microunde, centrale, boilere, hote, plite, cuptoare) — prețul citit pe pagina produsului,
+// cu dimensiunile din fișa tehnică, model 3D propriu, simbol în plan, puncte tehnice și linie în deviz.
+import { test } from 'vitest';
+import assert from 'node:assert/strict';
+import catalogJson from '../data/catalog.v1.json';
+import materialsJson from '../data/materials.v1.json';
+import evidence from '../data/catalog-evidence.2026-11-10.json';
+import { groups, toEngineCatalog } from '../core/catalog';
+import { RETAILER_HOSTS } from '../core/outbound';
+import { FRONT_CLEARANCE, WALL_HIGH } from '../core/rules';
+import { planSymbol } from '../core/plan-symbols';
+import { newSnapshot } from '../core/project';
+import { computeBOQ } from '../core/boq';
+import { windowOpenings, windowCandidates, windowIssues, sanitizeWindows, windowVisual } from '../core/windows';
+import { suggestTechPoints, techBodyFields, pruneProducts, TECH_PRODUCT_CATEGORY } from '../core/technical';
+import { groupsForRoom } from '../core/furniture-fit';
+import { viewerInput } from '../lib/viewer-input';
+import type { Catalog, MaterialsCatalog, Snapshot } from '../core/types';
+
+const cat = catalogJson as unknown as Catalog, mc = materialsJson as unknown as MaterialsCatalog;
+const NEW: Record<string, string> = { masinaSpalat: 'washer', uscator: 'washer', masinaVase: 'dishwasher', microunde: 'microwave', centrala: 'gasboiler' };
+const demo = (): Snapshot => newSnapshot(cat, 'Renovare', 'demo', 'ro', { materials: mc });
+
+test('electrocasnicele noi: grupă, model 3D, dimensiuni întregi, simbol în plan, loc în față, camerele potrivite', () => {
+  const g = groups(cat), eng = toEngineCatalog(cat);
+  for (const [k, model] of Object.entries(NEW)){ assert.ok(g[k] && g[k]!.variants.length >= 3, k); assert.equal(eng[k]!.model, model, k); assert.ok(FRONT_CLEARANCE[k] !== undefined, k);
+    for (const v of g[k]!.variants){ const dm = v.dimensionsCm!; assert.ok(dm && dm.w > 0 && dm.d > 0 && dm.h > 0, v.id); assert.equal(v.dimensionsConfidence, 'HIGH', v.id);
+      const s = planSymbol(k, dm.w / 100, dm.d / 100); assert.ok(s.outline || s.detail, v.id); } }
+  // tipurile diferite au stiluri diferite (nu un model standard): hublou frontal / încărcare verticală / încorporabilă, culori
+  const kinds = new Set(g['masinaSpalat']!.variants.map(v => v.style?.kind)); assert.ok(kinds.has('washer_front') && kinds.has('washer_top') && kinds.has('washer_dryer'), [...kinds].join());
+  assert.ok(new Set(g['masinaSpalat']!.variants.map(v => v.style?.col)).size >= 3);
+  assert.ok(WALL_HIGH.has('centrala') && WALL_HIGH.has('microunde'));
+  assert.ok(groupsForRoom('baie', Object.keys(g)).suggested.includes('masinaSpalat')); assert.ok(groupsForRoom('bucatarie', Object.keys(g)).suggested.includes('masinaVase'));
+  assert.ok(!groupsForRoom('dormitor', Object.keys(g)).suggested.includes('masinaVase'));
+});
+test('fiecare ofertă nouă are prețul și linkul citite pe pagina produsului (dovezile din 2026-11-10), pe magazinul declarat', () => {
+  const ev = new Map(evidence.items.map(i => [i.url, i.price]));
+  const fresh = cat.offers.filter(o => o.provenance.verifiedAt === '2026-11-10'); assert.ok(fresh.length >= 50, String(fresh.length));
+  for (const o of fresh){ assert.equal(ev.get(o.provenance.sourceUrl!), o.price, o.id); assert.ok(RETAILER_HOSTS[o.supplierId]!.includes(new URL(o.provenance.sourceUrl!).hostname), o.id); }
+  const mats = mc.materials.filter(m => m.verifiedAt === '2026-11-10'); assert.ok(mats.length >= 30);
+  for (const m of mats){ assert.equal(ev.get(m.sourceUrl!), m.unitPrice, m.id); assert.ok(['window', 'socket', 'switch', 'thermostat'].includes(m.category), m.id); }
+  // nimic cu dimensiuni contestate nu a intrat în plan; motivul e scris în dovezi
+  assert.ok(evidence.skipped.some(s => /BelliSlimo/.test(String((s as { name?: string }).name)) && /adâncimea/.test(String(s.reason))));
+  const newIds = new Set(fresh.map(o => o.variantId)); assert.ok(!cat.variants.some(v => newIds.has(v.id) && /BelliSlimo|Velis Tech|Vitodens/.test(v.name)));
+});
+test('ferestrele: produsele potrivite golului primele, avertisment de mărime și de ușă de balcon, linie în deviz, desen 3D', () => {
+  const s = demo(), o = windowOpenings(s)[0]!; assert.ok(o, 'demo are ferestre');
+  const c = windowCandidates(mc, o); assert.ok(c.length >= 15); for (let i = 1; i < c.length; i++) assert.ok(Number(c[i - 1]!.fits) >= Number(c[i]!.fits));
+  const wrong = c.find(x => !x.fits && x.m.specs?.win?.kind !== 'balcony_door')!, door = c.find(x => x.m.specs?.win?.kind === 'balcony_door')!;
+  s.windowUnits = { [o.id]: { product: wrong.m.id } }; assert.ok(windowIssues(s, mc).some(i => i.key === 'win.size'));
+  s.windowUnits = { [o.id]: { product: door.m.id } }; assert.ok(windowIssues(s, mc).some(i => i.key === 'win.balconySill'));
+  const b = computeBOQ(s, cat, mc), line = b.items.find(i => i.key === `window:${o.id}`); assert.ok(line, 'linia ferestrei'); assert.equal(line!.unitPrice ?? line!.total, line!.unitPrice ?? door.m.unitPrice);
+  const v = windowVisual(s, mc, 0)[0]!; assert.equal(v.color, door.m.specs!.color); assert.equal(v.fixed, false);
+  const vi = viewerInput(s, cat, toEngineCatalog(cat), { mc }) as { plan: { pereti: { goluri: { fer?: unknown }[] }[] } };
+  assert.ok(vi.plan.pereti[o.wallIndex]!.goluri[o.openingIndex]!.fer, 'motorul primește tâmplăria aleasă');
+});
+test('ferestrele la salvare: doar goluri de fereastră existente, id-uri scurte; altceva e refuzat', () => {
+  const s = demo(), o = windowOpenings(s)[0]!;
+  assert.deepEqual(sanitizeWindows({ [o.id]: { product: 'x-1' }, 'nu-exista': { product: 'x-1' } }, s).value, { [o.id]: { product: 'x-1' } });
+  assert.ok(sanitizeWindows([], s).error); assert.ok(sanitizeWindows({ [o.id]: { product: 5 } }, s).error); assert.ok(sanitizeWindows({ [o.id]: { product: 'x'.repeat(81) } }, s).error);
+  assert.deepEqual(sanitizeWindows({ [o.id]: {} }, s).value, {});
+});
+test('aparatajul electric: produsul pe priză, întrerupător și termostat; categoria greșită se elimină; linie în deviz', () => {
+  assert.equal(TECH_PRODUCT_CATEGORY.outlet, 'socket'); assert.equal(TECH_PRODUCT_CATEGORY.switch, 'switch');
+  const s = demo(); s.tech = suggestTechPoints(s); const out = s.tech.find(p => p.kind === 'outlet')!, sw = s.tech.find(p => p.kind === 'switch')!;
+  const sock = mc.materials.find(m => m.category === 'socket')!, swm = mc.materials.find(m => m.category === 'switch')!;
+  assert.equal(techBodyFields({ kind: 'outlet', product: sock.id }).product, sock.id);
+  out.product = sock.id; sw.product = sock.id; pruneProducts(s, mc); assert.equal(out.product, sock.id); assert.equal(sw.product, undefined, 'priza pe întrerupător se elimină');
+  sw.product = swm.id; const b = computeBOQ(s, cat, mc);
+  assert.ok(b.items.some(i => i.key.endsWith(`:outlet:${out.id}`))); assert.ok(b.items.some(i => i.key.endsWith(`:switch:${sw.id}`)));
+});
+test('punctele tehnice automate pentru electrocasnicele noi: priză, apă și scurgere unde trebuie', () => {
+  const s = demo(), bath = s.floor.rooms.find(r => r.type === 'baie')!, kit = s.floor.rooms.find(r => r.type === 'bucatarie')!, g = groups(cat);
+  const put = (group: string, room: typeof bath) => { const v = g[group]!.variants[0]!; s.placements.push({ id: `t-${group}`, roomId: room.id, group, variantId: v.id, x: (room.rect.x0 + room.rect.x1) / 2, z: (room.rect.z0 + room.rect.z1) / 2, rotation: 0, source: 'manual' }); };
+  put('masinaSpalat', bath); put('masinaVase', kit); put('centrala', kit);
+  const pts = suggestTechPoints(s), why = (re: RegExp) => pts.filter(p => re.test(p.reason)).map(p => p.kind).sort();
+  assert.deepEqual(why(/mașin(ă|a) de spălat \(|robinet mașină de spălat|scurgere mașină de spălat/), ['drain', 'outlet', 'water_cold']);
+  assert.deepEqual(why(/mașină de spălat vase|mașină de vase/), ['drain', 'outlet', 'water_cold']);
+  assert.ok(why(/centrală/).includes('outlet'));
+});

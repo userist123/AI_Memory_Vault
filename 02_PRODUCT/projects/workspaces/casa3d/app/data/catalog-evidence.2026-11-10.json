@@ -1,0 +1,1460 @@
+{
+ "note": "Produse reale citite pe pagina produsului pe 2026-11-10 (prețul și dimensiunile din fișa tehnică), pentru ferestre, electrocasnice, aparatele bucătăriei, centrale, boilere și aparataj electric. Fără dimensiuni ghicite: piesele cu dimensiuni lipsă sau contestate pe pagină au rămas deoparte.",
+ "items": [
+  {
+   "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-4k-80x116-cm-alba-fixa/4692264/",
+   "name": "Fereastră PVC termopan 4K 80x116 cm albă fixă",
+   "price": 328.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "preț — 328,00 lei; Lăţime 800 mm, Înălţime 1.160 mm, Adâncime construcţie 60 mm; Variantă: Element fix",
+   "dimensionsCm": {
+    "w": 80,
+    "h": 116,
+    "d": 6
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-6-camere-56x56-cm-stejar-auriu-dreapta-deschidere-dubla/4692254/",
+   "name": "Fereastră PVC termopan 6 camere 56x56 cm stejar auriu dreapta deschidere dublă",
+   "price": 359.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "359,00 lei (cu TVA, DEEE și DBA); lățime și înălțime 560 mm, adâncime construcție 70 mm, nuanță Golden Oak",
+   "dimensionsCm": {
+    "w": 56,
+    "h": 56,
+    "d": 7
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-100x50-cm-alba-antracit-deschidere-batanta/12019694/",
+   "name": "Fereastră PVC termopan 100x50 cm albă/antracit deschidere batantă",
+   "price": 379.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "preț — 379,00 lei; Lățime 1.000 mm, Înălțime 500 mm, Adâncime construcție 60 mm; „Fereastra este gri la exterior și albă la interior.”",
+   "dimensionsCm": {
+    "w": 100,
+    "h": 50,
+    "d": 6
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-5-camere-tripan-116x116-cm-alba-antracit-deschidere-dubla-stanga-fixa/12019673/",
+   "name": "Fereastră PVC termopan 5 camere tripan 116x116 cm albă/antracit deschidere dublă stânga + fixă",
+   "price": 769.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "769,00 lei; 1.160 mm x 1.160 mm, Adâncime construcţie 71 mm; „Cu vitrificare triplă”; „2 canaturi (oscilo-batant/fix)”",
+   "dimensionsCm": {
+    "w": 116,
+    "h": 116,
+    "d": 7.1
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-6-camere-116x116-cm-stejar-auriu-fixa-deschidere-dubla-dreapta/6301621/",
+   "name": "Fereastră PVC termopan 6 camere 116x116 cm stejar auriu fixă + deschidere dublă dreapta",
+   "price": 699.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "preț — 699,00 lei; Lăţime 1.160 mm, Înălţime 1.160 mm, Adâncime construcţie 70 mm; Nuanţă Golden Oak",
+   "dimensionsCm": {
+    "w": 116,
+    "h": 116,
+    "d": 7
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-4-camere-142x116-cm-alba-fixa-deschidere-dubla-dreapta/6301636/",
+   "name": "Fereastră PVC termopan 4 camere 142x116 cm albă fixă + deschidere dublă dreapta",
+   "price": 639.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "preț — 639,00 lei; Lăţime 1.420 mm, Înălţime 1.160 mm, Adâncime construcţie 60 mm; 4/16/4 mm",
+   "dimensionsCm": {
+    "w": 142,
+    "h": 116,
+    "d": 6
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/usa-balcon-pvc-termopan-aron-5k-86x204-cm-alba-dreapta/12019695/",
+   "name": "Ușă balcon PVC termopan ARON 5K 86x204 cm albă dreapta",
+   "price": 965.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "preț — 965,00 lei; Lăţime 860 mm, Înălţime 2.040 mm, Adâncime construcţie 71 mm; Cu vitrificare triplă",
+   "dimensionsCm": {
+    "w": 86,
+    "h": 204,
+    "d": 7.1
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/usa-balcon-pvc-termopan-6k-84x204-cm-stejar-auriu-dreapta-deschidere-simpla/4692261/",
+   "name": "Ușă balcon PVC termopan 6K 84x204 cm stejar auriu dreapta deschidere simplă",
+   "price": 1109.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "preț — 1109,00 lei; Lăţime 840 mm, Înălţime 2.040 mm, Adâncime construcţie 70 mm; Nuanţă Golden Oak",
+   "dimensionsCm": {
+    "w": 84,
+    "h": 204,
+    "d": 7
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/usa-balcon-pvc-termopan-5k-86x204-cm-nuc-dreapta-deschidere-simpla/12845987/",
+   "name": "Ușă balcon PVC termopan 5K 86x204 cm nuc dreapta deschidere simplă",
+   "price": 1090.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "preț — 1090,00 lei; Lăţime 860 mm, Înălţime 2.040 mm, Adâncime construcţie 60 mm; 4/16/4 mm",
+   "dimensionsCm": {
+    "w": 86,
+    "h": 204,
+    "d": 6
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/fereastra-de-mansarda-fakro-ftp-v-u4-78x118-cm/10451935/",
+   "name": "Fereastră de mansardă FAKRO FTP-V U4 78x118 cm",
+   "price": 2660.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "preț — 2660,00 lei; Lățime cadru exterior 78 cm, Înălțime cadru exterior 118 cm; Material ramă: Pin lăcuit",
+   "dimensionsCm": {
+    "w": 78,
+    "h": 118,
+    "d": null
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/fereastra-pvc-termopan-5-camere-alb-86-x-116-cm-dubla-deschidere-dreapta/p/6019494",
+   "name": "Fereastra PVC termopan, 5 camere, alb, 86 x 116 cm, dubla deschidere, dreapta",
+   "price": 469.0,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "515.00 lei /bucată 469.00 lei /bucată; „Prețul este valabil până la data de 30.11.2026”; Latime 86, Inaltime 116, Adancime constructiva 70 mm",
+   "dimensionsCm": {
+    "w": 86,
+    "h": 116,
+    "d": 7
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/fereastra-pvc-termopan-gealan-6-camere-nuc-116-x-114-cm-fixa-dubla-deschidere-dreapta/p/6072411",
+   "name": "Fereastra PVC termopan Gealan, 6 camere, nuc, 116 x 114 cm, fixa + dubla deschidere, dreapta",
+   "price": 1090.0,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "1090.00 lei /bucată; Latime 116, Inaltime 114, Adancime constructiva 74 mm; Culoare nuc",
+   "dimensionsCm": {
+    "w": 116,
+    "h": 114,
+    "d": 7.4
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/fereastra-pvc-termopan-gealan-6-camere-gri-antracit-146-x-114-cm-fixa-dubla-deschidere-dreapta/p/6072423",
+   "name": "Fereastra PVC termopan Gealan, 6 camere, gri antracit, 146 x 114 cm, fixa + dubla deschidere, dreapta",
+   "price": 1215.0,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "1215.00 lei /bucată; 146 x 114 cm, Adancime constructiva 74 mm; Culoare gri antracit",
+   "dimensionsCm": {
+    "w": 146,
+    "h": 114,
+    "d": 7.4
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/fereastra-mansarda-velux-standard-gll-ck04-1061-operare-de-sus-55-x-98-cm/p/6030535",
+   "name": "Fereastra mansarda VELUX, Standard, GLL CK04 1061, operare de sus, 55 x 98 cm",
+   "price": 2041.0,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "2041.00 lei /bucată; Latime 55, Inaltime 98; „geam termoizolant 3 foi sticla si gaz inert (argon)”",
+   "dimensionsCm": {
+    "w": 55,
+    "h": 98,
+    "d": null
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/fereastra-mansarda-velux-standard-plus-gll-mk08-1061-operare-de-sus-78-x-140-cm/p/6031434",
+   "name": "Fereastra mansarda VELUX, Standard, GLL MK08 1061, operare de sus, 78 x 140 cm",
+   "price": 2696.0,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "2696.00 lei /bucată; Latime 78, Inaltime 140; geam termoizolant 3 foi sticla si gaz inert (argon)",
+   "dimensionsCm": {
+    "w": 78,
+    "h": 140,
+    "d": null
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.emag.ro/fereastra-pvc-aluplast-cu-geam-termopan-barrier-75-antracit-1160x860-mm-profil-70-mm-1-canat-protectie-solara-oscilobatant-bagheta-warm-edge-5-camere-2-garnituri-b752706586a/pd/DC15D33BM/",
+   "name": "Fereastra PVC Aluplast cu geam termopan, Barrier 75, antracit, 1160x860 mm, profil 70 mm, 1 canat, oscilobatant, 5 camere",
+   "price": 1308.98,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "PRP: 1.374,43 Lei 1.308,98 Lei; Latime 860 mm, Inaltime 1160 mm; Adancime profil: 70 mm",
+   "dimensionsCm": {
+    "w": 86,
+    "h": 116,
+    "d": 7
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.emag.ro/fereastra-pvc-termopan-klass-6-camere-izolare-1200x1000-mm-gri-antracit-deschidere-oscilobatanta-dreapta-102397/pd/DWDBC03BM/",
+   "name": "Fereastra PVC termopan Klass, 6 camere izolare, 1200x1000 mm, gri antracit, deschidere oscilobatanta dreapta",
+   "price": 939.46,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "PRP: 1.148,24 Lei 939,46 Lei; tabel: Latime 1000 mm, Inaltime 1200 mm, Adancime 70 mm (titlul spune 1200x1000 mm)",
+   "dimensionsCm": {
+    "w": 100,
+    "h": 120,
+    "d": 7
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.emag.ro/fereastra-termopan-kobezol-lemn-masiv-deschidere-centrala-dreapta-vopsit-antracit-118x148-cm-kob-61/pd/DR75MQMBM/",
+   "name": "Fereastra termopan, Kobezol, Lemn masiv, Deschidere centrala, Dreapta, Vopsit antracit, 118x148 cm",
+   "price": 3627.58,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "3.627,58 Lei; Latime 118 cm, Inaltime 148 cm; Latime profil 68 mm; Material: Lemn",
+   "dimensionsCm": {
+    "w": 118,
+    "h": 148,
+    "d": 6.8
+   },
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-lg-8-kg-clasa-a-1400-rpm-6-motion-inverter-direct-drive-wi-fi-alb-f4x1008nwk/pd/DR6QF5YBM/",
+   "name": "Masina de spalat rufe LG F4X1008NWK, 8 kg, Clasa A, 1400 RPM, 6 Motion, Inverter Direct Drive, Wi-Fi, Alb",
+   "price": 1699.0,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"1.699,00 Lei\" langa \"Adauga in Cos\" (eticheta Super Pret, fara pret vechi) | Latime 60 cm, Adancime 59 cm, Inaltime 85 cm",
+   "dimensionsCm": {
+    "w": 60,
+    "d": 59,
+    "h": 85
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-samsung-9-kg-1400-rpm-clasa-a-motor-digital-inverter-eco-bubble-wifi-smartthings-ai-energy-negru-ww90cgc04dable/pd/DCLH27YBM/",
+   "name": "Masina de spalat rufe Samsung WW90CGC04DABLE, 9 kg, 1400 RPM, Clasa A, Motor Digital Inverter, Negru",
+   "price": 1849.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"PRP: 2.789,99 Lei\" urmat de \"1.849,99 Lei\" | Latime 60 cm, Adancime 63.5 cm, Inaltime 85 cm",
+   "dimensionsCm": {
+    "w": 60,
+    "d": 63.5,
+    "h": 85
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-bosch-8-kg-1400-rpm-iron-assist-hygiene-plus-ecosilence-drive-control-electronic-touch-speed-perfect-program-dark-colors-clasa-a-60-cm-alb-antracit-wan2826sby/pd/DGJ5KY2BM/",
+   "name": "Masina de spalat rufe Bosch WAN2826SBY, 8 Kg, 1400 RPM, Iron Assist, Hygiene Plus, EcoSilence Drive, alb/antracit",
+   "price": 2311.45,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"PRP: 3.499,99 Lei\" urmat de \"2.311,45 Lei\" | Latime 598 mm, Adancime 590 mm, Inaltime 845 mm",
+   "dimensionsCm": {
+    "w": 59.8,
+    "d": 59,
+    "h": 84.5
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-electrolux-8-kg-1400-rpm-clasa-a-motor-inverter-display-led-sensicare-timemanager-alb-ew6f3484e/pd/DTP13LYBM/",
+   "name": "Masina de spalat rufe Electrolux EW6F3484E, 8 kg, 1400 rpm, Clasa A, motor Inverter, Display LED, Alb",
+   "price": 2694.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"2.694,99 Lei\" (fara pret vechi) | Latime 59.6 cm, Adancime 57.6 cm, Inaltime 84.7 cm",
+   "dimensionsCm": {
+    "w": 59.6,
+    "d": 57.6,
+    "h": 84.7
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-arctic-9-kg-1400-rpm-clasa-a-motor-silent-inverter-extrasteam-ironexpress-fast-intensive-steam-child-lock-add-in-alb-aplm2wfsu29412w/pd/DKBLWFYBM/",
+   "name": "Masina de spalat rufe Arctic APLM2WFSU29412W, 9 Kg, 1400 RPM, Clasa A, Motor Silent Inverter, ExtraSteam, IronExpress, Alb",
+   "price": 1429.0,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"1.429,00 Lei\" (fara pret vechi) | Latime 60 cm, Adancime 54.6 cm, Inaltime 84.5 cm",
+   "dimensionsCm": {
+    "w": 60,
+    "d": 54.6,
+    "h": 84.5
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-incorporabila-whirlpool-bi-wmwg-81486e-eu-8-kg-1400-rpm-clasa-a-motor-inverter-display-digital-tehnologia-al-6-lea-simt-alb-wmwg81486e/pd/D56FZD2BM/",
+   "name": "Masina de spalat rufe incorporabila Whirlpool BI WMWG 81486E EU, 8 kg, 1400 rpm, Clasa A",
+   "price": 3186.0,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"3.540,00 Lei\" / \"3.186,00 Lei\" / \"Economisești: 10%\" | Latime 59.5 cm, Adancime 54.5 cm, Inaltime 81.5 cm",
+   "dimensionsCm": {
+    "w": 59.5,
+    "d": 54.5,
+    "h": 81.5
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-cu-incarcare-verticala-aeg-6-kg-1300-rpm-clasa-a-motor-inverter-cu-magnet-permanent-powercare-okomix-prosteam-prosense-powerclean-alb-ltr8e363e/pd/D5DGX3YBM/",
+   "name": "Masina de spalat rufe cu incarcare verticala AEG LTR8E363E, 6 kg, 1300 rpm, Clasa A, motor inverter cu magnet permanent",
+   "price": 3699.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"PRP: 4.059,99 Lei\" urmat de \"3.699,99 Lei\" | Latime 400 mm, Adancime 600 mm, Inaltime 890 mm",
+   "dimensionsCm": {
+    "w": 40,
+    "d": 60,
+    "h": 89
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-cu-incarcare-verticala-whirlpool-6-kg-1200-rpm-tehnologia-al-6lea-simt-clasa-b-motor-inverter-zen-display-digital-alb-tdlrbx6252bseu/pd/DRGFQBYBM/",
+   "name": "Masina de spalat rufe cu incarcare verticala Whirlpool TDLRBX6252BSEU, 6 kg, 1200 rpm, Clasa B, Alb",
+   "price": 3336.55,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"3.336,55 Lei\" langa \"Adauga in Cos\" (fara pret vechi) | Latime 40 cm, Adancime 60 cm, Inaltime 90 cm",
+   "dimensionsCm": {
+    "w": 40,
+    "d": 60,
+    "h": 90
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masina-de-spalat-rufe-verticala-electrolux-perfectcare-700-ew7tn3272-6-kg-1251-rpm-clasa-b-latime-40-cm-afisaj-lcd-motor-inverter-protectie-impotriva-scurgerilor-de-apa-alb/p/3043240",
+   "name": "Masina de spalat rufe verticala Electrolux PerfectCare 700 EW7TN3272, 6 kg, 1251 rpm, clasa B, latime 40 cm",
+   "price": 2599.0,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "\"2599.00 lei /bucată\" (\"Include taxa verde: 75.00 lei/bucată\") | Latime 39.7 cm, Adancime 59.9 cm, \"Dimensiuni IxLxA (cm)\" 90.8 x 39.7 x 59.9",
+   "dimensionsCm": {
+    "w": 39.7,
+    "d": 59.9,
+    "h": 90.8
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-cu-uscator-samsung-spalare-9-kg-uscare-6-kg-1400-rpm-clasa-a-spalare-clasa-d-spalare-uscare-ai-wash-ai-ecobubble-auto-dispense-ai-control-wifi-negru-wd90hg6u94bbu4/pd/D01J2K2BM/",
+   "name": "Masina de spalat rufe cu uscator Samsung WD90HG6U94BBU4, Spalare 9 kg, Uscare 6 kg, 1400 rpm, Negru",
+   "price": 3243.04,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"3.243,04 Lei\" (fara pret vechi) | Latime 600 mm, Adancime 590 mm, Inaltime 850 mm",
+   "dimensionsCm": {
+    "w": 60,
+    "d": 59,
+    "h": 85
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-cu-uscator-beko-10-kg-spalare-6-kg-uscare-clasa-a-1400-rpm-motor-prosmart-inverter-homewhiz-steamcure-ultrafast-addxtra-gri-b5dft510442m/pd/DN3S3DYBM/",
+   "name": "Masina de spalat rufe cu uscator BEKO B5DFT510442M, 10 kg spalare, 6 kg uscare, Clasa A, 1400 RPM, Gri",
+   "price": 2222.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"2.222,99 Lei\" (Super Pret, fara pret vechi) | Latime 60 cm, Adancime 60 cm, Inaltime 84.5 cm",
+   "dimensionsCm": {
+    "w": 60,
+    "d": 60,
+    "h": 84.5
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-frontala-cu-uscator-gorenje-wd2a164ads-a-10-6-kg-1400rpm-clasa-a-d-antracit-kxg0102091/pd/DDQZFGMBM/",
+   "name": "Masina de spalat rufe frontala CU USCATOR GORENJE WD2A164ADS/A, 10/6 KG, 1400RPM, Clasa A/D, ANTRACIT",
+   "price": 3099.0,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"PRP: 3.718,80 Lei\" urmat de \"3.099,00 Lei\" | Latime 59.5 cm, Adancime 61 cm, Inaltime 84.5 cm",
+   "dimensionsCm": {
+    "w": 59.5,
+    "d": 61,
+    "h": 84.5
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/uscator-de-rufe-samsung-pompa-de-caldura-9-kg-clasa-a-smartthings-ai-control-hygiene-care-ai-dry-wifi-negru-dv90db7845gbu4/pd/DP3VL93BM/",
+   "name": "Uscator de rufe Samsung DV90DB7845GBU4, pompa de caldura, 9 kg, Clasa A, AI Dry, WiFi, Negru",
+   "price": 3560.84,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"3.560,84 Lei\" (fara pret vechi) | Latime 600 mm, Adancime 600 mm, Inaltime 850 mm",
+   "dimensionsCm": {
+    "w": 60,
+    "d": 60,
+    "h": 85
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/uscator-de-rufe-bosch-pompa-de-caldura-8-kg-15-programe-autodry-technology-antivibration-filtru-easyclean-clasa-d-alb-negru-wth8520bby/pd/DK77M73BM/",
+   "name": "Uscator de rufe Bosch WTH8520BBY, Pompa de caldura, 8 kg, 15 programe, AutoDry, Clasa D, Alb/Negru",
+   "price": 3099.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"PRP: 5.149,99 Lei\" / \"3.099,99 Lei\" | Latime 598 mm, Adancime \"613 mm 648 mm 1096 mm\" (corp 613), Inaltime 842 mm",
+   "dimensionsCm": {
+    "w": 59.8,
+    "d": 61.3,
+    "h": 84.2
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/uscator-rufe-lg-rhx5009tb-9kg-turbo-dryer-dual-inverter-wifi-clasa-b-negru-mat-rhx5009tbb/pd/DSX15C2BM/",
+   "name": "Uscator rufe LG RHX5009TB, 9kg, Turbo Dryer, Dual Inverter, Wifi, Clasa B, Negru Mat",
+   "price": 4199.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"4.199,99 Lei\" (Super Pret, fara pret vechi) | Latime 60 cm, Adancime 65 cm, Inaltime 85 cm",
+   "dimensionsCm": {
+    "w": 60,
+    "d": 65,
+    "h": 85
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/uscator-de-rufe-electrolux-pompa-de-caldura-8-kg-clasa-c-motor-inverter-delicatecare-sensicare-display-led-iluminare-interioara-tambur-alb-ew7d384ae/pd/DYPDGCYBM/",
+   "name": "Uscator de rufe Electrolux EW7D384AE, Pompa de caldura, 8 kg, Clasa C, motor Inverter, DelicateCare, Alb",
+   "price": 3749.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"3.749,99 Lei\" langa \"Adauga in Cos\" (fara PRP) | Latime 59.6 cm, Adancime 66.2 cm, Inaltime 85 cm",
+   "dimensionsCm": {
+    "w": 59.6,
+    "d": 66.2,
+    "h": 85
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-vase-bosch-14-seturi-6-programe-efficientdry-sistem-rackmatic-home-connect-ecosilence-drive-tab-count-clasa-b-60-cm-alb-sms4evw08e/pd/D5XMY5YBM/",
+   "name": "Masina de spalat vase Bosch SMS4EVW08E, 14 seturi, 6 programe, EfficientDry, Rackmatic, Clasa B, 60 cm, Alb",
+   "price": 3289.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"PRP: 3.668,99 Lei\" / \"3.289,99 Lei\" | Latime 60 cm, Adancime 60 cm, Inaltime 84.5 cm",
+   "dimensionsCm": {
+    "w": 60,
+    "d": 60,
+    "h": 84.5
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-vase-arctic-14-seturi-6-programe-clasa-d-deschidere-automata-a-usii-aqua-protect-mini-35-60-cm-alb-dfn363/pd/DLD1BKMBM/",
+   "name": "Masina de spalat vase Arctic DFN363, 14 seturi, 6 programe, Clasa D, Deschidere automata a usii, 60 cm, Alb",
+   "price": 1699.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"PRP: 2.209,99 Lei\" / \"1.699,99 Lei\" | Latime 59.8 cm, Adancime 60 cm, Inaltime 85 cm",
+   "dimensionsCm": {
+    "w": 59.8,
+    "d": 60,
+    "h": 85
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/lagan-masina-spalat-vase-autonoma-alb-70576744/",
+   "name": "LAGAN Masina spalat vase autonoma, alb",
+   "price": 1999,
+   "readAt": "2026-11-10",
+   "store": "IKEA Romania",
+   "evidence": "\"Preț 1999lei\" | Lățime 60.0 cm, Adâncime 60.0 cm, Înălțime 84.5 cm",
+   "dimensionsCm": {
+    "w": 60,
+    "d": 60,
+    "h": 84.5
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-vase-beko-10-seturi-6-programe-clasa-e-motor-prosmart-inverter-hygiene-intense-fast-45-cm-inox-bdfs26020xq/pd/DVT2FVMBM/",
+   "name": "Masina de spalat vase Beko BDFS26020XQ, 10 seturi, 6 programe, Clasa E, ProSmart Inverter, 45 cm, Inox",
+   "price": 1599.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"1.599,99 Lei\" (fara pret vechi) | Latime 44.8 cm, Adancime 60 cm, Inaltime 85 cm",
+   "dimensionsCm": {
+    "w": 44.8,
+    "d": 60,
+    "h": 85
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-vase-incorporabila-bosch-14-seturi-6-programe-efficientdry-tab-count-silence-plus-sistem-rackmatic-infolight-ecosilence-drive-home-connect-60-cm-clasa-b-smv4evx08e/pd/D79MY5YBM/",
+   "name": "Masina de spalat vase incorporabila Bosch SMV4EVX08E, 14 seturi, 6 programe, EfficientDry, Silence Plus, 60 cm, Clasa B",
+   "price": 2699.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"PRP: 3.849,99 Lei\" / \"2.699,99 Lei\" | Latime 59.8 cm, Adancime 55 cm, Inaltime 81.5 cm",
+   "dimensionsCm": {
+    "w": 59.8,
+    "d": 55,
+    "h": 81.5
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/rengoera-masina-spalat-vase-incorporata-ikea-300-40475572/",
+   "name": "RENGÖRA Masina spalat vase incorporata, IKEA 300, 60 cm",
+   "price": 1999,
+   "readAt": "2026-11-10",
+   "store": "IKEA Romania",
+   "evidence": "1999 lei (include 33 lei taxa verde) | latime 59.8 cm, adancime 55.5 cm, inaltime 82.0 cm (pretul si dimensiunile citite pe pagina; textul exact nu a fost redat de extractor)",
+   "dimensionsCm": {
+    "w": 59.8,
+    "d": 55.5,
+    "h": 82
+   },
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/cuptor-cu-microunde-heinner-25-l-control-mecanic-800-w-negru-hmw-md25mbk/pd/DQL0P4YBM/",
+   "name": "Cuptor cu microunde Heinner HMW-MD25MBK, 25 l, Control mecanic, 800 W, Negru",
+   "price": 381.43,
+   "readAt": "2026-11-10",
+   "store": "eMAG (Vândut și livrat de: eMAG)",
+   "evidence": "\"381,43 Lei\" (fără preț vechi); Latime 47.2 cm, Adancime 39.3 cm, Inaltime 28 cm",
+   "dimensionsCm": {
+    "w": 47.2,
+    "d": 39.3,
+    "h": 28
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/cuptor-cu-microunde-gorenje-17-l-5-nivele-700-w-alb-mo17e1w/pd/DC8JP1BBM/",
+   "name": "Cuptor cu microunde, Gorenje MO17E1W, 17 l, 5 nivele, 700 W, Alb",
+   "price": 399.3,
+   "readAt": "2026-11-10",
+   "store": "eMAG Marketplace (Vândut și livrat de: ELECTRICS SHOP & BATTERY)",
+   "evidence": "\"399,30 Lei\" (fără preț vechi); Latime 45.1 cm, Adancime 34.3 cm, Inaltime 25.7 cm",
+   "dimensionsCm": {
+    "w": 45.1,
+    "d": 34.3,
+    "h": 25.7
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/cuptor-cu-microunde-samsung-23l-800w-digital-inox-negru-ms23k3513as-eo/pd/DZZ53JBBM/",
+   "name": "Cuptor cu microunde, Samsung, MS23K3513AS/EO, 23L, 800W, Digital, Inox, Negru",
+   "price": 711.54,
+   "readAt": "2026-11-10",
+   "store": "eMAG Marketplace (vânzător: NEI)",
+   "evidence": "\"749,00 Lei\" / \"711,54 Lei\", \"Economisești: 5%\" (711,54 = prețul redus); 48.9 cm lățime, 37.4 cm adâncime, 27.5 cm înălțime",
+   "dimensionsCm": {
+    "w": 48.9,
+    "d": 37.4,
+    "h": 27.5
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/cuptor-cu-microunde-incorporabil-bosch-25-l-900-w-autopilot-7-butoane-retractabile-control-digital-sticla-neagra-bfl554mb0/pd/DMNDJFBBM/",
+   "name": "Cuptor cu microunde incorporabil Bosch BFL554MB0, 25 l, 900 W, AutoPilot 7, Butoane retractabile, Control digital, Sticla neagra",
+   "price": 1499.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG (Vândut și livrat de: eMAG)",
+   "evidence": "\"PRP: 2.319,99 Lei\" / \"1.499,99 Lei\"; Lățime 59.4 cm, Adâncime 38.8 cm, Înălțime 38.2 cm",
+   "dimensionsCm": {
+    "w": 59.4,
+    "d": 38.8,
+    "h": 38.2
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/cuptor-cu-microunde-incorporabil-samsung-22-l-850-w-dezghetare-rapida-pastrare-la-cald-grill-mod-eco-interior-ceramic-negru-mg22m8254ak-e2/pd/DP3D54MBM/",
+   "name": "Cuptor cu microunde incorporabil Samsung MG22M8254AK/E2, 22 l, 850 W, Grill, Interior ceramic, Negru",
+   "price": 899.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG (Vândut și livrat de: eMAG)",
+   "evidence": "\"PRP: 1.269,99 Lei\" / \"899,99 Lei\"; Latime 59.5 cm, Adancime 32 cm, Inaltime 38 cm",
+   "dimensionsCm": {
+    "w": 59.5,
+    "d": 32,
+    "h": 38
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/lagan-cuptor-cu-microunde-incorporabil-negru-40600057/",
+   "name": "LAGAN Cuptor cu microunde încorporabil, negru",
+   "price": 899.0,
+   "readAt": "2026-11-10",
+   "store": "IKEA România",
+   "evidence": "\"899lei\"; lățime 59.5 cm, adâncime 34.4 cm, înălțime 39.4 cm, volum 20 l",
+   "dimensionsCm": {
+    "w": 59.5,
+    "d": 34.4,
+    "h": 39.4
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/hota-decorativa-heinner-60cm-design-t-shape-800-m-h-4-trepte-de-viteza-motor-1-x-250w-lumina-led-2-x-1-5w-2-filtre-aluminiu-control-touch-senzor-miscare-diametru-tub-evacuare-150mm-inox-sticla-neagra-/pd/DNQ0PF3BM/",
+   "name": "Hota decorativa Heinner HDCH-MD60TIX, 60cm, design T-shape, 800 m³/h, inox+sticla neagra",
+   "price": 796.51,
+   "readAt": "2026-11-10",
+   "store": "eMAG (Vândut și livrat de: eMAG)",
+   "evidence": "\"796,51 Lei\" (fără PRP); Latime 60 cm, Adancime 50 cm, Inaltime 45 cm; Design: Decorativa; 800 m³/h",
+   "dimensionsCm": {
+    "w": 60,
+    "d": 50,
+    "h": 45
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/hota-incorporabila-decorativa-bosch-3-trepte-intensiv-putere-de-absorbtie-550-mc-h-60-cm-sticla-neagra-dwk65dk60/pd/DJLF60YBM/",
+   "name": "Hota incorporabila decorativa Bosch DWK65DK60, 3 trepte + intensiv, 550 mc/h, 60 cm, Sticla neagra",
+   "price": 1049.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG (Vândut și livrat de: eMAG)",
+   "evidence": "\"1.398,99 Lei\" / \"1.049,99 Lei\", \"Economisești: 24%\"; Latime 60 cm, Inaltime 32.5 cm, adâncime lipsă; Design: Decorativa (hotă de perete înclinată, sticlă)",
+   "dimensionsCm": {
+    "w": 60,
+    "d": null,
+    "h": 32.5
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/stackbo-hota-perete-ikea-300-negru-70602371/",
+   "name": "STACKBO Hotă perete, IKEA 300 negru, 55 cm",
+   "price": 999.0,
+   "readAt": "2026-11-10",
+   "store": "IKEA România",
+   "evidence": "\"999lei\"; Lăţime 54.5 cm, Adâncime 35.9 cm, Înălțime 34.0 cm; 450 m³/h (extracție, treapta maximă normală)",
+   "dimensionsCm": {
+    "w": 54.5,
+    "d": 35.9,
+    "h": 34.0
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/hota-telescopica-incorporabila-electrolux-putere-de-absorbtie-600-mc-h-1-motor-60-cm-inox-lfp616x/pd/DC7WGVMBM/",
+   "name": "Hota telescopica incorporabila Electrolux LFP616X, 600 mc/h, 1 motor, 60 cm, Inox",
+   "price": 839.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG (Vândut și livrat de: eMAG)",
+   "evidence": "\"1.451,26 Lei\" / \"839,99 Lei\", \"Economisești: 42%\"; Latime 598 mm, Adancime 300 mm, înălțime lipsă",
+   "dimensionsCm": {
+    "w": 59.8,
+    "d": 30,
+    "h": null
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/hota-incorporabila-telescopica-samsung-putere-de-absorbtie-392-m3-h-60-cm-led-negru-nk24m1030ib-ur/pd/DSL9SSBBM/",
+   "name": "Hota incorporabila telescopica Samsung NK24M1030IB/UR, 392 m3/h, 60 cm, LED, Negru",
+   "price": 499.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG (Vândut și livrat de: eMAG)",
+   "evidence": "\"PRP: 709,99 Lei\" / \"499,99 Lei\"; 59.8 cm lățime, 30.1 cm adâncime, 18 cm înălțime",
+   "dimensionsCm": {
+    "w": 59.8,
+    "d": 30.1,
+    "h": 18
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/hota-insula-pyramis-corso-90cm-704mc-h-43db-touch-control-inox-si-sticla-neagra-pyr-065021701/pd/DC0T5BBBM/",
+   "name": "Hota insula Pyramis CORSO, 90cm, 704mc/h, 43dB, Touch Control, Inox si Sticla Neagra",
+   "price": 5417.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG Marketplace (vânzător: Pyramis)",
+   "evidence": "\"7.799,99 Lei\" / \"5.417,99 Lei\", \"Economisești: 30%\"; Latime 90 cm, adâncime și înălțime lipsă; 704 m³/h",
+   "dimensionsCm": {
+    "w": 90,
+    "d": null,
+    "h": null
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/hota-de-tavan-klarstein-high-line-eco-578-m-h-cu-evacuare-sau-fara-evacuare-recirculare-3-trepte-de-putere-panou-touch-functie-turbo-telecomanda-filtru-de-carbon-inclus-inox-si-sticla-clasa-energetica/pd/D847TY2BM/",
+   "name": "Hota de tavan Klarstein High Line Eco, 578 m³/h, evacuare sau recirculare, panou touch, telecomanda, inox si sticla, Alb, 77 cm",
+   "price": 1361.0,
+   "readAt": "2026-11-10",
+   "store": "eMAG Marketplace (Vândut și livrat de: Klarstein)",
+   "evidence": "\"1.361,00 Lei\" (fără PRP); Latime 77 cm, Adancime 32 cm, Inaltime 40.67 cm; Debit maxim 578 m³/h (descrierea spune 436 m³/h)",
+   "dimensionsCm": {
+    "w": 77,
+    "d": 32,
+    "h": 40.67
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/cuptor-incorporabil-bosch-71-l-electric-multifunctional-grill-7-functii-autocuratare-ecoclean-hidrolitica-3d-hotair-suport-telescopic-clasa-a-negru-hba534eb3/pd/DDXMY5YBM/",
+   "name": "Cuptor incorporabil Bosch HBA534EB3, 71 L, Electric, Multifunctional, Grill, 7 functii, EcoClean, 3D Hotair, Clasa A+, Negru",
+   "price": 1899.0,
+   "readAt": "2026-11-10",
+   "store": "eMAG Marketplace (Vândut și livrat de: Flanco)",
+   "evidence": "\"2.146,99 Lei\" / \"1.899,00 Lei\", \"Economisești: 11%\"; Latime 59.5 cm, Adancime 54.8 cm, Inaltime 59.5 cm",
+   "dimensionsCm": {
+    "w": 59.5,
+    "d": 54.8,
+    "h": 59.5
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/cuptor-electric-pyramis-60in-2060-md-black-glass-10-functii-clasa-a-volum-65-litri-aqua-clean-ghidaje-ambutisate-butoane-rotative-timer-digital-finisaj-sticla-neagra-pyr-202300655/pd/D8ZNP02BM/",
+   "name": "Cuptor electric Pyramis 60IN 2060 MD Black Glass, 10 functii, clasa A, 65 litri, Aqua Clean, finisaj sticla neagra",
+   "price": 877.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG Marketplace (Vândut și livrat de: Pyramis)",
+   "evidence": "\"1.399,99 Lei\" / \"877,99 Lei\", \"Economisești: 37%\"; Latime 59.5 cm, Adancime 57.5 cm, Inaltime 59.5 cm",
+   "dimensionsCm": {
+    "w": 59.5,
+    "d": 57.5,
+    "h": 59.5
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/cuptor-incorporabil-beko-electric-72-l-grill-steamshine-cleaning-timer-clasa-a-inox-bbie12300xd/pd/D04J13MBM/",
+   "name": "Cuptor incorporabil Beko BBIE12300XD, Electric, 72 l, Grill, SteamShine Cleaning, Timer, Clasa A, Inox",
+   "price": 1148.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG (Vândut și livrat de: eMAG)",
+   "evidence": "\"PRP: 1.849,99 Lei\" / \"1.148,99 Lei\"; Latime 59.4 cm, Adancime 56.7 cm, Inaltime 59.5 cm",
+   "dimensionsCm": {
+    "w": 59.4,
+    "d": 56.7,
+    "h": 59.5
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/cuptor-electric-teka-neo-hsb-6350-ss-8-functii-thermoseal-hydrocleanr-60-cm-70l-a-inox-anti-pata-111010068/pd/D4F7FF3BM/",
+   "name": "Cuptor electric Teka NEO HSB 6350 SS, 8 functii, ThermoSeal, HydroClean, 60 cm, 70l, A+, Inox anti-pata",
+   "price": 1098.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG Marketplace (Vândut și livrat de: TEKA KUCHENTECHNIK ROMANIA)",
+   "evidence": "\"1.658,91 Lei\" / \"1.098,99 Lei\", \"Economisești: 33%\"; Latimea produsului (mm): 595, Adancimea produsului (mm): 537+22, Inaltimea produsului (mm): 595 (adâncime trecută ca 53.7+2.2 = 55.9 cm)",
+   "dimensionsCm": {
+    "w": 59.5,
+    "d": 55.9,
+    "h": 59.5
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/stenaby-cuptor-cu-ventilatie-functie-grill-alb-ikea-300-00600059/",
+   "name": "STENABY Cuptor cu ventilație, funcție grill alb/IKEA 300",
+   "price": 1299.0,
+   "readAt": "2026-11-10",
+   "store": "IKEA România",
+   "evidence": "\"1.299lei\"; Lăţime 59.5 cm, Adâncime 54.6 cm, Înălțime 59.0 cm, Volum 72 l",
+   "dimensionsCm": {
+    "w": 59.5,
+    "d": 54.6,
+    "h": 59.0
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/plita-incorporabila-samsung-inductie-4-zone-de-gatit-control-tactil-power-boost-indicator-caldura-reziduala-60-cm-negru-nz64m3nm1bb-ol/pd/DL2F5CMBM/",
+   "name": "Plita incorporabila Samsung NZ64M3NM1BB/OL, Inductie, 4 zone de gatit, Control tactil, Power Boost, 60 cm, Negru",
+   "price": 949.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG (Vândut și livrat de: eMAG)",
+   "evidence": "\"1.249,99 Lei\" / \"949,99 Lei\", \"Economisești: 24%\"; Latime 590 mm, Adancime 520 mm, Inaltime 57 mm; Material Sticla",
+   "dimensionsCm": {
+    "w": 59,
+    "d": 52,
+    "h": 5.7
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/vilsta-plita-cu-inductie-ikea-300-negru-90557725/",
+   "name": "VILSTA Plită cu inducţie, IKEA 300 negru, 59 cm",
+   "price": 1199.0,
+   "readAt": "2026-11-10",
+   "store": "IKEA România",
+   "evidence": "\"1.199lei\" (include taxa verde 8 lei); Lăţime 59.0 cm, Adâncime 52.0 cm, Înălțime 5.3 cm; 4 zone",
+   "dimensionsCm": {
+    "w": 59.0,
+    "d": 52.0,
+    "h": 5.3
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/plita-incorporata-cu-inductie-electrolux-senseboil-hob2hood-functie-bridge-80-cm-eis82453/pd/DY43RXYBM/",
+   "name": "Plita incorporata cu inductie Electrolux EIS82453 SenseBoil, Hob2Hood, functie Bridge, 80 cm",
+   "price": 3673.29,
+   "readAt": "2026-11-10",
+   "store": "eMAG Marketplace (Vândut și livrat de: evomag)",
+   "evidence": "\"3.673,29 Lei\" (fără PRP); Latime 780 mm, Adancime 520 mm, înălțime lipsă; Material Sticla",
+   "dimensionsCm": {
+    "w": 78,
+    "d": 52,
+    "h": null
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/plita-incorporabila-beko-gaz-4-arzatoare-arzator-wok-60-cm-sticla-neagra-hilw64225s/pd/DWWGCKBBM/",
+   "name": "Plita incorporabila Beko HILW64225S, Gaz, 4 Arzatoare, Arzator Wok, 60 cm, Sticla neagra",
+   "price": 779.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG (Vândut și livrat de: eMAG)",
+   "evidence": "\"PRP: 1.679,99 Lei\" / \"779,99 Lei\"; Latime 58.5 cm, Adancime 52.4 cm, Inaltime 4.6 cm",
+   "dimensionsCm": {
+    "w": 58.5,
+    "d": 52.4,
+    "h": 4.6
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/plita-incorporabila-whirlpool-gaz-4-arzatoare-gratare-fonta-multistep-60-cm-negru-gowl628nbee/pd/D20X32MBM/",
+   "name": "Plita incorporabila Whirlpool GOWL628NBEE, Gaz, 4 arzatoare, Gratare fonta, MultiStep, 60 cm, Negru",
+   "price": 699.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG (Vândut și livrat de: eMAG)",
+   "evidence": "\"999,90 Lei\" / \"699,99 Lei\", \"Economisești: 29%\"; Latime 59 cm, Adancime 51 cm, Inaltime 4.9 cm; Material Sticla",
+   "dimensionsCm": {
+    "w": 59,
+    "d": 51,
+    "h": 4.9
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/plita-gaz-pyramis-4102-dimensiune-60x51cm-4-arzatoare-gratare-emailate-butoane-laterale-finisaj-inox-pyr-202300362/pd/DZL17P3BM/",
+   "name": "Plita gaz Pyramis 4102, 60x51cm, 4 arzatoare, gratare emailate, butoane laterale, finisaj inox",
+   "price": 362.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG Marketplace (Vândut și livrat de: Pyramis)",
+   "evidence": "\"639,99 Lei\" / \"362,99 Lei\", \"Economisești: 43%\"; Latime 60 cm; date tehnice: \"Dimensiune: 600x510x95mm\" (adâncime/înălțime neetichetate, interpretate L×A×Î)",
+   "dimensionsCm": {
+    "w": 60,
+    "d": 51,
+    "h": 9.5
+   },
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/centrala-termica-pe-gaz-in-condensare-ariston-alteas-one-net-24-murala-afisaj-lcd-ipx5d-protectie-inghet-fara-kit-evacuare/p/2030928",
+   "name": "Centrala termica pe gaz in condensare Ariston Alteas One+ Net 24, murala, fara kit evacuare",
+   "price": 5497,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "\"5497.00 lei /bucată\"; fisa: Putere 24 kW; Latime 400 mm, Adancime 315 mm, Inaltime 745 mm. Descriere: incalzire si \"prepararii de apa calda menajera\"; fara camp de boiler integrat.",
+   "dimensionsCm": {
+    "w": 40,
+    "d": 31.5,
+    "h": 74.5
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/centrala-termica-pe-gaz-in-condensare-motan-komfort-24-murala-afisaj-digital-ipx5d-protectie-inghet-schimbator-caldura-inox-fara-kit-evacuare/p/2031533",
+   "name": "Centrala termica pe gaz in condensare Motan Komfort 24, murala, schimbator caldura inox, fara kit evacuare",
+   "price": 2974,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "\"2974.00 lei /bucată\"; fisa: Putere 22.5 kW; Latime 398 mm, Adancime 340 mm, Inaltime 750 mm; debit ACM 12.1 l/min la 25°C, schimbator 1.4 l (fara volum de boiler).",
+   "dimensionsCm": {
+    "w": 39.8,
+    "d": 34,
+    "h": 75
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/centrala-termica-pe-gaz-in-condensatie-bosch-condens-gc5700iw-30-30-c-23-30-kw-acm-30-kw/12299061/",
+   "name": "Centrala termica pe gaz in condensatie Bosch Condens GC5700iW 30/30 C 23, 30 kW, ACM 30 kW",
+   "price": 7455,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"preț — 7455,00 lei\"; \"Putere termică nominală (80°/60°)\": 30 kW; \"Dimensiuni (l x î x a)\": 44 cm x 78 cm x 36 cm; \"încălzire = 30 kW și acm = 30 kW\", profil ACM XL; boiler integrat nedeclarat.",
+   "dimensionsCm": {
+    "w": 44,
+    "d": 36,
+    "h": 78
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.termix.ro/en/cumpara/condensing-gas-boiler-ecotec-pure%20vuw-286-7-2-hint-ii-1281",
+   "name": "Centrala termica in condensare Vaillant ecoTEC pure VUW 286/7-2 (H-INT II)",
+   "price": 5293.05,
+   "readAt": "2026-11-10",
+   "store": "Termix.ro",
+   "evidence": "\"RON 5,293.05 (VAT Included)\", transport neinclus; 24.0 kW la 80/60°C (26.1 kW la 50/30°C), ACM max 28.6 kW; Width 440 mm, depth 335 mm, height 720 mm; color White; \"Instant Hot Water, condensing\".",
+   "dimensionsCm": {
+    "w": 44,
+    "d": 33.5,
+    "h": 72
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/boiler-electric-ariston-pro-1-eco-50v-slim-50-l-1800-w/p/2023123",
+   "name": "Boiler electric Ariston Pro 1 Eco 50V slim, 50 L, 1800 W",
+   "price": 620,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "\"620.00 lei /bucată\" (include taxa verde 17.00 lei); 50 L, 1800 W; Latime 350 mm, Adancime 353 mm, Inaltime 837 mm; model slim, montaj vertical pe perete.",
+   "dimensionsCm": {
+    "w": 35,
+    "d": 35.3,
+    "h": 83.7
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/boiler-electric-ariston-lydos-eco-80-v-75-l-1800-w/p/2023263",
+   "name": "Boiler electric Ariston Lydos Eco 80 V, 75 L, 1800 W",
+   "price": 849,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "\"849.00 lei /bucată\"; capacitate 75 L (model 80 V), 1800 W; Inaltime 733 mm, Diametru 450 mm; culoare alb; montaj vertical.",
+   "dimensionsCm": {
+    "w": 45,
+    "d": 45,
+    "h": 73.3
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/boiler-electric-tesy-bilight-100-l-2000-w-termostat-reglabil/8861585/",
+   "name": "Boiler electric Tesy BiLight 100 l, 2000 W, termostat reglabil",
+   "price": 603,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"603,00 lei*\" (TVA, DEEE si DBA incluse); \"Conţinut nominal: 100 l\", \"Putere nominală: 2 kW\"; \"Dimensiuni (l x î x a)\": 44.0 cm x 99.0 cm x 46.0 cm; \"Rezervor mural\".",
+   "dimensionsCm": {
+    "w": 44,
+    "d": 46,
+    "h": 99
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/priza-2pe-simpla-schneider-sedna-design-obturatoare-alb/12013413/",
+   "name": "Priza 2P+E simpla Schneider Sedna Design obturatoare, alb",
+   "price": 15.2,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"preț — 15,20 lei\"; culoare alb (titlu); dimensiuni nelistate; rama nu e mentionata pe pagina (Hornbach vinde separat \"Ramă 1 post, alb\" Sedna Design la 4,20 lei).",
+   "dimensionsCm": {
+    "w": null,
+    "d": null,
+    "h": null
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/intrerupator-simplu-schneider-sedna-design-alb/12013357/",
+   "name": "Intrerupator simplu Schneider Sedna Design, alb",
+   "price": 14.6,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"preț — 14,60 lei\" (la 10 buc. 13,85 lei); cod producator SDD111101; dimensiuni nelistate; rama nementionata.",
+   "dimensionsCm": {
+    "w": null,
+    "d": null,
+    "h": null
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/intrerupator-simplu-schneider-sedna-design-antracit/12013433/",
+   "name": "Intrerupator simplu Schneider Sedna Design, antracit",
+   "price": 16.6,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"preț — 16,60 lei\" (la 10 buc. 15,75 lei); cod producator SDD114101; dimensiuni nelistate; rama nementionata (Hornbach vinde separat \"Ramă 1 post, antracit\" la 6,80 lei).",
+   "dimensionsCm": {
+    "w": null,
+    "d": null,
+    "h": null
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/priza-schuko-simpla-schneider-electric-asfora-eph2900221-incastrat-rama-inclusa-contact-de-protectie-alb/p/1036843",
+   "name": "Priza schuko simpla Schneider Electric Asfora EPH2900221, incastrat, rama inclusa, alb",
+   "price": 14.9,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "\"14.90 lei /bucată\"; Latime 83 mm, Grosime 42 mm, Inaltime 83 mm; culoare alb; Rama inclusa: Da; Gama: Asfora.",
+   "dimensionsCm": {
+    "w": 8.3,
+    "d": 4.2,
+    "h": 8.3
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/intrerupator-simplu-schneider-electric-asfora-eph0100121-incastrat-rama-inclusa-alb/p/1036845",
+   "name": "Intrerupator simplu Schneider Electric Asfora EPH0100121, incastrat, rama inclusa, alb",
+   "price": 14.24,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "\"14.24 lei /bucată\"; Latime 83 mm, Adancime 42 mm, Inaltime 83 mm; culoare alb; Rama inclusa: Da; Gama: Asfora.",
+   "dimensionsCm": {
+    "w": 8.3,
+    "d": 4.2,
+    "h": 8.3
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/intrerupator-simplu-fara-surub-schneider-electric-asfora-crem/6132290/",
+   "name": "Intrerupator simplu fara surub Schneider Electric Asfora, crem",
+   "price": 14,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"14,00 lei\"; Lăţime 83 mm, Înălţime 83 mm, Adâncime 43 mm; \"Nuanţă: Alb crem\"; cod EPH0100123; rama nu e declarata explicit in date (doar in descrierea imaginilor).",
+   "dimensionsCm": {
+    "w": 8.3,
+    "d": 4.3,
+    "h": 8.3
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/priza-simpla-cu-impamantare-legrand-valena-life-alb/10525724/",
+   "name": "Priza simpla cu impamantare Legrand Valena Life, alb",
+   "price": 26.3,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"26,30 lei\"; cod producator 753120; \"Priza este echipată cu o ramă\"; dimensiuni nelistate.",
+   "dimensionsCm": {
+    "w": null,
+    "d": null,
+    "h": null
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/priza-simpla-cu-impamantare-legrand-valena-life-negru-mat/10553855/",
+   "name": "Priza simpla cu impamantare Legrand Valena Life, negru mat",
+   "price": 34.9,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"34,90 lei\" (de la 15 buc. 33,10 lei); cod producator \"Legrand Valena Life 752130\"; dimensiuni si rama nementionate.",
+   "dimensionsCm": {
+    "w": null,
+    "d": null,
+    "h": null
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/intrerupator-simplu-legrand-valena-life-alb/10470675/",
+   "name": "Intrerupator simplu Legrand Valena Life, alb",
+   "price": 26.5,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"preț — 26,50 lei\"; cod producator \"Legrand Valena Life 752101\"; dimensiuni si rama nementionate.",
+   "dimensionsCm": {
+    "w": null,
+    "d": null,
+    "h": null
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/intrerupator-simplu-legrand-valena-life-negru-mat/10553607/",
+   "name": "Intrerupator simplu Legrand Valena Life, negru mat",
+   "price": 32.7,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"32,70 lei*\" (TVA, DEEE si DBA incluse); culoare negru mat; pagina afiseaza codul producator 752130 (acelasi ca la priza neagra - probabil eroare pe pagina); dimensiuni si rama nementionate.",
+   "dimensionsCm": {
+    "w": null,
+    "d": null,
+    "h": null
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/intrerupator-simplu-gewiss-chorus-gw10001-1bl-incastrat-modular-1-alb/p/1029198",
+   "name": "Intrerupator simplu Gewiss Chorus GW10001-1BL, incastrat, modular - 1, alb",
+   "price": 12.85,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "\"12.85 lei /bucată\"; Latime (mm) 25, Inaltime (mm) 45, adancime nelistata; culoare alb; Rama inclusa: Nu; Gama: Chorus; 1 modul.",
+   "dimensionsCm": {
+    "w": 2.5,
+    "d": null,
+    "h": 4.5
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/priza-schuko-simpla-gewiss-chorus-gw14203-1bl-incastrata-modulara-1-contact-de-protectie-gri-titan/p/1029220",
+   "name": "Priza schuko simpla Gewiss Chorus GW14203-1BL, incastrata, modulara - 1, contact de protectie, gri - titan",
+   "price": 31.84,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "\"31.84 lei /bucată\"; Latime (mm) 22, Grosime (mm) 35.6, Lungime (mm) 44; culoare gri titan; Rama inclusa: Nu; Gama: Chorus; 1 modul.",
+   "dimensionsCm": {
+    "w": 2.2,
+    "d": 3.56,
+    "h": 4.4
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/priza-simpla-cu-impamantare-panasonic-karre-plus-alb-incl-rama/10301785/",
+   "name": "Priza simpla cu impamantare Panasonic Karre Plus, alb, incl. rama",
+   "price": 14.5,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"preț — 14,50 lei\" (la 12 buc. 13,70 lei); Lăţime 80 mm, Înălţime 80 mm; cod WKTC02022WH-EU2; titlu \"incl. ramă\".",
+   "dimensionsCm": {
+    "w": 8,
+    "d": null,
+    "h": 8
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/intrerupator-simplu-panasonic-karre-plus-alb-incl-rama/10301770/",
+   "name": "Intrerupator simplu Panasonic Karre Plus, alb, incl. rama",
+   "price": 12.3,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"preț — 12,30 lei\" (la 12 buc. 11,60 lei); Lăţime 80 mm, Înălţime 80 mm; cod WKTC00012WH-EU2; titlu \"incl. ramă\".",
+   "dimensionsCm": {
+    "w": 8,
+    "d": null,
+    "h": 8
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/termostat-centrala-digital-programabil-wireless-bautech-i-8w/10610598/",
+   "name": "Termostat centrala digital programabil wireless Bautech I-8W",
+   "price": 205,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"205,00 lei*/ buc.\"; Înălţime 7 cm, Lăţime 9,5 cm, adancime nelistata; cod producator 126-025.",
+   "dimensionsCm": {
+    "w": 9.5,
+    "d": null,
+    "h": 7
+   },
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.termix.ro/en/cumpara/wireless-programmable-thermostat-salus-rt510rfplus-911",
+   "name": "Termostat wireless programabil Salus RT510RF+",
+   "price": 391.63,
+   "readAt": "2026-11-10",
+   "store": "Termix.ro",
+   "evidence": "\"RON 391.63 (VAT Included)\"; dimensiuni si culoare nelistate pe pagina.",
+   "dimensionsCm": {
+    "w": null,
+    "d": null,
+    "h": null
+   },
+   "topic": "instalatii-electrice"
+  }
+ ],
+ "skipped": [
+  {
+   "url": "https://www.leroymerlin.ro/produse/fereastra-pvc-5-camere-100-x-100-cm-alba-deschidere-dreapta-25003372.html",
+   "reason": "HTTP 403 Forbidden – pagina nu s-a putut deschide",
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.leroymerlin.ro/produse/ferestre-pvc/586/fereastra-pvc-termopan-5-camere176-x-116-cm-deschidere-dubla-stanga-alb/92194",
+   "reason": "HTTP 403 Forbidden – întregul leroymerlin.ro blochează accesul automat",
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://mathaus.ro/p/fereastra-mansarda-velux-gll-mko6-1061-78-x-118-cm-/000000000010928930",
+   "reason": "HTTP 403 Forbidden – pagina nu s-a putut deschide",
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.bricodepot.ro/amenajari-interioare/ferestre/fereastra-pvc-nuc-stanga-86-x-116-cm.html",
+   "reason": "Timeout la încărcare (60 s)",
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.bricodepot.ro/fereastra-termopan-fensterwelt-pvc-5-camere-56-x-56-cm-deschidere-oscilobatanta-stanga-alb/cpd/100860949/",
+   "reason": "Timeout la încărcare (60 s)",
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.bricodepot.ro/fereastra-termopan-pvc-geam-clar-low-e-nuc-6-camere-146-x-116-cm-dreapta-dubla-deschidere-oscilobatanta-extruplast/cpd/100860700/",
+   "reason": "Timeout la încărcare (60 s)",
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.emag.ro/fereastra-termopan-4-camere-1400x1200-mm-alb-deschidere-pe-dreapta-oscilobatant-fer140-120/pd/DD5Z59BBM/",
+   "reason": "Pagina nu afișează preț; „Stoc epuizat”",
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.emag.ro/search/ferestre-luminatoare/filter/material-f9799,aluminiu-v-1451608/termopan+aluminiu+fereastra/c",
+   "reason": "Nicio fereastră/ușă de locuință cu ramă din aluminiu: rezultatele sunt ferestre de rulotă, food-truck și ferestre de mansardă. Nici Dedeman/Hornbach nu au arătat ferestre din aluminiu gata făcute în căutări",
+   "topic": "ferestre"
+  },
+  {
+   "url": "https://www.flanco.ro/electrocasnice-mari/masini-de-spalat-rufe.html",
+   "reason": "Flanco a raspuns HTTP 403 (blocat); niciun produs Flanco citit.",
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://altex.ro/masini-spalat-rufe-verticale/cpl/",
+   "reason": "Altex: timeout la incarcare (si la pagina de incorporabile); nicio pagina de produs deschisa.",
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://mediagalaxy.ro/masini-spalat-vase/cpl/",
+   "reason": "Media Galaxy: timeout la incarcare.",
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-vase-incorporabila-whirlpool-6-programe-13-seturi-clasa-a-60-cm-wie-2b19/pd/D3P7K2BBM",
+   "reason": "Whirlpool WIE 2B19: pagina arata \"Stoc epuizat\" - nu poate fi cumparat.",
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-vase-bosch-10-seturi-6-programe-efficientdry-ecosilence-drive-home-connect-dosageassist-clasa-b-45-cm-inox-sps4emi17e/pd/DR22HB2BM/",
+   "reason": "Bosch SPS4EMI17E (2.580,22 Lei): dimensiuni contradictorii pe pagina (fisa 510x670x890 mm vs. titlu 45 cm / raspuns vanzator 450x600x845 mm).",
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-vase-incorporabila-electrolux-14-seturi-6-programe-3-temperaturi-maxi-flex-airdry-quickselect-usa-slide-display-led-clasa-e-motor-inverter-60-cm-e52le210s/pd/DDQ3KL2BM/",
+   "reason": "Electrolux E52LE210S (1.799,99 Lei): fisa da Latime 55 cm, in contradictie cu titlul \"60 cm\".",
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-cu-uscator-whirlpool-freshcare-9-kg-spalare-7-kg-uscare-1600-rpm-clasa-e-tehnologia-al-6-lea-simt-motor-inverter-display-digital-alb-negru-ffwdb-976258-bv-ee/pd/DVFRL5MBM/",
+   "reason": "Whirlpool FFWDB 976258 BV EE (2.624,25 Lei): clasa energetica (B in fisa vs E in titlu) si culoarea contradictorii; omis pentru a pastra lista la 24.",
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/masina-de-spalat-rufe-verticala-whirlpool-tdlr-6040s-eu/n-6-kg-1000-rpm-clasa-c-latime-40-cm-tehnologie-al-6-lea-simt-pornire-intarziata-alb/p/3054660",
+   "reason": "Whirlpool TDLR 6040S EU/N (1799.00 lei, 40x60x90 cm) citit valid, dar omis: limita de 24 si Whirlpool vertical deja inclus.",
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/froeslunda-masina-spalat-vase-incorporata-ikea-500-10568167/",
+   "reason": "IKEA FRÖSLUNDA 45 cm (2199 lei, 44.8x55.0x81.5 cm, 10 seturi, clasa D) citit valid, dar omis: limita de 24.",
+   "topic": "electrocasnice-mari"
+  },
+  {
+   "url": "https://altex.ro/cuptoare-microunde/cpl/",
+   "reason": "Altex: pagina nu s-a încărcat (timeout 60 s, de două ori); niciun preț citit de pe pagina produsului. Prețul Samsung MS23K3515AW/OL apărea doar în rezultate de căutare, deci nu e inclus.",
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://mediagalaxy.ro/cuptoare-microunde/cpl/",
+   "reason": "Media Galaxy: timeout 60 s, pagina nu s-a deschis.",
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.flanco.ro/electrocasnice-mari/hote.html",
+   "reason": "Flanco: HTTP 403 Forbidden (blocat pentru cititor automat). Un produs vândut de Flanco prin eMAG Marketplace (Bosch HBA534EB3) e inclus cu prețul de pe eMAG.",
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/cautare?q=hota",
+   "reason": "Dedeman: HTTP 404 la paginile de categorie/căutare încercate; nicio pagină de produs deschisă.",
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.ikea.com/ro/ro/p/magebo-cuptor-microunde-ikea-500-negru-10557055",
+   "reason": "IKEA MÅGEBO: pagina a returnat doar meniul de navigare, fără preț.",
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/plita-incorporabila-beko-inductie-4-zone-de-gatit-touch-control-80-cm-sticla-neagra-hii84800fhtx/pd/D46KPJBBM/",
+   "reason": "Beko HII84800FHTX (3.239,78 Lei) exclus: titlul spune 80 cm, dar fișa tehnică dă Lățime 77 cm; inconsistent.",
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/plita-incorporabila-teka-gsc-64320-xbc-ix-gaz-4-arzatoare-aprindere-electrica-gratare-fonta-inox-112610063/pd/DVBQTLMBM/",
+   "reason": "Teka GSC 64320 XBC IX (1.249,00 Lei) exclus: fișa tehnică are dimensiuni evident inversate (Latime 500 mm, Adancime 85 mm, Inaltime 580 mm).",
+   "topic": "bucatarie-aparate"
+  },
+  {
+   "url": "https://www.emag.ro/centrala-termica-in-condensare-immergas-victrix-tera-24-28-kw-kit-evacuare-inclus-65554545/pd/DD563NBBM/",
+   "reason": "Pagina deschisa, dar fara pret: \"Stoc epuizat\" (Immergas Victrix Tera 24/28).",
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/termostat-de-ambient-pentru-centrala-wireless-salus-it500-programabil-protectie-la-inghet-afisaj-digital-ip30-alb-negru/p/2034711",
+   "reason": "Pretul apare doar dupa selectarea localitatii; nu se vede pe pagina.",
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://altex.ro/centrale-termice/cpl/filtru/brand-3334/vaillant/",
+   "reason": "Altex nu raspunde la citire automata (timeout 60 s); nicio pagina Altex deschisa, deci Vaillant/Immergas/Gorenje de la Altex nu au fost incluse.",
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://altex.ro/boilere/cpl/filtru/p/6/",
+   "reason": "Timeout; boilere Gorenje TG80W-E / TG100W-E vazute doar in rezultate de cautare, pagina de produs nedeschisa.",
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.emag.ro/search/boiler+gorenje",
+   "reason": "Singurul boiler Gorenje vizibil este TGR150W-VH (150 L), in afara intervalului 50-100 L; niciun Gorenje 50/80/100 L cu pagina deschisa.",
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/termostat-centrala-wireless-programabil-regulus-tp44-rf/12539183/",
+   "reason": "Pret citit (359,00 lei) dar dimensiunile din fisa sunt eronate (0,85 cm x 1,05 cm); scos pentru a pastra lista la 26 de produse.",
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/centrala-termica-pe-gaz-in-condensatie-bosch-condens-gc1200w-24-c-ng-24-kw/12299065/",
+   "reason": "Pret citit (3274,00 lei, 24 kW) dar dimensiunile din fisa (67 x 39.5 x 28.4 cm, l x î x a) par inversate; scos pentru limita de 26 (Bosch e deja acoperit de GC5700iW).",
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/priza-schuko-simpla-gewiss-chorus-gw11203-incastrata-modulara-1-contact-de-protectie-protectie-copii-16a-ivoar/p/1040419",
+   "reason": "Pret citit (19.06 lei, ivoar, fara rama) dar scos pentru limita de 26; Chorus ramane acoperit de priza gri titan + intrerupator alb.",
+   "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-frontala-lg-direct-drive-steam-turbowash-wi-fi-11-kg-aidd-1400rpm-clasa-a-gri-inchis-f4x5011tbb/pd/DVX15C2BM/",
+   "name": "Masina de spalat rufe frontala LG F4X5011TBB, Direct Drive, Steam, TurboWash, Wi-Fi, 11 kg, 1400rpm, Clasa A, Gri inchis",
+   "price": 3319.99,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"3.319,99 Lei\" (fara pret vechi) | Latime 60 cm, Adancime \"57 mm\" (valoare eronata pe pagina, pusa null), Inaltime 85 cm",
+   "dimensionsCm": {
+    "w": 60,
+    "d": null,
+    "h": 85
+   },
+   "topic": "electrocasnice-mari",
+   "reason": "dimensiuni incomplete pe pagină: piesa nu se poate așeza în plan"
+  },
+  {
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-gorenje-frontala-steamtech-8kg-1400rpm-clasa-a-antracit-wnhpi84as-a/pd/D3MZ3ZYBM/",
+   "name": "Masina de Spalat Rufe Gorenje Frontala WNHPI84AS/A Steamtech 8Kg 1400Rpm Clasa A Antracit",
+   "price": 2674.1,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "\"2.674,10 Lei\" langa \"Adauga in Cos\" | fisa: Adancime 54 cm; latimea si inaltimea lipsesc din fisa",
+   "dimensionsCm": {
+    "w": null,
+    "d": 54,
+    "h": null
+   },
+   "topic": "electrocasnice-mari",
+   "reason": "dimensiuni incomplete pe pagină: piesa nu se poate așeza în plan"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/centrala-termica-pe-gaz-in-condensatie-viessmann-vitodens-050-w-combi-25-kw-incl-kit-evacuare-si-set-filtre-y/10477235/",
+   "name": "Centrala termica pe gaz in condensatie Viessmann Vitodens 050-W combi 25 kW, incl. kit evacuare si set filtre Y",
+   "price": 4490,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"4490,00 lei\"; \"Putere termică nominală (80°/60°)\": 22,4 kW; \"Dimensiuni (l x î x a)\": 30 cm x 70 cm x 40 cm (atentie: latimea/adancimea par inversate fata de forma uzuala); \"cazan în condensație combi\" cu schimbator in placi pentru ACM.",
+   "dimensionsCm": {
+    "w": 30,
+    "d": 40,
+    "h": 70
+   },
+   "topic": "instalatii-electrice",
+   "reason": "lățimea și adâncimea par inversate pe pagină"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/boiler-electric-tesy-bellislimo-lite-80-l-1200-w/10576812/",
+   "name": "Boiler electric Tesy BelliSlimo Lite 80 l 1200 W",
+   "price": 1305,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"1305,00 lei*/ buc.\"; \"Conţinut nominal\" 65 l (titlu: 80 l); \"Putere nominală\" 1,2 kW; \"Dimensiuni (l x î x a)\": 105.3 cm x 49 cm x 2.8 cm (valori copiate ca pe pagina; adancimea 2.8 cm si ordinea l/î par eronate); \"design plat\".",
+   "dimensionsCm": {
+    "w": 105.3,
+    "d": 2.8,
+    "h": 49
+   },
+   "topic": "instalatii-electrice",
+   "reason": "adâncimea 2,8 cm de pe pagină nu e plauzibilă"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/boiler-electric-ariston-velis-tech-wifi-80-eu-1-5kw-65-l-protectie-electrica-ipx4/12151299/",
+   "name": "Boiler electric Ariston Velis Tech WiFi 80 EU 1,5 kW, 65 l, protectie electrica IPX4",
+   "price": 2059,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "\"2059,00 lei\"; \"Conţinut nominal\" 65 l; \"Putere nominală\" 1,5 kW; \"Dimensiuni (l x î x a)\": 108.70 cm x 51.5 cm x 27.50 cm (copiat ca pe pagina; ordinea l/î pare inversata pentru un boiler vertical).",
+   "dimensionsCm": {
+    "w": 108.7,
+    "d": 27.5,
+    "h": 51.5
+   },
+   "topic": "instalatii-electrice",
+   "reason": "lățimea și înălțimea par inversate pe pagină"
+  }
+ ]
+}

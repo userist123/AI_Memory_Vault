@@ -372,9 +372,19 @@ function model(it){
       CY(.022, .026, .03, sx, ct + .015, -.2, tapMat, 16); CY(.012, .012, .3, sx, ct + .17, -.2, tapMat, 12);
       { const sp = new THREE.Mesh(new THREE.TorusGeometry(.09, .012, 8, 16, Math.PI), tapMat); sp.rotation.y = Math.PI / 2; sp.position.set(sx, ct + .32, -.11); sp.castShadow = true; g.add(sp); }
       B(.016, .05, .016, sx, ct + .26, -.02, tapMat); B(.012, .012, .1, sx + .03, ct + .27, -.2, tapMat);
-      // plita: sticlă neagră cu cele patru zone de gătit marcate
-      const hx = w / 2 - .55; B(.58, .006, .5, hx, ct + .003, 0, MAT('screen', '#0d0d0e'));
-      for (const [dx, dz, r] of [[-.14, -.1, .09], [.14, -.1, .07], [-.14, .12, .07], [.14, .12, .09]]){ const z = new THREE.Mesh(new THREE.TorusGeometry(r, .003, 4, 32), MAT('paint', '#3c3d40')); z.rotation.x = Math.PI / 2; z.position.set(hx + dx, ct + .0065, dz); g.add(z); }
+      // plita: sticlă neagră cu cele patru zone de gătit marcate; pe gaz (produsul ales), arzătoarele cu grătare de fontă
+      const hx = w / 2 - .55, gas = s.hob && /gas/.test(s.hob.kind || ''); B(.58, .006, .5, hx, ct + .003, 0, gas && s.hob.col && lumOf(s.hob.col) > .5 ? MAT('metal', s.hob.col) : MAT('screen', '#0d0d0e'));
+      if (gas) for (const [dx, dz, r] of [[-.14, -.1, .05], [.14, -.1, .04], [-.14, .12, .04], [.14, .12, .06]]){ CY(r, r, .02, hx + dx, ct + .016, dz, MAT('paint', '#1b1b1c'), 20); B(.2, .012, .012, hx + dx, ct + .03, dz, MAT('paint', '#121213')); B(.012, .012, .2, hx + dx, ct + .03, dz, MAT('paint', '#121213')); }
+      // hota aleasă, deasupra plitei: coș de perete (inox sau sticlă), telescopică sub suspendat sau de tavan
+      if (s.hood){ const hk = s.hood.kind || 'hood_chimney', hw = (s.hood.w || 60) / 100, hm = MAT('metal', s.hood.col && lumOf(s.hood.col) > .3 ? s.hood.col : '#c8cacc'), dark = MAT('screen', s.hood.col || '#151618'), hb = ct + .65, hz = -d / 2 + .25;
+        if (hk === 'hood_telescopic') B(hw, .04, .3, hx, k && k.upper === 'none' ? hb : h - .02 - .72 - .02, hz + .02, MAT('metal', '#bfc2c5'));   // sertarul telescopic, sub corpul suspendat
+        else if (hk === 'hood_ceiling') B(hw, .1, .45, hx, 2.5, hz, hm);
+        // cu corpuri suspendate deasupra (implicit), hota de perete rămâne doar baldachinul sub ele: coșul și sticla ar intra în corpuri
+        else if (!k || k.upper !== 'none'){ const yb = h - .02 - .72 - .07; B(hw, .06, .48, hx, yb + .03, hz, hm); if (s.hood.glass) B(hw - .02, .006, .3, hx, yb + .063, hz + .05, dark); }
+        else { if (s.hood.glass){ B(hw, .02, .45, hx, hb + .01, hz, hm); const gl = B(hw, .012, .38, hx, hb + .2, hz - .03, dark); gl.rotation.x = -.4; }
+          else { B(hw, .05, .48, hx, hb + .025, hz, hm); B(hw * .6, .22, .32, hx, hb + .16, hz - .06, hm); }
+          B(.26, 2.55 - hb - .27, .22, hx, (2.55 + hb + .27) / 2, -d / 2 + .11, hm); } }
+      if (!gas) for (const [dx, dz, r] of [[-.14, -.1, .09], [.14, -.1, .07], [-.14, .12, .07], [.14, .12, .09]]){ const z = new THREE.Mesh(new THREE.TorusGeometry(r, .003, 4, 32), MAT('paint', '#3c3d40')); z.rotation.x = Math.PI / 2; z.position.set(hx + dx, ct + .0065, dz); g.add(z); }
       // cuptorul: rama inox, ușa de sticlă cu geam fumuriu, mânerul bară și panoul de comandă
       const oz = -d / 2 + wd + .02; B(.58, .58, .012, hx, .46, oz, MAT('metal', '#9da0a3')); B(.54, .38, .006, hx, .4, oz + .008, MAT('screen', '#111214')); B(.5, .08, .006, hx, .68, oz + .008, MAT('screen', '#1a1b1d'));
       B(.46, .016, .016, hx, .62, oz + .035, MAT('metal', '#c4c7ca')); [-.18, .18].forEach(a => B(.012, .012, .03, hx + a, .62, oz + .02, MAT('metal', '#c4c7ca')));
@@ -391,7 +401,7 @@ function model(it){
         B(w, .015, .3, 0, top - .36, -d / 2 + .16, frame); for (let i = 0; i < n; i += 2){ const cx = -w / 2 + w / n * (i + .5); B(w / n - .01, .7, .015, cx, top - .36, -d / 2 + .32, front); handle(cx + w / n / 2 - .06, top - .62, -d / 2 + .335, true); }
         for (let i = 1; i < n; i += 2){ B(.1, .12, .1, -w / 2 + w / n * (i + .5) - .08, top - .64, -d / 2 + .15, MAT('ceramic', '#eae6de')); B(.14, .1, .14, -w / 2 + w / n * (i + .5) + .08, top - .3, -d / 2 + .15, MAT('ceramic', '#6a7c72')); } }
       else if (upper === 'closed'){ B(w, .72, .32, 0, top - .36, -d / 2 + .16, MAT('paint', '#2d2f33')); for (let i = 0; i < n; i++){ const cx = -w / 2 + w / n * (i + .5); B(w / n - .006, .7, .018, cx, top - .36, -d / 2 + .329, front); handle(cx + w / n / 2 - .06, top - .62, -d / 2 + .345, true); } }
-      if (upper !== 'none') B(.6, .12, .46, w / 2 - .55, top - .9, -d / 2 + .23, MAT('metal', '#bfc2c5'));
+      if (upper !== 'none' && !s.hood) B(.6, .12, .46, w / 2 - .55, top - .9, -d / 2 + .23, MAT('metal', '#bfc2c5'));   // hota generică, doar fără produs ales
       // placarea dintre blat și suspendate
       const bsH = Math.max(.2, wallBottom - (.86 + topM)), bsY = .86 + topM + bsH / 2;
       if (k && k.backsplash === 'tile' && k.backsplashTile){ const t = wallTexture({ kind: 'tile', color: k.backsplashColor, sizeCm: k.backsplashTile }, 'kit:' + k.backsplashColor), tc = t.clone(); tc.userData = { owned: true }; tc.needsUpdate = true; tc.repeat.set(w / t.userData.size, bsH / t.userData.size);
@@ -401,6 +411,40 @@ function model(it){
       if (k && k.led && upper !== 'none'){ const lm = new THREE.MeshStandardMaterial({ color: lin(k.led), emissive: lin(k.led), emissiveIntensity: 1.4 }); B(w - .04, .008, .015, 0, wallBottom - .006, -d / 2 + .3, lm); }
       break; }
     case 'fridge': { const m = s.inox ? MAT('metal', s.col) : MAT('paint', s.col); RB(w, h, d, .02, 0, h / 2, 0, m); B(w - .01, .004, .01, 0, h * .64, d / 2 + .001, MAT('paint', '#bdbdbd')); B(.02, .4, .03, w / 2 - .05, h * .8, d / 2 + .015, MAT('metal', '#aaa')); B(.02, .3, .03, w / 2 - .05, h * .45, d / 2 + .015, MAT('metal', '#aaa')); break; }
+    // electrocasnicele după produs: culoarea și tipul din stilul variantei (s.kind, s.col), dimensiunile din fișa produsului
+    case 'washer': { const body = MAT(s.inox ? 'metal' : 'paint', s.col || '#f4f4f2'), dark = MAT('screen', '#16181b'), ring = MAT(s.ringDark ? 'paint' : 'chrome', s.ringDark ? '#2a2c30' : '#cfd2d6');
+      RB(w, h, d, .015, 0, h / 2, 0, body);
+      if (s.kind === 'washer_top'){ B(w - .04, .01, d * .55, 0, h + .004, -d * .1, MAT('paint', '#e9e9e7')); B(w * .7, .05, .06, 0, h + .02, -d / 2 + .05, dark); break; }
+      const builtin = s.kind === 'washer_builtin' || s.kind === 'dishwasher_builtin';
+      B(w - .02, .09, .01, 0, h - .06, d / 2 + .004, builtin ? body : MAT('paint', s.col && lumOf(s.col) < .3 ? '#2a2c30' : '#ececea'));   // panoul de comandă
+      B(.12, .04, .006, w * .15, h - .06, d / 2 + .01, dark); const kn = CY(.03, .03, .025, -w * .3, h - .06, d / 2 + .015, MAT('chrome', '#c9ccd0'), 24); kn.rotation.x = Math.PI / 2;
+      if (s.kind === 'dryer'){ const r = Math.min(w, h) * .26, c = h * .48; const tor = new THREE.Mesh(new THREE.TorusGeometry(r, .03, 12, 40), ring); tor.position.set(0, c, d / 2 + .02); g.add(tor);
+        const gl = CY(r - .02, r - .02, .01, 0, c, d / 2 + .02, MAT('screen', '#3a3f45'), 40); gl.rotation.x = Math.PI / 2; B(w * .5, .03, .02, 0, .06, d / 2 + .005, MAT('paint', '#d6d6d4')); break; }
+      // hublou: inel, sticla fumurie, mânerul în lateral; mașina cu uscător are același hublou
+      const r = Math.min(w, h) * .25, c = h * .5; const tor = new THREE.Mesh(new THREE.TorusGeometry(r, .035, 14, 48), ring); tor.position.set(0, c, d / 2 + .02); g.add(tor);
+      const gl = CY(r - .02, r - .02, .012, 0, c, d / 2 + .018, MAT('glass', '#8fa4ad'), 48); gl.rotation.x = Math.PI / 2; B(.03, .1, .02, r + .03, c, d / 2 + .03, ring); break; }
+    case 'dishwasher': { const body = MAT(s.inox ? 'metal' : 'paint', s.col || '#f4f4f2'), builtin = s.kind === 'dishwasher_builtin';
+      RB(w, h, d, .012, 0, h / 2, 0, body);
+      if (builtin){ B(w - .01, h - .12, .02, 0, (h - .12) / 2 + .1, d / 2 + .01, MAT('paint', '#e8e4dc')); B(w * .5, .015, .025, 0, h - .1, d / 2 + .03, MAT('metal', '#9a9a9a')); B(w - .02, .09, .01, 0, .045, d / 2 - .02, MAT('paint', '#1f2023')); break; }
+      B(w - .01, .1, .01, 0, h - .06, d / 2 + .004, MAT('paint', s.col && lumOf(s.col) < .3 ? '#2a2c30' : '#ececea')); B(.14, .035, .006, 0, h - .06, d / 2 + .011, MAT('screen', '#16181b'));
+      B(w * .6, .02, .03, 0, h - .14, d / 2 + .02, MAT('chrome', '#c9ccd0')); B(w - .02, .08, .01, 0, .04, d / 2 - .015, MAT('paint', '#1f2023')); break; }
+    case 'microwave': { const body = MAT(s.inox ? 'metal' : 'paint', s.col || '#1e1f21'), y0 = s.kind === 'microwave_builtin' ? 1.2 : .92;
+      // independent: pe blat (0,92 m); încorporabil: în coloană, la 1,2 m
+      RB(w, h, d, .02, 0, y0 + h / 2, 0, body); B(w * .68, h * .78, .01, -w * .14, y0 + h / 2, d / 2 + .004, MAT('screen', '#202326'));
+      B(w * .2, h * .78, .01, w * .36, y0 + h / 2, d / 2 + .004, MAT('paint', s.col && lumOf(s.col) < .3 ? '#2b2d31' : '#e3e3e1')); B(.1, .03, .006, w * .36, y0 + h * .78, d / 2 + .01, MAT('screen', '#0e0f11'));
+      B(.02, h * .6, .02, w * .2 - .02, y0 + h / 2, d / 2 + .02, MAT('chrome', '#c9ccd0')); break; }
+    case 'hood': { const m = MAT(s.glass ? 'screen' : 'metal', s.col || '#c8cacc'), steel = MAT('metal', s.col && !s.glass ? s.col : '#c8cacc'), bottom = 1.55;
+      // hota: coș (de perete sau de insulă) cu baldachinul la 65 cm peste plită, telescopică sub corpul suspendat
+      if (s.kind === 'hood_telescopic'){ B(w, .18, d, 0, 1.45 + .09, 0, MAT('paint', '#e9e9e7')); B(w - .02, .03, .06, 0, 1.45 + .015, d / 2 - .03, steel); break; }
+      const top = 2.55, cw = Math.min(w * .4, .3), cd = Math.min(d * .7, .25);
+      if (s.kind === 'hood_ceiling'){ B(w, .12, d, 0, top - .06, 0, steel); break; }
+      if (s.glass){ B(w, .02, d, 0, bottom + .01, 0, steel); const gl = B(w, .015, d * .75, 0, bottom + .18, -d * .05, m); gl.rotation.x = -.35; }
+      else { B(w, .06, d, 0, bottom + .03, 0, steel); const cap = B(w * .7, .2, d * .7, 0, bottom + .16, s.kind === 'hood_island' ? 0 : -d * .12, steel); cap.scale.x = 1; }
+      B(cw, top - bottom - .2, cd, 0, (top + bottom + .2) / 2, s.kind === 'hood_island' ? 0 : -d / 2 + cd / 2, steel); break; }
+    case 'gasboiler': { const m = MAT('paint', s.col || '#f4f4f2'), y = 1.35 + h / 2;
+      // centrala murală: corpul pe perete (bază la ~1,35 m), afișajul jos pe față, racordurile și coșul
+      RB(w, h, d, .02, 0, y, 0, m); B(w * .7, .07, .01, 0, 1.35 + .08, d / 2 + .003, MAT('paint', '#d9dadb')); B(.08, .035, .006, -w * .15, 1.35 + .08, d / 2 + .01, MAT('screen', '#14161a'));
+      [-.12, -.05, .02, .09].forEach(a => CY(.011, .011, .25, a, 1.35 - .125, -d * .1, MAT('chrome', '#c9ccd0'), 10)); CY(.05, .05, .35, 0, 1.35 + h + .17, -d * .15, MAT('metal', '#d0d2d4'), 24); break; }
     case 'shower': { const bm = s.b || null, pm = MAT('metal', bm ? bm.metal : s.prof), fit = MAT('chrome', bm ? bm.metal : '#cfcfcf'), gl = MAT(s.frost ? 'frost' : 'glass', '#dcecf2');
       // poliță de nișă în perete cu sticle (șampon, gel, ulei de corp)
       B(.3, .012, .1, -w / 2 + .45, 1.0, -d / 2 + .05, MAT('ceramic', '#f2f0eb')); [['#e9e3d8', .17], ['#5f6b5c', .2], ['#b9824f', .14]].forEach(([c, hh], i) => CY(.026, .026, hh, -w / 2 + .37 + i * .08, 1.006 + hh / 2, -d / 2 + .06, MAT('ceramic', c), 16));
@@ -783,15 +827,16 @@ function model(it){
         else { const sl = g.sill != null ? g.sill : .9, top = Math.min(H - .05, sl + (g.h || 1.3)), wh = top - sl, cy = (sl + top) / 2, fm = g.culoare ? lookMat('frame', g.culoare, .5) : frameMat;
           seg(g.la, g.la + g.l, 0, sl); seg(g.la, g.la + g.l, top, H); const m = g.la + g.l / 2; box(g.l, wh, .02, glass, ax + ux * m, cy, az + uz * m, rot, walls).castShadow = false;
           // fereastră reală: toc PVC de 6 cm, canaturi cu profil, montant între canaturi, mânere, glaf interior și pervaz exterior
-          { const pf = .06, pd = .07, at = (sv, y, w2, h2, d2, mat, off = 0) => { const o = box(w2, h2, d2, mat, ax + ux * sv + nx * off, y, az + uz * sv + nz * off, rot, walls); o.castShadow = false; return o; };
+          // produsul ales (g.fer): culoarea și materialul tocului, canatele, fixă (fără canat mobil și mâner), aluminiul mai subțire
+          { const fw = g.fer, fm = fw && !g.culoare ? MAT(fw.frame === 'aluminium' ? 'metal' : 'paint', fw.color) : (g.culoare ? lookMat('frame', g.culoare, .5) : frameMat), pf = fw && fw.frame === 'aluminium' ? .045 : .06, pd = .07, at = (sv, y, w2, h2, d2, mat, off = 0) => { const o = box(w2, h2, d2, mat, ax + ux * sv + nx * off, y, az + uz * sv + nz * off, rot, walls); o.castShadow = false; return o; };
             const sIn = ((ax + ux * m - (pMinX + pMaxX) / 2) * nx + (az + uz * m - (pMinZ + pMaxZ) / 2) * nz) > 0 ? -1 : 1;   // partea dinspre casă
             at(g.la + pf / 2, cy, pf, wh, pd, fm); at(g.la + g.l - pf / 2, cy, pf, wh, pd, fm); at(m, sl + pf / 2, g.l - 2 * pf + .002, pf, pd - .004, fm); at(m, top - pf / 2, g.l - 2 * pf + .002, pf, pd - .004, fm);
-            const n2 = g.l > 1.1 ? 2 : 1, iw = (g.l - 2 * pf) / n2;
-            for (let k = 0; k < n2; k++){ const c0 = g.la + pf + iw * (k + .5), sw2 = iw - .01, sh2 = wh - 2 * pf - .01, sy = cy;
+            const n2 = fw ? fw.sashes : g.l > 1.1 ? 2 : 1, iw = (g.l - 2 * pf) / n2;
+            for (let k = 0; k < n2 && !(fw && fw.fixed); k++){ const c0 = g.la + pf + iw * (k + .5), sw2 = iw - .01, sh2 = wh - 2 * pf - .01, sy = cy;
               [[c0 - sw2 / 2 + .03, sy, .06, sh2], [c0 + sw2 / 2 - .03, sy, .06, sh2]].forEach(([sv, y, w2, h2]) => at(sv, y, w2, h2, .06, fm, sIn * .012));
               [sy - sh2 / 2 + .03, sy + sh2 / 2 - .03].forEach(y => at(c0, y, sw2 - .118, .06, .056, fm, sIn * .012));
               const hx = k === 0 && n2 === 2 ? c0 + sw2 / 2 - .03 : c0 - sw2 / 2 + .03; at(hx, sy, .02, .14, .02, handleMat, sIn * (.06)); at(hx, sy + .05, .035, .035, .012, handleMat, sIn * .05); }
-            if (n2 === 2) at(m, cy, .02, wh - 2 * pf, pd, fm);
+            for (let k = 1; k < n2; k++) at(g.la + pf + iw * k, cy, .02 + (fw && fw.fixed ? .03 : 0), wh - 2 * pf, pd, fm);
             at(m, sl - .01, g.l + .08, .025, .2, MAT('paint', '#f4f2ee'), sIn * (th / 2 + .06));               // glaf
             if (wl.ext) at(m, sl - .04, g.l + .06, .015, .14, MAT('metal', '#d8d6d0'), -sIn * (th / 2 + .05)); }   // pervaz
           if (g.trat){ const tr = g.trat, sg = tr.inward, at = (s, d, y, w2, h2, dp, mat) => { const px = ax + ux * s + nx * sg * d, pz = az + uz * s + nz * sg * d; const o = box(w2, h2, dp, mat, px, y, pz, rot, walls); o.castShadow = false; return o; };

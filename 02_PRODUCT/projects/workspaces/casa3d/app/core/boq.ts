@@ -1,3 +1,5 @@
+import { windowOpenings } from './windows';
+import { TECH_PRODUCT_CATEGORY } from './technical';
 import type { Catalog, Floor, Snapshot, Room, MaterialsCatalog, Material, RoomFinishes, BudgetSettings, Confidence } from './types';
 import { resolve, groupOf } from './catalog';
 import { area as rectArea } from './geometry';
@@ -263,6 +265,13 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
       if (tm && tm.category === RADIATOR_CATEGORY[tp.model ?? 'panel']){ const ps = tm.specs?.sizeCm;
         unknown.push(`Calorifer ${RADIATOR_RO[tp.model ?? 'panel']} ${Math.round(sz.w * 100)}×${Math.round(sz.h * 100)} cm · ${room.name}: produsul ales are altă mărime (${ps ? `${ps[0]}×${ps[1]} cm` : 'nedeclarată'}), fără preț verificat`); continue; }
       unknown.push(`Calorifer ${RADIATOR_RO[tp.model ?? 'panel']} ${Math.round(sz.w * 100)}×${Math.round(sz.h * 100)} cm (1 buc, nou sau mutat, cu racordare) · ${room.name}: fără preț verificat`); } }
+  // ferestre (tâmplăria completă), pe golul lor; montajul și glafurile nu au tarif verificat
+  for (const o of windowOpenings(snap)){ const wm = M(snap.windowUnits?.[o.id]?.product); if (!wm || wm.category !== 'window') continue;
+    items.push(materialLine(wm, `window:${o.id}`, o.roomIds[0] ?? null, `Fereastră · gol ${Math.round(o.widthM * 100)}×${Math.round(o.heightM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj fereastră ${wm.name}`); }
+  // aparatajul electric ales pe puncte (priză, întrerupător, termostat); manopera electricianului e în tarifele de instalații
+  for (const tp of snap.tech ?? []){ const want = TECH_PRODUCT_CATEGORY[tp.kind], tm = M(tp.product); if (!want || !tm || tm.category !== want) continue;
+    const room = floors(snap).flatMap(fl => fl.rooms).find(r => r.id === tp.roomId);
+    items.push(materialLine(tm, `${tp.roomId}:${tp.kind}:${tp.id}`, tp.roomId, `${tm.name} · ${room?.name ?? ''}`, 1, mc.verifiedAt, 0)); }
   // uși de interior (foaie + toc) și mânere, pe golul lor; montajul nu are tarif verificat
   for (const d of doorOpenings(snap)){ const c = snap.doors?.[d.id], dm = M(c?.product), hm = M(c?.handle), roomId = d.roomIds[0] ?? null;
     if (dm){ items.push(materialLine(dm, `door:${d.id}`, roomId, `Ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj ușă ${dm.name}`);

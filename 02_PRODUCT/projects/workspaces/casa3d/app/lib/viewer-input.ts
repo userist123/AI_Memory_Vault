@@ -3,6 +3,7 @@ import type { Catalog, Snapshot, MaterialsCatalog } from '@/core/types';
 import { roomVisual } from '@/core/finishes';
 import { textileVisual } from '@/core/textiles';
 import { doorVisual, doorSwing } from '@/core/doors';
+import { windowVisual } from '@/core/windows';
 import { kitchenVisual } from '@/core/kitchen';
 import { bathVisual } from '@/core/bath';
 import { allFixturePoints } from '@/core/fixtures';
@@ -43,9 +44,14 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   // bucătăria ca sistem: fronturile, blatul, placarea și LED-ul ajung în stilul piesei de bucătărie
   if (mc) for (const it of items) if (it.group === 'bucatarie' && it.variant){ const r = snap.floor.rooms.find(x => x.id === snap.placements.find(p => p.id === it.id)?.roomId);
     const kv = r ? kitchenVisual(mc, finishesOf(snap, r)) : null; if (kv) it.variant = { ...it.variant, s: { ...(it.variant.s || {}), k: kv } }; }
+  // hota și plita alese (incluse în bucătărie): tipul și culoarea produsului ajung în desenul bucătăriei
+  for (const it of items) if (it.group === 'bucatarie' && it.variant){ const st = (g: string) => { const id = snap.selections?.[g]; const v = id ? catalog.variants.find(x => x.id === id) : null; return v && (v.style as { kind?: string } | undefined)?.kind ? { ...(v.style as Record<string, unknown>), w: v.dimensionsCm?.w ?? null } : null; };   // doar produsele cu tipul declarat (proiectele vechi rămân neschimbate)
+    const hood = st('hota'), hob = st('plita'); if (hood || hob) it.variant = { ...it.variant, s: { ...(it.variant.s || {}), ...(hood ? { hood } : {}), ...(hob ? { hob } : {}) } }; }
   if (mc) for (const it of items) if ((it.group === 'dus' || it.group === 'lavoar' || it.group === 'wc') && it.variant){ const r = snap.floor.rooms.find(x => x.id === snap.placements.find(p => p.id === it.id)?.roomId);
     const bv = r ? bathVisual(finishesOf(snap, r)) : null; if (bv) it.variant = { ...it.variant, s: { ...(it.variant.s || {}), b: bv } }; }
   if (mc) for (const d of doorVisual(snap, mc, 0)){ const g = plan.pereti[d.wallIndex]?.goluri[d.openingIndex]; if (g) g.usa = { style: d.style, color: d.color, wood: d.wood, handle: d.handle }; }
+  // tâmplăria aleasă pe fiecare fereastră: culoarea tocului, canatele, fixă sau mobilă, aluminiu sau PVC
+  if (mc) for (const w of windowVisual(snap, mc, 0)){ const g = plan.pereti[w.wallIndex]?.goluri[w.openingIndex]; if (g) g.fer = { color: w.color, sashes: w.sashes, fixed: w.fixed, frame: w.frame, triple: w.triple }; }
   // sensul de deschidere al fiecărei uși (balamaua și partea), același ca în plan
   snap.floor.walls.forEach((w, wi) => w.openings.forEach((o, oi) => { if (o.kind !== 'door') return; const g = plan.pereti[wi]?.goluri[oi]; if (g) g.sw = doorSwing(snap.floor, wi, oi); }));
   // corpurile de iluminat plasate (culoarea: aleasă, a produsului, sau negru)
