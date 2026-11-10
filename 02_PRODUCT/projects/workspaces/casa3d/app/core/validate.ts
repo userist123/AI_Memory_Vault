@@ -87,6 +87,8 @@ export function validatePlacement(snap: Snapshot, cat: Catalog, p: FurniturePlac
   for (const o of others){ const ofp = footprintOf(cat, o); if (!ofp || allowed(p.group, o.group)) continue; const oz = clearanceZone(cat, o, ofp);
     if (oz && rectHit(oz, fp) && !rectHit(ofp, fp)){ issues.push({ code: 'CLEARANCE', severity: 'WARNING', message: `Stă în spațiul de circulație al piesei ${resolve(cat, o.variantId)?.product.name}.`, with: o.id, key: 'issue.CLEARANCE_IN', vars: { nm: resolve(cat, o.variantId)?.product.name ?? '' } }); break; } }
   // focarul pe lemne: coș de fum și verificare tehnică înainte de montaj (aplicația nu verifică tirajul, distanțele față de pereți sau aerul de ardere)
+  // microundele stau pe blat, pe o comodă sau pe o masă; puse direct pe pardoseală → avertisment (veioza și planta pot sta jos)
+  if (p.group === 'microunde' && !surfaceSupport({ placements: placed }, cat, p)) issues.push({ code: 'ON_FLOOR', severity: 'WARNING', message: 'Microundele stau pe pardoseală: pune-le pe blatul bucătăriei, pe o comodă sau pe o masă.', key: 'issue.ON_FLOOR' });
   if (NEEDS_CHIMNEY.has(p.group)) issues.push({ code: 'CHIMNEY', severity: 'WARNING', message: 'Focarul pe lemne cere coș de fum și verificare tehnică (coșar, pompieri) înainte de montaj.', key: 'issue.CHIMNEY' });
   return issues;
 }

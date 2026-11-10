@@ -96,6 +96,9 @@ test('regresie: microundele stau pe blatul bucătăriei (0,9 m), nu pe perete; c
   s.placements.push(onCounter); assert.equal(surfaceUnder(s, cat, onCounter), .9);
   const onFridge = { ...onCounter, id: 'mw2', x: fr.x, z: fr.z }; s.placements.push(onFridge);
   assert.ok(validatePlacement(s, cat, onFridge).some(i => i.code === 'OVERLAP'), 'microundele peste frigider sunt semnalate');
+  assert.ok(!validatePlacement(s, cat, onCounter).some(i => i.code === 'ON_FLOOR'), 'pe blat: fără avertisment');
+  const bath = s.floor.rooms.find(x => x.type === 'baie')!, r = bath.rect, onFloor = { ...onCounter, id: 'mw3', roomId: bath.id, x: (r.x0 + r.x1) / 2, z: (r.z0 + r.z1) / 2 }; s.placements.push(onFloor);
+  assert.equal(surfaceUnder(s, cat, onFloor), 0); assert.ok(validatePlacement(s, cat, onFloor).some(i => i.code === 'ON_FLOOR'), 'pe pardoseală: avertisment');
 });
 test('ușa de intrare: produs pe golul de intrare, primele în listă, avertismente pe golul greșit, deviz și desen 3D', () => {
   const s = demo(), ent = doorOpenings(s).find(d => d.entrance)!, inner = doorOpenings(s).find(d => !d.entrance)!; assert.ok(ent && inner, 'demo are intrare și uși de interior');
