@@ -48,17 +48,17 @@
                         </Style>
                     </TextBlock.Style>
                 </TextBlock>
-                <DataGrid Grid.Row="1" AutomationProperties.Name="Lanțul de custodie al cazului" ItemsSource="{Binding Investigation.CustodyRows}"
+                <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" AutomationProperties.Name="Lanțul de custodie al cazului" ItemsSource="{Binding Investigation.CustodyRows}"
                           AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" HeadersVisibility="Column" SelectionMode="Single">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="#" Binding="{Binding SeqText}" Width="55"/>
-                        <DataGridTextColumn Header="Ora (locală)" Binding="{Binding LocalText}" Width="140"/>
-                        <DataGridTextColumn Header="Cine" Binding="{Binding Who}" Width="140"/>
-                        <DataGridTextColumn Header="Ce s-a făcut" Binding="{Binding ActionText}" Width="160"/>
-                        <DataGridTextColumn Header="Proba" Binding="{Binding EvidenceId}" Width="110"/>
-                        <DataGridTextColumn Header="De unde → unde" Binding="{Binding FromTo}" Width="220"/>
-                        <DataGridTextColumn Header="Amprentă SHA-256" Binding="{Binding ShaShort}" FontFamily="{StaticResource CodeFontFamily}" Width="110"/>
-                        <DataGridTextColumn Header="Instrument" Binding="{Binding Tool}" Width="140"/>
+                        <DataGridTextColumn Header="#" Binding="{Binding SeqText}" Width="55" MinWidth="55"/>
+                        <DataGridTextColumn Header="Ora (locală)" Binding="{Binding LocalText}" Width="140" MinWidth="140"/>
+                        <DataGridTextColumn Header="Cine" Binding="{Binding Who}" Width="140" MinWidth="140"/>
+                        <DataGridTextColumn Header="Ce s-a făcut" Binding="{Binding ActionText}" Width="160" MinWidth="160"/>
+                        <DataGridTextColumn Header="Proba" Binding="{Binding EvidenceId}" Width="110" MinWidth="110"/>
+                        <DataGridTextColumn Header="De unde → unde" Binding="{Binding FromTo}" Width="220" MinWidth="220"/>
+                        <DataGridTextColumn Header="Amprentă SHA-256" Binding="{Binding ShaShort}" FontFamily="{StaticResource CodeFontFamily}" Width="140" MinWidth="140"/>
+                        <DataGridTextColumn Header="Instrument" Binding="{Binding Tool}" Width="140" MinWidth="140"/>
                         <DataGridTextColumn Header="Detalii" Binding="{Binding Details}" Width="*"/>
                     </DataGrid.Columns>
                     <DataGrid.RowDetailsTemplate>
@@ -73,14 +73,14 @@
 
         <!-- Session analysis ledger (in memory, not part of the case) -->
         <Expander Grid.Row="2" Margin="0,12,0,0" Header="Jurnalul analizei din această sesiune (în memorie; nu face parte din caz și nu se păstrează la închidere)">
-            <DataGrid ItemsSource="{Binding ProvenanceEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" MaxHeight="220"
+            <DataGrid HorizontalScrollBarVisibility="Auto" ItemsSource="{Binding ProvenanceEntries}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True" MaxHeight="220"
                       AutomationProperties.Name="Jurnalul analizei din această sesiune">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="#" Binding="{Binding SequenceNumber}" Width="45"/>
-                    <DataGridTextColumn Header="Marcaj de timp (UTC)" Binding="{Binding TimestampUtc, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="145"/>
-                    <DataGridTextColumn Header="Acțiune / etapă" Binding="{Binding ActionType}" Width="150"/>
-                    <DataGridTextColumn Header="Fișier / referință" Binding="{Binding EvidenceReference}" Width="200"/>
-                    <DataGridTextColumn Header="Sumă de control SHA-256" Binding="{Binding SourceSha256}" FontFamily="{StaticResource CodeFontFamily}" Width="240"/>
+                    <DataGridTextColumn Header="#" Binding="{Binding SequenceNumber}" Width="45" MinWidth="45"/>
+                    <DataGridTextColumn Header="Marcaj de timp (UTC)" Binding="{Binding TimestampUtc, StringFormat={}{0:yyyy-MM-dd HH:mm:ss}}" Width="170" MinWidth="170"/>
+                    <DataGridTextColumn Header="Acțiune / etapă" Binding="{Binding ActionType}" Width="150" MinWidth="150"/>
+                    <DataGridTextColumn Header="Fișier / referință" Binding="{Binding EvidenceReference}" Width="200" MinWidth="200"/>
+                    <DataGridTextColumn Header="Sumă de control SHA-256" Binding="{Binding SourceSha256}" FontFamily="{StaticResource CodeFontFamily}" Width="240" MinWidth="240"/>
                     <DataGridTextColumn Header="Detalii" Binding="{Binding Details}" Width="*"/>
                 </DataGrid.Columns>
             </DataGrid>

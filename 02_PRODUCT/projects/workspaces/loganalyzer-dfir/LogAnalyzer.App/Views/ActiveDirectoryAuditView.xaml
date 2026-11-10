@@ -36,54 +36,54 @@
             <!-- Metric 1: Total AD Events -->
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,6,0" Padding="10">
                 <StackPanel>
-                    <TextBlock Text="Evenimente Active Directory" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource TextMutedBrush}"/>
-                    <TextBlock Text="{Binding AdEventsAnalyzedCount, FallbackValue=0}" FontSize="18" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,1"/>
-                    <TextBlock Text="Jurnale DC și securitate domeniu" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="Evenimente Active Directory" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding AdEventsAnalyzedCount, FallbackValue=0, StringFormat={}{0:N0}}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,1"/>
+                    <TextBlock Text="Jurnale DC și securitate domeniu" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
 
             <!-- Metric 2: Domain Admins Changes -->
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,6,0" Padding="10">
                 <StackPanel>
-                    <TextBlock Text="Grupuri Domain Admins" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource DangerBrush}"/>
-                    <TextBlock Text="{Binding AdPrivilegedGroupChangesCount, FallbackValue=0}" FontSize="18" FontWeight="Black" Foreground="{StaticResource DangerBrush}" Margin="0,3,0,1"/>
-                    <TextBlock Text="Enterprise / Schema Admins" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="Grupuri Domain Admins" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding AdPrivilegedGroupChangesCount, FallbackValue=0, StringFormat={}{0:N0}}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,1"/>
+                    <TextBlock Text="Enterprise / Schema Admins" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
 
             <!-- Metric 3: Kerberos Exploits -->
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,6,0" Padding="10">
                 <StackPanel>
-                    <TextBlock Text="Atacuri Kerberos / AD" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
-                    <TextBlock Text="{Binding AdKerberosAttacksCount, FallbackValue=0}" FontSize="18" FontWeight="Black" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,3,0,1"/>
-                    <TextBlock Text="Kerberoast, DCSync, DCShadow" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="Atacuri Kerberos / AD" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding AdKerberosAttacksCount, FallbackValue=0, StringFormat={}{0:N0}}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,1"/>
+                    <TextBlock Text="Kerberoast, DCSync, DCShadow" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
 
             <!-- Metric 4: GPO & AD Objects Policy Tampering -->
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,6,0" Padding="10">
                 <StackPanel>
-                    <TextBlock Text="Modificări GPO și politici" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource WarningBrush}"/>
-                    <TextBlock Text="{Binding AdGpoPolicyChangesCount, FallbackValue=0}" FontSize="18" FontWeight="Black" Foreground="{StaticResource WarningBrush}" Margin="0,3,0,1"/>
-                    <TextBlock Text="EID 4739 / 5136 / 5137" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="Modificări GPO și politici" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding AdGpoPolicyChangesCount, FallbackValue=0, StringFormat={}{0:N0}}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,1"/>
+                    <TextBlock Text="EID 4739 / 5136 / 5137" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
 
             <!-- Metric 5: Azure AD / Cloud Identity -->
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,6,0" Padding="10">
                 <StackPanel>
-                    <TextBlock Text="Evenimente cloud Entra" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource CyanAccentBrush}"/>
-                    <TextBlock Text="{Binding AzureAdFindings.Count, FallbackValue=0}" FontSize="18" FontWeight="Black" Foreground="{StaticResource CyanAccentBrush}" Margin="0,3,0,1"/>
-                    <TextBlock Text="Roluri PIM, deplasare imposibilă" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="Evenimente cloud Entra" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding AzureAdFindings.Count, FallbackValue=0}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,1"/>
+                    <TextBlock Text="Roluri PIM, deplasare imposibilă" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
 
             <!-- Metric 6: UBA Behavioral Anomalies -->
             <Border Style="{StaticResource ObsidianCardStyle}" Padding="10">
                 <StackPanel>
-                    <TextBlock Text="Anomalii de comportament UBA" FontSize="8.5" FontWeight="Bold" Foreground="{StaticResource HighBrush}"/>
-                    <TextBlock Text="{Binding UbaAnomalies.Count, FallbackValue=0}" FontSize="18" FontWeight="Black" Foreground="{StaticResource HighBrush}" Margin="0,3,0,1"/>
-                    <TextBlock Text="Sesiuni concurente și în afara programului" FontSize="8.5" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBlock Text="Anomalii de comportament UBA" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Text="{Binding UbaAnomalies.Count, FallbackValue=0}" FontSize="18" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,3,0,1"/>
+                    <TextBlock Text="Sesiuni concurente și în afara programului" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap"/>
                 </StackPanel>
             </Border>
         </UniformGrid>
@@ -104,14 +104,14 @@
                                 <TextBlock Text="{Binding KerberosFindings.Count, StringFormat='{}{0} Detecții AD'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding KerberosFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
+                        <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" ItemsSource="{Binding KerberosFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Categorie" Binding="{Binding Category}" Width="140"/>
-                                <DataGridTextColumn Header="Tip atac / eveniment" Binding="{Binding AttackType}" Width="180"/>
-                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="90"/>
-                                <DataGridTextColumn Header="Cont țintă" Binding="{Binding TargetAccount}" Width="140"/>
-                                <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85"/>
-                                <DataGridTextColumn Header="Sursă / IP" Binding="{Binding ClientIp}" Width="100"/>
+                                <DataGridTextColumn Header="Categorie" Binding="{Binding Category}" Width="140" MinWidth="140"/>
+                                <DataGridTextColumn Header="Tip atac / eveniment" Binding="{Binding AttackType}" Width="180" MinWidth="180"/>
+                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="100" MinWidth="100"/>
+                                <DataGridTextColumn Header="Cont țintă" Binding="{Binding TargetAccount}" Width="140" MinWidth="140"/>
+                                <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85" MinWidth="85"/>
+                                <DataGridTextColumn Header="Sursă / IP" Binding="{Binding ClientIp}" Width="100" MinWidth="100"/>
                                 <DataGridTextColumn Header="Sumar analiză și recomandare răspuns" Binding="{Binding Description}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -133,17 +133,17 @@
                                 <TextBlock Text="{Binding AdAttributeDeltas.Count, StringFormat='{}{0} Modificări Atribute'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding AdAttributeDeltas}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
+                        <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" ItemsSource="{Binding AdAttributeDeltas}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Clasă obiect" Binding="{Binding ObjectClass}" Width="100"/>
-                                <DataGridTextColumn Header="DN obiect modificat" Binding="{Binding ObjectDn}" Width="220"/>
-                                <DataGridTextColumn Header="Nume atribut LDAP" Binding="{Binding AttributeName}" Width="160"/>
-                                <DataGridTextColumn Header="Valoare anterioară" Binding="{Binding OldValue}" Width="130"/>
-                                <DataGridTextColumn Header="Valoare nouă" Binding="{Binding NewValue}" Width="140"/>
-                                <DataGridTextColumn Header="Operațiune" Binding="{Binding Operation}" Width="110"/>
+                                <DataGridTextColumn Header="Clasă obiect" Binding="{Binding ObjectClass}" Width="110" MinWidth="110"/>
+                                <DataGridTextColumn Header="DN obiect modificat" Binding="{Binding ObjectDn}" Width="220" MinWidth="220"/>
+                                <DataGridTextColumn Header="Nume atribut LDAP" Binding="{Binding AttributeName}" Width="160" MinWidth="160"/>
+                                <DataGridTextColumn Header="Valoare anterioară" Binding="{Binding OldValue}" Width="160" MinWidth="160"/>
+                                <DataGridTextColumn Header="Valoare nouă" Binding="{Binding NewValue}" Width="140" MinWidth="140"/>
+                                <DataGridTextColumn Header="Operațiune" Binding="{Binding Operation}" Width="110" MinWidth="110"/>
                                 <DataGridTextColumn Header="Impact securitate" Binding="{Binding SecurityImpact}" Width="*"/>
-                                <DataGridTextColumn Header="Modificat De" Binding="{Binding ModifiedBy}" Width="110"/>
-                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="135"/>
+                                <DataGridTextColumn Header="Modificat De" Binding="{Binding ModifiedBy}" Width="110" MinWidth="110"/>
+                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="135" MinWidth="135"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -164,16 +164,16 @@
                                 <TextBlock Text="{Binding AzureAdFindings.Count, StringFormat='{}{0} Evenimente Cloud'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding AzureAdFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
+                        <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" ItemsSource="{Binding AzureAdFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Tip activitate cloud" Binding="{Binding ActivityType}" Width="200"/>
-                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="85"/>
-                                <DataGridTextColumn Header="Cont UPN" Binding="{Binding UserPrincipalName}" Width="170"/>
-                                <DataGridTextColumn Header="Locație / sursă" Binding="{Binding SourceLocationOrIp}" Width="140"/>
-                                <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="80"/>
+                                <DataGridTextColumn Header="Tip activitate cloud" Binding="{Binding ActivityType}" Width="200" MinWidth="200"/>
+                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="100" MinWidth="100"/>
+                                <DataGridTextColumn Header="Cont UPN" Binding="{Binding UserPrincipalName}" Width="170" MinWidth="170"/>
+                                <DataGridTextColumn Header="Locație / sursă" Binding="{Binding SourceLocationOrIp}" Width="140" MinWidth="140"/>
+                                <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="80" MinWidth="80"/>
                                 <DataGridTextColumn Header="Descriere și impact" Binding="{Binding Description}" Width="*"/>
-                                <DataGridTextColumn Header="Măsură răspuns" Binding="{Binding RemediationActionRo}" Width="240"/>
-                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="135"/>
+                                <DataGridTextColumn Header="Măsură răspuns" Binding="{Binding RemediationActionRo}" Width="240" MinWidth="240"/>
+                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="135" MinWidth="135"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -194,17 +194,17 @@
                                 <TextBlock Text="{Binding FileServerFindings.Count, StringFormat='{}{0} Evenimente Fișiere'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding FileServerFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
+                        <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" ItemsSource="{Binding FileServerFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Tip activitate fișier" Binding="{Binding ActivityType}" Width="190"/>
-                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="85"/>
-                                <DataGridTextColumn Header="Cale partajare / fișier" Binding="{Binding SharePathOrFileName}" Width="200"/>
-                                <DataGridTextColumn Header="Server" Binding="{Binding ServerHost}" Width="110"/>
-                                <DataGridTextColumn Header="Utilizator" Binding="{Binding AccessedBy}" Width="130"/>
-                                <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="80"/>
+                                <DataGridTextColumn Header="Tip activitate fișier" Binding="{Binding ActivityType}" Width="190" MinWidth="190"/>
+                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="100" MinWidth="100"/>
+                                <DataGridTextColumn Header="Cale partajare / fișier" Binding="{Binding SharePathOrFileName}" Width="200" MinWidth="200"/>
+                                <DataGridTextColumn Header="Server" Binding="{Binding ServerHost}" Width="110" MinWidth="110"/>
+                                <DataGridTextColumn Header="Utilizator" Binding="{Binding AccessedBy}" Width="130" MinWidth="130"/>
+                                <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="80" MinWidth="80"/>
                                 <DataGridTextColumn Header="Descriere și diagnostic" Binding="{Binding Description}" Width="*"/>
-                                <DataGridTextColumn Header="Recomandare răspuns" Binding="{Binding RemediationActionRo}" Width="240"/>
-                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="135"/>
+                                <DataGridTextColumn Header="Recomandare răspuns" Binding="{Binding RemediationActionRo}" Width="240" MinWidth="240"/>
+                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="135" MinWidth="135"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -225,16 +225,16 @@
                                 <TextBlock Text="{Binding DnsFindings.Count, StringFormat='{}{0} Evenimente DNS'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding DnsFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
+                        <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" ItemsSource="{Binding DnsFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Tip detecție" Binding="{Binding FindingType}" Width="180"/>
-                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="90"/>
-                                <DataGridTextColumn Header="Nume înregistrare" Binding="{Binding RecordName}" Width="160"/>
-                                <DataGridTextColumn Header="Zonă DNS" Binding="{Binding ZoneName}" Width="150"/>
-                                <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85"/>
+                                <DataGridTextColumn Header="Tip detecție" Binding="{Binding FindingType}" Width="180" MinWidth="180"/>
+                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="100" MinWidth="100"/>
+                                <DataGridTextColumn Header="Nume înregistrare" Binding="{Binding RecordName}" Width="160" MinWidth="160"/>
+                                <DataGridTextColumn Header="Zonă DNS" Binding="{Binding ZoneName}" Width="150" MinWidth="150"/>
+                                <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85" MinWidth="85"/>
                                 <DataGridTextColumn Header="Descriere și impact" Binding="{Binding Description}" Width="*"/>
-                                <DataGridTextColumn Header="Acțiune recomandată" Binding="{Binding RemediationActionRo}" Width="250"/>
-                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="140"/>
+                                <DataGridTextColumn Header="Acțiune recomandată" Binding="{Binding RemediationActionRo}" Width="250" MinWidth="250"/>
+                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="140" MinWidth="140"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -257,10 +257,10 @@
                         </DockPanel>
                         <DataGrid Grid.Row="1" ItemsSource="{Binding UbaAnomalies}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Utilizator domeniu" Binding="{Binding Username}" Width="150"/>
-                                <DataGridTextColumn Header="Tip anomalie UBA" Binding="{Binding AnomalyType}" Width="210"/>
-                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="90"/>
-                                <DataGridTextColumn Header="Punctaj risc" Binding="{Binding RiskWeight, StringFormat='{}{0}/100'}" Width="85"/>
+                                <DataGridTextColumn Header="Utilizator domeniu" Binding="{Binding Username}" Width="160" MinWidth="160"/>
+                                <DataGridTextColumn Header="Tip anomalie UBA" Binding="{Binding AnomalyType}" Width="210" MinWidth="210"/>
+                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity}" Width="100" MinWidth="100"/>
+                                <DataGridTextColumn Header="Punctaj risc" Binding="{Binding RiskWeight, StringFormat='{}{0}/100'}" Width="110" MinWidth="110"/>
                                 <DataGridTextColumn Header="Descriere și diagnostic comportamental" Binding="{Binding Description}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -282,14 +282,14 @@
                                 <TextBlock Text="{Binding ComplianceResults.Count, StringFormat='{}{0} controale (NEEVALUAT = fără verdict)'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding ComplianceResults}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
+                        <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" ItemsSource="{Binding ComplianceResults}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Standard / cadru" Binding="{Binding Framework}" Width="170"/>
-                                <DataGridTextColumn Header="Articol / control" Binding="{Binding ArticleOrControl}" Width="140"/>
-                                <DataGridTextColumn Header="Titlu control" Binding="{Binding ControlTitle}" Width="200"/>
-                                <DataGridTextColumn Header="Stare" Binding="{Binding Status}" Width="100"/>
+                                <DataGridTextColumn Header="Standard / cadru" Binding="{Binding Framework}" Width="170" MinWidth="170"/>
+                                <DataGridTextColumn Header="Articol / control" Binding="{Binding ArticleOrControl}" Width="150" MinWidth="150"/>
+                                <DataGridTextColumn Header="Titlu control" Binding="{Binding ControlTitle}" Width="200" MinWidth="200"/>
+                                <DataGridTextColumn Header="Stare" Binding="{Binding Status}" Width="100" MinWidth="100"/>
                                 <DataGridTextColumn Header="Evidență forensică corelată" Binding="{Binding EvidenceSummary}" Width="*"/>
-                                <DataGridTextColumn Header="Măsură corectivă impusă" Binding="{Binding RequiredAction}" Width="260"/>
+                                <DataGridTextColumn Header="Măsură corectivă impusă" Binding="{Binding RequiredAction}" Width="260" MinWidth="260"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>

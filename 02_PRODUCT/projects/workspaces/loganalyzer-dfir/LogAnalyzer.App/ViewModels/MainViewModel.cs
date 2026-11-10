@@ -187,7 +187,16 @@ namespace LogAnalyzer.UI.ViewModels
         // AI / Heuristic Analysis Properties
         public ObservableCollection<AiAnomalyItem> AiAnomalies { get; set; } = new();
         [ObservableProperty] private int _aiRiskScore = 0;
-        [ObservableProperty] private string _aiRiskLevel = "NEDETERMINAT (analiza nu a fost rulată)";
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(AiRiskVerdict))]
+        [NotifyPropertyChangedFor(nameof(AiRiskVerdictNote))]
+        private string _aiRiskLevel = "NEDETERMINAT (analiza nu a fost rulată)";
+        /// <summary>The verdict word alone ("NEDETERMINAT"): the page shows the explanation in parentheses on its own line.</summary>
+        public string AiRiskVerdict { get { int i = AiRiskLevel.IndexOf(" (", StringComparison.Ordinal); return i < 0 ? AiRiskLevel : AiRiskLevel[..i]; } }
+        /// <summary>The explanation that follows the verdict word, without the parentheses; empty when the level has none.</summary>
+        public string AiRiskVerdictNote { get { int i = AiRiskLevel.IndexOf(" (", StringComparison.Ordinal); return i < 0 ? "" : AiRiskLevel[(i + 2)..].TrimEnd(')'); } }
+        /// <summary>True only when the current counts and score come from an analysis run in this session over loaded events (the cards show "—" otherwise).</summary>
+        [ObservableProperty] private bool _aiHasEvidence = false;
         [ObservableProperty] private string _aiRiskColor = NeutralRiskColor;
         /// <summary>The colour of a risk level that was not computed (grey, never the green of „normal”).</summary>
         public const string NeutralRiskColor = ThemeColors.TextMuted;
@@ -2863,6 +2872,7 @@ namespace LogAnalyzer.UI.ViewModels
                 // nor at start-up, when only an earlier session's data was re-read (announce = false) and the status bar says „Nicio analiză încă.”; then the
                 // page says that nothing was analysed, in a neutral colour, never „Parametrii analizați se încadrează în limitele normale” in green
                 bool evidence = eventsForAnalysis.Count > 0 && announce;
+                AiHasEvidence = evidence;
                 AiRiskScore = evidence ? explainableRisk.TotalScore : 0;
                 AiRiskLevel = evidence ? explainableRisk.Level : eventsForAnalysis.Count > 0 ? "NEDETERMINAT (analiza nu a fost rulată în această sesiune)" : "NEDETERMINAT (nu există date analizate)";
                 AiRiskColor = evidence ? explainableRisk.LevelColor : NeutralRiskColor;

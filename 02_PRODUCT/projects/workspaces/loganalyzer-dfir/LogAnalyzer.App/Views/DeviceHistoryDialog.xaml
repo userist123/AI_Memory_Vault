@@ -15,7 +15,7 @@
         <DataGrid x:Name="HistoryGrid" AutomationProperties.Name="Istoricul dispozitivului din jurnalul sigilat" AutoGenerateColumns="False" CanUserAddRows="False" CanUserDeleteRows="False"
                   IsReadOnly="True" HeadersVisibility="Column" SelectionMode="Single">
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Data și ora" Binding="{Binding TimeText, Mode=OneWay}" Width="150"/>
+                <DataGridTextColumn Header="Data și ora" Binding="{Binding TimeText, Mode=OneWay}" Width="150" MinWidth="150"/>
                 <DataGridTextColumn Header="Eveniment" Binding="{Binding Kind, Mode=OneWay}" Width="1.3*"/>
                 <DataGridTextColumn Header="Utilizator" Binding="{Binding User, Mode=OneWay}" Width="1.1*"/>
                 <DataGridTextColumn Header="Detalii" Binding="{Binding Details, Mode=OneWay}" Width="2*">

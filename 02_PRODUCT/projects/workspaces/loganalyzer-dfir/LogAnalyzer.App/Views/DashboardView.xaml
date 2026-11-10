@@ -207,13 +207,13 @@
                             <TextBlock DockPanel.Dock="Left" Text="Coada de amenințări" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             <TextBlock DockPanel.Dock="Right" Text="{Binding IssuesView.Count, StringFormat='{}{0} alerte'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
                         </DockPanel>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding IssuesView}" SelectedItem="{Binding SelectedIssue}" AutoGenerateColumns="False" IsReadOnly="True" MinHeight="260">
+                        <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" ItemsSource="{Binding IssuesView}" SelectedItem="{Binding SelectedIssue}" AutoGenerateColumns="False" IsReadOnly="True" MinHeight="260">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="85"/>
+                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="100" MinWidth="100"/>
                                 <DataGridTextColumn Header="Ce s-a întâmplat" Binding="{Binding Plain}" Width="420" MinWidth="300"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
                                 <DataGridTextColumn Header="Procedură și acțiune" Binding="{Binding Explanation}" Width="*"/>
-                                <DataGridTextColumn Header="Tehnic: tipul alertei" Binding="{Binding Title}" Width="160"/>
-                                <DataGridTextColumn Header="Tehnic: tehnică" Binding="{Binding MitreTechniqueId}" Width="85"/>
+                                <DataGridTextColumn Header="Tehnic: tipul alertei" Binding="{Binding Title}" Width="180" MinWidth="180"/>
+                                <DataGridTextColumn Header="Tehnic: tehnică" Binding="{Binding MitreTechniqueId}" Width="140" MinWidth="140"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>

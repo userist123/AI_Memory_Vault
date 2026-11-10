@@ -41,9 +41,9 @@
                 </ContextMenu>
             </DataGrid.ContextMenu>
             <DataGrid.Columns>
-                <DataGridTextColumn Header="Categorie" Binding="{Binding Category}" Width="140"/>
-                <DataGridTextColumn Header="Calea cheii" Binding="{Binding KeyPath}" Width="280"/>
-                <DataGridTextColumn Header="Numele valorii" Binding="{Binding ValueName}" Width="160"/>
+                <DataGridTextColumn Header="Categorie" Binding="{Binding Category}" Width="140" MinWidth="140"/>
+                <DataGridTextColumn Header="Calea cheii" Binding="{Binding KeyPath}" Width="280" MinWidth="280"/>
+                <DataGridTextColumn Header="Numele valorii" Binding="{Binding ValueName}" Width="160" MinWidth="160"/>
                 <DataGridTextColumn Header="Datele valorii" Binding="{Binding ValueData}" Width="*"/>
             </DataGrid.Columns>
             <DataGrid.InputBindings>

@@ -31,8 +31,8 @@
                 <DataGrid x:Name="FieldsGrid" Margin="8" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column"
                           CanUserSortColumns="True" SelectionUnit="FullRow" ClipboardCopyMode="IncludeHeader">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Secțiune" Binding="{Binding Section}" Width="130"/>
-                        <DataGridTextColumn Header="Câmp" Binding="{Binding Name}" Width="220"/>
+                        <DataGridTextColumn Header="Secțiune" Binding="{Binding Section}" Width="130" MinWidth="130"/>
+                        <DataGridTextColumn Header="Câmp" Binding="{Binding Name}" Width="220" MinWidth="220"/>
                         <DataGridTextColumn Header="Valoare" Binding="{Binding Value}" Width="*">
                             <DataGridTextColumn.ElementStyle>
                                 <Style TargetType="TextBlock">
@@ -55,9 +55,9 @@
                                Text="Elemente din sesiune legate de acesta (aceeași sesiune de logon, același proces, IP sau cont, în ±10 minute). Dublu-click deschide fișa lor."/>
                     <DataGrid x:Name="RelatedGrid" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MouseDoubleClick="Related_DoubleClick">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Ora" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="150"/>
-                            <DataGridTextColumn Header="Tip" Binding="{Binding Kind}" Width="90"/>
-                            <DataGridTextColumn Header="Legătură" Binding="{Binding Link}" Width="200"/>
+                            <DataGridTextColumn Header="Ora" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="150" MinWidth="150"/>
+                            <DataGridTextColumn Header="Tip" Binding="{Binding Kind}" Width="90" MinWidth="90"/>
+                            <DataGridTextColumn Header="Legătură" Binding="{Binding Link}" Width="200" MinWidth="200"/>
                             <DataGridTextColumn Header="Rezumat" Binding="{Binding Summary}" Width="*"/>
                         </DataGrid.Columns>
                     </DataGrid>

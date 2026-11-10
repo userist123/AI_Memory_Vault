@@ -66,4 +66,14 @@
         </Style.Triggers>
     </Style>
 
+    <!-- Raw multi-line text (a PowerShell 4104 message is hundreds of px tall): the cell shows the first two lines, the whole text is in the tooltip. -->
+    <Style x:Key="TwoLineCellTextStyle" TargetType="TextBlock">
+        <Setter Property="TextWrapping" Value="Wrap"/>
+        <Setter Property="TextTrimming" Value="CharacterEllipsis"/>
+        <Setter Property="MaxHeight" Value="34"/>
+        <Setter Property="VerticalAlignment" Value="Center"/>
+        <Setter Property="ToolTip" Value="{Binding Text, RelativeSource={RelativeSource Self}}"/>
+        <Setter Property="ToolTipService.ShowDuration" Value="60000"/>
+    </Style>
+
 </ResourceDictionary>

@@ -23,10 +23,10 @@
                 <!-- lab 2026-11-07: the counters dock right first and the buttons wrap, so at 1024 px nothing is cut off -->
                 <Border DockPanel.Dock="Right" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="10,4" VerticalAlignment="Center">
                     <StackPanel Orientation="Horizontal">
-                        <TextBlock Text="Primite: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBlock Text="{Binding TotalLiveEventsCaptured, FallbackValue=0}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource CyanAccentBrush}" Margin="4,0,10,0"/>
-                        <TextBlock Text="Alerte: " FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                        <TextBlock Text="{Binding LiveAlerts.Count, FallbackValue=0}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource CriticalBrush}" Margin="4,0,0,0"/>
+                        <TextBlock Text="Primite: " FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="{Binding TotalLiveEventsCaptured, FallbackValue=0}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource CyanAccentBrush}" Margin="4,0,10,0"/>
+                        <TextBlock Text="Alerte: " FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock Text="{Binding LiveAlerts.Count, FallbackValue=0}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" Margin="4,0,0,0"/>
                     </StackPanel>
                 </Border>
                 <WrapPanel DockPanel.Dock="Left" Orientation="Horizontal">
@@ -65,12 +65,12 @@
                 </DockPanel>
                 <DataGrid Grid.Row="1" ItemsSource="{Binding LiveStreamingEvents}" SelectedItem="{Binding SelectedLiveStreamingEvent}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding TimeCreated, StringFormat={}{0:HH:mm:ss.fff}}" Width="110"/>
-                        <DataGridTextColumn Header="EID" Binding="{Binding EventId}" Width="60"/>
-                        <DataGridTextColumn Header="Nivel" Binding="{Binding Level, Converter={x:Static local:LiveLevelLabelConverter.Instance}}" Width="80"/>
-                        <DataGridTextColumn Header="Sursă" Binding="{Binding ProviderName}" Width="140"/>
-                        <DataGridTextColumn Header="Gazdă" Binding="{Binding MachineName}" Width="110"/>
-                        <DataGridTextColumn Header="Conținut" Binding="{Binding Message}" Width="*"/>
+                        <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding TimeCreated, StringFormat={}{0:HH:mm:ss.fff}}" Width="130" MinWidth="130"/>
+                        <DataGridTextColumn Header="EID" Binding="{Binding EventId}" Width="60" MinWidth="60"/>
+                        <DataGridTextColumn Header="Nivel" Binding="{Binding Level, Converter={x:Static local:LiveLevelLabelConverter.Instance}}" Width="80" MinWidth="80"/>
+                        <DataGridTextColumn Header="Sursă" Binding="{Binding ProviderName}" Width="140" MinWidth="140"/>
+                        <DataGridTextColumn Header="Gazdă" Binding="{Binding MachineName}" Width="110" MinWidth="110"/>
+                        <DataGridTextColumn Header="Conținut" Binding="{Binding Message}" Width="*" MinWidth="200" ElementStyle="{StaticResource TwoLineCellTextStyle}"/>
                     </DataGrid.Columns>
                 </DataGrid>
             </Grid>

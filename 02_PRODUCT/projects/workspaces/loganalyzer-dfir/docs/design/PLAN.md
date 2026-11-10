@@ -10,8 +10,8 @@ privită critic.
 | 3 | Fără emoji: pictograme vectoriale în butoane, alerte, bara de stare, arborele de procese | test: niciun caracter pictografic în XAML și în textele view-modelelor | făcut (teste) |
 | 4 | Fără culori din tema veche: view-modelele și paginile folosesc tokenii | test: nicio culoare literală în afara tokenilor (excepție: generatoarele de PDF) | făcut (teste) |
 | 5 | Etichete ca propoziții (fără majuscule integrale), fără engleză („Live Triage”) | test pe XAML | făcut (teste) |
-| 6 | Text tăiat: carduri de cifre, capete de coloană MITRE, bifele din Colectare date, titluri suprapuse | capturi la 1024 px fără text tăiat | parțial: MITRE, Colectare date, Panou general (verificat pe VM) |
-| 7 | Meniu lateral: o singură derulare, focus vizibil cu inel plin, fără indicii care repetă numele | capturi și test | parțial: o singură derulare, inel de focus (verificat pe VM) |
+| 6 | Text tăiat: carduri de cifre, capete de coloană MITRE, bifele din Colectare date, titluri suprapuse | capturi la 1024 px fără text tăiat | făcut: coloane cu lățime minimă și derulare orizontală, mesaje pe 2 rânduri cu indiciu, carduri care nu se taie, câmpuri de dată noi (verificat pe VM) |
+| 7 | Meniu lateral: o singură derulare, focus vizibil cu inel plin, fără indicii care repetă numele | capturi și test | făcut: o singură derulare, inel de focus, fără indiciu care repetă numele (verificat pe VM) |
 | 8 | Tabele: antet, înălțime de rând, trunchiere cu indiciu, cifre tabulare | capturi | făcut: stil comun al tabelelor, selecție pală cu șină, tabelul de dispozitive lărgit (verificat pe VM) |
 | 9 | Notificarea live și bara de stare: stil sobru, fără să acopere conținutul | capturi | făcut: card alb cu șina severității, text plafonat; „Alertă / Notificare în timp real” (verificat pe VM) |
 

@@ -1,4 +1,4 @@
-﻿<UserControl x:Class="LogAnalyzer.UI.Views.RiskAnalysisView"
+<UserControl x:Class="LogAnalyzer.UI.Views.RiskAnalysisView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
     <Grid Margin="24">
@@ -25,30 +25,76 @@
         <UniformGrid Grid.Row="1" Columns="4" Margin="0,0,0,16">
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,0,8,0">
                 <StackPanel>
-                    <TextBlock Text="Scor total de risc" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="{Binding AiRiskScore, StringFormat='{}{0}/100'}" Foreground="{Binding AiRiskColor}" FontSize="26" FontWeight="Bold" Margin="0,4,0,0"/>
-                    <TextBlock Text="{Binding AiRiskLevel}" Foreground="{Binding AiRiskColor}" FontSize="11" FontWeight="Bold" Margin="0,2,0,0"/>
+                    <TextBlock Text="Scor total de risc" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Foreground="{Binding AiRiskColor}" FontSize="26" FontWeight="Bold" Margin="0,4,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="{Binding AiRiskScore, StringFormat='{}{0}/100'}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AiHasEvidence}" Value="False"><Setter Property="Text" Value="—"/></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <!-- the verdict word on its own line, its explanation (from the parentheses of AiRiskLevel) on the next, both wrapping -->
+                    <TextBlock Text="{Binding AiRiskVerdict}" Foreground="{Binding AiRiskColor}" FontSize="12" FontWeight="SemiBold" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                    <TextBlock Text="{Binding AiRiskVerdictNote}" Foreground="{StaticResource TextMutedBrush}" FontSize="11" TextWrapping="Wrap" Margin="0,2,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Style.Triggers>
+                                    <Trigger Property="Text" Value=""><Setter Property="Visibility" Value="Collapsed"/></Trigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="4,0,4,0">
                 <StackPanel>
-                    <TextBlock Text="Entropie Shannon (H &gt; 4,8)" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="{Binding AiHighEntropyCount}" Foreground="{StaticResource HighBrush}" FontSize="26" FontWeight="Bold" Margin="0,4,0,0"/>
-                    <TextBlock Text="Conținut de script ofuscat" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
+                    <TextBlock Text="Entropie Shannon (H &gt; 4,8)" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Foreground="{StaticResource HighBrush}" FontSize="26" FontWeight="Bold" Margin="0,4,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="{Binding AiHighEntropyCount}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AiHasEvidence}" Value="False"><Setter Property="Text" Value="—"/></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="Conținut de script ofuscat" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="4,0,4,0">
                 <StackPanel>
-                    <TextBlock Text="Procese deghizate" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="{Binding AiMasqueradingCount}" Foreground="{StaticResource CriticalBrush}" FontSize="26" FontWeight="Bold" Margin="0,4,0,0"/>
-                    <TextBlock Text="Rulate din %TEMP% / AppData" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
+                    <TextBlock Text="Procese deghizate" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Foreground="{StaticResource CriticalBrush}" FontSize="26" FontWeight="Bold" Margin="0,4,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="{Binding AiMasqueradingCount}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AiHasEvidence}" Value="False"><Setter Property="Text" Value="—"/></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="Rulate din %TEMP% / AppData" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
             <Border Style="{StaticResource ObsidianCardStyle}" Margin="8,0,0,0">
                 <StackPanel>
-                    <TextBlock Text="Potriviri YARA și activitate în afara programului" FontSize="10" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    <TextBlock Text="{Binding AiYaraMatchesCount}" Foreground="{StaticResource PrimaryAccentBrush}" FontSize="26" FontWeight="Bold" Margin="0,4,0,0"/>
-                    <TextBlock Text="Tipare suspecte potrivite" FontSize="11" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,0,0"/>
+                    <TextBlock Text="Potriviri YARA și activitate în afara programului" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap"/>
+                    <TextBlock Foreground="{StaticResource PrimaryAccentBrush}" FontSize="26" FontWeight="Bold" Margin="0,4,0,0">
+                        <TextBlock.Style>
+                            <Style TargetType="TextBlock">
+                                <Setter Property="Text" Value="{Binding AiYaraMatchesCount}"/>
+                                <Style.Triggers>
+                                    <DataTrigger Binding="{Binding AiHasEvidence}" Value="False"><Setter Property="Text" Value="—"/></DataTrigger>
+                                </Style.Triggers>
+                            </Style>
+                        </TextBlock.Style>
+                    </TextBlock>
+                    <TextBlock Text="Tipare suspecte potrivite" FontSize="11" Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
                 </StackPanel>
             </Border>
         </UniformGrid>
@@ -71,10 +117,10 @@
                 <TextBlock Text="Factorii de risc și ponderea lor" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" Margin="0,0,0,10"/>
                 <DataGrid Grid.Row="1" ItemsSource="{Binding ExplainableRiskFactors}" AutoGenerateColumns="False" IsReadOnly="True">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Puncte" Binding="{Binding WeightPoints, StringFormat='+{0} pts'}" Width="85" FontWeight="Bold" Foreground="{StaticResource CriticalBrush}"/>
-                        <DataGridTextColumn Header="Categoria de risc" Binding="{Binding Category}" Width="180" FontWeight="SemiBold"/>
-                        <DataGridTextColumn Header="ID MITRE" Binding="{Binding MitreTechniqueId}" Width="100"/>
-                        <DataGridTextColumn Header="Sursa probei" Binding="{Binding EvidenceSource}" Width="150"/>
+                        <DataGridTextColumn Header="Puncte" Binding="{Binding WeightPoints, StringFormat='+{0} pts'}" Width="85" MinWidth="85" FontWeight="Bold" Foreground="{StaticResource CriticalBrush}"/>
+                        <DataGridTextColumn Header="Categoria de risc" Binding="{Binding Category}" Width="180" MinWidth="180" FontWeight="SemiBold"/>
+                        <DataGridTextColumn Header="ID MITRE" Binding="{Binding MitreTechniqueId}" Width="100" MinWidth="100"/>
+                        <DataGridTextColumn Header="Sursa probei" Binding="{Binding EvidenceSource}" Width="150" MinWidth="150"/>
                         <DataGridTextColumn Header="Motivație" Binding="{Binding LegalJustification}" Width="*"/>
                     </DataGrid.Columns>
                 </DataGrid>

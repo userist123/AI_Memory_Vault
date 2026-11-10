@@ -104,16 +104,16 @@
                                 <TextBlock Text="{Binding StandaloneSamFindings.Count, StringFormat='{}{0} Detecții SAM'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding StandaloneSamFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
+                        <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" ItemsSource="{Binding StandaloneSamFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Categorie" Binding="{Binding Category, Converter={x:Static sevc:CategoryTextConverter.Instance}}" Width="160"/>
-                                <DataGridTextColumn Header="Tip detecție (stație izolată)" Binding="{Binding FindingType}" Width="210"/>
-                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="90"/>
-                                <DataGridTextColumn Header="Cont / resursă țintă" Binding="{Binding TargetAccountOrResource}" Width="150"/>
-                                <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85"/>
-                                <DataGridTextColumn Header="Proces / dispozitiv sursă" Binding="{Binding SourceProcessOrDevice}" Width="160"/>
+                                <DataGridTextColumn Header="Categorie" Binding="{Binding Category, Converter={x:Static sevc:CategoryTextConverter.Instance}}" Width="160" MinWidth="160"/>
+                                <DataGridTextColumn Header="Tip detecție (stație izolată)" Binding="{Binding FindingType}" Width="240" MinWidth="240"/>
+                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="100" MinWidth="100"/>
+                                <DataGridTextColumn Header="Cont / resursă țintă" Binding="{Binding TargetAccountOrResource}" Width="170" MinWidth="170"/>
+                                <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85" MinWidth="85"/>
+                                <DataGridTextColumn Header="Proces / dispozitiv sursă" Binding="{Binding SourceProcessOrDevice}" Width="210" MinWidth="210"/>
                                 <DataGridTextColumn Header="Descriere și acțiune recomandată" Binding="{Binding Description}" Width="*"/>
-                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="140"/>
+                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="140" MinWidth="140"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -134,14 +134,14 @@
                                 <TextBlock Text="{Binding SamUsbStorageEventsCount, StringFormat='{}{0} Medii Detectate'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding StandaloneSamFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
+                        <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" ItemsSource="{Binding StandaloneSamFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Tip dispozitiv / eveniment" Binding="{Binding FindingType}" Width="220"/>
-                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="90"/>
-                                <DataGridTextColumn Header="Identificator hardware / serie" Binding="{Binding TargetAccountOrResource}" Width="200"/>
-                                <DataGridTextColumn Header="Driver / serviciu sursă" Binding="{Binding SourceProcessOrDevice}" Width="170"/>
+                                <DataGridTextColumn Header="Tip dispozitiv / eveniment" Binding="{Binding FindingType}" Width="220" MinWidth="220"/>
+                                <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="100" MinWidth="100"/>
+                                <DataGridTextColumn Header="Identificator hardware / serie" Binding="{Binding TargetAccountOrResource}" Width="250" MinWidth="250"/>
+                                <DataGridTextColumn Header="Driver / serviciu sursă" Binding="{Binding SourceProcessOrDevice}" Width="200" MinWidth="200"/>
                                 <DataGridTextColumn Header="Diagnostic &amp; Măsură Conformitate HG 585" Binding="{Binding Description}" Width="*"/>
-                                <DataGridTextColumn Header="Ora conectării" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="145"/>
+                                <DataGridTextColumn Header="Ora conectării" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="145" MinWidth="145"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -162,16 +162,16 @@
                                 <TextBlock Text="{Binding EmployeeActivities.Count, StringFormat='{}{0} Sesiuni Înregistrate'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding EmployeeActivities}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
+                        <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" ItemsSource="{Binding EmployeeActivities}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Utilizator local" Binding="{Binding Username}" Width="140"/>
-                                <DataGridTextColumn Header="Nume stație" Binding="{Binding Workstation}" Width="130"/>
-                                <DataGridTextColumn Header="Ora autentificării" Binding="{Binding LogonTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="145"/>
-                                <DataGridTextColumn Header="Ora deconectării" Binding="{Binding LogoffTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="145"/>
-                                <DataGridTextColumn Header="Timp activ (ore)" Binding="{Binding ActiveHours}" Width="110"/>
-                                <DataGridTextColumn Header="Blocări ecran" Binding="{Binding LockCount}" Width="100"/>
-                                <DataGridTextColumn Header="Deblocări" Binding="{Binding UnlockCount}" Width="90"/>
-                                <DataGridTextColumn Header="Stare sesiune" Binding="{Binding SessionStatus}" Width="110"/>
+                                <DataGridTextColumn Header="Utilizator local" Binding="{Binding Username}" Width="140" MinWidth="140"/>
+                                <DataGridTextColumn Header="Nume stație" Binding="{Binding Workstation}" Width="130" MinWidth="130"/>
+                                <DataGridTextColumn Header="Ora autentificării" Binding="{Binding LogonTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="160" MinWidth="160"/>
+                                <DataGridTextColumn Header="Ora deconectării" Binding="{Binding LogoffTime, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="145" MinWidth="145"/>
+                                <DataGridTextColumn Header="Timp activ (ore)" Binding="{Binding ActiveHours}" Width="140" MinWidth="140"/>
+                                <DataGridTextColumn Header="Blocări ecran" Binding="{Binding LockCount}" Width="120" MinWidth="120"/>
+                                <DataGridTextColumn Header="Deblocări" Binding="{Binding UnlockCount}" Width="90" MinWidth="90"/>
+                                <DataGridTextColumn Header="Stare sesiune" Binding="{Binding SessionStatus}" Width="120" MinWidth="120"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>
@@ -194,9 +194,9 @@
                         </DockPanel>
                         <DataGrid Grid.Row="1" ItemsSource="{Binding LolbasFindings}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Binar sistem" Binding="{Binding BinaryName}" Width="120"/>
-                                <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85"/>
-                                <DataGridTextColumn Header="Categorie comportament" Binding="{Binding Category, Converter={x:Static sevc:CategoryTextConverter.Instance}}" Width="150"/>
+                                <DataGridTextColumn Header="Binar sistem" Binding="{Binding BinaryName}" Width="120" MinWidth="120"/>
+                                <DataGridTextColumn Header="MITRE" Binding="{Binding MitreTechniqueId}" Width="85" MinWidth="85"/>
+                                <DataGridTextColumn Header="Categorie comportament" Binding="{Binding Category, Converter={x:Static sevc:CategoryTextConverter.Instance}}" Width="190" MinWidth="190"/>
                                 <DataGridTextColumn Header="Linie de comandă executată" Binding="{Binding CommandLine}" Width="*"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -218,14 +218,14 @@
                                 <TextBlock Text="{Binding ComplianceResults.Count, StringFormat='{}{0} Controale Evaluate'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>
                         </DockPanel>
-                        <DataGrid Grid.Row="1" ItemsSource="{Binding ComplianceResults}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
+                        <DataGrid HorizontalScrollBarVisibility="Auto" Grid.Row="1" ItemsSource="{Binding ComplianceResults}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Standard / cadru" Binding="{Binding Framework}" Width="170"/>
-                                <DataGridTextColumn Header="Articol / control" Binding="{Binding ArticleOrControl}" Width="140"/>
-                                <DataGridTextColumn Header="Titlu control" Binding="{Binding ControlTitle}" Width="200"/>
-                                <DataGridTextColumn Header="Stare" Binding="{Binding Status}" Width="100"/>
+                                <DataGridTextColumn Header="Standard / cadru" Binding="{Binding Framework}" Width="170" MinWidth="170"/>
+                                <DataGridTextColumn Header="Articol / control" Binding="{Binding ArticleOrControl}" Width="150" MinWidth="150"/>
+                                <DataGridTextColumn Header="Titlu control" Binding="{Binding ControlTitle}" Width="200" MinWidth="200"/>
+                                <DataGridTextColumn Header="Stare" Binding="{Binding Status}" Width="100" MinWidth="100"/>
                                 <DataGridTextColumn Header="Evidență forensică corelată" Binding="{Binding EvidenceSummary}" Width="*"/>
-                                <DataGridTextColumn Header="Măsură corectivă impusă" Binding="{Binding RequiredAction}" Width="260"/>
+                                <DataGridTextColumn Header="Măsură corectivă impusă" Binding="{Binding RequiredAction}" Width="260" MinWidth="260"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </Grid>

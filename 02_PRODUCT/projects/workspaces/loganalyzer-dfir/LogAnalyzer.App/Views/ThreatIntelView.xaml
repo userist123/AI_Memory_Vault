@@ -38,30 +38,39 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
-                        <TextBlock DockPanel.Dock="Left" Text="Profile de actori cu tehnici comune (nu este atribuire)" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-                        <TextBlock DockPanel.Dock="Right" Text="{Binding AptAttributionProfiles.Count, StringFormat='{}{0} profile'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    </DockPanel>
+                    <Grid Grid.Row="0" Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="Profile de actori cu tehnici comune (nu este atribuire)" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                        <TextBlock Grid.Column="1" Margin="12,0,0,0" Text="{Binding AptAttributionProfiles.Count, StringFormat='{}{0} profile'}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </Grid>
                     
                     <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
                         <ItemsControl ItemsSource="{Binding AptAttributionProfiles}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="14" Margin="0,0,0,10">
-                                        <StackPanel>
-                                            <DockPanel LastChildFill="False" Margin="0,0,0,6">
-                                                <TextBlock DockPanel.Dock="Left" Text="{Binding ActorName}" FontSize="13.5" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
-                                                <Border DockPanel.Dock="Right" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,2">
-                                                    <TextBlock Text="{Binding Origin}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource HighBrush}"/>
+                                    <Border Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="8" Padding="16" Margin="0,0,0,12">
+                                        <!-- 2026-11-11: no DockPanel (its left and right children collided at 1024 px: "UNC2452Suprapunere", badge cut off). Text column wraps; the
+                                             overlap figure has its own Auto column, so nothing is drawn over a title. -->
+                                        <Grid>
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="*"/>
+                                                <ColumnDefinition Width="Auto"/>
+                                            </Grid.ColumnDefinitions>
+                                            <StackPanel Grid.Column="0">
+                                                <TextBlock Text="{Binding ActorName}" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                                                <Border HorizontalAlignment="Left" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,2" Margin="0,6,0,0">
+                                                    <TextBlock Text="{Binding Origin}" FontSize="11" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource HighBrush}"/>
                                                 </Border>
-                                            </DockPanel>
-                                            <TextBlock Text="{Binding TargetSectors, StringFormat='Ținte: {0}'}" FontSize="11" FontWeight="SemiBold" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,4"/>
-                                            <TextBlock Text="{Binding KnownTools, StringFormat='Instrumente: {0}'}" FontSize="11" Foreground="{StaticResource SuccessBrush}" Margin="0,0,0,6"/>
-                                            <DockPanel LastChildFill="False">
-                                                <TextBlock DockPanel.Dock="Left" Text="{Binding Aliases, StringFormat='Alte nume: {0}'}" FontSize="10.5" Foreground="{StaticResource TextMutedBrush}"/>
-                                                <TextBlock DockPanel.Dock="Right" ToolTip="{Binding MatchLevel}" Text="{Binding MatchScore, StringFormat='Suprapunere tehnici: {0:F0}% (nu este atribuire)'}" FontSize="11" FontWeight="Bold" Foreground="{StaticResource CyanAccentBrush}"/>
-                                            </DockPanel>
-                                        </StackPanel>
+                                                <TextBlock Text="{Binding Aliases, StringFormat='Alte nume: {0}'}" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,8,0,0"/>
+                                                <TextBlock Text="{Binding TargetSectors, StringFormat='Ținte: {0}'}" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                                                <TextBlock Text="{Binding KnownTools, StringFormat='Instrumente: {0}'}" FontSize="12" TextWrapping="Wrap" Foreground="{StaticResource SuccessBrush}" Margin="0,4,0,0"/>
+                                                <TextBlock Text="Suprapunerea nu este atribuire." FontSize="11" TextWrapping="Wrap" Foreground="{StaticResource TextMutedBrush}" Margin="0,6,0,0"/>
+                                            </StackPanel>
+                                            <StackPanel Grid.Column="1" Margin="16,0,0,0" ToolTip="{Binding MatchLevel}">
+                                                <TextBlock Text="{Binding MatchScore, StringFormat='{}{0:F0}%'}" FontSize="20" FontWeight="SemiBold" HorizontalAlignment="Right" Foreground="{StaticResource CyanAccentBrush}"/>
+                                                <TextBlock Text="suprapunere tehnici" FontSize="11" HorizontalAlignment="Right" Foreground="{StaticResource TextSecondaryBrush}"/>
+                                            </StackPanel>
+                                        </Grid>
                                     </Border>
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
@@ -79,10 +88,11 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,12">
-                        <TextBlock DockPanel.Dock="Left" Text="Indicatori de compromitere (IOC) extrași" FontSize="14" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
-                        <TextBlock DockPanel.Dock="Right" Text="{Binding CurrentIocs.Count, StringFormat='{}{0} IOCs'}" FontSize="11" Foreground="{StaticResource TextSecondaryBrush}"/>
-                    </DockPanel>
+                    <Grid Grid.Row="0" Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions><ColumnDefinition Width="*"/><ColumnDefinition Width="Auto"/></Grid.ColumnDefinitions>
+                        <TextBlock Text="Indicatori de compromitere (IOC) extrași" FontSize="14" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                        <TextBlock Grid.Column="1" Margin="12,0,0,0" Text="{Binding CurrentIocs.Count, StringFormat='{}{0} IOC-uri'}" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    </Grid>
                     <DataGrid Grid.Row="1" ItemsSource="{Binding CurrentIocs}" AutoGenerateColumns="False" IsReadOnly="True" EnableRowVirtualization="True">
                         <DataGrid.ContextMenu>
                             <ContextMenu Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
@@ -91,7 +101,7 @@
                             </ContextMenu>
                         </DataGrid.ContextMenu>
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Tip" Binding="{Binding Type}" Width="90"/>
+                            <DataGridTextColumn Header="Tip" Binding="{Binding Type}" Width="90" MinWidth="90"/>
                             <DataGridTextColumn Header="Valoare indicator (IP / hash / domeniu)" Binding="{Binding Value}" Width="*"/>
                         </DataGrid.Columns>
                     </DataGrid>

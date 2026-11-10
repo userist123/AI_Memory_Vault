@@ -382,4 +382,83 @@ public sealed class DesignSweepTests
         var risk = StripXmlComments(Read(Path.Combine(AppDir(), "Views/RiskAnalysisView.xaml")));
         Assert.Contains("Padding=\"12,6\" VerticalAlignment=\"Top\"", risk);
     }
+
+    // ---------------------------------------------------------------- step 6 (2026-11-11): table headers, long cells, cards, date fields
+
+    /// <summary>Header width estimate: 7.5 px per character at 12 SemiBold plus 20 px of padding, rounded up to a multiple of 10.</summary>
+    private static int HeaderEstimate(string header) => (int)Math.Ceiling((7.5 * header.Length + 20) / 10.0) * 10;
+
+    [Fact]
+    public void Every_fixed_width_table_column_is_at_least_as_wide_as_its_header()
+    {
+        var column = new Regex(@"<DataGrid(?:Text|Template|CheckBox)Column[^>]*>", RegexOptions.Singleline);
+        var problems = new List<string>();
+        var dirs = new[] { Path.Combine(AppDir(), "Views"), Path.Combine(AppDir(), "Edition") };
+        foreach (var file in dirs.SelectMany(d => Files(d, "*.xaml")))
+        {
+            foreach (Match m in column.Matches(StripXmlComments(Read(file))))
+            {
+                var tag = m.Value;
+                var header = Regex.Match(tag, @"\sHeader=""([^""{]+)""");
+                if (!header.Success) continue;
+                // exception: an icon-only header (a glyph code such as &#xE734;) is drawn through a HeaderTemplate and has an accessible name, not a text width
+                if (header.Groups[1].Value.StartsWith("&#", StringComparison.Ordinal)) continue;
+                var text = System.Net.WebUtility.HtmlDecode(header.Groups[1].Value);
+                var width = Regex.Match(tag, @"\sWidth=""([^""]+)""");
+                var minWidth = Regex.Match(tag, @"\sMinWidth=""([^""]+)""");
+                // star and Auto widths share the remaining room or follow the content; only a numeric Width (or an explicit MinWidth) is a promise to the header
+                bool numeric = width.Success && double.TryParse(width.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture, out _);
+                if (!numeric && !minWidth.Success) continue;
+                double w = numeric ? double.Parse(width.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : 0;
+                double mw = minWidth.Success ? double.Parse(minWidth.Groups[1].Value, System.Globalization.CultureInfo.InvariantCulture) : 0;
+                if (Math.Max(w, mw) < HeaderEstimate(text))
+                    problems.Add($"{Path.GetFileName(file)}: \"{text}\" Width={w} MinWidth={mw} needs {HeaderEstimate(text)}");
+            }
+        }
+        Assert.True(problems.Count == 0, string.Join(Environment.NewLine, problems));
+    }
+
+    [Fact]
+    public void The_message_columns_show_two_lines_and_the_whole_text_in_a_capped_tooltip()
+    {
+        var grids = Read(Path.Combine(AppDir(), "Themes/Components/DataGrids.xaml"));
+        Assert.Contains("x:Key=\"TwoLineCellTextStyle\"", grids);
+        Assert.Contains("Property=\"MaxHeight\" Value=\"34\"", grids);
+        Assert.Contains("Property=\"TextTrimming\" Value=\"CharacterEllipsis\"", grids);
+        Assert.Contains("Property=\"ToolTipService.ShowDuration\" Value=\"60000\"", grids);
+        foreach (var page in new[] { "Views/LiveSocView.xaml", "Views/EventExplorerView.xaml" })
+            Assert.Matches(@"Binding=""\{Binding Message\}""[^>]*ElementStyle=""\{StaticResource TwoLineCellTextStyle\}""", Read(Path.Combine(AppDir(), page)));
+        var tips = Read(Path.Combine(AppDir(), "Themes/Components/Timeline.xaml"));
+        Assert.Contains("TargetType=\"ToolTip\"", tips);
+        Assert.Contains("Property=\"MaxWidth\" Value=\"560\"", tips);
+        Assert.Contains("Property=\"TextWrapping\" Value=\"Wrap\"", tips);
+    }
+
+    [Fact]
+    public void The_actor_cards_and_the_active_directory_cards_wrap_and_do_not_overlap()
+    {
+        var ti = StripXmlComments(Read(Path.Combine(AppDir(), "Views/ThreatIntelView.xaml")));
+        var card = ti.Substring(ti.IndexOf("<DataTemplate>", StringComparison.Ordinal), ti.IndexOf("</DataTemplate>", StringComparison.Ordinal) - ti.IndexOf("<DataTemplate>", StringComparison.Ordinal));
+        Assert.DoesNotContain("DockPanel", card);   // a DockPanel with free left and right children is what drew the texts over each other
+        Assert.Contains("<ColumnDefinition Width=\"Auto\"/>", card);
+        var ad = StripXmlComments(Read(Path.Combine(AppDir(), "Views/ActiveDirectoryAuditView.xaml")));
+        var ribbon = ad.Substring(ad.IndexOf("<UniformGrid Grid.Row=\"1\"", StringComparison.Ordinal), ad.IndexOf("</UniformGrid>", StringComparison.Ordinal) - ad.IndexOf("<UniformGrid Grid.Row=\"1\"", StringComparison.Ordinal));
+        Assert.Equal(6, Regex.Matches(ribbon, @"FontSize=""12"" FontWeight=""SemiBold"" Foreground=""\{StaticResource TextMutedBrush\}"" TextWrapping=""Wrap""").Count);
+        Assert.DoesNotContain("FontSize=\"8.5\"", ribbon);
+        var risk = StripXmlComments(Read(Path.Combine(AppDir(), "Views/RiskAnalysisView.xaml")));
+        Assert.DoesNotContain("TextTrimming", risk);
+        Assert.Contains("{Binding AiRiskVerdictNote}", risk);   // the explanation after NEDETERMINAT is its own TextBlock
+        Assert.Contains("{Binding AiHasEvidence}", risk);       // no analysis, no figures: the cards show a dash
+    }
+
+    [Fact]
+    public void Date_fields_use_the_dosar_colours_on_top_of_the_fluent_style()
+    {
+        var inputs = Read(Path.Combine(AppDir(), "Themes/Components/Inputs.xaml"));
+        Assert.Contains("TargetType=\"DatePicker\" BasedOn=\"{StaticResource {x:Type DatePicker}}\"", inputs);
+        Assert.Contains("Property=\"MinHeight\" Value=\"32\"", inputs);
+        // App.xaml keeps the Romanian language but must build on the Fluent style, or the old square WPF picker comes back
+        var app = Read(Path.Combine(AppDir(), "App.xaml"));
+        Assert.Contains("TargetType=\"DatePicker\" BasedOn=\"{StaticResource {x:Type DatePicker}}\"", app);
+    }
 }

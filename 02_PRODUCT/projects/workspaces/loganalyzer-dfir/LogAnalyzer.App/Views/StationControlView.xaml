@@ -179,7 +179,7 @@
                 <StackPanel Margin="0,10,0,0">
                     <TextBlock Text="Neconformități: măsuri, responsabili și termene" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                     <TextBlock Text="Pentru fiecare neconformitate scrieți măsura, cine răspunde și până când (zz.ll.aaaa). Fără acestea raportul pentru procesul-verbal nu se salvează." Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,4"/>
-                    <DataGrid x:Name="CorrectiveActionsGrid" AutomationProperties.Name="Neconformități: măsuri, responsabili și termene" ItemsSource="{Binding CorrectiveActionItems}" AutoGenerateColumns="False"
+                    <DataGrid HorizontalScrollBarVisibility="Auto" x:Name="CorrectiveActionsGrid" AutomationProperties.Name="Neconformități: măsuri, responsabili și termene" ItemsSource="{Binding CorrectiveActionItems}" AutoGenerateColumns="False"
                               CanUserAddRows="False" CanUserDeleteRows="False" HeadersVisibility="Column" MaxHeight="320">
                         <DataGrid.Columns>
                             <DataGridTemplateColumn Header="Verificarea" Width="2*" IsReadOnly="True">
@@ -190,8 +190,8 @@
                                 <DataGridTextColumn.EditingElementStyle><Style TargetType="TextBox"><Setter Property="TextWrapping" Value="Wrap"/><Setter Property="AcceptsReturn" Value="False"/></Style></DataGridTextColumn.EditingElementStyle>
                             </DataGridTextColumn>
                             <DataGridTextColumn Header="Responsabil" Binding="{Binding Responsible, UpdateSourceTrigger=LostFocus}" Width="*"/>
-                            <DataGridTextColumn Header="Termen (zz.ll.aaaa)" Binding="{Binding Deadline, UpdateSourceTrigger=LostFocus}" Width="120"/>
-                            <DataGridTextColumn Header="Stare" Binding="{Binding State, Mode=OneWay}" IsReadOnly="True" Width="80"/>
+                            <DataGridTextColumn Header="Termen (zz.ll.aaaa)" Binding="{Binding Deadline, UpdateSourceTrigger=LostFocus}" Width="170" MinWidth="170"/>
+                            <DataGridTextColumn Header="Stare" Binding="{Binding State, Mode=OneWay}" IsReadOnly="True" Width="80" MinWidth="80"/>
                             <DataGridTextColumn Header="Notă" Binding="{Binding Note, Mode=OneWay}" IsReadOnly="True" Width="2*">
                                 <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                             </DataGridTextColumn>
@@ -202,11 +202,11 @@
                 <Expander Header="Diferențe față de controlul anterior" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,0">
                     <DataGrid AutomationProperties.Name="Diferențe față de controlul anterior" ItemsSource="{Binding ComparisonChanges}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Ce s-a schimbat" Binding="{Binding Kind}" Width="110"/>
-                            <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="60"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="local:TermTip.Auto" Value="True"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
+                            <DataGridTextColumn Header="Ce s-a schimbat" Binding="{Binding Kind}" Width="140" MinWidth="140"/>
+                            <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="60" MinWidth="60"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="local:TermTip.Auto" Value="True"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
                             <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*"/>
-                            <DataGridTextColumn Header="Înainte" Binding="{Binding BeforeText}" Width="110"/>
-                            <DataGridTextColumn Header="Acum" Binding="{Binding AfterText}" Width="110"/>
+                            <DataGridTextColumn Header="Înainte" Binding="{Binding BeforeText}" Width="110" MinWidth="110"/>
+                            <DataGridTextColumn Header="Acum" Binding="{Binding AfterText}" Width="110" MinWidth="110"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </Expander>
@@ -276,8 +276,8 @@
                         <DataGrid AutomationProperties.Name="Verificările controlului" ItemsSource="{Binding Checks}" SelectedItem="{Binding SelectedCheck}" SelectionMode="Single"
                                   AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" ToolTip="Dați clic pe o verificare: în dreapta apare ce înseamnă, pe înțeles.">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="local:TermTip.Auto" Value="True"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
-                                <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="50"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="local:TermTip.Auto" Value="True"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
+                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110" MinWidth="110"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="local:TermTip.Auto" Value="True"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
+                                <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="50" MinWidth="50"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="local:TermTip.Auto" Value="True"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
                                 <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*">
                                     <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>
                                 </DataGridTextColumn>
@@ -429,7 +429,7 @@
                     </ScrollViewer>
                     <DataGrid AutomationProperties.Name="Cronologia acțiunilor" ItemsSource="{Binding Actions}" SelectedItem="{Binding SelectedAction}" SelectionMode="Single" ToolTip="Dați clic pe un rând: dedesubt apare ce înseamnă codul din coloana Probă." AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140"/>
+                        <DataGridTextColumn Header="Ora (UTC)" Binding="{Binding TimeUtc, StringFormat='yyyy-MM-dd HH:mm:ss'}" Width="140" MinWidth="140"/>
                         <DataGridTextColumn Header="Cine" Binding="{Binding Who}" Width="1.3*"/>
                         <DataGridTextColumn Header="Ce" Binding="{Binding Action}" Width="1.5*"/>
                         <DataGridTextColumn Header="Detalii" Binding="{Binding Detail}" Width="3*"/>

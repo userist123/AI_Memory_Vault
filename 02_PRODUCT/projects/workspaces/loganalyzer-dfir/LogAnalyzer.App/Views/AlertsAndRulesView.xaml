@@ -43,9 +43,9 @@
                     </DockPanel>
                     <DataGrid Grid.Row="1" ItemsSource="{Binding IssuesView}" SelectedItem="{Binding SelectedIssue}" AutoGenerateColumns="False" IsReadOnly="True">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="85"/>
-                            <DataGridTextColumn Header="Tehnică" Binding="{Binding MitreTechniqueId}" Width="85"/>
-                            <DataGridTextColumn Header="Titlul alertei" Binding="{Binding Title}" Width="160"/>
+                            <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="100" MinWidth="100"/>
+                            <DataGridTextColumn Header="Tehnică" Binding="{Binding MitreTechniqueId}" Width="85" MinWidth="85"/>
+                            <DataGridTextColumn Header="Titlul alertei" Binding="{Binding Title}" Width="160" MinWidth="160"/>
                             <DataGridTextColumn Header="Analiză și context" Binding="{Binding Explanation}" Width="*"/>
                         </DataGrid.Columns>
                         <DataGrid.InputBindings>

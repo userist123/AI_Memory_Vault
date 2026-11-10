@@ -201,9 +201,9 @@
                                     <DataTemplate><TextBlock Text="{Binding HumanFamily}" ToolTip="{Binding FamilyTooltip}" TextWrapping="Wrap"/></DataTemplate>
                                 </DataGridTemplateColumn.CellTemplate>
                             </DataGridTemplateColumn>
-                            <DataGridTextColumn Header="Stare" Binding="{Binding StateName}" Width="130"/>
+                            <DataGridTextColumn Header="Stare" Binding="{Binding StateName}" Width="130" MinWidth="130"/>
                             <DataGridTextColumn Header="Motiv" Binding="{Binding Reason}" Width="3*"/>
-                            <DataGridTextColumn Header="Parser" Binding="{Binding ParserStatus}" Width="110"/>
+                            <DataGridTextColumn Header="Parser" Binding="{Binding ParserStatus}" Width="110" MinWidth="110"/>
                         </DataGrid.Columns>
                     </DataGrid>
                 </StackPanel>

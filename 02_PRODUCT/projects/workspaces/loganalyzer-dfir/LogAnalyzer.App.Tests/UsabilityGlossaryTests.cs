@@ -88,7 +88,7 @@ public sealed class UsabilityGlossaryTests : IDisposable
     {
         var xaml = File.ReadAllText(Path.Combine(AppDir(), "Views", "StationControlView.xaml"));
         Assert.Matches(@"Header=""Rezultat"" Binding=""\{Binding Status\}""[^>]*>\s*<DataGridTextColumn\.ElementStyle><Style TargetType=""TextBlock""><Setter Property=""local:TermTip\.Auto"" Value=""True""/>", xaml);
-        Assert.Matches(@"Header=""Cod"" Binding=""\{Binding Id\}"" Width=""50"">\s*<DataGridTextColumn\.ElementStyle><Style TargetType=""TextBlock""><Setter Property=""local:TermTip\.Auto"" Value=""True""/>", xaml);
+        Assert.Matches(@"Header=""Cod"" Binding=""\{Binding Id\}"" Width=""50""[^>]*>\s*<DataGridTextColumn\.ElementStyle><Style TargetType=""TextBlock""><Setter Property=""local:TermTip\.Auto"" Value=""True""/>", xaml);
         Assert.Contains("local:HelpButton Term=\"anchor_code\"", xaml);
         // the converter behind the tooltips: the enum the grid binds, a check id, and nothing for an ordinary word
         Assert.StartsWith("DE VERIFICAT — ", (string)LogAnalyzer.UI.Views.TermTooltipConverter.Instance.Convert(ControlStatus.DeVerificat, typeof(object), null, System.Globalization.CultureInfo.InvariantCulture)!);
