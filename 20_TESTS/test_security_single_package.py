@@ -104,3 +104,18 @@ def test_physical_security_names_do_not_load_a_second_principal_class(tmp_path):
                        capture_output=True, text=True, timeout=180)
     assert r.returncode == 0, r.stderr
     assert r.stdout.strip().splitlines()[-1] == "False"
+
+
+def test_vault_secret_runtime_is_never_imported_through_a_facade():
+    """WP-14b review L1: under `cognitive_core.` / `memory_controller.` the module would be a second
+    object (own `_LOG_LOCK`, blind to patches on `interfaces.vault_runtime`). The supported names are
+    `security.vault_secret_runtime` and the alias `interfaces.vault_runtime`."""
+    import re
+    pattern = re.compile(r"\b(cognitive_core|memory_controller)\.vault_secret_runtime\b"
+                         r"|from\s+(cognitive_core|memory_controller)\s+import\s+[^\n]*\bvault_secret_runtime\b")
+    offenders = []
+    for root in ("03_IMPLEMENTATION", "30_SCRIPTS", "40_EXPERIMENTS", "08_RESEARCH", "cognitive_core"):
+        for path in (REPO / root).rglob("*.py"):
+            if pattern.search(path.read_text(encoding="utf-8", errors="replace")):
+                offenders.append(str(path.relative_to(REPO)))
+    assert offenders == [], offenders

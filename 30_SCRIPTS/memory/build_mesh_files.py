@@ -1,4 +1,4 @@
-"""scripts/build_mesh_files.py — Master Cognitive Memory Mesh Builder & Validator.
+"""30_SCRIPTS/memory/build_mesh_files.py — Master Cognitive Memory Mesh Builder & Validator.
 
 Generates:
 1. evaluation/vault_mesh/mesh_validator.py
