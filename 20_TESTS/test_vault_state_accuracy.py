@@ -135,9 +135,20 @@ def test_modules_the_card_calls_unwired_really_are(module, wired):
 
 
 _SECURITY_PKG = ("03_IMPLEMENTATION", "packages", "security")
-_PRE_MERGE_SECURITY_MODULES = frozenset({
-    "authority.py", "authorized_verdict.py", "authorizer.py", "conflict_detector.py", "git_hooks.py",
-    "mutation_gate.py", "security.py", "security_audit.py", "__init__.py",
+# The runtime-authority layer that lived in the repository-root `security/` directory until WP-14a,
+# enumerated explicitly: these files are the layer talking to itself and are skipped. Every OTHER
+# module of the merged package (the pre-merge ones and anything added later, e.g. a new
+# tool-execution path) is scanned, so a new production consumer cannot slip through unseen
+# (WP-14a review, M: an allow-list of old modules would have skipped every new file).
+_FORMER_ROOT_SECURITY_LAYER = frozenset({
+    "audit_pipeline.py", "audit_trail.py", "catalog_provenance_policy.py", "context_compression.py",
+    "handoff_benchmark.py", "knowledge_handoff.py", "loganalyzer_ui_sink.py", "memory_adapter.py",
+    "memory_boundary.py", "memory_integrity.py", "prompt_compiler.py", "runtime_adapter.py",
+    "runtime_enforcer.py", "security_event.py", "security_update_catalog.py",
+    "security_update_manager.py", "security_update_policy.py", "security_version.py",
+    "skill_exfiltration_scanner.py", "supply_chain_policy.py", "tool_authorization.py",
+    "tool_capabilities.py", "tool_integrity.py", "tool_response_boundary.py", "trust_gate.py",
+    "verified_reduction.py", "verify_security_catalog.py",
 })
 
 
@@ -151,10 +162,8 @@ def production_python_sources():
         parts = path.relative_to(REPO).parts
         if parts[0] in {".git", ".claude"} or skipped_parts & set(parts) or path.stem.startswith("test_"):
             continue
-        # The runtime-authority layer lives in the `security` package next to the modules that were
-        # already there before the merge (WP-14a); only the layer's own files are skipped, so those
-        # older modules and the nested `security/security/` package are still scanned as before.
-        if parts[:3] == _SECURITY_PKG and not (parts[3] in _PRE_MERGE_SECURITY_MODULES or len(parts) > 4):
+        # Only the former root layer's own files are skipped (see `_FORMER_ROOT_SECURITY_LAYER`).
+        if parts[:3] == _SECURITY_PKG and len(parts) == 4 and parts[3] in _FORMER_ROOT_SECURITY_LAYER:
             continue
         sources.append((path.relative_to(REPO).as_posix(), path.stem, path.read_text(encoding="utf-8", errors="ignore")))
     return sources
