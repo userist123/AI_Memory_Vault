@@ -30,6 +30,15 @@ PRUNE_DIRS = {
     ".git", "node_modules", "80_ARCHIVE", "__pycache__", ".venv", "venv",
     ".pytest_cache", ".mypy_cache", "site-packages", ".pnpm-store",
 }
+# Build metadata (`pip wheel .` / `pip install -e .` leave `<dist>.egg-info/` next to the packages):
+# never a unit or a source of imports (WP-18 review L1: a local build used to fail check (a)).
+PRUNE_SUFFIXES = (".egg-info", ".dist-info")
+
+
+def _pruned(name: str) -> bool:
+    return name in PRUNE_DIRS or name.endswith(PRUNE_SUFFIXES)
+
+
 DEFAULT_PYTHONPATH = [".", "03_IMPLEMENTATION/packages", "03_IMPLEMENTATION"]
 UNIT_PARENTS = (("packages", "03_IMPLEMENTATION/packages"), ("products", "03_IMPLEMENTATION/products"))
 TEXT_EXT = {".py", ".yml", ".yaml", ".md", ".toml", ".json", ".txt", ".sh", ".ini", ".cfg", ".ps1", ".bat", ".cmd"}
@@ -53,7 +62,7 @@ def walk_files(root: Path) -> list[str]:
             continue
         for e in entries:
             if e.is_dir():
-                if e.name in PRUNE_DIRS or e.is_symlink():
+                if _pruned(e.name) or e.is_symlink():
                     continue
                 stack.append(e)
             elif e.is_file():
@@ -82,13 +91,13 @@ def discover_units(root: Path, pyfiles: list[str]) -> dict[str, dict]:
         pdir = root / parent
         if pdir.is_dir():
             for d in sorted(pdir.iterdir()):
-                if d.is_dir() and d.name not in PRUNE_DIRS and not d.name.startswith("."):
+                if d.is_dir() and not _pruned(d.name) and not d.name.startswith("."):
                     units[f"{kind}/{d.name}"] = {"id": f"{kind}/{d.name}", "kind": kind, "name": d.name,
                                                  "dir": f"{parent}/{d.name}"}
     top_with_py = {f.split("/", 1)[0] for f in pyfiles if "/" in f}
     for d in sorted(root.iterdir()):
         if (d.is_dir() and d.name.isidentifier() and d.name in top_with_py
-                and d.name not in PRUNE_DIRS and not d.name.startswith(".")):
+                and not _pruned(d.name) and not d.name.startswith(".")):
             units[f"root/{d.name}"] = {"id": f"root/{d.name}", "kind": "root", "name": d.name, "dir": d.name}
     return units
 
@@ -983,7 +992,7 @@ def build_inventory(root: Path, also_units: set[str] | None = None) -> dict:
             d = root / units[c]["dir"]
             mods[c] = sorted(p.stem if p.is_file() else p.name for p in d.iterdir()
                              if (p.is_file() and p.suffix == ".py" and p.stem != "__init__")
-                             or (p.is_dir() and p.name not in PRUNE_DIRS)) if d.is_dir() else []
+                             or (p.is_dir() and not _pruned(p.name))) if d.is_dir() else []
         collisions.append({"name": name, "candidates_in_pythonpath_order": cands, "winner": cands[0],
                            "shim_targets": {c: res.shims[c]["targets"] for c in cands if c in res.shims},
                            "shim_target_source": {c: res.shims[c]["source"] for c in cands if c in res.shims},

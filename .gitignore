@@ -120,3 +120,6 @@ account-statement*
 
 # Per-machine Claude Code settings (the owner-authority gate is enabled here, opt-in)
 .claude/settings.local.json
+
+# Build metadata left by `pip wheel .` / `pip install -e .` (WP-17)
+*.egg-info/

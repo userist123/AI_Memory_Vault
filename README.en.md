@@ -161,7 +161,7 @@ These runtime interfaces are the target architecture. Some are present as isolat
 | `01_ARCHITECTURE/` | knowledge notes, registries, skill matrices, the ontology slot files |
 | `01_KNOWLEDGE/` | external research and imported knowledge |
 | `02_PRODUCT/` | project context and continuity |
-| `03_IMPLEMENTATION/` | `03_IMPLEMENTATION/packages/` — cognitive core, memory controller, retrieval, polymarket, providers |
+| `03_IMPLEMENTATION/` | `03_IMPLEMENTATION/packages/` — cognitive core, memory controller, retrieval, security, providers; `03_IMPLEMENTATION/products/` — the products (polymarket, xau_kinetic) |
 | `04_CONFIG/` · `05_DATA/` | configuration and data artifacts |
 | `04_MEMORY/` | legacy write root (`storage/path_resolver.py`): created at runtime, gitignored, absent from a clean checkout |
 | `06_INBOX/` | raw and imported material, pre-review |

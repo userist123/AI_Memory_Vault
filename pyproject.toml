@@ -29,3 +29,5 @@ include = [
   "vault_access*",
   "xau_kinetic*",
 ]
+# Test suites that live next to their package are not runtime code (WP-17).
+exclude = ["security.tests", "security.tests.*"]

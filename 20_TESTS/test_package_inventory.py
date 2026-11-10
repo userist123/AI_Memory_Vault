@@ -408,3 +408,18 @@ def test_facade_unresolved_records_carry_the_test_flag(tmp_path):
     _, data, _ = _run(root, tmp_path)
     assert {(r["file"], r["test"]) for r in data["meta"]["facade_unresolved"]} == {
         (f"{PK}/user/a.py", False), (f"{PK}/user/test_b.py", True)}
+
+
+def test_build_metadata_directories_are_not_units(tmp_path):
+    """WP-18 review L1: `pip wheel .` leaves `<dist>.egg-info/` next to the packages; it must not
+    become an (unassigned) unit, or a local build would fail the layer check."""
+    root = tmp_path / "repo"
+    _write(root, "pytest.ini", "[pytest]\npythonpath = . 03_IMPLEMENTATION/packages\n")
+    _write(root, "03_IMPLEMENTATION/packages/alpha/__init__.py", "")
+    _write(root, "03_IMPLEMENTATION/packages/ai_memory_vault.egg-info/top_level.txt", "alpha\n")
+    _write(root, "03_IMPLEMENTATION/packages/alpha-0.1.dist-info/METADATA", "Name: alpha\n")
+    rc, data, _ = _run(root, tmp_path)
+    assert rc == 0
+    ids = {u["id"] for u in data["units"]}
+    assert "packages/alpha" in ids
+    assert not any(i.endswith((".egg-info", ".dist-info")) for i in ids), ids

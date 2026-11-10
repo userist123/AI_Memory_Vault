@@ -19,6 +19,11 @@ The audit revealed that prior security claims ("fail-closed", "unforgeable appro
 
 All issues present on `main` have been remediated with fail-closed cryptographic and transactional boundaries, backed by **208 passing security/regression tests** (including 20 dedicated regression and adversarial self-audit tests) and **536 passing tests** across the wider vault test suite.
 
+> **Path note (WP-14a, 2026-11-10).** The repository-root `security/` directory was merged into
+> `03_IMPLEMENTATION/packages/security/`. Every `security/<file>` path in this report is now relative
+> to `03_IMPLEMENTATION/packages/`, and the security test command is
+> `pytest -q 03_IMPLEMENTATION/packages/security/tests`. The command logs below are kept as recorded.
+
 > **Correction (2026-10-07, review of this branch).** Two statements above were stronger than the code, and the tables below are corrected accordingly.
 >
 > 1. **Hardened in library, not yet wired into production.** The runtime-authority layer (`security/runtime_enforcer.py` with the HMAC `ApprovalBroker` and the SQLite `PersistentNonceStore`, `security/runtime_adapter.py` and its `production_mode`, `security/memory_adapter.py`, `memory_boundary.py`, `memory_integrity.py`, `security/security_update_manager.py`) is real code with tests, but a repo-wide search finds no importer outside `security/` and the tests, and nothing constructs `RuntimeAdapter`, `RuntimeEnforcer` or `ApprovalBroker` with `production_mode=True`. By the Global Production-Consumer Rule in `CLAUDE.md` it hardens nothing at runtime until a tool-execution path calls it. Findings that live only there carry the label **HARDENED IN LIBRARY, NOT YET WIRED INTO PRODUCTION** (B1/Gate 1, B2/Blocker 2, B4/Gate 2, M01, M02, M03, M07, U02, U03, and the nonce-persistence part of M08). Wiring it is a separate change; it was deliberately not done here. `20_TESTS/test_vault_state_accuracy.py::test_runtime_authority_layer_has_no_production_consumer` fails the day one of those modules gains a production consumer, so this note gets corrected rather than going stale. The findings that are enforced where the production code runs (U01, U04, U05, U06, U08, B11, the memory read path M04/M05/B3, the importer M06, the CI reporting of M08/B5) keep their status.
@@ -77,7 +82,7 @@ Classification tiers:
 
 ### 2.3 Targeted Remediation of 5 Concrete Blockers
 
-Detailed regression and adversarial proofs are documented in [`docs/security/PR209_REGRESSION_PROOF.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/docs/security/PR209_REGRESSION_PROOF.md).
+Detailed regression and adversarial proofs are documented in [`docs/security/PR209_REGRESSION_PROOF.md`](PR209_REGRESSION_PROOF.md).
 
 | Blocker ID | Description | Surface | Status | Enforcement & Verification |
 |---|---|---|---|---|
@@ -88,9 +93,9 @@ Detailed regression and adversarial proofs are documented in [`docs/security/PR2
 | **Blocker 5** | CI success reporting masks scanner failure | `.github/workflows/apisec-scan.yml`, `fortify.yml` | **VERIFIED_FIXED** | Added explicit step IDs (`id: apisec_scan`, `id: fortify_scan`). Final reporting step inspects step `outcome`: `EXECUTED_PASSED` is emitted ONLY if scanner succeeded (`outcome == 'success'`). Failed scanner emits `EXECUTED_FAILED`. Unconfigured emits `NOT_CONFIGURED_OPTIONAL`. Validated by `test_apisec_and_fortify_scan_outcome_checked_before_reporting_passed` and `test_blocker5_*`. |
 
 ### 2.2 Proof Artifacts & Empirical Verification
-- **Multi-Process Nonce & Authority Proof**: [`docs/security/PR209_AUTHORITY_MULTIPROCESS_PROOF.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/docs/security/PR209_AUTHORITY_MULTIPROCESS_PROOF.md)
-- **Security Barrier Mutation Proof**: [`docs/security/PR209_SECURITY_BARRIER_MUTATION_PROOF.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/docs/security/PR209_SECURITY_BARRIER_MUTATION_PROOF.md)
-- **CI Failure Root Cause Analysis**: [`docs/security/PR209_CI_FAILURE_ROOT_CAUSE.md`](file:///c:/Users/user/Documents/Codex/AI_Memory_Vault_CODEX_READY/docs/security/PR209_CI_FAILURE_ROOT_CAUSE.md)
+- **Multi-Process Nonce & Authority Proof**: [`docs/security/PR209_AUTHORITY_MULTIPROCESS_PROOF.md`](PR209_AUTHORITY_MULTIPROCESS_PROOF.md)
+- **Security Barrier Mutation Proof**: [`docs/security/PR209_SECURITY_BARRIER_MUTATION_PROOF.md`](PR209_SECURITY_BARRIER_MUTATION_PROOF.md)
+- **CI Failure Root Cause Analysis**: [`docs/security/PR209_CI_FAILURE_ROOT_CAUSE.md`](PR209_CI_FAILURE_ROOT_CAUSE.md)
 
 ---
 
