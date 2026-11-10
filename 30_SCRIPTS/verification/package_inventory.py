@@ -156,18 +156,70 @@ class Resolver:
                 res[n] = c
         return res
 
-    def set_shim(self, uid: str, consts: set[str], has_path: bool, path_ups: list[int] | None = None) -> None:
-        """Record a ``__path__`` shim and which units it points to.
+    def _elem_targets(self, uid: str, ups: int, comps: tuple[str, ...]) -> tuple[list[str], bool, str] | None:
+        """Units named by one evaluated ``__path__`` element (``(ups, comps)`` from ``analyze_file``).
 
-        ``path_ups`` = for each ``__path__`` element that is a bare parent-directory expression of
-        ``Path(__file__)`` (``.parent`` / ``.parents[N]``), how many levels above the file it is
-        (1 = the unit directory itself). Such a shim serves every sibling directly under that
-        directory (``path_expression``); otherwise targets come from string constants.
+        Returns ``(targets, expanded, directory)``: ``"self"`` = the shim's own directory, ``expanded`` = the
+        element is a directory that holds several unit directories (``path_expression``), ``directory`` = the
+        directory the element names (may be below the unit directory). ``None`` = not interpretable.
+        """
+        if ups < 1:
+            return None
+        own = self.units[uid]["dir"]
+        base = own
+        for _ in range(ups - 1):
+            base = base.rsplit("/", 1)[0] if "/" in base else ""
+        d = "/".join(x for x in (base, *comps) if x)
+        if d == own:
+            return ["self"], False, d
+        if d in self.by_dir:
+            return [self.by_dir[d]], False, d
+        anc = [u for u in self.units.values() if d.startswith(u["dir"] + "/")]
+        if anc:
+            best = max(anc, key=lambda u: len(u["dir"]))["id"]
+            return (["self"] if best == uid else [best]), False, d
+        kids = sorted(u["id"] for u in self.units.values()
+                      if u["id"] != uid and (u["dir"].rsplit("/", 1)[0] if "/" in u["dir"] else "") == d)
+        return (kids, True, d) if kids else None
+
+    def set_shim(self, uid: str, consts: set[str], has_path: bool, path_ups: list[int] | None = None,
+                 path_elems: list | None = None, resolves: bool = True) -> None:
+        """Record a ``__path__`` shim and which units it points to, IN THE ORDER OF ``__path__``.
+
+        ``path_elems`` = the evaluated ``__path__`` elements (``(ups, comps)`` of ``Path(__file__)``
+        expressions, see ``analyze_file``); targets are then exact and ordered, ``"self"`` marks the shim's
+        own directory. Without it (not interpretable) the legacy heuristics apply: ``path_ups`` (bare
+        parent-directory expressions serve every sibling directly under that directory, ``path_expression``)
+        or string constants (sorted; the order is NOT the ``__path__`` order).
+        ``shim_target_source``: ``path_eval`` / ``path_expression`` = the symbolic evaluator (exact, ordered);
+        ``legacy_fallback`` = the string-constant heuristic (sorted, NOT the ``__path__`` order; never trusted by
+        the layer check).
+        ``resolves=False`` (only the ``also_unit`` aliases of the layer config) records the targets (``shim_targets``) but the shim does not change how imports of
+        its name are resolved (``packages/security``: ``security.X`` is the repository-root package).
         """
         if not has_path:
             return
-        if path_ups:
+        if path_elems:
             targets: list[str] = []
+            dirs: dict[str, str] = {}
+            expanded = False
+            for ups, comps in path_elems:
+                r = self._elem_targets(uid, ups, comps)
+                if r is None:
+                    targets = []
+                    break
+                expanded = expanded or r[1]
+                for t in r[0]:
+                    if t not in targets:
+                        targets.append(t)
+                        if not r[1]:
+                            dirs[t] = r[2]
+            if targets:
+                self.shims[uid] = {"targets": targets, "resolves": resolves, "dirs": dirs,
+                                   "source": "path_expression" if expanded else "path_eval"}
+                return
+        if path_ups:
+            targets = []
             for ups in path_ups:
                 base = self.units[uid]["dir"]
                 for _ in range(ups - 1):
@@ -176,7 +228,7 @@ class Resolver:
                     parent = u["dir"].rsplit("/", 1)[0] if "/" in u["dir"] else ""
                     if parent == base and u["id"] != uid and u["id"] not in targets:
                         targets.append(u["id"])
-            self.shims[uid] = {"targets": targets, "source": "path_expression"}
+            self.shims[uid] = {"targets": targets, "source": "path_expression", "resolves": resolves}
             return
         own_parent = self.units[uid]["dir"].rsplit("/", 1)[0].rsplit("/", 1)[-1] if "/" in self.units[uid]["dir"] else ""
         parent_names = {u["dir"].rsplit("/", 1)[0].rsplit("/", 1)[-1] for u in self.units.values() if "/" in u["dir"]}
@@ -187,14 +239,40 @@ class Resolver:
                 for u in self.units.values():
                     if u["name"] == c and u["id"] != uid and u["dir"].rsplit("/", 1)[0].endswith(h) and u["id"] not in targets:
                         targets.append(u["id"])
-        self.shims[uid] = {"targets": targets, "source": "string_constants"}
+        self.shims[uid] = {"targets": targets, "source": "legacy_fallback", "resolves": resolves}
 
     def _served_by(self, unit_id: str, sub: list[str]) -> bool:
         d = self.units[unit_id]["dir"]
         return self.exists(f"{d}/{sub[0]}.py") or self.exists(f"{d}/{sub[0]}")
 
+    def _reexport_unit(self, uid: str, mod: str) -> str | None:
+        """``<shim dir>/<mod>.py`` re-exports a sibling package (``from [packages.]X.<m> import *``)."""
+        f = self.root / self.units[uid]["dir"] / f"{mod}.py"
+        if not f.is_file():
+            return None
+        try:
+            text = f.read_text("utf-8", "replace")
+        except OSError:
+            return None
+        m = re.search(r"^from (?:packages\.)?(\w+)\.", text, re.M)
+        cand = f"packages/{m.group(1)}" if m else None
+        return cand if cand in self.units and cand != uid else None
+
     def resolve(self, parts: list[str]) -> set[str]:
-        """Units reached by ``import a.b.c`` (``parts`` = ['a','b','c']); empty = not a repo unit."""
+        """Units reached by ``import a.b.c`` (``parts`` = ['a','b','c']); empty = not a repo unit.
+
+        Consumer view: a facade import credits the facade AND the unit that serves the submodule.
+        For dependency edges use ``resolve_full(...)["edges"]``.
+        """
+        return self.resolve_full(parts)["credits"]
+
+    def resolve_full(self, parts: list[str]) -> dict:
+        """``credits`` (consumers), ``edges`` (dependency targets), ``facade`` and ``state``.
+
+        ``state``: ``plain`` (no facade involved), ``bare`` (facade without submodule), ``served`` (submodule
+        resolved to another unit; the edge goes ONLY to that unit) or ``unresolved`` (facade submodule that
+        no ``__path__`` entry serves: the edge stays on the facade and is reported).
+        """
         for p in self.pythonpath:
             base = self._join(p, parts[0])
             uid = self.by_dir.get(base)
@@ -209,26 +287,39 @@ class Resolver:
             name = self.units[uid]["name"]
             credits = {uid}
             served = uid
-            if uid in self.shims and sub:
-                targets = self.shims[uid]["targets"]
+            state = "plain"
+            shim = self.shims.get(uid)
+            if shim and not shim.get("resolves", True):
+                shim = None
+            if shim:
+                state = "bare"
+            if shim and sub:
+                targets = shim["targets"]
                 served = None
-                if not self._served_by(uid, sub):
-                    if self.shims[uid].get("source") == "path_expression":
-                        # __path__ is the parent directory: ``shim.X`` is the sibling package X
-                        for t in targets:
-                            if self.units[t]["name"] == sub[0]:
-                                served = t
-                                break
-                    for t in ([] if served else targets):
-                        if self._served_by(t, sub):
+                if shim.get("source") == "path_expression":
+                    # __path__ is the parent directory: ``shim.X`` is the sibling package X
+                    for t in targets:
+                        if t != "self" and self.units[t]["name"] == sub[0]:
                             served = t
                             break
-                    if served is None and len(targets) == 1:
-                        served = targets[0]
-                else:
-                    served = uid
+                dirs = shim.get("dirs")
+                for t in ([] if served else targets):
+                    tid = uid if t == "self" else t
+                    if dirs is not None and t in dirs:  # the exact directory of the __path__ element
+                        hit = self.exists(f"{dirs[t]}/{sub[0]}.py") or self.exists(f"{dirs[t]}/{sub[0]}")
+                    else:
+                        hit = self._served_by(tid, sub)
+                    if hit:
+                        served = tid
+                        break
+                if served is None and dirs is None and len(targets) == 1 and targets[0] != "self":
+                    served = targets[0]  # legacy (uninterpreted __path__): a single target serves everything
+                if served == uid:  # an own module of the facade: follow its re-export to the sibling package
+                    served = self._reexport_unit(uid, sub[0])
+                state = "served" if served else "unresolved"
                 if served:
                     credits.add(served)
+            edges = {served} if state == "served" else {uid}
             if name in self.collisions and sub and self.count_stats:
                 key = served or "UNSERVED"
                 if served is None:
@@ -237,8 +328,8 @@ class Resolver:
                             key = f"SHADOWED:{loser}"
                             break
                 self.stats[name][key] += 1
-            return credits
-        return set()
+            return {"credits": credits, "edges": edges, "facade": uid if shim else None, "state": state}
+        return {"credits": set(), "edges": set(), "facade": None, "state": "plain"}
 
 
 # ----------------------------------------------------------------------------- per-file analysis
@@ -278,10 +369,126 @@ def _file_ups(node: ast.AST, varmap: dict[str, int]) -> int | None:
     return None
 
 
+def _pexpr(node: ast.AST, env: dict, loop: dict) -> tuple[int, tuple[str, ...]] | None:
+    """Symbolic ``Path(__file__)`` expression -> ``(ups, comps)``: ``ups`` levels above ``__file__`` (1 = the
+    directory of the file), then the path components appended below it. ``None`` = not interpretable."""
+    if isinstance(node, ast.Name):
+        return env.get(node.id)
+    if isinstance(node, ast.Call):
+        f = node.func
+        if isinstance(f, ast.Attribute) and f.attr in ("resolve", "absolute") and not node.args:
+            return _pexpr(f.value, env, loop)
+        name = f.id if isinstance(f, ast.Name) else ""
+        if name in ("str", "Path", "PurePath") and len(node.args) == 1 and not node.keywords:
+            a = node.args[0]
+            if name != "str" and _is_name(a, "__file__"):
+                return (0, ())
+            return _pexpr(a, env, loop)
+        return None
+    if isinstance(node, ast.Attribute) and node.attr == "parent":
+        base = _pexpr(node.value, env, loop)
+        if base is None:
+            return None
+        return (base[0], base[1][:-1]) if base[1] else (base[0] + 1, ())
+    if (isinstance(node, ast.Subscript) and isinstance(node.value, ast.Attribute) and node.value.attr == "parents"
+            and isinstance(node.slice, ast.Constant) and isinstance(node.slice.value, int) and node.slice.value >= 0):
+        base = _pexpr(node.value.value, env, loop)
+        return None if base is None or base[1] else (base[0] + node.slice.value + 1, ())
+    if isinstance(node, ast.BinOp) and isinstance(node.op, ast.Div):
+        base = _pexpr(node.left, env, loop)
+        if base is None:
+            return None
+        r = node.right
+        if isinstance(r, ast.Constant) and isinstance(r.value, str):
+            return (base[0], base[1] + tuple(x for x in r.value.split("/") if x))
+        if isinstance(r, ast.Name) and r.id in loop:
+            return (base[0], base[1] + (loop[r.id],))
+    return None
+
+
+def _flatten_path_value(v: ast.AST, env: dict) -> list:
+    """Elements of a ``__path__`` value: list/tuple, ``a + b`` and a one-generator comprehension over constants."""
+    if isinstance(v, (ast.List, ast.Tuple)):
+        return [_pexpr(e, env, {}) for e in v.elts]
+    if isinstance(v, ast.BinOp) and isinstance(v.op, ast.Add):
+        return _flatten_path_value(v.left, env) + _flatten_path_value(v.right, env)
+    if (isinstance(v, ast.ListComp) and len(v.generators) == 1 and not v.generators[0].ifs
+            and isinstance(v.generators[0].target, ast.Name)
+            and isinstance(v.generators[0].iter, (ast.List, ast.Tuple))
+            and all(isinstance(c, ast.Constant) and isinstance(c.value, str) for c in v.generators[0].iter.elts)):
+        g = v.generators[0]
+        return [_pexpr(v.elt, env, {g.target.id: c.value}) for c in g.iter.elts]
+    return [_pexpr(v, env, {})]
+
+
+def collect_path_elems(tree: ast.Module) -> list | None:
+    """The ordered ``__path__`` of a package ``__init__`` as ``(ups, comps)`` elements, or ``None`` if it does not
+    touch ``__path__`` or any element is not interpretable. ``__path__.append/extend`` without a prior assignment
+    extends the default ``__path__`` (the package's own directory, ``(1, ())``)."""
+    env: dict = {}
+    state = {"elems": None, "ok": True}
+
+    def need_init() -> None:
+        if state["elems"] is None:
+            state["elems"] = [(1, ())]
+
+    def add(items: list) -> None:
+        for it in items:
+            if it is None:
+                state["ok"] = False
+            else:
+                state["elems"].append(it)
+
+    handled: set[int] = set()
+
+    def walk(stmts: list) -> None:
+        for st in stmts:
+            if isinstance(st, ast.Assign):
+                if any(_is_name(t, "__path__") for t in st.targets):
+                    handled.add(id(st))
+                    state["elems"] = []
+                    add(_flatten_path_value(st.value, env))
+                elif len(st.targets) == 1 and isinstance(st.targets[0], ast.Name):
+                    v = _pexpr(st.value, env, {})
+                    if v is not None:
+                        env[st.targets[0].id] = v
+            elif (isinstance(st, ast.Expr) and isinstance(st.value, ast.Call)
+                  and isinstance(st.value.func, ast.Attribute) and _is_name(st.value.func.value, "__path__")
+                  and st.value.func.attr in ("append", "extend") and len(st.value.args) == 1):
+                handled.add(id(st.value))
+                need_init()
+                if st.value.func.attr == "append":
+                    add([_pexpr(st.value.args[0], env, {})])
+                else:
+                    add(_flatten_path_value(st.value.args[0], env))
+            elif isinstance(st, ast.If):
+                walk(st.body)
+                walk(st.orelse)
+            elif isinstance(st, ast.Try):
+                walk(st.body)
+
+    walk(tree.body)
+    # fail closed: any other way of moving ``__path__`` (insert, +=, subscript, del, attribute target, a function
+    # body, a handler, ...) makes the whole list uninterpretable instead of being ignored
+    for n in ast.walk(tree):
+        if isinstance(n, (ast.Assign, ast.AugAssign, ast.AnnAssign)) and id(n) not in handled:
+            tgs = n.targets if isinstance(n, ast.Assign) else [n.target]
+            if any(_is_dunder_path(t) or (isinstance(t, ast.Subscript) and _is_dunder_path(t.value)) for t in tgs):
+                state["ok"] = False
+        elif isinstance(n, ast.Delete):
+            if any(_is_dunder_path(t) or (isinstance(t, ast.Subscript) and _is_dunder_path(t.value))
+                   for t in n.targets):
+                state["ok"] = False
+        elif (isinstance(n, ast.Call) and id(n) not in handled and isinstance(n.func, ast.Attribute)
+              and _is_dunder_path(n.func.value) and n.func.attr not in ("index", "count", "copy")):
+            state["ok"] = False
+    return state["elems"] if state["elems"] is not None and state["ok"] else None
+
+
 def analyze_file(text: str) -> dict:
     """Return imports (list of part-lists + from-aliases), unknowns, main-guard, __all__, constants."""
     res = {"imports": [], "unknown": [], "has_main": False, "has_all": False, "consts": set(), "parse_error": None,
-           "path_ups": []}
+           "path_ups": [], "path_elems": None, "path_assigned": False}
     try:
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
@@ -289,6 +496,9 @@ def analyze_file(text: str) -> dict:
     except (SyntaxError, ValueError, RecursionError) as exc:
         res["parse_error"] = type(exc).__name__
         return res
+    res["path_elems"] = collect_path_elems(tree)
+    res["path_assigned"] = any(isinstance(n, ast.Assign) and any(_is_name(t, "__path__") for t in n.targets)
+                               for n in ast.walk(tree))
     varmap: dict[str, int] = {}
     for stmt in tree.body:
         if isinstance(stmt, ast.Assign) and any(_is_dunder_path(t) for t in stmt.targets):
@@ -338,7 +548,12 @@ def analyze_file(text: str) -> dict:
                     res["unknown"].append({"line": node.lineno, "kind": "path_assign",
                                            "detail": "sys.path" if _is_sys_path(tg) else "__path__"})
                 if isinstance(tg, ast.Subscript) and (_is_sys_path(tg.value) or _is_dunder_path(tg.value)):
-                    res["unknown"].append({"line": node.lineno, "kind": "path_assign", "detail": "path[...]"})
+                    res["unknown"].append({"line": node.lineno, "kind": "path_assign",
+                                           "detail": "sys.path[...]" if _is_sys_path(tg.value) else "__path__[...]"})
+        elif isinstance(node, ast.Delete):
+            for tg in node.targets:
+                if isinstance(tg, ast.Subscript) and _is_dunder_path(tg.value):
+                    res["unknown"].append({"line": node.lineno, "kind": "path_assign", "detail": "__path__[...]"})
         elif isinstance(node, ast.Constant) and isinstance(node.value, str):
             res["consts"].add(node.value)
         if isinstance(node, ast.Call):
@@ -426,12 +641,9 @@ _MODNAME = re.compile(rf"^{_MOD}$")
 
 
 def _unit_for_module(res: Resolver, module: str) -> str | None:
-    parts = module.split(".")
-    credits = res.resolve(parts)
-    if not credits:
-        return None
-    extra = sorted(credits - res.resolve(parts[:1]))
-    return extra[0] if extra else sorted(credits)[0]
+    """The unit a string import depends on: the unit that serves the submodule of a facade (not the facade)."""
+    edges = res.resolve_full(module.split("."))["edges"]
+    return sorted(edges)[0] if edges else None
 
 
 def find_string_imports(root: Path, allfiles: list[str], res: Resolver) -> list[dict]:
@@ -538,7 +750,26 @@ def promoted_test_files(info: dict[str, dict], pyfiles: list[str], pythonpath: l
 
 
 # ----------------------------------------------------------------------------- main build
-def build_inventory(root: Path) -> dict:
+def default_also_units(root: Path) -> set[str]:
+    """``also_unit`` aliases of ``04_CONFIG/architecture_layers.json`` under ``root``.
+
+    A missing or invalid config is reported on stderr (never silent): every alias then resolves
+    through its ``__path__``, including ``also_unit`` ones such as packages/security.
+    """
+    cfg = Path(root) / "04_CONFIG" / "architecture_layers.json"
+    try:
+        data = json.loads(cfg.read_text("utf-8"))
+        return {a for a, d in data.get("aliases", {}).items() if d.get("also_unit")}
+    except (OSError, ValueError, AttributeError) as exc:
+        print(f"package_inventory: WARNING no also_unit aliases ({cfg.name}: {type(exc).__name__}); "
+              "also_unit facades resolve through __path__", file=sys.stderr)
+        return set()
+
+
+def build_inventory(root: Path, also_units: set[str] | None = None) -> dict:
+    """``also_units``: units whose ``__path__`` extension must not change how their own name resolves
+    (``None`` = read ``also_unit`` from the layer config under ``root``)."""
+    also = set(also_units) if also_units is not None else default_also_units(root)
     root = root.resolve()
     allfiles = walk_files(root)
     pyfiles = [f for f in allfiles if f.endswith(".py")]
@@ -564,8 +795,14 @@ def build_inventory(root: Path) -> dict:
     # shims (a unit __init__.py that assigns __path__)
     for uid, u in units.items():
         init = f"{u['dir']}/__init__.py"
-        if init in info and any(x["detail"] == "__path__" for x in info[init]["unknown"]):
-            res.set_shim(uid, info[init]["consts"], True, info[init]["path_ups"])
+        if init not in info:
+            continue
+        fi = info[init]
+        touches = any(x["detail"].startswith("__path__") for x in fi["unknown"])
+        if touches or fi["path_elems"]:
+            # any ``__path__`` move makes the unit a shim. Only an ``also_unit`` alias of the layer config keeps
+            # resolving its own name as before (``packages/security``); every other shim resolves through it
+            res.set_shim(uid, fi["consts"], True, fi["path_ups"], fi["path_elems"], resolves=uid not in also)
 
     promoted = promoted_test_files(info, pyfiles, pythonpath)
     string_refs = find_string_imports(root, allfiles, res)
@@ -600,6 +837,7 @@ def build_inventory(root: Path) -> dict:
     unknown_outside: list[dict] = []
     violations: list[dict] = []
     parse_errors: list[str] = []
+    facade_unres: list[dict] = []
     per_unit_files: dict[str, list[str]] = defaultdict(list)
 
     for f in pyfiles:
@@ -615,10 +853,24 @@ def build_inventory(root: Path) -> dict:
                 rec["detail"] = "__path__ shim -> " + ", ".join(res.shims[src]["targets"] or ["(neidentificat)"])
             (unknown[src] if src else unknown_outside).append(rec)
         seen_targets: set[str] = set()
+        seen_edges: set[str] = set()
         for alts, line, is_from in fi["imports"]:
             credits: set[str] = set()
-            for parts in alts:
-                credits |= res.resolve(parts)
+            edge_t: set[str] = set()
+            results = [res.resolve_full(parts) for parts in alts]
+            for r in results:
+                credits |= r["credits"]
+                edge_t |= r["edges"]
+            # a facade import whose submodule resolved elsewhere drops the facade edge (bare / unresolved alts of
+            # the same statement); a facade whose submodule resolves nowhere keeps the edge and is reported
+            served_f = {r["facade"] for r in results if r["state"] == "served"}
+            for r in results:
+                if r["facade"] in served_f and r["state"] in ("bare", "unresolved"):
+                    edge_t.discard(r["facade"])
+            for parts, r in zip(alts, results):
+                if r["state"] == "unresolved" and r["facade"] not in served_f and src:
+                    facade_unres.append({"file": f, "line": line, "from_unit": src, "module": ".".join(parts),
+                                         "facade": r["facade"], "test": effective_test(f)})
             if not credits:
                 top = alts[0][0]
                 if top in stdlib:
@@ -631,19 +883,20 @@ def build_inventory(root: Path) -> dict:
                     ext[src][top] += 1
                 continue
             for t in sorted(credits):
-                if t == src:
-                    continue
-                if t in seen_targets:
+                if t == src or t in seen_targets:
                     continue
                 seen_targets.add(t)
+                bucket = test_cons if is_test_path(f) else (bench_cons if is_bench_path(f) else prod_cons)
+                bucket[t].add(f)
+            for t in sorted(edge_t):
+                if t == src or t in seen_edges:
+                    continue
+                seen_edges.add(t)
                 if src:
                     out_edges[src][t].add(f)
                     if src.startswith("packages/") and t.startswith("products/"):
                         violations.append({"from_unit": src, "file": f, "line": line, "to_unit": t,
                                            "test_file": is_test_path(f)})
-                    # own-unit files are not consumers of the unit they live in
-                bucket = test_cons if is_test_path(f) else (bench_cons if is_bench_path(f) else prod_cons)
-                bucket[t].add(f)
 
     # imports that live in strings, from non-test files inside a unit, are edges for the ratchet
     str_edges: dict[str, dict[str, set]] = defaultdict(lambda: defaultdict(set))
@@ -741,11 +994,18 @@ def build_inventory(root: Path) -> dict:
             "root": ".", "pythonpath_order": pythonpath, "testpaths": testpaths,
             "py_files_scanned": len(pyfiles), "pruned_dirs": sorted(PRUNE_DIRS),
             "test_paths_promoted_to_production": sorted(promoted), "parse_errors": sorted(parse_errors),
+            "facade_unresolved": sorted(facade_unres, key=lambda r: (r["file"], r["line"], r["module"])),
             "rules": {
                 "loc": "linii non-goale care nu încep cu #; docstring-urile se numără",
                 "consumers_prod": "fișiere .py în afara oricărui director de test/benchmark și în afara modulului",
                 "consumers_test": "fișiere sub 20_TESTS, /tests/, test_*.py sau conftest.py",
-                "shim_credit": "un import prin shim __path__ creditează și modulul servit",
+                "shim_credit": "consumatori: un import prin shim __path__ creditează fațada ȘI modulul servit",
+                "shim_target_source": ("path_eval/path_expression = evaluatorul simbolic al __path__ (exact, în ordine); "
+                                       "legacy_fallback = euristica pe constante-șir (sortat, nu ordinea __path__); "
+                                       "un alias declarat care cade pe legacy_fallback pică în architecture_boundaries"),
+                "facade_edges": ("muchii (imports_out*): un import prin fațadă creditează DOAR unitatea care servește "
+                                 "submodulul (ordinea din __path__); dacă nu se rezolvă, muchia rămâne pe fațadă și "
+                                 "apare în meta.facade_unresolved"),
             },
         },
         "units": unit_rows,

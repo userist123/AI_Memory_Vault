@@ -102,7 +102,7 @@ def test_shim_from_string_constants(tmp_path):
     })
     _, data, _ = _run(root, tmp_path)
     f = _unit(data, "packages/facade")
-    assert f["shim_target_source"] == "string_constants"
+    assert f["shim_target_source"] == "path_eval"
     assert f["shim_targets"] == ["packages/alpha", "packages/beta"]  # gamma is not named, so not a target
     assert _unit(data, "packages/alpha")["shim_target_source"] is None
 
@@ -124,7 +124,9 @@ def test_shim_from_path_expression_serves_all_siblings(tmp_path):
     assert d["shim_target_source"] == "path_expression"
     assert "packages/facade" in d["shim_targets"] and "packages/direct" not in d["shim_targets"]
     # `facade.gamma` is credited to the sibling package it serves
-    assert set(_unit(data, "packages/user")["imports_out"]) == {"packages/facade", "packages/gamma"}
+    # (WP-07: the edge goes only to the unit that serves it; the facade keeps the consumer record)
+    assert set(_unit(data, "packages/user")["imports_out"]) == {"packages/gamma"}
+    assert _unit(data, "packages/facade")["consumers_prod"] == [f"{PK}/user/a.py"]
 
 
 def test_collision_winner_follows_pythonpath_order(tmp_path):
@@ -239,3 +241,168 @@ def test_test_path_file_imported_by_production_is_promoted(tmp_path):
     _, data, _ = _run(root, tmp_path)
     assert data["meta"]["test_paths_promoted_to_production"] == [
         f"{PK}/alpha/tests/__init__.py", f"{PK}/alpha/tests/helpers.py"]
+
+
+# ----------------------------------------------------------------------------- WP-07 PR A: facade resolution
+FAC = ('from pathlib import Path\n_B = Path(__file__).resolve().parents[1]\n'
+       '__path__ = [{elems}]\n')
+
+
+def _fac(*names: str) -> str:
+    return FAC.format(elems=", ".join(f'str(_B / "{n}")' for n in names))
+
+
+def _edges(data: dict, uid: str) -> dict:
+    return _unit(data, uid)["imports_out_nontest"]
+
+
+def test_facade_path_order_wins_over_alphabetical_order(tmp_path):
+    """Python takes the first ``__path__`` entry that has the submodule; the targets keep that order."""
+    root = _mk(tmp_path, {
+        f"{PK}/alpha/__init__.py": "", f"{PK}/alpha/shared.py": "", f"{PK}/zeta/__init__.py": "",
+        f"{PK}/zeta/shared.py": "", f"{PK}/fac/__init__.py": _fac("zeta", "alpha"),
+        f"{PK}/user/a.py": "import fac.shared\n"})
+    _, data, _ = _run(root, tmp_path)
+    assert _unit(data, "packages/fac")["shim_targets"] == ["packages/zeta", "packages/alpha"]
+    assert _edges(data, "packages/user") == {"packages/zeta": 1}
+
+
+def test_facade_import_credits_only_the_serving_unit_but_consumers_stay_reported(tmp_path):
+    root = _mk(tmp_path, {
+        f"{PK}/alpha/__init__.py": "", f"{PK}/alpha/core.py": "", f"{PK}/fac/__init__.py": _fac("alpha"),
+        f"{PK}/user/a.py": "from fac.core import X\n", f"{PK}/user/b.py": "from fac import core\n",
+        "20_TESTS/test_fac.py": "import fac.core\n"})
+    _, data, _ = _run(root, tmp_path)
+    for key in ("imports_out", "imports_out_nontest"):
+        assert _unit(data, "packages/user")[key] == {"packages/alpha": 2}  # no edge to the facade
+    fac = _unit(data, "packages/fac")
+    assert fac["consumers_prod"] == [f"{PK}/user/a.py", f"{PK}/user/b.py"]  # who uses the facade is still reported
+    assert fac["consumers_test"] == ["20_TESTS/test_fac.py"]
+    assert _unit(data, "packages/alpha")["consumers_prod"] == [f"{PK}/user/a.py", f"{PK}/user/b.py"]
+    assert data["meta"]["facade_unresolved"] == []
+
+
+def test_unresolved_facade_submodule_keeps_the_facade_edge_and_is_reported(tmp_path):
+    root = _mk(tmp_path, {
+        f"{PK}/alpha/__init__.py": "", f"{PK}/alpha/core.py": "", f"{PK}/beta/__init__.py": "",
+        f"{PK}/fac/__init__.py": _fac("alpha", "beta"),
+        f"{PK}/user/a.py": "import fac.nothing\n", f"{PK}/user/b.py": "from fac.core import X\n"})
+    _, data, _ = _run(root, tmp_path)
+    assert _edges(data, "packages/user") == {"packages/alpha": 1, "packages/fac": 1}
+    assert [(r["file"], r["module"], r["facade"]) for r in data["meta"]["facade_unresolved"]] == [
+        (f"{PK}/user/a.py", "fac.nothing", "packages/fac")]
+
+
+def test_facade_from_import_of_a_non_module_name_is_reported_not_hidden(tmp_path):
+    root = _mk(tmp_path, {
+        f"{PK}/alpha/__init__.py": "", f"{PK}/alpha/core.py": "", f"{PK}/fac/__init__.py": _fac("alpha"),
+        f"{PK}/user/a.py": "from fac import Thing\n", f"{PK}/user/b.py": "from fac import core, Thing\n"})
+    _, data, _ = _run(root, tmp_path)
+    assert _edges(data, "packages/user") == {"packages/alpha": 1, "packages/fac": 1}  # a.py stays on the facade
+    assert [r["file"] for r in data["meta"]["facade_unresolved"]] == [f"{PK}/user/a.py"]
+
+
+ROOT_CC = ('from pathlib import Path\n_P = Path(__file__).resolve().parent.parent / "03_IMPLEMENTATION" / "packages"\n'
+           '__path__ = [str(Path(__file__).resolve().parent)] + [\n'
+           '    str(_P / name) for name in ("lrn", "interfaces")\n]\n')
+
+
+def test_root_shim_reexport_is_followed_to_the_sibling_package(tmp_path):
+    root = _mk(tmp_path, {
+        "cognitive_core/__init__.py": ROOT_CC,
+        "cognitive_core/closed.py": "from packages.lrn.closed import *\n",
+        "cognitive_core/cli.py": "import runpy\nfrom interfaces.cli import *  # noqa\n",
+        "cognitive_core/orphan.py": "X = 1\n",
+        f"{PK}/lrn/__init__.py": "", f"{PK}/lrn/closed.py": "", f"{PK}/interfaces/__init__.py": "",
+        f"{PK}/interfaces/cli.py": "",
+        f"{PK}/app/a.py": "from cognitive_core.closed import f\nimport cognitive_core.cli\nimport cognitive_core.orphan\n"})
+    _, data, _ = _run(root, tmp_path)
+    cc = _unit(data, "root/cognitive_core")
+    assert cc["shim_targets"] == ["self", "packages/lrn", "packages/interfaces"]
+    assert _edges(data, "packages/app") == {"packages/interfaces": 1, "packages/lrn": 1, "root/cognitive_core": 1}
+    assert cc["consumers_prod"] == [f"{PK}/app/a.py"]
+    # the module that re-exports nothing stays on the shim and is reported
+    assert [r["module"] for r in data["meta"]["facade_unresolved"]] == ["cognitive_core.orphan"]
+
+
+def test_memory_vault_style_facade_resolves_package_and_module_to_the_package(tmp_path):
+    root = _mk(tmp_path, {
+        f"{PK}/alpha/__init__.py": "", f"{PK}/alpha/core.py": "", f"{PK}/beta/__init__.py": "",
+        f"{PK}/mv/__init__.py": 'from pathlib import Path\n__path__ = [str(Path(__file__).resolve().parents[1])]\n',
+        f"{PK}/user/a.py": "import mv.alpha.core\n", f"{PK}/user/b.py": "from mv import beta\n"})
+    _, data, _ = _run(root, tmp_path)
+    assert _edges(data, "packages/user") == {"packages/alpha": 1, "packages/beta": 1}
+    assert _unit(data, "packages/mv")["consumers_prod"] == [f"{PK}/user/a.py", f"{PK}/user/b.py"]
+
+
+def test_single_target_product_facade_credits_the_product(tmp_path):
+    root = _mk(tmp_path, {
+        f"{PK}/xk/__init__.py": ('from pathlib import Path\n_E = Path(__file__).resolve().parents[2] / "products" / "prod"\n'
+                                 '__path__ = [str(_E)]\n'),
+        "03_IMPLEMENTATION/products/prod/__init__.py": "", "03_IMPLEMENTATION/products/prod/m.py": "",
+        f"{PK}/user/a.py": "import xk.m\n"})
+    _, data, _ = _run(root, tmp_path)
+    assert _unit(data, "packages/xk")["shim_targets"] == ["products/prod"]
+    assert _edges(data, "packages/user") == {"products/prod": 1}
+    assert [(v["from_unit"], v["to_unit"]) for v in data["layer_violations_package_to_product"]] == [
+        ("packages/user", "products/prod")]
+
+
+def test_package_that_extends_its_own_path_records_targets_without_changing_resolution(tmp_path):
+    root = _mk(tmp_path, {
+        f"{PK}/sec/__init__.py": ('from pathlib import Path\n_R = Path(__file__).resolve().parents[3] / "sec"\n'
+                                  'if _R.is_dir():\n    __path__.append(str(_R))\n'),
+        "sec/__init__.py": "", "sec/x.py": "", f"{PK}/user/a.py": "import sec.x\n"})
+    _, data, _ = _run(root, tmp_path)
+    assert _unit(data, "packages/sec")["shim_targets"] == ["self", "root/sec"]
+    assert _edges(data, "packages/user") == {"root/sec": 1}  # root/sec wins on the path, as before
+    assert data["meta"]["facade_unresolved"] == []
+
+
+_PH = 'from pathlib import Path\n_B = Path(__file__).resolve().parents[1]\n'
+
+
+def test_shim_sources_are_path_eval_versus_legacy_fallback(tmp_path):
+    root = _mk(tmp_path, {
+        f"{PK}/alpha/__init__.py": "", f"{PK}/beta/__init__.py": "",
+        f"{PK}/ev/__init__.py": _PH + '__path__ = [str(_B / "beta"), str(_B / "alpha")]\n',
+        f"{PK}/lg/__init__.py": _PH + 'def p(x):\n    return x\n__path__ = [str(_B / p("beta")), str(_B / "alpha")]\n'})
+    _, data, _ = _run(root, tmp_path)
+    assert _unit(data, "packages/ev")["shim_target_source"] == "path_eval"
+    assert _unit(data, "packages/ev")["shim_targets"] == ["packages/beta", "packages/alpha"]
+    assert _unit(data, "packages/lg")["shim_target_source"] == "legacy_fallback"
+
+
+def test_unrecognised_path_mutations_make_the_list_uninterpretable(tmp_path):
+    for i, mut in enumerate(['__path__.insert(0, str(_B / "beta"))\n', '__path__ += [str(_B / "beta")]\n',
+                             '__path__.extend(str(_B / n) for n in ["beta"])\n',
+                             'def f():\n    __path__.extend([str(_B / "beta")])\nf()\n',
+                             'def f():\n    __path__.append(str(_B / "beta"))\nf()\n']):
+        root = _mk(tmp_path / f"m{i}", {
+            f"{PK}/alpha/__init__.py": "", f"{PK}/beta/__init__.py": "",
+            f"{PK}/fac/__init__.py": _PH + '__path__ = [str(_B / "alpha")]\n' + mut})
+        _, data, _ = _run(root, tmp_path / f"m{i}")
+        assert _unit(data, "packages/fac")["shim_target_source"] == "legacy_fallback", mut
+
+
+def test_undeclared_append_only_shim_resolves_through_its_path_unless_also_unit(tmp_path):
+    files = {f"{PK}/memory/__init__.py": "", f"{PK}/memory/controller.py": "",
+             f"{PK}/routing/__init__.py": _PH + '__path__.append(str(_B / "memory"))\n',
+             f"{PK}/graph/__init__.py": "", f"{PK}/graph/zz.py": "import routing.controller\n"}
+    root = _mk(tmp_path / "plain", files)
+    _, data, _ = _run(root, tmp_path / "plain")
+    assert _edges(data, "packages/graph") == {"packages/memory": 1}
+    root = _mk(tmp_path / "also", files)
+    _write(root, "04_CONFIG/architecture_layers.json",
+           json.dumps({"aliases": {"packages/routing": {"__path__": [], "also_unit": True}}}))
+    _, data, _ = _run(root, tmp_path / "also")
+    assert _edges(data, "packages/graph") == {"packages/routing": 1}
+
+
+def test_facade_unresolved_records_carry_the_test_flag(tmp_path):
+    root = _mk(tmp_path, {
+        f"{PK}/alpha/__init__.py": "", f"{PK}/fac/__init__.py": _fac("alpha"),
+        f"{PK}/user/a.py": "import fac.nothing\n", f"{PK}/user/test_b.py": "import fac.nothing\n"})
+    _, data, _ = _run(root, tmp_path)
+    assert {(r["file"], r["test"]) for r in data["meta"]["facade_unresolved"]} == {
+        (f"{PK}/user/a.py", False), (f"{PK}/user/test_b.py", True)}

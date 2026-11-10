@@ -3,8 +3,10 @@
 
 Read-only, standard library only. Reuses ``package_inventory.build_inventory`` (no second resolver).
 Layers (``04_CONFIG/architecture_layers.json``) are ordered low -> high; a unit may import units of the
-same or a LOWER layer. Every upward edge that exists today is recorded in ``baseline_edges`` with an
-owner work package. The check fails on: a new upward edge, a count above baseline, and a STALE baseline
+same or a LOWER layer. Facade packages (``__path__`` shims such as ``memory_controller``) are not layers: they
+are ``aliases`` with a declared ``__path__``, and an import through a facade is an edge to the unit that serves
+the submodule (``package_inventory`` resolves it). The real ``__path__`` of every alias must equal the declared
+one. Every upward edge that exists today is recorded in ``baseline_edges`` with an owner work package. The check fails on: a new upward edge, a count above baseline, and a STALE baseline
 (edge gone or count lower), so every gain is locked in.
 
 An edge count is the number of NON-TEST files of the source unit that import the target unit.
@@ -30,12 +32,23 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 import package_inventory as pi  # noqa: E402
 
 DEFAULT_SINCE = "2026-11-09"
-FACADE_NAMES = {"memory_controller", "memory_vault", "cognitive_core"}
+# Residual upward edges (F2_memory_core_contract.md section 1.3): (from name, to name) -> owner work package.
+FACADE_NAMES = {"memory_controller", "memory_vault", "cognitive_core"}  # legacy default of owner_wp()
+OWNER_TABLE = {
+    ("graph", "memory"): "WP-10", ("lifecycle", "memory"): "WP-10", ("memory", "interfaces"): "WP-10",
+    ("retrieval", "memory"): "WP-10", ("retrieval", "interfaces"): "WP-10",
+    ("lifecycle", "interfaces"): "WP-14", ("security", "interfaces"): "WP-14", ("vault_access", "interfaces"): "WP-14",
+}
 EDGE_KEY = tuple  # (from_unit, to_unit)
 
 
-def _inventory(root: Path) -> dict:
-    return pi.build_inventory(Path(root))
+def also_units_of(config: dict) -> set[str]:
+    return {a for a, d in config.get("aliases", {}).items() if d.get("also_unit")}
+
+
+def _inventory(root: Path, config: dict | None = None) -> dict:
+    """``config`` given: its ``also_unit`` aliases are the only shims that keep resolving their own name."""
+    return pi.build_inventory(Path(root), also_units_of(config) if config is not None else None)
 
 
 def edges_from_inventory(inv: dict) -> dict[tuple[str, str], int]:
@@ -71,11 +84,17 @@ def layer_name(config: dict, unit: str) -> str | None:
     return None
 
 
+def aliases_of(config: dict) -> dict[str, dict]:
+    return config.get("aliases", {})
+
+
 def is_hard_forbidden(config: dict, kinds: dict[str, str], a: str, b: str) -> bool:
+    """package -> product, also through an alias that serves a product (``alias_units`` or a declared ``__path__``)."""
     hf = config.get("hard_forbidden", {})
-    aliases = set(hf.get("alias_units", []))
-    return kinds.get(a) == hf.get("from_kind", "packages") and (kinds.get(b) == hf.get("to_kind", "products")
-                                                                  or b in aliases)
+    to_kind = hf.get("to_kind", "products")
+    via = set(hf.get("alias_units", [])) | {
+        al for al, d in aliases_of(config).items() if any(kinds.get(x) == to_kind for x in d.get("__path__", []))}
+    return kinds.get(a) == hf.get("from_kind", "packages") and (kinds.get(b) == to_kind or b in via)
 
 
 def _classify(config: dict, inv: dict, edges: dict[tuple[str, str], int]):
@@ -83,25 +102,46 @@ def _classify(config: dict, inv: dict, edges: dict[tuple[str, str], int]):
     kinds = {u["id"]: u["kind"] for u in inv["units"]}
     rows = {}
     for (a, b), n in edges.items():
-        if a not in idx or b not in idx:
-            continue
-        upward = idx[a] < idx[b]
-        hard = is_hard_forbidden(config, kinds, a, b)
+        hard = is_hard_forbidden(config, kinds, a, b)  # enforced even when the edge does not go up (WP-12)
+        upward = a in idx and b in idx and idx[a] < idx[b]
         if upward or hard:
             rows[(a, b)] = {"count": n, "upward": upward, "hard": hard}
     return rows
 
 
 def check(root: Path, config: dict, inv: dict | None = None) -> list[str]:
-    inv = inv if inv is not None else _inventory(root)
+    inv = inv if inv is not None else _inventory(root, config)
     fails: list[str] = []
     idx = layer_index(config)
     ids = {u["id"] for u in inv["units"]}
-    for uid in sorted(ids - set(idx)):
-        fails.append(f"(a) unit {uid} exists but is not assigned to any layer in the config")
-    for uid in sorted(set(idx) - ids):
-        fails.append(f"(a) unit {uid} is assigned to a layer but does not exist in the inventory")
+    aliases = aliases_of(config)
+    for uid in sorted(ids - set(idx) - set(aliases)):
+        fails.append(f"(a) unit {uid} exists but is not assigned to any layer or alias in the config")
+    for uid in sorted((set(idx) | set(aliases)) - ids):
+        fails.append(f"(a) unit {uid} is assigned to a layer or alias but does not exist in the inventory")
+    by_id = {u["id"]: u for u in inv["units"]}
+    for uid in sorted(set(aliases) & ids):
+        real = by_id[uid]["shim_targets"]
+        declared = aliases[uid].get("__path__")
+        if real != declared:
+            fails.append(f"(h) alias {uid}: real __path__ {real} differs from the declared {declared}")
+        elif by_id[uid].get("shim_target_source") == "legacy_fallback":
+            fails.append(f"(h) alias {uid}: its __path__ is not interpretable by the evaluator (legacy_fallback "
+                         f"heuristic, order not guaranteed); write it as a literal list of Path(__file__) expressions")
+    for uid in sorted(ids - set(aliases)):
+        if by_id[uid].get("shim_targets") is not None:
+            fails.append(f"(h) unit {uid} moves its __path__ (shim_targets {by_id[uid]['shim_targets']}) but is not "
+                         f"declared in aliases")
+    for r in inv["meta"].get("facade_unresolved", []):
+        if not r.get("test"):
+            fails.append(f"(i) non-test import {r['module']} ({r['file']}:{r['line']}) is not served by any entry of the "
+                         f"__path__ of facade {r['facade']}")
+    plain_aliases = set(aliases) - also_units_of(config)
     edges = edges_from_inventory(inv)
+    for (a, b), n in sorted(edges.items()):
+        if b in plain_aliases:
+            fails.append(f"(j) {a} has a non-test edge to facade {b} ({n} files): a facade is not a unit, "
+                         f"the import must resolve to the unit that serves it")
     current = _classify(config, inv, edges)
     base = {(e["from"], e["to"]): e for e in config.get("baseline_edges", [])}
     for (a, b), row in sorted(current.items()):
@@ -140,10 +180,20 @@ def check(root: Path, config: dict, inv: dict | None = None) -> list[str]:
     return fails
 
 
+def table_owner(a: str, b: str, hard: bool) -> str | None:
+    """The owner fixed by the contract (hard_forbidden or a section 1.3 pair); ``None`` = not fixed."""
+    if hard:
+        return "WP-12"
+    return OWNER_TABLE.get((a.split("/", 1)[1], b.split("/", 1)[1]))
+
+
 def owner_wp(a: str, b: str, hard: bool) -> str:
+    """Owner of a residual edge: the section 1.3 table, hard_forbidden -> WP-12, else a name-based default."""
     if hard:
         return "WP-12"
     names = {a.split("/", 1)[1], b.split("/", 1)[1]}
+    if table_owner(a, b, False):
+        return table_owner(a, b, False)
     if names & FACADE_NAMES:
         return "WP-06"
     if names & {"xau_kinetic", "polymarket"}:
@@ -175,6 +225,13 @@ def plan_baseline(config: dict, inv: dict, allow_widen: bool = False, owner: str
             if n < prev["imports"]:
                 tightened.append(f"{a} -> {b}: {prev['imports']} -> {n}")
             e["imports"] = n
+            want = table_owner(a, b, row["hard"])
+            if allow_widen and want and prev.get("owner_wp") != want:
+                widened.append(f"{a} -> {b}: owner {prev.get('owner_wp')} -> {want}")
+                e["owner_wp"] = want
+            if allow_widen and reason and e.get("reason") != reason:
+                # re-attribution run (e.g. new layer order): the old reason names the old layers
+                e["reason"] = reason
             edges.append(e)
             continue
         what = f"{a} -> {b}: {prev['imports'] if prev else 'new'} -> {n}"
@@ -184,7 +241,10 @@ def plan_baseline(config: dict, inv: dict, allow_widen: bool = False, owner: str
                 edges.append(dict(prev))
             continue
         widened.append(what)
-        e = {"from": a, "to": b, "imports": n, "since": today, "owner_wp": owner, "reason": reason}
+        e = {"from": a, "to": b, "imports": n, "since": today,
+             "owner_wp": table_owner(a, b, row["hard"]) or owner, "reason": reason}
+        if e["owner_wp"] != owner:
+            e["widened_by"] = owner
         if row["hard"]:
             e["hard_forbidden"] = True
         edges.append(e)
@@ -220,7 +280,7 @@ def main(argv: list[str] | None = None) -> int:
     if not cfg_path.is_absolute() and not cfg_path.exists():
         cfg_path = root / cfg_path
     config = json.loads(cfg_path.read_text("utf-8"))
-    inv = _inventory(root)
+    inv = _inventory(root, config)
     if args.write_baseline:
         plan = plan_baseline(config, inv, args.allow_widen, args.owner_wp, args.reason)
         for k in ("tightened", "widened", "refused"):

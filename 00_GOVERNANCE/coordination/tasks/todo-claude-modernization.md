@@ -4,7 +4,7 @@ title: "Checkpoint: Claude Code - modernizarea AI Memory Vault"
 type: "project"
 lifecycle: "REVIEW"
 created: "2026-11-08T21:00:00Z"
-updated: "2026-11-09T19:00:00Z"
+updated: "2026-11-09T23:30:00Z"
 verification: "unverified"
 provenance:
   source_type: "execution"
@@ -97,11 +97,21 @@ Ramură F0: `modernize/f0-inventory`, worktree `D:/w/mod-f0`, bază origin/main 
       `vault_runtime` rămâne în interfaces până la WP-14.
 - Decizia proprietarului (opțională): excepție Protected Core dacă vrea nume fizice canonice (§5 din document).
 
+- PR draft WP-06: userist123/AI_Memory_Vault#374 (CI verde 9/9).
+- [x] WP-07 PR A (2026-11-09; vault-worker Sonnet ×2, vault-reviewer Opus ×2): ramura `modernize/f2-wp07a-facades`,
+      PR #375 (bază #374). Commit-uri e0928900e, cdb92ece7, 186f266ed, fca03fb2a. Inventarul rezolvă fațadele la unitatea
+      servită (ordinea reală din `__path__`, evaluator simbolic `path_eval`), config L0..L8 + `aliases` (6 intrări),
+      baseline 9 intrări (8 perechi / 11 fișiere + hard_forbidden interfaces→products/xau_kinetic). Graful = oracolul
+      F2 (44/115, pe tripleți). Review r1: RESPINS (H1: unitate nedeclarată cu `__path__.append`; H2: mutări
+      `insert`/`+=`/extend ignorate) → reparate, confirmate cu sonde rc=1. r2: ACCEPT CU REZERVE; L1 reparat de mine
+      (avertisment la config lipsă), R7 (obfuscare `__path__`) documentat în `unenforced`. Teste: 101 passed.
+
 ## Următorul pas (sesiune nouă)
-WP-07 PR A (vault-worker): rezolvarea fațadelor în `package_inventory.py` + config cu straturile/aliases din §1.2/§4 +
-baseline regenerat cu `--allow-widen --owner-wp WP-07`. Apoi WP-07 PR B (alias memory_controller→cognitive_core +
-`20_TESTS/test_memory_core_contract.py`, brief cu sondele din §2.1/§2.2/4), apoi WP-08 review.
-Ulterior (WP separat): job CI pentru jarvis_cognitive_brain și xau_kinetic după izolarea `.checkpoints`.
+WP-07 PR B (vault-worker, risc ridicat): alias `memory_controller` → `cognitive_core` (identitate unică) +
+`20_TESTS/test_memory_core_contract.py`; brief cu sondele din §2.1, §2.2/4 și lista L1 r2 din §4 a
+`F2_memory_core_contract.md` (VAULT_STATE:27, test_vault_state_accuracy:171, test_git_isolation:44,
+test_cognitive_core_import_order:43). Întâi inventarul stării la nivel de modul din modulele încărcate de două ori.
+Apoi WP-08 review. Ulterior: job CI jarvis_cognitive_brain/xau_kinetic după izolarea `.checkpoints`.
 
 ## Pași mai vechi (F1, închiși)
 WP-04b (nou): decizia pentru cele 129 de fișiere de test din afara `20_TESTS`, cu baseline propriu.
