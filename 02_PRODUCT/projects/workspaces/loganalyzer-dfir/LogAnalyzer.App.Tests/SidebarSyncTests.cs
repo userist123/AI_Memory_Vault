@@ -49,4 +49,14 @@ public sealed class SidebarSyncTests
         // page -> menu: the item of the open page is checked when SelectedTabIndex changes
         Assert.Matches(new Regex(@"PropertyChanged\s*\+=.*nameof\(MainViewModel\.SelectedTabIndex\)"), src);
     }
+
+    [Fact]
+    public void A_sidebar_tooltip_that_only_repeats_a_whole_name_is_not_opened()
+    {
+        // design step 7 (2026-11-10): the tooltip repeated a fully visible name and covered the item below; it opens only for a name cut with "…"
+        var src = Source();
+        Assert.Contains("ToolTipOpeningEvent", src);
+        Assert.Contains("RepeatsUntrimmedName", src);
+        Assert.Contains("WidthIncludingTrailingWhitespace <= tb.ActualWidth", src);
+    }
 }

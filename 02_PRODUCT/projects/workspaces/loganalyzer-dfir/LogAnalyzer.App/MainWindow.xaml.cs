@@ -28,6 +28,36 @@ namespace LogAnalyzer.UI.Views
                 if (!viewModel.OpenTab(tab)) SyncSidebar(viewModel.SelectedTabIndex);   // refused (licence / module): the menu goes back to the open page
             }));
             viewModel.PropertyChanged += (_, e) => { if (e.PropertyName == nameof(MainViewModel.SelectedTabIndex)) SyncSidebar(viewModel.SelectedTabIndex); };
+
+            // Design step 7 (2026-11-10): a sidebar item's default tooltip is its own name, there for a name cut with "…". When the name is shown whole,
+            // the tooltip only repeated it and covered the item below; it now opens only for a cut name. A tooltip with other text (an explanation) always opens.
+            AddHandler(FrameworkElement.ToolTipOpeningEvent, new System.Windows.Controls.ToolTipEventHandler((_, e) =>
+            {
+                if (e.OriginalSource is System.Windows.Controls.RadioButton { GroupName: SidebarGroup } rb && RepeatsUntrimmedName(rb)) e.Handled = true;
+            }));
+        }
+
+        /// <summary>True when the item's tooltip is just its name and the name is shown whole (nothing cut with "…").</summary>
+        private static bool RepeatsUntrimmedName(System.Windows.Controls.RadioButton rb)
+        {
+            if (rb.ToolTip is not string tip || !string.Equals(tip, rb.Content as string, System.StringComparison.Ordinal)) return false;
+            var tb = FindText(rb);
+            if (tb is null || tb.ActualWidth <= 0) return false;
+            var formatted = new System.Windows.Media.FormattedText(tb.Text, System.Globalization.CultureInfo.CurrentUICulture, tb.FlowDirection,
+                new System.Windows.Media.Typeface(tb.FontFamily, tb.FontStyle, tb.FontWeight, tb.FontStretch), tb.FontSize, tb.Foreground,
+                System.Windows.Media.VisualTreeHelper.GetDpi(tb).PixelsPerDip);
+            return formatted.WidthIncludingTrailingWhitespace <= tb.ActualWidth + 0.5;
+        }
+
+        private static System.Windows.Controls.TextBlock? FindText(DependencyObject root)
+        {
+            for (int i = 0; i < System.Windows.Media.VisualTreeHelper.GetChildrenCount(root); i++)
+            {
+                var c = System.Windows.Media.VisualTreeHelper.GetChild(root, i);
+                if (c is System.Windows.Controls.TextBlock tb) return tb;
+                if (FindText(c) is { } found) return found;
+            }
+            return null;
         }
 
         private const string SidebarGroup = "Sidebar";
