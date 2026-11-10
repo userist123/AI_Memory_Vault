@@ -614,6 +614,34 @@ public sealed class WindowsSearchIndexParserTests : IDisposable
     }
 
     [Fact]
+    public void A_Windows_collation_in_the_schema_does_not_make_a_sound_index_look_damaged()
+    {
+        // lab, real package from one shadow copy: CatalogStorageManager uses COLLATE "UNICODE_en-US"; quick_check failed with
+        // "no such collation sequence", the journal was dropped and the database was reported as unsound
+        var dir = Path.Combine(_dir, "coll"); Directory.CreateDirectory(dir);
+        var live = Path.Combine(dir, "Windows.db");
+        var ev = Path.Combine(_dir, "collev"); Directory.CreateDirectory(ev);
+        var l = new Layout(1, 1);
+        using (var c = new SqliteConnection($"Data Source={live};Pooling=False"))
+        {
+            c.Open();
+            c.CreateCollation("UNICODE_en-US", (a, b) => string.CompareOrdinal(a, b));
+            Exec(c, "PRAGMA journal_mode=WAL"); Exec(c, "PRAGMA wal_autocheckpoint=0");
+            Schema(c, l);
+            Exec(c, "CREATE TABLE CatalogStorageManager (CatalogName TEXT DEFAULT NULL, CatalogID INTEGER PRIMARY KEY, UNIQUE (CatalogName COLLATE \"UNICODE_en-US\" ASC, CatalogID ASC))");
+            Exec(c, "INSERT INTO CatalogStorageManager VALUES('SystemIndex', 1)");
+            for (int i = 1; i <= 4; i++) File1(c, l, i, $@"C:\a\f{i}.txt", Mod, (long)i);
+            CopyShared(live, Path.Combine(ev, "Windows.db"));
+            CopyShared(live + "-wal", Path.Combine(ev, "Windows.db-wal"));
+        }
+        SqliteConnection.ClearAllPools();
+        var (r, _) = Run(Path.Combine(ev, "Windows.db"));
+        Assert.Equal(4, r.Records);
+        Assert.DoesNotContain(r.Gaps, g => g.Artifact == "Windows.db");
+        Assert.DoesNotContain(r.Gaps, g => g.Reason.Contains("nu se potrivește"));
+    }
+
+    [Fact]
     public void A_database_that_fails_quick_check_is_never_read_silently()
     {
         var l = new Layout(1, 1);

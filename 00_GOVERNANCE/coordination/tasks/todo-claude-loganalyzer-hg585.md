@@ -526,3 +526,11 @@
   Lab leftovers (TEST data, to clean when the owner decides): WS01 C:\LA\eicar, C:\LA\dh, C:\LA\dh2, C:\LA\np, C:\LA\remote, C:\LA\wsearch,
   C:\LA\vss1, it.admin's Notepad TEST tabs and Documents\TEST-LA-raport-index.txt; Defender Operational log cleared by the test; host
   E:\LA-Lab\diag\{defender,rmm,notepad,wsearch,remote}. Fake RMM services were already removed.
+- 2026-11-10 (owner „Continua”): CI green on 1f7b018e0. Remote package: artifacts `search-index` (db + -wal from one WMI shadow copy,
+  deleted in finally, both files or neither, sizes/free space checked first, no fallback) and `notepad-tabs` (every path component checked
+  for reparse points). Import stores the index pair in its own WindowsSearch_<guid> folder, SHA checked before registering, vouched pair only
+  when the step ended ok. Real WS01 run found a parser bug: the real index declares COLLATE "UNICODE_en-US", quick_check failed with "no such
+  collation sequence" on a sound database -> journal dropped + false "unsound" gap; schema collations are now registered before the check.
+  Opus 2 rounds (r2: verified, LOW residuals: finally masks the copy error, UNC script root fails the step, TOCTOU on a user's own TabState).
+  Lab after fix: both steps ok, shadow copies 0 -> 0, WSearch not stopped, 1,171 entries no gaps, 4 tabs. Suites: Dfir 3162+.
+  Lab leftovers added: WS01 C:\LA\remote2, C:\LA\remote3; host E:\LA-Lab\diag\remote2, remote3.

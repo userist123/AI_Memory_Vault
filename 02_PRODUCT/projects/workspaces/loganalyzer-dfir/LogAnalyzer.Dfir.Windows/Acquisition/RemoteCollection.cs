@@ -48,8 +48,11 @@ public static class RemoteCollection
         "evtx:Security", "evtx:System", "evtx:Application", "evtx:Microsoft-Windows-PowerShell/Operational",
         "evtx:Microsoft-Windows-Windows Defender/Operational", "evtx:Microsoft-Windows-TaskScheduler/Operational",
         "evtx:Microsoft-Windows-Sysmon/Operational", "evtx:Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
-        "hive:SYSTEM", "hive:SOFTWARE", "prefetch", "tasks", "defender-history",
+        "hive:SYSTEM", "hive:SOFTWARE", "prefetch", "tasks", "defender-history", "notepad-tabs", "search-index",
     ];
+
+    /// <summary>Package sub-folders for the Notepad tab files (one folder per profile) and for the Windows Search index (Windows.db with its -wal).</summary>
+    public const string NotepadTabsFolder = "NotepadTabState", SearchIndexFolder = "WindowsSearch";
 
     /// <summary>Package sub-folder for the Defender DetectionHistory files (ProgramData\Microsoft\Windows Defender\Scans\History\Service\DetectionHistory).</summary>
     public const string DefenderHistoryFolder = "DefenderDetectionHistory";
@@ -162,6 +165,74 @@ public static class RemoteCollection
                     # one file per detection, kept after the Defender log is cleared; readable by administrators only
                     $src = Join-Path $env:ProgramData 'Microsoft\Windows Defender\Scans\History\Service\DetectionHistory'
                     Step $a { if (-not (Test-Path -LiteralPath $src)) { return '__absent__' }; Copy-Item -LiteralPath $src -Destination (Join-Path $files 'DefenderDetectionHistory') -Recurse -ErrorAction Stop }
+                } elseif ($a -eq 'notepad-tabs') {
+                    # the tab files of the Windows 11 Notepad, per profile: at most 500 files of at most 4 MiB each, links not followed
+                    Step $a {
+                        $copied = 0; $failed = 0; $skipped = 0; $links = 0
+                        foreach ($p in @(Get-ChildItem -LiteralPath (Join-Path $env:SystemDrive 'Users') -Directory -Force -ErrorAction SilentlyContinue)) {
+                            if ($p.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
+                            # every folder on the way is checked: a user can turn his own LocalState into a junction to another user's,
+                            # and that user's tabs would be collected under the wrong name
+                            $src = $p.FullName; $ok = $true
+                            foreach ($part in 'AppData', 'Local', 'Packages', 'Microsoft.WindowsNotepad_8wekyb3d8bbwe', 'LocalState', 'TabState') {
+                                $src = Join-Path $src $part
+                                if (-not (Test-Path -LiteralPath $src)) { $ok = $false; break }
+                                if ((Get-Item -LiteralPath $src -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { $ok = $false; $links++; break }
+                            }
+                            if (-not $ok) { continue }
+                            $d = Join-Path (Join-Path $files 'NotepadTabState') $p.Name
+                            New-Item -ItemType Directory -Path $d -Force | Out-Null
+                            $taken = 0
+                            foreach ($f in @(Get-ChildItem -LiteralPath $src -Filter '*.bin' -File -Force -ErrorAction SilentlyContinue)) {
+                                if ($f.Extension -ne '.bin') { continue }
+                                if ($f.Attributes -band [IO.FileAttributes]::ReparsePoint) { $links++; continue }
+                                if ($f.Length -gt 4MB -or $taken -ge 500) { $skipped++; continue }
+                                try { Copy-Item -LiteralPath $f.FullName -Destination $d -ErrorAction Stop; $copied++; $taken++ } catch { $failed++ }
+                            }
+                        }
+                        if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0) { throw "file copiate: $copied; necopiate (Notepad deschis?): $failed; sarite (peste 4 MiB sau peste 500 pe profil): $skipped; legaturi neurmate: $links" }
+                        if ($copied -eq 0) { return '__absent__' }
+                    }
+                } elseif ($a -eq 'search-index') {
+                    # Windows.db and its -wal from ONE shadow copy, deleted afterwards: a journal from another moment would rebuild a state
+                    # that never existed. The search service is not stopped. No shadow copy -> the step fails, nothing is copied.
+                    Step $a {
+                        $dir = Join-Path $env:ProgramData 'Microsoft\Search\Data\Applications\Windows'
+                        if (-not (Test-Path -LiteralPath (Join-Path $dir 'Windows.db'))) { return '__absent__' }
+                        $made = Invoke-CimMethod -ClassName Win32_ShadowCopy -MethodName Create -Arguments @{ Volume = $dir.Substring(0, 3); Context = 'ClientAccessible' } -ErrorAction Stop
+                        if ($made.ReturnValue -ne 0) { throw "copia de umbra nu a putut fi creata (cod $($made.ReturnValue))" }
+                        $sc = $null
+                        $d = Join-Path $files 'WindowsSearch'
+                        try {
+                            $sc = Get-CimInstance -ClassName Win32_ShadowCopy | Where-Object { $_.ID -eq $made.ShadowID }
+                            if (-not $sc) { throw "copia de umbra $($made.ShadowID) nu a fost gasita" }
+                            $root = $sc.DeviceObject + $dir.Substring(2) + [IO.Path]::DirectorySeparatorChar
+                            # sizes are read in the shadow copy before anything is written: over 2 GiB, or more than the free space, nothing is copied
+                            $need = [long]0
+                            foreach ($n in 'Windows.db', 'Windows.db-wal') {
+                                $fi = New-Object IO.FileInfo ($root + $n)
+                                if ($fi.Exists) { if ($fi.Length -gt 2GB) { throw "$n depaseste 2 GiB; indexul nu a fost copiat" }; $need += $fi.Length }
+                            }
+                            $free = (New-Object IO.DriveInfo ([IO.Path]::GetPathRoot($files))).AvailableFreeSpace
+                            if ($need + 256MB -gt $free) { throw "spatiu liber insuficient pentru index ($need octeti); nu a fost copiat" }
+                            New-Item -ItemType Directory -Path $d -Force | Out-Null
+                            try {
+                                [IO.File]::Copy($root + 'Windows.db', (Join-Path $d 'Windows.db'), $false)
+                                try { [IO.File]::Copy($root + 'Windows.db-wal', (Join-Path $d 'Windows.db-wal'), $false) } catch [IO.FileNotFoundException] { }
+                            } catch {
+                                # both files or neither: a database left without the journal of its own snapshot would be read as a complete pair
+                                Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue
+                                throw
+                            }
+                        } finally {
+                            if ($sc) { $sc | Remove-CimInstance -ErrorAction Stop }
+                            else {
+                                & vssadmin.exe delete shadows "/shadow=$($made.ShadowID)" /quiet 2>&1 | Out-Null
+                                $code = $LASTEXITCODE; $global:LASTEXITCODE = 0
+                                if ($code -ne 0) { throw "copia de umbra $($made.ShadowID) nu a putut fi stearsa (vssadmin cod $code); stergeti-o manual" }
+                            }
+                        }
+                    }
                 }
             }
             try {
@@ -241,6 +312,11 @@ public static class RemoteCollection
         : relativePath.EndsWith(".pf", StringComparison.OrdinalIgnoreCase) ? "prefetch" : relativePath.Contains("/Tasks/", StringComparison.OrdinalIgnoreCase) ? "task-xml"
         : relativePath.Contains("/" + DefenderHistoryFolder + "/", StringComparison.OrdinalIgnoreCase)
             && Investigation.InvestigationPipeline.ImportType(fullPath) is var t && t == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName ? t
+        : relativePath.Contains("/" + NotepadTabsFolder + "/", StringComparison.OrdinalIgnoreCase)
+            && Investigation.InvestigationPipeline.ImportType(fullPath) is var n && n == LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.SourceTypeName ? n
+        : relativePath.Equals("files/" + SearchIndexFolder + "/Windows.db", StringComparison.OrdinalIgnoreCase)
+            && Investigation.InvestigationPipeline.ImportType(fullPath) is var s && s == Parsers.WindowsSearchIndexParser.SourceTypeName ? s
+        : relativePath.Equals("files/" + SearchIndexFolder + "/Windows.db-wal", StringComparison.OrdinalIgnoreCase) ? WindowsSearchIndexCollector.WalSourceType
         : "file";
 
     /// <summary>Imports a verified package: the manifest, then every file with the manifest as parent and custody from the target.</summary>
@@ -254,12 +330,36 @@ public static class RemoteCollection
         var manifest = ws.ImportFile(Path.Combine(check.PackageDir, "manifest.json"), source, "remote-manifest", TemporalType.CurrentSnapshot,
             CollectorName, DfirInfo.ApplicationVersion, parentEvidenceId: null, notes: notes);
         var items = new List<EvidenceItem> { manifest };
+        // The search index: Windows.db and its -wal are stored together in a folder of their own for this import, so the journal the parser finds
+        // beside the database is the one of this package (never one left by an earlier import). The pair is vouched for as one shadow copy only
+        // when the package's search-index step ended "ok": the script then copied both files, or the database alone when there was no journal.
+        bool indexStepOk = m.Steps.Any(s => s.Artifact == "search-index" && s.Status == "ok");
+        string? indexDir = null;
         foreach (var f in m.Files)
         {
-            var kind = ImportKind(f.Path, Path.Combine(check.PackageDir, f.Path));
-            var item = ws.ImportFile(Path.Combine(check.PackageDir, f.Path), source, kind,
-                kind is "registry-hive" or "task-xml" ? TemporalType.CurrentSnapshot : TemporalType.Historical,
-                CollectorName, DfirInfo.ApplicationVersion, parentEvidenceId: manifest.EvidenceId, notes: $"{m.Host}:{f.Path}; {notes}");
+            var full = Path.Combine(check.PackageDir, f.Path);
+            var kind = ImportKind(f.Path, full);
+            EvidenceItem item;
+            if (kind == Parsers.WindowsSearchIndexParser.SourceTypeName || kind == WindowsSearchIndexCollector.WalSourceType)
+            {
+                if (indexDir is null) { indexDir = Path.Combine(ws.RawDir(source), "WindowsSearch_" + Guid.NewGuid().ToString("N")); Directory.CreateDirectory(indexDir); }
+                var dest = Path.Combine(indexDir, kind == WindowsSearchIndexCollector.WalSourceType ? "Windows.db-wal" : "Windows.db");
+                File.Copy(full, dest);
+                // checked before the file is registered beside the database: a journal swapped after Verify must not stay next to a vouched-for database
+                var copied = Hashing.Sha256File(dest);
+                if (!copied.Equals(f.Sha256, StringComparison.OrdinalIgnoreCase))
+                {
+                    try { Directory.Delete(indexDir, true); } catch (IOException) { }
+                    throw new InvalidOperationException($"{f.Path}: SHA-256 la import ({copied}) diferă de cel de pe țintă ({f.Sha256}).");
+                }
+                File.SetLastWriteTimeUtc(dest, File.GetLastWriteTimeUtc(full));
+                item = ws.RegisterStored(dest, full, source, kind, TemporalType.Historical, CollectorName, DfirInfo.ApplicationVersion, action: "imported", parentEvidenceId: manifest.EvidenceId,
+                    notes: $"{m.Host}:{f.Path}; {notes}" + (indexStepOk && kind == Parsers.WindowsSearchIndexParser.SourceTypeName ? $"; copia de umbră a pachetului, {Parsers.WindowsSearchIndexParser.SameSnapshotNote}" : ""));
+            }
+            else
+                item = ws.ImportFile(full, source, kind,
+                    kind is "registry-hive" or "task-xml" ? TemporalType.CurrentSnapshot : TemporalType.Historical,
+                    CollectorName, DfirInfo.ApplicationVersion, parentEvidenceId: manifest.EvidenceId, notes: $"{m.Host}:{f.Path}; {notes}");
             if (!item.Sha256.Equals(f.Sha256, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException($"{f.Path}: SHA-256 la import ({item.Sha256}) diferă de cel de pe țintă ({f.Sha256}).");
             // Custody starts on the target: who collected it, when, from where, with the hash computed there.

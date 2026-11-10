@@ -90,7 +90,10 @@ public sealed class WindowsSearchIndexParser : EvidenceParserBase
             bool baseOk = QuickCheckOk(copy, requireTables: false);
             // A pair is vouched for only when THIS application's collector copied it from one shadow copy (collector, action and note all match:
             // an imported file's notes hold the operator's path, which could contain the note text).
-            bool samePair = item.Collector == CollectedBy && item.AcquisitionMethod == "acquired" && item.Notes.Contains(SameSnapshotNote, StringComparison.Ordinal);
+            bool samePair = item.Notes.Contains(SameSnapshotNote, StringComparison.Ordinal) &&
+                (item.Collector == CollectedBy && item.AcquisitionMethod == "acquired"
+                 // a verified remote package: its script takes both files from one shadow copy, or neither
+                 || item.Collector == LogAnalyzer.Dfir.Windows.Acquisition.RemoteCollection.CollectorName && item.AcquisitionMethod == "imported");
             var walPath = fullPath + "-wal";
             bool walThere = File.Exists(walPath);
             if (walThere && new FileInfo(walPath).Length > MaxFileBytes)
@@ -162,6 +165,7 @@ public sealed class WindowsSearchIndexParser : EvidenceParserBase
         {
             using var c = new SqliteConnection($"Data Source={copy};Mode=ReadWrite;Pooling=False");
             c.Open();
+            RegisterSchemaCollations(c);
             using var cmd = c.CreateCommand();
             cmd.CommandText = "PRAGMA quick_check(1)";
             if (cmd.ExecuteScalar() is not string s || !s.Equals("ok", StringComparison.OrdinalIgnoreCase)) return false;
@@ -171,6 +175,33 @@ public sealed class WindowsSearchIndexParser : EvidenceParserBase
         }
         catch (SqliteException) { return false; }
         finally { SqliteConnection.ClearAllPools(); }
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex CollateName =
+        new(@"COLLATE\s+""?([A-Za-z0-9_\-]{1,64})""?", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>
+    /// The real index declares a Windows collation (lab, Windows 11 26100: CatalogStorageManager uses COLLATE "UNICODE_en-US") that this SQLite does not
+    /// have, and quick_check then fails with "no such collation sequence" on a sound database. The collations named in the schema are registered
+    /// (ordinal comparison; at most 16, names limited to letters, digits, '_' and '-') so the check can run. The name is passed to the API, never into SQL text.
+    /// </summary>
+    private static void RegisterSchemaCollations(SqliteConnection c)
+    {
+        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        using (var cmd = c.CreateCommand())
+        {
+            cmd.CommandText = "SELECT substr(sql, 1, 8192) FROM sqlite_master WHERE sql LIKE '%COLLATE%' LIMIT 256";
+            using var r = cmd.ExecuteReader();
+            while (r.Read())
+            {
+                if (r.IsDBNull(0)) continue;
+                try { foreach (System.Text.RegularExpressions.Match m in CollateName.Matches(r.GetString(0))) if (names.Count < 16) names.Add(m.Groups[1].Value); }
+                catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { }
+            }
+        }
+        foreach (var n in names)
+            if (n.ToUpperInvariant() is not ("BINARY" or "NOCASE" or "RTRIM"))
+                c.CreateCollation(n, (a, b) => string.CompareOrdinal(a, b));
     }
 
     private static void Read(SqliteConnection c, EvidenceItem item, IEventSink sink, ParseResult result, int maxEvents, CancellationToken ct)
