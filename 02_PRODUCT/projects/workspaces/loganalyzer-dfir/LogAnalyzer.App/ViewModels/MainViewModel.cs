@@ -2010,7 +2010,8 @@ namespace LogAnalyzer.UI.ViewModels
             IsAutoShieldTriggered = false;
             CurrentLiveToastAlert = loudest;
             IsLiveToastVisible = true;
-            StatusMessage = $"ALERTĂ LIVE: {(loudest.Plain.Length > 0 ? loudest.Plain : loudest.Title)}";
+            // design pass 2026-11-10: sentence case, and a low event is a notice, not an "ALERTĂ" in capitals
+            StatusMessage = $"{(SeverityRank(loudest.Severity) >= 2 ? "Alertă" : "Notificare")} în timp real: {(loudest.Plain.Length > 0 ? loudest.Plain : loudest.Title)}";
             if (SeverityRank(loudest.Severity) >= 3)
                 try { System.Media.SystemSounds.Exclamation.Play(); } catch (InvalidOperationException) { /* sound is optional */ }
             _toastAutoDismissTimer?.Stop();

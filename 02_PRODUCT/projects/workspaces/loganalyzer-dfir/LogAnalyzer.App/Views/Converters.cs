@@ -163,4 +163,30 @@ namespace LogAnalyzer.UI.Views
 
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
+
+    /// <summary>
+    /// The theme brush of a severity (enum or the English text of the older engines): the rail of the live alert (design step 9, 2026-11-10).
+    /// An unknown value is the neutral border colour, never a severity colour by guess.
+    /// </summary>
+    public sealed class SeverityBrushConverter : IValueConverter
+    {
+        public static readonly SeverityBrushConverter Instance = new();
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture)
+        {
+            LogAnalyzer.Dfir.Model.Severity? s = value is LogAnalyzer.Dfir.Model.Severity e ? e
+                : value is string t && Enum.TryParse<LogAnalyzer.Dfir.Model.Severity>(t.Trim().StartsWith("Info", StringComparison.OrdinalIgnoreCase) ? "Info" : t.Trim(), true, out var p) ? p : null;
+            var key = s switch
+            {
+                LogAnalyzer.Dfir.Model.Severity.Critical => "CriticalBrush",
+                LogAnalyzer.Dfir.Model.Severity.High => "HighBrush",
+                LogAnalyzer.Dfir.Model.Severity.Medium => "MediumBrush",
+                LogAnalyzer.Dfir.Model.Severity.Low or LogAnalyzer.Dfir.Model.Severity.Info => "LowBrush",
+                _ => "StrongBorderBrush",
+            };
+            return System.Windows.Application.Current?.TryFindResource(key) ?? System.Windows.Media.Brushes.Gray;
+        }
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
 }

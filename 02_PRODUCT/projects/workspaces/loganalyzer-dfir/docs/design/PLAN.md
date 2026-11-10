@@ -12,8 +12,8 @@ privită critic.
 | 5 | Etichete ca propoziții (fără majuscule integrale), fără engleză („Live Triage”) | test pe XAML | făcut (teste) |
 | 6 | Text tăiat: carduri de cifre, capete de coloană MITRE, bifele din Colectare date, titluri suprapuse | capturi la 1024 px fără text tăiat | parțial: MITRE, Colectare date, Panou general (verificat pe VM) |
 | 7 | Meniu lateral: o singură derulare, focus vizibil cu inel plin, fără indicii care repetă numele | capturi și test | parțial: o singură derulare, inel de focus (verificat pe VM) |
-| 8 | Tabele: antet, înălțime de rând, trunchiere cu indiciu, cifre tabulare | capturi | de făcut |
-| 9 | Notificarea live și bara de stare: stil sobru, fără să acopere conținutul | capturi | de făcut |
+| 8 | Tabele: antet, înălțime de rând, trunchiere cu indiciu, cifre tabulare | capturi | făcut: stil comun al tabelelor, selecție pală cu șină, tabelul de dispozitive lărgit (verificat pe VM) |
+| 9 | Notificarea live și bara de stare: stil sobru, fără să acopere conținutul | capturi | făcut: card alb cu șina severității, text plafonat; „Alertă / Notificare în timp real” (verificat pe VM) |
 
 Decizii luate fără întrebare (reversibile): tema „Registru” a devenit „Dosar” (cadru închis, hârtie rece, cobalt; vezi DESIGN.md); pragul de strângere a antetului este 1280 px; pictogramele vin din
 fontul de sistem (nimic de instalat).
