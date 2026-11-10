@@ -272,11 +272,11 @@ public sealed class BeginnerPolish20261022Tests : IDisposable
     public void The_policy_subtitle_has_a_space_after_the_period_and_no_english_in_simple()
     {
         var doc = Xaml("Views", "PolicyView.xaml");
-        var texts = doc.Descendants().Where(e => e.Name.LocalName == "TextBlock" && Attr(e, "Text").Contains("CIORNĂ")).ToList();
-        // 2026-10-23: Simplu has no states line any more (BeginnerSimplify20261023Tests); only the Expert line, with the English names, remains
+        var texts = doc.Descendants().Where(e => e.Name.LocalName == "TextBlock" && Attr(e, "Text").Contains("Ciornă")).ToList();
+        // 2026-10-23: Simplu has no states line any more (BeginnerSimplify20261023Tests); only the Expert line remains (2026-11-11: Romanian names only)
         Assert.Single(texts);
         foreach (var t in texts) { Assert.DoesNotContain(").Aprobarea", Attr(t, "Text")); Assert.Matches("\\. Aprobarea", Attr(t, "Text")); }
-        Assert.Single(texts, t => Attr(t, "Text").Contains("DRAFT"));
+        Assert.DoesNotContain(texts, t => Attr(t, "Text").Contains("DRAFT"));
     }
 
     // ───────── 7: „Cont nou” and the CRL text ─────────

@@ -25,7 +25,7 @@ namespace LogAnalyzer.Core.Models
 
         private static string Label(int rank) => rank switch
         {
-            4 => "CRITIC", 3 => "RIDICAT", 2 => "MEDIU", 1 => "SCĂZUT", _ => "INFORMATIV",
+            4 => "CRITIC", 3 => "RIDICAT", 2 => "MEDIU", 1 => "SCĂZUT", _ => "Informativ",
         };
 
         public static TimelineSummary From(IEnumerable<TimelineItem> items)

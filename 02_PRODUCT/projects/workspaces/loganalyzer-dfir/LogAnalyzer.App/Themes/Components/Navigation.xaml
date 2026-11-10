@@ -53,6 +53,9 @@
         <Setter Property="Cursor" Value="Hand"/>
         <!-- row 20 (2026-10-22): a long name ends in „…” and the full name is the tooltip (an entry may set its own, which wins) -->
         <Setter Property="ToolTip" Value="{Binding Content, RelativeSource={RelativeSource Self}}"/>
+        <!-- design step 7 (2026-11-10): no tooltip on keyboard focus: moving through the menu with the keyboard opened the item's own name over the next item
+             (a screen reader already reads the name; a cut name still shows its tooltip under the mouse) -->
+        <Setter Property="ToolTipService.ShowsToolTipOnKeyboardFocus" Value="False"/>
         <Setter Property="Template">
             <Setter.Value>
                 <ControlTemplate TargetType="RadioButton">

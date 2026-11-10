@@ -130,7 +130,7 @@
                 </ItemsControl>
                 <TextBlock Text="{Binding Result.CoverageLine}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
                 <WrapPanel Margin="0,12,0,0">
-                    <Button Content="Raport pentru proces-verbal (PDF)" Command="{Binding SaveReportCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,6"
+                    <Button Content="Raport pentru proces-verbal (PDF)" Command="{Binding SaveReportCommand}" Margin="0,0,8,6"
                             ToolTip="Salvează raportul în cazul stației și îl deschide. O copie în alt loc: „Salvează o copie…”."/>
                     <Button Content="Salvează o copie…" Command="{Binding SaveReportCopyCommand}" Margin="0,0,8,6" ToolTip="O copie a raportului în alt folder (pornește din folderul folosit data trecută); originalul rămâne în caz."/>
                     <Button Content="Exportă pentru ofițer" Command="{Binding ExportForOfficerCommand}" Margin="0,0,8,6"
@@ -156,7 +156,7 @@
                         <TextBlock Text="Codul de ancorare se trece pe procesul-verbal. La controlul următor se introduce din nou și aplicația verifică dacă jurnalul ei nu a fost rescris între timp."
                                    Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
                         <WrapPanel Margin="0,8,0,0">
-                            <Button Content="Semnează ca ofițer de securitate" Command="{Binding SignAsOfficerCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,6"
+                            <Button Content="Semnează ca ofițer de securitate" Command="{Binding SignAsOfficerCommand}" Margin="0,0,8,6"
                                     ToolTip="Ofițerul de securitate introduce cardul în cititorul tastaturii; Windows cere codul PIN. Semnătura calificată se adaugă la sfârșitul raportului, fără să-l schimbe."/>
                             <Button Content="Copiază jurnalul pentru CD-R…" Command="{Binding ExportAnchorCommand}" Margin="0,0,8,6"
                                     ToolTip="Copiază jurnalul aplicației și codul de ancorare într-un folder ales; folderul se arde pe un CD-R și se predă ofițerului."/>
@@ -223,7 +223,7 @@
                     <TextBlock Text="Amprenta certificatului ofițerului:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                     <local:HelpButton Term="cert_fingerprint" Margin="0,0,6,0"/>
                     <TextBox AutomationProperties.Name="Amprenta certificatului ofițerului de pe procesul-verbal" Text="{Binding VerifyFingerprint, UpdateSourceTrigger=PropertyChanged}" Width="520" FontFamily="Consolas" Margin="0,0,8,0"/>
-                    <Button Content="Verifică raport semnat…" Command="{Binding VerifySignedReportCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                    <Button Content="Verifică raport semnat…" Command="{Binding VerifySignedReportCommand}"/>
                 </WrapPanel>
                 <TextBlock Text="Fiecare rând al rezultatului spune ce s-a verificat: DA = în regulă, NU = problemă (raportul nu este valabil), NECONFIRMAT = nu s-a putut confirma pe această stație."
                            Foreground="{StaticResource TextMutedBrush}" TextWrapping="Wrap" Margin="0,6,0,0"/>
@@ -244,7 +244,7 @@
                 <TextBox AutomationProperties.Name="Verificator" Text="{Binding Inspector, UpdateSourceTrigger=PropertyChanged}" Width="170" Margin="0,0,16,0"/>
                 <TextBlock Text="Observații:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                 <TextBox AutomationProperties.Name="Observații" Text="{Binding Notes, UpdateSourceTrigger=PropertyChanged}" Width="220" Margin="0,0,16,0"/>
-                <Button Content="Rulează controlul" Command="{Binding RunCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                <Button Content="Rulează controlul" Command="{Binding RunCommand}" Margin="0,0,6,0"/>
                 <Button Content="Salvează raportul (PDF)" Command="{Binding SaveReportCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="Folder rapoarte" Command="{Binding OpenCaseFolderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
                 <TextBlock Text="Motiv corectare ceas:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>

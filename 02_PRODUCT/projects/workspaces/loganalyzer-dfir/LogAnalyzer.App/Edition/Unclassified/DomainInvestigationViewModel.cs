@@ -41,7 +41,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         public bool NetworkAllowed => !AppModeContext.IsAirGapped;
         public string ModeNote => NetworkAllowed
-            ? "Modul Network: interogările către controlerele de domeniu sunt permise (citire, cu contul Windows curent)."
+            ? "Modul rețea: interogările către controlerele de domeniu sunt permise (citire, cu contul Windows curent)."
             : "Modul AirGapped: interogările de rețea (LDAP, jurnale de pe controlere) sunt BLOCATE. Pe o rețea izolată cu domeniu, porniți aplicația cu --mode=network. Analiza e-mailului din fișiere exportate funcționează.";
 
         public DomainInvestigationViewModel()

@@ -32,6 +32,7 @@
                 </Border>
             </StackPanel>
         </DockPanel>
+            <TextBlock Style="{StaticResource PageLeadStyle}" Text="Etapele atacului reconstituite din constatări, în ordinea în care s-au petrecut."/>
             <Border Style="{StaticResource PageRuleStyle}"/>
         </StackPanel>
 

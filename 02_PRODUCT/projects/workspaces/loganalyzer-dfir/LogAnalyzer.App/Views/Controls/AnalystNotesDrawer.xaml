@@ -41,7 +41,7 @@
 
             <!-- Bottom Actions -->
             <StackPanel Grid.Row="3">
-                <Button Content="Adaugă la raportul PDF al cazului" Command="{Binding ExportPdfReportCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,2"/>
+                <Button Content="Adaugă la raportul PDF al cazului" Command="{Binding ExportPdfReportCommand}" Margin="0,2"/>
                 <Button Content="Închide panoul" Command="{Binding CloseAnalystDrawerCommand}" Margin="0,2"/>
             </StackPanel>
         </Grid>

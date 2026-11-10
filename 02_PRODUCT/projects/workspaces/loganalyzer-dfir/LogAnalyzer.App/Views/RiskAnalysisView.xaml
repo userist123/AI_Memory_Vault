@@ -12,7 +12,7 @@
         <!-- Header -->
         <StackPanel Grid.Row="0">
         <DockPanel LastChildFill="False">
-            <Button DockPanel.Dock="Right" Content="Rulează evaluarea de risc" Command="{Binding RunAiAnalysisCommand}" Style="{StaticResource AccentButtonStyle}" Padding="16,8"/>
+            <Button DockPanel.Dock="Right" Content="Rulează evaluarea de risc" Command="{Binding RunAiAnalysisCommand}" Style="{StaticResource AccentButtonStyle}" Padding="12,6" VerticalAlignment="Top"/>
             <StackPanel DockPanel.Dock="Left">
                 <TextBlock Style="{StaticResource PageTitleStyle}" Text="Analiza riscului"/>
                 <TextBlock Style="{StaticResource PageLeadStyle}" Text="Scor euristic după entropie, detectarea deghizării proceselor și factorii de risc, cu trasabilitate"/>

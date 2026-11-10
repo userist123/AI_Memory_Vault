@@ -68,7 +68,7 @@
                             <TextBox Text="{Binding QuickControl.AnchorLine, Mode=OneWay}" IsReadOnly="True" BorderThickness="0" Background="Transparent" FontFamily="Consolas" FontWeight="Bold"
                                      Foreground="{StaticResource TextPrimaryBrush}" AutomationProperties.Name="Codul de ancorare al acestui control, de trecut pe procesul-verbal"/>
                             <WrapPanel Margin="0,8,0,0">
-                                <Button Command="{Binding OpenControlReportCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,8,6"
+                                <Button Command="{Binding OpenControlReportCommand}" Margin="0,0,8,6"
                                         AutomationProperties.Name="Deschide raportul" ToolTip="Salvează raportul pentru procesul-verbal în cazul stației și îl deschide. Tastatură: Ctrl+O.">
                                     <AccessText Text="_Deschide raportul"/>
                                 </Button>

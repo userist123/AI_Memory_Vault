@@ -94,7 +94,7 @@
                             <PasswordBox x:Name="PasswordBox" Margin="0,2,0,8" AutomationProperties.Name="Parolă"/>
                             <TextBlock x:Name="ConfirmLabel" Text="Confirmare parolă" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}"/>
                             <PasswordBox x:Name="ConfirmBox" Margin="0,2,0,10" AutomationProperties.Name="Confirmare parolă"/>
-                            <Button x:Name="PasswordButton" Content="Autentificare cu parolă" Click="Password_Click" Style="{StaticResource AccentButtonStyle}" Padding="16,6" HorizontalAlignment="Left"/>
+                            <Button x:Name="PasswordButton" Content="Autentificare cu parolă" Click="Password_Click" Padding="16,6" HorizontalAlignment="Left"/>
                         </StackPanel>
                     </Border>
                 </StackPanel>

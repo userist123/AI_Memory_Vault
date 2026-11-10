@@ -104,7 +104,7 @@
                 <StackPanel Grid.Column="2" Orientation="Horizontal" VerticalAlignment="Center">
 
                     <!-- round 4 2026-10-23: placed LEFT of the language switch, so showing it in Expert never moves the switch (the right edge is fixed). G3: one „Colectează tot” for the station's role; every page reuses the result -->
-                    <Button Content="Colectează tot" Command="{x:Static services:CollectAllState.Command}" Style="{StaticResource AccentButtonStyle}" Padding="10,5" Margin="0,0,10,0"
+                    <Button Content="Colectează tot" Command="{x:Static services:CollectAllState.Command}" Style="{StaticResource FrameAccentButtonStyle}" Padding="10,5" Margin="0,0,10,0"
                             AutomationProperties.HelpText="Colectare și analiză completă pentru rolul acestei stații; rezultatul este folosit de toate paginile."
                             Visibility="{Binding IsExpertLevel, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     <!-- Operator -->
@@ -228,7 +228,7 @@
                         <StackPanel Visibility="{Binding ShowEventTableButtons, Converter={StaticResource BooleanToVisibilityConverter}}">
                             <Button Content="Încarcă un folder de probe" Command="{Binding LoadFolderCommand}" Margin="0,3"/>
                             <Button Content="Încarcă jurnale Windows" Command="{Binding LoadFilesCommand}" Margin="0,3"/>
-                            <Button Content="Exportă tabelul (CSV)" Command="{Binding ExportCsvCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,3"/>
+                            <Button Content="Exportă tabelul (CSV)" Command="{Binding ExportCsvCommand}" Style="{StaticResource FrameButtonStyle}" Margin="0,3"/>
                         </StackPanel>
                     </StackPanel>
 
@@ -243,7 +243,7 @@
                                 <TextBlock Text="Urmărește jurnalele Windows ale stației (fără driver de kernel)." FontSize="12" Foreground="{StaticResource FrameTextMutedBrush}" TextWrapping="Wrap"/>
                             </StackPanel>
                         </Border>
-                        <Button Content="Exportă raportul" Command="{Binding ExportCsvCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,2"
+                        <Button Content="Exportă raportul" Command="{Binding ExportCsvCommand}" Style="{StaticResource FrameButtonStyle}" Margin="0,2"
                                 Visibility="{Binding ShowEventTableButtons, Converter={StaticResource BooleanToVisibilityConverter}}"/>
                     </StackPanel>
                 </Grid>

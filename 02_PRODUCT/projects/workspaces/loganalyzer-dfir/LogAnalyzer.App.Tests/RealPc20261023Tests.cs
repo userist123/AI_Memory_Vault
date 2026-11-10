@@ -64,7 +64,7 @@ public sealed class RealPc20261023Tests : IDisposable
         Assert.StartsWith("IMPORT-", entry.Id);
         Assert.Equal("1.0.0", entry.Version);
         Assert.False(string.IsNullOrWhiteSpace(entry.Title));
-        Assert.Equal("CIORNĂ (DRAFT)", entry.StateText);
+        Assert.Equal("Ciornă", entry.StateText);
         Assert.NotEqual("", entry.DateText);
         Assert.True(vm.HasLibrary);
         Assert.False(vm.NothingOpenAndLibraryEmpty);

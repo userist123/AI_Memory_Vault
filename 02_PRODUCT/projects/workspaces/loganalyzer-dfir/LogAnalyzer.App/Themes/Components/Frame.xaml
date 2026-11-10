@@ -47,6 +47,12 @@
         </Setter>
     </Style>
 
+    <!-- the single accent action of the header: outlined in the frame accent, since the header must carry no solid cobalt button -->
+    <Style x:Key="FrameAccentButtonStyle" TargetType="Button" BasedOn="{StaticResource FrameButtonStyle}">
+        <Setter Property="BorderBrush" Value="{StaticResource FrameAccentBrush}"/>
+        <Setter Property="FontWeight" Value="SemiBold"/>
+    </Style>
+
     <!-- the two-state switch on the frame (Simplu / Expert) -->
     <Style x:Key="FrameChipTabStyle" TargetType="RadioButton">
         <Setter Property="Foreground" Value="{StaticResource FrameTextMutedBrush}"/>

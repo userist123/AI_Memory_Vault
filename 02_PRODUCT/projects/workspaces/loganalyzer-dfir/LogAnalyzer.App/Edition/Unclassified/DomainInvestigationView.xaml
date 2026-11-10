@@ -12,7 +12,7 @@
         </Grid.RowDefinitions>
         <StackPanel Grid.Row="0">
         <DockPanel>
-            <Button DockPanel.Dock="Right" Content="Raport PDF" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Center"/>
+            <Button DockPanel.Dock="Right" Content="Raport PDF" Command="{Binding ExportPdfCommand}" VerticalAlignment="Center"/>
             <StackPanel>
                 <TextBlock Style="{StaticResource PageTitleStyle}" Text="Investigație domeniu și e-mail"/>
                 <TextBlock Style="{StaticResource PageLeadStyle}" Text="{Binding ModeNote}"/>
@@ -22,6 +22,7 @@
         </StackPanel>
 
         <TabControl Grid.Row="1" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}">
+            <!-- Design rule: one accent button per screen. The three tabs below each keep one accent button because only one tab is visible at a time. -->
             <TabItem Header="Domeniu" Style="{StaticResource InspectorTabItemStyle}">
                 <DockPanel Margin="8">
                     <WrapPanel DockPanel.Dock="Top" Margin="0,0,0,8">

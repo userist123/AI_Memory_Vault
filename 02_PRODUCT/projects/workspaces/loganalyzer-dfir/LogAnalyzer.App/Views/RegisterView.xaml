@@ -53,7 +53,7 @@
                     <Button Content="Preia de pe stație" Command="{Binding DiscoverCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"
                             AutomationProperties.HelpText="Citește de pe această stație conturile sau mediile existente și adaugă rândurile care lipsesc. Nu modifică nimic pe Windows și nu schimbă rândurile deja existente."/>
                     <!-- 2026-10-23: one accent button in Simplu ("Preia de pe stație"); "Salvează" is the accent one in Expert as before -->
-                    <Button Content="Salvează" views:SimpleLevel.HideInSimple="True" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Salvează" views:SimpleLevel.HideInSimple="True" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Margin="0,0,6,0"/>
                     <Button Content="Salvează" views:SimpleLevel.OnlyInSimple="True" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Reîncarcă" views:SimpleLevel.HideInSimple="True" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Deschide…" views:SimpleLevel.HideInSimple="True" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>

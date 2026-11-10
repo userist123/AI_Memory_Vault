@@ -27,14 +27,14 @@ namespace LogAnalyzer.UI.ViewModels
 
         public static string StateName(PolicyStatus s) => s switch
         {
-            PolicyStatus.Draft => "CIORNĂ (DRAFT)",
-            PolicyStatus.Validated => "VALIDATĂ (VALIDATED)",
-            PolicyStatus.Tested => "TESTATĂ (TESTED)",
-            PolicyStatus.Approved => "APROBATĂ (APPROVED)",
-            PolicyStatus.Deployed => "APLICATĂ (DEPLOYED)",
-            PolicyStatus.Verified => "VERIFICATĂ (VERIFIED)",
-            PolicyStatus.Retired => "RETRASĂ (RETIRED)",
-            _ => s.ToString().ToUpperInvariant(),
+            PolicyStatus.Draft => "Ciornă",
+            PolicyStatus.Validated => "Validată",
+            PolicyStatus.Tested => "Testată",
+            PolicyStatus.Approved => "Aprobată",
+            PolicyStatus.Deployed => "Aplicată",
+            PolicyStatus.Verified => "Verificată",
+            PolicyStatus.Retired => "Retrasă",
+            _ => s.ToString(),
         };
     }
 

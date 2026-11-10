@@ -1,7 +1,14 @@
 <UserControl x:Class="LogAnalyzer.UI.Views.RegistryForensicsView"
              xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
              xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml">
-    <Grid Margin="20">
+    <DockPanel Margin="20">
+        <!-- standard page header: title, one-line explanation, register rule -->
+        <StackPanel DockPanel.Dock="Top">
+            <TextBlock Style="{StaticResource PageTitleStyle}" Text="Analiza registrului Windows"/>
+            <TextBlock Style="{StaticResource PageLeadStyle}" Text="Cheile din fișierele de registru încărcate (programe pornite automat, dispozitive USB, activitate recentă)."/>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
+    <Grid>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -61,4 +68,5 @@
             </StackPanel>
         </Grid>
     </Grid>
+    </DockPanel>
 </UserControl>

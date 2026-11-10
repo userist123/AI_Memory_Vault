@@ -31,7 +31,7 @@
             <TextBlock Style="{StaticResource PageLeadStyle}"
                        Text="Importați, aprobați și aplicați politici de securitate Windows, cu verificare după aplicare."/>
             <TextBlock
-                       Text="Stări: CIORNĂ (DRAFT) → VALIDATĂ (VALIDATED) → TESTATĂ (TESTED) → APROBATĂ (APPROVED) → APLICATĂ (DEPLOYED) → VERIFICATĂ (VERIFIED). Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată.">
+                       Text="Stări: Ciornă → Validată → Testată → Aprobată → Aplicată → Verificată. Aprobarea se face din alt cont Windows (fără auto-aprobare); aplicarea doar după confirmarea planului exact; fiecare modificare este re-citită și jurnalizată.">
                 <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource PageLeadStyle}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
             </TextBlock>
             <Border Style="{StaticResource PageRuleStyle}"/>
@@ -63,7 +63,7 @@
                                Text="Un pachet CERT (liste IOC, reguli YARA și Sigma) ajunge pe un mediu aprobat și este semnat pentru stație de ofițerul de securitate. Îl puneți în așteptare (se verifică semnătura, semnatarul și fiecare fișier, pe copie); un administrator îl aprobă cu un motiv și abia apoi analizele îl folosesc. Se poate reveni la o versiune aprobată anterior; o versiune veche nu se poate importa din nou."/>
                     <TextBlock Text="{Binding ActiveLine}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,6,0,6" AutomationProperties.Name="Pachetul activ"/>
                     <DockPanel Margin="0,0,0,4">
-                        <Button DockPanel.Dock="Right" Content="Pune în așteptare" Command="{Binding StageCommand}" Style="{StaticResource AccentButtonStyle}" Margin="6,0,0,0" Padding="12,4"
+                        <Button DockPanel.Dock="Right" Content="Pune în așteptare" Command="{Binding StageCommand}" Margin="6,0,0,0" Padding="12,4"
                                 AutomationProperties.Name="Pune pachetul în așteptare"/>
                         <TextBox Text="{Binding SourceFolder, UpdateSourceTrigger=PropertyChanged}" AutomationProperties.Name="Folderul pachetului"/>
                     </DockPanel>
@@ -87,7 +87,7 @@
                         </DataGrid.Columns>
                     </DataGrid>
                     <WrapPanel Margin="0,6,0,6">
-                        <Button Content="Aprobă și activează" Command="{Binding ApproveCommand}" Style="{StaticResource AccentButtonStyle}" Padding="12,4" Margin="0,0,6,0" AutomationProperties.Name="Aprobă și activează pachetul ales"/>
+                        <Button Content="Aprobă și activează" Command="{Binding ApproveCommand}" Padding="12,4" Margin="0,0,6,0" AutomationProperties.Name="Aprobă și activează pachetul ales"/>
                         <Button Content="Renunță" Command="{Binding DiscardCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,4" Margin="0,0,16,0" AutomationProperties.Name="Renunță la pachetul ales"/>
                         <TextBox Text="{Binding RollbackVersion, UpdateSourceTrigger=PropertyChanged}" Width="150" Margin="0,0,6,0" AutomationProperties.Name="Pachetul și versiunea pentru revenire, de exemplu CERT-RO v3"/>
                         <Button Content="Revino la versiunea" Command="{Binding RollbackCommand}" Style="{StaticResource OutlineButtonStyle}" Padding="12,4" AutomationProperties.Name="Revino la versiunea scrisă"/>
@@ -131,7 +131,7 @@
                 <Button Content="3. Rulare de probă" Command="{Binding DryRunCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
                 <Button Content="4. Aprobă" Command="{Binding ApproveCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
                 <Button Content="Calculează planul" Command="{Binding ComputePlanCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                <Button Content="Aplică planul…" Command="{Binding ApplyPlanCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                <Button Content="Aplică planul…" Command="{Binding ApplyPlanCommand}" Margin="0,0,6,0"/>
                 <Button Content="Rollback ultima execuție…" Command="{Binding RollbackLastCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                 <Button Content="Folder probe" Command="{Binding OpenEvidenceFolderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
                 <Button Content="Conformitate față de politică" Command="{Binding AssessAgainstPolicyCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>

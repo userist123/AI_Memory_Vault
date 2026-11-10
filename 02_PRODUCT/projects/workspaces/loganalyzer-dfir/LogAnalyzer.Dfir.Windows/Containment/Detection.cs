@@ -136,7 +136,7 @@ public static class BlockedConnectionLog
         {
             var flags = LogAnalyzer.Dfir.Windows.Native.AuditPolicy.QueryFlags(Guid.Parse(FilteringPlatformConnectionGuid));
             var setting = (LogAnalyzer.Dfir.Windows.Native.AuditSetting)(flags & 3);
-            return ((setting & LogAnalyzer.Dfir.Windows.Native.AuditSetting.Failure) != 0, setting == LogAnalyzer.Dfir.Windows.Native.AuditSetting.None ? "No Auditing" : setting.ToString());
+            return ((setting & LogAnalyzer.Dfir.Windows.Native.AuditSetting.Failure) != 0, setting == LogAnalyzer.Dfir.Windows.Native.AuditSetting.None ? "neauditat" : setting.ToString());
         }
         catch (System.ComponentModel.Win32Exception ex)
         {

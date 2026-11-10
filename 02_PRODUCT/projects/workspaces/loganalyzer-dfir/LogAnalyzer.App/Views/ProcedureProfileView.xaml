@@ -28,7 +28,6 @@
             <Border Style="{StaticResource PageRuleStyle}"/>
             <StackPanel Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ctrl:EmptyStateCard What="{x:Static vmx:EmptyStates.ProfileWhat}" Why="{x:Static vmx:EmptyStates.ProfileWhy}" Step="{x:Static vmx:EmptyStates.ProfileStep}"/>
-                <Button Content="Importă JSON…" views:SimpleLevel.HideInSimple="True" Command="{Binding ImportJsonCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" Margin="0,0,0,4" IsEnabled="{Binding CanEdit}"/>
             </StackPanel>
         </StackPanel>
 
@@ -89,7 +88,7 @@
                             <TextBox AutomationProperties.Name="Eticheta semnăturii din stânga" Text="{Binding HeaderSignatureLeft, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanEdit}" Width="220" Margin="0,0,12,4"/>
                             <TextBlock Text="Semnătura din dreapta:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <TextBox AutomationProperties.Name="Eticheta semnăturii din dreapta" Text="{Binding HeaderSignatureRight, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanEdit}" Width="220" Margin="0,0,12,4"/>
-                            <Button Content="Salvează antetul" Command="{Binding SaveHeaderCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,4"/>
+                            <Button Content="Salvează antetul" Command="{Binding SaveHeaderCommand}" IsEnabled="{Binding CanEdit}" Margin="0,0,6,4"/>
                             <Button Content="Reîncarcă antetul" Command="{Binding ReloadHeaderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,4"/>
                         </WrapPanel>
                         <TextBlock Text="{Binding HeaderStatus}" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>

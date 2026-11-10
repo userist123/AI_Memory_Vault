@@ -26,6 +26,26 @@ namespace LogAnalyzer.UI.Views
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
 
+    /// <summary>Romanian screen wording of a Windows event level ("Information" is shown as "Informativ"); the stored value is not changed.</summary>
+    public sealed class LiveLevelLabelConverter : IValueConverter
+    {
+        public static readonly LiveLevelLabelConverter Instance = new();
+
+        public static string Label(string? level) => (level ?? "").Trim().ToLowerInvariant() switch
+        {
+            "information" or "informational" => "Informativ",
+            "warning" => "Avertisment",
+            "error" => "Eroare",
+            "critical" => "Critic",
+            "verbose" => "Detaliat",
+            _ => level ?? "",
+        };
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) => Label(value as string);
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
+
     /// <summary>Romanian UI label of a standard state (UX contract §7): Observat, Corelat, Susținut de dovezi, ...</summary>
     public sealed class StandardStateLabelConverter : IValueConverter
     {

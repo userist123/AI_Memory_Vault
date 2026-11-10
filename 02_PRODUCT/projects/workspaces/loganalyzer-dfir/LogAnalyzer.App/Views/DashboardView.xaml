@@ -110,13 +110,13 @@
                         <TextBlock Foreground="{StaticResource TextPrimaryBrush}" FontSize="24" FontWeight="SemiBold" Margin="0,2,0,2">
                             <TextBlock.Style>
                                 <Style TargetType="TextBlock">
-                                    <Setter Property="Text" Value="OPRITĂ"/>
+                                    <Setter Property="Text" Value="Oprită"/>
                                     <Style.Triggers>
                                     <DataTrigger Binding="{Binding HasContainment}" Value="False">
-                                        <Setter Property="Text" Value="INDISPONIBILĂ"/>
+                                        <Setter Property="Text" Value="Indisponibilă"/>
                                     </DataTrigger>
                                         <DataTrigger Binding="{Binding Containment.AutoContainEnabled}" Value="True">
-                                            <Setter Property="Text" Value="PORNITĂ"/>
+                                            <Setter Property="Text" Value="Pornită"/>
                                         </DataTrigger>
                                     </Style.Triggers>
                                 </Style>

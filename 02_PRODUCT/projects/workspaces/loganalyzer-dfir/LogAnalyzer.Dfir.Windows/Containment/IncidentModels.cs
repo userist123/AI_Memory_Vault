@@ -37,6 +37,8 @@ public sealed class ProcessIncident
     public LogAnalyzer.Dfir.Response.ResponseOutcome? ReleaseVerification { get; set; }
     /// <summary>The state as shown on screen (success words only when re-checked).</summary>
     [JsonIgnore] public string StateText => ContainmentText.State(this);
+    /// <summary>The same state written as a sentence for the screen ("Izolare ridicată (verificat)"); reports keep <see cref="StateText"/>.</summary>
+    [JsonIgnore] public string StateDisplay => ContainmentText.Display(StateText);
 
     /// <summary>Every destination the program used or tried, each with the source that shows it.</summary>
     [JsonIgnore]
@@ -105,6 +107,14 @@ public static class ContainmentText
         ContainmentState.NotVerified => "IZOLARE NEVERIFICATĂ",
         _ => "IZOLARE EȘUATĂ",
     };
+
+    /// <summary>Screen wording of a state text: lower case with a capital first letter (the report constants stay in capitals).</summary>
+    public static string Display(string text)
+    {
+        if (string.IsNullOrEmpty(text)) return text;
+        var lower = text.ToLower(System.Globalization.CultureInfo.GetCultureInfo("ro-RO"));
+        return char.ToUpper(lower[0], System.Globalization.CultureInfo.GetCultureInfo("ro-RO")) + lower[1..];
+    }
 
     /// <summary>A logged action: the command returned, which is not a verification.</summary>
     public static string Action(bool success) => success ? "aplicat (vezi verificarea)" : "EȘUAT";

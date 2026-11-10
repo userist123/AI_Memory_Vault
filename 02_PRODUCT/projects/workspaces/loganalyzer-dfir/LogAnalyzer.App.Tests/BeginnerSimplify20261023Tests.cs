@@ -287,7 +287,7 @@ public sealed class BeginnerSimplify20261023Tests : IDisposable
                 Layout(view);
                 var states = Descendants(view).OfType<TextBlock>().Where(t => t.Text.StartsWith("Stări:", StringComparison.Ordinal)).ToList();
                 Assert.Equal(expert, states.Any(Shown));
-                if (expert) Assert.Contains("(DRAFT)", states.Single(Shown).Text);
+                if (expert) Assert.Contains("Ciornă → Validată", states.Single(Shown).Text);   // 2026-11-11: Romanian state names only
                 var manual = Descendants(view).OfType<Expander>().First(x => ((string)x.Header).StartsWith("Toți pașii, manual", StringComparison.Ordinal));
                 Assert.Equal(expert, Shown(manual));
                 var tabs = Descendants(view).OfType<TabControl>().Single(t => t.Items.OfType<TabItem>().Any(i => (string)i.Header == "Rezultatul execuției"));

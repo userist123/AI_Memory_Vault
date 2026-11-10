@@ -81,7 +81,7 @@
                         <WrapPanel Margin="0,6,0,6">
                             <Button Content="Schimbă rolul" Command="{Binding ToggleRoleCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                             <Button Content="Dezactivează / reactivează contul" Command="{Binding ToggleAccountDisabledCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                            <Button Content="Înregistrează cardul ales (secțiunea de sus) pentru persoana selectată" Command="{Binding EnrollForSelectedCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                            <Button Content="Înregistrează cardul ales (secțiunea de sus) pentru persoana selectată" Command="{Binding EnrollForSelectedCommand}"/>
                         </WrapPanel>
                         <DataGrid AutomationProperties.Name="Cardurile contului selectat" ItemsSource="{Binding Cards}" SelectedItem="{Binding SelectedCard}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="130">
                             <DataGrid.Columns>
@@ -98,7 +98,7 @@
                             <StackPanel Margin="0,0,6,0"><TextBlock Text="Contul (ex. DOMENIU\utilizator)" Margin="0,0,0,2" Foreground="{StaticResource TextSecondaryBrush}"/><TextBox AutomationProperties.Name="Contul persoanei noi" Text="{Binding NewAccount, UpdateSourceTrigger=PropertyChanged}" Width="220" ToolTip="DOMENIU\utilizator sau utilizator"/></StackPanel>
                             <StackPanel Margin="0,0,6,0"><TextBlock Text="Numele persoanei" Margin="0,0,0,2" Foreground="{StaticResource TextSecondaryBrush}"/><TextBox AutomationProperties.Name="Numele persoanei noi" Text="{Binding NewPerson, UpdateSourceTrigger=PropertyChanged}" Width="220" ToolTip="Nume și prenume"/></StackPanel>
                             <CheckBox Content="administrator global" IsChecked="{Binding NewIsAdministrator}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Bottom" Margin="0,0,6,6"/>
-                            <Button Content="Adaugă persoana (creează contul)" Command="{Binding CreateAccountCommand}" Style="{StaticResource AccentButtonStyle}" VerticalAlignment="Bottom" Margin="0,0,0,2"/>
+                            <Button Content="Adaugă persoana (creează contul)" Command="{Binding CreateAccountCommand}" VerticalAlignment="Bottom" Margin="0,0,0,2"/>
                         </WrapPanel>
                     </StackPanel>
                 </Border>
@@ -154,7 +154,7 @@
                             <TextBox AutomationProperties.Name="Blocare după inactivitate, minute" Text="{Binding IdleLockMinutes}" Width="50" Margin="0,0,16,0"/>
                             <TextBlock Text="Încercări greșite de parolă până la blocare temporară:" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <TextBox AutomationProperties.Name="Încercări greșite până la blocare" Text="{Binding LockoutThreshold}" Width="50" Margin="0,0,16,0"/>
-                            <Button Content="Salvează parametrii" Command="{Binding SavePolicyCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                            <Button Content="Salvează parametrii" Command="{Binding SavePolicyCommand}"/>
                         </WrapPanel>
                     </StackPanel>
                 </Border>

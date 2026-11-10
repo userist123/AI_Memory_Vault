@@ -37,7 +37,7 @@
                         ToolTip="Afișează capetele lanțurilor de custodie și de audit, de înscris în registrul de custodie cu semnătură și dată"/>
                 <TextBlock Text="Pentru cine este raportul?" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,6"/>
                 <ComboBox AutomationProperties.Name="Pentru cine este raportul" ItemsSource="{Binding ReportAudienceLabels}" SelectedIndex="{Binding ReportAudienceIndex}" ToolTip="{Binding ReportAudienceDescription}" Width="230" Margin="0,0,6,6"/>
-                <Button Content="Raport de incident (PDF)" Command="{Binding ExportPdfCommand}" Style="{StaticResource AccentButtonStyle}" ToolTip="{Binding ReportAudienceDescription}" Margin="0,0,0,6"/>
+                <Button Content="Raport de incident (PDF)" Command="{Binding ExportPdfCommand}" ToolTip="{Binding ReportAudienceDescription}" Margin="0,0,0,6"/>
             </WrapPanel>
             <StackPanel>
                 <TextBlock Style="{StaticResource PageTitleStyle}" Text="Investigație completă (caz)"/>
@@ -185,7 +185,7 @@
                         <Button Content="Adaugă fișiere de probă…" Command="{Binding AddFilesCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                         <Button Content="Adaugă folder de probe…" Command="{Binding AddFolderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                         <Button Content="Golește lista" Command="{Binding ClearFilesCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,16,0"/>
-                        <Button Content="Pornește investigația" Command="{Binding RunCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                        <Button Content="Pornește investigația" Command="{Binding RunCommand}" Margin="0,0,6,0"/>
                         <Button Content="Oprește" Command="{Binding CancelCommand}" Style="{StaticResource DangerButtonStyle}" Visibility="{Binding IsBusy, Converter={StaticResource BoolToVis}}"/>
                     </WrapPanel>
                     <!-- E1 / E10: historical sources and shadow copies as the target of the analysis -->
@@ -395,7 +395,7 @@
                         <WrapPanel Margin="0,0,0,12">
                             <TextBlock Text="Etapa următoare:" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{StaticResource TextPrimaryBrush}"/>
                             <ComboBox ItemsSource="{Binding WorkflowNextStages}" SelectedItem="{Binding SelectedNextStage}" MinWidth="140" Margin="0,0,8,0" AutomationProperties.Name="Etapa următoare"/>
-                            <Button Content="Mută cazul" Command="{Binding WorkflowMoveCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,6" Margin="0,0,8,0" AutomationProperties.Name="Mută cazul în etapa aleasă"/>
+                            <Button Content="Mută cazul" Command="{Binding WorkflowMoveCommand}" Padding="14,6" Margin="0,0,8,0" AutomationProperties.Name="Mută cazul în etapa aleasă"/>
                             <Button Content="Închide cazul" Command="{Binding WorkflowCloseCommand}" Padding="14,6" Margin="0,0,8,0" AutomationProperties.Name="Închide cazul după lista de închidere"/>
                             <Button Content="Adaugă nota" Command="{Binding WorkflowAddNoteCommand}" Padding="14,6" Margin="0,0,8,0"/>
                             <Button Content="Reîncarcă" Command="{Binding WorkflowRefreshCommand}" Padding="14,6" AutomationProperties.Name="Reîncarcă fluxul de lucru"/>
@@ -555,7 +555,7 @@
                         <ComboBox ItemsSource="{Binding RuleKinds}" SelectedIndex="{Binding RuleKindIndex}" MinWidth="140" Margin="0,0,6,0" AutomationProperties.Name="Tipul regulii"/>
                         <TextBlock Text="Nume:" VerticalAlignment="Center" Margin="0,0,4,0" Foreground="{StaticResource TextSecondaryBrush}"/>
                         <TextBox Text="{Binding RuleName, UpdateSourceTrigger=PropertyChanged}" Width="180" Margin="0,0,8,0" AutomationProperties.Name="Numele regulii"/>
-                        <Button Content="Testează pe acest caz" Command="{Binding TestRuleCommand}" Style="{StaticResource AccentButtonStyle}" Padding="12,4" Margin="0,0,6,0" AutomationProperties.Name="Testează regula pe acest caz"/>
+                        <Button Content="Testează pe acest caz" Command="{Binding TestRuleCommand}" Padding="12,4" Margin="0,0,6,0" AutomationProperties.Name="Testează regula pe acest caz"/>
                         <Button Content="Păstrează ca referință" Command="{Binding SaveRuleBaselineCommand}" Padding="12,4" Margin="0,0,6,0"/>
                         <Button Content="Compară cu referința" Command="{Binding CompareRuleWithBaselineCommand}" Padding="12,4" Margin="0,0,6,0"/>
                         <Button Content="Adaugă în regulile cazului" Command="{Binding AddRuleToCaseCommand}" Padding="12,4" AutomationProperties.Name="Adaugă regula în regulile cazului"/>
@@ -707,7 +707,7 @@
                         <ComboBox ItemsSource="{Binding AnalysisRunRows}" SelectedItem="{Binding RunBefore}" DisplayMemberPath="RunId" MinWidth="200" Margin="0,0,6,0" AutomationProperties.Name="Rularea de dinainte"/>
                         <TextBlock Text="cu" VerticalAlignment="Center" Margin="0,0,6,0" Foreground="{StaticResource TextPrimaryBrush}"/>
                         <ComboBox ItemsSource="{Binding AnalysisRunRows}" SelectedItem="{Binding RunAfter}" DisplayMemberPath="RunId" MinWidth="200" Margin="0,0,8,0" AutomationProperties.Name="Rularea de după"/>
-                        <Button Content="Compară" Command="{Binding CompareRunsCommand}" Style="{StaticResource AccentButtonStyle}" Padding="14,6" Margin="0,0,8,0" AutomationProperties.Name="Compară rulările alese"/>
+                        <Button Content="Compară" Command="{Binding CompareRunsCommand}" Padding="14,6" Margin="0,0,8,0" AutomationProperties.Name="Compară rulările alese"/>
                         <Button Content="Reanalizează cazul deschis" Command="{Binding ReanalyzeCommand}" Padding="14,6" AutomationProperties.Name="Reanalizează cazul deschis pe aceleași probe"
                                 ToolTip="Rulează din nou analiza pe probele deja din caz, fără colectare nouă; rularea veche rămâne înregistrată."/>
                     </WrapPanel>
@@ -918,7 +918,7 @@
                         <TextBox AutomationProperties.Name="Justificare" Text="{Binding RemoteJustification, UpdateSourceTrigger=PropertyChanged}" Width="320"/>
                     </WrapPanel>
                     <WrapPanel Margin="0,0,0,8">
-                        <Button Content="Autorizează și generează pachetul…" Command="{Binding GenerateRemotePackageCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                        <Button Content="Autorizează și generează pachetul…" Command="{Binding GenerateRemotePackageCommand}" Margin="0,0,6,0"/>
                         <Button Content="Verifică și importă pachetul…" Command="{Binding ImportRemotePackageCommand}" Style="{StaticResource OutlineButtonStyle}"/>
                     </WrapPanel>
                     <TextBlock Text="{Binding RemoteStatus}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
@@ -946,7 +946,7 @@
                         <TextBox AutomationProperties.Name="Chei publice de încredere" Text="{Binding TrustedKeysText, UpdateSourceTrigger=PropertyChanged}" AcceptsReturn="True" TextWrapping="Wrap" Height="60" FontFamily="Consolas" Margin="0,2,0,6"/>
                         <WrapPanel Margin="0,0,0,12">
                             <Button Content="Salvează setările semnăturii" Command="{Binding SaveSigningSettingsCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
-                            <Button Content="Verifică un raport…" Command="{Binding VerifyReportCommand}" Style="{StaticResource AccentButtonStyle}"/>
+                            <Button Content="Verifică un raport…" Command="{Binding VerifyReportCommand}"/>
                         </WrapPanel>
                         <TextBlock Text="Arhiva verificabilă a cazului" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
                         <TextBlock TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,6"

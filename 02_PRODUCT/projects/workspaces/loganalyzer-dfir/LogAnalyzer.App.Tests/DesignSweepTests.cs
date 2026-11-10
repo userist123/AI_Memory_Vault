@@ -52,6 +52,13 @@ public sealed class DesignSweepTests
         "Views/RiskAnalysisView.xaml", "Views/AttackStorylineView.xaml", "Views/MitreMatrixView.xaml", "Views/ThreatIntelView.xaml",
         "Views/ActiveDirectoryAuditView.xaml", "Views/KerberosAndLateralMovementView.xaml", "Views/AuthView.xaml",
         "Edition/Unclassified/ProcessContainmentView.xaml", "Edition/Unclassified/DomainInvestigationView.xaml",
+        "Views/EventExplorerView.xaml", "Views/RegistryForensicsView.xaml", "Views/LiveSocView.xaml",
+    ];
+
+    /// <summary>Pages that must also carry a one-line explanation (PageLeadStyle) under the title: the former untitled advanced pages and the storyline.</summary>
+    private static readonly string[] LeadPages =
+    [
+        "Views/EventExplorerView.xaml", "Views/RegistryForensicsView.xaml", "Views/LiveSocView.xaml", "Views/AttackStorylineView.xaml",
     ];
 
     [Fact]
@@ -68,6 +75,41 @@ public sealed class DesignSweepTests
             foreach (Match m in Regex.Matches(x, "<TextBlock[^>]*PageTitleStyle[^>]*>"))
                 if (Regex.IsMatch(m.Value, "FontSize=|FontWeight=|Foreground=")) problems.Add(rel + ": title with literal font attributes: " + m.Value);
         }
+        foreach (var rel in LeadPages)
+        {
+            var x = StripXmlComments(Read(Path.Combine(AppDir(), rel)));
+            var leads = Regex.Matches(x, Regex.Escape("Style=\"{StaticResource PageLeadStyle}\"")).Count;
+            if (leads != 1) problems.Add($"{rel}: {leads} PageLeadStyle (expected 1)");
+            if (!x.Contains("Style=\"{StaticResource PageTitleStyle}\"")) problems.Add(rel + ": no PageTitleStyle");
+            var rules = Regex.Matches(x, Regex.Escape("Style=\"{StaticResource PageRuleStyle}\"")).Count;
+            if (rules != 1) problems.Add($"{rel}: {rules} PageRuleStyle (expected 1)");
+        }
+        Assert.True(problems.Count == 0, string.Join("\n", problems));
+    }
+
+    // ---------------------------------------------------------------- one accent button per screen
+
+    /// <summary>Files allowed more than one AccentButtonStyle, with the reason (the buttons are never visible together).</summary>
+    private static readonly Dictionary<string, (int Max, string Reason)> AccentExceptions = new()
+    {
+        ["Edition/Unclassified/DomainInvestigationView.xaml"] = (3, "one accent button per tab of a TabControl; only one tab is visible at a time"),
+    };
+
+    [Fact]
+    public void Every_page_and_window_has_at_most_one_AccentButtonStyle_and_the_main_window_has_none()
+    {
+        var problems = new List<string>();
+        foreach (var dir in new[] { "Views", "Edition" })
+            foreach (var f in Files(Path.Combine(AppDir(), dir), "*.xaml"))
+            {
+                var rel = Path.GetRelativePath(AppDir(), f).Replace('\\', '/');
+                var n = Regex.Matches(StripXmlComments(Read(f)), "AccentButtonStyle").Count;
+                var max = AccentExceptions.TryGetValue(rel, out var e) ? e.Max : 1;
+                if (n > max) problems.Add($"{rel}: {n} AccentButtonStyle (max {max})");
+            }
+        var main = StripXmlComments(Read(Path.Combine(AppDir(), "MainWindow.xaml")));
+        if (Regex.IsMatch(main, "(?<![A-Za-z])AccentButtonStyle")) problems.Add("MainWindow.xaml still uses AccentButtonStyle (the frame uses FrameAccentButtonStyle)");
+        Assert.Contains("x:Key=\"FrameAccentButtonStyle\"", Read(Path.Combine(AppDir(), "Themes/Components/Frame.xaml")));
         Assert.True(problems.Count == 0, string.Join("\n", problems));
     }
 
@@ -308,5 +350,36 @@ public sealed class DesignSweepTests
             foreach (var b in banned)
                 if (Regex.IsMatch(t, "(?:Text|Content|Header)=\"(?!\\{)[^\"]*" + Regex.Escape(b))) Assert.Fail(rel + " still has " + b);
         }
+    }
+
+    // ---------------------------------------------------------------- display wording of state values (no capitals, no English)
+
+    [Fact]
+    public void State_values_shown_on_screen_are_sentences_while_the_report_constants_stay_as_they_are()
+    {
+        Assert.Equal("Izolare ridicată (verificat)", LogAnalyzer.Dfir.Windows.Containment.ContainmentText.Display(LogAnalyzer.Dfir.Windows.Containment.ContainmentText.State(LogAnalyzer.Dfir.Windows.Containment.ContainmentState.Released)));
+        Assert.Equal("Izolat (verificat)", LogAnalyzer.Dfir.Windows.Containment.ContainmentText.Display("IZOLAT (VERIFICAT)"));
+        Assert.Equal("Izolare eșuată", LogAnalyzer.Dfir.Windows.Containment.ContainmentText.Display("IZOLARE EȘUATĂ"));
+        // the report constant is untouched
+        Assert.Equal("IZOLARE RIDICATĂ (VERIFICAT)", LogAnalyzer.Dfir.Windows.Containment.ContainmentText.State(LogAnalyzer.Dfir.Windows.Containment.ContainmentState.Released));
+        Assert.Equal("Informativ", LogAnalyzer.UI.Views.LiveLevelLabelConverter.Label("Information"));
+        Assert.Equal("Altceva", LogAnalyzer.UI.Views.LiveLevelLabelConverter.Label("Altceva"));
+        Assert.StartsWith("Informativ", LogAnalyzer.Core.Models.TimelineSummary.From(new[] { new LogAnalyzer.Core.Models.TimelineItem { Timestamp = DateTime.UtcNow, Severity = "Information" } }).Peak);
+    }
+
+    [Fact]
+    public void The_dashboard_containment_card_and_the_policy_page_use_no_capital_state_words_or_English()
+    {
+        var dash = StripXmlComments(Read(Path.Combine(AppDir(), "Views/DashboardView.xaml")));
+        foreach (var w in new[] { "\"OPRITĂ\"", "\"PORNITĂ\"", "\"INDISPONIBILĂ\"" }) Assert.DoesNotContain(w, dash);
+        var pol = Read(Path.Combine(AppDir(), "Views/PolicyView.xaml"));
+        Assert.Contains("Stări: Ciornă → Validată", pol);
+        foreach (var w in new[] { "DRAFT", "VALIDATED", "DEPLOYED" }) Assert.DoesNotContain(w, pol);
+        var live = StripXmlComments(Read(Path.Combine(AppDir(), "Views/LiveSocView.xaml")));
+        Assert.DoesNotContain("SuccessButtonStyle", live);
+        Assert.DoesNotContain("DangerButtonStyle", live);
+        Assert.DoesNotContain("Modul Network", Read(Path.Combine(AppDir(), "Edition/Unclassified/DomainInvestigationViewModel.cs")));
+        var risk = StripXmlComments(Read(Path.Combine(AppDir(), "Views/RiskAnalysisView.xaml")));
+        Assert.Contains("Padding=\"12,6\" VerticalAlignment=\"Top\"", risk);
     }
 }
