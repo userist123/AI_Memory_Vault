@@ -125,3 +125,9 @@ test('fereastra „fixă + deschidere”: primul canat e fix; cuptorul ales ajun
   const vi = viewerInput(s, cat, toEngineCatalog(cat), { mc }) as { items: { group: string; variant?: { s?: { oven?: { inox?: boolean; col?: string } } } }[] };
   const k = vi.items.find(i => i.group === 'bucatarie')!; assert.equal(k.variant!.s!.oven!.inox, true); assert.equal(k.variant!.s!.oven!.col, (oven.style as { col: string }).col);
 });
+test('hota de tavan primește înălțimea camerei (nu o cotă fixă)', () => {
+  const s = demo(), hood = groups(cat)['hota']!.variants.find(v => (v.style as { kind?: string } | undefined)?.kind === 'hood_ceiling');
+  assert.ok(hood, 'catalogul are o hotă de tavan'); s.selections = { ...s.selections, hota: hood!.id }; s.floor.ceilingHeight = 2.8;
+  const vi = viewerInput(s, cat, toEngineCatalog(cat), { mc }) as { items: { group: string; variant?: { s?: { hood?: { ceil?: number } } } }[] };
+  assert.equal(vi.items.find(i => i.group === 'bucatarie')!.variant!.s!.hood!.ceil, 2.8);
+});

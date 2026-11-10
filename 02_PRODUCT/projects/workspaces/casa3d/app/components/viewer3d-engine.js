@@ -378,7 +378,7 @@ function model(it){
       // hota aleasă, deasupra plitei: coș de perete (inox sau sticlă), telescopică sub suspendat sau de tavan
       if (s.hood){ const hk = s.hood.kind || 'hood_chimney', hw = (s.hood.w || 60) / 100, hm = s.hood.col && lumOf(s.hood.col) < .3 ? MAT('paint', s.hood.col) : MAT('metal', s.hood.col || '#c8cacc'), dark = MAT('screen', '#151618'), hb = ct + .65, hz = -d / 2 + .25;
         if (hk === 'hood_telescopic') B(hw, .04, .3, hx, k && k.upper === 'none' ? hb : h - .02 - .72 - .02, hz + .02, hm);   // sertarul telescopic, sub corpul suspendat
-        else if (hk === 'hood_ceiling') B(hw, .1, .45, hx, 2.5, hz, hm);
+        else if (hk === 'hood_ceiling') B(hw, .1, .45, hx, (s.hood.ceil || 2.55) - .05, hz, hm);   // lipită de tavanul camerei
         // cu corpuri suspendate deasupra (implicit), hota de perete rămâne doar baldachinul sub ele: coșul și sticla ar intra în corpuri
         else if (!k || k.upper !== 'none'){ const yb = h - .02 - .72 - .07; B(hw, .06, .48, hx, yb + .03, hz, hm); if (s.hood.glass) B(hw - .02, .006, .3, hx, yb + .063, hz + .05, dark); }
         else { if (s.hood.glass){ B(hw, .02, .45, hx, hb + .01, hz, hm); const gl = B(hw, .012, .38, hx, hb + .2, hz - .03, dark); gl.rotation.x = -.4; }

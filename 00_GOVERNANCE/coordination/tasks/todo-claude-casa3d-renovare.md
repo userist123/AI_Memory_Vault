@@ -22,10 +22,10 @@ DONE:
     cuptorul ales (cu tip) dă culoarea / inoxul ramei.
   - Verificare vizuală: randări Blender Cycles în D:/casa3d-render/renovare/out/.
   - Revizie: runda 1 PARTIAL → reparat (532ee851f); runda 2 PARTIAL → rama dublă reparată de sesiunea principală.
-  - Teste: tests/renovation-products.test.ts (10); suita 143 de fișiere / 982 de teste; tsc curat; build compilat.
+  - Teste: tests/renovation-products.test.ts (11); suita 143 de fișiere / 983 de teste; tsc curat; build compilat.
 RESIDUALS ACCEPTATE (decizia sesiunii principale după runda 2):
   - cota blatului e fixă 0,9 m (motorul desenează .86 + blat); microundele pe pardoseală primesc acum avertismentul ON_FLOOR.
-  - hota de tavan are înălțime fixă 2,5 m; hota de insulă e desenată ca hotă de perete; hota-3/5/7 fără dimensiuni (60 cm).
+  - hota de insulă e desenată ca hotă de perete; hota-3/5/7 fără dimensiuni (60 cm).
   - ușile de 120 și 140 cm (două foi) sunt desenate cu o singură foaie; prețul de la eMAG Prodias e la „stoc epuizat”.
   - câmpul evidence al ușilor de intrare e rezumat de WebFetch, nu text integral copiat.
   - sanitizeWindows acceptă orice id scurt pentru produs (la fel ca la uși).
