@@ -4,7 +4,7 @@ title: "Checkpoint: Claude Code - modernizarea AI Memory Vault"
 type: "project"
 lifecycle: "REVIEW"
 created: "2026-11-08T21:00:00Z"
-updated: "2026-11-10T03:30:00Z"
+updated: "2026-11-10T10:00:00Z"
 verification: "unverified"
 provenance:
   source_type: "execution"
@@ -126,11 +126,28 @@ Ramură F0: `modernize/f0-inventory`, worktree `D:/w/mod-f0`, bază origin/main 
       retragere. Rămân pentru WP-14: L2 (din wheel, `memory_controller.controller` cere `security.verified_reduction`
       din root/security — preexistent).
 
-## Următorul pas (sesiune nouă)
-Decizia proprietarului: merge în lanț #372 (F0) → #373 (F1) → #374 → #375 → #376, după ce `boundaries` devine
-verificare obligatorie pe `main` (neprotejat azi). Apoi WP-09/10: închiderea celor 11 fișiere din baseline (§1.3 din
-`F2_memory_core_contract.md`) și ratchet pe importurile prin nume fizice (§2.2/2).
-Ulterior: job CI jarvis_cognitive_brain/xau_kinetic după izolarea `.checkpoints`.
+## F3 — PR-uri #377 (WP-09) → #378 (WP-10) → #379 (WP-11) → #380 (WP-12), stivuite peste #376
+- [x] WP-09: `graph/activation` cu Protocol, `memory/controller_factory.py`, ablation în `40_EXPERIMENTS`. Baseline 9→6.
+- [x] WP-10: `lifecycle/validation/book_to_memory_*` → `packages/book_to_memory` (L7). Baseline 6→4.
+- [x] WP-11: teste provider offline (subproces, socket blocat) + jurnal fără PII; `agent_bridge` dormant
+      (`F3_agents_routing_providers.md`). Review r1 RESPINS (reload în proces) → reparat 00536be28.
+- [x] WP-12: `data_router` → retrieval, `financial_ingestion` → `80_ARCHIVE/modernization`, polymarket → products. Baseline 4→2.
+- [x] WP-13 review integral F3: GATA CU REZERVE; M1/L1/L2/L3/L5 reparate (e7d5d9292). Suita: 5276 passed, 0 failed.
+
+## F4 — PR-uri #381 (WP-14a) → #382 (WP-14b) → #383 (WP-15)
+- [x] WP-14a: un singur pachet `security` (L0), `require_owner_principal` în `security/owner_principal.py`.
+      Ratchet-ul P3 a prins un al doilea `Principal` (import fizic `security.authorizer`) → reparat d4a0d38aa;
+      garda de consumatori inversată (19a544288). Wheel-ul importă acum `memory_controller.controller`.
+- [x] WP-14b: `vault_runtime` → `security/vault_secret_runtime.py` (+ alias `sys.modules`), `git_hooks` → interfaces,
+      `scripts/` din rădăcină arhivat. **Baseline ratchet 2→0.** Suita: 5289 passed, 0 failed.
+- [x] WP-15: prefixele rămân (`01_KNOWLEDGE` = rădăcina de date a stocării); test anti-derivă pe requirements.
+- Notă: worker-ul Sonnet a căzut o dată cu eroare de acces API (`oauth_org_not_allowed`); WP-14b/WP-15 și
+  reparațiile au fost făcute în sesiunea principală, review-urile pe Opus.
+
+## Următorul pas
+WP-16 review integral F4 (în curs) → WP-17 sincronizarea documentației (lista de căi învechite din WP-16 + L4/L6 din
+WP-13: linkuri `file:///` moarte în rapoartele PHASE*) → WP-18 review final și validarea release-ului.
+Decizia proprietarului: merge în lanț #372 → … → #383 după ce `boundaries` devine verificare obligatorie pe `main`.
 
 ## Pași mai vechi (F1, închiși)
 WP-04b (nou): decizia pentru cele 129 de fișiere de test din afara `20_TESTS`, cu baseline propriu.
