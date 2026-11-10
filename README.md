@@ -161,7 +161,7 @@ Aceste interfețe de execuție sunt arhitectura-țintă. Unele există ca primit
 | `01_ARCHITECTURE/` | note de cunoștințe, registre, matrice de competențe, fișierele de slot ale ontologiei |
 | `01_KNOWLEDGE/` | cercetare externă și cunoștințe importate |
 | `02_PRODUCT/` | contextul și continuitatea proiectelor |
-| `03_IMPLEMENTATION/` | `03_IMPLEMENTATION/packages/` — nucleu cognitiv, memory controller, regăsire, polymarket, furnizori |
+| `03_IMPLEMENTATION/` | `03_IMPLEMENTATION/packages/` — nucleu cognitiv, memory controller, regăsire, securitate, furnizori; `03_IMPLEMENTATION/products/` — produsele (polymarket, xau_kinetic) |
 | `04_CONFIG/` · `05_DATA/` | configurație și artefacte de date |
 | `04_MEMORY/` | rădăcina de scriere legacy (`storage/path_resolver.py`): creată la rulare, în `.gitignore`, absentă dintr-un checkout curat |
 | `06_INBOX/` | material brut și importat, înainte de recenzie |
