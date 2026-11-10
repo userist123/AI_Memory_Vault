@@ -12,6 +12,8 @@
 
     <Window.Resources>
         <views:GlossaryTooltipConverter x:Key="GlossaryTooltip"/>
+        <!-- design step 1 (docs/design/PLAN.md): below 1280 px the header folds its auxiliary labels into icons, so it fits whole at 1000 px -->
+        <ctrl:WidthThresholdConverter x:Key="WidthAt"/>
     </Window.Resources>
 
     <Window.InputBindings>
@@ -70,7 +72,7 @@
                     <Border Margin="8,0,0,0" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="3" Padding="10,4" VerticalAlignment="Center"
                             AutomationProperties.Name="Numele acestei stații">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Stația: " FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text="Stația: " FontSize="12" Foreground="{StaticResource TextMutedBrush}" Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=1280}"/>
                             <TextBlock Text="{Binding StationName}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
                     </Border>
@@ -84,7 +86,14 @@
                 </StackPanel>
 
                 <!-- Center: Global Command Palette Search -->
-                <Grid Grid.Column="1" HorizontalAlignment="Stretch" MinWidth="120" MaxWidth="440" Margin="12,0" VerticalAlignment="Center">
+                <!-- narrow window: the search box becomes one button that opens the same command palette (Ctrl+K) -->
+                <Button Grid.Column="1" HorizontalAlignment="Left" Margin="12,0" Padding="9,7" VerticalAlignment="Center" Command="{Binding ToggleCommandPaletteCommand}"
+                        Style="{StaticResource ActionButtonStyle}" ToolTip="Căutare în evenimente, reguli și artefacte (Ctrl+K)" AutomationProperties.Name="Căutare (Ctrl+K)"
+                        Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=&lt;1180}">
+                    <TextBlock Text="&#xE721;" FontFamily="{StaticResource IconFontFamily}" FontSize="14"/>
+                </Button>
+                <Grid Grid.Column="1" HorizontalAlignment="Stretch" MinWidth="120" MaxWidth="440" Margin="12,0" VerticalAlignment="Center"
+                      Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=1180}">
                     <TextBox Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" Height="34" Padding="32,6,64,6" FontSize="11.5" ToolTip="Căutare în evenimente, reguli și artefacte (Ctrl+K)" AutomationProperties.Name="Căutare"/>
                     <Path Data="M 9 2 C 5.1 2 2 5.1 2 9 C 2 12.9 5.1 16 9 16 C 10.7 16 12.2 15.4 13.4 14.4 L 17.3 18.3 C 17.7 18.7 18.3 18.7 18.7 18.3 C 19.1 17.9 19.1 17.3 18.7 16.9 L 14.8 13 C 15.6 11.8 16 10.5 16 9 C 16 5.1 12.9 2 9 2 Z M 9 4 C 11.8 4 14 6.2 14 9 C 14 11.8 11.8 14 9 14 C 6.2 14 4 11.8 4 9 C 4 6.2 6.2 4 9 4 Z"
                           Fill="{StaticResource TextMutedBrush}" Stretch="Uniform" Width="14" Height="14" HorizontalAlignment="Left" Margin="10,0,0,0" VerticalAlignment="Center"/>
@@ -103,7 +112,9 @@
                     <!-- Operator -->
                     <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,5" Margin="0,0,10,0">
                         <StackPanel Orientation="Horizontal">
-                            <TextBlock Text="Utilizator: " FontSize="12" Foreground="{StaticResource TextMutedBrush}"/>
+                            <TextBlock Text="Utilizator: " FontSize="12" Foreground="{StaticResource TextMutedBrush}" Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=1280}"/>
+                            <TextBlock Text="&#xE77B;" FontFamily="{StaticResource IconFontFamily}" FontSize="12" Foreground="{StaticResource TextMutedBrush}" Margin="0,2,6,0" VerticalAlignment="Center"
+                                       Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=&lt;1280}"/>
                             <TextBlock Text="{Binding OperatorName}" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                         </StackPanel>
                     </Border>
@@ -112,18 +123,30 @@
                     <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="10,3" Margin="0,0,10,0" VerticalAlignment="Center"
                             ToolTip="Simplu: cuvinte pe înțelesul tuturor, detaliile tehnice la un click distanță. Expert: numele tehnice rămân lângă cele simple. Datele sunt aceleași.">
                         <StackPanel Orientation="Horizontal" AutomationProperties.Name="Nivel de limbaj: Simplu sau Expert">
-                            <TextBlock Text="Limbaj: " FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center"/>
+                            <TextBlock Text="Limbaj: " FontSize="12" Foreground="{StaticResource TextMutedBrush}" VerticalAlignment="Center" Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=1280}"/>
                             <RadioButton Content="Simplu" IsChecked="{Binding IsSimpleLevel}" Style="{StaticResource ChipTabStyle}" Padding="8,2" Margin="0,0,2,0" VerticalAlignment="Center"
                                          AutomationProperties.Name="Limbaj simplu" AutomationProperties.HelpText="Cuvinte pe înțelesul tuturor; detaliile tehnice la un click distanță."/>
                             <RadioButton Content="Expert" IsChecked="{Binding IsExpertLevel}" Style="{StaticResource ChipTabStyle}" Padding="8,2" Margin="0" VerticalAlignment="Center"
                                          AutomationProperties.Name="Limbaj expert" AutomationProperties.HelpText="Numele tehnice rămân lângă cele simple."/>
                         </StackPanel>
                     </Border>
-                    <Button Content="Ce înseamnă?" Command="{Binding OpenGlossaryCommand}" Style="{StaticResource ActionButtonStyle}" Padding="10,5" Margin="0,0,10,0"
-                            AutomationProperties.HelpText="Deschide glosarul: fiecare termen tehnic, cu numele pe înțelesul tuturor și o explicație scurtă."/>
+                    <Button Command="{Binding OpenGlossaryCommand}" Style="{StaticResource ActionButtonStyle}" Padding="10,5" Margin="0,0,8,0"
+                            AutomationProperties.Name="Ce înseamnă?" ToolTip="Ce înseamnă? Glosarul termenilor (F1)"
+                            AutomationProperties.HelpText="Deschide glosarul: fiecare termen tehnic, cu numele pe înțelesul tuturor și o explicație scurtă.">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE897;" FontFamily="{StaticResource IconFontFamily}" FontSize="14" VerticalAlignment="Center"/>
+                            <TextBlock Text="Ce înseamnă?" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=1280}"/>
+                        </StackPanel>
+                    </Button>
 
                     <!-- Analyst Scratchpad Toggle -->
-                    <Button Content="Notițe" Command="{Binding ToggleAnalystDrawerCommand}" Style="{StaticResource ActionButtonStyle}" Padding="10,5"/>
+                    <Button Command="{Binding ToggleAnalystDrawerCommand}" Style="{StaticResource ActionButtonStyle}" Padding="10,5"
+                            AutomationProperties.Name="Notițe" ToolTip="Notițele investigatorului">
+                        <StackPanel Orientation="Horizontal">
+                            <TextBlock Text="&#xE70B;" FontFamily="{StaticResource IconFontFamily}" FontSize="14" VerticalAlignment="Center"/>
+                            <TextBlock Text="Notițe" Margin="6,0,0,0" VerticalAlignment="Center" Visibility="{Binding ActualWidth, RelativeSource={RelativeSource AncestorType=Window}, Converter={StaticResource WidthAt}, ConverterParameter=1280}"/>
+                        </StackPanel>
+                    </Button>
                 </StackPanel>
             </Grid>
             </ScrollViewer>

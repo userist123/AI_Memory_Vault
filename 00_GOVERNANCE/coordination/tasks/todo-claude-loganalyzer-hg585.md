@@ -614,3 +614,10 @@
   today), the live monitoring page, the Insula device monitor with a hot-added disk (Hyper-V SCSI disks count as internal, known since
   2026-11-06), officer signature / PAdES (needs a card). Open owner decision: the header at 1024 px. Lab leftovers of this pass: new TEST cases
   on WS01 (it.admin profile) and WS02, host E:\LA-Lab\reports\{labcheck-*,pdf}, evidence\LAB-WS0x-case, shots\LAB-WS0x\{ins,arh,cont}-*.
+- 2026-11-10 (owner: „acum ne axam pe partea de design a aplicatiei, sa o facem mai profi”): design pass on the existing "Registru" theme
+  (not a rebrand). Rules and plan: docs/design/{PRODUCT,DESIGN,PLAN}.md in the project (9 steps, each with its check). Step 1 DONE and
+  verified on the VM at 1024 px (Arhipelag, the longest header): below 1280 px the header folds „Stația:”, „Utilizator:”, „Limbaj:” and the
+  texts of „Ce înseamnă?” / „Notițe” into icons (system icon font), the search box becomes one button below 1180 px; no scrollbar line.
+  Wp18LanguageTests updated to the new form of the glossary button (name and visible text both still asserted).
+  FLAKY (seen once in a full App.Tests run, 3/3 green alone): OfficerQualifiedSignatureTests.The_CMS_is_CAdES_baseline_signing_certificate_v2_
+  present_and_no_signing_time - not investigated.
