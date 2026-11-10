@@ -849,23 +849,54 @@ public static class LiveStateAnalyzer
                 ContradictingEvidence = s.StartMode.Equals("Disabled", StringComparison.OrdinalIgnoreCase) ? ["Serviciul este dezactivat (StartMode=Disabled): nu pornește singur."] : [],
             };
         foreach (var t in snap.Tasks.Where(t => t.UserWritable))
+        {
+            // lab 2026-11-10: Windows itself installs OneDrive per user and creates this task on every profile; at High it was a false alarm on every station
+            bool oneDrive = IsDefaultOneDrivePath(t.Command);
             yield return new Finding
             {
                 FindingId = Id(), RuleId = "LIVE-TASK-USERPATH", Title = $"Activitate planificată care rulează dintr-o locație în care utilizatorii pot scrie: {Path.GetFileName(t.Path)}",
-                Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1053.005",
-                File = t.Command, FirstSeenUtc = snap.TakenUtc, Description = $"{t.Path}: {t.Command}",
-                ClassificationReason = "Definiția curentă a activității planificate.",
+                Severity = oneDrive ? Severity.Low : Severity.High, Category = "Persistence", Classification = oneDrive ? Classification.Candidate : Classification.Direct,
+                Confidence = oneDrive ? Confidence.Low : Confidence.High, MitreTechniqueId = "T1053.005",
+                File = t.Command, FirstSeenUtc = snap.TakenUtc, Description = $"{t.Path}: {t.Command}" + (oneDrive ? " " + DefaultOneDriveNote : ""),
+                ClassificationReason = oneDrive ? "Definiția curentă a activității planificate; calea este cea implicită a OneDrive." : "Definiția curentă a activității planificate.",
                 SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Tasks[{t.Path}]", "instantaneu al stării live")],
+                AlternativeExplanations = oneDrive ? ["Componenta OneDrive instalată de Windows pentru fiecare utilizator (comportament implicit)."] : [],
+                RecommendedNextSteps = oneDrive ? ["Verificați semnătura digitală Microsoft a fișierului (Proprietăți → Semnături digitale)."] : [],
             };
+        }
         foreach (var a in snap.Autoruns.Where(a => a.UserWritable))
+        {
+            bool oneDrive = IsDefaultOneDrivePath(a.Value);
             yield return new Finding
             {
                 FindingId = Id(), RuleId = "LIVE-AUTORUN-USERPATH", Title = $"Pornire automată dintr-o locație în care utilizatorii pot scrie: {a.Name}",
-                Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1547.001",
-                File = a.Value, FirstSeenUtc = snap.TakenUtc, Description = $"{a.Location}\\{a.Name} = {a.Value}",
-                ClassificationReason = "Cheile Run curente.",
+                Severity = oneDrive ? Severity.Low : Severity.Medium, Category = "Persistence", Classification = oneDrive ? Classification.Candidate : Classification.Direct,
+                Confidence = oneDrive ? Confidence.Low : Confidence.Medium, MitreTechniqueId = "T1547.001",
+                File = a.Value, FirstSeenUtc = snap.TakenUtc, Description = $"{a.Location}\\{a.Name} = {a.Value}" + (oneDrive ? " " + DefaultOneDriveNote : ""),
+                ClassificationReason = oneDrive ? "Cheile Run curente; calea este cea implicită a OneDrive." : "Cheile Run curente.",
                 SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Autoruns[{a.Name}]", "instantaneu al stării live")],
-                AlternativeExplanations = ["Multe aplicații per utilizator (actualizatoare, sincronizare) pornesc legitim din AppData."],
+                AlternativeExplanations = oneDrive ? ["Componenta OneDrive instalată de Windows pentru fiecare utilizator (comportament implicit)."]
+                    : ["Multe aplicații per utilizator (actualizatoare, sincronizare) pornesc legitim din AppData."],
+                RecommendedNextSteps = oneDrive ? ["Verificați semnătura digitală Microsoft a fișierului (Proprietăți → Semnături digitale)."] : [],
             };
+        }
+    }
+
+    internal const string DefaultOneDriveNote =
+        "Aceasta este calea implicită a componentei OneDrive, pe care Windows o instalează pentru fiecare utilizator. Locația poate fi însă scrisă de utilizator, deci un alt program poate purta același nume: verificați semnătura digitală Microsoft a fișierului.";
+
+    private static readonly System.Text.RegularExpressions.Regex DefaultOneDrive = new(
+        @"^""?(%localappdata%|[a-z]:\\users\\(?!\.{1,2}\\)[^\\/:*?""<>|]+\\appdata\\local)\\microsoft\\onedrive\\(onedrive|onedrivestandaloneupdater)\.exe""?(\s|$)",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>
+    /// True only for the exact default per-user OneDrive executables (OneDrive.exe, OneDriveStandaloneUpdater.exe directly in ...\AppData\Local\Microsoft\OneDrive).
+    /// The location is user-writable, so this lowers the severity and asks for the signature to be checked; it never hides the finding.
+    /// </summary>
+    internal static bool IsDefaultOneDrivePath(string? command)
+    {
+        if (string.IsNullOrWhiteSpace(command) || command.Contains("..", StringComparison.Ordinal)) return false;
+        try { return DefaultOneDrive.IsMatch(command.Trim()); }
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return false; }
     }
 }

@@ -564,3 +564,18 @@
   the gather files, not on folders on the way or Windows.db. Reviewer noted that host Defender blocked the test DLL in ITS run; main-session
   runs were not blocked (Defender not touched). Suites: Dfir 3220, App 1028, UI 368, Edition 45, python catalog 3.
   Lab leftovers added: WS01 C:\LA\remote4; host E:\LA-Lab\diag\remote4.
+- 2026-11-10 (owner: „Continua cu update-ul aplicatiei, repara ce este greșit... testele se fac pe vm”): CI green on c87f1cd58. Current build
+  deployed to the lab (Insula on WS02, Arhipelag + Continent on WS01), pages walked with the UIA driver, station control run in the UI and
+  headless on all 4 VMs x 3 postures (labcheck harness, all checks: E:\LA-Lab\reports\labcheck-<VM>-<posture>.txt), Colectează tot on Insula
+  (71,395 events, 29 findings; the in-app C# WMI collector copied Windows.db + Windows-gather.db: 428 / 430 rows, no gaps = first live proof).
+  Found on the VMs and fixed, each with a regression test: (1) sidebar item checked by keyboard / UI Automation did not open its page, and a
+  page opened from elsewhere left another item checked -> two-way sync in MainWindow; (2) 23 "Nu se aplică" reasons were printed in English
+  -> ControlApplicability.ReasonRo; (3) P11/P32 on Windows Server said "Invalid namespace ... run as administrator" -> BitLocker feature not
+  installed = NECONFORM; (4) C01 on a domain controller said the account list could not be read -> DE VERIFICAT, accounts are the domain's;
+  (5) P15 "Mod de pornire: necunoscut" with Secure Boot on -> UEFI (deduced); (6) P26 reported a blank LegalNoticeText as "title — and a text
+  of 1 character" -> no banner; (7) P39 on Windows Server said no antivirus registered (no Security Center there) -> follows Defender (P08);
+  (8) S02 "1 driver instalate"; (9) the default per-user OneDrive task / Run value were High / Medium persistence on every station -> Low,
+  candidate, check the Microsoft signature (exact default path only). Lab-verified after the fix: 2-8 (labcheck rerun). Still to verify on the
+  VM after redeploy: 1 and 9. Open, not fixed: header buttons „Ce înseamnă?” and „Notițe” fall outside a 1024 px window (thin horizontal
+  scrollbar); users-register grid rows are announced as "System.Data.DataRowView". Suites: Dfir 3264, App 1030, UI 368, Edition 45.
+  The lab VMs still shut down hourly (expired evaluation; watchdog restarts them): each UI session has about 55 minutes.

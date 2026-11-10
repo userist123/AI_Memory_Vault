@@ -454,10 +454,15 @@ public static class StationFactCollector
             using var bl = new ManagementObjectSearcher(@"root\cimv2\Security\MicrosoftVolumeEncryption", $"SELECT ProtectionStatus FROM Win32_EncryptableVolume WHERE DriveLetter = '{sysDrive}'");
             foreach (ManagementObject o in bl.Get()) s["BitLocker.SystemDrive"] = o["ProtectionStatus"]?.ToString() ?? "";
         }
+        // "Invalid namespace": the BitLocker feature is not installed (optional on Windows Server), so no volume can be encrypted: a fact, not a failed read
+        catch (ManagementException ex) when (ex.ErrorCode == ManagementStatus.InvalidNamespace) { s[BitLockerNotInstalledKey] = "1"; }
         catch (ManagementException ex) { s["BitLocker.SystemDrive.Error"] = ex.Message; }
     }
 
     // ---- settings, second wave (read-only) ---------------------------------------------------------------------
+
+    /// <summary>Set to "1" when the BitLocker WMI namespace does not exist: the feature is not installed (Windows Server without the BitLocker feature).</summary>
+    public const string BitLockerNotInstalledKey = "BitLocker.NotInstalled";
 
     /// <summary>The value is not there (key or value missing). Different from "" (empty string) = the read itself failed, so nothing is known.</summary>
     public const string Absent = "lipsă";
@@ -1065,6 +1070,7 @@ public static class StationFactCollector
             }
             f.Volumes = list;
         }
+        catch (ManagementException ex) when (ex.ErrorCode == ManagementStatus.InvalidNamespace) { f.Settings[BitLockerNotInstalledKey] = "1"; }
         catch (Exception ex) when (ex is ManagementException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
         {
             f.Settings["BitLocker.Volumes.Error"] = ex.Message;

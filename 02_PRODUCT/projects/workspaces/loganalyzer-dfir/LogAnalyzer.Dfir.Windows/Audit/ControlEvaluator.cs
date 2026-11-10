@@ -153,6 +153,13 @@ public static partial class ControlEvaluator
         // actually found is reported (an active Guest stays NECONFORM), the rest is NEDETERMINATE with the reason of the gap.
         var gap = f.Gaps.FirstOrDefault(g => g.Artifact == "Conturi locale");
         string partial = gap is null ? "" : $"Lista conturilor locale este incompletă ({gap.Reason}), deci verificarea nu se poate face pe ea.";
+        // lab 2026-11-10 (LAB-DC01): a domain controller has no local account database; its accounts are the domain's and are reviewed in Active Directory
+        if (f.Accounts.Count == 0 && gap is null && f.Settings.TryGetValue("OS.ProductType", out var productType) && productType.Equals("LanmanNT", StringComparison.OrdinalIgnoreCase))
+        {
+            Add(r, "C01", "Conturi", "Conturi locale", ControlStatus.DeVerificat,
+                "Stația este controler de domeniu: nu are conturi locale, conturile ei sunt cele ale domeniului. Acest control nu le verifică; verificați conturile domeniului (Guest, Administrator, conturi fără parolă obligatorie, parole care nu expiră) în pagina Active Directory.");
+            return;
+        }
         if (f.Accounts.Count == 0)
         {
             Add(r, "C01", "Conturi", "Conturi locale", ControlStatus.Nedeterminat, "Lista conturilor locale nu a putut fi citită." + (gap is null ? "" : $" ({gap.Reason})"));
@@ -273,6 +280,10 @@ public static partial class ControlEvaluator
                 $"{Ro.Capitalize(Ro.CountFem(f.DefenderExclusions.Count, "excludere configurată", "excluderi configurate"))}. Excluderile sunt folosite des de atacatori pentru a-și ascunde programele.", f.DefenderExclusions);
 
         var bl = S("BitLocker.SystemDrive");
+        // lab 2026-11-10 (Windows Server 2025): without the BitLocker feature the WMI namespace does not exist; the answer is "not encrypted", not "could not be read"
+        if (bl == "" && S(StationFactCollector.BitLockerNotInstalledKey) == "1")
+            Add(r, "P11", "Politici", "Criptarea discului de sistem (BitLocker)", ControlStatus.Neconform, BitLockerNotInstalled + " Discul de sistem NU este criptat.");
+        else
         Add(r, "P11", "Politici", "Criptarea discului de sistem (BitLocker)", bl == "1" ? ControlStatus.Conform : bl == "" ? ControlStatus.Nedeterminat : ControlStatus.Neconform,
             bl == "1" ? "Protecție activă." : bl == "" ? $"Starea nu a putut fi citită.{(S("BitLocker.SystemDrive.Error") is { Length: > 0 } blErr ? " " + blErr : "")}" : "Discul de sistem NU este protejat de BitLocker.");
 
@@ -931,7 +942,10 @@ public static partial class ControlEvaluator
         foreach (var l in services) r.Actions.Add(new ActionEntry(l.TimeUtc, V(l, "AccountName"), "serviciu nou instalat", $"{V(l, "ServiceName")}: {V(l, "ImagePath")}", Ev(l)));
         foreach (var l in tasks) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a creat activitatea planificată", V(l, "TaskName"), Ev(l)));
         Add(r, "S02", "Software", "Servicii noi și activități planificate create", services.Count + tasks.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-            $"{LogAnalyzer.Dfir.Language.RoText.Count(services.Count, "serviciu", "servicii")} noi, {LogAnalyzer.Dfir.Language.RoText.Count(tasks.Count, "activitate planificată", "activități planificate")} create ({LogAnalyzer.Dfir.Language.RoText.Count(drivers.Count, "driver", "drivere")} instalate, listate separat în cronologie).",
+            // the adjective agrees with the count (lab 2026-11-10: "1 driver instalate")
+            $"{LogAnalyzer.Dfir.Language.RoText.Count(services.Count, "serviciu", "servicii")} {(services.Count == 1 ? "nou" : "noi")}, " +
+            $"{LogAnalyzer.Dfir.Language.RoText.Count(tasks.Count, "activitate planificată", "activități planificate")} {(tasks.Count == 1 ? "creată" : "create")} " +
+            $"({LogAnalyzer.Dfir.Language.RoText.Count(drivers.Count, "driver", "drivere")} {(drivers.Count == 1 ? "instalat, listat" : "instalate, listate")} separat în cronologie).",
             services.Select(l => $"{Ev(l)}: {V(l, "ServiceName")} → {V(l, "ImagePath")}").Concat(tasks.Select(l => $"{Ev(l)}: {Who(l)} → {V(l, "TaskName")}")),
             "Serviciile și activitățile planificate sunt metode frecvente de persistență: verificați fiecare intrare necunoscută.");
 
@@ -942,7 +956,8 @@ public static partial class ControlEvaluator
     // ---- station hardening, radios, data left behind (read-only registry / WMI facts) ----------------------------
 
     private const string Absent = StationFactCollector.Absent;
-    private const string NoRead = " Nu a putut fi citit; pot fi necesare drepturi de administrator. Rulați aplicația ca administrator și repetați controlul.";
+    private const string BitLockerNotInstalled = "Componenta BitLocker nu este instalată pe acest sistem (pe Windows Server este o funcție opțională: „BitLocker Drive Encryption”).";
+    private const string NoRead =" Nu a putut fi citit; pot fi necesare drepturi de administrator. Rulați aplicația ca administrator și repetați controlul.";
 
     /// <summary>Checks about the second channels out of an isolated station: adapter kinds (N05), CD/DVD burning (P28), printing (P29), clipboard and activity history (P30), camera / microphone / speakers (P31).</summary>
     private static void AirGapChannels(StationFacts f, ControlReport r)
@@ -1117,7 +1132,8 @@ public static partial class ControlEvaluator
         // P15 Secure Boot and firmware mode
         var sb = S("SecureBoot.Enabled");
         var fw = S("Firmware.Type");
-        var fwText = fw switch { "2" => "UEFI (modern)", "1" => "BIOS vechi (Legacy)", "" => "necitit", Absent => "necunoscut", var x => $"cod {x}" };
+        // Secure Boot exists only under UEFI: when it is on and the firmware-type value is missing (lab 2026-11-10, Hyper-V generation 2), the mode is UEFI, not "unknown"
+        var fwText = fw switch { "2" => "UEFI (modern)", "1" => "BIOS vechi (Legacy)", "" or Absent when sb == "1" => "UEFI (dedus: Secure Boot există doar în UEFI)", "" => "necitit", Absent => "necunoscut", var x => $"cod {x}" };
         Add(r, "P15", "Politici", "Pornire securizată (Secure Boot)",
             sb == "" ? ControlStatus.Nedeterminat : sb == "1" ? ControlStatus.Conform : sb == "0" || fw == "1" ? ControlStatus.Neconform : ControlStatus.DeVerificat,
             sb == "" ? "Starea Secure Boot nu a putut fi citită." + NoRead
@@ -1266,7 +1282,9 @@ public static partial class ControlEvaluator
         // P26 logon banner
         var cap = S("LegalNotice.Caption");
         var txt = S("LegalNotice.Text");
-        bool noCap = cap is Absent or StationFactCollector.EmptyValue, noTxt = txt is Absent or StationFactCollector.EmptyValue;
+        // lab 2026-11-10: a value that holds only blanks or control characters shows nothing at logon; it was reported as "a title — and a text of 1 character"
+        static bool Blank(string v) => v.Length > 0 && v.All(ch => char.IsWhiteSpace(ch) || char.IsControl(ch));
+        bool noCap = cap is Absent or StationFactCollector.EmptyValue || Blank(cap), noTxt = txt is Absent or StationFactCollector.EmptyValue || Blank(txt);
         Add(r, "P26", "Politici", "Mesaj de avertizare la pornire (cu nivelul de clasificare)",
             cap == "" && txt == "" ? ControlStatus.Nedeterminat : noCap && noTxt ? ControlStatus.Neconform : ControlStatus.DeVerificat,
             cap == "" && txt == "" ? "Mesajul de avertizare nu a putut fi citit." + NoRead
@@ -1371,7 +1389,9 @@ public static partial class ControlEvaluator
 
         // P32 (A2) BitLocker on every fixed volume, PIN at boot.
         const string p28 = "BitLocker pe toate discurile fixe, cu PIN la pornire";
-        if (f.Volumes is not { } vols)
+        if (f.Volumes is null && S(StationFactCollector.BitLockerNotInstalledKey) == "1")
+            Add(r, "P32", "Politici", p28, ControlStatus.Neconform, BitLockerNotInstalled + " Niciun disc fix nu este criptat.");
+        else if (f.Volumes is not { } vols)
             Add(r, "P32", "Politici", p28, ControlStatus.Nedeterminat,
                 "Starea BitLocker a discurilor nu a putut fi citită." + (S("BitLocker.Volumes.Error") is { Length: > 0 } ve ? " " + ve + "." : "") + NoRead);
         else
@@ -1506,6 +1526,18 @@ public static partial class ControlEvaluator
         if (f.AntivirusProducts is not { } avs)
             Add(r, "P39", "Politici", "Antivirus înregistrat în Centrul de securitate Windows", ControlStatus.Nedeterminat,
                 "Lista antivirusurilor înregistrate în Windows nu a putut fi citită (pe Windows Server această listă nu există)." + NoRead);
+        else if (avs.Count == 0 && S("OS.ProductType") is "ServerNT" or "LanmanNT")
+        {
+            // lab 2026-11-10 (Windows Server 2025): Windows Server has no Security Center, the list is empty by design; an empty list there is not "no antivirus".
+            // The verdict follows what Defender itself reports (P08); another vendor's product cannot be seen this way, so anything else is to be checked.
+            bool defenderOn = S("Defender.AntivirusEnabled") == "True" && S("Defender.RealTime") == "True";
+            Add(r, "P39", "Politici", "Antivirus înregistrat în Centrul de securitate Windows", defenderOn ? ControlStatus.Conform : ControlStatus.DeVerificat,
+                "Windows Server nu are Centrul de securitate Windows, deci lista antivirusurilor înregistrate nu există pe acest sistem. " +
+                (defenderOn ? "Microsoft Defender raportează că este pornit, cu protecție în timp real (vezi P08)."
+                            : "Microsoft Defender nu raportează protecție în timp real pornită (vezi P08); dacă rulează alt antivirus, confirmați-l la server."),
+                [@"WMI root\SecurityCenter2 AntiVirusProduct: fără intrări (Windows Server)", $"MSFT_MpComputerStatus → AntivirusEnabled = {Shown(S("Defender.AntivirusEnabled"))}, RealTimeProtectionEnabled = {Shown(S("Defender.RealTime"))}"],
+                "Pe server trebuie să ruleze un antivirus pornit, cu semnături actualizate după procedura offline.");
+        }
         else
         {
             // [NESIGUR] productState decoding (bits 12-15 = on, bits 4-7 = signatures out of date) is community documentation, not an official Microsoft source.

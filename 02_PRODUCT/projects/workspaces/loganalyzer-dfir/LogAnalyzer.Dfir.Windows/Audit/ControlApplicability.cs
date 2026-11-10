@@ -140,7 +140,38 @@ public static class ControlApplicability
     ];
     // END GENERATED TABLE
 
-    private static readonly Dictionary<string, ApplicabilityEntry> ById = All.ToDictionary(e => e.Id, StringComparer.Ordinal);
+    /// <summary>
+    /// Why a check does not apply, as shown to the operator (Romanian). One entry for every check that does not apply in at least one posture; a test keeps
+    /// the two lists equal. Found in the lab on 2026-11-10: the English <see cref="ApplicabilityEntry.Reason"/> was printed in the control result and the report.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, string> ReasonRo = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["P19"] = "Blocarea camerei și a microfonului este o regulă pentru încăperile controlate; pe o stație de birou conectată ele se folosesc în mod legitim.",
+        ["P25"] = "Tratarea datelor rămase pe disc (paginare, hibernare, imagini de memorie) este o regulă pentru materialele clasificate.",
+        ["P26"] = "Avertismentul cu nivelul de clasificare există doar acolo unde se lucrează cu materiale clasificate.",
+        ["P28"] = "Inscripționarea de CD/DVD este urmărită ca o cale de scoatere a datelor doar pe stațiile controlate.",
+        ["P29"] = "Înregistrarea tipăririi este o regulă de lucru cu datele pe stațiile controlate.",
+        ["P30"] = "Istoricul clipboardului și al activității este urmărit ca o cale de scurgere doar pe stațiile controlate.",
+        ["P31"] = "Camera, microfonul și difuzoarele sunt o regulă pentru încăperile controlate.",
+        ["A10"] = "Folderele clasificate există doar în edițiile controlate (Standalone și Rețea air-gap).",
+        ["A14"] = "Folderele clasificate există doar în edițiile controlate (Standalone și Rețea air-gap).",
+        ["A15"] = "Folderele clasificate există doar în edițiile controlate (Standalone și Rețea air-gap).",
+        ["A19"] = "O stație izolată nu are controler de domeniu. Verificarea se face doar când stația însăși este controler de domeniu.",
+        ["D03"] = "Scanarea mediilor la conectare este o procedură a stațiilor controlate.",
+        ["D04"] = "Registrul mediilor semnat de ofițer se ține pe stația de transfer din edițiile controlate.",
+        ["N01"] = "Doar o stație izolată nu trebuie să atingă niciodată o rețea; o stație din rețea este conectată prin proiectare.",
+        ["N03"] = "O legătură radio este o a doua cale de ieșire dintr-o stație sau rețea izolată, dar este normală pe o stație cu Internet.",
+        ["N04"] = "Bluetooth trimite fișiere fără cablu în afara unei stații sau rețele izolate; regula privește doar edițiile izolate.",
+        ["N05"] = "Aceste adaptoare dau unei stații sau rețele izolate o cale spre Internet; regula privește doar edițiile izolate.",
+        ["N11"] = "O stație cu Internet este conectată prin proiectare; verificarea căii spre Internet privește doar edițiile izolate.",
+        ["N12"] = "Doar o stație dintr-o rețea izolată cu domeniu trebuie să fie membră a domeniului.",
+        ["N13"] = "Verificarea activă trimite trafic în rețea (caută controlerul de domeniu și deschide o conexiune LDAP la o adresă internă), de aceea există doar în ediția Rețea air-gap.",
+        ["N14"] = "Doar ediția Internet poate ajunge la Internet; la nivelul strict secret de importanță deosebită Internetul este interzis.",
+        ["S04"] = "Registrul actualizărilor offline există doar acolo unde actualizările nu pot veni online.",
+        ["S06"] = "Semnăturile antivirus vin pe un suport doar acolo unde actualizările nu pot veni online.",
+    };
+
+    private static readonly Dictionary<string, ApplicabilityEntry> ById =All.ToDictionary(e => e.Id, StringComparer.Ordinal);
 
     public static bool TryGet(string id, out ApplicabilityEntry entry) => ById.TryGetValue(id, out entry!);
 
@@ -154,8 +185,8 @@ public static class ControlApplicability
     public static ControlCheck Resolve(ControlCheck check, StationPosture posture)
     {
         if (Applies(check.Id, posture)) return check;
-        var entry = ById[check.Id];
-        var why = entry.Reason is { Length: > 0 } r ? " " + r : "";
+        // the table's Reason is English (it mirrors the documentation); what the operator reads comes from ReasonRo
+        var why = ReasonRo.TryGetValue(check.Id, out var r) ? " " + r : "";
         return check with
         {
             Status = ControlStatus.NuSeAplica,
