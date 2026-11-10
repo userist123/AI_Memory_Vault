@@ -34,7 +34,7 @@ DEFAULT_PYTHONPATH = [".", "03_IMPLEMENTATION/packages", "03_IMPLEMENTATION"]
 UNIT_PARENTS = (("packages", "03_IMPLEMENTATION/packages"), ("products", "03_IMPLEMENTATION/products"))
 TEXT_EXT = {".py", ".yml", ".yaml", ".md", ".toml", ".json", ".txt", ".sh", ".ini", ".cfg", ".ps1", ".bat", ".cmd"}
 TEXT_NAMES = {"Makefile", "justfile"}
-TESTDIR_TOP = ["20_TESTS", "02_PRODUCT", "security", "07_EVALUATION", "03_IMPLEMENTATION", ".agents"]
+TESTDIR_TOP = ["20_TESTS", "02_PRODUCT", "07_EVALUATION", "03_IMPLEMENTATION", ".agents"]
 REQ_FILES = ["requirements.txt", "requirements-memory-v6.txt"]
 SELF_EXCLUDED_REF = ("07_EVALUATION/reports/modernization/", "30_SCRIPTS/verification/package_inventory.py",
                      "04_CONFIG/architecture_layers.json",
@@ -195,7 +195,7 @@ class Resolver:
         ``legacy_fallback`` = the string-constant heuristic (sorted, NOT the ``__path__`` order; never trusted by
         the layer check).
         ``resolves=False`` (only the ``also_unit`` aliases of the layer config) records the targets (``shim_targets``) but the shim does not change how imports of
-        its name are resolved (``packages/security``: ``security.X`` is the repository-root package).
+        its name are resolved (a unit whose own name is shadowed by another package earlier on the pythonpath).
         """
         if not has_path:
             return
@@ -1050,7 +1050,7 @@ def render_md(inv: dict) -> str:
         outs = ", ".join(f"{k}({v})" for k, v in u["imports_out"].items())
         L.append(f"| `{u['id']}` | {'da' if u['init_exists'] else 'NU'} | {'da' if u['has_all'] else 'nu'} | "
                  f"{outs or '-'} | {(_short(u['shim_targets'] or [], 9) + ' (' + u['shim_target_source'] + ')') if u['shim_targets'] is not None else '-'} |")
-    L += ["", "Note: fișierele și LOC includ testele aflate în directorul modulului (ex. `security/test_*.py`). Nume locale nerezolvate (ex. module importate după manipulare `sys.path`) nu sunt numărate ca "
+    L += ["", "Note: fișierele și LOC includ testele aflate în directorul modulului (ex. `security/tests/test_*.py`). Nume locale nerezolvate (ex. module importate după manipulare `sys.path`) nu sunt numărate ca "
           "dependențe externe; ele sunt în JSON (`local_unresolved_names`).", ""]
 
     L += ["## Coliziunea `cognitive_core` (și alte nume duplicate)", ""]

@@ -44,7 +44,7 @@ jobs:
             exit 0
           fi
           python -m pip install --disable-pip-version-check packaging==26.3
-          if ! python security/verify_security_catalog.py; then
+          if ! python 03_IMPLEMENTATION/packages/security/verify_security_catalog.py; then
             echo "status=ADVISORY_FAILED" >> "$GITHUB_OUTPUT"
             echo "::error title=Security Catalog Failed::Catalog verification failed; merge is not blocked (status: ADVISORY_FAILED)."
             exit 0

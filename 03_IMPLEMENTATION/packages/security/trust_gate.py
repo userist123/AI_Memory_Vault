@@ -156,10 +156,11 @@ def verify_severity_attestation(
         raise SeverityAttestationError(
             "a severity downgrade needs an explicit owner attestation record"
         )
-    # Imported here: `security` is a leaf package and the vault's attestation rule lives with the
-    # proposal queue; loading it only when a downgrade is actually attested keeps the import graph
-    # of the rest of this module unchanged.
-    from cognitive_core.proposal_queue import require_owner_principal
+    # Imported here and through the facade, as before WP-14a: loading `security.trust_gate` under
+    # its physical name must not pull `security.authorizer` in a second time (a second `Principal`
+    # class next to `cognitive_core.authorizer`); the attestation rule now lives in
+    # `security.owner_principal`, so this is a same-package import, not an upward one.
+    from cognitive_core.owner_principal import require_owner_principal
 
     try:
         principal = require_owner_principal(attestation.principal)

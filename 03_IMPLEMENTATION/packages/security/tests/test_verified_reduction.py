@@ -8,8 +8,8 @@ from pathlib import Path
 import importlib.util
 import sys
 
-REPO = Path(__file__).resolve().parents[2]
-MODULE = REPO / "security" / "verified_reduction.py"
+REPO = Path(__file__).resolve().parents[4]
+MODULE = REPO / "03_IMPLEMENTATION" / "packages" / "security" / "verified_reduction.py"
 
 _spec = importlib.util.spec_from_file_location("verified_reduction", MODULE)
 mod = importlib.util.module_from_spec(_spec)

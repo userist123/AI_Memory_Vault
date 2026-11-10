@@ -3,7 +3,7 @@
 import sys
 from pathlib import Path
 
-PACKAGES = Path(__file__).resolve().parents[2] / "03_IMPLEMENTATION" / "packages"
+PACKAGES = Path(__file__).resolve().parents[4] / "03_IMPLEMENTATION" / "packages"
 if str(PACKAGES) not in sys.path:
     sys.path.insert(0, str(PACKAGES))
 
@@ -78,7 +78,7 @@ def test_controller_style_trusted_verification_string_is_normalized():
 def test_real_vault_trusted_provenance_states_reach_agent_context():
     import re
 
-    repo_root = Path(__file__).resolve().parents[2]
+    repo_root = Path(__file__).resolve().parents[4]
     knowledge_root = repo_root / "01_ARCHITECTURE" / "knowledge"
     found = {}
 

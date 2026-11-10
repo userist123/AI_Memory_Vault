@@ -134,15 +134,36 @@ def test_modules_the_card_calls_unwired_really_are(module, wired):
     )
 
 
+_SECURITY_PKG = ("03_IMPLEMENTATION", "packages", "security")
+# The runtime-authority layer that lived in the repository-root `security/` directory until WP-14a,
+# enumerated explicitly: these files are the layer talking to itself and are skipped. Every OTHER
+# module of the merged package (the pre-merge ones and anything added later, e.g. a new
+# tool-execution path) is scanned, so a new production consumer cannot slip through unseen
+# (WP-14a review, M: an allow-list of old modules would have skipped every new file).
+_FORMER_ROOT_SECURITY_LAYER = frozenset({
+    "audit_pipeline.py", "audit_trail.py", "catalog_provenance_policy.py", "context_compression.py",
+    "handoff_benchmark.py", "knowledge_handoff.py", "loganalyzer_ui_sink.py", "memory_adapter.py",
+    "memory_boundary.py", "memory_integrity.py", "prompt_compiler.py", "runtime_adapter.py",
+    "runtime_enforcer.py", "security_event.py", "security_update_catalog.py",
+    "security_update_manager.py", "security_update_policy.py", "security_version.py",
+    "skill_exfiltration_scanner.py", "supply_chain_policy.py", "tool_authorization.py",
+    "tool_capabilities.py", "tool_integrity.py", "tool_response_boundary.py", "trust_gate.py",
+    "verified_reduction.py", "verify_security_catalog.py",
+})
+
+
 @pytest.fixture(scope="module")
 def production_python_sources():
     """(relative path, text) of every .py file that could be a production consumer: not a test,
-    not evaluation or imported material, not the root `security/` layer itself. One walk, shared."""
+    not evaluation or imported material, not the `security` package itself. One walk, shared."""
     skipped_parts = {"20_TESTS", "07_EVALUATION", "06_INBOX", "imported", "benchmarks", "tests", "node_modules", "__pycache__"}
     sources = []
     for path in REPO.rglob("*.py"):
         parts = path.relative_to(REPO).parts
-        if parts[0] in {"security", ".git", ".claude"} or skipped_parts & set(parts) or path.stem.startswith("test_"):
+        if parts[0] in {".git", ".claude"} or skipped_parts & set(parts) or path.stem.startswith("test_"):
+            continue
+        # Only the former root layer's own files are skipped (see `_FORMER_ROOT_SECURITY_LAYER`).
+        if parts[:3] == _SECURITY_PKG and len(parts) == 4 and parts[3] in _FORMER_ROOT_SECURITY_LAYER:
             continue
         sources.append((path.relative_to(REPO).as_posix(), path.stem, path.read_text(encoding="utf-8", errors="ignore")))
     return sources

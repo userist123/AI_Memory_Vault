@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # Setup paths
-repo_root = Path(__file__).resolve().parents[2]
+repo_root = Path(__file__).resolve().parents[4]
 packages_path = repo_root / "03_IMPLEMENTATION" / "packages"
 scripts_path = repo_root / "30_SCRIPTS"
 

@@ -3,9 +3,9 @@ import hashlib,json,os,subprocess,sys
 from pathlib import Path
 from urllib.parse import urlparse
 from packaging.version import Version
-ROOT=Path(__file__).resolve().parents[1]
-KEY=ROOT/'security/catalog-signing-public-key.pem'
-ALLOWED=ROOT/'security/AI_SECURITY_UPDATE_ALLOWED_HOSTS.txt'
+HERE=Path(__file__).resolve().parent
+KEY=HERE/'catalog-signing-public-key.pem'
+ALLOWED=HERE/'AI_SECURITY_UPDATE_ALLOWED_HOSTS.txt'
 def alert(msg): print('::error::'+msg)
 def host(url):
  p=urlparse(url)

@@ -4,7 +4,7 @@ from pathlib import Path
 
 
 SCRIPT = (
-    Path(__file__).resolve().parents[2]
+    Path(__file__).resolve().parents[4]
     / "30_SCRIPTS"
     / "prompt"
     / "compile_task_prompt.py"
