@@ -4,7 +4,7 @@ title: "Checkpoint: Claude Code - modernizarea AI Memory Vault"
 type: "project"
 lifecycle: "REVIEW"
 created: "2026-11-08T21:00:00Z"
-updated: "2026-11-09T23:30:00Z"
+updated: "2026-11-10T03:30:00Z"
 verification: "unverified"
 provenance:
   source_type: "execution"
@@ -93,7 +93,7 @@ Ramură F0: `modernize/f0-inventory`, worktree `D:/w/mod-f0`, bază origin/main 
       intrare (L6), nu contracte. (2) Contract v1 Memory Core: controller/storage/core.Lifecycle; canonic = reuniunea
       `cognitive_core`, `memory_controller` devine alias `sys.modules` (azi 2 copii ale modulelor: api_server încarcă
       `authorizer` de 2 ori). Numele fizice NU devin canonice: nucleul protejat folosește importuri relative peste
-      pachete (review r1 H1). (3) `memory_vault` = alias de suprafață, deprecat, nu șters; `packages/cognitive_core` păstrat.
+      pachete (review r1 H1). (3) `memory_vault` = alias de suprafață, păstrat; `DeprecationWarning` AMÂNAT (WP-08 M1) în WP-ul care îl retrage; `packages/cognitive_core` păstrat.
       `vault_runtime` rămâne în interfaces până la WP-14.
 - Decizia proprietarului (opțională): excepție Protected Core dacă vrea nume fizice canonice (§5 din document).
 
@@ -106,12 +106,31 @@ Ramură F0: `modernize/f0-inventory`, worktree `D:/w/mod-f0`, bază origin/main 
       `insert`/`+=`/extend ignorate) → reparate, confirmate cu sonde rc=1. r2: ACCEPT CU REZERVE; L1 reparat de mine
       (avertisment la config lipsă), R7 (obfuscare `__path__`) documentat în `unenforced`. Teste: 101 passed.
 
+- [x] WP-07 PR B (2026-11-10; vault-worker Sonnet, vault-reviewer Opus ×2): ramura `modernize/f2-wp07b-alias`, PR #376
+      (bază #375). `memory_controller/_alias.py`: MetaPathFinder, `memory_controller.X is cognitive_core.X` când fișierul e
+      identic (4 nume diferite rămân ca înainte). Principal/MemoryController unice; starea la nivel de modul (singleton
+      controller, cache recall_cli, rate-limit memory_access, audit logger, lock-uri) devine partajată, intenționat.
+      `__name__` prin alias = `cognitive_core.X` (fără consumatori dependenți găsiți). Suita completă: 5256 passed /
+      55 skipped / 9 xfailed. Review r1: RESPINS (H1 `python -m memory_controller.X` rupt → reparat, P8/P9);
+      r2: ACCEPT CU REZERVE; L-a (spec real al modulului canonic) și L-b (`is_package` pe namespace) reparate de mine,
+      test nou care pică pe e3ca72374. Teste de contract P1–P9 + L-a/L-b în
+      `20_TESTS/test_memory_core_contract.py`. Notă: `01_ARCHITECTURE/memory/Lessons/Verify_Consumption_Not_Existence.md`
+      spune încă „19-line” (memorie canonică, neatinsă; actualizare prin `memory_propose`).
+
+- [x] WP-08 review integral F2 (2026-11-10, vault-reviewer Opus): GATA CU REZERVE. Ratchet-ul pică pe 5 mutații
+      (fațadă L0→L4, `__path__.append` nedeclarat, hard_forbidden prin xau_kinetic), identitatea la plafon (10/10),
+      `python -m memory_controller.api_server` → HTTP 200, wheel-ul conține `_alias.py`. Suita completă pe 3050a8109:
+      5264 passed / 1 failed / 55 skipped / 9 xfailed; eșecul = `todo-claude-wp7b.md` fără frontmatter → șters (conținut
+      mutat aici), test reverificat. Rezolvat: M2 (test de echivalență a celor două copii `cognitive_core`), M3
+      (checkpoint duplicat), L1 (inventar regenerat). Amânat explicit: M1 (`DeprecationWarning` memory_vault) în WP-ul de
+      retragere. Rămân pentru WP-14: L2 (din wheel, `memory_controller.controller` cere `security.verified_reduction`
+      din root/security — preexistent).
+
 ## Următorul pas (sesiune nouă)
-WP-07 PR B (vault-worker, risc ridicat): alias `memory_controller` → `cognitive_core` (identitate unică) +
-`20_TESTS/test_memory_core_contract.py`; brief cu sondele din §2.1, §2.2/4 și lista L1 r2 din §4 a
-`F2_memory_core_contract.md` (VAULT_STATE:27, test_vault_state_accuracy:171, test_git_isolation:44,
-test_cognitive_core_import_order:43). Întâi inventarul stării la nivel de modul din modulele încărcate de două ori.
-Apoi WP-08 review. Ulterior: job CI jarvis_cognitive_brain/xau_kinetic după izolarea `.checkpoints`.
+Decizia proprietarului: merge în lanț #372 (F0) → #373 (F1) → #374 → #375 → #376, după ce `boundaries` devine
+verificare obligatorie pe `main` (neprotejat azi). Apoi WP-09/10: închiderea celor 11 fișiere din baseline (§1.3 din
+`F2_memory_core_contract.md`) și ratchet pe importurile prin nume fizice (§2.2/2).
+Ulterior: job CI jarvis_cognitive_brain/xau_kinetic după izolarea `.checkpoints`.
 
 ## Pași mai vechi (F1, închiși)
 WP-04b (nou): decizia pentru cele 129 de fișiere de test din afara `20_TESTS`, cu baseline propriu.

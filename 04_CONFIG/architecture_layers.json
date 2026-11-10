@@ -100,7 +100,9 @@
     "cognitive_core",
     "security"
   ],
-  "baseline_dynamic_imports": {},
+  "baseline_dynamic_imports": {
+    "packages/memory_controller": 2
+  },
   "baseline_edges": [
     {
       "from": "packages/graph",

@@ -24,8 +24,11 @@ believing any specific component does that today.
 
 The repository layout is a trap for newcomers in three specific ways.
 
-**`memory_controller/` is a shim, not the implementation.** It is a 19-line
-`__init__.py` that sets `__path__` across sibling packages. The real controller
+**`memory_controller/` is a shim, not the implementation.** It is a 51-line
+`__init__.py` that sets `__path__` across sibling packages and installs the
+module-identity alias (`_alias.py`, ~150 lines, a meta-path finder: since WP-07 PR B
+`memory_controller.X` is the same module object as `cognitive_core.X` when both
+resolve `X` to the same file). The real controller
 is `03_IMPLEMENTATION/packages/memory/controller.py`, roughly 1000 lines. A
 `grep` inside `memory_controller/` finds nothing and is not evidence of
 absence. An external audit reached exactly that false conclusion.
