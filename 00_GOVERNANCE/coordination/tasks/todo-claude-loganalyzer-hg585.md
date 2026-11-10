@@ -521,3 +521,8 @@
   for only by collector + action + note. Accepted residual: a later-moment journal of an imported pair can only be flagged ("possibly
   mixed"), not detected. Real run: 1,171 events, SHA-256 unchanged. Suites: Dfir 3158, App 1028, UI 368, Edition 45.
   Next: $I30 slack (FSCTL_GET_NTFS_FILE_RECORD + raw $INDEX_ALLOCATION read), then decide on $LogFile / offline VSS (needs image formats).
+- 2026-11-10: CI of 0b5b318f0 was still pending when last read (not re-polled). $I30 / $LogFile (raw NTFS reads) not implemented in this
+  session; the direct-volume-read approach was dropped. Offline VSS needs disk-image support first. Both stay open for the owner.
+  Lab leftovers (TEST data, to clean when the owner decides): WS01 C:\LA\eicar, C:\LA\dh, C:\LA\dh2, C:\LA\np, C:\LA\remote, C:\LA\wsearch,
+  C:\LA\vss1, it.admin's Notepad TEST tabs and Documents\TEST-LA-raport-index.txt; Defender Operational log cleared by the test; host
+  E:\LA-Lab\diag\{defender,rmm,notepad,wsearch,remote}. Fake RMM services were already removed.
