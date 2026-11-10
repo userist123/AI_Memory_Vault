@@ -4,7 +4,7 @@ title: "Checkpoint: Claude Code - modernizarea AI Memory Vault"
 type: "project"
 lifecycle: "REVIEW"
 created: "2026-11-08T21:00:00Z"
-updated: "2026-11-10T10:00:00Z"
+updated: "2026-11-10T14:00:00Z"
 verification: "unverified"
 provenance:
   source_type: "execution"
@@ -144,10 +144,25 @@ Ramură F0: `modernize/f0-inventory`, worktree `D:/w/mod-f0`, bază origin/main 
 - Notă: worker-ul Sonnet a căzut o dată cu eroare de acces API (`oauth_org_not_allowed`); WP-14b/WP-15 și
   reparațiile au fost făcute în sesiunea principală, review-urile pe Opus.
 
-## Următorul pas
-WP-16 review integral F4 (în curs) → WP-17 sincronizarea documentației (lista de căi învechite din WP-16 + L4/L6 din
-WP-13: linkuri `file:///` moarte în rapoartele PHASE*) → WP-18 review final și validarea release-ului.
-Decizia proprietarului: merge în lanț #372 → … → #383 după ce `boundaries` devine verificare obligatorie pe `main`.
+- [x] WP-16 review integral F4 (vault-reviewer Opus): GATA CU REZERVE, fără H/M. Suita pe clonă: 5291 passed, 0 failed.
+
+## F5 — PR #384 (WP-17), peste #383
+- [x] WP-17: README/README.en (produsele în `03_IMPLEMENTATION/products/`), nota de cale WP-14a și linkuri relative
+      în `docs/security/AUDIT_REMEDIATION.md`, `security.tests` exclus din wheel, `*.egg-info/` în `.gitignore`.
+- [x] WP-18 review final de release (vault-reviewer Opus): **GATA CU REZERVE**, 10 puncte: ratchet `baseline_edges=0`,
+      identitate (un `Principal`, plafon P3 = 9), wheel (importurile merg, fără teste/produse), CLI-uri, nucleu protejat
+      neatins, 0 teste slăbite (+748 assert, 0 șterse; 5222 → 5355 colectate), confidențialitate curată, CI verde pe
+      #376/#380/#383/#384. Suita completă pe HEAD final 22c39ff5d: **5291 passed, 55 skipped, 9 xfailed, 0 failed**.
+      L1 (ratchet-ul pica după un `pip wheel` local, din cauza `*.egg-info`) reparat + test; L2 (acest checkpoint) actualizat.
+- Rămase, documentate, fără impact la runtime: linkuri `file:///` istorice în `08_RESEARCH/BOOK_TO_MEMORY/PHASE*`
+  (preexistente); căi istorice în rapoartele de evaluare; shim-ul `xau_kinetic` din wheel indică în afara instalării
+  (preexistent); `01_ARCHITECTURE/memory/Lessons/Verify_Consumption_Not_Existence.md` spune „19-line” (memorie
+  canonică: actualizare prin `memory_propose`, decizia proprietarului).
+
+## Pașii proprietarului (modernizarea e completă pe ramuri)
+1. Protejează `main` și fă `boundaries` verificare obligatorie (azi `main` e neprotejat).
+2. Merge strict în ordine #372 → #373 → … → #384, cu merge commit sau rebase (nu squash: PR-urile sunt stivuite).
+   Nu te opri la #382/#383: #383 conține remedierile WP-14b, #384 excluderea testelor din wheel.
 
 ## Pași mai vechi (F1, închiși)
 WP-04b (nou): decizia pentru cele 129 de fișiere de test din afara `20_TESTS`, cu baseline propriu.
