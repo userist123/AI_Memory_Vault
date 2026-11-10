@@ -601,3 +601,10 @@
   "cineva a greșit de mai multe ori parola contului „?<PSDirectVMLegacy>”" at every lab connection -> told as the Hyper-V host.
   Suites: Dfir 3265, App 1037, UI 369, Edition 45. To verify on the VM after the next redeploy: 15, 16, 17. Still open in the lab: remote
   collection WS01 -> SRV01 from the UI, live monitoring page, PDF reports, Insula device monitor with a hot-added disk.
+- 2026-11-10 (lab pass, part 4): 15, 16, 17 verified on WS01 (list items named, timeline cards 157-188 px, live alert tells the Hyper-V host).
+  Incident PDF generated from the Arhipelag case on WS01 (40 pages, Romanian; copy on the host: E:\LA-Lab\reports\pdf). Found in it:
+  (18) "AnyDesk observed between 6 September 2024 and 9 November 2026": the ShimCache time is the file's last-modified time (a copied
+  executable), also true for Windows Search entries -> the period of REMOTE-TOOL findings ignores those two unless nothing else has a time;
+  (19) the live toast still said "Contul ?<PSDirectVMLegacy> a primit 5 parole greșite ... Întrebați titularul contului" at Medium -> a Low
+  alert "Conexiuni PowerShell Direct de pe gazda Hyper-V". Both with tests; to verify on the VM after the next redeploy.
+  Driver note: a Save As dialog needs "click Save" (invoke and Enter do not reach it). Suites: Dfir 3266, App 1037, UI 369, Edition 45.

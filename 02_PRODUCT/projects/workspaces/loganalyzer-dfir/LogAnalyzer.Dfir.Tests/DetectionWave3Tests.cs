@@ -307,6 +307,23 @@ public class DetectionWave3Tests
     private static TimelineEvent Prefetch(double m, string exe, string path) =>
         Row("Prefetch", m, exe, path, f: [("RunCount", "2"), ("ReferencedFiles", @"\VOLUME{01d}" + path.Replace("C:", ""))]);
 
+    [Fact]
+    public void The_period_of_a_remote_tool_finding_ignores_file_modified_times_of_ShimCache_and_Windows_Search()
+    {
+        // lab 2026-11-10: the ShimCache entry of a copied AnyDesk.exe carried the file's modified time (2024-09-06) and the report said the tool was
+        // "observed between September 2024 and November 2026"; the tool was first seen when it ran
+        const string path = @"C:\Users\Public\AnyDesk.exe";
+        var run = Prefetch(0, "ANYDESK.EXE", path);
+        var shim = Row("ShimCache", -1_000_000, "ANYDESK.EXE", path);
+        var index = Row("WindowsSearch", -900_000, "ANYDESK.EXE", path);
+        var f = One(Run([run, shim, index]), "REMOTE-TOOL-EXECUTED");
+        Assert.Equal(run.Time.Utc, f.FirstSeenUtc);
+        Assert.Equal(run.Time.Utc, f.LastSeenUtc);
+        // with nothing else, the file time is still better than no time at all
+        var only = Run([shim]).Single(x => x.RuleId.StartsWith("REMOTE-TOOL", StringComparison.Ordinal));
+        Assert.Equal(shim.Time.Utc, only.FirstSeenUtc);
+    }
+
     [Theory]
     [InlineData("AteraAgent.exe", "Atera")]
     [InlineData("client32.exe", "NetSupport")]

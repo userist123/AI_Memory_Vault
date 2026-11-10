@@ -382,6 +382,21 @@ namespace LogAnalyzer.Core.Services.Network
                     RelatedEvents = new List<ParsedEvent> { ev }
                 };
             int same = list.Count(f => f.User.Equals(user, StringComparison.OrdinalIgnoreCase));
+            // lab 2026-11-10: PowerShell Direct from the Hyper-V host leaves failed logons for this placeholder account inside the virtual machine;
+            // the alert stays (someone administers the machine from the host), but as a low one that says what it is
+            if (same >= SameAccountThreshold && user.Equals("?<PSDirectVMLegacy>", StringComparison.OrdinalIgnoreCase))
+                return new DetectedIssue
+                {
+                    Title = "ℹ️ Conexiuni PowerShell Direct de pe gazda Hyper-V",
+                    Severity = "Low",
+                    MitreTechniqueId = "T1110.001",
+                    MitreTacticName = "Credential Access",
+                    Explanation = $"Contul tehnic {user} a primit {same} autentificări eșuate pe [{ev.MachineName}] în ultimele {FailureWindow.TotalMinutes:0} minute. " +
+                                  "Nu este un cont real și nu este o parolă ghicită: fiecare conexiune PowerShell Direct făcută de pe gazda Hyper-V lasă o astfel de urmă în mașina virtuală. " +
+                                  "Verificați cine administrează gazda și dacă aceste conexiuni erau așteptate.",
+                    CreatedAt = DateTime.UtcNow,
+                    RelatedEvents = new List<ParsedEvent> { ev }
+                };
             if (same >= SameAccountThreshold)
                 return new DetectedIssue
                 {

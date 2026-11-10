@@ -286,7 +286,12 @@ public static partial class Wp11Rules
             if (writable.Count > 0) why += $" Rulează sau este serviciu dintr-un folder în care utilizatorul poate scrie ({Join(writable.Select(ToolSafe), 3)}){raised}.";
             if (others.Count > 0 && !tool.Common) why += $" Pe aceeași stație, în cel mult 24 de ore, apar și: {Join(others.Select(t => t.Name))}{raised}.";
 
-            var times = hits.Select(h => T(h.Event)).Where(t => t is not null).OrderBy(t => t).ToList();
+            // The time of a ShimCache entry and of a Windows Search entry is the FILE's last-modified time, not when the tool was seen on the station
+            // (lab 2026-11-10: a copied executable carried 2024-09-06, so the report said "observed between September 2024 and November 2026").
+            // The period of the finding comes from the other traces; those two are used only when nothing else has a time.
+            static bool FileTimeOnly(ToolHit h) => h.Kind is "ShimCache" or "WindowsSearch";
+            var times = hits.Where(h => !FileTimeOnly(h)).Select(h => T(h.Event)).Where(t => t is not null).OrderBy(t => t).ToList();
+            if (times.Count == 0) times = hits.Select(h => T(h.Event)).Where(t => t is not null).OrderBy(t => t).ToList();
             var runCounts = exec.Where(h => h.Event.Source == "Prefetch").Select(h => F(h.Event, "RunCount")).Where(rc => rc.Length > 0).ToList();
             string kinds = string.Join(", ", hits.GroupBy(h => h.Kind).Select(g => $"{g.Count()} × {g.Key}"));
             bool dnsOnly = hits.All(h => h.Kind == "interogare DNS");

@@ -70,6 +70,10 @@ namespace LogAnalyzer.UI.Tests
             Assert.Contains("PowerShell Direct", s);
             Assert.Contains("nu este o parolă ghicită", s);
             Assert.DoesNotContain("a greșit de mai multe ori parola", s);
+            // the alert itself is a low one that says what it is, not "Medium: wrong password several times"
+            Assert.Equal("Low", a!.Severity);
+            Assert.Contains("Nu este un cont real", a.Explanation);
+            Assert.DoesNotContain("Întrebați titularul contului", a.Explanation);
         }
 
         [Fact]
