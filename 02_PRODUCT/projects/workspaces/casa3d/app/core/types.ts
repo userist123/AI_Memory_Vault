@@ -107,7 +107,9 @@ export interface MaterialSpecs { sizeCm?: [number, number]; rectified?: boolean;
   /** aparatajul electric: seria de design (Sedna, Valena…) și dacă prețul include rama */
   series?: string; withFrame?: boolean }
 export type WindowKind = 'fixed' | 'tilt_turn' | 'double' | 'balcony_door' | 'roof';
-export interface WindowSpec { kind: WindowKind; sashes: number; frame: 'pvc' | 'aluminium' | 'wood'; glazing?: 'double' | 'triple'; uw?: number | null }
+export interface WindowSpec { kind: WindowKind; sashes: number; frame: 'pvc' | 'aluminium' | 'wood'; glazing?: 'double' | 'triple'; uw?: number | null;
+  /** câte canate (de la stânga, privit din cameră) sunt fixe, după titlul produsului („fixă + deschidere dublă”) */
+  fixedSashes?: number }
 export interface Material { id: string; category: MaterialCategory; name: string; supplier: string; unit: 'm2' | 'ml' | 'L' | 'kg' | 'buc'; unitPrice: number;
   pack?: { size: number; label: string; price?: number }; coverage?: number; consumption?: number; sourceUrl: string | null; verificationType: string; confidence: Confidence; note?: string; specs?: MaterialSpecs; verifiedAt?: string }
 export interface LaborRate { id: string; label: string; unit: 'm2' | 'ml'; low: number; expected: number; high: number; sources: { name: string; url: string }[]; confidence: Confidence }

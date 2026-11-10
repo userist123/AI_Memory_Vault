@@ -386,7 +386,7 @@ function model(it){
           B(.26, 2.55 - hb - .27, .22, hx, (2.55 + hb + .27) / 2, -d / 2 + .11, hm); } }
       if (!gas) for (const [dx, dz, r] of [[-.14, -.1, .09], [.14, -.1, .07], [-.14, .12, .07], [.14, .12, .09]]){ const z = new THREE.Mesh(new THREE.TorusGeometry(r, .003, 4, 32), MAT('paint', '#3c3d40')); z.rotation.x = Math.PI / 2; z.position.set(hx + dx, ct + .0065, dz); g.add(z); }
       // cuptorul: rama inox, ușa de sticlă cu geam fumuriu, mânerul bară și panoul de comandă
-      const oz = -d / 2 + wd + .02; B(.58, .58, .012, hx, .46, oz, MAT('metal', '#9da0a3')); B(.54, .38, .006, hx, .4, oz + .008, MAT('screen', '#111214')); B(.5, .08, .006, hx, .68, oz + .008, MAT('screen', '#1a1b1d'));
+      const oz = -d / 2 + wd + .02, ov = s.oven, ovM = ov && ov.col ? (ov.inox ? MAT('metal', ov.col) : MAT('paint', ov.col)) : MAT('metal', '#9da0a3'); B(.58, .58, .012, hx, .46, oz, ovM); B(.54, .38, .006, hx, .4, oz + .008, MAT('screen', '#111214')); B(.5, .08, .006, hx, .68, oz + .008, MAT('screen', '#1a1b1d'));
       B(.46, .016, .016, hx, .62, oz + .035, MAT('metal', '#c4c7ca')); [-.18, .18].forEach(a => B(.012, .012, .03, hx + a, .62, oz + .02, MAT('metal', '#c4c7ca')));
       [-.2, -.14, .14, .2].forEach(a => CY(.014, .014, .015, hx + a, .68, oz + .015, MAT('metal', '#c4c7ca'), 16).rotation.x = Math.PI / 2);
       // pe blat, ca într-o casă locuită: tocătorul sprijinit de perete, ibricul, un bol cu fructe, sticlele lângă plită
@@ -833,11 +833,12 @@ function model(it){
             const sIn = ((ax + ux * m - (pMinX + pMaxX) / 2) * nx + (az + uz * m - (pMinZ + pMaxZ) / 2) * nz) > 0 ? -1 : 1;   // partea dinspre casă
             at(g.la + pf / 2, cy, pf, wh, pd, fm); at(g.la + g.l - pf / 2, cy, pf, wh, pd, fm); at(m, sl + pf / 2, g.l - 2 * pf + .002, pf, pd - .004, fm); at(m, top - pf / 2, g.l - 2 * pf + .002, pf, pd - .004, fm);
             const n2 = fw ? fw.sashes : g.l > 1.1 ? 2 : 1, iw = (g.l - 2 * pf) / n2;
-            for (let k = 0; k < n2 && !(fw && fw.fixed); k++){ const c0 = g.la + pf + iw * (k + .5), sw2 = iw - .01, sh2 = wh - 2 * pf - .01, sy = cy;
+            for (let k = 0; k < n2 && !(fw && fw.fixed); k++){ if (fw && fw.fixedSashes && k < fw.fixedSashes) continue;   // canatul fix: doar geamul în toc, fără ramă mobilă și mâner
+              const c0 = g.la + pf + iw * (k + .5), sw2 = iw - .01, sh2 = wh - 2 * pf - .01, sy = cy;
               [[c0 - sw2 / 2 + .03, sy, .06, sh2], [c0 + sw2 / 2 - .03, sy, .06, sh2]].forEach(([sv, y, w2, h2]) => at(sv, y, w2, h2, .06, fm, sIn * .012));
               [sy - sh2 / 2 + .03, sy + sh2 / 2 - .03].forEach(y => at(c0, y, sw2 - .118, .06, .056, fm, sIn * .012));
               const hx = k === 0 && n2 === 2 ? c0 + sw2 / 2 - .03 : c0 - sw2 / 2 + .03; at(hx, sy, .02, .14, .02, handleMat, sIn * (.06)); at(hx, sy + .05, .035, .035, .012, handleMat, sIn * .05); }
-            for (let k = 1; k < n2; k++) at(g.la + pf + iw * k, cy, .02 + (fw && fw.fixed ? .03 : 0), wh - 2 * pf, pd, fm);
+            for (let k = 1; k < n2; k++) at(g.la + pf + iw * k, cy, .02 + (fw && (fw.fixed || fw.fixedSashes && k <= fw.fixedSashes) ? .03 : 0), wh - 2 * pf, pd, fm);
             at(m, sl - .01, g.l + .08, .025, .2, MAT('paint', '#f4f2ee'), sIn * (th / 2 + .06));               // glaf
             if (wl.ext) at(m, sl - .04, g.l + .06, .015, .14, MAT('metal', '#d8d6d0'), -sIn * (th / 2 + .05)); }   // pervaz
           if (g.trat){ const tr = g.trat, sg = tr.inward, at = (s, d, y, w2, h2, dp, mat) => { const px = ax + ux * s + nx * sg * d, pz = az + uz * s + nz * sg * d; const o = box(w2, h2, dp, mat, px, y, pz, rot, walls); o.castShadow = false; return o; };

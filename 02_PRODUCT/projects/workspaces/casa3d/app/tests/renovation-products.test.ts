@@ -111,3 +111,14 @@ test('ușa de intrare: produs pe golul de intrare, primele în listă, avertisme
   const v = doorVisual(s, mc, ent.level).find(x => x.wallIndex === ent.wallIndex && x.openingIndex === ent.openingIndex) as { entrance?: boolean; color: string | null };
   assert.equal(v.entrance, true); assert.equal(v.color, d.specs!.color);
 });
+test('fereastra „fixă + deschidere”: primul canat e fix; cuptorul ales ajunge în desenul bucătăriei', () => {
+  const s = demo(), o = windowOpenings(s)[0]!, fixPlus = mc.materials.filter(m => m.category === 'window' && /fix[aă]\s*\+/i.test(m.name));
+  assert.ok(fixPlus.length >= 3); for (const m of fixPlus) assert.equal(m.specs!.win!.fixedSashes, 1, m.id);
+  s.windowUnits = { [o.id]: { product: fixPlus[0]!.id } }; const v = windowVisual(s, mc, 0)[0] as { fixedSashes?: number; fixed: boolean };
+  assert.equal(v.fixedSashes, 1); assert.equal(v.fixed, false);
+  const plain = mc.materials.find(m => m.category === 'window' && m.specs?.win?.kind === 'double' && !/fix/i.test(m.name))!;
+  s.windowUnits = { [o.id]: { product: plain.id } }; assert.equal((windowVisual(s, mc, 0)[0] as { fixedSashes?: number }).fixedSashes, undefined);
+  const oven = groups(cat)['cuptor']!.variants.find(v => (v.style as { inox?: boolean } | undefined)?.inox)!; s.selections = { ...s.selections, cuptor: oven.id };
+  const vi = viewerInput(s, cat, toEngineCatalog(cat), { mc }) as { items: { group: string; variant?: { s?: { oven?: { inox?: boolean; col?: string } } } }[] };
+  const k = vi.items.find(i => i.group === 'bucatarie')!; assert.equal(k.variant!.s!.oven!.inox, true); assert.equal(k.variant!.s!.oven!.col, (oven.style as { col: string }).col);
+});

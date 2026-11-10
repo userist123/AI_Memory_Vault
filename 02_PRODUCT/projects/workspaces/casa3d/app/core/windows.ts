@@ -51,5 +51,6 @@ export function sanitizeWindows(x: unknown, snap: Snapshot): { value?: Record<st
 /** Ce desenează motorul 3D pe golul de fereastră: culoarea tocului, canatele, fixă / mobilă, materialul profilului. */
 export function windowVisual(snap: Snapshot, mc: MaterialsCatalog, level: number){
   return windowOpenings(snap).filter(o => o.level === level).flatMap(o => { const m = materialOf(mc, snap.windowUnits?.[o.id]?.product), sp = windowSpec(m); if (!m || !sp) return [];
-    return [{ wallIndex: o.wallIndex, openingIndex: o.openingIndex, color: m.specs?.color ?? '#f4f4f2', sashes: Math.max(1, Math.min(4, Math.round(sp.sashes || 1))), fixed: sp.kind === 'fixed', frame: sp.frame, triple: sp.glazing === 'triple' }]; });
+    return [{ wallIndex: o.wallIndex, openingIndex: o.openingIndex, color: m.specs?.color ?? '#f4f4f2', sashes: Math.max(1, Math.min(4, Math.round(sp.sashes || 1))), fixed: sp.kind === 'fixed', frame: sp.frame, triple: sp.glazing === 'triple',
+      ...(sp.fixedSashes ? { fixedSashes: Math.max(0, Math.min(3, Math.round(sp.fixedSashes))) } : {}) }]; });
 }
