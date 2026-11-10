@@ -46,9 +46,9 @@ TASK ORCHESTRATION
 ## Canonical commands
 
 ```powershell
-python scripts/skill_ingestion.py scan
-python scripts/skill_ingestion.py match
-python scripts/skill_ingestion.py promote --skill <skill-id> --verified
+python 30_SCRIPTS/skills/skill_ingestion.py scan
+python 30_SCRIPTS/skills/skill_ingestion.py match
+python 30_SCRIPTS/skills/skill_ingestion.py promote --skill <skill-id> --verified
 ```
 
 Promotion is intentionally explicit. A raw import is never treated as operational merely because it contains `SKILL.md`.

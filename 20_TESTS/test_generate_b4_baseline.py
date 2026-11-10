@@ -1,10 +1,15 @@
-"""test_generate_b4_baseline.py — Verification for scripts/generate_b4_baseline.py."""
+"""test_generate_b4_baseline.py — Verification for 40_EXPERIMENTS/harnesses/generate_b4_baseline.py."""
 from __future__ import annotations
 
 import json
+import sys
 from pathlib import Path
 
-from scripts.generate_b4_baseline import generate_b4_baseline, main
+# The root `scripts/` copy was a leftover of the 2026-09-04 migration (archived in WP-14b);
+# the experiment harness is the canonical location.
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "40_EXPERIMENTS" / "harnesses"))
+
+from generate_b4_baseline import generate_b4_baseline, main  # noqa: E402
 
 
 def test_generate_b4_baseline_execution(tmp_path: Path):

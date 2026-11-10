@@ -7,14 +7,14 @@
       ],
       "imports_by_served_unit": {
         "packages/graph": 60,
-        "packages/interfaces": 160,
+        "packages/interfaces": 155,
         "packages/learning": 167,
         "packages/lifecycle": 24,
         "packages/memory": 240,
-        "packages/observability": 72,
-        "packages/providers": 173,
+        "packages/observability": 61,
+        "packages/providers": 169,
         "packages/retrieval": 52,
-        "packages/security": 16
+        "packages/security": 19
       },
       "modules": {
         "packages/cognitive_core": [],
@@ -103,7 +103,7 @@
       "site-packages",
       "venv"
     ],
-    "py_files_scanned": 2204,
+    "py_files_scanned": 2198,
     "pythonpath_order": [
       ".",
       "03_IMPLEMENTATION/packages",
@@ -2431,9 +2431,6 @@
         "03_IMPLEMENTATION/packages/learning/agents/retrieval_agent.py",
         "03_IMPLEMENTATION/packages/learning/agents/router_agent.py",
         "03_IMPLEMENTATION/packages/learning/agents/verifier_agent.py",
-        "03_IMPLEMENTATION/packages/security/git_hooks.py",
-        "03_IMPLEMENTATION/packages/vault_access/audit.py",
-        "03_IMPLEMENTATION/packages/vault_access/router.py",
         "07_EVALUATION/golden_memory_effectiveness_v1/run_benchmark.py",
         "30_SCRIPTS/evaluation/memory_usage_report.py",
         "40_EXPERIMENTS/harnesses/generate_b4_baseline.py",
@@ -2442,9 +2439,7 @@
         "40_EXPERIMENTS/harnesses/run_ablation_experiment.py",
         "cognitive_core/recall_cli.py",
         "cognitive_core/telegram_vault_bot.py",
-        "cognitive_core/vault_cli.py",
-        "scripts/generate_b4_baseline.py",
-        "scripts/run_ablation_experiment.py"
+        "cognitive_core/vault_cli.py"
       ],
       "consumers_test": [
         "03_IMPLEMENTATION/packages/security/tests/test_audit_remediation.py",
@@ -2464,6 +2459,7 @@
         "20_TESTS/test_council_model_execution.py",
         "20_TESTS/test_council_usage_audit.py",
         "20_TESTS/test_executive_model_execution_bridge.py",
+        "20_TESTS/test_git_hooks.py",
         "20_TESTS/test_memory_ablation.py",
         "20_TESTS/test_memory_access.py",
         "20_TESTS/test_memory_controller_factory.py",
@@ -2523,24 +2519,24 @@
         "packages/lifecycle": 2,
         "packages/memory": 6,
         "packages/providers": 2,
-        "packages/security": 8,
+        "packages/security": 9,
         "packages/vault_access": 3
       },
       "imports_out_nontest": {
         "packages/lifecycle": 2,
         "packages/memory": 6,
         "packages/providers": 2,
-        "packages/security": 8,
+        "packages/security": 9,
         "packages/vault_access": 3
       },
       "init_exists": true,
       "kind": "packages",
-      "loc": 4541,
+      "loc": 4396,
       "local_unresolved_names": [
         "build_route_manifest"
       ],
       "name": "interfaces",
-      "py_files": 24,
+      "py_files": 25,
       "shim_target_source": null,
       "shim_targets": null,
       "unknown": [
@@ -2572,7 +2568,7 @@
           "detail": "sys.path.insert",
           "file": "03_IMPLEMENTATION/packages/interfaces/recall_cli.py",
           "kind": "path_mutation",
-          "line": 16
+          "line": 18
         },
         {
           "detail": "sys.path.insert",
@@ -2720,10 +2716,10 @@
       "id": "packages/lifecycle",
       "import_name_winner": true,
       "imports_out": {
-        "packages/security": 2
+        "packages/security": 1
       },
       "imports_out_nontest": {
-        "packages/security": 2
+        "packages/security": 1
       },
       "init_exists": true,
       "kind": "packages",
@@ -2981,6 +2977,7 @@
         "03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_usage_test.py",
         "03_IMPLEMENTATION/packages/graph/activation.py",
         "03_IMPLEMENTATION/packages/interfaces/api_server.py",
+        "03_IMPLEMENTATION/packages/interfaces/git_hooks.py",
         "03_IMPLEMENTATION/packages/interfaces/memory_access.py",
         "03_IMPLEMENTATION/packages/interfaces/memory_mcp_server.py",
         "03_IMPLEMENTATION/packages/interfaces/memory_v6_cli.py",
@@ -3013,7 +3010,6 @@
         "03_IMPLEMENTATION/packages/observability/outcome_tracker.py",
         "03_IMPLEMENTATION/packages/observability/promotion_candidates.py",
         "03_IMPLEMENTATION/packages/retrieval/cache/lru_cache.py",
-        "03_IMPLEMENTATION/packages/security/git_hooks.py",
         "03_IMPLEMENTATION/products/xau_kinetic/engine/financial_ingestion/adapter.py",
         "07_EVALUATION/cognitive_core/evaluate_cognitive_core.py",
         "07_EVALUATION/cognitive_core/evaluate_modules_v3.py",
@@ -3304,8 +3300,7 @@
         "03_IMPLEMENTATION/packages/memory/project_ledger.py",
         "03_IMPLEMENTATION/packages/memory/storage/file_engine.py",
         "30_SCRIPTS/evaluation/retrieval_loss_funnel.py",
-        "40_EXPERIMENTS/harnesses/generate_b4_baseline.py",
-        "scripts/generate_b4_baseline.py"
+        "40_EXPERIMENTS/harnesses/generate_b4_baseline.py"
       ],
       "consumers_test": [
         "20_TESTS/memory_controller/test_adversarial_p0_p15_invariants.py",
@@ -3395,9 +3390,7 @@
         "30_SCRIPTS/ingestion/model_extract_concepts.py",
         "40_EXPERIMENTS/harnesses/generate_b4_baseline.py",
         "40_EXPERIMENTS/harnesses/real_execution_harness.py",
-        "40_EXPERIMENTS/harnesses/run_ablation_experiment.py",
-        "scripts/generate_b4_baseline.py",
-        "scripts/run_ablation_experiment.py"
+        "40_EXPERIMENTS/harnesses/run_ablation_experiment.py"
       ],
       "consumers_test": [
         "20_TESTS/memory_controller/test_supersession_phase43.py",
@@ -3678,6 +3671,7 @@
         "03_IMPLEMENTATION/packages/interfaces/recall_cli.py",
         "03_IMPLEMENTATION/packages/interfaces/tool_router.py",
         "03_IMPLEMENTATION/packages/interfaces/vault_cli.py",
+        "03_IMPLEMENTATION/packages/interfaces/vault_runtime.py",
         "03_IMPLEMENTATION/packages/learning/agents/base_agent.py",
         "03_IMPLEMENTATION/packages/learning/agents/consolidator_agent.py",
         "03_IMPLEMENTATION/packages/learning/agents/critic_agent.py",
@@ -3689,7 +3683,6 @@
         "03_IMPLEMENTATION/packages/learning/deduplication.py",
         "03_IMPLEMENTATION/packages/learning/learning.py",
         "03_IMPLEMENTATION/packages/learning/reflection.py",
-        "03_IMPLEMENTATION/packages/lifecycle/proposal_queue.py",
         "03_IMPLEMENTATION/packages/lifecycle/validation/supersession.py",
         "03_IMPLEMENTATION/packages/memory/executive.py",
         "03_IMPLEMENTATION/packages/memory/orchestrator.py",
@@ -3700,6 +3693,8 @@
         "03_IMPLEMENTATION/packages/retrieval/context/pack_builder.py",
         "03_IMPLEMENTATION/packages/retrieval/context/progressive_disclosure.py",
         "03_IMPLEMENTATION/packages/retrieval/data_router.py",
+        "03_IMPLEMENTATION/packages/vault_access/audit.py",
+        "03_IMPLEMENTATION/packages/vault_access/router.py",
         "07_EVALUATION/cognitive_core/evaluate_cognitive_core.py",
         "07_EVALUATION/cognitive_core/evaluate_modules_v3.py",
         "07_EVALUATION/heldout_retrieval_benchmark_v2/run_production_arms.py",
@@ -3783,7 +3778,6 @@
         "20_TESTS/test_evaluation_and_recall_lineage.py",
         "20_TESTS/test_executive.py",
         "20_TESTS/test_executive_orchestrator_dispatch.py",
-        "20_TESTS/test_git_hooks.py",
         "20_TESTS/test_global_workspace.py",
         "20_TESTS/test_graph_expansion.py",
         "20_TESTS/test_graph_expansion_noop_status.py",
@@ -3843,17 +3837,15 @@
       "id": "packages/security",
       "import_name_winner": true,
       "imports_out": {
-        "packages/interfaces": 2,
+        "packages/interfaces": 1,
         "packages/lifecycle": 1,
         "packages/memory": 2,
         "packages/retrieval": 6
       },
-      "imports_out_nontest": {
-        "packages/interfaces": 1
-      },
+      "imports_out_nontest": {},
       "init_exists": true,
       "kind": "packages",
-      "loc": 7275,
+      "loc": 7425,
       "local_unresolved_names": [
         "knowledge"
       ],
@@ -3962,10 +3954,10 @@
       "id": "packages/vault_access",
       "import_name_winner": true,
       "imports_out": {
-        "packages/interfaces": 2
+        "packages/security": 2
       },
       "imports_out_nontest": {
-        "packages/interfaces": 2
+        "packages/security": 2
       },
       "init_exists": true,
       "kind": "packages",
@@ -4232,6 +4224,7 @@
         "03_IMPLEMENTATION/packages/learning/agents/verifier_agent.py",
         "03_IMPLEMENTATION/packages/memory/controller.py",
         "03_IMPLEMENTATION/packages/observability/evaluation.py",
+        "03_IMPLEMENTATION/packages/security/trust_gate.py",
         "07_EVALUATION/context_packing/experiment_runner.py",
         "07_EVALUATION/full_context_baseline.py",
         "07_EVALUATION/golden_memory_effectiveness_v1/run_benchmark.py",
@@ -4249,9 +4242,7 @@
         "40_EXPERIMENTS/harnesses/generate_b4_baseline.py",
         "40_EXPERIMENTS/harnesses/memory_ablation_benchmark.py",
         "40_EXPERIMENTS/harnesses/real_execution_harness.py",
-        "40_EXPERIMENTS/harnesses/run_ablation_experiment.py",
-        "scripts/generate_b4_baseline.py",
-        "scripts/run_ablation_experiment.py"
+        "40_EXPERIMENTS/harnesses/run_ablation_experiment.py"
       ],
       "consumers_test": [
         "03_IMPLEMENTATION/packages/security/tests/test_pr209_final_security_gates.py",
@@ -4441,90 +4432,6 @@
           "file": "cognitive_core/vault_cli.py",
           "kind": "file_or_module_loader",
           "line": 16
-        }
-      ]
-    },
-    {
-      "ci_config_refs": {
-        ".github/workflows/casa3d-build.yml": 10
-      },
-      "consumers_bench_excluded": [],
-      "consumers_prod": [],
-      "consumers_test": [
-        "20_TESTS/test_generate_b4_baseline.py",
-        "20_TESTS/test_label_council_outcome.py",
-        "20_TESTS/test_outcome_cli_smoke.py"
-      ],
-      "dir": "scripts",
-      "dynamic_imports_nontest": 0,
-      "entry_points": {
-        "console_scripts": [],
-        "dunder_main": [],
-        "main_guard": [
-          "scripts/book_knowledge_consolidation.py",
-          "scripts/generate_b4_baseline.py",
-          "scripts/label_council_outcome.py",
-          "scripts/run_ablation_experiment.py",
-          "scripts/skill_ingestion.py"
-        ]
-      },
-      "external_deps": {
-        "yaml": 1
-      },
-      "has_all": false,
-      "id": "root/scripts",
-      "import_name_winner": true,
-      "imports_out": {
-        "packages/interfaces": 2,
-        "packages/observability": 1,
-        "packages/providers": 2
-      },
-      "imports_out_nontest": {
-        "packages/interfaces": 2,
-        "packages/observability": 1,
-        "packages/providers": 2
-      },
-      "init_exists": true,
-      "kind": "root",
-      "loc": 1260,
-      "local_unresolved_names": [
-        "evaluation",
-        "memory_ablation_benchmark"
-      ],
-      "name": "scripts",
-      "py_files": 7,
-      "shim_target_source": null,
-      "shim_targets": null,
-      "unknown": [
-        {
-          "detail": "sys.path.insert",
-          "file": "scripts/build_mesh_files.py",
-          "kind": "path_mutation",
-          "line": 19
-        },
-        {
-          "detail": "sys.path.insert",
-          "file": "scripts/generate_b4_baseline.py",
-          "kind": "path_mutation",
-          "line": 27
-        },
-        {
-          "detail": "sys.path.insert",
-          "file": "scripts/run_ablation_experiment.py",
-          "kind": "path_mutation",
-          "line": 18
-        },
-        {
-          "detail": "sys.path.insert",
-          "file": "scripts/run_ablation_experiment.py",
-          "kind": "path_mutation",
-          "line": 19
-        },
-        {
-          "detail": "sys.path.insert",
-          "file": "scripts/run_ablation_experiment.py",
-          "kind": "path_mutation",
-          "line": 20
         }
       ]
     }
@@ -6167,6 +6074,12 @@
       "file": "20_TESTS/test_gate_curriculum_report_statistics.py",
       "kind": "path_mutation",
       "line": 19
+    },
+    {
+      "detail": "sys.path.insert",
+      "file": "20_TESTS/test_generate_b4_baseline.py",
+      "kind": "path_mutation",
+      "line": 10
     },
     {
       "detail": "spec_from_file_location",
