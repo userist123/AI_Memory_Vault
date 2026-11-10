@@ -59,8 +59,10 @@ def test_probe_with_only_packages_on_the_path_imports_pack_builder_and_controlle
 
 
 def test_owner_principal_rule_is_shared_and_still_rejects_non_principals():
-    from security import owner_principal
-    from security.authorizer import Principal
+    # Through the facade (one module identity, one `Principal`): the physical name
+    # `security.owner_principal` would load `security.authorizer` a second time.
+    from cognitive_core import owner_principal
+    from cognitive_core.authorizer import Principal
     import cognitive_core.proposal_queue as pq
 
     assert pq.require_owner_principal is owner_principal.require_owner_principal
@@ -81,4 +83,24 @@ def test_owner_principal_rule_is_shared_and_still_rejects_non_principals():
 def test_trust_gate_has_no_upward_import_of_the_proposal_queue():
     text = (PACKAGES / "security" / "trust_gate.py").read_text(encoding="utf-8")
     assert "proposal_queue" not in text.replace("the proposal queue", "")
-    assert "cognitive_core" not in text
+    # The only facade import allowed is the same-package owner rule (lazy, inside the function).
+    facade_imports = [line.strip() for line in text.splitlines()
+                      if line.strip().startswith(("from cognitive_core", "import cognitive_core",
+                                                  "from memory_controller", "import memory_controller"))]
+    assert facade_imports == ["from cognitive_core.owner_principal import require_owner_principal"]
+
+
+def test_physical_security_names_do_not_load_a_second_principal_class(tmp_path):
+    """WP-14a review: `security.trust_gate` and `lifecycle.proposal_queue` reach the owner rule
+    through the facade, so `security.authorizer` (a second `Principal` next to
+    `cognitive_core.authorizer`) is never loaded by them."""
+    code = (
+        "import sys; sys.path[:0] = [sys.argv[1], sys.argv[2]]\n"
+        "import security.trust_gate, cognitive_core.proposal_queue, cognitive_core.authorizer\n"
+        "import interfaces.api_server\n"
+        "print('security.authorizer' in sys.modules)\n"
+    )
+    r = subprocess.run([sys.executable, "-c", code, str(REPO), str(PACKAGES)], cwd=str(tmp_path),
+                       capture_output=True, text=True, timeout=180)
+    assert r.returncode == 0, r.stderr
+    assert r.stdout.strip().splitlines()[-1] == "False"

@@ -15,7 +15,7 @@ from typing import Any, Dict, Iterable, List, Optional
 import json
 
 from .authorizer import DefaultAuthorizer, Operation, Principal  # noqa: F401  (re-exported for callers)
-from security.owner_principal import owner_principal_values, require_owner_principal  # noqa: F401
+from .owner_principal import owner_principal_values, require_owner_principal  # noqa: F401  (relative: resolves through the facade, one Principal class)
 from .extraction import MemoryCandidate
 
 
