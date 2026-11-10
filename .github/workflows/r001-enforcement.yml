@@ -19,24 +19,10 @@ on:
       - '.gitleaks.toml'
       - '.pre-commit-config.yaml'
       - '.github/workflows/r001-enforcement.yml'
+  # Required status check on main (branch protection): it must report on every PR,
+  # otherwise a PR outside these paths waits forever for `enforce`. Push keeps the filter.
   pull_request:
     branches: [main]
-    paths:
-      - '03_IMPLEMENTATION/**'
-      - '04_CONFIG/**'
-      - '06_INBOX/**'
-      - '09_SECURITY/**'
-      - '03_IMPLEMENTATION/packages/security/**'
-      - '20_TESTS/**'
-      - '30_SCRIPTS/verification/**'
-      - '40_EXPERIMENTS/**'
-      - '99_META/**'
-      - 'pyproject.toml'
-      - 'pytest.ini'
-      - 'requirements-memory-v6.txt'
-      - '.gitleaks.toml'
-      - '.pre-commit-config.yaml'
-      - '.github/workflows/r001-enforcement.yml'
 
 permissions:
   contents: read
