@@ -68,9 +68,9 @@ Muchia (A, B) numără fișierele non-test din A care importă B. Același crite
 | L2_policy_adapter | root/security | politica de securitate a repo-ului |
 | L3_retrieval | packages/observability, packages/retrieval | căutare, context, telemetrie |
 | L4_memory_core | packages/memory, packages/vault_access | **Memory Core** și controlul accesului |
-| L5_products | products/xau_kinetic, packages/polymarket | produse |
+| L5_products | products/xau_kinetic, products/polymarket | produse (polymarket mutat din `packages/` în WP-12) |
 | L6_entrypoints | packages/interfaces, packages/agent_bridge | CLI-uri, server API/MCP, harness |
-| L7_cognition | packages/learning | învățare în buclă închisă |
+| L7_cognition | packages/learning, packages/book_to_memory | învățare în buclă închisă; experimentele book-to-memory (WP-10) |
 | L8_apps | root/cognitive_core, root/scripts | CLI-uri publice și scripturi |
 
 Fațadele (`packages/memory_controller`, `packages/cognitive_core`, `packages/memory_vault`,
@@ -89,6 +89,17 @@ Constatări care susțin ordinea:
   de nume. Decizia aparține WP-14.
 
 ### 1.3 Datoria reală rămasă: 11 fișiere
+
+> **Stare după F3 (WP-09..WP-12, 2026-11-10).** Din cele 11 fișiere au rămas 3 (2 perechi, ambele WP-14):
+> `security → interfaces` (`security/git_hooks.py`) și `vault_access → interfaces` (`audit.py`, `router.py`).
+> Abateri de la remedierile din tabel, deliberate și revizuite:
+> - `lifecycle/validation/book_to_memory_*` nu au mers în `07_EVALUATION`, ci în unitatea nouă
+>   `packages/book_to_memory` pe **L7_cognition** (WP-10), deci muchiile lor spre memory/interfaces sunt acum în jos.
+>   Mutarea de strat a unei unități se prinde doar la review de diff (`unenforced`), de aceea e consemnată aici.
+> - `retrieval/memory_ablation_benchmark.py` a fost șters: o copie identică exista deja în `40_EXPERIMENTS/harnesses/` (WP-09).
+> - `memory/orchestrator.py` ia factory-ul din `memory/controller_factory.py` (WP-09), nu dintr-o funcție din retrieval.
+> - `retrieval → memory` (`financial_search.py`) s-a închis mutând `memory/data_router.py` în `retrieval/` (WP-12).
+
 
 | Muchie | Fișier | Import | Remediere propusă |
 |---|---|---|---|

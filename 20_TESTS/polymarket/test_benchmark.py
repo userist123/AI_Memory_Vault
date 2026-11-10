@@ -10,7 +10,7 @@ from __future__ import annotations
 
 import pytest
 
-from packages.polymarket.benchmark import (
+from products.polymarket.benchmark import (
     BENCHMARK_SCHEMA_VERSION,
     VERDICT_BETTER,
     VERDICT_NO_DIFFERENCE,

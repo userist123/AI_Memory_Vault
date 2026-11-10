@@ -564,7 +564,7 @@ Limitele sunt parte din rezultat: un singur capitol, 12 întrebări, deci o dife
 
 # 📈 Predicție Polymarket
 
-`03_IMPLEMENTATION/packages/polymarket/` — instantanee de piață, un consiliu de predicție, calibrare, avantajul modelului față de piață, abstenție de risc, dimensionare Kelly aplicată ultima și necondiționat, backtest, benchmark, ablație cu corecție Holm-Bonferroni și un contract de proveniență temporală.
+`03_IMPLEMENTATION/products/polymarket/` — instantanee de piață, un consiliu de predicție, calibrare, avantajul modelului față de piață, abstenție de risc, dimensionare Kelly aplicată ultima și necondiționat, backtest, benchmark, ablație cu corecție Holm-Bonferroni și un contract de proveniență temporală.
 
 ### Ce a stabilit prima captură reală
 

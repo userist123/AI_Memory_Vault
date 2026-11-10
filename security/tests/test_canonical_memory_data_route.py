@@ -9,7 +9,7 @@ if str(PACKAGES) not in sys.path:
 
 import pytest
 
-from memory.data_router import MemoryDataEgressGate, MemoryDataRouter, DataRouteViolation
+from retrieval.data_router import MemoryDataEgressGate, MemoryDataRouter, DataRouteViolation
 
 
 def test_model_egress_route_is_canonical_and_auditable():

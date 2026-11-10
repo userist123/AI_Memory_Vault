@@ -28,10 +28,13 @@ PACKAGES = REPO / "03_IMPLEMENTATION" / "packages"
 # Ratchet for P3: files loaded as two or more distinct module objects. Measured before
 # the alias (HEAD of modernize/f2-wp07a-facades): interfaces.api_server 11,
 # cognitive_core.recall_cli 10. After the alias: 10 and 10. What is left are modules the
-# production code imports by *physical* name (`retrieval.context.*`, `memory.data_router`),
+# production code imports by *physical* name (`retrieval.context.*`, `retrieval.data_router`),
 # which the contract keeps importable and migrates later. The numbers may go down, never up.
+# WP-12: data_router moved memory -> retrieval and is now imported relatively by
+# financial_search, so one fewer file is loaded twice: 10 -> 9 for both (measured, with and
+# without the repository root on the path).
 DUAL_LOAD_BEFORE = {"interfaces.api_server": 11, "cognitive_core.recall_cli": 10}
-DUAL_LOAD_CEILING = {"interfaces.api_server": 10, "cognitive_core.recall_cli": 10}
+DUAL_LOAD_CEILING = {"interfaces.api_server": 9, "cognitive_core.recall_cli": 9}
 
 CONTRACT_SYMBOLS = {
     "controller": ["MemoryController", "StorageEngine", "Lifecycle", "GraphExpansionDegraded",

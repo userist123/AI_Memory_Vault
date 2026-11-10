@@ -1,4 +1,4 @@
-from packages.polymarket.paper_simulation import (
+from products.polymarket.paper_simulation import (
     PaperInstruction,
     PaperQuote,
     PaperRun,
@@ -6,7 +6,7 @@ from packages.polymarket.paper_simulation import (
     SIDE_BUY,
     STATUS_PARTIAL,
 )
-from packages.polymarket.risk_sizing import MarketConditions, PortfolioState, SIZE_APPROVED, size_position
+from products.polymarket.risk_sizing import MarketConditions, PortfolioState, SIZE_APPROVED, size_position
 
 
 def test_risk_size_can_enter_paper_ledger_without_live_adapter():

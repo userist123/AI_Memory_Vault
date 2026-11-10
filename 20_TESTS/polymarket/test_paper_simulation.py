@@ -1,6 +1,6 @@
 import pytest
 
-from packages.polymarket.paper_simulation import (
+from products.polymarket.paper_simulation import (
     PaperInstruction,
     PaperQuote,
     PaperRun,
@@ -114,7 +114,7 @@ def test_no_network_or_credentials_symbols_present():
     import pathlib
 
     text = pathlib.Path(
-        "03_IMPLEMENTATION/packages/polymarket/paper_simulation.py"
+        "03_IMPLEMENTATION/products/polymarket/paper_simulation.py"
     ).read_text(encoding="utf-8")
     lowered = text.lower()
     assert "urllib" not in lowered

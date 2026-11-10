@@ -1,13 +1,13 @@
 import pytest
 
-from packages.polymarket.historical_replay import HistoricalPricePoint
-from packages.polymarket.market_model_edge import (
+from products.polymarket.historical_replay import HistoricalPricePoint
+from products.polymarket.market_model_edge import (
     MARKET_MODEL_EDGE_SCHEMA_VERSION,
     build_edge_observation,
     compare_predictions_to_market,
     select_latest_eligible_price,
 )
-from packages.polymarket.prediction_ledger import PredictionProvenance, build_prediction
+from products.polymarket.prediction_ledger import PredictionProvenance, build_prediction
 
 PREDICTION_TIME = "2026-01-01T12:00:00+00:00"
 EARLY_TIME = "2026-01-01T11:55:00+00:00"

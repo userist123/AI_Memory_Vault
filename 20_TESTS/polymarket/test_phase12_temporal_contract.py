@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import pytest
 
-from packages.polymarket.phase12_temporal_contract import TemporalReplayCase, validate_temporal_replay_case
+from products.polymarket.phase12_temporal_contract import TemporalReplayCase, validate_temporal_replay_case
 
 
 def _case(**overrides: str) -> TemporalReplayCase:

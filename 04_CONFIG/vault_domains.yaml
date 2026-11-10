@@ -142,7 +142,7 @@ domains:
   # ── 03 Implementation ────────────────────────────────────────────────────────────────────
   implementation:
     title: Implementare — documentația pachetelor Python (memory, retrieval, security, routing)
-    roots: ["03_IMPLEMENTATION/README.md", "03_IMPLEMENTATION/packages"]
+    roots: ["03_IMPLEMENTATION/README.md", "03_IMPLEMENTATION/packages", "03_IMPLEMENTATION/products/polymarket"]
     keywords: [implementare, implementation, cod, package, pachet, controller, retrieval, mcp, interfaces]
   products.xau_kinetic:
     title: XAU_Kinetic / Elite Quant Bot — motorul de trading XAUUSD

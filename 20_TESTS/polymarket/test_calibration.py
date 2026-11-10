@@ -2,20 +2,20 @@ import math
 
 import pytest
 
-from packages.polymarket.calibration import (
+from products.polymarket.calibration import (
     CALIBRATION_SCHEMA_VERSION,
     CalibrationObservation,
     observe_prediction,
     score_calibration,
 )
-from packages.polymarket.market_snapshot import (
+from products.polymarket.market_snapshot import (
     MarketLifecycle,
     PolymarketMarket,
     PriceObservation,
     ResolutionMetadata,
     build_snapshot,
 )
-from packages.polymarket.prediction_ledger import PredictionProvenance, build_prediction
+from products.polymarket.prediction_ledger import PredictionProvenance, build_prediction
 
 
 PREDICTION_TIME = "2026-01-01T12:00:00+00:00"

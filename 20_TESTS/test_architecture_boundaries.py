@@ -67,7 +67,8 @@ def test_real_repo_passes_with_committed_config():
     assert config["schema_version"] == 1 and config["baseline_commit"] == "0752ac2b7"
     assert ab.check(REPO, config) == []
     assert all(e["owner_wp"] in {"WP-06", "WP-10", "WP-12", "WP-14"} for e in config["baseline_edges"])
-    assert any(e.get("hard_forbidden") and e["to"] == "products/xau_kinetic" for e in config["baseline_edges"])
+    # WP-12 removed the only hard_forbidden entry (interfaces -> xau_kinetic); none may come back.
+    assert not any(e.get("hard_forbidden") for e in config["baseline_edges"])
 
 
 def test_downward_and_same_layer_imports_are_allowed(tmp_path):
@@ -138,7 +139,7 @@ def test_f_hard_forbidden_edge_needs_baseline_even_within_a_layer(tmp_path):
 
 def test_owner_wp_rules():
     assert ab.owner_wp("packages/a", "root/cognitive_core", False) == "WP-06"
-    assert ab.owner_wp("packages/a", "packages/polymarket", False) == "WP-12"
+    assert ab.owner_wp("packages/a", "products/polymarket", False) == "WP-12"
     assert ab.owner_wp("packages/a", "root/security", False) == "WP-14"
     assert ab.owner_wp("packages/a", "packages/b", False) == "WP-10"
     assert ab.owner_wp("packages/a", "products/b", True) == "WP-12"

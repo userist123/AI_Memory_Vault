@@ -27,7 +27,7 @@ import json
 
 import pytest
 
-from packages.polymarket.backtest import (
+from products.polymarket.backtest import (
     BACKTEST_SCHEMA_VERSION,
     SPLIT_TEST,
     Decision,
@@ -35,22 +35,22 @@ from packages.polymarket.backtest import (
     build_leakage_proof,
     score_decisions,
 )
-from packages.polymarket.gamma_ingest import ingest_payload
-from packages.polymarket.historical_replay import HistoricalPricePoint, HistoricalReplay
-from packages.polymarket.market_model_edge import select_latest_eligible_price
-from packages.polymarket.market_snapshot import SnapshotStore
-from packages.polymarket.prediction_ledger import (
+from products.polymarket.gamma_ingest import ingest_payload
+from products.polymarket.historical_replay import HistoricalPricePoint, HistoricalReplay
+from products.polymarket.market_model_edge import select_latest_eligible_price
+from products.polymarket.market_snapshot import SnapshotStore
+from products.polymarket.prediction_ledger import (
     PredictionProvenance,
     build_prediction,
 )
-from packages.polymarket.resolutions import (
+from products.polymarket.resolutions import (
     RESOLUTION_SCHEMA_VERSION,
     SOURCE_ONCHAIN_SETTLEMENT,
     STATUS_RESOLVED,
     ResolutionRecord,
 )
-from packages.polymarket.risk_abstention import DECISION_BET, evaluate_prediction
-from packages.polymarket.risk_sizing import (
+from products.polymarket.risk_abstention import DECISION_BET, evaluate_prediction
+from products.polymarket.risk_sizing import (
     SIZE_APPROVED,
     MarketConditions,
     PortfolioState,

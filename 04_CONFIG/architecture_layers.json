@@ -65,7 +65,7 @@
       "name": "L5_products",
       "units": [
         "products/xau_kinetic",
-        "packages/polymarket"
+        "products/polymarket"
       ]
     },
     {
@@ -106,24 +106,6 @@
     "packages/memory_controller": 2
   },
   "baseline_edges": [
-    {
-      "from": "packages/interfaces",
-      "to": "products/xau_kinetic",
-      "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-12",
-      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06)",
-      "hard_forbidden": true
-    },
-    {
-      "from": "packages/retrieval",
-      "to": "packages/memory",
-      "imports": 1,
-      "since": "2026-11-09",
-      "owner_wp": "WP-12",
-      "reason": "reatribuire dupa rezolvarea fatadelor (WP-06); ramane doar financial_search.py (produs financiar); memory_ablation_benchmark.py mutat in 40_EXPERIMENTS (WP-09)",
-      "widened_by": "WP-07"
-    },
     {
       "from": "packages/security",
       "to": "packages/interfaces",
@@ -192,7 +174,6 @@
         "packages/memory",
         "packages/memory_controller",
         "packages/observability",
-        "packages/polymarket",
         "packages/providers",
         "packages/retrieval",
         "packages/routing",
