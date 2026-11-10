@@ -166,7 +166,7 @@ public static class EvidenceFingerprint
         if (t == LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.FingerprintName];
         if (t == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName];
         if (t == LogAnalyzer.Dfir.FileSystem.RecycleBinInfoParser.SourceTypeName) return ["recycle_info"];
-        if (t is "chromium_history" or "firefox_places") return ["sqlite"];
+        if (t is "chromium_history" or "firefox_places" or "windows_search_index") return ["sqlite"];   // windows_search_index: WindowsSearchIndexParser.SourceTypeName
         if (t == "jumplist_auto" || name.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase)) return ["cfb"];
         if (t == "lnk" || name.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase)) return ["lnk"];
         return null;

@@ -142,7 +142,7 @@ public sealed class InvestigationPipeline
     public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
 
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
-        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector()];
+        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -162,9 +162,14 @@ public sealed class InvestigationPipeline
     public static List<EvidenceItem> Import(CaseWorkspace ws, IEnumerable<string> files)
     {
         var list = new List<EvidenceItem>();
-        foreach (var f in files)
+        var all = files.ToList();
+        foreach (var f in all)
         {
             var type = ImportType(f);
+            // the Windows Search index: Windows.db and the -wal beside it go together into one folder, so the parser finds the journal next to the database;
+            // a -wal selected on its own beside a selected Windows.db is taken with it, not imported twice
+            if (type == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName) { list.AddRange(ImportSearchIndex(ws, f)); continue; }
+            if (f.EndsWith("-wal", StringComparison.OrdinalIgnoreCase) && all.Any(x => x.Equals(f[..^4], StringComparison.OrdinalIgnoreCase) && ImportType(x) == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName)) continue;
             // E1: an archived log ("Archive-Security-<date>.evtx") is the Security channel; E1/E10: the origin (archived log, Windows.old, shadow copy) goes into the notes and custody.
             var source = type == "evtx" ? LogAnalyzer.Dfir.Windows.Acquisition.HistoricalSources.ChannelFromFileName(f) : type;
             var origin = LogAnalyzer.Dfir.Analysis.EvidenceOrigin.Label(f);
@@ -173,6 +178,39 @@ public sealed class InvestigationPipeline
             if (origin.Contains("VSS", StringComparison.Ordinal)) ws.Audit("vss.import", $"{list[^1].EvidenceId} din {f}");
         }
         return list;
+    }
+
+    /// <summary>
+    /// Imports a Windows Search Windows.db with the Windows.db-wal beside it (if any) into one new folder of the case, so the journal sits next to the
+    /// database. The note says whether a journal was there; the pair still cannot be vouched for as one state (the parser writes that gap).
+    /// </summary>
+    private static List<EvidenceItem> ImportSearchIndex(CaseWorkspace ws, string db)
+    {
+        var type = LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName;
+        var dir = Path.Combine(ws.RawDir("Import:" + type), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var items = new List<EvidenceItem>();
+        var wal = db + "-wal";
+        bool hasWal = File.Exists(wal);
+        string Copy(string from, string name)
+        {
+            var dest = Path.Combine(dir, name);
+            using (var src = new FileStream(from, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            using (var dst = new FileStream(dest, FileMode.CreateNew, FileAccess.Write))
+                src.CopyTo(dst);
+            File.SetLastWriteTimeUtc(dest, File.GetLastWriteTimeUtc(from));
+            return dest;
+        }
+        var origin = LogAnalyzer.Dfir.Analysis.EvidenceOrigin.Label(db);
+        var note = (origin.Length > 0 ? $"Sursă istorică ({origin}). " : "") + "Importat de operator din: " + db + "." +
+                   (hasWal ? " Jurnalul Windows.db-wal de lângă bază a fost importat împreună cu ea." : " " + LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.NoWalNote);
+        var dbItem = ws.RegisterStored(Copy(db, "Windows.db"), db, "Import:" + type, type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion, action: "imported", notes: note);
+        items.Add(dbItem);
+        if (hasWal)
+            items.Add(ws.RegisterStored(Copy(wal, "Windows.db-wal"), wal, "Import:" + type, LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.WalSourceType,
+                TemporalType.Historical, "Import", DfirInfo.ApplicationVersion, action: "imported", parentEvidenceId: dbItem.EvidenceId, notes: "Jurnalul WAL al indexului Windows Search, importat împreună cu " + db));
+        if (origin.Contains("VSS", StringComparison.Ordinal)) ws.Audit("vss.import", $"{dbItem.EvidenceId} din {db}");
+        return items;
     }
 
     /// <summary>The evidence type <see cref="Import"/> gives a file. Every file is evidence; one with no known type is "file" (hash IOCs, YARA). WP18: the intake screen uses the same rule.</summary>
@@ -197,6 +235,8 @@ public sealed class InvestigationPipeline
                 _ when Path.GetFileName(f).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase) => "amcache",
                 _ when EvidenceFingerprint.Detect(f) == "task_xml" => "task_xml",
                 _ when EvidenceFingerprint.Detect(f) == "usn_fsutil" => "usn_journal",
+                // the Windows Search index: the name Windows.db and an SQLite header; the tables are checked by the parser (another Windows.db is then refused there)
+                _ when Path.GetFileName(f).Equals(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.DatabaseFileName, StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName,
                 _ when Path.GetFileName(f).Equals("History", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "chromium_history",
                 _ when Path.GetFileName(f).Equals("places.sqlite", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "firefox_places",
                 _ when RegistryHiveType(Path.GetFileName(f)) is { } hiveType && EvidenceFingerprint.Detect(f) == "regf" => hiveType,
@@ -285,6 +325,10 @@ public sealed class InvestigationPipeline
     {
         LogAnalyzer.Dfir.Windows.Acquisition.SrumCollector.SrumLogSourceType =>
             "jurnal de tranzacții ESE al bazei SRUM: nu se citește separat; parserul SRUM îl folosește la recuperarea unei copii „murdare”",
+        LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.WalSourceType or LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.ShmSourceType =>
+            "însoțitor (-wal / -shm) al indexului Windows Search: nu se citește separat; parserul îl pune lângă copia de lucru a bazei",
+        LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.EdbSourceType =>
+            "Windows.edb (ESE): păstrat doar ca probă; nu există parser pentru el",
         "amcache_log" => "jurnal de tranzacții al hive-ului Amcache: păstrat în caz ca probă; reaplicarea lui pe hive nu este încă implementată (intrările scrise doar în jurnal pot lipsi)",
         _ => null,
     };

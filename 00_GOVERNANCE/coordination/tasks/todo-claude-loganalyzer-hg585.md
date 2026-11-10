@@ -510,3 +510,14 @@
   Accepted residual: Content stays in Fields (local AiCaseFacts blob; nothing leaves the station; exports with Fields not separately masked);
   the base parser layer already rejects >4 MiB, so the parser's own oversize gap is a second guard; collector outer catch message wording.
   Lab leftovers on WS01: C:\LA\np, C:\LA\remote, it.admin's Notepad tabs (TEST text). Suites: Dfir 3127, App 1028, UI 368, Edition 45.
+- 2026-11-10 (owner „Nu te mai opri pana nu termini toata treaba”): wave 7, Windows Search index (SQLite, Windows 11). Real Windows.db from
+  LAB-WS01 (WSearch stopped briefly for the lab copy only; TEST file in it.admin's Documents indexed, WorkId 1811). Worker (Sonnet):
+  WindowsSearchIndexParser (property ids from the Metadata table by name; AutoSummary = file content, sensitive, never in Summary) +
+  WindowsSearchIndexCollector + REMOTE-TOOL presence. Opus r1 HIGH (reproduced): db and -wal copied through separate esentutl /vss snapshots
+  rebuild a never-existing state that passes quick_check -> collector now makes ONE WMI Win32_ShadowCopy (ClientAccessible), copies db/-wal/-shm
+  from it, deletes it (orphan deleted if lookup fails); without it only the db (esentutl). WMI flow verified in PowerShell on WS01 (created,
+  copied, deleted, count back to 0); C# collector only with a fake ISnapshot. r2: journal of a vouched pair applied even if the db alone
+  fails quick_check (checkpoint frozen mid-way), unsound db always gets a gap, import brings Windows.db-wal into the same folder, pair vouched
+  for only by collector + action + note. Accepted residual: a later-moment journal of an imported pair can only be flagged ("possibly
+  mixed"), not detected. Real run: 1,171 events, SHA-256 unchanged. Suites: Dfir 3158, App 1028, UI 368, Edition 45.
+  Next: $I30 slack (FSCTL_GET_NTFS_FILE_RECORD + raw $INDEX_ALLOCATION read), then decide on $LogFile / offline VSS (needs image formats).

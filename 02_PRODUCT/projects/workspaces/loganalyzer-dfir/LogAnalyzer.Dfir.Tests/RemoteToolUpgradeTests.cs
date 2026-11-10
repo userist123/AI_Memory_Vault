@@ -80,6 +80,21 @@ public class RemoteToolUpgradeTests
     }
 
     [Fact]
+    public void Windows_Search_index_entry_for_a_remote_tool_is_presence_never_execution()
+    {
+        // an indexed AnyDesk.exe in Downloads: presence (the file existed when indexed), not a run; a user-writable folder does not raise it
+        var f = Assert.Single(Rt(Row("WindowsSearch", 0, "", @"C:\Users\ana\Downloads\AnyDesk.exe", "")));
+        Assert.Equal("REMOTE-TOOL-PRESENT", f.RuleId);
+        Assert.Equal(SemanticType.Presence, f.SemanticType);
+        Assert.Equal(Severity.Low, f.Severity);
+        Assert.Contains("AnyDesk", f.Title);
+        Assert.Empty(Rt(Row("WindowsSearch", 0, "", @"C:\Users\ana\Documents\notes.txt", "")));
+        var both = Rt(Row("WindowsSearch", 0, "", @"C:\Users\ana\Downloads\AnyDesk.exe", ""), Row("Prefetch", 1, "ANYDESK.EXE", @"C:\Users\ana\Downloads\AnyDesk.exe", ""));
+        Assert.Equal("REMOTE-TOOL-EXECUTED", Assert.Single(both).RuleId);
+        Assert.Equal(SemanticType.Presence, AntiOverclaim.SemanticForArtifact("WindowsSearch"));
+    }
+
+    [Fact]
     public void MuiCache_is_presence_evidence_for_a_remote_tool_never_execution()
     {
         var f = Assert.Single(Rt(Row("MUICache", 0, "anydesk.exe", @"C:\Users\ana\Downloads\AnyDesk.exe", "")));

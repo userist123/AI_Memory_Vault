@@ -209,7 +209,7 @@ public sealed class NotepadTabStateParser : EvidenceParserBase
     /// Content without format characters (bidi overrides, zero-width, the Tag block U+E0000-E007F used for "ASCII smuggling") and control characters
     /// other than CR, LF and TAB; U+2028 / U+2029 become LF; a lone surrogate becomes U+FFFD. Judged per code point, not per UTF-16 unit.
     /// </summary>
-    internal static string ContentClean(string content)
+    public static string ContentClean(string content)
     {
         if (string.IsNullOrEmpty(content)) return "";
         var sb = new System.Text.StringBuilder(content.Length);
