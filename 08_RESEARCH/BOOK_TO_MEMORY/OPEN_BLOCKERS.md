@@ -114,7 +114,7 @@ none of the "fixed" states below means a research hypothesis was confirmed. B02 
 
 ### B10: why it is open and what would close it
 
-* **Why open.** The Book-to-Memory modules (`lifecycle/validation/book_to_memory_*.py`), `retrieval/interference_gate.py` and the
+* **Why open.** The Book-to-Memory modules (`book_to_memory/book_to_memory_*.py`), `retrieval/interference_gate.py` and the
   harness added for B03-B08 are not wired into any production path, on purpose: they are research modules and `VAULT_STATE.md`
   section 3 says so. The Production-Consumer rule of `CLAUDE.md` (`grep -rl "<module>" ... | grep -v tests`) returns, for these modules,
   only other research modules and research scripts (`08_RESEARCH/BOOK_TO_MEMORY/run_h1_*.py`, `30_SCRIPTS/evaluation/*b2m*`),

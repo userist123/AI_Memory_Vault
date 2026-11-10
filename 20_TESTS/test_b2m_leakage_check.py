@@ -5,7 +5,7 @@ from pathlib import Path
 
 import pytest
 
-from lifecycle.validation.book_to_memory_leakage import (
+from book_to_memory.book_to_memory_leakage import (
     NEAR_NGRAM_THRESHOLD,
     ROLE_HELDOUT,
     ROLE_SCENARIO,

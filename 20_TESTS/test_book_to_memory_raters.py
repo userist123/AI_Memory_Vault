@@ -10,7 +10,7 @@ from pathlib import Path
 
 import pytest
 
-from lifecycle.validation.book_to_memory_raters import (
+from book_to_memory.book_to_memory_raters import (
     RATING_RECORD_SCHEMA,
     SCHEMA_VERSION,
     STATUS_INSUFFICIENT_RATERS,

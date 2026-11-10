@@ -2,9 +2,9 @@
 
 Implements the formal catalog registry according to:
 - 00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md (Section 2 & 11)
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_schema.py
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_pipeline.py
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_schema.py
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_lifecycle.py
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_pipeline.py
 """
 from __future__ import annotations
 

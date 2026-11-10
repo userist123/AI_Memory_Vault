@@ -3,8 +3,8 @@
 Implements the formal Conflict Management authority according to:
 - 00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md (Section 5: Contradictii)
 - 00_GOVERNANCE/protocols/Confidence_Model.md
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_schema.py
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_schema.py
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_lifecycle.py
 """
 from __future__ import annotations
 

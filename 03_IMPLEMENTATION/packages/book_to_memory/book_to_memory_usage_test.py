@@ -3,9 +3,9 @@
 Implements the formal Task-Based Validation authority according to:
 - 00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md (Section 6: Test de utilizare & Section 7: Evaluare cu/fara nota)
 - 00_GOVERNANCE/protocols/Confidence_Model.md
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_schema.py
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_conflict.py
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_schema.py
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_lifecycle.py
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_conflict.py
 """
 from __future__ import annotations
 

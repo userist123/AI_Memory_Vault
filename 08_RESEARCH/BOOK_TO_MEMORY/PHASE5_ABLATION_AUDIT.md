@@ -11,13 +11,13 @@
 ## 1. Inspectarea HEAD-ului și a Componentelor Existente (Fazele 1–4)
 
 HEAD-ul validat al Fazei 4 este `1e81c2250`, având un working tree curat și integrând componentele:
-1. `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_schema.py` (Faza 1):
+1. `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_schema.py` (Faza 1):
    - Cele 11 tipuri atomice, separarea epistemică, verificarea provenienței și neutralitatea datelor pasive.
-2. `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py` (Faza 2):
+2. `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_lifecycle.py` (Faza 2):
    - Porțile de tranziție `GATE-01..GATE-08`, token-ul HMAC semnat de Owner (`OwnerApprovalToken`), demotarea reversibilă și verificarea `GATE-07 Ablation` (`ablation_delta >= 0`).
-3. `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_conflict.py` (Faza 3):
+3. `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_conflict.py` (Faza 3):
    - `ConflictRegistry`, identitatea deterministă `CONFLICT-<domain>-<slug>`, păstrarea pozițiilor duale și blocajul stării `ACTIVE`.
-4. `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_usage_test.py` (Faza 4):
+4. `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_usage_test.py` (Faza 4):
    - `TaskSpecification` (structură imutabilă anti-memorare), `TaskBasedValidator`, grila canonică de notare (5 dimensiuni, max 10), bariera de izolare a sursei și audit trail semnat SHA-256.
 
 ### Teste Validate Moștenite:
@@ -81,7 +81,7 @@ Secțiunea 7 a politicii autoritative stabilește cadrul metodologic obligatoriu
 ## 4. Plan de Implementare Faza 5
 
 1. Modul nou:
-   `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_ablation.py`
+   `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_ablation.py`
    - Reutilizează `TaskSpecification` și `TaskBasedValidator` din Faza 4;
    - Definește `AblationCondition` (`WITH_NOTE`, `WITHOUT_NOTE`);
    - Definește `AblationTrial` și `AblationExperimentRecord`;

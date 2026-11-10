@@ -26,8 +26,8 @@ from datetime import datetime, timezone
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
 from memory_controller.authorizer import Principal
-from lifecycle.validation.book_to_memory_run_config import RunConfig
-from lifecycle.validation.book_to_memory_hypothesis import (
+from .book_to_memory_run_config import RunConfig
+from .book_to_memory_hypothesis import (
     BookToMemoryHypothesisRegistry,
     DecisionRecord,
     HypothesisRecord,

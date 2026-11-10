@@ -3,7 +3,7 @@
 **Document Version**: 1.0.0  
 **Status**: APPROVED & IMPLEMENTED  
 **Authority**: `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md`  
-**Module**: `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_pipeline.py`  
+**Module**: `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_pipeline.py`  
 **Test Suite**: `20_TESTS/test_book_to_memory_pipeline.py` (16/16 PASS)  
 
 ---

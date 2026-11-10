@@ -2,11 +2,11 @@
 
 Validates all contracts under:
 - 00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md
-- 03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_pipeline.py
+- 03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_pipeline.py
 """
 import pytest
 from memory_controller.authorizer import Principal
-from lifecycle.validation.book_to_memory_schema import (
+from book_to_memory.book_to_memory_schema import (
     BookToMemoryType,
     EpistemicType,
     ConflictSeverity,
@@ -15,23 +15,23 @@ from lifecycle.validation.book_to_memory_schema import (
     ProvenanceGateError,
     SecurityInjectionError,
 )
-from lifecycle.validation.book_to_memory_lifecycle import (
+from book_to_memory.book_to_memory_lifecycle import (
     BookToMemoryLifecycleState,
     OwnerApprovalToken,
     issue_owner_approval,
 )
-from lifecycle.validation.book_to_memory_conflict import (
+from book_to_memory.book_to_memory_conflict import (
     ConflictRegistry,
     ConflictRecord,
 )
-from lifecycle.validation.book_to_memory_usage_test import (
+from book_to_memory.book_to_memory_usage_test import (
     TaskSpecification,
     EvaluationAttempt,
     RubricDimension,
     UsageTestStatus,
 )
-from lifecycle.validation.book_to_memory_run_config import RunConfig
-from lifecycle.validation.book_to_memory_pipeline import (
+from book_to_memory.book_to_memory_run_config import RunConfig
+from book_to_memory.book_to_memory_pipeline import (
     BookToMemoryPipeline,
     PipelineStage,
     BookIngestionAuditReport,
@@ -681,6 +681,6 @@ def test_pipeline_report_exposes_the_content_the_owner_is_asked_to_approve(
         note=valid_concept_note, task_spec=valid_task, **synthetic_eval(valid_concept_note)
     )
     assert report.final_lifecycle == "VERIFIED"
-    from lifecycle.validation.book_to_memory_lifecycle import note_content_sha256
+    from book_to_memory.book_to_memory_lifecycle import note_content_sha256
     assert report.candidate_content_sha256 == note_content_sha256(report.candidate_note)
     assert report.candidate_note["usage_test_score"] is not None
