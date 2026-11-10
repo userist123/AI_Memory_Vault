@@ -15,5 +15,5 @@ privită critic.
 | 8 | Tabele: antet, înălțime de rând, trunchiere cu indiciu, cifre tabulare | capturi | de făcut |
 | 9 | Notificarea live și bara de stare: stil sobru, fără să acopere conținutul | capturi | de făcut |
 
-Decizii luate fără întrebare (reversibile): tema „Registru” rămâne; pragul de strângere a antetului este 1280 px; pictogramele vin din
+Decizii luate fără întrebare (reversibile): tema „Registru” a devenit „Dosar” (cadru închis, hârtie rece, cobalt; vezi DESIGN.md); pragul de strângere a antetului este 1280 px; pictogramele vin din
 fontul de sistem (nimic de instalat).
