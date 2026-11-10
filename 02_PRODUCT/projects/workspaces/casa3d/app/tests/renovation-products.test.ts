@@ -12,6 +12,7 @@ import { FRONT_CLEARANCE, WALL_HIGH, ON_SURFACE } from '../core/rules';
 import { planSymbol } from '../core/plan-symbols';
 import { newSnapshot } from '../core/project';
 import { computeBOQ } from '../core/boq';
+import { doorOpenings, doorIssues, doorOptions, doorVisual } from '../core/doors';
 import { windowOpenings, windowCandidates, windowIssues, sanitizeWindows, windowVisual } from '../core/windows';
 import { suggestTechPoints, techBodyFields, pruneProducts, TECH_PRODUCT_CATEGORY } from '../core/technical';
 import { groupsForRoom } from '../core/furniture-fit';
@@ -39,7 +40,7 @@ test('fiecare ofertă nouă are prețul și linkul citite pe pagina produsului (
   const fresh = cat.offers.filter(o => o.provenance.verifiedAt === '2026-11-10'); assert.ok(fresh.length >= 50, String(fresh.length));
   for (const o of fresh){ assert.equal(ev.get(o.provenance.sourceUrl!), o.price, o.id); assert.ok(RETAILER_HOSTS[o.supplierId]!.includes(new URL(o.provenance.sourceUrl!).hostname), o.id); }
   const mats = mc.materials.filter(m => m.verifiedAt === '2026-11-10'); assert.ok(mats.length >= 30);
-  for (const m of mats){ assert.equal(ev.get(m.sourceUrl!), m.unitPrice, m.id); assert.ok(['window', 'socket', 'switch', 'thermostat'].includes(m.category), m.id); }
+  for (const m of mats){ assert.equal(ev.get(m.sourceUrl!), m.unitPrice, m.id); assert.ok(['window', 'socket', 'switch', 'thermostat', 'door'].includes(m.category), m.id); }
   // nimic cu dimensiuni contestate nu a intrat în plan; motivul e scris în dovezi
   assert.ok(evidence.skipped.some(s => /BelliSlimo/.test(String((s as { name?: string }).name)) && /adâncimea/.test(String(s.reason))));
   const newIds = new Set(fresh.map(o => o.variantId)); assert.ok(!cat.variants.some(v => newIds.has(v.id) && /BelliSlimo|Velis Tech|Vitodens/.test(v.name)));
@@ -95,4 +96,18 @@ test('regresie: microundele stau pe blatul bucătăriei (0,9 m), nu pe perete; c
   s.placements.push(onCounter); assert.equal(surfaceUnder(s, cat, onCounter), .9);
   const onFridge = { ...onCounter, id: 'mw2', x: fr.x, z: fr.z }; s.placements.push(onFridge);
   assert.ok(validatePlacement(s, cat, onFridge).some(i => i.code === 'OVERLAP'), 'microundele peste frigider sunt semnalate');
+});
+test('ușa de intrare: produs pe golul de intrare, primele în listă, avertismente pe golul greșit, deviz și desen 3D', () => {
+  const s = demo(), ent = doorOpenings(s).find(d => d.entrance)!, inner = doorOpenings(s).find(d => !d.entrance)!; assert.ok(ent && inner, 'demo are intrare și uși de interior');
+  const doors = mc.materials.filter(m => m.category === 'door' && m.specs?.entrance); assert.ok(doors.length >= 6, String(doors.length));
+  for (const m of doors){ assert.ok(m.specs!.sizeCm![0] > 50 && m.specs!.sizeCm![1] > 180, m.id); assert.equal(m.verificationType, 'product_page', m.id); }
+  assert.ok(new Set(doors.map(m => m.specs!.color)).size >= 3, 'culori diferite, nu un model standard');
+  assert.ok(doorOptions(mc, true)[0]!.specs?.entrance); assert.ok(!doorOptions(mc, false)[0]!.specs?.entrance);
+  const d = doors[0]!, interior = mc.materials.find(m => m.category === 'door' && !m.specs?.entrance)!;
+  s.doors = { [ent.id]: { product: d.id }, [inner.id]: { product: d.id } };
+  const iss = doorIssues(s, mc); assert.ok(!iss.some(i => i.openingId === ent.id && i.key === 'door.entrance')); assert.ok(iss.some(i => i.openingId === inner.id && i.key === 'door.entranceInside'));
+  s.doors = { [ent.id]: { product: interior.id } }; assert.ok(doorIssues(s, mc).some(i => i.openingId === ent.id && i.key === 'door.entrance'));
+  s.doors = { [ent.id]: { product: d.id } }; const b = computeBOQ(s, cat, mc); assert.ok(b.items.some(i => i.key === `door:${ent.id}`));
+  const v = doorVisual(s, mc, ent.level).find(x => x.wallIndex === ent.wallIndex && x.openingIndex === ent.openingIndex) as { entrance?: boolean; color: string | null };
+  assert.equal(v.entrance, true); assert.equal(v.color, d.specs!.color);
 });

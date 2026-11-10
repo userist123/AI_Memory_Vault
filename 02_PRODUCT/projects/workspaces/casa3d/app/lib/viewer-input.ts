@@ -49,7 +49,7 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
     const hood = st('hota'), hob = st('plita'); if (hood || hob) it.variant = { ...it.variant, s: { ...(it.variant.s || {}), ...(hood ? { hood } : {}), ...(hob ? { hob } : {}) } }; }
   if (mc) for (const it of items) if ((it.group === 'dus' || it.group === 'lavoar' || it.group === 'wc') && it.variant){ const r = snap.floor.rooms.find(x => x.id === snap.placements.find(p => p.id === it.id)?.roomId);
     const bv = r ? bathVisual(finishesOf(snap, r)) : null; if (bv) it.variant = { ...it.variant, s: { ...(it.variant.s || {}), b: bv } }; }
-  if (mc) for (const d of doorVisual(snap, mc, 0)){ const g = plan.pereti[d.wallIndex]?.goluri[d.openingIndex]; if (g) g.usa = { style: d.style, color: d.color, wood: d.wood, handle: d.handle }; }
+  if (mc) for (const d of doorVisual(snap, mc, 0)){ const g = plan.pereti[d.wallIndex]?.goluri[d.openingIndex]; if (g) g.usa = { style: d.style, color: d.color, wood: d.wood, handle: d.handle, ...('entrance' in d ? { entrance: true, glass: d.glass } : {}) }; }
   // tâmplăria aleasă pe fiecare fereastră: culoarea tocului, canatele, fixă sau mobilă, aluminiu sau PVC
   if (mc) for (const w of windowVisual(snap, mc, 0)){ const g = plan.pereti[w.wallIndex]?.goluri[w.openingIndex]; if (g) g.fer = { color: w.color, sashes: w.sashes, fixed: w.fixed, frame: w.frame, triple: w.triple }; }
   // sensul de deschidere al fiecărei uși (balamaua și partea), același ca în plan

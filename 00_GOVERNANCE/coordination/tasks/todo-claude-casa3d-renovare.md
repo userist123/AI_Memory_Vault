@@ -14,16 +14,22 @@ DONE:
     (onPatchMany); priza dublă = 2 module + ramă dublă nepreţuită; rama simplă nepreţuită doar când pagina nu o include.
   - Electrocasnice noi (masinaSpalat, uscator, masinaVase, microunde, centrala; hote, plite, cuptoare noi): modele 3D după
     tip și culoare, simboluri în plan, spațiu în față, camere, puncte tehnice; microundele stau pe blat (0,9 m).
+  - Uși de intrare (2026-11-10, a doua etapă): 14 uși metalice reale (Dedeman 4, Hornbach 8, eMAG 2; 5 lăsate deoparte, cu
+    motiv) ca produse `door` cu specs.entrance; pe golul de intrare apar primele (doorOptions); avertisment invers
+    door.entranceInside; mânerul inclus nu mai cere mâner; desen 3D: foaie metalică groasă, panouri sau geam, vizor.
+    Două prețuri reverificate independent (Dedeman 1859 lei, Hornbach 2050 lei).
   - Verificare vizuală: randări Blender Cycles în D:/casa3d-render/renovare/out/.
   - Revizie: runda 1 PARTIAL → reparat (532ee851f); runda 2 PARTIAL → rama dublă reparată de sesiunea principală.
-  - Teste: tests/renovation-products.test.ts (8); suita 143 de fișiere / 980 de teste; tsc curat; build compilat.
+  - Teste: tests/renovation-products.test.ts (9); suita 143 de fișiere / 981 de teste; tsc curat; build compilat.
 RESIDUALS ACCEPTATE (decizia sesiunii principale după runda 2):
   - microundele puse pe podea nu primesc avertisment; cota blatului e fixă 0,9 m (motorul desenează .86 + blat).
   - hota de tavan are înălțime fixă 2,5 m; hota de insulă e desenată ca hotă de perete; hota-3/5/7 fără dimensiuni (60 cm).
   - stilul cuptorului nu se desenează; fereastra „fix + oscilobatant” e desenată cu 2 canate mobile.
+  - ușile de 120 și 140 cm (două foi) sunt desenate cu o singură foaie; prețul de la eMAG Prodias e la „stoc epuizat”.
+  - câmpul evidence al ușilor de intrare e rezumat de WebFetch, nu text integral copiat.
   - sanitizeWindows acceptă orice id scurt pentru produs (la fel ca la uși).
 NEXT: CI pe PR; decizia de merge e a proprietarului.
-IDEAS AFTER: uși de intrare (metal) și uși de balcon pe goluri de ușă; corpuri de iluminat ca produse pe punctele de lumină;
+IDEAS AFTER: uși de balcon pe goluri de ușă; ușă dublă desenată cu două foi; corpuri de iluminat direct pe punctele de lumină;
   parchet, gresie și vopsele din mai multe magazine; obiecte sanitare noi; reverificare lunară a prețurilor.
 KEY FILES: app/core/{windows,technical,boq,catalog}.ts, app/components/{viewer3d-engine.js,Editor.tsx,TechPanel.tsx},
   app/lib/viewer-input.ts, app/data/{catalog.v1,materials.v1,catalog-evidence.2026-11-10}.json, app/tests/renovation-products.test.ts.

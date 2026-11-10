@@ -28,7 +28,7 @@ import { downloadSchedule } from './FinishSchedule';
 import { finishSchedule } from '@/core/finish-schedule';
 import { WALL_ITEM_KINDS, WALL_ITEM_CATEGORY, wallItemDefaults, furnitureBelow, wallItemFurnitureIssues } from '@/core/wall-items';
 import { materialOf, insertBand, sideSpan, FEATURE_CATEGORY, featureMarks, roomCeilingDropCm } from '@/core/finishes';
-import { doorIssues, doorSwing, doorTypeOf, isSlidingType } from '@/core/doors';
+import { doorIssues, doorOptions, doorSwing, doorTypeOf, isSlidingType } from '@/core/doors';
 import { DOOR_TYPES, DOOR_TYPE_RULES, WALL_ITEM_RULES } from '@/core/rules';
 import { normalizeHex } from '@/core/appearance';
 import { footprintOf } from '@/core/validate';
@@ -1300,7 +1300,7 @@ function DoorPanel({ op, snap, mc, cur, onChange }: { op: Opening; snap: Snapsho
   return (<>
     <h4>{t('door.title')}</h4>
     {iss.map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.key === 'door.typeMismatch' ? { ...i.vars, type: String(i.vars?.type ?? '').split(', ').map(x => t(`door.type.${x}`)).join(', '), gap: t(`door.type.${i.vars?.gap}`) } : i.key === 'door.techInSlide' ? { ...i.vars, point: TECH_KINDS[i.vars?.point as TechKind]?.label[lang === 'en' ? 'en' : 'ro'] ?? String(i.vars?.point) } : i.vars)}</div>)}
-    <label className="f"><span>{t('door.product')}</span><MaterialPicker cur={cur} value={c.product} options={by('door')} none={t('door.none')} onChange={v => onChange({ product: v || null })} /></label>
+    <label className="f"><span>{t('door.product')}</span><MaterialPicker cur={cur} value={c.product} options={doorOptions(mc, !!op.entrance)} none={t('door.none')} onChange={v => onChange({ product: v || null })} /></label>
     <label className="f"><span>{t('door.handle')}</span><MaterialPicker cur={cur} value={c.handle} options={by('door_handle')} none={t('door.none')} onChange={v => onChange({ handle: v || null })} /></label>
     {(type === 'sliding' || type === 'pocket' || type === 'folding') && (systems.length > 0 || !!c.system) && <label className="f"><span>{t('door.system')}</span><MaterialPicker cur={cur} value={c.system} options={systems} none={t('door.none')} onChange={v => onChange({ system: v || null })} /></label>}
   </>);

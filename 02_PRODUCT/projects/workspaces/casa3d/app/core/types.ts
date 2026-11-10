@@ -96,7 +96,9 @@ export type FloorPattern = 'straight' | 'brick' | 'third' | 'diagonal' | 'herrin
 /** Date tehnice citite pe pagina produsului; lipsa unei valori înseamnă „nedeclarat”, nu „bun”. */
 export interface MaterialSpecs { sizeCm?: [number, number]; rectified?: boolean; slip?: 'R9' | 'R10' | 'R11' | 'R12' | 'R13'; ip?: string; cctK?: number; lumens?: number;
   roll?: { widthM: number; lengthM: number; repeatCm: number; match?: 'free' | 'straight' | 'offset' }; patterns?: FloorPattern[]; wet?: boolean; pieceM?: number; color?: string;
-  pieces?: number; opacity?: number; blind?: 'roller' | 'roman' | 'venetian'; door?: 'plain' | 'panel' | 'glass'; wood?: boolean; doorTypes?: DoorType[]; system?: 'sliding' | 'pocket' | 'folding';
+  pieces?: number; opacity?: number; blind?: 'roller' | 'roman' | 'venetian'; door?: 'plain' | 'panel' | 'glass'; wood?: boolean;
+  /** ușă de intrare (metalică, cu toc și închidere proprie): pe golul de intrare; `withHandle` = mânerul e în pachet */
+  entrance?: boolean; withHandle?: boolean; glass?: boolean; doorTypes?: DoorType[]; system?: 'sliding' | 'pocket' | 'folding';
   thicknessMm?: number; finish?: string; material?: string; diameterCm?: number; effect?: PlasterEffect;
   /** balustrada: ce parte a sistemului e produsul (mână curentă, stâlp, panou, set complet, kit de start), citit pe pagină */
   railPart?: 'handrail' | 'post' | 'panel' | 'set' | 'start';

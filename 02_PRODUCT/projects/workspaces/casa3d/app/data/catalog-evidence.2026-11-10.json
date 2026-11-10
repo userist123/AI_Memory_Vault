@@ -1,5 +1,5 @@
 {
- "note": "Produse reale citite pe pagina produsului pe 2026-11-10 (prețul și dimensiunile din fișa tehnică), pentru ferestre, electrocasnice, aparatele bucătăriei, centrale, boilere și aparataj electric. Fără dimensiuni ghicite: piesele cu dimensiuni lipsă sau contestate pe pagină au rămas deoparte.",
+ "note": "Produse reale citite pe pagina produsului pe 2026-11-10 (prețul și dimensiunile din fișa tehnică), pentru ferestre, electrocasnice, aparatele bucătăriei, centrale, boilere și aparataj electric și uși de intrare. Fără dimensiuni ghicite: piesele cu dimensiuni lipsă sau contestate pe pagină au rămas deoparte.",
  "items": [
   {
    "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-4k-80x116-cm-alba-fixa/4692264/",
@@ -1218,6 +1218,202 @@
     "h": null
    },
    "topic": "instalatii-electrice"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/usa-interior-metalica-megadoor-prestige-1-lux-1017-dreapta-alb-88-x-200-cm/p/6038991",
+   "name": "Usa interior metalica Megadoor Prestige 1 Lux 1017, dreapta, alb, 88 x 200 cm",
+   "price": 1859.0,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "1859.00 lei /bucată; Dimensiuni usa + toc (cm) 88 x 200; Grosime usa (cm) 7.7; Toc inclus: Da; clasa de rezistenta la efractie RC3",
+   "dimensionsCm": {
+    "w": 88,
+    "h": 200,
+    "d": 7.7
+   },
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/usa-interior-metalica-megadoor-prestige-1-lux-dreapta-gri-antracit-88-x-200-cm/p/6037354",
+   "name": "Usa interior metalica Megadoor Prestige 1 Lux, dreapta, gri antracit, 88 x 200 cm",
+   "price": 1859.0,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "1859.00 lei /bucată; Dimensiuni usa + toc (cm) 88 x 200; Grosime usa (cm) 7.7; Toc inclus: Da; set manere, vizor, 2 yale monobloc cu cilindri; RC3",
+   "dimensionsCm": {
+    "w": 88,
+    "h": 200,
+    "d": 7.7
+   },
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/usa-interior-metalica-megadoor-elite-plus-1047-stanga-gri-antracit-stejar-88-x-200-cm/p/6040707",
+   "name": "Usa interior metalica Megadoor Elite Plus 1047, stanga, gri antracit + stejar, 88 x 200 cm",
+   "price": 2343.0,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "2343.00 lei /bucată; toc: dimensiuni: 2000 x 880 x 160 mm; usa: 1950 x 780 x 77 mm; Toc inclus: Da, metal profilat imbracat cu MDF; clasa de rezistenta la efractie RC4",
+   "dimensionsCm": {
+    "w": 88,
+    "h": 200,
+    "d": 7.7
+   },
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/usa-interior-metalica-bestimp-l05g-stanga/-dreapta-maro-88-x-202-cm/p/6036309",
+   "name": "Usa interior metalica BestImp L05G, stanga / dreapta, maro, 88 x 202 cm",
+   "price": 979.0,
+   "readAt": "2026-11-10",
+   "store": "Dedeman",
+   "evidence": "979.00 lei /bucată; Dimensiuni usa + toc (cm) 88 x 202; Grosime usa (cm) 7; Toc inclus: Da, metalic; maro efect lovitura de ciocan; inchidere centralizata in 15 puncte",
+   "dimensionsCm": {
+    "w": 88,
+    "h": 202,
+    "d": 7
+   },
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/usa-exterior-metalica-deceneu-88x205-cm-dreapta/12273494/",
+   "name": "Ușă exterior metalică Deceneu 88x205 cm dreapta",
+   "price": 3009.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "3009,00 lei; Lăţime 880 mm, Înălţime 2.050 mm; Grosime umplutură 60 mm; Culoare de bază Gri; Gri antracit; Direcţie de deschidere Dreapta; Strat de vată minerală; Clasă de rezistenţă Fără",
+   "dimensionsCm": {
+    "w": 88,
+    "h": 205,
+    "d": 6
+   },
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/usa-de-intrare-metalica-pentru-exterior-tracia-classic-88x205-cm-stanga/10276606/",
+   "name": "Ușă exterior metalică Tracia Classic 88x205 cm stânga",
+   "price": 2015.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "2015,00 lei; Lăţime 880 mm; Înălţime 2.050 mm; Culoare de bază Maro; Direcţie de deschidere Stânga; Izolație ignifugă Nobasil; Clasă de rezistenţă Fără",
+   "dimensionsCm": {
+    "w": 88,
+    "h": 205,
+    "d": null
+   },
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/usa-exterior-metalica-callatis-88x205-cm-dreapta/6342556/",
+   "name": "Ușă exterior metalică Callatis 88x205 cm dreapta",
+   "price": 2050.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "2050,00 lei; Lăţime 880 mm; Înălţime 2.050 mm; grosimea totală fiind de 60 mm; Culoare de bază Maro; Punct de blocare de 5 ori; Valoare U 1,5 W/m²K; Clasă de rezistenţă Fără",
+   "dimensionsCm": {
+    "w": 88,
+    "h": 205,
+    "d": 6
+   },
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/usa-exterior-metalica-still-627-1-gri-antracit-1-geam-88x201-cm-dreapta/10369539/",
+   "name": "Ușă exterior metalică Still 627-1 gri antracit 1 geam 88x201 cm dreapta",
+   "price": 1980.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "1980,00 lei; 880 mm x 2.010 mm; Adâncime construcţie 165 mm; Sablat; maner usa; Valoare U 2,47 W/m²K; RC 2 conform DIN EN 1627",
+   "dimensionsCm": {
+    "w": 88,
+    "h": 201,
+    "d": 16.5
+   },
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/usa-de-intrare-metalica-pentru-exterior-still-627-1-2-geamuri-gri-140x201-cm-stanga/10369535/",
+   "name": "Ușă exterior metalică Still 627 1 2 geamuri gri 140x201 cm stânga",
+   "price": 4690.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "4690,00 lei; 1.400 mm x 2.010 mm; Adâncime construcţie 165 mm; 2 geamuri, Sablat; maner usa; Valoare U 2,47 W/m²K; RC 2 conform DIN EN 1627",
+   "dimensionsCm": {
+    "w": 140,
+    "h": 201,
+    "d": 16.5
+   },
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/usa-exterior-metalica-antracit-98x205-cm-stanga/12700457/",
+   "name": "Ușă exterior metalică antracit 98x205 cm stânga",
+   "price": 2590.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "2590,00 lei; Lăţime 980 mm; Înălţime 2.050 mm; Vopsit în câmp electrostatic; Strat de vată minerală; Valoare U 1,8 W/m²K; RC 2 conform DIN EN 1627",
+   "dimensionsCm": {
+    "w": 98,
+    "h": 205,
+    "d": null
+   },
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/usa-exterior-metalica-arhitect-425-nuc-wenge-120x201-cm-dreapta/10369528/",
+   "name": "Ușă exterior metalică Arhitect 425 nuc wenge 120x201 cm dreapta",
+   "price": 5060.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "5060,00 lei; Lăţime 1.200 mm; Înălţime 2.010 mm; Adâncime construcţie 165 mm; Culoare de bază Maro; Sticlă decorativă Sablat; maner usa; Valoare U 2,47 W/m²K; RC 2 conform DIN EN 1627",
+   "dimensionsCm": {
+    "w": 120,
+    "h": 201,
+    "d": 16.5
+   },
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.hornbach.ro/p/usa-de-intrare-metalica-pentru-interior-n25-maro-88x201-cm-stanga/10473378/",
+   "name": "Ușă de intrare metalică pentru interior N25 maro 88x201 cm stânga",
+   "price": 1570.0,
+   "readAt": "2026-11-10",
+   "store": "Hornbach",
+   "evidence": "1570,00 lei; Lăţime 880 mm; Înălţime 2.010 mm; Culoare de bază Maro, Nuc; Strat de vată minerală; Clasă de rezistenţă Fără",
+   "dimensionsCm": {
+    "w": 88,
+    "h": 201,
+    "d": null
+   },
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.emag.ro/usa-metalica-apartament-usa-intrare-izolatie-34-db-maco-u8-alb-202-x-88-x-13-cm-macou8alb/pd/D19PX5MBM/",
+   "name": "Usa metalica apartament, Usa Intrare izolatie 34 db, Maco U8 Alb, 202 x 88 x 13 cm",
+   "price": 3417.04,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "3.417,04 Lei; Latime 880 mm, Inaltime 2020 mm, Grosime 13 cm; Toc metalic executat din tabla de hotel dubludecapata de 1,5 mm; Maner cu arc de compensare; Uw=1,94W/m; Rw=34db",
+   "dimensionsCm": {
+    "w": 88,
+    "h": 202,
+    "d": 13
+   },
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.emag.ro/usa-metalica-intrare-in-apartament-main-clasa-4-antiefractie-izolatie-fonica-42-decibeli-culoare-negru-exterior-stejar-interior-860x2050-mm-deschidere-stanga-pro402/pd/DP587XYBM/",
+   "name": "Usa metalica intrare in apartament Main, clasa 4 antiefractie, izolatie fonica 42 decibeli, culoare negru exterior stejar interior, 860x2050 mm, deschidere stanga",
+   "price": 3446.96,
+   "readAt": "2026-11-10",
+   "store": "eMAG",
+   "evidence": "3.446,96 Lei; Latime 86 cm, Inaltime 205 cm; Cadru integrat; 7 puncte de inchidere; 1 Set Maner; CLASA ANTIEFRACTIE 4; IZOLATIE FONICA 42 Db",
+   "dimensionsCm": {
+    "w": 86,
+    "h": 205,
+    "d": null
+   },
+   "topic": "usi-intrare"
   }
  ],
  "skipped": [
@@ -1455,6 +1651,36 @@
    },
    "topic": "instalatii-electrice",
    "reason": "lățimea și înălțimea par inversate pe pagină"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/usa-interior-metalica-maco-urban-2y-stanga-wenge-202-x-88-cm/p/6035611",
+   "name": "Usa interior metalica Maco Urban 2Y, stanga, wenge, 202 x 88 cm",
+   "reason": "Dedeman nu afișează prețul fără selectarea localității; fără preț pe pagină.",
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/usa-interior-metalica-bm-1000-17-stanga-wenge-201-x-90-cm/p/6030117",
+   "name": "Usa interior metalica BM 1000 - 17, stanga, wenge, 201 x 90 cm",
+   "reason": "Preț lipsă pe pagină (necesită localitate).",
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.dedeman.ro/ro/usa-interior-metalica-bestimp-b28u-stanga/-dreapta-maro-inchis-88-x-202-cm/p/6036952",
+   "name": "Usa interior metalica BestImp B28U, stanga / dreapta, maro inchis, 88 x 202 cm",
+   "reason": "Preț lipsă pe pagină (necesită localitate).",
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.emag.ro/usa-intrare-apartament-maco-model-urban-placat-imitatie-lemn-mdf-gri-88-x-202-cm-maco-01/pd/D87TBGBBM/",
+   "name": "Usa Intrare Apartament, Maco, Model Urban Placat Imitatie Lemn, MDF, Gri, 88 x 202 cm",
+   "reason": "Produs retras din oferta eMAG, fără preț.",
+   "topic": "usi-intrare"
+  },
+  {
+   "url": "https://www.emag.ro/usa-metalica-intrare-apartament-culoare-antracit-deschidere-stanga-2050mm-x-950mm-95-m-l-1-1-1-1/pd/D1MKL7YBM/",
+   "name": "Usa metalica intrare apartament, culoare antracit, deschidere stanga, 2050mm x 950mm (HiSec)",
+   "reason": "Produs retras din oferta eMAG, fără preț pe pagină.",
+   "topic": "usi-intrare"
   }
  ]
 }
