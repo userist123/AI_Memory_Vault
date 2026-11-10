@@ -269,9 +269,14 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
   for (const o of windowOpenings(snap)){ const wm = M(snap.windowUnits?.[o.id]?.product); if (!wm || wm.category !== 'window') continue;
     items.push(materialLine(wm, `window:${o.id}`, o.roomIds[0] ?? null, `Fereastră · gol ${Math.round(o.widthM * 100)}×${Math.round(o.heightM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj fereastră ${wm.name}`); }
   // aparatajul electric ales pe puncte (priză, întrerupător, termostat); manopera electricianului e în tarifele de instalații
+  const frames = new Map<string, number>();
   for (const tp of snap.tech ?? []){ const want = TECH_PRODUCT_CATEGORY[tp.kind], tm = M(tp.product); if (!want || !tm || tm.category !== want) continue;
     const room = floors(snap).flatMap(fl => fl.rooms).find(r => r.id === tp.roomId);
-    items.push(materialLine(tm, `${tp.roomId}:${tp.kind}:${tp.id}`, tp.roomId, `${tm.name} · ${room?.name ?? ''}`, 1, mc.verifiedAt, 0)); }
+    // priza dublă = două module simple (catalogul are doar prize simple); rama dublă / suportul se cumpără separat
+    const n = tp.kind === 'outlet_double' ? 2 : 1;
+    items.push(materialLine(tm, `${tp.roomId}:${tp.kind}:${tp.id}`, tp.roomId, `${tm.name}${n > 1 ? ' (2 module, priză dublă)' : ''} · ${room?.name ?? ''}`, n, mc.verifiedAt, 0));
+    if (tm.specs?.withFrame !== true) frames.set(tm.name, (frames.get(tm.name) ?? 0) + 1); }
+  for (const [name, n] of frames) unknown.push(`Ramă și suport pentru ${name} (${n} buc): pagina produsului nu spune că sunt incluse, fără preț verificat`);
   // uși de interior (foaie + toc) și mânere, pe golul lor; montajul nu are tarif verificat
   for (const d of doorOpenings(snap)){ const c = snap.doors?.[d.id], dm = M(c?.product), hm = M(c?.handle), roomId = d.roomIds[0] ?? null;
     if (dm){ items.push(materialLine(dm, `door:${d.id}`, roomId, `Ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj ușă ${dm.name}`);

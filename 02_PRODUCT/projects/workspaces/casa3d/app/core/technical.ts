@@ -166,7 +166,7 @@ export function sanitizeTech(x: unknown, snap: Pick<Snapshot, 'floor'>): TechPoi
 export const TECH_PRODUCT_CATEGORY: Partial<Record<TechKind, 'socket' | 'switch' | 'thermostat'>> = { outlet: 'socket', outlet_double: 'socket', switch: 'switch', thermostat: 'thermostat' };
 export function techBodyFields(q: any): Pick<TechPoint, 'widthM' | 'heightM' | 'model' | 'product'> {
   // produsul (id de material) doar la calorifer și la aerul condiționat; un id stricat se elimină, nu blochează salvarea
-  const product = (q.kind === 'radiator' || q.kind === 'hvac_split' || q.kind in TECH_PRODUCT_CATEGORY) && typeof q.product === 'string' && /^[\w-]{1,80}$/.test(q.product) ? { product: q.product } : {};
+  const product = (q.kind === 'radiator' || q.kind === 'hvac_split' || Object.hasOwn(TECH_PRODUCT_CATEGORY, q.kind)) && typeof q.product === 'string' && /^[\w-]{1,80}$/.test(q.product) ? { product: q.product } : {};
   const R = PLAN_LIMITS.radiator, H = PLAN_LIMITS.hvac;
   if (q.kind === 'radiator'){
     if (q.model != null && !(RADIATOR_MODELS as readonly string[]).includes(q.model)) throw new PlanLimitError('Tipul caloriferului este invalid.');

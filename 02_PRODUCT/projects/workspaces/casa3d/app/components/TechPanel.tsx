@@ -20,7 +20,9 @@ const KINDS = Object.keys(TECH_KINDS) as TechKind[];
 
 /** `onPatch`: mărimile și tipul caloriferului (cm în câmpuri, m în model, aduse în limitele serverului); `issues`: avertismentele punctelor (aer condiționat). */
 /** `mc` + `cur`: produsele cu preț verificat (calorifer cu panouri, port-prosop, aparat split) și moneda, pentru alegerea din rând. */
-export default function TechPanel({ snap, show, kind, onShow, onKind, onSuggest, onClear, onDelete, onDraw, onPatch, issues, mc, cur }: { onDraw?(): void; snap: Snapshot; show: boolean; kind: TechKind; onShow(v: boolean): void; onKind(k: TechKind): void; onSuggest(): void; onClear(): void; onDelete(id: string): void;
+export default function TechPanel({ snap, show, kind, onShow, onKind, onSuggest, onClear, onDelete, onDraw, onPatch, onPatchMany, issues, mc, cur }: { onDraw?(): void;
+  /** același produs pe mai multe puncte deodată (seria pe toată casa), într-o singură modificare */
+  onPatchMany?(ids: string[], patch: Partial<Pick<TechPoint, 'product'>>): void; snap: Snapshot; show: boolean; kind: TechKind; onShow(v: boolean): void; onKind(k: TechKind): void; onSuggest(): void; onClear(): void; onDelete(id: string): void;
   onPatch?(id: string, patch: Partial<Pick<TechPoint, 'widthM' | 'heightM' | 'model' | 'product'>>): void; issues?: { text: string; severity: string }[]; mc?: MaterialsCatalog | null; cur?: string }){
   const { t, lang } = usePrefs(), pts = snap.tech || [], c = techCounts(pts), label = (k: TechKind) => TECH_KINDS[k].label[lang === 'en' ? 'en' : 'ro'];
   const used = KINDS.filter(k => c.total[k]);
@@ -45,7 +47,7 @@ export default function TechPanel({ snap, show, kind, onShow, onKind, onSuggest,
           {onPatch && isSizedRadiator(p) && <RadiatorFields p={p} room={r.name} mc={mc} cur={cur} onPatch={patch => onPatch(p.id, patch)} />}
           {onPatch && p.kind === 'hvac_split' && mc && <ProductField p={p} category="hvac_split" label={t('hvac.product')} aria={t('hvac.productAria', { room: r.name })} mc={mc} cur={cur} onPatch={patch => onPatch(p.id, patch)} />}
           {onPatch && TECH_PRODUCT_CATEGORY[p.kind] && mc && <ProductField p={p} category={TECH_PRODUCT_CATEGORY[p.kind]!} label={t('tech.product')} aria={t('tech.productAria', { kind: label(p.kind), room: r.name })} mc={mc} cur={cur} onPatch={patch => onPatch(p.id, patch)} />}</div>)}</details>; })}</div>
-      {onPatch && mc && <SeriesBulk pts={pts} mc={mc} cur={cur} onPatch={onPatch} />}
+      {onPatchMany && mc && <SeriesBulk pts={pts} mc={mc} cur={cur} onPatchMany={onPatchMany} />}
     </>}
   </div>);
 }
@@ -97,11 +99,11 @@ function RadiatorFields({ p, room, mc, cur, onPatch }: { p: TechPoint; room: str
 
 /** Aceeași serie pe toată casa: o priză și un întrerupător aleși o dată, aplicați tuturor punctelor de acel fel (fiecare
  *  punct se poate schimba apoi separat). Fără serie aleasă, punctele rămân fără preț de aparataj, ca până acum. */
-function SeriesBulk({ pts, mc, cur, onPatch }: { pts: TechPoint[]; mc: MaterialsCatalog; cur?: string; onPatch(id: string, patch: Partial<Pick<TechPoint, 'product'>>): void }){
+function SeriesBulk({ pts, mc, cur, onPatchMany }: { pts: TechPoint[]; mc: MaterialsCatalog; cur?: string; onPatchMany(ids: string[], patch: Partial<Pick<TechPoint, 'product'>>): void }){
   const { t } = usePrefs(), by = (c: string) => mc.materials.filter(m => m.category === c);
   const rows = (['socket', 'switch', 'thermostat'] as const).map(c => ({ c, opts: by(c), ids: pts.filter(p => TECH_PRODUCT_CATEGORY[p.kind] === c).map(p => p.id) })).filter(r => r.opts.length && r.ids.length);
   if (!rows.length) return null;
   return (<div className="tech-series"><h4>{t('tech.series')}</h4><p className="muted">{t('tech.seriesNote')}</p>
     {rows.map(r => <label key={r.c} className="f"><span>{t(`tech.series.${r.c}`, { n: r.ids.length })}</span>
-      <MaterialPicker cur={cur ?? 'RON'} value="" options={r.opts} none={t('tech.seriesPick')} onChange={v => { if (v) for (const id of r.ids) onPatch(id, { product: v }); }} /></label>)}</div>);
+      <MaterialPicker cur={cur ?? 'RON'} value="" options={r.opts} none={t('tech.seriesPick')} onChange={v => { if (v) onPatchMany(r.ids, { product: v }); }} /></label>)}</div>);
 }

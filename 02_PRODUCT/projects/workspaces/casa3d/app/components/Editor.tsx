@@ -1141,7 +1141,8 @@ export default function Editor({ id }: { id: string }){
         {stage === 'mep' && <TechPanel onDraw={() => setTool('tech')} snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
           onSuggest={() => { const pts = suggestTechPoints(snap); mutate(s => { s.tech = pts; }); setShowTech(true); say(t('tech.suggested', { n: pts.length })); }}
           onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })}
-          onPatch={(id, patch) => patchTech(id, p => { Object.assign(p, patch); if (!p.product) delete p.product; })} mc={mc} cur={cur} issues={catalog ? techIssues(snap, catalog, snap.floor).map(i => ({ text: iT(i), severity: i.severity })) : []} />}
+          onPatch={(id, patch) => patchTech(id, p => { Object.assign(p, patch); if (!p.product) delete p.product; })}
+          onPatchMany={(ids, patch) => { const set = new Set(ids); mutate(s => { s.tech = (s.tech || []).map(p => set.has(p.id) ? { ...p, ...patch } : p); }); }} mc={mc} cur={cur} issues={catalog ? techIssues(snap, catalog, snap.floor).map(i => ({ text: iT(i), severity: i.severity })) : []} />}
         {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
         {stage === 'docs' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
         {stage === 'quote' && <BudgetWithCustom id={id} snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}

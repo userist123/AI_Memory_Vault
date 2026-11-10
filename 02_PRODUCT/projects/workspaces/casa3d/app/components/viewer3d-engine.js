@@ -376,8 +376,8 @@ function model(it){
       const hx = w / 2 - .55, gas = s.hob && /gas/.test(s.hob.kind || ''); B(.58, .006, .5, hx, ct + .003, 0, gas && s.hob.col && lumOf(s.hob.col) > .5 ? MAT('metal', s.hob.col) : MAT('screen', '#0d0d0e'));
       if (gas) for (const [dx, dz, r] of [[-.14, -.1, .05], [.14, -.1, .04], [-.14, .12, .04], [.14, .12, .06]]){ CY(r, r, .02, hx + dx, ct + .016, dz, MAT('paint', '#1b1b1c'), 20); B(.2, .012, .012, hx + dx, ct + .03, dz, MAT('paint', '#121213')); B(.012, .012, .2, hx + dx, ct + .03, dz, MAT('paint', '#121213')); }
       // hota aleasă, deasupra plitei: coș de perete (inox sau sticlă), telescopică sub suspendat sau de tavan
-      if (s.hood){ const hk = s.hood.kind || 'hood_chimney', hw = (s.hood.w || 60) / 100, hm = MAT('metal', s.hood.col && lumOf(s.hood.col) > .3 ? s.hood.col : '#c8cacc'), dark = MAT('screen', s.hood.col || '#151618'), hb = ct + .65, hz = -d / 2 + .25;
-        if (hk === 'hood_telescopic') B(hw, .04, .3, hx, k && k.upper === 'none' ? hb : h - .02 - .72 - .02, hz + .02, MAT('metal', '#bfc2c5'));   // sertarul telescopic, sub corpul suspendat
+      if (s.hood){ const hk = s.hood.kind || 'hood_chimney', hw = (s.hood.w || 60) / 100, hm = s.hood.col && lumOf(s.hood.col) < .3 ? MAT('paint', s.hood.col) : MAT('metal', s.hood.col || '#c8cacc'), dark = MAT('screen', '#151618'), hb = ct + .65, hz = -d / 2 + .25;
+        if (hk === 'hood_telescopic') B(hw, .04, .3, hx, k && k.upper === 'none' ? hb : h - .02 - .72 - .02, hz + .02, hm);   // sertarul telescopic, sub corpul suspendat
         else if (hk === 'hood_ceiling') B(hw, .1, .45, hx, 2.5, hz, hm);
         // cu corpuri suspendate deasupra (implicit), hota de perete rămâne doar baldachinul sub ele: coșul și sticla ar intra în corpuri
         else if (!k || k.upper !== 'none'){ const yb = h - .02 - .72 - .07; B(hw, .06, .48, hx, yb + .03, hz, hm); if (s.hood.glass) B(hw - .02, .006, .3, hx, yb + .063, hz + .05, dark); }
@@ -428,8 +428,8 @@ function model(it){
       if (builtin){ B(w - .01, h - .12, .02, 0, (h - .12) / 2 + .1, d / 2 + .01, MAT('paint', '#e8e4dc')); B(w * .5, .015, .025, 0, h - .1, d / 2 + .03, MAT('metal', '#9a9a9a')); B(w - .02, .09, .01, 0, .045, d / 2 - .02, MAT('paint', '#1f2023')); break; }
       B(w - .01, .1, .01, 0, h - .06, d / 2 + .004, MAT('paint', s.col && lumOf(s.col) < .3 ? '#2a2c30' : '#ececea')); B(.14, .035, .006, 0, h - .06, d / 2 + .011, MAT('screen', '#16181b'));
       B(w * .6, .02, .03, 0, h - .14, d / 2 + .02, MAT('chrome', '#c9ccd0')); B(w - .02, .08, .01, 0, .04, d / 2 - .015, MAT('paint', '#1f2023')); break; }
-    case 'microwave': { const body = MAT(s.inox ? 'metal' : 'paint', s.col || '#1e1f21'), y0 = s.kind === 'microwave_builtin' ? 1.2 : .92;
-      // independent: pe blat (0,92 m); încorporabil: în coloană, la 1,2 m
+    case 'microwave': { const body = MAT(s.inox ? 'metal' : 'paint', s.col || '#1e1f21'), y0 = 0;
+      // pe blatul sau pe piesa de sub el: cota vine din plan (surfaceSupport → it.y), modelul pornește de la 0
       RB(w, h, d, .02, 0, y0 + h / 2, 0, body); B(w * .68, h * .78, .01, -w * .14, y0 + h / 2, d / 2 + .004, MAT('screen', '#202326'));
       B(w * .2, h * .78, .01, w * .36, y0 + h / 2, d / 2 + .004, MAT('paint', s.col && lumOf(s.col) < .3 ? '#2b2d31' : '#e3e3e1')); B(.1, .03, .006, w * .36, y0 + h * .78, d / 2 + .01, MAT('screen', '#0e0f11'));
       B(.02, h * .6, .02, w * .2 - .02, y0 + h / 2, d / 2 + .02, MAT('chrome', '#c9ccd0')); break; }
@@ -828,7 +828,7 @@ function model(it){
           seg(g.la, g.la + g.l, 0, sl); seg(g.la, g.la + g.l, top, H); const m = g.la + g.l / 2; box(g.l, wh, .02, glass, ax + ux * m, cy, az + uz * m, rot, walls).castShadow = false;
           // fereastră reală: toc PVC de 6 cm, canaturi cu profil, montant între canaturi, mânere, glaf interior și pervaz exterior
           // produsul ales (g.fer): culoarea și materialul tocului, canatele, fixă (fără canat mobil și mâner), aluminiul mai subțire
-          { const fw = g.fer, fm = fw && !g.culoare ? MAT(fw.frame === 'aluminium' ? 'metal' : 'paint', fw.color) : (g.culoare ? lookMat('frame', g.culoare, .5) : frameMat), pf = fw && fw.frame === 'aluminium' ? .045 : .06, pd = .07, at = (sv, y, w2, h2, d2, mat, off = 0) => { const o = box(w2, h2, d2, mat, ax + ux * sv + nx * off, y, az + uz * sv + nz * off, rot, walls); o.castShadow = false; return o; };
+          { const fw = g.fer, fm = fw ? MAT(fw.frame === 'aluminium' ? 'metal' : 'paint', fw.color) : (g.culoare ? lookMat('frame', g.culoare, .5) : frameMat), pf = fw && fw.frame === 'aluminium' ? .045 : .06, pd = .07, at = (sv, y, w2, h2, d2, mat, off = 0) => { const o = box(w2, h2, d2, mat, ax + ux * sv + nx * off, y, az + uz * sv + nz * off, rot, walls); o.castShadow = false; return o; };
             const sIn = ((ax + ux * m - (pMinX + pMaxX) / 2) * nx + (az + uz * m - (pMinZ + pMaxZ) / 2) * nz) > 0 ? -1 : 1;   // partea dinspre casă
             at(g.la + pf / 2, cy, pf, wh, pd, fm); at(g.la + g.l - pf / 2, cy, pf, wh, pd, fm); at(m, sl + pf / 2, g.l - 2 * pf + .002, pf, pd - .004, fm); at(m, top - pf / 2, g.l - 2 * pf + .002, pf, pd - .004, fm);
             const n2 = fw ? fw.sashes : g.l > 1.1 ? 2 : 1, iw = (g.l - 2 * pf) / n2;

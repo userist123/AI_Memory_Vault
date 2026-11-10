@@ -8,7 +8,7 @@ import materialsJson from '../data/materials.v1.json';
 import evidence from '../data/catalog-evidence.2026-11-10.json';
 import { groups, toEngineCatalog } from '../core/catalog';
 import { RETAILER_HOSTS } from '../core/outbound';
-import { FRONT_CLEARANCE, WALL_HIGH } from '../core/rules';
+import { FRONT_CLEARANCE, WALL_HIGH, ON_SURFACE } from '../core/rules';
 import { planSymbol } from '../core/plan-symbols';
 import { newSnapshot } from '../core/project';
 import { computeBOQ } from '../core/boq';
@@ -30,7 +30,7 @@ test('electrocasnicele noi: grupă, model 3D, dimensiuni întregi, simbol în pl
   // tipurile diferite au stiluri diferite (nu un model standard): hublou frontal / încărcare verticală / încorporabilă, culori
   const kinds = new Set(g['masinaSpalat']!.variants.map(v => v.style?.kind)); assert.ok(kinds.has('washer_front') && kinds.has('washer_top') && kinds.has('washer_dryer'), [...kinds].join());
   assert.ok(new Set(g['masinaSpalat']!.variants.map(v => v.style?.col)).size >= 3);
-  assert.ok(WALL_HIGH.has('centrala') && WALL_HIGH.has('microunde'));
+  assert.ok(WALL_HIGH.has('centrala') && !WALL_HIGH.has('microunde') && ON_SURFACE.has('microunde'), 'microundele stau pe blat');
   assert.ok(groupsForRoom('baie', Object.keys(g)).suggested.includes('masinaSpalat')); assert.ok(groupsForRoom('bucatarie', Object.keys(g)).suggested.includes('masinaVase'));
   assert.ok(!groupsForRoom('dormitor', Object.keys(g)).suggested.includes('masinaVase'));
 });
@@ -78,4 +78,18 @@ test('punctele tehnice automate pentru electrocasnicele noi: priză, apă și sc
   assert.deepEqual(why(/mașin(ă|a) de spălat \(|robinet mașină de spălat|scurgere mașină de spălat/), ['drain', 'outlet', 'water_cold']);
   assert.deepEqual(why(/mașină de spălat vase|mașină de vase/), ['drain', 'outlet', 'water_cold']);
   assert.ok(why(/centrală/).includes('outlet'));
+});
+test('regresie: priza dublă = două module; rama nedeclarată pe pagină apare în deviz fără preț', () => {
+  const s = demo(); s.tech = suggestTechPoints(s); const dbl = s.tech.find(p => p.kind === 'outlet_double')!; assert.ok(dbl, 'demo are prize duble');
+  const sock = mc.materials.find(m => m.category === 'socket' && m.specs?.withFrame !== true)!; dbl.product = sock.id;
+  const b = computeBOQ(s, cat, mc), line = b.items.find(i => i.key.endsWith(`:outlet_double:${dbl.id}`))!;
+  assert.equal(line.total, Math.round(sock.unitPrice * 2 * 100) / 100 || sock.unitPrice * 2, JSON.stringify(line)); assert.ok(b.unknown.some(u => u.includes('Ramă și suport') && u.includes(sock.name)));
+});
+test('regresie: microundele stau pe blatul bucătăriei (0,9 m), nu pe perete; ciocnirea cu frigiderul rămâne verificată', async () => {
+  const { surfaceUnder, validatePlacement } = await import('../core/validate');
+  const s = demo(), kit = s.placements.find(p => p.group === 'bucatarie')!, fr = s.placements.find(p => p.group === 'frigider')!, mw = groups(cat)['microunde']!.variants[0]!;
+  const onCounter = { id: 'mw1', roomId: kit.roomId, group: 'microunde', variantId: mw.id, x: kit.x, z: kit.z, rotation: kit.rotation, source: 'manual' as const };
+  s.placements.push(onCounter); assert.equal(surfaceUnder(s, cat, onCounter), .9);
+  const onFridge = { ...onCounter, id: 'mw2', x: fr.x, z: fr.z }; s.placements.push(onFridge);
+  assert.ok(validatePlacement(s, cat, onFridge).some(i => i.code === 'OVERLAP'), 'microundele peste frigider sunt semnalate');
 });

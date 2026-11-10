@@ -12,13 +12,17 @@ export const WALL_PROXIMITY_M = .35;       // cât de aproape de perete trebuie 
 export const FREE_STANDING = new Set(['masuta', 'masa', 'scaunBirou']);
 export const ALLOWED_OVERLAP: [string, string][] = [['birou', 'scaunBirou'], // scaunul intră sub birou
   // veioza și planta mică stau pe o piesă joasă (noptieră, comodă, birou, măsuță, masă): în 3D se ridică la înălțimea ei
-  ...['veioza', 'plantaNaturala'].flatMap(a => ['noptiera', 'comoda', 'comodaTv', 'birou', 'masuta', 'masa'].map(b => [a, b] as [string, string]))];
+  ...['veioza', 'plantaNaturala'].flatMap(a => ['noptiera', 'comoda', 'comodaTv', 'birou', 'masuta', 'masa'].map(b => [a, b] as [string, string])),
+  // microundele independente stau pe blatul bucătăriei sau pe o comodă / masă
+  ...['bucatarie', 'comoda', 'masa'].map(b => ['microunde', b] as [string, string])];
 /** Piese care pot sta pe altă piesă (ALLOWED_OVERLAP): în 3D stau pe fața de sus a piesei de sub centrul lor. */
-export const ON_SURFACE = new Set(['veioza', 'plantaNaturala']);
+export const ON_SURFACE = new Set(['veioza', 'plantaNaturala', 'microunde']);
+/** Blatul bucătăriei (m): microundele stau pe el, nu pe corpurile suspendate (înălțimea întregii piese de bucătărie). */
+export const KITCHEN_COUNTER_M = .9;
 /** Piese cu ardere (focarul pe lemne): cer coș de fum și verificare tehnică înainte de montaj. */
 export const NEEDS_CHIMNEY = new Set(['focarLemne']);
 /** Piese montate sus pe perete (dulapul cu oglindă peste lavoar, boilerul peste WC): pot sta deasupra pieselor joase. */
-export const WALL_HIGH = new Set(['dulapOglinda', 'boiler', 'centrala', 'microunde']);
+export const WALL_HIGH = new Set(['dulapOglinda', 'boiler', 'centrala']);
 // Tipurile de ușă (Opening.doorType): lățimea golului permisă pe tip (m), aplicată doar când tipul e ales, ca proiectele vechi să nu fie respinse.
 // `std` = lățimea propusă când golul iese din interval la schimbarea tipului (dubla sub 1 m primește 1,2 m; o dublă salvată între 0,8 și 1 m rămâne, cu avertisment);
 // pocket/sliding cer perete liber lângă gol (foaia + 10 cm).

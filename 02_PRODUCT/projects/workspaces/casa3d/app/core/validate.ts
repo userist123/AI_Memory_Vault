@@ -1,6 +1,6 @@
 import { resolve } from './catalog';
 import { rectHit, insideRect, footprintAt, frontRect, wallLength } from './geometry';
-import { FRONT_CLEARANCE, DINING_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M, ALLOWED_OVERLAP, WALL_HIGH, NEEDS_CHIMNEY, ON_SURFACE, DOOR_SLIDE_EXTRA_M, POCKET_MIN_WALL_M, DOUBLE_NARROW_M } from './rules';
+import { FRONT_CLEARANCE, DINING_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M, ALLOWED_OVERLAP, WALL_HIGH, NEEDS_CHIMNEY, ON_SURFACE, KITCHEN_COUNTER_M, DOOR_SLIDE_EXTRA_M, POCKET_MIN_WALL_M, DOUBLE_NARROW_M } from './rules';
 import { nicheIssues } from './niches';
 import { wallItemIssues } from './wall-items';
 import { renovationIssues } from './renovation';
@@ -49,7 +49,7 @@ export function surfaceSupport(snap: Pick<Snapshot, 'placements'>, cat: Catalog,
   let best: { id: string; h: number } | null = null;
   for (const o of snap.placements){ if (o.id === p.id || o.roomId !== p.roomId || ON_SURFACE.has(o.group) || !allowed(p.group, o.group) || WALL_HIGH.has(o.group)) continue;
     const ofp = footprintOf(cat, o); if (!ofp || !insideRect(ofp, fp)) continue;
-    const h = o.size ? o.size.h / 100 : resolve(cat, o.variantId)?.h ?? 0; if (!best || h > best.h) best = { id: o.id, h }; }
+    const h = o.group === 'bucatarie' ? KITCHEN_COUNTER_M : o.size ? o.size.h / 100 : resolve(cat, o.variantId)?.h ?? 0; if (!best || h > best.h) best = { id: o.id, h }; }
   return best;
 }
 /** Înălțimea (m) piesei pe care stă o veioză sau o plantă mică (surfaceSupport); 0 = stă pe pardoseală. */
