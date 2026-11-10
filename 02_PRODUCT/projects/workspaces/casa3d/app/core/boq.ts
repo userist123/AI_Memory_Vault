@@ -275,8 +275,10 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
     // priza dublă = două module simple (catalogul are doar prize simple); rama dublă / suportul se cumpără separat
     const n = tp.kind === 'outlet_double' ? 2 : 1;
     items.push(materialLine(tm, `${tp.roomId}:${tp.kind}:${tp.id}`, tp.roomId, `${tm.name}${n > 1 ? ' (2 module, priză dublă)' : ''} · ${room?.name ?? ''}`, n, mc.verifiedAt, 0));
-    if (tm.specs?.withFrame !== true) frames.set(tm.name, (frames.get(tm.name) ?? 0) + 1); }
-  for (const [name, n] of frames) unknown.push(`Ramă și suport pentru ${name} (${n} buc): pagina produsului nu spune că sunt incluse, fără preț verificat`);
+    // rama: la priza dublă trebuie o ramă dublă oricum (rama inclusă în produs e simplă); la restul, doar dacă pagina nu o include
+    const fk = n > 1 ? `dublă|${tm.name}` : tm.specs?.withFrame !== true ? `simplă|${tm.name}` : null; if (fk) frames.set(fk, (frames.get(fk) ?? 0) + 1); }
+  for (const [k, n] of frames){ const [kind, name] = k.split('|') as [string, string];
+    unknown.push(`Ramă ${kind} și suport pentru ${name} (${n} buc): ${kind === 'dublă' ? 'priza dublă cere o ramă dublă' : 'pagina produsului nu spune că rama e inclusă'}, fără preț verificat`); }
   // uși de interior (foaie + toc) și mânere, pe golul lor; montajul nu are tarif verificat
   for (const d of doorOpenings(snap)){ const c = snap.doors?.[d.id], dm = M(c?.product), hm = M(c?.handle), roomId = d.roomIds[0] ?? null;
     if (dm){ items.push(materialLine(dm, `door:${d.id}`, roomId, `Ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj ușă ${dm.name}`);

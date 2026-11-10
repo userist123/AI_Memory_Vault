@@ -83,7 +83,10 @@ test('regresie: priza dublă = două module; rama nedeclarată pe pagină apare 
   const s = demo(); s.tech = suggestTechPoints(s); const dbl = s.tech.find(p => p.kind === 'outlet_double')!; assert.ok(dbl, 'demo are prize duble');
   const sock = mc.materials.find(m => m.category === 'socket' && m.specs?.withFrame !== true)!; dbl.product = sock.id;
   const b = computeBOQ(s, cat, mc), line = b.items.find(i => i.key.endsWith(`:outlet_double:${dbl.id}`))!;
-  assert.equal(line.total, Math.round(sock.unitPrice * 2 * 100) / 100 || sock.unitPrice * 2, JSON.stringify(line)); assert.ok(b.unknown.some(u => u.includes('Ramă și suport') && u.includes(sock.name)));
+  assert.equal(line.total, Math.round(sock.unitPrice * 2 * 100) / 100 || sock.unitPrice * 2, JSON.stringify(line)); assert.ok(b.unknown.some(u => u.startsWith('Ramă dublă') && u.includes(sock.name)));
+  // seria cu ramă inclusă: rama simplă nu mai apare, dar priza dublă cere tot rama dublă
+  const framed = mc.materials.find(m => m.category === 'socket' && m.specs?.withFrame === true)!; dbl.product = framed.id;
+  const b2 = computeBOQ(s, cat, mc); assert.ok(b2.unknown.some(u => u.startsWith('Ramă dublă') && u.includes(framed.name))); assert.ok(!b2.unknown.some(u => u.startsWith('Ramă simplă') && u.includes(framed.name)));
 });
 test('regresie: microundele stau pe blatul bucătăriei (0,9 m), nu pe perete; ciocnirea cu frigiderul rămâne verificată', async () => {
   const { surfaceUnder, validatePlacement } = await import('../core/validate');
