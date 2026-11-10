@@ -608,3 +608,9 @@
   (19) the live toast still said "Contul ?<PSDirectVMLegacy> a primit 5 parole greșite ... Întrebați titularul contului" at Medium -> a Low
   alert "Conexiuni PowerShell Direct de pe gazda Hyper-V". Both with tests; to verify on the VM after the next redeploy.
   Driver note: a Save As dialog needs "click Save" (invoke and Enter do not reach it). Suites: Dfir 3266, App 1037, UI 369, Edition 45.
+- 2026-11-10 (lab pass, part 5): 18 and 19 verified on WS01 after redeploy (AnyDesk / RustDesk first seen 2026-11-09 21:21, the run; the status
+  bar tells the Hyper-V host). CI of ccf69a22c when last read: 34 passed, 4 long jobs still pending, none failed (not re-polled).
+  Not done in this pass: remote collection through the UI (file dialogs; the package flow itself was verified end to end on WS01 earlier
+  today), the live monitoring page, the Insula device monitor with a hot-added disk (Hyper-V SCSI disks count as internal, known since
+  2026-11-06), officer signature / PAdES (needs a card). Open owner decision: the header at 1024 px. Lab leftovers of this pass: new TEST cases
+  on WS01 (it.admin profile) and WS02, host E:\LA-Lab\reports\{labcheck-*,pdf}, evidence\LAB-WS0x-case, shots\LAB-WS0x\{ins,arh,cont}-*.
