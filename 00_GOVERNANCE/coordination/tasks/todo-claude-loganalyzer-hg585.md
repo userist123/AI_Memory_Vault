@@ -534,3 +534,9 @@
   Opus 2 rounds (r2: verified, LOW residuals: finally masks the copy error, UNC script root fails the step, TOCTOU on a user's own TabState).
   Lab after fix: both steps ok, shadow copies 0 -> 0, WSearch not stopped, 1,171 entries no gaps, 4 tabs. Suites: Dfir 3162+.
   Lab leftovers added: WS01 C:\LA\remote2, C:\LA\remote3; host E:\LA-Lab\diag\remote2, remote3.
+- 2026-11-10: Defender DetectionHistory, third real sample (EICAR in a zip on WS01, detection 0FF8925A..., 1116 Path has containerfile + file):
+  the parser stopped at the first key block -> missed the second resource and its hashes, and took the 1117 action time. Now all resources and
+  blocks are read in order, hashes bound to the resource whose block holds them (event Path = that file, not the zip), detection time = tail
+  FILETIME within 1 s of ThreatTrackingStartTime else the start time (a planted early FILETIME is never taken). Opus r1 found the hash/path
+  mismatch and the unbounded "earliest" rule; both fixed with tests; r2 skipped by the main session (small delta, all three real samples equal
+  the 1116 time). Suites: Dfir 3164, App 1028, UI 368, Edition 45. Lab leftover added: WS01 C:\LA\eicarzip, C:\LA\dhzip.

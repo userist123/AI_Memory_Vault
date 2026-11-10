@@ -52,7 +52,7 @@ public sealed class DefenderDetectionHistoryParser : EvidenceParserBase
     /// <summary>What one detection file says. Empty text / null where the file does not say it.</summary>
     public sealed record Detection(string DetectionId, long? ThreatId, string ThreatName, int? SeverityId, int? CategoryId, int? SourceId,
         IReadOnlyList<(string Type, string Path)> Resources, DateTime? DetectionTimeUtc, string TimeSource, string User, string Process,
-        string Sha256, string Sha1, string Md5, string Size, bool HasKeyBlock, bool Complete, int Records)
+        string Sha256, string Sha1, string Md5, string Size, bool HasKeyBlock, bool Complete, int Records, int PrimaryResource = 0)
     {
         public string PathText => string.Join("; ", Resources.Select(r => $"{r.Type}:_{r.Path}"));
     }
@@ -112,7 +112,8 @@ public sealed class DefenderDetectionHistoryParser : EvidenceParserBase
             ["Detection Time"] = d.DetectionTimeUtc?.ToString("o", CultureInfo.InvariantCulture) ?? "",
             ["Resource Types"] = string.Join(", ", d.Resources.Select(r => r.Type).Distinct()),
         };
-        var first = d.Resources.Count > 0 ? d.Resources[0].Path : "";
+        // the resource the hashes belong to (see DecodeCore); every resource stays in the Path field
+        var first = d.Resources.Count > 0 ? d.Resources[Math.Clamp(d.PrimaryResource, 0, d.Resources.Count - 1)].Path : "";
         sink.Add(new TimelineEvent
         {
             Time = d.DetectionTimeUtc is { } t ? Timestamp.FromUtc(t, t.ToString("o", CultureInfo.InvariantCulture), "Defender DetectionHistory FILETIME") : Timestamp.Unknown(),
@@ -150,8 +151,12 @@ public sealed class DefenderDetectionHistoryParser : EvidenceParserBase
 
         string Str(Rec r) => DecodeString(d.AsSpan(r.Start, r.Len));
         uint U32(Rec r) => BinaryPrimitives.ReadUInt32LittleEndian(d.AsSpan(r.Start));
+        // Every resource is followed by its own key/value block (lab, EICAR inside a zip: "containerfile" with an empty block, then "file"
+        // with the block that holds the hashes). The header ends at the first block; resources run up to the last; the tail follows the last.
         int blockIdx = recs.FindIndex(r => r.Type == TypeBlock);
+        int lastBlock = recs.FindLastIndex(r => r.Type == TypeBlock);
         int preEnd = blockIdx >= 0 ? blockIdx : recs.Count;
+        int resEnd = lastBlock >= 0 ? lastBlock : recs.Count;
 
         // 2. before the block: threat id, detection GUID, threat name, severity / category, resources
         long? threatId = null;
@@ -177,9 +182,26 @@ public sealed class DefenderDetectionHistoryParser : EvidenceParserBase
             if (nums.Count > 1 && nums[1] <= int.MaxValue) sev = (int)nums[1];
             if (nums.Count > 2 && nums[2] <= int.MaxValue) cat = (int)nums[2];
         }
+        // 3. resources and their key/value blocks, in file order. The detection-wide keys (name, threat id, scan source, start time) are taken
+        // from every block, the first value of a key kept; the hashes belong to ONE resource: the one whose own block holds them (in the zip
+        // sample the EICAR file inside, not the zip), and that resource is the event's path, so a hash is never shown beside another file.
         var resources = new List<(string, string)>();
-        for (int i = 0; i + 2 < preEnd && resources.Count < MaxResources; i++)
+        var keys = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, string>? hashKeys = null;
+        int primary = 0;
+        for (int i = 0, blocks = 0; i <= Math.Max(resEnd, lastBlock) && i < recs.Count; i++)
         {
+            if (recs[i].Type == TypeBlock)
+            {
+                if (blocks++ >= MaxResources) continue;
+                var own = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                ReadBlock(d.AsSpan(recs[i].Start, recs[i].Len), own);
+                foreach (var kv in own) if (keys.Count < MaxKeys) keys.TryAdd(kv.Key, kv.Value);
+                if (hashKeys is null && (own.ContainsKey("ThreatTrackingSha256") || own.ContainsKey("ThreatTrackingSha256Hash") || own.ContainsKey("ThreatTrackingSha1")))
+                { hashKeys = own; primary = Math.Max(0, resources.Count - 1); }
+                continue;
+            }
+            if (i + 2 >= resEnd || resources.Count >= MaxResources) continue;
             if (recs[i].Type != TypeString || !Str(recs[i]).StartsWith(MagicPrefix, StringComparison.Ordinal)) continue;
             if (recs[i + 1].Type != TypeString || recs[i + 2].Type != TypeString) continue;
             string type = Str(recs[i + 1]), path = Str(recs[i + 2]);
@@ -187,10 +209,6 @@ public sealed class DefenderDetectionHistoryParser : EvidenceParserBase
             resources.Add((type, path));
             i += 2;
         }
-
-        // 3. the key/value block
-        var keys = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
-        if (blockIdx >= 0) ReadBlock(d.AsSpan(recs[blockIdx].Start, recs[blockIdx].Len), keys);
         if (keys.TryGetValue("ThreatTrackingThreatName", out var kn) && kn.Length > 0) name = kn;
         int? source = keys.TryGetValue("ThreatTrackingScanSource", out var ss) && int.TryParse(ss, NumberStyles.None, CultureInfo.InvariantCulture, out var si) ? si : null;
         if (threatId is null && keys.TryGetValue("ThreatTrackingThreatId", out var kt) && long.TryParse(kt, NumberStyles.None, CultureInfo.InvariantCulture, out var kti)) threatId = kti;
@@ -199,24 +217,31 @@ public sealed class DefenderDetectionHistoryParser : EvidenceParserBase
         DateTime? when = null; string timeSource = "", user = "", process = "";
         if (blockIdx >= 0)
         {
-            var post = recs.Skip(blockIdx + 1).ToList();
-            int ftIdx = post.FindIndex(r => r.Type == TypeFileTime && r.Len >= 8);
-            if (ftIdx >= 0 && FromFileTime(BinaryPrimitives.ReadInt64LittleEndian(d.AsSpan(post[ftIdx].Start))) is { } w) { when = w; timeSource = "FILETIME după blocul de chei"; }
-            // Lab (EICAR, then the Defender log cleared): Defender rewrote the file and the FILETIME after the block moved 13 s later, while
-            // ThreatTrackingStartTime stayed within 1 ms of the 1116 Detection Time. In a fresh file the FILETIME is the exact 1116 time, so it is
-            // kept unless it lies more than a second after ThreatTrackingStartTime (a rewritten file).
-            if (keys.TryGetValue("ThreatTrackingStartTime", out var st) && long.TryParse(st, NumberStyles.None, CultureInfo.InvariantCulture, out var sti) && FromFileTime(sti) is { } w2
-                && (when is null || when.Value - w2 > TimeSpan.FromSeconds(1)))
-            { when = w2; timeSource = "ThreatTrackingStartTime"; }
+            var post = recs.Skip(lastBlock + 1).ToList();
+            // The tail holds several FILETIMEs: the first is the time of Defender's last action (it moves when Defender acts or rewrites the file),
+            // the detection is another one. On three lab files (EICAR fresh, rewritten after the log was cleared, EICAR in a zip) the detection
+            // FILETIME lies within 1 ms of ThreatTrackingStartTime and equals the 1116 Detection Time. So: with a valid start time, the tail
+            // FILETIME closest to it and at most 1 s away is the detection, else the start time itself (a planted or foreign FILETIME, however
+            // early, is never taken); without a start time, the earliest valid FILETIME of the tail.
+            var tail = post.Where(r => r.Type == TypeFileTime && r.Len >= 8).Select(r => FromFileTime(BinaryPrimitives.ReadInt64LittleEndian(d.AsSpan(r.Start))))
+                           .Where(t => t is not null).Select(t => t!.Value).ToList();
+            if (keys.TryGetValue("ThreatTrackingStartTime", out var st) && long.TryParse(st, NumberStyles.None, CultureInfo.InvariantCulture, out var sti) && FromFileTime(sti) is { } start)
+            {
+                var near = tail.Where(t => (t - start).Duration() <= TimeSpan.FromSeconds(1)).OrderBy(t => (t - start).Duration()).Take(1).ToList();
+                if (near.Count == 1) { when = near[0]; timeSource = "FILETIME de după blocurile de chei, la cel mult 1 s de ThreatTrackingStartTime"; }
+                else { when = start; timeSource = "ThreatTrackingStartTime"; }
+            }
+            else if (tail.Count > 0) { when = tail.Min(); timeSource = "cel mai vechi FILETIME de după blocurile de chei (fără ThreatTrackingStartTime)"; }
             var strings = post.Where(r => r.Type == TypeString).Select(Str).ToList();
             int u = strings.FindIndex(s => s.Contains('\\') &&!s.Contains(':'));
             if (u >= 0) { user = strings[u]; if (u + 1 < strings.Count) process = strings[u + 1]; }
         }
 
-        string K(params string[] names) { foreach (var n in names) if (keys.TryGetValue(n, out var v)) return v; return ""; }
+        var hk = hashKeys ?? keys;
+        string K(params string[] names) { foreach (var n in names) if (hk.TryGetValue(n, out var v)) return v; return ""; }
         return new Detection(id, threatId, name, sev, cat, source, resources, when, timeSource, user, process,
             K("ThreatTrackingSha256", "ThreatTrackingSha256Hash"), K("ThreatTrackingSha1"), K("ThreatTrackingMD5"), K("ThreatTrackingSize"),
-            blockIdx >= 0, complete, recs.Count);
+            blockIdx >= 0, complete, recs.Count, resources.Count == 0 ? 0 : Math.Min(primary, resources.Count - 1));
     }
 
     /// <summary>A FILETIME as a UTC time; null for zero, negative or beyond-calendar values.</summary>

@@ -95,17 +95,58 @@ public sealed class DefenderDetectionHistoryTests : IDisposable
     }
 
     [Fact]
+    public void A_real_detection_inside_a_zip_gives_both_resources_the_hashes_of_the_second_block_and_the_1116_time()
+    {
+        // Lab WS01: the EICAR test string inside TEST-LA-arhiva.zip. Its 1116 event: Path "containerfile:_C:\LA\eicarzip\TEST-LA-arhiva.zip;
+        // file:_C:\LA\eicarzip\TEST-LA-arhiva.zip->docs/eicar-in-zip.com", Detection Time 2026-11-10T05:48:22.467Z, user NT AUTHORITY\LOCAL SERVICE,
+        // process Unknown. Each resource has its own key block; the first FILETIME of the tail is the 1117 action time (05:48:35.25).
+        const string zipId = "0FF8925A-BB9B-43C6-B2D8-4094E582A250";
+        var bytes = File.ReadAllBytes(Path.Combine(AppContext.BaseDirectory, "Corpus", "DefenderDetectionHistory", zipId + ".eicar-in-zip"));
+        var path = Write(zipId, bytes);
+        var sink = new ListSink();
+        var r = new DefenderDetectionHistoryParser().Parse(Item(path), path, sink, default);
+        Assert.Equal(1, r.Records);
+        var e = Assert.Single(sink.Events);
+        Assert.Equal("{" + zipId + "}", e.Fields["Detection ID"]);
+        Assert.Equal(@"containerfile:_C:\LA\eicarzip\TEST-LA-arhiva.zip; file:_C:\LA\eicarzip\TEST-LA-arhiva.zip->docs/eicar-in-zip.com", e.Fields["Path"]);
+        Assert.Equal(@"NT AUTHORITY\LOCAL SERVICE", e.Fields["Detection User"]);
+        Assert.Equal("Unknown", e.Fields["Process Name"]);
+        Assert.Equal("275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f", e.Fields["SHA256"]);   // the EICAR file itself, from the second block
+        Assert.Equal(new DateTime(2026, 11, 10, 5, 48, 22, 467, DateTimeKind.Utc), new DateTime(e.Time.Utc!.Value.UtcDateTime.Ticks / TimeSpan.TicksPerMillisecond * TimeSpan.TicksPerMillisecond, DateTimeKind.Utc));
+        // the hash belongs to the file inside the zip (its own key block), so the event's path is that file, never the zip
+        Assert.Equal(@"C:\LA\eicarzip\TEST-LA-arhiva.zip->docs/eicar-in-zip.com", e.Path);
+        Assert.Equal("275a021bbfb6489e54d471899f7db9d1663fc695ec2fe2a2c4538aabf651fd0f", e.Hash);
+    }
+
+    [Fact]
+    public void A_planted_early_FILETIME_is_never_the_detection_time_and_tail_times_far_from_the_start_time_fall_back_to_it()
+    {
+        // a record appended at the end with a FILETIME of the year 2000: the detection stays at 18:05:53.6495606 (within 1 ms of the start time)
+        var planted = Real.Concat(Rec(0x0A, BitConverter.GetBytes(new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc).ToFileTimeUtc()))).ToArray();
+        var d1 = DefenderDetectionHistoryParser.Decode(planted);
+        Assert.Equal(DateTime.FromFileTimeUtc(134387211536495606), d1.DetectionTimeUtc);
+        Assert.Contains("ThreatTrackingStartTime", d1.TimeSource);
+        // every tail FILETIME 10 s after the start time: none is the detection, the start time is
+        var far = (byte[])Real.Clone();
+        long later = 134387211536487535 + TimeSpan.FromSeconds(10).Ticks;
+        BinaryPrimitives.WriteInt64LittleEndian(far.AsSpan(0x708 + 8), later);
+        BinaryPrimitives.WriteInt64LittleEndian(far.AsSpan(0x868), later);
+        var d2 = DefenderDetectionHistoryParser.Decode(far);
+        Assert.Equal(DateTime.FromFileTimeUtc(134387211536487535), d2.DetectionTimeUtc);
+        Assert.Equal("ThreatTrackingStartTime", d2.TimeSource);
+    }
+
+    [Fact]
     public void The_same_record_rewritten_by_Defender_after_the_log_was_cleared_keeps_the_detection_time_and_every_field()
     {
-        // Real lab file: Defender rewrote the record (2360 -> 2400 bytes) after the Operational log was cleared; its FILETIME after the
-        // key block moved to 18:06:06.5, while ThreatTrackingStartTime stayed at the detection (18:05:53.6487535, 1116 says 18:05:53.649).
+        // Real lab file: Defender rewrote the record (2360 -> 2400 bytes) after the Operational log was cleared; the FIRST FILETIME of the tail
+        // moved to 18:06:06.5 (Defender's action), while the detection FILETIME later in the tail stayed at 18:05:53.6495606 (1116: 18:05:53.649).
         var bytes = File.ReadAllBytes(Fixture + ".after-log-clear");
         var path = Write(RealId, bytes);
         var sink = new ListSink();
         new DefenderDetectionHistoryParser().Parse(Item(path), path, sink, default);
         var e = Assert.Single(sink.Events);
-        Assert.Equal(new DateTimeOffset(DateTime.FromFileTimeUtc(134387211536487535)), e.Time.Utc);
-        Assert.Contains("ThreatTrackingStartTime", e.TimeSemantics);
+        Assert.Equal(new DateTimeOffset(DateTime.FromFileTimeUtc(134387211536495606)), e.Time.Utc);   // the same instant as in the fresh file
         Assert.Equal("{" + RealId + "}", e.Fields["Detection ID"]);
         Assert.Equal("Virus:DOS/EICAR_Test_File", e.Fields["Threat Name"]);
         Assert.Equal(@"LAB\Administrator", e.Fields["Detection User"]);
@@ -220,7 +261,9 @@ public sealed class DefenderDetectionHistoryTests : IDisposable
     {
         var real = Real;
         var bad = (byte[])real.Clone();
-        BinaryPrimitives.WriteInt64LittleEndian(bad.AsSpan(0x708 + 8), -1);   // the detection time after the block
+        // every FILETIME of the tail invalid (0x708: last action, 0x868: detection): only then the start-time key is the fallback
+        BinaryPrimitives.WriteInt64LittleEndian(bad.AsSpan(0x708 + 8), -1);
+        BinaryPrimitives.WriteInt64LittleEndian(bad.AsSpan(0x868), -1);
         var d = DefenderDetectionHistoryParser.Decode(bad);
         Assert.Equal("ThreatTrackingStartTime", d.TimeSource);
         Assert.Equal(DateTime.FromFileTimeUtc(134387211536487535), d.DetectionTimeUtc);
