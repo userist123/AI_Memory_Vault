@@ -25,14 +25,25 @@ namespace LogAnalyzer.UI.Services
         private static readonly DependencyProperty WrittenProperty =
             DependencyProperty.RegisterAttached("Written", typeof(string), typeof(GridRowNames), new PropertyMetadata(""));
 
+        private static bool _registered;
+
+        /// <summary>
+        /// Names every grid row of the application. The hook is SizeChanged, raised for each row at its first layout: a class handler for Loaded is never
+        /// called, because WPF raises Loaded only where an instance handler exists (found by the test on 2026-11-10 after the first version did nothing on the VM).
+        /// </summary>
+        public static void Register()
+        {
+            if (_registered) return;
+            _registered = true;
+            EventManager.RegisterClassHandler(typeof(DataGridRow), FrameworkElement.SizeChangedEvent, new SizeChangedEventHandler((s, _) => Apply((DataGridRow)s)));
+        }
+
         /// <summary>Names the row now and again whenever the (recycled) row gets another item.</summary>
         public static void Apply(DataGridRow row)
         {
-            if (!(bool)row.GetValue(HookedProperty))
-            {
-                row.SetValue(HookedProperty, true);
-                row.DataContextChanged += (s, _) => Name((DataGridRow)s);
-            }
+            if ((bool)row.GetValue(HookedProperty)) return;   // SizeChanged comes again at every resize: the row is named once, then on every new item
+            row.SetValue(HookedProperty, true);
+            row.DataContextChanged += (s, _) => Name((DataGridRow)s);
             Name(row);
         }
 

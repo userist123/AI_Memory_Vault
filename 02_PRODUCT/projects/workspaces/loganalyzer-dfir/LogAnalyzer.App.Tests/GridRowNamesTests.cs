@@ -1,3 +1,5 @@
+using System.IO;
+using System.Linq;
 using System.Data;
 using LogAnalyzer.UI.Services;
 using Xunit;
@@ -51,5 +53,19 @@ public class GridRowNamesTests
         var name = GridRowNames.NameFor(new NoText { Name = new string('a', 500) }, Cols)!;
         Assert.True(name.Length < 120);
         Assert.Contains("…; PID: 0", name);   // the cut value, then the next column
+    }
+    [Fact]
+    public void The_global_hook_is_SizeChanged_never_Loaded_and_the_application_registers_it()
+    {
+        // A class handler for Loaded is never called (WPF raises Loaded only where an instance handler exists): the first version did nothing on the VM.
+        // A realised grid row needs a window handle, and creating one inside a test ends the test process early (632 of 1,036 tests ran), so the
+        // registration is checked in the source; the behaviour is checked on the lab VM through UI Automation.
+        var dir = AppContext.BaseDirectory;
+        while (dir is not null && !Directory.Exists(Path.Combine(dir, "LogAnalyzer.App", "Services"))) dir = Path.GetDirectoryName(dir);
+        Assert.NotNull(dir);
+        var src = File.ReadAllText(Path.Combine(dir!, "LogAnalyzer.App", "Services", "GridRowNames.cs"));
+        Assert.Contains("RegisterClassHandler(typeof(DataGridRow), FrameworkElement.SizeChangedEvent", src);
+        Assert.DoesNotContain("RegisterClassHandler(typeof(DataGridRow), FrameworkElement.LoadedEvent", src);
+        Assert.Contains("GridRowNames.Register();", File.ReadAllText(Path.Combine(dir!, "LogAnalyzer.App", "App.xaml.cs")));
     }
 }
