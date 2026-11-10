@@ -540,3 +540,15 @@
   FILETIME within 1 s of ThreatTrackingStartTime else the start time (a planted early FILETIME is never taken). Opus r1 found the hash/path
   mismatch and the unbounded "earliest" rule; both fixed with tests; r2 skipped by the main session (small delta, all three real samples equal
   the 1116 time). Suites: Dfir 3164, App 1028, UI 368, Edition 45. Lab leftover added: WS01 C:\LA\eicarzip, C:\LA\dhzip.
+- 2026-11-10 (owner „Continua”): CI green on 68eeea3bb. Wave 8, Windows-gather.db. Real lab experiment on WS01 (TEST file created in it.admin's
+  Documents, indexed, deleted; databases copied twice from one WMI shadow copy each, shadow copies back to 0): after the delete the file's rows
+  in SystemIndex_1_PropertyStore (Windows.db) are gone, its SystemIndex_Gthr row (path via SystemIndex_GthrPth + LastModified FILETIME LE)
+  stays; the new row lived only in Windows-gather.db-wal. Samples: host E:\LA-Lab\diag\gather\{a,b}. Phase 1 (worker, Sonnet): parser
+  WindowsSearchGatherParser + shared SQLite copy/WAL helper + registration. Phase 2 (next): collector/remote/import copy the gather pair from the
+  same shadow copy + a rule for gather rows with no property-store row (only for databases from one collection). Lab leftover: WS01 C:\LA\gth.
+  Phase 1 done: worker built the parser; real run found 2 of 1,175 rows silently lost (ORDER BY DocumentID used the secondary index, whose PK
+  lookups need the Windows collation; stand-in orders differently) -> ORDER BY +DocumentID, test fails without the fix. Opus r1: MEDIUM output
+  amplification (32K paths x deep chains) -> MaxPathChars 2,048; LOW row-order-dependent incomplete paths -> depth-aware memo (walk again
+  without memo when a memoised node would pass MaxDepth), both with tests; LIMIT cap+1. r2 skipped by the main session (bounded delta, tests in
+  both orders). Accepted LOW: collations now also registered on the Windows.db read connection (no collated column there); '..' / '\' inside
+  names kept verbatim (raw Url kept). Lab rerun: a and b sets 1,175 rows, no gaps, deleted TEST file still present with path and time.

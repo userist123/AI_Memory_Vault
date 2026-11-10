@@ -55,7 +55,7 @@ public sealed class WindowsSearchIndexParser : EvidenceParserBase
             "O intrare înseamnă că fișierul a existat la momentul indexării, nu că mai există sau că a fost deschis.",
             "Fișierele șterse pot rămâne în index până la următoarea trecere a serviciului de căutare.",
             "Windows.edb (ESE, Windows 10 și Windows 11 mai vechi) nu este citit de acest parser.",
-            "Windows-gather.db și Windows-usn.db nu sunt citite.",
+            "Windows-gather.db este citit de WindowsSearchGatherParser; Windows-usn.db nu este citit.",
             $"Se citesc cel mult {MaxEvents} de intrări și {MaxTextChars} de caractere pe valoare text; baza nu poate depăși 2 GiB. Intrările fără cale nu produc eveniment.",
             "Fără -wal / -shm colectate lângă bază, ultimele modificări ale indexului pot lipsi.",
             "AutoSummary este un fragment din conținutul fișierului (probă sensibilă): rămâne în câmpul AutoSummary, nu în rezumat.",
@@ -76,67 +76,14 @@ public sealed class WindowsSearchIndexParser : EvidenceParserBase
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
         var work = LogAnalyzer.Dfir.IO.WorkFolders.NewWorkDirectory(fullPath, "sqlite");
-        var copy = Path.Combine(work, DatabaseFileName);
         try
         {
-            File.Copy(fullPath, copy);
-            File.SetAttributes(copy, FileAttributes.Normal);
-            // Only -wal is placed beside the copy: SQLite rebuilds the -shm index from it. The collector takes Windows.db and -wal from ONE snapshot;
-            // for a pair from elsewhere (an import) the journal is applied only when the database alone is sound and the result still passes
-            // quick_check with both index tables. That catches a journal of another database, NOT a journal of the same database from a later moment
-            // (that one can rebuild a state that never existed and pass every check): the gap below says so whenever a journal is applied.
-            SQLitePCL.Batteries_V2.Init();
-            // The database alone only has to be sound: its tables may still live in the journal (a database never checkpointed).
-            bool baseOk = QuickCheckOk(copy, requireTables: false);
-            // A pair is vouched for only when THIS application's collector copied it from one shadow copy (collector, action and note all match:
-            // an imported file's notes hold the operator's path, which could contain the note text).
-            bool samePair = item.Notes.Contains(SameSnapshotNote, StringComparison.Ordinal) &&
-                (item.Collector == CollectedBy && item.AcquisitionMethod == "acquired"
-                 // a verified remote package: its script takes both files from one shadow copy, or neither
-                 || item.Collector == LogAnalyzer.Dfir.Windows.Acquisition.RemoteCollection.CollectorName && item.AcquisitionMethod == "imported");
-            var walPath = fullPath + "-wal";
-            bool walThere = File.Exists(walPath);
-            if (walThere && new FileInfo(walPath).Length > MaxFileBytes)
-            {
-                walThere = false;
-                result.Gaps.Add(new EvidenceGap("Windows.db-wal", EvidenceStatus.Partial, $"jurnalul WAL depășește {MaxFileBytes:N0} octeți și nu a fost aplicat",
-                    "Ultimele modificări ale indexului, aflate doar în jurnal, pot lipsi", "Windows.db citit fără jurnal", "Posibil"));
-            }
-            // a shadow copy can freeze a checkpoint half written: then the database alone fails quick_check and only database + journal is a valid
-            // state, so a vouched-for pair gets its journal even when the database alone is not sound
-            bool tryWal = walThere && (baseOk || samePair);
-            bool applied = false;
-            if (tryWal)
-            {
-                File.Copy(walPath, copy + "-wal"); File.SetAttributes(copy + "-wal", FileAttributes.Normal);
-                if (QuickCheckOk(copy))
-                {
-                    applied = true;
-                    if (!samePair)
-                        result.Gaps.Add(new EvidenceGap("Windows.db-wal", EvidenceStatus.Partial, "jurnalul WAL a fost aplicat, dar nu se știe dacă provine din același instantaneu cu baza: starea citită poate fi amestecată",
-                            "Valorile modificate între cele două copii pot apărea într-o combinație care nu a existat", "Windows.db și Windows.db-wal copiate din aceeași copie de umbră (colectorul aplicației face așa)", "Posibil"));
-                }
-                else
-                {
-                    SqliteConnection.ClearAllPools();
-                    foreach (var f in new[] { copy, copy + "-wal", copy + "-shm" }) if (File.Exists(f)) File.Delete(f);
-                    File.Copy(fullPath, copy);
-                    File.SetAttributes(copy, FileAttributes.Normal);
-                    result.Gaps.Add(new EvidenceGap("Windows.db-wal", EvidenceStatus.Partial, "jurnalul WAL al indexului nu se potrivește cu baza și nu a fost aplicat",
-                        "Ultimele modificări ale indexului, aflate doar în jurnal, pot lipsi", "Windows.db și Windows.db-wal copiate din același instantaneu", "Posibil"));
-                }
-            }
-            else if (!walThere && !samePair && item.AcquisitionMethod == "imported" && !item.Notes.Contains(NoWalNote, StringComparison.Ordinal))
-                result.Gaps.Add(new EvidenceGap("Windows.db-wal", EvidenceStatus.Partial, "baza a fost importată fără jurnalul WAL de lângă ea",
-                    "Ultimele modificări ale indexului, aflate doar în jurnal, pot lipsi", "Importați Windows.db împreună cu Windows.db-wal din același folder", "Posibil"));
-            // the read may still succeed on an unsound database (the damaged page off the query path): say so instead of staying silent
-            if (!baseOk && !applied)
-                result.Gaps.Add(new EvidenceGap("Windows.db", EvidenceStatus.Partial, "baza nu trece verificarea de integritate SQLite (quick_check)",
-                    "Unele intrări pot lipsi sau pot fi citite greșit", "O copie a indexului făcută din aceeași copie de umbră cu jurnalul", "Posibil"));
-            using var c = new SqliteConnection($"Data Source={copy};Mode=ReadWrite;Pooling=False");
+            var copy = SearchSqliteCopy.Prepare(Spec, item, fullPath, work, result);
+            using var c = new SqliteConnection(SearchSqliteCopy.ConnectionString(copy));
             try
             {
                 c.Open();
+                SearchSqliteCopy.RegisterSchemaCollations(c);
                 Read(c, item, sink, result, _maxEvents, ct);
             }
             catch (SqliteException ex)
@@ -155,54 +102,7 @@ public sealed class WindowsSearchIndexParser : EvidenceParserBase
         }
     }
 
-    /// <summary>
-    /// True when the working copy with its -wal opens, passes PRAGMA quick_check and still has both index tables. A journal of another database
-    /// can be internally valid and pass quick_check while replacing the schema, so the tables are checked too. Any SQLite error counts as "does not fit".
-    /// </summary>
-    private static bool QuickCheckOk(string copy, bool requireTables = true)
-    {
-        try
-        {
-            using var c = new SqliteConnection($"Data Source={copy};Mode=ReadWrite;Pooling=False");
-            c.Open();
-            RegisterSchemaCollations(c);
-            using var cmd = c.CreateCommand();
-            cmd.CommandText = "PRAGMA quick_check(1)";
-            if (cmd.ExecuteScalar() is not string s || !s.Equals("ok", StringComparison.OrdinalIgnoreCase)) return false;
-            if (!requireTables) return true;
-            cmd.CommandText = "SELECT count(*) FROM sqlite_master WHERE type='table' AND name IN ('SystemIndex_1_PropertyStore', 'SystemIndex_1_PropertyStore_Metadata')";
-            return cmd.ExecuteScalar() is long n && n == 2;
-        }
-        catch (SqliteException) { return false; }
-        finally { SqliteConnection.ClearAllPools(); }
-    }
-
-    private static readonly System.Text.RegularExpressions.Regex CollateName =
-        new(@"COLLATE\s+""?([A-Za-z0-9_\-]{1,64})""?", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
-
-    /// <summary>
-    /// The real index declares a Windows collation (lab, Windows 11 26100: CatalogStorageManager uses COLLATE "UNICODE_en-US") that this SQLite does not
-    /// have, and quick_check then fails with "no such collation sequence" on a sound database. The collations named in the schema are registered
-    /// (ordinal comparison; at most 16, names limited to letters, digits, '_' and '-') so the check can run. The name is passed to the API, never into SQL text.
-    /// </summary>
-    private static void RegisterSchemaCollations(SqliteConnection c)
-    {
-        var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-        using (var cmd = c.CreateCommand())
-        {
-            cmd.CommandText = "SELECT substr(sql, 1, 8192) FROM sqlite_master WHERE sql LIKE '%COLLATE%' LIMIT 256";
-            using var r = cmd.ExecuteReader();
-            while (r.Read())
-            {
-                if (r.IsDBNull(0)) continue;
-                try { foreach (System.Text.RegularExpressions.Match m in CollateName.Matches(r.GetString(0))) if (names.Count < 16) names.Add(m.Groups[1].Value); }
-                catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { }
-            }
-        }
-        foreach (var n in names)
-            if (n.ToUpperInvariant() is not ("BINARY" or "NOCASE" or "RTRIM"))
-                c.CreateCollation(n, (a, b) => string.CompareOrdinal(a, b));
-    }
+    private static readonly SearchSqliteSpec Spec = new(DatabaseFileName, [ValueTable, MetaTable], SameSnapshotNote, NoWalNote, CollectedBy, MaxFileBytes);
 
     private static void Read(SqliteConnection c, EvidenceItem item, IEventSink sink, ParseResult result, int maxEvents, CancellationToken ct)
     {

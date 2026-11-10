@@ -168,8 +168,8 @@ public sealed class InvestigationPipeline
             var type = ImportType(f);
             // the Windows Search index: Windows.db and the -wal beside it go together into one folder, so the parser finds the journal next to the database;
             // a -wal selected on its own beside a selected Windows.db is taken with it, not imported twice
-            if (type == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName) { list.AddRange(ImportSearchIndex(ws, f)); continue; }
-            if (f.EndsWith("-wal", StringComparison.OrdinalIgnoreCase) && all.Any(x => x.Equals(f[..^4], StringComparison.OrdinalIgnoreCase) && ImportType(x) == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName)) continue;
+            if (IsSearchDatabaseType(type)) { list.AddRange(ImportSearchIndex(ws, f, type)); continue; }
+            if (f.EndsWith("-wal", StringComparison.OrdinalIgnoreCase) && all.Any(x => x.Equals(f[..^4], StringComparison.OrdinalIgnoreCase) && IsSearchDatabaseType(ImportType(x)))) continue;
             // E1: an archived log ("Archive-Security-<date>.evtx") is the Security channel; E1/E10: the origin (archived log, Windows.old, shadow copy) goes into the notes and custody.
             var source = type == "evtx" ? LogAnalyzer.Dfir.Windows.Acquisition.HistoricalSources.ChannelFromFileName(f) : type;
             var origin = LogAnalyzer.Dfir.Analysis.EvidenceOrigin.Label(f);
@@ -184,9 +184,15 @@ public sealed class InvestigationPipeline
     /// Imports a Windows Search Windows.db with the Windows.db-wal beside it (if any) into one new folder of the case, so the journal sits next to the
     /// database. The note says whether a journal was there; the pair still cannot be vouched for as one state (the parser writes that gap).
     /// </summary>
-    private static List<EvidenceItem> ImportSearchIndex(CaseWorkspace ws, string db)
+    private static bool IsSearchDatabaseType(string type) =>
+        type == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName || type == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName;
+
+    private static List<EvidenceItem> ImportSearchIndex(CaseWorkspace ws, string db, string type)
     {
-        var type = LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName;
+        // Windows.db and Windows-gather.db go through the same pair logic; only the file name and the no-journal note differ
+        var isGather = type == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName;
+        var dbName = isGather ? LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.DatabaseFileName : LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.DatabaseFileName;
+        var noWalNote = isGather ? LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.NoWalNote : LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.NoWalNote;
         var dir = Path.Combine(ws.RawDir("Import:" + type), Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(dir);
         var items = new List<EvidenceItem>();
@@ -203,12 +209,12 @@ public sealed class InvestigationPipeline
         }
         var origin = LogAnalyzer.Dfir.Analysis.EvidenceOrigin.Label(db);
         var note = (origin.Length > 0 ? $"Sursă istorică ({origin}). " : "") + "Importat de operator din: " + db + "." +
-                   (hasWal ? " Jurnalul Windows.db-wal de lângă bază a fost importat împreună cu ea." : " " + LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.NoWalNote);
-        var dbItem = ws.RegisterStored(Copy(db, "Windows.db"), db, "Import:" + type, type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion, action: "imported", notes: note);
+                   (hasWal ? $" Jurnalul {dbName}-wal de lângă bază a fost importat împreună cu ea." : " " + noWalNote);
+        var dbItem = ws.RegisterStored(Copy(db, dbName), db, "Import:" + type, type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion, action: "imported", notes: note);
         items.Add(dbItem);
         if (hasWal)
-            items.Add(ws.RegisterStored(Copy(wal, "Windows.db-wal"), wal, "Import:" + type, LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.WalSourceType,
-                TemporalType.Historical, "Import", DfirInfo.ApplicationVersion, action: "imported", parentEvidenceId: dbItem.EvidenceId, notes: "Jurnalul WAL al indexului Windows Search, importat împreună cu " + db));
+            items.Add(ws.RegisterStored(Copy(wal, dbName + "-wal"), wal, "Import:" + type, LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.WalSourceType,
+                TemporalType.Historical, "Import", DfirInfo.ApplicationVersion, action: "imported", parentEvidenceId: dbItem.EvidenceId, notes: (isGather ? "Jurnalul WAL al bazei gather Windows Search, importat împreună cu " : "Jurnalul WAL al indexului Windows Search, importat împreună cu ") + db));
         if (origin.Contains("VSS", StringComparison.Ordinal)) ws.Audit("vss.import", $"{dbItem.EvidenceId} din {db}");
         return items;
     }
@@ -237,6 +243,8 @@ public sealed class InvestigationPipeline
                 _ when EvidenceFingerprint.Detect(f) == "usn_fsutil" => "usn_journal",
                 // the Windows Search index: the name Windows.db and an SQLite header; the tables are checked by the parser (another Windows.db is then refused there)
                 _ when Path.GetFileName(f).Equals(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.DatabaseFileName, StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName,
+                // the gatherer database beside it: the name Windows-gather.db and an SQLite header (the parser checks the tables)
+                _ when Path.GetFileName(f).Equals(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.DatabaseFileName, StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName,
                 _ when Path.GetFileName(f).Equals("History", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "chromium_history",
                 _ when Path.GetFileName(f).Equals("places.sqlite", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "firefox_places",
                 _ when RegistryHiveType(Path.GetFileName(f)) is { } hiveType && EvidenceFingerprint.Detect(f) == "regf" => hiveType,

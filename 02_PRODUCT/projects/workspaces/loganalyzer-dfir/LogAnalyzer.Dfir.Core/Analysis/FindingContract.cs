@@ -55,6 +55,7 @@ public static class FindingContract
         "DefenderDetectionHistoryParser" => "Istoricul detecțiilor Defender (DetectionHistory)",
         "NotepadTabStateParser" => "Filele Notepad din Windows 11 (TabState)",
         "WindowsSearchIndexParser" => "Indexul Windows Search (Windows.db)",
+        "WindowsSearchGatherParser" => "Baza gatherer Windows Search (Windows-gather.db)",
         "PcapngParser" => "Captura de rețea (PCAPNG)",
         "FirewallLogParser" => "Jurnalul firewall-ului (pfirewall.log)",
         var p when p.EndsWith("Parser", StringComparison.Ordinal) => p[..^6],
