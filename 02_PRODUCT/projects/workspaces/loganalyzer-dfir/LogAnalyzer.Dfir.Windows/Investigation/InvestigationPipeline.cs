@@ -174,7 +174,10 @@ public sealed class InvestigationPipeline
             var source = type == "evtx" ? LogAnalyzer.Dfir.Windows.Acquisition.HistoricalSources.ChannelFromFileName(f) : type;
             var origin = LogAnalyzer.Dfir.Analysis.EvidenceOrigin.Label(f);
             list.Add(ws.ImportFile(f, "Import:" + source, type == "evtx" ? "EventLog:" + source : type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion,
-                notes: (origin.Length > 0 ? $"Sursă istorică ({origin}). " : "") + "Importat de operator din: " + f));
+                notes: (origin.Length > 0 ? $"Sursă istorică ({origin}). " : "") + "Importat de operator din: " + f,
+                // a session log of AnyDesk / TeamViewer is in the local time of the station it came from, which an operator import does not name:
+                // its times stay unconverted instead of being read in this machine's zone
+                timezone: LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.IsKnown(type) ? "" : null));
             if (origin.Contains("VSS", StringComparison.Ordinal)) ws.Audit("vss.import", $"{list[^1].EvidenceId} din {f}");
         }
         return list;
@@ -236,6 +239,8 @@ public sealed class InvestigationPipeline
                 _ when Guid.TryParse(Path.GetFileName(f), out _) && EvidenceFingerprint.Detect(f) == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName => LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName,
                 // a Notepad tab file (<guid>.bin / .0.bin / .1.bin): only a GUID name with tab content; WindowState files have the same names and stay "file"
                 _ when LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.TryTabFileName(Path.GetFileName(f), out _, out _) && EvidenceFingerprint.Detect(f) == LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.FingerprintName => LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.SourceTypeName,
+                // the session logs of AnyDesk / TeamViewer: the exact file name AND the documented content (the type is the fingerprint name)
+                _ when LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.ByName(Path.GetFileName(f)) is { } remoteLog && EvidenceFingerprint.Detect(f) == remoteLog => remoteLog,
                 _ when Path.GetFileName(f).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase)
                        || Path.GetFileName(f).EndsWith("SYSTEM.hiv", StringComparison.OrdinalIgnoreCase) => "system_hive",
                 _ when Path.GetFileName(f).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase) => "amcache",

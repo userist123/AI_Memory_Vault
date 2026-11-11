@@ -128,7 +128,7 @@ public class Wp11ContractTests
             ("Security", 5140), ("Security", 5145), ("Security", 4670), ("Security", 4720), ("Security", 4722), ("Security", 4724), ("Security", 4738),
             ("Security", 4728), ("Security", 4732), ("Security", 4756), ("Security", 4624), ("Security", 4648), ("Security", 4688),
             ("System", 7036), ("System", 7040), ("System", 7045), ("System", 25), ("System", 33), ("System", 1074), ("System", 6006),
-            ("Application", 1034), ("Application", 11724), ("Application", 11707), ("Application", 8193), ("Application", 8194),
+            ("Application", 1034), ("Application", 11724), ("Application", 11707), ("Application", 8193), ("Application", 8194), ("Application", 0),
             ("Microsoft-Windows-Sysmon/Operational", 1), ("Microsoft-Windows-Sysmon/Operational", 4), ("Microsoft-Windows-Sysmon/Operational", 16), ("Microsoft-Windows-Sysmon/Operational", 22),
             ("Microsoft-Windows-WinRM/Operational", 6), ("Microsoft-Windows-WinRM/Operational", 91), ("Microsoft-Windows-WinRM/Operational", 142),
             ("OpenSSH/Operational", 4),

@@ -191,7 +191,7 @@ public sealed partial class CaseWorkspace
     /// <summary>Copies an external file into Raw/ (never moves the original) and registers it.</summary>
     public EvidenceItem ImportFile(string originalPath, string source, string sourceType, TemporalType temporal,
                                    string collector, string collectorVersion, Sensitivity sensitivity = Sensitivity.Confidential,
-                                   string? parentEvidenceId = null, string notes = "")
+                                   string? parentEvidenceId = null, string notes = "", string? timezone = null)
     {
         ThrowIfReadOnly();
         var dir = RawDir(source);
@@ -200,14 +200,14 @@ public sealed partial class CaseWorkspace
         using (var dst = new FileStream(dest, FileMode.CreateNew, FileAccess.Write))
             src.CopyTo(dst);
         File.SetLastWriteTimeUtc(dest, File.GetLastWriteTimeUtc(originalPath));
-        return RegisterStored(dest, originalPath, source, sourceType, temporal, collector, collectorVersion, "imported", sensitivity, parentEvidenceId, notes);
+        return RegisterStored(dest, originalPath, source, sourceType, temporal, collector, collectorVersion, "imported", sensitivity, parentEvidenceId, notes, timezone: timezone);
     }
 
     /// <summary>Registers a file already written inside the case (e.g. by wevtutil). Hashes it and makes it read-only.</summary>
     public EvidenceItem RegisterStored(string storedFullPath, string originalPath, string source, string sourceType, TemporalType temporal,
                                        string collector, string collectorVersion, string action = "acquired",
                                        Sensitivity sensitivity = Sensitivity.Confidential, string? parentEvidenceId = null, string notes = "",
-                                       EvidenceStatus status = EvidenceStatus.Success)
+                                       EvidenceStatus status = EvidenceStatus.Success, string? timezone = null)
     {
         ThrowIfReadOnly();
         var full = Path.GetFullPath(storedFullPath);
@@ -234,7 +234,8 @@ public sealed partial class CaseWorkspace
                 AcquiredAtUtc = DateTimeOffset.UtcNow,
                 Host = Info.Host,
                 User = Info.User,
-                Timezone = Info.Timezone,
+                // the zone of the station the file came from: the case machine's zone unless the caller knows better ("" = not known, e.g. a file imported from elsewhere)
+                Timezone = timezone ?? Info.Timezone,
                 Collector = collector,
                 CollectorVersion = collectorVersion,
                 AcquisitionMethod = action,

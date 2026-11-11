@@ -632,3 +632,16 @@
   Next (planner, ranked): RMM session logs (AnyDesk ad.trace / connection_trace.txt, TeamViewer Connections_incoming.txt, ScreenConnect
   events) with synthetic TEST logs on WS01; Windows-usn.db; Windows.edb ESE (needs Search on SRV01 = lab change); UI remote collection;
   flaky OfficerQualifiedSignatureTests.
+- 2026-11-11 RMM session logs DONE (planner item 1): parsers AnyDeskConnectionTraceParser, AnyDeskTraceParser, TeamViewerConnectionsParser
+  (LogAnalyzer.Dfir.Core/RemoteTools; registry 30), ScreenConnect Application ID 0 events; live collection (UserArtifactsCollector) and remote
+  package ("remote-tool-logs"). A session counts as execution in REMOTE-TOOL-EXECUTED (High, confidence Medium). Owner-delegated decision
+  (main session): approved tool + accepted incoming session from an ID/IP not in the profile = Medium "De verificat" (not High); approval
+  only by path pattern with only a session log = Medium "nici confirmată, nici exclusă". Opus review round 1 fixed: target time zone now in
+  the package manifest ("timezone"; operator imports and old packages leave session times unconverted), IPv4 with leading zeros rejected,
+  RemoteToolLogs typed before "/Tasks/". Lab WS01 (synthetic TEST logs: C:\ProgramData\AnyDesk\{connection_trace.txt,ad_svc.trace},
+  C:\Program Files\TeamViewer\Connections_incoming.txt, TEST source "ScreenConnect Client (TEST0000)" in Application): the 3 parsers
+  status OK, findings for AnyDesk / TeamViewer / ScreenConnect with sessions, 21:21 station time -> 19:21 UTC. Lab fix: ad.trace detail rows
+  (relay, remote OS) no longer counted as sessions; direction in Romanian. Lab leftovers: those TEST files and the event source on WS01,
+  E:\LA-Lab\diag\rmmlogs, case CASE-LAB-WS01-20261111-002241. Residual (recorded): SetupApi / Firewall imports still use the analyst's zone;
+  PS package has no reparse re-check after copy (live does). Formats not checked against a real AnyDesk / TeamViewer install.
+  Next (planner): Windows-usn.db; Windows.edb ESE (lab change on SRV01); UI remote collection; Insula device monitor; flaky Officer test.

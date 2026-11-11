@@ -30,6 +30,7 @@ public static class EvidenceFingerprint
         if (IsCustomDestinations(path, n, h)) return "custom_destinations";
         if (IsDefenderHistory(path)) return LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName;
         if (IsNotepadTab(path)) return LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.FingerprintName;
+        if (LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.Detect(path) is { } remoteToolLog) return remoteToolLog;
         if (IsFirewallLog(path)) return "pfirewall";
         if (IsZeekTsv(path)) return LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint;
         if (IsRecycleInfo(path)) return "recycle_info";
@@ -164,6 +165,7 @@ public static class EvidenceFingerprint
         if (t == LogAnalyzer.Dfir.Network.ZeekLogParser.SourceTypeName) return [LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint, "json"];
         if (t == "usn_journal") return ["usn_fsutil"];
         if (t == LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.FingerprintName];
+        if (LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.IsKnown(t)) return [t];   // the source type is the fingerprint name
         if (t == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName];
         if (t == LogAnalyzer.Dfir.FileSystem.RecycleBinInfoParser.SourceTypeName) return ["recycle_info"];
         if (t is "chromium_history" or "firefox_places" or "windows_search_index" or "windows_search_gather") return ["sqlite"];   // WindowsSearchIndexParser / WindowsSearchGatherParser .SourceTypeName

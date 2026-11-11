@@ -26,7 +26,10 @@ public sealed record RemoteManifest(
     [property: JsonPropertyName("requestSha256")] string RequestSha256, [property: JsonPropertyName("host")] string Host,
     [property: JsonPropertyName("user")] string User, [property: JsonPropertyName("elevated")] bool Elevated,
     [property: JsonPropertyName("collectedUtc")] string CollectedUtc, [property: JsonPropertyName("steps")] IReadOnlyList<RemoteStep> Steps,
-    [property: JsonPropertyName("files")] IReadOnlyList<RemoteFile> Files);
+    [property: JsonPropertyName("files")] IReadOnlyList<RemoteFile> Files,
+    // the target's own Windows time-zone id: the session logs of AnyDesk / TeamViewer are in the station's local time. A package without it (older format)
+    // leaves those times unconverted, never in the analyst's zone.
+    [property: JsonPropertyName("timezone")] string? Timezone = null);
 
 public sealed record RemotePackageCheck(bool Ok, IReadOnlyList<string> Problems, RemoteManifest? Manifest, RemoteCollectionRequest? Request, string PackageDir);
 
@@ -48,7 +51,7 @@ public static class RemoteCollection
         "evtx:Security", "evtx:System", "evtx:Application", "evtx:Microsoft-Windows-PowerShell/Operational",
         "evtx:Microsoft-Windows-Windows Defender/Operational", "evtx:Microsoft-Windows-TaskScheduler/Operational",
         "evtx:Microsoft-Windows-Sysmon/Operational", "evtx:Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
-        "hive:SYSTEM", "hive:SOFTWARE", "prefetch", "tasks", "defender-history", "notepad-tabs", "search-index",
+        "hive:SYSTEM", "hive:SOFTWARE", "prefetch", "tasks", "defender-history", "notepad-tabs", "remote-tool-logs", "search-index",
     ];
 
     /// <summary>Package sub-folders for the Notepad tab files (one folder per profile) and for the Windows Search index (Windows.db with its -wal).</summary>
@@ -56,6 +59,9 @@ public static class RemoteCollection
 
     /// <summary>Package sub-folder for the Defender DetectionHistory files (ProgramData\Microsoft\Windows Defender\Scans\History\Service\DetectionHistory).</summary>
     public const string DefenderHistoryFolder = "DefenderDetectionHistory";
+
+    /// <summary>Package sub-folder for the session logs of remote-access tools: <c>files/RemoteToolLogs/{Users/&lt;profile&gt;|ProgramData|ProgramFiles|ProgramFilesX86}/{AnyDesk|TeamViewer}/&lt;file&gt;</c>.</summary>
+    public const string RemoteToolLogsFolder = "RemoteToolLogs";
 
     private static readonly Regex HostName = new("^[A-Za-z0-9][A-Za-z0-9-]{0,14}$");
     private static readonly JsonSerializerOptions Indented = new() { WriteIndented = true };
@@ -194,6 +200,56 @@ public static class RemoteCollection
                         if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0) { throw "file copiate: $copied; necopiate (Notepad deschis?): $failed; sarite (peste 4 MiB sau peste 500 pe profil): $skipped; legaturi neurmate: $links" }
                         if ($copied -eq 0) { return '__absent__' }
                     }
+                } elseif ($a -eq 'remote-tool-logs') {
+                    # the session logs of AnyDesk (connection_trace.txt, ad.trace, ad_svc.trace) and TeamViewer (Connections.txt, Connections_incoming.txt), per profile and in
+                    # ProgramData / Program Files: no component of a path may be a link, at most 16 MiB per file (ad.trace / ad_svc.trace 64 MiB), empty files skipped
+                    Step $a {
+                        $copied = 0; $failed = 0; $skipped = 0; $links = 0
+                        $targets = New-Object System.Collections.Generic.List[object]
+                        foreach ($p in @(Get-ChildItem -LiteralPath (Join-Path $env:SystemDrive 'Users') -Directory -Force -ErrorAction SilentlyContinue)) {
+                            if ($p.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
+                            $targets.Add(@{ Base = $p.FullName; Parts = @('AppData', 'Roaming', 'AnyDesk'); Out = ('Users\' + $p.Name + '\AnyDesk'); Files = @('connection_trace.txt', 'ad.trace') })
+                            $targets.Add(@{ Base = $p.FullName; Parts = @('AppData', 'Roaming', 'TeamViewer'); Out = ('Users\' + $p.Name + '\TeamViewer'); Files = @('Connections.txt') })
+                        }
+                        if ($env:ProgramData) { $targets.Add(@{ Base = $env:ProgramData; Parts = @('AnyDesk'); Out = 'ProgramData\AnyDesk'; Files = @('connection_trace.txt', 'ad_svc.trace') }) }
+                        if ($env:ProgramFiles) { $targets.Add(@{ Base = $env:ProgramFiles; Parts = @('TeamViewer'); Out = 'ProgramFiles\TeamViewer'; Files = @('Connections_incoming.txt') }) }
+                        if (${env:ProgramFiles(x86)}) { $targets.Add(@{ Base = ${env:ProgramFiles(x86)}; Parts = @('TeamViewer'); Out = 'ProgramFilesX86\TeamViewer'; Files = @('Connections_incoming.txt') }) }
+                        foreach ($t in $targets) {
+                            # every folder on the way is checked: a user can turn his own AppData\Roaming\AnyDesk into a junction to another folder
+                            $src = $t.Base; $ok = $true
+                            if (-not (Test-Path -LiteralPath $src)) { continue }
+                            foreach ($part in $t.Parts) {
+                                $src = Join-Path $src $part
+                                if (-not (Test-Path -LiteralPath $src)) { $ok = $false; break }
+                                if ((Get-Item -LiteralPath $src -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { $ok = $false; $links++; break }
+                            }
+                            if (-not $ok) { continue }
+                            foreach ($name in $t.Files) {
+                                $fp = Join-Path $src $name
+                                if (-not (Test-Path -LiteralPath $fp -PathType Leaf)) { continue }
+                                $f = Get-Item -LiteralPath $fp -Force
+                                if ($f.Attributes -band [IO.FileAttributes]::ReparsePoint) { $links++; continue }
+                                $cap = $(if ($name -like '*.trace') { 64MB } else { 16MB })
+                                if ($f.Length -eq 0) { continue }
+                                if ($f.Length -gt $cap) { $skipped++; continue }
+                                $d = Join-Path (Join-Path $files 'RemoteToolLogs') $t.Out
+                                New-Item -ItemType Directory -Path $d -Force | Out-Null
+                                $dest = Join-Path $d $name
+                                # shared read (the tool may still hold the log open); a file that grew past the cap during the copy is removed
+                                $in = $null; $outFs = $null
+                                try {
+                                    $in = New-Object IO.FileStream($f.FullName, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]'ReadWrite,Delete')
+                                    $outFs = New-Object IO.FileStream($dest, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
+                                    $in.CopyTo($outFs)
+                                    $outFs.Dispose(); $outFs = $null
+                                    if ((New-Object IO.FileInfo $dest).Length -gt $cap) { Remove-Item -LiteralPath $dest -Force; $skipped++ } else { $copied++ }
+                                } catch { $failed++; if ($outFs) { $outFs.Dispose(); $outFs = $null }; Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue }
+                                finally { if ($in) { $in.Dispose() }; if ($outFs) { $outFs.Dispose() } }
+                            }
+                        }
+                        if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0) { throw "jurnale copiate: $copied; necopiate (fisier blocat sau acces refuzat): $failed; sarite (peste 16 MiB, ad.trace peste 64 MiB): $skipped; legaturi neurmate: $links" }
+                        if ($copied -eq 0) { return '__absent__' }
+                    }
                 } elseif ($a -eq 'search-index') {
                     # Windows.db and its -wal from ONE shadow copy, deleted afterwards: a journal from another moment would rebuild a state
                     # that never existed. The search service is not stopped. No shadow copy -> the step fails, nothing is copied.
@@ -277,7 +333,7 @@ public static class RemoteCollection
             $manifest = [ordered]@{
                 format = 'loganalyzer-remote-collection/1'; requestId = $RequestId; requestSha256 = $RequestSha256
                 host = $env:COMPUTERNAME; user = [Security.Principal.WindowsIdentity]::GetCurrent().Name; elevated = $isAdmin
-                collectedUtc = (Get-Date).ToUniversalTime().ToString('o'); steps = $steps.ToArray(); files = $list
+                collectedUtc = (Get-Date).ToUniversalTime().ToString('o'); steps = $steps.ToArray(); files = $list; timezone = [TimeZoneInfo]::Local.Id
             }
             $mp = Join-Path $out 'manifest.json'
             [IO.File]::WriteAllText($mp, ($manifest | ConvertTo-Json -Depth 6), (New-Object Text.UTF8Encoding $false))
@@ -340,7 +396,13 @@ public static class RemoteCollection
     /// </summary>
     internal static string ImportKind(string relativePath, string fullPath) =>
         relativePath.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase) ? "evtx" : relativePath.EndsWith(".hive", StringComparison.OrdinalIgnoreCase) ? "registry-hive"
-        : relativePath.EndsWith(".pf", StringComparison.OrdinalIgnoreCase) ? "prefetch" : relativePath.Contains("/Tasks/", StringComparison.OrdinalIgnoreCase) ? "task-xml"
+        : relativePath.EndsWith(".pf", StringComparison.OrdinalIgnoreCase) ? "prefetch"
+        // the session logs of AnyDesk / TeamViewer: only inside the package folder, only an exact file name with matching content (a file of another kind
+        // with the same name, or the same content under another name, stays "file"). Tested before "/Tasks/": a user profile named "Tasks" must not make them task XML.
+        : relativePath.StartsWith("files/" + RemoteToolLogsFolder + "/", StringComparison.OrdinalIgnoreCase)
+            && LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.ByName(Path.GetFileName(relativePath)) is not null
+            && Investigation.InvestigationPipeline.ImportType(fullPath) is var rt && LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.IsKnown(rt) ? rt
+        : relativePath.Contains("/Tasks/", StringComparison.OrdinalIgnoreCase) ? "task-xml"
         : relativePath.Contains("/" + DefenderHistoryFolder + "/", StringComparison.OrdinalIgnoreCase)
             && Investigation.InvestigationPipeline.ImportType(fullPath) is var t && t == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName ? t
         : relativePath.Contains("/" + NotepadTabsFolder + "/", StringComparison.OrdinalIgnoreCase)
@@ -403,7 +465,9 @@ public static class RemoteCollection
             else
                 item = ws.ImportFile(full, source, kind,
                     kind is "registry-hive" or "task-xml" ? TemporalType.CurrentSnapshot : TemporalType.Historical,
-                    CollectorName, DfirInfo.ApplicationVersion, parentEvidenceId: manifest.EvidenceId, notes: $"{m.Host}:{f.Path}; {notes}");
+                    CollectorName, DfirInfo.ApplicationVersion, parentEvidenceId: manifest.EvidenceId, notes: $"{m.Host}:{f.Path}; {notes}",
+                    // the target's zone from the manifest; without one, a session log's local times stay unconverted (never the analyst's zone)
+                    timezone: m.Timezone is { Length: > 0 } tz ? tz : LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.IsKnown(kind) ? "" : null);
             if (!item.Sha256.Equals(f.Sha256, StringComparison.OrdinalIgnoreCase))
                 throw new InvalidOperationException($"{f.Path}: SHA-256 la import ({item.Sha256}) diferă de cel de pe țintă ({f.Sha256}).");
             // Custody starts on the target: who collected it, when, from where, with the hash computed there.

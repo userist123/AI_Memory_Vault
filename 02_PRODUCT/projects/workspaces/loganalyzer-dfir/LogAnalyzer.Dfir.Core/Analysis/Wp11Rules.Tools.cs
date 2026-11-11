@@ -1,5 +1,6 @@
 using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.Profile;
 
 namespace LogAnalyzer.Dfir.Analysis;
 
@@ -169,7 +170,80 @@ public static partial class Wp11Rules
         return false;
     }
 
-    private sealed record ToolResult(RemoteToolRow Tool, List<ToolHit> Exec, List<ToolHit> Present);
+    private sealed record ToolResult(RemoteToolRow Tool, List<ToolHit> Exec, List<ToolHit> Present, List<(ToolHit Hit, ToolSession Info)> Sessions);
+
+    // ---- sessions from the tool's own logs (AnyDesk connection_trace / ad.trace, TeamViewer Connections*.txt) and ScreenConnect events in the Application log ----
+
+    /// <summary>Kind of a hit that comes from a session log: it is evidence that the tool was used, at least as strong as an execution artifact, but the file or log can be forged.</summary>
+    internal const string ToolSessionKind = "sesiune din jurnalul uneltei";
+    private const int ToolMaxSessionLines = 6;
+
+    private static readonly HashSet<string> ToolSessionSources = new(StringComparer.Ordinal)
+        { "Artifact:AnyDeskConnectionTrace", "Artifact:AnyDeskTrace", "Artifact:TeamViewerConnections" };
+
+    /// <summary>One session as the rule reports it. <see cref="Remote"/> is the remote id or IP (empty when the log does not give one).</summary>
+    private sealed record ToolSession(string Direction, bool Accepted, string Remote, string Account, string Method, string What);
+
+    private static string ToolSessionWhat(string kind) => kind switch
+    {
+        "AcceptedFrom" => "acceptată de la ID", "IncomingSessionRequest" => "cerere de sesiune de intrare", "LoggedInFromRelay" => "adresă văzută pe releu",
+        "SessionEnded" => "încheiată", "AuthenticatedPermanentToken" => "autentificare cu token permanent", "FileTransfer" => "transfer de fișiere",
+        "RemoteOs" => "sistemul de operare al celuilalt capăt", "" => "sesiune", _ => kind,
+    };
+
+    /// <summary>The session an event describes for <paramref name="tool"/>, or null. Only the known session-log sources count (a field named like ours in an EVTX event does not).</summary>
+    private static ToolSession? ToolSessionOf(TimelineEvent e, RemoteToolRow tool)
+    {
+        if (ToolSessionSources.Contains(e.Source))
+        {
+            if (!F(e, "Tool Id").Equals(tool.Id, StringComparison.OrdinalIgnoreCase) || F(e, "Session Evidence") != "da") return null;
+            var remote = F(e, "Remote Id", "IP");
+            var what = F(e, "Kind").Length > 0 ? ToolSessionWhat(F(e, "Kind")) : F(e, "Session Type").Length > 0 ? F(e, "Session Type") : "sesiune";
+            return new(F(e, "Direction"), F(e, "Accepted") == "da", remote, F(e, "Local Account"), F(e, "Auth Method"), what);
+        }
+        // ScreenConnect Client writes Application events with ID 0 from the source "ScreenConnect Client (<thumbprint>)"; the text is the message
+        if (tool.Id == "screenconnect" && e.Source.Equals("EventLog:Application", StringComparison.OrdinalIgnoreCase) && e.EventId == "0"
+            && e.Provider.StartsWith("ScreenConnect Client (", StringComparison.OrdinalIgnoreCase))
+        {
+            var text = AllText(e);
+            bool Has(string t) => text.Contains(t, StringComparison.OrdinalIgnoreCase);
+            if (Has("Transferred files")) return new("Incoming", true, "", "", "", "transfer de fișiere");
+            if (Has("Executed command")) return new("Incoming", true, "", "", "", "comandă executată");
+            if (Has("Disconnected")) return new("Incoming", false, "", "", "", "deconectare");
+            if (Has("Connected")) return new("Incoming", true, "", "", "", "conectare");
+        }
+        return null;
+    }
+
+    /// <summary>The sessions of a finding, as text: how many, then at most <see cref="ToolMaxSessionLines"/> (strangers first), each with direction, remote id / IP, time, local account and method.</summary>
+    private static string ToolSessionText(List<(ToolHit Hit, ToolSession Info)> sessions, List<(ToolHit Hit, ToolSession Info)> strangers)
+    {
+        string When(TimelineEvent e) => T(e) is { } t ? Time(t) : F(e, "Local Time").Length > 0 ? "ora locală " + ToolSafe(F(e, "Local Time")) + " (fusul stației nu este cunoscut)" : "oră necunoscută";
+        // Lab 2026-11-11 (WS01): the rows of ad.trace that only describe a session (relay address, the other end's OS, session closed) have no direction; they were
+        // counted and listed as sessions ("12 sesiuni" for 3 connections, "necunoscută adresă văzută pe releu"). Sessions are the rows with a direction;
+        // the others are counted apart and not listed. Each group is in time order, strangers first.
+        static bool Directed(ToolSession s) => s.Direction is "Incoming" or "Outgoing";
+        var directed = sessions.Where(x => Directed(x.Info)).ToList();
+        int details = sessions.Count - directed.Count;
+        static DateTimeOffset Order((ToolHit Hit, ToolSession Info) x) => T(x.Hit.Event) ?? DateTimeOffset.MaxValue;
+        var chosen = strangers.OrderBy(Order).Concat(directed.Where(x => !strangers.Contains(x)).OrderBy(Order)).Take(ToolMaxSessionLines).ToList();
+        var lines = chosen.Select(x =>
+        {
+            var i = x.Info;
+            return $"{When(x.Hit.Event)}: {(i.Direction == "Incoming" ? "intrare" : "ieșire")} ({ToolSafe(i.What)})" +
+                   (i.Remote.Length > 0 ? $", la distanță {ToolSafe(i.Remote)}" : "") + (i.Account.Length > 0 ? $", cont local {ToolSafe(i.Account)}" : "") +
+                   (i.Method.Length > 0 ? $", metodă {ToolSafe(i.Method)}" : "") + (i.Accepted ? "" : ", neacceptată sau fără acceptare în rând");
+        });
+        return $" Sesiuni în jurnalul propriu al uneltei: {directed.Count}" + (strangers.Count > 0 ? $", din care {strangers.Count} de intrare acceptate de la un ID/IP care nu este în profil" : "") +
+               (details > 0 ? $"; alte rânduri despre sesiuni, fără direcție (de exemplu adresă de releu, sistemul celuilalt capăt, autentificare, transfer, încheiere): {details}" : "") +
+               (lines.Any() ? $". Primele: {string.Join("; ", lines)}{(directed.Count > chosen.Count ? $" … (+{directed.Count - chosen.Count})" : "")}." : ".") +
+               " Jurnalele de sesiune pot fi modificate, completate sau șterse de cine are acces la stația analizată (un rând lipsă nu dovedește absența unei sesiuni); ora din ele este ora locală a stației." +
+               " Jurnalul nu arată ce s-a făcut în sesiune.";
+    }
+
+    /// <summary>True when the remote id / IP is listed as a network destination in the procedure profile (the only place the profile names addresses).</summary>
+    private static bool ToolRemoteApproved(ProcedureProfile? profile, string remote) =>
+        remote.Length > 0 && profile is not null && profile.NetworkDestinations.Any(d => d.Address.Trim().Equals(remote.Trim(), StringComparison.OrdinalIgnoreCase));
 
     /// <summary>
     /// REMOTE-TOOL-EXECUTED (Prefetch / BAM / UserAssist / 4688 / Sysmon 1 for a known remote-access tool) and REMOTE-TOOL-PRESENT (Amcache /
@@ -197,8 +271,16 @@ public static partial class Wp11Rules
                 return tool.ConditionalExecutables.Contains(file, StringComparer.OrdinalIgnoreCase) && tool.PathHints.Any(h => norm.Contains(h, StringComparison.OrdinalIgnoreCase));
             }
             var exec = new List<ToolHit>(); var present = new List<ToolHit>();
+            var sessions = new List<(ToolHit Hit, ToolSession Info)>();
             foreach (var e in c.Events)
             {
+                if (ToolSessionOf(e, tool) is { } session)
+                {
+                    // a session in the tool's own log is evidence of use, as strong as an execution artifact; it never goes through the path-based branches below
+                    var hit = new ToolHit(e, ToolSessionKind, "", "");
+                    exec.Add(hit); sessions.Add((hit, session));
+                    continue;
+                }
                 if (e.Source is "Prefetch" or "BAM" or "UserAssist")
                 {
                     if (IsExe(e.Process) || IsExe(e.Path)) exec.Add(new(e, e.Source, ExePath(e), ""));
@@ -232,7 +314,7 @@ public static partial class Wp11Rules
             foreach (var p in starts.Where(p => IsExe(p.Image)))
                 exec.Add(new(p.Event, p.Event.EventId == "4688" ? "4688" : "Sysmon 1", p.Image.Trim().Trim('"'), Sha256sOf(p.Event).FirstOrDefault() ?? ""));
             if (exec.Count == 0 && present.Count == 0) continue;
-            results.Add(new(tool, exec, present));
+            results.Add(new(tool, exec, present, sessions));
         }
 
         // Approval first: an approved tool neither raises nor is raised by the others.
@@ -249,7 +331,9 @@ public static partial class Wp11Rules
                 ? hits.Where(h => (r.Exec.Contains(h) || h.Kind.StartsWith("serviciu", StringComparison.Ordinal)) && h.Path.Length > 0 && !ToolStandardLocation(h.Path))
                       .Select(h => h.Path).Distinct(StringComparer.OrdinalIgnoreCase).ToList()
                 : [];
-            return (R: r, Hits: hits, Paths: paths, Approved: outside.Count > 0 ? null : approved, ApprovedOutside: outside);
+            // no path among the hits (only sessions from the tool's own log) and a profile row that approves the tool only at a path: the approval cannot be checked
+            var pathUnchecked = approved is null && paths.Count == 0 ? ApprovedSoftwareMatcher.PathRowByName(c.Profile, aliases) : null;
+            return (R: r, Hits: hits, Paths: paths, Approved: outside.Count > 0 ? null : approved, ApprovedOutside: outside, PathUnchecked: pathUnchecked);
         }).ToList();
 
         // Two distinct tools (the common ones and approved ones excluded) with evidence on one station within 24 h: each names the others.
@@ -273,6 +357,11 @@ public static partial class Wp11Rules
             var writable = hits.Where(h => (exec.Contains(h) || h.Kind.StartsWith("serviciu", StringComparison.Ordinal)) && h.Path.Length > 0 && ToolUserWritable(h.Path)).Select(h => h.Path).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var others = Others(r);
             bool approvedOutside = a.ApprovedOutside.Count > 0;
+            var sessions = r.Sessions;
+            // an accepted incoming session whose remote id / IP is not a destination named in the profile: the approval of the software does not cover who connects
+            var strangers = sessions.Where(x => x.Info.Direction == "Incoming" && x.Info.Accepted && !ToolRemoteApproved(c.Profile, x.Info.Remote)).ToList();
+            bool incomingUnknown = strangers.Count > 0;
+            bool realExec = exec.Any(h => h.Kind != ToolSessionKind);
 
             var severity = executed ? Severity.High : Severity.Low;
             string why = "";
@@ -281,6 +370,23 @@ public static partial class Wp11Rules
             if (tool.Common && writable.Count == 0) { severity = executed ? Severity.Medium : Severity.Low; why = $" {tool.Name} face parte din Windows; rulat din locul lui normal, severitatea este cel mult Medium (escrocheriile de tip „suport tehnic” folosesc exact această copie)."; }
             if (approved is not null) severity = Severity.Info;
             if (approvedOutside) { severity = Severity.Medium; why += $" Unealta figurează în profil doar după nume, iar aprobarea pe nume acoperă numai Program Files și Windows, nu și: {Join(a.ApprovedOutside.Select(ToolSafe), 3)}."; }
+            // the profile approves the software, not the person who connects: a stranger's accepted incoming session is treated as an unapproved tool that ran
+            bool approvedInfo = approved is not null && !incomingUnknown;
+            // owner decision 2026-11-11: an approved tool with an accepted incoming session from an ID / IP the profile does not name is Medium, "de verificat" (a
+            // help-desk session from a new technician is common); an UNAPPROVED tool with sessions stays High (executed). The finding is no longer Info.
+            if (approved is not null && incomingUnknown)
+            {
+                severity = Severity.Medium;
+                bool anyUnnamed = strangers.Any(x => x.Info.Remote.Length == 0);
+                why += " De verificat: software aprobat în profil, dar jurnalul uneltei arată o sesiune de intrare acceptată de la un ID sau o adresă care nu figurează în profil" +
+                       (anyUnnamed ? " (sau pe care jurnalul nu o arată)" : "") + ". Aprobarea acoperă programul, nu pe cel care se conectează: confirmați cu responsabilul uneltei că sesiunea era așteptată.";
+            }
+            // the profile approves the tool only at a path and the case has no path for it (only its session log): neither approved nor ruled out
+            if (approved is null && a.PathUnchecked is { } pathRow && !realExec && !approvedOutside)
+            {
+                severity = Severity.Medium;
+                why += $" De verificat: profilul aprobă {ToolSafe(pathRow.Name)} doar în {ToolSafe(pathRow.PathPattern)}, iar cazul are numai jurnalul de sesiune al uneltei, fără calea programului; aprobarea nu poate fi nici confirmată, nici exclusă.";
+            }
             // "raised" only where it changed the severity: an executed tool is High anyway, an approved one stays Info
             string raised = !executed && approved is null ? "; severitatea este crescută" : "";
             if (writable.Count > 0) why += $" Rulează sau este serviciu dintr-un folder în care utilizatorul poate scrie ({Join(writable.Select(ToolSafe), 3)}){raised}.";
@@ -300,17 +406,17 @@ public static partial class Wp11Rules
             o.Add(new Finding
             {
                 FindingId = c.NextId(), RuleId = executed ? "REMOTE-TOOL-EXECUTED" : "REMOTE-TOOL-PRESENT",
-                Title = $"Unealtă de acces la distanță {(executed ? "rulată" : "prezentă")}: {tool.Name}" + (approved is not null ? " (aprobat în profil)" : ""),
+                Title = $"Unealtă de acces la distanță {(executed ? "rulată" : "prezentă")}: {tool.Name}" + (approvedInfo ? " (aprobat în profil)" : ""),
                 Severity = severity,
-                Category = "Command and Control", Classification = Classification.Direct, Confidence = executed ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1219",
+                Category = "Command and Control", Classification = Classification.Direct, Confidence = realExec ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1219",
                 FirstSeenUtc = times.FirstOrDefault(), LastSeenUtc = times.LastOrDefault(), Process = tool.Executables.FirstOrDefault() ?? "", File = ToolSafe(paths.FirstOrDefault() ?? ""),
                 Description = $"{tool.Name}: {kinds}; {Time(times.FirstOrDefault())}" + (times.Count > 1 ? $" – {Time(times.LastOrDefault())}" : "") + "." +
                               (paths.Count > 0 ? $" Căi: {Join(paths.Select(ToolSafe), 4)}." : "") + (runCounts.Count > 0 ? $" Prefetch: număr de rulări {Join(runCounts)}." : "") +
                               (executed ? present.Count > 0 ? $" Alte dovezi de prezență: {present.Count} (instalare/serviciu/amcache/log/DNS)." : "" : dnsOnly ? " Există doar interogări DNS către domeniul uneltei: arată că stația a căutat domeniul, nu că unealta este instalată sau a rulat." : " Prezența unui artefact nu dovedește execuția; nu există în caz un artefact de execuție pentru această unealtă.") +
-                              (approved is not null ? $" Software aprobat în profil: {ToolSafe(approved.Name)} ({ToolSafe(approved.PathPattern.Length > 0 ? approved.PathPattern : approved.Publisher)}); aprobat în profil, deci informativ." : "") + why +
+                              (approved is not null ? $" Software aprobat în profil: {ToolSafe(approved.Name)} ({ToolSafe(approved.PathPattern.Length > 0 ? approved.PathPattern : approved.Publisher)})" + (approvedInfo ? "; aprobat în profil, deci informativ." : ".") : "") + why +
                               " Identificarea este după nume (fișier, serviciu, domeniu), nu după semnătură: un alt producător poate folosi același nume." +
-                              " Existența unei aplicații de acces de la distanță nu arată o sesiune sau cine s-a conectat.",
-                ClassificationReason = executed ? "Artefact de execuție (Prefetch/BAM/UserAssist/4688/Sysmon 1) pentru un executabil din lista de aplicații de acces de la distanță." : "Artefact de prezență (Amcache/ShimCache/MUICache/Windows Search/serviciu/instalare/log/DNS) pentru o aplicație din lista de acces de la distanță.",
+                              (sessions.Count > 0 ? ToolSessionText(sessions, strangers) : " Existența unei aplicații de acces de la distanță nu arată o sesiune sau cine s-a conectat."),
+                ClassificationReason = executed ? (realExec ? "Artefact de execuție (Prefetch/BAM/UserAssist/4688/Sysmon 1) pentru un executabil din lista de aplicații de acces de la distanță." : "Sesiune în jurnalul propriu al unei aplicații din lista de acces de la distanță (AnyDesk, TeamViewer, ScreenConnect); jurnalul poate fi falsificat, deci încrederea este Medie.") + (realExec && sessions.Count > 0 ? " Plus sesiuni în jurnalul propriu al uneltei." : "") : "Artefact de prezență (Amcache/ShimCache/MUICache/Windows Search/serviciu/instalare/log/DNS) pentru o aplicație din lista de acces de la distanță.",
                 SemanticType = executed ? SemanticType.Execution : SemanticType.Presence,
                 SupportingEvidence = evidence.Select(h => Ref(h.Event, $"{h.Kind} {tool.Name}")).ToList(),
                 AlternativeExplanations = ["Suport tehnic sau administrare legitimă; aplicația poate fi aprobată de organizație, dar netrecută în profil.", "O aplicație prezentă doar ca fișier descărcat sau instalată și nefolosită.", "Unealtă folosită legitim de departamentul IT.", "Software preinstalat pe stație."],

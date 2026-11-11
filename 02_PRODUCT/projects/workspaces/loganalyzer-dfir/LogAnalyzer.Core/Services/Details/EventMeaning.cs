@@ -123,7 +123,9 @@ namespace LogAnalyzer.Core.Services.Details
         // Senior review E1: providers the engines read that none of the dictionaries above covers. Provider is matched by a fragment of its name.
         private static readonly (string Provider, int Id, string Text)[] ByProvider =
         [
-            ("Kernel-Power", 41, "Stația a repornit fără o oprire corectă (pană de curent, blocare, buton de pornire ținut apăsat). Ce rula atunci s-a întrerupt brusc."),
+            // the ScreenConnect (ConnectWise Control) client writes its sessions to the Application log with ID 0 and source "ScreenConnect Client (<thumbprint>)"
+            ("ScreenConnect Client", 0, "ScreenConnect (aplicație de acces de la distanță): un rând din jurnalul sesiunilor clientului, de exemplu o conectare, o deconectare, un transfer de fișiere sau o comandă executată de la distanță. Textul arată ce s-a întâmplat; cine s-a conectat nu reiese întotdeauna din el."),
+            ("Kernel-Power", 41,"Stația a repornit fără o oprire corectă (pană de curent, blocare, buton de pornire ținut apăsat). Ce rula atunci s-a întrerupt brusc."),
             ("WLAN-AutoConfig", 8001, "Wi-Fi: stația s-a conectat la o rețea fără fir; evenimentul are numele rețelei (SSID), adaptorul folosit și tipul de autentificare."),
             ("WLAN-AutoConfig", 8003, "Wi-Fi: stația s-a deconectat de la o rețea fără fir (marchează sfârșitul conectării)."),
             ("WLAN-AutoConfig", 11001, "Wi-Fi: asocierea cu rețeaua fără fir a reușit; evenimentul are adaptorul, adresa fizică locală (LocalMac) și numele rețelei (SSID)."),

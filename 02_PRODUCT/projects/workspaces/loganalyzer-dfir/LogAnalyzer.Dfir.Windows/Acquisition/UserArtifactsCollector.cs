@@ -2,6 +2,7 @@ using System.Globalization;
 using System.Text.RegularExpressions;
 using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.RemoteTools;
 using Microsoft.Win32;
 
 namespace LogAnalyzer.Dfir.Windows.Acquisition;
@@ -45,22 +46,25 @@ public sealed class UserArtifactsCollector : ICollector
     private readonly Func<string, string, string, string, CancellationToken, VssCopyResult> _vssCopy;
     private readonly Func<IReadOnlySet<string>?> _shadowIds;
     private readonly Func<string, byte[]> _readInfo;
+    private readonly Func<IReadOnlyList<RemoteToolFolder>> _remoteToolFolders;
     private readonly int _maxProfiles, _maxInfoPerSid, _maxInfoTotal;
 
     /// <param name="profiles">ProfileList rows (tests); by default read from the registry.</param>
     /// <param name="fixedVolumes">Roots of the fixed volumes (tests); by default the ready fixed drives.</param>
     /// <param name="vssCopy">(source, destination, log folder, label, ct) → result (tests); by default esentutl /vss through <see cref="ToolRunner"/>.</param>
     /// <param name="shadowIds">Ids of the shadow copies that exist now, null when they cannot be listed (tests); by default <see cref="ShadowCopies.List"/>.</param>
+    /// <param name="remoteToolFolders">System-level folders of the remote-tool session logs (tests); by default ProgramData\AnyDesk and Program Files\TeamViewer.</param>
     /// <param name="readInfo">Reads one $I file (tests); by default a shared read of at most <see cref="RecycleBinInfoParser.MaxInfoFileBytes"/> + 1 bytes.</param>
     public UserArtifactsCollector(Func<IReadOnlyList<UserProfileEntry>>? profiles = null, Func<IReadOnlyList<string>>? fixedVolumes = null,
         Func<string, string, string, string, CancellationToken, VssCopyResult>? vssCopy = null, Func<IReadOnlySet<string>?>? shadowIds = null,
-        Func<string, byte[]>? readInfo = null, int maxProfiles = DefaultMaxProfiles, int maxInfoPerSid = DefaultMaxInfoPerSid, int maxInfoTotal = DefaultMaxInfoTotal)
+        Func<string, byte[]>? readInfo = null, Func<IReadOnlyList<RemoteToolFolder>>? remoteToolFolders = null, int maxProfiles = DefaultMaxProfiles, int maxInfoPerSid = DefaultMaxInfoPerSid, int maxInfoTotal = DefaultMaxInfoTotal)
     {
         _profiles = profiles ?? ReadProfileList;
         _fixedVolumes = fixedVolumes ?? FixedVolumeRoots;
         _vssCopy = vssCopy ?? EsentutlVssCopy;
         _shadowIds = shadowIds ?? CurrentShadowIds;
         _readInfo = readInfo ?? ReadInfoFile;
+        _remoteToolFolders = remoteToolFolders ?? DefaultRemoteToolFolders;
         _maxProfiles = maxProfiles; _maxInfoPerSid = maxInfoPerSid; _maxInfoTotal = maxInfoTotal;
     }
 
@@ -84,6 +88,7 @@ public sealed class UserArtifactsCollector : ICollector
         {
             CollectHives(ctx, o, vssUsed, ct);
             CollectRecycleBin(ctx, o, ct);
+            CollectRemoteToolLogs(ctx, o, vssUsed, ct);
         }
         finally
         {
@@ -257,6 +262,152 @@ public sealed class UserArtifactsCollector : ICollector
         }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException)
         { o.Errors.Add($"Notepad TabState ({sid}): folderul nu poate fi citit ({ex.Message})."); }
+    }
+
+    // ---- remote-access tool session logs ----
+
+    /// <summary>A folder of a remote-access tool and the session logs looked for in it. <see cref="Scope"/> names the place in the case ("ProgramData", "ProgramFiles", a SID).</summary>
+    public sealed record RemoteToolFolder(string Scope, string Tool, string Folder, IReadOnlyList<string> Files);
+
+    private static readonly (string Tool, string[] Relative, string[] Files)[] RemoteToolProfileFolders =
+    [
+        ("AnyDesk", ["AppData", "Roaming", "AnyDesk"], ["connection_trace.txt", "ad.trace"]),
+        ("TeamViewer", ["AppData", "Roaming", "TeamViewer"], ["Connections.txt"]),
+    ];
+
+    public const int MaxRemoteToolFilesTotal = 2_000;
+
+    /// <summary>Size cap of one session log: that of the parser that will read it.</summary>
+    public static long MaxRemoteToolLogBytes(string fileName) => RemoteToolLogFormats.ByName(fileName) switch
+    {
+        RemoteToolLogFormats.AnyDeskTrace => AnyDeskTraceParser.MaxFileBytes,
+        RemoteToolLogFormats.AnyDeskConnectionTrace => AnyDeskConnectionTraceParser.MaxFileBytes,
+        _ => TeamViewerConnectionsParser.MaxFileBytes,
+    };
+
+    private static IReadOnlyList<RemoteToolFolder> DefaultRemoteToolFolders()
+    {
+        var list = new List<RemoteToolFolder>();
+        var pd = Environment.GetFolderPath(Environment.SpecialFolder.CommonApplicationData);
+        var pf = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles);
+        var pf86 = Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86);
+        if (pd.Length > 0) list.Add(new("ProgramData", "AnyDesk", Path.Combine(pd, "AnyDesk"), ["connection_trace.txt", "ad_svc.trace"]));
+        if (pf.Length > 0) list.Add(new("ProgramFiles", "TeamViewer", Path.Combine(pf, "TeamViewer"), ["Connections_incoming.txt"]));
+        if (pf86.Length > 0 && !pf86.Equals(pf, StringComparison.OrdinalIgnoreCase)) list.Add(new("ProgramFilesX86", "TeamViewer", Path.Combine(pf86, "TeamViewer"), ["Connections_incoming.txt"]));
+        return list;
+    }
+
+    /// <summary>
+    /// Copies the session logs of AnyDesk (connection_trace.txt, ad.trace in every profile's AppData\Roaming\AnyDesk; connection_trace.txt and ad_svc.trace in ProgramData\AnyDesk)
+    /// and TeamViewer (Connections.txt per profile; Connections_incoming.txt in Program Files) with the rules of the Notepad tabs: a missing folder or file is normal and no error;
+    /// no component of the path may be a reparse point; a file over the parser's size cap, an empty file and a file that grew during the copy are not taken (a partial copy is
+    /// deleted); a locked file falls back to the shadow copy only on a sharing violation; every error goes in the step's note.
+    /// </summary>
+    private void CollectRemoteToolLogs(CollectorContext ctx, CollectorOutcome o, System.Runtime.CompilerServices.StrongBox<bool> vssUsed, CancellationToken ct)
+    {
+        var logDir = Path.Combine(ctx.Case.Root, "Logs", "tools");
+        var work = new List<RemoteToolFolder>();
+        try
+        {
+            int taken = 0;
+            foreach (var p in _profiles().OrderBy(p => p.KeyName, StringComparer.OrdinalIgnoreCase))
+            {
+                if (!IsSid(p.KeyName) || UnsafeProfilePath(p.ProfilePath).Length > 0) continue;   // reported once, by the hive step
+                if (++taken > _maxProfiles) break;
+                foreach (var (tool, rel, files) in RemoteToolProfileFolders)
+                    work.Add(new(p.KeyName, tool, Path.Combine([p.ProfilePath, .. rel]), files));
+            }
+        }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+        { o.Errors.Add("Jurnalele uneltelor de acces la distanță: lista profilurilor nu a putut fi citită (" + ex.Message + "); jurnalele din profiluri nu au fost colectate."); }
+        work.AddRange(_remoteToolFolders());
+
+        int copied = 0;
+        foreach (var w in work)
+        {
+            ct.ThrowIfCancellationRequested();
+            var label = $"Jurnale {w.Tool} ({w.Scope})";
+            var probe = Probe(w.Folder);
+            if (probe.State == ProbeState.Missing) continue;
+            if (probe.State == ProbeState.Unreadable) { o.Errors.Add($"{label}: folderul nu poate fi citit ({probe.Detail})."); continue; }
+            if (!probe.IsDirectory) { o.Errors.Add($"{label}: {Shorten(w.Folder)} nu este un folder; omis."); continue; }
+            var link = ReparseOnPath(w.Folder);
+            if (link.Length > 0) { o.Errors.Add($"{label}: calea trece printr-o legătură (reparse point: {Shorten(link)}), care nu este urmată; jurnalele nu au fost colectate."); continue; }
+            foreach (var name in w.Files)
+            {
+                ct.ThrowIfCancellationRequested();
+                var srcPath = Path.Combine(w.Folder, name);
+                var fp = Probe(srcPath);
+                if (fp.State == ProbeState.Missing) continue;
+                if (fp.State == ProbeState.Unreadable) { o.Errors.Add($"{label}: {name} nu poate fi citit ({fp.Detail})."); continue; }
+                if (fp.IsDirectory) { o.Errors.Add($"{label}: {name} este un folder, nu un fișier; omis."); continue; }
+                if (fp.IsReparse) { o.Errors.Add($"{label}: {name} este o legătură (reparse point), nu este urmată."); continue; }
+                if (copied >= MaxRemoteToolFilesTotal) { o.Errors.Add($"{label}: limita de {MaxRemoteToolFilesTotal} de fișiere a fost atinsă; restul nu au fost colectate."); return; }
+                long cap = MaxRemoteToolLogBytes(name);
+                long len;
+                try { len = new FileInfo(srcPath).Length; }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { o.Errors.Add($"{label}: {name} nu poate fi citit ({ex.Message})."); continue; }
+                if (len == 0) { o.Commands.Add($"{label}: {name} este gol, omis"); continue; }
+                if (len > cap) { o.Errors.Add($"{label}: {name} are {len} octeți, peste limita de {cap}; necopiat."); continue; }
+
+                // one folder per place and tool; a second run into the same case gets a new folder, so the file name (which names its format) stays exact
+                var baseDir = Path.Combine(ctx.Case.RawDir("UserActivity"), "RemoteToolLogs", CaseWorkspaceSafe(w.Scope), CaseWorkspaceSafe(w.Tool));
+                var destDir = baseDir;
+                for (int i = 1; File.Exists(Path.Combine(destDir, name)); i++) destDir = baseDir + "_" + i;
+                CreateDir(destDir);
+                var dest = Path.Combine(destDir, name);
+                string how = "copiat direct";
+                try
+                {
+                    bool tooBig;
+                    using (var src = new FileStream(srcPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                    using (var dst = new FileStream(dest, FileMode.CreateNew, FileAccess.Write))
+                    {
+                        var buf = new byte[81920]; long total = 0; int n;
+                        while ((n = src.Read(buf, 0, (int)Math.Min(buf.Length, cap + 1 - total))) > 0) { dst.Write(buf, 0, n); total += n; if (total > cap) break; }
+                        tooBig = total > cap;
+                    }
+                    if (tooBig) { TryDelete(dest); o.Errors.Add($"{label}: {name} a crescut peste limita de {cap} octeți în timpul copierii; necopiat."); continue; }
+                }
+                catch (UnauthorizedAccessException ex)
+                {
+                    TryDelete(dest);
+                    o.Errors.Add($"{label}: {name} nu poate fi citit ({ex.Message}); accesul refuzat nu este ocolit prin copia de umbră.");
+                    continue;
+                }
+                catch (IOException ex) when (ex is not FileNotFoundException and not DirectoryNotFoundException && (ex.HResult & 0xFFFF) is 32 or 33)
+                {
+                    TryDelete(dest);
+                    vssUsed.Value = true;
+                    var run = _vssCopy(srcPath, dest, logDir, $"esentutl_remotetool_{CaseWorkspaceSafe(w.Scope)}_{copied}", ct);
+                    o.Commands.Add(run.CommandLine);
+                    if (run.ExitCode != 0 || !File.Exists(dest))
+                    {
+                        TryDelete(dest);
+                        o.Errors.Add($"{label}: {name} nu a putut fi citit direct ({ex.Message}) și copierea din copia de umbră a eșuat (cod {run.ExitCode}).");
+                        continue;
+                    }
+                    if (new FileInfo(dest).Length > cap) { TryDelete(dest); o.Errors.Add($"{label}: {name} din copia de umbră depășește limita de {cap} octeți; necopiat."); continue; }
+                    how = "copiat din copia de umbră VSS (citirea directă a eșuat)";
+                }
+                catch (IOException ex)
+                {
+                    TryDelete(dest);
+                    o.Errors.Add($"{label}: {name} nu a putut fi copiat ({ex.Message}).");
+                    continue;
+                }
+                if (ReparseOnPath(srcPath).Length > 0)
+                {
+                    TryDelete(dest);
+                    o.Errors.Add($"{label}: {name} a devenit o legătură (reparse point) în timpul copierii; copia a fost eliminată.");
+                    continue;
+                }
+                try { File.SetLastWriteTimeUtc(dest, new FileInfo(srcPath).LastWriteTimeUtc); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+                o.Evidence.Add(ctx.Case.RegisterStored(dest, srcPath, $"RemoteToolLogs:{w.Scope}:{w.Tool}", RemoteToolLogFormats.ByName(name)!, TemporalType.Historical, Name, Version,
+                    notes: $"Jurnal de sesiune {w.Tool} ({name}), loc: {w.Scope} ({Shorten(w.Folder)}), {how}; SHA-256 calculat la colectare. Ora din jurnal este ora locală a stației."));
+                copied++;
+            }
+        }
     }
 
     private void CopyHive(CollectorContext ctx, CollectorOutcome o, string sid, string profilePath, string src, string fileName, string sourceType, string source,

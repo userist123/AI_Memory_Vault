@@ -388,6 +388,178 @@ public sealed class RemoteCollectionTests : IDisposable
         }
     }
 
+    // ---- remote-tool-logs ----
+
+    private static string RtCorpus(string rel) => Path.Combine(AppContext.BaseDirectory, "Corpus", "RemoteToolLogs", rel);
+
+    [Fact]
+    public void Remote_tool_logs_are_a_known_artifact_and_the_script_parses_in_PowerShell_5_1()
+    {
+        Assert.Contains("remote-tool-logs", RemoteCollection.KnownArtifacts);
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["remote-tool-logs"]);
+        var script = RemoteCollection.PackageScript(req, sha);
+        Assert.Contains("connection_trace.txt", script);
+        Assert.Contains("ad_svc.trace", script);
+        Assert.Contains("Connections_incoming.txt", script);
+        Assert.Contains("ReparsePoint", script);                       // no link followed, component by component
+        Assert.Contains("16MB", script);
+        Assert.Contains("64MB", script);
+        Assert.Contains("ReadWrite,Delete", script);                   // shared read: the tool may hold its log open
+        Assert.DoesNotContain("Invoke-WebRequest", script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Stop-Service", script, StringComparison.OrdinalIgnoreCase);
+        var file = Path.Combine(_root, "syntax_rt", "collect.ps1");
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        File.WriteAllText(file, script);
+        var check = Path.Combine(_root, "syntax_rt", "check.ps1");
+        File.WriteAllText(check, "param([string]$f) $e = $null; [void][System.Management.Automation.Language.Parser]::ParseFile($f, [ref]$null, [ref]$e); if ($e.Count -gt 0) { $e | ForEach-Object { $_.Message }; exit 1 }");
+        var psi = new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{check}\" \"{file}\"")
+        { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
+        psi.Environment.Remove("PSModulePath");
+        using var pr = Process.Start(psi)!;
+        var outText = pr.StandardOutput.ReadToEnd(); pr.StandardError.ReadToEnd(); pr.WaitForExit();
+        Assert.True(pr.ExitCode == 0, outText);
+    }
+
+    [Fact]
+    public void Remote_tool_logs_in_a_package_are_typed_only_in_their_folder_by_exact_name_and_content()
+    {
+        var pkg = Path.Combine(_root, "pkg_rt");
+        var anydesk = Path.Combine(pkg, "files", RemoteCollection.RemoteToolLogsFolder, "Users", "ana", "AnyDesk"); Directory.CreateDirectory(anydesk);
+        var tv = Path.Combine(pkg, "files", RemoteCollection.RemoteToolLogsFolder, "ProgramFiles", "TeamViewer"); Directory.CreateDirectory(tv);
+        var ct = Path.Combine(anydesk, "connection_trace.txt"); File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), ct);
+        var ad = Path.Combine(anydesk, "ad.trace"); File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), ad);
+        var cin = Path.Combine(tv, "Connections_incoming.txt"); File.Copy(RtCorpus(@"teamviewer_TEST\Connections_incoming.txt"), cin);
+        var fakeCt = Path.Combine(anydesk, "other"); Directory.CreateDirectory(fakeCt);
+        var junk = Path.Combine(fakeCt, "connection_trace.txt"); File.WriteAllText(junk, "not a session log\r\n");
+        var renamed = Path.Combine(anydesk, "connection_trace_copy.txt"); File.Copy(ct, renamed);
+        string Rel(string p) => Path.GetRelativePath(pkg, p).Replace('\\', '/');
+        Assert.Equal(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskConnectionTrace, RemoteCollection.ImportKind(Rel(ct), ct));
+        Assert.Equal(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskTrace, RemoteCollection.ImportKind(Rel(ad), ad));
+        Assert.Equal(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.TeamViewerConnections, RemoteCollection.ImportKind(Rel(cin), cin));
+        Assert.Equal("file", RemoteCollection.ImportKind(Rel(junk), junk));                        // right name, wrong content
+        Assert.Equal("file", RemoteCollection.ImportKind(Rel(renamed), renamed));                  // right content, wrong name
+        Assert.Equal("file", RemoteCollection.ImportKind("files/other/connection_trace.txt", ct)); // right file, outside the folder
+        Assert.Equal("file", RemoteCollection.ImportKind("files/" + RemoteCollection.NotepadTabsFolder + "/ana/connection_trace.txt", ct));
+        // a user profile named "Tasks": the session log is still a session log, never task XML (review finding 2026-11-11)
+        Assert.Equal(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskConnectionTrace,
+            RemoteCollection.ImportKind("files/" + RemoteCollection.RemoteToolLogsFolder + "/Users/Tasks/AnyDesk/connection_trace.txt", ct));
+    }
+
+    private string FakeStation(string name)
+    {
+        var fake = Path.Combine(_root, name);
+        Directory.CreateDirectory(Path.Combine(fake, "Users"));
+        Directory.CreateDirectory(Path.Combine(fake, "ProgramData"));
+        Directory.CreateDirectory(Path.Combine(fake, "Program Files"));
+        Directory.CreateDirectory(Path.Combine(fake, "Program Files (x86)"));
+        return fake;
+    }
+
+    private string RunPackageOnFakeStation(string script, string fake)
+    {
+        var dir = Path.Combine(_root, "target_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var file = Path.Combine(dir, "collect.ps1");
+        File.WriteAllText(file, script, new System.Text.UTF8Encoding(true));
+        var psi = PowerShell(file);
+        // the script builds every path from these variables: it reads the synthetic station, never the real one
+        psi.Environment["SystemDrive"] = fake;
+        psi.Environment["ProgramData"] = Path.Combine(fake, "ProgramData");
+        psi.Environment["ProgramFiles"] = Path.Combine(fake, "Program Files");
+        psi.Environment["ProgramW6432"] = Path.Combine(fake, "Program Files");   // Windows PowerShell takes ProgramFiles from here
+        psi.Environment["ProgramFiles(x86)"] = Path.Combine(fake, "Program Files (x86)");
+        using var p = Process.Start(psi)!;
+        var stdout = p.StandardOutput.ReadToEnd();
+        var stderr = p.StandardError.ReadToEnd();
+        p.WaitForExit();
+        Assert.True(p.ExitCode == 0, $"exit {p.ExitCode}: {stderr}");
+        return stdout.Trim().Split('\n').Last().Trim();
+    }
+
+    [Fact]
+    public void The_package_script_collects_session_logs_from_a_synthetic_station_and_the_import_types_them()
+    {
+        var fake = FakeStation("station1");
+        var ana = Path.Combine(fake, "Users", "ana", "AppData", "Roaming");
+        Directory.CreateDirectory(Path.Combine(ana, "AnyDesk")); Directory.CreateDirectory(Path.Combine(ana, "TeamViewer"));
+        File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), Path.Combine(ana, "AnyDesk", "connection_trace.txt"));
+        File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), Path.Combine(ana, "AnyDesk", "ad.trace"));
+        File.Copy(RtCorpus(@"teamviewer_TEST\Connections_incoming.txt"), Path.Combine(ana, "TeamViewer", "Connections.txt"));
+        File.WriteAllBytes(Path.Combine(ana, "AnyDesk", "ad_svc.trace"), []);                               // not looked for in a profile
+        Directory.CreateDirectory(Path.Combine(fake, "ProgramData", "AnyDesk"));
+        File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), Path.Combine(fake, "ProgramData", "AnyDesk", "ad_svc.trace"));
+        File.WriteAllBytes(Path.Combine(fake, "ProgramData", "AnyDesk", "connection_trace.txt"), []);       // empty: skipped
+        Directory.CreateDirectory(Path.Combine(fake, "Program Files", "TeamViewer"));
+        File.Copy(RtCorpus(@"teamviewer_TEST\Connections_incoming.txt"), Path.Combine(fake, "Program Files", "TeamViewer", "Connections_incoming.txt"));
+
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["remote-tool-logs"]);
+        var pkg = RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha), fake);
+        var check = RemoteCollection.Verify(ws, pkg);
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var step = check.Manifest!.Steps.Single();
+        Assert.Equal("ok", step.Status);
+        var files = check.Manifest.Files.Select(f => f.Path).OrderBy(x => x).ToList();
+        Assert.Equal(
+        [
+            "files/RemoteToolLogs/ProgramData/AnyDesk/ad_svc.trace",
+            "files/RemoteToolLogs/ProgramFiles/TeamViewer/Connections_incoming.txt",
+            "files/RemoteToolLogs/Users/ana/AnyDesk/ad.trace",
+            "files/RemoteToolLogs/Users/ana/AnyDesk/connection_trace.txt",
+            "files/RemoteToolLogs/Users/ana/TeamViewer/Connections.txt",
+        ], files);
+
+        var items = RemoteCollection.Import(ws, check).Where(i => i.SourceType != "remote-manifest").ToList();
+        Assert.Equal(5, items.Count);
+        Assert.Equal(2, items.Count(i => i.SourceType == LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskTrace));
+        Assert.Single(items, i => i.SourceType == LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskConnectionTrace);
+        Assert.Equal(2, items.Count(i => i.SourceType == LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.TeamViewerConnections));
+        // the session logs carry the TARGET's zone from the manifest (here the fake station is this machine), not the case machine's by assumption
+        Assert.Equal(TimeZoneInfo.Local.Id, check.Manifest.Timezone);
+        Assert.All(items, i => Assert.Equal(check.Manifest.Timezone, i.Timezone));
+    }
+
+    [Fact]
+    public void A_manifest_without_a_zone_leaves_session_log_times_unconverted()
+    {
+        // an older package (no "timezone") deserialises with Timezone null; the import then gives a session log no zone, never the analyst's
+        var m = System.Text.Json.JsonSerializer.Deserialize<RemoteManifest>("{\"format\":\"x\",\"requestId\":\"r\",\"requestSha256\":\"s\",\"host\":\"h\",\"user\":\"u\",\"elevated\":false,\"collectedUtc\":\"c\",\"steps\":[],\"files\":[]}");
+        Assert.NotNull(m);
+        Assert.Null(m!.Timezone);
+        var ws = NewCase();
+        var item = ws.ImportFile(RtCorpus(@"anydesk_TEST\connection_trace.txt"), "remote:h", LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskConnectionTrace, TemporalType.Historical, "test", "1", timezone: "");
+        Assert.Equal("", item.Timezone);
+        Assert.Null(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogText.ZoneOf(item).Info);
+        // a zone id from the target longer than any Windows id is not looked up
+        var odd = ws.ImportFile(RtCorpus(@"anydesk_TEST\connection_trace.txt"), "remote:h", LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskConnectionTrace, TemporalType.Historical, "test", "1", timezone: new string('x', 65));
+        Assert.Null(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogText.ZoneOf(odd).Info);
+    }
+
+    [Fact]
+    public void The_package_script_does_not_follow_a_link_on_the_path_and_says_so()
+    {
+        var fake = FakeStation("station2");
+        var elsewhere = Path.Combine(_root, "elsewhere");
+        Directory.CreateDirectory(elsewhere);
+        File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), Path.Combine(elsewhere, "connection_trace.txt"));
+        var roaming = Path.Combine(fake, "Users", "bob", "AppData", "Roaming");
+        Directory.CreateDirectory(roaming);
+        var psi = new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{Path.Combine(roaming, "AnyDesk")}\" \"{elsewhere}\"") { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+        using (var mk = Process.Start(psi)!) { mk.WaitForExit(10000); if (mk.ExitCode != 0) return; }   // junctions not available here
+
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["remote-tool-logs"]);
+        var pkg = RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha), fake);
+        var check = RemoteCollection.Verify(ws, pkg);
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var step = check.Manifest!.Steps.Single();
+        Assert.NotEqual("ok", step.Status);
+        Assert.Contains("legaturi neurmate: 1", step.Error);
+        Assert.Empty(check.Manifest.Files);                                                         // the file behind the junction was not taken
+        Directory.Delete(Path.Combine(roaming, "AnyDesk"));
+    }
+
     [Fact]
     public void Tampered_missing_extra_unauthorized_or_foreign_packages_are_refused()
     {
