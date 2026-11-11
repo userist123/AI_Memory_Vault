@@ -645,3 +645,15 @@
   E:\LA-Lab\diag\rmmlogs, case CASE-LAB-WS01-20261111-002241. Residual (recorded): SetupApi / Firewall imports still use the analyst's zone;
   PS package has no reparse re-check after copy (live does). Formats not checked against a real AnyDesk / TeamViewer install.
   Next (planner): Windows-usn.db; Windows.edb ESE (lab change on SRV01); UI remote collection; Insula device monitor; flaky Officer test.
+- 2026-11-11 RMM committed b01695e7d (pushed). CI read once right after the push: ACTIVE note integrity success, the rest queued /
+  in progress, none failed; NOT re-polled - the next session reads it once first and fixes it if red.
+  Planner ranking for the next phase (new session, read only this checkpoint):
+  1. Windows-usn.db (S-M): new parser beside WindowsSearchGatherParser, same single-WMI-shadow-copy and SQLite copy/WAL helper, collector
+     WindowsSearchIndexCollector + "search-index" artifact in RemoteCollection.cs, RESEARCH_GAPS C.7 "usn". Lab WS01 in one boot window:
+     TEST file in it.admin Documents, indexed, renamed, deleted; Colectează tot + remote package; USN rows old/new name + times, moment key
+     matches Windows.db / Windows-gather.db; shadow copies 0 -> 0, WSearch not stopped.
+  2. UI remote collection WS01 -> SRV01 (verification): TEST connection_trace.txt on SRV01, Continent on WS01, "click Save" in dialogs; the
+     session lands in UTC per SRV01's zone (exercises the new manifest "timezone"); captures at 1024 px. Start right after a VM restart.
+  3. SetupApi / Firewall imports with the target zone from the manifest (gap note without one); unit test + SRV01 Set-TimeZone round trip.
+  Later: Windows.edb ESE (Search on SRV01), flaky OfficerQualifiedSignatureTests (run alone 20x), Insula device monitor, AnyDesk
+  request+accept double count (wording).
