@@ -657,3 +657,11 @@
   3. SetupApi / Firewall imports with the target zone from the manifest (gap note without one); unit test + SRV01 Set-TimeZone round trip.
   Later: Windows.edb ESE (Search on SRV01), flaky OfficerQualifiedSignatureTests (run alone 20x), Insula device monitor, AnyDesk
   request+accept double count (wording).
+- 2026-11-11 planner item 1 (Windows-usn.db) DROPPED on evidence: schema read-only from sqlite_master = one table ChangeTracking
+  (Client, Batch, Path = volume, CaseMap, CurrentEntry/OldEntry BLOB(56), MoveSource/MoveDestination, RangeInformation), 1 row on a
+  Windows 11 machine used for weeks, one empty page on WS01 (4096 bytes, unchanged since 2026-11-06, no WAL). It is the indexer's per-volume
+  USN cursor, not a rename/delete history; recorded in RESEARCH_GAPS C.7. esentutl /vss on WS01: shadow copies 0 -> 0, copy empty
+  (E:\LA-Lab\diag\usn empty). Item 3 narrowed: remote packages now carry the target zone for every file (manifest "timezone");
+  SetupApi / Firewall are not collected remotely; the only open case is an OPERATOR import of setupapi.dev.log / pfirewall.log, which
+  still converts with the analysis machine's zone (usually right; "" would fall back to UTC). Product choice, left as is.
+  Next: item 2 (UI remote collection WS01 -> SRV01) right after a VM restart, then Windows.edb ESE / flaky Officer test.
