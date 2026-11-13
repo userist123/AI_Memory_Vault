@@ -30,3 +30,8 @@ Scenarii (toate cu ID de fișier = referință MFT în `truth.json`):
 
 Orele din `truth.json` sunt UTC, cu precizia pe care o raportează .NET (100 ns). `fsutil file layout` afișează
 orele $SI rotunjite la secundă.
+
+`volume.raw.gz`: imaginea brută întreagă a aceluiași volum (66.973.696 octeți necomprimați, gzip), citită din `\\.\F:` la
+sfârșitul lui `extract.ps1`, după aceleași operații. `mft.bin` și `many_i30.bin` sunt copiate din ea după extinderile date de
+Windows (`fsutil file queryextents`), deci sunt oracolul independent pentru un cititor brut (boot sector → înregistrarea 0 →
+data runs). Scanată după identificatorii privați (ASCII, UTF-16, SID binar al contului): 0.

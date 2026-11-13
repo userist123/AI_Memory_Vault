@@ -142,7 +142,7 @@ public sealed class InvestigationPipeline
     public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
 
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
-        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector()];
+        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector(), new NtfsMetadataCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -344,6 +344,10 @@ public sealed class InvestigationPipeline
             "însoțitor (-wal / -shm) al bazei gather Windows Search: nu se citește separat; parserul îl pune lângă copia de lucru a bazei",
         LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.EdbSourceType =>
             "Windows.edb (ESE): păstrat doar ca probă; nu există parser pentru el",
+        LogAnalyzer.Dfir.Windows.Acquisition.NtfsMetadataCollector.BootSourceType =>
+            "sectorul de boot NTFS: nu se citește separat; MftParser și I30Parser îl folosesc când stă alături de $MFT",
+        LogAnalyzer.Dfir.Windows.Acquisition.NtfsMetadataCollector.ManifestSourceType =>
+            "manifestul colectării NTFS (SHA-256, copia de umbră, ora): document de proveniență, nu are parser",
         "amcache_log" => "jurnal de tranzacții al hive-ului Amcache: păstrat în caz ca probă; reaplicarea lui pe hive nu este încă implementată (intrările scrise doar în jurnal pot lipsi)",
         _ => null,
     };

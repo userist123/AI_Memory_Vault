@@ -733,3 +733,37 @@
   Suites (main session, fresh): Dfir (Release) 3524 (3491 passed, 33 skipped, 0 failed), App 1084/1084.
   Next: S3 collector (raw $MFT + boot + $I30 + USN from ONE shadow copy, live on LAB-WS01), then lab check of the rule on a real
   system volume with 8.3 names (how many Low/Medium on a clean Windows install = noise budget).
+- 2026-11-13 NTFS S3 (in progress) LAB FACTS (LAB-WS01, Windows 11, today): copying "\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopyN\$MFT"
+  by path = Access denied; opening the shadow DEVICE read-only works (PowerShell and .NET FileStream) -> raw read is mandatory (also for
+  the remote PowerShell package). 8.3 names ENABLED on C: (tunnelling relevant). PowerShell prototype E:\LA-Lab\scripts\mft-raw.ps1
+  (boot -> record 0 -> runs) copied 127,926,272 bytes in 2 runs, SHA on target = SHA on host, shadow copies 0 -> 0. S3a collector
+  NtfsMetadataCollector (worker, uncommitted) run LIVE through a self-contained lab harness (scratchpad ntfsharness, E:\LA-Lab\scripts\
+  ntfs-harness.ps1): Success in 2.1 s, shadows 0 -> 0, $MFT 128 MB, FixupErrors 0, 10 $I30 directories all passing the coherence gate.
+  Defender on WS01 KILLS the harness (Behavior:Win32/NewCreatedFileExecWMI.A, "new file executing WMI", 4 detections) -> USN part
+  measured on the host (E:\LA-Lab\diag\ntfsreal: $MFT, $Boot, manifest, usn_direct.csv 71 MB; lab data, NOT in the repo). PRODUCT
+  NOTE: a new unsigned executable that uses WMI shadow copies is blocked behaviourally; the installed app was not (earlier sessions).
+  NOISE on a clean install: MftParser MismatchTotal 99,099 of 125,184 records (install.wim keeps $SI 2024-04-01, $FN = install day);
+  rule MFT only High 0 / Medium 4,684 / Low 316; MFT + USN (142,144 records) High 0. All Medium in system trees or directories, and the
+  5,000 emission cap was filled by them (a user-profile stomp could be pushed out). Decision: system-tree and directory mismatches are
+  counted, not emitted; Medium only outside them; High (USN) everywhere. Lab leftovers: WS01 C:\LA\{mft,mftraw,harness,ntfscase..ntfscase4}
+  (case files are read-only), Defender detection history on WS01 (not touched); host E:\LA-Lab\diag\{mft,mftraw,ntfsreal,ntfs-*.txt}.
+- 2026-11-13 NTFS S3a DONE: raw reader Dfir.Core/FileSystem/Ntfs/NtfsVolumeReader.cs (boot -> record 0 -> runs + $ATTRIBUTE_LIST; first
+  production consumer of DataRuns.Decode / AttributeList) + collector Dfir.Windows/Acquisition/NtfsMetadataCollector.cs (one WMI shadow copy,
+  device validated against the ShadowID, read-only handle, $MFT + $Boot + $I30 of up to 64 directories, manifest with SHA-256 / shadow id /
+  UTC time / zone, per-run folder Raw\NtfsMetadata\<UTC>_<8 hex>, files of a cancelled/failed run deleted), WmiShadowCopy extracted to
+  ShadowCopy.cs (equivalent to the old WmiSnapshot, checked by the reviewer), wired in "Colectează tot" (StandardAndUp). Oracle: from
+  Corpus/Ntfs/volume.raw.gz the extracted $MFT / \many:$I30 / boot are byte-identical to the files Windows gave (fsutil extents).
+  Live (lab harness on WS01): Success 2.1 s, shadows 0 -> 0, 128 MB, 0 fixup errors, 10 $I30 all passing the gate. Review r1: 2 MEDIUM
+  (sparse $MFT -> 512 MiB of zeros with a "valid" SHA; huge TotalSectors -> OverflowException failing the whole collection) + 4 LOW,
+  all fixed with red-first tests and confirmed by r2. Noise fix (measured on WS01): system trees / directories counted not emitted
+  (MftParser.SystemTrees), channel system_mismatch_recent (cap 20,000) feeding only the USN High path. r2 found one MEDIUM: user-writable
+  places inside system trees + NotDetected without USN -> main session: \Windows\Temp, \Windows\Tasks, \Windows\Tracing,
+  \Windows\System32\spool\drivers\color, \Windows\System32\Tasks, \$Recycle.Bin are NEVER filtered; only desktop.ini and the exact
+  \Users\Public\Libraries\RecordedTV.library-ms count as shell defaults (other .library-ms = NTLM lure, examined); AF08 is Undetermined
+  without USN when mismatches were only counted. Real WS01 data after all fixes: High 0 / Medium 0 / Low 0, AF08 Undetermined (fresh
+  install: channel capped). Accepted residuals: \Users\*\AppData\Local\Packages filtered (Store-provisioned, user-writable; covered by
+  the honest verdict); AF08 text mixes number formats (99,099 vs 142.144); a stomped system file older than 30 days is reached by no path
+  (said in AF08 limits). Suites (main session): Dfir (Release) 3631 (3598 passed, 33 skipped, 0 failed), App 1084/1084.
+  Next: S3b remote PowerShell package artifact "ntfs-metadata" (raw read from one shadow copy; prototype E:\LA-Lab\scripts\mft-raw.ps1 works
+  on WS01; add $I30 of a few directories or leave them to the in-app collector), then verify "Colectează tot" in the INSTALLED app on WS01
+  (publish + redeploy; the lab harness is killed by Defender: Behavior:Win32/NewCreatedFileExecWMI.A).

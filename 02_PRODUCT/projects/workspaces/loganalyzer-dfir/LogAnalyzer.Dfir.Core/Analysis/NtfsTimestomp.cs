@@ -15,6 +15,7 @@ namespace LogAnalyzer.Dfir.Analysis;
 /// and $SI Created more than 24 h before the creation operation (covers any zone error and the ambiguous DST hour).
 /// Both High paths: the "Basic info change" operation holds no rename and is closed (lower Usn) before the "Rename: new name" operation; both are dropped
 /// (counted as tunnelling, <see cref="Outcome.TunnelExplained"/>) when the final name was released by another file just before (see TunnelSignature).
+/// Not reported without USN: a mismatch of a directory or of a file in a system-managed tree (<see cref="MftParser.SystemTrees"/>).
 /// MEDIUM: any other mismatch without COPIED_CHANGE_TIME, with or without USN, when the record has no short (8.3) name; LOW when it has one (tunnelling possible).
 /// Not seen: tools that also change $FN or the MFT change time; without USN, a timestomp followed by a rename or a move.
 /// </summary>
@@ -165,6 +166,8 @@ public static class NtfsTimestomp
                 hits.Add(new Hit(Level.High, Kind.Rename, mft, create, change, rename, si, fn, UsnTime(create!), hasUsn, dos));
             else if (mismatch)
             {
+                // Directories and system-managed trees: normal on every installation; only the USN path (High, above) may report them.
+                if (F(mft, "IsDirectory") == "true" || MftParser.IsSystemTreePath(mft.Path)) continue;
                 // Tunneling (8.3 names only, calibration L2 / N2) inherits the CREATION time alone: the saved file is written now, so its $SI
                 // modification time is new. A modification time also far before $FN creation is not explained by tunneling (full stomp, A).
                 bool modifiedAlsoOld = ParseMft(F(mft, "SiModified")) is { } siM && fn.Ticks - siM.Ticks > Tolerance;
@@ -188,7 +191,7 @@ public static class NtfsTimestomp
 
     /// <summary>True when the MftParser caps left mismatch or recent records out of the events (nothing is known about those).</summary>
     public static bool Capped(IEnumerable<TimelineEvent> events)
-        => Sum(events, "MismatchTotal") > Sum(events, "MismatchEmitted") || Sum(events, "RecentTotal") > Sum(events, "RecentEmitted");
+        => Sum(events, "MismatchTotal") - Sum(events, "MismatchSystemTrees") - Sum(events, "MismatchDirectories") > Sum(events, "MismatchEmitted") || Sum(events, "RecentTotal") > Sum(events, "RecentEmitted");
 
     /// <summary>
     /// Why "nothing found" cannot be said (null = it can): the "recent" category was not emitted (no acquisition date), a cap cut mismatch or recent records,
@@ -199,7 +202,15 @@ public static class NtfsTimestomp
         var summaries = mftEvents.Where(e => F(e, "Category") == "summary").ToList();
         if (summaries.Any(e => F(e, "RecentCategory") != "emisă"))
             return "categoria fișierelor recente nu a fost emisă (proba nu are data achiziției), deci fișierele cu orele $SI și $FILE_NAME egale după o redenumire nu au fost verificate";
+        long chTotal = Sum(mftEvents, "SystemMismatchRecentTotal"), chEmitted = Sum(mftEvents, "SystemMismatchRecentEmitted");
+        if (chTotal > chEmitted)
+            return $"stație instalată sau actualizată masiv în ultimele 30 de zile: {chTotal:N0} fișiere de sistem noi, doar primele {chEmitted:N0} verificate cu USN";
         if (Capped(mftEvents)) return "plafoanele de emitere au lăsat neemise nepotriviri sau fișiere recente, deci nu se poate spune că nu există";
+        // Review 2026-11-13 (S3, round 2): the mismatches only counted (system trees, directories) are examined through the USN journal alone;
+        // without it "nothing found" would claim more than was checked.
+        long counted = Sum(mftEvents, "MismatchSystemTrees") + Sum(mftEvents, "MismatchDirectories");
+        if (usn.Count == 0 && counted > 0)
+            return $"{counted:N0} nepotriviri din arborii gestionați de sistem și din directoare au fost doar numărate, iar fără jurnalul USN nu pot fi verificate";
         if (usn.Count > 0)
         {
             var times = usn.Select(UsnTime).Where(t => t is not null).Select(t => t!.Value).ToList();

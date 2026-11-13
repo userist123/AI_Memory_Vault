@@ -251,6 +251,10 @@ public static class AntiForensics
             string tunnelNote = outcome.TunnelExplained > 0 || possibleTunnel > 0
                 ? $" Tunelare NTFS: {outcome.TunnelExplained} fișiere explicate prin tunelare (jurnalul USN arată numele eliberat de alt fișier chiar înainte), {possibleTunnel} doar din $MFT cu nume scurt 8.3 (posibil tunelare, neconfirmat)."
                 : "";
+            long sysTrees = NtfsTimestomp.Sum(mftEvents, "MismatchSystemTrees"), dirsOnly = NtfsTimestomp.Sum(mftEvents, "MismatchDirectories");
+            string countedNote = sysTrees + dirsOnly > 0
+                ? $"{sysTrees:N0} nepotriviri din arborii gestionați de sistem și {dirsOnly:N0} din directoare au fost doar numărate (tiparul normal al instalării și actualizărilor); acolo doar calea cu jurnalul USN poate detecta; "
+                : "";
             if (hits.Count == 0 && !NtfsTimestomp.HasMft(mftEvents))
                 Add("AF08", Af08Title, "T1070.006", AntiForensicResult.Undetermined,
                     "$MFT nu este parsat: comparația $STANDARD_INFORMATION / $FILE_NAME nu se poate face." +
@@ -263,15 +267,15 @@ public static class AntiForensics
                 {
                     int high = hits.Count(h => h.Level == NtfsTimestomp.Level.High), medium = hits.Count - high - possibleTunnel;
                     Add("AF08", Af08Title, "T1070.006", AntiForensicResult.Detected,
-                        $"{hits.Count} fișiere cu orele de creare care par schimbate după crearea fișierului ({high} confirmate de jurnalul USN, {medium} doar din $MFT, {possibleTunnel} doar din $MFT cu nume scurt 8.3 = posibil tunelare; {records:N0} înregistrări $MFT, {usnPart}): " +
+                        $"{hits.Count} fișiere cu orele de creare care par schimbate după crearea fișierului ({high} confirmate de jurnalul USN, {medium} doar din $MFT, {possibleTunnel} doar din $MFT cu nume scurt 8.3 = posibil tunelare; {records:N0} înregistrări $MFT, {usnPart}{(countedNote.Length > 0 ? "; " + countedNote.TrimEnd(' ', ';') : "")}): " +
                         string.Join("; ", hits.Take(5).Select(h => $"{LogAnalyzer.Dfir.FileSystem.MftParser.SafeText(h.Path)} ({(h.Level == NtfsTimestomp.Level.High ? "USN" : h.Level == NtfsTimestomp.Level.Low ? "doar $MFT, posibil tunelare" : "doar $MFT")})")) + (hits.Count > 5 ? $" și încă {hits.Count - 5}" : "") + "." + tunnelNote + " " + Limit,
                         hits.SelectMany(h => new[] { h.Mft, h.UsnCreate, h.UsnChange }.Where(e => e is not null).Select(e => Ref(e!, e!.Source == "MFT" ? "înregistrare $MFT: orele $SI / $FN" : "jurnal USN"))));
                 }
                 else if (NtfsTimestomp.Undetermined(mftEvents, usn) is { } why)
-                    Add("AF08", Af08Title, "T1070.006", AntiForensicResult.Undetermined, $"$MFT analizat ({records:N0} înregistrări), dar {why}. {usnPart}.{tunnelNote} " + Limit);
+                    Add("AF08", Af08Title, "T1070.006", AntiForensicResult.Undetermined, $"$MFT analizat ({records:N0} înregistrări), dar {why}. {usnPart}.{tunnelNote} " + (countedNote.Length > 0 ? countedNote.TrimEnd(' ', ';') + ". " : "") + Limit);
                 else
                     Add("AF08", Af08Title, "T1070.006", AntiForensicResult.NotDetected,
-                        $"Verificat: {records:N0} înregistrări $MFT ({NtfsTimestomp.Sum(mftEvents, "MismatchTotal"):N0} cu nepotrivire $SI/$FN, {NtfsTimestomp.Sum(mftEvents, "RecentTotal"):N0} recente), {usnPart}; " +
+                        $"Verificat: {records:N0} înregistrări $MFT ({NtfsTimestomp.Sum(mftEvents, "MismatchTotal"):N0} cu nepotrivire $SI/$FN, {NtfsTimestomp.Sum(mftEvents, "RecentTotal"):N0} recente), {usnPart}; " + countedNote +
                         "niciun fișier cu orele de creare mai vechi decât crearea fără tiparul unei copieri." + tunnelNote + " " + Limit);
             }
         }

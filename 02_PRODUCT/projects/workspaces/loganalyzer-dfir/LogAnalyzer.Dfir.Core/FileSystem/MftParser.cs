@@ -15,7 +15,7 @@ public sealed class MftParser : EvidenceParserBase
     public const string SourceTypeName = "ntfs_mft";
     public const string FingerprintName = "ntfs_mft";
     public const int MaxDeletedEvents = 20_000, MaxMismatchEvents = 5_000, MaxRecentEvents = 100_000;
-    public const int MaxIncompleteEvents = 5_000;
+    public const int MaxIncompleteEvents = 5_000, MaxSystemMismatchRecentEvents = 20_000;
     public const long MaxIndexNameChars = 64L * 1024 * 1024;
     public const int MaxDirectoryIndex = 2_000_000, MaxExtensionNames = 200_000, MaxPathDepth = 64;
     public static readonly TimeSpan RecentWindow = TimeSpan.FromDays(30);
@@ -39,6 +39,7 @@ public sealed class MftParser : EvidenceParserBase
         Limitations =
         [
             "Se emit doar: înregistrări șterse (cel mult 20.000, cele mai noi), nepotriviri $SI/$FN (cel mult 5.000), fișiere create/modificate în 30 de zile înainte de achiziție (cel mult 100.000) și un rezumat; restul înregistrărilor sunt doar numărate.",
+            "Nepotrivirile $SI/$FN ale directoarelor și ale fișierelor din arborii gestionați de sistem (\\Windows\\, \\Program Files\\, \\Program Files (x86)\\, \\ProgramData\\Microsoft\\, \\Users\\Default\\, \\$Recycle.Bin\\, \\PerfLogs\\, \\Recovery\\, \\System Volume Information\\) sunt doar numărate în rezumat (tiparul normal al instalării și actualizărilor), plus \\Users\\*\\AppData\\Local\\Packages\\ (\\Users\\Public\\ nu este arbore de sistem); cele cu $FILE_NAME creat în ultimele 30 de zile merg pe un canal separat (categoria system_mismatch_recent, cel mult 20.000, cele mai noi), folosit doar de calea cu jurnalul USN.",
             "O nepotrivire $SI/$FN este un semnal slab (copiere, mutare între volume, arhive o produc legitim); nu dovedește timestomp.",
             "O înregistrare ștearsă păstrează numele și orele de la ultima folosire; calea ei depinde de părintele încă în uz cu aceeași secvență.",
             "Parserul NU citește $ATTRIBUTE_LIST (nici rezident, nici nerezident). Leagă înregistrările de extensie de înregistrarea de bază prin base reference și secvența ei (extensia trebuie să fie în uz) și atașează doar $FILE_NAME din ele; alte atribute aflate în extensii nu sunt citite.",
@@ -49,6 +50,52 @@ public sealed class MftParser : EvidenceParserBase
         Status = ParserMaturity.Validated,
         Validation = "MftParserTests: Corpus/Ntfs (mft.bin scris de Windows 11) comparat cu truth.json (Get-Item/fsutil): căi, mărimi, ore $SI la 100 ns, ore $FN ale fișierului cu timestomp, 17 înregistrări libere; plus 11 probe ostile (P1–P11) și corecturile din review (MftParserReviewTests)",
     };
+
+    /// <summary>Trees the system manages (installation, servicing, updates): a $SI/$FN mismatch there is the normal pattern of an image, not a signal by itself.</summary>
+    public static readonly IReadOnlyList<string> SystemTrees =
+        ["\\Windows\\", "\\Program Files\\", "\\Program Files (x86)\\", "\\ProgramData\\Microsoft\\", "\\Users\\Default\\", "\\$Recycle.Bin\\", "\\PerfLogs\\", "\\Recovery\\", "\\System Volume Information\\", PackagesRoot];
+
+    public const string PackagesRoot = "\\Users\\*\\AppData\\Local\\Packages\\";
+
+    /// <summary>The system tree (prefix, case-insensitive) a reconstructed path is in; null otherwise. An incomplete path (starting with an ellipsis) is never in one.</summary>
+    /// <summary>
+    /// Places inside the system trees that any user can write to and that are usual staging places (review 2026-11-13, S3 round 2): never filtered,
+    /// a mismatch there is examined like anywhere else.
+    /// </summary>
+    public static readonly IReadOnlyList<string> UserWritableInsideSystemTrees =
+        ["\\Windows\\Temp\\", "\\Windows\\Tasks\\", "\\Windows\\Tracing\\", "\\Windows\\System32\\spool\\drivers\\color\\", "\\Windows\\System32\\Tasks\\", "\\$Recycle.Bin\\"];
+
+    public static string? SystemTreeOf(string path)
+    {
+        foreach (var w in UserWritableInsideSystemTrees) if (path.StartsWith(w, StringComparison.OrdinalIgnoreCase)) return null;
+        foreach (var t in SystemTrees) if (path.StartsWith(t, StringComparison.OrdinalIgnoreCase)) return t;
+        // \Users\<any profile>\AppData\Local\Packages\ (app data the system provisions); \Users\Public\ is deliberately not a system tree
+        const string Users = "\\Users\\", Tail = "\\AppData\\Local\\Packages\\";
+        if (path.StartsWith(Users, StringComparison.OrdinalIgnoreCase))
+        {
+            int end = path.IndexOf('\\', Users.Length);
+            if (end > Users.Length && string.Compare(path, end, Tail, 0, Tail.Length, StringComparison.OrdinalIgnoreCase) == 0) return PackagesRoot;
+            // The shell's own files that the image provisions in \Users and \Users\Public (lab WS01, clean install: the only 10 mismatches
+            // left outside the trees). Exact names only: any other file in \Users\Public stays examined (a usual staging place for attackers).
+            if (IsShellDefault(path)) return ShellDefaultsRoot;
+        }
+        return null;
+    }
+
+    public const string ShellDefaultsRoot = "\\Users\\(desktop.ini, RecordedTV.library-ms)";
+
+    private static bool IsShellDefault(string path)
+    {
+        var name = Path.GetFileName(path);
+        // A .library-ms in \Users\Public is a known NTLM-hash lure (review 2026-11-13, S3 round 2), so only the ONE default the image provisions,
+        // at its exact path, is a shell default; any other .library-ms stays examined.
+        if (path.Equals("\\Users\\Public\\Libraries\\RecordedTV.library-ms", StringComparison.OrdinalIgnoreCase)) return true;
+        if (!name.Equals("desktop.ini", StringComparison.OrdinalIgnoreCase)) return false;
+        return path.Equals("\\Users\\desktop.ini", StringComparison.OrdinalIgnoreCase)
+            || path.StartsWith("\\Users\\Public\\", StringComparison.OrdinalIgnoreCase);
+    }
+
+    public static bool IsSystemTreePath(string path) => SystemTreeOf(path) is not null;
 
     private sealed record DirEntry(ushort Sequence, MftReference Parent, string Name);
     private sealed record ExtNames(ulong BaseNumber, ushort BaseSequence, ulong ExtNumber, List<FileNameAttribute> Names);
@@ -141,6 +188,8 @@ public sealed class MftParser : EvidenceParserBase
         DateTimeOffset? acquired = item.AcquiredAtUtc == default ? null : item.AcquiredAtUtc;
         long windowStart = acquired is { } a ? a.UtcDateTime.Add(-RecentWindow).ToFileTimeUtc() : long.MaxValue;
         long windowEnd = acquired is { } a2 ? a2.UtcDateTime.ToFileTimeUtc() : long.MinValue;
+        long channelTotal = 0, channelEmitted = 0; var channelHeap = new PriorityQueue<ulong, (long Time, long NegNumber)>();
+        long mismatchSystem = 0, mismatchDirs = 0; var systemByRoot = new Dictionary<string, long>(StringComparer.OrdinalIgnoreCase);
         long emittedDeleted = 0, emittedMismatch = 0, emittedRecent = 0, mismatchOver = 0, recentOver = 0, mismatchTotal = 0, recentTotal = 0, deletedOver = 0, emittedIncomplete = 0, incompleteOver = 0, siModifiedOnlyTotal = 0;
         number = 0;
         while (true)
@@ -172,24 +221,71 @@ public sealed class MftParser : EvidenceParserBase
                 continue;
             }
             var signals = Signals(si, fns);
+            bool filteredMismatch = false;
             if (SiModifiedBeforeFnCreated(si, fns)) siModifiedOnlyTotal++;   // the pattern of any copy or extraction: counted, never emitted by itself
             if (signals.Count > 0)
             {
                 mismatchTotal++;
-                if (emittedMismatch < MaxMismatchEvents) { Emit("mismatch", rec, num, fns, si, signals); emittedMismatch++; }
-                else mismatchOver++;
-                continue;
+                // Directories and files in system-managed trees mismatch by the thousand on every installation: counted, not emitted (a recent one still
+                // reaches the USN path through the "recent" category below). The cap applies to the rest.
+                string? root = null; filteredMismatch = true;
+                if (rec.IsDirectory) mismatchDirs++;
+                else if ((root = SystemTreeOf(ParentPath(Best(fns).Parent, dirs).Path + Best(fns).Name)) is not null) { mismatchSystem++; systemByRoot[root] = systemByRoot.GetValueOrDefault(root) + 1; }
+                else
+                {
+                    if (emittedMismatch < MaxMismatchEvents) { Emit("mismatch", rec, num, fns, si, signals); emittedMismatch++; }
+                    else mismatchOver++;
+                    continue;
+                }
+                // Separate channel: a filtered mismatch whose $FN creation is in the 30 days before acquisition (what a timestomp of a system file looks like in
+                // the MFT) is kept, newest first, under its own cap, only for the USN path of the rule (never Medium or Low).
+                if (acquired is not null && InWindow(Best(fns).Created, windowStart, windowEnd))
+                {
+                    channelTotal++;
+                    channelHeap.Enqueue(num, (Best(fns).Created, -(long)num));
+                    if (channelHeap.Count > MaxSystemMismatchRecentEvents) channelHeap.Dequeue();
+                }
             }
             if (acquired is not null)
             {
                 // A timestomp hides the $SI times, not the $FN creation or the MFT change time: any of them in the window keeps the file in view
                 // (the rule NTFS-TIMESTOMP reads the $SI times of such a record against the USN journal; after a rename Windows copies $SI into $FN).
-                bool recent = InWindow(si.Created, windowStart, windowEnd) || InWindow(si.Modified, windowStart, windowEnd)
+                // A filtered mismatch (directory / system tree) has an old $SI, a $FN created at installation and an $SI change time touched by the system
+                // (measured on a fresh install: 99,049 extra "recent" records, over the cap, if the $FN creation or the change time counted). For those only a
+                // recent $SI creation or modification keeps them in view; the others are counted in the summary only.
+                bool recent = filteredMismatch ? InWindow(si.Created, windowStart, windowEnd) || InWindow(si.Modified, windowStart, windowEnd)
+                    : InWindow(si.Created, windowStart, windowEnd) || InWindow(si.Modified, windowStart, windowEnd)
                               || InWindow(Best(fns).Created, windowStart, windowEnd) || InWindow(si.MftModified, windowStart, windowEnd);
                 if (!recent) continue;
                 recentTotal++;
                 if (emittedRecent < MaxRecentEvents) { Emit("recent", rec, num, fns, si); emittedRecent++; }
                 else recentOver++;
+            }
+        }
+
+        // ---- pass 3: the channel (only when there is something to emit) ----
+        if (channelHeap.Count > 0)
+        {
+            var keep = new HashSet<ulong>();
+            while (channelHeap.TryDequeue(out var cn, out _)) keep.Add(cn);
+            fs.Position = 0;
+            number = 0;
+            while (true)
+            {
+                ct.ThrowIfCancellationRequested();
+                int got = fs.ReadAtLeast(buf, recordSize, throwOnEndOfStream: false);
+                if (got < recordSize) break;
+                ulong num = number++;
+                if (!keep.Contains(num)) continue;
+                var rec = NtfsFileRecord.Parse(buf, recordSize);
+                if (rec.State != NtfsRecordState.Ok || !rec.IsBaseRecord || !rec.InUse) continue;
+                var fns = Names(rec);
+                if (ext.TryGetValue(num, out var extList))
+                    foreach (var e in extList.Where(e => e.BaseSequence == rec.Sequence).Take(64)) fns.AddRange(e.Names);
+                var si = StandardInfo(rec);
+                if (fns.Count == 0 || si is null) continue;
+                Emit("system_mismatch_recent", rec, num, fns, si, Signals(si, fns));
+                channelEmitted++;
             }
         }
 
@@ -212,13 +308,21 @@ public sealed class MftParser : EvidenceParserBase
                 ["DeletedImplausibleEmitted"] = keptImplausible.ToString(CultureInfo.InvariantCulture), ["DeletedImplausibleNotEmitted"] = (implausibleDeleted - keptImplausible).ToString(CultureInfo.InvariantCulture),
                 ["AttributeWalkProblems"] = attrProblems.ToString(CultureInfo.InvariantCulture), ["IncompleteEmitted"] = emittedIncomplete.ToString(CultureInfo.InvariantCulture), ["DeletedNotEmitted"] = deletedOver.ToString(CultureInfo.InvariantCulture),
                 ["MismatchTotal"] = mismatchTotal.ToString(CultureInfo.InvariantCulture), ["MismatchEmitted"] = emittedMismatch.ToString(CultureInfo.InvariantCulture),
+                ["MismatchSystemTrees"] = mismatchSystem.ToString(CultureInfo.InvariantCulture), ["MismatchDirectories"] = mismatchDirs.ToString(CultureInfo.InvariantCulture),
+                ["MismatchSystemTreesByRoot"] = string.Join(";", systemByRoot.OrderByDescending(kv => kv.Value).ThenBy(kv => kv.Key, StringComparer.OrdinalIgnoreCase).Select(kv => $"{kv.Key}={kv.Value.ToString(CultureInfo.InvariantCulture)}")),
                 ["SiModifiedBeforeFnCreatedTotal"] = siModifiedOnlyTotal.ToString(CultureInfo.InvariantCulture),
+                ["SystemMismatchRecentTotal"] = channelTotal.ToString(CultureInfo.InvariantCulture), ["SystemMismatchRecentEmitted"] = channelEmitted.ToString(CultureInfo.InvariantCulture),
+                ["SystemMismatchRecentCategory"] = acquired is null ? "omisă: proba nu are data achiziției" : "emisă",
                 ["RecentTotal"] = recentTotal.ToString(CultureInfo.InvariantCulture), ["RecentEmitted"] = emittedRecent.ToString(CultureInfo.InvariantCulture),
                 ["RecentCategory"] = acquired is null ? "omisă: proba nu are data achiziției" : "emisă",
             },
             Notes = acquired is null ? "Fără dată de achiziție: categoria „fișiere recente” nu a fost emisă." : "",
         });
         result.Records++;
+        if (channelTotal > channelEmitted)
+            result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial,
+                $"{channelTotal - channelEmitted:N0} nepotriviri $SI/$FN din arborii de sistem sau directoare, create în ultimele 30 de zile, peste plafonul canalului de {MaxSystemMismatchRecentEvents:N0}",
+                "Doar cele mai noi după $FILE_NAME creare sunt emise pentru calea cu jurnalul USN", "Un export filtrat", "Posibil"));
         if (deletedOver > 0 || mismatchOver > 0 || recentOver > 0 || incompleteOver > 0)
             result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial,
                 $"Plafoane de emitere atinse: {deletedOver:N0} șterse neemise (din care {implausibleDeleted - keptImplausible:N0} cu ore neplauzibile; {keptImplausible:N0} dintre cele emise au ore neplauzibile), {mismatchOver:N0} nepotriviri, {recentOver:N0} recente, {incompleteOver:N0} incomplete neemise", "Evenimentele neemise sunt doar numărate în rezumat", "Un export filtrat", "Posibil"));
@@ -227,13 +331,14 @@ public sealed class MftParser : EvidenceParserBase
         void Emit(string category, NtfsFileRecord rec, ulong num, List<FileNameAttribute> fns, StandardInformation? si, List<string>? signals = null)
         {
             bool named = fns.Count > 0;
+            bool mm = category is "mismatch" or "system_mismatch_recent";
             var best = named ? Best(fns) : NoName;
             var (parentPath, flag) = named ? ParentPath(best.Parent, dirs) : ("", "fără $FILE_NAME citibil");
             string path = parentPath + best.Name;
             var (size, sizeKnown) = SizeOf(rec);
             var reference = MftReference.From(num, rec.Sequence);
             long when = category == "deleted" ? (DeletedTime(si, best) is var dt && dt != long.MinValue ? dt : best.MftModified)
-                      : category is "mismatch" or "incomplete" ? (si?.Created ?? best.Created)
+                      : mm || category == "incomplete" ? (si?.Created ?? best.Created)
                       : si is null ? 0
                       : InWindow(si.Modified, windowStart, windowEnd) ? si.Modified
                       : InWindow(si.Created, windowStart, windowEnd) ? si.Created
@@ -246,15 +351,15 @@ public sealed class MftParser : EvidenceParserBase
                 {
                     "deleted" => $"$MFT: înregistrare ștearsă {SafeText(path)}",
                     "incomplete" => $"$MFT: înregistrarea #{num} are atribute ilizibile ({SafeText(path)})",
-                    "mismatch" => $"$MFT: nepotrivire $SI/$FN la {SafeText(path)} ({string.Join(", ", signals ?? [])})",
+                    "mismatch" or "system_mismatch_recent" => $"$MFT: nepotrivire $SI/$FN la {SafeText(path)} ({string.Join(", ", signals ?? [])})",
                     _ => $"$MFT: fișier recent {SafeText(path)}",
                 },
-                TimeSemantics = category switch { "deleted" => "ultima modificare a înregistrării MFT (înregistrare nefolosită)", "mismatch" => "$STANDARD_INFORMATION creare", _ => "$STANDARD_INFORMATION creare/modificare" },
+                TimeSemantics = category switch { "deleted" => "ultima modificare a înregistrării MFT (înregistrare nefolosită)", "mismatch" or "system_mismatch_recent" => "$STANDARD_INFORMATION creare", _ => "$STANDARD_INFORMATION creare/modificare" },
                 TemporalType = TemporalType.Historical,
-                Classification = category == "mismatch" ? Classification.Candidate : Classification.Direct,
-                Confidence = category == "mismatch" ? Confidence.Low : category == "incomplete" ? Confidence.Medium : Confidence.High,
+                Classification = mm ? Classification.Candidate : Classification.Direct,
+                Confidence = mm ? Confidence.Low : category == "incomplete" ? Confidence.Medium : Confidence.High,
                 Locator = $"MFT#{num}",
-                Notes = category == "incomplete" ? "Atributele înregistrării nu au putut fi citite integral; ce s-a citit înainte de problemă este raportat." : category == "mismatch" ? "Semnal slab: o arhivă care restaurează ora de creare produce aceeași nepotrivire; nu dovedește timestomp (regula NTFS-TIMESTOMP o judecă împreună cu jurnalul USN)." : "",
+                Notes = category == "incomplete" ? "Atributele înregistrării nu au putut fi citite integral; ce s-a citit înainte de problemă este raportat." : mm ? "Semnal slab: o arhivă care restaurează ora de creare produce aceeași nepotrivire; nu dovedește timestomp (regula NTFS-TIMESTOMP o judecă împreună cu jurnalul USN)." : "",
             };
             var f = ev.Fields;
             f["Category"] = category; f["RecordNumber"] = num.ToString(CultureInfo.InvariantCulture);
