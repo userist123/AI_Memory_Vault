@@ -665,3 +665,17 @@
   SetupApi / Firewall are not collected remotely; the only open case is an OPERATOR import of setupapi.dev.log / pfirewall.log, which
   still converts with the analysis machine's zone (usually right; "" would fall back to UTC). Product choice, left as is.
   Next: item 2 (UI remote collection WS01 -> SRV01) right after a VM restart, then Windows.edb ESE / flaky Officer test.
+- 2026-11-13 (owner: „Continua cu loganalyzer … fable advisor pentru opus, opus researcher, atribuitor de sarcini și verificator,
+  sonnet executant, haiku numărător. Fii ambițios”): CI of e5fd/a479 had ONE red cause (enforce + zero-regression-gate:
+  docs/design/{DESIGN,PLAN,PRODUCT}.md without frontmatter, not in the unreadable-notes allowlist) -> fixed e84f85136.
+  Roles used: Haiku (Explore) baseline counts: tests Dfir 2602 / App 844 / UI 275 / Edition 20 attribute lines, 30 parsers,
+  ~83 rule ids; no $LogFile / $I30 / Windows.edb / WebCache; $MFT only an UNWIRED SHA stub. Fable (fable-consultant, read-only,
+  at the owner's explicit request despite the "Fable never a subagent" routing rule) ranked: NTFS $MFT + $I30 first
+  ($LogFile needs it), RDP sessions second, Windows.edb third. Opus researcher: format card from primary sources.
+  NEW PHASE „NTFS”: design docs/dfir/NTFS_MFT_DESIGN.md (tasks S1-S5, emission policy, out of scope), format card
+  docs/dfir/NTFS_FORMAT_CARD.md (confirmed on the corpus). Corpus LogAnalyzer.Dfir.Tests/Corpus/Ntfs: 64 MB VHDX written by
+  Windows 11 on the dev station (no station data, scanned for private identifiers incl. binary SID: 0 hits), mft.bin
+  (256 x 1024), many_i30.bin (3 INDX), boot.bin, truth.json from fsutil/Get-Item. Raw volume image + VHDX kept OUT of the
+  repo in the session scratchpad (ntfs\out). Lab: DC01 + SRV01 running, WS01/WS02 off.
+  Next: S1+S2 (reader + MftParser on an exported $MFT) to vault-worker, then Opus review; then S5 ($I30), S3 (VSS raw
+  collector, live on WS01), S4 (AF08 + graded timestomp rule).
