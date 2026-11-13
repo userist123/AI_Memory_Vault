@@ -1,0 +1,169 @@
+{
+  "drive": "G:",
+  "tz": "GTB Standard Time",
+  "scenarios": [
+    {
+      "name": "A",
+      "expected": "timestomp",
+      "path": "\\stomp\\a_separate.txt",
+      "fileId": "0x00000000000000000001000000000030",
+      "note": "create, close, 2 s later SetFileTime (3 SI times = 2019, zero fraction)",
+      "before": {
+        "siCreated": "2026-11-13T18:28:51.9316850Z",
+        "siModified": "2026-11-13T18:28:51.9326920Z",
+        "siAccessed": "2026-11-13T18:28:51.9326920Z"
+      },
+      "after": {
+        "siCreated": "2019-03-14T09:26:53.0000000Z",
+        "siModified": "2019-03-14T09:26:53.0000000Z",
+        "siAccessed": "2019-03-14T09:26:53.0000000Z"
+      }
+    },
+    {
+      "name": "B",
+      "expected": "timestomp",
+      "path": "\\stomp\\b_fraction.txt",
+      "fileId": "0x00000000000000000001000000000031",
+      "note": "same as A with a non-zero fraction (evades the zero-fraction signal)",
+      "before": {
+        "siCreated": "2026-11-13T18:28:53.9683085Z",
+        "siModified": "2026-11-13T18:28:53.9683085Z",
+        "siAccessed": "2026-11-13T18:28:53.9683085Z"
+      },
+      "after": {
+        "siCreated": "2019-03-14T09:26:53.1234567Z",
+        "siModified": "2019-03-14T09:26:53.1234567Z",
+        "siAccessed": "2019-03-14T09:26:53.1234567Z"
+      }
+    },
+    {
+      "name": "C",
+      "expected": "timestomp",
+      "path": "\\stomp\\c_after_rename.txt",
+      "fileId": "0x00000000000000000001000000000032",
+      "note": "stomp then rename (does Windows copy SI into FN?)",
+      "before": {
+        "siCreated": "2026-11-13T18:28:56.0147655Z",
+        "siModified": "2026-11-13T18:28:56.0147655Z",
+        "siAccessed": "2026-11-13T18:28:56.0147655Z"
+      },
+      "after": {
+        "siCreated": "2019-03-14T09:26:53.0000000Z",
+        "siModified": "2019-03-14T09:26:53.0000000Z",
+        "siAccessed": "2019-03-14T09:26:53.0000000Z"
+      }
+    },
+    {
+      "name": "D",
+      "expected": "timestomp",
+      "path": "\\sub\\d_moved.txt",
+      "fileId": "0x00000000000000000001000000000033",
+      "note": "stomp then move on the same volume",
+      "before": {
+        "siCreated": "2026-11-13T18:29:00.0384295Z",
+        "siModified": "2026-11-13T18:29:00.0384295Z",
+        "siAccessed": "2026-11-13T18:29:00.0384295Z"
+      },
+      "after": {
+        "siCreated": "2019-03-14T09:26:53.0000000Z",
+        "siModified": "2019-03-14T09:26:53.0000000Z",
+        "siAccessed": "2019-03-14T09:26:53.0000000Z"
+      }
+    },
+    {
+      "name": "E",
+      "expected": "timestomp",
+      "path": "\\stomp\\e_created_only.txt",
+      "fileId": "0x00000000000000000001000000000034",
+      "note": "only the creation time changed",
+      "before": {
+        "siCreated": "2026-11-13T18:29:04.0632938Z",
+        "siModified": "2026-11-13T18:29:04.0632938Z",
+        "siAccessed": "2026-11-13T18:29:04.0632938Z"
+      },
+      "after": {
+        "siCreated": "2019-03-14T09:26:53.0000000Z",
+        "siModified": "2026-11-13T18:29:04.0632938Z",
+        "siAccessed": "2026-11-13T18:29:04.0632938Z"
+      }
+    },
+    {
+      "name": "F",
+      "expected": "legit",
+      "path": "\\legit\\f_copy_same_volume.txt",
+      "fileId": "0x00000000000000000001000000000036",
+      "note": "Copy-Item on the same volume of a file with an old modification time",
+      "before": null,
+      "after": {
+        "siCreated": "2026-11-13T18:29:08.1098650Z",
+        "siModified": "2020-03-14T09:26:53.0000000Z",
+        "siAccessed": "2026-11-13T18:29:08.1098650Z"
+      }
+    },
+    {
+      "name": "G",
+      "expected": "legit",
+      "path": "\\xcopy\\g_copy_cross_volume.txt",
+      "fileId": "0x00000000000000000001000000000037",
+      "note": "Copy-Item from another volume (source SI = 2019)",
+      "before": null,
+      "after": {
+        "siCreated": "2026-11-13T18:29:08.1291797Z",
+        "siModified": "2019-03-14T09:26:53.0000000Z",
+        "siAccessed": "2026-11-13T18:29:08.1291797Z"
+      }
+    },
+    {
+      "name": "H",
+      "expected": "legit",
+      "path": "\\robo\\stomped.txt",
+      "fileId": "0x00000000000000000001000000000038",
+      "note": "robocopy /COPY:DAT from another volume (source SI = 2019)",
+      "before": null,
+      "after": {
+        "siCreated": "2019-03-14T09:26:53.0000000Z",
+        "siModified": "2019-03-14T09:26:53.0000000Z",
+        "siAccessed": "2019-03-14T09:26:53.0000000Z"
+      }
+    },
+    {
+      "name": "I",
+      "expected": "legit",
+      "path": "\\xmove\\i_moved_cross_volume.txt",
+      "fileId": "0x00000000000000000001000000000039",
+      "note": "Move-Item from another volume (source creation 2021)",
+      "before": null,
+      "after": {
+        "siCreated": "2026-11-13T18:29:08.1830123Z",
+        "siModified": "2026-11-13T16:48:19.9130410Z",
+        "siAccessed": "2026-11-13T18:29:08.1830123Z"
+      }
+    },
+    {
+      "name": "J",
+      "expected": "legit",
+      "path": "\\zip\\j_from_zip.txt",
+      "fileId": "0x0000000000000000000100000000003a",
+      "note": "Expand-Archive (zip, entry time 2018)",
+      "before": null,
+      "after": {
+        "siCreated": "2026-11-13T18:29:08.4365258Z",
+        "siModified": "2018-06-01T07:00:00.0000000Z",
+        "siAccessed": "2026-11-13T18:29:08.4375269Z"
+      }
+    },
+    {
+      "name": "K",
+      "expected": "legit",
+      "path": "\\tar\\k_from_tar.txt",
+      "fileId": "0x0000000000000000000100000000003b",
+      "note": "tar -xf (bsdtar), entry time 2018",
+      "before": null,
+      "after": {
+        "siCreated": "2026-11-13T18:29:08.0000000Z",
+        "siModified": "2018-06-01T07:00:00.0000000Z",
+        "siAccessed": "2026-11-13T18:29:08.0000000Z"
+      }
+    }
+  ]
+}

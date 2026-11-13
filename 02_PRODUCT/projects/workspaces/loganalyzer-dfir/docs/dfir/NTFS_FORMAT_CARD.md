@@ -83,6 +83,13 @@ la executabil în cale de utilizator, cu fracțiune zero. Puternic — coroborar
 $SI B înainte de instalarea sistemului, $SI diferit de orele din intrarea $I30 a părintelui. Concluzia doar din
 coroborare.
 
+**Calibrat pe Windows 11 (2026-11-13, `LogAnalyzer.Dfir.Tests/Corpus/NtfsCalib`, observat direct):** redenumirea și
+mutarea pe același volum COPIAZĂ orele $SI în $FN (un timestomp urmat de redenumire nu mai lasă nepotrivire în MFT;
+doar USN-ul îl arată); robocopy /COPY:DAT și Copy-Item copiază și ora „schimbare MFT” a sursei ($SI MftModified <
+$FN Created), pe care SetFileTime nu o poate seta; robocopy reproduce exact tiparul $SI creare < $FN creare; tar
+trunchiază la secundă (diferență < 1 s); Move-Item între volume NU păstrează ora de creare. Timestomp-ul apare în USN
+ca „Basic info change” într-o operație separată, după „File create … Close”. Detalii: README-ul corpusului.
+
 ## 10. Copii de umbră
 Calea robustă: citire brută a dispozitivului \\?\GLOBALROOT\Device\HarddiskVolumeShadowCopyN → boot sector →
 înregistrarea 0 → runs ale $MFT (+ $ATTRIBUTE_LIST) [VR]. Deschiderea „…ShadowCopyN\$MFT” ca fișier: neverificat.
