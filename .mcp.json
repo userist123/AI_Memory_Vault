@@ -6,7 +6,7 @@
     },
     "fetch": {
       "command": "python",
-      "args": ["-m", "uv", "tool", "run", "mcp-server-fetch==2026.11.11"]
+      "args": ["-m", "uv", "tool", "run", "--exclude-newer", "2026-11-13T00:00:00Z", "mcp-server-fetch==2026.11.11"]
     }
   }
 }

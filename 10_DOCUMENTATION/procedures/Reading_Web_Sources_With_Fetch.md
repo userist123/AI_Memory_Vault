@@ -24,7 +24,7 @@ operational skill is `.claude/skills/surse-web/SKILL.md`.
 
 ## Install (once per machine)
 
-    python -m pip install -r requirements-reading-tools.txt
+    python -m pip install -r 04_CONFIG/requirements-reading-tools.txt
 
 This installs `uv` only. The server itself runs through `python -m uv tool run
 mcp-server-fetch==2026.11.11`, in an isolated environment: `mcp-server-fetch` requires
@@ -36,13 +36,15 @@ only when `uv` is present.
 
 ## How it is wired
 
-- `.mcp.json` → `"fetch": {"command": "python", "args": ["-m", "uv", "tool", "run", "mcp-server-fetch==2026.11.11"]}`.
+- `.mcp.json` → `"fetch": {"command": "python", "args": ["-m", "uv", "tool", "run", "--exclude-newer", "2026-11-13T00:00:00Z", "mcp-server-fetch==2026.11.11"]}`.
+  `--exclude-newer` pins the resolution of the server's dependencies to that date, so a
+  release published later on PyPI is never pulled in; move both pins together when updating.
   Claude Code asks once to approve a project MCP server.
 - Tool: `mcp__fetch__fetch(url, max_length, start_index, raw)`. Long pages are read in
   chunks with `start_index`.
 - `agent-integrity-guard` keeps asking before every `mcp__fetch__*` call: the prefix is not
-  on `mcp_allow_prefixes`. Adding it would skip the guard's host check for every URL, so
-  it stays an owner decision, made by hand in `allowlist.json`.
+  on `mcp_allow_prefixes`. Adding it would allow every URL without asking (the guard has no
+  host check for MCP tools), so it stays an owner decision, made by hand in `allowlist.json`.
 
 ## Official sources that work
 

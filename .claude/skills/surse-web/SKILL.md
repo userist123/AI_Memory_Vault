@@ -16,8 +16,8 @@ Procedura completă: `10_DOCUMENTATION/procedures/Reading_Web_Sources_With_Fetch
 | Pagină cu JavaScript / goală la fetch | browserul integrat sau un MCP de browser headless (`browser_navigate` + `browser_snapshot`) |
 | Text oficial descărcat | `curl` în folderul de surse al lucrării, apoi citire locală (`python -I -X utf8`) |
 
-Serverul `fetch` rulează izolat: `python -m uv tool run mcp-server-fetch==2026.11.11`
-(instalare locală: `python -m pip install -r requirements-reading-tools.txt`). Nu instala
+Serverul `fetch` rulează izolat (comanda exactă e în `.mcp.json`: `python -m uv tool run --exclude-newer <dată> mcp-server-fetch==<versiune>`)
+(instalare locală: `python -m pip install -r 04_CONFIG/requirements-reading-tools.txt`). Nu instala
 `mcp-server-fetch` cu pip în interpretorul repo-ului: aduce `mcp` 2.x și strică `vault-memory`.
 Garda `agent-integrity-guard` cere aprobare la fiecare apel `mcp__fetch__*` (nu e pe `mcp_allow_prefixes`).
 

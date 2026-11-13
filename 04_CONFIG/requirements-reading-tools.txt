@@ -1,7 +1,7 @@
 # Reading tool for agents (MCP server `fetch` in .mcp.json): URL -> clean Markdown.
 # The server runs in its own isolated environment through uv, because mcp-server-fetch needs
 # mcp 2.x while this repository pins mcp==1.30.0 (requirements.txt) for vault-memory.
-# Local install, not used by CI: python -m pip install -r requirements-reading-tools.txt
+# Local install, not used by CI: python -m pip install -r 04_CONFIG/requirements-reading-tools.txt
 # The server version is pinned in .mcp.json (mcp-server-fetch==2026.11.11).
 # Procedure: 10_DOCUMENTATION/procedures/Reading_Web_Sources_With_Fetch.md
 uv==0.13.8
