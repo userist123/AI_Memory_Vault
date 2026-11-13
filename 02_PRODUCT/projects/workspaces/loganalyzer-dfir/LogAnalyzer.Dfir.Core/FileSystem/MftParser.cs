@@ -141,7 +141,7 @@ public sealed class MftParser : EvidenceParserBase
         DateTimeOffset? acquired = item.AcquiredAtUtc == default ? null : item.AcquiredAtUtc;
         long windowStart = acquired is { } a ? a.UtcDateTime.Add(-RecentWindow).ToFileTimeUtc() : long.MaxValue;
         long windowEnd = acquired is { } a2 ? a2.UtcDateTime.ToFileTimeUtc() : long.MinValue;
-        long emittedDeleted = 0, emittedMismatch = 0, emittedRecent = 0, mismatchOver = 0, recentOver = 0, mismatchTotal = 0, recentTotal = 0, deletedOver = 0, emittedIncomplete = 0, incompleteOver = 0;
+        long emittedDeleted = 0, emittedMismatch = 0, emittedRecent = 0, mismatchOver = 0, recentOver = 0, mismatchTotal = 0, recentTotal = 0, deletedOver = 0, emittedIncomplete = 0, incompleteOver = 0, siModifiedOnlyTotal = 0;
         number = 0;
         while (true)
         {
@@ -172,6 +172,7 @@ public sealed class MftParser : EvidenceParserBase
                 continue;
             }
             var signals = Signals(si, fns);
+            if (SiModifiedBeforeFnCreated(si, fns)) siModifiedOnlyTotal++;   // the pattern of any copy or extraction: counted, never emitted by itself
             if (signals.Count > 0)
             {
                 mismatchTotal++;
@@ -181,7 +182,10 @@ public sealed class MftParser : EvidenceParserBase
             }
             if (acquired is not null)
             {
-                bool recent = InWindow(si.Created, windowStart, windowEnd) || InWindow(si.Modified, windowStart, windowEnd);
+                // A timestomp hides the $SI times, not the $FN creation or the MFT change time: any of them in the window keeps the file in view
+                // (the rule NTFS-TIMESTOMP reads the $SI times of such a record against the USN journal; after a rename Windows copies $SI into $FN).
+                bool recent = InWindow(si.Created, windowStart, windowEnd) || InWindow(si.Modified, windowStart, windowEnd)
+                              || InWindow(Best(fns).Created, windowStart, windowEnd) || InWindow(si.MftModified, windowStart, windowEnd);
                 if (!recent) continue;
                 recentTotal++;
                 if (emittedRecent < MaxRecentEvents) { Emit("recent", rec, num, fns, si); emittedRecent++; }
@@ -208,6 +212,7 @@ public sealed class MftParser : EvidenceParserBase
                 ["DeletedImplausibleEmitted"] = keptImplausible.ToString(CultureInfo.InvariantCulture), ["DeletedImplausibleNotEmitted"] = (implausibleDeleted - keptImplausible).ToString(CultureInfo.InvariantCulture),
                 ["AttributeWalkProblems"] = attrProblems.ToString(CultureInfo.InvariantCulture), ["IncompleteEmitted"] = emittedIncomplete.ToString(CultureInfo.InvariantCulture), ["DeletedNotEmitted"] = deletedOver.ToString(CultureInfo.InvariantCulture),
                 ["MismatchTotal"] = mismatchTotal.ToString(CultureInfo.InvariantCulture), ["MismatchEmitted"] = emittedMismatch.ToString(CultureInfo.InvariantCulture),
+                ["SiModifiedBeforeFnCreatedTotal"] = siModifiedOnlyTotal.ToString(CultureInfo.InvariantCulture),
                 ["RecentTotal"] = recentTotal.ToString(CultureInfo.InvariantCulture), ["RecentEmitted"] = emittedRecent.ToString(CultureInfo.InvariantCulture),
                 ["RecentCategory"] = acquired is null ? "omisă: proba nu are data achiziției" : "emisă",
             },
@@ -229,7 +234,11 @@ public sealed class MftParser : EvidenceParserBase
             var reference = MftReference.From(num, rec.Sequence);
             long when = category == "deleted" ? (DeletedTime(si, best) is var dt && dt != long.MinValue ? dt : best.MftModified)
                       : category is "mismatch" or "incomplete" ? (si?.Created ?? best.Created)
-                      : (si is not null && InWindow(si.Modified, windowStart, windowEnd) ? si.Modified : si?.Created ?? 0);
+                      : si is null ? 0
+                      : InWindow(si.Modified, windowStart, windowEnd) ? si.Modified
+                      : InWindow(si.Created, windowStart, windowEnd) ? si.Created
+                      : InWindow(best.Created, windowStart, windowEnd) ? best.Created
+                      : si.MftModified;
             var ev = new TimelineEvent
             {
                 Time = NtfsTime.ToTimestamp(when, "$MFT, FILETIME UTC"), Source = "MFT", EvidenceId = item.EvidenceId, Process = "", Path = path,
@@ -245,7 +254,7 @@ public sealed class MftParser : EvidenceParserBase
                 Classification = category == "mismatch" ? Classification.Candidate : Classification.Direct,
                 Confidence = category == "mismatch" ? Confidence.Low : category == "incomplete" ? Confidence.Medium : Confidence.High,
                 Locator = $"MFT#{num}",
-                Notes = category == "incomplete" ? "Atributele înregistrării nu au putut fi citite integral; ce s-a citit înainte de problemă este raportat." : category == "mismatch" ? "Semnal slab: copierea, arhivele și mutarea între volume produc aceleași nepotriviri; nu dovedește timestomp." : "",
+                Notes = category == "incomplete" ? "Atributele înregistrării nu au putut fi citite integral; ce s-a citit înainte de problemă este raportat." : category == "mismatch" ? "Semnal slab: o arhivă care restaurează ora de creare produce aceeași nepotrivire; nu dovedește timestomp (regula NTFS-TIMESTOMP o judecă împreună cu jurnalul USN)." : "",
             };
             var f = ev.Fields;
             f["Category"] = category; f["RecordNumber"] = num.ToString(CultureInfo.InvariantCulture);
@@ -257,6 +266,7 @@ public sealed class MftParser : EvidenceParserBase
             if (fns.Any(n => n.NameHadInvalidUtf16)) f["NameInvalidUtf16"] = "true";
             f["Size"] = size.ToString(CultureInfo.InvariantCulture); f["SizeKnown"] = sizeKnown ? "true" : "false";
             f["FileNameCount"] = fns.Count.ToString(CultureInfo.InvariantCulture);
+            f["HasDosName"] = fns.Any(n => n.Namespace is 2 or 3) ? "true" : "false";   // a short (8.3) name exists: NTFS tunnelling is possible for this file
             if (si is not null)
             {
                 f["SiCreated"] = NtfsTime.Text(si.Created); f["SiModified"] = NtfsTime.Text(si.Modified);
@@ -361,16 +371,31 @@ public sealed class MftParser : EvidenceParserBase
         return ("…\\" + string.Concat(parts.Select(p => p + "\\")), problem);
     }
 
-    /// <summary>Weak $SI/$FN signals (format card §9). Several can hold at once; none is proof.</summary>
+    /// <summary>Largest $FN-after-$SI creation gap that is still ordinary: bsdtar truncates to the second, copies land within a few seconds (calibration 2026-11-13, README of Corpus/NtfsCalib).</summary>
+    public const long CreatedToleranceTicks = 60L * 10_000_000;
+
+    /// <summary>
+    /// Weak $SI/$FN signals (format card §9). A mismatch is a plausible $SI Created more than <see cref="CreatedToleranceTicks"/> before $FN Created; then
+    /// COPIED_CHANGE_TIME (the $SI MFT change time is before $FN Created: robocopy /COPY:DAT and Copy-Item copy it from the source) and the informative
+    /// SI_CREATED_ZERO_FRACTION can be added. None is proof; an empty list = no mismatch.
+    /// </summary>
     public static List<string> Signals(StandardInformation si, List<FileNameAttribute> fns)
     {
         var s = new List<string>();
         var fn = Best(fns);
         if (!NtfsTime.IsPlausible(si.Created) || !NtfsTime.IsPlausible(fn.Created)) return s;
-        if (si.Created < fn.Created) s.Add("SI_CREATED_BEFORE_FN_CREATED");
-        if (NtfsTime.IsPlausible(si.Modified) && si.Modified < fn.Created) s.Add("SI_MODIFIED_BEFORE_FN_CREATED");
+        if (fn.Created - si.Created <= CreatedToleranceTicks) return s;
+        s.Add("SI_CREATED_BEFORE_FN_CREATED");
+        if (NtfsTime.IsPlausible(si.MftModified) && si.MftModified < fn.Created) s.Add("COPIED_CHANGE_TIME");
         if (si.Created % 10_000_000 == 0 && fn.Created % 10_000_000 != 0) s.Add("SI_CREATED_ZERO_FRACTION");
         return s;
+    }
+
+    /// <summary>$SI Modified before $FN Created: what every copy and every extraction looks like. Only counted in the summary, never an event by itself.</summary>
+    public static bool SiModifiedBeforeFnCreated(StandardInformation si, List<FileNameAttribute> fns)
+    {
+        var fn = Best(fns);
+        return NtfsTime.IsPlausible(si.Modified) && NtfsTime.IsPlausible(fn.Created) && si.Modified < fn.Created;
     }
 
     /// <summary>

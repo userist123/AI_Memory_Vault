@@ -711,3 +711,25 @@
   Suites (main session, fresh): Dfir 3473 (3440 passed, 33 skipped, 0 failed), App 1084/1084.
   Next: S3 collector (raw $MFT + boot sector + $I30 of chosen directories from ONE shadow copy, live on WS01; uses DataRuns.Decode and
   AttributeList which have no production consumer yet), then S4 (AF08 real verdict + graded timestomp rule; truth: stomped.txt).
+- 2026-11-13 NTFS S4 DONE (timestomp): rule NTFS-TIMESTOMP (T1070.006, Analysis/NtfsTimestomp.cs + Wp14Rules.Timestomp.cs,
+  RuleContracts) and AF08 with a real verdict. Built on an EMPIRICAL calibration corpus (Corpus/NtfsCalib, Windows 11, USN active
+  before any operation, 17 scenarios A-N2; README has the table). Measured: rename / same-volume move COPY $SI into $FN; robocopy
+  /COPY:DAT and Copy-Item copy the source change time ($SI MftModified < $FN Created) - robocopy otherwise looks exactly like a
+  stomp; tar truncates to the second; File.Replace copies the creation time into $SI AND $FN in ONE operation; NTFS tunnelling
+  happens ONLY with 8.3 names on the volume (new Win11 volumes: off; system volume: usually on) and inherits the creation time only.
+  Rule (main-session design after 2 Opus review rounds that found: Close-time used as creation time, wrong USN time zone turning
+  zip/robocopy into High, AF08 NotDetected without the recent window, tunnelling/safe-save): USN ordered by Usn number never by time;
+  HIGH = $SI Created < $FN Created - 60 s + a separate earlier-closed "Basic info change" op (no Data/Create/Rename) after creation,
+  or ($SI == $FN copied by rename) create -> separate BIC -> rename with $SI > 24 h before the create (beats any zone error); no
+  High when the final name was freed just before by another FileId in the same parent (tunnelling, counted); MEDIUM = other mismatch
+  without copied change time; LOW = MFT-only mismatch on a DOS-named record whose $SI modification time is new (possible tunnelling;
+  main-session refinement: a DOS-named full stomp stays Medium). AF08 NotDetected only with the recent window emitted, no cap cut,
+  USN inside the window. UsnJournalParser uses EvidenceItem.Timezone (TimeSource field).
+  Calibration result: with USN A-E High, F-N2 nothing (all 4 zones tested); MFT only A, B, E Medium, L2 Low, rest nothing.
+  Accepted residuals: an archiver restoring creation times (7-Zip -mtc) then renaming looks like D3 (untested); an attacker can
+  pre-free the name within 15 s to have a stomp counted as tunnelling; NtSetInformationFile can also set the change time;
+  UsnJournalParser keeps only Close records ("Rename: old name" inferred). Defender quarantines the Debug Dfir test DLL
+  (Wacatac.H!ml false positive) -> run Dfir tests with -c Release; Defender not touched.
+  Suites (main session, fresh): Dfir (Release) 3524 (3491 passed, 33 skipped, 0 failed), App 1084/1084.
+  Next: S3 collector (raw $MFT + boot + $I30 + USN from ONE shadow copy, live on LAB-WS01), then lab check of the rule on a real
+  system volume with 8.3 names (how many Low/Medium on a clean Windows install = noise budget).

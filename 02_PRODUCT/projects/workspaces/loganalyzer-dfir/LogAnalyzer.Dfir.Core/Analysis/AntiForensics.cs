@@ -239,9 +239,42 @@ public static class AntiForensics
                     $". Acoperire: {Window()}.", [Ref(usn[0], "ID jurnal")]);
         }
 
-        Add("AF08", "Modificarea marcajelor de timp ale fișierelor (timestomp)", "T1070.006", AntiForensicResult.Undetermined,
-            "$MFT nu este parsat: comparația $STANDARD_INFORMATION / $FILE_NAME nu se poate face." +
-            (usn.Count > 0 ? " Motivul USN „Basic info change” apare și la schimbarea atributelor, deci nu dovedește singur o modificare a orelor." : ""));
+        // AF08 — timestomp: the NTFS-TIMESTOMP test over $MFT (+ USN), the same one the finding uses (NtfsTimestomp, calibrated on Corpus/NtfsCalib).
+        {
+            const string Af08Title = "Modificarea marcajelor de timp ale fișierelor (timestomp)";
+            const string Limit = "Limite: uneltele care schimbă și $FILE_NAME sau și ora de schimbare a înregistrării nu se văd; fără jurnal USN, o schimbare urmată de redenumire sau mutare nu se vede; " +
+                                 "tunelarea NTFS (cu nume scurte 8.3 pe volum, un fișier nou cu numele unuia șters sau redenumit cu puțin înainte moștenește ora lui de creare) produce același tipar și se exclude doar când jurnalul USN arată numele eliberat de alt fișier.";
+            var mftEvents = events.Where(e => e.Source == "MFT").ToList();
+            var outcome = NtfsTimestomp.Analyze(events);
+            var hits = outcome.Hits;
+            int possibleTunnel = hits.Count(h => h.Level == NtfsTimestomp.Level.Low);   // only the $MFT and a short name: possible tunnelling, still worth a look
+            string tunnelNote = outcome.TunnelExplained > 0 || possibleTunnel > 0
+                ? $" Tunelare NTFS: {outcome.TunnelExplained} fișiere explicate prin tunelare (jurnalul USN arată numele eliberat de alt fișier chiar înainte), {possibleTunnel} doar din $MFT cu nume scurt 8.3 (posibil tunelare, neconfirmat)."
+                : "";
+            if (hits.Count == 0 && !NtfsTimestomp.HasMft(mftEvents))
+                Add("AF08", Af08Title, "T1070.006", AntiForensicResult.Undetermined,
+                    "$MFT nu este parsat: comparația $STANDARD_INFORMATION / $FILE_NAME nu se poate face." +
+                    (usn.Count > 0 ? " Motivul USN „Basic info change” apare și la schimbarea atributelor, deci nu dovedește singur o modificare a orelor." : ""));
+            else
+            {
+                long records = NtfsTimestomp.Sum(mftEvents, "TotalRecords");
+                string usnPart = usn.Count > 0 ? $"jurnalul USN a fost analizat ({LogAnalyzer.Dfir.Language.RoText.Count(usn.Count, "înregistrare", "înregistrări")})" : "fără jurnal USN";
+                if (hits.Count > 0)
+                {
+                    int high = hits.Count(h => h.Level == NtfsTimestomp.Level.High), medium = hits.Count - high - possibleTunnel;
+                    Add("AF08", Af08Title, "T1070.006", AntiForensicResult.Detected,
+                        $"{hits.Count} fișiere cu orele de creare care par schimbate după crearea fișierului ({high} confirmate de jurnalul USN, {medium} doar din $MFT, {possibleTunnel} doar din $MFT cu nume scurt 8.3 = posibil tunelare; {records:N0} înregistrări $MFT, {usnPart}): " +
+                        string.Join("; ", hits.Take(5).Select(h => $"{LogAnalyzer.Dfir.FileSystem.MftParser.SafeText(h.Path)} ({(h.Level == NtfsTimestomp.Level.High ? "USN" : h.Level == NtfsTimestomp.Level.Low ? "doar $MFT, posibil tunelare" : "doar $MFT")})")) + (hits.Count > 5 ? $" și încă {hits.Count - 5}" : "") + "." + tunnelNote + " " + Limit,
+                        hits.SelectMany(h => new[] { h.Mft, h.UsnCreate, h.UsnChange }.Where(e => e is not null).Select(e => Ref(e!, e!.Source == "MFT" ? "înregistrare $MFT: orele $SI / $FN" : "jurnal USN"))));
+                }
+                else if (NtfsTimestomp.Undetermined(mftEvents, usn) is { } why)
+                    Add("AF08", Af08Title, "T1070.006", AntiForensicResult.Undetermined, $"$MFT analizat ({records:N0} înregistrări), dar {why}. {usnPart}.{tunnelNote} " + Limit);
+                else
+                    Add("AF08", Af08Title, "T1070.006", AntiForensicResult.NotDetected,
+                        $"Verificat: {records:N0} înregistrări $MFT ({NtfsTimestomp.Sum(mftEvents, "MismatchTotal"):N0} cu nepotrivire $SI/$FN, {NtfsTimestomp.Sum(mftEvents, "RecentTotal"):N0} recente), {usnPart}; " +
+                        "niciun fișier cu orele de creare mai vechi decât crearea fără tiparul unei copieri." + tunnelNote + " " + Limit);
+            }
+        }
 
         // AF09 — registry changes to logging and audit configuration, visible only with registry auditing (Sysmon 12–14, Security 4657).
         {

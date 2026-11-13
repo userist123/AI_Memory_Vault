@@ -28,6 +28,22 @@ stației (fișiere „TEST” create de script); scanat după identificatorii pr
 | J | Expand-Archive | $SI creare = ora extragerii; doar $SI modificare = 2018 | operație separată „Basic info change” | legitim |
 | K | tar -xf | $SI creare 18:29:08**.0000000** < $FN 18:29:08.4944813 (0,49 s) | o operație | legitim |
 
+Adăugate după review (aceeași zi, `calib_tunnel.ps1` pe `\save`, apoi `calib_tunnel2.ps1` pe `\save2` cu numele 8.3
+pornite pe volum; fișierul „vechi” are ora de creare 2024-01-01):
+
+| Scenariu | Operația | $SI creare | $FN creare | USN | Așteptat |
+|---|---|---|---|---|---|
+| L | salvare cu fișier temporar (temp + attrib separat + originalul redenumit și șters + temp redenumit), FĂRĂ 8.3 | acum | acum | — | legitim, nimic |
+| M | `File.Replace` (ReplaceFile), fără 8.3 | **2024** (copiat de ReplaceFile) | **2024** | „Security change \| Basic info change \| Rename: new name … Close” într-o SINGURĂ operație | legitim |
+| N | ștergere + recreare cu același nume, fără 8.3 | acum | acum | — | legitim, nimic |
+| L2 | ca L, CU 8.3 | **2024 (tunelat)** | acum | attrib = operație separată „Basic info change”; numele final eliberat chiar înainte de alt FileId din același director („Rename: old name” + „File delete”) | legitim — tiparul lui A! |
+| M2 | ca M, cu 8.3 | 2024 | 2024 | ca M | legitim |
+| N2 | ca N, cu 8.3 | **2024 (tunelat)** | **2024** | doar operația de creare, după „File delete” al aceluiași nume | legitim |
+
+Tunelarea NTFS (ora de creare a unui fișier șters sau redenumit în ultimele 15 s moștenită de noul fișier cu același nume)
+a avut loc DOAR cu numele scurte 8.3 pornite (L/N fără, L2/N2 cu). Pe volumele noi din Windows 11 numele 8.3 sunt
+oprite; pe volumul de sistem sunt de obicei pornite.
+
 Ce le deosebește:
 
 - H (robocopy) și G (Copy-Item) copiază și ora „schimbare MFT” a sursei: **$SI schimbare MFT < $FN creare**, ceea ce

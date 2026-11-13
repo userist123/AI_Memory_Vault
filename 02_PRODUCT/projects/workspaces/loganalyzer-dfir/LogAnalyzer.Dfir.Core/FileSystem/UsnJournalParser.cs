@@ -107,20 +107,30 @@ public sealed class UsnJournalParser(TimeZoneInfo? zone = null) : EvidenceParser
             return (names.ContainsKey(id) ? "" : "…\\") + string.Join("\\", parts);
         }
 
+        // the zone the export was made in: the one the evidence item states (case / remote manifest), else the one given to the parser, else this machine's
+        var zone = _zone;
+        if (!string.IsNullOrWhiteSpace(item.Timezone))
+        {
+            try { zone = TimeZoneInfo.FindSystemTimeZoneById(item.Timezone.Trim()); }
+            catch (Exception ex) when (ex is TimeZoneNotFoundException or InvalidTimeZoneException) { }   // an unknown id is ignored, never guessed
+        }
+
         foreach (var r in rows.Skip(1))
         {
             ct.ThrowIfCancellationRequested();
             if (r.Length <= iParent) { result.MalformedRecords++; continue; }
             if (!r[iReason].Contains("Close", StringComparison.Ordinal)) continue;
             Timestamp time;
+            string timeSource;
             if (iUtc >= 0 && r.Length > iUtc && DateTimeOffset.TryParseExact(r[iUtc], "yyyy-MM-dd'T'HH:mm:ss.fffffff'Z'", CultureInfo.InvariantCulture, DateTimeStyles.AssumeUniversal | DateTimeStyles.AdjustToUniversal, out var exact))
-                time = Timestamp.FromUtc(exact.UtcDateTime, r[iUtc], "jurnalul USN citit direct de aplicație, ora UTC înregistrată de volum");
+            { time = Timestamp.FromUtc(exact.UtcDateTime, r[iUtc], "jurnalul USN citit direct de aplicație, ora UTC înregistrată de volum"); timeSource = "UTC direct (citit de aplicație)"; }
             else if (DateTime.TryParseExact(r[iTime], "dd-MMM-yy HH:mm:ss", CultureInfo.InvariantCulture, DateTimeStyles.None, out var local))
             {
-                var utc = TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local, DateTimeKind.Unspecified), _zone);
-                time = Timestamp.FromUtc(utc, r[iTime], $"fsutil, ora locală convertită cu {_zone.Id}" + (_zone.IsAmbiguousTime(local) ? " (oră ambiguă la schimbarea orei)" : ""));
+                var utc = TimeZoneInfo.ConvertTimeToUtc(DateTime.SpecifyKind(local, DateTimeKind.Unspecified), zone);
+                time = Timestamp.FromUtc(utc, r[iTime], $"fsutil, ora locală convertită cu {zone.Id}" + (zone.IsAmbiguousTime(local) ? " (oră ambiguă la schimbarea orei)" : ""));
+                timeSource = $"local convertit cu {zone.Id}" + (zone.IsAmbiguousTime(local) ? " (oră ambiguă)" : "");
             }
-            else time = Timestamp.Unknown(r[iTime]);
+            else { time = Timestamp.Unknown(r[iTime]); timeSource = "necunoscută"; }
             var path = PathOf(r[iId]);
             sink.Add(new TimelineEvent
             {
@@ -131,7 +141,7 @@ public sealed class UsnJournalParser(TimeZoneInfo? zone = null) : EvidenceParser
                 Fields =
                 {
                     ["Usn"] = r[iUsn], ["FileName"] = r[iName], ["Reason"] = r[iReason], ["ReasonCode"] = r[iReasonCode],
-                    ["Attributes"] = r[iAttr], ["FileId"] = r[iId], ["ParentFileId"] = r[iParent], ["JournalId"] = header.JournalId,
+                    ["Attributes"] = r[iAttr], ["FileId"] = r[iId], ["ParentFileId"] = r[iParent], ["JournalId"] = header.JournalId, ["TimeSource"] = timeSource,
                     ["FirstUsn"] = header.FirstUsn.ToString(CultureInfo.InvariantCulture), ["NextUsn"] = header.NextUsn.ToString(CultureInfo.InvariantCulture),
                 },
             });

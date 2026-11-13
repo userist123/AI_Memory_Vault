@@ -53,6 +53,7 @@ public static partial class Wp14Rules
         Media(c, found);
         MediaUsageFindings(c, found);
         DeletedTraceFindings(c, found);
+        TimestompFindings(c, found);      // NTFS-TIMESTOMP: $MFT + USN (calibrated on a real volume)
         HistoryFindings(c, found);        // E1: every source, earliest evidence first
         AfterConnectFindings(c, found);   // E5: what followed each connection (linked to the medium's findings above)
         Optical(c, found);
