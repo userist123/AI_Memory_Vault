@@ -218,6 +218,24 @@
       "reason": "Plain markdown document in the read-only _recovered/ archive (never-committed LogAnalyzer files kept with provenance); not a note."
     },
     {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/design/DESIGN.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/design/PLAN.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/design/PRODUCT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
       "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/DFIR_CURRENT_ARCHITECTURE_AUDIT.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
