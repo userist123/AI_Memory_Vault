@@ -679,3 +679,20 @@
   repo in the session scratchpad (ntfs\out). Lab: DC01 + SRV01 running, WS01/WS02 off.
   Next: S1+S2 (reader + MftParser on an exported $MFT) to vault-worker, then Opus review; then S5 ($I30), S3 (VSS raw
   collector, live on WS01), S4 (AF08 + graded timestomp rule).
+- 2026-11-13 NTFS S1+S2 DONE (worker Sonnet, reviewer Opus 2 rounds, final fix by the main session): Dfir.Core/FileSystem/Ntfs/
+  {NtfsCommon,NtfsBootSector,NtfsFileRecord,NtfsAttributes}.cs + FileSystem/MftParser.cs (SourceType ntfs_mft, registry 31,
+  ParserCapabilities, fingerprint ntfs_mft in EvidencePreflight). Corpus test: paths, sizes, $SI times (100 ns) = truth.json;
+  stomped.txt $SI 2019 / $FN = pre-stomp times; 17 free records found deleted, no live record deleted.
+  Review r1 (3 MEDIUM, reproduced with probes): deleted cap ordered by raw $FN time (implausible times pushed real deletions out);
+  boot sector of another volume trusted -> false "truncated"; zero-length attribute hid a file with Success / 0 malformed. Fixed
+  with red-first tests + LOW: record 0 zero/BAAD, SafeText Cc+Cf, honest texts (parser does NOT read $ATTRIBUTE_LIST; links
+  extensions by base reference; AttributeList.Walk / DataRuns.Decode have NO production consumer yet -> S3), name budget 64 Mi chars.
+  Review r2: one MEDIUM regression (one altered USA count in record 0 set the size for the whole file) -> main session: every valid
+  header in the first 64 KiB votes for its own size, majority wins, the boot sector breaks ties only (a planted boot + one planted
+  header cannot outvote), gap "Antete FILE în conflict". MftParserRecordSizeVoteTests (6). Accepted LOW residuals (r2): fingerprint
+  'unknown' when the first bytes are neither FILE/BAAD/zero although the parser reads it; zeros + one FILE at 4096 fingerprinted
+  ntfs_mft; "incomplete" summary shows "(…)" and IncompleteNotEmitted is only in the gap. Not measured: multi-GB $MFT memory/speed,
+  real 4 KiB records, real $ATTRIBUTE_LIST.
+  Suites (main session, fresh): Dfir 3413 (3380 passed, 33 skipped, 0 failed), App 1084/1084.
+  Next: S5 ($I30 INDX + slack, corpus many_i30.bin: 3 deleted names live ONLY in $I30 because their MFT records were reused),
+  then S3 (raw $MFT from one shadow copy, live on WS01), then S4 (AF08 real verdict + graded timestomp rule).

@@ -1,0 +1,424 @@
+using System.Globalization;
+using LogAnalyzer.Dfir.FileSystem.Ntfs;
+using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.Parsing;
+
+namespace LogAnalyzer.Dfir.FileSystem;
+
+/// <summary>
+/// $MFT exported as a file (the $DATA of record 0). Streams the file twice: pass 1 builds the directory index (for paths), the set of the newest deleted
+/// records and the extension-record names; pass 2 emits by the policy in docs/dfir/NTFS_MFT_DESIGN.md ("Politica de emitere").
+/// Every byte is hostile: nothing read from the input sizes an allocation without a cap and a damaged record is counted, never fatal.
+/// </summary>
+public sealed class MftParser : EvidenceParserBase
+{
+    public const string SourceTypeName = "ntfs_mft";
+    public const string FingerprintName = "ntfs_mft";
+    public const int MaxDeletedEvents = 20_000, MaxMismatchEvents = 5_000, MaxRecentEvents = 100_000;
+    public const int MaxIncompleteEvents = 5_000;
+    public const long MaxIndexNameChars = 64L * 1024 * 1024;
+    public const int MaxDirectoryIndex = 2_000_000, MaxExtensionNames = 200_000, MaxPathDepth = 64;
+    public static readonly TimeSpan RecentWindow = TimeSpan.FromDays(30);
+    private readonly int _maxDirectoryIndex;
+    private readonly long _maxIndexNameChars;
+
+    /// <summary>The limits default to the production caps; tests lower them to reach the over-cap paths.</summary>
+    public MftParser(int maxDirectoryIndex = MaxDirectoryIndex, long maxIndexNameChars = MaxIndexNameChars)
+    { _maxDirectoryIndex = maxDirectoryIndex; _maxIndexNameChars = maxIndexNameChars; }
+
+    private static readonly FileNameAttribute NoName = new(default, 0, 0, 0, 0, 0, 0, 0, "", 1, false);
+    private static readonly string[] BootSiblings = ["$Boot", "boot.bin", "$Boot.bin"];
+
+    public override ParserDescriptor Descriptor { get; } = new()
+    {
+        ParserId = "MftParser", Version = "1.0", Artifact = "$MFT exportat (tabela principală de fișiere NTFS)",
+        SourceTypes = [SourceTypeName], FileNames = ["$MFT", ".mft"], Fingerprints = [FingerprintName],
+        MaxInputBytes = 0,   // streamed record by record
+        SupportedOs = "Windows (NTFS 3.x), înregistrări de 1.024 sau 4.096 octeți",
+        FormatVersions = ["NTFS 3.1 FILE record, fixup 512 octeți, $STANDARD_INFORMATION 48/72, $FILE_NAME, înregistrări de extensie legate prin base reference"],
+        Limitations =
+        [
+            "Se emit doar: înregistrări șterse (cel mult 20.000, cele mai noi), nepotriviri $SI/$FN (cel mult 5.000), fișiere create/modificate în 30 de zile înainte de achiziție (cel mult 100.000) și un rezumat; restul înregistrărilor sunt doar numărate.",
+            "O nepotrivire $SI/$FN este un semnal slab (copiere, mutare între volume, arhive o produc legitim); nu dovedește timestomp.",
+            "O înregistrare ștearsă păstrează numele și orele de la ultima folosire; calea ei depinde de părintele încă în uz cu aceeași secvență.",
+            "Parserul NU citește $ATTRIBUTE_LIST (nici rezident, nici nerezident). Leagă înregistrările de extensie de înregistrarea de bază prin base reference și secvența ei (extensia trebuie să fie în uz) și atașează doar $FILE_NAME din ele; alte atribute aflate în extensii nu sunt citite.",
+            "Fără ADS, $EA, $Bitmap, $Secure, conținut șters sau $I30.",
+            "Înregistrări cu fixup nepotrivit, BAAD sau antet incoerent sunt numărate (MalformedRecords) și nu produc evenimente. O înregistrare cu atribute ilizibile (lungime nevalidă etc.) este numărată; ce s-a citit înainte de problemă se emite cu AttributeWalk=incomplete.",
+            "Indexul de căi are plafon de directoare și de caractere de nume; peste plafon, căile rămase încep cu „…\\”.",
+        ],
+        Status = ParserMaturity.Validated,
+        Validation = "MftParserTests: Corpus/Ntfs (mft.bin scris de Windows 11) comparat cu truth.json (Get-Item/fsutil): căi, mărimi, ore $SI la 100 ns, ore $FN ale fișierului cu timestomp, 17 înregistrări libere; plus 11 probe ostile (P1–P11) și corecturile din review (MftParserReviewTests)",
+    };
+
+    private sealed record DirEntry(ushort Sequence, MftReference Parent, string Name);
+    private sealed record ExtNames(ulong BaseNumber, ushort BaseSequence, ulong ExtNumber, List<FileNameAttribute> Names);
+
+    protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
+    {
+        using var fs = new FileStream(fullPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete, 1 << 16, FileOptions.SequentialScan);
+        int recordSize = ResolveRecordSize(fullPath, fs, out string sizeSource, out string? bootGap);
+        var buf = new byte[recordSize];
+
+        // ---- pass 1 ----
+        var dirs = new Dictionary<ulong, DirEntry>();
+        var ext = new Dictionary<ulong, List<ExtNames>>();   // base number → names found in extension records
+        int extCount = 0;
+        var deletedHeap = new PriorityQueue<ulong, (long Time, long NegNumber)>();   // min-heap on the chosen deletion time (implausible = lowest), then on -number: keeps the newest MaxDeletedEvents, lowest numbers on ties
+        long attrProblems = 0, implausibleDeleted = 0, nameChars = 0, overCount = 0, overBudget = 0;
+        long total = 0, inUse = 0, deleted = 0, directories = 0, fixupErrors = 0, baad = 0, invalid = 0, blank = 0, dirOverflow = 0, extensions = 0;
+        bool truncatedTail = false;
+        ulong number = 0;
+        while (true)
+        {
+            ct.ThrowIfCancellationRequested();
+            int got = fs.ReadAtLeast(buf, recordSize, throwOnEndOfStream: false);
+            if (got == 0) break;
+            if (got < recordSize) { truncatedTail = true; break; }
+            var rec = NtfsFileRecord.Parse(buf, recordSize);
+            total++;
+            switch (rec.State)
+            {
+                case NtfsRecordState.NotRecord: blank++; number++; continue;
+                case NtfsRecordState.Torn: fixupErrors++; result.MalformedRecords++; number++; continue;
+                case NtfsRecordState.Baad: baad++; result.MalformedRecords++; number++; continue;
+                case NtfsRecordState.Invalid: invalid++; result.MalformedRecords++; number++; continue;
+            }
+            if (rec.Attributes.Count >= 0 && rec.AttributeProblems > 0) { attrProblems++; result.MalformedRecords++; }
+            if (rec.InUse) inUse++; else deleted++;
+            if (rec.IsDirectory && rec.InUse) directories++;
+            if (!rec.IsBaseRecord)
+            {
+                extensions++;
+                if (rec.InUse && extCount < MaxExtensionNames)
+                {
+                    var names = Names(rec);
+                    if (names.Count > 0)
+                    {
+                        if (!ext.TryGetValue(rec.BaseReference.Number, out var l)) ext[rec.BaseReference.Number] = l = [];
+                        l.Add(new ExtNames(rec.BaseReference.Number, rec.BaseReference.Sequence, number, names)); extCount++;
+                    }
+                }
+                number++; continue;
+            }
+            var fns = Names(rec);
+            if (rec.IsDirectory && rec.InUse && fns.Count > 0)
+            {
+                var best = Best(fns);
+                if (dirs.Count >= _maxDirectoryIndex) { dirOverflow++; overCount++; }
+                else if (nameChars + best.Name.Length > _maxIndexNameChars) { dirOverflow++; overBudget++; }
+                else { dirs[number] = new DirEntry(rec.Sequence, best.Parent, best.Name); nameChars += best.Name.Length; }
+            }
+            if (!rec.InUse && fns.Count > 0)
+            {
+                long t = DeletedTime(StandardInfo(rec), Best(fns));
+                if (t == long.MinValue) implausibleDeleted++;
+                deletedHeap.Enqueue(number, (t, -(long)number));
+                if (deletedHeap.Count > MaxDeletedEvents) deletedHeap.Dequeue();
+            }
+            number++;
+        }
+        var deletedKeep = new HashSet<ulong>();
+        long keptImplausible = 0;
+        while (deletedHeap.TryDequeue(out var n, out var pr)) { deletedKeep.Add(n); if (pr.Time == long.MinValue) keptImplausible++; }
+        if (truncatedTail)
+        {
+            result.MalformedRecords++;
+            result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial, "Fișierul $MFT se termină în mijlocul unei înregistrări",
+                $"Înregistrările de după offset {total * recordSize:N0} lipsesc", "Reexportul $MFT întreg", "Posibil"));
+        }
+        if (bootGap is not null)
+            result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial, bootGap,
+                "Mărimea înregistrării a fost dedusă din antetele FILE", "Sectorul de boot al volumului acestui $MFT", "Posibil"));
+        if (attrProblems > 0)
+            result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial, $"{attrProblems:N0} înregistrări cu atribute ilizibile (lungime, nume sau valoare în afara înregistrării)",
+                "Atributele de după problemă nu au fost citite; ce s-a citit înainte se emite cu AttributeWalk=incomplete", "Un alt export al aceluiași $MFT", "Posibil"));
+        if (dirOverflow > 0)
+            result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial, $"{dirOverflow:N0} directoare peste plafonul indexului de căi ({overCount:N0} peste {_maxDirectoryIndex:N0} directoare, {overBudget:N0} peste bugetul de {_maxIndexNameChars:N0} caractere de nume)",
+                "Unele căi încep cu „…\\”", "Un export filtrat", "Posibil"));
+
+        // ---- pass 2 ----
+        fs.Position = 0;
+        DateTimeOffset? acquired = item.AcquiredAtUtc == default ? null : item.AcquiredAtUtc;
+        long windowStart = acquired is { } a ? a.UtcDateTime.Add(-RecentWindow).ToFileTimeUtc() : long.MaxValue;
+        long windowEnd = acquired is { } a2 ? a2.UtcDateTime.ToFileTimeUtc() : long.MinValue;
+        long emittedDeleted = 0, emittedMismatch = 0, emittedRecent = 0, mismatchOver = 0, recentOver = 0, mismatchTotal = 0, recentTotal = 0, deletedOver = 0, emittedIncomplete = 0, incompleteOver = 0;
+        number = 0;
+        while (true)
+        {
+            ct.ThrowIfCancellationRequested();
+            int got = fs.ReadAtLeast(buf, recordSize, throwOnEndOfStream: false);
+            if (got < recordSize) break;
+            ulong num = number++;
+            var rec = NtfsFileRecord.Parse(buf, recordSize);
+            if (rec.State != NtfsRecordState.Ok || !rec.IsBaseRecord) continue;
+            var fns = Names(rec);
+            if (ext.TryGetValue(num, out var extList))
+                foreach (var e in extList.Where(e => e.BaseSequence == rec.Sequence).Take(64)) fns.AddRange(e.Names);
+            var si = StandardInfo(rec);
+            if (!rec.InUse)
+            {
+                if (fns.Count == 0 || !deletedKeep.Contains(num)) { if (fns.Count > 0) deletedOver++; continue; }
+                Emit("deleted", rec, num, fns, si);
+                emittedDeleted++;
+                continue;
+            }
+            if (fns.Count == 0 || si is null)
+            {
+                if (rec.AttributeProblems > 0 && (fns.Count > 0 || si is not null))
+                {
+                    if (emittedIncomplete < MaxIncompleteEvents) { Emit("incomplete", rec, num, fns, si); emittedIncomplete++; }
+                    else incompleteOver++;
+                }
+                continue;
+            }
+            var signals = Signals(si, fns);
+            if (signals.Count > 0)
+            {
+                mismatchTotal++;
+                if (emittedMismatch < MaxMismatchEvents) { Emit("mismatch", rec, num, fns, si, signals); emittedMismatch++; }
+                else mismatchOver++;
+                continue;
+            }
+            if (acquired is not null)
+            {
+                bool recent = InWindow(si.Created, windowStart, windowEnd) || InWindow(si.Modified, windowStart, windowEnd);
+                if (!recent) continue;
+                recentTotal++;
+                if (emittedRecent < MaxRecentEvents) { Emit("recent", rec, num, fns, si); emittedRecent++; }
+                else recentOver++;
+            }
+        }
+
+        sink.Add(new TimelineEvent
+        {
+            Time = acquired is { } acq ? Timestamp.FromUtc(acq.UtcDateTime, acq.ToString("O", CultureInfo.InvariantCulture), "data achiziției probei") : Timestamp.Unknown(),
+            Source = "MFT", EvidenceId = item.EvidenceId, Process = "", Path = "",
+            Summary = $"$MFT: {total:N0} înregistrări ({inUse:N0} în uz, {deleted:N0} șterse, {directories:N0} directoare), {result.MalformedRecords:N0} nevalide",
+            TimeSemantics = "rezumatul analizei $MFT", TemporalType = TemporalType.Derived, Classification = Classification.Direct, Confidence = Confidence.High,
+            Locator = "summary",
+            Fields =
+            {
+                ["Category"] = "summary", ["TotalRecords"] = total.ToString(CultureInfo.InvariantCulture), ["InUse"] = inUse.ToString(CultureInfo.InvariantCulture),
+                ["Deleted"] = deleted.ToString(CultureInfo.InvariantCulture), ["Directories"] = directories.ToString(CultureInfo.InvariantCulture),
+                ["FixupErrors"] = fixupErrors.ToString(CultureInfo.InvariantCulture), ["BaadRecords"] = baad.ToString(CultureInfo.InvariantCulture),
+                ["InvalidRecords"] = invalid.ToString(CultureInfo.InvariantCulture), ["BlankRecords"] = blank.ToString(CultureInfo.InvariantCulture),
+                ["ExtensionRecords"] = extensions.ToString(CultureInfo.InvariantCulture), ["RecordSize"] = recordSize.ToString(CultureInfo.InvariantCulture),
+                ["RecordSizeSource"] = sizeSource, ["TruncatedFile"] = truncatedTail ? "true" : "false",
+                ["DeletedEmitted"] = emittedDeleted.ToString(CultureInfo.InvariantCulture),
+                ["DeletedImplausibleEmitted"] = keptImplausible.ToString(CultureInfo.InvariantCulture), ["DeletedImplausibleNotEmitted"] = (implausibleDeleted - keptImplausible).ToString(CultureInfo.InvariantCulture),
+                ["AttributeWalkProblems"] = attrProblems.ToString(CultureInfo.InvariantCulture), ["IncompleteEmitted"] = emittedIncomplete.ToString(CultureInfo.InvariantCulture), ["DeletedNotEmitted"] = deletedOver.ToString(CultureInfo.InvariantCulture),
+                ["MismatchTotal"] = mismatchTotal.ToString(CultureInfo.InvariantCulture), ["MismatchEmitted"] = emittedMismatch.ToString(CultureInfo.InvariantCulture),
+                ["RecentTotal"] = recentTotal.ToString(CultureInfo.InvariantCulture), ["RecentEmitted"] = emittedRecent.ToString(CultureInfo.InvariantCulture),
+                ["RecentCategory"] = acquired is null ? "omisă: proba nu are data achiziției" : "emisă",
+            },
+            Notes = acquired is null ? "Fără dată de achiziție: categoria „fișiere recente” nu a fost emisă." : "",
+        });
+        result.Records++;
+        if (deletedOver > 0 || mismatchOver > 0 || recentOver > 0 || incompleteOver > 0)
+            result.Gaps.Add(new EvidenceGap(Path.GetFileName(fullPath), EvidenceStatus.Partial,
+                $"Plafoane de emitere atinse: {deletedOver:N0} șterse neemise (din care {implausibleDeleted - keptImplausible:N0} cu ore neplauzibile; {keptImplausible:N0} dintre cele emise au ore neplauzibile), {mismatchOver:N0} nepotriviri, {recentOver:N0} recente, {incompleteOver:N0} incomplete neemise", "Evenimentele neemise sunt doar numărate în rezumat", "Un export filtrat", "Posibil"));
+
+        // ---- local helpers ----
+        void Emit(string category, NtfsFileRecord rec, ulong num, List<FileNameAttribute> fns, StandardInformation? si, List<string>? signals = null)
+        {
+            bool named = fns.Count > 0;
+            var best = named ? Best(fns) : NoName;
+            var (parentPath, flag) = named ? ParentPath(best.Parent, dirs) : ("", "fără $FILE_NAME citibil");
+            string path = parentPath + best.Name;
+            var (size, sizeKnown) = SizeOf(rec);
+            var reference = MftReference.From(num, rec.Sequence);
+            long when = category == "deleted" ? (DeletedTime(si, best) is var dt && dt != long.MinValue ? dt : best.MftModified)
+                      : category is "mismatch" or "incomplete" ? (si?.Created ?? best.Created)
+                      : (si is not null && InWindow(si.Modified, windowStart, windowEnd) ? si.Modified : si?.Created ?? 0);
+            var ev = new TimelineEvent
+            {
+                Time = NtfsTime.ToTimestamp(when, "$MFT, FILETIME UTC"), Source = "MFT", EvidenceId = item.EvidenceId, Process = "", Path = path,
+                Summary = category switch
+                {
+                    "deleted" => $"$MFT: înregistrare ștearsă {SafeText(path)}",
+                    "incomplete" => $"$MFT: înregistrarea #{num} are atribute ilizibile ({SafeText(path)})",
+                    "mismatch" => $"$MFT: nepotrivire $SI/$FN la {SafeText(path)} ({string.Join(", ", signals ?? [])})",
+                    _ => $"$MFT: fișier recent {SafeText(path)}",
+                },
+                TimeSemantics = category switch { "deleted" => "ultima modificare a înregistrării MFT (înregistrare nefolosită)", "mismatch" => "$STANDARD_INFORMATION creare", _ => "$STANDARD_INFORMATION creare/modificare" },
+                TemporalType = TemporalType.Historical,
+                Classification = category == "mismatch" ? Classification.Candidate : Classification.Direct,
+                Confidence = category == "mismatch" ? Confidence.Low : category == "incomplete" ? Confidence.Medium : Confidence.High,
+                Locator = $"MFT#{num}",
+                Notes = category == "incomplete" ? "Atributele înregistrării nu au putut fi citite integral; ce s-a citit înainte de problemă este raportat." : category == "mismatch" ? "Semnal slab: copierea, arhivele și mutarea între volume produc aceleași nepotriviri; nu dovedește timestomp." : "",
+            };
+            var f = ev.Fields;
+            f["Category"] = category; f["RecordNumber"] = num.ToString(CultureInfo.InvariantCulture);
+            f["Sequence"] = rec.Sequence.ToString(CultureInfo.InvariantCulture); f["FileId"] = reference.FileId;
+            f["InUse"] = rec.InUse ? "true" : "false"; f["IsDirectory"] = rec.IsDirectory ? "true" : "false";
+            f["FileName"] = best.Name; f["Namespace"] = best.Namespace.ToString(CultureInfo.InvariantCulture);
+            f["ParentFileId"] = best.Parent.FileId; f["PathComplete"] = flag.Length == 0 ? "true" : "false";
+            if (flag.Length > 0) f["PathProblem"] = flag;
+            if (fns.Any(n => n.NameHadInvalidUtf16)) f["NameInvalidUtf16"] = "true";
+            f["Size"] = size.ToString(CultureInfo.InvariantCulture); f["SizeKnown"] = sizeKnown ? "true" : "false";
+            f["FileNameCount"] = fns.Count.ToString(CultureInfo.InvariantCulture);
+            if (si is not null)
+            {
+                f["SiCreated"] = NtfsTime.Text(si.Created); f["SiModified"] = NtfsTime.Text(si.Modified);
+                f["SiMftModified"] = NtfsTime.Text(si.MftModified); f["SiAccessed"] = NtfsTime.Text(si.Accessed);
+            }
+            if (named)
+            {
+                f["FnCreated"] = NtfsTime.Text(best.Created); f["FnModified"] = NtfsTime.Text(best.Modified);
+                f["FnMftModified"] = NtfsTime.Text(best.MftModified); f["FnAccessed"] = NtfsTime.Text(best.Accessed);
+            }
+            if (rec.AttributeProblems > 0) f["AttributeWalk"] = "incomplete";
+            if (signals is { Count: > 0 }) f["Signals"] = string.Join(";", signals);
+            sink.Add(ev);
+            result.Records++;
+        }
+    }
+
+    /// <summary>
+    /// A file name for a one-line text: every Unicode control (Cc) and format (Cf) character, U+034F, and the line and paragraph separators
+    /// are shown as backslash-u plus four hex digits (backslash-U plus eight for characters outside the BMP). The verbatim name stays in Path and Fields.
+    /// </summary>
+    public static string SafeText(string s)
+    {
+        System.Text.StringBuilder? sb = null;
+        int index = 0;
+        foreach (var r in s.EnumerateRunes())
+        {
+            bool bad = System.Text.Rune.IsControl(r) || System.Text.Rune.GetUnicodeCategory(r) == System.Globalization.UnicodeCategory.Format
+                       || r.Value is 0x034F or 0x2028 or 0x2029;
+            if (bad)
+            {
+                sb ??= new System.Text.StringBuilder(s[..index], s.Length + 16);
+                sb.Append((char)92);
+                if (r.Value <= 0xFFFF) sb.Append('u').Append(r.Value.ToString("X4", CultureInfo.InvariantCulture));
+                else sb.Append('U').Append(r.Value.ToString("X8", CultureInfo.InvariantCulture));
+            }
+            else sb?.Append(r.ToString());
+            index += r.Utf16SequenceLength;
+        }
+        return sb?.ToString() ?? s;
+    }
+
+    /// <summary>Time that ranks and dates a deleted record: $SI MFT-modified if plausible, else $FN MFT-modified if plausible, else long.MinValue (ranks last).</summary>
+    private static long DeletedTime(StandardInformation? si, FileNameAttribute best)
+        => si is not null && NtfsTime.IsPlausible(si.MftModified) ? si.MftModified : NtfsTime.IsPlausible(best.MftModified) ? best.MftModified : long.MinValue;
+
+    private static bool InWindow(long ft, long start, long end) => NtfsTime.IsPlausible(ft) && ft >= start && ft <= end;
+
+    private static List<FileNameAttribute> Names(NtfsFileRecord rec)
+    {
+        var l = new List<FileNameAttribute>();
+        foreach (var a in rec.Attributes)
+            if (a.Type == NtfsAttributeType.FileName && !a.NonResident && a.Name.Length == 0 && FileNameAttribute.TryParse(rec.ValueOf(a)) is { } fn) l.Add(fn);
+        return l;
+    }
+
+    private static StandardInformation? StandardInfo(NtfsFileRecord rec)
+    {
+        foreach (var a in rec.Attributes)
+            if (a.Type == NtfsAttributeType.StandardInformation && !a.NonResident) return StandardInformation.TryParse(rec.ValueOf(a));
+        return null;
+    }
+
+    private static FileNameAttribute Best(List<FileNameAttribute> fns)
+    {
+        var best = fns[0];
+        foreach (var n in fns) if (n.Rank > best.Rank) best = n;
+        return best;
+    }
+
+    /// <summary>Size of the unnamed $DATA (the real size; $FILE_NAME can be stale). Directories and records without $DATA: 0, size unknown flagged only when $DATA exists but is not usable.</summary>
+    private static (long Size, bool Known) SizeOf(NtfsFileRecord rec)
+    {
+        foreach (var a in rec.Attributes)
+        {
+            if (a.Type != NtfsAttributeType.Data || a.Name.Length != 0) continue;
+            if (!a.NonResident) return (a.ValueLength, true);
+            if (a.LowestVcn != 0 || a.RealSize < 0) continue;
+            return (a.RealSize, true);
+        }
+        return (0, rec.IsDirectory);
+    }
+
+    /// <summary>Directory path of a parent reference ending with a backslash. Root = "\"; a reused parent (sequence differs), a missing parent, a cycle or depth over 64 gives "…\" and a reason.</summary>
+    private static (string Path, string Problem) ParentPath(MftReference parent, Dictionary<ulong, DirEntry> dirs)
+    {
+        var parts = new List<string>();
+        var seen = new HashSet<ulong>();
+        var cur = parent;
+        string problem = "";
+        for (int depth = 0; ; depth++)
+        {
+            if (depth >= MaxPathDepth) { problem = "adâncime peste 64"; break; }
+            if (!dirs.TryGetValue(cur.Number, out var d)) { problem = "părinte lipsă sau nefolosit"; break; }
+            if (d.Sequence != cur.Sequence) { problem = "părinte reutilizat (secvență diferită)"; break; }
+            if (!seen.Add(cur.Number)) { problem = "ciclu în lanțul de părinți"; break; }
+            if (cur.Number == 5 && d.Parent.Number == 5) { parts.Reverse(); return ("\\" + string.Concat(parts.Select(p => p + "\\")), ""); }
+            parts.Add(d.Name);
+            cur = d.Parent;
+        }
+        parts.Reverse();
+        return ("…\\" + string.Concat(parts.Select(p => p + "\\")), problem);
+    }
+
+    /// <summary>Weak $SI/$FN signals (format card §9). Several can hold at once; none is proof.</summary>
+    public static List<string> Signals(StandardInformation si, List<FileNameAttribute> fns)
+    {
+        var s = new List<string>();
+        var fn = Best(fns);
+        if (!NtfsTime.IsPlausible(si.Created) || !NtfsTime.IsPlausible(fn.Created)) return s;
+        if (si.Created < fn.Created) s.Add("SI_CREATED_BEFORE_FN_CREATED");
+        if (NtfsTime.IsPlausible(si.Modified) && si.Modified < fn.Created) s.Add("SI_MODIFIED_BEFORE_FN_CREATED");
+        if (si.Created % 10_000_000 == 0 && fn.Created % 10_000_000 != 0) s.Add("SI_CREATED_ZERO_FRACTION");
+        return s;
+    }
+
+    /// <summary>
+    /// Record size from the first valid FILE header among the first 64 positions of 1,024 bytes (USA count = size/512 + 1). A boot sector next to the
+    /// file is used only to confirm it: if it says something else it belongs to another volume and is reported in <paramref name="bootGap"/>.
+    /// </summary>
+    private static int ResolveRecordSize(string fullPath, FileStream fs, out string source, out string? bootGap)
+    {
+        bootGap = null;
+        var head = new byte[NtfsFileRecord.DetectPositions * 1024 + 8];
+        fs.Position = 0;
+        int got = fs.ReadAtLeast(head, head.Length, throwOnEndOfStream: false);
+        fs.Position = 0;
+        int size = NtfsFileRecord.DetectRecordSize(head.AsSpan(0, got), out int offset, out var votes);
+        if (size == 0) throw new InvalidDataException("Nicio înregistrare FILE validă în primele 64 de poziții; nu este un $MFT.");
+        string Tally() => string.Join(", ", votes.OrderBy(v => v.Key).Select(v => $"{v.Key} octeți: {v.Value}"));
+        bool conflict = votes.Count > 1;
+        source = conflict ? $"majoritatea antetelor (USA count; {Tally()})"
+               : offset == 0 ? "primul antet (USA count)" : $"primul antet valid, la offset {offset} (USA count)";
+        NtfsBootSector? boot = null; string? bootName = null;
+        var dir = Path.GetDirectoryName(Path.GetFullPath(fullPath));
+        if (dir is not null)
+            foreach (var n in BootSiblings)
+            {
+                var p = Path.Combine(dir, n);
+                if (!File.Exists(p) || new FileInfo(p).Length is < 512 or > 64 * 1024) continue;
+                boot = NtfsBootSector.TryParse(File.ReadAllBytes(p), out var err);
+                bootName = n;
+                if (boot is null) bootGap = "Sectorul de boot furnizat alături nu a putut fi folosit: " + err;
+                break;
+            }
+        if (conflict)
+        {
+            // Headers disagree: a damaged or planted header. The boot sector is evidence too, so it breaks a TIE only; it never outvotes the majority
+            // (a planted boot sector plus one planted header must not impose their size on every other record).
+            if (boot is not null && boot.MftRecordSize != size && votes.TryGetValue(boot.MftRecordSize, out var bv) && bv == votes[size])
+            {
+                size = boot.MftRecordSize;
+                source = $"boot sector ({bootName}), între antete în conflict";
+            }
+            bootGap = $"Antete FILE în conflict asupra mărimii înregistrării ({Tally()}); s-a folosit {size} octeți" +
+                      (boot is null ? ", după majoritate." : boot.MftRecordSize == size ? $", confirmat de sectorul de boot ({bootName})." : $"; sectorul de boot ({bootName}) spune {boot.MftRecordSize}, mărime pe care majoritatea antetelor nu o confirmă.");
+        }
+        else if (boot is not null)
+        {
+            if (boot.MftRecordSize == size) source = $"boot sector ({bootName}), confirmat de antete";
+            else bootGap = $"Sectorul de boot de lângă fișier nu corespunde acestui $MFT ({boot.MftRecordSize} față de {size}); s-a folosit mărimea din antete";
+        }
+        return size;
+    }
+}

@@ -34,6 +34,7 @@ public static class EvidenceFingerprint
         if (IsFirewallLog(path)) return "pfirewall";
         if (IsZeekTsv(path)) return LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint;
         if (IsRecycleInfo(path)) return "recycle_info";
+        if (IsMft(path, h)) return LogAnalyzer.Dfir.FileSystem.MftParser.FingerprintName;
         var t = h.TrimStart(" \t\r\n﻿"u8);
         if (t.Length > 0 && (t[0] == (byte)'{' || t[0] == (byte)'[') || StartsWith(h, 0, [0xEF, 0xBB, 0xBF, (byte)'{'])) return "json";
         return "unknown";
@@ -164,6 +165,7 @@ public static class EvidenceFingerprint
         if (t == LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName) return ["pfirewall"];
         if (t == LogAnalyzer.Dfir.Network.ZeekLogParser.SourceTypeName) return [LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint, "json"];
         if (t == "usn_journal") return ["usn_fsutil"];
+        if (t == LogAnalyzer.Dfir.FileSystem.MftParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.MftParser.FingerprintName];
         if (t == LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.FingerprintName];
         if (LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.IsKnown(t)) return [t];   // the source type is the fingerprint name
         if (t == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName];
@@ -172,6 +174,20 @@ public static class EvidenceFingerprint
         if (t == "jumplist_auto" || name.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase)) return ["cfb"];
         if (t == "lnk" || name.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase)) return ["lnk"];
         return null;
+    }
+
+    /// <summary>
+    /// An exported $MFT: a valid FILE header (same rule as NtfsFileRecord.DetectRecordSize) among the first
+    /// 64 positions of 1,024 bytes. Record 0 may be zeroed or BAAD. Only files that start with FILE, BAAD or zeros are read that far.
+    /// </summary>
+    private static bool IsMft(string path, ReadOnlySpan<byte> h)
+    {
+        if (h.Length < 4 || !(StartsWith(h, 0, "FILE"u8) || StartsWith(h, 0, "BAAD"u8) || StartsWith(h, 0, [0, 0, 0, 0]))) return false;
+        var buf = new byte[LogAnalyzer.Dfir.FileSystem.Ntfs.NtfsFileRecord.DetectPositions * 1024 + 8];
+        int n;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        return LogAnalyzer.Dfir.FileSystem.Ntfs.NtfsFileRecord.DetectRecordSize(buf.AsSpan(0, n), out _) > 0;
     }
 
     private static bool StartsWith(ReadOnlySpan<byte> h, int offset, ReadOnlySpan<byte> magic) =>
