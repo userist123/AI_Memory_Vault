@@ -94,15 +94,8 @@ public sealed class NtfsFileRecord
             return r.Fail(NtfsRecordState.Invalid, $"offset primul atribut {r.FirstAttributeOffset} nevalid");
 
         // P2: verify EVERY sector tail against USA[0] before restoring any of them.
-        var copy = raw.ToArray();
-        ushort usn = Le.U16(copy, usaOffset);
-        for (int i = 1; i < usaCount; i++)
-            if (Le.U16(copy, i * 512 - 2) != usn) return r.Fail(NtfsRecordState.Torn, $"fixup nepotrivit la sectorul {i}");
-        for (int i = 1; i < usaCount; i++)
-        {
-            copy[i * 512 - 2] = copy[usaOffset + 2 * i];
-            copy[i * 512 - 1] = copy[usaOffset + 2 * i + 1];
-        }
+        var copy = NtfsFixup.Apply(raw, usaOffset, usaCount, out int badSector);
+        if (copy is null) return r.Fail(NtfsRecordState.Torn, $"fixup nepotrivit la sectorul {badSector}");
         r._data = copy;
         r.State = NtfsRecordState.Ok;
         return r;

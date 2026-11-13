@@ -696,3 +696,18 @@
   Suites (main session, fresh): Dfir 3413 (3380 passed, 33 skipped, 0 failed), App 1084/1084.
   Next: S5 ($I30 INDX + slack, corpus many_i30.bin: 3 deleted names live ONLY in $I30 because their MFT records were reused),
   then S3 (raw $MFT from one shadow copy, live on WS01), then S4 (AF08 real verdict + graded timestomp rule).
+- 2026-11-13 NTFS S5 DONE: I30Parser (SourceType ntfs_i30, registry 32) + Ntfs/{IndexRecord,NtfsFixup}.cs (fixup shared with
+  NtfsFileRecord, equivalence checked by the reviewer). Corpus: 3 INDX blocks, 39 allocated + 2 from $INDEX_ROOT (file_017, file_035
+  = B+ tree root separators) = the 41 live files; slack 34 = 24 live_copy + 10 deleted names historical_free (021..051); 018/036/060
+  keys survive only without their 16-byte header (not recovered); the 3 names whose MFT records were reused are NOT in slack.
+  Review r1 (2 MEDIUM): a mismatched neighbouring $MFT made live copies look deleted (Medium, no gap); classify compared names only
+  (a file moved out looked like noise). Fixed: coherence gate before any classification (one parent = live directory with the same
+  sequence; >= 98% of allocated entries live with same sequence and name; else all slack unclassified + gap; fails closed on small
+  directories), classes live_copy / moved_out (Medium) / historical_renamed (Low, "nume anterior posibil") / foreign_parent (Low, from
+  the index alone - accepted) / historical_reused / historical_free; $INDEX_ROOT read from the neighbouring $MFT (main-session
+  decision); MaxBlockSize 65,536; corpus numbers pinned. r2 APPROVED (LOW only); main session fixed 2 LOW (root without end marker /
+  used < 16 = problem, gap text join) with IndexRootDamageTests (4). Accepted: a coherent hostile $MFT + $I30 pair can plant a
+  historical_free name (no more than planting in $MFT itself); gaps keep Status Success (framework-wide).
+  Suites (main session, fresh): Dfir 3473 (3440 passed, 33 skipped, 0 failed), App 1084/1084.
+  Next: S3 collector (raw $MFT + boot sector + $I30 of chosen directories from ONE shadow copy, live on WS01; uses DataRuns.Decode and
+  AttributeList which have no production consumer yet), then S4 (AF08 real verdict + graded timestomp rule; truth: stomped.txt).

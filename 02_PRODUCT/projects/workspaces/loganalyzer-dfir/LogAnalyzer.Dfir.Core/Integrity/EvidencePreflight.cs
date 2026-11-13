@@ -34,6 +34,7 @@ public static class EvidenceFingerprint
         if (IsFirewallLog(path)) return "pfirewall";
         if (IsZeekTsv(path)) return LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint;
         if (IsRecycleInfo(path)) return "recycle_info";
+        if (StartsWith(h, 0, "INDX"u8)) return LogAnalyzer.Dfir.FileSystem.I30Parser.FingerprintName;
         if (IsMft(path, h)) return LogAnalyzer.Dfir.FileSystem.MftParser.FingerprintName;
         var t = h.TrimStart(" \t\r\n﻿"u8);
         if (t.Length > 0 && (t[0] == (byte)'{' || t[0] == (byte)'[') || StartsWith(h, 0, [0xEF, 0xBB, 0xBF, (byte)'{'])) return "json";
@@ -165,6 +166,7 @@ public static class EvidenceFingerprint
         if (t == LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName) return ["pfirewall"];
         if (t == LogAnalyzer.Dfir.Network.ZeekLogParser.SourceTypeName) return [LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint, "json"];
         if (t == "usn_journal") return ["usn_fsutil"];
+        if (t == LogAnalyzer.Dfir.FileSystem.I30Parser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.I30Parser.FingerprintName];
         if (t == LogAnalyzer.Dfir.FileSystem.MftParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.MftParser.FingerprintName];
         if (t == LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.FingerprintName];
         if (LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.IsKnown(t)) return [t];   // the source type is the fingerprint name

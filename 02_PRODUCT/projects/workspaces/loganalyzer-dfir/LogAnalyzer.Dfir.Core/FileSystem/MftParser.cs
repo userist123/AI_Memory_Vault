@@ -305,7 +305,7 @@ public sealed class MftParser : EvidenceParserBase
 
     private static bool InWindow(long ft, long start, long end) => NtfsTime.IsPlausible(ft) && ft >= start && ft <= end;
 
-    private static List<FileNameAttribute> Names(NtfsFileRecord rec)
+    internal static List<FileNameAttribute> Names(NtfsFileRecord rec)
     {
         var l = new List<FileNameAttribute>();
         foreach (var a in rec.Attributes)

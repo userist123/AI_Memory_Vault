@@ -12,6 +12,6 @@ public static class WindowsParsers
         [new EvtxParser(), new PrefetchParser(), new SrumNetworkParser(), new PcapngParser(), new SystemHiveExecutionParser(), new AmcacheParser(),
          new ScheduledTaskParser(), new UserHiveParser(), new SoftwareHiveParser(),
          new ServicesParser(), new BrowserHistoryParser(), new LnkParser(),
-         new UsbDevicesParser(), new JumpListParser(), new FirefoxHistoryParser(), new UsnJournalParser(), new MftParser(), new FirewallLogParser(),
+         new UsbDevicesParser(), new JumpListParser(), new FirefoxHistoryParser(), new UsnJournalParser(), new MftParser(), new I30Parser(), new FirewallLogParser(),
          new ShellBagsParser(), new RecycleBinInfoParser(), new LogAnalyzer.Dfir.Devices.SetupApiLogParser(), new CustomJumpListParser(), new LogAnalyzer.Dfir.Memory.VolatilityJsonParser(), new LogAnalyzer.Dfir.Network.ZeekLogParser(), new DefenderDetectionHistoryParser(), new NotepadTabStateParser(), new LogAnalyzer.Dfir.RemoteTools.AnyDeskConnectionTraceParser(), new LogAnalyzer.Dfir.RemoteTools.AnyDeskTraceParser(), new LogAnalyzer.Dfir.RemoteTools.TeamViewerConnectionsParser(), new WindowsSearchIndexParser(), new WindowsSearchGatherParser()]);
 }
