@@ -8,6 +8,9 @@ namespace LogAnalyzer.Dfir.Windows.Policy;
 /// <summary>A policy opened in the workbench: the native policy, its library copy and what the import could not take.</summary>
 public sealed record OpenedPolicy(PolicyDocument Policy, string LibraryPath, IReadOnlyList<string> Unsupported, IReadOnlyList<string> Metadata);
 
+/// <summary>A registered policy as the library page lists it; <see cref="LibraryPath"/> is null when its library copy is missing (it can then not be reopened).</summary>
+public sealed record PolicyLibraryEntry(string Id, string Version, string Title, PolicyStatus Status, DateTimeOffset? LastChangeUtc, string? LibraryPath);
+
 /// <summary>
 /// What the application uses to work with owner policies: open (native or imported), register, validate, dry-run, approve,
 /// plan, apply, roll back. Every step is done as the signed-in application account (or, with no sign-in, the Windows account
@@ -79,6 +82,19 @@ public sealed class PolicyWorkbench
         else File.WriteAllText(file, r.Yaml, new UTF8Encoding(false));
         return new OpenedPolicy(PolicyLoader.LoadFile(file), file, r.Unsupported, r.Metadata);
     }
+
+    /// <summary>The policies registered in the store, each with its library copy when it still exists (so a restart does not hide an earlier import).</summary>
+    public IReadOnlyList<PolicyLibraryEntry> LibraryEntries() => Store.All().Select(r =>
+    {
+        var file = Path.Combine(LibraryDir, $"{Safe(r.Id)}@{Safe(r.Version)}.lapolicy");
+        string? path = File.Exists(file) ? file : null;
+        string title = "";
+        if (path is not null)
+        {
+            try { title = PolicyLoader.LoadFile(path).Title; } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or FormatException or YamlDotNet.Core.YamlException) { path = null; }
+        }
+        return new PolicyLibraryEntry(r.Id, r.Version, title, r.Status, r.History.Count > 0 ? r.History[^1].AtUtc : null, path);
+    }).ToList();
 
     private static string Safe(string s) => string.Concat(s.Select(c => Path.GetInvalidFileNameChars().Contains(c) ? '_' : c));
 

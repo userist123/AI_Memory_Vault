@@ -1,0 +1,1 @@
+TEST: all files in this folder are SYNTHETIC samples (ids 9990001xx, addresses 203.0.113.0/24 and 2001:db8::/32 are documentation ranges), written in the formats described in public DFIR literature. They come from no real installation of AnyDesk or TeamViewer.

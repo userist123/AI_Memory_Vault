@@ -86,6 +86,481 @@ public sealed class RemoteCollectionTests : IDisposable
     }
 
     [Fact]
+    public void A_log_that_does_not_exist_on_the_target_is_absent_not_a_failed_step()
+    {
+        // lab SRV01 2026-11-07: Sysmon is not installed, wevtutil exit 15007 was reported as „pas eșuat”
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["evtx:Microsoft-Windows-Sysmon/Operational"]);
+        var check = RemoteCollection.Verify(ws, RunPackage(RemoteCollection.PackageScript(req, sha)));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var step = check.Manifest!.Steps.Single();
+        Assert.Contains(step.Status, new[] { "ok", "absent" });   // ok where Sysmon is installed
+        if (step.Status == "absent") Assert.Contains("nu exista pe statie", step.Error);
+    }
+
+    [Fact]
+    public void Defender_history_files_in_a_package_are_typed_for_the_DetectionHistory_parser_only_with_a_GUID_name_and_matching_content()
+    {
+        const string id = "2169D50A-AB8F-4CC5-992A-DEAFEE4FAE82";
+        var dir = Path.Combine(_root, "pkg", "files", RemoteCollection.DefenderHistoryFolder, "17");
+        Directory.CreateDirectory(dir);
+        var real = Path.Combine(dir, id);
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Corpus", "DefenderDetectionHistory", id), real);
+        var notGuid = Path.Combine(dir, "readme.txt"); File.WriteAllText(notGuid, "x");
+        var junk = Path.Combine(dir, Guid.NewGuid().ToString().ToUpperInvariant()); File.WriteAllBytes(junk, new byte[64]);
+        string Rel(string p) => Path.GetRelativePath(Path.Combine(_root, "pkg"), p).Replace('\\', '/');
+        Assert.Equal(LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName, RemoteCollection.ImportKind(Rel(real), real));
+        Assert.Equal("file", RemoteCollection.ImportKind(Rel(notGuid), notGuid));
+        Assert.Equal("file", RemoteCollection.ImportKind(Rel(junk), junk));
+        // the same GUID file outside the Defender folder of a package is not taken for one
+        Assert.Equal("file", RemoteCollection.ImportKind("files/other/" + id, real));
+    }
+
+    [Fact]
+    public void Notepad_tabs_and_the_search_index_in_a_package_are_typed_only_in_their_own_folders_with_matching_content()
+    {
+        const string tab = "0e735e0a-8148-44fb-8cea-7e15f4caa644.bin";
+        var pkg = Path.Combine(_root, "pkg2");
+        var np = Path.Combine(pkg, "files", RemoteCollection.NotepadTabsFolder, "ana"); Directory.CreateDirectory(np);
+        var realTab = Path.Combine(np, tab);
+        File.Copy(Path.Combine(AppContext.BaseDirectory, "Corpus", "NotepadTabState", tab), realTab);
+        var fakeTab = Path.Combine(np, Guid.NewGuid() + ".bin"); File.WriteAllBytes(fakeTab, new byte[64]);
+        var si = Path.Combine(pkg, "files", RemoteCollection.SearchIndexFolder); Directory.CreateDirectory(si);
+        var db = Path.Combine(si, "Windows.db");
+        using (var c = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={db};Pooling=False"))
+        {
+            c.Open();
+            using var cmd = c.CreateCommand(); cmd.CommandText = "CREATE TABLE t(x INTEGER)"; cmd.ExecuteNonQuery();
+        }
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        var notDb = Path.Combine(si, "other.db"); File.Copy(db, notDb);
+        string Rel(string p) => Path.GetRelativePath(pkg, p).Replace('\\', '/');
+        Assert.Equal(LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.SourceTypeName, RemoteCollection.ImportKind(Rel(realTab), realTab));
+        Assert.Equal("file", RemoteCollection.ImportKind(Rel(fakeTab), fakeTab));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/other/" + tab, realTab));
+        Assert.Equal(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName, RemoteCollection.ImportKind(Rel(db), db));
+        Assert.Equal(WindowsSearchIndexCollector.WalSourceType, RemoteCollection.ImportKind("files/" + RemoteCollection.SearchIndexFolder + "/Windows.db-wal", db));
+        Assert.Equal("file", RemoteCollection.ImportKind(Rel(notDb), notDb));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/elsewhere/Windows.db", db));
+    }
+
+    /// <summary>A package folder with a small Windows Search index (three rows that live only in the journal when <paramref name="withWal"/>), as the script would leave it.</summary>
+    private string IndexPackage(RemoteCollectionRequest req, string requestSha, string stepStatus, bool withWal, string name, bool withGather = false)
+    {
+        var pkg = Path.Combine(_root, name);
+        var dir = Path.Combine(pkg, "files", RemoteCollection.SearchIndexFolder); Directory.CreateDirectory(dir);
+        var live = Path.Combine(_root, name + "_live.db");
+        using (var c = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={live};Pooling=False"))
+        {
+            c.Open();
+            void X(string sql) { using var cmd = c.CreateCommand(); cmd.CommandText = sql; cmd.ExecuteNonQuery(); }
+            if (withWal) { X("PRAGMA journal_mode=WAL"); X("PRAGMA wal_autocheckpoint=0"); }
+            X("CREATE TABLE SystemIndex_1_PropertyStore_Metadata (Id INTEGER PRIMARY KEY, UniqueKey TEXT NOT NULL UNIQUE, Name TEXT NOT NULL, PropertyId INTEGER NOT NULL, VariantType INTEGER NOT NULL, StorageType INTEGER NOT NULL, MaxSize INTEGER, Flags INTEGER NOT NULL)");
+            X("CREATE TABLE SystemIndex_1_PropertyStore (WorkId INTEGER NOT NULL, ColumnId INTEGER NOT NULL, Value BLOB NOT NULL, PRIMARY KEY (WorkId, ColumnId)) WITHOUT ROWID");
+            X("INSERT INTO SystemIndex_1_PropertyStore_Metadata VALUES(7, 'k7', 'System.ItemPathDisplay', 1, 31, 11, NULL, 0)");
+            for (int i = 1; i <= 3; i++) X($"INSERT INTO SystemIndex_1_PropertyStore VALUES({i}, 7, 'C:\\a\\f{i}.txt')");
+            foreach (var n in withWal ? new[] { "", "-wal" } : [""])
+            {
+                using var src = new FileStream(live + n, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var dst = File.Create(Path.Combine(dir, "Windows.db" + n));
+                src.CopyTo(dst);
+            }
+        }
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        if (withGather)
+        {
+            // a small Windows-gather.db: DocumentID 1 is also a WorkId of Windows.db, DocumentID 4 is not; no journal of its own beside it here
+            var g = Path.Combine(dir, "Windows-gather.db");
+            using (var c = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={g};Pooling=False"))
+            {
+                c.Open();
+                void X(string sql) { using var cmd = c.CreateCommand(); cmd.CommandText = sql; cmd.ExecuteNonQuery(); }
+                X("CREATE TABLE SystemIndex_Gthr (ScopeID INTEGER NOT NULL, FileName TEXT, DocumentID INTEGER NOT NULL, LastModified BLOB, DeletedCount, TransactionFlags, CrawlNumberCrawled, Priority, AppOwnerId, StorageProviderId, UserData)");
+                X("CREATE TABLE SystemIndex_GthrPth (Scope INTEGER, Parent INTEGER, Name TEXT)");
+                X("INSERT INTO SystemIndex_GthrPth VALUES(2, 1, 'file:'), (3, 2, 'C:'), (4, 3, '/'), (5, 4, 'a/')");
+                X("INSERT INTO SystemIndex_Gthr (ScopeID, FileName, DocumentID) VALUES (5, 'f1.txt', 1), (5, 'gone.txt', 4)");
+            }
+            Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        }
+        string Sha(string p) => Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(File.ReadAllBytes(p)));
+        var files = Directory.GetFiles(dir).Select(p => new { path = Path.GetRelativePath(pkg, p).Replace('\\', '/'), size = new FileInfo(p).Length, sha256 = Sha(p) }).ToArray();
+        var manifest = new
+        {
+            format = RemoteCollection.Format, requestId = req.RequestId, requestSha256 = requestSha, host = req.TargetHost, user = @"PC01\admin", elevated = true,
+            collectedUtc = DateTimeOffset.UtcNow.ToString("o"),
+            steps = new[] { new { artifact = "search-index", startUtc = "", endUtc = "", status = stepStatus, error = stepStatus == "ok" ? "" : "disc plin" } },
+            files,
+        };
+        var mp = Path.Combine(pkg, "manifest.json");
+        File.WriteAllText(mp, JsonSerializer.Serialize(manifest));
+        File.WriteAllText(Path.Combine(pkg, "manifest.sha256"), Sha(mp) + "\n");
+        return pkg;
+    }
+
+    [Fact]
+    public void An_index_from_a_package_is_a_vouched_pair_only_when_its_step_ended_ok_and_never_meets_the_journal_of_another_import()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["search-index"]);
+        ParseResult Parse(EvidenceItem i) =>
+            new LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser().Parse(i, ws.FullPath(i.StoredPath), new ListSink(), default);
+
+        // 1. step ok, database + journal: read whole (the rows are only in the journal), no gap
+        var ok = RemoteCollection.Verify(ws, IndexPackage(req, sha, "ok", withWal: true, "pk_ok"));
+        Assert.True(ok.Ok, string.Join("; ", ok.Problems));
+        var first = RemoteCollection.Import(ws, ok);
+        var db1 = first.Single(i => i.SourceType == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName);
+        var wal1 = first.Single(i => i.SourceType == WindowsSearchIndexCollector.WalSourceType);
+        Assert.Equal(ws.FullPath(db1.StoredPath) + "-wal", ws.FullPath(wal1.StoredPath));
+        var r1 = Parse(db1);
+        Assert.Equal(3, r1.Records);
+        Assert.Empty(r1.Gaps);
+
+        // 2. a second package whose step failed after the database was copied (no journal): not vouched for, stored apart from the first
+        //    import's journal, and the missing journal is a written gap
+        var bad = RemoteCollection.Verify(ws, IndexPackage(req, sha, "failed", withWal: false, "pk_failed"));
+        Assert.True(bad.Ok, string.Join("; ", bad.Problems));
+        var db2 = RemoteCollection.Import(ws, bad).Single(i => i.SourceType == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName);
+        Assert.DoesNotContain(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SameSnapshotNote, db2.Notes);
+        Assert.NotEqual(Path.GetDirectoryName(ws.FullPath(db1.StoredPath)), Path.GetDirectoryName(ws.FullPath(db2.StoredPath)));
+        Assert.False(File.Exists(ws.FullPath(db2.StoredPath) + "-wal"));
+        Assert.Contains(Parse(db2).Gaps, g => g.Artifact == "Windows.db-wal");
+    }
+
+    [Fact]
+    public void The_search_index_step_copies_Windows_gather_db_from_the_same_shadow_copy_in_the_same_block_and_the_script_parses()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["search-index"]);
+        var script = RemoteCollection.PackageScript(req, sha);
+        int made = script.IndexOf("Win32_ShadowCopy -MethodName Create", StringComparison.Ordinal);
+        int gdb = script.IndexOf("$root + 'Windows-gather.db'", StringComparison.Ordinal);
+        int gwal = script.IndexOf("$root + 'Windows-gather.db-wal'", StringComparison.Ordinal);
+        int fin = script.IndexOf("Remove-CimInstance", StringComparison.Ordinal);
+        Assert.True(made > 0 && made < gdb && gdb < fin && gwal < fin, "the gather copy must sit between the shadow copy creation and its deletion");
+        // both files or neither: a failed copy removes the database it just wrote; a refused or missing gather is reported as text, never a failed step
+        Assert.Contains("Remove-Item -LiteralPath $gdb, ($gdb + '-wal')", script);
+        Assert.Contains("gather: absent", script);
+        Assert.Contains("ReparsePoint", script);
+        Assert.Contains("2GB", script);
+        // PowerShell 5.1 itself must accept the generated script
+        var file = Path.Combine(_root, "syntax", "collect.ps1");
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        File.WriteAllText(file, script);
+        var check = Path.Combine(_root, "syntax", "check.ps1");
+        File.WriteAllText(check, "param([string]$f) $e = $null; [void][System.Management.Automation.Language.Parser]::ParseFile($f, [ref]$null, [ref]$e); if ($e.Count -gt 0) { $e | ForEach-Object { $_.Message }; exit 1 }");
+        var psi = new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{check}\" \"{file}\"")
+        { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
+        psi.Environment.Remove("PSModulePath");
+        using var pr = Process.Start(psi)!;
+        var outText = pr.StandardOutput.ReadToEnd(); pr.StandardError.ReadToEnd(); pr.WaitForExit();
+        Assert.True(pr.ExitCode == 0, outText);
+    }
+
+    [Fact]
+    public void Gather_database_and_journal_of_a_package_are_typed_only_by_their_exact_path_and_content()
+    {
+        var pkg = Path.Combine(_root, "pkg3");
+        var si = Path.Combine(pkg, "files", RemoteCollection.SearchIndexFolder); Directory.CreateDirectory(si);
+        var db = Path.Combine(si, "Windows-gather.db");
+        using (var c = new Microsoft.Data.Sqlite.SqliteConnection($"Data Source={db};Pooling=False"))
+        {
+            c.Open();
+            using var cmd = c.CreateCommand(); cmd.CommandText = "CREATE TABLE t(x INTEGER)"; cmd.ExecuteNonQuery();
+        }
+        Microsoft.Data.Sqlite.SqliteConnection.ClearAllPools();
+        var rel = "files/" + RemoteCollection.SearchIndexFolder + "/Windows-gather.db";
+        Assert.Equal(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName, RemoteCollection.ImportKind(rel, db));
+        Assert.Equal(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.WalSourceType, RemoteCollection.ImportKind(rel + "-wal", db));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/elsewhere/Windows-gather.db", db));
+        var notSqlite = Path.Combine(si, "x.bin"); File.WriteAllBytes(notSqlite, new byte[64]);
+        Assert.Equal("file", RemoteCollection.ImportKind(rel, notSqlite));
+    }
+
+    private List<TimelineEvent> ParseIndexPair(CaseWorkspace ws, EvidenceItem db, EvidenceItem gdb)
+    {
+        var events = new List<TimelineEvent>();
+        foreach (var (i, parser) in new (EvidenceItem, LogAnalyzer.Dfir.Parsing.IEvidenceParser)[] { (db, new LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser()), (gdb, new LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser()) })
+        {
+            var sink = new ListSink();
+            parser.Parse(i, ws.FullPath(i.StoredPath), sink, default);
+            events.AddRange(sink.Events);
+        }
+        return events;
+    }
+
+    [Fact]
+    public void A_package_with_an_ok_search_step_stores_gather_beside_Windows_db_with_a_common_moment_key_and_the_rule_finds_the_file_only_gather_knows()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["search-index"]);
+        var check = RemoteCollection.Verify(ws, IndexPackage(req, sha, "ok", withWal: true, "pk_g_ok", withGather: true));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var items = RemoteCollection.Import(ws, check);
+        var db = items.Single(i => i.SourceType == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName);
+        var gdb = items.Single(i => i.SourceType == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName);
+        Assert.Equal(Path.GetDirectoryName(ws.FullPath(db.StoredPath)), Path.GetDirectoryName(ws.FullPath(gdb.StoredPath)));
+        Assert.StartsWith("WindowsSearch_", Path.GetFileName(Path.GetDirectoryName(ws.FullPath(gdb.StoredPath))));
+        Assert.Contains(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.GatherSameSnapshotNote, gdb.Notes);
+        Assert.Contains(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SameSnapshotNote, db.Notes);
+        var key = Path.GetFileName(Path.GetDirectoryName(ws.FullPath(gdb.StoredPath)))!["WindowsSearch_".Length..];
+        Assert.EndsWith(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SnapshotKeyPrefix + key, gdb.Notes);
+        Assert.EndsWith(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SnapshotKeyPrefix + key, db.Notes);
+
+        var events = ParseIndexPair(ws, db, gdb);
+        Assert.Contains(events, e => e.Source == "WindowsSearch");
+        Assert.Contains(events, e => e.Source == "WindowsSearchGather");
+        Assert.All(events, e => Assert.Equal(key, e.Fields[LogAnalyzer.Dfir.Analysis.Wp11Rules.SearchMomentField]));
+        var found = LogAnalyzer.Dfir.Analysis.Wp11Rules.Run(events, [], () => "F-1").Where(f => f.RuleId == "WSEARCH-GATHER-ONLY").ToList();
+        var one = Assert.Single(found);
+        Assert.Contains("gone.txt", one.File);
+    }
+
+    [Fact]
+    public void A_package_whose_search_step_did_not_end_ok_gets_no_same_snapshot_note_no_key_and_no_finding()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["search-index"]);
+        var check = RemoteCollection.Verify(ws, IndexPackage(req, sha, "failed", withWal: false, "pk_g_failed", withGather: true));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var items = RemoteCollection.Import(ws, check);
+        var db = items.Single(i => i.SourceType == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName);
+        var gdb = items.Single(i => i.SourceType == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName);
+        Assert.DoesNotContain(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.GatherSameSnapshotNote, gdb.Notes);
+        Assert.DoesNotContain(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SnapshotKeyPrefix, gdb.Notes);
+        Assert.DoesNotContain(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SnapshotKeyPrefix, db.Notes);
+        var events = ParseIndexPair(ws, db, gdb);
+        Assert.NotEmpty(events);
+        Assert.All(events, e => Assert.False(e.Fields.ContainsKey(LogAnalyzer.Dfir.Analysis.Wp11Rules.SearchMomentField)));
+        Assert.DoesNotContain(LogAnalyzer.Dfir.Analysis.Wp11Rules.Run(events, [], () => "F-1"), f => f.RuleId == "WSEARCH-GATHER-ONLY");
+    }
+
+    [Fact]
+    public void A_gather_file_swapped_after_Verify_is_refused_at_import_and_nothing_stays_beside_Windows_db()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["search-index"]);
+        var pkg = IndexPackage(req, sha, "ok", withWal: false, "pk_g_swap", withGather: true);
+        var check = RemoteCollection.Verify(ws, pkg);
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        File.AppendAllText(Path.Combine(pkg, "files", RemoteCollection.SearchIndexFolder, "Windows-gather.db"), "tampered");
+        Assert.Throws<InvalidOperationException>(() => RemoteCollection.Import(ws, check));
+        // the folder of the pair is removed with everything in it
+        var raw = ws.RawDir("remote:PC01");
+        var left = Directory.Exists(raw) ? Directory.GetFiles(raw, "Windows*.db*", SearchOption.AllDirectories) : [];
+        Assert.Empty(left);
+    }
+
+    [Fact]
+    public void The_search_index_step_takes_database_and_journal_from_one_shadow_copy_and_always_deletes_it()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["search-index", "notepad-tabs"]);
+        var script = RemoteCollection.PackageScript(req, sha);
+        // not run here: it would create a shadow copy on the machine that runs the tests; the run is checked in the lab
+        Assert.Contains("Win32_ShadowCopy", script);
+        Assert.Contains("Remove-CimInstance", script);
+        Assert.Contains("finally", script);
+        Assert.DoesNotContain("Stop-Service", script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("esentutl", script, StringComparison.OrdinalIgnoreCase);
+        Assert.Contains("Microsoft.WindowsNotepad_8wekyb3d8bbwe", script);
+    }
+
+    [Fact]
+    public void The_package_collects_the_Defender_history_folder_or_records_why_not()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["defender-history"]);
+        var script = RemoteCollection.PackageScript(req, sha);
+        Assert.Contains(@"Microsoft\Windows Defender\Scans\History\Service\DetectionHistory", script);
+        var check = RemoteCollection.Verify(ws, RunPackage(script));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var step = check.Manifest!.Steps.Single();
+        Assert.Contains(step.Status, new[] { "ok", "absent", "failed" });
+        // the folder is readable by administrators only: without elevation the step fails and says why, it is never silently "ok" and empty
+        if (!check.Manifest.Elevated) Assert.NotEqual("ok", step.Status);
+        if (step.Status != "ok") Assert.False(string.IsNullOrWhiteSpace(step.Error));
+        if (step.Status == "ok")
+        {
+            var items = RemoteCollection.Import(ws, check);
+            Assert.All(items.Where(i => i.StoredPath.Contains(RemoteCollection.DefenderHistoryFolder, StringComparison.OrdinalIgnoreCase) && Guid.TryParse(Path.GetFileName(i.StoredPath), out _)),
+                i => Assert.Equal(LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName, i.SourceType));
+        }
+    }
+
+    // ---- remote-tool-logs ----
+
+    private static string RtCorpus(string rel) => Path.Combine(AppContext.BaseDirectory, "Corpus", "RemoteToolLogs", rel);
+
+    [Fact]
+    public void Remote_tool_logs_are_a_known_artifact_and_the_script_parses_in_PowerShell_5_1()
+    {
+        Assert.Contains("remote-tool-logs", RemoteCollection.KnownArtifacts);
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["remote-tool-logs"]);
+        var script = RemoteCollection.PackageScript(req, sha);
+        Assert.Contains("connection_trace.txt", script);
+        Assert.Contains("ad_svc.trace", script);
+        Assert.Contains("Connections_incoming.txt", script);
+        Assert.Contains("ReparsePoint", script);                       // no link followed, component by component
+        Assert.Contains("16MB", script);
+        Assert.Contains("64MB", script);
+        Assert.Contains("ReadWrite,Delete", script);                   // shared read: the tool may hold its log open
+        Assert.DoesNotContain("Invoke-WebRequest", script, StringComparison.OrdinalIgnoreCase);
+        Assert.DoesNotContain("Stop-Service", script, StringComparison.OrdinalIgnoreCase);
+        var file = Path.Combine(_root, "syntax_rt", "collect.ps1");
+        Directory.CreateDirectory(Path.GetDirectoryName(file)!);
+        File.WriteAllText(file, script);
+        var check = Path.Combine(_root, "syntax_rt", "check.ps1");
+        File.WriteAllText(check, "param([string]$f) $e = $null; [void][System.Management.Automation.Language.Parser]::ParseFile($f, [ref]$null, [ref]$e); if ($e.Count -gt 0) { $e | ForEach-Object { $_.Message }; exit 1 }");
+        var psi = new ProcessStartInfo("powershell.exe", $"-NoProfile -NonInteractive -ExecutionPolicy Bypass -File \"{check}\" \"{file}\"")
+        { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false };
+        psi.Environment.Remove("PSModulePath");
+        using var pr = Process.Start(psi)!;
+        var outText = pr.StandardOutput.ReadToEnd(); pr.StandardError.ReadToEnd(); pr.WaitForExit();
+        Assert.True(pr.ExitCode == 0, outText);
+    }
+
+    [Fact]
+    public void Remote_tool_logs_in_a_package_are_typed_only_in_their_folder_by_exact_name_and_content()
+    {
+        var pkg = Path.Combine(_root, "pkg_rt");
+        var anydesk = Path.Combine(pkg, "files", RemoteCollection.RemoteToolLogsFolder, "Users", "ana", "AnyDesk"); Directory.CreateDirectory(anydesk);
+        var tv = Path.Combine(pkg, "files", RemoteCollection.RemoteToolLogsFolder, "ProgramFiles", "TeamViewer"); Directory.CreateDirectory(tv);
+        var ct = Path.Combine(anydesk, "connection_trace.txt"); File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), ct);
+        var ad = Path.Combine(anydesk, "ad.trace"); File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), ad);
+        var cin = Path.Combine(tv, "Connections_incoming.txt"); File.Copy(RtCorpus(@"teamviewer_TEST\Connections_incoming.txt"), cin);
+        var fakeCt = Path.Combine(anydesk, "other"); Directory.CreateDirectory(fakeCt);
+        var junk = Path.Combine(fakeCt, "connection_trace.txt"); File.WriteAllText(junk, "not a session log\r\n");
+        var renamed = Path.Combine(anydesk, "connection_trace_copy.txt"); File.Copy(ct, renamed);
+        string Rel(string p) => Path.GetRelativePath(pkg, p).Replace('\\', '/');
+        Assert.Equal(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskConnectionTrace, RemoteCollection.ImportKind(Rel(ct), ct));
+        Assert.Equal(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskTrace, RemoteCollection.ImportKind(Rel(ad), ad));
+        Assert.Equal(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.TeamViewerConnections, RemoteCollection.ImportKind(Rel(cin), cin));
+        Assert.Equal("file", RemoteCollection.ImportKind(Rel(junk), junk));                        // right name, wrong content
+        Assert.Equal("file", RemoteCollection.ImportKind(Rel(renamed), renamed));                  // right content, wrong name
+        Assert.Equal("file", RemoteCollection.ImportKind("files/other/connection_trace.txt", ct)); // right file, outside the folder
+        Assert.Equal("file", RemoteCollection.ImportKind("files/" + RemoteCollection.NotepadTabsFolder + "/ana/connection_trace.txt", ct));
+        // a user profile named "Tasks": the session log is still a session log, never task XML (review finding 2026-11-11)
+        Assert.Equal(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskConnectionTrace,
+            RemoteCollection.ImportKind("files/" + RemoteCollection.RemoteToolLogsFolder + "/Users/Tasks/AnyDesk/connection_trace.txt", ct));
+    }
+
+    private string FakeStation(string name)
+    {
+        var fake = Path.Combine(_root, name);
+        Directory.CreateDirectory(Path.Combine(fake, "Users"));
+        Directory.CreateDirectory(Path.Combine(fake, "ProgramData"));
+        Directory.CreateDirectory(Path.Combine(fake, "Program Files"));
+        Directory.CreateDirectory(Path.Combine(fake, "Program Files (x86)"));
+        return fake;
+    }
+
+    private string RunPackageOnFakeStation(string script, string fake)
+    {
+        var dir = Path.Combine(_root, "target_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var file = Path.Combine(dir, "collect.ps1");
+        File.WriteAllText(file, script, new System.Text.UTF8Encoding(true));
+        var psi = PowerShell(file);
+        // the script builds every path from these variables: it reads the synthetic station, never the real one
+        psi.Environment["SystemDrive"] = fake;
+        psi.Environment["ProgramData"] = Path.Combine(fake, "ProgramData");
+        psi.Environment["ProgramFiles"] = Path.Combine(fake, "Program Files");
+        psi.Environment["ProgramW6432"] = Path.Combine(fake, "Program Files");   // Windows PowerShell takes ProgramFiles from here
+        psi.Environment["ProgramFiles(x86)"] = Path.Combine(fake, "Program Files (x86)");
+        using var p = Process.Start(psi)!;
+        var stdout = p.StandardOutput.ReadToEnd();
+        var stderr = p.StandardError.ReadToEnd();
+        p.WaitForExit();
+        Assert.True(p.ExitCode == 0, $"exit {p.ExitCode}: {stderr}");
+        return stdout.Trim().Split('\n').Last().Trim();
+    }
+
+    [Fact]
+    public void The_package_script_collects_session_logs_from_a_synthetic_station_and_the_import_types_them()
+    {
+        var fake = FakeStation("station1");
+        var ana = Path.Combine(fake, "Users", "ana", "AppData", "Roaming");
+        Directory.CreateDirectory(Path.Combine(ana, "AnyDesk")); Directory.CreateDirectory(Path.Combine(ana, "TeamViewer"));
+        File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), Path.Combine(ana, "AnyDesk", "connection_trace.txt"));
+        File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), Path.Combine(ana, "AnyDesk", "ad.trace"));
+        File.Copy(RtCorpus(@"teamviewer_TEST\Connections_incoming.txt"), Path.Combine(ana, "TeamViewer", "Connections.txt"));
+        File.WriteAllBytes(Path.Combine(ana, "AnyDesk", "ad_svc.trace"), []);                               // not looked for in a profile
+        Directory.CreateDirectory(Path.Combine(fake, "ProgramData", "AnyDesk"));
+        File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), Path.Combine(fake, "ProgramData", "AnyDesk", "ad_svc.trace"));
+        File.WriteAllBytes(Path.Combine(fake, "ProgramData", "AnyDesk", "connection_trace.txt"), []);       // empty: skipped
+        Directory.CreateDirectory(Path.Combine(fake, "Program Files", "TeamViewer"));
+        File.Copy(RtCorpus(@"teamviewer_TEST\Connections_incoming.txt"), Path.Combine(fake, "Program Files", "TeamViewer", "Connections_incoming.txt"));
+
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["remote-tool-logs"]);
+        var pkg = RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha), fake);
+        var check = RemoteCollection.Verify(ws, pkg);
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var step = check.Manifest!.Steps.Single();
+        Assert.Equal("ok", step.Status);
+        var files = check.Manifest.Files.Select(f => f.Path).OrderBy(x => x).ToList();
+        Assert.Equal(
+        [
+            "files/RemoteToolLogs/ProgramData/AnyDesk/ad_svc.trace",
+            "files/RemoteToolLogs/ProgramFiles/TeamViewer/Connections_incoming.txt",
+            "files/RemoteToolLogs/Users/ana/AnyDesk/ad.trace",
+            "files/RemoteToolLogs/Users/ana/AnyDesk/connection_trace.txt",
+            "files/RemoteToolLogs/Users/ana/TeamViewer/Connections.txt",
+        ], files);
+
+        var items = RemoteCollection.Import(ws, check).Where(i => i.SourceType != "remote-manifest").ToList();
+        Assert.Equal(5, items.Count);
+        Assert.Equal(2, items.Count(i => i.SourceType == LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskTrace));
+        Assert.Single(items, i => i.SourceType == LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskConnectionTrace);
+        Assert.Equal(2, items.Count(i => i.SourceType == LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.TeamViewerConnections));
+        // the session logs carry the TARGET's zone from the manifest (here the fake station is this machine), not the case machine's by assumption
+        Assert.Equal(TimeZoneInfo.Local.Id, check.Manifest.Timezone);
+        Assert.All(items, i => Assert.Equal(check.Manifest.Timezone, i.Timezone));
+    }
+
+    [Fact]
+    public void A_manifest_without_a_zone_leaves_session_log_times_unconverted()
+    {
+        // an older package (no "timezone") deserialises with Timezone null; the import then gives a session log no zone, never the analyst's
+        var m = System.Text.Json.JsonSerializer.Deserialize<RemoteManifest>("{\"format\":\"x\",\"requestId\":\"r\",\"requestSha256\":\"s\",\"host\":\"h\",\"user\":\"u\",\"elevated\":false,\"collectedUtc\":\"c\",\"steps\":[],\"files\":[]}");
+        Assert.NotNull(m);
+        Assert.Null(m!.Timezone);
+        var ws = NewCase();
+        var item = ws.ImportFile(RtCorpus(@"anydesk_TEST\connection_trace.txt"), "remote:h", LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskConnectionTrace, TemporalType.Historical, "test", "1", timezone: "");
+        Assert.Equal("", item.Timezone);
+        Assert.Null(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogText.ZoneOf(item).Info);
+        // a zone id from the target longer than any Windows id is not looked up
+        var odd = ws.ImportFile(RtCorpus(@"anydesk_TEST\connection_trace.txt"), "remote:h", LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskConnectionTrace, TemporalType.Historical, "test", "1", timezone: new string('x', 65));
+        Assert.Null(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogText.ZoneOf(odd).Info);
+    }
+
+    [Fact]
+    public void The_package_script_does_not_follow_a_link_on_the_path_and_says_so()
+    {
+        var fake = FakeStation("station2");
+        var elsewhere = Path.Combine(_root, "elsewhere");
+        Directory.CreateDirectory(elsewhere);
+        File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), Path.Combine(elsewhere, "connection_trace.txt"));
+        var roaming = Path.Combine(fake, "Users", "bob", "AppData", "Roaming");
+        Directory.CreateDirectory(roaming);
+        var psi = new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{Path.Combine(roaming, "AnyDesk")}\" \"{elsewhere}\"") { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+        using (var mk = Process.Start(psi)!) { mk.WaitForExit(10000); if (mk.ExitCode != 0) return; }   // junctions not available here
+
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["remote-tool-logs"]);
+        var pkg = RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha), fake);
+        var check = RemoteCollection.Verify(ws, pkg);
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var step = check.Manifest!.Steps.Single();
+        Assert.NotEqual("ok", step.Status);
+        Assert.Contains("legaturi neurmate: 1", step.Error);
+        Assert.Empty(check.Manifest.Files);                                                         // the file behind the junction was not taken
+        Directory.Delete(Path.Combine(roaming, "AnyDesk"));
+    }
+
+    [Fact]
     public void Tampered_missing_extra_unauthorized_or_foreign_packages_are_refused()
     {
         var ws = NewCase();
@@ -147,7 +622,7 @@ public sealed class RemoteCollectionTests : IDisposable
         var script = RemoteCollection.PackageScript(req, sha);
         Assert.DoesNotContain("Get-FileHash", script, StringComparison.OrdinalIgnoreCase); // hashing must not depend on a module
         foreach (var forbidden in new[] { "Invoke-WebRequest", "Invoke-RestMethod", "Invoke-Command", "New-PSSession", "Enter-PSSession", "Start-BitsTransfer",
-                                          "Net.WebClient", "Net.Sockets", "HttpClient", "curl", "wget", "ftp", "Send-MailMessage", "\\\\\\\\", "Copy-Item -ToSession",
+                                          "Net.WebClient", "Net.Sockets", "-ComputerName", "-CimSession", "New-CimSession", "HttpClient", "curl", "wget", "ftp", "Send-MailMessage", "\\\\\\\\", "Copy-Item -ToSession",
                                           "HKLM\\SAM", "HKLM\\SECURITY", "Cookies", "Login Data" })
             Assert.DoesNotContain(forbidden, script, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(RemoteCollection.KnownArtifacts, a => a.Contains("SAM") || a.Contains("SECURITY"));

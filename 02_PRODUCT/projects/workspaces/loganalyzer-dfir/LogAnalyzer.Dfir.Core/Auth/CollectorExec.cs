@@ -190,6 +190,8 @@ public static class CollectorExec
         var sys = Environment.SystemDirectory;
         string[] extra;
         lock (Extra) extra = [.. Extra];
+        // master plan 6.6: the administrator-approved Volatility, so its runs are still recognised after the application restarted
+        if (Memory.VolatilityToolProfile.ApprovedExecutable() is { } vol && !extra.Contains(vol, StringComparer.OrdinalIgnoreCase)) extra = [.. extra, vol];
         return
         [
             .. new[] { "reg.exe", "esentutl.exe", "bcdedit.exe", "auditpol.exe" }.Select(n => Path.Combine(sys, n)),
@@ -204,6 +206,12 @@ public static class CollectorExec
     /// Adds a program to the inventory: called only by the edition code that starts it (LogAnalyzer.Response, registered by the Unclassified and Network
     /// compositions: the firewall tool). The Standalone edition has no such code and adds nothing.
     /// </summary>
+    /// <summary>
+    /// Master plan 6.6: an external tool the administrator approved (pinned hash, protected folder) and the application is about to start is the application's own
+    /// execution, like reg.exe. Called only after those checks pass (VolatilityRunner.CheckTool).
+    /// </summary>
+    public static void AddApprovedTool(string fullPath) => AddToInventory(fullPath);
+
     internal static void AddToInventory(string fullPath)
     {
         if (!Path.IsPathFullyQualified(fullPath)) throw new ArgumentException("The inventory takes full paths only.", nameof(fullPath));

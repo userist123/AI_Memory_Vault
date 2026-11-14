@@ -135,6 +135,25 @@ public sealed class HashChain(string path)
     }
 
     /// <summary>Whether an entry with this <paramref name="seq"/> and <paramref name="hash"/> is on the chain (a copy of the head held outside the case).</summary>
+    /// <summary>
+    /// Reads a whole chained log that a writer may hold exclusively (<see cref="Append"/> opens it with FileShare.None) — retried with a growing pause,
+    /// about 15 s in all (CI 2026-11-08: a busy writer kept a 2-second reader out on a slow runner). A file that disappears is not waited for.
+    /// </summary>
+    public static byte[] ReadAllShared(string path)
+    {
+        for (int attempt = 0; ; attempt++)
+        {
+            try
+            {
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var ms = new MemoryStream();
+                fs.CopyTo(ms);
+                return ms.ToArray();
+            }
+            catch (IOException) when (attempt < 400 && File.Exists(path)) { Thread.Sleep(Math.Min(5 + attempt, 50)); }
+        }
+    }
+
     public bool Contains(long seq, string hash) => File.Exists(Path) && ContainsIn(File.ReadLines(Path), seq, hash);
 
     private static bool ContainsIn(IEnumerable<string> lines, long seq, string hash)
@@ -144,7 +163,7 @@ public sealed class HashChain(string path)
             if (string.IsNullOrWhiteSpace(line)) continue;
             try
             {
-                var o = JsonNode.Parse(line)!.AsObject();
+                var o = (JsonNode.Parse(line) as JsonObject ?? throw new JsonException("linia nu este un obiect JSON"));
                 if (o["seq"] is { } s && s.GetValue<long>() == seq) return o["hash"] is { } h && string.Equals(h.GetValue<string>(), hash, StringComparison.Ordinal);
             }
             catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
@@ -157,7 +176,7 @@ public sealed class HashChain(string path)
         for (int attempt = 0; ; attempt++)
         {
             try { return new FileStream(Path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
-            catch (IOException) when (attempt < 100) { Thread.Sleep(20); }   // another writer holds the file; wait up to ~2 s
+            catch (IOException) when (attempt < 400) { Thread.Sleep(Math.Min(5 + attempt, 50)); }   // another writer holds the file; wait up to ~15 s (CI 2026-11-08: 2 s was not enough on a busy runner)
         }
     }
 
@@ -168,7 +187,7 @@ public sealed class HashChain(string path)
         if (last is null) return (0, Genesis);
         try
         {
-            var o = JsonNode.Parse(last)!.AsObject();
+            var o = (JsonNode.Parse(last) as JsonObject ?? throw new JsonException("linia nu este un obiect JSON"));
             if (o["seq"] is { } s && o["hash"] is { } h) return (s.GetValue<long>(), h.GetValue<string>());
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
@@ -206,14 +225,14 @@ public sealed class HashChain(string path)
     /// </summary>
     public ChainVerification Verify(byte[] content)
     {
-        var lines = Encoding.UTF8.GetString(content).Split('\n').Select(l => l.TrimEnd('\r')).ToList();
+        var lines = Lines(content);
         (long, string) HeadOf()
         {
             var last = lines.LastOrDefault(l => !string.IsNullOrWhiteSpace(l));
             if (last is null) return (0, Genesis);
             try
             {
-                var o = JsonNode.Parse(last)!.AsObject();
+                var o = (JsonNode.Parse(last) as JsonObject ?? throw new JsonException("linia nu este un obiect JSON"));
                 if (o["seq"] is { } s && o["hash"] is { } h) return (s.GetValue<long>(), h.GetValue<string>());
             }
             catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
@@ -222,6 +241,13 @@ public sealed class HashChain(string path)
         return Verify(VerifyPlain(lines, content.Length > 0), HeadOf, (seq, hash) => ContainsIn(lines, seq, hash));
     }
 
+    /// <summary>The lines of a log held in memory, split as <see cref="Verify(byte[])"/> splits them: exactly as File.ReadLines splits the file on disk (the integrity re-check): a leading UTF-8 BOM is dropped and a line ends at \r\n, \r or \n.</summary>
+    public static List<string> Lines(byte[] content)
+    {
+        var text = Encoding.UTF8.GetString(content);
+        if (text.Length > 0 && text[0] == '\uFEFF') text = text[1..];
+        return System.Text.RegularExpressions.Regex.Split(text, "\r\n|\r|\n").ToList();
+    }
     private ChainVerification Verify(ChainVerification plain, Func<(long Seq, string Head)> headOf, Func<long, string, bool> contains)
     {
         if (!IsSealed(out var key) || plain.Status == ChainStatus.Broken) return plain;
@@ -256,7 +282,7 @@ public sealed class HashChain(string path)
             lineNo++;
             if (string.IsNullOrWhiteSpace(line)) continue;
             JsonObject o;
-            try { o = JsonNode.Parse(line)!.AsObject(); }
+            try { o = (JsonNode.Parse(line) as JsonObject ?? throw new JsonException("linia nu este un obiect JSON")); }
             catch (Exception ex) when (ex is JsonException or InvalidOperationException)
             { return Broken(name, chained, legacy, expectSeq, $"linia {lineNo} nu este JSON valid"); }
             bool hasChain = o.ContainsKey("seq") || o.ContainsKey("hash") || o.ContainsKey("prevHash");

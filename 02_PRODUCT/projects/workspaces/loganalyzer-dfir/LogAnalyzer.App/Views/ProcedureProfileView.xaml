@@ -11,22 +11,23 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="Profil de proceduri" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-            <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
+            <TextBlock Style="{StaticResource PageTitleStyle}" Text="Profil de proceduri"/>
+            <TextBlock
                        Text="Procedurile după care se judecă stația. O secțiune goală este „nedefinit”, niciodată „conform”.">
-                <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource PageLeadStyle}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
             </TextBlock>
-            <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
+            <TextBlock
                        Text="Program de lucru, mentenanța jurnalelor, software aprobat, politica de grup așteptată (GPO), zone și transferuri. Se introduc manual, se lipesc din tabel sau se importă (JSON / CSV). Analiza le compară cu ce s-a observat; nimic nu se aplică pe Windows. O secțiune goală este „nedefinit”, niciodată „conform”.">
-                <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource PageLeadStyle}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
             </TextBlock>
             <TextBlock Text="{Binding AccessNotice}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
+            <Border Style="{StaticResource PageRuleStyle}"/>
             <StackPanel Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ctrl:EmptyStateCard What="{x:Static vmx:EmptyStates.ProfileWhat}" Why="{x:Static vmx:EmptyStates.ProfileWhy}" Step="{x:Static vmx:EmptyStates.ProfileStep}"/>
-                <Button Content="Importă JSON…" views:SimpleLevel.HideInSimple="True" Command="{Binding ImportJsonCommand}" Style="{StaticResource AccentButtonStyle}" HorizontalAlignment="Left" Margin="0,0,0,4" IsEnabled="{Binding CanEdit}"/>
             </StackPanel>
         </StackPanel>
 
@@ -44,6 +45,12 @@
                     <Button Content="Lipește în tabel" views:SimpleLevel.HideInSimple="True" Command="{Binding PasteCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,10,0"/>
                     <CheckBox Content="înlocuiește conținutul tabelului la import/lipire" views:SimpleLevel.HideInSimple="True" IsChecked="{Binding ReplaceOnImport}" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
                 </WrapPanel>
+                <WrapPanel Margin="0,8,0,0">
+                    <TextBlock Text="Nivelul stației:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
+                    <ComboBox AutomationProperties.Name="Nivelul stației" ItemsSource="{x:Static vmx:ProcedureProfileViewModel.StationLevelChoices}" DisplayMemberPath="Display" SelectedValuePath="Name"
+                              SelectedValue="{Binding StationLevel, Mode=TwoWay}" IsEnabled="{Binding CanEdit}" MinWidth="320"/>
+                </WrapPanel>
+                <TextBlock Text="{x:Static vmx:ProcedureProfileViewModel.StationLevelHelp}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,4,0,0"/>
                 <CheckBox Margin="0,8,0,0" Content="Mai multe secțiuni (sărbători legale, schimburi, rotirea jurnalelor, canale și destinații de transfer)" IsChecked="{Binding ShowMoreSections}"
                           Foreground="{StaticResource TextPrimaryBrush}" views:SimpleLevel.OnlyInSimple="True" AutomationProperties.Name="Mai multe secțiuni: arată și tabelele rar folosite"/>
                 <TextBlock Text="{Binding Status}" Foreground="{StaticResource TextPrimaryBrush}" FontWeight="SemiBold" Margin="0,8,0,0" TextWrapping="Wrap"/>
@@ -81,7 +88,7 @@
                             <TextBox AutomationProperties.Name="Eticheta semnăturii din stânga" Text="{Binding HeaderSignatureLeft, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanEdit}" Width="220" Margin="0,0,12,4"/>
                             <TextBlock Text="Semnătura din dreapta:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,0,6,0"/>
                             <TextBox AutomationProperties.Name="Eticheta semnăturii din dreapta" Text="{Binding HeaderSignatureRight, UpdateSourceTrigger=PropertyChanged}" IsEnabled="{Binding CanEdit}" Width="220" Margin="0,0,12,4"/>
-                            <Button Content="Salvează antetul" Command="{Binding SaveHeaderCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,4"/>
+                            <Button Content="Salvează antetul" Command="{Binding SaveHeaderCommand}" IsEnabled="{Binding CanEdit}" Margin="0,0,6,4"/>
                             <Button Content="Reîncarcă antetul" Command="{Binding ReloadHeaderCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,4"/>
                         </WrapPanel>
                         <TextBlock Text="{Binding HeaderStatus}" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
@@ -140,5 +147,22 @@
                 </DockPanel>
             </Border>
         </Grid>
+        <Border Grid.Row="4" Style="{StaticResource ObsidianCardStyle}" Margin="0,8,0,0" DataContext="{Binding HashSets}">
+            <DockPanel>
+                <TextBlock DockPanel.Dock="Top" Text="Seturi de amprente cunoscute" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <TextBlock DockPanel.Dock="Top" Text="„Cunoscut-rău” produce o constatare gravă la investigație; „cunoscut-bun” doar etichetează proba (nu o declară curată). Importul se face din fișiere, fără rețea." TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,2,0,6"/>
+                <StackPanel DockPanel.Dock="Top" Orientation="Horizontal" Margin="0,0,0,6">
+                    <ComboBox AutomationProperties.Name="Categoria setului de importat" ItemsSource="{x:Static vmx:HashSetsViewModel.Categories}" SelectedItem="{Binding SelectedCategory, Mode=TwoWay}" MinWidth="140" Margin="0,0,8,0"/>
+                    <Button Content="Importă set…" Command="{Binding ImportCommand}" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="Importă set de amprente" Margin="0,0,8,0"/>
+                    <Button Content="Elimină setul" Command="{Binding RemoveCommand}" IsEnabled="{Binding CanEdit}" AutomationProperties.Name="Elimină setul de amprente ales"/>
+                </StackPanel>
+                <TextBlock DockPanel.Dock="Top" Text="{x:Static vmx:HashSetsViewModel.CoverageNote}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,6" AutomationProperties.Name="Acoperirea seturilor de amprente"/>
+                <ListBox DockPanel.Dock="Bottom" AutomationProperties.Name="Seturi de amprente nefolosite și probleme" ItemsSource="{Binding Problems}" MaxHeight="90" Background="Transparent" BorderThickness="0" Foreground="{StaticResource TextPrimaryBrush}">
+                    <ListBox.ItemTemplate><DataTemplate><TextBlock Text="{Binding}" TextWrapping="Wrap"/></DataTemplate></ListBox.ItemTemplate>
+                </ListBox>
+                <TextBlock DockPanel.Dock="Bottom" Text="{Binding Status}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,0"/>
+                <ListBox AutomationProperties.Name="Seturi de amprente" ItemsSource="{Binding Sets}" SelectedItem="{Binding SelectedSet, Mode=TwoWay}" DisplayMemberPath="Display" MaxHeight="110" Background="Transparent" BorderThickness="0"/>
+            </DockPanel>
+        </Border>
     </Grid>
 </UserControl>

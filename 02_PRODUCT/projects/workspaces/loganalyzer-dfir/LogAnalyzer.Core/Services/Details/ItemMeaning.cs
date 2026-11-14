@@ -133,11 +133,11 @@ namespace LogAnalyzer.Core.Services.Details
         /// <summary>Severity words (English or Romanian, as the engines write them) in plain Romanian.</summary>
         public static string Severity(string s) => s.Trim().ToLowerInvariant() switch
         {
-            "critical" or "critic" or "critică" => "CRITIC — se tratează imediat",
-            "high" or "ridicat" or "ridicată" or "mare" => "RIDICAT — se verifică în aceeași zi",
-            "medium" or "moderate" or "mediu" or "medie" or "moderat" => "MEDIU — se verifică",
-            "low" or "scăzut" or "scăzută" or "redus" => "SCĂZUT — de obicei nu este o problemă",
-            "info" or "informational" or "informativ" => "INFORMATIV — nu indică o problemă, doar descrie",
+            "critical" or "critic" or "critică" => "Critic — se tratează imediat",
+            "high" or "ridicat" or "ridicată" or "mare" => "Ridicat — se verifică în aceeași zi",
+            "medium" or "moderate" or "mediu" or "medie" or "moderat" => "Mediu — se verifică",
+            "low" or "scăzut" or "scăzută" or "redus" => "Scăzut — de obicei nu este o problemă",
+            "info" or "informational" or "informativ" => "Informativ — nu indică o problemă, doar descrie",
             _ => s,
         };
 
@@ -172,7 +172,7 @@ namespace LogAnalyzer.Core.Services.Details
             ["T1053"] = "pornirea automată a unui program prin activitate planificată",
             ["T1053.002"] = "pornirea unui program la o oră fixă prin comanda „at”",
             ["T1053.005"] = "pornirea automată a unui program prin Task Scheduler",
-            ["T1055"] = "ascunderea codului în alt proces care rulează",
+            ["T1055"] = "ascunderea codului în alt proces care rulează", ["T1046"] = "căutarea serviciilor deschise în rețea (scanare de porturi sau de stații)", ["T1014"] = "ascunderea unui program față de sistem (rootkit): procesul nu mai apare în lista obișnuită",
             ["T1055.001"] = "injectarea unei biblioteci (DLL) în alt proces",
             ["T1055.002"] = "injectarea unui program portabil în alt proces",
             ["T1055.003"] = "deturnarea unui fir de execuție al altui proces",
@@ -273,6 +273,7 @@ namespace LogAnalyzer.Core.Services.Details
             ["T1558.003"] = "cererea de bilete Kerberos pentru a sparge offline parolele conturilor de serviciu (Kerberoasting)",
             ["T1558.004"] = "obținerea datelor de spart pentru conturi fără pre-autentificare (AS-REP roasting)",
             ["T1560"] = "arhivarea datelor înainte de a fi scoase",
+            ["T1649"] = "obținerea sau falsificarea certificatelor de autentificare (de exemplu un certificat emis pe numele altui cont)",
             ["T1562"] = "slăbirea apărării",
             ["T1562.001"] = "dezactivarea sau modificarea antivirusului ori a altor protecții",
             ["T1562.002"] = "dezactivarea jurnalelor de evenimente Windows",

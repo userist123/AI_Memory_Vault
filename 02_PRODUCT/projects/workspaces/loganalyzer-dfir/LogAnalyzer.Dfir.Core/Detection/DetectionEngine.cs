@@ -1,3 +1,4 @@
+using LogAnalyzer.Dfir.HashSets;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Detection;
@@ -14,14 +15,20 @@ public sealed class DetectionEngine
     private readonly List<IocMatcher> _iocs = [];
     private readonly List<YaraLite> _yara = [];
     private readonly List<SigmaLite> _sigma = [];
+    private readonly List<SigmaCorrelation> _correlations = [];
+    /// <summary>Fingerprint sets imported by the operator (HashSetLibrary). Known-bad matches become hash detections in <see cref="Run"/>; known-good ones are labels, kept out of the detections.</summary>
+    public IReadOnlyList<KnownHashSet> KnownHashSets { get; set; } = [];
     public List<EvidenceGap> LoadErrors { get; } = [];
     /// <summary>Rule evaluations that hit a regex match timeout in <see cref="Run"/>. Each is also in <see cref="LoadErrors"/> as a FAILED gap.</summary>
     public List<RuleTimeout> Timeouts { get; } = [];
 
     public IReadOnlyList<DetectionRule> Rules =>
         _iocs.Select(i => i.RuleSet)
+            .Concat(KnownHashSets.Where(h => h.Info.Category == HashSetCategory.KnownBad).Select(h => new DetectionRule($"HASHSET:{h.Info.Id}", h.Info.Version, DetectionKind.Hash,
+                $"Set de amprente {h.Info.Name} ({h.Info.EntryCount} intrări)", h.Info.SourceSha256, h.Info.SourceFileName)))
             .Concat(_yara.SelectMany(y => y.Rules.Select(r => r.Identity)))
-            .Concat(_sigma.SelectMany(s => s.Rules.Select(r => r.Identity))).ToList();
+            .Concat(_sigma.SelectMany(s => s.Rules.Select(r => r.Identity)))
+            .Concat(_correlations.Select(c => c.Identity)).ToList();
 
     public static DetectionEngine Load(params string[] ruleRoots) => Load(null, ruleRoots);
 
@@ -36,7 +43,17 @@ public sealed class DetectionEngine
             foreach (var f in Files(root, "yara", "*.yar")) e.Try(f, () => e._yara.Add(YaraLite.Parse(File.ReadAllText(f), f, matchTimeout)));
             foreach (var f in Files(root, "sigma", "*.yml")) e.Try(f, () => e._sigma.Add(SigmaLite.Load(matchTimeout ?? SigmaLite.DefaultMatchTimeout, (Path.GetFileName(f), File.ReadAllText(f)))));
         }
+        e.ResolveCorrelations();
         return e;
+    }
+
+    /// <summary>Correlation documents refer to base rules of any loaded file, so they are resolved once every file is loaded. A document that does not resolve is a load error (gap), never skipped.</summary>
+    private void ResolveCorrelations()
+    {
+        var baseRules = _sigma.SelectMany(s => s.Rules).ToList();
+        var pending = _sigma.SelectMany(s => s.Correlations).ToList();
+        var corrRefs = pending.SelectMany(p => new[] { p.Id, p.Name }).Where(x => x.Length > 0).ToList();
+        foreach (var p in pending) Try(p.File, () => _correlations.Add(SigmaCorrelation.Parse(p.File, p.Yaml, baseRules, corrRefs)));
     }
 
     private static IEnumerable<string> Files(string root, string sub, string pattern) =>
@@ -45,7 +62,7 @@ public sealed class DetectionEngine
     private void Try(string file, Action load)
     {
         try { load(); }
-        catch (Exception ex) when (ex is FormatException or InvalidDataException or IOException or YamlDotNet.Core.YamlException)
+        catch (Exception ex) when (ex is FormatException or InvalidDataException or IOException or YamlDotNet.Core.YamlException or OverflowException or ArgumentException)
         {
             LoadErrors.Add(new EvidenceGap($"Regulă {Path.GetFileName(file)}", EvidenceStatus.Failed, $"{ex.GetType().Name}: {ex.Message}",
                 "Regula nu a fost aplicată", "Corectați fișierul regulii", "Da"));
@@ -57,12 +74,30 @@ public sealed class DetectionEngine
     {
         var results = new List<DetectionResult>();
         var timedOut = new List<RuleTimeout>();
-        foreach (var s in _sigma) results.AddRange(s.Detect(timeline, timedOut));
+        var baseMatches = new List<(DetectionRule Rule, TimelineEvent Event)>();
+        foreach (var s in _sigma)
+            foreach (var m in s.Match(timeline, timedOut))
+            {
+                results.Add(SigmaLite.ToResult(m.Rule, m.Event));      // base rules always report their own matches (generate has no effect)
+                if (_correlations.Count > 0) baseMatches.Add((m.Rule.Identity, m.Event));
+            }
+        foreach (var c in _correlations)
+        {
+            var cr = c.Evaluate(baseMatches);
+            results.AddRange(cr.Hits.Select(SigmaCorrelation.ToResult));
+            foreach (var gap in cr.Gaps)
+                LoadErrors.Add(new EvidenceGap($"Corelare {c.Title}", EvidenceStatus.Partial, gap, "Corelarea s-a calculat fără aceste evenimente: lipsa unei corelări nu înseamnă că activitatea nu a existat",
+                    "Completați ora sau câmpul în sursă ori reanalizați cu parserul potrivit", "Parțial"));
+            foreach (var t in timedOut.Where(t => c.Referenced.Any(r => r.RuleId == t.RuleId)))
+                LoadErrors.Add(new EvidenceGap($"Corelare {c.Title}", EvidenceStatus.Partial, $"regula referită {t.RuleId} a depășit timpul la evaluare; corelarea poate fi incompletă",
+                    "Corelarea nu a văzut toate potrivirile regulii", "Simplificați expresia regulată a regulii", "Da"));
+        }
         foreach (var i in _iocs)
         {
             results.AddRange(i.MatchEvents(timeline));
             results.AddRange(i.MatchEvidence(evidence));
         }
+        if (KnownHashSets.Count > 0) results.AddRange(HashSetMatcher.ToDetections(HashSetMatcher.Match(KnownHashSets, evidence, timeline)));
         if (_yara.Count > 0)
             foreach (var e in evidence.Where(e => e.SourceType == "file"))
             {

@@ -577,4 +577,91 @@ public sealed class UserActivityParserTests : IDisposable
         Assert.Contains(user.Limitations, l => l.Contains("RecentDocs") && l.Contains("[T]"));
         Assert.Contains("doar sintetic", user.Validation);
     }
+
+    // ---- MUICache ----
+
+    private const string MuiRoot = @"Local Settings\Software\Microsoft\Windows\Shell\MuiCache";
+
+    private static RegfBuilder.Key MuiKey(RegfBuilder.Key root) => Chain(root, MuiRoot, T3);
+
+    [Fact]
+    public void MuiCache_gives_one_undated_presence_event_per_program()
+    {
+        var root = new RegfBuilder.Key("ROOT", T0);
+        var mui = MuiKey(root);
+        mui.Value("LangID", RegfBuilder.Dword, 1033);
+        mui.Value(@"C:\Program Files\LogAnalyzer Lab continent\LogAnalyzer.Internet.exe.FriendlyAppName", RegfBuilder.String, "LogAnalyzer.Internet");
+        mui.Value(@"C:\Program Files\LogAnalyzer Lab continent\LogAnalyzer.Internet.exe.ApplicationCompany", RegfBuilder.String, "LogAnalyzer Lab");
+        mui.Value(@"C:\Windows\System32\appresolver.dll.FriendlyAppName", RegfBuilder.String, "App Resolver");
+        var (r, s) = RunUsrClass(Save(root, "UsrClass.dat"));
+
+        var mc = s.Events.Where(e => e.Source == "MUICache").ToList();
+        Assert.Equal(2, mc.Count);
+        var a = Assert.Single(mc, e => e.Path.EndsWith("LogAnalyzer.Internet.exe"));
+        Assert.Equal("LogAnalyzer.Internet", a.Fields["FriendlyAppName"]);
+        Assert.Equal("LogAnalyzer Lab", a.Fields["ApplicationCompany"]);
+        Assert.Equal("LogAnalyzer.Internet.exe", a.Process);
+        Assert.False(a.Time.IsKnown);                                       // no time per program
+        Assert.Equal(T3.ToString("o", System.Globalization.CultureInfo.InvariantCulture), a.Fields["ListLastModified"]);
+        Assert.Contains("prezență, nu execuție datată", a.Summary);
+        Assert.Contains("prezență, nu execuție datată", a.Fields["Limitation"]);
+        Assert.Equal("", Assert.Single(mc, e => e.Path.EndsWith("appresolver.dll")).Fields["ApplicationCompany"]);
+        Assert.Equal(2, r.Records);
+        Assert.DoesNotContain(r.Gaps, g => g.Artifact == "MUICache");
+        // BagMRU is absent: its gap is still reported (MUICache records must not hide it)
+        Assert.Contains(r.Gaps, g => g.Artifact == "ShellBags" && g.Reason.Contains("BagMRU"));
+    }
+
+    [Fact]
+    public void MuiCache_ignores_unknown_names_non_string_data_and_long_names_without_throwing()
+    {
+        var root = new RegfBuilder.Key("ROOT", T0);
+        var mui = MuiKey(root);
+        mui.Value("some other value", RegfBuilder.String, "x");
+        mui.Value(".FriendlyAppName", RegfBuilder.String, "no path");                              // suffix only
+        mui.Value(@"C:\a\binary.exe.FriendlyAppName", RegfBuilder.Binary, new byte[] { 1, 2, 3 });  // not a string
+        mui.Value(@"C:\a\dword.exe.ApplicationCompany", RegfBuilder.Dword, 7);
+        mui.Value("C:\\" + new string('a', 1100) + ".exe.FriendlyAppName", RegfBuilder.String, "too long");
+        mui.Value(@"C:\ok\ok.exe.FriendlyAppName", RegfBuilder.String, "Ok");
+        var (r, s) = RunUsrClass(Save(root, "UsrClass.dat"));
+
+        var e = Assert.Single(s.Events, x => x.Source == "MUICache");
+        Assert.Equal(@"C:\ok\ok.exe", e.Path);
+        var gap = Assert.Single(r.Gaps, g => g.Artifact == "MUICache");
+        Assert.Contains("1 valori cu nume peste 1024", gap.Reason);
+        Assert.Contains("2 cu date ne-string", gap.Reason);
+    }
+
+    [Fact]
+    public void MuiCache_sanitises_RLO_and_line_breaks_in_the_summary()
+    {
+        var root = new RegfBuilder.Key("ROOT", T0);
+        var mui = MuiKey(root);
+        mui.Value("C:\\x\u202Egpj.exe\r\nnext.exe.FriendlyAppName", RegfBuilder.String, "Nume\r\n\u202Eevil\u0007");
+        var (_, s) = RunUsrClass(Save(root, "UsrClass.dat"));
+        var e = Assert.Single(s.Events, x => x.Source == "MUICache");
+        foreach (var f in new[] { e.Summary, e.Path, e.Process })
+        {
+            Assert.DoesNotContain('\u202E', f);
+            Assert.DoesNotContain('\r', f); Assert.DoesNotContain('\n', f); Assert.DoesNotContain('\u0007', f);
+        }
+    }
+
+    [Fact]
+    public void MuiCache_reads_at_most_the_value_cap_and_reports_the_rest()
+    {
+        var root = new RegfBuilder.Key("ROOT", T0);
+        var mui = MuiKey(root);
+        int n = UserActivity.MaxMuiValues + 50;
+        for (int i = 0; i < n; i++) mui.Value($@"C:\p\a{i}.exe.FriendlyAppName", RegfBuilder.String, "n");
+        var (r, s) = RunUsrClass(Save(root, "UsrClass.dat"));
+        Assert.Equal(UserActivity.MaxMuiValues, s.Events.Count(e => e.Source == "MUICache"));
+        Assert.Contains(r.Gaps, g => g.Artifact == "MUICache" && g.Reason.Contains("peste 20"));
+    }
+
+    [Fact]
+    public void MuiCache_is_presence_for_the_remote_tool_rule_and_the_overclaim_guard()
+    {
+        Assert.Equal(SemanticType.Presence, LogAnalyzer.Dfir.Analysis.AntiOverclaim.SemanticForArtifact("MUICache"));
+    }
 }

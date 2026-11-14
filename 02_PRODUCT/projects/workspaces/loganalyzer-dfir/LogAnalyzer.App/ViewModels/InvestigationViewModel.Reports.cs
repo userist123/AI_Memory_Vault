@@ -89,13 +89,16 @@ namespace LogAnalyzer.UI.ViewModels
         private void ExportMaskedPdf()
         {
             if (_result is null) { ReportStatus = "Rulați întâi o investigație sau deschideți un caz."; return; }
+            if (_result.Case.IsReadOnly && RedactionReversible) { ReportStatus = "Cazul este doar pentru citire: tabela unei pseudonimizări reversibile nu se poate păstra în el. Alegeți mascarea ireversibilă."; return; }
             var dlg = new SaveFileDialog { FileName = $"Raport_{_result.Case.Info.CaseId}_mascat.pdf", Filter = "PDF (*.pdf)|*.pdf", Title = "Raport cu date personale mascate (pentru partajare)" };
             if (dlg.ShowDialog() != true) return;
-            var masker = PiiMasker.FromTimeline(_result.Timeline, _result.Case.Info.Host, _result.Case.Info.User);
+            var policy = CurrentRedactionPolicy();
+            var masker = policy.Apply(PiiMasker.FromTimeline(_result.Timeline, _result.Case.Info.Host, _result.Case.Info.User));
             var audience = (LogAnalyzer.Dfir.Reporting.ReportAudience)Math.Clamp(ReportAudienceIndex, 0, ReportAudienceLabels.Length - 1);
             InvestigationReportPdf.Write(_result, dlg.FileName, masker.User(LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified.Split('\\').Last()), audience: audience, masker: masker);
             _result.Case.Audit("report.pdf_masked", $"{Path.GetFileName(dlg.FileName)} pseudonime={masker.Mapping.Count}");
-            ReportStatus = $"Raport cu date personale mascate salvat ({masker.Mapping.Count} valori înlocuite cu pseudonime consecvente). " + SignReport(dlg.FileName, _result.Case, MaskedSigner(masker));
+            var signed = SignReport(dlg.FileName, _result.Case, MaskedSigner(masker));
+            ReportStatus = $"Raport cu date personale mascate salvat ({policy.Describe()}; {masker.Counts.Values.Sum()} valori înlocuite cu pseudonime consecvente). " + RecordRedaction(policy, masker, "raport PDF", dlg.FileName) + " " + signed;
         }
 
         /// <summary>The signer written into the .sig of a masked export: the configured signer label passed through the masker, else the operator's pseudonym. Never the raw Windows user name.</summary>
@@ -111,14 +114,91 @@ namespace LogAnalyzer.UI.ViewModels
         private void ExportMaskedTimeline()
         {
             if (_result is null) { ReportStatus = "Rulați întâi o investigație sau deschideți un caz."; return; }
+            if (_result.Case.IsReadOnly && RedactionReversible) { ReportStatus = "Cazul este doar pentru citire: tabela unei pseudonimizări reversibile nu se poate păstra în el. Alegeți mascarea ireversibilă."; return; }
             var dlg = new SaveFileDialog { FileName = $"Cronologie_{_result.Case.Info.CaseId}_mascata.csv", Filter = "CSV (*.csv)|*.csv", Title = "Cronologie cu date personale mascate" };
             if (dlg.ShowDialog() != true) return;
-            var masker = PiiMasker.FromTimeline(_result.Timeline, _result.Case.Info.Host, _result.Case.Info.User);
+            var policy = CurrentRedactionPolicy();
+            var masker = policy.Apply(PiiMasker.FromTimeline(_result.Timeline, _result.Case.Info.Host, _result.Case.Info.User));
             LogAnalyzer.Dfir.IO.TimelineCsv.Write(dlg.FileName, _result.Timeline.Select(masker.Mask).ToList());
             _result.Case.Audit("timeline.export_masked", $"{Path.GetFileName(dlg.FileName)} rows={_result.Timeline.Count} pseudonime={masker.Mapping.Count}");
-            ReportStatus = $"Cronologie mascată salvată: {_result.Timeline.Count.ToString("N0", Ro)} rânduri, {masker.Mapping.Count} valori înlocuite (același pseudonim pentru aceeași valoare, ca în raportul mascat).";
+            ReportStatus = $"Cronologie mascată salvată: {_result.Timeline.Count.ToString("N0", Ro)} rânduri, {policy.Describe()}, {masker.Counts.Values.Sum()} valori înlocuite (același pseudonim pentru aceeași valoare, ca în raportul mascat). "
+                + RecordRedaction(policy, masker, "cronologie CSV", dlg.FileName);
         }
 
+        // ---- master plan 6.15: redaction policy, preview, record and reveal ----
+
+        [ObservableProperty] private bool _redactionReversible;
+        [ObservableProperty] private bool _maskUsers = true;
+        [ObservableProperty] private bool _maskHosts = true;
+        [ObservableProperty] private bool _maskAddresses = true;
+        [ObservableProperty] private bool _maskEmails = true;
+        [ObservableProperty] private bool _maskSids = true;
+        [ObservableProperty] private bool _maskSerials = true;
+        [ObservableProperty] private string _redactionPreviewLine = "";
+        [ObservableProperty] private string _revealRecordId = "";
+        [ObservableProperty] private string _revealPseudonym = "";
+        [ObservableProperty] private string _revealReason = "";
+        public ObservableCollection<RedactionPreviewRow> RedactionPreviewRows { get; } = new();
+        public ObservableCollection<string> RedactionRecords { get; } = new();
+
+        public RedactionPolicy CurrentRedactionPolicy()
+        {
+            var masked = new System.Collections.Generic.List<PiiCategory>();
+            if (MaskUsers) masked.Add(PiiCategory.Users);
+            if (MaskHosts) masked.Add(PiiCategory.Hosts);
+            if (MaskAddresses) masked.Add(PiiCategory.Addresses);
+            if (MaskEmails) masked.Add(PiiCategory.Emails);
+            if (MaskSids) masked.Add(PiiCategory.Sids);
+            if (MaskSerials) masked.Add(PiiCategory.Serials);
+            return new RedactionPolicy(RedactionReversible ? RedactionMode.Reversible : RedactionMode.Irreversible, masked);
+        }
+
+        /// <summary>Writes the redaction record of a finished export; the export itself is already on disk, so a failure here is said, not hidden.</summary>
+        private string RecordRedaction(RedactionPolicy policy, PiiMasker masker, string kind, string output)
+        {
+            if (_result is null) return "";
+            try
+            {
+                var rec = Redactions.Record(_result.Case, policy, masker, kind, output, LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified);
+                FillRedactionRecords();
+                return $"Înregistrarea {rec.Id} păstrează politica și amprenta exportului" + (rec.MappingFile.Length > 0 ? "; tabela pseudonimelor este criptată pentru contul dumneavoastră." : "; nu există tabelă: exportul nu se poate inversa.");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or PlatformNotSupportedException or System.Security.Cryptography.CryptographicException or InvalidOperationException)
+            {
+                return "ATENȚIE: exportul a fost salvat, dar înregistrarea redactării nu a putut fi scrisă: " + ex.Message;
+            }
+        }
+
+        internal void FillRedactionRecords()
+        {
+            RedactionRecords.Clear();
+            if (_result is null) return;
+            foreach (var r in Redactions.List(_result.Case))
+                RedactionRecords.Add($"{r.Id} · {r.Utc[..19].Replace('T', ' ')} UTC · {r.Kind} {r.OutputName} · {(r.Mode == RedactionMode.Reversible ? "reversibilă" : "ireversibilă")} · "
+                    + string.Join(", ", r.Masked.Select(RedactionPolicy.Name)) + $" · {r.Counts.Values.Sum()} valori · de {r.Operator}");
+        }
+
+        [RelayCommand]
+        private void PreviewRedaction()
+        {
+            RedactionPreviewRows.Clear();
+            if (_result is null) { RedactionPreviewLine = "Rulați întâi o investigație sau deschideți un caz."; return; }
+            var policy = CurrentRedactionPolicy();
+            var masker = policy.Apply(PiiMasker.FromTimeline(_result.Timeline, _result.Case.Info.Host, _result.Case.Info.User));
+            foreach (var row in Redactions.Preview(_result.Timeline, _result.Findings, masker)) RedactionPreviewRows.Add(row);
+            RedactionPreviewLine = RedactionPreviewRows.Count == 0
+                ? $"Previzualizare ({policy.Describe()}): nimic de înlocuit în primele rânduri."
+                : $"Previzualizare ({policy.Describe()}): primele {RedactionPreviewRows.Count} rânduri care se schimbă. Probele și analiza cazului nu se modifică; se schimbă doar fișierul exportat.";
+            FillRedactionRecords();
+        }
+
+        [RelayCommand]
+        private void RevealPseudonymValue()
+        {
+            if (_result is null) { ReportStatus = "Rulați întâi o investigație sau deschideți un caz."; return; }
+            var (_, msg) = Redactions.Reveal(_result.Case, RevealRecordId.Trim(), RevealPseudonym, RevealReason, LogAnalyzer.Dfir.Auth.OperatorIdentity.WhoDomainQualified);
+            ReportStatus = msg;
+        }
         // ---- F4: verifiable case archive ----
 
         [RelayCommand]
@@ -221,6 +301,9 @@ namespace LogAnalyzer.UI.ViewModels
         {
             var plan = CollectAllState.Plan(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role);
             CollectFromThisStation = true;
+            // lab 2026-11-10: after "Colectează tot" the assistant still showed "Un folder adus de la stația afectată" (its default) with an empty folder,
+            // although the probes had just been collected from this station; the assistant now shows the source that was used
+            IntakeFromThisStation = true;
             ProfileIndex = plan.ProfileIndex;
             CollectAllState.Instance.IsRunning = true;
             CollectAllState.Instance.Status = "Colectează tot: " + plan.Description;

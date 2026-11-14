@@ -76,6 +76,7 @@ public sealed class IocMatcher
         var names = Indicators.Where(i => i.Type == "filename").ToLookup(i => i.Value.ToUpperInvariant());
         var tasks = Indicators.Where(i => i.Type == "task").ToLookup(i => i.Value.ToUpperInvariant());
         var regs = Indicators.Where(i => i.Type == "registry").ToList();
+        var ja3 = Indicators.Where(i => i.Type == "ja3").ToLookup(i => i.Value.ToLowerInvariant());   // master plan 6.5: TLS client fingerprints
 
         foreach (var e in events)
         {
@@ -99,6 +100,8 @@ public sealed class IocMatcher
                 foreach (var ioc in names[Path.GetFileName(p).ToUpperInvariant()]) foreach (var r in Hit(ioc, $"fișier {p}")) yield return r;
             foreach (var t in new[] { e.Task, e.Fields.GetValueOrDefault("TaskName", "") }.Where(t => t.Length > 0))
                 foreach (var ioc in tasks[t.ToUpperInvariant()]) foreach (var r in Hit(ioc, $"activitate planificată {t}")) yield return r;
+            if (e.Fields.GetValueOrDefault("JA3Hash", "") is { Length: 32 } j)
+                foreach (var ioc in ja3[j.ToLowerInvariant()]) foreach (var r in Hit(ioc, $"amprentă TLS JA3 {j} (bibliotecă TLS, nu un program anume)")) yield return r;
             foreach (var ioc in regs.Where(g => KeyOf(g.Value) is { Length: > 0 } k && e.Locator.Contains(k, StringComparison.OrdinalIgnoreCase)))
                 foreach (var r in Hit(ioc, $"cheie {e.Locator}")) yield return r;
         }

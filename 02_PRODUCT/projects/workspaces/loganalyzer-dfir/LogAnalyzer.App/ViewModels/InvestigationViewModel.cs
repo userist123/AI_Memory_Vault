@@ -25,6 +25,52 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<string> ImportFiles { get; } = new();
         public ObservableCollection<Finding> Findings { get; } = new();
 
+        /// <summary>R7c: the acquisition run records of the case ("Colectări" tab), read with their integrity verdict by the pipeline or the case loader (no second hashing here).</summary>
+        public ObservableCollection<LogAnalyzer.Dfir.Case.AcquisitionRunRow> AcquisitionRuns { get; } = new();
+        [ObservableProperty] private string _acquisitionRunsLine = "Nicio fișă de colectare în acest caz";
+
+        internal void FillAcquisitionRuns(IReadOnlyList<LogAnalyzer.Dfir.Case.AcquisitionRunRow> rows, string error = "")
+        {
+            AcquisitionRuns.Clear();
+            foreach (var r in rows) AcquisitionRuns.Add(r);
+            var bad = rows.Count(r => r.HasProblem);
+            AcquisitionRunsLine = error.Length > 0 ? "Fișele de colectare nu au putut fi citite: " + error
+                : rows.Count == 0 ? "Nicio fișă de colectare în acest caz"
+                : $"{LogAnalyzer.Dfir.Language.RoText.Count(rows.Count, "colectare înregistrată", "colectări înregistrate")}, {LogAnalyzer.Dfir.Language.RoText.Count(bad, "cu problemă", "cu probleme")}";
+        }
+
+        /// <summary>Tab 9 "Istoricul probelor": the custody chain of the open case (Logs/chain_of_custody.jsonl), newest first, with the chain verdict.</summary>
+        public ObservableCollection<LogAnalyzer.Dfir.Case.CustodyRow> CustodyRows { get; } = new();
+        [ObservableProperty] private string _custodyLine = NoCaseCustodyLine;
+        [ObservableProperty] private bool _custodyProblem;
+        [ObservableProperty] private bool _custodyLoading;
+        internal const string NoCaseCustodyLine = "Niciun caz deschis: deschideți sau creați un caz în „Investigație completă” ca să vedeți cine a avut fiecare probă și ce s-a făcut cu ea.";
+
+        internal void FillCustody(LogAnalyzer.Dfir.Case.CustodyLedger? ledger, string error = "")
+        {
+            CustodyRows.Clear();
+            if (ledger is not null) foreach (var r in ledger.Rows) CustodyRows.Add(r);
+            CustodyProblem = error.Length > 0 || ledger is null || ledger.ChainProblem || ledger.Rows.Any(r => r.Unreadable);
+            CustodyLine = error.Length > 0 ? "Lanțul de custodie nu a putut fi citit: " + LogAnalyzer.Dfir.Case.AcquisitionRunOverview.Clean(error, 240)
+                : ledger is null ? NoCaseCustodyLine
+                : ledger.ChainLine + (ledger.Rows.Any(r => r.Unreadable) ? " · există linii ilizibile în jurnal" : "");
+        }
+
+        /// <summary>Reads the custody chain of the open case again (after an export or a state change), off the UI thread.</summary>
+        [RelayCommand]
+        private async Task RefreshCustody()
+        {
+            if (_result?.Case is not { } ws || CustodyLoading) { if (_result is null) FillCustody(null); return; }
+            CustodyLoading = true;
+            try
+            {
+                var ledger = await Task.Run(() => LogAnalyzer.Dfir.Case.CustodyOverview.Load(ws));
+                if (ReferenceEquals(_result?.Case, ws)) FillCustody(ledger);
+            }
+            catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException) { if (ReferenceEquals(_result?.Case, ws)) FillCustody(null, ex.Message); }
+            finally { CustodyLoading = false; }
+        }
+
         // WP6a (U4): the finding chosen in the grid and its card. The card is built from the finding and the case data by LogAnalyzer.Dfir.Presentation; selecting changes nothing in the case.
         private LogAnalyzer.Dfir.Presentation.EvidenceContext _evidenceContext = LogAnalyzer.Dfir.Presentation.EvidenceContext.Empty;
         [ObservableProperty] private Finding? _selectedFinding;
@@ -46,6 +92,19 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _airGapSummary = "Integritate air-gap: nedefinită (nicio analiză încă).";
         /// <summary>WP14b: the findings of the "Combined sequences" category (control gap + media, SMB + staging + USB, portable software + archive + USB); Finding.Sequence carries the ordered steps.</summary>
         public ObservableCollection<Finding> SequenceFindings { get; } = new();
+        /// <summary>„Cine ce a făcut”: the findings regrouped by person, in the order they happened (the same list the report prints).</summary>
+        public ObservableCollection<LogAnalyzer.Dfir.Language.PersonStory> PeopleStories { get; } = new();
+        public string PeopleIntro => LogAnalyzer.Dfir.Language.PeopleStory.Intro;
+
+        /// <summary>Tells „Cine ce a făcut” again from the result and the users register of this moment (the report builds it the same way when printed).</summary>
+        internal void RefreshPeopleStories()
+        {
+            PeopleStories.Clear();
+            if (_result is null) return;
+            foreach (var s in LogAnalyzer.Dfir.Language.PeopleStory.Build(_result.Findings, LogAnalyzer.Dfir.Language.PlainStory.CurrentPersonOf,
+                         LogAnalyzer.Dfir.Windows.Investigation.InvestigationReportText.Plain, LogAnalyzer.Dfir.Language.AccountResolver.FromEvents(_result.Timeline)))
+                PeopleStories.Add(s);
+        }
         [ObservableProperty] private string _sequenceSummary = "Secvențe combinate: nedefinite (nicio analiză încă).";
         [ObservableProperty] private string _sequenceSteps = "";
         /// <summary>E7: "Activitatea utilizatorului" tab: ShellBags, RecentDocs, Office MRU and Recycle Bin ($I) rows, the ones in classified folders or on removable volumes first.</summary>
@@ -154,6 +213,17 @@ namespace LogAnalyzer.UI.ViewModels
         public InvestigationViewModel(Func<InvestigationViewModel, object?>? aiFactory = null)
         {
             AiAnalysis = aiFactory?.Invoke(this);
+            // a person written in the users register after the analysis is named in „Cine ce a făcut” too (review 2026-11-07); weak, so a closed screen is not kept alive
+            var weak = new WeakReference<InvestigationViewModel>(this);
+            Action? onRegister = null;
+            onRegister = () =>
+            {
+                if (!weak.TryGetTarget(out var vm)) { LogAnalyzer.Dfir.Language.PlainStory.CurrentPersonOfChanged -= onRegister; return; }
+                // only the running application has a screen to refresh; without one (tests in parallel) another test's view model is never touched (review round 2, R3)
+                if (System.Windows.Application.Current?.Dispatcher is not { } d) return;
+                if (d.CheckAccess()) vm.RefreshPeopleStories(); else d.BeginInvoke(vm.RefreshPeopleStories);
+            };
+            LogAnalyzer.Dfir.Language.PlainStory.CurrentPersonOfChanged += onRegister;
         }
 
         [ObservableProperty] private string _remoteHost = "";
@@ -218,7 +288,7 @@ namespace LogAnalyzer.UI.ViewModels
         public string ReportAudienceDescription => LogAnalyzer.Dfir.Reporting.ReportAudiences.Description((LogAnalyzer.Dfir.Reporting.ReportAudience)Math.Clamp(ReportAudienceIndex, 0, ReportAudienceLabels.Length - 1));
         partial void OnReportAudienceIndexChanged(int value) => OnPropertyChanged(nameof(ReportAudienceDescription));
         [ObservableProperty] private string _log = "";
-        [ObservableProperty] private bool _isBusy;
+        [ObservableProperty, NotifyPropertyChangedFor(nameof(IntakeProgress))] private bool _isBusy;
         /// <summary>True once a result (a run, or a case opened from disk) is shown; before it, „Simplu” shows one sentence instead of empty result tabs.</summary>
         [ObservableProperty] private bool _hasResult;
         /// <summary>Operation state of the last run (UX contract §20), in Romanian. "Finalizat" does not mean any finding is verified.</summary>
@@ -287,7 +357,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _intakeError = "";
         public ObservableCollection<IncomingFamily> IntakeFamilies { get; } = new();
         public string IntakeTitle => _intake.Title;
-        public string IntakeProgress => _intake.ProgressText;
+        /// <summary>Evaluation 2026-11-05: the wizard said „Gata” while the analysis was still running.</summary>
+        public string IntakeProgress => IsBusy ? "Analiza rulează…" : _intake.ProgressText;
         public int IntakeStepIndex => _intake.StepIndex;
         public string IntakeStepTitle => _intake.Current.Title;
         public string IntakeQuestion => _intake.Current.Question;
@@ -378,6 +449,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task Run()
         {
+            if (IsBusy) { Log += "O analiză rulează deja; așteptați să se încheie sau opriți-o." + Environment.NewLine; return; }   // review 2026-11-08, P7
             if (!CollectFromThisStation && ImportFiles.Count == 0) { Log += "Alegeți colectarea de pe această stație sau adăugați probe de importat." + Environment.NewLine; return; }
             if (BuildScope().MissingFields().Count > 0) AskScopeAtStart();
             var scope = BuildScope();
@@ -398,6 +470,7 @@ namespace LogAnalyzer.UI.ViewModels
             bool collect = CollectFromThisStation;
             var name = CaseName;
             var zone = SystemZone.Trim();
+            bool pipelineDone = false;
             try
             {
                 _result = await Task.Run(() =>
@@ -417,8 +490,9 @@ namespace LogAnalyzer.UI.ViewModels
                         ws.Audit(signedInCase.Used ? "register.signed_media_used" : "register.signed_media_refused", signedInCase.Note);
                         if (signedInCase.Used) signedMedia = LogAnalyzer.Dfir.Registers.SignedMediaRegisterCase.ToMediaRegister(signedInCase.Active.Doc!);
                     }
-                    return new InvestigationPipeline().Run(ws, profile, collect, progress, _cts.Token, mediaRegister: signedMedia, systemZone: zone);
+                    return new InvestigationPipeline { ThreatIntel = LogAnalyzer.UI.Services.ThreatIntelFlows.Active() }.Run(ws, profile, collect, progress, _cts.Token, mediaRegister: signedMedia, systemZone: zone);
                 });
+                pipelineDone = true;
                 ShowResult(_result);
                 var checkedCase = _result.Case;
                 var ct = _cts.Token;
@@ -435,6 +509,15 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[OperationState.Failed] + " — " + ex.Message;
                 Log += "Eroare: " + ex.Message + Environment.NewLine;
+            }
+            catch (Exception ex) when (ex is not OutOfMemoryException && !pipelineDone)
+            {
+                // evaluation 2026-11-05: a defect inside the analysis (ArgumentException from the evidence graph) reached the dispatcher and
+                // closed the whole application; the run is what failed, the window is in a known state, so the run is marked failed instead.
+                // Only the pipeline call (review: an error after a finished run still takes the fail-closed path of the global handler).
+                OperationStatus = LogAnalyzer.Dfir.Analysis.StateLabels.RomanianOperation[OperationState.Failed] + " — eroare internă în analiză";
+                Log += $"Eroare internă în analiză ({ex.GetType().Name}): {ex.Message}. Cazul, dacă a apucat să fie creat, rămâne pe disc incomplet; rezultatele afișate acum, dacă există, sunt ale cazului anterior; detaliile sunt în jurnalul de pornire." + Environment.NewLine;
+                LogAnalyzer.UI.Services.StartupLog.Append(LogAnalyzer.UI.Services.StartupLog.PathIn(null, "startup_debug.log"), $"{DateTime.Now:o}  Investigation run failed: {LogAnalyzer.UI.Services.StartupLog.Redact(ex.ToString())}{Environment.NewLine}");
             }
             finally { IsBusy = false; }
         }
@@ -453,10 +536,21 @@ namespace LogAnalyzer.UI.ViewModels
             _evidenceContext = BuildEvidenceContext(result);
             Findings.Clear();
             foreach (var f in _result.Findings) Findings.Add(f);
+            FillAcquisitionRuns(_result.AcquisitionRuns, _result.AcquisitionRunsError);
+            FillCustody(_result.Custody, _result.CustodyError);
+            WorkflowStatus = "";
+            RefreshWorkflow();
+            RefreshRuns();
+            FillExecutables();
+            FillIdentities();
+            FillMemoryImages();
+            FillRedactionRecords();
+            FillCoverageTimeline();
             AirGapFindings.Clear();
             foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.Wp14Rules.Category)) AirGapFindings.Add(f);
             SequenceFindings.Clear();
             foreach (var f in _result.Findings.Where(f => f.Category == LogAnalyzer.Dfir.Analysis.SequenceRules.Category)) SequenceFindings.Add(f);
+            RefreshPeopleStories();
             SequenceSummary = SequenceFindings.Count == 0
                 ? "Secvențe combinate: nicio secvență observată în sursele colectate; asta nu dovedește că nu s-a întâmplat nimic (o sursă necolectată dă „pas neobservat”, nu absență)."
                 : $"Secvențe combinate: {SequenceFindings.Count} ({SequenceFindings.Count(a => a.Severity >= Severity.High)} ridicate). Fiecare arată faptele observate, în ordine, și pașii neobservați; nu stabilește scopul.";
@@ -473,6 +567,7 @@ namespace LogAnalyzer.UI.ViewModels
                 : $"Integritate air-gap: {AirGapFindings.Count} constatări ({AirGapFindings.Count(a => a.Severity >= Severity.High)} ridicate).";
             ResultChanged?.Invoke(this, EventArgs.Empty);
             LogAnalyzer.UI.Services.CollectAllState.Instance.Publish(result, opened);   // G3: one result, reused by every page
+            RefreshTimelineNotes();
             FillTimeline();
             var chains = _result.Findings.Where(f => f.RuleId == "INCIDENT-CHAIN").ToList();
             Chains = chains.Count == 0 ? "Niciun lanț de incident (constatări grave grupate în timp)." :
@@ -503,13 +598,10 @@ namespace LogAnalyzer.UI.ViewModels
         {
             Timeline.Clear();
             if (_result is null) return;
-            IEnumerable<TimelineEvent> q = _result.Timeline;
-            var flt = TimelineFilter.Trim();
-            if (flt.Length > 0)
-                q = q.Where(e => e.Summary.Contains(flt, StringComparison.OrdinalIgnoreCase) || e.Path.Contains(flt, StringComparison.OrdinalIgnoreCase) ||
-                                 e.Process.Contains(flt, StringComparison.OrdinalIgnoreCase) || e.User.Contains(flt, StringComparison.OrdinalIgnoreCase) ||
-                                 e.EventId == flt || e.RemoteIp.Contains(flt, StringComparison.OrdinalIgnoreCase) || e.Dns.Contains(flt, StringComparison.OrdinalIgnoreCase));
-            foreach (var e in q.Take(20000)) Timeline.Add(e);
+            // master plan 6.9: one filter for the page and the saved views (text, source, interval, bookmarks); an unreadable date keeps the text filter only
+            if (_suppressFill) return;
+            var spec = CurrentSpec(strict: false)!;
+            foreach (var e in LogAnalyzer.Dfir.Case.TimelineNotebook.Apply(_result.Timeline, spec, Views.BookmarkMarkConverter.Marked).Take(20000)) Timeline.Add(e);
         }
 
         [RelayCommand]
@@ -570,9 +662,12 @@ namespace LogAnalyzer.UI.ViewModels
             if (!check.Ok) { RemoteStatus = "Pachetul NU a fost importat: " + string.Join("; ", check.Problems); return; }
             var items = RemoteCollection.Import(ws, check);
             foreach (var i in items.Skip(1)) { var f = ws.FullPath(i.StoredPath); if (!ImportFiles.Contains(f)) ImportFiles.Add(f); }
-            var failed = check.Manifest!.Steps.Where(s => s.Status != "ok").Select(s => $"{s.Artifact} ({s.Error})").ToList();
+            var failed = check.Manifest!.Steps.Where(s => s.Status is not ("ok" or "absent")).Select(s => $"{s.Artifact} ({s.Error})").ToList();
+            // a log that does not exist on the target (Sysmon not installed) is said as such, not as a failed step (lab SRV01 2026-11-07)
+            var absent = check.Manifest.Steps.Where(s => s.Status == "absent").Select(s => s.Artifact.StartsWith("evtx:", StringComparison.Ordinal) ? s.Artifact[5..] : s.Artifact).ToList();
             RemoteStatus = $"Importat: {items.Count - 1} fișiere de pe {check.Manifest.Host}, fiecare cu SHA-256 egal cu cel calculat pe țintă; adăugate la lista de probe." +
-                           (failed.Count > 0 ? " Pași eșuați pe țintă: " + string.Join("; ", failed) : "");
+                           (failed.Count > 0 ? " Pași eșuați pe țintă: " + string.Join("; ", failed) : "") +
+                           (absent.Count > 0 ? " Jurnale care nu există pe țintă (componenta nu e instalată): " + string.Join("; ", absent) + "." : "");
         }
 
         /// <summary>Text shown at case close (owner decision 30): the final chain heads to record in the custody register.</summary>

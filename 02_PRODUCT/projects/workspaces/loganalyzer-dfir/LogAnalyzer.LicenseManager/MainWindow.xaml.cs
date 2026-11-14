@@ -2,6 +2,7 @@ using System.Diagnostics;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Windows;
+using System.Windows.Controls;
 using LogAnalyzer.Core.Services;
 using Microsoft.Win32;
 
@@ -20,6 +21,7 @@ public partial class MainWindow : Window
     {
         InitializeComponent();
         DpCustom.SelectedDate = DateTime.Today.AddYears(1);
+        ApplyModuleDefaults();
         RefreshLedger();
         // B10: a runtime older than .NET 10.0.13 is shown in the status line; the window opens and works either way
         if (LogAnalyzer.Dfir.Reporting.RuntimeGuard.Warning(Environment.Version) is { } runtimeWarning) ShowStatus("Atenție .NET: " + runtimeWarning + ".", ok: false);
@@ -36,12 +38,64 @@ public partial class MainWindow : Window
         if (string.IsNullOrWhiteSpace(TxtClient.Text)) TxtClient.Text = Environment.MachineName;
     }
 
+    private string SelectedModule => (CmbModule.SelectedItem as ComboBoxItem)?.Content as string ?? LicenseFeatures.ModuleInsula;
+
+    private IEnumerable<CheckBox> FeatureBoxes => PnlFeatures.Children.OfType<CheckBox>();
+
+    /// <summary>Capabilities pre-filled with the base set of the module; those the module can never carry are unchecked and disabled.</summary>
+    private void ApplyModuleDefaults()
+    {
+        if (PnlFeatures is null) return;
+        var module = SelectedModule;
+        foreach (var c in FeatureBoxes)
+        {
+            var allowed = LicenseFeatures.IsAllowedFor(module, (string)c.Tag);
+            c.IsEnabled = allowed;
+            c.IsChecked = allowed;
+        }
+    }
+
+    private void Module_Changed(object sender, SelectionChangedEventArgs e) => ApplyModuleDefaults();
+
+    /// <summary>Reads a cerere_licenta_*.json from the client and fills in the Hardware ID and the module (strict parse; nothing else is taken from the file).</summary>
+    private void LoadRequest_Click(object sender, RoutedEventArgs e)
+    {
+        var dlg = new OpenFileDialog { Title = "Cererea de licență a clientului", Filter = "Cerere de licență (*.json)|*.json|Toate fișierele|*.*" };
+        if (dlg.ShowDialog(this) != true) return;
+        try
+        {
+            if (new FileInfo(dlg.FileName).Length > LicenseRequest.MaxBytes) { ShowStatus("Fișierul nu este o cerere de licență (prea mare).", ok: false); return; }
+            if (LicenseRequest.Parse(File.ReadAllText(dlg.FileName)) is not { } req)
+            {
+                ShowStatus("Fișierul nu este o cerere de licență validă (produs, modul, hw, dată).", ok: false);
+                return;
+            }
+            TxtHwid.Text = req.HardwareId;
+            foreach (ComboBoxItem item in CmbModule.Items) if ((string)item.Content == req.Module) CmbModule.SelectedItem = item;
+            ApplyModuleDefaults();
+            ShowStatus($"Cerere încărcată: Hardware ID {req.HardwareId}, modulul {req.Module}. Completați titularul și generați licența.", ok: true);
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { ShowStatus("Fișierul nu poate fi citit: " + ex.Message, ok: false); }
+    }
+
     private void Generate_Click(object sender, RoutedEventArgs e)
     {
         var hwid = TxtHwid.Text.Trim().ToUpperInvariant();
         if (!HwidFormat.IsMatch(hwid))
         {
             ShowStatus("Hardware ID invalid: trebuie să aibă exact 16 caractere hexazecimale, așa cum apare în fereastra de activare a aplicației.", ok: false);
+            return;
+        }
+
+        var holderText = TxtHolder.Text.Trim();
+        if (holderText.Length == 0 || holderText.Length > LicenseService.MaxHolderLength)
+        {
+            ShowStatus($"Titularul este obligatoriu (1–{LicenseService.MaxHolderLength} caractere).", ok: false);
+            return;
+        }
+        if (!FeatureBoxes.Any(c => c.IsChecked == true))
+        {
+            ShowStatus("Alege cel puțin o capabilitate.", ok: false);
             return;
         }
 
@@ -72,9 +126,10 @@ public partial class MainWindow : Window
             var keyText = File.ReadAllText(TxtKeyPath.Text.Trim());
             using var key = LogAnalyzer.Dfir.Reporting.ReportSignature.LoadPrivateKey(keyText,
                 LogAnalyzer.Dfir.Reporting.ReportKeyProtection.NeedsPassphrase(keyText) ? PwdKey.Password : null);
-            licenseString = LicenseService.Sign(key, hwid, expiry);
-            // Self-check with the exact verification the application performs at activation and at every start.
-            var verifier = new LicenseService([Convert.ToBase64String(key.ExportSubjectPublicKeyInfo())]);
+            licenseString = LicenseService.SignV2(key, hwid, expiry, SelectedModule, TxtHolder.Text,
+                FeatureBoxes.Where(c => c.IsChecked == true).Select(c => (string)c.Tag).ToList());
+            // Self-check with the exact verification the application performs at activation and at every start (as the module it is issued for).
+            var verifier = new LicenseService([Convert.ToBase64String(key.ExportSubjectPublicKeyInfo())], null, null, LicenseFeatures.PostureOf(SelectedModule));
             if (!verifier.VerifyLicenseString(hwid, licenseString, DateTime.UtcNow))
             {
                 ShowStatus("Auto-verificarea a eșuat: licența nu ar fi acceptată de aplicație. Nu o distribui.", ok: false);

@@ -26,8 +26,16 @@ public static class EvidenceFingerprint
         if (n >= 4 && BinaryPrimitives.ReadUInt32LittleEndian(h) == 0x0A0D0D0A) return "pcapng";
         if (IsTaskXml(path)) return "task_xml";
         if (IsUsnExport(path)) return "usn_fsutil";
+        if (IsSetupApiLog(path)) return "setupapi_dev";
+        if (IsCustomDestinations(path, n, h)) return "custom_destinations";
+        if (IsDefenderHistory(path)) return LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName;
+        if (IsNotepadTab(path)) return LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.FingerprintName;
+        if (LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.Detect(path) is { } remoteToolLog) return remoteToolLog;
         if (IsFirewallLog(path)) return "pfirewall";
+        if (IsZeekTsv(path)) return LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint;
         if (IsRecycleInfo(path)) return "recycle_info";
+        if (StartsWith(h, 0, "INDX"u8)) return LogAnalyzer.Dfir.FileSystem.I30Parser.FingerprintName;
+        if (IsMft(path, h)) return LogAnalyzer.Dfir.FileSystem.MftParser.FingerprintName;
         var t = h.TrimStart(" \t\r\n﻿"u8);
         if (t.Length > 0 && (t[0] == (byte)'{' || t[0] == (byte)'[') || StartsWith(h, 0, [0xEF, 0xBB, 0xBF, (byte)'{'])) return "json";
         return "unknown";
@@ -43,6 +51,57 @@ public static class EvidenceFingerprint
         string head = n >= 2 && buf[0] == 0xFF && buf[1] == 0xFE ? System.Text.Encoding.Unicode.GetString(buf, 2, (n - 2) & ~1)
                     : System.Text.Encoding.UTF8.GetString(buf, 0, n);
         return head.Contains("<Task", StringComparison.Ordinal) && head.Contains("schemas.microsoft.com/windows/2004/02/mit/task", StringComparison.Ordinal);
+    }
+
+    /// <summary>setupapi.dev.log: starts with "[Device Install Log]" (UTF-8, ANSI or UTF-16 LE with a BOM).</summary>
+    private static bool IsSetupApiLog(string path)
+    {
+        var buf = new byte[96];
+        int n;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        var head = n >= 2 && buf[0] == 0xFF && buf[1] == 0xFE ? System.Text.Encoding.Unicode.GetString(buf, 2, (n - 2) & ~1) : System.Text.Encoding.UTF8.GetString(buf, 0, n);
+        return head.TrimStart('﻿', ' ', '\r', '\n').StartsWith("[Device Install Log]", StringComparison.Ordinal);
+    }
+
+    /// <summary>A custom Jump List: version 2 in the first 4 bytes and the footer 0xBABFFBAB in the last 4.</summary>
+    private static bool IsCustomDestinations(string path, int n, ReadOnlySpan<byte> head)
+    {
+        if (n < 12 || BinaryPrimitives.ReadUInt32LittleEndian(head) != 2) return false;
+        using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        if (fs.Length < 12) return false;
+        fs.Seek(-4, SeekOrigin.End);
+        Span<byte> tail = stackalloc byte[4];
+        return fs.ReadAtLeast(tail, 4, throwOnEndOfStream: false) == 4 && BinaryPrimitives.ReadUInt32LittleEndian(tail) == 0xBABFFBAB;
+    }
+
+    /// <summary>A Notepad tab file: a GUID name ending in .bin / .0.bin / .1.bin and content "NP" + sequence + a "saved" byte of 0 or 1 (a WindowState file has another value there); see <see cref="LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.LooksLikeTab"/>.</summary>
+    private static bool IsNotepadTab(string path)
+    {
+        if (!LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.TryTabFileName(Path.GetFileName(path), out _, out _)) return false;
+        var buf = new byte[32];
+        int n;
+        long length;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+        {
+            length = fs.Length;
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        }
+        return LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.LooksLikeTab(buf.AsSpan(0, n), length);
+    }
+
+    /// <summary>A Defender DetectionHistory file: an 8-byte ThreatId record followed by a 16-byte GUID record; see <see cref="LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.LooksLikeHistory"/>.</summary>
+    private static bool IsDefenderHistory(string path)
+    {
+        var buf = new byte[0x18];
+        int n;
+        long length;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+        {
+            length = fs.Length;
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        }
+        return LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.LooksLikeHistory(buf.AsSpan(0, n), length);
     }
 
     /// <summary>Text written by <c>fsutil usn readjournal … csv</c>: it starts with the "USN Journal ID" line.</summary>
@@ -82,6 +141,16 @@ public static class EvidenceFingerprint
         return LogAnalyzer.Dfir.Network.FirewallLogParser.LooksLikeFirewallLog(System.Text.Encoding.UTF8.GetString(buf, 0, n));
     }
 
+    /// <summary>Zeek TSV log: the first line is "#separator".</summary>
+    private static bool IsZeekTsv(string path)
+    {
+        var buf = new byte[64];
+        int n;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        return LogAnalyzer.Dfir.Network.ZeekLogParser.LooksLikeZeekTsv(System.Text.Encoding.UTF8.GetString(buf, 0, n));
+    }
+
     /// <summary>Formats an evidence item may legitimately have, from its declared type or name; null when not checked.</summary>
     public static IReadOnlyCollection<string>? Expected(EvidenceItem item)
     {
@@ -95,12 +164,32 @@ public static class EvidenceFingerprint
         if (t is "live_snapshot" or "airgap_facts") return ["json"];
         if (t == "task_xml") return ["task_xml"];
         if (t == LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName) return ["pfirewall"];
+        if (t == LogAnalyzer.Dfir.Network.ZeekLogParser.SourceTypeName) return [LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint, "json"];
         if (t == "usn_journal") return ["usn_fsutil"];
+        if (t == LogAnalyzer.Dfir.FileSystem.I30Parser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.I30Parser.FingerprintName];
+        if (t == LogAnalyzer.Dfir.FileSystem.MftParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.MftParser.FingerprintName];
+        if (t == LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.FingerprintName];
+        if (LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.IsKnown(t)) return [t];   // the source type is the fingerprint name
+        if (t == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName) return [LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName];
         if (t == LogAnalyzer.Dfir.FileSystem.RecycleBinInfoParser.SourceTypeName) return ["recycle_info"];
-        if (t is "chromium_history" or "firefox_places") return ["sqlite"];
+        if (t is "chromium_history" or "firefox_places" or "windows_search_index" or "windows_search_gather") return ["sqlite"];   // WindowsSearchIndexParser / WindowsSearchGatherParser .SourceTypeName
         if (t == "jumplist_auto" || name.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase)) return ["cfb"];
         if (t == "lnk" || name.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase)) return ["lnk"];
         return null;
+    }
+
+    /// <summary>
+    /// An exported $MFT: a valid FILE header (same rule as NtfsFileRecord.DetectRecordSize) among the first
+    /// 64 positions of 1,024 bytes. Record 0 may be zeroed or BAAD. Only files that start with FILE, BAAD or zeros are read that far.
+    /// </summary>
+    private static bool IsMft(string path, ReadOnlySpan<byte> h)
+    {
+        if (h.Length < 4 || !(StartsWith(h, 0, "FILE"u8) || StartsWith(h, 0, "BAAD"u8) || StartsWith(h, 0, [0, 0, 0, 0]))) return false;
+        var buf = new byte[LogAnalyzer.Dfir.FileSystem.Ntfs.NtfsFileRecord.DetectPositions * 1024 + 8];
+        int n;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        return LogAnalyzer.Dfir.FileSystem.Ntfs.NtfsFileRecord.DetectRecordSize(buf.AsSpan(0, n), out _) > 0;
     }
 
     private static bool StartsWith(ReadOnlySpan<byte> h, int offset, ReadOnlySpan<byte> magic) =>

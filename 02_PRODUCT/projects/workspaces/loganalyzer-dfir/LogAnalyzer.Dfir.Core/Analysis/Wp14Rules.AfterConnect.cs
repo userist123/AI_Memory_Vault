@@ -52,7 +52,7 @@ public static class AfterConnect
             if (e.EventId == "4624")
             {
                 var user = F(e, "TargetUserName");
-                if (user.Length == 0 || IsMachineAccount(user) || SystemAccounts.Contains(user)) continue;
+                if (user.Length == 0 || PlainPhrases.IsStationAccount(user, e.Host, F(e, "TargetUserSid")) || SystemAccounts.Contains(user)) continue;   // a name ending in $ is kept unless it is this computer's own (round-2 review)
                 if (F(e, "LogonType") is not ("2" or "10" or "11")) continue;
                 open[id.Length > 0 ? id : Guid.NewGuid().ToString()] = (user, T(e)!.Value);
             }
@@ -78,7 +78,7 @@ public static class AfterConnect
             var user = Bare(e.User.Length > 0 ? e.User : F(e, "SubjectUserName", "TargetUserName", "User", "UserName"));
             if (sessionUser.Length > 0 && user.Length > 0)
             {
-                bool system = IsMachineAccount(user) || SystemAccounts.Contains(user);
+                bool system = PlainPhrases.IsStationAccount(user, e.Host) || SystemAccounts.Contains(user);
                 if (system || !user.Equals(Bare(sessionUser), StringComparison.OrdinalIgnoreCase)) { excluded++; continue; }
             }
             int score = kind == AfterConnectKind.Download ? 2 : 3;
@@ -124,6 +124,34 @@ public static partial class Wp14Rules
 {
     internal const string AfterConnectRuleId = "MEDIA-AFTER-CONNECT";
 
+    private static readonly HashSet<string> KernelProcesses = new(StringComparer.OrdinalIgnoreCase) { "Registry", "MemCompression", "Memory Compression", "System", "Secure System", "System Idle Process", "vmmem", "vmmemWSL" };
+
+    private static bool IsWindowsOwn(string path)
+    {
+        var p = path.Replace('/', '\\');
+        // the kernel's own processes have no file on disk: Registry, MemCompression, System, Secure System (lab WS02: "a pornit programul Registry")
+        if (!p.Contains('\\') && KernelProcesses.Contains(p.Trim())) return true;
+        return p.Contains("\\Windows\\", StringComparison.OrdinalIgnoreCase) || p.Contains("\\Program Files", StringComparison.OrdinalIgnoreCase) || p.Contains("\\ProgramData\\Microsoft\\", StringComparison.OrdinalIgnoreCase)
+            || PlainPhrases.Leaf(p).Equals("desktop.ini", StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>MEDIA-AFTER-CONNECT in plain words: at most 5 programs and 5 files of the user (Windows' own left out), named as they were; the link is only in time.</summary>
+    internal static string AfterConnectStory(string stick, IReadOnlyList<AfterConnectWindow> windows)
+    {
+        var items = windows.SelectMany(w => w.Items).OrderByDescending(i => i.Score).ToList();
+        List<string> Names(AfterConnectKind k) => items.Where(i => i.Kind == k && !IsWindowsOwn(i.What)).Select(i => PlainPhrases.Leaf(i.What)).Where(n => n.Length > 0)
+            .Distinct(StringComparer.OrdinalIgnoreCase).Take(5).Select(PlainPhrases.Q).ToList();
+        var programs = Names(AfterConnectKind.Execution); var files = Names(AfterConnectKind.FileTouched); var downloads = Names(AfterConnectKind.Download);
+        var parts = new List<string>();
+        if (programs.Count > 0) parts.Add($"a pornit {(programs.Count == 1 ? "programul" : "programele")} {PlainPhrases.List(programs)}");
+        if (files.Count > 0) parts.Add($"a deschis {(files.Count == 1 ? "fișierul" : "fișierele")} {PlainPhrases.List(files)}");
+        if (downloads.Count > 0) parts.Add($"a descărcat {PlainPhrases.List(downloads)}");
+        var after = $"după ce a fost conectat stick-ul {PlainPhrases.Q(stick)}";
+        // nothing of the user: a whole clause of its own (capital letter, no account needed); otherwise the account's actions come first and need the subject
+        return parts.Count == 0 ? $"După ce a fost conectat stick-ul {PlainPhrases.Q(stick)}, pe calculator au mai fost doar activități ale Windows; nimic al utilizatorului nu a putut fi legat de stick"
+            : string.Join(" și ", parts) + " " + after + "; legătura este doar în timp și nu dovedește că aceste lucruri au de-a face cu stick-ul";
+    }
+
     internal static IEnumerable<AfterConnectWindow> AfterConnectWindows(IReadOnlyList<TimelineEvent> events, Observed m)
     {
         var arrivals = m.Events.Where(e => Ev(e, "Microsoft-Windows-Partition/Diagnostic", 1006) && T(e) is not null).Select(e => T(e)!.Value).Distinct().OrderBy(t => t).ToList();
@@ -160,6 +188,7 @@ public static partial class Wp14Rules
                 Category = c.FindingCategory, Classification = Classification.Correlated, Confidence = Confidence.Low,
                 FirstSeenUtc = windows[0].ConnectUtc, LastSeenUtc = windows[^1].Items.Max(i => i.WhenUtc),
                 User = string.Join(", ", windows.Select(w => w.SessionUser).Where(u => u.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase)),
+                PlainWhat = AfterConnectStory(PlainName(Kind(m)), windows),
                 Description = desc,
                 ClassificationReason = "Asociere în timp între ora conectării (Partition/Diagnostic 1006 sau registrul USB) și execuțiile, fișierele deschise și descărcările din fereastră.",
                 SemanticType = SemanticType.Observation,

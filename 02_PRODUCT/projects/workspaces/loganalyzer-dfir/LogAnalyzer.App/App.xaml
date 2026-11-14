@@ -22,6 +22,8 @@
                 <ResourceDictionary Source="/Themes/Components/DataGrids.xaml"/>
                 <ResourceDictionary Source="/Themes/Components/Navigation.xaml"/>
                 <ResourceDictionary Source="/Themes/Components/Cards.xaml"/>
+                <ResourceDictionary Source="/Themes/Components/Page.xaml"/>
+                <ResourceDictionary Source="/Themes/Components/Frame.xaml"/>
                 <ResourceDictionary Source="/Themes/Components/StatusBadges.xaml"/>
                 <ResourceDictionary Source="/Themes/Components/Inspector.xaml"/>
                 <ResourceDictionary Source="/Themes/Components/Dialogs.xaml"/>
@@ -31,8 +33,58 @@
             <!-- 2026-10-22 round 3: DatePicker/Calendar format with CurrentCulture unless Language is set on the element itself (a metadata
                  default does not count), so the owner's PC showed „01-Sep-26”. A style setter counts as set: the pickers show dd.MM.yyyy and
                  Romanian month names; the thread culture stays unchanged. -->
-            <Style TargetType="DatePicker">
+            <!-- 2026-11-11: BasedOn added. Without it this style replaced the Fluent DatePicker style, and the pickers kept the old square WPF look
+                 (calendar button with the day number). Inputs.xaml now supplies the Dosar colours on top of the Fluent style. -->
+            <Style TargetType="DatePicker" BasedOn="{StaticResource {x:Type DatePicker}}">
                 <Setter Property="Language" Value="ro-RO"/>
+                <!-- design pass 2026-11-11: the Fluent theme leaves DatePicker with the old square WPF look (a calendar button with "15"); the field now
+                     looks like the other inputs (one rounded border, the system calendar glyph). The named parts are the ones DatePicker requires
+                     (PART_Root, PART_TextBox, PART_Button, PART_Popup); DatePickerNames.Apply still names PART_Button for screen readers. -->
+                <Setter Property="MinHeight" Value="32"/>
+                <Setter Property="Template">
+                    <Setter.Value>
+                        <ControlTemplate TargetType="DatePicker">
+                            <Grid x:Name="PART_Root">
+                                <Border x:Name="bd" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4"/>
+                                <Grid>
+                                    <Grid.ColumnDefinitions>
+                                        <ColumnDefinition Width="*"/>
+                                        <ColumnDefinition Width="Auto"/>
+                                    </Grid.ColumnDefinitions>
+                                    <DatePickerTextBox x:Name="PART_TextBox" Grid.Column="0" BorderThickness="0" Background="Transparent" Padding="8,5"
+                                                       VerticalContentAlignment="Center" Foreground="{TemplateBinding Foreground}"/>
+                                    <Button x:Name="PART_Button" Grid.Column="1" Focusable="False" Cursor="Hand" Padding="8,0" Margin="0,0,2,0">
+                                        <Button.Template>
+                                            <ControlTemplate TargetType="Button">
+                                                <Border x:Name="b" Background="Transparent" CornerRadius="3" Padding="{TemplateBinding Padding}">
+                                                    <TextBlock Text="&#xE787;" FontFamily="{StaticResource IconFontFamily}" FontSize="14" VerticalAlignment="Center"
+                                                               Foreground="{StaticResource TextSecondaryBrush}"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True"><Setter TargetName="b" Property="Background" Value="{StaticResource Surface3Brush}"/></Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Button.Template>
+                                    </Button>
+                                </Grid>
+                                <Popup x:Name="PART_Popup" AllowsTransparency="True" Placement="Bottom" PlacementTarget="{Binding ElementName=PART_TextBox}" StaysOpen="False"/>
+                            </Grid>
+                            <ControlTemplate.Triggers>
+                                <Trigger Property="IsKeyboardFocusWithin" Value="True">
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource PrimaryAccentBrush}"/>
+                                    <Setter TargetName="bd" Property="BorderThickness" Value="2"/>
+                                </Trigger>
+                                <Trigger Property="IsMouseOver" Value="True">
+                                    <Setter TargetName="bd" Property="BorderBrush" Value="{StaticResource StrongBorderBrush}"/>
+                                </Trigger>
+                                <Trigger Property="IsEnabled" Value="False">
+                                    <Setter TargetName="bd" Property="Background" Value="{StaticResource Surface1Brush}"/>
+                                    <Setter Property="Foreground" Value="{StaticResource TextDisabledBrush}"/>
+                                </Trigger>
+                            </ControlTemplate.Triggers>
+                        </ControlTemplate>
+                    </Setter.Value>
+                </Setter>
             </Style>
             <Style TargetType="Calendar">
                 <Setter Property="Language" Value="ro-RO"/>

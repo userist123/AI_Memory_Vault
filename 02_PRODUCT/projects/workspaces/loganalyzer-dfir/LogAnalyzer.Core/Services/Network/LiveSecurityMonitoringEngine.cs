@@ -9,7 +9,7 @@ namespace LogAnalyzer.Core.Services.Network
 {
     public class LiveSecurityMonitoringEngine
     {
-        public const string TestAlertTitle = "[TEST — NU ESTE O ALERTĂ REALĂ] Mesaj de test al căii de alertare";
+        public const string TestAlertTitle = "[Test — nu este o alertă reală] Mesaj de test al căii de alertare";
 
         /// <summary>Approved accounts and maintenance windows from the procedure profile (WP15a); <c>null</c> = no profile, log clears stay NotAssessed.</summary>
         public LogMaintenancePolicy? MaintenancePolicy { get; set; }
@@ -29,7 +29,8 @@ namespace LogAnalyzer.Core.Services.Network
         {
             if (string.IsNullOrEmpty(xml)) return null;
             var m = Regex.Match(xml, "<Data Name=[\"']" + Regex.Escape(name) + "[\"']>([^<]*)</Data>");
-            var v = m.Success ? m.Groups[1].Value.Trim() : null;
+            // the XML keeps „<” as „&lt;” (lab VM: „?&lt;PSDirectVMLegacy>” in a live alert)
+            var v = m.Success ? System.Net.WebUtility.HtmlDecode(m.Groups[1].Value).Trim() : null;
             return string.IsNullOrEmpty(v) || v == "-" ? null : v;
         }
 
@@ -37,6 +38,13 @@ namespace LogAnalyzer.Core.Services.Network
         /// Evaluează în memorie un eveniment nou sosit în timp real și returnează o alertă dacă se detectează un atac sau anomalie.
         /// </summary>
         public DetectedIssue? EvaluateLiveEvent(ParsedEvent ev)
+        {
+            var issue = Evaluate(ev);
+            if (issue is not null && issue.Plain.Length == 0) issue.Plain = LivePlain.Tell(issue, ev, TimeZoneInfo.Local);
+            return issue;
+        }
+
+        private DetectedIssue? Evaluate(ParsedEvent ev)
         {
             if (ev == null) return null;
 
@@ -51,7 +59,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "🚨 ALERTĂ MARE: Fișier adus din Internet sau script pornit din Descărcări",
+                    Title = "Alertă mare: Fișier adus din Internet sau script pornit din Descărcări",
                     Severity = "High",
                     MitreTechniqueId = mshtaUrl ? "T1218.005" : scriptFromDownload ? "T1204.002" : "T1105",
                     MitreTacticName = mshtaUrl ? "Defense Evasion" : scriptFromDownload ? "Execution" : "Command and Control",
@@ -68,7 +76,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "🚨 ALERTĂ CRITICĂ: Tentativă Distrugere Shadow Copies (Ransomware)",
+                    Title = "Alertă critică: Tentativă Distrugere Shadow Copies (Ransomware)",
                     Severity = "Critical",
                     MitreTechniqueId = "T1490",
                     MitreTacticName = "Impact",
@@ -83,7 +91,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "🚨 ALERTĂ MARE: Execuție PowerShell Codificat / Download Cradle",
+                    Title = "Alertă mare: Execuție PowerShell Codificat / Download Cradle",
                     Severity = "High",
                     MitreTechniqueId = "T1059.001",
                     MitreTacticName = "Execution",
@@ -98,7 +106,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "🚨 ALERTĂ CRITICĂ: Tentativă Extragere Credențiale LSASS (Mimikatz / Dump)",
+                    Title = "Alertă critică: Tentativă Extragere Credențiale LSASS (Mimikatz / Dump)",
                     Severity = "Critical",
                     MitreTechniqueId = "T1003.001",
                     MitreTacticName = "Credential Access",
@@ -115,7 +123,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "⚠️ ALERTĂ MEDIE: Activitate de Recunoaștere & Enumerare Privilegii (Discovery)",
+                    Title = "Alertă medie: Activitate de Recunoaștere & Enumerare Privilegii (Discovery)",
                     Severity = "Medium",
                     MitreTechniqueId = "T1033",
                     MitreTacticName = "Discovery",
@@ -130,7 +138,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "⚠️ ALERTĂ MEDIE: Creare / Modificare Cont Utilizator sau Grup Privilegiat",
+                    Title = "Alertă medie: Creare / Modificare Cont Utilizator sau Grup Privilegiat",
                     Severity = "Medium",
                     MitreTechniqueId = "T1136.001",
                     MitreTacticName = "Persistence",
@@ -143,12 +151,14 @@ namespace LogAnalyzer.Core.Services.Network
             // 6. Curățare Jurnal de Securitate (Anti-Forensics EID 1102 / 104)
             if (ev.EventId == 1102 || ev.EventId == 104 || LogClearCommand.IsMatch(msg))
             {
-                string channel = ev.EventId == 1102 ? "Security" : ev.EventId == 104 ? "System" : "indicat în linia de comandă wevtutil";
+                string channel = ev.EventId is 1102 or 104
+                    ? LogClearAssessment.ClearedChannel(ev.EventId, ev.XmlData) is { Length: > 0 } c ? c : "jurnal nenumit în eveniment"
+                    : "indicat în linia de comandă wevtutil";
                 var (clearUser, clearDomain) = LogClearAssessment.SubjectFromXml(ev.XmlData);
                 var clear = LogClearAssessment.AssessUnscheduled(channel, new DateTimeOffset(ev.TimeCreated.ToUniversalTime()), MaintenancePolicy, clearUser, clearDomain);
                 return new DetectedIssue
                 {
-                    Title = "⚠️ Jurnal de evenimente golit (necesită verificare)",
+                    Title = "Jurnal de evenimente golit (necesită verificare)",
                     Severity = clear.Severity.ToString(),
                     MitreTechniqueId = "T1070.001",
                     MitreTacticName = "Defense Evasion",
@@ -164,7 +174,7 @@ namespace LogAnalyzer.Core.Services.Network
                 bool isPsExec = msg.Contains("psexec") || msg.Contains("psexesvc");
                 return new DetectedIssue
                 {
-                    Title = isPsExec ? "🚨 ALERTĂ MARE: Serviciu de Execuție la Distanță (PsExec / Lateral Movement)" : "⚠️ NOTIFICARE: Serviciu Nou Instalat în Sistem",
+                    Title = isPsExec ? "Alertă mare: Serviciu de Execuție la Distanță (PsExec / Lateral Movement)" : "NOTIFICARE: Serviciu Nou Instalat în Sistem",
                     Severity = isPsExec ? "High" : "Low",
                     MitreTechniqueId = "T1543.003",
                     MitreTacticName = "Persistence",
@@ -189,7 +199,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "☣️ ALERTĂ CRITICĂ: Tentativă Încărcare Driver Kernel Vulnerabil (BYOVD / Ring 0)",
+                    Title = "Alertă critică: Tentativă Încărcare Driver Kernel Vulnerabil (BYOVD / Ring 0)",
                     Severity = "Critical",
                     MitreTechniqueId = "T1068",
                     MitreTacticName = "Privilege Escalation",
@@ -206,7 +216,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "💉 ALERTĂ CRITICĂ: Injecție Exclusivă în Memorie & Process Hollowing",
+                    Title = "Alertă critică: Injecție Exclusivă în Memorie & Process Hollowing",
                     Severity = "Critical",
                     MitreTechniqueId = "T1055.012",
                     MitreTacticName = "Defense Evasion",
@@ -217,12 +227,13 @@ namespace LogAnalyzer.Core.Services.Network
             }
 
             // 11. Atac Fizic / Hardware (BadUSB / Rubber Ducky HID Injection T1052)
-            if (msg.Contains("rubber ducky") || msg.Contains("badusb") || msg.Contains("hid keyboard") ||
+            // never "hid keyboard": that is the name Windows gives every ordinary keyboard ("HID Keyboard Device")
+            if (msg.Contains("rubber ducky") || msg.Contains("badusb") ||
                 (msg.Contains("usb") && (msg.Contains("keystroke") || msg.Contains("payload injection"))))
             {
                 return new DetectedIssue
                 {
-                    Title = "🔌 ALERTĂ CRITICĂ: Atac Fizic BadUSB / Rubber Ducky (HID Keystroke Injection)",
+                    Title = "Alertă critică: Atac Fizic BadUSB / Rubber Ducky (HID Keystroke Injection)",
                     Severity = "Critical",
                     MitreTechniqueId = "T1200",
                     MitreTacticName = "Initial Access",
@@ -239,7 +250,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "🍪 ALERTĂ CRITICĂ: Furt Token-uri Sesiune & Bypass MFA (Infostealer / AiTM)",
+                    Title = "Alertă critică: Furt Token-uri Sesiune & Bypass MFA (Infostealer / AiTM)",
                     Severity = "Critical",
                     MitreTechniqueId = "T1539",
                     MitreTacticName = "Credential Access",
@@ -254,7 +265,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "📡 ALERTĂ MARE: Otrăvire Rețea Locală & Captură NTLM (Responder / LLMNR Poisoning)",
+                    Title = "Alertă mare: Otrăvire Rețea Locală & Captură NTLM (Responder / LLMNR Poisoning)",
                     Severity = "High",
                     MitreTechniqueId = "T1557.001",
                     MitreTacticName = "Credential Access",
@@ -265,12 +276,12 @@ namespace LogAnalyzer.Core.Services.Network
             }
 
             // 14. Abuz de Token-uri & Escaladare Privilegii (PrintSpoofer / Potato Exploits T1134)
-            if (msg.Contains("printspoofer") || msg.Contains("juicypotato") || msg.Contains("godpotato") ||
-                (msg.Contains("seimpersonateprivilege") && (msg.Contains("escalat") || msg.Contains("system"))))
+            // the tool names only: SeImpersonatePrivilege with SYSTEM is every Security 4672 Windows writes for its own service logons (lab VM 2026-11-06)
+            if (msg.Contains("printspoofer") || msg.Contains("juicypotato") || msg.Contains("godpotato") || msg.Contains("roguepotato") || msg.Contains("sweetpotato"))
             {
                 return new DetectedIssue
                 {
-                    Title = "🥔 ALERTĂ CRITICĂ: Escaladare Privilegii prin Abuz Token-uri (Potato / SeImpersonate)",
+                    Title = "Alertă critică: Escaladare Privilegii prin Abuz Token-uri (Potato / SeImpersonate)",
                     Severity = "Critical",
                     MitreTechniqueId = "T1134.001",
                     MitreTacticName = "Privilege Escalation",
@@ -285,7 +296,7 @@ namespace LogAnalyzer.Core.Services.Network
             {
                 return new DetectedIssue
                 {
-                    Title = "☁️ ALERTĂ MARE: Reguli Ascunse de Redirecționare Email & Exfiltrare Cloud",
+                    Title = "Alertă mare: Reguli Ascunse de Redirecționare Email & Exfiltrare Cloud",
                     Severity = "High",
                     MitreTechniqueId = "T1114.003",
                     MitreTacticName = "Collection",
@@ -335,7 +346,7 @@ namespace LogAnalyzer.Core.Services.Network
                     Severity = "High",
                     MitreTechniqueId = "T1059.001",
                     MitreTacticName = "Execution",
-                    Explanation = $"ALERTĂ DE TEST, NU O DETECȚIE REALĂ. Mesajul de test primit de pe [{ev.MachineName}] a declanșat calea de alertare; nu indică vreo activitate malițioasă.",
+                    Explanation = $"Alertă de test, nu o detecție reală. Mesajul de test primit de pe [{ev.MachineName}] a declanșat calea de alertare; nu indică vreo activitate malițioasă.",
                     IsTestAlert = true,
                     CreatedAt = DateTime.UtcNow,
                     RelatedEvents = new List<ParsedEvent> { ev }
@@ -361,7 +372,7 @@ namespace LogAnalyzer.Core.Services.Network
             if (accounts >= SprayAccountsThreshold)
                 return new DetectedIssue
                 {
-                    Title = "🚨 ALERTĂ MARE: Parole încercate pe multe conturi din aceeași sursă (password spraying)",
+                    Title = "Alertă mare: Parole încercate pe multe conturi din aceeași sursă (password spraying)",
                     Severity = "High",
                     MitreTechniqueId = "T1110.003",
                     MitreTacticName = "Credential Access",
@@ -371,10 +382,25 @@ namespace LogAnalyzer.Core.Services.Network
                     RelatedEvents = new List<ParsedEvent> { ev }
                 };
             int same = list.Count(f => f.User.Equals(user, StringComparison.OrdinalIgnoreCase));
+            // lab 2026-11-10: PowerShell Direct from the Hyper-V host leaves failed logons for this placeholder account inside the virtual machine;
+            // the alert stays (someone administers the machine from the host), but as a low one that says what it is
+            if (same >= SameAccountThreshold && user.Equals("?<PSDirectVMLegacy>", StringComparison.OrdinalIgnoreCase))
+                return new DetectedIssue
+                {
+                    Title = "Conexiuni PowerShell Direct de pe gazda Hyper-V",
+                    Severity = "Low",
+                    MitreTechniqueId = "T1110.001",
+                    MitreTacticName = "Credential Access",
+                    Explanation = $"Contul tehnic {user} a primit {same} autentificări eșuate pe [{ev.MachineName}] în ultimele {FailureWindow.TotalMinutes:0} minute. " +
+                                  "Nu este un cont real și nu este o parolă ghicită: fiecare conexiune PowerShell Direct făcută de pe gazda Hyper-V lasă o astfel de urmă în mașina virtuală. " +
+                                  "Verificați cine administrează gazda și dacă aceste conexiuni erau așteptate.",
+                    CreatedAt = DateTime.UtcNow,
+                    RelatedEvents = new List<ParsedEvent> { ev }
+                };
             if (same >= SameAccountThreshold)
                 return new DetectedIssue
                 {
-                    Title = "⚠️ ALERTĂ MEDIE: Parolă greșită de mai multe ori pentru același cont",
+                    Title = "Alertă medie: Parolă greșită de mai multe ori pentru același cont",
                     Severity = "Medium",
                     MitreTechniqueId = "T1110.001",
                     MitreTacticName = "Credential Access",

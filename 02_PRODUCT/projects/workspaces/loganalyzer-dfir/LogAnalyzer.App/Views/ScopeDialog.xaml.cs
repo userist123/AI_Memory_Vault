@@ -36,7 +36,8 @@ namespace LogAnalyzer.UI.Views
             _form.LegalBasisIndex = LegalBox.SelectedIndex; _form.NetworkIndex = NetworkBox.SelectedIndex; _form.ClassificationIndex = ClassBox.SelectedIndex;
             if (!_form.TryBuild(out var scope, out var missing))
             {
-                ErrorText.Text = "Câmpuri lipsă sau inconsistente: " + string.Join(", ", missing);
+                // in Romanian, as the wizard says them (lab VM 2026-11-06: the dialog showed the internal key „period.to”)
+                ErrorText.Text = "Câmpuri lipsă sau inconsistente: " + string.Join(", ", System.Linq.Enumerable.Select(missing, LogAnalyzer.UI.ViewModels.InvestigationViewModel.ScopeFieldRo));
                 return;
             }
             Result = scope;

@@ -26,7 +26,7 @@ namespace LogAnalyzer.Core.Services.Network
             if (_pinned) { _pinned = false; return null; }
             if (suppressed <= 0 || suppressed == _repeatsShown) return null;
             _repeatsShown = suppressed;
-            return $"🔴 Monitorizare activă · {suppressed} repetări ale unor alerte deja afișate au fost adăugate la alerta inițială (nu au deschis alerte noi).";
+            return $"Monitorizare activă · {suppressed} repetări ale unor alerte deja afișate au fost adăugate la alerta inițială (nu au deschis alerte noi).";
         }
 
         /// <summary>The newest <paramref name="rows"/> events of a batch (oldest first), the only ones worth inserting in the visible stream.</summary>

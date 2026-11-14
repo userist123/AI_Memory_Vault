@@ -61,6 +61,9 @@ public static partial class Wp11Rules
             Severity = Severity.Low, Category = "Lateral Movement", Classification = correlated ? Classification.Correlated : Classification.Direct,
             Confidence = Confidence.High, MitreTechniqueId = "T1021.001", FirstSeenUtc = ordered.FirstOrDefault(), LastSeenUtc = ordered.LastOrDefault(),
             User = groups[0].First().User, Ip = groups[0].Key.Ip,
+            PlainWhat = "a lucrat de la distanță pe acest calculator, din rețeaua internă (ecranul calculatorului a fost preluat prin rețea)" +
+                        (groups[0].Key.Ip.StartsWith('(') ? "" : $", de la adresa {groups[0].Key.Ip}") +
+                        (groups.Count > 1 ? $"; s-au mai făcut conectări de același fel cu încă {LogAnalyzer.Dfir.Language.RoText.Count(groups.Count - 1, "cont sau adresă", "conturi sau adrese")}" : ""),
             Description = string.Join("; ", groups.Take(15).Select(g => $"{g.First().User} de la {g.Key.Ip} ({string.Join(", ", g.GroupBy(x => x.Source).Select(s => $"{s.Count()} × {s.Key}"))})")) +
                           (loopback ? ". O sursă este adresa locală (loopback): RDP prin tunel este o posibilitate, nu o concluzie." : ""),
             ClassificationReason = correlated ? "Aceeași sesiune apare în Security 4624 tip 10 și în TerminalServices, apropiate în timp." : "Eveniment de autentificare RDP (4624 tip 10) sau TerminalServices 21/22/25/1149 dintr-o adresă care nu este publică.",
@@ -108,6 +111,11 @@ public static partial class Wp11Rules
             Confidence = pairs.Count > 0 ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1021.006",
             FirstSeenUtc = times.FirstOrDefault(), LastSeenUtc = times.LastOrDefault(),
             User = pairs.Count > 0 ? Account(F(pairs[0].Logon, "TargetUserName"), F(pairs[0].Logon, "TargetDomainName")) : "", Ip = pairs.Count > 0 ? F(pairs[0].Logon, "IpAddress") : "",
+            PlainWhat = sessionHost
+                ? "a lucrat de la distanță pe acest calculator (comenzi trimise prin rețea)" +
+                  (pairs.Count > 0 && F(pairs[0].Logon, "IpAddress") is { Length: > 0 } ip && ip != "-" ? $", de la adresa {ip}" : "; nu se știe de la ce adresă")
+                : n6 + n91 > 0 ? "Windows a înregistrat lucru de la distanță, cu comenzi trimise prin rețea, între acest calculator și altul"
+                : "Windows a înregistrat încercări nereușite de lucru de la distanță, cu comenzi trimise prin rețea",
             Description = $"WinRM/Operational: {n6} × 6 (sesiune inițiată de această stație), {n91} × 91 (shell creat pe această stație), {n142} × 142 (operații eșuate); " +
                           $"wsmprovhost.exe: {LogAnalyzer.Dfir.Language.RoText.Count(starts.Count, "pornire", "porniri")} 4688/Sysmon 1, {LogAnalyzer.Dfir.Language.RoText.Count(prefetch.Count, "intrare", "intrări")} Prefetch." + pairText,
             ClassificationReason = pairs.Count > 0 ? "wsmprovhost.exe pornit în sesiunea unei autentificări de tip 3 (LogonId sau utilizator+timp)." : "Evenimente WinRM/Operational și/sau pornirea gazdei de sesiune WinRM.",
@@ -165,6 +173,9 @@ public static partial class Wp11Rules
                 Severity = sev, Category = "Lateral Movement", Classification = pair is not null ? Classification.Correlated : Classification.Direct,
                 Confidence = pair is not null ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1569.002",
                 FirstSeenUtc = pair is not null ? T(pair) : T(e), LastSeenUtc = T(e), File = exe, User = F(e, "AccountName"),
+                PlainWhat = $"S-a instalat pe calculator serviciul {PlainPhrases.Q(name)} ({(psexesvc ? "partea de pe calculator a uneltei PsExec, care rulează comenzi de la distanță" : fromAdminShare ? "un serviciu cu fișierul adus prin partajarea administrativă a calculatorului" : "un serviciu cu nume întâmplător și fișierul direct în folderul Windows")})" +
+                            (pair is not null ? $"; cu puțin timp înainte, fișierul {PlainPhrases.Q(PlainPhrases.Leaf(F(pair, "RelativeTargetName")))} fusese copiat pe calculator prin partajarea administrativă" + (F(pair, "IpAddress") is { Length: > 0 } pip && pip != "-" ? $", de la adresa {pip}" : "") : "") +
+                            (approved is not null ? "; PsExec este software aprobat în profil" : "") + "; instalarea serviciului nu arată ce s-a rulat prin el",
                 Description = $"System 7045: {what} ({name}), ImagePath {image}, cont {F(e, "AccountName")}, {Time(T(e))}. " +
                               (pair is not null ? $"Security 5145: {F(pair, "RelativeTargetName")} accesat pe ADMIN$ de {Account(F(pair, "SubjectUserName"), F(pair, "SubjectDomainName"))} din {F(pair, "IpAddress")}, {Time(T(pair))}. " : "Nu există în caz un 5145 pe ADMIN$ pentru același fișier. ") +
                               (starts.Count > 0 ? $"Proces PSEXESVC.exe pornit: {LogAnalyzer.Dfir.Language.RoText.Count(starts.Count, "eveniment", "evenimente")}. " : "") +
@@ -186,6 +197,8 @@ public static partial class Wp11Rules
                 FindingId = c.NextId(), RuleId = "REMOTE-PSEXEC", Title = $"Executabile accesate prin ADMIN$ fără serviciu asociat în caz ({files.Count})",
                 Severity = Severity.Low, Category = "Lateral Movement", Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "T1021.002",
                 FirstSeenUtc = T(rest.OrderBy(T).First()), LastSeenUtc = T(rest.OrderBy(T).Last()),
+                PlainWhat = (files.Count == 1 ? "A fost copiat pe calculator, prin partajarea administrativă, un fișier executabil" : $"Au fost copiate pe calculator, prin partajarea administrativă, {LogAnalyzer.Dfir.Language.RoText.Count(files.Count, "fișier executabil", "fișiere executabile")}") +
+                            $" ({PlainPhrases.List(files.Select(f => PlainPhrases.Q(PlainPhrases.Leaf(f))).ToList(), 3)}), fără ca în probe să apară un serviciu instalat pentru {(files.Count == 1 ? "el; copierea nu arată că fișierul a fost rulat" : "ele; copierea nu arată că fișierele au fost rulate")}",
                 Description = $"Security 5145 pe ADMIN$: {Join(files)}; conturi {Join(rest.Select(w => Account(F(w, "SubjectUserName"), F(w, "SubjectDomainName"))))}, surse {Join(rest.Select(w => F(w, "IpAddress")))}. " +
                               "Nu există 7045 corespunzător în dovezile colectate (poate lipsi din jurnalul System colectat); copierea nu dovedește execuția.",
                 ClassificationReason = "Evenimente 5145 pe ADMIN$ pentru fișiere .exe; fără serviciu corespunzător în caz.",
@@ -202,6 +215,7 @@ public static partial class Wp11Rules
                 Severity = ApprovedSoftwareMatcher.Match(c.Profile, ["psexec", "psexesvc"], [], []) is not null ? Severity.Info : Severity.Medium,
                 Category = "Lateral Movement", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1569.002",
                 FirstSeenUtc = starts.Select(T).Min(), LastSeenUtc = starts.Select(T).Max(),
+                PlainWhat = "S-a pornit programul „PSEXESVC.exe” (partea de pe calculator a uneltei PsExec, care rulează comenzi de la distanță), fără ca în probe să apară instalarea serviciului lui; pornirea nu arată de unde a venit comanda",
                 Description = $"{starts.Count} dovezi de execuție pentru PSEXESVC.exe (4688 / Sysmon 1 / Prefetch); nu există 7045 în dovezile colectate. Pornirea nu arată de unde a venit comanda.",
                 ClassificationReason = "Proces PSEXESVC.exe înregistrat; instalarea serviciului lipsește din jurnalul colectat.",
                 SemanticType = SemanticType.Execution,
@@ -237,6 +251,10 @@ public static partial class Wp11Rules
             FindingId = c.NextId(), RuleId = "REMOTE-SSH", Title = $"Autentificări SSH acceptate ({accepted.Count})" + (external ? " din adrese publice" : ""),
             Severity = external ? Severity.Medium : Severity.Low, Category = "Lateral Movement", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1021.004",
             FirstSeenUtc = times.FirstOrDefault(), LastSeenUtc = times.LastOrDefault(), User = accepted[0].User, Ip = accepted[0].Ip,
+            PlainWhat = $"s-a conectat la calculator de la distanță prin SSH (terminal în mod text, prin rețea), de la adresa {accepted[0].Ip}, {PlainPhrases.Times(accepted.Count(a => a.User.Equals(accepted[0].User, StringComparison.OrdinalIgnoreCase) && a.Ip == accepted[0].Ip))}" +
+                        (accepted.Select(a => (a.User.ToLowerInvariant(), a.Ip)).Distinct().Count() > 1 ? (accepted.Select(a => (a.User.ToLowerInvariant(), a.Ip)).Distinct().Count() == 2 ? "; a mai fost acceptată o conectare de același fel cu un alt cont sau de la o altă adresă" : $"; au mai fost acceptate conectări de același fel cu {LogAnalyzer.Dfir.Language.RoText.Count(accepted.Select(a => (a.User.ToLowerInvariant(), a.Ip)).Distinct().Count() - 1, "alt cont sau adresă", "alte conturi sau adrese")}") : "") +
+                        (external ? "; cel puțin o adresă este publică (din afara rețelei interne)" : "") +
+                        (failed > 0 ? $"; în același jurnal {(failed == 1 ? "apare" : "apar")} și {LogAnalyzer.Dfir.Language.RoText.CountFem(failed, "încercare eșuată", "încercări eșuate")}" : ""),
             Description = string.Join("; ", accepted.GroupBy(a => (a.User.ToLowerInvariant(), a.Ip)).Take(15).Select(g => $"{g.First().User} de la {g.Key.Item2} ({g.Count()} × {g.First().Method})")) +
                           (failed > 0 ? $". {failed} încercări eșuate în același jurnal." : ""),
             ClassificationReason = "OpenSSH/Operational 4 cu mesaj 'Accepted … for … from …'. Arată o autentificare acceptată, nu activitatea din sesiune.",

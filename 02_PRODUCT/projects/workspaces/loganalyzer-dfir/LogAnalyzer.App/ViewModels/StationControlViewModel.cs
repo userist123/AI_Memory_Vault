@@ -174,6 +174,41 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private ControlComparison? _comparison;
         [ObservableProperty] private PreviousControl? _selectedPrevious;
         [ObservableProperty] private string _previousNote = "";
+        /// <summary>The non-conformities of this control with their measure, responsible and deadline (matrix HG 585 row 38); the inspector fills them in before the proces-verbal.</summary>
+        public ObservableCollection<CorrectiveAction> CorrectiveActionItems { get; } = new();
+        [ObservableProperty] private string _correctiveActionsMissing = "";
+
+        /// <summary>The plan of this control: the open actions of the previous control plus one new action per NECONFORM check.</summary>
+        internal static System.Collections.Generic.List<CorrectiveAction> BuildCorrectiveActions(ControlReport report, PreviousControl? previous) =>
+            CorrectiveActions.Plan(report.Checks, report.Facts.CollectedUtc, previous);
+
+        /// <summary>The "Status" text that stops the proces-verbal while an open action lacks its measure, responsible or deadline; null = complete.</summary>
+        internal static string? CorrectiveActionsGate(System.Collections.Generic.IEnumerable<CorrectiveAction> items)
+        {
+            var missing = CorrectiveActions.Missing(items);
+            return missing.Count == 0 ? null
+                : "Completați pentru fiecare neconformitate măsura, responsabilul și termenul înainte de procesul-verbal:" + Environment.NewLine + string.Join(Environment.NewLine, missing);
+        }
+
+        private void RebuildCorrectiveActions()
+        {
+            CorrectiveActionItems.Clear();
+            if (_report is not null) foreach (var a in BuildCorrectiveActions(_report, PreviousControls.FirstOrDefault())) CorrectiveActionItems.Add(a);
+            RefreshCorrectiveActionsMissing();
+        }
+
+        /// <summary>The comparison printed in the proces-verbal: against the most recent saved control (the one the measures come from), or null when there is none.</summary>
+        internal static ControlComparison? ReportComparison(ControlReport report, PreviousControl? previous) =>
+            previous is null ? null : ControlComparison.Compare(previous, report.Checks);
+
+        /// <summary>Called by the page after a cell of the actions grid was edited. A report saved before the edit no longer matches: it is generated again when needed.</summary>
+        public void RefreshCorrectiveActionsMissing()
+        {
+            CorrectiveActionsMissing = string.Join(Environment.NewLine, CorrectiveActions.Missing(CorrectiveActionItems));
+            if (_lastReportPdf is not null) { _lastReportPdf = null; Status = "Măsurile s-au schimbat după salvarea raportului; raportul se generează din nou la următoarea deschidere, semnare sau copiere."; }
+        }
+
+        private void ClearCorrectiveActions() { CorrectiveActionItems.Clear(); CorrectiveActionsMissing = ""; }
         // WP18 S5: the "proces-verbal" fields (decision D3) and the manual marking (decision D4).
         private readonly LogAnalyzer.Dfir.Reporting.ReportHeaderProfile _headerProfile = LogAnalyzer.Dfir.Reporting.ReportHeaderProfile.Load(null, out _);
         [ObservableProperty] private string _inspectorFunction = "";
@@ -261,6 +296,24 @@ namespace LogAnalyzer.UI.ViewModels
             return (folders, updates, transfers);
         }
 
+        /// <summary>The media of the profile's approved transfer channels; null when the profile is unreadable or defines none (check P14).</summary>
+        internal static List<string>? CurrentTransferMedia()
+        {
+            try
+            {
+                var ch = ProfileProvider.Shared.Current?.TransferChannels;
+                return ch is { Count: > 0 } ? ch.Select(c => $"{c.Name} {c.Medium}".Trim()).ToList() : null;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return null; }
+        }
+
+        /// <summary>The station level written in the procedure profile ("" = nedefinit or the profile is unreadable).</summary>
+        internal static string CurrentStationLevel()
+        {
+            try { return ProfileProvider.Shared.Current?.StationLevel ?? ""; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return ""; }
+        }
+
         private UpdateRegisterViewModel? _updateRegister;
         /// <summary>"Registrul actualizărilor offline" (control research P5), edited on the control page; created when the page first shows it.</summary>
         public UpdateRegisterViewModel UpdateRegister => _updateRegister ??= new UpdateRegisterViewModel();
@@ -277,7 +330,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task FlowNext()
         {
-            if (_flow.Completed) { _flow.Restart(); Result = null; Comparison = null; ComparisonChanges.Clear(); RaiseFlow(); return; }
+            if (_flow.Completed) { _flow.Restart(); Result = null; Comparison = null; ComparisonChanges.Clear(); ClearCorrectiveActions(); RaiseFlow(); return; }
             bool wasLast = _flow.IsLastStep;
             // The case scope (why, period, systems, approver, act) is asked once, at the start; the report step does not ask again when it is complete.
             if (_flow.StepIndex == 0 && !LogAnalyzer.UI.Services.LiveCase.EnsureScopeAtStart() && LogAnalyzer.UI.Services.LiveCase.ScopePrompt is not null)
@@ -296,7 +349,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         [RelayCommand] private void FlowBack() { _flow.Back(); SetFlowHint(); RaiseFlow(); }
         [RelayCommand] private void FlowStop() { _flow.Stop(); RaiseFlow(); Status = "Controlul a fost oprit. Ce ați ales rămâne; apăsați „Înainte” ca să continuați."; }
-        [RelayCommand] private void FlowRestart() { _flow.Restart(); Result = null; Comparison = null; ComparisonChanges.Clear(); SetFlowHint(); RaiseFlow(); }
+        [RelayCommand] private void FlowRestart() { _flow.Restart(); Result = null; Comparison = null; ComparisonChanges.Clear(); ClearCorrectiveActions(); SetFlowHint(); RaiseFlow(); }
 
         /// <summary>"Compară cu controlul anterior": a difference against the selected (or the most recent) saved control.</summary>
         [RelayCommand]
@@ -352,6 +405,8 @@ namespace LogAnalyzer.UI.ViewModels
                 var previousAnchor = PreviousAnchorCode;
                 var previousFromStation = PreviousCodeIsStationHint();
                 _lastReportPdf = null;
+                // a comparison or result left from the previous run never reaches this run's report
+                Comparison = null; ComparisonChanges.Clear(); Result = null;
                 _controlFinishAudited = false;
                 bool auditedStart = LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ControlStarted,
                     LogAnalyzer.Dfir.Auth.OperationAudit.ControlStartedDetail(LogAnalyzer.Core.Services.Edition.StationPostures.EditionLabel(posture), posture.ToString(),
@@ -375,6 +430,9 @@ namespace LogAnalyzer.UI.ViewModels
                     }
                     var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates, dcProbe: dcProbe, transfers: transfers,
                                                              auditPath: auditPath, auditChainValid: deviceChainValid, auditBytes: deviceAuditBytes);
+                    // the station's level comes only from the procedure profile; without it the level-dependent checks (A18, N14) stay NEDETERMINAT
+                    facts.StationLevel = CurrentStationLevel();
+        facts.ApprovedTransferMedia = CurrentTransferMedia();
                     // Time memory (S05): the latest time the application recorded, read BEFORE this report adds its own "clock.seen" entry.
                     // D04 and the transfer register: the officer-signed media register in force (re-verified; compared with the last install in the sealed audit)
                     // owner decision 2026-10-16: with the register switched off (MediaRegisterFeature) it is not read; D04 is "Nu se aplică" and the transfer
@@ -430,6 +488,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Actions.Clear();
                 foreach (var a in _report.Actions.OrderByDescending(a => a.TimeUtc)) Actions.Add(a);
                 FillClassified();
+                RebuildCorrectiveActions();
                 Summary = $"NECONFORM {_report.Count(ControlStatus.Neconform)} · DE VERIFICAT {_report.Count(ControlStatus.DeVerificat)} · " +
                           $"NEDETERMINAT {_report.Count(ControlStatus.Nedeterminat)} · CONFORM {_report.Count(ControlStatus.Conform)}" +
                           (_report.Count(ControlStatus.NuSeAplica) > 0 ? $" · NU SE APLICĂ {_report.Count(ControlStatus.NuSeAplica)}" : "");
@@ -572,8 +631,13 @@ namespace LogAnalyzer.UI.ViewModels
             if (_report is null) { Status = "Rulați întâi controlul."; return null; }
             var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
             if (ws is null) { Status = ReportScopeMessage(_report.Anchor is not null, _controlFinishAudited); return null; }
+            var gate = CorrectiveActionsGate(CorrectiveActionItems);
+            RefreshCorrectiveActionsMissing();
+            if (gate is not null) { Status = gate; return null; }
             if (Result is null) BuildResult();
-            var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result, ManualItems.Select(m => m.ToResult()).ToList());
+            // section 3e is always against the same previous control the measures (3d) were carried from, whatever period was chosen
+            var comparison = ReportComparison(_report, PreviousControls.FirstOrDefault());
+            var (_, pdf) = ControlReportPdf.SaveToCase(_report, ws, Inspector, Notes, BuildHeader(_report), Result, ManualItems.Select(m => m.ToResult()).ToList(), CorrectiveActionItems.ToList(), comparison);
             string sha;
             using (var fs = File.OpenRead(pdf)) sha = Convert.ToHexString(System.Security.Cryptography.SHA256.HashData(fs));
             LogAnalyzer.UI.Services.AuthApp.Record(LogAnalyzer.Dfir.Auth.OperationAudit.ReportGenerated, LogAnalyzer.Dfir.Auth.OperationAudit.ReportGeneratedDetail(Path.GetFileName(pdf), sha));

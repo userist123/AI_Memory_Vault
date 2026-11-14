@@ -313,7 +313,7 @@ namespace LogAnalyzer.UI.ViewModels
             _watcher.Start();
             _monitor?.SetEventsAvailable(_watcher.PnpEventsActive);
             IsLive = true;
-            LiveStatus = "Supraveghere în timp real PORNITĂ: orice dispozitiv conectat sau scos apare mai jos în câteva secunde.";
+            LiveStatus = "Supraveghere în timp real pornită: orice dispozitiv conectat sau scos apare mai jos în câteva secunde.";
         }
 
         private void StopLive()

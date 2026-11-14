@@ -43,7 +43,7 @@ namespace LogAnalyzer.UI.Tests
             Assert.Contains(m, l => l.Contains("întregului calculator"));
             Assert.Contains(m, l => l.Contains("Baza de date de pornire a Windows (BCD)"));
             Assert.Contains(m, l => l.Contains("număr 2"));
-            Assert.Contains(m, l => l.Contains("INFORMATIV"));
+            Assert.Contains(m, l => l.Contains("Informativ"));
         }
 
         [Fact]
@@ -69,7 +69,7 @@ namespace LogAnalyzer.UI.Tests
             var m = DetailSheetBuilder.Build(ev).Meaning;
             Assert.Contains(m, l => l.Contains("operație normală a Windows") && l.Contains("NU activitatea unei persoane"));
             Assert.DoesNotContain(m, l => l.Contains("Exemplu de abuz") || l.Contains("Security ID:"));
-            Assert.Contains(m, l => l.Contains("SCĂZUT"));
+            Assert.Contains(m, l => l.Contains("Scăzut"));
         }
 
         [Fact]

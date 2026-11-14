@@ -24,7 +24,7 @@ public static class FindingCardActions
 public sealed record FindingCardModel(
     string FindingId, string RuleId, string Title, string HumanSummary, string SeverityText, string SeveritySpec, string SeverityIcon,
     string StateLabel, string StateMeaning, string VerificationLabel, string VerificationText,
-    WhyExplanation Why, EvidenceLevels Evidence, KnowThinkDontKnow Know, IReadOnlyList<string> NextSteps, string TechnicalSummary)
+    WhyExplanation Why, EvidenceLevels Evidence, KnowThinkDontKnow Know, IReadOnlyList<string> NextSteps, string TechnicalSummary, string Plain = "")
 {
     public const string NoNextStep = "Niciun pas recomandat nu este înregistrat pentru această constatare.";
 
@@ -37,6 +37,8 @@ public sealed record FindingCardModel(
             StateLabels.Romanian(f.Status), StateLabels.Meaning(f.Status),
             StateLabels.Romanian(v.State), $"{StateLabels.Meaning(v.State)} {v.Reason}".Trim(),
             WhyExplainer.Build(f, ctx, verificationChecks, legacyScore), EvidenceLevels.Build(f, ctx), KnowThinkDontKnow.Build(f, ctx),
-            f.RecommendedNextSteps.Count > 0 ? f.RecommendedNextSteps.ToList() : [NoNextStep], f.TechnicalSummary);
+            f.RecommendedNextSteps.Count > 0 ? f.RecommendedNextSteps.ToList() : [NoNextStep], f.TechnicalSummary,
+            // the plain sentence comes first on the card (owner 2026-11-06); a case saved before it existed gets it told now, by account
+            LogAnalyzer.Dfir.Language.PlainStory.Current(f));
     }
 }

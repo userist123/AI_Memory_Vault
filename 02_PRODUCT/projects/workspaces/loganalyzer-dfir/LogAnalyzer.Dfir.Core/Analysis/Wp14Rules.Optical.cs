@@ -60,6 +60,9 @@ public static partial class Wp14Rules
             Severity = writeClaim ? Sev(c, Severity.Medium) : Sev(c, Severity.Low),
             Category = c.FindingCategory, Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1052",
             FirstSeenUtc = times.Count > 0 ? times.Min() : null, LastSeenUtc = times.Count > 0 ? times.Max() : null,
+            PlainWhat = burnExecuted ? "A rulat un program de inscripționare de CD/DVD pe calculator; nu se știe ce s-a scris pe disc"
+                      : writeClaim ? "Există urme că s-a pregătit sau s-a scris un CD/DVD pe calculator; nu se știe ce conținea discul"
+                      : "Există urme de CD/DVD pe calculator (unitate, imagine de disc sau program de inscripționare), dar nu o dovadă că s-a scris un disc",
             Description = $"{ordered.Count} urme optice ({string.Join(", ", kinds)}): " + string.Join("; ", ordered.Take(8).Select(h => h.Text)) + ". " +
                           (writeClaim ? "Inscripționarea pe disc este susținută doar de IMAPI sau de un instrument de inscripționare executat; conținutul și discul nu sunt cunoscute."
                                       : "Doar prezență, nu inscripționare: o unitate optică, o imagine sau un instrument prezent nu arată că s-a scris un disc.") + regNote,

@@ -165,6 +165,7 @@ public sealed class AmcacheParser : EvidenceParserBase
                 "Inventarul aplicațiilor nu este disponibil", "Root\\File (format Windows 8)", "Parțial"));
             return;
         }
+        int emptyKeys = 0;
         foreach (var k in reg.SubKeys(@"Root\InventoryApplicationFile"))
         {
             ct.ThrowIfCancellationRequested();
@@ -172,11 +173,18 @@ public sealed class AmcacheParser : EvidenceParserBase
             string V(string n) => k.Value(n)?.AsText ?? "";
             var path = V("LowerCaseLongPath");
             var sha1 = V("FileId") is { Length: 44 } fid && fid.StartsWith("0000") ? fid[4..].ToUpperInvariant() : V("FileId");
+            // evaluation 2026-11-05: a key without values (written only to the unapplied transaction log) printed "Amcache:  ( ) prezent la ";
+            // its name ("whoami.exe|7380676a876ce9b1") still names the program, and the row says why the rest is missing
+            var name = V("Name") is { Length: > 0 } n ? n : keyName.Split('|')[0];
+            bool valueless = V("Name").Length == 0 && path.Length == 0;
+            if (valueless) emptyKeys++;
             sink.Add(new TimelineEvent
             {
                 Time = Hive.KeyTime(k),
-                Source = "Amcache", EvidenceId = item.EvidenceId, Path = path, Process = V("Name"), Hash = sha1,
-                Summary = $"Amcache: {V("Name")} ({V("Publisher")} {V("Version")}) prezent la {path}",
+                Source = "Amcache", EvidenceId = item.EvidenceId, Path = path, Process = name, Hash = sha1,
+                Summary = valueless
+                    ? $"Amcache: {name} — intrare fără valori în hive (cale, editor și versiune lipsesc; probabil scrise doar în jurnalul de tranzacții, care nu este aplicat)"
+                    : $"Amcache: {name} ({V("Publisher")} {V("Version")}) prezent la {path}",
                 TimeSemantics = "Amcache entry last written (≈ first seen / install)",
                 TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.Medium,
                 Locator = $@"Amcache.hve\Root\InventoryApplicationFile\{keyName}",
@@ -189,6 +197,9 @@ public sealed class AmcacheParser : EvidenceParserBase
             });
             result.Records++;
         }
+        if (emptyKeys > 0)
+            result.Gaps.Add(new EvidenceGap("Amcache InventoryApplicationFile", EvidenceStatus.Partial, $"{emptyKeys} intrări fără valori (doar numele cheii): hive-ul era „murdar” la copiere și jurnalele de tranzacții nu sunt aplicate",
+                "Calea, editorul și versiunea acestor programe lipsesc; numele vine din numele cheii", "Aplicarea jurnalelor .LOG1/.LOG2 (neimplementată)", "Parțial"));
         if (File.Exists(fullPath + ".LOG1") is false && File.Exists(Path.Combine(Path.GetDirectoryName(fullPath)!, "Amcache.hve.LOG1")) is false)
             result.Gaps.Add(new EvidenceGap("Amcache transaction logs", EvidenceStatus.Partial, "jurnalele de tranzacții .LOG1/.LOG2 nu au fost aplicate",
                 "Cele mai recente intrări pot lipsi dacă hive-ul era „murdar” la copiere", "Copiere împreună cu .LOG1/.LOG2", "Parțial"));

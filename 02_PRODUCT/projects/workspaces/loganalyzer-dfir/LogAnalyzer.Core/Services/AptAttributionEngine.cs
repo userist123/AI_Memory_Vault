@@ -7,6 +7,8 @@ namespace LogAnalyzer.Core.Services
 {
     public class AptActorProfile
     {
+        /// <summary>What a screen reader announces for the item (the default was the class name, lab 2026-11-10).</summary>
+        public override string ToString() => $"{ActorName} · potrivire {MatchLevel} ({MatchScore:0}%)";
         public string ActorName { get; set; } = string.Empty; // ex: "APT29 (Cozy Bear / Nobelium)"
         public string Aliases { get; set; } = string.Empty;
         public string Origin { get; set; } = string.Empty; // ex: "Statul Rus (SVR)"
@@ -15,7 +17,7 @@ namespace LogAnalyzer.Core.Services
         public List<string> SignatureTechniques { get; set; } = new();
         public double MatchScore { get; set; } // 0 - 100%
         public string MatchLevel { get; set; } = "Scăzut";
-        public string MatchColor { get; set; } = "#38bdf8";
+        public string MatchColor { get; set; } = "#285F7E" /* Registru theme token Low */;
         public List<string> MatchedTechniques { get; set; } = new();
     }
 
@@ -121,7 +123,7 @@ namespace LogAnalyzer.Core.Services
                     MatchedTechniques = matched,
                     MatchScore = Math.Round(score, 1),
                     MatchLevel = (score >= 70 ? "suprapunere mare" : score >= 40 ? "suprapunere moderată" : "suprapunere mică") + " de tehnici — NU este atribuire",
-                    MatchColor = score >= 70 ? "#ef4444" : score >= 40 ? "#f97316" : "#38bdf8"
+                    MatchColor = score >= 70 ? "#A3201C" /* Registru theme token Critical */ : score >= 40 ? "#A84B0C" /* Registru theme token High */ : "#285F7E" /* Registru theme token Low */
                 };
 
                 results.Add(profileCopy);

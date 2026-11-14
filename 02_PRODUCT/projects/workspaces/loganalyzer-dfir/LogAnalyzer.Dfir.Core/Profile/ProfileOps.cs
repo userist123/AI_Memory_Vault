@@ -37,6 +37,8 @@ public static class ProfileOps
             if (missing.Count > 0)
                 issues.Add(new ProfileIssue(ProfileTable.RotationProcedure, 0, "lipsesc pașii " + string.Join(", ", missing), false));
         }
+        if (!string.IsNullOrWhiteSpace(p.StationLevel) && StationLevelRules.Resolve(p.StationLevel) is null)
+            issues.Add(new ProfileIssue(null, 0, $"nivelul stației „{p.StationLevel.Trim()}” nu este un nivel de clasificare cunoscut; regulile care depind de nivel (A18, N14) îl tratează ca nedefinit", IsError: false));
         return issues;
     }
 

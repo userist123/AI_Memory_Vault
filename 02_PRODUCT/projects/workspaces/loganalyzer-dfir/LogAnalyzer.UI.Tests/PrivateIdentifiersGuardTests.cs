@@ -54,6 +54,9 @@ namespace LogAnalyzer.UI.Tests
                 var rel = Path.GetRelativePath(root, f);
                 var parts = rel.Split(Path.DirectorySeparatorChar);
                 if (parts.Any(p => p is "bin" or "obj" or ".vs" or ".git")) continue;
+                // the WPF markup pass writes <Project>_<random>_wpftmp.csproj next to the project while a build runs (absolute paths inside);
+                // it is git-ignored and deleted after the build, so a parallel build (release gate) must not fail this guard
+                if (Path.GetFileName(f).EndsWith("_wpftmp.csproj", StringComparison.OrdinalIgnoreCase)) continue;
                 if (!TextExtensions.Contains(Path.GetExtension(f).ToLowerInvariant())) continue;
                 string text;
                 try { text = File.ReadAllText(f); } catch (IOException) { continue; }

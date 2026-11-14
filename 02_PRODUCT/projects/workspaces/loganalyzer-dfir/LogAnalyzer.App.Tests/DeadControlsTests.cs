@@ -27,7 +27,9 @@ public sealed class DeadControlsTests
         var dead = new List<string>();
         foreach (var f in Files("*.xaml"))
             foreach (var b in XDocument.Load(f).Descendants().Where(e => e.Name.LocalName == "Button"))
-                if (!b.Attributes().Any(a => a.Name.LocalName is "Command" or "Click") && !b.Elements().Any(e => e.Name.LocalName == "Button.ContextMenu"))
+                // a named template part (PART_Button of a DatePicker) is wired by its control, not by a command: only inside a ControlTemplate
+                if (!b.Attributes().Any(a => a.Name.LocalName is "Command" or "Click") && !b.Elements().Any(e => e.Name.LocalName == "Button.ContextMenu")
+                    && !(b.Attributes().Any(a => a.Name.LocalName == "Name" && a.Value.StartsWith("PART_", StringComparison.Ordinal)) && b.Ancestors().Any(e => e.Name.LocalName == "ControlTemplate")))
                     dead.Add($"{Path.GetFileName(f)}: {b.Attribute("Content")?.Value ?? b.ToString()[..Math.Min(80, b.ToString().Length)]}");
         Assert.True(dead.Count == 0, "buttons that do nothing:\n" + string.Join("\n", dead));
     }

@@ -69,6 +69,7 @@ namespace LogAnalyzer.Core.Services.Details
             [4740] = "Cont blocat după prea multe parole greșite.",
             [4768] = "Tichet Kerberos TGT cerut (autentificare în domeniu).",
             [4769] = "Tichet de serviciu Kerberos cerut. Cereri RC4 (0x17) către multe servicii pot indica Kerberoasting.",
+            [4887] = "Autoritatea de certificare a emis un certificat. Un nume alternativ (SAN) cerut de solicitant poate permite autentificarea ca alt cont.",
             [4771] = "Pre-autentificare Kerberos eșuată (parolă greșită în domeniu).",
             [4776] = "Validare de credențiale NTLM.",
             [4778] = "Sesiune (RDP) reconectată.",
@@ -122,7 +123,9 @@ namespace LogAnalyzer.Core.Services.Details
         // Senior review E1: providers the engines read that none of the dictionaries above covers. Provider is matched by a fragment of its name.
         private static readonly (string Provider, int Id, string Text)[] ByProvider =
         [
-            ("Kernel-Power", 41, "Stația a repornit fără o oprire corectă (pană de curent, blocare, buton de pornire ținut apăsat). Ce rula atunci s-a întrerupt brusc."),
+            // the ScreenConnect (ConnectWise Control) client writes its sessions to the Application log with ID 0 and source "ScreenConnect Client (<thumbprint>)"
+            ("ScreenConnect Client", 0, "ScreenConnect (aplicație de acces de la distanță): un rând din jurnalul sesiunilor clientului, de exemplu o conectare, o deconectare, un transfer de fișiere sau o comandă executată de la distanță. Textul arată ce s-a întâmplat; cine s-a conectat nu reiese întotdeauna din el."),
+            ("Kernel-Power", 41,"Stația a repornit fără o oprire corectă (pană de curent, blocare, buton de pornire ținut apăsat). Ce rula atunci s-a întrerupt brusc."),
             ("WLAN-AutoConfig", 8001, "Wi-Fi: stația s-a conectat la o rețea fără fir; evenimentul are numele rețelei (SSID), adaptorul folosit și tipul de autentificare."),
             ("WLAN-AutoConfig", 8003, "Wi-Fi: stația s-a deconectat de la o rețea fără fir (marchează sfârșitul conectării)."),
             ("WLAN-AutoConfig", 11001, "Wi-Fi: asocierea cu rețeaua fără fir a reușit; evenimentul are adaptorul, adresa fizică locală (LocalMac) și numele rețelei (SSID)."),
@@ -165,6 +168,8 @@ namespace LogAnalyzer.Core.Services.Details
             [1116] = "Microsoft Defender a detectat malware.",
             [1117] = "Microsoft Defender a acționat împotriva malware-ului.",
             [5001] = "Protecția în timp real a Microsoft Defender a fost DEZACTIVATĂ.",
+            [5010] = "Căutarea programelor spion și a programelor nedorite de către Microsoft Defender a fost DEZACTIVATĂ.",
+            [5012] = "Căutarea virușilor de către Microsoft Defender a fost DEZACTIVATĂ.",
             [5007] = "Configurația Microsoft Defender a fost modificată (verificați excluderile).",
             [1] = "Sysmon: proces creat (cu hash și linie de comandă).",
             [3] = "Sysmon: conexiune de rețea inițiată de un proces.",

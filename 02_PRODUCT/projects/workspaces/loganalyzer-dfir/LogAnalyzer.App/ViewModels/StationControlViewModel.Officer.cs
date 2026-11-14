@@ -296,7 +296,7 @@ namespace LogAnalyzer.UI.ViewModels
                     RecordOfficerEvent(OperationAudit.OfficerRegistered, OperationAudit.OfficerRegisteredDetail(row.Fingerprint, row.Name, row.Basis, ""));
                     OfficerInfo = $"Primul ofițer de securitate: {row.Name}{Environment.NewLine}AMPRENTA CERTIFICATULUI: {row.Fingerprint}{Environment.NewLine}" +
                                   "Treceți amprenta pe procesul-verbal și semnați lângă ea. La verificare, semnătura se compară cu amprenta de pe hârtie.";
-                    MessageBox.Show($"AMPRENTA CERTIFICATULUI OFIȚERULUI {row.Name}:\n\n{row.Fingerprint}\n\nTreceți-o pe procesul-verbal și semnați lângă ea.", "Primul ofițer de securitate", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show($"Amprenta certificatului ofițerului {row.Name}:\n\n{row.Fingerprint}\n\nTreceți-o pe procesul-verbal și semnați lângă ea.", "Primul ofițer de securitate", MessageBoxButton.OK, MessageBoxImage.Information);
                     Status = "Primul ofițer de securitate a fost înregistrat.";
                     return;
                 }

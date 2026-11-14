@@ -93,7 +93,7 @@ public sealed class BeginnerSimplify2_20261023Tests : IDisposable
             Layout(view);
             var shown = Buttons(view);
             foreach (var m in ProfileMoved.Append("Salvează")) Assert.Equal(1, shown.Count(b => b == m));
-            Assert.Equal(2, shown.Count(b => b == "Importă JSON…"));   // toolbar + empty-state card, as before
+            Assert.Equal(1, shown.Count(b => b == "Importă JSON…"));   // the toolbar one only: the duplicate accent button of the empty-state card was removed (one accent per screen, 2026-11-11)
             Assert.Contains(ProfileReplace, Boxes(view));
             return 0;
         });

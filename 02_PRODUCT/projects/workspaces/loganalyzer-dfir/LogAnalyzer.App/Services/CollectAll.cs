@@ -87,12 +87,16 @@ namespace LogAnalyzer.UI.Services
         /// <summary>Raised when a control or an analysis result is recorded, with the line for the status bar.</summary>
         public event Action<string>? ActivityRecorded;
 
+        /// <summary>Raised after a station control finished (with or without a saved report): Home lists the station's LIVE case in „Cazuri recente”.</summary>
+        public event Action? ControlRecorded;
+
         /// <summary>A station control finished: the empty banner goes away and the status bar gets the summary.</summary>
         public void RecordControl(string summary)
         {
             ControlDone = true;
             LastActivity = summary;
             ActivityRecorded?.Invoke(summary);
+            ControlRecorded?.Invoke();
         }
 
         /// <summary>Raised after a new result is published (pages refresh what they show from it).</summary>

@@ -54,6 +54,10 @@ public sealed class RemoteToolRow
     public List<string> DisplayContains { get; set; } = [];
     public List<string> ProductContains { get; set; } = [];
     public List<string> LogMarkers { get; set; } = [];
+    /// <summary>DNS suffixes of the tool's service (matched at a label boundary: "x.anydesk.com" yes, "notanydesk.com" no). Optional.</summary>
+    public List<string> Domains { get; set; } = [];
+    /// <summary>Part of Windows (Quick Assist): present is Low, run from its normal place Medium, and it never counts toward the two-tools rule.</summary>
+    public bool Common { get; set; }
 }
 
 public sealed class RemoteToolCatalog
@@ -118,6 +122,8 @@ public sealed class PowerShellLists
     /// <summary>Summed weight from which a block is High (unless a keyword is flagged <see cref="PowerShellKeyword.High"/>).</summary>
     public int HighScore { get; set; } = 8;
     public List<PowerShellKeyword> Keywords { get; set; } = [];
+    /// <summary>Text that a Windows-generated CIM module never contains: its presence keeps a block with the CDXML prologue listed on its own.</summary>
+    public List<string> CimForeignContent { get; set; } = [];
 }
 
 public sealed class RuleLists

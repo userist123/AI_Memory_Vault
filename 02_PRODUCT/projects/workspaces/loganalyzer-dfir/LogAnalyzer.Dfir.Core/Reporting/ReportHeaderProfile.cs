@@ -53,8 +53,8 @@ public sealed class ReportHeaderField { public string Label { get; set; } = ""; 
 /// <summary>"Pentru cine este raportul?" (UX contract §15): the audience chooses the sections, never the facts.</summary>
 public enum ReportAudience { Management, ItSecurity, Forensic, IncidentResponse, Audit, Legal, Everything }
 
-/// <summary>Sections of the investigation report, by number as the PDF prints them.</summary>
-public enum ReportSection { IncidentChains = 1, Gaps = 2, Findings = 3, EvidenceCollected = 4, Detections = 5, AntiForensics = 6, PolicyTimeline = 7, Integrity = 8, LegalNotes = 9 }
+/// <summary>Sections of the investigation report. The values 1-9 follow the PDF's print order; later sections get the next free number, and the PDF numbers its headings in print order (Identities prints after Detections).</summary>
+public enum ReportSection { IncidentChains = 1, Gaps = 2, Findings = 3, EvidenceCollected = 4, Detections = 5, AntiForensics = 6, PolicyTimeline = 7, Integrity = 8, LegalNotes = 9, Identities = 10 }
 
 public static class ReportAudiences
 {
@@ -74,11 +74,11 @@ public static class ReportAudiences
     public static string Description(ReportAudience a) => a switch
     {
         ReportAudience.Management => "Ce s-a întâmplat, sursele lipsă sau incomplete și constatările pe scurt (cu ce lipsește și ce limitează concluziile); fără detalii tehnice.",
-        ReportAudience.ItSecurity => "Lanțul incidentului, constatările cu probe, detecțiile și sursele lipsă; fără integritatea element de probă cu element de probă.",
+        ReportAudience.ItSecurity => "Lanțul incidentului, constatările cu probe, detecțiile, conturile privilegiate și sursele lipsă; fără integritatea element de probă cu element de probă.",
         ReportAudience.Forensic => "Totul, cu accent pe probe: colectare, citire și interpretare, integritate, surse lipsă, ascunderea sau ștergerea urmelor.",
-        ReportAudience.IncidentResponse => "Lanțul incidentului, constatările, detecțiile și sursele lipsă, ca să se decidă următorii pași.",
-        ReportAudience.Audit => "Probele colectate, sursele lipsă, cronologia politicilor și integritatea; constatările pe scurt.",
-        ReportAudience.Legal => "Aceleași secțiuni ca raportul complet, fără listele brute (detecții, colectare), plus notele juridice: ce poate și ce nu poate dovedi raportul.",
+        ReportAudience.IncidentResponse => "Lanțul incidentului, constatările, detecțiile, conturile privilegiate și sursele lipsă, ca să se decidă următorii pași.",
+        ReportAudience.Audit => "Probele colectate, sursele lipsă, cronologia politicilor, conturile privilegiate și integritatea; constatările pe scurt.",
+        ReportAudience.Legal => "Secțiunile raportului complet, fără listele brute (detecții, colectare) și fără căile conturilor, plus notele juridice: ce poate și ce nu poate dovedi raportul.",
         _ => "Toate secțiunile raportului.",
     };
 
@@ -94,9 +94,9 @@ public static class ReportAudiences
         var extra = a switch
         {
             ReportAudience.Management => Array.Empty<ReportSection>(),
-            ReportAudience.ItSecurity => new[] { ReportSection.Detections },
-            ReportAudience.IncidentResponse => new[] { ReportSection.Detections },
-            ReportAudience.Audit => new[] { ReportSection.EvidenceCollected, ReportSection.PolicyTimeline, ReportSection.Integrity },
+            ReportAudience.ItSecurity => new[] { ReportSection.Detections, ReportSection.Identities },
+            ReportAudience.IncidentResponse => new[] { ReportSection.Detections, ReportSection.Identities },
+            ReportAudience.Audit => new[] { ReportSection.EvidenceCollected, ReportSection.PolicyTimeline, ReportSection.Integrity, ReportSection.Identities },
             ReportAudience.Legal => new[] { ReportSection.PolicyTimeline, ReportSection.Integrity, ReportSection.LegalNotes },
             _ => Enum.GetValues<ReportSection>(),
         };

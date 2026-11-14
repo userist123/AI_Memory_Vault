@@ -13,11 +13,11 @@ public static class AntiOverclaim
     /// <summary>Artifacts that record that something ran. Everything else is presence, configuration or observation.</summary>
     private static readonly HashSet<string> ExecutionArtifacts = new(StringComparer.OrdinalIgnoreCase) { "Prefetch", "BAM", "UserAssist" };
 
-    /// <summary>Artifact → what it may be called. Amcache, ShimCache, LNK, Jump List, USB, USN are presence/observation, never execution or user action.</summary>
+    /// <summary>Artifact → what it may be called. Amcache, ShimCache, MUICache, WindowsSearch (index entry), LNK, Jump List, USB, USN are presence/observation, never execution or user action.</summary>
     public static SemanticType SemanticForArtifact(string artifact) => artifact switch
     {
         _ when ExecutionArtifacts.Contains(artifact) => SemanticType.Execution,
-        "Amcache" or "ShimCache" or "LNK" or "JumpList" => SemanticType.Presence,
+        "Amcache" or "ShimCache" or "MUICache" or "WindowsSearch" or "LNK" or "JumpList" => SemanticType.Presence,
         "Service" or "ScheduledTask" or "RunKey" or "Winlogon" or "IFEO" or "SystemConfig" => SemanticType.Configuration,
         _ => SemanticType.Observation,
     };

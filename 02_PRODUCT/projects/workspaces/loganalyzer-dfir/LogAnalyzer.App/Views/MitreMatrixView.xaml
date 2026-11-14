@@ -8,23 +8,18 @@
         </Grid.RowDefinitions>
 
         <!-- Title & Coverage Stats -->
-        <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,16">
+        <StackPanel Grid.Row="0">
+        <DockPanel LastChildFill="False">
             <StackPanel DockPanel.Dock="Left" Orientation="Horizontal" VerticalAlignment="Center">
-                <TextBlock Text="Tehnici de atac (MITRE ATT&amp;CK)" FontSize="20" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center"/>
-                <Border Margin="14,0,0,0" BorderBrush="{StaticResource PrimaryAccentBrush}" Background="{StaticResource Surface3Brush}" BorderThickness="1" CornerRadius="4" Padding="8,2" VerticalAlignment="Center">
-                    <TextBlock Text="ENTERPRISE MATRIX" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
-                </Border>
+                <TextBlock Style="{StaticResource PageTitleStyle}" Text="Tehnici de atac (MITRE ATT&amp;CK)" VerticalAlignment="Center"/>
             </StackPanel>
-            <Border DockPanel.Dock="Right" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="12,6">
-                <StackPanel Orientation="Horizontal">
-                    <TextBlock Text="DETT&amp;CT VISIBILITY COVERAGE: " FontSize="11" FontWeight="Bold" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center"/>
-                    <TextBlock Text="88.4%" FontSize="12" FontWeight="Bold" Foreground="{StaticResource SuccessBrush}" VerticalAlignment="Center" Margin="6,0,0,0"/>
-                </StackPanel>
-            </Border>
         </DockPanel>
+            <Border Style="{StaticResource PageRuleStyle}"/>
+        </StackPanel>
 
-        <!-- 7-Column Grid Matrix -->
-        <Grid Grid.Row="1">
+        <!-- 7-column matrix; design pass 2026-11-10: ONE vertical scroll for the whole matrix (each column had its own scrollbar, which took the width and broke words) -->
+        <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
+        <Grid VerticalAlignment="Top">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="*"/>
@@ -36,24 +31,23 @@
             </Grid.ColumnDefinitions>
 
             <!-- Column 1: Initial Access -->
-            <Border Grid.Column="0" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,6,0" Padding="6">
+            <Border Grid.Column="0" Background="{StaticResource Surface1Brush}" BorderThickness="0" CornerRadius="4" Margin="0,0,4,0" Padding="4,6,4,4">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="4" Padding="6,6" Margin="0,0,0,8">
-                        <TextBlock Text="INITIAL ACCESS" FontSize="9.5" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" TextAlignment="Center"/>
+                    <Border Grid.Row="0" BorderBrush="{StaticResource TextPrimaryBrush}" BorderThickness="0,0,0,2" Padding="4,2,4,6" Margin="0,0,0,6" MinHeight="40">
+                        <TextBlock Text="Acces inițial" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" VerticalAlignment="Bottom"/>
                     </Border>
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding MitreInitialAccessTechniques}">
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding MitreInitialAccessTechniques}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,6">
+                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,5" Margin="0,0,0,4" ToolTip="{Binding}">
                                         <Grid>
                                             <StackPanel>
-                                                <TextBlock Text="{Binding TechId}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
-                                                <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                <TextBlock Text="{Binding TechId}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="11" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,1,0,0"/>
                                             </StackPanel>
                                             <Ellipse Width="7" Height="7" Fill="{Binding DotColor}" Visibility="{Binding HasDot, Converter={StaticResource BooleanToVisibilityConverter}}" HorizontalAlignment="Right" VerticalAlignment="Top"/>
                                         </Grid>
@@ -61,29 +55,27 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ScrollViewer>
                 </Grid>
             </Border>
 
             <!-- Column 2: Execution -->
-            <Border Grid.Column="1" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,6,0" Padding="6">
+            <Border Grid.Column="1" Background="{StaticResource Surface1Brush}" BorderThickness="0" CornerRadius="4" Margin="0,0,4,0" Padding="4,6,4,4">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="4" Padding="6,6" Margin="0,0,0,8">
-                        <TextBlock Text="EXECUTION" FontSize="9.5" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" TextAlignment="Center"/>
+                    <Border Grid.Row="0" BorderBrush="{StaticResource TextPrimaryBrush}" BorderThickness="0,0,0,2" Padding="4,2,4,6" Margin="0,0,0,6" MinHeight="40">
+                        <TextBlock Text="Execuție" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" VerticalAlignment="Bottom"/>
                     </Border>
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding MitreExecutionTechniques}">
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding MitreExecutionTechniques}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,6">
+                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,5" Margin="0,0,0,4" ToolTip="{Binding}">
                                         <Grid>
                                             <StackPanel>
-                                                <TextBlock Text="{Binding TechId}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
-                                                <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                <TextBlock Text="{Binding TechId}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="11" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,1,0,0"/>
                                             </StackPanel>
                                             <Ellipse Width="7" Height="7" Fill="{Binding DotColor}" Visibility="{Binding HasDot, Converter={StaticResource BooleanToVisibilityConverter}}" HorizontalAlignment="Right" VerticalAlignment="Top"/>
                                         </Grid>
@@ -91,29 +83,27 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ScrollViewer>
                 </Grid>
             </Border>
 
             <!-- Column 3: Persistence -->
-            <Border Grid.Column="2" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,6,0" Padding="6">
+            <Border Grid.Column="2" Background="{StaticResource Surface1Brush}" BorderThickness="0" CornerRadius="4" Margin="0,0,4,0" Padding="4,6,4,4">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="4" Padding="6,6" Margin="0,0,0,8">
-                        <TextBlock Text="PERSISTENCE" FontSize="9.5" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" TextAlignment="Center"/>
+                    <Border Grid.Row="0" BorderBrush="{StaticResource TextPrimaryBrush}" BorderThickness="0,0,0,2" Padding="4,2,4,6" Margin="0,0,0,6" MinHeight="40">
+                        <TextBlock Text="Persistență" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" VerticalAlignment="Bottom"/>
                     </Border>
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding MitrePersistenceTechniques}">
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding MitrePersistenceTechniques}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,6">
+                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,5" Margin="0,0,0,4" ToolTip="{Binding}">
                                         <Grid>
                                             <StackPanel>
-                                                <TextBlock Text="{Binding TechId}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
-                                                <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                <TextBlock Text="{Binding TechId}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="11" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,1,0,0"/>
                                             </StackPanel>
                                             <Ellipse Width="7" Height="7" Fill="{Binding DotColor}" Visibility="{Binding HasDot, Converter={StaticResource BooleanToVisibilityConverter}}" HorizontalAlignment="Right" VerticalAlignment="Top"/>
                                         </Grid>
@@ -121,29 +111,27 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ScrollViewer>
                 </Grid>
             </Border>
 
             <!-- Column 4: Privilege Escalation -->
-            <Border Grid.Column="3" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,6,0" Padding="6">
+            <Border Grid.Column="3" Background="{StaticResource Surface1Brush}" BorderThickness="0" CornerRadius="4" Margin="0,0,4,0" Padding="4,6,4,4">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="4" Padding="6,6" Margin="0,0,0,8">
-                        <TextBlock Text="PRIVILEGE ESC" FontSize="9" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" TextAlignment="Center"/>
+                    <Border Grid.Row="0" BorderBrush="{StaticResource TextPrimaryBrush}" BorderThickness="0,0,0,2" Padding="4,2,4,6" Margin="0,0,0,6" MinHeight="40">
+                        <TextBlock Text="Escaladarea privilegiilor" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" VerticalAlignment="Bottom"/>
                     </Border>
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding MitrePrivEscTechniques}">
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding MitrePrivEscTechniques}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,6">
+                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,5" Margin="0,0,0,4" ToolTip="{Binding}">
                                         <Grid>
                                             <StackPanel>
-                                                <TextBlock Text="{Binding TechId}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
-                                                <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                <TextBlock Text="{Binding TechId}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="11" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,1,0,0"/>
                                             </StackPanel>
                                             <Ellipse Width="7" Height="7" Fill="{Binding DotColor}" Visibility="{Binding HasDot, Converter={StaticResource BooleanToVisibilityConverter}}" HorizontalAlignment="Right" VerticalAlignment="Top"/>
                                         </Grid>
@@ -151,29 +139,27 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ScrollViewer>
                 </Grid>
             </Border>
 
             <!-- Column 5: Defense Evasion -->
-            <Border Grid.Column="4" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,6,0" Padding="6">
+            <Border Grid.Column="4" Background="{StaticResource Surface1Brush}" BorderThickness="0" CornerRadius="4" Margin="0,0,4,0" Padding="4,6,4,4">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="4" Padding="6,6" Margin="0,0,0,8">
-                        <TextBlock Text="DEFENSE EVASION" FontSize="9.5" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" TextAlignment="Center"/>
+                    <Border Grid.Row="0" BorderBrush="{StaticResource TextPrimaryBrush}" BorderThickness="0,0,0,2" Padding="4,2,4,6" Margin="0,0,0,6" MinHeight="40">
+                        <TextBlock Text="Evitarea apărării" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" VerticalAlignment="Bottom"/>
                     </Border>
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding MitreDefenseEvasionTechniques}">
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding MitreDefenseEvasionTechniques}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,6">
+                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,5" Margin="0,0,0,4" ToolTip="{Binding}">
                                         <Grid>
                                             <StackPanel>
-                                                <TextBlock Text="{Binding TechId}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
-                                                <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                <TextBlock Text="{Binding TechId}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="11" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,1,0,0"/>
                                             </StackPanel>
                                             <Ellipse Width="7" Height="7" Fill="{Binding DotColor}" Visibility="{Binding HasDot, Converter={StaticResource BooleanToVisibilityConverter}}" HorizontalAlignment="Right" VerticalAlignment="Top"/>
                                         </Grid>
@@ -181,29 +167,27 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ScrollViewer>
                 </Grid>
             </Border>
 
             <!-- Column 6: Credential Access -->
-            <Border Grid.Column="5" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Margin="0,0,6,0" Padding="6">
+            <Border Grid.Column="5" Background="{StaticResource Surface1Brush}" BorderThickness="0" CornerRadius="4" Margin="0,0,4,0" Padding="4,6,4,4">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="4" Padding="6,6" Margin="0,0,0,8">
-                        <TextBlock Text="CREDENTIAL ACCESS" FontSize="8.5" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" TextAlignment="Center"/>
+                    <Border Grid.Row="0" BorderBrush="{StaticResource TextPrimaryBrush}" BorderThickness="0,0,0,2" Padding="4,2,4,6" Margin="0,0,0,6" MinHeight="40">
+                        <TextBlock Text="Accesul la credențiale" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" VerticalAlignment="Bottom"/>
                     </Border>
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding MitreCredentialAccessTechniques}">
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding MitreCredentialAccessTechniques}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,6">
+                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,5" Margin="0,0,0,4" ToolTip="{Binding}">
                                         <Grid>
                                             <StackPanel>
-                                                <TextBlock Text="{Binding TechId}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
-                                                <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                <TextBlock Text="{Binding TechId}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="11" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,1,0,0"/>
                                             </StackPanel>
                                             <Ellipse Width="7" Height="7" Fill="{Binding DotColor}" Visibility="{Binding HasDot, Converter={StaticResource BooleanToVisibilityConverter}}" HorizontalAlignment="Right" VerticalAlignment="Top"/>
                                         </Grid>
@@ -211,29 +195,27 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ScrollViewer>
                 </Grid>
             </Border>
 
             <!-- Column 7: Impact -->
-            <Border Grid.Column="6" Background="{StaticResource Surface1Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="6">
+            <Border Grid.Column="6" Background="{StaticResource Surface1Brush}" BorderThickness="0" CornerRadius="4" Padding="4,6,4,4">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    <Border Grid.Row="0" Background="{StaticResource Surface3Brush}" BorderBrush="{StaticResource PrimaryAccentBrush}" BorderThickness="1" CornerRadius="4" Padding="6,6" Margin="0,0,0,8">
-                        <TextBlock Text="IMPACT" FontSize="9.5" FontWeight="Black" Foreground="{StaticResource TextPrimaryBrush}" TextAlignment="Center"/>
+                    <Border Grid.Row="0" BorderBrush="{StaticResource TextPrimaryBrush}" BorderThickness="0,0,0,2" Padding="4,2,4,6" Margin="0,0,0,6" MinHeight="40">
+                        <TextBlock Text="Impact" FontSize="11.5" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" VerticalAlignment="Bottom"/>
                     </Border>
-                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
-                        <ItemsControl ItemsSource="{Binding MitreImpactTechniques}">
+                    <ItemsControl Grid.Row="1" ItemsSource="{Binding MitreImpactTechniques}">
                             <ItemsControl.ItemTemplate>
                                 <DataTemplate>
-                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="6" Padding="8" Margin="0,0,0,6">
+                                    <Border Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" BorderThickness="1" CornerRadius="4" Padding="6,5" Margin="0,0,0,4" ToolTip="{Binding}">
                                         <Grid>
                                             <StackPanel>
-                                                <TextBlock Text="{Binding TechId}" FontSize="10" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
-                                                <TextBlock Text="{Binding Name}" FontSize="10" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                                                <TextBlock Text="{Binding TechId}" FontSize="10.5" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}" FontFamily="{StaticResource CodeFontFamily}"/>
+                                                <TextBlock Text="{Binding Name}" FontSize="11" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap" Margin="0,1,0,0"/>
                                             </StackPanel>
                                             <Ellipse Width="7" Height="7" Fill="{Binding DotColor}" Visibility="{Binding HasDot, Converter={StaticResource BooleanToVisibilityConverter}}" HorizontalAlignment="Right" VerticalAlignment="Top"/>
                                         </Grid>
@@ -241,9 +223,9 @@
                                 </DataTemplate>
                             </ItemsControl.ItemTemplate>
                         </ItemsControl>
-                    </ScrollViewer>
                 </Grid>
             </Border>
         </Grid>
+        </ScrollViewer>
     </Grid>
 </UserControl>

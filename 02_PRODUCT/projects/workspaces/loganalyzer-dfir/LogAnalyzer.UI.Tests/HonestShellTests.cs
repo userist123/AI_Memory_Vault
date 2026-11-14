@@ -135,9 +135,9 @@ namespace LogAnalyzer.UI.Tests
 
             Assert.NotNull(alert);
             Assert.True(alert!.IsTestAlert);
-            Assert.StartsWith("[TEST", alert.Title);
-            Assert.Contains("NU ESTE O ALERTĂ REALĂ", alert.Title);
-            Assert.Contains("NU O DETECȚIE REALĂ", alert.Explanation);
+            Assert.StartsWith("[Test", alert.Title);
+            Assert.Contains("nu este o alertă reală", alert.Title);
+            Assert.Contains("nu o detecție reală", alert.Explanation);
         }
 
         [Fact]
@@ -213,7 +213,6 @@ namespace LogAnalyzer.UI.Tests
             Assert.DoesNotContain("APT Attribution", text);
             Assert.DoesNotContain("& Attribution", text);
             Assert.Contains("nu este atribuire", text);
-            Assert.Contains("NU este atribuire", text);
             Assert.DoesNotContain("Threat Intel &amp; APT\"", main);
         }
 
@@ -279,7 +278,8 @@ namespace LogAnalyzer.UI.Tests
             Assert.Contains("<views:HomeView DataContext=\"{Binding Home}\"/>", main);
             Assert.Contains("private int _selectedTabIndex = HomeViewModel.HomeTabIndex", vm);
             Assert.Contains("Command Dashboard", main);          // the existing pages are still there
-            Assert.Contains("Investigație completă (caz)", main);
+            Assert.Contains(LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(LogAnalyzer.Core.Services.Edition.StationPosture.Standalone, LogAnalyzer.Core.Services.Connectivity.AppMode.AirGapped, []).SelectMany(s => s.Pages),
+                            p => p.Title == "Investigație completă (caz)");   // 2026-11-05: the Avansat menu comes from the catalog
         }
 
         [Fact]

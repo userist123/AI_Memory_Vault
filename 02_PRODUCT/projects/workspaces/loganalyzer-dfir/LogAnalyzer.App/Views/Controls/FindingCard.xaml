@@ -12,9 +12,17 @@
         <StackPanel>
             <DockPanel>
                 <ctrl:SeverityBadge DockPanel.Dock="Right" Severity="{Binding Card.SeveritySpec}" VerticalAlignment="Top" Margin="12,0,0,0"/>
-                <TextBlock Text="{Binding Card.Title}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"/>
+                <!-- owner 2026-11-06: first what happened, in plain words (who, what, with what, when); the technical title and summary only on request -->
+                <TextBlock Text="{Binding Card.Plain}" FontSize="16" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}"
+                           AutomationProperties.Name="Ce s-a întâmplat"/>
             </DockPanel>
-            <TextBlock Text="{Binding Card.HumanSummary}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,6,0,0"/>
+            <Expander Header="Detalii tehnice (pentru specialiști)" Margin="0,6,0,0" Foreground="{StaticResource TextSecondaryBrush}" AutomationProperties.Name="Detaliile tehnice ale constatării">
+                <StackPanel>
+                    <TextBlock Text="{Binding Card.Title}" FontWeight="SemiBold" TextWrapping="Wrap" Foreground="{StaticResource TextPrimaryBrush}" Margin="0,4,0,0"/>
+                    <TextBlock Text="{Binding Card.HumanSummary}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                    <TextBlock Text="{Binding Card.TechnicalSummary}" TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0"/>
+                </StackPanel>
+            </Expander>
 
             <WrapPanel Margin="0,8,0,0">
                 <TextBlock Foreground="{StaticResource TextPrimaryBrush}" Margin="0,0,16,0">
@@ -48,9 +56,9 @@
                 <DataGrid ItemsSource="{Binding Card.Evidence.List}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220" Margin="0,6,0,0"
                           AutomationProperties.Name="Lista dovezilor: sursă, oră, descriere">
                     <DataGrid.Columns>
-                        <DataGridTextColumn Header="Sursă" Binding="{Binding Source}" Width="*"/>
-                        <DataGridTextColumn Header="Ora" Binding="{Binding TimeText}" Width="*"/>
-                        <DataGridTextColumn Header="Descriere" Binding="{Binding Description}" Width="3*"/>
+                        <DataGridTextColumn Header="Sursă" Binding="{Binding Source}" Width="*" MinWidth="70"/>
+                        <DataGridTextColumn Header="Ora" Binding="{Binding TimeText}" Width="*" MinWidth="50"/>
+                        <DataGridTextColumn Header="Descriere" Binding="{Binding Description}" Width="3*" MinWidth="100"/>
                     </DataGrid.Columns>
                 </DataGrid>
                 <Expander Header="Detalii tehnice (id probă, SHA-256, cale, parser, locator)" AutomationProperties.Name="Detalii tehnice ale dovezilor" Margin="0,6,0,0" Foreground="{StaticResource TextPrimaryBrush}">
@@ -59,13 +67,13 @@
                         <DataGrid ItemsSource="{Binding Card.Evidence.Technical}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="260"
                                   AutomationProperties.Name="Detalii tehnice ale dovezilor">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Id probă" Binding="{Binding EvidenceId}" Width="90"/>
-                                <DataGridTextColumn Header="Amprenta fișierului (SHA-256)" Binding="{Binding Sha256}" Width="2*"/>
-                                <DataGridTextColumn Header="Cale sursă" Binding="{Binding SourcePath}" Width="2*"/>
-                                <DataGridTextColumn Header="Parser" Binding="{Binding Parser}" Width="*"/>
-                                <DataGridTextColumn Header="Versiune" Binding="{Binding ParserVersion}" Width="80"/>
-                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp}" Width="*"/>
-                                <DataGridTextColumn Header="Locator" Binding="{Binding Locator}" Width="*"/>
+                                <DataGridTextColumn Header="Id probă" Binding="{Binding EvidenceId}" Width="90" MinWidth="90"/>
+                                <DataGridTextColumn Header="Amprenta fișierului (SHA-256)" Binding="{Binding Sha256}" Width="2*" MinWidth="250"/>
+                                <DataGridTextColumn Header="Cale sursă" Binding="{Binding SourcePath}" Width="2*" MinWidth="100"/>
+                                <DataGridTextColumn Header="Parser" Binding="{Binding Parser}" Width="*" MinWidth="70"/>
+                                <DataGridTextColumn Header="Versiune" Binding="{Binding ParserVersion}" Width="90" MinWidth="90"/>
+                                <DataGridTextColumn Header="Marcaj de timp" Binding="{Binding Timestamp}" Width="*" MinWidth="130"/>
+                                <DataGridTextColumn Header="Locator" Binding="{Binding Locator}" Width="*" MinWidth="80"/>
                             </DataGrid.Columns>
                         </DataGrid>
                     </StackPanel>

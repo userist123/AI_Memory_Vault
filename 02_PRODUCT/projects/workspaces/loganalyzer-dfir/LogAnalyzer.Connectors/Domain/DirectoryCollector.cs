@@ -40,7 +40,7 @@ public static class DirectoryCollector
         var snap = new DomainSnapshot { DomainName = domainName.Length > 0 ? domainName : baseDn, DomainSid = domainSid, Server = dnsHost };
         snap.Policy = new DomainPolicy(
             Int(root, "minPwdLength"), Int(root, "lockoutThreshold"),
-            root.Properties["maxPwdAge"].Value is { } mpa ? Interval(mpa) : null, Int(root, "pwdHistoryLength"));
+            MaxPasswordAge(root), Int(root, "pwdHistoryLength"));
 
         foreach (var a in Search(root, "(&(objectCategory=person)(objectClass=user))", ct)) snap.Users.Add(a);
         ct.ThrowIfCancellationRequested();
@@ -89,17 +89,18 @@ public static class DirectoryCollector
     private static int Int(DirectoryEntry e, string attr) => e.Properties[attr].Value is { } v ? Convert.ToInt32(v) : 0;
 
     /// <summary>Large-integer interval (negative 100-ns ticks) from ADSI.</summary>
-    private static TimeSpan? Interval(object v)
+    /// <summary>
+    /// maxPwdAge through a base-scope search, which returns the large integer as a plain Int64. Read from the DirectoryEntry it is an
+    /// IADsLargeInteger COM object; the dynamic call on it threw NotImplementedException in the published app and closed it (lab VM 2026-11-07).
+    /// </summary>
+    private static TimeSpan? MaxPasswordAge(DirectoryEntry root)
     {
-        try
-        {
-            dynamic li = v;
-            long ticks = ((long)(int)li.HighPart << 32) | (uint)(int)li.LowPart;
-            return ticks == long.MinValue || ticks == 0 ? null : TimeSpan.FromTicks(-ticks);
-        }
-        catch (Microsoft.CSharp.RuntimeBinder.RuntimeBinderException) { return null; }
+        using var s = new DirectorySearcher(root, "(objectClass=*)", ["maxPwdAge"], SearchScope.Base);
+        var r = s.FindOne();
+        return r is not null && r.Properties["maxPwdAge"] is { Count: > 0 } p && p[0] is long ticks ? Interval(ticks) : null;
     }
 
+    internal static TimeSpan? Interval(long ticks) => ticks is 0 or long.MinValue ? null : TimeSpan.FromTicks(-ticks);
     /// <summary>RFC 4515 escaping for values inserted in LDAP filters.</summary>
     public static string Escape(string value)
     {

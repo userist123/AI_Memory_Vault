@@ -11,6 +11,9 @@ public sealed record SuspectProcess(int Pid, string Name, string Path, IReadOnly
 {
     /// <summary>Only these may be contained without asking: high confidence and not vouched for by the operator.</summary>
     public bool EligibleForAutoContainment => HighConfidence && !Trusted;
+
+    /// <summary>The grid row's name for a screen reader (lab VM 2026-11-07: „SuspectProcess { Pid = …, Reasons = System.Collections.Generic.List`1… }”).</summary>
+    public override string ToString() => $"{Name} (PID {Pid}): {string.Join("; ", Reasons)}";
 }
 
 /// <summary>
@@ -53,6 +56,24 @@ public static class SuspiciousProcessDetector
                                  (b[0] == 169 && b[1] == 254) || b[0] == 127 || b[0] >= 224);
     }
 
+    /// <summary>
+    /// The original name of a Microsoft program whose file now has another name („cmd.exe” for updsvc.exe), from its version resource; null when the
+    /// names match, the file has no version resource or it is not Microsoft's.
+    /// </summary>
+    public static string? RenamedWindowsProgram(string path)
+    {
+        try
+        {
+            var v = FileVersionInfo.GetVersionInfo(path);
+            if (v.CompanyName?.Contains("Microsoft", StringComparison.OrdinalIgnoreCase) != true) return null;
+            var original = (v.OriginalFilename ?? "").Trim();
+            if (original.EndsWith(".mui", StringComparison.OrdinalIgnoreCase)) original = original[..^4];
+            if (original.Length == 0) return null;
+            return original.Equals(System.IO.Path.GetFileName(path), StringComparison.OrdinalIgnoreCase) ? null : original.ToLowerInvariant();
+        }
+        catch (Exception ex) when (ex is System.IO.FileNotFoundException or UnauthorizedAccessException or System.IO.IOException) { return null; }
+    }
+
     /// <summary>Scans running processes; never touches them.</summary>
     public static IReadOnlyList<SuspectProcess> Scan(TrustedProgramStore? trusted = null)
     {
@@ -81,7 +102,11 @@ public static class SuspiciousProcessDetector
                 var sig = Authenticode.Verify(path);
                 bool unsigned = !sig.IsSigned || !sig.IsValid;
                 if (unsigned) reasons.Add(sig.IsSigned ? $"semnătură invalidă ({sig.Status})" : "fără semnătură digitală");
-                if (!unsigned && !(writable && internet)) continue;
+                // a Windows program copied under another name into a writable folder (lab S4: cmd.exe as C:\Users\Public\Libraries\upd\updsvc.exe, T1036.003);
+                // listed for the operator, never high confidence: it is not unsigned and may talk to no one
+                var renamed = writable ? RenamedWindowsProgram(path) : null;
+                if (renamed is not null) reasons.Add($"program al Windows copiat și redenumit (numele original: {renamed})");
+                if (!unsigned && !(writable && internet) && renamed is null) continue;
 
                 bool isTrusted = trusted?.IsTrusted(path) == true;
                 if (isTrusted) reasons.Add("marcat de operator ca program de încredere (SHA-256)");
@@ -111,7 +136,7 @@ public static class BlockedConnectionLog
         {
             var flags = LogAnalyzer.Dfir.Windows.Native.AuditPolicy.QueryFlags(Guid.Parse(FilteringPlatformConnectionGuid));
             var setting = (LogAnalyzer.Dfir.Windows.Native.AuditSetting)(flags & 3);
-            return ((setting & LogAnalyzer.Dfir.Windows.Native.AuditSetting.Failure) != 0, setting == LogAnalyzer.Dfir.Windows.Native.AuditSetting.None ? "No Auditing" : setting.ToString());
+            return ((setting & LogAnalyzer.Dfir.Windows.Native.AuditSetting.Failure) != 0, setting == LogAnalyzer.Dfir.Windows.Native.AuditSetting.None ? "neauditat" : setting.ToString());
         }
         catch (System.ComponentModel.Win32Exception ex)
         {

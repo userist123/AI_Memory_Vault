@@ -39,6 +39,9 @@ public sealed record RecentCaseView(RecentCase Entry, bool Exists)
 
     /// <summary>Display only: the last-opened time in the operator's local time, dd.MM.yyyy HH:mm.</summary>
     public string LastOpenedLocalText => "deschis ultima dată " + Entry.LastOpenedUtc.ToLocalTime().ToString("dd.MM.yyyy HH:mm", System.Globalization.CultureInfo.InvariantCulture);
+
+    /// <summary>Name announced by a screen reader for the list row (evaluation 2026-11-05: the record text with the full profile path was announced).</summary>
+    public override string ToString() => $"{Entry.Title}, {DisplayState}, {LastOpenedLocalText}";
 }
 
 /// <summary>

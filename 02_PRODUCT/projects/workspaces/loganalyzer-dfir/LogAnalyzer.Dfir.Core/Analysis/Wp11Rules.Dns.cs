@@ -79,6 +79,9 @@ public static partial class Wp11Rules
                 Severity = highInterest ? Severity.Medium : Severity.Low, Category = "Command and Control", Classification = byPid ? Classification.Candidate : Classification.Direct,
                 Confidence = byPid ? Confidence.Low : Confidence.Medium, MitreTechniqueId = "T1071.004",
                 FirstSeenUtc = T(items[0].Event), LastSeenUtc = T(items[^1].Event), Process = file, File = g.First().Image, Domain = domains[0],
+                PlainWhat = $"Programul {PlainPhrases.Q(file)} ({(lolbin ? "o unealtă Windows adesea folosită abuziv" : "pornit dintr-un loc în care utilizatorii pot scrie")}) a căutat în DNS " +
+                            $"{(domains.Count == 1 ? "adresa rar întâlnită" : "adrese rar întâlnite")} {PlainPhrases.List(domains.Select(PlainPhrases.Q).ToList(), 3, ("adresă", "adrese"))}, fiecare apărând în tot cazul cel mult {PlainPhrases.Times(c.Options.DnsRareMaxCount)}" +
+                            (byPid ? " (programul este dedus după numărul procesului, deci nu este sigur)" : "") + "; căutarea unei adrese nu dovedește o conexiune",
                 Description = $"{file} ({(lolbin ? "unealtă Windows abuzată frecvent" : "program rulat dintr-o locație în care utilizatorii pot scrie")}) a rezolvat {Join(domains, 8)}; fiecare domeniu apare cel mult de {LogAnalyzer.Dfir.Language.RoText.Times(c.Options.DnsRareMaxCount)} în tot cazul. " +
                               (byPid ? $"Procesul a fost dedus din PID {items.First(q => q.ByPid).Pid} (cel mai recent proces cu acest PID pornit înainte de interogare; PID-urile se reutilizează). " : "Procesul este cel din Sysmon 22. ") +
                               "Rezolvarea unui nume nu dovedește o conexiune sau un transfer.",
@@ -110,6 +113,9 @@ public static partial class Wp11Rules
                 FindingId = c.NextId(), RuleId = "DNS-SERVER-CHANGED", Title = $"Serverele DNS ale interfeței {F(items[0], "Interface")} s-au schimbat",
                 Severity = allApproved ? Severity.Info : external ? Severity.Medium : Severity.Low, Category = "Defense Evasion", Classification = Classification.Direct, Confidence = Confidence.Medium,
                 FirstSeenUtc = t0, LastSeenUtc = t1,
+                PlainWhat = $"Calculatorul folosește acum serverele DNS (cele care află adresa unui site după nume) {string.Join(", ", after)} în loc de {string.Join(", ", before)} pe o interfață de rețea" +
+                            (allApproved ? "; serverele noi sunt destinații aprobate în profil" : external ? "; cel puțin un server nou este o adresă publică care nu apare în profil" : "") +
+                            "; registrul arată valoarea, nu cine a schimbat-o",
                 Description = $"Interfața {F(items[0], "Interface")}: {string.Join(", ", before)} ({Time(t0)}) → {string.Join(", ", after)} ({Time(t1)})." +
                               (allApproved ? " Serverele noi sunt destinații aprobate în profil (aprobat în profil)." : external ? " Cel puțin un server nou este o adresă publică care nu apare în profil." : "") +
                               (context.Count > 0 ? $" Evenimente NetworkProfile în apropiere: {context.Count} (contextul rețelei, nu dovada schimbării)." : "") +

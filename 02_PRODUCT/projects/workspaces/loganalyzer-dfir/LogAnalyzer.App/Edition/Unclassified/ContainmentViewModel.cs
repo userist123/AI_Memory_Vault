@@ -87,7 +87,7 @@ namespace LogAnalyzer.UI.ViewModels
             var (on, detail) = BlockedConnectionLog.IsFailureAuditEnabled();
             AuditStatus = on
                 ? "Auditul conexiunilor blocate este activ: încercările programelor izolate sunt înregistrate (evenimentul 5157)."
-                : $"Auditul conexiunilor blocate NU este activ ({detail}). Fără el, Windows nu înregistrează unde încearcă să se conecteze un program izolat.";
+                : $"Auditul conexiunilor blocate nu este activ ({detail}). Fără el, Windows nu înregistrează unde încearcă să se conecteze un program izolat.";
         }
 
         [RelayCommand]
@@ -218,8 +218,9 @@ namespace LogAnalyzer.UI.ViewModels
                     "Ridicare izolare", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;
             Status = ContainmentRelease.Run(_service, inc, "ridicată de operator");
             IncidentDetail = IncidentDetailFormatter.Format(inc);
+            // the same object put back in its own place is not a change for the grid (lab VM 2026-11-07: the row still said „IZOLAT” after the release)
             var idx = Incidents.IndexOf(inc);
-            if (idx >= 0) { Incidents[idx] = inc; SelectedIncident = inc; }
+            if (idx >= 0) { Incidents.RemoveAt(idx); Incidents.Insert(idx, inc); SelectedIncident = inc; }
         }
 
         [RelayCommand]
@@ -342,19 +343,19 @@ namespace LogAnalyzer.UI.ViewModels
             if (s is { Persistence.Count: > 0 })
             {
                 sb.AppendLine();
-                sb.AppendLine("PORNIRE AUTOMATĂ");
+                sb.AppendLine("Pornire automată");
                 foreach (var p in s.Persistence) sb.AppendLine($"  {p.Mechanism}: {p.Location}  {p.Value}");
             }
             sb.AppendLine();
             sb.AppendLine("CONSTATĂRI");
             foreach (var f in i.Findings) sb.AppendLine($"  [{f.Severity.ToSpec()}/{f.Classification.ToSpec()}] {f.Title}: {f.Description}");
             sb.AppendLine();
-            sb.AppendLine("JURNAL ACȚIUNI");
+            sb.AppendLine("Jurnal de acțiuni");
             foreach (var a in i.Actions) sb.AppendLine($"  {L(a.TimeUtc)}  {a.Action}  {ContainmentText.Action(a.Success)}  {a.Target}  {a.Detail}");
             if (s is { Gaps.Count: > 0 })
             {
                 sb.AppendLine();
-                sb.AppendLine("SURSE LIPSĂ SAU INCOMPLETE");
+                sb.AppendLine("Surse lipsă sau incomplete");
                 foreach (var g in s.Gaps) sb.AppendLine($"  {g.Artifact}: {g.Status.ToSpec()} — {g.Reason}");
             }
             return sb.ToString();

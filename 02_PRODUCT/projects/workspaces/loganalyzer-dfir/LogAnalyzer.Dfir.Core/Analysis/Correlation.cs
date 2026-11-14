@@ -49,6 +49,54 @@ public static class Correlation
     internal static readonly TimeSpan CredentialWindow = TimeSpan.FromMinutes(30);
 
     /// <summary>
+    /// A wrong password or an unknown account refused by the domain controller: 4771 with Kerberos status 0x18 (pre-authentication failed) or
+    /// 0x6 (no such account), or 4776 with NTLM status 0xC000006A (wrong password) or 0xC0000064 (no such account). Expired or locked accounts and
+    /// clock skew are other statuses and are not counted as guessing.
+    /// </summary>
+    internal static bool IsDcPasswordFailure(TimelineEvent e)
+    {
+        if (!e.Source.Equals("EventLog:Security", StringComparison.OrdinalIgnoreCase)) return false;
+        // a computer account failing (its own password out of sync after a restore) is not someone guessing
+        if (Wp11Rules.F(e, "TargetUserName").EndsWith('$')) return false;
+        var status = Wp11Rules.F(e, "Status").Trim().ToLowerInvariant();
+        return e.EventId switch
+        {
+            "4771" => status is "0x18" or "0x6",
+            "4776" => status is "0xc000006a" or "0xc0000064",
+            _ => false,
+        };
+    }
+
+    /// <summary>The source address of a failed sign-in, without the IPv4-mapped prefix 4771 writes („::ffff:10.0.0.5”).</summary>
+    internal static string FailIp(TimelineEvent e)
+    {
+        var ip = Wp11Rules.F(e, "IpAddress").Trim();
+        if (ip == "-") return "";   // 4625 writes „-”, 4776 has no address: both mean none, and must group together
+        return ip.StartsWith("::ffff:", StringComparison.OrdinalIgnoreCase) ? ip[7..] : ip;
+    }
+
+    /// <summary>The computer named by a failed sign-in (4625 WorkstationName, 4776 Workstation), empty when unknown.</summary>
+    private static string FailWs(TimelineEvent e) => Wp11Rules.F(e, "WorkstationName", "Workstation").Trim() is { Length: > 0 } w && w != "-" ? w.TrimStart('\\') : "";
+
+    /// <summary>
+    /// One attempt seen in two logs (4776 on the domain controller and 4625 on the server it was meant for) is counted once: a record of another
+    /// kind within a second of the one kept is the same attempt.
+    /// </summary>
+    private static List<TimelineEvent> Once(List<TimelineEvent> ordered)
+    {
+        var kept = new List<TimelineEvent>();
+        foreach (var e in ordered)
+        {
+            bool same = false;
+            // time-sorted: only the last kept records can be within the second
+            for (int i = kept.Count - 1; i >= 0 && e.Time.Utc!.Value - kept[i].Time.Utc!.Value <= TimeSpan.FromSeconds(1); i--)
+                if (kept[i].EventId != e.EventId) { same = true; break; }
+            if (!same) kept.Add(e);
+        }
+        return kept;
+    }
+
+    /// <summary>
     /// The densest window of at most <paramref name="window"/> over time-sorted items whose count (or distinct key count) reaches
     /// <paramref name="n"/>; returns the item index range, or null.
     /// </summary>
@@ -85,16 +133,17 @@ public static class Correlation
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
     private static readonly System.Text.RegularExpressions.Regex DefenderWeakeningValue = new(
-        @"exclusions|\bDisable(?:RealtimeMonitoring|BehaviorMonitoring|IOAVProtection|ScriptScanning|OnAccessProtection|AntiSpyware|AntiVirus|BlockAtFirstSeen|ArchiveScanning)\s*=\s*(?:0x)?0*1\b|TamperProtection\s*=\s*(?:0x)?0*4\b|SpynetReporting\s*=\s*(?:0x)?0+\b",
+        @"\\(?:ASROnly(?:PerRule)?)?Exclusions(?:\\|_)|\bDisable(?:RealtimeMonitoring|BehaviorMonitoring|IOAVProtection|ScriptScanning|OnAccessProtection|AntiSpyware|AntiVirus|BlockAtFirstSeen|ArchiveScanning)\s*=\s*(?:0x)?0*1\b|TamperProtection\s*=\s*(?:0x)?0*4\b|SpynetReporting\s*=\s*(?:0x)?0+\b",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
     private static readonly System.Text.RegularExpressions.Regex WmiTypedName = new(
-        @"^\s*(?:(?<type>[A-Za-z_]+)\.)?Name\s*=\s*""(?<name>[^""]*)""\s*$",
+        @"^\s*(?:(?:(?<type>[A-Za-z_]+)\.)?Name|(?<type>[A-Za-z_]+))\s*=\s*""(?<name>[^""]*)""\s*$",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
     /// <summary>
     /// True only for the subscription Windows registers itself: the consumer / filter NAME field is exactly "SCM Event Log Consumer" / "SCM Event Log Filter"
-    /// (an NTEventLogEventConsumer / __EventFilter). A command line or script that merely mentions the phrase is not built-in.
+    /// (an NTEventLogEventConsumer / __EventFilter), written as Type.Name="..." or, as WMI-Activity 5861 logs it, Type="...". A command line or script that
+    /// merely mentions the phrase is not built-in.
     /// </summary>
     private static bool IsBuiltInWmiSubscription(string consumer)
     {
@@ -108,7 +157,57 @@ public static class Correlation
         return false;
     }
 
-    /// <summary>A Defender 5007 "new value" that weakens protection: an exclusion, a protection-disabling switch (explicit list) set to 1, Tamper Protection off, cloud reporting off.</summary>
+    /// <summary>
+    /// The script PowerShell generates from a CDXML module for every CIM cmdlet (Storage, NetAdapter, NetTCPIP...): it starts with the fixed prologue
+    /// and drives Microsoft.PowerShell.Cmdletization. Windows logs it as Warning by itself; only the Warning flag is discounted, never a keyword hit.
+    /// </summary>
+    /// <summary>„OneDrive Standalone Update Task-S-1-5-21-…-1000” → „OneDrive Standalone Update Task” (a per-user task carries its user's SID in the name).</summary>
+    internal static string TaskNameWithoutSid(string name) =>
+        System.Text.RegularExpressions.Regex.Replace(name ?? "", @"-?S-1-5-21(?:-\d+){3,4}$", "", System.Text.RegularExpressions.RegexOptions.CultureInvariant).Trim();
+
+    internal static bool IsGeneratedCimModule(string text)
+    {
+        var t = text.TrimStart();
+        if (!t.StartsWith("#requires -version 3.0", StringComparison.OrdinalIgnoreCase)) return false;
+        // the generated prologue is fixed and comes first: the markers must sit at its head, not anywhere (a comment) in a pasted script (review round 1)
+        var head = t.Length > 600 ? t[..600] : t;
+        if (!head.Contains(@"try { Microsoft.PowerShell.Core\Set-StrictMode -Off } catch { }", StringComparison.Ordinal) ||
+            // both separators and both cases are generated (lab VMs: ROOT\Microsoft\Windows\Defender\MSFT_MpRollback; Server 2025: root/StandardCimv2/MSFT_NetAdapter...)
+            !(head.Contains("$script:ClassName = 'ROOT/", StringComparison.OrdinalIgnoreCase) || head.Contains("$script:ClassName = 'ROOT\\", StringComparison.OrdinalIgnoreCase)) ||
+            !t.Contains("Microsoft.PowerShell.Cmdletization", StringComparison.Ordinal)) return false;
+        // a generated CIM wrapper never loads native code or decodes payloads: any listed text (data, rule_lists.json) means foreign content; an empty list
+        // (data not loaded) treats nothing as the generated module, so nothing is summarised away
+        var foreign = Wp11Data.Default.Lists.Powershell.CimForeignContent;
+        return foreign.Count > 0 && !foreign.Any(k => k.Length > 0 && t.Contains(k, StringComparison.OrdinalIgnoreCase));
+    }
+
+    private static readonly System.Text.RegularExpressions.Regex CimClassNameRx = new(@"\$script:ClassName\s*=\s*'(?<c>[^'\r\n]{1,200})'",
+        System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>The CIM class a generated module wraps (ROOT/Microsoft/Windows/Storage/MSFT_Disk), shown made visible; "clasă necunoscută" otherwise.</summary>
+    internal static string CimClassName(string text) => CimClassNameRx.Match(text) is { Success: true } m ? Visible(m.Groups["c"].Value) : "clasă necunoscută";
+
+    /// <summary>A Defender 5007 "new value" that weakens protection: an exclusion (a value under an ...\Exclusions\ key; Features\TPExclusions is a Tamper
+    /// Protection flag Defender writes itself, not an exclusion), a protection-disabling switch (explicit list) set to 1, Tamper Protection off, cloud reporting off.</summary>
+    private static readonly System.Text.RegularExpressions.Regex ExcludedPathInSetting = new(@"Exclusions\\Paths\\(?<p>[^=]+?)\s*(?:=|$)", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+    private static readonly System.Text.RegularExpressions.Regex ExcludedPathInCommand = new(@"-ExclusionPath\s*[: ]\s*(?:['""](?<p>[^'""]+)['""]|(?<p>[^\s,;]+))", System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>DEF-TAMPER in plain words: which folders the antivirus was told to skip, or that its protection was switched off or a change was blocked.</summary>
+    private static string DefenderPlain(List<TimelineEvent> tamper, List<TimelineEvent> commands, Func<TimelineEvent, string, string> F)
+    {
+        var excluded = tamper.Where(e => e.EventId == "5007").Select(e => ExcludedPathInSetting.Match(F(e, "New Value") + F(e, "NewValue")))
+            .Concat(commands.Select(e => ExcludedPathInCommand.Match(F(e, "CommandLine") + " " + F(e, "ScriptBlockText"))))
+            .Where(m => m.Success).Select(m => m.Groups["p"].Value.Trim()).Where(p => p.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        bool off = tamper.Any(e => e.EventId is "5001" or "5010" or "5012");
+        if (excluded.Count > 0)
+            return "a slăbit antivirusul: l-a pus să nu mai verifice " + (excluded.Count == 1 ? "folderul " : "folderele ") + PlainPhrases.List(excluded.Select(PlainPhrases.Q).ToList(), 4) +
+                   (off ? "; protecția lui a fost oprită și ea" : "");
+        if (off) return "Windows a înregistrat oprirea protecției antivirusului Microsoft Defender";
+        if (tamper.Any(e => e.EventId == "5007")) return "a slăbit antivirusul: a schimbat o setare de protecție a antivirusului Microsoft Defender într-una mai slabă";
+        if (commands.Count > 0) return "a rulat comenzi prin care antivirusul Microsoft Defender poate fi oprit sau slăbit";
+        return "Windows a blocat o încercare de a slăbi antivirusul Microsoft Defender";
+    }
+
     private static bool WeakensDefender(string newValue) => newValue.Length > 0 && DefenderWeakeningValue.IsMatch(newValue);
 
     private static readonly System.Text.RegularExpressions.Regex CommandExecutableRx = new(
@@ -159,6 +258,7 @@ public static class Correlation
                 Title = $"Microsoft Defender a detectat {(threats.Count == 1 ? threats[0] : $"{threats.Count} amenințări")} în {WinPath.GetFileName(g.Key.TrimEnd('\\'))}",
                 Severity = Severity.High, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.High,
                 FirstSeenUtc = g.Min(e => e.Time.Utc), LastSeenUtc = g.Max(e => e.Time.Utc), File = g.Key, User = F(first, "Detection User"),
+                PlainWhat = $"Microsoft Defender (antivirusul Windows) a detectat {(threats.Count == 1 ? PlainPhrases.Q(threats[0]) : threats.Count == 0 ? "ceva periculos" : $"{threats.Count} amenințări")} în {PlainPhrases.Q(PlainPhrases.Leaf(g.Key.TrimEnd('\\')))}",
                 Description = $"{LogAnalyzer.Dfir.Language.RoText.Count(g.Count(), "eveniment", "evenimente")} Defender pentru {g.Key}: {string.Join(", ", threats.Take(15))}. Acțiuni: {string.Join(", ", g.Select(e => F(e, "Action Name")).Where(a => a.Length > 0).Distinct())}.",
                 ClassificationReason = "Înregistrare directă în jurnalul Defender.",
                 SupportingEvidence = g.Take(20).Select(e => Ref(e, $"Defender {e.EventId}")).ToList(),
@@ -187,6 +287,7 @@ public static class Correlation
                 FindingId = Id(), RuleId = "DEF-TAMPER", Title = "Microsoft Defender dezactivat, slăbit sau cu excluderi adăugate",
                 Severity = Severity.High, Category = "Defense Evasion", Classification = Classification.Direct, Confidence = Confidence.High,
                 FirstSeenUtc = all.Count > 0 ? all.Min(e => e.Time.Utc) : null, LastSeenUtc = all.Count > 0 ? all.Max(e => e.Time.Utc) : null, MitreTechniqueId = "T1562.001",
+                PlainWhat = DefenderPlain(tamper, tamperCommands, (e, n) => F(e, n)),
                 Description = string.Join("; ", tamper.Concat(tamperCommands).Take(10).Select(Describe)) +
                               ". Ce s-a întâmplat: protecția antivirus a fost oprită sau slăbită, ori s-a încercat. De ce contează: atacatorii o fac înainte să ruleze programe dăunătoare, ca să nu fie detectați.",
                 ClassificationReason = "Înregistrări directe: jurnalul Defender (5001 protecție dezactivată, 5007 configurație modificată, 5013 modificare blocată de Tamper Protection) sau o linie de comandă / script PowerShell care apelează comenzile Defender de modificare a preferințelor (din lista de date a regulii).",
@@ -207,6 +308,7 @@ public static class Correlation
         {
             var ordered = g.Select(e => (e, id: long.TryParse(e.Locator[14..], out var r) ? r : -1)).Where(x => x.id > 0).OrderBy(x => x.id).ToList();
             var gaps = new List<string>();
+            long missingTotal = 0;
             var refs = new List<EvidenceRef>();
             for (int i = 1; i < ordered.Count; i++)
             {
@@ -217,6 +319,7 @@ public static class Correlation
                 {
                     gaps.Add($"RecordID {ordered[i - 1].id} ({ordered[i - 1].e.Time.Utc:yyyy-MM-dd HH:mm}) → {ordered[i].id} ({ordered[i].e.Time.Utc:yyyy-MM-dd HH:mm}): lipsesc {diff - 1}");
                     refs.Add(Ref(ordered[i].e, $"după golul de {diff - 1} înregistrări"));
+                    missingTotal += diff - 1;
                 }
             }
             if (gaps.Count > 0)
@@ -225,6 +328,7 @@ public static class Correlation
                     FindingId = Id(), RuleId = "LOG-GAP", Title = $"Goluri în numerotarea înregistrărilor din {g.First().Source[9..]}",
                     Severity = Severity.Medium, Category = "Defense Evasion", Classification = Classification.Candidate, Confidence = Confidence.Medium,
                     MitreTechniqueId = "T1070.001", Description = string.Join("; ", gaps.Take(10)),
+                    PlainWhat = $"Există în jurnalul {PlainPhrases.Q(g.First().Source[9..])} {LogAnalyzer.Dfir.Language.RoText.CountMasc(gaps.Count, "gol", "goluri")} în numerotarea înregistrărilor (lipsesc în total {LogAnalyzer.Dfir.Language.RoText.CountFem(missingTotal, "înregistrare", "înregistrări")}), ceea ce poate arăta o ștergere selectivă sau un fișier stricat",
                     ClassificationReason = "Într-un jurnal exportat, numerele de înregistrare sunt consecutive; golurile apar la ștergere selectivă sau la corupere.",
                     SupportingEvidence = refs.Take(20).ToList(),
                     AlternativeExplanations = ["Corupere a fișierului jurnal.", "Export parțial."],
@@ -239,6 +343,9 @@ public static class Correlation
                 FindingId = Id(), RuleId = "PERSIST-SERVICE-USERPATH", Title = $"Serviciu instalat dintr-o locație în care utilizatorii pot scrie: {F(e, "ServiceName")}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1543.003",
                 FirstSeenUtc = e.Time.Utc, File = F(e, "ImagePath") + F(e, "ServiceFileName"), User = F(e, "AccountName"),
+                PlainWhat = (PlainPhrases.IsStationAccount(F(e, "SubjectUserName"), e.Host, F(e, "SubjectUserSid")) ? "A fost instalat" : $"Contul {PlainPhrases.Q(PlainPhrases.ShortAccount(F(e, "SubjectUserName")))} a instalat") +
+                            $" serviciul {PlainPhrases.Q(F(e, "ServiceName"))}, care pornește programul {PlainPhrases.Q(PlainPhrases.Leaf(F(e, "ImagePath") + F(e, "ServiceFileName")))} " +
+                            (F(e, "StartType").Contains("auto", StringComparison.OrdinalIgnoreCase) ? "singur, la fiecare pornire a calculatorului, " : "") + "dintr-un folder în care orice utilizator poate scrie",
                 Description = $"Serviciul {F(e, "ServiceName")} rulează {F(e, "ImagePath")}{F(e, "ServiceFileName")} ca {F(e, "AccountName")}{F(e, "ServiceAccount")}.",
                 ClassificationReason = "Eveniment de instalare a serviciului cu cale în ProgramData/AppData/Temp.",
                 SupportingEvidence = [Ref(e, "instalare serviciu")],
@@ -264,6 +371,7 @@ public static class Correlation
                 FindingId = Id(), RuleId = "PERSIST-TASK", Title = $"Activitate planificată care rulează un script sau pornește dintr-o locație în care utilizatorii pot scrie: {taskName}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1053.005",
                 FirstSeenUtc = created.Time.Utc, User = user,
+                PlainWhat = $"a programat în Windows activitatea {PlainPhrases.Q(PlainPhrases.Leaf(taskName))}, care rulează singură un script sau un program dintr-un folder în care orice utilizator poate scrie",
                 Description = $"Activitatea planificată {taskName} a fost creată {(user.Length > 0 ? "de " + user : "(creatorul nu apare în jurnal)")}" +
                               (ran?.Time.Utc is { } at ? $"; a rulat la {at:yyyy-MM-dd HH:mm} UTC" : "") +
                               ". Acțiunea indică un script sau o cale în care utilizatorii pot scrie. Ce verificați: ce rulează activitatea planificată, cine a creat-o și dacă a pornit (TaskScheduler 200).",
@@ -282,6 +390,11 @@ public static class Correlation
                 FindingId = Id(), RuleId = "PERSIST-TASK-CONFIG", Title = $"Activitate planificată{(hidden ? " ascunsă" : "")} care rulează dintr-o locație în care utilizatorii pot scrie: {e.Task}",
                 Severity = hidden ? Severity.High : Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
                 MitreTechniqueId = "T1053.005", FirstSeenUtc = e.Time.Utc, File = e.Path, Process = e.Process, User = e.User,
+                // the definition says what is configured, not who made it or that Windows owns it (lab WS02: a user's OneDrive task was told as „Windows are…”);
+                // a per-user task name ends in the user's SID, which never reaches the sentence
+                PlainWhat = $"Există pe calculator activitatea programată {PlainPhrases.Q(TaskNameWithoutSid(PlainPhrases.Leaf(e.Task)))}{(hidden ? " (ascunsă)" : "")}" +
+                            (e.User.Length > 0 && !LogAnalyzer.Dfir.Language.AccountResolver.IsSid(e.User) && !PlainPhrases.IsStationAccount(e.User) ? $", care rulează sub contul {PlainPhrases.Q(PlainPhrases.ShortAccount(e.User))}" : "") +
+                            $", care pornește singură programul {PlainPhrases.Q(PlainPhrases.Leaf(e.Path))}, dintr-un folder în care orice utilizator poate scrie",
                 Description = $"{e.Task} rulează {F(e, "Command")} {F(e, "Arguments")} ca {e.User} ({F(e, "RunLevel")}); declanșatori: {F(e, "Triggers")}; autor {F(e, "Author")}.",
                 ClassificationReason = "Definiția activității planificate (XML din System32\\Tasks) indică o cale în care utilizatorii pot scrie. Arată configurația, nu o rulare.",
                 SupportingEvidence = [Ref(e, "definiția activității planificate")],
@@ -300,6 +413,8 @@ public static class Correlation
                 FindingId = Id(), RuleId = "PERSIST-SERVICE-CONFIG", Title = $"Serviciu configurat dintr-o locație în care utilizatorii pot scrie: {e.Service}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
                 MitreTechniqueId = "T1543.003", FirstSeenUtc = e.Time.Utc, File = file, User = e.User,
+                PlainWhat = $"Serviciul {PlainPhrases.Q(e.Service)} pornește programul {PlainPhrases.Q(PlainPhrases.Leaf(file))} dintr-un folder în care orice utilizator poate scrie" +
+                            (F(e, "StartMode").Equals("Disabled", StringComparison.OrdinalIgnoreCase) ? " (serviciul este oprit definitiv, nu pornește singur)" : ""),
                 Description = $"{e.Service} ({F(e, "ServiceType")}, {F(e, "StartMode")}) rulează {F(e, "ImagePath")}" +
                               (F(e, "ServiceDll").Length > 0 ? $" cu ServiceDll {F(e, "ServiceDll")}" : "") + $" ca {e.User}.",
                 ClassificationReason = "Configurația serviciului din hive-ul SYSTEM indică o cale în care utilizatorii pot scrie. Arată configurația, nu o rulare.",
@@ -323,6 +438,8 @@ public static class Correlation
                 Title = $"Regulă de firewall care permite {(inbound ? "intrarea" : "ieșirea")} pentru un program dintr-o locație în care utilizatorii pot scrie: {WinPath.GetFileName(F(e, "ApplicationPath"))}",
                 Severity = inbound ? Severity.High : Severity.Medium, Category = "DefenseEvasion", Classification = Classification.Direct, Confidence = Confidence.High,
                 MitreTechniqueId = "T1562.004", FirstSeenUtc = e.Time.Utc, File = F(e, "ApplicationPath"), User = F(e, "ModifyingUser"),
+                PlainWhat = (PlainPhrases.KnownActor(F(e, "ModifyingUser")) ? "a adăugat sau a modificat" : "S-a adăugat sau s-a modificat") +
+                            $" o regulă a firewall-ului care lasă programul {PlainPhrases.Q(PlainPhrases.Leaf(F(e, "ApplicationPath")))} să {(inbound ? "primească conexiuni din rețea" : "se conecteze la rețea")}, deși se află într-un folder în care orice utilizator poate scrie",
                 Description = $"Regula „{F(e, "RuleName")}” ({(inbound ? "Inbound" : "Outbound")}, Allow) pentru {F(e, "ApplicationPath")}, adăugată/modificată de {F(e, "ModifyingApplication")}.",
                 ClassificationReason = "Evenimentul de firewall arată o regulă de tip Allow pentru o cale în care utilizatorii pot scrie.",
                 SupportingEvidence = [Ref(e, "regulă firewall")],
@@ -342,6 +459,8 @@ public static class Correlation
                 FindingId = Id(), RuleId = "PERSIST-WMI", Title = $"Abonament WMI permanent înregistrat: {Trunc(g.Key, 80)}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1546.003",
                 FirstSeenUtc = g.Min(e => e.Time.Utc), LastSeenUtc = g.Max(e => e.Time.Utc), User = first.User,
+                PlainWhat = "S-a înregistrat în Windows o regulă ascunsă care pornește singură o comandă sau un script când se întâmplă ceva pe calculator (de exemplu la pornire), fără un fișier vizibil" +
+                            (g.Key.StartsWith('(') ? "" : $": {PlainPhrases.Q(PlainPhrases.Cut(g.Key, 60))}"),
                 Description = $"Ce s-a întâmplat: Windows a înregistrat un abonament WMI permanent (evenimente {string.Join(", ", g.Select(e => e.EventId).Distinct())}): {Trunc(Wp11Rules.AllText(first), 240)}. " +
                               "De ce contează: un abonament WMI rulează o comandă sau un script la un eveniment (pornire, oră), fără fișier vizibil, și supraviețuiește repornirii. Ce verificați: consumatorul (comanda sau scriptul) și cine l-a creat.",
                 ClassificationReason = "Înregistrare directă a unui consumator / filtru / legături WMI permanente (WMI-Activity 5861, Sysmon 19-21).",
@@ -353,22 +472,31 @@ public static class Correlation
 
         // Registry autostarts (Run/RunOnce, Winlogon, IFEO) from saved hives.
         foreach (var e in events.Where(e => e.Source == "RunKey" && IsUserWritable(e.Path)))
+        {
+            // lab 2026-11-10: the default per-user OneDrive Run value was Medium persistence in every profile of every station
+            bool oneDrive = KnownDefaults.IsDefaultOneDrivePath(F(e, "Command"));
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "PERSIST-RUNKEY-USERPATH", Title = $"Pornire automată dintr-o locație în care utilizatorii pot scrie: {F(e, "ValueName")}",
-                Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
+                Severity = oneDrive ? Severity.Low : Severity.Medium, Category = "Persistence", Classification = oneDrive ? Classification.Candidate : Classification.Direct,
+                Confidence = oneDrive ? Confidence.Low : Confidence.High,
                 MitreTechniqueId = "T1547.001", FirstSeenUtc = e.Time.Utc, File = e.Path, Process = e.Process,
-                Description = $"{F(e, "Hive")}\\{F(e, "Key")}: {F(e, "ValueName")} = {F(e, "Command")}",
-                ClassificationReason = "Valoarea din cheia Run/RunOnce indică o cale în care utilizatorii pot scrie. Ora este LastWriteTime al cheii.",
+                PlainWhat = $"Programul {PlainPhrases.Q(PlainPhrases.Leaf(e.Path))} este pus să pornească singur la fiecare logare, dintr-un folder în care orice utilizator poate scrie" +
+                            (oneDrive ? "; este calea implicită a OneDrive din Windows" : ""),
+                Description = $"{F(e, "Hive")}\\{F(e, "Key")}: {F(e, "ValueName")} = {F(e, "Command")}" + (oneDrive ? " " + KnownDefaults.OneDriveNote : ""),
+                ClassificationReason = "Valoarea din cheia Run/RunOnce indică o cale în care utilizatorii pot scrie. Ora este LastWriteTime al cheii." + (oneDrive ? " Calea este cea implicită a OneDrive." : ""),
                 SupportingEvidence = [Ref(e, "valoare Run")],
-                AlternativeExplanations = ["Multe aplicații per utilizator (actualizatoare, sincronizare) pornesc legitim din AppData."],
+                AlternativeExplanations = [oneDrive ? KnownDefaults.OneDriveAlternative : "Multe aplicații per utilizator (actualizatoare, sincronizare) pornesc legitim din AppData."],
+                RecommendedNextSteps = oneDrive ? [KnownDefaults.OneDriveNextStep] : [],
             });
+        }
         foreach (var e in events.Where(e => e.Source == "IFEO"))
             f.Add(new Finding
             {
                 FindingId = Id(), RuleId = "PERSIST-IFEO-DEBUGGER", Title = $"Image File Execution Options: {F(e, "Target")} este înlocuit de {e.Process}",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
                 MitreTechniqueId = "T1546.012", FirstSeenUtc = e.Time.Utc, File = e.Path, Process = e.Process,
+                PlainWhat = $"Există în Windows o setare care pornește {PlainPhrases.Q(e.Process.Length > 0 ? e.Process : PlainPhrases.Leaf(F(e, "Command")))} ca depanator al programului {PlainPhrases.Q(F(e, "Target"))}, adică la pornirea acestuia rulează și celălalt program; setarea poate fi legitimă (depanator instalat de dezvoltatori) sau poate fi folosită pentru a rula ascuns alt program",
                 Description = $"La pornirea {F(e, "Target")} Windows rulează {F(e, "Command")}.",
                 ClassificationReason = "Valoarea Debugger din IFEO redirecționează pornirea programului țintă.",
                 SupportingEvidence = [Ref(e, "IFEO Debugger")],
@@ -380,6 +508,7 @@ public static class Correlation
                 FindingId = Id(), RuleId = "PERSIST-WINLOGON", Title = $"Winlogon {F(e, "ValueName")} diferit de valoarea implicită",
                 Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
                 MitreTechniqueId = "T1547.004", FirstSeenUtc = e.Time.Utc, File = e.Path,
+                PlainWhat = $"Există în setările de pornire a sesiunii (intrarea în cont) valoarea {PlainPhrases.Q(F(e, "ValueName"))} schimbată față de cea obișnuită: Windows pornește {PlainPhrases.Q(PlainPhrases.Cut(F(e, "Command"), 100))} la intrarea în cont",
                 Description = $"{F(e, "ValueName")} = {F(e, "Command")}",
                 ClassificationReason = "Shell diferit de explorer.exe sau Userinit cu alte programe decât userinit.exe.",
                 SupportingEvidence = [Ref(e, "Winlogon")],
@@ -412,6 +541,7 @@ public static class Correlation
                     FindingId = Id(), RuleId = "EXEC-SCRIPT-VIA-LOLBIN", Title = $"{e.Process} a lucrat cu scripturi din locații în care utilizatorii pot scrie",
                     Severity = Severity.High, Category = "Execution", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1218",
                     LastSeenUtc = e.Time.Utc, Process = e.Process, File = string.Join("; ", scripts.Take(5)),
+                    PlainWhat = $"Programul {PlainPhrases.Q(e.Process)} (o unealtă Windows adesea folosită abuziv) a lucrat cu {LogAnalyzer.Dfir.Language.RoText.CountMasc(scripts.Count, "script", "scripturi")} din foldere în care orice utilizator poate scrie ({PlainPhrases.List(scripts.Select(x => PlainPhrases.Q(PlainPhrases.Leaf(x))).ToList(), 3, ("script", "scripturi"))})",
                     Description = $"Prefetch-ul lui {e.Process} face referire la: {string.Join(", ", scripts.Take(10))}.",
                     ClassificationReason = "Fișiere referite în Prefetch în timpul execuției programului.",
                     SupportingEvidence = [Ref(e, "Prefetch ReferencedFiles")],
@@ -451,6 +581,8 @@ public static class Correlation
                     Severity = Severity.High, Category = "Command and Control / Exfiltration",
                     Classification = prefetch.Count > 0 ? Classification.Correlated : Classification.Candidate, Confidence = prefetch.Count > 0 ? Confidence.High : Confidence.Medium,
                     FirstSeenUtc = g.Min(e => e.Time.Utc), LastSeenUtc = g.Max(e => e.Time.Utc), Process = exe, File = g.Key,
+                    PlainWhat = $"Programul {PlainPhrases.Q(exe)} ({(Lolbins.Contains(exe) ? "o unealtă Windows adesea folosită abuziv" : "pornit dintr-un folder în care orice utilizator poate scrie")}) a trimis în rețea circa {BytesText(sent)} și a primit circa {BytesText(recv)}" +
+                                (prefetch.Count > 0 ? "; faptul că a rulat este confirmat și de lista programelor pornite" : "") + "; probele nu arată cu ce adrese a comunicat",
                     Description = $"SRUM: {sent:N0} B trimiși, {recv:N0} B primiți, în {g.Count()} intervale orare." +
                                   (prefetch.Count > 0 ? $" Prefetch confirmă execuția (ultima {prefetch.Max(p => p.Time.Utc):yyyy-MM-dd HH:mm} UTC)." : ""),
                     ClassificationReason = prefetch.Count > 0 ? "Două surse independente: SRUM (trafic) și Prefetch (execuție)." : "O singură sursă (SRUM).",
@@ -465,27 +597,53 @@ public static class Correlation
 
         // 6. Credential attacks and remote access.
         // Brute force: the same user failing from the same address CredentialThreshold times inside CredentialWindow.
-        var failures = events.Where(e => Ev(e, "Security", 4625) && e.Time.Utc is not null).ToList();
-        foreach (var g in failures.GroupBy(e => (F(e, "IpAddress"), F(e, "TargetUserName"))))
+        const string PsDirectPlaceholderAccount = "?<PSDirectVMLegacy>";
+        // A wrong password for a domain account never reaches the station: the domain controller refuses it and writes 4771 (Kerberos pre-authentication
+        // failed) or 4776 (NTLM validation failed) in its own log (lab DC01 2026-11-07: 17 × 4771 for one guessing series, no 4625 anywhere).
+        var failures = events.Where(e => e.Time.Utc is not null && (Ev(e, "Security", 4625) || IsDcPasswordFailure(e))).ToList();
+        // not split by the computer name: 4776 takes it from the client, and a name changed at every attempt would keep each series under the
+        // threshold (review round 2); all the names of the series are told instead
+        foreach (var g in failures.GroupBy(e => (FailIp(e), F(e, "TargetUserName").ToLowerInvariant())))
         {
-            var ordered = g.OrderBy(e => e.Time.Utc).ToList();
+            var ordered = Once(g.OrderBy(e => e.Time.Utc).ToList());
             if (FindBurst(ordered.Select(e => (e.Time.Utc!.Value, "")).ToList(), CredentialThreshold, CredentialWindow, distinct: false) is not { } b) continue;
             var inWindow = ordered.Skip(b.Start).Take(b.End - b.Start + 1).ToList();
+            string account = F(inWindow[0], "TargetUserName");
+            bool atDc = inWindow.Any(IsDcPasswordFailure);
+            // lab 2026-11-10: every PowerShell Direct connection from the Hyper-V host leaves failed logons for the placeholder account "?<PSDirectVMLegacy>"
+            // inside the virtual machine (309 in one lab case). It is the host probing the guest, not a person guessing a password: lower severity, said plainly.
+            bool psDirect = account.Equals(PsDirectPlaceholderAccount, StringComparison.OrdinalIgnoreCase);
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "CRED-BRUTEFORCE", Title = $"{inWindow.Count} autentificări eșuate pentru {g.Key.Item2} de la {g.Key.Item1}",
-                Severity = Severity.Medium, Category = "Credential Access", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1110",
-                FirstSeenUtc = inWindow[0].Time.Utc, LastSeenUtc = inWindow[^1].Time.Utc, Ip = g.Key.Item1, User = g.Key.Item2,
+                FindingId = Id(), RuleId = "CRED-BRUTEFORCE", Title = $"{inWindow.Count} autentificări eșuate pentru {account} " +
+                        (g.Key.Item1.Trim() is not ("" or "-") ? $"de la {g.Key.Item1}"
+                            : atDc ? "(controlerul de domeniu nu a înregistrat adresa)" : "fără adresă de rețea (autentificare locală sau prin serviciu)"),
+                Severity = psDirect ? Severity.Low : Severity.Medium, Category = "Credential Access", Classification = psDirect ? Classification.Candidate : Classification.Direct,
+                Confidence = psDirect ? Confidence.Low : Confidence.High, MitreTechniqueId = "T1110",
+                FirstSeenUtc = inWindow[0].Time.Utc, LastSeenUtc = inWindow[^1].Time.Utc, Ip = g.Key.Item1, User = account,
+                PlainWhat = psDirect ? $"Gazda Hyper-V s-a conectat {PlainPhrases.Times(inWindow.Count)} la această mașină virtuală prin PowerShell Direct; fiecare conexiune lasă o autentificare eșuată pentru contul tehnic {PlainPhrases.Q(account)}"
+                    : $"Cineva a încercat {PlainPhrases.Times(inWindow.Count)} o parolă greșită pentru contul {PlainPhrases.Q(account)}" +
+                            (inWindow.Select(FailWs).Where(w => w.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList() is { Count: > 0 } wss
+                                ? (wss.Count == 1 ? $", de la calculatorul {PlainPhrases.Q(wss[0])}"
+                                    : $", de la calculatoare cu {wss.Count} nume diferite ({PlainPhrases.List(wss.Select(PlainPhrases.Q).ToList(), 3, ("nume", "nume"))}; numele îl declară cel care încearcă)") +
+                                (g.Key.Item1.Trim() is "" or "-" ? "" : $" (adresa {g.Key.Item1.Trim()})")
+                              : g.Key.Item1.Trim() is "" or "-" ? "" : $", de la adresa {g.Key.Item1.Trim()}") +
+                            (atDc ? "; controlerul de domeniu a refuzat parola" : ""),
                 Description = $"Între {inWindow[0].Time.Utc:yyyy-MM-dd HH:mm} și {inWindow[^1].Time.Utc:yyyy-MM-dd HH:mm} UTC (cel puțin {CredentialThreshold} încercări în {CredentialWindow.TotalMinutes:0} minute; în total {g.Count()} în probe).",
-                ClassificationReason = "Evenimente 4625 repetate pentru același cont și aceeași adresă, într-o fereastră scurtă.",
-                SupportingEvidence = inWindow.Take(15).Select(e => Ref(e, "4625")).ToList(),
+                ClassificationReason = "Autentificări eșuate repetate pentru același cont și aceeași adresă, într-o fereastră scurtă (4625 pe calculator; 4771 Kerberos sau 4776 NTLM pe controlerul de domeniu).",
+                SupportingEvidence = inWindow.Take(15).Select(e => Ref(e, e.EventId)).ToList(),
+                AlternativeExplanations = psDirect
+                    ? [$"Contul „{PsDirectPlaceholderAccount}” nu este un cont real: apare în mașinile virtuale Hyper-V la conexiunile PowerShell Direct făcute de pe gazdă (observat în laborator). Verificați cine administrează gazda și dacă aceste conexiuni erau așteptate."]
+                    : atDc
+                    ? ["O parolă veche rămasă salvată (un serviciu, o unitate de rețea mapată, un telefon) încearcă singură, repetat, după schimbarea parolei.", "Utilizatorul și-a uitat parola."]
+                    : ["Utilizatorul și-a uitat parola.", "Un serviciu sau o sarcină programată cu o parolă veche."],
             });
         }
         // Password spraying: one address tries many different accounts (few passwords each), which per-account counting never sees.
-        foreach (var g in failures.Where(e => F(e, "TargetUserName").Length > 0 && F(e, "TargetUserName") != "-" && Wp11Rules.IsRemoteAddress(F(e, "IpAddress")))
-                                  .GroupBy(e => F(e, "IpAddress")))
+        foreach (var g in failures.Where(e => F(e, "TargetUserName").Length > 0 && F(e, "TargetUserName") != "-" && Wp11Rules.IsRemoteAddress(FailIp(e)))
+                                  .GroupBy(FailIp))
         {
-            var ordered = g.OrderBy(e => e.Time.Utc).ToList();
+            var ordered = Once(g.OrderBy(e => e.Time.Utc).ToList());
             if (FindBurst(ordered.Select(e => (e.Time.Utc!.Value, F(e, "TargetUserName").ToLowerInvariant())).ToList(), CredentialThreshold, CredentialWindow, distinct: true) is not { } b) continue;
             var inWindow = ordered.Skip(b.Start).Take(b.End - b.Start + 1).ToList();
             var users = inWindow.Select(e => F(e, "TargetUserName")).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -494,10 +652,11 @@ public static class Correlation
                 FindingId = Id(), RuleId = "CRED-SPRAY", Title = $"Posibil password spraying: {users.Count} conturi diferite încercate de la {g.Key}",
                 Severity = Severity.High, Category = "Credential Access", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1110.003",
                 FirstSeenUtc = inWindow[0].Time.Utc, LastSeenUtc = inWindow[^1].Time.Utc, Ip = g.Key,
+                PlainWhat = $"Cineva a încercat parole pe {LogAnalyzer.Dfir.Language.RoText.Count(users.Count, "cont", "conturi")} diferite ({PlainPhrases.List(users.Select(PlainPhrases.Q).ToList(), 3, ("cont", "conturi"))}), de la adresa {g.Key}, într-un interval scurt, puține pe fiecare cont, așa cum se face ca să nu se blocheze conturile",
                 Description = $"Între {inWindow[0].Time.Utc:yyyy-MM-dd HH:mm} și {inWindow[^1].Time.Utc:yyyy-MM-dd HH:mm} UTC, de la {g.Key} au eșuat autentificări pentru {users.Count} conturi diferite ({string.Join(", ", users.Take(10))}{(users.Count > 10 ? ", …" : "")}). " +
                               "Ce s-a întâmplat: aceeași adresă a încercat puține parole pe multe conturi. De ce contează: așa se evită blocarea contului și se găsesc conturi cu parole slabe. Ce verificați: dacă după serie există o autentificare reușită (4624) de la aceeași adresă.",
-                ClassificationReason = $"Cel puțin {CredentialThreshold} conturi distincte cu 4625 de la aceeași adresă în {CredentialWindow.TotalMinutes:0} minute.",
-                SupportingEvidence = inWindow.Take(15).Select(e => Ref(e, "4625")).ToList(),
+                ClassificationReason = $"Cel puțin {CredentialThreshold} conturi distincte cu autentificări eșuate (4625, 4771, 4776) de la aceeași adresă în {CredentialWindow.TotalMinutes:0} minute.",
+                SupportingEvidence = inWindow.Take(15).Select(e => Ref(e, e.EventId)).ToList(),
                 AlternativeExplanations = ["Un server sau o aplicație care validează conturi cu parole expirate (serviciu, scaner de vulnerabilități autorizat)."],
                 RecommendedNextSteps = ["Căutați 4624 de la aceeași adresă după serie.", "Blocați sau monitorizați adresa dacă este externă; resetați parolele conturilor reușite."],
             });
@@ -509,6 +668,7 @@ public static class Correlation
                 FindingId = Id(), RuleId = "REMOTE-RDP-PUBLIC", Title = "Autentificări RDP de pe adrese din Internet",
                 Severity = Severity.High, Category = "Initial Access", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1133",
                 FirstSeenUtc = rdp.Min(e => e.Time.Utc), LastSeenUtc = rdp.Max(e => e.Time.Utc),
+                PlainWhat = $"Cineva s-a conectat la acest calculator de la distanță, prin Internet (ecranul calculatorului a fost preluat prin rețea), cu {(rdp.Select(e => F(e, "TargetUserName")).Distinct(StringComparer.OrdinalIgnoreCase).Count() == 1 ? "contul " + PlainPhrases.Q(F(rdp[0], "TargetUserName")) : "mai multe conturi")}, de la {PlainPhrases.List(rdp.Select(e => F(e, "IpAddress")).Distinct().Select(a => a is "" or "-" ? "o adresă necunoscută" : "adresa " + a).ToList(), 3)} ({PlainPhrases.Times(rdp.Count)})",
                 Description = string.Join("; ", rdp.GroupBy(e => (F(e, "TargetUserName"), F(e, "IpAddress"))).Select(g => $"{g.Key.Item1} de la {g.Key.Item2} ({g.Count()})")),
                 ClassificationReason = "Evenimente 4624 cu tip 10 și adresă publică.",
                 SupportingEvidence = rdp.Take(20).Select(e => Ref(e, "4624 RDP")).ToList(),
@@ -520,7 +680,9 @@ public static class Correlation
         var psCfg = Wp11Data.Default.Lists.Powershell;
         var psBlocks = events.Where(e => Ev(e, "Microsoft-Windows-PowerShell/Operational", 4104))
             .GroupBy(e => F(e, "ScriptBlockId") is { Length: > 0 } sid ? "id:" + sid : "ev:" + e.EvidenceId + e.Locator).ToList();
-        var psFindings = new List<(int Score, Finding Finding)>();
+        // The id is given only to the blocks that are listed (top 100): giving one to every block left holes in the numbering (evaluation 2026-11-05).
+        var psFindings = new List<(int Score, bool Cim, DateTimeOffset? First, EvidenceRef FirstRef, Func<string, Finding> Make)>();
+        var psSuspect = new List<(List<TimelineEvent> Parts, string Text, List<PowerShellKeyword> HitKw, int Score, bool Cim)>();
         foreach (var blk in psBlocks)
         {
             var parts = blk.OrderBy(e => int.TryParse(F(e, "MessageNumber"), out var mn) ? mn : 0).ToList();
@@ -530,31 +692,118 @@ public static class Correlation
             bool warned = parts.Any(e => F(e, "_xLevel") == "3");
             // Two distinct indicators, or one heavy one, or Windows' own Warning flag; a single weight-2 keyword (an installer's iex) is not enough.
             if (hitKw.Count < 2 && score < psCfg.MinScore && !warned) continue;
+            // Windows' Warning flag alone on the module Windows generates for every CIM cmdlet (Get-Disk, Get-NetAdapter...) is administration, not a
+            // finding: one lab VM gave 87 such blocks (2026-11-06). A keyword hit in the same text still counts.
+            // Never summarised away (review rounds 1-2: a deny-list cannot prove a pasted prologue is the generated module): each distinct text stays
+            // its own finding with its evidence, only Low; the same module run again is one finding with the count (87 blocks -> a few rows).
+            psSuspect.Add((parts, text, hitKw, score, hitKw.Count == 0 && IsGeneratedCimModule(text)));
+        }
+        // The same script text run again by the same account on the same host (a helper every remote copy loads, a scheduled script) is one finding
+        // with the count, not one per run; another account or host is its own finding (review round 1).
+        foreach (var same in psSuspect.GroupBy(b => (b.Text, b.Parts[0].User.ToLowerInvariant(), b.Parts[0].Host.ToLowerInvariant())))
+        {
+            var (parts, text, hitKw, score, cim) = same.OrderBy(b => b.Parts[0].Time.Utc).First();
+            int runs = same.Count();
+            var runStarts = same.OrderBy(b => b.Parts[0].Time.Utc).Select(b => b.Parts[0]).ToList();
+            // the first record of every run, always including the last run (LastSeen points at it)
+            var allParts = runStarts.Count <= 11 ? runStarts : [.. runStarts.Take(10), runStarts[^1]];
             bool amsi = hitKw.Any(k => k.High);
             var first = parts[0];
+            var last = runStarts[^1].Time.Utc;
             var mitre = hitKw.OrderByDescending(k => k.Weight).Select(k => k.Mitre).FirstOrDefault(m => m.Length > 0) ?? "T1059.001";
-            psFindings.Add((score, new Finding
+            psFindings.Add((score, cim, first.Time.Utc, Ref(first, "4104"), id => new Finding
             {
-                FindingId = Id(), RuleId = "PS-SUSPICIOUS",
-                Title = hitKw.Count > 0 ? $"Bloc PowerShell suspect: {string.Join(", ", hitKw.OrderByDescending(k => k.Weight).Take(4).Select(k => k.Text.Trim()))}" : "Bloc PowerShell marcat de Windows ca suspect (nivel Avertisment)",
-                Severity = amsi || score >= psCfg.HighScore ? Severity.High : Severity.Medium, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Medium, MitreTechniqueId = mitre,
-                FirstSeenUtc = first.Time.Utc, LastSeenUtc = parts[^1].Time.Utc, User = first.User,
-                Description = $"Ce s-a întâmplat: un script PowerShell conține {(hitKw.Count > 0 ? "tehnici folosite des la descărcare, ofuscare sau dezactivarea protecției (" + string.Join(", ", hitKw.Select(k => k.Text.Trim())) + ")" : "apeluri pe care Windows însuși le marchează ca suspecte (nivel Warning)")}. " +
+                FindingId = id, RuleId = "PS-SUSPICIOUS",
+                Title = hitKw.Count > 0 ? $"Bloc PowerShell suspect: {string.Join(", ", hitKw.OrderByDescending(k => k.Weight).Take(4).Select(k => k.Text.Trim()))}"
+                        : cim ? $"Modul PowerShell cu prologul modulelor CIM generate de Windows, marcat Avertisment: {CimClassName(text)}" : "Bloc PowerShell marcat de Windows ca suspect (nivel Avertisment)",
+                Severity = cim ? Severity.Low : amsi || score >= psCfg.HighScore ? Severity.High : Severity.Medium, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Medium, MitreTechniqueId = mitre,
+                FirstSeenUtc = first.Time.Utc, LastSeenUtc = last, User = first.User,
+                PlainWhat = cim ? $"Windows a rulat un modul de administrare obișnuit ({CimClassName(text)}), marcat ca suspect doar automat; de obicei este administrare, nu un atac"
+                    : hitKw.Count > 0 ? "a rulat un script PowerShell care folosește metode des întâlnite la descărcarea de programe, la ascunderea comenzilor sau la oprirea protecției" +
+                        $" (cuvinte găsite în script: {string.Join(", ", hitKw.OrderByDescending(k => k.Weight).Take(3).Select(k => k.Text.Trim()))})" + (runs > 1 ? $"; același script a rulat {PlainPhrases.Times(runs)}" : "")
+                    : "a rulat un script PowerShell pe care Windows însuși l-a marcat ca suspect" + (runs > 1 ? $"; același script a rulat {PlainPhrases.Times(runs)}" : ""),
+                Description = $"Ce s-a întâmplat: un script PowerShell conține {(hitKw.Count > 0 ? "tehnici folosite des la descărcare, ofuscare sau dezactivarea protecției (" + string.Join(", ", hitKw.Select(k => k.Text.Trim())) + ")" : "apeluri pe care Windows însuși le marchează ca suspecte (nivel Warning)")}" +
+                              (runs > 1 ? $"; același text a rulat {PlainPhrases.Times(runs)} (prima {first.Time.Utc:yyyy-MM-dd HH:mm}, ultima {last:yyyy-MM-dd HH:mm} UTC)" : "") + ". " +
                               $"De ce contează: aceste tehnici apar în atacuri fără fișiere, dar și în scripturi de administrare. Ce verificați: contul, procesul părinte și scopul scriptului. Începutul: {Trunc(text, 200)}",
-                ClassificationReason = hitKw.Count > 0 ? $"Cuvinte-cheie ponderate în textul scriptului (scor {score}); Script Block Logging nu arată rezultatul execuției." : "Evenimentul 4104 are nivelul Warning, setat de Windows pentru conținut suspect.",
-                SupportingEvidence = parts.Take(5).Select(e => Ref(e, "4104")).ToList(),
+                ClassificationReason = hitKw.Count > 0 ? $"Cuvinte-cheie ponderate în textul scriptului (scor {score}); Script Block Logging nu arată rezultatul execuției."
+                    : cim ? "Doar nivelul Warning al Windows, pe un text care începe ca modulele CDXML generate pentru comenzile CIM (Get-Disk, Get-NetAdapter...): de obicei administrare, de aceea Low; prologul poate fi copiat, deci textul se citește."
+                    : "Evenimentul 4104 are nivelul Warning, setat de Windows pentru conținut suspect.",
+                SupportingEvidence = parts.Take(5).Concat(allParts.Skip(1)).Distinct().Select(e => Ref(e, "4104")).ToList(),
                 AlternativeExplanations = ["Scripturi de administrare sau de instalare legitime."],
                 RecommendedNextSteps = ["Citiți scriptul complet și identificați contul și procesul care l-au lansat."],
             }));
         }
-        foreach (var (_, pf) in psFindings.OrderByDescending(x => x.Score).ThenBy(x => x.Finding.FirstSeenUtc).Take(100)) f.Add(pf);
+        // within the cap a Warning block that is not the generated CIM module comes before the CIM modules (lab SRV01: 98 CIM rows pushed others into the summary)
+        var psOrdered = psFindings.OrderByDescending(x => x.Score).ThenBy(x => x.Cim).ThenBy(x => x.First).ToList();
+        foreach (var (_, _, _, _, make) in psOrdered.Take(100)) f.Add(make(Id()));
         if (psFindings.Count > 100)
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "PS-SUSPICIOUS", Title = $"Alte {psFindings.Count - 100} blocuri PowerShell suspecte nu au fost listate individual",
+                FindingId = Id(), RuleId = "PS-SUSPICIOUS", Title = $"Alte {psFindings.Count - 100} scripturi PowerShell suspecte nu au fost listate individual",
                 Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "T1059.001",
-                Description = "Raportul listează primele 100 de blocuri după scor; restul sunt în cronologie (evenimente 4104).",
+                PlainWhat = $"Mai multe scripturi PowerShell suspecte ({psFindings.Count - 100}, peste cele 100 afișate) nu au fost listate individual; ele se găsesc în cronologie",
+                Description = "Raportul listează primele 100 de scripturi după scor (un script rulat de mai multe ori de același cont este unul); restul sunt în cronologie (evenimente 4104).",
                 ClassificationReason = "Limită de afișare, nu o concluzie.",
+                // evaluation 2026-11-05: without evidence the summary was rejected by the provenance binding and never reached the report
+                SupportingEvidence = psOrdered.Skip(100).Take(20).Select(x => x.FirstRef).ToList(),
+            });
+        // 7a. Suspicious PowerShell command line from the classic "Windows PowerShell" log (400, engine start): HostApplication carries the full
+        // command line even when Script Block Logging and process auditing are off (evaluation 2026-11-05: "-WindowStyle Hidden -EncodedCommand"
+        // was in the log and gave no finding). Same keyword list and threshold as the script blocks; one finding per distinct command line.
+        var hostApps = events.Where(e => Ev(e, "Windows PowerShell", 400))
+            .Select(e => (e, cmd: HostApplication(F(e, "Data2", "HostApplication"))))
+            .Where(x => x.cmd.Length > 0)
+            .GroupBy(x => x.cmd, StringComparer.OrdinalIgnoreCase);
+        // Review 2026-11-05: the short forms (-e, -ec) and the decoded text count too; attacker text is shown with invisible / direction
+        // characters made visible; at most 100 command lines are listed (same cap as the script blocks), the rest in one summary.
+        var cmdLines = new List<(int Score, DateTimeOffset? First, EvidenceRef FirstRef, Func<string, Finding> Make)>();
+        foreach (var g in hostApps)
+        {
+            var decoded = DecodedCommand(g.Key);
+            var hay = decoded.Length > 0 ? g.Key + " " + decoded : g.Key;
+            var hitKw = psCfg.Keywords.Where(k => k.Text.Length > 0 && hay.Contains(k.Text, StringComparison.OrdinalIgnoreCase)).ToList();
+            var labels = hitKw.OrderByDescending(k => k.Weight).Select(k => k.Text.Trim()).ToList();
+            int score = hitKw.Sum(k => k.Weight), indicators = hitKw.Count;
+            if (decoded.Length > 0 && !hitKw.Any(k => k.Text.Contains("enc", StringComparison.OrdinalIgnoreCase)))
+            {
+                indicators++; score += 2; labels.Add("comandă codificată");
+            }
+            if (indicators < 2 && score < psCfg.MinScore) continue;
+            var runs = g.Select(x => x.e).OrderBy(e => e.Time.Utc).ToList();
+            var high = hitKw.Any(k => k.High) || score >= psCfg.HighScore;
+            var mitre = decoded.Length > 0 ? "T1027" : hitKw.OrderByDescending(k => k.Weight).Select(k => k.Mitre).FirstOrDefault(m => m.Length > 0) ?? "T1059.001";
+            var shownCmd = Visible(Trunc(g.Key, 300));
+            var shownDecoded = Visible(Trunc(decoded, 300));
+            cmdLines.Add((score, runs[0].Time.Utc, Ref(runs[0], "Windows PowerShell 400 HostApplication"), id => new Finding
+            {
+                FindingId = id, RuleId = "PS-CMDLINE-SUSPICIOUS",
+                Title = $"PowerShell pornit cu o linie de comandă suspectă: {string.Join(", ", labels.Take(4))}",
+                Severity = high ? Severity.High : Severity.Medium, Category = "Execution",
+                Classification = Classification.Candidate, Confidence = Confidence.Medium, MitreTechniqueId = mitre,
+                FirstSeenUtc = runs[0].Time.Utc, LastSeenUtc = runs[^1].Time.Utc, User = runs[0].User,
+                PlainWhat = "a pornit PowerShell" + (g.Key.Contains("hidden", StringComparison.OrdinalIgnoreCase) ? " ascuns (fără fereastră vizibilă)" : "") +
+                            (decoded.Length > 0 ? $", cu o comandă codificată care face: {PlainPhrases.Cut(shownDecoded, 160)}"
+                              : $", cu o comandă care conține: {string.Join(", ", labels.Take(3))}") + (runs.Count > 1 ? $" ({PlainPhrases.Times(runs.Count)})" : ""),
+                Description = $"Ce s-a întâmplat: PowerShell a pornit de {LogAnalyzer.Dfir.Language.RoText.Count(runs.Count, "dată", "ori")} cu linia de comandă: {shownCmd}." +
+                              (shownDecoded.Length > 0 ? $" Comanda codificată, decodată: {shownDecoded}." : "") +
+                              " De ce contează: fereastra ascunsă și comanda codificată sunt folosite ca să nu se vadă ce rulează; apar și în instrumente de administrare. Ce verificați: procesul părinte, contul și scopul comenzii.",
+                ClassificationReason = $"Cuvinte-cheie ponderate în linia de comandă din evenimentul 400 și în comanda decodată (scor {score}); evenimentul arată pornirea, nu rezultatul.",
+                SupportingEvidence = runs.Take(5).Select(e => Ref(e, "Windows PowerShell 400 HostApplication")).ToList(),
+                AlternativeExplanations = ["Instrumente de administrare sau de instalare care pornesc PowerShell ascuns."],
+                RecommendedNextSteps = ["Identificați procesul care a pornit PowerShell (Prefetch, BAM, 4688 dacă există) și verificați comanda decodată."],
+            }));
+        }
+        var cmdOrdered = cmdLines.OrderByDescending(x => x.Score).ThenBy(x => x.First).ToList();
+        foreach (var (_, _, _, make) in cmdOrdered.Take(100)) f.Add(make(Id()));
+        if (cmdLines.Count > 100)
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "PS-CMDLINE-SUSPICIOUS", Title = $"Alte {cmdLines.Count - 100} linii de comandă PowerShell suspecte nu au fost listate individual",
+                Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "T1059.001",
+                PlainWhat = $"Mai multe porniri de PowerShell cu linii de comandă suspecte ({cmdLines.Count - 100}, peste cele 100 afișate) nu au fost listate individual; ele se găsesc în cronologie",
+                Description = "Raportul listează primele 100 de linii de comandă după scor; restul sunt în cronologie (evenimente 400 din jurnalul Windows PowerShell).",
+                ClassificationReason = "Limită de afișare, nu o concluzie.",
+                SupportingEvidence = cmdOrdered.Skip(100).Take(20).Select(x => x.FirstRef).ToList(),
             });
 
         // 7b. WP11 Tier 1: SMB shares, account lifecycle, remote administration, security agents, snapshot deletion, DNS, remote-access tools.
@@ -597,6 +846,7 @@ public static class Correlation
                                : $"Program prezent ({src}) în locație în care utilizatorii pot scrie, legat de alte constatări: {x.Process}",
                 Severity = Severity.High, Category = "Execution", Classification = Classification.Correlated, Confidence = Confidence.Medium,
                 FirstSeenUtc = span.Count > 0 ? span.Min() : null, LastSeenUtc = span.Count > 0 ? span.Max() : x.LastSeenUtc, File = x.File, Process = x.Process,
+                PlainWhat = $"Programul {PlainPhrases.Q(x.Process)} {(Ran(x) ? "a rulat" : "este prezent (fără dovadă că a rulat)")} dintr-un folder în care orice utilizator poate scrie, iar în același timp sau în același folder probele arată {LogAnalyzer.Dfir.Language.RoText.CountFem(touching.Count, "altă constatare gravă", "alte constatări grave")}",
                 Description = x.Description + " Legături: " + string.Join("; ", touching.Take(5).Select(s => s.Title)),
                 ClassificationReason = Ran(x)
                     ? $"Execuție dovedită ({src}) apropiată în timp sau în cale de alte constatări grave."
@@ -617,6 +867,10 @@ public static class Correlation
                       : $"{LogAnalyzer.Dfir.Language.RoText.Count(rest.Count, "program", "programe")} prezente în locații în care utilizatorii pot scrie, fără dovadă de execuție (fără alte semnale)",
                 Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low,
                 FirstSeenUtc = rest.Min(T), LastSeenUtc = rest.Max(T),
+                PlainWhat = (rest.Count == 1 ? "A fost găsit un program " : $"Au fost găsite {LogAnalyzer.Dfir.Language.RoText.Count(rest.Count, "program", "programe")} ") +
+                            (rest.Count == 1 ? (Ran(rest[0]) ? "care a rulat" : "care este doar prezent, fără dovadă că a rulat,")
+                                : rest.All(Ran) ? "care au rulat" : rest.Any(Ran) ? "care au rulat sau sunt doar prezente" : "doar prezente, fără dovadă că au rulat,") +
+                            " în foldere în care orice utilizator poate scrie, fără alte semne grave; asta se întâmplă adesea cu instalatoare și aplicații instalate pentru un singur utilizator",
                 Description = string.Join("; ", rest.GroupBy(x => x.Process, StringComparer.OrdinalIgnoreCase).Select(g => (Last: g.OrderByDescending(T).First(), N: g.Count())).OrderByDescending(g => T(g.Last)).Take(60)
                     .Select(g => $"{g.Last.Process} ({T(g.Last):yyyy-MM-dd HH:mm}{(Ran(g.Last) ? "" : $", doar prezent ({ExecSource(g.Last)})")}{(g.N > 1 ? $", {g.N} apariții" : "")})")),
                 ClassificationReason = string.Join("; ", new[]
@@ -656,6 +910,10 @@ public static class Correlation
                 Severity = tied ? Severity.High : Severity.Medium, Category = "InitialAccess", Classification = Classification.Correlated,
                 Confidence = tied ? Confidence.High : Confidence.Medium, MitreTechniqueId = "T1204.002",
                 FirstSeenUtc = start, LastSeenUtc = first.Time.Utc, File = d.Path, Process = first.Process, Domain = d.Dns,
+                PlainWhat = $"S-a descărcat din browser fișierul {PlainPhrases.Q(WinPath.GetFileName(d.Path))}" + (d.Dns.Length > 0 ? $" (de pe {d.Dns})" : "") +
+                            $", iar după {PlainPhrases.Duration(first.Time.Utc!.Value - start)} a pornit, din același folder, programul {PlainPhrases.Q(first.Process)}" +
+                            (hits.Count > 1 ? $" (și încă {LogAnalyzer.Dfir.Language.RoText.CountMasc(hits.Count - 1, "program", "programe")})" : "") +
+                            (tied ? "; numele lor conțin același număr" : ""),
                 Description = $"{d.Path} descărcat la {start:yyyy-MM-dd HH:mm:ss} UTC din {F(d, "TabUrl")} (lanț: {Trunc(F(d, "UrlChain"), 200)}); " +
                               $"apoi {string.Join(", ", hits.Take(5).Select(h => $"{h.Event.Process} ({h.Event.Source}, {h.Event.Time.Utc:HH:mm:ss})"))}.",
                 ClassificationReason = tied
@@ -681,6 +939,7 @@ public static class Correlation
                         ? Severity.Critical : Severity.High,
                     Category = "Incident", Classification = Classification.Correlated, Confidence = Confidence.Medium,
                     FirstSeenUtc = T(cluster[0]), LastSeenUtc = T(cluster[^1]),
+                    PlainWhat = ChainStory(cluster),
                     Description = string.Join(" → ", cluster.Select(c => $"[{T(c):HH:mm}] {c.Title}")),
                     ClassificationReason = "Constatări din surse diferite (Prefetch, SRUM, Defender, jurnale) concentrate în aceeași fereastră de timp.",
                     SupportingEvidence = cluster.SelectMany(c => c.SupportingEvidence.Take(3)).ToList(),
@@ -721,6 +980,9 @@ public static class Correlation
         var lines = clears.OrderBy(e => e.Time.Utc).Take(15).Select(e =>
             $"{e.Time.Utc:yyyy-MM-dd HH:mm} {e.Source[9..]} {e.EventId} {(e.EventId == "1102" ? "de " + F(e, "SubjectUserName") : F(e, "Channel"))}").ToList();
         var verdict = assessed.Select(a => a.Reason).Distinct().ToList();
+        List<string> SubjectsOf(IEnumerable<TimelineEvent> evs) => evs.Where(e => !PlainPhrases.IsStationAccount(F(e, "SubjectUserName"), e.Host, F(e, "SubjectUserSid")))
+            .Select(e => PlainPhrases.ShortAccount(F(e, "SubjectUserName"))).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        var subjects = SubjectsOf(clears);
         // Only Security 1100 records, each next to a System 1074/6006/6005: the logging service stopped because Windows shut down.
         // Nothing was cleared, so the finding must not say so (no "logs cleared" title, no T1070.001, no "activity before the clear").
         var stops = clears.Where(e => e.EventId == "1100").ToList();
@@ -731,6 +993,7 @@ public static class Correlation
                 Severity = Severity.Info, Category = "Defense Evasion",
                 Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "",
                 FirstSeenUtc = clears.Min(e => e.Time.Utc), LastSeenUtc = clears.Max(e => e.Time.Utc),
+                PlainWhat = "Windows a oprit serviciul care ține jurnalele odată cu oprirea calculatorului (normal; nu s-a șters nimic)",
                 Description = string.Join("; ", lines) + (verdict.Count > 0 ? ". Evaluare: " + string.Join(" ", verdict.Take(5)) : "") +
                               ". Niciun jurnal nu a fost golit (nu există Security 1102 / System 104).",
                 ClassificationReason = "Doar Security 1100, fiecare lângă o oprire/repornire a sistemului (System 1074/6006/6005 în ±10 min): Windows oprește serviciul de jurnalizare la fiecare oprire.",
@@ -745,12 +1008,77 @@ public static class Correlation
             Severity = severity, Category = "Defense Evasion",
             Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1070.001",
             FirstSeenUtc = clears.Min(e => e.Time.Utc), LastSeenUtc = clears.Max(e => e.Time.Utc),
+            User = subjects.Count == 1 ? subjects[0] : "",
+            PlainWhat = LogTamperPlain(clears, logClears.Select(e => e.EventId == "1102" ? "Security" : F(e, "Channel") is { Length: > 0 } ch ? ch : "System").ToList(), SubjectsOf),
             Description = string.Join("; ", lines) + (verdict.Count > 0 ? ". Evaluare: " + string.Join(" ", verdict.Take(5)) : ""),
             ClassificationReason = "Evenimente 1102/104/1100/4719 înregistrate de Windows. Severitatea ține de ciclul de viață al golirii (planificată / neașteptată / neevaluată) și de factori de corelare, nu de ora din zi.",
             SupportingEvidence = clears.Take(30).Select(e => new EvidenceRef(e.EvidenceId, e.Locator, $"{e.Source} {e.EventId}")).ToList(),
             MissingEvidence = ["Activitatea anterioară ștergerii nu mai este în jurnal; surse alternative: SRUM, Prefetch, Amcache, copii VSS."],
             AlternativeExplanations = ["Mentenanță planificată (rotirea jurnalelor, curățare după instalare) făcută de un administrator."],
         };
+    }
+
+    /// <summary>A byte count for a sentence: „4,5 MB”, „120 KB”.</summary>
+    private static string BytesText(long b) => b >= 1_000_000
+        ? (b / 1_000_000.0).ToString("0.#", System.Globalization.CultureInfo.GetCultureInfo("ro-RO")) + " MB"
+        : (b / 1000.0).ToString("0.#", System.Globalization.CultureInfo.GetCultureInfo("ro-RO")) + " KB";
+
+    /// <summary>INCIDENT-CHAIN in plain words: the steps in the order they happened, each told the way its own finding tells it (at most 8).</summary>
+    internal static string ChainStory(List<Finding> steps)
+    {
+        string One(Finding x)
+        {
+            var what = x.PlainWhat.Length > 0 ? x.PlainWhat : LogAnalyzer.Dfir.Language.PlainStory.Fallback(x);
+            // the same Who() rendering as the finding's own sentence (the users register is not available here: accounts are named)
+            return what.Length > 0 && char.IsUpper(what[0]) ? LogAnalyzer.Dfir.Language.PlainStory.LowerFirst(what) : $"{LogAnalyzer.Dfir.Language.PlainStory.Who(x.User, null, x.Host)} {what}";
+        }
+        var shown = steps.Take(8).Select(One).ToList();
+        var words = new[] { "întâi", "apoi", "apoi", "apoi", "apoi", "apoi", "apoi", "la sfârșit" };
+        var told = shown.Select((t, i) => (i == shown.Count - 1 && shown.Count > 1 && steps.Count <= 8 ? "la sfârșit" : words[Math.Min(i, 6)]) + " " + t);
+        return "Mai multe lucruri grave s-au petrecut unul după altul pe calculator: " + string.Join("; ", told) + (steps.Count > 8 ? $"; și încă {steps.Count - 8} pași" : "");
+    }
+
+    /// <summary>What a cleared log is, in a few words.</summary>
+    internal static string PlainLogName(string channel) => channel.ToLowerInvariant() switch
+    {
+        "security" => "„Security” (jurnalul de securitate: lista cu cine a intrat pe calculator)",
+        "system" => "„System” (jurnalul sistemului: lista cu pornirile și erorile calculatorului)",
+        "windows powershell" or "microsoft-windows-powershell/operational" => "„Windows PowerShell” (lista cu ce s-a făcut pe calculator în PowerShell)",
+        "application" => "„Application” (jurnalul programelor instalate)",
+        _ => $"„{channel}” (un jurnal al Windows)",
+    };
+
+    /// <summary>
+    /// LOG-TAMPER in plain words: which logs were deleted, whether the logging service was stopped, whether the rules for what Windows notes were changed.
+    /// Each part is told with ITS OWN accounts: when all parts have the same single account the sentence needs a subject (the person from the register is
+    /// added by <see cref="LogAnalyzer.Dfir.Language.PlainStory.Tell"/>); otherwise each part names its accounts or is a subject-less clause.
+    /// </summary>
+    private static string LogTamperPlain(List<TimelineEvent> clears, List<string> clearedChannels, Func<IEnumerable<TimelineEvent>, List<string>> subjectsOf)
+    {
+        var names = clearedChannels.Distinct(StringComparer.OrdinalIgnoreCase).Select(PlainLogName).ToList();
+        var clearEvents = clears.Where(e => e.EventId is "1102" or "104").ToList();
+        var stopEvents = clears.Where(e => e.EventId == "1100").ToList();
+        var policyEvents = clears.Where(e => e.EventId == "4719").ToList();
+        var parts = new List<(List<string> Who, string Active, string Passive)>();
+        if (names.Count > 0)
+            parts.Add((subjectsOf(clearEvents), (names.Count == 1 ? "șters jurnalul " : "șters jurnalele ") + PlainPhrases.List(names, 4),
+                (names.Count == 1 ? "a fost șters jurnalul " : "au fost șterse jurnalele ") + PlainPhrases.List(names, 4)));
+        if (stopEvents.Count > 0) parts.Add((subjectsOf(stopEvents), "oprit serviciul care ține jurnalele", "a fost oprit serviciul care ține jurnalele"));
+        if (policyEvents.Count > 0)
+            parts.Add((subjectsOf(policyEvents), "schimbat regulile după care Windows notează ce se întâmplă pe calculator", "au fost schimbate regulile după care Windows notează ce se întâmplă pe calculator"));
+        if (parts.Count == 0) return "a umblat la jurnalele calculatorului";
+        var allSubjects = parts.SelectMany(p => p.Who).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+        // no person among the subjects (Windows itself, or none recorded): the passive clauses, never „cineva (probele nu arată contul)” when the events name Windows (round-2 review)
+        if (allSubjects.Count == 0) { var passive = string.Join("; ", parts.Select(p => p.Passive)); return char.ToUpperInvariant(passive[0]) + passive[1..]; }
+        bool sameForAll = allSubjects.Count == 1 && parts.All(p => p.Who.Count == 1);
+        if (sameForAll) return string.Join(" și ", parts.Select(p => "a " + p.Active));
+        // different or unknown accounts: never one account credited with another's part
+        string Accounts(List<string> who) => (who.Count == 1 ? "contul " : "conturile ") + PlainPhrases.List(who.Select(PlainPhrases.Q).ToList(), 4, ("cont", "conturi"));
+        var told = parts.Select(p => p.Who.Count == 0
+            ? p.Passive
+            : $"{Accounts(p.Who)} {(p.Who.Count == 1 ? "a" : "au")} {p.Active}").ToList();
+        var text = string.Join("; ", told.Select((t, i) => i == 0 ? char.ToUpperInvariant(t[0]) + t[1..] : t));
+        return text;
     }
 
     /// <summary>"containerfile:_C:\x.zip; file:_C:\x.zip->inner" → "C:\x.zip".</summary>
@@ -776,5 +1104,60 @@ public static class Correlation
         return p.ToUpperInvariant();
     }
 
-    private static string Trunc(string s, int n) { s = s.ReplaceLineEndings(" "); return s.Length <= n ? s : s[..n] + "…"; }
+    /// <summary>The "HostApplication=" line of a classic PowerShell 400/600 event (the third data string is a block of "Name=Value" lines).</summary>
+    internal static string HostApplication(string data)
+    {
+        foreach (var line in data.Split('\n'))
+        {
+            var l = line.Trim();
+            if (l.StartsWith("HostApplication=", StringComparison.OrdinalIgnoreCase)) return l["HostApplication=".Length..].Trim();
+        }
+        return "";
+    }
+
+    /// <summary>The text of "-EncodedCommand / -enc / -e &lt;base64&gt;" (UTF-16LE, as PowerShell expects), or "" when there is none or it does not decode.</summary>
+    internal static string DecodedCommand(string commandLine)
+    {
+        // the command line comes from the log, i.e. from whoever ran PowerShell: bounded input, bounded match time, bounded output
+        if (commandLine.Length > 32_768) commandLine = commandLine[..32_768];
+        System.Text.RegularExpressions.Match m;
+        try
+        {
+            m = System.Text.RegularExpressions.Regex.Match(commandLine, @"\s[-/](?:e|en|enc|enco|encod|encode|encoded|encodedc|encodedco|encodedcom|encodedcomm|encodedcomma|encodedcomman|encodedcommand|ec)\s+[""']?([A-Za-z0-9+/=]{8,})",
+                System.Text.RegularExpressions.RegexOptions.IgnoreCase, TimeSpan.FromSeconds(1));
+        }
+        catch (System.Text.RegularExpressions.RegexMatchTimeoutException) { return ""; }
+        if (!m.Success) return "";
+        try
+        {
+            var text = System.Text.Encoding.Unicode.GetString(Convert.FromBase64String(m.Groups[1].Value));
+            if (text.Length > 2_000) text = text[..2_000];
+            // shown to the operator: control characters out, so a crafted payload cannot break the report layout
+            return new string(text.Select(c => char.IsControl(c) ? ' ' : c).ToArray()).Trim();
+        }
+        catch (FormatException) { return ""; }
+    }
+
+    /// <summary>Text written by whoever ran a command, made safe to show: control, format (bidi overrides, zero-width) and line/paragraph
+    /// separator characters become a visible "⟨U+XXXX⟩", so "‮gnp.exe" cannot pass for another file name in the UI, PDF or HTML.</summary>
+    internal static string Visible(string s)
+    {
+        // by code point (review round 2: tag characters U+E0000-E007F are Format but outside the BMP); a lone surrogate is shown too
+        var sb = new System.Text.StringBuilder(s.Length + 16);
+        for (int i = 0; i < s.Length;)
+        {
+            if (System.Text.Rune.DecodeFromUtf16(s.AsSpan(i), out var r, out var used) != System.Buffers.OperationStatus.Done)
+            {
+                sb.Append($"⟨U+{(int)s[i]:X4}⟩"); i++; continue;
+            }
+            if (System.Text.Rune.GetUnicodeCategory(r) is System.Globalization.UnicodeCategory.Control or System.Globalization.UnicodeCategory.Format
+                or System.Globalization.UnicodeCategory.LineSeparator or System.Globalization.UnicodeCategory.ParagraphSeparator)
+                sb.Append($"⟨U+{r.Value:X4}⟩");
+            else sb.Append(s, i, used);
+            i += used;
+        }
+        return sb.ToString();
+    }
+
+    private static string Trunc(string s, int n) { s = s.ReplaceLineEndings(" "); if (s.Length <= n) return s; if (char.IsHighSurrogate(s[n - 1])) n--; return s[..n] + "…"; }   // never splits a surrogate pair (review round 2)
 }

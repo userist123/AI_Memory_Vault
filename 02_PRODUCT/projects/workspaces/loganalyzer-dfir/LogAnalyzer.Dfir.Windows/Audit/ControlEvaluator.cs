@@ -1,4 +1,4 @@
-﻿using System.Globalization;
+using System.Globalization;
 using System.Text.RegularExpressions;
 using LogAnalyzer.Core.Services.Edition;
 using LogAnalyzer.Dfir.Devices;
@@ -81,11 +81,13 @@ public static partial class ControlEvaluator
         Network(f, r);
         Software(f, r);
         StationHardening(f, r);
+        StigChecks(f, r);
         AirGapChannels(f, r);
         AirGapStation(f, r);
         InternetEgress(f, r);
         DomainMembership(f, r);
         OwnActivityCheck(f, r);
+        LevelRules(f, r);
         // The posture of the executable decides which rules apply: the rest become "Nu se aplică" (never counted as findings).
         for (var i = 0; i < r.Checks.Count; i++) r.Checks[i] = ControlApplicability.Resolve(r.Checks[i], f.Posture);
         r.Actions.Sort((a, b) => a.TimeUtc.CompareTo(b.TimeUtc));
@@ -151,6 +153,13 @@ public static partial class ControlEvaluator
         // actually found is reported (an active Guest stays NECONFORM), the rest is NEDETERMINATE with the reason of the gap.
         var gap = f.Gaps.FirstOrDefault(g => g.Artifact == "Conturi locale");
         string partial = gap is null ? "" : $"Lista conturilor locale este incompletă ({gap.Reason}), deci verificarea nu se poate face pe ea.";
+        // lab 2026-11-10 (LAB-DC01): a domain controller has no local account database; its accounts are the domain's and are reviewed in Active Directory
+        if (f.Accounts.Count == 0 && gap is null && f.Settings.TryGetValue("OS.ProductType", out var productType) && productType.Equals("LanmanNT", StringComparison.OrdinalIgnoreCase))
+        {
+            Add(r, "C01", "Conturi", "Conturi locale", ControlStatus.DeVerificat,
+                "Stația este controler de domeniu: nu are conturi locale, conturile ei sunt cele ale domeniului. Acest control nu le verifică; verificați conturile domeniului (Guest, Administrator, conturi fără parolă obligatorie, parole care nu expiră) în pagina Active Directory.");
+            return;
+        }
         if (f.Accounts.Count == 0)
         {
             Add(r, "C01", "Conturi", "Conturi locale", ControlStatus.Nedeterminat, "Lista conturilor locale nu a putut fi citită." + (gap is null ? "" : $" ({gap.Reason})"));
@@ -271,6 +280,10 @@ public static partial class ControlEvaluator
                 $"{Ro.Capitalize(Ro.CountFem(f.DefenderExclusions.Count, "excludere configurată", "excluderi configurate"))}. Excluderile sunt folosite des de atacatori pentru a-și ascunde programele.", f.DefenderExclusions);
 
         var bl = S("BitLocker.SystemDrive");
+        // lab 2026-11-10 (Windows Server 2025): without the BitLocker feature the WMI namespace does not exist; the answer is "not encrypted", not "could not be read"
+        if (bl == "" && S(StationFactCollector.BitLockerNotInstalledKey) == "1")
+            Add(r, "P11", "Politici", "Criptarea discului de sistem (BitLocker)", ControlStatus.Neconform, BitLockerNotInstalled + " Discul de sistem NU este criptat.");
+        else
         Add(r, "P11", "Politici", "Criptarea discului de sistem (BitLocker)", bl == "1" ? ControlStatus.Conform : bl == "" ? ControlStatus.Nedeterminat : ControlStatus.Neconform,
             bl == "1" ? "Protecție activă." : bl == "" ? $"Starea nu a putut fi citită.{(S("BitLocker.SystemDrive.Error") is { Length: > 0 } blErr ? " " + blErr : "")}" : "Discul de sistem NU este protejat de BitLocker.");
 
@@ -281,9 +294,41 @@ public static partial class ControlEvaluator
             S("WDigest.UseLogonCredential") == "1" ? "UseLogonCredential=1: parolele în clar pot fi extrase din memorie." : "Configurare implicită sigură.");
 
         bool usbBlocked = S("USBSTOR.Start") == "4" || S("RemovableStorage.DenyAll") == "1";
-        Add(r, "P14", "Politici", "Stocare USB blocată prin politică", usbBlocked ? ControlStatus.Conform : f.Posture == StationPosture.Standalone ? ControlStatus.DeVerificat : ControlStatus.DeVerificat,
-            usbBlocked ? "Accesul la stocare amovibilă este blocat." : "Stocarea USB este permisă.", rec: "Pe stațiile izolate, permiteți doar suporturi aprobate și înregistrate.");
+        // research 2026-11-07 plan P2.8: the verdict follows the procedure profile. A profile that approves no transfer over USB / removable media while the
+        // station lets any stick be used is NECONFORM; one that approves such a channel leaves the media register (D01–D04) to decide; no profile: DE VERIFICAT
+        // review 2026-11-08: NECONFORM only when EVERY approved channel is recognisably not a storage medium (paper, network, disc...); a channel whose
+        // medium is not recognised ("Card SD aprobat", "HDD portabil criptat") is never taken as "no USB channel"
+        var usbChannel = f.ApprovedTransferMedia?.FirstOrDefault(IsRemovableMedium);
+        var unknownChannel = f.ApprovedTransferMedia?.FirstOrDefault(m => !IsRemovableMedium(m) && !IsNonStorageMedium(m));
+        var p14 = usbBlocked ? ControlStatus.Conform : f.ApprovedTransferMedia is null || usbChannel is not null || unknownChannel is not null ? ControlStatus.DeVerificat : ControlStatus.Neconform;
+        Add(r, "P14", "Politici", "Stocare USB blocată prin politică", p14,
+            usbBlocked ? "Accesul la stocare amovibilă este blocat."
+                : f.ApprovedTransferMedia is null ? "Stocarea USB este permisă. Profilul de proceduri nu definește canalele de transfer aprobate, deci nu se poate spune dacă stația are voie să folosească stick-uri."
+                : usbChannel is not null ? $"Stocarea USB este permisă, iar profilul de proceduri aprobă transferul pe suport amovibil („{usbChannel}”). Verificați că se folosesc doar suporturile din registrul mediilor (D01–D04)."
+                : unknownChannel is not null ? $"Stocarea USB este permisă. Profilul de proceduri aprobă canalul „{unknownChannel}”, al cărui mediu aplicația nu îl poate încadra: verificați dacă este un suport de stocare și, dacă da, că se folosesc doar suporturile din registrul mediilor (D01–D04)."
+                : $"Stocarea USB este permisă, dar toate canalele de transfer aprobate în profilul de proceduri sunt de alt tip decât un suport de stocare (canale aprobate: {string.Join("; ", f.ApprovedTransferMedia)}). Orice stick poate fi folosit fără să existe o procedură pentru el.",
+            f.ApprovedTransferMedia is null ? [] : f.ApprovedTransferMedia.Select(m => "Profil, canal aprobat: " + m),
+            rec: "Pe stațiile izolate, permiteți doar suporturi aprobate și înregistrate; dacă procedura nu prevede transfer pe USB, blocați stocarea USB (USBSTOR Start = 4 sau politica Removable Storage Access).");
     }
+
+    /// <summary>Words of a transfer channel's medium that mean USB / removable media (check P14).</summary>
+    // whole words only: "cd" must not match inside another word
+    private static readonly System.Text.RegularExpressions.Regex DiscMedium = new(@"(?<![\p{L}\d])(?:cd|dvd|blu-ray|bd-r|disc optic|disc inscripționat)(?![\p{L}\d])",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    private static readonly System.Text.RegularExpressions.Regex RemovableMedium = new(
+        @"(?<![\p{L}\d])(?:usb|stick|pendrive|amovibil\w*|removable|flash|card|sd|microsd|hdd|ssd|hard\w*|disc dur|disc extern|disk\w*|portabil\w*|extern\w*|stocare|storage|suport de stocare|mediu de stocare|memorie|cheie de memorie)(?![\p{L}\d])",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    private static readonly System.Text.RegularExpressions.Regex NonStorageMedium = new(
+        @"(?<![\p{L}\d])(?:hârtie|hartie|paper|imprimant\w*|tipărit\w*|tiparit\w*|print\w*|rețea\w*|retea\w*|network|lan|e-?mail|curier|fax|scanner|scanat\w*)(?![\p{L}\d])",
+        System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>A channel medium that is a storage device that can be carried (stick, card, external disk).</summary>
+    internal static bool IsRemovableMedium(string m) => RemovableMedium.IsMatch(m);
+
+    /// <summary>A channel medium that is recognisably not a carried storage device (paper, network, e-mail; a disc is told by P28).</summary>
+    internal static bool IsNonStorageMedium(string m) => NonStorageMedium.IsMatch(m) || DiscMedium.IsMatch(m);
 
     // ---- audit and logs ---------------------------------------------------------------------------------------
 
@@ -292,9 +337,86 @@ public static partial class ControlEvaluator
         ("Logon", AuditSetting.Success | AuditSetting.Failure), ("Special Logon", AuditSetting.Success),
         ("User Account Management", AuditSetting.Success), ("Security Group Management", AuditSetting.Success),
         ("Audit Policy Change", AuditSetting.Success), ("Process Creation", AuditSetting.Success),
-        ("Removable Storage", AuditSetting.Success), ("Plug and Play Events", AuditSetting.Success),
+        ("Removable Storage", AuditSetting.Success | AuditSetting.Failure), ("Plug and Play Events", AuditSetting.Success),
         ("Security State Change", AuditSetting.Success), ("Other Object Access Events", AuditSetting.Success),
     ];
+
+    // on a domain controller a wrong password for a domain account is refused here, by Kerberos (4771) or NTLM (4776), never on the workstation
+    private static readonly string[] DcFailureAudit = ["Kerberos Authentication Service", "Credential Validation"];
+
+    /// <summary>Every audit subcategory a check reads by name; each must be in the list AuditPolicy.Query reads, or it would always look „None”.</summary>
+    internal static IEnumerable<string> AuditSubcategoriesUsed() =>
+        RequiredAudit.Select(x => x.Name).Concat(DcFailureAudit).Concat(["Removable Storage", "File System", "Handle Manipulation", "Detailed File Share", "Process Creation"]).Distinct();
+
+    /// <summary>
+    /// A19 (LA-Lab 2026-11-07): DC01 audited only Kerberos successes, so 17 wrong passwords for a domain account left no trace anywhere and the password
+    /// guessing could not be detected. Only on a domain controller; any other station gets no A19 line.
+    /// </summary>
+    private static void DomainControllerFailureAudit(StationFacts f, ControlReport r)
+    {
+        const string title = "Controlerul de domeniu notează parolele greșite";
+        // review 2026-11-08: a role that was collected but could not be read is unknown (the station may be a domain controller), never "not a DC"
+        if (f.Settings.TryGetValue("OS.ProductType", out var role) && role == "")
+        {
+            Add(r, "A19", "Audit", title, ControlStatus.Nedeterminat, "Rolul calculatorului (controler de domeniu sau nu) nu a putut fi citit, deci nu se știe dacă verificarea se aplică." + NoRead);
+            return;
+        }
+        if (!(role ?? "").Equals("LanmanNT", StringComparison.OrdinalIgnoreCase)) return;
+        if (f.AuditPolicy is not { } ap)
+        {
+            Add(r, "A19", "Audit", title, ControlStatus.Nedeterminat, "Politica de audit nu a putut fi citită." + NoRead);
+            return;
+        }
+        // a subcategory that was not read is unknown, never "None" (lab DC01 2026-11-08: Kerberos was not in the read list and showed as not audited)
+        var unread = DcFailureAudit.Where(n => !ap.ContainsKey(n)).ToList();
+        if (unread.Count > 0)
+        {
+            Add(r, "A19", "Audit", title, ControlStatus.Nedeterminat, $"Setarea de audit pentru {string.Join(", ", unread)} nu a fost citită, deci nu se poate spune dacă se notează parolele greșite." + NoRead);
+            return;
+        }
+        var missing = DcFailureAudit.Where(n => (ap.GetValueOrDefault(n) & AuditSetting.Failure) != AuditSetting.Failure).ToList();
+        Add(r, "A19", "Audit", title, missing.Count == 0 ? ControlStatus.Conform : ControlStatus.Neconform,
+            missing.Count == 0
+                ? "Controlerul notează încercările de autentificare refuzate (parolă greșită, cont inexistent), deci ghicirea parolelor pe conturile de domeniu lasă urme."
+                : $"Controlerul NU notează încercările refuzate pentru: {string.Join(", ", missing.Select(m => $"{m} ({ap.GetValueOrDefault(m)})"))}. Parola greșită a unui cont de domeniu este refuzată aici, nu pe stație: dacă cineva încearcă parole, nu rămâne nicio urmă nicăieri.",
+            DcFailureAudit.Select(n => $"{n}: {ap.GetValueOrDefault(n)}"),
+            "Cereți administratorului să pornească auditarea eșecurilor pentru „Kerberos Authentication Service” și „Credential Validation” (GPO-ul controlerelor de domeniu sau auditpol).");
+    }
+
+    // research 2026-11-07 (Acoperirea auditului pe stații izolate): CIS Windows 11 v5.0.1 asks at least 196,608 KB; the old 128 MB was below it
+    internal const int SecurityLogMinMB = 192;
+
+    /// <summary>
+    /// A20 (research 2026-11-07, plan P1.5): the logs that record that a stick or disk was connected, with its serial. Partition/Diagnostic (event 1006) is on
+    /// by default, so finding it off means someone turned it off; DriverFrameworks-UserMode/Operational is off by default and adds every connection and
+    /// disconnection. Neither shows which files were copied: that is Removable Storage auditing (A01/A08) and the medium's own journal.
+    /// </summary>
+    private static void DeviceConnectionLogs(StationFacts f, ControlReport r)
+    {
+        const string title = "Jurnalele care notează conectarea dispozitivelor sunt pornite";
+        var part = f.Settings.GetValueOrDefault("DeviceLog.PartitionEnabled", "");
+        var dfw = f.Settings.GetValueOrDefault("DeviceLog.DriverFrameworksEnabled", "");
+        string Shown(string v) => v == "1" ? "pornit" : v == "0" ? "oprit" : "necitit";
+        IEnumerable<string> ev = [$"Microsoft-Windows-Partition/Diagnostic → {Shown(part)}", $"Microsoft-Windows-DriverFrameworks-UserMode/Operational → {Shown(dfw)}"];
+        if (part == "" && dfw == "") { Add(r, "A20", "Audit", title, ControlStatus.Nedeterminat, "Starea jurnalelor de dispozitive nu a putut fi citită." + NoRead, ev); return; }
+        if (part == "0")
+        {
+            Add(r, "A20", "Audit", title, ControlStatus.Neconform,
+                "Jurnalul Partition/Diagnostic este oprit. În Windows el este pornit implicit și notează fiecare stick sau disc conectat, cu producătorul și seria; oprit, conectările nu mai lasă această urmă. Aflați cine l-a oprit și când.",
+                ev, "Reporniți jurnalul Microsoft-Windows-Partition/Diagnostic și porniți și DriverFrameworks-UserMode/Operational.");
+            return;
+        }
+        Add(r, "A20", "Audit", title, dfw == "1" && part == "1" ? ControlStatus.Conform : ControlStatus.DeVerificat,
+            dfw == "1" && part == "1"
+                ? "Ambele jurnale sunt pornite: fiecare conectare și deconectare a unui dispozitiv lasă urme cu seria lui. Ce fișiere s-au copiat nu se vede aici (vezi A01 și A08)."
+                // review 2026-11-08: the sentence about Partition/Diagnostic only when it was read as on
+                : dfw == "0" && part == "1"
+                    ? "Jurnalul Partition/Diagnostic este pornit (conectările se văd, cu seria), dar DriverFrameworks-UserMode/Operational este oprit (cum este implicit în Windows), deci deconectările și conectările repetate ale aceluiași dispozitiv nu au urmă separată."
+                : dfw == "0"
+                    ? "DriverFrameworks-UserMode/Operational este oprit (cum este implicit în Windows), iar starea jurnalului Partition/Diagnostic nu a putut fi citită." + NoRead
+                    : "Starea unuia dintre jurnale nu a putut fi citită." + NoRead,
+            ev, "Porniți jurnalul Microsoft-Windows-DriverFrameworks-UserMode/Operational (de exemplu cu wevtutil sl … /e:true sau prin GPO).");
+    }
 
     private static void AuditAndLogs(StationFacts f, ControlReport r)
     {
@@ -308,9 +430,12 @@ public static partial class ControlEvaluator
         }
         else Add(r, "A01", "Audit", "Politica de audit", ControlStatus.Nedeterminat, "Nu a putut fi citită (necesită administrator).");
 
+        DomainControllerFailureAudit(f, r);
+        DeviceConnectionLogs(f, r);
+
         if (int.TryParse(f.Settings.GetValueOrDefault("SecurityLog.MaxSizeMB"), out var mb))
-            Add(r, "A02", "Audit", "Dimensiunea jurnalului Security", mb >= 128 ? ControlStatus.Conform : ControlStatus.Neconform,
-                $"{mb} MB, mod {f.Settings.GetValueOrDefault("SecurityLog.Mode")}.", rec: "Minimum 128 MB; arhivare înainte de suprascriere pe stațiile care nu trimit jurnalele centralizat.");
+            Add(r, "A02", "Audit", "Dimensiunea jurnalului Security", mb >= SecurityLogMinMB ? ControlStatus.Conform : ControlStatus.Neconform,
+                $"{mb} MB, mod {f.Settings.GetValueOrDefault("SecurityLog.Mode")}.", rec: $"Minimum {SecurityLogMinMB} MB (CIS: 196.608 KB; DISA STIG cere cât să încapă cel puțin o săptămână de evenimente); arhivare înainte de suprascriere pe stațiile care nu trimit jurnalele centralizat.");
 
         foreach (var c in f.Coverage.Where(c => c.Channel is "Security" or "System"))
             Add(r, c.Channel == "Security" ? "A03" : "A04", "Audit", $"Jurnalul {c.Channel} acoperă perioada controlată",
@@ -817,7 +942,10 @@ public static partial class ControlEvaluator
         foreach (var l in services) r.Actions.Add(new ActionEntry(l.TimeUtc, V(l, "AccountName"), "serviciu nou instalat", $"{V(l, "ServiceName")}: {V(l, "ImagePath")}", Ev(l)));
         foreach (var l in tasks) r.Actions.Add(new ActionEntry(l.TimeUtc, Who(l), "a creat activitatea planificată", V(l, "TaskName"), Ev(l)));
         Add(r, "S02", "Software", "Servicii noi și activități planificate create", services.Count + tasks.Count == 0 ? ControlStatus.Conform : ControlStatus.DeVerificat,
-            $"{LogAnalyzer.Dfir.Language.RoText.Count(services.Count, "serviciu", "servicii")} noi, {LogAnalyzer.Dfir.Language.RoText.Count(tasks.Count, "activitate planificată", "activități planificate")} create ({LogAnalyzer.Dfir.Language.RoText.Count(drivers.Count, "driver", "drivere")} instalate, listate separat în cronologie).",
+            // the adjective agrees with the count (lab 2026-11-10: "1 driver instalate")
+            $"{LogAnalyzer.Dfir.Language.RoText.Count(services.Count, "serviciu", "servicii")} {(services.Count == 1 ? "nou" : "noi")}, " +
+            $"{LogAnalyzer.Dfir.Language.RoText.Count(tasks.Count, "activitate planificată", "activități planificate")} {(tasks.Count == 1 ? "creată" : "create")} " +
+            $"({LogAnalyzer.Dfir.Language.RoText.Count(drivers.Count, "driver", "drivere")} {(drivers.Count == 1 ? "instalat, listat" : "instalate, listate")} separat în cronologie).",
             services.Select(l => $"{Ev(l)}: {V(l, "ServiceName")} → {V(l, "ImagePath")}").Concat(tasks.Select(l => $"{Ev(l)}: {Who(l)} → {V(l, "TaskName")}")),
             "Serviciile și activitățile planificate sunt metode frecvente de persistență: verificați fiecare intrare necunoscută.");
 
@@ -828,7 +956,8 @@ public static partial class ControlEvaluator
     // ---- station hardening, radios, data left behind (read-only registry / WMI facts) ----------------------------
 
     private const string Absent = StationFactCollector.Absent;
-    private const string NoRead = " Nu a putut fi citit; pot fi necesare drepturi de administrator. Rulați aplicația ca administrator și repetați controlul.";
+    private const string BitLockerNotInstalled = "Componenta BitLocker nu este instalată pe acest sistem (pe Windows Server este o funcție opțională: „BitLocker Drive Encryption”).";
+    private const string NoRead =" Nu a putut fi citit; pot fi necesare drepturi de administrator. Rulați aplicația ca administrator și repetați controlul.";
 
     /// <summary>Checks about the second channels out of an isolated station: adapter kinds (N05), CD/DVD burning (P28), printing (P29), clipboard and activity history (P30), camera / microphone / speakers (P31).</summary>
     private static void AirGapChannels(StationFacts f, ControlReport r)
@@ -870,13 +999,19 @@ public static partial class ControlEvaluator
             bool explorerOnly = S("Optical.NoCDBurningMachine") == "1" || S("Optical.NoCDBurningUser") == "1";
             var ev = new[] { @"HKLM\SOFTWARE\Policies\Microsoft\Windows\RemovableStorageDevices\{53f56308-b6bf-11d0-94f2-00a0c91efb8b} → Deny_Write = " + Shown(S("Optical.DenyWrite")),
                              @"Policies\Explorer → NoCDBurning (mașină) = " + Shown(S("Optical.NoCDBurningMachine")) + "; (utilizator) = " + Shown(S("Optical.NoCDBurningUser")), "WMI Win32_CDROMDrive → Capabilities (4 = scrie discuri)" + (S("Optical.WriterSource") is { Length: > 0 } src ? "; surse citite: " + src : ""), "IMAPI2 MsftDiscRecorder2 → SupportedProfiles (profiluri inscriptibile: CD-R, DVD+R, BD-R ...)" };
+            // research 2026-11-07 plan P2.8: a disc channel approved in the procedure profile turns the isolated station's NECONFORM into DE VERIFICAT (the
+            // discs written must then be the registered ones); without such a channel, an unblocked writer on an isolated station stays NECONFORM
+            var discChannel = f.ApprovedTransferMedia?.FirstOrDefault(m => DiscMedium.IsMatch(m));
+            if (discChannel is not null) ev = [.. ev, "Profil, canal aprobat: " + discChannel];
             Add(r, "P28", "Politici", "Inscripționarea de CD/DVD blocată",
-                writers == 0 || denyWrite ? ControlStatus.Conform : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
+                writers == 0 || denyWrite ? ControlStatus.Conform : isolated && discChannel is null ? ControlStatus.Neconform : ControlStatus.DeVerificat,
                 writers == 0 ? $"Stația nu are nicio unitate optică cu capacitate de scriere ({Ro.CountFem(N("Optical.DriveCount"), "unitate optică", "unități optice")})."
                     : denyWrite ? $"Scrierea pe CD/DVD este refuzată prin politica de stocare amovibilă (unități cu scriere: {S("Optical.WriterNames")})."
                     : explorerOnly ? $"ATENȚIE: stația are {Ro.CountFem(writers, "unitate care scrie discuri", "unități care scriu discuri")} ({S("Optical.WriterNames")}), iar politica NoCDBurning blochează doar inscripționarea din Explorer. Un program de inscripționare sau serviciul IMAPI pot scrie în continuare; blocarea reală este politica „CD și DVD: refuzare scriere”, care nu este setată."
                     : $"Stația are {Ro.CountFem(writers, "unitate care scrie discuri", "unități care scriu discuri")} ({S("Optical.WriterNames")}) și nicio politică nu oprește scrierea (nici NoCDBurning, nici „CD și DVD: refuzare scriere”).",
-                ev, "Setați politica „CD și DVD: refuzare scriere” (Deny_Write); NoCDBurning singur nu este suficient.");
+                ev, discChannel is not null
+                    ? $"Profilul de proceduri aprobă transferul pe disc („{discChannel}”): verificați că discurile inscripționate sunt cele din registrul mediilor; în rest, setați politica „CD și DVD: refuzare scriere” (Deny_Write)."
+                    : "Setați politica „CD și DVD: refuzare scriere” (Deny_Write); NoCDBurning singur nu este suficient.");
         }
 
         // P29 printing recorded
@@ -887,7 +1022,7 @@ public static partial class ControlEvaluator
         {
             int printers = N("Print.PrinterCount");
             var issues = new List<string>();
-            if (printers > 0 && log == "0") issues.Add("jurnalul de tipărire (PrintService/Operational) este OPRIT, deci nu se înregistrează ce documente se tipăresc");
+            if (printers > 0 && log == "0") issues.Add("jurnalul de tipărire (PrintService/Operational) este oprit, deci nu se înregistrează ce documente se tipăresc");
             if (netPr.Length > 0) issues.Add($"există imprimante de rețea: {netPr}");
             Add(r, "P29", "Audit", "Tipărirea este înregistrată",
                 printers == 0 ? ControlStatus.Conform : log == "" ? ControlStatus.Nedeterminat : issues.Count == 0 ? ControlStatus.Conform : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
@@ -910,7 +1045,7 @@ public static partial class ControlEvaluator
             bool actDefaultOn = cache == "da" && ap != "0" && ap != "1";
             Add(r, "P30", "Politici", "Istoric clipboard și istoric de activitate Windows oprite",
                 !clipOn && !actPolicyOn && !actDefaultOn ? ControlStatus.Conform : (clipOn || actPolicyOn) && isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
-                clipOn ? $"Istoricul clipboard este PORNIT (EnableClipboardHistory = 1): ultimele elemente copiate, inclusiv text dintr-un document clasificat, rămân pe disc. {(actPolicyOn ? "Istoricul de activitate este și el permis explicit prin politică." : "")}"
+                clipOn ? $"Istoricul clipboard este pornit (EnableClipboardHistory = 1): ultimele elemente copiate, inclusiv text dintr-un document clasificat, rămân pe disc. {(actPolicyOn ? "Istoricul de activitate este și el permis explicit prin politică." : "")}"
                     : actPolicyOn ? "Istoricul de activitate (Timeline) este permis explicit prin politică (EnableActivityFeed = 1)."
                     : actDefaultOn ? $"Istoricul clipboard este oprit, dar baza de activitate Windows (ActivitiesCache.db) există și politica EnableActivityFeed nu este setată ({Shown(ap)}), deci istoricul de activitate rămâne în regimul implicit al Windows. Opriți-l prin politică."
                     : $"Istoricul clipboard și cel de activitate sunt oprite (EnableClipboardHistory = {Shown(cu)}, AllowClipboardHistory = {Shown(cp)}, EnableActivityFeed = {Shown(ap)}).",
@@ -956,10 +1091,17 @@ public static partial class ControlEvaluator
             var svcText = svc switch { "" => "starea serviciului Wi-Fi nu a putut fi citită", Absent => "serviciul Wi-Fi nu există pe această stație", "4" => "serviciul Wi-Fi este dezactivat", "2" => "serviciul Wi-Fi pornește singur", _ => "serviciul Wi-Fi poate porni la cerere" };
             int profN = int.TryParse(profiles, out var profParsed) ? profParsed : 0;
             var profText = profiles == "" ? $"profilurile Wi-Fi salvate nu au putut fi numărate ({(S("Wlan.ProfileUnread") is { Length: > 0 } why ? why : "sursa nu a fost citită")})" : profN == 1 ? "un profil Wi-Fi salvat" : $"{Ro.Count(profN, "profil", "profiluri")} Wi-Fi salvate";
-            var status = wifi == 0 ? ControlStatus.Conform : noInternet && wifiUp > 0 ? ControlStatus.Neconform : ControlStatus.DeVerificat;
+            // research 2026-11-07 plan P2.6: the Wi-Fi networks NetworkList remembers (the same facts as N01/N02, which judge the connections themselves):
+            // with no adapter now, a remembered Wi-Fi network still means the station had one, so the check is not CONFORM
+            var wifiKnown = f.NetworkProfiles.Where(np => np.Kind == "Wi-Fi").OrderByDescending(np => np.LastConnectedLocal).ToList();
+            var knownText = wifiKnown.Count == 0 ? "" : $" Windows ține minte {Ro.CountFem(wifiKnown.Count, "rețea Wi-Fi", "rețele Wi-Fi")}: " +
+                string.Join("; ", wifiKnown.Take(10).Select(np => $"„{np.Name}” (ultima conectare {np.LastConnectedLocal:yyyy-MM-dd})")) + (wifiKnown.Count > 10 ? $"; … încă {wifiKnown.Count - 10}" : "") +
+                " (conectările din perioada controlată sunt judecate la N01).";
+            var status = wifi == 0 && wifiKnown.Count == 0 ? ControlStatus.Conform : noInternet && wifiUp > 0 ? ControlStatus.Neconform : ControlStatus.DeVerificat;
             Add(r, "N03", "Rețea", "Adaptor Wi-Fi (rețea fără fir)", status,
+                wifi == 0 && wifiKnown.Count > 0 ? $"Stația nu are acum niciun adaptor Wi-Fi; {profText}.{knownText}" :
                 wifi == 0 ? $"Stația nu are niciun adaptor Wi-Fi; {profText}."
-                    : $"Stația are {Ro.CountMasc(wifi, "adaptor Wi-Fi", "adaptoare Wi-Fi")} ({(wifiUp == 0 ? "niciunul pornit acum" : wifiUp == 1 ? (wifi == 1 ? "pornit acum" : "unul pornit acum") : $"{wifiUp} pornite acum")}); {svcText}; {profText}." + (noInternet ? " Pe o stație izolată un adaptor Wi-Fi poate crea o legătură cu exteriorul." : ""),
+                    : $"Stația are {Ro.CountMasc(wifi, "adaptor Wi-Fi", "adaptoare Wi-Fi")} ({(wifiUp == 0 ? "niciunul pornit acum" : wifiUp == 1 ? (wifi == 1 ? "pornit acum" : "unul pornit acum") : $"{wifiUp} pornite acum")}); {svcText}; {profText}." + (noInternet ? " Pe o stație izolată un adaptor Wi-Fi poate crea o legătură cu exteriorul." : "") + knownText,
                 (wifi > 0 ? S("Wifi.Adapters").Split("; ", StringSplitOptions.RemoveEmptyEntries) : []).Concat([@"HKLM\SYSTEM\CurrentControlSet\Services\WlanSvc → Start = " + Shown(svc)]),
                 "Adaptorul Wi-Fi se scoate fizic sau se dezactivează din BIOS; dacă este aprobat, notați documentul de aprobare.");
         }
@@ -973,24 +1115,30 @@ public static partial class ControlEvaluator
             int bt = int.TryParse(btCount, out var bc) ? bc : 0;
             var svc = S("Bluetooth.ServiceStart");
             bool svcOff = svc is "4" or Absent;
-            var status = bt == 0 ? ControlStatus.Conform : noInternet && !svcOff ? ControlStatus.Neconform : ControlStatus.DeVerificat;
+            int paired = int.TryParse(S("Bluetooth.PairedCount"), out var pc) ? pc : 0;
+            // a paired device on an isolated station means a pairing was made there: NECONFORM, whatever the service setting is now
+            // review 2026-11-08: no radio and an unread pairing list is unknown, never CONFORM
+            bool pairedUnread = S("Bluetooth.PairedCount") == "";
+            var status = bt == 0 && pairedUnread ? ControlStatus.Nedeterminat
+                : bt == 0 && paired == 0 ? ControlStatus.Conform : noInternet && (!svcOff || paired > 0) ? ControlStatus.Neconform : ControlStatus.DeVerificat;
+            var pairedText = paired > 0 ? $" Windows ține minte {Ro.CountMasc(paired, "dispozitiv Bluetooth", "dispozitive Bluetooth")} (de regulă asociate cu stația): {S("Bluetooth.Paired")}; o asociere înseamnă că dispozitivul a fost legat de stație, nu ce s-a transmis." : "";
             Add(r, "N04", "Rețea", "Bluetooth", status,
-                bt == 0 ? "Stația nu are componente Bluetooth."
-                    : $"Stația are Bluetooth ({Ro.CountFem(bt, "componentă", "componente")}: {S("Bluetooth.Components")}); serviciul Bluetooth este {(svcOff ? "dezactivat" : svc == "" ? "într-o stare necitită" : "permis să pornească")}." +
-                      (noInternet ? " Prin Bluetooth se pot trimite fișiere fără cablu." : ""),
-                [@"HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start = " + Shown(svc)],
+                (bt == 0 ? (paired > 0 ? "Stația nu are acum componente Bluetooth." : pairedUnread ? "Stația nu are componente Bluetooth, dar lista dispozitivelor ținute minte nu a putut fi citită." + NoRead : "Stația nu are componente Bluetooth.") : $"Stația are Bluetooth ({Ro.CountFem(bt, "componentă", "componente")}: {S("Bluetooth.Components")}); serviciul Bluetooth este {(svcOff ? "dezactivat" : svc == "" ? "într-o stare necitită" : "permis să pornească")}.") +
+                pairedText + (noInternet && (bt > 0 || paired > 0) ? " Prin Bluetooth se pot trimite fișiere fără cablu." : ""),
+                [@"HKLM\SYSTEM\CurrentControlSet\Services\bthserv → Start = " + Shown(svc), @"HKLM\SYSTEM\CurrentControlSet\Services\BTHPORT\Parameters\Devices → " + (S("Bluetooth.PairedCount") is { Length: > 0 } pcs ? pcs + " dispozitive" : "necitit")],
                 "Bluetooth trebuie oprit dacă organizația nu l-a aprobat în scris.");
         }
 
         // P15 Secure Boot and firmware mode
         var sb = S("SecureBoot.Enabled");
         var fw = S("Firmware.Type");
-        var fwText = fw switch { "2" => "UEFI (modern)", "1" => "BIOS vechi (Legacy)", "" => "necitit", Absent => "necunoscut", var x => $"cod {x}" };
+        // Secure Boot exists only under UEFI: when it is on and the firmware-type value is missing (lab 2026-11-10, Hyper-V generation 2), the mode is UEFI, not "unknown"
+        var fwText = fw switch { "2" => "UEFI (modern)", "1" => "BIOS vechi (Legacy)", "" or Absent when sb == "1" => "UEFI (dedus: Secure Boot există doar în UEFI)", "" => "necitit", Absent => "necunoscut", var x => $"cod {x}" };
         Add(r, "P15", "Politici", "Pornire securizată (Secure Boot)",
             sb == "" ? ControlStatus.Nedeterminat : sb == "1" ? ControlStatus.Conform : sb == "0" || fw == "1" ? ControlStatus.Neconform : ControlStatus.DeVerificat,
             sb == "" ? "Starea Secure Boot nu a putut fi citită." + NoRead
                 : sb == "1" ? $"Secure Boot este pornit. Mod de pornire: {fwText}."
-                : sb == "0" ? $"Secure Boot este OPRIT: stația poate fi pornită de pe un stick cu alt sistem. Mod de pornire: {fwText}."
+                : sb == "0" ? $"Secure Boot este oprit: stația poate fi pornită de pe un stick cu alt sistem. Mod de pornire: {fwText}."
                 : fw == "1" ? "Stația pornește în mod BIOS vechi (Legacy), care nu are Secure Boot."
                 : $"Nu s-a găsit informația Secure Boot în registru (stație veche sau fără UEFI). Mod de pornire: {fwText}.",
             [@"HKLM\SYSTEM\CurrentControlSet\Control\SecureBoot\State → UEFISecureBootEnabled = " + Shown(sb)],
@@ -1134,7 +1282,9 @@ public static partial class ControlEvaluator
         // P26 logon banner
         var cap = S("LegalNotice.Caption");
         var txt = S("LegalNotice.Text");
-        bool noCap = cap is Absent or StationFactCollector.EmptyValue, noTxt = txt is Absent or StationFactCollector.EmptyValue;
+        // lab 2026-11-10: a value that holds only blanks or control characters shows nothing at logon; it was reported as "a title — and a text of 1 character"
+        static bool Blank(string v) => v.Length > 0 && v.All(ch => char.IsWhiteSpace(ch) || char.IsControl(ch));
+        bool noCap = cap is Absent or StationFactCollector.EmptyValue || Blank(cap), noTxt = txt is Absent or StationFactCollector.EmptyValue || Blank(txt);
         Add(r, "P26", "Politici", "Mesaj de avertizare la pornire (cu nivelul de clasificare)",
             cap == "" && txt == "" ? ControlStatus.Nedeterminat : noCap && noTxt ? ControlStatus.Neconform : ControlStatus.DeVerificat,
             cap == "" && txt == "" ? "Mesajul de avertizare nu a putut fi citit." + NoRead
@@ -1239,7 +1389,9 @@ public static partial class ControlEvaluator
 
         // P32 (A2) BitLocker on every fixed volume, PIN at boot.
         const string p28 = "BitLocker pe toate discurile fixe, cu PIN la pornire";
-        if (f.Volumes is not { } vols)
+        if (f.Volumes is null && S(StationFactCollector.BitLockerNotInstalledKey) == "1")
+            Add(r, "P32", "Politici", p28, ControlStatus.Neconform, BitLockerNotInstalled + " Niciun disc fix nu este criptat.");
+        else if (f.Volumes is not { } vols)
             Add(r, "P32", "Politici", p28, ControlStatus.Nedeterminat,
                 "Starea BitLocker a discurilor nu a putut fi citită." + (S("BitLocker.Volumes.Error") is { Length: > 0 } ve ? " " + ve + "." : "") + NoRead);
         else
@@ -1289,7 +1441,7 @@ public static partial class ControlEvaluator
             dma == "" ? ControlStatus.Nedeterminat : dma == "1" ? (dmaPol == "2" ? ControlStatus.DeVerificat : ControlStatus.Conform) : isolated ? ControlStatus.Neconform : ControlStatus.DeVerificat,
             dma == "" ? "Starea protecției DMA nu a putut fi citită." + NoRead
                 : dma == "1" ? $"Protecția DMA în nucleu este pornită; politica pentru dispozitivele externe incompatibile: {dmaPolText}."
-                : "Protecția DMA în nucleu este OPRITĂ sau stația nu o are: un dispozitiv conectat la un port Thunderbolt/USB4 poate citi memoria stației. Dacă stația nu are astfel de porturi, notați acest lucru în procesul-verbal.",
+                : "Protecția DMA în nucleu este oprită sau stația nu o are: un dispozitiv conectat la un port Thunderbolt/USB4 poate citi memoria stației. Dacă stația nu are astfel de porturi, notați acest lucru în procesul-verbal.",
             ["Windows (informația afișată de msinfo32 ca „Kernel DMA Protection”) = " + (dma == "1" ? "pornită" : dma == "0" ? "oprită" : "necitită"),
              @"HKLM\SOFTWARE\Policies\Microsoft\Windows\Kernel DMA Protection → DeviceEnumerationPolicy = " + Shown(dmaPol)],
             "Porniți protecția DMA din UEFI/BIOS (VT-d / IOMMU); dacă nu există, porturile Thunderbolt se dezactivează sau se sigilează.");
@@ -1374,6 +1526,18 @@ public static partial class ControlEvaluator
         if (f.AntivirusProducts is not { } avs)
             Add(r, "P39", "Politici", "Antivirus înregistrat în Centrul de securitate Windows", ControlStatus.Nedeterminat,
                 "Lista antivirusurilor înregistrate în Windows nu a putut fi citită (pe Windows Server această listă nu există)." + NoRead);
+        else if (avs.Count == 0 && S("OS.ProductType") is "ServerNT" or "LanmanNT")
+        {
+            // lab 2026-11-10 (Windows Server 2025): Windows Server has no Security Center, the list is empty by design; an empty list there is not "no antivirus".
+            // The verdict follows what Defender itself reports (P08); another vendor's product cannot be seen this way, so anything else is to be checked.
+            bool defenderOn = S("Defender.AntivirusEnabled") == "True" && S("Defender.RealTime") == "True";
+            Add(r, "P39", "Politici", "Antivirus înregistrat în Centrul de securitate Windows", defenderOn ? ControlStatus.Conform : ControlStatus.DeVerificat,
+                "Windows Server nu are Centrul de securitate Windows, deci lista antivirusurilor înregistrate nu există pe acest sistem. " +
+                (defenderOn ? "Microsoft Defender raportează că este pornit, cu protecție în timp real (vezi P08)."
+                            : "Microsoft Defender nu raportează protecție în timp real pornită (vezi P08); dacă rulează alt antivirus, confirmați-l la server."),
+                [@"WMI root\SecurityCenter2 AntiVirusProduct: fără intrări (Windows Server)", $"MSFT_MpComputerStatus → AntivirusEnabled = {Shown(S("Defender.AntivirusEnabled"))}, RealTimeProtectionEnabled = {Shown(S("Defender.RealTime"))}"],
+                "Pe server trebuie să ruleze un antivirus pornit, cu semnături actualizate după procedura offline.");
+        }
         else
         {
             // [NESIGUR] productState decoding (bits 12-15 = on, bits 4-7 = signatures out of date) is community documentation, not an official Microsoft source.
@@ -1384,7 +1548,7 @@ public static partial class ControlEvaluator
             Add(r, "P39", "Politici", "Antivirus înregistrat în Centrul de securitate Windows",
                 avs.Count == 0 || on.Count == 0 ? ControlStatus.Neconform : on.Any(Current) ? ControlStatus.Conform : ControlStatus.DeVerificat,
                 avs.Count == 0 ? "Niciun antivirus nu este înregistrat în Centrul de securitate Windows."
-                    : on.Count == 0 ? $"Antivirusurile înregistrate sunt OPRITE: {string.Join("; ", avs.Select(Line))}."
+                    : on.Count == 0 ? $"Antivirusurile înregistrate sunt oprite: {string.Join("; ", avs.Select(Line))}."
                     : on.Any(Current) ? $"Antivirus pornit: {string.Join("; ", on.Where(Current).Select(a => a.Name))}."
                     : $"Antivirusul este pornit, dar Windows raportează semnături vechi: {string.Join("; ", on.Select(Line))}.",
                 avs.Select(Line).Prepend(@"WMI root\SecurityCenter2 AntiVirusProduct (displayName, productState)"),
@@ -1452,7 +1616,7 @@ public static partial class ControlEvaluator
         Add(r, "N10", "Rețea", "Partajarea conexiunii la Internet (ICS)",
             ics == "" ? (icsPol == "0" ? ControlStatus.DeVerificat : ControlStatus.Nedeterminat) : ics.StartsWith("da", StringComparison.Ordinal) ? (noInternet ? ControlStatus.Neconform : ControlStatus.DeVerificat) : ControlStatus.Conform,
             ics == "" ? (icsPol == "0" ? "Starea partajării nu a putut fi citită; politica interzice activarea ei." : "Starea partajării conexiunii nu a putut fi citită." + NoRead)
-                : ics.StartsWith("da", StringComparison.Ordinal) ? $"Partajarea conexiunii la Internet este PORNITĂ ({ics[3..].Trim()}): stația face legătura între două rețele."
+                : ics.StartsWith("da", StringComparison.Ordinal) ? $"Partajarea conexiunii la Internet este pornită ({ics[3..].Trim()}): stația face legătura între două rețele."
                 : "Partajarea conexiunii la Internet nu este pornită pe nicio conexiune." + (icsPol == "0" ? " Politica interzice și activarea ei." : ""),
             ["Interfața Windows de partajare (HNetCfg.HNetShare) → " + Shown(ics), @"HKLM\SOFTWARE\Policies\Microsoft\Windows\Network Connections → NC_ShowSharedAccessUI = " + Shown(icsPol),
              @"HKLM\SYSTEM\CurrentControlSet\Services\SharedAccess → Start = " + Shown(icsSvc)],

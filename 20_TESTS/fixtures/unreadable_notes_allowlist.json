@@ -218,6 +218,60 @@
       "reason": "Plain markdown document in the read-only _recovered/ archive (never-committed LogAnalyzer files kept with provenance); not a note."
     },
     {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/LogAnalyzer.Dfir.Tests/Corpus/Ntfs/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/NTFS_FORMAT_CARD.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/NTFS_MFT_DESIGN.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/LogAnalyzer.Dfir.Tests/Corpus/NtfsCalib/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/LogAnalyzer.Dfir.Tests/Corpus/NtfsLog/README.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/NTFS_LOGFILE_DESIGN.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/design/DESIGN.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/design/PLAN.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/design/PRODUCT.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
       "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/DFIR_CURRENT_ARCHITECTURE_AUDIT.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
@@ -938,6 +992,12 @@
       "reason": "Plain markdown research document (protection of classified information on standalone workstations, public sources); not a note. Frontmatter would require owner lifecycle/verification values."
     },
     {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RESEARCH_GAPS_2026-11-09.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown research document (gaps against DFIR reference tools and the DISA STIG Windows 11 CAT I list, public sources); not a note. Frontmatter would require owner lifecycle/verification values."
+    },
+    {
       "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PROVENANCE_2026-10-16_PDF_SIGNING_LIBRARIES.md",
       "kind": "no_frontmatter",
       "category": "plain_document",
@@ -1236,6 +1296,108 @@
       "kind": "no_frontmatter",
       "category": "plain_document",
       "reason": "Agent coordination checkpoint (protocol 00_GOVERNANCE/coordination/tasks/README.md), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/MATRICE_HG585_ORNISS_2026-10-23.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PLAN_PRODUS_PROFESIONAL_2026-11-04.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Plain markdown document with no frontmatter; not a note. Giving it frontmatter would mean choosing id/lifecycle/verification values, which is an owner decision."
+    },
+    {
+      "path": "00_GOVERNANCE/coordination/tasks/todo-claude-loganalyzer-hg585.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "Agent coordination checkpoint (protocol 00_GOVERNANCE/coordination/tasks/README.md), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/ANALYSIS_RUNS.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/NETWORK_ZEEK.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/CASE_WORKFLOW.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/COVERAGE_TIMELINE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/MASTER_PLAN_STATUS.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/MEMORY_VOLATILITY.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/NETWORK_JA3.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/PE_TRIAGE.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/RULE_LAB.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/THREAT_INTEL_PACKAGES.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/TIMELINE_NOTES.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/IDENTITY_AD.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/REDACTION_POLICY.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
+    },
+    {
+      "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/docs/dfir/NETWORK_HEURISTICS.md",
+      "kind": "no_frontmatter",
+      "category": "plain_document",
+      "reason": "LogAnalyzer DFIR product documentation (master plan module), plain markdown by design; it is not a memory note and therefore intentionally has no note frontmatter."
     }
   ]
 }

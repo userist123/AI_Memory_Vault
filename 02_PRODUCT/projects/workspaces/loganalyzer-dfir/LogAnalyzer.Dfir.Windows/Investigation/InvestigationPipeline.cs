@@ -19,11 +19,51 @@ namespace LogAnalyzer.Dfir.Windows.Investigation;
 
 public sealed record CollectionRow(string Collector, EvidenceStatus Status, int EvidenceCount, string Errors, DateTimeOffset StartUtc, DateTimeOffset EndUtc);
 
+public static class InvestigationResultAcquisitionExtensions
+{
+    /// <summary>
+    /// Fills <see cref="InvestigationResult.AcquisitionRuns"/> from the case. Cancellation propagates; an IO error is kept in
+    /// <see cref="InvestigationResult.AcquisitionRunsError"/> (shown instead of "no records"), never turned into an empty list.
+    /// </summary>
+    public static void LoadAcquisitionRuns(this InvestigationResult r, CaseWorkspace ws, CancellationToken ct = default,
+        IReadOnlyDictionary<string, string>? knownActualHashes = null, IReadOnlyDictionary<string, string>? registeredOutputs = null)
+    {
+        r.AcquisitionRuns.Clear();
+        r.AcquisitionRunsError = "";
+        try { r.AcquisitionRuns.AddRange(AcquisitionRunOverview.Load(ws, ct, knownActualHashes, registeredOutputs)); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { r.AcquisitionRunsError = ex.Message; }
+    }
+
+    /// <summary>Fills <see cref="InvestigationResult.Custody"/> (tab 9) from the case custody chain. Cancellation propagates; an IO error is kept in <see cref="InvestigationResult.CustodyError"/>.</summary>
+    public static void LoadCustody(this InvestigationResult r, CaseWorkspace ws, CancellationToken ct = default)
+    {
+        r.Custody = null;
+        r.CustodyError = "";
+        try { r.Custody = CustodyOverview.Load(ws, ct); }
+        catch (Exception ex) when (ex is not OperationCanceledException and not OutOfMemoryException) { r.CustodyError = ex.Message; }   // review: never stop the case from opening
+    }
+}
+
 public sealed class InvestigationResult
 {
     public required CaseWorkspace Case { get; init; }
     public List<CollectionRow> Collection { get; } = [];
+    /// <summary>R7c: the acquisition run records of the case with the verdict of their re-check (Logs/acquisition_runs); filled after the acquisition ended and when a case is opened.</summary>
+    public List<AcquisitionRunRow> AcquisitionRuns { get; } = [];
+    /// <summary>Why <see cref="AcquisitionRuns"/> could not be read ("" = it was read; an empty list then really means no records).</summary>
+    public string AcquisitionRunsError { get; set; } = "";
+    /// <summary>The case custody chain with its verdict (tab 9 "Istoricul probelor"); null until read or when <see cref="CustodyError"/> says why it could not be.</summary>
+    public CustodyLedger? Custody { get; set; }
+    public string CustodyError { get; set; } = "";
     public List<ParseResult> Parsing { get; } = [];
+    /// <summary>Master plan 6.7: the evidence files that are Windows executables, read statically (Analysis/pe_triage.json).</summary>
+    public List<LogAnalyzer.Dfir.Detection.PeTriageRow> PeTriage { get; } = [];
+    /// <summary>Master plan 6.10: identities rebuilt from the Security events of this run (Analysis/identity.json); null on a case analysed before it existed.</summary>
+    public LogAnalyzer.Dfir.Identity.IdentityReport? Identity { get; set; }
+    public LogAnalyzer.Dfir.Identity.IdentityGraphReport? IdentityGraph { get; set; }
+    /// <summary>Master plan 6.16: the immutable record of this run and its difference from the previous run (null for the first run or an opened case).</summary>
+    public AnalysisRunManifest? Run { get; set; }
+    public RunDiff? RunDiff { get; set; }
     public List<TimelineEvent> Timeline { get; } = [];
     public List<Finding> Findings { get; } = [];
     public List<EvidenceGap> Gaps { get; } = [];
@@ -33,6 +73,8 @@ public sealed class InvestigationResult
     public EvidenceGraph? Graph { get; set; }
     /// <summary>Rule matches (IOC, Sigma, YARA) with rule identity and evidence (Analysis/detections.json).</summary>
     public List<DetectionResult> Detections { get; } = [];
+    /// <summary>R7a: hashes of the case found in an operator-imported fingerprint set, known-good (label only) and known-bad (also a finding), Analysis/known_hashes.json.</summary>
+    public List<LogAnalyzer.Dfir.HashSets.HashSetMatch> KnownHashMatches { get; } = [];
     /// <summary>Rules that were loaded for this run (Analysis/rules.json).</summary>
     public List<DetectionRule> RulesUsed { get; } = [];
     /// <summary>Anti-forensics checks: DETECTED / NOT_DETECTED / UNDETERMINED per technique (Analysis/anti_forensics.json).</summary>
@@ -89,12 +131,22 @@ public sealed class InvestigationResult
 public sealed class InvestigationPipeline
 {
     private const string Producer = "InvestigationPipeline";
+
+    /// <summary>
+    /// Master plan 6.12: the approved, verified offline threat-intelligence package of the station, loaded as one more rules root (null = none).
+    /// The caller verifies it (signature, signer, file hashes) right before the run; a package that did not verify arrives with only a Problem.
+    /// </summary>
+    public LogAnalyzer.Dfir.Detection.ActiveThreatIntel? ThreatIntel { get; init; }
     private readonly ParserRegistry _registry;
 
     public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
 
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
-        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector()];
+        [new LiveStateCollector(),
+         // NtfsMetadata is second on purpose: the case folder usually sits on the system volume, so what the other collectors write rotates $LogFile
+         // (measured window ~4.8 h / 64 MiB) before the shadow copy freezes it; live state stays first because it is the most volatile.
+         new NtfsMetadataCollector(),
+         new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -114,17 +166,64 @@ public sealed class InvestigationPipeline
     public static List<EvidenceItem> Import(CaseWorkspace ws, IEnumerable<string> files)
     {
         var list = new List<EvidenceItem>();
-        foreach (var f in files)
+        var all = files.ToList();
+        foreach (var f in all)
         {
             var type = ImportType(f);
+            // the Windows Search index: Windows.db and the -wal beside it go together into one folder, so the parser finds the journal next to the database;
+            // a -wal selected on its own beside a selected Windows.db is taken with it, not imported twice
+            if (IsSearchDatabaseType(type)) { list.AddRange(ImportSearchIndex(ws, f, type)); continue; }
+            if (f.EndsWith("-wal", StringComparison.OrdinalIgnoreCase) && all.Any(x => x.Equals(f[..^4], StringComparison.OrdinalIgnoreCase) && IsSearchDatabaseType(ImportType(x)))) continue;
             // E1: an archived log ("Archive-Security-<date>.evtx") is the Security channel; E1/E10: the origin (archived log, Windows.old, shadow copy) goes into the notes and custody.
             var source = type == "evtx" ? LogAnalyzer.Dfir.Windows.Acquisition.HistoricalSources.ChannelFromFileName(f) : type;
             var origin = LogAnalyzer.Dfir.Analysis.EvidenceOrigin.Label(f);
             list.Add(ws.ImportFile(f, "Import:" + source, type == "evtx" ? "EventLog:" + source : type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion,
-                notes: (origin.Length > 0 ? $"Sursă istorică ({origin}). " : "") + "Importat de operator din: " + f));
+                notes: (origin.Length > 0 ? $"Sursă istorică ({origin}). " : "") + "Importat de operator din: " + f,
+                // a session log of AnyDesk / TeamViewer is in the local time of the station it came from, which an operator import does not name:
+                // its times stay unconverted instead of being read in this machine's zone
+                timezone: LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.IsKnown(type) ? "" : null));
             if (origin.Contains("VSS", StringComparison.Ordinal)) ws.Audit("vss.import", $"{list[^1].EvidenceId} din {f}");
         }
         return list;
+    }
+
+    /// <summary>
+    /// Imports a Windows Search Windows.db with the Windows.db-wal beside it (if any) into one new folder of the case, so the journal sits next to the
+    /// database. The note says whether a journal was there; the pair still cannot be vouched for as one state (the parser writes that gap).
+    /// </summary>
+    private static bool IsSearchDatabaseType(string type) =>
+        type == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName || type == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName;
+
+    private static List<EvidenceItem> ImportSearchIndex(CaseWorkspace ws, string db, string type)
+    {
+        // Windows.db and Windows-gather.db go through the same pair logic; only the file name and the no-journal note differ
+        var isGather = type == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName;
+        var dbName = isGather ? LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.DatabaseFileName : LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.DatabaseFileName;
+        var noWalNote = isGather ? LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.NoWalNote : LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.NoWalNote;
+        var dir = Path.Combine(ws.RawDir("Import:" + type), Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var items = new List<EvidenceItem>();
+        var wal = db + "-wal";
+        bool hasWal = File.Exists(wal);
+        string Copy(string from, string name)
+        {
+            var dest = Path.Combine(dir, name);
+            using (var src = new FileStream(from, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            using (var dst = new FileStream(dest, FileMode.CreateNew, FileAccess.Write))
+                src.CopyTo(dst);
+            File.SetLastWriteTimeUtc(dest, File.GetLastWriteTimeUtc(from));
+            return dest;
+        }
+        var origin = LogAnalyzer.Dfir.Analysis.EvidenceOrigin.Label(db);
+        var note = (origin.Length > 0 ? $"Sursă istorică ({origin}). " : "") + "Importat de operator din: " + db + "." +
+                   (hasWal ? $" Jurnalul {dbName}-wal de lângă bază a fost importat împreună cu ea." : " " + noWalNote);
+        var dbItem = ws.RegisterStored(Copy(db, dbName), db, "Import:" + type, type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion, action: "imported", notes: note);
+        items.Add(dbItem);
+        if (hasWal)
+            items.Add(ws.RegisterStored(Copy(wal, dbName + "-wal"), wal, "Import:" + type, LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.WalSourceType,
+                TemporalType.Historical, "Import", DfirInfo.ApplicationVersion, action: "imported", parentEvidenceId: dbItem.EvidenceId, notes: (isGather ? "Jurnalul WAL al bazei gather Windows Search, importat împreună cu " : "Jurnalul WAL al indexului Windows Search, importat împreună cu ") + db));
+        if (origin.Contains("VSS", StringComparison.Ordinal)) ws.Audit("vss.import", $"{dbItem.EvidenceId} din {db}");
+        return items;
     }
 
     /// <summary>The evidence type <see cref="Import"/> gives a file. Every file is evidence; one with no known type is "file" (hash IOCs, YARA). WP18: the intake screen uses the same rule.</summary>
@@ -138,12 +237,23 @@ public sealed class InvestigationPipeline
             {
                 ".evtx" => "evtx", ".pf" => "prefetch", ".pcapng" => "pcapng", ".lnk" => "lnk",
                 _ when f.EndsWith(".automaticDestinations-ms", StringComparison.OrdinalIgnoreCase) => "jumplist_auto",
+                _ when f.EndsWith(".customDestinations-ms", StringComparison.OrdinalIgnoreCase) => LogAnalyzer.Dfir.FileSystem.CustomJumpListParser.SourceTypeName,
                 _ when Path.GetFileName(f).Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase) => "srum",
+                // a Defender DetectionHistory file is named by a GUID, without extension: only a GUID name with the right content is typed
+                _ when Guid.TryParse(Path.GetFileName(f), out _) && EvidenceFingerprint.Detect(f) == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName => LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName,
+                // a Notepad tab file (<guid>.bin / .0.bin / .1.bin): only a GUID name with tab content; WindowState files have the same names and stay "file"
+                _ when LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.TryTabFileName(Path.GetFileName(f), out _, out _) && EvidenceFingerprint.Detect(f) == LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.FingerprintName => LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.SourceTypeName,
+                // the session logs of AnyDesk / TeamViewer: the exact file name AND the documented content (the type is the fingerprint name)
+                _ when LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.ByName(Path.GetFileName(f)) is { } remoteLog && EvidenceFingerprint.Detect(f) == remoteLog => remoteLog,
                 _ when Path.GetFileName(f).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase)
                        || Path.GetFileName(f).EndsWith("SYSTEM.hiv", StringComparison.OrdinalIgnoreCase) => "system_hive",
                 _ when Path.GetFileName(f).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase) => "amcache",
                 _ when EvidenceFingerprint.Detect(f) == "task_xml" => "task_xml",
                 _ when EvidenceFingerprint.Detect(f) == "usn_fsutil" => "usn_journal",
+                // the Windows Search index: the name Windows.db and an SQLite header; the tables are checked by the parser (another Windows.db is then refused there)
+                _ when Path.GetFileName(f).Equals(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.DatabaseFileName, StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName,
+                // the gatherer database beside it: the name Windows-gather.db and an SQLite header (the parser checks the tables)
+                _ when Path.GetFileName(f).Equals(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.DatabaseFileName, StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName,
                 _ when Path.GetFileName(f).Equals("History", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "chromium_history",
                 _ when Path.GetFileName(f).Equals("places.sqlite", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "firefox_places",
                 _ when RegistryHiveType(Path.GetFileName(f)) is { } hiveType && EvidenceFingerprint.Detect(f) == "regf" => hiveType,
@@ -170,12 +280,15 @@ public sealed class InvestigationPipeline
     /// <param name="procedureProfile">The procedure profile to use. When null the profile installed on this machine (%PROGRAMDATA%\LogAnalyzer\profile) is loaded
     /// if there is one; with none, behaviour is exactly as before the profile existed (log clears are NotAssessed).</param>
     public InvestigationResult Run(CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress = null, CancellationToken ct = default, ProcedureProfile? procedureProfile = null,
-        MediaRegister? mediaRegister = null, UsersRegister? usersRegister = null, string systemZone = "")
+        MediaRegister? mediaRegister = null, UsersRegister? usersRegister = null, string systemZone = "", LogAnalyzer.Dfir.HashSets.HashSetLibrary? hashSets = null)
     {
         var r = new InvestigationResult { Case = ws, State = OperationState.Running, StateReason = "Analiza rulează." };
-        try { return RunCore(r, ws, profile, collect, progress, ct, procedureProfile, mediaRegister, usersRegister, systemZone); }
+        try { return RunCore(r, ws, profile, collect, progress, ct, procedureProfile, mediaRegister, usersRegister, systemZone, hashSets); }
         catch (OperationCanceledException) { MarkEnded(r, ws, OperationState.Cancelled, "Oprit de operator; rezultatele parțiale nu sunt complete."); throw; }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { MarkEnded(r, ws, OperationState.Failed, ex.Message); throw; }
+        // evaluation 2026-11-05: a defect (ArgumentException in the evidence graph) left the case without run_state.json, read later as
+        // "starea analizei este necunoscută"; the run is recorded as failed with what happened, then the exception goes on to the caller
+        catch (Exception ex) when (ex is not OutOfMemoryException) { MarkEnded(r, ws, OperationState.Failed, $"Eroare internă în analiză ({ex.GetType().Name}): {ex.Message}"); throw; }
     }
 
     [System.Runtime.Versioning.SupportedOSPlatform("windows")]
@@ -224,6 +337,27 @@ public sealed class InvestigationPipeline
         }
     }
 
+    /// <summary>Why a transaction-log companion is not parsed on its own (evaluation 2026-11-05: „niciun parser înregistrat” read like a defect).</summary>
+    internal static string? AuxiliaryNote(string sourceType) => sourceType switch
+    {
+        LogAnalyzer.Dfir.Windows.Acquisition.SrumCollector.SrumLogSourceType =>
+            "jurnal de tranzacții ESE al bazei SRUM: nu se citește separat; parserul SRUM îl folosește la recuperarea unei copii „murdare”",
+        LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.WalSourceType or LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.ShmSourceType =>
+            "însoțitor (-wal / -shm) al indexului Windows Search: nu se citește separat; parserul îl pune lângă copia de lucru a bazei",
+        LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.WalSourceType or LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.ShmSourceType =>
+            "însoțitor (-wal / -shm) al bazei gather Windows Search: nu se citește separat; parserul îl pune lângă copia de lucru a bazei",
+        LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.EdbSourceType =>
+            "Windows.edb (ESE): păstrat doar ca probă; nu există parser pentru el",
+        LogAnalyzer.Dfir.Windows.Acquisition.NtfsMetadataCollector.BootSourceType =>
+            "sectorul de boot NTFS: nu se citește separat; MftParser și I30Parser îl folosesc când stă alături de $MFT",
+        LogAnalyzer.Dfir.Windows.Acquisition.NtfsMetadataCollector.LogFileSourceType =>
+            "$LogFile conservat brut din copia de umbră; nu are încă parser în această versiune",
+        LogAnalyzer.Dfir.Windows.Acquisition.NtfsMetadataCollector.ManifestSourceType =>
+            "manifestul colectării NTFS (SHA-256, copia de umbră, ora): document de proveniență, nu are parser",
+        "amcache_log" => "jurnal de tranzacții al hive-ului Amcache: păstrat în caz ca probă; reaplicarea lui pe hive nu este încă implementată (intrările scrise doar în jurnal pot lipsi)",
+        _ => null,
+    };
+
     private static void MarkEnded(InvestigationResult r, CaseWorkspace ws, OperationState state, string reason)
     {
         r.State = state;
@@ -239,33 +373,78 @@ public sealed class InvestigationPipeline
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* the original failure is what the caller must see */ }
     }
 
+    /// <summary>
+    /// Writes the acquisition run record. A failure is audited and shown as a gap; it never throws, so it can neither mask the exception that ended
+    /// the run nor fail an otherwise good run.
+    /// </summary>
+    internal static void CompleteRunRecord(AcquisitionRunRecorder recorder, CaseWorkspace ws, InvestigationResult r, OperationState state, string reason)
+    {
+        try { recorder.Complete(state, reason); }
+        catch (Exception ex) when (ex is not OutOfMemoryException)
+        {
+            try { ws.Audit("acquisition.run_record_failed", $"run={recorder.RunId} {ex.GetType().Name}: {ex.Message}"); }
+            catch (Exception ex2) when (ex2 is not OutOfMemoryException) { /* audit unavailable: the gap below still tells the operator; nothing may escape the finally */ }
+            r.Gaps.Add(new EvidenceGap("Fișa colectării", EvidenceStatus.Failed, ex.Message, "Fișa colectării nu a putut fi scrisă; colectarea nu are înregistrare per rulare",
+                "Repetarea colectării sau a scrierii fișei", "Posibil"));
+        }
+    }
+
     private InvestigationResult RunCore(InvestigationResult r, CaseWorkspace ws, CollectionProfile profile, bool collect, IProgress<string>? progress, CancellationToken ct, ProcedureProfile? procedureProfile = null,
-        MediaRegister? mediaRegister = null, UsersRegister? usersRegister = null, string systemZone = "")
+        MediaRegister? mediaRegister = null, UsersRegister? usersRegister = null, string systemZone = "", LogAnalyzer.Dfir.HashSets.HashSetLibrary? hashSets = null)
     {
         bool elevated = OperatingSystem.IsWindows() && IsAdministrator();
-        ws.Audit("investigation.start", $"profile={profile} collect={collect} elevated={elevated}");
+        var startedUtc = DateTimeOffset.UtcNow;   // master plan 6.16: the run manifest records when the run began
+        var recorder = collect ? AcquisitionRunRecorder.Begin(ws, profile.ToString(), elevated) : null;
+        ws.Audit("investigation.start", $"profile={profile} collect={collect} elevated={elevated}" + (recorder is null ? "" : $" run={recorder.RunId}"));
 
-        // 1. Acquisition.
-        if (collect)
-            foreach (var c in AllCollectors.Where(c => (c.Profiles & profile) != 0))
+        // 1. Acquisition. The run record is written when the loop ends, whatever way it ends.
+        if (recorder is not null)
+        {
+            var runState = OperationState.Completed;
+            var runReason = "";
+            try
             {
-                ct.ThrowIfCancellationRequested();
-                progress?.Report($"Colectare: {c.Name}");
-                var start = DateTimeOffset.UtcNow;
-                CollectorOutcome o;
-                try { o = c.Collect(new CollectorContext { Case = ws, IsElevated = elevated }, ct); }
-                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
-                { o = new CollectorOutcome { Status = EvidenceStatus.Failed, Errors = { ex.Message } }; }
-                var end = DateTimeOffset.UtcNow;
-                r.Collection.Add(new CollectionRow(c.Name, o.Status, o.Evidence.Count, string.Join("; ", o.Errors), start, end));
-                ws.RecordCollection(new CollectionAuditRecord(c.Name, start, end, o.Status, o.ExitCode, o.Source, ws.Root, o.Evidence.Sum(e => e.Size),
-                    "", o.Tool, o.ToolVersion, string.Join(" && ", o.Commands), string.Join("; ", o.Errors)));
-                if (o.Status is EvidenceStatus.NotAvailable or EvidenceStatus.Failed)
-                    r.Gaps.Add(new EvidenceGap(c.Name, o.Status, string.Join("; ", o.Errors), "Sursa lipsește din analiză",
-                        c.RequiresElevation ? "Rulare ca administrator" : "Import manual al probei", elevated ? "Posibil" : "Cu drepturi de administrator"));
-                else if (o.Errors.Count > 0)
-                    r.Gaps.Add(new EvidenceGap(c.Name, EvidenceStatus.Partial, string.Join("; ", o.Errors.Take(8)), "Unele surse lipsesc", "Rulare ca administrator / import", "Posibil"));
+                foreach (var c in AllCollectors.Where(c => (c.Profiles & profile) != 0))
+                {
+                    ct.ThrowIfCancellationRequested();
+                    progress?.Report($"Colectare: {c.Name}");
+                    var start = DateTimeOffset.UtcNow;
+                    CollectorOutcome o;
+                    try { o = c.Collect(new CollectorContext { Case = ws, IsElevated = elevated }, ct); }
+                    catch (OperationCanceledException)
+                    {
+                        // Whatever the collector had already stored belongs to the record even though it never returned an outcome.
+                        recorder.AddInterrupted(c.Name, c.Version, EvidenceStatus.Partial, "colectare întreruptă (anulată)", start, DateTimeOffset.UtcNow);
+                        throw;
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+                    {
+                        o = new CollectorOutcome { Status = EvidenceStatus.Failed, Errors = { ex.Message } };
+                        o.Evidence.AddRange(AcquisitionRunRecorder.EvidenceSince(ws, c.Name, start));
+                    }
+                    catch (Exception ex) when (ex is not OutOfMemoryException)
+                    {
+                        // Review round 2: an unexpected failure still ends the run, but the evidence already stored is not left out of the record.
+                        recorder.AddInterrupted(c.Name, c.Version, EvidenceStatus.Failed, $"{ex.GetType().Name}: {ex.Message}", start, DateTimeOffset.UtcNow);
+                        throw;
+                    }
+                    var end = DateTimeOffset.UtcNow;
+                    var manifest = recorder.Add(c.Name, c.Version, o.Tool, o.ToolVersion, o.Status, o.Errors, o.Commands, o.Evidence, start, end);
+                    r.Collection.Add(new CollectionRow(c.Name, o.Status, o.Evidence.Count, string.Join("; ", o.Errors), start, end));
+                    ws.RecordCollection(new CollectionAuditRecord(c.Name, start, end, o.Status, o.ExitCode, o.Source, ws.Root, o.Evidence.Sum(e => e.Size),
+                        manifest, o.Tool, o.ToolVersion, string.Join(" && ", o.Commands), string.Join("; ", o.Errors)));
+                    if (o.Status is EvidenceStatus.NotAvailable or EvidenceStatus.Failed)
+                        r.Gaps.Add(new EvidenceGap(c.Name, o.Status, string.Join("; ", o.Errors), "Sursa lipsește din analiză",
+                            c.RequiresElevation ? "Rulare ca administrator" : "Import manual al probei", elevated ? "Posibil" : "Cu drepturi de administrator"));
+                    else if (o.Errors.Count > 0)
+                        r.Gaps.Add(new EvidenceGap(c.Name, EvidenceStatus.Partial, string.Join("; ", o.Errors.Take(8)), "Unele surse lipsesc", "Rulare ca administrator / import", "Posibil"));
+                }
             }
+            catch (OperationCanceledException) { runState = OperationState.Cancelled; runReason = "colectare anulată de operator"; throw; }
+            catch (Exception ex) { runState = OperationState.Failed; runReason = ex.GetType().Name + ": " + ex.Message; throw; }
+            finally { CompleteRunRecord(recorder, ws, r, runState, runReason); }
+            r.LoadAcquisitionRuns(ws, ct);   // after the finally: a cancelled or failed run keeps its own exception
+        }
 
         // 2. Parsing into one timeline.
         var analysisDir = Path.Combine(ws.Root, "Analysis");
@@ -294,7 +473,7 @@ public sealed class InvestigationPipeline
                     r.Parsing.Add(new ParseResult
                     {
                         EvidenceId = ev.EvidenceId, Parser = "-", ParserVersion = "-", Status = EvidenceStatus.SkippedByDesign,
-                        Error = sel.Problem, ExpectedSha256 = ev.Sha256,
+                        Error = AuxiliaryNote(ev.SourceType) ?? sel.Problem, ExpectedSha256 = ev.Sha256,
                     });
                 continue;
             }
@@ -345,7 +524,7 @@ public sealed class InvestigationPipeline
                 else
                     ProvenanceBinder.BindEvents(sink.Events.Skip(mark), ev, parser.Descriptor.ParserId, parser.Descriptor.Version);
                 r.Parsing.Add(pr);
-                ws.RecordTransformation(ev.EvidenceId, parser.Descriptor.ParserId, parser.Descriptor.Version, "Analysis/timeline.csv", $"{LogAnalyzer.Dfir.Language.RoText.Count(pr.Records, "înregistrare", "înregistrări")}, status {pr.Status.ToSpec()}");
+                ws.RecordTransformation(ev.EvidenceId, parser.Descriptor.ParserId, parser.Descriptor.Version, "Analysis/timeline.csv", $"{LogAnalyzer.Dfir.Language.RoText.Count(pr.Records, "înregistrare", "înregistrări")}, stare {LogAnalyzer.Dfir.Language.RoLabels.Source(pr.Status)} ({pr.Status.ToSpec()})");
                 r.Gaps.AddRange(pr.Gaps);
                 if (pr.Status is EvidenceStatus.Failed or EvidenceStatus.Partial)
                     r.Gaps.Add(new EvidenceGap(Path.GetFileName(ev.StoredPath), pr.Status, pr.Error.Length > 0 ? pr.Error : $"{LogAnalyzer.Dfir.Language.RoText.Count(pr.MalformedRecords, "înregistrare", "înregistrări")} corupte",
@@ -377,7 +556,7 @@ public sealed class InvestigationPipeline
         var found = new List<Finding>(Correlation.Run(r.Timeline, maintenance, procedureProfile));
         // WP14a: removable media against the media register, CD/DVD, and NIC / Wi-Fi / Bluetooth / DHCP on an air-gapped or standalone scope.
         progress?.Report("Suporturi de stocare amovibile și integritate air-gap");
-        int wp14No = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n0) ? n0 : 0).DefaultIfEmpty(0).Max();
+        int wp14No = LiveStateAnalyzer.MaxFindingNo(found);
         var airGapFacts = LoadAirGapFacts(ws, r);
         r.FactsRemovableLetters.AddRange(airGapFacts?.RemovableLetters ?? []);
         var wp14 = Wp14Analysis.Run(ws, r.Timeline, () => $"F-{++wp14No:D4}", mediaRegister, usersRegister, procedureProfile, systemZone, facts: airGapFacts);
@@ -394,7 +573,7 @@ public sealed class InvestigationPipeline
                 ws.Audit(pre.Code == "EVIDENCE_MUTATED" ? "evidence.mutated" : "evidence.preflight_failed", $"{live.EvidenceId} {pre.Code} {pre.Detail}");
                 continue;
             }
-            found.AddRange(LiveStateAnalyzer.Analyze(live, liveFull, found.Count));
+            found.AddRange(LiveStateAnalyzer.Analyze(live, liveFull, LiveStateAnalyzer.MaxFindingNo(found)).ToList());   // evaluation 2026-11-05: found.Count collided with a reserved id (F-0305 twice -> EvidenceGraph crash)
         }
         // WP15b: policy change timeline, configured/applied/enforced/observed and control gaps, from the case timeline alone (EVTX is enough; the expected policy comes from the profile link).
         progress?.Report("Cronologie politici");
@@ -406,22 +585,70 @@ public sealed class InvestigationPipeline
             Expected = expectedSettings, ExpectedIssues = expectedIssues, Maintenance = maintenance,
             HighFindingTimesUtc = found.Where(x => x.Severity >= Severity.High && (x.FirstSeenUtc ?? x.LastSeenUtc) is not null).Select(x => (x.FirstSeenUtc ?? x.LastSeenUtc)!.Value).ToList(),
         });
-        int lastFindingNo = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n) ? n : 0).DefaultIfEmpty(0).Max();
+        int lastFindingNo = LiveStateAnalyzer.MaxFindingNo(found);
         found.AddRange(policyTimeline.ToFindings(() => $"F-{++lastFindingNo:D4}"));
         r.PolicyTimeline = policyTimeline;
         // WP14b: combined sequences (control gap + media, SMB + staging + USB, portable software + archive + USB) over the findings and rows above; they add no second detection.
         progress?.Report("Secvențe combinate");
-        int sequenceNo = found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n1) ? n1 : 0).DefaultIfEmpty(0).Max();
+        int sequenceNo = LiveStateAnalyzer.MaxFindingNo(found);
         var sequences = SequenceRules.Run(r.Timeline, found, () => $"F-{++sequenceNo:D4}", new SequenceInput { Scope = ws.Info.Scope });
         found.AddRange(sequences);
+        // R7a: fingerprint sets imported by the operator. Known-bad -> high finding; known-good -> label only (Analysis/known_hashes.json), the item stays in the case.
+        var hashSetList = (hashSets ?? new LogAnalyzer.Dfir.HashSets.HashSetLibrary()).Load(out var hashSetProblems);
+        foreach (var hp in hashSetProblems) { r.Gaps.Add(new EvidenceGap("Set de amprente", EvidenceStatus.Failed, hp, "Setul nu a fost folosit la potrivire", "Reimportați setul", "Da")); ws.Audit("hashset.problem", hp); }
+        // Coverage, said plainly: the case's samples are compared by SHA-256 only; a set of MD5 / SHA-1 only reaches the event fields that carry those hashes.
+        foreach (var hs in hashSetList.Where(h => !h.Info.CoversEvidenceSamples))
+            r.Gaps.Add(new EvidenceGap("Set de amprente", EvidenceStatus.Partial, $"Setul „{hs.Info.Name}” conține doar {string.Join(", ", hs.Info.Algorithms)}. {LogAnalyzer.Dfir.HashSets.HashSetMatcher.CoverageNote}",
+                "Probele din caz (fișierele importate) nu sunt comparate cu acest set", "Folosiți un set cu SHA-256 pentru probele din caz", "Da"));
+        var hashMatches = LogAnalyzer.Dfir.HashSets.HashSetMatcher.Match(hashSetList, ws.LoadEvidence(), r.Timeline);
+        int hashFindingNo = LiveStateAnalyzer.MaxFindingNo(found);
+        found.AddRange(LogAnalyzer.Dfir.HashSets.HashSetMatcher.ToFindings(hashMatches, () => $"F-{++hashFindingNo:D4}"));
+        r.KnownHashMatches.AddRange(hashMatches);
+        // Master plan 6.6: rules over Volatility rows and the memory/disk correlation, from the case timeline alone.
+        int memFindingNo = LiveStateAnalyzer.MaxFindingNo(found);
+        var memFindings = LogAnalyzer.Dfir.Memory.MemoryFindings.Run(r.Timeline, () => $"F-{++memFindingNo:D4}");
+        found.AddRange(memFindings.Findings);
+        r.Gaps.AddRange(memFindings.Gaps);
+        // Master plan 6.5: beaconing and scan heuristics over the connections, and the endpoint process behind a sensor-observed connection.
+        int netFindingNo = LiveStateAnalyzer.MaxFindingNo(found);
+        var net = LogAnalyzer.Dfir.Network.NetworkHeuristics.Run(r.Timeline, () => $"F-{++netFindingNo:D4}");
+        found.AddRange(net.Findings);
+        r.Gaps.AddRange(net.Gaps);
+        LogAnalyzer.Dfir.IO.Json.Write(Path.Combine(analysisDir, "network_links.json"), net.Links);
+        ws.RecordOutput(LogAnalyzer.Dfir.Network.NetworkHeuristicsResult.LinksRelPath, "NetworkHeuristics", "1", net.Links.Select(l => l.NetworkEvidenceId).Concat(net.Links.Select(l => l.EndpointEvidenceId)).Distinct());
+        if (collect)
+        {
+            // evaluation 2026-11-05: a signed per-user program is checked on this station before it is reported as high (see SignatureCalibration)
+            // review 2026-11-05: only findings whose every piece of evidence was collected live on this host (not imported, not remote)
+            var liveHere = ws.LoadEvidence().Where(e => e.Collector is { Length: > 0 } c && c != "Import" && !c.Contains("remote package", StringComparison.OrdinalIgnoreCase)
+                                                 && !string.Equals(e.AcquisitionMethod, "imported", StringComparison.OrdinalIgnoreCase)   // review round 2 LOW-1: Host is the case host for every item
+                                                 && string.Equals(e.Host, Environment.MachineName, StringComparison.OrdinalIgnoreCase))
+                             .Select(e => e.EvidenceId).ToHashSet(StringComparer.Ordinal);
+            var calibrated = SignatureCalibration.Apply(found, File.Exists, Native.Authenticode.Verify, ArtifactPathResolver.ForThisStation().Resolve,
+                f => f.SupportingEvidence.Count > 0 && f.SupportingEvidence.All(e => liveHere.Contains(e.EvidenceId))).ToList();
+            int lowered = calibrated.Where((x, i) => x.Severity != found[i].Severity).Count();
+            if (lowered > 0) ws.Audit("finding.severity_calibrated", $"{lowered} constatări din locații în care utilizatorii pot scrie coborâte cu un nivel: fișier semnat valid, verificat pe stație, probe colectate pe stație");
+            found = calibrated;
+        }
         var (kept, rejected) = ProvenanceBinder.BindFindings(found, ws.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal));
         LogAnalyzer.Dfir.Case.ClockMemory.Refresh();
         TimeReliability.Apply(kept, r.Timeline, LogAnalyzer.Dfir.Case.ClockMemory.StartupWarning.Length > 0);
         // Finding contract: semantic type, standard state, limitations, provenance, audit trail (added beside Classification).
         var parsersByEvidence = r.Parsing.Where(p => p.Parser != "-" && p.Status is EvidenceStatus.Success or EvidenceStatus.Partial or EvidenceStatus.Empty)
                                          .GroupBy(p => p.EvidenceId, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.Select(p => p.Parser).Distinct().ToList(), StringComparer.Ordinal);
-        kept = FindingContract.Enrich(kept, new FindingContractContext { ParsersOf = e => parsersByEvidence.GetValueOrDefault(e) ?? [], NowUtc = DateTimeOffset.UtcNow }).ToList();
+        // the plain sentence names the person an account belongs to (users register) and tells the time in the station's zone
+        kept = FindingContract.Enrich(kept, new FindingContractContext { ParsersOf = e => parsersByEvidence.GetValueOrDefault(e) ?? [], NowUtc = DateTimeOffset.UtcNow,
+            // the saved register when the caller passes none, as the media rules do (Wp14Analysis): the app passed none, so no person was ever named
+            PersonOf = (usersRegister ?? LogAnalyzer.Dfir.Registers.RegisterStore.Load<LogAnalyzer.Dfir.Registers.UsersRegister>().Register) is { } ur ? ur.PersonOf : null, Zone = TimeZoneInfo.Local,
+            AccountOfSid = LogAnalyzer.Dfir.Language.AccountResolver.FromEvents(r.Timeline) }).ToList();
         r.Findings.AddRange(kept);
+        foreach (var dup in kept.GroupBy(x => x.FindingId, StringComparer.Ordinal).Where(x => x.Count() > 1))
+        {
+            // numbering defect, said plainly instead of crashing later (EvidenceGraph, report): the findings stay, the id is ambiguous
+            ws.Audit("finding.duplicate_id", $"{dup.Key} x{dup.Count()}: {string.Join(", ", dup.Select(x => x.RuleId))}");
+            r.Gaps.Add(new EvidenceGap("Numerotarea constatărilor", EvidenceStatus.Partial, $"Identificatorul {dup.Key} a fost dat la {dup.Count()} constatări ({string.Join(", ", dup.Select(x => x.RuleId))})",
+                "Trimiterile între constatări după acest identificator pot fi ambigue", "Raportați defectul; reluați analiza după actualizare", "Da"));
+        }
         r.RejectedFindings.AddRange(rejected);
         foreach (var x in rejected) ws.Audit("finding.rejected", $"{x.Finding.FindingId} {x.Finding.RuleId}: {x.Reason}");
 
@@ -450,7 +677,18 @@ public sealed class InvestigationPipeline
 
         // Detection: rules shipped with the application plus the case's own Rules folder (ioc / yara / sigma).
         progress?.Report("Detecție (IOC, Sigma, YARA)");
-        var engine = DetectionEngine.Load(Path.Combine(AppContext.BaseDirectory, "Rules"), Path.Combine(ws.Root, "Rules"));
+        var engine = DetectionEngine.Load(Path.Combine(AppContext.BaseDirectory, "Rules"), Path.Combine(ws.Root, "Rules"), ThreatIntel?.RulesRoot ?? "");
+        if (ThreatIntel is { RulesRoot: null, Problem: { Length: > 0 } tiProblem } && !tiProblem.StartsWith("niciun pachet", StringComparison.Ordinal))
+            r.Gaps.Add(new EvidenceGap("Pachetul de informații despre amenințări", EvidenceStatus.Failed, tiProblem,
+                "Regulile pachetului nu au fost folosite la această analiză", "Verificați pachetul în pagina Politici și reluați analiza", "Da"));
+        else if (ThreatIntel?.RulesRoot is not null)
+        {
+            ws.Audit("threat_intel.used", $"{ThreatIntel.PackageId} v{ThreatIntel.Version}");
+            if (ThreatIntel.Problem.Length > 0)   // used, but said: an expired package
+                r.Gaps.Add(new EvidenceGap("Pachetul de informații despre amenințări", EvidenceStatus.Partial, ThreatIntel.Problem,
+                    "Regulile pachetului au fost folosite, dar pot fi depășite", "Un pachet nou de la publicator", "Da"));
+        }
+        engine.KnownHashSets = hashSetList;
         var evidenceItems = ws.LoadEvidence();
         var scannable = new List<EvidenceItem>();
         foreach (var e in evidenceItems)
@@ -466,15 +704,62 @@ public sealed class InvestigationPipeline
         r.Gaps.AddRange(engine.LoadErrors);
         File.WriteAllText(Path.Combine(analysisDir, "detections.json"), JsonSerializer.Serialize(r.Detections, new JsonSerializerOptions { WriteIndented = true }));
         File.WriteAllText(Path.Combine(analysisDir, "rules.json"), JsonSerializer.Serialize(r.RulesUsed, new JsonSerializerOptions { WriteIndented = true }));
+        File.WriteAllText(Path.Combine(analysisDir, "known_hashes.json"), JsonSerializer.Serialize(r.KnownHashMatches.Select(m => new { m.SetName, m.Category, m.Label, m.SetSourceFile, m.SetSourceSha256, m.EvidenceId, m.Path, m.Algorithm, m.Hash, m.Source }), new JsonSerializerOptions { WriteIndented = true }));
+        ws.RecordOutput("Analysis/known_hashes.json", "HashSetMatcher", "1.0", evidenceIds);
         ws.RecordOutput("Analysis/detections.json", "DetectionEngine", "1.0", evidenceIds);
         ws.RecordOutput("Analysis/rules.json", "DetectionEngine", "1.0");
         ws.RecordTransformation("CASE", "DetectionEngine", "1.0", "Analysis/detections.json", $"{r.Detections.Count} potriviri, {r.RulesUsed.Count} reguli");
+        // Master plan 6.7: every evidence file that is a Windows executable is read statically (never run) and its signature is checked on this
+        // station (embedded or catalog, cache only, no network). Observations with their reasons, not verdicts.
+        progress?.Report("Triaj executabile");
+        foreach (var e in evidenceItems)
+        {
+            if (!ws.TryFullPath(e.StoredPath, out var full) || !File.Exists(full)) continue;
+            try
+            {
+                using (var fs = new FileStream(full, FileMode.Open, FileAccess.Read, FileShare.Read))
+                    if (fs.Length < 64 || fs.ReadByte() != 'M' || fs.ReadByte() != 'Z') continue;
+                var pe = LogAnalyzer.Dfir.Detection.PeTriage.Analyze(full);
+                if (!pe.IsPe)
+                {
+                    // starts like an executable but cannot be read as one: malformed programs are the interesting ones, so it is said, not dropped
+                    r.Gaps.Add(new EvidenceGap(e.OriginalName, EvidenceStatus.Partial, pe.Problem, "Fișierul începe ca un executabil Windows, dar nu a putut fi citit ca unul",
+                        "Analiză manuală într-un mediu izolat", "Posibil"));
+                    continue;
+                }
+                var sig = OperatingSystem.IsWindows() ? LogAnalyzer.Dfir.Windows.Native.Authenticode.Verify(full) : new LogAnalyzer.Dfir.Windows.Native.SignatureInfo(false, false, "none", "neverificat (nu este Windows)", "");
+                r.PeTriage.Add(new LogAnalyzer.Dfir.Detection.PeTriageRow(e.EvidenceId, e.OriginalName, pe, sig.Kind, sig.Status, sig.Signer, sig.IsValid));
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            {
+                r.Gaps.Add(new EvidenceGap(e.OriginalName, EvidenceStatus.Failed, ex.Message, "Executabilul nu a putut fi citit pentru triaj", "Reachiziție", "Posibil"));
+            }
+        }
+        // written also when empty, so a run with no executables never leaves an earlier run's list behind
+        {
+            LogAnalyzer.Dfir.Detection.PeTriageFile.Write(Path.Combine(analysisDir, "pe_triage.json"), r.PeTriage);
+            ws.RecordOutput(LogAnalyzer.Dfir.Detection.PeTriageFile.RelPath, "PeTriage", "1", r.PeTriage.Select(p => p.EvidenceId));
+        }
+        // Master plan 6.10: identities by SID across DCs, servers and workstations, written always so a reopened case (whose timeline.csv has no
+        // event fields) still has them.
+        progress?.Report("Identități și sesiuni");
+        r.Identity = LogAnalyzer.Dfir.Identity.IdentityReconstruction.Build(r.Timeline);
+        LogAnalyzer.Dfir.Identity.IdentityReport.Write(Path.Combine(analysisDir, "identity.json"), r.Identity);
+        ws.RecordOutput(LogAnalyzer.Dfir.Identity.IdentityReport.RelPath, "IdentityReconstruction", LogAnalyzer.Dfir.Identity.IdentityReconstruction.Version, evidenceIds);
+        ws.RecordTransformation("CASE", "IdentityReconstruction", LogAnalyzer.Dfir.Identity.IdentityReconstruction.Version, LogAnalyzer.Dfir.Identity.IdentityReport.RelPath,
+            $"{r.Identity.Identities.Count} identități, {r.Identity.Sessions.Count} sesiuni, {r.Identity.DirectoryChanges.Count} modificări de director, {r.Identity.DuplicatesDropped} duplicate eliminate");
+        // the account's path (account → session → host → process → resource), by exact host + logon id and ProcessGuid only
+        r.IdentityGraph = LogAnalyzer.Dfir.Identity.IdentityGraph.Build(r.Identity, r.Timeline);
+        LogAnalyzer.Dfir.Identity.IdentityGraphReport.Write(Path.Combine(analysisDir, "identity_graph.json"), r.IdentityGraph);
+        ws.RecordOutput(LogAnalyzer.Dfir.Identity.IdentityGraphReport.RelPath, "IdentityGraph", LogAnalyzer.Dfir.Identity.IdentityGraph.Version, evidenceIds);
+        ws.RecordTransformation("CASE", "IdentityGraph", LogAnalyzer.Dfir.Identity.IdentityGraph.Version, LogAnalyzer.Dfir.Identity.IdentityGraphReport.RelPath,
+            $"{r.IdentityGraph.ProcessesLinked} procese și {r.IdentityGraph.ResourcesLinked} resurse legate de sesiuni");
         r.AntiForensics.AddRange(LogAnalyzer.Dfir.Analysis.AntiForensics.Evaluate(r.Timeline, r.Gaps, maintenance,
             found.Where(x => x.Severity >= Severity.High && x.RuleId != "LOG-TAMPER" && (x.FirstSeenUtc ?? x.LastSeenUtc) is not null).Select(x => (x.FirstSeenUtc ?? x.LastSeenUtc)!.Value).ToList()));
         File.WriteAllText(Path.Combine(analysisDir, "anti_forensics.json"), JsonSerializer.Serialize(r.AntiForensics, new JsonSerializerOptions { WriteIndented = true }));
         ws.RecordOutput("Analysis/anti_forensics.json", "AntiForensics", "1.0", evidenceIds);
         ws.RecordTransformation("CASE", "AntiForensics", "1.0", "Analysis/anti_forensics.json",
-            $"{r.AntiForensics.Count(c => c.Result == AntiForensicResult.Detected)} DETECTED, {r.AntiForensics.Count(c => c.Result == AntiForensicResult.Undetermined)} UNDETERMINED");
+            $"{r.AntiForensics.Count(c => c.Result == AntiForensicResult.Detected)} detectate, {r.AntiForensics.Count(c => c.Result == AntiForensicResult.Undetermined)} nedeterminate (verificări de ascundere a urmelor)");
         File.WriteAllText(Path.Combine(analysisDir, "policy_timeline.json"), policyTimeline.ToJson());
         ws.RecordOutput("Analysis/policy_timeline.json", "PolicyTimeline", "1.0", evidenceIds);
         ws.RecordTransformation("CASE", "PolicyTimeline", "1.0", "Analysis/policy_timeline.json",
@@ -503,11 +788,34 @@ public sealed class InvestigationPipeline
         ws.WriteManifest("Exports/export_manifest.json", ["Exports/vault_proposals.jsonl", "Exports/vault_refused.json", "Analysis/dependencies.json"], Producer, DfirInfo.ApplicationVersion);
         var (state, stateReason) = OperationStates.Summarize(r.Collection.Select(c => c.Status).ToList(), r.Parsing);
         MarkEnded(r, ws, state, stateReason);
+        // Master plan 6.16: the immutable run record (manifest, finding snapshot, diff with the previous run), BEFORE the anchor below so the anchor's
+        // chain heads cover it (review 2026-11-08, P4). A failure of any kind is a gap, never a failed run (review P2: a duplicate rule id threw).
+        try
+        {
+            static string Fingerprint(object? o) => o is null ? "nu" : "da " + Convert.ToHexStringLower(System.Security.Cryptography.SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(JsonSerializer.Serialize(o))))[..16];
+            var settings = new Dictionary<string, string>
+            {
+                ["profil_colectare"] = profile.ToString(), ["colectare"] = collect ? "da" : "nu", ["fus_sistem"] = systemZone,
+                ["profil_proceduri"] = Fingerprint(r.Procedure), ["registru_medii"] = Fingerprint(mediaRegister), ["registru_utilizatori"] = usersRegister is null ? "nu" : "da",
+                ["seturi_amprente"] = hashSets is null ? "nu" : "da",
+                ["pachet_ti"] = ThreatIntel?.RulesRoot is not null ? $"{ThreatIntel.PackageId} v{ThreatIntel.Version}" : "nu",
+            };
+            var manifest = AnalysisRuns.Build(ws, startedUtc, r.Findings, r.Parsing, r.RulesUsed, r.Timeline.Count, state.ToSpec(), LogAnalyzer.Dfir.Analysis.FindingContract.Version, settings);
+            (r.Run, r.RunDiff) = AnalysisRuns.Record(ws, manifest);
+        }
+        catch (Exception ex) when (ex is not OutOfMemoryException and not OperationCanceledException)
+        {
+            try { ws.Audit("analysis.run_record_failed", $"{ex.GetType().Name}: {ex.Message}"); }
+            catch (Exception ex2) when (ex2 is not OutOfMemoryException) { /* the gap below still tells the operator */ }
+            r.Gaps.Add(new EvidenceGap("Fișa rulării analizei", EvidenceStatus.Failed, ex.Message, "Rularea nu are manifest imuabil; nu poate fi comparată cu altele",
+                "Reluarea analizei", "Da"));
+        }
         var schemaManifest = SchemaManifest.ForRun();
         schemaManifest.Anchor = ws.Anchor();   // chain heads: a copy held outside the case makes truncation at the end detectable
         schemaManifest.Write(Path.Combine(analysisDir, SchemaVersions.ManifestFile));
         ws.RecordOutput("Analysis/" + SchemaVersions.ManifestFile, Producer, DfirInfo.ApplicationVersion);
         ws.Audit("investigation.end", $"{r.Timeline.Count} events, {r.Findings.Count} findings, {r.Gaps.Count} gaps, state {state.ToSpec()}");
+        r.LoadCustody(ws, CancellationToken.None);   // review round 2: never cancelled after investigation.end (a late cancel would rewrite a finished run as cancelled). Last: the tab shows every custody entry of this run (outputs, parsing), with or without collection
         return r;
     }
 }
@@ -515,6 +823,11 @@ public sealed class InvestigationPipeline
 /// <summary>Findings from the live-state snapshot: what is running or set to start from user-writable locations, and unsigned.</summary>
 public static class LiveStateAnalyzer
 {
+    /// <summary>Highest number among the "F-nnnn" ids already given; the next stage numbers from here. Correlation reserves ids ahead of
+    /// building some findings, so the count of findings is not the next free number.</summary>
+    public static int MaxFindingNo(IEnumerable<Finding> found) =>
+        found.Select(x => x.FindingId.StartsWith("F-", StringComparison.Ordinal) && int.TryParse(x.FindingId.AsSpan(2), out var n) ? n : 0).DefaultIfEmpty(0).Max();
+
     public static IEnumerable<Finding> Analyze(EvidenceItem item, string path, int offset)
     {
         var snap = JsonSerializer.Deserialize<LiveStateCollector.Snapshot>(File.ReadAllText(path));
@@ -551,23 +864,41 @@ public static class LiveStateAnalyzer
                 ContradictingEvidence = s.StartMode.Equals("Disabled", StringComparison.OrdinalIgnoreCase) ? ["Serviciul este dezactivat (StartMode=Disabled): nu pornește singur."] : [],
             };
         foreach (var t in snap.Tasks.Where(t => t.UserWritable))
+        {
+            // lab 2026-11-10: Windows itself installs OneDrive per user and creates this task on every profile; at High it was a false alarm on every station
+            bool oneDrive = IsDefaultOneDrivePath(t.Command);
             yield return new Finding
             {
                 FindingId = Id(), RuleId = "LIVE-TASK-USERPATH", Title = $"Activitate planificată care rulează dintr-o locație în care utilizatorii pot scrie: {Path.GetFileName(t.Path)}",
-                Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1053.005",
-                File = t.Command, FirstSeenUtc = snap.TakenUtc, Description = $"{t.Path}: {t.Command}",
-                ClassificationReason = "Definiția curentă a activității planificate.",
+                Severity = oneDrive ? Severity.Low : Severity.High, Category = "Persistence", Classification = oneDrive ? Classification.Candidate : Classification.Direct,
+                Confidence = oneDrive ? Confidence.Low : Confidence.High, MitreTechniqueId = "T1053.005",
+                File = t.Command, FirstSeenUtc = snap.TakenUtc, Description = $"{t.Path}: {t.Command}" + (oneDrive ? " " + DefaultOneDriveNote : ""),
+                ClassificationReason = oneDrive ? "Definiția curentă a activității planificate; calea este cea implicită a OneDrive." : "Definiția curentă a activității planificate.",
                 SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Tasks[{t.Path}]", "instantaneu al stării live")],
+                AlternativeExplanations = oneDrive ? ["Componenta OneDrive instalată de Windows pentru fiecare utilizator (comportament implicit)."] : [],
+                RecommendedNextSteps = oneDrive ? ["Verificați semnătura digitală Microsoft a fișierului (Proprietăți → Semnături digitale)."] : [],
             };
+        }
         foreach (var a in snap.Autoruns.Where(a => a.UserWritable))
+        {
+            bool oneDrive = IsDefaultOneDrivePath(a.Value);
             yield return new Finding
             {
                 FindingId = Id(), RuleId = "LIVE-AUTORUN-USERPATH", Title = $"Pornire automată dintr-o locație în care utilizatorii pot scrie: {a.Name}",
-                Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1547.001",
-                File = a.Value, FirstSeenUtc = snap.TakenUtc, Description = $"{a.Location}\\{a.Name} = {a.Value}",
-                ClassificationReason = "Cheile Run curente.",
+                Severity = oneDrive ? Severity.Low : Severity.Medium, Category = "Persistence", Classification = oneDrive ? Classification.Candidate : Classification.Direct,
+                Confidence = oneDrive ? Confidence.Low : Confidence.Medium, MitreTechniqueId = "T1547.001",
+                File = a.Value, FirstSeenUtc = snap.TakenUtc, Description = $"{a.Location}\\{a.Name} = {a.Value}" + (oneDrive ? " " + DefaultOneDriveNote : ""),
+                ClassificationReason = oneDrive ? "Cheile Run curente; calea este cea implicită a OneDrive." : "Cheile Run curente.",
                 SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Autoruns[{a.Name}]", "instantaneu al stării live")],
-                AlternativeExplanations = ["Multe aplicații per utilizator (actualizatoare, sincronizare) pornesc legitim din AppData."],
+                AlternativeExplanations = oneDrive ? ["Componenta OneDrive instalată de Windows pentru fiecare utilizator (comportament implicit)."]
+                    : ["Multe aplicații per utilizator (actualizatoare, sincronizare) pornesc legitim din AppData."],
+                RecommendedNextSteps = oneDrive ? ["Verificați semnătura digitală Microsoft a fișierului (Proprietăți → Semnături digitale)."] : [],
             };
+        }
     }
+
+    internal const string DefaultOneDriveNote = LogAnalyzer.Dfir.Analysis.KnownDefaults.OneDriveNote;
+
+    /// <summary>See <see cref="LogAnalyzer.Dfir.Analysis.KnownDefaults.IsDefaultOneDrivePath"/> (shared with the registry Run rule).</summary>
+    internal static bool IsDefaultOneDrivePath(string? command) => LogAnalyzer.Dfir.Analysis.KnownDefaults.IsDefaultOneDrivePath(command);
 }

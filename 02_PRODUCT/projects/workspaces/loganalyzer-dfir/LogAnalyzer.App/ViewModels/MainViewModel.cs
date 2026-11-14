@@ -47,6 +47,8 @@ namespace LogAnalyzer.UI.ViewModels
         public RangeObservableCollection<DetectedIssue> DetectedIssues { get; set; } = new();
         public RangeObservableCollection<RegistryArtifact> RegistryArtifacts { get; set; } = new();
         public RangeObservableCollection<TimelineItem> TimelineItems { get; set; } = new();
+        /// <summary>First / last event and highest severity of the events shown on the timeline page.</summary>
+        public TimelineSummary TimelineSummary => TimelineSummary.From(TimelineItems);
         public RangeObservableCollection<IocItem> CurrentIocs { get; set; } = new();
         
         // Threat Hunting Command Center Collections
@@ -82,9 +84,11 @@ namespace LogAnalyzer.UI.ViewModels
         // Operating mode: decided once at startup from the station's connectivity (or forced), see App.OnStartup.
         [ObservableProperty] private bool _isAirGappedMode = AppModeContext.IsAirGapped;
         [ObservableProperty] private bool _isNetworkMode = !AppModeContext.IsAirGapped;
-        [ObservableProperty] private string _systemModeBadgeText = AppModeContext.IsAirGapped ? "Mod: izolat (fără rețea)" : "Mod: conectat";
+        [ObservableProperty] private string _systemModeBadgeText = LogAnalyzer.Core.Services.Edition.ModuleCatalog.ModeBadge(StationPostureContext.Current, AppModeContext.IsAirGapped);
         /// <summary>Header subtitle: the station this application runs on.</summary>
-        public string StationSubtitle => "Analiză de jurnale și probe";
+        /// <summary>The module with its descriptor (plan 2026-11-04): "Insula — Stație izolată".</summary>
+        public string StationSubtitle => LogAnalyzer.Core.Services.Edition.ModuleCatalog.DisplayName(LogAnalyzer.Core.Services.Edition.StationPostureContext.Current);
+        public string ProductName => LogAnalyzer.Core.Services.Edition.ModuleCatalog.ProductName;
         /// <summary>The name of this PC, shown in the header instead of the station role (owner, 2026-10-11).</summary>
         public string StationName => Environment.MachineName;
         [ObservableProperty] private string _securityShieldStatusText = AppModeContext.IsAirGapped
@@ -139,6 +143,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>WP18 S2: the role profile (intents and sidebar entries) of this PC. Data from the role, the edition and the mode.</summary>
         public LogAnalyzer.Core.Services.Edition.RoleProfile RoleProfile { get; }
         public System.Collections.Generic.IReadOnlyList<LogAnalyzer.Core.Services.Edition.NavigationEntry> RoleNavigation => RoleProfile.Navigation;
+        /// <summary>The „Avansat” menu: sections and pages from <see cref="LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu"/> for this module, the current mode and the role's main pages.</summary>
+        public System.Collections.Generic.IReadOnlyList<LogAnalyzer.Core.Services.Edition.ModuleCatalog.MenuSection> AdvancedMenu =>
+            LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(StationPostureContext.Current, AppModeContext.IsAirGapped ? AppMode.AirGapped : AppMode.Network, RoleNavigation.Select(n => n.Tab).ToList(), HasRight);
 
         /// <summary>Control audit of this station ("Control stație" tab).</summary>
         public StationControlViewModel StationControl { get; } = new();
@@ -168,7 +175,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ShowMediaCenter()
         {
-            SelectedTabIndex = LogAnalyzer.Core.Services.Edition.RoleProfiles.TabMediaRegister;
+            if (!OpenTab(LogAnalyzer.Core.Services.Edition.RoleProfiles.TabMediaRegister)) return;
             MediaCenter.SelectedTab = 0;
         }
         public UsersRegisterViewModel UsersRegister { get; }
@@ -180,10 +187,19 @@ namespace LogAnalyzer.UI.ViewModels
         // AI / Heuristic Analysis Properties
         public ObservableCollection<AiAnomalyItem> AiAnomalies { get; set; } = new();
         [ObservableProperty] private int _aiRiskScore = 0;
-        [ObservableProperty] private string _aiRiskLevel = "NEDETERMINAT (analiza nu a fost rulată)";
+        [ObservableProperty]
+        [NotifyPropertyChangedFor(nameof(AiRiskVerdict))]
+        [NotifyPropertyChangedFor(nameof(AiRiskVerdictNote))]
+        private string _aiRiskLevel = "NEDETERMINAT (analiza nu a fost rulată)";
+        /// <summary>The verdict word alone ("NEDETERMINAT"): the page shows the explanation in parentheses on its own line.</summary>
+        public string AiRiskVerdict { get { int i = AiRiskLevel.IndexOf(" (", StringComparison.Ordinal); return i < 0 ? AiRiskLevel : AiRiskLevel[..i]; } }
+        /// <summary>The explanation that follows the verdict word, without the parentheses; empty when the level has none.</summary>
+        public string AiRiskVerdictNote { get { int i = AiRiskLevel.IndexOf(" (", StringComparison.Ordinal); return i < 0 ? "" : AiRiskLevel[(i + 2)..].TrimEnd(')'); } }
+        /// <summary>True only when the current counts and score come from an analysis run in this session over loaded events (the cards show "—" otherwise).</summary>
+        [ObservableProperty] private bool _aiHasEvidence = false;
         [ObservableProperty] private string _aiRiskColor = NeutralRiskColor;
         /// <summary>The colour of a risk level that was not computed (grey, never the green of „normal”).</summary>
-        public const string NeutralRiskColor = "#94a3b8";
+        public const string NeutralRiskColor = ThemeColors.TextMuted;
         /// <summary>The summary when there is no event to analyse (review finding 4, 2026-10-22).</summary>
         public const string NoDataSummary = "Nu există date analizate.";
         [ObservableProperty] private int _aiHighEntropyCount = 0;
@@ -271,7 +287,7 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _workbenchRuleContent = "title: Execuție PowerShell Codificat\nlogsource:\n  category: process_creation\ndetection:\n  selection:\n    CommandLine|contains:\n      - '-enc'\n      - 'bypass'\n      - 'downloadstring'\n  condition: selection";
         // Command Palette & Global Search
         [ObservableProperty] private bool _isCommandPaletteVisible = false;
-        [ObservableProperty] private string _workbenchStatusMessage = "Ready to compile and evaluate rules against ingested events.";
+        [ObservableProperty] private string _workbenchStatusMessage = "Gata de compilare: regulile se evaluează pe evenimentele încărcate.";
         [ObservableProperty] private string _workbenchCompileResult = "Introduceți o regulă Sigma YAML sau YARA și apăsați 'Compilează & Evaluează'.";
         [ObservableProperty] private int _workbenchMatchCount = 0;
 
@@ -281,7 +297,7 @@ namespace LogAnalyzer.UI.ViewModels
         // Analyst Triage Case Notes & Scratchpad
         [ObservableProperty] private bool _isAnalystDrawerOpen = false;
         [ObservableProperty] private string _analystCaseNotes = "Analyst notes initialized. Documenting forensic hypothesis and evidence correlation.";
-        [ObservableProperty] private string _analystCaseStatus = "UNDER TRIAGE";
+        [ObservableProperty] private string _analystCaseStatus = "În triere";
 
         [ObservableProperty] private string _searchText = string.Empty;
         partial void OnSearchTextChanged(string value) => SearchEventsText = value;
@@ -316,7 +332,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <summary>G3: the older pages under "Avansat" that load their own events (dashboard, events, registry, alerts, timeline, risk, attack chain,
         /// threat intelligence, MITRE); on them the window shows the empty offer while neither "Colectează tot" nor the page has data.</summary>
-        public static readonly int[] LegacyDataTabs = [0, 1, 2, 3, 4, 5, 6, 7, 10];
+        public static readonly int[] LegacyDataTabs = [0, 1, 2, 3, 4, 5, 6, 7, 8, 10];   // 8 (Conturi locale și USB) reads the same events (evaluation 2026-11-05)
         public bool IsLegacyDataPage => LegacyDataTabs.Contains(SelectedTabIndex);
         [ObservableProperty] private int _totalEventsCount;
         [ObservableProperty] private int _totalAlertsCount;
@@ -327,6 +343,8 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private int _lowAlertsCount;
         [ObservableProperty] private int _totalRegistryCount;
         [ObservableProperty] private int _totalHostsCount;
+        /// <summary>Techniques actually present in the loaded (non-test) alerts, with their alert counts. Empty when none are loaded.</summary>
+        [ObservableProperty] private IReadOnlyList<AlertTechniqueCount> _loadedAlertTechniques = Array.Empty<AlertTechniqueCount>();
 
         // Paging properties
         [ObservableProperty] private int _evtxCurrentPage = 1;
@@ -405,7 +423,7 @@ namespace LogAnalyzer.UI.ViewModels
         public ObservableCollection<ParsedEvent> LiveStreamingEvents { get; } = new();
         public ObservableCollection<DetectedIssue> LiveAlerts { get; } = new();
         [ObservableProperty] private bool _isLiveMonitoringActive;
-        [ObservableProperty] private string _liveMonitoringStatusText = "⏹ Monitorizare oprită. Apăsați 'Pornește Monitorizare Live'.";
+        [ObservableProperty] private string _liveMonitoringStatusText = "Monitorizare oprită. Apăsați 'Pornește Monitorizare Live'.";
         [ObservableProperty] private int _totalLiveEventsCaptured = 0;
         [ObservableProperty] private string _liveRemoteTargetHost = "localhost";
         [ObservableProperty] private DetectedIssue? _selectedLiveAlert;
@@ -476,7 +494,7 @@ namespace LogAnalyzer.UI.ViewModels
                 try
                 {
                     if (!CopyAudited("raw_event", RawEventMessage)) return;
-                    StatusMessage = "📋 Detalii eveniment copiate în Clipboard.";
+                    StatusMessage = "Detalii eveniment copiate în Clipboard.";
                 }
                 catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or System.Runtime.InteropServices.ExternalException) { StatusMessage = $"Clipboard indisponibil: {ex.Message}"; }
             }
@@ -648,9 +666,17 @@ namespace LogAnalyzer.UI.ViewModels
             IDatabaseService databaseService, IAuditCollectionService collectionService, EvidenceIntakeService evidenceIntake,
             IEditionProfile edition, IFeatureViewFactory featureViews, IHostDefense hostDefense,
             ILiveEventSourceFactory liveSourceFactory, IConnectivityWatcher connectivityWatcher,
-            LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null)
+            LogAnalyzer.Dfir.Windows.Policy.IRegistryValueWriter? registryWriter = null,
+            LogAnalyzer.Core.Services.LicenseService? license = null)
         {
             Edition = edition;
+            // The licence was verified before sign-in (App.xaml.cs); its rights are read ONCE here and drive the menu, the role pages and every navigation.
+            // Review of R2b: the rights are those VERIFIED at start (or at activation), never a fallback: a licence that expired, was renamed or is half-written
+            // by the end of sign-in keeps exactly the verified rights; a licence service with nothing verified grants no capability. Without a licence service at all
+            // (a test host; production always registers it) the module base set applies.
+            _licenseRights = RightsFrom(license);
+            // the timeline side panel is recomputed from the events shown whenever they change (never fixed sample text)
+            TimelineItems.CollectionChanged += (_, _) => OnPropertyChanged(nameof(TimelineSummary));
             // a failure to write the sealed audit is never silent: banner (AuditHealth) and the status line (weak: the health object lives for the process)
             System.ComponentModel.PropertyChangedEventManager.AddHandler(AuditHealth, (_, e) => { if (AuditHealth.HasWarning) StatusMessage = AuditHealth.Warning; },
                 nameof(LogAnalyzer.UI.Services.AuditHealth.Warning));
@@ -660,19 +686,21 @@ namespace LogAnalyzer.UI.ViewModels
             Containment = featureViews.CreateViewModel(FeatureKeys.Containment);
             DomainInvestigation = featureViews.CreateViewModel(FeatureKeys.DomainInvestigation);
             Investigation = new InvestigationViewModel(inv => featureViews.CreateViewModel(FeatureKeys.AiAnalysis, inv));
+            Investigation.StateChanged += OnInvestigationStateChanged;   // evaluation 2026-11-05: the advanced pages show the open case
             // The account's language level (default Simple) before any page reads a glossary term.
             LogAnalyzer.Dfir.Language.LanguageLevelContext.Set(_languagePreferences.Load(PreferenceAccount));
             IsExpertLevel = LogAnalyzer.Dfir.Language.LanguageLevelContext.IsExpert;
-            RoleProfile = LogAnalyzer.Core.Services.Edition.RoleProfiles.For(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role, edition, AppModeContext.Current.Mode);
-            Home = new HomeViewModel(Investigation, tab => SelectedTabIndex = tab, profile: RoleProfile, quickControl: StationControl);
+            RoleProfile = LogAnalyzer.Core.Services.Edition.RoleProfiles.For(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role, edition, AppModeContext.Current.Mode, HasRight);
+            Home = new HomeViewModel(Investigation, tab => OpenTab(tab), profile: RoleProfile, quickControl: StationControl);
             // 2026-10-22 PC walkthrough: the status bar follows the last control or investigation instead of staying on „Nicio analiză încă.”
             LogAnalyzer.UI.Services.CollectAllState.Instance.ActivityRecorded += line => StatusMessage = ActivityStatusLine(line, AuditHealth.HasWarning ? AuditHealth.Warning : null);
             // G3: „Colectează tot” anywhere in the window runs the complete collection and analysis for the role; the control station also runs its control.
             LogAnalyzer.UI.Services.CollectAllState.Handler = async () =>
             {
-                SelectedTabIndex = HomeViewModel.InvestigationTabIndex;
+                if (!OpenTab(HomeViewModel.InvestigationTabIndex)) return;
                 await Investigation.CollectAllCommand.ExecuteAsync(null);
-                if (LogAnalyzer.UI.Services.CollectAllState.Plan(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role).RunStationControl)
+                if (LogAnalyzer.UI.Services.CollectAllState.Plan(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role).RunStationControl
+                    && CanOpenTab(LogAnalyzer.Core.Services.Edition.RoleProfiles.TabStationControl))
                     await StationControl.RunCommand.ExecuteAsync(null);
             };
             Policy = new PolicyViewModel(registryWriter);
@@ -680,7 +708,7 @@ namespace LogAnalyzer.UI.ViewModels
             MediaRegister = new MediaRegisterViewModel();
             MediaCenter = new MediaCenterViewModel(MediaRegister);
             Transfer = new TransferViewModel(MediaCenter);
-            MediaCenter.NavigateToTransferRegister = () => SelectedTabIndex = LogAnalyzer.Core.Services.Edition.RoleProfiles.TabTransferRegister;
+            MediaCenter.NavigateToTransferRegister = () => OpenTab(LogAnalyzer.Core.Services.Edition.RoleProfiles.TabTransferRegister);
             UsersRegister = new UsersRegisterViewModel();
             Auth = new AuthViewModel();
             _eventParser = eventParser;
@@ -827,6 +855,12 @@ namespace LogAnalyzer.UI.ViewModels
                 HighAlertsCount = distribution.High;
                 MediumAlertsCount = distribution.Medium;
                 LowAlertsCount = distribution.LowOrInfo;
+                LoadedAlertTechniques = DetectedIssues
+                    .Where(i => !i.IsTestAlert && !string.IsNullOrWhiteSpace(i.MitreTechniqueId))
+                    .GroupBy(i => i.MitreTechniqueId.Trim(), StringComparer.OrdinalIgnoreCase)
+                    .Select(g => new AlertTechniqueCount(g.Key, g.Count()))
+                    .OrderByDescending(t => t.Count).ThenBy(t => t.TechId, StringComparer.OrdinalIgnoreCase)
+                    .ToList();
 
                 PopulateMitreMatrix();
             }
@@ -849,10 +883,34 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void Navigate(string indexStr)
         {
-            if (int.TryParse(indexStr, out int index))
-            {
-                SelectedTabIndex = index;
-            }
+            if (int.TryParse(indexStr, out int index)) OpenTab(index);
+        }
+
+        /// <summary>The message shown when a function is not part of the station's licence (or of its module).</summary>
+        public const string NotLicensedMessage = "Această funcție nu este inclusă în licența acestei stații.";
+
+        private readonly System.Collections.Generic.IReadOnlyList<string> _licenseRights;
+
+        /// <summary>The licence capabilities read once at start (see the constructor).</summary>
+        public System.Collections.Generic.IReadOnlyList<string> LicenseRights => _licenseRights;
+
+        private bool HasRight(string capability) => _licenseRights.Contains(capability, System.StringComparer.Ordinal);
+
+        /// <summary>The module has a page for the tab and the licence allows it (a tab outside the page catalogue is not decided here).</summary>
+        /// <summary>The rights of the main window: those verified at start / activation; none when the service verified nothing; the module base set without a licence service.</summary>
+        internal static System.Collections.Generic.IReadOnlyList<string> RightsFrom(LogAnalyzer.Core.Services.LicenseService? license) =>
+            license is null ? LogAnalyzer.Core.Services.LicenseFeatures.DefaultFor(StationPostureContext.Current)
+                : license.VerifiedClaims?.Features ?? (System.Collections.Generic.IReadOnlyList<string>)Array.Empty<string>();
+
+        internal bool CanOpenTab(int tab) => LogAnalyzer.Core.Services.Edition.ModuleCatalog.CanOpenTab(tab, StationPostureContext.Current, HasRight,
+            LogAnalyzer.Core.Services.Connectivity.AppModeContext.IsAirGapped ? LogAnalyzer.Core.Services.Connectivity.AppMode.AirGapped : LogAnalyzer.Core.Services.Connectivity.AppMode.Network);
+
+        /// <summary>The single door to a page: refuses a tab the licence or the module does not allow (message in the status line) instead of opening it.</summary>
+        internal bool OpenTab(int tab)
+        {
+            if (!CanOpenTab(tab)) { StatusMessage = NotLicensedMessage; return false; }
+            SelectedTabIndex = tab;
+            return true;
         }
 
         [RelayCommand] private void NextEvtxPage() { if (EvtxCurrentPage < EvtxTotalPages) EvtxCurrentPage++; }
@@ -956,9 +1014,14 @@ namespace LogAnalyzer.UI.ViewModels
 
             if (result == MessageBoxResult.Yes)
             {
+                // review 2026-11-05: never while a case load or an import writes the store (Wait(0): the UI thread must not block on a load whose
+                // continuation needs it)
+                _caseWorkspaceCts?.Cancel();
+                if (!_workspaceGate.Wait(0)) { StatusMessage = "Datele se încarcă încă în paginile avansate; reîncercați curățarea peste câteva secunde."; return; }
                 try
                 {
                     _databaseService.ClearDatabase();
+                    _workspaceCaseId = ""; WorkspaceSourceLine = NoCaseSourceLine;
                     
                     Events.Clear();
                     RegistryArtifacts.Clear();
@@ -973,6 +1036,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     MessageBox.Show($"Eroare la ștergerea bazei de date: {ex.Message}", "Eroare", MessageBoxButton.OK, MessageBoxImage.Error);
                 }
+                finally { _workspaceGate.Release(); }
             }
         }
 
@@ -1236,16 +1300,16 @@ namespace LogAnalyzer.UI.ViewModels
             var sb = new StringBuilder();
             sb.AppendLine($"=== {inv.Title} (Risc: {inv.RiskLevel}) ===");
             sb.AppendLine();
-            sb.AppendLine($"📋 SUMAR EXECUTIV:\n{inv.ExecutiveSummaryRo}");
+            sb.AppendLine($"SUMAR EXECUTIV:\n{inv.ExecutiveSummaryRo}");
             sb.AppendLine();
-            sb.AppendLine($"⚔️ CARTOGRAFIERE MITRE ATT&CK:\n{inv.MitreKillChainMapping}");
+            sb.AppendLine($"CARTOGRAFIERE MITRE ATT&CK:\n{inv.MitreKillChainMapping}");
             sb.AppendLine();
-            sb.AppendLine($"⚖️ IMPACT REGLEMENTAR:\n{inv.RegulatoryImpactRo}");
+            sb.AppendLine($"IMPACT REGLEMENTAR:\n{inv.RegulatoryImpactRo}");
             sb.AppendLine();
-            sb.AppendLine("🔍 EVIDENȚE FORENSICE CORELATE:");
+            sb.AppendLine("Dovezi forensice corelate:");
             foreach (var ev in inv.ForensicEvidenceBullets) sb.AppendLine($" • {ev}");
             sb.AppendLine();
-            sb.AppendLine("🛡️ GHID DE IZOLARE & CONTAINMENT (HG 585 / NIS2):");
+            sb.AppendLine("GHID DE IZOLARE & CONTAINMENT (HG 585 / NIS2):");
             foreach (var st in inv.RecommendedContainmentSteps) sb.AppendLine($" {st}");
 
             MessageBox.Show(sb.ToString(), "AI Copilot DFIR Assistant — Analiză & Playbook", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -1321,10 +1385,11 @@ namespace LogAnalyzer.UI.ViewModels
                     CollectionHostname,
                     log => App.Current.Dispatcher.Invoke(() => CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, log))
                 )) is { } refused) ShowExportRefused(refused);
+                else Home.NoteLiveCaseUsed();   // 2026-10-23: the live collection is exported for the station's LIVE case: it is listed in „Cazuri recente”
             }
             catch (Exception ex)
             {
-                CollectionLogs += $"[FATAL ERROR] {ex.Message}" + Environment.NewLine;
+                CollectionLogs += $"[Eroare fatală] {ex.Message}" + Environment.NewLine;
             }
             finally
             {
@@ -1340,7 +1405,7 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 if (!System.Net.IPAddress.TryParse(SyslogBindAddress?.Trim(), out var bind))
                 {
-                    CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, $"[SYSLOG ERROR] Adresa de ascultare „{SyslogBindAddress}” nu este o adresă IP.");
+                    CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, $"[Eroare syslog] Adresa de ascultare „{SyslogBindAddress}” nu este o adresă IP.");
                     return;
                 }
                 var allowed = new System.Collections.Generic.List<System.Net.IPAddress>();
@@ -1348,7 +1413,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     if (!System.Net.IPAddress.TryParse(part, out var ip))
                     {
-                        CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, $"[SYSLOG ERROR] „{part}” din lista surselor permise nu este o adresă IP.");
+                        CollectionLogs = LogAnalyzer.Core.Services.BoundedText.Append(CollectionLogs, $"[Eroare syslog] „{part}” din lista surselor permise nu este o adresă IP.");
                         return;
                     }
                     allowed.Add(ip);
@@ -1430,7 +1495,8 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 try
                 {
-                    var matches = Regex.Matches(value.XmlData, @"<Data Name=""([^""]+)"">([^<]*)</Data>");
+                    // EventRecord.ToXml writes Name='…' (apostrophes): both quote styles are read (2026-11-08: only "…" was, so no field of a real event showed)
+                    var matches = Regex.Matches(value.XmlData, @"<Data Name=[""']([^""']+)[""']>([^<]*)</Data>", RegexOptions.None, LogAnalyzer.Dfir.RegexDefaults.RuleMatchTimeout);
                     foreach (Match match in matches)
                     {
                         var name = match.Groups[1].Value;
@@ -1601,7 +1667,7 @@ namespace LogAnalyzer.UI.ViewModels
                 LiveAlerts.Insert(0, newAlert);
                 IssuesView?.Refresh();
                 ReloadDashboardStats();
-                StatusMessage = "🚨 Alertă escaladată în Centrul de Combatere & Live SOC!";
+                StatusMessage = "Alertă escaladată în Centrul de Combatere & Live SOC!";
                 OpenAlertModal(newAlert, host, show: false);
             });
         }
@@ -1726,7 +1792,7 @@ namespace LogAnalyzer.UI.ViewModels
                         : "Integritate probatorie confirmată (Fără fișiere externe modificate).";
                     if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "pdf-forensic", DetectedIssues.Count, dialog.FileName,
                             () => PdfReportService.GenerateReport(dialog.FileName, DetectedIssues.ToList(), timeline, sessionHashes)) is { } refused) { ShowExportRefused(refused); return; }
-                    StatusMessage = $"✅ Raport PDF generat cu succes!";
+                    StatusMessage = $"Raport PDF generat cu succes!";
                 } 
                 catch (Exception ex) 
                 { 
@@ -1749,7 +1815,7 @@ namespace LogAnalyzer.UI.ViewModels
                         : "Integritate probatorie confirmată (Fără fișiere externe modificate).";
                     if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "html-forensic", DetectedIssues.Count, dialog.FileName,
                             () => HtmlReportService.GenerateReport(dialog.FileName, DetectedIssues.ToList(), timeline, sessionHashes, TotalEventsCount, TotalRegistryCount, TotalHostsCount, OperatorName)) is { } refused) { ShowExportRefused(refused); return; }
-                    StatusMessage = "✅ Raport HTML generat cu succes!";
+                    StatusMessage = "Raport HTML generat cu succes!";
                 }
                 catch (Exception ex)
                 {
@@ -1786,7 +1852,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "json-stix", DetectedIssues.Count, dialog.FileName,
                             () => StixMispExportService.ExportToStix21(dialog.FileName, DetectedIssues.ToList(), CurrentIocs.ToList(), _currentSessionHashes)) is { } refused) { ShowExportRefused(refused); return; }
-                    StatusMessage = "✅ Export STIX 2.1 generat cu succes!";
+                    StatusMessage = "Export STIX 2.1 generat cu succes!";
                 }
                 catch (Exception ex)
                 {
@@ -1805,7 +1871,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "json-misp", DetectedIssues.Count, dialog.FileName,
                             () => StixMispExportService.ExportToMispJson(dialog.FileName, DetectedIssues.ToList(), CurrentIocs.ToList(), OperatorName)) is { } refused) { ShowExportRefused(refused); return; }
-                    StatusMessage = "✅ Export MISP JSON generat cu succes!";
+                    StatusMessage = "Export MISP JSON generat cu succes!";
                 }
                 catch (Exception ex)
                 {
@@ -1824,7 +1890,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     string script = IncidentResponsePlaybookService.GenerateHostIsolationScript(CollectionHostname);
                     File.WriteAllText(dialog.FileName, script, Encoding.UTF8);
-                    StatusMessage = $"✅ Script de izolare rețea generat în: {dialog.FileName}";
+                    StatusMessage = $"Script de izolare rețea generat în: {dialog.FileName}";
                 }
                 catch (Exception ex)
                 {
@@ -1844,7 +1910,7 @@ namespace LogAnalyzer.UI.ViewModels
                     int targetPid = SelectedEvent != null ? SelectedEvent.EventId : 5124;
                     string script = IncidentResponsePlaybookService.GenerateKillProcessTreeScript(targetPid, "SuspiciousProcess.exe");
                     File.WriteAllText(dialog.FileName, script, Encoding.UTF8);
-                    StatusMessage = $"✅ Script de terminare procese generat în: {dialog.FileName}";
+                    StatusMessage = $"Script de terminare procese generat în: {dialog.FileName}";
                 }
                 catch (Exception ex)
                 {
@@ -1871,7 +1937,7 @@ namespace LogAnalyzer.UI.ViewModels
                 Application.Current?.Dispatcher?.Invoke(() =>
                 {
                     ConnectivityWarningText = warning;
-                    StatusMessage = "⚠ " + warning;
+                    StatusMessage = warning;
                 });
             });
         }
@@ -1951,16 +2017,26 @@ namespace LogAnalyzer.UI.ViewModels
             if (loudest is null) return;
 
             IsAutoShieldTriggered = false;
-            CurrentLiveToastAlert = loudest;
-            IsLiveToastVisible = true;
-            StatusMessage = $"🚨 ALERTĂ LIVE: {loudest.Title}";
+            // a low or informational alert goes to the status bar only; the card opens for medium and above
+            bool showToast = ShouldShowToast(loudest.Severity);
+            if (showToast)
+            {
+                CurrentLiveToastAlert = loudest;
+                IsLiveToastVisible = true;
+            }
+            // design pass 2026-11-10: sentence case, and a low event is a notice, not an "ALERTĂ" in capitals
+            StatusMessage = $"{(SeverityRank(loudest.Severity) >= 2 ? "Alertă" : "Notificare")} în timp real: {(loudest.Plain.Length > 0 ? loudest.Plain : loudest.Title)}";
             if (SeverityRank(loudest.Severity) >= 3)
                 try { System.Media.SystemSounds.Exclamation.Play(); } catch (InvalidOperationException) { /* sound is optional */ }
+            if (!showToast) return;
             _toastAutoDismissTimer?.Stop();
             _toastAutoDismissTimer = new System.Timers.Timer(7000) { AutoReset = false };
             _toastAutoDismissTimer.Elapsed += (s, e) => Application.Current?.Dispatcher?.Invoke(() => IsLiveToastVisible = false);
             _toastAutoDismissTimer.Start();
         }
+
+        /// <summary>The live notification card opens only for medium severity and above; low and informational alerts appear in the status bar.</summary>
+        internal static bool ShouldShowToast(string? severity) => SeverityRank(severity) >= 2;
 
         private static int SeverityRank(string? s) => s?.ToLowerInvariant() switch { "critical" => 4, "high" => 3, "medium" => 2, "low" => 1, _ => 0 };
 
@@ -1972,8 +2048,8 @@ namespace LogAnalyzer.UI.ViewModels
             var tech = AttackTechniques.FirstOrDefault(t => t.TechId.Equals(id, StringComparison.OrdinalIgnoreCase))
                        ?? AttackTechniques.FirstOrDefault(t => t.TechId.Equals(id.Split('.')[0], StringComparison.OrdinalIgnoreCase));
             if (tech is null) return;
-            tech.DetectionColor = "#3f1218";
-            tech.BorderColor = "#ef4444";
+            tech.DetectionColor = ThemeColors.BadgeCriticalBg;
+            tech.BorderColor = ThemeColors.Critical;
             tech.Severity = alert.Severity;
         }
 
@@ -1987,7 +2063,7 @@ namespace LogAnalyzer.UI.ViewModels
             _liveDrainTimer?.Stop();
             do DrainLiveQueue(); while (!_liveQueue.IsEmpty);
             IsLiveMonitoringActive = false;
-            LiveMonitoringStatusText = "⏹ Monitorizare în timp real oprită.";
+            LiveMonitoringStatusText = "Monitorizare în timp real oprită.";
         }
 
         [RelayCommand]
@@ -2019,7 +2095,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (MessageBox.Show("Izolați ÎNTREAGA stație de rețea (tot traficul de ieșire blocat)?\n\nPentru un singur program suspect folosiți „Izolare procese suspecte”, care lasă restul PC-ului conectat.",
                     "Izolare stație", MessageBoxButton.YesNo, MessageBoxImage.Warning) != MessageBoxResult.Yes) return;
             var res = RecordResponse(_hostDefense.IsolateHostFromNetwork());
-            StatusMessage = $"🛡️ {res.Message}";
+            StatusMessage = $"{res.Message}";
             IsCountermeasureModalVisible = false;
             _auditService.LogAction("HOST_ISOLATION", $"{OperatorName} - {res.Status} - {res.Message}");
             MessageBox.Show(res.Message + (res.Success ? "\n\n(Puteți ridica izolarea oricând din bara laterală prin butonul de restaurare rețea)." : $"\n\n{res.ExecutionDetails}"),
@@ -2049,7 +2125,7 @@ namespace LogAnalyzer.UI.ViewModels
         private void ExecuteRestoreNetwork()
         {
             var res = RecordResponse(_hostDefense.RestoreNetworkAccess());
-            StatusMessage = $"🌐 {res.Message}";
+            StatusMessage = $"{res.Message}";
             _auditService.LogAction("HOST_RESTORE_NETWORK", $"{OperatorName} - {res.Status} - {res.Message}");
             MessageBox.Show(res.Success ? res.Message : $"{res.Message}\n\n{res.ExecutionDetails}", $"Restaurare rețea — {res.Status}", MessageBoxButton.OK,
                 res.Success ? MessageBoxImage.Information : MessageBoxImage.Warning);
@@ -2066,7 +2142,7 @@ namespace LogAnalyzer.UI.ViewModels
             // Killing every process with a guessed name (the former behaviour) is not acceptable on evidence.
             // The suspicious program is contained individually, scanned and documented in the containment tab.
             IsCountermeasureModalVisible = false;
-            SelectedTabIndex = 13;
+            if (!OpenTab(13)) return;
             StatusMessage = "Selectați programul în „Izolare procese suspecte”: i se blochează doar lui rețeaua, este scanat, iar incidentul se salvează cu probe.";
         }
 
@@ -2112,7 +2188,16 @@ namespace LogAnalyzer.UI.ViewModels
             ".evtx", ".reg", ".dat", ".csv", ".json", ".log", ".lnk", ".pf", ".hve", ".txt", ".bin", ".bmc"
         };
 
+        /// <summary>Review 2026-11-05: a manual import and a case load never run at the same time on the shared working database.</summary>
         private async Task ProcessFilesAsync(string[] allFiles)
+        {
+            _caseWorkspaceCts?.Cancel();
+            await _workspaceGate.WaitAsync();
+            try { await ProcessFilesCoreAsync(allFiles); }
+            finally { _workspaceGate.Release(); }
+        }
+
+        private async Task ProcessFilesCoreAsync(string[] allFiles)
         {
             IsLoading = true;
             LoadingProgress = 0;
@@ -2120,6 +2205,7 @@ namespace LogAnalyzer.UI.ViewModels
             LoadingSubDetail = "Filtrare artefacte forenzice relevante...";
             StatusMessage = "Inițializare sesiune de investigație...";
 
+            _workspaceCaseId = ""; WorkspaceSourceLine = NoCaseSourceLine;
             Events.Clear(); RegistryArtifacts.Clear(); DetectedIssues.Clear(); TimelineItems.Clear();
             _databaseService.ClearDatabase();
 
@@ -2208,58 +2294,7 @@ namespace LogAnalyzer.UI.ViewModels
                         LoadingSubDetail = $"Procesare EVTX: {Path.GetFileName(file)} ({totalEvtxProcessed:N0} evenimente)";
                     });
 
-                    try 
-                    {
-                        var batch = new List<ParsedEvent>();
-                        var timelineBatch = new List<TimelineItem>();
-                        
-                        foreach (var ev in _eventParser.ParseEvtxFile(file)) 
-                        {
-                            // The knowledge base describes Security-log events only; its "EventExample" is a sample event from another computer
-                            // and must never be shown as if it came from this station (owner 2026-10-11).
-                            var kbDetails = (ev.ProviderName ?? "").Contains("Security-Auditing", StringComparison.OrdinalIgnoreCase) ? _kbService.GetDetails(ev.EventId) : null;
-                            if (kbDetails != null)
-                            {
-                                ev.OfficialDescription = kbDetails.ExtendedDescription;
-                                ev.ReferenceUrl = kbDetails.ReferenceUrl;
-                                if (string.IsNullOrWhiteSpace(ev.PotentialCriticality)) ev.PotentialCriticality = kbDetails.PotentialCriticality;
-                            }
-                            batch.Add(ev);
-                            
-                            timelineBatch.Add(new TimelineItem 
-                            { 
-                                Timestamp = ev.TimeCreated, 
-                                Source = "EVTX", 
-                                Category = $"EID {ev.EventId}", 
-                                Description = ev.Message ?? "-", 
-                                UserOrHost = ev.MachineName ?? "-" 
-                            });
-
-                            if (batch.Count >= 5000)
-                            {
-                                _databaseService.SaveEvents(batch);
-                                _databaseService.SaveTimeline(timelineBatch);
-                                totalEvtxProcessed += batch.Count;
-                                batch.Clear();
-                                timelineBatch.Clear();
-                            }
-                        }
-                        if (batch.Count > 0)
-                        {
-                            _databaseService.SaveEvents(batch);
-                            _databaseService.SaveTimeline(timelineBatch);
-                            totalEvtxProcessed += batch.Count;
-                        }
-                        if (_eventParser is EvtxParser repairedBy && repairedBy.LastRepairNote.Length > 0)
-                            importErrors.Add($"{Path.GetFileName(file)} (EVTX): {repairedBy.LastRepairNote}.");
-                        if (_eventParser is EvtxParser legacy && legacy.LastMalformedRecords > 0)
-                            importErrors.Add($"{Path.GetFileName(file)} (EVTX): {legacy.LastMalformedRecords} înregistrări ilizibile au fost sărite; restul fișierului a fost importat.");
-                    } 
-                    catch (Exception ex)
-                    {
-                        // Never skip a file silently: the operator must know what is missing from the analysis.
-                        importErrors.Add($"{Path.GetFileName(file)} (EVTX): {ex.Message}");
-                    }
+                    totalEvtxProcessed += IngestEvtxFile(file, importErrors);
                 }
 
                 // 2.2 Parsare Registru .REG
@@ -2424,13 +2459,13 @@ namespace LogAnalyzer.UI.ViewModels
                             {
                                 if (sRule.MatchCount > 0)
                                 {
-                                    matchInUi.Status = $"MATCHED ({sRule.MatchCount})";
-                                    matchInUi.RuleStatusColor = "#ef4444";
+                                    matchInUi.Status = $"{sRule.MatchCount} potriviri";
+                                    matchInUi.RuleStatusColor = ThemeColors.Critical;
                                 }
                                 else
                                 {
-                                    matchInUi.Status = "Active";
-                                    matchInUi.RuleStatusColor = "#22c55e";
+                                    matchInUi.Status = "Activă";
+                                    matchInUi.RuleStatusColor = ThemeColors.Success;
                                 }
                             }
                         }
@@ -2481,6 +2516,68 @@ namespace LogAnalyzer.UI.ViewModels
             }
         }
 
+
+        /// <summary>Parses one EVTX file into the working database (events + timeline); a problem is added to <paramref name="importErrors"/>, never skipped silently. Returns the events saved.</summary>
+        private int IngestEvtxFile(string file, List<string> importErrors, System.Threading.CancellationToken ct = default)
+        {
+            int n = 0;
+            try 
+            {
+                var batch = new List<ParsedEvent>();
+                var timelineBatch = new List<TimelineItem>();
+                
+                foreach (var ev in _eventParser.ParseEvtxFile(file)) 
+                {
+                    // The knowledge base describes Security-log events only; its "EventExample" is a sample event from another computer
+                    // and must never be shown as if it came from this station (owner 2026-10-11).
+                    var kbDetails = (ev.ProviderName ?? "").Contains("Security-Auditing", StringComparison.OrdinalIgnoreCase) ? _kbService.GetDetails(ev.EventId) : null;
+                    if (kbDetails != null)
+                    {
+                        ev.OfficialDescription = kbDetails.ExtendedDescription;
+                        ev.ReferenceUrl = kbDetails.ReferenceUrl;
+                        if (string.IsNullOrWhiteSpace(ev.PotentialCriticality)) ev.PotentialCriticality = kbDetails.PotentialCriticality;
+                    }
+                    batch.Add(ev);
+                    
+                    timelineBatch.Add(new TimelineItem 
+                    { 
+                        Timestamp = ev.TimeCreated, 
+                        Source = "EVTX", 
+                        Category = $"EID {ev.EventId}", 
+                        Description = ev.Message ?? "-", 
+                        UserOrHost = ev.MachineName ?? "-" 
+                    });
+    
+                    if (batch.Count >= 5000)
+                    {
+                        ct.ThrowIfCancellationRequested();   // review 2026-11-05: a newer case load or import must not wait for, or mix with, this file
+                        _databaseService.SaveEvents(batch);
+                        _databaseService.SaveTimeline(timelineBatch);
+                        n += batch.Count;
+                        batch.Clear();
+                        timelineBatch.Clear();
+                    }
+                }
+                if (batch.Count > 0)
+                {
+                    _databaseService.SaveEvents(batch);
+                    _databaseService.SaveTimeline(timelineBatch);
+                    n += batch.Count;
+                }
+                if (_eventParser is EvtxParser repairedBy && repairedBy.LastRepairNote.Length > 0)
+                    importErrors.Add($"{Path.GetFileName(file)} (EVTX): {repairedBy.LastRepairNote}.");
+                if (_eventParser is EvtxParser legacy && legacy.LastMalformedRecords > 0)
+                    importErrors.Add($"{Path.GetFileName(file)} (EVTX): {legacy.LastMalformedRecords} înregistrări ilizibile au fost sărite; restul fișierului a fost importat.");
+            } 
+            catch (OperationCanceledException) { throw; }
+            catch (Exception ex)
+            {
+                // Never skip a file silently: the operator must know what is missing from the analysis.
+                importErrors.Add($"{Path.GetFileName(file)} (EVTX): {ex.Message}");
+            }
+            return n;
+        }
+
         private bool FilterIssues(object obj) => !(HideVerifiedAlerts && ((DetectedIssue)obj).IsVerified);
 
         private async void InitializeProcessTree()
@@ -2504,7 +2601,7 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     ProcessName = r.Path.Length > 0 ? $"{r.Name}  —  {r.Path}" : r.Name,
                     PID = r.Pid,
-                    RiskColor = LogAnalyzer.Dfir.Analysis.Correlation.IsUserWritable(r.Path) ? "#f59e0b" : "#a7adc2",
+                    RiskColor = LogAnalyzer.Dfir.Analysis.Correlation.IsUserWritable(r.Path) ? ThemeColors.Medium : ThemeColors.TextMuted,
                     ProcessIcon = "•",
                 });
                 foreach (var r in rows.OrderBy(r => r.Pid))
@@ -2529,8 +2626,8 @@ namespace LogAnalyzer.UI.ViewModels
                     SigmaRules.Add(new SigmaRule
                     {
                         RuleName = r.Title,
-                        Status = r.MatchCount > 0 ? $"MATCHED ({r.MatchCount})" : "Active",
-                        RuleStatusColor = r.MatchCount > 0 ? "#ef4444" : "#22c55e",
+                        Status = r.MatchCount > 0 ? $"{r.MatchCount} potriviri" : "Activă",
+                        RuleStatusColor = r.MatchCount > 0 ? ThemeColors.Critical : ThemeColors.Success,
                         FilePath = r.FilePath,
                         RuleContent = r.YamlContent
                     });
@@ -2687,7 +2784,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// </summary>
         private async Task RunAnalysisAsync(bool announce)
         {
-            if (_analysisEngine is not AnalysisEngine ae || _aiRunning) return;
+            if (_analysisEngine is not AnalysisEngine ae) return;
+            // review 2026-11-05: a call while one runs is not dropped (the panels would keep the previous data set): it runs right after
+            if (_aiRunning) { _analysisRerun = true; _analysisRerunAnnounce |= announce; return; }
             _aiRunning = true;
             try
             {
@@ -2748,7 +2847,7 @@ namespace LogAnalyzer.UI.ViewModels
                         Details = a.Explanation,
                         Score = score,
                         Severity = a.Severity,
-                        SeverityColor = a.Severity == "Critical" ? "#ef4444" : a.Severity == "High" ? "#f97316" : "#f59e0b",
+                        SeverityColor = a.Severity == "Critical" ? ThemeColors.Critical : a.Severity == "High" ? ThemeColors.High : ThemeColors.Medium,
                         MitreId = a.MitreTechniqueId ?? "T1027",
                         Timestamp = a.RelatedEvents.FirstOrDefault()?.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss") ?? ""
                     });
@@ -2763,7 +2862,7 @@ namespace LogAnalyzer.UI.ViewModels
                         Details = y.Explanation,
                         Score = 8.5,
                         Severity = y.Severity,
-                        SeverityColor = "#ef4444",
+                        SeverityColor = ThemeColors.Critical,
                         MitreId = y.MitreTechniqueId ?? "T1059",
                         Timestamp = y.RelatedEvents.FirstOrDefault()?.TimeCreated.ToString("yyyy-MM-dd HH:mm:ss") ?? ""
                     });
@@ -2782,6 +2881,7 @@ namespace LogAnalyzer.UI.ViewModels
                 // nor at start-up, when only an earlier session's data was re-read (announce = false) and the status bar says „Nicio analiză încă.”; then the
                 // page says that nothing was analysed, in a neutral colour, never „Parametrii analizați se încadrează în limitele normale” in green
                 bool evidence = eventsForAnalysis.Count > 0 && announce;
+                AiHasEvidence = evidence;
                 AiRiskScore = evidence ? explainableRisk.TotalScore : 0;
                 AiRiskLevel = evidence ? explainableRisk.Level : eventsForAnalysis.Count > 0 ? "NEDETERMINAT (analiza nu a fost rulată în această sesiune)" : "NEDETERMINAT (nu există date analizate)";
                 AiRiskColor = evidence ? explainableRisk.LevelColor : NeutralRiskColor;
@@ -2939,7 +3039,7 @@ namespace LogAnalyzer.UI.ViewModels
                 // 2026-10-22 round 2: nor right after sign-in, when only the data of an earlier session was re-read (announce = false)
                 StatusMessage = eventsForAnalysis.Count == 0 || !announce
                     ? NoAnalysisLine(LogAnalyzer.UI.Services.CollectAllState.Instance.LastActivity, LogAnalyzer.UI.Services.CollectAllState.Instance.HasEarlierControls, Home?.RecentList.Count ?? 0, SelectedTabIndex == HomeViewModel.HomeTabIndex)
-                    : (Edition.Has(LogAnalyzer.Core.Services.Edition.EditionFeature.AiAnalysis) ? "✅ Analiză AI finalizată" : "✅ Analiză finalizată")
+                    : (Edition.Has(LogAnalyzer.Core.Services.Edition.EditionFeature.AiAnalysis) ? "Analiză AI finalizată" : "Analiză finalizată")
                       + $": Risc {AiRiskScore}/100 | {kerbFindings.Count} Kerberos | {lolbas.Count} LOLBAS | {multiCorrelations.Count} Lanțuri Corelate";
                 UpdateStorylineAndAptAttribution();
             }
@@ -2947,7 +3047,11 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 StatusMessage = "Analiza nu a putut fi făcută: " + ex.Message;
             }
-            finally { _aiRunning = false; }
+            finally
+            {
+                _aiRunning = false;
+                if (_analysisRerun) { _analysisRerun = false; var again = _analysisRerunAnnounce; _analysisRerunAnnounce = false; _ = RunAnalysisAsync(again); }
+            }
         }
 
         [RelayCommand]
@@ -2972,7 +3076,7 @@ namespace LogAnalyzer.UI.ViewModels
                 if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "txt-nis2-24h", CurrentIocs.Count, dialog.FileName,
                         () => File.WriteAllText(dialog.FileName, draft, Encoding.UTF8)) is { } refused) { ShowExportRefused(refused); return; }
                 _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Salvat proiectul de avertizare timpurie NIS2 (24h); netransmis, de verificat și transmis prin PNRISC de entitate.");
-                StatusMessage = "✅ Draft Notificare Timpurie NIS2 (24h) exportat cu succes!";
+                StatusMessage = "Draft Notificare Timpurie NIS2 (24h) exportat cu succes!";
             }
         }
 
@@ -2998,7 +3102,7 @@ namespace LogAnalyzer.UI.ViewModels
                 if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "txt-nis2-72h", CurrentIocs.Count, dialog.FileName,
                         () => File.WriteAllText(dialog.FileName, draft, Encoding.UTF8)) is { } refused) { ShowExportRefused(refused); return; }
                 _provenanceLedger.AppendEntry("NIS2_EXPORTED", dialog.FileName, "-", "Salvat proiectul de notificare NIS2 (72h); netransmis, de verificat și transmis prin PNRISC de entitate.");
-                StatusMessage = "✅ Draft Notificare Incident NIS2 (72h) exportat cu succes!";
+                StatusMessage = "Draft Notificare Incident NIS2 (72h) exportat cu succes!";
             }
         }
 
@@ -3018,7 +3122,7 @@ namespace LogAnalyzer.UI.ViewModels
                 if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "json-case-uco", 0, dialog.FileName,
                         () => File.WriteAllText(dialog.FileName, json, Encoding.UTF8)) is { } refused) { ShowExportRefused(refused); return; }
                 _provenanceLedger.AppendEntry("CASE_UCO_EXPORTED", dialog.FileName, "-", "Exportat pachet CASE 1.3 / UCO JSON-LD pentru probatoriu legal.");
-                StatusMessage = "✅ Pachet CASE / UCO JSON-LD exportat cu succes!";
+                StatusMessage = "Pachet CASE / UCO JSON-LD exportat cu succes!";
             }
         }
 
@@ -3041,7 +3145,7 @@ namespace LogAnalyzer.UI.ViewModels
                 if (LogAnalyzer.UI.Services.ExportAudit.Run(LiveCaseId, "csv-timeline", events.Count(), dialog.FileName,
                         () => _timelineExportService.ExportPlasoCsv(dialog.FileName, events, new List<ForensicArtifact>(), reg)) is { } refused) { ShowExportRefused(refused); return; }
                 _provenanceLedger.AppendEntry("SUPERTIMELINE_EXPORTED", dialog.FileName, "-", "Exportat Super-Timeline standardizat Plaso / Timesketch CSV.");
-                StatusMessage = "✅ Super-Timeline Plaso CSV exportat cu succes!";
+                StatusMessage = "Super-Timeline Plaso CSV exportat cu succes!";
             }
         }
 
@@ -3089,7 +3193,7 @@ namespace LogAnalyzer.UI.ViewModels
                             csvContent)) is { } refused) { ShowExportRefused(refused); return; }
 
                 _provenanceLedger.AppendEntry("CASE_SEALED_BUNDLE", dialog.FileName, zipSha, $"Pachet caz forenzic sigilat cu succes. SHA-256 Sigiliu: {zipSha}");
-                StatusMessage = $"🔒 Pachet Caz Sigilat cu Succes! Hash Sigiliu SHA-256: {zipSha.Substring(0, 16)}...";
+                StatusMessage = $"Pachet Caz Sigilat cu Succes! Hash Sigiliu SHA-256: {zipSha.Substring(0, 16)}...";
             }
         }
 
@@ -3125,10 +3229,10 @@ namespace LogAnalyzer.UI.ViewModels
                 {
                     try
                     {
-                        StatusMessage = "⚡ Inițializare procedură sanitizare NIST SP 800-88r2...";
+                        StatusMessage = "Inițializare procedură sanitizare NIST SP 800-88r2...";
                         var progress = new Progress<SanitizationProgress>(p =>
                         {
-                            StatusMessage = $"🛡️ Sanitizare în curs: {p.StatusMessage}";
+                            StatusMessage = $"Sanitizare în curs: {p.StatusMessage}";
                         });
 
                         var result = await _sanitizationEngine.SanitizeMediaAsync(targetFile, SanitizationMethod.NistClearZero, progress);
@@ -3231,7 +3335,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
 
                 WorkbenchMatchCount = matchCount;
-                WorkbenchCompileResult = $"✅ Regula a fost compilată cu succes! S-au identificat {matchCount} potriviri în jurnale.";
+                WorkbenchCompileResult = $"Regula a fost compilată cu succes! S-au identificat {matchCount} potriviri în jurnale.";
                 StatusMessage = $"Workbench: Regula a returnat {matchCount} potriviri.";
             }
             catch (Exception ex)
@@ -3247,7 +3351,7 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 if (string.IsNullOrWhiteSpace(WorkbenchRuleContent))
                 {
-                    WorkbenchCompileResult = "⚠️ Introduceți conținutul unei reguli Sigma în editor înainte de transpilare.";
+                    WorkbenchCompileResult = "Introduceți conținutul unei reguli Sigma în editor înainte de transpilare.";
                     return;
                 }
 
@@ -3274,15 +3378,15 @@ namespace LogAnalyzer.UI.ViewModels
                 var targets = transpiler.Transpile(title, eventId, image, cmd);
 
                 var sb = new StringBuilder();
-                sb.AppendLine($"⚡ [TRANSPILARE OFFLINE SIGMA]: {targets.RuleTitle}");
+                sb.AppendLine($"[Transpilare Sigma fără rețea]: {targets.RuleTitle}");
                 sb.AppendLine("--------------------------------------------------");
-                sb.AppendLine("🔍 SPLUNK SPL:");
+                sb.AppendLine("SPLUNK SPL:");
                 sb.AppendLine(targets.SplunkSpl);
                 sb.AppendLine();
-                sb.AppendLine("🛡️ SENTINEL KQL:");
+                sb.AppendLine("SENTINEL KQL:");
                 sb.AppendLine(targets.SentinelKql);
                 sb.AppendLine();
-                sb.AppendLine("💻 POWERSHELL HUNTING SCRIPT:");
+                sb.AppendLine("Script PowerShell de vânătoare:");
                 sb.AppendLine(targets.PowerShellHunting);
 
                 WorkbenchCompileResult = sb.ToString();
@@ -3366,7 +3470,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var results = detector.AnalyzeConnections(networkList);
 
                 var sb = new StringBuilder();
-                sb.AppendLine("📡 REZULTAT DETECȚIE STATISTICĂ C2 BEACONING:");
+                sb.AppendLine("Rezultatul detecției statistice a balizelor C2:");
                 sb.AppendLine("==================================================");
 
                 if (results.Count == 0)
@@ -3397,10 +3501,12 @@ namespace LogAnalyzer.UI.ViewModels
 
     public class ProcessNode
     {
+        /// <summary>What a screen reader announces for the tree item (the default was the class name, lab 2026-11-10).</summary>
+        public override string ToString() => $"{ProcessName} (PID {PID})";
         public string ProcessName { get; set; } = string.Empty;
         public int PID { get; set; }
-        public string RiskColor { get; set; } = "#e1e7f0";
-        public string ProcessIcon { get; set; } = "⚙️";
+        public string RiskColor { get; set; } = ThemeColors.TextPrimary;
+        public string ProcessIcon { get; set; } = string.Empty;
         public ObservableCollection<ProcessNode> Children { get; set; } = new();
     }
 
@@ -3408,14 +3514,14 @@ namespace LogAnalyzer.UI.ViewModels
     {
         public string RuleName { get; set; } = string.Empty;
         
-        private string _status = "Active";
+        private string _status = "Activă";
         public string Status
         {
             get => _status;
             set => SetProperty(ref _status, value);
         }
 
-        private string _ruleStatusColor = "#00ff87";
+        private string _ruleStatusColor = ThemeColors.Success;
         public string RuleStatusColor
         {
             get => _ruleStatusColor;
@@ -3426,16 +3532,21 @@ namespace LogAnalyzer.UI.ViewModels
         public string RuleContent { get; set; } = string.Empty;
     }
 
+    /// <summary>A technique id found in loaded alerts and how many alerts carry it.</summary>
+    public sealed record AlertTechniqueCount(string TechId, int Count);
+
     public class MitreTechnique
     {
+        /// <summary>What a screen reader announces for the item (the default was the class name, lab 2026-11-10).</summary>
+        public override string ToString() => string.IsNullOrWhiteSpace(Tactic) ? $"{TechId} {Name}" : $"{TechId} {Name} · {Tactic}";
         public string TechId { get; set; } = string.Empty;
         public string Name { get; set; } = string.Empty;
-        public string DetectionColor { get; set; } = "#121622";
-        public string BorderColor { get; set; } = "#1e2538";
+        public string DetectionColor { get; set; } = ThemeColors.Surface2;
+        public string BorderColor { get; set; } = ThemeColors.Border;
         public string Severity { get; set; } = "None";
         public string Tactic { get; set; } = string.Empty;
         public bool HasDot { get; set; } = false;
-        public string DotColor { get; set; } = "#ef4444";
+        public string DotColor { get; set; } = ThemeColors.Critical;
     }
 
     public class AiAnomalyItem
@@ -3445,7 +3556,7 @@ namespace LogAnalyzer.UI.ViewModels
         public string Details { get; set; } = string.Empty;
         public double Score { get; set; }
         public string Severity { get; set; } = "High";
-        public string SeverityColor { get; set; } = "#ef4444";
+        public string SeverityColor { get; set; } = ThemeColors.Critical;
         public string MitreId { get; set; } = "T1027";
         public string Timestamp { get; set; } = string.Empty;
     }

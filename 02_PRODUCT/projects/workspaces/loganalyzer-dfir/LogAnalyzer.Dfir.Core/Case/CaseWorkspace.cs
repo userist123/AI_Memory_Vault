@@ -104,6 +104,41 @@ public sealed partial class CaseWorkspace
     }
 
     /// <summary>
+    /// <see cref="Create"/> for a folder that a component of the application wrote to before the case existed (the live device journal of the station's
+    /// LIVE case, lab 2026-11-09: once it existed, every later report and officer export of that station failed with "Case folder is not empty").
+    /// Only plain files named in <paramref name="preCaseFiles"/> are accepted: they are set aside, the case is created in the empty folder, and they are
+    /// put back unchanged (the case audit records each one). Any other content is refused exactly as <see cref="Create"/> refuses it.
+    /// </summary>
+    public static CaseWorkspace CreateKeepingPreCaseFiles(string root, CaseInfo info, IReadOnlyCollection<string> preCaseFiles)
+    {
+        if (!Directory.Exists(root)) return Create(root, info);
+        var entries = Directory.EnumerateFileSystemEntries(root).ToList();
+        if (entries.Count == 0) return Create(root, info);
+        if (!entries.All(e => File.Exists(e) && new FileInfo(e).LinkTarget is null && preCaseFiles.Contains(Path.GetFileName(e), StringComparer.OrdinalIgnoreCase)))
+            throw new IOException($"Case folder is not empty: {root}");
+        var aside = root.TrimEnd(Path.DirectorySeparatorChar) + ".precase-" + Guid.NewGuid().ToString("N");
+        Directory.CreateDirectory(aside);
+        var moved = new List<(string From, string To)>();
+        try
+        {
+            foreach (var e in entries) { var to = Path.Combine(aside, Path.GetFileName(e)); File.Move(e, to); moved.Add((e, to)); }
+            var ws = Create(root, info);
+            foreach (var (from, to) in moved)
+            {
+                File.Move(to, from);
+                ws.Audit("case.precase_file_kept", $"{Path.GetFileName(from)} sha256={Hashing.Sha256File(from)} (scris de aplicație înainte de crearea cazului)");
+            }
+            moved.Clear();
+            return ws;
+        }
+        finally
+        {
+            foreach (var (from, to) in moved) if (File.Exists(to) && !File.Exists(from)) File.Move(to, from);   // creation failed: put everything back
+            try { if (!Directory.EnumerateFileSystemEntries(aside).Any()) Directory.Delete(aside); } catch (IOException) { }
+        }
+    }
+
+    /// <summary>
     /// Opens a case. Unless <paramref name="recheck"/> is false, it then runs <see cref="Recheck"/> (WP3b): evidence and registered outputs are
     /// re-hashed and both chains verified; the verdict is in <see cref="LastRecheck"/>. Nothing is ever repaired. Hashing is streamed and
     /// <paramref name="ct"/> cancels it (the exception propagates; the case folder is left as it was apart from the audit entries already written).
@@ -156,7 +191,7 @@ public sealed partial class CaseWorkspace
     /// <summary>Copies an external file into Raw/ (never moves the original) and registers it.</summary>
     public EvidenceItem ImportFile(string originalPath, string source, string sourceType, TemporalType temporal,
                                    string collector, string collectorVersion, Sensitivity sensitivity = Sensitivity.Confidential,
-                                   string? parentEvidenceId = null, string notes = "")
+                                   string? parentEvidenceId = null, string notes = "", string? timezone = null)
     {
         ThrowIfReadOnly();
         var dir = RawDir(source);
@@ -165,14 +200,14 @@ public sealed partial class CaseWorkspace
         using (var dst = new FileStream(dest, FileMode.CreateNew, FileAccess.Write))
             src.CopyTo(dst);
         File.SetLastWriteTimeUtc(dest, File.GetLastWriteTimeUtc(originalPath));
-        return RegisterStored(dest, originalPath, source, sourceType, temporal, collector, collectorVersion, "imported", sensitivity, parentEvidenceId, notes);
+        return RegisterStored(dest, originalPath, source, sourceType, temporal, collector, collectorVersion, "imported", sensitivity, parentEvidenceId, notes, timezone: timezone);
     }
 
     /// <summary>Registers a file already written inside the case (e.g. by wevtutil). Hashes it and makes it read-only.</summary>
     public EvidenceItem RegisterStored(string storedFullPath, string originalPath, string source, string sourceType, TemporalType temporal,
                                        string collector, string collectorVersion, string action = "acquired",
                                        Sensitivity sensitivity = Sensitivity.Confidential, string? parentEvidenceId = null, string notes = "",
-                                       EvidenceStatus status = EvidenceStatus.Success)
+                                       EvidenceStatus status = EvidenceStatus.Success, string? timezone = null, DateTimeOffset? acquiredAtUtc = null)
     {
         ThrowIfReadOnly();
         var full = Path.GetFullPath(storedFullPath);
@@ -196,10 +231,11 @@ public sealed partial class CaseWorkspace
                 OriginalName = Path.GetFileName(originalPath),
                 Size = fi.Length,
                 Sha256 = sha,
-                AcquiredAtUtc = DateTimeOffset.UtcNow,
+                AcquiredAtUtc = acquiredAtUtc ?? DateTimeOffset.UtcNow,
                 Host = Info.Host,
                 User = Info.User,
-                Timezone = Info.Timezone,
+                // the zone of the station the file came from: the case machine's zone unless the caller knows better ("" = not known, e.g. a file imported from elsewhere)
+                Timezone = timezone ?? Info.Timezone,
                 Collector = collector,
                 CollectorVersion = collectorVersion,
                 AcquisitionMethod = action,

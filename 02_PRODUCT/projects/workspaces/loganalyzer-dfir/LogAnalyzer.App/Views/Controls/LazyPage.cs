@@ -15,8 +15,11 @@ namespace LogAnalyzer.UI.Views.Controls
     [ContentProperty(nameof(Page))]
     public sealed class LazyPage : ContentControl
     {
-        /// <summary>The smallest page size the views are laid out for; a smaller viewport scrolls instead of squeezing the page.</summary>
-        public const double MinPageWidth = 880, MinPageHeight = 560;
+        /// <summary>
+        /// The smallest page size the views are laid out for; a smaller viewport scrolls instead of squeezing the page. 740 wide: a 1024 px window
+        /// leaves 768 px beside the menu, less the vertical scroll bar (lab 2026-11-07: at 880 every page scrolled sideways and cut its right edge).
+        /// </summary>
+        public const double MinPageWidth = 740, MinPageHeight = 560;
 
         public DataTemplate? Page { get; set; }
 

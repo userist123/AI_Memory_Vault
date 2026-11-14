@@ -21,6 +21,9 @@ public sealed record UsbDeviceFact(string Device, string Serial, string Friendly
 
 public sealed record ChannelCoverage(string Channel, DateTimeOffset? OldestUtc, long Records, bool Readable, string Note);
 
+/// <summary>An archived Security log Windows left on the station (Archive-Security-*.evtx, „archive when full”): the span of its events (check A18).</summary>
+public sealed record SecurityArchiveFact(string File, DateTimeOffset? OldestUtc, DateTimeOffset? NewestUtc, string Error, string Computer = "");
+
 public enum VolumeKind { Sistem, Fix, Amovibil }
 
 /// <summary>
@@ -62,6 +65,12 @@ public sealed class StationFacts
     public bool IsAdministrator { get; init; }
     /// <summary>The edition's compile-time posture; decides which checks apply (see ControlApplicability). Default: the strictest, so a forgotten value never relaxes a rule.</summary>
     public LogAnalyzer.Core.Services.Edition.StationPosture Posture { get; init; } = LogAnalyzer.Core.Services.Edition.StationPosture.Standalone;
+    /// <summary>The station's classification level from the procedure profile (checks A18, N14); empty = not defined, never guessed.</summary>
+    public string StationLevel { get; set; } = "";
+    /// <summary>
+    /// The media of the transfer channels the procedure profile approves (check P14); null = the profile is unreadable or defines no channel, never guessed.
+    /// </summary>
+    public List<string>? ApprovedTransferMedia { get; set; }
     public List<LocalAccount> Accounts { get; init; } = [];
     public PasswordPolicy? PasswordPolicy { get; set; }
     public Dictionary<string, AuditSetting>? AuditPolicy { get; set; }
@@ -78,6 +87,9 @@ public sealed class StationFacts
     public List<UsbDeviceFact> UsbDevices { get; init; } = [];
     public List<LogFact> Logs { get; init; } = [];
     public List<ChannelCoverage> Coverage { get; init; } = [];
+    public List<SecurityArchiveFact> SecurityArchives { get; init; } = [];
+    /// <summary>Older archives left unread because of the read limit (check A18 says so; they never count as read or unreadable archives).</summary>
+    public int SecurityArchivesNotRead { get; set; }
     public List<EvidenceGap> Gaps { get; init; } = [];
 
     // Air-gap station requirements (comparison 2026-10-12, rows A2-A16, B8, C8). For every list, null = the source could not be read.
@@ -239,7 +251,10 @@ public static class StationFactCollector
         Try(facts, "Setări de securitate", () => ReadSettings(facts));
         Try(facts, "Setări de securitate (extinse)", () => ReadSettingsWave2(facts));
         Try(facts, "Setări de securitate (stație izolată)", () => ReadSettingsWave3(facts));
+        Try(facts, "Setări de securitate (reguli STIG)", () => ReadStigSettings(facts));
+        Try(facts, "Drepturi de utilizator (LSA)", () => ReadUserRights(facts));
         Try(facts, "Volume și BitLocker", () => ReadVolumes(facts));
+        Try(facts, "Arhivele jurnalului Security", () => ReadSecurityArchives(facts));
         Try(facts, "Căi spre internet (configurație locală)", () => facts.EgressPaths = EgressPathCollector.Collect(facts.EgressUnread));
         Try(facts, "Apartenența la domeniu", () => ReadDomainMembership(facts));
         if (dcProbe is not null && posture == LogAnalyzer.Core.Services.Edition.StationPosture.IsolatedNetwork
@@ -410,7 +425,7 @@ public static class StationFactCollector
             s["Firewall.Private"] = ((bool)fw.FirewallEnabled[2]) ? "activ" : "inactiv";
             s["Firewall.Public"] = ((bool)fw.FirewallEnabled[4]) ? "activ" : "inactiv";
         }
-        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException) { }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException or NotImplementedException or NotSupportedException) { }   // a COM call that the published app cannot bind (lab VM 2026-11-07, AD) must not stop the collection
 
         try
         {
@@ -439,10 +454,15 @@ public static class StationFactCollector
             using var bl = new ManagementObjectSearcher(@"root\cimv2\Security\MicrosoftVolumeEncryption", $"SELECT ProtectionStatus FROM Win32_EncryptableVolume WHERE DriveLetter = '{sysDrive}'");
             foreach (ManagementObject o in bl.Get()) s["BitLocker.SystemDrive"] = o["ProtectionStatus"]?.ToString() ?? "";
         }
+        // "Invalid namespace": the BitLocker feature is not installed (optional on Windows Server), so no volume can be encrypted: a fact, not a failed read
+        catch (ManagementException ex) when (ex.ErrorCode == ManagementStatus.InvalidNamespace) { s[BitLockerNotInstalledKey] = "1"; }
         catch (ManagementException ex) { s["BitLocker.SystemDrive.Error"] = ex.Message; }
     }
 
     // ---- settings, second wave (read-only) ---------------------------------------------------------------------
+
+    /// <summary>Set to "1" when the BitLocker WMI namespace does not exist: the feature is not installed (Windows Server without the BitLocker feature).</summary>
+    public const string BitLockerNotInstalledKey = "BitLocker.NotInstalled";
 
     /// <summary>The value is not there (key or value missing). Different from "" (empty string) = the read itself failed, so nothing is known.</summary>
     public const string Absent = "lipsă";
@@ -469,6 +489,16 @@ public static class StationFactCollector
     }
 
     private static string Hklm(string key, string name) => RegRead(Registry.LocalMachine, key, name);
+
+    /// <summary>„Telefonul lui X (AA:BB:CC:DD:EE:FF)” from a BTHPORT\Parameters\Devices subkey: the name is UTF-8 bytes ended by a zero. Pure.</summary>
+    public static string BluetoothPairedText(string macKey, byte[]? name)
+    {
+        var mac = macKey.Length == 12 && macKey.All(char.IsAsciiHexDigit)
+            ? string.Join(":", Enumerable.Range(0, 6).Select(i => macKey.Substring(i * 2, 2).ToUpperInvariant())) : macKey;
+        var n = name is null ? "" : System.Text.Encoding.UTF8.GetString(name).Split('\0')[0].Trim();
+        n = new string(n.Where(ch => !char.IsControl(ch)).ToArray());
+        return n.Length > 0 ? $"{n} ({mac})" : mac;
+    }
 
     /// <summary>Windows install date (HKLM\...\CurrentVersion\InstallDate, Unix seconds); null when it cannot be read.</summary>
     public static DateTimeOffset? ReadInstallDate() =>
@@ -524,6 +554,17 @@ public static class StationFactCollector
         {
             using var cfg = new System.Diagnostics.Eventing.Reader.EventLogConfiguration("Microsoft-Windows-PrintService/Operational");
             s["Print.LogEnabled"] = cfg.IsEnabled ? "1" : "0";
+        });
+        // A20: the logs that record a device being connected (Partition/Diagnostic is on by default, DriverFrameworks-UserMode off)
+        Guard(() =>
+        {
+            using var cfg = new System.Diagnostics.Eventing.Reader.EventLogConfiguration("Microsoft-Windows-Partition/Diagnostic");
+            s["DeviceLog.PartitionEnabled"] = cfg.IsEnabled ? "1" : "0";
+        });
+        Guard(() =>
+        {
+            using var cfg = new System.Diagnostics.Eventing.Reader.EventLogConfiguration("Microsoft-Windows-DriverFrameworks-UserMode/Operational");
+            s["DeviceLog.DriverFrameworksEnabled"] = cfg.IsEnabled ? "1" : "0";
         });
         Guard(() =>
         {
@@ -601,6 +642,20 @@ public static class StationFactCollector
             s["Bluetooth.Components"] = string.Join("; ", names.Take(5));
         });
         s["Bluetooth.ServiceStart"] = Hklm(@"SYSTEM\CurrentControlSet\Services\bthserv", "Start");
+        // research 2026-11-07 plan P2.2: the paired devices Windows remembers (address and name only; the link keys under Parameters\Keys are never read)
+        Guard(() =>
+        {
+            using var devs = Registry.LocalMachine.OpenSubKey(@"SYSTEM\CurrentControlSet\Services\BTHPORT\Parameters\Devices");
+            if (devs is null) { s["Bluetooth.PairedCount"] = "0"; return; }
+            var paired = new List<string>();
+            foreach (var mac in devs.GetSubKeyNames())
+            {
+                using var d = devs.OpenSubKey(mac);
+                paired.Add(BluetoothPairedText(mac, d?.GetValue("Name") as byte[]));
+            }
+            s["Bluetooth.PairedCount"] = paired.Count.ToString();
+            s["Bluetooth.Paired"] = string.Join("; ", paired.Take(10)) + (paired.Count > 10 ? $"; … încă {paired.Count - 10}" : "");
+        });
 
         // Boot.
         s["SecureBoot.Enabled"] = Hklm(@"SYSTEM\CurrentControlSet\Control\SecureBoot\State", "UEFISecureBootEnabled");
@@ -641,6 +696,8 @@ public static class StationFactCollector
         s["OS.DisplayVersion"] = Hklm(cv, "DisplayVersion");
         s["OS.Build"] = Hklm(cv, "CurrentBuild");
         s["OS.UBR"] = Hklm(cv, "UBR");
+        // WinNT = workstation, ServerNT = member server, LanmanNT = domain controller (check A19)
+        s["OS.ProductType"] = Hklm(@"SYSTEM\CurrentControlSet\Control\ProductOptions", "ProductType");
         s["OS.InstallDate"] = ReadInstallDate() is { } inst ? inst.ToString("yyyy-MM-dd'T'HH:mm:ss'Z'", System.Globalization.CultureInfo.InvariantCulture) : Absent;
         Guard(() =>
         {
@@ -817,6 +874,61 @@ public static class StationFactCollector
         Guard(() => f.InstalledUpdates = ReadInstalledUpdates());
     }
 
+    /// <summary>The user rights whose holders check P42 lists (STIG WN11-UR-000015, -000045, -000065).</summary>
+    internal static readonly string[] DangerousRights = ["SeTcbPrivilege", "SeCreateTokenPrivilege", "SeDebugPrivilege"];
+
+    /// <summary>Holders of the dangerous user rights (check P42): "UserRights.&lt;right&gt;" = "S-1-…;S-1-…", "(niciunul)", or "" when not readable; "UserRights.Names" = SID=name pairs.</summary>
+    private static void ReadUserRights(StationFacts f)
+    {
+        var (holders, names) = UserRights.Read(DangerousRights);
+        foreach (var (right, value) in holders) f.Settings["UserRights." + right] = value;
+        f.Settings["UserRights.Names"] = names;
+    }
+
+    /// <summary>"da" / "nu" when the registry key exists / does not; "" when it cannot be read.</summary>
+    private static string KeyExists(string key)
+    {
+        try { using var k = Registry.LocalMachine.OpenSubKey(key); return k is null ? "nu" : "da"; }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { return ""; }
+    }
+
+    /// <summary>Settings behind checks P40, P41, P43-P47 (STIG rules): registry values and DEP from WMI. A value that cannot be read stays "".</summary>
+    private static void ReadStigSettings(StationFacts f)
+    {
+        var s = f.Settings;
+        const string lsa = @"SYSTEM\CurrentControlSet\Control\Lsa";
+        s["Stig.RestrictAnonymousSAM"] = Hklm(lsa, "RestrictAnonymousSAM");
+        s["Stig.RestrictAnonymous"] = Hklm(lsa, "RestrictAnonymous");
+        s["Stig.EveryoneIncludesAnonymous"] = Hklm(lsa, "EveryoneIncludesAnonymous");
+        s["Stig.RestrictNullSessAccess"] = Hklm(@"SYSTEM\CurrentControlSet\Services\LanmanServer\Parameters", "RestrictNullSessAccess");
+        s["Stig.NoLMHash"] = Hklm(lsa, "NoLMHash");
+        s["Stig.LmCompatibilityLevel"] = Hklm(lsa, "LmCompatibilityLevel");
+
+        const string installer = @"SOFTWARE\Policies\Microsoft\Windows\Installer";
+        s["Stig.AlwaysInstallElevatedHklm"] = Hklm(installer, "AlwaysInstallElevated");
+        s["Stig.AlwaysInstallElevatedHkcu"] = RegRead(Registry.CurrentUser, installer, "AlwaysInstallElevated");   // current user only
+
+        Guard(() =>
+        {
+            using var os = new ManagementObjectSearcher("SELECT DataExecutionPrevention_SupportPolicy FROM Win32_OperatingSystem");
+            foreach (ManagementBaseObject o in os.Get()) s["Stig.DepSupportPolicy"] = o["DataExecutionPrevention_SupportPolicy"]?.ToString() ?? "";
+        });
+        s["Stig.DisableExceptionChainValidation"] = Hklm(@"SYSTEM\CurrentControlSet\Control\Session Manager\kernel", "DisableExceptionChainValidation");
+
+        const string winrm = @"SOFTWARE\Policies\Microsoft\Windows\WinRM";
+        s["Stig.WinRmClientAllowBasic"] = Hklm(winrm + @"\Client", "AllowBasic");
+        s["Stig.WinRmClientAllowUnencrypted"] = Hklm(winrm + @"\Client", "AllowUnencryptedTraffic");
+        s["Stig.WinRmServiceAllowBasic"] = Hklm(winrm + @"\Service", "AllowBasic");
+        s["Stig.WinRmServiceAllowUnencrypted"] = Hklm(winrm + @"\Service", "AllowUnencryptedTraffic");
+
+        s["Stig.LlmnrEnableMulticast"] = Hklm(@"SOFTWARE\Policies\Microsoft\Windows NT\DNSClient", "EnableMulticast");
+
+        s["Stig.W3svcKey"] = KeyExists(@"SYSTEM\CurrentControlSet\Services\W3SVC");
+        s["Stig.W3svcStart"] = Hklm(@"SYSTEM\CurrentControlSet\Services\W3SVC", "Start");
+        // IIS components without the web service (Hostable Web Core, management tools) still leave the IIS setup key (review 2026-11-09)
+        s["Stig.IisInetStpKey"] = KeyExists(@"SOFTWARE\Microsoft\InetStp");
+    }
+
     /// <summary>The installed Windows updates (Win32_QuickFixEngineering), read-only. Throws ManagementException when WMI cannot be read.</summary>
     public static List<InstalledUpdateFact> ReadInstalledUpdates()
     {
@@ -888,7 +1000,7 @@ public static class StationFactCollector
             }
             return names.Count == 0 ? "nu" : "da: " + string.Join("; ", names);
         }
-        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException or InvalidCastException or UnauthorizedAccessException) { return ""; }
+        catch (Exception ex) when (ex is System.Runtime.InteropServices.COMException or Microsoft.CSharp.RuntimeBinder.RuntimeBinderException or InvalidCastException or UnauthorizedAccessException or NotImplementedException or NotSupportedException) { return ""; }
     }
 
     // [NESIGUR] SystemDmaGuardPolicyInformation = 202, from the public Windows headers (phnt); it is the value msinfo32 shows as „Kernel DMA Protection”. Confirm in the lab.
@@ -958,6 +1070,7 @@ public static class StationFactCollector
             }
             f.Volumes = list;
         }
+        catch (ManagementException ex) when (ex.ErrorCode == ManagementStatus.InvalidNamespace) { f.Settings[BitLockerNotInstalledKey] = "1"; }
         catch (Exception ex) when (ex is ManagementException or System.Runtime.InteropServices.COMException or UnauthorizedAccessException)
         {
             f.Settings["BitLocker.Volumes.Error"] = ex.Message;
@@ -989,6 +1102,38 @@ public static class StationFactCollector
     }
 
     // ---- classified folders: audit rules (SACL) -----------------------------------------------------------------
+
+    /// <summary>
+    /// The archived Security logs in winevt\Logs (Archive-Security-*.evtx) with the time of their first and last event and the computer that wrote them,
+    /// read from the file only; the newest <paramref name="maxArchives"/> (the file names carry the date), the rest counted. Archives kept elsewhere
+    /// (exported to media) are not seen; check A18 says so.
+    /// </summary>
+    internal static void ReadSecurityArchives(StationFacts f, int maxArchives = 200)
+    {
+        var logs = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.Windows), "System32", "winevt", "Logs");
+        if (!Directory.Exists(logs)) return;
+        var all = Directory.EnumerateFiles(logs, "Archive-Security-*.evtx").OrderDescending(StringComparer.OrdinalIgnoreCase).ToList();
+        foreach (var file in all.Take(maxArchives))
+        {
+            try
+            {
+                var (first, computer) = EdgeEvent(file, reverse: false);
+                f.SecurityArchives.Add(new SecurityArchiveFact(Path.GetFileName(file), first, EdgeEvent(file, reverse: true).Time, "", computer));
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or EventLogException or IOException)
+            {
+                f.SecurityArchives.Add(new SecurityArchiveFact(Path.GetFileName(file), null, null, ex is UnauthorizedAccessException ? "acces refuzat (necesită administrator)" : ex.Message));
+            }
+        }
+        f.SecurityArchivesNotRead = Math.Max(0, all.Count - maxArchives);
+    }
+
+    private static (DateTimeOffset? Time, string Computer) EdgeEvent(string file, bool reverse)
+    {
+        using var reader = new EventLogReader(new EventLogQuery(file, PathType.FilePath) { ReverseDirection = reverse });
+        using var rec = reader.ReadEvent();
+        return (rec?.TimeCreated is { } t ? new DateTimeOffset(t.ToUniversalTime(), TimeSpan.Zero) : null, rec?.MachineName ?? "");
+    }
 
     /// <summary>
     /// Reads the audit rules of each folder. Reading a SACL needs the "Manage auditing and security log" right (administrators); the .NET call turns it

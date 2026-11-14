@@ -55,6 +55,8 @@ public static class RulePatterns
             Severity = Severity.Info, Category = category, Classification = Classification.Unproven, Confidence = Confidence.Low,
             SemanticType = SemanticType.Observation,
             FirstSeenUtc = times.Count > 0 ? times[0] : null, LastSeenUtc = times.Count > 0 ? times[^1] : null,
+            PlainWhat = (rows.Count == 1 ? "Nu s-a putut verifica o intrare" : $"Nu s-au putut verifica {LogAnalyzer.Dfir.Language.RoText.Count(rows.Count, "intrare", "intrări")}") + " din probe, pentru că verificarea automată a durat prea mult; " +
+                        "lipsa unei constatări pentru ele nu înseamnă că sunt curate, ci că trebuie citite manual",
             Description = $"Pe {LogAnalyzer.Dfir.Language.RoText.Count(rows.Count, "intrare", "intrări")} cel puțin un tipar al regulii {ruleId} nu și-a terminat potrivirea în " +
                           $"{RegexDefaults.RuleMatchTimeout.TotalMilliseconds:0} ms. Rezultatul pentru ele este „neevaluat”, nu „curat”: lipsa constatării {ruleId} pe aceste " +
                           "intrări nu înseamnă că textul nu conține ce caută regula. Un text umplut intenționat cu repetiții poate produce această situație.",

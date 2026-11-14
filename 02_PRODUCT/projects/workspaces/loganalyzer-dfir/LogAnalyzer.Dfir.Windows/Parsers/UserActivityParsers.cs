@@ -329,6 +329,73 @@ internal static class UserActivity
         }
     }
 
+    // ---- MUICache ----
+
+    internal const string MuiCacheKey = @"Local Settings\Software\Microsoft\Windows\Shell\MuiCache";
+    /// <summary>Most values read from the MuiCache key; the rest are reported as a gap.</summary>
+    internal const int MaxMuiValues = 20_000;
+    /// <summary>Longest value name (a program path plus suffix) kept; longer ones are skipped and counted.</summary>
+    internal const int MaxMuiNameChars = 1024;
+    internal const string MuiLimitation = "arată că programul a fost pornit din interfața grafică cel puțin o dată (prezență, nu execuție datată)";
+    private const string FriendlySuffix = ".FriendlyAppName", CompanySuffix = ".ApplicationCompany";
+
+    /// <summary>
+    /// MUICache (UsrClass.dat): values named "&lt;path&gt;.FriendlyAppName" / "&lt;path&gt;.ApplicationCompany" with string data, one event per program.
+    /// The values have no time of their own, so the events are undated; the key's last write time is only given as "ListLastModified".
+    /// A value with another name, non-string data or a name over <see cref="MaxMuiNameChars"/> is ignored (and counted); at most <see cref="MaxMuiValues"/> values are read.
+    /// </summary>
+    internal static void MuiCache(RawRegistry reg, EvidenceItem item, IEventSink sink, ParseResult result, CancellationToken ct)
+    {
+        var key = reg.OpenKey(MuiCacheKey);
+        if (key is null) return;
+        var account = UserHiveParser.ProfileName(item.OriginalPath);
+        var apps = new Dictionary<string, (string Friendly, string Company, string ValueName)>(StringComparer.OrdinalIgnoreCase);
+        int read = 0, tooLong = 0, nonString = 0;
+        bool capped = false;
+        foreach (var v in key.Values)
+        {
+            ct.ThrowIfCancellationRequested();
+            if (++read > MaxMuiValues) { capped = true; break; }
+            var n = v.Name;
+            bool friendly = n.EndsWith(FriendlySuffix, StringComparison.OrdinalIgnoreCase), company = n.EndsWith(CompanySuffix, StringComparison.OrdinalIgnoreCase);
+            if (!friendly && !company) continue;   // LangID and any other value: not a program
+            if (n.Length > MaxMuiNameChars) { tooLong++; continue; }
+            if (v.Type is not (RawValue.RegSz or RawValue.RegExpandSz)) { nonString++; continue; }
+            var path = n[..^(friendly ? FriendlySuffix.Length : CompanySuffix.Length)];
+            if (path.Length == 0) continue;
+            apps.TryGetValue(path, out var cur);
+            apps[path] = friendly ? (v.AsText, cur.Company ?? "", cur.ValueName ?? n) : (cur.Friendly ?? "", v.AsText, cur.ValueName ?? n);
+        }
+        var listTime = key.LastWriteUtc.ToString("o", CultureInfo.InvariantCulture);
+        foreach (var (path, a) in apps.OrderBy(x => x.Key, StringComparer.OrdinalIgnoreCase))
+        {
+            var fields = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+            {
+                ["FriendlyAppName"] = a.Friendly, ["ApplicationCompany"] = a.Company, ["Key"] = key.Path, ["Account"] = account,
+                ["ListLastModified"] = listTime, ["Limitation"] = MuiLimitation,
+            };
+            var shortName = WinPath.GetFileName(path);
+            sink.Add(new TimelineEvent
+            {
+                Time = Timestamp.Unknown(),
+                TimeSemantics = "MUICache values carry no time per program (the key's last write time is the last change of the whole list, shown only as ListLastModified)",
+                TimeUncertainty = "fără oră per program",
+                Source = "MUICache", EvidenceId = item.EvidenceId, Path = DefenderDetectionHistoryParser.Safe(path), Process = DefenderDetectionHistoryParser.Safe(shortName),
+                Summary = $"MUICache în profilul „{account}”: {DefenderDetectionHistoryParser.Safe(path)}{(a.Friendly.Length > 0 ? $" ({DefenderDetectionHistoryParser.Safe(a.Friendly)})" : "")} — {MuiLimitation}",
+                TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.Medium,
+                Locator = $@"UsrClass\{key.Path}\{a.ValueName}", Fields = fields,
+            });
+            result.Records++;
+        }
+        if (capped)
+        {
+            result.MalformedRecords++;
+            result.Gaps.Add(new EvidenceGap("MUICache", EvidenceStatus.Partial, $"peste {MaxMuiValues:N0} de valori în MuiCache; restul nu a fost citit", "Programe pornite din interfața grafică pot lipsi", "Amcache, ShimCache, Prefetch, BAM", "Posibil"));
+        }
+        if (tooLong + nonString > 0)
+            result.Gaps.Add(new EvidenceGap("MUICache", EvidenceStatus.Partial, $"{tooLong} valori cu nume peste {MaxMuiNameChars} de caractere și {nonString} cu date ne-string au fost ignorate", "Aceste programe nu apar în cronologie", "Amcache, ShimCache, Prefetch, BAM", "Posibil"));
+    }
+
     // ---- Office MRU ----
 
     internal static void OfficeMru(RawRegistry reg, EvidenceItem item, IEventSink sink, ParseResult result, CancellationToken ct)
@@ -440,6 +507,7 @@ public sealed class ShellBagsParser : EvidenceParserBase
             "Numele lungi din blocul de extensie sunt validate doar pe date sintetice; jurnalele de tranzacții ale hive-ului nu sunt aplicate.",
             "Limite de siguranță: adâncime 48, 20.000 de chei, 40.000 de citiri de subchei, 2.000.000 de nume de subchei citite; depășirea lor este raportată ca lacună.",
             "Dacă MRUListEx lipsește, ordinea intrărilor este necunoscută: nicio intrare nu primește ora cheii ca cea mai nouă.",
+            "MUICache (Local Settings\\Software\\Microsoft\\Windows\\Shell\\MuiCache): arată că programul a fost pornit din interfața grafică cel puțin o dată (prezență, nu execuție datată); valorile nu au oră, evenimentele sunt fără oră, iar ora cheii apare doar ca „ListLastModified”. Se citesc cel mult 20.000 de valori, nume de cel mult 1024 de caractere, doar date string.",
         ],
         Status = ParserMaturity.Tested,
         Validation = "UserActivityParserTests: hive-uri sintetice (RegfBuilder) cu căi, ore și cazuri ostile (cicluri, adâncime, elemente trunchiate, MRUListEx invalid); fără corpus real",
@@ -454,5 +522,7 @@ public sealed class ShellBagsParser : EvidenceParserBase
         if (result.Records == 0 && result.MalformedRecords == 0)
             result.Gaps.Add(new EvidenceGap("ShellBags", EvidenceStatus.NotAvailable, "cheia BagMRU lipsește sau este goală în UsrClass.dat",
                 "Nu se știe ce foldere a răsfoit utilizatorul în Explorer", "NTUSER.DAT (Shell\\BagMRU), LNK, Jump Lists", "Nu"));
+        // MUICache is read in the same pass, after the BagMRU check above (its records must not hide a missing BagMRU)
+        UserActivity.Guarded("MUICache", result, () => UserActivity.MuiCache(reg, item, sink, result, ct));
     }
 }

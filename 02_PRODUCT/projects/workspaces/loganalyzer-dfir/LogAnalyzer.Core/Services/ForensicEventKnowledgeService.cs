@@ -271,7 +271,8 @@ namespace LogAnalyzer.Core.Services
             try
             {
                 var f = Regex.Escape(fieldName);
-                var match = Regex.Match(xml, $@"<Data Name=""{f}"">([^<]*)</Data>", RegexOptions.IgnoreCase, LogAnalyzer.Dfir.RegexDefaults.RuleMatchTimeout);
+                // EventRecord.ToXml writes Name='…' (apostrophes): both quote styles are read (2026-11-08)
+                var match = Regex.Match(xml, $@"<Data Name=[""']{f}[""']>([^<]*)</Data>", RegexOptions.IgnoreCase, LogAnalyzer.Dfir.RegexDefaults.RuleMatchTimeout);
                 if (match.Success) return match.Groups[1].Value;
 
                 var elemMatch = Regex.Match(xml, $@"<{f}>([^<]*)</{f}>", RegexOptions.IgnoreCase, LogAnalyzer.Dfir.RegexDefaults.RuleMatchTimeout);

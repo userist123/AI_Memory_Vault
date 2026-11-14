@@ -83,7 +83,7 @@ namespace LogAnalyzer.Core.Services
                             Severity = "Critical",
                             ParentProcess = parent,
                             CommandLine = ev.Message ?? string.Empty,
-                            Description = $"ALERTA GRAVĂ: Procesul [{parent}] (Server Web sau Document Office) a lansat o consolă de comandă. Tipar clasic de Web Shell (T1505.003) sau exploatare prin document malițios (T1204.002).",
+                            Description = $"Alertă gravă: Procesul [{parent}] (Server Web sau Document Office) a lansat o consolă de comandă. Tipar clasic de Web Shell (T1505.003) sau exploatare prin document malițios (T1204.002).",
                             MitreTechniqueId = "T1505.003",
                             Timestamp = ev.TimeCreated
                         });

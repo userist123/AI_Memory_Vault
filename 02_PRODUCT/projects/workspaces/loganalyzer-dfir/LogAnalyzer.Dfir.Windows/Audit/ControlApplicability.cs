@@ -78,8 +78,16 @@ public static class ControlApplicability
         Row("P37", "Application allow-list (App Control / WDAC)", Yes("Enforced or documented alternative"), Yes("Enforced or documented alternative"), Yes("Enforced or documented alternative"), null),
         Row("P38", "Last full and quick antivirus scan", Yes("Recent"), Yes("Recent"), Yes("Recent"), null),
         Row("P39", "Antivirus registered in Security Center", Yes("Registered"), Yes("Registered"), Yes("Registered"), null),
+        Row("P40", "Anonymous access to accounts and shares", Yes("Denied"), Yes("Denied"), Yes("Denied"), null),
+        Row("P41", "LM hash and old NTLM authentication", Yes("No LM hash; NTLMv2 only"), Yes("No LM hash; NTLMv2 only"), Yes("No LM hash; NTLMv2 only"), null),
+        Row("P42", "Dangerous user rights", Yes("None beyond the allowed holders"), Yes("None beyond the allowed holders"), Yes("None beyond the allowed holders"), null),
+        Row("P43", "MSI install with elevated rights (AlwaysInstallElevated)", Yes("Off"), Yes("Off"), Yes("Off"), null),
+        Row("P44", "Memory protection: DEP and SEHOP", Yes("DEP OptOut or AlwaysOn; SEHOP on"), Yes("DEP OptOut or AlwaysOn; SEHOP on"), Yes("DEP OptOut or AlwaysOn; SEHOP on"), null),
+        Row("P45", "WinRM Basic authentication and unencrypted traffic", Yes("Disabled"), Yes("Disabled"), Yes("Disabled"), null),
+        Row("P46", "Name resolution by broadcast (LLMNR)", Yes("Off; non-conform if on"), Yes("Off; review if on"), Yes("Off; review if on"), null),
+        Row("P47", "IIS web server installed", Yes("Not installed; non-conform if installed"), Yes("Not installed; review if installed"), Yes("Not installed; review if installed"), null),
         Row("A01", "Audit policy records the required activity", Yes("Required categories on"), Yes("Required categories on"), Yes("Required categories on"), null),
-        Row("A02", "Security log size", Yes("At least 128 MB"), Yes("At least 128 MB"), Yes("At least 128 MB"), null),
+        Row("A02", "Security log size", Yes("At least 192 MB"), Yes("At least 192 MB"), Yes("At least 192 MB"), null),
         Row("A03", "Security log covers the audited period", Yes("Covers the period"), Yes("Covers the period"), Yes("Covers the period"), null),
         Row("A04", "Other logs cover the audited period", Yes("Cover the period"), Yes("Cover the period"), Yes("Cover the period"), null),
         Row("A05", "Logs cleared in the period", Yes("None"), Yes("None"), Yes("None"), null),
@@ -95,7 +103,10 @@ public static class ControlApplicability
         Row("A15", "Classified files: access and exits without approval", Yes("Review; non-conform on any exit not in the transfer register"), Yes("Review; non-conform on any exit not in the transfer register (network shares included)"), No, "Classified folders exist only in the controlled editions."),
         Row("A16", "Application installation date versus the previous control (paper anchor)", Yes("Unchanged"), Yes("Unchanged"), Yes("Unchanged"), null),
         Row("A17", "The application's own commands recognised from its sealed audit", Yes("All recorded"), Yes("All recorded"), Yes("All recorded"), null),
-        Row("U01", "Changes to the Administrators group", Yes("Review"), Yes("Review"), Yes("Review"), null),
+        Row("A18", "Access-record retention required by the station level", Yes("Live log covers the level's retention; otherwise review the archives"), Yes("Live log covers the level's retention; otherwise review the archives"), Yes("Live log covers the level's retention; otherwise review the archives"), null),
+        Row("A19", "A domain controller records refused logons (wrong passwords)", No, Yes("Failures audited for Kerberos Authentication Service and Credential Validation"), Yes("Failures audited for Kerberos Authentication Service and Credential Validation"), "A standalone station has no domain controller. Checked only when the station itself is a domain controller."),
+        Row("A20", "Logs that record device connections are on", Yes("Partition/Diagnostic and DriverFrameworks-UserMode on"), Yes("Partition/Diagnostic and DriverFrameworks-UserMode on"), Yes("Partition/Diagnostic and DriverFrameworks-UserMode on"), null),
+        Row("U01","Changes to the Administrators group", Yes("Review"), Yes("Review"), Yes("Review"), null),
         Row("U02", "Accounts created, deleted, enabled, disabled or reset", Yes("Review"), Yes("Review"), Yes("Review"), null),
         Row("U03", "Remote (RDP) logons", Yes("Review"), Yes("Review (administration over the LAN is normal)"), Yes("Review"), null),
         Row("U04", "Series of wrong passwords (5+ in an hour)", Yes("None"), Yes("None"), Yes("None"), null),
@@ -119,6 +130,7 @@ public static class ControlApplicability
         Row("N11", "No path to the internet (passive configuration check)", Yes("No gateway, DNS, proxy, VPN, radio, cellular or ICS configuration found; non-conform on any"), Yes("Only internal gateway and DNS; non-conform on proxy, VPN, radio, cellular or ICS leading outside the internal ranges"), No, "Reads local configuration only (registry, adapter properties, Plug and Play device list, local files; no WMI) and never opens a socket. Any source it cannot read makes it NEDETERMINAT (never CONFORM) and is named in the detail. An internet station is connected by design."),
         Row("N12", "Domain membership", No, Yes("Member of the domain"), No, "Only a station on an isolated domain LAN is expected to be a domain member."),
         Row("N13", "Domain controller reachable (active, read-only check)", No, Yes("Located at an internal address and LDAP answers; non-conform on a public address"), No, "Active check: Windows' domain locator (DNS SRV query to the configured DNS server, Netlogon UDP ping) plus one TCP connection to LDAP 389 at a private address only, no credentials; it sends traffic, so it exists only in the Network edition."),
+        Row("N14", "Internet allowed at the station level", No, No, Yes("Review (forbidden at the highest level)"), "Only the Internet edition can reach the internet; at strict secret de importanta deosebita the internet is forbidden."),
         Row("S01", "Programs installed or uninstalled", Yes("Review"), Yes("Review"), Yes("Review"), null),
         Row("S02", "New services and scheduled tasks", Yes("Review"), Yes("Review"), Yes("Review"), null),
         Row("S03", "Windows version and last update", Yes("Known and documented"), Yes("Known and documented"), Yes("Recent"), null),
@@ -128,7 +140,38 @@ public static class ControlApplicability
     ];
     // END GENERATED TABLE
 
-    private static readonly Dictionary<string, ApplicabilityEntry> ById = All.ToDictionary(e => e.Id, StringComparer.Ordinal);
+    /// <summary>
+    /// Why a check does not apply, as shown to the operator (Romanian). One entry for every check that does not apply in at least one posture; a test keeps
+    /// the two lists equal. Found in the lab on 2026-11-10: the English <see cref="ApplicabilityEntry.Reason"/> was printed in the control result and the report.
+    /// </summary>
+    public static readonly IReadOnlyDictionary<string, string> ReasonRo = new Dictionary<string, string>(StringComparer.Ordinal)
+    {
+        ["P19"] = "Blocarea camerei și a microfonului este o regulă pentru încăperile controlate; pe o stație de birou conectată ele se folosesc în mod legitim.",
+        ["P25"] = "Tratarea datelor rămase pe disc (paginare, hibernare, imagini de memorie) este o regulă pentru materialele clasificate.",
+        ["P26"] = "Avertismentul cu nivelul de clasificare există doar acolo unde se lucrează cu materiale clasificate.",
+        ["P28"] = "Inscripționarea de CD/DVD este urmărită ca o cale de scoatere a datelor doar pe stațiile controlate.",
+        ["P29"] = "Înregistrarea tipăririi este o regulă de lucru cu datele pe stațiile controlate.",
+        ["P30"] = "Istoricul clipboardului și al activității este urmărit ca o cale de scurgere doar pe stațiile controlate.",
+        ["P31"] = "Camera, microfonul și difuzoarele sunt o regulă pentru încăperile controlate.",
+        ["A10"] = "Folderele clasificate există doar în edițiile controlate (Standalone și Rețea air-gap).",
+        ["A14"] = "Folderele clasificate există doar în edițiile controlate (Standalone și Rețea air-gap).",
+        ["A15"] = "Folderele clasificate există doar în edițiile controlate (Standalone și Rețea air-gap).",
+        ["A19"] = "O stație izolată nu are controler de domeniu. Verificarea se face doar când stația însăși este controler de domeniu.",
+        ["D03"] = "Scanarea mediilor la conectare este o procedură a stațiilor controlate.",
+        ["D04"] = "Registrul mediilor semnat de ofițer se ține pe stația de transfer din edițiile controlate.",
+        ["N01"] = "Doar o stație izolată nu trebuie să atingă niciodată o rețea; o stație din rețea este conectată prin proiectare.",
+        ["N03"] = "O legătură radio este o a doua cale de ieșire dintr-o stație sau rețea izolată, dar este normală pe o stație cu Internet.",
+        ["N04"] = "Bluetooth trimite fișiere fără cablu în afara unei stații sau rețele izolate; regula privește doar edițiile izolate.",
+        ["N05"] = "Aceste adaptoare dau unei stații sau rețele izolate o cale spre Internet; regula privește doar edițiile izolate.",
+        ["N11"] = "O stație cu Internet este conectată prin proiectare; verificarea căii spre Internet privește doar edițiile izolate.",
+        ["N12"] = "Doar o stație dintr-o rețea izolată cu domeniu trebuie să fie membră a domeniului.",
+        ["N13"] = "Verificarea activă trimite trafic în rețea (caută controlerul de domeniu și deschide o conexiune LDAP la o adresă internă), de aceea există doar în ediția Rețea air-gap.",
+        ["N14"] = "Doar ediția Internet poate ajunge la Internet; la nivelul strict secret de importanță deosebită Internetul este interzis.",
+        ["S04"] = "Registrul actualizărilor offline există doar acolo unde actualizările nu pot veni online.",
+        ["S06"] = "Semnăturile antivirus vin pe un suport doar acolo unde actualizările nu pot veni online.",
+    };
+
+    private static readonly Dictionary<string, ApplicabilityEntry> ById =All.ToDictionary(e => e.Id, StringComparer.Ordinal);
 
     public static bool TryGet(string id, out ApplicabilityEntry entry) => ById.TryGetValue(id, out entry!);
 
@@ -142,8 +185,8 @@ public static class ControlApplicability
     public static ControlCheck Resolve(ControlCheck check, StationPosture posture)
     {
         if (Applies(check.Id, posture)) return check;
-        var entry = ById[check.Id];
-        var why = entry.Reason is { Length: > 0 } r ? " " + r : "";
+        // the table's Reason is English (it mirrors the documentation); what the operator reads comes from ReasonRo
+        var why = ReasonRo.TryGetValue(check.Id, out var r) ? " " + r : "";
         return check with
         {
             Status = ControlStatus.NuSeAplica,

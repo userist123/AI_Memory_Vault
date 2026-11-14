@@ -35,6 +35,8 @@ public sealed class RecheckResult
     public int OutputsModifiedCount { get; set; }
     public int OutputsMissingCount { get; set; }
     public int InvalidatedCount { get; set; }
+    /// <summary>R7b: problems the acquisition run verifier found (see Notes); they raise the verdict, never lower it.</summary>
+    public int AcquisitionProblemsCount { get; set; }
     public ChainReport Chains { get; set; } = null!;
     /// <summary>Chain heads at verification time, before the re-check's own audit entry.</summary>
     public ChainAnchor Anchor { get; set; } = null!;

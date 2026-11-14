@@ -1,0 +1,18 @@
+{
+  "schema_version": "1",
+  "description": "Master plan 6.7: imports often seen in injection, credential theft or download-and-run. Their presence is context for the analyst, never proof. Kept as data (not compiled strings) so the published DLL does not carry the names the detection lists look for.",
+  "imports": [
+    { "name": "VirtualAllocEx", "meaning": "alocare de memorie în alt proces" },
+    { "name": "WriteProcessMemory", "meaning": "scriere în memoria altui proces" },
+    { "name": "CreateRemoteThread", "meaning": "fir de execuție pornit în alt proces" },
+    { "name": "NtUnmapViewOfSection", "meaning": "golirea imaginii unui proces (process hollowing)" },
+    { "name": "SetWindowsHookExA", "meaning": "interceptarea tastaturii sau a mesajelor" },
+    { "name": "SetWindowsHookExW", "meaning": "interceptarea tastaturii sau a mesajelor" },
+    { "name": "GetAsyncKeyState", "meaning": "citirea tastelor apăsate" },
+    { "name": "MiniDumpWriteDump", "meaning": "copierea memoriei unui proces (de exemplu LSASS)" },
+    { "name": "URLDownloadToFileA", "meaning": "descărcarea unui fișier" },
+    { "name": "URLDownloadToFileW", "meaning": "descărcarea unui fișier" },
+    { "name": "CryptEncrypt", "meaning": "criptarea datelor" },
+    { "name": "AdjustTokenPrivileges", "meaning": "activarea privilegiilor speciale" }
+  ]
+}

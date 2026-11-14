@@ -11,7 +11,9 @@ namespace LogAnalyzer.Core.Services
         public AttackStoryline GenerateStoryline(IEnumerable<DetectedIssue> issues)
         {
             var storyline = new AttackStoryline();
-            var issueList = issues?.ToList() ?? new List<DetectedIssue>();
+            // Evaluation 2026-11-05: low / informational alerts ("Serviciul de jurnalizare s-a oprit la oprirea sistemului (normal)") were placed
+            // as attack stages; only high and critical alerts, never test alerts, take part in the grouping.
+            var issueList = (issues ?? Enumerable.Empty<DetectedIssue>()).Where(i => !i.IsTestAlert && (i.Severity is "High" or "Critical")).ToList();
 
             if (issueList.Count == 0)
             {
@@ -35,7 +37,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "1. Acces Inițial (Initial Access)",
-                    StageIcon = "🚪",
                     TechniqueId = initialAccess.MitreTechniqueId ?? "T1110",
                     Title = initialAccess.Title,
                     Description = initialAccess.Explanation,
@@ -56,7 +57,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "2. Execuție Payload (Execution)",
-                    StageIcon = "⚡",
                     TechniqueId = execution.MitreTechniqueId ?? "T1059.001",
                     Title = execution.Title,
                     Description = execution.Explanation,
@@ -77,7 +77,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "3. Mecanisme Persistență (Persistence)",
-                    StageIcon = "⚓",
                     TechniqueId = persistence.MitreTechniqueId ?? "T1547.001",
                     Title = persistence.Title,
                     Description = persistence.Explanation,
@@ -98,7 +97,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "4. Escaladare Privilegii (Privilege Escalation)",
-                    StageIcon = "👑",
                     TechniqueId = privEsc.MitreTechniqueId ?? "T1548.002",
                     Title = privEsc.Title,
                     Description = privEsc.Explanation,
@@ -119,7 +117,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "5. Evaziune Defensivă (Defense Evasion)",
-                    StageIcon = "🛡️",
                     TechniqueId = defenseEvasion.MitreTechniqueId ?? "T1070.001",
                     Title = defenseEvasion.Title,
                     Description = defenseEvasion.Explanation,
@@ -140,7 +137,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "6. Acces Credențiale (Credential Access)",
-                    StageIcon = "🔑",
                     TechniqueId = credAccess.MitreTechniqueId ?? "T1003.001",
                     Title = credAccess.Title,
                     Description = credAccess.Explanation,
@@ -161,7 +157,6 @@ namespace LogAnalyzer.Core.Services
                 {
                     StageIndex = stageIndex++,
                     StageName = "7. Impact & C2 (Command and Control / Impact)",
-                    StageIcon = "💥",
                     TechniqueId = impact.MitreTechniqueId ?? "T1490",
                     Title = impact.Title,
                     Description = impact.Explanation,
@@ -177,7 +172,7 @@ namespace LogAnalyzer.Core.Services
 
             // Generate overall executive narrative
             var sb = new StringBuilder();
-            sb.AppendLine($"Atacatorul a parcurs cu succes {nodes.Count} stadii critice din lanțul cibernetic (Cyber Kill Chain).");
+            sb.AppendLine($"Corelarea automată a găsit alerte ridicate sau critice pentru {nodes.Count} etape ale lanțului de atac (Cyber Kill Chain). Este o grupare după tipul alertelor, nu o reconstituire verificată a unui atac: fiecare etapă se confirmă pe probe.");
             if (initialAccess != null) sb.AppendLine($"• Punct de intrare: {initialAccess.Title}.");
             if (execution != null) sb.AppendLine($"• Execuție inițială: {execution.Title}.");
             if (persistence != null) sb.AppendLine($"• Ancorare în sistem (Persistență): {persistence.Title}.");
@@ -186,17 +181,18 @@ namespace LogAnalyzer.Core.Services
 
             storyline.OverallSummary = sb.ToString();
             storyline.ThreatSeverityScore = Math.Min(99, 45 + nodes.Count * 12);
-            storyline.RiskLevel = storyline.ThreatSeverityScore >= 80 ? "CRITIC" : storyline.ThreatSeverityScore >= 50 ? "RIDICAT" : "MODERAT";
+            // the shown level is the highest severity among the grouped alerts, not a score made from the number of stages
+            storyline.RiskLevel = nodes.Any(n => n.Severity == "Critical") ? "CRITIC" : "RIDICAT";
 
             return storyline;
         }
 
         private string GetSeverityColor(string severity) => severity switch
         {
-            "Critical" => "#ef4444",
-            "High" => "#f97316",
-            "Medium" => "#f59e0b",
-            _ => "#38bdf8"
+            "Critical" => "#A3201C" /* Registru theme token Critical */,
+            "High" => "#A84B0C" /* Registru theme token High */,
+            "Medium" => "#7A5D00" /* Registru theme token Medium */,
+            _ => "#285F7E" /* Registru theme token Low */
         };
     }
 }

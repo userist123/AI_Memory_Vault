@@ -14,7 +14,9 @@ public static class Differential
                 using var p = Process.Start(new ProcessStartInfo(exe, "-c \"import sqlite3,sys;print(sqlite3.sqlite_version)\"")
                     { RedirectStandardOutput = true, RedirectStandardError = true, UseShellExecute = false, CreateNoWindow = true });
                 if (p is null) continue;
-                p.WaitForExit(15_000);
+                // CI 2026-11-08: a slow runner did not finish in time and ExitCode threw "Process must exit" during test discovery;
+                // a probe that does not answer means no reference implementation, not a failed test run
+                if (!p.WaitForExit(15_000)) { try { p.Kill(entireProcessTree: true); } catch (InvalidOperationException) { } continue; }
                 if (p.ExitCode == 0) return exe;
             }
             catch (System.ComponentModel.Win32Exception) { /* not installed under this name */ }

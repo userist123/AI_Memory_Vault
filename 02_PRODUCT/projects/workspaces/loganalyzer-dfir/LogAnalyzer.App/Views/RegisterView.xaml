@@ -5,6 +5,8 @@
              xmlns:ctrl="clr-namespace:LogAnalyzer.UI.Views.Controls"
              xmlns:vmx="clr-namespace:LogAnalyzer.UI.ViewModels"
              xmlns:views="clr-namespace:LogAnalyzer.UI.Views">
+    <!-- lab VM 2026-11-07 (1024x720): the cards above took all the height and the rows table got none, so no person could be written in: the page scrolls and the table keeps a minimum height -->
+    <ScrollViewer VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
     <Grid Margin="24">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -14,10 +16,10 @@
         </Grid.RowDefinitions>
 
         <StackPanel Grid.Row="0" Margin="0,0,0,12">
-            <TextBlock Text="{Binding Title}" FontSize="22" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
-            <TextBlock Text="{Binding Notice}" Margin="0,4,0,0" TextWrapping="Wrap">
+            <TextBlock Style="{StaticResource PageTitleStyle}" Text="{Binding Title}"/>
+            <TextBlock Text="{Binding Notice}">
                 <!-- 2026-10-23: in Simplu the permissions line is a small secondary line under the one explanation -->
-                <TextBlock.Style><Style TargetType="TextBlock">
+                <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource PageLeadStyle}">
                     <Setter Property="FontSize" Value="13"/><Setter Property="FontWeight" Value="SemiBold"/><Setter Property="Foreground" Value="{StaticResource TextPrimaryBrush}"/>
                     <Style.Triggers><DataTrigger Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True">
                         <Setter Property="FontSize" Value="12"/><Setter Property="FontWeight" Value="Normal"/><Setter Property="Foreground" Value="{StaticResource TextSecondaryBrush}"/>
@@ -25,19 +27,20 @@
                 </Style></TextBlock.Style>
             </TextBlock>
             <TextBlock Text="{Binding AccessNotice}" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource CriticalBrush}" Margin="0,4,0,0" TextWrapping="Wrap"/>
-            <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
+            <TextBlock
                        Text="Lista persoanelor care lucrează pe stație. Apăsați „Preia de pe stație”; o completați apoi cu autorizările.">
-                <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers>
+                <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource PageLeadStyle}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers>
                     <MultiDataTrigger><MultiDataTrigger.Conditions>
                         <Condition Binding="{Binding IsSimple, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"/>
                         <Condition Binding="{Binding IsEmpty}" Value="False"/>
                     </MultiDataTrigger.Conditions><Setter Property="Visibility" Value="Visible"/></MultiDataTrigger>
                 </Style.Triggers></Style></TextBlock.Style>
             </TextBlock>
-            <TextBlock FontSize="13" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,4,0,0" TextWrapping="Wrap"
+            <TextBlock
                        Text="Rândurile se preiau de pe stație („Preia de pe stație”); persoana completează doar ce stația nu poate ști. Se pot și lipi din tabel sau importa (JSON / CSV). Analiza le compară cu ce s-a observat; nimic nu se aplică pe Windows. Un registru fără rânduri este „registru nedefinit”, niciodată „conform”. Fiecare modificare salvată intră într-un jurnal de audit înlănțuit prin hash.">
-                <TextBlock.Style><Style TargetType="TextBlock"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
+                <TextBlock.Style><Style TargetType="TextBlock" BasedOn="{StaticResource PageLeadStyle}"><Setter Property="Visibility" Value="Collapsed"/><Style.Triggers><DataTrigger Binding="{Binding IsExpert, Source={x:Static services:LanguageLevelState.Instance}}" Value="True"><Setter Property="Visibility" Value="Visible"/></DataTrigger></Style.Triggers></Style></TextBlock.Style>
             </TextBlock>
+            <Border Style="{StaticResource PageRuleStyle}"/>
             <StackPanel Visibility="{Binding IsEmpty, Converter={StaticResource BooleanToVisibilityConverter}}">
                 <ctrl:EmptyStateCard What="{x:Static vmx:EmptyStates.UsersWhat}" Why="{x:Static vmx:EmptyStates.UsersWhy}" Step="{x:Static vmx:EmptyStates.UsersStep}"/>
             </StackPanel>
@@ -50,7 +53,7 @@
                     <Button Content="Preia de pe stație" Command="{Binding DiscoverCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"
                             AutomationProperties.HelpText="Citește de pe această stație conturile sau mediile existente și adaugă rândurile care lipsesc. Nu modifică nimic pe Windows și nu schimbă rândurile deja existente."/>
                     <!-- 2026-10-23: one accent button in Simplu ("Preia de pe stație"); "Salvează" is the accent one in Expert as before -->
-                    <Button Content="Salvează" views:SimpleLevel.HideInSimple="True" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"/>
+                    <Button Content="Salvează" views:SimpleLevel.HideInSimple="True" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Margin="0,0,6,0"/>
                     <Button Content="Salvează" views:SimpleLevel.OnlyInSimple="True" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Reîncarcă" views:SimpleLevel.HideInSimple="True" Command="{Binding ReloadCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
                     <Button Content="Deschide…" views:SimpleLevel.HideInSimple="True" Command="{Binding OpenFileCommand}" Style="{StaticResource OutlineButtonStyle}" Margin="0,0,6,0"/>
@@ -86,7 +89,7 @@
             <DockPanel Margin="8">
                 <TextBlock DockPanel.Dock="Top" Text="{Binding Columns}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <TextBlock DockPanel.Dock="Top" Text="{Binding Hint}" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,8"/>
-                <DataGrid ItemsSource="{Binding View}" AutoGenerateColumns="True" AutoGeneratingColumn="Grid_AutoGeneratingColumn" CanUserAddRows="True" CanUserDeleteRows="True"
+                <DataGrid ItemsSource="{Binding View}" MinHeight="220" AutoGenerateColumns="True" AutoGeneratingColumn="Grid_AutoGeneratingColumn" CanUserAddRows="True" CanUserDeleteRows="True"
                           HeadersVisibility="Column" SelectionUnit="CellOrRowHeader" ClipboardCopyMode="IncludeHeader"/>
             </DockPanel>
         </Border>
@@ -98,4 +101,5 @@
             </DockPanel>
         </Border>
     </Grid>
+    </ScrollViewer>
 </UserControl>

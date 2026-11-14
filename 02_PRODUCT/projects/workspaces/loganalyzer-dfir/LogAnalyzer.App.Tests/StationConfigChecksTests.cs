@@ -631,7 +631,7 @@ public sealed class StationConfigChecksTests
     {
         var found = CodeExplainer.FindIn(@"AppLocker 8004 RecordID 1: E:\x.exe; CodeIntegrity 3077; Defender 1116; HKLM\SYSTEM\CurrentControlSet\Policies\Microsoft\FVE → RDVDenyWriteAccess = 1; " +
                                          @"HKLM\SOFTWARE\Policies\Microsoft\Windows NT\Terminal Services → fAllowToGetHelp = 0; HKLM\SYSTEM\CurrentControlSet\Services\PortProxy → x");
-        Assert.Contains(found, x => x.Code == "AppLocker 8004" && x.What.Contains("OPRIT"));
+        Assert.Contains(found, x => x.Code == "AppLocker 8004" && x.What.Contains("oprit"));
         Assert.Contains(found, x => x.Code == "CodeIntegrity 3077");
         Assert.Contains(found, x => x.Code == "Defender 1116" && x.What.Contains("rău-intenționat"));
         Assert.Contains(found, x => x.Code == @"FVE\RDVDenyWriteAccess");

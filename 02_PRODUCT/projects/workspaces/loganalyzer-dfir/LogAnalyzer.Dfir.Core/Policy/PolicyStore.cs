@@ -42,6 +42,10 @@ public sealed class PolicyStore
 
     private static string Key(string id, string version) => $"{id}@{version}";
 
+    /// <summary>Every registered policy, newest activity first (read-only listing for the library page; the lifecycle is unchanged).</summary>
+    public IReadOnlyList<PolicyRecord> All() =>
+        _records.Values.OrderByDescending(r => r.History.Count > 0 ? r.History[^1].AtUtc : DateTimeOffset.MinValue).ToList();
+
     public PolicyRecord? Get(PolicyDocument p) => _records.GetValueOrDefault(Key(p.Id, p.Version));
 
     public PolicyRecord Register(PolicyDocument p, string op)

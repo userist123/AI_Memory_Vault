@@ -54,10 +54,24 @@ internal sealed class EseReadOnlyDatabase : IDisposable
             JetSetSystemParameterW(pi, IntPtr.Zero, JetParamRecovery, IntPtr.Zero, "Off");
         }
         finally { Marshal.FreeHGlobal(pi); }
-        Check(JetInit(ref _instance), "JetInit");
-        Check(JetBeginSessionW(_instance, out _session, null, null), "JetBeginSession");
-        Check(JetAttachDatabase2W(_session, _path, 0, JetBitDbReadOnly), "JetAttachDatabase2");
-        Check(JetOpenDatabaseW(_session, _path, null, out _dbid, JetBitDbReadOnly), "JetOpenDatabase");
+        bool initialised = false;
+        try
+        {
+            Check(JetInit(ref _instance), "JetInit");
+            initialised = true;
+            Check(JetBeginSessionW(_instance, out _session, null, null), "JetBeginSession");
+            Check(JetAttachDatabase2W(_session, _path, 0, JetBitDbReadOnly), "JetAttachDatabase2");
+            Check(JetOpenDatabaseW(_session, _path, null, out _dbid, JetBitDbReadOnly), "JetOpenDatabase");
+        }
+        catch
+        {
+            // a failed attach (e.g. JET -550, dirty database) must not leave the instance holding the working copy: the caller recovers and retries
+            if (_session != IntPtr.Zero) { JetEndSession(_session, 0); _session = IntPtr.Zero; }
+            // review 2026-11-05: after a failed JetInit the instance may already be released by ESE; terminate only one that started
+            if (initialised && _instance != IntPtr.Zero) JetTerm(_instance);
+            _instance = IntPtr.Zero;
+            throw;
+        }
     }
 
     public sealed class Table : IDisposable

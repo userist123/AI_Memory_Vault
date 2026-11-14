@@ -107,7 +107,9 @@ public sealed class BeginnerPolish20261022Tests : IDisposable
 
     private static string PageTitle(string file)
     {
-        var title = Xaml("Views", file).Descendants().First(e => e.Name.LocalName == "TextBlock" && double.TryParse(Attr(e, "FontSize"), System.Globalization.CultureInfo.InvariantCulture, out var s) && s >= 20 && Attr(e, "Text").Length > 0);
+        // the page title is the first TextBlock that uses the shared PageTitleStyle (24, SemiBold) or, on a page not yet converted, carries a literal size of 20 or more
+        var title = Xaml("Views", file).Descendants().First(e => e.Name.LocalName == "TextBlock" && Attr(e, "Text").Length > 0 && (Attr(e, "Style") == "{StaticResource PageTitleStyle}"
+            || (double.TryParse(Attr(e, "FontSize"), System.Globalization.CultureInfo.InvariantCulture, out var s) && s >= 20)));
         return Attr(title, "Text");
     }
 
@@ -270,11 +272,11 @@ public sealed class BeginnerPolish20261022Tests : IDisposable
     public void The_policy_subtitle_has_a_space_after_the_period_and_no_english_in_simple()
     {
         var doc = Xaml("Views", "PolicyView.xaml");
-        var texts = doc.Descendants().Where(e => e.Name.LocalName == "TextBlock" && Attr(e, "Text").Contains("CIORNĂ")).ToList();
-        // 2026-10-23: Simplu has no states line any more (BeginnerSimplify20261023Tests); only the Expert line, with the English names, remains
+        var texts = doc.Descendants().Where(e => e.Name.LocalName == "TextBlock" && Attr(e, "Text").Contains("Ciornă")).ToList();
+        // 2026-10-23: Simplu has no states line any more (BeginnerSimplify20261023Tests); only the Expert line remains (2026-11-11: Romanian names only)
         Assert.Single(texts);
         foreach (var t in texts) { Assert.DoesNotContain(").Aprobarea", Attr(t, "Text")); Assert.Matches("\\. Aprobarea", Attr(t, "Text")); }
-        Assert.Single(texts, t => Attr(t, "Text").Contains("DRAFT"));
+        Assert.DoesNotContain(texts, t => Attr(t, "Text").Contains("DRAFT"));
     }
 
     // ───────── 7: „Cont nou” and the CRL text ─────────
@@ -316,10 +318,24 @@ public sealed class BeginnerPolish20261022Tests : IDisposable
     {
         var doc = Xaml("MainWindow.xaml");
         var expander = doc.Descendants().First(e => e.Name.LocalName == "Expander" && Attr(e, "Header").StartsWith("Avansat"));
+        // 2026-11-05: the entries come from ModuleCatalog.Menu through one template (no static list); the template carries name, style, group and command
         var buttons = expander.Descendants().Where(e => e.Name.LocalName == "RadioButton").ToList();
-        Assert.True(buttons.Count >= 20);
-        foreach (var b in buttons) Assert.Contains("AdvancedNav", Attr(b, "Visibility") + b.ToString(), StringComparison.Ordinal);
-        Assert.Contains(expander.Descendants(), e => e.Name.LocalName == "ScrollViewer" && Attr(e, "MaxHeight").Length > 0);
+        var template = Assert.Single(buttons);
+        Assert.Equal("{Binding Title}", Attr(template, "AutomationProperties.Name"));
+        Assert.Equal("Sidebar", Attr(template, "GroupName"));
+        Assert.Contains("NavigateCommand", Attr(template, "Command"));
+        Assert.Equal("{Binding TabText}", Attr(template, "CommandParameter"));
+        Assert.Contains(expander.Descendants(), e => e.Name.LocalName == "ItemsControl" && Attr(e, "ItemsSource") == "{Binding AdvancedMenu}");
+        var menu = LogAnalyzer.Core.Services.Edition.ModuleCatalog.Menu(LogAnalyzer.Core.Services.Edition.StationPosture.Internet, AppMode.Network, []).SelectMany(s => s.Pages).ToList();
+        Assert.True(menu.Count >= 20);
+        foreach (var page in menu) Assert.False(string.IsNullOrWhiteSpace(page.Title));
+        // design pass 2026-11-10: ONE scroll in the sidebar (a nested scroll box with MaxHeight was the second scrollbar). The list still never slides under
+        // the buttons at the bottom left: the expander lives in the scrolled row (*) of the sidebar grid, the bottom actions in their own Auto row.
+        Assert.DoesNotContain(expander.Descendants(), e => e.Name.LocalName == "ScrollViewer");
+        var scroller = expander.Ancestors().First(e => e.Name.LocalName == "ScrollViewer");
+        Assert.Equal("0", Attr(scroller, "Grid.Row"));
+        var sidebarGrid = scroller.Parent!;
+        Assert.Contains(sidebarGrid.Elements(), e => Attr(e, "Grid.Row") == "1");
         var nav = Src("Themes", "Components", "Navigation.xaml");
         Assert.Contains("TextTrimming", nav);
         Assert.Contains("CharacterEllipsis", nav);
