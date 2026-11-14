@@ -870,3 +870,18 @@
   FOUND: restart area version is 1.1 on EVERY real sample (this one, the G0 raw copy, Corpus/NtfsLog VHDX); only Corpus/Ntfs is 2.0.
   Design doc updated: L3 covers 1.1 first (calibrate on the WS01 sample, 16,382 of 16,384 pages RCRD), 2.0 on Corpus/Ntfs.
   Next: L3 (pure structural parser in Dfir.Core) - Fable consult first on 1.1 vs 2.0 page layout, then brief.
+- 2026-11-14 (claude, RMM thread; planner item 2) UI REMOTE COLLECTION WS01 -> SRV01 verified, and a bug found and fixed. CI of 3065870d1
+  (contains the RMM commits) read once: 32/32 success. Lab: SRV01 time zone set to UTC for the test (WS01 = GTB, +2), TEST
+  C:\ProgramData\AnyDesk\connection_trace.txt on SRV01; Continent on WS01 via UIA: "Autorizează și generează pachetul…" -> Save dialog
+  (the File name box refuses settext; the default name was kept), package run as admin on SRV01 (exit 0, manifest timezone=UTC, step
+  remote-tool-logs ok), "Verifică și importă pachetul…" -> folder dialog ("click Folder:" then "type", then "click Select Folder"), 205 files,
+  "Pornește investigația" -> CASE-LAB-WS01-20261114-192447. BUG (fixed): "Verifică și importă" imports into the LIVE case with the target
+  zone, but the run makes a NEW case and re-imports the stored files through InvestigationPipeline.Import as operator imports, so the
+  zone was lost (session logs unconverted). Fix: InvestigationViewModel keeps stored path -> zone from the package import and passes it;
+  InvestigationPipeline.Import(ws, files, zones). Result in the lab: SRV01 row "2026-11-09, 21:21" -> 2026-11-09 21:21 UTC (UTC target) on the
+  timeline and in REMOTE-TOOL-EXECUTED. Test RemoteCollectionTests.The_target_zone_survives_the_reimport_into_the_case_of_the_run.
+  Note: the station's own session logs are collected only by the "Completă" profile (UserArtifactsCollector, by design); "Pornește
+  investigația" with the standard profile does not read them, "Colectează tot" does. SRV01 zone restored to GTB Standard Time.
+  Lab leftovers: SRV01 C:\ProgramData\AnyDesk\connection_trace.txt (TEST), C:\LA-Collect-212158; WS01 Documents\LA_LAB-SRV01_20261114T192159Z,
+  an extra authorized-but-unsaved TEST request 4fa2c04e in the live case; host E:\LA-Lab\evidence\remote\LA_LAB-SRV01_20261114T192159Z.
+  Suites: Dfir 3752 (3719 passed, 33 skipped), App 1084, UI 370 (369 + 1 skipped), all exit 0.

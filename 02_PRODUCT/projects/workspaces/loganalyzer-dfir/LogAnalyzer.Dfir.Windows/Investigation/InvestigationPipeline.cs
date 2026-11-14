@@ -162,8 +162,12 @@ public sealed class InvestigationPipeline
         });
     }
 
-    /// <summary>Imports existing evidence files — copies, never moves. Known artifacts get their type; anything else is type "file".</summary>
-    public static List<EvidenceItem> Import(CaseWorkspace ws, IEnumerable<string> files)
+    /// <summary>
+    /// Imports existing evidence files — copies, never moves. Known artifacts get their type; anything else is type "file".
+    /// <paramref name="zones"/>: the station time zone already decided for a file (path → Windows zone id, "" = not known), e.g. the target's zone
+    /// from a remote package imported into the live case before the run; a file not listed gets the default below.
+    /// </summary>
+    public static List<EvidenceItem> Import(CaseWorkspace ws, IEnumerable<string> files, IReadOnlyDictionary<string, string>? zones = null)
     {
         var list = new List<EvidenceItem>();
         var all = files.ToList();
@@ -179,9 +183,12 @@ public sealed class InvestigationPipeline
             var origin = LogAnalyzer.Dfir.Analysis.EvidenceOrigin.Label(f);
             list.Add(ws.ImportFile(f, "Import:" + source, type == "evtx" ? "EventLog:" + source : type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion,
                 notes: (origin.Length > 0 ? $"Sursă istorică ({origin}). " : "") + "Importat de operator din: " + f,
-                // a session log of AnyDesk / TeamViewer is in the local time of the station it came from, which an operator import does not name:
-                // its times stay unconverted instead of being read in this machine's zone
-                timezone: LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.IsKnown(type) ? "" : null));
+                // the zone decided where the file came from (a remote package: the target's zone from its manifest) is kept. Otherwise a session log of
+                // AnyDesk / TeamViewer is in the local time of a station an operator import does not name: its times stay unconverted instead of being
+                // read in this machine's zone. (Lab 2026-11-14: "Verifică și importă" put the package in the live case with the target's zone, then the
+                // run re-imported those files as operator imports and the zone was lost.)
+                timezone: zones is not null && zones.TryGetValue(f, out var known) ? known
+                    : LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.IsKnown(type) ? "" : null));
             if (origin.Contains("VSS", StringComparison.Ordinal)) ws.Audit("vss.import", $"{list[^1].EvidenceId} din {f}");
         }
         return list;

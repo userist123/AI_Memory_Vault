@@ -23,6 +23,9 @@ namespace LogAnalyzer.UI.ViewModels
         private CancellationTokenSource? _cts;
 
         public ObservableCollection<string> ImportFiles { get; } = new();
+
+        /// <summary>Station zone of files that came from a verified remote package (stored path → zone id), passed to the run's import.</summary>
+        private readonly Dictionary<string, string> _importZones = new(StringComparer.OrdinalIgnoreCase);
         public ObservableCollection<Finding> Findings { get; } = new();
 
         /// <summary>R7c: the acquisition run records of the case ("Colectări" tab), read with their integrity verdict by the pipeline or the case loader (no second hashing here).</summary>
@@ -467,6 +470,7 @@ namespace LogAnalyzer.UI.ViewModels
             var progress = new Progress<string>(m => Log += $"{DateTime.Now:HH:mm:ss}  {m}{Environment.NewLine}");
             var profile = ProfileIndex switch { 0 => CollectionProfile.Quick, 2 => CollectionProfile.FullForensic, _ => CollectionProfile.Standard };
             var files = ImportFiles.ToList();
+            var zones = files.Where(_importZones.ContainsKey).ToDictionary(f => f, f => _importZones[f], StringComparer.OrdinalIgnoreCase);
             bool collect = CollectFromThisStation;
             var name = CaseName;
             var zone = SystemZone.Trim();
@@ -480,7 +484,7 @@ namespace LogAnalyzer.UI.ViewModels
                     if (files.Count > 0)
                     {
                         ((IProgress<string>)progress).Report($"Import {files.Count} fișiere (copii; originalele nu se modifică)");
-                        InvestigationPipeline.Import(ws, files);
+                        InvestigationPipeline.Import(ws, files, zones);
                     }
                     // B7: a signed media register in the case folder is verified like on the live path; an invalid one is not used and the reason is shown
                     LogAnalyzer.Dfir.Registers.MediaRegister? signedMedia = null;
@@ -661,7 +665,8 @@ namespace LogAnalyzer.UI.ViewModels
             var check = RemoteCollection.Verify(ws, dlg.FolderName);
             if (!check.Ok) { RemoteStatus = "Pachetul NU a fost importat: " + string.Join("; ", check.Problems); return; }
             var items = RemoteCollection.Import(ws, check);
-            foreach (var i in items.Skip(1)) { var f = ws.FullPath(i.StoredPath); if (!ImportFiles.Contains(f)) ImportFiles.Add(f); }
+            // the station zone each file got at import (the target's, from the manifest) travels with it into the case of the run
+            foreach (var i in items.Skip(1)) { var f = ws.FullPath(i.StoredPath); _importZones[f] = i.Timezone; if (!ImportFiles.Contains(f)) ImportFiles.Add(f); }
             var failed = check.Manifest!.Steps.Where(s => s.Status is not ("ok" or "absent")).Select(s => $"{s.Artifact} ({s.Error})").ToList();
             // a log that does not exist on the target (Sysmon not installed) is said as such, not as a failed step (lab SRV01 2026-11-07)
             var absent = check.Manifest.Steps.Where(s => s.Status == "absent").Select(s => s.Artifact.StartsWith("evtx:", StringComparison.Ordinal) ? s.Artifact[5..] : s.Artifact).ToList();

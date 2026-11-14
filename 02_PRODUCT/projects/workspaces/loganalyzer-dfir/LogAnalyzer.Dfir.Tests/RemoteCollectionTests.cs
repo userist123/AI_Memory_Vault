@@ -521,6 +521,33 @@ public sealed class RemoteCollectionTests : IDisposable
     }
 
     [Fact]
+    public void The_target_zone_survives_the_reimport_into_the_case_of_the_run()
+    {
+        // lab 2026-11-14: "Verifică și importă" puts the package in the live case; the run then re-imports the stored files into a NEW case
+        // through InvestigationPipeline.Import. The zone from the manifest must travel with them; without it a session log stays unconverted.
+        var fake = FakeStation("station-tz");
+        var roaming = Path.Combine(fake, "Users", "ana", "AppData", "Roaming", "AnyDesk"); Directory.CreateDirectory(roaming);
+        File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), Path.Combine(roaming, "connection_trace.txt"));
+        var live = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(live, Environment.MachineName, @"STATIE\operator", "investigație de test", ["remote-tool-logs"]);
+        var check = RemoteCollection.Verify(live, RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha), fake));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var stored = RemoteCollection.Import(live, check).Single(i => i.SourceType == LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskConnectionTrace);
+        var path = live.FullPath(stored.StoredPath);
+        Assert.Equal(check.Manifest!.Timezone, stored.Timezone);
+
+        CaseWorkspace Other(string name) => CaseWorkspace.Create(Path.Combine(_root, name), new CaseInfo { CaseId = "CASE-" + name, Name = name, CreatedAtUtc = DateTimeOffset.UtcNow, Scope = TestScopes.Valid() });
+        var run = Other("case-run");
+        var kept = LogAnalyzer.Dfir.Windows.Investigation.InvestigationPipeline.Import(run, [path], new Dictionary<string, string> { [path] = stored.Timezone }).Single();
+        Assert.Equal(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.AnyDeskConnectionTrace, kept.SourceType);
+        Assert.Equal(stored.Timezone, kept.Timezone);
+        Assert.NotNull(LogAnalyzer.Dfir.RemoteTools.RemoteToolLogText.ZoneOf(kept).Info);
+        // the same file imported by the operator with no known zone: unconverted, never this machine's zone by assumption
+        var bare = LogAnalyzer.Dfir.Windows.Investigation.InvestigationPipeline.Import(Other("case-bare"), [path]).Single();
+        Assert.Equal("", bare.Timezone);
+    }
+
+    [Fact]
     public void A_manifest_without_a_zone_leaves_session_log_times_unconverted()
     {
         // an older package (no "timezone") deserialises with Timezone null; the import then gives a session log no zone, never the analyst's
