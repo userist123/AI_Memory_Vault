@@ -885,3 +885,11 @@
   Lab leftovers: SRV01 C:\ProgramData\AnyDesk\connection_trace.txt (TEST), C:\LA-Collect-212158; WS01 Documents\LA_LAB-SRV01_20261114T192159Z,
   an extra authorized-but-unsaved TEST request 4fa2c04e in the live case; host E:\LA-Lab\evidence\remote\LA_LAB-SRV01_20261114T192159Z.
   Suites: Dfir 3752 (3719 passed, 33 skipped), App 1084, UI 370 (369 + 1 skipped), all exit 0.
+- 2026-11-14 flaky OfficerQualifiedSignatureTests.The_CMS_is_CAdES_baseline... FIXED (test-only bug). Captured failure (run 29 of a loop):
+  CryptographicException "ASN1 corrupted data" / "encoded length exceeds the number of bytes remaining" at SignedCms.Decode: the TEST cut
+  the CMS out of the zero-padded /Contents with TrimEnd('0'), which also removes real trailing 00 bytes of the CMS. Now cut at the DER
+  length (DerPrefix); assertions unchanged. Before: 1 failure in 15 and 1 in 29 runs alone; after: 0 failures in 200 runs; App 1084/1084.
+  Production (PdfSignatureCheck) already uses the DER length. The OpenSSL recipe in docs/dfir/DESIGN_2026-10-16_OFFICER_SIGNATURE_AND_AUDIT_ANCHOR.md
+  said "trailing zeros removed" (same flaw for a human verifier): now "as it is, do not strip zeros; openssl reads the DER length".
+  Remaining planner items: Windows.edb ESE (needs the Search feature on SRV01 = lab change), Insula device monitor (blocked: Hyper-V
+  SCSI disks count as internal), AnyDesk request+accept double count (wording only).
