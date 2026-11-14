@@ -1,3 +1,4 @@
+using System.Text.RegularExpressions;
 using System.Globalization;
 using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.Model;
@@ -228,26 +229,49 @@ public static class AntiForensics
                     "Ștergerea fișierelor .pf se vede doar în jurnalul USN, care nu a fost analizat.", cfg.Select(e => Ref(e, "EnablePrefetcher")));
         }
 
-        // AF07 — the change journal deleted and recreated: its ID (a FILETIME) is the creation time.
+        // AF07 — the change journal absent on the system volume, or deleted and recreated: its ID (a FILETIME) is the creation time.
+        // Three different answers: the volume has no journal (Windows creates one on the system volume by default), the journal was created long after the
+        // oldest event-log record (recreated, or a major repair), and nothing wrong in an analysed journal. No journal analysed and none reported absent = undetermined.
         {
+            const string Af07Title = "Anomalii în jurnalul USN";
             var ids = usn.Select(e => F(e, "JournalId")).Where(x => x.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var created = ids.Select(i => (Id: i, At: LogAnalyzer.Dfir.FileSystem.UsnJournalParser.JournalCreatedUtc(i))).ToList();
-            var earliestLog = evtxSources.Where(e => e.Time.Utc is not null).Select(e => e.Time.Utc!.Value).DefaultIfEmpty().Min();
-            if (ids.Count == 0)
-                Add("AF07", "Anomalii în jurnalul USN", "T1070.004", AntiForensicResult.Undetermined, "Jurnalul USN nu a fost analizat (export fsutil usn readjournal).");
+            // Anchor = the 1st percentile of the event-log times, not the minimum: one record written with a wrong clock must not move it
+            // (with 3 or more records at least the earliest one is set aside). A wrong clock or rotated logs still shift the anchor, and the text says so.
+            var evtxTimes = evtxSources.Where(e => e.Time.Utc is not null).Select(e => e.Time.Utc!.Value).OrderBy(t => t).ToList();
+            var earliestLog = evtxTimes.Count == 0 ? default : evtxTimes[evtxTimes.Count < 3 ? 0 : Math.Max(1, evtxTimes.Count / 100)];
+            // The collector's text when the volume has no active journal (Win32 error 1179): "jurnalul USN C: nu a putut fi citit (volumul nu are jurnal USN activ ...)".
+            var absent = gaps.Select(g => g.Artifact + " " + g.Reason).Where(t => t.Contains("nu are jurnal USN activ", StringComparison.OrdinalIgnoreCase)).ToList();
+            string absentLetter = absent.Select(t => Regex.Match(t, @"jurnalul USN ([A-Za-z]):")).Where(m => m.Success).Select(m => m.Groups[1].Value.ToUpperInvariant()).FirstOrDefault() ?? "";
+            // It is the system volume when the text says so, or when the case shows processes or files running from <letter>:\Windows.
+            bool IsSystemVolume() => absent.Any(t => t.Contains("volumul de sistem", StringComparison.OrdinalIgnoreCase)) ||
+                absentLetter.Length > 0 && events.Any(e => new[] { e.Path, e.Process, F(e, "NewProcessName"), F(e, "Image"), F(e, "ProcessName"), F(e, "CommandLine") }
+                    .Any(p => p.TrimStart('"', ' ').StartsWith(absentLetter + @":\Windows\", StringComparison.OrdinalIgnoreCase)));
+            var tolerance = TimeSpan.FromHours(24);
+            if (absent.Count > 0 && IsSystemVolume())
+                Add("AF07", Af07Title, "T1070.004", AntiForensicResult.Detected,
+                    $"Gravitate Medie: volumul de sistem nu are jurnal USN activ ({absentLetter}:); Windows îl creează implicit pe volumul de sistem, deci jurnalul a fost oprit sau șters (fsutil usn deletejournal) sau volumul a fost configurat altfel. De verificat: " +
+                    "un volum de sistem fără jurnal poate fi și o imagine pregătită special; citirea jurnalului a returnat eroarea „volumul nu are jurnal USN activ”.")
+                    ;
+            else if (ids.Count == 0)
+                Add("AF07", Af07Title, "T1070.004", AntiForensicResult.Undetermined,
+                    absent.Count > 0
+                        ? $"Jurnalul USN{(absentLetter.Length > 0 ? " " + absentLetter + ":" : "")} nu este activ, dar nu se știe dacă este volumul de sistem (nu există în probe niciun proces sau fișier din {(absentLetter.Length > 0 ? absentLetter + ":" : "acel volum")}\\Windows): fără acest lucru, lipsa jurnalului nu se poate judeca."
+                        : "Jurnalul USN nu a fost analizat (export fsutil usn readjournal).");
             else if (ids.Count > 1)
-                Add("AF07", "Anomalii în jurnalul USN", "T1070.004", AntiForensicResult.Detected,
+                Add("AF07", Af07Title, "T1070.004", AntiForensicResult.Detected,
                     "Exporturi cu ID-uri de jurnal diferite (jurnal șters și recreat între ele): " + string.Join("; ", created.Select(c => $"{c.Id} creat {c.At:yyyy-MM-ddTHH:mm:ssZ}")),
                     usn.GroupBy(e => F(e, "JournalId")).Select(g => Ref(g.First(), "ID jurnal")));
-            else if (created[0].At is { } at && earliestLog != default && at > earliestLog)
-                Add("AF07", "Anomalii în jurnalul USN", "T1070.004", AntiForensicResult.Detected,
-                    $"Jurnalul USN {ids[0]} a fost creat la {at:yyyy-MM-ddTHH:mm:ssZ}, după cea mai veche înregistrare din jurnalele de evenimente ({earliestLog:yyyy-MM-ddTHH:mm:ssZ}): " +
-                    "a fost șters și recreat (sau volumul este nou).", [Ref(usn[0], "ID jurnal")]);
+            else if (created[0].At is { } at && earliestLog != default && at - earliestLog > tolerance)
+                Add("AF07", Af07Title, "T1070.004", AntiForensicResult.Detected,
+                    $"Gravitate Medie, De verificat: jurnalul USN {ids[0]} a fost creat la {at:yyyy-MM-ddTHH:mm:ssZ}, la peste {tolerance.TotalHours:0} de ore după începutul jurnalelor de evenimente ({earliestLog:yyyy-MM-ddTHH:mm:ssZ}, percentila 1 a orelor înregistrărilor): " +
+                    "a fost șters și recreat (sau volumul este nou). Ancora depinde de jurnalele de evenimente: un ceas greșit sau jurnale EVTX rotite (cele vechi șterse de Windows) o mută. Toleranță: un jurnal poate fi recreat și de Windows după un chkdsk sau o actualizare majoră, fără nicio intenție de ascundere.",
+                    [Ref(usn[0], "ID jurnal")]);
             else
-                Add("AF07", "Anomalii în jurnalul USN", "T1070.004", AntiForensicResult.NotDetected,
+                Add("AF07", Af07Title, "T1070.004", AntiForensicResult.NotDetected,
                     $"Un singur jurnal, {ids[0]}, creat la {created[0].At:yyyy-MM-ddTHH:mm:ssZ}" +
-                    (earliestLog != default ? $", înaintea celei mai vechi înregistrări din jurnalele de evenimente ({earliestLog:yyyy-MM-ddTHH:mm:ssZ})" : "") +
-                    $". Acoperire: {Window()}.", [Ref(usn[0], "ID jurnal")]);
+                    (earliestLog != default ? $", fără mai mult de {tolerance.TotalHours:0} de ore după începutul jurnalelor de evenimente ({earliestLog:yyyy-MM-ddTHH:mm:ssZ}, percentila 1; un ceas greșit sau jurnale EVTX rotite mută această ancoră)" : "") +
+                    $". Acoperire: {Window()}. Limită: ora formatării sau a instalării volumului nu este în probe, deci un jurnal recreat imediat după instalare nu se vede.", [Ref(usn[0], "ID jurnal")]);
         }
 
         // AF08 — timestomp: the NTFS-TIMESTOMP test over $MFT (+ USN), the same one the finding uses (NtfsTimestomp, calibrated on Corpus/NtfsCalib).

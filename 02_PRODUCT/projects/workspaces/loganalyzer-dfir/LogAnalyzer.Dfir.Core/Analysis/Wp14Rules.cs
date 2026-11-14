@@ -53,6 +53,7 @@ public static partial class Wp14Rules
         Media(c, found);
         MediaUsageFindings(c, found);
         DeletedTraceFindings(c, found);
+        UsnJournalDeletedFindings(c, found);   // fsutil usn deletejournal / createjournal in 4688, Sysmon 1, PowerShell 4104
         TimestompFindings(c, found);      // NTFS-TIMESTOMP: $MFT + USN (calibrated on a real volume)
         HistoryFindings(c, found);        // E1: every source, earliest evidence first
         AfterConnectFindings(c, found);   // E5: what followed each connection (linked to the medium's findings above)

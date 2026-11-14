@@ -820,3 +820,21 @@
   Oracle corpus LogAnalyzer.Dfir.Tests/Corpus/NtfsLog (9 known operations right after format, $LogFile not wrapped, 33 USN images;
   fsutil refuses $LogFile extents -> copied by a separate PowerShell decoder). Design docs/dfir/NTFS_LOGFILE_DESIGN.md (tasks L1-L5).
   Next: L1 (AF07 deletejournal detection) to a Sonnet worker, Opus review; then L2 conservation.
+- 2026-11-14 $LogFile phase L1 DONE: AF07 hardened (journal absent on the system volume = distinct Detected Medium; recreation anchored on the
+  1st percentile of EVTX times with a 24 h tolerance; NotDetected only with a journal analysed) + rule USN-JOURNAL-DELETED (T1070.004,
+  Wp14Rules.UsnJournal.cs, linear UsnCommandScanner, no regex on raw text): fsutil.exe process (Image / NewProcessName / OriginalFileName)
+  -> its arguments without argv[0]; shell lines lexed (cmd quoting; cmd /c|/k and powershell -Command re-read, depth 3; a powershell.exe
+  line is not split by cmd rules); 4104 PowerShell lexer (strings incl. typographic quotes U+2018-201E, here-strings anywhere, # and <# #>
+  comments; '{' '(' open a block mid-word only after a keyword, else the brace pair stays in the word: \\?\Volume{GUID}); deletejournal = High,
+  createjournal alone = Low, recreate <= 1 h on the SAME non-empty volume = High; 4688 + Sysmon 1 of one execution deduplicated; 256 KiB
+  cap per event -> Info RULE-NOT-EVALUATED. Lab calibration (main session, read-only, 3 VMs): the C: USN journal is created at FIRST BOOT
+  (~1 s from the oldest EVTX record) while Win32_OperatingSystem.InstallDate is ~10 h earlier (image preparation) -> an InstallDate anchor
+  would false-positive on every station; the EVTX anchor is right. Reviews: r1 2 MEDIUM (printed text in strings/here-strings/comments ->
+  High; ReDoS on 3,000 spaces silently hiding a real delete) fixed by the worker (17 tests red first); r2 2 MEDIUM (compact try{fsutil ...}
+  missed; typographic quotes / here-string after '=' -> High) + 4 LOW -> main session fixed the lexer (UsnJournalDeletionRound2Tests).
+  Accepted residuals: Start-Process / iex / concatenation / variable verbs in 4104 not captured (the child fsutil 4688 / Sysmon 1 is);
+  `cmd /c "a" & "b"` second statement may be missed; cmd `\"` treated as escape (rare FP); percentile weak with > 1% wrong-clock records;
+  no producer yet for the volume format / install time (MftParser summary could add record 0 / root $SI creation).
+  Suites (main session): Dfir (Release) 3720 (3687 passed, 33 skipped, 0 failed), App 1084/1084, python 27/27.
+  Next: lab check of USN-JOURNAL-DELETED on WS02 (Hyper-V checkpoint FIRST, then fsutil usn deletejournal + createjournal, collect, revert);
+  then L2 ($LogFile conservation in NtfsMetadataCollector, early in "Colectează tot").
