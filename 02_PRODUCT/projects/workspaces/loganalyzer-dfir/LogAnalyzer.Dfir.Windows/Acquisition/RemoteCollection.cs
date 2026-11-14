@@ -46,12 +46,15 @@ public static class RemoteCollection
     public const string Format = "loganalyzer-remote-collection/1";
     public const string CollectorName = "LogAnalyzer remote package";
 
+    /// <summary>The artifact name of the raw NTFS metadata step ($MFT + $Boot of the system volume) and its package sub-folder (files/NTFS/$MFT, files/NTFS/$Boot).</summary>
+    public const string NtfsMetadataArtifact = "ntfs-metadata", NtfsFolder = "NTFS";
+
     public static readonly IReadOnlyList<string> KnownArtifacts =
     [
         "evtx:Security", "evtx:System", "evtx:Application", "evtx:Microsoft-Windows-PowerShell/Operational",
         "evtx:Microsoft-Windows-Windows Defender/Operational", "evtx:Microsoft-Windows-TaskScheduler/Operational",
         "evtx:Microsoft-Windows-Sysmon/Operational", "evtx:Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
-        "hive:SYSTEM", "hive:SOFTWARE", "prefetch", "tasks", "defender-history", "notepad-tabs", "remote-tool-logs", "search-index",
+        "hive:SYSTEM", "hive:SOFTWARE", "prefetch", "tasks", "defender-history", "notepad-tabs", "remote-tool-logs", "search-index", NtfsMetadataArtifact,
     ];
 
     /// <summary>Package sub-folders for the Notepad tab files (one folder per profile) and for the Windows Search index (Windows.db with its -wal).</summary>
@@ -152,6 +155,159 @@ public static class RemoteCollection
                 # an action that returns '__absent__' found nothing to collect (a folder that does not exist on this station)
                 try { $res = @(& $action); if ($res -contains '__absent__') { $absent = $true; $err = 'folderul nu exista pe statie' } elseif ($LASTEXITCODE -eq 15007) { $absent = $true; $err = 'jurnalul nu exista pe statie (componenta nu este instalata)' } elseif ($LASTEXITCODE -ne 0) { $err = "cod de iesire $LASTEXITCODE" } } catch { $err = $_.Exception.Message }
                 $steps.Add([ordered]@{ artifact = $name; startUtc = $start; endUtc = (Get-Date).ToUniversalTime().ToString('o'); status = $(if ($absent) { 'absent' } elseif ($err) { 'failed' } else { 'ok' }); error = $(if ($err) { $err } else { $global:StepNote }) })
+            }
+            # ntfs-metadata (T1-T6): $MFT and $Boot read RAW from the read-only device of ONE shadow copy created by the step (File.Copy of the shadow
+            # copy's $MFT is refused). Every number read from the volume is hostile until checked; any refusal throws and removes this step's files.
+            # \\{2} = the two leading backslashes of the device path; a literal run of four backslashes would trip the no-UNC check of the package-script test
+            $ShadowDeviceRegex = '^\\{2}\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy\d+$'
+            function Read-NtfsBytes([IO.Stream]$h, [long]$pos, [int]$n) {
+                $b = New-Object byte[] $n
+                $h.Position = $pos
+                $got = 0
+                while ($got -lt $n) {
+                    $r = $h.Read($b, $got, $n - $got)
+                    if ($r -le 0) { throw "citire scurta la pozitia $pos (cerut $n, primit $got)" }
+                    $got += $r
+                }
+                return ,$b
+            }
+            function Copy-NtfsMetadataRaw([string]$device, [string]$dir) {
+                $mftOut = [IO.Path]::Combine($dir, '$MFT'); $bootOut = [IO.Path]::Combine($dir, '$Boot')
+                $h = $null; $fs = $null; $bfs = $null; $sha = $null; $madeMft = $false; $madeBoot = $false
+                try {
+                    $h = [IO.File]::Open($device, 'Open', 'Read', 'ReadWrite')
+                    $boot = Read-NtfsBytes $h 0 512
+                    if ($boot[510] -ne 0x55 -or $boot[511] -ne 0xAA) { throw 'sectorul de boot nu are semnatura 55AA' }
+                    if ([Text.Encoding]::ASCII.GetString($boot, 3, 8) -ne 'NTFS    ') { throw 'volumul nu este NTFS' }
+                    $bps = [int][BitConverter]::ToUInt16($boot, 11)
+                    if (@(512, 1024, 2048, 4096) -notcontains $bps) { throw "bytes/sector $bps neacceptat" }
+                    $spc = [int]$boot[13]
+                    if ($spc -lt 1 -or $spc -gt 128 -or ($spc -band ($spc - 1)) -ne 0) { throw "sectoare/cluster $spc neacceptat" }
+                    $cs = $bps * $spc
+                    $total = [BitConverter]::ToInt64($boot, 40)
+                    if ($total -le 0 -or $total -gt 2251799813685248) { throw "numar de sectoare $total neacceptat" }
+                    $volBytes = [long]$total * $bps
+                    $clusters = ([long]$total - ([long]$total % $spc)) / $spc
+                    $mftLcn = [BitConverter]::ToInt64($boot, 48)
+                    if ($mftLcn -lt 0 -or $mftLcn -ge $clusters) { throw "LCN-ul `$MFT $mftLcn este in afara volumului" }
+                    $cpr = [int]$boot[64]; if ($cpr -gt 127) { $cpr -= 256 }
+                    if ($cpr -lt 0) { if (-$cpr -gt 16) { throw "marimea inregistrarii (cod $cpr) neacceptata" }; $rs = [int](1 -shl (-$cpr)) } else { $rs = $cpr * $cs }
+                    if ($rs -ne 1024 -and $rs -ne 4096) { throw "marimea inregistrarii $rs neacceptata (doar 1024 sau 4096)" }
+                    if ($mftLcn * $cs + $rs -gt $volBytes) { throw 'inregistrarea 0 este in afara volumului' }
+                    $rec = Read-NtfsBytes $h ($mftLcn * $cs) $rs
+                    if ($rec[0] -ne 0x46 -or $rec[1] -ne 0x49 -or $rec[2] -ne 0x4C -or $rec[3] -ne 0x45) { throw 'inregistrarea 0 nu incepe cu FILE' }
+                    $uo = [int][BitConverter]::ToUInt16($rec, 4); $uc = [int][BitConverter]::ToUInt16($rec, 6)
+                    if ($uc -ne $rs / 512 + 1 -or $uo -lt 42 -or $uo + 2 * $uc -gt 510) { throw 'matricea de fixup a inregistrarii 0 este invalida' }
+                    $usn = [BitConverter]::ToUInt16($rec, $uo)
+                    # every sector end is checked BEFORE anything is restored
+                    for ($i = 1; $i -lt $uc; $i++) { if ([BitConverter]::ToUInt16($rec, $i * 512 - 2) -ne $usn) { throw "fixup nepotrivit in sectorul $i al inregistrarii 0" } }
+                    for ($i = 1; $i -lt $uc; $i++) { $rec[$i * 512 - 2] = $rec[$uo + 2 * $i]; $rec[$i * 512 - 1] = $rec[$uo + 2 * $i + 1] }
+                    if (([BitConverter]::ToUInt16($rec, 22) -band 3) -ne 1) { throw 'inregistrarea 0 nu este o inregistrare de fisier in uz' }
+                    if ([BitConverter]::ToUInt32($rec, 28) -ne $rs) { throw 'marimea alocata a inregistrarii 0 difera de cea din boot' }
+                    if ([BitConverter]::ToInt64($rec, 32) -ne 0) { throw 'inregistrarea 0 nu este inregistrare de baza' }
+                    $p = [int][BitConverter]::ToUInt16($rec, 20)
+                    if ($p -lt 48 -or $p % 8 -ne 0) { throw 'primul atribut al inregistrarii 0 este invalid' }
+                    $lcns = New-Object System.Collections.Generic.List[long]; $lens = New-Object System.Collections.Generic.List[long]
+                    $found = 0; $realSize = [long]0; $sumClusters = [long]0; $guard = 0; $ended = $false
+                    while ($p + 16 -le $rs) {
+                        if (++$guard -gt 64) { throw 'prea multe atribute in inregistrarea 0' }
+                        $t = [BitConverter]::ToUInt32($rec, $p)
+                        if ($t -eq 4294967295) { $ended = $true; break }
+                        $len = [int][BitConverter]::ToUInt32($rec, $p + 4)
+                        if ($len -lt 16 -or $len % 8 -ne 0 -or $p + $len -gt $rs) { throw 'lungime de atribut invalida in inregistrarea 0' }
+                        if ($t -eq 0x20) { throw 'inregistrarea 0 are $ATTRIBUTE_LIST: colectati $MFT cu aplicatia LogAnalyzer pe statie' }
+                        if ($t -eq 0x80 -and $rec[$p + 9] -eq 0) {
+                            $found++
+                            if ($found -gt 1) { throw 'mai multe atribute $DATA fara nume' }
+                            if ($rec[$p + 8] -ne 1) { throw '$DATA este rezident' }
+                            if ($len -lt 64) { throw '$DATA nerezident prea scurt' }
+                            if (([BitConverter]::ToUInt16($rec, $p + 12) -band 0xC001) -ne 0) { throw '$DATA este comprimat, criptat sau sparse' }
+                            if ([BitConverter]::ToUInt16($rec, $p + 34) -ne 0) { throw '$DATA are unitate de compresie' }
+                            if ([BitConverter]::ToInt64($rec, $p + 16) -ne 0) { throw '$DATA nu incepe la VCN 0' }
+                            $realSize = [BitConverter]::ToInt64($rec, $p + 48)
+                            if ([BitConverter]::ToInt64($rec, $p + 56) -ne $realSize) { throw 'valid data length difera de marimea reala' }
+                            if ($realSize -le 0 -or $realSize -gt 16GB -or $realSize -gt $volBytes) { throw "marimea `$MFT $realSize neacceptata (peste 16 GiB sau peste volum)" }
+                            # a real $MFT is a whole number of records and holds at least the 16 reserved system records
+                            if ($realSize % $rs -ne 0 -or $realSize -lt 16 * $rs) { throw "marimea reala $realSize nu este multiplu de $rs sau este sub 16 inregistrari" }
+                            $ro = [int][BitConverter]::ToUInt16($rec, $p + 32)
+                            if ($ro -lt 64 -or $ro -ge $len) { throw 'offsetul listei de run-uri este invalid' }
+                            $q = $p + $ro; $qEnd = $p + $len; $cur = [long]0; $lim = [long]4503599627370496
+                            while ($true) {
+                                if ($q -ge $qEnd) { throw 'lista de run-uri nu se termina in atribut' }
+                                $hb = [int]$rec[$q]
+                                if ($hb -eq 0) { break }
+                                $lv = $hb -band 15; $lo = $hb -shr 4
+                                if ($lv -lt 1 -or $lv -gt 8) { throw "run cu lungimea de $lv octeti neacceptata" }
+                                if ($lo -eq 0) { throw 'run sparse in $MFT' }
+                                if ($lo -gt 8) { throw "run cu offset de $lo octeti neacceptat" }
+                                if ($q + 1 + $lv + $lo -gt $qEnd) { throw 'run in afara atributului' }
+                                if ($lens.Count -ge 4096) { throw 'mai mult de 4096 run-uri' }
+                                $q++
+                                $n = [long]0; for ($k = 0; $k -lt $lv; $k++) { $n = $n -bor ([long]$rec[$q + $k] -shl (8 * $k)) }; $q += $lv
+                                $off = [long]0; for ($k = 0; $k -lt $lo; $k++) { $off = $off -bor ([long]$rec[$q + $k] -shl (8 * $k)) }
+                                if ($lo -lt 8 -and ($rec[$q + $lo - 1] -band 0x80)) { $off = $off - ([long]1 -shl (8 * $lo)) }
+                                $q += $lo
+                                if ($n -lt 1 -or $n -gt $lim -or $off -gt $lim -or $off -lt -$lim) { throw 'run cu valori neacceptate' }
+                                $cur += $off
+                                if ($cur -lt 0 -or $cur -ge $clusters -or $cur + $n -gt $clusters) { throw "run in afara volumului (LCN $cur, $n clustere)" }
+                                if ($lens.Count -eq 0 -and $cur -ne $mftLcn) { throw 'primul run nu coincide cu LCN-ul $MFT din boot' }
+                                $lcns.Add($cur); $lens.Add($n); $sumClusters += $n
+                            }
+                            if ($lens.Count -eq 0) { throw 'lista de run-uri este goala' }
+                            # as in NtfsVolumeReader: sorted by LCN the runs never overlap, and none covers cluster 0 (the boot sector)
+                            $ord = @(0..($lens.Count - 1) | Sort-Object { $lcns[$_] })
+                            for ($oi = 0; $oi -lt $ord.Count; $oi++) {
+                                if ($lcns[$ord[$oi]] -lt 1) { throw 'run care acopera clusterul 0 (sectorul de boot)' }
+                                if ($oi -gt 0 -and $lcns[$ord[$oi]] -lt $lcns[$ord[$oi - 1]] + $lens[$ord[$oi - 1]]) { throw "run-uri suprapuse la LCN $($lcns[$ord[$oi]])" }
+                            }
+                            if ($sumClusters * $cs -lt $realSize) { throw 'run-urile acopera mai putin decat marimea reala' }
+                        }
+                        $p += $len
+                    }
+                    if (-not $ended) { throw 'lista de atribute a inregistrarii 0 nu are marcaj de sfarsit' }
+                    if ($found -ne 1) { throw 'inregistrarea 0 nu are un $DATA nerezident fara nume' }
+                    # space is checked BEFORE the first byte is written
+                    $free = (New-Object IO.DriveInfo ([IO.Path]::GetPathRoot($dir))).AvailableFreeSpace
+                    if ($realSize + 512 + 256MB -gt $free) { throw "spatiu liber insuficient pentru `$MFT ($realSize octeti); nu a fost copiat" }
+                    $bfs = [IO.File]::Open($bootOut, 'CreateNew', 'Write', 'None'); $madeBoot = $true
+                    $bfs.Write($boot, 0, 512); $bfs.Dispose(); $bfs = $null
+                    $bootHex = [BitConverter]::ToString([Security.Cryptography.SHA256]::Create().ComputeHash($boot)) -replace '-', ''
+                    $sha = [Security.Cryptography.SHA256]::Create()
+                    $fs = [IO.File]::Open($mftOut, 'CreateNew', 'Write', 'None'); $madeMft = $true
+                    $buf = New-Object byte[] (4MB); $left = $realSize
+                    for ($ri = 0; $ri -lt $lens.Count -and $left -gt 0; $ri++) {
+                        $h.Position = $lcns[$ri] * $cs
+                        $bytes = [Math]::Min([long]$left, [long]($lens[$ri] * $cs))
+                        while ($bytes -gt 0) {
+                            $want = [int][Math]::Min([long]$buf.Length, [long]$bytes); $got = 0
+                            while ($got -lt $want) {
+                                $r = $h.Read($buf, $got, $want - $got)
+                                if ($r -le 0) { throw "citire scurta in run-ul $ri (lipsesc $($want - $got) octeti)" }
+                                $got += $r
+                            }
+                            $fs.Write($buf, 0, $got); [void]$sha.TransformBlock($buf, 0, $got, $null, 0)
+                            $bytes -= $got; $left -= $got
+                        }
+                    }
+                    if ($left -ne 0) { throw "run-urile au acoperit mai putin decat marimea ($left octeti lipsa)" }
+                    [void]$sha.TransformFinalBlock((New-Object byte[] 0), 0, 0); $fs.Dispose(); $fs = $null
+                    $mftHex = [BitConverter]::ToString($sha.Hash) -replace '-', ''
+                    # the hash computed during the copy must equal the hash of the file as written
+                    if ((New-Object IO.FileInfo $mftOut).Length -ne $realSize -or (Get-Sha256Hex $mftOut) -ne $mftHex) { throw '$MFT scris difera de cel citit (SHA-256 sau marime)' }
+                    if ((Get-Sha256Hex $bootOut) -ne $bootHex) { throw '$Boot scris difera de cel citit (SHA-256)' }
+                    return "`$MFT: $realSize octeti, $($lens.Count) run-uri, inregistrare de $rs octeti"
+                } catch {
+                    if ($fs) { $fs.Dispose(); $fs = $null }
+                    if ($bfs) { $bfs.Dispose(); $bfs = $null }
+                    if ($madeMft) { Remove-Item -LiteralPath $mftOut -Force -ErrorAction SilentlyContinue }
+                    if ($madeBoot) { Remove-Item -LiteralPath $bootOut -Force -ErrorAction SilentlyContinue }
+                    throw
+                } finally {
+                    if ($fs) { $fs.Dispose() }
+                    if ($bfs) { $bfs.Dispose() }
+                    if ($h) { $h.Dispose() }
+                    if ($sha) { $sha.Dispose() }
+                }
             }
             foreach ($a in $Artifacts) {
                 if ($a.StartsWith('evtx:')) {
@@ -320,6 +476,35 @@ public static class RemoteCollection
                             }
                         }
                     }
+                } elseif ($a -eq 'ntfs-metadata') {
+                    # $MFT + $Boot of the system volume from ONE shadow copy created here and deleted in finally (vssadmin fallback). The copy's device is
+                    # opened read-only by Copy-NtfsMetadataRaw; only the DeviceObject of the copy this step created (found by its ShadowID) is ever opened.
+                    Step $a {
+                        $vol = $env:SystemDrive
+                        if ($vol -notmatch '^[A-Za-z]:$') { throw "SystemDrive neasteptat: $vol" }
+                        $made = Invoke-CimMethod -ClassName Win32_ShadowCopy -MethodName Create -Arguments @{ Volume = ($vol + '\'); Context = 'ClientAccessible' } -ErrorAction Stop
+                        if ($made.ReturnValue -ne 0) { throw "copia de umbra nu a putut fi creata (cod $($made.ReturnValue))" }
+                        $sc = $null
+                        $d = Join-Path $files 'NTFS'
+                        try {
+                            $sc = Get-CimInstance -ClassName Win32_ShadowCopy | Where-Object { $_.ID -eq $made.ShadowID }
+                            if (-not $sc) { throw "copia de umbra $($made.ShadowID) nu a fost gasita" }
+                            $dev = [string]$sc.DeviceObject
+                            if ($dev -notmatch $ShadowDeviceRegex -or $dev.IndexOf("`n") -ge 0) { throw "DeviceObject neasteptat: $dev" }
+                            New-Item -ItemType Directory -Path $d -Force | Out-Null
+                            try { $global:StepNote = Copy-NtfsMetadataRaw $dev $d }
+                            catch { Remove-Item -LiteralPath $d -Recurse -Force -ErrorAction SilentlyContinue; throw }
+                        } finally {
+                            # deleted through CIM; if that is impossible or fails, vssadmin deletes it by ShadowID; if that fails too the operator is told
+                            $gone = $false
+                            if ($sc) { try { $sc | Remove-CimInstance -ErrorAction Stop; $gone = $true } catch { $gone = $false } }
+                            if (-not $gone) {
+                                & vssadmin.exe delete shadows "/shadow=$($made.ShadowID)" /quiet 2>&1 | Out-Null
+                                $code = $LASTEXITCODE; $global:LASTEXITCODE = 0
+                                if ($code -ne 0) { throw "copia de umbra $($made.ShadowID) nu a putut fi stearsa; stergeti-o manual (vssadmin cod $code)" }
+                            }
+                        }
+                    }
                 }
             }
             try {
@@ -379,7 +564,8 @@ public static class RemoteCollection
         {
             var full = Path.GetFullPath(Path.Combine(packageDir, f.Path));
             if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase) || Path.IsPathRooted(f.Path)) { problems.Add($"cale în afara pachetului: {f.Path}"); continue; }
-            listed.Add(full);
+            // the same file twice (compared case-insensitively on the full path) would be imported twice under one hash
+            if (!listed.Add(full)) { problems.Add($"cale dublată în manifest: {f.Path}"); continue; }
             if (!File.Exists(full)) { problems.Add($"lipsește {f.Path}"); continue; }
             if (new FileInfo(full).Length != f.Size) problems.Add($"{f.Path}: dimensiune {new FileInfo(full).Length}, manifest {f.Size}");
             else if (!Hashing.Sha256File(full).Equals(f.Sha256, StringComparison.OrdinalIgnoreCase)) problems.Add($"{f.Path}: SHA-256 diferit de cel calculat pe țintă");
@@ -413,6 +599,8 @@ public static class RemoteCollection
         : relativePath.Equals("files/" + SearchIndexFolder + "/Windows-gather.db", StringComparison.OrdinalIgnoreCase)
             && Investigation.InvestigationPipeline.ImportType(fullPath) is var g && g == Parsers.WindowsSearchGatherParser.SourceTypeName ? g
         : relativePath.Equals("files/" + SearchIndexFolder + "/Windows-gather.db-wal", StringComparison.OrdinalIgnoreCase) ? Parsers.WindowsSearchGatherParser.WalSourceType
+        : relativePath.Equals("files/" + NtfsFolder + "/" + NtfsMetadataCollector.MftFileName, StringComparison.Ordinal) ? LogAnalyzer.Dfir.FileSystem.MftParser.SourceTypeName
+        : relativePath.Equals("files/" + NtfsFolder + "/" + NtfsMetadataCollector.BootFileName, StringComparison.Ordinal) ? NtfsMetadataCollector.BootSourceType
         : "file";
 
     /// <summary>Imports a verified package: the manifest, then every file with the manifest as parent and custody from the target.</summary>
@@ -423,6 +611,21 @@ public static class RemoteCollection
         var m = check.Manifest;
         var source = "remote:" + m.Host;
         var notes = $"cererea {m.RequestId}; colectat de {m.User} ({(m.Elevated ? "administrator" : "fără drepturi de administrator")}) la {m.CollectedUtc}";
+        // $MFT and $Boot are a pair only when the ntfs-metadata step ended "ok" (the script then wrote both from one shadow copy, hash checked);
+        // from a failed step the files (the script removes them) would stay plain "file" evidence, never typed for MftParser.
+        // Everything about the pair is checked HERE, before the first record is written: exactly one $MFT and one $Boot (exact, ordinal names), and the
+        // moment of the shadow copy (the step's startUtc) must be readable: MftParser's 30-day window and system_mismatch_recent count from it.
+        var ntfsStep = m.Steps.FirstOrDefault(s => s.Artifact == NtfsMetadataArtifact && s.Status == "ok");
+        bool ntfsStepOk = ntfsStep is not null;
+        DateTimeOffset ntfsMoment = default;
+        if (ntfsStepOk)
+        {
+            foreach (var (rel, label) in new[] { ("files/" + NtfsFolder + "/" + NtfsMetadataCollector.MftFileName, NtfsMetadataCollector.MftFileName), ("files/" + NtfsFolder + "/" + NtfsMetadataCollector.BootFileName, NtfsMetadataCollector.BootFileName) })
+                if (m.Files.Count(x => string.Equals(x.Path, rel, StringComparison.Ordinal)) != 1)
+                    throw new InvalidOperationException($"pasul ntfs-metadata este „ok”, dar pachetul nu are exact un {label} ({rel}); importul este refuzat.");
+            if (!DateTimeOffset.TryParse(ntfsStep!.StartUtc, System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.AssumeUniversal, out ntfsMoment))
+                throw new InvalidOperationException($"startUtc „{ntfsStep.StartUtc}” al pasului ntfs-metadata nu poate fi citit; $MFT nu se importă cu o oră greșită.");
+        }
         var manifest = ws.ImportFile(Path.Combine(check.PackageDir, "manifest.json"), source, "remote-manifest", TemporalType.CurrentSnapshot,
             CollectorName, DfirInfo.ApplicationVersion, parentEvidenceId: null, notes: notes);
         var items = new List<EvidenceItem> { manifest };
@@ -433,12 +636,29 @@ public static class RemoteCollection
         // Windows-gather.db and its -wal go into the same folder; the folder id is the moment key written in the notes of both databases (the package script
         // takes them from one shadow copy, and the step must be "ok" for the note and the key to be written)
         string? indexDir = null, indexKey = null;
+        string? ntfsDir = null;
         foreach (var f in m.Files)
         {
             var full = Path.Combine(check.PackageDir, f.Path);
             var kind = ImportKind(f.Path, full);
+            if (!ntfsStepOk && kind is LogAnalyzer.Dfir.FileSystem.MftParser.SourceTypeName or NtfsMetadataCollector.BootSourceType) kind = "file";
             EvidenceItem item;
-            if (kind is Parsers.WindowsSearchIndexParser.SourceTypeName or WindowsSearchIndexCollector.WalSourceType
+            if (kind is LogAnalyzer.Dfir.FileSystem.MftParser.SourceTypeName or NtfsMetadataCollector.BootSourceType)
+            {
+                ntfsDir ??= Directory.CreateDirectory(Path.Combine(ws.RawDir(source), "NTFS_" + Guid.NewGuid().ToString("N"))).FullName;
+                var ndest = Path.Combine(ntfsDir, kind == NtfsMetadataCollector.BootSourceType ? NtfsMetadataCollector.BootFileName : NtfsMetadataCollector.MftFileName);
+                File.Copy(full, ndest);
+                var ncopied = Hashing.Sha256File(ndest);
+                if (!ncopied.Equals(f.Sha256, StringComparison.OrdinalIgnoreCase))
+                {
+                    try { Directory.Delete(ntfsDir, true); } catch (IOException) { }
+                    throw new InvalidOperationException($"{f.Path}: SHA-256 la import ({ncopied}) diferă de cel de pe țintă ({f.Sha256}).");
+                }
+                File.SetLastWriteTimeUtc(ndest, File.GetLastWriteTimeUtc(full));
+                item = ws.RegisterStored(ndest, full, source, kind, TemporalType.Historical, CollectorName, DfirInfo.ApplicationVersion, action: "imported", parentEvidenceId: manifest.EvidenceId,
+                    notes: $"{m.Host}:{f.Path}; {notes}; cererea {m.RequestId}; citit brut din copia de umbră a pachetului", timezone: m.Timezone is { Length: > 0 } ntz ? ntz : null, acquiredAtUtc: ntfsMoment);
+            }
+            else if (kind is Parsers.WindowsSearchIndexParser.SourceTypeName or WindowsSearchIndexCollector.WalSourceType
                      or Parsers.WindowsSearchGatherParser.SourceTypeName or Parsers.WindowsSearchGatherParser.WalSourceType)
             {
                 if (indexDir is null) { indexKey = Guid.NewGuid().ToString("N"); indexDir = Path.Combine(ws.RawDir(source), "WindowsSearch_" + indexKey); Directory.CreateDirectory(indexDir); }

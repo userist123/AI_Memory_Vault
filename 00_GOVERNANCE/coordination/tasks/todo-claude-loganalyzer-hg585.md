@@ -767,3 +767,22 @@
   Next: S3b remote PowerShell package artifact "ntfs-metadata" (raw read from one shadow copy; prototype E:\LA-Lab\scripts\mft-raw.ps1 works
   on WS01; add $I30 of a few directories or leave them to the in-app collector), then verify "Colectează tot" in the INSTALLED app on WS01
   (publish + redeploy; the lab harness is killed by Defender: Behavior:Win32/NewCreatedFileExecWMI.A).
+- 2026-11-14 CI of cdb28bc79: 2 red (enforce, zero-regression-gate) = 20_TESTS/test_loganalyzer_rule_catalog.py: the rule id must be a
+  LITERAL in a `const string *RuleId = "..."` inside Wp14Rules*.cs (it referenced NtfsTimestomp.RuleId) -> fixed 81c0a2f52. LESSON: the
+  python catalog test is not in the dotnet suites; before a push that adds a rule run `python -m pytest 20_TESTS/test_loganalyzer_rule_catalog.py
+  20_TESTS/test_vault_access_clients.py -q --basetemp <scratchpad>` (the default basetemp hits a PermissionError on this station).
+- 2026-11-14 NTFS S3b DONE: remote package artifact "ntfs-metadata" (RemoteCollection.cs): ONE WMI shadow copy of the system drive, its device
+  opened read-only (regex-anchored, found by ShadowID), boot + record 0 + runs validated (bps, spc, record size 1024/4096, fixup all positions
+  first, unnamed non-resident $DATA, no sparse/compressed/encrypted, run nibbles, LCN in volume, sorted by LCN: no overlap, none over cluster 0,
+  <= 4,096 runs, real size multiple of the record and >= 16 records, <= volume and <= 16 GiB, VDL = real, $ATTRIBUTE_LIST in record 0 ->
+  step failed "use the app"), free space first, partial files removed, finally: Remove-CimInstance then vssadmin /shadow=<id>. Import (only
+  with the step "ok" and exactly one files/NTFS/$MFT + $Boot): own NTFS_<guid> folder, SHA re-checked, AcquiredAtUtc = the step's startUtc
+  (CaseWorkspace.RegisterStored gained an optional acquiredAtUtc); Verify refuses duplicate manifest paths. No $I30 in the remote package
+  (left to the in-app collector). LIVE on LAB-WS01 twice (before and after the review fixes): step ok, 128,188,416 bytes, 2 runs, shadow copies
+  0 -> 0, Verify ok, MftParser on the import Success with 0 fixup errors. Review r1: 1 MEDIUM (overlapping runs accepted -> duplicated records
+  imported as a valid $MFT) + 5 LOW, all fixed (6 tests red first); r2 APPROVED. Accepted: search-index step still does not fall back to
+  vssadmin when Remove-CimInstance fails; a compromised station can feed any bytes (SHA proves transport, not provenance). Lab: generator
+  scratchpad\remotentfs, E:\LA-Lab\scripts\remote5.ps1, packages E:\LA-Lab\diag\remote5{,a}; WS01 C:\LA\remote5.
+  Suites (main session): Dfir (Release) 3643 (3610 passed, 33 skipped, 0 failed), App 1084/1084, python 27/27.
+  Next (NTFS phase): verify "Colectează tot" in the INSTALLED app on WS01 (publish + redeploy, UIA driver) incl. the NTFS collector and
+  the AF08 / NTFS-TIMESTOMP texts on screen; then $LogFile (next phase, now that the reader exists).

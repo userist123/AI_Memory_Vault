@@ -207,7 +207,7 @@ public sealed partial class CaseWorkspace
     public EvidenceItem RegisterStored(string storedFullPath, string originalPath, string source, string sourceType, TemporalType temporal,
                                        string collector, string collectorVersion, string action = "acquired",
                                        Sensitivity sensitivity = Sensitivity.Confidential, string? parentEvidenceId = null, string notes = "",
-                                       EvidenceStatus status = EvidenceStatus.Success, string? timezone = null)
+                                       EvidenceStatus status = EvidenceStatus.Success, string? timezone = null, DateTimeOffset? acquiredAtUtc = null)
     {
         ThrowIfReadOnly();
         var full = Path.GetFullPath(storedFullPath);
@@ -231,7 +231,7 @@ public sealed partial class CaseWorkspace
                 OriginalName = Path.GetFileName(originalPath),
                 Size = fi.Length,
                 Sha256 = sha,
-                AcquiredAtUtc = DateTimeOffset.UtcNow,
+                AcquiredAtUtc = acquiredAtUtc ?? DateTimeOffset.UtcNow,
                 Host = Info.Host,
                 User = Info.User,
                 // the zone of the station the file came from: the case machine's zone unless the caller knows better ("" = not known, e.g. a file imported from elsewhere)
