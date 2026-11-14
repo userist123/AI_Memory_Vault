@@ -68,7 +68,9 @@ export interface Snapshot { name: string; floor: Floor; levels?: Floor[]; placem
   /** variante A/B/C pe cameră (core/room-options.ts) */
   roomOptions?: Record<string, import('./room-options').RoomOption[]>;
   /** biblioteca de componente parametrice și modele importate ale proiectului/utilizatorului */
-  userLibrary?: import('./user-library').UserLibraryItem[] }
+  userLibrary?: import('./user-library').UserLibraryItem[];
+  /** amplasamentul pentru studiul de însorire (core/site-location.ts): coordonate rotunjite, fus orar, nordul față de plan */
+  site?: import('./site-location').SiteInfo }
 export interface Supplier { id: string; name: string; country: string; website: string }
 export interface Product { id: string; group: string; name: string; brand: string; category: string; model3d: string }
 export interface ProductVariant { id: string; productId: string; name: string; legacyIndex: number; dimensionsCm: { w: number; d: number; h: number } | null; dimensionsConfidence: Confidence; style: Record<string, any>; chairs?: number; includedWith?: string }
