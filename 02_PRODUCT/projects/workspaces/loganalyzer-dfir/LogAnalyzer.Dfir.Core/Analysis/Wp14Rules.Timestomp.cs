@@ -10,7 +10,7 @@ namespace LogAnalyzer.Dfir.Analysis;
 /// </summary>
 public static partial class Wp14Rules
 {
-    internal const string TimestompRuleId = NtfsTimestomp.RuleId;
+    internal const string TimestompRuleId = "NTFS-TIMESTOMP";
     internal const int TimestompFindingCap = 50;
 
     internal static void TimestompFindings(Ctx c, List<Finding> o)

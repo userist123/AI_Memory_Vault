@@ -21,7 +21,7 @@ namespace LogAnalyzer.Dfir.Analysis;
 /// </summary>
 public static class NtfsTimestomp
 {
-    public const string RuleId = "NTFS-TIMESTOMP";
+    public const string RuleId = Wp14Rules.TimestompRuleId;   // the literal lives in Wp14Rules (the rule catalog test reads it there)
     public const string MftSource = "MFT", UsnSource = "USN";
     private static readonly long Tolerance = MftParser.CreatedToleranceTicks;
     private static readonly DateTime Min = new(1980, 1, 1, 0, 0, 0, DateTimeKind.Utc), Max = new(2100, 1, 1, 0, 0, 0, DateTimeKind.Utc);
