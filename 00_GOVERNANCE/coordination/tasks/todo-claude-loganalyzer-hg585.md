@@ -862,3 +862,11 @@
   Suites (main session): Dfir (Release) 3751 (3718 passed, 33 skipped, 0 failed), App 1084/1084, python 27/27, solution build 0 errors.
   Next: live check on LAB-WS01 (installed app, "Colectează tot" elevated: $LogFile size = MFT record 2 $DATA, RSTR at 0 and 4096, shadows
   0 -> 0, collector second in the run log); then L3 (pure structural parser, Dfir.Core).
+- 2026-11-14 L2 LIVE CHECK (installed Arhipelag lab build of dbfc94892 on LAB-WS01, E:\LA-Lab\scripts\t-l2.ps1 elevated via sudo: update-app
+  -> UIA "Colectează tot" -> read-only inspection): case CASE-LAB-WS01-20261114-141843; Raw folders in creation order LiveState (14:18:45.71Z)
+  -> NtfsMetadata (14:18:45.82Z) -> EventLogs ... (collector second, as designed); $LogFile 67,108,864 bytes = the 64 MiB measured
+  independently at G0, VDL = size, 1 run, RSTR at 0 and 4096, page sizes 4096, manifest logFile Copied, SHA equal, no errors / gaps,
+  shadow copies 0 -> 0, deleted. Sample on the host: E:\LA-Lab\diag\l2 ($LogFile, $Boot, manifest; lab only, not committed).
+  FOUND: restart area version is 1.1 on EVERY real sample (this one, the G0 raw copy, Corpus/NtfsLog VHDX); only Corpus/Ntfs is 2.0.
+  Design doc updated: L3 covers 1.1 first (calibrate on the WS01 sample, 16,382 of 16,384 pages RCRD), 2.0 on Corpus/Ntfs.
+  Next: L3 (pure structural parser in Dfir.Core) - Fable consult first on 1.1 vs 2.0 page layout, then brief.
