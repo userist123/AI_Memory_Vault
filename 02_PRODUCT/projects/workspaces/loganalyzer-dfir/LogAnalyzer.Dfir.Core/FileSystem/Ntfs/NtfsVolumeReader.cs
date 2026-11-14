@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using System.Text;
 
 namespace LogAnalyzer.Dfir.FileSystem.Ntfs;
 
@@ -7,6 +8,20 @@ public sealed class NtfsReadException(string message, Exception? inner = null) :
 
 /// <summary>A finished copy. <see cref="Size"/> is the $DATA / $INDEX_ALLOCATION real size; <see cref="Sha256"/> is computed on the bytes written.</summary>
 public sealed record NtfsCopyResult(long Size, string Sha256, long ValidDataLength, int Runs, int SparseRuns);
+
+/// <summary>One $LogFile restart page as found in the COPIED bytes: its offset and the 4-byte magic (ASCII when printable, else <c>0x</c> + hex).</summary>
+public sealed record NtfsRestartPage(long Offset, string Magic)
+{
+    /// <summary>"RSTR" (written by the driver) and "CHKD" (rewritten by chkdsk) are the two magics of a usable restart page.</summary>
+    public bool IsValid => Magic is "RSTR" or "CHKD";
+}
+
+/// <summary>
+/// A finished $LogFile copy. The restart header values (system page size, log page size, version) are read from the bytes that were written, not inferred.
+/// <see cref="RestartPages"/> has page 0 and, when <see cref="SystemPageSize"/> is a power of two in 512..65536 below the size, the page at that offset;
+/// otherwise <see cref="SecondPageLocated"/> is false and only page 0 is listed. A wrong magic is an observation, never an exception.
+/// </summary>
+public sealed record NtfsLogFileResult(NtfsCopyResult Copy, uint SystemPageSize, uint LogPageSize, short VersionMajor, short VersionMinor, IReadOnlyList<NtfsRestartPage> RestartPages, bool SecondPageLocated);
 
 public enum NtfsDirectoryStatus { Copied, NotFound, NoIndexAllocation, ReparsePoint }
 
@@ -24,6 +39,8 @@ public sealed record NtfsDirectoryResult(string Path, NtfsDirectoryStatus Status
 public sealed class NtfsVolumeReader
 {
     public const long MaxMftBytes = 64L << 30, MaxIndexBytes = 1L << 30, MaxAttributeListBytes = 1L << 20;
+    /// <summary>$LogFile plafon (1 GiB): the real one is tens of MiB; above it the record is hostile.</summary>
+    public const long MaxLogFileBytes = 1L << 30;
     public const int MaxDirectoryEntries = 4_000_000;
     /// <summary>Largest volume accepted from a boot sector (256 TiB): above it, or a product that overflows, the sector is hostile.</summary>
     public const long MaxVolumeBytes = 1L << 48;
@@ -190,7 +207,7 @@ public sealed class NtfsVolumeReader
     /// The non-resident attribute (type, name) of a base record, including the segments held by extension records named in its $ATTRIBUTE_LIST.
     /// <paramref name="readRecord"/> reads another record of the same $MFT. Returns null when the attribute does not exist at all.
     /// </summary>
-    private Segments? CollectSegments(NtfsFileRecord baseRec, ulong baseNumber, uint type, string name, Func<ulong, NtfsFileRecord> readRecord, long maxBytes, string what, bool mft = false)
+    private Segments? CollectSegments(NtfsFileRecord baseRec, ulong baseNumber, uint type, string name, Func<ulong, NtfsFileRecord> readRecord, long maxBytes, string what, bool mft = false, bool noSparse = false)
     {
         bool Match(NtfsAttribute a) => a.Type == type && string.Equals(a.Name, name, StringComparison.OrdinalIgnoreCase);
         var found = new List<(NtfsFileRecord Rec, NtfsAttribute A)>();
@@ -232,10 +249,10 @@ public sealed class NtfsVolumeReader
             }
         }
         if (found.Count == 0) return null;
-        return BuildSegments(found, what, maxBytes, mft);
+        return BuildSegments(found, what, maxBytes, mft, noSparse);
     }
 
-    private Segments BuildSegments(List<(NtfsFileRecord Rec, NtfsAttribute A)> found, string what, long maxBytes, bool mft = false)
+    private Segments BuildSegments(List<(NtfsFileRecord Rec, NtfsAttribute A)> found, string what, long maxBytes, bool mft = false, bool noSparse = false)
     {
         var ordered = found.OrderBy(f => f.A.LowestVcn).ToList();
         if (ordered[0].A.LowestVcn != 0) throw new NtfsReadException($"{what}: lipsește segmentul de la VCN 0");
@@ -251,6 +268,7 @@ public sealed class NtfsVolumeReader
             if (dec.Error is not null) throw new NtfsReadException($"{what}: {dec.Error}");
             if (!a.IsSparse && dec.Runs.Any(r => r.IsSparse)) throw new NtfsReadException($"{what}: run sparse într-un atribut fără steagul sparse");
             if (mft && (a.IsSparse || dec.Runs.Any(r => r.IsSparse))) throw new NtfsReadException($"{what}: atribut sparse, refuzat (un $MFT nu are zone fără LCN; copia ar scrie zero-uri)");
+            if (noSparse && (a.IsSparse || dec.Runs.Any(r => r.IsSparse))) throw new NtfsReadException($"{what}: atribut sparse, refuzat (copia ar scrie zero-uri în locul unor date)");
             runs.AddRange(dec.Runs);
             expectedVcn = a.HighestVcn + 1;
         }
@@ -307,6 +325,69 @@ public sealed class NtfsVolumeReader
         ArgumentNullException.ThrowIfNull(output);
         var m = LoadMft();
         return CopyMap(m, m.Readable, output, ct);
+    }
+
+    // ------------------------------------------------------------------ $LogFile
+
+    private const int LogFileRecord = 2, LogPageMin = 4096, RestartCapture = 65536 + 16;
+
+    /// <summary>Forwards writes and keeps the first bytes, so restart pages are read from what was really written.</summary>
+    private sealed class HeadCapture(Stream inner, int keep) : Stream
+    {
+        private readonly byte[] _head = new byte[keep];
+        private long _written;
+        public ReadOnlySpan<byte> Head => _head.AsSpan(0, (int)Math.Min(_written, _head.Length));
+        public override bool CanRead => false; public override bool CanSeek => false; public override bool CanWrite => true;
+        public override long Length => throw new NotSupportedException();
+        public override long Position { get => throw new NotSupportedException(); set => throw new NotSupportedException(); }
+        public override void Flush() => inner.Flush();
+        public override int Read(byte[] buffer, int offset, int count) => throw new NotSupportedException();
+        public override long Seek(long offset, SeekOrigin origin) => throw new NotSupportedException();
+        public override void SetLength(long value) => throw new NotSupportedException();
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            inner.Write(buffer, offset, count);
+            if (_written < _head.Length) Array.Copy(buffer, offset, _head, (int)_written, (int)Math.Min(count, _head.Length - _written));
+            _written += count;
+        }
+    }
+
+    private static string MagicText(ReadOnlySpan<byte> m)
+    {
+        foreach (var b in m) if (b < 0x21 || b > 0x7E) return "0x" + Convert.ToHexString(m);
+        return Encoding.ASCII.GetString(m);
+    }
+
+    /// <summary>
+    /// Copies $LogFile (record 2, unnamed $DATA) to <paramref name="output"/>. Record 2 must be in use, a base file record, not a directory, with a non-DOS $FILE_NAME
+    /// "$LogFile" whose parent is record 5; the $DATA must be non-resident, not sparse, compressed or encrypted, between two 4096-byte pages and <see cref="MaxLogFileBytes"/>.
+    /// Anything else is an <see cref="NtfsReadException"/> raised before a byte is written. No semantic parsing: the restart header is only reported.
+    /// </summary>
+    public NtfsLogFileResult CopyLogFile(Stream output, CancellationToken ct = default)
+    {
+        ArgumentNullException.ThrowIfNull(output);
+        var mft = LoadMft();
+        var rec = ReadRecordVia(mft, LogFileRecord, "$LogFile");
+        if (!rec.InUse || !rec.IsBaseRecord || rec.IsDirectory) throw new NtfsReadException("$LogFile: înregistrarea 2 nu este o înregistrare de bază de fișier în uz");
+        var root = ReadRecordVia(mft, RootRecord, "$LogFile");   // the parent's sequence in $FILE_NAME must be the real one of record 5
+        if (!root.InUse || !root.IsBaseRecord || !root.IsDirectory) throw new NtfsReadException("$LogFile: înregistrarea 5 (rădăcina) nu este un director de bază în uz; părintele lui $LogFile nu poate fi confirmat");
+        bool named = rec.Attributes.Any(a => a.Type == NtfsAttributeType.FileName && !a.NonResident
+            && FileNameAttribute.TryParse(rec.ValueOf(a)) is { } fn && fn.Namespace != 2 && fn.Parent.Number == RootRecord && fn.Parent.Sequence == root.Sequence && string.Equals(fn.Name, "$LogFile", StringComparison.Ordinal));
+        if (!named) throw new NtfsReadException("$LogFile: înregistrarea 2 nu are numele „$LogFile” cu părintele în înregistrarea 5 (număr și secvență); nu se copiază altceva sub acest nume");
+        var segs = CollectSegments(rec, LogFileRecord, NtfsAttributeType.Data, "", n => ReadRecordVia(mft, n, "$LogFile"), MaxLogFileBytes, "$LogFile", noSparse: true)
+            ?? throw new NtfsReadException("$LogFile: lipsește $DATA");
+        if (segs.RealSize > MaxLogFileBytes) throw new NtfsReadException($"$LogFile: mărime {segs.RealSize:N0} peste plafonul de {MaxLogFileBytes:N0} octeți");
+        if (segs.RealSize < 2 * LogPageMin) throw new NtfsReadException($"$LogFile: mărime {segs.RealSize:N0} sub două pagini de {LogPageMin} octeți");
+        var cap = new HeadCapture(output, RestartCapture);
+        var copy = CopyMap(new StreamMap(segs.Runs, segs.RealSize, segs.ValidLength), segs.RealSize, cap, ct);
+        var head = cap.Head;
+        if (head.Length < 0x20) throw new NtfsReadException("$LogFile: copia are mai puțin de 32 de octeți");   // unreachable after the size check
+        uint sysPage = BitConverter.ToUInt32(head[0x10..0x14]), logPage = BitConverter.ToUInt32(head[0x14..0x18]);
+        short minor = BitConverter.ToInt16(head[0x1A..0x1C]), major = BitConverter.ToInt16(head[0x1C..0x1E]);
+        var pages = new List<NtfsRestartPage> { new(0, MagicText(head[..4])) };
+        bool second = sysPage is >= 512 and <= 65536 && (sysPage & (sysPage - 1)) == 0 && sysPage + 4 <= copy.Size && sysPage + 4 <= head.Length;
+        if (second) pages.Add(new(sysPage, MagicText(head.Slice((int)sysPage, 4))));
+        return new NtfsLogFileResult(copy, sysPage, logPage, major, minor, pages, second);
     }
 
     // ------------------------------------------------------------------ directories

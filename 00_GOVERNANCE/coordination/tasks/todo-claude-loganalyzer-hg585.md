@@ -847,3 +847,18 @@
   șters și recreat prin comandă” (4688 fsutil.exe + 4104); AF07 Detected Medium (journal created 2026-11-14T11:33:24Z vs EVTX start
   2026-11-06T15:10:31Z, percentile 1), text with the chkdsk / major-update tolerance.
   Next: L2 ($LogFile conservation in NtfsMetadataCollector, as early as possible in "Colectează tot"; reader copies MFT record 2).
+- 2026-11-14 L2 DONE ($LogFile conservation, claude main session + vault-worker Sonnet + 2 Opus vault-reviewer rounds). NtfsVolumeReader.CopyLogFile:
+  record 2 in use / base / not a directory, non-DOS $FILE_NAME "$LogFile" whose parent = record 5 by number AND real sequence, record 5 an
+  in-use base directory; unnamed $DATA via CollectSegments (attribute list), non-resident, no sparse (new noSparse flag, $MFT/$I30 paths
+  unchanged), not compressed/encrypted, 2 pages..1 GiB (MaxLogFileBytes); restart values (magic at 0 and at system_page_size, page sizes,
+  version) read from the COPIED bytes (head capture ~64 KiB); RSTR/CHKD valid. NtfsMetadataCollector: $LogFile after $MFT, before $I30,
+  SourceType ntfs_logfile, manifest block logFile; a $LogFile error = file deleted + Partial ($MFT/$I30/USN kept); bad magic or VDL < size =
+  file kept + gap + Partial. InvestigationPipeline: NtfsMetadataCollector moved SECOND in AllCollectors (right after LiveState): the case
+  folder is usually on C: and the other collectors' writes rotate $LogFile (~4.8 h / 64 MiB) before the shadow copy freezes it;
+  AuxiliaryNote for ntfs_logfile (no parser yet -> SkippedByDesign). Remote package untouched (out of scope this phase).
+  Reviews: r1 1 MEDIUM (cancellation test fired inside the $MFT read, $LogFile never reached) + 3 LOW -> worker; r2 1 MEDIUM (record 5
+  flags not checked) + 2 LOW (weak test assertions) -> main session fixed (root theory test, furthest-offset check, error reason).
+  Note: Defender once blocked the Release test dll (0x800700E1 -> "No test matches", exit 0): always check the test count is > 0.
+  Suites (main session): Dfir (Release) 3751 (3718 passed, 33 skipped, 0 failed), App 1084/1084, python 27/27, solution build 0 errors.
+  Next: live check on LAB-WS01 (installed app, "Colectează tot" elevated: $LogFile size = MFT record 2 $DATA, RSTR at 0 and 4096, shadows
+  0 -> 0, collector second in the run log); then L3 (pure structural parser, Dfir.Core).

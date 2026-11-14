@@ -142,7 +142,11 @@ public sealed class InvestigationPipeline
     public InvestigationPipeline(ParserRegistry? registry = null) => _registry = registry ?? WindowsParsers.Registry;
 
     public static IReadOnlyList<ICollector> AllCollectors { get; } =
-        [new LiveStateCollector(), new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector(), new NtfsMetadataCollector()];
+        [new LiveStateCollector(),
+         // NtfsMetadata is second on purpose: the case folder usually sits on the system volume, so what the other collectors write rotates $LogFile
+         // (measured window ~4.8 h / 64 MiB) before the shadow copy freezes it; live state stays first because it is the most volatile.
+         new NtfsMetadataCollector(),
+         new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -346,6 +350,8 @@ public sealed class InvestigationPipeline
             "Windows.edb (ESE): păstrat doar ca probă; nu există parser pentru el",
         LogAnalyzer.Dfir.Windows.Acquisition.NtfsMetadataCollector.BootSourceType =>
             "sectorul de boot NTFS: nu se citește separat; MftParser și I30Parser îl folosesc când stă alături de $MFT",
+        LogAnalyzer.Dfir.Windows.Acquisition.NtfsMetadataCollector.LogFileSourceType =>
+            "$LogFile conservat brut din copia de umbră; nu are încă parser în această versiune",
         LogAnalyzer.Dfir.Windows.Acquisition.NtfsMetadataCollector.ManifestSourceType =>
             "manifestul colectării NTFS (SHA-256, copia de umbră, ora): document de proveniență, nu are parser",
         "amcache_log" => "jurnal de tranzacții al hive-ului Amcache: păstrat în caz ca probă; reaplicarea lui pe hive nu este încă implementată (intrările scrise doar în jurnal pot lipsi)",

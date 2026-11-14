@@ -20,7 +20,7 @@ namespace LogAnalyzer.Dfir.Windows.Acquisition;
 /// Windows Search index. The change journal (USN) of the same volume is added to the same folder as <c>usn_&lt;LETTER&gt;.csv</c> (<see cref="UsnJournalNative"/>, read only), so
 /// NTFS-TIMESTOMP can use its High path on the system volume. Order: the journal is read right after $MFT and $I30 were copied, while the copy still exists (it is deleted
 /// afterwards): $MFT, $I30 and USN are then as close in time as the design allows (the journal is live, so it can run slightly past the copy's moment; the manifest states
-/// both moments). A failed or capped journal read is a run problem (Partial), never a failure: $MFT and $I30 stay valid. Nothing here can be proven without a real shadow copy: the orchestration is tested with a fake volume.
+/// both moments). A failed or capped journal read is a run problem (Partial), never a failure: $MFT and $I30 stay valid. <c>$LogFile</c> (MFT record 2) is copied right after $MFT, from the same shadow copy and before the $I30 reads: it is a ring buffer (about 4.8 h / 64 MiB measured), so the later it is read the more of the history is already overwritten, and its restart header values are reported from the copied bytes only (no parsing; a bad magic keeps the file and makes the run Partial). Nothing here can be proven without a real shadow copy: the orchestration is tested with a fake volume.
 /// </summary>
 public sealed class NtfsMetadataCollector : ICollector
 {
@@ -30,6 +30,7 @@ public sealed class NtfsMetadataCollector : ICollector
     public CollectionProfile Profiles => CollectionProfile.StandardAndUp;
 
     public const string UsnSourceType = "usn_journal";
+    public const string LogFileSourceType = "ntfs_logfile", LogFileName = "$LogFile";
     public const string BootSourceType = "ntfs_boot", ManifestSourceType = "ntfs_manifest";
     public const string MftFileName = "$MFT", BootFileName = "$Boot", ManifestFileName = "manifest.json";
     public const int MaxDirectories = 64;
@@ -110,6 +111,7 @@ public sealed class NtfsMetadataCollector : ICollector
         string? bootSha = null;
         var evidencePending = new List<(string File, string Orig, string Type, string Sha, string Note)>();
         Dictionary<string, object?>? usnManifest = null;
+        Dictionary<string, object?> logFileManifest = new() { ["status"] = "NotPresent" };
         bool deleted = false;
         try
         {
@@ -135,6 +137,9 @@ public sealed class NtfsMetadataCollector : ICollector
                 catch { TryDelete(mftPath); throw; }
                 mftSha = mft.Sha256; mftSize = mft.Size; mftValid = mft.ValidDataLength; mftRuns = mft.Runs;
                 evidencePending.Add((mftPath, _volumeRoot + MftFileName, MftParser.SourceTypeName, mft.Sha256, $"$MFT:$DATA ({mft.Size:N0} octeți, {mft.Runs} run-uri) citit brut din copia de umbră {snapId}; același moment ca $I30 din acest folder."));
+
+                // $LogFile: any problem here is reported and the run goes on ($MFT, $I30 and USN stay valid); cancellation propagates
+                logFileManifest = CollectLogFile(reader, outDir, written, evidencePending, gaps, o, snapId, ct);
 
                 // $I30 of the chosen directories
                 int taken = 0, index = 0;
@@ -239,6 +244,7 @@ public sealed class NtfsMetadataCollector : ICollector
                     directoriesNotFound = notFound.ToArray(),
                     profilesSkipped = profilesSkipped.ToArray(),
                     usn = usnManifest,
+                    logFile = logFileManifest,
                     gaps = gaps.ToArray(),
                     directoriesSkippedOverCap = skipped.ToArray(),
                     errors = o.Errors.ToArray(),
@@ -255,6 +261,53 @@ public sealed class NtfsMetadataCollector : ICollector
         if (!core && o.Evidence.Count == 0) { foreach (var f in written) TryDelete(f); TryRemoveEmpty(outDir); }   // a failed run leaves nothing that is not registered
         o.Status = !core ? EvidenceStatus.Failed : o.Errors.Count > 0 ? EvidenceStatus.Partial : EvidenceStatus.Success;
         return o;
+    }
+
+    /// <summary>
+    /// $LogFile into the fixed file <c>$LogFile</c> of the run folder. Never throws except on cancellation: a failure deletes the file and goes to <c>o.Errors</c> (Partial);
+    /// a missing restart-page magic keeps the file (it is evidence) and goes to <c>o.Errors</c> and <paramref name="gaps"/>. All restart values come from the copied bytes.
+    /// </summary>
+    private Dictionary<string, object?> CollectLogFile(NtfsVolumeReader reader, string outDir, List<string> written, List<(string File, string Orig, string Type, string Sha, string Note)> pending, List<string> gaps, CollectorOutcome o, string? snapId, CancellationToken ct)
+    {
+        var m = new Dictionary<string, object?> { ["status"] = "Error" };
+        string? path = null;
+        try
+        {
+            ct.ThrowIfCancellationRequested();
+            path = SafeOutPath(outDir, LogFileName);
+            written.Add(path);
+            NtfsLogFileResult r;
+            using (var f = new FileStream(path, FileMode.CreateNew, FileAccess.Write, FileShare.None)) r = reader.CopyLogFile(f, ct);
+            var c = r.Copy;
+            m["status"] = "Copied"; m["file"] = LogFileName; m["size"] = c.Size; m["validDataLength"] = c.ValidDataLength; m["runs"] = c.Runs; m["sha256"] = c.Sha256;
+            m["systemPageSize"] = r.SystemPageSize; m["logPageSize"] = r.LogPageSize; m["version"] = $"{r.VersionMajor}.{r.VersionMinor}";
+            m["restartPages"] = r.RestartPages.Select(p => new { offset = p.Offset, magic = p.Magic }).ToArray();
+            m["error"] = null;
+            pending.Add((path, _volumeRoot + LogFileName, LogFileSourceType, c.Sha256, $"$LogFile ({c.Size:N0} octeți, {c.Runs} run-uri) copiat brut din copia de umbră {snapId}, la același moment ca $MFT din acest folder; analiza vine ulterior."));
+            foreach (var p in r.RestartPages.Where(p => !p.IsValid))
+            {
+                var gap = $"$LogFile nu are pagina de restart validă la offset {p.Offset} (magie {p.Magic})";
+                gaps.Add(gap); o.Errors.Add(gap);
+            }
+            if (!r.SecondPageLocated)
+            {
+                var gap = $"$LogFile: a doua pagină de restart nu poate fi localizată (system_page_size {r.SystemPageSize} nu este o putere a lui 2 între 512 și 65536 sub mărimea fișierului)";
+                gaps.Add(gap); o.Errors.Add(gap);
+            }
+            if (c.ValidDataLength < c.Size)
+            {
+                var gap = $"$LogFile are valid data length {c.ValidDataLength:N0} din {c.Size:N0} octeți; octeții de după sunt zero-uri în copie";
+                gaps.Add(gap); o.Errors.Add(gap);
+            }
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex) when (ex is NtfsReadException or IOException or UnauthorizedAccessException)
+        {
+            if (path is not null) { TryDelete(path); written.Remove(path); }
+            m = new Dictionary<string, object?> { ["status"] = "Error", ["error"] = ex.Message };
+            o.Errors.Add($"$LogFile necopiat ({ex.Message}); $MFT, $I30 și USN continuă");
+        }
+        return m;
     }
 
     /// <summary>
