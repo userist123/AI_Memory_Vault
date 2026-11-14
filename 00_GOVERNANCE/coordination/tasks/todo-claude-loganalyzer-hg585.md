@@ -809,3 +809,14 @@
   Suites (main session): Dfir (Release) 3652 (3619 passed, 33 skipped, 0 failed), App 1084/1084, python 27/27.
   NTFS phase complete (S1-S6). Next phase: $LogFile (redo/undo of creates, renames, deletes and $SI/$FN changes; the raw reader exists:
   copy $LogFile from the same shadow copy in NtfsMetadataCollector), then the SRUM tables not yet read, then Windows.edb (ESE).
+- 2026-11-14 NEW PHASE „$LogFile” (owner: „Continua”). CI of 30fb89b4c: 32/32 green. Fable advisor: $LogFile usually wraps FASTER than USN;
+  its value is (A) USN record images surviving `fsutil usn deletejournal`, (B) old/new $SI in undo/redo; do AF07 first, gate on a measured
+  window, then conservation -> structural parser -> slice A -> slice B; no High from $LogFile alone; no full redo/undo; no 1.1 without a
+  sample; not in the remote package. Opus researcher: format from ntfs-3g logfile.h / logfile.c / ntfsrecover.c (sources saved in the
+  scratchpad ntfs\), no per-record time, v2.0 tail pages = blocks 2..33, $SI old/new semantics NOT confirmed primarily.
+  G0 gate (threshold >= 2 h set before measuring): first estimate from FILE-header LSN + $SI time was INVALID (45% time inversions, said so);
+  direct: WS01 $LogFile 64 MiB read raw from a shadow copy (E:\LA-Lab\scripts\logfile-raw.ps1, shadows 0 -> 0) -> 14,267 USN_RECORD_V2
+  images, 05:36:44-10:25:05 UTC = 4.8 h -> PASSED (idle lab VM; a busy station is shorter; own collection activity is inside the window).
+  Oracle corpus LogAnalyzer.Dfir.Tests/Corpus/NtfsLog (9 known operations right after format, $LogFile not wrapped, 33 USN images;
+  fsutil refuses $LogFile extents -> copied by a separate PowerShell decoder). Design docs/dfir/NTFS_LOGFILE_DESIGN.md (tasks L1-L5).
+  Next: L1 (AF07 deletejournal detection) to a Sonnet worker, Opus review; then L2 conservation.
