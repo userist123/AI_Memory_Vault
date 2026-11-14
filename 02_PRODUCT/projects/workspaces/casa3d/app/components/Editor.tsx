@@ -1,4 +1,5 @@
 'use client';
+import { windowOpenings, windowCandidates, windowIssues } from '@/core/windows';
 import StylePanel from './StylePanel';
 import TraceabilityPanel from './TraceabilityPanel';
 import DesignOptionsLab from './DesignOptionsLab';
@@ -27,7 +28,7 @@ import { downloadSchedule } from './FinishSchedule';
 import { finishSchedule } from '@/core/finish-schedule';
 import { WALL_ITEM_KINDS, WALL_ITEM_CATEGORY, wallItemDefaults, furnitureBelow, wallItemFurnitureIssues } from '@/core/wall-items';
 import { materialOf, insertBand, sideSpan, FEATURE_CATEGORY, featureMarks, roomCeilingDropCm } from '@/core/finishes';
-import { doorIssues, doorSwing, doorTypeOf, isSlidingType } from '@/core/doors';
+import { doorIssues, doorOptions, doorSwing, doorTypeOf, isSlidingType } from '@/core/doors';
 import { DOOR_TYPES, DOOR_TYPE_RULES, WALL_ITEM_RULES } from '@/core/rules';
 import { normalizeHex } from '@/core/appearance';
 import { footprintOf } from '@/core/validate';
@@ -903,6 +904,8 @@ export default function Editor({ id }: { id: string }){
                   <small className="prov" style={{ gridColumn: '1/-1' }}>{sw.auto ? t(sliding ? 'door.slideAuto' : 'door.swingAuto') : t('door.swingSet')}</small></div></>; })()}
             {selOp.kind === 'door' && !selOp.passage && mc && <DoorPanel op={selOp} snap={house!} mc={mc} cur={cur} onChange={(p: DoorChoice) => mutate(s => { const cur0 = s.doors?.[selOp.id] ?? {}, next = { ...cur0, ...p };
               const clean = { ...(next.product ? { product: next.product } : {}), ...(next.handle ? { handle: next.handle } : {}), ...(next.system ? { system: next.system } : {}) }; s.doors = { ...(s.doors || {}) }; if (Object.keys(clean).length) s.doors[selOp.id] = clean; else delete s.doors[selOp.id]; })} />}
+            {selOp.kind === 'window' && mc && <WindowPanel op={selOp} snap={house!} mc={mc} cur={cur} onChange={(product: string | null) => mutate(s => { s.windowUnits = { ...(s.windowUnits || {}) };
+              if (product) s.windowUnits[selOp.id] = { product }; else delete s.windowUnits[selOp.id]; if (!Object.keys(s.windowUnits).length) delete s.windowUnits; })} />}
             <button className="btn danger" onClick={del}>{t('editor.deleteOpening')}</button>
           </>}
           {/* inspector:end */}
@@ -1138,7 +1141,8 @@ export default function Editor({ id }: { id: string }){
         {stage === 'mep' && <TechPanel onDraw={() => setTool('tech')} snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
           onSuggest={() => { const pts = suggestTechPoints(snap); mutate(s => { s.tech = pts; }); setShowTech(true); say(t('tech.suggested', { n: pts.length })); }}
           onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })}
-          onPatch={(id, patch) => patchTech(id, p => { Object.assign(p, patch); if (!p.product) delete p.product; })} mc={mc} cur={cur} issues={catalog ? techIssues(snap, catalog, snap.floor).map(i => ({ text: iT(i), severity: i.severity })) : []} />}
+          onPatch={(id, patch) => patchTech(id, p => { Object.assign(p, patch); if (!p.product) delete p.product; })}
+          onPatchMany={(ids, patch) => { const set = new Set(ids); mutate(s => { s.tech = (s.tech || []).map(p => set.has(p.id) ? { ...p, ...patch } : p); }); }} mc={mc} cur={cur} issues={catalog ? techIssues(snap, catalog, snap.floor).map(i => ({ text: iT(i), severity: i.severity })) : []} />}
         {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
         {stage === 'docs' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
         {stage === 'quote' && <BudgetWithCustom id={id} snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
@@ -1296,12 +1300,25 @@ function DoorPanel({ op, snap, mc, cur, onChange }: { op: Opening; snap: Snapsho
   return (<>
     <h4>{t('door.title')}</h4>
     {iss.map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.key === 'door.typeMismatch' ? { ...i.vars, type: String(i.vars?.type ?? '').split(', ').map(x => t(`door.type.${x}`)).join(', '), gap: t(`door.type.${i.vars?.gap}`) } : i.key === 'door.techInSlide' ? { ...i.vars, point: TECH_KINDS[i.vars?.point as TechKind]?.label[lang === 'en' ? 'en' : 'ro'] ?? String(i.vars?.point) } : i.vars)}</div>)}
-    <label className="f"><span>{t('door.product')}</span><MaterialPicker cur={cur} value={c.product} options={by('door')} none={t('door.none')} onChange={v => onChange({ product: v || null })} /></label>
+    <label className="f"><span>{t('door.product')}</span><MaterialPicker cur={cur} value={c.product} options={doorOptions(mc, !!op.entrance)} none={t('door.none')} onChange={v => onChange({ product: v || null })} /></label>
     <label className="f"><span>{t('door.handle')}</span><MaterialPicker cur={cur} value={c.handle} options={by('door_handle')} none={t('door.none')} onChange={v => onChange({ handle: v || null })} /></label>
     {(type === 'sliding' || type === 'pocket' || type === 'folding') && (systems.length > 0 || !!c.system) && <label className="f"><span>{t('door.system')}</span><MaterialPicker cur={cur} value={c.system} options={systems} none={t('door.none')} onChange={v => onChange({ system: v || null })} /></label>}
   </>);
 }
 
+/** Tâmplăria golului de fereastră: produsele care se potrivesc golului întâi, cu diferența de mărime; avertismentele. */
+function WindowPanel({ op, snap, mc, cur, onChange }: { op: Opening; snap: Snapshot; mc: MaterialsCatalog; cur: string; onChange(product: string | null): void }){
+  const { t } = usePrefs(), o = windowOpenings(snap).find(x => x.id === op.id); if (!o) return null;
+  const cands = windowCandidates(mc, o), value = snap.windowUnits?.[op.id]?.product ?? '', iss = windowIssues(snap, mc).filter(i => i.openingId === op.id);
+  if (!cands.length) return <p className="prov">{t('win.noProducts')}</p>;
+  return (<>
+    <h4>{t('win.title')}</h4>
+    {iss.map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.vars)}</div>)}
+    <label className="f"><span>{t('win.product', { gap: `${Math.round(o.widthM * 100)}×${Math.round(o.heightM * 100)}` })}</span>
+      <MaterialPicker cur={cur} value={value} options={cands.map(c => c.m)} none={t('win.none')} onChange={v => onChange(v || null)} /></label>
+    <small className="prov">{t('win.fitNote', { n: cands.filter(c => c.fits).length })}</small>
+  </>);
+}
 /** Sub titlul etapei: faza, câte etape sunt gata și ce face etapa aceasta „gata” (aceeași regulă ca bulina din bara de etape). */
 function StageMeta({ stage, done }: { stage: Stage; done: Record<Stage, boolean> | null }){
   const { t } = usePrefs(); if (!done) return null; const ok = done[stage];

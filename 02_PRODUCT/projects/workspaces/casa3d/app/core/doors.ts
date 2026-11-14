@@ -21,9 +21,10 @@ export interface DoorIssue { key: string; openingId: string; vars?: Record<strin
 export function doorIssues(snap: Snapshot, mc: MaterialsCatalog): DoorIssue[] {
   const out: DoorIssue[] = [];
   for (const d of doorOpenings(snap)){ const c = snap.doors?.[d.id], m = materialOf(mc, c?.product); if (!m) continue;
-    if (d.entrance) out.push({ key: 'door.entrance', openingId: d.id, vars: { name: m.name } });
+    if (d.entrance && !m.specs?.entrance) out.push({ key: 'door.entrance', openingId: d.id, vars: { name: m.name } });
+    if (!d.entrance && m.specs?.entrance) out.push({ key: 'door.entranceInside', openingId: d.id, vars: { name: m.name } });
     const w = (m.specs?.sizeCm?.[0] ?? 0) / 100; if (w && Math.abs(w - d.widthM) > DOOR_RULES.sizeTolM) out.push({ key: 'door.size', openingId: d.id, vars: { door: Math.round(w * 100), gap: Math.round(d.widthM * 100) } });
-    if (!c?.handle) out.push({ key: 'door.noHandle', openingId: d.id });
+    if (!c?.handle && m.specs?.withHandle !== true) out.push({ key: 'door.noHandle', openingId: d.id });
     // produsul declară tipurile pentru care e făcut (specs.doorTypes): altul decât al golului → avertisment, produsul rămâne
     const dt = m.specs?.doorTypes; if (dt?.length && !dt.includes(d.type)) out.push({ key: 'door.typeMismatch', openingId: d.id, vars: { name: m.name, type: dt.join(', '), gap: d.type } }); }
   // glisantele: o priză, un întrerupător sau un termostat pe zona unde parchează foaia (pe fața peretelui sau în casetă)
@@ -42,8 +43,14 @@ export function sanitizeDoors(doors: unknown, snap: Snapshot): { value?: Record<
     if (ids.has(k)) out[k] = { ...(v.product ? { product: v.product } : {}), ...(v.handle ? { handle: v.handle } : {}), ...(v.system ? { system: v.system } : {}) }; }
   return { value: out };
 }
+/** Ușile din catalog pentru un gol: pe intrare, ușile de intrare întâi; pe un gol interior, ușile de interior întâi (ordinea în rest e a catalogului). */
+export function doorOptions(mc: MaterialsCatalog, entrance: boolean){
+  const all = mc.materials.filter(m => m.category === 'door'), fit = (m: (typeof all)[number]) => !!m.specs?.entrance === entrance;
+  return [...all.filter(fit), ...all.filter(m => !fit(m))];
+}
 /** Ce desenează motorul 3D: stilul foii, culoarea ei și culoarea mânerului, pe golul de ușă. */
 export function doorVisual(snap: Snapshot, mc: MaterialsCatalog, level: number){
   return doorOpenings(snap).filter(d => d.level === level).flatMap(d => { const c = snap.doors?.[d.id], m = materialOf(mc, c?.product), h = materialOf(mc, c?.handle);
-    return m || h ? [{ wallIndex: d.wallIndex, openingIndex: d.openingIndex, style: m?.specs?.door ?? 'plain', color: m?.specs?.color ?? null, wood: !!m?.specs?.wood, handle: h?.specs?.color ?? null }] : []; });
+    return m || h ? [{ wallIndex: d.wallIndex, openingIndex: d.openingIndex, style: m?.specs?.door ?? 'plain', color: m?.specs?.color ?? null, wood: !!m?.specs?.wood, handle: h?.specs?.color ?? null,
+      ...(m?.specs?.entrance ? { entrance: true, glass: !!m.specs.glass } : {}) }] : []; });
 }

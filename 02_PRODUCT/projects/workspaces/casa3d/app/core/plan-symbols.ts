@@ -54,7 +54,9 @@ export function planSymbol(group: string, w: number, d: number, chairs = 4): Pla
       parts.push(rrect(-X + .07, -Y + .07, X - .07, Y - .07, Math.min(.25, Y * .7)), circle(-X + .2, 0, .025));
       return { outline: fmt(rrect(-X, -Y, X, Y, .04)), detail: fmt(parts.join('')) }; }
     case 'bideu': { parts.push(ellipse(0, Y * .1, X * .8, Y * .8), circle(0, -Y + .08, .02)); return { outline: '', detail: fmt(parts.join('')) }; }
-    case 'dulapOglinda': case 'boiler': // pe perete, deasupra altor piese: doar conturul punctat
+    case 'masinaSpalat': case 'uscator': return { outline: fmt(box), detail: fmt(circle(0, 0, Math.min(X, Y) * .7)) };   // hubloul
+    case 'masinaVase': return { outline: fmt(box), detail: fmt(line(-X, Y - .05, X, Y - .05) + line(-X * .6, -Y * .4, X * .6, -Y * .4) + line(-X * .6, 0, X * .6, 0)) };
+    case 'dulapOglinda': case 'boiler': case 'centrala': case 'microunde': // pe perete sau pe blat, deasupra altor piese: doar conturul punctat
       return { outline: '', detail: fmt(box), fill: 'none' };
     case 'caloriferBaie': return { outline: fmt(box), detail: '' };
     case 'plantaArtificiala': case 'plantaNaturala': { // ghiveciul (cerc) și frunzele din jur, ca în planurile de amenajare

@@ -68,7 +68,9 @@ export interface Snapshot { name: string; floor: Floor; levels?: Floor[]; placem
   /** variante A/B/C pe cameră (core/room-options.ts) */
   roomOptions?: Record<string, import('./room-options').RoomOption[]>;
   /** biblioteca de componente parametrice și modele importate ale proiectului/utilizatorului */
-  userLibrary?: import('./user-library').UserLibraryItem[] }
+  userLibrary?: import('./user-library').UserLibraryItem[];
+  /** tâmplăria aleasă pe fiecare gol de fereastră, după id-ul golului (core/windows.ts) */
+  windowUnits?: Record<string, WindowChoice> }
 export interface Supplier { id: string; name: string; country: string; website: string }
 export interface Product { id: string; group: string; name: string; brand: string; category: string; model3d: string }
 export interface ProductVariant { id: string; productId: string; name: string; legacyIndex: number; dimensionsCm: { w: number; d: number; h: number } | null; dimensionsConfidence: Confidence; style: Record<string, any>; chairs?: number; includedWith?: string }
@@ -76,7 +78,7 @@ export interface Offer { id: string; variantId: string; supplierId: string; pric
 export interface Catalog { suppliers: Supplier[]; products: Product[]; variants: ProductVariant[]; offers: Offer[] }
 export type Severity = 'PASS' | 'WARNING' | 'ERROR';
 /** `message` = textul românesc (compatibil cu API-ul); `key` + `vars` = același text în orice limbă (lib/i18n.ts issueText). */
-export interface Issue { code: 'OUT_OF_ROOM' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW_BLOCKED' | 'CLEARANCE' | 'UNKNOWN_VARIANT' | 'OPENING_OUTSIDE_WALL' | 'WALL_TOO_SHORT' | 'STAIR'
+export interface Issue { code: 'OUT_OF_ROOM' | 'ON_FLOOR' | 'OVERLAP' | 'DOOR_ZONE' | 'WINDOW_BLOCKED' | 'CLEARANCE' | 'UNKNOWN_VARIANT' | 'OPENING_OUTSIDE_WALL' | 'WALL_TOO_SHORT' | 'STAIR'
   | 'NICHE_OUTSIDE_WALL' | 'NICHE_TOO_DEEP' | 'NICHE_OVER_OPENING' | 'SHAFT_DOOR' | 'SHAFT_OUTSIDE_ROOM' | 'DOOR_TYPE' | 'WALL_ITEM'
   | 'WALL_DEMOLISH' | 'RADIATOR_BLOCKED' | 'HVAC' | 'ZONE_OUTSIDE_ROOM' | 'ZONE_OVERLAP'
   | 'CEILING_ZONE_OUTSIDE_ROOM' | 'CEILING_ZONE_OVERLAP' | 'CEILING_ZONE_LOW' | 'RAILING_LOW' | 'CEILING_ZONE_ABOVE_ROOM_CEILING' | 'CHIMNEY'; severity: 'WARNING' | 'ERROR'; message: string; with?: string; key?: string; vars?: Record<string, string | number> }
@@ -87,16 +89,27 @@ export type MaterialCategory = 'parquet' | 'floor_tile' | 'wall_tile' | 'paint' 
   | 'curtain' | 'sheer' | 'blind' | 'rug' | 'door' | 'door_handle' | 'door_system' | 'moulding'
   | 'wall_art' | 'mirror' | 'wall_shelf'
   | 'countertop' | 'kitchen_sink' | 'kitchen_tap' | 'bath_tap' | 'shower_set' | 'towel_radiator' | 'led_mirror' | 'pendant' | 'wall_light' | 'led_profile'
-  | 'panel_radiator' | 'railing' | 'hvac_split';
+  | 'panel_radiator' | 'railing' | 'hvac_split'
+  | 'window' | 'socket' | 'switch' | 'thermostat';
 /** Modul de așezare a pardoselii (parchet sau plăci). */
 export type FloorPattern = 'straight' | 'brick' | 'third' | 'diagonal' | 'herringbone' | 'chevron' | 'checker';
 /** Date tehnice citite pe pagina produsului; lipsa unei valori înseamnă „nedeclarat”, nu „bun”. */
 export interface MaterialSpecs { sizeCm?: [number, number]; rectified?: boolean; slip?: 'R9' | 'R10' | 'R11' | 'R12' | 'R13'; ip?: string; cctK?: number; lumens?: number;
   roll?: { widthM: number; lengthM: number; repeatCm: number; match?: 'free' | 'straight' | 'offset' }; patterns?: FloorPattern[]; wet?: boolean; pieceM?: number; color?: string;
-  pieces?: number; opacity?: number; blind?: 'roller' | 'roman' | 'venetian'; door?: 'plain' | 'panel' | 'glass'; wood?: boolean; doorTypes?: DoorType[]; system?: 'sliding' | 'pocket' | 'folding';
+  pieces?: number; opacity?: number; blind?: 'roller' | 'roman' | 'venetian'; door?: 'plain' | 'panel' | 'glass'; wood?: boolean;
+  /** ușă de intrare (metalică, cu toc și închidere proprie): pe golul de intrare; `withHandle` = mânerul e în pachet */
+  entrance?: boolean; withHandle?: boolean; glass?: boolean; doorTypes?: DoorType[]; system?: 'sliding' | 'pocket' | 'folding';
   thicknessMm?: number; finish?: string; material?: string; diameterCm?: number; effect?: PlasterEffect;
   /** balustrada: ce parte a sistemului e produsul (mână curentă, stâlp, panou, set complet, kit de start), citit pe pagină */
-  railPart?: 'handrail' | 'post' | 'panel' | 'set' | 'start' }
+  railPart?: 'handrail' | 'post' | 'panel' | 'set' | 'start';
+  /** fereastra: tipul, numărul de canate, materialul tocului, geamul și Uw (W/m²K), citite pe pagina produsului */
+  win?: WindowSpec;
+  /** aparatajul electric: seria de design (Sedna, Valena…) și dacă prețul include rama */
+  series?: string; withFrame?: boolean }
+export type WindowKind = 'fixed' | 'tilt_turn' | 'double' | 'balcony_door' | 'roof';
+export interface WindowSpec { kind: WindowKind; sashes: number; frame: 'pvc' | 'aluminium' | 'wood'; glazing?: 'double' | 'triple'; uw?: number | null;
+  /** câte canate (de la stânga, privit din cameră) sunt fixe, după titlul produsului („fixă + deschidere dublă”) */
+  fixedSashes?: number }
 export interface Material { id: string; category: MaterialCategory; name: string; supplier: string; unit: 'm2' | 'ml' | 'L' | 'kg' | 'buc'; unitPrice: number;
   pack?: { size: number; label: string; price?: number }; coverage?: number; consumption?: number; sourceUrl: string | null; verificationType: string; confidence: Confidence; note?: string; specs?: MaterialSpecs; verifiedAt?: string }
 export interface LaborRate { id: string; label: string; unit: 'm2' | 'ml'; low: number; expected: number; high: number; sources: { name: string; url: string }[]; confidence: Confidence }
@@ -135,6 +148,8 @@ export interface KitchenSpec { frontColor?: string; frontFinish?: 'matt' | 'glos
 export interface WindowTreatment { openingId: string; curtain?: string | null; sheer?: string | null; blind?: string | null; fullness?: number }
 /** Ușa aleasă pentru un gol de ușă (produs cu toc), mânerul ei și sistemul (șină, casetă pentru ușa în perete, kit pliant). */
 export interface DoorChoice { product?: string | null; handle?: string | null; system?: string | null }
+/** Fereastra aleasă pentru un gol de fereastră (tâmplăria completă: toc, canate, geam). */
+export interface WindowChoice { product?: string | null }
 /** Covorul camerei: centrat dacă lipsesc `x` și `z` (centrul covorului, în m, în coordonatele planului); `rotate` îl întoarce cu 90°.
  *  `RoomFinishes.rugs` = covoarele în plus (al doilea covor, sub masă), fiecare cu poziția lui. */
 export interface RugChoice { material: string; rotate?: boolean; x?: number; z?: number }
