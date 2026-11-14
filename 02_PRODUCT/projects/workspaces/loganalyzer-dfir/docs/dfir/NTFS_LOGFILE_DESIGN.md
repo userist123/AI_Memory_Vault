@@ -26,9 +26,18 @@ Prima estimare (din LSN-ul din antetul FILE și ora $SI) a fost INVALIDĂ: 45% i
 | L4 | Felia A: imaginile USN din redo-ul scrierilor în `$J` → evenimente USN marcate „din $LogFile” | identice câmp cu câmp cu USN-ul citit de Windows pe fereastra comună; după `deletejournal` pe VHDX cele dinainte se regăsesc | obligatoriu |
 | L5 | Felia B: undo/redo $SI → câmp de coroborare pentru NTFS-TIMESTOMP | `stomp.txt` din corpus: undo = ora dinainte, redo = 2019; copierea / mutarea / arhivele nu potrivesc | obligatoriu (gradarea regulii) |
 
+## Versiunea reală a jurnalului (măsurată la L2, 2026-11-14)
+
+Toate eșantioanele reale au restart area **1.1**, nu 2.0: `$LogFile` de 64 MiB copiat de aplicație din copia de umbră a LAB-WS01 (L2,
+„Colectează tot”), copia brută de la G0 (tot din copie de umbră) și corpusul `NtfsLog` (VHDX demontat). Doar `Corpus/Ntfs/volume.raw.gz`
+are 2.0. Ipoteza probabilă (NEVERIFICATĂ în sursă proprie): Windows scrie 2.0 cât volumul e montat și coboară la 1.1 la o închidere curată,
+iar copia de umbră apare ca volum închis curat. Consecință pentru L3: **1.1 este versiunea pe care o primește produsul** și se acoperă prima
+(paginile de după restart și reasamblarea se calibrează pe eșantionul WS01: 16.382 de pagini RCRD din 16.384); 2.0 rămâne acoperită pe
+corpusul `Ntfs`. Nicio regulă din ntfs-3g despre paginile tail nu se aplică fără verificare pe eșantion.
+
 ## Ce nu se face în această fază
 
-Redo/undo complet, reconstrucția stării, tabelele de tranzacții / pagini murdare; versiunea 1.1 fără eșantion (se raportează „versiune
+Redo/undo complet, reconstrucția stării, tabelele de tranzacții / pagini murdare; o versiune fără eșantion propriu (se raportează „versiune
 neacoperită”); `$LogFile` în pachetul la distanță; carving pe volum; ore inventate; uneltele terțe (LogFileParser, NTFS Log Tracker) ca
 poartă de acceptare (sunt alte implementări ale aceluiași format nedocumentat: doar coroborare).
 
