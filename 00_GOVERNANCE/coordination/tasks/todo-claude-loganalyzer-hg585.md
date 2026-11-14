@@ -838,3 +838,12 @@
   Suites (main session): Dfir (Release) 3720 (3687 passed, 33 skipped, 0 failed), App 1084/1084, python 27/27.
   Next: lab check of USN-JOURNAL-DELETED on WS02 (Hyper-V checkpoint FIRST, then fsutil usn deletejournal + createjournal, collect, revert);
   then L2 ($LogFile conservation in NtfsMetadataCollector, early in "Colectează tot").
+- 2026-11-14 L1 LAB CHECK on LAB-WS02 (Insula, workgroup: credential LAB-WS02\labadmin, NOT LAB\Administrator). Default config there: NO
+  Process Creation auditing, no 4688 command line, no script block logging, no Sysmon -> the command-line rule is blind on such stations,
+  AF07 is the only net. Test inside a Hyper-V checkpoint (E:\LA-Lab\scripts\t-ws02-usndel.ps1: checkpoint -> enable auditing -> powershell
+  -Command "fsutil usn deletejournal /d C:" -> 5 s -> createjournal -> export Security/System/PowerShell EVTX + new USN -> TurnOff, restore,
+  remove checkpoint; checkpoints after: none). Journal ID 0x01dd6e39de300ac7 -> 0x01dd742bf5c99138. Host analysis (scratchpad usnlab,
+  EvtxParser + UsnJournalParser + Wp14Rules + AntiForensics, data in E:\LA-Lab\diag\usndel): USN-JOURNAL-DELETED High „Jurnalul USN a fost
+  șters și recreat prin comandă” (4688 fsutil.exe + 4104); AF07 Detected Medium (journal created 2026-11-14T11:33:24Z vs EVTX start
+  2026-11-06T15:10:31Z, percentile 1), text with the chkdsk / major-update tolerance.
+  Next: L2 ($LogFile conservation in NtfsMetadataCollector, as early as possible in "Colectează tot"; reader copies MFT record 2).
