@@ -5,6 +5,7 @@ using System.Text.RegularExpressions;
 using LogAnalyzer.Dfir.FileSystem;
 using LogAnalyzer.Dfir.FileSystem.Ntfs;
 using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.Windows.Native;
 
 namespace LogAnalyzer.Dfir.Windows.Acquisition;
 
@@ -16,7 +17,10 @@ namespace LogAnalyzer.Dfir.Windows.Acquisition;
 /// finally and the number of shadow copies before and after is compared; (T5) output only inside the case folder, with fixed generated names, SHA-256 on the bytes
 /// written and cross-checked against the hash the case computes when it registers the file; (T6) a short read or I/O error is an error, never zero padding.
 /// Files land in ONE folder so that <see cref="MftParser"/> and <see cref="I30Parser"/> find <c>$MFT</c> and <c>$Boot</c> beside each $I30. Needs elevation, like the
-/// Windows Search index. Nothing here can be proven without a real shadow copy: the orchestration is tested with a fake volume.
+/// Windows Search index. The change journal (USN) of the same volume is added to the same folder as <c>usn_&lt;LETTER&gt;.csv</c> (<see cref="UsnJournalNative"/>, read only), so
+/// NTFS-TIMESTOMP can use its High path on the system volume. Order: the journal is read right after $MFT and $I30 were copied, while the copy still exists (it is deleted
+/// afterwards): $MFT, $I30 and USN are then as close in time as the design allows (the journal is live, so it can run slightly past the copy's moment; the manifest states
+/// both moments). A failed or capped journal read is a run problem (Partial), never a failure: $MFT and $I30 stay valid. Nothing here can be proven without a real shadow copy: the orchestration is tested with a fake volume.
 /// </summary>
 public sealed class NtfsMetadataCollector : ICollector
 {
@@ -25,6 +29,7 @@ public sealed class NtfsMetadataCollector : ICollector
     public bool RequiresElevation => true;
     public CollectionProfile Profiles => CollectionProfile.StandardAndUp;
 
+    public const string UsnSourceType = "usn_journal";
     public const string BootSourceType = "ntfs_boot", ManifestSourceType = "ntfs_manifest";
     public const string MftFileName = "$MFT", BootFileName = "$Boot", ManifestFileName = "manifest.json";
     public const int MaxDirectories = 64;
@@ -43,12 +48,13 @@ public sealed class NtfsMetadataCollector : ICollector
     private readonly string _volumeRoot;
     private readonly Func<DateTimeOffset> _clock;
     private readonly Func<NtfsVolumeReader, IEnumerable<string>>? _plan;
+    private readonly Func<char, CancellationToken, UsnJournalRead>? _readUsn;   // null = the journal is not read (tests that do not inject one never touch a real journal)
 
-    public NtfsMetadataCollector() : this(new WmiShadowCopy(), WmiShadowCopy.Count, OpenDeviceReadOnly, Path.GetPathRoot(Environment.SystemDirectory) ?? "C:\\", () => DateTimeOffset.UtcNow) { }
+    public NtfsMetadataCollector() : this(new WmiShadowCopy(), WmiShadowCopy.Count, OpenDeviceReadOnly, Path.GetPathRoot(Environment.SystemDirectory) ?? "C:\\", () => DateTimeOffset.UtcNow, null, (l, c) => UsnJournalNative.Read(l, c)) { }
 
-    /// <summary>Tests: another shadow copy provider, counter, device opener and volume root.</summary>
-    internal NtfsMetadataCollector(WindowsSearchIndexCollector.ISnapshot snapshot, Func<int> count, Func<string, Stream> open, string volumeRoot, Func<DateTimeOffset>? clock = null, Func<NtfsVolumeReader, IEnumerable<string>>? plan = null)
-    { _snapshot = snapshot; _count = count; _open = open; _volumeRoot = volumeRoot; _clock = clock ?? (() => DateTimeOffset.UtcNow); _plan = plan; }
+    /// <summary>Tests: another shadow copy provider, counter, device opener, volume root and journal reader (never the real journal of the development station).</summary>
+    internal NtfsMetadataCollector(WindowsSearchIndexCollector.ISnapshot snapshot, Func<int> count, Func<string, Stream> open, string volumeRoot, Func<DateTimeOffset>? clock = null, Func<NtfsVolumeReader, IEnumerable<string>>? plan = null, Func<char, CancellationToken, UsnJournalRead>? readUsn = null)   // readUsn null: journal not read
+    { _readUsn = readUsn; _snapshot = snapshot; _count = count; _open = open; _volumeRoot = volumeRoot; _clock = clock ?? (() => DateTimeOffset.UtcNow); _plan = plan; }
 
     /// <summary>T1: read-only handle on the device, shared with everyone (the copy is immutable). Used only with a path accepted by <see cref="IsShadowDevice"/>.</summary>
     private static Stream OpenDeviceReadOnly(string device)
@@ -103,6 +109,7 @@ public sealed class NtfsMetadataCollector : ICollector
         string? mftSha = null; long mftSize = 0; long mftValid = 0; int mftRuns = 0;
         string? bootSha = null;
         var evidencePending = new List<(string File, string Orig, string Type, string Sha, string Note)>();
+        Dictionary<string, object?>? usnManifest = null;
         bool deleted = false;
         try
         {
@@ -172,6 +179,7 @@ public sealed class NtfsMetadataCollector : ICollector
                         o.Errors.Add($"{dir}: $I30 necopiat, scrierea în folderul cazului a eșuat ({ex.Message})");
                     }
                 }
+                usnManifest = _readUsn is null ? null : CollectUsn(outDir, written, evidencePending, gaps, o, ct);
                 if (skipped.Count > 0) o.Errors.Add($"plafonul de {MaxDirectories} directoare a fost atins; {skipped.Count} directoare nu au fost copiate: {string.Join(", ", skipped.Take(10))}{(skipped.Count > 10 ? ", ..." : "")}");
             }
         }
@@ -202,7 +210,7 @@ public sealed class NtfsMetadataCollector : ICollector
         {
             try
             {
-                var item = ctx.Case.RegisterStored(file, orig, "NtfsMetadata", type, TemporalType.Historical, Name, Version, notes: note);
+                var item = ctx.Case.RegisterStored(file, orig, type == UsnSourceType ? "USN:" + UsnJournalCollector.Letter(_volumeRoot) : "NtfsMetadata", type, TemporalType.Historical, Name, Version, notes: note, timezone: type == UsnSourceType ? TimeZoneInfo.Local.Id : null);
                 if (!string.Equals(item.Sha256, sha, StringComparison.OrdinalIgnoreCase)) { o.Errors.Add($"{Path.GetFileName(file)}: SHA-256 din caz ({item.Sha256}) diferă de cel al octeților scriși ({sha})"); continue; }
                 o.Evidence.Add(item);
                 if (type == MftParser.SourceTypeName) mftItem = item; else if (type == BootSourceType) bootItem = item;
@@ -230,6 +238,7 @@ public sealed class NtfsMetadataCollector : ICollector
                     directories = dirs.Select(d => new { path = d.Path, status = d.Status, file = d.File, size = d.Size, validDataLength = d.ValidDataLength, sha256 = d.Sha256, detail = d.Detail }).ToArray(),
                     directoriesNotFound = notFound.ToArray(),
                     profilesSkipped = profilesSkipped.ToArray(),
+                    usn = usnManifest,
                     gaps = gaps.ToArray(),
                     directoriesSkippedOverCap = skipped.ToArray(),
                     errors = o.Errors.ToArray(),
@@ -246,6 +255,52 @@ public sealed class NtfsMetadataCollector : ICollector
         if (!core && o.Evidence.Count == 0) { foreach (var f in written) TryDelete(f); TryRemoveEmpty(outDir); }   // a failed run leaves nothing that is not registered
         o.Status = !core ? EvidenceStatus.Failed : o.Errors.Count > 0 ? EvidenceStatus.Partial : EvidenceStatus.Success;
         return o;
+    }
+
+    /// <summary>
+    /// The change journal of the system volume into <c>usn_&lt;L&gt;.csv</c> in the run folder (same CSV as <see cref="UsnJournalCollector"/>, with the exact UTC column).
+    /// Never throws except on cancellation: the outcome is the manifest block, problems go to <c>o.Errors</c> (Partial) and, for a capped read, to <paramref name="gaps"/>.
+    /// </summary>
+    private Dictionary<string, object?> CollectUsn(string outDir, List<string> written, List<(string File, string Orig, string Type, string Sha, string Note)> pending, List<string> gaps, CollectorOutcome o, CancellationToken ct)
+    {
+        var letter = UsnJournalCollector.Letter(_volumeRoot);
+        var m = new Dictionary<string, object?> { ["status"] = "NotRead", ["letter"] = letter.Length > 0 ? letter : null };
+        if (letter.Length != 1) { var e = $"jurnalul USN nu a fost citit: litera volumului „{_volumeRoot}” nu poate fi stabilită"; m["error"] = e; o.Errors.Add(e); return m; }
+        o.Commands.Add($"FSCTL_READ_USN_JOURNAL \\\\.\\{letter}: (doar citire)");
+        string? dest = null;
+        try
+        {
+            ct.ThrowIfCancellationRequested();
+            var read = _readUsn!(letter[0], ct);
+            var readAt = _clock();
+            dest = SafeOutPath(outDir, $"usn_{letter}.csv");
+            written.Add(dest);
+            var tz = TimeZoneInfo.Local;
+            using (var w = new StreamWriter(new FileStream(dest, FileMode.CreateNew, FileAccess.Write, FileShare.None), new UTF8Encoding(false)))
+                UsnJournalNative.WriteCsv(w, read.Info, read.Records, tz, $"volumul de sistem {_volumeRoot}", read.Incomplete);
+            var sha = Convert.ToHexString(SHA256.HashData(File.ReadAllBytes(dest)));
+            pending.Add((dest, $"{letter}: jurnalul USN al volumului de sistem", UsnSourceType, sha,
+                $"Jurnalul USN al volumului {letter}:, citit direct (doar citire) imediat după copierea $MFT și $I30 din acest folder; coloana „Time stamp UTC” are ora exactă."));
+            m["status"] = read.Complete ? "Read" : "Incomplete";
+            m["file"] = Path.GetFileName(dest); m["sha256"] = sha;
+            m["journalId"] = "0x" + read.Info.JournalId.ToString("x16"); m["firstUsn"] = read.Info.FirstUsn; m["nextUsn"] = read.Info.NextUsn;
+            m["records"] = read.Records.Count; m["incomplete"] = !read.Complete; m["incompleteReason"] = read.Complete ? null : read.Incomplete;
+            m["readUtc"] = readAt.UtcDateTime.ToString("yyyy-MM-ddTHH:mm:ss.fffZ");
+            if (!read.Complete)
+            {
+                var gap = $"jurnalul USN {letter}: este incomplet: {read.Incomplete}";
+                gaps.Add(gap); o.Errors.Add(gap);
+            }
+        }
+        catch (OperationCanceledException) { throw; }
+        catch (Exception ex)
+        {
+            if (dest is not null) { TryDelete(dest); written.Remove(dest); }
+            var why = ex is System.ComponentModel.Win32Exception { NativeErrorCode: 1179 } ? "volumul nu are jurnal USN activ (nu s-a creat unul)" : $"{ex.GetType().Name}: {ex.Message}";
+            var e = $"jurnalul USN {letter}: nu a putut fi citit ({why}); $MFT și $I30 rămân valabile, dar regula NTFS-TIMESTOMP nu poate folosi calea cu jurnal";
+            m["status"] = "Error"; m["error"] = e; o.Errors.Add(e);
+        }
+        return m;
     }
 
     /// <summary>Fixed directories first, then each profile under \Users (links and service profiles left out), in a stable order. Existence is decided by the reader.</summary>

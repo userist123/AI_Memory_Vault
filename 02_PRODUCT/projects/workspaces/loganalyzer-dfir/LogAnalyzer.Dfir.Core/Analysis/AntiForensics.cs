@@ -42,6 +42,17 @@ public static class AntiForensics
     private const string TaskOps = "EventLog:Microsoft-Windows-TaskScheduler/Operational";
 
     /// <summary>Utilities whose renaming ATT&amp;CK lists under T1036.003 (Rename System Utilities), by their PE OriginalFileName.</summary>
+    /// <summary>
+    /// The USN sentence of an AF08 "undetermined" text: its own sentence, capital letter, full stop. When there is no journal and the reason already says so
+    /// (<paramref name="why"/> names the journal), nothing is added, so the same cause is never stated twice.
+    /// </summary>
+    internal static string UsnSentence(int usnCount, string why)
+    {
+        if (usnCount > 0) return $"Jurnalul USN a fost analizat ({LogAnalyzer.Dfir.Language.RoText.Count(usnCount, "înregistrare", "înregistrări")}).";
+        if (why.Contains("jurnalul USN", StringComparison.OrdinalIgnoreCase)) return "";
+        return "Jurnalul USN nu a fost analizat: lipsește din caz (nu a fost colectat sau importat), deci o modificare urmată de redenumire sau mutare nu se poate verifica.";
+    }
+
     private static readonly HashSet<string> SystemUtilities = new(StringComparer.OrdinalIgnoreCase)
     {
         "cmd.exe", "powershell.exe", "pwsh.dll", "rundll32.exe", "regsvr32.exe", "mshta.exe", "wscript.exe", "cscript.exe", "certutil.exe",
@@ -272,7 +283,7 @@ public static class AntiForensics
                         hits.SelectMany(h => new[] { h.Mft, h.UsnCreate, h.UsnChange }.Where(e => e is not null).Select(e => Ref(e!, e!.Source == "MFT" ? "înregistrare $MFT: orele $SI / $FN" : "jurnal USN"))));
                 }
                 else if (NtfsTimestomp.Undetermined(mftEvents, usn) is { } why)
-                    Add("AF08", Af08Title, "T1070.006", AntiForensicResult.Undetermined, $"$MFT analizat ({records:N0} înregistrări), dar {why}. {usnPart}.{tunnelNote} " + (countedNote.Length > 0 ? countedNote.TrimEnd(' ', ';') + ". " : "") + Limit);
+                    Add("AF08", Af08Title, "T1070.006", AntiForensicResult.Undetermined, $"$MFT analizat ({records:N0} înregistrări), dar {why}.{(UsnSentence(usn.Count, why) is { Length: > 0 } us ? " " + us : "")}{tunnelNote} " + (countedNote.Length > 0 ? countedNote.TrimEnd(' ', ';') + ". " : "") + Limit);
                 else
                     Add("AF08", Af08Title, "T1070.006", AntiForensicResult.NotDetected,
                         $"Verificat: {records:N0} înregistrări $MFT ({NtfsTimestomp.Sum(mftEvents, "MismatchTotal"):N0} cu nepotrivire $SI/$FN, {NtfsTimestomp.Sum(mftEvents, "RecentTotal"):N0} recente), {usnPart}; " + countedNote +

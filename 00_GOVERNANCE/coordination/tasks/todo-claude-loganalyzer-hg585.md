@@ -786,3 +786,26 @@
   Suites (main session): Dfir (Release) 3643 (3610 passed, 33 skipped, 0 failed), App 1084/1084, python 27/27.
   Next (NTFS phase): verify "Colectează tot" in the INSTALLED app on WS01 (publish + redeploy, UIA driver) incl. the NTFS collector and
   the AF08 / NTFS-TIMESTOMP texts on screen; then $LogFile (next phase, now that the reader exists).
+- 2026-11-14 INSTALLED-APP CHECK (Arhipelag lab build of d7dd17beb, E:\LA-Lab\scripts\build-lab-arhipelag.ps1 = build-lab-apps.ps1 for one
+  module with the current scratchpad TEMP; keys restored, SHA equal; update-app.ps1 to WS01; UIA: E:\LA-Lab\scripts\t-ntfs2.ps1 restarts
+  WS01 after the hourly shutdown and waits for PowerShell Direct, then cmd_ntfs.txt "Colectează tot" -> "Confirmă scopul"): case
+  CASE-LAB-WS01-20261114-052942 (C:\Users\it.admin\AppData\Local\LogAnalyzer\Cases, hidden AppData: search with -Force), 243,528 events,
+  72 findings; NtfsMetadataCollector ran inside "Colectează tot": $MFT 128,974,848 + $Boot + 10 .i30 + manifest, shadow copies 0;
+  MftParser Success 44,266 events, 0 malformed; AF08 Undetermined (fresh install, channel capped). FOUND: "Colectează tot" never reads the
+  SYSTEM volume's USN journal (UsnJournalCollector reads only external NTFS media, by design) -> the NTFS-TIMESTOMP High path never has data
+  for C: in the app; AF08 text glued two reasons ("verificate cu USN. fără jurnal USN."). S6 dispatched: NtfsMetadataCollector also reads
+  the system volume journal with UsnJournalNative into the same run folder (usn_<L>.csv, UTC column), AF08 reasons as separate sentences.
+  First UI attempt was cut by the hourly VM shutdown during the 300 s wait (not an app fault).
+- 2026-11-14 NTFS S6 DONE: NtfsMetadataCollector also reads the SYSTEM volume's USN journal (UsnJournalNative.Read, read-only FSCTL)
+  right after copying $MFT / $I30, while the shadow copy still exists, into usn_<L>.csv in the same run folder (UTC column, station zone,
+  SourceType usn_journal); manifest block "usn" (status, journalId, first/next USN, records, incomplete, readUtc, sha256); a failed or capped
+  read = Partial, never Failed. AF08 reasons are separate sentences (no "USN. fără jurnal" glue). Main session read the diff (read-only,
+  partial file deleted on error, public constructor wires the real reader). Not reviewed by a separate Opus agent (reuses the reviewed
+  native reader, no new handle/IO path) - recorded as a decision. LIVE in the INSTALLED app (Arhipelag lab build, WS01, case
+  CASE-LAB-WS01-20261114-055626): usn_C.csv 90,632,588 bytes, 360,107 records, complete; 161,923 closed operations parsed; NTFS-TIMESTOMP
+  0 findings on the clean station; AF08 Undetermined with the right reasons (fresh install, channel capped; USN analysed); collector
+  SUCCESS, shadow copies 0. Lab note: the first sign-in after a fresh app start failed once (timing of the UIA typing; a second try with the
+  app open worked) - do not loop sign-ins (lockout risk).
+  Suites (main session): Dfir (Release) 3652 (3619 passed, 33 skipped, 0 failed), App 1084/1084, python 27/27.
+  NTFS phase complete (S1-S6). Next phase: $LogFile (redo/undo of creates, renames, deletes and $SI/$FN changes; the raw reader exists:
+  copy $LogFile from the same shadow copy in NtfsMetadataCollector), then the SRUM tables not yet read, then Windows.edb (ESE).
