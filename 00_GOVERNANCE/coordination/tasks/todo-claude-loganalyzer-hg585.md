@@ -893,3 +893,14 @@
   said "trailing zeros removed" (same flaw for a human verifier): now "as it is, do not strip zeros; openssl reads the DER length".
   Remaining planner items: Windows.edb ESE (needs the Search feature on SRV01 = lab change), Insula device monitor (blocked: Hyper-V
   SCSI disks count as internal), AnyDesk request+accept double count (wording only).
+- 2026-11-15 (claude, RMM thread) Windows.edb ESE: NOT built, on evidence. CI of 882fffdf9 read once: 32/32 success. LAB CHANGE: Windows
+  Search (feature Search-Service) installed on LAB-SRV01 (Server 2025 Datacenter Evaluation, build 26100), WSearch Automatic + running;
+  kept installed for later tests (undo: Uninstall-WindowsFeature Search-Service). Server 2025 writes the index in SQLite like Windows 11
+  (Windows.db / Windows-gather.db / Windows-usn.db, Projects\SystemIndex\PropMap\PropMap.db, SecStore\SecStore.db), NO Windows.edb. ESE
+  matters only for Windows 10 / Server 2022 and older; the lab has none and a sample needs an install image (download = owner decision).
+  Verified end to end instead: TEST file C:\Users\Administrator.LAB\Documents\TEST_LA_index_server2025.txt on SRV01 (indexed after 10 s,
+  checked through Search.CollatorDSO), remote package of request e810533e re-run (search-index ok: files/WindowsSearch/Windows.db +
+  -wal, Windows-gather.db + -wal; manifest timezone GTB), imported and analysed from the Continent UI on WS01 ->
+  CASE-LAB-WS01-20261115-073731: WindowsSearchIndexParser 130 records and WindowsSearchGatherParser 130 records from SRV01 (1829 / 1843 from
+  WS01), status OK; the TEST file in , index (System.DateModified, WorkId 134) and gatherer (DocumentID 134), all 07:33:04.431Z.
+  RESEARCH_GAPS C.7 updated. Lab leftovers: SRV01 TEST file, C:\LA-Collect-093416; WS01 Documents\LA_LAB-SRV01_20261115T073417Z.
