@@ -904,3 +904,7 @@
   CASE-LAB-WS01-20261115-073731: WindowsSearchIndexParser 130 records and WindowsSearchGatherParser 130 records from SRV01 (1829 / 1843 from
   WS01), status OK; the TEST file in , index (System.DateModified, WorkId 134) and gatherer (DocumentID 134), all 07:33:04.431Z.
   RESEARCH_GAPS C.7 updated. Lab leftovers: SRV01 TEST file, C:\LA-Collect-093416; WS01 Documents\LA_LAB-SRV01_20261115T073417Z.
+- 2026-11-15 AnyDesk double count (last open planner wording item) DONE: REMOTE-TOOL-EXECUTED keeps listing every session row and, when rows
+  repeat, adds "aproximativ N conexiuni distincte" (same direction, partner and minute = one); test
+  RemoteToolSessionRulesTests.One_connection_written_twice_is_estimated_as_one_distinct_connection. Planner list now empty except the
+  blocked items (ESE: no Windows 10 / Server 2022 sample; Insula device monitor: Hyper-V SCSI disks count as internal).

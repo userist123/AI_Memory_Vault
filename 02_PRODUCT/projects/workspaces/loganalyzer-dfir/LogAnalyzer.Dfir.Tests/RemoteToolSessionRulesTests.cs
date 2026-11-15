@@ -51,6 +51,19 @@ public sealed class RemoteToolSessionRulesTests : IDisposable
     }
 
     [Fact]
+    public void One_connection_written_twice_is_estimated_as_one_distinct_connection()
+    {
+        // ad.trace writes "Incoming session request" and then "Accepting from" for the same connection; connection_trace.txt can repeat it too
+        var request = Row(AnyDeskTraceParser.EventSource, 0, f: [("Tool Id", "anydesk"), ("Session Evidence", "da"), ("Kind", "IncomingSessionRequest"), ("Direction", "Incoming"), ("Accepted", "necunoscut"), ("Remote Id", "999000111")]);
+        var f = One(Run([AnyDeskSession(0), request]), "REMOTE-TOOL-EXECUTED");
+        Assert.Contains("Sesiuni în jurnalul propriu al uneltei: 2", f.Description);
+        Assert.Contains("aproximativ 1 conexiuni distincte", f.Description);
+        // two partners: no estimate added
+        var g = One(Run([AnyDeskSession(0), AnyDeskSession(5, remote: "999000222")]), "REMOTE-TOOL-EXECUTED");
+        Assert.DoesNotContain("conexiuni distincte", g.Description);
+    }
+
+    [Fact]
     public void Rows_that_only_describe_a_session_are_counted_apart_and_not_listed_as_sessions()
     {
         // lab 2026-11-11: ad.trace relay / remote-OS rows (no direction) made "12 sesiuni" out of 3 connections

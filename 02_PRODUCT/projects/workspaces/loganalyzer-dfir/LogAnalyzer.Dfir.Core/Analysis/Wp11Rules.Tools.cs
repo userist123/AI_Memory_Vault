@@ -234,7 +234,13 @@ public static partial class Wp11Rules
                    (i.Remote.Length > 0 ? $", la distanță {ToolSafe(i.Remote)}" : "") + (i.Account.Length > 0 ? $", cont local {ToolSafe(i.Account)}" : "") +
                    (i.Method.Length > 0 ? $", metodă {ToolSafe(i.Method)}" : "") + (i.Accepted ? "" : ", neacceptată sau fără acceptare în rând");
         });
-        return $" Sesiuni în jurnalul propriu al uneltei: {directed.Count}" + (strangers.Count > 0 ? $", din care {strangers.Count} de intrare acceptate de la un ID/IP care nu este în profil" : "") +
+        // The same connection can be written more than once (ad.trace "Incoming session request" then "Accepting from"; connection_trace.txt and ad.trace
+        // both): the rows stay listed, and when they repeat, an estimate of distinct connections is added (same direction, partner and minute = one).
+        int distinct = directed.Select(x => (x.Info.Direction, x.Info.Remote, Minute: T(x.Hit.Event) is { } t ? t.ToString("yyyyMMddHHmm", System.Globalization.CultureInfo.InvariantCulture) : "?" + F(x.Hit.Event, "Local Time")))
+                               .Distinct().Count();
+        return $" Sesiuni în jurnalul propriu al uneltei: {directed.Count}" +
+               (distinct < directed.Count ? $" (aproximativ {distinct} conexiuni distincte: aceeași direcție, același partener și același minut se numără o dată)" : "") +
+               (strangers.Count > 0 ? $", din care {strangers.Count} de intrare acceptate de la un ID/IP care nu este în profil" : "") +
                (details > 0 ? $"; alte rânduri despre sesiuni, fără direcție (de exemplu adresă de releu, sistemul celuilalt capăt, autentificare, transfer, încheiere): {details}" : "") +
                (lines.Any() ? $". Primele: {string.Join("; ", lines)}{(directed.Count > chosen.Count ? $" … (+{directed.Count - chosen.Count})" : "")}." : ".") +
                " Jurnalele de sesiune pot fi modificate, completate sau șterse de cine are acces la stația analizată (un rând lipsă nu dovedește absența unei sesiuni); ora din ele este ora locală a stației." +
