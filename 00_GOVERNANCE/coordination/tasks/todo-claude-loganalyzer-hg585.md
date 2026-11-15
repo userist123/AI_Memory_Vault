@@ -922,3 +922,16 @@
   CredentialsDelegation policy key and C:\LA\rdp removed, mstsc closed). One failed RDP logon attempt is now in SRV01's logs.
   To verify on real data: the owner opens RDP WS01 -> SRV01 (connect, close window, reconnect, log off), then remote package + import.
   Suites: Dfir 3773 (3740 passed, 33 skipped), App 1084, UI 370 (369 + 1 skipped), all exit 0.
+- 2026-11-15 RMM session logs in the STANDARD profile (planner #2 item 3) DONE. Owner-delegated decision (main session, safe option): the
+  standard profile reads ONLY the AnyDesk / TeamViewer session logs, not the other per-user artifacts (hives, Recycle Bin, Notepad tabs stay
+  "Completă"). New RemoteToolLogsCollector (Profiles = Standard, needs admin) delegating to UserArtifactsCollector.CollectRemoteToolLogsOnly
+  (same copy rules and shadow check; profiles skipped for an unsafe path are reported there, since no hive step runs). COORDINATION with the
+  NTFS thread: InvestigationPipeline.AllCollectors gained one entry right after UserArtifactsCollector; order of LiveState / NtfsMetadata
+  unchanged (NtfsLogFileCopyTests still green). Guard kept: UserArtifactsCollector still not in Standard; new test: exactly one of the two
+  collectors per profile (Standard / FullForensic), none in Quick. LAB (installed Continent on WS01, "Pornește investigația", profile
+  "Standard (+ SRUM)"): CASE-LAB-WS01-20261115-145653, acquisition run lists collector RemoteToolLogs, custody EV-000247
+  C:\ProgramData\AnyDesk\connection_trace.txt; REMOTE-TOOL-EXECUTED AnyDesk 6 sessions ("aproximativ 4 conexiuni distincte") and
+  TeamViewer 2 (on 2026-11-14 the same profile had none). Not reviewed by Opus (thin wrapper over reviewed code; tests + lab instead).
+  Suites: Dfir 3775 (3742 passed, 33 skipped), App 1084, UI 370 (369 + 1 skipped), all exit 0.
+  Next (planner #2): item 2, remaining RMM logs (TeamViewer *_Logfile.log, RustDesk) - formats need a documented source; parsers would stay
+  TESTED, not VALIDATED, without a real install (owner decision on a real sample).

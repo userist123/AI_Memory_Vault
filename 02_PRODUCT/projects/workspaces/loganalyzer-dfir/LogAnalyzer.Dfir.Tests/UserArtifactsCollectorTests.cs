@@ -359,6 +359,45 @@ public sealed class UserArtifactsCollectorTests : IDisposable
     }
 
     [Fact]
+    public void The_standard_profile_reads_the_session_logs_through_its_own_collector_and_exactly_one_collector_reads_them_per_profile()
+    {
+        // 2026-11-15: before, only "Completă" read the session logs, so a standard investigation silently had no session evidence
+        var c = new RemoteToolLogsCollector();
+        Assert.Equal(CollectionProfile.Standard, c.Profiles);
+        Assert.True(c.RequiresElevation);
+        foreach (var profile in new[] { CollectionProfile.Standard, CollectionProfile.FullForensic })
+            Assert.Single(InvestigationPipeline.AllCollectors.Where(x => (x.Profiles & profile) != 0), x => x is RemoteToolLogsCollector or UserArtifactsCollector);
+        Assert.DoesNotContain(InvestigationPipeline.AllCollectors.Where(x => (x.Profiles & CollectionProfile.Quick) != 0), x => x is RemoteToolLogsCollector or UserArtifactsCollector);
+    }
+
+    [Fact]
+    public void The_logs_only_collector_copies_the_session_logs_and_nothing_else_and_needs_administrator_rights()
+    {
+        Profile(_profile);
+        File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), Path.Combine(ToolDir("AnyDesk"), "connection_trace.txt"));
+        File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), Path.Combine(ToolDir("AnyDesk"), "ad.trace"));
+        File.Copy(RtCorpus(@"teamviewer_TEST\Connections_incoming.txt"), Path.Combine(ToolDir("TeamViewer"), "Connections.txt"));
+        var system = SystemFolders(out var pd, out var pf);
+        File.Copy(RtCorpus(@"anydesk_TEST\connection_trace.txt"), Path.Combine(pd, "connection_trace.txt"));
+        File.Copy(RtCorpus(@"anydesk_TEST\ad_svc.trace"), Path.Combine(pd, "ad_svc.trace"));
+        File.Copy(RtCorpus(@"teamviewer_TEST\Connections_incoming.txt"), Path.Combine(pf, "Connections_incoming.txt"));
+        var rc = new RemoteToolLogsCollector(Collector(remoteFolders: system));
+
+        var denied = rc.Collect(new CollectorContext { Case = _ws, IsElevated = false }, default);
+        Assert.Empty(denied.Evidence);
+        Assert.Equal(EvidenceStatus.NotAvailable, denied.Status);
+
+        var o = rc.Collect(new CollectorContext { Case = _ws, IsElevated = true }, default);
+        Assert.Empty(o.Errors);
+        Assert.Equal(EvidenceStatus.Success, o.Status);
+        Assert.Equal(6, o.Evidence.Count);
+        Assert.All(o.Evidence, e => Assert.True(RemoteToolLogFormats.IsKnown(e.SourceType)));
+        Assert.Empty(_copies);                                       // no hive, no shadow copy: only the logs, copied directly
+        var r = new InvestigationPipeline().Run(_ws, CollectionProfile.Standard, collect: false);
+        Assert.Contains(r.Findings, f => f.RuleId == "REMOTE-TOOL-EXECUTED" && f.Title.Contains("AnyDesk") && f.Description.Contains("999000111"));
+    }
+
+    [Fact]
     public void Missing_remote_tool_folders_and_files_are_not_errors_and_an_empty_log_is_skipped_with_a_note()
     {
         Profile(_profile);

@@ -100,6 +100,26 @@ public sealed class UserArtifactsCollector : ICollector
         return o;
     }
 
+    /// <summary>
+    /// Only the remote-tool session logs (used by <see cref="RemoteToolLogsCollector"/> in the Standard profile): same copy rules, shadow-copy check and
+    /// status as in the full run. Profiles skipped for an unsafe path are reported here, because the hive step that reports them does not run.
+    /// </summary>
+    internal CollectorOutcome CollectRemoteToolLogsOnly(CollectorContext ctx, CancellationToken ct)
+    {
+        var o = new CollectorOutcome
+        {
+            Source = "jurnalele de sesiune AnyDesk / TeamViewer din profiluri, ProgramData și Program Files",
+            Tool = "copiere directă; esentutl.exe /vss doar pentru un fișier blocat", ToolVersion = ToolRunner.FileVersion(ToolRunner.System32("esentutl.exe")),
+        };
+        var before = _shadowIds();
+        var vssUsed = new System.Runtime.CompilerServices.StrongBox<bool>(false);
+        try { CollectRemoteToolLogs(ctx, o, vssUsed, ct, reportUnsafeProfiles: true); }
+        finally { if (vssUsed.Value) CheckLeftoverShadows(ctx, o, before); }
+        o.Status = o.Evidence.Count > 0 ? (o.Errors.Count > 0 ? EvidenceStatus.Partial : EvidenceStatus.Success)
+                 : o.Errors.Count > 0 ? EvidenceStatus.Failed : EvidenceStatus.Empty;
+        return o;
+    }
+
     // ---- hives ----
 
     private void CollectHives(CollectorContext ctx, CollectorOutcome o, System.Runtime.CompilerServices.StrongBox<bool> vssUsed, CancellationToken ct)
@@ -303,7 +323,7 @@ public sealed class UserArtifactsCollector : ICollector
     /// no component of the path may be a reparse point; a file over the parser's size cap, an empty file and a file that grew during the copy are not taken (a partial copy is
     /// deleted); a locked file falls back to the shadow copy only on a sharing violation; every error goes in the step's note.
     /// </summary>
-    private void CollectRemoteToolLogs(CollectorContext ctx, CollectorOutcome o, System.Runtime.CompilerServices.StrongBox<bool> vssUsed, CancellationToken ct)
+    private void CollectRemoteToolLogs(CollectorContext ctx, CollectorOutcome o, System.Runtime.CompilerServices.StrongBox<bool> vssUsed, CancellationToken ct, bool reportUnsafeProfiles = false)
     {
         var logDir = Path.Combine(ctx.Case.Root, "Logs", "tools");
         var work = new List<RemoteToolFolder>();
@@ -312,7 +332,13 @@ public sealed class UserArtifactsCollector : ICollector
             int taken = 0;
             foreach (var p in _profiles().OrderBy(p => p.KeyName, StringComparer.OrdinalIgnoreCase))
             {
-                if (!IsSid(p.KeyName) || UnsafeProfilePath(p.ProfilePath).Length > 0) continue;   // reported once, by the hive step
+                if (!IsSid(p.KeyName)) continue;
+                if (UnsafeProfilePath(p.ProfilePath) is { Length: > 0 } why)
+                {
+                    // reported once, by the hive step; in the logs-only run there is no hive step, so it is reported here
+                    if (reportUnsafeProfiles) o.Errors.Add($"Profilul {p.KeyName} nu a fost cercetat pentru jurnalele de sesiune: {why}");
+                    continue;
+                }
                 if (++taken > _maxProfiles) break;
                 foreach (var (tool, rel, files) in RemoteToolProfileFolders)
                     work.Add(new(p.KeyName, tool, Path.Combine([p.ProfilePath, .. rel]), files));
