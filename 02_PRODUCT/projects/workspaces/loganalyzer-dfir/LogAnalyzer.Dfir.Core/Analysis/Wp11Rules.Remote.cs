@@ -14,6 +14,7 @@ public static partial class Wp11Rules
     private static void Remote(Ctx c, List<Finding> o)
     {
         RdpInternal(c, o);
+        RdpSessions(c, o);
         WinRm(c, o);
         PsExec(c, o);
         Ssh(c, o);

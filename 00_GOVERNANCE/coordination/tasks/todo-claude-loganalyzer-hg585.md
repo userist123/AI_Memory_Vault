@@ -908,3 +908,17 @@
   repeat, adds "aproximativ N conexiuni distincte" (same direction, partner and minute = one); test
   RemoteToolSessionRulesTests.One_connection_written_twice_is_estimated_as_one_distinct_connection. Planner list now empty except the
   blocked items (ESE: no Windows 10 / Server 2022 sample; Insula device monitor: Hyper-V SCSI disks count as internal).
+- 2026-11-15 RDP-SESSIONS DONE (planner #2 item 1, RESEARCH_GAPS C.5; vault-worker Sonnet + 2 Opus vault-reviewer rounds; main session
+  fixed round 2). New Wp11Rules.RdpSessions.cs (Info, Observation, T1021.001), called after RdpInternal; RuleContracts / ParserCapabilities
+  (LSM 21-25, Security 4778/4779) / Wp11ContractTests updated, tests Wp11RdpSessionsTests (20). Owner-delegated decision (main session):
+  informative finding only, existing RDP rules unchanged. r1 (cap counted attempts, production sorts by time so "log order" did not exist,
+  cap kept the oldest, 4778/4779 and 4624 attributed to several sessions, over-claiming wording, empty host mixed) fixed by the worker;
+  r2 MEDIUM (a session replaced by a reused ID had an open upper bound and took a 4779 written after the reuse) fixed here, test shown RED
+  on the old line and GREEN on the fix; LastSeenUtc from the last event; "fără început înregistrat (… sau evenimentul 21 lipsește)";
+  a BS control character in Wp11ContractTests ("CORP\bob" in a verbatim string) fixed. Accepted residuals in RESEARCH_GAPS C.5.
+  LAB: field names User / SessionID / Address confirmed on real WS01 EVTX (all console, Address=LOCAL). A real network RDP WS01 -> SRV01
+  could NOT be made: Credential Guard on WS01 refuses default-credential delegation and asks for a password (not entered by the agent).
+  Lab changes for the attempt were all undone (SRV01: Remote Desktop Users member removed, RDP firewall group disabled; WS01:
+  CredentialsDelegation policy key and C:\LA\rdp removed, mstsc closed). One failed RDP logon attempt is now in SRV01's logs.
+  To verify on real data: the owner opens RDP WS01 -> SRV01 (connect, close window, reconnect, log off), then remote package + import.
+  Suites: Dfir 3773 (3740 passed, 33 skipped), App 1084, UI 370 (369 + 1 skipped), all exit 0.

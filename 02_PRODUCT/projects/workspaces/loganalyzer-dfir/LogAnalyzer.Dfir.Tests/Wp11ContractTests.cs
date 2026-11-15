@@ -13,7 +13,7 @@ public class Wp11ContractTests
     internal static readonly string[] AllRules =
     [
         "SMB-ADMIN-SHARE", "SMB-SHARE-PERMS-CHANGED", "ACCOUNT-CREATED", "ACCOUNT-ADDED-PRIVILEGED-GROUP", "ACCOUNT-CREATED-THEN-USED",
-        "REMOTE-RDP-INTERNAL", "REMOTE-WINRM", "REMOTE-PSEXEC", "REMOTE-SSH", "SECURITY-AGENT-STOPPED", "VSS-SNAPSHOT-DELETED",
+        "REMOTE-RDP-INTERNAL", "RDP-SESSIONS", "REMOTE-WINRM", "REMOTE-PSEXEC", "REMOTE-SSH", "SECURITY-AGENT-STOPPED", "VSS-SNAPSHOT-DELETED",
         "DNS-RARE-DOMAIN", "DNS-SERVER-CHANGED", "REMOTE-TOOL-PRESENT", "REMOTE-TOOL-EXECUTED", "DISCOVERY-BURST",
         "KERBEROAST-RC4", "ASREP-ROAST", "ADCS-SAN", "NTLM-RELAY-MACHINE", "EDR-WFP-BLOCK", "DEF-HISTORY-ONLY", "WSEARCH-GATHER-ONLY",
     ];
@@ -28,6 +28,8 @@ public class Wp11ContractTests
         Sec(4732, 3, ("MemberSid", "S-1-5-21-1-2-3-1105"), ("MemberName", "CN=svc_x,DC=c"), ("TargetUserName", "Administrators"), ("TargetSid", "S-1-5-32-544"), ("SubjectUserName", "admin1")),
         Sec(4624, 4, ("TargetUserName", "svc_x"), ("TargetUserSid", "S-1-5-21-1-2-3-1105"), ("LogonType", "3"), ("IpAddress", "10.0.0.8")),
         Sec(4624, 5, ("TargetUserName", "bob"), ("TargetDomainName", "CORP"), ("LogonType", "10"), ("IpAddress", "10.0.0.9")),
+        Ev("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 21, 5.1, "Microsoft-Windows-TerminalServices-LocalSessionManager", ("User", @"CORP\bob"), ("SessionID", "7"), ("Address", "10.0.0.9")),
+        Ev("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 24, 5.5, "Microsoft-Windows-TerminalServices-LocalSessionManager", ("User", @"CORP\bob"), ("SessionID", "7"), ("Address", "10.0.0.9")),
         Ev("Microsoft-Windows-WinRM/Operational", 91, 6, "Microsoft-Windows-WinRM"),
         Sys(7045, 7, "Service Control Manager", ("ServiceName", "PSEXESVC"), ("ImagePath", @"%SystemRoot%\PSEXESVC.exe")),
         Ev("OpenSSH/Operational", 4, 8, "OpenSSH", ("payload", "Accepted password for al from 10.0.0.5 port 22 ssh2")),
@@ -133,7 +135,7 @@ public class Wp11ContractTests
             ("Microsoft-Windows-WinRM/Operational", 6), ("Microsoft-Windows-WinRM/Operational", 91), ("Microsoft-Windows-WinRM/Operational", 142),
             ("OpenSSH/Operational", 4),
             ("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 21), ("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 22),
-            ("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 25), ("Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational", 1149),
+            ("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 25), ("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 23), ("Microsoft-Windows-TerminalServices-LocalSessionManager/Operational", 24), ("Security", 4778), ("Security", 4779), ("Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational", 1149),
             ("Microsoft-Windows-DNS-Client/Operational", 3006), ("Microsoft-Windows-DNS-Client/Operational", 3008), ("Microsoft-Windows-DNS-Client/Operational", 3020),
             ("Microsoft-Windows-NetworkProfile/Operational", 10000),
             ("Microsoft-Windows-PowerShell/Operational", 4104),
