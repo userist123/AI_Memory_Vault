@@ -764,18 +764,29 @@ public static class RemoteCollection
     /// The evidence type of a package file. A file of the Defender history folder is typed like a direct import (GUID name and matching content),
     /// so anything else placed there stays "file" and never reaches the DetectionHistory parser.
     /// </summary>
+    /// <summary>files/SYSTEM.hive and files/SOFTWARE.hive (written by "reg save" for hive:SYSTEM / hive:SOFTWARE) with regf content; any other .hive stays "file".</summary>
+    private static string PackageHiveKind(string relativePath, string fullPath)
+    {
+        var name = Path.GetFileName(relativePath);
+        var kind = name.Equals("SYSTEM.hive", StringComparison.OrdinalIgnoreCase) ? "system_hive" : name.Equals("SOFTWARE.hive", StringComparison.OrdinalIgnoreCase) ? "software_hive" : "";
+        return kind.Length > 0 && relativePath.Count(ch => ch == '/') == 1 && LogAnalyzer.Dfir.Integrity.EvidenceFingerprint.Detect(fullPath) == "regf" ? kind : "file";
+    }
+
     internal static string ImportKind(string relativePath, string fullPath) =>
         // the user hives: only the exact package path files/UserHives/<profile>/{NTUSER.DAT|UsrClass.dat} and only regf content; anything else under the folder stays "file"
         // (tested first: a profile named "Tasks" must not make them task XML, and a stray .evtx or .hive there must not reach a parser)
         relativePath.StartsWith("files/" + UserHivesFolder + "/", StringComparison.OrdinalIgnoreCase) ? UserHiveKind(relativePath, fullPath)
-        : relativePath.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase) ? "evtx" : relativePath.EndsWith(".hive", StringComparison.OrdinalIgnoreCase) ? "registry-hive"
+                // audit 2026-11-16: ".hive" was typed "registry-hive" and the tasks "task-xml", types no parser reads: the SYSTEM / SOFTWARE hives of every remote package
+        // were never parsed (services, USB, ShimCache missing). The types are now the parsers' own, decided by name AND content.
+        : relativePath.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase) ? "evtx"
+        : relativePath.EndsWith(".hive", StringComparison.OrdinalIgnoreCase) ? PackageHiveKind(relativePath, fullPath)
         : relativePath.EndsWith(".pf", StringComparison.OrdinalIgnoreCase) ? "prefetch"
         // the session logs of AnyDesk / TeamViewer: only inside the package folder, only an exact file name with matching content (a file of another kind
         // with the same name, or the same content under another name, stays "file"). Tested before "/Tasks/": a user profile named "Tasks" must not make them task XML.
         : relativePath.StartsWith("files/" + RemoteToolLogsFolder + "/", StringComparison.OrdinalIgnoreCase)
             && LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.ByName(Path.GetFileName(relativePath)) is not null
             && Investigation.InvestigationPipeline.ImportType(fullPath) is var rt && LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.IsKnown(rt) ? rt
-        : relativePath.Contains("/Tasks/", StringComparison.OrdinalIgnoreCase) ? "task-xml"
+        : relativePath.Contains("/Tasks/", StringComparison.OrdinalIgnoreCase) ? (Investigation.InvestigationPipeline.ImportType(fullPath) == "task_xml" ? "task_xml" : "file")
         : relativePath.Contains("/" + DefenderHistoryFolder + "/", StringComparison.OrdinalIgnoreCase)
             && Investigation.InvestigationPipeline.ImportType(fullPath) is var t && t == LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.SourceTypeName ? t
         : relativePath.Contains("/" + NotepadTabsFolder + "/", StringComparison.OrdinalIgnoreCase)
@@ -879,7 +890,7 @@ public static class RemoteCollection
             }
             else
                 item = ws.ImportFile(full, source, kind,
-                    kind is "registry-hive" or "task-xml" ? TemporalType.CurrentSnapshot : TemporalType.Historical,
+                    kind is "system_hive" or "software_hive" or "task_xml" ? TemporalType.CurrentSnapshot : TemporalType.Historical,
                     CollectorName, DfirInfo.ApplicationVersion, parentEvidenceId: manifest.EvidenceId,
                     notes: f.Path.StartsWith("files/" + UserHivesFolder + "/", StringComparison.OrdinalIgnoreCase) && f.Path.Split('/') is { Length: >= 3 } uh
                         ? $"{m.Host}:{f.Path}; profil de origine: {uh[2]}; {notes}" : $"{m.Host}:{f.Path}; {notes}",

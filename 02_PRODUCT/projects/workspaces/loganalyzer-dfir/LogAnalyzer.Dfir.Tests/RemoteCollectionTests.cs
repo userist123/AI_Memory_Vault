@@ -696,6 +696,35 @@ public sealed class RemoteCollectionTests : IDisposable
         return RegfBuilder.Build(root, "NTUSER.DAT");
     }
 
+    [Fact]
+    public void Every_file_kind_the_package_writes_is_read_by_a_parser_or_is_a_known_companion()
+    {
+        // audit 2026-11-16: "files/SYSTEM.hive" was typed "registry-hive" and "files/Tasks/..." "task-xml", types no parser reads: the SYSTEM / SOFTWARE hives
+        // of every remote package were never parsed (found on a real SRV01 package: "niciun parser înregistrat"). Each kind must reach a parser now.
+        var dir = Path.Combine(_root, "kinds"); Directory.CreateDirectory(dir);
+        string Put(string name, byte[] bytes) { var p = Path.Combine(dir, name); File.WriteAllBytes(p, bytes); return p; }
+        var hive = Put("SYSTEM.hive", SyntheticNtUser());
+        var soft = Put("SOFTWARE.hive", SyntheticNtUser());
+        var task = Put("task", System.Text.Encoding.Unicode.GetPreamble().Concat(System.Text.Encoding.Unicode.GetBytes("<?xml version=\"1.0\" encoding=\"UTF-16\"?>\n<Task version=\"1.4\" xmlns=\"http://schemas.microsoft.com/windows/2004/02/mit/task\"><Actions><Exec><Command>C:\\TEST\\a.exe</Command></Exec></Actions></Task>")).ToArray());
+        var registry = LogAnalyzer.Dfir.Windows.Parsers.WindowsParsers.Registry;
+        foreach (var (rel, full, expected) in new[]
+        {
+            ("files/SYSTEM.hive", hive, "system_hive"), ("files/SOFTWARE.hive", soft, "software_hive"), ("files/Tasks/Microsoft/Windows/TEST/task", task, "task_xml"),
+        })
+        {
+            var kind = RemoteCollection.ImportKind(rel, full);
+            Assert.Equal(expected, kind);
+            var item = new EvidenceItem { EvidenceId = "EV-K", CaseId = "C", Source = "remote:test", SourceType = kind, StoredPath = full };
+            Assert.NotEmpty(registry.Candidates(item));
+        }
+        // a .hive that is not SYSTEM / SOFTWARE, or not a regf file, stays "file"
+        Assert.Equal("file", RemoteCollection.ImportKind("files/SAM.hive", Put("SAM.hive", SyntheticNtUser())));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/SYSTEM.hive", Put("not-a-hive", [1, 2, 3, 4])));
+        // the operator import recognises the package names too (an analyst importing the files folder by hand)
+        Assert.Equal("system_hive", LogAnalyzer.Dfir.Windows.Investigation.InvestigationPipeline.ImportType(hive));
+        Assert.Equal("software_hive", LogAnalyzer.Dfir.Windows.Investigation.InvestigationPipeline.ImportType(soft));
+    }
+
     private static void PutHives(string fake, string profile, bool ntuser = true, bool usrclass = true)
     {
         var home = Path.Combine(fake, "Users", profile);

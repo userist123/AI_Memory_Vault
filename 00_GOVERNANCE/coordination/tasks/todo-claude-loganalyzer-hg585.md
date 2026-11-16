@@ -1003,3 +1003,16 @@
   Save dialog" seen on 2026-11-14). Lab leftovers: SRV01 C:\LA-Collect-201116, WS01 Documents\LA_LAB-SRV01_20261116T181117Z and a TEST
   request without package in the live case. Suites: Dfir 3884 (3851 passed, 33 skipped), App 1088, UI 370 (369 + 1 skipped), all exit 0.
   Next: planner #3 item 3 (ESE sample) blocked on an install image (owner); ask a NEW planner from this checkpoint.
+- 2026-11-16 AUDIT FIX (planner #4 item 1): the SYSTEM / SOFTWARE hives of EVERY remote package were never parsed. RemoteCollection.ImportKind typed
+  "files/*.hive" as "registry-hive" (and tasks "task-xml"), types no parser reads; InvestigationPipeline.ImportType did not know the ".hive"
+  extension either (only "SYSTEM" / "*SYSTEM.hiv"), so the run's re-import did not recover them. Found on the real SRV01 package
+  ("niciun parser înregistrat pentru tipul file" for SYSTEM_4.hive / SOFTWARE_4.hive); tasks survived only because task XML is recognised by content.
+  Fix: package kinds are now the parsers' own (system_hive / software_hive with regf content and the exact names written by reg save, task_xml by
+  content); ImportType knows SYSTEM.hive / SOFTWARE.hive. Test Every_file_kind_the_package_writes_is_read_by_a_parser_or_is_a_known_companion
+  (each kind must have a parser candidate in WindowsParsers.Registry). LAB (same SRV01 package re-imported): SYSTEM -> ServicesParser 660,
+  SystemHiveExecutionParser 137, UsbDevicesParser partial 0 (VM); SOFTWARE -> SoftwareHiveParser 5. Not Opus-reviewed (small, tested on real data).
+  FOUND (not fixed, product question): two app instances on one station share the live case and the second fails on LogAnalyzer_Audit.log
+  ("used by another process"); the lab scripts start a new instance each run (t-session) - kill old instances first. Suites: Dfir 3885 (3852
+  passed, 33 skipped), App 1088, UI 370 (369 + 1 skipped), all exit 0.
+  Next (planner #4): item 3 remote package aligned with live collection (Amcache, SRUM, setupapi, LNK/JumpLists, firewall log, archived logs,
+  TerminalServices-RemoteConnectionManager + WinRM channels; personal ones optional like user-hives); item 2 Insula end-to-end on WS02 last.

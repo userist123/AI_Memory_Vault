@@ -260,7 +260,9 @@ public sealed class InvestigationPipeline
                 // the session logs of AnyDesk / TeamViewer: the exact file name AND the documented content (the type is the fingerprint name)
                 _ when LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.ByName(Path.GetFileName(f)) is { } remoteLog && EvidenceFingerprint.Detect(f) == remoteLog => remoteLog,
                 _ when Path.GetFileName(f).Equals("SYSTEM", StringComparison.OrdinalIgnoreCase)
-                       || Path.GetFileName(f).EndsWith("SYSTEM.hiv", StringComparison.OrdinalIgnoreCase) => "system_hive",
+                       || Path.GetFileName(f).EndsWith("SYSTEM.hiv", StringComparison.OrdinalIgnoreCase)
+                       // the remote package writes "SYSTEM.hive" (audit 2026-11-16: it was never recognised); regf content required for this name
+                       || Path.GetFileName(f).Equals("SYSTEM.hive", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "regf" => "system_hive",
                 _ when Path.GetFileName(f).Equals("Amcache.hve", StringComparison.OrdinalIgnoreCase) => "amcache",
                 _ when EvidenceFingerprint.Detect(f) == "task_xml" => "task_xml",
                 _ when EvidenceFingerprint.Detect(f) == "usn_fsutil" => "usn_journal",
@@ -282,7 +284,7 @@ public sealed class InvestigationPipeline
     {
         var n = name.ToUpperInvariant();
         if (n is "NTUSER.DAT" or "HKCU.HIV" || n.StartsWith("NTUSER", StringComparison.Ordinal) && n.EndsWith(".HIV", StringComparison.Ordinal)) return "ntuser_hive";
-        if (n is "SOFTWARE" or "SOFTWARE.HIV" || n.EndsWith("_SOFTWARE.HIV", StringComparison.Ordinal)) return "software_hive";
+        if (n is "SOFTWARE" or "SOFTWARE.HIV" or "SOFTWARE.HIVE" || n.EndsWith("_SOFTWARE.HIV", StringComparison.Ordinal)) return "software_hive";   // .HIVE: the remote package
         if (n is "USRCLASS.DAT" or "USRCLASS.HIV" || n.StartsWith("USRCLASS", StringComparison.Ordinal) && n.EndsWith(".HIV", StringComparison.Ordinal)) return "usrclass_hive";
         return null;
     }
