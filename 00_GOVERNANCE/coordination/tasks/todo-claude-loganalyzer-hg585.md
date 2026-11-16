@@ -1016,3 +1016,9 @@
   passed, 33 skipped), App 1088, UI 370 (369 + 1 skipped), all exit 0.
   Next (planner #4): item 3 remote package aligned with live collection (Amcache, SRUM, setupapi, LNK/JumpLists, firewall log, archived logs,
   TerminalServices-RemoteConnectionManager + WinRM channels; personal ones optional like user-hives); item 2 Insula end-to-end on WS02 last.
+- 2026-11-16 CI of d6343d167: 31/32 success, 1 FAILURE in "LogAnalyzer DFIR Build & Package" (run 43930773969, Test Release):
+  ThreatIntelPackagesTests.The_pipeline_uses_the_approved_package_records_it_in_the_run_and_shows_a_package_that_did_not_verify_as_a_gap,
+  line 194 Assert.Contains(r.RulesUsed, cert.csv) - the approved package's rules were not in RulesUsed (the approval itself succeeded).
+  Not related to the diff (it touched RemoteCollection / InvestigationPipeline.Import / the UI); passes locally in Release 3/3; the same test was
+  green on 8532d2161 (32/32). Certificate windows are years wide (not a clock edge). Treated as FLAKY, NOT investigated to the root yet:
+  next session reads CI of f2c909abd once; if it fails again, investigate (shared state under parallel xUnit, store dir, package load timing).
