@@ -302,8 +302,30 @@ public sealed class UserArtifactsCollector : ICollector
     {
         RemoteToolLogFormats.AnyDeskTrace => AnyDeskTraceParser.MaxFileBytes,
         RemoteToolLogFormats.AnyDeskConnectionTrace => AnyDeskConnectionTraceParser.MaxFileBytes,
+        RemoteToolLogFormats.TeamViewerLogfile => TeamViewerLogfileParser.MaxFileBytes,
         _ => TeamViewerConnectionsParser.MaxFileBytes,
     };
+
+    /// <summary>Most TeamViewer log files kept per folder (TeamViewer15_Logfile.log, TeamViewer15_Logfile_OLD.log, other versions side by side).</summary>
+    public const int MaxTeamViewerLogfilesPerFolder = 16;
+
+    /// <summary>The fixed names of the folder plus, for TeamViewer, the main logs <c>TeamViewer&lt;NN&gt;_Logfile[_OLD].log</c> found in it (the version number is part of the name).</summary>
+    private static IEnumerable<string> WithTeamViewerLogfiles(RemoteToolFolder w)
+    {
+        var names = new List<string>(w.Files);
+        if (!w.Tool.Equals("TeamViewer", StringComparison.Ordinal)) return names;
+        try
+        {
+            foreach (var path in Directory.EnumerateFiles(w.Folder, "TeamViewer*_Logfile*.log").Take(256))
+            {
+                var n = Path.GetFileName(path);
+                if (RemoteToolLogFormats.ByName(n) == RemoteToolLogFormats.TeamViewerLogfile && !names.Contains(n, StringComparer.OrdinalIgnoreCase)
+                    && names.Count(x => RemoteToolLogFormats.ByName(x) == RemoteToolLogFormats.TeamViewerLogfile) < MaxTeamViewerLogfilesPerFolder) names.Add(n);
+            }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }   // the per-file steps report what they cannot read
+        return names;
+    }
 
     private static IReadOnlyList<RemoteToolFolder> DefaultRemoteToolFolders()
     {
@@ -359,7 +381,7 @@ public sealed class UserArtifactsCollector : ICollector
             if (!probe.IsDirectory) { o.Errors.Add($"{label}: {Shorten(w.Folder)} nu este un folder; omis."); continue; }
             var link = ReparseOnPath(w.Folder);
             if (link.Length > 0) { o.Errors.Add($"{label}: calea trece printr-o legătură (reparse point: {Shorten(link)}), care nu este urmată; jurnalele nu au fost colectate."); continue; }
-            foreach (var name in w.Files)
+            foreach (var name in WithTeamViewerLogfiles(w))
             {
                 ct.ThrowIfCancellationRequested();
                 var srcPath = Path.Combine(w.Folder, name);

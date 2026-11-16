@@ -380,12 +380,15 @@ public static class RemoteCollection
                                 if ((Get-Item -LiteralPath $src -Force).Attributes -band [IO.FileAttributes]::ReparsePoint) { $ok = $false; $links++; break }
                             }
                             if (-not $ok) { continue }
-                            foreach ($name in $t.Files) {
+                            # TeamViewer<NN>_Logfile.log / _OLD.log: the version number is part of the name, so the folder is listed (at most 16 files)
+                            $names = @($t.Files)
+                            if ($t.Out -like '*TeamViewer') { $names += @(Get-ChildItem -LiteralPath $src -File -Force -Filter 'TeamViewer*_Logfile*.log' -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^TeamViewer\d{1,3}_Logfile(_OLD)?(_\d{1,6})?\.log$' } | Select-Object -First 16 | ForEach-Object { $_.Name }) }
+                            foreach ($name in $names) {
                                 $fp = Join-Path $src $name
                                 if (-not (Test-Path -LiteralPath $fp -PathType Leaf)) { continue }
                                 $f = Get-Item -LiteralPath $fp -Force
                                 if ($f.Attributes -band [IO.FileAttributes]::ReparsePoint) { $links++; continue }
-                                $cap = $(if ($name -like '*.trace') { 64MB } else { 16MB })
+                                $cap = $(if ($name -like '*.trace' -or $name -like 'TeamViewer*_Logfile*.log') { 64MB } else { 16MB })
                                 if ($f.Length -eq 0) { continue }
                                 if ($f.Length -gt $cap) { $skipped++; continue }
                                 $d = Join-Path (Join-Path $files 'RemoteToolLogs') $t.Out
@@ -403,7 +406,7 @@ public static class RemoteCollection
                                 finally { if ($in) { $in.Dispose() }; if ($outFs) { $outFs.Dispose() } }
                             }
                         }
-                        if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0) { throw "jurnale copiate: $copied; necopiate (fisier blocat sau acces refuzat): $failed; sarite (peste 16 MiB, ad.trace peste 64 MiB): $skipped; legaturi neurmate: $links" }
+                        if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0) { throw "jurnale copiate: $copied; necopiate (fisier blocat sau acces refuzat): $failed; sarite (peste 16 MiB; ad.trace și TeamViewer*_Logfile.log peste 64 MiB): $skipped; legaturi neurmate: $links" }
                         if ($copied -eq 0) { return '__absent__' }
                     }
                 } elseif ($a -eq 'search-index') {

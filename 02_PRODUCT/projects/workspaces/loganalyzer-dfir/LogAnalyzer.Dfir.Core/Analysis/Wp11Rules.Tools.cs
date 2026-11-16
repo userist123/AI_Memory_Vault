@@ -179,7 +179,7 @@ public static partial class Wp11Rules
     private const int ToolMaxSessionLines = 6;
 
     private static readonly HashSet<string> ToolSessionSources = new(StringComparer.Ordinal)
-        { "Artifact:AnyDeskConnectionTrace", "Artifact:AnyDeskTrace", "Artifact:TeamViewerConnections" };
+        { "Artifact:AnyDeskConnectionTrace", "Artifact:AnyDeskTrace", "Artifact:TeamViewerConnections", "Artifact:TeamViewerLogfile" };
 
     /// <summary>One session as the rule reports it. <see cref="Remote"/> is the remote id or IP (empty when the log does not give one).</summary>
     private sealed record ToolSession(string Direction, bool Accepted, string Remote, string Account, string Method, string What);
@@ -188,7 +188,8 @@ public static partial class Wp11Rules
     {
         "AcceptedFrom" => "acceptată de la ID", "IncomingSessionRequest" => "cerere de sesiune de intrare", "LoggedInFromRelay" => "adresă văzută pe releu",
         "SessionEnded" => "încheiată", "AuthenticatedPermanentToken" => "autentificare cu token permanent", "FileTransfer" => "transfer de fișiere",
-        "RemoteOs" => "sistemul de operare al celuilalt capăt", "" => "sesiune", _ => kind,
+        "RemoteOs" => "sistemul de operare al celuilalt capăt", "IncomingSession" => "sesiune de intrare (jurnal TeamViewer)",
+        "FailedAuthentication" => "autentificare eșuată (jurnal TeamViewer)", "" => "sesiune", _ => kind,
     };
 
     /// <summary>The session an event describes for <paramref name="tool"/>, or null. Only the known session-log sources count (a field named like ours in an EVTX event does not).</summary>
@@ -218,7 +219,7 @@ public static partial class Wp11Rules
     /// <summary>The sessions of a finding, as text: how many, then at most <see cref="ToolMaxSessionLines"/> (strangers first), each with direction, remote id / IP, time, local account and method.</summary>
     private static string ToolSessionText(List<(ToolHit Hit, ToolSession Info)> sessions, List<(ToolHit Hit, ToolSession Info)> strangers)
     {
-        string When(TimelineEvent e) => T(e) is { } t ? Time(t) : F(e, "Local Time").Length > 0 ? "ora locală " + ToolSafe(F(e, "Local Time")) + " (fusul stației nu este cunoscut)" : "oră necunoscută";
+        string When(TimelineEvent e) => T(e) is { } t ? Time(t) : F(e, "Local Time", "Start Local").Length > 0 ? "ora locală " + ToolSafe(F(e, "Local Time", "Start Local")) + " (fusul stației nu este cunoscut)" : "oră necunoscută";
         // Lab 2026-11-11 (WS01): the rows of ad.trace that only describe a session (relay address, the other end's OS, session closed) have no direction; they were
         // counted and listed as sessions ("12 sesiuni" for 3 connections, "necunoscută adresă văzută pe releu"). Sessions are the rows with a direction;
         // the others are counted apart and not listed. Each group is in time order, strangers first.
@@ -236,15 +237,74 @@ public static partial class Wp11Rules
         });
         // The same connection can be written more than once (ad.trace "Incoming session request" then "Accepting from"; connection_trace.txt and ad.trace
         // both): the rows stay listed, and when they repeat, an estimate of distinct connections is added (same direction, partner and minute = one).
-        int distinct = directed.Select(x => (x.Info.Direction, x.Info.Remote, Minute: T(x.Hit.Event) is { } t ? t.ToString("yyyyMMddHHmm", System.Globalization.CultureInfo.InvariantCulture) : "?" + F(x.Hit.Event, "Local Time")))
-                               .Distinct().Count();
+        int distinct = DistinctConnections(directed);
         return $" Sesiuni în jurnalul propriu al uneltei: {directed.Count}" +
-               (distinct < directed.Count ? $" (aproximativ {distinct} conexiuni distincte: aceeași direcție, același partener și același minut se numără o dată)" : "") +
+               (distinct < directed.Count ? $" (aproximativ {distinct} conexiuni distincte: aceeași direcție, același partener și același minut se numără o dată; pentru TeamViewer, același partener cu începuturi la cel mult 2 minute în jurnalul principal și în Connections_incoming.txt este o singură conexiune)" : "") +
                (strangers.Count > 0 ? $", din care {strangers.Count} de intrare acceptate de la un ID/IP care nu este în profil" : "") +
                (details > 0 ? $"; alte rânduri despre sesiuni, fără direcție (de exemplu adresă de releu, sistemul celuilalt capăt, autentificare, transfer, încheiere): {details}" : "") +
                (lines.Any() ? $". Primele: {string.Join("; ", lines)}{(directed.Count > chosen.Count ? $" … (+{directed.Count - chosen.Count})" : "")}." : ".") +
                " Jurnalele de sesiune pot fi modificate, completate sau șterse de cine are acces la stația analizată (un rând lipsă nu dovedește absența unei sesiuni); ora din ele este ora locală a stației." +
                " Jurnalul nu arată ce s-a făcut în sesiune.";
+    }
+
+    /// <summary>Tolerance between the start written by the main TeamViewer log and the one written by Connections_incoming.txt for the same connection.</summary>
+    private static readonly TimeSpan ToolSameConnectionTolerance = TimeSpan.FromMinutes(2);
+
+    private static bool IsTeamViewerSource(string source) => source.StartsWith("Artifact:TeamViewer", StringComparison.Ordinal);
+
+    /// <summary>A local time written in a session event's fields ("yyyy-MM-dd HH:mm:ss"), or null.</summary>
+    private static DateTime? LocalOf(TimelineEvent e) =>
+        DateTime.TryParseExact(F(e, "Local Time", "Start Local"), "yyyy-MM-dd HH:mm:ss", System.Globalization.CultureInfo.InvariantCulture, System.Globalization.DateTimeStyles.None, out var d) ? d : null;
+
+    /// <summary>
+    /// Estimate of distinct connections among directed session rows. Same direction, partner and minute = one (as before). Added for TeamViewer: a row of the main log and a
+    /// row of Connections_incoming.txt (different sources) of the same direction and partner whose starts are at most 2 minutes apart are one connection. The starts are
+    /// compared in UTC when both rows have it, and also by the local time written in the row (both files use the station's clock, so the local times compare even when
+    /// only one of the rows could be converted or the zone of the item and the header offset of the log disagree).
+    /// </summary>
+    private static int DistinctConnections(List<(ToolHit Hit, ToolSession Info)> directed)
+    {
+        // Review r2 2026-11-16: the first version clustered every row against every member (quadratic, chain-merging, order-dependent, local time deciding
+        // even when UTC disagreed). Now linear apart from one sort per partner: same direction, partner, station and minute = one row (as before, plus the
+        // station); then, for TeamViewer only, a row of the main log and a row of Connections_incoming.txt are paired at most once each, nearest first,
+        // when their starts are at most 2 minutes apart: UTC when both rows have it, the local time only when one of them has no UTC.
+        static string MinuteKey(TimelineEvent e) => T(e) is { } t ? t.ToString("yyyyMMddHHmm", System.Globalization.CultureInfo.InvariantCulture) : "?" + F(e, "Local Time", "Start Local");
+        var units = directed
+            .GroupBy(x => (x.Info.Direction, x.Info.Remote, Host: ToolHost(x.Hit.Event).ToLowerInvariant(), Tv: IsTeamViewerSource(x.Hit.Event.Source) ? x.Hit.Event.Source : "", Key: MinuteKey(x.Hit.Event)))
+            .Select(g => (g.Key, Event: g.First().Hit.Event)).ToList();
+        int count = units.Count;
+        // Pass 1 pairs rows that both have UTC, by UTC. Pass 2 pairs the rows left, by the local time written in them, only when at least one of the two has no
+        // UTC: two UTC times that disagree are never overruled by the local time (the estimate may stay higher, never lower). Each row is paired at most once.
+        foreach (var partner in units.Where(u => u.Key.Tv.Length > 0).GroupBy(u => (u.Key.Direction, u.Key.Remote, u.Key.Host)))
+        {
+            var bySource = partner.GroupBy(u => u.Key.Tv).OrderByDescending(s => s.Count()).ToList();
+            if (bySource.Count < 2) continue;
+            // the two TeamViewer files: the main log and Connections*.txt (another split pairs the two largest groups; never chained)
+            var a = bySource[0].Select(u => (Utc: T(u.Event)?.UtcDateTime, Local: LocalOf(u.Event))).ToList();
+            var b = bySource[1].Select(u => (Utc: T(u.Event)?.UtcDateTime, Local: LocalOf(u.Event))).ToList();
+            var usedA = new bool[a.Count]; var usedB = new bool[b.Count];
+            void Pair(Func<(DateTime? Utc, DateTime? Local), DateTime?> key, Func<int, int, bool> allowed)
+            {
+                var ai = Enumerable.Range(0, a.Count).Where(i => !usedA[i] && key(a[i]) is not null).OrderBy(i => key(a[i])).ToList();
+                var bi = Enumerable.Range(0, b.Count).Where(i => !usedB[i] && key(b[i]) is not null).OrderBy(i => key(b[i])).ToList();
+                int lo = 0;
+                foreach (var i in ai)
+                {
+                    var x = key(a[i])!.Value;
+                    while (lo < bi.Count && key(b[bi[lo]])!.Value < x - ToolSameConnectionTolerance) lo++;
+                    int best = -1; var bestGap = TimeSpan.MaxValue;
+                    for (int j = lo; j < bi.Count && key(b[bi[j]])!.Value <= x + ToolSameConnectionTolerance; j++)
+                    {
+                        var g = (key(b[bi[j]])!.Value - x).Duration();
+                        if (!usedB[bi[j]] && allowed(i, bi[j]) && g < bestGap) { best = bi[j]; bestGap = g; }
+                    }
+                    if (best >= 0) { usedA[i] = true; usedB[best] = true; count--; }
+                }
+            }
+            Pair(r => r.Utc, (_, _) => true);
+            Pair(r => r.Local, (i, j) => a[i].Utc is null || b[j].Utc is null);
+        }
+        return count;
     }
 
     /// <summary>True when the remote id / IP is listed as a network destination in the procedure profile (the only place the profile names addresses).</summary>

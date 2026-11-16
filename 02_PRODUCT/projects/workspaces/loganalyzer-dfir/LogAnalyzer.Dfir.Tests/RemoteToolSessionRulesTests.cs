@@ -12,6 +12,10 @@ namespace LogAnalyzer.Dfir.Tests;
 /// REMOTE-TOOL-PRESENT: a session is evidence of use as strong as an execution artifact (but Medium confidence: the logs can be forged), the finding lists the sessions,
 /// and an accepted incoming session from an id / IP that the profile does not name raises an approved tool from Info to High.
 /// </summary>
+[CollectionDefinition("ToolSessionsTiming", DisableParallelization = true)]
+public class ToolSessionsTimingCollection;
+
+[Collection("ToolSessionsTiming")]
 public sealed class RemoteToolSessionRulesTests : IDisposable
 {
     private readonly RemoteToolTestKit _k = new();
@@ -229,6 +233,77 @@ public sealed class RemoteToolSessionRulesTests : IDisposable
         var f = One(Run([AnyDeskSession(0, remote: "format necunoscut: 12\u202E34\"quote")]), "REMOTE-TOOL-EXECUTED");
         Assert.DoesNotContain('\u202E', f.Description);
         Assert.DoesNotContain('"', f.Description);
+    }
+
+    [Fact]
+    public void The_TeamViewer_main_log_sessions_flow_into_the_rule_and_the_same_connection_in_Connections_incoming_counts_once()
+    {
+        var (_, log) = RemoteToolTestKit.Run(new TeamViewerLogfileParser(), TeamViewerLogfileParser.SourceTypeName, RemoteToolTestKit.Corpus(@"teamviewer_TEST\TeamViewer15_Logfile.log"), RemoteToolTestKit.Zone);
+        var t = One(Run(log), "REMOTE-TOOL-EXECUTED");
+        Assert.Equal(Severity.High, t.Severity);
+        Assert.Equal(Confidence.Medium, t.Confidence);
+        Assert.Contains("Sesiuni în jurnalul propriu al uneltei: 3", t.Description);
+        Assert.Contains("999000111", t.Description);
+        Assert.Contains("neacceptată", t.Description);                       // the failed authentication is listed as not accepted
+
+        // both files of the same station: 3 + 2 rows. The two Connections_incoming rows start within seconds of two sessions of the main log.
+        // Without a zone on the items both files keep local times: compared in local time, 3 connections. With the probe zone (W. Europe, UTC+1 in
+        // November) the corpus header says UTC+2 from 10 November on purpose (header precedence), so the 08:00 session gets two UTC times an hour
+        // apart: rows whose UTC times disagree are NOT paired (decision 2026-11-16, review r2: the estimate may stay higher, never lower) -> 4.
+        foreach (var (zone, expected) in new[] { ("", 3), (RemoteToolTestKit.Zone, 4) })
+        {
+            var (_, log2) = RemoteToolTestKit.Run(new TeamViewerLogfileParser(), TeamViewerLogfileParser.SourceTypeName, RemoteToolTestKit.Corpus(@"teamviewer_TEST\TeamViewer15_Logfile.log"), zone);
+            var (_, cin) = RemoteToolTestKit.Run(new TeamViewerConnectionsParser(), TeamViewerConnectionsParser.SourceTypeName, RemoteToolTestKit.Corpus(@"teamviewer_TEST\Connections_incoming.txt"), zone);
+            var both = One(Run([.. log2, .. cin]), "REMOTE-TOOL-EXECUTED");
+            Assert.Contains("Sesiuni în jurnalul propriu al uneltei: 5", both.Description);
+            Assert.Contains($"aproximativ {expected} conexiuni distincte", both.Description);
+        }
+    }
+
+    [Fact]
+    public void Two_TeamViewer_rows_of_one_partner_are_one_connection_only_within_two_minutes_and_across_files()
+    {
+        TimelineEvent Log(double m) => Row(TeamViewerLogfileParser.EventSource, m, f: [("Tool Id", "teamviewer"), ("Session Evidence", "da"), ("Direction", "Incoming"), ("Accepted", "da"), ("Remote Id", "999000111"), ("Kind", "IncomingSession")]);
+        var near = One(Run([Log(0), TvSession(1.5, remote: "999000111")]), "REMOTE-TOOL-EXECUTED");
+        Assert.Contains("aproximativ 1 conexiuni distincte", near.Description);
+        var far = One(Run([Log(0), TvSession(10, remote: "999000111")]), "REMOTE-TOOL-EXECUTED");
+        Assert.Contains("Sesiuni în jurnalul propriu al uneltei: 2", far.Description);
+        Assert.DoesNotContain("conexiuni distincte", far.Description);                  // 10 minutes apart: two connections
+        var other = One(Run([Log(0), TvSession(1, remote: "999000999")]), "REMOTE-TOOL-EXECUTED");
+        Assert.DoesNotContain("conexiuni distincte", other.Description);                // another partner
+        var sameFile = One(Run([Log(0), Log(1.5)]), "REMOTE-TOOL-EXECUTED");
+        Assert.DoesNotContain("conexiuni distincte", sameFile.Description);             // two rows of the same file within 2 minutes are two reconnects, not one
+    }
+
+    [Fact]
+    public void Pairing_across_the_two_TeamViewer_files_never_chains_does_not_depend_on_order_and_stays_per_station()
+    {
+        // review r2 2026-11-16: a Connections row between two reconnects of the main log merged them all into one; the result depended on the row order
+        static TimelineEvent On(TimelineEvent e, string host) => host.Length == 0 ? e : new TimelineEvent
+        {
+            Time = e.Time, Source = e.Source, EvidenceId = e.EvidenceId, Locator = e.Locator, Summary = e.Summary, Host = host,
+            Fields = new Dictionary<string, string>(e.Fields, StringComparer.OrdinalIgnoreCase),
+        };
+        TimelineEvent Log(double m, string host = "") => On(Row(TeamViewerLogfileParser.EventSource, m, f: [("Tool Id", "teamviewer"), ("Session Evidence", "da"), ("Direction", "Incoming"), ("Accepted", "da"), ("Remote Id", "999000111"), ("Kind", "IncomingSession")]), host);
+        TimelineEvent Cin(double m, string host = "") => On(TvSession(m, remote: "999000111"), host);
+        // two reconnects 1.5 minutes apart, each written in both files: 4 rows, 2 connections, in every order
+        foreach (var order in new[] { new[] { Log(0), Log(1.5), Cin(0.1), Cin(1.6) }, [Log(0), Cin(0.1), Log(1.5), Cin(1.6)], [Cin(1.6), Log(1.5), Cin(0.1), Log(0)] })
+            Assert.Contains("aproximativ 2 conexiuni distincte", One(Run(order), "REMOTE-TOOL-EXECUTED").Description);
+        // one Connections row between two reconnects of the main log pairs with ONE of them: 3 rows, 2 connections, in both orders
+        Assert.Contains("aproximativ 2 conexiuni distincte", One(Run([Log(0), Log(1.5), Cin(0.75)]), "REMOTE-TOOL-EXECUTED").Description);
+        Assert.Contains("aproximativ 2 conexiuni distincte", One(Run([Log(0), Cin(0.75), Log(1.5)]), "REMOTE-TOOL-EXECUTED").Description);
+        // rows of two stations are never one connection
+        Assert.DoesNotContain("conexiuni distincte", One(Run([Log(0, "LAB-WS01"), Cin(0.5, "LAB-WS02")]), "REMOTE-TOOL-EXECUTED").Description);
+    }
+
+    [Fact]
+    public void Ten_thousand_session_rows_of_one_partner_are_counted_quickly()
+    {
+        // review r2 2026-11-16: the first pairing was quadratic (10,000 rows of one partner: 16.9 s)
+        TimelineEvent Log(double m) => Row(TeamViewerLogfileParser.EventSource, m, f: [("Tool Id", "teamviewer"), ("Session Evidence", "da"), ("Direction", "Incoming"), ("Accepted", "da"), ("Remote Id", "999000111"), ("Kind", "IncomingSession")]);
+        var rows = Enumerable.Range(0, 5000).SelectMany(i => new[] { Log(i * 3), TvSession(i * 3 + 0.1, remote: "999000111") }).ToList();
+        // best of 3, in a collection that does not run in parallel with the others (the same practice as the RDP timing test): the machine load of a
+        // full parallel run is not the rule
     }
 
     [Fact]

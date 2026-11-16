@@ -935,3 +935,22 @@
   Suites: Dfir 3775 (3742 passed, 33 skipped), App 1084, UI 370 (369 + 1 skipped), all exit 0.
   Next (planner #2): item 2, remaining RMM logs (TeamViewer *_Logfile.log, RustDesk) - formats need a documented source; parsers would stay
   TESTED, not VALIDATED, without a real install (owner decision on a real sample).
+- 2026-11-16 TeamViewer main log parser DONE (planner #2 item 2, part 1). TeamViewerLogfileParser (TeamViewer<NN>_Logfile(_OLD).log; Program Files
+  and Program Files (x86)\TeamViewer, AppData\Roaming\TeamViewer; live + remote package). Format and markers taken from a REAL public TeamViewer
+  15.55 log (GitHub, CTF lab file; read for format only, not copied): one event per incoming session (partner ID, IP from "punch received",
+  partner name, auth method, attempts = max "attempt number K", client version, start/end); "was successful" = accepted, "was denied",
+  "CMD_ENDSESSION with reason: LoginFailed", "aborting login" = not accepted (all REAL wordings), anything else unknown; UTC offset from the
+  "Start: ... (UTC+h:mm)" header. File transfers NOT parsed (no real sample). Run on the real public log: 3 sessions (2 accepted, 1 failed
+  after 3 attempts), UTC+3 converted, status Success, no gaps. Two Opus rounds; r1 (guessed failure words, attempts lost, double count with
+  Connections_incoming, Terminate->Statistics gap, AddOther overwrite, ...) fixed by the worker; r2 (DistinctConnections quadratic,
+  chain-merging, local time overruling UTC) fixed here: units by direction/partner/station/minute, then TeamViewer main log <-> Connections
+  pairing once each, nearest first, UTC pass then local pass only when a row lacks UTC; tests for chain / order / stations / 10,000 rows
+  (timing test in a non-parallel collection, best of 3). LAB WS01 (installed Continent, standard profile): TEST Logfile in C:\Program
+  Files\TeamViewer collected and parsed into REMOTE-TOOL-EXECUTED (sessions with method, failed auth listed). Synthetic corpus header says
+  UTC+1 while WS01 is UTC+2, so the 21:21 session gets two UTC times and is (conservatively) not paired -> "aproximativ 4". Corpus .log kept by a
+  local .gitignore (!*.log). Lab leftover: WS01 C:\Program Files\TeamViewer\TeamViewer15_Logfile.log (TEST), case CASE-LAB-WS01-20261116-061944.
+  Suites: Dfir 3813 (3780 passed, 33 skipped), App 1084, UI 370 (369 + 1 skipped), all exit 0.
+  RustDesk (next): line "[yyyy-MM-dd HH:mm:ss.ffffff +hh:mm] LEVEL [file:line] msg" (flexi_logger opt_format, verified in source); markers from
+  RustDesk source: "#<id> Connection opened from <addr>." (older: without "#<id>"), "#<id> Connection closed: <reason>", "new wakelock, require
+  display on: ...", "drop wakelock"; paths AppData\Roaming\RustDesk\log\ (+ cm\, server\), LocalService profile; rotation daily or 16 MiB,
+  names rustdesk_rCURRENT.log / rustdesk_rYYYY-MM-DD_HH-MM-SS.log, keep 90. No real sample yet.

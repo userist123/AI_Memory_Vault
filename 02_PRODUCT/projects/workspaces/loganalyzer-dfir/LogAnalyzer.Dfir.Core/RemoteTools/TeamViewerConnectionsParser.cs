@@ -31,7 +31,7 @@ public sealed class TeamViewerConnectionsParser : EvidenceParserBase
             "Formatul nu este documentat de TeamViewer; coloanele sunt cele din literatura publică DFIR și din mostre sintetice marcate TEST. Verificarea pe o instalare reală se face în laborator.",
             "Fișierul poate fi modificat, completat sau falsificat de oricine are acces la stație (și de un atacator): evenimentele sunt dovadă Directă, dar cu încredere Medie.",
             "Ora este ora locală a stației, fără fus orar; este convertită în UTC doar când proba poartă fusul stației, altfel rămâne oră locală neconvertită, fără oră pe cronologie.",
-            "Connections_incoming.txt = sesiuni primite, Connections.txt = sesiuni inițiate de utilizator; direcția vine din numele fișierului. Jurnalele detaliate (TeamViewer15_Logfile.log) nu sunt citite.",
+            "Connections_incoming.txt = sesiuni primite, Connections.txt = sesiuni inițiate de utilizator; direcția vine din numele fișierului. Jurnalul principal (TeamViewer15_Logfile.log) este citit de TeamViewerLogfileParser.",
             "Numele afișat este scris de partener și poate fi orice text; apare curățat doar în câmpuri, nu în rezumat. Jurnalul nu arată ce s-a făcut în sesiune.",
             "Un ID care nu este format din cifre este marcat „format necunoscut”; un interval invers (sfârșit înaintea începutului) este marcat și nu produce durată.",
             $"Cel mult {MaxRows} de rânduri și {MaxFileBytes / (1024 * 1024)} MiB; liniile se citesc până la {RemoteToolLogText.MaxLineChars} de caractere.",

@@ -359,6 +359,31 @@ public sealed class UserArtifactsCollectorTests : IDisposable
     }
 
     [Fact]
+    public void TeamViewer_main_logs_are_collected_by_pattern_from_the_profile_and_Program_Files_and_the_look_alikes_are_not()
+    {
+        Profile(_profile);
+        var tvUser = ToolDir("TeamViewer");
+        var sample = RtCorpus(@"teamviewer_TEST\TeamViewer15_Logfile.log");
+        File.Copy(sample, Path.Combine(tvUser, "TeamViewer15_Logfile.log"));
+        File.Copy(sample, Path.Combine(tvUser, "TeamViewer15_Logfile_OLD.log"));
+        File.Copy(sample, Path.Combine(tvUser, "MyTeamViewer15_Logfile.log"));      // not a TeamViewer name: not collected
+        File.Copy(sample, Path.Combine(tvUser, "TeamViewer15_Logfile.txt"));
+        var system = SystemFolders(out _, out var pf);
+        File.Copy(sample, Path.Combine(pf, "TeamViewer14_Logfile.log"));
+
+        var o = Collect(Collector(remoteFolders: system));
+
+        Assert.Empty(o.Errors);
+        var logs = o.Evidence.Where(e => e.SourceType == TeamViewerLogfileParser.SourceTypeName).ToList();
+        Assert.Equal(3, logs.Count);
+        Assert.Equal(["TeamViewer14_Logfile.log", "TeamViewer15_Logfile.log", "TeamViewer15_Logfile_OLD.log"],
+            logs.Select(e => Path.GetFileName(_ws.FullPath(e.StoredPath))).Order(StringComparer.Ordinal).ToArray());
+        Assert.All(logs, e => Assert.Equal(Hashing.Sha256File(_ws.FullPath(e.StoredPath)), e.Sha256));
+        Assert.Contains(logs, e => e.Notes.Contains("ProgramFiles"));
+        Assert.Equal(64L * 1024 * 1024, UserArtifactsCollector.MaxRemoteToolLogBytes("TeamViewer15_Logfile.log"));
+    }
+
+    [Fact]
     public void The_standard_profile_reads_the_session_logs_through_its_own_collector_and_exactly_one_collector_reads_them_per_profile()
     {
         // 2026-11-15: before, only "Completă" read the session logs, so a standard investigation silently had no session evidence

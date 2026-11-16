@@ -12,11 +12,15 @@ public static class RemoteToolLogFormats
     public const string AnyDeskConnectionTrace = "anydesk_connection_trace";
     public const string AnyDeskTrace = "anydesk_trace";
     public const string TeamViewerConnections = "teamviewer_connections";
+    public const string TeamViewerLogfile = "teamviewer_logfile";
     public const int HeadBytes = 8 * 1024;
 
     private static readonly TimeSpan Timeout = TimeSpan.FromMilliseconds(200);
     internal static readonly Regex ConnectionTraceRow = new(@"^\s*(?<dir>Incoming|Outgoing)\s+(?<dt>\d{4}-\d{2}-\d{2},?\s+\d{2}:\d{2}(?::\d{2})?)(?<rest>.*)$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, Timeout);
     internal static readonly Regex TraceRow = new(@"^\s*(?<lvl>info|warning|warn|error|fatal|debug)\s+(?<d>\d{4}-\d{2}-\d{2})\s+(?<t>\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?)\s+(?<proc>\S+)\s+(?<pid>\d+)\s+(?<tid>\d+)\s+(?<n>\d+)\s+(?<mod>\S+)\s+-\s+(?<msg>.*)$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, Timeout);
+    /// <summary>A row of the TeamViewer main log: "2024/08/04 13:59:37.493  5348  964 S0   message" (local time, pid, tid, label such as 0 / S0 / G2 / D3 / H64 with an optional "!" or "!!", message).</summary>
+    internal static readonly Regex TeamViewerLogRow = new(@"^(?<d>\d{4}/\d{2}/\d{2}) (?<t>\d{2}:\d{2}:\d{2}\.\d{3})\s+(?<pid>\d{1,10})\s+(?<tid>\d{1,10})\s+(?<lbl>[A-Za-z]{0,2}\d{1,3}!{0,2})(?:\s+(?<msg>.*))?$", RegexOptions.CultureInvariant, Timeout);
+    private static readonly Regex TeamViewerLogName = new(@"^teamviewer\d{1,3}_logfile(?:_old)?\.log$", RegexOptions.CultureInvariant, Timeout);
     internal static readonly Regex TeamViewerTime = new(@"^\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}$", RegexOptions.CultureInvariant, Timeout);
 
     /// <summary>
@@ -28,8 +32,15 @@ public static class RemoteToolLogFormats
         "connection_trace.txt" => AnyDeskConnectionTrace,
         "ad.trace" or "ad_svc.trace" => AnyDeskTrace,
         "connections_incoming.txt" or "connections.txt" => TeamViewerConnections,
+        var n when IsTeamViewerLogName(n) => TeamViewerLogfile,
         _ => null,
     };
+
+    private static bool IsTeamViewerLogName(string lowerName)
+    {
+        try { return TeamViewerLogName.IsMatch(lowerName); }
+        catch (RegexMatchTimeoutException) { return false; }
+    }
 
     private static string StripCopySuffix(string name)
     {
@@ -41,7 +52,7 @@ public static class RemoteToolLogFormats
         return stem + name[dot..];
     }
 
-    public static bool IsKnown(string type) => type is AnyDeskConnectionTrace or AnyDeskTrace or TeamViewerConnections;
+    public static bool IsKnown(string type) => type is AnyDeskConnectionTrace or AnyDeskTrace or TeamViewerConnections or TeamViewerLogfile;
 
     /// <summary>The format of the file (name and content), or null. Never throws on a file that cannot be read: null.</summary>
     public static string? Detect(string path)
@@ -71,6 +82,7 @@ public static class RemoteToolLogFormats
                 if (l.Length == 0 || l.Length > 4096) continue;
                 if (kind == AnyDeskConnectionTrace && ConnectionTraceRow.IsMatch(l)) return kind;
                 if (kind == AnyDeskTrace && TraceRow.IsMatch(l)) return kind;
+                if (kind == TeamViewerLogfile && TeamViewerLogRow.IsMatch(l)) return kind;
                 if (kind == TeamViewerConnections)
                 {
                     var c = l.Split('\t');
