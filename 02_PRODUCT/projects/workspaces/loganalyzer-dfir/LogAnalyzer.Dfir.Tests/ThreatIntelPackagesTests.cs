@@ -16,6 +16,12 @@ namespace LogAnalyzer.Dfir.Tests;
 public sealed class ThreatIntelPackagesTests : IDisposable
 {
     private static readonly DateTimeOffset Now = DateTimeOffset.UtcNow;
+
+    /// <summary>
+    /// The rules snapshot of each test in its own folder (2026-11-16: with the shared default folder, a parallel test loading the same package deleted
+    /// this test's snapshot between its load and the engine reading it; CI failed once on the pipeline test).
+    /// </summary>
+    private string Snap => Path.Combine(_dir, "snap");
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "la_ti_" + Guid.NewGuid().ToString("N"));
     public void Dispose()
     {
@@ -91,11 +97,11 @@ public sealed class ThreatIntelPackagesTests : IDisposable
         var (check, staged) = s.Stage(Package("v1", 1), "ana", Cms, P.Trust(), P.Trusted);
         Assert.True(check.Ok, check.Headline);
         Assert.NotNull(staged);
-        Assert.Null(s.LoadActive(Cms, P.Trust(), P.Trusted).RulesRoot);
+        Assert.Null(s.LoadActive(Cms, P.Trust(), P.Trusted, Snap).RulesRoot);
 
         Assert.Contains("motiv", s.Approve(staged!.Id, "ioana", "", Cms, P.Trust(), P.Trusted).Result.Reason);
         Assert.True(s.Approve(staged.Id, "ioana", "pachet lunar CERT", Cms, P.Trust(), P.Trusted).Result.Ok);
-        var active = s.LoadActive(Cms, P.Trust(), P.Trusted);
+        var active = s.LoadActive(Cms, P.Trust(), P.Trusted, Snap);
         Assert.Equal(("CERT-TEST", 1), (active.PackageId, active.Version));
         var engine = DetectionEngine.Load(active.RulesRoot!);
         Assert.Contains(engine.Rules, r => r.RuleId.Contains("cert.csv", StringComparison.OrdinalIgnoreCase));
@@ -131,7 +137,7 @@ public sealed class ThreatIntelPackagesTests : IDisposable
         File.AppendAllText(Path.Combine(stagedDir, "ioc", "cert.csv"), "ip,6.6.6.6,strecurat\n");
         var (r, _) = s.Approve(staged.Id, "ioana", "ok", Cms, P.Trust(), P.Trusted);
         Assert.Contains("nu se mai verifică", r.Reason);
-        Assert.Null(s.LoadActive(Cms, P.Trust(), P.Trusted).RulesRoot);
+        Assert.Null(s.LoadActive(Cms, P.Trust(), P.Trusted, Snap).RulesRoot);
     }
 
     [Fact]
@@ -146,12 +152,12 @@ public sealed class ThreatIntelPackagesTests : IDisposable
         var (_, st2) = s.Stage(Package("v2", 2, previousSha: ShaOf(v1), ioc: "Type,Value\nip,10.0.0.9,c2\n"), "ana", Cms, P.Trust(), P.Trusted);
         Assert.True(s.Approve(st2!.Id, "ana", "v2", Cms, P.Trust(), P.Trusted).Result.Ok);
         Assert.Contains(s.HistoryEvents(), e => e.Kind == "approved" && e.Detail.Contains("aceeași persoană"));
-        Assert.Equal(2, s.LoadActive(Cms, P.Trust(), P.Trusted).Version);
+        Assert.Equal(2, s.LoadActive(Cms, P.Trust(), P.Trusted, Snap).Version);
 
         Assert.Contains("nu este mai nouă", s.Stage(Package("replay", 1), "ana", Cms, P.Trust(), P.Trusted).Check.Headline);   // re-import of v1 refused
         Assert.Contains("motiv", s.Rollback("CERT-TEST", 1, "ioana", "").Reason);
         Assert.True(s.Rollback("CERT-TEST", 1, "ioana", "v2 dă fals pozitive").Ok);
-        Assert.Equal(1, s.LoadActive(Cms, P.Trust(), P.Trusted).Version);
+        Assert.Equal(1, s.LoadActive(Cms, P.Trust(), P.Trusted, Snap).Version);
         Assert.Contains("nu este mai nouă", s.Stage(Package("v2again", 2, previousSha: ShaOf(v1)), "ana", Cms, P.Trust(), P.Trusted).Check.Headline);
         Assert.Contains("nu a fost aprobată", s.Rollback("CERT-TEST", 7, "ioana", "x").Reason);
     }
@@ -165,17 +171,17 @@ public sealed class ThreatIntelPackagesTests : IDisposable
         var csv = Path.Combine(s.Root, "Versions", "CERT-TEST-v1", "ioc", "cert.csv");
         var original = File.ReadAllText(csv);
         File.AppendAllText(csv, "ip,6.6.6.6,strecurat\n");
-        Assert.Contains("nu se mai verifică", s.LoadActive(Cms, P.Trust(), P.Trusted).Problem);
+        Assert.Contains("nu se mai verifică", s.LoadActive(Cms, P.Trust(), P.Trusted, Snap).Problem);
         File.WriteAllText(csv, original);
-        Assert.NotNull(s.LoadActive(Cms, P.Trust(), P.Trusted).RulesRoot);
+        Assert.NotNull(s.LoadActive(Cms, P.Trust(), P.Trusted, Snap).RulesRoot);
 
         File.WriteAllText(Path.Combine(s.Root, "active.json"), File.ReadAllText(Path.Combine(s.Root, "active.json")).Replace("\"version\": 1", "\"version\": 9"));
-        Assert.Contains("nu corespunde ultimei aprobări", s.LoadActive(Cms, P.Trust(), P.Trusted).Problem);
+        Assert.Contains("nu corespunde ultimei aprobări", s.LoadActive(Cms, P.Trust(), P.Trusted, Snap).Problem);
 
         var lines = File.ReadAllLines(s.HistoryPath);
         lines[0] = lines[0].Replace("\"ana\"", "\"mallory\"");
         File.WriteAllLines(s.HistoryPath, lines);
-        Assert.Contains("compromis", s.LoadActive(Cms, P.Trust(), P.Trusted).Problem);
+        Assert.Contains("compromis", s.LoadActive(Cms, P.Trust(), P.Trusted, Snap).Problem);
     }
 
     [Fact]
@@ -184,7 +190,7 @@ public sealed class ThreatIntelPackagesTests : IDisposable
         var s = Store();
         var (_, st) = s.Stage(Package("v1", 1), "ana", Cms, P.Trust(), P.Trusted);
         Assert.True(s.Approve(st!.Id, "ioana", "v1", Cms, P.Trust(), P.Trusted).Result.Ok);
-        var active = s.LoadActive(Cms, P.Trust(), P.Trusted);
+        var active = s.LoadActive(Cms, P.Trust(), P.Trusted, Snap);
 
         var evidence = Path.Combine(_dir, "note.txt");
         File.WriteAllText(evidence, "x");
@@ -219,7 +225,7 @@ public sealed class ThreatIntelPackagesTests : IDisposable
         Assert.StartsWith(Path.Combine(_dir, "snap"), active.RulesRoot);                                      // never the store folder
         Assert.Single(Directory.EnumerateFiles(active.RulesRoot!, "*", SearchOption.AllDirectories));
         File.WriteAllText(Path.Combine(s.Root, "Versions", "CERT-TEST-v1", "ioc", "plantat.csv"), "Type,Value\nip,6.6.6.6\n");
-        Assert.Contains("fișiere nesemnate", s.LoadActive(Cms, P.Trust(), P.Trusted).Problem);
+        Assert.Contains("fișiere nesemnate", s.LoadActive(Cms, P.Trust(), P.Trusted, Snap).Problem);
     }
 
     [Fact]
@@ -238,7 +244,7 @@ public sealed class ThreatIntelPackagesTests : IDisposable
         File.WriteAllLines(s.HistoryPath, linesAtV1);
         File.WriteAllText(Path.Combine(s.Root, "active.json"), oldActive);
         Assert.Equal(ChainStatus.Broken, s.VerifyHistory().Status);
-        Assert.Contains("compromis", s.LoadActive(Cms, P.Trust(), P.Trusted).Problem);
+        Assert.Contains("compromis", s.LoadActive(Cms, P.Trust(), P.Trusted, Snap).Problem);
     }
 
     [Fact]
@@ -246,7 +252,7 @@ public sealed class ThreatIntelPackagesTests : IDisposable
     {
         var (s, _) = Approved();
         File.Delete(s.HistoryPath);
-        Assert.Contains("istoricul pachetelor lipsește", s.LoadActive(Cms, P.Trust(), P.Trusted).Problem);
+        Assert.Contains("istoricul pachetelor lipsește", s.LoadActive(Cms, P.Trust(), P.Trusted, Snap).Problem);
     }
 
     [Fact]
@@ -278,7 +284,7 @@ public sealed class ThreatIntelPackagesTests : IDisposable
         File.WriteAllBytes(Path.Combine(dir, ThreatIntelManifest.SignatureName), FakeCms.Sign(json));
         var (_, st) = s.Stage(dir, "ana", Cms, P.Trust(), P.Trusted);
         Assert.True(s.Approve(st!.Id, "ioana", "x", Cms, P.Trust(), P.Trusted).Result.Ok);
-        var a = s.LoadActive(Cms, P.Trust(), P.Trusted);
+        var a = s.LoadActive(Cms, P.Trust(), P.Trusted, Snap);
         Assert.NotNull(a.RulesRoot);
         Assert.Contains("a expirat", a.Problem);
     }
@@ -287,7 +293,7 @@ public sealed class ThreatIntelPackagesTests : IDisposable
     public void Round2_a_missing_seal_key_or_an_unsafe_store_is_said_as_such_and_refuses_everything_and_snapshots_do_not_pile_up()
     {
         var noKey = new ThreatIntelStore(Path.Combine(_dir, "nokey"), null, @sealed: true);
-        Assert.Contains("cheia de sigilare", noKey.LoadActive(Cms, P.Trust(), P.Trusted).Problem);
+        Assert.Contains("cheia de sigilare", noKey.LoadActive(Cms, P.Trust(), P.Trusted, Snap).Problem);
         Assert.Contains("cheia de sigilare", noKey.Stage(Package("k", 1), "ana", Cms, P.Trust(), P.Trusted).Check.Headline);
 
         var unsafeStore = new ThreatIntelStore(Path.Combine(_dir, "unsafe"), refusal: "depozitul pachetelor are drepturi nesigure");
@@ -298,5 +304,20 @@ public sealed class ThreatIntelPackagesTests : IDisposable
         s.LoadActive(Cms, P.Trust(), P.Trusted, Path.Combine(_dir, "snap"));
         s.LoadActive(Cms, P.Trust(), P.Trusted, Path.Combine(_dir, "snap"));
         Assert.Single(Directory.GetDirectories(Path.Combine(_dir, "snap")));
+    }
+
+    [Fact]
+    public void A_load_keeps_the_recent_snapshot_of_another_process_and_removes_old_ones()
+    {
+        // 2026-11-16: the load removed every other snapshot, including the one an analysis in another process was about to read
+        var (s, _) = Approved();
+        var other = Directory.CreateDirectory(Path.Combine(_dir, "snap", "CERT-TEST-v1-0000000000000000-p999999")).FullName;
+        File.WriteAllText(Path.Combine(other, "rule.csv"), "x");
+        var old = Directory.CreateDirectory(Path.Combine(_dir, "snap", "CERT-TEST-v1-1111111111111111-p999998")).FullName;
+        Directory.SetLastWriteTimeUtc(old, DateTime.UtcNow - ThreatIntelStore.SnapshotMaxAge - TimeSpan.FromHours(1));
+        s.LoadActive(Cms, P.Trust(), P.Trusted, Path.Combine(_dir, "snap"));
+        Assert.True(Directory.Exists(other));                                         // another process, recent: kept
+        Assert.False(Directory.Exists(old));                                          // another process, older than a day: removed
+        Assert.Single(Directory.GetDirectories(Path.Combine(_dir, "snap")), d => d.EndsWith($"-p{Environment.ProcessId}", StringComparison.Ordinal));
     }
 }

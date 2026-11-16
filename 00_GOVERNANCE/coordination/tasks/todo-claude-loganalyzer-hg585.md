@@ -1022,3 +1022,10 @@
   Not related to the diff (it touched RemoteCollection / InvestigationPipeline.Import / the UI); passes locally in Release 3/3; the same test was
   green on 8532d2161 (32/32). Certificate windows are years wide (not a clock edge). Treated as FLAKY, NOT investigated to the root yet:
   next session reads CI of f2c909abd once; if it fails again, investigate (shared state under parallel xUnit, store dir, package load timing).
+- 2026-11-16 CI flake ROOT CAUSE FOUND + FIXED (ThreatIntelPackagesTests pipeline test, failed once on d6343d167; c685475ce 32/32 green).
+  ThreatIntelStore.LoadActive wrote the rules snapshot to the SHARED %TEMP%\LogAnalyzer-ti and deleted EVERY other snapshot on each load; the
+  engine reads the files much later without holding them open, so a parallel test loading the same package (same folder name) deleted this
+  test's snapshot before the engine read it. Same race in production with two app instances / two analyses (two instances seen today in the
+  lab). Fix: snapshot per process (name suffix -p<pid>); a load removes this process' older snapshots and only other processes' snapshots
+  older than SnapshotMaxAge (1 day). Tests: every LoadActive in the test class uses the test's own folder; new
+  A_load_keeps_the_recent_snapshot_of_another_process_and_removes_old_ones. Dfir 3886 (3853 passed, 33 skipped) exit 0.

@@ -332,6 +332,9 @@ public sealed class ThreatIntelStore
     /// The rules root to give the detection engine, or why there is none. Verified on every load: the active pointer must name an approved version
     /// with the same manifest hash as the history, and the folder must still pass <see cref="Verify"/>.
     /// </summary>
+    /// <summary>A snapshot of another process is removed only after this age (it may belong to an analysis still running there).</summary>
+    public static readonly TimeSpan SnapshotMaxAge = TimeSpan.FromDays(1);
+
     public ActiveThreatIntel LoadActive(ICmsDetachedVerifier verifier, QualifiedSignatureTrust trust, IReadOnlyList<string> trustedPublishers, string? snapshotRoot = null)
     {
         if (Refusal.Length > 0) return ActiveThreatIntel.None(Refusal);
@@ -353,11 +356,21 @@ public sealed class ThreatIntelStore
         // The engine reads a private snapshot written from bytes hashed while being copied, never the store folder itself (review 2026-11-08: a file
         // swapped between this check and the engine's load, much later in the run, would have been used).
         // one snapshot per manifest, rewritten from the verified bytes each time; older snapshots are removed (review round 2: one new folder per load)
+        // 2026-11-16 (a CI failure traced to it): the snapshot folder is shared by every process of the station, and the engine reads the files much later
+        // without holding them open, so deleting "every other snapshot" removed the rules of an analysis running in ANOTHER process (two app instances,
+        // or parallel test runs) between its load and its use. A snapshot is now per process; a load removes this process' older snapshots and only
+        // the snapshots of other processes that are more than a day old.
         var snapBase = snapshotRoot ?? Path.Combine(Path.GetTempPath(), "LogAnalyzer-ti");
-        var snap = Path.Combine(snapBase, $"{a.PackageId}-v{a.Version}-{a.ManifestSha256[..16]}");
+        var mine = $"-p{Environment.ProcessId}";
+        var snap = Path.Combine(snapBase, $"{a.PackageId}-v{a.Version}-{a.ManifestSha256[..16]}{mine}");
         if (Directory.Exists(snapBase))
             foreach (var old in Directory.GetDirectories(snapBase))
-                try { DeleteTree(old); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* in use by a running analysis: left for the next load */ }
+            {
+                bool ours = Path.GetFileName(old).EndsWith(mine, StringComparison.Ordinal);
+                bool stale = DateTime.UtcNow - Directory.GetLastWriteTimeUtc(old) > SnapshotMaxAge;
+                if (!ours && !stale) continue;
+                try { DeleteTree(old); } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { /* in use: left for a later load */ }
+            }
         foreach (var f in check.Manifest!.Files)
         {
             var bytes = File.ReadAllBytes(Path.Combine(dir, f.Path.Replace('/', Path.DirectorySeparatorChar)));
