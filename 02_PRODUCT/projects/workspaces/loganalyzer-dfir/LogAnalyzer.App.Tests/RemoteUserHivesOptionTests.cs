@@ -69,6 +69,56 @@ public sealed class RemoteUserHivesOptionTests
         Assert.DoesNotContain("RemoteCollection.KnownArtifacts);", src.Substring(src.IndexOf("private void GenerateRemotePackage", StringComparison.Ordinal), 900));
     }
 
+    private const string HistoryLabel = "Include istoricul personal (SRUM, fișiere recente)";
+
+    [Fact]
+    public void The_personal_history_checkbox_exists_in_the_tab_is_unticked_by_default_and_carries_an_automation_name()
+    {
+        var doc = XDocument.Parse(AppFile("Views", "InvestigationView.xaml"));
+        var box = doc.Descendants().Single(e => e.Name.LocalName == "CheckBox" && (string?)e.Attribute("Content") == HistoryLabel);
+        Assert.Equal(HistoryLabel, (string?)box.Attributes().Single(a => a.Name.LocalName == "AutomationProperties.Name").Value);
+        Assert.Equal("{Binding RemoteIncludePersonalHistory}", (string?)box.Attribute("IsChecked"));
+        Assert.Equal("Colectare la distanță", (string?)box.Ancestors().First(e => e.Name.LocalName == "TabItem").Attribute("Header"));
+        Assert.False(new InvestigationViewModel().RemoteIncludePersonalHistory);
+    }
+
+    [Fact]
+    public void The_personal_history_box_adds_SRUM_and_recent_items_to_the_list_only_when_ticked_and_the_status_says_so()
+    {
+        var vm = new InvestigationViewModel();
+        var off = InvestigationViewModel.RemoteWithPersonalHistory(InvestigationViewModel.RemoteArtifactList(vm.RemoteIncludeUserHives), vm.RemoteIncludePersonalHistory);
+        Assert.DoesNotContain("srum", off);
+        Assert.DoesNotContain("recent-items", off);
+        Assert.Equal(RemoteCollection.KnownArtifacts, off);
+        Assert.Contains("amcache", off); Assert.Contains("setupapi", off); Assert.Contains("firewall-log", off);   // the new defaults are in without any box
+
+        vm.RemoteIncludePersonalHistory = true;
+        var on = InvestigationViewModel.RemoteWithPersonalHistory(InvestigationViewModel.RemoteArtifactList(vm.RemoteIncludeUserHives), vm.RemoteIncludePersonalHistory);
+        Assert.Equal([.. RemoteCollection.KnownArtifacts, "srum", "recent-items"], on);
+        vm.RemoteIncludeUserHives = true;
+        Assert.Equal([.. RemoteCollection.KnownArtifacts, "user-hives", "srum", "recent-items"],
+            InvestigationViewModel.RemoteWithPersonalHistory(InvestigationViewModel.RemoteArtifactList(vm.RemoteIncludeUserHives), vm.RemoteIncludePersonalHistory));
+
+        Assert.Contains("nu este inclus", InvestigationViewModel.RemoteGeneratedStatus("R1", "PC01", "c.ps1", false));
+        var yes = InvestigationViewModel.RemoteGeneratedStatus("R1", "PC01", "c.ps1", false, true);
+        Assert.Contains("ESTE inclus", yes);
+        Assert.DoesNotContain("nu este inclus", yes);
+    }
+
+    [Fact]
+    public void GenerateRemotePackage_takes_the_personal_history_from_the_box_and_the_choice_goes_back_to_unticked_after_each_request()
+    {
+        var src = AppFile("ViewModels", "InvestigationViewModel.cs");
+        var body = src.Substring(src.IndexOf("private void GenerateRemotePackage", StringComparison.Ordinal), 1400);
+        Assert.Contains("var includeHistory = RemoteIncludePersonalHistory;", body);
+        Assert.Contains("RemoteWithPersonalHistory(RemoteArtifactList(includeHives), includeHistory)", body);
+        Assert.True(body.IndexOf("EndRemoteRequest();", StringComparison.Ordinal) > body.IndexOf("RemoteCollection.Authorize", StringComparison.Ordinal));
+        var vm = new InvestigationViewModel { RemoteIncludeUserHives = true, RemoteIncludePersonalHistory = true };
+        vm.EndRemoteRequest();
+        Assert.False(vm.RemoteIncludeUserHives);
+        Assert.False(vm.RemoteIncludePersonalHistory);
+    }
+
     [Fact]
     public void The_choice_applies_to_one_request_only_and_goes_back_to_unticked()
     {

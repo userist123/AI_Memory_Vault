@@ -174,6 +174,7 @@ public sealed class InvestigationPipeline
         IReadOnlyDictionary<string, (string SourceType, string Note)>? carried = null)
     {
         var list = new List<EvidenceItem>();
+        var srumFolders = new Dictionary<string, string>(StringComparer.Ordinal);
         var all = files.ToList();
         foreach (var f in all)
         {
@@ -184,6 +185,21 @@ public sealed class InvestigationPipeline
             // the Windows Search index: Windows.db and the -wal beside it go together into one folder, so the parser finds the journal next to the database;
             // a -wal selected on its own beside a selected Windows.db is taken with it, not imported twice
             if (IsSearchDatabaseType(type)) { list.AddRange(ImportSearchIndex(ws, f, type)); continue; }
+            // a SRUM set that came from a remote package (its notes carry the set key) stays together, with the original names, in one folder per key:
+            // SrumNetworkParser looks for the ESE logs beside the database and checks them against the case index
+            if (type is "srum" or LogAnalyzer.Dfir.Windows.Acquisition.SrumCollector.SrumLogSourceType && SrumSetKey(carriedNote) is { } srumKey)
+            {
+                var folder = srumFolders.TryGetValue(srumKey, out var known0) ? known0 : srumFolders[srumKey] = Directory.CreateDirectory(Path.Combine(ws.RawDir("Import:srum"), "SRUM_" + srumKey)).FullName;
+                var sdest = Path.Combine(folder, Path.GetFileName(f));
+                using (var src = new FileStream(f, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+                using (var dst = new FileStream(sdest, FileMode.CreateNew, FileAccess.Write))
+                    src.CopyTo(dst);
+                File.SetLastWriteTimeUtc(sdest, File.GetLastWriteTimeUtc(f));
+                list.Add(ws.RegisterStored(sdest, f, "Import:srum", type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion, action: "imported",
+                    notes: "Importat de operator din: " + f + "; la importul pachetului: " + carriedNote,
+                    timezone: zones is not null && zones.TryGetValue(f, out var szone) ? szone : null));
+                continue;
+            }
             if (f.EndsWith("-wal", StringComparison.OrdinalIgnoreCase) && all.Any(x => x.Equals(f[..^4], StringComparison.OrdinalIgnoreCase) && IsSearchDatabaseType(ImportType(x)))) continue;
             // E1: an archived log ("Archive-Security-<date>.evtx") is the Security channel; E1/E10: the origin (archived log, Windows.old, shadow copy) goes into the notes and custody.
             var source = type == "evtx" ? LogAnalyzer.Dfir.Windows.Acquisition.HistoricalSources.ChannelFromFileName(f) : type;
@@ -202,9 +218,25 @@ public sealed class InvestigationPipeline
     }
 
     /// <summary>
+    /// The key of a remote SRUM set in the notes of an item: <see cref="LogAnalyzer.Dfir.Windows.Acquisition.RemoteCollection.SrumSetKeyPrefix"/> + 32 hex digits
+    /// as the LAST segment of the notes, where the import writes it; null when there is none. Review 2026-11-16 MED: the notes also carry the user name from
+    /// the target's manifest, so a "set SRUM: …" planted there must not be taken for the key (it would merge two sets into one folder).
+    /// </summary>
+    internal static string? SrumSetKey(string notes)
+    {
+        const string sep = "; ";
+        var marker = sep + LogAnalyzer.Dfir.Windows.Acquisition.RemoteCollection.SrumSetKeyPrefix;
+        var i = notes.LastIndexOf(marker, StringComparison.Ordinal);
+        if (i < 0) return null;
+        var k = notes.AsSpan(i + marker.Length);
+        return k.Length == 32 && Guid.TryParseExact(k, "N", out _) ? k.ToString() : null;
+    }
+
+    /// <summary>
     /// Imports a Windows Search Windows.db with the Windows.db-wal beside it (if any) into one new folder of the case, so the journal sits next to the
     /// database. The note says whether a journal was there; the pair still cannot be vouched for as one state (the parser writes that gap).
     /// </summary>
+
     private static bool IsSearchDatabaseType(string type) =>
         type == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchIndexParser.SourceTypeName || type == LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName;
 

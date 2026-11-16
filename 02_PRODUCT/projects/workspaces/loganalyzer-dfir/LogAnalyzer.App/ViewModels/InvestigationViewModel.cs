@@ -236,17 +236,24 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private string _remoteJustification = "";
         /// <summary>Unticked by default: the user hives hold personal history, so they are in a package only when the operator asks.</summary>
         [ObservableProperty] private bool _remoteIncludeUserHives;
+        /// <summary>Unticked by default, like the user hives: SRUM and the recent items (shortcuts, Jump Lists) are personal history, so they are in a package only when the operator asks. One box for both.</summary>
+        [ObservableProperty] private bool _remoteIncludePersonalHistory;
 
         /// <summary>The artifact list a package request carries: the default list, plus "user-hives" only when the operator ticked the box.</summary>
         public static IReadOnlyList<string> RemoteArtifactList(bool includeUserHives) => RemoteCollection.ArtifactsFor(includeUserHives);
 
+        /// <summary>The list of <see cref="RemoteArtifactList"/> plus SRUM and the recent items when the operator ticked the personal-history box.</summary>
+        public static IReadOnlyList<string> RemoteWithPersonalHistory(IReadOnlyList<string> list, bool includePersonalHistory) =>
+            includePersonalHistory ? [.. list, .. RemoteCollection.PersonalHistoryArtifacts.Where(a => !list.Contains(a))] : list;
+
         /// <summary>Called as soon as a request is authorized: the choice of the user hives applies to that request only, so a new request needs a new tick.</summary>
-        public void EndRemoteRequest() => RemoteIncludeUserHives = false;
+        public void EndRemoteRequest() { RemoteIncludeUserHives = false; RemoteIncludePersonalHistory = false; }
 
         /// <summary>The status line after a package is generated; it says whether the user hives were included.</summary>
-        public static string RemoteGeneratedStatus(string requestId, string host, string scriptFile, bool includeUserHives) =>
+        public static string RemoteGeneratedStatus(string requestId, string host, string scriptFile, bool includeUserHives, bool includePersonalHistory = false) =>
             $"Cererea {requestId} autorizată pentru {host} și înregistrată în caz. " +
             (includeUserHives ? "Hive-urile utilizatorilor (NTUSER.DAT, UsrClass.dat) SUNT incluse în pachet (istoric personal). " : "Hive-urile utilizatorilor NU sunt incluse în pachet. ") +
+            (includePersonalHistory ? "Istoricul personal (SRUM, fișiere recente) ESTE inclus în pachet. " : "Istoricul personal (SRUM, fișiere recente) nu este inclus în pachet. ") +
             $"Rulați {scriptFile} ca administrator pe {host}; aduceți folderul LA_{host}_… înapoi și apăsați „Verifică și importă”.";
         [ObservableProperty] private string _remoteStatus = "Pachetul rulează pe stația țintă (local, fără rețea), calculează SHA-256 acolo; îl aduceți pe suport extern și îl verificați aici înainte de import.";
 
@@ -664,12 +671,13 @@ namespace LogAnalyzer.UI.ViewModels
             IntegrityLine = LogAnalyzer.UI.Services.LiveCase.IntegrityLine ?? "";
                 using var id = System.Security.Principal.WindowsIdentity.GetCurrent();
                 var includeHives = RemoteIncludeUserHives;
-                var (req, sha) = RemoteCollection.Authorize(ws, RemoteHost, id.Name, RemoteJustification, RemoteArtifactList(includeHives));
+                var includeHistory = RemoteIncludePersonalHistory;
+                var (req, sha) = RemoteCollection.Authorize(ws, RemoteHost, id.Name, RemoteJustification, RemoteWithPersonalHistory(RemoteArtifactList(includeHives), includeHistory));
                 EndRemoteRequest();
                 var dlg = new SaveFileDialog { FileName = $"Colectare_{req.TargetHost}.ps1", Filter = "PowerShell (*.ps1)|*.ps1" };
                 if (dlg.ShowDialog() != true) { RemoteStatus = $"Cererea {req.RequestId} a fost autorizată, dar pachetul nu a fost salvat."; return; }
                 File.WriteAllText(dlg.FileName, RemoteCollection.PackageScript(req, sha), new System.Text.UTF8Encoding(true));
-                RemoteStatus = RemoteGeneratedStatus(req.RequestId, req.TargetHost, Path.GetFileName(dlg.FileName), includeHives);
+                RemoteStatus = RemoteGeneratedStatus(req.RequestId, req.TargetHost, Path.GetFileName(dlg.FileName), includeHives, includeHistory);
             }
             catch (ArgumentException ex) { RemoteStatus = "Oprit: " + ex.Message; }
         }

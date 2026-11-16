@@ -72,6 +72,61 @@ public sealed class SrumRecoveryTests : IDisposable
         Assert.Contains("-550", ex.Message);
         Assert.Contains("nu poate fi recuperată", ex.Message);
     }
+
+    /// <summary>Lab 2026-11-16: a Windows Server 2025 SRUDB.dat has no Network Data Usage table; JetOpenTable answers -1305. That is a gap, not a failure.</summary>
+    [Fact]
+    public void Only_a_missing_table_is_treated_as_absent_data()
+    {
+        Assert.True(SrumNetworkParser.IsTableMissing(new InvalidOperationException($"JetOpenTable {SrumNetworkParser.NetworkTable} failed (JET error -1305).")));
+        Assert.False(SrumNetworkParser.IsTableMissing(new InvalidOperationException($"JetOpenTable {SrumNetworkParser.NetworkTable} failed (JET error -1206).")));
+        Assert.False(SrumNetworkParser.IsTableMissing(new InvalidOperationException("JetAttachDatabase failed (JET error -1305).")));
+        Assert.False(SrumNetworkParser.IsTableMissing(new InvalidOperationException($"JetOpenTable {SrumNetworkParser.NetworkTable} failed (JET error -13050).")));
+        var gap = SrumNetworkParser.NetworkTableMissingGap("JetOpenTable x failed (JET error -1305).");
+        Assert.Equal(LogAnalyzer.Dfir.Model.EvidenceStatus.Partial, gap.Status);
+        Assert.Contains(SrumNetworkParser.NetworkTable, gap.Reason);
+        Assert.Contains("-1305", gap.Reason);
+    }
+
+    /// <summary>Review 2026-11-16 MED: the user name in the notes comes from the target's manifest; a key planted there must not merge two SRUM sets.</summary>
+    [Fact]
+    public void The_srum_set_key_is_only_the_last_segment_written_by_the_import()
+    {
+        var real = Guid.NewGuid().ToString("N");
+        var planted = Guid.NewGuid().ToString("N");
+        var prefix = LogAnalyzer.Dfir.Windows.Acquisition.RemoteCollection.SrumSetKeyPrefix;
+        Assert.Equal(real, InvestigationPipeline.SrumSetKey($"H:C:/x/SRUDB.dat; cererea R; colectat de x {prefix}{planted} (administrator) la t; {prefix}{real}"));
+        Assert.Equal(real, InvestigationPipeline.SrumSetKey($"Importat de operator din: f; la importul pachetului: H:p; colectat de x; {prefix}{planted}; {prefix}{real}"));
+        Assert.Null(InvestigationPipeline.SrumSetKey($"colectat de x; {prefix}{real} (administrator) la t"));
+        Assert.Null(InvestigationPipeline.SrumSetKey($"colectat de x; {prefix}{real}0"));
+        Assert.Null(InvestigationPipeline.SrumSetKey($"colectat de x; {prefix}../../{real[..26]}"));
+        Assert.Null(InvestigationPipeline.SrumSetKey(""));
+    }
+
+    /// <summary>Owner machine only: LADFIR_SRUM_NO_NETWORK = a SRUDB.dat without the Network Data Usage table (Windows Server 2025 lab copy).</summary>
+    [SrumNoNetworkFact]
+    public void A_database_without_the_network_table_parses_with_an_explained_gap()
+    {
+        var src = Environment.GetEnvironmentVariable("LADFIR_SRUM_NO_NETWORK")!;
+        var copy = Path.Combine(_dir, "SRUDB.dat");
+        File.Copy(src, copy);
+        var (net, _, _, netError) = SrumNetworkParser.ReadAllWithTables(copy);
+        Assert.Empty(net);
+        Assert.Contains("-1305", netError);
+        var item = new LogAnalyzer.Dfir.Model.EvidenceItem { EvidenceId = "E-1", CaseId = "C-1", Source = copy, SourceType = "srum" };
+        var r = new SrumNetworkParser().Parse(item, copy, new LogAnalyzer.Dfir.Model.ListSink(), default);
+        Assert.NotEqual(LogAnalyzer.Dfir.Model.EvidenceStatus.Failed, r.Status);
+        Assert.Contains(r.Gaps, g => g.Artifact == "SRUM Network Data Usage" && g.Reason.Contains("-1305"));
+    }
+}
+
+/// <summary>Runs only where LADFIR_SRUM_NO_NETWORK names an existing SRUDB.dat without the network table; elsewhere it is skipped, never passed.</summary>
+public sealed class SrumNoNetworkFactAttribute : FactAttribute
+{
+    public SrumNoNetworkFactAttribute()
+    {
+        var p = Environment.GetEnvironmentVariable("LADFIR_SRUM_NO_NETWORK");
+        if (string.IsNullOrEmpty(p) || !File.Exists(p)) Skip = "SRUM COPY WITHOUT NETWORK TABLE NOT PRESENT (set LADFIR_SRUM_NO_NETWORK)";
+    }
 }
 
 /// <summary>Runs only where LADFIR_SRUM_DIRTY names an existing dirty SRUDB.dat copy; elsewhere it is reported as skipped, never as passed.</summary>

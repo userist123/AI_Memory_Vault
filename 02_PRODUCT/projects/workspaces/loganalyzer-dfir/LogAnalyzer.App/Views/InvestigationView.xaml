@@ -919,6 +919,8 @@
                     </WrapPanel>
                     <CheckBox Content="Include hive-urile utilizatorilor (NTUSER.DAT, UsrClass.dat: istoric personal)" IsChecked="{Binding RemoteIncludeUserHives}"
                               AutomationProperties.Name="Include hive-urile utilizatorilor (NTUSER.DAT, UsrClass.dat: istoric personal)" Margin="0,0,0,8"/>
+                    <CheckBox Content="Include istoricul personal (SRUM, fișiere recente)" IsChecked="{Binding RemoteIncludePersonalHistory}"
+                              AutomationProperties.Name="Include istoricul personal (SRUM, fișiere recente)" Margin="0,0,0,8"/>
                     <WrapPanel Margin="0,0,0,8">
                         <Button Content="Autorizează și generează pachetul…" Command="{Binding GenerateRemotePackageCommand}" Margin="0,0,6,0"/>
                         <Button Content="Verifică și importă pachetul…" Command="{Binding ImportRemotePackageCommand}" Style="{StaticResource OutlineButtonStyle}"/>

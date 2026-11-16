@@ -24,6 +24,7 @@ public sealed class SrumNetworkParser : EvidenceParserBase
             "Se citesc tabelele Network Data Usage (octeți per aplicație și interfață) și Network Connectivity (durata conectării per interfață); celelalte tabele SRUM nu sunt citite.",
             "Ora unui rând este sfârșitul intervalului de agregare (aproximativ 1 h), nu momentul transferului.",
             "O bază „murdară” fără jurnalele ESE poate pierde ultimele înregistrări.",
+            "O bază fără tabela Network Data Usage (de exemplu cea de pe Windows Server 2025) este raportată ca lacună cu motiv, nu ca eșec.",
         ],
         Status = ParserMaturity.Validated,
         Validation = "CorpusRegressionTests (srum), InvestigationTests pe corpusul VendorAgent",
@@ -44,10 +45,21 @@ public sealed class SrumNetworkParser : EvidenceParserBase
     /// <summary>Both SRUM network tables. <c>ConnectivityError</c> is "" when the Network Connectivity table was read, else why not (the usage rows are still returned).</summary>
     public static (List<SrumNetRow> Network, List<SrumConnRow> Connectivity, string ConnectivityError) ReadAll(string srudbPath, CancellationToken ct = default)
     {
+        var (net, conn, connError, _) = ReadAllWithTables(srudbPath, ct);
+        return (net, conn, connError);
+    }
+
+    /// <summary>
+    /// As <see cref="ReadAll"/>, plus <c>NetworkError</c>: "" when the Network Data Usage table was read, else why it is absent
+    /// (JET -1305, the table does not exist in this database: lab 2026-11-16, a Windows Server 2025 SRUDB.dat has no such table).
+    /// Any other error opening it still fails the read.
+    /// </summary>
+    internal static (List<SrumNetRow> Network, List<SrumConnRow> Connectivity, string ConnectivityError, string NetworkError) ReadAllWithTables(string srudbPath, CancellationToken ct = default)
+    {
         var conn = new List<SrumConnRow>();
         string connError = "";
         _lastRecovery = "";
-        var rows = ReadCore(srudbPath, ct, db =>
+        var (rows, netError) = ReadCore(srudbPath, ct, db =>
         {
             try
             {
@@ -63,10 +75,14 @@ public sealed class SrumNetworkParser : EvidenceParserBase
             }
             catch (InvalidOperationException ex) { connError = ex.Message; }
         });
-        return (rows, conn, connError);
+        return (rows, conn, connError, netError);
     }
 
-    private static List<SrumNetRow> ReadCore(string srudbPath, CancellationToken ct, Action<EseReadOnlyDatabase> extra)
+    /// <summary>True only for "the table does not exist" (JET_errObjectNotFound, -1305), as <see cref="EseReadOnlyDatabase.OpenTable"/> words it.</summary>
+    internal static bool IsTableMissing(InvalidOperationException ex) =>
+        ex.Message.StartsWith("JetOpenTable ", StringComparison.Ordinal) && ex.Message.Contains("(JET error -1305)", StringComparison.Ordinal);
+
+    private static (List<SrumNetRow> Rows, string NetworkError) ReadCore(string srudbPath, CancellationToken ct, Action<EseReadOnlyDatabase> extra)
     {
         var work = LogAnalyzer.Dfir.IO.WorkFolders.NewWorkDirectory(srudbPath, "srum");   // security audit #14: never %TEMP%
         try
@@ -75,6 +91,7 @@ public sealed class SrumNetworkParser : EvidenceParserBase
             File.Copy(srudbPath, copy);
             File.SetAttributes(copy, FileAttributes.Normal);
             var rows = new List<SrumNetRow>();
+            string netError = "";
             using (var db = OpenOrRecover(copy, Path.GetDirectoryName(Path.GetFullPath(srudbPath))!, work, ct))
             {
                 var idmap = new Dictionary<int, string>();
@@ -88,7 +105,11 @@ public sealed class SrumNetworkParser : EvidenceParserBase
                         idmap[idx] = blob is null ? "" : r.Byte(cType) == 3 ? SidToString(blob) : System.Text.Encoding.Unicode.GetString(blob).TrimEnd('\0');
                     }
                 }
-                using (var t = db.OpenTable(NetworkTable))
+                EseReadOnlyDatabase.Table? netTable = null;
+                try { netTable = db.OpenTable(NetworkTable); }
+                catch (InvalidOperationException ex) when (IsTableMissing(ex)) { netError = ex.Message; }
+                if (netTable is not null)
+                using (var t = netTable)
                 {
                     uint cTs = t.Column("TimeStamp"), cApp = t.Column("AppId"), cUser = t.Column("UserId"), cIf = t.Column("InterfaceLuid"),
                          cSent = t.Column("BytesSent"), cRecv = t.Column("BytesRecvd");
@@ -103,7 +124,7 @@ public sealed class SrumNetworkParser : EvidenceParserBase
                 }
                 extra(db);
             }
-            return rows;
+            return (rows, netError);
         }
         finally
         {
@@ -178,9 +199,17 @@ public sealed class SrumNetworkParser : EvidenceParserBase
         return (logs, "");
     }
 
+    /// <summary>The gap for a SRUDB.dat that has no Network Data Usage table: the data never existed in this database, so no other copy of it helps.</summary>
+    internal static EvidenceGap NetworkTableMissingGap(string why) =>
+        new("SRUM Network Data Usage", EvidenceStatus.Partial,
+            $"sursă lipsă: tabela SRUM Network Data Usage {NetworkTable} nu există în această bază ({why}); așa arată, de exemplu, o bază SRUM de pe Windows Server 2025",
+            "Volumul de date trimis/primit per aplicație nu se poate lua din SRUM pentru această stație",
+            "jurnalele firewall-ului, ale proxy-ului sau ale echipamentelor de rețea pentru aceeași perioadă", "Nu");
+
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
-        var (network, connectivity, connError) = ReadAll(fullPath, ct);
+        var (network, connectivity, connError, netError) = ReadAllWithTables(fullPath, ct);
+        if (netError.Length > 0) result.Gaps.Add(NetworkTableMissingGap(netError));
         if (_lastRecovery is { Length: > 0 } recovered)
             result.Gaps.Add(new EvidenceGap("SRUM (recuperare)", EvidenceStatus.Partial, recovered,
                 "Înregistrările necomise la momentul copierii pot lipsi dacă jurnalele copiate nu le conțin", "o copie SRUDB.dat cu oprire curată", "Posibil"));

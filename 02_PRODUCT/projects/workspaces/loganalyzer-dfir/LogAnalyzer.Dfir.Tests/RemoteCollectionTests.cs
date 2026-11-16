@@ -29,6 +29,11 @@ public sealed class RemoteCollectionTests : IDisposable
     public void Dispose()
     {
         AppModeContext.ResetForTests();
+        foreach (var top in _shortRoots.Where(Directory.Exists))
+        {
+            foreach (var f in Directory.GetFiles(top, "*", SearchOption.AllDirectories)) { try { File.SetAttributes(f, FileAttributes.Normal); } catch (IOException) { } }
+            Directory.Delete(top, true);
+        }
         if (!Directory.Exists(_root)) return;
         foreach (var f in Directory.GetFiles(_root, "*", SearchOption.AllDirectories)) File.SetAttributes(f, FileAttributes.Normal);
         Directory.Delete(_root, true);
@@ -448,9 +453,24 @@ public sealed class RemoteCollectionTests : IDisposable
             RemoteCollection.ImportKind("files/" + RemoteCollection.RemoteToolLogsFolder + "/Users/Tasks/AnyDesk/connection_trace.txt", ct));
     }
 
-    private string FakeStation(string name)
+    private readonly List<string> _shortRoots = [];
+
+    /// <summary>
+    /// A station folder under a SHORT path (C:\Users\Public\lad_xxxxxxxx): the hard-link check of the package runs fsutil.exe, a native tool that fails on a path over
+    /// 260 characters, and the test temp folder can be that long. Falls back to the test root when there is no public folder.
+    /// </summary>
+    private string ShortBase(string name)
     {
-        var fake = Path.Combine(_root, name);
+        var pub = Environment.GetEnvironmentVariable("PUBLIC");
+        if (string.IsNullOrEmpty(pub) || !Directory.Exists(pub)) return Path.Combine(_root, name);
+        var top = Path.Combine(pub, "lad_" + Guid.NewGuid().ToString("N")[..8]);
+        _shortRoots.Add(top);
+        return Path.Combine(top, name);
+    }
+
+    private string FakeStation(string name, bool shortPath = false)
+    {
+        var fake = shortPath ? ShortBase(name) : Path.Combine(_root, name);
         Directory.CreateDirectory(Path.Combine(fake, "Users"));
         Directory.CreateDirectory(Path.Combine(fake, "ProgramData"));
         Directory.CreateDirectory(Path.Combine(fake, "Program Files"));
@@ -717,6 +737,32 @@ public sealed class RemoteCollectionTests : IDisposable
             var item = new EvidenceItem { EvidenceId = "EV-K", CaseId = "C", Source = "remote:test", SourceType = kind, StoredPath = full };
             Assert.NotEmpty(registry.Candidates(item));
         }
+        // artifacts added to approach the live collection: each kind must be exactly the live collector's SourceType and reach a parser (or be a documented companion)
+        var lnk = LnkParserTests.BuildLnk(@"C:\Users\u\Downloads\SETUP.EXE", "/x", @"C:\Users\u\Downloads", "ws-01");
+        foreach (var (rel, name, bytes, expected) in new (string, string, byte[], string)[]
+        {
+            ("files/Amcache/Amcache.hve", "Amcache.hve", SyntheticNtUser(), "amcache"),
+            ("files/Srum/SRUDB.dat", "SRUDB.dat", SyntheticSrudb(), "srum"),
+            ("files/SetupApi/setupapi.dev.log", "setupapi.dev.log", SyntheticSetupApi(), LogAnalyzer.Dfir.Devices.SetupApiLogParser.SourceTypeName),
+            ("files/SetupApi/setupapi.dev.20260101_120000.log", "setupapi.dev.20260101_120000.log", SyntheticSetupApi(), LogAnalyzer.Dfir.Devices.SetupApiLogParser.SourceTypeName),
+            ("files/Firewall/pfirewall.log", "pfirewall.log", SyntheticFirewall(), LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName),
+            ("files/Firewall/pfirewall.log.old", "pfirewall.log.old", SyntheticFirewall(), LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName),
+            ("files/RecentItems/ana/Recent/a.lnk", "a.lnk", lnk, "lnk"),
+            ("files/RecentItems/ana/AutomaticDestinations/f01b4d95cf55d32a.automaticDestinations-ms", "f01b4d95cf55d32a.automaticDestinations-ms", SyntheticAutoJumpList(lnk), "jumplist_auto"),
+            ("files/RecentItems/ana/CustomDestinations/5f7b5f1e01b83767.customDestinations-ms", "5f7b5f1e01b83767.customDestinations-ms", NewSourcesRoutingTests.CustomDestinations(lnk), LogAnalyzer.Dfir.FileSystem.CustomJumpListParser.SourceTypeName),
+        })
+        {
+            var newFull = Put(name, bytes);
+            var newKind = RemoteCollection.ImportKind(rel, newFull);
+            Assert.Equal(expected, newKind);
+            var newItem = new EvidenceItem { EvidenceId = "EV-K", CaseId = "C", Source = "remote:test", SourceType = newKind, StoredPath = newFull };
+            Assert.NotEmpty(registry.Candidates(newItem));
+        }
+        // the companions the live collectors also keep (no parser reads them on their own; AmcacheParser and SrumNetworkParser use them beside the database)
+        foreach (var (rel, name, expected) in new[] { ("files/Amcache/Amcache.hve.LOG1", "Amcache.hve.LOG1", "amcache_log"), ("files/Amcache/Amcache.hve.LOG2", "Amcache.hve.LOG2", "amcache_log"),
+                                                      ("files/Srum/SRU.chk", "SRU.chk", SrumCollector.SrumLogSourceType), ("files/Srum/SRU00001.log", "SRU00001.log", SrumCollector.SrumLogSourceType),
+                                                      ("files/Srum/SRUDB.jfm", "SRUDB.jfm", SrumCollector.SrumLogSourceType), ("files/Srum/SRUtmp.jrs", "SRUtmp.jrs", SrumCollector.SrumLogSourceType) })
+            Assert.Equal(expected, RemoteCollection.ImportKind(rel, Put(name, [1, 2, 3, 4, 5, 6, 7, 8])));
         // a .hive that is not SYSTEM / SOFTWARE, or not a regf file, stays "file"
         Assert.Equal("file", RemoteCollection.ImportKind("files/SAM.hive", Put("SAM.hive", SyntheticNtUser())));
         Assert.Equal("file", RemoteCollection.ImportKind("files/SYSTEM.hive", Put("not-a-hive", [1, 2, 3, 4])));
@@ -745,7 +791,7 @@ public sealed class RemoteCollectionTests : IDisposable
         var (req, _) = RemoteCollection.Authorize(ws, "PC01", "op", "j", [RemoteCollection.UserHivesArtifact]);
         Assert.Equal(["user-hives"], req.Artifacts);
         Assert.DoesNotContain("user-hives", RemoteCollection.KnownArtifacts);
-        Assert.Equal(["user-hives"], RemoteCollection.OptionalArtifacts);
+        Assert.Equal(["user-hives", "srum", "recent-items"], RemoteCollection.OptionalArtifacts);
         Assert.DoesNotContain("user-hives", RemoteCollection.ArtifactsFor(false));
         Assert.Equal([.. RemoteCollection.KnownArtifacts, "user-hives"], RemoteCollection.ArtifactsFor(true));
         // a request edited to carry an unknown artifact still cannot generate a package
@@ -947,12 +993,14 @@ public sealed class RemoteCollectionTests : IDisposable
     [Fact]
     public void UnauthorizedFile_maps_every_package_folder_to_its_artifact()
     {
-        string[] all = [.. RemoteCollection.KnownArtifacts, "user-hives"];
+        string[] all = [.. RemoteCollection.KnownArtifacts, .. RemoteCollection.OptionalArtifacts];
         foreach (var path in new[]
         {
             "files/Security.evtx", "files/Microsoft-Windows-PowerShell_Operational.evtx", "files/SYSTEM.hive", "files/SOFTWARE.hive", "files/Prefetch/A.pf", "files/Tasks/x/y",
             "files/DefenderDetectionHistory/a/b", "files/NotepadTabState/ana/x.bin", "files/RemoteToolLogs/Users/ana/AnyDesk/connection_trace.txt",
             "files/WindowsSearch/Windows.db", "files/UserHives/ana/NTUSER.DAT", "files/NTFS/$MFT",
+            "files/Amcache/Amcache.hve", "files/Srum/SRUDB.dat", "files/SetupApi/setupapi.dev.log", "files/Firewall/pfirewall.log", "files/RecentItems/ana/Recent/a.lnk",
+            "files/Microsoft-Windows-WinRM_Operational.evtx", "files/Microsoft-Windows-TerminalServices-RemoteConnectionManager_Operational.evtx",
         })
             Assert.Null(RemoteCollection.UnauthorizedFile(path, all));
         Assert.NotNull(RemoteCollection.UnauthorizedFile("files/SAM.hive", all));          // not an artifact
@@ -967,6 +1015,12 @@ public sealed class RemoteCollectionTests : IDisposable
         Assert.NotNull(RemoteCollection.UnauthorizedFile("files/Security.evtx", ["evtx:System"]));
         Assert.NotNull(RemoteCollection.UnauthorizedFile("files/Prefetch/A.pf", ["tasks"]));
         Assert.NotNull(RemoteCollection.UnauthorizedFile("files/NTFS/$MFT", ["prefetch"]));
+        // each new folder is bound to its own artifact only
+        Assert.NotNull(RemoteCollection.UnauthorizedFile("files/Amcache/Amcache.hve", ["srum", "setupapi", "firewall-log", "recent-items"]));
+        Assert.NotNull(RemoteCollection.UnauthorizedFile("files/Srum/SRUDB.dat", ["amcache", "setupapi", "firewall-log", "recent-items"]));
+        Assert.NotNull(RemoteCollection.UnauthorizedFile("files/SetupApi/setupapi.dev.log", ["amcache", "srum", "firewall-log", "recent-items"]));
+        Assert.NotNull(RemoteCollection.UnauthorizedFile("files/Firewall/pfirewall.log", ["amcache", "srum", "setupapi", "recent-items"]));
+        Assert.NotNull(RemoteCollection.UnauthorizedFile("files/RecentItems/ana/Recent/a.lnk", ["amcache", "srum", "setupapi", "firewall-log", "user-hives"]));
     }
 
     [Fact]
@@ -985,5 +1039,430 @@ public sealed class RemoteCollectionTests : IDisposable
         Assert.Equal("file", RemoteCollection.ImportKind("files/UserHives/NTUSER.DAT", nt));                     // no profile folder
         Assert.Equal("file", RemoteCollection.ImportKind("files/UserHives/ana/x/NTUSER.DAT", nt));               // too deep
         Assert.Equal("file", RemoteCollection.ImportKind("files/UserHives/ana/SYSTEM.hive", nt));                // another hive name in the folder
+    }
+
+    // ---- artifacts added to approach the live collection: amcache, setupapi, firewall-log (default); srum, recent-items (optional) ----
+
+    private static byte[] SyntheticSrudb() { var b = new byte[4096]; BitConverter.GetBytes(0x89ABCDEFu).CopyTo(b, 4); return b; }   // the ESE header is what the fingerprint reads
+
+    private static byte[] SyntheticSetupApi() => System.Text.Encoding.UTF8.GetBytes(
+        "[Device Install Log]\r\n     OS Version = 10.0.19045\r\n>>>  [Device Install (Hardware initiated) - USB\\VID_0781&PID_5567\\4C530001]\r\n" +
+        ">>>  Section start 2026/09/01 10:00:00.123\r\n<<<  [Exit status: SUCCESS]\r\n");
+
+    private static byte[] SyntheticFirewall() => System.Text.Encoding.ASCII.GetBytes(
+        "#Version: 1.5\r\n#Software: Microsoft Windows Firewall\r\n#Time Format: Local\r\n#Fields: date time action protocol src-ip dst-ip src-port dst-port size tcpflags tcpsyn tcpack tcpwin icmptype icmpcode info path\r\n\r\n" +
+        "2026-09-01 10:00:00 ALLOW TCP 10.0.0.5 10.0.0.9 50000 443 0 - 0 0 0 - - - SEND\r\n");
+
+    private static byte[] SyntheticAutoJumpList(byte[] lnk) => JumpListParserTests.BuildCfb(("1", lnk),
+        ("DestList", JumpListParserTests.DestList((1, @"C:\Users\u\Downloads\SETUP.EXE", new DateTime(2026, 9, 19, 15, 1, 2, DateTimeKind.Utc), 3, false))));
+
+    private static void Put(string path, byte[] bytes) { Directory.CreateDirectory(Path.GetDirectoryName(path)!); File.WriteAllBytes(path, bytes); }
+
+    private static bool MakeJunction(string link, string target)
+    {
+        var psi = new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{link}\" \"{target}\"") { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+        using var mk = Process.Start(psi)!;
+        mk.StandardOutput.ReadToEnd(); mk.StandardError.ReadToEnd();
+        mk.WaitForExit(10000);
+        return mk.ExitCode == 0;
+    }
+
+    private static readonly string[] NewArtifacts = ["amcache", "setupapi", "firewall-log", "srum", "recent-items"];
+
+    /// <summary>A synthetic station with every new artifact present.</summary>
+    private string StationWithNewArtifacts(string name)
+    {
+        var fake = FakeStation(name, true);
+        var win = Path.Combine(fake, "Windows");
+        Put(Path.Combine(win, "appcompat", "Programs", "Amcache.hve"), SyntheticNtUser());
+        Put(Path.Combine(win, "appcompat", "Programs", "Amcache.hve.LOG1"), [1, 2, 3, 4, 5, 6, 7, 8]);
+        Put(Path.Combine(win, "appcompat", "Programs", "Amcache.hve.LOG2"), [8, 7, 6, 5, 4, 3, 2, 1]);
+        Put(Path.Combine(win, "appcompat", "Programs", "Amcache.hve.bak"), [9, 9, 9, 9]);                       // not looked for
+        Put(Path.Combine(win, "System32", "sru", "SRUDB.dat"), SyntheticSrudb());
+        Put(Path.Combine(win, "System32", "sru", "SRU.chk"), [1, 2, 3, 4]);
+        Put(Path.Combine(win, "System32", "sru", "SRU00001.log"), [1, 2, 3, 4]);
+        Put(Path.Combine(win, "System32", "sru", "SRUtmp.jrs"), [1, 2, 3, 4]);
+        Put(Path.Combine(win, "System32", "sru", "notes.txt"), [1, 2, 3, 4]);                                    // not an ESE file of SRUM
+        Put(Path.Combine(win, "INF", "setupapi.dev.log"), SyntheticSetupApi());
+        Put(Path.Combine(win, "INF", "setupapi.dev.20260101_120000.log"), SyntheticSetupApi());
+        Put(Path.Combine(win, "INF", "setupapi.dev.log.bak"), SyntheticSetupApi());                              // not a setupapi.dev*.log name of the two real forms
+        Put(Path.Combine(win, "INF", "setupapi.app.log"), SyntheticSetupApi());
+        Put(Path.Combine(win, "System32", "LogFiles", "Firewall", "pfirewall.log"), SyntheticFirewall());
+        Put(Path.Combine(win, "System32", "LogFiles", "Firewall", "pfirewall.log.old"), SyntheticFirewall());
+        Put(Path.Combine(win, "System32", "LogFiles", "Firewall", "other.log"), SyntheticFirewall());
+        var lnk = LnkParserTests.BuildLnk(@"C:\Users\u\Downloads\SETUP.EXE", "/x", @"C:\Users\u\Downloads", "ws-01");
+        var recent = Path.Combine(fake, "Users", "ana", "AppData", "Roaming", "Microsoft", "Windows", "Recent");
+        Put(Path.Combine(recent, "a.lnk"), lnk);
+        Put(Path.Combine(recent, "empty.lnk"), []);                                                              // empty: skipped
+        Put(Path.Combine(recent, "notes.txt"), [1, 2, 3]);                                                      // not a shortcut
+        Put(Path.Combine(recent, "AutomaticDestinations", "f01b4d95cf55d32a.automaticDestinations-ms"), SyntheticAutoJumpList(lnk));
+        Put(Path.Combine(recent, "CustomDestinations", "5f7b5f1e01b83767.customDestinations-ms"), NewSourcesRoutingTests.CustomDestinations(lnk));
+        var bob = Path.Combine(fake, "Users", "bob", "AppData", "Roaming", "Microsoft", "Windows", "Recent");
+        Put(Path.Combine(bob, "b.lnk"), lnk);
+        Directory.CreateDirectory(Path.Combine(fake, "Users", "carl"));                                         // a profile without a Recent folder
+        return fake;
+    }
+
+    private RemotePackageCheck RunNew(string fake, params string[] artifacts)
+    {
+        var ws = CaseWorkspace.Create(Path.Combine(_root, "case_" + Guid.NewGuid().ToString("N")), new CaseInfo { CaseId = "CASE-REMOTE", Name = "remote", CreatedAtUtc = DateTimeOffset.UtcNow, Scope = TestScopes.Valid() });
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", artifacts);
+        return RemoteCollection.Verify(ws, RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha, false), fake));
+    }
+
+    [Fact]
+    public void Authorize_accepts_the_new_default_and_optional_artifacts_and_keeps_the_optional_ones_out_of_the_default_list()
+    {
+        var ws = NewCase();
+        foreach (var a in new[] { "evtx:Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational", "evtx:Microsoft-Windows-WinRM/Operational", "amcache", "setupapi", "firewall-log" })
+            Assert.Contains(a, RemoteCollection.KnownArtifacts);
+        foreach (var a in new[] { "srum", "recent-items" })
+        {
+            Assert.DoesNotContain(a, RemoteCollection.KnownArtifacts);
+            Assert.DoesNotContain(a, RemoteCollection.ArtifactsFor(false));
+            Assert.DoesNotContain(a, RemoteCollection.ArtifactsFor(true));
+            Assert.Contains(a, RemoteCollection.ArtifactsFor(false, true));
+            Assert.Contains(a, RemoteCollection.OptionalArtifacts);
+        }
+        Assert.Equal([.. RemoteCollection.KnownArtifacts, "srum", "recent-items"], RemoteCollection.ArtifactsFor(false, true));
+        Assert.Equal([.. RemoteCollection.KnownArtifacts, "user-hives", "srum", "recent-items"], RemoteCollection.ArtifactsFor(true, true));
+        var (req, _) = RemoteCollection.Authorize(ws, "PC01", "op", "j", ["srum", "recent-items", "amcache"]);
+        Assert.Equal(["srum", "recent-items", "amcache"], req.Artifacts);
+        Assert.Throws<ArgumentException>(() => RemoteCollection.Authorize(ws, "PC01", "op", "j", ["srum-all"]));
+        Assert.Throws<ArgumentException>(() => RemoteCollection.Authorize(ws, "PC01", "op", "j", ["recent-items", "hive:SAM"]));
+        Assert.Throws<ArgumentException>(() => RemoteCollection.PackageScript(req with { Artifacts = ["srum", "evil"] }, new string('A', 64)));
+        // a default package carries the code of the default steps only: no SRUM, no recent-items, no user-hives branch
+        var (def, sha) = RemoteCollection.Authorize(ws, "PC01", "op", "j", RemoteCollection.KnownArtifacts);
+        var script = RemoteCollection.PackageScript(def, sha);
+        Assert.Contains("$a -eq 'amcache'", script); Assert.Contains("$a -eq 'setupapi'", script); Assert.Contains("$a -eq 'firewall-log'", script);
+        Assert.DoesNotContain("$a -eq 'srum'", script); Assert.DoesNotContain("$a -eq 'recent-items'", script); Assert.DoesNotContain("$a -eq 'user-hives'", script);
+        // a package without any of the steps that read held-open files has no shadow-copy copy at all
+        var (rt, sha2) = RemoteCollection.Authorize(ws, "PC01", "op", "j", ["prefetch", "remote-tool-logs"]);
+        Assert.DoesNotContain("esentutl", RemoteCollection.PackageScript(rt, sha2), StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void The_new_steps_collect_a_synthetic_station_with_the_live_collectors_rules_and_the_import_types_them_like_the_live_collectors()
+    {
+        var fake = StationWithNewArtifacts("station-new");
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", NewArtifacts);
+        var check = RemoteCollection.Verify(ws, RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha, false), fake));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        Assert.All(check.Manifest!.Steps, st => Assert.True(st.Status == "ok", $"{st.Artifact}: {st.Status} {st.Error}"));
+        Assert.Equal(
+        [
+            "files/Amcache/Amcache.hve", "files/Amcache/Amcache.hve.LOG1", "files/Amcache/Amcache.hve.LOG2",
+            "files/Firewall/pfirewall.log", "files/Firewall/pfirewall.log.old",
+            "files/RecentItems/ana/AutomaticDestinations/f01b4d95cf55d32a.automaticDestinations-ms", "files/RecentItems/ana/CustomDestinations/5f7b5f1e01b83767.customDestinations-ms", "files/RecentItems/ana/Recent/a.lnk",
+            "files/RecentItems/bob/Recent/b.lnk",
+            "files/SetupApi/setupapi.dev.20260101_120000.log", "files/SetupApi/setupapi.dev.log",
+            "files/Srum/SRU.chk", "files/Srum/SRU00001.log", "files/Srum/SRUDB.dat", "files/Srum/SRUtmp.jrs",
+        ], check.Manifest.Files.Select(f => f.Path).OrderBy(x => x, StringComparer.Ordinal).ToList());
+        // the firewall step says what it did not look for
+        Assert.Contains("calea implicită", check.Manifest.Steps.Single(st => st.Artifact == "firewall-log").Error);
+
+        var items = RemoteCollection.Import(ws, check).Where(i => i.SourceType != "remote-manifest").ToList();
+        Assert.Equal(15, items.Count);
+        string Kind(string tail) => items.Single(i => i.Notes.Contains(":files/" + tail + ";", StringComparison.Ordinal)).SourceType;
+        Assert.Equal("amcache", Kind("Amcache/Amcache.hve"));
+        Assert.Equal("amcache_log", Kind("Amcache/Amcache.hve.LOG1"));
+        Assert.Equal("amcache_log", Kind("Amcache/Amcache.hve.LOG2"));
+        Assert.Equal("srum", Kind("Srum/SRUDB.dat"));
+        Assert.Equal(3, items.Count(i => i.SourceType == SrumCollector.SrumLogSourceType));
+        Assert.Equal(LogAnalyzer.Dfir.Devices.SetupApiLogParser.SourceTypeName, Kind("SetupApi/setupapi.dev.log"));
+        Assert.Equal(LogAnalyzer.Dfir.Devices.SetupApiLogParser.SourceTypeName, Kind("SetupApi/setupapi.dev.20260101_120000.log"));
+        Assert.Equal(LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName, Kind("Firewall/pfirewall.log"));
+        Assert.Equal(LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName, Kind("Firewall/pfirewall.log.old"));
+        Assert.Equal(2, items.Count(i => i.SourceType == "lnk"));
+        Assert.Equal("jumplist_auto", Kind("RecentItems/ana/AutomaticDestinations/f01b4d95cf55d32a.automaticDestinations-ms"));
+        Assert.Equal(LogAnalyzer.Dfir.FileSystem.CustomJumpListParser.SourceTypeName, Kind("RecentItems/ana/CustomDestinations/5f7b5f1e01b83767.customDestinations-ms"));
+        foreach (var f in check.Manifest.Files) Assert.Equal(f.Sha256, items.Single(i => i.Notes.Contains(":" + f.Path + ";", StringComparison.Ordinal)).Sha256, ignoreCase: true);
+        // every typed item reaches a parser, except the companions
+        var registry = LogAnalyzer.Dfir.Windows.Parsers.WindowsParsers.Registry;
+        Assert.All(items.Where(i => i.SourceType is not ("amcache_log" or "srum_log")), i => Assert.NotEmpty(registry.Candidates(i)));
+    }
+
+    [Fact]
+    public void A_SRUM_log_held_open_by_the_system_does_not_fail_the_step_when_the_database_is_copied()
+    {
+        // lab SRV01 2026-11-16: SRUDB.dat copied (shadow copy) but two ESE logs in use were not, and the whole step said "failed"
+        var fake = StationWithNewArtifacts("station-srum-busy");
+        var log = Path.Combine(fake, "Windows", "System32", "sru", "SRU00001.log");
+        RemotePackageCheck check;
+        using (new FileStream(log, FileMode.Open, FileAccess.Read, FileShare.None))   // held like the system holds its current ESE log
+            check = RunNew(fake, "srum");
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var step = check.Manifest!.Steps.Single();
+        Assert.Equal("ok", step.Status);
+        Assert.Contains("SRU00001.log", step.Error);
+        Assert.Contains("necopiate", step.Error);
+        Assert.Contains(check.Manifest.Files, f => f.Path == "files/Srum/SRUDB.dat");
+        Assert.DoesNotContain(check.Manifest.Files, f => f.Path.EndsWith("SRU00001.log", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Recent_folders_without_any_shortcut_say_so_instead_of_a_missing_folder()
+    {
+        // lab SRV01 2026-11-16: every Recent folder existed but was empty, and the step said "folderul nu exista pe statie"
+        var fake = FakeStation("station-recent-empty", true);
+        Directory.CreateDirectory(Path.Combine(fake, "Users", "ana", "AppData", "Roaming", "Microsoft", "Windows", "Recent"));
+        var step = RunNew(fake, "recent-items").Manifest!.Steps.Single();
+        Assert.Equal("absent", step.Status);
+        Assert.Contains("nu există fișiere recente", step.Error);
+    }
+
+    [Fact]
+    public void An_empty_station_gives_absent_for_every_new_step_and_no_file()
+    {
+        var check = RunNew(FakeStation("station-nothing", true), NewArtifacts);
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        Assert.Equal(5, check.Manifest!.Steps.Count);
+        Assert.All(check.Manifest.Steps, st => Assert.Equal("absent", st.Status));
+        Assert.Empty(check.Manifest.Files);
+        // Amcache.hve missing but its logs present: absent too, the logs are not taken alone
+        var fake = FakeStation("station-logs-only", true);
+        Put(Path.Combine(fake, "Windows", "appcompat", "Programs", "Amcache.hve.LOG1"), [1, 2, 3, 4]);
+        var lonely = RunNew(fake, "amcache");
+        Assert.Equal("absent", lonely.Manifest!.Steps.Single().Status);
+        Assert.Empty(lonely.Manifest.Files);
+    }
+
+    [Fact]
+    public void A_link_on_the_way_is_refused_and_counted_by_every_new_step()
+    {
+        var fake = StationWithNewArtifacts("station-links");
+        var elsewhere = Path.Combine(_root, "elsewhere-new");
+        Put(Path.Combine(elsewhere, "setupapi.dev.log"), SyntheticSetupApi());
+        Put(Path.Combine(elsewhere, "SRUDB.dat"), SyntheticSrudb());
+        Put(Path.Combine(elsewhere, "pfirewall.log"), SyntheticFirewall());
+        Put(Path.Combine(elsewhere, "Amcache.hve"), SyntheticNtUser());
+        Put(Path.Combine(elsewhere, "x.customDestinations-ms"), NewSourcesRoutingTests.CustomDestinations(LnkParserTests.BuildLnk(@"C:\a.exe", "", "", "m")));
+        // INF, sru, Firewall and Programs are replaced by junctions to a folder outside the station; carl's Recent is a junction
+        foreach (var rel in new[] { @"Windows\INF", @"Windows\System32\sru", @"Windows\System32\LogFiles\Firewall", @"Windows\appcompat\Programs" })
+            Directory.Delete(Path.Combine(fake, rel), true);
+        foreach (var rel in new[] { @"Windows\INF", @"Windows\System32\sru", @"Windows\System32\LogFiles\Firewall", @"Windows\appcompat\Programs" })
+            Assert.True(MakeJunction(Path.Combine(fake, rel), elsewhere), "a junction could not be created; this test needs one (review 2026-11-16: no silent pass)");
+        var carlRecent = Path.Combine(fake, "Users", "carl", "AppData", "Roaming", "Microsoft", "Windows", "Recent");
+        Directory.CreateDirectory(carlRecent);
+        Put(Path.Combine(carlRecent, "c.lnk"), LnkParserTests.BuildLnk(@"C:\a.exe", "", "", "m"));
+        Assert.True(MakeJunction(Path.Combine(carlRecent, "AutomaticDestinations"), elsewhere), "a junction could not be created; this test needs one");
+        try
+        {
+            var check = RunNew(fake, NewArtifacts);
+            Assert.True(check.Ok, string.Join("; ", check.Problems));
+            foreach (var art in new[] { "amcache", "srum", "setupapi", "firewall-log" })
+            {
+                var st = check.Manifest!.Steps.Single(x => x.Artifact == art);
+                Assert.NotEqual("ok", st.Status);
+                Assert.Contains("legături neurmate: 1", st.Error);
+            }
+            var recentStep = check.Manifest!.Steps.Single(x => x.Artifact == "recent-items");
+            Assert.NotEqual("ok", recentStep.Status);
+            Assert.Contains("legături neurmate: 1", recentStep.Error);
+            // nothing came from behind a link; carl's own shortcut was taken
+            Assert.DoesNotContain(check.Manifest.Files, f => f.Path.StartsWith("files/Amcache/") || f.Path.StartsWith("files/Srum/") || f.Path.StartsWith("files/SetupApi/") || f.Path.StartsWith("files/Firewall/"));
+            Assert.Contains(check.Manifest.Files, f => f.Path == "files/RecentItems/carl/Recent/c.lnk");
+            Assert.DoesNotContain(check.Manifest.Files, f => f.Path.StartsWith("files/RecentItems/carl/AutomaticDestinations/"));
+        }
+        finally
+        {
+            Directory.Delete(Path.Combine(carlRecent, "AutomaticDestinations"));
+            foreach (var rel in new[] { @"Windows\INF", @"Windows\System32\sru", @"Windows\System32\LogFiles\Firewall", @"Windows\appcompat\Programs" }) Directory.Delete(Path.Combine(fake, rel));
+        }
+    }
+
+    [HardLinkFact]
+    public void The_amcache_step_refuses_a_hard_linked_hive()
+    {
+        var fake = FakeStation("station-hl-amcache", true);
+        var elsewhere = Path.Combine(_root, "elsewhere-amcache-hl");
+        Put(Path.Combine(elsewhere, "other.dat"), SyntheticNtUser());
+        Directory.CreateDirectory(Path.Combine(fake, "Windows", "appcompat", "Programs"));
+        Assert.True(MakeHardLink(Path.Combine(fake, "Windows", "appcompat", "Programs", "Amcache.hve"), Path.Combine(elsewhere, "other.dat")));
+        var check = RunNew(fake, "amcache");
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var st = check.Manifest!.Steps.Single();
+        Assert.NotEqual("ok", st.Status);
+        Assert.Contains("legături neurmate: 1", st.Error);
+        Assert.Empty(check.Manifest.Files);
+    }
+
+    [Fact]
+    public void Oversized_and_surplus_files_are_counted_not_copied()
+    {
+        var fake = FakeStation("station-caps", true);
+        var recent = Path.Combine(fake, "Users", "ana", "AppData", "Roaming", "Microsoft", "Windows", "Recent");
+        Directory.CreateDirectory(recent);
+        File.WriteAllBytes(Path.Combine(recent, "ok.lnk"), LnkParserTests.BuildLnk(@"C:\a.exe", "", "", "m"));
+        using (var big = new FileStream(Path.Combine(recent, "big.lnk"), FileMode.CreateNew)) big.SetLength(1024 * 1024 + 1);          // over the 1 MiB cap of a shortcut
+        var inf = Path.Combine(fake, "Windows", "INF");
+        Directory.CreateDirectory(inf);
+        File.WriteAllBytes(Path.Combine(inf, "setupapi.dev.log"), SyntheticSetupApi());
+        for (int i = 0; i < 22; i++) File.WriteAllBytes(Path.Combine(inf, $"setupapi.dev.2025{(i + 1):00}01_120000.log"), SyntheticSetupApi());
+        var check = RunNew(fake, "recent-items", "setupapi");
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var rs = check.Manifest!.Steps.Single(x => x.Artifact == "recent-items");
+        Assert.NotEqual("ok", rs.Status);
+        Assert.Contains("sărite (peste limita de mărime sau de număr): 1", rs.Error);
+        Assert.Equal(["files/RecentItems/ana/Recent/ok.lnk"], check.Manifest.Files.Select(f => f.Path).Where(p => p.StartsWith("files/RecentItems/")).ToList());
+        // the live file first, then the newest rotated copies, 20 in all
+        var setup = check.Manifest.Files.Where(f => f.Path.StartsWith("files/SetupApi/")).Select(f => f.Path).ToList();
+        Assert.Equal(20, setup.Count);
+        Assert.Contains("files/SetupApi/setupapi.dev.log", setup);
+    }
+
+    [Fact]
+    public void Verify_refuses_a_file_in_the_folder_of_a_new_artifact_the_request_did_not_ask_for()
+    {
+        var fake = FakeStation("station-bind-new");
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["remote-tool-logs"]);
+        var pkg = RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha, false), fake);
+        Assert.True(RemoteCollection.Verify(ws, pkg).Ok);
+        var lnk = LnkParserTests.BuildLnk(@"C:\a.exe", "", "", "m");
+        foreach (var (rel, bytes, artifact) in new (string, byte[], string)[]
+        {
+            ("files/Amcache/Amcache.hve", SyntheticNtUser(), "amcache"), ("files/Srum/SRUDB.dat", SyntheticSrudb(), "srum"), ("files/SetupApi/setupapi.dev.log", SyntheticSetupApi(), "setupapi"),
+            ("files/Firewall/pfirewall.log", SyntheticFirewall(), "firewall-log"), ("files/RecentItems/mallory/Recent/a.lnk", lnk, "recent-items"),
+        })
+        {
+            var copy = Path.Combine(_root, "copy_" + artifact);
+            Directory.CreateDirectory(copy);
+            foreach (var f in Directory.GetFiles(pkg, "*", SearchOption.AllDirectories)) { var d = Path.Combine(copy, Path.GetRelativePath(pkg, f)); Directory.CreateDirectory(Path.GetDirectoryName(d)!); File.Copy(f, d); }
+            InjectFile(copy, rel, bytes);
+            var bad = RemoteCollection.Verify(ws, copy);
+            Assert.False(bad.Ok);
+            Assert.Contains(bad.Problems, p => p.Contains(artifact) && p.Contains("nu este în cererea autorizată"));
+            Assert.Throws<InvalidOperationException>(() => RemoteCollection.Import(ws, bad));
+        }
+        // the same injection under a request that carries the artifact is accepted
+        var (req2, sha2) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["remote-tool-logs", "srum", "recent-items", "amcache", "setupapi", "firewall-log"]);
+        var pkg2 = RunPackageOnFakeStation(RemoteCollection.PackageScript(req2, sha2, false), fake);
+        InjectFile(pkg2, "files/Srum/SRUDB.dat", SyntheticSrudb());
+        InjectFile(pkg2, "files/RecentItems/mallory/Recent/a.lnk", lnk);
+        Assert.True(RemoteCollection.Verify(ws, pkg2).Ok);
+    }
+
+    [Fact]
+    public void ImportKind_types_the_new_folders_only_by_exact_path_name_and_content()
+    {
+        var dir = Path.Combine(_root, "kind-new"); Directory.CreateDirectory(dir);
+        string Write(string name, byte[] b) { var p = Path.Combine(dir, name); File.WriteAllBytes(p, b); return p; }
+        var hive = Write("Amcache.hve", SyntheticNtUser());
+        var srum = Write("SRUDB.dat", SyntheticSrudb());
+        var setup = Write("setupapi.dev.log", SyntheticSetupApi());
+        var fw = Write("pfirewall.log", SyntheticFirewall());
+        var junk = Write("junk.bin", [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18]);
+        var lnk = Write("a.lnk", LnkParserTests.BuildLnk(@"C:\a.exe", "", "", "m"));
+        var auto = Write("x.automaticDestinations-ms", SyntheticAutoJumpList(File.ReadAllBytes(lnk)));
+        // wrong content under the right name stays "file"
+        Assert.Equal("file", RemoteCollection.ImportKind("files/Amcache/Amcache.hve", junk));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/Srum/SRUDB.dat", junk));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/SetupApi/setupapi.dev.log", junk));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/Firewall/pfirewall.log", junk));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/RecentItems/ana/Recent/a.lnk", junk));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/RecentItems/ana/AutomaticDestinations/x.automaticDestinations-ms", junk));
+        // right content under the wrong name, folder or depth stays "file"
+        Assert.Equal("file", RemoteCollection.ImportKind("files/Amcache/SYSTEM.hive", hive));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/Amcache/x/Amcache.hve", hive));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/Srum/other.dat", srum));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/SetupApi/setupapi.app.log", setup));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/SetupApi/setupapi.dev.log.bak", setup));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/Firewall/other.log", fw));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/RecentItems/ana/Other/a.lnk", lnk));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/RecentItems/ana/Recent/a.txt", lnk));
+        Assert.Equal("file", RemoteCollection.ImportKind("files/RecentItems/Recent/a.lnk", lnk));                         // no profile folder
+        Assert.Equal("file", RemoteCollection.ImportKind("files/RecentItems/ana/Recent/x/a.lnk", lnk));                   // too deep
+        Assert.Equal("file", RemoteCollection.ImportKind("files/RecentItems/ana/Recent/x.automaticDestinations-ms", auto)); // jump list in the shortcut folder
+        Assert.Equal("file", RemoteCollection.ImportKind("files/Other/Amcache.hve", hive));                               // outside the folder
+        // a profile named "Tasks": still a shortcut, never task XML
+        Assert.Equal("lnk", RemoteCollection.ImportKind("files/RecentItems/Tasks/Recent/a.lnk", lnk));
+        Assert.Equal("jumplist_auto", RemoteCollection.ImportKind("files/RecentItems/Tasks/AutomaticDestinations/x.automaticDestinations-ms", auto));
+    }
+
+    [Fact]
+    public void The_reimport_into_the_case_of_the_run_keeps_the_type_of_every_new_kind_through_the_carried_types()
+    {
+        var fake = StationWithNewArtifacts("station-reimport");
+        var live = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(live, Environment.MachineName, @"STATIE\operator", "investigație de test", NewArtifacts);
+        var check = RemoteCollection.Verify(live, RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha, false), fake));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var stored = RemoteCollection.Import(live, check).Where(i => i.SourceType != "remote-manifest").ToList();
+        var paths = stored.Select(i => live.FullPath(i.StoredPath)).ToList();
+        var carried = stored.ToDictionary(i => live.FullPath(i.StoredPath), i => (i.SourceType, i.Notes), StringComparer.OrdinalIgnoreCase);
+        var run = CaseWorkspace.Create(Path.Combine(_root, "case-run-new"), new CaseInfo { CaseId = "CASE-run-new", Name = "run", CreatedAtUtc = DateTimeOffset.UtcNow, Scope = TestScopes.Valid() });
+        var kept = LogAnalyzer.Dfir.Windows.Investigation.InvestigationPipeline.Import(run, paths, null, carried);
+        Assert.Equal(stored.Count, kept.Count);
+        for (int i = 0; i < stored.Count; i++) Assert.Equal(stored[i].SourceType, kept[i].SourceType);
+        // without the carried types the name alone decides: the text logs and the companions would be plain "file" (why the types travel)
+        var bare = LogAnalyzer.Dfir.Windows.Investigation.InvestigationPipeline.Import(run, paths.Where(p => Path.GetFileName(p).StartsWith("pfirewall", StringComparison.OrdinalIgnoreCase)).ToList());
+        Assert.All(bare, b => Assert.Equal("file", b.SourceType));
+    }
+
+    [Fact]
+    public void The_srum_step_creates_one_shadow_copy_for_the_whole_set_and_deletes_it_and_a_readable_set_needs_none()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "op", "j", ["srum"]);
+        var script = RemoteCollection.PackageScript(req, sha);
+        Assert.Contains("$AllowShadowCopy = $true", script);
+        Assert.Contains("$AllowShadowCopy = $false", RemoteCollection.PackageScript(req, sha, false));
+        // in the srum step: exactly one creation of a WMI shadow copy, and its deletion (CIM, then vssadmin by ID); the other steps of the package are not counted
+        var from = script.IndexOf("$a -eq 'srum'", StringComparison.Ordinal);
+        var step = script[from..script.IndexOf("} elseif ($a -eq", from + 10, StringComparison.Ordinal)];
+        Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(step, "-MethodName Create").Count);
+        Assert.Contains("Remove-CimInstance", step);
+        Assert.Contains("vssadmin.exe delete shadows", step);
+        Assert.Contains("Get-VssLeft", step);                              // shadow copies counted before and after
+        // the set is copied from the shadow copy as a whole: the direct copies are removed first, the files are listed IN the shadow copy
+        Assert.True(step.IndexOf("Remove-Item -LiteralPath $dest -Recurse", StringComparison.Ordinal) < step.IndexOf("-MethodName Create", StringComparison.Ordinal));
+        Assert.Contains("(New-Object IO.DirectoryInfo $shRoot).GetFiles()", step);
+
+        // a set that can be read directly never creates a shadow copy, and the note says from which moment it comes
+        var fake = StationWithNewArtifacts("station-srum-direct");
+        var check = RunNew(fake, "srum");
+        var st = check.Manifest!.Steps.Single();
+        Assert.Equal("ok", st.Status);
+        Assert.Contains("fără copie de umbră", st.Error);
+        Assert.Contains("momentului", st.Error);
+    }
+
+    [Fact]
+    public void The_srum_set_stays_together_with_its_original_names_in_the_live_case_and_in_the_case_of_the_run()
+    {
+        var fake = StationWithNewArtifacts("station-srum-set");
+        var live = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(live, Environment.MachineName, @"STATIE\operator", "investigație de test", ["srum"]);
+        var check = RemoteCollection.Verify(live, RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha, false), fake));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var expected = new[] { "SRU.chk", "SRU00001.log", "SRUDB.dat", "SRUtmp.jrs" };
+        var stored = RemoteCollection.Import(live, check).Where(i => i.SourceType != "remote-manifest").ToList();
+        Assert.Equal(expected, stored.Select(i => Path.GetFileName(i.StoredPath)).OrderBy(x => x, StringComparer.Ordinal).ToArray());
+        var liveDir = Path.GetDirectoryName(live.FullPath(stored[0].StoredPath))!;
+        Assert.All(stored, i => Assert.Equal(liveDir, Path.GetDirectoryName(live.FullPath(i.StoredPath))));
+        Assert.Matches(@"SRUM_[0-9a-f]{32}$", liveDir);
+        var key = liveDir[^32..];
+        Assert.All(stored, i => Assert.Contains(RemoteCollection.SrumSetKeyPrefix + key, i.Notes));
+        Assert.Equal(1, stored.Count(i => i.SourceType == "srum"));
+        Assert.Equal(3, stored.Count(i => i.SourceType == SrumCollector.SrumLogSourceType));
+
+        var run = CaseWorkspace.Create(Path.Combine(_root, "case-run-srum"), new CaseInfo { CaseId = "CASE-run-srum", Name = "run", CreatedAtUtc = DateTimeOffset.UtcNow, Scope = TestScopes.Valid() });
+        var paths = stored.Select(i => live.FullPath(i.StoredPath)).ToList();
+        var carried = stored.ToDictionary(i => live.FullPath(i.StoredPath), i => (i.SourceType, i.Notes), StringComparer.OrdinalIgnoreCase);
+        var kept = LogAnalyzer.Dfir.Windows.Investigation.InvestigationPipeline.Import(run, paths, null, carried);
+        Assert.Equal(expected, kept.Select(i => Path.GetFileName(i.StoredPath)).OrderBy(x => x, StringComparer.Ordinal).ToArray());
+        var runDir = Path.GetDirectoryName(run.FullPath(kept[0].StoredPath))!;
+        Assert.All(kept, i => Assert.Equal(runDir, Path.GetDirectoryName(run.FullPath(i.StoredPath))));
+        Assert.NotEqual(liveDir, runDir);
+        Assert.Equal(stored.Select(i => i.SourceType).Order().ToArray(), kept.Select(i => i.SourceType).Order().ToArray());
+        // what the parser is given: the path of the database, with the checked logs beside it (the real recovery needs a real ESE database; here the placement and the selection)
+        var db = kept.Single(i => i.SourceType == "srum");
+        Assert.Equal("SRUDB.dat", Path.GetFileName(run.FullPath(db.StoredPath)));
+        var (logs, problem) = LogAnalyzer.Dfir.Windows.Parsers.SrumNetworkParser.VerifiedSrumLogs(runDir, default);
+        Assert.Equal("", problem);
+        Assert.Equal(["SRU.chk", "SRU00001.log", "SRUtmp.jrs"], logs.Select(l => Path.GetFileName(l.Path)).OrderBy(x => x, StringComparer.Ordinal).ToArray());
+        Assert.All(logs, l => Assert.Equal(runDir, Path.GetDirectoryName(l.Path)));
     }
 }

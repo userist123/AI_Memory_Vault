@@ -54,22 +54,36 @@ public static class RemoteCollection
         "evtx:Security", "evtx:System", "evtx:Application", "evtx:Microsoft-Windows-PowerShell/Operational",
         "evtx:Microsoft-Windows-Windows Defender/Operational", "evtx:Microsoft-Windows-TaskScheduler/Operational",
         "evtx:Microsoft-Windows-Sysmon/Operational", "evtx:Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
+        // RDP-SESSIONS reads the RemoteConnectionManager channel, REMOTE-WINRM the WinRM one
+        "evtx:Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational", "evtx:Microsoft-Windows-WinRM/Operational",
         "hive:SYSTEM", "hive:SOFTWARE", "prefetch", "tasks", "defender-history", "notepad-tabs", "remote-tool-logs", "search-index", NtfsMetadataArtifact,
+        AmcacheArtifact, SetupApiArtifact, FirewallLogArtifact,
     ];
 
     /// <summary>
     /// Artifacts that <see cref="Authorize"/> accepts only when the operator asks for them; never part of <see cref="KnownArtifacts"/> (the default list).
     /// "user-hives": NTUSER.DAT and UsrClass.dat of every profile; they hold personal history (typed paths, recent documents, shell folders).
+    /// "srum" (per-application usage by user SID) and "recent-items" (shortcuts and Jump Lists of every profile) are personal history too: see <see cref="PersonalHistoryArtifacts"/>.
     /// </summary>
     public const string UserHivesArtifact = "user-hives";
-    public static readonly IReadOnlyList<string> OptionalArtifacts = [UserHivesArtifact];
+    public const string SrumArtifact = "srum", RecentItemsArtifact = "recent-items";
+    public static readonly IReadOnlyList<string> OptionalArtifacts = [UserHivesArtifact, SrumArtifact, RecentItemsArtifact];
+
+    /// <summary>The optional artifacts the UI offers under one box, "Include istoricul personal (SRUM, fișiere recente)".</summary>
+    public static readonly IReadOnlyList<string> PersonalHistoryArtifacts = [SrumArtifact, RecentItemsArtifact];
 
     /// <summary>Package sub-folder of the user hives: <c>files/UserHives/&lt;profile&gt;/{NTUSER.DAT|UsrClass.dat}</c>.</summary>
     public const string UserHivesFolder = "UserHives";
 
-    /// <summary>The list a request carries: the default artifacts, plus the optional user hives when the operator ticked them.</summary>
-    public static IReadOnlyList<string> ArtifactsFor(bool includeUserHives) =>
-        includeUserHives ? [.. KnownArtifacts, UserHivesArtifact] : KnownArtifacts;
+    /// <summary>Package sub-folders of the artifacts added to bring the package close to the live collection (one folder per artifact, so Verify can bind a file to its artifact).</summary>
+    public const string AmcacheFolder = "Amcache", SrumFolder = "Srum", SetupApiFolder = "SetupApi", FirewallFolder = "Firewall", RecentItemsFolder = "RecentItems";
+
+    /// <summary>The artifact names of Amcache.hve (+ .LOG1/.LOG2), setupapi.dev*.log and pfirewall.log (+ .old).</summary>
+    public const string AmcacheArtifact = "amcache", SetupApiArtifact = "setupapi", FirewallLogArtifact = "firewall-log";
+
+    /// <summary>The list a request carries: the default artifacts, plus the optional user hives and the personal history (SRUM, recent items) when the operator ticked them.</summary>
+    public static IReadOnlyList<string> ArtifactsFor(bool includeUserHives, bool includePersonalHistory = false) =>
+        [.. KnownArtifacts, .. (includeUserHives ? new[] { UserHivesArtifact } : []), .. (includePersonalHistory ? PersonalHistoryArtifacts : [])];
 
     private static bool IsAllowed(string artifact) => KnownArtifacts.Contains(artifact) || OptionalArtifacts.Contains(artifact);
 
@@ -125,37 +139,114 @@ public static class RemoteCollection
 
     private static string Q(string s) => "'" + s.Replace("'", "''") + "'";
 
+    /// <summary>
+    /// PowerShell helpers shared by the steps that read a file another process may hold open (user-hives, amcache, srum, recent-items, setupapi, firewall-log). Emitted before the
+    /// step loop only when the request carries one of those artifacts, so a package without them contains no code to read hives and no call to esentutl.
+    /// </summary>
+    private const string SharedHelpers = """
+            # BEGIN user-hives helpers (the tests extract this block and run it)
+            function Get-ShadowCount {
+                try { return @(Get-CimInstance -ClassName Win32_ShadowCopy -ErrorAction Stop).Count } catch { return $null }
+            }
+            # New-Object wraps the IOException of a failed open in a MethodInvocationException: the Win32 code (32 sharing violation, 33 lock violation) is in the
+            # inner exception, so the whole chain is walked
+            function Test-SharingViolation($ex) {
+                $depth = 0
+                while ($ex -and $depth -lt 8) {
+                    if (($ex -is [IO.IOException]) -and ((($ex.HResult -band 0xFFFF) -eq 32) -or (($ex.HResult -band 0xFFFF) -eq 33))) { return $true }
+                    $ex = $ex.InnerException; $depth++
+                }
+                return $false
+            }
+            # number of names (hard links) of a file, -1 when it cannot be read; fsutil reads the metadata, so it also works on a file another process holds open
+            function Get-HardLinkCount([string]$path) {
+                try {
+                    $rows = @(& fsutil.exe hardlink list $path 2>$null | Where-Object { $_ -and $_.Trim() })
+                    $code = $LASTEXITCODE; $global:LASTEXITCODE = 0
+                    if ($code -ne 0) { return -1 }
+                    return $rows.Count
+                } catch { return -1 }
+            }
+            # END user-hives helpers
+            # Guarded copy of ONE file, shared by amcache, srum, setupapi, firewall-log and recent-items. The caller has already checked that no folder on the way is a link
+            # (Get-SafeItem). Here: the file is not a link, not larger than the cap, there is room for it (+256 MiB), it has a single name (a hard link is refused). It is read with sharing;
+            # only a failure to OPEN it for a sharing or lock violation goes to the volume-shadow-copy copy (esentutl /vss), and only when the caller allows it ($vss). The shadow copies are
+            # counted before the first such read and again at the end of the step (Get-VssLeft): one that stays is reported.
+            $script:VssUsed = $false; $script:ShadowBefore = $null
+            function Reset-VssState { $script:VssUsed = $false; $script:ShadowBefore = $null }
+            function Get-VssLeft {
+                if (-not $script:VssUsed) { return '' }
+                $after = Get-ShadowCount
+                if ($null -eq $script:ShadowBefore -or $null -eq $after) { return '; lista copiilor de umbră nu a putut fi citită: nu s-a putut verifica dacă a rămas una' }
+                if ($after -gt $script:ShadowBefore) { return "; a rămas o copie de umbră nouă după colectare ($($after - $script:ShadowBefore)): verificați și ștergeți-o dacă nu aparține altui program" }
+                return ''
+            }
+            # State of the item at $base\<parts>: 'absent', 'link' (a component or the item is a reparse point), 'dir' or 'file'
+            function Get-SafeItem([string]$base, [string[]]$parts) {
+                $src = $base; $gi = $null
+                foreach ($part in $parts) {
+                    $src = Join-Path $src $part
+                    $gi = Get-Item -LiteralPath $src -Force -ErrorAction SilentlyContinue
+                    if (-not $gi) { return @{ State = 'absent'; Obj = $null } }
+                    if ($gi.Attributes -band [IO.FileAttributes]::ReparsePoint) { return @{ State = 'link'; Obj = $null } }
+                }
+                return @{ State = $(if ($gi.PSIsContainer) { 'dir' } else { 'file' }); Obj = $gi }
+            }
+            # 'ok', 'vss' (copied from the shadow copy), 'skipped' (over the cap), 'link' (reparse point or hard link), 'busy' (held open by another process; only when $vss is $false) or 'failed'
+            function Copy-GuardedFile([IO.FileSystemInfo]$gi, [string]$dest, [long]$cap, [bool]$vss) {
+                if ($gi.Attributes -band [IO.FileAttributes]::ReparsePoint) { return 'link' }
+                if ($gi.Length -gt $cap) { return 'skipped' }
+                $free = (New-Object IO.DriveInfo ([IO.Path]::GetPathRoot($dest))).AvailableFreeSpace
+                if ($gi.Length + 256MB -gt $free) { return 'failed' }
+                $hl = Get-HardLinkCount $gi.FullName
+                if ($hl -lt 0) { return 'failed' }
+                if ($hl -gt 1) { return 'link' }
+                New-Item -ItemType Directory -Path ([IO.Path]::GetDirectoryName($dest)) -Force | Out-Null
+                $in = $null; $outFs = $null; $busy = $false; $done = $false; $over = $false; $bad = $false
+                try {
+                    $in = New-Object IO.FileStream($gi.FullName, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]'ReadWrite,Delete')
+                    $outFs = New-Object IO.FileStream($dest, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
+                    # capped copy: a file that grew past the cap after the size check stops at the cap + 1 byte
+                    $buf = New-Object byte[] (1MB); $total = [long]0
+                    while (($n = $in.Read($buf, 0, $buf.Length)) -gt 0) {
+                        $total += $n
+                        if ($total -gt $cap) { $over = $true; break }
+                        $outFs.Write($buf, 0, $n)
+                    }
+                    $outFs.Dispose(); $outFs = $null
+                    if ($over) { Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue } else { $done = $true }
+                } catch {
+                    if ($outFs) { $outFs.Dispose(); $outFs = $null }
+                    Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue
+                    $busy = ((-not $in) -and (Test-SharingViolation $_.Exception))
+                    if (-not $busy) { $bad = $true }
+                } finally { if ($in) { $in.Dispose() }; if ($outFs) { $outFs.Dispose() } }
+                if ($over) { return 'skipped' }
+                if ($bad) { return 'failed' }
+                $viaVss = $false
+                if ($busy) {
+                    if (-not $vss) { return 'busy' }
+                    if (-not $script:VssUsed) { $script:VssUsed = $true; $script:ShadowBefore = Get-ShadowCount }
+                    & esentutl.exe /y $gi.FullName /vss /d $dest 2>&1 | Out-Null
+                    $ecode = $LASTEXITCODE; $global:LASTEXITCODE = 0
+                    if ($ecode -ne 0 -or -not (Test-Path -LiteralPath $dest -PathType Leaf)) { Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue; return 'failed' }
+                    $viaVss = $true
+                } elseif (-not $done) { return 'failed' }
+                $now = Get-Item -LiteralPath $gi.FullName -Force -ErrorAction SilentlyContinue
+                if ($now -and ($now.Attributes -band [IO.FileAttributes]::ReparsePoint)) { Remove-Item -LiteralPath $dest -Force; return 'link' }
+                if ((New-Object IO.FileInfo $dest).Length -gt $cap) { Remove-Item -LiteralPath $dest -Force; return 'skipped' }
+                if ($viaVss) { return 'vss' }
+                return 'ok'
+            }
+            """;
+
     /// <summary>The PowerShell branch of the optional user-hives step; appended to the script only when the request carries <see cref="UserHivesArtifact"/>.</summary>
     private const string UserHivesBranch = """
                 } elseif ($a -eq 'user-hives') {
                     # OPTIONAL (personal history): NTUSER.DAT and UsrClass.dat of every profile under Users, into files\UserHives\<profile>. No component of the path may be
                     # a link (the file too), at most 512 MiB per file, at most 200 profiles. A file another process holds open (a logged-on user) is read only on a sharing
                     # violation, through esentutl /vss; the shadow copies are counted before the first such read and after the loop, and one that stays is reported.
-                    # The transaction logs (.LOG1/.LOG2) are not copied, as in the live collector.
-                    # BEGIN user-hives helpers (the tests extract this block and run it)
-                    function Get-ShadowCount {
-                        try { return @(Get-CimInstance -ClassName Win32_ShadowCopy -ErrorAction Stop).Count } catch { return $null }
-                    }
-                    # New-Object wraps the IOException of a failed open in a MethodInvocationException: the Win32 code (32 sharing violation, 33 lock violation) is in the
-                    # inner exception, so the whole chain is walked
-                    function Test-SharingViolation($ex) {
-                        $depth = 0
-                        while ($ex -and $depth -lt 8) {
-                            if (($ex -is [IO.IOException]) -and ((($ex.HResult -band 0xFFFF) -eq 32) -or (($ex.HResult -band 0xFFFF) -eq 33))) { return $true }
-                            $ex = $ex.InnerException; $depth++
-                        }
-                        return $false
-                    }
-                    # number of names (hard links) of a file, -1 when it cannot be read; fsutil reads the metadata, so it also works on a file another process holds open
-                    function Get-HardLinkCount([string]$path) {
-                        try {
-                            $rows = @(& fsutil.exe hardlink list $path 2>$null | Where-Object { $_ -and $_.Trim() })
-                            $code = $LASTEXITCODE; $global:LASTEXITCODE = 0
-                            if ($code -ne 0) { return -1 }
-                            return $rows.Count
-                        } catch { return -1 }
-                    }
-                    # END user-hives helpers
+                    # The transaction logs (.LOG1/.LOG2) are not copied, as in the live collector. The helpers (Get-ShadowCount, Test-SharingViolation, Get-HardLinkCount) are defined before the loop.
                     Step $a {
                         $copied = 0; $failed = 0; $skipped = 0; $links = 0; $viaVss = 0; $taken = 0; $profilesLeft = 0
                         $cap = 512MB
@@ -238,8 +329,258 @@ public static class RemoteCollection
                     }
             """;
 
+    /// <summary>Amcache.hve with its transaction logs, as the live ExecutionArtifactsCollector takes them (the live files are locked: shadow copy only on a sharing violation).</summary>
+    private const string AmcacheBranch = """
+                } elseif ($a -eq 'amcache') {
+                    # %SystemRoot%\appcompat\Programs\Amcache.hve and Amcache.hve.LOG1/.LOG2 (as the live collector) into files\Amcache. No component of the path may be a link, at most
+                    # 512 MiB per file, a file with several names is refused. The file is held open by the system: it is read from a shadow copy (through the shared guarded copy) only on a
+                    # sharing violation. A station without Amcache.hve is absent, never a failure.
+                    Step $a {
+                        Reset-VssState
+                        $main = Get-SafeItem $WinDir @('appcompat', 'Programs', 'Amcache.hve')
+                        if ($main.State -eq 'absent') { return '__absent__' }
+                        $copied = 0; $failed = 0; $skipped = 0; $links = 0; $viaVss = 0
+                        foreach ($suffix in @('', '.LOG1', '.LOG2')) {
+                            $name = 'Amcache.hve' + $suffix
+                            $s = Get-SafeItem $WinDir @('appcompat', 'Programs', $name)
+                            if ($s.State -eq 'absent') { continue }
+                            if ($s.State -eq 'link') { $links++; if ($suffix -eq '') { break }; continue }
+                            if ($s.State -eq 'dir') { $failed++; continue }
+                            $r = @(Copy-GuardedFile $s.Obj (Join-Path (Join-Path $files 'Amcache') $name) 512MB $true)[-1]
+                            switch ($r) { 'ok' { $copied++ } 'vss' { $copied++; $viaVss++ } 'skipped' { $skipped++ } 'link' { $links++ } default { $failed++ } }
+                        }
+                        $left = Get-VssLeft
+                        if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0 -or $left) { throw "Amcache: fișiere copiate: $copied (din copia de umbră: $viaVss); necopiate (acces refuzat, loc insuficient sau eșec esentutl): $failed; sărite (peste 512 MiB): $skipped; legături neurmate: $links$left" }
+                        if ($main.State -ne 'file' -or $copied -eq 0) { return '__absent__' }
+                    }
+    """;
+
+    /// <summary>SRUDB.dat and the ESE files beside it that a recovery needs, as the live SrumCollector takes them.</summary>
+    private const string SrumBranch = """
+                } elseif ($a -eq 'srum') {
+                    # OPTIONAL (usage history per application and user SID): %SystemRoot%\System32\sru\SRUDB.dat and the ESE files beside it (SRU.chk, SRUDB.jfm, SRU*.log, SRU*.jrs; at most 20, 64 MiB each)
+                    # into files\Srum. The parser needs the logs of the SAME moment as the database to recover a "dirty" copy (JET -550), so the set is never mixed:
+                    #  1. every file is read directly, with sharing (no link on the way, at most 2 GiB the database, a file with several names refused);
+                    #  2. only if one of them is held open by the system (lab SRV01 2026-11-16: SRU.log and SRUtmp.log), the direct copies are removed and ALL the files are copied from ONE shadow copy
+                    #     created by this step (WMI, as in search-index) and deleted at the end; the shadow copies are counted before and after, and one that stays is reported;
+                    #  3. without a shadow copy the old rule applies: the database through esentutl /vss, the logs read directly (a log in use is named in the note) - the database may be dirty.
+                    # SRUM names the applications itself (SruDbIdMapTable): the SOFTWARE hive is not needed. The note of the step says which moment the set comes from.
+                    Step $a {
+                        Reset-VssState
+                        $main = Get-SafeItem $WinDir @('System32', 'sru', 'SRUDB.dat')
+                        if ($main.State -eq 'absent') { return '__absent__' }
+                        $dest = Join-Path $files 'Srum'
+                        $auxRegex = '^(SRU\.chk|SRUDB\.jfm|SRU[^\\/]*\.(log|jrs))$'
+                        $copied = 0; $failed = 0; $skipped = 0; $links = 0; $viaVss = 0; $mainOk = $false
+                        $auxFailed = New-Object System.Collections.Generic.List[string]; $auxBusy = New-Object System.Collections.Generic.List[string]
+                        $results = [ordered]@{}
+                        $note = ''
+                        if ($main.State -eq 'link') { $links++ } elseif ($main.State -eq 'dir') { $failed++ } else {
+                            $sruDir = Get-SafeItem $WinDir @('System32', 'sru')
+                            $set = New-Object System.Collections.Generic.List[object]
+                            $set.Add(@{ Name = 'SRUDB.dat'; Obj = $main.Obj; Cap = 2GB })
+                            if ($sruDir.State -eq 'dir') {
+                                foreach ($f in @(Get-ChildItem -LiteralPath $sruDir.Obj.FullName -File -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -match $auxRegex } | Sort-Object Name | Select-Object -First 20)) {
+                                    $set.Add(@{ Name = $f.Name; Obj = $f; Cap = 64MB })
+                                }
+                            }
+                            $busyAny = $false
+                            foreach ($e in $set) {
+                                $r = @(Copy-GuardedFile $e.Obj (Join-Path $dest $e.Name) $e.Cap $false)[-1]
+                                $results[$e.Name] = $r
+                                if ($r -eq 'busy') { $busyAny = $true }
+                            }
+                            $momentUtc = (Get-Date).ToUniversalTime().ToString('o')
+                            if (-not $busyAny) { $note = "SRUM: baza și jurnalele ESE citite direct, fără copie de umbră, în jurul momentului $momentUtc" }
+                            elseif ($results.Values -contains 'link') { $note = '' }
+                            else {
+                                # step 2: ONE shadow copy for the whole set; the direct copies are removed first so that nothing of another moment stays
+                                Remove-Item -LiteralPath $dest -Recurse -Force -ErrorAction SilentlyContinue
+                                if (Test-Path -LiteralPath $dest) { throw 'SRUM: copiile directe ale setului nu au putut fi șterse înainte de copia de umbră; setul ar fi amestecat din momente diferite, deci nu a fost colectat' }
+                                $results = [ordered]@{}
+                                $made = $null; $sc = $null; $shadowErr = ''
+                                if (-not $AllowShadowCopy) { $shadowErr = 'copia de umbră nu este permisă pe această rulare' }
+                                else {
+                                    $script:VssUsed = $true; $script:ShadowBefore = Get-ShadowCount
+                                    try {
+                                        $made = Invoke-CimMethod -ClassName Win32_ShadowCopy -MethodName Create -Arguments @{ Volume = $WinDir.Substring(0, 3); Context = 'ClientAccessible' } -ErrorAction Stop
+                                        if ($made.ReturnValue -ne 0) { throw "copia de umbră nu a putut fi creată (cod $($made.ReturnValue))" }
+                                        $momentUtc = (Get-Date).ToUniversalTime().ToString('o')
+                                        $sc = Get-CimInstance -ClassName Win32_ShadowCopy | Where-Object { $_.ID -eq $made.ShadowID }
+                                        if (-not $sc) { throw "copia de umbră $($made.ShadowID) nu a fost găsită" }
+                                        $dev = [string]$sc.DeviceObject
+                                        if ($dev -notmatch $ShadowDeviceRegex -or $dev.IndexOf("`n") -ge 0) { throw "DeviceObject neașteptat: $dev" }
+                                        $shRoot = $dev + $sruDir.Obj.FullName.Substring(2) + [IO.Path]::DirectorySeparatorChar
+                                        # the set is listed IN the shadow copy (the moment it describes); sizes and links are checked there before anything is written
+                                        $shSet = New-Object System.Collections.Generic.List[object]
+                                        $shSet.Add(@{ Name = 'SRUDB.dat'; Cap = 2GB })
+                                        foreach ($fi in @((New-Object IO.DirectoryInfo $shRoot).GetFiles() | Where-Object { $_.Name -match $auxRegex } | Sort-Object Name | Select-Object -First 20)) { $shSet.Add(@{ Name = $fi.Name; Cap = 64MB }) }
+                                        $need = [long]0
+                                        foreach ($e in $shSet) { $fi = New-Object IO.FileInfo ($shRoot + $e.Name); if ($fi.Exists) { $need += $fi.Length } }
+                                        $free = (New-Object IO.DriveInfo ([IO.Path]::GetPathRoot($files))).AvailableFreeSpace
+                                        if ($need + 256MB -gt $free) { throw "spațiu liber insuficient pentru setul SRUM ($need octeți); nu a fost copiat" }
+                                        New-Item -ItemType Directory -Path $dest -Force | Out-Null
+                                        foreach ($e in $shSet) {
+                                            $fi = New-Object IO.FileInfo ($shRoot + $e.Name)
+                                            if (-not $fi.Exists) { $results[$e.Name] = 'failed'; continue }
+                                            if ($fi.Attributes -band [IO.FileAttributes]::ReparsePoint) { $results[$e.Name] = 'link'; continue }
+                                            if ($fi.Length -gt $e.Cap) { $results[$e.Name] = 'skipped'; continue }
+                                            try { [IO.File]::Copy($fi.FullName, (Join-Path $dest $e.Name), $false); $results[$e.Name] = 'vss' } catch { $results[$e.Name] = 'failed' }
+                                        }
+                                        if ($results.Values -contains 'failed' -or $results.Values -contains 'link' -or $results.Values -contains 'skipped') { Remove-Item -LiteralPath $dest -Recurse -Force -ErrorAction SilentlyContinue; throw 'setul SRUM nu a putut fi copiat complet din copia de umbră' }
+                                        $note = "SRUM: baza și toate jurnalele ESE copiate din ACEEAȘI copie de umbră, creată la $momentUtc și ștearsă la final"
+                                    } catch { $shadowErr = $_.Exception.Message; $results = [ordered]@{} }
+                                    finally {
+                                        # deleted through CIM; if that is impossible or fails, vssadmin deletes it by ShadowID; what stays is reported by the count below
+                                        $gone = $false
+                                        if ($sc) { try { $sc | Remove-CimInstance -ErrorAction Stop; $gone = $true } catch { $gone = $false } }
+                                        if (-not $gone -and $made -and $made.ShadowID) {
+                                            & vssadmin.exe delete shadows "/shadow=$($made.ShadowID)" /quiet 2>&1 | Out-Null
+                                            $global:LASTEXITCODE = 0
+                                        }
+                                    }
+                                }
+                                if ($results.Count -eq 0) {
+                                    # step 3: no shadow copy of the set: the old rule (database through esentutl, logs read directly); the sets are of different moments
+                                    Remove-Item -LiteralPath $dest -Recurse -Force -ErrorAction SilentlyContinue
+                                    if (Test-Path -LiteralPath $dest) { throw 'SRUM: copiile anterioare ale setului nu au putut fi șterse; setul ar fi amestecat din momente diferite, deci nu a fost colectat' }
+                                    foreach ($e in $set) {
+                                        $r = @(Copy-GuardedFile $e.Obj (Join-Path $dest $e.Name) $e.Cap ($e.Name -eq 'SRUDB.dat'))[-1]
+                                        $results[$e.Name] = $r
+                                    }
+                                    # review 2026-11-16: the database goes through esentutl only when it is locked; otherwise it is read directly
+                                    $dbHow = if ($results['SRUDB.dat'] -eq 'vss') { 'din copia esentutl' } else { 'citită direct' }
+                                    $note = "SRUM: copia de umbră WMI a setului nu a putut fi folosită ($shadowErr); baza SRUDB.dat $dbHow, jurnalele ESE citite direct: sunt din alt moment decât baza și baza poate fi murdară"
+                                }
+                            }
+                            foreach ($k in @($results.Keys)) {
+                                $r = $results[$k]
+                                switch ($r) { 'ok' { $copied++ } 'vss' { $copied++; $viaVss++ } 'skipped' { $skipped++ } 'link' { $links++ } 'busy' { if ($k -eq 'SRUDB.dat') { $failed++ } else { $auxBusy.Add($k) } } default { if ($k -eq 'SRUDB.dat') { $failed++ } else { $auxFailed.Add($k) } } }
+                                if ($k -eq 'SRUDB.dat' -and ($r -eq 'ok' -or $r -eq 'vss')) { $mainOk = $true }
+                            }
+                        }
+                        $left = Get-VssLeft
+                        # lab SRV01 2026-11-16: the database was copied but two ESE logs in use were not, and the whole step said "failed". The step fails when the
+                        # database is missing, a link was met or a shadow copy was left; logs in use are named in the note (the database is read without them)
+                        if (-not $mainOk -or $failed -gt 0 -or $skipped -gt 0 -or $links -gt 0 -or $left) { throw "SRUM: fișiere copiate: $copied (din copia de umbră: $viaVss); necopiate (acces refuzat, loc insuficient sau eșec esentutl): $($failed + $auxFailed.Count + $auxBusy.Count); sărite (peste limită): $skipped; legături neurmate: $links$left" }
+                        if ($auxBusy.Count -gt 0) { $note += "; jurnale ESE folosite de sistem, necopiate: $($auxBusy -join ', ')" }
+                        if ($auxFailed.Count -gt 0) { $note += "; jurnale ESE necopiate din alt motiv (acces refuzat, loc insuficient sau eroare de citire): $($auxFailed -join ', ')" }
+                        $global:StepNote = $note
+                        if ($copied -eq 0) { return '__absent__' }
+                    }
+    """;
+
+    /// <summary>setupapi.dev.log and its rotated copies, as the live SetupApiLogCollector takes them.</summary>
+    private const string SetupApiBranch = """
+                } elseif ($a -eq 'setupapi') {
+                    # %SystemRoot%\INF\setupapi.dev.log first, then the newest rotated copies setupapi.dev.AAAAMMZZ_HHMMSS.log (a descending name is a descending date), at most 20 in all, as the live
+                    # collector, into files\SetupApi. INF may not be a link; at most 128 MiB per file; a file with several names is refused; read with sharing, no shadow copy.
+                    Step $a {
+                        $inf = Get-SafeItem $WinDir @('INF')
+                        if ($inf.State -eq 'absent') { return '__absent__' }
+                        $copied = 0; $failed = 0; $skipped = 0; $links = 0
+                        if ($inf.State -eq 'link') { $links++ } elseif ($inf.State -eq 'dir') {
+                            $names = @(Get-ChildItem -LiteralPath $inf.Obj.FullName -File -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -cmatch '^setupapi\.dev(\.\d{8}_\d{6})?\.log$' } | ForEach-Object { $_.Name })
+                            $rotated = @($names | Where-Object { $_ -cne 'setupapi.dev.log' } | Sort-Object -Descending)
+                            $take = @(@($names | Where-Object { $_ -ceq 'setupapi.dev.log' }) + $rotated | Select-Object -First 20)
+                            foreach ($name in $take) {
+                                $s = Get-SafeItem $WinDir @('INF', $name)
+                                if ($s.State -eq 'absent') { continue }
+                                if ($s.State -eq 'link') { $links++; continue }
+                                if ($s.State -eq 'dir') { $failed++; continue }
+                                $r = @(Copy-GuardedFile $s.Obj (Join-Path (Join-Path $files 'SetupApi') $name) 128MB $false)[-1]
+                                switch ($r) { 'ok' { $copied++ } 'skipped' { $skipped++ } 'link' { $links++ } default { $failed++ } }
+                            }
+                        } else { $failed++ }
+                        if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0) { throw "setupapi: jurnale copiate: $copied; necopiate (acces refuzat sau loc insuficient): $failed; sărite (peste 128 MiB): $skipped; legături neurmate: $links" }
+                        if ($copied -eq 0) { return '__absent__' }
+                    }
+    """;
+
+    /// <summary>pfirewall.log and pfirewall.log.old at their default path.</summary>
+    private const string FirewallLogBranch = """
+                } elseif ($a -eq 'firewall-log') {
+                    # %SystemRoot%\System32\LogFiles\Firewall\pfirewall.log and pfirewall.log.old (the default path) into files\Firewall; absent when logging is off or the file is elsewhere.
+                    # No component of the path may be a link; at most 64 MiB per file (the live collector's limit); a file with several names is refused; read with sharing, no shadow copy.
+                    # A log that the policy or the local setting moved to another path is NOT collected here (the live collector reads that setting): the step note says so.
+                    Step $a {
+                        $dir = Get-SafeItem $WinDir @('System32', 'LogFiles', 'Firewall')
+                        if ($dir.State -eq 'absent') { return '__absent__' }
+                        $copied = 0; $failed = 0; $skipped = 0; $links = 0
+                        if ($dir.State -eq 'link') { $links++ } elseif ($dir.State -eq 'dir') {
+                            foreach ($name in @('pfirewall.log', 'pfirewall.log.old')) {
+                                $s = Get-SafeItem $WinDir @('System32', 'LogFiles', 'Firewall', $name)
+                                if ($s.State -eq 'absent') { continue }
+                                if ($s.State -eq 'link') { $links++; continue }
+                                if ($s.State -eq 'dir') { $failed++; continue }
+                                $r = @(Copy-GuardedFile $s.Obj (Join-Path (Join-Path $files 'Firewall') $name) 64MB $false)[-1]
+                                switch ($r) { 'ok' { $copied++ } 'skipped' { $skipped++ } 'link' { $links++ } default { $failed++ } }
+                            }
+                        } else { $failed++ }
+                        if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0) { throw "firewall: jurnale copiate: $copied; necopiate (acces refuzat sau loc insuficient): $failed; sărite (peste 64 MiB): $skipped; legături neurmate: $links" }
+                        if ($copied -eq 0) { return '__absent__' }
+                        $global:StepNote = 'doar calea implicită (System32\LogFiles\Firewall); un jurnal mutat prin politică sau setare locală nu este inclus'
+                    }
+    """;
+
+    /// <summary>The shortcuts and Jump Lists of every profile, as the live RecentItemsCollector takes them (profiles from Users, not from ProfileList).</summary>
+    private const string RecentItemsBranch = """
+                } elseif ($a -eq 'recent-items') {
+                    # OPTIONAL (personal history): per profile under Users, AppData\Roaming\Microsoft\Windows\Recent\*.lnk (at most 2000, 1 MiB each) and its AutomaticDestinations\*.automaticDestinations-ms
+                    # (at most 500, 256 MiB each) and CustomDestinations\*.customDestinations-ms (at most 500, 16 MiB each), the newest first, into files\RecentItems\<profile>\{Recent|AutomaticDestinations|
+                    # CustomDestinations}. No component of the path may be a link (the profile folder and every folder on the way, the file too); a file with several names is refused; at most 200
+                    # profiles; empty files are skipped. Read with sharing, no shadow copy. Files over the count cap are counted as skipped.
+                    Step $a {
+                        $copied = 0; $failed = 0; $skipped = 0; $links = 0; $taken = 0; $profilesLeft = 0; $failNames = New-Object System.Collections.Generic.List[string]
+                        $sets = @(
+                            @{ Folder = ''; Out = 'Recent'; Ext = '.lnk'; MaxBytes = 1MB; MaxCount = 2000 },
+                            @{ Folder = 'AutomaticDestinations'; Out = 'AutomaticDestinations'; Ext = '.automaticDestinations-ms'; MaxBytes = 256MB; MaxCount = 500 },
+                            @{ Folder = 'CustomDestinations'; Out = 'CustomDestinations'; Ext = '.customDestinations-ms'; MaxBytes = 16MB; MaxCount = 500 })
+                        $profiles = @(Get-ChildItem -LiteralPath (Join-Path $env:SystemDrive 'Users') -Directory -Force -ErrorAction SilentlyContinue | Sort-Object Name)
+                        for ($pi = 0; $pi -lt $profiles.Count; $pi++) {
+                            $p = $profiles[$pi]
+                            if ($p.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
+                            $rec = Get-SafeItem $p.FullName @('AppData', 'Roaming', 'Microsoft', 'Windows', 'Recent')
+                            if ($rec.State -eq 'absent') { continue }
+                            if ($rec.State -eq 'link') { $links++; continue }
+                            if ($rec.State -ne 'dir') { $failed++; continue }
+                            if ($taken -ge 200) { $profilesLeft = $profiles.Count - $pi; break }
+                            $taken++
+                            foreach ($set in $sets) {
+                                $dirItem = $rec.Obj
+                                if ($set.Folder.Length -gt 0) {
+                                    $sub = Get-SafeItem $rec.Obj.FullName @($set.Folder)
+                                    if ($sub.State -eq 'absent') { continue }
+                                    if ($sub.State -eq 'link') { $links++; continue }
+                                    if ($sub.State -ne 'dir') { $failed++; continue }
+                                    $dirItem = $sub.Obj
+                                }
+                                try {
+                                    $found = @(Get-ChildItem -LiteralPath $dirItem.FullName -File -Force -ErrorAction Stop | Where-Object { $_.Name.EndsWith($set.Ext, [StringComparison]::OrdinalIgnoreCase) } | Sort-Object LastWriteTimeUtc -Descending)
+                                } catch { $failed++; if ($failNames.Count -lt 5) { $failNames.Add($p.Name + '/' + $set.Out) }; continue }
+                                if ($found.Count -gt $set.MaxCount) { $skipped += ($found.Count - $set.MaxCount) }
+                                foreach ($f in @($found | Select-Object -First $set.MaxCount)) {
+                                    if ($f.Attributes -band [IO.FileAttributes]::ReparsePoint) { $links++; continue }
+                                    if ($f.Length -eq 0) { continue }
+                                    $dest = Join-Path (Join-Path (Join-Path (Join-Path $files 'RecentItems') $p.Name) $set.Out) $f.Name
+                                    $r = @(Copy-GuardedFile $f $dest $set.MaxBytes $false)[-1]
+                                    switch ($r) { 'ok' { $copied++ } 'skipped' { $skipped++ } 'link' { $links++ } default { $failed++; if ($failNames.Count -lt 5) { $failNames.Add($p.Name + '/' + $set.Out + '/' + $f.Name) } } }
+                                }
+                            }
+                        }
+                        if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0 -or $profilesLeft -gt 0) { throw "fișiere recente copiate: $copied; necopiate (acces refuzat, loc insuficient sau folder care nu poate fi citit): $failed; sărite (peste limita de mărime sau de număr): $skipped; legături neurmate: $links; profiluri peste limita de 200 necolectate: $profilesLeft$(if ($failNames.Count -gt 0) { '; primele necopiate: ' + ($failNames -join ', ') })" }
+                        if ($copied -eq 0) { return '__absent__:nu există fișiere recente (LNK sau JumpLists) în profilurile stației' }
+                    }
+    """;
+
     /// <summary>The package script. It only reads the target and writes next to itself; it contains no network command.</summary>
-    public static string PackageScript(RemoteCollectionRequest r, string requestSha256)
+    public static string PackageScript(RemoteCollectionRequest r, string requestSha256) => PackageScript(r, requestSha256, allowShadowCopy: true);
+
+    /// <summary>
+    /// <paramref name="allowShadowCopy"/> false makes the script behave as if no WMI shadow copy could be created (the SRUM step then uses its fallback rule). The tests use it so that
+    /// they never create a shadow copy on the machine that runs them; a package for an operator always allows it.
+    /// </summary>
+    internal static string PackageScript(RemoteCollectionRequest r, string requestSha256, bool allowShadowCopy)
     {
         if (!HostName.IsMatch(r.TargetHost) || !Guid.TryParse(r.RequestId, out _) || !Regex.IsMatch(requestSha256, "^[0-9A-Fa-f]{64}$")
             || r.Artifacts.Any(a => !IsAllowed(a)))
@@ -252,6 +593,7 @@ public static class RemoteCollection
         sb.AppendLine($"$RequestId = {Q(r.RequestId)}");
         sb.AppendLine($"$RequestSha256 = {Q(requestSha256.ToUpperInvariant())}");
         sb.AppendLine($"$ExpectedHost = {Q(r.TargetHost)}");
+        sb.AppendLine($"$AllowShadowCopy = {(allowShadowCopy ? "$true" : "$false")}");
         sb.AppendLine($"$Artifacts = @({string.Join(", ", r.Artifacts.Select(Q))})");
         sb.Append("""
             if ($env:COMPUTERNAME -ne $ExpectedHost) {
@@ -261,6 +603,8 @@ public static class RemoteCollection
             $out = Join-Path $PSScriptRoot ('LA_' + $env:COMPUTERNAME + '_' + (Get-Date).ToUniversalTime().ToString('yyyyMMddTHHmmssZ'))
             $files = Join-Path $out 'files'
             New-Item -ItemType Directory -Path $files -Force | Out-Null
+            # the Windows folder as a name under SystemDrive (SystemRoot is always on SystemDrive): the amcache, srum, setupapi and firewall-log steps build their paths from it
+            $WinDir = Join-Path $env:SystemDrive ([IO.Path]::GetFileName($env:SystemRoot.TrimEnd('\')))
             $isAdmin = ([Security.Principal.WindowsPrincipal][Security.Principal.WindowsIdentity]::GetCurrent()).IsInRole([Security.Principal.WindowsBuiltInRole]::Administrator)
             # SHA-256 through .NET, not the FileHash cmdlet: that cmdlet lives in a module that fails to load when
             # Windows PowerShell inherits a PowerShell 7 PSModulePath (a launcher, a CI runner, an admin console),
@@ -282,7 +626,7 @@ public static class RemoteCollection
                 $global:StepNote = ''
                 # wevtutil 15007: the channel does not exist on this station (Sysmon not installed): absent, not a failure (lab SRV01 2026-11-07)
                 # an action that returns '__absent__' found nothing to collect (a folder that does not exist on this station)
-                try { $res = @(& $action); if ($res -contains '__absent__') { $absent = $true; $err = 'folderul nu exista pe statie' } elseif ($LASTEXITCODE -eq 15007) { $absent = $true; $err = 'jurnalul nu exista pe statie (componenta nu este instalata)' } elseif ($LASTEXITCODE -ne 0) { $err = "cod de iesire $LASTEXITCODE" } } catch { $err = $_.Exception.Message }
+                try { $res = @(& $action); $abs = @($res | Where-Object { $_ -is [string] -and $_.StartsWith('__absent__') }); if ($abs.Count -gt 0) { $absent = $true; $err = $(if ($abs[0].Length -gt 11) { $abs[0].Substring(11) } else { 'folderul nu exista pe statie' }) } elseif ($LASTEXITCODE -eq 15007) { $absent = $true; $err = 'jurnalul nu exista pe statie (componenta nu este instalata)' } elseif ($LASTEXITCODE -ne 0) { $err = "cod de iesire $LASTEXITCODE" } } catch { $err = $_.Exception.Message }
                 $steps.Add([ordered]@{ artifact = $name; startUtc = $start; endUtc = (Get-Date).ToUniversalTime().ToString('o'); status = $(if ($absent) { 'absent' } elseif ($err) { 'failed' } else { 'ok' }); error = $(if ($err) { $err } else { $global:StepNote }) })
             }
             # ntfs-metadata (T1-T6): $MFT and $Boot read RAW from the read-only device of ONE shadow copy created by the step (File.Copy of the shadow
@@ -438,6 +782,15 @@ public static class RemoteCollection
                     if ($sha) { $sha.Dispose() }
                 }
             }
+            """);
+        // the helpers of the steps that read files another process may hold open exist in the script only when a request asks for one of those steps
+        if (r.Artifacts.Any(a => a is UserHivesArtifact or AmcacheArtifact or SrumArtifact or RecentItemsArtifact or SetupApiArtifact or FirewallLogArtifact))
+        {
+            sb.AppendLine();
+            sb.Append(SharedHelpers);
+        }
+        sb.AppendLine();
+        sb.Append("""
             foreach ($a in $Artifacts) {
                 if ($a.StartsWith('evtx:')) {
                     $ch = $a.Substring(5)
@@ -489,6 +842,10 @@ public static class RemoteCollection
         sb.AppendLine();
         // the user-hives branch exists in the script only when the operator asked for it: a default package contains no code to read user hives
         if (r.Artifacts.Contains(UserHivesArtifact)) sb.Append(UserHivesBranch);
+        // every other branch below is emitted the same way: only for the artifacts the request carries
+        foreach (var (artifact, branch) in new[] { (AmcacheArtifact, AmcacheBranch), (SrumArtifact, SrumBranch), (SetupApiArtifact, SetupApiBranch), (FirewallLogArtifact, FirewallLogBranch), (RecentItemsArtifact, RecentItemsBranch) })
+            if (r.Artifacts.Contains(artifact)) { sb.AppendLine(); sb.Append(branch); }
+        sb.AppendLine();
         sb.Append("""
                 } elseif ($a -eq 'remote-tool-logs') {
                     # the session logs of AnyDesk (connection_trace.txt, ad.trace, ad_svc.trace) and TeamViewer (Connections.txt, Connections_incoming.txt), per profile and in
@@ -683,6 +1040,7 @@ public static class RemoteCollection
     [
         (UserHivesFolder, UserHivesArtifact), (RemoteToolLogsFolder, "remote-tool-logs"), (NotepadTabsFolder, "notepad-tabs"), (SearchIndexFolder, "search-index"),
         (DefenderHistoryFolder, "defender-history"), ("Prefetch", "prefetch"), ("Tasks", "tasks"), (NtfsFolder, NtfsMetadataArtifact),
+        (AmcacheFolder, AmcacheArtifact), (SrumFolder, SrumArtifact), (SetupApiFolder, SetupApiArtifact), (FirewallFolder, FirewallLogArtifact), (RecentItemsFolder, RecentItemsArtifact),
     ];
 
     /// <summary>Null when the package file belongs to an artifact of the request; otherwise the reason it does not.</summary>
@@ -772,7 +1130,55 @@ public static class RemoteCollection
         return kind.Length > 0 && relativePath.Count(ch => ch == '/') == 1 && LogAnalyzer.Dfir.Integrity.EvidenceFingerprint.Detect(fullPath) == "regf" ? kind : "file";
     }
 
+    /// <summary>Matches the names the setupapi step collects (the live collector's pattern, tightened to the two real forms); the script carries the same pattern.</summary>
+    private static readonly Regex SetupApiName = new(@"^setupapi\.dev(\.\d{8}_\d{6})?\.log$", RegexOptions.CultureInvariant);
+    /// <summary>The ESE files beside SRUDB.dat that the srum step collects (the live collector's rule: SRU.chk, SRUDB.jfm, SRU*.log, SRU*.jrs).</summary>
+    private static readonly Regex SrumAuxName = new(@"^(SRU\.chk|SRUDB\.jfm|SRU[^\\/]*\.(log|jrs))$", RegexOptions.IgnoreCase | RegexOptions.CultureInvariant);
+
+    /// <summary>
+    /// The type of a file in one of the folders added for Amcache, SRUM, setupapi, the firewall log and the recent items; null when the path is not in one of them. Only the exact package
+    /// layout, an exact name and the content (the fingerprint) give a type: anything else stays "file". The types are EXACTLY the ones the live collectors give.
+    /// </summary>
+    private static string? ExtraFolderKind(string relativePath, string fullPath)
+    {
+        var seg = relativePath.Split('/');
+        if (seg.Length < 2 || !seg[0].Equals("files", StringComparison.OrdinalIgnoreCase)) return null;
+        string Fp() => LogAnalyzer.Dfir.Integrity.EvidenceFingerprint.Detect(fullPath);
+        if (seg[1].Equals(AmcacheFolder, StringComparison.OrdinalIgnoreCase))
+            return seg.Length != 3 ? "file" : seg[2] switch
+            {
+                "Amcache.hve" => Fp() == "regf" && Investigation.InvestigationPipeline.ImportType(fullPath) == "amcache" ? "amcache" : "file",
+                "Amcache.hve.LOG1" or "Amcache.hve.LOG2" => "amcache_log",
+                _ => "file",
+            };
+        if (seg[1].Equals(SrumFolder, StringComparison.OrdinalIgnoreCase))
+            return seg.Length != 3 ? "file" : seg[2] == "SRUDB.dat" ? (Fp() == "ese" ? "srum" : "file") : SrumAuxName.IsMatch(seg[2]) ? SrumCollector.SrumLogSourceType : "file";
+        if (seg[1].Equals(SetupApiFolder, StringComparison.OrdinalIgnoreCase))
+            return seg.Length == 3 && SetupApiName.IsMatch(seg[2]) && Fp() == "setupapi_dev" ? LogAnalyzer.Dfir.Devices.SetupApiLogParser.SourceTypeName : "file";
+        if (seg[1].Equals(FirewallFolder, StringComparison.OrdinalIgnoreCase))
+            return seg.Length == 3 && seg[2] is "pfirewall.log" or "pfirewall.log.old" && Fp() == "pfirewall" ? LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName : "file";
+        if (seg[1].Equals(RecentItemsFolder, StringComparison.OrdinalIgnoreCase))
+        {
+            // files/RecentItems/<profile>/<Recent|AutomaticDestinations|CustomDestinations>/<name>
+            if (seg.Length != 5 || seg[2].Length == 0) return "file";
+            var (ext, type, finger) = seg[3] switch
+            {
+                "Recent" => (".lnk", "lnk", "lnk"),
+                "AutomaticDestinations" => (".automaticDestinations-ms", "jumplist_auto", "cfb"),
+                "CustomDestinations" => (".customDestinations-ms", LogAnalyzer.Dfir.FileSystem.CustomJumpListParser.SourceTypeName, "custom_destinations"),
+                _ => ("", "", ""),
+            };
+            return type.Length > 0 && seg[4].EndsWith(ext, StringComparison.OrdinalIgnoreCase) && Fp() == finger ? type : "file";
+        }
+        return null;
+    }
+
+    /// <summary>Marker written in the notes of every file of one SRUM set; the key is the folder id the set got at import. Used again by the re-import into the case of the run.</summary>
+    public const string SrumSetKeyPrefix = "set SRUM: ";
+
     internal static string ImportKind(string relativePath, string fullPath) =>
+        // the folders of Amcache / SRUM / setupapi / firewall log / recent items first, for the same reason as the user hives (a profile named "Tasks", a stray .evtx or .hive)
+        ExtraFolderKind(relativePath, fullPath) is { } extraKind ? extraKind :
         // the user hives: only the exact package path files/UserHives/<profile>/{NTUSER.DAT|UsrClass.dat} and only regf content; anything else under the folder stays "file"
         // (tested first: a profile named "Tasks" must not make them task XML, and a stray .evtx or .hive there must not reach a parser)
         relativePath.StartsWith("files/" + UserHivesFolder + "/", StringComparison.OrdinalIgnoreCase) ? UserHiveKind(relativePath, fullPath)
@@ -843,6 +1249,9 @@ public static class RemoteCollection
         // takes them from one shadow copy, and the step must be "ok" for the note and the key to be written)
         string? indexDir = null, indexKey = null;
         string? ntfsDir = null;
+        // the SRUM set (database + ESE logs): one folder of its own with the ORIGINAL names, so SrumNetworkParser finds the logs beside the database (in the common folder of the
+        // source a second file of the same name would become "_1"); one key in the notes of every file of the set
+        string? srumDir = null, srumKey = null;
         foreach (var f in m.Files)
         {
             var full = Path.Combine(check.PackageDir, f.Path);
@@ -863,6 +1272,21 @@ public static class RemoteCollection
                 File.SetLastWriteTimeUtc(ndest, File.GetLastWriteTimeUtc(full));
                 item = ws.RegisterStored(ndest, full, source, kind, TemporalType.Historical, CollectorName, DfirInfo.ApplicationVersion, action: "imported", parentEvidenceId: manifest.EvidenceId,
                     notes: $"{m.Host}:{f.Path}; {notes}; cererea {m.RequestId}; citit brut din copia de umbră a pachetului", timezone: m.Timezone is { Length: > 0 } ntz ? ntz : null, acquiredAtUtc: ntfsMoment);
+            }
+            else if (kind is "srum" or SrumCollector.SrumLogSourceType)
+            {
+                if (srumDir is null) { srumKey = Guid.NewGuid().ToString("N"); srumDir = Path.Combine(ws.RawDir(source), "SRUM_" + srumKey); Directory.CreateDirectory(srumDir); }
+                var sdest = Path.Combine(srumDir, Path.GetFileName(f.Path));
+                File.Copy(full, sdest);
+                var scopied = Hashing.Sha256File(sdest);
+                if (!scopied.Equals(f.Sha256, StringComparison.OrdinalIgnoreCase))
+                {
+                    try { Directory.Delete(srumDir, true); } catch (IOException) { }
+                    throw new InvalidOperationException($"{f.Path}: SHA-256 la import ({scopied}) diferă de cel de pe țintă ({f.Sha256}).");
+                }
+                File.SetLastWriteTimeUtc(sdest, File.GetLastWriteTimeUtc(full));
+                item = ws.RegisterStored(sdest, full, source, kind, TemporalType.Historical, CollectorName, DfirInfo.ApplicationVersion, action: "imported", parentEvidenceId: manifest.EvidenceId,
+                    notes: $"{m.Host}:{f.Path}; {notes}; {SrumSetKeyPrefix}{srumKey}", timezone: m.Timezone is { Length: > 0 } stz ? stz : null);
             }
             else if (kind is Parsers.WindowsSearchIndexParser.SourceTypeName or WindowsSearchIndexCollector.WalSourceType
                      or Parsers.WindowsSearchGatherParser.SourceTypeName or Parsers.WindowsSearchGatherParser.WalSourceType)

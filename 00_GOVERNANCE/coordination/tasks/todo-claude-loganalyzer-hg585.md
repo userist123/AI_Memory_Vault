@@ -1029,3 +1029,18 @@
   lab). Fix: snapshot per process (name suffix -p<pid>); a load removes this process' older snapshots and only other processes' snapshots
   older than SnapshotMaxAge (1 day). Tests: every LoadActive in the test class uses the test's own folder; new
   A_load_keeps_the_recent_snapshot_of_another_process_and_removes_old_ones. Dfir 3886 (3853 passed, 33 skipped) exit 0.
+- 2026-11-16 PLANNER #4 ITEM 3 DONE (remote package aligned with live collection), commit with this entry. RemoteCollection: new KnownArtifacts
+  (evtx TerminalServices-RemoteConnectionManager/Operational + Microsoft-Windows-WinRM/Operational, amcache, setupapi, firewall-log), optional
+  user-hives / srum / recent-items (UI checkbox "Include istoricul personal (SRUM, fișiere recente)", off by default, reset per request);
+  helper block Copy-GuardedFile (ok/vss/skipped/link/busy/failed). SRUM set: read directly; if any file is locked the WHOLE set comes from ONE
+  WMI shadow copy (only with $AllowShadowCopy, deleted in finally); else old rule (database via esentutl only if locked) with a note.
+  Logs held by the system do not fail the step (database copied); other log failures are named separately. Import groups the set into
+  SRUM_<key> (key = last notes segment only; review MED: a key planted in the manifest user name is ignored, test). SrumNetworkParser: a
+  database WITHOUT the Network Data Usage table (JET -1305 at JetOpenTable; real Windows Server 2025 SRUDB.dat from the lab) is an explained
+  gap, not Failed; any other JET error still fails. Test runs on the real copy with LADFIR_SRUM_NO_NETWORK set (owner machine; skipped elsewhere).
+  LAB SRV01: shadow copies 0->0, RCM 69 + WinRM 63 events, Amcache 88, setupapi partial, firewall absent (logging off), SRUM 12 files direct.
+  Opus review round 2: PARTIAL -> fixed MED (key injection), LOW notes (step-3 note says direct vs esentutl; busy vs failed logs; leftover
+  direct copies now abort instead of mixing moments), doc moved. ACCEPTED RESIDUAL: the "other moment" fact of a step-3 set is only in the
+  manifest step note, not in the item notes / parser recovery gap; import does not check the step status. Step 2 (WMI shadow copy) is
+  exercised only as script text, never executed by a test.
+  Next: read CI once; planner #4 item 2 (Insula "Colectează tot" end-to-end on WS02); then a NEW planner.
