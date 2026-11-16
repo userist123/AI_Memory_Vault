@@ -14,8 +14,12 @@ namespace LogAnalyzer.Dfir.RemoteTools;
 /// "[yyyy-MM-dd HH:mm:ss.ffffff ±HH:mm] LEVEL [file:line] message". The UTC offset is on EVERY row, so the UTC time is exact and does not depend on the probe's time zone.
 /// Only the session markers of the server side are read: "#id Connection opened from addr", "#id Connection closed: reason", "#id connection loop exited",
 /// "new wakelock, require display on: true|false", "drop wakelock". They are consolidated per file into one event per "#id" (an id reused after a rotation starts a new session).
-/// The log does not show whether the connection was accepted (<c>Accepted</c> = "necunoscut"), what was done in it, file transfers or authentication: none of these is parsed.
-/// The file is written on the analysed station and can be forged: every text is cut and cleaned and no text of the file reaches the summary but validated ids, addresses and times.
+/// File transfers (<c>libs/base/src/fs.rs</c>: <c>log::info!("new write {}", data_source)</c> / <c>"new read {}"</c>, where the data source prints as "File: &lt;path&gt;" or "Bytes") are read as separate
+/// events FileWrite (a file written ON the station = received from the remote side; seen in <c>log\cm\</c>) and FileRead (a file read FROM the station = sent to the remote side;
+/// seen in the main log). They are not sessions (no Direction). A transfer gets the Session Id only when exactly one partner session is open in the SAME file.
+/// The log does not show whether the connection was accepted (<c>Accepted</c> = "necunoscut"), what was done in the session besides those transfers, or authentication: ordinary authentication
+/// is NOT logged by RustDesk (the only message is "Permanent password accepted via logon-screen fallback", a rare case), so it is not parsed.
+/// The file is written on the analysed station and can be forged: every text is cut and cleaned; a transfer path is the only free text that reaches an event (sanitised, at most 4096 characters).
 /// </summary>
 public sealed class RustDeskLogParser : EvidenceParserBase
 {
@@ -30,17 +34,21 @@ public sealed class RustDeskLogParser : EvidenceParserBase
     /// <summary>Sessions kept open at once; beyond it the oldest is written without an end (a hostile file that opens sessions and never closes them).</summary>
     public const int MaxOpenSessions = 64;
     private const int MaxReasonChars = 128;
+    /// <summary>Longest transfer path kept (after cleaning); a line is read up to <see cref="RemoteToolLogText.MaxLineChars"/> characters anyway.</summary>
+    public const int MaxPathChars = 4096;
+    private const int MaxSummaryPathChars = 200;
 
     public override ParserDescriptor Descriptor { get; } = new()
     {
-        ParserId = "RustDeskLogParser", Version = "1.0", Artifact = "Jurnalul RustDesk (rustdesk_rCURRENT.log, rustdesk_rAAAA-LL-ZZ_HH-MM-SS.log): conexiunile de intrare",
+        ParserId = "RustDeskLogParser", Version = "1.1", Artifact = "Jurnalul RustDesk (rustdesk_rCURRENT.log, rustdesk_rAAAA-LL-ZZ_HH-MM-SS.log): conexiunile de intrare și transferurile de fișiere",
         SourceTypes = [SourceTypeName], FileNames = [], Fingerprints = [FingerprintName], MaxInputBytes = MaxFileBytes,
         SupportedOs = "Windows și Linux cu RustDesk (text scris de flexi_logger, citit în flux în cod gestionat)",
         FormatVersions = ["„[AAAA-LL-ZZ HH:MM:SS.uuuuuu ±HH:MM] NIVEL [fișier:linie] mesaj”, decalajul UTC pe fiecare rând (flexi_logger::opt_format; verificat în codul bibliotecii și pe rânduri publicate în tichete rustdesk/rustdesk, Windows și Linux)"],
         Limitations =
         [
             "Mesajele RustDesk nu sunt documentate și diferă între versiuni; markerii sunt cei din rânduri reale publicate (conexiune deschisă / închisă, buclă de conexiune încheiată, wakelock). Alte versiuni pot scrie alt text și atunci conexiunea nu este recunoscută.",
-            "Transferurile de fișiere și autentificările NU sunt interpretate: nu există rânduri reale verificate. Jurnalul nu arată dacă conexiunea a fost acceptată (Accepted = necunoscut) și nici ce s-a făcut în ea.",
+            "Transferurile de fișiere sunt citite din rândurile „new write File: <cale>” (fișier scris pe stație, primit de la distanță; apare în log\\cm\\) și „new read File: <cale>” (fișier citit de pe stație, trimis la distanță; apare în jurnalul principal), după libs/base/src/fs.rs din RustDesk; „Bytes” înseamnă date din memorie, fără cale. Calea vine din jurnalul stației și poate fi falsificată. Rândurile „new write/read” cu alt text sunt numărate, nu interpretate. Autentificarea obișnuită NU este jurnalizată de RustDesk (singurul mesaj este „Permanent password accepted via logon-screen fallback”, rar) și nu este interpretată. Jurnalul nu arată dacă conexiunea a fost acceptată (Accepted = necunoscut) și nici ce s-a făcut în ea în afara transferurilor.",
+            "Un transfer primește Session Id doar când în ACELAȘI fișier este deschisă exact o sesiune de partener; altfel rămâne fără (jurnalul cm și cel principal sunt fișiere diferite, deci un transfer din cm de regulă nu are sesiune).",
             "Ora vine din decalajul UTC scris pe fiecare rând (exactă, nu depinde de fusul probei). Un decalaj imposibil (de exemplu +25:00) sau o dată imposibilă respinge rândul: este numărat, nu transformat în eveniment.",
             "Un id „#id” poate fi reutilizat după o rotație sau o repornire: o nouă „Connection opened” cu același id începe o sesiune nouă, iar cea veche rămâne fără sfârșit. Versiunile vechi scriu „Connection opened” fără „#id”: închiderea fără id se leagă de sesiunea fără id doar când este exact una deschisă.",
             "Adresa 127.0.0.0/8 sau ::1 este un proces local sau un releu, nu un partener: se scrie ca LocalConnection cu Session Evidence = nu. Adresa unui partener venită printr-un releu nu este dovedită ca adresa lui reală; portul este portul sursă al conexiunii.",
@@ -49,7 +57,7 @@ public sealed class RustDeskLogParser : EvidenceParserBase
             $"Fișier de cel mult {MaxFileBytes / (1024 * 1024)} MiB, cel mult {MaxEvents} de evenimente și {MaxOpenSessions} de sesiuni deschise deodată; liniile se citesc până la {RemoteToolLogText.MaxLineChars} de caractere (restul se aruncă și se marchează). Un mesaj pe mai multe rânduri: rândurile de continuare (fără prefix) sunt ignorate.",
         ],
         Status = ParserMaturity.Tested,
-        Validation = "RustDeskLogTests: mostră sintetică TEST în formatul real, fără sesiuni, deschidere fără închidere, închidere fără deschidere, sesiuni intercalate și wakelock ambiguu, motiv ostil (U+202E, control, 10.000 de caractere), IP invalide / 010.0.0.1 / IPv6 cu port, decalaje +05:45 / -03:30 / +25:00, rând de 5 MB, fișier peste plafon, UTF-16, continuare pe mai multe rânduri, oră în viitor, tipizare după nume și conținut, 2.000 de sesiuni",
+        Validation = "RustDeskLogTests: mostră sintetică TEST în formatul real, fără sesiuni, deschidere fără închidere, închidere fără deschidere, sesiuni intercalate și wakelock ambiguu, motiv ostil (U+202E, control, 10.000 de caractere), transferuri de fișiere (cale ostilă U+202E / control / 10.000 de caractere / UNC / relativă, „Bytes”, „new write” fără „File:”, 10.000 de transferuri, două sesiuni deschise), IP invalide / 010.0.0.1 / IPv6 cu port, decalaje +05:45 / -03:30 / +25:00, rând de 5 MB, fișier peste plafon, UTF-16, continuare pe mai multe rânduri, oră în viitor, tipizare după nume și conținut, 2.000 de sesiuni",
     };
 
     private static readonly TimeSpan RxTimeout = TimeSpan.FromMilliseconds(200);
@@ -60,6 +68,14 @@ public sealed class RustDeskLogParser : EvidenceParserBase
     private static readonly Regex NewWake = new(@"^new wakelock, require display on: (?<v>true|false)\.?\s*$", Opt, RxTimeout);
     private static readonly Regex DropWake = new(@"^drop wakelock\.?\s*$", Opt, RxTimeout);
     private static readonly Regex PortText = new(@"^\d{1,5}$", Opt, RxTimeout);
+
+    private sealed class Xfer
+    {
+        public bool Write, Memory, Truncated;
+        public string Path = "", SessionId = "", Note = "";
+        public RowTime Time;
+        public long Line;
+    }
 
     private sealed class Sess
     {
@@ -85,6 +101,8 @@ public sealed class RustDeskLogParser : EvidenceParserBase
         var done = new List<Sess>();
         // the last closed session by id: a "connection loop exited" row can come before or after the "Connection closed" row of the same id
         var closedById = new Dictionary<string, Sess>(StringComparer.Ordinal);
+        var transfers = new List<Xfer>();
+        long transferIgnored = 0;
         long line = 0, otherRows = 0, orphans = 0, badRows = 0, wakeUnattached = 0, wakeAttached = 0, continuation = 0, invalidIps = 0;
         bool capHit = false;
         Sess? lastClosedNoId = null;                                    // old versions write no id: the latest closed session without one can still receive its loop-exited row / reason
@@ -185,6 +203,23 @@ public sealed class RustDeskLogParser : EvidenceParserBase
                         if (isOpen) Close(s, true, time, line, "connection loop exited");
                     }
                 }
+                else if (msg.StartsWith("new write ", StringComparison.Ordinal) || msg.StartsWith("new read ", StringComparison.Ordinal))
+                {
+                    // libs/base/src/fs.rs: "new write {data_source}" / "new read {data_source}"; the data source prints as "File: <path>" or "Bytes"
+                    bool write = msg.StartsWith("new write ", StringComparison.Ordinal);
+                    var src = msg[(write ? "new write ".Length : "new read ".Length)..].TrimEnd('\r', '\n');
+                    bool memory = src == "Bytes";
+                    bool isFile = src.StartsWith("File: ", StringComparison.Ordinal);
+                    var rawPath = isFile ? src["File: ".Length..] : "";
+                    if (!(memory || (isFile && rawPath.Trim().Length > 0))) { transferIgnored++; continue; }
+                    if (done.Count + open.Count + transfers.Count >= MaxEvents) { capHit = true; continue; }
+                    var x = new Xfer { Write = write, Memory = memory, Path = memory ? "" : RemoteToolLogText.Sane(rawPath, MaxPathChars), Time = time, Line = line, Truncated = truncated };
+                    // the session only when exactly one partner session is open in this same file; never guessed
+                    var partners = open.Where(o => !o.Loopback).ToList();
+                    if (partners.Count == 1) x.SessionId = partners[0].Id;
+                    else if (partners.Count > 1) x.Note = $"{partners.Count} sesiuni de partener erau deschise deodată; transferul nu a fost atribuit nici uneia";
+                    transfers.Add(x);
+                }
                 else if (msg.Contains("wakelock", StringComparison.Ordinal) && (NewWake.IsMatch(msg) || DropWake.IsMatch(msg)))
                 {
                     // no id on these rows: they belong to the one open session of a partner, never guessed when there are two or none
@@ -215,18 +250,20 @@ public sealed class RustDeskLogParser : EvidenceParserBase
         // sessions still open at the end of the file have no end in it
         foreach (var s in open.ToList()) Close(s, false, default, 0, "jurnalul se termină înainte de sfârșitul conexiunii");
 
-        foreach (var s in done.OrderBy(x => x.StartLine))
+        // sessions and transfers in the order of the rows
+        var ordered = done.Select(s => (Line: s.StartLine, S: (Sess?)s, X: (Xfer?)null)).Concat(transfers.Select(x => (Line: x.Line, S: (Sess?)null, X: (Xfer?)x))).OrderBy(t => t.Line);
+        foreach (var (_, s, x) in ordered)
         {
             ct.ThrowIfCancellationRequested();
             if (result.Records >= MaxEvents) { capHit = true; break; }
-            sink.Add(BuildEvent(s, item, file, now));
+            sink.Add(s is not null ? BuildEvent(s, item, file, now) : BuildTransferEvent(x!, item, file, now));
             result.Records++;
         }
         if (capHit && !result.Gaps.Any(g => g.Reason.StartsWith("peste ", StringComparison.Ordinal)))
             result.Gaps.Add(new EvidenceGap(file, EvidenceStatus.Partial, $"plafon de {MaxEvents} de evenimente atins; restul conexiunilor nu au fost scrise", "Conexiunile de după plafon lipsesc din cronologie", "Fișierul brut din caz", "Posibil"));
-        if (orphans > 0 || badRows > 0)
-            result.Gaps.Add(new EvidenceGap(file, EvidenceStatus.Partial, $"{orphans} de închideri fără conexiune deschisă și {badRows} de rânduri cu dată sau decalaj imposibil au fost numărate, nu transformate în evenimente",
-                "Închiderile și rândurile respinse nu apar în cronologie", "Fișierul brut din caz", "Posibil",
+        if (orphans > 0 || badRows > 0 || transferIgnored > 0)
+            result.Gaps.Add(new EvidenceGap(file, EvidenceStatus.Partial, $"{orphans} de închideri fără conexiune deschisă, {badRows} de rânduri cu dată sau decalaj imposibil și {transferIgnored} de rânduri „new write/read” cu alt text decât „File: <cale>” sau „Bytes” au fost numărate, nu transformate în evenimente",
+                "Închiderile, transferurile neinterpretate și rândurile respinse nu apar în cronologie", "Fișierul brut din caz", "Posibil",
                 $"rânduri wakelock atribuite: {wakeAttached}, neatribuite: {wakeUnattached}, adrese invalide: {invalidIps}, rânduri de continuare sau fără prefix: {continuation}, alte rânduri: {otherRows}"));
     }
 
@@ -305,6 +342,37 @@ public sealed class RustDeskLogParser : EvidenceParserBase
 
     private static string OffsetText(TimeSpan o) => (o < TimeSpan.Zero ? "-" : "+") + o.Duration().ToString(@"hh\:mm", CultureInfo.InvariantCulture);
 
+    private static TimelineEvent BuildTransferEvent(Xfer x, EvidenceItem item, string file, DateTime now)
+    {
+        var (st, timeProblem) = Stamp(x.Time, now);
+        string kind = x.Write ? "FileWrite" : "FileRead";
+        string transfer = x.Write ? "fișier scris pe stație (primit de la distanță)" : "fișier citit de pe stație (trimis la distanță)";
+        var f = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            ["Tool Id"] = ToolId, ["Tool"] = "RustDesk", ["Session Evidence"] = "da", ["Kind"] = kind, ["Direction"] = "",
+            ["Transfer"] = transfer, ["Transfer Data"] = x.Memory ? "memorie" : "fișier", ["File Path"] = x.Path,
+            ["Session Id"] = x.SessionId,
+            ["Local Time"] = RemoteToolLogText.LocalText(x.Time.Local), ["Time Offset"] = OffsetText(x.Time.Offset), ["Time Raw"] = RemoteToolLogText.Sane(x.Time.Raw, 48),
+            ["Source File"] = RemoteToolLogText.Sane(file, 128), ["Line"] = x.Line.ToString(CultureInfo.InvariantCulture),
+            ["Limitation"] = "Calea vine din jurnalul stației și poate fi falsificată; rândul nu arată dimensiunea, conținutul, partenerul sau dacă transferul s-a terminat.",
+        };
+        if (x.Note.Length > 0) f["Ambiguity"] = x.Note;
+        if (x.Truncated) f["Line Truncated"] = $"da (peste {RemoteToolLogText.MaxLineChars} de caractere)";
+        if (timeProblem.Length > 0) f["Time Problem"] = timeProblem;
+        var shown = x.Memory ? "date din memorie (fără cale)" : x.Path.Length > MaxSummaryPathChars ? x.Path[..(char.IsHighSurrogate(x.Path[MaxSummaryPathChars - 1]) ? MaxSummaryPathChars - 1 : MaxSummaryPathChars)] + "…" : x.Path;   // review 2026-11-16: never split a surrogate pair
+        return new TimelineEvent
+        {
+            Time = st,
+            TimeSemantics = "Ora rândului „new write/read” din jurnalul RustDesk: decalajul UTC este scris pe rând, deci ora UTC este exactă",
+            TimeZoneBasis = st.IsKnown ? "decalajul UTC scris pe rând (" + OffsetText(x.Time.Offset) + ")" : "oră a rândului neutilizabilă (" + timeProblem + ")",
+            TimeUncertainty = "",
+            Source = EventSource, EvidenceId = item.EvidenceId, Provider = "RustDesk " + RemoteToolLogText.Sane(file, 64), EventId = kind,
+            Summary = $"RustDesk (jurnal): {transfer}: {shown}" + (x.SessionId.Length > 0 ? $", sesiunea #{x.SessionId}" : "") + $", ora locală {RemoteToolLogText.LocalText(x.Time.Local)} ({OffsetText(x.Time.Offset)})",
+            TemporalType = TemporalType.Historical, Classification = Classification.Direct, Confidence = Confidence.Medium,
+            Locator = $"{RemoteToolLogText.Sane(file, 64)}:line={x.Line}", Fields = f,
+        };
+    }
+
     private static TimelineEvent BuildEvent(Sess s, EvidenceItem item, string file, DateTime now)
     {
         var (st, timeProblem) = Stamp(s.Start, now);
@@ -329,7 +397,7 @@ public sealed class RustDeskLogParser : EvidenceParserBase
             ["End Time UTC"] = endUtc, ["Duration Seconds"] = duration, ["End Reason"] = s.EndReason,
             ["Source File"] = RemoteToolLogText.Sane(file, 128), ["Line"] = s.StartLine.ToString(CultureInfo.InvariantCulture),
             ["End Line"] = s.EndLine > 0 ? s.EndLine.ToString(CultureInfo.InvariantCulture) : "",
-            ["Limitation"] = "Jurnalul poate fi falsificat de cine are acces la stație; nu arată acceptarea, autentificarea, transferurile de fișiere sau ce s-a făcut în sesiune.",
+            ["Limitation"] = "Jurnalul poate fi falsificat de cine are acces la stație; nu arată acceptarea, autentificarea sau ce s-a făcut în sesiune; transferurile de fișiere sunt evenimente separate, fără legătură sigură cu sesiunea.",
         };
         if (s.Ip.Length > 0)
         {

@@ -428,8 +428,29 @@ public sealed class UserArtifactsCollectorTests : IDisposable
         // the production pipeline parses them with the RustDesk parser and the sessions reach REMOTE-TOOL-EXECUTED
         var r = new InvestigationPipeline().Run(_ws, CollectionProfile.FullForensic, collect: false);
         Assert.All(logs, e => Assert.Contains(r.Parsing, p => p.EvidenceId == e.EvidenceId && p.Parser == "RustDeskLogParser"));
-        Assert.Equal(32 * 4, r.Timeline.Count(e => e.Source == RustDeskLogParser.EventSource));
+        Assert.Equal(32 * 6, r.Timeline.Count(e => e.Source == RustDeskLogParser.EventSource));   // 4 sessions + 2 FileRead rows per sample
         Assert.Contains(r.Findings, f => f.RuleId == "REMOTE-TOOL-EXECUTED" && f.Title.Contains("RustDesk"));
+    }
+
+    [Fact]
+    public void A_RustDesk_cm_log_is_collected_parsed_and_its_transfers_reach_REMOTE_TOOL_EXECUTED()
+    {
+        Profile(_profile);
+        var cm = Path.Combine(_profile, "AppData", "Roaming", "RustDesk", "log", "cm");
+        Directory.CreateDirectory(cm);
+        File.Copy(RtCorpus(@"rustdesk_TEST\cm\rustdesk_rCURRENT.log"), Path.Combine(cm, "rustdesk_rCURRENT.log"));
+
+        var o = Collect(Collector());
+
+        Assert.Empty(o.Errors);
+        var logs = o.Evidence.Where(e => e.SourceType == RustDeskLogParser.SourceTypeName).ToList();
+        var one = Assert.Single(logs);
+        Assert.Contains(Path.Combine("log", "cm"), _ws.FullPath(one.StoredPath), StringComparison.OrdinalIgnoreCase);
+        var r = new InvestigationPipeline().Run(_ws, CollectionProfile.FullForensic, collect: false);
+        Assert.Contains(r.Parsing, p => p.EvidenceId == one.EvidenceId && p.Parser == "RustDeskLogParser");
+        Assert.Equal(3, r.Timeline.Count(e => e.Source == RustDeskLogParser.EventSource && e.Fields.TryGetValue("Kind", out var k) && k == "FileWrite"));
+        var f = Assert.Single(r.Findings, x => x.RuleId == "REMOTE-TOOL-EXECUTED" && x.Title.Contains("RustDesk"));
+        Assert.Contains("3 scrise pe stație (primite de la distanță)", f.Description);
     }
 
     [Fact]
@@ -454,6 +475,18 @@ public sealed class UserArtifactsCollectorTests : IDisposable
         foreach (var n in new[] { "rustdesk_rCURRENT.log", "RustDesk_rCurrent_1.log", "rustdesk_r2026-01-01_00-00-00.log", "rustdesk_r2026-03-01_00-00-00.log" })
             File.WriteAllBytes(Path.Combine(small, n), [1]);
         Assert.Equal(["rustdesk_rCURRENT.log", "RustDesk_rCurrent_1.log", "rustdesk_r2026-03-01_00-00-00.log", "rustdesk_r2026-01-01_00-00-00.log"], UserArtifactsCollector.RustDeskLogsOf(small));
+    }
+
+    [Fact]
+    public void A_folder_listed_both_as_a_profile_folder_and_as_a_system_folder_is_read_once()
+    {
+        // lab 2026-11-16: the LocalService profile is a ProfileList row (S-1-5-19) AND an explicit system folder; the same RustDesk log was copied twice
+        Profile(_profile);
+        var server = Path.Combine(_profile, "AppData", "Roaming", "RustDesk", "log", "server");
+        Directory.CreateDirectory(server);
+        File.Copy(RtCorpus(@"rustdesk_TEST\rustdesk_rCURRENT.log"), Path.Combine(server, "rustdesk_rCURRENT.log"));
+        var o = Collect(Collector(remoteFolders: [new UserArtifactsCollector.RemoteToolFolder("LocalService", "RustDesk", server + Path.DirectorySeparatorChar, [])]));
+        Assert.Single(o.Evidence, e => e.SourceType == RemoteToolLogFormats.RustDeskLog);
     }
 
     [Fact]

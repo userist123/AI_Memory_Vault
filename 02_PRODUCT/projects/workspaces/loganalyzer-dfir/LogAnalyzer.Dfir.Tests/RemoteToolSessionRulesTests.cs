@@ -264,7 +264,7 @@ public sealed class RemoteToolSessionRulesTests : IDisposable
     public void The_RustDesk_log_sessions_flow_into_the_rule_and_a_local_connection_is_not_a_session()
     {
         var (_, log) = RemoteToolTestKit.Run(new RustDeskLogParser(), RustDeskLogParser.SourceTypeName, RemoteToolTestKit.Corpus(@"rustdesk_TEST\rustdesk_rCURRENT.log"), RemoteToolTestKit.Zone);
-        Assert.Equal(4, log.Count);                                           // 3 partner sessions and 1 loopback connection
+        Assert.Equal(6, log.Count);                                           // 3 partner sessions, 1 loopback connection and 2 FileRead transfers
         var t = One(Run(log), "REMOTE-TOOL-EXECUTED");
         Assert.Contains("RustDesk", t.Title);
         Assert.Equal(Severity.High, t.Severity);
@@ -285,6 +285,45 @@ public sealed class RemoteToolSessionRulesTests : IDisposable
             "[2026-11-09 08:30:00.000102 +01:00] DEBUG [src/server/connection.rs:3001] #903 Connection opened from 127.0.0.1:57510.\n"), RemoteToolTestKit.Zone);
         Assert.Single(local);
         Assert.DoesNotContain(Run(local), f => f.RuleId == "REMOTE-TOOL-EXECUTED");
+    }
+
+    [Fact]
+    public void RustDesk_transfers_are_one_sentence_of_their_own_not_sessions_and_do_not_change_the_severity()
+    {
+        var (_, main) = RemoteToolTestKit.Run(new RustDeskLogParser(), RustDeskLogParser.SourceTypeName, RemoteToolTestKit.Corpus(@"rustdesk_TEST\rustdesk_rCURRENT.log"), RemoteToolTestKit.Zone);
+        var (_, cm) = RemoteToolTestKit.Run(new RustDeskLogParser(), RustDeskLogParser.SourceTypeName, RemoteToolTestKit.Corpus(@"rustdesk_TEST\cm\rustdesk_rCURRENT.log"), RemoteToolTestKit.Zone);
+        var sessionsOnly = One(Run(main.Where(e => !e.Fields["Kind"].StartsWith("File", StringComparison.Ordinal)).ToList()), "REMOTE-TOOL-EXECUTED");
+        var f = One(Run([.. main, .. cm]), "REMOTE-TOOL-EXECUTED");
+        Assert.Equal(sessionsOnly.Severity, f.Severity);                                       // informative: text only
+        Assert.Equal(sessionsOnly.Confidence, f.Confidence);
+        Assert.Contains("Sesiuni în jurnalul propriu al uneltei: 3", f.Description);           // the transfers are not sessions ...
+        Assert.DoesNotContain("alte rânduri despre sesiuni", f.Description);                   // ... and not "other rows about sessions"
+        Assert.Contains("Transferuri de fișiere în jurnalul RustDesk: 3 scrise pe stație (primite de la distanță), 2 citite de pe stație (trimise la distanță). Primele:", f.Description);
+        Assert.Contains(@"C:\Users\TEST-user\Desktop\TEST-raport.docx", f.Description);
+        Assert.Contains("(date din memorie, fără cale)", f.Description);
+        Assert.Contains("pot fi falsificate", f.Description);
+        Assert.Equal(1, Count(f.Description, "Căile vin din jurnalul stației și pot fi falsificate"));
+    }
+
+    private static int Count(string text, string part) => text.Split(part).Length - 1;
+
+    [Fact]
+    public void A_RustDesk_log_with_only_transfers_is_evidence_of_use_and_lists_at_most_five_paths()
+    {
+        var (_, cm) = RemoteToolTestKit.Run(new RustDeskLogParser(), RustDeskLogParser.SourceTypeName, RemoteToolTestKit.Corpus(@"rustdesk_TEST\cm\rustdesk_rCURRENT.log"), RemoteToolTestKit.Zone);
+        var f = One(Run(cm), "REMOTE-TOOL-EXECUTED");
+        Assert.Equal(Severity.High, f.Severity);
+        Assert.DoesNotContain("Sesiuni în jurnalul propriu al uneltei", f.Description);
+        Assert.DoesNotContain("alte rânduri despre sesiuni", f.Description);
+        Assert.Contains("Transferuri de fișiere în jurnalul RustDesk: 3 scrise pe stație (primite de la distanță), 0 citite de pe stație (trimise la distanță).", f.Description);
+        Assert.Equal(1, Count(f.Description, "Căile vin din jurnalul stației și pot fi falsificate"));   // said once
+
+        TimelineEvent Tr(int i) => Row(RustDeskLogParser.EventSource, i, f: [("Tool Id", "rustdesk"), ("Session Evidence", "da"), ("Kind", "FileRead"), ("File Path", @"C:\TEST\f" + i + ".txt")]);
+        var many = One(Run(Enumerable.Range(0, 8).Select(Tr).ToList()), "REMOTE-TOOL-EXECUTED");
+        Assert.Contains(@"f4.txt", many.Description);
+        Assert.DoesNotContain(@"f5.txt", many.Description);                                      // the first five only
+        Assert.Contains("… (+3)", many.Description);
+        Assert.Contains("0 scrise pe stație (primite de la distanță), 8 citite de pe stație (trimise la distanță)", many.Description);
     }
 
     [Fact]
@@ -390,7 +429,39 @@ public sealed class RemoteToolSessionRulesTests : IDisposable
         TimelineEvent Log(double m) => Row(TeamViewerLogfileParser.EventSource, m, f: [("Tool Id", "teamviewer"), ("Session Evidence", "da"), ("Direction", "Incoming"), ("Accepted", "da"), ("Remote Id", "999000111"), ("Kind", "IncomingSession")]);
         var rows = Enumerable.Range(0, 5000).SelectMany(i => new[] { Log(i * 3), TvSession(i * 3 + 0.1, remote: "999000111") }).ToList();
         // best of 3, in a collection that does not run in parallel with the others (the same practice as the RDP timing test): the machine load of a
-        // full parallel run is not the rule
+        // full parallel run is not the rule's cost. (Review 2026-11-16: an earlier edit left this test with no body at all; it is restored here.)
+        long best = long.MaxValue;
+        Finding? f = null;
+        for (int k = 0; k < 3; k++)
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            f = One(Run(rows), "REMOTE-TOOL-EXECUTED");
+            best = Math.Min(best, sw.ElapsedMilliseconds);
+        }
+        Assert.Contains("Sesiuni în jurnalul propriu al uneltei: 10000", f!.Description);
+        Assert.Contains("aproximativ 5000 conexiuni distincte", f.Description);
+        Assert.True(best < 5000, $"best of 3 took {best} ms");
+    }
+
+    [Fact]
+    public void RustDesk_file_transfers_are_not_counted_as_sessions_and_forty_thousand_of_them_are_handled_quickly()
+    {
+        // review 2026-11-16: the header said "N × sesiune din jurnalul uneltei" for transfer rows, and List.Contains per hit made the rule quadratic (80,000 rows: 9.6 s)
+        TimelineEvent Tr(double m, string kind) => Row(RustDeskLogParser.EventSource, m, f: [("Tool Id", "rustdesk"), ("Session Evidence", "da"), ("Kind", kind), ("File Path", $@"C:\Users\TEST-user\Desktop\TEST-{m}.txt")]);
+        var few = One(Run([Tr(0, "FileWrite"), Tr(1, "FileRead")]), "REMOTE-TOOL-EXECUTED");
+        Assert.Contains("2 × transfer de fișiere din jurnalul uneltei", few.Description);
+        Assert.DoesNotContain("× sesiune din jurnalul uneltei", few.Description);
+        Assert.Equal(Confidence.Medium, few.Confidence);                                 // a transfer row is not an execution artifact
+        var rows = Enumerable.Range(0, 40_000).Select(i => Tr(i * 0.01, i % 2 == 0 ? "FileWrite" : "FileRead")).ToList();
+        long best = long.MaxValue;
+        for (int k = 0; k < 3; k++)
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var f = One(Run(rows), "REMOTE-TOOL-EXECUTED");
+            best = Math.Min(best, sw.ElapsedMilliseconds);
+            Assert.Contains("20000 scrise pe stație", f.Description);
+        }
+        Assert.True(best < 5000, $"best of 3 took {best} ms");
     }
 
     [Fact]

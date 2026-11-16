@@ -970,3 +970,19 @@
   C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\log\server\rustdesk_rCURRENT.log (TEST), case CASE-LAB-WS01-20261116-161324.
   Suites: Dfir 3866 (3833 passed, 33 skipped), App 1084, UI 370 (369 + 1 skipped), all exit 0.
   Next: none of planner #2 left except blocked items; ask a NEW planner (checkpoint <= 40 lines) for the next phase.
+- 2026-11-16 RustDesk FILE TRANSFERS DONE (planner #3 item 1). Format from the RustDesk source libs/base/src/fs.rs: log::info!("new write {}") /
+  ("new read {}") with DataSource shown "File: <path>" or "Bytes"; write = file written on the station (received; log\cm), read = read from it
+  (sent; main log). RustDesk does NOT log ordinary authentication (only "Permanent password accepted via logon-screen fallback"): not parsed,
+  written as a limitation. Parser 1.1: FileWrite / FileRead events (path sanitized, 4096 cap, Summary 200 without splitting a surrogate); rule:
+  own sentence "Transferuri de fișiere în jurnalul RustDesk: N scrise..., M citite..." (<= 5 paths, forgery warning), header counts
+  "transfer de fișiere din jurnalul uneltei" apart from sessions, a transfer row is not an execution artifact (confidence stays Medium),
+  severity unchanged. Opus r1 fixed here: quadratic List.Contains in the rule (80,000 rows 9.6 s) -> sets; header counted transfers as sessions.
+  ALSO FOUND: my 2026-11-16 edit (bash-style quote escaping in a PowerShell string) had left RemoteToolSessionRulesTests.Ten_thousand_session_
+  rows_of_one_partner_are_counted_quickly with NO body since b262b3766 (it passed while testing nothing); restored with asserts; scanned the
+  week's test files: no other empty test. LAB WS01 (installed Continent, standard profile): log\cm collected, the finding lists 3 written /
+  2 read with paths and times. FOUND IN LAB: the LocalService profile is also a ProfileList row (S-1-5-19), so its RustDesk folder was read
+  twice (two evidence ids for one file) -> folders deduplicated by full path; test red without the fix, green with it (lab not re-run).
+  Accepted residuals: U+2028/U+2029 pass the shared sanitizer like "\n" (line breaks are allowed on purpose); transfers count in the
+  "two tools within 24 h" correlation like any use. Lab leftover: WS01 it.admin AppData\Roaming\RustDesk\log\cm\rustdesk_rCURRENT.log (TEST).
+  Suites: see commit. Next (planner #3): item 2 UsrClass.dat / Notepad tabs in the remote package (same restriction as live: "Completă" only);
+  item 3 (ESE sample) blocked on an install image (owner).

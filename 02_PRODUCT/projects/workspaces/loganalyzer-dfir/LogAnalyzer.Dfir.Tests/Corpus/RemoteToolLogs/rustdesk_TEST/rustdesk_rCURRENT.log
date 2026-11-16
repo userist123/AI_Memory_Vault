@@ -4,6 +4,8 @@
 [2026-11-09 08:31:01.000000 +01:00] INFO [src\platform\mod.rs:210] new wakelock, require display on: true
 [2026-11-09 08:31:30.000000 +01:00] INFO [src\server\connection.rs:3120] #903 Connection closed: connection manager
 [2026-11-09 08:31:30.000500 +01:00] DEBUG [src\server\connection.rs:3125] #903 connection loop exited
+[2026-11-09 08:35:10.000000 +01:00] INFO [libs\hbb_common\src\fs.rs:660] new read File: C:\Users\TEST-user\Documents\TEST-contract.pdf
+[2026-11-09 08:36:20.250000 +01:00] INFO [libs\hbb_common\src\fs.rs:660] new read File: C:\Users\TEST-user\Documents\TEST-lista.xlsx
 [2026-11-09 08:40:59.000000 +01:00] INFO [src\platform\mod.rs:215] drop wakelock
 [2026-11-09 08:41:00.500000 +01:00] INFO [src\server\connection.rs:3120] #901 Connection closed: Peer close
 [2026-11-09 08:41:00.700000 +01:00] DEBUG [src\server\connection.rs:3125] #901 connection loop exited

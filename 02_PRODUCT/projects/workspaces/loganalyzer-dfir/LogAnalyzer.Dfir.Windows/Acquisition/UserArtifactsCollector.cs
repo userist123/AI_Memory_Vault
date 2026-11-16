@@ -434,6 +434,9 @@ public sealed class UserArtifactsCollector : ICollector
         catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
         { o.Errors.Add("Jurnalele uneltelor de acces la distanță: lista profilurilor nu a putut fi citită (" + ex.Message + "); jurnalele din profiluri nu au fost colectate."); }
         work.AddRange(_remoteToolFolders());
+        // lab 2026-11-16: the LocalService profile is also a ProfileList row (S-1-5-19), so its RustDesk folder was listed twice and every file copied twice
+        // under two evidence ids; one folder (full path, case-insensitive, without a trailing separator) is read once, by its first listing
+        work = work.GroupBy(w => Path.GetFullPath(w.Folder).TrimEnd(Path.DirectorySeparatorChar), StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
 
         int copied = 0;
         foreach (var w in work)

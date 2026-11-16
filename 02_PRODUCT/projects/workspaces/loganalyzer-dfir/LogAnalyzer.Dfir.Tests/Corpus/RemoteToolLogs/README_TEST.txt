@@ -16,3 +16,11 @@ the non-marker rows and all values are invented. Values are TEST values: ids 901
 It holds: session #903 from 127.0.0.1 (loopback: a LocalConnection, not a session), #901 with a wakelock (display on, then dropped) closed by "Peer close" then "connection loop exited",
 #902 with two continuation lines and the "connection loop exited" row BEFORE the "Connection closed" row, and #904 from an IPv6 address at offset +02:00 (source paths with "/"). It has no
 authentication and no file transfer rows: the parser does not read them (no verified real rows exist). Expected: 4 events, 3 of them partner sessions, no gap.
+
+rustdesk_TEST (updated 2026-11-16, file transfers): rustdesk_rCURRENT.log also holds two "new read File: <path>" rows (08:35:10 and 08:36:20, when only the partner session #901 is open, so they carry
+Session Id 901). rustdesk_TEST/cm/rustdesk_rCURRENT.log (the connection-manager log, collected from log\cm) is SYNTHETIC too: a non-transfer row, two "new write File: <path>" rows
+(C:\Users\TEST-user\Desktop\TEST-raport.docx, C:\Users\TEST-user\Downloads\TEST-unealta.zip) and one "new write Bytes" row (memory data, no path). The row wording follows libs/base/src/fs.rs of
+RustDesk (log::info!("new write {}", data_source) / ("new read {}", data_source); data source prints "File: <path>" or "Bytes"); the source file name in the prefix is invented and must not be relied on.
+Meaning: "new write File:" = a file written ON the station (received from the remote side, seen in log\cm); "new read File:" = a file read FROM the station (sent to the remote side, seen in the main log).
+LIMITATION: ordinary RustDesk authentication is NOT logged (the only message is "Permanent password accepted via logon-screen fallback", rare): it is not parsed and has no sample.
+Expected: main log 6 events (4 sessions + 2 FileRead), cm log 3 events (2 FileWrite + 1 Bytes), no gap.

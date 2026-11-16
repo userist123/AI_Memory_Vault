@@ -176,13 +176,15 @@ public static partial class Wp11Rules
 
     /// <summary>Kind of a hit that comes from a session log: it is evidence that the tool was used, at least as strong as an execution artifact, but the file or log can be forged.</summary>
     internal const string ToolSessionKind = "sesiune din jurnalul uneltei";
+    /// <summary>A file transfer in the tool's own log (RustDesk): use of the tool, but not a session; counted apart in the header of the finding (review 2026-11-16).</summary>
+    internal const string ToolTransferKind = "transfer de fișiere din jurnalul uneltei";
     private const int ToolMaxSessionLines = 6;
 
     private static readonly HashSet<string> ToolSessionSources = new(StringComparer.Ordinal)
         { "Artifact:AnyDeskConnectionTrace", "Artifact:AnyDeskTrace", "Artifact:TeamViewerConnections", "Artifact:TeamViewerLogfile", "Artifact:RustDeskLog" };
 
     /// <summary>One session as the rule reports it. <see cref="Remote"/> is the remote id or IP (empty when the log does not give one).</summary>
-    private sealed record ToolSession(string Direction, bool Accepted, string Remote, string Account, string Method, string What, bool AcceptanceUnknown = false);
+    private sealed record ToolSession(string Direction, bool Accepted, string Remote, string Account, string Method, string What, bool AcceptanceUnknown = false, string TransferKind = "", string TransferPath = "");
 
     /// <summary>The RustDesk log writes "Connection opened" before authentication and never shows acceptance: its incoming connections have <c>Accepted</c> = necunoscut by construction.</summary>
     private const string RustDeskSource = "Artifact:RustDeskLog";
@@ -205,6 +207,9 @@ public static partial class Wp11Rules
             if (!F(e, "Tool Id").Equals(tool.Id, StringComparison.OrdinalIgnoreCase) || F(e, "Session Evidence") != "da") return null;
             var remote = F(e, "Remote Id", "IP");
             var what = F(e, "Kind").Length > 0 ? ToolSessionWhat(F(e, "Kind")) : F(e, "Session Type").Length > 0 ? F(e, "Session Type") : "sesiune";
+            // RustDesk file transfers (FileWrite = written on the station, FileRead = read from it) are not sessions: they are reported in a sentence of their own
+            if (e.Source == RustDeskSource && F(e, "Kind") is "FileWrite" or "FileRead")
+                return new("", false, "", "", "", "transfer de fișiere", false, F(e, "Kind"), F(e, "File Path"));
             return new(F(e, "Direction"), F(e, "Accepted") == "da", remote, F(e, "Local Account"), F(e, "Auth Method"), what, e.Source == RustDeskSource);
         }
         // ScreenConnect Client writes Application events with ID 0 from the source "ScreenConnect Client (<thumbprint>)"; the text is the message
@@ -229,10 +234,13 @@ public static partial class Wp11Rules
         // counted and listed as sessions ("12 sesiuni" for 3 connections, "necunoscută adresă văzută pe releu"). Sessions are the rows with a direction;
         // the others are counted apart and not listed. Each group is in time order, strangers first.
         static bool Directed(ToolSession s) => s.Direction is "Incoming" or "Outgoing";
+        var transfers = sessions.Where(x => x.Info.TransferKind.Length > 0).ToList();
+        sessions = sessions.Where(x => x.Info.TransferKind.Length == 0).ToList();
         var directed = sessions.Where(x => Directed(x.Info)).ToList();
         int details = sessions.Count - directed.Count;
         static DateTimeOffset Order((ToolHit Hit, ToolSession Info) x) => T(x.Hit.Event) ?? DateTimeOffset.MaxValue;
-        var chosen = strangers.OrderBy(Order).Concat(directed.Where(x => !strangers.Contains(x)).OrderBy(Order)).Take(ToolMaxSessionLines).ToList();
+        var strangerSet = new HashSet<(ToolHit Hit, ToolSession Info)>(strangers);   // review 2026-11-16: List.Contains per row was quadratic
+        var chosen = strangers.OrderBy(Order).Concat(directed.Where(x => !strangerSet.Contains(x)).OrderBy(Order)).Take(ToolMaxSessionLines).ToList();
         var lines = chosen.Select(x =>
         {
             var i = x.Info;
@@ -243,6 +251,9 @@ public static partial class Wp11Rules
         // The same connection can be written more than once (ad.trace "Incoming session request" then "Accepting from"; connection_trace.txt and ad.trace
         // both): the rows stay listed, and when they repeat, an estimate of distinct connections is added (same direction, partner and minute = one).
         int distinct = DistinctConnections(directed);
+        var transferText = ToolTransferText(transfers, When);
+        // a log with only transfers has no session to count: the transfer sentence stands alone
+        if (sessions.Count == 0) return transferText;
         return $" Sesiuni în jurnalul propriu al uneltei: {directed.Count}" +
                (distinct < directed.Count ? $" (aproximativ {distinct} conexiuni distincte: aceeași direcție, același partener și același minut se numără o dată" +
                    // the TeamViewer pairing note only where it applies (lab 2026-11-16: it was printed for RustDesk too)
@@ -252,7 +263,24 @@ public static partial class Wp11Rules
                (details > 0 ? $"; alte rânduri despre sesiuni, fără direcție (de exemplu adresă de releu, sistemul celuilalt capăt, autentificare, transfer, încheiere): {details}" : "") +
                (lines.Any() ? $". Primele: {string.Join("; ", lines)}{(directed.Count > chosen.Count ? $" … (+{directed.Count - chosen.Count})" : "")}." : ".") +
                " Jurnalele de sesiune pot fi modificate, completate sau șterse de cine are acces la stația analizată (un rând lipsă nu dovedește absența unei sesiuni); AnyDesk și TeamViewer scriu ora locală a stației (convertită în UTC doar când fusul stației sau decalajul din antet este cunoscut), RustDesk scrie decalajul față de UTC pe fiecare rând." +
-               " Jurnalul nu arată ce s-a făcut în sesiune.";
+               " Jurnalul nu arată ce s-a făcut în sesiune." + transferText;
+    }
+
+    private const int ToolMaxTransferLines = 5;
+
+    /// <summary>
+    /// RustDesk file transfers as one sentence: how many were written on the station (received from the remote side) and how many were read from it (sent to the remote side),
+    /// then at most <see cref="ToolMaxTransferLines"/> sanitised paths with their time. The path comes from the station's own log and can be forged. Empty when there is none.
+    /// </summary>
+    private static string ToolTransferText(List<(ToolHit Hit, ToolSession Info)> transfers, Func<TimelineEvent, string> when)
+    {
+        if (transfers.Count == 0) return "";
+        int written = transfers.Count(x => x.Info.TransferKind == "FileWrite"), read = transfers.Count - written;
+        var first = transfers.OrderBy(x => T(x.Hit.Event) ?? DateTimeOffset.MaxValue).Take(ToolMaxTransferLines)
+            .Select(x => $"{when(x.Hit.Event)}: {(x.Info.TransferKind == "FileWrite" ? "scris" : "citit")} " + (x.Info.TransferPath.Length > 0 ? ToolSafe(x.Info.TransferPath) : "(date din memorie, fără cale)"));
+        return $" Transferuri de fișiere în jurnalul RustDesk: {written} scrise pe stație (primite de la distanță), {read} citite de pe stație (trimise la distanță). Primele: {string.Join("; ", first)}" +
+               (transfers.Count > ToolMaxTransferLines ? $" … (+{transfers.Count - ToolMaxTransferLines})" : "") +
+               ". Căile vin din jurnalul stației și pot fi falsificate; jurnalul nu arată dimensiunea, conținutul sau dacă transferul s-a terminat.";
     }
 
     /// <summary>Tolerance between the start written by the main TeamViewer log and the one written by Connections_incoming.txt for the same connection.</summary>
@@ -362,7 +390,7 @@ public static partial class Wp11Rules
                 if (ToolSessionOf(e, tool) is { } session)
                 {
                     // a session in the tool's own log is evidence of use, as strong as an execution artifact; it never goes through the path-based branches below
-                    var hit = new ToolHit(e, ToolSessionKind, "", "");
+                    var hit = new ToolHit(e, session.TransferKind.Length > 0 ? ToolTransferKind : ToolSessionKind, "", "");
                     exec.Add(hit); sessions.Add((hit, session));
                     continue;
                 }
@@ -413,6 +441,8 @@ public static partial class Wp11Rules
         var assessed = results.Select(r =>
         {
             var hits = (r.Exec.Count > 0 ? r.Exec.Concat(r.Present) : r.Present).ToList();
+            // review 2026-11-16: List.Contains per hit made these filters quadratic (80,000 transfer rows: 9.6 s); a set keeps them linear
+            var execSet = new HashSet<ToolHit>(r.Exec, ReferenceEqualityComparer.Instance);
             var paths = hits.Select(h => h.Path).Where(p => p.Length > 0).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var aliases = r.Tool.Aliases.Concat([r.Tool.Name]).Concat(r.Tool.Executables.Select(x => WinPath.GetFileNameWithoutExtension(x)));
             var hashes = hits.SelectMany(h => h.Hash.Length > 0 ? [h.Hash] : Sha256sOf(h.Event)).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
@@ -420,7 +450,7 @@ public static partial class Wp11Rules
             // a profile row with no path pattern and no hash approves the name only: it covers only copies in Program Files / Windows
             bool nameOnly = approved is not null && approved.PathPattern.Trim().Length == 0 && approved.Sha256.Trim().Length == 0;
             var outside = nameOnly
-                ? hits.Where(h => (r.Exec.Contains(h) || h.Kind.StartsWith("serviciu", StringComparison.Ordinal)) && h.Path.Length > 0 && !ToolStandardLocation(h.Path))
+                ? hits.Where(h => (execSet.Contains(h) || h.Kind.StartsWith("serviciu", StringComparison.Ordinal)) && h.Path.Length > 0 && !ToolStandardLocation(h.Path))
                       .Select(h => h.Path).Distinct(StringComparer.OrdinalIgnoreCase).ToList()
                 : [];
             // no path among the hits (only sessions from the tool's own log) and a profile row that approves the tool only at a path: the approval cannot be checked
@@ -446,14 +476,15 @@ public static partial class Wp11Rules
             bool executed = exec.Count > 0;
             var hits = a.Hits; var paths = a.Paths; var approved = a.Approved;
             // runs, or is a service, from a folder a user can write to (an Amcache / ShimCache entry shows presence, not a run)
-            var writable = hits.Where(h => (exec.Contains(h) || h.Kind.StartsWith("serviciu", StringComparison.Ordinal)) && h.Path.Length > 0 && ToolUserWritable(h.Path)).Select(h => h.Path).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
+            var execHits = new HashSet<ToolHit>(exec, ReferenceEqualityComparer.Instance);
+            var writable = hits.Where(h => (execHits.Contains(h) || h.Kind.StartsWith("serviciu", StringComparison.Ordinal)) && h.Path.Length > 0 && ToolUserWritable(h.Path)).Select(h => h.Path).Distinct(StringComparer.OrdinalIgnoreCase).ToList();
             var others = Others(r);
             bool approvedOutside = a.ApprovedOutside.Count > 0;
             var sessions = r.Sessions;
             // an accepted incoming session whose remote id / IP is not a destination named in the profile: the approval of the software does not cover who connects
             var strangers = sessions.Where(x => x.Info.Direction == "Incoming" && (x.Info.Accepted || x.Info.AcceptanceUnknown) && !ToolRemoteApproved(c.Profile, x.Info.Remote)).ToList();
             bool incomingUnknown = strangers.Count > 0;
-            bool realExec = exec.Any(h => h.Kind != ToolSessionKind);
+            bool realExec = exec.Any(h => h.Kind is not (ToolSessionKind or ToolTransferKind));
 
             var severity = executed ? Severity.High : Severity.Low;
             string why = "";

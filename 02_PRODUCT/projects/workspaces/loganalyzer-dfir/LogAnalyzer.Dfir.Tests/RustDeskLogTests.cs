@@ -40,8 +40,9 @@ public sealed class RustDeskLogTests : IDisposable
         // the probe zone is irrelevant: the offset is written on every row
         foreach (var zone in new[] { "", RemoteToolTestKit.Zone, "Tokyo Standard Time" })
         {
-            var (r, e) = RemoteToolTestKit.Run(P, T, Sample, zone);
-            Assert.Equal(4, r.Records);
+            var (r, all) = RemoteToolTestKit.Run(P, T, Sample, zone);
+            var e = all.Where(x => !x.Fields["Kind"].StartsWith("File", StringComparison.Ordinal)).ToList();     // the sessions; the two FileRead rows are checked below
+            Assert.Equal(6, r.Records);                                           // 4 sessions + 2 FileRead rows
             Assert.Equal(EvidenceStatus.Success, r.Status);
             Assert.Empty(r.Gaps);
             Assert.Equal(0, r.MalformedRecords);
@@ -87,8 +88,108 @@ public sealed class RustDeskLogTests : IDisposable
             Assert.Equal("443", c.Fields["Remote Port"]);
             Assert.Equal(new DateTimeOffset(2026, 11, 10, 10, 0, 0, TimeSpan.Zero), c.Time.Utc);   // 12:00 at +02:00
             Assert.Equal("+02:00", c.Fields["Time Offset"]);
-            Assert.All(e, x => { Assert.Equal(Classification.Direct, x.Classification); Assert.Equal(Confidence.Medium, x.Confidence); RemoteToolTestKit.AssertNothingHidden(x); });
+            Assert.All(all, x => { Assert.Equal(Classification.Direct, x.Classification); Assert.Equal(Confidence.Medium, x.Confidence); RemoteToolTestKit.AssertNothingHidden(x); });
+
+            // the two "new read File:" rows (08:35:10 and 08:36:20, only #901 open): separate events, in the order of the rows, not sessions
+            var reads = all.Where(x => x.Fields["Kind"] == "FileRead").ToList();
+            Assert.Equal(2, reads.Count);
+            Assert.Equal([2, 3], reads.Select(x => all.IndexOf(x)).ToArray());
+            Assert.Equal(@"C:\Users\TEST-user\Documents\TEST-contract.pdf", reads[0].Fields["File Path"]);
+            Assert.Equal("fișier citit de pe stație (trimis la distanță)", reads[0].Fields["Transfer"]);
+            Assert.Equal("fișier", reads[0].Fields["Transfer Data"]);
+            Assert.Equal("da", reads[0].Fields["Session Evidence"]);
+            Assert.Equal("", reads[0].Fields["Direction"]);
+            Assert.Equal("901", reads[0].Fields["Session Id"]);                       // exactly one partner session open in this file (the loopback #903 is closed and never counts)
+            Assert.Equal(new DateTimeOffset(2026, 11, 9, 7, 35, 10, TimeSpan.Zero), reads[0].Time.Utc);
+            Assert.Equal(RustDeskLogParser.EventSource, reads[0].Source);
         }
+    }
+
+    private static string Corpus_cm => RemoteToolTestKit.Corpus(@"rustdesk_TEST\cm\rustdesk_rCURRENT.log");
+
+    [Fact]
+    public void The_cm_log_gives_FileWrite_events_with_the_path_and_Bytes_without_one_and_no_session_id()
+    {
+        var (r, e) = RemoteToolTestKit.Run(P, T, Corpus_cm, RemoteToolTestKit.Zone);
+        Assert.Equal(3, r.Records);
+        Assert.Equal(EvidenceStatus.Success, r.Status);
+        Assert.Empty(r.Gaps);
+        Assert.All(e, x =>
+        {
+            Assert.Equal("FileWrite", x.Fields["Kind"]);
+            Assert.Equal("fișier scris pe stație (primit de la distanță)", x.Fields["Transfer"]);
+            Assert.Equal("", x.Fields["Direction"]);
+            Assert.Equal("da", x.Fields["Session Evidence"]);
+            Assert.Equal("", x.Fields["Session Id"]);                                  // no session in this file
+            RemoteToolTestKit.AssertNothingHidden(x);
+        });
+        Assert.Equal(@"C:\Users\TEST-user\Desktop\TEST-raport.docx", e[0].Fields["File Path"]);
+        Assert.Equal("fișier", e[0].Fields["Transfer Data"]);
+        Assert.Equal(new DateTimeOffset(2026, 11, 9, 7, 33, 0, 120, TimeSpan.Zero), e[0].Time.Utc);
+        Assert.Equal("", e[1].Fields["File Path"]);                                    // "new write Bytes": memory data, no path
+        Assert.Equal("memorie", e[1].Fields["Transfer Data"]);
+        Assert.Equal(@"C:\Users\TEST-user\Downloads\TEST-unealta.zip", e[2].Fields["File Path"]);
+    }
+
+    private static string Wr(string time, string what, string verb = "write", string date = "2026-11-09") =>
+        R(time, $"new {verb} {what}", "INFO", date: date, src: @"libs\hbb_common\src\fs.rs:624");
+
+    [Fact]
+    public void A_hostile_transfer_path_is_cleaned_and_capped_and_UNC_and_relative_paths_are_kept_as_text_only()
+    {
+        var text = Wr("08:00:01.000000", "File: C:\\Users\\x\\a\u202Egnp.exe") + Wr("08:00:02.000000", "File: C:\\x\u0001\u0007\\b.txt")
+                 + Wr("08:00:03.000000", @"File: \\server\share\x") + Wr("08:00:04.000000", @"File: ..\..\x", "read")
+                 + Wr("08:00:05.000000", "File: C:\\" + new string('A', 10_000));
+        var (r, e) = RunText(text);
+        Assert.Equal(5, r.Records);
+        Assert.Equal(EvidenceStatus.Success, r.Status);
+        Assert.All(e, RemoteToolTestKit.AssertNothingHidden);
+        Assert.DoesNotContain('\u202E', e[0].Fields["File Path"]);
+        Assert.Contains("gnp.exe", e[0].Fields["File Path"]);
+        Assert.DoesNotContain(e[1].Fields["File Path"], ch => char.IsControl(ch));
+        Assert.Equal(@"\\server\share\x", e[2].Fields["File Path"]);
+        Assert.Equal("FileRead", e[3].Fields["Kind"]);
+        Assert.Equal(@"..\..\x", e[3].Fields["File Path"]);                              // text only: never resolved or opened
+        Assert.True(e[4].Fields["File Path"].Length <= RustDeskLogParser.MaxPathChars + 1);
+        Assert.True(e[4].Summary.Length < 600);
+        Assert.Contains("Line Truncated", e[4].Fields.Keys);                           // the 2048-character line cap cut the path first
+    }
+
+    [Fact]
+    public void A_new_write_without_File_is_ignored_counted_and_reported_as_a_gap()
+    {
+        var (r, e) = RunText(Wr("08:00:01.000000", "Stream") + Wr("08:00:02.000000", "File:") + Wr("08:00:03.000000", "File: ") + Wr("08:00:04.000000", "File: C:\\ok.txt") + Wr("08:00:05.000000", "bytes", "read"));
+        Assert.Single(e);
+        Assert.Equal(@"C:\ok.txt", e[0].Fields["File Path"]);
+        Assert.Contains(r.Gaps, g => g.Reason.Contains("4 de rânduri „new write/read”", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void Ten_thousand_transfers_are_all_events_and_fast()
+    {
+        var sb = new StringBuilder();
+        for (int i = 0; i < 10_000; i++) sb.Append(Wr($"{8 + i / 3600:00}:{i / 60 % 60:00}:{i % 60:00}.000000", $"File: C:\\Users\\TEST-user\\Desktop\\f{i}.txt"));
+        var w = Stopwatch.StartNew();
+        var (r, e) = RunText(sb.ToString());
+        w.Stop();
+        Assert.Equal(10_000, r.Records);
+        Assert.Equal(10_000, e.Count);
+        Assert.True(w.Elapsed < TimeSpan.FromSeconds(20), $"{w.Elapsed}");
+    }
+
+    [Fact]
+    public void A_transfer_gets_the_session_id_only_when_exactly_one_partner_session_is_open_in_the_same_file()
+    {
+        var one = RunText(Open("08:00:00.000000", "5", "192.0.2.1:1000") + Wr("08:00:10.000000", "File: C:\\a.txt") + Close("08:01:00.000000", "5")).E;
+        Assert.Equal("5", one.Single(x => x.Fields["Kind"] == "FileWrite").Fields["Session Id"]);
+        var two = RunText(Open("08:00:00.000000", "5", "192.0.2.1:1000") + Open("08:00:01.000000", "6", "192.0.2.2:1000") + Wr("08:00:10.000000", "File: C:\\a.txt") + Close("08:01:00.000000", "5") + Close("08:01:01.000000", "6")).E;
+        var t = two.Single(x => x.Fields["Kind"] == "FileWrite");
+        Assert.Equal("", t.Fields["Session Id"]);
+        Assert.Contains("2 sesiuni", t.Fields["Ambiguity"]);
+        var none = RunText(Wr("08:00:10.000000", "File: C:\\a.txt")).E.Single();
+        Assert.Equal("", none.Fields["Session Id"]);
+        var loop = RunText(Open("08:00:00.000000", "7", "127.0.0.1:1000") + Wr("08:00:10.000000", "File: C:\\a.txt") + Close("08:01:00.000000", "7")).E;
+        Assert.Equal("", loop.Single(x => x.Fields["Kind"] == "FileWrite").Fields["Session Id"]);      // a loopback connection is not a partner
     }
 
     [Fact]
@@ -424,7 +525,7 @@ public sealed class RustDeskLogTests : IDisposable
     {
         var d = P.Descriptor;
         Assert.Equal(T, d.SourceTypes.Single());
-        Assert.Contains(d.Limitations, x => x.Contains("Transferurile de fișiere", StringComparison.Ordinal) && x.Contains("autentificările", StringComparison.Ordinal));
+        Assert.Contains(d.Limitations, x => x.Contains("new write File:", StringComparison.Ordinal) && x.Contains("NU este jurnalizată", StringComparison.Ordinal));
         Assert.Equal(RustDeskLogParser.MaxFileBytes, d.MaxInputBytes);
         Assert.Equal("rustdesk", RustDeskLogParser.ToolId);
     }
