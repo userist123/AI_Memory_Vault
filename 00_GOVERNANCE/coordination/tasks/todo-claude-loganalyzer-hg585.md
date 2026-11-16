@@ -986,3 +986,20 @@
   "two tools within 24 h" correlation like any use. Lab leftover: WS01 it.admin AppData\Roaming\RustDesk\log\cm\rustdesk_rCURRENT.log (TEST).
   Suites: see commit. Next (planner #3): item 2 UsrClass.dat / Notepad tabs in the remote package (same restriction as live: "Completă" only);
   item 3 (ESE sample) blocked on an install image (owner).
+- 2026-11-16 USER HIVES in the remote package DONE (planner #3 item 2). Owner-delegated decision (safe): optional artifact "user-hives"
+  (NTUSER.DAT, UsrClass.dat per profile), NOT in the default list; UI check box "Include hive-urile utilizatorilor (... istoric personal)",
+  unchecked by default and reset after every generation; the default package has no hive code at all. Locked hives via esentutl /y /vss only on
+  a sharing violation; hardlinks (fsutil hardlink list > 1) and reparse points refused; 512 MiB per file, 200 profiles, free space tracked;
+  capped copy. Verify now binds every package file to an artifact of the request (UnauthorizedFile; canonical paths only, "..", ".", "\"
+  refused) - also closes an older gap for all artifacts. Notepad tabs were already in the package (RESEARCH_GAPS §6 corrected).
+  Reviews: r1 HIGH (HResult read from MethodInvocationException: the VSS path never ran), MEDIUM hardlink, MEDIUM Verify not bound to the
+  request -> worker; r2 MEDIUM ".." bypass of the binding -> fixed here with tests. LAB (UI on WS01 -> SRV01 -> UI import -> run):
+  package with hives generated (UIA "click" on the check box had missed: use focus + key " "), run on SRV01 as admin: 7 hives incl. the
+  LOADED NTUSER.DAT of Administrator.LAB, shadow copies 0 -> 0, fsutil fine on a real UsrClass.dat; Verify of the real full package OK (216
+  files, no false refusal). FOUND IN LAB + FIXED: the live case flattens package files into one folder ("NTUSER_1.DAT"), and the run re-typed
+  by name -> "file", never parsed; InvestigationPipeline.Import(..., carried) now keeps the type and origin note decided at the package import
+  (only when the name gives no type). After the fix: 4 ntuser_hive + 3 usrclass_hive parsed (0 records: server profiles never used in
+  Explorer; gaps "cheia lipsește"). Also explained: after the scope dialog the pending "generate" command continues by itself (the "extra
+  Save dialog" seen on 2026-11-14). Lab leftovers: SRV01 C:\LA-Collect-201116, WS01 Documents\LA_LAB-SRV01_20261116T181117Z and a TEST
+  request without package in the live case. Suites: Dfir 3884 (3851 passed, 33 skipped), App 1088, UI 370 (369 + 1 skipped), all exit 0.
+  Next: planner #3 item 3 (ESE sample) blocked on an install image (owner); ask a NEW planner from this checkpoint.

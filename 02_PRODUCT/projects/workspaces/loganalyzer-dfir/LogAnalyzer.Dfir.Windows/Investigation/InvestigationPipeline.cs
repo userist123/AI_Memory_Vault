@@ -167,13 +167,20 @@ public sealed class InvestigationPipeline
     /// <paramref name="zones"/>: the station time zone already decided for a file (path → Windows zone id, "" = not known), e.g. the target's zone
     /// from a remote package imported into the live case before the run; a file not listed gets the default below.
     /// </summary>
-    public static List<EvidenceItem> Import(CaseWorkspace ws, IEnumerable<string> files, IReadOnlyDictionary<string, string>? zones = null)
+    /// <param name="carried">What the import of a remote package already decided for a file of the live case (path → evidence type and origin note).
+    /// Lab 2026-11-16: the live case stores the package files in one folder, so a second NTUSER.DAT becomes "NTUSER_1.DAT"; re-typed by name in the run it
+    /// became "file" and was never parsed, and the profile it came from was lost. The carried type is used only when the name gives no type.</param>
+    public static List<EvidenceItem> Import(CaseWorkspace ws, IEnumerable<string> files, IReadOnlyDictionary<string, string>? zones = null,
+        IReadOnlyDictionary<string, (string SourceType, string Note)>? carried = null)
     {
         var list = new List<EvidenceItem>();
         var all = files.ToList();
         foreach (var f in all)
         {
             var type = ImportType(f);
+            string carriedType = "", carriedNote = "";
+            if (carried is not null && carried.TryGetValue(f, out var cv)) { carriedType = cv.SourceType ?? ""; carriedNote = cv.Note ?? ""; }
+            if (type == "file" && carriedType.Length > 0 && carriedType != "file" && !carriedType.StartsWith("EventLog:", StringComparison.Ordinal)) type = carriedType;
             // the Windows Search index: Windows.db and the -wal beside it go together into one folder, so the parser finds the journal next to the database;
             // a -wal selected on its own beside a selected Windows.db is taken with it, not imported twice
             if (IsSearchDatabaseType(type)) { list.AddRange(ImportSearchIndex(ws, f, type)); continue; }
@@ -182,7 +189,7 @@ public sealed class InvestigationPipeline
             var source = type == "evtx" ? LogAnalyzer.Dfir.Windows.Acquisition.HistoricalSources.ChannelFromFileName(f) : type;
             var origin = LogAnalyzer.Dfir.Analysis.EvidenceOrigin.Label(f);
             list.Add(ws.ImportFile(f, "Import:" + source, type == "evtx" ? "EventLog:" + source : type, TemporalType.Historical, "Import", DfirInfo.ApplicationVersion,
-                notes: (origin.Length > 0 ? $"Sursă istorică ({origin}). " : "") + "Importat de operator din: " + f,
+                notes: (origin.Length > 0 ? $"Sursă istorică ({origin}). " : "") + "Importat de operator din: " + f + (carriedNote.Length > 0 ? "; la importul pachetului: " + carriedNote : ""),
                 // the zone decided where the file came from (a remote package: the target's zone from its manifest) is kept. Otherwise a session log of
                 // AnyDesk / TeamViewer is in the local time of a station an operator import does not name: its times stay unconverted instead of being
                 // read in this machine's zone. (Lab 2026-11-14: "Verifică și importă" put the package in the live case with the target's zone, then the

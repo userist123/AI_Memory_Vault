@@ -26,6 +26,9 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <summary>Station zone of files that came from a verified remote package (stored path → zone id), passed to the run's import.</summary>
         private readonly Dictionary<string, string> _importZones = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>Evidence type and origin note decided at the remote-package import (stored path → both), passed to the run's import (lab 2026-11-16).</summary>
+        private readonly Dictionary<string, (string SourceType, string Note)> _importCarried = new(StringComparer.OrdinalIgnoreCase);
         public ObservableCollection<Finding> Findings { get; } = new();
 
         /// <summary>R7c: the acquisition run records of the case ("Colectări" tab), read with their integrity verdict by the pipeline or the case loader (no second hashing here).</summary>
@@ -231,6 +234,20 @@ namespace LogAnalyzer.UI.ViewModels
 
         [ObservableProperty] private string _remoteHost = "";
         [ObservableProperty] private string _remoteJustification = "";
+        /// <summary>Unticked by default: the user hives hold personal history, so they are in a package only when the operator asks.</summary>
+        [ObservableProperty] private bool _remoteIncludeUserHives;
+
+        /// <summary>The artifact list a package request carries: the default list, plus "user-hives" only when the operator ticked the box.</summary>
+        public static IReadOnlyList<string> RemoteArtifactList(bool includeUserHives) => RemoteCollection.ArtifactsFor(includeUserHives);
+
+        /// <summary>Called as soon as a request is authorized: the choice of the user hives applies to that request only, so a new request needs a new tick.</summary>
+        public void EndRemoteRequest() => RemoteIncludeUserHives = false;
+
+        /// <summary>The status line after a package is generated; it says whether the user hives were included.</summary>
+        public static string RemoteGeneratedStatus(string requestId, string host, string scriptFile, bool includeUserHives) =>
+            $"Cererea {requestId} autorizată pentru {host} și înregistrată în caz. " +
+            (includeUserHives ? "Hive-urile utilizatorilor (NTUSER.DAT, UsrClass.dat) SUNT incluse în pachet (istoric personal). " : "Hive-urile utilizatorilor NU sunt incluse în pachet. ") +
+            $"Rulați {scriptFile} ca administrator pe {host}; aduceți folderul LA_{host}_… înapoi și apăsați „Verifică și importă”.";
         [ObservableProperty] private string _remoteStatus = "Pachetul rulează pe stația țintă (local, fără rețea), calculează SHA-256 acolo; îl aduceți pe suport extern și îl verificați aici înainte de import.";
 
         public string[] Profiles { get; } = { "Rapid (jurnale, Prefetch, stare live)", "Standard (+ SRUM)", "Complet (+ hive-uri utilizatori, Coș $I)" };
@@ -471,6 +488,7 @@ namespace LogAnalyzer.UI.ViewModels
             var profile = ProfileIndex switch { 0 => CollectionProfile.Quick, 2 => CollectionProfile.FullForensic, _ => CollectionProfile.Standard };
             var files = ImportFiles.ToList();
             var zones = files.Where(_importZones.ContainsKey).ToDictionary(f => f, f => _importZones[f], StringComparer.OrdinalIgnoreCase);
+            var carried = files.Where(_importCarried.ContainsKey).ToDictionary(f => f, f => _importCarried[f], StringComparer.OrdinalIgnoreCase);
             bool collect = CollectFromThisStation;
             var name = CaseName;
             var zone = SystemZone.Trim();
@@ -484,7 +502,7 @@ namespace LogAnalyzer.UI.ViewModels
                     if (files.Count > 0)
                     {
                         ((IProgress<string>)progress).Report($"Import {files.Count} fișiere (copii; originalele nu se modifică)");
-                        InvestigationPipeline.Import(ws, files, zones);
+                        InvestigationPipeline.Import(ws, files, zones, carried);
                     }
                     // B7: a signed media register in the case folder is verified like on the live path; an invalid one is not used and the reason is shown
                     LogAnalyzer.Dfir.Registers.MediaRegister? signedMedia = null;
@@ -645,11 +663,13 @@ namespace LogAnalyzer.UI.ViewModels
                 if (ws is null) { RemoteStatus = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             IntegrityLine = LogAnalyzer.UI.Services.LiveCase.IntegrityLine ?? "";
                 using var id = System.Security.Principal.WindowsIdentity.GetCurrent();
-                var (req, sha) = RemoteCollection.Authorize(ws, RemoteHost, id.Name, RemoteJustification, RemoteCollection.KnownArtifacts);
+                var includeHives = RemoteIncludeUserHives;
+                var (req, sha) = RemoteCollection.Authorize(ws, RemoteHost, id.Name, RemoteJustification, RemoteArtifactList(includeHives));
+                EndRemoteRequest();
                 var dlg = new SaveFileDialog { FileName = $"Colectare_{req.TargetHost}.ps1", Filter = "PowerShell (*.ps1)|*.ps1" };
                 if (dlg.ShowDialog() != true) { RemoteStatus = $"Cererea {req.RequestId} a fost autorizată, dar pachetul nu a fost salvat."; return; }
                 File.WriteAllText(dlg.FileName, RemoteCollection.PackageScript(req, sha), new System.Text.UTF8Encoding(true));
-                RemoteStatus = $"Cererea {req.RequestId} autorizată pentru {req.TargetHost} și înregistrată în caz. Rulați {Path.GetFileName(dlg.FileName)} ca administrator pe {req.TargetHost}; aduceți folderul LA_{req.TargetHost}_… înapoi și apăsați „Verifică și importă”.";
+                RemoteStatus = RemoteGeneratedStatus(req.RequestId, req.TargetHost, Path.GetFileName(dlg.FileName), includeHives);
             }
             catch (ArgumentException ex) { RemoteStatus = "Oprit: " + ex.Message; }
         }
@@ -666,7 +686,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (!check.Ok) { RemoteStatus = "Pachetul NU a fost importat: " + string.Join("; ", check.Problems); return; }
             var items = RemoteCollection.Import(ws, check);
             // the station zone each file got at import (the target's, from the manifest) travels with it into the case of the run
-            foreach (var i in items.Skip(1)) { var f = ws.FullPath(i.StoredPath); _importZones[f] = i.Timezone; if (!ImportFiles.Contains(f)) ImportFiles.Add(f); }
+            foreach (var i in items.Skip(1)) { var f = ws.FullPath(i.StoredPath); _importZones[f] = i.Timezone; _importCarried[f] = (i.SourceType, i.Notes); if (!ImportFiles.Contains(f)) ImportFiles.Add(f); }
             var failed = check.Manifest!.Steps.Where(s => s.Status is not ("ok" or "absent")).Select(s => $"{s.Artifact} ({s.Error})").ToList();
             // a log that does not exist on the target (Sysmon not installed) is said as such, not as a failed step (lab SRV01 2026-11-07)
             var absent = check.Manifest.Steps.Where(s => s.Status == "absent").Select(s => s.Artifact.StartsWith("evtx:", StringComparison.Ordinal) ? s.Artifact[5..] : s.Artifact).ToList();

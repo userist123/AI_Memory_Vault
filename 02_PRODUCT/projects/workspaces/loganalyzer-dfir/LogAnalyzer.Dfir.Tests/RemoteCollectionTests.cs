@@ -2,7 +2,9 @@ using System.Diagnostics;
 using System.Text.Json;
 using LogAnalyzer.Core.Services.Connectivity;
 using LogAnalyzer.Dfir.Case;
+using LogAnalyzer.Dfir.IO;
 using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.Tests.Synthetic;
 using LogAnalyzer.Dfir.Windows.Acquisition;
 using Xunit;
 
@@ -548,6 +550,26 @@ public sealed class RemoteCollectionTests : IDisposable
     }
 
     [Fact]
+    public void Carried_types_and_origins_survive_the_reimport_of_files_renamed_by_the_live_case()
+    {
+        // lab 2026-11-16: the live case stored a second NTUSER.DAT as NTUSER_1.DAT; the run re-typed it by name as "file" and it was never parsed
+        var dir = Path.Combine(_root, "renamed"); Directory.CreateDirectory(dir);
+        var first = Path.Combine(dir, "NTUSER.DAT"); var second = Path.Combine(dir, "NTUSER_1.DAT");
+        foreach (var f in new[] { first, second }) File.WriteAllBytes(f, [(byte)'r', (byte)'e', (byte)'g', (byte)'f', 0, 0, 0, 0]);
+        CaseWorkspace Other(string name) => CaseWorkspace.Create(Path.Combine(_root, name), new CaseInfo { CaseId = "CASE-" + name, Name = name, CreatedAtUtc = DateTimeOffset.UtcNow, Scope = TestScopes.Valid() });
+        var carried = new Dictionary<string, (string, string)>
+        {
+            [first] = ("ntuser_hive", "profil de origine: ana"), [second] = ("ntuser_hive", "profil de origine: bob"),
+        };
+        var items = LogAnalyzer.Dfir.Windows.Investigation.InvestigationPipeline.Import(Other("case-carried"), [first, second], null, carried);
+        Assert.All(items, i => Assert.Equal("ntuser_hive", i.SourceType));
+        Assert.Contains(items, i => i.Notes.Contains("profil de origine: bob"));
+        // without what the package import decided, the renamed copy is not a hive (the old behaviour, still right for an operator import)
+        var bare = LogAnalyzer.Dfir.Windows.Investigation.InvestigationPipeline.Import(Other("case-bare2"), [second]).Single();
+        Assert.Equal("file", bare.SourceType);
+    }
+
+    [Fact]
     public void A_manifest_without_a_zone_leaves_session_log_times_unconverted()
     {
         // an older package (no "timezone") deserialises with Timezone null; the import then gives a session log no zone, never the analyst's
@@ -654,5 +676,285 @@ public sealed class RemoteCollectionTests : IDisposable
             Assert.DoesNotContain(forbidden, script, StringComparison.OrdinalIgnoreCase);
         Assert.DoesNotContain(RemoteCollection.KnownArtifacts, a => a.Contains("SAM") || a.Contains("SECURITY"));
         Assert.True(AppModeContext.IsAirGapped);
+    }
+
+    // ---- user hives (optional artifact) ----
+
+    private static byte[] SyntheticUsrClass()
+    {
+        var root = new RegfBuilder.Key("ROOT", new DateTime(2026, 9, 1, 12, 0, 0, DateTimeKind.Utc));
+        var bag = root.Sub(@"Local Settings\Software\Microsoft\Windows\Shell\BagMRU");
+        bag.Value("0", RegfBuilder.Binary, ShellItemBuilder.List(ShellItemBuilder.Root(ShellItemBuilder.ThisPc)));
+        bag.Value("MRUListEx", RegfBuilder.Binary, ShellItemBuilder.Mru(0, 0xFFFFFFFF));
+        return RegfBuilder.Build(root, "UsrClass.dat");
+    }
+
+    private static byte[] SyntheticNtUser()
+    {
+        var root = new RegfBuilder.Key("ROOT", new DateTime(2026, 9, 1, 12, 0, 0, DateTimeKind.Utc));
+        root.Sub(@"Software\Microsoft\Windows\CurrentVersion\Explorer\RecentDocs").Value("MRUListEx", RegfBuilder.Binary, ShellItemBuilder.Mru(0xFFFFFFFF));
+        return RegfBuilder.Build(root, "NTUSER.DAT");
+    }
+
+    private static void PutHives(string fake, string profile, bool ntuser = true, bool usrclass = true)
+    {
+        var home = Path.Combine(fake, "Users", profile);
+        Directory.CreateDirectory(home);
+        if (ntuser) File.WriteAllBytes(Path.Combine(home, "NTUSER.DAT"), SyntheticNtUser());
+        if (!usrclass) return;
+        var w = Path.Combine(home, "AppData", "Local", "Microsoft", "Windows");
+        Directory.CreateDirectory(w);
+        File.WriteAllBytes(Path.Combine(w, "UsrClass.dat"), SyntheticUsrClass());
+    }
+
+    [Fact]
+    public void Authorize_refuses_an_unknown_artifact_accepts_user_hives_and_the_default_list_does_not_contain_them()
+    {
+        var ws = NewCase();
+        Assert.Throws<ArgumentException>(() => RemoteCollection.Authorize(ws, "PC01", "op", "j", ["user-hives-all"]));
+        Assert.Throws<ArgumentException>(() => RemoteCollection.Authorize(ws, "PC01", "op", "j", ["user-hives", "hive:SAM"]));
+        var (req, _) = RemoteCollection.Authorize(ws, "PC01", "op", "j", [RemoteCollection.UserHivesArtifact]);
+        Assert.Equal(["user-hives"], req.Artifacts);
+        Assert.DoesNotContain("user-hives", RemoteCollection.KnownArtifacts);
+        Assert.Equal(["user-hives"], RemoteCollection.OptionalArtifacts);
+        Assert.DoesNotContain("user-hives", RemoteCollection.ArtifactsFor(false));
+        Assert.Equal([.. RemoteCollection.KnownArtifacts, "user-hives"], RemoteCollection.ArtifactsFor(true));
+        // a request edited to carry an unknown artifact still cannot generate a package
+        Assert.Throws<ArgumentException>(() => RemoteCollection.PackageScript(req with { Artifacts = ["user-hives", "evil"] }, new string('A', 64)));
+        var script = RemoteCollection.PackageScript(req, new string('A', 64));
+        foreach (var forbidden in new[] { "Invoke-WebRequest", "Net.WebClient", "curl", "wget", "ftp", "HKLM\\SAM", "HKLM\\SECURITY", "Cookies", "Login Data" })
+            Assert.DoesNotContain(forbidden, script, StringComparison.OrdinalIgnoreCase);
+    }
+
+    [Fact]
+    public void The_user_hives_step_collects_from_a_synthetic_station_refuses_links_and_oversized_files_and_the_import_types_them()
+    {
+        var fake = FakeStation("station-hives");
+        PutHives(fake, "ana"); PutHives(fake, "bob");
+        PutHives(fake, "dora", usrclass: false);
+        File.WriteAllText(Path.Combine(fake, "Users", "dora", "NTUSER.DAT"), "nu este un hive de registru");          // right name, wrong content
+        // carl: NTUSER.DAT is fine, UsrClass.dat is behind a junction on the path (refused and counted)
+        PutHives(fake, "carl", usrclass: false);
+        var elsewhere = Path.Combine(_root, "elsewhere-hives");
+        Directory.CreateDirectory(elsewhere);
+        File.WriteAllBytes(Path.Combine(elsewhere, "UsrClass.dat"), SyntheticUsrClass());
+        var carlLocal = Path.Combine(fake, "Users", "carl", "AppData", "Local", "Microsoft");
+        Directory.CreateDirectory(carlLocal);
+        var psi = new ProcessStartInfo("cmd.exe", $"/c mklink /J \"{Path.Combine(carlLocal, "Windows")}\" \"{elsewhere}\"") { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+        using (var mk = Process.Start(psi)!) { mk.WaitForExit(10000); if (mk.ExitCode != 0) return; }                  // junctions not available here
+        // eve: NTUSER.DAT over the 512 MiB cap (never read), UsrClass.dat fine
+        PutHives(fake, "eve", ntuser: false);
+        using (var big = new FileStream(Path.Combine(fake, "Users", "eve", "NTUSER.DAT"), FileMode.CreateNew)) big.SetLength(513L * 1024 * 1024);
+
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["user-hives"]);
+        var pkg = RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha), fake);
+        var check = RemoteCollection.Verify(ws, pkg);
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var step = check.Manifest!.Steps.Single();
+        Assert.NotEqual("ok", step.Status);
+        Assert.Contains("legaturi neurmate: 1", step.Error);
+        Assert.Contains("sarite (peste 512 MiB): 1", step.Error);
+        Assert.Contains("hive-uri copiate: 7", step.Error);
+        Assert.Equal(
+        [
+            "files/UserHives/ana/NTUSER.DAT", "files/UserHives/ana/UsrClass.dat",
+            "files/UserHives/bob/NTUSER.DAT", "files/UserHives/bob/UsrClass.dat",
+            "files/UserHives/carl/NTUSER.DAT",
+            "files/UserHives/dora/NTUSER.DAT",
+            "files/UserHives/eve/UsrClass.dat",
+        ], check.Manifest.Files.Select(f => f.Path).OrderBy(x => x, StringComparer.Ordinal).ToList());
+        Assert.Empty(Directory.GetFiles(pkg, "*", SearchOption.AllDirectories).Where(f => new FileInfo(f).Length > 100 * 1024 * 1024));
+
+        var items = RemoteCollection.Import(ws, check).Where(i => i.SourceType != "remote-manifest").ToList();
+        Assert.Equal(7, items.Count);
+        Assert.Equal(3, items.Count(i => i.SourceType == "ntuser_hive"));
+        Assert.Equal(3, items.Count(i => i.SourceType == "usrclass_hive"));
+        var notHive = Assert.Single(items, i => i.SourceType == "file");
+        Assert.Contains("dora", notHive.Notes);
+        foreach (var f in check.Manifest.Files)
+        {
+            var it = items.Single(i => i.Notes.Contains(f.Path, StringComparison.Ordinal));
+            Assert.Equal(f.Sha256, it.Sha256, ignoreCase: true);                                   // SHA-256 at import equals the manifest's (the target's)
+            Assert.Contains("profil de origine: " + f.Path.Split('/')[2], it.Notes);
+        }
+
+        // the ShellBags parser runs on the imported UsrClass.dat
+        var uc = items.First(i => i.SourceType == "usrclass_hive" && i.Notes.Contains("/ana/"));
+        var sink = new LogAnalyzer.Dfir.Model.ListSink();
+        var parsed = new LogAnalyzer.Dfir.Windows.Parsers.ShellBagsParser().Parse(uc, ws.FullPath(uc.StoredPath), sink, default);
+        Assert.Equal(EvidenceStatus.Success, parsed.Status);
+        Assert.NotEmpty(sink.Events);
+        Directory.Delete(Path.Combine(carlLocal, "Windows"));
+    }
+
+    /// <summary>Runs a PowerShell snippet (PS 5.1, as the package does) and returns its trimmed stdout.</summary>
+    private string RunSnippet(string script)
+    {
+        var dir = Path.Combine(_root, "snip_" + Guid.NewGuid().ToString("N"));
+        Directory.CreateDirectory(dir);
+        var file = Path.Combine(dir, "s.ps1");
+        File.WriteAllText(file, script, new System.Text.UTF8Encoding(true));
+        using var p = Process.Start(PowerShell(file))!;
+        var stdout = p.StandardOutput.ReadToEnd(); var stderr = p.StandardError.ReadToEnd();
+        p.WaitForExit();
+        Assert.True(p.ExitCode == 0, $"exit {p.ExitCode}: {stderr}");
+        return stdout.Trim();
+    }
+
+    private static string UserHiveHelpers(string script)
+    {
+        const string begin = "# BEGIN user-hives helpers", end = "# END user-hives helpers";
+        var i = script.IndexOf(begin, StringComparison.Ordinal); var j = script.IndexOf(end, StringComparison.Ordinal);
+        Assert.True(i >= 0 && j > i, "the helper block is missing from the script");
+        return script[i..j];
+    }
+
+    [Fact]
+    public void The_sharing_violation_check_finds_the_IOException_inside_the_MethodInvocationException_and_esentutl_is_not_run()
+    {
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "op", "j", ["user-hives"]);
+        var helpers = UserHiveHelpers(RemoteCollection.PackageScript(req, sha));
+        var locked = Path.Combine(_root, "locked.dat"); File.WriteAllBytes(locked, [1, 2, 3]);
+        var free = Path.Combine(_root, "free.dat"); File.WriteAllBytes(free, [1, 2, 3]);
+        var missing = Path.Combine(_root, "missing.dat");
+        // same call as the step: New-Object wraps the failure; only the helper (not the esentutl branch) is run here
+        string Probe(string path) => "try { $s = New-Object IO.FileStream('" + path + "', [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]'ReadWrite,Delete'); $s.Dispose(); 'open' } catch { 'busy=' + $(Test-SharingViolation $_.Exception) + ' type=' + $_.Exception.GetType().Name }\n";
+        using (new FileStream(locked, FileMode.Open, FileAccess.ReadWrite, FileShare.None))
+        {
+            var r = RunSnippet(helpers + Probe(locked) + Probe(missing) + Probe(free));
+            var lines = r.Split('\n').Select(l => l.Trim()).ToArray();
+            Assert.Equal("busy=True type=MethodInvocationException", lines[0]);   // the wrapper is what the catch block sees
+            Assert.Equal("busy=False type=MethodInvocationException", lines[1]);  // a missing file is a plain failure, not a lock
+            Assert.Equal("open", lines[2]);
+        }
+        Assert.DoesNotContain("esentutl", helpers, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private sealed class HardLinkFactAttribute : FactAttribute
+    {
+        public HardLinkFactAttribute()
+        {
+            var dir = Path.Combine(Path.GetTempPath(), "ladfir_hl_probe_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(dir);
+            try
+            {
+                File.WriteAllText(Path.Combine(dir, "a"), "x");
+                if (!MakeHardLink(Path.Combine(dir, "b"), Path.Combine(dir, "a"))) Skip = "hard links cannot be created on this volume (mklink /H failed)";
+            }
+            finally { Directory.Delete(dir, true); }
+        }
+    }
+
+    private static bool MakeHardLink(string link, string target)
+    {
+        var psi = new ProcessStartInfo("cmd.exe", $"/c mklink /H \"{link}\" \"{target}\"") { CreateNoWindow = true, UseShellExecute = false, RedirectStandardOutput = true, RedirectStandardError = true };
+        using var mk = Process.Start(psi)!;
+        mk.StandardOutput.ReadToEnd(); mk.StandardError.ReadToEnd();
+        mk.WaitForExit(10000);
+        return mk.ExitCode == 0;
+    }
+
+    [HardLinkFact]
+    public void The_user_hives_step_refuses_a_hard_linked_hive_and_counts_it()
+    {
+        var fake = FakeStation("station-hardlink");
+        PutHives(fake, "ana", usrclass: false);
+        var elsewhere = Path.Combine(_root, "elsewhere-hl");
+        Directory.CreateDirectory(elsewhere);
+        var original = Path.Combine(elsewhere, "someone-elses-hive.dat");
+        File.WriteAllBytes(original, SyntheticNtUser());
+        var fred = Path.Combine(fake, "Users", "fred"); Directory.CreateDirectory(fred);
+        Assert.True(MakeHardLink(Path.Combine(fred, "NTUSER.DAT"), original));
+
+        var ws = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["user-hives"]);
+        var check = RemoteCollection.Verify(ws, RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha), fake));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        var step = check.Manifest!.Steps.Single();
+        Assert.NotEqual("ok", step.Status);
+        Assert.Contains("legaturi neurmate: 1", step.Error);
+        Assert.Equal(["files/UserHives/ana/NTUSER.DAT"], check.Manifest.Files.Select(f => f.Path).ToList());
+    }
+
+    private static void InjectFile(string pkg, string relative, byte[] bytes)
+    {
+        var full = Path.Combine(pkg, relative.Replace('/', Path.DirectorySeparatorChar));
+        Directory.CreateDirectory(Path.GetDirectoryName(full)!);
+        File.WriteAllBytes(full, bytes);
+        var mp = Path.Combine(pkg, "manifest.json");
+        var node = System.Text.Json.Nodes.JsonNode.Parse(File.ReadAllText(mp))!;
+        var arr = node["files"] as System.Text.Json.Nodes.JsonArray ?? [];
+        node["files"] = arr;
+        arr.Add(new System.Text.Json.Nodes.JsonObject { ["path"] = relative, ["size"] = bytes.Length, ["sha256"] = Hashing.Sha256File(full) });
+        File.WriteAllText(mp, node.ToJsonString(), new System.Text.UTF8Encoding(false));
+        File.WriteAllText(Path.Combine(pkg, "manifest.sha256"), Hashing.Sha256File(mp) + "\n");   // the sums recomputed too
+    }
+
+    [Fact]
+    public void Verify_refuses_a_file_in_the_folder_of_an_artifact_the_request_did_not_ask_for()
+    {
+        var fake = FakeStation("station-bind");
+        var ws = NewCase();
+        // request WITHOUT user-hives: a hive injected under files/UserHives, manifest and its sum recomputed
+        var (req, sha) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["remote-tool-logs"]);
+        var pkg = RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha), fake);
+        Assert.True(RemoteCollection.Verify(ws, pkg).Ok);
+        InjectFile(pkg, "files/UserHives/mallory/NTUSER.DAT", SyntheticNtUser());
+        var bad = RemoteCollection.Verify(ws, pkg);
+        Assert.False(bad.Ok);
+        Assert.Contains(bad.Problems, p => p.Contains("user-hives") && p.Contains("nu este în cererea autorizată"));
+        Assert.Throws<InvalidOperationException>(() => RemoteCollection.Import(ws, bad));
+
+        // the same injection under a request that does carry user-hives is accepted
+        var (req2, sha2) = RemoteCollection.Authorize(ws, Environment.MachineName, @"STATIE\operator", "investigație de test", ["remote-tool-logs", "user-hives"]);
+        var pkg2 = RunPackageOnFakeStation(RemoteCollection.PackageScript(req2, sha2), fake);
+        InjectFile(pkg2, "files/UserHives/mallory/NTUSER.DAT", SyntheticNtUser());
+        var good = RemoteCollection.Verify(ws, pkg2);
+        Assert.True(good.Ok, string.Join("; ", good.Problems));
+    }
+
+    [Fact]
+    public void UnauthorizedFile_maps_every_package_folder_to_its_artifact()
+    {
+        string[] all = [.. RemoteCollection.KnownArtifacts, "user-hives"];
+        foreach (var path in new[]
+        {
+            "files/Security.evtx", "files/Microsoft-Windows-PowerShell_Operational.evtx", "files/SYSTEM.hive", "files/SOFTWARE.hive", "files/Prefetch/A.pf", "files/Tasks/x/y",
+            "files/DefenderDetectionHistory/a/b", "files/NotepadTabState/ana/x.bin", "files/RemoteToolLogs/Users/ana/AnyDesk/connection_trace.txt",
+            "files/WindowsSearch/Windows.db", "files/UserHives/ana/NTUSER.DAT", "files/NTFS/$MFT",
+        })
+            Assert.Null(RemoteCollection.UnauthorizedFile(path, all));
+        Assert.NotNull(RemoteCollection.UnauthorizedFile("files/SAM.hive", all));          // not an artifact
+        // review r2 2026-11-16: a non-canonical path judged by its first folder while the file read is elsewhere
+        var prefetchOnly = new[] { "prefetch" };
+        foreach (var bad in new[] { "files/Prefetch/../UserHives/mallory/NTUSER.DAT", @"files/Prefetch/..\UserHives\mallory\NTUSER.DAT", "files/Prefetch/./../UserHives/m/NTUSER.DAT",
+                                    "files/Prefetch//x.pf", "files/./Prefetch/x.pf", "files/Prefetch/../x.hive" })
+            Assert.NotNull(RemoteCollection.UnauthorizedFile(bad, prefetchOnly));
+        Assert.Null(RemoteCollection.UnauthorizedFile("files/Prefetch/CMD.EXE-1234ABCD.pf", prefetchOnly));
+        Assert.NotNull(RemoteCollection.UnauthorizedFile("files/Other/x", all));
+        Assert.NotNull(RemoteCollection.UnauthorizedFile("elsewhere/x", all));
+        Assert.NotNull(RemoteCollection.UnauthorizedFile("files/Security.evtx", ["evtx:System"]));
+        Assert.NotNull(RemoteCollection.UnauthorizedFile("files/Prefetch/A.pf", ["tasks"]));
+        Assert.NotNull(RemoteCollection.UnauthorizedFile("files/NTFS/$MFT", ["prefetch"]));
+    }
+
+    [Fact]
+    public void ImportKind_types_user_hives_only_by_exact_path_and_content()
+    {
+        var dir = Path.Combine(_root, "kind"); Directory.CreateDirectory(dir);
+        var nt = Path.Combine(dir, "NTUSER.DAT"); File.WriteAllBytes(nt, SyntheticNtUser());
+        var uc = Path.Combine(dir, "UsrClass.dat"); File.WriteAllBytes(uc, SyntheticUsrClass());
+        var junk = Path.Combine(dir, "junk.dat"); File.WriteAllText(junk, "x");
+        Assert.Equal("ntuser_hive", RemoteCollection.ImportKind("files/UserHives/ana/NTUSER.DAT", nt));
+        Assert.Equal("usrclass_hive", RemoteCollection.ImportKind("files/UserHives/ana/UsrClass.dat", uc));
+        Assert.Equal("ntuser_hive", RemoteCollection.ImportKind("files/UserHives/Tasks/NTUSER.DAT", nt));         // a profile named "Tasks"
+        Assert.Equal("file", RemoteCollection.ImportKind("files/UserHives/ana/NTUSER.DAT", junk));               // not a hive
+        Assert.Equal("file", RemoteCollection.ImportKind("files/UserHives/ana/UsrClass.dat", nt));               // content of the other kind
+        Assert.Equal("file", RemoteCollection.ImportKind("files/Other/ana/NTUSER.DAT", nt));                     // outside the folder
+        Assert.Equal("file", RemoteCollection.ImportKind("files/UserHives/NTUSER.DAT", nt));                     // no profile folder
+        Assert.Equal("file", RemoteCollection.ImportKind("files/UserHives/ana/x/NTUSER.DAT", nt));               // too deep
+        Assert.Equal("file", RemoteCollection.ImportKind("files/UserHives/ana/SYSTEM.hive", nt));                // another hive name in the folder
     }
 }

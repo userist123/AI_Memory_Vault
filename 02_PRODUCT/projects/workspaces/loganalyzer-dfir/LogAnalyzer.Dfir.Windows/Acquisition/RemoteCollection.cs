@@ -57,6 +57,22 @@ public static class RemoteCollection
         "hive:SYSTEM", "hive:SOFTWARE", "prefetch", "tasks", "defender-history", "notepad-tabs", "remote-tool-logs", "search-index", NtfsMetadataArtifact,
     ];
 
+    /// <summary>
+    /// Artifacts that <see cref="Authorize"/> accepts only when the operator asks for them; never part of <see cref="KnownArtifacts"/> (the default list).
+    /// "user-hives": NTUSER.DAT and UsrClass.dat of every profile; they hold personal history (typed paths, recent documents, shell folders).
+    /// </summary>
+    public const string UserHivesArtifact = "user-hives";
+    public static readonly IReadOnlyList<string> OptionalArtifacts = [UserHivesArtifact];
+
+    /// <summary>Package sub-folder of the user hives: <c>files/UserHives/&lt;profile&gt;/{NTUSER.DAT|UsrClass.dat}</c>.</summary>
+    public const string UserHivesFolder = "UserHives";
+
+    /// <summary>The list a request carries: the default artifacts, plus the optional user hives when the operator ticked them.</summary>
+    public static IReadOnlyList<string> ArtifactsFor(bool includeUserHives) =>
+        includeUserHives ? [.. KnownArtifacts, UserHivesArtifact] : KnownArtifacts;
+
+    private static bool IsAllowed(string artifact) => KnownArtifacts.Contains(artifact) || OptionalArtifacts.Contains(artifact);
+
     /// <summary>Package sub-folders for the Notepad tab files (one folder per profile) and for the Windows Search index (Windows.db with its -wal).</summary>
     public const string NotepadTabsFolder = "NotepadTabState", SearchIndexFolder = "WindowsSearch";
 
@@ -80,7 +96,7 @@ public static class RemoteCollection
         if (string.IsNullOrWhiteSpace(justification)) throw new ArgumentException("Colectarea la distanță cere o justificare.");
         var list = artifacts.Distinct().ToList();
         if (list.Count == 0) throw new ArgumentException("Nu a fost ales niciun artefact.");
-        foreach (var a in list.Where(a => !KnownArtifacts.Contains(a))) throw new ArgumentException($"Artefact necunoscut: {a}.");
+        foreach (var a in list.Where(a => !IsAllowed(a))) throw new ArgumentException($"Artefact necunoscut: {a}.");
 
         var r = new RemoteCollectionRequest(Guid.NewGuid().ToString(), ws.Info.CaseId, host.ToUpperInvariant(), operatorName.Trim(), justification.Trim(), list, DateTimeOffset.UtcNow);
         var dir = RequestsDir(ws);
@@ -109,11 +125,124 @@ public static class RemoteCollection
 
     private static string Q(string s) => "'" + s.Replace("'", "''") + "'";
 
+    /// <summary>The PowerShell branch of the optional user-hives step; appended to the script only when the request carries <see cref="UserHivesArtifact"/>.</summary>
+    private const string UserHivesBranch = """
+                } elseif ($a -eq 'user-hives') {
+                    # OPTIONAL (personal history): NTUSER.DAT and UsrClass.dat of every profile under Users, into files\UserHives\<profile>. No component of the path may be
+                    # a link (the file too), at most 512 MiB per file, at most 200 profiles. A file another process holds open (a logged-on user) is read only on a sharing
+                    # violation, through esentutl /vss; the shadow copies are counted before the first such read and after the loop, and one that stays is reported.
+                    # The transaction logs (.LOG1/.LOG2) are not copied, as in the live collector.
+                    # BEGIN user-hives helpers (the tests extract this block and run it)
+                    function Get-ShadowCount {
+                        try { return @(Get-CimInstance -ClassName Win32_ShadowCopy -ErrorAction Stop).Count } catch { return $null }
+                    }
+                    # New-Object wraps the IOException of a failed open in a MethodInvocationException: the Win32 code (32 sharing violation, 33 lock violation) is in the
+                    # inner exception, so the whole chain is walked
+                    function Test-SharingViolation($ex) {
+                        $depth = 0
+                        while ($ex -and $depth -lt 8) {
+                            if (($ex -is [IO.IOException]) -and ((($ex.HResult -band 0xFFFF) -eq 32) -or (($ex.HResult -band 0xFFFF) -eq 33))) { return $true }
+                            $ex = $ex.InnerException; $depth++
+                        }
+                        return $false
+                    }
+                    # number of names (hard links) of a file, -1 when it cannot be read; fsutil reads the metadata, so it also works on a file another process holds open
+                    function Get-HardLinkCount([string]$path) {
+                        try {
+                            $rows = @(& fsutil.exe hardlink list $path 2>$null | Where-Object { $_ -and $_.Trim() })
+                            $code = $LASTEXITCODE; $global:LASTEXITCODE = 0
+                            if ($code -ne 0) { return -1 }
+                            return $rows.Count
+                        } catch { return -1 }
+                    }
+                    # END user-hives helpers
+                    Step $a {
+                        $copied = 0; $failed = 0; $skipped = 0; $links = 0; $viaVss = 0; $taken = 0; $profilesLeft = 0
+                        $cap = 512MB
+                        $shadowBefore = $null; $vssUsed = $false
+                        $free = (New-Object IO.DriveInfo ([IO.Path]::GetPathRoot($files))).AvailableFreeSpace
+                        $profiles = @(Get-ChildItem -LiteralPath (Join-Path $env:SystemDrive 'Users') -Directory -Force -ErrorAction SilentlyContinue | Sort-Object Name)
+                        $wanted = @(@{ Name = 'NTUSER.DAT'; Parts = @('NTUSER.DAT') }, @{ Name = 'UsrClass.dat'; Parts = @('AppData', 'Local', 'Microsoft', 'Windows', 'UsrClass.dat') })
+                        for ($pi = 0; $pi -lt $profiles.Count; $pi++) {
+                            $p = $profiles[$pi]
+                            if ($p.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
+                            $counted = $false
+                            foreach ($w in $wanted) {
+                                $src = $p.FullName; $present = $true; $ok = $true; $gi = $null
+                                foreach ($part in $w.Parts) {
+                                    $src = Join-Path $src $part
+                                    $gi = Get-Item -LiteralPath $src -Force -ErrorAction SilentlyContinue
+                                    if (-not $gi) { $present = $false; break }
+                                    if ($gi.Attributes -band [IO.FileAttributes]::ReparsePoint) { $ok = $false; $links++; break }
+                                }
+                                if (-not $present -or -not $ok) { continue }
+                                if ($gi.PSIsContainer) { $failed++; continue }
+                                if (-not $counted) {
+                                    if ($taken -ge 200) { $profilesLeft = $profiles.Count - $pi; break }
+                                    $counted = $true; $taken++
+                                }
+                                if ($gi.Length -gt $cap) { $skipped++; continue }
+                                if ($gi.Length + 256MB -gt $free) { $failed++; continue }
+                                # a file with more than one name (a hard link to another profile's hive or to any other file) is not a reparse point, so it is refused here
+                                $hl = Get-HardLinkCount $gi.FullName
+                                if ($hl -lt 0) { $failed++; continue }
+                                if ($hl -gt 1) { $links++; continue }
+                                $d = Join-Path (Join-Path $files 'UserHives') $p.Name
+                                New-Item -ItemType Directory -Path $d -Force | Out-Null
+                                $dest = Join-Path $d $w.Name
+                                $in = $null; $outFs = $null; $busy = $false; $done = $false; $over = $false
+                                try {
+                                    $in = New-Object IO.FileStream($gi.FullName, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]'ReadWrite,Delete')
+                                    $outFs = New-Object IO.FileStream($dest, [IO.FileMode]::CreateNew, [IO.FileAccess]::Write)
+                                    # capped copy: a file that grew past the cap after the size check stops at the cap + 1 byte
+                                    $buf = New-Object byte[] (1MB); $total = [long]0
+                                    while (($n = $in.Read($buf, 0, $buf.Length)) -gt 0) {
+                                        $total += $n
+                                        if ($total -gt $cap) { $over = $true; break }
+                                        $outFs.Write($buf, 0, $n)
+                                    }
+                                    $outFs.Dispose(); $outFs = $null
+                                    if ($over) { Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue; $skipped++ } else { $done = $true }
+                                } catch {
+                                    if ($outFs) { $outFs.Dispose(); $outFs = $null }
+                                    Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue
+                                    # only a failure to OPEN the source for a sharing or lock violation goes to esentutl; any other error is a plain failure
+                                    $busy = ((-not $in) -and (Test-SharingViolation $_.Exception))
+                                    if (-not $busy) { $failed++ }
+                                } finally { if ($in) { $in.Dispose() }; if ($outFs) { $outFs.Dispose() } }
+                                if ($over) { continue }
+                                if ($busy) {
+                                    if (-not $vssUsed) { $vssUsed = $true; $shadowBefore = Get-ShadowCount }
+                                    & esentutl.exe /y $gi.FullName /vss /d $dest 2>&1 | Out-Null
+                                    $ecode = $LASTEXITCODE; $global:LASTEXITCODE = 0
+                                    if ($ecode -ne 0 -or -not (Test-Path -LiteralPath $dest -PathType Leaf)) { Remove-Item -LiteralPath $dest -Force -ErrorAction SilentlyContinue; $failed++; continue }
+                                    $done = $true; $viaVss++
+                                }
+                                if (-not $done) { continue }
+                                $now = Get-Item -LiteralPath $gi.FullName -Force -ErrorAction SilentlyContinue
+                                if ($now -and ($now.Attributes -band [IO.FileAttributes]::ReparsePoint)) { Remove-Item -LiteralPath $dest -Force; $links++; if ($busy) { $viaVss-- }; continue }
+                                if ((New-Object IO.FileInfo $dest).Length -gt $cap) { Remove-Item -LiteralPath $dest -Force; $skipped++; if ($busy) { $viaVss-- }; continue }
+                                $copied++
+                                $free -= (New-Object IO.FileInfo $dest).Length
+                            }
+                            if ($profilesLeft -gt 0) { break }
+                        }
+                        $left = ''
+                        if ($vssUsed) {
+                            $shadowAfter = Get-ShadowCount
+                            if ($null -eq $shadowBefore -or $null -eq $shadowAfter) { $left = '; lista copiilor de umbra nu a putut fi citita: nu s-a putut verifica daca a ramas una' }
+                            elseif ($shadowAfter -gt $shadowBefore) { $left = "; a ramas o copie de umbra noua dupa colectare ($($shadowAfter - $shadowBefore)): verificati si stergeti-o daca nu apartine altui program" }
+                        }
+                        if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0 -or $profilesLeft -gt 0 -or $left) { throw "hive-uri copiate: $copied (din copia de umbra: $viaVss); necopiate (acces refuzat, loc insuficient sau esec esentutl): $failed; sarite (peste 512 MiB): $skipped; legaturi neurmate: $links; profiluri peste limita de 200 necolectate: $profilesLeft$left" }
+                        if ($copied -eq 0) { return '__absent__' }
+                    }
+            """;
+
     /// <summary>The package script. It only reads the target and writes next to itself; it contains no network command.</summary>
     public static string PackageScript(RemoteCollectionRequest r, string requestSha256)
     {
         if (!HostName.IsMatch(r.TargetHost) || !Guid.TryParse(r.RequestId, out _) || !Regex.IsMatch(requestSha256, "^[0-9A-Fa-f]{64}$")
-            || r.Artifacts.Any(a => !KnownArtifacts.Contains(a)))
+            || r.Artifacts.Any(a => !IsAllowed(a)))
             throw new ArgumentException("Cererea nu este validă pentru generarea pachetului.");
         var sb = new StringBuilder();
         sb.AppendLine("# LogAnalyzer - pachet de colectare DFIR. Ruleaza pe statia tinta, local; nu foloseste reteaua.");
@@ -356,6 +485,11 @@ public static class RemoteCollection
                         if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0) { throw "file copiate: $copied; necopiate (Notepad deschis?): $failed; sarite (peste 4 MiB sau peste 500 pe profil): $skipped; legaturi neurmate: $links" }
                         if ($copied -eq 0) { return '__absent__' }
                     }
+            """);
+        sb.AppendLine();
+        // the user-hives branch exists in the script only when the operator asked for it: a default package contains no code to read user hives
+        if (r.Artifacts.Contains(UserHivesArtifact)) sb.Append(UserHivesBranch);
+        sb.Append("""
                 } elseif ($a -eq 'remote-tool-logs') {
                     # the session logs of AnyDesk (connection_trace.txt, ad.trace, ad_svc.trace) and TeamViewer (Connections.txt, Connections_incoming.txt), per profile and in
                     # ProgramData / Program Files: no component of a path may be a link, at most 16 MiB per file (ad.trace / ad_svc.trace 64 MiB), empty files skipped
@@ -544,6 +678,39 @@ public static class RemoteCollection
         return sb.ToString();
     }
 
+    /// <summary>Package folder (below files/) → the artifact that writes it. The NTFS folder is written only by the ntfs-metadata step of the script.</summary>
+    private static readonly (string Folder, string Artifact)[] FolderArtifacts =
+    [
+        (UserHivesFolder, UserHivesArtifact), (RemoteToolLogsFolder, "remote-tool-logs"), (NotepadTabsFolder, "notepad-tabs"), (SearchIndexFolder, "search-index"),
+        (DefenderHistoryFolder, "defender-history"), ("Prefetch", "prefetch"), ("Tasks", "tasks"), (NtfsFolder, NtfsMetadataArtifact),
+    ];
+
+    /// <summary>Null when the package file belongs to an artifact of the request; otherwise the reason it does not.</summary>
+    internal static string? UnauthorizedFile(string relativePath, IReadOnlyList<string> artifacts)
+    {
+        // review r2 2026-11-16: "files/Prefetch/../UserHives/x/NTUSER.DAT" passed as Prefetch while the file read was the UserHives one; a path of the manifest
+        // must be canonical: forward slashes only, no "." / ".." / empty segment
+        if (relativePath.Contains('\\')) return $"{relativePath}: calea din manifest conține „\\”";
+        var seg = relativePath.Split('/');
+        if (seg.Any(s => s is "" or "." or "..")) return $"{relativePath}: calea din manifest nu este canonică (segment gol, „.” sau „..”)";
+        if (seg.Length < 2 || !seg[0].Equals("files", StringComparison.OrdinalIgnoreCase)) return $"{relativePath}: nu este sub files/";
+        if (seg.Length == 2)
+        {
+            // files/<channel>.evtx and files/<hive>.hive are written one per requested artifact, with the name the script derives from it
+            var name = seg[1];
+            foreach (var a in artifacts)
+            {
+                if (a.StartsWith("evtx:", StringComparison.Ordinal) && name.Equals(Regex.Replace(a[5..], "[\\\\/: ]", "_") + ".evtx", StringComparison.OrdinalIgnoreCase)) return null;
+                if (a.StartsWith("hive:", StringComparison.Ordinal) && name.Equals(a[5..] + ".hive", StringComparison.OrdinalIgnoreCase)) return null;
+            }
+            return $"{relativePath}: fișier care nu corespunde niciunui artefact din cerere";
+        }
+        foreach (var (folder, artifact) in FolderArtifacts)
+            if (seg[1].Equals(folder, StringComparison.OrdinalIgnoreCase))
+                return artifacts.Contains(artifact) ? null : $"{relativePath}: artefactul „{artifact}” nu este în cererea autorizată";
+        return $"{relativePath}: folder care nu corespunde niciunui artefact";
+    }
+
     /// <summary>Checks a transferred package against the case's authorization, without changing it.</summary>
     public static RemotePackageCheck Verify(CaseWorkspace ws, string packageDir)
     {
@@ -581,6 +748,8 @@ public static class RemoteCollection
             if (!full.StartsWith(root, StringComparison.OrdinalIgnoreCase) || Path.IsPathRooted(f.Path)) { problems.Add($"cale în afara pachetului: {f.Path}"); continue; }
             // the same file twice (compared case-insensitively on the full path) would be imported twice under one hash
             if (!listed.Add(full)) { problems.Add($"cale dublată în manifest: {f.Path}"); continue; }
+            // every file must belong to an artifact the request authorized (a file injected into a folder of an artifact that was not asked for, with recomputed sums, is refused)
+            if (r is not null && UnauthorizedFile(f.Path, r.Artifacts) is { } why) problems.Add(why);
             if (!File.Exists(full)) { problems.Add($"lipsește {f.Path}"); continue; }
             if (new FileInfo(full).Length != f.Size) problems.Add($"{f.Path}: dimensiune {new FileInfo(full).Length}, manifest {f.Size}");
             else if (!Hashing.Sha256File(full).Equals(f.Sha256, StringComparison.OrdinalIgnoreCase)) problems.Add($"{f.Path}: SHA-256 diferit de cel calculat pe țintă");
@@ -596,7 +765,10 @@ public static class RemoteCollection
     /// so anything else placed there stays "file" and never reaches the DetectionHistory parser.
     /// </summary>
     internal static string ImportKind(string relativePath, string fullPath) =>
-        relativePath.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase) ? "evtx" : relativePath.EndsWith(".hive", StringComparison.OrdinalIgnoreCase) ? "registry-hive"
+        // the user hives: only the exact package path files/UserHives/<profile>/{NTUSER.DAT|UsrClass.dat} and only regf content; anything else under the folder stays "file"
+        // (tested first: a profile named "Tasks" must not make them task XML, and a stray .evtx or .hive there must not reach a parser)
+        relativePath.StartsWith("files/" + UserHivesFolder + "/", StringComparison.OrdinalIgnoreCase) ? UserHiveKind(relativePath, fullPath)
+        : relativePath.EndsWith(".evtx", StringComparison.OrdinalIgnoreCase) ? "evtx" : relativePath.EndsWith(".hive", StringComparison.OrdinalIgnoreCase) ? "registry-hive"
         : relativePath.EndsWith(".pf", StringComparison.OrdinalIgnoreCase) ? "prefetch"
         // the session logs of AnyDesk / TeamViewer: only inside the package folder, only an exact file name with matching content (a file of another kind
         // with the same name, or the same content under another name, stays "file"). Tested before "/Tasks/": a user profile named "Tasks" must not make them task XML.
@@ -617,6 +789,14 @@ public static class RemoteCollection
         : relativePath.Equals("files/" + NtfsFolder + "/" + NtfsMetadataCollector.MftFileName, StringComparison.Ordinal) ? LogAnalyzer.Dfir.FileSystem.MftParser.SourceTypeName
         : relativePath.Equals("files/" + NtfsFolder + "/" + NtfsMetadataCollector.BootFileName, StringComparison.Ordinal) ? NtfsMetadataCollector.BootSourceType
         : "file";
+
+    private static string UserHiveKind(string relativePath, string fullPath)
+    {
+        var seg = relativePath.Split('/');
+        if (seg.Length != 4 || seg[2].Length == 0) return "file";
+        var expected = seg[3] switch { "NTUSER.DAT" => "ntuser_hive", "UsrClass.dat" => "usrclass_hive", _ => "" };
+        return expected.Length > 0 && Investigation.InvestigationPipeline.ImportType(fullPath) == expected ? expected : "file";
+    }
 
     /// <summary>Imports a verified package: the manifest, then every file with the manifest as parent and custody from the target.</summary>
     public static IReadOnlyList<EvidenceItem> Import(CaseWorkspace ws, RemotePackageCheck check)
@@ -700,7 +880,9 @@ public static class RemoteCollection
             else
                 item = ws.ImportFile(full, source, kind,
                     kind is "registry-hive" or "task-xml" ? TemporalType.CurrentSnapshot : TemporalType.Historical,
-                    CollectorName, DfirInfo.ApplicationVersion, parentEvidenceId: manifest.EvidenceId, notes: $"{m.Host}:{f.Path}; {notes}",
+                    CollectorName, DfirInfo.ApplicationVersion, parentEvidenceId: manifest.EvidenceId,
+                    notes: f.Path.StartsWith("files/" + UserHivesFolder + "/", StringComparison.OrdinalIgnoreCase) && f.Path.Split('/') is { Length: >= 3 } uh
+                        ? $"{m.Host}:{f.Path}; profil de origine: {uh[2]}; {notes}" : $"{m.Host}:{f.Path}; {notes}",
                     // the target's zone from the manifest; without one, a session log's local times stay unconverted (never the analyst's zone)
                     timezone: m.Timezone is { Length: > 0 } tz ? tz : LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.IsKnown(kind) ? "" : null);
             if (!item.Sha256.Equals(f.Sha256, StringComparison.OrdinalIgnoreCase))
