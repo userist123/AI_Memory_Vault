@@ -261,6 +261,93 @@ public sealed class RemoteToolSessionRulesTests : IDisposable
     }
 
     [Fact]
+    public void The_RustDesk_log_sessions_flow_into_the_rule_and_a_local_connection_is_not_a_session()
+    {
+        var (_, log) = RemoteToolTestKit.Run(new RustDeskLogParser(), RustDeskLogParser.SourceTypeName, RemoteToolTestKit.Corpus(@"rustdesk_TEST\rustdesk_rCURRENT.log"), RemoteToolTestKit.Zone);
+        Assert.Equal(4, log.Count);                                           // 3 partner sessions and 1 loopback connection
+        var t = One(Run(log), "REMOTE-TOOL-EXECUTED");
+        Assert.Contains("RustDesk", t.Title);
+        Assert.Equal(Severity.High, t.Severity);
+        Assert.Equal(Confidence.Medium, t.Confidence);
+        Assert.Contains("Sesiuni în jurnalul propriu al uneltei: 3", t.Description);      // the loopback connection (Session Evidence = nu) is not counted
+        Assert.Contains("192.0.2.10", t.Description);
+        Assert.Contains("2001:db8::5", t.Description);
+        // the log never shows acceptance: it is claimed neither way (lab 2026-11-16: "neacceptată" contradicted "acceptarea nu reiese din jurnal")
+        Assert.Contains("acceptarea nu reiese din jurnalul RustDesk", t.Description);
+        Assert.DoesNotContain("neacceptată", t.Description);
+        Assert.DoesNotContain("acceptată de la", t.Description);
+        Assert.DoesNotContain("pentru TeamViewer", t.Description);                     // the TeamViewer pairing note only where it applies
+        Assert.DoesNotContain("127.0.0.1", t.Description);
+        Assert.DoesNotContain("Peer close", t.Description);                               // no text of the log reaches the finding
+
+        // only a local connection: no session, no finding
+        var (_, local) = RemoteToolTestKit.Run(new RustDeskLogParser(), RustDeskLogParser.SourceTypeName, _k.Write("rustdesk_rCURRENT.log",
+            "[2026-11-09 08:30:00.000102 +01:00] DEBUG [src/server/connection.rs:3001] #903 Connection opened from 127.0.0.1:57510.\n"), RemoteToolTestKit.Zone);
+        Assert.Single(local);
+        Assert.DoesNotContain(Run(local), f => f.RuleId == "REMOTE-TOOL-EXECUTED");
+    }
+
+    [Fact]
+    public void An_IPv4_mapped_IPv6_address_matches_the_IPv4_named_in_the_profile()
+    {
+        // review r2 2026-11-16: a tool listening on both protocols writes "::ffff:192.0.2.10"; compared as text it never matched "192.0.2.10" -> a false Medium
+        TimelineEvent Rd(string ip) => Row(RustDeskLogParser.EventSource, 0, f: [("Tool Id", "rustdesk"), ("Session Evidence", "da"), ("Direction", "Incoming"), ("Accepted", "necunoscut"), ("IP", ip), ("Kind", "IncomingConnection")]);
+        var profile = ProfileWithSoftware(("RustDesk", "Purslane Ltd", "", ""));
+        profile.NetworkDestinations = [new NetworkDestinationRow { Address = "192.0.2.10", Zone = "LAN", Purpose = "Suport IT" }];
+        Assert.Equal(Severity.Info, One(Run([Rd("::ffff:192.0.2.10")], profile), "REMOTE-TOOL-EXECUTED").Severity);
+        Assert.Equal(Severity.Medium, One(Run([Rd("::ffff:192.0.2.11")], profile), "REMOTE-TOOL-EXECUTED").Severity);
+    }
+
+    [Fact]
+    public void An_approved_RustDesk_with_an_incoming_connection_from_an_unlisted_address_is_Medium_to_check_and_never_claims_acceptance()
+    {
+        var (_, log) = RemoteToolTestKit.Run(new RustDeskLogParser(), RustDeskLogParser.SourceTypeName, RemoteToolTestKit.Corpus(@"rustdesk_TEST\rustdesk_rCURRENT.log"), RemoteToolTestKit.Zone);
+        var profile = ProfileWithSoftware(("RustDesk", "Purslane Ltd", "", ""));
+        // owner decision 2026-11-16: acceptance does not show in the RustDesk log ("Connection opened" is written before authentication), yet the connection is to be checked
+        var f = One(Run(log, profile), "REMOTE-TOOL-EXECUTED");
+        Assert.Equal(Severity.Medium, f.Severity);
+        Assert.Contains("De verificat", f.Description);
+        Assert.Contains("Acceptarea nu reiese din jurnalul RustDesk", f.Description);
+        Assert.Contains("din care 3 de intrare cu acceptarea necunoscută", f.Description);
+        Assert.DoesNotContain("acceptate de la un ID/IP", f.Description);
+        Assert.DoesNotContain("(aprobat în profil)", f.Title);
+        // some addresses listed, one not: still to check
+        var some = ProfileWithSoftware(("RustDesk", "Purslane Ltd", "", ""));
+        some.NetworkDestinations = [new NetworkDestinationRow { Address = "192.0.2.10", Zone = "LAN", Purpose = "Suport IT" }, new NetworkDestinationRow { Address = "198.51.100.7", Zone = "LAN", Purpose = "Suport IT" }];
+        Assert.Equal(Severity.Medium, One(Run(log, some), "REMOTE-TOOL-EXECUTED").Severity);
+        // every partner address listed in the profile: informative again
+        var all = ProfileWithSoftware(("RustDesk", "Purslane Ltd", "", ""));
+        all.NetworkDestinations = new[] { "192.0.2.10", "198.51.100.7", "2001:db8::5" }.Select(a => new NetworkDestinationRow { Address = a, Zone = "LAN", Purpose = "Suport IT" }).ToList();
+        var ok = One(Run(log, all), "REMOTE-TOOL-EXECUTED");
+        Assert.Equal(Severity.Info, ok.Severity);
+        Assert.Contains("(aprobat în profil)", ok.Title);
+        // not approved: stays High
+        Assert.Equal(Severity.High, One(Run(log), "REMOTE-TOOL-EXECUTED").Severity);
+        // the other tools are unchanged: an incoming AnyDesk row with "necunoscut" acceptance is still not a stranger's accepted session
+        var request = Row(AnyDeskTraceParser.EventSource, 0, f: [("Tool Id", "anydesk"), ("Session Evidence", "da"), ("Kind", "IncomingSessionRequest"), ("Direction", "Incoming"), ("Accepted", "necunoscut"), ("Remote Id", "999000111")]);
+        Assert.Equal(Severity.Info, One(Run([request], ProfileWithSoftware(("AnyDesk", "philandro Software GmbH", "", ""))), "REMOTE-TOOL-EXECUTED").Severity);
+    }
+
+    [Fact]
+    public void A_RustDesk_log_with_only_loopback_connections_is_presence_not_execution_and_with_a_partner_session_it_is_not_listed_apart()
+    {
+        var (_, local) = RemoteToolTestKit.Run(new RustDeskLogParser(), RustDeskLogParser.SourceTypeName, _k.Write("rustdesk_rCURRENT.log",
+            "[2026-11-09 08:30:00.000102 +01:00] DEBUG [src/server/connection.rs:3001] #903 Connection opened from 127.0.0.1:57510.\n[2026-11-09 08:31:00.000000 +01:00] INFO [src/server/connection.rs:3120] #903 Connection closed: connection manager\n"), RemoteToolTestKit.Zone);
+        var found = Run(local);
+        Assert.DoesNotContain(found, x => x.RuleId == "REMOTE-TOOL-EXECUTED");
+        var p = One(found, "REMOTE-TOOL-PRESENT");
+        Assert.Contains("RustDesk", p.Title);
+        Assert.Equal(Severity.Low, p.Severity);
+        Assert.Contains("jurnal RustDesk (doar conexiuni locale)", p.Description);
+        Assert.DoesNotContain("Sesiuni în jurnalul propriu al uneltei", p.Description);
+        // the sample has partner sessions: execution, and no "only local" evidence kind
+        var (_, log) = RemoteToolTestKit.Run(new RustDeskLogParser(), RustDeskLogParser.SourceTypeName, RemoteToolTestKit.Corpus(@"rustdesk_TEST\rustdesk_rCURRENT.log"), RemoteToolTestKit.Zone);
+        var all = Run(log);
+        Assert.DoesNotContain(all, x => x.RuleId == "REMOTE-TOOL-PRESENT");
+        Assert.DoesNotContain("doar conexiuni locale", One(all, "REMOTE-TOOL-EXECUTED").Description);
+    }
+
+    [Fact]
     public void Two_TeamViewer_rows_of_one_partner_are_one_connection_only_within_two_minutes_and_across_files()
     {
         TimelineEvent Log(double m) => Row(TeamViewerLogfileParser.EventSource, m, f: [("Tool Id", "teamviewer"), ("Session Evidence", "da"), ("Direction", "Incoming"), ("Accepted", "da"), ("Remote Id", "999000111"), ("Kind", "IncomingSession")]);

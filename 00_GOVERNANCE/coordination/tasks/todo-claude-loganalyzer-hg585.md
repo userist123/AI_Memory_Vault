@@ -954,3 +954,19 @@
   RustDesk source: "#<id> Connection opened from <addr>." (older: without "#<id>"), "#<id> Connection closed: <reason>", "new wakelock, require
   display on: ...", "drop wakelock"; paths AppData\Roaming\RustDesk\log\ (+ cm\, server\), LocalService profile; rotation daily or 16 MiB,
   names rustdesk_rCURRENT.log / rustdesk_rYYYY-MM-DD_HH-MM-SS.log, keep 90. No real sample yet.
+- 2026-11-16 RustDesk logs DONE (planner #2 item 2, part 2). RustDeskLogParser: line "[yyyy-MM-dd HH:mm:ss.ffffff +hh:mm] LEVEL [file:line] msg"
+  (flexi_logger opt_format, verified in the library source) with markers verified on REAL lines from GitHub issues rustdesk/rustdesk
+  (#9003, #10251, #12784, #14662; Windows + Linux): "#id Connection opened from addr:port.", "#id Connection closed: <reason>", "#id
+  connection loop exited", "new wakelock, require display on: ...", "drop wakelock". One session per #id; loopback = LocalConnection
+  (Session Evidence nu; a log with only local connections gives REMOTE-TOOL-PRESENT). Collected from AppData\Roaming\RustDesk\log (+server,
+  cm) and the LocalService profile, at most 30 newest per folder, rCURRENT always (decoys "rustdesk_rcurrent!NN.log" cannot hide it).
+  Owner-delegated decision: approved RustDesk + incoming connection (acceptance unknown) from an address not in the profile = Medium
+  "De verificat" (acceptance never claimed either way); IPv4-mapped IPv6 compared as IPv4 with the profile (all tools). Run on the 634 real
+  lines: 9 sessions with id / IP / real close reason / display, 2 loopback, a masked IP ("*****") rejected. Opus r1 (no correctness defect;
+  rule consequences) -> worker; r2 (decoys hide rCURRENT, text for invalid IPs, ::ffff: mismatch) fixed here with tests. Rule texts about time
+  now say AnyDesk/TeamViewer = station local time, RustDesk = UTC offset per line; TeamViewer pairing note only for TeamViewer. LAB WS01
+  (installed Continent, standard profile): both TEST logs (it.admin and LocalService\...\log\server) in custody, REMOTE-TOOL-EXECUTED RustDesk
+  with the connections. Lab leftovers: WS01 C:\Users\it.admin\AppData\Roaming\RustDesk\log\rustdesk_rCURRENT.log and
+  C:\Windows\ServiceProfiles\LocalService\AppData\Roaming\RustDesk\log\server\rustdesk_rCURRENT.log (TEST), case CASE-LAB-WS01-20261116-161324.
+  Suites: Dfir 3866 (3833 passed, 33 skipped), App 1084, UI 370 (369 + 1 skipped), all exit 0.
+  Next: none of planner #2 left except blocked items; ask a NEW planner (checkpoint <= 40 lines) for the next phase.

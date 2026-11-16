@@ -384,6 +384,94 @@ public sealed class UserArtifactsCollectorTests : IDisposable
     }
 
     [Fact]
+    public void RustDesk_logs_are_collected_per_folder_newest_30_only_with_the_service_profile_and_the_look_alikes_are_not()
+    {
+        Profile(_profile);
+        var sample = RtCorpus(@"rustdesk_TEST\rustdesk_rCURRENT.log");
+        var log = Path.Combine(_profile, "AppData", "Roaming", "RustDesk", "log");
+        var server = Path.Combine(log, "server");
+        var cm = Path.Combine(log, "cm");
+        foreach (var d in new[] { log, server, cm }) Directory.CreateDirectory(d);
+        File.Copy(sample, Path.Combine(log, "rustdesk_rCURRENT.log"));
+        // 40 rotated files, the oldest 11 (January 1-11) are over the limit of 30 per folder together with rCURRENT
+        for (int i = 0; i < 40; i++)
+            File.Copy(sample, Path.Combine(log, i < 28 ? $"rustdesk_r2026-01-{i + 1:00}_10-00-00.log" : $"rustdesk_r2026-02-{i - 27:00}_10-00-00.log"));
+        File.Copy(sample, Path.Combine(server, "RustDesk_rCurrent.log"));            // another capitalisation of the same name
+        File.Copy(sample, Path.Combine(server, "rustdesk_rCURRENT.txt"));            // not RustDesk names: not collected
+        File.Copy(sample, Path.Combine(server, "myrustdesk_rCURRENT.log"));
+        File.Copy(sample, Path.Combine(server, "notes.log"));
+        File.WriteAllBytes(Path.Combine(cm, "rustdesk_rCURRENT.log"), []);           // empty: skipped, not an error
+        var svc = Path.Combine(_vol, "Windows", "ServiceProfiles", "LocalService", "AppData", "Roaming", "RustDesk", "log");
+        Directory.CreateDirectory(svc);
+        File.Copy(sample, Path.Combine(svc, "rustdesk_rCURRENT.log"));
+
+        var o = Collect(Collector(remoteFolders: [new("LocalService", "RustDesk", svc, [], "log")]));
+
+        Assert.Empty(o.Errors);
+        var logs = o.Evidence.Where(e => e.SourceType == RustDeskLogParser.SourceTypeName).ToList();
+        Assert.Equal(32, logs.Count);                                                   // 30 + 1 (server) + 1 (service profile)
+        var byDir = logs.GroupBy(e => Path.GetDirectoryName(_ws.FullPath(e.StoredPath))!).ToList();
+        Assert.Equal(3, byDir.Count);
+        Assert.Equal([1, 1, 30], byDir.Select(g => g.Count()).Order().ToArray());
+        var names = logs.Select(e => Path.GetFileName(_ws.FullPath(e.StoredPath))).ToList();
+        Assert.Contains("rustdesk_rCURRENT.log", names);
+        Assert.Contains("rustdesk_r2026-02-12_10-00-00.log", names);
+        Assert.Contains("rustdesk_r2026-01-12_10-00-00.log", names);                    // the 29th newest rotated file
+        Assert.DoesNotContain("rustdesk_r2026-01-11_10-00-00.log", names);              // the first one over the limit
+        Assert.DoesNotContain("rustdesk_r2026-01-01_10-00-00.log", names);
+        Assert.Contains("RustDesk_rCurrent.log", names);
+        Assert.DoesNotContain(names, n => n is "rustdesk_rCURRENT.txt" or "myrustdesk_rCURRENT.log" or "notes.log");
+        Assert.All(logs, e => Assert.Equal(Hashing.Sha256File(_ws.FullPath(e.StoredPath)), e.Sha256));
+        Assert.Contains(logs, e => e.Notes.Contains("LocalService"));
+        Assert.Equal(64L * 1024 * 1024, UserArtifactsCollector.MaxRemoteToolLogBytes("rustdesk_rCURRENT.log"));
+
+        // the production pipeline parses them with the RustDesk parser and the sessions reach REMOTE-TOOL-EXECUTED
+        var r = new InvestigationPipeline().Run(_ws, CollectionProfile.FullForensic, collect: false);
+        Assert.All(logs, e => Assert.Contains(r.Parsing, p => p.EvidenceId == e.EvidenceId && p.Parser == "RustDeskLogParser"));
+        Assert.Equal(32 * 4, r.Timeline.Count(e => e.Source == RustDeskLogParser.EventSource));
+        Assert.Contains(r.Findings, f => f.RuleId == "REMOTE-TOOL-EXECUTED" && f.Title.Contains("RustDesk"));
+    }
+
+    [Fact]
+    public void RustDesk_selection_always_takes_rCURRENT_and_the_newest_whatever_the_order_and_the_size_of_the_folder()
+    {
+        var dir = Path.Combine(_vol, "bigfolder");
+        Directory.CreateDirectory(dir);
+        // 20,500 rotated files (more than the old enumeration cut of 20,000): in a name-ordered folder rCURRENT and the newest names are read LAST
+        for (int i = 0; i < 20_500; i++)
+            File.WriteAllBytes(Path.Combine(dir, $"rustdesk_r{2000 + i / 366:0000}-{1 + i % 12:00}-{1 + i % 28:00}_{i % 24:00}-{i % 60:00}-{(i * 7) % 60:00}.log"), []);
+        File.WriteAllBytes(Path.Combine(dir, "rustdesk_rCURRENT.log"), []);
+        File.WriteAllBytes(Path.Combine(dir, "not_a_rustdesk.log"), []);
+        var picked = UserArtifactsCollector.RustDeskLogsOf(dir);
+        Assert.Equal(UserArtifactsCollector.MaxRustDeskLogsPerFolder, picked.Count);
+        Assert.Equal("rustdesk_rCURRENT.log", picked[0]);
+        var rotated = Directory.EnumerateFiles(dir, "rustdesk_r2*.log").Select(Path.GetFileName).OfType<string>().ToList();
+        var expected = rotated.OrderByDescending(n => n.Substring(10, 19), StringComparer.Ordinal).Take(UserArtifactsCollector.MaxRustDeskLogsPerFolder - 1).ToList();
+        Assert.Equal(expected, picked.Skip(1).ToList());                              // newest first, independent of the enumeration order
+        // a folder with a copy of the current file and a few rotated ones: the current ones come first and all are kept
+        var small = Path.Combine(_vol, "smallfolder");
+        Directory.CreateDirectory(small);
+        foreach (var n in new[] { "rustdesk_rCURRENT.log", "RustDesk_rCurrent_1.log", "rustdesk_r2026-01-01_00-00-00.log", "rustdesk_r2026-03-01_00-00-00.log" })
+            File.WriteAllBytes(Path.Combine(small, n), [1]);
+        Assert.Equal(["rustdesk_rCURRENT.log", "RustDesk_rCurrent_1.log", "rustdesk_r2026-03-01_00-00-00.log", "rustdesk_r2026-01-01_00-00-00.log"], UserArtifactsCollector.RustDeskLogsOf(small));
+    }
+
+    [Fact]
+    public void Decoys_named_like_the_current_RustDesk_log_cannot_hide_it()
+    {
+        // review r2 2026-11-16: 30 decoys "rustdesk_rcurrent!NN.log" sort before "rustdesk_rCURRENT.log" and filled the cap before the name check
+        var dir = Path.Combine(_vol, "decoys");
+        Directory.CreateDirectory(dir);
+        for (int i = 0; i < 40; i++) File.WriteAllBytes(Path.Combine(dir, $"rustdesk_rcurrent!{i:00}.log"), [1]);
+        File.WriteAllBytes(Path.Combine(dir, "rustdesk_rCURRENT.log"), [1]);
+        File.WriteAllBytes(Path.Combine(dir, "rustdesk_r2026-01-01_00-00-00.log"), [1]);
+        var picked = UserArtifactsCollector.RustDeskLogsOf(dir);
+        Assert.Equal("rustdesk_rCURRENT.log", picked[0]);
+        Assert.Contains("rustdesk_r2026-01-01_00-00-00.log", picked);
+        Assert.DoesNotContain(picked, n => n.Contains('!'));
+    }
+
+    [Fact]
     public void The_standard_profile_reads_the_session_logs_through_its_own_collector_and_exactly_one_collector_reads_them_per_profile()
     {
         // 2026-11-15: before, only "Completă" read the session logs, so a standard investigation silently had no session evidence

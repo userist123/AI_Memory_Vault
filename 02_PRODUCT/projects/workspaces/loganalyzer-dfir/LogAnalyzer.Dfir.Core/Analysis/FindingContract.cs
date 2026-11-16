@@ -57,6 +57,7 @@ public static class FindingContract
         "AnyDeskTraceParser" => "Jurnalul AnyDesk (ad.trace / ad_svc.trace)",
         "TeamViewerConnectionsParser" => "Jurnalul de sesiuni TeamViewer (Connections*.txt)",
         "TeamViewerLogfileParser" => "Jurnalul principal TeamViewer (TeamViewer<NN>_Logfile.log)",
+        "RustDeskLogParser" => "Jurnalul RustDesk (rustdesk_rCURRENT.log, rustdesk_r*.log)",
         "NotepadTabStateParser" => "Filele Notepad din Windows 11 (TabState)",
         "WindowsSearchIndexParser" => "Indexul Windows Search (Windows.db)",
         "WindowsSearchGatherParser" => "Baza gatherer Windows Search (Windows-gather.db)",

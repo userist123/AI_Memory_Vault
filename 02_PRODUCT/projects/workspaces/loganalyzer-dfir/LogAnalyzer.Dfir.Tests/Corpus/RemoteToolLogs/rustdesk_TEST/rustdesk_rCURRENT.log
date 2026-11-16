@@ -1,0 +1,17 @@
+[2026-11-09 08:29:58.000001 +01:00] INFO [src\server.rs:120] TEST: server started, listening for connections
+[2026-11-09 08:30:00.000102 +01:00] DEBUG [src\server\connection.rs:3001] #903 Connection opened from 127.0.0.1:57510.
+[2026-11-09 08:31:00.250000 +01:00] DEBUG [src\server\connection.rs:3001] #901 Connection opened from 192.0.2.10:51234.
+[2026-11-09 08:31:01.000000 +01:00] INFO [src\platform\mod.rs:210] new wakelock, require display on: true
+[2026-11-09 08:31:30.000000 +01:00] INFO [src\server\connection.rs:3120] #903 Connection closed: connection manager
+[2026-11-09 08:31:30.000500 +01:00] DEBUG [src\server\connection.rs:3125] #903 connection loop exited
+[2026-11-09 08:40:59.000000 +01:00] INFO [src\platform\mod.rs:215] drop wakelock
+[2026-11-09 08:41:00.500000 +01:00] INFO [src\server\connection.rs:3120] #901 Connection closed: Peer close
+[2026-11-09 08:41:00.700000 +01:00] DEBUG [src\server\connection.rs:3125] #901 connection loop exited
+[2026-11-09 09:00:00.000000 +01:00] DEBUG [src\server\connection.rs:3001] #902 Connection opened from 198.51.100.7:43909.
+TEST: continuation line of a message without a prefix
+    TEST: a second continuation line
+[2026-11-09 09:05:00.000000 +01:00] DEBUG [src\server\connection.rs:3125] #902 connection loop exited
+[2026-11-09 09:05:00.100000 +01:00] INFO [src\server\connection.rs:3120] #902 Connection closed: Broken pipe (os error 32)
+[2026-11-10 12:00:00.000000 +02:00] DEBUG [src/server/connection.rs:3001] #904 Connection opened from [2001:db8::5]:443.
+[2026-11-10 12:10:00.000000 +02:00] INFO [src/server/connection.rs:3120] #904 Connection closed: Reset by the peer
+[2026-11-10 12:10:00.000300 +02:00] DEBUG [src/server/connection.rs:3125] #904 connection loop exited

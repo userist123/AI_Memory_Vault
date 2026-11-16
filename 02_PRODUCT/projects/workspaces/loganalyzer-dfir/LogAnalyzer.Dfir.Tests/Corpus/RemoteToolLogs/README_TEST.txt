@@ -7,3 +7,12 @@ the partner name is TEST-Partener. It is NOT copied from any real log: the messa
 UDP addresses, version, Terminate then Statistics), a second accepted session after a second "Start:" header with another UTC offset, and a failed session with three attempts
 (SRP secret mismatch, denied x3, CMD_ENDSESSION LoginFailed, Statistics before the "no session ... aborting login" Terminate, AbortLogin). The first two sessions have the same
 partner and start (within seconds) as the two rows of teamviewer_TEST/Connections_incoming.txt, so the rule must count 3 connections for 5 rows. File transfers are not covered.
+
+
+rustdesk_TEST/rustdesk_rCURRENT.log (added 2026-11-16): SYNTHETIC, written by hand for the tests in the row format of flexi_logger::opt_format used by RustDesk
+("[yyyy-MM-dd HH:mm:ss.ffffff +HH:mm] LEVEL [file:line] message", the UTC offset is on EVERY row). It is NOT copied from any real log: the marker wording ("#id Connection opened from addr.",
+"#id Connection closed: reason", "#id connection loop exited", "new wakelock, require display on: true", "drop wakelock") follows rows published in rustdesk/rustdesk issues (Windows and Linux);
+the non-marker rows and all values are invented. Values are TEST values: ids 901-904, addresses 192.0.2.x / 198.51.100.x / 2001:db8:: (documentation ranges) and 127.0.0.1 (a local connection).
+It holds: session #903 from 127.0.0.1 (loopback: a LocalConnection, not a session), #901 with a wakelock (display on, then dropped) closed by "Peer close" then "connection loop exited",
+#902 with two continuation lines and the "connection loop exited" row BEFORE the "Connection closed" row, and #904 from an IPv6 address at offset +02:00 (source paths with "/"). It has no
+authentication and no file transfer rows: the parser does not read them (no verified real rows exist). Expected: 4 events, 3 of them partner sessions, no gap.

@@ -287,12 +287,16 @@ public sealed class UserArtifactsCollector : ICollector
     // ---- remote-access tool session logs ----
 
     /// <summary>A folder of a remote-access tool and the session logs looked for in it. <see cref="Scope"/> names the place in the case ("ProgramData", "ProgramFiles", a SID).</summary>
-    public sealed record RemoteToolFolder(string Scope, string Tool, string Folder, IReadOnlyList<string> Files);
+    public sealed record RemoteToolFolder(string Scope, string Tool, string Folder, IReadOnlyList<string> Files, string Sub = "");
 
-    private static readonly (string Tool, string[] Relative, string[] Files)[] RemoteToolProfileFolders =
+    private static readonly (string Tool, string[] Relative, string[] Files, string Sub)[] RemoteToolProfileFolders =
     [
-        ("AnyDesk", ["AppData", "Roaming", "AnyDesk"], ["connection_trace.txt", "ad.trace"]),
-        ("TeamViewer", ["AppData", "Roaming", "TeamViewer"], ["Connections.txt"]),
+        ("AnyDesk", ["AppData", "Roaming", "AnyDesk"], ["connection_trace.txt", "ad.trace"], ""),
+        ("TeamViewer", ["AppData", "Roaming", "TeamViewer"], ["Connections.txt"], ""),
+        // RustDesk: the rotated logs are found by pattern (see WithPatternLogs): the client writes in log, the server side in log/server, the connection manager in log/cm
+        ("RustDesk", ["AppData", "Roaming", "RustDesk", "log"], [], "log"),
+        ("RustDesk", ["AppData", "Roaming", "RustDesk", "log", "server"], [], Path.Combine("log", "server")),
+        ("RustDesk", ["AppData", "Roaming", "RustDesk", "log", "cm"], [], Path.Combine("log", "cm")),
     ];
 
     public const int MaxRemoteToolFilesTotal = 2_000;
@@ -303,16 +307,68 @@ public sealed class UserArtifactsCollector : ICollector
         RemoteToolLogFormats.AnyDeskTrace => AnyDeskTraceParser.MaxFileBytes,
         RemoteToolLogFormats.AnyDeskConnectionTrace => AnyDeskConnectionTraceParser.MaxFileBytes,
         RemoteToolLogFormats.TeamViewerLogfile => TeamViewerLogfileParser.MaxFileBytes,
+        RemoteToolLogFormats.RustDeskLog => RustDeskLogParser.MaxFileBytes,
         _ => TeamViewerConnectionsParser.MaxFileBytes,
     };
 
     /// <summary>Most TeamViewer log files kept per folder (TeamViewer15_Logfile.log, TeamViewer15_Logfile_OLD.log, other versions side by side).</summary>
     public const int MaxTeamViewerLogfilesPerFolder = 16;
 
+    /// <summary>Most RustDesk log files kept per folder: the newest by name / time (the client rotates daily or at 16 MiB and keeps up to 90).</summary>
+    public const int MaxRustDeskLogsPerFolder = 30;
+    private const int MaxRustDeskFolderEntries = 1_000_000;
+
+    /// <summary>Sort key of a RustDesk log name: "rCURRENT" is the file being written (newest); a rotated file carries its timestamp in the name. Null when the name is not a RustDesk log.</summary>
+    internal static string? RustDeskRank(string name)
+    {
+        if (RemoteToolLogFormats.ByName(name) != RemoteToolLogFormats.RustDeskLog) return null;
+        if (name.Length >= 10 + 19 && char.IsAsciiDigit(name[10])) return name.Substring(10, 19);
+        return "9999-99-99_99-99-99";
+    }
+
+    /// <summary>
+    /// The newest <see cref="MaxRustDeskLogsPerFolder"/> RustDesk logs of a folder: the files being written (rCURRENT, found by their own narrow search, so a folder full of rotated
+    /// files cannot hide them), then the rotated ones by the time in the name, newest first. The rotated ones are chosen while ALL the entries are read (a bounded sorted set), so the
+    /// choice does not depend on the order of the enumeration; only a folder of more than <see cref="MaxRustDeskFolderEntries"/> entries is cut short.
+    /// </summary>
+    internal static List<string> RustDeskLogsOf(string folder)
+    {
+        var current = new List<string>();
+        var newest = new SortedSet<(string Rank, string Name)>(Comparer<(string Rank, string Name)>.Create((a, b) =>
+        {
+            int c = string.CompareOrdinal(a.Rank, b.Rank);
+            return c != 0 ? c : StringComparer.OrdinalIgnoreCase.Compare(a.Name, b.Name);
+        }));
+        try
+        {
+            // review r2 2026-11-16: the cap was applied BEFORE the name check, so 30 decoys named "rustdesk_rcurrent!NN.log" (sorted before ".") hid the real file;
+            // the name is checked first, the cap counts only the real ones
+            foreach (var path in Directory.EnumerateFiles(folder, "rustdesk_rcurrent*.log").Take(MaxRustDeskFolderEntries))
+            {
+                var n = Path.GetFileName(path);
+                if (RustDeskRank(n) is not null && current.Count < MaxRustDeskLogsPerFolder) current.Add(n);
+            }
+            current.Sort(StringComparer.OrdinalIgnoreCase);
+            int room = Math.Max(0, MaxRustDeskLogsPerFolder - current.Count);
+            if (room > 0)
+                foreach (var path in Directory.EnumerateFiles(folder, "rustdesk_r*.log").Take(MaxRustDeskFolderEntries))
+                {
+                    var n = Path.GetFileName(path);
+                    if (RustDeskRank(n) is not { } rank || current.Contains(n, StringComparer.OrdinalIgnoreCase)) continue;
+                    if (rank.StartsWith("9999", StringComparison.Ordinal)) continue;     // a current file beyond the ones above (cannot happen: they were all listed)
+                    newest.Add((rank, n));
+                    if (newest.Count > room) newest.Remove(newest.Min);
+                }
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }   // the per-file steps report what they cannot read
+        return [.. current, .. newest.Reverse().Select(x => x.Name)];
+    }
+
     /// <summary>The fixed names of the folder plus, for TeamViewer, the main logs <c>TeamViewer&lt;NN&gt;_Logfile[_OLD].log</c> found in it (the version number is part of the name).</summary>
-    private static IEnumerable<string> WithTeamViewerLogfiles(RemoteToolFolder w)
+    private static IEnumerable<string> WithPatternLogs(RemoteToolFolder w)
     {
         var names = new List<string>(w.Files);
+        if (w.Tool.Equals("RustDesk", StringComparison.Ordinal)) { names.AddRange(RustDeskLogsOf(w.Folder)); return names; }
         if (!w.Tool.Equals("TeamViewer", StringComparison.Ordinal)) return names;
         try
         {
@@ -336,12 +392,21 @@ public sealed class UserArtifactsCollector : ICollector
         if (pd.Length > 0) list.Add(new("ProgramData", "AnyDesk", Path.Combine(pd, "AnyDesk"), ["connection_trace.txt", "ad_svc.trace"]));
         if (pf.Length > 0) list.Add(new("ProgramFiles", "TeamViewer", Path.Combine(pf, "TeamViewer"), ["Connections_incoming.txt"]));
         if (pf86.Length > 0 && !pf86.Equals(pf, StringComparison.OrdinalIgnoreCase)) list.Add(new("ProgramFilesX86", "TeamViewer", Path.Combine(pf86, "TeamViewer"), ["Connections_incoming.txt"]));
+        // the RustDesk service runs as LocalService: its logs are under that service profile, not under a user profile
+        var win = Environment.GetFolderPath(Environment.SpecialFolder.Windows);
+        if (win.Length > 0)
+        {
+            var svc = Path.Combine(win, "ServiceProfiles", "LocalService", "AppData", "Roaming", "RustDesk", "log");
+            list.Add(new("LocalService", "RustDesk", svc, [], "log"));
+            list.Add(new("LocalService", "RustDesk", Path.Combine(svc, "server"), [], Path.Combine("log", "server")));
+            list.Add(new("LocalService", "RustDesk", Path.Combine(svc, "cm"), [], Path.Combine("log", "cm")));
+        }
         return list;
     }
 
     /// <summary>
     /// Copies the session logs of AnyDesk (connection_trace.txt, ad.trace in every profile's AppData\Roaming\AnyDesk; connection_trace.txt and ad_svc.trace in ProgramData\AnyDesk)
-    /// and TeamViewer (Connections.txt per profile; Connections_incoming.txt in Program Files) with the rules of the Notepad tabs: a missing folder or file is normal and no error;
+    /// and TeamViewer (Connections.txt per profile; Connections_incoming.txt in Program Files) and RustDesk (the newest 30 rustdesk_r*.log of log, log/server and log/cm per profile and of the LocalService service profile) with the rules of the Notepad tabs: a missing folder or file is normal and no error;
     /// no component of the path may be a reparse point; a file over the parser's size cap, an empty file and a file that grew during the copy are not taken (a partial copy is
     /// deleted); a locked file falls back to the shadow copy only on a sharing violation; every error goes in the step's note.
     /// </summary>
@@ -362,8 +427,8 @@ public sealed class UserArtifactsCollector : ICollector
                     continue;
                 }
                 if (++taken > _maxProfiles) break;
-                foreach (var (tool, rel, files) in RemoteToolProfileFolders)
-                    work.Add(new(p.KeyName, tool, Path.Combine([p.ProfilePath, .. rel]), files));
+                foreach (var (tool, rel, files, sub) in RemoteToolProfileFolders)
+                    work.Add(new(p.KeyName, tool, Path.Combine([p.ProfilePath, .. rel]), files, sub));
             }
         }
         catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
@@ -381,7 +446,7 @@ public sealed class UserArtifactsCollector : ICollector
             if (!probe.IsDirectory) { o.Errors.Add($"{label}: {Shorten(w.Folder)} nu este un folder; omis."); continue; }
             var link = ReparseOnPath(w.Folder);
             if (link.Length > 0) { o.Errors.Add($"{label}: calea trece printr-o legătură (reparse point: {Shorten(link)}), care nu este urmată; jurnalele nu au fost colectate."); continue; }
-            foreach (var name in WithTeamViewerLogfiles(w))
+            foreach (var name in WithPatternLogs(w))
             {
                 ct.ThrowIfCancellationRequested();
                 var srcPath = Path.Combine(w.Folder, name);
@@ -400,6 +465,7 @@ public sealed class UserArtifactsCollector : ICollector
 
                 // one folder per place and tool; a second run into the same case gets a new folder, so the file name (which names its format) stays exact
                 var baseDir = Path.Combine(ctx.Case.RawDir("UserActivity"), "RemoteToolLogs", CaseWorkspaceSafe(w.Scope), CaseWorkspaceSafe(w.Tool));
+                if (w.Sub.Length > 0) baseDir = Path.Combine([baseDir, .. w.Sub.Split(Path.DirectorySeparatorChar).Select(CaseWorkspaceSafe)]);
                 var destDir = baseDir;
                 for (int i = 1; File.Exists(Path.Combine(destDir, name)); i++) destDir = baseDir + "_" + i;
                 CreateDir(destDir);

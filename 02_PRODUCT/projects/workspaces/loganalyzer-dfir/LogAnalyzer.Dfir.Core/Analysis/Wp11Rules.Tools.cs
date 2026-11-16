@@ -179,17 +179,22 @@ public static partial class Wp11Rules
     private const int ToolMaxSessionLines = 6;
 
     private static readonly HashSet<string> ToolSessionSources = new(StringComparer.Ordinal)
-        { "Artifact:AnyDeskConnectionTrace", "Artifact:AnyDeskTrace", "Artifact:TeamViewerConnections", "Artifact:TeamViewerLogfile" };
+        { "Artifact:AnyDeskConnectionTrace", "Artifact:AnyDeskTrace", "Artifact:TeamViewerConnections", "Artifact:TeamViewerLogfile", "Artifact:RustDeskLog" };
 
     /// <summary>One session as the rule reports it. <see cref="Remote"/> is the remote id or IP (empty when the log does not give one).</summary>
-    private sealed record ToolSession(string Direction, bool Accepted, string Remote, string Account, string Method, string What);
+    private sealed record ToolSession(string Direction, bool Accepted, string Remote, string Account, string Method, string What, bool AcceptanceUnknown = false);
+
+    /// <summary>The RustDesk log writes "Connection opened" before authentication and never shows acceptance: its incoming connections have <c>Accepted</c> = necunoscut by construction.</summary>
+    private const string RustDeskSource = "Artifact:RustDeskLog";
+    /// <summary>Evidence kind of a RustDesk log that holds only loopback connections: RustDesk ran locally, no partner is shown.</summary>
+    internal const string ToolLocalOnlyKind = "jurnal RustDesk (doar conexiuni locale)";
 
     private static string ToolSessionWhat(string kind) => kind switch
     {
         "AcceptedFrom" => "acceptată de la ID", "IncomingSessionRequest" => "cerere de sesiune de intrare", "LoggedInFromRelay" => "adresă văzută pe releu",
         "SessionEnded" => "încheiată", "AuthenticatedPermanentToken" => "autentificare cu token permanent", "FileTransfer" => "transfer de fișiere",
         "RemoteOs" => "sistemul de operare al celuilalt capăt", "IncomingSession" => "sesiune de intrare (jurnal TeamViewer)",
-        "FailedAuthentication" => "autentificare eșuată (jurnal TeamViewer)", "" => "sesiune", _ => kind,
+        "FailedAuthentication" => "autentificare eșuată (jurnal TeamViewer)", "IncomingConnection" => "conexiune, acceptarea nu reiese din jurnalul RustDesk", "" => "sesiune", _ => kind,
     };
 
     /// <summary>The session an event describes for <paramref name="tool"/>, or null. Only the known session-log sources count (a field named like ours in an EVTX event does not).</summary>
@@ -200,7 +205,7 @@ public static partial class Wp11Rules
             if (!F(e, "Tool Id").Equals(tool.Id, StringComparison.OrdinalIgnoreCase) || F(e, "Session Evidence") != "da") return null;
             var remote = F(e, "Remote Id", "IP");
             var what = F(e, "Kind").Length > 0 ? ToolSessionWhat(F(e, "Kind")) : F(e, "Session Type").Length > 0 ? F(e, "Session Type") : "sesiune";
-            return new(F(e, "Direction"), F(e, "Accepted") == "da", remote, F(e, "Local Account"), F(e, "Auth Method"), what);
+            return new(F(e, "Direction"), F(e, "Accepted") == "da", remote, F(e, "Local Account"), F(e, "Auth Method"), what, e.Source == RustDeskSource);
         }
         // ScreenConnect Client writes Application events with ID 0 from the source "ScreenConnect Client (<thumbprint>)"; the text is the message
         if (tool.Id == "screenconnect" && e.Source.Equals("EventLog:Application", StringComparison.OrdinalIgnoreCase) && e.EventId == "0"
@@ -233,17 +238,20 @@ public static partial class Wp11Rules
             var i = x.Info;
             return $"{When(x.Hit.Event)}: {(i.Direction == "Incoming" ? "intrare" : "ieșire")} ({ToolSafe(i.What)})" +
                    (i.Remote.Length > 0 ? $", la distanță {ToolSafe(i.Remote)}" : "") + (i.Account.Length > 0 ? $", cont local {ToolSafe(i.Account)}" : "") +
-                   (i.Method.Length > 0 ? $", metodă {ToolSafe(i.Method)}" : "") + (i.Accepted ? "" : ", neacceptată sau fără acceptare în rând");
+                   (i.Method.Length > 0 ? $", metodă {ToolSafe(i.Method)}" : "") + (i.Accepted || i.AcceptanceUnknown ? "" : ", neacceptată sau fără acceptare în rând");
         });
         // The same connection can be written more than once (ad.trace "Incoming session request" then "Accepting from"; connection_trace.txt and ad.trace
         // both): the rows stay listed, and when they repeat, an estimate of distinct connections is added (same direction, partner and minute = one).
         int distinct = DistinctConnections(directed);
         return $" Sesiuni în jurnalul propriu al uneltei: {directed.Count}" +
-               (distinct < directed.Count ? $" (aproximativ {distinct} conexiuni distincte: aceeași direcție, același partener și același minut se numără o dată; pentru TeamViewer, același partener cu începuturi la cel mult 2 minute în jurnalul principal și în Connections_incoming.txt este o singură conexiune)" : "") +
-               (strangers.Count > 0 ? $", din care {strangers.Count} de intrare acceptate de la un ID/IP care nu este în profil" : "") +
+               (distinct < directed.Count ? $" (aproximativ {distinct} conexiuni distincte: aceeași direcție, același partener și același minut se numără o dată" +
+                   // the TeamViewer pairing note only where it applies (lab 2026-11-16: it was printed for RustDesk too)
+                   (directed.Any(x => IsTeamViewerSource(x.Hit.Event.Source)) ? "; pentru TeamViewer, același partener cu începuturi la cel mult 2 minute în jurnalul principal și în Connections_incoming.txt este o singură conexiune" : "") + ")" : "") +
+               (strangers.Count(x => !x.Info.AcceptanceUnknown) > 0 ? $", din care {strangers.Count(x => !x.Info.AcceptanceUnknown)} de intrare acceptate de la un ID/IP care nu este în profil" : "") +
+               (strangers.Count(x => x.Info.AcceptanceUnknown) > 0 ? $", din care {strangers.Count(x => x.Info.AcceptanceUnknown)} de intrare cu acceptarea necunoscută (jurnalul RustDesk nu o arată) de la o adresă care nu este în profil" : "") +
                (details > 0 ? $"; alte rânduri despre sesiuni, fără direcție (de exemplu adresă de releu, sistemul celuilalt capăt, autentificare, transfer, încheiere): {details}" : "") +
                (lines.Any() ? $". Primele: {string.Join("; ", lines)}{(directed.Count > chosen.Count ? $" … (+{directed.Count - chosen.Count})" : "")}." : ".") +
-               " Jurnalele de sesiune pot fi modificate, completate sau șterse de cine are acces la stația analizată (un rând lipsă nu dovedește absența unei sesiuni); ora din ele este ora locală a stației." +
+               " Jurnalele de sesiune pot fi modificate, completate sau șterse de cine are acces la stația analizată (un rând lipsă nu dovedește absența unei sesiuni); AnyDesk și TeamViewer scriu ora locală a stației (convertită în UTC doar când fusul stației sau decalajul din antet este cunoscut), RustDesk scrie decalajul față de UTC pe fiecare rând." +
                " Jurnalul nu arată ce s-a făcut în sesiune.";
     }
 
@@ -309,7 +317,17 @@ public static partial class Wp11Rules
 
     /// <summary>True when the remote id / IP is listed as a network destination in the procedure profile (the only place the profile names addresses).</summary>
     private static bool ToolRemoteApproved(ProcedureProfile? profile, string remote) =>
-        remote.Length > 0 && profile is not null && profile.NetworkDestinations.Any(d => d.Address.Trim().Equals(remote.Trim(), StringComparison.OrdinalIgnoreCase));
+        remote.Length > 0 && profile is not null && profile.NetworkDestinations.Any(d => ToolAddressKey(d.Address).Equals(ToolAddressKey(remote), StringComparison.OrdinalIgnoreCase));
+
+    /// <summary>
+    /// An address as compared with the profile: an IPv4-mapped IPv6 address ("::ffff:192.0.2.10", written by a tool listening on both protocols) is its IPv4
+    /// address, so it matches the IPv4 the profile names (review r2 2026-11-16). Anything else (an ID, a name) is compared as written.
+    /// </summary>
+    private static string ToolAddressKey(string address)
+    {
+        var a = address.Trim();
+        return System.Net.IPAddress.TryParse(a, out var ip) && ip.IsIPv4MappedToIPv6 ? ip.MapToIPv4().ToString() : a;
+    }
 
     /// <summary>
     /// REMOTE-TOOL-EXECUTED (Prefetch / BAM / UserAssist / 4688 / Sysmon 1 for a known remote-access tool) and REMOTE-TOOL-PRESENT (Amcache /
@@ -338,6 +356,7 @@ public static partial class Wp11Rules
             }
             var exec = new List<ToolHit>(); var present = new List<ToolHit>();
             var sessions = new List<(ToolHit Hit, ToolSession Info)>();
+            var localOnly = new List<ToolHit>();
             foreach (var e in c.Events)
             {
                 if (ToolSessionOf(e, tool) is { } session)
@@ -345,6 +364,11 @@ public static partial class Wp11Rules
                     // a session in the tool's own log is evidence of use, as strong as an execution artifact; it never goes through the path-based branches below
                     var hit = new ToolHit(e, ToolSessionKind, "", "");
                     exec.Add(hit); sessions.Add((hit, session));
+                    continue;
+                }
+                if (e.Source == RustDeskSource && F(e, "Tool Id").Equals(tool.Id, StringComparison.OrdinalIgnoreCase) && F(e, "Kind") == "LocalConnection")
+                {
+                    localOnly.Add(new ToolHit(e, ToolLocalOnlyKind, "", ""));
                     continue;
                 }
                 if (e.Source is "Prefetch" or "BAM" or "UserAssist")
@@ -379,6 +403,8 @@ public static partial class Wp11Rules
             }
             foreach (var p in starts.Where(p => IsExe(p.Image)))
                 exec.Add(new(p.Event, p.Event.EventId == "4688" ? "4688" : "Sysmon 1", p.Image.Trim().Trim('"'), Sha256sOf(p.Event).FirstOrDefault() ?? ""));
+            // a RustDesk log with only loopback connections: RustDesk ran on this station (presence), no partner is shown; with any partner session it is not listed apart
+            if (sessions.Count == 0) present.AddRange(localOnly);
             if (exec.Count == 0 && present.Count == 0) continue;
             results.Add(new(tool, exec, present, sessions));
         }
@@ -425,7 +451,7 @@ public static partial class Wp11Rules
             bool approvedOutside = a.ApprovedOutside.Count > 0;
             var sessions = r.Sessions;
             // an accepted incoming session whose remote id / IP is not a destination named in the profile: the approval of the software does not cover who connects
-            var strangers = sessions.Where(x => x.Info.Direction == "Incoming" && x.Info.Accepted && !ToolRemoteApproved(c.Profile, x.Info.Remote)).ToList();
+            var strangers = sessions.Where(x => x.Info.Direction == "Incoming" && (x.Info.Accepted || x.Info.AcceptanceUnknown) && !ToolRemoteApproved(c.Profile, x.Info.Remote)).ToList();
             bool incomingUnknown = strangers.Count > 0;
             bool realExec = exec.Any(h => h.Kind != ToolSessionKind);
 
@@ -444,6 +470,11 @@ public static partial class Wp11Rules
             {
                 severity = Severity.Medium;
                 bool anyUnnamed = strangers.Any(x => x.Info.Remote.Length == 0);
+                if (strangers.All(x => x.Info.AcceptanceUnknown))
+                    // owner decision 2026-11-16 (safe variant): the RustDesk log shows "Connection opened" even before authentication, so acceptance is not claimed
+                    why += " De verificat: software aprobat în profil, dar jurnalul RustDesk arată o conexiune de intrare de la o adresă care nu figurează în profil" + (anyUnnamed ? " (sau pe care jurnalul nu o arată ca adresă validă)" : "") + ". Acceptarea nu reiese din jurnalul RustDesk " +
+                           "(rândul „Connection opened” apare și înaintea autentificării), deci conexiunea poate să nu fi fost acceptată. Aprobarea acoperă programul, nu pe cel care se conectează: confirmați cu responsabilul uneltei că era așteptată.";
+                else
                 why += " De verificat: software aprobat în profil, dar jurnalul uneltei arată o sesiune de intrare acceptată de la un ID sau o adresă care nu figurează în profil" +
                        (anyUnnamed ? " (sau pe care jurnalul nu o arată)" : "") + ". Aprobarea acoperă programul, nu pe cel care se conectează: confirmați cu responsabilul uneltei că sesiunea era așteptată.";
             }

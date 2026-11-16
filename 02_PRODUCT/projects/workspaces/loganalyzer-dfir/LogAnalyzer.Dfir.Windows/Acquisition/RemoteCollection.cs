@@ -366,10 +366,20 @@ public static class RemoteCollection
                             if ($p.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
                             $targets.Add(@{ Base = $p.FullName; Parts = @('AppData', 'Roaming', 'AnyDesk'); Out = ('Users\' + $p.Name + '\AnyDesk'); Files = @('connection_trace.txt', 'ad.trace') })
                             $targets.Add(@{ Base = $p.FullName; Parts = @('AppData', 'Roaming', 'TeamViewer'); Out = ('Users\' + $p.Name + '\TeamViewer'); Files = @('Connections.txt') })
+                            # RustDesk: the client writes in log\, the server side in log\server\, the connection manager in log\cm\ (the files are chosen by name below)
+                            foreach ($sub in @('log', 'log\server', 'log\cm')) {
+                                $targets.Add(@{ Base = $p.FullName; Parts = @(@('AppData', 'Roaming', 'RustDesk') + $sub.Split('\')); Out = ('Users\' + $p.Name + '\RustDesk\' + $sub); Files = @(); Kind = 'rustdesk' })
+                            }
                         }
                         if ($env:ProgramData) { $targets.Add(@{ Base = $env:ProgramData; Parts = @('AnyDesk'); Out = 'ProgramData\AnyDesk'; Files = @('connection_trace.txt', 'ad_svc.trace') }) }
                         if ($env:ProgramFiles) { $targets.Add(@{ Base = $env:ProgramFiles; Parts = @('TeamViewer'); Out = 'ProgramFiles\TeamViewer'; Files = @('Connections_incoming.txt') }) }
                         if (${env:ProgramFiles(x86)}) { $targets.Add(@{ Base = ${env:ProgramFiles(x86)}; Parts = @('TeamViewer'); Out = 'ProgramFilesX86\TeamViewer'; Files = @('Connections_incoming.txt') }) }
+                        # the RustDesk service runs as LocalService: its logs are under that service profile
+                        if ($env:SystemRoot) {
+                            foreach ($sub in @('log', 'log\server', 'log\cm')) {
+                                $targets.Add(@{ Base = (Join-Path $env:SystemRoot 'ServiceProfiles\LocalService'); Parts = @(@('AppData', 'Roaming', 'RustDesk') + $sub.Split('\')); Out = ('ServiceProfiles\LocalService\RustDesk\' + $sub); Files = @(); Kind = 'rustdesk' })
+                            }
+                        }
                         foreach ($t in $targets) {
                             # every folder on the way is checked: a user can turn his own AppData\Roaming\AnyDesk into a junction to another folder
                             $src = $t.Base; $ok = $true
@@ -383,12 +393,14 @@ public static class RemoteCollection
                             # TeamViewer<NN>_Logfile.log / _OLD.log: the version number is part of the name, so the folder is listed (at most 16 files)
                             $names = @($t.Files)
                             if ($t.Out -like '*TeamViewer') { $names += @(Get-ChildItem -LiteralPath $src -File -Force -Filter 'TeamViewer*_Logfile*.log' -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^TeamViewer\d{1,3}_Logfile(_OLD)?(_\d{1,6})?\.log$' } | Select-Object -First 16 | ForEach-Object { $_.Name }) }
+                            # RustDesk rustdesk_rCURRENT.log / rustdesk_rYYYY-MM-DD_HH-MM-SS.log (optional copy suffix _N): ALL the entries are read and sorted BEFORE the first 30 are taken (no early cut, so the order of the enumeration cannot hide rCURRENT); rCURRENT is the newest, then by the time in the name
+                            if ($t.Kind -eq 'rustdesk') { $names += @(Get-ChildItem -LiteralPath $src -File -Force -Filter 'rustdesk_r*.log' -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^rustdesk_r(CURRENT|\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})(_\d{1,6})?\.log$' } | Sort-Object -Descending -Property @{ Expression = { if ($_.Name -match '^rustdesk_rCURRENT') { '9999-99-99_99-99-99' } else { $_.Name.Substring(10, 19) } } }, Name | Select-Object -First 30 | ForEach-Object { $_.Name }) }
                             foreach ($name in $names) {
                                 $fp = Join-Path $src $name
                                 if (-not (Test-Path -LiteralPath $fp -PathType Leaf)) { continue }
                                 $f = Get-Item -LiteralPath $fp -Force
                                 if ($f.Attributes -band [IO.FileAttributes]::ReparsePoint) { $links++; continue }
-                                $cap = $(if ($name -like '*.trace' -or $name -like 'TeamViewer*_Logfile*.log') { 64MB } else { 16MB })
+                                $cap = $(if ($name -like '*.trace' -or $name -like 'TeamViewer*_Logfile*.log' -or $name -like 'rustdesk_r*.log') { 64MB } else { 16MB })
                                 if ($f.Length -eq 0) { continue }
                                 if ($f.Length -gt $cap) { $skipped++; continue }
                                 $d = Join-Path (Join-Path $files 'RemoteToolLogs') $t.Out
@@ -406,7 +418,7 @@ public static class RemoteCollection
                                 finally { if ($in) { $in.Dispose() }; if ($outFs) { $outFs.Dispose() } }
                             }
                         }
-                        if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0) { throw "jurnale copiate: $copied; necopiate (fisier blocat sau acces refuzat): $failed; sarite (peste 16 MiB; ad.trace și TeamViewer*_Logfile.log peste 64 MiB): $skipped; legaturi neurmate: $links" }
+                        if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0) { throw "jurnale copiate: $copied; necopiate (fisier blocat sau acces refuzat): $failed; sarite (peste 16 MiB; ad.trace, TeamViewer*_Logfile.log și rustdesk_r*.log peste 64 MiB): $skipped; legaturi neurmate: $links" }
                         if ($copied -eq 0) { return '__absent__' }
                     }
                 } elseif ($a -eq 'search-index') {

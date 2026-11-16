@@ -13,6 +13,7 @@ public static class RemoteToolLogFormats
     public const string AnyDeskTrace = "anydesk_trace";
     public const string TeamViewerConnections = "teamviewer_connections";
     public const string TeamViewerLogfile = "teamviewer_logfile";
+    public const string RustDeskLog = "rustdesk_log";
     public const int HeadBytes = 8 * 1024;
 
     private static readonly TimeSpan Timeout = TimeSpan.FromMilliseconds(200);
@@ -21,6 +22,9 @@ public static class RemoteToolLogFormats
     /// <summary>A row of the TeamViewer main log: "2024/08/04 13:59:37.493  5348  964 S0   message" (local time, pid, tid, label such as 0 / S0 / G2 / D3 / H64 with an optional "!" or "!!", message).</summary>
     internal static readonly Regex TeamViewerLogRow = new(@"^(?<d>\d{4}/\d{2}/\d{2}) (?<t>\d{2}:\d{2}:\d{2}\.\d{3})\s+(?<pid>\d{1,10})\s+(?<tid>\d{1,10})\s+(?<lbl>[A-Za-z]{0,2}\d{1,3}!{0,2})(?:\s+(?<msg>.*))?$", RegexOptions.CultureInvariant, Timeout);
     private static readonly Regex TeamViewerLogName = new(@"^teamviewer\d{1,3}_logfile(?:_old)?\.log$", RegexOptions.CultureInvariant, Timeout);
+    /// <summary>A row of the RustDesk log (flexi_logger opt_format): "[2024-12-10 08:32:15.753808 +01:00] INFO [src\server\connection.rs:3120] #1638 Connection closed: connection manager" (UTC offset on every row).</summary>
+    internal static readonly Regex RustDeskLogRow = new(@"^\[(?<d>\d{4}-\d{2}-\d{2}) (?<t>\d{2}:\d{2}:\d{2}\.\d{6}) (?<sg>[+-])(?<oh>\d{2}):(?<om>\d{2})\] (?:TRACE|DEBUG|INFO|WARN|ERROR) \[[^\]\r\n]{1,260}:\d{1,7}\](?: (?<msg>.*))?$", RegexOptions.CultureInvariant, Timeout);
+    private static readonly Regex RustDeskLogName = new(@"^rustdesk_r(?:current|\d{4}-\d{2}-\d{2}_\d{2}-\d{2}-\d{2})\.log$", RegexOptions.CultureInvariant, Timeout);
     internal static readonly Regex TeamViewerTime = new(@"^\d{2}-\d{2}-\d{4} \d{2}:\d{2}:\d{2}$", RegexOptions.CultureInvariant, Timeout);
 
     /// <summary>
@@ -33,12 +37,20 @@ public static class RemoteToolLogFormats
         "ad.trace" or "ad_svc.trace" => AnyDeskTrace,
         "connections_incoming.txt" or "connections.txt" => TeamViewerConnections,
         var n when IsTeamViewerLogName(n) => TeamViewerLogfile,
+        var n when IsRustDeskLogName(n) => RustDeskLog,
         _ => null,
     };
 
     private static bool IsTeamViewerLogName(string lowerName)
     {
         try { return TeamViewerLogName.IsMatch(lowerName); }
+        catch (RegexMatchTimeoutException) { return false; }
+    }
+
+    /// <summary>"rustdesk_rcurrent.log" or "rustdesk_r2024-12-10_08-32-15.log" (lower-case name, copy suffix already removed).</summary>
+    private static bool IsRustDeskLogName(string lowerName)
+    {
+        try { return RustDeskLogName.IsMatch(lowerName); }
         catch (RegexMatchTimeoutException) { return false; }
     }
 
@@ -52,7 +64,7 @@ public static class RemoteToolLogFormats
         return stem + name[dot..];
     }
 
-    public static bool IsKnown(string type) => type is AnyDeskConnectionTrace or AnyDeskTrace or TeamViewerConnections or TeamViewerLogfile;
+    public static bool IsKnown(string type) => type is AnyDeskConnectionTrace or AnyDeskTrace or TeamViewerConnections or TeamViewerLogfile or RustDeskLog;
 
     /// <summary>The format of the file (name and content), or null. Never throws on a file that cannot be read: null.</summary>
     public static string? Detect(string path)
@@ -83,6 +95,7 @@ public static class RemoteToolLogFormats
                 if (kind == AnyDeskConnectionTrace && ConnectionTraceRow.IsMatch(l)) return kind;
                 if (kind == AnyDeskTrace && TraceRow.IsMatch(l)) return kind;
                 if (kind == TeamViewerLogfile && TeamViewerLogRow.IsMatch(l)) return kind;
+                if (kind == RustDeskLog && RustDeskLogRow.IsMatch(l)) return kind;
                 if (kind == TeamViewerConnections)
                 {
                     var c = l.Split('\t');
