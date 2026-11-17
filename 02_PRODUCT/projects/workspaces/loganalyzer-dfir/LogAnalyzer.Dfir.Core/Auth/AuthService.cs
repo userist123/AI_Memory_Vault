@@ -132,16 +132,9 @@ public sealed partial class AuthService
     /// </summary>
     public ChainVerification VerifyAuditSnapshot(out byte[] content)
     {
-        content = [];
-        if (File.Exists(AuditPath))
-        {
-            using var fs = new FileStream(AuditPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
-            using var ms = new MemoryStream();
-            fs.CopyTo(ms);
-            content = ms.ToArray();
-            return new HashChain(AuditPath).Verify(content);
-        }
-        return new HashChain(AuditPath).Verify();
+        var r = new HashChain(AuditPath).ReadVerified();   // bytes and sealed head from one snapshot
+        content = r.Content;
+        return r.Verification;
     }
     public string AccountsSha256 => File.Exists(AccountsPath) ? Hashing.Sha256File(AccountsPath) : "";
 

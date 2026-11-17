@@ -1148,3 +1148,29 @@
   backup; bytes unchanged). Suites: Dfir (Release) 3917 (3884 passed, 33 skipped), App 1098, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
   Next: read CI once; planner #6 item 3 = lab check with two real instances on WS02 of a state change racing a registration is impractical from
   the UI (state changes are not reachable without evidence workflows); ask a NEW planner from this checkpoint. Owner items unchanged.
+- 2026-11-17 CI of 56c62d995 and de1aef038 read once: 32/32 success each. PLANNER #7 (Plan agent, verified in code): 1 RISKY sealed-chain head race
+  (HashChain.Verify reads log, head and .head separately -> false "trunchiat sau rescris"; WriteSealedHead File.Move fails while a reader holds .head
+  (ReadAllText, no share Delete) AFTER the line is written -> seal stuck, auth audit permanently Broken: card sign-in refused, admin page
+  "accounts.json modificat", D05/A15/A17 invalid); 2 LOW case-file readers (Json.ReadLines/File.ReadLines, HashChain VerifyPlain/Contains,
+  RegisteredOutputs, CountLines, AnalysisFootprint) fail or count 0 while another instance writes -> SharedRead helper with retry; 3 RISKY
+  CaseArchive.Export (FileShare.ReadWrite|Delete) can zip a half-rewritten index/chain into a signed archive; 4 LOW transient false "legacy"
+  plain lines in EffectiveChains (Audit writes plain log before chain). Not now: StartupLog, legacy root ChainOfCustodyService (UI.Tests only),
+  auto-restore of evidence_index.jsonl.tmp, third-instance wizard stall (no code evidence).
+  ITEM 1 in progress (vault-worker, then Opus review): atomic snapshot (log bytes + .head under one share-Read handle) for Verify and AuthService;
+  ReadSealedHead with share ReadWrite|Delete + retry; WriteSealedHead Move retry; sealed Append all-or-nothing (truncate back if the head move
+  finally fails). Probes P1-P6 in the brief.
+- 2026-11-17 PLANNER #7 ITEM 1 DONE (vault-worker; Opus review APPROVE, MEDIUM + LOW fixed by the main session). HashChain.ReadVerified(): log bytes and
+  .head read under ONE FileShare.Read log handle (retry sharing/lock only); Verify() and AuthService.VerifyAuditSnapshot use it (no false "trunchiat
+  sau rescris" while another instance appends). ReadSealedHead opens .head ReadWrite|Delete with retry; WriteSealedHead retries the Move on sharing
+  violations and on "access denied" (Windows' answer to replacing a file held without share Delete) only while .head is a writable file and only
+  UnauthorizedAttempts=60 (~2 s; review MEDIUM: a persistent deny held the log ~19 s); sealed Append is all-or-nothing: the log is truncated back
+  (SetLength + Flush under the FileShare.None handle) if the head move finally fails, original cause kept (AggregateException if the rollback fails).
+  Verify(byte[]) kept for unsealed callers (CaseWorkflow, TimelineNotebook, CustodyOverview, HashSetLibrary). Tests HashChainSealConcurrencyTests:
+  reader holding .head, verify loop vs 300 appends, failed head move, read-only head fails at once (first three red on the old code, checked by
+  the worker by restoring the old files). ACCEPTED RESIDUAL: crash between line write and head move still leaves the log ahead of the seal
+  (unchanged); .head read before the key-null check (non-admin unable to read .head would throw instead of "key unavailable"; unlikely);
+  rollback deletes .head.tmp and could race a Reseal in another process (rare; admin retries); test 3 covers rollback via a failing tmp
+  write, not via exhausted Move retries. Suites: Dfir (Release) 3921 (3888 passed, 33 skipped), App 1098, UI 370 (369 + 1 skipped), Edition 45.
+  Next: read CI once; planner #7 item 2 (SharedRead for case-file readers: Json.ReadLines, HashChain VerifyPlain/Contains, RegisteredOutputs,
+  CountLines, AnalysisFootprint), then 3 (CaseArchive.Export consistency), 4 (EffectiveChains transient legacy). Lab check of item 1 later
+  (two instances + device monitor, then the control report: D05 valid). Owner items unchanged.

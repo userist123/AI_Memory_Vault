@@ -51,24 +51,62 @@ public sealed class HashChain(string path)
 
     private sealed record SealedHead(long Seq, string Hash, string Mac);
 
-    private SealedHead? ReadSealedHead()
+    /// <summary>Retry budget for sharing/lock violations (about 15-20 s with the growing pause below). Only ERROR_SHARING_VIOLATION / ERROR_LOCK_VIOLATION are retried.</summary>
+    internal static int SharingAttempts = 400;
+
+    /// <summary>Attempts for an "access denied" replace of the head (another reader without FileShare.Delete): ~2 s, then the append is rolled back.</summary>
+    internal const int UnauthorizedAttempts = 60;
+
+    internal static bool IsSharingViolation(IOException e) => (e.HResult & 0xFFFF) is 32 or 33;
+
+    private static void SharingPause(int attempt) => Thread.Sleep(Math.Min(5 + attempt, 50));
+
+    /// <summary>Text of the <c>.head</c> file, or null when there is none. Opened with FileShare.ReadWrite | Delete so the writer's replace succeeds while it is read.</summary>
+    private string? ReadHeadText()
     {
         var hp = HeadPath(Path);
-        if (!File.Exists(hp)) return null;
+        for (int attempt = 0; ; attempt++)
+        {
+            if (!File.Exists(hp)) return null;
+            try
+            {
+                using var fs = new FileStream(hp, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var sr = new StreamReader(fs);
+                return sr.ReadToEnd();
+            }
+            catch (FileNotFoundException) { return null; }
+            catch (DirectoryNotFoundException) { return null; }
+            catch (IOException e) when (IsSharingViolation(e) && attempt < SharingAttempts) { SharingPause(attempt); }
+        }
+    }
+
+    private static SealedHead? ParseHead(string? text)
+    {
+        if (text is null) return null;
         try
         {
-            var o = JsonNode.Parse(File.ReadAllText(hp))!.AsObject();
+            var o = JsonNode.Parse(text)!.AsObject();
             return new SealedHead(o["seq"]!.GetValue<long>(), o["hash"]!.GetValue<string>(), o["mac"]!.GetValue<string>());
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or NullReferenceException) { return new SealedHead(-1, "", ""); }
     }
+
+    private SealedHead? ReadSealedHead() => ParseHead(ReadHeadText());
 
     private void WriteSealedHead(byte[] key, long seq, string hash)
     {
         var o = new JsonObject { ["seq"] = seq, ["hash"] = hash, ["mac"] = Mac(key, seq, hash) };
         var tmp = HeadPath(Path) + ".tmp";
         File.WriteAllText(tmp, o.ToJsonString(Json.Line));
-        File.Move(tmp, HeadPath(Path), overwrite: true);
+        for (int attempt = 0; ; attempt++)
+        {
+            try { File.Move(tmp, HeadPath(Path), overwrite: true); return; }
+            // Windows reports a replace of a file that another handle holds without FileShare.Delete as "access denied": retried only while the target is a
+            // writable file, and only ~2 s (review 2026-11-17: a persistent deny would otherwise hold the log, and every other instance's sign-in, ~19 s)
+            catch (UnauthorizedAccessException) when (attempt < UnauthorizedAttempts && File.Exists(HeadPath(Path))
+                                                       && !File.GetAttributes(HeadPath(Path)).HasFlag(FileAttributes.ReadOnly)) { SharingPause(attempt); }
+            catch (IOException e) when (IsSharingViolation(e) && attempt < SharingAttempts) { SharingPause(attempt); }
+        }
     }
 
     private static bool SealMatches(byte[] key, SealedHead? h, long seq, string head) =>
@@ -109,10 +147,25 @@ public sealed class HashChain(string path)
             obj["prevHash"] = head;
             obj["hash"] = HashOf(obj);
             var bytes = Encoding.UTF8.GetBytes(obj.ToJsonString(Json.Line) + "\n");
-            fs.Seek(0, SeekOrigin.End);
+            long lengthBefore = fs.Seek(0, SeekOrigin.End);
             fs.Write(bytes);
             fs.Flush(true);
-            if (moveSeal) WriteSealedHead(key!, seq + 1, obj["hash"]!.GetValue<string>());
+            if (moveSeal)
+            {
+                try { WriteSealedHead(key!, seq + 1, obj["hash"]!.GetValue<string>()); }
+                catch (Exception moveError)
+                {
+                    // all-or-nothing: never leave the log ahead of its seal because the head could not be moved
+                    try
+                    {
+                        fs.SetLength(lengthBefore);
+                        fs.Flush(true);
+                    }
+                    catch (Exception rollbackError) { throw new AggregateException(moveError, rollbackError); }   // keep the original cause
+                    try { File.Delete(HeadPath(Path) + ".tmp"); } catch { }
+                    throw;
+                }
+            }
         }
     }
 
@@ -195,13 +248,46 @@ public sealed class HashChain(string path)
     }
 
     /// <summary>The plain chain check and, for a sealed log, that the chain ends exactly at the sealed head.</summary>
-    public ChainVerification Verify() => Verify(VerifyPlain(), Head, Contains);
+    public ChainVerification Verify() => ReadVerified().Verification;
+
+    /// <summary>
+    /// Reads the log bytes and (for a sealed log) the <c>.head</c> text under ONE read handle of the log (writers are excluded for that moment, so an append and its
+    /// head move cannot fall between the two reads) and verifies exactly those bytes. A missing log is empty.
+    /// </summary>
+    public (byte[] Content, ChainVerification Verification) ReadVerified()
+    {
+        bool exists = false;
+        byte[] content = [];
+        string? headText = null;
+        bool sealedLog = IsSealed(out _);
+        for (int attempt = 0; ; attempt++)
+        {
+            try
+            {
+                using var fs = new FileStream(Path, FileMode.Open, FileAccess.Read, FileShare.Read);
+                using var ms = new MemoryStream();
+                fs.CopyTo(ms);
+                content = ms.ToArray();
+                exists = true;
+                if (sealedLog) headText = ReadHeadText();
+                break;
+            }
+            catch (FileNotFoundException) { break; }
+            catch (DirectoryNotFoundException) { break; }
+            catch (IOException e) when (IsSharingViolation(e) && attempt < SharingAttempts) { SharingPause(attempt); }
+        }
+        if (!exists && sealedLog) headText = ReadHeadText();
+        return (content, VerifyCore(content, exists, ParseHead(headText)));
+    }
 
     /// <summary>
     /// The same check on <paramref name="content"/>, the bytes of the log read once by the caller (who then reads the records from the same bytes, so the answer
-    /// and the records are about one and the same content). The sealed head is read from its own file.
+    /// and the records are about one and the same content). The sealed head is read from its own file AFTER the caller read the bytes, so it is NOT atomic with
+    /// them: on a sealed log that other processes append to, use <see cref="ReadVerified"/>.
     /// </summary>
-    public ChainVerification Verify(byte[] content)
+    public ChainVerification Verify(byte[] content) => VerifyCore(content, content.Length > 0, ParseHead(IsSealed(out _) ? ReadHeadText() : null));
+
+    private ChainVerification VerifyCore(byte[] content, bool exists, SealedHead? sealedHead)
     {
         var lines = Lines(content);
         (long, string) HeadOf()
@@ -216,7 +302,7 @@ public sealed class HashChain(string path)
             catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
             return (0, Genesis);
         }
-        return Verify(VerifyPlain(lines, content.Length > 0), HeadOf, (seq, hash) => ContainsIn(lines, seq, hash));
+        return Verify(VerifyPlain(lines, exists), HeadOf, (seq, hash) => ContainsIn(lines, seq, hash), sealedHead);
     }
 
     /// <summary>The lines of a log held in memory, split as <see cref="Verify(byte[])"/> splits them: exactly as File.ReadLines splits the file on disk (the integrity re-check): a leading UTF-8 BOM is dropped and a line ends at \r\n, \r or \n.</summary>
@@ -226,13 +312,12 @@ public sealed class HashChain(string path)
         if (text.Length > 0 && text[0] == '\uFEFF') text = text[1..];
         return System.Text.RegularExpressions.Regex.Split(text, "\r\n|\r|\n").ToList();
     }
-    private ChainVerification Verify(ChainVerification plain, Func<(long Seq, string Head)> headOf, Func<long, string, bool> contains)
+    private ChainVerification Verify(ChainVerification plain, Func<(long Seq, string Head)> headOf, Func<long, string, bool> contains, SealedHead? h)
     {
         if (!IsSealed(out var key) || plain.Status == ChainStatus.Broken) return plain;
         var name = System.IO.Path.GetFileName(Path);
         if (key is null) return Broken(name, plain.Entries, plain.LegacyLines, 0, KeyUnavailable.Replace("; nu s-a scris nimic", ""));
         var (seq, head) = headOf();
-        var h = ReadSealedHead();
         if (seq == 0 && h is null) return plain;
         if (h is null) return Broken(name, plain.Entries, plain.LegacyLines, seq, "capul lanțului nu are sigiliu (fișierul .head lipsește)");
         if (!CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(h.Mac), Encoding.ASCII.GetBytes(Mac(key, h.Seq, h.Hash))))
