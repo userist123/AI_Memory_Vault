@@ -1184,3 +1184,15 @@
   still turns an IOException after the budget into 0 reports; Json.Read (single JSON files) unchanged; other File.ReadLines callers outside these
   files not reviewed. Suites: Dfir (Release) 3932 (3899 passed, 33 skipped), App 1098, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
   Next: read CI once; planner #7 item 3 (CaseArchive.Export: shared-written files with share Read + retry; risky -> worker + Opus), then 4.
+- 2026-11-17 CI of a98a576ec read once: 32/32 success; cadd54562: 28 success, 4 in progress, 0 failures. PLANNER #7 ITEM 3 DONE (main session;
+  Opus review APPROVE, both MEDIUM fixed). CaseArchive.Export: IsSharedCaseLog (direct children of Logs\, Evidence\evidence_index.jsonl, root
+  media_live.jsonl of the LIVE case; NOT *.tmp / *.lock, which another instance must be able to replace/delete) opened with FileShare.Read + retry
+  of sharing violations (writers excluded while copied: no half line / half-rewritten index zipped and signed); other files (evidence, outputs)
+  unchanged (share ReadWrite|Delete). A sealed log's .head is read while that log is held and archived from that copy (same moment, as
+  HashChain.ReadVerified). Tests (App): An_archive_waits_for_another_instance_writing_a_shared_case_log_and_never_zips_half_a_line,
+  A_sealed_log_archived_while_another_instance_appends_keeps_its_head_from_the_same_moment (CHECKED: passes also without the head fix - the window
+  is microseconds; regression guard only), classification theory (14 cases). RESIDUAL: files are each consistent, not one snapshot together;
+  export runs on the UI thread and can wait up to ~20 s for a writer; short-lived files listed then gone (.lock, .tmp) still throw
+  FileNotFoundException (pre-existing). Suites: Dfir (Release) 3932 (3899 passed, 33 skipped), App 1113, UI 370 (369 + 1 skipped), Edition 45.
+  Next: read CI once; planner #7 item 4 (EffectiveChains transient "legacy" lines, low); then lab check of item 1 (two instances + monitor,
+  control report D05 valid). Owner items unchanged.

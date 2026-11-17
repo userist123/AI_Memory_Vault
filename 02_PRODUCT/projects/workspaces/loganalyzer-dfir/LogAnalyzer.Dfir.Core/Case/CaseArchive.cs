@@ -76,12 +76,16 @@ public static class CaseArchive
         bool signed = false; string signNote = signing is null || signing.PrivateKeyPath.Length == 0 ? "arhiva nu este semnată: nu este configurată o cheie de semnare" : "";
         using (var zip = ZipFile.Open(zipFull, ZipArchiveMode.Create))
         {
+            // the sealed head of a chained log, read while that log was held (same moment as the log): used instead of re-reading the .head file later
+            var heads = new Dictionary<string, byte[]>(StringComparer.OrdinalIgnoreCase);
             foreach (var f in Directory.EnumerateFiles(caseRoot, "*", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
             {
                 var rel = Prefix + Path.GetRelativePath(caseRoot, f).Replace('\\', '/');
                 var entry = zip.CreateEntry(rel, CompressionLevel.Optimal);
                 entry.LastWriteTime = File.GetLastWriteTime(f);
-                using var src = new FileStream(f, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var src = heads.Remove(f, out var heldHead) ? new MemoryStream(heldHead) : (Stream)OpenForArchive(caseRoot, f);
+                if (src is FileStream && IsSharedCaseLog(caseRoot, f) && File.Exists(HashChain.HeadPath(f)))
+                    heads[HashChain.HeadPath(f)] = ReadHeadWhileLogHeld(HashChain.HeadPath(f));
                 using var dst = entry.Open();
                 using var sha = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 var buf = new byte[81920]; int n; long size = 0;
@@ -104,6 +108,61 @@ public static class CaseArchive
         var zsha = Sha256File(zipFull);
         File.WriteAllText(SidecarPath(zipFull), $"{zsha}  {Path.GetFileName(zipFull)}\r\n{manifestSha}  {ManifestName}\r\n", Encoding.ASCII);
         return new CaseArchiveResult(zipFull, zsha, manifestSha, manifest.Files.Count, bytes, signed, signNote);
+    }
+
+    /// <summary>
+    /// Whether <paramref name="file"/> is one of the small files that app instances append to or rewrite in place while a case is open (Logs\: audit and
+    /// custody logs, chains and their sealed heads; Evidence\evidence_index.jsonl). Planner #7, 2026-11-17: these are read with FileShare.Read, so the
+    /// archive waits for a writer of another instance instead of zipping (and signing) a half-written line or a half-rewritten index.
+    /// </summary>
+    internal static bool IsSharedCaseLog(string caseRoot, string file)
+    {
+        var rel = Path.GetRelativePath(caseRoot, file);
+        var dir = Path.GetDirectoryName(rel) ?? "";
+        var name = Path.GetFileName(rel);
+        // short-lived helpers (rewrite backups, lock files) keep the old open: holding them would make another instance's write of them fail
+        if (name.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".lock", StringComparison.OrdinalIgnoreCase)) return false;
+        return dir.Equals("Logs", StringComparison.OrdinalIgnoreCase)
+            || (dir.Equals("Evidence", StringComparison.OrdinalIgnoreCase) && name.Equals("evidence_index.jsonl", StringComparison.OrdinalIgnoreCase))
+            || (dir.Length == 0 && name.Equals("media_live.jsonl", StringComparison.OrdinalIgnoreCase));   // the live device journal of the LIVE case
+    }
+
+    /// <summary>The sealed head of a chained log, read while the archive holds that log (writers excluded), as <see cref="HashChain.ReadVerified"/> does.</summary>
+    private static byte[] ReadHeadWhileLogHeld(string headPath)
+    {
+        for (int attempt = 0; ; attempt++)
+        {
+            try
+            {
+                using var fs = new FileStream(headPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var ms = new MemoryStream();
+                fs.CopyTo(ms);
+                return ms.ToArray();
+            }
+            catch (IOException ex) when (attempt < LogAnalyzer.Dfir.IO.SharedAppend.MaxAttempts && LogAnalyzer.Dfir.IO.SharedAppend.IsSharingViolation(ex))
+            {
+                Thread.Sleep(Math.Min(5 + attempt, 50));
+            }
+        }
+    }
+
+    /// <summary>
+    /// Opens a case file for the archive. A shared case log is opened with FileShare.Read (writers excluded while it is copied) and a sharing violation is
+    /// retried like the writers' own retry (~20 s; they hold these files for milliseconds). Every other file (evidence, outputs: large, written once) keeps
+    /// FileShare.ReadWrite | FileShare.Delete, so a long copy never holds up another instance. Each file is consistent on its own; files are not a
+    /// snapshot of one moment together.
+    /// </summary>
+    private static FileStream OpenForArchive(string caseRoot, string file)
+    {
+        if (!IsSharedCaseLog(caseRoot, file)) return new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        for (int attempt = 0; ; attempt++)
+        {
+            try { return new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read); }
+            catch (IOException ex) when (attempt < LogAnalyzer.Dfir.IO.SharedAppend.MaxAttempts && LogAnalyzer.Dfir.IO.SharedAppend.IsSharingViolation(ex))
+            {
+                Thread.Sleep(Math.Min(5 + attempt, 50));
+            }
+        }
     }
 
     /// <summary>The detached signature (JSON bytes) of manifest.json, or null with the reason when the key is missing or unreadable.</summary>
