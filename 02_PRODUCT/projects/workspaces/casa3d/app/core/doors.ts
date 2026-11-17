@@ -6,7 +6,7 @@ import { doorTypeOf, isSlidingType, slideZone, inSlideZone } from './door-geomet
 export { doorTypeOf, isSlidingType, slideSide, slideZone, doorSwing, type DoorSwing } from './door-geometry';
 
 export const DOOR_RULES = { sizeTolM: .1 };
-export interface DoorOpening { id: string; level: number; widthM: number; entrance: boolean; wallIndex: number; openingIndex: number; roomIds: string[]; type: DoorType; flush: boolean }
+export interface DoorOpening { id: string; level: number; widthM: number; entrance: boolean; /** golul e într-un perete exterior și nu e intrarea: ușă de balcon / terasă */ exterior: boolean; wallIndex: number; openingIndex: number; roomIds: string[]; type: DoorType; flush: boolean }
 export function doorOpenings(snap: Snapshot): DoorOpening[] {
   // camerele de o parte și de alta a ușii: cele al căror dreptunghi atinge mijlocul golului
   return floors(snap).flatMap((fl: Floor, level) => fl.walls.flatMap((w, wi) => { const L = Math.hypot(w.b[0] - w.a[0], w.b[1] - w.a[1]) || 1, ux = (w.b[0] - w.a[0]) / L, uz = (w.b[1] - w.a[1]) / L;
@@ -15,7 +15,7 @@ export function doorOpenings(snap: Snapshot): DoorOpening[] {
     if (w.status === 'demolish') return [];
     return w.openings.flatMap((o, oi) => { if (o.kind !== 'door' || o.passage) return []; const m = o.offset + o.width / 2, x = w.a[0] + ux * m, z = w.a[1] + uz * m, e = .01;
       const roomIds = fl.rooms.filter(r => x >= r.rect.x0 - e && x <= r.rect.x1 + e && z >= r.rect.z0 - e && z <= r.rect.z1 + e).map(r => r.id);
-      return [{ id: o.id, level, widthM: o.width, entrance: !!o.entrance, wallIndex: wi, openingIndex: oi, roomIds, type: doorTypeOf(o)!, flush: !!o.flush }]; }); }));
+      return [{ id: o.id, level, widthM: o.width, entrance: !!o.entrance, exterior: !!w.exterior && !o.entrance, wallIndex: wi, openingIndex: oi, roomIds, type: doorTypeOf(o)!, flush: !!o.flush }]; }); }));
 }
 export interface DoorIssue { key: string; openingId: string; vars?: Record<string, string | number> }
 export function doorIssues(snap: Snapshot, mc: MaterialsCatalog): DoorIssue[] {
@@ -24,7 +24,11 @@ export function doorIssues(snap: Snapshot, mc: MaterialsCatalog): DoorIssue[] {
     if (d.entrance && !m.specs?.entrance) out.push({ key: 'door.entrance', openingId: d.id, vars: { name: m.name } });
     if (!d.entrance && m.specs?.entrance) out.push({ key: 'door.entranceInside', openingId: d.id, vars: { name: m.name } });
     const w = (m.specs?.sizeCm?.[0] ?? 0) / 100; if (w && Math.abs(w - d.widthM) > DOOR_RULES.sizeTolM) out.push({ key: 'door.size', openingId: d.id, vars: { door: Math.round(w * 100), gap: Math.round(d.widthM * 100) } });
-    if (!c?.handle && m.specs?.withHandle !== true) out.push({ key: 'door.noHandle', openingId: d.id });
+    // ușa de balcon (tâmplărie PVC): doar pe un perete exterior; mânerul ei e de tâmplărie, nu se alege din mânerele de ușă de interior
+    const balcony = isBalconyDoor(m); if (balcony && !d.exterior) out.push({ key: 'door.balconyInside', openingId: d.id, vars: { name: m.name } });
+    // ușa de balcon din catalog e batantă (o foaie pe balamale): pe un gol glisant, în perete, pliant sau dublu nu se potrivește
+    if (balcony && d.type !== 'swing') out.push({ key: 'door.balconyType', openingId: d.id, vars: { name: m.name } });
+    if (!c?.handle && m.specs?.withHandle !== true && !balcony) out.push({ key: 'door.noHandle', openingId: d.id });
     // produsul declară tipurile pentru care e făcut (specs.doorTypes): altul decât al golului → avertisment, produsul rămâne
     const dt = m.specs?.doorTypes; if (dt?.length && !dt.includes(d.type)) out.push({ key: 'door.typeMismatch', openingId: d.id, vars: { name: m.name, type: dt.join(', '), gap: d.type } }); }
   // glisantele: o priză, un întrerupător sau un termostat pe zona unde parchează foaia (pe fața peretelui sau în casetă)
@@ -43,14 +47,18 @@ export function sanitizeDoors(doors: unknown, snap: Snapshot): { value?: Record<
     if (ids.has(k)) out[k] = { ...(v.product ? { product: v.product } : {}), ...(v.handle ? { handle: v.handle } : {}), ...(v.system ? { system: v.system } : {}) }; }
   return { value: out };
 }
-/** Ușile din catalog pentru un gol: pe intrare, ușile de intrare întâi; pe un gol interior, ușile de interior întâi (ordinea în rest e a catalogului). */
-export function doorOptions(mc: MaterialsCatalog, entrance: boolean){
+/** Ușa de balcon / terasă: tâmplărie din catalogul de ferestre (specs.win.kind === 'balcony_door'), pusă pe un gol de ușă. */
+export const isBalconyDoor = (m: { category: string; specs?: { win?: { kind?: string } } } | undefined) => !!m && m.category === 'window' && m.specs?.win?.kind === 'balcony_door';
+/** Ușile din catalog pentru un gol: pe intrare, ușile de intrare întâi; pe un perete exterior (balcon, terasă), ușile de balcon întâi;
+ *  pe un gol interior, ușile de interior întâi (ordinea în rest e a catalogului). Ușile de balcon apar doar pe golurile din perete exterior. */
+export function doorOptions(mc: MaterialsCatalog, entrance: boolean, exterior = false){
   const all = mc.materials.filter(m => m.category === 'door'), fit = (m: (typeof all)[number]) => !!m.specs?.entrance === entrance;
-  return [...all.filter(fit), ...all.filter(m => !fit(m))];
+  const balcony = exterior ? mc.materials.filter(isBalconyDoor) : [];
+  return [...balcony, ...all.filter(fit), ...all.filter(m => !fit(m))];
 }
 /** Ce desenează motorul 3D: stilul foii, culoarea ei și culoarea mânerului, pe golul de ușă. */
 export function doorVisual(snap: Snapshot, mc: MaterialsCatalog, level: number){
   return doorOpenings(snap).filter(d => d.level === level).flatMap(d => { const c = snap.doors?.[d.id], m = materialOf(mc, c?.product), h = materialOf(mc, c?.handle);
-    return m || h ? [{ wallIndex: d.wallIndex, openingIndex: d.openingIndex, style: m?.specs?.door ?? 'plain', color: m?.specs?.color ?? null, wood: !!m?.specs?.wood, handle: h?.specs?.color ?? null,
-      ...(m?.specs?.entrance ? { entrance: true, glass: !!m.specs.glass } : {}) }] : []; });
+    return m || h ? [{ wallIndex: d.wallIndex, openingIndex: d.openingIndex, style: m?.specs?.door ?? 'plain', color: m?.specs?.color ?? null, wood: !!m?.specs?.wood, handle: isBalconyDoor(m) ? null : h?.specs?.color ?? null,
+      ...(m?.specs?.entrance ? { entrance: true, glass: !!m.specs.glass } : {}), ...(isBalconyDoor(m) ? { style: 'balcony' as const, wood: false } : {}) }] : []; });
 }

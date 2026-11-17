@@ -29,10 +29,29 @@ DONE:
     lățimea din titlu când pagina n-are dimensiuni (widthInName: hota-7 „90cm”, hota-3/5 „60 cm”); test extins (kitchen absent,
     upper closed, cameră fără bucătărie, insula + upper none în viewerInput). Capturi: D:/casa3d-render/renovare/verificare-2026-11-17/.
   - Ușa de 140 cm: titlul paginii Hornbach e chiar „Still 627 1 2 geamuri” (fără „1/2” sau „canat”); nu setez doorTypes.
+  - Runda 2 (2026-11-17), alese de Fable (read-only), cercetare web + implementare Opus:
+    - fix: fixedSashes ajunge în g.fer (viewer-input) — fereastra „fixă + deschidere” are canatul fix și în 3D.
+    - U1 ușa de balcon pe gol de ușă: DoorOpening.exterior, doorOptions(mc, entrance, exterior) cu ușile de balcon (window
+      kind balcony_door) primele doar pe perete exterior, avertisment door.balconyInside, fără door.noHandle, deviz „Ușă de balcon”
+      + montaj (glaf, pervaz, prag) fără preț, desen 3D: cercevea PVC în culoarea produsului + geam clar.
+    - U2 produse pe punctele tehnice: data → data_socket (prize RJ45/TV din seriile existente), vent_exhaust → bath_fan; serie pe
+      toată casa; deviz: ventilator fără ramă + montaj fără preț; corp 3D doar cu cele 3 cote de pe pagină (specs.bodyCm).
+      17 produse (Dedeman 12, Hornbach 5) în materials.v1.json, dovezi în data/catalog-evidence.2026-11-17.json, note brute în
+      D:/w/research_notes/casa3d-produse/ventilatie-date.json; 3 prețuri reverificate (Vents X1, Sedna RJ45, Gewiss GW12423).
+    - Capturi 11-16 în D:/casa3d-render/renovare/verificare-2026-11-17/. Suita 143/986, tsc curat.
+  - Next.js: PR separat #391 (16.4.3 → 16.4.6, GHSA-mfr8 + GHSA-vc7v), build verde local.
   - Teste: tests/renovation-products.test.ts (12); suita 143 de fișiere / 984 de teste; tsc curat; build compilat.
 RESIDUALS ACCEPTATE (decizia sesiunii principale după runda 2):
   - cota blatului e fixă 0,9 m (motorul desenează .86 + blat); microundele pe pardoseală primesc acum avertismentul ON_FLOOR.
   - ramura „hotă de insulă fără sticlă” nu are produs în catalog: neverificată vizual.
+  - ventilatoare: 7 din 8 nu declară culoarea → desen în alb-gri neutru (#f2f2f0); nu există ventilator negru/inox cu preț citit
+    (eMAG și Hornbach blochează citirea automată); Panasonic Karre Plus fără prize de date cu preț pe pagină.
+  - nu există avertisment de IP pentru ventilatorul pus deasupra dușului (zonele din băi nu sunt modelate).
+  - revizia Fable (U1+U2) aplicată: ușa de balcon fără mâner/sistem în deviz și în panou, avertisment door.balconyType; stilul nu
+    mai suprascrie ușa de balcon (core/styles.ts). Reziduuri: door.size compară doar lățimea (±10 cm); ușile de balcon pot fi
+    puse și pe gol de fereastră (două căi); seria de date pe toată casa pune același produs și pe punctele „TV / internet”
+    (socketKind nefolosit încă); adâncimea ventilatorului de pe pagină include probabil ștuțul (desen tăiat la 8 cm).
+  - `npm run build` pe acest branch pică până la merge-ul #391 (Next.js); testele și tsc sunt verzi.
   - ușile de 120 și 140 cm: paginile Hornbach (recitite 2026-11-17) nu spun că au două foi și nici cum sunt împărțite (doar
     „trei balamale”, o direcție de deschidere), deci rămân desenate cu o singură foaie; prețul de la eMAG Prodias e la „stoc epuizat”.
   - câmpul evidence al ușilor de intrare e rezumat de WebFetch, nu text integral copiat.

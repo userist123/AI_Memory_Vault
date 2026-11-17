@@ -53,7 +53,7 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
     const bv = r ? bathVisual(finishesOf(snap, r)) : null; if (bv) it.variant = { ...it.variant, s: { ...(it.variant.s || {}), b: bv } }; }
   if (mc) for (const d of doorVisual(snap, mc, 0)){ const g = plan.pereti[d.wallIndex]?.goluri[d.openingIndex]; if (g) g.usa = { style: d.style, color: d.color, wood: d.wood, handle: d.handle, ...('entrance' in d ? { entrance: true, glass: d.glass } : {}) }; }
   // tâmplăria aleasă pe fiecare fereastră: culoarea tocului, canatele, fixă sau mobilă, aluminiu sau PVC
-  if (mc) for (const w of windowVisual(snap, mc, 0)){ const g = plan.pereti[w.wallIndex]?.goluri[w.openingIndex]; if (g) g.fer = { color: w.color, sashes: w.sashes, fixed: w.fixed, frame: w.frame, triple: w.triple }; }
+  if (mc) for (const w of windowVisual(snap, mc, 0)){ const g = plan.pereti[w.wallIndex]?.goluri[w.openingIndex]; if (g) g.fer = { color: w.color, sashes: w.sashes, fixed: w.fixed, frame: w.frame, triple: w.triple, ...('fixedSashes' in w && w.fixedSashes ? { fixedSashes: w.fixedSashes } : {}) }; }
   // sensul de deschidere al fiecărei uși (balamaua și partea), același ca în plan
   snap.floor.walls.forEach((w, wi) => w.openings.forEach((o, oi) => { if (o.kind !== 'door') return; const g = plan.pereti[wi]?.goluri[oi]; if (g) g.sw = doorSwing(snap.floor, wi, oi); }));
   // corpurile de iluminat plasate (culoarea: aleasă, a produsului, sau negru)
@@ -76,7 +76,12 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   // punctele tehnice cu corp: unitatea de aer condiționat (cutie albă pe perete) și caloriferul nou (cu nervuri), pe fața peretelui
   // din dreptul lor; grosimea e cea a peretelui din 3D (motorul desenează pereții de 25 / 15 cm)
   const ceil = snap.floor.ceilingHeight;
-  const tehnice = (snap.tech ?? []).flatMap(t => { const ac = t.kind === 'hvac_split'; if (!ac && !isSizedRadiator(t)) return [];
+  const tehnice = (snap.tech ?? []).flatMap(t => {
+    // ventilatorul de extracție ales (cu cote pe pagină): masca pe fața peretelui, centrată pe înălțimea punctului
+    if (t.kind === 'vent_exhaust'){ const fm = mc ? materialOf(mc, t.product) : undefined, b = fm?.category === 'bath_fan' ? fm.specs?.bodyCm : undefined, f = b && techFrame(snap.floor, t); if (!b || !f) return [];
+      const th = f.wall?.exterior ? .25 : .15, k = th / 2 - f.thickness / 2, w = b[0] / 100, h = b[1] / 100, d = b[2] / 100, y = Math.max(0, Math.min(ceil - h - .02, t.height - h / 2));
+      return [{ id: t.id, kind: 'fan', model: fm!.specs?.color ?? '#f2f2f0', x: f.face[0] + f.n[0] * k, z: f.face[1] + f.n[1] * k, nx: f.n[0], nz: f.n[1], ux: f.u[0], uz: f.u[1], w, h, d, y }]; }
+    const ac = t.kind === 'hvac_split'; if (!ac && !isSizedRadiator(t)) return [];
     const f = techFrame(snap.floor, t); if (!f) return []; const th = f.wall?.exterior ? .25 : .15, k = th / 2 - f.thickness / 2, s = ac ? hvacSize(t) : radiatorSize(t);
     const y = Math.max(0, Math.min(ceil - s.h - .02, t.height));
     return [{ id: t.id, kind: ac ? 'ac' : 'radiator', model: t.model ?? 'panel', x: f.face[0] + f.n[0] * k, z: f.face[1] + f.n[1] * k, nx: f.n[0], nz: f.n[1], ux: f.u[0], uz: f.u[1], w: s.w, h: s.h, d: s.d, y }]; });

@@ -162,8 +162,12 @@ export function sanitizeTech(x: unknown, snap: Pick<Snapshot, 'floor'>): TechPoi
 }
 /** Mărimile corpului (calorifer, aer condiționat), curățate: numerele finite se aduc în interval; NaN, Infinity și șirurile se
  *  resping (PlanLimitError → 400), ca un client vechi să poată salva, dar o valoare stricată să nu ajungă în 3D și în deviz. */
-/** Aparatajul cu produs ales din catalog: priza (simplă sau dublă), întrerupătorul și termostatul de cameră. */
-export const TECH_PRODUCT_CATEGORY: Partial<Record<TechKind, 'socket' | 'switch' | 'thermostat'>> = { outlet: 'socket', outlet_double: 'socket', switch: 'switch', thermostat: 'thermostat' };
+/** Aparatajul cu produs ales din catalog: priza (simplă sau dublă), întrerupătorul, termostatul de cameră, priza de date / TV
+ *  și ventilatorul de extracție (pe punctul de grilă / ventilator). */
+export type TechProductCategory = 'socket' | 'switch' | 'thermostat' | 'data_socket' | 'bath_fan';
+export const TECH_PRODUCT_CATEGORY: Partial<Record<TechKind, TechProductCategory>> = { outlet: 'socket', outlet_double: 'socket', switch: 'switch', thermostat: 'thermostat', data: 'data_socket', vent_exhaust: 'bath_fan' };
+/** Ce produse pot cere ramă separată (aparataj în cutie de doză, ca până acum); ventilatorul are masca lui, fără ramă. */
+export const FRAMED_CATEGORY = new Set<TechProductCategory>(['socket', 'switch', 'thermostat', 'data_socket']);
 export function techBodyFields(q: any): Pick<TechPoint, 'widthM' | 'heightM' | 'model' | 'product'> {
   // produsul (id de material) doar la calorifer și la aerul condiționat; un id stricat se elimină, nu blochează salvarea
   const product = (q.kind === 'radiator' || q.kind === 'hvac_split' || Object.hasOwn(TECH_PRODUCT_CATEGORY, q.kind)) && typeof q.product === 'string' && /^[\w-]{1,80}$/.test(q.product) ? { product: q.product } : {};

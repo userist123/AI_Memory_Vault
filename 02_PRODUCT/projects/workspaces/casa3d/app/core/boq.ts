@@ -1,12 +1,12 @@
 import { windowOpenings } from './windows';
-import { TECH_PRODUCT_CATEGORY } from './technical';
+import { TECH_PRODUCT_CATEGORY, FRAMED_CATEGORY } from './technical';
 import type { Catalog, Floor, Snapshot, Room, MaterialsCatalog, Material, RoomFinishes, BudgetSettings, Confidence } from './types';
 import { resolve, groupOf } from './catalog';
 import { area as rectArea } from './geometry';
 import { openingsOnSide } from './validate';
 import { floors, floorOfRoom } from './levels';
 import { roomWindows, curtainPlan, blindPlan } from './textiles';
-import { doorOpenings } from './doors';
+import { doorOpenings, isBalconyDoor } from './doors';
 import { kitchenOf, kitchenRun, kitchenQuantities, KITCHEN_DEFAULT } from './kitchen';
 import { bathOf } from './bath';
 import { fixtureCount } from './fixtures';
@@ -276,14 +276,18 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
     const n = tp.kind === 'outlet_double' ? 2 : 1;
     items.push(materialLine(tm, `${tp.roomId}:${tp.kind}:${tp.id}`, tp.roomId, `${tm.name}${n > 1 ? ' (2 module, priză dublă)' : ''} · ${room?.name ?? ''}`, n, mc.verifiedAt, 0));
     // rama: la priza dublă trebuie o ramă dublă oricum (rama inclusă în produs e simplă); la restul, doar dacă pagina nu o include
-    const fk = n > 1 ? `dublă|${tm.name}` : tm.specs?.withFrame !== true ? `simplă|${tm.name}` : null; if (fk) frames.set(fk, (frames.get(fk) ?? 0) + 1); }
+    if (want === 'bath_fan'){ unknown.push(`Montaj ventilator ${tm.name}: tubulatură, străpungere și racord electric, fără preț verificat`); continue; }
+    const fk = !FRAMED_CATEGORY.has(want) ? null : n > 1 ? `dublă|${tm.name}` : tm.specs?.withFrame !== true ? `simplă|${tm.name}` : null; if (fk) frames.set(fk, (frames.get(fk) ?? 0) + 1); }
   for (const [k, n] of frames){ const [kind, name] = k.split('|') as [string, string];
     unknown.push(`Ramă ${kind} și suport pentru ${name} (${n} buc): ${kind === 'dublă' ? 'priza dublă cere o ramă dublă' : 'pagina produsului nu spune că rama e inclusă'}, fără preț verificat`); }
   // uși de interior (foaie + toc) și mânere, pe golul lor; montajul nu are tarif verificat
   for (const d of doorOpenings(snap)){ const c = snap.doors?.[d.id], dm = M(c?.product), hm = M(c?.handle), roomId = d.roomIds[0] ?? null;
-    if (dm){ items.push(materialLine(dm, `door:${d.id}`, roomId, `Ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj ușă ${dm.name}`);
+    if (dm && isBalconyDoor(dm)){ items.push(materialLine(dm, `door:${d.id}`, roomId, `Ușă de balcon · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj ușă de balcon ${dm.name} (glaf, pervaz, prag)`); }
+    else if (dm){ items.push(materialLine(dm, `door:${d.id}`, roomId, `Ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj ușă ${dm.name}`);
       // ușa pliantă completă se vinde fără accesoriile de prindere (scrie pe pagina produsului)
       if (dm.specs?.doorTypes?.includes('folding')) unknown.push(`Accesorii de prindere ușă pliantă (nu sunt incluse) · gol ${Math.round(d.widthM * 100)} cm`); }
+    // ușa de balcon are feroneria ei (tâmplărie PVC): un mâner sau un sistem rămas de la ușa veche nu intră în deviz
+    if (isBalconyDoor(dm)) continue;
     if (hm) items.push(materialLine(hm, `handle:${d.id}`, roomId, `Mâner ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0));
     // sistemul ușii (șina glisantei, caseta ușii în perete, kitul pliantei): doar pe tipul pentru care e făcut
     const sm = M(c?.system); if (sm && sm.specs?.system === d.type) items.push(materialLine(sm, `doorsys:${d.id}`, roomId, `Sistem ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); }

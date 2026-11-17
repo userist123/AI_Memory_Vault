@@ -90,7 +90,7 @@ export type MaterialCategory = 'parquet' | 'floor_tile' | 'wall_tile' | 'paint' 
   | 'wall_art' | 'mirror' | 'wall_shelf'
   | 'countertop' | 'kitchen_sink' | 'kitchen_tap' | 'bath_tap' | 'shower_set' | 'towel_radiator' | 'led_mirror' | 'pendant' | 'wall_light' | 'led_profile'
   | 'panel_radiator' | 'railing' | 'hvac_split'
-  | 'window' | 'socket' | 'switch' | 'thermostat';
+  | 'window' | 'socket' | 'switch' | 'thermostat' | 'data_socket' | 'bath_fan';
 /** Modul de așezare a pardoselii (parchet sau plăci). */
 export type FloorPattern = 'straight' | 'brick' | 'third' | 'diagonal' | 'herringbone' | 'chevron' | 'checker';
 /** Date tehnice citite pe pagina produsului; lipsa unei valori înseamnă „nedeclarat”, nu „bun”. */
@@ -105,7 +105,11 @@ export interface MaterialSpecs { sizeCm?: [number, number]; rectified?: boolean;
   /** fereastra: tipul, numărul de canate, materialul tocului, geamul și Uw (W/m²K), citite pe pagina produsului */
   win?: WindowSpec;
   /** aparatajul electric: seria de design (Sedna, Valena…) și dacă prețul include rama */
-  series?: string; withFrame?: boolean }
+  series?: string; withFrame?: boolean;
+  /** priza de date / TV: tipul modulului; ventilatorul de baie: racordul (mm), debitul (m³/h), zgomotul (dB) — toate de pe pagină */
+  socketKind?: 'data_rj45' | 'data_rj45_double' | 'tv' | 'tv_sat'; ductMm?: number; flowM3h?: number; noiseDb?: number;
+  /** dimensiunile corpului vizibil (lățime × înălțime × adâncime, cm), când pagina dă trei cote */
+  bodyCm?: [number, number, number] }
 export type WindowKind = 'fixed' | 'tilt_turn' | 'double' | 'balcony_door' | 'roof';
 export interface WindowSpec { kind: WindowKind; sashes: number; frame: 'pvc' | 'aluminium' | 'wood'; glazing?: 'double' | 'triple'; uw?: number | null;
   /** câte canate (de la stânga, privit din cameră) sunt fixe, după titlul produsului („fixă + deschidere dublă”) */

@@ -46,7 +46,7 @@ export default function TechPanel({ snap, show, kind, onShow, onKind, onSuggest,
           <button className="btn" onClick={() => onDelete(p.id)}>{t('tech.delete')}</button>
           {onPatch && isSizedRadiator(p) && <RadiatorFields p={p} room={r.name} mc={mc} cur={cur} onPatch={patch => onPatch(p.id, patch)} />}
           {onPatch && p.kind === 'hvac_split' && mc && <ProductField p={p} category="hvac_split" label={t('hvac.product')} aria={t('hvac.productAria', { room: r.name })} mc={mc} cur={cur} onPatch={patch => onPatch(p.id, patch)} />}
-          {onPatch && TECH_PRODUCT_CATEGORY[p.kind] && mc && <ProductField p={p} category={TECH_PRODUCT_CATEGORY[p.kind]!} label={t('tech.product')} aria={t('tech.productAria', { kind: label(p.kind), room: r.name })} mc={mc} cur={cur} onPatch={patch => onPatch(p.id, patch)} />}</div>)}</details>; })}</div>
+          {onPatch && TECH_PRODUCT_CATEGORY[p.kind] && mc && <ProductField p={p} category={TECH_PRODUCT_CATEGORY[p.kind]!} label={t(p.kind === 'vent_exhaust' ? 'tech.productFan' : 'tech.product')} aria={t('tech.productAria', { kind: label(p.kind), room: r.name })} mc={mc} cur={cur} onPatch={patch => onPatch(p.id, patch)} />}</div>)}</details>; })}</div>
       {onPatchMany && mc && <SeriesBulk pts={pts} mc={mc} cur={cur} onPatchMany={onPatchMany} />}
     </>}
   </div>);
@@ -101,7 +101,7 @@ function RadiatorFields({ p, room, mc, cur, onPatch }: { p: TechPoint; room: str
  *  punct se poate schimba apoi separat). Fără serie aleasă, punctele rămân fără preț de aparataj, ca până acum. */
 function SeriesBulk({ pts, mc, cur, onPatchMany }: { pts: TechPoint[]; mc: MaterialsCatalog; cur?: string; onPatchMany(ids: string[], patch: Partial<Pick<TechPoint, 'product'>>): void }){
   const { t } = usePrefs(), by = (c: string) => mc.materials.filter(m => m.category === c);
-  const rows = (['socket', 'switch', 'thermostat'] as const).map(c => ({ c, opts: by(c), ids: pts.filter(p => TECH_PRODUCT_CATEGORY[p.kind] === c).map(p => p.id) })).filter(r => r.opts.length && r.ids.length);
+  const rows = (['socket', 'switch', 'thermostat', 'data_socket', 'bath_fan'] as const).map(c => ({ c, opts: by(c), ids: pts.filter(p => TECH_PRODUCT_CATEGORY[p.kind] === c).map(p => p.id) })).filter(r => r.opts.length && r.ids.length);
   if (!rows.length) return null;
   return (<div className="tech-series"><h4>{t('tech.series')}</h4><p className="muted">{t('tech.seriesNote')}</p>
     {rows.map(r => <label key={r.c} className="f"><span>{t(`tech.series.${r.c}`, { n: r.ids.length })}</span>

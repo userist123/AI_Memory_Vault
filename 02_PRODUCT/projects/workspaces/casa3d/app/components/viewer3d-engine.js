@@ -805,7 +805,11 @@ function model(it){
             // pivotul: pe linia balamalelor, la fața peretelui dinspre care se deschide; x local = de-a lungul foii
             const pivot = new THREE.Group(); pivot.position.set(hx + nx * faceOff, 0, hz + nz * faceOff); walls.add(pivot); const inner = new THREE.Group(); inner.position.x = -pv; pivot.add(inner);
             const P = (bw, bh, bd, x, y, z, mat, shadow = true) => { const o = new THREE.Mesh(new THREE.BoxGeometry(bw, bh, bd), mat); o.position.set(x, y, z); o.castShadow = shadow; o.receiveShadow = true; inner.add(o); return o; };
-            const lt = ent ? .07 : .04; P(lw, lh, lt, lw / 2, lh / 2 + .006, 0, lm);
+            const bal = us && us.style === 'balcony', lt = ent || bal ? .07 : .04;
+            // ușa de balcon: cercevea de PVC în culoarea produsului (profil 9 cm, jos 12 cm) și geam clar pe aproape toată foaia
+            if (bal){ const pw = .09, pb = .12; P(lw, pw, lt, lw / 2, lh - pw / 2 + .006, 0, lm); P(lw, pb, lt, lw / 2, pb / 2 + .006, 0, lm); P(pw, lh, lt, pw / 2, lh / 2 + .006, 0, lm); P(pw, lh, lt, lw - pw / 2, lh / 2 + .006, 0, lm);
+              P(lw - 2 * pw, lh - pw - pb, .02, lw / 2, pb + (lh - pw - pb) / 2 + .006, 0, glass, false); }
+            else P(lw, lh, lt, lw / 2, lh / 2 + .006, 0, lm);
             if (us && us.style === 'glass') [1, -1].forEach(sg => P(lw * .55, lh * .55, .006, lw / 2, lh * .58, sg * (lt / 2 + .002), MAT('frost', '#e9ecec'), false));
             if (us && us.entrance && us.glass) [1, -1].forEach(sg => P(lw * .22, lh * .62, .006, lw * .3, lh * .55, sg * (lt / 2 + .003), MAT('frost', '#dfe3e3'), false));
             if (us && us.style === 'panel' || ent && !(us && us.entrance && us.glass)) [1, -1].forEach(sg => [lh * .72, lh * .3].forEach((y, i) => P(lw * .66, lh * (i ? .36 : .3), .006, lw / 2, y, sg * (lt / 2 + .003), lm, false)));
@@ -964,6 +968,10 @@ function model(it){
     (p.tehnice || []).forEach(t => { const rot = -Math.atan2(t.uz, t.ux), at = (dn, du, y, w2, h2, d2, mat) => box(w2, h2, d2, mat, t.x + t.nx * dn + t.ux * du, y, t.z + t.nz * dn + t.uz * du, rot, walls);
       if (t.kind === 'ac'){ const body = MAT('paint', '#f6f6f3'), slit = MAT('paint', '#2b2d30'), g = .01;
         at(g + t.d / 2, 0, t.y + t.h / 2, t.w, t.h, t.d, body).userData.tech = t.id; at(g + t.d + .002, 0, t.y + .05, t.w * .86, .025, .004, slit).castShadow = false; return; }
+      // ventilatorul de extracție: masca (cotele și culoarea produsului ales) cu fante orizontale pe față
+      if (t.kind === 'fan'){ const body = MAT('paint', t.model), slit = MAT('paint', lumOf(t.model) < .3 ? '#5a5c60' : '#2b2d30'), d = Math.min(.08, t.d), g = .005;
+        at(g + d / 2, 0, t.y + t.h / 2, t.w, t.h, d, body).userData.tech = t.id;
+        for (let k = 1; k <= 5; k++) at(g + d + .001, 0, t.y + t.h * (.2 + .6 * k / 6), t.w * .7, .006, .002, slit).castShadow = false; return; }
       const y = t.y + t.h / 2, g = .03;
       if (t.model === 'towel'){ const bar = MAT('chrome', '#d8d8d8'); at(g + t.d / 2, -t.w / 2 + .015, y, .03, t.h, .03, bar).userData.tech = t.id; at(g + t.d / 2, t.w / 2 - .015, y, .03, t.h, .03, bar);
         for (let k = t.y + .06; k < t.y + t.h - .03; k += .08) at(g + t.d / 2, 0, k, t.w - .03, .018, .018, bar).castShadow = false; return; }
