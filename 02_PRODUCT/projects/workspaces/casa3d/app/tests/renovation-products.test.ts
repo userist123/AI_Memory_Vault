@@ -17,7 +17,7 @@ import { doorOpenings, doorIssues, doorOptions, doorVisual } from '../core/doors
 import { windowOpenings, windowCandidates, windowIssues, sanitizeWindows, windowVisual } from '../core/windows';
 import { suggestTechPoints, techBodyFields, pruneProducts, TECH_PRODUCT_CATEGORY } from '../core/technical';
 import { groupsForRoom } from '../core/furniture-fit';
-import { viewerInput } from '../lib/viewer-input';
+import { viewerInput, widthInName } from '../lib/viewer-input';
 import type { Catalog, MaterialsCatalog, Snapshot } from '../core/types';
 
 const cat = catalogJson as unknown as Catalog, mc = materialsJson as unknown as MaterialsCatalog;
@@ -141,6 +141,17 @@ test('hota de insulă: coșul până la tavanul camerei și avertisment cât tim
   const f0 = finishesOf(s, s.floor.rooms.find(r => r.id === room)!);
   assert.ok(keys(f0).includes('kit.islandHoodUpper'), 'cu suspendate (implicit): avertisment');
   assert.ok(!keys({ ...f0, kitchen: { ...(f0.kitchen || {}), upper: 'none' } }).includes('kit.islandHoodUpper'), 'fără suspendate: fără avertisment');
+  assert.ok(keys({ ...f0, kitchen: undefined }).includes('kit.islandHoodUpper'), 'fără setări de bucătărie (suspendate implicite): avertisment');
+  assert.ok(keys({ ...f0, kitchen: { ...(f0.kitchen || {}), upper: 'closed' } }).includes('kit.islandHoodUpper'), 'suspendate închise: avertisment');
+  const other = s.floor.rooms.find(r => r.id !== room && !s.placements.some(p => p.roomId === r.id && p.group === 'bucatarie'))!;
+  assert.deepEqual(kitchenIssues(s, cat, mc, other.id, finishesOf(s, other)), [], 'camera fără bucătărie: nimic');
+  // exact condiția motorului: hota de insulă și bucătăria fără suspendate ajung împreună în desen; lățimea vine din titlu („90cm”)
+  s.finishes ={ ...(s.finishes || {}), [room]: { ...f0, kitchen: { ...(f0.kitchen || {}), upper: 'none' } } };
+  const v2 = viewerInput(s, cat, toEngineCatalog(cat), { mc }) as { items: { group: string; variant?: { s?: { hood?: { kind?: string; w?: number }; k?: { upper?: string } } } }[] }, ks = v2.items.find(i => i.group === 'bucatarie')!.variant!.s!;
+  assert.equal(ks.hood!.kind, 'hood_island'); assert.equal(ks.k!.upper, 'none'); assert.equal(ks.hood!.w, 90);
+  assert.equal(widthInName('Hotă X, 704mc/h, 60 cm, Inox'), 60); assert.equal(widthInName('Hotă fără lățime, 704mc/h'), null);
   s.selections = { ...s.selections, hota: groups(cat)['hota']!.variants.find(v => (v.style as { kind?: string } | undefined)?.kind === 'hood_chimney')!.id };
   assert.ok(!keys(f0).includes('kit.islandHoodUpper'), 'hota de perete: fără avertisment');
+  const v3 = viewerInput(s, cat, toEngineCatalog(cat), { mc }) as { items: { group: string; variant?: { s?: { hood?: { ceil?: number } } } }[] };
+  assert.equal(v3.items.find(i => i.group === 'bucatarie')!.variant!.s!.hood!.ceil, 2.7, 'coșul hotei de perete urcă până la tavanul camerei');
 });

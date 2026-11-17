@@ -24,15 +24,22 @@ DONE:
   - Revizie: runda 1 PARTIAL → reparat (532ee851f); runda 2 PARTIAL → rama dublă reparată de sesiunea principală.
   - Hota de insulă (2026-11-17): fără suspendate, baldachin centrat pe plită și coș până la tavanul camerei (sticla stă pe
     ramă); cu suspendate, avertismentul kit.islandHoodUpper în panoul bucătăriei. Verificat în aplicație (tur Bucătărie, hota-7).
+  - Advising Fable (2026-11-17, read-only) aplicat: hota de perete cu sticlă nu mai plutește (sticla înclinată pe ramă, coșul din
+    ea); coșul hotei de perete urcă până la tavanul camerei (ceil trimis și pentru hood_chimney); coș omis la tavan sub baldachin;
+    lățimea din titlu când pagina n-are dimensiuni (widthInName: hota-7 „90cm”, hota-3/5 „60 cm”); test extins (kitchen absent,
+    upper closed, cameră fără bucătărie, insula + upper none în viewerInput). Capturi: D:/casa3d-render/renovare/verificare-2026-11-17/.
+  - Ușa de 140 cm: titlul paginii Hornbach e chiar „Still 627 1 2 geamuri” (fără „1/2” sau „canat”); nu setez doorTypes.
   - Teste: tests/renovation-products.test.ts (12); suita 143 de fișiere / 984 de teste; tsc curat; build compilat.
 RESIDUALS ACCEPTATE (decizia sesiunii principale după runda 2):
   - cota blatului e fixă 0,9 m (motorul desenează .86 + blat); microundele pe pardoseală primesc acum avertismentul ON_FLOOR.
-  - hota-3/5/7 fără dimensiuni (60 cm).
+  - ramura „hotă de insulă fără sticlă” nu are produs în catalog: neverificată vizual.
   - ușile de 120 și 140 cm: paginile Hornbach (recitite 2026-11-17) nu spun că au două foi și nici cum sunt împărțite (doar
     „trei balamale”, o direcție de deschidere), deci rămân desenate cu o singură foaie; prețul de la eMAG Prodias e la „stoc epuizat”.
   - câmpul evidence al ușilor de intrare e rezumat de WebFetch, nu text integral copiat.
   - sanitizeWindows acceptă orice id scurt pentru produs (la fel ca la uși).
 NEXT: CI pe PR; decizia de merge e a proprietarului.
+  `npm run build` (2026-11-17): compilează toate paginile, apoi Next.js 16.4.3 iese cu SecurityFatalError (vulnerabilitate
+  cunoscută în registry) — dependență, nu codul PR-ului; cere upgrade Next într-o sarcină separată.
 IDEAS AFTER: uși de balcon pe goluri de ușă; ușă de intrare dublă doar cu un produs care își declară foile; corpuri de iluminat direct pe punctele de lumină;
   parchet, gresie și vopsele din mai multe magazine; obiecte sanitare noi; reverificare lunară a prețurilor.
 KEY FILES: app/core/{windows,technical,boq,catalog}.ts, app/components/{viewer3d-engine.js,Editor.tsx,TechPanel.tsx},

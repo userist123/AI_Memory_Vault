@@ -384,11 +384,14 @@ function model(it){
         else if (hk === 'hood_island' && k && k.upper === 'none'){ const top = s.hood.ceil || 2.55, cw = Math.min(hw * .4, .3); B(hw, .05, .6, hx, hb + .025, 0, hm);
           // cu sticlă: placa de sticlă stă pe ramă și coșul pornește din ea; fără sticlă: capacul piramidal, apoi coșul
           const cb = s.hood.glass ? hb + .062 : hb + .25; if (s.hood.glass) B(hw - .01, .012, .58, hx, hb + .056, 0, dark); else B(hw * .7, .2, .42, hx, hb + .15, 0, hm);
-          B(cw, top - cb, cw * .8, hx, (top + cb) / 2, 0, hm); }
+          if (top > cb + .02) B(cw, top - cb, cw * .8, hx, (top + cb) / 2, 0, hm); }
         else if (!k || k.upper !== 'none'){ const yb = h - .02 - .72 - .07; B(hw, .06, .48, hx, yb + .03, hz, hm); if (s.hood.glass) B(hw - .02, .006, .3, hx, yb + .063, hz + .05, dark); }
-        else { if (s.hood.glass){ B(hw, .02, .45, hx, hb + .01, hz, hm); const gl = B(hw, .012, .38, hx, hb + .2, hz - .03, dark); gl.rotation.x = -.4; }
+        // hota de perete: înclinată cu sticlă (marginea de jos pe rama din față, cea de sus la perete) sau cu capac; coșul urcă până la tavanul camerei
+        else { const top = s.hood.ceil || 2.55; let cb = hb + .27;
+          if (s.hood.glass){ B(hw, .02, .45, hx, hb + .01, hz, hm); const zf = hz + .225, zb = -d / 2 + .03, rise = .3, gl = B(hw, .012, Math.hypot(zf - zb, rise), hx, hb + .02 + rise / 2, (zf + zb) / 2, dark);
+            gl.rotation.x = Math.atan2(rise, zf - zb); cb = hb + .02 + rise - .02; }
           else { B(hw, .05, .48, hx, hb + .025, hz, hm); B(hw * .6, .22, .32, hx, hb + .16, hz - .06, hm); }
-          B(.26, 2.55 - hb - .27, .22, hx, (2.55 + hb + .27) / 2, -d / 2 + .11, hm); } }
+          if (top > cb + .02) B(.26, top - cb, .22, hx, (top + cb) / 2, -d / 2 + .11, hm); } }
       if (!gas) for (const [dx, dz, r] of [[-.14, -.1, .09], [.14, -.1, .07], [-.14, .12, .07], [.14, .12, .09]]){ const z = new THREE.Mesh(new THREE.TorusGeometry(r, .003, 4, 32), MAT('paint', '#3c3d40')); z.rotation.x = Math.PI / 2; z.position.set(hx + dx, ct + .0065, dz); g.add(z); }
       // cuptorul: rama inox, ușa de sticlă cu geam fumuriu, mânerul bară și panoul de comandă
       const oz = -d / 2 + wd + .02, ov = s.oven, ovM = ov && ov.col ? (ov.inox ? MAT('metal', ov.col) : MAT('paint', ov.col)) : MAT('metal', '#9da0a3'); B(.58, .58, .012, hx, .46, oz, ovM); B(.54, .38, .006, hx, .4, oz + .008, MAT('screen', '#111214')); B(.5, .08, .006, hx, .68, oz + .008, MAT('screen', '#1a1b1d'));
