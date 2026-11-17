@@ -1233,3 +1233,8 @@
   parsing, 20x1000 process stress.
   Next: planner #8 item 1 (harness + kill tests first, report the defect, then fix with Opus review). Owner items: ESE sample, RDP manual test,
   PR #370, lab cleanup; questions from the audit (accreditation authority, supported Windows builds, PAdES profile wanted).
+- 2026-11-17 LAB CHECK planner #7 item 1 RESULT (WS02): during the round with three parallel station controls (instances A/B/C) the station auth audit
+  grew 670 -> 842 lines; afterwards the last line (seq 842) and auth_audit.jsonl.head (seq 842) carry the same hash, no .head.tmp left (seq/hash
+  alignment checked from the VM disk; the MAC itself was verified by the app only up to 670, the UI driver stalled while three controls ran).
+  The VM shut itself down at 21:58: System 1074 by wlms.exe (Windows License Monitoring = expired evaluation licence, hourly shutdown) - lab issue
+  for the owner, not a product defect. WS02 stopped.
