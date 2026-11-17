@@ -7,6 +7,7 @@ import { resolve, groupOf } from '../core/catalog';
 import { r3 } from '../core/geometry';
 import { activeOpenings } from '../core/renovation';
 import { ALLOWED_OVERLAP, FRONT_CLEARANCE } from '../core/rules';
+import { randomId } from '@/core/uuid';
 
 // Aceleași valori ca doorZones() din core/validate.ts (0.95 m în fața ușii), ca aplicarea să treacă și validatorul aplicației.
 export const DOOR_CLEAR_DEPTH = 0.95;
@@ -50,7 +51,7 @@ export function placementsFromTwin(snap: Snapshot, cat: Catalog, twin: Twin, ids
     const fw = swap ? qd : qw, fd = swap ? qw : qd;
     const prev = existing.get(q.id);
     // Piesele noi primesc un UUID, ca la orice piesă a aplicației: id-urile generate de solver nu ajung în proiect.
-    const id = prev ? q.id : globalThis.crypto.randomUUID(); ids?.set(q.id, id);
+    const id = prev ? q.id : randomId(); ids?.set(q.id, id);
     return [{ id, roomId: q.roomId, group: groupOf(q.catalogId), variantId: q.catalogId, x: r3(q.x + fw / 2), z: r3(q.y + fd / 2), rotation: toRadians(q.rotation), source: prev?.source ?? 'auto', ...(prev?.size ? { size: prev.size } : {}) }];
   });
 }

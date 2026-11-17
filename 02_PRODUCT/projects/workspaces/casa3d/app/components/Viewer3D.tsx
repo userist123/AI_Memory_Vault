@@ -12,6 +12,7 @@ import { lighting, sunDirection, captureFileName, type TimeOfDay } from '@/core/
 import { parseViews, addView, removeView, viewsKey, clampCut, type SavedView } from '@/core/saved-views';
 import { askPrompt } from '@/lib/dialog';
 import { classifyTier, parseTierPick, TIER_KEY, type Tier, type TierPick } from '@/core/viewport-tiers';
+import { randomId } from '@/core/uuid';
 
 export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_VOIDS, projectId, selectedId = null, hoverId = null, onHover, frame, onFrameOther }: { snap: Snapshot; catalog: Catalog; mc?: MaterialsCatalog | null; onPick(id: string | null): void; voids?: PlateVoid[]; projectId?: string;
   /** selecția comună cu planul (UI/UX P2-10): piesa selectată și cea de sub mouse (aici sau în plan); `frame.n` crește la fiecare cerere de încadrare */
@@ -31,7 +32,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   const keepViews = (l: SavedView[]) => { setViews(l); if (projectId) try { localStorage.setItem(viewsKey(projectId), JSON.stringify(l)); } catch { /* stocare plină sau blocată */ } };
   async function saveView(){ const view = v.current?.getView?.(); if (!view) return; setViewsOpen(false);
     const name = await askPrompt({ title: t('viewer.saveView'), confirmLabel: t('viewer.saveViewOk'), input: { label: t('viewer.viewName'), maxLength: 40, initial: mode === 'walk' && room ? snap.floor.rooms.find(r => r.id === room)?.name ?? '' : '' } });
-    if (name && name.trim()) keepViews(addView(views, name, view, typeof crypto !== 'undefined' && 'randomUUID' in crypto ? crypto.randomUUID() : String(Date.now()))); }
+    if (name && name.trim()) keepViews(addView(views, name, view, randomId())); }
   function openView(sv: SavedView){ setViewsOpen(false); setMode(sv.view.mode); if (sv.view.mode !== 'walk') setRoom(null); setCutPct(Math.round(sv.view.cut * 100)); v.current?.setView?.(sv.view); }
   const preset = (k: 'top' | 'iso' | 'front') => { setViewsOpen(false); go('house'); v.current?.setCameraPreset(k); };
   // nivelul de calitate (plan A1): „Automat” clasează local și poate coborî singur într-o sesiune; o alegere manuală e respectată și memorată

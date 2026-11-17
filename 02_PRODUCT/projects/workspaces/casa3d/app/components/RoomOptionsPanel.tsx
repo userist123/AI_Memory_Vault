@@ -10,9 +10,10 @@ import { formatMoney, formatMoneyDelta } from '@/core/format';
 import { usePrefs } from '@/lib/prefs';
 import { askConfirm } from '@/lib/dialog';
 import { intlLocale } from '@/lib/i18n';
+import { randomId } from '@/core/uuid';
 
 interface Choice { roomId: string; optionId: string; label: string; author: string; note: string; chosenAt: string; revisionNumber: number }
-const newId = () => (globalThis.crypto?.randomUUID?.() ?? `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`);
+const newId = () => randomId();
 
 export default function RoomOptionsPanel({ id, room, snap, cat, mc, cur, onSnap, say }: { id: string; room: Room; snap: Snapshot; cat: Catalog; mc: MaterialsCatalog; cur: string; onSnap(s: Snapshot): void; say(m: string): void }){
   const { t, lang } = usePrefs(), G = useMemo(() => groups(cat), [cat]);

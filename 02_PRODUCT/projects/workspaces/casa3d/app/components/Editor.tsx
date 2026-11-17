@@ -99,9 +99,10 @@ import ToolRail from './ToolRail';
 import { dimGeometry } from '@/core/annotations';
 import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
 import { flushSync } from 'react-dom';
+import { randomId } from '@/core/uuid';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
-const uid = () => crypto.randomUUID();
+const uid = () => randomId();
 const newWallId = () => `wall-${uid().slice(0, 8)}`;
 /** Tipurile oferite de unealta „Placare” (lemnul decorativ întâi); bagheta se pune din panou. */
 const CLAD_KINDS: WallFeatureKind[] = ['slats', 'panel', 'frames', 'wallpaper', 'plaster', 'stone', 'brick', 'paint', 'tile'];
