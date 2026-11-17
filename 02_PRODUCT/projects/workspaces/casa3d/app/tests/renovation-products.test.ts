@@ -11,7 +11,8 @@ import { RETAILER_HOSTS } from '../core/outbound';
 import { FRONT_CLEARANCE, WALL_HIGH, ON_SURFACE } from '../core/rules';
 import { planSymbol } from '../core/plan-symbols';
 import { newSnapshot } from '../core/project';
-import { computeBOQ } from '../core/boq';
+import { computeBOQ, finishesOf } from '../core/boq';
+import { kitchenIssues } from '../core/kitchen';
 import { doorOpenings, doorIssues, doorOptions, doorVisual } from '../core/doors';
 import { windowOpenings, windowCandidates, windowIssues, sanitizeWindows, windowVisual } from '../core/windows';
 import { suggestTechPoints, techBodyFields, pruneProducts, TECH_PRODUCT_CATEGORY } from '../core/technical';
@@ -130,4 +131,16 @@ test('hota de tavan primește înălțimea camerei (nu o cotă fixă)', () => {
   assert.ok(hood, 'catalogul are o hotă de tavan'); s.selections = { ...s.selections, hota: hood!.id }; s.floor.ceilingHeight = 2.8;
   const vi = viewerInput(s, cat, toEngineCatalog(cat), { mc }) as { items: { group: string; variant?: { s?: { hood?: { ceil?: number } } } }[] };
   assert.equal(vi.items.find(i => i.group === 'bucatarie')!.variant!.s!.hood!.ceil, 2.8);
+});
+test('hota de insulă: coșul până la tavanul camerei și avertisment cât timp există corpuri suspendate', () => {
+  const s = demo(), hood = groups(cat)['hota']!.variants.find(v => (v.style as { kind?: string } | undefined)?.kind === 'hood_island');
+  assert.ok(hood, 'catalogul are o hotă de insulă'); s.selections = { ...s.selections, hota: hood!.id }; s.floor.ceilingHeight = 2.7;
+  const vi = viewerInput(s, cat, toEngineCatalog(cat), { mc }) as { items: { group: string; variant?: { s?: { hood?: { ceil?: number } } } }[] };
+  assert.equal(vi.items.find(i => i.group === 'bucatarie')!.variant!.s!.hood!.ceil, 2.7);
+  const room = s.placements.find(p => p.group === 'bucatarie')!.roomId, keys = (f: ReturnType<typeof finishesOf>) => kitchenIssues(s, cat, mc, room, f).map(i => i.key);
+  const f0 = finishesOf(s, s.floor.rooms.find(r => r.id === room)!);
+  assert.ok(keys(f0).includes('kit.islandHoodUpper'), 'cu suspendate (implicit): avertisment');
+  assert.ok(!keys({ ...f0, kitchen: { ...(f0.kitchen || {}), upper: 'none' } }).includes('kit.islandHoodUpper'), 'fără suspendate: fără avertisment');
+  s.selections = { ...s.selections, hota: groups(cat)['hota']!.variants.find(v => (v.style as { kind?: string } | undefined)?.kind === 'hood_chimney')!.id };
+  assert.ok(!keys(f0).includes('kit.islandHoodUpper'), 'hota de perete: fără avertisment');
 });

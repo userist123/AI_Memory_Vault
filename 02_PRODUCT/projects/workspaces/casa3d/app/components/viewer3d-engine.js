@@ -380,6 +380,11 @@ function model(it){
         if (hk === 'hood_telescopic') B(hw, .04, .3, hx, k && k.upper === 'none' ? hb : h - .02 - .72 - .02, hz + .02, hm);   // sertarul telescopic, sub corpul suspendat
         else if (hk === 'hood_ceiling') B(hw, .1, .45, hx, (s.hood.ceil || 2.55) - .05, hz, hm);   // lipită de tavanul camerei
         // cu corpuri suspendate deasupra (implicit), hota de perete rămâne doar baldachinul sub ele: coșul și sticla ar intra în corpuri
+        // hota de insulă fără corpuri suspendate: baldachin centrat pe plită și coș până la tavanul camerei, desprinse de perete
+        else if (hk === 'hood_island' && k && k.upper === 'none'){ const top = s.hood.ceil || 2.55, cw = Math.min(hw * .4, .3); B(hw, .05, .6, hx, hb + .025, 0, hm);
+          // cu sticlă: placa de sticlă stă pe ramă și coșul pornește din ea; fără sticlă: capacul piramidal, apoi coșul
+          const cb = s.hood.glass ? hb + .062 : hb + .25; if (s.hood.glass) B(hw - .01, .012, .58, hx, hb + .056, 0, dark); else B(hw * .7, .2, .42, hx, hb + .15, 0, hm);
+          B(cw, top - cb, cw * .8, hx, (top + cb) / 2, 0, hm); }
         else if (!k || k.upper !== 'none'){ const yb = h - .02 - .72 - .07; B(hw, .06, .48, hx, yb + .03, hz, hm); if (s.hood.glass) B(hw - .02, .006, .3, hx, yb + .063, hz + .05, dark); }
         else { if (s.hood.glass){ B(hw, .02, .45, hx, hb + .01, hz, hm); const gl = B(hw, .012, .38, hx, hb + .2, hz - .03, dark); gl.rotation.x = -.4; }
           else { B(hw, .05, .48, hx, hb + .025, hz, hm); B(hw * .6, .22, .32, hx, hb + .16, hz - .06, hm); }

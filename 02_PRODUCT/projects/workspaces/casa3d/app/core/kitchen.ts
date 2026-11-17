@@ -24,7 +24,11 @@ export function kitchenQuantities(run: { lengthM: number; modules: number }, k: 
 }
 export interface KitchenIssue { key: string; roomId: string; vars?: Record<string, string | number> }
 export function kitchenIssues(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog, roomId: string, f: RoomFinishes): KitchenIssue[] {
-  const out: KitchenIssue[] = [], run = kitchenRun(snap, cat, roomId); if (!run || !f.kitchen) return out; const k = kitchenOf(f), top = materialOf(mc, k.countertop);
+  const out: KitchenIssue[] = [], run = kitchenRun(snap, cat, roomId); if (!run) return out;
+  // hota de insulă atârnă de tavan cu coșul la mijloc: deasupra plitei nu pot rămâne corpuri suspendate (și fără ele rămâne o hotă de insulă lângă perete)
+  const hood = snap.selections?.hota ? resolve(cat, snap.selections.hota) : null;
+  if ((hood?.variant.style as { kind?: string } | undefined)?.kind === 'hood_island' && kitchenOf(f).upper !== 'none') out.push({ key: 'kit.islandHoodUpper', roomId });
+  if (!f.kitchen) return out; const k = kitchenOf(f), top = materialOf(mc, k.countertop);
   if (k.backsplash === 'tile' && !f.wallTile) out.push({ key: 'kit.noTile', roomId });
   if (k.underLed && k.upper === 'none') out.push({ key: 'kit.ledNoUpper', roomId });
   if (top?.specs?.sizeCm && top.specs.sizeCm[1] / 100 < .6) out.push({ key: 'kit.topShallow', roomId, vars: { cm: top.specs.sizeCm[1] } });
