@@ -28,7 +28,7 @@ public static class Json
     public static T Read<T>(string path) => JsonSerializer.Deserialize<T>(File.ReadAllText(path), Options)
         ?? throw new InvalidDataException($"Empty JSON: {path}");
 
-    public static void AppendLine<T>(string path, T value) => File.AppendAllText(path, JsonSerializer.Serialize(value, Line) + "\n");
+    public static void AppendLine<T>(string path, T value) => SharedAppend.WriteText(path, JsonSerializer.Serialize(value, Line) + "\n");
 
     public static IEnumerable<T> ReadLines<T>(string path)
     {

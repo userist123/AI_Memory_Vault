@@ -183,7 +183,7 @@ public sealed class HashChain(string path)
     /// <summary>Seq and hash of the last chained line; a legacy or unreadable last line starts a fresh chain (Verify() reports it).</summary>
     private static (long Seq, string Head) ReadHead(FileStream fs)
     {
-        var last = LastNonEmptyLine(fs);
+        var last = LogAnalyzer.Dfir.IO.SharedAppend.LastNonEmptyLine(fs);
         if (last is null) return (0, Genesis);
         try
         {
@@ -192,28 +192,6 @@ public sealed class HashChain(string path)
         }
         catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
         return (0, Genesis);
-    }
-
-    private static string? LastNonEmptyLine(FileStream fs)
-    {
-        long end = fs.Length;
-        if (end == 0) return null;
-        var buffer = new List<byte>();
-        var chunk = new byte[4096];
-        long pos = end;
-        while (pos > 0)
-        {
-            int n = (int)Math.Min(chunk.Length, pos);
-            pos -= n;
-            fs.Seek(pos, SeekOrigin.Begin);
-            fs.ReadExactly(chunk, 0, n);
-            buffer.InsertRange(0, chunk.Take(n));
-            var text = Encoding.UTF8.GetString(buffer.ToArray()).TrimEnd('\r', '\n', ' ', '\t');
-            int nl = text.LastIndexOf('\n');
-            if (nl >= 0) return text[(nl + 1)..].TrimEnd('\r');
-            if (pos == 0) return text.Length > 0 ? text : null;
-        }
-        return null;
     }
 
     /// <summary>The plain chain check and, for a sealed log, that the chain ends exactly at the sealed head.</summary>

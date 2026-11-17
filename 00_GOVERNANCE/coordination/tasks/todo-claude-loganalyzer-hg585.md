@@ -1114,3 +1114,28 @@
   not investigated). WS02 stopped. No product code changed.
   Next: a NEW planner from this checkpoint; first candidate item: move Json.AppendLine and PolicyAuditLog.Append to SharedAppend (with tests).
   Owner items unchanged (ESE sample, RDP manual test, PR #370, lab cleanup).
+- 2026-11-17 PLANNER #6 started. ITEM 1 (in progress, vault-worker + Opus review): cross-process appends. SharedAppend.WriteAfterLastLine (ReadWrite,
+  share Read, last line read under the handle; LastNonEmptyLine moved from HashChain); Json.AppendLine -> SharedAppend; evidence id allocated
+  under the index handle (max(counter, last line id)+1: two processes/workspaces gave duplicate EV ids); PolicyAuditLog.Append and App
+  ChainOfCustodyService.Append compute Prev under the handle (in-process _lastHash forked the chain with two instances); media_live.jsonl and
+  AuditLogService via SharedAppend. Probe list P1-P8 in the brief (two writers keep one chain; distinct ids; held file only delays; non-sharing
+  error fails at once; bytes unchanged; garbage last line; HashChain unchanged; empty file). StartupLog left (best-effort, per-process).
+- 2026-11-17 PLANNER #6 ITEM 1 DONE (vault-worker + main-session fixes; Opus review round 1 REQUEST_CHANGES (2 MEDIUM), round 2 APPROVE (LOW only)).
+  SharedAppend: WriteAfterLastLine (last line read under a ReadWrite/share-Read handle) and RewriteUnderHandle (whole-file rewrite in place under the
+  same kind of handle, backup path+".tmp" deleted best-effort, leading BOM skipped). CaseWorkspace: evidence id = max(counter, last index line id)+1
+  under the index handle (two workspaces/processes issued duplicate EV ids); TransitionState/MarkDisposed via UpdateEvidenceIndex under the handle
+  (old temp+move dropped an entry appended meanwhile -> lost line + duplicate id); same refusal messages/order. PolicyAuditLog.Append and App
+  ChainOfCustodyService.Append compute Prev under the handle (ChainOfCustodyService no longer caches/restores _lastHash: constructor no longer
+  throws on a truncated last line; Verify returns false on a bad line instead of throwing). Json.AppendLine, media_live.jsonl, AuditLogService via
+  SharedAppend.WriteText (now create the folder; AppendAllText threw). ExportAuditTests.RawWrite also matches SharedAppend.Write*/Rewrite*
+  (review M1: the guard had lost two entries). Tests: Two_workspaces_on_one_case_give_distinct_evidence_ids, A_state_change_in_one_workspace_never_
+  drops_an_entry_another_workspace_appends_at_the_same_time, A_refused_state_change_leaves_the_index_bytes_unchanged, Two_custody_services_on_one_
+  file_keep_one_chain, A_truncated_last_line_does_not_stop_the_service_..., Two_policy_audit_logs_..., A_chained_append_waits/fails_at_once/on_an_
+  empty_file, garbage last line; 3 RawWrite InlineData. ACCEPTED RESIDUAL: a crash between the in-place write and SetLength can leave a stray tail
+  in evidence_index.jsonl (case will not open; recover from evidence_index.jsonl.tmp by hand); CaseArchive.Export (FileShare.ReadWrite|Delete)
+  in another process can zip a mid-rewrite index; P4 test uses a directory (UnauthorizedAccessException), the sharing filter is checked by reading;
+  the policy-chain test also passes on the old code; legacy root Services\ChainOfCustodyService.cs (compiled only into UI.Tests) keeps the cached
+  hash. NOTE: Defender (Wacatac.H!ml) blocks the Debug Dfir test DLL again -> run Dfir with -c Release; check the count is > 0.
+  Suites: Dfir (Release) 3915 (3882 passed, 33 skipped), App 1098, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
+  Next: read CI once; then planner #6 next item (candidates: recovery of evidence_index.jsonl.tmp on open; lab check with two real instances
+  of a state change racing a registration). Owner items unchanged (ESE sample, RDP manual test, PR #370, lab cleanup).

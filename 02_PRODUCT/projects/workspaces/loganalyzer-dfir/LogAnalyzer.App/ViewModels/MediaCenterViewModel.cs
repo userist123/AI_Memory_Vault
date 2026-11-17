@@ -386,7 +386,7 @@ namespace LogAnalyzer.UI.ViewModels
             {
                 var dir = LogAnalyzer.UI.Services.LiveCase.Root;
                 Directory.CreateDirectory(dir);
-                File.AppendAllText(Path.Combine(dir, "media_live.jsonl"), JsonSerializer.Serialize(e) + Environment.NewLine);
+                LogAnalyzer.Dfir.IO.SharedAppend.WriteText(Path.Combine(dir, "media_live.jsonl"), JsonSerializer.Serialize(e) + Environment.NewLine);
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
         }

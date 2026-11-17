@@ -310,7 +310,9 @@ public sealed class ExportAuditTests : IDisposable
         @"|new\s+(?:System\.IO\.)?(?:FileStream|StreamWriter)\s*\((?![^;\r\n]*FileAccess\.Read\b(?!Write))" +
         @"|\bFile\.Open\s*\((?![^;\r\n]*FileAccess\.Read\b(?!Write))" +
         @"|\b(?:fi|\w*(?:[Ff]ile|[Ii]nfo)\w*)\.(?:OpenWrite|Create|CreateText|AppendText)\s*\(\s*\)" +
-        @"|new\s+(?:System\.IO\.)?FileInfo\s*\([^;\r\n]*\)\s*\.(?:OpenWrite|Create|CreateText|AppendText)\s*\(");
+        @"|new\s+(?:System\.IO\.)?FileInfo\s*\([^;\r\n]*\)\s*\.(?:OpenWrite|Create|CreateText|AppendText)\s*\(" +
+        // the cross-process append helper of Dfir.Core writes files too (Write, WriteText, WriteAfterLastLine, RewriteUnderHandle)
+        @"|\bSharedAppend\.(?:Write\w*|Rewrite\w*)\s*\(");
 
     /// <summary>
     /// Methods with a raw file write that is neither a user export nor in need of ExportAudit.Run, with the reason. Everything else must call
@@ -384,6 +386,9 @@ public sealed class ExportAuditTests : IDisposable
     [InlineData("using var w = fi.CreateText();")]
     [InlineData("using var w = fi.AppendText();")]
     [InlineData("using var s = new FileInfo(p).Create();")]
+    [InlineData("SharedAppend.WriteText(p, x);")]
+    [InlineData("LogAnalyzer.Dfir.IO.SharedAppend.WriteAfterLastLine(p, last => x);")]
+    [InlineData("SharedAppend.Write(p, empty => x);")]
     public void The_raw_write_guard_recognises_every_form_of_a_file_write(string code) => Assert.Matches(RawWrite, code);
 
     [Theory]

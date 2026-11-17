@@ -473,4 +473,103 @@ public sealed class AuditChainCustodyTests : IDisposable
         Assert.Contains("scop incomplet (caz vechi)", old.ScopeNote);
         Add(old); // an old case remains usable
     }
+
+    // ---- shared chained append (two processes on one file) ----
+
+    [Fact]
+    public void Two_workspaces_on_one_case_give_distinct_evidence_ids()
+    {
+        var a = NewCase();
+        var b = CaseWorkspace.Open(a.Root);
+        var ids = new List<string>();
+        for (int k = 0; k < 6; k++) ids.Add(Add(k % 2 == 0 ? a : b, $"f{k}.txt").EvidenceId);
+        Assert.Equal(ids.Count, ids.Distinct().Count());
+        Assert.Equal(ids.OrderBy(x => x, StringComparer.Ordinal).ToList(), ids);
+        Assert.Equal(ids, Json.ReadLines<EvidenceItem>(a.EvidenceIndexPath).Select(e => e.EvidenceId).ToList());
+    }
+
+    [Fact]
+    public void A_state_change_in_one_workspace_never_drops_an_entry_another_workspace_appends_at_the_same_time()
+    {
+        // review 2026-11-17: the state change read the index, then replaced it with temp file + move; an entry appended in between was dropped and its
+        // id issued again. Now the read and the rewrite happen under the index handle that also serialises the appends.
+        var a = NewCase();
+        var b = CaseWorkspace.Open(a.Root);
+        var first = Enumerable.Range(0, 20).Select(k => Add(a, $"a{k}.txt").EvidenceId).ToList();
+        var appended = new List<string>();
+        var writer = Task.Run(() => { for (int k = 0; k < 40; k++) appended.Add(Add(b, $"b{k}.txt").EvidenceId); });
+        var changer = Task.Run(() => { foreach (var id in first) Assert.True(a.TransitionState(id, EvidenceState.Verified, "t").Ok); });
+        Task.WaitAll(writer, changer);
+        var index = Json.ReadLines<EvidenceItem>(a.EvidenceIndexPath).ToList();
+        Assert.Equal(60, index.Count);
+        Assert.Equal(60, index.Select(e => e.EvidenceId).Distinct().Count());
+        Assert.All(appended, id => Assert.Contains(index, e => e.EvidenceId == id));
+        Assert.All(first, id => Assert.Equal(EvidenceState.Verified, index.Single(e => e.EvidenceId == id).State));
+        Assert.False(File.Exists(a.EvidenceIndexPath + ".tmp"));
+    }
+
+    [Fact]
+    public void A_refused_state_change_leaves_the_index_bytes_unchanged()
+    {
+        var a = NewCase();
+        var id = Add(a, "x.txt").EvidenceId;
+        var before = File.ReadAllBytes(a.EvidenceIndexPath);
+        Assert.False(a.TransitionState(id, EvidenceState.Archived, "t").Ok);   // ACQUIRED -> ARCHIVED skips steps
+        Assert.False(a.TransitionState("EV-999999", EvidenceState.Verified, "t").Ok);
+        Assert.Equal(before, File.ReadAllBytes(a.EvidenceIndexPath));
+    }
+
+    [Fact]
+    public void Two_policy_audit_logs_on_one_file_keep_one_chain()
+    {
+        Directory.CreateDirectory(_root);
+        var path = Path.Combine(_root, "sub", "policy_audit.jsonl");
+        var a = new LogAnalyzer.Dfir.Policy.PolicyAuditLog(path);
+        var b = new LogAnalyzer.Dfir.Policy.PolicyAuditLog(path);
+        for (int k = 0; k < 6; k++)
+            (k % 2 == 0 ? a : b).Append(new LogAnalyzer.Dfir.Policy.PolicyAuditEntry(DateTimeOffset.UtcNow, "X", "k", "op", "ap", "P", "1", "s", "p", "st", "c", "set", null, "a", null, "ok", $"d{k}"));
+        Assert.Empty(a.VerifyChain());
+        Assert.Equal(6, a.Read().Count);
+        Assert.Equal("", a.Read()[0].Prev);
+    }
+
+    [Fact]
+    public void A_chained_append_waits_for_a_writer_that_holds_the_file()
+    {
+        Directory.CreateDirectory(_root);
+        var path = Path.Combine(_root, "held.jsonl");
+        File.WriteAllText(path, "first\n");
+        foreach (var share in new[] { FileShare.Read, FileShare.None })
+        {
+            var held = new FileStream(path, FileMode.OpenOrCreate, FileAccess.Write, share);
+            var release = Task.Run(async () => { await Task.Delay(300); held.Dispose(); });
+            string? seen = null;
+            SharedAppend.WriteAfterLastLine(path, last => { seen = last; return "next\n"; });
+            release.Wait();
+            Assert.NotNull(seen);
+        }
+        Assert.Equal(new[] { "first", "next", "next" }, File.ReadAllLines(path));
+        Assert.False(File.ReadAllBytes(path) is [0xEF, 0xBB, 0xBF, ..]);
+    }
+
+    [Fact]
+    public void A_chained_append_fails_at_once_on_an_error_that_is_not_a_sharing_violation()
+    {
+        var dir = Path.Combine(_root, "isdir");
+        Directory.CreateDirectory(dir);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        Assert.ThrowsAny<Exception>(() => SharedAppend.WriteAfterLastLine(dir, _ => "x"));
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5), $"took {sw.Elapsed}");
+    }
+
+    [Fact]
+    public void A_chained_append_on_an_empty_file_sees_no_last_line_and_creates_the_folder()
+    {
+        var path = Path.Combine(_root, "new", "dir", "c.jsonl");
+        string? seen = "unset";
+        SharedAppend.WriteAfterLastLine(path, last => { seen = last; return "a\n"; });
+        Assert.Null(seen);
+        SharedAppend.WriteAfterLastLine(path, last => { seen = last; return "b\n"; });
+        Assert.Equal("a", seen);
+    }
 }
