@@ -691,7 +691,8 @@ export default function Editor({ id }: { id: string }){
       {health && (
         <button
           type="button"
-          className="btn sm"
+          className="btn sm tb-health"
+          aria-label={`${health.score}% · ${t('health.short')}`}
           style={{
             height: 32,
             padding: '0 10px',

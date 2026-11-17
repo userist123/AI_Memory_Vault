@@ -126,7 +126,7 @@ export default function PlanView(p: Props){
   // în alta (altfel ciorna rămâne după cursor și blochează tragerea în Selecție)
   useEffect(() => { setRuler(null); setPreview(null); setTyped(''); setHit(null); setRoomDraft(null); setDimDraft(null); setTextDraft(null); setMenu(null); setDim(null); }, [p.tool]);
   // meniul contextual (registru: contextCommands) și cota editată pe loc; ambele în coordonate de ecran
-  const [menu, setMenu] = useState<{ x: number; y: number; kind: ContextKind } | null>(null), menuByKey = useRef(0);
+  const [menu, setMenu] = useState<{ x: number; y: number; kind: ContextKind } | null>(null), menuByKey = useRef(0), [moveOpen, setMoveOpen] = useState(false);
   const [dim, setDim] = useState<{ wallId: string; text: string; orig: string; x: number; y: number; bad: boolean } | null>(null), dimClick = useRef<{ id: string; at: number } | null>(null);
   useEffect(() => { setMenu(null); setDim(null); }, [vb]);   // poziția lor pe ecran nu mai corespunde după zoom / deplasare
   const mac = typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent);
@@ -720,9 +720,11 @@ export default function PlanView(p: Props){
       onBlur={() => { if (textClosed.current) return; textClosed.current = true; const v = cleanPlanText(textVal); if (v) p.onAddText?.(textDraft.at, v); setTextDraft(null); }}
       onKeyDown={e => { e.stopPropagation(); if (e.key !== 'Enter' && e.key !== 'Escape') return; e.preventDefault(); textClosed.current = true;
         const v = e.key === 'Enter' ? cleanPlanText(textVal) : ''; if (v) p.onAddText?.(textDraft.at, v); setTextDraft(null); svg.current?.focus(); }} />}
-    {<div className="plan-nudge" role="group" aria-label={t('plan.nudgeAria')}>
+    {/* pe telefon: zoom și încadrare mereu, săgețile (alternativa la tragere, WCAG 2.5.7) după butonul „Mută planul” */}
+    {<div className={`plan-nudge ${moveOpen ? 'is-move' : ''}`} role="group" aria-label={t('plan.nudgeAria')}>
       {([['in', '+', () => zoomBy(1 / 1.25)], ['out', '−', () => zoomBy(1.25)], ['fit', '⤢', fitAll], ['left', '◀', () => panBy(-.2, 0)], ['up', '▲', () => panBy(0, -.2)], ['down', '▼', () => panBy(0, .2)], ['right', '▶', () => panBy(.2, 0)]] as const).map(([k, sym, fn]) =>
-        <button key={k} type="button" className="btn" aria-label={t(`plan.nudge.${k}`)} title={t(`plan.nudge.${k}`)} onClick={fn}>{sym}</button>)}
+        <button key={k} type="button" className={`btn nudge-${['left', 'up', 'down', 'right'].includes(k) ? 'arrow' : 'zoom'}`} aria-label={t(`plan.nudge.${k}`)} title={t(`plan.nudge.${k}`)} onClick={fn}>{sym}</button>)}
+      <button type="button" className="btn nudge-toggle" aria-expanded={moveOpen} aria-label={t('plan.nudge.move')} title={t('plan.nudge.move')} onClick={() => setMoveOpen(v => !v)}>✥</button>
     </div>}
     {menu && p.sel && <PlanContextMenu x={menu.x} y={menu.y} label={t('ctx.aria')} onClose={() => { setMenu(null); svg.current?.focus({ preventScroll: true }); }} onPick={runCommand}
       items={contextCommands(menu.kind).filter(available).map(id => { const c = commandById(id)!; return { id, label: t(c.menuLabel ?? c.label), hint: commandHint(id, { mac }), danger: id === 'delete' }; })} />}
