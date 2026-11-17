@@ -52,6 +52,13 @@ DONE:
     (magazin, URL, data citirii) trece deviz → profit → proformă (core/commercial.ts PriceSource); proforma o arată sub fiecare
     produs + nota pf.observedNote („nu sunt oferte ale magazinelor…”); CSV-ul de facturare rămâne fără linkuri. Verificat: catalogul
     nu conține imagini/descrieri de la magazine; public/ are doar CC0 Poly Haven. Test tests/price-source.test.ts; captura 19.
+  - Audit limba română (2026-11-17, cerința proprietarului „totul în română, inclusiv detaliile tehnice”): crawler Playwright
+    (10 etape, meniuri, dialoguri, 45 de inspectoare, 8 documente) + scanner static. Reparat: panoul de sănătate afișa
+    BLOCKER/WARNING/TIP și grupa internă „(dus)” → Blocant/Atenție/Sfat și numele produsului; cardurile Erori/Avertismente
+    numără lista; straturile DXF în română (PERETI, USI, FERESTRE, CAMERE, COTE, MOBILIER, INSTALATII, …, ASCII), „Linie
+    continua”, plita = PL; proiect inexistent → mesaj permanent + „Înapoi la proiecte” (rămânea la „Se încarcă…”). Golden
+    lot4: doar cele 2 amprente dxf actualizate (intrările vechi păstrate). Rezultat final crawler: 0 identificatori interni,
+    0 erori de consolă; potrivirile rămase sunt fals pozitive (link, Legendă, confirmă). Suita 144/990.
 NEXT (sesiunea următoare): proforma emisă înghețată (copie aditivă la emitere, data prețului pe linie; SourceLine pierde
   verifiedAt/sourceUrl în core/commercial.ts) — atinge DB, cere vault-reviewer. Înainte: decizia proprietarului
   „proforma = estimare sau ofertă” și ce face cu termenii Dedeman/Hornbach (acord scris / afiliere / doar link + preț observat).

@@ -31,3 +31,14 @@ test('evaluateProjectHealth catches geometric errors and flags blocker actions',
   assert.ok(blocker);
   assert.equal(blocker.targetKind, 'placement');
 });
+
+test('mesajele pentru utilizator nu conțin identificatori interni (grupa „dus”), ci numele produsului; DXF românesc fără simbolul „K”', async () => {
+  const s = demo(); s.tech = s.tech ?? []; const shower = s.placements.find(p => p.group === 'dus')!;
+  const drain = evaluateProjectHealth({ ...s, tech: [] }, cat, mc).actionsQueue.find(a => a.id === `tech-drain-${shower.id}` || a.id.startsWith('tech-drain-'))!;
+  assert.ok(drain, 'demo fără scurgeri: acțiune de scurgere');
+  for (const txt of [drain.title.ro, drain.title.en]){ assert.ok(!/\((dus|wc|lavoar)\)/.test(txt), txt); assert.ok(!/\b(dus|lavoar)\b:/.test(txt), txt); }
+  const { planToDxf } = await import('../core/dxf'); const { suggestTechPoints } = await import('../core/technical');
+  const t = demo(); t.tech = suggestTechPoints(t); assert.ok(t.tech.some(p => p.kind === 'cooker'), 'demo are plită');
+  const ro = planToDxf(t, cat, { lang: 'ro' }), en = planToDxf(t, cat, { lang: 'en' });
+  assert.ok(/\n1\nPL\n/.test(ro) && !/\n1\nK\n/.test(ro), 'plita = PL în română'); assert.ok(/\n1\nK\n/.test(en), 'K rămâne în engleză');
+});

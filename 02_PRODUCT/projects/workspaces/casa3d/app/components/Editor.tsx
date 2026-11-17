@@ -195,10 +195,12 @@ export default function Editor({ id }: { id: string }){
     return alts;
   }, [preview, snap, catalog, t]);
   const [wallItemKind, setWallItemKind] = useState<WallItemKind>('art'), [cladKind, setCladKind] = useState<WallFeatureKind>('slats'), [cladFocus, setCladFocus] = useState<{ room: string; i: number; n: number } | null>(null);
-  const toastT = useRef<any>(null), say = (msg: string) => { setToast(msg); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(''), 6000); };
+  // proiectul nu s-a putut încărca (inexistent, al altui utilizator, rețea): mesaj permanent, nu un toast care dispare și lasă „Se încarcă…”
+  const [loadFailed, setLoadFailed] = useState(false);
+  const toastT = useRef<any>(null), say =(msg: string) => { setToast(msg); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(''), 6000); };
 
   useEffect(() => { Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.json()), fetch('/api/health').then(r => r.json()), fetch('/api/materials').then(r => r.json())])
-    .then(([p, c, h, m]) => { setHouse(p.draft); latest.current = p.draft; baseRev.current = p.draftRev ?? null; setMeta(p.meta ?? { status: 'design' }); setCatalog(c); setMc(m); setRev(p.currentRevision); setPersistent(h.persistent); setDemo(!!h.demo); const st = readStash(store(), id); if (st){ stashOpen.current = true; setStash(st); } }).catch(() => say(t('editor.loadError')));
+    .then(([p, c, h, m]) => { setHouse(p.draft); latest.current = p.draft; baseRev.current = p.draftRev ?? null; setMeta(p.meta ?? { status: 'design' }); setCatalog(c); setMc(m); setRev(p.currentRevision); setPersistent(h.persistent); setDemo(!!h.demo); const st = readStash(store(), id); if (st){ stashOpen.current = true; setStash(st); } }).catch(() => setLoadFailed(true));
     fetch('/api/outbound').then(r => r.ok ? r.json() : null).then(setOut).catch(() => {});
     loadRevs(); }, [id]); // eslint-disable-line
   const loadRevs = () => { fetch(`/api/projects/${id}/revisions`).then(r => r.ok ? r.json() : []).then(setRevs); fetch(`/api/projects/${id}/shares`).then(r => r.ok ? r.json() : []).then(setShares); };
@@ -481,7 +483,8 @@ export default function Editor({ id }: { id: string }){
   // arborele Structură: toate nivelurile (nivelul curent refolosește descrierea de mai sus); doar în layoutul nou sau pe telefon
   const outline = useMemo(() => house && catalog && (mode === 'studio' || compact) ? buildOutliner(floors(house).map((_, i) => ({ name: levelName(i), groups: i === L ? mirror : describePlan(levelView(house, i), catalog, { t, units, lang }) }))) : [],
     [house, catalog, mode, compact, L, mirror, t, units, lang]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!snap || !catalog || !mc) return toast ? <div className="home"><p className="muted" role="status">{toast}</p></div> : <EditorSkeleton label={t('editor.loading')} />;
+  if (loadFailed) return <div className="home"><p role="alert">{t('editor.loadError')}</p><p><a className="btn" href="/">{t('nf.back')}</a></p></div>;
+  if (!snap || !catalog || !mc) return toast ?<div className="home"><p className="muted" role="status">{toast}</p></div> : <EditorSkeleton label={t('editor.loading')} />;
   const G = groups(catalog);
   const onAddWall = (a: [number, number], b: [number, number]) => mutate(s => { s.floor.walls.push({ id: `wall-${uid().slice(0, 8)}`, a, b, thickness: SEGMENT_THICKNESS.wall, exterior: false, openings: [] }); });
   // lungimea peretelui (inspector și cota din plan): core/wall-edit.ts păstrează colțul închis; un refuz se anunță, nu se aplică

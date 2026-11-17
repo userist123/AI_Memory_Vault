@@ -26,6 +26,14 @@ export const DXF_ZONE_LAYERS = [{ name: 'FLOOR_ZONES', color: 9 }] as const;
 /** Straturile lotului 4, doar când proiectul le folosește: tavanele false pe zonă (deasupra planului de secțiune) și balustradele. */
 export const DXF_CEILING_ZONE_LAYERS = [{ name: 'CEILING_ZONES', color: 6 }] as const;
 export const DXF_RAILING_LAYERS = [{ name: 'RAILINGS', color: 4 }] as const;
+/** Numele straturilor în fișierul pentru limba română (ASCII, fără diacritice: AutoCAD R12 le păstrează la fel în orice versiune).
+ *  Codul lucrează cu identificatorii englezești; traducerea se face doar la scriere. */
+const DXF_LAYER_RO: Record<string, string> = { WALLS: 'PERETI', DOORS: 'USI', WINDOWS: 'FERESTRE', ROOMS: 'CAMERE', DIMENSIONS: 'COTE', FURNITURE: 'MOBILIER',
+  SERVICES: 'INSTALATII', LEVELS: 'NIVELURI', STAIRS: 'SCARI', NOTES: 'NOTE', WALLS_NEW: 'PERETI_NOI', WALLS_DEMOLISH: 'PERETI_DE_DEMOLAT',
+  FLOOR_ZONES: 'ZONE_PARDOSEALA', CEILING_ZONES: 'ZONE_TAVAN', RAILINGS: 'BALUSTRADE' };
+export const dxfLayerName = (id: string, lang: 'ro' | 'en') => lang === 'ro' ? DXF_LAYER_RO[id] ?? id : id;
+/** Inversul: din numele scris în fișier înapoi la identificatorul din cod (pentru citire și teste). */
+export const dxfLayerId = (name: string) => Object.entries(DXF_LAYER_RO).find(([, ro]) => ro === name)?.[0] ?? name;
 export const TECH_SYMBOL: Record<TechKind, string> = { outlet: 'P', outlet_double: 'P2', switch: 'I', light_point: 'L', data: 'D', cooker: 'K', water_cold: 'A', water_hot: 'C', drain: 'S', hvac_split: 'AC', thermostat: 'T', vent_exhaust: 'V', radiator: 'R' };
 
 /** Text sigur pentru R12: fără caractere de control, fără coduri %% (oricâte %), fără \, non-ASCII ca \U+XXXX (convenția AutoCAD). */
@@ -41,6 +49,7 @@ const hex = (c: number) => '\\U+' + c.toString(16).toUpperCase().padStart(4, '0'
 
 type Pt = [number, number];
 export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en' }): string {
+  const LN = (id: string) => dxfLayerName(id, opts.lang);
   const ents: string[] = [], tag = (code: number, v: string | number) => `${code}\n${v}`;
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
   const num = (v: number) => (Math.round(v * 1000) / 1000).toString();
@@ -49,17 +58,17 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
   let usedRenovation = false, usedZones = false, usedCeilingZones = false, usedRailings = false;
   const P = (x: number, z: number): Pt => [x * 1000 + ox, -z * 1000];   // metri plan -> mm DXF
   const line = (layer: string, a: Pt, b: Pt) => { grow(...a); grow(...b);
-    ents.push(['0\nLINE', tag(8, layer), tag(10, num(a[0])), tag(20, num(a[1])), tag(30, 0), tag(11, num(b[0])), tag(21, num(b[1])), tag(31, 0)].join('\n')); };
+    ents.push(['0\nLINE', tag(8, LN(layer)), tag(10, num(a[0])), tag(20, num(a[1])), tag(30, 0), tag(11, num(b[0])), tag(21, num(b[1])), tag(31, 0)].join('\n')); };
   const poly = (layer: string, pts: Pt[]) => { // contur închis
-    const o = ['0\nPOLYLINE', tag(8, layer), tag(66, 1), tag(70, 1)];
-    for (const p of pts){ grow(...p); o.push('0\nVERTEX', tag(8, layer), tag(10, num(p[0])), tag(20, num(p[1])), tag(30, 0)); }
-    o.push('0\nSEQEND', tag(8, layer)); ents.push(o.join('\n')); };
+    const o = ['0\nPOLYLINE', tag(8, LN(layer)), tag(66, 1), tag(70, 1)];
+    for (const p of pts){ grow(...p); o.push('0\nVERTEX', tag(8, LN(layer)), tag(10, num(p[0])), tag(20, num(p[1])), tag(30, 0)); }
+    o.push('0\nSEQEND', tag(8, LN(layer))); ents.push(o.join('\n')); };
   const circle = (layer: string, c: Pt, r: number) => { grow(c[0] - r, c[1] - r); grow(c[0] + r, c[1] + r);
-    ents.push(['0\nCIRCLE', tag(8, layer), tag(10, num(c[0])), tag(20, num(c[1])), tag(30, 0), tag(40, num(r))].join('\n')); };
+    ents.push(['0\nCIRCLE', tag(8, LN(layer)), tag(10, num(c[0])), tag(20, num(c[1])), tag(30, 0), tag(40, num(r))].join('\n')); };
   const arc = (layer: string, c: Pt, r: number, a0: number, a1: number) => { grow(c[0] - r, c[1] - r); grow(c[0] + r, c[1] + r);
-    ents.push(['0\nARC', tag(8, layer), tag(10, num(c[0])), tag(20, num(c[1])), tag(30, 0), tag(40, num(r)), tag(50, num(a0)), tag(51, num(a1))].join('\n')); };
+    ents.push(['0\nARC', tag(8, LN(layer)), tag(10, num(c[0])), tag(20, num(c[1])), tag(30, 0), tag(40, num(r)), tag(50, num(a0)), tag(51, num(a1))].join('\n')); };
   const text = (layer: string, at: Pt, h: number, s: string, o: { rot?: number; center?: boolean } = {}) => { grow(...at);
-    const l = ['0\nTEXT', tag(8, layer), tag(10, num(at[0])), tag(20, num(at[1])), tag(30, 0), tag(40, num(h)), tag(1, dxfText(s))];
+    const l = ['0\nTEXT', tag(8, LN(layer)), tag(10, num(at[0])), tag(20, num(at[1])), tag(30, 0), tag(40, num(h)), tag(1, dxfText(s))];
     if (o.rot) l.push(tag(50, num(o.rot)));
     if (o.center) l.push(tag(72, 1), tag(11, num(at[0])), tag(21, num(at[1])), tag(31, 0));
     ents.push(l.join('\n')); };
@@ -170,7 +179,7 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
 
     // ---- instalații ----
     for (const t of snap.tech ?? []){ if (!(t.kind in TECH_KINDS) || !Number.isFinite(t.x) || !Number.isFinite(t.z)) continue;
-      const c = P(t.x, t.z); circle('SERVICES', c, 80); text('SERVICES', [c[0] + 120, c[1] - 50], 100, TECH_SYMBOL[t.kind]); }
+      const c = P(t.x, t.z); circle('SERVICES', c, 80); text('SERVICES', [c[0] + 120, c[1] - 50], 100, t.kind === 'cooker' && opts.lang === 'ro' ? 'PL' : TECH_SYMBOL[t.kind]); }
   };
   const drawStairs = (full: Snapshot, i: number) => {
     const f = floors(full)[i]!, ST = 'STAIRS', rect = (r: RoomRect) => [P(r.x0, r.z0), P(r.x1, r.z0), P(r.x1, r.z1), P(r.x0, r.z1)];
@@ -201,9 +210,8 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
   });
 
   if (!Number.isFinite(x0)){ x0 = y0 = 0; x1 = y1 = 1000; }
-  const lt = ['0\nLTYPE', tag(2, 'CONTINUOUS'), tag(70, 0), tag(3, 'Solid line'), tag(72, 65), tag(73, 0), tag(40, 0)];
-  const layers = [...DXF_LAYERS, ...DXF_LEVEL_LAYERS, ...DXF_NOTE_LAYERS, ...(usedRenovation ? DXF_RENOVATION_LAYERS : []), ...(usedZones ? DXF_ZONE_LAYERS : []), ...(usedCeilingZones ? DXF_CEILING_ZONE_LAYERS : []), ...(usedRailings ? DXF_RAILING_LAYERS : [])].map(l => ['0\nLAYER', tag(2, l.name), tag(70, 0), tag(62, l.color), tag(6, 'CONTINUOUS')].join('\n'));
-  void opts;   // limba: etichetele din desen sunt neutre (nume de camere deja localizate, cote în mm, simboluri)
+  const lt = ['0\nLTYPE', tag(2, 'CONTINUOUS'), tag(70, 0), tag(3, opts.lang === 'ro' ? 'Linie continua' : 'Solid line'), tag(72, 65), tag(73, 0), tag(40, 0)];
+  const layers = [...DXF_LAYERS, ...DXF_LEVEL_LAYERS, ...DXF_NOTE_LAYERS, ...(usedRenovation ? DXF_RENOVATION_LAYERS : []), ...(usedZones ? DXF_ZONE_LAYERS : []), ...(usedCeilingZones ? DXF_CEILING_ZONE_LAYERS : []), ...(usedRailings ? DXF_RAILING_LAYERS : [])].map(l => ['0\nLAYER', tag(2, LN(l.name)), tag(70, 0), tag(62, l.color), tag(6, 'CONTINUOUS')].join('\n'));
   return [
     '0\nSECTION', '2\nHEADER', '9\n$ACADVER\n1\nAC1009', '9\n$INSUNITS\n70\n4', '9\n$MEASUREMENT\n70\n1',
     `9\n$EXTMIN\n10\n${num(x0)}\n20\n${num(y0)}\n30\n0`, `9\n$EXTMAX\n10\n${num(x1)}\n20\n${num(y1)}\n30\n0`, '0\nENDSEC',
