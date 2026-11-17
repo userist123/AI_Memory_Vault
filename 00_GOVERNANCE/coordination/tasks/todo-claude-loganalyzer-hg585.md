@@ -1044,3 +1044,20 @@
   manifest step note, not in the item notes / parser recovery gap; import does not check the step status. Step 2 (WMI shadow copy) is
   exercised only as script text, never executed by a test.
   Next: read CI once; planner #4 item 2 (Insula "Colectează tot" end-to-end on WS02); then a NEW planner.
+- 2026-11-17 CI of 3b1e574d1: 32/32 success. PLANNER #4 ITEM 2 DONE: Insula "Colectează tot" end-to-end on LAB-WS02 (lab build of 3b1e574d1,
+  update-app insula, t-session sign-in, UIA: header "Colectează tot" -> scope dialog -> Confirmă). Investigation (profile Standard, elevated,
+  run COMPLETED, 08:07:38-08:08:13 station time) then station control (NECONFORM 22, DE VERIFICAT 31, NEDETERMINAT 6, CONFORM 36, N/A 4).
+  Case CASE-LAB-WS02-20261117-060738 pulled to E:\LA-Lab\evidence\LAB-WS02-case: 261 parser results, 0 Failed (SRUM 114 rows, Amcache 179,
+  148 Prefetch, MFT/$I30/USN, Windows Search index + gather, LNK/JumpLists); 31 findings incl. the lab scenarios (LOG-TAMPER High,
+  MEDIA-*, AIRGAP-NIC-ADDED, AIRGAP-PRINT-JOB, CRED-BRUTEFORCE); every collector gap has its reason (no Sysmon, no archived logs,
+  firewall logging off, no external NTFS media, no Defender history). PDF report generated from the UI (35 pages; recheck 261 OK / 0
+  modified / 0 missing), copied to E:\LA-Lab\reports\pdf. NOT a product bug: setupapi Partial (1 record, 1 malformed) = the lab script
+  scenario-media.ps1 wrote the synthetic USBSTOR section with the ro-RO date separator (2026.11.06); Windows writes 2026/11/06 on the
+  same file. Lab script fixed (InvariantCulture; .bak kept); the line already on WS02 stays. Checked, by design: RemoteToolLogsCollector
+  is Standard-only (FullForensic gets the same files from UserArtifactsCollector, test exists); scope dialog prefills the station LIVE
+  case scope. OBSERVATIONS for the owner (product questions, not changed): (1) on Standard the coverage row "Hive-uri de registru
+  (NTUSER, SOFTWARE)" says the collector ran but produced no source and Home asks to "complete" it, while the profile leaves those hives
+  out on purpose (SOFTWARE values are read live by AirGapFactsCollector); (2) the reused scope period (01-09.11) does not cover the
+  collection day and nothing warns; (3) after "Colectează tot" the investigation page stays on wizard step 1 and the status bar keeps only
+  the control line (the investigation summary is on Acasă, lower down).
+  Next: a NEW planner from this checkpoint (planner #4 done). Owner items unchanged (ESE sample, RDP manual test, PR #370, lab cleanup).
