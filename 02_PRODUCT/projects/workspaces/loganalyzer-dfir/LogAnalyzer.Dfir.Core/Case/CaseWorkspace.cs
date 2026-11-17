@@ -52,8 +52,29 @@ public sealed partial class CaseWorkspace
         Zone = TryZone(info.Timezone);
         _custodyChain = new HashChain(Path.Combine(Root, "Logs", "chain_of_custody.jsonl"));
         _auditChain = new HashChain(Path.Combine(Root, "Logs", "audit_chain.jsonl"));
-        _evidenceCounter = Json.ReadLines<EvidenceItem>(EvidenceIndexPath).Count();
+        _evidenceCounter = CountEvidence(EvidenceIndexPath);
     }
+
+    /// <summary>
+    /// Number of index entries. A damaged index stops the case from opening with a message that says where the rewrite backup is (a crash in the middle
+    /// of a state change can leave the index damaged, review 2026-11-17); the case is never repaired here, the operator decides.
+    /// </summary>
+    private static int CountEvidence(string index)
+    {
+        try { return Json.ReadLines<EvidenceItem>(index).Count(); }
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidDataException)
+        {
+            throw new InvalidDataException(DamagedIndexMessage(index, File.Exists(index + ".tmp")), ex);
+        }
+    }
+
+    internal static string DamagedIndexMessage(string index, bool backupExists) =>
+        $"Indexul probelor cazului este deteriorat ({index}); cazul nu se deschide, iar aplicația nu îl repară. " +
+        (backupExists
+            ? $"Lângă el există copia completă scrisă chiar înainte de ultima schimbare de stare a unei probe ({index}.tmp); o oprire bruscă în timpul acelei " +
+              "schimbări poate lăsa indexul astfel. Comparați cele două fișiere; dacă copia este cea bună, puneți-o în locul indexului (păstrați indexul " +
+              "deteriorat ca probă) și deschideți din nou cazul. Schimbarea de stare din copie poate să nu aibă intrare în lanțul de custodie."
+            : "Nu există o copie de rescriere (.tmp); verificați fișierul și lanțul de custodie al cazului.");
 
     /// <summary>Set when the case has no complete scope (a case created before WP3: "scop incomplet (caz vechi)") or only a provisional one.</summary>
     public string? ScopeNote => Info.Scope.MissingFields().Count > 0 ? "scop incomplet (caz vechi)"

@@ -508,6 +508,25 @@ public sealed class AuditChainCustodyTests : IDisposable
         Assert.False(File.Exists(a.EvidenceIndexPath + ".tmp"));
     }
 
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public void A_damaged_evidence_index_stops_the_open_with_the_backup_named_and_nothing_repaired(bool withBackup)
+    {
+        var a = NewCase();
+        Add(a, "x.txt");
+        var index = a.EvidenceIndexPath;
+        var good = File.ReadAllBytes(index);
+        File.AppendAllText(index, "}\r\n");   // the tail a crash between the in-place write and SetLength can leave
+        if (withBackup) File.WriteAllBytes(index + ".tmp", good);
+        var damaged = File.ReadAllBytes(index);
+        var ex = Assert.Throws<InvalidDataException>(() => CaseWorkspace.Open(a.Root));
+        Assert.Contains("deteriorat", ex.Message);
+        if (withBackup) Assert.Contains(index + ".tmp", ex.Message); else Assert.Contains("Nu există o copie de rescriere", ex.Message);
+        Assert.Equal(damaged, File.ReadAllBytes(index));                       // nothing repaired
+        Assert.Equal(withBackup, File.Exists(index + ".tmp"));
+    }
+
     [Fact]
     public void A_refused_state_change_leaves_the_index_bytes_unchanged()
     {

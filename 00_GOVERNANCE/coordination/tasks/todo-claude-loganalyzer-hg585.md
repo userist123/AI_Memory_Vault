@@ -1139,3 +1139,12 @@
   Suites: Dfir (Release) 3915 (3882 passed, 33 skipped), App 1098, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
   Next: read CI once; then planner #6 next item (candidates: recovery of evidence_index.jsonl.tmp on open; lab check with two real instances
   of a state change racing a registration). Owner items unchanged (ESE sample, RDP manual test, PR #370, lab cleanup).
+- 2026-11-17 CI of 56c62d995 read once: 31 success, 1 in progress, 0 failures. PLANNER #6 ITEM 2 DONE (low risk: message only, not Opus-reviewed):
+  a damaged evidence index (e.g. the tail a crash between the in-place rewrite and SetLength leaves) stopped CaseWorkspace.Open with a bare
+  JsonException. Now CountEvidence throws InvalidDataException with DamagedIndexMessage: says the case does not open and is NOT repaired (Open's
+  rule "Nothing is ever repaired"), names evidence_index.jsonl.tmp when it exists (full content written before the last state change; compare,
+  replace by hand keeping the damaged index, the change may lack a custody entry), else says there is no backup. No automatic restore (decision:
+  consistent with the no-repair rule). Test A_damaged_evidence_index_stops_the_open_with_the_backup_named_and_nothing_repaired (with/without
+  backup; bytes unchanged). Suites: Dfir (Release) 3917 (3884 passed, 33 skipped), App 1098, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
+  Next: read CI once; planner #6 item 3 = lab check with two real instances on WS02 of a state change racing a registration is impractical from
+  the UI (state changes are not reachable without evidence workflows); ask a NEW planner from this checkpoint. Owner items unchanged.
