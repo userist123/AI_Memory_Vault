@@ -51,7 +51,13 @@ test('ferestrele: produsele potrivite golului primele, avertisment de mărime ș
   const s = demo(), o = windowOpenings(s)[0]!; assert.ok(o, 'demo are ferestre');
   const c = windowCandidates(mc, o); assert.ok(c.length >= 15); for (let i = 1; i < c.length; i++) assert.ok(Number(c[i - 1]!.fits) >= Number(c[i]!.fits));
   const wrong = c.find(x => !x.fits && x.m.specs?.win?.kind !== 'balcony_door')!, door = c.find(x => x.m.specs?.win?.kind === 'balcony_door')!;
-  s.windowUnits = { [o.id]: { product: wrong.m.id } }; assert.ok(windowIssues(s, mc).some(i => i.key === 'win.size'));
+  s.windowUnits = { [o.id]: { product: wrong.m.id } }; assert.ok(windowIssues(s, mc).some(i => i.key === 'win.size' || i.key === 'win.tooBig'));
+  // diferența cu semn: 3 cm sub gol = apropiat; 3 cm peste gol = nu intră (înainte era „se potrivește”, cu Math.abs)
+  const probe = (dw: number) => { const m = { ...wrong.m, id: 'probe', specs: { ...wrong.m.specs, sizeCm: [Math.round(o.widthM * 100) + dw, Math.round(o.heightM * 100)] as [number, number] } };
+    const mc2 = { ...mc, materials: [...mc.materials, m] }, s2 = { ...s, windowUnits: { [o.id]: { product: 'probe' } } };
+    return { fits: windowCandidates(mc2, o).find(x => x.m.id === 'probe')!.fits, keys: windowIssues(s2, mc2).map(i => i.key) }; };
+  assert.deepEqual(probe(-3), { fits: true, keys: probe(-3).keys.filter(k => k !== 'win.size' && k !== 'win.tooBig') });
+  const big = probe(3); assert.equal(big.fits, false); assert.ok(big.keys.includes('win.tooBig') && !big.keys.includes('win.size'));
   s.windowUnits = { [o.id]: { product: door.m.id } }; assert.ok(windowIssues(s, mc).some(i => i.key === 'win.balconySill'));
   const b = computeBOQ(s, cat, mc), line = b.items.find(i => i.key === `window:${o.id}`); assert.ok(line, 'linia ferestrei'); assert.equal(line!.unitPrice ?? line!.total, line!.unitPrice ?? door.m.unitPrice);
   const v = windowVisual(s, mc, 0)[0]!; assert.equal(v.color, door.m.specs!.color); assert.equal(v.fixed, false);

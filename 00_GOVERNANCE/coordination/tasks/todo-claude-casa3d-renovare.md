@@ -40,6 +40,17 @@ DONE:
       D:/w/research_notes/casa3d-produse/ventilatie-date.json; 3 prețuri reverificate (Vents X1, Sedna RJ45, Gewiss GW12423).
     - Capturi 11-16 în D:/casa3d-render/renovare/verificare-2026-11-17/. Suita 143/986, tsc curat.
   - Next.js: PR separat #391 (16.4.3 → 16.4.6, GHSA-mfr8 + GHSA-vc7v), build verde local.
+  - Runda 3 (2026-11-17): audit extern ChatGPT confruntat de Fable cu codul (multe propuneri existau deja: I5 tab. 6.1.1.1,
+    istoric prețuri, STALE 14 zile). Implementat: cada intră în BATH_ZONE; ventilator / punct de lumină sub 0,60 m de duș sau
+    cadă → notă TIP cu IP-ul declarat (fără IP minim: SR HD 60364-7-701 nu e disponibil integral); VENT_BATH în 3 stări după
+    ventilatorul ales (fără / debit nedeclarat / sub cerință; debitul liber e limită de sus); fereastra: diferență cu semn —
+    mai mare decât golul cu > 1 cm nu mai e „apropiată” și primește win.tooBig. Capturi 17-18. Suita 143/988, tsc curat.
+  - Verificat pe surse (2026-11-17): Dedeman T&C — „Preluarea conținutului … în alte scopuri decât pentru utilizarea în interes
+    personal” e sancționată; Hornbach T&C 21.01.2026 — acces „limitat, în interes personal”, exploatarea comercială cere
+    „acordul scris al proprietarului”; ANAF: TVA 21% / 11% de la 1 august 2025; Ordinul 959/2023 → DDR ≤ 30 mA (pct. 4.1.5.2.1).
+NEXT (sesiunea următoare): proforma emisă înghețată (copie aditivă la emitere, data prețului pe linie; SourceLine pierde
+  verifiedAt/sourceUrl în core/commercial.ts) — atinge DB, cere vault-reviewer. Înainte: decizia proprietarului
+  „proforma = estimare sau ofertă” și ce face cu termenii Dedeman/Hornbach (acord scris / afiliere / doar link + preț observat).
   - Teste: tests/renovation-products.test.ts (12); suita 143 de fișiere / 984 de teste; tsc curat; build compilat.
 RESIDUALS ACCEPTATE (decizia sesiunii principale după runda 2):
   - cota blatului e fixă 0,9 m (motorul desenează .86 + blat); microundele pe pardoseală primesc acum avertismentul ON_FLOOR.

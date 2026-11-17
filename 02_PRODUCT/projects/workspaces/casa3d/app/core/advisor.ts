@@ -9,7 +9,7 @@ import { roomCeilingDropCm } from './finishes';
 import { finishesOf, roomGeometry } from './boq';
 import { FRONT_CLEARANCE, TALL_ITEM_M, WALL_PROXIMITY_M } from './rules';
 import { WINDOW_HEIGHT, LIGHTS_EXTRA_PER_M2 } from './rules.boq';
-import { tradeChecks } from './trade-checks';
+import { tradeChecks, type TechProductInfo } from './trade-checks';
 import { activeOpenings } from './renovation';
 import { contrastRatio, hexToRgb, hueDistance, isNeutral, relativeLuminance, rgbToHsl } from './color';
 
@@ -26,6 +26,8 @@ export interface AdvisorOptions {
   accessibility?: boolean;
   colorsOf?: (snap: Snapshot, cat: Catalog) => ColorEntry[];
   budget?: { total: number | null; target: number | null; unknown: number };
+  /** produsul ales pe un punct tehnic (IP, debit), din catalogul de materiale; fără el, verificările din baie folosesc doar geometria */
+  productOf?: (id: string) => TechProductInfo | undefined;
   /** Moneda bugetului (implicit RON). */
   currency?: string;
 }
@@ -230,7 +232,7 @@ export function adviseProject(snap: Snapshot, cat: Catalog, opts: AdvisorOptions
     for (const p of snap.placements.filter(q => ['lavoar', 'dus', 'wc', 'bucatarie'].includes(q.group)))
       if (!near(p, ['drain'])) add('TECH_NO_DRAIN', { severity: 'WARNING', category: 'instalatii', refs: { roomId: p.roomId, placementIds: [p.id] }, code: 'TECH_NO_DRAIN', vars: { nm: nameOf(p), rn: roomOf(p.roomId)?.name ?? '' } });
   }
-  for (const c of tradeChecks(snap, cat, fps, nameOf)) add(c.rule, c.a);
+  for (const c of tradeChecks(snap, cat, fps, nameOf, opts.productOf)) add(c.rule, c.a);
   const b = opts.budget, cur = opts.currency ?? 'RON';
   if (b){
     if (b.total != null && b.target != null && b.total > b.target) add('OVER_BUDGET', { severity: 'WARNING', category: 'buget', refs: {}, code: 'OVER_BUDGET', vars: { cur, total_money: b.total, over_money: b.total - b.target, target_money: b.target } });

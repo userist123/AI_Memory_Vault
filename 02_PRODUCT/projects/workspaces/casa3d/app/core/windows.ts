@@ -5,8 +5,9 @@ import type { Floor, Material, MaterialsCatalog, Snapshot, WindowChoice, WindowS
 import { floors } from './levels';
 import { materialOf } from './finishes';
 
-/** Toleranța față de gol: tâmplăria se comandă cu 1–2 cm sub gol; peste 5 cm diferență nu mai e același gol. */
-export const WINDOW_RULES = { sizeTolM: .05 };
+/** Toleranța față de gol (regulă a aplicației, fără normativ): tâmplăria se comandă sub gol; până la 5 cm mai mică e „apropiată”,
+ *  peste 1 cm mai mare decât golul nu intră fără a modifica golul. Potrivirea reală se stabilește la măsurătoare, cu rostul de montaj. */
+export const WINDOW_RULES = { sizeTolM: .05, overM: .01 };
 export const WINDOW_SILL = .9, WINDOW_HEIGHT = 1.3;
 export interface WindowOpening { id: string; level: number; widthM: number; heightM: number; sillM: number; wallIndex: number; openingIndex: number; roomIds: string[]; exterior: boolean }
 
@@ -26,16 +27,20 @@ export function windowIssues(snap: Snapshot, mc: MaterialsCatalog): WindowIssue[
   const out: WindowIssue[] = [];
   for (const o of windowOpenings(snap)){ const m = materialOf(mc, snap.windowUnits?.[o.id]?.product); if (!m) continue;
     const sz = m.specs?.sizeCm, w = sz ? sz[0] / 100 : 0, h = sz ? sz[1] / 100 : 0;
-    if (w && h && (Math.abs(w - o.widthM) > WINDOW_RULES.sizeTolM || Math.abs(h - o.heightM) > WINDOW_RULES.sizeTolM))
+    if (w && h && (w - o.widthM > WINDOW_RULES.overM || h - o.heightM > WINDOW_RULES.overM))
+      out.push({ key: 'win.tooBig', openingId: o.id, vars: { win: `${sz![0]}×${sz![1]}`, gap: `${Math.round(o.widthM * 100)}×${Math.round(o.heightM * 100)}` } });
+    else if (w && h && (Math.abs(w - o.widthM) > WINDOW_RULES.sizeTolM || Math.abs(h - o.heightM) > WINDOW_RULES.sizeTolM))
       out.push({ key: 'win.size', openingId: o.id, vars: { win: `${sz![0]}×${sz![1]}`, gap: `${Math.round(o.widthM * 100)}×${Math.round(o.heightM * 100)}` } });
     if (windowSpec(m)?.kind === 'balcony_door' && o.sillM > .15) out.push({ key: 'win.balconySill', openingId: o.id, vars: { sill: Math.round(o.sillM * 100) } });
     if (!o.exterior) out.push({ key: 'win.interior', openingId: o.id }); }
   return out;
 }
-/** Produsele care se potrivesc golului (± toleranță), primele; restul după diferența de mărime. */
+/** Produsele apropiate de gol (cel mult 5 cm mai mici și nu mai mari decât golul), primele; restul după diferența de mărime. */
 export function windowCandidates(mc: MaterialsCatalog, o: Pick<WindowOpening, 'widthM' | 'heightM'>): { m: Material; fits: boolean; diffCm: number }[] {
-  return mc.materials.filter(m => m.category === 'window').map(m => { const sz = m.specs?.sizeCm, dw = sz ? Math.abs(sz[0] / 100 - o.widthM) : 9, dh = sz ? Math.abs(sz[1] / 100 - o.heightM) : 9;
-    return { m, fits: dw <= WINDOW_RULES.sizeTolM && dh <= WINDOW_RULES.sizeTolM, diffCm: Math.round((dw + dh) * 100) }; })
+  return mc.materials.filter(m => m.category === 'window').map(m => { const sz = m.specs?.sizeCm, sw = sz ? sz[0] / 100 - o.widthM : 9, sh = sz ? sz[1] / 100 - o.heightM : 9, dw = Math.abs(sw), dh = Math.abs(sh);
+    // cu semn: mai mic decât golul (până la toleranță) = apropiat; mai mare decât golul = nu intră, oricât de mică e diferența
+    const ok = (d: number) => d <= WINDOW_RULES.overM && d >= -WINDOW_RULES.sizeTolM;
+    return { m, fits: !!sz && ok(sw) && ok(sh), diffCm: Math.round((dw + dh) * 100) }; })
     .sort((a, b) => Number(b.fits) - Number(a.fits) || a.diffCm - b.diffCm || a.m.unitPrice - b.m.unitPrice);
 }
 /** Păstrează doar golurile de fereastră existente și id-uri scurte; altceva → mesaj de eroare (400). */
