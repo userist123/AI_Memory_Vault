@@ -56,6 +56,8 @@
     <!-- test seams (CaseArchive.ImportCore) stay internal -->
     <InternalsVisibleTo Include="LogAnalyzer.App.Tests" />
     <InternalsVisibleTo Include="LogAnalyzer.Dfir.Tests" />
+    <!-- multi-process test worker: switches on HashChain.FaultInjection (crash tests) -->
+    <InternalsVisibleTo Include="LogAnalyzer.Dfir.ChainWorker" />
     <!-- the edition code that starts the firewall tool and the collection script registers them in the program inventory (CollectorExec) -->
     <InternalsVisibleTo Include="LogAnalyzer.Response" />
   </ItemGroup>

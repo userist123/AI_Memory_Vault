@@ -1238,3 +1238,21 @@
   alignment checked from the VM disk; the MAC itself was verified by the app only up to 670, the UI driver stalled while three controls ran).
   The VM shut itself down at 21:58: System 1074 by wlms.exe (Windows License Monitoring = expired evaluation licence, hourly shutdown) - lab issue
   for the owner, not a product defect. WS02 stopped.
+- 2026-11-17 PLANNER #8 ITEM 1 DONE (phase A vault-worker: harness; phase B main session; Opus review r1 REQUEST_CHANGES 2 MEDIUM, r2 APPROVE).
+  Multi-PROCESS harness: test exe LogAnalyzer.Dfir.ChainWorker (in LogAnalyzer.slnx, never published: Package job publishes only the three editions;
+  calls RuntimeGuard like every exe, added to RuntimeGuardEntryPointTests' entry list as that test instructs) + internal HashChain.FaultInjection
+  (off by default, no env read when off; LA_CHAIN_FAULT=<point>[:n] -> FailFast at after-intent / after-line-flush / after-head-tmp / after-head-move).
+  DEFECT CONFIRMED by kill tests before the fix: a crash after the line flush (or after .head.tmp) left the sealed log one entry ahead of the seal ->
+  Broken "intrări adăugate după ultimul cap sigilat ... fără cheia de sigilare" for ever, the next append did not repair it (card sign-in refused).
+  FIX: before the line the key holder writes <log>.head.pending = {prevSeq, prevHash, seq, mac=HMAC(key,"LogAnalyzer-chain-intent-v1|prevSeq|prevHash|
+  seq|hash")} (no hash in clear: review M2, a clear hash let someone without the key rebuild a rolled-back entry); Verify accepts exactly that
+  announced entry right after a valid sealed head or, for the first sealed append, after the empty chain (review M1); the next Append finishes the
+  head move; rollback deletes the intent; WriteIntent retries sharing violations; .head.tmp written with Flush(true) (power loss) and share Read;
+  CaseArchive treats *.pending as transient; AuditAnchor CD-R export copies the intent. Tests MultiProcessChainTests (3 processes x 200 sealed
+  appends with a verify loop; 3 x 200 SharedAppend lines; crash at each point incl. the first append; intent hides the hash; a line without the key
+  after an old or announced intent stays Broken). ACCEPTED RESIDUAL (pre-existing, LOW): a .head.tmp left after a failed rollback holds the
+  rolled-back entry's hash in clear (offline brute force of the entry, then revive) -> later: 128-bit random nonce in each sealed entry; online
+  oracle (Valid/Broken per planted guess) needs one app verify per guess over ~1e7 timestamps: not practical; power loss beyond the tmp flush not
+  covered. Suites: Dfir (Release) 3945 (3912 passed, 33 skipped), App 1114, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
+  Next: planner #8 item 2 (HKLM anti-rollback witness, separate Opus review) after the owner's design proposal work (uploaded file
+  Propunere_Redesign_WPF_DFIR_Compliance.md). Owner items unchanged.

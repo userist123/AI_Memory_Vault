@@ -130,7 +130,7 @@ public static class CaseArchive
         var dir = Path.GetDirectoryName(rel) ?? "";
         var name = Path.GetFileName(rel);
         // short-lived helpers (rewrite backups, lock files) keep the old open: holding them would make another instance's write of them fail
-        if (name.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase) || name.EndsWith(".lock", StringComparison.OrdinalIgnoreCase)) return false;
+        if (IsTransientHelper(name)) return false;
         return dir.Equals("Logs", StringComparison.OrdinalIgnoreCase)
             || (dir.Equals("Evidence", StringComparison.OrdinalIgnoreCase) && name.Equals("evidence_index.jsonl", StringComparison.OrdinalIgnoreCase))
             || (dir.Length == 0 && name.Equals("media_live.jsonl", StringComparison.OrdinalIgnoreCase));   // the live device journal of the LIVE case
@@ -138,7 +138,8 @@ public static class CaseArchive
 
     /// <summary>A short-lived helper file of an open case (rewrite backup *.tmp, lock file *.lock): it may vanish between the listing and the copy.</summary>
     internal static bool IsTransientHelper(string file) =>
-        file.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".lock", StringComparison.OrdinalIgnoreCase);
+        file.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".lock", StringComparison.OrdinalIgnoreCase)
+        || file.EndsWith(".pending", StringComparison.OrdinalIgnoreCase);   // the intent of a sealed append (HashChain.IntentPath): deleted right after the head move
 
     /// <summary>A file time the ZIP format can hold (1980-2107); a file removed meanwhile reads as 1601, a damaged one as anything.</summary>
     internal static DateTime ZipTime(DateTime t)

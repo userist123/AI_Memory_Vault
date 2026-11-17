@@ -93,14 +93,121 @@ public sealed class HashChain(string path)
 
     private SealedHead? ReadSealedHead() => ParseHead(ReadHeadText());
 
-    private void WriteSealedHead(byte[] key, long seq, string hash)
+    // ---- intent of a sealed append (planner #8, 2026-11-17) ----
+    // A process killed after writing its line and before moving the sealed head left the log one entry ahead of the seal: Verify said "entries added
+    // after the last sealed head without the sealing key" for ever (card sign-in refused) although the key holder wrote it (multi-process kill test).
+    // Before the line, the writer now records, MACed with the seal key, exactly which entry it is about to add after which sealed head. Only that entry,
+    // directly after that head, is accepted as "seal move pending" and sealed by the next append. A line appended without the key has no such intent.
+
+    public static string IntentPath(string logPath) => logPath + ".head.pending";
+
+    // the announced entry's hash is NOT stored in clear (review 2026-11-17: from a clear hash an attacker without the key could rebuild a rolled-back entry by
+    // brute force and revive it); only its MAC is stored, which nobody can check or forge without the key
+    private sealed record SealIntent(long PrevSeq, string PrevHash, long Seq, string Mac);
+
+    private static string IntentMac(byte[] key, long prevSeq, string prevHash, long seq, string hash) =>
+        Convert.ToHexStringLower(HMACSHA256.HashData(key, Encoding.UTF8.GetBytes($"LogAnalyzer-chain-intent-v1|{prevSeq}|{prevHash}|{seq}|{hash}")));
+
+    private string? ReadIntentText()
+    {
+        var ip = IntentPath(Path);
+        for (int attempt = 0; ; attempt++)
+        {
+            if (!File.Exists(ip)) return null;
+            try
+            {
+                using var fs = new FileStream(ip, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+                using var sr = new StreamReader(fs);
+                return sr.ReadToEnd();
+            }
+            catch (FileNotFoundException) { return null; }
+            catch (DirectoryNotFoundException) { return null; }
+            catch (IOException e) when (IsSharingViolation(e) && attempt < SharingAttempts) { SharingPause(attempt); }
+        }
+    }
+
+    private static SealIntent? ParseIntent(string? text)
+    {
+        if (text is null) return null;
+        try
+        {
+            var o = JsonNode.Parse(text)!.AsObject();
+            return new SealIntent(o["prevSeq"]!.GetValue<long>(), o["prevHash"]!.GetValue<string>(), o["seq"]!.GetValue<long>(), o["mac"]!.GetValue<string>());
+        }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or NullReferenceException) { return null; }
+    }
+
+    private void WriteIntent(byte[] key, long prevSeq, string prevHash, long seq, string hash)
+    {
+        var o = new JsonObject { ["prevSeq"] = prevSeq, ["prevHash"] = prevHash, ["seq"] = seq, ["mac"] = IntentMac(key, prevSeq, prevHash, seq, hash) };
+        var bytes = Encoding.UTF8.GetBytes(o.ToJsonString(Json.Line));
+        for (int attempt = 0; ; attempt++)
+        {
+            try
+            {
+                using var fs = new FileStream(IntentPath(Path), FileMode.Create, FileAccess.Write, FileShare.Read);
+                fs.Write(bytes);
+                fs.Flush(true);   // durable before the line it announces
+                return;
+            }
+            catch (IOException e) when (IsSharingViolation(e) && attempt < SharingAttempts) { SharingPause(attempt); }   // a scanner holding the file only delays
+        }
+    }
+
+    private void DeleteIntent() { try { File.Delete(IntentPath(Path)); } catch (Exception e) when (e is IOException or UnauthorizedAccessException) { } }
+
+    /// <summary>
+    /// Whether the log's last entry (<paramref name="seq"/>, <paramref name="head"/>, linked by <paramref name="lastPrevHash"/>) is exactly the entry a key holder
+    /// announced right after the valid sealed head <paramref name="h"/>: the seal move of that append is pending (a crash), not an entry added without the key.
+    /// </summary>
+    private static bool IntentCovers(byte[] key, SealIntent? i, SealedHead? h, long seq, string head, string? lastPrevHash)
+    {
+        if (i is null) return false;
+        // the sealed predecessor: a valid sealed head, or (first sealed append, review 2026-11-17) no head at all and the empty chain
+        var (prevSeq, prevHash) = h is null ? (0L, Genesis) : (h.Seq, h.Hash);
+        if (h is not null && !SealMatches(key, h, h.Seq, h.Hash)) return false;
+        return seq == prevSeq + 1 && i.PrevSeq == prevSeq && i.PrevHash == prevHash && i.Seq == seq && lastPrevHash == prevHash
+            && CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(i.Mac), Encoding.ASCII.GetBytes(IntentMac(key, prevSeq, prevHash, seq, head)));
+    }
+
+    private static string? PrevHashOf(string? line)
+    {
+        if (line is null) return null;
+        try { return (JsonNode.Parse(line) as JsonObject)?["prevHash"]?.GetValue<string>(); }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { return null; }
+    }
+
+    /// <summary>
+    /// Test-only fault injection for multi-process crash tests. Off by default (only LogAnalyzer.Dfir.ChainWorker turns it on): when off, no environment variable is read
+    /// and <see cref="Append"/> behaves exactly as without it. LA_CHAIN_FAULT=&lt;point&gt;[:&lt;n&gt;] kills the process (FailFast) at the n-th append of this process (default 1).
+    /// Points: after-intent, after-line-flush, after-head-tmp, after-head-move.
+    /// </summary>
+    internal static bool FaultInjection;
+    private static int _appendNo;
+
+    private static void Fault(string point, int appendNo)
+    {
+        if (!FaultInjection) return;
+        var spec = Environment.GetEnvironmentVariable("LA_CHAIN_FAULT");
+        if (string.IsNullOrEmpty(spec)) return;
+        var parts = spec.Split(':', 2);
+        int n = parts.Length > 1 && int.TryParse(parts[1], out var v) ? v : 1;
+        if (parts[0] == point && appendNo == n) Environment.FailFast("fault injection: " + point);
+    }
+
+    private void WriteSealedHead(byte[] key, long seq, string hash, int faultAppendNo = 0)
     {
         var o = new JsonObject { ["seq"] = seq, ["hash"] = hash, ["mac"] = Mac(key, seq, hash) };
         var tmp = HeadPath(Path) + ".tmp";
-        File.WriteAllText(tmp, o.ToJsonString(Json.Line));
+        using (var t = new FileStream(tmp, FileMode.Create, FileAccess.Write, FileShare.Read))   // as File.WriteAllText did: a reader of the tmp does not fail the append
+        {
+            t.Write(Encoding.UTF8.GetBytes(o.ToJsonString(Json.Line)));
+            t.Flush(true);   // durable before it replaces the head: a power loss must not leave a torn .head ("sigiliu falsificat")
+        }
+        Fault("after-head-tmp", faultAppendNo);
         for (int attempt = 0; ; attempt++)
         {
-            try { File.Move(tmp, HeadPath(Path), overwrite: true); return; }
+            try { File.Move(tmp, HeadPath(Path), overwrite: true); Fault("after-head-move", faultAppendNo); return; }
             // Windows reports a replace of a file that another handle holds without FileShare.Delete as "access denied": retried only while the target is a
             // writable file, and only ~2 s (review 2026-11-17: a persistent deny would otherwise hold the log, and every other instance's sign-in, ~19 s)
             catch (UnauthorizedAccessException) when (attempt < UnauthorizedAttempts && File.Exists(HeadPath(Path))
@@ -141,18 +248,37 @@ public sealed class HashChain(string path)
             if (sealedLog && key is null) throw new SealingKeyUnavailableException(KeyUnavailable);
             using var fs = OpenExclusive();
             var (seq, head) = ReadHead(fs);
-            bool moveSeal = sealedLog && SealMatches(key!, ReadSealedHead(), seq, head);
+            int appendNo = FaultInjection ? Interlocked.Increment(ref _appendNo) : 0;
+            bool moveSeal = false;
+            if (sealedLog)
+            {
+                var sealedHead = ReadSealedHead();
+                moveSeal = SealMatches(key!, sealedHead, seq, head);
+                // a previous append of a key holder was killed between its line and its head move: finish that head move (only for the announced entry)
+                if (!moveSeal && IntentCovers(key!, ParseIntent(ReadIntentText()), sealedHead, seq, head, PrevHashOf(SharedAppend.LastNonEmptyLine(fs))))
+                {
+                    WriteSealedHead(key!, seq, head);
+                    DeleteIntent();
+                    moveSeal = true;
+                }
+            }
             var obj = JsonSerializer.SerializeToNode(entry, Json.Line)!.AsObject();
             obj["seq"] = seq + 1;
             obj["prevHash"] = head;
             obj["hash"] = HashOf(obj);
             var bytes = Encoding.UTF8.GetBytes(obj.ToJsonString(Json.Line) + "\n");
+            if (moveSeal)
+            {
+                WriteIntent(key!, seq, head, seq + 1, obj["hash"]!.GetValue<string>());
+                Fault("after-intent", appendNo);
+            }
             long lengthBefore = fs.Seek(0, SeekOrigin.End);
             fs.Write(bytes);
             fs.Flush(true);
+            Fault("after-line-flush", appendNo);
             if (moveSeal)
             {
-                try { WriteSealedHead(key!, seq + 1, obj["hash"]!.GetValue<string>()); }
+                try { WriteSealedHead(key!, seq + 1, obj["hash"]!.GetValue<string>(), appendNo); }
                 catch (Exception moveError)
                 {
                     // all-or-nothing: never leave the log ahead of its seal because the head could not be moved
@@ -163,8 +289,10 @@ public sealed class HashChain(string path)
                     }
                     catch (Exception rollbackError) { throw new AggregateException(moveError, rollbackError); }   // keep the original cause
                     try { File.Delete(HeadPath(Path) + ".tmp"); } catch { }
+                    DeleteIntent();
                     throw;
                 }
+                DeleteIntent();
             }
         }
     }
@@ -258,7 +386,7 @@ public sealed class HashChain(string path)
     {
         bool exists = false;
         byte[] content = [];
-        string? headText = null;
+        string? headText = null, intentText = null;
         bool sealedLog = IsSealed(out _);
         for (int attempt = 0; ; attempt++)
         {
@@ -269,15 +397,15 @@ public sealed class HashChain(string path)
                 fs.CopyTo(ms);
                 content = ms.ToArray();
                 exists = true;
-                if (sealedLog) headText = ReadHeadText();
+                if (sealedLog) { headText = ReadHeadText(); intentText = ReadIntentText(); }
                 break;
             }
             catch (FileNotFoundException) { break; }
             catch (DirectoryNotFoundException) { break; }
             catch (IOException e) when (IsSharingViolation(e) && attempt < SharingAttempts) { SharingPause(attempt); }
         }
-        if (!exists && sealedLog) headText = ReadHeadText();
-        return (content, VerifyCore(content, exists, ParseHead(headText)));
+        if (!exists && sealedLog) { headText = ReadHeadText(); intentText = ReadIntentText(); }
+        return (content, VerifyCore(content, exists, ParseHead(headText), ParseIntent(intentText)));
     }
 
     /// <summary>
@@ -285,9 +413,11 @@ public sealed class HashChain(string path)
     /// and the records are about one and the same content). The sealed head is read from its own file AFTER the caller read the bytes, so it is NOT atomic with
     /// them: on a sealed log that other processes append to, use <see cref="ReadVerified"/>.
     /// </summary>
-    public ChainVerification Verify(byte[] content) => VerifyCore(content, content.Length > 0, ParseHead(IsSealed(out _) ? ReadHeadText() : null));
+    public ChainVerification Verify(byte[] content) => IsSealed(out _)
+        ? VerifyCore(content, content.Length > 0, ParseHead(ReadHeadText()), ParseIntent(ReadIntentText()))
+        : VerifyCore(content, content.Length > 0, null, null);
 
-    private ChainVerification VerifyCore(byte[] content, bool exists, SealedHead? sealedHead)
+    private ChainVerification VerifyCore(byte[] content, bool exists, SealedHead? sealedHead, SealIntent? intent)
     {
         var lines = Lines(content);
         (long, string) HeadOf()
@@ -302,7 +432,8 @@ public sealed class HashChain(string path)
             catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
             return (0, Genesis);
         }
-        return Verify(VerifyPlain(lines, exists), HeadOf, (seq, hash) => ContainsIn(lines, seq, hash), sealedHead);
+        return Verify(VerifyPlain(lines, exists), HeadOf, (seq, hash) => ContainsIn(lines, seq, hash), sealedHead, intent,
+                      PrevHashOf(lines.LastOrDefault(l => !string.IsNullOrWhiteSpace(l))));
     }
 
     /// <summary>The lines of a log held in memory, split as <see cref="Verify(byte[])"/> splits them: exactly as File.ReadLines splits the file on disk (the integrity re-check): a leading UTF-8 BOM is dropped and a line ends at \r\n, \r or \n.</summary>
@@ -312,17 +443,20 @@ public sealed class HashChain(string path)
         if (text.Length > 0 && text[0] == '\uFEFF') text = text[1..];
         return System.Text.RegularExpressions.Regex.Split(text, "\r\n|\r|\n").ToList();
     }
-    private ChainVerification Verify(ChainVerification plain, Func<(long Seq, string Head)> headOf, Func<long, string, bool> contains, SealedHead? h)
+    private ChainVerification Verify(ChainVerification plain, Func<(long Seq, string Head)> headOf, Func<long, string, bool> contains, SealedHead? h, SealIntent? intent, string? lastPrevHash)
     {
         if (!IsSealed(out var key) || plain.Status == ChainStatus.Broken) return plain;
         var name = System.IO.Path.GetFileName(Path);
         if (key is null) return Broken(name, plain.Entries, plain.LegacyLines, 0, KeyUnavailable.Replace("; nu s-a scris nimic", ""));
         var (seq, head) = headOf();
         if (seq == 0 && h is null) return plain;
+        if (h is null && IntentCovers(key, intent, null, seq, head, lastPrevHash)) return plain;   // first sealed append cut by a crash
         if (h is null) return Broken(name, plain.Entries, plain.LegacyLines, seq, "capul lanțului nu are sigiliu (fișierul .head lipsește)");
         if (!CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(h.Mac), Encoding.ASCII.GetBytes(Mac(key, h.Seq, h.Hash))))
             return Broken(name, plain.Entries, plain.LegacyLines, h.Seq, "sigiliul capului lanțului nu este valid (lanț recalculat sau sigiliu falsificat)");
         if (h.Seq == seq && h.Hash == head) return plain;
+        // the key holder's own last entry whose seal move was cut by a crash (announced in the MACed intent): valid, the next append moves the seal
+        if (IntentCovers(key, intent, h, seq, head, lastPrevHash)) return plain;
         if (seq > h.Seq && contains(h.Seq, h.Hash))
             return Broken(name, plain.Entries, plain.LegacyLines, h.Seq + 1, $"intrări adăugate după ultimul cap sigilat (Seq {h.Seq}) fără cheia de sigilare");
         return Broken(name, plain.Entries, plain.LegacyLines, Math.Min(seq, h.Seq), $"lanțul nu mai ajunge la capul sigilat (Seq {h.Seq}): trunchiat sau rescris");

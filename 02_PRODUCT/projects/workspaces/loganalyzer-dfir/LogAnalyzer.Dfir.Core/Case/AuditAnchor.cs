@@ -109,6 +109,9 @@ public static class AuditAnchor
         File.Copy(logPath, copy, overwrite: false);
         var head = HashChain.HeadPath(logPath);
         if (File.Exists(head)) File.Copy(head, Path.Combine(folder, Path.GetFileName(head)), overwrite: false);
+        // the intent of a sealed append whose head move is pending (a crash): without it the copy would verify as broken
+        var intent = HashChain.IntentPath(logPath);
+        if (File.Exists(intent)) { try { File.Copy(intent, Path.Combine(folder, Path.GetFileName(intent)), overwrite: false); } catch (FileNotFoundException) { } }
         string sha;
         using (var fs = File.OpenRead(copy)) sha = Convert.ToHexStringLower(SHA256.HashData(fs));
         var anchorFile = Path.Combine(folder, "ancorare.txt");

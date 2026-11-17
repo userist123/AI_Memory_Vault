@@ -150,7 +150,7 @@ namespace LogAnalyzer.UI.ViewModels
                 var now = DateTimeOffset.UtcNow;
                 AnchorExport? exported = null;
                 var dest = Path.Combine(folder, AuditAnchor.ExportFolderName(now));
-                if (ExportAudit.RunBundle(ExportAudit.LiveCaseId, "jurnal-cd-r", dest, [Path.GetFileName(log), Path.GetFileName(HashChain.HeadPath(log)) + " (dacă există)", "ancorare.txt"],
+                if (ExportAudit.RunBundle(ExportAudit.LiveCaseId, "jurnal-cd-r", dest, [Path.GetFileName(log), Path.GetFileName(HashChain.HeadPath(log)) + " (dacă există)", Path.GetFileName(HashChain.IntentPath(log)) + " (dacă există)", "ancorare.txt"],
                         () => { exported = AuditAnchor.Export(log, folder, Environment.MachineName, now); return Directory.GetFiles(exported.Folder); }) is { } refused)
                 { Status = "Copierea jurnalului nu s-a făcut: " + refused; return; }
                 var x = exported!;
