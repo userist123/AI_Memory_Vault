@@ -67,6 +67,31 @@ public sealed class SharedReadTests : IDisposable
     }
 
     [Fact]
+    public void A_plain_audit_line_another_instance_is_writing_is_not_reported_as_an_older_unchained_line()
+    {
+        // planner #7, 2026-11-17: Audit writes the plain line, then the chain entry (same timestamp); a re-check in between counted the line as "anterioară"
+        var ws = NewCase();
+        var inFlight = $"{DateTimeOffset.UtcNow.AddSeconds(1):yyyy-MM-ddTHH:mm:ss.fffZ}\tb\tcase.opened\t\n";
+        File.AppendAllText(ws.AppAuditLogPath, inFlight);
+        var audit = ws.Recheck().Chains.Audit;
+        Assert.Equal(ChainStatus.Valid, audit.Status);
+        Assert.Equal(0, audit.LegacyLines);
+        Assert.DoesNotContain("anterioare", audit.Message);
+    }
+
+    [Fact]
+    public void A_plain_audit_line_older_than_the_first_chained_entry_is_still_an_older_unchained_line()
+    {
+        var ws = NewCase();
+        var old = "2020-01-01T00:00:00.000Z\top\tcase.opened\t\n";
+        File.WriteAllText(ws.AppAuditLogPath, old + File.ReadAllText(ws.AppAuditLogPath));
+        var audit = ws.Recheck().Chains.Audit;
+        Assert.Equal(ChainStatus.Valid, audit.Status);
+        Assert.Equal(1, audit.LegacyLines);
+        Assert.Contains("1 linii anterioare", audit.Message);
+    }
+
+    [Fact]
     public void SharedRead_does_not_retry_other_errors()
     {
         Assert.Throws<FileNotFoundException>(() => SharedRead.Lines(Path.Combine(_root, "missing.txt")));

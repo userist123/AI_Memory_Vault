@@ -272,10 +272,14 @@ public sealed partial class CaseWorkspace
         var audit = rep.Audit;
         if (audit.Status == ChainStatus.Valid)
         {
-            int lines = CountLines(AppAuditLogPath);
-            if (lines > audit.Entries + audit.LegacyLines)
+            // planner #7, 2026-11-17: only plain lines OLDER than the first chained entry are "anterioare" (a case from before the chain). Audit writes the
+            // plain line and then the chain entry with the same timestamp, so a line another instance is writing right now (or a line added after the chain
+            // was verified) was counted as a legacy line; a newer unchained line is in progress, not legacy. Without a readable first chained time: as before.
+            int old = audit.Entries > 0 && FirstChainedTime(AuditChainPath) is { } first
+                ? Math.Max(0, PlainLinesBefore(AppAuditLogPath, first) - audit.LegacyLines)
+                : Math.Max(0, CountLines(AppAuditLogPath) - audit.Entries - audit.LegacyLines);
+            if (old > 0)
             {
-                int old = lines - audit.Entries - audit.LegacyLines;
                 audit = audit with
                 {
                     Status = audit.Entries == 0 ? ChainStatus.Legacy : ChainStatus.Valid, LegacyLines = audit.LegacyLines + old,
@@ -284,6 +288,44 @@ public sealed partial class CaseWorkspace
             }
         }
         return new ChainReport(custody, audit);
+    }
+
+    /// <summary>The time of the first chained entry (to the millisecond, as the plain log writes it), or null when it cannot be read.</summary>
+    private static DateTimeOffset? FirstChainedTime(string chainPath)
+    {
+        if (!File.Exists(chainPath)) return null;
+        try
+        {
+            foreach (var l in SharedRead.Lines(chainPath))
+            {
+                if (string.IsNullOrWhiteSpace(l)) continue;
+                using var doc = System.Text.Json.JsonDocument.Parse(l);
+                if (doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object && doc.RootElement.TryGetProperty("seq", out _)
+                    && doc.RootElement.TryGetProperty("timestampUtc", out var t) && t.TryGetDateTimeOffset(out var ts))
+                    return new DateTimeOffset(ts.UtcTicks - ts.UtcTicks % TimeSpan.TicksPerMillisecond, TimeSpan.Zero);
+            }
+        }
+        catch (Exception e) when (e is System.Text.Json.JsonException || (e is IOException io && !SharedAppend.IsSharingViolation(io))) { }
+        return null;
+    }
+
+    /// <summary>Non-empty plain audit lines whose leading timestamp is earlier than <paramref name="first"/>; a line without a readable timestamp counts too (old format).</summary>
+    private static int PlainLinesBefore(string path, DateTimeOffset first)
+    {
+        if (!File.Exists(path)) return 0;
+        int n = 0;
+        try
+        {
+            foreach (var l in SharedRead.Lines(path))
+            {
+                if (string.IsNullOrWhiteSpace(l)) continue;
+                var tab = l.IndexOf('\t');
+                if (tab <= 0 || !DateTimeOffset.TryParseExact(l[..tab], "yyyy-MM-ddTHH:mm:ss.fffZ", System.Globalization.CultureInfo.InvariantCulture,
+                        System.Globalization.DateTimeStyles.AssumeUniversal | System.Globalization.DateTimeStyles.AdjustToUniversal, out var ts) || ts < first) n++;
+            }
+        }
+        catch (IOException e) when (!SharedAppend.IsSharingViolation(e)) { }
+        return n;
     }
 
     private static int CountLines(string path)

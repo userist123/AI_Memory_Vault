@@ -1196,3 +1196,17 @@
   FileNotFoundException (pre-existing). Suites: Dfir (Release) 3932 (3899 passed, 33 skipped), App 1113, UI 370 (369 + 1 skipped), Edition 45.
   Next: read CI once; planner #7 item 4 (EffectiveChains transient "legacy" lines, low); then lab check of item 1 (two instances + monitor,
   control report D05 valid). Owner items unchanged.
+- 2026-11-17 CI of cadd54562 read once: 32/32; 3f02deaed: 31 success, 1 in progress. FOUND + FIXED (pre-existing, CaseArchive): a .tmp/.lock removed
+  by another instance between the listing and the copy read as 1601 and ZipArchiveEntry.LastWriteTime threw "cannot be converted into a Zip file
+  timestamp" -> the whole export failed (the sealed-log archive test was flaky in the full App suite: 1 of 3 runs). Now the file is opened before
+  the entry is created, a vanished transient helper (*.tmp, *.lock) is skipped, ZipTime clamps to 1980-2107. Test A_file_time_the_zip_format_
+  cannot_hold_is_clamped_instead_of_failing_the_export. App suite green twice in a row after the fix.
+  PLANNER #7 ITEM 4 DONE (low risk, not Opus-reviewed): EffectiveChains counted every plain audit line beyond the chain as "linii anterioare"
+  (legacy), so a line another instance was writing (plain first, chain second, same timestamp) or added after the chain was verified showed as
+  legacy. Now, when the chain has entries, only plain lines whose timestamp is EARLIER than the first chained entry (ms precision) count; a line
+  without a readable timestamp still counts (old format); no first chained time readable -> the old count. Tests A_plain_audit_line_another_
+  instance_is_writing_is_not_reported_as_an_older_unchained_line, A_plain_audit_line_older_than_the_first_chained_entry_is_still_... RESIDUAL:
+  an injected plain line newer than the chain is no longer reported as legacy (the plain log was never a tamper signal; the chain is).
+  Suites: Dfir (Release) 3934 (3901 passed, 33 skipped), App 1114 (twice), UI 370 (369 + 1 skipped), Edition 45, all exit 0.
+  PLANNER #7 DONE (items 1-4). Next: read CI once; lab check on WS02 of item 1 (two instances + device monitor, then the control report: D05
+  valid; auth audit not Broken), then a NEW planner. Owner items unchanged.
