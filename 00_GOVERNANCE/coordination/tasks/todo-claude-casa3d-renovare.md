@@ -62,9 +62,15 @@ DONE:
   - Acces din rețeaua locală (2026-11-17): layout-ul randa mereu `lang="en"` și engleza ca primă limbă (pagina fără JS, ex. login pe
     telefon, era în engleză) → limba din Accept-Language, implicit română. `next dev` din LAN: allowedDevOrigins din
     CASA3D_DEV_ORIGINS (IP-ul nu intră în repo). Verificat: din LAN /api → 401 (și cu Host: localhost falsificat), login în română.
-NEXT (sesiunea următoare): proforma emisă înghețată (copie aditivă la emitere, data prețului pe linie; SourceLine pierde
-  verifiedAt/sourceUrl în core/commercial.ts) — atinge DB, cere vault-reviewer. Înainte: decizia proprietarului
-  „proforma = estimare sau ofertă” și ce face cu termenii Dedeman/Hornbach (acord scris / afiliere / doar link + preț observat).
+  - Telefon (2026-11-17): login pe http din LAN (cookie fără Secure doar cu CASA3D_LAN_HTTP=1, dev, http, IP privat),
+    randomId() în loc de crypto.randomUUID (lipsește pe http), editor pe ecran mic (antet 233→115 px, plan 94→260 px).
+  - Proforma emisă înghețată (2026-11-17): tabel issued_proformas (doar INSERT, unic pe proiect+serie+număr), POST .../proforma/issue,
+    GET .../proforma?s=&n=, .../proformas, CSV ?s=&n=, export „proforme-emise/”. Ciorna marcată („· ciornă”, „Ciornă din”).
+    vault-reviewer: APROBAT CU REPARAȚII → reparat: numărul următor printr-un UPDATE jsonb atomic (doar dacă seria/numărul
+    n-au fost schimbate, golește issueDate și dueDate, nextSaved=false raportat), data emiterii în ora României, emiterea blocată
+    în modul demo, test extins (lib/share.ts, gate pe rutele noi). E2E în browser: emisă rămâne 48.894,27 RON după schimbarea
+    proiectului, ciorna 41.081,26 RON și nr. 4. Suita 147/997. Capturi 27-29. Reziduu: cursa reală doar pe Postgres (PGlite e serial).
+NEXT: merge #391 (Next.js) apoi #386; reverificarea prețurilor vechi (1 octombrie) pe paginile produselor.
   - Teste: tests/renovation-products.test.ts (12); suita 143 de fișiere / 984 de teste; tsc curat; build compilat.
 RESIDUALS ACCEPTATE (decizia sesiunii principale după runda 2):
   - cota blatului e fixă 0,9 m (motorul desenează .86 + blat); microundele pe pardoseală primesc acum avertismentul ON_FLOOR.
