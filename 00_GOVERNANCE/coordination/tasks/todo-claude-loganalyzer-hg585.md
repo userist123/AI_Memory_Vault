@@ -1210,3 +1210,26 @@
   Suites: Dfir (Release) 3934 (3901 passed, 33 skipped), App 1114 (twice), UI 370 (369 + 1 skipped), Edition 45, all exit 0.
   PLANNER #7 DONE (items 1-4). Next: read CI once; lab check on WS02 of item 1 (two instances + device monitor, then the control report: D05
   valid; auth audit not Broken), then a NEW planner. Owner items unchanged.
+- 2026-11-17 CI of 6b238bfc3 (with 6eb1836f5): 32/32. LAB CHECK planner #7 item 1 on WS02 (lab build of 6b238bfc3): hostile reader holding the auth audit
+  .head the old way (FileShare.Read, no Delete; 2338 opens in 150 s) while instances A/B signed in, confirmed scopes and a third instance C signed
+  in: "Audit autentificare: 663 -> 667 -> 670 de intrări verificate", "accounts.json corespunde ...", no .head.tmp left. Round with three parallel
+  station controls: result pending at checkpoint time (lab driver slow: an invoke on "Pornește controlul" blocks until the control ends).
+  LAB NOTE: after "Confirmă scopul" the control must be pressed again (by design, LiveCase.ScopeRequiredMessage); the "third instance stall" seen
+  earlier is this, not a product bug. A page reached again by nav keeps its old values (navigate away first).
+- 2026-11-17 EXTERNAL AUDIT (ChatGPT web research, owner-supplied file; treated as hypotheses): code inventory (Explore) + Fable advice.
+  Already present: ShellBags, Recycle Bin $I, VSS inventory (read-only), offline archive verifier (KeyGen verify-archive), reparse/junction
+  handling, ClockMemory, parser and rule versions. Owner-side (not code): SOPs, validation pack, accreditation matrix (HG 585/2002 cap. 8 INFOSEC),
+  PAdES profile (B-B only today; isolated station has no TSA). Public references downloaded (not in repo): E:\LA-Lab\refs\standards (NIST SP 800-86,
+  SWGDE 17-F-002 v2.1, ETSI EN 319 142-1 V1.3.1, RFC 2104, RFC 6979, HG 585/2002 standard text). ISO/IEC 27037/41/42/43 are paid: not downloaded.
+  PLANNER #8 (Fable-ranked): 1 G1 multi-PROCESS harness (worker exe via Process.Start, FailFast kill points after line flush / head tmp / head move
+  via env var) - Fable expects a defect: a kill after the line flush leaves the log ahead of the seal and reads as tampering ("intrări adăugate
+  după ultimul cap sigilat") until an admin reseals; run the kill tests BEFORE fixing. 2 G2 anti-rollback witness: MAC binds only seq|hash, so an
+  older valid log+.head pair verifies; A11 checks only that the paper anchor is still contained (a copy taken after the last anchor gives CONFORM);
+  design: HKLM witness (seq, hash, MAC with the seal key) via AuthStoreSecurity, written after the head move; head behind witness = restored
+  copy, witness behind head = benign crash; residual: admin editing registry or full image restore (paper code/CD-R only); separate Opus review.
+  3 G4 artifacts in this order: WMI-Activity 5861 (permanent subscriptions), TaskCache Tree/Tasks, RDP RemoteConnectionManager 1149 + SMB
+  channels (on an isolated station any hit is a finding), PowerShell transcripts, OpenSave/LastVisited PIDL MRU last. 4 SBOM (CycloneDX; Deterministic
+  is the SDK default). 5 G3 forked-case compare only (identical / prefix / forked at seq N). DROPPED: PAdES B-T/TSA, thumbcache, DAM, WMI OBJECTS.DATA
+  parsing, 20x1000 process stress.
+  Next: planner #8 item 1 (harness + kill tests first, report the defect, then fix with Opus review). Owner items: ESE sample, RDP manual test,
+  PR #370, lab cleanup; questions from the audit (accreditation authority, supported Windows builds, PAdES profile wanted).
