@@ -92,6 +92,19 @@ public sealed class CaseArchiveTests : IDisposable
         writer.Wait();
     }
 
+    [Fact]
+    public void A_file_time_the_zip_format_cannot_hold_is_clamped_instead_of_failing_the_export()
+    {
+        // a file removed after the listing reads as 1601-01-01 (File.GetLastWriteTime of a missing file)
+        Assert.Equal(new DateTime(1980, 1, 1), CaseArchive.ZipTime(File.GetLastWriteTime(Path.Combine(_k.Dir, "no-such-file"))).Date);
+        Assert.Equal(2107, CaseArchive.ZipTime(new DateTime(2200, 1, 1)).Year);
+        var t = new DateTime(2026, 11, 17, 10, 0, 0, DateTimeKind.Local);
+        Assert.Equal(t, CaseArchive.ZipTime(t));
+        Assert.True(CaseArchive.IsTransientHelper(@"C:\c\Evidence\evidence_index.jsonl.tmp"));
+        Assert.True(CaseArchive.IsTransientHelper(@"C:\c\Logs\workflow.jsonl.LOCK"));
+        Assert.False(CaseArchive.IsTransientHelper(@"C:\c\Logs\audit_chain.jsonl"));
+    }
+
     [Theory]
     [InlineData("Logs/LogAnalyzer_Audit.log", true)]
     [InlineData("Logs/audit_chain.jsonl", true)]

@@ -81,11 +81,20 @@ public static class CaseArchive
             foreach (var f in Directory.EnumerateFiles(caseRoot, "*", SearchOption.AllDirectories).OrderBy(f => f, StringComparer.OrdinalIgnoreCase))
             {
                 var rel = Prefix + Path.GetRelativePath(caseRoot, f).Replace('\\', '/');
-                var entry = zip.CreateEntry(rel, CompressionLevel.Optimal);
-                entry.LastWriteTime = File.GetLastWriteTime(f);
-                using var src = heads.Remove(f, out var heldHead) ? new MemoryStream(heldHead) : (Stream)OpenForArchive(caseRoot, f);
+                Stream src;
+                if (heads.Remove(f, out var heldHead)) src = new MemoryStream(heldHead);
+                else
+                {
+                    try { src = OpenForArchive(caseRoot, f); }
+                    // a rewrite backup or lock file another instance removed after the listing is not case content (lab/test 2026-11-17: its timestamp
+                    // read as 1601 and the whole export failed with "cannot be converted into a Zip file timestamp")
+                    catch (Exception ex) when ((ex is FileNotFoundException or DirectoryNotFoundException) && IsTransientHelper(f)) { continue; }
+                }
+                using var srcUse = src;
                 if (src is FileStream && IsSharedCaseLog(caseRoot, f) && File.Exists(HashChain.HeadPath(f)))
                     heads[HashChain.HeadPath(f)] = ReadHeadWhileLogHeld(HashChain.HeadPath(f));
+                var entry = zip.CreateEntry(rel, CompressionLevel.Optimal);
+                entry.LastWriteTime = ZipTime(File.GetLastWriteTime(f));
                 using var dst = entry.Open();
                 using var sha = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
                 var buf = new byte[81920]; int n; long size = 0;
@@ -125,6 +134,18 @@ public static class CaseArchive
         return dir.Equals("Logs", StringComparison.OrdinalIgnoreCase)
             || (dir.Equals("Evidence", StringComparison.OrdinalIgnoreCase) && name.Equals("evidence_index.jsonl", StringComparison.OrdinalIgnoreCase))
             || (dir.Length == 0 && name.Equals("media_live.jsonl", StringComparison.OrdinalIgnoreCase));   // the live device journal of the LIVE case
+    }
+
+    /// <summary>A short-lived helper file of an open case (rewrite backup *.tmp, lock file *.lock): it may vanish between the listing and the copy.</summary>
+    internal static bool IsTransientHelper(string file) =>
+        file.EndsWith(".tmp", StringComparison.OrdinalIgnoreCase) || file.EndsWith(".lock", StringComparison.OrdinalIgnoreCase);
+
+    /// <summary>A file time the ZIP format can hold (1980-2107); a file removed meanwhile reads as 1601, a damaged one as anything.</summary>
+    internal static DateTime ZipTime(DateTime t)
+    {
+        var min = new DateTime(1980, 1, 1, 0, 0, 0, DateTimeKind.Local);
+        var max = new DateTime(2107, 12, 31, 23, 59, 58, DateTimeKind.Local);
+        return t < min ? min : t > max ? max : t;
     }
 
     /// <summary>The sealed head of a chained log, read while the archive holds that log (writers excluded), as <see cref="HashChain.ReadVerified"/> does.</summary>
