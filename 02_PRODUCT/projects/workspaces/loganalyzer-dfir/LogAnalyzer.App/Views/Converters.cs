@@ -15,6 +15,20 @@ namespace LogAnalyzer.UI.Views
         public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
     }
 
+    /// <summary>
+    /// The result word of a control check exactly as the PDF prints it (NECONFORM, DE VERIFICAT, NEDETERMINAT, CONFORM, NU SE APLICĂ). The grid bound the enum
+    /// directly and showed "DeVerificat" / "NuSeAplica" (redesign 2026-11-17), unlike the report and the filter above the grid.
+    /// </summary>
+    public sealed class ControlStatusTextConverter : IValueConverter
+    {
+        public static readonly ControlStatusTextConverter Instance = new();
+
+        public object Convert(object value, Type targetType, object parameter, CultureInfo culture) =>
+            value is LogAnalyzer.Dfir.Windows.Audit.ControlStatus s ? LogAnalyzer.Dfir.Windows.Audit.ControlReportPdf.StatusText(s) : value?.ToString() ?? "";
+
+        public object ConvertBack(object value, Type targetType, object parameter, CultureInfo culture) => Binding.DoNothing;
+    }
+
     /// <summary>Shows a list of strings in one grid cell.</summary>
     public sealed class JoinConverter : IValueConverter
     {

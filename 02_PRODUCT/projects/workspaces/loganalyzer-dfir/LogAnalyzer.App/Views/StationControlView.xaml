@@ -276,7 +276,48 @@
                         <DataGrid AutomationProperties.Name="Verificările controlului" ItemsSource="{Binding Checks}" SelectedItem="{Binding SelectedCheck}" SelectionMode="Single"
                                   AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" ToolTip="Dați clic pe o verificare: în dreapta apare ce înseamnă, pe înțeles.">
                             <DataGrid.Columns>
-                                <DataGridTextColumn Header="Rezultat" Binding="{Binding Status}" Width="110" MinWidth="110"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="local:TermTip.Auto" Value="True"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
+                                <!-- redesign 2026-11-17: the result as a badge with the PDF's word, a symbol and the tone of the Home chips (never colour only);
+                                     it showed the enum name ("DeVerificat", "NuSeAplica") before -->
+                                <DataGridTemplateColumn Header="Rezultat" Width="140" MinWidth="140" SortMemberPath="Status">
+                                    <DataGridTemplateColumn.CellTemplate>
+                                        <DataTemplate>
+                                            <Grid>
+                                            <!-- a compact label at the top left of the cell (the cell style stretches its content: lab screenshot 2026-11-17) -->
+                                            <Border CornerRadius="4" Padding="6,2" Margin="2,4,2,2" BorderThickness="1" HorizontalAlignment="Left" VerticalAlignment="Top">
+                                                <Border.Style>
+                                                    <Style TargetType="Border">
+                                                        <Setter Property="Background" Value="{StaticResource Surface2Brush}"/>
+                                                        <Setter Property="BorderBrush" Value="{StaticResource BorderBrush}"/>
+                                                        <Style.Triggers>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Neconform"><Setter Property="Background" Value="{StaticResource BadgeCriticalBgBrush}"/><Setter Property="BorderBrush" Value="{StaticResource CriticalBrush}"/></DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="DeVerificat"><Setter Property="Background" Value="{StaticResource BadgeHighBgBrush}"/><Setter Property="BorderBrush" Value="{StaticResource HighBrush}"/></DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Nedeterminat"><Setter Property="Background" Value="{StaticResource BadgeLowBgBrush}"/><Setter Property="BorderBrush" Value="{StaticResource LowBrush}"/></DataTrigger>
+                                                            <DataTrigger Binding="{Binding Status}" Value="Conform"><Setter Property="Background" Value="{StaticResource BadgeSuccessBgBrush}"/><Setter Property="BorderBrush" Value="{StaticResource SuccessBrush}"/></DataTrigger>
+                                                        </Style.Triggers>
+                                                    </Style>
+                                                </Border.Style>
+                                                <StackPanel Orientation="Horizontal">
+                                                    <TextBlock FontFamily="{StaticResource IconFontFamily}" FontSize="12" VerticalAlignment="Center" Margin="0,0,5,0">
+                                                        <TextBlock.Style>
+                                                            <Style TargetType="TextBlock">
+                                                                <Setter Property="Text" Value="&#xE738;"/>
+                                                                <Setter Property="Foreground" Value="{StaticResource TextMutedBrush}"/>
+                                                                <Style.Triggers>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Neconform"><Setter Property="Text" Value="&#xE711;"/><Setter Property="Foreground" Value="{StaticResource CriticalBrush}"/></DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="DeVerificat"><Setter Property="Text" Value="&#xE7BA;"/><Setter Property="Foreground" Value="{StaticResource HighBrush}"/></DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Nedeterminat"><Setter Property="Text" Value="&#xE9CE;"/><Setter Property="Foreground" Value="{StaticResource LowBrush}"/></DataTrigger>
+                                                                    <DataTrigger Binding="{Binding Status}" Value="Conform"><Setter Property="Text" Value="&#xE73E;"/><Setter Property="Foreground" Value="{StaticResource SuccessBrush}"/></DataTrigger>
+                                                                </Style.Triggers>
+                                                            </Style>
+                                                        </TextBlock.Style>
+                                                    </TextBlock>
+                                                    <TextBlock Text="{Binding Status, Converter={x:Static local:ControlStatusTextConverter.Instance}}" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" VerticalAlignment="Center" local:TermTip.Auto="True"/>
+                                                </StackPanel>
+                                            </Border>
+                                            </Grid>
+                                        </DataTemplate>
+                                    </DataGridTemplateColumn.CellTemplate>
+                                </DataGridTemplateColumn>
                                 <DataGridTextColumn Header="Cod" Binding="{Binding Id}" Width="50" MinWidth="50"><DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="local:TermTip.Auto" Value="True"/></Style></DataGridTextColumn.ElementStyle></DataGridTextColumn>
                                 <DataGridTextColumn Header="Verificare" Binding="{Binding Title}" Width="2*" MinWidth="100">
                                     <DataGridTextColumn.ElementStyle><Style TargetType="TextBlock"><Setter Property="TextWrapping" Value="Wrap"/></Style></DataGridTextColumn.ElementStyle>

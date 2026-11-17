@@ -1256,3 +1256,16 @@
   covered. Suites: Dfir (Release) 3945 (3912 passed, 33 skipped), App 1114, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
   Next: planner #8 item 2 (HKLM anti-rollback witness, separate Opus review) after the owner's design proposal work (uploaded file
   Propunere_Redesign_WPF_DFIR_Compliance.md). Owner items unchanged.
+- 2026-11-18 REDESIGN STEP 1 (owner's ChatGPT proposal Propunere_Redesign_WPF_DFIR_Compliance.md, made WITHOUT screenshots; checked against the code):
+  the app already has a token design system (Themes\Tokens\ColorTokens/Typography with Segoe UI Variable + Segoe Fluent Icons, Fluent.Light,
+  StatusBadges, nav with an active rail in Navigation.xaml) - the proposal's palette/nav are mostly already there. Real gaps found: (1) the Control
+  stație "Rezultat" column bound the ControlStatus enum and showed "DeVerificat"/"NuSeAplica" (not the PDF words); (2) SidebarTabStyle defined twice
+  (Buttons.xaml dead copy, Navigation.xaml wins). Done: ControlStatusTextConverter (= ControlReportPdf.StatusText) + DataGridTemplateColumn badge:
+  PDF word + Segoe Fluent symbol (E711 x, E7BA !, E9CE ?, E73E check, E738 -) + tone of the Home chips (Critical/High/Low/Success badge brushes,
+  NU SE APLICĂ neutral), glossary tooltip kept, SortMemberPath=Status, compact top-left (lab screenshot showed the cell style stretched it);
+  Buttons.xaml duplicate removed. UsabilityGlossaryTests regex updated to the template column (same assertions: column, Status binding, TermTip).
+  Visual check: offscreen render of the real column XAML with the real theme (temporary test, not committed) + lab screenshot on WS02 (before the
+  alignment fix). NOT done (product decisions): dark theme (all ~1900 resource refs are StaticResource: big change + many literal-XAML tests),
+  two-row header, status-bar history. Lab driver: new "scroll <percent>" verb (ScrollPattern) and Shot picks the largest window (a tooltip was shot);
+  E:\LA-Lab\scripts\driver-ws02.ps1 (.bak kept). Suites: App 1114, UI 370 (369 + 1 skipped), all exit 0 (Dfir/Edition untouched by this step).
+  Next: owner decides dark theme / header; planner #8 item 2 (HKLM anti-rollback witness). Owner items unchanged.
