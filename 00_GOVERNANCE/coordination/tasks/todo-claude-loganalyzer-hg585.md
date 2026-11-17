@@ -1174,3 +1174,13 @@
   Next: read CI once; planner #7 item 2 (SharedRead for case-file readers: Json.ReadLines, HashChain VerifyPlain/Contains, RegisteredOutputs,
   CountLines, AnalysisFootprint), then 3 (CaseArchive.Export consistency), 4 (EffectiveChains transient legacy). Lab check of item 1 later
   (two instances + device monitor, then the control report: D05 valid). Owner items unchanged.
+- 2026-11-17 CI of a98a576ec read once: 4 success, 28 in progress/queued, 0 failures. PLANNER #7 ITEM 2 DONE (low risk, vault-worker, not
+  Opus-reviewed): IO\SharedRead (Lines/AllText): FileShare.Read kept (an in-place rewrite stays excluded), whole read under the handle, retry only
+  sharing/lock violations (SharedAppend policy ~20 s), BOM/splitting like File.ReadLines. Used by Json.ReadLines (CountEvidence on Open,
+  LoadEvidence, auth audit readers), HashChain VerifyPlain/Contains, RegisteredOutputs, CountLines (a sharing violation no longer counts 0; it
+  propagates after the budget) and AnalysisFootprint. Main-session fix: Json.ReadLines now materializes, so the large single-run outputs read by
+  EventSink.Read go through new lazy Json.StreamLines (spec §77: never buffer a whole log). Tests SharedReadTests (11; A_case_opens_while_another_
+  writer_holds_the_evidence_index and CountLines_waits... red on the old code, checked by the worker by reverting). RESIDUAL: AnalysisFootprint
+  still turns an IOException after the budget into 0 reports; Json.Read (single JSON files) unchanged; other File.ReadLines callers outside these
+  files not reviewed. Suites: Dfir (Release) 3932 (3899 passed, 33 skipped), App 1098, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
+  Next: read CI once; planner #7 item 3 (CaseArchive.Export: shared-written files with share Read + retry; risky -> worker + Opus), then 4.

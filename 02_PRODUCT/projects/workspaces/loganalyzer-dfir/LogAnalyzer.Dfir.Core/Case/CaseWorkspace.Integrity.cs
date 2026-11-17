@@ -240,7 +240,7 @@ public sealed partial class CaseWorkspace
     {
         var latest = new Dictionary<string, OutputRecord>(StringComparer.OrdinalIgnoreCase);
         if (!File.Exists(CustodyJsonlPath)) return [];
-        foreach (var line in File.ReadLines(CustodyJsonlPath))
+        foreach (var line in SharedRead.Lines(CustodyJsonlPath))
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
             try
@@ -290,8 +290,8 @@ public sealed partial class CaseWorkspace
     {
         if (!File.Exists(path)) return 0;
         int n = 0;
-        try { foreach (var l in File.ReadLines(path)) if (!string.IsNullOrWhiteSpace(l)) n++; }
-        catch (IOException) { }
+        try { foreach (var l in SharedRead.Lines(path)) if (!string.IsNullOrWhiteSpace(l)) n++; }
+        catch (IOException e) when (!SharedAppend.IsSharingViolation(e)) { }
         return n;
     }
 

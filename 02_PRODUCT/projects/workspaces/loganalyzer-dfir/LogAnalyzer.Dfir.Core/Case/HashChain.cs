@@ -207,7 +207,7 @@ public sealed class HashChain(string path)
         }
     }
 
-    public bool Contains(long seq, string hash) => File.Exists(Path) && ContainsIn(File.ReadLines(Path), seq, hash);
+    public bool Contains(long seq, string hash) => File.Exists(Path) && ContainsIn(SharedRead.Lines(Path), seq, hash);
 
     private static bool ContainsIn(IEnumerable<string> lines, long seq, string hash)
     {
@@ -332,7 +332,7 @@ public sealed class HashChain(string path)
     public ChainVerification VerifyPlainChain() => VerifyPlain();
 
     private ChainVerification VerifyPlain() =>
-        File.Exists(Path) ? VerifyPlain(File.ReadLines(Path), exists: true) : VerifyPlain([], exists: false);
+        File.Exists(Path) ? VerifyPlain(SharedRead.Lines(Path), exists: true) : VerifyPlain([], exists: false);
 
     private ChainVerification VerifyPlain(IEnumerable<string> lines, bool exists)
     {
