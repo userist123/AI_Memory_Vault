@@ -27,7 +27,12 @@ namespace LogAnalyzer.UI.Views
             PurposeBox.Text = _form.Purpose; ApproverBox.Text = _form.Approver; SystemsBox.Text = _form.Systems; NotesBox.Text = _form.Notes; ActBox.Text = _form.AuthorizingAct;
             FromPicker.SelectedDate = _form.PeriodFrom; ToPicker.SelectedDate = _form.PeriodTo;
             LegalBox.SelectedIndex = _form.LegalBasisIndex; NetworkBox.SelectedIndex = _form.NetworkIndex; ClassBox.SelectedIndex = _form.ClassificationIndex;
+            ShowPeriodWarning();
+            ToPicker.SelectedDateChanged += (_, _) => ShowPeriodWarning();
         }
+
+        // Non-blocking: the operator may confirm a past period (an audit of an earlier interval); the pipeline also records it in the case audit.
+        private void ShowPeriodWarning() => PeriodWarningText.Text = ScopeForm.PeriodEndsBeforeWarning(ToPicker.SelectedDate, DateTime.UtcNow) ?? "";
 
         private void Confirm_Click(object sender, RoutedEventArgs e)
         {

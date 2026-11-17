@@ -94,8 +94,11 @@ namespace LogAnalyzer.UI.Services
         public void RecordControl(string summary)
         {
             ControlDone = true;
-            LastActivity = summary;
-            ActivityRecorded?.Invoke(summary);
+            // Lab WS02 2026-11-17: after „Colectează tot” the status bar kept only the control line; the investigation of the same run stays in front of it.
+            var line = _runInvestigationLine is { } inv && summary.Length > 0 ? inv.TrimEnd('.') + "; " + char.ToLowerInvariant(summary[0]) + summary[1..] : summary;
+            _runInvestigationLine = null;
+            LastActivity = line;
+            ActivityRecorded?.Invoke(line);
             ControlRecorded?.Invoke();
         }
 
@@ -110,13 +113,23 @@ namespace LogAnalyzer.UI.Services
             LastActivity = opened
                 ? $"Caz deschis: {(string.IsNullOrWhiteSpace(r.Case.Info.Name) ? r.Case.Info.CaseId : r.Case.Info.Name)} ({r.Timeline.Count.ToString("N0", RoRo)} evenimente, {r.Findings.Count} constatări)."
                 : $"Investigație finalizată: {r.Timeline.Count.ToString("N0", RoRo)} evenimente, {r.Findings.Count} constatări (caz {r.Case.Info.CaseId}).";
+            if (_inCollectAll && !opened) _runInvestigationLine = LastActivity;
             ActivityRecorded?.Invoke(LastActivity);
             Published?.Invoke(r);
         }
 
+        private bool _inCollectAll;
+        private string? _runInvestigationLine;
+
+        /// <summary>„Colectează tot” starts: an investigation published before the station control of the same run stays on the status bar with it.</summary>
+        public void BeginCollectAll() { _inCollectAll = true; _runInvestigationLine = null; }
+
+        /// <summary>„Colectează tot” ended (also on failure): a later control alone shows only its own line.</summary>
+        public void EndCollectAll() { _inCollectAll = false; _runInvestigationLine = null; }
+
         private static readonly System.Globalization.CultureInfo RoRo = System.Globalization.CultureInfo.GetCultureInfo("ro-RO");
 
-        public void Clear() { Current = null; ControlDone = false; LastActivity = ""; Status = EmptySubtitle; }
+        public void Clear() { Current = null; ControlDone = false; LastActivity = ""; Status = EmptySubtitle; _inCollectAll = false; _runInvestigationLine = null; }
 
         /// <summary>The plan for a role: the incident-response station collects everything (complete profile); the control station collects the standard set and runs the station control.</summary>
         public static CollectAllPlan Plan(StationRole role) => role switch

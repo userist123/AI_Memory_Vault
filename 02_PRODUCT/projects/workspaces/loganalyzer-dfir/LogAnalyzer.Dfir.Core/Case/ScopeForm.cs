@@ -17,6 +17,23 @@ public sealed class ScopeForm
     /// period, category or authorising act). Every mandatory field is printed, an empty one as "nespecificat"; the first line says whether
     /// the scope is confirmed. Text the operator typed is printed as typed (the PDF writer escapes it).
     /// </summary>
+    /// <summary>
+    /// Warning, never a block, when the scope period ends before <paramref name="todayUtc"/> (lab WS02 2026-11-17: a reused scope 01–09.11 for a
+    /// collection on 17.11; the period-aware rules then skip everything after the 9th without a word). Null when the period is open or covers today.
+    /// The period is the approver's decision, so it is never extended on the operator's behalf.
+    /// </summary>
+    public static string? PeriodEndsBeforeWarning(DateTime? periodTo, DateTime todayUtc)
+    {
+        if (periodTo is not { } to || to.Date >= todayUtc.Date) return null;
+        var inv = System.Globalization.CultureInfo.InvariantCulture;
+        return $"Perioada scopului se încheie la {to.ToString("dd.MM.yyyy", inv)}, înainte de ziua colectării ({todayUtc.ToString("dd.MM.yyyy", inv)}): " +
+               "evenimentele de după această dată nu sunt luate în calcul de regulile care țin cont de perioadă. Extindeți perioada dacă ziua colectării trebuie inclusă.";
+    }
+
+    /// <summary><see cref="PeriodEndsBeforeWarning(DateTime?, DateTime)"/> for a saved scope (its end is the last tick of the day).</summary>
+    public static string? PeriodEndsBeforeWarning(CaseScope? s, DateTimeOffset nowUtc) =>
+        s?.PeriodToUtc is { } to ? PeriodEndsBeforeWarning(to.UtcDateTime.Date, nowUtc.UtcDateTime) : null;
+
     public static IReadOnlyList<string> ReportLines(CaseScope? s)
     {
         if (s is null) return ["Scopul cazului: lipsește (caz creat înaintea scopului obligatoriu); rezultatele nu au un scop confirmat."];

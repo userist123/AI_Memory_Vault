@@ -698,10 +698,16 @@ namespace LogAnalyzer.UI.ViewModels
             LogAnalyzer.UI.Services.CollectAllState.Handler = async () =>
             {
                 if (!OpenTab(HomeViewModel.InvestigationTabIndex)) return;
-                await Investigation.CollectAllCommand.ExecuteAsync(null);
-                if (LogAnalyzer.UI.Services.CollectAllState.Plan(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role).RunStationControl
-                    && CanOpenTab(LogAnalyzer.Core.Services.Edition.RoleProfiles.TabStationControl))
-                    await StationControl.RunCommand.ExecuteAsync(null);
+                var state = LogAnalyzer.UI.Services.CollectAllState.Instance;
+                state.BeginCollectAll();
+                try
+                {
+                    await Investigation.CollectAllCommand.ExecuteAsync(null);
+                    if (LogAnalyzer.UI.Services.CollectAllState.Plan(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role).RunStationControl
+                        && CanOpenTab(LogAnalyzer.Core.Services.Edition.RoleProfiles.TabStationControl))
+                        await StationControl.RunCommand.ExecuteAsync(null);
+                }
+                finally { state.EndCollectAll(); }
             };
             Policy = new PolicyViewModel(registryWriter);
             ProcedureProfile = new ProcedureProfileViewModel();

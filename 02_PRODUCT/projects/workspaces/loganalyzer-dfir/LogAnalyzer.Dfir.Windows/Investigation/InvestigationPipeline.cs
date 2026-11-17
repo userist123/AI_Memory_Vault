@@ -444,6 +444,8 @@ public sealed class InvestigationPipeline
         var startedUtc = DateTimeOffset.UtcNow;   // master plan 6.16: the run manifest records when the run began
         var recorder = collect ? AcquisitionRunRecorder.Begin(ws, profile.ToString(), elevated) : null;
         ws.Audit("investigation.start", $"profile={profile} collect={collect} elevated={elevated}" + (recorder is null ? "" : $" run={recorder.RunId}"));
+        if (collect && ScopeForm.PeriodEndsBeforeWarning(ws.Info.Scope, startedUtc) is { } periodWarning)
+            ws.Audit("case.scope_period_before_collection", periodWarning);   // the approver's period is kept; the fact is recorded
 
         // 1. Acquisition. The run record is written when the loop ends, whatever way it ends.
         if (recorder is not null)

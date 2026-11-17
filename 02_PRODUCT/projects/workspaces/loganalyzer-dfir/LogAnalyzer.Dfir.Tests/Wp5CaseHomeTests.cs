@@ -394,6 +394,21 @@ public sealed class Wp5CaseHomeTests : IDisposable
     }
 
     [Fact]
+    public void The_execution_collector_does_not_answer_for_the_user_and_software_hives()
+    {
+        // Lab WS02 2026-11-17, profile Standard: ExecutionArtifactsCollector saved SYSTEM + Amcache, and the registry row said the collector
+        // "ran but produced no source" for NTUSER / SOFTWARE, hives it never collects. The row is NOT_COLLECTED; the families it does read keep its run.
+        var ok = Cov(runs: [new CollectorRun("ExecutionArtifactsCollector", EvidenceStatus.Success, 2, "")]);
+        Assert.Equal(CoverageState.NotCollected, Row(ok, "registry").State);
+        Assert.Equal(CoverageState.Unavailable, Row(ok, "shimcache").State);          // its own family without a SYSTEM item: still answered by its run
+        var failed = Cov(runs: [new CollectorRun("ExecutionArtifactsCollector", EvidenceStatus.NotAvailable, 0, "necesită drepturi de administrator")]);
+        Assert.Equal(CoverageState.NotCollected, Row(failed, "registry").State);
+        Assert.Equal(CoverageState.Unavailable, Row(failed, "amcache").State);
+        var users = Cov(runs: [new CollectorRun("UserArtifactsCollector", EvidenceStatus.Failed, 0, "ProfileList")]);
+        Assert.Equal(CoverageState.Unavailable, Row(users, "registry").State);         // the collector that does take NTUSER still answers for it
+    }
+
+    [Fact]
     public void A_collector_that_failed_makes_its_family_unavailable_and_one_that_never_ran_leaves_it_not_collected()
     {
         var m = Cov(runs: [new CollectorRun("SrumCollector", EvidenceStatus.NotAvailable, 0, "SRUDB.dat blocat")]);

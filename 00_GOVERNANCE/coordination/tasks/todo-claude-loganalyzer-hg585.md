@@ -1075,3 +1075,12 @@
   (pre-existing); on non-Windows every IOException is retried and FileShare.Read does not exclude writers (app is Windows-only). Not lab-tested
   with two real processes. Suites: Dfir 3904 (3871 passed, 33 skipped), App 1091, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
   Next: read CI once; item 2 (CoverageMatrix registry family), then 3, 4.
+- 2026-11-17 PLANNER #5 ITEMS 2, 3, 4 DONE (low risk, not Opus-reviewed: mapping, UI text, one audit line). CI of 72e3c87b2 read once: 25 success,
+  7 in progress, 0 failures. (2) CoverageMatrix family "registry" now maps only UserArtifactsCollector (ExecutionArtifactsCollector saves SYSTEM +
+  Amcache only): on Standard the row is NOT_COLLECTED instead of a false "ran but produced no source"; test The_execution_collector_does_not_answer_
+  for_the_user_and_software_hives. (3) ScopeForm.PeriodEndsBeforeWarning: ScopeDialog shows a non-blocking warning (WarningBrush) when the period
+  ends before today; InvestigationPipeline.RunCore audits "case.scope_period_before_collection" on a collecting run. Period never auto-extended
+  (approver's decision). Test in ScopeReportLinesTests. Dialog text NOT seen on screen yet (lab). (4) CollectAllState.BeginCollectAll /
+  EndCollectAll around the Handler: RecordControl puts the same run's investigation line in front of the control line; a control alone keeps its
+  own line; test in CollectAllTests. Suites: Dfir 3906 (3873 passed, 33 skipped), App 1092, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
+  Next: read CI once; item 5 (SRUM step-3 note, Opus review) or a lab check of items 1+3 on WS02 (two instances; scope warning).
