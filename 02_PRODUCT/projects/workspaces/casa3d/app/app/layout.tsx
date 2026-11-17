@@ -6,11 +6,14 @@ import './tokens.css';
 import './globals.css';
 import { headers } from 'next/headers';
 import { PrefsProvider } from '@/lib/prefs';
+import { DEFAULT_LANG, detectLang, type Lang } from '@/lib/i18n';
 import DialogHost from '@/components/DialogHost';
 export const metadata = { title: 'Casa mea 3D', description: 'Floor plan, real furniture and budget in one project. / Plan, mobilier real și buget, într-un singur proiect.' };
 // Citirea antetelor face fiecare pagină dinamică: Next pune nonce-ul din CSP (proxy.ts) pe scripturile proprii;
 // o pagină pre-randată static n-ar avea nonce și ar fi blocată de 'strict-dynamic'.
+// Limba primei randări (și a paginii fără JavaScript): cea a browserului (Accept-Language), altfel limba implicită a aplicației
+// (română). După montare, alegerea salvată de utilizator (localStorage) are prioritate.
 export default async function RootLayout({ children }: { children: React.ReactNode }){
-  await headers();
-  return (<html lang="en"><head></head><body><PrefsProvider>{children}<DialogHost /></PrefsProvider></body></html>);
+  const al = (await headers()).get('accept-language'), lang: Lang = al ? detectLang(al) : DEFAULT_LANG;
+  return (<html lang={lang}><head></head><body><PrefsProvider initialLang={lang}>{children}<DialogHost /></PrefsProvider></body></html>);
 }

@@ -59,6 +59,9 @@ DONE:
     continua”, plita = PL; proiect inexistent → mesaj permanent + „Înapoi la proiecte” (rămânea la „Se încarcă…”). Golden
     lot4: doar cele 2 amprente dxf actualizate (intrările vechi păstrate). Rezultat final crawler: 0 identificatori interni,
     0 erori de consolă; potrivirile rămase sunt fals pozitive (link, Legendă, confirmă). Suita 144/990.
+  - Acces din rețeaua locală (2026-11-17): layout-ul randa mereu `lang="en"` și engleza ca primă limbă (pagina fără JS, ex. login pe
+    telefon, era în engleză) → limba din Accept-Language, implicit română. `next dev` din LAN: allowedDevOrigins din
+    CASA3D_DEV_ORIGINS (IP-ul nu intră în repo). Verificat: din LAN /api → 401 (și cu Host: localhost falsificat), login în română.
 NEXT (sesiunea următoare): proforma emisă înghețată (copie aditivă la emitere, data prețului pe linie; SourceLine pierde
   verifiedAt/sourceUrl în core/commercial.ts) — atinge DB, cere vault-reviewer. Înainte: decizia proprietarului
   „proforma = estimare sau ofertă” și ce face cu termenii Dedeman/Hornbach (acord scris / afiliere / doar link + preț observat).
