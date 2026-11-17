@@ -84,6 +84,62 @@ public sealed class AuditChainCustodyTests : IDisposable
         Assert.Equal(ChainStatus.Valid, r.Audit.Status);
     }
 
+    [Fact]
+    public void Two_app_instances_on_one_case_write_the_plain_audit_files_while_another_writer_holds_them()
+    {
+        // Lab 2026-11-16 (LAB-WS02): two app instances share the station's LIVE case; the second failed with "used by another process" on
+        // LogAnalyzer_Audit.log, and the exception also lost the chained entry written after it. A writer holding the plain files (as the old
+        // File.AppendAllText / CsvWriter of another instance did: write access, FileShare.Read) now only delays the append.
+        var a = NewCase();
+        var b = CaseWorkspace.Open(a.Root);
+        Add(a);                                       // the custody CSV exists, with its header
+        int auditBefore = File.ReadAllLines(a.AppAuditLogPath).Length;
+        int custodyBefore = File.ReadAllLines(a.CustodyCsvPath).Length;
+        var held = new[] { a.AppAuditLogPath, a.CustodyCsvPath, a.CollectionAuditPath }
+            .Select(p => new FileStream(p, FileMode.OpenOrCreate, FileAccess.Write, FileShare.Read)).ToList();
+        var release = Task.Run(async () => { await Task.Delay(300); held.ForEach(s => s.Dispose()); });
+        const int n = 20;
+        var now = DateTimeOffset.UtcNow;
+        Parallel.For(0, 2, i =>
+        {
+            var ws = i == 0 ? a : b;
+            for (int k = 0; k < n; k++)
+            {
+                ws.Audit("test.parallel", $"w{i} k{k}");
+                ws.RecordCollection(new CollectionAuditRecord($"C{i}", now, now, EvidenceStatus.Success, 0, "src", "dst", 1, Zeros, "t", "1", "", ""));
+                ws.Custody(new CustodyEntry(now, "u", "test.parallel", $"E{i}-{k}", "", "", Zeros, "t", "1", "", ""));
+            }
+        });
+        release.Wait();
+
+        var audit = File.ReadAllLines(a.AppAuditLogPath);
+        Assert.Equal(n * 2, audit.Count(l => l.Contains("\ttest.parallel\t")));
+        Assert.Equal(n * 2, audit.Count(l => l.Contains("\tcollector.finished\t")));
+        Assert.All(audit.Skip(auditBefore), l => Assert.Equal(4, l.Split('\t').Length));          // no interleaved half-lines
+        var collection = File.ReadAllLines(a.CollectionAuditPath);
+        Assert.Single(collection, l => l.StartsWith("Collector,StartUTC", StringComparison.Ordinal)); // header once, by whichever writer came first
+        Assert.Equal(n * 2 + 1, collection.Length);
+        Assert.Equal(custodyBefore + n * 2, File.ReadAllLines(a.CustodyCsvPath).Length);
+        var bytes = File.ReadAllBytes(a.CollectionAuditPath);
+        Assert.True(bytes is [0xEF, 0xBB, 0xBF, (byte)'C', ..]);                                     // the BOM only at the start
+        Assert.Equal(1, Enumerable.Range(0, bytes.Length - 2).Count(j => bytes[j] == 0xEF && bytes[j + 1] == 0xBB && bytes[j + 2] == 0xBF));
+        var r = a.VerifyChains();
+        Assert.Equal(ChainStatus.Valid, r.Audit.Status);
+        Assert.Equal(ChainStatus.Valid, r.Custody.Status);
+    }
+
+    [Fact]
+    public void A_shared_append_fails_at_once_on_an_error_that_is_not_a_sharing_violation()
+    {
+        var dir = Path.Combine(_root, "ro");
+        Directory.CreateDirectory(dir);
+        var p = Path.Combine(dir, "x.log");
+        File.WriteAllText(p, "");
+        File.SetAttributes(p, FileAttributes.ReadOnly);
+        var sw = System.Diagnostics.Stopwatch.StartNew();
+        Assert.Throws<UnauthorizedAccessException>(() => SharedAppend.WriteText(p, "y\n"));
+        Assert.True(sw.Elapsed < TimeSpan.FromSeconds(5));   // no 15-second wait for an error a retry cannot fix
+    }
     private static void Rewrite(string path, Func<List<string>, List<string>> f) => File.WriteAllLines(path, f(File.ReadAllLines(path).ToList()));
 
     [Fact]

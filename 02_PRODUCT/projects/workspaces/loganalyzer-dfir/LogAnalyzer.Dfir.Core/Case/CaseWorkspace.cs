@@ -275,7 +275,7 @@ public sealed partial class CaseWorkspace
                 CollectorAccount = Unknown(e.CollectorAccount), CollectorMachine = Unknown(e.CollectorMachine),
                 SourceSystem = Unknown(e.SourceSystem), MediaId = Unknown(e.MediaId),
             };
-            using (var w = new CsvWriter(CustodyCsvPath, CustodyEntry.Header, append: true)) w.WriteRow(e.Row());
+            CsvWriter.AppendShared(CustodyCsvPath, CustodyEntry.Header, e.Row());
             _custodyChain.Append(e);
         }
     }
@@ -407,11 +407,7 @@ public sealed partial class CaseWorkspace
 
     public void RecordCollection(CollectionAuditRecord r)
     {
-        lock (_gate)
-        {
-            using var w = new CsvWriter(CollectionAuditPath, CollectionAuditRecord.Header, append: true);
-            w.WriteRow(r.Row());
-        }
+        lock (_gate) CsvWriter.AppendShared(CollectionAuditPath, CollectionAuditRecord.Header, r.Row());
         Audit("collector.finished", $"{r.Collector} status={r.Status.ToSpec()} exit={r.ExitCode} {r.Error}");
     }
 
@@ -422,7 +418,7 @@ public sealed partial class CaseWorkspace
         var d = detail.ReplaceLineEndings(" ");
         lock (_gate)
         {
-            File.AppendAllText(AppAuditLogPath, $"{now:yyyy-MM-ddTHH:mm:ss.fffZ}\t{OperatorIdentity.Who}\t{action}\t{d}\n");
+            SharedAppend.WriteText(AppAuditLogPath, $"{now:yyyy-MM-ddTHH:mm:ss.fffZ}\t{OperatorIdentity.Who}\t{action}\t{d}\n");
             _auditChain.Append(new AuditEntry(now, OperatorIdentity.Who, action, d));
         }
     }

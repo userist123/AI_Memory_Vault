@@ -1061,3 +1061,17 @@
   collection day and nothing warns; (3) after "Colectează tot" the investigation page stays on wizard step 1 and the status bar keeps only
   the control line (the investigation summary is on Acasă, lower down).
   Next: a NEW planner from this checkpoint (planner #4 done). Owner items unchanged (ESE sample, RDP manual test, PR #370, lab cleanup).
+- 2026-11-17 PLANNER #5 started (items, by value/risk: 1 multi-instance audit files; 2 coverage family "registry" maps ExecutionArtifactsCollector,
+  which never collects NTUSER/SOFTWARE -> false "ran but produced no source" on Standard; 3 scope period ending before the collection day silently
+  drops events from Wp14Rules (Ctx.InPeriod) -> non-blocking warning + audit, never auto-extend; 4 status bar after "Colectează tot" keeps only
+  the control line (CollectAllState.RecordControl overwrites LastActivity); 5 SRUM step-3 "other moment" residual into item notes).
+  ITEM 1 DONE: two app instances on one station share the LIVE case; the second failed with "used by another process" on LogAnalyzer_Audit.log
+  (File.AppendAllText) and lost the chained entry written after it; same for chain_of_custody.csv / collection_audit.csv (CsvWriter append).
+  Fix: IO\SharedAppend (write alone, readers allowed, retry ONLY sharing/lock violations ~20 s, like HashChain.OpenExclusive; other errors fail at
+  once) + CsvWriter.AppendShared (header + BOM decided under the same handle; RowText = old WriteRow output). Decision: the second instance is not
+  blocked, it only no longer fails. Tests: Two_app_instances_on_one_case_write_the_plain_audit_files_while_another_writer_holds_them (red on the
+  old code with the lab error), A_shared_append_fails_at_once_on_an_error_that_is_not_a_sharing_violation. Opus review: APPROVE (low notes).
+  ACCEPTED RESIDUAL: Integrity CountLines (File.ReadLines) swallows a sharing violation and returns 0 for a few ms while a writer holds the file
+  (pre-existing); on non-Windows every IOException is retried and FileShare.Read does not exclude writers (app is Windows-only). Not lab-tested
+  with two real processes. Suites: Dfir 3904 (3871 passed, 33 skipped), App 1091, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
+  Next: read CI once; item 2 (CoverageMatrix registry family), then 3, 4.
