@@ -11,11 +11,14 @@ import { usePrefs } from '@/lib/prefs';
 import LoadError from './LoadError';
 import { formatNumber, normalizeUnit, qtyDecimals } from '@/core/format';
 import { intlLocale } from '@/lib/i18n';
+/** gazda paginii produsului (ex. www.dedeman.ro), ca text scurt lângă preț; linkul complet rămâne în href */
+const hostOf = (u: string) => { try { return new URL(u).hostname; } catch { return u; } };
 
 type Data = { name: string; client: ClientInfo | null; siteAddress: string | null; seller: StudioProfile; series: string; number: number; issueDate: string; dueDate: string | null; proforma: Proforma;
   chain?: { invoiceable: number; contingency: number; contingencyPct: number; total: number } };
 export default function ProformaView({ id }: { id: string }){
   const { t, lang } = usePrefs(), [d, setD] = useState<Data | null>(null), [err, setErr] = useState(false);
+  const seenDate = (d: string) => { const x = new Date(d + 'T00:00:00Z'); return isNaN(+x) ? d : x.toLocaleDateString(intlLocale(lang), { timeZone: 'UTC' }); };
   useEffect(() => { fetch(`/api/projects/${id}/commercial/proforma`).then(r => r.ok ? r.json() : Promise.reject()).then(setD).catch(() => setErr(true)); }, [id]);
   if (err) return <LoadError />;
   if (!d) return <main className="report"><DocSkeleton label={t('print.loading')} /></main>;
@@ -43,7 +46,7 @@ export default function ProformaView({ id }: { id: string }){
     </div>
     <table><thead><tr><th>#</th><th>{t('com.col.name')}</th><th>{t('com.col.unit')}</th><th className="n">{t('com.col.qty')}</th><th className="n">{t('com.col.unitNet')}</th><th className="n">{t('com.col.net')}</th><th className="n">{t('com.col.vat', { p: p.vatPct })}</th></tr></thead>
       {p.groups.map(g => <tbody key={g.category}><tr><td colSpan={7}><b>{catLabel(g.category)}</b></td></tr>
-        {g.lines.map((l, k) => <tr key={k}><td>{k + 1}</td><td>{l.name}</td><td>{normalizeUnit(l.unit)}</td><td className="n">{formatNumber(l.qty, lang, { decimals: qtyDecimals(l.unit, l.qty) })}</td><td className="n">{n2(l.unitNet)}</td><td className="n">{n2(l.net)}</td><td className="n">{n2(l.vat)}</td></tr>)}
+        {g.lines.map((l, k) => <tr key={k}><td>{k + 1}</td><td>{l.name}{l.source && <><br /><small className="muted pf-src">{t('pf.seen', { store: l.source.store, date: seenDate(l.source.seenAt) })} <a href={l.source.url} target="_blank" rel="noopener noreferrer">{hostOf(l.source.url)}</a></small></>}</td><td>{normalizeUnit(l.unit)}</td><td className="n">{formatNumber(l.qty, lang, { decimals: qtyDecimals(l.unit, l.qty) })}</td><td className="n">{n2(l.unitNet)}</td><td className="n">{n2(l.net)}</td><td className="n">{n2(l.vat)}</td></tr>)}
         <tr><td colSpan={5} className="n"><small>{t('com.subtotal', { c: catLabel(g.category) })}</small></td><td className="n">{n2(g.net)}</td><td className="n">{n2(g.vat)}</td></tr></tbody>)}
     </table>
     <table className="pf-sum"><tbody>
@@ -53,6 +56,7 @@ export default function ProformaView({ id }: { id: string }){
       <tr className="pf-due"><td>{p.milestone ? t('com.dueNowMilestone') : t('com.dueNowFull')}</td><td className="n">{n2(p.due)} RON</td></tr></tbody></table>
     {!p.feeVatPayer && p.groups.some(g => g.category === 'fee') && <p className="small">{t('com.feeNoVat')}</p>}
     {p.unknownLines > 0 && <p className="muted small">{t('com.pfUnknown', { n: p.unknownLines })}</p>}
+    {p.groups.some(g => g.lines.some(l => l.source)) && <p className="muted small">{t('pf.observedNote')}</p>}
     <p className="muted small">{t('com.notFiscal')}</p>
   </main>);
 }

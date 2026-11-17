@@ -48,6 +48,10 @@ DONE:
   - Verificat pe surse (2026-11-17): Dedeman T&C — „Preluarea conținutului … în alte scopuri decât pentru utilizarea în interes
     personal” e sancționată; Hornbach T&C 21.01.2026 — acces „limitat, în interes personal”, exploatarea comercială cere
     „acordul scris al proprietarului”; ANAF: TVA 21% / 11% de la 1 august 2025; Ordinul 959/2023 → DDR ≤ 30 mA (pct. 4.1.5.2.1).
+  - Decizia proprietarului (2026-11-17): fără acorduri cu magazinele — doar link + preț observat cu data. Implementat: sursa
+    (magazin, URL, data citirii) trece deviz → profit → proformă (core/commercial.ts PriceSource); proforma o arată sub fiecare
+    produs + nota pf.observedNote („nu sunt oferte ale magazinelor…”); CSV-ul de facturare rămâne fără linkuri. Verificat: catalogul
+    nu conține imagini/descrieri de la magazine; public/ are doar CC0 Poly Haven. Test tests/price-source.test.ts; captura 19.
 NEXT (sesiunea următoare): proforma emisă înghețată (copie aditivă la emitere, data prețului pe linie; SourceLine pierde
   verifiedAt/sourceUrl în core/commercial.ts) — atinge DB, cere vault-reviewer. Înainte: decizia proprietarului
   „proforma = estimare sau ofertă” și ce face cu termenii Dedeman/Hornbach (acord scris / afiliere / doar link + preț observat).
