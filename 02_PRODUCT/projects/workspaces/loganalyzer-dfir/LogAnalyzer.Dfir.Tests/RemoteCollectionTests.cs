@@ -1464,5 +1464,68 @@ public sealed class RemoteCollectionTests : IDisposable
         Assert.Equal("", problem);
         Assert.Equal(["SRU.chk", "SRU00001.log", "SRUtmp.jrs"], logs.Select(l => Path.GetFileName(l.Path)).OrderBy(x => x, StringComparer.Ordinal).ToArray());
         Assert.All(logs, l => Assert.Equal(runDir, Path.GetDirectoryName(l.Path)));
+        // a set read directly is of one moment: no "different moments" note in either case
+        Assert.All(stored, i => Assert.DoesNotContain(RemoteCollection.SrumMixedMomentNote, i.Notes));
+        Assert.All(kept, i => Assert.DoesNotContain(RemoteCollection.SrumMixedMomentNote, i.Notes));
+    }
+
+    [Fact]
+    public void A_srum_set_of_different_moments_says_so_in_the_notes_of_every_file_and_in_the_recovery_gap()
+    {
+        // residual of planner #4 item 3: the step-3 fact ("the logs are of another moment") was only in the manifest step note
+        var fake = StationWithNewArtifacts("station-srum-mixed");
+        var live = NewCase();
+        var (req, sha) = RemoteCollection.Authorize(live, Environment.MachineName, @"STATIE\operator", "investigație de test", ["srum"]);
+        var log = Path.Combine(fake, "Windows", "System32", "sru", "SRU00001.log");
+        RemotePackageCheck check;
+        using (new FileStream(log, FileMode.Open, FileAccess.Read, FileShare.None))   // a log held by the system and no shadow copy allowed: step 3
+            check = RemoteCollection.Verify(live, RunPackageOnFakeStation(RemoteCollection.PackageScript(req, sha, false), fake));
+        Assert.True(check.Ok, string.Join("; ", check.Problems));
+        Assert.Contains("din alt moment", check.Manifest!.Steps.Single().Error);
+        var stored = RemoteCollection.Import(live, check).Where(i => i.SourceType != "remote-manifest").ToList();
+        Assert.NotEmpty(stored);
+        Assert.All(stored, i => Assert.Contains(RemoteCollection.SrumMixedMomentNote, i.Notes));
+        // the set key stays the last segment, so the run still keeps the set together, and the fact travels with it
+        var key = Path.GetDirectoryName(live.FullPath(stored[0].StoredPath))![^32..];
+        Assert.All(stored, i => Assert.Equal(key, LogAnalyzer.Dfir.Windows.Investigation.InvestigationPipeline.SrumSetKey(i.Notes)));
+        var run = CaseWorkspace.Create(Path.Combine(_root, "case-run-srum-mixed"), new CaseInfo { CaseId = "CASE-run-srum-mixed", Name = "run", CreatedAtUtc = DateTimeOffset.UtcNow, Scope = TestScopes.Valid() });
+        var carried = stored.ToDictionary(i => live.FullPath(i.StoredPath), i => (i.SourceType, i.Notes), StringComparer.OrdinalIgnoreCase);
+        var kept = LogAnalyzer.Dfir.Windows.Investigation.InvestigationPipeline.Import(run, carried.Keys.ToList(), null, carried);
+        Assert.Single(kept.Select(i => Path.GetDirectoryName(run.FullPath(i.StoredPath))).Distinct());
+        Assert.All(kept, i => Assert.Contains(RemoteCollection.SrumMixedMomentNote, i.Notes));
+
+        // the parser's recovery gap: the fact and a stronger likelihood only for such a set
+        var mixedGap = LogAnalyzer.Dfir.Windows.Parsers.SrumNetworkParser.RecoveryGap("recuperată", kept.Single(i => i.SourceType == "srum").Notes);
+        Assert.Contains("NU sunt din același moment", mixedGap.Reason);
+        var oneMoment = LogAnalyzer.Dfir.Windows.Parsers.SrumNetworkParser.RecoveryGap("recuperată", "H:files/Srum/SRUDB.dat; cererea R");
+        Assert.DoesNotContain("același moment", oneMoment.Reason);
+        Assert.NotEqual(mixedGap, oneMoment);
+    }
+
+    [Fact]
+    public void Only_one_ok_srum_step_with_the_step_1_or_step_2_sentence_counts_as_one_moment()
+    {
+        RemoteStep S(string status, string note, string art = "srum") => new(art, "t0", "t1", status, note);
+        var direct = RemoteCollection.SrumDirectNotePrefix + ", în jurul momentului 2026-11-17T08:00:00Z";
+        var shadow = RemoteCollection.SrumShadowNotePrefix + ", creată la t și ștearsă la final";
+        Assert.Null(RemoteCollection.SrumSetMomentNote([S("ok", direct)]));
+        Assert.Null(RemoteCollection.SrumSetMomentNote([S("ok", shadow), S("ok", "", "amcache")]));
+        Assert.Equal(RemoteCollection.SrumMixedMomentNote, RemoteCollection.SrumSetMomentNote([S("ok", RemoteCollection.SrumMixedNotePrefix + " (x); ... din alt moment")]));
+        // review LOW: a failed or unknown step is not proven to be a mix, only not proven to be one moment
+        Assert.Equal(RemoteCollection.SrumUnprovenMomentNote, RemoteCollection.SrumSetMomentNote([S("failed", direct)]));
+        Assert.Equal(RemoteCollection.SrumUnprovenMomentNote, RemoteCollection.SrumSetMomentNote([S("failed", RemoteCollection.SrumMixedNotePrefix)]));
+        Assert.Equal(RemoteCollection.SrumUnprovenMomentNote, RemoteCollection.SrumSetMomentNote([S("ok", direct), S("ok", direct)]));
+        Assert.Equal(RemoteCollection.SrumUnprovenMomentNote, RemoteCollection.SrumSetMomentNote([]));
+        Assert.Equal(RemoteCollection.SrumUnprovenMomentNote, RemoteCollection.SrumSetMomentNote([S("ok", null!)]));
+        Assert.Equal(RemoteCollection.SrumUnprovenMomentNote, RemoteCollection.SrumSetMomentNote([S("ok", "x " + direct)]));
+        var unproven = LogAnalyzer.Dfir.Windows.Parsers.SrumNetworkParser.RecoveryGap("recuperată", "H:p; " + RemoteCollection.SrumUnprovenMomentNote + "; set SRUM: k");
+        Assert.Contains("nu este dovedit", unproven.Reason);
+        Assert.DoesNotContain("NU sunt din același moment", unproven.Reason);
+        // the two sentences are the ones the package script writes
+        var (req, sha) = RemoteCollection.Authorize(NewCase(), "PC01", "op", "j", ["srum"]);
+        var script = RemoteCollection.PackageScript(req, sha);
+        Assert.Contains("\"" + RemoteCollection.SrumDirectNotePrefix + ", în jurul momentului $momentUtc\"", script);
+        Assert.Contains("\"" + RemoteCollection.SrumShadowNotePrefix + ", creată la $momentUtc", script);
+        Assert.Contains("\"" + RemoteCollection.SrumMixedNotePrefix + " ($shadowErr)", script);
     }
 }

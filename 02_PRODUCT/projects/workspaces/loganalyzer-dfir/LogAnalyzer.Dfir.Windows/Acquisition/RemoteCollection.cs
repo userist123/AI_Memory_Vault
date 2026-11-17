@@ -1176,6 +1176,40 @@ public static class RemoteCollection
     /// <summary>Marker written in the notes of every file of one SRUM set; the key is the folder id the set got at import. Used again by the re-import into the case of the run.</summary>
     public const string SrumSetKeyPrefix = "set SRUM: ";
 
+    /// <summary>The start of the srum step note when the whole set was read directly (step 1) or copied from ONE shadow copy (step 2): one moment.</summary>
+    internal const string SrumDirectNotePrefix = "SRUM: baza și jurnalele ESE citite direct, fără copie de umbră", SrumShadowNotePrefix = "SRUM: baza și toate jurnalele ESE copiate din ACEEAȘI copie de umbră";
+
+    /// <summary>The start of the srum step note of step 3 (no shadow copy of the set; the database and the logs are copied at different moments).</summary>
+    internal const string SrumMixedNotePrefix = "SRUM: copia de umbră WMI a setului nu a putut fi folosită";
+
+    /// <summary>
+    /// Review 2026-11-17 LOW: a failed or unknown srum step (e.g. step 1 failed on a log over the limit) is NOT proven to be of different moments, only not proven
+    /// to be of one; the notes say exactly that, never the stronger fact of step 3.
+    /// </summary>
+    public const string SrumUnprovenMomentNote = "set SRUM fără dovada unui singur moment: pasul srum al pachetului nu confirmă că baza și jurnalele ESE provin din aceeași copie";
+
+    /// <summary>
+    /// Written by the import in the notes of every file of a SRUM set that is not known to be of one moment (residual of planner #4 item 3: the fact was only
+    /// in the manifest step note). SrumNetworkParser repeats it in its recovery gap. The application's own text, never the target's.
+    /// </summary>
+    public const string SrumMixedMomentNote = "set SRUM din momente diferite: baza și jurnalele ESE nu provin din aceeași copie (pachetul nu a putut folosi o copie de umbră pentru tot setul)";
+
+    /// <summary>
+    /// Null when the package says the set is of one moment: exactly one srum step, "ok", whose note starts with the step-1 or step-2 sentence.
+    /// <see cref="SrumMixedMomentNote"/> for one "ok" step with the step-3 sentence. Anything else (a failed or missing step, two steps, an unknown note)
+    /// gets <see cref="SrumUnprovenMomentNote"/>: an unproven moment is not presented as one, nor as a proven mix.
+    /// </summary>
+    internal static string? SrumSetMomentNote(IReadOnlyList<RemoteStep> steps)
+    {
+        var s = steps.Where(x => x.Artifact == SrumArtifact).ToList();
+        if (s.Count == 1 && s[0].Status == "ok" && (s[0].Error ?? "") is var e)
+        {
+            if (e.StartsWith(SrumDirectNotePrefix, StringComparison.Ordinal) || e.StartsWith(SrumShadowNotePrefix, StringComparison.Ordinal)) return null;
+            if (e.StartsWith(SrumMixedNotePrefix, StringComparison.Ordinal)) return SrumMixedMomentNote;
+        }
+        return SrumUnprovenMomentNote;
+    }
+
     internal static string ImportKind(string relativePath, string fullPath) =>
         // the folders of Amcache / SRUM / setupapi / firewall log / recent items first, for the same reason as the user hives (a profile named "Tasks", a stray .evtx or .hive)
         ExtraFolderKind(relativePath, fullPath) is { } extraKind ? extraKind :
@@ -1252,6 +1286,8 @@ public static class RemoteCollection
         // the SRUM set (database + ESE logs): one folder of its own with the ORIGINAL names, so SrumNetworkParser finds the logs beside the database (in the common folder of the
         // source a second file of the same name would become "_1"); one key in the notes of every file of the set
         string? srumDir = null, srumKey = null;
+        // the moment fact goes into the notes of every file of the set (before the key, which stays the last segment: InvestigationPipeline.SrumSetKey)
+        var srumMoment = SrumSetMomentNote(m.Steps) is { } mixed ? "; " + mixed : "";
         foreach (var f in m.Files)
         {
             var full = Path.Combine(check.PackageDir, f.Path);
@@ -1286,7 +1322,7 @@ public static class RemoteCollection
                 }
                 File.SetLastWriteTimeUtc(sdest, File.GetLastWriteTimeUtc(full));
                 item = ws.RegisterStored(sdest, full, source, kind, TemporalType.Historical, CollectorName, DfirInfo.ApplicationVersion, action: "imported", parentEvidenceId: manifest.EvidenceId,
-                    notes: $"{m.Host}:{f.Path}; {notes}; {SrumSetKeyPrefix}{srumKey}", timezone: m.Timezone is { Length: > 0 } stz ? stz : null);
+                    notes: $"{m.Host}:{f.Path}; {notes}{srumMoment}; {SrumSetKeyPrefix}{srumKey}", timezone: m.Timezone is { Length: > 0 } stz ? stz : null);
             }
             else if (kind is Parsers.WindowsSearchIndexParser.SourceTypeName or WindowsSearchIndexCollector.WalSourceType
                      or Parsers.WindowsSearchGatherParser.SourceTypeName or Parsers.WindowsSearchGatherParser.WalSourceType)

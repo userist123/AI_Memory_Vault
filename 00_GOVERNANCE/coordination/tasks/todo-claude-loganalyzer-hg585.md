@@ -1084,3 +1084,15 @@
   EndCollectAll around the Handler: RecordControl puts the same run's investigation line in front of the control line; a control alone keeps its
   own line; test in CollectAllTests. Suites: Dfir 3906 (3873 passed, 33 skipped), App 1092, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
   Next: read CI once; item 5 (SRUM step-3 note, Opus review) or a lab check of items 1+3 on WS02 (two instances; scope warning).
+- 2026-11-17 CI of b462a686c read once: 32/32 success. PLANNER #5 ITEM 5 DONE (closes the planner #4 item 3 residual): RemoteCollection.Import puts an
+  application-written moment fact into the notes of every file of a remote SRUM set, BEFORE the set key (the key stays the last segment for
+  InvestigationPipeline.SrumSetKey; it travels to the case of the run with the carried notes). SrumSetMomentNote(steps): one "ok" srum step with the step-1
+  or step-2 sentence -> nothing; with the step-3 sentence -> SrumMixedMomentNote; anything else (failed, missing, duplicate, unknown note) ->
+  SrumUnprovenMomentNote. SrumNetworkParser.RecoveryGap: mixed -> "NU sunt din același moment", likelihood Probabil; unproven -> "nu este dovedit", Posibil.
+  Tests: A_srum_set_of_different_moments_says_so_in_the_notes_of_every_file_and_in_the_recovery_gap (real step 3: log held FileShare.None, no shadow copy),
+  Only_one_ok_srum_step_with_the_step_1_or_step_2_sentence_counts_as_one_moment (incl. the three prefixes are the script's own text). Opus review: APPROVE;
+  LOW 1 (a failed step was called a proven mix) fixed with the unproven note; ACCEPTED RESIDUAL: the target writes the manifest, so it can forge a step-1
+  sentence (it also controls the files) or plant the sentence in user/host (only makes the gap more cautious); a failed recovery's exception does not
+  name the moment fact (the notes do); step 2 never run end to end. Suites: Dfir 3908 (3875 passed, 33 skipped), App 1092, UI 370 (369 + 1 skipped),
+  Edition 45, all exit 0.
+  Next: a lab check of items 1+3 on WS02 (two instances; scope warning on screen), then a NEW planner. Owner items unchanged.

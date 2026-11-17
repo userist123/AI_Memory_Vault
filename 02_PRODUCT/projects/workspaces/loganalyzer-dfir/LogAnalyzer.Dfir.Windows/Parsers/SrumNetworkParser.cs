@@ -206,13 +206,31 @@ public sealed class SrumNetworkParser : EvidenceParserBase
             "Volumul de date trimis/primit per aplicație nu se poate lua din SRUM pentru această stație",
             "jurnalele firewall-ului, ale proxy-ului sau ale echipamentelor de rețea pentru aceeași perioadă", "Nu");
 
+    /// <summary>
+    /// The gap of a recovered database. When the notes of the item say the set is of different moments (remote package, step 3), the gap says so and the
+    /// missing records become likely, not only possible: the logs replayed are not those of the moment the database was copied.
+    /// </summary>
+    internal static EvidenceGap RecoveryGap(string recovered, string itemNotes)
+    {
+        const string better = "o copie SRUDB.dat cu oprire curată sau un set luat dintr-o singură copie de umbră";
+        if (itemNotes.Contains(LogAnalyzer.Dfir.Windows.Acquisition.RemoteCollection.SrumMixedMomentNote, StringComparison.Ordinal))
+            return new EvidenceGap("SRUM (recuperare)", EvidenceStatus.Partial,
+                recovered + "; jurnalele ESE folosite NU sunt din același moment cu baza (" + LogAnalyzer.Dfir.Windows.Acquisition.RemoteCollection.SrumMixedMomentNote + ")",
+                "Înregistrările necomise la momentul copierii bazei pot lipsi sau pot fi incomplete: jurnalele copiate sunt din alt moment", better, "Probabil");
+        if (itemNotes.Contains(LogAnalyzer.Dfir.Windows.Acquisition.RemoteCollection.SrumUnprovenMomentNote, StringComparison.Ordinal))
+            return new EvidenceGap("SRUM (recuperare)", EvidenceStatus.Partial,
+                recovered + "; nu este dovedit că jurnalele ESE folosite sunt din același moment cu baza (" + LogAnalyzer.Dfir.Windows.Acquisition.RemoteCollection.SrumUnprovenMomentNote + ")",
+                "Înregistrările necomise la momentul copierii pot lipsi dacă jurnalele copiate nu sunt din același moment cu baza", better, "Posibil");
+        return new EvidenceGap("SRUM (recuperare)", EvidenceStatus.Partial, recovered,
+                "Înregistrările necomise la momentul copierii pot lipsi dacă jurnalele copiate nu le conțin", "o copie SRUDB.dat cu oprire curată", "Posibil");
+    }
+
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {
         var (network, connectivity, connError, netError) = ReadAllWithTables(fullPath, ct);
         if (netError.Length > 0) result.Gaps.Add(NetworkTableMissingGap(netError));
         if (_lastRecovery is { Length: > 0 } recovered)
-            result.Gaps.Add(new EvidenceGap("SRUM (recuperare)", EvidenceStatus.Partial, recovered,
-                "Înregistrările necomise la momentul copierii pot lipsi dacă jurnalele copiate nu le conțin", "o copie SRUDB.dat cu oprire curată", "Posibil"));
+            result.Gaps.Add(RecoveryGap(recovered, item.Notes ?? ""));
         foreach (var c in connectivity)
         {
             sink.Add(new TimelineEvent
