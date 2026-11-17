@@ -1096,3 +1096,21 @@
   name the moment fact (the notes do); step 2 never run end to end. Suites: Dfir 3908 (3875 passed, 33 skipped), App 1092, UI 370 (369 + 1 skipped),
   Edition 45, all exit 0.
   Next: a lab check of items 1+3 on WS02 (two instances; scope warning on screen), then a NEW planner. Owner items unchanged.
+- 2026-11-17 CI of 2af9a3dcb read once: 32/32 success. LAB CHECK of planner #5 items 1+3 on LAB-WS02 (lab build of 2af9a3dcb, update-app insula,
+  two instances A/B signed in, UIA). ITEM 3 VERIFIED ON SCREEN: the scope dialog shows the orange non-blocking warning "Perioada scopului se încheie
+  la 09.11.2026, înainte de ziua colectării (17.11.2026) ..." (shot E:\LA-Lab\shots\LAB-WS02\two-A-scope.png); both runs audited
+  case.scope_period_before_collection in LogAnalyzer_Audit.log + audit_chain.jsonl; period not extended. Item 4 seen too: status bar after
+  "Colectează tot" = investigation line, then control line. ITEM 1 PARTIAL: A and B ran "Colectează tot" overlapping (14:40:21-14:41:13 and
+  14:40:42-14:41:33 UTC), both COMPLETED (cases ...-144021 / ...-144042), no error; but each run writes its own investigation case, not the shared
+  LIVE case. Both instances later opened LIVE-LAB-WS02 and appended case.opened/case.recheck 3 s apart (chain seq 3..6 intact, no error).
+  Forced-contention probe (separate process holds LIVE\Logs\LogAnalyzer_Audit.log Write/share Read 7 s while a third instance opens LIVE) NOT
+  achieved: on Insula only the control report (gated by 22 corrective measures) opens LIVE from the UI; "Colectează acum" on the control page
+  did not touch LIVE. Fable consulted (advisor): close with residual. ACCEPTED RESIDUAL: cross-process contention on LIVE LogAnalyzer_Audit.log
+  not reproduced with the real app; the retry is proven by the in-process unit test (share modes are per open, not per process); lab showed two
+  instances appending 3 s apart without error. SAME BUG CLASS, NOT FIXED (Fable, from source): Json.AppendLine (Json.cs ~31, evidence index
+  CaseWorkspace ~249) and PolicyAuditLog.Append (PolicyExecution.cs ~393) still use File.AppendAllText; after the ~19 s SharedAppend budget
+  Audit throws before the chain append (CaseWorkspace ~421-422). LAB NOTES: windows of two instances overlap at 0,0, so the driver's mouse
+  "click" can hit the other instance - use "invoke" per pid; in a fresh third instance the control wizard did not reach the report (unexplained,
+  not investigated). WS02 stopped. No product code changed.
+  Next: a NEW planner from this checkpoint; first candidate item: move Json.AppendLine and PolicyAuditLog.Append to SharedAppend (with tests).
+  Owner items unchanged (ESE sample, RDP manual test, PR #370, lab cleanup).
