@@ -1275,3 +1275,21 @@
   expired client evaluation - so they keep shutting down hourly (wlms). Rearm count now 0 on all. Remaining legitimate options (owner): a new
   Windows 11 Enterprise evaluation image for WS01/WS02 (reinstall + lab scenarios), or a licensed Windows (an Eval SKU cannot take a retail key:
   reinstall), or keep lab runs under one hour.
+- 2026-11-18 PLANNER #8 ITEM 2 DONE (anti-rollback witness; vault-worker core + main-session fixes; Opus review r1 REQUEST_CHANGES 3 MEDIUM + 1 LOW,
+  r2 REQUEST_CHANGES 1 MEDIUM -> main session decided and fixed after the 2-round limit). HashChain: IHeadWitness + RegisterHeadSeal(path, key,
+  witness); witness MAC = HMAC(key,"LogAnalyzer-chain-witness-v1|seq|hash"); Append advances it after the head move (monotonic; only over a plain-valid
+  log that still contains the witness entry -> a fork cannot take it over); a failed witness write never loses/rolls back an entry. Verify (only when
+  otherwise Valid; witness read UNDER the log handle in ReadVerified): absent -> Valid; present but unreadable -> Broken "nu poate fi citit"; MAC
+  invalid -> Broken; witness ahead of the log -> Broken "jurnalul a fost înlocuit cu o copie mai veche"; entry missing -> Broken "rescris"; Reseal
+  resets it. Production: FileHeadWitness in %ProgramFiles%\LogAnalyzer\witness (registry REJECTED by the Standalone Edition guard: no RegistryKey
+  SetValue/CreateSubKey - owner decision if wanted; ProgramData REJECTED after review r2: standard users can pre-create folders there and lock out
+  card sign-in), folder created WITH an Administrators/SYSTEM-only protected DACL + owner Administrators (no Users read), reparse points refused, an
+  existing unprotected folder moved aside "<dir>.untrusted-<utc>-<guid>" (kept) and recreated. Wired in AuthStoreSecurity.Windows() (auth audit
+  only; ThreatIntel history unchanged). Tests HeadWitnessTests (12: rollback, fork, lagging witness, tamper/delete, write failure, reseal, no-witness
+  unchanged, concurrent writers, file witness round trip + folder restore, unreadable witness, concurrent ReadVerified, unprotected folder moved aside).
+  ACCEPTED RESIDUAL: an administrator deleting the witness (or restoring Program Files and the auth folder together, or a full image) is not caught
+  (paper anchor / CD-R remain); the real ACL code (ForLog / OnlyAdminsCanRead / ApplyAdminOnlyAcl) is not unit-tested (test process not elevated) -
+  verify on a lab VM; a move-aside is not yet surfaced in the audit/UI; a GPO making the creator the owner of new objects would fail the check.
+  Suites: Dfir (Release) 3957 (3924 passed, 33 skipped), App 1114, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
+  Next: lab check of the witness on a VM (elevated app: folder created with the admin-only DACL; restore an older auth folder -> Broken "copie mai
+  veche" on the admin page); then planner #8 item 3 (artifacts: WMI-Activity 5861 first). Owner: registry witness yes/no; WS01/WS02 eval reinstall.

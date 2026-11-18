@@ -28,11 +28,15 @@ public sealed class AuthStoreSecurity
     /// <summary>Returns the chain key for the auth folder, creating it when absent (<c>created</c> = true); null when it cannot be read.</summary>
     public required Func<string, (byte[]? Key, bool Created)> ChainKey { get; init; }
 
+    /// <summary>The anti-rollback witness for a log path (null = none). Default none: tests and None keep the pre-witness behaviour.</summary>
+    public Func<string, LogAnalyzer.Dfir.Case.IHeadWitness?> Witness { get; init; } = _ => null;
+
     public static readonly AuthStoreSecurity None = new() { CheckAcl = _ => StoreAclResult.Ok, ChainKey = _ => (null, false) };
 
     /// <summary>Production: real DACL check and a DPAPI (LocalMachine) protected key in an Administrators/SYSTEM-only file.</summary>
     [SupportedOSPlatform("windows")]
-    public static AuthStoreSecurity Windows() => new() { CheckAcl = AuthStoreProtection.CheckDirectory, ChainKey = AuthStoreProtection.LoadOrCreateMachineKey };
+    public static AuthStoreSecurity Windows() => new() { CheckAcl = AuthStoreProtection.CheckDirectory, ChainKey = AuthStoreProtection.LoadOrCreateMachineKey,
+                                                          Witness = FileHeadWitness.ForLog };   // a file outside the auth folder (the Standalone edition must not write the registry)
 
     /// <summary>Tests: a fixed ACL verdict and an in-memory key.</summary>
     public static AuthStoreSecurity ForTests(StoreAclResult acl, byte[]? key) => new() { CheckAcl = _ => acl, ChainKey = _ => (key, false) };

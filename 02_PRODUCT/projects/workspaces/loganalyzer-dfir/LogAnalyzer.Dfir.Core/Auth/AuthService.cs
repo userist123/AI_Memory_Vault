@@ -54,7 +54,7 @@ public sealed partial class AuthService
     private void SealAudit()
     {
         var (key, created) = _security.ChainKey(Dir);
-        HashChain.RegisterHeadSeal(AuditPath, key);
+        HashChain.RegisterHeadSeal(AuditPath, key, _security.Witness(AuditPath));
         if (key is null || !created || !File.Exists(AuditPath)) return;
         var chain = new HashChain(AuditPath);
         if (File.Exists(HashChain.HeadPath(AuditPath)) || chain.Head().Seq == 0) return;

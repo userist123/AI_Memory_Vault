@@ -26,6 +26,17 @@ public sealed class SealingKeyUnavailableException(string message) : Unauthorize
 /// Someone without the key can still recompute the plain chain, but not the seal. An append that finds the file not ending at the sealed head
 /// is still written (evidence is not dropped) but the seal is not moved over it, so the log stays broken until an administrator reseals it.
 /// </summary>
+/// <summary>
+/// Anti-rollback witness of a sealed log, kept OUTSIDE the log folder (production: a file in %PROGRAMDATA%\LogAnalyzer\witness, Administrators/SYSTEM only; the registry is not allowed in the Standalone edition): the highest head (seq, hash, MAC) ever written. A head MAC has no
+/// freshness, so replacing log + .head by an older valid copy verifies; the witness makes that visible. Residual: whoever can write the witness store
+/// (an administrator) can delete or lower it.
+/// </summary>
+public interface IHeadWitness
+{
+    (long Seq, string Hash, string Mac)? Read();
+    void Write(long seq, string hash, string mac);
+}
+
 public sealed class HashChain(string path)
 {
     public const string LegacyMessage = "lanț neverificabil (caz creat înainte de WP3)";
@@ -38,7 +49,49 @@ public sealed class HashChain(string path)
     private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, byte[]?> Seals = new(StringComparer.OrdinalIgnoreCase);
 
     /// <summary>Seals the head of the log at <paramref name="logPath"/> for this process. A null key means "sealed, but the key cannot be read": appends are refused.</summary>
-    public static void RegisterHeadSeal(string logPath, byte[]? key) => Seals[System.IO.Path.GetFullPath(logPath)] = key;
+    public static void RegisterHeadSeal(string logPath, byte[]? key, IHeadWitness? witness = null)
+    {
+        var full = System.IO.Path.GetFullPath(logPath);
+        Seals[full] = key;
+        if (witness is null) Witnesses.TryRemove(full, out _); else Witnesses[full] = witness;
+    }
+
+    private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, IHeadWitness> Witnesses = new(StringComparer.OrdinalIgnoreCase);
+
+    private IHeadWitness? WitnessOf() => Witnesses.TryGetValue(System.IO.Path.GetFullPath(Path), out var w) ? w : null;
+
+    private static string WitnessMac(byte[] key, long seq, string hash) =>
+        Convert.ToHexStringLower(HMACSHA256.HashData(key, Encoding.UTF8.GetBytes($"LogAnalyzer-chain-witness-v1|{seq}|{hash}")));
+
+    private static bool WitnessMacOk(byte[] key, (long Seq, string Hash, string Mac) w) =>
+        CryptographicOperations.FixedTimeEquals(Encoding.ASCII.GetBytes(w.Mac ?? ""), Encoding.ASCII.GetBytes(WitnessMac(key, w.Seq, w.Hash ?? "")));
+
+    /// <summary>Append path: moves the witness forward only (never down, never over a tampered one). A failure to read or write it never fails the append.</summary>
+    private void AdvanceWitness(byte[] key, long seq, string hash, FileStream fs, long prevSeq, string prevHash)
+    {
+        var w = WitnessOf();
+        if (w is null) return;
+        try
+        {
+            var cur = w.Read();
+            if (cur is { } c)
+            {
+                if (c.Seq >= seq || !WitnessMacOk(key, c)) return;
+                // a fork that outgrew the witness must not take it over: only a witness that this very log still contains moves forward (else Verify keeps reporting "rescris")
+                if (!(c.Seq == prevSeq && c.Hash == prevHash))
+                {
+                    fs.Position = 0;
+                    using var ms = new MemoryStream();
+                    fs.CopyTo(ms);
+                    var lines = Lines(ms.ToArray());
+                    // only over a plain-valid chain (review 2026-11-18: a crafted line with the witness's seq/hash must not let a fork take the witness over)
+                    if (VerifyPlain(lines, exists: true).Status != ChainStatus.Valid || !ContainsIn(lines, c.Seq, c.Hash)) return;
+                }
+            }
+            w.Write(seq, hash, WitnessMac(key, seq, hash));
+        }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException or InvalidOperationException) { }   // residual: a lagging witness
+    }
 
     public static string HeadPath(string logPath) => logPath + ".head";
 
@@ -232,7 +285,11 @@ public sealed class HashChain(string path)
             if (key is null) throw new SealingKeyUnavailableException(KeyUnavailable);
             if (VerifyPlain().Status == ChainStatus.Broken) throw new InvalidOperationException("lanțul simplu este rupt; nu se sigilează");
             var (seq, head) = Head();
-            if (seq > 0) WriteSealedHead(key, seq, head);
+            if (seq > 0)
+            {
+                WriteSealedHead(key, seq, head);
+                WitnessOf()?.Write(seq, head, WitnessMac(key, seq, head));   // the audited recovery: may go DOWN (a failure is raised, the break stays visible)
+            }
         }
     }
 
@@ -258,6 +315,7 @@ public sealed class HashChain(string path)
                 if (!moveSeal && IntentCovers(key!, ParseIntent(ReadIntentText()), sealedHead, seq, head, PrevHashOf(SharedAppend.LastNonEmptyLine(fs))))
                 {
                     WriteSealedHead(key!, seq, head);
+                    AdvanceWitness(key!, seq, head, fs, -1, "");
                     DeleteIntent();
                     moveSeal = true;
                 }
@@ -293,6 +351,7 @@ public sealed class HashChain(string path)
                     throw;
                 }
                 DeleteIntent();
+                AdvanceWitness(key!, seq + 1, obj["hash"]!.GetValue<string>(), fs, seq, head);
             }
         }
     }
@@ -387,6 +446,7 @@ public sealed class HashChain(string path)
         bool exists = false;
         byte[] content = [];
         string? headText = null, intentText = null;
+        WitnessRead witnessRead = default;
         bool sealedLog = IsSealed(out _);
         for (int attempt = 0; ; attempt++)
         {
@@ -397,15 +457,16 @@ public sealed class HashChain(string path)
                 fs.CopyTo(ms);
                 content = ms.ToArray();
                 exists = true;
-                if (sealedLog) { headText = ReadHeadText(); intentText = ReadIntentText(); }
+                // the witness too is read while the log is held (review 2026-11-18: read after the handle, a concurrent append + witness move gave a false "copie mai veche")
+                if (sealedLog) { headText = ReadHeadText(); intentText = ReadIntentText(); witnessRead = ReadWitness(); }
                 break;
             }
             catch (FileNotFoundException) { break; }
             catch (DirectoryNotFoundException) { break; }
             catch (IOException e) when (IsSharingViolation(e) && attempt < SharingAttempts) { SharingPause(attempt); }
         }
-        if (!exists && sealedLog) { headText = ReadHeadText(); intentText = ReadIntentText(); }
-        return (content, VerifyCore(content, exists, ParseHead(headText), ParseIntent(intentText)));
+        if (!exists && sealedLog) { headText = ReadHeadText(); intentText = ReadIntentText(); witnessRead = ReadWitness(); }
+        return (content, VerifyCore(content, exists, ParseHead(headText), ParseIntent(intentText), witnessRead));
     }
 
     /// <summary>
@@ -414,10 +475,10 @@ public sealed class HashChain(string path)
     /// them: on a sealed log that other processes append to, use <see cref="ReadVerified"/>.
     /// </summary>
     public ChainVerification Verify(byte[] content) => IsSealed(out _)
-        ? VerifyCore(content, content.Length > 0, ParseHead(ReadHeadText()), ParseIntent(ReadIntentText()))
-        : VerifyCore(content, content.Length > 0, null, null);
+        ? VerifyCore(content, content.Length > 0, ParseHead(ReadHeadText()), ParseIntent(ReadIntentText()), ReadWitness())
+        : VerifyCore(content, content.Length > 0, null, null, default);
 
-    private ChainVerification VerifyCore(byte[] content, bool exists, SealedHead? sealedHead, SealIntent? intent)
+    private ChainVerification VerifyCore(byte[] content, bool exists, SealedHead? sealedHead, SealIntent? intent, WitnessRead witnessRead)
     {
         var lines = Lines(content);
         (long, string) HeadOf()
@@ -433,7 +494,7 @@ public sealed class HashChain(string path)
             return (0, Genesis);
         }
         return Verify(VerifyPlain(lines, exists), HeadOf, (seq, hash) => ContainsIn(lines, seq, hash), sealedHead, intent,
-                      PrevHashOf(lines.LastOrDefault(l => !string.IsNullOrWhiteSpace(l))));
+                      PrevHashOf(lines.LastOrDefault(l => !string.IsNullOrWhiteSpace(l))), witnessRead);
     }
 
     /// <summary>The lines of a log held in memory, split as <see cref="Verify(byte[])"/> splits them: exactly as File.ReadLines splits the file on disk (the integrity re-check): a leading UTF-8 BOM is dropped and a line ends at \r\n, \r or \n.</summary>
@@ -443,7 +504,32 @@ public sealed class HashChain(string path)
         if (text.Length > 0 && text[0] == '\uFEFF') text = text[1..];
         return System.Text.RegularExpressions.Regex.Split(text, "\r\n|\r|\n").ToList();
     }
-    private ChainVerification Verify(ChainVerification plain, Func<(long Seq, string Head)> headOf, Func<long, string, bool> contains, SealedHead? h, SealIntent? intent, string? lastPrevHash)
+    /// <summary>What reading the witness gave: not registered / absent (Value null, Error null), a value, or an error (present but unreadable).</summary>
+    private readonly record struct WitnessRead(bool Registered, (long Seq, string Hash, string Mac)? Value, string? Error);
+
+    private WitnessRead ReadWitness()
+    {
+        if (WitnessOf() is not { } w) return default;
+        try { return new WitnessRead(true, w.Read(), null); }
+        catch (Exception e) when (e is IOException or UnauthorizedAccessException or System.Security.SecurityException or InvalidOperationException) { return new WitnessRead(true, null, e.Message); }
+    }
+
+    private ChainVerification Verify(ChainVerification plain, Func<(long Seq, string Head)> headOf, Func<long, string, bool> contains, SealedHead? h, SealIntent? intent, string? lastPrevHash, WitnessRead witnessRead)
+    {
+        var r = VerifySealed(plain, headOf, contains, h, intent, lastPrevHash);
+        if (r.Status != ChainStatus.Valid || !IsSealed(out var key) || key is null || !witnessRead.Registered) return r;
+        var name = System.IO.Path.GetFileName(Path);
+        var (seq, _) = headOf();
+        // present but unreadable is a problem to see, never a silent "valid" (review 2026-11-18)
+        if (witnessRead.Error is { } err) return Broken(name, r.Entries, r.LegacyLines, seq, $"martorul anti-revenire nu poate fi citit: {err}");
+        if (witnessRead.Value is not { } wv) return r;   // absent: unchanged (residual: an administrator can delete it)
+        if (!WitnessMacOk(key, wv)) return Broken(name, r.Entries, r.LegacyLines, seq, "martorul anti-revenire nu este valid (modificat în afara aplicației)");
+        if (wv.Seq > seq) return Broken(name, r.Entries, r.LegacyLines, seq, $"jurnalul a fost înlocuit cu o copie mai veche: martorul anti-revenire indică Seq {wv.Seq}, jurnalul se oprește la Seq {seq}");
+        if (!contains(wv.Seq, wv.Hash)) return Broken(name, r.Entries, r.LegacyLines, wv.Seq, $"jurnalul nu mai conține intrarea Seq {wv.Seq} confirmată de martorul anti-revenire: rescris");
+        return r;
+    }
+
+    private ChainVerification VerifySealed(ChainVerification plain, Func<(long Seq, string Head)> headOf, Func<long, string, bool> contains, SealedHead? h, SealIntent? intent, string? lastPrevHash)
     {
         if (!IsSealed(out var key) || plain.Status == ChainStatus.Broken) return plain;
         var name = System.IO.Path.GetFileName(Path);
