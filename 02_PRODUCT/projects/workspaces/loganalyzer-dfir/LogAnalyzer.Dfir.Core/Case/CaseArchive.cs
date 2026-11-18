@@ -177,6 +177,8 @@ public static class CaseArchive
     private static FileStream OpenForArchive(string caseRoot, string file)
     {
         if (!IsSharedCaseLog(caseRoot, file)) return new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+        // the chain writers' turnstile (CI 2026-11-18: an appending instance kept this reader out for ~20 s); held only while opening
+        using var turn = HashChain.Turnstile.Enter(file);
         for (int attempt = 0; ; attempt++)
         {
             try { return new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.Read); }

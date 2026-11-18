@@ -1348,3 +1348,8 @@
   LADFIR_REQUIRE_CORPUS. Residuals: no transaction-log replay; Triggers blob not parsed; no correlation rule yet (TaskCache vs task XML,
   hidden-task finding) - next step. Suites: Dfir (Release) 3990 (3957 passed, 33 skipped), App 1114, UI 370 (1 skipped), Edition 45, exit 0.
   Next: correlation for TaskCache (task in cache without XML / Tree without SD -> finding), then RDP 1149 + SMB, PowerShell transcripts.
+- 2026-11-18 (claude, hg585) CI of 40c982d66: DFIR job failed on App test CaseArchiveTests.A_sealed_log_archived_while_another_instance_appends...
+  (sharing violation in CaseArchive.OpenForArchive: same reader starvation). Fix: OpenForArchive takes HashChain.Turnstile for shared case logs
+  (held only while opening). CaseArchiveTests 23/23 x3 under full CPU load; Dfir (Release) 3990 (3957 passed, 33 skipped), App 1114, exit 0.
+  Next: TaskCache correlation rules (worker): Tree without SD -> finding; task in cache without XML only when XML of the same station is in the
+  case (collection gaps, e.g. access-denied task files, must not become findings); PERSIST-TASK-CONFIG on TaskCache without duplicating XML.
