@@ -141,7 +141,7 @@ public sealed class HashChain(string path)
             var o = JsonNode.Parse(text)!.AsObject();
             return new SealedHead(o["seq"]!.GetValue<long>(), o["hash"]!.GetValue<string>(), o["mac"]!.GetValue<string>());
         }
-        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or NullReferenceException) { return new SealedHead(-1, "", ""); }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or NullReferenceException or ArgumentException) { return new SealedHead(-1, "", ""); }
     }
 
     private SealedHead? ReadSealedHead() => ParseHead(ReadHeadText());
@@ -187,7 +187,7 @@ public sealed class HashChain(string path)
             var o = JsonNode.Parse(text)!.AsObject();
             return new SealIntent(o["prevSeq"]!.GetValue<long>(), o["prevHash"]!.GetValue<string>(), o["seq"]!.GetValue<long>(), o["mac"]!.GetValue<string>());
         }
-        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or NullReferenceException) { return null; }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or NullReferenceException or ArgumentException) { return null; }
     }
 
     private void WriteIntent(byte[] key, long prevSeq, string prevHash, long seq, string hash)
@@ -227,7 +227,7 @@ public sealed class HashChain(string path)
     {
         if (line is null) return null;
         try { return (JsonNode.Parse(line) as JsonObject)?["prevHash"]?.GetValue<string>(); }
-        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { return null; }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or ArgumentException) { return null; }
     }
 
     /// <summary>
@@ -408,7 +408,7 @@ public sealed class HashChain(string path)
                 var o = (JsonNode.Parse(line) as JsonObject ?? throw new JsonException("linia nu este un obiect JSON"));
                 if (o["seq"] is { } s && s.GetValue<long>() == seq) return o["hash"] is { } h && string.Equals(h.GetValue<string>(), hash, StringComparison.Ordinal);
             }
-            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
+            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or ArgumentException) { }
         }
         return false;
     }
@@ -516,7 +516,7 @@ public sealed class HashChain(string path)
             var o = (JsonNode.Parse(last) as JsonObject ?? throw new JsonException("linia nu este un obiect JSON"));
             if (o["seq"] is { } s && o["hash"] is { } h) return (s.GetValue<long>(), h.GetValue<string>());
         }
-        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or ArgumentException) { }
         return (0, Genesis);
     }
 
@@ -577,7 +577,7 @@ public sealed class HashChain(string path)
                 var o = (JsonNode.Parse(last) as JsonObject ?? throw new JsonException("linia nu este un obiect JSON"));
                 if (o["seq"] is { } s && o["hash"] is { } h) return (s.GetValue<long>(), h.GetValue<string>());
             }
-            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
+            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or ArgumentException) { }
             return (0, Genesis);
         }
         return Verify(VerifyPlain(lines, exists), HeadOf, (seq, hash) => ContainsIn(lines, seq, hash), sealedHead, intent,

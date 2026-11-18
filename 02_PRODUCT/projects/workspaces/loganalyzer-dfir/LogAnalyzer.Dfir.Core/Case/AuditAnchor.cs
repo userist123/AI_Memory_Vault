@@ -174,8 +174,9 @@ public static class AuditAnchor
         {
             if (string.IsNullOrWhiteSpace(line)) continue;
             JsonObject? o = null;
-            try { o = JsonNode.Parse(line) as JsonObject; }
-            catch (JsonException) { }
+            // Count builds the property map: a duplicate key throws here (ArgumentException), not later in a caller (review 2026-11-18)
+            try { o = JsonNode.Parse(line) as JsonObject; _ = o?.Count; }
+            catch (Exception ex) when (ex is JsonException or ArgumentException) { o = null; }
             if (o is not null) yield return o;
         }
     }
@@ -194,7 +195,7 @@ public static class AuditAnchor
                 var o = JsonNode.Parse(line)?.AsObject();
                 if (o?["seq"] is { } s && o["hash"] is { } h) list.Add((s.GetValue<long>(), h.GetValue<string>()));
             }
-            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
+            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or ArgumentException) { }
         }
         return list;
     }

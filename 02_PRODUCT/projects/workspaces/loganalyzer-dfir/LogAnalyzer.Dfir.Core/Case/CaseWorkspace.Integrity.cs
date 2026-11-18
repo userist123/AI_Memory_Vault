@@ -251,7 +251,7 @@ public sealed partial class CaseWorkspace
                 var deps = trans.StartsWith(DependsPrefix, StringComparison.Ordinal) ? trans[DependsPrefix.Length..].Split(';', StringSplitOptions.RemoveEmptyEntries) : [];
                 latest[to] = new OutputRecord(to, o["sha256"]?.GetValue<string>() ?? "", 0, o["tool"]?.GetValue<string>() ?? "", o["toolVersion"]?.GetValue<string>() ?? "", deps);
             }
-            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException) { }
+            catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or ArgumentException) { }
         }
         return latest.Values.ToList();
     }

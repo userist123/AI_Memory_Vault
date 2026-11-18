@@ -89,8 +89,8 @@ public static class CustodyOverview
     private static CustodyRow Row(string line, int lineNo)
     {
         JsonObject o;
-        try { o = JsonNode.Parse(line) as JsonObject ?? throw new JsonException("nu este un obiect"); }
-        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException)
+        try { o = JsonNode.Parse(line) as JsonObject ?? throw new JsonException("nu este un obiect"); _ = o.Count; }   // Count: a duplicate key throws here (review 2026-11-18)
+        catch (Exception ex) when (ex is JsonException or InvalidOperationException or FormatException or ArgumentException)
         {
             return new CustodyRow(null, null, "—", "linie ilizibilă", "", "", "", "", "", $"linia {lineNo} din jurnal nu poate fi citită", true);
         }

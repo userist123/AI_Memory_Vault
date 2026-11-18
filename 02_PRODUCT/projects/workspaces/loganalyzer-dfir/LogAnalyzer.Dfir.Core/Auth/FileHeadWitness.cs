@@ -74,7 +74,8 @@ public sealed class FileHeadWitness : IHeadWitness
             var o = JsonNode.Parse(text) as JsonObject;
             if (o?["seq"] is { } s && o["hash"] is { } h && o["mac"] is { } m) return (s.GetValue<long>(), h.GetValue<string>(), m.GetValue<string>());
         }
-        catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidOperationException or FormatException) { }
+        // a duplicate key throws ArgumentException on lookup (review 2026-11-18): an invalid witness, never a crash of the verification
+        catch (Exception ex) when (ex is System.Text.Json.JsonException or InvalidOperationException or FormatException or ArgumentException) { }
         return (-1, "", "");   // present but unreadable: reported as an invalid witness (the MAC cannot match)
     }
 

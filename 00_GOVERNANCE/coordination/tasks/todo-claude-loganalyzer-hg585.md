@@ -1446,3 +1446,12 @@
   before the read (a growing log can pass 64 MB), case.json uncapped (CLI exit 2 on OOM/IO); each log read twice (CPU).
   Suites: Dfir (Release) 4063 (4030 passed, 33 skipped), App 1126, UI 370 (1 skipped), Edition 45, all exit 0.
   Next: read CI once; L1 fix (HashChain duplicate-key on Verify paths, Opus review); wiring MRU into USER-ACTIVITY-*. Lab: LAB-SRV01 still Saved.
+- 2026-11-18 (claude, hg585) CI of ee793b315 (SBOM) and f452eb91b (compare): all green (33/33). L1 DONE: duplicate JSON keys (parse ok, ArgumentException on
+  first lookup) no longer crash: HashChain (sealed head -> invalid seal, intent -> none, PrevHashOf, ContainsIn, HeadOf x2), FileHeadWitness (-> invalid
+  witness, Broken), AuditAnchor (Objects forces Count in the try; Entries), CaseWorkspace.Integrity, CustodyOverview.Row. Tests App.Tests
+  HashChainDuplicateKeyTests (7; 4+1 fail with the fix reverted). Opus review r1 REQUEST_CHANGES (FileHeadWitness MEDIUM + 3 LOW sites) -> fixed.
+  DEFENDER (owner): LogAnalyzer.Dfir.Tests.dll now quarantined on EVERY build (Ransom:Win32/Clop.SIB!MTB, ID 2147807749, signatures 1.463.359.0, since
+  23:12), even with the new test file moved out: the Dfir suite cannot run locally; CI runs it. New tests go to App.Tests until the owner decides.
+  MRU WIRING (in progress, uncommitted): OpenSaveMRU + LastVisitedMRU are user-activity sources (UserActivityAnalysis.IsSource, labels, time meaning
+  = key time only for the newest choice, detail with program/position/"nu dovedește citirea"), rules wording, UI time note; UserActivityContext
+  schema 1.1 (a 1.0 context restores only the 4 original sources). Tests App.Tests UserActivityDialogListTests (5). App 1138, UI 370, Edition 45 ok.
