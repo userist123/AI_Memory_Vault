@@ -15,7 +15,7 @@ public class Wp11ContractTests
         "SMB-ADMIN-SHARE", "SMB-SHARE-PERMS-CHANGED", "ACCOUNT-CREATED", "ACCOUNT-ADDED-PRIVILEGED-GROUP", "ACCOUNT-CREATED-THEN-USED",
         "REMOTE-RDP-INTERNAL", "RDP-SESSIONS", "REMOTE-WINRM", "REMOTE-PSEXEC", "REMOTE-SSH", "SECURITY-AGENT-STOPPED", "VSS-SNAPSHOT-DELETED",
         "DNS-RARE-DOMAIN", "DNS-SERVER-CHANGED", "REMOTE-TOOL-PRESENT", "REMOTE-TOOL-EXECUTED", "DISCOVERY-BURST",
-        "KERBEROAST-RC4", "ASREP-ROAST", "ADCS-SAN", "NTLM-RELAY-MACHINE", "EDR-WFP-BLOCK", "DEF-HISTORY-ONLY", "WSEARCH-GATHER-ONLY",
+        "KERBEROAST-RC4", "ASREP-ROAST", "ADCS-SAN", "NTLM-RELAY-MACHINE", "EDR-WFP-BLOCK", "DEF-HISTORY-ONLY", "WSEARCH-GATHER-ONLY", "SMB-SERVER-AUTH-FAIL", "SMB-CLIENT-SHARE-DENIED",
     ];
 
     /// <summary>A timeline in which every rule fires at least once.</summary>
@@ -58,6 +58,9 @@ public class Wp11ContractTests
         Row("WindowsSearch", 24, path: @"C:\LA\TEST-LA-gather-aste.txt", f: [("WorkId", "1811"), (Wp11Rules.SearchMomentField, "{SNAP-C}")]),
         Row("WindowsSearchGather", 24.1, path: @"C:\LA\TEST-LA-gather-aste.txt", f: [("DocumentID", "1811"), ("IsScopePattern", "nu"), (Wp11Rules.SearchMomentField, "{SNAP-C}")]),
         Row("WindowsSearchGather", 24.2, path: @"C:\LA\TEST-LA-gather-sters.txt", f: [("DocumentID", "1827"), ("IsScopePattern", "nu"), (Wp11Rules.SearchMomentField, "{SNAP-C}")]),
+        // SMB: ten sessions refused to one client address (real lab layout), one administrative share refused to this station
+        .. Enumerable.Range(0, 10).Select(i => Ev("Microsoft-Windows-SMBServer/Security", 551, 25 + i * 0.1, "Microsoft-Windows-SMBServer", ("Status", "0xc0000072"), ("ClientAddress", "0200D9010A0A0A0A0000000000000000"), ("ClientName", @"\\10.10.10.10"))),
+        Ev("Microsoft-Windows-SmbClient/Security", 31010, 26, "Microsoft-Windows-SMBClient", ("Status", "3221225506"), ("ShareName", @"\\10.10.10.32\C$")),
     ];
 
     private static List<Finding> Enriched() => FindingContract.Enrich(Correlation.Run(Everything())).ToList();
@@ -139,6 +142,7 @@ public class Wp11ContractTests
             ("Microsoft-Windows-DNS-Client/Operational", 3006), ("Microsoft-Windows-DNS-Client/Operational", 3008), ("Microsoft-Windows-DNS-Client/Operational", 3020),
             ("Microsoft-Windows-NetworkProfile/Operational", 10000),
             ("Microsoft-Windows-PowerShell/Operational", 4104),
+            ("Microsoft-Windows-SMBServer/Security", 551), ("Microsoft-Windows-SmbClient/Security", 31010),
         ];
         foreach (var (ch, id) in needed)
         {

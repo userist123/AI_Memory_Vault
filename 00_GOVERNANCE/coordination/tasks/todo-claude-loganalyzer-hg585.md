@@ -1366,3 +1366,15 @@
   Suites: Dfir (Release) 4011 (3978 passed, 33 skipped), App 1114, UI 370 (1 skipped), Edition 45 (last three before the final R2/R3 delta,
   which touches only Correlation.cs + its test).
   Next: RDP RemoteConnectionManager 1149 + SMB channels, then PowerShell transcripts, OpenSave/LastVisited MRU; SBOM; forked-case compare.
+- 2026-11-18 (claude, hg585) CI of 82a6fad58 green. RDP/SMB item: Explore inventory -> RDP 1149 ALREADY used (RDP-SESSIONS, REMOTE-RDP-INTERNAL);
+  missing: SMBServer/SmbClient Security channels, RdpCoreTS, RDPClient. Lab: WS02 has NO network adapter (isolated, workgroup) - loopback SMB
+  fails (1231). Temporary NIC on switch LA-Lab-Izolat (10.10.10.32), capture, NIC removed (verified) - WS02 back to isolated; File and Printer
+  Sharing firewall group was enabled on WS02 (left enabled; harmless without a NIC). Real events: WS02 SMBServer/Security 551 x3 (sockaddr
+  ClientAddress, Status 0xC000006D/0xC0000072, UserName empty), DC01 SmbClient/Security 31010 (\10.10.10.32\C$, 0xC0000022). Samples in
+  E:\LA-Lab\diag\smb (lab only). DONE: collect SMBServer/Security + SmbClient/Security (Collectors.cs, RemoteCollection.KnownArtifacts; absent
+  channel = gap); rules SMB-SERVER-AUTH-FAIL (551 bursts per decoded client IP, T1110, no account named, cross-ref CRED-BRUTEFORCE) and
+  SMB-CLIENT-SHARE-DENIED (31010 admin shares per server, Low; >= 5 servers in 3 h -> Medium T1135); ItemMeaning T1135. Review APPROVE;
+  main session fixed 3 notes (raw-hex grouping without the port, loopback alternative, "(nume declarat de client)" in titles) + tests.
+  No RDP 1149 / RdpCoreTS 131 / RDPClient samples exist in the lab (manual RDP test = owner item). Suites: Dfir (Release) 4025 (3992 passed,
+  33 skipped), App 1114, UI 370 (1 skipped), Edition 45, all exit 0.
+  Next: PowerShell transcripts, then OpenSave/LastVisited PIDL MRU; SBOM; forked-case compare. Lab: LAB-SRV01 still Saved.

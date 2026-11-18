@@ -56,6 +56,8 @@ public static class RemoteCollection
         "evtx:Microsoft-Windows-Sysmon/Operational", "evtx:Microsoft-Windows-TerminalServices-LocalSessionManager/Operational",
         // RDP-SESSIONS reads the RemoteConnectionManager channel, REMOTE-WINRM the WinRM one
         "evtx:Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational", "evtx:Microsoft-Windows-WinRM/Operational",
+        // SMB-SERVER-AUTH-FAIL reads SMBServer/Security 551, SMB-CLIENT-SHARE-DENIED reads SmbClient/Security 31010
+        "evtx:Microsoft-Windows-SMBServer/Security", "evtx:Microsoft-Windows-SmbClient/Security",
         "hive:SYSTEM", "hive:SOFTWARE", "prefetch", "tasks", "defender-history", "notepad-tabs", "remote-tool-logs", "search-index", NtfsMetadataArtifact,
         AmcacheArtifact, SetupApiArtifact, FirewallLogArtifact,
     ];

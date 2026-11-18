@@ -202,6 +202,7 @@ namespace LogAnalyzer.Core.Services.Details
             ["T1082"] = "aflarea informațiilor despre sistem",
             ["T1083"] = "căutarea fișierelor și folderelor",
             ["T1087"] = "listarea conturilor",
+            ["T1135"] = "căutarea partajărilor de rețea ale altor calculatoare",
             ["T1091"] = "răspândire prin suporturi amovibile (stick-uri)",
             ["T1095"] = "comunicare printr-un protocol de rețea nestandard",
             ["T1098"] = "modificarea unui cont pentru a păstra accesul",

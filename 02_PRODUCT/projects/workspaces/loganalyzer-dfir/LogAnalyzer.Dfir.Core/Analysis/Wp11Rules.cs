@@ -22,6 +22,7 @@ public static partial class Wp11Rules
         var c = new Ctx(events, existing, nextId, profile, data ?? Wp11Data.Default, options ?? new Wp11Options());
         var found = new List<Finding>();
         Smb(c, found);
+        SmbAuth(c, found);
         Accounts(c, found);
         Remote(c, found);
         Agents(c, found);
