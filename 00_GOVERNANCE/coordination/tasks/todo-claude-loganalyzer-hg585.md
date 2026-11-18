@@ -1416,3 +1416,18 @@
   assertions; the 19:40 build was flagged again yet the DLL stayed and ran. Host Defender untouched; an exclusion for the build folder is
   the owner's decision. Suites: Dfir (Release) 4063 (4030 passed, 33 skipped), App 1114, UI 370 (1 skipped), Edition 45, all exit 0.
   Next: SBOM (CycloneDX); forked-case compare; wiring MRU into USER-ACTIVITY-*. Lab: LAB-SRV01 still Saved.
+- 2026-11-18 (claude, hg585) CI for 53040b89d / f8439b5d6 read once: all green (LogAnalyzer DFIR Build & Package success).
+  PLANNER #8 ITEM 4 SBOM: CI already wrote a CycloneDX SBOM per edition, but with version 0.0.0, random serial/timestamp, QuestPDF without a
+  licence, and without the .NET runtime packs + single-file host shipped inside the self-contained exe. New eng/Sbom.psm1 + eng/New-EditionSbom.ps1
+  (tool pinned 6.3.1; --no-serial-number --include-license-text --runtime win-x64 -c Release; version = DfirInfo.ApplicationVersion; runtime packs
+  from msbuild ResolvedFrameworkReference/ResolvedRuntimePack (licence from .nuspec, hash .nupkg.sha512) + ResolvedSingleFileHostPack (SHA-256 of
+  singlefilehost.exe; licence copied from the NETCore runtime nuspec, labelled la:licenseSource); timestamp = commit time / SOURCE_DATE_EPOCH;
+  ordinal sort; refuses any component without licence or hash). Package gets <edition>.cdx.json + SHA256SUMS (sha256sum -c format), after the
+  smoke test. Offline self-test eng/tests/Test-Sbom.ps1 in build-test job. Verified locally: identical bytes on two runs (25 components Standalone,
+  26 Retea/Internet); temp publish + elevated self-test from a Program Files copy with SBOM + SHA256SUMS alongside: exit 0, native-libraries ok.
+  Doc HG585 SW-03 -> MEETS (QuestPDF dual licence = owner decision). Build-only ILLink.Tasks stays listed with scope "excluded".
+  SBOM review (Opus) r1 REQUEST_CHANGES minor: 1 MEDIUM (missing-pack refusal could never fire: required list came from the same filter) -> fixed:
+  every ResolvedFrameworkReference must be covered by a pack (Select-ShippedRuntimePacks, tested); LOW: host licence fallback now requires host
+  version == NETCore pack version; only the top-level SHA256SUMS excluded (deeper files of that name are listed, verified); ordinal sort for
+  SHA256SUMS; temp folder removed on failure; HG585 line 22 + SW-01 (-> PARTIAL: SHA256SUMS + native manifest, no Authenticode / unsigned sums).
+  Delta small and covered by Test-Sbom (27 checks) + a real run (46/46 sums match) -> no round 2 (main session decision). CI to read once.

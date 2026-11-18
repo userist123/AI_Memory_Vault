@@ -128,6 +128,11 @@ jobs:
       # ---- Release gate (contract section 22; owner decisions 7 and 8) -------------------------------------------------------
       # Pull requests and pushes to main: REPORT mode (prints the matrix, uploads it, never fails the build). A release tag or a
       # manual dispatch with enforce_gate: ENFORCE mode, which fails unless every item is PASS or WAIVED.
+      - name: SBOM module self-test
+        if: always()
+        shell: pwsh
+        run: ./eng/tests/Test-Sbom.ps1
+
       - name: Release gate self-test
         if: always()
         shell: pwsh
@@ -235,14 +240,13 @@ jobs:
           if (Test-Path $report) { Get-Content $report | ForEach-Object { Write-Host $_ } }
           if ($p.ExitCode -ne 0) { Write-Host "::error::self-test exited with $($p.ExitCode)"; exit 1 }
 
-      # Security audit #9: CycloneDX SBOM of the edition (packages from the lock files, project references followed), tool pinned in .config/dotnet-tools.json.
-      - name: SBOM (CycloneDX)
+      # Security audit #9 / accreditation SW-03: CycloneDX SBOM of the edition (tool pinned in .config/dotnet-tools.json): NuGet packages from the lock
+      # files plus the .NET runtime packs and single-file host inside the executable, each with licence and hash, version = DfirInfo.ApplicationVersion,
+      # reproducible (timestamp = commit time). Refused when a component lacks a licence or a hash. The SBOM and SHA256SUMS (every file) go into the
+      # package; written after the smoke test, which runs on a copy.
+      - name: SBOM (CycloneDX) and SHA256SUMS
         shell: pwsh
-        run: |
-          dotnet tool restore
-          if ($LASTEXITCODE -ne 0) { Write-Host "::error::dotnet tool restore a eșuat"; exit 1 }
-          dotnet tool run dotnet-CycloneDX ${{ matrix.project }} --recursive --output sbom --filename "$env:EDITION.cdx.json" --output-format Json --disable-package-restore --set-name "$env:EDITION"
-          if ($LASTEXITCODE -ne 0 -or -not (Test-Path "sbom/$env:EDITION.cdx.json")) { Write-Host "::error::SBOM-ul nu a fost generat"; exit 1 }
+        run: ./eng/New-EditionSbom.ps1 -Project '${{ matrix.project }}' -Edition $env:EDITION -OutputDirectory sbom -PackageDirectory "publish/$env:EDITION/win-x64"
 
       - name: Upload package
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
