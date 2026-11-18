@@ -1269,3 +1269,9 @@
   two-row header, status-bar history. Lab driver: new "scroll <percent>" verb (ScrollPattern) and Shot picks the largest window (a tooltip was shot);
   E:\LA-Lab\scripts\driver-ws02.ps1 (.bak kept). Suites: App 1114, UI 370 (369 + 1 skipped), all exit 0 (Dfir/Edition untouched by this step).
   Next: owner decides dark theme / header; planner #8 item 2 (HKLM anti-rollback witness). Owner items unchanged.
+- 2026-11-18 LAB LICENSING (owner asked to stop the hourly shutdown; an unofficial activation script was REFUSED): slmgr /dlv showed all four lab VMs
+  expired (0xC004F009 grace time expired) with 1 rearm left; slmgr /rearm + restart on each: LAB-DC01 and LAB-SRV01 (ServerDatacenterEval) are now
+  "Initial grace period"; LAB-WS01 and LAB-WS02 (EnterpriseEval) rebooted but stay in Notification mode (0xC004F009) - rearm does not restore an
+  expired client evaluation - so they keep shutting down hourly (wlms). Rearm count now 0 on all. Remaining legitimate options (owner): a new
+  Windows 11 Enterprise evaluation image for WS01/WS02 (reinstall + lab scenarios), or a licensed Windows (an Eval SKU cannot take a retail key:
+  reinstall), or keep lab runs under one hour.
