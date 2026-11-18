@@ -13,7 +13,7 @@ namespace LogAnalyzer.Dfir.Windows.Parsers;
 /// ShellBags (BagMRU), RecentDocs and the Office MRU lists. Hostile hives are the expected input: every walk is bounded (depth, nodes, entries),
 /// uses an explicit stack, and a corrupt structure is a reported gap, never an exception to the caller.
 /// </summary>
-internal static class UserActivity
+internal static partial class UserActivity
 {
     /// <summary>Deepest BagMRU nesting followed. Real profiles stay below about 30.</summary>
     internal const int MaxBagDepth = 48;

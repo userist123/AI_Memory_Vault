@@ -1403,3 +1403,16 @@
   ComDlg32 MRU (OpenSave/LastVisited/CIDSize) implemented by worker, NOT committed: review r1 CHANGES (key time on first RESOLVED entry instead
   of MRUListEx[0]; lab Windows-comparison test can pass with 0 matches; exe-name cap note; decode failures without gap; field Order vs
   MruPosition; one Guarded call for 3 keys). Next: new worker for those fixes, r2 review, commit. Wiring MRU into USER-ACTIVITY-* = later step.
+- 2026-11-18 (claude, hg585) ComDlg32 MRU DONE. Lab: notepad dialog via UIA refused (app not in front), but WS02 user hive already held real
+  OpenSavePidlMRU (* and pdf), LastVisitedPidlMRU and CIDSizeMRU from the app's own Save dialogs; hive saved to E:\LA-Lab\diag\mru (lab only).
+  New UserActivityParsers.ComDlg32.cs (NTUSER, Sources OpenSaveMRU / LastVisitedMRU / CIDSizeMRU; MruPosition 0-based + MruListed; key time
+  only for the value named by MRUListEx[0], else nobody + gap; PIDLs via existing ShellItems; bounds + gaps; three separate Guarded calls).
+  Lab test: 5/5 PIDLs equal to Windows SHGetPathFromIDListW (test asserts match == total). Reviews: r1 CHANGES (key time on first resolved
+  entry, lab test provable with 0 matches, exe-name cap, decode failures without gap, field names, one guard for 3 keys) -> new worker;
+  r2 APPROVE + 2 notes applied by main session (Limitations line: a damaged ComDlg32 subkey can hide the ones after it - RawRegistry
+  limitation; ResolutionNote test tightened). NOT wired into USER-ACTIVITY-* rules (changes counts/report/UI) - separate step.
+  DEFENDER (owner item): the ML model flags LogAnalyzer.Dfir.Tests.dll (Wacatac.B!ml, IDs 2147735505 / 2147735503) intermittently; bisect showed no
+  single pattern (removing any small block of the new tests drops it below the threshold); two name-limit tests merged with identical
+  assertions; the 19:40 build was flagged again yet the DLL stayed and ran. Host Defender untouched; an exclusion for the build folder is
+  the owner's decision. Suites: Dfir (Release) 4063 (4030 passed, 33 skipped), App 1114, UI 370 (1 skipped), Edition 45, all exit 0.
+  Next: SBOM (CycloneDX); forked-case compare; wiring MRU into USER-ACTIVITY-*. Lab: LAB-SRV01 still Saved.
