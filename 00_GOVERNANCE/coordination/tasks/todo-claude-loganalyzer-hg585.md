@@ -1378,3 +1378,19 @@
   No RDP 1149 / RdpCoreTS 131 / RDPClient samples exist in the lab (manual RDP test = owner item). Suites: Dfir (Release) 4025 (3992 passed,
   33 skipped), App 1114, UI 370 (1 skipped), Edition 45, all exit 0.
   Next: PowerShell transcripts, then OpenSave/LastVisited PIDL MRU; SBOM; forked-case compare. Lab: LAB-SRV01 still Saved.
+- 2026-11-18 (claude, hg585) CI of 97a268e5a green. PowerShell transcripts DONE. Lab WS02: transcription policy enabled temporarily (key was
+  absent -> removed again, verified "policy after: absent"); 2 real transcripts (with OutputDirectory + invocation header -> C:\LA\pstr\yyyyMMdd\;
+  without -> Documents ROOT); times local without zone; native output not transcribed; no PSReadLine history on the station (needs an
+  interactive console: not covered). Samples E:\LA-Lab\diag\pstr (lab only). New PowerShellTranscriptParser (session + per-command events,
+  output text NOT stored, only OutputLineCount; local time converted only with a known station zone; "PS>$global:?" skipped; interactive
+  "PS C:\path>" prompt and PS 7 header unseen -> lower confidence). Live collection (UserArtifactsCollector, full profile): Documents root +
+  yyyyMMdd subfolders + policy OutputDirectory (HKLM + running user's HKCU), links refused, UNC -> gap, caps reported. Remote: optional
+  artifact "ps-transcripts" under the personal-history checkbox (relabelled), dedupe of folders/files, links on the policy path refused,
+  limits reported, the collection script's own transcript excluded by PID + start time. Detector: PS-CMDLINE-SUSPICIOUS keyword logic shared
+  (AssessPsCommand, unchanged behaviour) + new PS-TRANSCRIPT-SUSPICIOUS ("comandă executată în sesiune", not "tastată"). Reviews: r1 CHANGES
+  (dedupe, links, silent limits, wording, self-transcript) -> new worker; r2 CHANGES F1 (the app DOES run powershell.exe: AuditCollector.ps1)
+  -> main session: such a transcript is LABELLED (alternative explanation, name can be imitated), never hidden or lowered; test claim fixed.
+  Accepted residuals: OutputDirectory "C:\" normalizes to "C:" remotely (F2); 20-line header read can read a newline-free file whole (F3);
+  Get-LinkOnPath treats access-denied as no link; redirected Documents (OneDrive) not covered; remote self-exclusion not run end to end.
+  Suites: Dfir (Release) 4048 (4015 passed, 33 skipped), App 1114, UI 370 (1 skipped), Edition 45, all exit 0.
+  Next: OpenSave/LastVisited PIDL MRU; SBOM (CycloneDX); forked-case compare. Lab: LAB-SRV01 still Saved.

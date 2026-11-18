@@ -117,7 +117,8 @@ public sealed class UserArtifactsCollectorTests : IDisposable
         int maxPerSid = UserArtifactsCollector.DefaultMaxInfoPerSid, int maxTotal = UserArtifactsCollector.DefaultMaxInfoTotal, IReadOnlyList<UserArtifactsCollector.RemoteToolFolder>? remoteFolders = null) =>
         // the system folders of the remote tools (ProgramData, Program Files) are never read from the real machine in a test: none unless the test gives them
         new(() => profiles ?? [new UserProfileEntry(Sid, _profile)], () => [_vol + Path.DirectorySeparatorChar], vss ?? FakeVss,
-            shadows ?? (() => new HashSet<string>()), readInfo, () => remoteFolders ?? [], maxProfiles, maxPerSid, maxTotal);
+            shadows ?? (() => new HashSet<string>()), readInfo, () => remoteFolders ?? [], maxProfiles, maxPerSid, maxTotal,
+            transcriptPolicyDirs: () => []);   // never the transcription policy of the real machine
 
     private CollectorOutcome Collect(UserArtifactsCollector c, bool elevated = true, CancellationToken ct = default) =>
         c.Collect(new CollectorContext { Case = _ws, IsElevated = elevated }, ct);
@@ -619,7 +620,7 @@ public sealed class UserArtifactsCollectorTests : IDisposable
             return new VssCopyResult(5, "esentutl.exe /y " + src + " /vss /d " + dest);
         }
         var ws2 = InvestigationPipeline.NewCase(Path.Combine(_dir, "cases2"), "e7-colectare-2", TestScopes.Valid());
-        var c2 = new UserArtifactsCollector(() => [new UserProfileEntry(Sid, _profile)], () => [_vol + Path.DirectorySeparatorChar], Bad, () => new HashSet<string>(), null, () => [], 200, 10_000, 20_000);
+        var c2 = new UserArtifactsCollector(() => [new UserProfileEntry(Sid, _profile)], () => [_vol + Path.DirectorySeparatorChar], Bad, () => new HashSet<string>(), null, () => [], 200, 10_000, 20_000, transcriptPolicyDirs: () => []);
         var o2 = c2.Collect(new CollectorContext { Case = ws2, IsElevated = true }, default);
         Assert.Contains(o2.Errors, e => e.Contains("ad.trace") && e.Contains("copia de umbră a eșuat") && e.Contains("cod 5"));
         Assert.DoesNotContain(o2.Evidence, e => e.SourceType == AnyDeskTraceParser.SourceTypeName);
@@ -677,7 +678,7 @@ public sealed class UserArtifactsCollectorTests : IDisposable
     public void An_unreadable_profile_list_is_a_gap_and_the_recycle_bin_is_still_collected()
     {
         Info(Sid, "AB12CD.docx", @"C:\Users\test\a.docx");
-        var c = new UserArtifactsCollector(() => throw new UnauthorizedAccessException("acces refuzat"), () => [_vol], FakeVss, () => new HashSet<string>());
+        var c = new UserArtifactsCollector(() => throw new UnauthorizedAccessException("acces refuzat"), () => [_vol], FakeVss, () => new HashSet<string>(), transcriptPolicyDirs: () => []);
         var o = Collect(c);
         Assert.Contains(o.Errors, e => e.StartsWith("Lista profilurilor (ProfileList) nu a putut fi citită"));
         Assert.Single(o.Evidence, e => e.SourceType == "recycle_info");

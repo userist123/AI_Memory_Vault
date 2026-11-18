@@ -99,6 +99,7 @@ public sealed class CoverageMatrix
         new("network_capture", "Captură de rețea (pcapng)", ["PcapngParser"], [], [], []),
         new("browser", "Istoric browser (Chromium, Firefox)", ["BrowserHistoryParser", "FirefoxHistoryParser"], [], [], []),
         new("tasks", "Sarcini programate", ["ScheduledTaskParser"], [], [], []),
+        new("ps_transcripts", "Transcrieri PowerShell", ["PowerShellTranscriptParser"], ["UserArtifactsCollector"], [], [], "există doar dacă transcrierea este pornită (politică sau Start-Transcript); colectată cu profilul complet"),
         new("live_state", "Starea live (procese, conexiuni, rulare automată)", [], ["LiveStateCollector"], ["live_snapshot"], [], "analizor propriu, fără parser"),
     ];
 

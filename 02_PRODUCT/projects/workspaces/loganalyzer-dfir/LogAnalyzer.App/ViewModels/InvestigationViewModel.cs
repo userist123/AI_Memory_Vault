@@ -253,7 +253,7 @@ namespace LogAnalyzer.UI.ViewModels
         public static string RemoteGeneratedStatus(string requestId, string host, string scriptFile, bool includeUserHives, bool includePersonalHistory = false) =>
             $"Cererea {requestId} autorizată pentru {host} și înregistrată în caz. " +
             (includeUserHives ? "Hive-urile utilizatorilor (NTUSER.DAT, UsrClass.dat) SUNT incluse în pachet (istoric personal). " : "Hive-urile utilizatorilor NU sunt incluse în pachet. ") +
-            (includePersonalHistory ? "Istoricul personal (SRUM, fișiere recente) ESTE inclus în pachet. " : "Istoricul personal (SRUM, fișiere recente) nu este inclus în pachet. ") +
+            (includePersonalHistory ? "Istoricul personal (SRUM, fișiere recente, transcrieri PowerShell) ESTE inclus în pachet. " : "Istoricul personal (SRUM, fișiere recente, transcrieri PowerShell) nu este inclus în pachet. ") +
             $"Rulați {scriptFile} ca administrator pe {host}; aduceți folderul LA_{host}_… înapoi și apăsați „Verifică și importă”.";
         [ObservableProperty] private string _remoteStatus = "Pachetul rulează pe stația țintă (local, fără rețea), calculează SHA-256 acolo; îl aduceți pe suport extern și îl verificați aici înainte de import.";
 

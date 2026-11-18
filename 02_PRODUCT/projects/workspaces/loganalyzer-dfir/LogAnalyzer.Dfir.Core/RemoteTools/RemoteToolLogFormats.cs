@@ -14,9 +14,12 @@ public static class RemoteToolLogFormats
     public const string TeamViewerConnections = "teamviewer_connections";
     public const string TeamViewerLogfile = "teamviewer_logfile";
     public const string RustDeskLog = "rustdesk_log";
+    /// <summary>A PowerShell transcript (PowerShell_transcript.HOST.random.yyyyMMddHHmmss.txt). Not a remote tool: it shares the rules of these logs (exact name AND content, local time without zone).</summary>
+    public const string PsTranscript = "ps_transcript";
     public const int HeadBytes = 8 * 1024;
 
     private static readonly TimeSpan Timeout = TimeSpan.FromMilliseconds(200);
+    private static readonly Regex PsTranscriptName = new(@"^powershell_transcript\.[^\/]{1,200}\.\d{14}\.txt$", RegexOptions.CultureInvariant, Timeout);
     internal static readonly Regex ConnectionTraceRow = new(@"^\s*(?<dir>Incoming|Outgoing)\s+(?<dt>\d{4}-\d{2}-\d{2},?\s+\d{2}:\d{2}(?::\d{2})?)(?<rest>.*)$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, Timeout);
     internal static readonly Regex TraceRow = new(@"^\s*(?<lvl>info|warning|warn|error|fatal|debug)\s+(?<d>\d{4}-\d{2}-\d{2})\s+(?<t>\d{2}:\d{2}:\d{2}(?:\.\d{1,7})?)\s+(?<proc>\S+)\s+(?<pid>\d+)\s+(?<tid>\d+)\s+(?<n>\d+)\s+(?<mod>\S+)\s+-\s+(?<msg>.*)$", RegexOptions.CultureInvariant | RegexOptions.IgnoreCase, Timeout);
     /// <summary>A row of the TeamViewer main log: "2024/08/04 13:59:37.493  5348  964 S0   message" (local time, pid, tid, label such as 0 / S0 / G2 / D3 / H64 with an optional "!" or "!!", message).</summary>
@@ -38,8 +41,15 @@ public static class RemoteToolLogFormats
         "connections_incoming.txt" or "connections.txt" => TeamViewerConnections,
         var n when IsTeamViewerLogName(n) => TeamViewerLogfile,
         var n when IsRustDeskLogName(n) => RustDeskLog,
+        var n when IsPsTranscriptName(n) => PsTranscript,
         _ => null,
     };
+
+    private static bool IsPsTranscriptName(string lowerName)
+    {
+        try { return PsTranscriptName.IsMatch(lowerName); }
+        catch (RegexMatchTimeoutException) { return false; }
+    }
 
     private static bool IsTeamViewerLogName(string lowerName)
     {
@@ -64,7 +74,7 @@ public static class RemoteToolLogFormats
         return stem + name[dot..];
     }
 
-    public static bool IsKnown(string type) => type is AnyDeskConnectionTrace or AnyDeskTrace or TeamViewerConnections or TeamViewerLogfile or RustDeskLog;
+    public static bool IsKnown(string type) => type is AnyDeskConnectionTrace or AnyDeskTrace or TeamViewerConnections or TeamViewerLogfile or RustDeskLog or PsTranscript;
 
     /// <summary>The format of the file (name and content), or null. Never throws on a file that cannot be read: null.</summary>
     public static string? Detect(string path)
@@ -88,6 +98,7 @@ public static class RemoteToolLogFormats
             var lines = text.Split('\n');
             // the last line may be cut by the 8 KiB window
             int count = lines.Length > 1 && n == HeadBytes ? lines.Length - 1 : lines.Length;
+            if (kind == PsTranscript) return LogAnalyzer.Dfir.Scripting.PowerShellTranscriptParser.HeadLooksLikeTranscript(lines.Take(count).ToList()) ? kind : null;
             for (int i = 0; i < count; i++)
             {
                 var l = lines[i].TrimEnd('\r').TrimStart('\uFEFF');

@@ -951,16 +951,8 @@ public static class Correlation
         var cmdLines = new List<(int Score, DateTimeOffset? First, EvidenceRef FirstRef, Func<string, Finding> Make)>();
         foreach (var g in hostApps)
         {
-            var decoded = DecodedCommand(g.Key);
-            var hay = decoded.Length > 0 ? g.Key + " " + decoded : g.Key;
-            var hitKw = psCfg.Keywords.Where(k => k.Text.Length > 0 && hay.Contains(k.Text, StringComparison.OrdinalIgnoreCase)).ToList();
-            var labels = hitKw.OrderByDescending(k => k.Weight).Select(k => k.Text.Trim()).ToList();
-            int score = hitKw.Sum(k => k.Weight), indicators = hitKw.Count;
-            if (decoded.Length > 0 && !hitKw.Any(k => k.Text.Contains("enc", StringComparison.OrdinalIgnoreCase)))
-            {
-                indicators++; score += 2; labels.Add("comandă codificată");
-            }
-            if (indicators < 2 && score < psCfg.MinScore) continue;
+            var (decoded, hitKw, labels, score, suspicious) = AssessPsCommand(g.Key, psCfg);
+            if (!suspicious) continue;
             var runs = g.Select(x => x.e).OrderBy(e => e.Time.Utc).ToList();
             var high = hitKw.Any(k => k.High) || score >= psCfg.HighScore;
             var mitre = decoded.Length > 0 ? "T1027" : hitKw.OrderByDescending(k => k.Weight).Select(k => k.Mitre).FirstOrDefault(m => m.Length > 0) ?? "T1059.001";
@@ -996,6 +988,56 @@ public static class Correlation
                 Description = "Raportul listează primele 100 de linii de comandă după scor; restul sunt în cronologie (evenimente 400 din jurnalul Windows PowerShell).",
                 ClassificationReason = "Limită de afișare, nu o concluzie.",
                 SupportingEvidence = cmdOrdered.Skip(100).Take(20).Select(x => x.FirstRef).ToList(),
+            });
+
+        // 7c. The same assessment (AssessPsCommand: same keyword list, weights and threshold as 7a) on the commands of a PowerShell transcript: one finding per typed
+        // command; it cites the transcript file and the command's start time. Direct: the command text IS in the file; the keyword match itself is an indication.
+        var trCmds = new List<(int Score, DateTimeOffset? First, EvidenceRef FirstRef, Func<string, Finding> Make)>();
+        foreach (var e in events.Where(e => e.Source == "PowerShellTranscript" && e.EventId == "Command"))
+        {
+            var text = F(e, "Command");
+            if (text.Length == 0) continue;
+            var (decoded, hitKw, labels, score, suspicious) = AssessPsCommand(text, psCfg);
+            if (!suspicious) continue;
+            var high = hitKw.Any(k => k.High) || score >= psCfg.HighScore;
+            var mitre = decoded.Length > 0 ? "T1027" : hitKw.OrderByDescending(k => k.Weight).Select(k => k.Mitre).FirstOrDefault(m => m.Length > 0) ?? "T1059.001";
+            var shown = Visible(Trunc(text, 300));
+            var shownDecoded = Visible(Trunc(decoded, 300));
+            var file = F(e, "Source File");
+            var when = F(e, "Local Time") is { Length: > 0 } lt ? $"ora locală {lt}" + (F(e, "Command Time Source").StartsWith("Command start time", StringComparison.Ordinal) ? "" : " (ora de început a sesiunii)") : "ora nu se cunoaște";
+            trCmds.Add((score, e.Time.Utc, Ref(e, $"Transcriere PowerShell {file}, rândul {F(e, "Line")}"), id => new Finding
+            {
+                FindingId = id, RuleId = "PS-TRANSCRIPT-SUSPICIOUS",
+                Title = $"Comandă PowerShell suspectă într-o transcriere: {string.Join(", ", labels.Take(4))}",
+                Severity = high ? Severity.High : Severity.Medium, Category = "Execution",
+                Classification = Classification.Direct, Confidence = e.Confidence, MitreTechniqueId = mitre,
+                FirstSeenUtc = e.Time.Utc, LastSeenUtc = e.Time.Utc, Host = e.Host, User = e.User,
+                PlainWhat = $"în transcrierea unei sesiuni PowerShell apare o comandă care conține: {string.Join(", ", labels.Take(3))}" + (decoded.Length > 0 ? $"; comanda codificată face: {PlainPhrases.Cut(shownDecoded, 160)}" : ""),
+                Description = $"Ce s-a întâmplat: fișierul de transcriere {Visible(file)} conține o comandă executată în sesiune ({when}): {shown}." +
+                              (shownDecoded.Length > 0 ? $" Comanda codificată, decodată: {shownDecoded}." : "") +
+                              " De ce contează: aceste elemente apar în atacuri, dar și în scripturi de administrare. Ce verificați: contul din antet, scopul comenzii și rezultatul ei (ieșirea nu este păstrată de aplicație; se citește în fișierul brut).",
+                ClassificationReason = $"Comanda este în fișierul de transcriere (Direct); potrivirea cu cuvinte-cheie ponderate (scor {score}) este o indicație, nu o dovadă de intenție. Transcrierea arată ce comandă s-a executat în sesiune (tastată în consolă sau primită de la un program, de exemplu prin -Command), nu cine a lansat-o.",
+                SupportingEvidence = [Ref(e, $"Transcriere PowerShell {file}, rândul {F(e, "Line")}")],
+                // review round 2: LogAnalyzer's own audit collector runs powershell.exe (AuditCollector.ps1); with transcription on, its session is transcribed too.
+                // Labelled, never hidden or lowered: the script name in the launch line can be imitated.
+                AlternativeExplanations = F(e, "Host Application").Contains("AuditCollector.ps1", StringComparison.OrdinalIgnoreCase)
+                    ? ["Linia de lansare a sesiunii conține AuditCollector.ps1, scriptul de colectare al LogAnalyzer: poate fi chiar sesiunea instrumentului. Numele poate fi imitat; verificați calea scriptului față de folderul de instalare al aplicației.",
+                       "Script de administrare sau de instalare rulat de un administrator."]
+                    : ["Script de administrare sau de instalare rulat de un administrator."],
+                RecommendedNextSteps = ["Citiți fișierul de transcriere brut (ieșirea comenzii) și verificați contul și scopul comenzii."],
+            }));
+        }
+        var trOrdered = trCmds.OrderByDescending(x => x.Score).ThenBy(x => x.First).ToList();
+        foreach (var (_, _, _, make) in trOrdered.Take(100)) f.Add(make(Id()));
+        if (trCmds.Count > 100)
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "PS-TRANSCRIPT-SUSPICIOUS", Title = $"Alte {trCmds.Count - 100} comenzi PowerShell suspecte din transcrieri nu au fost listate individual",
+                Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "T1059.001",
+                PlainWhat = $"Mai multe comenzi PowerShell suspecte din transcrieri ({trCmds.Count - 100}, peste cele 100 afișate) nu au fost listate individual; ele se găsesc în cronologie",
+                Description = "Raportul listează primele 100 de comenzi după scor; restul sunt în cronologie (evenimente PowerShellTranscript).",
+                ClassificationReason = "Limită de afișare, nu o concluzie.",
+                SupportingEvidence = trOrdered.Skip(100).Take(20).Select(x => x.FirstRef).ToList(),
             });
 
         // 7b. WP11 Tier 1: SMB shares, account lifecycle, remote administration, security agents, snapshot deletion, DNS, remote-access tools.
@@ -1294,6 +1336,24 @@ public static class Correlation
         if (p.StartsWith("\\VOLUME{", StringComparison.OrdinalIgnoreCase)) { var i = p.IndexOf('}'); if (i > 0) p = p[(i + 1)..]; }
         else if (p.Length > 2 && p[1] == ':') p = p[2..];
         return p.ToUpperInvariant();
+    }
+
+    /// <summary>
+    /// The keyword assessment of one PowerShell command line (the same list, weights and threshold for the 400 HostApplication and for the commands of a transcript):
+    /// keywords found in the text and in its decoded -EncodedCommand, score, and whether it passes the threshold (two indicators, or the minimum score).
+    /// </summary>
+    private static (string Decoded, List<PowerShellKeyword> HitKw, List<string> Labels, int Score, bool Suspicious) AssessPsCommand(string commandLine, PowerShellLists psCfg)
+    {
+        var decoded = DecodedCommand(commandLine);
+        var hay = decoded.Length > 0 ? commandLine + " " + decoded : commandLine;
+        var hitKw = psCfg.Keywords.Where(k => k.Text.Length > 0 && hay.Contains(k.Text, StringComparison.OrdinalIgnoreCase)).ToList();
+        var labels = hitKw.OrderByDescending(k => k.Weight).Select(k => k.Text.Trim()).ToList();
+        int score = hitKw.Sum(k => k.Weight), indicators = hitKw.Count;
+        if (decoded.Length > 0 && !hitKw.Any(k => k.Text.Contains("enc", StringComparison.OrdinalIgnoreCase)))
+        {
+            indicators++; score += 2; labels.Add("comandă codificată");
+        }
+        return (decoded, hitKw, labels, score, indicators >= 2 || score >= psCfg.MinScore);
     }
 
     /// <summary>The "HostApplication=" line of a classic PowerShell 400/600 event (the third data string is a block of "Name=Value" lines).</summary>

@@ -791,7 +791,7 @@ public sealed class RemoteCollectionTests : IDisposable
         var (req, _) = RemoteCollection.Authorize(ws, "PC01", "op", "j", [RemoteCollection.UserHivesArtifact]);
         Assert.Equal(["user-hives"], req.Artifacts);
         Assert.DoesNotContain("user-hives", RemoteCollection.KnownArtifacts);
-        Assert.Equal(["user-hives", "srum", "recent-items"], RemoteCollection.OptionalArtifacts);
+        Assert.Equal(["user-hives", "srum", "recent-items", "ps-transcripts"], RemoteCollection.OptionalArtifacts);
         Assert.DoesNotContain("user-hives", RemoteCollection.ArtifactsFor(false));
         Assert.Equal([.. RemoteCollection.KnownArtifacts, "user-hives"], RemoteCollection.ArtifactsFor(true));
         // a request edited to carry an unknown artifact still cannot generate a package
@@ -1116,7 +1116,7 @@ public sealed class RemoteCollectionTests : IDisposable
         var ws = NewCase();
         foreach (var a in new[] { "evtx:Microsoft-Windows-TerminalServices-RemoteConnectionManager/Operational", "evtx:Microsoft-Windows-WinRM/Operational", "amcache", "setupapi", "firewall-log" })
             Assert.Contains(a, RemoteCollection.KnownArtifacts);
-        foreach (var a in new[] { "srum", "recent-items" })
+        foreach (var a in new[] { "srum", "recent-items", "ps-transcripts" })
         {
             Assert.DoesNotContain(a, RemoteCollection.KnownArtifacts);
             Assert.DoesNotContain(a, RemoteCollection.ArtifactsFor(false));
@@ -1124,8 +1124,8 @@ public sealed class RemoteCollectionTests : IDisposable
             Assert.Contains(a, RemoteCollection.ArtifactsFor(false, true));
             Assert.Contains(a, RemoteCollection.OptionalArtifacts);
         }
-        Assert.Equal([.. RemoteCollection.KnownArtifacts, "srum", "recent-items"], RemoteCollection.ArtifactsFor(false, true));
-        Assert.Equal([.. RemoteCollection.KnownArtifacts, "user-hives", "srum", "recent-items"], RemoteCollection.ArtifactsFor(true, true));
+        Assert.Equal([.. RemoteCollection.KnownArtifacts, "srum", "recent-items", "ps-transcripts"], RemoteCollection.ArtifactsFor(false, true));
+        Assert.Equal([.. RemoteCollection.KnownArtifacts, "user-hives", "srum", "recent-items", "ps-transcripts"], RemoteCollection.ArtifactsFor(true, true));
         var (req, _) = RemoteCollection.Authorize(ws, "PC01", "op", "j", ["srum", "recent-items", "amcache"]);
         Assert.Equal(["srum", "recent-items", "amcache"], req.Artifacts);
         Assert.Throws<ArgumentException>(() => RemoteCollection.Authorize(ws, "PC01", "op", "j", ["srum-all"]));
@@ -1210,6 +1210,46 @@ public sealed class RemoteCollectionTests : IDisposable
         var step = RunNew(fake, "recent-items").Manifest!.Steps.Single();
         Assert.Equal("absent", step.Status);
         Assert.Contains("nu există fișiere recente", step.Error);
+    }
+
+    [Fact]
+    public void The_transcript_step_reads_each_folder_and_file_once_refuses_links_on_the_policy_path_reports_every_limit_and_leaves_out_its_own_session()
+    {
+        var script = RemoteCollection.PackageScript(RemoteCollection.Authorize(NewCase(), "PC01", "op", "j", ["ps-transcripts"]).Item1, new string('A', 64));
+        var branch = script[script.IndexOf("$a -eq 'ps-transcripts'", StringComparison.Ordinal)..];
+        // each folder once (normalised full path, a folder inside a walked policy folder dropped) and each file once
+        Assert.Contains("$seenDirs", branch); Assert.Contains("$walkRoots", branch); Assert.Contains("$seenFiles", branch); Assert.Contains("Get-NormPath", branch);
+        // every component of the policy path is checked for a reparse point
+        Assert.Contains("Get-LinkOnPath", branch);
+        Assert.Contains("director de transcriere printr-o legătură (junction/symlink), necolectat", branch);
+        // every limit is reported with its folder
+        foreach (var limit in new[] { "limita de adâncime (8 niveluri)", "limita de 2000 de foldere parcurse", "limita de 400 de subfoldere de dată", "limita de 2000 de fișiere pe folder", "profiluri peste limita de 200" })
+            Assert.Contains(limit, branch);
+        // the own session: this process id and start time, the header read on 20 lines only
+        Assert.Contains("[int]$PID", branch); Assert.Contains("GetCurrentProcess().StartTime", branch); Assert.Contains("-lt 20", branch);
+        Assert.Contains("transcrierea propriei sesiuni de colectare, exclusă", branch);
+        Assert.DoesNotContain("Invoke-Expression", branch);
+    }
+
+    [Fact]
+    public void The_transcript_step_collects_documents_and_date_folders_once_and_counts_a_link_on_the_way()
+    {
+        var fake = FakeStation("station-pstr", true);
+        var ana = Path.Combine(fake, "Users", "ana", "Documents");
+        Put(Path.Combine(ana, "PowerShell_transcript.LAB.aaaa1111.20261118100000.txt"), [1, 2, 3]);
+        Put(Path.Combine(ana, "20261118", "PowerShell_transcript.LAB.bbbb2222.20261118110000.txt"), [4, 5, 6]);
+        Put(Path.Combine(ana, "notes.txt"), [7]);
+        var elsewhere = Path.Combine(_root, "elsewhere-pstr");
+        Put(Path.Combine(elsewhere, "PowerShell_transcript.LAB.cccc3333.20261118120000.txt"), [8, 9]);
+        Directory.CreateDirectory(Path.Combine(fake, "Users", "bob"));
+        Assert.True(MakeJunction(Path.Combine(fake, "Users", "bob", "Documents"), elsewhere), "a junction could not be created; this test needs one");
+        try
+        {
+            var step = RunNew(fake, "ps-transcripts").Manifest!.Steps.Single();
+            Assert.Contains("transcrieri copiate: 2", step.Error);
+            Assert.Contains("legături neurmate: 1", step.Error);
+        }
+        finally { Directory.Delete(Path.Combine(fake, "Users", "bob", "Documents")); }
     }
 
     [Fact]

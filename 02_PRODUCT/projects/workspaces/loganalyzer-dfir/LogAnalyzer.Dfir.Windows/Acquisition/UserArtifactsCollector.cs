@@ -47,6 +47,7 @@ public sealed class UserArtifactsCollector : ICollector
     private readonly Func<IReadOnlySet<string>?> _shadowIds;
     private readonly Func<string, byte[]> _readInfo;
     private readonly Func<IReadOnlyList<RemoteToolFolder>> _remoteToolFolders;
+    private readonly Func<IReadOnlyList<string>> _transcriptDirs;
     private readonly int _maxProfiles, _maxInfoPerSid, _maxInfoTotal;
 
     /// <param name="profiles">ProfileList rows (tests); by default read from the registry.</param>
@@ -54,11 +55,14 @@ public sealed class UserArtifactsCollector : ICollector
     /// <param name="vssCopy">(source, destination, log folder, label, ct) → result (tests); by default esentutl /vss through <see cref="ToolRunner"/>.</param>
     /// <param name="shadowIds">Ids of the shadow copies that exist now, null when they cannot be listed (tests); by default <see cref="ShadowCopies.List"/>.</param>
     /// <param name="remoteToolFolders">System-level folders of the remote-tool session logs (tests); by default ProgramData\AnyDesk and Program Files\TeamViewer.</param>
+    /// <param name="transcriptPolicyDirs">OutputDirectory values of the PowerShell transcription policy, not yet expanded (tests); by default HKLM and the HKCU of the running user.</param>
     /// <param name="readInfo">Reads one $I file (tests); by default a shared read of at most <see cref="RecycleBinInfoParser.MaxInfoFileBytes"/> + 1 bytes.</param>
     public UserArtifactsCollector(Func<IReadOnlyList<UserProfileEntry>>? profiles = null, Func<IReadOnlyList<string>>? fixedVolumes = null,
         Func<string, string, string, string, CancellationToken, VssCopyResult>? vssCopy = null, Func<IReadOnlySet<string>?>? shadowIds = null,
-        Func<string, byte[]>? readInfo = null, Func<IReadOnlyList<RemoteToolFolder>>? remoteToolFolders = null, int maxProfiles = DefaultMaxProfiles, int maxInfoPerSid = DefaultMaxInfoPerSid, int maxInfoTotal = DefaultMaxInfoTotal)
+        Func<string, byte[]>? readInfo = null, Func<IReadOnlyList<RemoteToolFolder>>? remoteToolFolders = null, int maxProfiles = DefaultMaxProfiles, int maxInfoPerSid = DefaultMaxInfoPerSid, int maxInfoTotal = DefaultMaxInfoTotal,
+        Func<IReadOnlyList<string>>? transcriptPolicyDirs = null)
     {
+        _transcriptDirs = transcriptPolicyDirs ?? ReadTranscriptPolicyDirs;
         _profiles = profiles ?? ReadProfileList;
         _fixedVolumes = fixedVolumes ?? FixedVolumeRoots;
         _vssCopy = vssCopy ?? EsentutlVssCopy;
@@ -88,7 +92,7 @@ public sealed class UserArtifactsCollector : ICollector
         {
             CollectHives(ctx, o, vssUsed, ct);
             CollectRecycleBin(ctx, o, ct);
-            CollectRemoteToolLogs(ctx, o, vssUsed, ct);
+            CollectRemoteToolLogs(ctx, o, vssUsed, ct, includeTranscripts: true);
         }
         finally
         {
@@ -308,8 +312,106 @@ public sealed class UserArtifactsCollector : ICollector
         RemoteToolLogFormats.AnyDeskConnectionTrace => AnyDeskConnectionTraceParser.MaxFileBytes,
         RemoteToolLogFormats.TeamViewerLogfile => TeamViewerLogfileParser.MaxFileBytes,
         RemoteToolLogFormats.RustDeskLog => RustDeskLogParser.MaxFileBytes,
+        RemoteToolLogFormats.PsTranscript => LogAnalyzer.Dfir.Scripting.PowerShellTranscriptParser.MaxFileBytes,
         _ => TeamViewerConnectionsParser.MaxFileBytes,
     };
+
+    // ---- PowerShell transcripts ----
+
+    /// <summary>The tool name of the transcript folders in the work list of <see cref="CollectRemoteToolLogs"/>.</summary>
+    internal const string TranscriptTool = "PowerShell";
+    private const string TranscriptPolicySubKey = @"Software\Policies\Microsoft\Windows\PowerShell\Transcription";
+    /// <summary>Most transcript entries listed per folder, most yyyyMMdd sub-folders of one Documents, most folders and levels walked under the policy directory.</summary>
+    public const int MaxTranscriptEntriesPerFolder = 2_000, MaxTranscriptDateFolders = 400, MaxTranscriptPolicyFolders = 2_000, MaxTranscriptPolicyDepth = 8;
+    private static readonly Regex DateFolder = new(@"^\d{8}$", RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(100));
+
+    /// <summary>OutputDirectory of the transcription policy: HKLM, then the HKCU of the running user (other users' hives are not loaded here). Raw values, may hold %VARIABLES%.</summary>
+    private static IReadOnlyList<string> ReadTranscriptPolicyDirs()
+    {
+        var list = new List<string>();
+        foreach (var root in new[] { Registry.LocalMachine, Registry.CurrentUser })
+        {
+            try
+            {
+                using var key = root.OpenSubKey(TranscriptPolicySubKey);
+                if (key?.GetValue("OutputDirectory", null, RegistryValueOptions.DoNotExpandEnvironmentNames) is string v && v.Trim().Length > 0) list.Add(v.Trim());
+            }
+            catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException) { }
+        }
+        return list;
+    }
+
+    /// <summary>Documents (the root, where Windows PowerShell writes by default) and its yyyyMMdd sub-folders (depth 1) of a profile.</summary>
+    internal static IEnumerable<RemoteToolFolder> TranscriptFoldersOfProfile(string scope, string profilePath, CollectorOutcome? o = null)
+    {
+        var docs = Path.Combine(profilePath, "Documents");
+        yield return new(scope, TranscriptTool, docs, [], "Documents");
+        List<string> subs;
+        try { subs = Directory.Exists(docs) ? Directory.EnumerateDirectories(docs).Where(d => DateFolder.IsMatch(Path.GetFileName(d))).Take(MaxTranscriptDateFolders + 1).ToList() : []; }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { subs = []; }
+        if (subs.Count > MaxTranscriptDateFolders)
+        {
+            o?.Errors.Add($"Transcrieri PowerShell: folderul {Shorten(docs)} are peste {MaxTranscriptDateFolders} de subfoldere cu nume de dată (limita de subfoldere de dată); cele de peste limită nu au fost colectate.");
+            subs = subs.Take(MaxTranscriptDateFolders).ToList();
+        }
+        foreach (var d in subs) yield return new(scope, TranscriptTool, d, [], Path.Combine("Documents", Path.GetFileName(d)));
+    }
+
+    /// <summary>
+    /// The folders of the policy OutputDirectory values, walked recursively (bounded). A network (UNC) directory is not followed and is reported; a value that is not an absolute
+    /// local path is reported too.
+    /// </summary>
+    private List<RemoteToolFolder> TranscriptPolicyFolders(CollectorOutcome o)
+    {
+        var result = new List<RemoteToolFolder>();
+        IReadOnlyList<string> raw;
+        try { raw = _transcriptDirs(); }
+        catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+        { o.Errors.Add("Transcrieri PowerShell: directorul din politică nu a putut fi citit (" + ex.Message + ")."); return result; }
+        int scopeNo = 0;
+        foreach (var value in raw.Distinct(StringComparer.OrdinalIgnoreCase))
+        {
+            scopeNo++;
+            var dir = Environment.ExpandEnvironmentVariables(value);
+            if (dir.StartsWith(@"\\", StringComparison.Ordinal) || dir.StartsWith("//", StringComparison.Ordinal))
+            {
+                o.Errors.Add($"Transcrieri PowerShell: director de transcriere în rețea, necolectat ({Shorten(dir)}).");
+                continue;
+            }
+            if (!Path.IsPathFullyQualified(dir) || dir.Contains('%'))
+            {
+                o.Errors.Add($"Transcrieri PowerShell: directorul din politică ({Shorten(dir)}) nu este o cale locală completă; necolectat.");
+                continue;
+            }
+            var scope = "PolicyDir" + (scopeNo > 1 ? scopeNo.ToString(CultureInfo.InvariantCulture) : "");
+            int before = result.Count;
+            bool depthCut = false, childrenCut = false;
+            var queue = new Queue<(string Dir, string Rel, int Depth)>();
+            queue.Enqueue((dir, "Output", 0));
+            while (queue.Count > 0 && result.Count - before < MaxTranscriptPolicyFolders)
+            {
+                var (d, rel, depth) = queue.Dequeue();
+                result.Add(new(scope, TranscriptTool, d, [], rel));
+                try
+                {
+                    int seen = 0;
+                    foreach (var child in Directory.EnumerateDirectories(d))
+                    {
+                        if (++seen > MaxTranscriptPolicyFolders) { childrenCut = true; break; }
+                        // a link is not walked
+                        try { if ((File.GetAttributes(child) & FileAttributes.ReparsePoint) != 0) continue; } catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { continue; }
+                        if (depth >= MaxTranscriptPolicyDepth) { depthCut = true; break; }
+                        queue.Enqueue((child, Path.Combine(rel, CaseWorkspaceSafe(Path.GetFileName(child))), depth + 1));
+                    }
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
+            }
+            if (queue.Count > 0) o.Errors.Add($"Transcrieri PowerShell: directorul {Shorten(dir)} are peste {MaxTranscriptPolicyFolders} de foldere (limita de foldere parcurse); restul nu au fost parcurse.");
+            if (depthCut) o.Errors.Add($"Transcrieri PowerShell: directorul {Shorten(dir)} are subfoldere sub nivelul {MaxTranscriptPolicyDepth} (limita de adâncime); acestea nu au fost parcurse.");
+            if (childrenCut) o.Errors.Add($"Transcrieri PowerShell: un folder din {Shorten(dir)} are peste {MaxTranscriptPolicyFolders} de subfoldere (limita de foldere parcurse); cele de peste limită nu au fost parcurse.");
+        }
+        return result;
+    }
 
     /// <summary>Most TeamViewer log files kept per folder (TeamViewer15_Logfile.log, TeamViewer15_Logfile_OLD.log, other versions side by side).</summary>
     public const int MaxTeamViewerLogfilesPerFolder = 16;
@@ -365,9 +467,28 @@ public sealed class UserArtifactsCollector : ICollector
     }
 
     /// <summary>The fixed names of the folder plus, for TeamViewer, the main logs <c>TeamViewer&lt;NN&gt;_Logfile[_OLD].log</c> found in it (the version number is part of the name).</summary>
-    private static IEnumerable<string> WithPatternLogs(RemoteToolFolder w)
+    private static IEnumerable<string> WithPatternLogs(RemoteToolFolder w, CollectorOutcome? o = null)
     {
         var names = new List<string>(w.Files);
+        if (w.Tool.Equals(TranscriptTool, StringComparison.Ordinal))
+        {
+            try
+            {
+                int seen = 0;
+                foreach (var path in Directory.EnumerateFiles(w.Folder, "PowerShell_transcript*.txt"))
+                {
+                    if (++seen > MaxTranscriptEntriesPerFolder)
+                    {
+                        o?.Errors.Add($"Transcrieri PowerShell: folderul {Shorten(w.Folder)} are peste {MaxTranscriptEntriesPerFolder} de fișiere de transcriere (limita de fișiere pe folder); restul nu au fost colectate.");
+                        break;
+                    }
+                    var n = Path.GetFileName(path);
+                    if (RemoteToolLogFormats.ByName(n) == RemoteToolLogFormats.PsTranscript) names.Add(n);
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }   // the per-file steps report what they cannot read
+            return names;
+        }
         if (w.Tool.Equals("RustDesk", StringComparison.Ordinal)) { names.AddRange(RustDeskLogsOf(w.Folder)); return names; }
         if (!w.Tool.Equals("TeamViewer", StringComparison.Ordinal)) return names;
         try
@@ -410,10 +531,11 @@ public sealed class UserArtifactsCollector : ICollector
     /// no component of the path may be a reparse point; a file over the parser's size cap, an empty file and a file that grew during the copy are not taken (a partial copy is
     /// deleted); a locked file falls back to the shadow copy only on a sharing violation; every error goes in the step's note.
     /// </summary>
-    private void CollectRemoteToolLogs(CollectorContext ctx, CollectorOutcome o, System.Runtime.CompilerServices.StrongBox<bool> vssUsed, CancellationToken ct, bool reportUnsafeProfiles = false)
+    private void CollectRemoteToolLogs(CollectorContext ctx, CollectorOutcome o, System.Runtime.CompilerServices.StrongBox<bool> vssUsed, CancellationToken ct, bool reportUnsafeProfiles = false, bool includeTranscripts = false)
     {
         var logDir = Path.Combine(ctx.Case.Root, "Logs", "tools");
         var work = new List<RemoteToolFolder>();
+        var transcriptWork = new List<RemoteToolFolder>();
         try
         {
             int taken = 0;
@@ -429,11 +551,14 @@ public sealed class UserArtifactsCollector : ICollector
                 if (++taken > _maxProfiles) break;
                 foreach (var (tool, rel, files, sub) in RemoteToolProfileFolders)
                     work.Add(new(p.KeyName, tool, Path.Combine([p.ProfilePath, .. rel]), files, sub));
+                if (includeTranscripts) transcriptWork.AddRange(TranscriptFoldersOfProfile(p.KeyName, p.ProfilePath, o));
             }
         }
         catch (Exception ex) when (ex is System.Security.SecurityException or UnauthorizedAccessException or IOException)
         { o.Errors.Add("Jurnalele uneltelor de acces la distanță: lista profilurilor nu a putut fi citită (" + ex.Message + "); jurnalele din profiluri nu au fost colectate."); }
         work.AddRange(_remoteToolFolders());
+        // the transcripts come last: the remote-tool logs are taken first when the file count cap is reached
+        if (includeTranscripts) { transcriptWork.InsertRange(0, TranscriptPolicyFolders(o)); work.AddRange(transcriptWork); }
         // lab 2026-11-16: the LocalService profile is also a ProfileList row (S-1-5-19), so its RustDesk folder was listed twice and every file copied twice
         // under two evidence ids; one folder (full path, case-insensitive, without a trailing separator) is read once, by its first listing
         work = work.GroupBy(w => Path.GetFullPath(w.Folder).TrimEnd(Path.DirectorySeparatorChar), StringComparer.OrdinalIgnoreCase).Select(g => g.First()).ToList();
@@ -449,7 +574,7 @@ public sealed class UserArtifactsCollector : ICollector
             if (!probe.IsDirectory) { o.Errors.Add($"{label}: {Shorten(w.Folder)} nu este un folder; omis."); continue; }
             var link = ReparseOnPath(w.Folder);
             if (link.Length > 0) { o.Errors.Add($"{label}: calea trece printr-o legătură (reparse point: {Shorten(link)}), care nu este urmată; jurnalele nu au fost colectate."); continue; }
-            foreach (var name in WithPatternLogs(w))
+            foreach (var name in WithPatternLogs(w, o))
             {
                 ct.ThrowIfCancellationRequested();
                 var srcPath = Path.Combine(w.Folder, name);

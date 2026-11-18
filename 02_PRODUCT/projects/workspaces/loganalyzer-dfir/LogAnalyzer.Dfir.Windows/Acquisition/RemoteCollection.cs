@@ -69,10 +69,17 @@ public static class RemoteCollection
     /// </summary>
     public const string UserHivesArtifact = "user-hives";
     public const string SrumArtifact = "srum", RecentItemsArtifact = "recent-items";
-    public static readonly IReadOnlyList<string> OptionalArtifacts = [UserHivesArtifact, SrumArtifact, RecentItemsArtifact];
 
-    /// <summary>The optional artifacts the UI offers under one box, "Include istoricul personal (SRUM, fișiere recente)".</summary>
-    public static readonly IReadOnlyList<string> PersonalHistoryArtifacts = [SrumArtifact, RecentItemsArtifact];
+    /// <summary>
+    /// Optional, personal history: PowerShell transcripts (PowerShell_transcript*.txt) from the OutputDirectory of the transcription policy (local folders only, recursive, bounded)
+    /// and from Documents (root and yyyyMMdd sub-folders) of every profile. They hold typed commands AND the output of the commands, which can include passwords and personal data.
+    /// Package folder: <c>files/PowerShellTranscripts/{Policy|User_&lt;profile&gt;}/&lt;file&gt;</c>.
+    /// </summary>
+    public const string PsTranscriptsArtifact = "ps-transcripts", PsTranscriptsFolder = "PowerShellTranscripts";
+    public static readonly IReadOnlyList<string> OptionalArtifacts = [UserHivesArtifact, SrumArtifact, RecentItemsArtifact, PsTranscriptsArtifact];
+
+    /// <summary>The optional artifacts the UI offers under one box, "Include istoricul personal (SRUM, fișiere recente, transcrieri PowerShell)".</summary>
+    public static readonly IReadOnlyList<string> PersonalHistoryArtifacts = [SrumArtifact, RecentItemsArtifact, PsTranscriptsArtifact];
 
     /// <summary>Package sub-folder of the user hives: <c>files/UserHives/&lt;profile&gt;/{NTUSER.DAT|UsrClass.dat}</c>.</summary>
     public const string UserHivesFolder = "UserHives";
@@ -575,6 +582,139 @@ public static class RemoteCollection
                     }
     """;
 
+    /// <summary>PowerShell transcripts: the policy OutputDirectory (local, recursive, bounded) and Documents of every profile (root and yyyyMMdd sub-folders), with the rules of the recent-items step.</summary>
+    private const string PsTranscriptsBranch = """
+                } elseif ($a -eq 'ps-transcripts') {
+                    # OPTIONAL (personal history; a transcript holds the commands run in a session AND their output): files PowerShell_transcript.<host>.<random>.<yyyyMMddHHmmss>.txt, at most 5 MiB each and 2000 in all.
+                    # Policy OutputDirectory (HKLM, then HKCU of the account that runs this script): local folders only, walked up to 8 levels and 2000 folders without following links; a network
+                    # (UNC) directory is not followed and is reported; no component of the policy path may be a link. Per profile under Users: Documents (root) and its yyyyMMdd sub-folders (at most 400).
+                    # No component of a profile path may be a link. A folder is read once (full path, case-insensitive; a folder inside a walked policy folder is not read again) and a file once. The
+                    # transcript of THIS script's own PowerShell session (header "Process ID" = this process, created after it started) is not collected. Every limit hit is reported with its folder.
+                    Step $a {
+                        $copied = 0; $failed = 0; $skipped = 0; $links = 0; $unc = 0; $badDir = 0; $found = 0; $ownSkipped = 0
+                        $cutDepth = New-Object System.Collections.Generic.List[string]; $cutFolders = New-Object System.Collections.Generic.List[string]
+                        $cutDates = New-Object System.Collections.Generic.List[string]; $cutFiles = New-Object System.Collections.Generic.List[string]
+                        $linkDirs = New-Object System.Collections.Generic.List[string]; $profilesLeft = 0
+                        $nameRx = '^PowerShell_transcript\.[^\\/]{1,200}\.\d{14}\.txt$'
+                        $ownPid = [int]$PID
+                        $ownStartUtc = [Diagnostics.Process]::GetCurrentProcess().StartTime.ToUniversalTime()
+                        function Get-NormPath([string]$q) { try { return [IO.Path]::GetFullPath($q).TrimEnd('\') } catch { return $q.TrimEnd('\') } }
+                        # the first component of the path (below the volume root) that is a reparse point, '' when none (an absent component ends the check)
+                        function Get-LinkOnPath([string]$full) {
+                            $root = [IO.Path]::GetPathRoot($full); $cur = $root
+                            foreach ($part in @($full.Substring($root.Length).Split('\') | Where-Object { $_.Length -gt 0 })) {
+                                $cur = Join-Path $cur $part
+                                $gi = Get-Item -LiteralPath $cur -Force -ErrorAction SilentlyContinue
+                                if (-not $gi) { return '' }
+                                if ($gi.Attributes -band [IO.FileAttributes]::ReparsePoint) { return $cur }
+                            }
+                            return ''
+                        }
+                        # the "Process ID:" of the transcript header (first 20 lines only), -1 when there is none or the file cannot be read
+                        function Get-TranscriptPid([string]$q) {
+                            $fs = $null; $sr = $null
+                            try {
+                                $fs = New-Object IO.FileStream($q, [IO.FileMode]::Open, [IO.FileAccess]::Read, [IO.FileShare]'ReadWrite,Delete')
+                                $sr = New-Object IO.StreamReader($fs)
+                                for ($li = 0; $li -lt 20; $li++) {
+                                    $line = $sr.ReadLine()
+                                    if ($null -eq $line) { break }
+                                    if ($line -match '^Process ID:\s*(\d+)\s*$') { return [int]$Matches[1] }
+                                }
+                            } catch { } finally { if ($sr) { $sr.Dispose() } elseif ($fs) { $fs.Dispose() } }
+                            return -1
+                        }
+                        $cands = New-Object System.Collections.Generic.List[object]
+                        foreach ($hive in @('HKLM:', 'HKCU:')) {
+                            $od = $null
+                            try { $od = (Get-ItemProperty -LiteralPath ($hive + '\SOFTWARE\Policies\Microsoft\Windows\PowerShell\Transcription') -Name OutputDirectory -ErrorAction Stop).OutputDirectory } catch { }
+                            if (-not $od) { continue }
+                            $d = [Environment]::ExpandEnvironmentVariables([string]$od).Trim()
+                            if ($d -match '^\\{2}' -or $d -match '^//') { $unc++; continue }
+                            if ($d -notmatch '^[A-Za-z]:\\' -or $d.Contains('%')) { $badDir++; continue }
+                            if (-not (Test-Path -LiteralPath $d -PathType Container)) { continue }
+                            $norm = Get-NormPath $d
+                            $lk = Get-LinkOnPath $norm
+                            if ($lk.Length -gt 0) { $linkDirs.Add($norm); continue }
+                            $cands.Add(@{ Dir = $norm; Out = 'Policy'; Walk = $true })
+                        }
+                        $profs = @(Get-ChildItem -LiteralPath (Join-Path $env:SystemDrive 'Users') -Directory -Force -ErrorAction SilentlyContinue | Sort-Object Name)
+                        if ($profs.Count -gt 200) { $profilesLeft = $profs.Count - 200 }
+                        foreach ($p in @($profs | Select-Object -First 200)) {
+                            if ($p.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
+                            $docs = Get-SafeItem $p.FullName @('Documents')
+                            if ($docs.State -eq 'absent') { continue }
+                            if ($docs.State -eq 'link') { $links++; continue }
+                            if ($docs.State -ne 'dir') { continue }
+                            $out = 'User_' + ($p.Name -replace '[^A-Za-z0-9._-]', '_')
+                            $cands.Add(@{ Dir = (Get-NormPath $docs.Obj.FullName); Out = $out; Walk = $false })
+                            $subs = @(Get-ChildItem -LiteralPath $docs.Obj.FullName -Directory -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -match '^\d{8}$' -and -not ($_.Attributes -band [IO.FileAttributes]::ReparsePoint) } | Sort-Object Name)
+                            if ($subs.Count -gt 400) { $cutDates.Add($p.Name + ' (' + $subs.Count + ' subfoldere de dată)') }
+                            foreach ($sd in @($subs | Select-Object -First 400)) {
+                                $cands.Add(@{ Dir = (Get-NormPath $sd.FullName); Out = $out; Walk = $false })
+                            }
+                        }
+                        # one folder once: policy folders (walked) first, the shortest path first; a folder equal to or inside an accepted walked folder is dropped
+                        $targets = New-Object System.Collections.Generic.List[object]
+                        $seenDirs = @{}; $walkRoots = New-Object System.Collections.Generic.List[string]
+                        foreach ($c in @($cands | Sort-Object @{ Expression = { if ($_.Walk) { 0 } else { 1 } } }, @{ Expression = { $_.Dir.Length } })) {
+                            if ($seenDirs.ContainsKey($c.Dir)) { continue }
+                            $inside = $false
+                            foreach ($wr in $walkRoots) { if ($c.Dir.StartsWith($wr + '\', [StringComparison]::OrdinalIgnoreCase)) { $inside = $true; break } }
+                            if ($inside) { continue }
+                            $seenDirs[$c.Dir] = $true
+                            if ($c.Walk) { $walkRoots.Add($c.Dir) }
+                            $targets.Add($c)
+                        }
+                        $seenFiles = @{}
+                        foreach ($t in $targets) {
+                            $dirs = New-Object System.Collections.Generic.List[object]
+                            $dirs.Add(@{ Path = $t.Dir; Depth = 0 })
+                            for ($di = 0; $di -lt $dirs.Count -and $di -lt 2000; $di++) {
+                                $cur = $dirs[$di]
+                                if ($t.Walk) {
+                                    foreach ($c in @(Get-ChildItem -LiteralPath $cur.Path -Directory -Force -ErrorAction SilentlyContinue)) {
+                                        if ($c.Attributes -band [IO.FileAttributes]::ReparsePoint) { continue }
+                                        if ($cur.Depth -ge 8) { if ($cutDepth.Count -lt 5 -and -not $cutDepth.Contains($t.Dir)) { $cutDepth.Add($t.Dir) }; break }
+                                        $dirs.Add(@{ Path = $c.FullName; Depth = $cur.Depth + 1 })
+                                    }
+                                }
+                                $named = @(Get-ChildItem -LiteralPath $cur.Path -File -Force -ErrorAction SilentlyContinue | Where-Object { $_.Name -match $nameRx } | Sort-Object Name)
+                                if ($named.Count -gt 2000 -and $cutFiles.Count -lt 5) { $cutFiles.Add($cur.Path) }
+                                foreach ($f in @($named | Select-Object -First 2000)) {
+                                    if ($f.Attributes -band [IO.FileAttributes]::ReparsePoint) { $links++; continue }
+                                    if ($f.Length -eq 0) { continue }
+                                    $fkey = Get-NormPath $f.FullName
+                                    if ($seenFiles.ContainsKey($fkey)) { continue }
+                                    $seenFiles[$fkey] = $true
+                                    if ($f.CreationTimeUtc -ge $ownStartUtc.AddSeconds(-5) -and (Get-TranscriptPid $f.FullName) -eq $ownPid) { $ownSkipped++; continue }
+                                    if ($found -ge 2000) { $skipped++; continue }
+                                    $found++
+                                    $dest = Join-Path (Join-Path (Join-Path $files 'PowerShellTranscripts') $t.Out) $f.Name
+                                    for ($k = 1; (Test-Path -LiteralPath $dest) -and $k -lt 1000; $k++) {
+                                        $dest = Join-Path (Split-Path -Parent $dest) ([IO.Path]::GetFileNameWithoutExtension($f.Name) + '_' + $k + '.txt')
+                                    }
+                                    $r = @(Copy-GuardedFile $f $dest 5MB $false)[-1]
+                                    switch ($r) { 'ok' { $copied++ } 'skipped' { $skipped++ } 'link' { $links++ } default { $failed++ } }
+                                }
+                            }
+                            if ($dirs.Count -gt 2000 -and $cutFolders.Count -lt 5) { $cutFolders.Add($t.Dir) }
+                        }
+                        $ownNote = $(if ($ownSkipped -gt 0) { "; transcrierea propriei sesiuni de colectare, exclusă: $ownSkipped" } else { '' })
+                        if ($failed -gt 0 -or $skipped -gt 0 -or $links -gt 0 -or $unc -gt 0 -or $badDir -gt 0 -or $linkDirs.Count -gt 0 -or $cutDepth.Count -gt 0 -or $cutFolders.Count -gt 0 -or $cutDates.Count -gt 0 -or $cutFiles.Count -gt 0 -or $profilesLeft -gt 0) {
+                            throw ("transcrieri copiate: $copied; necopiate (fișier deschis sau acces refuzat): $failed; sărite (peste 5 MiB sau peste 2000 de fișiere în total): $skipped; legături neurmate: $links; director de transcriere în rețea, necolectat: $unc; director din politică care nu este o cale locală completă: $badDir" +
+                                $(if ($linkDirs.Count -gt 0) { '; director de transcriere printr-o legătură (junction/symlink), necolectat: ' + ($linkDirs -join ', ') } else { '' }) +
+                                $(if ($cutDepth.Count -gt 0) { '; limita de adâncime (8 niveluri) atinsă, subfolderele mai adânci necitite, în: ' + ($cutDepth -join ', ') } else { '' }) +
+                                $(if ($cutFolders.Count -gt 0) { '; limita de 2000 de foldere parcurse atinsă, restul necitit, în: ' + ($cutFolders -join ', ') } else { '' }) +
+                                $(if ($cutDates.Count -gt 0) { '; limita de 400 de subfoldere de dată atinsă, restul necitit, în: ' + ($cutDates -join ', ') } else { '' }) +
+                                $(if ($cutFiles.Count -gt 0) { '; limita de 2000 de fișiere pe folder atinsă, restul necolectat, în: ' + ($cutFiles -join ', ') } else { '' }) +
+                                $(if ($profilesLeft -gt 0) { "; profiluri peste limita de 200 necercetate: $profilesLeft" } else { '' }) + $ownNote)
+                        }
+                        if ($copied -eq 0) { return ('__absent__:nu exista transcrieri PowerShell in directorul din politica sau in Documents' + $ownNote) }
+                        $global:StepNote = ('fiecare folder și fiecare fișier citit o singură dată' + $ownNote)
+                    }
+    """;
+
     /// <summary>The package script. It only reads the target and writes next to itself; it contains no network command.</summary>
     public static string PackageScript(RemoteCollectionRequest r, string requestSha256) => PackageScript(r, requestSha256, allowShadowCopy: true);
 
@@ -786,7 +926,7 @@ public static class RemoteCollection
             }
             """);
         // the helpers of the steps that read files another process may hold open exist in the script only when a request asks for one of those steps
-        if (r.Artifacts.Any(a => a is UserHivesArtifact or AmcacheArtifact or SrumArtifact or RecentItemsArtifact or SetupApiArtifact or FirewallLogArtifact))
+        if (r.Artifacts.Any(a => a is UserHivesArtifact or AmcacheArtifact or SrumArtifact or RecentItemsArtifact or PsTranscriptsArtifact or SetupApiArtifact or FirewallLogArtifact))
         {
             sb.AppendLine();
             sb.Append(SharedHelpers);
@@ -845,7 +985,7 @@ public static class RemoteCollection
         // the user-hives branch exists in the script only when the operator asked for it: a default package contains no code to read user hives
         if (r.Artifacts.Contains(UserHivesArtifact)) sb.Append(UserHivesBranch);
         // every other branch below is emitted the same way: only for the artifacts the request carries
-        foreach (var (artifact, branch) in new[] { (AmcacheArtifact, AmcacheBranch), (SrumArtifact, SrumBranch), (SetupApiArtifact, SetupApiBranch), (FirewallLogArtifact, FirewallLogBranch), (RecentItemsArtifact, RecentItemsBranch) })
+        foreach (var (artifact, branch) in new[] { (AmcacheArtifact, AmcacheBranch), (SrumArtifact, SrumBranch), (SetupApiArtifact, SetupApiBranch), (FirewallLogArtifact, FirewallLogBranch), (RecentItemsArtifact, RecentItemsBranch), (PsTranscriptsArtifact, PsTranscriptsBranch) })
             if (r.Artifacts.Contains(artifact)) { sb.AppendLine(); sb.Append(branch); }
         sb.AppendLine();
         sb.Append("""
@@ -1043,6 +1183,7 @@ public static class RemoteCollection
         (UserHivesFolder, UserHivesArtifact), (RemoteToolLogsFolder, "remote-tool-logs"), (NotepadTabsFolder, "notepad-tabs"), (SearchIndexFolder, "search-index"),
         (DefenderHistoryFolder, "defender-history"), ("Prefetch", "prefetch"), ("Tasks", "tasks"), (NtfsFolder, NtfsMetadataArtifact),
         (AmcacheFolder, AmcacheArtifact), (SrumFolder, SrumArtifact), (SetupApiFolder, SetupApiArtifact), (FirewallFolder, FirewallLogArtifact), (RecentItemsFolder, RecentItemsArtifact),
+        (PsTranscriptsFolder, PsTranscriptsArtifact),
     ];
 
     /// <summary>Null when the package file belongs to an artifact of the request; otherwise the reason it does not.</summary>
@@ -1159,6 +1300,10 @@ public static class RemoteCollection
             return seg.Length == 3 && SetupApiName.IsMatch(seg[2]) && Fp() == "setupapi_dev" ? LogAnalyzer.Dfir.Devices.SetupApiLogParser.SourceTypeName : "file";
         if (seg[1].Equals(FirewallFolder, StringComparison.OrdinalIgnoreCase))
             return seg.Length == 3 && seg[2] is "pfirewall.log" or "pfirewall.log.old" && Fp() == "pfirewall" ? LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName : "file";
+        if (seg[1].Equals(PsTranscriptsFolder, StringComparison.OrdinalIgnoreCase))
+            // files/PowerShellTranscripts/<Policy|User_profile>/<file>: the exact transcript name AND the transcript header
+            return seg.Length == 4 && seg[2].Length > 0 && LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.ByName(seg[3]) == LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.PsTranscript
+                   && Fp() == LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.PsTranscript ? LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.PsTranscript : "file";
         if (seg[1].Equals(RecentItemsFolder, StringComparison.OrdinalIgnoreCase))
         {
             // files/RecentItems/<profile>/<Recent|AutomaticDestinations|CustomDestinations>/<name>

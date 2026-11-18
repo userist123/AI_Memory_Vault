@@ -69,7 +69,7 @@ public sealed class RemoteUserHivesOptionTests
         Assert.DoesNotContain("RemoteCollection.KnownArtifacts);", src.Substring(src.IndexOf("private void GenerateRemotePackage", StringComparison.Ordinal), 900));
     }
 
-    private const string HistoryLabel = "Include istoricul personal (SRUM, fișiere recente)";
+    private const string HistoryLabel = "Include istoricul personal (SRUM, fișiere recente, transcrieri PowerShell)";
 
     [Fact]
     public void The_personal_history_checkbox_exists_in_the_tab_is_unticked_by_default_and_carries_an_automation_name()
@@ -94,9 +94,9 @@ public sealed class RemoteUserHivesOptionTests
 
         vm.RemoteIncludePersonalHistory = true;
         var on = InvestigationViewModel.RemoteWithPersonalHistory(InvestigationViewModel.RemoteArtifactList(vm.RemoteIncludeUserHives), vm.RemoteIncludePersonalHistory);
-        Assert.Equal([.. RemoteCollection.KnownArtifacts, "srum", "recent-items"], on);
+        Assert.Equal([.. RemoteCollection.KnownArtifacts, "srum", "recent-items", "ps-transcripts"], on);
         vm.RemoteIncludeUserHives = true;
-        Assert.Equal([.. RemoteCollection.KnownArtifacts, "user-hives", "srum", "recent-items"],
+        Assert.Equal([.. RemoteCollection.KnownArtifacts, "user-hives", "srum", "recent-items", "ps-transcripts"],
             InvestigationViewModel.RemoteWithPersonalHistory(InvestigationViewModel.RemoteArtifactList(vm.RemoteIncludeUserHives), vm.RemoteIncludePersonalHistory));
 
         Assert.Contains("nu este inclus", InvestigationViewModel.RemoteGeneratedStatus("R1", "PC01", "c.ps1", false));
