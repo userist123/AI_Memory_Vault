@@ -1528,3 +1528,6 @@ label.chk{min-height:24px;align-items:center} label.chk input[type=checkbox]{wid
 }
 .plan-nudge .nudge-toggle{display:none}
 @media (max-width:639px){ .plan-nudge .nudge-toggle{display:inline-flex} }
+
+/* variantele scoase din vânzare (data/offers-gone.json): la sfârșitul listei, estompate */
+.var.gone{opacity:.6} .var.gone small{color:var(--err)}

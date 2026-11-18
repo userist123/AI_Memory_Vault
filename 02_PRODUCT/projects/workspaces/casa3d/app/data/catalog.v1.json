@@ -2435,7 +2435,21 @@
       "brand": "Tesy",
       "category": "Boiler",
       "model3d": "boiler"
-    }
+    },
+    {"id": "masuta-tranered-masuta-cafea", "group": "masuta", "name": "TRANERED măsuță cafea", "brand": "IKEA", "category": "Măsuță de cafea", "model3d": "coffee"},
+    {"id": "masa-alhult-masa-extensibila-4-scaune-alhult", "group": "masa", "name": "ÅLHULT masă extensibilă + 4 scaune ÅLHULT", "brand": "IKEA", "category": "Masă cu scaune", "model3d": "dining"},
+    {"id": "masa-alhult-odger-masa-4-scaune", "group": "masa", "name": "ÅLHULT/ODGER masă + 4 scaune", "brand": "IKEA", "category": "Masă cu scaune", "model3d": "dining"},
+    {"id": "masa-nasinge-masa-4-scaune-nasinge", "group": "masa", "name": "NÄSINGE masă + 4 scaune NÄSINGE", "brand": "IKEA", "category": "Masă cu scaune", "model3d": "dining"},
+    {"id": "masa-tonstad-masa-2-scaune-tonstad", "group": "masa", "name": "TONSTAD masă + 2 scaune TONSTAD", "brand": "IKEA", "category": "Masă cu scaune", "model3d": "dining"},
+    {"id": "masa-tonstad-krylbo-masa-2-scaune", "group": "masa", "name": "TONSTAD/KRYLBO masă + 2 scaune", "brand": "IKEA", "category": "Masă cu scaune", "model3d": "dining"},
+    {"id": "pat-malm-cadru-pat-inalt-160x200", "group": "pat", "name": "MALM cadru pat înalt 160x200", "brand": "IKEA", "category": "Pat", "model3d": "bed"},
+    {"id": "pat-malm-cadru-pat-inalt-luroy-160x200", "group": "pat", "name": "MALM cadru pat înalt Luröy 160x200", "brand": "IKEA", "category": "Pat", "model3d": "bed"},
+    {"id": "pat-malm-cadru-pat-inalt-luroy-140x200", "group": "pat", "name": "MALM cadru pat înalt Luröy 140x200", "brand": "IKEA", "category": "Pat", "model3d": "bed"},
+    {"id": "bucatarie-knoxhult-bucatarie", "group": "bucatarie", "name": "KNOXHULT bucătărie", "brand": "IKEA", "category": "Bucătărie", "model3d": "kitchen"},
+    {"id": "bucatarie-metod-bucatarie-veddinge", "group": "bucatarie", "name": "METOD bucătărie Veddinge", "brand": "IKEA", "category": "Bucătărie", "model3d": "kitchen"},
+    {"id": "pantofar-gullaberg-dulap-pantofi-4-compartimente", "group": "pantofar", "name": "GULLABERG dulap pantofi 4 compartimente", "brand": "IKEA", "category": "Pantofar", "model3d": "shoe"},
+    {"id": "pantofar-gullaberg-dulap-pantofi-2-compartimente", "group": "pantofar", "name": "GULLABERG dulap pantofi 2 compartimente", "brand": "IKEA", "category": "Pantofar", "model3d": "shoe"},
+    {"id": "dulap-hauga-dulap-de-haine-cu-usi-glisante", "group": "dulap", "name": "HAUGA dulap de haine cu uși glisante", "brand": "IKEA", "category": "Dulap", "model3d": "wardrobe"}
   ],
   "variants": [
     {
@@ -7425,7 +7439,24 @@
       "style": {
         "flat": false
       }
-    }
+    },
+    {"id": "canapea-16", "productId": "canapea-kivik-canapea-3-locuri-cu-sezlong", "name": "KIVIK Canapea 3 locuri cu șezlong, Tresund bej deschis", "legacyIndex": 16, "dimensionsCm": {"w": 280, "d": 163, "h": 83}, "dimensionsConfidence": "HIGH", "style": {"mat": "fabric", "col": "#d8ccb8", "chaise": true}},
+    {"id": "masuta-13", "productId": "masuta-tranered-masuta-cafea", "name": "TRANERED măsuță cafea, maro-î, 90x90 cm", "legacyIndex": 13, "dimensionsCm": {"w": 90, "d": 90, "h": 41}, "dimensionsConfidence": "HIGH", "style": {"col": "#3b2c24"}},
+    {"id": "masa-17", "productId": "masa-alhult-masa-extensibila-4-scaune-alhult", "name": "ÅLHULT / ÅLHULT masă + 4 scaune, negru/maro/Bomstad negru negru, 120/170x80 cm", "legacyIndex": 17, "dimensionsCm": {"w": 120, "d": 80, "h": 74}, "dimensionsConfidence": "HIGH", "style": {"top": "#3f2d22", "chair": "orrsta"}, "chairs": 4},
+    {"id": "masa-18", "productId": "masa-alhult-odger-masa-4-scaune", "name": "ÅLHULT / ODGER masă + 4 scaune, negru/maro/antracit, 120/170x80 cm", "legacyIndex": 18, "dimensionsCm": {"w": 120, "d": 80, "h": 74}, "dimensionsConfidence": "HIGH", "style": {"top": "#3f2d22", "chair": "orrsta"}, "chairs": 4},
+    {"id": "masa-19", "productId": "masa-nasinge-masa-4-scaune-nasinge", "name": "NÄSINGE / NÄSINGE masă + 4 scaune, alb/alb Tibbleby bej-gri, 130/190x80 cm", "legacyIndex": 19, "dimensionsCm": {"w": 130, "d": 80, "h": 75}, "dimensionsConfidence": "HIGH", "style": {"top": "#f2f2ee", "chair": "orrstaWhite"}, "chairs": 4},
+    {"id": "masa-20", "productId": "masa-tonstad-masa-2-scaune-tonstad", "name": "TONSTAD / TONSTAD masă + 2 scaune, alb murdar/alb murdar Fridtuna bej deschis, 80/120x70 cm", "legacyIndex": 20, "dimensionsCm": {"w": 80, "d": 70, "h": 75}, "dimensionsConfidence": "HIGH", "style": {"top": "#ece9e1", "chair": "orrstaWhite"}, "chairs": 2},
+    {"id": "masa-21", "productId": "masa-tonstad-krylbo-masa-2-scaune", "name": "TONSTAD / KRYLBO masă + 2 scaune, frnr stjr/Tonerud bej închis, 80/120x70 cm", "legacyIndex": 21, "dimensionsCm": {"w": 80, "d": 70, "h": 75}, "dimensionsConfidence": "HIGH", "style": {"top": "#c4a273", "chair": "orrsta"}, "chairs": 2},
+    {"id": "pat-17", "productId": "pat-malm-cadru-pat-inalt-160x200", "name": "MALM cadru pat înalt, alb, 160x200 cm", "legacyIndex": 17, "dimensionsCm": {"w": 176, "d": 209, "h": 100}, "dimensionsConfidence": "HIGH", "style": {"col": "#f1f1ee"}},
+    {"id": "pat-18", "productId": "pat-malm-cadru-pat-inalt-luroy-160x200", "name": "MALM cadru pat înalt, alb/Luröy, 160x200 cm", "legacyIndex": 18, "dimensionsCm": {"w": 176, "d": 209, "h": 100}, "dimensionsConfidence": "HIGH", "style": {"col": "#f2f2ee", "wood": true}},
+    {"id": "pat-19", "productId": "pat-malm-cadru-pat-inalt-luroy-140x200", "name": "MALM cadru pat înalt, negru-maro/Luröy, 140x200 cm", "legacyIndex": 19, "dimensionsCm": {"w": 156, "d": 209, "h": 100}, "dimensionsConfidence": "HIGH", "style": {"col": "#2f2621", "wood": true}},
+    {"id": "bucatarie-3", "productId": "bucatarie-knoxhult-bucatarie", "name": "KNOXHULT bucătărie, gri închis, 240x61x220 cm", "legacyIndex": 3, "dimensionsCm": {"w": 240, "d": 61, "h": 220}, "dimensionsConfidence": "HIGH", "style": {"frame": "#3d3f42", "fronts": "#55585b"}},
+    {"id": "bucatarie-4", "productId": "bucatarie-metod-bucatarie-veddinge", "name": "METOD bucătărie, alb/Veddinge alb, 210x60x227 cm", "legacyIndex": 4, "dimensionsCm": {"w": 210, "d": 64, "h": 227}, "dimensionsConfidence": "HIGH", "style": {"frame": "#f2f2ee", "fronts": "#f4f4f1"}},
+    {"id": "bucatarie-5", "productId": "bucatarie-metod-bucatarie-veddinge", "name": "METOD bucătărie, alb/Veddinge alb, 170x60x227 cm", "legacyIndex": 5, "dimensionsCm": {"w": 170, "d": 64, "h": 227}, "dimensionsConfidence": "HIGH", "style": {"frame": "#f2f2ee", "fronts": "#f4f4f1"}},
+    {"id": "pantofar-9", "productId": "pantofar-gullaberg-dulap-pantofi-4-compartimente", "name": "GULLABERG dulap pantofi cu 4 compartimente, alb", "legacyIndex": 9, "dimensionsCm": {"w": 105, "d": 22, "h": 107}, "dimensionsConfidence": "HIGH", "style": {"col": "#f3f3f0"}},
+    {"id": "pantofar-10", "productId": "pantofar-gullaberg-dulap-pantofi-4-compartimente", "name": "GULLABERG dulap pantofi cu 4 compartimente, gri", "legacyIndex": 10, "dimensionsCm": {"w": 105, "d": 22, "h": 107}, "dimensionsConfidence": "HIGH", "style": {"col": "#8d8a85"}},
+    {"id": "pantofar-11", "productId": "pantofar-gullaberg-dulap-pantofi-2-compartimente", "name": "GULLABERG dulap pantofi cu 2 compartimente, gri", "legacyIndex": 11, "dimensionsCm": {"w": 88, "d": 30, "h": 122}, "dimensionsConfidence": "HIGH", "style": {"col": "#8d8a85", "two": true}},
+    {"id": "dulap-11", "productId": "dulap-hauga-dulap-de-haine-cu-usi-glisante", "name": "HAUGA dulap de haine cu uși glisante, alb", "legacyIndex": 11, "dimensionsCm": {"w": 118, "d": 55, "h": 199}, "dimensionsConfidence": "HIGH", "style": {"col": "#f2f2ee", "sliding": true}}
   ],
   "offers": [
     {
@@ -12483,6 +12514,23 @@
         "verificationType": "product_page",
         "confidence": "HIGH"
       }
-    }
+    },
+    {"id": "offer-canapea-16", "variantId": "canapea-16", "supplierId": "ikea-ro", "price": 3349, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-cu-sezlong-tresund-bej-deschis-s79482840/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-masuta-13", "variantId": "masuta-13", "supplierId": "ikea-ro", "price": 699, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/tranered-masuta-cafea-maro-i-10608998/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-masa-17", "variantId": "masa-17", "supplierId": "ikea-ro", "price": 1715, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/alhult-alhult-masa-4-scaune-negru-maro-bomstad-negru-negru-s69610089/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-masa-18", "variantId": "masa-18", "supplierId": "ikea-ro", "price": 1995, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/alhult-odger-masa-4-scaune-negru-maro-antracit-s09610092/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-masa-19", "variantId": "masa-19", "supplierId": "ikea-ro", "price": 1995, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/naesinge-naesinge-masa-4-scaune-alb-alb-tibbleby-bej-gri-s29596943/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-masa-20", "variantId": "masa-20", "supplierId": "ikea-ro", "price": 1697, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/tonstad-tonstad-masa-2-scaune-alb-murdar-alb-murdar-fridtuna-bej-deschis-s79596587/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-masa-21", "variantId": "masa-21", "supplierId": "ikea-ro", "price": 1897, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/tonstad-krylbo-masa-2-scaune-frnr-stjr-tonerud-bej-inchis-s69596658/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-pat-17", "variantId": "pat-17", "supplierId": "ikea-ro", "price": 799, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-alb-s09929373/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-pat-18", "variantId": "pat-18", "supplierId": "ikea-ro", "price": 999, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-alb-luroey-s29002433/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-pat-19", "variantId": "pat-19", "supplierId": "ikea-ro", "price": 1149, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-negru-maro-luroey-s89002430/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-bucatarie-3", "variantId": "bucatarie-3", "supplierId": "ikea-ro", "price": 1769, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/knoxhult-bucatarie-gri-inchis-s59614945/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-bucatarie-4", "variantId": "bucatarie-4", "supplierId": "ikea-ro", "price": 3215, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/metod-bucatarie-alb-veddinge-alb-s69614916/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-bucatarie-5", "variantId": "bucatarie-5", "supplierId": "ikea-ro", "price": 2805, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/metod-bucatarie-alb-veddinge-alb-s09614919/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-pantofar-9", "variantId": "pantofar-9", "supplierId": "ikea-ro", "price": 399, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/gullaberg-dulap-pantofi-cu-4-compartimente-alb-50587710/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-pantofar-10", "variantId": "pantofar-10", "supplierId": "ikea-ro", "price": 399, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/gullaberg-dulap-pantofi-cu-4-compartimente-gri-10587707/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-pantofar-11", "variantId": "pantofar-11", "supplierId": "ikea-ro", "price": 599, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/gullaberg-dulap-pantofi-cu-2-compartimente-gri-40587697/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}},
+    {"id": "offer-dulap-11", "variantId": "dulap-11", "supplierId": "ikea-ro", "price": 1299, "currency": "RON", "availability": "UNKNOWN", "affiliateUrl": null, "provenance": {"source": "IKEA", "sourceUrl": "https://www.ikea.com/ro/ro/p/hauga-dulap-de-haine-cu-usi-glisante-alb-60456916/", "verifiedAt": "2026-11-18", "verificationType": "product_page", "confidence": "HIGH"}}
   ]
 }

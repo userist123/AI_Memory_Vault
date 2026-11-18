@@ -12,7 +12,7 @@ test('catalogul e încărcat în baza de date cu proveniență', async () => {
   // data verificării: cea a importului sau, pentru ofertele reverificate pe pagină (data/price-rechecks.json), data reverificării
   const { OFFERS_GONE } = await import('../lib/offers-gone');
   const { PRICE_RECHECKS } = await import('../lib/price-rechecks'), rechecked = new Map(PRICE_RECHECKS.filter(r => r.kind === 'o').map(r => [r.id, r.seenAt]));
-  assert.ok(c.offers.every(o => o.provenance.sourceUrl && (['2026-09-30', '2026-10-10', '2026-10-11', '2026-10-24', '2026-11-10'].includes(o.provenance.verifiedAt!) || rechecked.get(o.id) === o.provenance.verifiedAt) && o.availability === (OFFERS_GONE.has(o.id) ? 'OUT_OF_STOCK' : 'UNKNOWN')));
+  assert.ok(c.offers.every(o => o.provenance.sourceUrl && (['2026-09-30', '2026-10-10', '2026-10-11', '2026-10-24', '2026-11-10', '2026-11-18'].includes(o.provenance.verifiedAt!) || rechecked.get(o.id) === o.provenance.verifiedAt) && o.availability === (OFFERS_GONE.has(o.id) ? 'OUT_OF_STOCK' : 'UNKNOWN')));
   assert.ok(c.offers.some(o => rechecked.get(o.id) === o.provenance.verifiedAt), 'reverificările au ajuns în bază');
 });
 test('flux complet: proiect nou → salvare → reîncărcare → revizie → modificare → restaurare', async () => {

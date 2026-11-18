@@ -85,8 +85,15 @@ DONE:
     devizul și editorul le marchează „scos din vânzare”, propunerea automată le evită dacă grupa are alternativă. Stocul și
     încrederea din editor afișate în română (erau IN_STOCK/HIGH). Suita 149/1010, tsc curat. Raport:
     research_notes/casa3d-produse/reverificare-script-2026-11-18.json (în afara repo).
-    DE FĂCUT: toate cele 3 combinații ENHET (bucătăria) și toate mesele EKEDALEN sunt scoase din vânzare → produse noi de cercetat.
-NEXT: înlocuitori pentru bucătăria ENHET și mesele EKEDALEN; merge #391 (Next.js) apoi #386 (decizia proprietarului); verificarea de mână a celor ~90 de prețuri rămase.
+  - Înlocuitori (2026-11-18): 17 variante IKEA noi (canapea-16, masuta-13, masa-17..21, pat-17..19, bucatarie-3..5 KNOXHULT/METOD,
+    pantofar-9..11 GULLABERG, dulap-11 HAUGA), găsite de un agent din sitemap-ul IKEA RO și verificate independent (pagină de
+    produs, familia în titlu, preț JSON-LD egal); dovada în data/catalog-evidence.2026-11-18.json; legătura vechi → nou și ce
+    diferă în data/offers-gone.json (canapea-1 → canapea-0 existentă). Editorul: buton „Înlocuiește cu …” pe piesa scoasă din
+    vânzare, iar în lista de variante cele indisponibile stau la sfârșit, marcate. Verificat în browser pe bucătăria ENHET
+    (înlocuire → METOD 3.215 RON, poziție validă; anulată după test). Fără înlocuitor: LISTERBY (nicio măsuță de stejar
+    135–145 × 55–65 cm cu dimensiuni pe pagină). Toate echivalente, nu același produs (EKEDALEN, ENHET, HEMNES, SONGESAND nu se
+    mai vând în RO). Suita 150/1012.
+NEXT: merge #391 (Next.js) apoi #386 (decizia proprietarului); verificarea de mână a celor ~90 de prețuri rămase.
   - Teste: tests/renovation-products.test.ts (12); suita 143 de fișiere / 984 de teste; tsc curat; build compilat.
 RESIDUALS ACCEPTATE (decizia sesiunii principale după runda 2):
   - cota blatului e fixă 0,9 m (motorul desenează .86 + blat); microundele pe pardoseală primesc acum avertismentul ON_FLOOR.

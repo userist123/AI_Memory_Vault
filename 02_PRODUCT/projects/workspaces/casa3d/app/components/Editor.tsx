@@ -100,7 +100,7 @@ import { dimGeometry } from '@/core/annotations';
 import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
 import { flushSync } from 'react-dom';
 import { randomId } from '@/core/uuid';
-import { OFFERS_GONE } from '@/lib/offers-gone';
+import { OFFERS_GONE, OFFER_REPLACEMENTS } from '@/lib/offers-gone';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
 const uid = () => randomId();
@@ -1274,7 +1274,7 @@ function RoomPanel({ part, focusFeature, room, snap, G, cat, mc, cur, onFinish, 
     <label className="f"><span>{t('editor.addGroup')}</span><select value={grp} onChange={e => { setGrp(e.target.value); setVi(0); }}>
       {fit.suggested.length > 0 && <optgroup label={t('editor.groupsFor', { room: t(`roomType.${room.type}`) })}>{fit.suggested.map(k => <option key={k} value={k}>{G[k].label}</option>)}</optgroup>}
       <optgroup label={fit.suggested.length ? t('editor.groupsOther') : t('editor.groupsAll')}>{fit.others.map(k => <option key={k} value={k}>{G[k].label}</option>)}</optgroup></select></label>
-    <label className="f"><span>{t('editor.addVariant')}</span><select value={vi} onChange={e => setVi(Number(e.target.value))}>{(G[grp]?.variants ?? []).map((v: any, i: number) => <option key={v.id} value={i}>{v.name}</option>)}</select></label>
+    <label className="f"><span>{t('editor.addVariant')}</span><select value={vi} onChange={e => setVi(Number(e.target.value))}>{(G[grp]?.variants ?? []).map((v: any, i: number) => <option key={v.id} value={i}>{v.name}{cat.offers.find((o: { variantId: string }) => o.variantId === v.id)?.availability === 'OUT_OF_STOCK' ? ` · ${t('stock.OUT_OF_STOCK')}` : ''}</option>)}</select></label>
     <button className="btn primary" disabled={!G[grp]?.variants[vi]} onClick={() => onAdd(G[grp].variants[vi].id)}>{t('editor.addToRoom')}</button></>}
   </>);
 }
@@ -1287,6 +1287,8 @@ function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMo
     <div className="prov">{g.label} · {room?.name} · {rv.offer ? lei(rv.offer.price) : t('common.unknownPrice')}</div>
     {rv.offer && <div className="prov">{t('editor.provenance', { source: rv.offer.provenance.source ?? '', date: rv.offer.provenance.verifiedAt ?? '', conf: t(`conf.${rv.offer.provenance.confidence ?? 'UNKNOWN'}`), dimConf: t(`conf.${rv.variant.dimensionsConfidence ?? 'UNKNOWN'}`), stock: t(`stock.${rv.offer.availability ?? 'UNKNOWN'}`) })}{freshness(rv.offer.provenance.verifiedAt).stale ? ` · ${t('editor.priceRecheck')}` : ''}</div>}
     {rv.offer?.availability === 'OUT_OF_STOCK' && <div className="prov err" role="status">{t('editor.offerGone', { date: OFFERS_GONE.get(rv.offer.id) ?? rv.offer.provenance.verifiedAt ?? '' })}</div>}
+    {(() => { const r = rv.offer?.availability === 'OUT_OF_STOCK' ? OFFER_REPLACEMENTS.get(rv.offer.id) : undefined, nv = r ? resolve(catalog, r.variantId) : null;
+      return nv && nv.offer?.availability !== 'OUT_OF_STOCK' ? <div className="repl"><button className="btn" onClick={() => onVariant(nv.variant.id)}>{t('editor.useReplacement', { name: nv.variant.name, price: nv.offer ? lei(nv.offer.price) : t('common.unknownPrice') })}</button>{r!.why ? <small className="prov">{r!.why}</small> : null}</div> : null; })()}
     {issues.length ? issues.map((i, k) => { const tg = issueTarget(i, snap.floor, snap.placements); return <div key={k} className={`issue ${i.severity}`} role={tg ? 'button' : undefined} tabIndex={tg ? 0 : undefined} style={tg ? { cursor: 'pointer' } : undefined} onClick={tg ? () => onFocusIssue(i) : undefined} onKeyDown={tg ? e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onFocusIssue(i); } } : undefined}>{iT(i)}</div>; }) : <div className="issue PASS">{t('editor.positionValid')}</div>}
     <div className="grid2">
       <label className="f"><span>{t('editor.xField', { u })}</span><input type="number" value={inField(p.x)} onChange={e => num(e.target.value, (x: number) => onMove(x / 100, p.z), -1e9)} /></label>
@@ -1294,8 +1296,9 @@ function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMo
     </div>
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button className="btn" onClick={onRotate}>{t('editor.rotate')}</button><button className="btn" onClick={onDuplicate} title={commandHint('duplicate', { mac: typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) })}>{t('editor.duplicate')}</button>{rv.offer && out?.targets[`o:${rv.offer.id}`] && <a className="btn" href={`/go/o/${rv.offer.id}`} target="_blank" rel={relFor(out.targets[`o:${rv.offer.id}`])}>{t('editor.viewProduct')}{out.targets[`o:${rv.offer.id}`] === 'affiliate' ? ` ${t('editor.affiliateTag')}` : ''}</a>}<button className="btn danger" onClick={onDelete}>{t('common.delete')}</button></div>
     <h4>{t('editor.variantsOnly', { n: g.variants.length })}</h4>
-    {g.variants.map((v: any) => { const o = catalog.offers.find(x => x.variantId === v.id), dm = v.dimensionsCm;
-      return <button key={v.id} className="var" aria-pressed={v.id === p.variantId} onClick={() => onVariant(v.id)}><span>{v.name}</span><span className="mono">{o ? lei(o.price) : '—'}</span><small>{dm ? formatDimsCm(dm, units, lang) : t('common.unknownDims')}{v.dimensionsConfidence === 'MEDIUM' ? ` ${t('common.approx')}` : ''}</small></button>; })}
+    {/* cele scoase din vânzare la sfârșit, marcate (rămân alegibile: proiectul vechi le poate păstra) */}
+    {[...g.variants].sort((a: any, b: any) => Number(catalog.offers.find(x => x.variantId === a.id)?.availability === 'OUT_OF_STOCK') - Number(catalog.offers.find(x => x.variantId === b.id)?.availability === 'OUT_OF_STOCK')).map((v: any) => { const o = catalog.offers.find(x => x.variantId === v.id), dm = v.dimensionsCm, goneV = o?.availability === 'OUT_OF_STOCK';
+      return <button key={v.id} className={goneV ? 'var gone' : 'var'} aria-pressed={v.id === p.variantId} onClick={() => onVariant(v.id)}><span>{v.name}</span><span className="mono">{o ? lei(o.price) : '—'}</span><small>{dm ? formatDimsCm(dm, units, lang) : t('common.unknownDims')}{v.dimensionsConfidence === 'MEDIUM' ? ` ${t('common.approx')}` : ''}{goneV ? ` · ${t('stock.OUT_OF_STOCK')}` : ''}</small></button>; })}
   </>);
 }
 

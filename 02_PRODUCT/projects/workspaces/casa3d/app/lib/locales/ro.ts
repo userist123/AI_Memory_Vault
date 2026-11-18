@@ -47,7 +47,7 @@ export const ro: Dict = {
   "editor.name": "Nume", "editor.type": "Tip", "editor.posX": "Poziție x ({u})", "editor.posZ": "Poziție z ({u})",
   "editor.roomWallsNote": "Camera și pereții se editează separat: după ce schimbi dimensiunile, ajustează și pereții (sau invers).",
   "editor.autoRoom": "Amenajare automată în cameră", "editor.addFurniture": "Adaugă mobilier", "editor.addToRoom": "Adaugă în cameră",
-  "editor.provenance": "Sursa: {source} · verificat {date} · încredere preț {conf} · dimensiuni {dimConf} · stoc {stock}", "editor.priceRecheck": "preț de reverificat", "budget.unavailable": "scos din vânzare: alege alt produs", "editor.offerGone": "Pagina produsului nu mai există sau trimite la o categorie (verificat {date}): probabil scos din vânzare, alege alt produs.",
+  "editor.provenance": "Sursa: {source} · verificat {date} · încredere preț {conf} · dimensiuni {dimConf} · stoc {stock}", "editor.priceRecheck": "preț de reverificat", "budget.unavailable": "scos din vânzare: alege alt produs", "editor.useReplacement": "Înlocuiește cu {name} ({price})", "editor.offerGone": "Pagina produsului nu mai există sau trimite la o categorie (verificat {date}): probabil scos din vânzare, alege alt produs.",
   "stock.UNKNOWN": "necunoscut", "stock.IN_STOCK": "în stoc", "stock.OUT_OF_STOCK": "indisponibil", "conf.HIGH": "mare", "conf.MEDIUM": "medie", "conf.UNKNOWN": "necunoscută",
   "editor.positionValid": "Poziție validă: încape, nu blochează uși, ferestre sau circulația.", "editor.xField": "x ({u})", "editor.zField": "z ({u})",
   "editor.rotate": "Rotește 90° (R)", "editor.duplicate": "Duplică", "editor.viewProduct": "Vezi produsul", "editor.affiliateTag": "(afiliere)", "editor.variantsOnly": "Variante ({n}) — doar pentru această piesă",
