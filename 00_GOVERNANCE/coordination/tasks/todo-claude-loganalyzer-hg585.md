@@ -1293,3 +1293,11 @@
   Suites: Dfir (Release) 3957 (3924 passed, 33 skipped), App 1114, UI 370 (369 + 1 skipped), Edition 45, all exit 0.
   Next: lab check of the witness on a VM (elevated app: folder created with the admin-only DACL; restore an older auth folder -> Broken "copie mai
   veche" on the admin page); then planner #8 item 3 (artifacts: WMI-Activity 5861 first). Owner: registry witness yes/no; WS01/WS02 eval reinstall.
+- 2026-11-18 LAB CHECK of the witness on WS02 (lab build of 34a96cb1d, elevated app): VERIFIED - on the first audit append the app created
+  C:\Program Files\LogAnalyzer\witness with exactly "SYSTEM:(OI)(CI)(F)" and "BUILTIN\Administrators:(OI)(CI)(F)" (no Users), and the witness file
+  advanced with the audit (930 -> 932 -> 933 -> 934 -> 935); final state consistent (log, .head and witness at seq 935, same hash, no pending/tmp).
+  After an older auth folder was put back (log 930, witness 932) the app showed the auth integrity warning and refused card sign-in.
+  NOT VERIFIED IN THE LAB: the exact admin-page message ("copie mai veche") - the lab sign-in automation failed in every session of this run
+  (fields left empty), and in the clean rerun the auth_audit.jsonl.head file was held by another process so the "attack" copy was partial. My lab
+  script retried PS Direct calls on any error and ran the copy steps up to five times, mixing snapshots; WS02's auth folder was restored from the
+  pre-test copy (seq 929) and the test witness removed, then the clean rerun ended consistent. The message itself is covered by HeadWitnessTests.
