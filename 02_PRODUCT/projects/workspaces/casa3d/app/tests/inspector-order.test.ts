@@ -140,8 +140,11 @@ describe('ordinea câmpurilor din inspector', () => {
         "placement": [
           "common.unknownPrice",
           "editor.provenance",
-          "common.unknown",
+          "conf.\${rv.offer.provenance.confidence ?? 'UNKNOWN'}",
+          "conf.\${rv.variant.dimensionsConfidence ?? 'UNKNOWN'}",
+          "stock.\${rv.offer.availability ?? 'UNKNOWN'}",
           "editor.priceRecheck",
+          "editor.offerGone",
           "editor.positionValid",
           "editor.xField",
           "editor.zField",

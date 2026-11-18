@@ -3,6 +3,7 @@
 // fiecărui import). La fiecare pornire se aplică peste baza de date: doar dacă verificarea e mai nouă decât cea din bază, deci o
 // corectură manuală mai nouă (updatePrice, lib/outbound.ts) nu e suprascrisă, iar a doua pornire nu mai schimbă nimic.
 import rechecks from '../data/price-rechecks.json';
+import { OFFERS_GONE_LIST, type OfferGone } from './offers-gone';
 type Query = (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 /** `per`: la un material vândut la pachet, prețul de pe pagină e pe unitate (m², ml, L: „unit”) sau pe pachet / bucată („pack”). */
 export interface PriceRecheck { kind: 'm' | 'o'; id: string; price: number; seenAt: string; url: string; evidence: string; per?: 'unit' | 'pack' }
@@ -14,7 +15,7 @@ export async function applyPriceRechecks(q: Query, items: PriceRecheck[] = PRICE
   for (const r of items){
     if (r.kind === 'o'){
       // linkul se actualizează odată cu prețul: unele oferte din primul import duceau la o categorie sau la alt produs
-      const u = await q(`update offers set price=$1, verified_at=$2, source_url=$4 where id=$3 and (verified_at is null or verified_at < $2::date) returning id`, [r.price, r.seenAt, r.id, r.url]);
+      const u = await q(`update offers set price=$1, verified_at=$2, source_url=$4, availability=case when availability='OUT_OF_STOCK' then 'UNKNOWN' else availability end where id=$3 and (verified_at is null or verified_at < $2::date) returning id`, [r.price, r.seenAt, r.id, r.url]);
       if (!u.rows[0]) continue;
     } else {
       // materialul cu preț pe pachet (găleată, bucată de plintă): prețul observat e al pachetului, ca în updatePrice
@@ -29,6 +30,14 @@ export async function applyPriceRechecks(q: Query, items: PriceRecheck[] = PRICE
     await q('insert into price_history(target_kind, target_id, price, verified_at) values($1,$2,$3,$4)', [r.kind, r.id, r.price, r.seenAt]); changed++;
   }
   return changed;
+}
+
+/** Oferta a cărei pagină a dispărut devine indisponibilă, doar dacă prețul ei nu a fost citit (de mână sau automat) în ziua
+ *  verificării sau după; o citire nouă a prețului o face din nou „necunoscută” (pagina există). */
+export async function applyOffersGone(q: Query, items: OfferGone[] = OFFERS_GONE_LIST){
+  let n = 0;
+  for (const g of items) n += (await q(`update offers set availability='OUT_OF_STOCK' where id=$1 and availability <> 'OUT_OF_STOCK' and (verified_at is null or verified_at < $2::date) returning id`, [g.id, g.checkedAt])).rows.length;
+  return n;
 }
 
 /** Catalogul de materiale din fișier cu reverificările aplicate (aceleași reguli ca applyPriceRechecks, fără bază de date). */

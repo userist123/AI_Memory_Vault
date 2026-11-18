@@ -27,6 +27,17 @@ describe('propuneri (motorul de reguli)', () => {
     for (const e of evs){ assert.notEqual(e.status, 'ERROR', `${e.tier}: ${JSON.stringify(e.issues.filter(i => i.severity === 'ERROR'))}`); for (const vid of Object.values(e.selections)) assert.ok(resolve(cat, vid), vid); }
     assert.ok(evs[0].total <= evs[1].total && evs[1].total <= evs[2].total, evs.map(e => e.total).join(' / '));
   });
+  test('produsele scoase din vânzare nu se propun, cât timp grupa are altceva; altfel rămân (nu dispare grupa)', () => {
+    const goneSofa = cat.offers.filter(o => o.variantId.startsWith('canapea-')).map(o => o.id);
+    const c2 = { ...cat, offers: cat.offers.map(o => goneSofa.slice(1).includes(o.id) || (o.variantId.startsWith('masa-') && o.variantId !== 'masa-0') ? { ...o, availability: 'OUT_OF_STOCK' as const } : o) };
+    const keep = cat.offers.find(o => o.id === goneSofa[0])!.variantId;
+    for (const v of proposeByRules(demo(), c2, mc, brief()).variants){
+      if (v.selections.canapea) assert.equal(v.selections.canapea, keep);
+      for (const vid of Object.values(v.selections)) if (vid.startsWith('canapea-')) assert.notEqual(c2.offers.find(o => o.variantId === vid)!.availability, 'OUT_OF_STOCK', vid);
+    }
+    const allGone = { ...cat, offers: cat.offers.map(o => o.variantId.startsWith('canapea-') ? { ...o, availability: 'OUT_OF_STOCK' as const } : o) };
+    assert.ok(proposeByRules(demo(), allGone, mc, brief()).variants.some(v => v.selections.canapea), 'fără alternativă: canapeaua rămâne');
+  });
   test('animale → fără catifea/piele; copii → fără blat de sticlă; doar IKEA → nimic de la Dedeman', () => {
     const s = demo(), b = brief({ pets: true, children: true, suppliers: ['IKEA'] });
     for (const v of proposeByRules(s, cat, mc, b).variants){

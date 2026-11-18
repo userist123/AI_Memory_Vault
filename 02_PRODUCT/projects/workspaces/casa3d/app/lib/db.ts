@@ -2,7 +2,7 @@
 import { SCHEMA } from './schema';
 import catalogSeed from '../data/catalog.v1.json';
 import materialsSeed from '../data/materials.v1.json';
-import { applyPriceRechecks } from './price-rechecks';
+import { applyPriceRechecks, applyOffersGone } from './price-rechecks';
 export type Query = (sql: string, params?: unknown[]) => Promise<{ rows: any[] }>;
 export type DbMode = 'postgres' | 'pglite-file' | 'pglite-memory';
 /** Rulează `fn` într-o tranzacție: orice excepție face ROLLBACK și e rearuncată neschimbată. */
@@ -77,6 +77,7 @@ async function migrate(q: Query){
   await seedOutbound(q);
   // prețurile reverificate pe paginile produselor (data/price-rechecks.json), peste cele din import, doar dacă sunt mai noi
   await applyPriceRechecks(q);
+  await applyOffersGone(q);
 }
 export async function getDb(): Promise<Db> {
   const g = globalThis as unknown as { __casa3d_db_ready?: Promise<Db> | null };

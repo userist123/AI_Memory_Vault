@@ -100,6 +100,7 @@ import { dimGeometry } from '@/core/annotations';
 import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
 import { flushSync } from 'react-dom';
 import { randomId } from '@/core/uuid';
+import { OFFERS_GONE } from '@/lib/offers-gone';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
 const uid = () => randomId();
@@ -1284,7 +1285,8 @@ function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMo
   return (<>
     <h3>{rv.variant.name}</h3>
     <div className="prov">{g.label} · {room?.name} · {rv.offer ? lei(rv.offer.price) : t('common.unknownPrice')}</div>
-    {rv.offer && <div className="prov">{t('editor.provenance', { source: rv.offer.provenance.source ?? '', date: rv.offer.provenance.verifiedAt ?? '', conf: rv.offer.provenance.confidence ?? '', dimConf: rv.variant.dimensionsConfidence, stock: rv.offer.availability === 'UNKNOWN' ? t('common.unknown') : rv.offer.availability })}{freshness(rv.offer.provenance.verifiedAt).stale ? ` · ${t('editor.priceRecheck')}` : ''}</div>}
+    {rv.offer && <div className="prov">{t('editor.provenance', { source: rv.offer.provenance.source ?? '', date: rv.offer.provenance.verifiedAt ?? '', conf: t(`conf.${rv.offer.provenance.confidence ?? 'UNKNOWN'}`), dimConf: t(`conf.${rv.variant.dimensionsConfidence ?? 'UNKNOWN'}`), stock: t(`stock.${rv.offer.availability ?? 'UNKNOWN'}`) })}{freshness(rv.offer.provenance.verifiedAt).stale ? ` · ${t('editor.priceRecheck')}` : ''}</div>}
+    {rv.offer?.availability === 'OUT_OF_STOCK' && <div className="prov err" role="status">{t('editor.offerGone', { date: OFFERS_GONE.get(rv.offer.id) ?? rv.offer.provenance.verifiedAt ?? '' })}</div>}
     {issues.length ? issues.map((i, k) => { const tg = issueTarget(i, snap.floor, snap.placements); return <div key={k} className={`issue ${i.severity}`} role={tg ? 'button' : undefined} tabIndex={tg ? 0 : undefined} style={tg ? { cursor: 'pointer' } : undefined} onClick={tg ? () => onFocusIssue(i) : undefined} onKeyDown={tg ? e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onFocusIssue(i); } } : undefined}>{iT(i)}</div>; }) : <div className="issue PASS">{t('editor.positionValid')}</div>}
     <div className="grid2">
       <label className="f"><span>{t('editor.xField', { u })}</span><input type="number" value={inField(p.x)} onChange={e => num(e.target.value, (x: number) => onMove(x / 100, p.z), -1e9)} /></label>

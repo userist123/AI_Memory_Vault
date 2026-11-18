@@ -47,7 +47,7 @@ export async function updatePrice(input: any){
   const kind = String(input.kind), id = String(input.targetId), price = Number(input.price), verifiedAt = String(input.verifiedAt || '');
   if (!kindOk(kind) || !idOk(id) || !(price > 0) || !/^\d{4}-\d{2}-\d{2}$/.test(verifiedAt)) throw new HttpError(400, 'Date invalide.');
   const { q } = await getDb();
-  if (kind === 'o'){ const r = await q("update offers set price=$1, verified_at=$2, verification_type='manual', confidence='HIGH' where id=$3 returning id", [price, verifiedAt, id]); if (!r.rows[0]) throw new HttpError(404, 'Ofertă inexistentă.'); }
+  if (kind === 'o'){ const r = await q("update offers set price=$1, verified_at=$2, verification_type='manual', confidence='HIGH', availability=case when availability='OUT_OF_STOCK' then 'UNKNOWN' else availability end where id=$3 returning id", [price, verifiedAt, id]); if (!r.rows[0]) throw new HttpError(404, 'Ofertă inexistentă.'); }
   else { const m = (await q('select pack from materials where id=$1', [id])).rows[0]; if (!m) throw new HttpError(404, 'Material inexistent.');
     if (m.pack?.price != null){ const pack = { ...m.pack, price }; await q("update materials set pack=$1, unit_price=$2, verified_at=$3, verification_type='manual' where id=$4", [JSON.stringify(pack), Math.round(price / m.pack.size * 100) / 100, verifiedAt, id]); }
     else await q("update materials set unit_price=$1, verified_at=$2, verification_type='manual' where id=$3", [price, verifiedAt, id]); }

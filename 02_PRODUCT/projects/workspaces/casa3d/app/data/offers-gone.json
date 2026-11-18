@@ -1,0 +1,119 @@
+{
+ "note": "Oferte a căror pagină de produs nu mai există (404/410) sau trimite acum la o categorie, la reverificare (scripts/recheck-prices.mjs). La pornire, oferta primește disponibilitatea OUT_OF_STOCK; editorul arată de ce. Fișier mic, separat, pentru că îl citește și interfața.",
+ "items": [
+  {
+   "id": "offer-canapea-1",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-tresund-bej-deschis-s89482830/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-canapea-4",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-cu-sezlong-tresund-antracit-s99482839/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-masuta-2",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-masuta-cafea-negru-maro-10176292/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-masuta-3",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/listerby-masuta-cafea-frnr-stjr-30513904/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-masa-0",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ekedalen-ekedalen-masa-4-scaune-maro-i-orrsta-gri-s69221278/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-masa-1",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ekedalen-aelvsta-masa-4-scaune-maro-i-ratan-negru-s49570819/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-masa-2",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/laneberg-ekedalen-masa-4-scaune-alb-alb-gri-s89304791/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-masa-3",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ekedalen-ingolf-masa-4-scaune-alb-alb-s69482968/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-masa-4",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ekedalen-ekedalen-masa-2-scaune-maro-i-orrsta-gri-s29296874/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-pat-2",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-4-cutii-depozitare-alb-s99931611/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-pat-3",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-furnir-stejar-alb-luroey-s59027390/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-bucatarie-0",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-alb-s19338049/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-bucatarie-1",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-gri-cadru-s19337399/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-bucatarie-2",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-alb-s99337282/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-pantofar-0",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-pantofi-cu-4-compartimente-alb-60156121/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-pantofar-1",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-pantofi-cu-4-compartimente-negru-maro-80156120/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-pantofar-2",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-pantofi-cu-2-compartimente-negru-maro-40216908/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-pat-5",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-alb-luroey-s69002431/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  },
+  {
+   "id": "offer-dulap-4",
+   "checkedAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/songesand-dulap-de-haine-alb-90347351/",
+   "why": "pagina produsului trimite acum la o categorie (scos din vânzare?)"
+  }
+ ]
+}

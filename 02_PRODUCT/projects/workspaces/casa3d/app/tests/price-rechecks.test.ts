@@ -51,3 +51,16 @@ test('ofertele relegate: linkul nou e pagina produsului (nu categorie) și ajung
   for (const r of relinked){ assert.ok(isProductPage(r.url), r.url);
     const row = (await q('select source_url from offers where id=$1', [r.id])).rows[0]; assert.equal(row?.source_url, r.url, r.id); }
 });
+
+test('oferta scoasă din vânzare: indisponibilă la pornire; o citire nouă a prețului (manuală sau automată) o readuce', async () => {
+  const { applyOffersGone } = await import('../lib/price-rechecks'); const { q } = await getDb();
+  const o = (await q("select id, verified_at::text as v from offers where availability <> 'OUT_OF_STOCK' and verified_at < '2026-12-01' and id ~ '^[a-z0-9-]{1,80}$' order by id limit 2")).rows;
+  const av = async (id: string) => (await q('select availability from offers where id=$1', [id])).rows[0].availability;
+  const gone = o.map((r: any) => ({ id: r.id, checkedAt: '2026-12-02', url: 'https://x/p/1', why: 'test' }));
+  assert.equal(await applyOffersGone(q, gone), 2); assert.equal(await av(o[0].id), 'OUT_OF_STOCK');
+  assert.equal(await applyOffersGone(q, gone), 0, 'idempotent');
+  await updatePrice({ kind: 'o', targetId: o[0].id, price: 777, verifiedAt: '2026-12-03' }); assert.equal(await av(o[0].id), 'UNKNOWN', 'corectura manuală: pagina există');
+  assert.equal(await applyOffersGone(q, gone), 0, 'citirea manuală e după verificare: nu se mai marchează');
+  await applyPriceRechecks(q, [{ kind: 'o', id: o[1].id, price: 5, seenAt: '2026-12-04', url: 'https://x/p/2', evidence: 'test' }]);
+  assert.equal(await av(o[1].id), 'UNKNOWN');
+});

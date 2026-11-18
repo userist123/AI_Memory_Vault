@@ -1,5 +1,5 @@
 # todo-claude-casa3d-renovare
-STATUS: IN_REVIEW (PR draft)        UPDATED: 2026-11-17
+STATUS: IN_REVIEW (PR draft)        UPDATED: 2026-11-18
 TASK: Casa3D, cerința proprietarului: „tot ce se poate renova și adăuga în casă trebuie să existe, să poată fi înlocuit și
   cumpărat; uși, geamuri, utilitare, electrocasnice — nu modele standard”.
 BRANCH: claude/casa3d-renovare-produse, worktree D:/w/reno (bază origin/main 0d97d13c3). Dev: launch config casa3d-reno, port 3221.
@@ -76,7 +76,17 @@ DONE:
     alt produs: 16 relegate la pagina corectă (verificate independent), 9 notate (relinkNotApplied). Proforma arată sursa doar pentru
     pagini de produs (isProductPage). Rămase de mână: Hornbach (anti-robot), JYSK, pagini fără preț structurat. Suita 148/1001.
   - #391: picau enforce + zero-regression-gate doar pe allowlist-ul de note (checkpoint fără frontmatter) → adăugat, CI 43/43.
-NEXT: merge #391 (Next.js) apoi #386 (decizia proprietarului); verificarea de mână a celor ~90 de prețuri rămase.
+  - Reverificare periodică (2026-11-18): `npm run prices:recheck` (scripts/recheck-prices.mjs + scripts/lib/price-extract.mjs, testat în
+    tests/price-extract.test.ts): prețuri mai vechi de --days N (implicit 30), o cerere la 3–5 s, 403/429 → manual (fără ocolire),
+    preț doar din JSON-LD (inclusiv priceSpecification IKEA, fără prețul vechi tăiat) sau finalPrice Dedeman; --apply scrie în
+    data/price-rechecks.json și data/offers-gone.json; --from <raport> aplică un raport fără cereri noi. Rulat pe 186 de prețuri:
+    63 la fel, 23 schimbate, 20 IKEA trimit la categorie (confirmat în browser real), 80 manual (Hornbach 42, JYSK 12, eMAG 10,
+    Dedeman 7, linkuri non-produs 9). Ofertele dispărute → availability OUT_OF_STOCK la pornire (o citire nouă de preț o readuce);
+    devizul și editorul le marchează „scos din vânzare”, propunerea automată le evită dacă grupa are alternativă. Stocul și
+    încrederea din editor afișate în română (erau IN_STOCK/HIGH). Suita 149/1010, tsc curat. Raport:
+    research_notes/casa3d-produse/reverificare-script-2026-11-18.json (în afara repo).
+    DE FĂCUT: toate cele 3 combinații ENHET (bucătăria) și toate mesele EKEDALEN sunt scoase din vânzare → produse noi de cercetat.
+NEXT: înlocuitori pentru bucătăria ENHET și mesele EKEDALEN; merge #391 (Next.js) apoi #386 (decizia proprietarului); verificarea de mână a celor ~90 de prețuri rămase.
   - Teste: tests/renovation-products.test.ts (12); suita 143 de fișiere / 984 de teste; tsc curat; build compilat.
 RESIDUALS ACCEPTATE (decizia sesiunii principale după runda 2):
   - cota blatului e fixă 0,9 m (motorul desenează .86 + blat); microundele pe pardoseală primesc acum avertismentul ON_FLOOR.

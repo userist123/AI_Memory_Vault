@@ -9,7 +9,8 @@
     "start": "node scripts/run-local.mjs start",
     "start:hosted": "next start",
     "test": "vitest run",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prices:recheck": "node scripts/recheck-prices.mjs"
   },
   "dependencies": {
     "@casa3d/twin-core": "file:../packages/twin-core",

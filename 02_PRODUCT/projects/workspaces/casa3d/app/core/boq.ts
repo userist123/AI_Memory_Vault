@@ -79,6 +79,8 @@ const FEATURE_LABEL: Record<string, string> = { paint: 'Vopsea', panel: 'Lambriu
 export type BoqCategory = 'furniture' | 'finishes' | 'lighting' | 'appliances' | 'sanitary' | 'textiles';
 export interface BoqItem { key: string; category: BoqCategory; roomId: string | null; label: string; refId: string; netQty: number; unit: string; wastePct: number;
   orderedQty: number; packs: number | null; packLabel: string | null; unitPrice: number | null; total: number | null; supplier: string; sourceUrl: string | null; verifiedAt: string | null; confidence: Confidence; note?: string;
+  /** pagina produsului a dispărut la ultima reverificare (data/offers-gone.json): de înlocuit înainte de comandă */
+  unavailable?: true;
   /** culoarea exactă (#rrggbb) a unei vopsele nuanțate: pentru mostră și comandă; eticheta poartă doar numele culorii */
   color?: string }
 export interface LaborItem { key: string; roomId: string; rateId: string; label: string; qty: number; unit: string; low: number; expected: number; high: number; confidence: Confidence; sources: { name: string; url: string }[] }
@@ -299,7 +301,8 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
   const lineFor = (key: string, roomId: string | null, vid: string, custom?: { w: number; d: number; h: number }) => { const rv = resolve(cat, vid); const g = groupOf(vid);
     if (!rv){ unknown.push(vid); return; } const price = custom ? null : rv.offer?.price ?? null; const label = custom ? `${rv.variant.name} — pe comandă ${custom.w}×${custom.d}×${custom.h} cm` : rv.variant.name; if (price == null) unknown.push(label);
     items.push({ key, category: SANITARY.has(g) ? 'sanitary' : APPLIANCES.has(g) ? 'appliances' : 'furniture', roomId, label, refId: vid, netQty: 1, unit: 'buc', wastePct: 0, orderedQty: 1, packs: null, packLabel: null,
-      unitPrice: price, total: price, supplier: rv.offer?.provenance.source || 'UNKNOWN', sourceUrl: rv.offer?.provenance.sourceUrl ?? null, verifiedAt: rv.offer?.provenance.verifiedAt ?? null, confidence: rv.offer?.provenance.confidence ?? 'UNKNOWN' }); };
+      unitPrice: price, total: price, supplier: rv.offer?.provenance.source || 'UNKNOWN', sourceUrl: rv.offer?.provenance.sourceUrl ?? null, verifiedAt: rv.offer?.provenance.verifiedAt ?? null, confidence: rv.offer?.provenance.confidence ?? 'UNKNOWN',
+      ...(rv.offer?.availability === 'OUT_OF_STOCK' ? { unavailable: true as const } : {}) }); };
   // fiecare piesă sanitară e produsul ales (walk-in, WC suspendat, cadă...): se plătește exact ce s-a ales
   for (const p of snap.placements){ const room = p.roomId ? floors(snap).flatMap(f => f.rooms).find(r => r.id === p.roomId) : undefined, bb = room?.type === 'baie' && snap.finishes?.[room.id]?.bath ? bathOf(finishesOf(snap, room)) : null;
     lineFor(p.id, p.roomId, p.variantId, p.size); }
