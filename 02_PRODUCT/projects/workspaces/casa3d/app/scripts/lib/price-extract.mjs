@@ -8,23 +8,15 @@ const num = s => Number(String(s).replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/
 
 export function priceFromHtml(html, url){
   const code = /dedeman\.ro\/.*\/p\/(\d+)/.exec(url)?.[1];
-  if (code){
-    const i = html.indexOf(`"finalPrice" data-product-id="${code}"`), j = i >= 0 ? html.lastIndexOf('data-price-box="product-id-', i) : -1;
-    if (i < 0) return null;
-    const box = html.slice(Math.max(j, i - 1500), i + 1200);
-    const f = /data-price-amount="([\d.]+)"\s+data-price-type="finalPrice"/.exec(box) ?? /data-price-type="finalPrice"[^>]*data-price-amount="([\d.]+)"/.exec(box);
-    if (!f) return null;
-    const unit = /price-sale-unit">\s*\/\s*([^<\s]+)/.exec(html.slice(i, i + 900))?.[1] ?? null;
-    return { price: Number(f[1]), unit, how: 'dedeman-finalPrice',
-      evidence: `cod ${code}: finalPrice ${f[1]} lei${unit ? ' /' + unit : ''}${/oldPrice/.test(box) ? ' (pagina arată și un preț vechi: promoție)' : ''}` };
-  }
+  if (code) return dedemanPrice(html, code);
   for (const mm of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)){
-    let j; try { j = JSON.parse(mm[1]); } catch { continue; }
+    // eMAG: descrierea din JSON-LD are uneori linii noi și tab-uri nescăpate (JSON invalid); înlocuite cu spații, restul rămâne
+    let j; try { j = JSON.parse(mm[1]); } catch { try { j = JSON.parse(mm[1].replace(/[\u0000-\u001f]+/g, ' ')); } catch { continue; } }
     for (const n of (Array.isArray(j) ? j : j['@graph'] ?? [j])){
       if (![].concat(n?.['@type'] || []).includes('Product')) continue;
       for (const o of [].concat(n.offers || [])){
         if (o.price != null || o.lowPrice != null){ const p = o.price ?? o.lowPrice;
-          if (/^RON$/i.test(o.priceCurrency || 'RON') && num(p) > 0) return { price: num(p), unit: null, how: 'json-ld', evidence: `offers.price=${p} ${o.priceCurrency || ''}`.trim() + (o.seller?.name ? ` (vânzător: ${String(o.seller.name).slice(0, 60)})` : '') }; continue; }
+          if (/^RON$/i.test(o.priceCurrency || 'RON') && num(p) > 0) return { price: num(p), unit: null, how: 'json-ld', evidence: `offers.price=${p} ${o.priceCurrency || ''}`.trim() + (o.seller?.name ? ` (vânzător: ${String(o.seller.name).replace(/&amp;/g, '&').slice(0, 60)})` : '') }; continue; }
         // IKEA: priceSpecification e o listă — prețul curent și, la promoții, prețul vechi tăiat (StrikethroughPrice), care nu se ia
         const specs = [].concat(o.priceSpecification || []), cur = specs.filter(s => s?.price != null && !/Strikethrough|ListPrice/i.test(s.priceType || '') && /^RON$/i.test(s.priceCurrency || 'RON'));
         if (cur.length === 1 && num(cur[0].price) > 0) return { price: num(cur[0].price), unit: null, how: 'json-ld',
@@ -33,6 +25,34 @@ export function priceFromHtml(html, url){
     }
   }
   return null;
+}
+
+// Dedeman: prețul final din cutia de preț a produsului din adresă (…/p/<cod>). Pagina are și produsele recomandate, deci cutia
+// se leagă de produs: (1) prin codul din adresă (`"finalPrice" data-product-id="<cod>"`) sau, când pagina nu-l pune acolo,
+// (2) prin id-ul intern din formularul „adaugă în coș” al produsului principal (id="product_addtocart_form"), iar codul din adresă
+// trebuie să fie și adresa canonică a paginii. Altfel: null.
+function dedemanPrice(html, code){
+  const pick = (i, label) => {
+    const j = html.lastIndexOf('data-price-box="product-id-', i), box = html.slice(Math.max(j, i - 1500), i + 1200);
+    const f = /data-price-amount="([\d.]+)"\s+data-price-type="finalPrice"/.exec(box) ?? /data-price-type="finalPrice"[^>]*data-price-amount="([\d.]+)"/.exec(box);
+    if (!f) return null;
+    const unit = /price-sale-unit">\s*\/\s*([^<\s]+)/.exec(html.slice(i, i + 900))?.[1] ?? null;
+    return { price: Number(f[1]), unit, how: 'dedeman-finalPrice',
+      evidence: `${label}: finalPrice ${f[1]} lei${unit ? ' /' + unit : ''}${/oldPrice/.test(box) ? ' (pagina arată și un preț vechi: promoție)' : ''}` };
+  };
+  const i = html.indexOf(`"finalPrice" data-product-id="${code}"`);
+  if (i >= 0) return pick(i, `cod ${code}`);
+  const canon = /<link rel="canonical" href="([^"]+)"/.exec(html)?.[1] ?? '';
+  if (!new RegExp(`/p/${code}(?:[-/?#]|$)`).test(canon)) return null;
+  const fi = html.indexOf('id="product_addtocart_form"'); if (fi < 0) return null;
+  const pid = /name="product" value="(\d+)"/.exec(html.slice(fi, fi + 3000))?.[1]; if (!pid) return null;
+  const k = html.indexOf(`id="product-price-${pid}"`); if (k < 0) return null;
+  const tag = html.slice(k, html.indexOf('>', k)), f = /data-price-amount="([\d.]+)"/.exec(tag);
+  if (!f || !/data-price-type="finalPrice"/.test(tag)) return null;
+  const unit = /price-sale-unit">\s*\/\s*([^<\s]+)/.exec(html.slice(k, k + 900))?.[1] ?? null;
+  const box = html.slice(Math.max(0, k - 1200), k);
+  return { price: Number(f[1]), unit, how: 'dedeman-finalPrice',
+    evidence: `cod ${code} (produsul ${pid} din formularul paginii): finalPrice ${f[1]} lei${unit ? ' /' + unit : ''}${/oldPrice/.test(box) ? ' (pagina arată și un preț vechi: promoție)' : ''}` };
 }
 
 // Aceeași regulă ca isProductPage din core/commercial.ts (testul o compară): pagina unui produs, nu o categorie, doar https.

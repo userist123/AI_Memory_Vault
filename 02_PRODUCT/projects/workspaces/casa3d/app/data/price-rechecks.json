@@ -3710,6 +3710,103 @@
    "seenAt": "2026-11-18",
    "url": "https://www.dedeman.ro/ro/boiler-electric-ariston-lydos-eco-80-v-75-l-1800-w/p/2023263",
    "evidence": "cod 2023263: finalPrice 849 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "banda-led-hoff-3000k",
+   "price": 98.07,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/banda-led-dublu-adeziva-pentru-interior-hoff-smd-2835-12-v-24-w-2500-lm-lumina-calda-cu-alimentator-arelux-5-m/p/1070874-1048524",
+   "evidence": "cod 1070874 (produsul 893876 din formularul paginii): finalPrice 98.07 lei /pachet",
+   "per": "pack"
+  },
+  {
+   "kind": "o",
+   "id": "offer-lavoar-10",
+   "price": 1556,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-geberit-modo-cu-sertare-alb-suspendat-60-x-48-5-x-65-cm-mdf/p/3054343-3054344",
+   "evidence": "cod 3054343 (produsul 986983 din formularul paginii): finalPrice 1556 lei /pachet"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-4",
+   "price": 1836.86,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-arctic-9-kg-1400-rpm-clasa-a-motor-silent-inverter-extrasteam-ironexpress-fast-intensive-steam-child-lock-add-in-alb-aplm2wfsu29412w/pd/DKBLWFYBM/",
+   "evidence": "offers.price=1836.86 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-7",
+   "price": 3336.55,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-cu-incarcare-verticala-whirlpool-6-kg-1200-rpm-tehnologia-al-6lea-simt-clasa-b-motor-inverter-zen-display-digital-alb-tdlrbx6252bseu/pd/DRGFQBYBM/",
+   "evidence": "offers.price=3336.55 RON (vânzător: Dragtek com)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-10",
+   "price": 2699.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-cu-uscator-beko-10-kg-spalare-6-kg-uscare-clasa-a-1400-rpm-motor-prosmart-inverter-homewhiz-steamcure-ultrafast-addxtra-gri-b5dft510442m/pd/DN3S3DYBM/",
+   "evidence": "offers.price=2699.9 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaVase-1",
+   "price": 1699.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-vase-arctic-14-seturi-6-programe-clasa-d-deschidere-automata-a-usii-aqua-protect-mini-35-60-cm-alb-dfn363/pd/DLD1BKMBM/",
+   "evidence": "offers.price=1699.99 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaVase-3",
+   "price": 2017.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-vase-beko-10-seturi-6-programe-clasa-e-motor-prosmart-inverter-hygiene-intense-fast-45-cm-inox-bdfs26020xq/pd/DVT2FVMBM/",
+   "evidence": "offers.price=2017.99 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-microunde-1",
+   "price": 399.3,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/cuptor-cu-microunde-gorenje-17-l-5-nivele-700-w-alb-mo17e1w/pd/DC8JP1BBM/",
+   "evidence": "offers.price=399.3 RON (vânzător: ELECTRICS SHOP & BATTERY)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-hota-7",
+   "price": 7799.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/hota-insula-pyramis-corso-90cm-704mc-h-43db-touch-control-inox-si-sticla-neagra-pyr-065021701/pd/DC0T5BBBM/",
+   "evidence": "offers.price=7799.99 RON (vânzător: Pyramis)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cuptor-4",
+   "price": 1148.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/cuptor-incorporabil-beko-electric-72-l-grill-steamshine-cleaning-timer-clasa-a-inox-bbie12300xd/pd/D04J13MBM/",
+   "evidence": "offers.price=1148.99 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plita-6",
+   "price": 999.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/plita-incorporabila-beko-gaz-4-arzatoare-arzator-wok-60-cm-sticla-neagra-hilw64225s/pd/DWWGCKBBM/",
+   "evidence": "offers.price=999.99 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plita-7",
+   "price": 699.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/plita-incorporabila-whirlpool-gaz-4-arzatoare-gratare-fonta-multistep-60-cm-negru-gowl628nbee/pd/D20X32MBM/",
+   "evidence": "offers.price=699.99 RON (vânzător: eMAG)"
   }
  ],
  "notVerified": [
@@ -3717,13 +3814,6 @@
    "kind": "material",
    "id": "vopsea-savana-super",
    "url": "https://dedeman.ro/ro/vopsea-superlavabila-interior-savana-alba-15-l-amorsa-4-l-prosop-de-plaja-cadou/p/5015076",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "material",
-   "id": "banda-led-hoff-3000k",
-   "url": "https://www.dedeman.ro/ro/banda-led-dublu-adeziva-pentru-interior-hoff-smd-2835-12-v-24-w-2500-lm-lumina-calda-cu-alimentator-arelux-5-m/p/1070874-1048524",
    "status": "manual",
    "why": "preț negăsit clar în pagină"
   },
@@ -4085,13 +4175,6 @@
    "why": "preț negăsit clar în pagină"
   },
   {
-   "kind": "offer",
-   "id": "offer-lavoar-10",
-   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-geberit-modo-cu-sertare-alb-suspendat-60-x-48-5-x-65-cm-mdf/p/3054343-3054344",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
    "kind": "material",
    "id": "hornbach-fereastra-pvc-termopan-4k-80x116-cm-alba-fixa",
    "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-4k-80x116-cm-alba-fixa/4692264/",
@@ -4326,76 +4409,6 @@
    "kind": "material",
    "id": "hornbach-priza-date-rj45-simpla-legrand-valena-life-cat6-negru-mat",
    "url": "https://www.hornbach.ro/p/priza-date-rj45-simpla-legrand-valena-life-cat6-negru-mat/10553858/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-masinaSpalat-4",
-   "url": "https://www.emag.ro/masina-de-spalat-rufe-arctic-9-kg-1400-rpm-clasa-a-motor-silent-inverter-extrasteam-ironexpress-fast-intensive-steam-child-lock-add-in-alb-aplm2wfsu29412w/pd/DKBLWFYBM/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-masinaSpalat-7",
-   "url": "https://www.emag.ro/masina-de-spalat-rufe-cu-incarcare-verticala-whirlpool-6-kg-1200-rpm-tehnologia-al-6lea-simt-clasa-b-motor-inverter-zen-display-digital-alb-tdlrbx6252bseu/pd/DRGFQBYBM/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-masinaSpalat-10",
-   "url": "https://www.emag.ro/masina-de-spalat-rufe-cu-uscator-beko-10-kg-spalare-6-kg-uscare-clasa-a-1400-rpm-motor-prosmart-inverter-homewhiz-steamcure-ultrafast-addxtra-gri-b5dft510442m/pd/DN3S3DYBM/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-masinaVase-1",
-   "url": "https://www.emag.ro/masina-de-spalat-vase-arctic-14-seturi-6-programe-clasa-d-deschidere-automata-a-usii-aqua-protect-mini-35-60-cm-alb-dfn363/pd/DLD1BKMBM/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-masinaVase-3",
-   "url": "https://www.emag.ro/masina-de-spalat-vase-beko-10-seturi-6-programe-clasa-e-motor-prosmart-inverter-hygiene-intense-fast-45-cm-inox-bdfs26020xq/pd/DVT2FVMBM/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-microunde-1",
-   "url": "https://www.emag.ro/cuptor-cu-microunde-gorenje-17-l-5-nivele-700-w-alb-mo17e1w/pd/DC8JP1BBM/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-hota-7",
-   "url": "https://www.emag.ro/hota-insula-pyramis-corso-90cm-704mc-h-43db-touch-control-inox-si-sticla-neagra-pyr-065021701/pd/DC0T5BBBM/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-cuptor-4",
-   "url": "https://www.emag.ro/cuptor-incorporabil-beko-electric-72-l-grill-steamshine-cleaning-timer-clasa-a-inox-bbie12300xd/pd/D04J13MBM/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-plita-6",
-   "url": "https://www.emag.ro/plita-incorporabila-beko-gaz-4-arzatoare-arzator-wok-60-cm-sticla-neagra-hilw64225s/pd/DWWGCKBBM/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-plita-7",
-   "url": "https://www.emag.ro/plita-incorporabila-whirlpool-gaz-4-arzatoare-gratare-fonta-multistep-60-cm-negru-gowl628nbee/pd/D20X32MBM/",
    "status": "manual",
    "why": "preț negăsit clar în pagină"
   },

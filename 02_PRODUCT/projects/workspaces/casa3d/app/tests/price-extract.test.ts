@@ -77,3 +77,20 @@ test('ofertele dispărute: intră în lista separată, nu în „neverificate”
   assert.deepEqual(g.items.map((i: { id: string }) => i.id), ['old', 'g']); assert.equal(g.items[1].checkedAt, '2026-12-18');
   assert.deepEqual(mergeRechecks({ items: [], notVerified: [] }, res, '2026-12-18').notVerified, [], 'dispărută ≠ de verificat de mână');
 });
+
+test('Dedeman fără codul în cutia de preț: produsul din formularul „adaugă în coș”, doar dacă adresa canonică e a codului', () => {
+  const rec = '<div data-price-box="product-id-111"><span id="product-price-111" data-price-amount="9.99" data-price-type="finalPrice"></span></div>';
+  const page = (canon: string) => `<link rel="canonical" href="${canon}" />${rec}<form id="product_addtocart_form" action="/checkout/cart/add/"><input type="hidden" name="product" value="185945"></form>
+    <div data-price-box="product-id-185945"><span data-price-type="oldPrice" data-price-amount="548.99"></span><span id="product-price-185945" data-price-amount="469" data-price-type="finalPrice" class="price-wrapper"></span><span class="price-wrapper price-sale-unit">/bucată</span></div>`;
+  const url = 'https://www.dedeman.ro/ro/oglinda/p/3043896', p = priceFromHtml(page(url), url);
+  assert.equal(p.price, 469); assert.equal(p.unit, 'bucată'); assert.match(p.evidence, /produsul 185945 din formularul paginii/); assert.match(p.evidence, /promoție/);
+  assert.equal(priceFromHtml(page('https://www.dedeman.ro/ro/alt-produs/p/999'), url), null, 'canonica altui produs → nimic');
+  assert.equal(priceFromHtml(rec, url), null, 'fără formular → nimic (nu se ia prețul unui produs recomandat)');
+});
+
+test('eMAG: JSON-LD cu linii noi nescăpate în descriere se citește; vânzătorul fără entități HTML', () => {
+  const raw = '<script type="application/ld+json">{"@type": "Product", "description": "Nota:\n\tdescriere", "offers": {"@type": "Offer", "price": "399.3", "priceCurrency": "RON", "seller": {"name": "ELECTRICS SHOP &amp; BATTERY"}}}</script>';
+  assert.throws(() => JSON.parse(raw.slice(raw.indexOf('{'), raw.lastIndexOf('}') + 1)), 'JSON-ul paginii e invalid (ca pe eMAG)');
+  const p = priceFromHtml(raw, 'https://www.emag.ro/x/pd/DC8JP1BBM/');
+  assert.equal(p.price, 399.3); assert.match(p.evidence, /ELECTRICS SHOP & BATTERY/);
+});
