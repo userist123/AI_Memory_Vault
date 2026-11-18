@@ -1301,3 +1301,17 @@
   (fields left empty), and in the clean rerun the auth_audit.jsonl.head file was held by another process so the "attack" copy was partial. My lab
   script retried PS Direct calls on any error and ran the copy steps up to five times, mixing snapshots; WS02's auth folder was restored from the
   pre-test copy (seq 929) and the test witness removed, then the clean rerun ended consistent. The message itself is covered by HeadWitnessTests.
+- 2026-11-18 PLANNER #8 ITEM 3a DONE (WMI permanent subscriptions; vault-worker + main-session cleanup; low/medium risk, not Opus-reviewed: detection
+  wording/severity only). REAL sample first: on LAB-WS02 a test LogFileEventConsumer subscription (LA-TEST-*) produced WMI-Activity 5861
+  (UserData Operation_ESStoConsumerBinding: Namespace, ESS, CONSUMER, PossibleCause with the __EventFilter / consumer instances); also a Windows
+  default 5861 on a clean VM (ESS "SCM Event Log Filter", NTEventLogEventConsumer "SCM Event Log Consumer"). Test subscription removed (0 left);
+  sample kept outside the repo (E:\LA-Lab\diag\wmi, contains SIDs). FINDING: rule PERSIST-WMI already existed (Correlation.cs; the earlier Explore
+  inventory said MISSING - wrong) and EvtxParser already keeps UserData leaves. Refined: 5861 -> one finding per (ESS, CONSUMER) pair (repeats
+  aggregated); default SCM pair excluded only with its own filter (a look-alike with another filter is reported); severity High for
+  CommandLine/ActiveScript consumers, Medium otherwise (was always High); the finding lists namespace, filter, filter Query, consumer class/name and
+  CommandLineTemplate/ExecutablePath/ScriptText/ScriptFileName/Filename/SourceName parsed from PossibleCause; says a mechanism exists, not who made
+  it nor that it ran. Sysmon 19-21 unchanged. Tests WmiSubscription5861Tests (5, from the real XML without SIDs). Grouping separator written as
+  "\u0001" (was a raw control character). Property names other than those in the captured event come from the Microsoft class names.
+  Suites: Dfir (Release) 3962 (3929 passed, 33 skipped), App 1114, UI 370 (369 + 1 skipped), Edition 45, all exit 0. The worker saw one
+  HashChainSealConcurrencyTests access-denied failure once; 5 targeted reruns passed (possible rare flake, watch CI).
+  Next: planner #8 item 3b (TaskCache Tree/Tasks), then RDP RemoteConnectionManager 1149 + SMB channels, PowerShell transcripts. Owner items unchanged.

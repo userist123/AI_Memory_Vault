@@ -140,6 +140,45 @@ public static class Correlation
         @"^\s*(?:(?:(?<type>[A-Za-z_]+)\.)?Name|(?<type>[A-Za-z_]+))\s*=\s*""(?<name>[^""]*)""\s*$",
         System.Text.RegularExpressions.RegexOptions.IgnoreCase | System.Text.RegularExpressions.RegexOptions.CultureInvariant, TimeSpan.FromMilliseconds(200));
 
+    private static readonly System.Text.RegularExpressions.Regex WmiProp = new(
+        @"^\s*(?<k>[A-Za-z_][A-Za-z0-9_]*)\s*=\s*""(?<v>(?:[^""\\]|\\.)*)""\s*;\s*$",
+        System.Text.RegularExpressions.RegexOptions.CultureInvariant | System.Text.RegularExpressions.RegexOptions.Multiline, TimeSpan.FromMilliseconds(200));
+
+    /// <summary>Consumer class of a 5861 CONSUMER field written Class="Name" or Class.Name="Name"; empty when not parseable.</summary>
+    internal static string WmiConsumerClass(string consumer)
+    {
+        var m = WmiTypedName.Match(consumer);
+        return m.Success ? m.Groups["type"].Value : "";
+    }
+
+    /// <summary>High only for consumers that run a command or a script (CommandLine / ActiveScript); every other or unknown class is Medium.</summary>
+    internal static Severity WmiConsumerSeverity(string consumer)
+    {
+        var c = WmiConsumerClass(consumer);
+        return c.Equals("CommandLineEventConsumer", StringComparison.OrdinalIgnoreCase) || c.Equals("ActiveScriptEventConsumer", StringComparison.OrdinalIgnoreCase)
+            ? Severity.High : Severity.Medium;
+    }
+
+    /// <summary>
+    /// Reads the `Name = "value";` lines of the 5861 PossibleCause text ("Binding EventFilter: instance of __EventFilter {…} Perm. Consumer: instance of X {…}").
+    /// Returns (section, property, value) with the section "filter" or "consumer"; \ and \" are unescaped.
+    /// </summary>
+    internal static List<(string Section, string Key, string Value)> WmiPossibleCauseProps(string cause)
+    {
+        var res = new List<(string, string, string)>();
+        if (string.IsNullOrWhiteSpace(cause)) return res;
+        var section = "filter";
+        foreach (var line in cause.Split((char)10))
+        {
+            var l = line.TrimEnd((char)13);
+            if (l.TrimStart().StartsWith("Perm. Consumer", StringComparison.OrdinalIgnoreCase)) { section = "consumer"; continue; }
+            var m = WmiProp.Match(l);
+            if (!m.Success) continue;
+            res.Add((section, m.Groups["k"].Value, m.Groups["v"].Value.Replace("\\\\", "\\").Replace("\\\"", "\"")));
+        }
+        return res;
+    }
+
     /// <summary>
     /// True only for the subscription Windows registers itself: the consumer / filter NAME field is exactly "SCM Event Log Consumer" / "SCM Event Log Filter"
     /// (an NTEventLogEventConsumer / __EventFilter), written as Type.Name="..." or, as WMI-Activity 5861 logs it, Type="...". A command line or script that
@@ -449,20 +488,42 @@ public static class Correlation
 
         // WMI event subscriptions: WMI-Activity 5861 (permanent event consumer registered) and Sysmon 19/20/21 (filter / consumer / binding).
         // Built-in consumers that Windows registers itself are left out.
-        var wmiSubs = events.Where(e => (Ev(e, "Microsoft-Windows-WMI-Activity/Operational", 5861) || Ev(e, Wp11Rules.Sysmon, 19, 20, 21)) &&
-                                        !IsBuiltInWmiSubscription(F(e, "CONSUMER", "Consumer", "Name", "ESS"))).ToList();
-        foreach (var g in wmiSubs.GroupBy(e => F(e, "CONSUMER", "Consumer", "Name", "ESS") is { Length: > 0 } k ? k : "(fără nume) " + e.EventId, StringComparer.OrdinalIgnoreCase))
+        // 5861 = one finding per (ESS filter, CONSUMER) pair (repeated 5861 for the same pair are aggregated); severity follows the consumer class.
+        bool Is5861(TimelineEvent e) => Ev(e, "Microsoft-Windows-WMI-Activity/Operational", 5861);
+        var wmiSubs = events.Where(e => (Is5861(e) || Ev(e, Wp11Rules.Sysmon, 19, 20, 21)) &&
+                                        !(IsBuiltInWmiSubscription(F(e, "CONSUMER", "Consumer", "Name", "ESS")) &&
+                                          (!Is5861(e) || F(e, "ESS") is not { Length: > 0 } ess0 || ess0.Equals("SCM Event Log Filter", StringComparison.OrdinalIgnoreCase)))).ToList();
+        foreach (var g in wmiSubs.GroupBy(e => (F(e, "CONSUMER", "Consumer", "Name", "ESS") is { Length: > 0 } k ? k : "(fără nume) " + e.EventId) +
+                                               (Is5861(e) ? "\u0001" + F(e, "ESS") : ""), StringComparer.OrdinalIgnoreCase))
         {
             var first = g.OrderBy(e => e.Time.Utc).First();
+            var key = g.Key.Split('\u0001')[0];
+            bool is5861 = Is5861(first);
+            var sev = is5861 ? WmiConsumerSeverity(F(first, "CONSUMER")) : Severity.High;
+            var props = is5861 ? WmiPossibleCauseProps(F(first, "PossibleCause")) : [];
+            string P(string section, string name) => props.FirstOrDefault(x => x.Section == section && x.Key.Equals(name, StringComparison.OrdinalIgnoreCase)).Value ?? "";
+            var details = new List<string>();
+            if (is5861)
+            {
+                if (F(first, "Namespace") is { Length: > 0 } wns) details.Add($"spațiu de nume {wns}");
+                if (F(first, "ESS") is { Length: > 0 } ess) details.Add($"filtru {Trunc(ess, 120)}");
+                if (P("filter", "Query") is { Length: > 0 } q) details.Add($"interogare filtru {Trunc(q, 300)}");
+                if (WmiConsumerClass(F(first, "CONSUMER")) is { Length: > 0 } cls) details.Add($"clasa consumatorului {cls}");
+                if (WmiTypedName.Match(F(first, "CONSUMER")) is { Success: true } cm) details.Add($"consumator {Trunc(cm.Groups["name"].Value, 120)}");
+                foreach (var pn in new[] { "CommandLineTemplate", "ExecutablePath", "ScriptText", "ScriptFileName", "Filename", "SourceName" })
+                    if ((P("consumer", pn) is { Length: > 0 } pv ? pv : F(first, pn)) is { Length: > 0 } val) details.Add($"{pn} = {Trunc(val, 300)}");
+            }
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "PERSIST-WMI", Title = $"Abonament WMI permanent înregistrat: {Trunc(g.Key, 80)}",
-                Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1546.003",
+                FindingId = Id(), RuleId = "PERSIST-WMI", Title = $"Abonament WMI permanent înregistrat: {Trunc(key, 80)}",
+                Severity = sev, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.Medium, MitreTechniqueId = "T1546.003",
                 FirstSeenUtc = g.Min(e => e.Time.Utc), LastSeenUtc = g.Max(e => e.Time.Utc), User = first.User,
-                PlainWhat = "S-a înregistrat în Windows o regulă ascunsă care pornește singură o comandă sau un script când se întâmplă ceva pe calculator (de exemplu la pornire), fără un fișier vizibil" +
-                            (g.Key.StartsWith('(') ? "" : $": {PlainPhrases.Q(PlainPhrases.Cut(g.Key, 60))}"),
-                Description = $"Ce s-a întâmplat: Windows a înregistrat un abonament WMI permanent (evenimente {string.Join(", ", g.Select(e => e.EventId).Distinct())}): {Trunc(Wp11Rules.AllText(first), 240)}. " +
-                              "De ce contează: un abonament WMI rulează o comandă sau un script la un eveniment (pornire, oră), fără fișier vizibil, și supraviețuiește repornirii. Ce verificați: consumatorul (comanda sau scriptul) și cine l-a creat.",
+                PlainWhat = sev == Severity.High
+                    ? "S-a înregistrat în Windows o regulă ascunsă care pornește singură o comandă sau un script când se întâmplă ceva pe calculator (de exemplu la pornire), fără un fișier vizibil"
+                    : "S-a înregistrat în Windows o regulă ascunsă (abonament WMI permanent) care reacționează singură când se întâmplă ceva pe calculator, fără un fișier vizibil",
+                Description = $"Ce s-a întâmplat: Windows a înregistrat un abonament WMI permanent (evenimente {string.Join(", ", g.Select(e => e.EventId).Distinct())}): " +
+                              (details.Count > 0 ? string.Join("; ", details) : Trunc(Wp11Rules.AllText(first), 240)) + ". " +
+                              "De ce contează: un abonament WMI reacționează la un eveniment (pornire, oră) fără fișier vizibil și supraviețuiește repornirii; arată că există un mecanism de persistență, nu cine l-a creat și nici că a rulat. Ce verificați: consumatorul (comanda sau scriptul) și cine l-a creat.",
                 ClassificationReason = "Înregistrare directă a unui consumator / filtru / legături WMI permanente (WMI-Activity 5861, Sysmon 19-21).",
                 SupportingEvidence = g.Take(10).Select(e => Ref(e, $"WMI {e.EventId}")).ToList(),
                 AlternativeExplanations = ["Software de administrare sau de monitorizare legitim înregistrează abonamente WMI (de exemplu agenți de inventar)."],
