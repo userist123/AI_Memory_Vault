@@ -1329,3 +1329,22 @@
   Item 3b TaskCache: Explore inventory -> RawRegistry (IO\RawRegistry.cs), SoftwareHiveParser (RegistryPersistenceParsers.cs:267, source type
   software_hive), register in WindowsParsers.cs, synthetic hives via DeletedRegistryTracesTests NewHive. Lab capture script
   E:\LA-Lab\scripts\t-taskcache.ps1 ready; WS02 failed to start (host RAM: 4 GB VM, ~4 GB free). Next: free RAM / start WS02, capture, then worker.
+- 2026-11-18 (claude, hg585) CI of ddaa8a96a (turnstile fix): all workflows green incl. DFIR Build & Package.
+  Planner #8 item 3b DONE: TaskCache from the offline SOFTWARE hive. Lab: task \LA-TEST\LA-TEST-TaskCache created on WS02 (2 Exec, SYSTEM),
+  keys + hive captured, task removed (cleanup verified); reference capture of the whole station (226 tasks: Get-ScheduledTask/Info JSON,
+  System32\Tasks via robocopy /B, hive at the same moment) kept in E:\LA-Lab\diag\taskcache (lab only; Tree SD values hold the machine SID).
+  LA-LAB host RAM: LAB-SRV01 put in Saved state to start WS02 (Start-VM LAB-SRV01 to resume).
+  New LogAnalyzer.Dfir.Windows\Parsers\TaskCacheReader.cs, called from SoftwareHiveParser: Source "TaskCache", one event per action;
+  Actions v3 (context, 0x6666 Exec, 0x7777 ComHandler) - 226/226 tasks, 0 action mismatches vs Get-ScheduledTask; DynamicInfo: FILETIME@12 =
+  LastRunTime 226/226, u32@24 = LastTaskResult 93/98 run tasks (5 = running at capture, 267009 computed by the service), FILETIME@4 =
+  cache (re-)registration (194/226 in one minute after servicing -> field CacheRegisteredUtc, NOT creation), FILETIME@28 unproven (neutral name).
+  Anomalies (fields + gaps): Tree without SD (task hidden from listings), Tree Id without Tasks key, Tasks without Tree, duplicate Tree Id,
+  unreadable Actions/DynamicInfo. Limits: 50 000 events/hive, 200 000 keys, tree depth/cycles, shared Actions cells parsed once (key = cell +
+  declared length). RawRegistry: big-data size validated against the hive length and segments x 16344 before allocating.
+  Reviews: round 1 (CHANGES: amplification, CreatedUtc overclaim, RawRegistry OOM, duplicate Id, docs, tests) -> fixed by a new worker;
+  round 2 (CHANGES: dedupe key cell-only) -> fixed by main session + test that fails on the old key. Defender ML (Wacatac) flagged the
+  test DLL when the real Actions hex (cmd redirection) was embedded -> replaced by a helper-built blob with benign commands (real bytes stay
+  covered by the lab-file test); host Defender untouched. Lab-file tests ([LabFileFact]) skip when E:\LA-Lab is absent, also under
+  LADFIR_REQUIRE_CORPUS. Residuals: no transaction-log replay; Triggers blob not parsed; no correlation rule yet (TaskCache vs task XML,
+  hidden-task finding) - next step. Suites: Dfir (Release) 3990 (3957 passed, 33 skipped), App 1114, UI 370 (1 skipped), Edition 45, exit 0.
+  Next: correlation for TaskCache (task in cache without XML / Tree without SD -> finding), then RDP 1149 + SMB, PowerShell transcripts.

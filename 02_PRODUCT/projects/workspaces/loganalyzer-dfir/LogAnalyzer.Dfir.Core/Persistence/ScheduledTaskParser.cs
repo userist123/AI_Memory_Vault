@@ -27,7 +27,7 @@ public sealed partial class ScheduledTaskParser : EvidenceParserBase
             "Configurația activității planificate la momentul copierii; nu dovedește că a rulat (vezi TaskScheduler/Operational, 4698/4702).",
             "Data din RegistrationInfo este scrisă de cel care creează activitatea planificată și poate fi falsificată; fără fus orar rămâne neconvertită.",
             "Variabilele de mediu din comandă nu sunt expandate.",
-            "Nu citește TaskCache din registru (activități planificate fără fișier XML sau cu XML șters).",
+            "Citește doar fișierele XML; cache-ul din registru (TaskCache, inclusiv activitățile fără fișier XML) este citit din hive-ul SOFTWARE de SoftwareHiveParser.",
         ],
         Status = ParserMaturity.Validated,
         Validation = "ScheduledTaskParserTests: 303 fișiere reale din corpus comparate cu schtasks /query /v; XML sintetic cu valori exacte",

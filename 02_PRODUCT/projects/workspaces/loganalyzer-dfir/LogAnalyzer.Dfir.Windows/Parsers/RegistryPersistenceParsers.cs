@@ -271,18 +271,22 @@ public sealed class SoftwareHiveParser : EvidenceParserBase
 
     public override ParserDescriptor Descriptor { get; } = new()
     {
-        ParserId = "SoftwareHiveParser", Version = "1.0", Artifact = "Hive SOFTWARE — Run/RunOnce, Winlogon, IFEO Debugger",
+        ParserId = "SoftwareHiveParser", Version = "1.0", Artifact = "Hive SOFTWARE — Run/RunOnce, Winlogon, IFEO Debugger, TaskCache (activități planificate)",
         SourceTypes = ["software_hive"], FileNames = ["SOFTWARE", "SOFTWARE.hiv", "*_SOFTWARE.hiv"], Fingerprints = ["regf"],
         SupportedOs = "Oricare (citire offline cu RawRegistry)",
-        FormatVersions = ["Run / RunOnce (inclusiv WOW6432Node și Policies\\Explorer\\Run)", "Winlogon Shell / Userinit", "Image File Execution Options\\*\\Debugger"],
+        FormatVersions = ["Run / RunOnce (inclusiv WOW6432Node și Policies\\Explorer\\Run)", "Winlogon Shell / Userinit", "Image File Execution Options\\*\\Debugger", "Schedule\\TaskCache (Tree, Tasks, Plain, Logon, Boot, Maintenance; Actions și DynamicInfo versiunea 3)"],
         Limitations =
         [
             "Alte locuri de persistență din SOFTWARE (AppInit_DLLs, Active Setup, extensii shell, SilentProcessExit) nu sunt încă citite.",
             "Ora este LastWriteTime al cheii, comună tuturor valorilor.",
             "Jurnalele de tranzacții ale hive-ului nu sunt aplicate.",
+            "TaskCache: declanșatorii (Triggers) nu sunt interpretați, doar lungimea lor; acțiunile de alt tip decât Exec și ComHandler sau Actions/DynamicInfo de altă versiune decât 3 sunt raportate ca lacune.",
+            "TaskCache: câmpul DynamicInfo de la octetul 28 are sens nedovedit și este emis sub nume neutru; rezultatul ultimei rulări este cel din cache (nu cel calculat de serviciu pentru activități în curs de rulare sau niciodată rulate).",
+            "TaskCache: ora evenimentului este momentul înregistrării în cache din DynamicInfo (octetul 4; poate fi o reînregistrare la actualizare, nu crearea activității: pe stația de referință 194 din 226 de valori cad în același minut, deși activitățile au fost înregistrate între 2006 și 2021), altfel LastWriteTime al cheii; lipsa SD din Tree și același Id în mai multe căi din Tree sunt semnalate ca anomalii, fără atribuire.",
+            "TaskCache: cel mult 50 000 de evenimente pe hive (și 200 000 de chei); peste limită citirea se oprește cu o lacună.",
         ],
         Status = ParserMaturity.Validated,
-        Validation = "RegistryPersistenceParserTests: SOFTWARE real din corpus comparat cu reg export (Run, RunOnce, WOW6432Node, Winlogon) și hive sintetic",
+        Validation = "RegistryPersistenceParserTests: SOFTWARE real din corpus comparat cu reg export (Run, RunOnce, WOW6432Node, Winlogon) și hive sintetic; TaskCacheReaderTests: 226 activități reale comparate cu Get-ScheduledTask (acțiuni identice, ultima rulare 226/226), octeți reali ai unei activități create intenționat, hive-uri și bloburi sintetice ostile",
     };
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
@@ -340,6 +344,7 @@ public sealed class SoftwareHiveParser : EvidenceParserBase
             }
         }
 
+        TaskCacheReader.Emit(reg, item, sink, result, ct);
         DeletedRegistryTraces.Emit(fullPath, "SOFTWARE", item, sink, result, ct);
     }
 

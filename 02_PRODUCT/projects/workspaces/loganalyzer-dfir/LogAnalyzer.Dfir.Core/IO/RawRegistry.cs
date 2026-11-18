@@ -82,6 +82,9 @@ public sealed class RawRegistry
     /// <summary>Reads the subkey at <paramref name="offset"/> (from <see cref="ChildOffsets"/>) with its path under <paramref name="parent"/>.</summary>
     public RawKey ReadChild(RawKey parent, int offset) => Guard(() => ReadKey(offset, $@"{parent.Path}\{KeyName(offset)}"));
 
+    /// <summary>Name of the subkey at <paramref name="offset"/> (from <see cref="ChildOffsets"/>) without reading its values, so a key whose values are damaged can still be named.</summary>
+    public string ChildName(int offset) => Guard(() => KeyName(offset));
+
     private int? Locate(string keyPath)
     {
         int nk = _rootCell;
@@ -113,7 +116,11 @@ public sealed class RawRegistry
                 bool ascii = (BinaryPrimitives.ReadUInt16LittleEndian(vk.AsSpan(0x10)) & 1) != 0;
                 // A non-compressed name is UTF-16 code units, whatever text they form (some programs store ANSI bytes there).
                 var name = ascii ? Encoding.Latin1.GetString(vk, 0x14, nameLen) : Utf16Units(vk.AsSpan(0x14, nameLen));
-                values.Add(new RawValue(name, BinaryPrimitives.ReadInt32LittleEndian(vk.AsSpan(0x0C)), Data(vk)));
+                bool inline = (BinaryPrimitives.ReadUInt32LittleEndian(vk.AsSpan(4)) & 0x80000000) != 0;
+                values.Add(new RawValue(name, BinaryPrimitives.ReadInt32LittleEndian(vk.AsSpan(0x0C)), Data(vk))
+                {
+                    DataCellOffset = inline ? -1 : BinaryPrimitives.ReadInt32LittleEndian(vk.AsSpan(8)),
+                });
             }
         }
         return new RawKey(keyPath, lastWrite, subkeys, values) { CellOffset = nk };
@@ -164,6 +171,9 @@ public sealed class RawRegistry
             int segments = BinaryPrimitives.ReadUInt16LittleEndian(cell.AsSpan(2));
             var seglist = Cell(BinaryPrimitives.ReadInt32LittleEndian(cell.AsSpan(4)));
             if ((long)segments * 4 > seglist.Length) throw new InvalidDataException($"Lista de segmente big-data ({segments}) depășește celula ({seglist.Length} octeți).");
+            // The declared size is attacker-controlled: it can never exceed what the segments can hold, nor the file itself.
+            if (size > _s.Length || (long)segments * BigDataSegment < size)
+                throw new InvalidDataException($"Dimensiunea big-data declarată ({size} octeți) depășește hive-ul ({_s.Length} octeți) sau capacitatea celor {segments} segmente.");
             var result = new byte[size];
             int done = 0;
             for (int i = 0; i < segments && done < size; i++)
@@ -227,6 +237,9 @@ public sealed class RawRegistry
 
 public sealed record RawValue(string Name, int Type, byte[] Data)
 {
+    /// <summary>Hive-bin-relative offset of the cell that holds the data; -1 when the data is stored inline in the value cell. Two values with the same offset share their bytes.</summary>
+    public int DataCellOffset { get; init; } = -1;
+
     public const int RegSz = 1, RegExpandSz = 2, RegBinary = 3, RegDword = 4, RegMultiSz = 7, RegQword = 11;
 
     /// <summary>Text of REG_SZ / REG_EXPAND_SZ (not expanded) / REG_MULTI_SZ (joined by spaces); DWORD as decimal; otherwise "".</summary>
