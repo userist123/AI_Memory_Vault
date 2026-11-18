@@ -204,6 +204,57 @@ public sealed class HeadWitnessTests : IDisposable
     }
 
     [Fact]
+    public void A_reader_gets_in_within_seconds_while_four_writers_append_back_to_back()
+    {
+        // CI 2026-11-18: writers re-took the exclusive handle right after releasing it and a verifier starved for 20 s (sharing violation); the turnstile lets it in
+        var w = new MemWitness(); var log = Log(w); Add(log, 1);
+        int running = 4;
+        var writers = Enumerable.Range(0, 4).Select(k => Task.Factory.StartNew(() =>
+        {
+            var c = new HashChain(log);
+            for (int i = 0; i < 150; i++) c.Append(new { Event = "w" + k, I = i });
+            Interlocked.Decrement(ref running);
+        }, TaskCreationOptions.LongRunning)).ToArray();   // own threads: four blocked pool threads would starve other tests of the suite
+        var slowest = TimeSpan.Zero; int checks = 0;
+        while (Volatile.Read(ref running) > 0 || checks < 3)
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            var (_, v) = new HashChain(log).ReadVerified();
+            sw.Stop();
+            Assert.True(v.Status == ChainStatus.Valid, v.Reason);
+            if (sw.Elapsed > slowest) slowest = sw.Elapsed;
+            checks++;
+        }
+        Task.WaitAll(writers);
+        Assert.True(slowest < TimeSpan.FromSeconds(5), $"cea mai lentă verificare a așteptat {slowest.TotalSeconds:0.0} s");
+        Assert.Equal(601, new HashChain(log).Head().Seq);
+    }
+
+    [Fact]
+    public void A_held_turnstile_costs_one_short_wait_then_is_skipped_and_the_log_still_works()
+    {
+        // review 2026-11-18: the mutex name is predictable; a process holding it must not stall every open of the log
+        var log = Path.Combine(_dir, "held.jsonl");
+        Add(log, 1);
+        var name = @"Local\LogAnalyzer-chain-" + Convert.ToHexStringLower(SHA256.HashData(System.Text.Encoding.UTF8.GetBytes(Path.GetFullPath(log).ToLowerInvariant())))[..32];
+        using var held = new ManualResetEventSlim(); using var release = new ManualResetEventSlim();
+        var holder = new Thread(() => { using var m = new Mutex(true, name); held.Set(); release.Wait(); m.ReleaseMutex(); });
+        holder.Start(); held.Wait();
+        try
+        {
+            var sw = System.Diagnostics.Stopwatch.StartNew();
+            Add(log, 1);                                             // waits once, then the old path
+            var first = sw.Elapsed; sw.Restart();
+            Add(log, 3); Assert.Equal(ChainStatus.Valid, V(log).Status);
+            var rest = sw.Elapsed;
+            Assert.True(first < TimeSpan.FromSeconds(5), $"prima operație a așteptat {first.TotalSeconds:0.0} s");
+            Assert.True(rest < TimeSpan.FromSeconds(2), $"operațiile următoare au așteptat {rest.TotalSeconds:0.0} s");
+            Assert.Equal(5, new HashChain(log).Head().Seq);
+        }
+        finally { release.Set(); holder.Join(); }
+    }
+
+    [Fact]
     public void A_witness_folder_found_without_protection_is_moved_aside_and_recreated_protected()
     {
         // review 2026-11-18: a standard user can pre-create the folder in ProgramData and own the witness; production checks the DACL (injected here)

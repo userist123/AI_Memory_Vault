@@ -25,9 +25,11 @@ public sealed class HashChainSealConcurrencyTests : IDisposable
         var before = File.ReadAllBytes(log);
         // the old way of reading: FileShare.Read, no Delete -> the writer's replace of .head cannot succeed while this is open
         var reader = new FileStream(HashChain.HeadPath(log), FileMode.Open, FileAccess.Read, FileShare.Read);
-        var release = Task.Run(() => { Thread.Sleep(400); reader.Dispose(); });
+        // a dedicated thread: a Task.Run queued behind a busy thread pool (full suite) started after the writer's ~2 s retry budget (2026-11-18)
+        var release = new Thread(() => { Thread.Sleep(400); reader.Dispose(); }) { IsBackground = true };
+        release.Start();
         new HashChain(log).Append(new { Event = "second" });
-        release.Wait();
+        release.Join();
         Assert.True(File.ReadAllBytes(log).Length > before.Length);
         Assert.Equal(ChainStatus.Valid, new HashChain(log).Verify().Status);
     }

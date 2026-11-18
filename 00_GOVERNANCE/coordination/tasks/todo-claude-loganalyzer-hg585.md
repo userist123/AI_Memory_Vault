@@ -1315,3 +1315,17 @@
   Suites: Dfir (Release) 3962 (3929 passed, 33 skipped), App 1114, UI 370 (369 + 1 skipped), Edition 45, all exit 0. The worker saw one
   HashChainSealConcurrencyTests access-denied failure once; 5 targeted reruns passed (possible rare flake, watch CI).
   Next: planner #8 item 3b (TaskCache Tree/Tasks), then RDP RemoteConnectionManager 1149 + SMB channels, PowerShell transcripts. Owner items unchanged.
+- 2026-11-18 (claude, hg585) CI of b22eb701f: DFIR Build & Package FAILED (other workflows green): HeadWitnessTests.A_verify_running_while_another_writer...
+  and MultiProcessChainTests.Three_processes... -> sharing violation in HashChain.ReadVerified after ~20 s (reader starvation: Append re-took the
+  FileShare.None handle right after releasing it). FIX: HashChain.Turnstile = named mutex Local\LogAnalyzer-chain-<sha256(path)[..32]> taken around
+  OpenExclusive's open loop, ReadVerified, Head(), ReadAllShared (never while a writer holds the file -> no deadlock). Best effort: creation failure /
+  timeout -> old retry loop. Review (vault-reviewer, round 1): no deadlock, semantics unchanged; FINDING a standard user can pre-create/hold the
+  predictable mutex -> fixed: Wait 2 s, then the turnstile is skipped for that log for 60 s (cost <= ~2 s/min/log, never a failure). Residual
+  (accepted): SharedRead.Lines callers (VerifyPlain, Contains) do not use the turnstile. New tests: four writers back to back, a reader must get
+  in < 5 s (fails without the turnstile under full CPU load: 11 s; passes with it); a held turnstile costs one short wait then is skipped.
+  HashChainSealConcurrencyTests reader-holds-head test: the release ran in Task.Run and started late on a busy pool in the full suite (the rare
+  failure noted above) -> dedicated thread; the 4-writer test uses LongRunning tasks. Suites: Dfir (Release) 3964 (3931 passed, 33 skipped) x2,
+  App 1114, UI 370 (1 skipped), Edition 45 (first turnstile version; delta touches only Dfir.Core HashChain + Dfir tests).
+  Item 3b TaskCache: Explore inventory -> RawRegistry (IO\RawRegistry.cs), SoftwareHiveParser (RegistryPersistenceParsers.cs:267, source type
+  software_hive), register in WindowsParsers.cs, synthetic hives via DeletedRegistryTracesTests NewHive. Lab capture script
+  E:\LA-Lab\scripts\t-taskcache.ps1 ready; WS02 failed to start (host RAM: 4 GB VM, ~4 GB free). Next: free RAM / start WS02, capture, then worker.

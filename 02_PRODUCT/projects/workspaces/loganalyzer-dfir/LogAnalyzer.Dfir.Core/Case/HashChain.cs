@@ -362,6 +362,7 @@ public sealed class HashChain(string path)
         lock (_gate)
         {
             if (!File.Exists(Path)) return (0, Genesis);
+            using var turn = Turnstile.Enter(Path);
             for (int attempt = 0; ; attempt++)
             {
                 try
@@ -381,6 +382,7 @@ public sealed class HashChain(string path)
     /// </summary>
     public static byte[] ReadAllShared(string path)
     {
+        using var turn = Turnstile.Enter(path);
         for (int attempt = 0; ; attempt++)
         {
             try
@@ -413,10 +415,64 @@ public sealed class HashChain(string path)
 
     private FileStream OpenExclusive()
     {
+        using var turn = Turnstile.Enter(Path);   // a waiting reader holds the turnstile: no new writer gets in before it (CI 2026-11-18: readers starved)
         for (int attempt = 0; ; attempt++)
         {
             try { return new FileStream(Path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
             catch (IOException) when (attempt < 400) { Thread.Sleep(Math.Min(5 + attempt, 50)); }   // another writer holds the file; wait up to ~15 s (CI 2026-11-08: 2 s was not enough on a busy runner)
+        }
+    }
+
+    /// <summary>
+    /// Fairness between the writers of one log and its readers (CI 2026-11-18: an append loop re-took the exclusive handle right after releasing it, so a polling
+    /// reader of the same log never got in within its ~20 s budget). Whoever wants to OPEN the log (writer or reader) passes a named mutex keyed by the log path;
+    /// the mutex is held only while opening (a writer) or reading (a reader), never while a writer holds the file, so it cannot deadlock against the file handle.
+    /// Waiters on a mutex are served roughly in order, so a waiting reader is let in after the current writer instead of after an unbounded run of writers.
+    /// Best effort: if the mutex cannot be created or is not obtained in time, the old retry loop runs unchanged (never a failure, only the old starvation risk).
+    /// </summary>
+    internal sealed class Turnstile : IDisposable
+    {
+        private Mutex? _m;
+        private Turnstile(Mutex m) => _m = m;
+
+        /// <summary>
+        /// Short on purpose (review 2026-11-18): the mutex name follows from the log path, so any process of the session can create and hold it. A legitimate holder
+        /// keeps it only for one open (milliseconds); after a timeout the turnstile is skipped for that log for <see cref="Backoff"/>, so a hostile holder costs at
+        /// most ~2 s per minute per log (the old retry loop then runs as before), never a failure.
+        /// </summary>
+        internal static readonly TimeSpan Wait = TimeSpan.FromSeconds(2);
+        internal static readonly TimeSpan Backoff = TimeSpan.FromSeconds(60);
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, long> SkipUntil = new(StringComparer.Ordinal);
+
+        public static Turnstile? Enter(string logPath)
+        {
+            Mutex? m = null;
+            try
+            {
+                var name = @"Local\LogAnalyzer-chain-" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(System.IO.Path.GetFullPath(logPath).ToLowerInvariant())))[..32];
+                if (SkipUntil.TryGetValue(name, out var until) && Environment.TickCount64 < until) return null;
+                m = new Mutex(false, name);
+                bool owned;
+                try { owned = m.WaitOne(Wait); }
+                catch (AbandonedMutexException) { owned = true; }   // a holder died: the mutex is ours, it guards no data
+                if (owned) return new Turnstile(m);
+                SkipUntil[name] = Environment.TickCount64 + (long)Backoff.TotalMilliseconds;
+                m.Dispose();
+                return null;
+            }
+            catch (Exception ex) when (ex is UnauthorizedAccessException or IOException or WaitHandleCannotBeOpenedException or ArgumentException)
+            {
+                m?.Dispose();
+                return null;
+            }
+        }
+
+        public void Dispose()
+        {
+            var m = Interlocked.Exchange(ref _m, null);
+            if (m is null) return;
+            try { m.ReleaseMutex(); } catch (ApplicationException) { }
+            m.Dispose();
         }
     }
 
@@ -448,6 +504,7 @@ public sealed class HashChain(string path)
         string? headText = null, intentText = null;
         WitnessRead witnessRead = default;
         bool sealedLog = IsSealed(out _);
+        using (var turn = Turnstile.Enter(Path))
         for (int attempt = 0; ; attempt++)
         {
             try
