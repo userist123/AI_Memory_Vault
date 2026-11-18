@@ -117,6 +117,16 @@ export type LineCategory = BoqCategory | 'custom';
 /** `costTotal`: costul real al liniei (produs propriu cu preț de achiziție); lipsă/null → din discountul furnizorului. */
 /** De unde vine prețul unui produs: magazinul, pagina produsului și data la care prețul a fost citit acolo (preț observat, nu ofertă). */
 export interface PriceSource { store: string; url: string; seenAt: string }
+/** Linkul e pagina unui produs, nu o categorie sau o listă de magazin (…/cat/…, …/c/123): doar atunci prețul poate fi arătat
+ *  clientului ca „preț observat” pe pagina produsului. Altfel linia rămâne fără sursă, iar nota despre prețuri nu o acoperă. */
+export function isProductPage(url: string): boolean {
+  let p: URL; try { p = new URL(url); } catch { return false; }
+  if (p.protocol !== 'https:') return false;
+  const path = p.pathname.toLowerCase();
+  if (/\/p\/|\/pd\//.test(path)) return true;                   // IKEA, Dedeman, Hornbach (…/p/…), eMAG (…/pd/…)
+  if (/\/(cat|c|category|categorie|categorii)\/|\/c\/\d+\/?$/.test(path)) return false;
+  return path.split('/').filter(Boolean).length >= 1;
+}
 export interface SourceLine { key: string; category: LineCategory; label: string; supplier: string; qty: number; unit: string; unitPrice: number | null; total: number | null; costTotal?: number | null; source?: PriceSource | null }
 export interface SourceLabor { key: string; label: string; qty: number; unit: string; amount: number }
 export interface ProfitLine { key: string; category: LineCategory; label: string; supplier: string; qty: number; unit: string;
@@ -226,7 +236,7 @@ export interface CustomSource { id: string; name: string; supplier: string; qty:
  */
 export function commercialSources(b: Budget, custom: CustomSource[] = []): { items: SourceLine[]; labor: SourceLabor[]; extras: SourceLabor[] } {
   const items: SourceLine[] = b.items.map(i => ({ key: i.key, category: i.category, label: i.label, supplier: i.supplier, qty: i.orderedQty, unit: i.unit, unitPrice: i.unitPrice, total: i.total,
-    ...(i.sourceUrl && i.verifiedAt && /^https:\/\//.test(i.sourceUrl) ? { source: { store: i.supplier, url: i.sourceUrl, seenAt: i.verifiedAt } } : {}) }));
+    ...(i.sourceUrl && i.verifiedAt && isProductPage(i.sourceUrl) ? { source: { store: i.supplier, url: i.sourceUrl, seenAt: i.verifiedAt } } : {}) }));
   // produsele proprii: `price` e prețul de listă / către client (cu TVA, ca în catalog); costul real, dacă e cunoscut, e costPrice
   for (const c of custom) items.push({ key: 'c|' + c.id, category: 'custom', label: c.name, supplier: c.supplier, qty: c.qty, unit: c.unit,
     unitPrice: c.price, total: c.price == null ? null : r2(c.price * c.qty), costTotal: c.costPrice == null ? null : r2(c.costPrice * c.qty) });

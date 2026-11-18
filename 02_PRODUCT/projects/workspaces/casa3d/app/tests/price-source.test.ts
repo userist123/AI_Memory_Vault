@@ -22,3 +22,14 @@ test('proforma: produsele din catalog poartă magazinul, pagina produsului și d
   // CSV-ul pentru programul de facturare: aceleași coloane, fără linkuri
   const csv = proformaCsv(proforma); assert.ok(!/https?:\/\//.test(csv), 'fără URL în CSV');
 });
+
+test('sursa prețului: doar pagina unui produs, nu o categorie (altfel clientul ar vedea „preț observat” pe o listă)', async () => {
+  const { isProductPage } = await import('../core/commercial');
+  for (const u of ['https://www.ikea.com/ro/ro/p/billy-biblioteca-alb-00263850/', 'https://www.dedeman.ro/ro/parchet-laminat/p/4027179', 'https://www.hornbach.ro/p/usa/10369535/', 'https://www.emag.ro/x/pd/DABC123/'])
+    assert.equal(isProductPage(u), true, u);
+  for (const u of ['https://www.ikea.com/ro/ro/cat/familia-billy-28102/', 'https://www.dedeman.ro/ro/mobilier-baie/c/65', 'https://www.dedeman.ro/ro/seturi-rezervoare-incastrate-cu-vase-wc/c/3934', 'http://www.ikea.com/ro/ro/p/x/', 'nu e url'])
+    assert.equal(isProductPage(u), false, u);
+  const A = 'owner-price-source-cat', id = await repo.createProject(A, 'Categorii', 'demo');
+  const lines = (await getProforma(A, id, '2026-11-18')).proforma.groups.flatMap(g => g.lines);
+  assert.ok(lines.every(l => !l.source || isProductPage(l.source.url)), 'nicio linie nu arată o categorie ca sursă');
+});

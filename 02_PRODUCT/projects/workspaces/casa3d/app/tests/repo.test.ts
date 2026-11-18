@@ -9,7 +9,10 @@ const A = '11111111-1111-4111-8111-111111111111', B = '22222222-2222-4222-8222-2
 
 test('catalogul e încărcat în baza de date cu proveniență', async () => {
   const c = await repo.getCatalog(); assert.equal(c.variants.length, catalogSeed.variants.length); assert.equal(c.offers.length, catalogSeed.offers.length);
-  assert.ok(c.offers.every(o => o.provenance.sourceUrl && ['2026-09-30', '2026-10-10', '2026-10-11', '2026-10-24', '2026-11-10'].includes(o.provenance.verifiedAt!) && o.availability === 'UNKNOWN'));
+  // data verificării: cea a importului sau, pentru ofertele reverificate pe pagină (data/price-rechecks.json), data reverificării
+  const { PRICE_RECHECKS } = await import('../lib/price-rechecks'), rechecked = new Map(PRICE_RECHECKS.filter(r => r.kind === 'o').map(r => [r.id, r.seenAt]));
+  assert.ok(c.offers.every(o => o.provenance.sourceUrl && (['2026-09-30', '2026-10-10', '2026-10-11', '2026-10-24', '2026-11-10'].includes(o.provenance.verifiedAt!) || rechecked.get(o.id) === o.provenance.verifiedAt) && o.availability === 'UNKNOWN'));
+  assert.ok(c.offers.some(o => rechecked.get(o.id) === o.provenance.verifiedAt), 'reverificările au ajuns în bază');
 });
 test('flux complet: proiect nou → salvare → reîncărcare → revizie → modificare → restaurare', async () => {
   const id = await repo.createProject(A, 'Apartament test', 'demo');
@@ -47,11 +50,13 @@ test('Faza 2: materialele, manopera și serviciile sunt în baza de date cu prov
   const mc = await repo.getMaterials(); assert.equal(mc.materials.length, src.materials.length); assert.equal(mc.labor.length, src.labor.length);
   // datele tehnice și data verificării fiecărui material ajung din fișier în baza de date
   for (const x of src.materials) assert.deepEqual(mc.materials.find(m => m.id === x.id)!.specs, x.specs, x.id);
-  assert.equal(mc.materials.find(m => m.id === 'tapet-grandeco-marmor')!.verifiedAt, '2026-10-10');
+  const { materialsWithRechecks } = await import('../lib/price-rechecks'), src2 = materialsWithRechecks(src);
+  assert.equal(mc.materials.find(m => m.id === 'tapet-grandeco-marmor')!.verifiedAt, src2.materials.find((m: any) => m.id === 'tapet-grandeco-marmor')!.verifiedAt);
   assert.ok(mc.materials.every(m => m.verificationType && m.confidence)); assert.equal(mc.verifiedAt, '2026-10-01');
   const { computeBudget } = await import('../core/boq'); const json = (await import('../data/materials.v1.json')).default as any;
   const id = await repo.createProject(A, 'Buget DB', 'demo'), p = await repo.getProject(A, id), cat = await repo.getCatalog();
-  assert.equal(computeBudget(p.draft, cat, mc).chosen.total, computeBudget(p.draft, cat, json).chosen.total);
+  // baza = fișierul sursă cu reverificările de preț aplicate (lib/price-rechecks.ts)
+  assert.equal(computeBudget(p.draft, cat, mc).chosen.total, computeBudget(p.draft, cat, materialsWithRechecks(json)).chosen.total);
   p.draft.budget = { target: 50000, contingencyPct: 15, includeLabor: true, laborScenario: 'high', deliveryIkea: true, deliveryDedeman: 200, furnitureAssembly: null, kitchenAssembly: true, design: 0 };
   await repo.saveDraft(A, id, p.draft); assert.equal((await repo.getProject(A, id)).draft.budget!.contingencyPct, 15);
   p.draft.budget.contingencyPct = 500; await assert.rejects(repo.saveDraft(A, id, p.draft), (e: any) => e.status === 400);
