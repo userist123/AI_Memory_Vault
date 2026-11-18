@@ -638,6 +638,9 @@ public sealed class HashChain(string path)
     /// <summary>Only the plain chain (seq, prevHash, hash of every entry), without the seal: what an external anchor relies on.</summary>
     public ChainVerification VerifyPlainChain() => VerifyPlain();
 
+    /// <summary>The plain chain of a log held in memory (a copy read from another case folder or an archive), without the seal; <paramref name="name"/> only labels the result.</summary>
+    public static ChainVerification VerifyPlainChain(string name, byte[] content) => new HashChain(name).VerifyPlain(Lines(content), exists: true);
+
     private ChainVerification VerifyPlain() =>
         File.Exists(Path) ? VerifyPlain(SharedRead.Lines(Path), exists: true) : VerifyPlain([], exists: false);
 
@@ -652,10 +655,11 @@ public sealed class HashChain(string path)
             lineNo++;
             if (string.IsNullOrWhiteSpace(line)) continue;
             JsonObject o;
-            try { o = (JsonNode.Parse(line) as JsonObject ?? throw new JsonException("linia nu este un obiect JSON")); }
-            catch (Exception ex) when (ex is JsonException or InvalidOperationException)
+            bool hasChain;
+            // a duplicate key ("seq" twice) parses but throws ArgumentException on the first lookup (review 2026-11-18): an invalid line, not a crash
+            try { o = (JsonNode.Parse(line) as JsonObject ?? throw new JsonException("linia nu este un obiect JSON")); hasChain = o.ContainsKey("seq") || o.ContainsKey("hash") || o.ContainsKey("prevHash"); }
+            catch (Exception ex) when (ex is JsonException or InvalidOperationException or ArgumentException)
             { return Broken(name, chained, legacy, expectSeq, $"linia {lineNo} nu este JSON valid"); }
-            bool hasChain = o.ContainsKey("seq") || o.ContainsKey("hash") || o.ContainsKey("prevHash");
             if (!hasChain)
             {
                 if (chained > 0) return Broken(name, chained, legacy, expectSeq, $"linia {lineNo} fără câmpuri de lanț după intrări înlănțuite");

@@ -1431,3 +1431,18 @@
   version == NETCore pack version; only the top-level SHA256SUMS excluded (deeper files of that name are listed, verified); ordinal sort for
   SHA256SUMS; temp folder removed on failure; HG585 line 22 + SW-01 (-> PARTIAL: SHA256SUMS + native manifest, no Authenticode / unsigned sums).
   Delta small and covered by Test-Sbom (27 checks) + a real run (46/46 sums match) -> no round 2 (main session decision). CI to read once.
+- 2026-11-18 (claude, hg585) SBOM committed ee793b315 (CI not yet read). PLANNER #8 ITEM 5 DONE: forked-case compare (read-only, never merges).
+  New Dfir.Core/Case/CaseForkCompare.cs: two copies of a case (folder or case .zip, entries under case/) compared for every hash-chained Logs/*.jsonl
+  (plain chain only; broken chain compared up to its break): per log Identical (+SameBytes) / FirstIsPrefix / SecondIsPrefix / Forked at Seq N /
+  OnlyInOne / NotComparable; case-level CaseForkVerdict (Broken > Forked/Unrelated > cross-log fork > FirstOlder/SecondOlder > Identical /
+  IdenticalChainsDifferentFiles > NothingComparable). Zip: duplicate names (case/slash variants) refused, decompressed bytes counted (64 MB/log,
+  max 64 logs). KeyGen `compare-case <case1> <case2>`: exit 0 identical, 5 chains identical/files differ, 3 older copy, 4 forked/unrelated,
+  2 broken/unreadable/nothing, 1 usage. HashChain: static VerifyPlainChain(name, bytes); VerifyPlain treats a duplicate-key line as invalid JSON
+  (was an ArgumentException crash). Tests App.Tests CaseForkCompareTests (12). Opus review r1 REQUEST_CHANGES (HIGH: logs older in opposite
+  directions called "older copy"; MEDIUM duplicate-key crash; MEDIUM identical ignored bytes outside chain; LOW x3) -> all fixed; r2 APPROVE.
+  ACCEPTED RESIDUALS: L1 HashChain.PrevHashOf / HeadOf / ContainsIn still throw ArgumentException on a duplicate-key LAST line in Verify()
+  (sealed-log paths; not reachable from compare-case) -> separate one-line fix with its own review; L2 a log chained in one copy and with 0
+  chained entries in the other counts as prefix/shared history (unrelated cases may read Forked, not Unrelated); L3 folder read: size checked
+  before the read (a growing log can pass 64 MB), case.json uncapped (CLI exit 2 on OOM/IO); each log read twice (CPU).
+  Suites: Dfir (Release) 4063 (4030 passed, 33 skipped), App 1126, UI 370 (1 skipped), Edition 45, all exit 0.
+  Next: read CI once; L1 fix (HashChain duplicate-key on Verify paths, Opus review); wiring MRU into USER-ACTIVITY-*. Lab: LAB-SRV01 still Saved.
