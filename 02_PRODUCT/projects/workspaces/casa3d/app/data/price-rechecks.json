@@ -2894,6 +2894,134 @@
    "seenAt": "2026-11-18",
    "url": "https://www.dedeman.ro/ro/focar-semineu-remus-din-fonta-cu-regulator-tiraj-830-x-750-x-432-mm/p/2024736",
    "evidence": "cod 2024736: finalPrice 3490 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-0",
+   "price": 199,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/billy-biblioteca-alb-50263838/",
+   "evidence": "offers.price=199 RON; pagina produsului: „BILLY bibliotecă, alb, 40x28x202 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-noptiera-2",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-noptiera-gri-verde-maro-deschis-vopsit-50610739/",
+   "evidence": "offers.price=299 RON; pagina produsului: „HEMNES Noptieră, gri-verde/maro deschis vopsit, 46x35 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulap-2",
+   "price": 649,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kleppstad-dulap-de-haine-cu-usi-glisante-alb-90437238/",
+   "evidence": "offers.price=649 RON; pagina produsului: „KLEPPSTAD dulap de haine cu uşi glisante, alb, 117x55x176 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-birou-1",
+   "price": 449,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/micke-birou-alb-90214308/",
+   "evidence": "offers.price=449 RON; pagina produsului: „MICKE Birou, alb, 142x50 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-birou-3",
+   "price": 99.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/torald-birou-alb-90493955/",
+   "evidence": "offers.price=99.9 RON; pagina produsului: „TORALD birou, alb, 65x40 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-1",
+   "price": 699,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/markus-scaun-rotativ-vissle-gri-inchis-70261150/",
+   "evidence": "offers.price=699 RON; pagina produsului: „MARKUS scaun rotativ, Vissle gri închis, Mediu (M)  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-2",
+   "price": 899,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/markus-scaun-rotativ-vissle-gri-inchis-10588801/",
+   "evidence": "offers.price=899 RON; pagina produsului: „MARKUS scaun rotativ, Vissle gri închis, Mare (L)  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-frigider-2",
+   "price": 3499,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/alingsas-frigider-congelator-ikea-500-independent-inox-20567959/",
+   "evidence": "offers.price=3499 RON; pagina produsului: „ALINGSÅS frigider/congelator, IKEA 500 independent/inox, 210/106 l  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plita-0",
+   "price": 1199,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/vilsta-plita-cu-inductie-ikea-300-negru-90557725/",
+   "evidence": "offers.price=1199 RON; pagina produsului: „VILSTA plită cu inducţie, IKEA 300 negru, 59 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plita-1",
+   "price": 1699,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/matmaessig-plita-cu-inductie-ikea-300-negru-10467093/",
+   "evidence": "offers.price=1699 RON; pagina produsului: „MATMÄSSIG plită cu inducţie, IKEA 300 negru, 59 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cuptor-0",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/lagan-cuptor-alb-10600054/",
+   "evidence": "offers.price=999 RON; pagina produsului: „LAGAN cuptor, alb  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cuptor-1",
+   "price": 1999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/mataelskare-cuptor-cu-convectie-ikea-300-inox-40368765/",
+   "evidence": "offers.price=1999 RON; pagina produsului: „MATÄLSKARE Cuptor cu convecţie, aspect inox  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-hota-0",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/lagan-hota-perete-alb-50401383/",
+   "evidence": "offers.price=299 RON; pagina produsului: „LAGAN Hotă perete, alb  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-hota-1",
+   "price": 399,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/viggbo-hota-perete-ikea-300-negru-40593132/",
+   "evidence": "offers.price=399 RON; pagina produsului: „VIGGBO hotă perete, IKEA 300 negru, 52 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-0",
+   "price": 959.05,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cabina-dus-patrata-seldus-eur4-sticla-securizata-transparenta-profil-cromat-90-x-90-x-190-cm/p/3054624",
+   "evidence": "cod 3054624: finalPrice 959.05 lei; pagina produsului: „Cabina dus patrata, Seldus EUR4, sticla securizata transparenta, profil cromat, 90 x 90 x ” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-oglinda-1",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-baie-cu-oglinda-alb-80217675/",
+   "evidence": "offers.price=999 RON; pagina produsului: „HEMNES Dulap oglindă cu 2 uşi, alb, 103x16x98 cm  - IKEA” (linkul vechi ducea la alt produs)"
   }
  ],
  "notVerified": [
@@ -3046,13 +3174,6 @@
   },
   {
    "kind": "offer",
-   "id": "offer-biblioteca-0",
-   "url": "https://www.ikea.com/ro/ro/cat/familia-billy-28102/",
-   "status": "changed",
-   "why": "preț citit doar din text (pagină de categorie), neacceptat"
-  },
-  {
-   "kind": "offer",
    "id": "offer-biblioteca-3",
    "url": "https://www.ikea.com/ro/ro/p/kallax-etajera-alb-80275887/",
    "status": "manual",
@@ -3137,48 +3258,6 @@
   },
   {
    "kind": "offer",
-   "id": "offer-noptiera-2",
-   "url": "https://www.ikea.com/ro/ro/cat/noptiere-20656/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-dulap-2",
-   "url": "https://www.ikea.com/ro/ro/cat/dulapuri-de-haine-19053/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-birou-1",
-   "url": "https://www.ikea.com/ro/ro/cat/birouri-birouri-pentru-computer-20649/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-birou-3",
-   "url": "https://www.ikea.com/ro/ro/cat/birouri-birouri-pentru-computer-20649/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-scaunBirou-1",
-   "url": "https://www.ikea.com/ro/ro/cat/scaune-de-birou-20652/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-scaunBirou-2",
-   "url": "https://www.ikea.com/ro/ro/cat/scaune-de-birou-20652/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
    "id": "offer-bucatarie-0",
    "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-alb-s19338049/",
    "status": "manual",
@@ -3200,64 +3279,8 @@
   },
   {
    "kind": "offer",
-   "id": "offer-frigider-2",
-   "url": "https://www.ikea.com/ro/ro/cat/independente-20824/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-plita-0",
-   "url": "https://www.ikea.com/ro/ro/cat/electrocasnice-ka002/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-plita-1",
-   "url": "https://www.ikea.com/ro/ro/p/lagan-frigider-congelator-independent-alb-70490118/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
    "id": "offer-plita-2",
    "url": "https://www.ikea.com/ro/ro/cat/familia-lagan-53227/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-cuptor-0",
-   "url": "https://www.ikea.com/ro/ro/cat/familia-lagan-53227/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-cuptor-1",
-   "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-alb-s19338049/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-hota-0",
-   "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-colt-alb-s39337992/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-hota-1",
-   "url": "https://www.ikea.com/ro/ro/p/lagan-frigider-congelator-independent-alb-70490118/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-dus-0",
-   "url": "https://www.dedeman.ro/ro/obiecte-sanitare-baie-si-accesorii/c/14",
    "status": "manual",
    "why": "preț negăsit clar în pagină"
   },
@@ -3307,13 +3330,6 @@
    "kind": "offer",
    "id": "offer-pantofar-2",
    "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-pantofi-cu-2-compartimente-negru-maro-40216908/",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-oglinda-1",
-   "url": "https://www.ikea.com/ro/ro/cat/hemnes-oglinzi-si-dulapuri-cu-oglinzi-700478/",
    "status": "manual",
    "why": "preț negăsit clar în pagină"
   },
@@ -3484,6 +3500,53 @@
    "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-geberit-modo-cu-sertare-alb-suspendat-60-x-48-5-x-65-cm-mdf/p/3054343-3054344",
    "status": "manual",
    "why": "preț negăsit clar în pagină"
+  }
+ ],
+ "relinkNotApplied": [
+  {
+   "id": "offer-comodaTv-1",
+   "name": "BESTÅ comodă TV + uși, alb/Lappviken, 240x42x38",
+   "why": "Model, culoare (alb/Lappviken alb) și dimensiuni identice."
+  },
+  {
+   "id": "offer-comodaTv-2",
+   "name": "BESTÅ comodă TV cu uși, aspect stejar antichizat, 120x42x74",
+   "why": "variantă nesigură (marcată de agent)"
+  },
+  {
+   "id": "offer-comodaTv-3",
+   "name": "BESTÅ comodă TV, alb, 120x40x48 (deschisă)",
+   "why": "Varianta deschisă, fără uși, alb, aceleași dimensiuni."
+  },
+  {
+   "id": "offer-noptiera-1",
+   "name": "SONGESAND noptieră, alb, 42x40 cm",
+   "why": "negăsit de agent: Pagina cunoscută de motoare (/ro/ro/p/songesand-noptiera-alb-30367441/) redirecționează acum la /ro/ro/cat/produse-products/; nu apare în prima pagină a categoriei noptiere. Probabil scos din vânzare pe ikea.ro; neconfirmat definitiv."
+  },
+  {
+   "id": "offer-plita-2",
+   "name": "LAGAN plită cu inducție plug-in, 2 zone",
+   "why": "negăsit de agent: Pagina cunoscută (/ro/ro/p/lagan-plita-cu-inductie-plug-in-2-zone-negru-70506096/) redirecționează la /ro/ro/cat/produse-products/, iar pagina familiei LAGAN nu conține nicio plită. Probabil scos din vânzare pe ikea.ro."
+  },
+  {
+   "id": "offer-lavoar-0",
+   "name": "Mască baie + lavoar Goodmob Nemo/Neon 60, alb, suspendat",
+   "why": "variantă nesigură (marcată de agent)"
+  },
+  {
+   "id": "offer-lavoar-1",
+   "name": "Mască baie + lavoar Larisa, cu uși, alb, 60x33.6x72",
+   "why": "Titlu identic cu numele din catalog."
+  },
+  {
+   "id": "offer-lavoar-2",
+   "name": "Mască baie + lavoar Goodmob Crea/Neon, negru, suspendat, 60 cm",
+   "why": "negăsit de agent: Nu există pagină cu pachet mască Crea 60 negru + lavoar Neon fără dulap cu oglindă. Găsite doar: pachet cu dulap cu oglindă (p/3046665-3046678-3046469, ~1217.99 lei), masca Crea 60 negru singură cu uși (3046665, ~521 lei) sau cu sertare (3046692, ~760 lei) și lavoarul Neon 60 (3046469). Nu aleg alt produs."
+  },
+  {
+   "id": "offer-wc-0",
+   "name": "Set rezervor încastrat + vas WC Grohe Solido 4 în 1, Rimless",
+   "why": "Singura pagină 'Solido 4 in 1, Rimless'; există și varianta Square 39467000, neverificată. Fără localitate selectată, fetch-ul simplu nu arată prețul; l-am citit în browser. Prețul s-a schimbat față de 1389."
   }
  ]
 }

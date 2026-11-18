@@ -44,3 +44,10 @@ test('fișierul de reverificări: fiecare intrare are ID existent, preț pozitiv
     assert.equal(new URL(r.url).hostname.replace(/^www\./, ''), new URL(src).hostname.replace(/^www\./, ''), `${r.id}: același magazin`);
     assert.ok(r.price > 0 && r.evidence.length > 3, r.id); assert.match(r.seenAt, /^\d{4}-\d{2}-\d{2}$/); }
 });
+
+test('ofertele relegate: linkul nou e pagina produsului (nu categorie) și ajunge în bază', async () => {
+  const { isProductPage } = await import('../core/commercial'); const { q } = await getDb();
+  const relinked = PRICE_RECHECKS.filter(r => r.kind === 'o' && /linkul vechi/.test(r.evidence)); assert.ok(relinked.length >= 15, String(relinked.length));
+  for (const r of relinked){ assert.ok(isProductPage(r.url), r.url);
+    const row = (await q('select source_url from offers where id=$1', [r.id])).rows[0]; assert.equal(row?.source_url, r.url, r.id); }
+});

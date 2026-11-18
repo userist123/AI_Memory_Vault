@@ -13,7 +13,8 @@ export async function applyPriceRechecks(q: Query, items: PriceRecheck[] = PRICE
   let changed = 0;
   for (const r of items){
     if (r.kind === 'o'){
-      const u = await q(`update offers set price=$1, verified_at=$2 where id=$3 and (verified_at is null or verified_at < $2::date) returning id`, [r.price, r.seenAt, r.id]);
+      // linkul se actualizează odată cu prețul: unele oferte din primul import duceau la o categorie sau la alt produs
+      const u = await q(`update offers set price=$1, verified_at=$2, source_url=$4 where id=$3 and (verified_at is null or verified_at < $2::date) returning id`, [r.price, r.seenAt, r.id, r.url]);
       if (!u.rows[0]) continue;
     } else {
       // materialul cu preț pe pachet (găleată, bucată de plintă): prețul observat e al pachetului, ca în updatePrice

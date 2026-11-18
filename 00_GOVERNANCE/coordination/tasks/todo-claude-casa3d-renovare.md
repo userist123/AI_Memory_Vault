@@ -70,7 +70,13 @@ DONE:
     n-au fost schimbate, golește issueDate și dueDate, nextSaved=false raportat), data emiterii în ora României, emiterea blocată
     în modul demo, test extins (lib/share.ts, gate pe rutele noi). E2E în browser: emisă rămâne 48.894,27 RON după schimbarea
     proiectului, ciorna 41.081,26 RON și nr. 4. Suita 147/997. Capturi 27-29. Reziduu: cursa reală doar pe Postgres (PGlite e serial).
-NEXT: merge #391 (Next.js) apoi #386; reverificarea prețurilor vechi (1 octombrie) pe paginile produselor.
+  - Prețuri reverificate (2026-11-18): 441 vechi (>14 zile) citite pe pagina produsului (JSON-LD / Dedeman finalPrice legat de cod,
+    unitatea de pe pagină la pachete): 250 neschimbate, 107 schimbate → data/price-rechecks.json, aplicat la pornire (lib/price-rechecks.ts,
+    doar dacă e mai nou, istoric în price_history, actualizează și linkul ofertei). 25 de oferte din importul 09-30 duceau la categorii /
+    alt produs: 16 relegate la pagina corectă (verificate independent), 9 notate (relinkNotApplied). Proforma arată sursa doar pentru
+    pagini de produs (isProductPage). Rămase de mână: Hornbach (anti-robot), JYSK, pagini fără preț structurat. Suita 148/1001.
+  - #391: picau enforce + zero-regression-gate doar pe allowlist-ul de note (checkpoint fără frontmatter) → adăugat, CI 43/43.
+NEXT: merge #391 (Next.js) apoi #386 (decizia proprietarului); verificarea de mână a celor ~90 de prețuri rămase.
   - Teste: tests/renovation-products.test.ts (12); suita 143 de fișiere / 984 de teste; tsc curat; build compilat.
 RESIDUALS ACCEPTATE (decizia sesiunii principale după runda 2):
   - cota blatului e fixă 0,9 m (motorul desenează .86 + blat); microundele pe pardoseală primesc acum avertismentul ON_FLOOR.
