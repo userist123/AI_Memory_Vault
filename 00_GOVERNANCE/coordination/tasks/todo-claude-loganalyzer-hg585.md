@@ -1394,3 +1394,12 @@
   Get-LinkOnPath treats access-denied as no link; redirected Documents (OneDrive) not covered; remote self-exclusion not run end to end.
   Suites: Dfir (Release) 4048 (4015 passed, 33 skipped), App 1114, UI 370 (1 skipped), Edition 45, all exit 0.
   Next: OpenSave/LastVisited PIDL MRU; SBOM (CycloneDX); forked-case compare. Lab: LAB-SRV01 still Saved.
+- 2026-11-18 (claude, hg585) CI of fd59033fb: DFIR job FAILED again on HeadWitnessTests 4-writers + MultiProcessChainTests (reader starvation).
+  Cause: the 2 s turnstile wait (review DoS fix) is too short behind 3-4 writers that each fsync on a slow runner; the timeout switched the
+  turnstile off for 60 s. Fix (HashChain.Turnstile): wait Wait (2 s), then on in Slice (2 s) steps up to MaxWaitWithProgress (20 s) only while
+  the log file changes (length / last write = writers passing through); no progress -> give up + 60 s backoff as before. Hostile holder cost
+  now <= ~4 s per minute per log. HeadWitnessTests held-mutex bound follows the constants (>= Wait, < Wait + Slice + 3 s). Concurrency tests
+  29/29 x3 under full CPU load; Dfir (Release) 4055 (4022 passed, 33 skipped) incl. the uncommitted MRU work.
+  ComDlg32 MRU (OpenSave/LastVisited/CIDSize) implemented by worker, NOT committed: review r1 CHANGES (key time on first RESOLVED entry instead
+  of MRUListEx[0]; lab Windows-comparison test can pass with 0 matches; exe-name cap note; decode failures without gap; field Order vs
+  MruPosition; one Guarded call for 3 keys). Next: new worker for those fixes, r2 review, commit. Wiring MRU into USER-ACTIVITY-* = later step.

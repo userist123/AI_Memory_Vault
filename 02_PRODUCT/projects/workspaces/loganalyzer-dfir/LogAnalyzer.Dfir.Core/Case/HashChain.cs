@@ -437,11 +437,41 @@ public sealed class HashChain(string path)
 
         /// <summary>
         /// Short on purpose (review 2026-11-18): the mutex name follows from the log path, so any process of the session can create and hold it. A legitimate holder
-        /// keeps it only for one open (milliseconds); after a timeout the turnstile is skipped for that log for <see cref="Backoff"/>, so a hostile holder costs at
-        /// most ~2 s per minute per log (the old retry loop then runs as before), never a failure.
+        /// keeps it only for one open (milliseconds); after a timeout without progress the turnstile is skipped for that log for <see cref="Backoff"/>, so a hostile
+        /// holder costs at most ~4 s (Wait + one Slice) per minute per log (the old retry loop then runs as before), never a failure.
         /// </summary>
         internal static readonly TimeSpan Wait = TimeSpan.FromSeconds(2);
+        /// <summary>
+        /// CI 2026-11-18 (fd59033fb): behind 3-4 writers that each fsync on a slow runner a legitimate wait exceeds 2 s; the backoff then switched the turnstile
+        /// off and the reader starved again. Past <see cref="Wait"/> the wait goes on (up to this bound) only while the log keeps changing, i.e. writers are
+        /// really passing through; a holder that only sits on the mutex makes no progress and is still given up on after <see cref="Wait"/>.
+        /// </summary>
+        internal static readonly TimeSpan MaxWaitWithProgress = TimeSpan.FromSeconds(20);
+        /// <summary>One slice of the progress wait: long enough for one writer's whole append on a slow runner (fsync + head move + witness).</summary>
+        internal static readonly TimeSpan Slice = TimeSpan.FromSeconds(2);
         internal static readonly TimeSpan Backoff = TimeSpan.FromSeconds(60);
+
+        private static (long, long) Progress(string path)
+        {
+            try { var fi = new FileInfo(path); return fi.Exists ? (fi.Length, fi.LastWriteTimeUtc.Ticks) : (-1, 0); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return (-1, 0); }
+        }
+
+        /// <summary>Waits for the mutex: <see cref="Wait"/> unconditionally, then on in short slices while the log changes, at most <see cref="MaxWaitWithProgress"/>.</summary>
+        private static bool WaitWithProgress(Mutex m, string logPath)
+        {
+            if (m.WaitOne(Wait)) return true;
+            var deadline = Environment.TickCount64 + (long)(MaxWaitWithProgress - Wait).TotalMilliseconds;
+            var last = Progress(logPath);
+            while (Environment.TickCount64 < deadline)
+            {
+                if (m.WaitOne(Slice)) return true;
+                var now = Progress(logPath);
+                if (now == last) return false;   // nobody got through in that slice: not a busy queue
+                last = now;
+            }
+            return false;
+        }
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, long> SkipUntil = new(StringComparer.Ordinal);
 
         public static Turnstile? Enter(string logPath)
@@ -453,7 +483,7 @@ public sealed class HashChain(string path)
                 if (SkipUntil.TryGetValue(name, out var until) && Environment.TickCount64 < until) return null;
                 m = new Mutex(false, name);
                 bool owned;
-                try { owned = m.WaitOne(Wait); }
+                try { owned = WaitWithProgress(m, logPath); }
                 catch (AbandonedMutexException) { owned = true; }   // a holder died: the mutex is ours, it guards no data
                 if (owned) return new Turnstile(m);
                 SkipUntil[name] = Environment.TickCount64 + (long)Backoff.TotalMilliseconds;

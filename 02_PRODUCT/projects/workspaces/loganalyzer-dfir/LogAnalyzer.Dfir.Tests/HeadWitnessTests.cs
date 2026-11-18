@@ -247,7 +247,9 @@ public sealed class HeadWitnessTests : IDisposable
             var first = sw.Elapsed; sw.Restart();
             Add(log, 3); Assert.Equal(ChainStatus.Valid, V(log).Status);
             var rest = sw.Elapsed;
-            Assert.True(first < TimeSpan.FromSeconds(5), $"prima operație a așteptat {first.TotalSeconds:0.0} s");
+            // a holder that makes no progress costs Wait + one Slice (2 + 2 s, CI 2026-11-18 design), then the turnstile is skipped
+            Assert.True(first < HashChain.Turnstile.Wait + HashChain.Turnstile.Slice + TimeSpan.FromSeconds(3), $"prima operație a așteptat {first.TotalSeconds:0.0} s");
+            Assert.True(first >= HashChain.Turnstile.Wait, $"prima operație nu a așteptat turnichetul ({first.TotalSeconds:0.0} s)");
             Assert.True(rest < TimeSpan.FromSeconds(2), $"operațiile următoare au așteptat {rest.TotalSeconds:0.0} s");
             Assert.Equal(5, new HashChain(log).Head().Seq);
         }
