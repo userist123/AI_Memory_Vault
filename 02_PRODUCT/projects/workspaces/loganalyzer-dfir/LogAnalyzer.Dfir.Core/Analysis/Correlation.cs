@@ -419,14 +419,24 @@ public static class Correlation
             });
         }
 
-        // Task definitions (System32\Tasks XML): configuration that runs a program from a user-writable location.
-        foreach (var e in events.Where(e => e.Source == "ScheduledTask" && e.Path.Length > 0 &&
+        // Task definitions (System32\Tasks XML) and the TaskCache registry copy of the same tasks: configuration that runs a program from a user-writable location.
+        // Tasks are matched on (host, task path) case-insensitively, without the leading backslash the TaskCache URI sometimes lacks.
+        static (string, string) TaskKey(TimelineEvent e) => (e.Host.ToLowerInvariant(), e.Task.Trim().TrimStart('\\').ToLowerInvariant());
+        static string CmdKey(string c) => c.Trim().Trim('"').ToLowerInvariant();
+        var xmlTaskEvents = events.Where(e => e.Source == "ScheduledTask").ToList();
+        var xmlTasks = xmlTaskEvents.Select(TaskKey).ToHashSet();
+        var xmlCommands = xmlTaskEvents.Select(e => (TaskKey(e), CmdKey(F(e, "Command")), CmdKey(F(e, "Arguments")))).ToHashSet();
+        // a Tree entry whose Id has no Tasks key defines no action: Windows leaves such stale entries on clean systems (lab: 31 of them), so it is not a configured task
+        var cacheEvents = events.Where(e => e.Source == "TaskCache" && e.Task.Trim().Length > 0 && F(e, "Anomaly") != "TreeIdWithoutTasksKey").ToList();
+        foreach (var e in events.Where(e => (e.Source == "ScheduledTask" || e.Source == "TaskCache" && F(e, "ActionType") == "Exec" && !xmlCommands.Contains((TaskKey(e), CmdKey(F(e, "Command")), CmdKey(F(e, "Arguments")))))
+                                            && e.Path.Length > 0 &&
                                             (IsUserWritable(e.Path) || HasScriptPath(F(e, "Arguments")) && IsUserWritable(F(e, "Arguments")))))
         {
-            bool hidden = F(e, "Hidden") == "true";
+            bool fromCache = e.Source == "TaskCache";
+            bool hidden = fromCache ? F(e, "TreeHasSd") == "false" : F(e, "Hidden") == "true";
             f.Add(new Finding
             {
-                FindingId = Id(), RuleId = "PERSIST-TASK-CONFIG", Title = $"Activitate planificată{(hidden ? " ascunsă" : "")} care rulează dintr-o locație în care utilizatorii pot scrie: {e.Task}",
+                FindingId = Id(), RuleId = "PERSIST-TASK-CONFIG", Title = $"Activitate planificată{(hidden ? " ascunsă" : "")} care rulează dintr-o locație în care utilizatorii pot scrie: {TaskNameWithoutSid(e.Task)}",
                 Severity = hidden ? Severity.High : Severity.Medium, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
                 MitreTechniqueId = "T1053.005", FirstSeenUtc = e.Time.Utc, File = e.Path, Process = e.Process, User = e.User,
                 // the definition says what is configured, not who made it or that Windows owns it (lab WS02: a user's OneDrive task was told as „Windows are…”);
@@ -434,12 +444,133 @@ public static class Correlation
                 PlainWhat = $"Există pe calculator activitatea programată {PlainPhrases.Q(TaskNameWithoutSid(PlainPhrases.Leaf(e.Task)))}{(hidden ? " (ascunsă)" : "")}" +
                             (e.User.Length > 0 && !LogAnalyzer.Dfir.Language.AccountResolver.IsSid(e.User) && !PlainPhrases.IsStationAccount(e.User) ? $", care rulează sub contul {PlainPhrases.Q(PlainPhrases.ShortAccount(e.User))}" : "") +
                             $", care pornește singură programul {PlainPhrases.Q(PlainPhrases.Leaf(e.Path))}, dintr-un folder în care orice utilizator poate scrie",
-                Description = $"{e.Task} rulează {F(e, "Command")} {F(e, "Arguments")} ca {e.User} ({F(e, "RunLevel")}); declanșatori: {F(e, "Triggers")}; autor {F(e, "Author")}.",
-                ClassificationReason = "Definiția activității planificate (XML din System32\\Tasks) indică o cale în care utilizatorii pot scrie. Arată configurația, nu o rulare.",
-                SupportingEvidence = [Ref(e, "definiția activității planificate")],
+                Description = fromCache
+                    ? $"{e.Task} rulează {F(e, "Command")} {F(e, "Arguments")}; autor {F(e, "Author")}; momentul înregistrării în cache {F(e, "CacheRegisteredUtc")}" +
+                      (hidden ? "; intrarea din Tree nu are valoarea SD (activitatea nu apare în listările obișnuite)" : "") + "."
+                    : $"{e.Task} rulează {F(e, "Command")} {F(e, "Arguments")} ca {e.User} ({F(e, "RunLevel")}); declanșatori: {F(e, "Triggers")}; autor {F(e, "Author")}.",
+                ClassificationReason = fromCache
+                    ? "Definiția din cache-ul activităților planificate din registru (TaskCache) indică o cale în care utilizatorii pot scrie; în caz nu există XML al aceleiași activități cu aceeași comandă. Arată configurația, nu o rulare."
+                    : "Definiția activității planificate (XML din System32\\Tasks) indică o cale în care utilizatorii pot scrie. Arată configurația, nu o rulare.",
+                SupportingEvidence = [Ref(e, fromCache ? "definiția activității planificate din cache-ul din registru" : "definiția activității planificate")],
                 AlternativeExplanations = ["Actualizatoare legitime instalate per utilizator (AppData) creează astfel de activități planificate."],
                 MissingEvidence = ["Rulări ale activității planificate: TaskScheduler/Operational (200/201) sau Prefetch pentru executabil."],
-                ContradictingEvidence = F(e, "Enabled") == "false" ? ["Activitatea planificată este dezactivată (Settings/Enabled=false): în această stare nu pornește singură."] : [],
+                ContradictingEvidence = !fromCache && F(e, "Enabled") == "false" ? ["Activitatea planificată este dezactivată (Settings/Enabled=false): în această stare nu pornește singură."] : [],
+            });
+        }
+
+        // XML coverage per host: Tree entries with actions that have a matching task file (only hosts with at least one XML event are compared)
+        var xmlHosts = xmlTaskEvents.Select(x => x.Host.ToLowerInvariant()).ToHashSet();
+        var hostCoverage = cacheEvents.Where(e => F(e, "TreeHasSd").Length > 0 && F(e, "ActionType").Length > 0 && xmlHosts.Contains(e.Host.ToLowerInvariant()))
+            .GroupBy(e => e.Host.ToLowerInvariant())
+            .ToDictionary(h => h.Key, h =>
+            {
+                var tasks = h.Select(TaskKey).ToHashSet();
+                var missing = tasks.Where(t => !xmlTasks.Contains(t)).ToHashSet();
+                return (Total: tasks.Count, Matched: tasks.Count - missing.Count, Missing: missing, Ratio: (double)(tasks.Count - missing.Count) / tasks.Count);
+            });
+
+        // TaskCache: one finding per task (not per action).
+        foreach (var g in cacheEvents.GroupBy(TaskKey))
+        {
+            var first = g.First();
+            var taskName = first.Task;
+            var cmdList = string.Join("; ", g.Select(e => F(e, "ActionType") == "Exec" ? $"{F(e, "Command")} {F(e, "Arguments")}".Trim() : F(e, "ComClassId").Length > 0 ? $"handler COM {F(e, "ComClassId")}" : "")
+                                              .Where(x => x.Length > 0).Distinct());
+            var cmds = cmdList.Length > 0 ? cmdList : "(nicio acțiune lizibilă în cache)";
+            var registered = F(first, "CacheRegisteredUtc");
+            var lastRun = F(first, "LastRunUtc");
+            var dup = F(first, "TreeDuplicateIdPaths");
+            var plainName = PlainPhrases.Q(TaskNameWithoutSid(PlainPhrases.Leaf(taskName)));
+
+            // Tarrask (Microsoft, 2022): a Tree entry without the SD value keeps the task configured while it is missing from schtasks / Task Scheduler listings.
+            if (g.Any(e => F(e, "TreeHasSd") == "false"))
+                f.Add(new Finding
+                {
+                    FindingId = Id(), RuleId = "PERSIST-TASK-NO-SD", Title = $"Activitate planificată configurată în registru fără descriptor de securitate (ascunsă din listări): {TaskNameWithoutSid(taskName)}",
+                    Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High,
+                    MitreTechniqueId = "T1053.005", FirstSeenUtc = first.Time.Utc,
+                    PlainWhat = $"În registru este configurată activitatea programată {plainName} fără descriptorul ei de securitate; o astfel de activitate nu apare în listele obișnuite (Task Scheduler, schtasks), deși este configurată",
+                    Description = $"Intrarea {taskName} din Tree (cache-ul activităților planificate din registru) nu are valoarea SD, deci activitatea nu apare în listările obișnuite (ascundere, T1053.005) cât timp rămâne configurată. Acțiuni în cache: {cmds}." +
+                                  (registered.Length > 0 ? $" Momentul înregistrării în cache: {registered} (înregistrare sau reînregistrare în cache, nu neapărat crearea)." : "") +
+                                  (lastRun.Length > 0 ? $" Ultima pornire înregistrată în cache: {lastRun}." : "") +
+                                  (dup.Length > 0 ? $" Același Id apare în Tree și la căile: {dup}." : ""),
+                    ClassificationReason = "Intrarea din Tree a activității, în cache-ul activităților planificate din registru (TaskCache), nu are valoarea SD. Arată configurația din registru, nu cine a făcut-o și nici o rulare.",
+                    SupportingEvidence = g.Take(6).Select(e => Ref(e, "activitate planificată din cache-ul din registru")).ToList(),
+                    AlternativeExplanations = ["Cheie de registru deteriorată sau un instrument care a rescris cheia a putut șterge valoarea SD."],
+                    MissingEvidence = ["Crearea activității: Security 4698 sau TaskScheduler 106.", "Rulările activității: TaskScheduler 200/201."],
+                });
+
+            // No task XML: per task only when the XML coverage of the host is high; otherwise one summary finding per host (block after this loop).
+            if (g.Any(e => F(e, "TreeHasSd").Length > 0 && F(e, "ActionType").Length > 0) && hostCoverage.TryGetValue(first.Host.ToLowerInvariant(), out var cov) && cov.Missing.Contains(TaskKey(first)) && cov.Ratio >= 0.8)
+                f.Add(new Finding
+                {
+                    FindingId = Id(), RuleId = "PERSIST-TASK-NO-XML", Title = $"Activitate planificată din registru fără fișier XML în System32\\Tasks: {TaskNameWithoutSid(taskName)}",
+                    Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Correlated, Confidence = Confidence.Medium,
+                    MitreTechniqueId = "T1053.005", FirstSeenUtc = first.Time.Utc,
+                    PlainWhat = $"Activitatea programată {plainName} este configurată în registru, dar printre fișierele de activități copiate de pe același calculator nu există fișierul ei",
+                    Description = $"{taskName} apare în cache-ul activităților planificate din registru (acțiuni: {cmds}), dar colectarea conține fișiere XML din System32\\Tasks de pe același calculator ({cov.Matched} din {cov.Total} activități din cache au fișier) și niciunul nu corespunde acestei activități." +
+                                  (registered.Length > 0 ? $" Momentul înregistrării în cache: {registered}." : ""),
+                    ClassificationReason = "Activitate prezentă în TaskCache (Tree) și absentă din setul de fișiere XML colectate de pe același calculator, deși celelalte activități din cache au fișier. Arată o diferență între două surse, nu cine a creat activitatea.",
+                    SupportingEvidence = g.Take(6).Select(e => Ref(e, "activitate planificată din cache-ul din registru")).ToList(),
+                    AlternativeExplanations = ["Fișierul activității poate pur și simplu să nu fi fost copiat (de exemplu acces refuzat la copierea din System32\\Tasks).", "Fișierul a fost șters după înregistrare sau cheia din registru a rămas după o dezinstalare.",
+                                               "Fișierele XML pot proveni de la altă stație când stația nu este cunoscută (Host gol)."],
+                    MissingEvidence = ["Lista fișierelor care nu au putut fi copiate din System32\\Tasks (lipsuri de colectare, nevăzute de această regulă).", "Crearea activității: Security 4698 sau TaskScheduler 106."],
+                });
+        }
+
+        // Low XML coverage for a host: at most one summary finding for that host instead of one per task.
+        foreach (var (hostKey, cov) in hostCoverage.Where(h => h.Value.Ratio < 0.8 && h.Value.Missing.Count > 0))
+        {
+            var firstEv = cacheEvents.First(e => e.Host.ToLowerInvariant() == hostKey);
+            var names = cacheEvents.Where(e => e.Host.ToLowerInvariant() == hostKey && cov.Missing.Contains(TaskKey(e))).Select(e => e.Task.Trim()).Distinct(StringComparer.OrdinalIgnoreCase).OrderBy(n => n, StringComparer.Ordinal).Take(10).Select(TaskNameWithoutSid).ToList();
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "PERSIST-TASK-NO-XML", Title = $"{cov.Missing.Count} activități planificate din registru nu au fișier XML în setul colectat",
+                Severity = Severity.Low, Category = "Persistence", Classification = Classification.Correlated, Confidence = Confidence.Medium,
+                MitreTechniqueId = "T1053.005", FirstSeenUtc = firstEv.Time.Utc,
+                PlainWhat = $"{cov.Missing.Count} din {cov.Total} activități programate din registru nu au fișierul lor printre cele copiate; cel mai probabil copia fișierelor este incompletă sau fișierele provin de la altă stație",
+                Description = $"{cov.Missing.Count} din {cov.Total} activități din cache-ul de activități planificate (TaskCache) nu au fișier XML în System32\\Tasks din colectare; acoperire {cov.Ratio:P0}, sub pragul de 80%. Probabil copie incompletă sau fișiere de la altă stație. Primele {names.Count}: {string.Join("; ", names)}.",
+                ClassificationReason = "Acoperirea fișierelor XML față de TaskCache este scăzută; se raportează o singură constatare pentru stație, nu una pe activitate. Arată o diferență între două surse, nu o ascundere.",
+                SupportingEvidence = cacheEvents.Where(e => e.Host.ToLowerInvariant() == hostKey && cov.Missing.Contains(TaskKey(e))).Take(6).Select(e => Ref(e, "activitate planificată din cache-ul din registru")).ToList(),
+                AlternativeExplanations = ["Copia din System32\\Tasks este incompletă (acces refuzat, colectare parțială).", "Fișierele XML pot proveni de la altă stație când stația nu este cunoscută (Host gol).", "Cheile din registru au rămas după dezinstalări."],
+                MissingEvidence = ["Lista fișierelor care nu au putut fi copiate din System32\\Tasks.", "Confirmarea că fișierele XML și hive-ul provin de la aceeași stație."],
+            });
+        }
+
+        // The same task in the cache and in the file with different actions (multiset of Exec command+arguments / ComHandler class+data).
+        string ActionKey(TimelineEvent e)
+        {
+            var type = F(e, "ActionType");
+            if (type == "ComHandler") return "COM " + CmdKey(F(e, "ComClassId")) + " " + CmdKey(F(e, "ComData"));
+            if (type == "Exec" || type.Length == 0 && F(e, "Command").Length > 0) return "EXEC " + CmdKey(F(e, "Command")) + " " + CmdKey(F(e, "Arguments"));
+            return "";
+        }
+        string ActionText(TimelineEvent e) => F(e, "ActionType") == "ComHandler" ? $"handler COM {F(e, "ComClassId")} {F(e, "ComData")}".Trim() : $"{F(e, "Command")} {F(e, "Arguments")}".Trim();
+        var xmlByTask = xmlTaskEvents.Where(e => ActionKey(e).Length > 0).GroupBy(TaskKey).ToDictionary(g => g.Key, g => g.ToList());
+        // review round 2: only cache tasks with a Tree entry (a stale Tasks key with the same URI would double the list), never a partially read Actions blob,
+        // and each copy (evidence item) compared on its own: two collected copies of one task are not a difference
+        List<string> Keys(IEnumerable<TimelineEvent> es) => es.Select(ActionKey).OrderBy(k => k, StringComparer.Ordinal).ToList();
+        foreach (var g in cacheEvents.Where(e => ActionKey(e).Length > 0 && F(e, "TreeHasSd").Length > 0).GroupBy(TaskKey))
+        {
+            if (!xmlByTask.TryGetValue(g.Key, out var xs)) continue;
+            if (g.Any(e => F(e, "Anomaly").Contains("ActionsUnreadable", StringComparison.Ordinal))) continue;
+            var cacheSets = g.GroupBy(e => e.EvidenceId).Select(Keys).ToList();
+            var xmlSets = xs.GroupBy(e => e.EvidenceId).Select(Keys).ToList();
+            if (cacheSets.Any(c => xmlSets.Any(x => c.SequenceEqual(x)))) continue;
+            var first = g.First();
+            var cacheText = string.Join("; ", g.Select(ActionText));
+            var xmlText = string.Join("; ", xs.Select(ActionText));
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "PERSIST-TASK-CACHE-MISMATCH", Title = $"Activitate planificată cu acțiuni diferite în cache-ul din registru și în fișierul ei: {TaskNameWithoutSid(first.Task)}",
+                Severity = Severity.Medium, Category = "Persistence", Classification = Classification.Correlated, Confidence = Confidence.Medium,
+                MitreTechniqueId = "T1053.005", FirstSeenUtc = first.Time.Utc,
+                PlainWhat = $"Pentru activitatea programată {PlainPhrases.Q(TaskNameWithoutSid(PlainPhrases.Leaf(first.Task)))}, cache-ul din registru și fișierul ei arată acțiuni diferite",
+                Description = $"{first.Task}: cache-ul din registru (TaskCache) arată {cacheText}; fișierul din System32\\Tasks arată {xmlText}. Diferența arată două surse care nu coincid, nu spune care este cea corectă.",
+                ClassificationReason = "Aceeași activitate (stație și cale) apare în TaskCache și în fișierul XML cu acțiuni diferite (comandă și argumente sau handler COM).",
+                SupportingEvidence = g.Take(3).Select(e => Ref(e, "acțiune din cache-ul din registru")).Concat(xs.Take(3).Select(e => Ref(e, "acțiune din fișierul activității"))).ToList(),
+                AlternativeExplanations = ["Activitatea a fost actualizată între momentul copierii fișierului și cel al copierii hive-ului (decalaj de colectare).", "O modificare a fost aplicată doar într-unul dintre cele două locuri (fișier sau registru)."],
+                MissingEvidence = ["Momentele exacte ale copierii fișierului și ale hive-ului.", "Modificarea activității: Security 4702 sau TaskScheduler 140."],
             });
         }
 

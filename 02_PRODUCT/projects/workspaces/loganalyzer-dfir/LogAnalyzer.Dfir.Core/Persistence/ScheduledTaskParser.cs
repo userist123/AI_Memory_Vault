@@ -79,7 +79,7 @@ public sealed partial class ScheduledTaskParser : EvidenceParserBase
             var fields = new Dictionary<string, string>(common, StringComparer.OrdinalIgnoreCase)
             {
                 ["ActionType"] = kind, ["Command"] = command, ["Arguments"] = a is null ? "" : V(a, "Arguments"),
-                ["WorkingDirectory"] = a is null ? "" : V(a, "WorkingDirectory"), ["ComClassId"] = a is null ? "" : V(a, "ClassId"),
+                ["WorkingDirectory"] = a is null ? "" : V(a, "WorkingDirectory"), ["ComClassId"] = a is null ? "" : V(a, "ClassId"), ["ComData"] = a is null ? "" : V(a, "Data"),
             };
             var what = command.Length > 0 ? $"{command} {fields["Arguments"]}".Trim()
                      : fields["ComClassId"].Length > 0 ? $"handler COM {fields["ComClassId"]}" : "fără acțiune";

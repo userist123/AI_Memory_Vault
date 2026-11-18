@@ -1353,3 +1353,16 @@
   (held only while opening). CaseArchiveTests 23/23 x3 under full CPU load; Dfir (Release) 3990 (3957 passed, 33 skipped), App 1114, exit 0.
   Next: TaskCache correlation rules (worker): Tree without SD -> finding; task in cache without XML only when XML of the same station is in the
   case (collection gaps, e.g. access-denied task files, must not become findings); PERSIST-TASK-CONFIG on TaskCache without duplicating XML.
+- 2026-11-18 (claude, hg585) CI of 6e2f6f065 green. TaskCache correlation DONE (Correlation.cs, RuleContracts.cs, ScheduledTaskParser ComData):
+  PERSIST-TASK-NO-SD (Tree without SD: hidden from listings; High/Direct/High, one per task); PERSIST-TASK-NO-XML (per task, Medium/Correlated,
+  only when >= 80% of the host's cache tasks have XML; else ONE Low summary with <= 10 names; Host is empty in the pipeline -> "Host gol"
+  alternative); PERSIST-TASK-CACHE-MISMATCH (same task, different actions in cache vs XML; Medium/Correlated; never claims tampering; ignores
+  Tasks keys without Tree, partially read Actions blobs, and compares each collected copy on its own); PERSIST-TASK-CONFIG extended to cache
+  Exec events, suppressed only when the XML has the same command AND arguments. Titles without SIDs (TaskNameWithoutSid). TaskCacheReader:
+  Tree Ids without Tasks key (31 on the clean lab station) -> ONE note per hive instead of one gap each. Lab station: 0 NO-SD, 0 NO-XML,
+  0 MISMATCH, 1 CONFIG (from XML). Reviews: r1 CHANGES (arguments in suppression, NO-XML flood, SIDs in titles, orphan gaps) -> new worker;
+  r2 APPROVE with low risks R2/R3 (duplicates / partial blob -> false MISMATCH) -> fixed by main session + test. Residuals: Arguments compared
+  case-insensitively (theoretical blind spot); TaskNameWithoutSid strips only a trailing SID; collection gaps not visible to Correlation.
+  Suites: Dfir (Release) 4011 (3978 passed, 33 skipped), App 1114, UI 370 (1 skipped), Edition 45 (last three before the final R2/R3 delta,
+  which touches only Correlation.cs + its test).
+  Next: RDP RemoteConnectionManager 1149 + SMB channels, then PowerShell transcripts, OpenSave/LastVisited MRU; SBOM; forked-case compare.

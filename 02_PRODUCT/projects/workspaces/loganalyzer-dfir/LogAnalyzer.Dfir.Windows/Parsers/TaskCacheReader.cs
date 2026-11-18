@@ -142,6 +142,9 @@ public static class TaskCacheReader
         public bool Take() { if (Count >= MaxEvents) { Exhausted = true; return false; } Count++; return true; }
     }
 
+    /// <summary>One note per hive (count first, up to 5 examples): Tree entries without a Tasks key are common on clean stations.</summary>
+    private const string OrphanTreeKind = "intrări Tree fără cheie Tasks (frecvent pe stații curate; acțiunile lor nu pot fi citite)";
+
     private sealed class Gaps
     {
         private readonly Dictionary<string, (string Impact, List<string> Examples, int Count)> _g = new();
@@ -154,7 +157,7 @@ public static class TaskCacheReader
         public void Flush(ParseResult result)
         {
             foreach (var (kind, e) in _g)
-                result.Gaps.Add(new EvidenceGap("TaskCache", EvidenceStatus.Partial, $"{kind} ({e.Count})", e.Impact,
+                result.Gaps.Add(new EvidenceGap("TaskCache", EvidenceStatus.Partial, kind == OrphanTreeKind ? $"{e.Count} {kind}" : $"{kind} ({e.Count})", e.Impact,
                     "Task Scheduler pe stația vie (schtasks /query /v), System32\\Tasks, jurnalul TaskScheduler/Operational", "Posibil",
                     "Exemple: " + string.Join("; ", e.Examples)));
         }
@@ -310,7 +313,7 @@ public static class TaskCacheReader
             if (budget.Exhausted) break;
             if (seenTaskIds.Contains(t.Id)) continue;
             if (!budget.Take()) break;
-            gaps.Add("intrare Tree cu Id fără cheie în Tasks", "Nu se știe ce rulează activitatea", $"{t.Name} -> {t.Id}");
+            gaps.Add(OrphanTreeKind, "Nu se știe ce rulează aceste activități; nu indică prin sine o problemă", $"{t.Name} -> {t.Id}");
             sink.Add(new TimelineEvent
             {
                 Time = Hive.KeyTime(root), TimeSemantics = "TaskCache key last written (no Tasks key for this entry)",

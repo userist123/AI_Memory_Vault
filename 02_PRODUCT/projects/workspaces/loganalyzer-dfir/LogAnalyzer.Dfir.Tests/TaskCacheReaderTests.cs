@@ -298,7 +298,9 @@ public sealed class TaskCacheReaderTests : IDisposable
 
         var gaps = result.Gaps.Where(x => x.Artifact == "TaskCache").Select(x => x.Reason).ToList();
         Assert.Contains(gaps, r => r.StartsWith("intrare Tree fără valoarea SD"));
-        Assert.Contains(gaps, r => r.StartsWith("intrare Tree cu Id fără cheie în Tasks"));
+        Assert.Contains("1 intrări Tree fără cheie Tasks (frecvent pe stații curate; acțiunile lor nu pot fi citite)", gaps);
+        var orphanGap = Assert.Single(result.Gaps, x => x.Reason.Contains("intrări Tree fără cheie Tasks"));
+        Assert.Equal(@"Exemple: \T\Orphan -> " + orphanTree, orphanGap.Notes);
         Assert.Contains(gaps, r => r.StartsWith("cheie Tasks fără intrare în Tree"));
         Assert.Contains(gaps, r => r.StartsWith("blobul Actions nu a putut fi interpretat"));
         var sdGap = result.Gaps.First(x => x.Reason.StartsWith("intrare Tree fără valoarea SD"));
