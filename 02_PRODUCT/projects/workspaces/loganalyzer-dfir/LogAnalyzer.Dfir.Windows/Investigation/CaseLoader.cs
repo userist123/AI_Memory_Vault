@@ -158,7 +158,7 @@ public static class CaseLoader
         {
             var why = activityProblem ?? (activity is not null ? LogAnalyzer.Dfir.Analysis.UserActivityContext.MismatchText : LogAnalyzer.Dfir.Analysis.UserActivityContext.UnevaluableText);
             result.ActivityUnevaluable = why;
-            if (timeline.Any(e => e.Source is "ShellBags" or "RecentDocs" or "OfficeMRU" or "RecycleBin"))
+            if (timeline.Any(e => LogAnalyzer.Dfir.Analysis.UserActivityAnalysis.IsSource(e.Source)))
                 notes.Add("Activitatea utilizatorului: " + why);
         }
         if (File.Exists(Path.Combine(analysis, "timeline.csv"))) result.TimelineCsv = Path.Combine(analysis, "timeline.csv");

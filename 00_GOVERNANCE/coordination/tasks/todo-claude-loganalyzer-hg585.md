@@ -1455,3 +1455,16 @@
   MRU WIRING (in progress, uncommitted): OpenSaveMRU + LastVisitedMRU are user-activity sources (UserActivityAnalysis.IsSource, labels, time meaning
   = key time only for the newest choice, detail with program/position/"nu dovedește citirea"), rules wording, UI time note; UserActivityContext
   schema 1.1 (a 1.0 context restores only the 4 original sources). Tests App.Tests UserActivityDialogListTests (5). App 1138, UI 370, Edition 45 ok.
+- 2026-11-18 (claude, hg585) L1 committed 0c6c70acd. MRU WIRING DONE: OpenSaveMRU + LastVisitedMRU in the user-activity view and USER-ACTIVITY-*.
+  OpenSaveMRU rows with the same (evidence, account, path) in several lists ("*" + extension) are ONE row (newest dated kept; detail names the lists);
+  LastVisitedMRU rows say "pereche program–folder". Summary counts files chosen / program folders apart. Rule titles, reasons, plain texts and
+  descriptions follow the sources present; WITHOUT dialog rows they are the original texts (test Without_dialog_rows_the_rule_texts_are_the_original_ones).
+  RuleContracts, GHID_DE_UTILIZARE, UI time note, CaseLoader (IsSource) updated; UserActivityContext schema 1.1 (1.0 restores the 4 old sources).
+  Reviews: r1 REQUEST_CHANGES (overclaiming wording, double counting, docs, CaseLoader) -> fixed; r2 REQUEST_CHANGES (HIGH: REMOVABLE description
+  changed for non-dialog rows -> Dfir UserActivityRulesTests:123 would fail; LOW title) -> fixed by main session (2-round cap). Dfir
+  UserActivityRulesTests (21) run by copying it temporarily into App.Tests: all pass. ACCEPTED RESIDUALS: collapsed OpenSaveMRU rows keep only the
+  kept row as supporting evidence (the others are named in the detail); a 1.0 context restores no fields to dialog rows (cases written today by dev
+  builds only); a future-schema context gets the generic mismatch text (fails closed). Suites: App 1141, UI 370 (1 skipped), Edition 45, Dfir build ok;
+  Dfir suite only in CI (Defender).
+  Next: read CI once (Dfir suite!). Then a NEW planner (planner #8 done). Owner: Defender exclusion for the Dfir test build (now blocks every build),
+  QuestPDF licence, RDP manual test, registry witness decision, WS01/WS02 reinstall, lab cleanup (LAB-SRV01 Saved).

@@ -121,7 +121,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>What the times of this tab mean (shown above the table, next to the time column).</summary>
         public string UserActivityTimeNote =>
             "Ce înseamnă ora: ShellBags = ultima actualizare a intrării folderului de către Explorer (nu prima deschidere, nu dovedește citirea unui fișier); RecentDocs = ora cheii, doar pentru cea mai nouă intrare; " +
-            "Office MRU = ultima deschidere de aplicația Office (UTC); Coș de reciclare = ora ștergerii (UTC), iar „conținut golit sau eliminat” înseamnă că fișierul $R lipsește, nu că elementul nu a existat. " +
+            "Office MRU = ultima deschidere de aplicația Office (UTC); Deschide/Salvează (OpenSaveMRU, LastVisitedMRU) = ora cheii listei, doar pentru cea mai recentă alegere, iar alegerea nu dovedește citirea sau scrierea fișierului; Coș de reciclare = ora ștergerii (UTC), iar „conținut golit sau eliminat” înseamnă că fișierul $R lipsește, nu că elementul nu a existat. " +
             "Rândurile din foldere clasificate sau de pe volume amovibile sunt primele; sunt urme slabe, DE VERIFICAT, nu dovezi de acces la conținut.";
         /// <summary>WP14a: the zone of the analysed system, as the operator declares it (compared with the zone in the media register).</summary>
         [ObservableProperty] private string _systemZone = "";
