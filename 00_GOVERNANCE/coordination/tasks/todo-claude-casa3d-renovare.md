@@ -98,7 +98,10 @@ DONE:
     doar dacă adresa canonică e a codului; validat pe 8 pagini citite corect (același preț pe ambele căi). Din 17 pagini fără preț:
     12 citite (5 schimbate, ex. hota Pyramis 5.417,99 → 7.799,99), 5 Dedeman fără formular de cumpărare → rămân manuale.
     Raport: research_notes/casa3d-produse/reverificare-reluata-2026-11-18.json. Suita 150/1014.
-NEXT: merge #391 (Next.js) apoi #386 (decizia proprietarului); de verificat de mână: Hornbach 42, JYSK 12, Dedeman 5, 9 linkuri fără pagină de produs.
+  - JYSK (2026-11-18): pagina are un ProductGroup cu toate culorile → prețul variantei cu adresa paginii (după redirecționare);
+    linkul redirecționat se salvează. 12/12 citite (6 schimbate, verificate pe titlu). RAVNSBJERG: numele din catalog spunea
+    „stejar cald”, pagina (aceeași de la import) e „stejar natur” → numele corectat. Suita 150/1015.
+NEXT: merge #391 (Next.js) apoi #386 (decizia proprietarului); de verificat de mână: Hornbach 42 (blochează citirea), Dedeman 5 (fără formular de cumpărare), 9 linkuri fără pagină de produs.
   - Teste: tests/renovation-products.test.ts (12); suita 143 de fișiere / 984 de teste; tsc curat; build compilat.
 RESIDUALS ACCEPTATE (decizia sesiunii principale după runda 2):
   - cota blatului e fixă 0,9 m (motorul desenează .86 + blat); microundele pe pardoseală primesc acum avertismentul ON_FLOOR.

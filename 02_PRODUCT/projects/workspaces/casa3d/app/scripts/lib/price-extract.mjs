@@ -4,16 +4,19 @@
 //   - altfel: JSON-LD Product.offers.price în RON (IKEA, Hornbach, JYSK, Mobexpert).
 // Un preț din textul paginii nu se acceptă (pe o pagină de categorie ar fi prețul altui produs). Fără sursă clară → null.
 
-const num = s => Number(String(s).replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'));
+const num = s => Number(String(s).replace(/\s*lei\s*$/i, '').replace(/\s/g, '').replace(/\.(?=\d{3}(\D|$))/g, '').replace(',', '.'));
 
-export function priceFromHtml(html, url){
+// `pageUrl`: adresa finală a paginii (după redirecționări); la JYSK alege varianta din ProductGroup.
+export function priceFromHtml(html, url, pageUrl = url){
   const code = /dedeman\.ro\/.*\/p\/(\d+)/.exec(url)?.[1];
   if (code) return dedemanPrice(html, code);
   for (const mm of html.matchAll(/<script[^>]+application\/ld\+json[^>]*>([\s\S]*?)<\/script>/gi)){
     // eMAG: descrierea din JSON-LD are uneori linii noi și tab-uri nescăpate (JSON invalid); înlocuite cu spații, restul rămâne
     let j; try { j = JSON.parse(mm[1]); } catch { try { j = JSON.parse(mm[1].replace(/[\u0000-\u001f]+/g, ' ')); } catch { continue; } }
-    for (const n of (Array.isArray(j) ? j : j['@graph'] ?? [j])){
-      if (![].concat(n?.['@type'] || []).includes('Product')) continue;
+    for (const n0 of (Array.isArray(j) ? j : j['@graph'] ?? [j])){
+      // JYSK: ProductGroup cu toate culorile, fiecare cu adresa și prețul ei → doar varianta cu adresa paginii deschise
+      const n = [].concat(n0?.['@type'] || []).includes('ProductGroup') ? [].concat(n0.hasVariant || []).find(v => sameUrl(v?.url ?? v?.offers?.url, pageUrl)) : n0;
+      if (!n || ![].concat(n?.['@type'] || []).includes('Product')) continue;
       for (const o of [].concat(n.offers || [])){
         if (o.price != null || o.lowPrice != null){ const p = o.price ?? o.lowPrice;
           if (/^RON$/i.test(o.priceCurrency || 'RON') && num(p) > 0) return { price: num(p), unit: null, how: 'json-ld', evidence: `offers.price=${p} ${o.priceCurrency || ''}`.trim() + (o.seller?.name ? ` (vânzător: ${String(o.seller.name).replace(/&amp;/g, '&').slice(0, 60)})` : '') }; continue; }
@@ -54,6 +57,8 @@ function dedemanPrice(html, code){
   return { price: Number(f[1]), unit, how: 'dedeman-finalPrice',
     evidence: `cod ${code} (produsul ${pid} din formularul paginii): finalPrice ${f[1]} lei${unit ? ' /' + unit : ''}${/oldPrice/.test(box) ? ' (pagina arată și un preț vechi: promoție)' : ''}` };
 }
+
+const sameUrl = (a, b) => { try { const x = new URL(a), y = new URL(b), k = u => u.host.replace(/^www\./, '') + u.pathname.replace(/\/$/, ''); return k(x) === k(y); } catch { return false; } };
 
 // Aceeași regulă ca isProductPage din core/commercial.ts (testul o compară): pagina unui produs, nu o categorie, doar https.
 export function isProductUrl(url){
@@ -105,7 +110,7 @@ export function mergeRechecks(rechecks, results, readAt){
   const ok = results.filter(r => (r.status === 'same' || r.status === 'changed') && (r.how === 'json-ld' || r.how === 'dedeman-finalPrice') && r.price > 0);
   const ids = new Set(ok.map(r => `${r.kind}:${r.id}`));
   const items = (rechecks.items || []).filter(i => !ids.has(`${i.kind}:${i.id}`))
-    .concat(ok.map(r => ({ kind: r.kind, id: r.id, price: r.price, seenAt: readAt, url: r.url, evidence: r.evidence, ...(r.per ? { per: r.per } : {}) })));
+    .concat(ok.map(r => ({ kind: r.kind, id: r.id, price: r.price, seenAt: readAt, url: r.finalUrl && isProductUrl(r.finalUrl) ? r.finalUrl : r.url, evidence: r.evidence, ...(r.per ? { per: r.per } : {}) })));
   const notVerified = (rechecks.notVerified || []).filter(i => !ids.has(`${i.kind === 'material' ? 'm' : i.kind === 'offer' ? 'o' : i.kind}:${i.id}`));
   for (const r of results) if (!ok.includes(r) && !(r.kind === 'o' && r.status === 'gone')) {
     const k = r.kind === 'm' ? 'material' : 'offer';

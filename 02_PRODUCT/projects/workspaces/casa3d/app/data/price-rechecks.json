@@ -3807,6 +3807,102 @@
    "seenAt": "2026-11-18",
    "url": "https://www.emag.ro/plita-incorporabila-whirlpool-gaz-4-arzatoare-gratare-fonta-multistep-60-cm-negru-gowl628nbee/pd/D20X32MBM/",
    "evidence": "offers.price=699.99 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-13",
+   "price": 1500,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/sufragerie/canapele/canapea-egense-3-locuri-nisipie",
+   "evidence": "offers.price=1500 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-14",
+   "price": 1699,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/sufragerie/canapele/canapea-falslev-3-locuri-gri",
+   "evidence": "offers.price=1699 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-13",
+   "price": 1799,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/dormitor/paturi/cadre-de-pat-si-somiere/cadre-de-pat/cadru-pat-markskel-160x200-stejar-salbatic-alb",
+   "evidence": "offers.price=1799 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-14",
+   "price": 1350,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/dormitor/paturi/cadre-de-pat-si-somiere/cadre-de-pat/cadru-pat-limfjorden-160x200-3-sertare-alb",
+   "evidence": "offers.price=1350 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-15",
+   "price": 1150,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/dormitor/paturi/cadre-de-pat-si-somiere/cadre-de-pat/cadru-pat-kongsberg-160x200-bej",
+   "evidence": "offers.price=1150 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulap-9",
+   "price": 875,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/depozitare/dulapuri/dulap-fandrup-96x176-2-usi-3-sertare-stejar-deschis",
+   "evidence": "offers.price=875 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulap-10",
+   "price": 2000,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/depozitare/dulapuri/dulap-vellerup-200x200-4-usi-3-sertare-alb",
+   "evidence": "offers.price=2000 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-12",
+   "price": 300,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/birou/scaune-de-birou/scaun-birou-billum-negru",
+   "evidence": "offers.price=300 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pantofar-8",
+   "price": 350,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/depozitare/pantofare/pantofar-bakhuse-3-compartimente-alb",
+   "evidence": "offers.price=350 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masuta-12",
+   "price": 799,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/sufragerie/masute-de-cafea/masuta-cafea-ravnsbjerg-90x90-stejar-natur",
+   "evidence": "offers.price=799 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-15",
+   "price": 699,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/bucatarie/mese-dining/masa-aabenraa-90x160-stejar-cald-negru",
+   "evidence": "offers.price=699 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-16",
+   "price": 500,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/bucatarie/mese-dining/masa-ringsted-o100-alba",
+   "evidence": "offers.price=500 RON"
   }
  ],
  "notVerified": [
@@ -4080,90 +4176,6 @@
    "kind": "offer",
    "id": "offer-oglinda-5",
    "url": "https://www.dedeman.ro/ro/oglinda-decorativa-f2205-rotunda-negru-60-x-60-cm/p/3043896",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-canapea-13",
-   "url": "https://jysk.ro/sufragerie/canapele/canapea-egense-3-locuri-nisipie",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-canapea-14",
-   "url": "https://jysk.ro/sufragerie/canapele/canapea-falslev-3-locuri-gri",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-pat-13",
-   "url": "https://jysk.ro/dormitor/cadre-de-pat/cadru-pat-markskel-160x200-stejar-salbatic-alb",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-pat-14",
-   "url": "https://jysk.ro/dormitor/paturi/cadre-de-pat-si-somiere/cadre-de-pat/cadru-pat-limfjorden-160x200-3-sertare-alb",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-pat-15",
-   "url": "https://jysk.ro/dormitor/paturi/cadre-de-pat-si-somiere/cadre-de-pat/cadru-pat-kongsberg-160x200-bej",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-dulap-9",
-   "url": "https://jysk.ro/depozitare/dulapuri/dulap-fandrup-96x176-2-usi-3-sertare-stejar",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-dulap-10",
-   "url": "https://jysk.ro/depozitare/dulapuri/dulap-vellerup-200x200-4-usi-3-sertare-alb",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-scaunBirou-12",
-   "url": "https://jysk.ro/birou/scaune-de-birou/scaun-birou-billum-negru",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-pantofar-8",
-   "url": "https://jysk.ro/depozitare/pantofare/pantofar-bakhuse-3-compartimente-alb",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-masuta-12",
-   "url": "https://jysk.ro/sufragerie/masute-de-cafea/masuta-cafea-ravnsbjerg-90x90-stejar-natur",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-masa-15",
-   "url": "https://jysk.ro/bucatarie/mese-dining/masa-aabenraa-90x160-stejar-cald/negru",
-   "status": "manual",
-   "why": "preț negăsit clar în pagină"
-  },
-  {
-   "kind": "offer",
-   "id": "offer-masa-16",
-   "url": "https://jysk.ro/bucatarie/mese-dining/mese-dining/masa-ringsted-o100-alba",
    "status": "manual",
    "why": "preț negăsit clar în pagină"
   },

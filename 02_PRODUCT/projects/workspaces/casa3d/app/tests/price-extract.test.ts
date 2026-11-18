@@ -94,3 +94,15 @@ test('eMAG: JSON-LD cu linii noi nescăpate în descriere se citește; vânzăto
   const p = priceFromHtml(raw, 'https://www.emag.ro/x/pd/DC8JP1BBM/');
   assert.equal(p.price, 399.3); assert.match(p.evidence, /ELECTRICS SHOP & BATTERY/);
 });
+
+test('JYSK: ProductGroup cu toate culorile → doar varianta cu adresa paginii (după redirecționare); fără potrivire → nimic', () => {
+  const g = { '@type': 'ProductGroup', hasVariant: [
+    { '@type': 'Product', url: 'https://jysk.ro/canapele/canapea-falslev-3-locuri-gri', offers: { url: 'https://jysk.ro/canapele/canapea-falslev-3-locuri-gri', price: '1699', priceCurrency: 'RON' } },
+    { '@type': 'Product', url: 'https://jysk.ro/articlelookup?article=3630125#product-intro', offers: { price: '1500 Lei', priceCurrency: 'RON' } }] };
+  const html = ld(g), u = 'https://jysk.ro/canapele/canapea-falslev-3-locuri-gri';
+  assert.equal(priceFromHtml(html, u).price, 1699);
+  assert.equal(priceFromHtml(html, 'https://jysk.ro/canapele/vechi', u).price, 1699, 'adresa finală decide');
+  assert.equal(priceFromHtml(html, 'https://jysk.ro/canapele/alta-culoare'), null, 'nicio variantă cu adresa paginii');
+  const r = mergeRechecks({ items: [], notVerified: [] }, [{ kind: 'o', id: 'j', url: 'https://jysk.ro/a/b', finalUrl: 'https://jysk.ro/a/b-c', status: 'changed', price: 699, how: 'json-ld', evidence: 'e' }], '2026-11-18');
+  assert.equal(r.items[0].url, 'https://jysk.ro/a/b-c', 'linkul nou după redirecționare');
+});

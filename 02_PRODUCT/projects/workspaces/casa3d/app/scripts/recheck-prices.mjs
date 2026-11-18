@@ -36,7 +36,7 @@ for (const [k, it] of todo.entries()){
     if (resp.status === 404 || resp.status === 410) r = { status: 'gone', http: resp.status, why: 'pagina nu mai există' };
     else if (!resp.ok) r = { status: 'manual', http: resp.status, why: `răspuns ${resp.status} (magazinul nu permite citirea automată)` };
     else if (resp.url !== it.url && !isProductUrl(resp.url)) r = { status: 'gone', http: resp.status, finalUrl: resp.url, why: 'pagina produsului trimite acum la o categorie (scos din vânzare?)' };
-    else r = { http: resp.status, ...classify(it, priceFromHtml(await resp.text(), it.url)), ...(resp.url !== it.url ? { finalUrl: resp.url } : {}) };
+    else r = { http: resp.status, ...classify(it, priceFromHtml(await resp.text(), it.url, resp.url)), ...(resp.url !== it.url ? { finalUrl: resp.url } : {}) };
   } catch (e) { r = { status: 'manual', why: String(e?.name || e).slice(0, 60) }; }
   res.push({ ...it, ...r, readAt: today });
   console.log(`${k + 1}/${todo.length} ${r.status.padEnd(7)} ${it.store.padEnd(10)} ${it.id}`);
