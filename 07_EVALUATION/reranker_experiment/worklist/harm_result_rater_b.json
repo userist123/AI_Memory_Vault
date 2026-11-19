@@ -1,0 +1,37 @@
+{
+ "off": {
+  "relevant_in_first3": 8,
+  "results": 46,
+  "questions_with_relevant": 7
+ },
+ "on": {
+  "relevant_in_first3": 14,
+  "results": 53,
+  "questions_with_relevant": 10
+ },
+ "per_question": {
+  "1": "same",
+  "2": "same",
+  "3": "same",
+  "4": "same",
+  "5": "same",
+  "6": "same",
+  "7": "win",
+  "8": "same",
+  "9": "same",
+  "10": "same",
+  "11": "same",
+  "12": "same",
+  "13": "same",
+  "14": "same",
+  "15": "win",
+  "16": "same",
+  "17": "same",
+  "18": "same",
+  "19": "win",
+  "20": "same"
+ },
+ "wins": 3,
+ "losses": 0,
+ "evaluator": "rater_b (claude-opus, blind)"
+}

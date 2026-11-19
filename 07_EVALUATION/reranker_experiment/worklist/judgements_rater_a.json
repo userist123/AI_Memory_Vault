@@ -1,0 +1,446 @@
+{
+ "evaluator": "rater_a (claude-sonnet, blind)",
+ "rule": "A note is relevant only if it would help do the task the question was taken from (the task_source_quote). Judge each pair independently; you are not told which system returned it.",
+ "judgements": [
+  {
+   "pair_id": "P001",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P002",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P003",
+   "relevant": true,
+   "reason": "Lifecycle/verification distribution informs read-path semantics"
+  },
+  {
+   "pair_id": "P004",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P005",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P006",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P007",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P008",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P009",
+   "relevant": true,
+   "reason": "Gap S1: entry points lack lifecycle filtering"
+  },
+  {
+   "pair_id": "P010",
+   "relevant": true,
+   "reason": "Module existing vs consumed; consumer grep evidence"
+  },
+  {
+   "pair_id": "P011",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P012",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P013",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P014",
+   "relevant": true,
+   "reason": "AI_AGENT lifecycle injection at creation hardened"
+  },
+  {
+   "pair_id": "P015",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P016",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P017",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P018",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P019",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P020",
+   "relevant": true,
+   "reason": "Retrieval path shows lifecycle filters caller-supplied"
+  },
+  {
+   "pair_id": "P021",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P022",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P023",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P024",
+   "relevant": true,
+   "reason": "P0 retrieval diagnostic findings relevant to baseline evaluation"
+  },
+  {
+   "pair_id": "P025",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P026",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P027",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P028",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P029",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P030",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P031",
+   "relevant": true,
+   "reason": "Task ledger covers lifecycle policy and entry-point floor"
+  },
+  {
+   "pair_id": "P032",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P033",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P034",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P035",
+   "relevant": true,
+   "reason": "Registry covers BM25 lexical baseline results"
+  },
+  {
+   "pair_id": "P036",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P037",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P038",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P039",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P040",
+   "relevant": true,
+   "reason": "Module reality matrix with importer counts"
+  },
+  {
+   "pair_id": "P041",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P042",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P043",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P044",
+   "relevant": true,
+   "reason": "Book ingestion recipe relevant to concept extraction"
+  },
+  {
+   "pair_id": "P045",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P046",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P047",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P048",
+   "relevant": true,
+   "reason": "Gap S3: gitleaks allowlist of RAW_IMPORTS; secrets scanning"
+  },
+  {
+   "pair_id": "P049",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P050",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P051",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P052",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P053",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P054",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P055",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P056",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P057",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P058",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P059",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P060",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P061",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P062",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P063",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P064",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P065",
+   "relevant": true,
+   "reason": "Retrieval path: graph expansion off by default"
+  },
+  {
+   "pair_id": "P066",
+   "relevant": true,
+   "reason": "Module matrix: synapse_store graph expansion off by default"
+  },
+  {
+   "pair_id": "P067",
+   "relevant": true,
+   "reason": "Rules protecting RAW_IMPORTS from deletion/indexing"
+  },
+  {
+   "pair_id": "P068",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P069",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P070",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P071",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P072",
+   "relevant": true,
+   "reason": "Real test baseline with exact results, red main"
+  },
+  {
+   "pair_id": "P073",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P074",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P075",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P076",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P077",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P078",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P079",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P080",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P081",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P082",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P083",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P084",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P085",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P086",
+   "relevant": true,
+   "reason": "Held-out benchmark guard and invalid gold notes"
+  },
+  {
+   "pair_id": "P087",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  },
+  {
+   "pair_id": "P088",
+   "relevant": false,
+   "reason": "Does not help the specific task; keyword overlap only"
+  }
+ ]
+}
