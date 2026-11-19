@@ -598,7 +598,34 @@ public static class OperationAudit
         string sha = "";
         try { if (File.Exists(outputPath)) using (var fs = File.OpenRead(outputPath)) sha = Convert.ToHexStringLower(SHA256.HashData(fs)); }
         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
-        return $"case={(caseId.Length > 0 ? caseId : "(fără caz)")}; format={format}; items={items}; sha256={sha}";
+        return $"case={(caseId.Length > 0 ? caseId : "(fără caz)")}; format={format}; items={items}; sha256={sha}; {DestinationDetail(outputPath)}";
+    }
+
+    /// <summary>Where an export went (HG585 EXP-01 / MED-01, planner #11 item 3): the drive type, the volume serial and the medium of the signed media register.</summary>
+    /// <param name="DriveType">"amovibil", "fix", "rețea", "optic", "RAM", "necunoscut".</param>
+    /// <param name="VolumeSerial">Upper-case hex as Windows reports it (GetVolumeInformation), "" when not readable (network path, no medium).</param>
+    /// <param name="Medium">The inventory number of the ACTIVE entry of the verified signed media register with that volume serial; <see cref="MediumUnregistered"/>
+    /// when the register is usable and has no such entry; <see cref="MediumRegisterUnavailable"/> when no verified register is installed (never "neînregistrat"
+    /// then: absence from an unverified list proves nothing); <see cref="MediumUnknown"/> when the destination could not be read.</param>
+    public sealed record ExportMedium(string DriveType, string VolumeSerial, string Medium);
+
+    public const string MediumUnregistered = "neînregistrat", MediumRegisterUnavailable = "registru indisponibil", MediumUnknown = "necunoscut";
+
+    /// <summary>Set by the application (Windows: drive type, volume serial, signed media register). Null or failing = <see cref="MediumUnknown"/>; an export is never refused for it.</summary>
+    public static Func<string, ExportMedium>? MediumOf { get; set; }
+
+    /// <summary>"path=…; drive=…; volume=…; medium=…" for the written file. The path is the full path (separators of the detail format neutralised).</summary>
+    public static string DestinationDetail(string outputPath)
+    {
+        string full;
+        try { full = Path.GetFullPath(outputPath); }
+        catch (Exception ex) when (ex is ArgumentException or NotSupportedException or PathTooLongException or IOException) { full = outputPath; }
+        ExportMedium m;
+        try { m = MediumOf?.Invoke(full) ?? new ExportMedium(MediumUnknown, "", MediumUnknown); }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or ArgumentException or InvalidOperationException or System.Security.SecurityException)
+        { m = new ExportMedium(MediumUnknown, "", MediumUnknown); }
+        static string Clean(string s) => s.ReplaceLineEndings(" ").Replace("; ", ", ").Replace("=", "-");
+        return $"path={full.ReplaceLineEndings(" ").Replace("; ", ", ")}; drive={Clean(m.DriveType)}; volume={Clean(m.VolumeSerial)}; medium={Clean(m.Medium)}";
     }
 
     /// <summary>

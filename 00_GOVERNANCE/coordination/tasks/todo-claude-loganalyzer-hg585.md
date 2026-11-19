@@ -1650,3 +1650,12 @@
   fallback; a ReadVerified that still throws reaches DispatcherUnhandledException as a warning (card sign-in fails with the error, unchanged).
   ANOTHER SESSION works in this worktree (commit 199faf149 DOC-01/Prefetch is not mine; uncommitted ExportAudit/OperationAudit/ExportMediumResolver/
   ExportDestinationTests are theirs - ExportDestinationTests.A_failing_resolver... fails locally). Commit only own files.
+- 2026-11-20 (claude, hg585, session 44cea9) PLANNER #11 ITEM 3 DONE (main session, medium, not Opus-reviewed: audit detail only, nothing refused): every written
+  unmasked export (single file and bundle) records "path=<full>; drive=<amovibil|fix|rețea|optic|RAM|necunoscut>; volume=<serial X8>; medium=<inventory of the ACTIVE
+  entry of the verified signed media register with that volume serial | neînregistrat | registru indisponibil (no usable register: never "neînregistrat") | necunoscut>"
+  between sha256 and phase. OperationAudit.MediumOf seam (null/failing -> necunoscut; separators neutralised), Dfir.Windows ExportMediumResolver (GetVolumeInformation,
+  serial spellings normalised, two active entries with one serial -> both named), installed in ExportAudit's static ctor (MediaRegisterFlows.Active, audit version
+  check when signed in). Dfir OperationAuditTests:60 exact string updated (CI only). Tests App.Tests ExportDestinationTests (5) + ExportAuditTests pass.
+  Owner (2026-11-20): another session works on the same branch elsewhere; the uncommitted TurnstileStarvationTests.cs / App.Tests.csproj ChainWorker reference /
+  HashChain.cs changes are NOT this session's and were not committed. Fable advice on the CI starvation (writer in SkipUntil re-opens with no gap; fix = short
+  bounded mutex probe during backoff, rate-limited) recorded for whoever owns item 1.
