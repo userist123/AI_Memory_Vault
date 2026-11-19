@@ -1589,3 +1589,8 @@
   VerifiedClaims and ExpiredClaims both set (gate still refuses; clearing VerifiedClaims would change R2b mid-session semantics); L3 a renewal refused
   against the floor shows the generic "Licența a expirat"; L4 source-order test does not check the path equals AuthApp.Service.AuditPath. Floor read is
   unverified (planted far-future clock.seen forces read-only = fail-closed DoS, already true for the gate floor). Next: read CI; item 4 (users register).
+- 2026-11-19 (claude, hg585) CI DFIR Build & Package FAILED on 44dadad51, d975695f5, 4e52dc915 (my earlier reads saw it still running - lesson: read the
+  DFIR workflow conclusion explicitly). Causes: (1) AiClaimValidationReportTests: new RegisterReportPdf missing from the explicit OutputWriters list ->
+  added (false: prints people's register rows, never AI text); (2) HeadWitnessTests.A_reader_gets_in_within_seconds... measured 9.5 s / 7.4 s on loaded
+  runners (passed on d975695f5 in between; 44dadad51 touched no chain code) -> HeadWitnessTests in a DisableParallelization collection "ChainTiming",
+  5 s bound unchanged. Dfir.Tests compiles; suite only in CI. Next: read the DFIR workflow conclusion of this commit before anything else.

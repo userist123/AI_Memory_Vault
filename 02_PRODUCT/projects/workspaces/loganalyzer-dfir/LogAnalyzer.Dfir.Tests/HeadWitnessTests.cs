@@ -4,7 +4,15 @@ using Xunit;
 
 namespace LogAnalyzer.Dfir.Tests;
 
+/// <summary>
+/// CI 2026-11-19: the turnstile timing test measured 7-9 s only on loaded runners while the other collections ran in parallel (it passed in between);
+/// the 5 s bound is kept, the class runs alone so the measurement is about the chain, not about the runner's CPU.
+/// </summary>
+[CollectionDefinition("ChainTiming", DisableParallelization = true)]
+public sealed class ChainTimingCollection { }
+
 /// <summary>Anti-rollback witness of a sealed log: an older valid copy of log + .head is caught, a lagging witness is normal, a failing witness never loses an entry.</summary>
+[Collection("ChainTiming")]
 public sealed class HeadWitnessTests : IDisposable
 {
     private readonly string _dir = Path.Combine(Path.GetTempPath(), "la-witness-" + Guid.NewGuid().ToString("N"));

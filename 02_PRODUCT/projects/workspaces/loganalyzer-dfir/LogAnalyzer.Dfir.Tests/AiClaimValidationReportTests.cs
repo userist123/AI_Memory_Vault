@@ -288,6 +288,7 @@ public sealed class AiClaimValidationReportTests : IDisposable
         ["LogAnalyzer.Dfir.Registers.MediaHistoryExport"] = false,
         ["LogAnalyzer.Dfir.Windows.Native.EventLogExport"] = false,
         ["LogAnalyzer.Dfir.Windows.Registers.TransferReportPdf"] = false,
+        ["LogAnalyzer.Dfir.Windows.Registers.RegisterReportPdf"] = false,   // planner #10 item 2: prints register rows typed by people, never AI text
     };
 
     private static List<Assembly> Load()
