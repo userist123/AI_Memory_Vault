@@ -269,6 +269,14 @@
                 <local:RegisterView DataContext="{Binding InterventionRegister}"/>
             </Border>
         </Expander>
+
+        <!-- Register of backup copies (ORNISS model Anexa 21; planner #10 item 3): checked by S09 -->
+        <Expander Header="Registrul copiilor de siguranță (ce s-a copiat, pe ce suport, cine a făcut copia și dacă restaurarea a fost încercată)" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12"
+                  AutomationProperties.HelpText="Fiecare copie de siguranță a datelor sau a sistemului se trece aici, cu data, suportul, persoana care a făcut-o și locul de păstrare, iar după o încercare de restaurare, cu data și persoana. Controlul stației verifică cât de veche este ultima copie și dacă restaurarea a fost încercată.">
+            <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,6,0,0" Height="460">
+                <local:RegisterView DataContext="{Binding BackupRegister}"/>
+            </Border>
+        </Expander>
         </StackPanel>
 
         <TabControl Grid.Row="2" ctrl:PageFill.MinHeight="440" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}">

@@ -347,6 +347,32 @@ namespace LogAnalyzer.UI.ViewModels
             "Verificare după intervenție: data și persoana (cerută după hardware sau reparație, în 7 zile); Observații.";
     }
 
+    /// <summary>
+    /// "Registrul copiilor de siguranță" (planner #10 item 3; ORNISS model Anexa 21): every backup copy with its medium, who made it, where it is kept and the restore test.
+    /// Entered by hand; the station control checks it (check S09). Nothing can be read from the station for it.
+    /// </summary>
+    public sealed class BackupRegisterViewModel : RegisterViewModel<BackupRegister>
+    {
+        public BackupRegisterViewModel(string? path = null) : base(path) { }
+
+        /// <summary>Backup copies are written down by people; nothing on the station can be read into this register.</summary>
+        public override bool HasDiscovery => false;
+
+        /// <summary>ORNISS model, Anexa 21: the backup register has a printed form.</summary>
+        public override bool CanPrint => true;
+        protected override string PrintTitle => "Registrul de evidență a copiilor de siguranță".ToUpper(System.Globalization.CultureInfo.GetCultureInfo("ro-RO"));
+        protected override string PrintAuditKind => "pdf-register-copii-siguranta";
+
+        protected override System.Collections.Generic.IReadOnlyList<object> Discover() => System.Array.Empty<object>();
+
+        protected override string MergeObserved(BackupRegister register, System.Collections.Generic.IReadOnlyList<object> observed) =>
+            "Copiile de siguranță nu se pot citi de pe stație: treceți fiecare copie de mână (data, suportul, cine a făcut-o), apoi salvați.";
+
+        public override string Hint =>
+            "Data: aaaa-LL-zz; Stația; Ce s-a copiat: date sau sistem; Suportul și numărul lui din registrul de medii, dacă există; Făcută de; Locul de păstrare; " +
+            "Testul de restaurare: data și persoana (opțional, dar controlul îl cere cel puțin o dată la 180 de zile); Observații.";
+    }
+
     /// <summary>"Registru utilizatori" (decision 17): persons, accounts and clearances, entered by hand by the global administrator.</summary>
     public sealed class UsersRegisterViewModel : RegisterViewModel<UsersRegister>
     {

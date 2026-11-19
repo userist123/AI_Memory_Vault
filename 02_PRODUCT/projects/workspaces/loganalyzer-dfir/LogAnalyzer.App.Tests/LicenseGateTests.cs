@@ -294,6 +294,28 @@ public sealed class LicenseGateTests : IDisposable
     }
 
     [Fact]
+    public void The_backups_register_is_not_saved_without_registers_or_when_the_licence_is_expired_and_is_saved_with_the_right()
+    {
+        string[] row = ["2026-11-10", "S1", "date", "HDD extern", "M-17", "Ion Popescu", "Seif", "", "", ""];
+        foreach (var licence in new[] { Issue(Future, StationPosture.Standalone, LicenseFeatures.CaseLocal), Issue(Past) })
+        {
+            Start(licence);
+            var path = Path.Combine(_dir, "backups-" + Guid.NewGuid().ToString("N") + ".json");
+            var vm = new BackupRegisterViewModel(path);
+            vm.Data.Rows.Add(row.Cast<object>().ToArray());
+            vm.SaveCommand.Execute(null);
+            Assert.False(File.Exists(path));
+            Assert.True(vm.Status == LicenseGate.NotLicensedMessage || vm.Status.Contains("doar citire"), vm.Status);
+        }
+        Start(Issue(Future));                                               // the control: with the right the same save works
+        var ok = Path.Combine(_dir, "backups-ok.json");
+        var vm2 = new BackupRegisterViewModel(ok);
+        vm2.Data.Rows.Add(row.Cast<object>().ToArray());
+        vm2.SaveCommand.Execute(null);
+        Assert.True(File.Exists(ok), vm2.Status);
+    }
+
+    [Fact]
     public void Containment_of_the_station_needs_response_host_and_nothing_is_run_without_it()
     {
         Start(Issue(Past));

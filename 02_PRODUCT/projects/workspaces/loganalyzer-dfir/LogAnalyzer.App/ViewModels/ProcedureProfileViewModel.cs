@@ -135,6 +135,12 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>HG 585 ID-03: the system-use notice shown (and accepted) at sign-in; empty = the module default text.</summary>
         [ObservableProperty] private string _signInNotice = "";
         public const string SignInNoticeHelp = "Textul notificării de utilizare afișat la autentificare, aprobat de ofițerul de securitate (cel mult 2000 de caractere). Dacă rămâne gol, se folosește textul implicit al aplicației. Fiecare acceptare se înregistrează în jurnalul sigilat împreună cu amprenta textului.";
+        /// <summary>Planner #10 item 3 (check S09): the oldest the newest backup copy may be, in days; empty = the default (30). Text, so that a wrong entry reaches the validation instead of being dropped.</summary>
+        [ObservableProperty] private string _backupMaxAgeDaysText = "";
+        /// <summary>The oldest the newest restore test may be, in days; empty = the default (180).</summary>
+        [ObservableProperty] private string _backupRestoreTestMaxAgeDaysText = "";
+        public const string BackupLimitsHelp = "Controlul copiilor de siguranță (S09) arată Neconform dacă ultima copie din Registrul copiilor de siguranță este mai veche decât prima valoare (implicit 30 de zile) și De verificat dacă ultimul test de restaurare este mai vechi decât a doua (implicit 180 de zile) sau lipsește. Valori între 1 și 3650; gol = implicit.";
+        private static int ParseDays(string? text) => string.IsNullOrWhiteSpace(text) ? 0 : int.TryParse(text.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n) ? n : -1;
         public const int SignInNoticeMaxLength = LogAnalyzer.Dfir.Profile.SignInNoticeResolver.MaxLength;
 
         // WP18 S5 (decision D3): the unit's report header, next to the procedure profile; only the administrator saves it.
@@ -201,6 +207,8 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var t in Tables) ProfileTables.SetCells(_profile, t.Table, t.Rows());
             _profile.StationLevel = StationLevel ?? "";
             _profile.SignInNotice = LogAnalyzer.Dfir.Profile.SignInNoticeResolver.Normalize(SignInNotice);
+            _profile.BackupMaxAgeDays = ParseDays(BackupMaxAgeDaysText);                       // an entry that is not a whole number becomes -1: the validation refuses it
+            _profile.BackupRestoreTestMaxAgeDays = ParseDays(BackupRestoreTestMaxAgeDaysText);
         }
 
         private void Push()
@@ -209,6 +217,8 @@ namespace LogAnalyzer.UI.ViewModels
             // an imported or hand-written marking ("SSID", "secret") is shown as the level's name, so the picker finds it and never clears it
             StationLevel = LogAnalyzer.Dfir.Profile.StationLevelRules.Resolve(_profile.StationLevel)?.Name ?? _profile.StationLevel ?? "";
             SignInNotice = _profile.SignInNotice ?? "";
+            BackupMaxAgeDaysText = _profile.BackupMaxAgeDays == 0 ? "" : _profile.BackupMaxAgeDays.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            BackupRestoreTestMaxAgeDaysText = _profile.BackupRestoreTestMaxAgeDays == 0 ? "" : _profile.BackupRestoreTestMaxAgeDays.ToString(System.Globalization.CultureInfo.InvariantCulture);
             Refresh();
             OnPropertyChanged(nameof(IsEmpty));
         }

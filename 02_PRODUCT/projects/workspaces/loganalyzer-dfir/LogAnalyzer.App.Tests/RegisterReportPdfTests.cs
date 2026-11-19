@@ -109,4 +109,11 @@ public sealed class RegisterReportPdfTests
         Assert.True(new InterventionRegisterViewModel(path).CanPrint);
         Assert.False(new UsersRegisterViewModel(path).CanPrint);
     }
+
+    [Fact]
+    public void The_backups_register_also_opts_in_to_printing_through_the_same_gated_print_method()
+    {
+        var path = Path.Combine(Path.GetTempPath(), "la-rrp-" + Guid.NewGuid().ToString("N") + ".json");
+        Assert.True(new BackupRegisterViewModel(path).CanPrint);
+    }
 }

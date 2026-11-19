@@ -1,7 +1,7 @@
 # Matricea de acoperire HG 585 / ORNISS → LogAnalyzer (control stație) — 2026-10-23
 
 Scop: ce cere cadrul legal public pentru controlul unei stații care prelucrează informații clasificate,
-ce verifică deja aplicația (106 verificări automate C/P/A/U/D/N/S la 2026-11-19 + 16 verificări manuale M01–M16)
+ce verifică deja aplicația (107 verificări automate C/P/A/U/D/N/S la 2026-11-19 + 16 verificări manuale M01–M16)
 și ce lipsește. Urmează o propunere de flux și de pagini, construită pe tiparele instrumentelor existente.
 
 ## Starea surselor (citiți înainte de matrice)
@@ -61,7 +61,7 @@ Legendă acoperire: **DA** = verificare automată existentă; **MANUAL** = exist
 | **Registre și marcare** |
 | 28 | Banner/marcaj de clasificare | HG 585 art. 59 | V | P26 | DA | — |
 | 29 | Registrul de intervenții hardware/software (Anexa 14) | Model Anexa 14 | M | S08 (2026-11-19): „Registrul intervențiilor hardware și software” (pagina Control stație, `interventions.json`): data, ora, stația, felul, componentele, descrierea, executantul, martorul, referința autorizării, verificarea după intervenție, observații; salvat cu jurnal de audit în lanț | PARȚIAL | Câmpurile sunt cele cerute de enunț; tipăritura există acum (buton „Tipărește”, PDF A4 pe lat: titlul modelului, coloanele, toate rândurile, perioadă opțională, SHA-256 al fișierului și potrivirea cu jurnalul de audit, marcajul pe fiecare pagină, linii de semnătură întocmit/verificat/aprobat), dar nu este o reproducere pixel cu pixel a formularului oficial Anexa 14; fără semnături pe rânduri; registrul gol = NEDETERMINAT, nu CONFORM
-| 30 | Registrul copiilor de siguranță (Anexa 21) | Model pct. 142 | M | — | LIPSĂ | Registru simplu + verificare: ultima copie mai veche decât termenul din profil |
+| 30 | Registrul copiilor de siguranță (Anexa 21) | Model pct. 142 | M | S09 (2026-11-19): „Registrul copiilor de siguranță” (pagina Control stație, `backups.json`): data, stația, ce s-a copiat, suportul și numărul lui, cine a făcut copia, locul de păstrare, data și persoana testului de restaurare, observații; salvat cu jurnal de audit în lanț; termenele sunt în profil (copia: implicit 30 de zile, testul de restaurare: implicit 180) | PARȚIAL | Ultima copie mai veche decât termenul = NECONFORM; fără test de restaurare sau test prea vechi = DE VERIFICAT; registrul gol = NEDETERMINAT. Tipăritura există (același PDF de registre, titlul Anexei 21), dar nu este o reproducere pixel cu pixel a formularului oficial; aplicația nu citește copiile în sine, deci nu poate dovedi că o copie este completă sau restaurabilă |
 | **Personal** |
 | 31 | Instruire periodică, angajament de confidențialitate | HG 585 art. 35, 274(2), 278 | V | — | LIPSĂ | Câmpuri în Registru utilizatori: data ultimei instruiri, angajament semnat; expirate → DE VERIFICAT |
 | **Incidente** |
@@ -97,7 +97,7 @@ NIST 800-53A (metoda: examinare / interviu / test).
 
 **Pentru ofițer — un control în 6 pași, pe o singură pagină „Control stație”:**
 1. Alege stația și profilul (pragurile unității din CSS/PrOpSec; versiunea profilului apare în PV).
-2. Controlul automat (cele 106 verificări) — un clic, doar citire.
+2. Controlul automat (cele 107 verificări) — un clic, doar citire.
 3. Chestionarul manual M01–M16 (+ fizic/TEMPEST), fiecare cu metoda (examinare / interviu / test)
    și dovadă atașată (scan, fotografie, număr de sigiliu). Răspunsurile preluate de la controlul
    anterior apar „preluat, de confirmat”, niciodată confirmate automat.

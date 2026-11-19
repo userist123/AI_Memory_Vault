@@ -25,6 +25,8 @@ namespace LogAnalyzer.UI.Views
             ["Path"] = "Calea folderului", ["Package"] = "Pachet (nume sau KB)", ["Origin"] = "Proveniență", ["BroughtBy"] = "Adus de",
             ["Time"] = "Ora", ["Station"] = "Stația", ["Components"] = "Componente / programe afectate", ["Performer"] = "Executant", ["Witness"] = "Martor",
             ["AuthorizationRef"] = "Autorizare (referință)", ["PostCheckDate"] = "Verificare după intervenție: data", ["PostCheckBy"] = "Verificare după intervenție: efectuată de",
+            ["What"] = "Ce s-a copiat", ["MediumNumber"] = "Număr suport", ["MadeBy"] = "Făcută de", ["StoredAt"] = "Locul de păstrare",
+            ["RestoreTestDate"] = "Test de restaurare: data", ["RestoreTestBy"] = "Test de restaurare: efectuat de",
         };
 
         public static string For(string column) => Romanian.TryGetValue(column, out var ro) ? ro : column;

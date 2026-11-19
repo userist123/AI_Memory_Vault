@@ -1571,3 +1571,11 @@
   ID-02/AC-02, ID-03, MRK, licensing) with code evidence; P1/P2/P3 counts not recomputed. MATRICE header 95 -> 106 checks (A20 C6 D5 N14 P47 S8 U6).
   On-screen check of the new windows still open. Suites: App 1319, UI 370 (1 skipped), Edition 45, exit 0. Next: read CI once; items 3 (backup register +
   S09), 4 (users training/pledge + U07, risky), 6 (rolled-back clock read-only start, risky).
+- 2026-11-19 (claude, hg585) CI of 44dadad51: 27/27; d975695f5: 30 success + 3 running when read. PLANNER #10 ITEM 3 DONE (vault-worker, medium, not
+  Opus-reviewed: register + read-only check, same pattern as S08): BackupRegister (backups.json; date, station, what, medium, who, where kept, restore test
+  date + by, notes; restore test not before the copy). Profile BackupMaxAgeDays (default 30) + BackupRestoreTestMaxAgeDays (default 180), 0 = default,
+  1..3650, two fields on the profile page (OWNER may change the defaults - chosen by Claude as safe values). S09 (Software): none/unreadable/empty ->
+  NEDETERMINAT; newest copy older than the limit -> NECONFORM; no restore test or too old -> DE VERIFICAT; future/unreadable dates never count as newest.
+  Expander + "Tipărește" (RegisterReportPdf, pdf-register-copii-siguranta). EDITIONS row checked by script against ControlApplicability (same shape as
+  S07, which passed CI). MATRICE #30 -> PARȚIAL, header 107. Tests BackupRegisterTests (25) + gate/print tests; red: age > -> >= fails 2. Suites: App 1346,
+  UI 370 (1 skipped), Edition 45, exit 0. Next: read CI once; items 4 (users training/pledge + U07, risky) and 6 (rolled-back clock read-only start, risky).

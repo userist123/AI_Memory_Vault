@@ -336,6 +336,32 @@ namespace LogAnalyzer.UI.ViewModels
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return (null, ex.Message); }
         }
 
+        /// <summary>
+        /// The register of backup copies for check S09. A missing file is "not in use" (null, no problem), an unreadable or invalid one is reported as a problem
+        /// (null + text); both make S09 NEDETERMINAT. Never treated as an empty register.
+        /// </summary>
+        internal static (System.Collections.Generic.List<LogAnalyzer.Dfir.Registers.BackupRow>? Rows, string Problem) CurrentBackups(string? path = null)
+        {
+            try
+            {
+                var r = LogAnalyzer.Dfir.Registers.RegisterStore.Load<LogAnalyzer.Dfir.Registers.BackupRegister>(path);
+                if (r.Register is null) return (null, string.Join("; ", r.Issues.Where(i => i.IsError).Select(i => i.Message)));
+                return (r.Register.Rows, "");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return (null, ex.Message); }
+        }
+
+        /// <summary>The two backup age limits of the procedure profile (0 = the default; an unreadable profile gives 0, 0).</summary>
+        internal static (int BackupMaxAgeDays, int RestoreTestMaxAgeDays) CurrentBackupLimits()
+        {
+            try { var p = ProfileProvider.Shared.Current; return (p?.BackupMaxAgeDays ?? 0, p?.BackupRestoreTestMaxAgeDays ?? 0); }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return (0, 0); }
+        }
+
+        private BackupRegisterViewModel? _backupRegister;
+        /// <summary>"Registrul copiilor de siguranță" (planner #10 item 3), edited on the control page; compared by check S09.</summary>
+        public BackupRegisterViewModel BackupRegister => _backupRegister ??= new BackupRegisterViewModel();
+
         private InterventionRegisterViewModel? _interventionRegister;
         /// <summary>"Registrul intervențiilor hardware și software" (planner #9 item 7), edited on the control page; compared by check S08.</summary>
         public InterventionRegisterViewModel InterventionRegister => _interventionRegister ??= new InterventionRegisterViewModel();
@@ -456,9 +482,12 @@ namespace LogAnalyzer.UI.ViewModels
                         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { deviceChainValid = false; }
                     }
                     var interventions = CurrentInterventions();
+                    var backups = CurrentBackups();
                     var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates, dcProbe: dcProbe, transfers: transfers,
                                                              auditPath: auditPath, auditChainValid: deviceChainValid, auditBytes: deviceAuditBytes,
-                                                             approvedSoftware: CurrentApprovedSoftware(), interventions: interventions.Rows, interventionsProblem: interventions.Problem);
+                                                             approvedSoftware: CurrentApprovedSoftware(), interventions: interventions.Rows, interventionsProblem: interventions.Problem,
+                                                             backups: backups.Rows, backupsProblem: backups.Problem);
+                    (facts.BackupMaxAgeDays, facts.BackupRestoreTestMaxAgeDays) = CurrentBackupLimits();
                     // the station's level comes only from the procedure profile; without it the level-dependent checks (A18, N14) stay NEDETERMINAT
                     facts.StationLevel = CurrentStationLevel();
         facts.ApprovedTransferMedia = CurrentTransferMedia();

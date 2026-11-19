@@ -139,6 +139,14 @@ public sealed class StationFacts
     public List<LogAnalyzer.Dfir.Registers.InterventionRow>? InterventionRegister { get; set; }
     /// <summary>Why the interventions register could not be read ("" = no problem); S08 then says so.</summary>
     public string InterventionRegisterProblem { get; set; } = "";
+    /// <summary>The register of backup copies (check S09); null = not given or unreadable (see <see cref="BackupRegisterProblem"/>), an empty list = not filled in.</summary>
+    public List<LogAnalyzer.Dfir.Registers.BackupRow>? BackupRegister { get; set; }
+    /// <summary>Why the backups register could not be read ("" = no problem); S09 then says so.</summary>
+    public string BackupRegisterProblem { get; set; } = "";
+    /// <summary>Most days the newest backup may be old (procedure profile; 0 = default 30).</summary>
+    public int BackupMaxAgeDays { get; set; }
+    /// <summary>Most days the newest restore test may be old (procedure profile; 0 = default 180).</summary>
+    public int BackupRestoreTestMaxAgeDays { get; set; }
     /// <summary>The latest time the application itself recorded in its chained audit logs ("time memory", check S05); null = no earlier record.</summary>
     public DateTimeOffset? LatestAppRecordUtc { get; set; }
     /// <summary>Set when a recorded time was made under a wrong clock and the correction is not yet confirmed (check S05).</summary>
@@ -231,6 +239,7 @@ public static class StationFactCollector
     /// <param name="classifiedFolders">The classified folders of the procedure profile (their audit rules are read); null = not collected.</param>
     /// <param name="offlineUpdates">The organisation's register of offline updates (compared with the installed updates); null = not given.</param>
     /// <param name="interventions">The organisation's register of hardware / software interventions (check S08); null = not given or unreadable, so S08 is NEDETERMINAT.</param>
+    /// <param name="backups">The organisation's register of backup copies (check S09); null = not given or unreadable, so S09 is NEDETERMINAT.</param>
     /// <param name="approvedSoftware">The approved-software rows of the procedure profile (their files are hashed, check S07); null = not given, so S07 is NEDETERMINAT.</param>
     /// <param name="dcProbe">The ACTIVE domain-controller probe (check N13); only the Network edition has one. Used only on the IsolatedNetwork posture and
     /// only on a domain-joined station; null = not probed.</param>
@@ -239,7 +248,8 @@ public static class StationFactCollector
                                        IDomainControllerProbe? dcProbe = null, LogAnalyzer.Dfir.Registers.TransferRegister? transfers = null,
                                        string? auditPath = null, bool auditChainValid = false, byte[]? auditBytes = null,
                                        IReadOnlyList<LogAnalyzer.Dfir.Profile.ApprovedSoftwareRow>? approvedSoftware = null,
-                                       IReadOnlyList<LogAnalyzer.Dfir.Registers.InterventionRow>? interventions = null, string interventionsProblem = "")
+                                       IReadOnlyList<LogAnalyzer.Dfir.Registers.InterventionRow>? interventions = null, string interventionsProblem = "",
+                                       IReadOnlyList<LogAnalyzer.Dfir.Registers.BackupRow>? backups = null, string backupsProblem = "")
     {
         using var id = WindowsIdentity.GetCurrent();
         var facts = new StationFacts
@@ -287,6 +297,8 @@ public static class StationFactCollector
         if (offlineUpdates is not null) facts.OfflineUpdateRegister = [.. offlineUpdates];
         if (interventions is not null) facts.InterventionRegister = [.. interventions];
         facts.InterventionRegisterProblem = interventionsProblem;
+        if (backups is not null) facts.BackupRegister = [.. backups];
+        facts.BackupRegisterProblem = backupsProblem;
         Try(facts, "Profiluri de rețea", () => facts.NetworkProfiles.AddRange(ReadNetworkProfiles()));
         Try(facts, "Interfețe de rețea", () => facts.ConnectedInterfacesNow.AddRange(ReadConnectedInterfaces()));
         Try(facts, "Dispozitive USB (USBSTOR)", () => facts.UsbDevices.AddRange(ReadUsbStor()));
