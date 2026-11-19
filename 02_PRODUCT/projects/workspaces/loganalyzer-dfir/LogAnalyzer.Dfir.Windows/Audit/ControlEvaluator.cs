@@ -80,6 +80,7 @@ public static partial class ControlEvaluator
         DeviceMonitorCheck(f, r);
         Network(f, r);
         Software(f, r);
+        ApprovedSoftwareIntegrityCheck(f, r);
         StationHardening(f, r);
         StigChecks(f, r);
         AirGapChannels(f, r);

@@ -137,6 +137,7 @@ public static class ControlApplicability
         Row("S04", "Offline updates applied and update register", Yes("Register matches installed updates"), Yes("Register matches installed updates"), No, "The offline update register exists only where updates cannot come online."),
         Row("S05", "Station clock versus the application's time memory", Yes("Consistent"), Yes("Consistent"), Yes("Consistent"), null),
         Row("S06", "Antivirus signatures and update register", Yes("Every signature update is in the register"), Yes("Every signature update is in the register"), No, "Signatures come on a medium only where updates cannot come online."),
+        Row("S07", "Approved software unaltered (SHA-256 of the profile)", Yes("Every approved file matches its profile SHA-256; non-conform on any difference; review if a file cannot be read"), Yes("Every approved file matches its profile SHA-256; non-conform on any difference; review if a file cannot be read"), Yes("Every approved file matches its profile SHA-256; non-conform on any difference; review if a file cannot be read"), null),
     ];
     // END GENERATED TABLE
 

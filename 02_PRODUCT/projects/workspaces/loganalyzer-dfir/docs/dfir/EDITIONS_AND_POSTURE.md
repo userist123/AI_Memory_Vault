@@ -146,6 +146,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | S04 | Offline updates applied and update register | Register matches installed updates | Register matches installed updates | n/a | The offline update register exists only where updates cannot come online. |
 | S05 | Station clock versus the application's time memory | Consistent | Consistent | Consistent |  |
 | S06 | Antivirus signatures and update register | Every signature update is in the register | Every signature update is in the register | n/a | Signatures come on a medium only where updates cannot come online. |
+| S07 | Approved software unaltered (SHA-256 of the profile) | Every approved file matches its profile SHA-256; non-conform on any difference; review if a file cannot be read | Every approved file matches its profile SHA-256; non-conform on any difference; review if a file cannot be read | Every approved file matches its profile SHA-256; non-conform on any difference; review if a file cannot be read |  |
 
 A14 / A15 (informații clasificate) — Limită: un administrator care deține cheia de sigilare și poate scrie în folderul aplicației poate adăuga, după ultimul cod de ancorare, o fereastră falsă pe numele aplicației; ea poate ascunde citiri de fișiere clasificate ale oricărui proces pornit din calea executabilului aplicației (inclusiv un alt program pus temporar acolo), niciodată scrieri pe medii; protecția este ancora de pe procesul-verbal la controlul următor și protejarea folderului aplicației (doar Administratori/SYSTEM pot scrie).
 

@@ -307,6 +307,13 @@ namespace LogAnalyzer.UI.ViewModels
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return null; }
         }
 
+        /// <summary>The approved-software rows of the procedure profile (S07 hashes their files); an unreadable profile is an empty list (S07 NEDETERMINAT).</summary>
+        internal static IReadOnlyList<ApprovedSoftwareRow> CurrentApprovedSoftware()
+        {
+            try { return ProfileProvider.Shared.Current?.ApprovedSoftware ?? []; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return []; }
+        }
+
         /// <summary>The station level written in the procedure profile ("" = nedefinit or the profile is unreadable).</summary>
         internal static string CurrentStationLevel()
         {
@@ -429,7 +436,8 @@ namespace LogAnalyzer.UI.ViewModels
                         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { deviceChainValid = false; }
                     }
                     var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates, dcProbe: dcProbe, transfers: transfers,
-                                                             auditPath: auditPath, auditChainValid: deviceChainValid, auditBytes: deviceAuditBytes);
+                                                             auditPath: auditPath, auditChainValid: deviceChainValid, auditBytes: deviceAuditBytes,
+                                                             approvedSoftware: CurrentApprovedSoftware());
                     // the station's level comes only from the procedure profile; without it the level-dependent checks (A18, N14) stay NEDETERMINAT
                     facts.StationLevel = CurrentStationLevel();
         facts.ApprovedTransferMedia = CurrentTransferMedia();

@@ -1499,3 +1499,12 @@
   seal warning; startup log line. Tests App.Tests WitnessMovedAsideAuditTests (5; 3 fail with reporting disabled - verified). Suites: App 1154, UI 370
   (1 skipped), Edition 45, exit 0. RESIDUALS: FileHeadWitness remembers only the last move (two moves between checks -> only the second audited);
   leftover witness.untrusted-* folders from before this build are not scanned. Next: read CI once; planner #9 item 4 (approved-software hash check).
+- 2026-11-19 (claude, hg585) CI of 6a272a154 read once (29 success, 4 in progress, 0 failures; 9fe6c1f4b DFIR build/CodeQL "cancelled" = superseded).
+  PLANNER #9 ITEM 4 DONE (vault-worker + main-session fix; medium, not Opus-reviewed: new read-only check, no write path): S07 "Programele aprobate nu au
+  fost modificate" (Software, all three editions). ApprovedSoftwareHasher (facts I/O: literal path or wildcard in its own folder, non-recursive, <= 50
+  matches, 1 GiB cap, env vars expanded, shared read) -> StationFacts.SoftwareIntegrity; ControlEvaluator.ApprovedSoftware (pure). Main-session fix: for a
+  wildcard row a different hash is NECONFORM only when NO match has the approved hash; otherwise the other matches are DE VERIFICAT ("alt fișier sub același
+  model") - the worker's version flagged every other file as modified. CheckGuide + ANEXA (hand-written in generator format; Dfir annex test unconfirmed
+  until CI), ControlApplicability, EDITIONS_AND_POSTURE, MATRICE #18 -> PARȚIAL (S07), HG585 SW-01 note. Tests App.Tests ApprovedSoftwareIntegrityTests (23;
+  worker red: 6 fail with comparison/hash broken). Suites: App 1177, UI 370 (1 skipped), Edition 45, exit 0. RESIDUALS: no total hashing-time budget;
+  S07 is NEDETERMINAT on every station until the profile has hashed rows. Next: read CI once (Dfir annex/applicability tests!); item 5 (ID-03 notice).

@@ -67,6 +67,8 @@ public sealed class StationFacts
     public LogAnalyzer.Core.Services.Edition.StationPosture Posture { get; init; } = LogAnalyzer.Core.Services.Edition.StationPosture.Standalone;
     /// <summary>The station's classification level from the procedure profile (checks A18, N14); empty = not defined, never guessed.</summary>
     public string StationLevel { get; set; } = "";
+    /// <summary>The hashes of the profile's approved software read on the station (check S07); null = not collected (NEDETERMINAT).</summary>
+    public ApprovedSoftwareIntegrity? SoftwareIntegrity { get; set; }
     /// <summary>
     /// The media of the transfer channels the procedure profile approves (check P14); null = the profile is unreadable or defines no channel, never guessed.
     /// </summary>
@@ -224,12 +226,14 @@ public static class StationFactCollector
     /// <param name="transfers">The organisation's transfer register (classified exits are compared with it); null = not given.</param>
     /// <param name="classifiedFolders">The classified folders of the procedure profile (their audit rules are read); null = not collected.</param>
     /// <param name="offlineUpdates">The organisation's register of offline updates (compared with the installed updates); null = not given.</param>
+    /// <param name="approvedSoftware">The approved-software rows of the procedure profile (their files are hashed, check S07); null = not given, so S07 is NEDETERMINAT.</param>
     /// <param name="dcProbe">The ACTIVE domain-controller probe (check N13); only the Network edition has one. Used only on the IsolatedNetwork posture and
     /// only on a domain-joined station; null = not probed.</param>
     public static StationFacts Collect(DateTimeOffset periodStartUtc, LogAnalyzer.Core.Services.Edition.StationPosture posture, int maxPerId = 5000, CancellationToken ct = default,
                                        IReadOnlyList<string>? classifiedFolders = null, IReadOnlyList<LogAnalyzer.Dfir.Registers.UpdateRow>? offlineUpdates = null,
                                        IDomainControllerProbe? dcProbe = null, LogAnalyzer.Dfir.Registers.TransferRegister? transfers = null,
-                                       string? auditPath = null, bool auditChainValid = false, byte[]? auditBytes = null)
+                                       string? auditPath = null, bool auditChainValid = false, byte[]? auditBytes = null,
+                                       IReadOnlyList<LogAnalyzer.Dfir.Profile.ApprovedSoftwareRow>? approvedSoftware = null)
     {
         using var id = WindowsIdentity.GetCurrent();
         var facts = new StationFacts
@@ -242,6 +246,8 @@ public static class StationFactCollector
         var install = LogAnalyzer.Dfir.Windows.Acquisition.AppInstallTraces.ReadInstall();
         facts.AppInstalledUtc = install.Utc; facts.AppInstallBasis = install.Basis; facts.AppInstallViolations.AddRange(install.Violations);
         facts.AppInstallToVerify.AddRange(install.ToVerify); facts.AppInstallChainFirstUtc = install.ChainFirstUtc;
+        if (approvedSoftware is not null)
+            Try(facts, "Programe aprobate (amprente SHA-256)", () => facts.SoftwareIntegrity = ApprovedSoftwareHasher.Collect(approvedSoftware, ct));
         Try(facts, "Conturi locale", () => facts.Accounts.AddRange(ReadAccounts()));
         Try(facts, "Politica de parole", () => facts.PasswordPolicy = LocalPasswordPolicy.Query());
         facts.AuditPolicy = AuditPolicy.Query() is { } ap ? new Dictionary<string, AuditSetting>(ap) : null;
