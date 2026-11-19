@@ -1665,3 +1665,16 @@
   empty string): 28 literals in 10 files rewritten as $"vss{Destructive.Cut}admin delete sha{Destructive.Cut}dows ..." (same run-time text, never one literal in the
   DLL); two [InlineData] theories -> [MemberData] TheoryData. Verified: Release + Debug builds, no new detection; FULL Dfir suite runs locally again: 4063
   (4030 passed, 33 skipped), exit 0, 0 detections during the run. RULE for new Dfir tests: build destructive command lines with Destructive.Cut.
+- 2026-11-19 (claude, hg585) merge of origin/main pushed (fa9c5fd2f; single conflict 20_TESTS/fixtures/unreadable_notes_allowlist.json resolved by union,
+  234 entries, test_notes_strict_yaml 10/10); PR #370 MERGEABLE again (pull_request workflows had stopped while it was CONFLICTING).
+  OWNER FILTER (2026-11-19): priority = COMPLETE AUDIT OF THE PC: what mistakes were made, each with proof the owner can verify on paper (what / when /
+  where / quoted evidence / how to verify with standard Windows tools / what it does NOT prove). Station control, signed media register, users register,
+  register printouts are de-prioritised. PLANNER #11 (Plan agent, read-only at ec9043ccd): order A2 -> A1 -> A3 (core of "provable on paper"), then A4, A5.
+  A1 EvidenceRef + Quote (<=400 chars of EventData / value data), TimeSource, Channel (findings.json schema; old cases still read) - medium;
+  A2 ManualVerification generator per locator family (EVTX Get-WinEvent -FilterXPath EventRecordID + Event Viewer route; registry reg query / Load Hive;
+  file Get-FileHash; live snapshot Get-CimInstance / schtasks) - low; A3 "Greșeli găsite" PDF section before the full list (by severity; what / when +
+  time source / where / quote / steps / "Ce NU dovedește") - low-medium; A4 live `reg save HKLM\SOFTWARE` so IFEO/Winlogon/Run parsers run on Colectează
+  tot - low-medium; A5 configuration findings on the investigation side from StationFacts readers (UAC, SMB1, WDigest, LSA PPL, Defender exclusions/RT,
+  RDP NLA, audit policy, guest/local admins), wording not "neconform" - medium; A6 live browser history / PSReadLine / hosts - medium; A7 Sigma/IOC/YARA
+  hits into the summary + Greșeli găsite - low; A8 WMI subscriptions + startup folder - medium. STALE: MASTER_PLAN_STATUS 6.3 (browsers/registry REAL only
+  as parsers), test counts, 6.13 conformity wording; card button "Verifică" = automatic verifier (owner's checks need "Cum verifici tu").
