@@ -259,6 +259,9 @@ public static class InvestigationReportPdf
                         foreach (var e in refs.Take(8))
                         {
                             P(cc, $"Element de probă {e.EvidenceId} · {RoText.CleanPathsInText(e.Locator)} · {RoText.CleanPathsInText(e.Description)}").FontSize(7).FontColor(Muted);
+                            // planner #11 A1: the quoted original and where its time comes from, so the owner can lay the report next to the source (printed through P, hence masked like every other text)
+                            P(cc, "  Citat: " + (e.Quote.Length > 0 ? $"„{e.Quote}”" : LogAnalyzer.Dfir.Presentation.EvidenceLevels.QuoteUnavailable)).FontSize(6.5f).FontColor(Muted);
+                            P(cc, "  Ora din: " + (e.TimeSource.Length > 0 ? e.TimeSource : LogAnalyzer.Dfir.Integrity.EvidenceQuote.UnknownTimeSource) + (e.Channel.Length > 0 ? " · canal: " + e.Channel : "")).FontSize(6.5f).FontColor(Muted);
                             var how = LogAnalyzer.Dfir.Presentation.ManualVerification.For(e, evidence.GetValueOrDefault(e.EvidenceId), r.Case.Root, EvtxRows.Value.GetValueOrDefault((e.EvidenceId, e.Locator)))
                                 .Where(s => shownSteps.Add(s.ToLine())).Take(3).ToList();
                             if (how.Count > 0) P(cc, LogAnalyzer.Dfir.Presentation.ManualVerification.Heading + ":").FontSize(6.5f).Bold().FontColor(Muted);

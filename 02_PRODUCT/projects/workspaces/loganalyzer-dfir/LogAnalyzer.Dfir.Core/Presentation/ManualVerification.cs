@@ -63,11 +63,11 @@ public static class ManualVerification
             string id = ev.Groups[1].Value;
             if (stored is not null)
                 steps.Add(new("PowerShell", $"Get-WinEvent -Path {Sq(stored)} -FilterXPath \"*[System[EventRecordID={id}]]\" | Format-List *",
-                    $"{EventText(row, id)}; câmpurile (Message, TimeCreated, Id) trebuie să se potrivească cu constatarea", true));
+                    $"{EventText(row, id)}; câmpurile (Message, TimeCreated, Id) trebuie să se potrivească cu constatarea{QuoteHint(reference)}", true));
             else steps.Add(NoCopy(item, reference));
             if (Channel(item) is { Length: > 0 } ch)
                 steps.Add(new("Event Viewer", $"{ChannelPath(ch)} → Filter Current Log" + (row is { EventId.Length: > 0 } ? $" → Event ID {row.EventId}" : "") + $" → caută înregistrarea {id}" + (row is { Time.UtcIso.Length: > 0 } ? $" (ora {row.Time.UtcIso} UTC)" : ""),
-                    "aceleași câmpuri ca la pasul cu copia din caz. Jurnalul de pe stația live poate fi ciclat între timp (evenimentele vechi pot lipsi): atunci contează doar copia din caz", false));
+                    "aceleași câmpuri ca la pasul cu copia din caz" + QuoteHint(reference) + ". Jurnalul de pe stația live poate fi ciclat între timp (evenimentele vechi pot lipsi): atunci contează doar copia din caz", false));
             AddHash(steps, stored, sha, item);
             return steps;
         }
@@ -107,12 +107,12 @@ public static class ManualVerification
             return steps;
         }
         if (Registry.Match(loc) is { Success: true } rg)
-            return RegistrySteps(loc, rg.Groups["hive"].Value, rg.Groups["rel"].Value, stored, sha, item);
+            return RegistrySteps(loc, rg.Groups["hive"].Value, rg.Groups["rel"].Value, stored, sha, item, QuoteHint(reference));
         if (TextLine.Match(loc) is { Success: true } tl)
         {
             AddHash(steps, stored, sha, item);
             steps.Add(new("Notepad", $"deschide copia din caz → Editare → Salt la… → linia {tl.Groups["n"].Value}",
-                "textul liniei cu cel din constatare (dacă fișierul are antet, verifică și liniile vecine)", false));
+                "textul liniei cu cel din constatare (dacă fișierul are antet, verifică și liniile vecine)" + QuoteHint(reference), false));
             return steps;
         }
         if (FilePositions.Any(r => r.IsMatch(loc)))
@@ -128,7 +128,7 @@ public static class ManualVerification
 
     // ---- registry ----
 
-    private static IReadOnlyList<VerificationStep> RegistrySteps(string loc, string hive, string rel, string? stored, string sha, EvidenceItem? item)
+    private static IReadOnlyList<VerificationStep> RegistrySteps(string loc, string hive, string rel, string? stored, string sha, EvidenceItem? item, string quoteHint = "")
     {
         var steps = new List<VerificationStep>();
         int deleted = rel.IndexOf("#deleted", StringComparison.Ordinal);
@@ -155,7 +155,7 @@ public static class ManualVerification
             string value = path[(cut + 1)..];
             return $"reg query {Dq(path[..cut])} /v {(value.Any(char.IsWhiteSpace) ? Dq(value) : DqIfNeeded(value))}";
         }
-        string what = tail is not null ? $"valoarea de sub SID-ul din {tail} trebuie să existe și să aibă conținutul din constatare" : "datele valorii (sau ale cheii) trebuie să fie cele din constatare";
+        string what = tail is not null ? $"valoarea de sub SID-ul din {tail} trebuie să existe și să aibă conținutul din constatare" : "datele valorii (sau ale cheii) trebuie să fie cele din constatare" + quoteHint;
         string differs = "stația live poate fi diferită de cea de la colectare: o diferență nu infirmă copia din caz";
 
         if (live.Length > 0)
@@ -178,6 +178,10 @@ public static class ManualVerification
         || rel.EndsWith(@"\AppCompatCache", StringComparison.Ordinal);
 
     // ---- shared pieces ----
+
+    /// <summary>When the reference carries a quote, the owner is told to compare with it (planner #11 A1); nothing is added for a reference without one.</summary>
+    private static string QuoteHint(EvidenceRef reference) =>
+        reference.Quote is { Length: > 0 } ? "; compară valorile cu rândul „Citat:” al acestei dovezi" : "";
 
     private static void AddHash(List<VerificationStep> steps, string? stored, string sha, EvidenceItem? item)
     {

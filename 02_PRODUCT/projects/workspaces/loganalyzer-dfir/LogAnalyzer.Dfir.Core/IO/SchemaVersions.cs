@@ -12,7 +12,8 @@ namespace LogAnalyzer.Dfir.IO;
 public static class SchemaVersions
 {
     public const string Legacy = "1.0";
-    public const string Findings = "2.0";
+    /// <summary>2.1 (planner #11 A1): every evidence reference may carry Quote, TimeSource and Channel; 2.0 files read back with their defaults.</summary>
+    public const string Findings = "2.1";
     public const string Graph = "2.0";
     public const string VaultProposals = "2.0";
     public const string Timeline = "2.0";

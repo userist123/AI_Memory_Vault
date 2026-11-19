@@ -220,7 +220,7 @@ public sealed class Wp5CaseHomeTests : IDisposable
     {
         var b = BuildCase();
         var fp = Path.Combine(b.Ws.Root, "Analysis", "findings.json");
-        File.WriteAllText(fp, File.ReadAllText(fp).Replace("\"schema_version\": \"2.0\"", "\"schema_version\": \"9.0\""));
+        File.WriteAllText(fp, File.ReadAllText(fp).Replace("\"schema_version\": \"2.1\"", "\"schema_version\": \"9.0\""));
         var before = File.ReadAllText(b.Ws.AppAuditLogPath);
         var res = Open(b);
         Assert.False(res.Opened);

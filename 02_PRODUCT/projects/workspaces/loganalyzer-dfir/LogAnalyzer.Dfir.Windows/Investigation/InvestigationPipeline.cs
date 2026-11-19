@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Security.Principal;
 using System.Text.Json;
 using LogAnalyzer.Dfir.Analysis;
@@ -681,7 +682,7 @@ public sealed class InvestigationPipeline
             if (lowered > 0) ws.Audit("finding.severity_calibrated", $"{lowered} constatări din locații în care utilizatorii pot scrie coborâte cu un nivel: fișier semnat valid, verificat pe stație, probe colectate pe stație");
             found = calibrated;
         }
-        var (kept, rejected) = ProvenanceBinder.BindFindings(found, ws.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal));
+        var (kept, rejected) = ProvenanceBinder.BindFindings(found, ws.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal), r.Timeline);
         LogAnalyzer.Dfir.Case.ClockMemory.Refresh();
         TimeReliability.Apply(kept, r.Timeline, LogAnalyzer.Dfir.Case.ClockMemory.StartupWarning.Length > 0);
         // Finding contract: semantic type, standard state, limitations, provenance, audit trail (added beside Classification).
@@ -898,7 +899,7 @@ public static class LiveStateAnalyzer
                 Ip = string.Join(", ", conns.Take(10)), FirstSeenUtc = snap.TakenUtc,
                 Description = $"PID {p.Pid}, părinte {p.Ppid}; linie de comandă: {p.CommandLine}" + (conns.Count > 0 ? $"; conexiuni: {string.Join(", ", conns.Take(10))}" : ""),
                 ClassificationReason = "Observat în fotografia stării live (semnătură verificată, tabela TCP).",
-                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Processes[pid={p.Pid}]", "instantaneu al stării live")],
+                SupportingEvidence = [LiveRef(item, $"Processes[pid={p.Pid}]", "Stare live: procese", ("Name", p.Name), ("Pid", p.Pid.ToString(CultureInfo.InvariantCulture)), ("Path", p.Path), ("CommandLine", p.CommandLine), ("Signature", p.Signature))],
                 AlternativeExplanations = ["Aplicație legitimă instalată per utilizator, fără semnătură."],
                 RecommendedNextSteps = ["Izolați programul din fila „Izolare procese suspecte” pentru scanare completă."],
             };
@@ -911,7 +912,7 @@ public static class LiveStateAnalyzer
                 File = s.Path, User = s.Account, FirstSeenUtc = snap.TakenUtc,
                 Description = $"{s.DisplayName}: {s.Path} ({s.StartMode}, {s.State}, cont {s.Account}).",
                 ClassificationReason = "Configurația curentă a serviciilor.",
-                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Services[{s.Name}]", "instantaneu al stării live")],
+                SupportingEvidence = [LiveRef(item, $"Services[{s.Name}]", "Stare live: servicii", ("ServiceName", s.Name), ("Path", s.Path), ("StartMode", s.StartMode), ("State", s.State), ("Account", s.Account))],
                 ContradictingEvidence = s.StartMode.Equals("Disabled", StringComparison.OrdinalIgnoreCase) ? ["Serviciul este dezactivat (StartMode=Disabled): nu pornește singur."] : [],
             };
         foreach (var t in snap.Tasks.Where(t => t.UserWritable))
@@ -925,7 +926,7 @@ public static class LiveStateAnalyzer
                 Confidence = oneDrive ? Confidence.Low : Confidence.High, MitreTechniqueId = "T1053.005",
                 File = t.Command, FirstSeenUtc = snap.TakenUtc, Description = $"{t.Path}: {t.Command}" + (oneDrive ? " " + DefaultOneDriveNote : ""),
                 ClassificationReason = oneDrive ? "Definiția curentă a activității planificate; calea este cea implicită a OneDrive." : "Definiția curentă a activității planificate.",
-                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Tasks[{t.Path}]", "instantaneu al stării live")],
+                SupportingEvidence = [LiveRef(item, $"Tasks[{t.Path}]", "Stare live: activități planificate", ("TaskName", t.Path), ("Command", t.Command))],
                 AlternativeExplanations = oneDrive ? ["Componenta OneDrive instalată de Windows pentru fiecare utilizator (comportament implicit)."] : [],
                 RecommendedNextSteps = oneDrive ? ["Verificați semnătura digitală Microsoft a fișierului (Proprietăți → Semnături digitale)."] : [],
             };
@@ -940,7 +941,7 @@ public static class LiveStateAnalyzer
                 Confidence = oneDrive ? Confidence.Low : Confidence.Medium, MitreTechniqueId = "T1547.001",
                 File = a.Value, FirstSeenUtc = snap.TakenUtc, Description = $"{a.Location}\\{a.Name} = {a.Value}" + (oneDrive ? " " + DefaultOneDriveNote : ""),
                 ClassificationReason = oneDrive ? "Cheile Run curente; calea este cea implicită a OneDrive." : "Cheile Run curente.",
-                SupportingEvidence = [new EvidenceRef(item.EvidenceId, $"Autoruns[{a.Name}]", "instantaneu al stării live")],
+                SupportingEvidence = [LiveRef(item, $"Autoruns[{a.Name}]", "Stare live: pornire automată", ("Location", a.Location), ("Name", a.Name), ("Value", a.Value))],
                 AlternativeExplanations = oneDrive ? ["Componenta OneDrive instalată de Windows pentru fiecare utilizator (comportament implicit)."]
                     : ["Multe aplicații per utilizator (actualizatoare, sincronizare) pornesc legitim din AppData."],
                 RecommendedNextSteps = oneDrive ? ["Verificați semnătura digitală Microsoft a fișierului (Proprietăți → Semnături digitale)."] : [],
@@ -949,6 +950,12 @@ public static class LiveStateAnalyzer
     }
 
     internal const string DefaultOneDriveNote = LogAnalyzer.Dfir.Analysis.KnownDefaults.OneDriveNote;
+
+    /// <summary>Planner #11 A1: a live-snapshot reference quotes the properties the finding rests on; the time is the moment of collection.</summary>
+    private static EvidenceRef LiveRef(EvidenceItem item, string locator, string channel, params (string Key, string Value)[] props) =>
+        new(item.EvidenceId, locator, "instantaneu al stării live", "",
+            EvidenceQuote.Truncate(string.Join("; ", props.Where(x => !string.IsNullOrWhiteSpace(x.Value)).Select(x => $"{x.Key}={System.Text.RegularExpressions.Regex.Replace(x.Value, @"[\r\n\t]+", " ")}")), EvidenceQuote.MaxQuoteLength),
+            EvidenceQuote.SnapshotTime, channel);
 
     /// <summary>See <see cref="LogAnalyzer.Dfir.Analysis.KnownDefaults.IsDefaultOneDrivePath"/> (shared with the registry Run rule).</summary>
     internal static bool IsDefaultOneDrivePath(string? command) => LogAnalyzer.Dfir.Analysis.KnownDefaults.IsDefaultOneDrivePath(command);

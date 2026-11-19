@@ -45,8 +45,13 @@ public sealed class TimelineEvent
 }
 
 /// <summary>A pointer from a finding to the exact evidence behind it.</summary>
-/// <remarks><see cref="Sha256"/> is the source hash at acquisition, bound by <c>ProvenanceBinder</c>.</remarks>
-public sealed record EvidenceRef(string EvidenceId, string Locator, string Description, string Sha256 = "");
+/// <remarks>
+/// <see cref="Sha256"/> is the source hash at acquisition, bound by <c>ProvenanceBinder</c>. The three trailing members (planner #11 A1) let the owner compare the report with the
+/// original on paper: <see cref="Quote"/> is the quoted raw content (at most 400 characters), <see cref="TimeSource"/> says where the time of that row comes from, and
+/// <see cref="Channel"/> is the event channel or the source kind. They are bound from the timeline row the reference points to (never invented): without that row
+/// the quote stays empty and the time source is <see cref="LogAnalyzer.Dfir.Integrity.EvidenceQuote.UnknownTimeSource"/>. A findings.json written before they existed reads back with exactly those defaults.
+/// </remarks>
+public sealed record EvidenceRef(string EvidenceId, string Locator, string Description, string Sha256 = "", string Quote = "", string TimeSource = "Necunoscut", string Channel = "");
 
 /// <summary>Finding (spec §52). Severity and confidence are deliberately separate.</summary>
 public sealed class Finding

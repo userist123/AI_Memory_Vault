@@ -1689,3 +1689,11 @@
   LOCALLY (no Defender detection since ec9043ccd): 4026 passed, 34 skipped, 3 failed (AnyDesk/RustDesk parser tests; pass alone 63/63 -> load/timing,
   not A2). RESIDUALS: registry key-vs-value heuristic; reg load needs admin; line=N counting; event id/time in steps only when a timeline row matches.
   Card look not seen on screen. Next: A1 (Quote/TimeSource/Channel on EvidenceRef).
+- 2026-11-19 (claude, hg585) PLANNER #11 A1 DONE (vault-worker + main-session fix; medium, not Opus-reviewed): EvidenceRef + Quote (<=400, surrogate-safe),
+  TimeSource (EVTX TimeCreated / Registry LastWrite (cheie) / Prefetch / Instantaneu la colectare / Linie de jurnal text / Necunoscut), Channel; filled by
+  Integrity/EvidenceQuote via ProvenanceBinder.BindFindings(timeline); findings.json 2.0 -> 2.1 (old reads with defaults). PDF "Citat:" + "Ora din: … ·
+  canal:" per evidence (masked like all printed text; "Citat: indisponibil în acest caz" when empty); card columns Citat / Ora din; ManualVerification adds
+  "compară valorile cu rândul Citat". Main-session fix: when no raw text exists the parser SUMMARY is quoted with the label "Rezumat (nu textul original): "
+  (it must never be compared word for word as the source). Dfir tests edited: FindingContractTests:464, Wp5CaseHomeTests:223 (2.1). Tests App.Tests
+  EvidenceQuoteTests (11; red 6/11 without the bind). Suites: App 1435, UI 370 (1 skipped), Edition 45, affected Dfir classes 118/118. RESIDUALS:
+  detection-engine findings have no quote; IncidentPdfReport unmasked/unquoted; card columns not seen on screen.

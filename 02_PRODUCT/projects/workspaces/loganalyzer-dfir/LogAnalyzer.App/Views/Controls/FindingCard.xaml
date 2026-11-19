@@ -54,11 +54,13 @@
             <StackPanel Visibility="{Binding IsEvidenceOpen, Converter={StaticResource BoolToVis}}" Margin="0,6,0,0">
                 <TextBlock Text="{Binding Card.Evidence.Summary}" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
                 <DataGrid ItemsSource="{Binding Card.Evidence.List}" AutoGenerateColumns="False" IsReadOnly="True" HeadersVisibility="Column" MaxHeight="220" Margin="0,6,0,0"
-                          AutomationProperties.Name="Lista dovezilor: sursă, oră, descriere">
+                          AutomationProperties.Name="Lista dovezilor: sursă, oră, descriere, citat, sursa orei">
                     <DataGrid.Columns>
                         <DataGridTextColumn Header="Sursă" Binding="{Binding Source}" Width="*" MinWidth="70"/>
                         <DataGridTextColumn Header="Ora" Binding="{Binding TimeText}" Width="*" MinWidth="50"/>
                         <DataGridTextColumn Header="Descriere" Binding="{Binding Description}" Width="3*" MinWidth="100"/>
+                        <DataGridTextColumn Header="Citat" Binding="{Binding Quote}" Width="3*" MinWidth="100"/>
+                        <DataGridTextColumn Header="Ora din" Binding="{Binding TimeSource}" Width="*" MinWidth="70"/>
                     </DataGrid.Columns>
                 </DataGrid>
                 <Expander Header="Detalii tehnice (id probă, SHA-256, cale, parser, locator)" AutomationProperties.Name="Detalii tehnice ale dovezilor" Margin="0,6,0,0" Foreground="{StaticResource TextPrimaryBrush}">
