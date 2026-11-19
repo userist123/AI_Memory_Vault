@@ -114,6 +114,9 @@ public sealed class HashChain(string path)
     /// <summary>Attempts for an "access denied" replace of the head (another reader without FileShare.Delete): ~2 s, then the append is rolled back.</summary>
     internal const int UnauthorizedAttempts = 60;
 
+    /// <summary>Raw (turnstile skipped) sharing-violation retries of <see cref="ReadVerified"/> before it queues at the turnstile once more (about 1 s with the pause below).</summary>
+    internal const int RawAttemptsBeforeTurnstile = 40;
+
     internal static bool IsSharingViolation(IOException e) => (e.HResult & 0xFFFF) is 32 or 33;
 
     private static void SharingPause(int attempt) => Thread.Sleep(Math.Min(5 + attempt, 50));
@@ -419,12 +422,21 @@ public sealed class HashChain(string path)
 
     private FileStream OpenExclusive()
     {
-        using var turn = Turnstile.Enter(Path);   // a waiting reader holds the turnstile: no new writer gets in before it (CI 2026-11-18: readers starved)
-        for (int attempt = 0; ; attempt++)
+        var turn = Turnstile.Enter(Path);   // a waiting reader holds the turnstile: no new writer gets in before it (CI 2026-11-18: readers starved)
+        try
         {
-            try { return new FileStream(Path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
-            catch (IOException) when (attempt < 400) { Thread.Sleep(Math.Min(5 + attempt, 50)); }   // another writer holds the file; wait up to ~15 s (CI 2026-11-08: 2 s was not enough on a busy runner)
+            for (int attempt = 0; ; attempt++)
+            {
+                try { return new FileStream(Path, FileMode.OpenOrCreate, FileAccess.ReadWrite, FileShare.None); }
+                catch (IOException) when (attempt < 400)
+                {
+                    // review 2026-11-19: a writer in backoff (turnstile skipped) that keeps finding the log held queues once like the others, as ReadVerified does
+                    if (turn is null && attempt == RawAttemptsBeforeTurnstile) turn = Turnstile.Enter(Path, ignoreBackoff: true);
+                    Thread.Sleep(Math.Min(5 + attempt, 50));   // another writer holds the file; wait up to ~15 s (CI 2026-11-08: 2 s was not enough on a busy runner)
+                }
+            }
         }
+        finally { turn?.Dispose(); }
     }
 
     /// <summary>
@@ -478,18 +490,23 @@ public sealed class HashChain(string path)
         }
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, long> SkipUntil = new(StringComparer.Ordinal);
 
-        public static Turnstile? Enter(string logPath)
+        /// <summary>
+        /// <paramref name="ignoreBackoff"/>: a reader that has already starved raw for a while asks once more (CI 2026-11-19: a wait that ended without the mutex switched
+        /// the turnstile off for <see cref="Backoff"/>, and a reader competing raw against writers that hand the log over without a gap exhausted its whole retry budget).
+        /// Getting the mutex proves the holder is not stuck, so the backoff is cleared; a stuck holder costs one more bounded wait and re-arms it.
+        /// </summary>
+        public static Turnstile? Enter(string logPath, bool ignoreBackoff = false)
         {
             Mutex? m = null;
             try
             {
                 var name = @"Local\LogAnalyzer-chain-" + Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(System.IO.Path.GetFullPath(logPath).ToLowerInvariant())))[..32];
-                if (SkipUntil.TryGetValue(name, out var until) && Environment.TickCount64 < until) return null;
+                if (!ignoreBackoff && SkipUntil.TryGetValue(name, out var until) && Environment.TickCount64 < until) return null;
                 m = new Mutex(false, name);
                 bool owned;
                 try { owned = WaitWithProgress(m, logPath); }
                 catch (AbandonedMutexException) { owned = true; }   // a holder died: the mutex is ours, it guards no data
-                if (owned) return new Turnstile(m);
+                if (owned) { SkipUntil.TryRemove(name, out _); return new Turnstile(m); }
                 SkipUntil[name] = Environment.TickCount64 + (long)Backoff.TotalMilliseconds;
                 m.Dispose();
                 return null;
@@ -538,7 +555,9 @@ public sealed class HashChain(string path)
         string? headText = null, intentText = null;
         WitnessRead witnessRead = default;
         bool sealedLog = IsSealed(out _);
-        using (var turn = Turnstile.Enter(Path))
+        var turn = Turnstile.Enter(Path);
+        try
+        {
         for (int attempt = 0; ; attempt++)
         {
             try
@@ -554,8 +573,15 @@ public sealed class HashChain(string path)
             }
             catch (FileNotFoundException) { break; }
             catch (DirectoryNotFoundException) { break; }
-            catch (IOException e) when (IsSharingViolation(e) && attempt < SharingAttempts) { SharingPause(attempt); }
+            catch (IOException e) when (IsSharingViolation(e) && attempt < SharingAttempts)
+            {
+                // the turnstile was skipped (backoff) and ~1 s of raw retries found the log always held: queue behind the writers once, like a reader that never backed off
+                if (turn is null && attempt == RawAttemptsBeforeTurnstile) turn = Turnstile.Enter(Path, ignoreBackoff: true);
+                SharingPause(attempt);
+            }
         }
+        }
+        finally { turn?.Dispose(); }
         if (!exists && sealedLog) { headText = ReadHeadText(); intentText = ReadIntentText(); witnessRead = ReadWitness(); }
         return (content, VerifyCore(content, exists, ParseHead(headText), ParseIntent(intentText), witnessRead));
     }

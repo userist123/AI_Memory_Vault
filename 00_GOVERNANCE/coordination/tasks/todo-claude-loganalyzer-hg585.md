@@ -1638,3 +1638,15 @@
   labelled ExecutionProven, no consumer) deleted (git keeps it). UI 370 (1 skipped) ok, solution builds.
   COORDINATION: another session is editing this worktree at the same time (uncommitted LogAnalyzer.App.Tests/TurnstileStarvationTests.cs + ChainWorker
   ProjectReference in App.Tests.csproj = planner #11 item 1); asked via SendMessage, no reply yet; this session did NOT stage or touch those files.
+- 2026-11-19 (claude, hg585) DFIR CI a86292db3 success; a8f864a42 failed on MultiProcessChainTests (2nd time today: IOException sharing violation escaping
+  ReadVerified after ~78 s). PLANNER #11 ITEM 1 DONE (vault-worker diagnosis + independent review APPROVE with follow-ups, both applied by main session):
+  root cause (partly confirmed): Turnstile.Enter giving up sets SkipUntil = now + 60 s; during that every reader of the process skips the turnstile and
+  competes raw with writers that hand the exclusive handle over without a gap -> 20 s retry budget exhausted. Emulation 7/20 -> 20/20 after the fix; NOT
+  reproduced with real ChainWorker processes on this fast PC (CI trigger unproven). Fix: Enter(path, ignoreBackoff) clears SkipUntil when the mutex is
+  obtained; ReadVerified AND OpenExclusive (review MEDIUM: writers kept their own backoff) re-enter the turnstile once after RawAttemptsBeforeTurnstile (40,
+  ~1 s) raw sharing retries. Tests App.Tests TurnstileStarvationTests (3: emulation, 3 real ChainWorker processes with forced backoff, backoff decision;
+  SharingAttempts 120 per review; 5/5 local runs green); App.Tests.csproj references ChainWorker (ReferenceOutputAssembly=false). RESIDUALS: a stuck turnstile
+  holder + busy writers now costs a starving read an extra wait (worst ~59 s vs ~39 s; some calls on the UI thread); ReadAllShared/Head keep the raw
+  fallback; a ReadVerified that still throws reaches DispatcherUnhandledException as a warning (card sign-in fails with the error, unchanged).
+  ANOTHER SESSION works in this worktree (commit 199faf149 DOC-01/Prefetch is not mine; uncommitted ExportAudit/OperationAudit/ExportMediumResolver/
+  ExportDestinationTests are theirs - ExportDestinationTests.A_failing_resolver... fails locally). Commit only own files.
