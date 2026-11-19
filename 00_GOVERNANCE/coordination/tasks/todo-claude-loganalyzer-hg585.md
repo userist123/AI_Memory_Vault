@@ -1546,3 +1546,15 @@
   PARȚIAL (S08). Tests App.Tests InterventionRegisterTests (28) + LicenseGateTests (+1); red: 7 fail with the witness rule off, 4 with the grace broken.
   Suites: App 1307, UI 370 (1 skipped), Edition 45, exit 0. RESIDUALS: no Anexa 14 printout/PDF; S02 services/tasks/drivers not correlated; witness
   presence not provable; MATRICE header still says "95 verificări". PLANNER #9 DONE (items 1-7). Next: read CI once; then a NEW planner.
+- 2026-11-19 (claude, hg585) CI of 2aff5c9b8 read once: 33/33 (Dfir incl. S08 annex). PLANNER #10 (Plan agent, verified at 2aff5c9b8; no lab): 1 MRK gap:
+  transfer-register PDF gets "" (TransferViewModel.cs:354) and OfficerRequestPdf has no marking - low; 2 shared RegisterReportPdf, first Anexa 14
+  intervention printout (report.pv, ExportAudit, SignIfConfigured) - medium; 3 backup-copies register (Anexa 21) + S09 (matrix #30) - medium; 4 users
+  register training/pledge columns (schema 1.1) + U07 (matrix #31, #2) - risky; 5 witness move-aside leftovers (scan untrusted-* siblings, all moves) - low;
+  6 read-only start when the clock was rolled back (CheckSaved UtcNow) - risky; 7 docs (HG585 table body stale: AUD-05, CRY-02, HOST-03/04, NET-03/06,
+  ID-02, AC-02; matrix header 95 -> 106 checks) + on-screen check of the new windows via the UIA driver - low. CONTRADICTIONS: planner #9 item 1 claimed
+  marking on all PDFs (transfer + officer request were not); item 6 residual list over-stated (most are runtime-tested in LicenseGateTests:185-303);
+  old lines 55 (LATENT Has()) and 68 (OPEN navigation-only checks) closed by LicenseGate.
+- 2026-11-19 (claude, hg585) PLANNER #10 ITEM 1 DONE (main session, low): TransferReportPdf prints MarkingText.Line(marking) in the header and on every
+  footer (empty -> "fără marcaj introdus"); TransferViewModel passes the confirmed live scope's marking (CurrentMarking) instead of ""; OfficerRequestPdf
+  takes the control page's MarkingLevel (header, footer, signature page). Tests App.Tests TransferMarkingTests (3; 2 fail with the old footer rule).
+  Suites: App 1310, UI 370 (1 skipped), Edition 45, exit 0. Next: item 5 (witness leftovers, low), item 7 docs, then items 2-3 (worker).

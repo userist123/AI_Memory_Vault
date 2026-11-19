@@ -34,7 +34,7 @@ public static class TransferReportPdf
             page.DefaultTextStyle(x => x.FontSize(8).FontFamily("Segoe UI").FontColor("#111827"));
             page.Header().Column(h =>
             {
-                if (marking.Length > 0) h.Item().AlignCenter().Text(marking).Bold().FontSize(10).FontColor("#b91c1c");
+                h.Item().AlignCenter().Text(LogAnalyzer.Dfir.Reporting.MarkingText.Line(marking)).Bold().FontSize(10).FontColor("#b91c1c");   // planner #10 item 1: always printed
                 if (header.Unit.Length > 0) h.Item().AlignCenter().Text(header.Unit).Bold().FontSize(11);
                 if (header.Structure.Length > 0) h.Item().AlignCenter().Text(header.Structure).FontSize(9);
                 h.Item().AlignCenter().Text("REGISTRUL DE EVIDENȚĂ A TRANSFERURILOR DE DATE PE MEDII DE STOCARE").Bold().FontSize(12);
@@ -108,7 +108,7 @@ public static class TransferReportPdf
                         });
                 });
             });
-            ReportFooter.Compose(page.Footer(), "transfers", $"LogAnalyzer {DfirInfo.ApplicationVersion}", null, marking.Length > 0 ? marking : null);
+            ReportFooter.Compose(page.Footer(), "transfers", $"LogAnalyzer {DfirInfo.ApplicationVersion}", null, LogAnalyzer.Dfir.Reporting.MarkingText.Line(marking));
         })).GeneratePdf(path);
     }
 

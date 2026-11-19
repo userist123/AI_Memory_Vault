@@ -306,7 +306,7 @@ namespace LogAnalyzer.UI.ViewModels
                 }
                 Directory.CreateDirectory(store.RequestsDir);
                 var requestPath = Path.Combine(store.RequestsDir, $"Cerere_ofiter_{OfficerFingerprint.Normalize(identity.Fingerprint)[..16]}_{DateTimeOffset.UtcNow:yyyyMMdd_HHmmss}.pdf");
-                OfficerRequestPdf.Write(requestPath, identity, Environment.MachineName, DateTimeOffset.UtcNow);
+                OfficerRequestPdf.Write(requestPath, identity, Environment.MachineName, DateTimeOffset.UtcNow, MarkingLevel);
                 var pending = OfficerRegistry.AddRequest(data, identity, requestPath, DateTimeOffset.UtcNow);
                 store.Save(data);
                 RecordOfficerEvent(OperationAudit.OfficerRequested, $"cert_fingerprint={pending.Fingerprint}; name={pending.Name}; request_sha256={pending.RequestSha256}");
