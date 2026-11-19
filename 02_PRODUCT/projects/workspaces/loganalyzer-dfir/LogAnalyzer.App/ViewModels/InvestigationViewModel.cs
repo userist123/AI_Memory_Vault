@@ -478,6 +478,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task Run()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { Log += licenseRefusal + Environment.NewLine; return; }   // collection / import / analysis write the case
             if (IsBusy) { Log += "O analiză rulează deja; așteptați să se încheie sau opriți-o." + Environment.NewLine; return; }   // review 2026-11-08, P7
             if (!CollectFromThisStation && ImportFiles.Count == 0) { Log += "Alegeți colectarea de pe această stație sau adăugați probe de importat." + Environment.NewLine; return; }
             if (BuildScope().MissingFields().Count > 0) AskScopeAtStart();
@@ -666,6 +667,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void GenerateRemotePackage()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { Log = licenseRefusal; return; }
             try
             {
                 var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
@@ -687,6 +689,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ImportRemotePackage()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { Log = licenseRefusal; return; }
             var dlg = new OpenFolderDialog { Title = "Folderul pachetului colectat (conține manifest.json)" };
             if (dlg.ShowDialog() != true) return;
             var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();

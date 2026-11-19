@@ -906,7 +906,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>The rights of the main window: those verified at start / activation; none when the service verified nothing; the module base set without a licence service.</summary>
         internal static System.Collections.Generic.IReadOnlyList<string> RightsFrom(LogAnalyzer.Core.Services.LicenseService? license) =>
             license is null ? LogAnalyzer.Core.Services.LicenseFeatures.DefaultFor(StationPostureContext.Current)
-                : license.VerifiedClaims?.Features ?? (System.Collections.Generic.IReadOnlyList<string>)Array.Empty<string>();
+                // Planner #9 item 6: an expired but otherwise valid licence (read-only state) lets the PAGES open so that cases, reports and registers can be read; it is NOT authority: every
+                // write operation asks LicenseGate, which refuses all capabilities while the licence is expired.
+                : license.VerifiedClaims?.Features ?? license.ExpiredClaims?.Features ?? (System.Collections.Generic.IReadOnlyList<string>)Array.Empty<string>();
 
         internal bool CanOpenTab(int tab) => LogAnalyzer.Core.Services.Edition.ModuleCatalog.CanOpenTab(tab, StationPostureContext.Current, HasRight,
             LogAnalyzer.Core.Services.Connectivity.AppModeContext.IsAirGapped ? LogAnalyzer.Core.Services.Connectivity.AppMode.AirGapped : LogAnalyzer.Core.Services.Connectivity.AppMode.Network);
@@ -1049,6 +1051,10 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>The .NET runtime is older than 10.0.13 (finding B10): a banner on every page, never blocking.</summary>
         public string RuntimeWarning => LogAnalyzer.UI.Services.StartupNotices.RuntimeWarning;
         public bool HasRuntimeWarning => LogAnalyzer.UI.Services.StartupNotices.HasRuntimeWarning;
+
+        /// <summary>„Licență expirată — mod doar citire (data expirării …)”, shown on every page while the licence is expired; null otherwise.</summary>
+        public string? LicenseBanner => LogAnalyzer.Core.Services.LicenseGate.ReadOnlyBanner;
+        public bool HasLicenseBanner => LicenseBanner is not null;
 
         /// <summary>Failures to write the sealed audit, shown as a persistent banner on every page.</summary>
         public LogAnalyzer.UI.Services.AuditHealth AuditHealth => LogAnalyzer.UI.Services.AuditHealth.Instance;
@@ -1377,6 +1383,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task StartCollectionAsync()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { StatusMessage = licenseRefusal; return; }
             if (IsCollectionRunning) { StatusMessage = "Colectarea rulează deja; așteptați să se termine."; return; }
             IsCollectionRunning = true;
             CollectionLogs = string.Empty;
@@ -1406,6 +1413,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void StartSyslog()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CollectLan, out var licenseRefusal)) { StatusMessage = licenseRefusal; return; }
             CollectionLogs = string.Empty;
             try
             {
@@ -1889,6 +1897,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void GenerateHostIsolationScript()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ResponseHost, out var licenseRefusal)) { StatusMessage = licenseRefusal; return; }
             var dialog = new SaveFileDialog { Filter = "PowerShell Script (*.ps1)|*.ps1", FileName = $"Isolate_Host_{CollectionHostname}_{DateTime.Now:yyyyMMdd}.ps1" };
             if (dialog.ShowDialog() == true)
             {
@@ -1908,6 +1917,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void GenerateKillProcessScript()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ResponseHost, out var licenseRefusal)) { StatusMessage = licenseRefusal; return; }
             var dialog = new SaveFileDialog { Filter = "PowerShell Script (*.ps1)|*.ps1", FileName = $"Kill_Malicious_ProcessTree_{DateTime.Now:yyyyMMdd}.ps1" };
             if (dialog.ShowDialog() == true)
             {
@@ -1951,6 +1961,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void StartLiveMonitoring()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CollectLan, out var licenseRefusal)) { StatusMessage = licenseRefusal; return; }
             if (IsLiveMonitoringActive) { StatusMessage = "Monitorizarea rulează deja."; return; }
 
             _liveWatcher = _liveSourceFactory.Create();
@@ -3158,6 +3169,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void SealDfirCaseBundle()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { StatusMessage = licenseRefusal; return; }
             var dialog = new SaveFileDialog { Filter = "Pachet Caz Forenzic Sigilat (*.dfirbundle.zip)|*.dfirbundle.zip", FileName = $"DFIR_CASE_SEALED_{DateTime.Now:yyyyMMdd_HHmmss}.dfirbundle.zip" };
             if (dialog.ShowDialog() == true)
             {
@@ -3206,6 +3218,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task SanitizeMediaAndGenerateCertPdfAsync()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { StatusMessage = licenseRefusal; return; }
             var openDialog = new OpenFileDialog
             {
                 Title = "Selectează fișierul / imaginea disc pentru sanitizare deterministă (NIST 800-88)",

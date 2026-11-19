@@ -229,6 +229,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void Register()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.Registers, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (Files.Count == 0) { Status = "Ca să înregistrați transferul, alegeți întâi fișierele (amprentele lor intră în registru)."; return; }
             var row = new TransferRow
             {

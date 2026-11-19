@@ -83,6 +83,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void Stage()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (string.IsNullOrWhiteSpace(SourceFolder) || !System.IO.Directory.Exists(SourceFolder.Trim())) { Status = "Alegeți folderul pachetului (cu ti_package.json și ti_package.json.p7s)."; return; }
             try
             {
@@ -101,6 +102,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void Approve()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (SelectedStaged is not { } p) { Status = "Alegeți un pachet din așteptare."; return; }
             if (!_mayAdminister()) { Status = "Refuzat: doar un administrator aprobă un pachet de informații despre amenințări."; return; }
             try
@@ -117,6 +119,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void Discard()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (SelectedStaged is not { } p) { Status = "Alegeți un pachet din așteptare."; return; }
             try { var r = _store().Discard(p.Id, Me, Reason); Status = r.Ok ? "Pachetul a fost scos din așteptare." : "Refuzat: " + r.Reason; }
             catch (Exception ex) when (ex is not OutOfMemoryException) { Status = "Nu s-a putut renunța: " + ex.Message; }
@@ -126,6 +129,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void Rollback()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (!_mayAdminister()) { Status = "Refuzat: doar un administrator revine la o versiune anterioară."; return; }
             var parts = RollbackVersion.Trim().Split(' ', StringSplitOptions.RemoveEmptyEntries);
             if (parts.Length != 2 || !int.TryParse(parts[1].TrimStart('v', 'V'), out var v)) { Status = "Scrieți pachetul și versiunea, de exemplu: CERT-RO v3"; return; }   // ids are letters, digits, . _ - (no spaces)

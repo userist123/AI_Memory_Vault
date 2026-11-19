@@ -260,6 +260,16 @@
                         Visibility="{Binding HasRuntimeWarning, Converter={StaticResource BooleanToVisibilityConverter}}">
                     <TextBlock Text="{Binding RuntimeWarning}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" VerticalAlignment="Center"/>
                 </Border>
+                <!-- expired licence: the application is read-only (planner #9 item 6) -->
+                <Border Background="{StaticResource BadgeHighBgBrush}" BorderBrush="{StaticResource WarningBrush}" BorderThickness="0,0,0,1" Padding="16,8"
+                        AutomationProperties.Name="Licență expirată — mod doar citire"
+                        Visibility="{Binding HasLicenseBanner, Converter={StaticResource BooleanToVisibilityConverter}}">
+                    <DockPanel>
+                        <Button DockPanel.Dock="Right" Content="Reînnoiește licența" Click="RenewLicense_Click" Style="{StaticResource OutlineButtonStyle}" Padding="12,4" Margin="12,0,0,0"
+                                AutomationProperties.Name="Reînnoiește licența"/>
+                        <TextBlock Text="{Binding LicenseBanner}" TextWrapping="Wrap" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}" VerticalAlignment="Center"/>
+                    </DockPanel>
+                </Border>
                 <!-- the sealed audit could not be written (review 2026-10-15): persistent until the application is closed, never silent -->
                 <Border Background="{StaticResource BadgeHighBgBrush}" BorderBrush="{StaticResource WarningBrush}" BorderThickness="0,0,0,1" Padding="16,8"
                         AutomationProperties.Name="Avertisment jurnal de audit"

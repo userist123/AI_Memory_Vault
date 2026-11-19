@@ -137,6 +137,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private async Task ContainAsync(string path, int? pid, string trigger, bool suspend)
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ResponseHost, out var licenseRefusal)) { Status = licenseRefusal; return; }
             EnsureCase();
             IsBusy = true;
             Status = $"Se izolează și se scanează {Path.GetFileName(path)}…";
@@ -181,6 +182,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task TrustSelected()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ResponseHost, out var licenseRefusal)) { Status = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (SelectedSuspect is not { } s) { Status = "Selectați un proces din listă."; return; }
             if (MessageBox.Show($"Marcați programul ca fiind de încredere?\n\n{s.Path}\n\nNu va mai fi izolat automat. Încrederea se leagă de SHA-256-ul fișierului curent: " +
                                 "dacă fișierul se schimbă (actualizare sau înlocuire), trebuie confirmat din nou.",
@@ -253,6 +255,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void EnableBlockedAudit()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ResponseHost, out var licenseRefusal)) { Status = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (MessageBox.Show("Activați auditul Windows pentru conexiunile blocate (subcategoria „Filtering Platform Connection”, eșecuri)?\n\n" +
                                 "Este o modificare a politicii de audit a stației. Fără ea nu se poate vedea unde încearcă să se conecteze un program izolat.",
                     "Activare audit", MessageBoxButton.YesNo, MessageBoxImage.Question) != MessageBoxResult.Yes) return;

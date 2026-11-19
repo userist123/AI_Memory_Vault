@@ -104,6 +104,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void SaveTimelineView()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { TimelineNotesLine = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (Notebook is not { } nb) { TimelineNotesLine = "Deschideți întâi un caz."; return; }
             if (CurrentSpec() is not { } spec) return;
             var r = Guard(() => nb.SaveView(Me, NewViewName, spec));
@@ -134,6 +135,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void DeleteSavedView()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { TimelineNotesLine = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (Notebook is not { } nb || SelectedSavedView is not { } name) { TimelineNotesLine = "Alegeți o vedere salvată."; return; }
             var r = Guard(() => nb.DeleteView(Me, name));
             TimelineNotesLine = r.Ok ? $"Vederea „{name}” a fost ștearsă din listă (rămâne în jurnalul notițelor)." : "Refuzat: " + r.Reason;
@@ -152,6 +154,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ToggleBookmark()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { TimelineNotesLine = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (Notebook is not { } nb || SelectedTimelineEvent is not { } e) { TimelineNotesLine = "Alegeți un eveniment din cronologie."; return; }
             var key = TimelineNotebook.EventKey(e);
             bool marked = _notes.Bookmarks.ContainsKey(key);
@@ -163,6 +166,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void AddAnnotation()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { TimelineNotesLine = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (Notebook is not { } nb || SelectedTimelineEvent is not { } e) { TimelineNotesLine = "Alegeți un eveniment din cronologie."; return; }
             var r = Guard(() => nb.Annotate(Me, TimelineNotebook.EventKey(e), AnnotationText));
             TimelineNotesLine = r.Ok ? "Nota a fost adăugată (este o notă a analistului, nu o probă)." : "Refuzat: " + r.Reason;

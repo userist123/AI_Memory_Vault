@@ -48,6 +48,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task RunVolatility()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { MemoryRunLines.Add(licenseRefusal); return; }   // planner #9 item 6 review r2: read-only mode
             if (IsBusy) { MemoryRunLines.Add("O analiză rulează deja; așteptați să se încheie."); return; }
             if (_result is null || SelectedMemoryImage is not { } image) { MemoryRunLines.Add("Alegeți imaginea de memorie din caz."); return; }
             var ws = _result.Case;

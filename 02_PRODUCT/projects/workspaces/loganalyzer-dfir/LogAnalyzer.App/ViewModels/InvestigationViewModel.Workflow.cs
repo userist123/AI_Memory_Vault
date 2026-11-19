@@ -134,6 +134,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void WorkflowAddParticipant()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { WorkflowStatus = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (NoCase()) return;
             var account = string.IsNullOrWhiteSpace(NewParticipantAccount) ? Me : NewParticipantAccount.Trim();
             var role = Enum.GetValues<CaseRole>()[Math.Clamp(NewParticipantRole, 0, 3)];
@@ -144,6 +145,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void WorkflowMove()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { WorkflowStatus = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (NoCase()) return;
             var to = Enum.GetValues<CaseStage>().FirstOrDefault(s => CaseWorkflow.Label(s) == SelectedNextStage);
             if (SelectedNextStage is null) { WorkflowStatus = "Nu există o etapă următoare."; return; }
@@ -154,6 +156,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void WorkflowClose()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { WorkflowStatus = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (NoCase()) return;
             CaseClosure? closure = null;
             Report(() => { var c = Workflow!.Close(Me, _result!.Findings); closure = c.Closure; return c.Result; },
@@ -164,6 +167,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void WorkflowAddTask()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { WorkflowStatus = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (NoCase()) return;
             Report(() => Workflow!.AddTask(Me, NewTaskTitle, NewTaskAssignee, SelectedWorkflowReview?.FindingId), "Sarcina a fost adăugată.");
             if (!WorkflowStatus.StartsWith("Refuzat", StringComparison.Ordinal)) { NewTaskTitle = ""; NewTaskAssignee = ""; }
@@ -172,6 +176,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void WorkflowTaskDone()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { WorkflowStatus = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (NoCase()) return;
             if (SelectedWorkflowTask is not { } t) { WorkflowStatus = "Alegeți o sarcină din listă."; return; }
             Report(() => Workflow!.SetTaskStatus(Me, t.TaskId, CaseTaskStatus.Done, WorkflowReason), $"Sarcina {t.TaskId} este făcută.");
@@ -180,6 +185,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void WorkflowTaskCancel()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { WorkflowStatus = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (NoCase()) return;
             if (SelectedWorkflowTask is not { } t) { WorkflowStatus = "Alegeți o sarcină din listă."; return; }
             Report(() => Workflow!.SetTaskStatus(Me, t.TaskId, CaseTaskStatus.Cancelled, WorkflowReason), $"Sarcina {t.TaskId} este anulată.");
@@ -188,6 +194,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void WorkflowReview()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { WorkflowStatus = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (NoCase()) return;
             if (SelectedWorkflowReview is not { } row) { WorkflowStatus = "Alegeți o constatare din lista de revizuit."; return; }
             var d = Enum.GetValues<FindingDecision>()[Math.Clamp(SelectedDecision, 0, 3)];
@@ -197,6 +204,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void WorkflowAddNote()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { WorkflowStatus = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (NoCase()) return;
             Report(() => Workflow!.AddNote(Me, WorkflowReason), "Nota a fost adăugată în jurnalul cazului.");
         }

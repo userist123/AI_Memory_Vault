@@ -215,13 +215,20 @@ namespace LogAnalyzer.UI
                 // 2. Verificăm licența
                 var licenseService = ServiceProvider.GetRequiredService<LogAnalyzer.Core.Services.LicenseService>();
                 Step(debugLogPath, $"Verifying license... (IsActivated: {licenseService.IsActivated()})\n");
+                // Planner #9 item 6: the licence gate of the operations reads the licence verified here (a process that never calls Configure has no licence regime).
+                LogAnalyzer.Core.Services.LicenseGate.Configure(licenseService);
+                // An EXPIRED licence that is otherwise valid (trusted signature, product, this PC, this module) starts the application READ-ONLY instead of closing it: cases are kept for years
+                // and must stay readable. Every other failure (bad signature, wrong module / hardware, malformed, missing) still goes to the activation window and then shuts down.
                 if (!licenseService.IsActivated())
                 {
                     Step(debugLogPath, "License is not activated. Showing ActivationWindow...\n");
                     var activationWindow = ServiceProvider.GetRequiredService<ActivationWindow>();
+                    // An expired but otherwise valid licence: the window also offers „Continuă în mod doar citire”, so renewal stays possible here.
+                    if (licenseService.ExpiredClaims is { } expiredNow) activationWindow.OfferReadOnly(expiredNow.ExpiresUtcDate);
                     bool? activated = activationWindow.ShowDialog();
+                    var continueReadOnly = activated != true && activationWindow.ReadOnlyChosen && licenseService.ExpiredClaims is not null;
                     Step(debugLogPath, $"ActivationWindow ShowDialog returned: {activated}\n");
-                    if (activated != true)
+                    if (activated != true && !continueReadOnly)
                     {
                         Step(debugLogPath, "Shutdown called due to license failure.\n");
                         splash.Close();
@@ -238,6 +245,13 @@ namespace LogAnalyzer.UI
                 // Planner #9 item 3: the anti-rollback witness folder was not protected and was moved aside (audited, shown again at sign-in).
                 if (AuthApp.Service.WitnessMovedAside is { } moved)
                     Step(debugLogPath, $"Anti-rollback witness folder moved aside: {moved}" + (AuthApp.Service.WitnessMoveNotRecorded is { } wm ? $" (not audited: {wm})" : "") + "\n");
+                // Planner #9 item 6: every refusal of the licence gate and the read-only start are facts of the sealed audit (ids and dates only).
+                LogAnalyzer.Core.Services.LicenseGate.Refusal = (capability, reason) => AuthApp.Record("licence.refused", $"capability={capability}; reason={reason}");
+                if (licenseService.ExpiredClaims is { } readOnly)
+                {
+                    Step(debugLogPath, $"License expired {readOnly.ExpiresUtcDate:yyyy-MM-dd}: starting READ-ONLY.\n");
+                    AuthApp.Record("licence.read_only_start", $"expired={readOnly.ExpiresUtcDate:yyyy-MM-dd}; licence_id={readOnly.LicenseId}; module={readOnly.Module}");
+                }
                 // Security audit #18: the accepted signed policy's version goes into the hash-chained auth audit (anti-rollback mark).
                 if (startup.PolicyVersion > 0)
                 {
@@ -246,6 +260,11 @@ namespace LogAnalyzer.UI
                 }
                 // The application's own time memory: compare the clock with the last recorded time BEFORE sign-in writes its own entries,
                 // then record "clock.seen" in the chained auth audit.
+                // Planner #9 item 6: the licence expiry is compared with max(clock, highest time ever recorded in the sealed chain), so a clock set back
+                // does not undo an expiry (review round 2: not the clock baseline, which forgets a later time after a correction or a suspect record).
+                try { if (LogAnalyzer.Dfir.Case.ClockMemory.HighestRecorded(AuthApp.Service.AuditPath) is { } seenBefore) LogAnalyzer.Core.Services.LicenseGate.RaiseClockFloor(seenBefore.UtcDateTime); }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { Step(debugLogPath, $"Clock floor for the licence not read: {ex.GetType().Name}\n"); }
+                if (!LogAnalyzer.Core.Services.LicenseGate.IsConfigured) throw new InvalidOperationException("LicenseGate is not configured at start-up.");   // fail closed: never run the operations without the licence regime
                 try
                 {
                     var clock = LogAnalyzer.Dfir.Case.ClockMemory.Startup(AuthApp.Service.AuditPath, DateTimeOffset.UtcNow, LogAnalyzer.Dfir.Windows.Audit.StationFactCollector.ReadInstallDate());

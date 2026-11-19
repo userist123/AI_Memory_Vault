@@ -398,6 +398,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task Run()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ControlStation, out var licenseRefusal)) { Status = licenseRefusal; return; }   // planner #9 item 6: the right is checked here too, not only at navigation
             if (PeriodDays is < 1 or > 3650) { Status = "Perioada trebuie să fie între 1 și 3650 de zile."; return; }
             IsBusy = true;
             Status = "Se colectează datele stației (conturi, politici, jurnale, USB, rețele)…";
@@ -595,6 +596,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void SaveReportCopy()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ReportPv, out var licenseRefusal)) { Status = licenseRefusal; return; }
             var pdf = _lastReportPdf ?? GenerateReport();
             if (pdf is null) return;
             var dlg = new SaveFileDialog { FileName = Path.GetFileName(pdf), Filter = "PDF (*.pdf)|*.pdf", Title = "Salvați o copie a raportului (originalul rămâne în caz)" };
@@ -636,6 +638,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private string? GenerateReport()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ReportPv, out var licenseRefusal)) { Status = licenseRefusal; return null; }   // "Raport pentru proces-verbal": report.pv
             if (_report is null) { Status = "Rulați întâi controlul."; return null; }
             var ws = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
             if (ws is null) { Status = ReportScopeMessage(_report.Anchor is not null, _controlFinishAudited); return null; }

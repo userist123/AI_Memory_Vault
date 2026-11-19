@@ -69,6 +69,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void AddRuleToCase()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { RuleLabSummary = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (_result is null) { RuleLabSummary = "Deschideți întâi un caz."; return; }
             if (_ruleRun is null || _ruleRunText != RuleText) { RuleLabSummary = "Testați întâi regula așa cum este acum; se adaugă doar o regulă testată."; return; }
             try

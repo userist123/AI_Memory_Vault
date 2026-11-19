@@ -54,6 +54,7 @@ namespace LogAnalyzer.UI.Services
         /// <summary>Runs the handler once at a time; a second press while it runs only says so.</summary>
         public static async Task RunAsync()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { Instance.Status = licenseRefusal; return; }   // collection writes a case: case.local (catalogue: pages 12 and 16)
             if (Handler is null) { Instance.Status = "Colectarea nu este disponibilă în această fereastră."; return; }
             if (Instance.IsRunning) { Instance.Status = "Colectarea completă rulează deja; rezultatul apare pe toate paginile când se termină."; return; }
             await Handler();

@@ -85,6 +85,7 @@ namespace LogAnalyzer.UI.ViewModels
         /// </summary>
         public async Task RunQuickAsync()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ControlStation, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (IsBusy) return;
             _flow.Restart(); Result = null; Comparison = null; ComparisonChanges.Clear();
             if (!LiveCase.EnsureScopeAtStart() && LiveCase.ScopePrompt is not null)
@@ -160,6 +161,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExportForOfficer()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ReportPv, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (_report is null) { Status = "Rulați întâi controlul."; return; }
             const string Title = "Alegeți unde se pune exportul pentru ofițerul de securitate (de exemplu stick-ul înrolat sau folderul de ars pe CD-R)";
             var root = FolderMemory.Shared.Get(FolderMemory.OfficerExport) ?? PickFolder(Title, FolderMemory.OfficerExport);

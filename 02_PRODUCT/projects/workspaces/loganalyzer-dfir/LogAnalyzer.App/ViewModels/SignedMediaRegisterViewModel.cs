@@ -88,6 +88,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void EnrollConnected()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ControlStation, out var licenseRefusal)) { Status = licenseRefusal; return; }
             RefreshActive();
             if (Draft.Count == 0 && _active.Usable) foreach (var e in _active.Doc!.Entries) Draft.Add(new MediaEnrollmentRow(e.Copy(), false));
             IReadOnlyList<DeviceRecord> devices;
@@ -122,6 +123,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void SignAndExport()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ControlStation, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (Draft.Count == 0) { Status = "Ciorna este goală: apăsați întâi „Înrolează mediile conectate”."; return; }
             var now = DateTimeOffset.UtcNow;
             var doc = SignedMediaRegister.NextVersion(_active.Usable ? _active.Doc : null, _active.Usable ? _active.Sha256 : null, Draft.Select(r => r.ToEntry(now)), Environment.MachineName, now);
@@ -158,6 +160,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ImportSigned()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ControlStation, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (PaperFingerprint.Trim().Length > 0 && OfficerFingerprint.Normalize(PaperFingerprint).Length == 0)
             { Status = "Amprenta scrisă nu are forma corectă: 64 de caractere 0-9 și A-F, exact ca pe procesul-verbal."; return; }
             var dlg = new OpenFileDialog { Title = "Alegeți registrul de medii semnat (registru_medii_vNNNN.json, cu semnătura .p7s alături)", Filter = "Registru de medii (*.json)|*.json" };

@@ -1517,3 +1517,21 @@
   instance (identity check). Tests App.Tests SignInNoticeTests (13; 3 fail with the service gate off - worker). Suites: App 1190, UI 370 (1 skipped),
   Edition 45, exit 0. HG585 ID-03 -> PARTIAL; GHID updated. OWNER: official notice text from the security officer. NOT SEEN ON SCREEN yet (XAML).
   RESIDUALS: L4 card unlock with the marker not covered by a test. Next: read CI once; item 6 (R2b leftovers + read-only on licence expiry, RISKY).
+- 2026-11-19 (claude, hg585) PLANNER #9 ITEM 6 DONE (RISKY; vault-worker 2 rounds + independent review r1 REQUEST_CHANGES (2 HIGH + MEDIUM), r2
+  REQUEST_CHANGES (HIGH + MEDIUM + LOW) -> fixed by main session (2-round cap)). Core LicenseGate: Require(capability) on VerifiedClaims, per-call expiry vs
+  max(clock, floor); RequireWritable (refuses while expired) for capability-less writes; refusals -> AuthApp.Record licence.refused; App throws at start if
+  not configured. LicenseService.ExpiredClaims only for Expired after signature/product/hardware AND module ok (tampered / wrong PC / wrong module never
+  read-only). Start: activation window ALSO for expired-valid, with "Continuă în mod doar citire" (r1 HIGH-1: renewal kept); banner "Licență expirată —
+  mod doar citire" + "Reînnoiește licența" (restart after success). Gated: control.station (Run, quick, signed media register, media center), report.pv
+  (report, copy, officer export/sign, anchor, media history, cross-station signed), case.local (collection, sanitize, seal bundle, remote package,
+  reanalyze, volatility, archive import, rule-to-case, workflow ops, timeline views/bookmarks/notes), collect.lan (live monitoring, syslog, domain ops),
+  registers, response.host (isolate, block IoC, scripts, contain, trust, blocked-audit). RequireWritable: policies, profile saves, officer trust, signing
+  settings, threat-intel packages, auth admin ops. Deliberately ungated: RestoreNetworkAccess/Release, disabling accounts/cards, CRL import,
+  AcceptIntegrity, exports of collected data (ExportAudit). r2 HIGH fixed: floor = ClockMemory.HighestRecorded (max of ALL clock records; the baseline
+  forgot a later time after a suspect record or clock.ack -> full rights again from the 2nd start). r2 LOW: source test now requires the gate as the
+  FIRST statement (not a comment). Tests App.Tests LicenseGateTests (88; red: 17/21 fail with Require forced true; r2 test proves LatestRecorded forgets
+  February while HighestRecorded keeps it). Suites: App 1278, UI 370 (1 skipped), Edition 45, exit 0. RESIDUALS: CheckSaved still uses UtcNow (rolled-back
+  clock at start -> no banner/activation offer, but every write refused by the gate); a clock once set far ahead by mistake keeps an expired licence
+  read-only; most gates proven by source text, not at run time; ContainAsync / CollectAll.RunAsync / Investigation Run / RunQuickAsync / ExportForOfficer /
+  SaveReportCopy / ImportDataPack gated but not in the source-test list; NOT SEEN ON SCREEN (activation window choice, banner). Next: read CI once; item 7
+  (intervention register) if continuing, else a NEW planner.

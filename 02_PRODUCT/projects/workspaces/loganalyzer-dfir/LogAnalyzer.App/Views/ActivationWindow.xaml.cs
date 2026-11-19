@@ -35,6 +35,18 @@ namespace LogAnalyzer.UI.Views
                 ShowError("Licența salvată pe această stație este din schema veche și nu mai este valabilă. " + LicenseService.Explain(LicenseCheck.LegacyScheme));
         }
 
+        /// <summary>True when the window was closed with „Continuă în mod doar citire” (only offered for an expired, otherwise valid licence).</summary>
+        public bool ReadOnlyChosen { get; private set; }
+
+        /// <summary>Planner #9 item 6: the licence expired but is otherwise valid; the window still renews it and also offers the read-only start.</summary>
+        public void OfferReadOnly(DateTime expired)
+        {
+            BtnReadOnly.Visibility = Visibility.Visible;
+            ShowError($"Licența a expirat la {expired:yyyy-MM-dd}. Activați o licență nouă sau continuați în mod doar citire (cazurile, rapoartele și registrele se pot citi; nu se colectează și nu se scrie nimic).");
+        }
+
+        private void ReadOnly_Click(object sender, RoutedEventArgs e) { ReadOnlyChosen = true; DialogResult = false; }
+
         private void CopyHwid_Click(object sender, RoutedEventArgs e)
         {
             if (!string.IsNullOrEmpty(TxtHardwareId.Text))

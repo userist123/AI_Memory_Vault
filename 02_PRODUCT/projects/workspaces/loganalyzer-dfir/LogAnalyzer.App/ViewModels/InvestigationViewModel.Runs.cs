@@ -51,6 +51,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async System.Threading.Tasks.Task Reanalyze()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { RunDiffSummary = licenseRefusal; return; }   // planner #9 item 6 review r2: read-only mode
             if (_result?.Case is not { } ws) { RunDiffSummary = "Deschideți întâi un caz."; return; }
             if (IsBusy) return;
             if (ws.IsReadOnly) { RunDiffSummary = "Cazul este doar pentru citire (" + ws.ReadOnlyReason + "): nu se reanalizează."; return; }

@@ -163,6 +163,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private void Save()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.Registers, out var licenseRefusal)) { Status = licenseRefusal; return; }
             Pull();
             try
             {

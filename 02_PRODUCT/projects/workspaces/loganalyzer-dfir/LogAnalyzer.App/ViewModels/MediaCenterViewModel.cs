@@ -407,6 +407,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task AddToRegister()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ControlStation, out var licenseRefusal)) { Summary = licenseRefusal; return; }
             if (!_register.CanEdit) { Summary = _register.AccessNotice; return; }
             await _register.DiscoverCommand.ExecuteAsync(null);
             Summary = _register.Status + " Deschideți fila „Registrul de medii” ca să completați nivelul, zona și utilizatorul, apoi salvați.";

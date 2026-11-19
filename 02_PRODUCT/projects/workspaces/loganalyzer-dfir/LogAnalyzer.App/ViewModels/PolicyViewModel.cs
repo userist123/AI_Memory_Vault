@@ -228,6 +228,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ApplyPlan()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (_policy is null || _plan is null) { Status = "Ca să aplicați, calculați întâi planul: butonul „Calculează planul” arată exact ce se va schimba."; return; }
             if (_plan.ToChange == 0) { Status = "Planul nu are nicio modificare de aplicat."; return; }
             var text = $"Se vor modifica {_plan.ToChange} setări pe {_plan.Station} ca {_bench.Operator}.\n" +
@@ -318,6 +319,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private void WithPolicy(Func<PolicyDocument, string> action)
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (_policy is null) { Status = "Ca să faceți acest pas, deschideți întâi politica: butonul „Deschide politica…” de sus."; return; }
             var p = _policy;
             Step(() => action(p));

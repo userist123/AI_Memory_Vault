@@ -53,6 +53,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task InventoryDomain()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CollectLan, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (LogAnalyzer.UI.Services.LiveCase.GetConfirmed() is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             IsBusy = true;
             Status = "Se citește Active Directory…";
@@ -90,6 +91,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task InvestigateUser()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CollectLan, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (string.IsNullOrWhiteSpace(UserName)) { Status = "Introduceți numele de utilizator (sAMAccountName)."; return; }
             if (LogAnalyzer.UI.Services.LiveCase.GetConfirmed() is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             IsBusy = true;
@@ -118,6 +120,7 @@ namespace LogAnalyzer.UI.ViewModels
 
         private void SaveScript(bool online)
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CollectLan, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (!Mailbox.Contains('@')) { Status = "Introduceți adresa cutiei poștale."; return; }
             var liveCase = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
             if (liveCase is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
@@ -134,6 +137,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task ImportMail()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CollectLan, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (LogAnalyzer.UI.Services.LiveCase.GetConfirmed() is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             var dlg = new OpenFolderDialog { Title = "Folderul cu message_trace.csv / inbox_rules.csv / mailbox_forwarding.csv" };
             if (dlg.ShowDialog() != true) return;
@@ -157,6 +161,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExportPdf()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CollectLan, out var licenseRefusal)) { Status = licenseRefusal; return; }
             var liveCase = LogAnalyzer.UI.Services.LiveCase.GetConfirmed();
             if (liveCase is null) { Status = LogAnalyzer.UI.Services.LiveCase.ScopeRequiredMessage; return; }
             var dlg = new SaveFileDialog { FileName = $"Investigatie_{DateTime.Now:yyyyMMdd_HHmm}.pdf", Filter = "PDF (*.pdf)|*.pdf" };

@@ -358,7 +358,7 @@ namespace LogAnalyzer.Core.Services
             result = Check(hw, fullInput, DateTime.UtcNow, out var claims);
             LastClaims = claims;
             if (result != LicenseCheck.Valid) return false;
-            try { File.WriteAllText(_licenseFilePath, fullInput.Trim()); _savedClaims = null; VerifiedClaims = claims; return true; }
+            try { File.WriteAllText(_licenseFilePath, fullInput.Trim()); _savedClaims = null; VerifiedClaims = claims; ExpiredClaims = null; return true; }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { result = LicenseCheck.Malformed; return false; }
         }
 
@@ -367,12 +367,15 @@ namespace LogAnalyzer.Core.Services
 
         public LicenseCheck CheckSaved()
         {
+            ExpiredClaims = null;   // every early return below (no file, no hardware id, unreadable file) leaves the read-only state OFF
             try
             {
                 if (!File.Exists(_licenseFilePath)) return LicenseCheck.Malformed;
                 if (TryHardwareId() is not { } hw) return LicenseCheck.HardwareIdUnavailable;
                 var r = Check(hw, File.ReadAllText(_licenseFilePath), DateTime.UtcNow, out var claims);
-                if (r == LicenseCheck.Valid) VerifiedClaims = claims;
+                if (r == LicenseCheck.Valid) { VerifiedClaims = claims; ExpiredClaims = null; }
+                // read-only state (planner #9 item 6): ONLY an expired licence whose signature, product and hardware passed (Check orders them before expiry) and whose module is this build's
+                else ExpiredClaims = r == LicenseCheck.Expired && claims is not null && string.Equals(claims.Module, CompiledModule, StringComparison.Ordinal) ? claims : null;
                 return r;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return LicenseCheck.Malformed; }
@@ -384,6 +387,12 @@ namespace LogAnalyzer.Core.Services
         /// start and the end of sign-in never turns into the module's full set; it keeps exactly the rights that were verified.
         /// </summary>
         public LicenseClaims? VerifiedClaims { get; private set; }
+
+        /// <summary>
+        /// The claims of a licence found at start that is EXPIRED but otherwise valid for this build and this PC (trusted signature, product, hardware id, this module); null for every
+        /// other outcome (bad signature, wrong module / hardware / product, malformed, missing). It grants nothing: <see cref="LicenseGate"/> refuses every capability while only this is set.
+        /// </summary>
+        public LicenseClaims? ExpiredClaims { get; private set; }
 
         private static string B64Url(byte[] b) => Convert.ToBase64String(b).TrimEnd('=').Replace('+', '-').Replace('/', '_');
 

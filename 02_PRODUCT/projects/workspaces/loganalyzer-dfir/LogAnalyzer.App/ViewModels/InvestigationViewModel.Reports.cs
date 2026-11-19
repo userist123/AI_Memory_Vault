@@ -45,6 +45,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void SaveSigningSettings()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Log = licenseRefusal; return; }
             var s = CurrentSigning();
             s.Save(SigningSettingsPathOverride);
             ReportStatus = $"Setările semnăturii au fost salvate: {(s.CanSign ? "cheia de semnare este accesibilă" : "fără cheie de semnare accesibilă (rapoartele nu vor fi semnate)")}, {s.TrustedPublicKeys.Count} chei de încredere.";
@@ -227,6 +228,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task ImportCaseArchive()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { Log += licenseRefusal + Environment.NewLine; return; }   // planner #9 item 6 review r2: read-only mode
             var dlg = new OpenFileDialog { Title = "Arhivă de caz (ZIP cu manifest.json)", Filter = "Arhivă ZIP (*.zip)|*.zip" };
             if (dlg.ShowDialog() != true) return;
             var casesRoot = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "LogAnalyzer", "Cases");
@@ -299,6 +301,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private async Task CollectAll()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.CaseLocal, out var licenseRefusal)) { CollectAllState.Instance.Status = licenseRefusal; Log += licenseRefusal + Environment.NewLine; return; }
             var plan = CollectAllState.Plan(LogAnalyzer.Core.Services.Edition.StationRoleContext.Role);
             CollectFromThisStation = true;
             // lab 2026-11-10: after "Colectează tot" the assistant still showed "Un folder adus de la stația afectată" (its default) with an empty folder,

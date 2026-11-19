@@ -139,6 +139,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExportAnchor()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ReportPv, out var licenseRefusal)) { Status = licenseRefusal; return; }
             var log = AuditLogPath();
             if (log is null) { Status = "Jurnalul aplicației nu este disponibil (autentificarea nu este pornită)."; return; }
             // usability 2026-10-16: the dialog starts in the folder used last time
@@ -179,6 +180,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void SignAsOfficer()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ReportPv, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (_report is null) { Status = "Rulați întâi controlul."; return; }
             var pdf = _lastReportPdf ?? GenerateReport();
             if (pdf is null) return;
@@ -237,6 +239,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ImportOfficerTrust()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             var dlg = new OpenFileDialog { Title = "Certificatele autorității de certificare calificate (CA) și listele de revocare (CRL)", Multiselect = true,
                                            Filter = "Certificate și CRL (*.cer;*.crt;*.der;*.pem;*.crl)|*.cer;*.crt;*.der;*.pem;*.crl|Toate fișierele|*.*" };
             if (dlg.ShowDialog() != true) return;
@@ -263,6 +266,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ManageOfficers()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             var store = OfficerStore.Shared;
             var data = store.Load();   // always re-read before changing
             try

@@ -5,6 +5,16 @@ namespace LogAnalyzer.UI.Views
 {
     public partial class MainWindow : Window
     {
+        /// <summary>Read-only banner: opens the activation window; after a successful activation the application closes so that every page starts with the new rights.</summary>
+        private void RenewLicense_Click(object sender, RoutedEventArgs e)
+        {
+            if (LogAnalyzer.UI.AppComposition.ServiceProvider?.GetService(typeof(ActivationWindow)) is not ActivationWindow window) return;
+            window.Owner = this;
+            if (window.ShowDialog() != true) return;
+            MessageBox.Show("Licența nouă a fost activată. Aplicația se închide; porniți-o din nou ca să aibă toate drepturile licenței.", "Licență reînnoită", MessageBoxButton.OK, MessageBoxImage.Information);
+            Application.Current.Shutdown();
+        }
+
         public MainWindow(MainViewModel viewModel)
         {
             InitializeComponent();

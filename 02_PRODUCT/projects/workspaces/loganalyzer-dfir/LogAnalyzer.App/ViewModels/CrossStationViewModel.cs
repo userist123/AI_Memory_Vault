@@ -108,6 +108,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void ExportSignedReport()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ReportPv, out var licenseRefusal)) { Status = licenseRefusal; return; }
             if (_result is null || _settings is null) { Status = "Faceți întâi confruntarea."; return; }
             List<System.Security.Cryptography.X509Certificates.X509Certificate2> certs;
             try { certs = OfficerFlows.CardSigningCertificates(AuthApp.Cards, DateTimeOffset.UtcNow); }

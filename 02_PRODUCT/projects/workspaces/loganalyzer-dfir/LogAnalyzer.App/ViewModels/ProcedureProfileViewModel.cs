@@ -157,6 +157,7 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void SaveHeader()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { HeaderStatus = licenseRefusal; return; }
             if (!CanEdit) { HeaderStatus = LogAnalyzer.Dfir.Auth.OperatorIdentity.AdministratorOnlyMessage; return; }
             try
             {
@@ -267,12 +268,14 @@ namespace LogAnalyzer.UI.ViewModels
         [RelayCommand]
         private void SaveAs()
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             var dlg = new SaveFileDialog { FileName = ProfileStore.FileName, Filter = "Profil de proceduri (*.json)|*.json", Title = "Salvați o copie a profilului" };
             if (dlg.ShowDialog() == true) SaveTo(dlg.FileName);
         }
 
         private void SaveTo(string path)
         {
+            if (!LogAnalyzer.Core.Services.LicenseGate.RequireWritable(out var licenseRefusal)) { Status = licenseRefusal; return; }
             Pull();
             try
             {

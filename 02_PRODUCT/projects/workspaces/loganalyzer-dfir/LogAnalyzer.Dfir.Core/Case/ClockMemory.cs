@@ -137,6 +137,17 @@ public static class ClockMemory
     /// <summary>The time the clock is compared with (see <see cref="ReadBaseline"/>, first path only); null when the chain has no clock records.</summary>
     public static DateTimeOffset? LatestRecorded(params string[] chainPaths) => chainPaths.Length == 0 ? null : ReadBaseline(chainPaths[0]).Baseline;
 
+    /// <summary>
+    /// Planner #9 item 6, review round 2: the highest time EVER recorded by a clock record of the chain (no "suspect" skipping, no reset at "clock.ack").
+    /// Used as the licence expiry floor: the baseline above deliberately forgets a later time after a correction, which let a clock set back before the
+    /// expiry date give full rights again from the second start. Residual: a clock once set far ahead by mistake keeps an expired licence read-only.
+    /// </summary>
+    public static DateTimeOffset? HighestRecorded(string auditPath)
+    {
+        var all = ReadRecords(auditPath);
+        return all.Count == 0 ? null : all.Max(r => r.When);
+    }
+
     private static IEnumerable<string> ReadAllLinesShared(string path)
     {
         using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
