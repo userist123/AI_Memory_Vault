@@ -65,6 +65,26 @@ def _effective_vault_root() -> str:
     return str(root.resolve())
 
 
+def _configured_reranker():
+    """The cross-encoder reranker, only when AI_MEMORY_VAULT_RERANKER_URL is set (OFF by default).
+
+    Measured in 07_EVALUATION/reranker_experiment/. The URL must be a loopback
+    http:// address; HttpReranker refuses anything else, and a bad value fails
+    loudly here rather than silently running without the reranker.
+    """
+    url = os.getenv("AI_MEMORY_VAULT_RERANKER_URL", "").strip()
+    if not url:
+        return None
+    from retrieval.reranker import HttpReranker
+    timeout = float(os.getenv("AI_MEMORY_VAULT_RERANKER_TIMEOUT", "5"))
+    # K = 50 is the preregistered, measured default; 100 was measured only descriptively
+    # (07_EVALUATION/reranker_experiment/REPORT.md section 11).
+    k = int(os.getenv("AI_MEMORY_VAULT_RERANKER_K", "50"))
+    if not 1 <= k <= 200:
+        raise ValueError("AI_MEMORY_VAULT_RERANKER_K must be between 1 and 200 (the candidate list holds 200)")
+    return HttpReranker(url, timeout=timeout, k=k)
+
+
 def get_memory_controller() -> MemoryController:
     """Initializeaza si returneaza instanta securizata de MemoryController."""
     global _CACHED_CONTROLLER, _CACHED_CONTROLLER_ROOT
@@ -81,7 +101,7 @@ def get_memory_controller() -> MemoryController:
                 cur.execute("SELECT COUNT(*) FROM notes")
                 count = cur.fetchone()[0]
             if count > 0:
-                _CACHED_CONTROLLER = MemoryController(storage)
+                _CACHED_CONTROLLER = MemoryController(storage, reranker=_configured_reranker())
                 _CACHED_CONTROLLER_ROOT = vault_root
                 return _CACHED_CONTROLLER
         except Exception:
@@ -90,6 +110,6 @@ def get_memory_controller() -> MemoryController:
     # Fallback catre FileStorageEngine care scaneaza folderele canonice.
     # MEMORY_VAULT_ROOT permite rularea in alt vault fara a modifica codul.
     storage = FileStorageEngine(vault_root)
-    _CACHED_CONTROLLER = MemoryController(storage)
+    _CACHED_CONTROLLER = MemoryController(storage, reranker=_configured_reranker())
     _CACHED_CONTROLLER_ROOT = vault_root
     return _CACHED_CONTROLLER

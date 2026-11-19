@@ -1,0 +1,543 @@
+{
+ "arms": {
+  "off": {
+   "1": [
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+    "proc-browser-ai-0001",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+   ],
+   "2": [
+    "ed51e423-3078-4b0a-a38b-2f9d2bb62522",
+    "c1a01101-7291-49fa-9481-22904c10d090"
+   ],
+   "3": [
+    "04953748-4b63-421b-8e02-6cce24e52234",
+    "0ad6e209-6ba5-4de5-8b74-e27df9c92185",
+    "1bd0162e-f183-4c6f-ac3c-2057c2a96a62"
+   ],
+   "4": [],
+   "5": [
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31"
+   ],
+   "6": [
+    "a6cd6aa4-910a-462b-8659-341a183536a8",
+    "48be737f-d50d-4f30-b55a-3aec9877e6da"
+   ],
+   "7": [
+    "e4eca2b5-20e0-4082-aeb3-588d598f10c9",
+    "da78ac14-bb8d-561f-8636-4875b8a7cb38",
+    "vault-master-index-0001"
+   ],
+   "8": [],
+   "9": [],
+   "10": [
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31",
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+   ],
+   "11": [
+    "06ef78d3-9090-4092-b50e-204034a8d40d",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "0479ee1a-44b8-41b8-b608-0c232f2f9a31"
+   ],
+   "12": [
+    "04e86b85-4346-4c5f-a495-c5a43231b61e",
+    "11111111-1111-4111-a111-111111111111",
+    "17e7ea30-a054-4b96-b33e-a42a05115eb8"
+   ],
+   "13": [
+    "a81adbaa-68bf-4d8a-a18a-26af82a3d375"
+   ],
+   "14": [
+    "a6cd6aa4-910a-462b-8659-341a183536a8",
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+    "7fd8ae5b-eabd-4b54-a8fb-63e6daae9557"
+   ],
+   "15": [
+    "78120472-e317-5b6d-9097-fbe6ebcf8149",
+    "28890ae9-095d-4d32-a374-54cd7996d9aa"
+   ],
+   "16": [
+    "a81adbaa-68bf-4d8a-a18a-26af82a3d375",
+    "0be22e07-e4d2-4fba-90fe-6d8dd0796aed",
+    "moc-master-brain-0001"
+   ],
+   "17": [
+    "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4",
+    "proc-enterprise-integration-0001",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+   ],
+   "18": [
+    "knw-retrieval-bottleneck-p0-0001",
+    "reg-retrieval-hypotheses-0001",
+    "0056507e-53b9-4d12-9610-a5be259403f5"
+   ],
+   "19": [
+    "0923cd4f-b2bd-4285-b11f-63be9d9977e8",
+    "0d0d9f30-fa32-416f-95e3-0149006dae79",
+    "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4"
+   ],
+   "20": [
+    "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+    "proc-brain-arch-0001"
+   ]
+  },
+  "on": {
+   "1": [
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010",
+    "moc-imports-0010",
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8"
+   ],
+   "2": [
+    "60a9210f-eb13-4b64-9347-605ce4792ae2",
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+   ],
+   "3": [
+    "0ad6e209-6ba5-4de5-8b74-e27df9c92185",
+    "34b289bd-9226-4189-a326-51eefb7fb436",
+    "90ef92ef-3a2d-482e-aa1f-1c806e76200f"
+   ],
+   "4": [
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+   ],
+   "5": [
+    "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+   ],
+   "6": [
+    "cb0155f4-d99c-4fd0-b4c7-2326604c70f4",
+    "43f78207-5f51-4c8d-9c71-1b154394b9e6",
+    "b48091d9-4ede-47cf-ada1-6907ff50a363"
+   ],
+   "7": [
+    "7fd8ae5b-eabd-4b54-a8fb-63e6daae9557",
+    "64fd38ce-3a9c-40af-8348-1021ffcb0fca",
+    "b7c3d1e4-9a52-4f68-b103-2c8e5d7a4f19"
+   ],
+   "8": [
+    "c1a01101-7291-49fa-9481-22904c10d002",
+    "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4",
+    "78884547-f37a-4fab-811d-5d20e63626ce"
+   ],
+   "9": [
+    "11e9fe55-6924-4231-9635-c5629bff6ae3",
+    "0f9affc9-8fac-415c-b059-31a23a284926",
+    "9274b72b-ea97-4f5c-b235-2416a190cace"
+   ],
+   "10": [
+    "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39",
+    "7b6aae13-83e6-43ec-80df-7c8a202251fd",
+    "11e9fe55-6924-4231-9635-c5629bff6ae3"
+   ],
+   "11": [
+    "23b3793b-fef3-5536-bfc1-da42d6c8a700",
+    "37a81ae3-71a3-5bb4-b8e9-351f4edd2450",
+    "46cfee29-6e38-5dea-b4be-ec220daadf60"
+   ],
+   "12": [
+    "0f9affc9-8fac-415c-b059-31a23a284926",
+    "c1a01101-7291-49fa-9481-22904c10d020",
+    "0f6d608d-2737-49b4-9818-a695ab43eb61"
+   ],
+   "13": [
+    "a81adbaa-68bf-4d8a-a18a-26af82a3d375",
+    "b777e588-a5ac-47da-83f2-260c7e476a69"
+   ],
+   "14": [
+    "proc-brain-arch-0001",
+    "cb0155f4-d99c-4fd0-b4c7-2326604c70f4"
+   ],
+   "15": [
+    "7eb6b761-da1e-4e93-9f7d-6bccbbd48686",
+    "fce00714-05aa-44ac-84e3-432c6ca70bd1",
+    "3b5eea1c-0f04-4a12-8cbb-b9866a47ce83"
+   ],
+   "16": [
+    "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4",
+    "44dabf4a-e6b7-48f6-b8d3-3d271b93ea0e",
+    "0be22e07-e4d2-4fba-90fe-6d8dd0796aed"
+   ],
+   "17": [
+    "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840009",
+    "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+   ],
+   "18": [
+    "reg-retrieval-hypotheses-0001",
+    "0056507e-53b9-4d12-9610-a5be259403f5",
+    "123fe8df-2490-44f0-b695-143c3d5a997f"
+   ],
+   "19": [
+    "bca30cd9-2208-4c0a-b274-6ec893699666",
+    "64fd38ce-3a9c-40af-8348-1021ffcb0fca",
+    "44dabf4a-e6b7-48f6-b8d3-3d271b93ea0e"
+   ],
+   "20": [
+    "proc-brain-arch-0001"
+   ]
+  }
+ },
+ "key": {
+  "P001": {
+   "question_id": 10,
+   "note_id": "11e9fe55-6924-4231-9635-c5629bff6ae3"
+  },
+  "P002": {
+   "question_id": 1,
+   "note_id": "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8"
+  },
+  "P003": {
+   "question_id": 14,
+   "note_id": "cb0155f4-d99c-4fd0-b4c7-2326604c70f4"
+  },
+  "P004": {
+   "question_id": 19,
+   "note_id": "0d0d9f30-fa32-416f-95e3-0149006dae79"
+  },
+  "P005": {
+   "question_id": 12,
+   "note_id": "11111111-1111-4111-a111-111111111111"
+  },
+  "P006": {
+   "question_id": 2,
+   "note_id": "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+  },
+  "P007": {
+   "question_id": 10,
+   "note_id": "0056507e-53b9-4d12-9610-a5be259403f5"
+  },
+  "P008": {
+   "question_id": 5,
+   "note_id": "0056507e-53b9-4d12-9610-a5be259403f5"
+  },
+  "P009": {
+   "question_id": 14,
+   "note_id": "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8"
+  },
+  "P010": {
+   "question_id": 19,
+   "note_id": "bca30cd9-2208-4c0a-b274-6ec893699666"
+  },
+  "P011": {
+   "question_id": 7,
+   "note_id": "b7c3d1e4-9a52-4f68-b103-2c8e5d7a4f19"
+  },
+  "P012": {
+   "question_id": 10,
+   "note_id": "7b6aae13-83e6-43ec-80df-7c8a202251fd"
+  },
+  "P013": {
+   "question_id": 11,
+   "note_id": "46cfee29-6e38-5dea-b4be-ec220daadf60"
+  },
+  "P014": {
+   "question_id": 13,
+   "note_id": "a81adbaa-68bf-4d8a-a18a-26af82a3d375"
+  },
+  "P015": {
+   "question_id": 12,
+   "note_id": "c1a01101-7291-49fa-9481-22904c10d020"
+  },
+  "P016": {
+   "question_id": 16,
+   "note_id": "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4"
+  },
+  "P017": {
+   "question_id": 11,
+   "note_id": "23b3793b-fef3-5536-bfc1-da42d6c8a700"
+  },
+  "P018": {
+   "question_id": 18,
+   "note_id": "0056507e-53b9-4d12-9610-a5be259403f5"
+  },
+  "P019": {
+   "question_id": 16,
+   "note_id": "0be22e07-e4d2-4fba-90fe-6d8dd0796aed"
+  },
+  "P020": {
+   "question_id": 14,
+   "note_id": "7fd8ae5b-eabd-4b54-a8fb-63e6daae9557"
+  },
+  "P021": {
+   "question_id": 11,
+   "note_id": "0056507e-53b9-4d12-9610-a5be259403f5"
+  },
+  "P022": {
+   "question_id": 12,
+   "note_id": "0f6d608d-2737-49b4-9818-a695ab43eb61"
+  },
+  "P023": {
+   "question_id": 6,
+   "note_id": "48be737f-d50d-4f30-b55a-3aec9877e6da"
+  },
+  "P024": {
+   "question_id": 18,
+   "note_id": "knw-retrieval-bottleneck-p0-0001"
+  },
+  "P025": {
+   "question_id": 5,
+   "note_id": "0479ee1a-44b8-41b8-b608-0c232f2f9a31"
+  },
+  "P026": {
+   "question_id": 7,
+   "note_id": "e4eca2b5-20e0-4082-aeb3-588d598f10c9"
+  },
+  "P027": {
+   "question_id": 8,
+   "note_id": "c1a01101-7291-49fa-9481-22904c10d002"
+  },
+  "P028": {
+   "question_id": 4,
+   "note_id": "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+  },
+  "P029": {
+   "question_id": 12,
+   "note_id": "04e86b85-4346-4c5f-a495-c5a43231b61e"
+  },
+  "P030": {
+   "question_id": 3,
+   "note_id": "1bd0162e-f183-4c6f-ac3c-2057c2a96a62"
+  },
+  "P031": {
+   "question_id": 13,
+   "note_id": "b777e588-a5ac-47da-83f2-260c7e476a69"
+  },
+  "P032": {
+   "question_id": 7,
+   "note_id": "da78ac14-bb8d-561f-8636-4875b8a7cb38"
+  },
+  "P033": {
+   "question_id": 3,
+   "note_id": "0ad6e209-6ba5-4de5-8b74-e27df9c92185"
+  },
+  "P034": {
+   "question_id": 15,
+   "note_id": "3b5eea1c-0f04-4a12-8cbb-b9866a47ce83"
+  },
+  "P035": {
+   "question_id": 18,
+   "note_id": "reg-retrieval-hypotheses-0001"
+  },
+  "P036": {
+   "question_id": 19,
+   "note_id": "0923cd4f-b2bd-4285-b11f-63be9d9977e8"
+  },
+  "P037": {
+   "question_id": 1,
+   "note_id": "proc-browser-ai-0001"
+  },
+  "P038": {
+   "question_id": 6,
+   "note_id": "cb0155f4-d99c-4fd0-b4c7-2326604c70f4"
+  },
+  "P039": {
+   "question_id": 16,
+   "note_id": "44dabf4a-e6b7-48f6-b8d3-3d271b93ea0e"
+  },
+  "P040": {
+   "question_id": 19,
+   "note_id": "64fd38ce-3a9c-40af-8348-1021ffcb0fca"
+  },
+  "P041": {
+   "question_id": 5,
+   "note_id": "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+  },
+  "P042": {
+   "question_id": 8,
+   "note_id": "78884547-f37a-4fab-811d-5d20e63626ce"
+  },
+  "P043": {
+   "question_id": 3,
+   "note_id": "90ef92ef-3a2d-482e-aa1f-1c806e76200f"
+  },
+  "P044": {
+   "question_id": 10,
+   "note_id": "3f2a91c4-7d18-4e5b-9a06-52c8b41d7e39"
+  },
+  "P045": {
+   "question_id": 17,
+   "note_id": "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4"
+  },
+  "P046": {
+   "question_id": 16,
+   "note_id": "moc-master-brain-0001"
+  },
+  "P047": {
+   "question_id": 2,
+   "note_id": "ed51e423-3078-4b0a-a38b-2f9d2bb62522"
+  },
+  "P048": {
+   "question_id": 5,
+   "note_id": "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8"
+  },
+  "P049": {
+   "question_id": 17,
+   "note_id": "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+  },
+  "P050": {
+   "question_id": 12,
+   "note_id": "17e7ea30-a054-4b96-b33e-a42a05115eb8"
+  },
+  "P051": {
+   "question_id": 3,
+   "note_id": "34b289bd-9226-4189-a326-51eefb7fb436"
+  },
+  "P052": {
+   "question_id": 15,
+   "note_id": "7eb6b761-da1e-4e93-9f7d-6bccbbd48686"
+  },
+  "P053": {
+   "question_id": 9,
+   "note_id": "11e9fe55-6924-4231-9635-c5629bff6ae3"
+  },
+  "P054": {
+   "question_id": 2,
+   "note_id": "0d8f4ce3-daab-4aaa-9c25-9bea910d23d8"
+  },
+  "P055": {
+   "question_id": 19,
+   "note_id": "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4"
+  },
+  "P056": {
+   "question_id": 12,
+   "note_id": "0f9affc9-8fac-415c-b059-31a23a284926"
+  },
+  "P057": {
+   "question_id": 11,
+   "note_id": "0479ee1a-44b8-41b8-b608-0c232f2f9a31"
+  },
+  "P058": {
+   "question_id": 20,
+   "note_id": "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+  },
+  "P059": {
+   "question_id": 6,
+   "note_id": "b48091d9-4ede-47cf-ada1-6907ff50a363"
+  },
+  "P060": {
+   "question_id": 6,
+   "note_id": "a6cd6aa4-910a-462b-8659-341a183536a8"
+  },
+  "P061": {
+   "question_id": 3,
+   "note_id": "04953748-4b63-421b-8e02-6cce24e52234"
+  },
+  "P062": {
+   "question_id": 14,
+   "note_id": "proc-brain-arch-0001"
+  },
+  "P063": {
+   "question_id": 17,
+   "note_id": "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+  },
+  "P064": {
+   "question_id": 20,
+   "note_id": "proc-brain-arch-0001"
+  },
+  "P065": {
+   "question_id": 7,
+   "note_id": "7fd8ae5b-eabd-4b54-a8fb-63e6daae9557"
+  },
+  "P066": {
+   "question_id": 7,
+   "note_id": "64fd38ce-3a9c-40af-8348-1021ffcb0fca"
+  },
+  "P067": {
+   "question_id": 1,
+   "note_id": "0c4c8b76-85c4-4fde-a14a-4bde0b840010"
+  },
+  "P068": {
+   "question_id": 20,
+   "note_id": "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4"
+  },
+  "P069": {
+   "question_id": 19,
+   "note_id": "44dabf4a-e6b7-48f6-b8d3-3d271b93ea0e"
+  },
+  "P070": {
+   "question_id": 10,
+   "note_id": "0479ee1a-44b8-41b8-b608-0c232f2f9a31"
+  },
+  "P071": {
+   "question_id": 11,
+   "note_id": "06ef78d3-9090-4092-b50e-204034a8d40d"
+  },
+  "P072": {
+   "question_id": 15,
+   "note_id": "fce00714-05aa-44ac-84e3-432c6ca70bd1"
+  },
+  "P073": {
+   "question_id": 15,
+   "note_id": "28890ae9-095d-4d32-a374-54cd7996d9aa"
+  },
+  "P074": {
+   "question_id": 1,
+   "note_id": "moc-imports-0010"
+  },
+  "P075": {
+   "question_id": 9,
+   "note_id": "9274b72b-ea97-4f5c-b235-2416a190cace"
+  },
+  "P076": {
+   "question_id": 6,
+   "note_id": "43f78207-5f51-4c8d-9c71-1b154394b9e6"
+  },
+  "P077": {
+   "question_id": 2,
+   "note_id": "c1a01101-7291-49fa-9481-22904c10d090"
+  },
+  "P078": {
+   "question_id": 9,
+   "note_id": "0f9affc9-8fac-415c-b059-31a23a284926"
+  },
+  "P079": {
+   "question_id": 2,
+   "note_id": "60a9210f-eb13-4b64-9347-605ce4792ae2"
+  },
+  "P080": {
+   "question_id": 11,
+   "note_id": "37a81ae3-71a3-5bb4-b8e9-351f4edd2450"
+  },
+  "P081": {
+   "question_id": 14,
+   "note_id": "a6cd6aa4-910a-462b-8659-341a183536a8"
+  },
+  "P082": {
+   "question_id": 17,
+   "note_id": "proc-enterprise-integration-0001"
+  },
+  "P083": {
+   "question_id": 8,
+   "note_id": "13ce9272-3ee4-4b34-9e49-cbdfb26c5ce4"
+  },
+  "P084": {
+   "question_id": 1,
+   "note_id": "0c4c8b76-85c4-4fde-a14a-4bde0b840009"
+  },
+  "P085": {
+   "question_id": 7,
+   "note_id": "vault-master-index-0001"
+  },
+  "P086": {
+   "question_id": 18,
+   "note_id": "123fe8df-2490-44f0-b695-143c3d5a997f"
+  },
+  "P087": {
+   "question_id": 16,
+   "note_id": "a81adbaa-68bf-4d8a-a18a-26af82a3d375"
+  },
+  "P088": {
+   "question_id": 15,
+   "note_id": "78120472-e317-5b6d-9097-fbe6ebcf8149"
+  }
+ },
+ "statuses": {
+  "off:disabled": 20,
+  "on:ok": 20
+ },
+ "judged_depth": 3
+}

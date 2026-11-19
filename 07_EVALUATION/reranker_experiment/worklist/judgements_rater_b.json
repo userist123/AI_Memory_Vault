@@ -1,0 +1,446 @@
+{
+ "evaluator": "rater_b (claude-opus, blind)",
+ "rule": "A note is relevant only if it would help do the task the question was taken from (the task_source_quote). Judge each pair independently; you are not told which system returned it.",
+ "judgements": [
+  {
+   "pair_id": "P001",
+   "relevant": false,
+   "reason": "Concept note; no occurrences computation method"
+  },
+  {
+   "pair_id": "P002",
+   "relevant": false,
+   "reason": "Gitleaks gap, not removal of tracked inbox files"
+  },
+  {
+   "pair_id": "P003",
+   "relevant": true,
+   "reason": "Lifecycle and verification counts; unlabelled notes pass filters"
+  },
+  {
+   "pair_id": "P004",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P005",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P006",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P007",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P008",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P009",
+   "relevant": true,
+   "reason": "S1: entry points do not filter lifecycle; REVIEW reaches agents"
+  },
+  {
+   "pair_id": "P010",
+   "relevant": true,
+   "reason": "Consumer-grep rule for unwired modules"
+  },
+  {
+   "pair_id": "P011",
+   "relevant": false,
+   "reason": "Generic briefing method, not R016 graph arms"
+  },
+  {
+   "pair_id": "P012",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P013",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P014",
+   "relevant": true,
+   "reason": "AI_AGENT lifecycle injection at creation (OMEGA-006) and fix pattern"
+  },
+  {
+   "pair_id": "P015",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P016",
+   "relevant": false,
+   "reason": "Search measurement, not specific retrieval bypasses"
+  },
+  {
+   "pair_id": "P017",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P018",
+   "relevant": false,
+   "reason": "Dependency DAG, no BM25 baseline content"
+  },
+  {
+   "pair_id": "P019",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P020",
+   "relevant": true,
+   "reason": "Read path stages incl. caller-supplied lifecycle filters"
+  },
+  {
+   "pair_id": "P021",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P022",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P023",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P024",
+   "relevant": false,
+   "reason": "Retrieval bottleneck findings, not BM25 baseline or held-out"
+  },
+  {
+   "pair_id": "P025",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P026",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P027",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P028",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P029",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P030",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P031",
+   "relevant": true,
+   "reason": "Task ledger for transition policy and lifecycle floor per principal"
+  },
+  {
+   "pair_id": "P032",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P033",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P034",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P035",
+   "relevant": true,
+   "reason": "BM25 lexical vs semantic evidence in retrieval hypotheses"
+  },
+  {
+   "pair_id": "P036",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P037",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P038",
+   "relevant": false,
+   "reason": "Corpus stats, no edge proposer lifecycle detail"
+  },
+  {
+   "pair_id": "P039",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P040",
+   "relevant": true,
+   "reason": "Module matrix with production importer counts and statuses"
+  },
+  {
+   "pair_id": "P041",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P042",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P043",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P044",
+   "relevant": true,
+   "reason": "Book ingestion recipe for concept extraction"
+  },
+  {
+   "pair_id": "P045",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P046",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P047",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P048",
+   "relevant": true,
+   "reason": "Gitleaks allowlist gap for RAW_IMPORTS"
+  },
+  {
+   "pair_id": "P049",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P050",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P051",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P052",
+   "relevant": false,
+   "reason": "Index hub of Phase 0 documents, no CI evidence detail"
+  },
+  {
+   "pair_id": "P053",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P054",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P055",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P056",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P057",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P058",
+   "relevant": false,
+   "reason": "Lifecycle chain listed, no REVIEW/ACTIVE decision"
+  },
+  {
+   "pair_id": "P059",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P060",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P061",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P062",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P063",
+   "relevant": true,
+   "reason": "Provenance rules for derivatives from RAW imports"
+  },
+  {
+   "pair_id": "P064",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P065",
+   "relevant": true,
+   "reason": "Graph expansion stage, off by default, in search path"
+  },
+  {
+   "pair_id": "P066",
+   "relevant": true,
+   "reason": "synapse_store graph expansion behind flag, off by default"
+  },
+  {
+   "pair_id": "P067",
+   "relevant": true,
+   "reason": "Rules forbidding deletion/rewrite of RAW_IMPORTS"
+  },
+  {
+   "pair_id": "P068",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P069",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P070",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P071",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P072",
+   "relevant": true,
+   "reason": "Test baseline: main red and why CI missed it"
+  },
+  {
+   "pair_id": "P073",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P074",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P075",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P076",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P077",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P078",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P079",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P080",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P081",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P082",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P083",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P084",
+   "relevant": false,
+   "reason": "Backup procedure, not removing tracked inbox files"
+  },
+  {
+   "pair_id": "P085",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P086",
+   "relevant": true,
+   "reason": "Held-out benchmark guard defect and v2 rebuild"
+  },
+  {
+   "pair_id": "P087",
+   "relevant": false,
+   "reason": "Off-topic for the named task"
+  },
+  {
+   "pair_id": "P088",
+   "relevant": false,
+   "reason": "Unrelated modernization checkpoint"
+  }
+ ]
+}

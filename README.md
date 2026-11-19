@@ -45,7 +45,7 @@ Un substrat de memorie externă persistentă pentru agenți AI: memorie cu prove
 | Memoria persistentă a agenților | stare reluabilă `CURRENT.md` în `00_GOVERNANCE/coordination/agents/` | **IMPLEMENTAT** |
 | Planning Influence | simulare V3 fără scurgere de oracol, veto de contradicție cu prioritate absolută, reper al bazei derivat prin simulare | **VALIDAT CA SIMULARE — NU CA AGENT REAL** |
 | Politica de incertitudine | contract de aplicabilitate + forța dovezii + contradicție + cost de verificare | **MĂSURAT ÎN SIMULAREA V3** |
-| Influență cognitivă susținută de model | MVE cauzal pereche pe execuție reală de model | **ÎNCĂ NEDEMONSTRAT** |
+| Influență cognitivă susținută de model | ablație cauzală pereche pe un model local real (QA pe benchmark v3, recuperare forțată): memoria cu reranker 52/130 răspunsuri corecte față de 24 (memoria de azi) și 7 (fără memorie), 29 câștiguri / 1 pierdere (`07_EVALUATION/memory_qa_ablation/`) | **DEMONSTRAT PE QA, NU PE AGENT** — test de citire; un agent care decide singur când caută nu a fost măsurat |
 | Învățare continuă complet închisă | bucla rezultat → dovadă → învățare → mutație canonică | **PARȚIAL / DESCHIS** |
 
 <details>

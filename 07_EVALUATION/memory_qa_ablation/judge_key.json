@@ -1,0 +1,2767 @@
+{
+ "Q001": {
+  "case": "R3-115",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q002": {
+  "case": "R3-081",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q003": {
+  "case": "R3-135",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q004": {
+  "case": "R3-066",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q005": {
+  "case": "R3-141",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q006": {
+  "case": "R3-092",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q007": {
+  "case": "R3-097",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q008": {
+  "case": "R3-091",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q009": {
+  "case": "R3-116",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q010": {
+  "case": "R3-085",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q011": {
+  "case": "R3-024",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q012": {
+  "case": "R3-062",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q013": {
+  "case": "R3-111",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q014": {
+  "case": "R3-015",
+  "conditions": [
+   "A",
+   "B"
+  ]
+ },
+ "Q015": {
+  "case": "R3-058",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q016": {
+  "case": "R3-105",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q017": {
+  "case": "R3-040",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q018": {
+  "case": "R3-115",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q019": {
+  "case": "R3-027",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q020": {
+  "case": "R3-034",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q021": {
+  "case": "R3-103",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q022": {
+  "case": "R3-072",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q023": {
+  "case": "R3-073",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q024": {
+  "case": "R3-032",
+  "conditions": [
+   "A",
+   "B",
+   "C"
+  ]
+ },
+ "Q025": {
+  "case": "R3-123",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q026": {
+  "case": "R3-153",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q027": {
+  "case": "R3-099",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q028": {
+  "case": "R3-137",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q029": {
+  "case": "R3-064",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q030": {
+  "case": "R3-143",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q031": {
+  "case": "R3-096",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q032": {
+  "case": "R3-003",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q033": {
+  "case": "R3-070",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q034": {
+  "case": "R3-090",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q035": {
+  "case": "R3-157",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q036": {
+  "case": "R3-031",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q037": {
+  "case": "R3-112",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q038": {
+  "case": "R3-156",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q039": {
+  "case": "R3-154",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q040": {
+  "case": "R3-037",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q041": {
+  "case": "R3-142",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q042": {
+  "case": "R3-029",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q043": {
+  "case": "R3-038",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q044": {
+  "case": "R3-036",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q045": {
+  "case": "R3-129",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q046": {
+  "case": "R3-130",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q047": {
+  "case": "R3-039",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q048": {
+  "case": "R3-026",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q049": {
+  "case": "R3-114",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q050": {
+  "case": "R3-116",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q051": {
+  "case": "R3-044",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q052": {
+  "case": "R3-122",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q053": {
+  "case": "R3-078",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q054": {
+  "case": "R3-009",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q055": {
+  "case": "R3-126",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q056": {
+  "case": "R3-064",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q057": {
+  "case": "R3-073",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q058": {
+  "case": "R3-136",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q059": {
+  "case": "R3-138",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q060": {
+  "case": "R3-038",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q061": {
+  "case": "R3-113",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q062": {
+  "case": "R3-095",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q063": {
+  "case": "R3-071",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q064": {
+  "case": "R3-080",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q065": {
+  "case": "R3-069",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q066": {
+  "case": "R3-118",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q067": {
+  "case": "R3-015",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q068": {
+  "case": "R3-133",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q069": {
+  "case": "R3-014",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q070": {
+  "case": "R3-051",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q071": {
+  "case": "R3-057",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q072": {
+  "case": "R3-134",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q073": {
+  "case": "R3-120",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q074": {
+  "case": "R3-013",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q075": {
+  "case": "R3-047",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q076": {
+  "case": "R3-036",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q077": {
+  "case": "R3-060",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q078": {
+  "case": "R3-148",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q079": {
+  "case": "R3-037",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q080": {
+  "case": "R3-048",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q081": {
+  "case": "R3-117",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q082": {
+  "case": "R3-134",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q083": {
+  "case": "R3-043",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q084": {
+  "case": "R3-065",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q085": {
+  "case": "R3-117",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q086": {
+  "case": "R3-023",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q087": {
+  "case": "R3-021",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q088": {
+  "case": "R3-023",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q089": {
+  "case": "R3-100",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q090": {
+  "case": "R3-051",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q091": {
+  "case": "R3-050",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q092": {
+  "case": "R3-150",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q093": {
+  "case": "R3-068",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q094": {
+  "case": "R3-044",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q095": {
+  "case": "R3-001",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q096": {
+  "case": "R3-135",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q097": {
+  "case": "R3-020",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q098": {
+  "case": "R3-035",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q099": {
+  "case": "R3-107",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q100": {
+  "case": "R3-151",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q101": {
+  "case": "R3-049",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q102": {
+  "case": "R3-020",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q103": {
+  "case": "R3-148",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q104": {
+  "case": "R3-007",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q105": {
+  "case": "R3-024",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q106": {
+  "case": "R3-122",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q107": {
+  "case": "R3-020",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q108": {
+  "case": "R3-156",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q109": {
+  "case": "R3-009",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q110": {
+  "case": "R3-016",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q111": {
+  "case": "R3-142",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q112": {
+  "case": "R3-034",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q113": {
+  "case": "R3-157",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q114": {
+  "case": "R3-074",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q115": {
+  "case": "R3-083",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q116": {
+  "case": "R3-086",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q117": {
+  "case": "R3-005",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q118": {
+  "case": "R3-093",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q119": {
+  "case": "R3-001",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q120": {
+  "case": "R3-028",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q121": {
+  "case": "R3-110",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q122": {
+  "case": "R3-071",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q123": {
+  "case": "R3-017",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q124": {
+  "case": "R3-077",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q125": {
+  "case": "R3-132",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q126": {
+  "case": "R3-068",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q127": {
+  "case": "R3-030",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q128": {
+  "case": "R3-146",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q129": {
+  "case": "R3-099",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q130": {
+  "case": "R3-133",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q131": {
+  "case": "R3-109",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q132": {
+  "case": "R3-102",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q133": {
+  "case": "R3-053",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q134": {
+  "case": "R3-055",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q135": {
+  "case": "R3-116",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q136": {
+  "case": "R3-028",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q137": {
+  "case": "R3-149",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q138": {
+  "case": "R3-145",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q139": {
+  "case": "R3-086",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q140": {
+  "case": "R3-127",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q141": {
+  "case": "R3-141",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q142": {
+  "case": "R3-055",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q143": {
+  "case": "R3-092",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q144": {
+  "case": "R3-061",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q145": {
+  "case": "R3-019",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q146": {
+  "case": "R3-135",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q147": {
+  "case": "R3-147",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q148": {
+  "case": "R3-125",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q149": {
+  "case": "R3-024",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q150": {
+  "case": "R3-140",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q151": {
+  "case": "R3-046",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q152": {
+  "case": "R3-076",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q153": {
+  "case": "R3-082",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q154": {
+  "case": "R3-102",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q155": {
+  "case": "R3-098",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q156": {
+  "case": "R3-108",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q157": {
+  "case": "R3-138",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q158": {
+  "case": "R3-069",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q159": {
+  "case": "R3-069",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q160": {
+  "case": "R3-090",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q161": {
+  "case": "R3-113",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q162": {
+  "case": "R3-121",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q163": {
+  "case": "R3-136",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q164": {
+  "case": "R3-029",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q165": {
+  "case": "R3-065",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q166": {
+  "case": "R3-131",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q167": {
+  "case": "R3-159",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q168": {
+  "case": "R3-002",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q169": {
+  "case": "R3-017",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q170": {
+  "case": "R3-006",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q171": {
+  "case": "R3-033",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q172": {
+  "case": "R3-027",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q173": {
+  "case": "R3-115",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q174": {
+  "case": "R3-149",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q175": {
+  "case": "R3-066",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q176": {
+  "case": "R3-121",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q177": {
+  "case": "R3-159",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q178": {
+  "case": "R3-037",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q179": {
+  "case": "R3-106",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q180": {
+  "case": "R3-063",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q181": {
+  "case": "R3-084",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q182": {
+  "case": "R3-077",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q183": {
+  "case": "R3-120",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q184": {
+  "case": "R3-006",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q185": {
+  "case": "R3-114",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q186": {
+  "case": "R3-049",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q187": {
+  "case": "R3-066",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q188": {
+  "case": "R3-054",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q189": {
+  "case": "R3-044",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q190": {
+  "case": "R3-147",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q191": {
+  "case": "R3-047",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q192": {
+  "case": "R3-074",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q193": {
+  "case": "R3-096",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q194": {
+  "case": "R3-084",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q195": {
+  "case": "R3-027",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q196": {
+  "case": "R3-007",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q197": {
+  "case": "R3-062",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q198": {
+  "case": "R3-022",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q199": {
+  "case": "R3-155",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q200": {
+  "case": "R3-061",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q201": {
+  "case": "R3-030",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q202": {
+  "case": "R3-123",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q203": {
+  "case": "R3-083",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q204": {
+  "case": "R3-012",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q205": {
+  "case": "R3-147",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q206": {
+  "case": "R3-156",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q207": {
+  "case": "R3-101",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q208": {
+  "case": "R3-004",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q209": {
+  "case": "R3-113",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q210": {
+  "case": "R3-079",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q211": {
+  "case": "R3-098",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q212": {
+  "case": "R3-146",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q213": {
+  "case": "R3-131",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q214": {
+  "case": "R3-014",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q215": {
+  "case": "R3-035",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q216": {
+  "case": "R3-026",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q217": {
+  "case": "R3-108",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q218": {
+  "case": "R3-096",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q219": {
+  "case": "R3-111",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q220": {
+  "case": "R3-045",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q221": {
+  "case": "R3-019",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q222": {
+  "case": "R3-068",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q223": {
+  "case": "R3-130",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q224": {
+  "case": "R3-098",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q225": {
+  "case": "R3-149",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q226": {
+  "case": "R3-063",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q227": {
+  "case": "R3-155",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q228": {
+  "case": "R3-099",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q229": {
+  "case": "R3-140",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q230": {
+  "case": "R3-086",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q231": {
+  "case": "R3-150",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q232": {
+  "case": "R3-054",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q233": {
+  "case": "R3-026",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q234": {
+  "case": "R3-052",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q235": {
+  "case": "R3-014",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q236": {
+  "case": "R3-144",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q237": {
+  "case": "R3-021",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q238": {
+  "case": "R3-080",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q239": {
+  "case": "R3-152",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q240": {
+  "case": "R3-043",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q241": {
+  "case": "R3-104",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q242": {
+  "case": "R3-035",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q243": {
+  "case": "R3-112",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q244": {
+  "case": "R3-057",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q245": {
+  "case": "R3-128",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q246": {
+  "case": "R3-046",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q247": {
+  "case": "R3-022",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q248": {
+  "case": "R3-022",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q249": {
+  "case": "R3-076",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q250": {
+  "case": "R3-081",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q251": {
+  "case": "R3-077",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q252": {
+  "case": "R3-132",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q253": {
+  "case": "R3-045",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q254": {
+  "case": "R3-128",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q255": {
+  "case": "R3-142",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q256": {
+  "case": "R3-072",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q257": {
+  "case": "R3-126",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q258": {
+  "case": "R3-067",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q259": {
+  "case": "R3-008",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q260": {
+  "case": "R3-123",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q261": {
+  "case": "R3-067",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q262": {
+  "case": "R3-137",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q263": {
+  "case": "R3-095",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q264": {
+  "case": "R3-007",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q265": {
+  "case": "R3-057",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q266": {
+  "case": "R3-137",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q267": {
+  "case": "R3-133",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q268": {
+  "case": "R3-153",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q269": {
+  "case": "R3-040",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q270": {
+  "case": "R3-079",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q271": {
+  "case": "R3-002",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q272": {
+  "case": "R3-105",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q273": {
+  "case": "R3-118",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q274": {
+  "case": "R3-005",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q275": {
+  "case": "R3-003",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q276": {
+  "case": "R3-139",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q277": {
+  "case": "R3-105",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q278": {
+  "case": "R3-125",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q279": {
+  "case": "R3-059",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q280": {
+  "case": "R3-018",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q281": {
+  "case": "R3-134",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q282": {
+  "case": "R3-019",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q283": {
+  "case": "R3-010",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q284": {
+  "case": "R3-119",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q285": {
+  "case": "R3-039",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q286": {
+  "case": "R3-021",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q287": {
+  "case": "R3-060",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q288": {
+  "case": "R3-106",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q289": {
+  "case": "R3-072",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q290": {
+  "case": "R3-070",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q291": {
+  "case": "R3-031",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q292": {
+  "case": "R3-101",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q293": {
+  "case": "R3-089",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q294": {
+  "case": "R3-012",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q295": {
+  "case": "R3-083",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q296": {
+  "case": "R3-013",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q297": {
+  "case": "R3-018",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q298": {
+  "case": "R3-043",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q299": {
+  "case": "R3-145",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q300": {
+  "case": "R3-110",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q301": {
+  "case": "R3-064",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q302": {
+  "case": "R3-087",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q303": {
+  "case": "R3-094",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q304": {
+  "case": "R3-025",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q305": {
+  "case": "R3-151",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q306": {
+  "case": "R3-093",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q307": {
+  "case": "R3-070",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q308": {
+  "case": "R3-017",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q309": {
+  "case": "R3-160",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q310": {
+  "case": "R3-124",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q311": {
+  "case": "R3-100",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q312": {
+  "case": "R3-152",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q313": {
+  "case": "R3-011",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q314": {
+  "case": "R3-158",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q315": {
+  "case": "R3-108",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q316": {
+  "case": "R3-053",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q317": {
+  "case": "R3-053",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q318": {
+  "case": "R3-132",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q319": {
+  "case": "R3-091",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q320": {
+  "case": "R3-008",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q321": {
+  "case": "R3-148",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q322": {
+  "case": "R3-160",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q323": {
+  "case": "R3-143",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q324": {
+  "case": "R3-154",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q325": {
+  "case": "R3-104",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q326": {
+  "case": "R3-150",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q327": {
+  "case": "R3-073",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q328": {
+  "case": "R3-042",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q329": {
+  "case": "R3-042",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q330": {
+  "case": "R3-093",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q331": {
+  "case": "R3-112",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q332": {
+  "case": "R3-075",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q333": {
+  "case": "R3-059",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q334": {
+  "case": "R3-060",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q335": {
+  "case": "R3-151",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q336": {
+  "case": "R3-103",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q337": {
+  "case": "R3-058",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q338": {
+  "case": "R3-127",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q339": {
+  "case": "R3-087",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q340": {
+  "case": "R3-082",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q341": {
+  "case": "R3-048",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q342": {
+  "case": "R3-075",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q343": {
+  "case": "R3-089",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q344": {
+  "case": "R3-091",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q345": {
+  "case": "R3-153",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q346": {
+  "case": "R3-078",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q347": {
+  "case": "R3-107",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q348": {
+  "case": "R3-094",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q349": {
+  "case": "R3-144",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q350": {
+  "case": "R3-111",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q351": {
+  "case": "R3-054",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q352": {
+  "case": "R3-028",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q353": {
+  "case": "R3-082",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q354": {
+  "case": "R3-097",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q355": {
+  "case": "R3-124",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q356": {
+  "case": "R3-023",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q357": {
+  "case": "R3-088",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q358": {
+  "case": "R3-012",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q359": {
+  "case": "R3-063",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q360": {
+  "case": "R3-003",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q361": {
+  "case": "R3-129",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q362": {
+  "case": "R3-029",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q363": {
+  "case": "R3-090",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q364": {
+  "case": "R3-079",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q365": {
+  "case": "R3-139",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q366": {
+  "case": "R3-075",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q367": {
+  "case": "R3-085",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q368": {
+  "case": "R3-160",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q369": {
+  "case": "R3-121",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q370": {
+  "case": "R3-033",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q371": {
+  "case": "R3-107",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q372": {
+  "case": "R3-045",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q373": {
+  "case": "R3-106",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q374": {
+  "case": "R3-013",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q375": {
+  "case": "R3-050",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q376": {
+  "case": "R3-118",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q377": {
+  "case": "R3-129",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q378": {
+  "case": "R3-103",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q379": {
+  "case": "R3-088",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q380": {
+  "case": "R3-010",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q381": {
+  "case": "R3-074",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q382": {
+  "case": "R3-114",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q383": {
+  "case": "R3-076",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q384": {
+  "case": "R3-033",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q385": {
+  "case": "R3-085",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q386": {
+  "case": "R3-018",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q387": {
+  "case": "R3-016",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q388": {
+  "case": "R3-005",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q389": {
+  "case": "R3-065",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q390": {
+  "case": "R3-041",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q391": {
+  "case": "R3-136",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q392": {
+  "case": "R3-140",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q393": {
+  "case": "R3-119",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q394": {
+  "case": "R3-131",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q395": {
+  "case": "R3-008",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q396": {
+  "case": "R3-056",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q397": {
+  "case": "R3-095",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q398": {
+  "case": "R3-041",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q399": {
+  "case": "R3-158",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q400": {
+  "case": "R3-080",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q401": {
+  "case": "R3-078",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q402": {
+  "case": "R3-016",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q403": {
+  "case": "R3-048",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q404": {
+  "case": "R3-104",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q405": {
+  "case": "R3-038",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q406": {
+  "case": "R3-039",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q407": {
+  "case": "R3-058",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q408": {
+  "case": "R3-097",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q409": {
+  "case": "R3-025",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q410": {
+  "case": "R3-154",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q411": {
+  "case": "R3-144",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q412": {
+  "case": "R3-125",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q413": {
+  "case": "R3-001",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q414": {
+  "case": "R3-071",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q415": {
+  "case": "R3-059",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q416": {
+  "case": "R3-030",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q417": {
+  "case": "R3-011",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q418": {
+  "case": "R3-087",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q419": {
+  "case": "R3-041",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q420": {
+  "case": "R3-042",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q421": {
+  "case": "R3-002",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q422": {
+  "case": "R3-011",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q423": {
+  "case": "R3-158",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q424": {
+  "case": "R3-100",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q425": {
+  "case": "R3-101",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q426": {
+  "case": "R3-145",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q427": {
+  "case": "R3-056",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q428": {
+  "case": "R3-061",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q429": {
+  "case": "R3-092",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q430": {
+  "case": "R3-089",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q431": {
+  "case": "R3-109",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q432": {
+  "case": "R3-006",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q433": {
+  "case": "R3-052",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q434": {
+  "case": "R3-130",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q435": {
+  "case": "R3-034",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q436": {
+  "case": "R3-119",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q437": {
+  "case": "R3-122",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q438": {
+  "case": "R3-009",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q439": {
+  "case": "R3-109",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q440": {
+  "case": "R3-051",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q441": {
+  "case": "R3-010",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q442": {
+  "case": "R3-155",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q443": {
+  "case": "R3-067",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q444": {
+  "case": "R3-081",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q445": {
+  "case": "R3-124",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q446": {
+  "case": "R3-102",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q447": {
+  "case": "R3-047",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q448": {
+  "case": "R3-004",
+  "conditions": [
+   "B",
+   "C"
+  ]
+ },
+ "Q449": {
+  "case": "R3-152",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q450": {
+  "case": "R3-040",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q451": {
+  "case": "R3-110",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q452": {
+  "case": "R3-138",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q453": {
+  "case": "R3-128",
+  "conditions": [
+   "C"
+  ]
+ },
+ "Q454": {
+  "case": "R3-094",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q455": {
+  "case": "R3-127",
+  "conditions": [
+   "B"
+  ]
+ },
+ "Q456": {
+  "case": "R3-088",
+  "conditions": [
+   "A"
+  ]
+ },
+ "Q457": {
+  "case": "R3-143",
+  "conditions": [
+   "A"
+  ]
+ }
+}

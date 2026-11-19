@@ -1,0 +1,3222 @@
+{
+ "meta": {
+  "model": "qwen2.5:7b-instruct",
+  "model_digest": "845dbda0ea48ed749caafd9e6037047aa19acfcfd82e704d7ca97d631a0b697e",
+  "options": {
+   "temperature": 0,
+   "seed": 42,
+   "num_ctx": 8192,
+   "num_predict": 300
+  },
+  "contexts_git_head": "c1d16175c18bf900dcb283c96077d51018a321bb",
+  "max_prompt_tokens": 2918,
+  "reused_C_from_B": 4,
+  "minutes": 8.2
+ },
+ "rows": [
+  {
+   "id": "R3-001",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The evidence condition corresponding to the highest level defined in the vault is \"S1\" with a severity of \"high\".",
+     "prompt_tokens": 1620,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Condition B, which corresponds to a \"Full Vault Context Dump,\" has the highest evidence coverage and accuracy at 71.1% evidence coverage and 63.3% accuracy.",
+     "prompt_tokens": 1889,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-002",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not specify four criteria for creating a new note. They contain information about agent transfers, software for home renovation projects, cost-router phases in a project, and Git procedures, but do not detail note creation criteria.",
+     "prompt_tokens": 1712,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Based on the information provided, there are no explicit four criteria given for creating a new note. The notes mention various processes and changes related to note handling and storage but do not detail specific criteria for creating new notes. Therefore, I don't have enough information to provide an answer to this specific question.",
+     "prompt_tokens": 2107,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-003",
+   "answers": {
+    "A": {
+     "answer": "Un agent nu are voie să prezinte drept real o proprietate indiferent de forma în care a fost obținută dacă există dovezi clară că transacția nu a avut loc în mod legal, de exemplu, în cazul vânării sau a obținerii de forță puternică.",
+     "prompt_tokens": 90,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about what an AI agent is not allowed to present as real, regardless of how it was obtained.",
+     "prompt_tokens": 505,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Din informațiile date, nu este specificat exact ce tipuri de relații sau interacțiuni un agent nu are voie să prezinte drept real, indiferent de forma în care au fost obținute. Informațiile oferite se concentrează mai mult pe tipurile de obiecte și relațiile lor în mesh-ul de memorie cognitive, dar nu detalierează restricțiile specifice pentru agente. Prin urmare, cu informațiile actuale, nu pot oferi o răspuns specific la întrebare.",
+     "prompt_tokens": 493,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-004",
+   "answers": {
+    "A": {
+     "answer": "Trebuie ignorată sau verificată înainte de a fi utilizată.",
+     "prompt_tokens": 78,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.",
+     "prompt_tokens": 110,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know.",
+     "prompt_tokens": 110,
+     "done_reason": "stop",
+     "reused_from": "B"
+    }
+   }
+  },
+  {
+   "id": "R3-005",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 79,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not specify a role responsible for locating canonical cross-cutting knowledge and preserving provenance.",
+     "prompt_tokens": 1525,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Based on the information provided, the role responsible for locating canonical cross-cutting knowledge and preserving provenance is Layer 2: Canonical Knowledge (`01_KNOWLEDGE/`). This layer is described as containing \"Verified domain architectures, research findings, and protocols\" and has strict mutability rules, requiring AI-proposed knowledge to be reviewed and human-attested before becoming active.",
+     "prompt_tokens": 1400,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-006",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 73,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Based on the information provided, there is no explicit statement about what must never happen while discovering an external repository. The notes focus on security gaps and protocols within a specific memory vault and agent routing system, but do not detail strict rules for external repository discovery. Therefore, I don't know the specific answer to this question based on the given data.",
+     "prompt_tokens": 1976,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "What must never happen while discovering an external repository is that the model must never be the source of authority. The repository owner is considered the final authority for mutations to the repository and for privileged machine operations performed by an AI agent.",
+     "prompt_tokens": 1948,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-007",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The precedence of evidence sources can depend on the specific context or legal framework involved.",
+     "prompt_tokens": 72,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about the precedence of evidence sources when records disagree.",
+     "prompt_tokens": 1662,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "When records disagree, the following hierarchy of evidence sources takes precedence:\n\n1. **PRIMARY**: Official text, Monitorul Oficial scans, or the manufacturer's own TDS or guidelines.\n2. **SECONDARY**: Reputable secondary sources (tax press, retailer, trade summary). These should be checked against the official text before use as hard rules.\n3. **UNVERIFIED**: Secondary sources only, conflicting, or not found in any text read. Use only as a soft hint.\n\nThis hierarchy ensures that the most authoritative sources are given priority in resolving disagreements.",
+     "prompt_tokens": 1930,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-008",
+   "answers": {
+    "A": {
+     "answer": "The standard rejects merely decorative renaming of modules to maintain clarity and avoid confusion, ensuring that module names accurately reflect their functionality or purpose.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about the standard's reasons for rejecting merely decorative renaming of modules.",
+     "prompt_tokens": 1624,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The standard rejects merely decorative renaming of modules because it aims to prevent the addition of vocabulary without adding function. Renaming for aesthetics alone would introduce new terms without improving the functionality or clarity, which is what this standard seeks to avoid. Instead, the taxonomy focuses on fixing ambiguity in the existing codebase.",
+     "prompt_tokens": 2158,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-009",
+   "answers": {
+    "A": {
+     "answer": "A durable change should be recorded by updating the existing record to reflect the new information, ensuring that the original data is preserved or referenced, and maintaining a clear history of changes.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "When a durable change is needed and an equivalent record already exists, the change should be committed as a new, coherent, and validated update. Ensure the commit message is descriptive and that the change set does not include credentials or other secrets. Follow the Git procedure to back up the vault before making any significant changes, and verify the results after restoration or rollback.",
+     "prompt_tokens": 1567,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "When an equivalent record already exists for a durable change, the next step is to reuse the existing method documented in the vault rather than rediscovering it. This involves recording the solution or method in the vault so that it can be reused by the next agent, as described in the notes under the \"Recording a solved problem so the next agent can reuse the method\" section.",
+     "prompt_tokens": 1796,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-010",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The specific details on how a vault distinguishes one reusable capability from a generic repository would depend on the implementation of the vault system in question.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The vault distinguishes one reusable capability from a generic repository through the routing protocol, which involves several steps including task normalization, policy gate evaluation, and capability classification. This process ensures that the appropriate agent role, runtime, and model quality tier are selected based on the specific requirements of the task.",
+     "prompt_tokens": 1699,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The vault distinguishes one reusable capability from a generic repository through its **SKILL** object type in the Cognitive Memory Mesh Architecture. Each skill is defined as a reusable procedural capability and execution runbook, with a specific location (`/.agents/skills/`) and allowed outgoing relations such as `requires`, `tested_by`, and `implements`. This taxonomy helps in organizing and discovering capabilities in a structured manner without altering production runtime retrieval or packing algorithms.",
+     "prompt_tokens": 2019,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-011",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 79,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The long-context evaluation described as covering trajectories longer than 35 sessions is the LoCoMo benchmark.",
+     "prompt_tokens": 1803,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The long-context evaluation described as covering trajectories longer than 35 sessions is LoCoMo (Long-Context Dynamic Memory).",
+     "prompt_tokens": 1804,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-012",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The axiom that separates a declaration from what was actually observed is: \\(\\mathbf{DECLARED \\neq OBSERVED}\\).",
+     "prompt_tokens": 2108,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The axiom that separates a declaration from what was actually observed is **\"Agent Report ≠ Verification Evidence\"**. This means that saying \"I verified the code\" is an unverified assertion and requires empirical test logs (`pytest` exit code 0) or browser renders as verification evidence.",
+     "prompt_tokens": 2118,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-013",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 79,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Based on the provided notes, the primary accuracy bottleneck identified is **Candidate Discovery / Retrieval Composition**, rather than model reasoning or the final context byte budget. This suggests that even with high candidate recall, the quality or relevance of the retrieved candidates is not sufficient to improve the model's accuracy significantly.",
+     "prompt_tokens": 2115,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The primary failure identified between high candidate recall and the information delivered to the model was the **`PACKING_FAILURE`** in the **P1 Context Packing Laboratory**. Specifically, under the production baseline (P0), 76.1% of all discovered factual keywords were discarded or corrupted before reaching the LLM context due to issues in the `ContextPackBuilder`. These issues included string compression, truncation, and clearing of notes beyond a certain length, which prevented the full context from being effectively delivered to the model.",
+     "prompt_tokens": 1985,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-014",
+   "answers": {
+    "A": {
+     "answer": "Prioritatea este stabilitatea și trasabilitatea atunci când se adaugă funcționalități. A menține un sistem stabil și trasaționabil este crucial, deoarece permite identificarea și urmărirea efectelor introducerii noilor funcționalități.",
+     "prompt_tokens": 87,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Ce prioritate este data stabilității și trăsabilității atunci când se adaugă funcționalități?\n\nRăspuns: Prioritatea dată stabilității și trăsabilității este foarte mare atunci când se adaugă funcționalități, deoarece astfel se asigură integritatea și corectitudinea sistemului.",
+     "prompt_tokens": 119,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the priority of stability and traceability when adding functionalities.",
+     "prompt_tokens": 1567,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-015",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 73,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.",
+     "prompt_tokens": 2025,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about a specific question that an interface should surface within five seconds.",
+     "prompt_tokens": 2431,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-016",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes provided do not contain the answer to the question.",
+     "prompt_tokens": 107,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about a principle that eliminates pixels that do not transmit data. The notes are about data pipelines, caching patterns, and a 3D house design process, but do not address image processing or data transmission principles related to pixels.",
+     "prompt_tokens": 1148,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-017",
+   "answers": {
+    "A": {
+     "answer": "Trebuie stabilit clar ce funcționalități va oferi interfata utilizatorului și care sunt datele de intrare și ieșire ale funcțiilor. De asemenea, ar trebui să se definească elementele grafice ale interfetei, cum ar fi butoanele, campurile de text, listele de selectare, etc.",
+     "prompt_tokens": 80,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes provided are empty and do not contain the necessary information to answer the question.",
+     "prompt_tokens": 112,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Înainte de a scrie codul interfetei, trebuie stabilit explicit numărul maxim de intrari simultane, directiile permise (BUY/SELL), regulile de SL/TP, criteriile de selectie a strategiei, precum și cerințele de management al riscului. Aceste specificări trebuie valideazate cu utilizatorul înainte de a începe implementarea.",
+     "prompt_tokens": 913,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-018",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about the specific platform this forensic architecture is designed to run on.",
+     "prompt_tokens": 1673,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Based on the information provided, the forensic architecture seems to be designed to run on a platform that can handle both Windows and Linux environments, as it mentions issues with CRLF normalization and LF conversion, which are common differences between Windows and Unix/Linux file systems. However, the specific primary platform is not explicitly stated. The solution implemented involves normalizing EOL (End of Line) characters to ensure consistency across different platforms.",
+     "prompt_tokens": 1683,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-019",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The specific runtime, networking, and UI constraints for the transfer-register application are not provided in the question.",
+     "prompt_tokens": 79,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain any information about runtime, networking, and UI constraints for a transfer-register application. The notes are focused on concepts like memory censors, the law of requisite variety, a research project for Casa3D, and UI design prompts, but none of them relate to the constraints of a transfer-register application.",
+     "prompt_tokens": 1557,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The notes do not provide specific details about the runtime, networking, and UI constraints imposed on the transfer-register application. However, the notes do mention that the application is built using C#/WPF/.NET 8, which implies a WPF UI. For runtime and networking constraints, the notes reference a tech stack that includes .NET (C#, WPF) for desktop applications, but do not specify any particular constraints. Therefore, I don't know the specific constraints without more detailed information.",
+     "prompt_tokens": 1483,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-020",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The specific details can vary greatly depending on the device and operating system in use. Generally, authentication involves verifying the identity of the operator through methods like passwords, biometrics, or tokens. On-device database protection might include encryption, access controls, and regular updates to mitigate vulnerabilities.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain any information about operator authentication or on-device database protection.",
+     "prompt_tokens": 1935,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Based on the provided notes, the authentication and protection of the on-device database for Casa3D are handled as follows:\n\n- **Authentication**:\n  - The login system uses a single password per owner, with hashing using `scrypt` (N=16384, r=8, p=1) and an HMAC-SHA256 session cookie (`casa_session`) that expires in 30 days and rotates with password changes.\n  - There are rate limits on login attempts, allowing 5 attempts per IP address over a 15-minute period.\n\n- **Database Protection**:\n  - The database configuration varies depending on the environment:\n    - In a local development or Vercel environment, it uses Postgres with a PostgreSQL pool, limited to a maximum of 5 connections.\n    - In a disk-based or in-memory environment, it uses PGlite.\n  - The database schema includes a column `owner` in tables like `projects`, `tasks`, and `studio_profile`, which helps in managing tenancy and access control.\n\nThese measures ensure that the system is secure and that user data is protected.",
+     "prompt_tokens": 2733,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-021",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about the architecture's requirements for model-generated output.",
+     "prompt_tokens": 1603,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The architecture requires that model-generated output crossing architectural boundaries use strict Pydantic V2 schemas, and no raw dictionaries or unvalidated floating point values are passed between strategy and risk modules.",
+     "prompt_tokens": 2147,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-022",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The question does not provide enough information about the specific document in question.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about the status assigned to legal and institutional references in the document. The notes focus on technical details of software projects and do not discuss the status of legal or institutional references.",
+     "prompt_tokens": 1738,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "This document states that the references are \"not legal advice\" and that \"Every licence row must be re-checked on the live page before anything ships.\" It also marks some facts as [verified], but notes that the information comes from secondary sources unless noted.",
+     "prompt_tokens": 1561,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-023",
+   "answers": {
+    "A": {
+     "answer": "I don't know. Please provide more context or the note in question.",
+     "prompt_tokens": 79,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The note does not mention any national framework being approved under a Romanian law. It discusses Casa3D software and some Romanian forum evidence, but does not reference a specific national framework in a Romanian law.",
+     "prompt_tokens": 1746,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The notes provided do not specify a national framework approved under cited Romanian law. They contain information about design guidelines, the law of requisite variety, and constraints in a theoretical context, but no clear reference to a specific Romanian legal framework.",
+     "prompt_tokens": 1271,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-024",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes do not specify the institutional scope given to the order discussed. The notes provide details about Casa3D software and its current state, but do not mention any specific order or its scope.",
+     "prompt_tokens": 2308,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The notes provided do not contain information about the institutional scope of the order discussed. The notes are technical documentation and do not include details about institutional policies or scopes.",
+     "prompt_tokens": 2119,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-025",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The specific breadth of a linked curated resource collection by category count would depend on the particular collection in question.",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes do not provide information on the breadth of the linked curated resource collection by category count.",
+     "prompt_tokens": 2658,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The notes do not provide information on the breadth of the linked curated resource collection by category count.",
+     "prompt_tokens": 2647,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-026",
+   "answers": {
+    "A": {
+     "answer": "I don't know. Could you provide more context about the collection and the specialized skills you're referring to?",
+     "prompt_tokens": 79,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Această colecție integrează 130 de skill-uri specializate pentru agenți AI.",
+     "prompt_tokens": 2358,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Această colecție integrează 130 de skill-uri specializate.",
+     "prompt_tokens": 2576,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-027",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The specific properties for GPU-accelerated animation can vary depending on the technology or framework being used, but common ones might include transform, opacity, and filter properties in CSS animations.",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain any information about GPU-accelerated animation or its properties. The notes are primarily about skills for AI agents, including web design, game development, and media skills, as well as a process for ingesting books into an ontology and details from a statistics manual.",
+     "prompt_tokens": 1695,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know.\n\nThe provided notes do not contain any information about GPU-accelerated animation properties.",
+     "prompt_tokens": 1074,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-028",
+   "answers": {
+    "A": {
+     "answer": "I don't know. Please provide more context about the conversion flow.",
+     "prompt_tokens": 78,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about a specific conversion flow or the primary action a visitor should be guided toward.",
+     "prompt_tokens": 2128,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "In the \"Hero Sections\" category, the primary action a visitor should be guided toward is clear messaging, visuals, and CTAs that instantly capture attention, communicate the value proposition, and guide visitors toward action.",
+     "prompt_tokens": 1751,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-029",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The layer described as the repository of stable, reusable knowledge is the `KNOWLEDGE` layer, which is part of the Cognitive Memory Mesh architecture. It contains canonical, verified domain facts and architectural blueprints.",
+     "prompt_tokens": 1575,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Layer 2: Canonical Knowledge (`01_KNOWLEDGE/`) is described as the repository of stable, reusable knowledge.",
+     "prompt_tokens": 1668,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-030",
+   "answers": {
+    "A": {
+     "answer": "I don't know. Establishing the utility of stored information typically requires demonstrating its relevance, accuracy, and value in a specific context, but there isn't a single, universally defined \"evidence sequence\" for this process.",
+     "prompt_tokens": 78,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Based on the notes provided, the evidence sequence required before the utility of stored information can be established includes:\n\n- SOURCE_VERIFIED / TEST_VERIFIED / RUNTIME_VERIFIED / MEASURED / INFERRED / UNVERIFIED labels on every claim.\n- Evidence labels should be applied to establish the utility of stored information.\n\nThis requirement is explicitly stated in the notes under the \"Hard constraints (owner)\" section.",
+     "prompt_tokens": 1498,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the evidence sequence required to establish the utility of stored information.",
+     "prompt_tokens": 1930,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-031",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 72,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The P0 document formalizes the empirical findings, mathematical measurements, failure modes, and architectural implications derived from the P0 Real Pipeline Diagnostic Experiment executed against the AI Memory Vault.",
+     "prompt_tokens": 1973,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The P0 document formalizes the empirical findings, mathematical measurements, failure modes, and architectural implications derived from the P0 Real Pipeline Diagnostic Experiment executed against the AI Memory Vault.",
+     "prompt_tokens": 1672,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-032",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 73,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.",
+     "prompt_tokens": 105,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know.",
+     "prompt_tokens": 105,
+     "done_reason": "stop",
+     "reused_from": "B"
+    }
+   }
+  },
+  {
+   "id": "R3-033",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The specific details of trading architecture module splits can vary greatly depending on the system and company.",
+     "prompt_tokens": 72,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The trading architecture of XAU_Kinetic is split into the following modules:\n\n- `domain/`: Contains Pydantic V2 immutable data entities.\n- `application/`: Includes Clean Abstract Base Classes and the `StrategyRunner` orchestrator.\n- `infrastructure/`: Houses the `MT5Client` wrapper and `SQLitePersistence` with WAL and SHA-256 journaling.\n- `risk/`: Features the `RiskManager` and `TPLadderManager`.\n- `strategies/`: Contains pure functional strategy logic for closed bar evaluation.\n\nThese modules are structured to separate concerns strictly between core domain entities, application orchestration, infrastructure drivers, risk management, and trading strategy decisions.",
+     "prompt_tokens": 2070,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The trading architecture is split into several modules as follows:\n\n- `domain/`: Contains Pydantic V2 immutable data entities.\n- `application/`: Includes Clean Abstract Base Classes and the `StrategyRunner` orchestrator.\n- `infrastructure/`: Houses the `MT5 client wrapper` and `SQLite WAL SHA-256 persistence`.\n- `risk/`: Manages the `RiskManager` and `TPLadderManager`.\n- `strategies/`: Contains pure functional strategy logic.\n\nThis structure helps in maintaining a clean separation of concerns and makes the system easier to maintain, test, and extend.",
+     "prompt_tokens": 2188,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-034",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not specify which agent is responsible for research and compliance verification as opposed to production coding.",
+     "prompt_tokens": 1455,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The `secops_auditor` agent performs research and compliance verification rather than production coding.",
+     "prompt_tokens": 1266,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-035",
+   "answers": {
+    "A": {
+     "answer": "In an air-gapped environment, tools must not be able to communicate with the internet or any external network, ensuring that they are isolated from external threats.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The requirement for tools in an air-gapped environment includes secure local authentication (PIN hash Argon2id + salt) without network dependencies, complete database encryption (SQLite WAL mode + DPAPI), and secure sidecar cognitive bridge with `AI_Memory_Vault_CODEX_READY` on loopback `127.0.0.1:8765`. Additionally, there is a need for native document generation of official PDFs with QuestPDF, and an offline heuristic DFIR/YARA scanner for detecting threats in data packages.",
+     "prompt_tokens": 1994,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "In an air-gapped environment, all tools must function offline without any cloud dependencies.",
+     "prompt_tokens": 1857,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-036",
+   "answers": {
+    "A": {
+     "answer": "PowerShell is commonly used for AD, GPO automation, and system scripting.",
+     "prompt_tokens": 78,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "PowerShell is used for AD, GPO automation, and system scripting.",
+     "prompt_tokens": 1442,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "PowerShell is used for AD, GPO automation, and system scripting.",
+     "prompt_tokens": 1725,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-037",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 73,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes provided do not contain information about the North Star goal of the vault. The notes discuss the architecture, governance, and some components of the AI Memory Vault, but do not specify a North Star goal.",
+     "prompt_tokens": 1232,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the North Star goal of the vault.",
+     "prompt_tokens": 1750,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-038",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes do not provide information about what the successor agent is instructed to read.",
+     "prompt_tokens": 1213,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The first thing the successor agent is instructed to read is `docs/reports/CLAUDE_CODE_COST_ROUTER_IMPLEMENTATION_REPORT.md` (phase-1 report: §10 benchmark table, §13 risks R1-R5).",
+     "prompt_tokens": 1659,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-039",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 78,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain any information about the XAU Kinetic architecture or its risk-control components.",
+     "prompt_tokens": 1926,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The risk-control component explicitly mentioned in the XAU Kinetic architecture is the `RiskManager`. It is described as an independent circuit breaker and position sizing engine with absolute VETO authority over signals generated by strategies.",
+     "prompt_tokens": 1651,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-040",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Dexie (IndexedDB) provides FinScope's local-first offline storage.",
+     "prompt_tokens": 1293,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "FinScope uses IndexedDB via Dexie for its local-first offline storage.",
+     "prompt_tokens": 1829,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-041",
+   "answers": {
+    "A": {
+     "answer": "I don't know. Could you provide more context or details about the project?",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Based on the provided notes, there are no specific known issues mentioned that are currently affecting the project's state. However, there are some caveats and areas for improvement noted:\n\n- In the Claude Code cost-router phase 3, the task is to minimize total model tokens while preserving correctness, security, and routing policies. This suggests there might be inefficiencies in the current implementation that need addressing.\n- In the Casa3D plan for selling to other users, all prices are estimates and need to be re-checked before any purchase.\n- The history rewrite on 2026-10-31 involved removing personal identifiers from the Git history, which changed commit IDs and may affect references to old SHAs in documents.\n\nWithout explicit known issues stated, these points highlight areas that could be considered as potential challenges or areas for improvement.",
+     "prompt_tokens": 1904,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The known issue affecting the project's current state is with the `$PSScriptRoot` variable returning incorrectly or being empty when the script is invoked outside of a standalone execution context, such as when dot-sourcing, running in the ISE, or in a different working directory.",
+     "prompt_tokens": 2256,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-042",
+   "answers": {
+    "A": {
+     "answer": "I don't know. Could you please specify which platform you are referring to?",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about the number of editions or what they are for any platform.",
+     "prompt_tokens": 2139,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "This platform has two editions:\n\n1. `LogAnalyzer.AirGapped` (Ediție Standalone Offline)\n2. `LogAnalyzer.Network` (Ediție Conectată / SOC & Real-Time EDR)",
+     "prompt_tokens": 2255,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-043",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The specific database mode and encryption details are not provided in the question and would need to be defined as part of the application success criteria.",
+     "prompt_tokens": 78,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The application specifies that the database mode can be Postgres (with a pg pool, max 5 connections), PGlite on disk, or in memory on Vercel. For encryption, the session cookie `casa_session` uses HMAC-SHA256 with scrypt (N=16384, r=8, p=1) for password hashing.",
+     "prompt_tokens": 1765,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The application success criteria specify SQLite WAL mode with full database encryption using DPAPI.",
+     "prompt_tokens": 2138,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-044",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The desktop host uses `http://127.0.0.1:8000` as the local endpoint for the Python cognitive core.",
+     "prompt_tokens": 1714,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about a local endpoint for the Python cognitive core used by the desktop host.",
+     "prompt_tokens": 1888,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-045",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The question seems to mix elements from different contexts. JARVIS is a fictional AI assistant from the Iron Man/Marvel comics/ films, while \"Vault\" could refer to various contexts without additional information.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain any information about JARVIS or its role relative to the Vault. The notes are about a Consiliul de Memorie AI with 21 specialized agents and an AI Memory Vault architecture, but do not mention JARVIS.",
+     "prompt_tokens": 1706,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know.\n\nThe provided notes do not contain any information about JARVIS or its role relative to the Vault. The notes focus on the AI Memory Vault, its architecture, and how it manages tasks, policies, and knowledge. There is no mention of JARVIS in the given data.",
+     "prompt_tokens": 1729,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-046",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about the endpoint used to stream chat responses from Ollama.",
+     "prompt_tokens": 1792,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the endpoint used to stream chat responses from Ollama.",
+     "prompt_tokens": 1072,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-047",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 72,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes provided do not contain information about offline license validation implementations. They discuss Windows security audit logs, registry forensics, 3D modeling strategies, and an agent memory trace emitter protocol, but do not mention any specific offline license validation rules or processes.",
+     "prompt_tokens": 2285,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know.\n\nThe notes provided do not contain specific information about license validation implemented offline. They discuss various topics including Windows security audit logs, WPF application issues, skill gaps in WPF enterprise applications, and 3D modeling research, but do not address offline license validation.",
+     "prompt_tokens": 2113,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-048",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "5\n\nThe workspace specification lists 5 system modules:\n\n1. GLOBAL WORKSPACE THEORY (GWT) HUB (Competitive Proposal Broadcast)\n2. ACT-R ACTIVATION & ATTENTION ALLOC.\n3. RECONSOLIDATION & VOLATILITY STATE\n4. PRODUCTION UTILITY & REWARD FEEDBACK",
+     "prompt_tokens": 1422,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The notes do not provide a specific number of system modules listed in the workspace specification.",
+     "prompt_tokens": 1892,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-049",
+   "answers": {
+    "A": {
+     "answer": "Before a migration or mass modification to the vault, you should back up the current data to prevent data loss.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Before a migration or mass modification to the vault, an independent backup of the vault, including `06_INBOX/RAW_IMPORTS/`, should be kept.",
+     "prompt_tokens": 2029,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Before a migration or mass modification to the vault, an independent backup of the vault, including `06_INBOX/RAW_IMPORTS/`, should be kept.",
+     "prompt_tokens": 1480,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-050",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 73,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The unmodified external export must be preserved permanently in `06_INBOX/RAW_IMPORTS/`.",
+     "prompt_tokens": 1849,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The unmodified external export must be preserved permanently in `06_INBOX/RAW_IMPORTS/`.",
+     "prompt_tokens": 1839,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-051",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The key first step in the measured book-ingestion recipe is to convert the book to text using the script `convert_pdf_to_text.py`:\n\n```bash\npython 30_SCRIPTS/ingestion/convert_pdf_to_text.py <folder> --pages-per-chunk 3\n```",
+     "prompt_tokens": 1963,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The key first step in the measured book-ingestion recipe is to convert the book using the script `convert_pdf_to_text.py`:\n\n```bash\npython 30_SCRIPTS/ingestion/convert_pdf_to_text.py <folder> --pages-per-chunk 3\n```",
+     "prompt_tokens": 2271,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-052",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The required Python version can vary depending on the specific deployment procedure or project. You should check the documentation or requirements file for the exact version needed.",
+     "prompt_tokens": 73,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The deployment procedure requires Python 3.12+ to be installed.",
+     "prompt_tokens": 1802,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The deployment procedure requires Python 3.12+ to be installed.",
+     "prompt_tokens": 1733,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-053",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes provided do not list three specific habits that the procedure says mattered most. The notes contain procedures for ingesting books, deploying a trading engine, Git operations, quoting from copyrighted sources, and import sanitization, but do not explicitly mention three key habits.",
+     "prompt_tokens": 1903,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The three habits that mattered most according to the procedure are:\n\n1. Run it before believing it.\n2. Treat a contradiction as a bug in your own measurement.\n3. Write down what you could not verify.",
+     "prompt_tokens": 1793,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-054",
+   "answers": {
+    "A": {
+     "answer": "The note suggests that the hippocampus plays a crucial role in forming and retrieving new memories, which is essential for learning.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The hippocampus plays a crucial role in memory processing, including recognition and spatial memory. It helps project information to cortical regions to provide meaning and facilitates the consolidation of new learning into long-term memory.",
+     "prompt_tokens": 2078,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "According to the note, the hippocampus is involved in memory, specifically in normal recognition memory and spatial memory. It plays a role in projecting information to cortical regions to provide meaning and facilitating the consolidation of new learning into long-term memory.",
+     "prompt_tokens": 1789,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-055",
+   "answers": {
+    "A": {
+     "answer": "The cerebellum is described as essential for motor memories, which are related to coordination and balance.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The cerebellum is described as essential for the formation of implicit memories, including procedural memory, motor learning, and classical conditioning.",
+     "prompt_tokens": 1849,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The cerebellum is described as essential for the formation of implicit memories, including procedural memory, motor learning, and classical conditioning.",
+     "prompt_tokens": 2474,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-056",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The question does not provide a specific note for reference.",
+     "prompt_tokens": 71,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Forgetting is defined as the loss of information from long-term memory.",
+     "prompt_tokens": 2093,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Forgetting is defined as the loss of information from long-term memory.",
+     "prompt_tokens": 1865,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-057",
+   "answers": {
+    "A": {
+     "answer": "Levels of Processing Theory suggests that deeper processing leads to better long-term storage. When information is processed semantically or elaboratively, it is more likely to be remembered than when it is processed merely phonetically or superficially.",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about Levels of Processing Theory or its implications for long-term storage.",
+     "prompt_tokens": 1984,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "According to the Levels of Processing Theory proposed by Fergus Craik and Robert Lockhart, information processed more deeply is more likely to be stored in long-term memory. This theory emphasizes linking new information to existing memories to increase meaningfulness.",
+     "prompt_tokens": 2099,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-058",
+   "answers": {
+    "A": {
+     "answer": "Episodic memory stores personal experiences and specific events that an individual has encountered.",
+     "prompt_tokens": 73,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Episodic memory stores decisions, errors, experiences, lessons, and preferences for an agent.",
+     "prompt_tokens": 2106,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Episodic memory stores past state embeddings and hidden activations for an agent, enabling it to retrieve relevant prior experiences for decision-making in rare or unseen situations.",
+     "prompt_tokens": 1472,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-059",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The ontology note you referred to was not provided in your question. Could you please provide more details or context?",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain a specific definition for semantic memory. They discuss engram, subsymbolic information, retrograde and anterograde amnesia, and canonical representation, but not semantic memory.",
+     "prompt_tokens": 1309,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The defining content of semantic memory in this ontology note is that it is the durable cognitive repository storing generalized world knowledge, lexical representations, and abstract conceptual principles detached from autobiographical origins.",
+     "prompt_tokens": 1164,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-060",
+   "answers": {
+    "A": {
+     "answer": "Associative retrieval in the cognitive architecture allows for the retrieval of information based on associations or connections with existing knowledge, rather than through a direct, explicit search.",
+     "prompt_tokens": 73,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Associative retrieval functions by scanning historical episode traces to retrieve relevant operational context for ongoing agent actions within the cognitive architecture.",
+     "prompt_tokens": 1078,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "In the cognitive architecture, associative retrieval functions scanning historical episode traces to retrieve relevant operational context for ongoing agent actions. It is a core cognitive architecture concept recurrent across the literature and has been promoted to REVIEW status for ontology grounding.",
+     "prompt_tokens": 1229,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-061",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The question seems to mix concepts from different areas - UI evaluation procedures and asynchronous enumerable operations in programming. There isn't a direct connection between these that I'm aware of without more context.",
+     "prompt_tokens": 97,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes are empty and do not contain the necessary information to answer the question.",
+     "prompt_tokens": 129,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know.\n\nThe provided notes do not mention IAsyncEnumerable or any specific procedure related to evaluating GUI interfaces using IAsyncEnumerable for I/O heavy operations.",
+     "prompt_tokens": 1042,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-062",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 91,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information related to Squint Test or recommendations for UI/IO architecture for massive operations.",
+     "prompt_tokens": 1872,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information related to Squint Test or recommendations for UI/IO architecture for massive operations.",
+     "prompt_tokens": 1886,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-063",
+   "answers": {
+    "A": {
+     "answer": "Nu am informații suficiente pentru a răspunde corect. Poate ar fi util să furnizați mai multe detalii despre proiect sau contextul în care se folosesc KPI-urile.",
+     "prompt_tokens": 95,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes are empty and do not contain the necessary information to answer the question.",
+     "prompt_tokens": 127,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Proiectul notat este \"Registru de Transferuri\" și folosește stocare locală cu SQLite, criptată cu DPAPI.",
+     "prompt_tokens": 1183,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-064",
+   "answers": {
+    "A": {
+     "answer": "Nu am informații suficiente pentru a răspunde cu certitudine. Pornind de la nota și folosind Dexie, cerințele de prezentare pentru un panou administrativ pot varia, dar de obicei ar include elemente precum datele de bază ale proiectului, obiectivele, metodele de implementare, rezultatele așteptate și planul de monitorizare și evaluare. Iată un exemplu de cerință:\n\n\"Prezentarea trebuie să includă un răspuns detaliat la cerințele de prezentare pentru panou administrativ, bazat pe utilizarea Dexie, care ar trebui să conțină informații despre datele de bază ale proiectului, obiectivele, metodele de implementare, rezultatele așteptate și planul de monitorizare și evaluare.\"",
+     "prompt_tokens": 95,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Baza de date locală cuDEXie sugerează că aplicația are nevoie de un panou de administrare pentru gestionarea datelor stocate offline. Cerința de prezentare ar trebui să conțină un dashboard pentru administrarea bazii de date, inclusiv operațiuni precum adăugare, modificare și ștergere a datelor, precum și monitorizarea stării bazei de date.",
+     "prompt_tokens": 1017,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Pentru un panou administrativ, ar trebui să conducă cerința de prezentare a stocului de date locale gestionat de Dexie, inclusiv structura bazei de date, numărul de tabele și de registri, performanța la citire și scriere, și posibilele restricții de securitate aplicate. Aceasta ar oferi un cadru clar pentru gestionarea și monitorizarea datelor locale în aplicație FinScope.",
+     "prompt_tokens": 2918,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-065",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 88,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes do not provide information about the visual rules applied to data imported from PDF, Excel, CSV, or OCR scans in the FinScope project.",
+     "prompt_tokens": 2555,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The notes do not provide information about the visual theme or style rules used for importing PDF/Excel/CSV files or OCR in the FinScope project.",
+     "prompt_tokens": 1627,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-066",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 90,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not mention a system of design or a Squint Test procedure.",
+     "prompt_tokens": 1198,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about a system of design that uses Squint Test or its requirements before coding.",
+     "prompt_tokens": 2014,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-067",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The exact specifications would depend on the specific air-gapped system or environment being discussed, and would likely be detailed in the relevant security or technical documentation.",
+     "prompt_tokens": 93,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information related to air-gapped environments, print/scanning, or product specifications from a conformity document.",
+     "prompt_tokens": 156,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain specific information about print or scan requirements in air-gapped environments.",
+     "prompt_tokens": 1166,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-068",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 92,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Nota nu specifică exact obligațiile generale asociate cu autentificarea PIN Argon2id + salt, dar menționează că această metodă de autentificare locală sigură nu depinde de rețea. Conform contextului, această abordare este conformă cu HG 585/2002, NATO AC/35-D/1022, EUCI 2013/488/UE, NIST SP 800-88r2 și legislația conexă.",
+     "prompt_tokens": 1143,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The notes do not mention Argon2id or any specific obligations related to it for PIN authentication. The notes describe using a local secure PIN authentication with Argon2id hash and salt, but do not list general obligations associated with this method.",
+     "prompt_tokens": 1142,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-069",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 96,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes mention WCAG 2.2 A/AA but do not specify an audit procedure using 10 Nielsen heuristics.",
+     "prompt_tokens": 763,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The notes do not mention the use of 10 Nielsen heuristics or WCAG AA in a specific audit procedure objective.",
+     "prompt_tokens": 1096,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-070",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 91,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not mention any specific integrity rule associated with the architecture that enforces JSON format in Ollama API calls.",
+     "prompt_tokens": 1199,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know.\n\nThe notes provided do not mention any specific integrity rule forcing JSON format in Ollama API calls. They discuss vault access, client configuration, and book ingestion processes, but do not reference JSON formatting rules for Ollama.",
+     "prompt_tokens": 1087,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-071",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 92,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes provided are empty and do not contain the necessary information to answer the question.",
+     "prompt_tokens": 124,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain the answer to the question asked.",
+     "prompt_tokens": 148,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-072",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The specific rules of memorization described in the note associated with ExplainableAiRiskEngine are not provided in the given context.",
+     "prompt_tokens": 83,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Regulile de memorare descrise în nota asociata cu ExplainableAiRiskEngine includ utilizarea unui motor care înlocuiește evaluările opace printr-o descompunere matematică a riscului (0-100) în factori de pondere trasabili până la nivelul sursei de probă, asociind fiecare factor cu tehnica MITRE corespunzătoare și justificarea legală în limba română.",
+     "prompt_tokens": 642,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Nota nu conține detalii specifice despre reguli de memorare asociate cu ExplainableAiRiskEngine. Această secțiune se concentrează mai mult pe funcționalitățile și mecanismele motorului de evaluare a riscurilor explicațiabile.",
+     "prompt_tokens": 1365,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-073",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The question seems to mix concepts from memory forensics and note-taking, which are not directly related. Could you provide more context or clarify your question?",
+     "prompt_tokens": 88,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes are empty and do not contain the necessary information to answer the question.",
+     "prompt_tokens": 120,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Platforma LogAnalyzer DFIR Enterprise este legată de regulile despre clasele de memorie și crearea notelor, fiind menită pentru analize forenzice a sistemelor Windows în mod air-gapped și offline.",
+     "prompt_tokens": 1610,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-074",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The question seems to be asking about a level of trust associated with a document discussing Explainable AI Risk Engine, but without more context or information about the document, I cannot provide a specific level of trust.",
+     "prompt_tokens": 82,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes provided are empty, so there is no information to determine the associated level of confidence for the document discussing ExplainableAI Risk Engine.",
+     "prompt_tokens": 114,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Documentul asociă un nivel de încredere implicit în evaluarea riscului explicabil printr-o descompunere matematică a riscului (0-100) în factori de pondere trasabili, până la nivelul sursei de probă, asociind fiecare factor cu tehnica MITRE corespunzătoare și justificarea legală în limba română. Asta sugerează un nivel ridicat de încredere și transparență în procesul de evaluare a riscului.",
+     "prompt_tokens": 641,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-075",
+   "answers": {
+    "A": {
+     "answer": "I don't know. This question seems to be in Romanian, but the specific rules or regulations for animations related to UI problem severity classification on a 0-4 scale are not widely documented or standardized. Such rules would likely vary by company or organization.",
+     "prompt_tokens": 91,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain any information about a procedure that classifies UI problems by severity levels or related animation rules.",
+     "prompt_tokens": 1232,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not mention any specific rules for classifying UI problems by severity levels.",
+     "prompt_tokens": 955,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-076",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The question refers to a specific note related to a project's restriction on look-ahead bias, but without more context, I cannot provide details about which concrete components of the project are described in that note.",
+     "prompt_tokens": 86,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes you provided are missing, so I cannot answer the question based on the given information.",
+     "prompt_tokens": 118,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information specifically related to the interzicerea look-ahead bias or its concrete components in a project.",
+     "prompt_tokens": 2136,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-077",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 78,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain any information related to Kill Switch hardware or its modular separation.",
+     "prompt_tokens": 540,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Nota nu specifică explicit o separare modulară pentru Kill Switch hardware. Aceasta se referă mai mult la implementarea lui în aplicație, inclusiv funcționalitatea de jurnalizare conformă Vault Rules P18 și prezența unui buton roșu Kill Switch de urgență în interfața nativă Windows.",
+     "prompt_tokens": 1242,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-078",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 94,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes are empty and do not contain the necessary information to answer the question.",
+     "prompt_tokens": 126,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The notes mention Argon2id for local authentication security but do not specify a role for an external agent in relation to this.",
+     "prompt_tokens": 967,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-079",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The specific development guidelines for SQLite WAL or SQLCipher are not detailed in a publicly available general document. These are database technologies and the exact internal guidelines for their development would typically be proprietary information or detailed in private documentation.",
+     "prompt_tokens": 84,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not specifically mention any development rules related to SQLite WAL or SQLCipher. They do discuss using SQLite WAL mode and DPAPI for data encryption, but there are no explicit development rules outlined for these technologies.",
+     "prompt_tokens": 1783,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Regulile de dezvoltare indicate în documentul asociat cu SQLite WAL / SQLCipher includ:\n\n- Utilizarea modului WAL (Write-Ahead Logging) pentru SQLite.\n- Implementarea EF Core 10.\n- Utilizarea algoritmului de hash SHA-256 pentru cadru de hashuri.\n- Asigurarea imutabilității hardware prin utilizarea intervalului de chei `P16-P18`.",
+     "prompt_tokens": 2120,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-080",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The question seems to be in Romanian, asking about standards for scripts related to the configuration file ObsidianTactical.xaml, but I don't have specific information about this file or its configuration standards.",
+     "prompt_tokens": 85,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information relevant to the question about ObsidianTactical.xaml configuration scripts.",
+     "prompt_tokens": 148,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The notes do not specify which standards are related to the administration scripts for configuring ObsidianTactical.xaml.",
+     "prompt_tokens": 1111,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-081",
+   "answers": {
+    "A": {
+     "answer": "Principiile arhitecturii cu circuit breaker care sunt legate de descrierea sistemului includ:\n\n1. Introducerea unui circuit breaker virtual pentru a controla erorile serviciului.\n2. Limitarea impactului unor servicii neaccesibile asupra celorlalte.\n3. Implementarea unui mecanism de supraviețuire pentru a permite restituirea serviciului rapid.\n4. Asigurarea că erorile locale nu afectează întregul sistem.",
+     "prompt_tokens": 86,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Ce principii arhitecturale de separare sunt legate de descrierea sistemului cu circuit breaker?\n\nSistemul cu circuit breaker (CB) este legat de principiul de separare a responsabilităților prin intermediul introducerii unui element de control (circuit breaker) care permite aizolarea unei componente a sistemului în cazul unei erori, fără a afecta funcționalitatea celorlalte componente. Acest principiu este parte a arhitecturii microservicii și a arhitecturii distribuite, care promovează independența și scalabilitatea componentelor.",
+     "prompt_tokens": 118,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Principiul de separare care include un circuit breaker independent este legat de descrierea sistemului cu circuit breaker. În anumite module, cum ar fi `RiskManager`, există un \"circuit breaker\" isolat și un manager de poziții (position sizing engine) care are puterea de a veto semnalele generate de strategii. Acesta nu poate fi păstrat sau modificat de către strategii.",
+     "prompt_tokens": 960,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-082",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 86,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain any information related to motor circuits, circuit breakers, or environmental conditions for such devices. The notes are focused on kitchen planning guidelines and do not address the question asked.",
+     "prompt_tokens": 548,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not specify any environment prerequisites for the circuit breaker-related procedure.",
+     "prompt_tokens": 964,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-083",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 81,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Identitatea de sistem asociată aplicatiei FinScope nu este specificată în notele date. Nota menționează identitatea de sistem în cadrul structurii core ale arhitecturii sistemului, dar nu conține informații specifice despre identitatea pentru aplicația FinScope.",
+     "prompt_tokens": 1276,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the specific system identity for FinScope.",
+     "prompt_tokens": 1839,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-084",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The specific document associated with ExplainableAiRiskEngine and its described editions are not provided in the question.",
+     "prompt_tokens": 81,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Documentul asociat cu ExplainableAiRiskEngine nu menționează nicio editie specifică. ExplainableAiRiskEngine este descris ca fiind motorul care înlocuiește evaluările opace printr-o descompunere matematică a riscului în factori de pondere trasabili.",
+     "prompt_tokens": 640,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Documentul asociat cu ExplainableAiRiskEngine nu menționează nicio editie specifică. ExplainableAiRiskEngine este descris ca fiind motorul care înlocuiește evaluările opace printr-o descompunere matematică a riscului în factori de pondere trasabili.",
+     "prompt_tokens": 640,
+     "done_reason": "stop",
+     "reused_from": "B"
+    }
+   }
+  },
+  {
+   "id": "R3-085",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The term \"air-gapped\" typically refers to a physical security measure where a computer or network is completely isolated from untrusted networks, such as the internet, to protect against unauthorized access. However, without more specific information about the air-gapped product in question, I cannot provide a precise answer about its storage and authentication schema.",
+     "prompt_tokens": 85,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Schema de stocare și autentificare legat de produsul air-gapped este următorul:\n\n- Autentificare locală sigură (PIN hash Argon2id + salt) fără dependințe de rețea.\n- Criptare completă a bazei de date (SQLite WAL mode + DPAPI).",
+     "prompt_tokens": 689,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Schema de stocare și autentificare legat de produsul air-gapped incluie:\n\n- Autentificare locală prin PIN numeric, hash-uit cu salt (SHA-256), fără JWT/sesiuni.\n- Criptare la nivel de bază de date (SQLCipher AES-256-CBC) cu cheia derivată/protejată prin DPAPI.",
+     "prompt_tokens": 2018,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-086",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The question seems to mix concepts from different domains. \"Arhitectura de straturi\" refers to layer-based architecture in software design, while \"runbook\" is typically used in IT operations to document procedures. Tampermonkey is a browser extension for injecting user scripts. These concepts are not directly related, so without more context, I cannot make a connection to a specific layer architecture or runbook.",
+     "prompt_tokens": 86,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes are empty, so there's no information to determine the connection between the architecture layers and the Tampermonkey runbook.",
+     "prompt_tokens": 118,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Runbook-ul nu specifică explicit o arhitectură de straturi legată de Tampermonkey. Aceasta discută despre metode de conectare ai agenților AI din browser la vault-ul canonic, inclusiv o metodă care implică o extensie browser / Tampermonkey, dar nu prezintă o arhitectură de straturi.",
+     "prompt_tokens": 1981,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-087",
+   "answers": {
+    "A": {
+     "answer": "Conform notei legate de arhitectura stratificată a Vault-ului, agentii de browser se conectează folosind protocolul HTTP sau HTTPS, prin intermediul unui endpoint specific, de obicei https://<vault-instance>/v1/. Conexiunea poate fi autentificată prin utilizarea unui token de autentificare valid.",
+     "prompt_tokens": 91,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Conform notei, există trei metode de conectare pentru agentii de browser AI:\n\n1. **Metoda A: Prompt de Sistem & Markdown Injection (Fără Server)**\n2. **Metoda B: Server REST Local** (de exemplu, `http://127.0.0.1:8000`)\n3. **Metoda C: Extensie Browser / Tampermonkey Userscript**\n\nFiecare metodă oferă un mod diferit de a sincroniza și conecta agenții AI din browser la Vault-ul canonic de memorie.",
+     "prompt_tokens": 1708,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Conform notei, există trei metode de conectare pentru agentii de browser:\n\n1. **Metoda A: Prompt de Sistem & Markdown Injection (Fără Server)**\n2. **Metoda B: Server REST Local (http://127.0.0.1:8000)**\n3. **Metoda C: Extensie Browser / Tampermonkey Userscript**\n\nFiecare metodă oferă un mod diferit de a sincroniza și conecta agenții AI din browser la Vault-ul canonic de memorie.",
+     "prompt_tokens": 1906,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-088",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 91,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain information about the activation mechanism described in the structure 05 RESOURCES of the Vault. The notes focus on Casa3D's features, missing functionalities, and comparisons with other design software, but do not mention any activation mechanism for Vault resources.",
+     "prompt_tokens": 2899,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Informațiile date nu conțin detalii specifice despre mecanismul de activare descris în structura 05 RESOURCES a Vault-ului. Pentru a oferi un răspuns precis, ar fi necesar un extract mai detaliat din documentul respectiv.",
+     "prompt_tokens": 2638,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-089",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 84,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not specify the dimension of the agent council associated with the ACT-R motor.",
+     "prompt_tokens": 1993,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Consiliul de agenti are 14 membri, ca se poate vedea din structura Consiliului Extins prezentată în notele date.",
+     "prompt_tokens": 2427,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-090",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The question appears to be in Romanian, asking about the entry category for a motor with a decay rate d = 0.5 in a catalog, but without additional context, I cannot provide a specific answer.",
+     "prompt_tokens": 88,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about a catalog related to a decay rate d = 0.5 or any specific number of entries in such a catalog.",
+     "prompt_tokens": 1628,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The notes do not provide information about the number of entries in the catalog related to the motor with decay rate d = 0.5.",
+     "prompt_tokens": 2231,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-091",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The specific document or details about the 99 SYSTEM architecture are not provided in the question.",
+     "prompt_tokens": 88,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes provided do not contain the necessary information to answer the question.",
+     "prompt_tokens": 120,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Based on the notes provided, the document specifies two levels of integration for the AI Memory Vault in a large-scale enterprise application suite:\n\n1. Through a REST API Gateway/Microservice Proxy (MCP)\n2. Directly via Python SDK from the cognitive_core module",
+     "prompt_tokens": 408,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-092",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 85,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes you provided are empty, so there is no information to answer the question about which note is related to the book ingestion procedure.",
+     "prompt_tokens": 117,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain an answer to the specific question about a query appearing in the book ingestion procedure.",
+     "prompt_tokens": 2031,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-093",
+   "answers": {
+    "A": {
+     "answer": "Reteta asociata cu slotul de proceduri spune ca dupa masuratori ramane in urma procesului doar codul de eroare si informatii despre tipul masuratorii realizate.",
+     "prompt_tokens": 87,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes provided are empty and do not contain the answer to the question.",
+     "prompt_tokens": 119,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about a measurement procedure outcome or retention after measurements.",
+     "prompt_tokens": 1177,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-094",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The question appears to be in Romanian, but the terminology is not clear. Could you please provide more context or clarify the question?",
+     "prompt_tokens": 83,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about the research component related to contracts with three coding agents.",
+     "prompt_tokens": 1698,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information specifically about the research component associated with three-agent contract transfers.",
+     "prompt_tokens": 684,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-095",
+   "answers": {
+    "A": {
+     "answer": "I don't know. However, QuestPDF is a library for generating PDF documents in Java and .NET, and its workflow typically involves creating a document, adding content like text and images, and then saving or rendering the document. For specific details on their workflow for transfer products, more context or documentation from the library would be needed.",
+     "prompt_tokens": 84,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information related to the workflow associated with the product transfer or the term QuestPDF.",
+     "prompt_tokens": 1804,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Workflow-ul asociat produsului de transferuri nu este specificat în detaliu în notele date. Cu toate acestea, generativ, pentru producția documentelor oficiale PDF cu QuestPDF, workflow-ul este generat nativ și este unul dintre success criteria-urile aplicației, indicând că procesul de generare a documentelor PDF se face folosind QuestPDF.",
+     "prompt_tokens": 2464,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-096",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 86,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes provided are empty and do not contain any information to answer the question.",
+     "prompt_tokens": 118,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Nota asociată descrie configurarea și depanarea instalării PaperCut MF + Xerox VersaLink C7120, inclusiv autentificarea pe cartela și setarea secure print release.",
+     "prompt_tokens": 676,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-097",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 93,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about a long-term memory benchmark associated with the 00 CORE / 01 KNOWLEDGE system structure.",
+     "prompt_tokens": 1144,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Baza de date nu conține informații specifice despre un benchmark de memorie pe termen lung asociat cu structura 00_CORE/01_KNOWLEDGE a sistemului în contextul dat. Notațiile furnizate nu menționează explicit un astfel de benchmark în această structură specifică.",
+     "prompt_tokens": 1614,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-098",
+   "answers": {
+    "A": {
+     "answer": "Axioma lui Euclid despre dovezi este asociată cu structura de straturi a Vault-ului.",
+     "prompt_tokens": 83,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes provided are empty and do not contain any information to answer the question about an axiom related to the structure of layers in the Vault.",
+     "prompt_tokens": 115,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about an axiom regarding proof structures in the Vault system.",
+     "prompt_tokens": 2111,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-099",
+   "answers": {
+    "A": {
+     "answer": "Principiul de audit din nota legată de tool call hooks cere înregistrarea și monitorizarea apelurilor la instrumente sau funcții pentru a garanta integritatea și integritatea proceselor.",
+     "prompt_tokens": 79,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about audit call hooks or their audit principles.",
+     "prompt_tokens": 1434,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Principiul de audit din nota legată de tool call hooks cere verificarea și confirmarea aferentă a evenimentelor instrumentaleizate prin hook-uri, pentru a se asigura că statele declarate sunt corespunzătoare evenimentelor observate.",
+     "prompt_tokens": 2138,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-100",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 93,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information related to anti-attributes, positioning, or tokens.css/theme.ts files.",
+     "prompt_tokens": 653,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about anti-attributes, positioning, or files tokens.css/theme.ts.",
+     "prompt_tokens": 1307,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-101",
+   "answers": {
+    "A": {
+     "answer": "Adaptation in an ontology definition helps an organism's essential variables better fit the environmental context, enhancing survival and reproductive success.",
+     "prompt_tokens": 79,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "According to the notes, adaptation, as a concept, shifts the focus to the state of equilibrium where the essential variables of the adapted organism change less than they would if the organism were unadapted. This suggests that adaptation helps in stabilizing or reducing variability in essential variables, contributing to the organism's survival.",
+     "prompt_tokens": 1975,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "For the organism's essential variables, adaptation achieves an equilibrium state wherein these variables experience significantly less disturbance than in an unadapted state.",
+     "prompt_tokens": 1428,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-102",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 79,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain specific information about how the agent uses episodic memory in rare or novel contexts. The notes focus on the architecture of the AI Memory Vault, the Atkinson-Shiffrin model of memory, parts of the brain involved in memory, and study techniques, but do not address the use of episodic memory in novel situations.",
+     "prompt_tokens": 2207,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The agent uses its episodic memory to retrieve relevant prior experiences stored in the episodic memory component when facing rare or novel contexts. This allows the agent to execute previously learned episodic sequences, reinstating hidden activations from past rare states into the recurrent working memory layers, and make informed decisions in new situations.",
+     "prompt_tokens": 1710,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-103",
+   "answers": {
+    "A": {
+     "answer": "I don't know. Could you provide more context about the architecture you're referring to?",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain any specific information about a buffer or its functional role in the described architecture. The notes focus on the architecture of `XAU_Kinetic` trading engine, vault architecture, Casa3D project, and the concept of subsymbolic information, but do not mention buffers.",
+     "prompt_tokens": 1932,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "In the described architecture, a buffer is a restricted capacity interface holding a single chunk that connects an internal cognitive module to the central production system.",
+     "prompt_tokens": 1229,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-104",
+   "answers": {
+    "A": {
+     "answer": "Chunking reduces repeated impasses in the Soar formulation by allowing the system to handle complex problems as a combination of simpler, pre-learned chunks. This means that when faced with a problem, Soar can break it down into smaller, more manageable parts that have been previously solved, thus avoiding getting stuck (impasses) at each small step.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information related to the Soar formulation or chunking to reduce repeated impasses.",
+     "prompt_tokens": 1308,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Chunking reduces repeated impasses in the Soar formulation by converting substate reasoning into immediate production rules, thereby eliminating repetitive impasses.",
+     "prompt_tokens": 1695,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-105",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The question seems to refer to a specific associative process, but without more context, I cannot provide a precise answer.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Based on the provided notes, synaptic facilitation is associated with synaptic plasticity, which is a mechanism that modifies the strength of the connections between neurons in response to their activity. This process provides the physical/structural foundation through which experience is transformed into permanent storage in the consolidation slot. However, the notes do not explicitly detail what makes the associative process capable of producing synaptic facilitation. For a precise answer, we would need more specific information from the referenced sources.",
+     "prompt_tokens": 1677,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The associative learning process described, classical conditioning, requires precise temporal contiguity between sensory excitation and modulatory feedback to establish associative synaptic facilitation.",
+     "prompt_tokens": 1433,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-106",
+   "answers": {
+    "A": {
+     "answer": "A cognitive architecture organizes cognitive processes and components into one integrated model.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information directly answering the question about what a cognitive architecture organizes into one integrated model.",
+     "prompt_tokens": 1933,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "A cognitive architecture organizes memory systems, processing mechanisms, and control cycles into one integrated model of general cognition.",
+     "prompt_tokens": 1186,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-107",
+   "answers": {
+    "A": {
+     "answer": "The purpose of the stabilization phase called consolidation is to integrate and stabilize changes or improvements implemented in a system or organization.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The purpose of the stabilization phase called consolidation is to make newly registered experiential information permanently fixed in neural tissue through protein synthesis.",
+     "prompt_tokens": 1434,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The purpose of the stabilization phase called consolidation is to make newly registered experiential information permanently fixed in neural tissue, requiring protein synthesis for this process.",
+     "prompt_tokens": 1299,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-108",
+   "answers": {
+    "A": {
+     "answer": "A Markov constraint in a model reduces uncertainty by assuming that the future state depends only on the current state, not on the sequence of events that preceded it. This simplification can make the model more manageable while still capturing the essential dynamics of the system.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "A Markov chain provides a formal representational mechanism that supports state evaluation and transition probabilities, which can alter uncertainty in the model by offering a probabilistic framework to predict the next state based on the current state. This helps in managing and reducing uncertainty by providing a structured way to handle transitions between states, which is crucial for modeling dynamical systems in the context of agent routing and state evaluation.",
+     "prompt_tokens": 1606,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "A Markov constraint causes entropy to drop below the maximum theoretical uncertainty of uniform distributions, as per the canonical definition provided.",
+     "prompt_tokens": 1167,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-109",
+   "answers": {
+    "A": {
+     "answer": "Declarative memory involves remembering facts and events, which can be consciously recalled and described in words. In contrast, a rigid associative routine is an automated sequence of actions or behaviors triggered by specific cues, without the need for conscious recall.",
+     "prompt_tokens": 78,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Declarative memory is distinguished from a rigid associative routine by its ability to enable novel inferential derivations and contextual problem-solving beyond rigid associative routines, as per the canonical definition provided in the notes.",
+     "prompt_tokens": 1442,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Declarative memory is distinguished from a rigid associative routine by its ability to enable novel inferential derivations and contextual problem-solving beyond rigid associative routines.",
+     "prompt_tokens": 1220,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-110",
+   "answers": {
+    "A": {
+     "answer": "Blood pressure and temperature are examples of essential variables because they are critical for maintaining homeostasis and overall health. Variations in these variables can indicate underlying health issues and are crucial for monitoring and managing patient care.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain information about blood pressure, temperature, or why they are considered essential variables in the context of ultrastable systems or adaptation. These notes focus on system stability, adaptation as a core concept, and project structure preferences for Python applications, but do not provide the specific answer to the question about essential variables.",
+     "prompt_tokens": 760,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Blood pressure and temperature are examples of essential variables because their values must remain within viability boundaries to ensure the body functions properly. Deviations from these limits can be life-threatening, making them crucial for maintaining survival.",
+     "prompt_tokens": 1430,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-111",
+   "answers": {
+    "A": {
+     "answer": "Explicit memory, also known as declarative memory, involves recall that requires conscious effort and can be verbalized.",
+     "prompt_tokens": 72,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The notes provided do not contain a specific answer to what kind of recall characterizes explicit memory. The notes mention \"Recall\" in the context of memory retrieval but do not differentiate between explicit and implicit recall. Therefore, I don't know the specific kind of recall that characterizes explicit memory based on the given information.",
+     "prompt_tokens": 2240,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not specify the type of recall that characterizes explicit memory. The notes mention \"Recall\" in the context of memory retrieval but do not differentiate between explicit and implicit recall.",
+     "prompt_tokens": 1625,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-112",
+   "answers": {
+    "A": {
+     "answer": "Feedback influences subsequent action in the described regulator model by comparing the current state with the desired state and adjusting the inputs or actions necessary to minimize the difference, thus helping the system move towards the desired state.",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain explicit information about how feedback influences subsequent action in a regulator model. The notes discuss various topics including AI memory vaults, retrieval bottlenecks, a cognitive AI architecture, and a cost-router phase for Claude Code, but none of them detail the specific mechanism of feedback influencing actions in a regulator model.",
+     "prompt_tokens": 1938,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "In the described regulator model, feedback influences subsequent action by routing observed discrepancies between actual output and target patterns back into the regulator. This process guides subsequent actions to address the discrepancies.",
+     "prompt_tokens": 1258,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-113",
+   "answers": {
+    "A": {
+     "answer": "Ashby's homeostat is associated with a physical arrangement that includes a series of relays and lamps arranged in a feedback loop, designed to mimic biological homeostatic processes.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Ashby's homeostat consists of four interconnected units equipped with magnets and uniselectors.",
+     "prompt_tokens": 1842,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The homeostat, designed by Ashby, consists of four interconnected units equipped with magnets and uniselectors.",
+     "prompt_tokens": 1329,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-114",
+   "answers": {
+    "A": {
+     "answer": "An impasse often triggers a transition from a stuck or unproductive problem-solving approach to exploring new strategies or perspectives.",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The notes do not provide a specific answer to what transition in problem solving is triggered by an impasse. The notes discuss various topics including agent transfer, dependency DAG phases, Casa3D research, and reinforcement learning, but do not address the transition in problem solving related to impasses.",
+     "prompt_tokens": 1379,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "An impasse triggers the creation of a substate, which is an automatically generated problem-solving context that allows the system to shift from reactive execution to deliberate reasoning.",
+     "prompt_tokens": 1324,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-115",
+   "answers": {
+    "A": {
+     "answer": "Implicit memory is expressed through unconscious recall, such as improved performance in tasks without conscious remembrance of the learned material, whereas deliberate recollection involves conscious effort to retrieve specific information from memory.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Implicit memory is expressed through skills and habits that are performed without conscious awareness, such as riding a bike or typing, whereas deliberate recollection involves consciously retrieving specific information or events from memory, like recalling a person's name or what you had for dinner yesterday.",
+     "prompt_tokens": 2527,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Implicit memory is expressed through behavioral performance rather than intentional mental recollection. It involves nonconscious retention of motor abilities and perceptual skills, manifested directly through performance without the need for conscious retrieval.",
+     "prompt_tokens": 1435,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-116",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 71,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain specific information about where latent memory resides. The notes discuss forgetting, neurotransmitters, problems with memory, and memory construction and reconstruction, but do not address the location of latent memory.",
+     "prompt_tokens": 2212,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Latent memory resides within transformer activation spaces, according to the notes retrieved from the user's knowledge vault.",
+     "prompt_tokens": 1224,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-117",
+   "answers": {
+    "A": {
+     "answer": "The externalized long-term store provides access to information without consuming continuous attention, as the information is stored externally, such as in books, notes, or digital devices.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "The externalized long-term store provides factual archives and operational manuals that guide agent execution without consuming continuous attention.",
+     "prompt_tokens": 1237,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The externalized long-term store provides factual archives and operational manuals that guide agent execution without consuming continuous attention.",
+     "prompt_tokens": 1432,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-118",
+   "answers": {
+    "A": {
+     "answer": "The mental-imagery component is attributed with the capability to visualize or perceive images in the mind's eye, often referred to as visual imagination.",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain any information about a mental-imagery component or its attributed capabilities.",
+     "prompt_tokens": 1991,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The mental-imagery component constructs depictive internal representations to perform visual transformations and metric queries.",
+     "prompt_tokens": 1023,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-119",
+   "answers": {
+    "A": {
+     "answer": "Nondeclarative memory encompasses two main kinds of learning: procedural memory and implicit memory.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Nondeclarative memory encompasses procedural memory, motor learning, and classical conditioning. These types of learning are associated with the cerebellum and are not dependent on the hippocampus for their formation and retention.",
+     "prompt_tokens": 2498,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Nondeclarative memory encompasses skills, habits, conditioning, and priming.",
+     "prompt_tokens": 1408,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-120",
+   "answers": {
+    "A": {
+     "answer": "An operator plays a role in executing and monitoring decisions within a decision cycle, ensuring that the chosen actions are implemented correctly and efficiently.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain information about the role of an operator in a decision cycle. They are focused on the development of a live trading application using MetaTrader 5, Python, and Tkinter.",
+     "prompt_tokens": 549,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know.\n\nThe provided notes do not contain information about the role of an operator in a decision cycle. They are focused on the development of a live trading application using MetaTrader 5, Python, and Tkinter.",
+     "prompt_tokens": 549,
+     "done_reason": "stop",
+     "reused_from": "B"
+    }
+   }
+  },
+  {
+   "id": "R3-121",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 70,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know.\n\nThe provided notes do not contain information about parametric memory or its location. The notes focus on topics such as forgetting, memory problems, neurotransmitters, memory construction and reconstruction, and amnesia, but do not mention parametric memory.",
+     "prompt_tokens": 2430,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Parametric memory is located within the trained synaptic weights of the foundation model, according to the provided notes.",
+     "prompt_tokens": 1796,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-122",
+   "answers": {
+    "A": {
+     "answer": "The key property of priming in this definition is that it refers to an unconscious activation of associated concepts or responses.",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain a definition of priming or its key properties.",
+     "prompt_tokens": 2112,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "An unconscious facilitation in identifying or producing recently encountered perceptual stimuli.",
+     "prompt_tokens": 1688,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-123",
+   "answers": {
+    "A": {
+     "answer": "Procedural memory encompasses behaviors such as knowing how to perform tasks, like riding a bike or typing, which are skills acquired through experience and practice.",
+     "prompt_tokens": 72,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Procedural memory encompasses behaviors such as motor skills and implicit learning, including motor learning and classical conditioning.",
+     "prompt_tokens": 2305,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Procedural memory encompasses motor coordination, perceptual skills, and cognitive algorithms that operate automatically without conscious inspection.",
+     "prompt_tokens": 1797,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-124",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 78,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about turning an isolated face acknowledgment into complete personal recognition.",
+     "prompt_tokens": 1731,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "According to the definition provided, recollection turns an isolated face acknowledgment into complete personal recognition.",
+     "prompt_tokens": 1461,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-125",
+   "answers": {
+    "A": {
+     "answer": "In the cybernetic formulation, regulation is described as a process where a system's output is compared to a reference input, and any discrepancy is corrected to maintain the system's desired state or performance.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "In the ultrastable system described, regulation is automatically reorganizing its internal parameters whenever essential variables leave viable limits to preserve those variables.",
+     "prompt_tokens": 1644,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "In the cybernetic formulation, regulation is described as the mathematical coordination of responsive moves designed to collapse a large disturbance set into minimal acceptable outcomes.",
+     "prompt_tokens": 1236,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-126",
+   "answers": {
+    "A": {
+     "answer": "Markov Decision Process (MDP) defines the states, actions, and transitions in the reinforcement-learning definition.",
+     "prompt_tokens": 80,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "A framework formalised by Markov decision processes defines the states, actions, and transitions in the reinforcement-learning definition.",
+     "prompt_tokens": 1669,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "A framework formalised by Markov decision processes defines the states, actions, and transitions in the reinforcement-learning definition.",
+     "prompt_tokens": 1022,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-127",
+   "answers": {
+    "A": {
+     "answer": "Reservoir sampling is useful for a stream whose total length is unknown because it allows you to randomly select a fixed number of samples from the stream without needing to know the total length in advance. This is achieved by maintaining a \"reservoir\" of selected items and updating it as new items arrive, ensuring each item has an equal probability of being part of the final sample.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information related to reservoir sampling or its usefulness for streams of unknown length.",
+     "prompt_tokens": 2168,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Reservoir sampling is useful for a stream whose total length is unknown because it allows for randomly selecting a sample of k items from the stream while ensuring each item has an equal probability of selection, without requiring explicit knowledge of the total stream length or boundaries. This makes it suitable for processing large or continuous data streams where the total size is not known in advance.",
+     "prompt_tokens": 1963,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-128",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The definition you're referring to wasn't provided in your question. Could you please provide the definition or context?",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "In the given definition, ultrastable system refers to a cybernetic system that acts to preserve its essential variables by automatically reorganizing its internal parameters whenever those variables leave viable limits. This implies a form of stability where the system actively maintains its state through self-regulation.",
+     "prompt_tokens": 1922,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Cybernetic stability, as defined, is the capacity of a system to keep its essential variables within safe physiological limits, similar to biological adaptation.",
+     "prompt_tokens": 1534,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-129",
+   "answers": {
+    "A": {
+     "answer": "In a state-determined system, future behavior is determined by the current state and the rules governing the system's dynamics.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "In a state-determined system, future behaviors are determined by the current internal configuration and incoming environmental inputs without intrinsic randomness.",
+     "prompt_tokens": 1532,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "In a state-determined system, future behaviors are determined by its current internal configuration and incoming environmental inputs, without intrinsic randomness.",
+     "prompt_tokens": 1574,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-130",
+   "answers": {
+    "A": {
+     "answer": "An ultrastable system maintains its state with extremely high precision and stability over time, often with mechanisms that correct minor deviations. In contrast, a merely fixed system may have some tolerance for deviation before it changes state or behavior.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "An ultrastable system distinguishes itself by automatically reorganizing its internal parameters to preserve its essential variables when those variables leave viable limits. This is in contrast to a merely fixed system, which does not have this self-adjusting capability.",
+     "prompt_tokens": 1605,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "An ultrastable system differs from a merely fixed system in that it acts to preserve its essential variables by automatically reorganizing its internal parameters whenever those variables leave viable limits. This distinguishes it from a fixed system, which does not have this self-regulating mechanism to adapt and reorganize in response to changes.",
+     "prompt_tokens": 1607,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-131",
+   "answers": {
+    "A": {
+     "answer": "Kafka este folosit pentru gestionarea de volumi mari de evenimente sau date în timp real, dar nu este specific pentru memorie persistentă. Este o platformă de publicare și abonare robustă, fiabilă și scalabilă, utilizată în special pentru loggarea, agregarea și analiza datelor în timp real. Memoria persistentă este o funcție a sistemului, nu un scop specific al Kafka.",
+     "prompt_tokens": 79,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain any information related to Kafka or persistent memory events.",
+     "prompt_tokens": 1708,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Informațiile date nu conțin detalii specifice despre utilizarea Kafka pentru evenimentele de memorie persistentă. S-ar putea să fie necesară informații suplimentare din alte surse pentru a răspunde corect la această întrebare.",
+     "prompt_tokens": 1680,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-132",
+   "answers": {
+    "A": {
+     "answer": "Nu există o schema specifică în PostgreSQL pentru a stoca memoriile canonice. Memoriile canonice sunt o concept din domeniul standardizării limbajului de programare și nu sunt legate direct de baze de date. În PostgreSQL, informațiile despre memoriile canonice ar fi stocate într-o tabelă specifică definită de utilizator, nu într-o schema predefinită.",
+     "prompt_tokens": 80,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Baza de date PostgreSQL nu este specificată în răspuns direct pentru această întrebare. Notația furnizată conține informații despre abilități legate de PostgreSQL, dar nu include o schema specifică pentru o tabelă care ar stoca memoriile canonice. Pentru a afla structura exactă a schema pentru această tabelă, ar fi nevoie de informații suplimentare sau de consultarea codului sursă al bazei de date.",
+     "prompt_tokens": 2148,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Informația specifică privind schema PostgreSQL pentru tabela în care sunt stocate memoriile canonice nu este prezentă în datele furnizate. Schema exactă nu este menționată în aceste note.",
+     "prompt_tokens": 2688,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-133",
+   "answers": {
+    "A": {
+     "answer": "RabbitMQ este utilizat pentru coordonarea dintre agenti în scenarii precum procese distribuite, microservicii și sisteme de procesare a mesajelor.",
+     "prompt_tokens": 79,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes provided do not contain the necessary information to answer the question.",
+     "prompt_tokens": 111,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the broker RabbitMQ or any broker used for coordination between agents.",
+     "prompt_tokens": 2438,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-134",
+   "answers": {
+    "A": {
+     "answer": "Politica de expirare NATS pentru memoria de lucru nu este o concept specifică. NATS se referă la Not All Nodes See Traffic, un model de distribuție de mesaje, iar politica de expirare nu face parte din această abordare. Politica de expirare poate fi asociată cu alte tehnologii de memorie de lucru, cum ar fi cache-urile, dar nu este specifică NATS.",
+     "prompt_tokens": 82,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about NATS memory retention or expiration policies.",
+     "prompt_tokens": 594,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about NATS expiration policies for working memory.",
+     "prompt_tokens": 1596,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-135",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The specific GraphQL endpoint for querying a cognitive graph would depend on the implementation and configuration of the particular system or service being used.",
+     "prompt_tokens": 79,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about a specific GraphQL endpoint for querying the cognitive graph.",
+     "prompt_tokens": 1927,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "Informațiile date nu conțin specific informații despre un endpoint GraphQL pentru interogarea grafului cognitiv. Pentru a obține această informație, ar fi nevoie de detalii suplimentare din contextul skill-urilor sau implementărilor relevante. Dacă există un astfel de endpoint, acesta ar fi definit în cadrul skill-ului `graphql` sau `graphql-architect`, dar informațiile date nu includ acest detalu.",
+     "prompt_tokens": 2358,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-136",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 84,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about TLS certificate rotation for the local gateway.",
+     "prompt_tokens": 578,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the TLS certificate rotation algorithm for the local gateway.",
+     "prompt_tokens": 1508,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-137",
+   "answers": {
+    "A": {
+     "answer": "Portul SMTP folosit de componenta de notificări este de obicei portul 25.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "Portul SMTP folosit de componenta de notificări este de obicei portul 587.",
+     "prompt_tokens": 108,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the SMTP port used by a notification component.",
+     "prompt_tokens": 1827,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-138",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 82,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information related to OpenID Connect or browser-agent authentication.",
+     "prompt_tokens": 587,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the OpenID Connect provider configured for browser-agent authentication.",
+     "prompt_tokens": 1664,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-139",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about a Nomad job name for running the Memory Vault runtime.",
+     "prompt_tokens": 1418,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about a Nomad job name for running the Memory Vault runtime.",
+     "prompt_tokens": 1405,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-140",
+   "answers": {
+    "A": {
+     "answer": "Nu am informații suficiente pentru a răspunde această întrebare, deoarece nu am fost furnizat contextul necesar sau date specifice legate de bucketul S3 și artefactele de evaluare.",
+     "prompt_tokens": 84,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about the name of the S3 bucket where evaluation artifacts are stored.",
+     "prompt_tokens": 1723,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the S3 bucket name for evaluation artifacts.",
+     "prompt_tokens": 2406,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-141",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about SSE event names for graph edge promotions.",
+     "prompt_tokens": 1647,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about SSE event names for graph edge promotions.",
+     "prompt_tokens": 2035,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-142",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 79,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about AMQP exchanges for ingestion jobs.",
+     "prompt_tokens": 1357,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the AMQP exchange name for ingestion jobs.",
+     "prompt_tokens": 2636,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-143",
+   "answers": {
+    "A": {
+     "answer": "I don't know. The specific DNS domain for an external cognitive service would depend on the particular service and its configuration.",
+     "prompt_tokens": 80,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The notes provided do not contain the necessary information to answer the question about the DNS domain configured for external cognitive services.",
+     "prompt_tokens": 112,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about a specific DNS domain configured for an external cognitive service.",
+     "prompt_tokens": 694,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-144",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 83,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about the gRPC version used between Memory Controller and Agent Council.",
+     "prompt_tokens": 1634,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the gRPC version used between the Memory Controller and Agent Council.",
+     "prompt_tokens": 1888,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-145",
+   "answers": {
+    "A": {
+     "answer": "Cheia de partitionare din tabela distribuita a jurnalului de memorie este adresa de memorie a tranziției.",
+     "prompt_tokens": 83,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about a distributed memory journal or its partitioning key.",
+     "prompt_tokens": 1099,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the distributed memory journal's partitioning key.",
+     "prompt_tokens": 1380,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-146",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 71,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not mention any Kafka topic related to canonical-memory mutations.",
+     "prompt_tokens": 1956,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not mention any Kafka topic related to canonical-memory mutations.",
+     "prompt_tokens": 1714,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-147",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 72,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about a PostgreSQL table storing canonical ontology history.",
+     "prompt_tokens": 1209,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about which PostgreSQL table stores the canonical ontology history.",
+     "prompt_tokens": 1712,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-148",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 72,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about a PostgreSQL table storing canonical ontology history.",
+     "prompt_tokens": 1209,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about which PostgreSQL table stores the canonical ontology history.",
+     "prompt_tokens": 1712,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-149",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about a GraphQL mutation for approving a memory candidate.",
+     "prompt_tokens": 1959,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain any information about a specific GraphQL mutation used to approve a memory candidate.",
+     "prompt_tokens": 2509,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-150",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain any information about OAuth2 provider configuration for browser-agent login.",
+     "prompt_tokens": 2170,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not mention any OAuth2 provider configured for browser-agent login.",
+     "prompt_tokens": 1781,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-151",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 76,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about the exact container image tag used for the memory runtime.",
+     "prompt_tokens": 2092,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about a specific container image tag for the memory runtime.",
+     "prompt_tokens": 1705,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-152",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 73,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not mention any S3 bucket storing frozen retrieval benchmarks.",
+     "prompt_tokens": 1957,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about an S3 bucket storing frozen retrieval benchmarks.",
+     "prompt_tokens": 2154,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-153",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 78,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about browser events related to graph edges being promoted.",
+     "prompt_tokens": 1766,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about browser event names related to graph edge promotion.",
+     "prompt_tokens": 1612,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-154",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 73,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about an AMQP queue for book-ingestion jobs.",
+     "prompt_tokens": 2170,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about which AMQP queue receives book-ingestion jobs.",
+     "prompt_tokens": 2303,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-155",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about a specific DNS hostname assigned to an external cognitive gateway.",
+     "prompt_tokens": 1447,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "The provided notes do not contain any information about a DNS hostname assigned to an external cognitive gateway. Therefore, I don't know the specific DNS hostname you're asking about.",
+     "prompt_tokens": 1180,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-156",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 77,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about a gRPC method connecting the Memory Controller to the Agent Council.",
+     "prompt_tokens": 1897,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the specific gRPC method that connects the Memory Controller to the Agent Council.",
+     "prompt_tokens": 2209,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-157",
+   "answers": {
+    "A": {
+     "answer": "I don't know. There is no standard requirement for a mandatory TLS cipher suite for local service connections. The choice of cipher suite typically depends on the specific application and security requirements.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain any information about TLS cipher suites for local service connections.",
+     "prompt_tokens": 1694,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain any information about TLS cipher suites for local service connections.",
+     "prompt_tokens": 2439,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-158",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 75,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about a specific SQLite index name used for lifecycle filtering.",
+     "prompt_tokens": 2067,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the exact SQLite index name used for lifecycle filtering.",
+     "prompt_tokens": 2355,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-159",
+   "answers": {
+    "A": {
+     "answer": "I don't know.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about the specific vector dimension configured for the production semantic index.",
+     "prompt_tokens": 1210,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know. The provided notes do not contain information about the specific vector dimension configured for the production semantic index.",
+     "prompt_tokens": 1530,
+     "done_reason": "stop"
+    }
+   }
+  },
+  {
+   "id": "R3-160",
+   "answers": {
+    "A": {
+     "answer": "I don't know. Cron expressions are typically used for scheduling tasks at specific times, but \"nightly memory consolidation\" is not a standard task or event that would be scheduled with a cron expression. Memory consolidation is a process that occurs within a system and cannot be scheduled externally.",
+     "prompt_tokens": 74,
+     "done_reason": "stop"
+    },
+    "B": {
+     "answer": "I don't know. The provided notes do not contain information about a cron expression for nightly memory consolidation.",
+     "prompt_tokens": 1873,
+     "done_reason": "stop"
+    },
+    "C": {
+     "answer": "I don't know.\n\nThe provided notes do not contain any information about a cron expression for nightly memory consolidation. The notes discuss memory consolidation in biological terms and some computational models, but there is no mention of scheduling or cron expressions.",
+     "prompt_tokens": 2263,
+     "done_reason": "stop"
+    }
+   }
+  }
+ ]
+}

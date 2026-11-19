@@ -1,0 +1,2747 @@
+{
+ "rubric": "Answerable question (a reference is given): CORRECT only if the answer states every key proposition of the reference (all steps for multi-step references) and nothing in it contradicts the reference; ABSTAIN if it makes no substantive claim (e.g. 'I don't know'); otherwise INCORRECT. Paraphrase and another language are fine. Unanswerable question (reference says none exists): ABSTAIN if it declines or says it does not know; HALLUCINATION if it asserts any substantive answer.",
+ "items": [
+  {
+   "pair_id": "Q001",
+   "question": "How is implicit memory expressed differently from deliberate recollection?",
+   "reference": "Through nonconscious retention of abilities and skills that show up directly in behavior rather than intentional recollection.",
+   "answer": "Implicit memory is expressed through skills and habits that are performed without conscious awareness, such as riding a bike or typing, whereas deliberate recollection involves consciously retrieving specific information or events from memory, like recalling a person's name or what you had for dinner yesterday."
+  },
+  {
+   "pair_id": "Q002",
+   "question": "Ce principii arhitecturale de separare sunt legate de descrierea sistemului cu circuit breaker?",
+   "reference": "XAU Kinetic separa strict entitatile de domeniu, orchestrarea aplicatiei, driverele de infrastructura, managementul riscului si deciziile de strategie.",
+   "answer": "Principiile arhitecturii cu circuit breaker care sunt legate de descrierea sistemului includ:\n\n1. Introducerea unui circuit breaker virtual pentru a controla erorile serviciului.\n2. Limitarea impactului unor servicii neaccesibile asupra celorlalte.\n3. Implementarea unui mecanism de supraviețuire pentru a permite restituirea serviciului rapid.\n4. Asigurarea că erorile locale nu afectează întregul sistem."
+  },
+  {
+   "pair_id": "Q003",
+   "question": "Care este endpointul GraphQL pentru interogarea grafului cognitiv?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about a specific GraphQL endpoint for querying the cognitive graph."
+  },
+  {
+   "pair_id": "Q004",
+   "question": "Ce sistem de design este legat de procedura care foloseste Squint Test si ce cere el inainte de cod?",
+   "reference": "Tokenii vizuali stricti trebuie definiti inainte de orice linie de cod UI.",
+   "answer": "I don't know. The provided notes do not mention a system of design or a Squint Test procedure."
+  },
+  {
+   "pair_id": "Q005",
+   "question": "What exact SSE event name is emitted when a graph edge is promoted?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about SSE event names for graph edge promotions."
+  },
+  {
+   "pair_id": "Q006",
+   "question": "Ce intrebare apare in nota din slotul legat de procedura de ingestie a cartilor?",
+   "reference": "Intrebarea este: Cum sunt executate operatiile?",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q007",
+   "question": "Ce benchmark de memorie pe termen lung este asociat cu structura 00 CORE / 01 KNOWLEDGE a sistemului?",
+   "reference": "LoCoMo e descris ca benchmark pentru pastrarea, actualizarea si recuperarea memoriei pe traiectorii conversationale de peste 35 de sesiuni.",
+   "answer": "I don't know. The provided notes do not contain information about a long-term memory benchmark associated with the 00 CORE / 01 KNOWLEDGE system structure."
+  },
+  {
+   "pair_id": "Q008",
+   "question": "Ce niveluri de integrare sunt prevazute in documentul asociat arhitecturii 99 SYSTEM?",
+   "reference": "Documentul enterprise descrie patru niveluri de integrare in proiect.",
+   "answer": "I don't know. The notes provided do not contain the necessary information to answer the question."
+  },
+  {
+   "pair_id": "Q009",
+   "question": "Where does the described latent memory reside?",
+   "reference": "In compressed historical context represented within transformer activation spaces rather than plaintext.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q010",
+   "question": "Ce schema de stocare si autentificare este legata de produsul air-gapped?",
+   "reference": "Autentificarea foloseste un PIN local cu hash si salt, iar baza de date este criptata cu SQLCipher, cu cheia protejata prin DPAPI.",
+   "answer": "I don't know. The term \"air-gapped\" typically refers to a physical security measure where a computer or network is completely isolated from untrusted networks, such as the internet, to protect against unauthorized access. However, without more specific information about the air-gapped product in question, I cannot provide a precise answer about its storage and authentication schema."
+  },
+  {
+   "pair_id": "Q011",
+   "question": "What institutional scope is given to the order discussed in this note?",
+   "reference": "It establishes the Romanian Ministry of Defence's internal rules for protecting national, NATO, EU, and equivalent classified information.",
+   "answer": "I don't know. The notes do not specify the institutional scope given to the order discussed. The notes provide details about Casa3D software and its current state, but do not mention any specific order or its scope."
+  },
+  {
+   "pair_id": "Q012",
+   "question": "Ce arhitectura UI si I/O este recomandata de nota asociata cu Squint Test pentru operatii masive?",
+   "reference": "Operatiile I/O si parsarea masiva se executa asincron prin streaming IAsyncEnumerable, iar UI foloseste MVVM strict.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q013",
+   "question": "What kind of recall characterizes explicit memory?",
+   "reference": "Conscious recollection of past occurrences, factual knowledge, and personal experiences, requiring deliberate awareness.",
+   "answer": "Explicit memory, also known as declarative memory, involves recall that requires conscious effort and can be verbalized."
+  },
+  {
+   "pair_id": "Q014",
+   "question": "What question should this interface surface within five seconds?",
+   "reference": "Whether everything is okay and, if not, where the anomaly is.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q015",
+   "question": "What does episodic memory store for an agent?",
+   "reference": "Past state embeddings and hidden activations that allow retrieval of relevant prior experiences in rare or unseen situations.",
+   "answer": "Episodic memory stores decisions, errors, experiences, lessons, and preferences for an agent."
+  },
+  {
+   "pair_id": "Q016",
+   "question": "What makes the associative process described here capable of producing synaptic facilitation?",
+   "reference": "It requires precise temporal contiguity between sensory excitation and modulatory feedback.",
+   "answer": "Based on the provided notes, synaptic facilitation is associated with synaptic plasticity, which is a mechanism that modifies the strength of the connections between neurons in response to their activity. This process provides the physical/structural foundation through which experience is transformed into permanent storage in the consolidation slot. However, the notes do not explicitly detail what makes the associative process capable of producing synaptic facilitation. For a precise answer, we would need more specific information from the referenced sources."
+  },
+  {
+   "pair_id": "Q017",
+   "question": "Which storage technology provides FinScope's local-first offline storage?",
+   "reference": "IndexedDB via Dexie.",
+   "answer": "Dexie (IndexedDB) provides FinScope's local-first offline storage."
+  },
+  {
+   "pair_id": "Q018",
+   "question": "How is implicit memory expressed differently from deliberate recollection?",
+   "reference": "Through nonconscious retention of abilities and skills that show up directly in behavior rather than intentional recollection.",
+   "answer": "Implicit memory is expressed through behavioral performance rather than intentional mental recollection. It involves nonconscious retention of motor abilities and perceptual skills, manifested directly through performance without the need for conscious retrieval."
+  },
+  {
+   "pair_id": "Q019",
+   "question": "Which properties are specified for GPU-accelerated animation?",
+   "reference": "transform and opacity.",
+   "answer": "I don't know.\n\nThe provided notes do not contain any information about GPU-accelerated animation or its properties. The notes are primarily about skills for AI agents, including web design, game development, and media skills, as well as a process for ingesting books into an ontology and details from a statistics manual."
+  },
+  {
+   "pair_id": "Q020",
+   "question": "Which agent performs research and compliance verification rather than production coding?",
+   "reference": "Perplexity operates as the external research agent, not the execution agent.",
+   "answer": "The `secops_auditor` agent performs research and compliance verification rather than production coding."
+  },
+  {
+   "pair_id": "Q021",
+   "question": "What is the functional role of a buffer in the described architecture?",
+   "reference": "It is a restricted-capacity interface that holds one chunk between an internal cognitive module and the central production system.",
+   "answer": "I don't know. Could you provide more context about the architecture you're referring to?"
+  },
+  {
+   "pair_id": "Q022",
+   "question": "Ce reguli de memorare sunt descrise in nota asociata cu ExplainableAiRiskEngine?",
+   "reference": "Memoria este impartita in clase precum knowledge, project, procedure, decision, experience, error, lesson, preference, resource si hypothesis; o nota noua trebuie sa fie reutilizabila, distincta, suficient de stabila si relevanta.",
+   "answer": "Regulile de memorare descrise în nota asociata cu ExplainableAiRiskEngine includ utilizarea unui motor care înlocuiește evaluările opace printr-o descompunere matematică a riscului (0-100) în factori de pondere trasabili până la nivelul sursei de probă, asociind fiecare factor cu tehnica MITRE corespunzătoare și justificarea legală în limba română."
+  },
+  {
+   "pair_id": "Q023",
+   "question": "Ce platforma de forensics este legata de regulile despre clasele de memorie si crearea notelor?",
+   "reference": "LogAnalyzer DFIR Enterprise este o suita air-gapped si offline pentru analiza forenzica a sistemelor Windows.",
+   "answer": "I don't know. The provided notes are empty and do not contain the necessary information to answer the question."
+  },
+  {
+   "pair_id": "Q024",
+   "question": "What is the purpose of the retrieval hypothesis registry?",
+   "reference": "It tracks formalized, testable empirical hypotheses about memory retrieval, candidate generation, and multi-signal fusion.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q025",
+   "question": "What sort of behavior does procedural memory encompass?",
+   "reference": "Motor coordination, perceptual skills, and cognitive algorithms that operate automatically without conscious inspection.",
+   "answer": "Procedural memory encompasses motor coordination, perceptual skills, and cognitive algorithms that operate automatically without conscious inspection."
+  },
+  {
+   "pair_id": "Q026",
+   "question": "What is the exact browser event name emitted when a graph edge is promoted?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about browser events related to graph edges being promoted."
+  },
+  {
+   "pair_id": "Q027",
+   "question": "Ce cere principiul de audit din nota legata de tool call hooks?",
+   "reference": "Utilitatea memoriei necesita un lant de provenienta neîntrerupt si observabil empiric, de la query/discovery pana la retrieve si load.",
+   "answer": "Principiul de audit din nota legată de tool call hooks cere verificarea și confirmarea aferentă a evenimentelor instrumentaleizate prin hook-uri, pentru a se asigura că statele declarate sunt corespunzătoare evenimentelor observate."
+  },
+  {
+   "pair_id": "Q028",
+   "question": "Ce port SMTP foloseste componenta de notificari?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "Portul SMTP folosit de componenta de notificări este de obicei portul 25."
+  },
+  {
+   "pair_id": "Q029",
+   "question": "Pornind de la nota care foloseste Dexie, ce cerinta de prezentare ar trebui sa conduca un panou administrativ?",
+   "reference": "Panoul trebuie sa raspunda in 5 secunde daca totul este in regula si, daca nu, unde este anomalia.",
+   "answer": "Pentru un panou administrativ, ar trebui să conducă cerința de prezentare a stocului de date locale gestionat de Dexie, inclusiv structura bazei de date, numărul de tabele și de registri, performanța la citire și scriere, și posibilele restricții de securitate aplicate. Aceasta ar oferi un cadru clar pentru gestionarea și monitorizarea datelor locale în aplicație FinScope."
+  },
+  {
+   "pair_id": "Q030",
+   "question": "Ce domeniu DNS este configurat pentru serviciul cognitiv extern?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about a specific DNS domain configured for an external cognitive service."
+  },
+  {
+   "pair_id": "Q031",
+   "question": "Ce configurare este descrisa in nota asociata cu referinta oficiala si sectiunea Source Details?",
+   "reference": "Fluxul necesita IP fix pentru imprimanta, cititor de card USB sau retea, iar dispozitivul foloseste EIP 3.7 compatibil cu PaperCut MF Secure Access.",
+   "answer": "I don't know. The notes provided are empty and do not contain any information to answer the question."
+  },
+  {
+   "pair_id": "Q032",
+   "question": "Ce nu are voie un agent sa prezinte drept real, indiferent de forma in care a fost obtinut?",
+   "reference": "Date inventate, date demo/exemplu/placeholder prezentate ca reale, rezultate simulate neexecutate efectiv și verificări sau teste neefectuate nu pot fi prezentate drept reale.",
+   "answer": "Din informațiile date, nu este specificat exact ce tipuri de relații sau interacțiuni un agent nu are voie să prezinte drept real, indiferent de forma în care au fost obținute. Informațiile oferite se concentrează mai mult pe tipurile de obiecte și relațiile lor în mesh-ul de memorie cognitive, dar nu detalierează restricțiile specifice pentru agente. Prin urmare, cu informațiile actuale, nu pot oferi o răspuns specific la întrebare."
+  },
+  {
+   "pair_id": "Q033",
+   "question": "Ce regula de integritate este asociata arhitecturii care forteaza format JSON in apelurile Ollama?",
+   "reference": "Vault-ul cere sa nu se inventeze informatii, sa se marcheze ce nu este verificat si sa se pastreze sursa si data cand sunt disponibile.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q034",
+   "question": "Cate intrari are catalogul legat de motorul cu rata de decadere d = 0.5?",
+   "reference": "Catalogul are 3659 intrari, din 3661 directoare reale.",
+   "answer": "I don't know. The provided notes do not contain information about a catalog related to a decay rate d = 0.5 or any specific number of entries in such a catalog."
+  },
+  {
+   "pair_id": "Q035",
+   "question": "Which TLS cipher suite is mandatory for local service connections?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain any information about TLS cipher suites for local service connections."
+  },
+  {
+   "pair_id": "Q036",
+   "question": "What does the P0 document formalize?",
+   "reference": "Empirical findings, mathematical measurements, failure modes, and architectural implications from the P0 Real Pipeline Diagnostic Experiment.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q037",
+   "question": "How does feedback influence subsequent action in the described regulator model?",
+   "reference": "Observed discrepancies between actual output and target patterns are routed back into the regulator to guide later action.",
+   "answer": "In the described regulator model, feedback influences subsequent action by routing observed discrepancies between actual output and target patterns back into the regulator. This process guides subsequent actions to address the discrepancies."
+  },
+  {
+   "pair_id": "Q038",
+   "question": "What exact gRPC method connects the Memory Controller to the Agent Council?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about a gRPC method connecting the Memory Controller to the Agent Council."
+  },
+  {
+   "pair_id": "Q039",
+   "question": "Which AMQP queue receives book-ingestion jobs?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about an AMQP queue for book-ingestion jobs."
+  },
+  {
+   "pair_id": "Q040",
+   "question": "What is the North Star goal of the vault?",
+   "reference": "To build an AI system with persistent memory, controlled retrieval, a knowledge graph, verification, and continuity across models and sessions.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q041",
+   "question": "Care este numele exchange-ului AMQP pentru joburile de ingestie?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about AMQP exchanges for ingestion jobs."
+  },
+  {
+   "pair_id": "Q042",
+   "question": "Which layer is described as the repository of stable, reusable knowledge?",
+   "reference": "01 KNOWLEDGE.",
+   "answer": "The layer described as the repository of stable, reusable knowledge is the `KNOWLEDGE` layer, which is part of the Cognitive Memory Mesh architecture. It contains canonical, verified domain facts and architectural blueprints."
+  },
+  {
+   "pair_id": "Q043",
+   "question": "What is the first thing the successor agent is instructed to read?",
+   "reference": "This handoff document itself.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q044",
+   "question": "Which language is used for AD, GPO automation, and system scripting?",
+   "reference": "PowerShell.",
+   "answer": "PowerShell is used for AD, GPO automation, and system scripting."
+  },
+  {
+   "pair_id": "Q045",
+   "question": "What determines future behavior in a state-determined system?",
+   "reference": "Its current internal configuration and incoming environmental inputs, without intrinsic randomness.",
+   "answer": "In a state-determined system, future behavior is determined by the current state and the rules governing the system's dynamics."
+  },
+  {
+   "pair_id": "Q046",
+   "question": "What distinguishes an ultrastable system from a merely fixed system?",
+   "reference": "It automatically reorganizes its internal parameters when essential variables leave viable limits.",
+   "answer": "An ultrastable system maintains its state with extremely high precision and stability over time, often with mechanisms that correct minor deviations. In contrast, a merely fixed system may have some tolerance for deviation before it changes state or behavior."
+  },
+  {
+   "pair_id": "Q047",
+   "question": "Which risk-control component is explicitly mentioned in the XAU Kinetic architecture?",
+   "reference": "An isolated risk engine with a circuit breaker.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q048",
+   "question": "Cate skill-uri specializate integreaza aceasta colectie?",
+   "reference": "130 specialized agent skills.",
+   "answer": "Această colecție integrează 130 de skill-uri specializate pentru agenți AI."
+  },
+  {
+   "pair_id": "Q049",
+   "question": "What transition in problem solving is triggered by an impasse?",
+   "reference": "It moves the system from reactive execution toward deliberate, reflective reasoning.",
+   "answer": "The notes do not provide a specific answer to what transition in problem solving is triggered by an impasse. The notes discuss various topics including agent transfer, dependency DAG phases, Casa3D research, and reinforcement learning, but do not address the transition in problem solving related to impasses."
+  },
+  {
+   "pair_id": "Q050",
+   "question": "Where does the described latent memory reside?",
+   "reference": "In compressed historical context represented within transformer activation spaces rather than plaintext.",
+   "answer": "Latent memory resides within transformer activation spaces, according to the notes retrieved from the user's knowledge vault."
+  },
+  {
+   "pair_id": "Q051",
+   "question": "What local endpoint does the desktop host use for the Python cognitive core?",
+   "reference": "http://127.0.0.1:3000",
+   "answer": "I don't know. The provided notes do not contain information about a local endpoint for the Python cognitive core used by the desktop host."
+  },
+  {
+   "pair_id": "Q052",
+   "question": "What is the key property of priming in this definition?",
+   "reference": "It is an unconscious facilitation for identifying or producing recently encountered stimuli and is independent of medial-temporal-lobe declarative memory.",
+   "answer": "The key property of priming in this definition is that it refers to an unconscious activation of associated concepts or responses."
+  },
+  {
+   "pair_id": "Q053",
+   "question": "Ce rol are agentul extern asociat aplicatiei de evidenta a transferurilor, in documentul care mentioneaza Argon2id?",
+   "reference": "Perplexity face research extern si verificare de conformitate cu surse citate, nu executie.",
+   "answer": "I don't know. The provided notes are empty and do not contain the necessary information to answer the question."
+  },
+  {
+   "pair_id": "Q054",
+   "question": "How should a durable change be recorded when an equivalent record already exists?",
+   "reference": "Update the canonical record and relevant index/MOC rather than creating parallel copies.",
+   "answer": "When a durable change is needed and an equivalent record already exists, the change should be committed as a new, coherent, and validated update. Ensure the commit message is descriptive and that the change set does not include credentials or other secrets. Follow the Git procedure to back up the vault before making any significant changes, and verify the results after restoration or rollback."
+  },
+  {
+   "pair_id": "Q055",
+   "question": "What formal framework defines the states, actions, and transitions in the reinforcement-learning definition?",
+   "reference": "Markov decision processes, with a discount factor controlling the value of future rewards.",
+   "answer": "A framework formalised by Markov decision processes defines the states, actions, and transitions in the reinforcement-learning definition."
+  },
+  {
+   "pair_id": "Q056",
+   "question": "Pornind de la nota care foloseste Dexie, ce cerinta de prezentare ar trebui sa conduca un panou administrativ?",
+   "reference": "Panoul trebuie sa raspunda in 5 secunde daca totul este in regula si, daca nu, unde este anomalia.",
+   "answer": "Baza de date locală cuDEXie sugerează că aplicația are nevoie de un panou de administrare pentru gestionarea datelor stocate offline. Cerința de prezentare ar trebui să conțină un dashboard pentru administrarea bazii de date, inclusiv operațiuni precum adăugare, modificare și ștergere a datelor, precum și monitorizarea stării bazei de date."
+  },
+  {
+   "pair_id": "Q057",
+   "question": "Ce platforma de forensics este legata de regulile despre clasele de memorie si crearea notelor?",
+   "reference": "LogAnalyzer DFIR Enterprise este o suita air-gapped si offline pentru analiza forenzica a sistemelor Windows.",
+   "answer": "Platforma LogAnalyzer DFIR Enterprise este legată de regulile despre clasele de memorie și crearea notelor, fiind menită pentru analize forenzice a sistemelor Windows în mod air-gapped și offline."
+  },
+  {
+   "pair_id": "Q058",
+   "question": "Ce algoritm de rotatie a certificatelor TLS este configurat pentru gateway-ul local?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about TLS certificate rotation for the local gateway."
+  },
+  {
+   "pair_id": "Q059",
+   "question": "Ce furnizor OpenID Connect este configurat pentru autentificarea browser-agentilor?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q060",
+   "question": "What is the first thing the successor agent is instructed to read?",
+   "reference": "This handoff document itself.",
+   "answer": "The first thing the successor agent is instructed to read is `docs/reports/CLAUDE_CODE_COST_ROUTER_IMPLEMENTATION_REPORT.md` (phase-1 report: §10 benchmark table, §13 risks R1-R5)."
+  },
+  {
+   "pair_id": "Q061",
+   "question": "What physical arrangement is associated with Ashby's homeostat?",
+   "reference": "Four interconnected units equipped with magnets and uniselectors.",
+   "answer": "Ashby's homeostat consists of four interconnected units equipped with magnets and uniselectors."
+  },
+  {
+   "pair_id": "Q062",
+   "question": "Cum este organizat workflow-ul asociat produsului de transferuri si termenului QuestPDF?",
+   "reference": "Workflow-ul de remodelare are 7 sarcini secventiale; fiecare se planifica, se aproba, se executa si se verifica separat, iar urmatoarea nu incepe fara build verde.",
+   "answer": "Workflow-ul asociat produsului de transferuri nu este specificat în detaliu în notele date. Cu toate acestea, generativ, pentru producția documentelor oficiale PDF cu QuestPDF, workflow-ul este generat nativ și este unul dintre success criteria-urile aplicației, indicând că procesul de generare a documentelor PDF se face folosind QuestPDF."
+  },
+  {
+   "pair_id": "Q063",
+   "question": "Ce principiu de output structurat se gaseste in documentul legat de regula care cere note atomice si nu permite secrete?",
+   "reference": "AI-ul propune, codul dispune: output-ul AI este tratat ca input nevalidat si trebuie validat strict pe schema; actiunile ireversibile cer confirmare umana.",
+   "answer": "I don't know. The notes provided are empty and do not contain the necessary information to answer the question."
+  },
+  {
+   "pair_id": "Q064",
+   "question": "Ce standarde pentru scripturile de administrare sunt legate de configuratia ObsidianTactical.xaml?",
+   "reference": "Scripturile trebuie sa fie idempotente, complet trasabile prin Start-Transcript, non-distructive asupra originalelor si verificate imediat cu SHA-256.",
+   "answer": "I don't know. The provided notes do not contain information relevant to the question about ObsidianTactical.xaml configuration scripts."
+  },
+  {
+   "pair_id": "Q065",
+   "question": "Ce obiectiv unic este descris in nota asociata cu procedura de audit care foloseste 10 Euristici Nielsen si WCAG AA?",
+   "reference": "O pagina de landing trebuie sa conduca utilizatorul catre o singura actiune primara fara elemente care sa distraga atentia.",
+   "answer": "I don't know. The notes mention WCAG 2.2 A/AA but do not specify an audit procedure using 10 Nielsen heuristics."
+  },
+  {
+   "pair_id": "Q066",
+   "question": "What capability is attributed to the mental-imagery component?",
+   "reference": "It constructs depictive internal representations for visual transformations and metric queries.",
+   "answer": "The mental-imagery component is attributed with the capability to visualize or perceive images in the mind's eye, often referred to as visual imagination."
+  },
+  {
+   "pair_id": "Q067",
+   "question": "What question should this interface surface within five seconds?",
+   "reference": "Whether everything is okay and, if not, where the anomaly is.",
+   "answer": "I don't know. The provided notes do not contain information about a specific question that an interface should surface within five seconds."
+  },
+  {
+   "pair_id": "Q068",
+   "question": "Ce broker RabbitMQ este utilizat pentru coordonarea dintre agenti?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The notes provided do not contain the necessary information to answer the question."
+  },
+  {
+   "pair_id": "Q069",
+   "question": "Ce prioritate este data stabilitatii si trasabilitatii atunci cand se adauga functionalitati?",
+   "reference": "Stabilitatea, trasabilitatea si decuplarea MVVM au prioritate in fata adaugarii de functionalitati nevalidate.",
+   "answer": "Prioritatea este stabilitatea și trasabilitatea atunci când se adaugă funcționalități. A menține un sistem stabil și trasaționabil este crucial, deoarece permite identificarea și urmărirea efectelor introducerii noilor funcționalități."
+  },
+  {
+   "pair_id": "Q070",
+   "question": "What is the key first step in the measured book-ingestion recipe?",
+   "reference": "Convert the source, then have an agent read the chunks.",
+   "answer": "The key first step in the measured book-ingestion recipe is to convert the book using the script `convert_pdf_to_text.py`:\n\n```bash\npython 30_SCRIPTS/ingestion/convert_pdf_to_text.py <folder> --pages-per-chunk 3\n```"
+  },
+  {
+   "pair_id": "Q071",
+   "question": "What does Levels of Processing Theory say about long-term storage?",
+   "reference": "Information processed more deeply is more likely to be stored in long-term memory.",
+   "answer": "I don't know. The provided notes do not contain information about Levels of Processing Theory or its implications for long-term storage."
+  },
+  {
+   "pair_id": "Q072",
+   "question": "Ce politica de expirare NATS este folosita pentru memoria de lucru?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "Politica de expirare NATS pentru memoria de lucru nu este o concept specifică. NATS se referă la Not All Nodes See Traffic, un model de distribuție de mesaje, iar politica de expirare nu face parte din această abordare. Politica de expirare poate fi asociată cu alte tehnologii de memorie de lucru, cum ar fi cache-urile, dar nu este specifică NATS."
+  },
+  {
+   "pair_id": "Q073",
+   "question": "What role does an operator play in a decision cycle?",
+   "reference": "It is the focal element chosen among competing alternatives through preference arbitration to update active representations.",
+   "answer": "An operator plays a role in executing and monitoring decisions within a decision cycle, ensuring that the chosen actions are implemented correctly and efficiently."
+  },
+  {
+   "pair_id": "Q074",
+   "question": "What failure was identified between high candidate recall and the information delivered to the model?",
+   "reference": "Packing failure.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q075",
+   "question": "What kind of license validation is implemented offline?",
+   "reference": "Validation of an offline RSA-PSS signed license using a public key.",
+   "answer": "I don't know. The notes provided do not contain information about offline license validation implementations. They discuss Windows security audit logs, registry forensics, 3D modeling strategies, and an agent memory trace emitter protocol, but do not mention any specific offline license validation rules or processes."
+  },
+  {
+   "pair_id": "Q076",
+   "question": "Which language is used for AD, GPO automation, and system scripting?",
+   "reference": "PowerShell.",
+   "answer": "PowerShell is commonly used for AD, GPO automation, and system scripting."
+  },
+  {
+   "pair_id": "Q077",
+   "question": "What does associative retrieval do in the cognitive architecture?",
+   "reference": "It scans historical episode traces to retrieve relevant operational context for ongoing agent actions.",
+   "answer": "In the cognitive architecture, associative retrieval functions scanning historical episode traces to retrieve relevant operational context for ongoing agent actions. It is a core cognitive architecture concept recurrent across the literature and has been promoted to REVIEW status for ontology grounding."
+  },
+  {
+   "pair_id": "Q078",
+   "question": "Which PostgreSQL table stores the canonical ontology history?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q079",
+   "question": "What is the North Star goal of the vault?",
+   "reference": "To build an AI system with persistent memory, controlled retrieval, a knowledge graph, verification, and continuity across models and sessions.",
+   "answer": "I don't know. The provided notes do not contain information about the North Star goal of the vault."
+  },
+  {
+   "pair_id": "Q080",
+   "question": "How many system modules are listed in the workspace specification?",
+   "reference": "Seven modules.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q081",
+   "question": "What does the externalized long-term store provide without consuming continuous attention?",
+   "reference": "Factual archives and operational manuals that guide agent execution.",
+   "answer": "The externalized long-term store provides factual archives and operational manuals that guide agent execution without consuming continuous attention."
+  },
+  {
+   "pair_id": "Q082",
+   "question": "Ce politica de expirare NATS este folosita pentru memoria de lucru?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about NATS memory retention or expiration policies."
+  },
+  {
+   "pair_id": "Q083",
+   "question": "Which database mode and encryption are specified as part of the application success criteria?",
+   "reference": "SQLite WAL mode with database encryption, using the stated secure local-storage design.",
+   "answer": "The application specifies that the database mode can be Postgres (with a pg pool, max 5 connections), PGlite on disk, or in memory on Vercel. For encryption, the session cookie `casa_session` uses HMAC-SHA256 with scrypt (N=16384, r=8, p=1) for password hashing."
+  },
+  {
+   "pair_id": "Q084",
+   "question": "Ce regula vizuala ajunge din proiectul care importa extrageri PDF/Excel/CSV si OCR?",
+   "reference": "Standardul cere maximizarea raportului data-to-ink si eliminarea pixelilor care nu prezinta date.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q085",
+   "question": "What does the externalized long-term store provide without consuming continuous attention?",
+   "reference": "Factual archives and operational manuals that guide agent execution.",
+   "answer": "The externalized long-term store provides access to information without consuming continuous attention, as the information is stored externally, such as in books, notes, or digital devices."
+  },
+  {
+   "pair_id": "Q086",
+   "question": "What national framework does this note describe as being approved under the cited Romanian law?",
+   "reference": "It approves the National Standards for the Protection of Classified Information in Romania, adopted under Law 182/2002.",
+   "answer": "I don't know. Please provide more context or the note in question."
+  },
+  {
+   "pair_id": "Q087",
+   "question": "What does the architecture require the program to do with model-generated output?",
+   "reference": "AI proposes while code decides; AI output is treated as unvalidated user input and must pass strict schema validation, with no irreversible action without human confirmation.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q088",
+   "question": "What national framework does this note describe as being approved under the cited Romanian law?",
+   "reference": "It approves the National Standards for the Protection of Classified Information in Romania, adopted under Law 182/2002.",
+   "answer": "I don't know. The notes provided do not specify a national framework approved under cited Romanian law. They contain information about design guidelines, the law of requisite variety, and constraints in a theoretical context, but no clear reference to a specific Romanian legal framework."
+  },
+  {
+   "pair_id": "Q089",
+   "question": "Ce livrabil central defineste nota despre anti-atribute si pozitionare, legata de fisierele tokens.css/theme.ts?",
+   "reference": "Un Mini Brand Book stabileste pozitionarea, atributele de personalitate, paleta si regulile tipografice.",
+   "answer": "I don't know. The provided notes do not contain information related to anti-attributes, positioning, or tokens.css/theme.ts files."
+  },
+  {
+   "pair_id": "Q090",
+   "question": "What is the key first step in the measured book-ingestion recipe?",
+   "reference": "Convert the source, then have an agent read the chunks.",
+   "answer": "The key first step in the measured book-ingestion recipe is to convert the book to text using the script `convert_pdf_to_text.py`:\n\n```bash\npython 30_SCRIPTS/ingestion/convert_pdf_to_text.py <folder> --pages-per-chunk 3\n```"
+  },
+  {
+   "pair_id": "Q091",
+   "question": "Where must the unmodified external export be preserved?",
+   "reference": "Permanently in 06 INBOX/RAW IMPORTS/.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q092",
+   "question": "Which OAuth2 provider is configured for browser-agent login?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q093",
+   "question": "Ce obligatii generale sunt descrise in nota de conformitate asociata cu autentificarea PIN Argon2id + salt?",
+   "reference": "Aplicatiile pentru gestionarea documentelor si transferurilor trebuie sa respecte simultan HG 585/2002 si standardele conexe, inclusiv pentru trasabilitate si audit in medii air-gapped.",
+   "answer": "I don't know. The notes do not mention Argon2id or any specific obligations related to it for PIN authentication. The notes describe using a local secure PIN authentication with Argon2id hash and salt, but do not list general obligations associated with this method."
+  },
+  {
+   "pair_id": "Q094",
+   "question": "What local endpoint does the desktop host use for the Python cognitive core?",
+   "reference": "http://127.0.0.1:3000",
+   "answer": "The desktop host uses `http://127.0.0.1:8000` as the local endpoint for the Python cognitive core."
+  },
+  {
+   "pair_id": "Q095",
+   "question": "Which evidence condition corresponds to the highest level defined in the vault?",
+   "reference": "Very High means the information is directly verified by the user, execution, test, or an authoritative primary source.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q096",
+   "question": "Care este endpointul GraphQL pentru interogarea grafului cognitiv?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "Informațiile date nu conțin specific informații despre un endpoint GraphQL pentru interogarea grafului cognitiv. Pentru a obține această informație, ar fi nevoie de detalii suplimentare din contextul skill-urilor sau implementărilor relevante. Dacă există un astfel de endpoint, acesta ar fi definit în cadrul skill-ului `graphql` sau `graphql-architect`, dar informațiile date nu includ acest detalu."
+  },
+  {
+   "pair_id": "Q097",
+   "question": "How are operators authenticated and how is the on-device database protected?",
+   "reference": "Use a local numeric PIN hashed with salt and SHA-256, without JWT/sessions, and encrypt the database with SQLCipher with the key protected via DPAPI.",
+   "answer": "I don't know.\n\nThe provided notes do not contain any information about operator authentication or on-device database protection."
+  },
+  {
+   "pair_id": "Q098",
+   "question": "What is the requirement for tools in an air-gapped environment?",
+   "reference": "All tools must work offline without cloud dependencies.",
+   "answer": "The requirement for tools in an air-gapped environment includes secure local authentication (PIN hash Argon2id + salt) without network dependencies, complete database encryption (SQLite WAL mode + DPAPI), and secure sidecar cognitive bridge with `AI_Memory_Vault_CODEX_READY` on loopback `127.0.0.1:8765`. Additionally, there is a need for native document generation of official PDFs with QuestPDF, and an offline heuristic DFIR/YARA scanner for detecting threats in data packages."
+  },
+  {
+   "pair_id": "Q099",
+   "question": "What is the purpose of the stabilization phase called consolidation?",
+   "reference": "It progressively stabilizes newly registered experiential information so it can become permanently fixed in neural tissue.",
+   "answer": "The purpose of the stabilization phase called consolidation is to integrate and stabilize changes or improvements implemented in a system or organization."
+  },
+  {
+   "pair_id": "Q100",
+   "question": "What is the exact container image tag used for the memory runtime?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q101",
+   "question": "What should be done before a migration or mass modification to the vault?",
+   "reference": "Keep an independent backup of the vault, including 06 INBOX/RAW IMPORTS/.",
+   "answer": "Before a migration or mass modification to the vault, an independent backup of the vault, including `06_INBOX/RAW_IMPORTS/`, should be kept."
+  },
+  {
+   "pair_id": "Q102",
+   "question": "How are operators authenticated and how is the on-device database protected?",
+   "reference": "Use a local numeric PIN hashed with salt and SHA-256, without JWT/sessions, and encrypt the database with SQLCipher with the key protected via DPAPI.",
+   "answer": "Based on the provided notes, the authentication and protection of the on-device database for Casa3D are handled as follows:\n\n- **Authentication**:\n  - The login system uses a single password per owner, with hashing using `scrypt` (N=16384, r=8, p=1) and an HMAC-SHA256 session cookie (`casa_session`) that expires in 30 days and rotates with password changes.\n  - There are rate limits on login attempts, allowing 5 attempts per IP address over a 15-minute period.\n\n- **Database Protection**:\n  - The database configuration varies depending on the environment:\n    - In a local development or Vercel environment, it uses Postgres with a PostgreSQL pool, limited to a maximum of 5 connections.\n    - In a disk-based or in-memory environment, it uses PGlite.\n  - The database schema includes a column `owner` in tables like `projects`, `tasks`, and `studio_profile`, which helps in managing tenancy and access control.\n\nThese measures ensure that the system is secure and that user data is protected."
+  },
+  {
+   "pair_id": "Q103",
+   "question": "Which PostgreSQL table stores the canonical ontology history?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about which PostgreSQL table stores the canonical ontology history."
+  },
+  {
+   "pair_id": "Q104",
+   "question": "Which evidence sources take precedence when records disagree?",
+   "reference": "GitHub main, committed source, real test output, and CI take precedence.",
+   "answer": "I don't know. The precedence of evidence sources can depend on the specific context or legal framework involved."
+  },
+  {
+   "pair_id": "Q105",
+   "question": "What institutional scope is given to the order discussed in this note?",
+   "reference": "It establishes the Romanian Ministry of Defence's internal rules for protecting national, NATO, EU, and equivalent classified information.",
+   "answer": "I don't know. The notes provided do not contain information about the institutional scope of the order discussed. The notes are technical documentation and do not include details about institutional policies or scopes."
+  },
+  {
+   "pair_id": "Q106",
+   "question": "What is the key property of priming in this definition?",
+   "reference": "It is an unconscious facilitation for identifying or producing recently encountered stimuli and is independent of medial-temporal-lobe declarative memory.",
+   "answer": "An unconscious facilitation in identifying or producing recently encountered perceptual stimuli."
+  },
+  {
+   "pair_id": "Q107",
+   "question": "How are operators authenticated and how is the on-device database protected?",
+   "reference": "Use a local numeric PIN hashed with salt and SHA-256, without JWT/sessions, and encrypt the database with SQLCipher with the key protected via DPAPI.",
+   "answer": "I don't know. The specific details can vary greatly depending on the device and operating system in use. Generally, authentication involves verifying the identity of the operator through methods like passwords, biometrics, or tokens. On-device database protection might include encryption, access controls, and regular updates to mitigate vulnerabilities."
+  },
+  {
+   "pair_id": "Q108",
+   "question": "What exact gRPC method connects the Memory Controller to the Agent Council?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the specific gRPC method that connects the Memory Controller to the Agent Council."
+  },
+  {
+   "pair_id": "Q109",
+   "question": "How should a durable change be recorded when an equivalent record already exists?",
+   "reference": "Update the canonical record and relevant index/MOC rather than creating parallel copies.",
+   "answer": "A durable change should be recorded by updating the existing record to reflect the new information, ensuring that the original data is preserved or referenced, and maintaining a clear history of changes."
+  },
+  {
+   "pair_id": "Q110",
+   "question": "Ce principiu elimina pixelii care nu transmit date?",
+   "reference": "The goal is to maximize the data-to-ink ratio; pixels that do not present data should be removed.",
+   "answer": "I don't know. The notes provided do not contain the answer to the question."
+  },
+  {
+   "pair_id": "Q111",
+   "question": "Care este numele exchange-ului AMQP pentru joburile de ingestie?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q112",
+   "question": "Which agent performs research and compliance verification rather than production coding?",
+   "reference": "Perplexity operates as the external research agent, not the execution agent.",
+   "answer": "I don't know. The provided notes do not specify which agent is responsible for research and compliance verification as opposed to production coding."
+  },
+  {
+   "pair_id": "Q113",
+   "question": "Which TLS cipher suite is mandatory for local service connections?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. There is no standard requirement for a mandatory TLS cipher suite for local service connections. The choice of cipher suite typically depends on the specific application and security requirements."
+  },
+  {
+   "pair_id": "Q114",
+   "question": "Ce nivel de incredere este asociat documentului care discuta ExplainableAiRiskEngine?",
+   "reference": "Very High este rezervat informatiilor verificate direct de utilizator, prin executie, test sau sursa primara autoritativa.",
+   "answer": "Documentul asociă un nivel de încredere implicit în evaluarea riscului explicabil printr-o descompunere matematică a riscului (0-100) în factori de pondere trasabili, până la nivelul sursei de probă, asociind fiecare factor cu tehnica MITRE corespunzătoare și justificarea legală în limba română. Asta sugerează un nivel ridicat de încredere și transparență în procesul de evaluare a riscului."
+  },
+  {
+   "pair_id": "Q115",
+   "question": "Ce identitate de sistem este descrisa in nota asociata aplicatiei FinScope?",
+   "reference": "Vault-ul este memoria externa a sistemului AI si stratul de continuitate intre sesiuni, modele si proiecte.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q116",
+   "question": "Ce arhitectura de straturi este legata de runbook-ul care discuta Tampermonkey?",
+   "reference": "Structura de baza include 00 CORE, 01 KNOWLEDGE, 02 PROJECTS, 03 PROCEDURES, 04 MEMORY, 05 RESOURCES, 06 INBOX, 90 TEMPLATES si 99 SYSTEM.",
+   "answer": "I don't know. The question seems to mix concepts from different domains. \"Arhitectura de straturi\" refers to layer-based architecture in software design, while \"runbook\" is typically used in IT operations to document procedures. Tampermonkey is a browser extension for injecting user scripts. These concepts are not directly related, so without more context, I cannot make a connection to a specific layer architecture or runbook."
+  },
+  {
+   "pair_id": "Q117",
+   "question": "Which role is responsible for locating canonical cross-cutting knowledge and preserving provenance?",
+   "reference": "It locates relevant canonical knowledge, maps tasks to skills and agents, distinguishes canonical material from raw external imports, detects duplicates/conflicts, and preserves provenance.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q118",
+   "question": "Ce spune reteta asociata cu slotul de proceduri despre ce ramane in urma masuratorilor?",
+   "reference": "Reteta retine ceea ce a supravietuit masuratorii si include si partile care au esuat, nu doar succesele.",
+   "answer": "I don't know. The notes provided are empty and do not contain the answer to the question."
+  },
+  {
+   "pair_id": "Q119",
+   "question": "Which evidence condition corresponds to the highest level defined in the vault?",
+   "reference": "Very High means the information is directly verified by the user, execution, test, or an authoritative primary source.",
+   "answer": "Condition B, which corresponds to a \"Full Vault Context Dump,\" has the highest evidence coverage and accuracy at 71.1% evidence coverage and 63.3% accuracy."
+  },
+  {
+   "pair_id": "Q120",
+   "question": "What single primary action should a visitor be guided toward in this conversion flow?",
+   "reference": "Guide the user toward one primary action without distracting elements.",
+   "answer": "I don't know. Please provide more context about the conversion flow."
+  },
+  {
+   "pair_id": "Q121",
+   "question": "Why are blood pressure and temperature examples of essential variables?",
+   "reference": "They are crucial somatic quantities that must remain within viability boundaries.",
+   "answer": "I don't know.\n\nThe provided notes do not contain information about blood pressure, temperature, or why they are considered essential variables in the context of ultrastable systems or adaptation. These notes focus on system stability, adaptation as a core concept, and project structure preferences for Python applications, but do not provide the specific answer to the question about essential variables."
+  },
+  {
+   "pair_id": "Q122",
+   "question": "Ce principiu de output structurat se gaseste in documentul legat de regula care cere note atomice si nu permite secrete?",
+   "reference": "AI-ul propune, codul dispune: output-ul AI este tratat ca input nevalidat si trebuie validat strict pe schema; actiunile ireversibile cer confirmare umana.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q123",
+   "question": "Ce trebuie stabilit inainte sa fie scris codul interfetei?",
+   "reference": "Strict visual tokens such as semantic colors, typography scale, and spacing.",
+   "answer": "Înainte de a scrie codul interfetei, trebuie stabilit explicit numărul maxim de intrari simultane, directiile permise (BUY/SELL), regulile de SL/TP, criteriile de selectie a strategiei, precum și cerințele de management al riscului. Aceste specificări trebuie valideazate cu utilizatorul înainte de a începe implementarea."
+  },
+  {
+   "pair_id": "Q124",
+   "question": "Ce separare modulara descrie nota legata de Kill Switch hardware?",
+   "reference": "Arhitectura este impartita in data, strategy, risk, execution si journal, iar modulul de risc are drept de veto asupra semnalelor strategiei.",
+   "answer": "Nota nu specifică explicit o separare modulară pentru Kill Switch hardware. Aceasta se referă mai mult la implementarea lui în aplicație, inclusiv funcționalitatea de jurnalizare conformă Vault Rules P18 și prezența unui buton roșu Kill Switch de urgență în interfața nativă Windows."
+  },
+  {
+   "pair_id": "Q125",
+   "question": "Care este schema PostgreSQL pentru tabela in care sunt stocate memoriile canonice?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "Baza de date PostgreSQL nu este specificată în răspuns direct pentru această întrebare. Notația furnizată conține informații despre abilități legate de PostgreSQL, dar nu include o schema specifică pentru o tabelă care ar stoca memoriile canonice. Pentru a afla structura exactă a schema pentru această tabelă, ar fi nevoie de informații suplimentare sau de consultarea codului sursă al bazei de date."
+  },
+  {
+   "pair_id": "Q126",
+   "question": "Ce obligatii generale sunt descrise in nota de conformitate asociata cu autentificarea PIN Argon2id + salt?",
+   "reference": "Aplicatiile pentru gestionarea documentelor si transferurilor trebuie sa respecte simultan HG 585/2002 si standardele conexe, inclusiv pentru trasabilitate si audit in medii air-gapped.",
+   "answer": "Nota nu specifică exact obligațiile generale asociate cu autentificarea PIN Argon2id + salt, dar menționează că această metodă de autentificare locală sigură nu depinde de rețea. Conform contextului, această abordare este conformă cu HG 585/2002, NATO AC/35-D/1022, EUCI 2013/488/UE, NIST SP 800-88r2 și legislația conexă."
+  },
+  {
+   "pair_id": "Q127",
+   "question": "What evidence sequence is required before the utility of stored information can be established?",
+   "reference": "An unbroken, empirically observable provenance chain from query/discovery through retrieval and loading to use.",
+   "answer": "I don't know. The provided notes do not contain information about the evidence sequence required to establish the utility of stored information."
+  },
+  {
+   "pair_id": "Q128",
+   "question": "Which Kafka topic carries canonical-memory mutations?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q129",
+   "question": "Ce cere principiul de audit din nota legata de tool call hooks?",
+   "reference": "Utilitatea memoriei necesita un lant de provenienta neîntrerupt si observabil empiric, de la query/discovery pana la retrieve si load.",
+   "answer": "I don't know. The provided notes do not contain information about audit call hooks or their audit principles."
+  },
+  {
+   "pair_id": "Q130",
+   "question": "Ce broker RabbitMQ este utilizat pentru coordonarea dintre agenti?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the broker RabbitMQ or any broker used for coordination between agents."
+  },
+  {
+   "pair_id": "Q131",
+   "question": "What distinguishes declarative memory from a rigid associative routine in this ontology?",
+   "reference": "It supports novel inferential derivations and contextual problem-solving.",
+   "answer": "Declarative memory involves remembering facts and events, which can be consciously recalled and described in words. In contrast, a rigid associative routine is an automated sequence of actions or behaviors triggered by specific cues, without the need for conscious recall."
+  },
+  {
+   "pair_id": "Q132",
+   "question": "How does the described agent use episodic memory when facing rare or novel contexts?",
+   "reference": "It reinstates hidden activations from past rare states into recurrent working-memory layers so previously learned episodic sequences can be executed in novel contexts.",
+   "answer": "The agent uses its episodic memory to retrieve relevant prior experiences stored in the episodic memory component when facing rare or novel contexts. This allows the agent to execute previously learned episodic sequences, reinstating hidden activations from past rare states into the recurrent working memory layers, and make informed decisions in new situations."
+  },
+  {
+   "pair_id": "Q133",
+   "question": "What are the three habits the procedure says mattered most?",
+   "reference": "Run it before believing it, along with the other two evidence-oriented reflexes encoded by the procedure.",
+   "answer": "I don't know. The notes provided do not list three specific habits that the procedure says mattered most. The notes contain procedures for ingesting books, deploying a trading engine, Git operations, quoting from copyrighted sources, and import sanitization, but do not explicitly mention three key habits."
+  },
+  {
+   "pair_id": "Q134",
+   "question": "What kind of memories is the cerebellum described as essential for?",
+   "reference": "Implicit memories, including procedural memory, motor learning, and classical conditioning.",
+   "answer": "The cerebellum is described as essential for the formation of implicit memories, including procedural memory, motor learning, and classical conditioning."
+  },
+  {
+   "pair_id": "Q135",
+   "question": "Where does the described latent memory reside?",
+   "reference": "In compressed historical context represented within transformer activation spaces rather than plaintext.",
+   "answer": "I don't know.\n\nThe provided notes do not contain specific information about where latent memory resides. The notes discuss forgetting, neurotransmitters, problems with memory, and memory construction and reconstruction, but do not address the location of latent memory."
+  },
+  {
+   "pair_id": "Q136",
+   "question": "What single primary action should a visitor be guided toward in this conversion flow?",
+   "reference": "Guide the user toward one primary action without distracting elements.",
+   "answer": "In the \"Hero Sections\" category, the primary action a visitor should be guided toward is clear messaging, visuals, and CTAs that instantly capture attention, communicate the value proposition, and guide visitors toward action."
+  },
+  {
+   "pair_id": "Q137",
+   "question": "What GraphQL mutation is used to approve a memory candidate?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q138",
+   "question": "Care este cheia de partitionare din tabela distribuita a jurnalului de memorie?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about a distributed memory journal or its partitioning key."
+  },
+  {
+   "pair_id": "Q139",
+   "question": "Ce arhitectura de straturi este legata de runbook-ul care discuta Tampermonkey?",
+   "reference": "Structura de baza include 00 CORE, 01 KNOWLEDGE, 02 PROJECTS, 03 PROCEDURES, 04 MEMORY, 05 RESOURCES, 06 INBOX, 90 TEMPLATES si 99 SYSTEM.",
+   "answer": "I don't know. The provided notes are empty, so there's no information to determine the connection between the architecture layers and the Tampermonkey runbook."
+  },
+  {
+   "pair_id": "Q140",
+   "question": "Why is reservoir sampling useful for a stream whose total length is unknown?",
+   "reference": "It lets k items be sampled uniformly from a stream without knowing the final length or explicit stream boundaries.",
+   "answer": "Reservoir sampling is useful for a stream whose total length is unknown because it allows for randomly selecting a sample of k items from the stream while ensuring each item has an equal probability of selection, without requiring explicit knowledge of the total stream length or boundaries. This makes it suitable for processing large or continuous data streams where the total size is not known in advance."
+  },
+  {
+   "pair_id": "Q141",
+   "question": "What exact SSE event name is emitted when a graph edge is promoted?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q142",
+   "question": "What kind of memories is the cerebellum described as essential for?",
+   "reference": "Implicit memories, including procedural memory, motor learning, and classical conditioning.",
+   "answer": "The cerebellum is described as essential for motor memories, which are related to coordination and balance."
+  },
+  {
+   "pair_id": "Q143",
+   "question": "Ce intrebare apare in nota din slotul legat de procedura de ingestie a cartilor?",
+   "reference": "Intrebarea este: Cum sunt executate operatiile?",
+   "answer": "I don't know. The provided notes do not contain an answer to the specific question about a query appearing in the book ingestion procedure."
+  },
+  {
+   "pair_id": "Q144",
+   "question": "Ce procedura de evaluare a interfetelor grafice este legata de documentul care foloseste IAsyncEnumerable pentru operatii I/O grele?",
+   "reference": "Procedura sistematica foloseste 10 Euristici Nielsen si WCAG AA, iar fiecare problema primeste severitate 0–4, locatie, euristica si propunere de remediere.",
+   "answer": "I don't know. The provided notes are empty and do not contain the necessary information to answer the question."
+  },
+  {
+   "pair_id": "Q145",
+   "question": "Which runtime, networking, and UI constraints are imposed on the transfer-register application?",
+   "reference": "WPF on .NET 10, with zero external network calls and Vault communication strictly via 127.0.0.1.",
+   "answer": "The notes do not provide specific details about the runtime, networking, and UI constraints imposed on the transfer-register application. However, the notes do mention that the application is built using C#/WPF/.NET 8, which implies a WPF UI. For runtime and networking constraints, the notes reference a tech stack that includes .NET (C#, WPF) for desktop applications, but do not specify any particular constraints. Therefore, I don't know the specific constraints without more detailed information."
+  },
+  {
+   "pair_id": "Q146",
+   "question": "Care este endpointul GraphQL pentru interogarea grafului cognitiv?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The specific GraphQL endpoint for querying a cognitive graph would depend on the implementation and configuration of the particular system or service being used."
+  },
+  {
+   "pair_id": "Q147",
+   "question": "Which PostgreSQL table stores the canonical ontology history?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q148",
+   "question": "How is regulation described in the cybernetic formulation?",
+   "reference": "As coordinating responsive moves mathematically to collapse a large disturbance set into minimally acceptable outcomes.",
+   "answer": "In the cybernetic formulation, regulation is described as the mathematical coordination of responsive moves designed to collapse a large disturbance set into minimal acceptable outcomes."
+  },
+  {
+   "pair_id": "Q149",
+   "question": "What institutional scope is given to the order discussed in this note?",
+   "reference": "It establishes the Romanian Ministry of Defence's internal rules for protecting national, NATO, EU, and equivalent classified information.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q150",
+   "question": "Care este numele bucket-ului S3 in care sunt puse artefactele de evaluare?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the S3 bucket name for evaluation artifacts."
+  },
+  {
+   "pair_id": "Q151",
+   "question": "What endpoint is used to stream chat responses from Ollama?",
+   "reference": "The Ollama /api/chat endpoint.",
+   "answer": "I don't know. The provided notes do not contain information about the endpoint used to stream chat responses from Ollama."
+  },
+  {
+   "pair_id": "Q152",
+   "question": "Ce componente concrete ale proiectului sunt descrise in nota legata de interzicerea look-ahead bias?",
+   "reference": "XAU Kinetic este un sistem hibrid Python 3.12+ cu Clean Architecture, integrat cu MetaTrader 5 si o aplicatie desktop C .NET 8 WPF; include Pydantic V2 si un motor de risc cu circuit breaker.",
+   "answer": "I don't know. The provided notes do not contain information specifically related to the interzicerea look-ahead bias or its concrete components in a project."
+  },
+  {
+   "pair_id": "Q153",
+   "question": "Ce preconditie de mediu este ceruta de procedura legata de motorul cu circuit breaker?",
+   "reference": "Python 3.12+ este instalat, iar pentru modul live terminalul MetaTrader 5 trebuie sa fie instalat, actualizat si conectat la contul brokerului.",
+   "answer": "I don't know.\n\nThe provided notes do not contain any information related to motor circuits, circuit breakers, or environmental conditions for such devices. The notes are focused on kitchen planning guidelines and do not address the question asked."
+  },
+  {
+   "pair_id": "Q154",
+   "question": "How does the described agent use episodic memory when facing rare or novel contexts?",
+   "reference": "It reinstates hidden activations from past rare states into recurrent working-memory layers so previously learned episodic sequences can be executed in novel contexts.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q155",
+   "question": "Ce axiom despre dovezi este asociat cu structura de straturi a Vault-ului?",
+   "reference": "Protocolul impune ca DECLARED sa nu fie tratat ca OBSERVED.",
+   "answer": "I don't know. The provided notes do not contain information about an axiom regarding proof structures in the Vault system."
+  },
+  {
+   "pair_id": "Q156",
+   "question": "How does a Markov constraint alter uncertainty in the described model?",
+   "reference": "It restricts transitions so entropy falls below the maximum uncertainty of a uniform distribution.",
+   "answer": "A Markov chain provides a formal representational mechanism that supports state evaluation and transition probabilities, which can alter uncertainty in the model by offering a probabilistic framework to predict the next state based on the current state. This helps in managing and reducing uncertainty by providing a structured way to handle transitions between states, which is crucial for modeling dynamical systems in the context of agent routing and state evaluation."
+  },
+  {
+   "pair_id": "Q157",
+   "question": "Ce furnizor OpenID Connect este configurat pentru autentificarea browser-agentilor?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the OpenID Connect provider configured for browser-agent authentication."
+  },
+  {
+   "pair_id": "Q158",
+   "question": "Ce obiectiv unic este descris in nota asociata cu procedura de audit care foloseste 10 Euristici Nielsen si WCAG AA?",
+   "reference": "O pagina de landing trebuie sa conduca utilizatorul catre o singura actiune primara fara elemente care sa distraga atentia.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q159",
+   "question": "Ce obiectiv unic este descris in nota asociata cu procedura de audit care foloseste 10 Euristici Nielsen si WCAG AA?",
+   "reference": "O pagina de landing trebuie sa conduca utilizatorul catre o singura actiune primara fara elemente care sa distraga atentia.",
+   "answer": "I don't know. The notes do not mention the use of 10 Nielsen heuristics or WCAG AA in a specific audit procedure objective."
+  },
+  {
+   "pair_id": "Q160",
+   "question": "Cate intrari are catalogul legat de motorul cu rata de decadere d = 0.5?",
+   "reference": "Catalogul are 3659 intrari, din 3661 directoare reale.",
+   "answer": "I don't know. The question appears to be in Romanian, asking about the entry category for a motor with a decay rate d = 0.5 in a catalog, but without additional context, I cannot provide a specific answer."
+  },
+  {
+   "pair_id": "Q161",
+   "question": "What physical arrangement is associated with Ashby's homeostat?",
+   "reference": "Four interconnected units equipped with magnets and uniselectors.",
+   "answer": "The homeostat, designed by Ashby, consists of four interconnected units equipped with magnets and uniselectors."
+  },
+  {
+   "pair_id": "Q162",
+   "question": "Where is parametric memory located?",
+   "reference": "In the trained synaptic weights of the foundation model.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q163",
+   "question": "Ce algoritm de rotatie a certificatelor TLS este configurat pentru gateway-ul local?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the TLS certificate rotation algorithm for the local gateway."
+  },
+  {
+   "pair_id": "Q164",
+   "question": "Which layer is described as the repository of stable, reusable knowledge?",
+   "reference": "01 KNOWLEDGE.",
+   "answer": "Layer 2: Canonical Knowledge (`01_KNOWLEDGE/`) is described as the repository of stable, reusable knowledge."
+  },
+  {
+   "pair_id": "Q165",
+   "question": "Ce regula vizuala ajunge din proiectul care importa extrageri PDF/Excel/CSV si OCR?",
+   "reference": "Standardul cere maximizarea raportului data-to-ink si eliminarea pixelilor care nu prezinta date.",
+   "answer": "I don't know. The notes do not provide information about the visual rules applied to data imported from PDF, Excel, CSV, or OCR scans in the FinScope project."
+  },
+  {
+   "pair_id": "Q166",
+   "question": "Ce topic Kafka este folosit pentru evenimentele de memorie persistenta?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain any information related to Kafka or persistent memory events."
+  },
+  {
+   "pair_id": "Q167",
+   "question": "Which vector dimension is configured for the production semantic index?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the specific vector dimension configured for the production semantic index."
+  },
+  {
+   "pair_id": "Q168",
+   "question": "What four criteria are given for creating a new note?",
+   "reference": "It should be reusable, distinct, stable enough, and relevant to future work.",
+   "answer": "I don't know. The provided notes do not specify four criteria for creating a new note. They contain information about agent transfers, software for home renovation projects, cost-router phases in a project, and Git procedures, but do not detail note creation criteria."
+  },
+  {
+   "pair_id": "Q169",
+   "question": "Ce trebuie stabilit inainte sa fie scris codul interfetei?",
+   "reference": "Strict visual tokens such as semantic colors, typography scale, and spacing.",
+   "answer": "Trebuie stabilit clar ce funcționalități va oferi interfata utilizatorului și care sunt datele de intrare și ieșire ale funcțiilor. De asemenea, ar trebui să se definească elementele grafice ale interfetei, cum ar fi butoanele, campurile de text, listele de selectare, etc."
+  },
+  {
+   "pair_id": "Q170",
+   "question": "What must never happen while discovering an external repository?",
+   "reference": "It must never execute external repository code during discovery.",
+   "answer": "What must never happen while discovering an external repository is that the model must never be the source of authority. The repository owner is considered the final authority for mutations to the repository and for privileged machine operations performed by an AI agent."
+  },
+  {
+   "pair_id": "Q171",
+   "question": "How is the trading architecture split into modules?",
+   "reference": "Five decoupled modules: data, strategy, risk, execution, and journal.",
+   "answer": "The trading architecture of XAU_Kinetic is split into the following modules:\n\n- `domain/`: Contains Pydantic V2 immutable data entities.\n- `application/`: Includes Clean Abstract Base Classes and the `StrategyRunner` orchestrator.\n- `infrastructure/`: Houses the `MT5Client` wrapper and `SQLitePersistence` with WAL and SHA-256 journaling.\n- `risk/`: Features the `RiskManager` and `TPLadderManager`.\n- `strategies/`: Contains pure functional strategy logic for closed bar evaluation.\n\nThese modules are structured to separate concerns strictly between core domain entities, application orchestration, infrastructure drivers, risk management, and trading strategy decisions."
+  },
+  {
+   "pair_id": "Q172",
+   "question": "Which properties are specified for GPU-accelerated animation?",
+   "reference": "transform and opacity.",
+   "answer": "I don't know.\n\nThe provided notes do not contain any information about GPU-accelerated animation properties."
+  },
+  {
+   "pair_id": "Q173",
+   "question": "How is implicit memory expressed differently from deliberate recollection?",
+   "reference": "Through nonconscious retention of abilities and skills that show up directly in behavior rather than intentional recollection.",
+   "answer": "Implicit memory is expressed through unconscious recall, such as improved performance in tasks without conscious remembrance of the learned material, whereas deliberate recollection involves conscious effort to retrieve specific information from memory."
+  },
+  {
+   "pair_id": "Q174",
+   "question": "What GraphQL mutation is used to approve a memory candidate?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about a GraphQL mutation for approving a memory candidate."
+  },
+  {
+   "pair_id": "Q175",
+   "question": "Ce sistem de design este legat de procedura care foloseste Squint Test si ce cere el inainte de cod?",
+   "reference": "Tokenii vizuali stricti trebuie definiti inainte de orice linie de cod UI.",
+   "answer": "I don't know. The provided notes do not contain information about a system of design that uses Squint Test or its requirements before coding."
+  },
+  {
+   "pair_id": "Q176",
+   "question": "Where is parametric memory located?",
+   "reference": "In the trained synaptic weights of the foundation model.",
+   "answer": "I don't know.\n\nThe provided notes do not contain information about parametric memory or its location. The notes focus on topics such as forgetting, memory problems, neurotransmitters, memory construction and reconstruction, and amnesia, but do not mention parametric memory."
+  },
+  {
+   "pair_id": "Q177",
+   "question": "Which vector dimension is configured for the production semantic index?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q178",
+   "question": "What is the North Star goal of the vault?",
+   "reference": "To build an AI system with persistent memory, controlled retrieval, a knowledge graph, verification, and continuity across models and sessions.",
+   "answer": "I don't know. The notes provided do not contain information about the North Star goal of the vault. The notes discuss the architecture, governance, and some components of the AI Memory Vault, but do not specify a North Star goal."
+  },
+  {
+   "pair_id": "Q179",
+   "question": "What does a cognitive architecture organize into one integrated model?",
+   "reference": "Memory systems, processing mechanisms, and control cycles.",
+   "answer": "I don't know. The provided notes do not contain information directly answering the question about what a cognitive architecture organizes into one integrated model."
+  },
+  {
+   "pair_id": "Q180",
+   "question": "Nota despre KPI-uri 3–5 trimite catre ce proiect si ce tip de stocare locala foloseste acesta?",
+   "reference": "FinScope foloseste IndexedDB prin Dexie pentru stocare locala, offline, fara cloud.",
+   "answer": "Nu am informații suficiente pentru a răspunde corect. Poate ar fi util să furnizați mai multe detalii despre proiect sau contextul în care se folosesc KPI-urile."
+  },
+  {
+   "pair_id": "Q181",
+   "question": "Ce editii sunt descrise de documentul asociat cu ExplainableAiRiskEngine?",
+   "reference": "Platforma LogAnalyzer are doua editii: LogAnalyzer.AirGapped si LogAnalyzer.Network.",
+   "answer": "Documentul asociat cu ExplainableAiRiskEngine nu menționează nicio editie specifică. ExplainableAiRiskEngine este descris ca fiind motorul care înlocuiește evaluările opace printr-o descompunere matematică a riscului în factori de pondere trasabili."
+  },
+  {
+   "pair_id": "Q182",
+   "question": "Ce separare modulara descrie nota legata de Kill Switch hardware?",
+   "reference": "Arhitectura este impartita in data, strategy, risk, execution si journal, iar modulul de risc are drept de veto asupra semnalelor strategiei.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q183",
+   "question": "What role does an operator play in a decision cycle?",
+   "reference": "It is the focal element chosen among competing alternatives through preference arbitration to update active representations.",
+   "answer": "I don't know.\n\nThe provided notes do not contain information about the role of an operator in a decision cycle. They are focused on the development of a live trading application using MetaTrader 5, Python, and Tkinter."
+  },
+  {
+   "pair_id": "Q184",
+   "question": "What must never happen while discovering an external repository?",
+   "reference": "It must never execute external repository code during discovery.",
+   "answer": "Based on the information provided, there is no explicit statement about what must never happen while discovering an external repository. The notes focus on security gaps and protocols within a specific memory vault and agent routing system, but do not detail strict rules for external repository discovery. Therefore, I don't know the specific answer to this question based on the given data."
+  },
+  {
+   "pair_id": "Q185",
+   "question": "What transition in problem solving is triggered by an impasse?",
+   "reference": "It moves the system from reactive execution toward deliberate, reflective reasoning.",
+   "answer": "An impasse triggers the creation of a substate, which is an automatically generated problem-solving context that allows the system to shift from reactive execution to deliberate reasoning."
+  },
+  {
+   "pair_id": "Q186",
+   "question": "What should be done before a migration or mass modification to the vault?",
+   "reference": "Keep an independent backup of the vault, including 06 INBOX/RAW IMPORTS/.",
+   "answer": "Before a migration or mass modification to the vault, you should back up the current data to prevent data loss."
+  },
+  {
+   "pair_id": "Q187",
+   "question": "Ce sistem de design este legat de procedura care foloseste Squint Test si ce cere el inainte de cod?",
+   "reference": "Tokenii vizuali stricti trebuie definiti inainte de orice linie de cod UI.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q188",
+   "question": "What role does the hippocampus play in learning according to this note?",
+   "reference": "It is critical for memory processing, helps project information to cortical regions for meaning, and facilitates consolidation of new learning into long-term memory.",
+   "answer": "The hippocampus plays a crucial role in memory processing, including recognition and spatial memory. It helps project information to cortical regions to provide meaning and facilitates the consolidation of new learning into long-term memory."
+  },
+  {
+   "pair_id": "Q189",
+   "question": "What local endpoint does the desktop host use for the Python cognitive core?",
+   "reference": "http://127.0.0.1:3000",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q190",
+   "question": "Which PostgreSQL table stores the canonical ontology history?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about a PostgreSQL table storing canonical ontology history."
+  },
+  {
+   "pair_id": "Q191",
+   "question": "What kind of license validation is implemented offline?",
+   "reference": "Validation of an offline RSA-PSS signed license using a public key.",
+   "answer": "I don't know.\n\nThe notes provided do not contain specific information about license validation implemented offline. They discuss various topics including Windows security audit logs, WPF application issues, skill gaps in WPF enterprise applications, and 3D modeling research, but do not address offline license validation."
+  },
+  {
+   "pair_id": "Q192",
+   "question": "Ce nivel de incredere este asociat documentului care discuta ExplainableAiRiskEngine?",
+   "reference": "Very High este rezervat informatiilor verificate direct de utilizator, prin executie, test sau sursa primara autoritativa.",
+   "answer": "I don't know. The question seems to be asking about a level of trust associated with a document discussing Explainable AI Risk Engine, but without more context or information about the document, I cannot provide a specific level of trust."
+  },
+  {
+   "pair_id": "Q193",
+   "question": "Ce configurare este descrisa in nota asociata cu referinta oficiala si sectiunea Source Details?",
+   "reference": "Fluxul necesita IP fix pentru imprimanta, cititor de card USB sau retea, iar dispozitivul foloseste EIP 3.7 compatibil cu PaperCut MF Secure Access.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q194",
+   "question": "Ce editii sunt descrise de documentul asociat cu ExplainableAiRiskEngine?",
+   "reference": "Platforma LogAnalyzer are doua editii: LogAnalyzer.AirGapped si LogAnalyzer.Network.",
+   "answer": "I don't know. The specific document associated with ExplainableAiRiskEngine and its described editions are not provided in the question."
+  },
+  {
+   "pair_id": "Q195",
+   "question": "Which properties are specified for GPU-accelerated animation?",
+   "reference": "transform and opacity.",
+   "answer": "I don't know. The specific properties for GPU-accelerated animation can vary depending on the technology or framework being used, but common ones might include transform, opacity, and filter properties in CSS animations."
+  },
+  {
+   "pair_id": "Q196",
+   "question": "Which evidence sources take precedence when records disagree?",
+   "reference": "GitHub main, committed source, real test output, and CI take precedence.",
+   "answer": "I don't know. The provided notes do not contain information about the precedence of evidence sources when records disagree."
+  },
+  {
+   "pair_id": "Q197",
+   "question": "Ce arhitectura UI si I/O este recomandata de nota asociata cu Squint Test pentru operatii masive?",
+   "reference": "Operatiile I/O si parsarea masiva se executa asincron prin streaming IAsyncEnumerable, iar UI foloseste MVVM strict.",
+   "answer": "I don't know. The provided notes do not contain information related to Squint Test or recommendations for UI/IO architecture for massive operations."
+  },
+  {
+   "pair_id": "Q198",
+   "question": "What status does this document assign to its own legal and institutional references?",
+   "reference": "It is a research/proposal document, not a statement of verified current law; legal and institutional references require verification against official Romanian sources.",
+   "answer": "I don't know. The question does not provide enough information about the specific document in question."
+  },
+  {
+   "pair_id": "Q199",
+   "question": "Which DNS hostname is assigned to the external cognitive gateway?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "The provided notes do not contain any information about a DNS hostname assigned to an external cognitive gateway. Therefore, I don't know the specific DNS hostname you're asking about."
+  },
+  {
+   "pair_id": "Q200",
+   "question": "Ce procedura de evaluare a interfetelor grafice este legata de documentul care foloseste IAsyncEnumerable pentru operatii I/O grele?",
+   "reference": "Procedura sistematica foloseste 10 Euristici Nielsen si WCAG AA, iar fiecare problema primeste severitate 0–4, locatie, euristica si propunere de remediere.",
+   "answer": "I don't know. The question seems to mix concepts from different areas - UI evaluation procedures and asynchronous enumerable operations in programming. There isn't a direct connection between these that I'm aware of without more context."
+  },
+  {
+   "pair_id": "Q201",
+   "question": "What evidence sequence is required before the utility of stored information can be established?",
+   "reference": "An unbroken, empirically observable provenance chain from query/discovery through retrieval and loading to use.",
+   "answer": "I don't know. Establishing the utility of stored information typically requires demonstrating its relevance, accuracy, and value in a specific context, but there isn't a single, universally defined \"evidence sequence\" for this process."
+  },
+  {
+   "pair_id": "Q202",
+   "question": "What sort of behavior does procedural memory encompass?",
+   "reference": "Motor coordination, perceptual skills, and cognitive algorithms that operate automatically without conscious inspection.",
+   "answer": "Procedural memory encompasses behaviors such as knowing how to perform tasks, like riding a bike or typing, which are skills acquired through experience and practice."
+  },
+  {
+   "pair_id": "Q203",
+   "question": "Ce identitate de sistem este descrisa in nota asociata aplicatiei FinScope?",
+   "reference": "Vault-ul este memoria externa a sistemului AI si stratul de continuitate intre sesiuni, modele si proiecte.",
+   "answer": "I don't know. The provided notes do not contain information about the specific system identity for FinScope."
+  },
+  {
+   "pair_id": "Q204",
+   "question": "What axiom separates a declaration from what was actually observed?",
+   "reference": "DECLARED is not equal to OBSERVED.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q205",
+   "question": "Which PostgreSQL table stores the canonical ontology history?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about which PostgreSQL table stores the canonical ontology history."
+  },
+  {
+   "pair_id": "Q206",
+   "question": "What exact gRPC method connects the Memory Controller to the Agent Council?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q207",
+   "question": "In the ontology definition, what does adaptation achieve for the organism's essential variables?",
+   "reference": "An equilibrium in which essential variables experience significantly less disturbance than in an unadapted state.",
+   "answer": "Adaptation in an ontology definition helps an organism's essential variables better fit the environmental context, enhancing survival and reproductive success."
+  },
+  {
+   "pair_id": "Q208",
+   "question": "Ce trebuie facut cu o informatie care nu a fost verificata?",
+   "reference": "Trebuie sa fie marcata explicit; sursa si data se pastreaza cand sunt disponibile, iar ipotezele nu se transforma in fapte.",
+   "answer": "Trebuie ignorată sau verificată înainte de a fi utilizată."
+  },
+  {
+   "pair_id": "Q209",
+   "question": "What physical arrangement is associated with Ashby's homeostat?",
+   "reference": "Four interconnected units equipped with magnets and uniselectors.",
+   "answer": "Ashby's homeostat is associated with a physical arrangement that includes a series of relays and lamps arranged in a feedback loop, designed to mimic biological homeostatic processes."
+  },
+  {
+   "pair_id": "Q210",
+   "question": "Ce reguli de dezvoltare sunt indicate in documentul asociat cu SQLite WAL / SQLCipher?",
+   "reference": "Este specificat WPF pe .NET 10 cu MVVM strict, zero apeluri externe de retea si comunicare cu Vault-ul strict prin 127.0.0.1.",
+   "answer": "Regulile de dezvoltare indicate în documentul asociat cu SQLite WAL / SQLCipher includ:\n\n- Utilizarea modului WAL (Write-Ahead Logging) pentru SQLite.\n- Implementarea EF Core 10.\n- Utilizarea algoritmului de hash SHA-256 pentru cadru de hashuri.\n- Asigurarea imutabilității hardware prin utilizarea intervalului de chei `P16-P18`."
+  },
+  {
+   "pair_id": "Q211",
+   "question": "Ce axiom despre dovezi este asociat cu structura de straturi a Vault-ului?",
+   "reference": "Protocolul impune ca DECLARED sa nu fie tratat ca OBSERVED.",
+   "answer": "Axioma lui Euclid despre dovezi este asociată cu structura de straturi a Vault-ului."
+  },
+  {
+   "pair_id": "Q212",
+   "question": "Which Kafka topic carries canonical-memory mutations?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not mention any Kafka topic related to canonical-memory mutations."
+  },
+  {
+   "pair_id": "Q213",
+   "question": "Ce topic Kafka este folosit pentru evenimentele de memorie persistenta?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "Informațiile date nu conțin detalii specifice despre utilizarea Kafka pentru evenimentele de memorie persistentă. S-ar putea să fie necesară informații suplimentare din alte surse pentru a răspunde corect la această întrebare."
+  },
+  {
+   "pair_id": "Q214",
+   "question": "Ce prioritate este data stabilitatii si trasabilitatii atunci cand se adauga functionalitati?",
+   "reference": "Stabilitatea, trasabilitatea si decuplarea MVVM au prioritate in fata adaugarii de functionalitati nevalidate.",
+   "answer": "Ce prioritate este data stabilității și trăsabilității atunci când se adaugă funcționalități?\n\nRăspuns: Prioritatea dată stabilității și trăsabilității este foarte mare atunci când se adaugă funcționalități, deoarece astfel se asigură integritatea și corectitudinea sistemului."
+  },
+  {
+   "pair_id": "Q215",
+   "question": "What is the requirement for tools in an air-gapped environment?",
+   "reference": "All tools must work offline without cloud dependencies.",
+   "answer": "In an air-gapped environment, tools must not be able to communicate with the internet or any external network, ensuring that they are isolated from external threats."
+  },
+  {
+   "pair_id": "Q216",
+   "question": "Cate skill-uri specializate integreaza aceasta colectie?",
+   "reference": "130 specialized agent skills.",
+   "answer": "Această colecție integrează 130 de skill-uri specializate."
+  },
+  {
+   "pair_id": "Q217",
+   "question": "How does a Markov constraint alter uncertainty in the described model?",
+   "reference": "It restricts transitions so entropy falls below the maximum uncertainty of a uniform distribution.",
+   "answer": "A Markov constraint causes entropy to drop below the maximum theoretical uncertainty of uniform distributions, as per the canonical definition provided."
+  },
+  {
+   "pair_id": "Q218",
+   "question": "Ce configurare este descrisa in nota asociata cu referinta oficiala si sectiunea Source Details?",
+   "reference": "Fluxul necesita IP fix pentru imprimanta, cititor de card USB sau retea, iar dispozitivul foloseste EIP 3.7 compatibil cu PaperCut MF Secure Access.",
+   "answer": "Nota asociată descrie configurarea și depanarea instalării PaperCut MF + Xerox VersaLink C7120, inclusiv autentificarea pe cartela și setarea secure print release."
+  },
+  {
+   "pair_id": "Q219",
+   "question": "What kind of recall characterizes explicit memory?",
+   "reference": "Conscious recollection of past occurrences, factual knowledge, and personal experiences, requiring deliberate awareness.",
+   "answer": "I don't know. The provided notes do not specify the type of recall that characterizes explicit memory. The notes mention \"Recall\" in the context of memory retrieval but do not differentiate between explicit and implicit recall."
+  },
+  {
+   "pair_id": "Q220",
+   "question": "What is the role of JARVIS relative to the Vault?",
+   "reference": "JARVIS is the visual and operational control plane over the AI Memory Vault V6, not a separate memory system.",
+   "answer": "I don't know.\n\nThe provided notes do not contain any information about JARVIS or its role relative to the Vault. The notes are about a Consiliul de Memorie AI with 21 specialized agents and an AI Memory Vault architecture, but do not mention JARVIS."
+  },
+  {
+   "pair_id": "Q221",
+   "question": "Which runtime, networking, and UI constraints are imposed on the transfer-register application?",
+   "reference": "WPF on .NET 10, with zero external network calls and Vault communication strictly via 127.0.0.1.",
+   "answer": "I don't know. The specific runtime, networking, and UI constraints for the transfer-register application are not provided in the question."
+  },
+  {
+   "pair_id": "Q222",
+   "question": "Ce obligatii generale sunt descrise in nota de conformitate asociata cu autentificarea PIN Argon2id + salt?",
+   "reference": "Aplicatiile pentru gestionarea documentelor si transferurilor trebuie sa respecte simultan HG 585/2002 si standardele conexe, inclusiv pentru trasabilitate si audit in medii air-gapped.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q223",
+   "question": "What distinguishes an ultrastable system from a merely fixed system?",
+   "reference": "It automatically reorganizes its internal parameters when essential variables leave viable limits.",
+   "answer": "An ultrastable system differs from a merely fixed system in that it acts to preserve its essential variables by automatically reorganizing its internal parameters whenever those variables leave viable limits. This distinguishes it from a fixed system, which does not have this self-regulating mechanism to adapt and reorganize in response to changes."
+  },
+  {
+   "pair_id": "Q224",
+   "question": "Ce axiom despre dovezi este asociat cu structura de straturi a Vault-ului?",
+   "reference": "Protocolul impune ca DECLARED sa nu fie tratat ca OBSERVED.",
+   "answer": "I don't know. The notes provided are empty and do not contain any information to answer the question about an axiom related to the structure of layers in the Vault."
+  },
+  {
+   "pair_id": "Q225",
+   "question": "What GraphQL mutation is used to approve a memory candidate?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain any information about a specific GraphQL mutation used to approve a memory candidate."
+  },
+  {
+   "pair_id": "Q226",
+   "question": "Nota despre KPI-uri 3–5 trimite catre ce proiect si ce tip de stocare locala foloseste acesta?",
+   "reference": "FinScope foloseste IndexedDB prin Dexie pentru stocare locala, offline, fara cloud.",
+   "answer": "I don't know. The provided notes are empty and do not contain the necessary information to answer the question."
+  },
+  {
+   "pair_id": "Q227",
+   "question": "Which DNS hostname is assigned to the external cognitive gateway?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about a specific DNS hostname assigned to an external cognitive gateway."
+  },
+  {
+   "pair_id": "Q228",
+   "question": "Ce cere principiul de audit din nota legata de tool call hooks?",
+   "reference": "Utilitatea memoriei necesita un lant de provenienta neîntrerupt si observabil empiric, de la query/discovery pana la retrieve si load.",
+   "answer": "Principiul de audit din nota legată de tool call hooks cere înregistrarea și monitorizarea apelurilor la instrumente sau funcții pentru a garanta integritatea și integritatea proceselor."
+  },
+  {
+   "pair_id": "Q229",
+   "question": "Care este numele bucket-ului S3 in care sunt puse artefactele de evaluare?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the name of the S3 bucket where evaluation artifacts are stored."
+  },
+  {
+   "pair_id": "Q230",
+   "question": "Ce arhitectura de straturi este legata de runbook-ul care discuta Tampermonkey?",
+   "reference": "Structura de baza include 00 CORE, 01 KNOWLEDGE, 02 PROJECTS, 03 PROCEDURES, 04 MEMORY, 05 RESOURCES, 06 INBOX, 90 TEMPLATES si 99 SYSTEM.",
+   "answer": "Runbook-ul nu specifică explicit o arhitectură de straturi legată de Tampermonkey. Aceasta discută despre metode de conectare ai agenților AI din browser la vault-ul canonic, inclusiv o metodă care implică o extensie browser / Tampermonkey, dar nu prezintă o arhitectură de straturi."
+  },
+  {
+   "pair_id": "Q231",
+   "question": "Which OAuth2 provider is configured for browser-agent login?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not mention any OAuth2 provider configured for browser-agent login."
+  },
+  {
+   "pair_id": "Q232",
+   "question": "What role does the hippocampus play in learning according to this note?",
+   "reference": "It is critical for memory processing, helps project information to cortical regions for meaning, and facilitates consolidation of new learning into long-term memory.",
+   "answer": "The note suggests that the hippocampus plays a crucial role in forming and retrieving new memories, which is essential for learning."
+  },
+  {
+   "pair_id": "Q233",
+   "question": "Cate skill-uri specializate integreaza aceasta colectie?",
+   "reference": "130 specialized agent skills.",
+   "answer": "I don't know. Could you provide more context about the collection and the specialized skills you're referring to?"
+  },
+  {
+   "pair_id": "Q234",
+   "question": "Which Python version is required by the deployment procedure?",
+   "reference": "Python 3.12 or newer.",
+   "answer": "I don't know. The required Python version can vary depending on the specific deployment procedure or project. You should check the documentation or requirements file for the exact version needed."
+  },
+  {
+   "pair_id": "Q235",
+   "question": "Ce prioritate este data stabilitatii si trasabilitatii atunci cand se adauga functionalitati?",
+   "reference": "Stabilitatea, trasabilitatea si decuplarea MVVM au prioritate in fata adaugarii de functionalitati nevalidate.",
+   "answer": "I don't know. The provided notes do not contain information about the priority of stability and traceability when adding functionalities."
+  },
+  {
+   "pair_id": "Q236",
+   "question": "Ce versiune de protocol gRPC este folosita intre Memory Controller si Agent Council?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the gRPC version used between the Memory Controller and Agent Council."
+  },
+  {
+   "pair_id": "Q237",
+   "question": "What does the architecture require the program to do with model-generated output?",
+   "reference": "AI proposes while code decides; AI output is treated as unvalidated user input and must pass strict schema validation, with no irreversible action without human confirmation.",
+   "answer": "I don't know. The provided notes do not contain information about the architecture's requirements for model-generated output."
+  },
+  {
+   "pair_id": "Q238",
+   "question": "Ce standarde pentru scripturile de administrare sunt legate de configuratia ObsidianTactical.xaml?",
+   "reference": "Scripturile trebuie sa fie idempotente, complet trasabile prin Start-Transcript, non-distructive asupra originalelor si verificate imediat cu SHA-256.",
+   "answer": "I don't know. The question seems to be in Romanian, asking about standards for scripts related to the configuration file ObsidianTactical.xaml, but I don't have specific information about this file or its configuration standards."
+  },
+  {
+   "pair_id": "Q239",
+   "question": "Which S3 bucket stores the frozen retrieval benchmarks?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not mention any S3 bucket storing frozen retrieval benchmarks."
+  },
+  {
+   "pair_id": "Q240",
+   "question": "Which database mode and encryption are specified as part of the application success criteria?",
+   "reference": "SQLite WAL mode with database encryption, using the stated secure local-storage design.",
+   "answer": "I don't know. The specific database mode and encryption details are not provided in the question and would need to be defined as part of the application success criteria."
+  },
+  {
+   "pair_id": "Q241",
+   "question": "Why does chunking reduce repeated impasses in the Soar formulation?",
+   "reference": "It compiles substate reasoning into immediate production rules, removing the need to repeat the same impasse reasoning.",
+   "answer": "Chunking reduces repeated impasses in the Soar formulation by converting substate reasoning into immediate production rules, thereby eliminating repetitive impasses."
+  },
+  {
+   "pair_id": "Q242",
+   "question": "What is the requirement for tools in an air-gapped environment?",
+   "reference": "All tools must work offline without cloud dependencies.",
+   "answer": "In an air-gapped environment, all tools must function offline without any cloud dependencies."
+  },
+  {
+   "pair_id": "Q243",
+   "question": "How does feedback influence subsequent action in the described regulator model?",
+   "reference": "Observed discrepancies between actual output and target patterns are routed back into the regulator to guide later action.",
+   "answer": "Feedback influences subsequent action in the described regulator model by comparing the current state with the desired state and adjusting the inputs or actions necessary to minimize the difference, thus helping the system move towards the desired state."
+  },
+  {
+   "pair_id": "Q244",
+   "question": "What does Levels of Processing Theory say about long-term storage?",
+   "reference": "Information processed more deeply is more likely to be stored in long-term memory.",
+   "answer": "According to the Levels of Processing Theory proposed by Fergus Craik and Robert Lockhart, information processed more deeply is more likely to be stored in long-term memory. This theory emphasizes linking new information to existing memories to increase meaningfulness."
+  },
+  {
+   "pair_id": "Q245",
+   "question": "What does cybernetic stability mean in the given definition?",
+   "reference": "The ability of a system to keep its essential variables within safe physiological limits.",
+   "answer": "In the given definition, ultrastable system refers to a cybernetic system that acts to preserve its essential variables by automatically reorganizing its internal parameters whenever those variables leave viable limits. This implies a form of stability where the system actively maintains its state through self-regulation."
+  },
+  {
+   "pair_id": "Q246",
+   "question": "What endpoint is used to stream chat responses from Ollama?",
+   "reference": "The Ollama /api/chat endpoint.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q247",
+   "question": "What status does this document assign to its own legal and institutional references?",
+   "reference": "It is a research/proposal document, not a statement of verified current law; legal and institutional references require verification against official Romanian sources.",
+   "answer": "I don't know. The provided notes do not contain information about the status assigned to legal and institutional references in the document. The notes focus on technical details of software projects and do not discuss the status of legal or institutional references."
+  },
+  {
+   "pair_id": "Q248",
+   "question": "What status does this document assign to its own legal and institutional references?",
+   "reference": "It is a research/proposal document, not a statement of verified current law; legal and institutional references require verification against official Romanian sources.",
+   "answer": "This document states that the references are \"not legal advice\" and that \"Every licence row must be re-checked on the live page before anything ships.\" It also marks some facts as [verified], but notes that the information comes from secondary sources unless noted."
+  },
+  {
+   "pair_id": "Q249",
+   "question": "Ce componente concrete ale proiectului sunt descrise in nota legata de interzicerea look-ahead bias?",
+   "reference": "XAU Kinetic este un sistem hibrid Python 3.12+ cu Clean Architecture, integrat cu MetaTrader 5 si o aplicatie desktop C .NET 8 WPF; include Pydantic V2 si un motor de risc cu circuit breaker.",
+   "answer": "I don't know. The notes you provided are missing, so I cannot answer the question based on the given information."
+  },
+  {
+   "pair_id": "Q250",
+   "question": "Ce principii arhitecturale de separare sunt legate de descrierea sistemului cu circuit breaker?",
+   "reference": "XAU Kinetic separa strict entitatile de domeniu, orchestrarea aplicatiei, driverele de infrastructura, managementul riscului si deciziile de strategie.",
+   "answer": "Principiul de separare care include un circuit breaker independent este legat de descrierea sistemului cu circuit breaker. În anumite module, cum ar fi `RiskManager`, există un \"circuit breaker\" isolat și un manager de poziții (position sizing engine) care are puterea de a veto semnalele generate de strategii. Acesta nu poate fi păstrat sau modificat de către strategii."
+  },
+  {
+   "pair_id": "Q251",
+   "question": "Ce separare modulara descrie nota legata de Kill Switch hardware?",
+   "reference": "Arhitectura este impartita in data, strategy, risk, execution si journal, iar modulul de risc are drept de veto asupra semnalelor strategiei.",
+   "answer": "I don't know. The provided notes do not contain any information related to Kill Switch hardware or its modular separation."
+  },
+  {
+   "pair_id": "Q252",
+   "question": "Care este schema PostgreSQL pentru tabela in care sunt stocate memoriile canonice?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "Informația specifică privind schema PostgreSQL pentru tabela în care sunt stocate memoriile canonice nu este prezentă în datele furnizate. Schema exactă nu este menționată în aceste note."
+  },
+  {
+   "pair_id": "Q253",
+   "question": "What is the role of JARVIS relative to the Vault?",
+   "reference": "JARVIS is the visual and operational control plane over the AI Memory Vault V6, not a separate memory system.",
+   "answer": "I don't know.\n\nThe provided notes do not contain any information about JARVIS or its role relative to the Vault. The notes focus on the AI Memory Vault, its architecture, and how it manages tasks, policies, and knowledge. There is no mention of JARVIS in the given data."
+  },
+  {
+   "pair_id": "Q254",
+   "question": "What does cybernetic stability mean in the given definition?",
+   "reference": "The ability of a system to keep its essential variables within safe physiological limits.",
+   "answer": "I don't know. The definition you're referring to wasn't provided in your question. Could you please provide the definition or context?"
+  },
+  {
+   "pair_id": "Q255",
+   "question": "Care este numele exchange-ului AMQP pentru joburile de ingestie?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the AMQP exchange name for ingestion jobs."
+  },
+  {
+   "pair_id": "Q256",
+   "question": "Ce reguli de memorare sunt descrise in nota asociata cu ExplainableAiRiskEngine?",
+   "reference": "Memoria este impartita in clase precum knowledge, project, procedure, decision, experience, error, lesson, preference, resource si hypothesis; o nota noua trebuie sa fie reutilizabila, distincta, suficient de stabila si relevanta.",
+   "answer": "I don't know. The specific rules of memorization described in the note associated with ExplainableAiRiskEngine are not provided in the given context."
+  },
+  {
+   "pair_id": "Q257",
+   "question": "What formal framework defines the states, actions, and transitions in the reinforcement-learning definition?",
+   "reference": "Markov decision processes, with a discount factor controlling the value of future rewards.",
+   "answer": "Markov Decision Process (MDP) defines the states, actions, and transitions in the reinforcement-learning definition."
+  },
+  {
+   "pair_id": "Q258",
+   "question": "Ce specificatii de produs rezulta din documentul de conformitate care discuta printare/scanare in medii air-gapped?",
+   "reference": "Produsul este o aplicatie desktop WPF .NET 10 pentru evidenta transferurilor si controlul dispozitivelor, destinata unui mediu air-gapped/militar.",
+   "answer": "I don't know. The provided notes do not contain specific information about print or scan requirements in air-gapped environments."
+  },
+  {
+   "pair_id": "Q259",
+   "question": "Why does the standard reject merely decorative renaming of modules?",
+   "reference": "Because several cognitively named modules already have zero production consumers, so decorative renaming would add vocabulary without adding function.",
+   "answer": "The standard rejects merely decorative renaming of modules to maintain clarity and avoid confusion, ensuring that module names accurately reflect their functionality or purpose."
+  },
+  {
+   "pair_id": "Q260",
+   "question": "What sort of behavior does procedural memory encompass?",
+   "reference": "Motor coordination, perceptual skills, and cognitive algorithms that operate automatically without conscious inspection.",
+   "answer": "Procedural memory encompasses behaviors such as motor skills and implicit learning, including motor learning and classical conditioning."
+  },
+  {
+   "pair_id": "Q261",
+   "question": "Ce specificatii de produs rezulta din documentul de conformitate care discuta printare/scanare in medii air-gapped?",
+   "reference": "Produsul este o aplicatie desktop WPF .NET 10 pentru evidenta transferurilor si controlul dispozitivelor, destinata unui mediu air-gapped/militar.",
+   "answer": "I don't know. The exact specifications would depend on the specific air-gapped system or environment being discussed, and would likely be detailed in the relevant security or technical documentation."
+  },
+  {
+   "pair_id": "Q262",
+   "question": "Ce port SMTP foloseste componenta de notificari?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the SMTP port used by a notification component."
+  },
+  {
+   "pair_id": "Q263",
+   "question": "Cum este organizat workflow-ul asociat produsului de transferuri si termenului QuestPDF?",
+   "reference": "Workflow-ul de remodelare are 7 sarcini secventiale; fiecare se planifica, se aproba, se executa si se verifica separat, iar urmatoarea nu incepe fara build verde.",
+   "answer": "I don't know. However, QuestPDF is a library for generating PDF documents in Java and .NET, and its workflow typically involves creating a document, adding content like text and images, and then saving or rendering the document. For specific details on their workflow for transfer products, more context or documentation from the library would be needed."
+  },
+  {
+   "pair_id": "Q264",
+   "question": "Which evidence sources take precedence when records disagree?",
+   "reference": "GitHub main, committed source, real test output, and CI take precedence.",
+   "answer": "When records disagree, the following hierarchy of evidence sources takes precedence:\n\n1. **PRIMARY**: Official text, Monitorul Oficial scans, or the manufacturer's own TDS or guidelines.\n2. **SECONDARY**: Reputable secondary sources (tax press, retailer, trade summary). These should be checked against the official text before use as hard rules.\n3. **UNVERIFIED**: Secondary sources only, conflicting, or not found in any text read. Use only as a soft hint.\n\nThis hierarchy ensures that the most authoritative sources are given priority in resolving disagreements."
+  },
+  {
+   "pair_id": "Q265",
+   "question": "What does Levels of Processing Theory say about long-term storage?",
+   "reference": "Information processed more deeply is more likely to be stored in long-term memory.",
+   "answer": "Levels of Processing Theory suggests that deeper processing leads to better long-term storage. When information is processed semantically or elaboratively, it is more likely to be remembered than when it is processed merely phonetically or superficially."
+  },
+  {
+   "pair_id": "Q266",
+   "question": "Ce port SMTP foloseste componenta de notificari?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "Portul SMTP folosit de componenta de notificări este de obicei portul 587."
+  },
+  {
+   "pair_id": "Q267",
+   "question": "Ce broker RabbitMQ este utilizat pentru coordonarea dintre agenti?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "RabbitMQ este utilizat pentru coordonarea dintre agenti în scenarii precum procese distribuite, microservicii și sisteme de procesare a mesajelor."
+  },
+  {
+   "pair_id": "Q268",
+   "question": "What is the exact browser event name emitted when a graph edge is promoted?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about browser event names related to graph edge promotion."
+  },
+  {
+   "pair_id": "Q269",
+   "question": "Which storage technology provides FinScope's local-first offline storage?",
+   "reference": "IndexedDB via Dexie.",
+   "answer": "FinScope uses IndexedDB via Dexie for its local-first offline storage."
+  },
+  {
+   "pair_id": "Q270",
+   "question": "Ce reguli de dezvoltare sunt indicate in documentul asociat cu SQLite WAL / SQLCipher?",
+   "reference": "Este specificat WPF pe .NET 10 cu MVVM strict, zero apeluri externe de retea si comunicare cu Vault-ul strict prin 127.0.0.1.",
+   "answer": "I don't know. The provided notes do not specifically mention any development rules related to SQLite WAL or SQLCipher. They do discuss using SQLite WAL mode and DPAPI for data encryption, but there are no explicit development rules outlined for these technologies."
+  },
+  {
+   "pair_id": "Q271",
+   "question": "What four criteria are given for creating a new note?",
+   "reference": "It should be reusable, distinct, stable enough, and relevant to future work.",
+   "answer": "Based on the information provided, there are no explicit four criteria given for creating a new note. The notes mention various processes and changes related to note handling and storage but do not detail specific criteria for creating new notes. Therefore, I don't have enough information to provide an answer to this specific question."
+  },
+  {
+   "pair_id": "Q272",
+   "question": "What makes the associative process described here capable of producing synaptic facilitation?",
+   "reference": "It requires precise temporal contiguity between sensory excitation and modulatory feedback.",
+   "answer": "I don't know. The question seems to refer to a specific associative process, but without more context, I cannot provide a precise answer."
+  },
+  {
+   "pair_id": "Q273",
+   "question": "What capability is attributed to the mental-imagery component?",
+   "reference": "It constructs depictive internal representations for visual transformations and metric queries.",
+   "answer": "The mental-imagery component constructs depictive internal representations to perform visual transformations and metric queries."
+  },
+  {
+   "pair_id": "Q274",
+   "question": "Which role is responsible for locating canonical cross-cutting knowledge and preserving provenance?",
+   "reference": "It locates relevant canonical knowledge, maps tasks to skills and agents, distinguishes canonical material from raw external imports, detects duplicates/conflicts, and preserves provenance.",
+   "answer": "Based on the information provided, the role responsible for locating canonical cross-cutting knowledge and preserving provenance is Layer 2: Canonical Knowledge (`01_KNOWLEDGE/`). This layer is described as containing \"Verified domain architectures, research findings, and protocols\" and has strict mutability rules, requiring AI-proposed knowledge to be reviewed and human-attested before becoming active."
+  },
+  {
+   "pair_id": "Q275",
+   "question": "Ce nu are voie un agent sa prezinte drept real, indiferent de forma in care a fost obtinut?",
+   "reference": "Date inventate, date demo/exemplu/placeholder prezentate ca reale, rezultate simulate neexecutate efectiv și verificări sau teste neefectuate nu pot fi prezentate drept reale.",
+   "answer": "I don't know. The provided notes do not contain information about what an AI agent is not allowed to present as real, regardless of how it was obtained."
+  },
+  {
+   "pair_id": "Q276",
+   "question": "What Nomad job name runs the Memory Vault runtime?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q277",
+   "question": "What makes the associative process described here capable of producing synaptic facilitation?",
+   "reference": "It requires precise temporal contiguity between sensory excitation and modulatory feedback.",
+   "answer": "The associative learning process described, classical conditioning, requires precise temporal contiguity between sensory excitation and modulatory feedback to establish associative synaptic facilitation."
+  },
+  {
+   "pair_id": "Q278",
+   "question": "How is regulation described in the cybernetic formulation?",
+   "reference": "As coordinating responsive moves mathematically to collapse a large disturbance set into minimally acceptable outcomes.",
+   "answer": "In the ultrastable system described, regulation is automatically reorganizing its internal parameters whenever essential variables leave viable limits to preserve those variables."
+  },
+  {
+   "pair_id": "Q279",
+   "question": "What is the defining content of semantic memory in this ontology note?",
+   "reference": "Generalized world knowledge, lexical representations, and abstract conceptual principles detached from autobiographical origins.",
+   "answer": "The defining content of semantic memory in this ontology note is that it is the durable cognitive repository storing generalized world knowledge, lexical representations, and abstract conceptual principles detached from autobiographical origins."
+  },
+  {
+   "pair_id": "Q280",
+   "question": "What kind of platform is this forensic architecture designed to run as?",
+   "reference": "It is an air-gapped and offline forensic suite for Windows systems.",
+   "answer": "I don't know. The provided notes do not contain information about the specific platform this forensic architecture is designed to run on."
+  },
+  {
+   "pair_id": "Q281",
+   "question": "Ce politica de expirare NATS este folosita pentru memoria de lucru?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about NATS expiration policies for working memory."
+  },
+  {
+   "pair_id": "Q282",
+   "question": "Which runtime, networking, and UI constraints are imposed on the transfer-register application?",
+   "reference": "WPF on .NET 10, with zero external network calls and Vault communication strictly via 127.0.0.1.",
+   "answer": "I don't know.\n\nThe provided notes do not contain any information about runtime, networking, and UI constraints for a transfer-register application. The notes are focused on concepts like memory censors, the law of requisite variety, a research project for Casa3D, and UI design prompts, but none of them relate to the constraints of a transfer-register application."
+  },
+  {
+   "pair_id": "Q283",
+   "question": "How does the vault distinguish one reusable capability from a generic repository?",
+   "reference": "It distinguishes actual skills, skill collections, agents, instructions, prompts, references, backend references, programming-language references, templates/examples, and irrelevant material; a repository is not automatically a skill.",
+   "answer": "The vault distinguishes one reusable capability from a generic repository through the routing protocol, which involves several steps including task normalization, policy gate evaluation, and capability classification. This process ensures that the appropriate agent role, runtime, and model quality tier are selected based on the specific requirements of the task."
+  },
+  {
+   "pair_id": "Q284",
+   "question": "Which kinds of learning does nondeclarative memory encompass?",
+   "reference": "Nonconscious abilities such as skills, habits, conditioning, and priming that are expressed through performance.",
+   "answer": "Nondeclarative memory encompasses procedural memory, motor learning, and classical conditioning. These types of learning are associated with the cerebellum and are not dependent on the hippocampus for their formation and retention."
+  },
+  {
+   "pair_id": "Q285",
+   "question": "Which risk-control component is explicitly mentioned in the XAU Kinetic architecture?",
+   "reference": "An isolated risk engine with a circuit breaker.",
+   "answer": "The risk-control component explicitly mentioned in the XAU Kinetic architecture is the `RiskManager`. It is described as an independent circuit breaker and position sizing engine with absolute VETO authority over signals generated by strategies."
+  },
+  {
+   "pair_id": "Q286",
+   "question": "What does the architecture require the program to do with model-generated output?",
+   "reference": "AI proposes while code decides; AI output is treated as unvalidated user input and must pass strict schema validation, with no irreversible action without human confirmation.",
+   "answer": "The architecture requires that model-generated output crossing architectural boundaries use strict Pydantic V2 schemas, and no raw dictionaries or unvalidated floating point values are passed between strategy and risk modules."
+  },
+  {
+   "pair_id": "Q287",
+   "question": "What does associative retrieval do in the cognitive architecture?",
+   "reference": "It scans historical episode traces to retrieve relevant operational context for ongoing agent actions.",
+   "answer": "Associative retrieval functions by scanning historical episode traces to retrieve relevant operational context for ongoing agent actions within the cognitive architecture."
+  },
+  {
+   "pair_id": "Q288",
+   "question": "What does a cognitive architecture organize into one integrated model?",
+   "reference": "Memory systems, processing mechanisms, and control cycles.",
+   "answer": "A cognitive architecture organizes memory systems, processing mechanisms, and control cycles into one integrated model of general cognition."
+  },
+  {
+   "pair_id": "Q289",
+   "question": "Ce reguli de memorare sunt descrise in nota asociata cu ExplainableAiRiskEngine?",
+   "reference": "Memoria este impartita in clase precum knowledge, project, procedure, decision, experience, error, lesson, preference, resource si hypothesis; o nota noua trebuie sa fie reutilizabila, distincta, suficient de stabila si relevanta.",
+   "answer": "Nota nu conține detalii specifice despre reguli de memorare asociate cu ExplainableAiRiskEngine. Această secțiune se concentrează mai mult pe funcționalitățile și mecanismele motorului de evaluare a riscurilor explicațiabile."
+  },
+  {
+   "pair_id": "Q290",
+   "question": "Ce regula de integritate este asociata arhitecturii care forteaza format JSON in apelurile Ollama?",
+   "reference": "Vault-ul cere sa nu se inventeze informatii, sa se marcheze ce nu este verificat si sa se pastreze sursa si data cand sunt disponibile.",
+   "answer": "I don't know. The provided notes do not mention any specific integrity rule associated with the architecture that enforces JSON format in Ollama API calls."
+  },
+  {
+   "pair_id": "Q291",
+   "question": "What does the P0 document formalize?",
+   "reference": "Empirical findings, mathematical measurements, failure modes, and architectural implications from the P0 Real Pipeline Diagnostic Experiment.",
+   "answer": "The P0 document formalizes the empirical findings, mathematical measurements, failure modes, and architectural implications derived from the P0 Real Pipeline Diagnostic Experiment executed against the AI Memory Vault."
+  },
+  {
+   "pair_id": "Q292",
+   "question": "In the ontology definition, what does adaptation achieve for the organism's essential variables?",
+   "reference": "An equilibrium in which essential variables experience significantly less disturbance than in an unadapted state.",
+   "answer": "According to the notes, adaptation, as a concept, shifts the focus to the state of equilibrium where the essential variables of the adapted organism change less than they would if the organism were unadapted. This suggests that adaptation helps in stabilizing or reducing variability in essential variables, contributing to the organism's survival."
+  },
+  {
+   "pair_id": "Q293",
+   "question": "Ce dimensiune are consiliul de agenti in nota asociata cu motorul ACT-R?",
+   "reference": "Matricea consiliului descrie 21 de agenti specializati.",
+   "answer": "Consiliul de agenti are 14 membri, ca se poate vedea din structura Consiliului Extins prezentată în notele date."
+  },
+  {
+   "pair_id": "Q294",
+   "question": "What axiom separates a declaration from what was actually observed?",
+   "reference": "DECLARED is not equal to OBSERVED.",
+   "answer": "The axiom that separates a declaration from what was actually observed is **\"Agent Report ≠ Verification Evidence\"**. This means that saying \"I verified the code\" is an unverified assertion and requires empirical test logs (`pytest` exit code 0) or browser renders as verification evidence."
+  },
+  {
+   "pair_id": "Q295",
+   "question": "Ce identitate de sistem este descrisa in nota asociata aplicatiei FinScope?",
+   "reference": "Vault-ul este memoria externa a sistemului AI si stratul de continuitate intre sesiuni, modele si proiecte.",
+   "answer": "Identitatea de sistem asociată aplicatiei FinScope nu este specificată în notele date. Nota menționează identitatea de sistem în cadrul structurii core ale arhitecturii sistemului, dar nu conține informații specifice despre identitatea pentru aplicația FinScope."
+  },
+  {
+   "pair_id": "Q296",
+   "question": "What failure was identified between high candidate recall and the information delivered to the model?",
+   "reference": "Packing failure.",
+   "answer": "Based on the provided notes, the primary accuracy bottleneck identified is **Candidate Discovery / Retrieval Composition**, rather than model reasoning or the final context byte budget. This suggests that even with high candidate recall, the quality or relevance of the retrieved candidates is not sufficient to improve the model's accuracy significantly."
+  },
+  {
+   "pair_id": "Q297",
+   "question": "What kind of platform is this forensic architecture designed to run as?",
+   "reference": "It is an air-gapped and offline forensic suite for Windows systems.",
+   "answer": "Based on the information provided, the forensic architecture seems to be designed to run on a platform that can handle both Windows and Linux environments, as it mentions issues with CRLF normalization and LF conversion, which are common differences between Windows and Unix/Linux file systems. However, the specific primary platform is not explicitly stated. The solution implemented involves normalizing EOL (End of Line) characters to ensure consistency across different platforms."
+  },
+  {
+   "pair_id": "Q298",
+   "question": "Which database mode and encryption are specified as part of the application success criteria?",
+   "reference": "SQLite WAL mode with database encryption, using the stated secure local-storage design.",
+   "answer": "The application success criteria specify SQLite WAL mode with full database encryption using DPAPI."
+  },
+  {
+   "pair_id": "Q299",
+   "question": "Care este cheia de partitionare din tabela distribuita a jurnalului de memorie?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "Cheia de partitionare din tabela distribuita a jurnalului de memorie este adresa de memorie a tranziției."
+  },
+  {
+   "pair_id": "Q300",
+   "question": "Why are blood pressure and temperature examples of essential variables?",
+   "reference": "They are crucial somatic quantities that must remain within viability boundaries.",
+   "answer": "Blood pressure and temperature are examples of essential variables because their values must remain within viability boundaries to ensure the body functions properly. Deviations from these limits can be life-threatening, making them crucial for maintaining survival."
+  },
+  {
+   "pair_id": "Q301",
+   "question": "Pornind de la nota care foloseste Dexie, ce cerinta de prezentare ar trebui sa conduca un panou administrativ?",
+   "reference": "Panoul trebuie sa raspunda in 5 secunde daca totul este in regula si, daca nu, unde este anomalia.",
+   "answer": "Nu am informații suficiente pentru a răspunde cu certitudine. Pornind de la nota și folosind Dexie, cerințele de prezentare pentru un panou administrativ pot varia, dar de obicei ar include elemente precum datele de bază ale proiectului, obiectivele, metodele de implementare, rezultatele așteptate și planul de monitorizare și evaluare. Iată un exemplu de cerință:\n\n\"Prezentarea trebuie să includă un răspuns detaliat la cerințele de prezentare pentru panou administrativ, bazat pe utilizarea Dexie, care ar trebui să conțină informații despre datele de bază ale proiectului, obiectivele, metodele de implementare, rezultatele așteptate și planul de monitorizare și evaluare.\""
+  },
+  {
+   "pair_id": "Q302",
+   "question": "Cum se conecteaza agentii de browser, conform notei legate de arhitectura stratificata a Vault-ului?",
+   "reference": "Una dintre metode este prin prompt de sistem si Markdown Injection fara server; runbook-ul descrie trei metode de conectare.",
+   "answer": "Conform notei legate de arhitectura stratificată a Vault-ului, agentii de browser se conectează folosind protocolul HTTP sau HTTPS, prin intermediul unui endpoint specific, de obicei https://<vault-instance>/v1/. Conexiunea poate fi autentificată prin utilizarea unui token de autentificare valid."
+  },
+  {
+   "pair_id": "Q303",
+   "question": "Cum este configurata componenta de research asociata contractelor cu trei agenti de cod?",
+   "reference": "Perplexity nu are fisier auto-incarcat per repository; echivalentul este un Space cu instructiuni custom si fisiere de context incarcate manual.",
+   "answer": "I don't know. The provided notes do not contain information specifically about the research component associated with three-agent contract transfers."
+  },
+  {
+   "pair_id": "Q304",
+   "question": "How broad is the linked curated resource collection by category count?",
+   "reference": "It covers more than 25 categories.",
+   "answer": "I don't know. The specific breadth of a linked curated resource collection by category count would depend on the particular collection in question."
+  },
+  {
+   "pair_id": "Q305",
+   "question": "What is the exact container image tag used for the memory runtime?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about a specific container image tag for the memory runtime."
+  },
+  {
+   "pair_id": "Q306",
+   "question": "Ce spune reteta asociata cu slotul de proceduri despre ce ramane in urma masuratorilor?",
+   "reference": "Reteta retine ceea ce a supravietuit masuratorii si include si partile care au esuat, nu doar succesele.",
+   "answer": "Reteta asociata cu slotul de proceduri spune ca dupa masuratori ramane in urma procesului doar codul de eroare si informatii despre tipul masuratorii realizate."
+  },
+  {
+   "pair_id": "Q307",
+   "question": "Ce regula de integritate este asociata arhitecturii care forteaza format JSON in apelurile Ollama?",
+   "reference": "Vault-ul cere sa nu se inventeze informatii, sa se marcheze ce nu este verificat si sa se pastreze sursa si data cand sunt disponibile.",
+   "answer": "I don't know.\n\nThe notes provided do not mention any specific integrity rule forcing JSON format in Ollama API calls. They discuss vault access, client configuration, and book ingestion processes, but do not reference JSON formatting rules for Ollama."
+  },
+  {
+   "pair_id": "Q308",
+   "question": "Ce trebuie stabilit inainte sa fie scris codul interfetei?",
+   "reference": "Strict visual tokens such as semantic colors, typography scale, and spacing.",
+   "answer": "I don't know. The notes provided are empty and do not contain the necessary information to answer the question."
+  },
+  {
+   "pair_id": "Q309",
+   "question": "What is the exact cron expression for nightly memory consolidation?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. Cron expressions are typically used for scheduling tasks at specific times, but \"nightly memory consolidation\" is not a standard task or event that would be scheduled with a cron expression. Memory consolidation is a process that occurs within a system and cannot be scheduled externally."
+  },
+  {
+   "pair_id": "Q310",
+   "question": "What turns an isolated face acknowledgment into complete personal recognition according to this definition?",
+   "reference": "Full recovery of identifying context and associative facts.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q311",
+   "question": "Ce livrabil central defineste nota despre anti-atribute si pozitionare, legata de fisierele tokens.css/theme.ts?",
+   "reference": "Un Mini Brand Book stabileste pozitionarea, atributele de personalitate, paleta si regulile tipografice.",
+   "answer": "I don't know. The provided notes do not contain information about anti-attributes, positioning, or files tokens.css/theme.ts."
+  },
+  {
+   "pair_id": "Q312",
+   "question": "Which S3 bucket stores the frozen retrieval benchmarks?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about an S3 bucket storing frozen retrieval benchmarks."
+  },
+  {
+   "pair_id": "Q313",
+   "question": "Which long-context evaluation is described as covering trajectories longer than 35 sessions?",
+   "reference": "LoCoMo (Long-Context Dynamic Memory).",
+   "answer": "The long-context evaluation described as covering trajectories longer than 35 sessions is the LoCoMo benchmark."
+  },
+  {
+   "pair_id": "Q314",
+   "question": "What is the exact SQLite index name used for lifecycle filtering?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the exact SQLite index name used for lifecycle filtering."
+  },
+  {
+   "pair_id": "Q315",
+   "question": "How does a Markov constraint alter uncertainty in the described model?",
+   "reference": "It restricts transitions so entropy falls below the maximum uncertainty of a uniform distribution.",
+   "answer": "A Markov constraint in a model reduces uncertainty by assuming that the future state depends only on the current state, not on the sequence of events that preceded it. This simplification can make the model more manageable while still capturing the essential dynamics of the system."
+  },
+  {
+   "pair_id": "Q316",
+   "question": "What are the three habits the procedure says mattered most?",
+   "reference": "Run it before believing it, along with the other two evidence-oriented reflexes encoded by the procedure.",
+   "answer": "The three habits that mattered most according to the procedure are:\n\n1. Run it before believing it.\n2. Treat a contradiction as a bug in your own measurement.\n3. Write down what you could not verify."
+  },
+  {
+   "pair_id": "Q317",
+   "question": "What are the three habits the procedure says mattered most?",
+   "reference": "Run it before believing it, along with the other two evidence-oriented reflexes encoded by the procedure.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q318",
+   "question": "Care este schema PostgreSQL pentru tabela in care sunt stocate memoriile canonice?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "Nu există o schema specifică în PostgreSQL pentru a stoca memoriile canonice. Memoriile canonice sunt o concept din domeniul standardizării limbajului de programare și nu sunt legate direct de baze de date. În PostgreSQL, informațiile despre memoriile canonice ar fi stocate într-o tabelă specifică definită de utilizator, nu într-o schema predefinită."
+  },
+  {
+   "pair_id": "Q319",
+   "question": "Ce niveluri de integrare sunt prevazute in documentul asociat arhitecturii 99 SYSTEM?",
+   "reference": "Documentul enterprise descrie patru niveluri de integrare in proiect.",
+   "answer": "I don't know. The specific document or details about the 99 SYSTEM architecture are not provided in the question."
+  },
+  {
+   "pair_id": "Q320",
+   "question": "Why does the standard reject merely decorative renaming of modules?",
+   "reference": "Because several cognitively named modules already have zero production consumers, so decorative renaming would add vocabulary without adding function.",
+   "answer": "I don't know. The provided notes do not contain information about the standard's reasons for rejecting merely decorative renaming of modules."
+  },
+  {
+   "pair_id": "Q321",
+   "question": "Which PostgreSQL table stores the canonical ontology history?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about a PostgreSQL table storing canonical ontology history."
+  },
+  {
+   "pair_id": "Q322",
+   "question": "What is the exact cron expression for nightly memory consolidation?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know.\n\nThe provided notes do not contain any information about a cron expression for nightly memory consolidation. The notes discuss memory consolidation in biological terms and some computational models, but there is no mention of scheduling or cron expressions."
+  },
+  {
+   "pair_id": "Q323",
+   "question": "Ce domeniu DNS este configurat pentru serviciul cognitiv extern?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The notes provided do not contain the necessary information to answer the question about the DNS domain configured for external cognitive services."
+  },
+  {
+   "pair_id": "Q324",
+   "question": "Which AMQP queue receives book-ingestion jobs?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q325",
+   "question": "Why does chunking reduce repeated impasses in the Soar formulation?",
+   "reference": "It compiles substate reasoning into immediate production rules, removing the need to repeat the same impasse reasoning.",
+   "answer": "I don't know. The provided notes do not contain information related to the Soar formulation or chunking to reduce repeated impasses."
+  },
+  {
+   "pair_id": "Q326",
+   "question": "Which OAuth2 provider is configured for browser-agent login?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain any information about OAuth2 provider configuration for browser-agent login."
+  },
+  {
+   "pair_id": "Q327",
+   "question": "Ce platforma de forensics este legata de regulile despre clasele de memorie si crearea notelor?",
+   "reference": "LogAnalyzer DFIR Enterprise este o suita air-gapped si offline pentru analiza forenzica a sistemelor Windows.",
+   "answer": "I don't know. The question seems to mix concepts from memory forensics and note-taking, which are not directly related. Could you provide more context or clarify your question?"
+  },
+  {
+   "pair_id": "Q328",
+   "question": "How many editions does this platform have and what are they?",
+   "reference": "Two editions: LogAnalyzer.AirGapped and LogAnalyzer.Network.",
+   "answer": "I don't know. The provided notes do not contain information about the number of editions or what they are for any platform."
+  },
+  {
+   "pair_id": "Q329",
+   "question": "How many editions does this platform have and what are they?",
+   "reference": "Two editions: LogAnalyzer.AirGapped and LogAnalyzer.Network.",
+   "answer": "I don't know. Could you please specify which platform you are referring to?"
+  },
+  {
+   "pair_id": "Q330",
+   "question": "Ce spune reteta asociata cu slotul de proceduri despre ce ramane in urma masuratorilor?",
+   "reference": "Reteta retine ceea ce a supravietuit masuratorii si include si partile care au esuat, nu doar succesele.",
+   "answer": "I don't know. The provided notes do not contain information about a measurement procedure outcome or retention after measurements."
+  },
+  {
+   "pair_id": "Q331",
+   "question": "How does feedback influence subsequent action in the described regulator model?",
+   "reference": "Observed discrepancies between actual output and target patterns are routed back into the regulator to guide later action.",
+   "answer": "I don't know.\n\nThe provided notes do not contain explicit information about how feedback influences subsequent action in a regulator model. The notes discuss various topics including AI memory vaults, retrieval bottlenecks, a cognitive AI architecture, and a cost-router phase for Claude Code, but none of them detail the specific mechanism of feedback influencing actions in a regulator model."
+  },
+  {
+   "pair_id": "Q332",
+   "question": "Ce reguli pentru animatii sunt legate de procedura care clasifica problemele UI pe severitate 0–4?",
+   "reference": "Animatiile trebuie sa serveasca unor scopuri legitime; pentru performanta se folosesc proprietati accelerate GPU precum transform si opacity si se respecta prefers-reduced-motion.",
+   "answer": "I don't know. This question seems to be in Romanian, but the specific rules or regulations for animations related to UI problem severity classification on a 0-4 scale are not widely documented or standardized. Such rules would likely vary by company or organization."
+  },
+  {
+   "pair_id": "Q333",
+   "question": "What is the defining content of semantic memory in this ontology note?",
+   "reference": "Generalized world knowledge, lexical representations, and abstract conceptual principles detached from autobiographical origins.",
+   "answer": "I don't know. The provided notes do not contain a specific definition for semantic memory. They discuss engram, subsymbolic information, retrograde and anterograde amnesia, and canonical representation, but not semantic memory."
+  },
+  {
+   "pair_id": "Q334",
+   "question": "What does associative retrieval do in the cognitive architecture?",
+   "reference": "It scans historical episode traces to retrieve relevant operational context for ongoing agent actions.",
+   "answer": "Associative retrieval in the cognitive architecture allows for the retrieval of information based on associations or connections with existing knowledge, rather than through a direct, explicit search."
+  },
+  {
+   "pair_id": "Q335",
+   "question": "What is the exact container image tag used for the memory runtime?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the exact container image tag used for the memory runtime."
+  },
+  {
+   "pair_id": "Q336",
+   "question": "What is the functional role of a buffer in the described architecture?",
+   "reference": "It is a restricted-capacity interface that holds one chunk between an internal cognitive module and the central production system.",
+   "answer": "I don't know.\n\nThe provided notes do not contain any specific information about a buffer or its functional role in the described architecture. The notes focus on the architecture of `XAU_Kinetic` trading engine, vault architecture, Casa3D project, and the concept of subsymbolic information, but do not mention buffers."
+  },
+  {
+   "pair_id": "Q337",
+   "question": "What does episodic memory store for an agent?",
+   "reference": "Past state embeddings and hidden activations that allow retrieval of relevant prior experiences in rare or unseen situations.",
+   "answer": "Episodic memory stores personal experiences and specific events that an individual has encountered."
+  },
+  {
+   "pair_id": "Q338",
+   "question": "Why is reservoir sampling useful for a stream whose total length is unknown?",
+   "reference": "It lets k items be sampled uniformly from a stream without knowing the final length or explicit stream boundaries.",
+   "answer": "Reservoir sampling is useful for a stream whose total length is unknown because it allows you to randomly select a fixed number of samples from the stream without needing to know the total length in advance. This is achieved by maintaining a \"reservoir\" of selected items and updating it as new items arrive, ensuring each item has an equal probability of being part of the final sample."
+  },
+  {
+   "pair_id": "Q339",
+   "question": "Cum se conecteaza agentii de browser, conform notei legate de arhitectura stratificata a Vault-ului?",
+   "reference": "Una dintre metode este prin prompt de sistem si Markdown Injection fara server; runbook-ul descrie trei metode de conectare.",
+   "answer": "Conform notei, există trei metode de conectare pentru agentii de browser:\n\n1. **Metoda A: Prompt de Sistem & Markdown Injection (Fără Server)**\n2. **Metoda B: Server REST Local (http://127.0.0.1:8000)**\n3. **Metoda C: Extensie Browser / Tampermonkey Userscript**\n\nFiecare metodă oferă un mod diferit de a sincroniza și conecta agenții AI din browser la Vault-ul canonic de memorie."
+  },
+  {
+   "pair_id": "Q340",
+   "question": "Ce preconditie de mediu este ceruta de procedura legata de motorul cu circuit breaker?",
+   "reference": "Python 3.12+ este instalat, iar pentru modul live terminalul MetaTrader 5 trebuie sa fie instalat, actualizat si conectat la contul brokerului.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q341",
+   "question": "How many system modules are listed in the workspace specification?",
+   "reference": "Seven modules.",
+   "answer": "5\n\nThe workspace specification lists 5 system modules:\n\n1. GLOBAL WORKSPACE THEORY (GWT) HUB (Competitive Proposal Broadcast)\n2. ACT-R ACTIVATION & ATTENTION ALLOC.\n3. RECONSOLIDATION & VOLATILITY STATE\n4. PRODUCTION UTILITY & REWARD FEEDBACK"
+  },
+  {
+   "pair_id": "Q342",
+   "question": "Ce reguli pentru animatii sunt legate de procedura care clasifica problemele UI pe severitate 0–4?",
+   "reference": "Animatiile trebuie sa serveasca unor scopuri legitime; pentru performanta se folosesc proprietati accelerate GPU precum transform si opacity si se respecta prefers-reduced-motion.",
+   "answer": "I don't know. The provided notes do not mention any specific rules for classifying UI problems by severity levels."
+  },
+  {
+   "pair_id": "Q343",
+   "question": "Ce dimensiune are consiliul de agenti in nota asociata cu motorul ACT-R?",
+   "reference": "Matricea consiliului descrie 21 de agenti specializati.",
+   "answer": "I don't know. The provided notes do not specify the dimension of the agent council associated with the ACT-R motor."
+  },
+  {
+   "pair_id": "Q344",
+   "question": "Ce niveluri de integrare sunt prevazute in documentul asociat arhitecturii 99 SYSTEM?",
+   "reference": "Documentul enterprise descrie patru niveluri de integrare in proiect.",
+   "answer": "Based on the notes provided, the document specifies two levels of integration for the AI Memory Vault in a large-scale enterprise application suite:\n\n1. Through a REST API Gateway/Microservice Proxy (MCP)\n2. Directly via Python SDK from the cognitive_core module"
+  },
+  {
+   "pair_id": "Q345",
+   "question": "What is the exact browser event name emitted when a graph edge is promoted?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q346",
+   "question": "Ce rol are agentul extern asociat aplicatiei de evidenta a transferurilor, in documentul care mentioneaza Argon2id?",
+   "reference": "Perplexity face research extern si verificare de conformitate cu surse citate, nu executie.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q347",
+   "question": "What is the purpose of the stabilization phase called consolidation?",
+   "reference": "It progressively stabilizes newly registered experiential information so it can become permanently fixed in neural tissue.",
+   "answer": "The purpose of the stabilization phase called consolidation is to make newly registered experiential information permanently fixed in neural tissue, requiring protein synthesis for this process."
+  },
+  {
+   "pair_id": "Q348",
+   "question": "Cum este configurata componenta de research asociata contractelor cu trei agenti de cod?",
+   "reference": "Perplexity nu are fisier auto-incarcat per repository; echivalentul este un Space cu instructiuni custom si fisiere de context incarcate manual.",
+   "answer": "I don't know. The provided notes do not contain information about the research component related to contracts with three coding agents."
+  },
+  {
+   "pair_id": "Q349",
+   "question": "Ce versiune de protocol gRPC este folosita intre Memory Controller si Agent Council?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q350",
+   "question": "What kind of recall characterizes explicit memory?",
+   "reference": "Conscious recollection of past occurrences, factual knowledge, and personal experiences, requiring deliberate awareness.",
+   "answer": "The notes provided do not contain a specific answer to what kind of recall characterizes explicit memory. The notes mention \"Recall\" in the context of memory retrieval but do not differentiate between explicit and implicit recall. Therefore, I don't know the specific kind of recall that characterizes explicit memory based on the given information."
+  },
+  {
+   "pair_id": "Q351",
+   "question": "What role does the hippocampus play in learning according to this note?",
+   "reference": "It is critical for memory processing, helps project information to cortical regions for meaning, and facilitates consolidation of new learning into long-term memory.",
+   "answer": "According to the note, the hippocampus is involved in memory, specifically in normal recognition memory and spatial memory. It plays a role in projecting information to cortical regions to provide meaning and facilitating the consolidation of new learning into long-term memory."
+  },
+  {
+   "pair_id": "Q352",
+   "question": "What single primary action should a visitor be guided toward in this conversion flow?",
+   "reference": "Guide the user toward one primary action without distracting elements.",
+   "answer": "I don't know. The provided notes do not contain information about a specific conversion flow or the primary action a visitor should be guided toward."
+  },
+  {
+   "pair_id": "Q353",
+   "question": "Ce preconditie de mediu este ceruta de procedura legata de motorul cu circuit breaker?",
+   "reference": "Python 3.12+ este instalat, iar pentru modul live terminalul MetaTrader 5 trebuie sa fie instalat, actualizat si conectat la contul brokerului.",
+   "answer": "I don't know. The provided notes do not specify any environment prerequisites for the circuit breaker-related procedure."
+  },
+  {
+   "pair_id": "Q354",
+   "question": "Ce benchmark de memorie pe termen lung este asociat cu structura 00 CORE / 01 KNOWLEDGE a sistemului?",
+   "reference": "LoCoMo e descris ca benchmark pentru pastrarea, actualizarea si recuperarea memoriei pe traiectorii conversationale de peste 35 de sesiuni.",
+   "answer": "Baza de date nu conține informații specifice despre un benchmark de memorie pe termen lung asociat cu structura 00_CORE/01_KNOWLEDGE a sistemului în contextul dat. Notațiile furnizate nu menționează explicit un astfel de benchmark în această structură specifică."
+  },
+  {
+   "pair_id": "Q355",
+   "question": "What turns an isolated face acknowledgment into complete personal recognition according to this definition?",
+   "reference": "Full recovery of identifying context and associative facts.",
+   "answer": "I don't know. The provided notes do not contain information about turning an isolated face acknowledgment into complete personal recognition."
+  },
+  {
+   "pair_id": "Q356",
+   "question": "What national framework does this note describe as being approved under the cited Romanian law?",
+   "reference": "It approves the National Standards for the Protection of Classified Information in Romania, adopted under Law 182/2002.",
+   "answer": "I don't know. The note does not mention any national framework being approved under a Romanian law. It discusses Casa3D software and some Romanian forum evidence, but does not reference a specific national framework in a Romanian law."
+  },
+  {
+   "pair_id": "Q357",
+   "question": "Ce mecanism de activare este descris in documentul legat de structura 05 RESOURCES a Vault-ului?",
+   "reference": "Motorul ACT-R al decaderii activarii foloseste formula indicata cu rata de decadere d = 0.5.",
+   "answer": "I don't know.\n\nThe provided notes do not contain information about the activation mechanism described in the structure 05 RESOURCES of the Vault. The notes focus on Casa3D's features, missing functionalities, and comparisons with other design software, but do not mention any activation mechanism for Vault resources."
+  },
+  {
+   "pair_id": "Q358",
+   "question": "What axiom separates a declaration from what was actually observed?",
+   "reference": "DECLARED is not equal to OBSERVED.",
+   "answer": "The axiom that separates a declaration from what was actually observed is: \\(\\mathbf{DECLARED \\neq OBSERVED}\\)."
+  },
+  {
+   "pair_id": "Q359",
+   "question": "Nota despre KPI-uri 3–5 trimite catre ce proiect si ce tip de stocare locala foloseste acesta?",
+   "reference": "FinScope foloseste IndexedDB prin Dexie pentru stocare locala, offline, fara cloud.",
+   "answer": "Proiectul notat este \"Registru de Transferuri\" și folosește stocare locală cu SQLite, criptată cu DPAPI."
+  },
+  {
+   "pair_id": "Q360",
+   "question": "Ce nu are voie un agent sa prezinte drept real, indiferent de forma in care a fost obtinut?",
+   "reference": "Date inventate, date demo/exemplu/placeholder prezentate ca reale, rezultate simulate neexecutate efectiv și verificări sau teste neefectuate nu pot fi prezentate drept reale.",
+   "answer": "Un agent nu are voie să prezinte drept real o proprietate indiferent de forma în care a fost obținută dacă există dovezi clară că transacția nu a avut loc în mod legal, de exemplu, în cazul vânării sau a obținerii de forță puternică."
+  },
+  {
+   "pair_id": "Q361",
+   "question": "What determines future behavior in a state-determined system?",
+   "reference": "Its current internal configuration and incoming environmental inputs, without intrinsic randomness.",
+   "answer": "In a state-determined system, future behaviors are determined by the current internal configuration and incoming environmental inputs without intrinsic randomness."
+  },
+  {
+   "pair_id": "Q362",
+   "question": "Which layer is described as the repository of stable, reusable knowledge?",
+   "reference": "01 KNOWLEDGE.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q363",
+   "question": "Cate intrari are catalogul legat de motorul cu rata de decadere d = 0.5?",
+   "reference": "Catalogul are 3659 intrari, din 3661 directoare reale.",
+   "answer": "I don't know. The notes do not provide information about the number of entries in the catalog related to the motor with decay rate d = 0.5."
+  },
+  {
+   "pair_id": "Q364",
+   "question": "Ce reguli de dezvoltare sunt indicate in documentul asociat cu SQLite WAL / SQLCipher?",
+   "reference": "Este specificat WPF pe .NET 10 cu MVVM strict, zero apeluri externe de retea si comunicare cu Vault-ul strict prin 127.0.0.1.",
+   "answer": "I don't know. The specific development guidelines for SQLite WAL or SQLCipher are not detailed in a publicly available general document. These are database technologies and the exact internal guidelines for their development would typically be proprietary information or detailed in private documentation."
+  },
+  {
+   "pair_id": "Q365",
+   "question": "What Nomad job name runs the Memory Vault runtime?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about a Nomad job name for running the Memory Vault runtime."
+  },
+  {
+   "pair_id": "Q366",
+   "question": "Ce reguli pentru animatii sunt legate de procedura care clasifica problemele UI pe severitate 0–4?",
+   "reference": "Animatiile trebuie sa serveasca unor scopuri legitime; pentru performanta se folosesc proprietati accelerate GPU precum transform si opacity si se respecta prefers-reduced-motion.",
+   "answer": "I don't know. The provided notes do not contain any information about a procedure that classifies UI problems by severity levels or related animation rules."
+  },
+  {
+   "pair_id": "Q367",
+   "question": "Ce schema de stocare si autentificare este legata de produsul air-gapped?",
+   "reference": "Autentificarea foloseste un PIN local cu hash si salt, iar baza de date este criptata cu SQLCipher, cu cheia protejata prin DPAPI.",
+   "answer": "Schema de stocare și autentificare legat de produsul air-gapped este următorul:\n\n- Autentificare locală sigură (PIN hash Argon2id + salt) fără dependințe de rețea.\n- Criptare completă a bazei de date (SQLite WAL mode + DPAPI)."
+  },
+  {
+   "pair_id": "Q368",
+   "question": "What is the exact cron expression for nightly memory consolidation?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about a cron expression for nightly memory consolidation."
+  },
+  {
+   "pair_id": "Q369",
+   "question": "Where is parametric memory located?",
+   "reference": "In the trained synaptic weights of the foundation model.",
+   "answer": "Parametric memory is located within the trained synaptic weights of the foundation model, according to the provided notes."
+  },
+  {
+   "pair_id": "Q370",
+   "question": "How is the trading architecture split into modules?",
+   "reference": "Five decoupled modules: data, strategy, risk, execution, and journal.",
+   "answer": "The trading architecture is split into several modules as follows:\n\n- `domain/`: Contains Pydantic V2 immutable data entities.\n- `application/`: Includes Clean Abstract Base Classes and the `StrategyRunner` orchestrator.\n- `infrastructure/`: Houses the `MT5 client wrapper` and `SQLite WAL SHA-256 persistence`.\n- `risk/`: Manages the `RiskManager` and `TPLadderManager`.\n- `strategies/`: Contains pure functional strategy logic.\n\nThis structure helps in maintaining a clean separation of concerns and makes the system easier to maintain, test, and extend."
+  },
+  {
+   "pair_id": "Q371",
+   "question": "What is the purpose of the stabilization phase called consolidation?",
+   "reference": "It progressively stabilizes newly registered experiential information so it can become permanently fixed in neural tissue.",
+   "answer": "The purpose of the stabilization phase called consolidation is to make newly registered experiential information permanently fixed in neural tissue through protein synthesis."
+  },
+  {
+   "pair_id": "Q372",
+   "question": "What is the role of JARVIS relative to the Vault?",
+   "reference": "JARVIS is the visual and operational control plane over the AI Memory Vault V6, not a separate memory system.",
+   "answer": "I don't know. The question seems to mix elements from different contexts. JARVIS is a fictional AI assistant from the Iron Man/Marvel comics/ films, while \"Vault\" could refer to various contexts without additional information."
+  },
+  {
+   "pair_id": "Q373",
+   "question": "What does a cognitive architecture organize into one integrated model?",
+   "reference": "Memory systems, processing mechanisms, and control cycles.",
+   "answer": "A cognitive architecture organizes cognitive processes and components into one integrated model."
+  },
+  {
+   "pair_id": "Q374",
+   "question": "What failure was identified between high candidate recall and the information delivered to the model?",
+   "reference": "Packing failure.",
+   "answer": "The primary failure identified between high candidate recall and the information delivered to the model was the **`PACKING_FAILURE`** in the **P1 Context Packing Laboratory**. Specifically, under the production baseline (P0), 76.1% of all discovered factual keywords were discarded or corrupted before reaching the LLM context due to issues in the `ContextPackBuilder`. These issues included string compression, truncation, and clearing of notes beyond a certain length, which prevented the full context from being effectively delivered to the model."
+  },
+  {
+   "pair_id": "Q375",
+   "question": "Where must the unmodified external export be preserved?",
+   "reference": "Permanently in 06 INBOX/RAW IMPORTS/.",
+   "answer": "The unmodified external export must be preserved permanently in `06_INBOX/RAW_IMPORTS/`."
+  },
+  {
+   "pair_id": "Q376",
+   "question": "What capability is attributed to the mental-imagery component?",
+   "reference": "It constructs depictive internal representations for visual transformations and metric queries.",
+   "answer": "I don't know. The provided notes do not contain any information about a mental-imagery component or its attributed capabilities."
+  },
+  {
+   "pair_id": "Q377",
+   "question": "What determines future behavior in a state-determined system?",
+   "reference": "Its current internal configuration and incoming environmental inputs, without intrinsic randomness.",
+   "answer": "In a state-determined system, future behaviors are determined by its current internal configuration and incoming environmental inputs, without intrinsic randomness."
+  },
+  {
+   "pair_id": "Q378",
+   "question": "What is the functional role of a buffer in the described architecture?",
+   "reference": "It is a restricted-capacity interface that holds one chunk between an internal cognitive module and the central production system.",
+   "answer": "In the described architecture, a buffer is a restricted capacity interface holding a single chunk that connects an internal cognitive module to the central production system."
+  },
+  {
+   "pair_id": "Q379",
+   "question": "Ce mecanism de activare este descris in documentul legat de structura 05 RESOURCES a Vault-ului?",
+   "reference": "Motorul ACT-R al decaderii activarii foloseste formula indicata cu rata de decadere d = 0.5.",
+   "answer": "Informațiile date nu conțin detalii specifice despre mecanismul de activare descris în structura 05 RESOURCES a Vault-ului. Pentru a oferi un răspuns precis, ar fi necesar un extract mai detaliat din documentul respectiv."
+  },
+  {
+   "pair_id": "Q380",
+   "question": "How does the vault distinguish one reusable capability from a generic repository?",
+   "reference": "It distinguishes actual skills, skill collections, agents, instructions, prompts, references, backend references, programming-language references, templates/examples, and irrelevant material; a repository is not automatically a skill.",
+   "answer": "I don't know. The specific details on how a vault distinguishes one reusable capability from a generic repository would depend on the implementation of the vault system in question."
+  },
+  {
+   "pair_id": "Q381",
+   "question": "Ce nivel de incredere este asociat documentului care discuta ExplainableAiRiskEngine?",
+   "reference": "Very High este rezervat informatiilor verificate direct de utilizator, prin executie, test sau sursa primara autoritativa.",
+   "answer": "I don't know. The notes provided are empty, so there is no information to determine the associated level of confidence for the document discussing ExplainableAI Risk Engine."
+  },
+  {
+   "pair_id": "Q382",
+   "question": "What transition in problem solving is triggered by an impasse?",
+   "reference": "It moves the system from reactive execution toward deliberate, reflective reasoning.",
+   "answer": "An impasse often triggers a transition from a stuck or unproductive problem-solving approach to exploring new strategies or perspectives."
+  },
+  {
+   "pair_id": "Q383",
+   "question": "Ce componente concrete ale proiectului sunt descrise in nota legata de interzicerea look-ahead bias?",
+   "reference": "XAU Kinetic este un sistem hibrid Python 3.12+ cu Clean Architecture, integrat cu MetaTrader 5 si o aplicatie desktop C .NET 8 WPF; include Pydantic V2 si un motor de risc cu circuit breaker.",
+   "answer": "I don't know. The question refers to a specific note related to a project's restriction on look-ahead bias, but without more context, I cannot provide details about which concrete components of the project are described in that note."
+  },
+  {
+   "pair_id": "Q384",
+   "question": "How is the trading architecture split into modules?",
+   "reference": "Five decoupled modules: data, strategy, risk, execution, and journal.",
+   "answer": "I don't know. The specific details of trading architecture module splits can vary greatly depending on the system and company."
+  },
+  {
+   "pair_id": "Q385",
+   "question": "Ce schema de stocare si autentificare este legata de produsul air-gapped?",
+   "reference": "Autentificarea foloseste un PIN local cu hash si salt, iar baza de date este criptata cu SQLCipher, cu cheia protejata prin DPAPI.",
+   "answer": "Schema de stocare și autentificare legat de produsul air-gapped incluie:\n\n- Autentificare locală prin PIN numeric, hash-uit cu salt (SHA-256), fără JWT/sesiuni.\n- Criptare la nivel de bază de date (SQLCipher AES-256-CBC) cu cheia derivată/protejată prin DPAPI."
+  },
+  {
+   "pair_id": "Q386",
+   "question": "What kind of platform is this forensic architecture designed to run as?",
+   "reference": "It is an air-gapped and offline forensic suite for Windows systems.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q387",
+   "question": "Ce principiu elimina pixelii care nu transmit date?",
+   "reference": "The goal is to maximize the data-to-ink ratio; pixels that do not present data should be removed.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q388",
+   "question": "Which role is responsible for locating canonical cross-cutting knowledge and preserving provenance?",
+   "reference": "It locates relevant canonical knowledge, maps tasks to skills and agents, distinguishes canonical material from raw external imports, detects duplicates/conflicts, and preserves provenance.",
+   "answer": "I don't know. The provided notes do not specify a role responsible for locating canonical cross-cutting knowledge and preserving provenance."
+  },
+  {
+   "pair_id": "Q389",
+   "question": "Ce regula vizuala ajunge din proiectul care importa extrageri PDF/Excel/CSV si OCR?",
+   "reference": "Standardul cere maximizarea raportului data-to-ink si eliminarea pixelilor care nu prezinta date.",
+   "answer": "I don't know. The notes do not provide information about the visual theme or style rules used for importing PDF/Excel/CSV files or OCR in the FinScope project."
+  },
+  {
+   "pair_id": "Q390",
+   "question": "What is the known issue affecting this project's current state?",
+   "reference": "Resolving $PSScriptRoot can fail or be incorrect when the script runs outside standalone direct execution.",
+   "answer": "I don't know. Could you provide more context or details about the project?"
+  },
+  {
+   "pair_id": "Q391",
+   "question": "Ce algoritm de rotatie a certificatelor TLS este configurat pentru gateway-ul local?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q392",
+   "question": "Care este numele bucket-ului S3 in care sunt puse artefactele de evaluare?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "Nu am informații suficiente pentru a răspunde această întrebare, deoarece nu am fost furnizat contextul necesar sau date specifice legate de bucketul S3 și artefactele de evaluare."
+  },
+  {
+   "pair_id": "Q393",
+   "question": "Which kinds of learning does nondeclarative memory encompass?",
+   "reference": "Nonconscious abilities such as skills, habits, conditioning, and priming that are expressed through performance.",
+   "answer": "Nondeclarative memory encompasses two main kinds of learning: procedural memory and implicit memory."
+  },
+  {
+   "pair_id": "Q394",
+   "question": "Ce topic Kafka este folosit pentru evenimentele de memorie persistenta?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "Kafka este folosit pentru gestionarea de volumi mari de evenimente sau date în timp real, dar nu este specific pentru memorie persistentă. Este o platformă de publicare și abonare robustă, fiabilă și scalabilă, utilizată în special pentru loggarea, agregarea și analiza datelor în timp real. Memoria persistentă este o funcție a sistemului, nu un scop specific al Kafka."
+  },
+  {
+   "pair_id": "Q395",
+   "question": "Why does the standard reject merely decorative renaming of modules?",
+   "reference": "Because several cognitively named modules already have zero production consumers, so decorative renaming would add vocabulary without adding function.",
+   "answer": "The standard rejects merely decorative renaming of modules because it aims to prevent the addition of vocabulary without adding function. Renaming for aesthetics alone would introduce new terms without improving the functionality or clarity, which is what this standard seeks to avoid. Instead, the taxonomy focuses on fixing ambiguity in the existing codebase."
+  },
+  {
+   "pair_id": "Q396",
+   "question": "How is forgetting defined in the note?",
+   "reference": "As the loss of information from long-term memory.",
+   "answer": "Forgetting is defined as the loss of information from long-term memory."
+  },
+  {
+   "pair_id": "Q397",
+   "question": "Cum este organizat workflow-ul asociat produsului de transferuri si termenului QuestPDF?",
+   "reference": "Workflow-ul de remodelare are 7 sarcini secventiale; fiecare se planifica, se aproba, se executa si se verifica separat, iar urmatoarea nu incepe fara build verde.",
+   "answer": "I don't know. The provided notes do not contain information related to the workflow associated with the product transfer or the term QuestPDF."
+  },
+  {
+   "pair_id": "Q398",
+   "question": "What is the known issue affecting this project's current state?",
+   "reference": "Resolving $PSScriptRoot can fail or be incorrect when the script runs outside standalone direct execution.",
+   "answer": "Based on the provided notes, there are no specific known issues mentioned that are currently affecting the project's state. However, there are some caveats and areas for improvement noted:\n\n- In the Claude Code cost-router phase 3, the task is to minimize total model tokens while preserving correctness, security, and routing policies. This suggests there might be inefficiencies in the current implementation that need addressing.\n- In the Casa3D plan for selling to other users, all prices are estimates and need to be re-checked before any purchase.\n- The history rewrite on 2026-10-31 involved removing personal identifiers from the Git history, which changed commit IDs and may affect references to old SHAs in documents.\n\nWithout explicit known issues stated, these points highlight areas that could be considered as potential challenges or areas for improvement."
+  },
+  {
+   "pair_id": "Q399",
+   "question": "What is the exact SQLite index name used for lifecycle filtering?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about a specific SQLite index name used for lifecycle filtering."
+  },
+  {
+   "pair_id": "Q400",
+   "question": "Ce standarde pentru scripturile de administrare sunt legate de configuratia ObsidianTactical.xaml?",
+   "reference": "Scripturile trebuie sa fie idempotente, complet trasabile prin Start-Transcript, non-distructive asupra originalelor si verificate imediat cu SHA-256.",
+   "answer": "I don't know. The notes do not specify which standards are related to the administration scripts for configuring ObsidianTactical.xaml."
+  },
+  {
+   "pair_id": "Q401",
+   "question": "Ce rol are agentul extern asociat aplicatiei de evidenta a transferurilor, in documentul care mentioneaza Argon2id?",
+   "reference": "Perplexity face research extern si verificare de conformitate cu surse citate, nu executie.",
+   "answer": "I don't know. The notes mention Argon2id for local authentication security but do not specify a role for an external agent in relation to this."
+  },
+  {
+   "pair_id": "Q402",
+   "question": "Ce principiu elimina pixelii care nu transmit date?",
+   "reference": "The goal is to maximize the data-to-ink ratio; pixels that do not present data should be removed.",
+   "answer": "I don't know. The provided notes do not contain information about a principle that eliminates pixels that do not transmit data. The notes are about data pipelines, caching patterns, and a 3D house design process, but do not address image processing or data transmission principles related to pixels."
+  },
+  {
+   "pair_id": "Q403",
+   "question": "How many system modules are listed in the workspace specification?",
+   "reference": "Seven modules.",
+   "answer": "I don't know. The notes do not provide a specific number of system modules listed in the workspace specification."
+  },
+  {
+   "pair_id": "Q404",
+   "question": "Why does chunking reduce repeated impasses in the Soar formulation?",
+   "reference": "It compiles substate reasoning into immediate production rules, removing the need to repeat the same impasse reasoning.",
+   "answer": "Chunking reduces repeated impasses in the Soar formulation by allowing the system to handle complex problems as a combination of simpler, pre-learned chunks. This means that when faced with a problem, Soar can break it down into smaller, more manageable parts that have been previously solved, thus avoiding getting stuck (impasses) at each small step."
+  },
+  {
+   "pair_id": "Q405",
+   "question": "What is the first thing the successor agent is instructed to read?",
+   "reference": "This handoff document itself.",
+   "answer": "I don't know. The notes do not provide information about what the successor agent is instructed to read."
+  },
+  {
+   "pair_id": "Q406",
+   "question": "Which risk-control component is explicitly mentioned in the XAU Kinetic architecture?",
+   "reference": "An isolated risk engine with a circuit breaker.",
+   "answer": "I don't know.\n\nThe provided notes do not contain any information about the XAU Kinetic architecture or its risk-control components."
+  },
+  {
+   "pair_id": "Q407",
+   "question": "What does episodic memory store for an agent?",
+   "reference": "Past state embeddings and hidden activations that allow retrieval of relevant prior experiences in rare or unseen situations.",
+   "answer": "Episodic memory stores past state embeddings and hidden activations for an agent, enabling it to retrieve relevant prior experiences for decision-making in rare or unseen situations."
+  },
+  {
+   "pair_id": "Q408",
+   "question": "Ce benchmark de memorie pe termen lung este asociat cu structura 00 CORE / 01 KNOWLEDGE a sistemului?",
+   "reference": "LoCoMo e descris ca benchmark pentru pastrarea, actualizarea si recuperarea memoriei pe traiectorii conversationale de peste 35 de sesiuni.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q409",
+   "question": "How broad is the linked curated resource collection by category count?",
+   "reference": "It covers more than 25 categories.",
+   "answer": "I don't know. The notes do not provide information on the breadth of the linked curated resource collection by category count."
+  },
+  {
+   "pair_id": "Q410",
+   "question": "Which AMQP queue receives book-ingestion jobs?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about which AMQP queue receives book-ingestion jobs."
+  },
+  {
+   "pair_id": "Q411",
+   "question": "Ce versiune de protocol gRPC este folosita intre Memory Controller si Agent Council?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the gRPC version used between Memory Controller and Agent Council."
+  },
+  {
+   "pair_id": "Q412",
+   "question": "How is regulation described in the cybernetic formulation?",
+   "reference": "As coordinating responsive moves mathematically to collapse a large disturbance set into minimally acceptable outcomes.",
+   "answer": "In the cybernetic formulation, regulation is described as a process where a system's output is compared to a reference input, and any discrepancy is corrected to maintain the system's desired state or performance."
+  },
+  {
+   "pair_id": "Q413",
+   "question": "Which evidence condition corresponds to the highest level defined in the vault?",
+   "reference": "Very High means the information is directly verified by the user, execution, test, or an authoritative primary source.",
+   "answer": "The evidence condition corresponding to the highest level defined in the vault is \"S1\" with a severity of \"high\"."
+  },
+  {
+   "pair_id": "Q414",
+   "question": "Ce principiu de output structurat se gaseste in documentul legat de regula care cere note atomice si nu permite secrete?",
+   "reference": "AI-ul propune, codul dispune: output-ul AI este tratat ca input nevalidat si trebuie validat strict pe schema; actiunile ireversibile cer confirmare umana.",
+   "answer": "I don't know. The provided notes do not contain the answer to the question asked."
+  },
+  {
+   "pair_id": "Q415",
+   "question": "What is the defining content of semantic memory in this ontology note?",
+   "reference": "Generalized world knowledge, lexical representations, and abstract conceptual principles detached from autobiographical origins.",
+   "answer": "I don't know. The ontology note you referred to was not provided in your question. Could you please provide more details or context?"
+  },
+  {
+   "pair_id": "Q416",
+   "question": "What evidence sequence is required before the utility of stored information can be established?",
+   "reference": "An unbroken, empirically observable provenance chain from query/discovery through retrieval and loading to use.",
+   "answer": "Based on the notes provided, the evidence sequence required before the utility of stored information can be established includes:\n\n- SOURCE_VERIFIED / TEST_VERIFIED / RUNTIME_VERIFIED / MEASURED / INFERRED / UNVERIFIED labels on every claim.\n- Evidence labels should be applied to establish the utility of stored information.\n\nThis requirement is explicitly stated in the notes under the \"Hard constraints (owner)\" section."
+  },
+  {
+   "pair_id": "Q417",
+   "question": "Which long-context evaluation is described as covering trajectories longer than 35 sessions?",
+   "reference": "LoCoMo (Long-Context Dynamic Memory).",
+   "answer": "The long-context evaluation described as covering trajectories longer than 35 sessions is LoCoMo (Long-Context Dynamic Memory)."
+  },
+  {
+   "pair_id": "Q418",
+   "question": "Cum se conecteaza agentii de browser, conform notei legate de arhitectura stratificata a Vault-ului?",
+   "reference": "Una dintre metode este prin prompt de sistem si Markdown Injection fara server; runbook-ul descrie trei metode de conectare.",
+   "answer": "Conform notei, există trei metode de conectare pentru agentii de browser AI:\n\n1. **Metoda A: Prompt de Sistem & Markdown Injection (Fără Server)**\n2. **Metoda B: Server REST Local** (de exemplu, `http://127.0.0.1:8000`)\n3. **Metoda C: Extensie Browser / Tampermonkey Userscript**\n\nFiecare metodă oferă un mod diferit de a sincroniza și conecta agenții AI din browser la Vault-ul canonic de memorie."
+  },
+  {
+   "pair_id": "Q419",
+   "question": "What is the known issue affecting this project's current state?",
+   "reference": "Resolving $PSScriptRoot can fail or be incorrect when the script runs outside standalone direct execution.",
+   "answer": "The known issue affecting the project's current state is with the `$PSScriptRoot` variable returning incorrectly or being empty when the script is invoked outside of a standalone execution context, such as when dot-sourcing, running in the ISE, or in a different working directory."
+  },
+  {
+   "pair_id": "Q420",
+   "question": "How many editions does this platform have and what are they?",
+   "reference": "Two editions: LogAnalyzer.AirGapped and LogAnalyzer.Network.",
+   "answer": "This platform has two editions:\n\n1. `LogAnalyzer.AirGapped` (Ediție Standalone Offline)\n2. `LogAnalyzer.Network` (Ediție Conectată / SOC & Real-Time EDR)"
+  },
+  {
+   "pair_id": "Q421",
+   "question": "What four criteria are given for creating a new note?",
+   "reference": "It should be reusable, distinct, stable enough, and relevant to future work.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q422",
+   "question": "Which long-context evaluation is described as covering trajectories longer than 35 sessions?",
+   "reference": "LoCoMo (Long-Context Dynamic Memory).",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q423",
+   "question": "What is the exact SQLite index name used for lifecycle filtering?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q424",
+   "question": "Ce livrabil central defineste nota despre anti-atribute si pozitionare, legata de fisierele tokens.css/theme.ts?",
+   "reference": "Un Mini Brand Book stabileste pozitionarea, atributele de personalitate, paleta si regulile tipografice.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q425",
+   "question": "In the ontology definition, what does adaptation achieve for the organism's essential variables?",
+   "reference": "An equilibrium in which essential variables experience significantly less disturbance than in an unadapted state.",
+   "answer": "For the organism's essential variables, adaptation achieves an equilibrium state wherein these variables experience significantly less disturbance than in an unadapted state."
+  },
+  {
+   "pair_id": "Q426",
+   "question": "Care este cheia de partitionare din tabela distribuita a jurnalului de memorie?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information about the distributed memory journal's partitioning key."
+  },
+  {
+   "pair_id": "Q427",
+   "question": "How is forgetting defined in the note?",
+   "reference": "As the loss of information from long-term memory.",
+   "answer": "I don't know. The question does not provide a specific note for reference."
+  },
+  {
+   "pair_id": "Q428",
+   "question": "Ce procedura de evaluare a interfetelor grafice este legata de documentul care foloseste IAsyncEnumerable pentru operatii I/O grele?",
+   "reference": "Procedura sistematica foloseste 10 Euristici Nielsen si WCAG AA, iar fiecare problema primeste severitate 0–4, locatie, euristica si propunere de remediere.",
+   "answer": "I don't know.\n\nThe provided notes do not mention IAsyncEnumerable or any specific procedure related to evaluating GUI interfaces using IAsyncEnumerable for I/O heavy operations."
+  },
+  {
+   "pair_id": "Q429",
+   "question": "Ce intrebare apare in nota din slotul legat de procedura de ingestie a cartilor?",
+   "reference": "Intrebarea este: Cum sunt executate operatiile?",
+   "answer": "I don't know. The notes you provided are empty, so there is no information to answer the question about which note is related to the book ingestion procedure."
+  },
+  {
+   "pair_id": "Q430",
+   "question": "Ce dimensiune are consiliul de agenti in nota asociata cu motorul ACT-R?",
+   "reference": "Matricea consiliului descrie 21 de agenti specializati.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q431",
+   "question": "What distinguishes declarative memory from a rigid associative routine in this ontology?",
+   "reference": "It supports novel inferential derivations and contextual problem-solving.",
+   "answer": "Declarative memory is distinguished from a rigid associative routine by its ability to enable novel inferential derivations and contextual problem-solving beyond rigid associative routines, as per the canonical definition provided in the notes."
+  },
+  {
+   "pair_id": "Q432",
+   "question": "What must never happen while discovering an external repository?",
+   "reference": "It must never execute external repository code during discovery.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q433",
+   "question": "Which Python version is required by the deployment procedure?",
+   "reference": "Python 3.12 or newer.",
+   "answer": "The deployment procedure requires Python 3.12+ to be installed."
+  },
+  {
+   "pair_id": "Q434",
+   "question": "What distinguishes an ultrastable system from a merely fixed system?",
+   "reference": "It automatically reorganizes its internal parameters when essential variables leave viable limits.",
+   "answer": "An ultrastable system distinguishes itself by automatically reorganizing its internal parameters to preserve its essential variables when those variables leave viable limits. This is in contrast to a merely fixed system, which does not have this self-adjusting capability."
+  },
+  {
+   "pair_id": "Q435",
+   "question": "Which agent performs research and compliance verification rather than production coding?",
+   "reference": "Perplexity operates as the external research agent, not the execution agent.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q436",
+   "question": "Which kinds of learning does nondeclarative memory encompass?",
+   "reference": "Nonconscious abilities such as skills, habits, conditioning, and priming that are expressed through performance.",
+   "answer": "Nondeclarative memory encompasses skills, habits, conditioning, and priming."
+  },
+  {
+   "pair_id": "Q437",
+   "question": "What is the key property of priming in this definition?",
+   "reference": "It is an unconscious facilitation for identifying or producing recently encountered stimuli and is independent of medial-temporal-lobe declarative memory.",
+   "answer": "I don't know. The provided notes do not contain a definition of priming or its key properties."
+  },
+  {
+   "pair_id": "Q438",
+   "question": "How should a durable change be recorded when an equivalent record already exists?",
+   "reference": "Update the canonical record and relevant index/MOC rather than creating parallel copies.",
+   "answer": "When an equivalent record already exists for a durable change, the next step is to reuse the existing method documented in the vault rather than rediscovering it. This involves recording the solution or method in the vault so that it can be reused by the next agent, as described in the notes under the \"Recording a solved problem so the next agent can reuse the method\" section."
+  },
+  {
+   "pair_id": "Q439",
+   "question": "What distinguishes declarative memory from a rigid associative routine in this ontology?",
+   "reference": "It supports novel inferential derivations and contextual problem-solving.",
+   "answer": "Declarative memory is distinguished from a rigid associative routine by its ability to enable novel inferential derivations and contextual problem-solving beyond rigid associative routines."
+  },
+  {
+   "pair_id": "Q440",
+   "question": "What is the key first step in the measured book-ingestion recipe?",
+   "reference": "Convert the source, then have an agent read the chunks.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q441",
+   "question": "How does the vault distinguish one reusable capability from a generic repository?",
+   "reference": "It distinguishes actual skills, skill collections, agents, instructions, prompts, references, backend references, programming-language references, templates/examples, and irrelevant material; a repository is not automatically a skill.",
+   "answer": "The vault distinguishes one reusable capability from a generic repository through its **SKILL** object type in the Cognitive Memory Mesh Architecture. Each skill is defined as a reusable procedural capability and execution runbook, with a specific location (`/.agents/skills/`) and allowed outgoing relations such as `requires`, `tested_by`, and `implements`. This taxonomy helps in organizing and discovering capabilities in a structured manner without altering production runtime retrieval or packing algorithms."
+  },
+  {
+   "pair_id": "Q442",
+   "question": "Which DNS hostname is assigned to the external cognitive gateway?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q443",
+   "question": "Ce specificatii de produs rezulta din documentul de conformitate care discuta printare/scanare in medii air-gapped?",
+   "reference": "Produsul este o aplicatie desktop WPF .NET 10 pentru evidenta transferurilor si controlul dispozitivelor, destinata unui mediu air-gapped/militar.",
+   "answer": "I don't know. The provided notes do not contain information related to air-gapped environments, print/scanning, or product specifications from a conformity document."
+  },
+  {
+   "pair_id": "Q444",
+   "question": "Ce principii arhitecturale de separare sunt legate de descrierea sistemului cu circuit breaker?",
+   "reference": "XAU Kinetic separa strict entitatile de domeniu, orchestrarea aplicatiei, driverele de infrastructura, managementul riscului si deciziile de strategie.",
+   "answer": "Ce principii arhitecturale de separare sunt legate de descrierea sistemului cu circuit breaker?\n\nSistemul cu circuit breaker (CB) este legat de principiul de separare a responsabilităților prin intermediul introducerii unui element de control (circuit breaker) care permite aizolarea unei componente a sistemului în cazul unei erori, fără a afecta funcționalitatea celorlalte componente. Acest principiu este parte a arhitecturii microservicii și a arhitecturii distribuite, care promovează independența și scalabilitatea componentelor."
+  },
+  {
+   "pair_id": "Q445",
+   "question": "What turns an isolated face acknowledgment into complete personal recognition according to this definition?",
+   "reference": "Full recovery of identifying context and associative facts.",
+   "answer": "According to the definition provided, recollection turns an isolated face acknowledgment into complete personal recognition."
+  },
+  {
+   "pair_id": "Q446",
+   "question": "How does the described agent use episodic memory when facing rare or novel contexts?",
+   "reference": "It reinstates hidden activations from past rare states into recurrent working-memory layers so previously learned episodic sequences can be executed in novel contexts.",
+   "answer": "I don't know.\n\nThe provided notes do not contain specific information about how the agent uses episodic memory in rare or novel contexts. The notes focus on the architecture of the AI Memory Vault, the Atkinson-Shiffrin model of memory, parts of the brain involved in memory, and study techniques, but do not address the use of episodic memory in novel situations."
+  },
+  {
+   "pair_id": "Q447",
+   "question": "What kind of license validation is implemented offline?",
+   "reference": "Validation of an offline RSA-PSS signed license using a public key.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q448",
+   "question": "Ce trebuie facut cu o informatie care nu a fost verificata?",
+   "reference": "Trebuie sa fie marcata explicit; sursa si data se pastreaza cand sunt disponibile, iar ipotezele nu se transforma in fapte.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q449",
+   "question": "Which S3 bucket stores the frozen retrieval benchmarks?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q450",
+   "question": "Which storage technology provides FinScope's local-first offline storage?",
+   "reference": "IndexedDB via Dexie.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q451",
+   "question": "Why are blood pressure and temperature examples of essential variables?",
+   "reference": "They are crucial somatic quantities that must remain within viability boundaries.",
+   "answer": "Blood pressure and temperature are examples of essential variables because they are critical for maintaining homeostasis and overall health. Variations in these variables can indicate underlying health issues and are crucial for monitoring and managing patient care."
+  },
+  {
+   "pair_id": "Q452",
+   "question": "Ce furnizor OpenID Connect este configurat pentru autentificarea browser-agentilor?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The provided notes do not contain information related to OpenID Connect or browser-agent authentication."
+  },
+  {
+   "pair_id": "Q453",
+   "question": "What does cybernetic stability mean in the given definition?",
+   "reference": "The ability of a system to keep its essential variables within safe physiological limits.",
+   "answer": "Cybernetic stability, as defined, is the capacity of a system to keep its essential variables within safe physiological limits, similar to biological adaptation."
+  },
+  {
+   "pair_id": "Q454",
+   "question": "Cum este configurata componenta de research asociata contractelor cu trei agenti de cod?",
+   "reference": "Perplexity nu are fisier auto-incarcat per repository; echivalentul este un Space cu instructiuni custom si fisiere de context incarcate manual.",
+   "answer": "I don't know. The question appears to be in Romanian, but the terminology is not clear. Could you please provide more context or clarify the question?"
+  },
+  {
+   "pair_id": "Q455",
+   "question": "Why is reservoir sampling useful for a stream whose total length is unknown?",
+   "reference": "It lets k items be sampled uniformly from a stream without knowing the final length or explicit stream boundaries.",
+   "answer": "I don't know. The provided notes do not contain information related to reservoir sampling or its usefulness for streams of unknown length."
+  },
+  {
+   "pair_id": "Q456",
+   "question": "Ce mecanism de activare este descris in documentul legat de structura 05 RESOURCES a Vault-ului?",
+   "reference": "Motorul ACT-R al decaderii activarii foloseste formula indicata cu rata de decadere d = 0.5.",
+   "answer": "I don't know."
+  },
+  {
+   "pair_id": "Q457",
+   "question": "Ce domeniu DNS este configurat pentru serviciul cognitiv extern?",
+   "reference": "NONE - this question has no answer in the vault.",
+   "answer": "I don't know. The specific DNS domain for an external cognitive service would depend on the particular service and its configuration."
+  }
+ ]
+}

@@ -1,0 +1,219 @@
+{
+ "purpose": "Benchmark v3 gold notes that production search() can never serve to an agent because of note metadata, not ranking. Fixing them means choosing id/lifecycle/verification values: an owner decision.",
+ "notes": [
+  {
+   "note": "knw-leg-hg585-2002-0001",
+   "path": null,
+   "lifecycle": "NORMALIZED",
+   "type": "knowledge",
+   "reason": "lifecycle 'NORMALIZED': not served to AI_AGENT (floor ACTIVE+REVIEW)",
+   "cases": [
+    "R3-023"
+   ]
+  },
+  {
+   "note": "knw-leg-m172-2021-0001",
+   "path": null,
+   "lifecycle": "NORMALIZED",
+   "type": "knowledge",
+   "reason": "lifecycle 'NORMALIZED': not served to AI_AGENT (floor ACTIVE+REVIEW)",
+   "cases": [
+    "R3-024"
+   ]
+  },
+  {
+   "note": "99522c1a-b212-4571-b4d8-7dbbba2a3462",
+   "path": null,
+   "lifecycle": "NORMALIZED",
+   "type": "knowledge",
+   "reason": "lifecycle 'NORMALIZED': not served to AI_AGENT (floor ACTIVE+REVIEW)",
+   "cases": [
+    "R3-068"
+   ]
+  },
+  {
+   "note": "romania-classified-information-digital-security-reform",
+   "path": null,
+   "lifecycle": "raw",
+   "type": "knowledge",
+   "reason": "lifecycle 'raw': not served to AI_AGENT (floor ACTIVE+REVIEW)",
+   "cases": [
+    "R3-022"
+   ]
+  },
+  {
+   "note": "3452fafe-8b80-445e-a742-9ceb68662e69",
+   "path": null,
+   "lifecycle": null,
+   "type": "core",
+   "reason": "lifecycle None: not served to AI_AGENT (floor ACTIVE+REVIEW)",
+   "cases": [
+    "R3-001",
+    "R3-074"
+   ]
+  },
+  {
+   "note": "54b48919-d58a-4502-a20f-2717b022d375",
+   "path": null,
+   "lifecycle": null,
+   "type": "core",
+   "reason": "lifecycle None: not served to AI_AGENT (floor ACTIVE+REVIEW)",
+   "cases": [
+    "R3-002",
+    "R3-072"
+   ]
+  },
+  {
+   "note": "fcd80a74-9192-4fb8-baa2-527c0a61f26e",
+   "path": null,
+   "lifecycle": null,
+   "type": "core",
+   "reason": "lifecycle None: not served to AI_AGENT (floor ACTIVE+REVIEW)",
+   "cases": [
+    "R3-003"
+   ]
+  },
+  {
+   "note": "e08b0d08-8527-4ddf-a260-09f5f6f7c499",
+   "path": null,
+   "lifecycle": null,
+   "type": "core",
+   "reason": "lifecycle None: not served to AI_AGENT (floor ACTIVE+REVIEW)",
+   "cases": [
+    "R3-004",
+    "R3-070"
+   ]
+  },
+  {
+   "note": "multi-agent-execution-protocol-v1",
+   "path": null,
+   "lifecycle": null,
+   "type": "core",
+   "reason": "lifecycle None: not served to AI_AGENT (floor ACTIVE+REVIEW)",
+   "cases": [
+    "R3-007"
+   ]
+  },
+  {
+   "note": "330fa4bc-5b7c-4fb0-8d80-bcfa148a29c9",
+   "path": null,
+   "lifecycle": null,
+   "type": "core",
+   "reason": "lifecycle None: not served to AI_AGENT (floor ACTIVE+REVIEW)",
+   "cases": [
+    "R3-029",
+    "R3-086"
+   ]
+  },
+  {
+   "note": "ff8c8d71-06a7-4c60-8e2c-cd5601a7fe07",
+   "path": null,
+   "lifecycle": null,
+   "type": "core",
+   "reason": "lifecycle None: not served to AI_AGENT (floor ACTIVE+REVIEW)",
+   "cases": [
+    "R3-037"
+   ]
+  },
+  {
+   "note": "1bc7f563-35da-4c5e-91cb-9bb789bb28a2",
+   "path": null,
+   "lifecycle": null,
+   "type": "core",
+   "reason": "lifecycle None: not served to AI_AGENT (floor ACTIVE+REVIEW)",
+   "cases": [
+    "R3-083"
+   ]
+  },
+  {
+   "note": "path:00_GOVERNANCE/agents/memory-librarian.md",
+   "path": "00_GOVERNANCE/agents/memory-librarian.md",
+   "lifecycle": null,
+   "type": null,
+   "reason": "no frontmatter id: storage does not index the file",
+   "cases": [
+    "R3-005"
+   ]
+  },
+  {
+   "note": "path:00_GOVERNANCE/agents/memory-skill-router.md",
+   "path": "00_GOVERNANCE/agents/memory-skill-router.md",
+   "lifecycle": null,
+   "type": null,
+   "reason": "no frontmatter id: storage does not index the file",
+   "cases": [
+    "R3-006"
+   ]
+  },
+  {
+   "note": "path:00_GOVERNANCE/skills/memory-sync/SKILL.md",
+   "path": "00_GOVERNANCE/skills/memory-sync/SKILL.md",
+   "lifecycle": null,
+   "type": null,
+   "reason": "no frontmatter id: storage does not index the file",
+   "cases": [
+    "R3-009"
+   ]
+  },
+  {
+   "note": "path:00_GOVERNANCE/skills/skill-discovery/SKILL.md",
+   "path": "00_GOVERNANCE/skills/skill-discovery/SKILL.md",
+   "lifecycle": null,
+   "type": null,
+   "reason": "no frontmatter id: storage does not index the file",
+   "cases": [
+    "R3-010"
+   ]
+  },
+  {
+   "note": "path:02_PRODUCT/projects/workspaces/jarvis_desktop/Jarvis_Desktop_WPF_Command_Center_Specification.md",
+   "path": "02_PRODUCT/projects/workspaces/jarvis_desktop/Jarvis_Desktop_WPF_Command_Center_Specification.md",
+   "lifecycle": null,
+   "type": null,
+   "reason": "no frontmatter id: storage does not index the file",
+   "cases": [
+    "R3-044"
+   ]
+  },
+  {
+   "note": "path:02_PRODUCT/projects/workspaces/jarvis_web/Jarvis_Web_Command_Center_Specification.md",
+   "path": "02_PRODUCT/projects/workspaces/jarvis_web/Jarvis_Web_Command_Center_Specification.md",
+   "lifecycle": null,
+   "type": null,
+   "reason": "no frontmatter id: storage does not index the file",
+   "cases": [
+    "R3-045"
+   ]
+  },
+  {
+   "note": "path:02_PRODUCT/projects/workspaces/jarvis_web/walkthrough.md",
+   "path": "02_PRODUCT/projects/workspaces/jarvis_web/walkthrough.md",
+   "lifecycle": null,
+   "type": null,
+   "reason": "no frontmatter id: storage does not index the file",
+   "cases": [
+    "R3-046"
+   ]
+  },
+  {
+   "note": "path:02_PRODUCT/projects/workspaces/loganalyzer-dfir/Documentation/PHASE1-STATUS.md",
+   "path": "02_PRODUCT/projects/workspaces/loganalyzer-dfir/Documentation/PHASE1-STATUS.md",
+   "lifecycle": null,
+   "type": null,
+   "reason": "no frontmatter id: storage does not index the file",
+   "cases": [
+    "R3-047"
+   ]
+  },
+  {
+   "note": "path:02_PRODUCT/projects/workspaces/registru-transferuri/Registru_Transferuri_Workspace_Specification.md",
+   "path": "02_PRODUCT/projects/workspaces/registru-transferuri/Registru_Transferuri_Workspace_Specification.md",
+   "lifecycle": null,
+   "type": null,
+   "reason": "no frontmatter id: storage does not index the file",
+   "cases": [
+    "R3-048"
+   ]
+  }
+ ]
+}

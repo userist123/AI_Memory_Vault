@@ -115,8 +115,25 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         self.send_response(status); self.send_header('Content-Type','application/json; charset=utf-8'); self.send_header('Access-Control-Allow-Origin','*'); self.send_header('Access-Control-Allow-Methods','GET,POST,OPTIONS'); self.send_header('Access-Control-Allow-Headers','Content-Type,Authorization,Mcp-Version'); self.send_header('Cache-Control','no-store'); self.send_header('X-Content-Type-Options','nosniff'); self.end_headers()
     def _json(self,status,payload):
         self._set_headers(status); self.wfile.write(json.dumps(payload,ensure_ascii=False,cls=APIJSONEncoder).encode('utf-8'))
+    MAX_BODY_BYTES = 2 * 1024 * 1024
+
+    def _read_raw_body(self):
+        """Read the whole request body (bounded). Called before any reply, including a 401:
+        a socket closed with unread data is reset on Windows, so the client would see
+        WinError 10053 instead of the answer."""
+        try:
+            n = int(self.headers.get('Content-Length', 0) or 0)
+        except ValueError:
+            n = -1
+        if n < 0 or n > self.MAX_BODY_BYTES:
+            return None
+        return self.rfile.read(n) if n else b''
+
     def _body(self):
-        n=int(self.headers.get('Content-Length',0) or 0); raw=self.rfile.read(n); return json.loads(raw.decode('utf-8')) if raw else {}
+        raw = getattr(self, '_raw_body', None)
+        if raw is None:
+            raw = self._read_raw_body() or b''
+        return json.loads(raw.decode('utf-8')) if raw else {}
     def do_OPTIONS(self): self._set_headers(200)
     def do_GET(self):
         p=urlparse(self.path); path=p.path; q=parse_qs(p.query)
@@ -142,6 +159,10 @@ class BrowserMemoryAPIHandler(BaseHTTPRequestHandler):
         self._json(404,{'error':'Endpoint not found'})
     def do_POST(self):
         path=urlparse(self.path).path
+        self._raw_body = self._read_raw_body()
+        if self._raw_body is None:
+            self.close_connection = True
+            self._json(413, {'error': 'request body too large or invalid Content-Length'}); return
         if path.startswith('/api/v1/') and not self._require_api_auth():
             return
         try: data=self._body()
