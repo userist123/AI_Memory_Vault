@@ -62,7 +62,8 @@ def main() -> int:
 
     snap = json.loads((args.snapshot_dir / "snapshot.json").read_text(encoding="utf-8"))
     run_rankings: Dict[str, dict] = {}
-    meta = {"ordering": args.ordering, "k": args.k}
+    meta = {"ordering": args.ordering, "k": args.k,
+            "git_head": os.popen(f'git -C "{REPO_ROOT}" rev-parse HEAD').read().strip()}
     if args.ordering == "run":
         run = json.loads(args.run.read_text(encoding="utf-8"))
         run_rankings = run["by_k"][str(args.k)]["rankings"]
@@ -72,17 +73,20 @@ def main() -> int:
     controller = get_memory_controller()
     engine = controller.retrieval_engine
     original = engine.retrieve
-    state = {"order": [], "applied": False}
+    state = {"order": [], "applied": False, "matched": 0}
 
     def patched(*a, **kw):
         notes = original(*a, **kw)
         sink = kw.get("trace_sink")
         if sink is not None and sink.get("source") == "generated" and state["order"]:
             pos = {nid: i for i, nid in enumerate(state["order"])}
+            matched = 0
             for e in sink.get("fused_ranking") or []:
                 if isinstance(e, dict) and e.get("id") in pos:
                     e["fused_score"] = 1000.0 - pos[e["id"]]
-            state["applied"] = True
+                    matched += 1
+            state["applied"] = matched == len(pos)
+            state["matched"] = matched
         return notes
 
     engine.retrieve = patched

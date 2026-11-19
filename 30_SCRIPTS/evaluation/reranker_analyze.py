@@ -178,6 +178,19 @@ def main() -> int:
         ident = served_ids(ident_path)
         controls["identity_differs_from_baseline"] = sum(ident[c] != base_ids[c] for c in base_ids)
     s["controls"] = controls
+    # Section 6: controls must pass before any conclusion.
+    oracle_expected = sum(1 for r in rows if r["gold_fused_rank"] and r["gold_fused_rank"] <= args.k)
+    failed = []
+    if controls.get("identity_differs_from_baseline") != 0:
+        failed.append("identity")
+    if controls.get("oracle_hit5") != oracle_expected:
+        failed.append("oracle")
+    heads = {json.loads(p.read_text(encoding="utf-8"))["meta"].get("git_head")
+             for p in [args.served, ident_path, *args.repeat_served]}
+    if len(heads) != 1 or None in heads:
+        failed.append(f"git_head_mismatch:{sorted(map(str, heads))}")
+    if failed:
+        s["decision"] = "CONTROLS_FAILED:" + ",".join(failed)
 
     rk = raw["by_k"][str(args.k)]["rankings"]
     top = lambda rid: (rk[rid]["scores"] or [float("-inf")])[0]  # noqa: E731
