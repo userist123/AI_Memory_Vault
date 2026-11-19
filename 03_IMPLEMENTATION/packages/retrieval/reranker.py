@@ -21,6 +21,7 @@ from __future__ import annotations
 import ipaddress
 import json
 import math
+import urllib.error
 import urllib.parse
 import urllib.request
 from typing import Any, Dict, List, Sequence
@@ -80,6 +81,17 @@ def _is_loopback(url: str) -> bool:
         return False
 
 
+class _NoRedirect(urllib.request.HTTPRedirectHandler):
+    def redirect_request(self, req, fp, code, msg, headers, newurl):  # noqa: D401
+        raise urllib.error.HTTPError(req.full_url, code, "redirects are refused", headers, fp)
+
+
+#: No proxy (system, WinINet or *_PROXY env) and no redirects: a request built
+#: for a loopback URL can only ever reach that loopback socket. The default
+#: urllib opener would honour HTTP_PROXY and send note text to the proxy host.
+_LOOPBACK_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}), _NoRedirect())
+
+
 class HttpReranker:
     """Client for the local reranker server. Loopback URLs only."""
 
@@ -97,7 +109,7 @@ class HttpReranker:
         req = urllib.request.Request(f"{self.url}/rerank", data=body,
                                      headers={"Content-Type": "application/json"}, method="POST")
         try:
-            with urllib.request.urlopen(req, timeout=self.timeout) as resp:
+            with _LOOPBACK_OPENER.open(req, timeout=self.timeout) as resp:
                 payload = json.loads(resp.read().decode("utf-8"))
         except Exception as exc:  # noqa: BLE001 - any transport failure is "unavailable"
             raise RerankerError(f"reranker unreachable: {type(exc).__name__}") from exc

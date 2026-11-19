@@ -156,3 +156,70 @@ def test_factory_builds_reranker_only_when_env_is_set(monkeypatch, tmp_path):
     built = controller_factory.get_memory_controller()
     assert isinstance(built.reranker, HttpReranker)
     monkeypatch.setattr(controller_factory, "_CACHED_CONTROLLER", None)
+
+
+def _serve_once(handler_cls):
+    import http.server
+    import threading
+    srv = http.server.HTTPServer(("127.0.0.1", 0), handler_cls)
+    threading.Thread(target=srv.handle_request, daemon=True).start()
+    return srv
+
+
+def test_http_reranker_ignores_proxy_settings(monkeypatch):
+    """Note text must reach the loopback server itself, never an HTTP proxy."""
+    import http.server
+    import json as _json
+    seen = {"proxy": 0}
+
+    class Proxy(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            seen["proxy"] += 1
+            body = b'{"scores": [9.0], "model": "proxy"}'
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def log_message(self, *a):
+            return
+
+    class Real(Proxy):
+        def do_POST(self):
+            length = int(self.headers["Content-Length"])
+            assert _json.loads(self.rfile.read(length))["documents"] == ["NOTETEXT"]
+            body = b'{"scores": [1.0], "model": "real"}'
+            self.send_response(200)
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+    proxy, real = _serve_once(Proxy), _serve_once(Real)
+    for var in ("HTTP_PROXY", "http_proxy", "ALL_PROXY"):
+        monkeypatch.setenv(var, f"http://127.0.0.1:{proxy.server_port}")
+    monkeypatch.delenv("NO_PROXY", raising=False)
+    monkeypatch.delenv("no_proxy", raising=False)
+    client = HttpReranker(f"http://127.0.0.1:{real.server_port}", timeout=3)
+    assert client.score("SECRETQUERY", ["NOTETEXT"]) == [1.0]
+    assert client.model == "real" and seen["proxy"] == 0
+    proxy.server_close()
+    real.server_close()
+
+
+def test_http_reranker_refuses_redirects():
+    import http.server
+
+    class Redirect(http.server.BaseHTTPRequestHandler):
+        def do_POST(self):
+            self.send_response(302)
+            self.send_header("Location", "http://example.com/rerank")
+            self.send_header("Content-Length", "0")
+            self.end_headers()
+
+        def log_message(self, *a):
+            return
+
+    srv = _serve_once(Redirect)
+    with pytest.raises(RerankerError):
+        HttpReranker(f"http://127.0.0.1:{srv.server_port}", timeout=3).score("q", ["d"])
+    srv.server_close()

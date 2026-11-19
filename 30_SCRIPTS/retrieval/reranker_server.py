@@ -11,7 +11,9 @@ set (OFF otherwise). Measured configuration: 07_EVALUATION/reranker_experiment/.
 API: POST /rerank {"query": str, "documents": [str, ...]} -> {"scores": [...], "model": str}
      GET  /health -> {"ok": true, "model": str}
 
-Binds 127.0.0.1 only; refuses bodies over 4 MB and more than 200 documents.
+Binds 127.0.0.1 only and answers only requests whose Host header is a loopback
+name (a web page cannot drive it); refuses bodies over 4 MB and more than 200
+documents.
 One request is scored at a time (the GPU is shared with the local LLM).
 """
 from __future__ import annotations
@@ -45,11 +47,21 @@ def build_handler(model, label: str, lock: threading.Lock):
             else:
                 self._send(404, {"error": "not_found"})
 
+        def _host_ok(self) -> bool:
+            host = (self.headers.get("Host") or "").rsplit(":", 1)[0].strip("[]").lower()
+            return host in ("127.0.0.1", "localhost", "::1")
+
         def do_POST(self):
+            if not self._host_ok():
+                self._send(403, {"error": "host"})
+                return
             if self.path != "/rerank":
                 self._send(404, {"error": "not_found"})
                 return
-            length = int(self.headers.get("Content-Length") or 0)
+            try:
+                length = int(self.headers.get("Content-Length") or 0)
+            except ValueError:
+                length = -1
             if length <= 0 or length > MAX_BODY:
                 self._send(413, {"error": "body_size"})
                 return
@@ -67,8 +79,12 @@ def build_handler(model, label: str, lock: threading.Lock):
             if not docs:
                 self._send(200, {"scores": [], "model": label})
                 return
-            with lock:
-                scores = model.predict([(query, d) for d in docs], batch_size=32, show_progress_bar=False)
+            try:
+                with lock:
+                    scores = model.predict([(query, d) for d in docs], batch_size=32, show_progress_bar=False)
+            except Exception:  # noqa: BLE001 - the client fails closed on any non-200
+                self._send(500, {"error": "inference_failed"})
+                return
             self._send(200, {"scores": [float(s) for s in scores], "model": label})
 
     return Handler
