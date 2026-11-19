@@ -321,6 +321,25 @@ namespace LogAnalyzer.UI.ViewModels
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return ""; }
         }
 
+        /// <summary>
+        /// The register of hardware / software interventions for check S08. A missing file is "not in use" (null, no problem), an unreadable or invalid one is reported as a problem
+        /// (null + text); both make S08 NEDETERMINAT. Never treated as an empty register.
+        /// </summary>
+        internal static (System.Collections.Generic.List<LogAnalyzer.Dfir.Registers.InterventionRow>? Rows, string Problem) CurrentInterventions(string? path = null)
+        {
+            try
+            {
+                var r = LogAnalyzer.Dfir.Registers.RegisterStore.Load<LogAnalyzer.Dfir.Registers.InterventionRegister>(path);
+                if (r.Register is null) return (null, string.Join("; ", r.Issues.Where(i => i.IsError).Select(i => i.Message)));
+                return (r.Register.Rows, "");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return (null, ex.Message); }
+        }
+
+        private InterventionRegisterViewModel? _interventionRegister;
+        /// <summary>"Registrul intervențiilor hardware și software" (planner #9 item 7), edited on the control page; compared by check S08.</summary>
+        public InterventionRegisterViewModel InterventionRegister => _interventionRegister ??= new InterventionRegisterViewModel();
+
         private UpdateRegisterViewModel? _updateRegister;
         /// <summary>"Registrul actualizărilor offline" (control research P5), edited on the control page; created when the page first shows it.</summary>
         public UpdateRegisterViewModel UpdateRegister => _updateRegister ??= new UpdateRegisterViewModel();
@@ -436,9 +455,10 @@ namespace LogAnalyzer.UI.ViewModels
                         try { deviceChainValid = LogAnalyzer.UI.Services.AuthApp.Service.VerifyAuditSnapshot(out var bytes).Status == LogAnalyzer.Dfir.Case.ChainStatus.Valid; deviceAuditBytes = bytes; }
                         catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { deviceChainValid = false; }
                     }
+                    var interventions = CurrentInterventions();
                     var facts = StationFactCollector.Collect(start, posture, classifiedFolders: folders, offlineUpdates: updates, dcProbe: dcProbe, transfers: transfers,
                                                              auditPath: auditPath, auditChainValid: deviceChainValid, auditBytes: deviceAuditBytes,
-                                                             approvedSoftware: CurrentApprovedSoftware());
+                                                             approvedSoftware: CurrentApprovedSoftware(), interventions: interventions.Rows, interventionsProblem: interventions.Problem);
                     // the station's level comes only from the procedure profile; without it the level-dependent checks (A18, N14) stay NEDETERMINAT
                     facts.StationLevel = CurrentStationLevel();
         facts.ApprovedTransferMedia = CurrentTransferMedia();

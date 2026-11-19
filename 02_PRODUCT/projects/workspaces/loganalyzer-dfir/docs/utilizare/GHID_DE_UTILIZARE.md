@@ -167,6 +167,8 @@ Registrele **nu se completează de mână**. Apăsați **„Preia de pe stație�
 
 Doar administratorul aplicației poate salva registrele; ceilalți le pot citi, iar ecranul spune asta.
 
+**Registrul intervențiilor hardware și software** (pagina „Control stație”, secțiunea cu același nume) se completează de mână, un rând pentru fiecare intervenție pe echipamentele sau programele stației: data și ora, felul (hardware, software, configurare sau reparație), componentele sau programele afectate, descrierea, **executantul** și **martorul**. Orice modificare a sistemului se face de cel puțin două persoane (HG 585 art. 277), deci martorul trebuie să fie altă persoană decât executantul; aplicația refuză salvarea altfel. După o reparație sau o schimbare de hardware se verifică dispozitivele de securitate (art. 329 alin. 2); treceți data și persoana în coloanele „Verificare după intervenție”. Verificarea S08 din control arată Neconform dacă un rând nu are martor sau dacă o intervenție hardware ori o reparație nu are verificarea după intervenție în 7 zile, și De verificat dacă termenul nu a trecut sau dacă jurnalul Windows arată o instalare sau dezinstalare fără rând în registru în aceeași zi. Absența rândurilor nu dovedește absența intervențiilor; un registru gol nu este niciodată „conform”.
+
 ## 8. Politicile (import GPO, verificare, aplicare)
 
 Ecranul **„Politici”** spune mereu, sus, **pasul următor** și de ce, cu un singur buton care îl face:

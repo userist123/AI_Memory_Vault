@@ -23,6 +23,8 @@ namespace LogAnalyzer.UI.Views
             ["PolicyPath"] = "Calea politicii", ["Description"] = "Descriere",
             ["FromZone"] = "Din zona", ["ToZone"] = "În zona", ["Medium"] = "Suport", ["Address"] = "Adresă", ["Purpose"] = "Scop",
             ["Path"] = "Calea folderului", ["Package"] = "Pachet (nume sau KB)", ["Origin"] = "Proveniență", ["BroughtBy"] = "Adus de",
+            ["Time"] = "Ora", ["Station"] = "Stația", ["Components"] = "Componente / programe afectate", ["Performer"] = "Executant", ["Witness"] = "Martor",
+            ["AuthorizationRef"] = "Autorizare (referință)", ["PostCheckDate"] = "Verificare după intervenție: data", ["PostCheckBy"] = "Verificare după intervenție: efectuată de",
         };
 
         public static string For(string column) => Romanian.TryGetValue(column, out var ro) ? ro : column;

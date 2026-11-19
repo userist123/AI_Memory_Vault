@@ -1535,3 +1535,14 @@
   read-only; most gates proven by source text, not at run time; ContainAsync / CollectAll.RunAsync / Investigation Run / RunQuickAsync / ExportForOfficer /
   SaveReportCopy / ImportDataPack gated but not in the source-test list; NOT SEEN ON SCREEN (activation window choice, banner). Next: read CI once; item 7
   (intervention register) if continuing, else a NEW planner.
+- 2026-11-19 (claude, hg585) CI of 4857fc88a (item 6) read once: 33/33 success (Dfir suite included). PLANNER #9 ITEM 7 DONE (vault-worker + main-session
+  fixes; medium, not Opus-reviewed: register + read-only check, write path = existing RegisterViewModel.Save with LicenseGate Registers). InterventionRegister
+  (interventions.json, 12 columns: date, station, kind hardware/software/configurare/reparatie, components, description, performer, witness, authorisation,
+  post-check date + by, notes; witness == performer (case/space/domain-insensitive) or missing -> error). Expander on the station-control page, Romanian
+  headers. Check S08 (Software): no/unreadable/empty register -> NEDETERMINAT; no witness / witness == performer -> NECONFORM; hardware/reparatie without
+  post-check -> DE VERIFICAT within 7 days, NECONFORM after; Windows Installer ops (11707/11724/1033/1034) on a day without a register row -> DE VERIFICAT.
+  Main-session fixes: a day covered by the OFFLINE UPDATES register is already documented (no DE VERIFICAT for every update); "Preia de pe stație" hidden
+  for this register (HasDiscovery=false; nothing to read). CheckGuide + ANEXA (hand-written, generator format) updated identically. MATRICE #20/#23/#29 ->
+  PARȚIAL (S08). Tests App.Tests InterventionRegisterTests (28) + LicenseGateTests (+1); red: 7 fail with the witness rule off, 4 with the grace broken.
+  Suites: App 1307, UI 370 (1 skipped), Edition 45, exit 0. RESIDUALS: no Anexa 14 printout/PDF; S02 services/tasks/drivers not correlated; witness
+  presence not provable; MATRICE header still says "95 verificări". PLANNER #9 DONE (items 1-7). Next: read CI once; then a NEW planner.

@@ -135,6 +135,10 @@ public sealed class StationFacts
     public Dictionary<string, string> ImageSha256 { get; init; } = new(StringComparer.OrdinalIgnoreCase);
     /// <summary>The register of offline updates kept by the organisation; an empty list = the register is not filled in; null = not given.</summary>
     public List<LogAnalyzer.Dfir.Registers.UpdateRow>? OfflineUpdateRegister { get; set; }
+    /// <summary>The register of hardware / software interventions (check S08); null = not given or unreadable (see <see cref="InterventionRegisterProblem"/>), an empty list = not filled in.</summary>
+    public List<LogAnalyzer.Dfir.Registers.InterventionRow>? InterventionRegister { get; set; }
+    /// <summary>Why the interventions register could not be read ("" = no problem); S08 then says so.</summary>
+    public string InterventionRegisterProblem { get; set; } = "";
     /// <summary>The latest time the application itself recorded in its chained audit logs ("time memory", check S05); null = no earlier record.</summary>
     public DateTimeOffset? LatestAppRecordUtc { get; set; }
     /// <summary>Set when a recorded time was made under a wrong clock and the correction is not yet confirmed (check S05).</summary>
@@ -226,6 +230,7 @@ public static class StationFactCollector
     /// <param name="transfers">The organisation's transfer register (classified exits are compared with it); null = not given.</param>
     /// <param name="classifiedFolders">The classified folders of the procedure profile (their audit rules are read); null = not collected.</param>
     /// <param name="offlineUpdates">The organisation's register of offline updates (compared with the installed updates); null = not given.</param>
+    /// <param name="interventions">The organisation's register of hardware / software interventions (check S08); null = not given or unreadable, so S08 is NEDETERMINAT.</param>
     /// <param name="approvedSoftware">The approved-software rows of the procedure profile (their files are hashed, check S07); null = not given, so S07 is NEDETERMINAT.</param>
     /// <param name="dcProbe">The ACTIVE domain-controller probe (check N13); only the Network edition has one. Used only on the IsolatedNetwork posture and
     /// only on a domain-joined station; null = not probed.</param>
@@ -233,7 +238,8 @@ public static class StationFactCollector
                                        IReadOnlyList<string>? classifiedFolders = null, IReadOnlyList<LogAnalyzer.Dfir.Registers.UpdateRow>? offlineUpdates = null,
                                        IDomainControllerProbe? dcProbe = null, LogAnalyzer.Dfir.Registers.TransferRegister? transfers = null,
                                        string? auditPath = null, bool auditChainValid = false, byte[]? auditBytes = null,
-                                       IReadOnlyList<LogAnalyzer.Dfir.Profile.ApprovedSoftwareRow>? approvedSoftware = null)
+                                       IReadOnlyList<LogAnalyzer.Dfir.Profile.ApprovedSoftwareRow>? approvedSoftware = null,
+                                       IReadOnlyList<LogAnalyzer.Dfir.Registers.InterventionRow>? interventions = null, string interventionsProblem = "")
     {
         using var id = WindowsIdentity.GetCurrent();
         var facts = new StationFacts
@@ -279,6 +285,8 @@ public static class StationFactCollector
             facts.Settings["PrintService.OperationalEnabled"] = Hklm(@"SOFTWARE\Microsoft\Windows\CurrentVersion\WINEVT\Channels\" + PrintServiceChannel, "Enabled");
         });
         if (offlineUpdates is not null) facts.OfflineUpdateRegister = [.. offlineUpdates];
+        if (interventions is not null) facts.InterventionRegister = [.. interventions];
+        facts.InterventionRegisterProblem = interventionsProblem;
         Try(facts, "Profiluri de rețea", () => facts.NetworkProfiles.AddRange(ReadNetworkProfiles()));
         Try(facts, "Interfețe de rețea", () => facts.ConnectedInterfacesNow.AddRange(ReadConnectedInterfaces()));
         Try(facts, "Dispozitive USB (USBSTOR)", () => facts.UsbDevices.AddRange(ReadUsbStor()));

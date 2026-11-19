@@ -77,6 +77,8 @@ namespace LogAnalyzer.UI.ViewModels
         public IRelayCommand PasteCommand { get; }
         /// <summary>"Preia de pe stație": reads what exists on this station (read-only) and adds the missing rows; never changes an existing row.</summary>
         public IAsyncRelayCommand DiscoverCommand { get; }
+        /// <summary>False for a register with nothing to read from the station (the "Preia de pe stație" button is then hidden).</summary>
+        public virtual bool HasDiscovery => true;
 
         /// <summary>Reads the station on a background task. Returns the observed items for <see cref="MergeObserved"/>.</summary>
         protected abstract System.Collections.Generic.IReadOnlyList<object> Discover();
@@ -288,6 +290,28 @@ namespace LogAnalyzer.UI.ViewModels
         public override string Hint =>
             "Date: yyyy-MM-dd (ziua aplicării); Kind: windows | antivirus | aplicatie; Package: numele pachetului, iar pentru Windows numărul KB (ex. KB5031234); " +
             "Sha256: amprenta pachetului (64 hex); Origin: de unde provine pachetul; BroughtBy: cine a adus suportul; Medium: numărul suportului din registrul de medii; Notes.";
+    }
+
+    /// <summary>
+    /// "Registrul intervențiilor hardware și software" (planner #9 item 7; HG 585 art. 277 and 329 alin. 2; ORNISS model Anexa 14): every intervention on the station with its
+    /// performer and witness. Entered by hand; the station control checks it (check S08). Nothing can be read from the station for it.
+    /// </summary>
+    public sealed class InterventionRegisterViewModel : RegisterViewModel<InterventionRegister>
+    {
+        public InterventionRegisterViewModel(string? path = null) : base(path) { }
+
+        /// <summary>Interventions are written by people; nothing on the station can be read into this register.</summary>
+        public override bool HasDiscovery => false;
+
+        protected override System.Collections.Generic.IReadOnlyList<object> Discover() => System.Array.Empty<object>();
+
+        protected override string MergeObserved(InterventionRegister register, System.Collections.Generic.IReadOnlyList<object> observed) =>
+            "Intervențiile nu se pot citi de pe stație: treceți fiecare intervenție de mână (executant și martor), apoi salvați.";
+
+        public override string Hint =>
+            "Data: aaaa-LL-zz; Ora: HH:mm (opțional); Stația; Felul: hardware | software | configurare | reparatie; Componentele sau programele afectate; Descrierea; " +
+            "Executantul și Martorul: două persoane diferite (orice modificare a sistemului se face de cel puțin 2 persoane); Autorizarea: referința, dacă există; " +
+            "Verificare după intervenție: data și persoana (cerută după hardware sau reparație, în 7 zile); Observații.";
     }
 
     /// <summary>"Registru utilizatori" (decision 17): persons, accounts and clearances, entered by hand by the global administrator.</summary>

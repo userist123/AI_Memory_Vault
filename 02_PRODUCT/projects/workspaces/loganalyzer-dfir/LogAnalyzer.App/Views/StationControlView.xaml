@@ -261,6 +261,14 @@
                 <local:RegisterView DataContext="{Binding UpdateRegister}"/>
             </Border>
         </Expander>
+
+        <!-- Register of hardware / software interventions with a witness (HG 585 art. 277, 329(2); planner #9 item 7): checked by S08 -->
+        <Expander Header="Registrul intervențiilor hardware și software (cine a intervenit pe stație și cine a fost martor)" Foreground="{StaticResource TextSecondaryBrush}" Margin="0,0,0,12"
+                  AutomationProperties.HelpText="Fiecare intervenție pe echipamentele sau programele stației se trece aici, cu executantul și martorul (două persoane diferite), iar după o reparație sau o schimbare de hardware, cu verificarea dispozitivelor de securitate. Controlul stației verifică acest registru.">
+            <Border Style="{StaticResource ObsidianCardStyle}" Margin="0,6,0,0" Height="460">
+                <local:RegisterView DataContext="{Binding InterventionRegister}"/>
+            </Border>
+        </Expander>
         </StackPanel>
 
         <TabControl Grid.Row="2" ctrl:PageFill.MinHeight="440" Background="{StaticResource Surface2Brush}" BorderBrush="{StaticResource BorderBrush}" Visibility="{Binding HasResult, Converter={StaticResource BoolToVis}}">

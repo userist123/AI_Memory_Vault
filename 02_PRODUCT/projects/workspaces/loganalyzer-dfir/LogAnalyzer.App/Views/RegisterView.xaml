@@ -51,6 +51,7 @@
                 
                 <WrapPanel VerticalAlignment="Center">
                     <Button Content="Preia de pe stație" Command="{Binding DiscoverCommand}" Style="{StaticResource AccentButtonStyle}" Margin="0,0,6,0"
+                            Visibility="{Binding HasDiscovery, Converter={StaticResource BooleanToVisibilityConverter}}"
                             AutomationProperties.HelpText="Citește de pe această stație conturile sau mediile existente și adaugă rândurile care lipsesc. Nu modifică nimic pe Windows și nu schimbă rândurile deja existente."/>
                     <!-- 2026-10-23: one accent button in Simplu ("Preia de pe stație"); "Salvează" is the accent one in Expert as before -->
                     <Button Content="Salvează" views:SimpleLevel.HideInSimple="True" Command="{Binding SaveCommand}" IsEnabled="{Binding CanEdit}" Margin="0,0,6,0"/>
