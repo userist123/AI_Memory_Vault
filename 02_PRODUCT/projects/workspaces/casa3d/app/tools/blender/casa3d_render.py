@@ -808,7 +808,9 @@ def light_scene(scene_data, assets='', portals=True):
     world.use_nodes = True
     nt = world.node_tree
     sky = nt.nodes.new('ShaderNodeTexSky')
-    sky.sky_type = 'NISHITA'
+    # cerul fizic: „NISHITA” până în Blender 4.x; din Blender 5 același model se numește „SINGLE_SCATTERING”
+    sky_types = {e.identifier for e in sky.bl_rna.properties['sky_type'].enum_items}
+    sky.sky_type = 'NISHITA' if 'NISHITA' in sky_types else 'SINGLE_SCATTERING'
     sky.sun_disc = False
     sun = scene_data.get('sun', {})
     d = to_blender(sun.get('dir', [0.45, 0.75, -0.48])).normalized()

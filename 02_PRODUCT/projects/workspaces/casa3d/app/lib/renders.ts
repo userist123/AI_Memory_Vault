@@ -34,11 +34,14 @@ export async function startRender(owner: string, projectId: string, body: string
   const log = createWriteStream(path.join(dir, 'blender.log'));
   // un fișier .js/.mjs (înlocuitor de Blender, ex. în teste) rulează cu Node-ul curent; altfel e executabilul Blender
   const bin = process.env.CASA3D_BLENDER!, viaNode = /\.m?js$/i.test(bin);
-  const p = spawn(viaNode ? process.execPath : bin, [...(viaNode ? [bin] : []), '-b', '-P', SCRIPT(), '--', scenePath, dir, '--samples', String(samples), '--width', '1600', '--height', '1000', '--rooms', rooms], { windowsHide: true });
+  // --python-exit-code 1: fără el Blender iese cu 0 și când scriptul crapă, iar jobul ar apărea „gata” fără nicio imagine
+  const p = spawn(viaNode ? process.execPath : bin, [...(viaNode ? [bin] : []), '-b', '--python-exit-code', '1', '-P', SCRIPT(), '--', scenePath, dir, '--samples', String(samples), '--width', '1600', '--height', '1000', '--rooms', rooms], { windowsHide: true });
   running.set(projectId, p); p.stdout?.pipe(log); p.stderr?.pipe(log);
   const timer = setTimeout(() => p.kill(), TIMEOUT_MS);
   p.on('close', async code => { clearTimeout(timer); running.delete(projectId);
-    await fs.writeFile(path.join(dir, 'status.json'), JSON.stringify({ status: code === 0 ? 'done' : 'failed', code, startedAt: new Date(Number(job)).toISOString(), samples })).catch(() => {}); });
+    // „gata” doar cu cel puțin o imagine: o ieșire 0 fără imagini (script oprit devreme, versiune de Blender nepotrivită) e un eșec
+    const images = (await fs.readdir(dir).catch(() => [] as string[])).filter(f => FILE_RE.test(f));
+    await fs.writeFile(path.join(dir, 'status.json'), JSON.stringify({ status: code === 0 && images.length > 0 ? 'done' : 'failed', code, startedAt: new Date(Number(job)).toISOString(), samples })).catch(() => {}); });
   p.on('error', () => { running.delete(projectId); });
   return { job, status: 'running', images: [], startedAt: new Date(Number(job)).toISOString(), samples };
 }

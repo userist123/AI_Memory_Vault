@@ -19,7 +19,8 @@ test('fără Blender: 501; cu un „Blender” de test: job → imagine, un sing
   await assert.rejects(startRender(A, id, scene, {}), (e: any) => e.status === 501);
   // „Blender” de test: scrie <out>/living.png (argumentele sunt: -b -P script -- scene out ...)
   // (un script Node, ca să meargă și pe Windows, unde un .sh nu se poate porni)
-  const fake = path.join(dir, 'blender.mjs'); writeFileSync(fake, "import { writeFileSync } from 'node:fs'; import path from 'node:path';\nconst a = process.argv.slice(2); setTimeout(() => writeFileSync(path.join(a[a.indexOf('--') + 2], 'living.png'), Buffer.from([0x89, 0x50, 0x4e, 0x47])), 300);\n"); process.env.CASA3D_BLENDER = fake;
+  // scrie imaginea doar dacă primește --python-exit-code 1 (altfel o eroare din script ar ieși cu 0)
+  const fake = path.join(dir, 'blender.mjs'); writeFileSync(fake, "import { writeFileSync } from 'node:fs'; import path from 'node:path';\nconst a = process.argv.slice(2); const i = a.indexOf('--python-exit-code'); if (i < 0 || a[i + 1] !== '1' || i > a.indexOf('-P')) process.exit(0);\nsetTimeout(() => writeFileSync(path.join(a[a.indexOf('--') + 2], 'living.png'), Buffer.from([0x89, 0x50, 0x4e, 0x47])), 300);\n"); process.env.CASA3D_BLENDER = fake;
   await assert.rejects(startRender(A, id, '{"nu":"e scena"}', {}), (e: any) => e.status === 400);
   const job = await startRender(A, id, scene, { samples: 64 }); assert.equal(job.status, 'running');
   await assert.rejects(startRender(A, id, scene, {}), (e: any) => e.status === 409);
@@ -29,4 +30,13 @@ test('fără Blender: 501; cu un „Blender” de test: job → imagine, un sing
   for (const bad of ['../scene.casa3d.json', 'blender.log', 'x.png/../../a.png']) await assert.rejects(readRender(A, id, job.job, bad), (e: any) => e.status === 404);
   await assert.rejects(readRender(A, id, '../..', 'living.png'), (e: any) => e.status === 404);
   await assert.rejects(listRenders(B, id));
+});
+
+test('Blender iese cu 0 dar nu scrie nicio imagine (script oprit): jobul e „failed”, nu „done”', async () => {
+  const id = await repo.createProject(A, 'Randare goală', 'demo'), dir = mkdtempSync(path.join(tmpdir(), 'casa3d-r0-'));
+  process.env.CASA3D_RENDER_DIR = path.join(dir, 'out');
+  const fake = path.join(dir, 'blender.mjs'); writeFileSync(fake, 'setTimeout(() => process.exit(0), 100);\n'); process.env.CASA3D_BLENDER = fake;
+  await startRender(A, id, scene, {});
+  for (let i = 0; i < 40 && (await listRenders(A, id)).jobs[0]!.status === 'running'; i++) await wait(100);
+  const l = await listRenders(A, id); assert.equal(l.jobs[0]!.status, 'failed'); assert.deepEqual(l.jobs[0]!.images, []);
 });
