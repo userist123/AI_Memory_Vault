@@ -37,6 +37,8 @@ public interface IHeadWitness
     void Write(long seq, string hash, string mac);
     /// <summary>Planner #9 item 3: the untrusted witness folder this witness moved aside (its content kept as found), or null. The owner of the log audits it.</summary>
     string? MovedAside => null;
+    /// <summary>Planner #10 item 5: every untrusted witness folder known (moved aside by this process, or left next to the witness folder by an earlier start).</summary>
+    IReadOnlyList<string> UntrustedFolders() => MovedAside is { } m ? [m] : [];
 }
 
 public sealed class HashChain(string path)

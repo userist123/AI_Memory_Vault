@@ -105,4 +105,37 @@ public sealed class WitnessMovedAsideAuditTests : IDisposable
         Assert.Single(File.ReadAllLines(svc.AuditPath), l => l.Contains("auth.witness_moved_aside"));
         Assert.Equal(ChainStatus.Valid, svc.VerifyAudit().Status);
     }
+
+    [Fact]
+    public void Two_moves_in_one_session_are_two_audit_lines()
+    {
+        // planner #10 item 5: the witness kept only the last move; two moves between checks lost the first one
+        var protectedDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var (svc, _) = Start(protectedDirs);
+        svc.AuditOperation(null, "test.op", "x");
+        protectedDirs.Clear();
+        svc.AuditOperation(null, "test.op", "y");            // move 1 (the folder is recreated protected)
+        protectedDirs.Clear();
+        svc.AuditOperation(null, "test.op", "z");            // move 2
+        var lines = File.ReadAllLines(svc.AuditPath).Where(l => l.Contains("auth.witness_moved_aside")).ToList();
+        Assert.Equal(2, lines.Count);
+        Assert.Equal(2, Directory.GetDirectories(_dir, "witness.untrusted-*").Length);
+        Assert.Equal(ChainStatus.Valid, svc.VerifyAudit().Status);
+    }
+
+    [Fact]
+    public void A_leftover_untrusted_folder_from_an_earlier_start_is_audited_once_across_restarts()
+    {
+        // planner #10 item 5: folders moved aside by a build that did not audit moves (or before a crash) are found next to the witness folder at start
+        var leftover = Path.Combine(_dir, "witness.untrusted-20201231235959-abcdef12");
+        Directory.CreateDirectory(leftover);
+        var protectedDirs = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        var (svc, _) = Start(protectedDirs);
+        Assert.Equal(leftover, svc.WitnessMovedAside);
+        var (again, _) = Start(protectedDirs);                // next start: already named in the audit
+        Assert.Null(again.WitnessMovedAside);
+        var line = Assert.Single(File.ReadAllLines(again.AuditPath), l => l.Contains("auth.witness_moved_aside"));
+        Assert.Contains("abcdef12", line);
+        Assert.Equal(ChainStatus.Valid, again.VerifyAudit().Status);
+    }
 }

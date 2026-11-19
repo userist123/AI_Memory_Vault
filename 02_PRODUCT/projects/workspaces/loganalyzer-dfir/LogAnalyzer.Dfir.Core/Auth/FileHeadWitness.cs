@@ -52,6 +52,26 @@ public sealed class FileHeadWitness : IHeadWitness
     /// <summary>The untrusted folder moved aside by the last check, if any (for the audit / the operator).</summary>
     public string? MovedAside { get; private set; }
 
+    private readonly List<string> _moves = [];
+
+    /// <summary>
+    /// Planner #10 item 5: the folders moved aside by this process plus every "&lt;witness&gt;.untrusted-*" folder found next to the witness folder (left by an
+    /// earlier start, possibly by a build that did not audit moves). Read-only; an unreadable parent folder gives only the moves of this process.
+    /// </summary>
+    public IReadOnlyList<string> UntrustedFolders()
+    {
+        var all = new SortedSet<string>(StringComparer.OrdinalIgnoreCase);
+        lock (_moves) all.UnionWith(_moves);
+        try
+        {
+            var parent = Path.GetDirectoryName(_dir);
+            if (parent is not null && Directory.Exists(parent))
+                all.UnionWith(Directory.EnumerateDirectories(parent, Path.GetFileName(_dir) + ".untrusted-*"));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException) { }
+        return [.. all];
+    }
+
     public (long Seq, string Hash, string Mac)? Read()
     {
         EnsureProtectedFolder(create: false);
@@ -107,6 +127,7 @@ public sealed class FileHeadWitness : IHeadWitness
             var aside = _dir + ".untrusted-" + DateTime.UtcNow.ToString("yyyyMMddHHmmss") + "-" + Guid.NewGuid().ToString("N")[..8];
             Directory.Move(_dir, aside);
             MovedAside = aside;
+            lock (_moves) _moves.Add(aside);   // planner #10 item 5: every move is kept, not only the last one
         }
         else if (!create) return;
         Directory.CreateDirectory(Path.GetDirectoryName(_dir)!);

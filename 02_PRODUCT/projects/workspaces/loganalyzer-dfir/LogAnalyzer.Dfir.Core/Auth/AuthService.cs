@@ -92,7 +92,7 @@ public sealed partial class AuthService
     }
 
     private LogAnalyzer.Dfir.Case.IHeadWitness? _witness;
-    private string? _reportedMove;
+    private readonly HashSet<string> _reportedMoves = new(StringComparer.OrdinalIgnoreCase);   // planner #10 item 5: every move, not only the last one
 
     public const string WitnessMovedMessage =
         "Folderul martorului anti-revenire nu era protejat și a fost mutat deoparte; martorul a fost refăcut. O înlocuire a jurnalului cu o copie mai veche, " +
@@ -121,19 +121,33 @@ public sealed partial class AuthService
         // Monitor is re-entrant on the same thread, so the nested Audit() of the line below is stopped by _reportingMove.
         lock (_witnessGate)
         {
-            if (_reportingMove || _witness.MovedAside is not { } aside || aside == _reportedMove) return;
-            WitnessMovedAside = aside;
+            if (_reportingMove) return;
+            var pending = _witness.UntrustedFolders().Where(d => !_reportedMoves.Contains(d)).ToList();
+            if (pending.Count == 0) return;
+            // planner #10 item 5: a folder already named in the audit (an earlier start reported it) is not reported again
+            string auditText = "";
+            try { if (File.Exists(AuditPath)) { using var fs = new FileStream(AuditPath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete); using var sr = new StreamReader(fs); auditText = sr.ReadToEnd(); } }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { }
             _reportingMove = true;
             try
             {
-                Audit("auth.witness_moved_aside", "aplicație", "", "warning", "witness_untrusted",
-                      $"folderul martorului anti-revenire nu era protejat (Administrators/SYSTEM) și a fost mutat deoparte în {aside}, cu conținutul păstrat; martorul a fost refăcut");
-                _reportedMove = aside;              // only once written: a failed write is retried at the next audited operation or verification
-                WitnessMoveNotRecorded = null;
-            }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
-            {
-                WitnessMoveNotRecorded = $"{ex.GetType().Name}: {ex.Message}";
+                foreach (var aside in pending)
+                {
+                    if (auditText.Contains(System.Text.Json.JsonEncodedText.Encode(aside).ToString(), StringComparison.OrdinalIgnoreCase) || auditText.Contains(aside, StringComparison.OrdinalIgnoreCase))
+                    { _reportedMoves.Add(aside); continue; }
+                    WitnessMovedAside = aside;
+                    try
+                    {
+                        Audit("auth.witness_moved_aside", "aplicație", "", "warning", "witness_untrusted",
+                              $"folderul martorului anti-revenire nu era protejat (Administrators/SYSTEM) și a fost mutat deoparte în {aside}, cu conținutul păstrat; martorul a fost refăcut");
+                        _reportedMoves.Add(aside);   // only once written: a failed write is retried at the next audited operation or verification
+                        WitnessMoveNotRecorded = null;
+                    }
+                    catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+                    {
+                        WitnessMoveNotRecorded = $"{ex.GetType().Name}: {ex.Message}";
+                    }
+                }
             }
             finally { _reportingMove = false; }
         }
@@ -272,7 +286,7 @@ public sealed partial class AuthService
     {
         Directory.CreateDirectory(Dir);
         new HashChain(AuditPath).Append(new AuthAuditEntry(ev, who, account, card, reader, result, reason, _clock(), detail, accountsChanged ? AccountsSha256 : ""));
-        if (_witness?.MovedAside is { } moved && moved != _reportedMove) ReportWitnessMove();   // the append itself may have moved the folder aside
+        if (_witness?.MovedAside is { } moved && !_reportedMoves.Contains(moved)) ReportWitnessMove();   // the append itself may have moved the folder aside
     }
 
     private static string Short(string? thumb) => thumb is null ? "" : thumb[..Math.Min(16, thumb.Length)];
