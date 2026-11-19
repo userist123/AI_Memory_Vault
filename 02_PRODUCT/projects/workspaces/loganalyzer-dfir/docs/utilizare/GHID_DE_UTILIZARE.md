@@ -85,6 +85,8 @@ Cu lista **„Filtru după rezultat”** vedeți doar NECONFORM, doar DE VERIFIC
 
 Apăsați **„Raport pentru proces-verbal (PDF)”**. **Prima dată** pe o stație se deschide fereastra **„Scopul cazului stației”**: scop, aprobator, sisteme în scop, perioada, temei, categoria sistemului, clasificare, observații. Completați-o o singură dată; fără ea raportul nu se salvează, iar aplicația vă spune asta.
 
+**Marcaj raport.** În aceeași fereastră puteți scrie, la „Marcaj raport”, marcajul de clasificare pe care îl cere unitatea (de exemplu SECRET DE SERVICIU). Aplicația îl tipărește exact cum l-ați scris, în antetul și în subsolul fiecărei pagini a rapoartelor (investigație, verificări, confruntare între stații, incident, control, transfer). Marcajul este introdus de dumneavoastră și **nu este verificat de aplicație** (nu se potrivește automat cu conținutul și nu se aplică pe paragrafe). Dacă lăsați câmpul gol, rapoartele spun „fără marcaj introdus”; cuvinte precum „neclasificat” sau „NESECRET” nu sunt acceptate ca marcaj. Raportul de investigație poartă „Document în lucru — cazul nu este închis” până la închiderea cazului.
+
 Raportul se salvează în cazul stației, cu amprenta lui; vi se oferă și salvarea unei copii unde doriți (originalul rămâne în caz). Raportul conține verificările, pe ce se bazează fiecare și golurile de probă (sursele care nu au putut fi citite și ce înseamnă asta pentru control).
 
 ### 4.6 Colectarea pentru investigație: ce aduce profilul „Complet”

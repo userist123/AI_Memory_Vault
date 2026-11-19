@@ -60,6 +60,11 @@ public sealed class CaseScope
     public string Notes { get; init; } = "";
     /// <summary>The concrete act that authorises the work (number, date, issuer), not only its category (legal research G1). Printed in reports; empty = not stated.</summary>
     public string AuthorizingAct { get; init; } = "";
+    /// <summary>
+    /// The classification marking the operator wants printed on the reports of this case (typed by hand, e.g. "SECRET DE SERVICIU"). Part of the confirmed,
+    /// audited scope. NOT verified by the application and not per paragraph. Empty = none entered (reports say so). Absent in older case.json = empty.
+    /// </summary>
+    public string Marking { get; init; } = "";
 
     /// <summary>True when the scope is complete and was entered by the operator (not the placeholder of a LIVE case, not a pre-WP3 case).</summary>
     public bool IsConfirmed => !Provisional && MissingFields().Count == 0;

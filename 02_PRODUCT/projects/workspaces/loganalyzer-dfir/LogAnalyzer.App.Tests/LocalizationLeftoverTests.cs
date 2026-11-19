@@ -51,7 +51,7 @@ public sealed class LocalizationLeftoverTests
         var doc = XDocument.Load(Path.Combine(AppDir(), "Views", "ScopeDialog.xaml"));
         XNamespace x = "http://schemas.microsoft.com/winfx/2006/xaml";
         var fields = doc.Descendants().Where(e => e.Name.LocalName is "TextBox" or "DatePicker" or "ComboBox" && e.Attribute(x + "Name") is not null).ToList();
-        Assert.Equal(10, fields.Count);
+        Assert.Equal(11, fields.Count);
         Assert.All(fields, f => Assert.False(string.IsNullOrWhiteSpace((string?)f.Attribute("AutomationProperties.Name")), (string?)f.Attribute(x + "Name")));
     }
 

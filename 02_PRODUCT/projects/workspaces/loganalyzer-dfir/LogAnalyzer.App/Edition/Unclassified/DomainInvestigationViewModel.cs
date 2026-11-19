@@ -169,7 +169,7 @@ namespace LogAnalyzer.UI.ViewModels
                 MailMessages.Take(2000).Select(m => new[] { m.TimeUtc.ToString("yyyy-MM-dd HH:mm:ss"), m.Sender, m.Recipients, m.Subject, m.ClientIp, m.Status }).ToList());
             var modeNote = ModeNote;
             if (LogAnalyzer.UI.Services.ExportAudit.Run(Path.GetFileName(liveCase.Root.TrimEnd('\\', '/')), "pdf-domain", checks.Count + userTable.Rows.Count + mailTable.Rows.Count, dlg.FileName,
-                    () => ChecksReportPdf.Write(dlg.FileName, "Investigație domeniu și e-mail", modeNote, LogAnalyzer.Dfir.Case.ReportSeal.For(liveCase), checks, notes, userTable, mailTable)) is { } refused)
+                    () => ChecksReportPdf.Write(dlg.FileName, "Investigație domeniu și e-mail", modeNote, LogAnalyzer.Dfir.Case.ReportSeal.For(liveCase), liveCase.Info.Scope.Marking, checks, notes, userTable, mailTable)) is { } refused)
             { Status = refused; return; }
             Status = "Raport salvat: " + dlg.FileName;
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });

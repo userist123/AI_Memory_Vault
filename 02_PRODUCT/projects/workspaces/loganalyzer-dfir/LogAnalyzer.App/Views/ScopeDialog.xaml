@@ -13,7 +13,7 @@
         <Grid>
             <Grid.ColumnDefinitions><ColumnDefinition Width="140"/><ColumnDefinition Width="*"/></Grid.ColumnDefinitions>
             <Grid.RowDefinitions>
-                <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
+                <RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/><RowDefinition/>
             </Grid.RowDefinitions>
             <TextBlock Grid.Row="0" Text="Scop:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
             <TextBox Grid.Row="0" Grid.Column="1" x:Name="PurposeBox" AutomationProperties.Name="Scopul cazului" Margin="0,4"/>
@@ -35,6 +35,8 @@
             <TextBox Grid.Row="8" Grid.Column="1" x:Name="NotesBox" AutomationProperties.Name="Observații" Margin="0,4"/>
             <TextBlock Grid.Row="9" Text="Actul care autorizează:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
             <TextBox Grid.Row="9" Grid.Column="1" x:Name="ActBox" AutomationProperties.Name="Actul care autorizează" Margin="0,4" ToolTip="Numărul, data și emitentul documentului care dispune controlul sau investigația (apare în raport)"/>
+            <TextBlock Grid.Row="10" Text="Marcaj raport:" Foreground="{StaticResource TextSecondaryBrush}" VerticalAlignment="Center" Margin="0,4"/>
+            <TextBox Grid.Row="10" Grid.Column="1" x:Name="MarkingBox" AutomationProperties.Name="Marcaj raport" Margin="0,4" ToolTip="Marcajul de clasificare tipărit pe fiecare pagină a rapoartelor (de exemplu SECRET DE SERVICIU). Se introduce manual și nu este verificat de aplicație; gol = „fără marcaj introdus”."/>
         </Grid>
         <TextBlock x:Name="PeriodWarningText" Foreground="{StaticResource WarningBrush}" TextWrapping="Wrap" Margin="0,8,0,0" AutomationProperties.Name="Avertisment perioadă"/>
         <TextBlock x:Name="ErrorText" Foreground="{StaticResource CriticalBrush}" TextWrapping="Wrap" Margin="0,8,0,0"/>

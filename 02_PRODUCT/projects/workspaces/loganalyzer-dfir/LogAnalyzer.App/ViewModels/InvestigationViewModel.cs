@@ -275,7 +275,7 @@ namespace LogAnalyzer.UI.ViewModels
         [ObservableProperty] private int _classificationIndex = -1;
 
         // Notes and the authorizing act come from the scope dialog (this form has no fields for them); they are carried so a later Configure does not drop them.
-        private string _scopeNotes = "", _scopeAct = "";
+        private string _scopeNotes = "", _scopeAct = "", _scopeMarking = "";
 
         /// <summary>
         /// The scope is asked at the start (dialog pre-filled from the last case); this copies a confirmed scope into the form fields when the form is still incomplete,
@@ -284,6 +284,8 @@ namespace LogAnalyzer.UI.ViewModels
         public bool AskScopeAtStart()
         {
             if (!LogAnalyzer.UI.Services.LiveCase.EnsureScopeAtStart()) return BuildScope().MissingFields().Count == 0;
+            // the marking is entered only in the scope dialog (this form has no field for it): always take it from the confirmed scope
+            if (LogAnalyzer.UI.Services.LiveCase.CurrentScope is { IsConfirmed: true } confirmed) _scopeMarking = confirmed.Marking;
             if (BuildScope().MissingFields().Count == 0) return true;
             if (LogAnalyzer.UI.Services.LiveCase.CurrentScope is not { IsConfirmed: true } s) return false;
             ScopePurpose = s.Purpose; ScopeApprover = s.Approver; ScopeSystems = string.Join("; ", s.SystemsInScope);
@@ -291,13 +293,13 @@ namespace LogAnalyzer.UI.ViewModels
             LegalBasisIndex = s.LegalBasis switch { LegalBasis.Incident => 0, LegalBasis.Audit => 1, LegalBasis.Control => 2, _ => -1 };
             NetworkIndex = s.Network switch { NetworkCategory.AirGappedNetwork => 0, NetworkCategory.StandalonePc => 1, NetworkCategory.Connected => 2, _ => -1 };
             ClassificationIndex = s.Classification switch { ClassificationLevel.Classified => 0, ClassificationLevel.Unclassified => 1, _ => -1 };
-            _scopeNotes = s.Notes; _scopeAct = s.AuthorizingAct;
+            _scopeNotes = s.Notes; _scopeAct = s.AuthorizingAct; _scopeMarking = s.Marking;
             return BuildScope().MissingFields().Count == 0;
         }
 
         private CaseScope BuildScope() => new()
         {
-            Notes = _scopeNotes, AuthorizingAct = _scopeAct,
+            Notes = _scopeNotes, AuthorizingAct = _scopeAct, Marking = _scopeMarking,
             Purpose = ScopePurpose.Trim(),
             Approver = ScopeApprover.Trim(),
             SystemsInScope = ScopeSystems.Split(new[] { ',', ';' }, StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries).ToList(),

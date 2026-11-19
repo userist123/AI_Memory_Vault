@@ -236,7 +236,7 @@ namespace LogAnalyzer.UI.ViewModels
             if (dlg.ShowDialog() != true) return;
             var caseName = _case.Info.Name;
             if (LogAnalyzer.UI.Services.ExportAudit.Run(_case.Info.CaseId, "pdf-containment", 1, dlg.FileName,
-                    () => IncidentPdfReport.Write(inc, dlg.FileName, caseName, Environment.MachineName)) is { } refused) { Status = refused; return; }
+                    () => IncidentPdfReport.Write(inc, dlg.FileName, caseName, Environment.MachineName, _case.Info.Scope.Marking)) is { } refused) { Status = refused; return; }
             _case.Audit("report.pdf", $"{inc.IncidentId} {dlg.FileName}");
             Status = $"Raport salvat: {dlg.FileName}";
             Process.Start(new ProcessStartInfo(dlg.FileName) { UseShellExecute = true });

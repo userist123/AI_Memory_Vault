@@ -23,6 +23,9 @@ public static class InvestigationReportPdf
 
     /// <param name="preCheck">F2: the evidence re-check made just before this report; null = run it now on the case (every PDF re-verifies first).</param>
     /// <param name="masker">F10: when given, every printed text goes through it (user, host, IP, e-mail and the user segment of paths become consistent pseudonyms) for sharing.</param>
+    /// <summary>Header line while the case has no <c>case.closed</c> audit entry.</summary>
+    public const string WorkingDocument = "Document în lucru — cazul nu este închis";
+
     public static void Write(InvestigationResult r, string path, string investigator, string notes = "", LogAnalyzer.Dfir.Reporting.ReportAudience audience = LogAnalyzer.Dfir.Reporting.ReportAudience.Everything,
                              LogAnalyzer.Dfir.Case.PreReportCheck? preCheck = null, LogAnalyzer.Dfir.Privacy.PiiMasker? masker = null)
     {
@@ -85,7 +88,11 @@ public static class InvestigationReportPdf
                 string title = W($"Raport de investigație — {info.Name}" + (audience == LogAnalyzer.Dfir.Reporting.ReportAudience.Everything ? "" : $" · {LogAnalyzer.Dfir.Reporting.ReportAudiences.Label(audience)}"));
                 string sub = W($"Caz {info.CaseId} · {station.Line} · investigator {investigator} · orele sunt în {RoText.ZoneName(zone, DateTimeOffset.Now)}, cu ora UTC între paranteze") +
                              (masker is null ? "" : " · EXPORT CU DATE PERSONALE MASCATE (pseudonime consecvente)");
-                printed.Add(title); printed.Add(sub);
+                var markingLine = LogAnalyzer.Dfir.Reporting.MarkingText.Line(info.Scope?.Marking);
+                printed.Add(markingLine); printed.Add(title); printed.Add(sub);
+                h.Item().AlignCenter().Text(markingLine).Bold().FontSize(8).FontColor("#b91c1c");
+                // until a case.closed entry exists in the audit chain the report is a working document (read from the chain file, as CaseLoader does)
+                if (!CaseLoader.IsClosed(r.Case)) { printed.Add(WorkingDocument); h.Item().AlignCenter().Text(WorkingDocument).Bold().FontSize(8).FontColor("#b45309"); }
                 h.Item().Text(title).Bold().FontSize(14).FontColor(Ink);
                 h.Item().Text(sub).FontSize(7.5f).FontColor(Muted);
                 h.Item().PaddingTop(4).LineHorizontal(1).LineColor(Ink);
@@ -400,7 +407,8 @@ public static class InvestigationReportPdf
                        "„Indisponibil” înseamnă că sursa nu a putut fi citită, nu că activitatea nu a avut loc. O constatare marcată „indiciu – de confirmat” cere confirmarea analistului.")
                     .FontSize(7).Italic().FontColor(Muted);
             });
-            LogAnalyzer.Dfir.Windows.Audit.ReportFooter.Compose(page.Footer(), "investigation", $"LogAnalyzer {DfirInfo.ApplicationVersion} · {info.CaseId}", seal);
+            LogAnalyzer.Dfir.Windows.Audit.ReportFooter.Compose(page.Footer(), "investigation", $"LogAnalyzer {DfirInfo.ApplicationVersion} · {info.CaseId}", seal,
+                LogAnalyzer.Dfir.Reporting.MarkingText.Line(info.Scope?.Marking));
         })).GeneratePdf(path);
         TextObserver.Value?.Invoke(string.Join("\n", printed));
     }

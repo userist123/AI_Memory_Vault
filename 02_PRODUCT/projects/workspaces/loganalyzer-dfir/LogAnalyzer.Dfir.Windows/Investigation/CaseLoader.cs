@@ -226,7 +226,7 @@ public static class CaseLoader
     }
 
     /// <summary>True when the audit chain holds a <c>case.closed</c> entry (written by <see cref="CaseClosure.Close"/>). Read from the chain file, not from the plain log.</summary>
-    private static bool IsClosed(CaseWorkspace ws)
+    internal static bool IsClosed(CaseWorkspace ws)
     {
         try
         {
