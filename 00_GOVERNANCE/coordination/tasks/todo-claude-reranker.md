@@ -17,8 +17,12 @@
    `07_EVALUATION/reranker_experiment/results/ineligible_gold_notes.json`; K = 100 descriptive 79/130 (rerank p95 1.58 s).
    `AI_MEMORY_VAULT_RERANKER_K` added (default 50).
 
+7. Ready to use: client circuit breaker (no 2 s penalty per search while the server is down), port 18765, verified end to
+   end through the real MCP server (ON = experiment lists, OFF = baseline). Full suite 5318 passed; CI 46/46 green.
+
 ## Next
-- Owner: decide whether to run the reranker server on the PC and set `AI_MEMORY_VAULT_RERANKER_URL` (ON for agents).
+- Owner: merge PR #392 (agent merge was refused by the permission system), then enable on the PC with the local
+  install script (autostart + `AI_MEMORY_VAULT_RERANKER_URL`); the agent was not allowed to create autostart/env entries.
 - Open research: an agent that decides when to search (not forced retrieval); multi-hop (3/40); Romanian gap;
   human calibration of the LLM judges.
 
