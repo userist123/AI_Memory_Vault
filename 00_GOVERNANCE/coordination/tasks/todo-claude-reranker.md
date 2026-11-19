@@ -13,12 +13,17 @@
 4. Causal QA ablation (preregistered `777f61525`): PASSES_THROUGH. Correct answers A 7 / B 24 / C 52 of 130, C vs B
    29 wins / 1 loss, judges kappa 0.95, hallucinations 3/1/0 of 30 (`07_EVALUATION/memory_qa_ablation/REPORT.md`).
 
+6. Diagnosis: 25 of 37 never-candidate gold cases are note metadata (no id / no or non-standard lifecycle), list in
+   `07_EVALUATION/reranker_experiment/results/ineligible_gold_notes.json`; K = 100 descriptive 79/130 (rerank p95 1.58 s).
+   `AI_MEMORY_VAULT_RERANKER_K` added (default 50).
+
 ## Next
 - Owner: decide whether to run the reranker server on the PC and set `AI_MEMORY_VAULT_RERANKER_URL` (ON for agents).
 - Open research: an agent that decides when to search (not forced retrieval); multi-hop (3/40); Romanian gap;
   human calibration of the LLM judges.
 
 ## Open owner decisions (not changed by this work)
+- Metadata of the 21 gold notes in `ineligible_gold_notes.json` (9 without id, 8 without lifecycle, 4 NORMALIZED/raw).
 - `memory_get` withholds REVIEW notes whose verification is not `unverified` (e.g. `inferred`) while `search()` serves them
   (`interfaces/memory_access.py` `_review_candidate`): 16 such notes, 14 of them v3 gold. Trust-boundary change → owner.
 - Turning the reranker ON by default (it needs the GPU server; CPU is > 30 s per query).

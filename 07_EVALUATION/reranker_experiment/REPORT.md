@@ -133,3 +133,35 @@ only works once the page file has room to grow (it grew from 32 to 38 GB after s
 The server refuses to start on a port another process already holds (`ExclusiveServer`, `SO_EXCLUSIVEADDRUSE` on Windows):
 on 2026-11-19 another session's `python -m http.server` held 8765 and the stdlib server bound the same port silently, so
 requests went to the other process (the client failed closed). Regression test in `20_TESTS/test_controller_reranker.py`.
+
+## 11. Where the remaining misses are (diagnosis after the verdict, descriptive)
+
+With K = 50 the reranker misses only 6 cases whose gold is in the top 50 (all multi_hop). The other 53 misses are gold notes
+outside the top 50: 37 never among the candidates, 16 at fused rank 51–200 (Romanian: 32 of 61 cases are beyond the top 50).
+
+**25 of the 37 "never a candidate" cases are note metadata, not retrieval** (`results/ineligible_gold_notes.json`, 21 notes):
+
+| Cause | Notes | Cases |
+|---|---:|---:|
+| No frontmatter `id`: the storage engine does not index the file | 9 | — |
+| `lifecycle` missing (type `core`): below the agent floor ACTIVE+REVIEW | 8 | — |
+| `lifecycle` `NORMALIZED` or lower-case `raw` | 4 | — |
+| **Total** | **21** | **25** |
+
+No ranking change can serve these notes to an agent. Giving them an id or a lifecycle means choosing values, which the
+vault reserves for the owner (not done here). The remaining ~12 are genuine lexical candidate misses (a dense retriever is
+the candidate fix; not measured).
+
+**Larger K, descriptive only (chosen after seeing v3, so not adopted; K = 50 stays the default):** identity replays reproduce
+the baseline 0/160 at K = 100 and 200; oracle 88 and 93.
+
+| Arm | Served hit@5 (of 130) | Wins / losses vs baseline | Rerank p95 |
+|---|---:|---:|---:|
+| bge fp16, K = 50 (confirmatory) | 71 | 47 / 0 | 0.74 s |
+| bge fp16, K = 100 | 79 | 55 / 0 | 1.58 s |
+| bge fp16, K = 200 | 82 | 58 / 0 | 3.13 s (over the 2 s limit) |
+| mMiniLM, K = 100 | 74 | 51 / 1 | 0.59 s |
+| mMiniLM, K = 200 | 75 | 52 / 1 | 1.20 s |
+
+`AI_MEMORY_VAULT_RERANKER_K` (1–200, default 50) sets K in `controller_factory`; a K other than 50 needs its own
+preregistered test before it becomes a default.

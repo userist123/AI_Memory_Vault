@@ -77,7 +77,12 @@ def _configured_reranker():
         return None
     from retrieval.reranker import HttpReranker
     timeout = float(os.getenv("AI_MEMORY_VAULT_RERANKER_TIMEOUT", "5"))
-    return HttpReranker(url, timeout=timeout)
+    # K = 50 is the preregistered, measured default; 100 was measured only descriptively
+    # (07_EVALUATION/reranker_experiment/REPORT.md section 11).
+    k = int(os.getenv("AI_MEMORY_VAULT_RERANKER_K", "50"))
+    if not 1 <= k <= 200:
+        raise ValueError("AI_MEMORY_VAULT_RERANKER_K must be between 1 and 200 (the candidate list holds 200)")
+    return HttpReranker(url, timeout=timeout, k=k)
 
 
 def get_memory_controller() -> MemoryController:

@@ -246,3 +246,21 @@ def test_reranker_server_refuses_a_port_already_in_use():
             mod.make_server(port, mod.build_handler(None, "x", None))
     finally:
         holder.close()
+
+
+def test_factory_reranker_k_defaults_to_50_and_is_bounded(monkeypatch, tmp_path):
+    from memory_controller import controller_factory
+    monkeypatch.setenv("MEMORY_VAULT_ROOT", str(tmp_path))
+    monkeypatch.setenv("AI_MEMORY_VAULT_RERANKER_URL", "http://127.0.0.1:8765")
+    monkeypatch.delenv("AI_MEMORY_VAULT_RERANKER_K", raising=False)
+    monkeypatch.setattr(controller_factory, "_CACHED_CONTROLLER", None)
+    assert controller_factory.get_memory_controller().reranker.k == 50
+    monkeypatch.setattr(controller_factory, "_CACHED_CONTROLLER", None)
+    monkeypatch.setenv("AI_MEMORY_VAULT_RERANKER_K", "100")
+    assert controller_factory.get_memory_controller().reranker.k == 100
+    for bad in ("0", "500"):
+        monkeypatch.setattr(controller_factory, "_CACHED_CONTROLLER", None)
+        monkeypatch.setenv("AI_MEMORY_VAULT_RERANKER_K", bad)
+        with pytest.raises(ValueError):
+            controller_factory.get_memory_controller()
+    monkeypatch.setattr(controller_factory, "_CACHED_CONTROLLER", None)
