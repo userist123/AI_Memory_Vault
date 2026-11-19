@@ -60,9 +60,9 @@ Agent Council / orchestration
 Use the repository pipeline:
 
 ```powershell
-python scripts/skill_ingestion.py scan
-python scripts/skill_ingestion.py match
-python scripts/skill_ingestion.py promote --skill <skill-id> --verified
+python 30_SCRIPTS/skills/skill_ingestion.py scan
+python 30_SCRIPTS/skills/skill_ingestion.py match
+python 30_SCRIPTS/skills/skill_ingestion.py promote --skill <skill-id> --verified
 ```
 
 Promotion is intentionally explicit. `SKILL.md` presence alone is not proof that content is safe, correct or operational.

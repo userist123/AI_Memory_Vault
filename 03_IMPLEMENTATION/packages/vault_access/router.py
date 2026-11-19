@@ -48,7 +48,7 @@ _STOP = {"si", "sau", "de", "la", "in", "din", "cu", "pe", "pentru", "ce", "cum"
 
 def _default_cache_path() -> Optional[Path]:
     try:
-        from interfaces import vault_runtime
+        from security import vault_secret_runtime as vault_runtime
         return vault_runtime.state_dir() / "route_meta_cache.json"
     except Exception:  # noqa: BLE001
         return None

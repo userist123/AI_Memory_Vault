@@ -13,10 +13,25 @@ explicitly but uncompetitive for automatic working memory broadcast.
 
 import time
 import math
-from typing import List, Dict, Any, Tuple, Optional
-from memory_controller.controller import MemoryController
+from typing import List, Dict, Any, Tuple, Optional, Protocol
 from memory_controller.authorizer import Principal
 from .synapse import SynapticGraph
+
+
+
+class ActivationController(Protocol):
+    """Structural contract the engine needs from a memory controller.
+
+    Declared locally so the graph layer does not import the memory layer;
+    ``memory_controller.controller.MemoryController`` satisfies it.
+    """
+
+    storage: Any
+
+    def search(self, principal: Any, query: str, page_size: int = ...) -> Dict[str, Any]: ...
+
+    def cognitive_read(self, principal: Any, node_id: str) -> Dict[str, Any]: ...
+
 
 DORMANT_THRESHOLD = -2.0
 DEFAULT_DECAY_RATE = 0.5
@@ -109,7 +124,7 @@ class ActivationEngine:
     Traverses the synaptic graph deterministically without bypassing MemoryController policies.
     Integrates ACT-R base-level activation decay.
     """
-    def __init__(self, memory_controller: MemoryController, max_depth: int = 3, max_nodes: int = 20, decay_factor: float = DEFAULT_DECAY_RATE):
+    def __init__(self, memory_controller: ActivationController, max_depth: int = 3, max_nodes: int = 20, decay_factor: float = DEFAULT_DECAY_RATE):
         self.controller = memory_controller
         self.max_depth = max_depth
         self.max_nodes = max_nodes

@@ -60,4 +60,4 @@ State per blocker: [`OPEN_BLOCKERS.md`](OPEN_BLOCKERS.md). Nothing below has bee
 | B04 | [`PROMPT_AUDIT_B04.md`](PROMPT_AUDIT_B04.md) |
 | B06 | `b06_labelling_packet/` (owner instructions inside), `30_SCRIPTS/evaluation/b2m_ingest_labels.py` |
 | B07 | `07_EVALUATION/b2m_leakage/`, `30_SCRIPTS/evaluation/b2m_leakage_check.py` |
-| B08 | `RunConfig` in `lifecycle/validation/book_to_memory_run_config.py`, recorded by the H1 runners |
+| B08 | `RunConfig` in `book_to_memory/book_to_memory_run_config.py`, recorded by the H1 runners |

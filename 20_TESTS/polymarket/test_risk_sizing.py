@@ -11,7 +11,7 @@ import math
 
 import pytest
 
-from packages.polymarket.risk_sizing import (
+from products.polymarket.risk_sizing import (
     SIZE_APPROVED,
     SIZE_REFUSED,
     SIZING_FIXED_FRACTIONAL,
@@ -214,7 +214,7 @@ def test_the_module_has_no_route_to_execution():
     a venue, or touches a credential, and a grep is how that stays true."""
     import pathlib
     source = (pathlib.Path(__file__).resolve().parents[2]
-              / "03_IMPLEMENTATION" / "packages" / "polymarket"
+              / "03_IMPLEMENTATION" / "products" / "polymarket"
               / "risk_sizing.py").read_text(encoding="utf-8")
     for forbidden in ("requests", "httpx", "urllib", "socket", "private_key",
                       "api_key", "sign(", "submit_order", "place_order"):

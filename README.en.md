@@ -161,7 +161,7 @@ These runtime interfaces are the target architecture. Some are present as isolat
 | `01_ARCHITECTURE/` | knowledge notes, registries, skill matrices, the ontology slot files |
 | `01_KNOWLEDGE/` | external research and imported knowledge |
 | `02_PRODUCT/` | project context and continuity |
-| `03_IMPLEMENTATION/` | `03_IMPLEMENTATION/packages/` — cognitive core, memory controller, retrieval, polymarket, providers |
+| `03_IMPLEMENTATION/` | `03_IMPLEMENTATION/packages/` — cognitive core, memory controller, retrieval, security, providers; `03_IMPLEMENTATION/products/` — the products (polymarket, xau_kinetic) |
 | `04_CONFIG/` · `05_DATA/` | configuration and data artifacts |
 | `04_MEMORY/` | legacy write root (`storage/path_resolver.py`): created at runtime, gitignored, absent from a clean checkout |
 | `06_INBOX/` | raw and imported material, pre-review |
@@ -579,7 +579,7 @@ The limits are part of the result: one chapter, 12 questions, so a difference of
 
 # 📈 Polymarket forecasting
 
-`03_IMPLEMENTATION/packages/polymarket/` — market snapshots, a prediction
+`03_IMPLEMENTATION/products/polymarket/` — market snapshots, a prediction
 council, calibration, model-vs-market edge, risk abstention, Kelly sizing
 clamped last and unconditionally, backtest, benchmark, ablation with
 Holm-Bonferroni correction, and a temporal provenance contract.
@@ -658,6 +658,7 @@ The workflows in [`.github/workflows/`](.github/workflows/), grouped by what the
 | central agent router, dispatcher and secure bridge | `agent-routing-tests.yml` |
 | direct `vault://` routes, per-channel read policy, MCP/CLI/Ollama/Telegram adapters | `vault-access.yml` |
 | ACTIVE notes, checked against their recorded digests | `active-note-integrity.yml` |
+| architectural layer boundaries (import ratchet) | `architecture-boundaries.yml` |
 | the paths gitleaks skips, scanned for high-confidence secrets | `exempt-area-secret-scan.yml` |
 | runtime write paths | `write-path-audit.yml` |
 | security: secrets, static analysis | `secret-scan.yml`, `codeql.yml`, `codeql-csharp.yml`, `codeql-config-cleanup.yml`, `fortify.yml`, `apisec-scan.yml` |

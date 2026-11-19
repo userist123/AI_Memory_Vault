@@ -7,7 +7,10 @@ from pathlib import Path
 
 import pytest
 
-from scripts.label_council_outcome import append_outcome
+# Canonical location since WP-14b (the root `scripts/` copy was a migration leftover).
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "30_SCRIPTS" / "observability"))
+
+from label_council_outcome import append_outcome  # noqa: E402
 
 
 def test_append_outcome_writes_structured_manual_record(tmp_path: Path) -> None:
@@ -74,11 +77,11 @@ def test_invalid_confidence_is_rejected(tmp_path: Path) -> None:
 def test_cli_writes_manual_label_and_json_output(tmp_path: Path) -> None:
     ledger = tmp_path / "outcomes.jsonl"
 
-    repo_root = next((p for p in (Path(__file__).resolve().parents[1], Path(__file__).resolve().parents[2]) if (p / "scripts" / "label_council_outcome.py").exists()), Path(__file__).resolve().parents[1])
+    repo_root = next((p for p in (Path(__file__).resolve().parents[1], Path(__file__).resolve().parents[2]) if (p / "30_SCRIPTS" / "observability" / "label_council_outcome.py").exists()), Path(__file__).resolve().parents[1])
     completed = subprocess.run(
         [
             sys.executable,
-            "scripts/label_council_outcome.py",
+            "30_SCRIPTS/observability/label_council_outcome.py",
             "--run-id",
             "run_cli_1",
             "--outcome",
@@ -112,11 +115,11 @@ def test_cli_writes_manual_label_and_json_output(tmp_path: Path) -> None:
 def test_cli_invalid_outcome_fails(tmp_path: Path) -> None:
     ledger = tmp_path / "outcomes.jsonl"
 
-    repo_root = next((p for p in (Path(__file__).resolve().parents[1], Path(__file__).resolve().parents[2]) if (p / "scripts" / "label_council_outcome.py").exists()), Path(__file__).resolve().parents[1])
+    repo_root = next((p for p in (Path(__file__).resolve().parents[1], Path(__file__).resolve().parents[2]) if (p / "30_SCRIPTS" / "observability" / "label_council_outcome.py").exists()), Path(__file__).resolve().parents[1])
     completed = subprocess.run(
         [
             sys.executable,
-            "scripts/label_council_outcome.py",
+            "30_SCRIPTS/observability/label_council_outcome.py",
             "--run-id",
             "run_cli_2",
             "--outcome",

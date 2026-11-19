@@ -161,7 +161,7 @@ Aceste interfețe de execuție sunt arhitectura-țintă. Unele există ca primit
 | `01_ARCHITECTURE/` | note de cunoștințe, registre, matrice de competențe, fișierele de slot ale ontologiei |
 | `01_KNOWLEDGE/` | cercetare externă și cunoștințe importate |
 | `02_PRODUCT/` | contextul și continuitatea proiectelor |
-| `03_IMPLEMENTATION/` | `03_IMPLEMENTATION/packages/` — nucleu cognitiv, memory controller, regăsire, polymarket, furnizori |
+| `03_IMPLEMENTATION/` | `03_IMPLEMENTATION/packages/` — nucleu cognitiv, memory controller, regăsire, securitate, furnizori; `03_IMPLEMENTATION/products/` — produsele (polymarket, xau_kinetic) |
 | `04_CONFIG/` · `05_DATA/` | configurație și artefacte de date |
 | `04_MEMORY/` | rădăcina de scriere legacy (`storage/path_resolver.py`): creată la rulare, în `.gitignore`, absentă dintr-un checkout curat |
 | `06_INBOX/` | material brut și importat, înainte de recenzie |
@@ -564,7 +564,7 @@ Limitele sunt parte din rezultat: un singur capitol, 12 întrebări, deci o dife
 
 # 📈 Predicție Polymarket
 
-`03_IMPLEMENTATION/packages/polymarket/` — instantanee de piață, un consiliu de predicție, calibrare, avantajul modelului față de piață, abstenție de risc, dimensionare Kelly aplicată ultima și necondiționat, backtest, benchmark, ablație cu corecție Holm-Bonferroni și un contract de proveniență temporală.
+`03_IMPLEMENTATION/products/polymarket/` — instantanee de piață, un consiliu de predicție, calibrare, avantajul modelului față de piață, abstenție de risc, dimensionare Kelly aplicată ultima și necondiționat, backtest, benchmark, ablație cu corecție Holm-Bonferroni și un contract de proveniență temporală.
 
 ### Ce a stabilit prima captură reală
 
@@ -626,6 +626,7 @@ Workflow-urile din [`.github/workflows/`](.github/workflows/), grupate după ce 
 | routerul central de agenți, dispatcher-ul și bridge-ul securizat | `agent-routing-tests.yml` |
 | rutele directe `vault://`, politica de acces pe canale, adaptoarele MCP/CLI/Ollama/Telegram | `vault-access.yml` |
 | notele ACTIVE, verificate față de amprentele înregistrate | `active-note-integrity.yml` |
+| limitele dintre straturile arhitecturale (ratchet de importuri) | `architecture-boundaries.yml` |
 | zonele scutite de gitleaks, scanate pentru secrete de mare încredere | `exempt-area-secret-scan.yml` |
 | căile de scriere ale runtime-ului | `write-path-audit.yml` |
 | securitate: secrete, analiză statică | `secret-scan.yml`, `codeql.yml`, `codeql-csharp.yml`, `codeql-config-cleanup.yml`, `fortify.yml`, `apisec-scan.yml` |

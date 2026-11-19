@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 import pytest
 
-from packages.polymarket import (
+from products.polymarket import (
     PredictionLedger,
     PredictionProvenance,
     build_prediction,

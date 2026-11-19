@@ -42,7 +42,7 @@ Cu toate acestea, `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md` Secțiunea
 ## 3. Obiectivele Fazei 9
 
 1. **Construirea Modulului `BookToMemoryHypothesisRegistry`**:
-   - Fișier: `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_hypothesis.py`.
+   - Fișier: `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_hypothesis.py`.
    - Înregistrarea tipizată a ipotezelor inginerești cu verificarea sursei, locației exacte (capitol/pagină), principiului, predicției falsificabile, controlului, metricii și pragurilor de succes/eșec.
    - Verificarea mașinii de stări a lanțului de evidențe (`TrackState`).
    - Înregistrarea deciziilor experimentale (`DecisionRecord`) cu interzicerea omiterii eșecurilor.

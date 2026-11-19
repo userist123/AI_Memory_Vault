@@ -26,13 +26,13 @@ from datetime import datetime
 
 import pytest
 
-from packages.polymarket.historical_paper_replay import (
+from products.polymarket.historical_paper_replay import (
     HistoricalMarketBundle,
     HistoricalTapePoint,
     build_market_bundle,
     run_mechanical_control,
 )
-from packages.polymarket.historical_replay import HistoricalPricePoint
+from products.polymarket.historical_replay import HistoricalPricePoint
 
 _FIXTURE = (
     pathlib.Path(__file__).resolve().parents[2]

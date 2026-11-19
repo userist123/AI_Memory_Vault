@@ -11,7 +11,7 @@ from pathlib import Path
 
 import pytest
 
-from lifecycle.validation.book_to_memory_real_ablation import (
+from book_to_memory.book_to_memory_real_ablation import (
     COND_DECOY,
     COND_SKEPTIC,
     COND_WITH,
@@ -41,7 +41,7 @@ from lifecycle.validation.book_to_memory_real_ablation import (
     template_set_hash,
     write_task_packet,
 )
-from lifecycle.validation.book_to_memory_run_config import ConfigMismatchError, RunConfig, RunConfigError, config_of
+from book_to_memory.book_to_memory_run_config import ConfigMismatchError, RunConfig, RunConfigError, config_of
 
 REPO = Path(__file__).resolve().parents[1]
 PACKET = REPO / "08_RESEARCH" / "BOOK_TO_MEMORY" / "b03_task_packet"
@@ -444,7 +444,7 @@ def test_committed_packet_is_reproducible_from_the_notes():
 
 
 def test_blind_rating_generator_accepts_the_committed_packet(tmp_path):
-    from lifecycle.validation.book_to_memory_blind_packet import build_blind_packet, items_from_b03_packet
+    from book_to_memory.book_to_memory_blind_packet import build_blind_packet, items_from_b03_packet
     trials = items_from_b03_packet(PACKET, tmp_path / "no_answers")
     assert all(t["answer"] == "" for t in trials) and len(trials) == 204
     # fill with synthetic text so the generator has something to package

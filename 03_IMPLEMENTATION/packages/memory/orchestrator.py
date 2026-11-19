@@ -329,7 +329,7 @@ class MultiAgentDispatcher:
 
     def __init__(self, memory_controller: Optional[MemoryController] = None):
         if memory_controller is None:
-            from cognitive_core.recall_cli import get_memory_controller
+            from memory_controller.controller_factory import get_memory_controller
             memory_controller = get_memory_controller()
         self.orchestrator = MultiAgentOrchestrator(memory_controller)
         self.config: Dict[str, Any] = {"nodes": {"local": {"enabled": True}}}
@@ -341,7 +341,7 @@ class MultiAgentDispatcher:
             requested agent_role -> role validation -> authorized role -> worker selection -> real dispatch
         """
         import json
-        from cognitive_core.recall_cli import validate_hmac_secret
+        from memory_controller.controller_factory import validate_hmac_secret
 
         # Fail closed if HMAC secret is missing or invalid
         validate_hmac_secret()

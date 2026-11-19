@@ -6,26 +6,26 @@ Validates end-to-end integration of all 10 preceding phases through BookToMemory
 import pytest
 
 from memory_controller.authorizer import Principal
-from lifecycle.validation.book_to_memory_schema import (
+from book_to_memory.book_to_memory_schema import (
     BookToMemoryType,
     SecurityInjectionError,
 )
-from lifecycle.validation.book_to_memory_lifecycle import (
+from book_to_memory.book_to_memory_lifecycle import (
     BookToMemoryLifecycleState,
     issue_owner_approval,
 )
-from lifecycle.validation.book_to_memory_hypothesis import TrackState
-from lifecycle.validation.book_to_memory_experiment import (
+from book_to_memory.book_to_memory_hypothesis import TrackState
+from book_to_memory.book_to_memory_experiment import (
     ExperimentConfig,
     ExperimentValidationError,
 )
-from lifecycle.validation.book_to_memory_usage_test import (
+from book_to_memory.book_to_memory_usage_test import (
     EvaluationAttempt,
     RubricDimension,
     TaskSpecification,
 )
-from lifecycle.validation.book_to_memory_facade import BookToMemoryFacade
-from lifecycle.validation.book_to_memory_run_config import RunConfig
+from book_to_memory.book_to_memory_facade import BookToMemoryFacade
+from book_to_memory.book_to_memory_run_config import RunConfig
 
 
 def _synthetic_eval(note_id: str) -> dict:

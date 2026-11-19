@@ -2,7 +2,7 @@ from datetime import datetime, timezone
 
 import pytest
 
-from packages.polymarket.historical_evaluation_dataset import load_historical_evaluation_dataset
+from products.polymarket.historical_evaluation_dataset import load_historical_evaluation_dataset
 
 
 def _ts(day: int) -> str:

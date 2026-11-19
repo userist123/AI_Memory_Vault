@@ -11,13 +11,13 @@
 ## 1. Inspectarea HEAD-ului și a Arhitecturii Moștenite
 
 HEAD-ul curent este `ab0a7c7ac`, conținând integral implementările și testele Fazelor 1, 2 și 3:
-1. `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_schema.py` (Faza 1):
+1. `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_schema.py` (Faza 1):
    - Prezent (cod și teste);
    - Definește cele 11 tipuri atomice de note, lanțul epistemic, porțile de securitate și proveniență.
-2. `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py` (Faza 2):
+2. `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_lifecycle.py` (Faza 2):
    - Prezent (cod și teste);
    - Implementează stările `RAW -> UNVERIFIED -> VERIFIED -> ACTIVE` (cu `REJECTED`), porțile `GATE-01..GATE-08`, token-ul HMAC semnat de Owner (`OwnerApprovalToken`) și demotarea reversibilă.
-3. `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_conflict.py` (Faza 3):
+3. `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_conflict.py` (Faza 3):
    - Prezent (cod și teste);
    - Implementează `ConflictRegistry`, identitatea deterministă `CONFLICT-<domain>-<slug>`, prezervarea duală, taxonomia de severitate/rezoluție și blocajul stării `ACTIVE`.
 
@@ -59,7 +59,7 @@ Secțiunea 6 a politicii autoritative stabilește cadrul normativ obligatoriu pe
 1. **Proprietăți în Schemă**:
    - `03_IMPLEMENTATION/packages/lifecycle/validation/schema.py` recunoaște `usage_test_score` și `usage_test_accuracy` ca metadate opționale de validare.
 2. **Garanția din Lifecycle (GATE-05)**:
-   - `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py` linia 224: `GATE-05` blochează tranziția spre `VERIFIED` și `ACTIVE` dacă `usage_score < 8` sau este `None`.
+   - `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_lifecycle.py` linia 224: `GATE-05` blochează tranziția spre `VERIFIED` și `ACTIVE` dacă `usage_score < 8` sau este `None`.
 3. **Ablation Benchmark General**:
    - `40_EXPERIMENTS/harnesses/memory_ablation_benchmark.py` conține `MemoryAblationExperimentRunner` pentru măsurarea performanței retrieval vs zero-retrieval la nivel de vault global.
 
@@ -81,7 +81,7 @@ Secțiunea 6 a politicii autoritative stabilește cadrul normativ obligatoriu pe
 
 Pentru a acoperi toate cerințele din prompt și `POLICY-02`:
 1. Crearea modulului:
-   `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_usage_test.py`
+   `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_usage_test.py`
    - Clasa `TaskSpecification` (imutabilă, definită înainte de rulare);
    - Clasa `RubricScore` (Corectitudine, Completitudine, Fara ghicit, Fara surse externe, Reproductibilitate);
    - Clasa `UsageTestResult` (rezultat brut, semnătură hash a încercării, audit trail complet);

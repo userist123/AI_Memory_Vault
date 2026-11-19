@@ -104,7 +104,7 @@
  {
   "id": "N08",
   "question": "Which combination of findings makes the static scanner for skill and prompt data leaks return its most severe verdict?",
-  "answer_path": "security/SKILL_EXFILTRATION_SCANNER.md",
+  "answer_path": "03_IMPLEMENTATION/packages/security/SKILL_EXFILTRATION_SCANNER.md",
   "answer_fact": "BLOCK = active data-access evidence plus active network/external-destination evidence.",
   "fact_regex": "(?=.*BLOCK)(?=.*data)(?=.*(network|external|exfil|egress|send))",
   "domain": "security",
@@ -119,7 +119,7 @@
  {
   "id": "N09",
   "question": "Can a component whose declared origin is on the default deployment blacklist still be admitted if its package hash and signature are valid or a human approves it?",
-  "answer_path": "security/SUPPLY_CHAIN_BOUNDARY.md",
+  "answer_path": "03_IMPLEMENTATION/packages/security/SUPPLY_CHAIN_BOUNDARY.md",
   "answer_fact": "A blocked origin cannot be overridden by a valid package hash",
   "fact_regex": "(cannot|can ?not|can't|not) be overrid|\\bno\\b.{0,80}(hash|signature|approv)",
   "domain": "security",

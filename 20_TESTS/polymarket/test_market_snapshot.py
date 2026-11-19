@@ -7,11 +7,11 @@ from pathlib import Path
 import sys
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "03_IMPLEMENTATION" / "packages"))
+sys.path.insert(0, str(ROOT / "03_IMPLEMENTATION"))
 
 import pytest
 
-from polymarket.market_snapshot import (
+from products.polymarket.market_snapshot import (
     MarketLifecycle,
     PriceObservation,
     ResolutionMetadata,

@@ -1,10 +1,10 @@
 import pytest
 
-from packages.polymarket.prediction_council import (
+from products.polymarket.prediction_council import (
     PREDICTION_COUNCIL_SCHEMA_VERSION,
     build_council,
 )
-from packages.polymarket.prediction_ledger import PredictionProvenance, build_prediction
+from products.polymarket.prediction_ledger import PredictionProvenance, build_prediction
 
 
 KNOWN = "2026-01-01T12:00:00+00:00"

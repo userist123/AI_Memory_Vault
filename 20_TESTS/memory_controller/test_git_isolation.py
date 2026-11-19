@@ -42,6 +42,10 @@ def _copy_memory_controller(src_root: Path, dest_root: Path) -> Path:
 def _load_controller_module(pkg_path: Path):
     sys.path.insert(0, str(pkg_path.parent))
     spec = importlib.util.find_spec("memory_controller.controller")
+    # `memory_controller.controller` is now an alias of the shared canonical module, so
+    # module_from_spec(spec) would hand back that shared object. This test needs a fresh
+    # module object (own singleton state), so build it from the canonical file instead.
+    spec = importlib.util.spec_from_file_location(spec.name, spec.origin)
     module = importlib.util.module_from_spec(spec)
     spec.loader.exec_module(module)
     sys.path.pop(0)

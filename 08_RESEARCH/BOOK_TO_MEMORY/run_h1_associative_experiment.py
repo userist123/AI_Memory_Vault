@@ -24,7 +24,7 @@ from memory_controller.authorizer import Principal
 from memory_controller.controller import MemoryController, RANKING_ARM_FUSED_SCORE, GraphExpansionDegraded
 from retrieval.vault_index import VaultIndex
 from memory_controller.storage.file_engine import FileStorageEngine
-from lifecycle.validation.book_to_memory_run_config import RunConfig, compare_results, stamp
+from book_to_memory.book_to_memory_run_config import RunConfig, compare_results, stamp
 
 CASES_PATH = REPO_ROOT / "artifacts" / "h1" / "h1_cases.json"
 CORPUS_PATH = REPO_ROOT / "artifacts" / "h1" / "current_labeling_corpus.json"

@@ -186,3 +186,14 @@ def test_bare_nonexistent_directory_is_reported():
     assert "path 09_COORDINATION/ does not exist" in out
     assert "path 99_SYSTEM/ does not exist" not in out
     assert not any("docs/" in o for o in out)
+
+
+def test_the_two_requirement_files_cannot_drift_apart():
+    """WP-15: `requirements-memory-v6.txt` is kept (4 workflows install it) but must stay an exact
+    copy of `requirements.txt`; one edited without the other fails here instead of silently
+    giving two CI jobs two different dependency sets."""
+    def pins(name):
+        text = (REPO / name).read_text(encoding="utf-8").lstrip("﻿")
+        return sorted(l.strip() for l in text.splitlines() if l.strip() and not l.strip().startswith("#"))
+
+    assert pins("requirements.txt") == pins("requirements-memory-v6.txt")

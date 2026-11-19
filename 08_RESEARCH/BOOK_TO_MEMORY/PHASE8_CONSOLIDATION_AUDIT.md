@@ -33,7 +33,7 @@ Deși `BookToMemoryPipeline` poate valida orice notă individuală sau hartă de
 ## 3. Obiectivele Fazei 8
 
 1. **Implementarea `BookToMemoryCatalog`**:
-   - Modul: `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_catalog.py`.
+   - Modul: `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_catalog.py`.
    - Înregistrarea, validarea și gestionarea tamper-evident a hărților canonice de cărți (`type: book_map`).
    - Asocierea bidirecțională între notele atomice validate și hărțile de carte părinte (`map-<source_identity>`).
    - Calculul acoperirii per carte și identificarea capitolelor neacoperite.

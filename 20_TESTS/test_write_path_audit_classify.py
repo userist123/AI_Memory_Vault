@@ -29,7 +29,7 @@ def test_classify_recognises_the_real_controller_and_consolidation_paths():
 
 
 def test_other_files_are_not_mistaken_for_the_controller():
-    other = REPO / "03_IMPLEMENTATION" / "packages" / "memory" / "data_router.py"
+    other = REPO / "03_IMPLEMENTATION" / "packages" / "retrieval" / "data_router.py"
     assert wpa.classify(other, "self.storage.set") == "DIRECT_STORAGE_MUTATION"
     assert wpa.classify(Path("x/not_memory/controller.py"), "self.storage.set") == "DIRECT_STORAGE_MUTATION"
 

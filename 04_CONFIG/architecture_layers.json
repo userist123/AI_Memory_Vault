@@ -1,0 +1,166 @@
+{
+  "schema_version": 1,
+  "baseline_date": "2026-11-09",
+  "baseline_commit": "0752ac2b7",
+  "rule": "Layers are ordered low to high (WP-06/WP-07 order, F2_memory_core_contract.md section 1.2). A unit may import units of the same or a LOWER layer only. Facade packages are `aliases`, not layers: an import through a facade is an edge to the unit that owns the submodule (first match in the facade's declared __path__), and the real __path__ of every alias must equal the declared one. An upward edge is allowed only while it is listed in baseline_edges. hard_forbidden (package -> product, also through an alias) is enforced even when the edge no longer goes up. The check is a ratchet: new upward edges and growth fail, and so does a stale baseline (edge removed or count lower), so every gain must be locked by regenerating the baseline. Edge count = number of non-test files of the source unit importing the target unit. Non-test imports include `-m` argv lists in .py files inside a unit, and test-path files imported by production code. Non-literal import_module/__import__ calls are counted per unit in baseline_dynamic_imports (same ratchet semantics).",
+  "unenforced": [
+    "agent_bridge is dormant (no production consumer, WP-11); the layer test does not detect dormancy, 20_TESTS/test_vault_state_accuracy.py (zero production importers of agent_bridge) does",
+    "Facade resolution follows the declared/real __path__ and the re-export line of root cognitive_core/<mod>.py (`from [packages.]X.<m> import *`); a facade submodule no __path__ entry serves keeps the edge on the facade, is listed in the inventory meta.facade_unresolved and FAILS the check (i) when the file is non-test.",
+    "WP-14a: `security` is a single regular package (packages/security, L0); the former root/security layer (L2_policy_adapter) is gone. The remaining name collision (`cognitive_core`: root shim vs packages shim) is tracked in known_collisions.",
+    "Layer membership of an alias (facade) is not checked: an edge to an unresolved facade is only judged by hard_forbidden.",
+    "Non-literal dynamic imports are counted per unit, not resolved to a target unit.",
+    "Reassigning a unit to another layer in this config is caught only by diff review.",
+    "benchmarks/ files count as production.",
+    "Relative imports and same-directory sys.path imports are not resolved.",
+    "python -m strings in non-.py files inside a unit are not edges (only py_argv_m and python_c).",
+    "R1 (WP-04 review r2): `-c` argv in .py files ([sys.executable, '-c', 'import x']) is not parsed; python_c is read only from shell/yml-type files.",
+    "R2: shell command strings inside .py files (os.system('python -m x'), subprocess with shell=True) are not scanned.",
+    "R3: import_module aliased by assignment (im = importlib.import_module), getattr(importlib, 'import_module') and builtins.__import__ are not counted.",
+    "R4: transitive edges through .py files outside any unit (e.g. 03_IMPLEMENTATION/x.py) are not followed.",
+    "R7 (WP-07 PR A review r2): __path__ changed through an obfuscated reference (an alias such as `_p = __path__; _p.append(...)`, setattr on the module, globals()['__path__']) is not detected; same class as R3, caught only by diff review. A plain `import <facade>` without a submodule in non-test code fails check (j).",
+    "L2 (WP-07 PR A review): the re-export follow for a facade's own modules (`cognitive_core/<mod>.py` of a facade that lists `self`) is a regex heuristic on `from [packages.]X.<m> import *`; an unusual re-export spelling keeps the edge on the facade (then reported in meta.facade_unresolved and failed by check (i)).",
+    "A `__path__` move outside the unit's own __init__.py (e.g. `memory_controller.__path__.insert(...)` in another file) is listed in the inventory `unknown` but is not parsed or failed by the layer check; only the __init__ of a unit is evaluated.",
+    "R5/R6 (low): a mixed refuse+tighten --write-baseline run writes the tightening and exits 1; --owner-wp format is not validated; a trailing '# python -m x' comment still yields a string ref; 'python -malpha' and 'pypy3 -m' are missed."
+  ],
+  "excluded": {
+    "test_files": "Files matching package_inventory.is_test_path (under 20_TESTS/ or tests/, named test_*.py, or conftest.py) are not counted."
+  },
+  "layers": [
+    {
+      "name": "L0_foundation",
+      "units": [
+        "packages/security",
+        "packages/providers",
+        "packages/routing",
+        "packages/graph"
+      ]
+    },
+    {
+      "name": "L1_lifecycle",
+      "units": [
+        "packages/lifecycle"
+      ]
+    },
+    {
+      "name": "L3_retrieval",
+      "units": [
+        "packages/observability",
+        "packages/retrieval"
+      ]
+    },
+    {
+      "name": "L4_memory_core",
+      "units": [
+        "packages/memory",
+        "packages/vault_access"
+      ]
+    },
+    {
+      "name": "L5_products",
+      "units": [
+        "products/xau_kinetic",
+        "products/polymarket"
+      ]
+    },
+    {
+      "name": "L6_entrypoints",
+      "units": [
+        "packages/interfaces",
+        "packages/agent_bridge"
+      ]
+    },
+    {
+      "name": "L7_cognition",
+      "units": [
+        "packages/book_to_memory",
+        "packages/learning"
+      ]
+    },
+    {
+      "name": "L8_apps",
+      "units": [
+        "root/cognitive_core"
+      ]
+    }
+  ],
+  "hard_forbidden": {
+    "rule": "A package-kind unit must never import a product-kind unit, directly or through the packages/xau_kinetic alias.",
+    "from_kind": "packages",
+    "to_kind": "products",
+    "alias_units": [
+      "packages/xau_kinetic"
+    ]
+  },
+  "known_collisions": [
+    "cognitive_core"
+  ],
+  "baseline_dynamic_imports": {
+    "packages/memory_controller": 2
+  },
+  "baseline_edges": [],
+  "aliases": {
+    "packages/memory_controller": {
+      "__path__": [
+        "packages/retrieval",
+        "packages/memory",
+        "packages/security",
+        "packages/lifecycle",
+        "packages/interfaces",
+        "packages/observability"
+      ]
+    },
+    "packages/cognitive_core": {
+      "__path__": [
+        "packages/graph",
+        "packages/memory",
+        "packages/learning",
+        "packages/observability",
+        "packages/providers",
+        "packages/interfaces",
+        "packages/security",
+        "packages/retrieval",
+        "packages/lifecycle"
+      ]
+    },
+    "root/cognitive_core": {
+      "__path__": [
+        "self",
+        "packages/graph",
+        "packages/memory",
+        "packages/learning",
+        "packages/observability",
+        "packages/providers",
+        "packages/interfaces",
+        "packages/security",
+        "packages/retrieval",
+        "packages/lifecycle"
+      ]
+    },
+    "packages/memory_vault": {
+      "__path__": [
+        "packages/agent_bridge",
+        "packages/book_to_memory",
+        "packages/cognitive_core",
+        "packages/graph",
+        "packages/interfaces",
+        "packages/learning",
+        "packages/lifecycle",
+        "packages/memory",
+        "packages/memory_controller",
+        "packages/observability",
+        "packages/providers",
+        "packages/retrieval",
+        "packages/routing",
+        "packages/security",
+        "packages/vault_access",
+        "packages/xau_kinetic"
+      ]
+    },
+    "packages/xau_kinetic": {
+      "__path__": [
+        "products/xau_kinetic"
+      ]
+    }
+  },
+  "aliases_note": "Facades are __path__ shims, not layers: an import through one is an edge to the unit that serves the submodule (first match in __path__). `__path__` is the declared, ordered list of units; \"self\" = the shim's own directory. The check fails if the real __path__ (package_inventory shim_targets) differs."
+}

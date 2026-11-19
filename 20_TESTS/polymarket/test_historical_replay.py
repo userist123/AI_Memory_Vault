@@ -5,10 +5,10 @@ import sys
 import pytest
 
 ROOT = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(ROOT / "03_IMPLEMENTATION" / "packages"))
+sys.path.insert(0, str(ROOT / "03_IMPLEMENTATION"))
 
-from polymarket.historical_replay import HistoricalPricePoint, HistoricalReplay
-from polymarket.market_snapshot import MarketLifecycle, PolymarketMarket, ResolutionMetadata, PriceObservation, build_snapshot
+from products.polymarket.historical_replay import HistoricalPricePoint, HistoricalReplay
+from products.polymarket.market_snapshot import MarketLifecycle, PolymarketMarket, ResolutionMetadata, PriceObservation, build_snapshot
 
 
 BASE = PolymarketMarket(

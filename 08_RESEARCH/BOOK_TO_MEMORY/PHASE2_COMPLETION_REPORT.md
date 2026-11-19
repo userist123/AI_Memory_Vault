@@ -50,7 +50,7 @@ Codul implementează, iar testele unitare (`20_TESTS/test_book_to_memory_lifecyc
 ## 3. Fișiere Create și Modificate în Faza 2
 
 ### Fișiere Create:
-1. `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py`
+1. `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_lifecycle.py`
 2. `20_TESTS/test_book_to_memory_lifecycle_gates.py`
 3. `08_RESEARCH/BOOK_TO_MEMORY/PHASE2_ENTRYPOINT_AUDIT.md`
 4. `08_RESEARCH/BOOK_TO_MEMORY/PHASE2_LIFECYCLE_MATRIX.md`
