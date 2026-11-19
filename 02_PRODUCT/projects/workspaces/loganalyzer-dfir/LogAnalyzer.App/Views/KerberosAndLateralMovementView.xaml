@@ -18,7 +18,7 @@
                         <TextBlock Text="Ediția Standalone, fără rețea" FontSize="9" FontWeight="Bold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                     </Border>
                 </StackPanel>
-                <TextBlock Style="{StaticResource PageLeadStyle}" Text="Auditare specializată pentru PC-uri izolate (fără conexiune la rețea / domeniu): Bază SAM, Medii USB, Politici de Audit, Sesiuni Locale &amp; Conformitate HG 585/2002"/>
+                <TextBlock Style="{StaticResource PageLeadStyle}" Text="Auditare specializată pentru PC-uri izolate (fără conexiune la rețea / domeniu): Bază SAM, Medii USB, Politici de Audit, Sesiuni Locale &amp; matrice orientativă (neatestată, referință HG 585/2002)"/>
             </StackPanel>
 
             <!-- lab 2026-11-07: under the title and wrapping, so at 1024 px no button is cut off -->
@@ -140,7 +140,7 @@
                                 <DataGridTextColumn Header="Severitate" Binding="{Binding Severity, Converter={x:Static sevc:SeverityTextConverter.Instance}}" Width="100" MinWidth="100"/>
                                 <DataGridTextColumn Header="Identificator hardware / serie" Binding="{Binding TargetAccountOrResource}" Width="250" MinWidth="250"/>
                                 <DataGridTextColumn Header="Driver / serviciu sursă" Binding="{Binding SourceProcessOrDevice}" Width="200" MinWidth="200"/>
-                                <DataGridTextColumn Header="Diagnostic &amp; Măsură Conformitate HG 585" Binding="{Binding Description}" Width="*" MinWidth="320"/>
+                                <DataGridTextColumn Header="Diagnostic &amp; măsură (referință HG 585, neatestată)" Binding="{Binding Description}" Width="*" MinWidth="320"/>
                                 <DataGridTextColumn Header="Ora conectării" Binding="{Binding Timestamp, StringFormat='{}{0:yyyy-MM-dd HH:mm:ss}'}" Width="145" MinWidth="145"/>
                             </DataGrid.Columns>
                         </DataGrid>
@@ -213,7 +213,7 @@
                             <RowDefinition Height="*"/>
                         </Grid.RowDefinitions>
                         <DockPanel Grid.Row="0" LastChildFill="False" Margin="0,0,0,10">
-                            <TextBlock DockPanel.Dock="Left" Text="Matrice de Conformitate pentru Sisteme de Prelucrare Izolate (HG 585/2002, MS 172/191, ISO/IEC 27042)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
+                            <TextBlock DockPanel.Dock="Left" Text="Matrice orientativă, neatestată, pentru sisteme de prelucrare izolate (referințe: HG 585/2002, MS 172/191, ISO/IEC 27042)" FontSize="13" FontWeight="SemiBold" Foreground="{StaticResource PrimaryAccentBrush}"/>
                             <Border DockPanel.Dock="Right" Background="{StaticResource Surface3Brush}" CornerRadius="4" Padding="6,2">
                                 <TextBlock Text="{Binding ComplianceResults.Count, StringFormat='{}{0} Controale Evaluate'}" FontSize="10.5" FontWeight="Bold" Foreground="{StaticResource TextPrimaryBrush}"/>
                             </Border>

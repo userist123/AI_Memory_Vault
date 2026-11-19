@@ -57,7 +57,7 @@ namespace LogAnalyzer.Core.Services
                 if (sList.Any(s => s.FindingType.Contains("auditpol", StringComparison.OrdinalIgnoreCase)))
                 {
                     result.ExecutiveSummaryRo += "A fost detectată alterarea politicilor locale de auditare (tentativă de deghizare a activității). ";
-                    result.RecommendedContainmentSteps.Add("Restaurați imediat politica de audit standard din baseline-ul securizat HG 585.");
+                    result.RecommendedContainmentSteps.Add("Restaurați imediat politica de audit aprobată pentru stație (configurația de bază din documentația de acreditare).");
                 }
                 if (sList.Any(s => s.FindingType.Contains("USB", StringComparison.OrdinalIgnoreCase)))
                 {
@@ -98,7 +98,7 @@ namespace LogAnalyzer.Core.Services
                 RiskLevel = "Critic",
                 MitreKillChainMapping = mitreTechniqueId,
                 ExecutiveSummaryRo = $"Analiza automată a corelat incidentul '{findingTitle}' (Categorie: {category}, Țintă: {targetAccount}). {description}",
-                RegulatoryImpactRo = "Incident critic cu impact direct asupra conformității HG 585/2002 și Directiva NIS2."
+                RegulatoryImpactRo = "Incident critic; impactul asupra obligațiilor din HG 585/2002 și Directiva NIS2 îl evaluează ofițerul de securitate."
             };
 
             res.ForensicEvidenceBullets.Add($"Entitate / Țintă afectată: {targetAccount}");

@@ -242,6 +242,32 @@ namespace LogAnalyzer.UI.Tests
             Assert.Contains("NIST SP 800-88r2", text);
         }
 
+        /// <summary>
+        /// HG585 DOC-01 (planner #11 item 2): no shipped source states that the application or one of its outputs CONFORMS to a standard or a law; a standard
+        /// is named only as a reference, with "conformitatea nu este atestată". No made-up "baseline HG 585" and no start argument the application ignores.
+        /// </summary>
+        [Fact]
+        public void No_shipped_source_claims_conformity_or_gives_an_ignored_start_argument()
+        {
+            var root = Directory.GetParent(AppDir())!.FullName;
+            string[] forbidden = ["Conformitate ISO", "Conform ISO/IEC", "Conform Standardelor", "Conformitate HG 585", "Matrice Conformitate", "Matrice de Conformitate",
+                                  "evaluare a conformității la nivel", "baseline securitate HG", "baseline-ul securizat HG", "--mode=network"];
+            var hits = new List<string>();
+            foreach (var f in Directory.EnumerateFiles(root, "*", SearchOption.AllDirectories))
+            {
+                var ext = Path.GetExtension(f);
+                if (ext is not (".cs" or ".xaml" or ".md")) continue;
+                var rel = Path.GetRelativePath(root, f);
+                var top = rel.Split(Path.DirectorySeparatorChar)[0];
+                // tests (which quote the old strings), recovered history, research and requirement documents, build output
+                if (top.EndsWith(".Tests", StringComparison.Ordinal) || top is "_recovered" or "docs" or "reports" or "research_notes" or "Documentation" or "publish") continue;
+                if (rel.Contains($"{Path.DirectorySeparatorChar}bin{Path.DirectorySeparatorChar}") || rel.Contains($"{Path.DirectorySeparatorChar}obj{Path.DirectorySeparatorChar}")) continue;
+                var text = File.ReadAllText(f);
+                hits.AddRange(forbidden.Where(p => text.Contains(p, StringComparison.Ordinal)).Select(p => $"{rel}: {p}"));
+            }
+            Assert.True(hits.Count == 0, "Unfounded conformity wording: " + string.Join("; ", hits));
+        }
+
         [Fact]
         public void Compliance_matrix_cites_no_unconfirmed_article_number()
         {

@@ -189,7 +189,7 @@ namespace LogAnalyzer.Core.Services
                         }
 
                         // 3. Compliance Matrix
-                        col.Item().PaddingTop(4).Text(isAirGapped ? "2. Matrice Conformitate Stație Izolată (HG 585/2002, ISO/IEC 27042)" : "2. Matrice Conformitate Enterprise (Directiva NIS2, HG 585/2002, GDPR, PCI-DSS)")
+                        col.Item().PaddingTop(4).Text(isAirGapped ? "2. Matrice orientativă, neatestată, pentru stația izolată (referințe: HG 585/2002, ISO/IEC 27042)" : "2. Matrice orientativă, neatestată (referințe: Directiva NIS2, HG 585/2002, GDPR, PCI-DSS)")
                             .Bold().FontSize(11).FontColor("#0f172a");
 
                         col.Item().Table(table =>

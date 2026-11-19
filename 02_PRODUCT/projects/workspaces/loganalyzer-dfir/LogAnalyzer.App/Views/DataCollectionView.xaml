@@ -96,7 +96,7 @@
                     <!-- design pass 2026-11-10: the standard is a second line, not a label docked over the wrapping title -->
                     <StackPanel Grid.Row="0" Margin="0,0,0,10">
                         <TextBlock Text="Rezultatul colectării și sumele de control" FontSize="16" FontWeight="SemiBold" Foreground="{StaticResource TextPrimaryBrush}" TextWrapping="Wrap"/>
-                        <TextBlock Text="Conform ISO/IEC 27037 (identificarea, colectarea și păstrarea probelor digitale)" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
+                        <TextBlock Text="Referință metodologică: ISO/IEC 27037 (identificarea, colectarea și păstrarea probelor digitale); conformitatea nu este atestată de aplicație" FontSize="12" Foreground="{StaticResource TextSecondaryBrush}" TextWrapping="Wrap" Margin="0,2,0,0"/>
                     </StackPanel>
                     <TextBox Grid.Row="1" IsReadOnly="True" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource CodeTextBrush}" BorderBrush="{StaticResource BorderBrush}" FontFamily="{StaticResource CodeFontFamily}" FontSize="11.5" Padding="12" AcceptsReturn="True" VerticalScrollBarVisibility="Auto"
                              Text="{Binding CollectionLogs, FallbackValue='Colectarea nu a fost pornită. Alegeți ce se colectează și rulați triajul.'}"/>

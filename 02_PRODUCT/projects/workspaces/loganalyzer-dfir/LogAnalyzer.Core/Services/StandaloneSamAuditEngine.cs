@@ -75,7 +75,7 @@ namespace LogAnalyzer.Core.Services
                     MitreTechniqueId = "T1562.002",
                     SourceProcessOrDevice = "auditpol.exe / Local Security Authority",
                     Description = $"Detectate {auditpolEvents.Count} modificări ale politicilor de auditare Windows pe stație (interval {first:yyyy-MM-dd HH:mm} - {last:yyyy-MM-dd HH:mm}).",
-                    RemediationActionRo = "Restaurați politica de audit standard din baseline securitate HG 585.",
+                    RemediationActionRo = "Restaurați politica de audit aprobată pentru stație (configurația de bază din documentația de acreditare).",
                     Timestamp = last
                 });
             }

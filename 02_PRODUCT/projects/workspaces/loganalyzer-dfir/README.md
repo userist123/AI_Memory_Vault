@@ -104,7 +104,7 @@ Fila **„Investigație domeniu și e-mail”** (`LogAnalyzer.Internet.exe --tab
   - redirecționarea automată a cutiei poștale;
   - mesaje trimise în afara organizației.
 
-Toate interogările de rețea trec prin `NetworkPolicy`. În modul AirGapped sunt blocate; pe o rețea izolată cu domeniu, porniți aplicația cu `--mode=network`. Rezultatele se salvează în cazul stației (`Investigations/`), ca probe, și se pot exporta ca PDF.
+Toate interogările de rețea trec prin `NetworkPolicy`. În modul AirGapped sunt blocate; pe o rețea izolată cu domeniu, modul rețea vine doar din politica semnată a stației (argumentul `--mode=` este ignorat). Rezultatele se salvează în cazul stației (`Investigations/`), ca probe, și se pot exporta ca PDF.
 ## Investigația completă (caz)
 
 Fila **„Investigație completă (caz)”** (`LogAnalyzer.Internet.exe --tab=16`) reface cap-coadă o investigație ca cea de pe o stație de laborator:

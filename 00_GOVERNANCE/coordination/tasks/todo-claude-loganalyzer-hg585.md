@@ -1618,3 +1618,23 @@
   rule forbids typing passwords; or an expired licence signed by the private key): read-only choice in the activation window, banner, intervention/backup
   register expanders, marking field in the scope dialog. Owner (2026-11-19): the old UIA/lab scripts were moved to E: -> E:\LA-Lab\scripts (driver-ws02.ps1,
   push-driver.ps1, vsend.ps1); an E:\D_offload\w\loganalyzer-dfir copy also exists. CI of a8f864a42: all completed checks green when read, DFIR build running.
+- 2026-11-20 (claude, hg585) CI of a86292db3: 33/33 (DFIR success); a8f864a42 DFIR failed on MultiProcessChainTests (reader IOException after 400 sharing
+  retries, 1 m 41 s) = 2nd occurrence. Local repro (3/6 ChainWorker processes, idle / 56 burners / 2 cores pinned): max ReadVerified 0.1-2.4 s, never an
+  IOException -> root cause NOT reproduced; Fable second opinion requested before any change. PLANNER #11 (Plan agent, verified at a86292db3):
+  1 turnstile/reader starvation (CI flakes) - main session; 2 DOC-01 leftovers ("Conformitate ISO/IEC 27037", "Conform Standardelor", AD audit "Conformitate
+  HG 585/NIS2", "baseline securitate HG 585", "--mode=network" hint) - low; 3 EXP-01/MED-01 export path + medium (SignedMediaRegister volume serial) in the
+  sealed audit detail - medium; 4 SW-05 profile integrity vs last profile.edited after_sha256 + folder ACL -> dependent verdicts DE VERIFICAT - risky;
+  5 control date in the station's local calendar (U07/S08/S09 use the UTC date) - risky small; 6 DEL-01 sanitization guard (no case/evidence paths, admin
+  role, media.sanitized in sealed audit, optional witness) - medium-risky; 7 startup/integrity events (native-manifest warning, station.role, ALERT_VIEWED)
+  into the sealed audit via a queue - low-medium; 8 licence/notice test residuals (card unlock marker, clock-floor path, renewal-vs-floor message) - low.
+  Stale doc rows found: CRY-03 (key zeroed now), SW-06 (CodeQL covers C#), DEL-02 (fixed), NET-01/02 + HOST-02 done for P1. Dead code trap:
+  Infrastructure/Parsers/PrefetchParser.cs fabricates "ExecutionProven" from a zero-filled MAM buffer (UNWIRED) -> delete with item 2.
+- 2026-11-20 (claude, hg585, session 44cea9) PLANNER #11 ITEM 2 DONE (main session, low, text only): DOC-01 leftovers reworded to "Referință metodologică: ...
+  (conformitatea nu este atestată de acest raport/pachet/aplicație)" or "matrice orientativă, neatestată (referințe: ...)": PdfReportService, HtmlReportService,
+  DfirCasePackagingService, AdAuditHtml/PdfReportService, KerberosAndLateralMovementView, ActiveDirectoryAuditView, DataCollectionView; "baseline securitate HG 585"
+  -> "politica de audit aprobată pentru stație" (StandaloneSamAuditEngine, AiCopilotInvestigationEngine); "--mode=network" hint -> network mode only from the
+  signed station policy (DomainInvestigationViewModel, README). Guard UI.Tests HonestShellTests.No_shipped_source_claims_conformity_or_gives_an_ignored_start_argument
+  (scans shipped .cs/.xaml/.md; red with the old PdfReportService footer - verified). Dead Infrastructure/Parsers/PrefetchParser.cs (zero-filled MAM buffer
+  labelled ExecutionProven, no consumer) deleted (git keeps it). UI 370 (1 skipped) ok, solution builds.
+  COORDINATION: another session is editing this worktree at the same time (uncommitted LogAnalyzer.App.Tests/TurnstileStarvationTests.cs + ChainWorker
+  ProjectReference in App.Tests.csproj = planner #11 item 1); asked via SendMessage, no reply yet; this session did NOT stage or touch those files.

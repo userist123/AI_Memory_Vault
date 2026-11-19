@@ -182,7 +182,7 @@ namespace LogAnalyzer.Core.Services
 
             // Footer
             sb.AppendLine("        <div class=\"footer\">");
-            sb.AppendLine("            <p>Raport generat automat de <strong>LogAnalyzer DFIR Platform v2.6</strong> | Conformitate ISO/IEC 27037:2012 (Ghid pentru manipularea probelor digitale)</p>");
+            sb.AppendLine("            <p>Raport generat automat de <strong>LogAnalyzer DFIR Platform v2.6</strong> | Referință metodologică: ISO/IEC 27037:2012 (ghid pentru manipularea probelor digitale); conformitatea nu este atestată de acest raport</p>");
             sb.AppendLine("        </div>");
             sb.AppendLine("    </div>");
             sb.AppendLine("</body>");
