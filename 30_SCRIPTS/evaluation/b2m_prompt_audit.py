@@ -17,7 +17,7 @@ REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "03_IMPLEMENTATION" / "packages"))
 os.environ.setdefault("MEMORY_CONTROLLER_HMAC_SECRET", "0" * 32)
 
-from lifecycle.validation.book_to_memory_prompt_audit import (  # noqa: E402
+from book_to_memory.book_to_memory_prompt_audit import (  # noqa: E402
     LEADING_PATTERNS,
     audit_register,
     framing_variants,

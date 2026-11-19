@@ -112,5 +112,5 @@
 
 1. Nu există o cale directă („side door”) prin care un agent AI sau o funcție de asistență poate promova o notă în `ACTIVE`.
 2. Pentru a asigura conformitatea totală cu `POLICY-LEARNING-QUALITY-02`, vom implementa modulul formal de porți:
-   `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_lifecycle.py`
+   `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_lifecycle.py`
    care va centraliza validarea porților GATE-01..GATE-08, validarea token-ului de aprobare al owner-ului, și mecanismele de demotare (ACTIVE -> UNVERIFIED).

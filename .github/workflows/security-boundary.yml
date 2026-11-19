@@ -3,7 +3,7 @@ name: Security Boundary Tests
 on:
   pull_request:
     paths:
-      - "security/**"
+      - "03_IMPLEMENTATION/packages/security/**"
       - "03_IMPLEMENTATION/packages/retrieval/context/**"
       - "03_IMPLEMENTATION/packages/memory/**"
       - "03_IMPLEMENTATION/packages/retrieval/financial_search.py"
@@ -28,13 +28,13 @@ jobs:
         with:
           python-version: "3.12"
       - name: Compile security modules
-        run: python -m compileall -q security
+        run: python -m compileall -q 03_IMPLEMENTATION/packages/security
       - name: Install test runner
         run: python -m pip install --disable-pip-version-check pytest==9.1.1 pyyaml==6.0.3 jsonschema==4.26.0 mcp==1.30.0
       - name: Run security tests
         env:
-          PYTHONPATH: .
-        run: python -m pytest security/tests -q -o pythonpath=.
+          PYTHONPATH: .:03_IMPLEMENTATION/packages
+        run: python -m pytest 03_IMPLEMENTATION/packages/security/tests -q
       - name: Audit workflow security boundary
         run: python 30_SCRIPTS/verification/workflow_security_audit.py
 
@@ -55,5 +55,5 @@ jobs:
         run: python -m pip install --disable-pip-version-check pytest==9.1.1
       - name: Run canonical memory data route gate
         env:
-          PYTHONPATH: .
-        run: python -m pytest security/tests/test_canonical_memory_data_route.py -q
+          PYTHONPATH: .:03_IMPLEMENTATION/packages
+        run: python -m pytest 03_IMPLEMENTATION/packages/security/tests/test_canonical_memory_data_route.py -q

@@ -1,6 +1,6 @@
 import pytest
 
-from packages.polymarket.temporal_provenance_contract import CaptureInput, ProvenanceRecord
+from products.polymarket.temporal_provenance_contract import CaptureInput, ProvenanceRecord
 
 
 def test_accepts_historically_provenanced_point_before_cutoff():

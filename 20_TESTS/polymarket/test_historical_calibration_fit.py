@@ -2,9 +2,9 @@ from __future__ import annotations
 
 import pytest
 
-from polymarket.historical_calibration_fit import fit_historical_calibration, transform_historical_holdout
-from polymarket.historical_calibration_holdout import split_historical_calibration_holdout
-from polymarket.historical_evaluation_runner import evaluate_historical_dataset
+from products.polymarket.historical_calibration_fit import fit_historical_calibration, transform_historical_holdout
+from products.polymarket.historical_calibration_holdout import split_historical_calibration_holdout
+from products.polymarket.historical_evaluation_runner import evaluate_historical_dataset
 
 
 def _row(day: int, probability: float, outcome: str) -> dict[str, object]:

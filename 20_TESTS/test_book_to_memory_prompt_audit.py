@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pytest
 
-from lifecycle.validation.book_to_memory_prompt_audit import (
+from book_to_memory.book_to_memory_prompt_audit import (
     FROZEN_QUERY_EXEMPTIONS,
     LEADING_PATTERNS,
     audit_register,
@@ -16,7 +16,7 @@ from lifecycle.validation.book_to_memory_prompt_audit import (
     lint_prompt,
     reverse_polarity,
 )
-from lifecycle.validation.book_to_memory_real_ablation import (
+from book_to_memory.book_to_memory_real_ablation import (
     COND_SKEPTIC,
     COND_WITH,
     COND_WITHOUT,
@@ -75,8 +75,8 @@ def test_question_template_is_neutral():
 
 def test_default_task_description_and_context_header_are_neutral():
     os.environ.setdefault("MEMORY_CONTROLLER_HMAC_SECRET", "0" * 32)
-    from lifecycle.validation import book_to_memory_facade as facade
-    from lifecycle.validation import book_to_memory_retrieval as retrieval
+    from book_to_memory import book_to_memory_facade as facade
+    from book_to_memory import book_to_memory_retrieval as retrieval
     assert lint_prompt(facade.DEFAULT_TASK_DESCRIPTION) == []
     assert lint_prompt("\n".join(retrieval.CONTEXT_HEADER_LINES)) == []
     assert "evidence" not in "\n".join(retrieval.CONTEXT_HEADER_LINES)
@@ -87,7 +87,7 @@ def test_default_task_description_and_context_header_are_neutral():
 
 def test_the_default_task_text_is_the_same_for_both_conditions():
     """One text, no mention of the note: the baseline condition is not told about a note."""
-    from lifecycle.validation import book_to_memory_facade as facade
+    from book_to_memory import book_to_memory_facade as facade
     assert "note" not in facade.DEFAULT_TASK_DESCRIPTION.lower()
 
 

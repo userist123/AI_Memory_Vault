@@ -14,32 +14,9 @@ from pathlib import Path
 from typing import Any, Dict, Iterable, List, Optional
 import json
 
-from .authorizer import DefaultAuthorizer, Operation, Principal
+from .authorizer import DefaultAuthorizer, Operation, Principal  # noqa: F401  (re-exported for callers)
+from .owner_principal import owner_principal_values, require_owner_principal  # noqa: F401  (relative: resolves through the facade, one Principal class)
 from .extraction import MemoryCandidate
-
-
-def owner_principal_values() -> frozenset:
-    """Values of the principals the vault allows to ATTEST (the owner attestation matrix)."""
-    authorizer = DefaultAuthorizer()
-    return frozenset(p.value for p in Principal if authorizer.is_allowed(p, Operation.ATTEST))
-
-
-def require_owner_principal(approver: Any) -> str:
-    """Return the principal value when `approver` is a typed owner principal, else raise.
-
-    The check is on the type, not on spelling: a plain string, a missing principal and an
-    AI_AGENT are all refused. ``Principal`` is compared by class name and value because the
-    ``cognitive_core`` and ``memory_controller`` import shims each load their own copy of the
-    enum, so identity cannot be used.
-    """
-    if isinstance(approver, str) or type(approver).__name__ != "Principal":
-        raise PermissionError(
-            "approval requires an owner Principal (HUMAN or ADMIN); a reviewer name is only a label"
-        )
-    value = str(getattr(approver, "value", "")).lower()
-    if value not in owner_principal_values():
-        raise PermissionError(f"principal '{value}' is not allowed to attest an approval")
-    return value
 
 
 class MemoryProposalQueue:

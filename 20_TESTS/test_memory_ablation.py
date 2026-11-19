@@ -15,6 +15,7 @@ from __future__ import annotations
 import json
 import os
 import shutil
+import sys
 import tempfile
 from pathlib import Path
 from typing import Any, Dict, List
@@ -22,8 +23,11 @@ from unittest.mock import MagicMock
 
 import pytest
 
+# memory_ablation_benchmark is an experiment (WP-09): lives in 40_EXPERIMENTS/harnesses
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "40_EXPERIMENTS" / "harnesses"))
+
 from cognitive_core.fake_model_provider import FakeModelProvider
-from cognitive_core.memory_ablation_benchmark import (
+from memory_ablation_benchmark import (
     AblationTask,
     BenchmarkSummary,
     MemoryAblationExperimentRunner,

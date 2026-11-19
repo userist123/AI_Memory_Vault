@@ -3,6 +3,10 @@
     "vault-memory": {
       "command": "python",
       "args": ["03_IMPLEMENTATION/packages/interfaces/memory_mcp_server.py", "--principal", "cloud_cli.claude_code"]
+    },
+    "fetch": {
+      "command": "python",
+      "args": ["-m", "uv", "tool", "run", "--exclude-newer", "2026-11-13T00:00:00Z", "mcp-server-fetch==2026.11.11"]
     }
   }
 }

@@ -4,9 +4,9 @@ from dataclasses import replace
 import json
 import pytest
 
-from packages.polymarket.historical_paper_replay import build_market_bundle
-from packages.polymarket.model_historical_evaluator_v2 import evaluate_prediction, select_eligible_tape_point
-from packages.polymarket.prediction_ledger import PredictionProvenance, build_prediction
+from products.polymarket.historical_paper_replay import build_market_bundle
+from products.polymarket.model_historical_evaluator_v2 import evaluate_prediction, select_eligible_tape_point
+from products.polymarket.prediction_ledger import PredictionProvenance, build_prediction
 
 
 def _prov():

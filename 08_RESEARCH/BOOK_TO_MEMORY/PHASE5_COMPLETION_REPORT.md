@@ -89,7 +89,7 @@ TOTAL REPOSITORY TESTS:
 ## 3. Fișiere Generate și Comise în Faza 5
 
 1. **Modul de Implementare**:
-   - `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_ablation.py`
+   - `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_ablation.py`
 2. **Suită de Teste**:
    - `20_TESTS/test_book_to_memory_ablation.py`
 3. **Rapoarte de Audit, Arhitectură și Securitate**:

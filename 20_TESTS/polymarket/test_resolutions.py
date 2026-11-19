@@ -8,7 +8,7 @@ from __future__ import annotations
 
 import pytest
 
-from packages.polymarket.resolutions import (
+from products.polymarket.resolutions import (
     ACCEPTABLE_SOURCES,
     RESOLUTION_SCHEMA_VERSION,
     SOURCE_MANUAL_ATTESTED,
@@ -42,7 +42,7 @@ def test_a_close_time_source_cannot_be_named():
     """Using a market's close time as its resolution time is the specific
     mistake this module prevents. The constant is absent so nobody adds it back
     as a convenience."""
-    import packages.polymarket.resolutions as module
+    import products.polymarket.resolutions as module
     assert not hasattr(module, "SOURCE_DERIVED_CLOSE_TIME")
     assert ACCEPTABLE_SOURCES == {SOURCE_ONCHAIN_SETTLEMENT, SOURCE_MANUAL_ATTESTED}
 
@@ -195,6 +195,6 @@ def test_the_module_touches_no_network():
     response shape."""
     import pathlib
     source = (pathlib.Path(__file__).resolve().parents[2] / "03_IMPLEMENTATION"
-              / "packages" / "polymarket" / "resolutions.py").read_text(encoding="utf-8")
+              / "products" / "polymarket" / "resolutions.py").read_text(encoding="utf-8")
     for forbidden in ("urlopen", "urllib", "requests", "socket", "httpx"):
         assert forbidden not in source

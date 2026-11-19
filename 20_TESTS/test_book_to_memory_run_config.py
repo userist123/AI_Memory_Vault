@@ -4,7 +4,7 @@ from pathlib import Path
 
 import pytest
 
-from lifecycle.validation.book_to_memory_run_config import (
+from book_to_memory.book_to_memory_run_config import (
     NO_MODEL_ID,
     ConfigMismatchError,
     RunConfig,

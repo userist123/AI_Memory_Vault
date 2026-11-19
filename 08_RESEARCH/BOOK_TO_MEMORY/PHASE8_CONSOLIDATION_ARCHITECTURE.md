@@ -3,7 +3,7 @@
 **Document Version**: 1.0.0  
 **Phase**: Phase 8 — Corpus Catalog & Reversible Consolidation  
 **Authority**: `00_GOVERNANCE/rules/POLICY-LEARNING-QUALITY-02.md` (Sections 2, 8, 11)  
-**Module**: `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_catalog.py`  
+**Module**: `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_catalog.py`  
 **Test Suite**: `20_TESTS/test_book_to_memory_catalog.py` (14/14 PASS)  
 
 ---

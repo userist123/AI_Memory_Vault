@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import pytest
 
-from packages.polymarket.backtest import (
+from products.polymarket.backtest import (
     BACKTEST_SCHEMA_VERSION,
     SPLIT_CALIBRATION,
     SPLIT_TEST,
@@ -243,7 +243,7 @@ def test_the_module_has_no_route_to_execution_or_a_live_clock():
     that can reach a venue is not a backtest."""
     import pathlib
     source = (pathlib.Path(__file__).resolve().parents[2]
-              / "03_IMPLEMENTATION" / "packages" / "polymarket"
+              / "03_IMPLEMENTATION" / "products" / "polymarket"
               / "backtest.py").read_text(encoding="utf-8")
     for forbidden in ("requests", "httpx", "urllib", "socket",
                       "datetime.now", "utcnow", "time.time", "random"):

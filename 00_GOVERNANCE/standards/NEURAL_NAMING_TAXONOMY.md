@@ -34,7 +34,7 @@ Afferent (input) → central processing → efferent (output).
 
 | Neural term | Role | Where it lives now |
 |---|---|---|
-| **Afferent / sensory** — receives | untrusted input arrives, is classified and quarantined | `06_INBOX/`, `interfaces/financial_ingestion.py` |
+| **Afferent / sensory** — receives | untrusted input arrives, is classified and quarantined | `06_INBOX/`, `products/xau_kinetic/engine/financial_ingestion/` (the former `interfaces/financial_ingestion.py` is archived in `80_ARCHIVE/modernization/`, WP-12) |
 | **Brainstem** — involuntary gate | authorization; nothing passes without it, and it is never bypassed | `security/authorizer.py`, `security/authority.py` |
 | **Hippocampus** — forms memory | writes, lifecycle transitions, consolidation | `memory/controller.py`, `lifecycle/policy.py`, `learning/consolidation.py` |
 | **Synapse** — connects memory | one edge between two notes, with weight, origin, provenance | `graph/synapse_store.py`, `graph/synapse.py` |

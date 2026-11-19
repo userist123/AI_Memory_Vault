@@ -9,7 +9,7 @@ import uuid
 import pytest
 from jsonschema.exceptions import ValidationError
 
-from lifecycle.validation.book_to_memory_schema import (
+from book_to_memory.book_to_memory_schema import (
     BookToMemoryType,
     EpistemicType,
     ConflictSeverity,

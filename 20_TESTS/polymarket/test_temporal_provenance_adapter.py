@@ -2,8 +2,8 @@ from datetime import datetime, timezone
 
 import pytest
 
-from packages.polymarket.historical_paper_replay import HistoricalTapePoint
-from packages.polymarket.temporal_provenance_adapter import attach_provenance
+from products.polymarket.historical_paper_replay import HistoricalTapePoint
+from products.polymarket.temporal_provenance_adapter import attach_provenance
 
 
 def _ts(day: int) -> str:

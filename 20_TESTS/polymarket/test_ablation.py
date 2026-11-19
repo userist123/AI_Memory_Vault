@@ -10,12 +10,12 @@ from __future__ import annotations
 
 import pytest
 
-from packages.polymarket.ablation import (
+from products.polymarket.ablation import (
     ABLATION_SCHEMA_VERSION,
     AblationReport,
     run_ablations,
 )
-from packages.polymarket.benchmark import (
+from products.polymarket.benchmark import (
     VERDICT_NO_DIFFERENCE,
     VERDICT_UNDERPOWERED,
     VERDICT_WORSE,

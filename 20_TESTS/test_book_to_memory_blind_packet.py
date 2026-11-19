@@ -8,14 +8,14 @@ from pathlib import Path
 
 import pytest
 
-from lifecycle.validation.book_to_memory_blind_packet import (
+from book_to_memory.book_to_memory_blind_packet import (
     BlindPacketError,
     assert_blind,
     build_blind_packet,
     scores_by_trial,
     unblinding_risk,
 )
-from lifecycle.validation.book_to_memory_raters import aggregate_ratings, load_ratings
+from book_to_memory.book_to_memory_raters import aggregate_ratings, load_ratings
 
 REPO = Path(__file__).resolve().parents[1]
 _SPEC = importlib.util.spec_from_file_location("b2m_blind_rating_packet", REPO / "30_SCRIPTS" / "evaluation" / "b2m_blind_rating_packet.py")

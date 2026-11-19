@@ -8,11 +8,11 @@ Validates all contracts under:
 """
 import pytest
 from memory_controller.authorizer import Principal
-from lifecycle.validation.book_to_memory_schema import (
+from book_to_memory.book_to_memory_schema import (
     BookToMemoryValidationError,
     SecurityInjectionError,
 )
-from lifecycle.validation.book_to_memory_hypothesis import (
+from book_to_memory.book_to_memory_hypothesis import (
     TrackState,
     CANONICAL_VAULT_PROBLEMS,
     HypothesisError,

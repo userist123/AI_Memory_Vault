@@ -81,7 +81,7 @@ Toate cerințele specificate au fost implementate fără excepție:
 ## 3. Fișiere Create și Modificate în Faza 3
 
 1. **Implementare Nouă**:
-   - `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_conflict.py` (Registry complet, validare identitate, taxonomie de rezoluție, control de acces actor)
+   - `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_conflict.py` (Registry complet, validare identitate, taxonomie de rezoluție, control de acces actor)
 2. **Suite de Teste**:
    - `20_TESTS/test_book_to_memory_conflicts.py` (33 de teste riguroase, acoperire completă)
 3. **Rapoarte și Documentație**:

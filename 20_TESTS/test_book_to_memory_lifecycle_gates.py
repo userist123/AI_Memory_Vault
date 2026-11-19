@@ -42,13 +42,13 @@ from datetime import datetime, timezone, timedelta
 
 from memory_controller.authorizer import Principal, Operation
 from memory_controller.storage.sqlite_engine import SQLiteStorageEngine
-from lifecycle.validation.book_to_memory_schema import (
+from book_to_memory.book_to_memory_schema import (
     BookToMemoryType,
     ConflictSeverity,
     ConflictStatus,
     EpistemicType,
 )
-from lifecycle.validation.book_to_memory_lifecycle import (
+from book_to_memory.book_to_memory_lifecycle import (
     BookToMemoryLifecycleState,
     APPROVAL_TOKEN_VERSION,
     OwnerApprovalToken,
@@ -645,7 +645,7 @@ def test_32_extending_the_expiry_breaks_the_signature():
 
 
 def test_32_old_format_token_is_refused():
-    from lifecycle.validation import book_to_memory_lifecycle as lifecycle_module
+    from book_to_memory import book_to_memory_lifecycle as lifecycle_module
 
     note = valid_concept_payload("VERIFIED")
     ts = datetime.now(timezone.utc).isoformat()

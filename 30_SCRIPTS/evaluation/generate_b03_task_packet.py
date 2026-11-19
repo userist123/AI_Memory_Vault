@@ -21,7 +21,7 @@ from typing import List
 REPO = Path(__file__).resolve().parents[2]
 sys.path.insert(0, str(REPO / "03_IMPLEMENTATION" / "packages"))
 
-from lifecycle.validation.book_to_memory_real_ablation import (  # noqa: E402
+from book_to_memory.book_to_memory_real_ablation import (  # noqa: E402
     SEED,
     build_task_list,
     parse_promoted_note,

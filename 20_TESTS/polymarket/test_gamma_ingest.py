@@ -14,14 +14,14 @@ import json
 
 import pytest
 
-from packages.polymarket.gamma_ingest import (
+from products.polymarket.gamma_ingest import (
     GAMMA_MARKETS_URL,
     MAX_PAGE_LIMIT,
     fetch_page,
     ingest_payload,
     lifecycle_from,
 )
-from packages.polymarket.market_snapshot import MarketLifecycle, SnapshotStore
+from products.polymarket.market_snapshot import MarketLifecycle, SnapshotStore
 
 ACQUIRED = "2026-03-01T12:00:00Z"
 
@@ -151,7 +151,7 @@ def test_the_caller_supplies_acquired_at_and_nothing_here_reads_a_clock(store):
 
     import pathlib
     source = (pathlib.Path(__file__).resolve().parents[2] / "03_IMPLEMENTATION"
-              / "packages" / "polymarket" / "gamma_ingest.py").read_text(encoding="utf-8")
+              / "products" / "polymarket" / "gamma_ingest.py").read_text(encoding="utf-8")
     body = source.split("def main(")[0]
     for forbidden in ("datetime.now", "utcnow", "time.time"):
         assert forbidden not in body, (
@@ -179,7 +179,7 @@ def test_the_module_sends_no_credentials():
     here would be a key committed to the repository."""
     import pathlib
     source = (pathlib.Path(__file__).resolve().parents[2] / "03_IMPLEMENTATION"
-              / "packages" / "polymarket" / "gamma_ingest.py").read_text(encoding="utf-8")
+              / "products" / "polymarket" / "gamma_ingest.py").read_text(encoding="utf-8")
     for forbidden in ("Authorization", "Bearer", "api_key", "apiKey",
                       "private_key", "secret"):
         assert forbidden not in source
@@ -189,7 +189,7 @@ def test_only_fetch_page_touches_the_network():
     """The split is what makes everything above testable offline."""
     import pathlib
     source = (pathlib.Path(__file__).resolve().parents[2] / "03_IMPLEMENTATION"
-              / "packages" / "polymarket" / "gamma_ingest.py").read_text(encoding="utf-8")
+              / "products" / "polymarket" / "gamma_ingest.py").read_text(encoding="utf-8")
     after_fetch = source.split("def lifecycle_from(")[1]
     for forbidden in ("urlopen", "urllib.request", "requests.", "socket"):
         assert forbidden not in after_fetch, (

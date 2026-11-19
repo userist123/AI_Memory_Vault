@@ -2,11 +2,11 @@ from datetime import datetime, timezone
 
 import pytest
 
-from packages.polymarket.historical_evaluation_calibration import (
+from products.polymarket.historical_evaluation_calibration import (
     project_calibration_observations,
     score_historical_evaluation_calibration,
 )
-from packages.polymarket.historical_evaluation_runner import evaluate_historical_dataset
+from products.polymarket.historical_evaluation_runner import evaluate_historical_dataset
 
 
 def _ts(day: int) -> str:

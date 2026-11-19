@@ -4,7 +4,7 @@ import json
 
 import pytest
 
-from packages.polymarket.historical_paper_replay import (
+from products.polymarket.historical_paper_replay import (
     CLOB_PRICES_HISTORY_URL,
     HistoricalMarketBundle,
     HistoricalTapePoint,

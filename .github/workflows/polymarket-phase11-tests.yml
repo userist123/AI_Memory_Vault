@@ -49,7 +49,7 @@ jobs:
           mkdir -p artifacts/phase11
           python - <<'PY'
           import json
-          from packages.polymarket.historical_paper_replay import collect_resolved_bundles, run_mechanical_control
+          from products.polymarket.historical_paper_replay import collect_resolved_bundles, run_mechanical_control
 
           # Scan a wider closed-market window because the public catalog contains
           # many non-CLOB and historical markets whose CLOB tape is no longer retained.

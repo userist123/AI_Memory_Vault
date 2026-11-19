@@ -82,7 +82,7 @@ TOTAL:
 ## 3. Fișiere Generate în Faza 4
 
 1. **Modul Implementare**:
-   - `03_IMPLEMENTATION/packages/lifecycle/validation/book_to_memory_usage_test.py`
+   - `03_IMPLEMENTATION/packages/book_to_memory/book_to_memory_usage_test.py`
 2. **Suită de Teste**:
    - `20_TESTS/test_book_to_memory_usage_test.py`
 3. **Rapoarte de Audit, Arhitectură și Securitate**:
