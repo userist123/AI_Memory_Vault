@@ -147,6 +147,12 @@ public sealed class StationFacts
     public int BackupMaxAgeDays { get; set; }
     /// <summary>Most days the newest restore test may be old (procedure profile; 0 = default 180).</summary>
     public int BackupRestoreTestMaxAgeDays { get; set; }
+    /// <summary>The users register (check U07: local accounts, clearance validity, training and pledge); null = not given or unreadable (see <see cref="UsersRegisterProblem"/>), a register without rows is not defined.</summary>
+    public LogAnalyzer.Dfir.Registers.UsersRegister? UsersRegister { get; set; }
+    /// <summary>Why the users register could not be read ("" = no problem); U07 then says so.</summary>
+    public string UsersRegisterProblem { get; set; } = "";
+    /// <summary>Most days the last training of a person may be old (procedure profile; 0 = default 365).</summary>
+    public int TrainingMaxAgeDays { get; set; }
     /// <summary>The latest time the application itself recorded in its chained audit logs ("time memory", check S05); null = no earlier record.</summary>
     public DateTimeOffset? LatestAppRecordUtc { get; set; }
     /// <summary>Set when a recorded time was made under a wrong clock and the correction is not yet confirmed (check S05).</summary>

@@ -44,6 +44,17 @@ public sealed class ProcedureProfile
     /// <summary>The restore-test age limit in force: the setting, or the default when it is 0 or out of range.</summary>
     public static int EffectiveBackupRestoreTestMaxAgeDays(int value) => value is >= 1 and <= MaxBackupAgeDays ? value : DefaultBackupRestoreTestMaxAgeDays;
 
+    /// <summary>Default for <see cref="TrainingMaxAgeDays"/> and the value used when it is 0 or absent (planner #10 item 4, check U07).</summary>
+    public const int DefaultTrainingMaxAgeDays = 365;
+    /// <summary>The largest accepted value of <see cref="TrainingMaxAgeDays"/>.</summary>
+    public const int MaxTrainingAgeDays = 3650;
+
+    /// <summary>Most days the last training of a person in the users register may be old before check U07 says DE VERIFICAT. 0 or absent = <see cref="DefaultTrainingMaxAgeDays"/>; valid 1..3650.</summary>
+    public int TrainingMaxAgeDays { get; set; }
+
+    /// <summary>The training age limit in force: the setting, or the default when it is 0 or out of range.</summary>
+    public static int EffectiveTrainingMaxAgeDays(int value) => value is >= 1 and <= MaxTrainingAgeDays ? value : DefaultTrainingMaxAgeDays;
+
     // Working hours
     public List<WorkingHoursRow> WorkingHours { get; set; } = [];
     public List<HolidayRow> Holidays { get; set; } = [];

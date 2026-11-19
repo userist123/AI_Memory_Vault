@@ -43,6 +43,8 @@ public static class ProfileOps
             issues.Add(new ProfileIssue(null, 0, $"termenul de vechime a copiei de siguranță ({p.BackupMaxAgeDays} zile) trebuie să fie între 1 și {ProcedureProfile.MaxBackupAgeDays}; 0 = implicit ({ProcedureProfile.DefaultBackupMaxAgeDays})"));
         if (p.BackupRestoreTestMaxAgeDays != 0 && p.BackupRestoreTestMaxAgeDays is < 1 or > ProcedureProfile.MaxBackupAgeDays)
             issues.Add(new ProfileIssue(null, 0, $"termenul de vechime a testului de restaurare ({p.BackupRestoreTestMaxAgeDays} zile) trebuie să fie între 1 și {ProcedureProfile.MaxBackupAgeDays}; 0 = implicit ({ProcedureProfile.DefaultBackupRestoreTestMaxAgeDays})"));
+        if (p.TrainingMaxAgeDays != 0 && p.TrainingMaxAgeDays is < 1 or > ProcedureProfile.MaxTrainingAgeDays)
+            issues.Add(new ProfileIssue(null, 0, $"termenul de vechime a instruirii ({p.TrainingMaxAgeDays} zile) trebuie să fie între 1 și {ProcedureProfile.MaxTrainingAgeDays}; 0 = implicit ({ProcedureProfile.DefaultTrainingMaxAgeDays})"));
         if ((p.SignInNotice?.Trim().Length ?? 0) > SignInNoticeResolver.MaxLength)
             issues.Add(new ProfileIssue(null, 0, $"textul notificării de utilizare depășește {SignInNoticeResolver.MaxLength} de caractere"));
         return issues;

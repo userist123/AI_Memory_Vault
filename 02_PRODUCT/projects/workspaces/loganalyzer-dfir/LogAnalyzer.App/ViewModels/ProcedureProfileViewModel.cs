@@ -140,6 +140,9 @@ namespace LogAnalyzer.UI.ViewModels
         /// <summary>The oldest the newest restore test may be, in days; empty = the default (180).</summary>
         [ObservableProperty] private string _backupRestoreTestMaxAgeDaysText = "";
         public const string BackupLimitsHelp = "Controlul copiilor de siguranță (S09) arată Neconform dacă ultima copie din Registrul copiilor de siguranță este mai veche decât prima valoare (implicit 30 de zile) și De verificat dacă ultimul test de restaurare este mai vechi decât a doua (implicit 180 de zile) sau lipsește. Valori între 1 și 3650; gol = implicit.";
+        /// <summary>Planner #10 item 4 (check U07): the oldest the last training of a person may be, in days; empty = the default (365). Text, like the backup limits.</summary>
+        [ObservableProperty] private string _trainingMaxAgeDaysText = "";
+        public const string TrainingLimitHelp = "Controlul persoanelor din Registrul utilizatori (U07) arată De verificat dacă data ultimei instruiri a unui utilizator este mai veche decât această valoare (implicit 365 de zile) sau lipsește. Valori între 1 și 3650; gol = implicit.";
         private static int ParseDays(string? text) => string.IsNullOrWhiteSpace(text) ? 0 : int.TryParse(text.Trim(), System.Globalization.NumberStyles.None, System.Globalization.CultureInfo.InvariantCulture, out var n) ? n : -1;
         public const int SignInNoticeMaxLength = LogAnalyzer.Dfir.Profile.SignInNoticeResolver.MaxLength;
 
@@ -209,6 +212,7 @@ namespace LogAnalyzer.UI.ViewModels
             _profile.SignInNotice = LogAnalyzer.Dfir.Profile.SignInNoticeResolver.Normalize(SignInNotice);
             _profile.BackupMaxAgeDays = ParseDays(BackupMaxAgeDaysText);                       // an entry that is not a whole number becomes -1: the validation refuses it
             _profile.BackupRestoreTestMaxAgeDays = ParseDays(BackupRestoreTestMaxAgeDaysText);
+            _profile.TrainingMaxAgeDays = ParseDays(TrainingMaxAgeDaysText);
         }
 
         private void Push()
@@ -219,6 +223,7 @@ namespace LogAnalyzer.UI.ViewModels
             SignInNotice = _profile.SignInNotice ?? "";
             BackupMaxAgeDaysText = _profile.BackupMaxAgeDays == 0 ? "" : _profile.BackupMaxAgeDays.ToString(System.Globalization.CultureInfo.InvariantCulture);
             BackupRestoreTestMaxAgeDaysText = _profile.BackupRestoreTestMaxAgeDays == 0 ? "" : _profile.BackupRestoreTestMaxAgeDays.ToString(System.Globalization.CultureInfo.InvariantCulture);
+            TrainingMaxAgeDaysText = _profile.TrainingMaxAgeDays == 0 ? "" : _profile.TrainingMaxAgeDays.ToString(System.Globalization.CultureInfo.InvariantCulture);
             Refresh();
             OnPropertyChanged(nameof(IsEmpty));
         }

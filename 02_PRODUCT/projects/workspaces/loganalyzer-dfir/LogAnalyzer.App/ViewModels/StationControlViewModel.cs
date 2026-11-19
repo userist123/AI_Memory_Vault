@@ -358,6 +358,28 @@ namespace LogAnalyzer.UI.ViewModels
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return (0, 0); }
         }
 
+        /// <summary>
+        /// The users register for check U07. A missing file is "not in use" (null, no problem), an unreadable or invalid one is reported as a problem (null + text); both make U07
+        /// NEDETERMINAT. Never treated as an empty register.
+        /// </summary>
+        internal static (LogAnalyzer.Dfir.Registers.UsersRegister? Register, string Problem) CurrentUsers(string? path = null)
+        {
+            try
+            {
+                var r = LogAnalyzer.Dfir.Registers.RegisterStore.Load<LogAnalyzer.Dfir.Registers.UsersRegister>(path);
+                if (r.Register is null) return (null, string.Join("; ", r.Issues.Where(i => i.IsError).Select(i => i.Message)));
+                return (r.Register, "");
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return (null, ex.Message); }
+        }
+
+        /// <summary>The training age limit of the procedure profile (0 = the default; an unreadable profile gives 0).</summary>
+        internal static int CurrentTrainingLimit()
+        {
+            try { return ProfileProvider.Shared.Current?.TrainingMaxAgeDays ?? 0; }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return 0; }
+        }
+
         private BackupRegisterViewModel? _backupRegister;
         /// <summary>"Registrul copiilor de siguranță" (planner #10 item 3), edited on the control page; compared by check S09.</summary>
         public BackupRegisterViewModel BackupRegister => _backupRegister ??= new BackupRegisterViewModel();
@@ -488,6 +510,8 @@ namespace LogAnalyzer.UI.ViewModels
                                                              approvedSoftware: CurrentApprovedSoftware(), interventions: interventions.Rows, interventionsProblem: interventions.Problem,
                                                              backups: backups.Rows, backupsProblem: backups.Problem);
                     (facts.BackupMaxAgeDays, facts.BackupRestoreTestMaxAgeDays) = CurrentBackupLimits();
+                    (facts.UsersRegister, facts.UsersRegisterProblem) = CurrentUsers();
+                    facts.TrainingMaxAgeDays = CurrentTrainingLimit();
                     // the station's level comes only from the procedure profile; without it the level-dependent checks (A18, N14) stay NEDETERMINAT
                     facts.StationLevel = CurrentStationLevel();
         facts.ApprovedTransferMedia = CurrentTransferMedia();

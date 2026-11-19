@@ -121,6 +121,7 @@ Network checks N11 and N12 are specific to this model. N11 ("no path to the inte
 | U04 | Series of wrong passwords (5+ in an hour) | None | None | None |  |
 | U05 | Who worked with administrator rights | Review | Review | Review |  |
 | U06 | PowerShell scripts with commonly abused techniques | Review | Review | Review |  |
+| U07 | Active local accounts in the users register with training and pledge | Review: every active local account is in the users register; an account without a row or without a valid clearance is non-conform; a missing or old training or pledge is review; no register or an empty one is undetermined | Review: every active local account is in the users register; an account without a row or without a valid clearance is non-conform; a missing or old training or pledge is review; no register or an empty one is undetermined | Review: every active local account is in the users register; an account without a row or without a valid clearance is non-conform; a missing or old training or pledge is review; no register or an empty one is undetermined |  |
 | D01 | USB storage devices used on the station | Review | Review | Review |  |
 | D02 | Connected removable media encrypted (BitLocker To Go) | Encrypted | Encrypted | Encrypted | Owner decision: data leakage through removable media is a risk on every station, connected ones included. |
 | D03 | Media scanned with antivirus at connection | Scanned | Scanned | n/a | Scan-at-connection is a controlled-station procedure. |

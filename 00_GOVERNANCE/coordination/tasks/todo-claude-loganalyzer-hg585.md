@@ -1594,3 +1594,17 @@
   added (false: prints people's register rows, never AI text); (2) HeadWitnessTests.A_reader_gets_in_within_seconds... measured 9.5 s / 7.4 s on loaded
   runners (passed on d975695f5 in between; 44dadad51 touched no chain code) -> HeadWitnessTests in a DisableParallelization collection "ChainTiming",
   5 s bound unchanged. Dfir.Tests compiles; suite only in CI. Next: read the DFIR workflow conclusion of this commit before anything else.
+- 2026-11-19 (claude, hg585) DFIR CI of 8071047fd: first run failed on two timing tests (PiiMasker regex 500 ms timeout on a short title; MultiProcessChain
+  sharing violation), rerun of the failed job: SUCCESS -> runner load flakes, not regressions. PLANNER #10 ITEM 4 DONE (RISKY; vault-worker 2 rounds +
+  independent review r1 REQUEST_CHANGES (HIGH + 3 MEDIUM), r2 REQUEST_CHANGES (2 MEDIUM + LOW) -> fixed by main session (2-round cap)). UsersRegister
+  schema 1.1: LastTraining + PledgeSigned (optional dates at the end; 1.0 loads with blank cells; 8-column CSV ok; future date = warning only).
+  RegisterStore.Save writes per type (SchemaWrittenBy) and REFUSES to overwrite a file of a newer schema (newer major, or same major + newer minor; r2:
+  "2.0" passed the minor-only guard). Profile TrainingMaxAgeDays (default 365, Claude's choice; page field). U07 (Utilizatori): per enabled local person
+  account (RID 500 included when enabled; 501-504, system, $ and disabled excluded): no row or no clearance valid at the control date -> NECONFORM; rows
+  without clearance -> DE VERIFICAT; expired history rows (renewal = new row) never change the result and are needed by Wp14; accounts unreadable ->
+  NEDETERMINAT; no local person account -> DE VERIFICAT; training/pledge checked also for every register person with a valid clearance. Docs: CheckGuide/
+  ANEXA "Conform" text no longer says "nicio abilitare nu a expirat" (r2), GHID future-date sentence fixed, MATRICE #2/#31 PARȚIAL, header 108. Dfir test
+  edited: Wp14RegisterTests:196 ColumnNames 10. Tests UsersTrainingRegisterTests (43; red: renewal, domain-station, guard, newer-major guard). Suites: App
+  1393, UI 370 (1 skipped), Edition 45, exit 0. RESIDUALS: older builds ALREADY deployed overwrite 1.1 files (drop the 2 columns) - do not downgrade;
+  domain\user matched by user part (as Wp14); control date UTC vs local row validation (00:00-03:00 off by one day); one expired + one no-clearance row
+  = NECONFORM (undocumented). PLANNER #10 DONE (items 1-7; on-screen check of new windows still open). Next: read the DFIR workflow conclusion explicitly.

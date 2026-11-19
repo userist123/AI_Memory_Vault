@@ -75,6 +75,7 @@ public static partial class ControlEvaluator
         AuditAndLogs(f, r);
         AccountChanges(f, r);
         Logons(f, r);
+        UsersRegisterCheck(f, r);
         Devices(f, r);
         SignedMediaRegisterCheck(f, r);
         DeviceMonitorCheck(f, r);

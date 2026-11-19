@@ -1,7 +1,7 @@
 # Matricea de acoperire HG 585 / ORNISS → LogAnalyzer (control stație) — 2026-10-23
 
 Scop: ce cere cadrul legal public pentru controlul unei stații care prelucrează informații clasificate,
-ce verifică deja aplicația (107 verificări automate C/P/A/U/D/N/S la 2026-11-19 + 16 verificări manuale M01–M16)
+ce verifică deja aplicația (108 verificări automate C/P/A/U/D/N/S la 2026-11-19 + 16 verificări manuale M01–M16)
 și ce lipsește. Urmează o propunere de flux și de pagini, construită pe tiparele instrumentelor existente.
 
 ## Starea surselor (citiți înainte de matrice)
@@ -27,7 +27,7 @@ Legendă acoperire: **DA** = verificare automată existentă; **MANUAL** = exist
 |---|---|---|---|---|---|---|
 | **Acces și autentificare** |
 | 1 | Acces doar cu certificat/autorizație de nivel corespunzător + need-to-know | HG 585 art. 33, 274, 272; L.182 art. 28 | V | Registru utilizatori (nivel, valabil de la/până la); M11; U05 cine a lucrat cu drepturi | PARȚIAL | Comparație automată: fiecare cont care s-a autentificat în perioadă ↔ abilitare valabilă la data logării, ca verificare cu id propriu |
-| 2 | Conturile foștilor utilizatori dezactivate | Model pct. 140–141 | M | C01–C06, U02 | PARȚIAL | Cont activ fără rând (sau cu abilitare expirată) în Registru utilizatori → NECONFORM |
+| 2 | Conturile foștilor utilizatori dezactivate | Model pct. 140–141 | M | C01–C06, U02, U07 | PARȚIAL | U07 (2026-11-19): fiecare cont local activ (fără cele dezactivate, încorporate sau ale sistemului), potrivit cu rândurile Registrului utilizatori după cont sau SID, ca la analiza suporturilor: cont activ fără rând sau fără nicio abilitare valabilă la data controlului (rândurile vechi, expirate, rămân ca istoric și nu contează cât timp există un rând valabil; reînnoirea este un rând nou) = NECONFORM; rânduri fără nivel de abilitare = DE VERIFICAT; registrul lipsă, gol sau ilizibil, ori lista conturilor locale necitită = NEDETERMINAT. Limite: conturile de domeniu nu se compară cu lista locală; conturile foștilor utilizatori se văd doar dacă au rămas active pe stație |
 | 3 | Politica de parole (lungime, expirare, istoric, complexitate, schimbare la prima logare) | Model pct. 4.5.4 (ex.) | M | P01–P03 | PARȚIAL | Istoric parole și complexitate; pragurile din Profil, nu fixe |
 | 4 | Parolă BIOS, boot doar de pe disc intern | Model pct. 4.5.4 | M | M07 (manual); P15 Secure Boot | MANUAL | Citire WMI de la producător acolo unde există (Dell/HP/Lenovo), altfel rămâne manual |
 | 5 | Parolele implicite schimbate | Model pct. 55 | M | C03, C04 | PARȚIAL | — |
@@ -63,7 +63,7 @@ Legendă acoperire: **DA** = verificare automată existentă; **MANUAL** = exist
 | 29 | Registrul de intervenții hardware/software (Anexa 14) | Model Anexa 14 | M | S08 (2026-11-19): „Registrul intervențiilor hardware și software” (pagina Control stație, `interventions.json`): data, ora, stația, felul, componentele, descrierea, executantul, martorul, referința autorizării, verificarea după intervenție, observații; salvat cu jurnal de audit în lanț | PARȚIAL | Câmpurile sunt cele cerute de enunț; tipăritura există acum (buton „Tipărește”, PDF A4 pe lat: titlul modelului, coloanele, toate rândurile, perioadă opțională, SHA-256 al fișierului și potrivirea cu jurnalul de audit, marcajul pe fiecare pagină, linii de semnătură întocmit/verificat/aprobat), dar nu este o reproducere pixel cu pixel a formularului oficial Anexa 14; fără semnături pe rânduri; registrul gol = NEDETERMINAT, nu CONFORM
 | 30 | Registrul copiilor de siguranță (Anexa 21) | Model pct. 142 | M | S09 (2026-11-19): „Registrul copiilor de siguranță” (pagina Control stație, `backups.json`): data, stația, ce s-a copiat, suportul și numărul lui, cine a făcut copia, locul de păstrare, data și persoana testului de restaurare, observații; salvat cu jurnal de audit în lanț; termenele sunt în profil (copia: implicit 30 de zile, testul de restaurare: implicit 180) | PARȚIAL | Ultima copie mai veche decât termenul = NECONFORM; fără test de restaurare sau test prea vechi = DE VERIFICAT; registrul gol = NEDETERMINAT. Tipăritura există (același PDF de registre, titlul Anexei 21), dar nu este o reproducere pixel cu pixel a formularului oficial; aplicația nu citește copiile în sine, deci nu poate dovedi că o copie este completă sau restaurabilă |
 | **Personal** |
-| 31 | Instruire periodică, angajament de confidențialitate | HG 585 art. 35, 274(2), 278 | V | — | LIPSĂ | Câmpuri în Registru utilizatori: data ultimei instruiri, angajament semnat; expirate → DE VERIFICAT |
+| 31 | Instruire periodică, angajament de confidențialitate | HG 585 art. 35, 274(2), 278 | V | U07 | PARȚIAL | U07 (2026-11-19): Registrul utilizatori (schema 1.1) are coloanele „Ultima instruire” și „Angajament semnat” (date, opționale); pentru fiecare cont local activ, fără dată de instruire, cu instruire mai veche decât „Vechimea maximă a instruirii” din profil (implicit 365 de zile) sau fără dată a angajamentului = DE VERIFICAT. Aplicația nu poate arăta că instruirea sau angajamentul au avut loc; nu urmărește conținutul instruirii |
 | **Incidente** |
 | 32 | Incidentele înregistrate și raportate (raport după Anexa 18) | Model pct. 89–91; INFOSEC 2 art. 51–52 | M/V\* | M13; IncidentPdfReport | PARȚIAL | Registru de incidente (păstrat 5 ani, HG 781 art. 11) |
 | 33 | Raportare imediată la administratorul de securitate | Model pct. 89 | M | Alerte în monitor | PARȚIAL | Din alerta D05/A05/A12: „Întocmește raport de incident” precompletat după Anexa 18 |
@@ -97,7 +97,7 @@ NIST 800-53A (metoda: examinare / interviu / test).
 
 **Pentru ofițer — un control în 6 pași, pe o singură pagină „Control stație”:**
 1. Alege stația și profilul (pragurile unității din CSS/PrOpSec; versiunea profilului apare în PV).
-2. Controlul automat (cele 107 verificări) — un clic, doar citire.
+2. Controlul automat (cele 108 verificări) — un clic, doar citire.
 3. Chestionarul manual M01–M16 (+ fizic/TEMPEST), fiecare cu metoda (examinare / interviu / test)
    și dovadă atașată (scan, fotografie, număr de sigiliu). Răspunsurile preluate de la controlul
    anterior apar „preluat, de confirmat”, niciodată confirmate automat.

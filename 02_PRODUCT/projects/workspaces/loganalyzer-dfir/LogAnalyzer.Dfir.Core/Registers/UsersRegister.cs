@@ -15,6 +15,10 @@ public sealed class UserRow
     public string ClearanceValidTo { get; set; } = "";
     public string NeedToKnow { get; set; } = "";
     public string ZonesAllowed { get; set; } = "";
+    /// <summary>Schema 1.1 (planner #10 item 4, matrix row 31): date of the person's last training (yyyy-MM-dd); optional, blank in a 1.0 file.</summary>
+    public string LastTraining { get; set; } = "";
+    /// <summary>Schema 1.1: date the confidentiality pledge was signed (yyyy-MM-dd); optional, blank in a 1.0 file.</summary>
+    public string PledgeSigned { get; set; } = "";
 
     [JsonIgnore] public List<string> AccountList => RegisterRules.SplitList(Accounts);
     [JsonIgnore] public List<string> SidList => RegisterRules.SplitList(Sids);
@@ -28,10 +32,13 @@ public sealed class UserRow
 /// </summary>
 public sealed class UsersRegister : IRegisterData
 {
-    public const string CurrentSchemaVersion = "1.0";
+    /// <summary>1.1 added the two last columns (LastTraining, PledgeSigned); a 1.0 file loads with them blank and is written as 1.1 on the next change.</summary>
+    public const string CurrentSchemaVersion = "1.1";
+    /// <summary>A training or pledge date up to this many days after today is accepted (clock offsets), as for the backups register.</summary>
+    public const int FutureToleranceDays = 1;
     public const string DefaultFileName = "users.json";
     public const string EditNotice = "editare permisă numai administratorului global autentificat (card + PIN; administratorul principal poate folosi și contul + parola)";
-    public static readonly string[] ColumnNames = ["Person", "Accounts", "Sids", "Clearance", "ClearanceValidFrom", "ClearanceValidTo", "NeedToKnow", "ZonesAllowed"];
+    public static readonly string[] ColumnNames = ["Person", "Accounts", "Sids", "Clearance", "ClearanceValidFrom", "ClearanceValidTo", "NeedToKnow", "ZonesAllowed", "LastTraining", "PledgeSigned"];
 
     [JsonPropertyName("schema_version")] public string SchemaVersion { get; set; } = CurrentSchemaVersion;
     public DateTimeOffset? UpdatedUtc { get; set; }
@@ -63,15 +70,17 @@ public sealed class UsersRegister : IRegisterData
     [JsonIgnore] public IReadOnlyList<string> Columns => ColumnNames;
     [JsonIgnore] public bool IsDefined => Rows.Count > 0;
 
-    public List<string[]> Cells() => Rows.Select(r => new[] { r.Person, r.Accounts, r.Sids, r.Clearance, r.ClearanceValidFrom, r.ClearanceValidTo, r.NeedToKnow, r.ZonesAllowed }).ToList();
+    public List<string[]> Cells() => Rows.Select(r => new[] { r.Person, r.Accounts, r.Sids, r.Clearance, r.ClearanceValidFrom, r.ClearanceValidTo, r.NeedToKnow, r.ZonesAllowed, r.LastTraining, r.PledgeSigned }).ToList();
 
     public void SetCells(IEnumerable<IReadOnlyList<string>> rows) =>
         Rows = rows.Select(r => Enumerable.Range(0, ColumnNames.Length).Select(i => i < r.Count ? (r[i] ?? "").Trim() : "").ToArray())
-                   .Select(c => new UserRow { Person = c[0], Accounts = c[1], Sids = c[2], Clearance = c[3], ClearanceValidFrom = c[4], ClearanceValidTo = c[5], NeedToKnow = c[6], ZonesAllowed = c[7] })
+                   .Select(c => new UserRow { Person = c[0], Accounts = c[1], Sids = c[2], Clearance = c[3], ClearanceValidFrom = c[4], ClearanceValidTo = c[5], NeedToKnow = c[6], ZonesAllowed = c[7], LastTraining = c[8], PledgeSigned = c[9] })
                    .ToList();
 
     public List<(string Message, bool IsError)> ValidateRow(IReadOnlyList<string> c, IReadOnlyList<string[]> previousRows)
     {
+        // a row of the older 8-column shape (a caller that passes fewer cells) has blank training and pledge cells
+        if (c.Count < ColumnNames.Length) c = [.. c, .. Enumerable.Repeat("", ColumnNames.Length - c.Count)];
         var m = new List<(string, bool)>();
         void Err(string s) => m.Add((s, true));
         void Warn(string s) => m.Add((s, false));
@@ -94,6 +103,15 @@ public sealed class UsersRegister : IRegisterData
         if (!okFrom) Err($"data „{c[4]}” nu este în formatul yyyy-MM-dd (abilitare valabilă de la)");
         if (!okTo) Err($"data „{c[5]}” nu este în formatul yyyy-MM-dd (abilitare valabilă până la)");
         if (hasFrom && hasTo && okFrom && okTo && to < from) Err("sfârșitul valabilității precedă începutul");
+        var latest = DateOnly.FromDateTime(DateTime.Now).AddDays(FutureToleranceDays);
+        void DateCell(string v, string what)
+        {
+            if (Empty(v)) return;
+            if (!RegisterRules.TryDate(v, out var d)) Err($"data „{v}” nu este în formatul yyyy-MM-dd ({what})");
+            else if (d > latest) Warn($"data „{v}” este în viitor ({what}); ceasul stației poate fi în urmă, iar controlul U07 nu o numără");
+        }
+        DateCell(c[8], "ultima instruire");
+        DateCell(c[9], "angajament semnat");
         if (!Empty(c[3]) && previousRows.Any(p => p[0].Trim().Equals(c[0].Trim(), StringComparison.OrdinalIgnoreCase) && p[3].Trim().Equals(c[3].Trim(), StringComparison.OrdinalIgnoreCase)))
             Warn($"persoana „{c[0]}” are același nivel înregistrat de mai multe ori");
         return m;

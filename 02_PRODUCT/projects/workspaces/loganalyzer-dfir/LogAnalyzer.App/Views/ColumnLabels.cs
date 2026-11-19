@@ -14,6 +14,7 @@ namespace LogAnalyzer.UI.Views
             ["Person"] = "Persoana", ["Accounts"] = "Conturi", ["Account"] = "Cont", ["Sids"] = "Identificatori cont (SID)",
             ["Clearance"] = "Autorizație", ["ClearanceValidFrom"] = "Autorizație valabilă de la", ["ClearanceValidTo"] = "Autorizație valabilă până la",
             ["NeedToKnow"] = "Necesitatea de a cunoaște", ["ZonesAllowed"] = "Zone permise",
+            ["LastTraining"] = "Ultima instruire", ["PledgeSigned"] = "Angajament semnat",
             ["RegistrationNumber"] = "Număr de înregistrare", ["Serial"] = "Număr de serie", ["VidPid"] = "Cod producător/produs (VID:PID)",
             ["Type"] = "Tip", ["Classification"] = "Clasificare", ["AssignedUser"] = "Utilizator", ["Zone"] = "Zonă",
             ["ValidFrom"] = "Valabil de la", ["ValidTo"] = "Valabil până la", ["Status"] = "Stare", ["Notes"] = "Observații", ["Note"] = "Observații",

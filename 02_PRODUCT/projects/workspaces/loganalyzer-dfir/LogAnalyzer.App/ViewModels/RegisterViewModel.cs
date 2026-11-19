@@ -396,11 +396,13 @@ namespace LogAnalyzer.UI.ViewModels
         private const string SimpleHint =
             "Rândurile vin de pe stație (conturile existente sau folosite pe ea); persoana completează doar ce stația nu poate ști: autorizarea (nivelul), zonele și nevoia de a cunoaște. " +
             "Persoana; Conturile: DOMENIU\\utilizator, separate prin ; sau |; Identificatorii de cont: opțional; Autorizarea: nivel NATO, UE sau național (un rând pentru fiecare abilitare; gol = fără abilitare); " +
-            "Autorizare valabilă de la / până la: aaaa-LL-zz; Necesitatea de a cunoaște: note; Zone permise: zone separate prin ; sau |. Abilitările se introduc manual; nu se deduc din nimic.";
+            "Autorizare valabilă de la / până la: aaaa-LL-zz; Necesitatea de a cunoaște: note; Zone permise: zone separate prin ; sau |; " +
+            "Ultima instruire și Angajament semnat: aaaa-LL-zz (opționale; verificarea U07 din control le cere). Abilitările se introduc manual; nu se deduc din nimic.";
 
         private const string ExpertHint =
             "Rândurile vin de pe stație (conturile existente sau folosite pe ea); persoana completează doar ce stația nu poate ști: autorizația (nivelul), zonele și nevoia de a cunoaște. " +
             "Persoana (Person); Conturile (Accounts): DOMENIU\\utilizator, separate prin ; sau |; Identificatorii de cont (Sids): opțional; Autorizația (Clearance): nivel NATO, UE sau național (un rând pentru fiecare abilitare; gol = fără abilitare); " +
-            "Autorizație valabilă de la / până la (ClearanceValidFrom/To): aaaa-LL-zz; Necesitatea de a cunoaște (NeedToKnow): note; Zone permise (ZonesAllowed): zone separate prin ; sau |. Abilitările se introduc manual; nu se deduc din nimic.";
+            "Autorizație valabilă de la / până la (ClearanceValidFrom/To): aaaa-LL-zz; Necesitatea de a cunoaște (NeedToKnow): note; Zone permise (ZonesAllowed): zone separate prin ; sau |; " +
+            "Ultima instruire (LastTraining) și Angajament semnat (PledgeSigned): aaaa-LL-zz (opționale; verificarea U07 din control le cere). Abilitările se introduc manual; nu se deduc din nimic.";
     }
 }
