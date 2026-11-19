@@ -1608,3 +1608,6 @@
   1393, UI 370 (1 skipped), Edition 45, exit 0. RESIDUALS: older builds ALREADY deployed overwrite 1.1 files (drop the 2 columns) - do not downgrade;
   domain\user matched by user part (as Wp14); control date UTC vs local row validation (00:00-03:00 off by one day); one expired + one no-clearance row
   = NECONFORM (undocumented). PLANNER #10 DONE (items 1-7; on-screen check of new windows still open). Next: read the DFIR workflow conclusion explicitly.
+- 2026-11-19 (claude, hg585) DFIR CI of 95d6fd119: first run failed only on HeadWitnessTests turnstile timing (5.3 s, class already alone), rerun SUCCESS.
+  Bound aligned with the design and with the held-turnstile test: Wait + Slice + 3 s (7 s); the guarded starvation was 20 s. Planner #10 complete.
+  Next session: a NEW planner; on-screen check of the new windows (UIA driver) is the first candidate.

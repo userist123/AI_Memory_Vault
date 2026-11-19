@@ -234,7 +234,10 @@ public sealed class HeadWitnessTests : IDisposable
             checks++;
         }
         Task.WaitAll(writers);
-        Assert.True(slowest < TimeSpan.FromSeconds(5), $"cea mai lentă verificare a așteptat {slowest.TotalSeconds:0.0} s");
+        // CI 2026-11-19: 5.3 s on a slow runner even when the class ran alone; the turnstile design allows Wait + one Slice (2 + 2 s), so the bound is the same
+        // as the held-turnstile test below (design + 3 s of runner slack); the starvation it guards against was 20 s
+        var bound = HashChain.Turnstile.Wait + HashChain.Turnstile.Slice + TimeSpan.FromSeconds(3);
+        Assert.True(slowest < bound, $"cea mai lentă verificare a așteptat {slowest.TotalSeconds:0.0} s (limita {bound.TotalSeconds:0} s)");
         Assert.Equal(601, new HashChain(log).Head().Seq);
     }
 
