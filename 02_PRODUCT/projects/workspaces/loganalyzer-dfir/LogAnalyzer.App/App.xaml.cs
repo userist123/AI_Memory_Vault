@@ -217,6 +217,14 @@ namespace LogAnalyzer.UI
                 Step(debugLogPath, $"Verifying license... (IsActivated: {licenseService.IsActivated()})\n");
                 // Planner #9 item 6: the licence gate of the operations reads the licence verified here (a process that never calls Configure has no licence regime).
                 LogAnalyzer.Core.Services.LicenseGate.Configure(licenseService);
+                // Planner #10 item 6: the expiry is decided with max(clock, highest time recorded in the sealed auth audit), read here BEFORE the licence check (read-only: no write, no AuthApp needed),
+                // so a clock set back past the expiry still gets the read-only start, the banner and the audit line. Unreadable memory = no floor (the later floor below still applies to the gate).
+                try
+                {
+                    if (LogAnalyzer.Dfir.Case.ClockMemory.HighestRecorded(System.IO.Path.Combine(LogAnalyzer.Dfir.Auth.AuthService.DefaultDir, LogAnalyzer.Dfir.Auth.AuthService.AuditFileName)) is { } earlyFloor)
+                    { licenseService.RaiseExpiryFloor(earlyFloor.UtcDateTime); LogAnalyzer.Core.Services.LicenseGate.RaiseClockFloor(earlyFloor.UtcDateTime); }
+                }
+                catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException) { Step(debugLogPath, $"Early clock floor for the licence not read: {ex.GetType().Name}\n"); }
                 // An EXPIRED licence that is otherwise valid (trusted signature, product, this PC, this module) starts the application READ-ONLY instead of closing it: cases are kept for years
                 // and must stay readable. Every other failure (bad signature, wrong module / hardware, malformed, missing) still goes to the activation window and then shuts down.
                 if (!licenseService.IsActivated())
@@ -224,7 +232,7 @@ namespace LogAnalyzer.UI
                     Step(debugLogPath, "License is not activated. Showing ActivationWindow...\n");
                     var activationWindow = ServiceProvider.GetRequiredService<ActivationWindow>();
                     // An expired but otherwise valid licence: the window also offers „Continuă în mod doar citire”, so renewal stays possible here.
-                    if (licenseService.ExpiredClaims is { } expiredNow) activationWindow.OfferReadOnly(expiredNow.ExpiresUtcDate);
+                    if (licenseService.ExpiredClaims is { } expiredNow) activationWindow.OfferReadOnly(expiredNow.ExpiresUtcDate, licenseService.ClockBehindFloor);
                     bool? activated = activationWindow.ShowDialog();
                     var continueReadOnly = activated != true && activationWindow.ReadOnlyChosen && licenseService.ExpiredClaims is not null;
                     Step(debugLogPath, $"ActivationWindow ShowDialog returned: {activated}\n");

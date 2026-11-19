@@ -39,10 +39,10 @@ namespace LogAnalyzer.UI.Views
         public bool ReadOnlyChosen { get; private set; }
 
         /// <summary>Planner #9 item 6: the licence expired but is otherwise valid; the window still renews it and also offers the read-only start.</summary>
-        public void OfferReadOnly(DateTime expired)
+        public void OfferReadOnly(DateTime expired, bool clockBehind = false)
         {
             BtnReadOnly.Visibility = Visibility.Visible;
-            ShowError($"Licența a expirat la {expired:yyyy-MM-dd}. Activați o licență nouă sau continuați în mod doar citire (cazurile, rapoartele și registrele se pot citi; nu se colectează și nu se scrie nimic).");
+            ShowError($"Licența a expirat la {expired:yyyy-MM-dd}" + (clockBehind ? " (ceasul stației este în urmă față de ultima oră înregistrată; expirarea se măsoară față de aceasta)" : "") + ". Activați o licență nouă sau continuați în mod doar citire (cazurile, rapoartele și registrele se pot citi; nu se colectează și nu se scrie nimic).");
         }
 
         private void ReadOnly_Click(object sender, RoutedEventArgs e) { ReadOnlyChosen = true; DialogResult = false; }

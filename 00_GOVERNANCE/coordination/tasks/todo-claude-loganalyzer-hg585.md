@@ -1579,3 +1579,13 @@
   Expander + "Tipărește" (RegisterReportPdf, pdf-register-copii-siguranta). EDITIONS row checked by script against ControlApplicability (same shape as
   S07, which passed CI). MATRICE #30 -> PARȚIAL, header 107. Tests BackupRegisterTests (25) + gate/print tests; red: age > -> >= fails 2. Suites: App 1346,
   UI 370 (1 skipped), Edition 45, exit 0. Next: read CI once; items 4 (users training/pledge + U07, risky) and 6 (rolled-back clock read-only start, risky).
+- 2026-11-19 (claude, hg585) PLANNER #10 ITEM 6 DONE (RISKY; vault-worker + independent review APPROVE, 4 LOW; L2 fixed). Option (a): App.xaml.cs reads
+  ClockMemory.HighestRecorded(AuthService.DefaultDir\auth_audit.jsonl) right after LicenseGate.Configure, BEFORE the licence check, and raises
+  LicenseService.RaiseExpiryFloor + LicenseGate.RaiseClockFloor; LicenseService.EffectiveNow() = max(UtcNow, floor) for the expiry comparison only
+  (CheckSaved, CurrentLicense, ValidateAndSaveKey). A licence valid by the clock but expired by the floor goes the normal Expired path (activation window
+  with "Continuă în mod doar citire", banner, licence.read_only_start); tampered / wrong HW / wrong module never reach ExpiredClaims (module re-checked).
+  Banner/activation note "ceasul stației este în urmă…", only beyond a 2-minute tolerance (L2). Tests LicenseGateTests +4 (red: EffectiveNow = UtcNow ->
+  floor test fails). Suites: App 1350, UI 370 (1 skipped), Edition 45, exit 0. NOT FIXED (LOW, recorded): L1 IsActivated() before the floor leaves
+  VerifiedClaims and ExpiredClaims both set (gate still refuses; clearing VerifiedClaims would change R2b mid-session semantics); L3 a renewal refused
+  against the floor shows the generic "Licența a expirat"; L4 source-order test does not check the path equals AuthApp.Service.AuditPath. Floor read is
+  unverified (planted far-future clock.seen forces read-only = fail-closed DoS, already true for the gate floor). Next: read CI; item 4 (users register).

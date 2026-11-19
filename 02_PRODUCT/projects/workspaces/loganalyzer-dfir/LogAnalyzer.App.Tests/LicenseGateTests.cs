@@ -437,6 +437,63 @@ public sealed class LicenseGateTests : IDisposable
         Assert.False(LicenseGate.Require(LicenseFeatures.CaseLocal, out _));
     }
 
+    private static readonly DateTime Feb2099 = new(2099, 2, 1, 0, 0, 0, DateTimeKind.Utc);
+
+    [Fact]
+    public void A_licence_valid_by_the_clock_but_expired_by_the_recorded_floor_is_the_read_only_start_at_CheckSaved()
+    {
+        File.WriteAllText(LicFile, Issue(DateTime.UtcNow.Date.AddDays(10)));   // valid by the real clock
+        var control = Service();
+        Assert.Equal(LicenseCheck.Valid, control.CheckSaved());                // no floor: unchanged
+        Assert.Null(control.ExpiredClaims);
+        Assert.False(control.ClockBehindFloor);
+
+        var svc = Service();
+        svc.RaiseExpiryFloor(DateTime.UtcNow.Date.AddDays(30));                // the station recorded a later time
+        Assert.Equal(LicenseCheck.Expired, svc.CheckSaved());
+        Assert.False(svc.IsActivated());
+        Assert.NotNull(svc.ExpiredClaims);                                     // the activation window offers read-only
+        Assert.True(svc.ClockBehindFloor);
+        svc.RaiseExpiryFloor(new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc));   // only raises
+        Assert.Equal(LicenseCheck.Expired, svc.CheckSaved());
+    }
+
+    [Fact]
+    public void The_floor_never_makes_a_tampered_wrong_machine_or_wrong_module_licence_read_only()
+    {
+        var good = Issue(DateTime.UtcNow.Date.AddDays(10));
+        foreach (var (text, hw, p) in new[] { (Tamper(good, "Unitatea X", "Unitatea Y"), Hwid, StationPosture.Standalone), (good, "0000000000000000", StationPosture.Standalone), (good, Hwid, StationPosture.Internet) })
+        {
+            File.WriteAllText(LicFile, text);
+            var svc = Service(p, hw);
+            svc.RaiseExpiryFloor(Feb2099);
+            Assert.NotEqual(LicenseCheck.Valid, svc.CheckSaved());
+            Assert.Null(svc.ExpiredClaims);
+        }
+    }
+
+    [Fact]
+    public void The_start_up_reads_the_floor_before_the_licence_check_and_tells_that_the_clock_is_behind()
+    {
+        var app = Src("LogAnalyzer.App", "App.xaml.cs");
+        var floor = app.IndexOf("licenseService.RaiseExpiryFloor(", StringComparison.Ordinal);
+        Assert.True(floor > 0);
+        Assert.True(floor < app.IndexOf("if (!licenseService.IsActivated())", StringComparison.Ordinal));
+        Assert.True(floor < app.IndexOf("AuthApp.Initialize()", StringComparison.Ordinal));   // read-only read of the audit file, before AuthApp exists
+        Assert.Contains("licenseService.ClockBehindFloor", app);
+        Assert.Contains("ceasul stației este în urmă față de ultima oră înregistrată", Src("LogAnalyzer.Core", "Services", "LicenseGate.cs"));
+        Assert.Contains("ceasul stației este în urmă față de ultima oră înregistrată", Src("LogAnalyzer.App", "Views", "ActivationWindow.xaml.cs"));
+    }
+
+    [Fact]
+    public void The_gate_banner_says_the_expiry_is_measured_against_the_recorded_time_only_when_the_clock_is_behind()
+    {
+        Start(Issue(Past), now: () => new DateTime(2098, 12, 1, 0, 0, 0, DateTimeKind.Utc));
+        Assert.DoesNotContain("în urmă", LicenseGate.ReadOnlyBanner!);
+        LicenseGate.RaiseClockFloor(Feb2099);
+        Assert.Contains("ceasul stației este în urmă față de ultima oră înregistrată", LicenseGate.ReadOnlyBanner!);
+    }
+
     public static IEnumerable<object[]> GatedOperations()
     {
         const string Req = "LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.";

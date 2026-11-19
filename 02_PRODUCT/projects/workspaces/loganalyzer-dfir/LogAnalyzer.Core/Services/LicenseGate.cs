@@ -66,7 +66,9 @@ namespace LogAnalyzer.Core.Services
         public static bool IsReadOnly => ReadOnlyClaims() is not null;
 
         /// <summary>„Licență expirată — mod doar citire (data expirării …)”; null when the licence is not expired.</summary>
-        public static string? ReadOnlyBanner => ReadOnlyClaims() is { } c ? $"Licență expirată — mod doar citire (data expirării {Day(c.ExpiresUtcDate)})" : null;
+        public static string? ReadOnlyBanner => ReadOnlyClaims() is { } c ? $"Licență expirată — mod doar citire (data expirării {Day(c.ExpiresUtcDate)})" + (ClockBehind() ? " — ceasul stației este în urmă față de ultima oră înregistrată; expirarea se măsoară față de aceasta" : "") : null;
+
+        private static bool ClockBehind() { lock (Sync) { return _seenFloor > DateTime.MinValue && _utcNow() < _seenFloor - LicenseService.ClockBehindTolerance; } }   // review L2: tolerance
 
         /// <summary>
         /// True when the verified licence grants <paramref name="capability"/> now. Otherwise false, with <paramref name="message"/> (Romanian) for the status line, and the

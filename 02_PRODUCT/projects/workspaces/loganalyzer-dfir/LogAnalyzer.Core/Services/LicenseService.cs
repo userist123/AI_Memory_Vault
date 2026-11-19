@@ -61,6 +61,25 @@ namespace LogAnalyzer.Core.Services
         private readonly Func<string> _hardwareId;
         private readonly StationPosture? _module;
         private LicenseClaims? _savedClaims;
+        private DateTime _expiryFloorUtc = DateTime.MinValue;
+
+        /// <summary>
+        /// Planner #10 item 6: the highest time the station has recorded (read from the sealed audit BEFORE the start-up licence check). The expiry comparison of this service uses
+        /// max(UtcNow, this), so a clock set back past the expiry date does not skip the read-only start. It only ever raises the effective time (never lowers it) and is used for the
+        /// expiry comparison only: signature, product, hardware and module checks are untouched.
+        /// </summary>
+        public void RaiseExpiryFloor(DateTime seenUtc) { if (seenUtc > _expiryFloorUtc) _expiryFloorUtc = seenUtc; }
+
+        /// <summary>The floor of <see cref="RaiseExpiryFloor"/>; <see cref="DateTime.MinValue"/> when none.</summary>
+        public DateTime ExpiryFloorUtc => _expiryFloorUtc;
+
+        /// <summary>True when the clock is behind the recorded floor (the expiry is then measured against the floor).</summary>
+        public bool ClockBehindFloor => _expiryFloorUtc > DateTime.MinValue && DateTime.UtcNow < _expiryFloorUtc - ClockBehindTolerance;
+
+        /// <summary>Review L2: a small clock step back (NTP) is not reported as "ceasul este în urmă" (same tolerance as ClockMemoryCheck).</summary>
+        public static readonly TimeSpan ClockBehindTolerance = TimeSpan.FromMinutes(2);
+
+        private DateTime EffectiveNow() { var n = DateTime.UtcNow; return n > _expiryFloorUtc ? n : _expiryFloorUtc; }
 
         /// <summary>Production: public keys compiled into this assembly, license.lic next to the executable, hardware id of this PC.</summary>
         public LicenseService() : this(EmbeddedPublicKeys(), null, null) { }
@@ -289,7 +308,7 @@ namespace LogAnalyzer.Core.Services
             try
             {
                 if (!File.Exists(_licenseFilePath) || TryHardwareId() is not { } hw) return _savedClaims = null;
-                var r = Check(hw, File.ReadAllText(_licenseFilePath), DateTime.UtcNow, out var c);
+                var r = Check(hw, File.ReadAllText(_licenseFilePath), EffectiveNow(), out var c);
                 return _savedClaims = r == LicenseCheck.Valid ? c : null;
             }
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException) { return _savedClaims = null; }
@@ -355,7 +374,7 @@ namespace LogAnalyzer.Core.Services
         public bool ValidateAndSaveKey(string fullInput, out LicenseCheck result)
         {
             if (TryHardwareId() is not { } hw) { result = LicenseCheck.HardwareIdUnavailable; return false; }
-            result = Check(hw, fullInput, DateTime.UtcNow, out var claims);
+            result = Check(hw, fullInput, EffectiveNow(), out var claims);
             LastClaims = claims;
             if (result != LicenseCheck.Valid) return false;
             try { File.WriteAllText(_licenseFilePath, fullInput.Trim()); _savedClaims = null; VerifiedClaims = claims; ExpiredClaims = null; return true; }
@@ -372,7 +391,7 @@ namespace LogAnalyzer.Core.Services
             {
                 if (!File.Exists(_licenseFilePath)) return LicenseCheck.Malformed;
                 if (TryHardwareId() is not { } hw) return LicenseCheck.HardwareIdUnavailable;
-                var r = Check(hw, File.ReadAllText(_licenseFilePath), DateTime.UtcNow, out var claims);
+                var r = Check(hw, File.ReadAllText(_licenseFilePath), EffectiveNow(), out var claims);
                 if (r == LicenseCheck.Valid) { VerifiedClaims = claims; ExpiredClaims = null; }
                 // read-only state (planner #9 item 6): ONLY an expired licence whose signature, product and hardware passed (Check orders them before expiry) and whose module is this build's
                 else ExpiredClaims = r == LicenseCheck.Expired && claims is not null && string.Equals(claims.Module, CompiledModule, StringComparison.Ordinal) ? claims : null;
