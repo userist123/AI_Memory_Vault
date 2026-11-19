@@ -1,0 +1,1 @@
+{"model": "BAAI/bge-reranker-v2-m3", "revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e", "device": "cpu", "fp16": false, "cases": 5, "max_length": 512, "load_seconds": 3.63, "by_k": {"50": {"rerank_ms_p50": 32216.7, "rerank_ms_p95": 34613.8, "rerank_ms_max": 34921.6, "pairs": 250, "pairs_over_max_length": 2}}, "torch": "2.11.0+cu128"}
