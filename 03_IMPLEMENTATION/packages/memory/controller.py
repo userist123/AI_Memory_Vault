@@ -10,6 +10,7 @@ from datetime import datetime, timezone, timedelta
 # Core imports
 import hashlib
 import threading
+import time
 from .authorizer import Authorizer, DefaultAuthorizer, Principal, Operation
 from .validation.schema import validate_frontmatter
 from .validation.provenance import validate_provenance
@@ -231,8 +232,13 @@ class MemoryController:
         enable_global_workspace: bool = False,
         enable_reasoning: bool = False,
         enable_executive: bool = False,
+        reranker: Any = None,
     ):
         self.storage = storage
+        #: Cross-encoder reranker (retrieval/reranker.py). None = OFF, the
+        #: production default; controller_factory sets it only when
+        #: AI_MEMORY_VAULT_RERANKER_URL is configured.
+        self.reranker = reranker
         self.authorizer = authorizer or DefaultAuthorizer()
         self.cache = Cache()
         self.supersession_enforcer = SupersessionEnforcer(self.storage)
@@ -294,6 +300,44 @@ class MemoryController:
         #: as every explicit caller-supplied filter). Off by default, per
         #: requirement 3. See CLASSIFIER_FILTER_ARMS and RetrievalEngine.retrieve().
         self.classifier_filter_arm = classifier_filter_arm
+
+    def _rerank_fused(self, query: str, notes: List[Dict[str, Any]], fused_score_map: Dict[str, float],
+                      candidate_trace: Dict[str, Any]) -> Dict[str, float]:
+        """Reorder the top-K candidates by the cross-encoder; fail closed to fused order.
+
+        Only ``notes`` (already gated by storage.query and the classifier arm)
+        are sent or reordered, so no note can enter that production would not
+        have ranked. The top K by the production key (fused_score, id) get
+        scores ``RERANK_SCORE_BASE - position``; every other note keeps its
+        fused score (< 1), so it stays below and in production order.
+        """
+        from retrieval.reranker import DEFAULT_RERANK_K, RERANK_SCORE_BASE, rerank_text, validate_scores
+        k = int(getattr(self.reranker, 'k', DEFAULT_RERANK_K) or DEFAULT_RERANK_K)
+        by_id = {n.get('id'): n for n in notes if n.get('id')}
+        top_ids = sorted(by_id, key=lambda i: (fused_score_map.get(i, 0.0), i), reverse=True)[:k]
+        info: Dict[str, Any] = {'k': k, 'candidates': len(top_ids)}
+        if not top_ids:
+            info['status'] = 'no_candidates'
+            candidate_trace['reranker'] = info
+            return fused_score_map
+        started = time.perf_counter()
+        try:
+            scores = validate_scores(
+                self.reranker.score(query, [rerank_text(by_id[i]) for i in top_ids]), len(top_ids))
+        except Exception as exc:  # noqa: BLE001 - any reranker failure keeps the measured production order
+            info.update(status='error', error=type(exc).__name__,
+                        ms=round((time.perf_counter() - started) * 1000.0, 1))
+            candidate_trace['reranker'] = info
+            return fused_score_map
+        order = sorted(range(len(top_ids)), key=lambda j: (-scores[j], j))
+        reranked = dict(fused_score_map)
+        for pos, j in enumerate(order):
+            reranked[top_ids[j]] = RERANK_SCORE_BASE - pos
+        info.update(status='ok', model=str(getattr(self.reranker, 'model', 'unknown')),
+                    ms=round((time.perf_counter() - started) * 1000.0, 1),
+                    moved=sum(1 for pos, j in enumerate(order) if j != pos))
+        candidate_trace['reranker'] = info
+        return reranked
 
     # The cognitive-core classes are imported where they are built, not at module level:
     # `executive`, `reasoning`, `recall`, ... import this module at their top, so any
@@ -830,6 +874,9 @@ class MemoryController:
 
             candidate_trace: Dict[str, Any] = {}
             candidate_trace['agent_lifecycle_floor_applied'] = agent_floor_applied
+            candidate_trace['reranker'] = {
+                'status': 'disabled' if self.reranker is None else 'not_applicable',
+            }
             candidate_trace['lifecycles_requested'] = [
                 getattr(l, 'value', str(l)) for l in (lifecycles or [])
             ]
@@ -858,8 +905,12 @@ class MemoryController:
             ):
                 from retrieval.context.retrieval import CLASSIFIER_FILTER_ARM_BOOST
                 active_classifier_filter_arm = CLASSIFIER_FILTER_ARM_BOOST
+            # With a reranker the retrieval cache is bypassed (query_fp=None
+            # disables both its read and its write): a hit stores only the
+            # head of the pre-rerank order and would serve it unreranked.
             notes = self.retrieval_engine.retrieve(
-                classified, principal, query_fp, disclosure_level, budget,
+                classified, principal, None if self.reranker is not None else query_fp,
+                disclosure_level, budget,
                 offset=offset, query=sanitized, trace_sink=candidate_trace,
                 classifier_filter_arm=active_classifier_filter_arm,
             )
@@ -1041,6 +1092,8 @@ class MemoryController:
                         for e in (candidate_trace.get('fused_ranking') or [])
                         if isinstance(e, dict) and e.get('id')
                     }
+                    if self.reranker is not None and active_ranking_arm == RANKING_ARM_FUSED_SCORE:
+                        fused_score_map = self._rerank_fused(sanitized, notes, fused_score_map, candidate_trace)
                     components_map = {
                         c['id']: c for c in self.scorer.score_components(sanitized, notes) if c.get('id')
                     }
