@@ -17,6 +17,23 @@
 | P2 | 4 | 28 | 13 | 4 | 49 |
 | P3 | 2 | 28 | 12 | 3 | 45 |
 
+### Actualizare 2026-11-19 — rânduri depășite de cod (verificate în cod la commitul 44dadad51)
+
+Tabelul de mai sus și corpul documentului sunt analiza din 2026-10-08. Rândurile de mai jos s-au schimbat de atunci; numărătoarea P1/P2/P3 nu a fost refăcută.
+
+| Rând | Ce spunea | Starea în cod (2026-11-19) |
+|---|---|---|
+| AUD-05 | lipsește semnarea rapoartelor | Există semnătura PAdES a ofițerului cu certificat calificat (`LogAnalyzer.App/Services/OfficerCms.cs`, `OfficerFlows.cs`); profilul PAdES rămâne decizia proprietarului. |
+| CRY-02 | sare (salt) fixă în cod | Constanta `INFOSEC_ROMANIA_SOC_2026_SECURE_KEY` nu mai există în cod. |
+| HOST-03 | lansare `powershell -ExecutionPolicy Bypass` | Nu mai există o astfel de lansare; textul apare doar într-un comentariu al regulilor de detecție (`LiveSecurityMonitoringEngine.cs`). |
+| HOST-04 | manifest `highestAvailable` | Manifestul activ cere `requireAdministrator` (`LogAnalyzer.App/app.manifest`). |
+| NET-03 | `--mode=` / `LogAnalyzer.mode` relaxează modul | Ignorate; ediția clasificată este mereu izolată (`App.xaml.cs`, comentariul de la detecția modului; `EditionPolicy.cs`). |
+| NET-06 | receptorul syslog ascultă pe toate interfețele | Ascultă doar pe adresa configurată; `Any`/`IPv6Any`/broadcast și adresele care nu sunt ale stației sunt refuzate (`LogAnalyzer.Connectors/Collection/UdpSyslogReceiver.cs`). |
+| ID-02 / AC-02 | fără autentificare proprie, fără roluri | Autentificare proprie (card + PIN; parolă doar pentru administratorul principal) și roluri Operator / Administrator (`LogAnalyzer.Dfir.Core/Auth/AuthService.cs`, `AuthModels.cs`), audit sigilat. |
+| ID-03 | fără notificare de utilizare | PARȚIAL: notificare din profil sau implicită, acceptare explicită, `notice.accepted` în auditul sigilat (2026-11-19); textul oficial îl dă ofițerul de securitate. |
+| MRK-01..03 | fără marcaj | PARȚIAL: marcaj introdus manual, neverificat, pe fiecare pagină a rapoartelor de investigație, verificări, confruntare, incident, control, transferuri și a cererii de înregistrare a ofițerului (2026-11-19); nu este marcaj pe paragraf. |
+| Licențiere | verificări doar la navigare | Drepturile licenței se verifică în servicii (`LicenseGate`); licența expirată, altfel validă, deschide aplicația doar pentru citire (2026-11-19). |
+
 ### Primele 10 blocaje pentru acreditare
 
 1. **Nu există lanț de integritate al livrabilului** — executabil nesemnat, fără manifest de hash-uri, fără SBOM, fără build reproductibil, DLL-uri native auto-extrase (SW-01..SW-03; HG 309-311, 318). *Actualizare 2026-11-18: pachetul fiecărei ediții conține acum SBOM-ul CycloneDX și `SHA256SUMS` (SW-03); bibliotecile native stau lângă executabil, iar manifestul lor este verificat la pornire (auditul de securitate #5). Rămân deschise semnarea Authenticode și semnarea manifestului.*

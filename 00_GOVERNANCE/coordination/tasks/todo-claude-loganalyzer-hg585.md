@@ -1558,3 +1558,16 @@
   footer (empty -> "fără marcaj introdus"); TransferViewModel passes the confirmed live scope's marking (CurrentMarking) instead of ""; OfficerRequestPdf
   takes the control page's MarkingLevel (header, footer, signature page). Tests App.Tests TransferMarkingTests (3; 2 fail with the old footer rule).
   Suites: App 1310, UI 370 (1 skipped), Edition 45, exit 0. Next: item 5 (witness leftovers, low), item 7 docs, then items 2-3 (worker).
+- 2026-11-19 (claude, hg585) PLANNER #10 ITEM 2 DONE (vault-worker, medium, not Opus-reviewed: print-only + gated): RegisterReportPdf prints any IRegisterData
+  (landscape, marking header+footer, labels via ColumnLabels.For, optional Date period, file SHA-256 + "matches last audit entry" + chain status, repeated
+  table header, wrapped cells, Întocmit/Verificat/Aprobat). RegisterViewModel.PrintCommand ("Tipărește", CanPrint true only for interventions): first
+  statement LicenseGate.Require(ReportPv), ExportAudit "pdf-register-interventii", SignIfConfigured. Tests RegisterReportPdfTests (6; red: 2 fail with
+  marking removed / a row skipped) + LicenseGate source list. RESIDUALS: audit match is a string check on the last "interventions" audit line; no period UI;
+  other registers CanPrint=false; one integrity test may return early without asserting if the identity cannot save registers.
+  PLANNER #10 ITEM 5 DONE (main session, low): IHeadWitness.UntrustedFolders() (FileHeadWitness: every move of this process + "<witness>.untrusted-*"
+  siblings); AuthService audits each folder once (HashSet, skips folders already named in the audit, so restarts do not repeat). Tests
+  WitnessMovedAsideAuditTests +2 (two moves = two lines; leftover folder audited once across restarts); mutation (no sibling scan + no move list): 6/7 fail.
+  PLANNER #10 ITEM 7 (docs part) DONE: HG585_ACCREDITATION_REQUIREMENTS gets a dated "Actualizare 2026-11-19" table (AUD-05, CRY-02, HOST-03/04, NET-03/06,
+  ID-02/AC-02, ID-03, MRK, licensing) with code evidence; P1/P2/P3 counts not recomputed. MATRICE header 95 -> 106 checks (A20 C6 D5 N14 P47 S8 U6).
+  On-screen check of the new windows still open. Suites: App 1319, UI 370 (1 skipped), Edition 45, exit 0. Next: read CI once; items 3 (backup register +
+  S09), 4 (users training/pledge + U07, risky), 6 (rolled-back clock read-only start, risky).
