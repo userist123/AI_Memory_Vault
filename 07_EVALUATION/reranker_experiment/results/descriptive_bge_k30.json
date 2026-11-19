@@ -1,0 +1,156 @@
+{
+ "n": 130,
+ "baseline_hit5": 24,
+ "arm_hit5": 57,
+ "wins": 33,
+ "losses": 0,
+ "net": 33,
+ "mcnemar_exact_p": 0.0,
+ "win_ids": [
+  "R3-008",
+  "R3-013",
+  "R3-014",
+  "R3-041",
+  "R3-043",
+  "R3-053",
+  "R3-057",
+  "R3-059",
+  "R3-061",
+  "R3-062",
+  "R3-067",
+  "R3-080",
+  "R3-085",
+  "R3-091",
+  "R3-097",
+  "R3-100",
+  "R3-101",
+  "R3-102",
+  "R3-104",
+  "R3-105",
+  "R3-106",
+  "R3-108",
+  "R3-110",
+  "R3-112",
+  "R3-114",
+  "R3-116",
+  "R3-119",
+  "R3-121",
+  "R3-122",
+  "R3-124",
+  "R3-125",
+  "R3-127",
+  "R3-128"
+ ],
+ "loss_ids": [],
+ "mrr5": {
+  "baseline": 0.1354,
+  "arm": 0.4064
+ },
+ "hit1": {
+  "baseline": 14,
+  "arm": 50
+ },
+ "hit3": {
+  "baseline": 19,
+  "arm": 55
+ },
+ "convertible_6_to_k": 38,
+ "converted": 33,
+ "strata": {
+  "all": {
+   "n": 130,
+   "base": 24,
+   "arm": 57,
+   "wins": 33,
+   "losses": 0
+  },
+  "class:conceptual": {
+   "n": 30,
+   "base": 7,
+   "arm": 24,
+   "wins": 17,
+   "losses": 0
+  },
+  "class:direct": {
+   "n": 60,
+   "base": 15,
+   "arm": 23,
+   "wins": 8,
+   "losses": 0
+  },
+  "class:multi_hop": {
+   "n": 40,
+   "base": 2,
+   "arm": 10,
+   "wins": 8,
+   "losses": 0
+  },
+  "lang:en": {
+   "n": 69,
+   "base": 19,
+   "arm": 41,
+   "wins": 22,
+   "losses": 0
+  },
+  "lang:ro": {
+   "n": 61,
+   "base": 5,
+   "arm": 16,
+   "wins": 11,
+   "losses": 0
+  }
+ },
+ "latency": {
+  "search_p95_ms": 332.1,
+  "rerank_p95_ms": 492.8,
+  "end_to_end_p95_upper_bound_ms": 824.9
+ },
+ "decision": "ADOPT",
+ "decision_inputs": {
+  "ro_net": 11,
+  "p95_ok": true
+ },
+ "controls": {
+  "shuffled_labels_net": 1,
+  "repeat_served_top5_flips": [],
+  "identity_hit5": 24,
+  "oracle_hit5": 62,
+  "identity_differs_from_baseline": 0
+ },
+ "abstain_auroc_top_score": 0.8107692307692308,
+ "new_top5_notes": 193,
+ "new_top5_not_agent_readable": [
+  "276d1940-c948-4feb-902f-bd6c74958594",
+  "4b5d72d1-dc4a-43db-b7eb-595faeef85e4",
+  "8c7d5c90-9c29-450b-b5a9-e2b2024db502",
+  "b4e88f21-7291-49fa-9481-22904c10a001",
+  "b4e88f21-7291-49fa-9481-22904c10a002",
+  "b4e88f21-7291-49fa-9481-22904c10a005",
+  "c1a01101-7291-49fa-9481-22904c10b001",
+  "c1a01101-7291-49fa-9481-22904c10b003",
+  "c1a01101-7291-49fa-9481-22904c10b004",
+  "c1a01101-7291-49fa-9481-22904c10b005",
+  "c1a01101-7291-49fa-9481-22904c10b006",
+  "c1a01101-7291-49fa-9481-22904c10d001",
+  "c1a01101-7291-49fa-9481-22904c10d002",
+  "c1a01101-7291-49fa-9481-22904c10d003"
+ ],
+ "served_fewer_than_5": {
+  "baseline": 39,
+  "arm": 28
+ },
+ "config": {
+  "served_meta": {
+   "ordering": "run",
+   "k": 30,
+   "git_head": "4ce3d982f0f0524129272ae8d9382b7a370954eb",
+   "model": "BAAI/bge-reranker-v2-m3",
+   "revision": "953dc6f6f85a1b2dbfca4c34a2796e7dde08d41e",
+   "device": "cuda",
+   "fp16": true,
+   "max_length": 512,
+   "cases": 160,
+   "run_file": "bge_fp16_r1.json"
+  }
+ }
+}
