@@ -10,12 +10,13 @@
    `controller_factory`, model server `30_SCRIPTS/retrieval/reranker_server.py`; wired path reproduces the experiment
    160/160. Review NO-GO (proxy bypass) fixed in `71e55490e` with tests.
 3. Harm check on 20 real work questions: 3 wins / 0 losses, two blind judges, kappa 0.92.
-4. Causal QA ablation preregistered (`07_EVALUATION/memory_qa_ablation/PREREGISTRATION.md`, `777f61525`), contexts frozen,
-   manipulation check passed (B 24, C 71). Answers: `memory_qa_answer.py`; judging: `memory_qa_judge.py`.
+4. Causal QA ablation (preregistered `777f61525`): PASSES_THROUGH. Correct answers A 7 / B 24 / C 52 of 130, C vs B
+   29 wins / 1 loss, judges kappa 0.95, hallucinations 3/1/0 of 30 (`07_EVALUATION/memory_qa_ablation/REPORT.md`).
 
 ## Next
-- Finish the QA ablation: answers → blind packet → two judges → score → report.
-- Delta review of the proxy fix + QA harness, then final full suite, push, PR update.
+- Owner: decide whether to run the reranker server on the PC and set `AI_MEMORY_VAULT_RERANKER_URL` (ON for agents).
+- Open research: an agent that decides when to search (not forced retrieval); multi-hop (3/40); Romanian gap;
+  human calibration of the LLM judges.
 
 ## Open owner decisions (not changed by this work)
 - `memory_get` withholds REVIEW notes whose verification is not `unverified` (e.g. `inferred`) while `search()` serves them

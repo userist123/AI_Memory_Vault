@@ -86,6 +86,14 @@ def packet() -> None:
 def labels_by_case(judge_file: Path) -> dict:
     key = json.loads((EXP / "judge_key.json").read_text(encoding="utf-8"))
     j = json.loads(judge_file.read_text(encoding="utf-8"))["judgements"]
+    abstain = {c["id"] for c in json.loads(BENCH.read_text(encoding="utf-8"))["cases"] if c["abstain"]}
+    ids = [i["pair_id"] for i in j]
+    if len(ids) != len(set(ids)):
+        raise SystemExit(f"DUPLICATE_PAIR_IDS in {judge_file.name}")
+    for item in j:
+        allowed = {"ABSTAIN", "HALLUCINATION"} if key[item["pair_id"]]["case"] in abstain             else {"CORRECT", "INCORRECT", "ABSTAIN"}
+        if item.get("label") not in allowed:
+            raise SystemExit(f"INVALID_LABEL {item['pair_id']}={item.get('label')!r} in {judge_file.name}")
     lab = {}
     for item in j:
         k = key[item["pair_id"]]
@@ -149,8 +157,11 @@ def score(j1: Path, j2: Path) -> None:
             strata[key]["n"] += 1
             for c in "ABC":
                 strata[key][c] += correct(l1, i, c)
-    recall = {c: round(sum(v for v in (fact_recall(answers[i][c]["answer"], cases[i]["required_facts"])
-                                        for i in ans_ids) if not math.isnan(v)) / len(ans_ids), 4) for c in "ABC"}
+    recall = {}
+    for c in "ABC":
+        vals = [v for v in (fact_recall(answers[i][c]["answer"], cases[i]["required_facts"]) for i in ans_ids)
+                if not math.isnan(v)]
+        recall[c] = round(sum(vals) / len(vals), 4) if vals else None
     res.update({"primary": prim, "ro_contrast": {k2: v for k2, v in ro_c.items() if not k2.endswith("ids")},
                 "kappa_judges_BC_correct": round(k, 4), "rule": rule, "verdict": verdict,
                 "distinct_gold_notes_in_discordant": len(gold_notes), "gold_served": served,

@@ -45,7 +45,7 @@ A persistent external memory substrate for AI agents: provenance-aware memory, s
 | Persistent agent memory | resumable `CURRENT.md` state under `00_GOVERNANCE/coordination/agents/` | **IMPLEMENTED** |
 | Planning Influence | V3 simulation without oracle leakage, contradiction veto with absolute priority, baseline benchmark derived by simulation | **VALIDATED AS A SIMULATION — NOT AS A REAL AGENT** |
 | Uncertainty policy | applicability + evidence strength + contradiction + verification cost contract | **MEASURED IN THE V3 SIMULATION** |
-| Model-backed cognitive influence | paired causal MVE on real model runtime | **NOT YET PROVEN** |
+| Model-backed cognitive influence | paired causal ablation on a real local model (QA on benchmark v3, forced retrieval): reranked memory 52/130 correct answers vs 24 (memory today) and 7 (no memory), 29 wins / 1 loss (`07_EVALUATION/memory_qa_ablation/`) | **SHOWN ON QA, NOT ON AN AGENT** — a reading test; an agent that decides when to search was not measured |
 | Fully closed continual learning | outcome → evidence → learning → canonical mutation loop | **PARTIAL / OPEN** |
 
 <details>
