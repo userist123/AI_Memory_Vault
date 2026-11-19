@@ -1611,3 +1611,10 @@
 - 2026-11-19 (claude, hg585) DFIR CI of 95d6fd119: first run failed only on HeadWitnessTests turnstile timing (5.3 s, class already alone), rerun SUCCESS.
   Bound aligned with the design and with the held-turnstile test: Wait + Slice + 3 s (7 s); the guarded starvation was 20 s. Planner #10 complete.
   Next session: a NEW planner; on-screen check of the new windows (UIA driver) is the first candidate.
+- 2026-11-19 (claude, hg585) ON-SCREEN CHECK (publish of a8f864a42 tree, App.Classified win-x64-singlefile, elevated robocopy into C:\Program Files\LogAnalyzer
+  Insula (R1), launched elevated, screenshots kept OUT of the repo in %TEMP%\la_screen - they show the machine name): sign-in window shows the
+  "Notificare de utilizare" box (default module text) with the checkbox "Am citit și accept condițiile de utilizare"; UIA read: "Autentificare cu card" and
+  "Autentificare cu parolă" enabled=False before ticking, True after the TogglePattern tick. VERIFIED. Not checked on screen (needs sign-in, and the owner's
+  rule forbids typing passwords; or an expired licence signed by the private key): read-only choice in the activation window, banner, intervention/backup
+  register expanders, marking field in the scope dialog. Owner (2026-11-19): the old UIA/lab scripts were moved to E: -> E:\LA-Lab\scripts (driver-ws02.ps1,
+  push-driver.ps1, vsend.ps1); an E:\D_offload\w\loganalyzer-dfir copy also exists. CI of a8f864a42: all completed checks green when read, DFIR build running.
