@@ -454,6 +454,7 @@ public sealed class LicenseGateTests : IDisposable
         foreach (var n in new[] { "private void CreateAccount()", "private void ToggleRole()", "private async Task EnrollForMeAsync()", "private async Task EnrollForSelectedAsync()", "private void ImportCa()", "private void SavePolicy()", "private void ImportDataPack()" })
             yield return S("ViewModels/AuthViewModel.cs", n, Wr);
         yield return S("ViewModels/RegisterViewModel.cs", "private void Save()", Req + "Registers");
+        yield return S("ViewModels/RegisterViewModel.cs", "private void Print()", Req + "ReportPv");
         yield return S("ViewModels/TransferViewModel.cs", "private void Register()", Req + "Registers");
         yield return S("ViewModels/StationControlViewModel.cs", "private async Task Run()", Req + "ControlStation");
         yield return S("ViewModels/StationControlViewModel.cs", "private string? GenerateReport()", Req + "ReportPv");

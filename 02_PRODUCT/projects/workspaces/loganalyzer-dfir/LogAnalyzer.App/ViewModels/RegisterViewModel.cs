@@ -43,6 +43,7 @@ namespace LogAnalyzer.UI.ViewModels
             ImportCsvCommand = new RelayCommand(ImportCsv);
             PasteCommand = new RelayCommand(Paste);
             DiscoverCommand = new AsyncRelayCommand(DiscoverAsync, () => CanEdit);
+            PrintCommand = new RelayCommand(Print);
             LoadFrom(_registerPath, startup: true);
             Services.AuthApp.SessionChanged += () => { OnPropertyChanged(nameof(AccessNotice)); OnPropertyChanged(nameof(CanEdit)); DiscoverCommand.NotifyCanExecuteChanged(); };
         }
@@ -79,6 +80,33 @@ namespace LogAnalyzer.UI.ViewModels
         public IAsyncRelayCommand DiscoverCommand { get; }
         /// <summary>False for a register with nothing to read from the station (the "Preia de pe stație" button is then hidden).</summary>
         public virtual bool HasDiscovery => true;
+
+        /// <summary>Planner #10 item 2: "Tipărește" - the register as a printed PDF (title, columns, rows, SHA-256, marking, signature lines). Off unless the register opts in.</summary>
+        public IRelayCommand PrintCommand { get; }
+        public virtual bool CanPrint => false;
+        /// <summary>The title printed on the PDF (ORNISS model wording when the register has one).</summary>
+        protected virtual string PrintTitle => _register.Title.ToUpperInvariant();
+        /// <summary>The kind written to the export audit.</summary>
+        protected virtual string PrintAuditKind => "pdf-register-" + _register.Kind;
+        private static string CurrentMarking() => LogAnalyzer.UI.Services.LiveCase.CurrentScope is { IsConfirmed: true } s ? s.Marking : "";
+
+        private void Print()
+        {
+            if (!LogAnalyzer.Core.Services.LicenseGate.Require(LogAnalyzer.Core.Services.LicenseFeatures.ReportPv, out var licenseRefusal)) { Status = licenseRefusal; return; }
+            if (!CanPrint) return;
+            var dlg = new SaveFileDialog { FileName = $"Registru_{_register.Kind}_{DateTime.Now:yyyyMMdd}.pdf", Filter = "PDF (*.pdf)|*.pdf", Title = $"Tipărește: {Title}" };
+            if (dlg.ShowDialog() != true) return;
+            Pull();
+            var snapshot = _register;
+            var header = LogAnalyzer.Dfir.Reporting.ReportHeaderProfile.Load(null, out _);
+            var integrity = LogAnalyzer.Dfir.Windows.Registers.RegisterReportPdf.Integrity(RegisterPath, snapshot);
+            if (LogAnalyzer.UI.Services.ExportAudit.Run(LogAnalyzer.UI.Services.ExportAudit.LiveCaseId, PrintAuditKind, snapshot.Cells().Count, dlg.FileName,
+                    () => LogAnalyzer.Dfir.Windows.Registers.RegisterReportPdf.Write(dlg.FileName, snapshot, header, CurrentMarking(), PrintTitle, LogAnalyzer.UI.Views.ColumnLabels.For, integrity: integrity)) is { } refused)
+            { Status = refused; return; }
+            var signLine = LogAnalyzer.Dfir.Reporting.ReportSigningSettings.Load().SignIfConfigured(dlg.FileName);
+            Status = $"Registrul a fost tipărit în {dlg.FileName}. {signLine}";
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo(dlg.FileName) { UseShellExecute = true });
+        }
 
         /// <summary>Reads the station on a background task. Returns the observed items for <see cref="MergeObserved"/>.</summary>
         protected abstract System.Collections.Generic.IReadOnlyList<object> Discover();
@@ -302,6 +330,11 @@ namespace LogAnalyzer.UI.ViewModels
 
         /// <summary>Interventions are written by people; nothing on the station can be read into this register.</summary>
         public override bool HasDiscovery => false;
+
+        /// <summary>ORNISS model, Anexa 14: the intervention register has a printed form.</summary>
+        public override bool CanPrint => true;
+        protected override string PrintTitle => "Registrul de evidență a intervențiilor hardware și software".ToUpper(System.Globalization.CultureInfo.GetCultureInfo("ro-RO"));
+        protected override string PrintAuditKind => "pdf-register-interventii";
 
         protected override System.Collections.Generic.IReadOnlyList<object> Discover() => System.Array.Empty<object>();
 
