@@ -91,3 +91,26 @@ and per language; AUROC of the top reranker score for abstain vs measurable (no 
 - The 20 work questions in `07_EVALUATION/memory_usage/` are a harm check only, not evidence of gain.
 - Design reviewed by a read-only second-opinion agent; harness reviewed by an independent reviewer before
   the labelled run.
+
+## 8. Amendment A1 (pre-score, 2026-11-19, after harness review; no labelled reranker result had been computed)
+
+Independent harness review (NO-GO) found that the baseline is what `search()` serves after the pack stage
+(`pack_builder`, egress/provenance/compression rejection, token budget), while the arm was scored on raw
+fused candidates. Production serves fewer than 5 notes in 39 of the 130 measurable cases (19 of them none),
+so the raw arm would have been credited with slots production never serves (false-ADOPT risk).
+
+Changes, frozen before scoring:
+
+1. **Both sides are served lists.** The arm is scored on what `search(Principal.AI_AGENT, query, page_size=5)`
+   serves when the reranker order is injected at the single point production ranks (the `fused_score` values in
+   the candidate trace). Harness: `30_SCRIPTS/evaluation/reranker_replay.py`. Pack building, egress and budget
+   run unchanged.
+2. **Control 1 is now strict.** The identity ordering replayed through the pipeline must equal the baseline in
+   160/160 cases. Measured before scoring: 0 of 160 differ. **Control 2:** oracle ordering through the pipeline:
+   77/130 (equals oracle@50, so the pack stage removes no gold note in the top 50).
+3. Secondary MRR/hit@1/hit@3 are computed on served lists (MRR@5), for baseline and arm alike.
+4. The analyzer asserts the confirmatory configuration (model, revision, fp16, device, K = 50, 160 cases) and
+   computes the latency condition: search p95 + rerank p95 ≤ 2000 ms (sum of p95s, an upper bound).
+5. Repeat flips are counted on served lists; any difference in the served top 5 counts as a flip.
+
+The decision rule in section 5 is unchanged.
