@@ -262,8 +262,13 @@ def search(controller, query: str, limit: int = 5, principal: Principal = Princi
         raise ValueError("query must be a non-empty string")
     limit = max(1, min(int(limit), MAX_LIMIT))
     pack = controller.search(principal, query, page_size=limit)
-    fused = {e.get("id"): e.get("fused_score") for e in (pack.get("candidate_trace") or {}).get("fused_ranking") or []
-             if isinstance(e, dict)}
+    trace = pack.get("candidate_trace") or {}
+    fused = {e.get("id"): e.get("fused_score") for e in trace.get("fused_ranking") or [] if isinstance(e, dict)}
+    # When the reranker ordered the list, show its scores: the fused score of a
+    # reranked note no longer matches the order the agent receives.
+    reranker = trace.get("reranker") or {}
+    if reranker.get("status") == "ok" and isinstance(reranker.get("scores"), dict):
+        fused.update(reranker["scores"])
     results: List[Dict[str, Any]] = []
     for item in (pack.get("results") or [])[:limit]:
         note_id = item.get("id")

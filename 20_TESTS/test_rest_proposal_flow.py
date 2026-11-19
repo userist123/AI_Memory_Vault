@@ -172,3 +172,17 @@ def test_the_jarvis_supervisor_client_authenticates_against_the_gateway(api, mon
         supervisor._request_json("/metrics")
     assert refused.value.code == 401
     assert supervisor._request_json("/status")["status"] == "online"  # the one public route
+
+
+def test_a_refused_post_with_a_body_is_answered_not_reset(api):
+    """A 401 must reach the client even when the request carried a body.
+
+    The handler answered 401 before reading the body; on Windows, closing a socket
+    with unread data sends a RST, so the client sometimes saw WinError 10053
+    instead of the 401 (seen 2026-11-19 in the full suite). The body is now read
+    before the token check.
+    """
+    big = {"content": "x" * 200_000, "type": "fact"}
+    for _ in range(15):
+        status, body = api.call("POST", "/api/v1/propose", big, token="wrong-token")
+        assert status == 401 and body["error"] == "authentication required"

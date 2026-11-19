@@ -43,6 +43,9 @@ def build_handler(model, label: str, lock: threading.Lock):
             return
 
         def do_GET(self):
+            if not self._host_ok():
+                self._send(403, {"error": "host"})
+                return
             if self.path == "/health":
                 self._send(200, {"ok": True, "model": label})
             else:

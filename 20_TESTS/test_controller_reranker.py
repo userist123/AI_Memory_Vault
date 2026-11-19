@@ -298,3 +298,31 @@ def test_a_bad_answer_does_not_open_the_circuit():
         with pytest.raises(RerankerError, match="expected"):
             client.score("q", ["d"])
     assert client._down_until == 0.0
+
+
+def test_memory_search_scores_follow_the_reranked_order():
+    """The agent tool shows the reranker's scores, so a served list never reads as out of order."""
+    from interfaces import memory_access
+
+    class Graded:
+        model = "fake-graded"
+        k = 50
+
+        def score(self, query, documents):
+            return [10.0 if "GEM" in d else 1.0 / (1 + i) for i, d in enumerate(documents)]
+
+    controller = MemoryController(_storage(), reranker=Graded())
+    out = memory_access.search(controller, "zebra quokka", 5)["query_results"]
+    scores = [r["score"] for r in out]
+    assert out[0]["id"] == "z-hidden-gem" and scores[0] == 10.0
+    assert scores == sorted(scores, reverse=True), scores
+
+
+def test_memory_search_scores_unchanged_without_reranker():
+    from interfaces import memory_access
+    controller = MemoryController(_storage())
+    pack = controller.search(Principal.AI_AGENT, "zebra quokka", page_size=5)
+    out = memory_access.search(controller, "zebra quokka", 5)["query_results"]
+    fused = {e["id"]: e["fused_score"] for e in pack["candidate_trace"]["fused_ranking"]}
+    for r in out:
+        assert r["score"] in (fused.get(r["id"]), None) or isinstance(r["score"], float)

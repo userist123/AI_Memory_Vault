@@ -333,6 +333,9 @@ class MemoryController:
         reranked = dict(fused_score_map)
         for pos, j in enumerate(order):
             reranked[top_ids[j]] = RERANK_SCORE_BASE - pos
+        # The reranker's own scores, so a tool that displays a score shows one that
+        # agrees with the served order (memory_access.search).
+        info['scores'] = {top_ids[j]: round(scores[j], 6) for j in order}
         info.update(status='ok', model=str(getattr(self.reranker, 'model', 'unknown')),
                     ms=round((time.perf_counter() - started) * 1000.0, 1),
                     moved=sum(1 for pos, j in enumerate(order) if j != pos))
