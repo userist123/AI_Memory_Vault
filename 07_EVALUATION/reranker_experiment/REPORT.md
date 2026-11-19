@@ -124,5 +124,12 @@ eranker_server.py --port 8765 --fp16
 set AI_MEMORY_VAULT_RERANKER_URL=http://127.0.0.1:8765      (then start the MCP server / CLI)
 ```
 
-The server process commits about 6.4 GB of virtual memory (CUDA context); on this PC it cannot run next to a 7B Ollama model
-while the page file sits on a nearly full drive.
+**Co-residency, measured 2026-11-19 (`results/wired_check_coresident.json`):** with `qwen2.5:7b-instruct` loaded in Ollama
+(5.0 GB, 100% GPU) and the reranker server up, VRAM is 7.4 of 8.1 GB; the wired path still serves the identical top 5 on
+160/160 queries (hit@5 71), search p95 1.07 s, rerank p95 0.74 s, and the 7B model still generates at 54–70 tokens/s
+(~2 s per answer with a 2k-token memory context). The server commits about 6.4 GB of virtual memory (CUDA context); this
+only works once the page file has room to grow (it grew from 32 to 38 GB after space was freed on its drive).
+
+The server refuses to start on a port another process already holds (`ExclusiveServer`, `SO_EXCLUSIVEADDRUSE` on Windows):
+on 2026-11-19 another session's `python -m http.server` held 8765 and the stdlib server bound the same port silently, so
+requests went to the other process (the client failed closed). Regression test in `20_TESTS/test_controller_reranker.py`.

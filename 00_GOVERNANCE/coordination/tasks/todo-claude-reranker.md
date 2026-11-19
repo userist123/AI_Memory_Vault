@@ -23,6 +23,9 @@
   (`interfaces/memory_access.py` `_review_candidate`): 16 such notes, 14 of them v3 gold. Trust-boundary change → owner.
 - Turning the reranker ON by default (it needs the GPU server; CPU is > 30 s per query).
 
+5. Co-residency verified: reranker server + qwen2.5:7b on the 8 GB GPU, wired path 160/160 identical, search p95 1.07 s.
+   Server now refuses an occupied port (another session held 8765 on 2026-11-19; use `--port 8766` if so).
+
 ## Environment
-- Reranker venv and HF cache live outside the repo (drive E:). The server commits ~6.4 GB; it cannot run next to a 7B
-  Ollama model on this PC (page file on a nearly full drive D:), so phases are run one after the other.
+- Reranker venv and HF cache live outside the repo (drive E:). The server commits ~6.4 GB; it runs next to a 7B Ollama
+  model since 24 GB were freed on D: (old folders moved to E:\D_offload with junctions, page file can grow).

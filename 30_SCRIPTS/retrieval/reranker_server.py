@@ -20,6 +20,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import socket
 import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
@@ -90,6 +91,26 @@ def build_handler(model, label: str, lock: threading.Lock):
     return Handler
 
 
+class ExclusiveServer(ThreadingHTTPServer):
+    """Refuses to start on a port another process already holds.
+
+    The stdlib default (allow_reuse_address) sets SO_REUSEADDR, which on Windows
+    lets a second socket bind the same port: the server then "starts" while the
+    other process keeps receiving the requests, note text included.
+    """
+    allow_reuse_address = False
+    daemon_threads = True
+
+    def server_bind(self):
+        if hasattr(socket, "SO_EXCLUSIVEADDRUSE"):
+            self.socket.setsockopt(socket.SOL_SOCKET, socket.SO_EXCLUSIVEADDRUSE, 1)
+        super().server_bind()
+
+
+def make_server(port: int, handler) -> ExclusiveServer:
+    return ExclusiveServer(("127.0.0.1", port), handler)
+
+
 def main() -> int:
     ap = argparse.ArgumentParser()
     ap.add_argument("--port", type=int, default=8765)
@@ -106,7 +127,7 @@ def main() -> int:
     model = CrossEncoder(args.model, revision=args.revision, device=args.device, max_length=MAX_LENGTH, **kwargs)
     model.predict([("warm", "up")])
     label = f"{args.model}@{args.revision[:12]}{'+fp16' if args.fp16 else ''}"
-    server = ThreadingHTTPServer(("127.0.0.1", args.port), build_handler(model, label, threading.Lock()))
+    server = make_server(args.port, build_handler(model, label, threading.Lock()))
     print(json.dumps({"listening": f"http://127.0.0.1:{args.port}", "model": label}), flush=True)
     server.serve_forever()
     return 0

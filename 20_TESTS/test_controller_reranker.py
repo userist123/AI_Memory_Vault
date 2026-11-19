@@ -223,3 +223,26 @@ def test_http_reranker_refuses_redirects():
     with pytest.raises(RerankerError):
         HttpReranker(f"http://127.0.0.1:{srv.server_port}", timeout=3).score("q", ["d"])
     srv.server_close()
+
+
+def test_reranker_server_refuses_a_port_already_in_use():
+    """A second process on the port must make the server fail, not silently share the port."""
+    import importlib.util
+    import socket
+    from pathlib import Path
+    path = Path(__file__).resolve().parents[1] / "30_SCRIPTS" / "retrieval" / "reranker_server.py"
+    spec = importlib.util.spec_from_file_location("reranker_server_under_test", path)
+    mod = importlib.util.module_from_spec(spec)
+    spec.loader.exec_module(mod)
+    holder = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    # Like `python -m http.server`: the occupant itself uses SO_REUSEADDR, which is
+    # what let a stdlib server bind the same port on Windows (observed 2026-11-19).
+    holder.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    holder.bind(("127.0.0.1", 0))
+    holder.listen(1)
+    port = holder.getsockname()[1]
+    try:
+        with pytest.raises(OSError):
+            mod.make_server(port, mod.build_handler(None, "x", None))
+    finally:
+        holder.close()
