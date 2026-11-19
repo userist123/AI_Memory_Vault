@@ -119,9 +119,12 @@ namespace LogAnalyzer.UI.Views
             if (_mode == SignInWindowMode.Unlock) return;
             try
             {
-                if (AuthApp.Service.SealNotRecorded is not null)
+                var warnings = new List<string>();
+                if (AuthApp.Service.SealNotRecorded is not null) warnings.Add(LogAnalyzer.Dfir.Auth.AuthService.SealNotRecordedMessage);
+                if (AuthApp.Service.WitnessMovedAside is not null) warnings.Add(LogAnalyzer.Dfir.Auth.AuthService.WitnessMovedMessage);
+                if (warnings.Count > 0)
                 {
-                    SealText.Text = LogAnalyzer.Dfir.Auth.AuthService.SealNotRecordedMessage;
+                    SealText.Text = string.Join(Environment.NewLine, warnings);
                     SealText.Visibility = Visibility.Visible;
                 }
             }

@@ -1491,3 +1491,11 @@
   EvidenceSince/AddInterrupted(mark): entries after the mark, -1 (unreadable index) falls back to the start time. Pipeline passes the mark in the 3
   catch blocks. Tests App.Tests InterruptedCollectorMarkTests (3; 2 fail with the mark ignored - verified). Suites: App 1149, UI 370 (1 skipped),
   Edition 45, exit 0; Dfir builds, suite only in CI. Next: read CI once; item 3 (witness MovedAside -> audit + admin warning).
+- 2026-11-19 (claude, hg585) PLANNER #9 ITEM 3 DONE (main session; independent review APPROVE with 1 MEDIUM + 2 LOW, all fixed): IHeadWitness.MovedAside
+  (default null; FileHeadWitness implements it). AuthService keeps the witness, probes it at construction, and after every Audit append, VerifyAudit and
+  VerifyAuditSnapshot (MEDIUM: a move found by a read path only was lost if the process ended before the next operation) writes ONE sealed line
+  auth.witness_moved_aside (folder path in detail) per folder: check-and-set under a lock (LOW race -> duplicate line), re-entrancy flag, _reportedMove set
+  only after the write (LOW: a failed write is retried). WitnessMovedAside / WitnessMoveNotRecorded; sign-in window shows WitnessMovedMessage with the
+  seal warning; startup log line. Tests App.Tests WitnessMovedAsideAuditTests (5; 3 fail with reporting disabled - verified). Suites: App 1154, UI 370
+  (1 skipped), Edition 45, exit 0. RESIDUALS: FileHeadWitness remembers only the last move (two moves between checks -> only the second audited);
+  leftover witness.untrusted-* folders from before this build are not scanned. Next: read CI once; planner #9 item 4 (approved-software hash check).

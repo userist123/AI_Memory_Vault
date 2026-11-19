@@ -235,6 +235,9 @@ namespace LogAnalyzer.UI
                 AuthApp.Initialize();
                 // Independent review #5: the audit head was sealed but the record of it could not be appended (shown again at sign-in).
                 if (AuthApp.Service.SealNotRecorded is { } sealIssue) Step(debugLogPath, $"Auth audit seal not recorded: {sealIssue}\n");
+                // Planner #9 item 3: the anti-rollback witness folder was not protected and was moved aside (audited, shown again at sign-in).
+                if (AuthApp.Service.WitnessMovedAside is { } moved)
+                    Step(debugLogPath, $"Anti-rollback witness folder moved aside: {moved}" + (AuthApp.Service.WitnessMoveNotRecorded is { } wm ? $" (not audited: {wm})" : "") + "\n");
                 // Security audit #18: the accepted signed policy's version goes into the hash-chained auth audit (anti-rollback mark).
                 if (startup.PolicyVersion > 0)
                 {

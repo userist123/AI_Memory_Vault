@@ -47,14 +47,66 @@ public sealed partial class AuthService
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
         Trust = new CertificateTrust(TrustDir, CrlDir, () => Policy.MissingCrl, _clock);
         _security = security ?? (dir is null && OperatingSystem.IsWindows() ? AuthStoreSecurity.Windows() : AuthStoreSecurity.None);
-        if (!ReferenceEquals(_security, AuthStoreSecurity.None)) SealAudit();
+        if (!ReferenceEquals(_security, AuthStoreSecurity.None)) { SealAudit(); ReportWitnessMove(probe: true); }
     }
+
+    private LogAnalyzer.Dfir.Case.IHeadWitness? _witness;
+    private string? _reportedMove;
+
+    public const string WitnessMovedMessage =
+        "Folderul martorului anti-revenire nu era protejat și a fost mutat deoparte; martorul a fost refăcut. O înlocuire a jurnalului cu o copie mai veche, " +
+        "făcută înainte, nu mai poate fi detectată. Verificați cine a avut acces la stație.";
+
+    /// <summary>
+    /// Planner #9 item 3: the folder the anti-rollback witness moved aside because it was not protected (null = none). Moving it aside silently resets the
+    /// witness, so it is written to the sealed auth audit (auth.witness_moved_aside, once per folder) and shown at sign-in.
+    /// </summary>
+    public string? WitnessMovedAside { get; private set; }
+
+    /// <summary>Non-null when the move-aside could not be written to the audit (the reason, for the startup log).</summary>
+    public string? WitnessMoveNotRecorded { get; private set; }
+
+    /// <summary>Audits a witness folder moved aside, once per folder. <paramref name="probe"/>: read the witness first, so the folder is checked at start.</summary>
+    private void ReportWitnessMove(bool probe = false)
+    {
+        if (_witness is null) return;
+        if (probe)
+        {
+            try { _witness.Read(); }
+            // an unreadable witness is reported by the chain verification (Broken), not here
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Security.SecurityException or InvalidOperationException) { }
+        }
+        // review 2026-11-19: Audit() runs on several threads (collector sink, session context) -> check-and-set under a lock, so one move is one line;
+        // Monitor is re-entrant on the same thread, so the nested Audit() of the line below is stopped by _reportingMove.
+        lock (_witnessGate)
+        {
+            if (_reportingMove || _witness.MovedAside is not { } aside || aside == _reportedMove) return;
+            WitnessMovedAside = aside;
+            _reportingMove = true;
+            try
+            {
+                Audit("auth.witness_moved_aside", "aplicație", "", "warning", "witness_untrusted",
+                      $"folderul martorului anti-revenire nu era protejat (Administrators/SYSTEM) și a fost mutat deoparte în {aside}, cu conținutul păstrat; martorul a fost refăcut");
+                _reportedMove = aside;              // only once written: a failed write is retried at the next audited operation or verification
+                WitnessMoveNotRecorded = null;
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
+            {
+                WitnessMoveNotRecorded = $"{ex.GetType().Name}: {ex.Message}";
+            }
+            finally { _reportingMove = false; }
+        }
+    }
+
+    private readonly object _witnessGate = new();
+    private bool _reportingMove;
 
     /// <summary>Registers the audit head seal; when the key was just created, an existing intact chain is sealed once (trusted on first use) and that is audited.</summary>
     private void SealAudit()
     {
         var (key, created) = _security.ChainKey(Dir);
-        HashChain.RegisterHeadSeal(AuditPath, key, _security.Witness(AuditPath));
+        _witness = _security.Witness(AuditPath);
+        HashChain.RegisterHeadSeal(AuditPath, key, _witness);
         if (key is null || !created || !File.Exists(AuditPath)) return;
         var chain = new HashChain(AuditPath);
         if (File.Exists(HashChain.HeadPath(AuditPath)) || chain.Head().Seq == 0) return;
@@ -124,7 +176,12 @@ public sealed partial class AuthService
     public IReadOnlyList<AuthAccount> Accounts() => ReadAccounts()?.Accounts ?? [];
     public AuthAccount? Find(string account) => ReadAccounts()?.Accounts.FirstOrDefault(a => SameName(a.Account, account));
     public AuthAccount? PrimaryAdmin => ReadAccounts()?.Accounts.FirstOrDefault(a => a.IsPrimaryAdmin);
-    public ChainVerification VerifyAudit() => new HashChain(AuditPath).Verify();
+    public ChainVerification VerifyAudit()
+    {
+        var r = new HashChain(AuditPath).Verify();
+        ReportWitnessMove();   // review 2026-11-19: reading the witness can move its folder aside; audited now, not only at the next operation
+        return r;
+    }
 
     /// <summary>
     /// Reads the audit file ONCE and verifies the chain on those bytes; the caller reads the records it needs from the same <paramref name="content"/>, so the
@@ -133,6 +190,7 @@ public sealed partial class AuthService
     public ChainVerification VerifyAuditSnapshot(out byte[] content)
     {
         var r = new HashChain(AuditPath).ReadVerified();   // bytes and sealed head from one snapshot
+        ReportWitnessMove();   // appended after the snapshot: the caller's verdict and records stay about the bytes it got
         content = r.Content;
         return r.Verification;
     }
@@ -173,6 +231,7 @@ public sealed partial class AuthService
     {
         Directory.CreateDirectory(Dir);
         new HashChain(AuditPath).Append(new AuthAuditEntry(ev, who, account, card, reader, result, reason, _clock(), detail, accountsChanged ? AccountsSha256 : ""));
+        if (_witness?.MovedAside is { } moved && moved != _reportedMove) ReportWitnessMove();   // the append itself may have moved the folder aside
     }
 
     private static string Short(string? thumb) => thumb is null ? "" : thumb[..Math.Min(16, thumb.Length)];
