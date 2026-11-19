@@ -21,6 +21,12 @@ public sealed class ProcedureProfile
     /// </summary>
     public string StationLevel { get; set; } = "";
 
+    /// <summary>
+    /// HG 585 ID-03: the system-use notice the security officer approved, shown before sign-in and accepted explicitly (see <see cref="SignInNoticeResolver"/>).
+    /// Optional: empty (also in profiles written before this field existed) = the module's default text. At most <see cref="SignInNoticeResolver.MaxLength"/> characters.
+    /// </summary>
+    public string SignInNotice { get; set; } = "";
+
     // Working hours
     public List<WorkingHoursRow> WorkingHours { get; set; } = [];
     public List<HolidayRow> Holidays { get; set; } = [];

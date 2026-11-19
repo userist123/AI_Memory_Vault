@@ -1508,3 +1508,12 @@
   until CI), ControlApplicability, EDITIONS_AND_POSTURE, MATRICE #18 -> PARȚIAL (S07), HG585 SW-01 note. Tests App.Tests ApprovedSoftwareIntegrityTests (23;
   worker red: 6 fail with comparison/hash broken). Suites: App 1177, UI 370 (1 skipped), Edition 45, exit 0. RESIDUALS: no total hashing-time budget;
   S07 is NEDETERMINAT on every station until the profile has hashed rows. Next: read CI once (Dfir annex/applicability tests!); item 5 (ID-03 notice).
+- 2026-11-19 (claude, hg585) PLANNER #9 ITEM 5 DONE (ID-03; vault-worker + independent review APPROVE, LOW L1-L3 fixed by main session). ProcedureProfile.SignInNotice
+  (<= 2000, trimmed; profile page box), SignInNoticeResolver (profile text, else ModuleCatalog.DefaultNotice; unreadable profile -> default + one-line
+  remark, never blocks). SignInWindow: notice + checkbox, sign-in buttons disabled until ticked; Unlock not asked. AuthService(requireNoticeAcceptance:
+  true) only from AuthApp.Initialize: SignInWithPassword/Card without NoticeAcceptance (or with blank text) refused + audited notice_not_accepted
+  (card: before any card/PIN; typed name kept only as a hash, L3); success writes notice.accepted (sha256 of the exact displayed text + source) AND the
+  auth.signin ok detail carries the same facts (L1: a failed second write cannot leave a sign-in without the record). Unlock uses a private marker
+  instance (identity check). Tests App.Tests SignInNoticeTests (13; 3 fail with the service gate off - worker). Suites: App 1190, UI 370 (1 skipped),
+  Edition 45, exit 0. HG585 ID-03 -> PARTIAL; GHID updated. OWNER: official notice text from the security officer. NOT SEEN ON SCREEN yet (XAML).
+  RESIDUALS: L4 card unlock with the marker not covered by a test. Next: read CI once; item 6 (R2b leftovers + read-only on licence expiry, RISKY).

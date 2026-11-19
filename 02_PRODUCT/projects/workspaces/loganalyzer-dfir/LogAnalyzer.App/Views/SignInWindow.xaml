@@ -34,6 +34,9 @@
                     <StackPanel>
                         <TextBlock Text="Notificare de utilizare" FontSize="12" FontWeight="SemiBold" Foreground="{StaticResource WarningBrush}"/>
                         <TextBlock x:Name="NoticeText" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{StaticResource TextSecondaryBrush}"/>
+                        <TextBlock x:Name="NoticeRemark" Visibility="Collapsed" FontSize="12" TextWrapping="Wrap" Margin="0,4,0,0" Foreground="{StaticResource WarningBrush}"/>
+                        <CheckBox x:Name="NoticeAck" Margin="0,8,0,0" Foreground="{StaticResource TextPrimaryBrush}" Checked="NoticeAck_Changed" Unchecked="NoticeAck_Changed"
+                                  Content="Am citit și accept condițiile de utilizare" AutomationProperties.Name="Am citit și accept condițiile de utilizare; autentificarea este activă numai după bifare"/>
                     </StackPanel>
                 </Border>
             </DockPanel>

@@ -23,6 +23,7 @@ Pe ecran apare doar **numele stației** (de exemplu `1234DOC5143SV` sau `NETWS01
    *De ce:* fără drepturi de administrator, Windows nu lasă citirea jurnalului Security și a politicii de audit, iar multe verificări ies NEDETERMINAT.
 2. **Prima pornire pe o stație.** Aplicația cere crearea administratorului principal al aplicației: nume și prenume, cont, parolă și „Confirmare parolă”. Țineți parola într-un loc sigur.
 3. **Autentificarea** se face cu cardul în slotul tastaturii: apăsați „Autentificare cu card” și introduceți PIN-ul în fereastra Windows / SafeNet (aplicația nu vede și nu păstrează PIN-ul). Administratorul principal se poate autentifica și cu cont și parolă.
+   Înainte de autentificare citiți „Notificarea de utilizare” din stânga ferestrei și bifați „Am citit și accept condițiile de utilizare”; până atunci butoanele de autentificare sunt inactive. Acceptarea se înregistrează în jurnalul sigilat. Textul îl stabilește ofițerul de securitate în profilul procedural (câmpul „Notificarea de utilizare”); dacă nu este completat, se folosește textul implicit al aplicației. La deblocarea unei sesiuni deschise nu vi se cere din nou.
 
 ## 3. Ecranul „Acasă”
 

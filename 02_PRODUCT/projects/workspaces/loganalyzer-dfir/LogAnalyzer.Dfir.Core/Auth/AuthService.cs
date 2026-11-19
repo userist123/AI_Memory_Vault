@@ -35,13 +35,54 @@ public sealed partial class AuthService
     private readonly bool _classified;
     private readonly Dictionary<Guid, AuthSession> _sessions = [];
     private readonly AuthStoreSecurity _security;
+    private readonly bool _requireNotice;
+
+    public const string NoticeNotAcceptedReason = "notice_not_accepted";
+    public const string NoticeAcceptedEvent = "notice.accepted";
+
+    /// <summary>The exact notice text the person was shown and accepted, and where it came from ("profil" or "implicit").</summary>
+    public sealed record NoticeAcceptance(string Text, string Source);
+
+    /// <summary>Private marker for Unlock (re-authentication of an open session, which was already accepted at sign-in): not asked again, not recorded again.</summary>
+    private static readonly NoticeAcceptance UnlockReauth = new("", "unlock");
+
+    /// <summary>"sha256=…; sursa=…" of an accepted notice, or null (none / unlock).</summary>
+    private static string? NoticeFacts(NoticeAcceptance? notice)
+    {
+        if (notice is null || string.IsNullOrWhiteSpace(notice.Text)) return null;
+        var hash = Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(notice.Text)));
+        return $"sha256={hash}; sursa={(notice.Source == "profil" ? "profil" : "implicit")}";
+    }
+
+    /// <summary>Review L1: the auth.signin ok line itself carries the acceptance, so a failed notice.accepted write cannot leave a sign-in without it.</summary>
+    private static string WithNotice(string detail, NoticeAcceptance? notice) => NoticeFacts(notice) is { } f ? $"{detail}; notificare acceptată {f}" : detail;
+
+    private SignInResult? RefuseWithoutNotice(NoticeAcceptance? notice, string account, string mode)
+    {
+        if (!_requireNotice || ReferenceEquals(notice, UnlockReauth) || !string.IsNullOrWhiteSpace(notice?.Text)) return null;
+        // review L3: the typed name is kept only as a hash, as for an unknown account (it may be a password typed in the wrong box)
+        Audit("auth.signin", "(neautentificat)", "(nevalidat) sha256:" + Short(Convert.ToHexStringLower(SHA256.HashData(Encoding.UTF8.GetBytes(account.ToLowerInvariant())))), "refused", NoticeNotAcceptedReason, mode + "; notificarea de utilizare nu a fost acceptată");
+        return new SignInResult(false, NoticeNotAcceptedReason, "notificarea de utilizare trebuie citită și acceptată înainte de autentificare");
+    }
+
+    /// <summary>Writes <c>notice.accepted</c> (SHA-256 of the exact text + its source) for a sign-in that succeeded. Facts only, no notice text in the audit.</summary>
+    private void AuditNoticeAccepted(AuthAccount acc, NoticeAcceptance? notice, string card = "", string reader = "")
+    {
+        if (NoticeFacts(notice) is not { } facts) return;
+        Audit(NoticeAcceptedEvent, acc.Account, acc.Account, "ok", "", facts, card, reader);
+    }
 
     /// <param name="security">
     /// DACL check of the folder and the key sealing the audit head (security audit #4). Default: the real Windows checks for the production folder
     /// (<paramref name="dir"/> null), none for an explicit folder (tests, tools) unless given.
     /// </param>
-    public AuthService(string? dir = null, bool classifiedEdition = false, Func<DateTimeOffset>? clock = null, AuthStoreSecurity? security = null)
+    /// <param name="requireNoticeAcceptance">
+    /// HG 585 ID-03: when true, every sign-in must carry a <see cref="NoticeAcceptance"/>; without it the service itself refuses (reason
+    /// <see cref="NoticeNotAcceptedReason"/>, audited). The application turns it on in one place (AuthApp), so no sign-in path can skip the notice.
+    /// </param>
+    public AuthService(string? dir = null, bool classifiedEdition = false, Func<DateTimeOffset>? clock = null, AuthStoreSecurity? security = null, bool requireNoticeAcceptance = false)
     {
+        _requireNotice = requireNoticeAcceptance;
         Dir = dir ?? DefaultDir;
         _classified = classifiedEdition;
         _clock = clock ?? (() => DateTimeOffset.UtcNow);
@@ -292,11 +333,12 @@ public sealed partial class AuthService
 
     // ───────────────────────── password sign-in (primary administrator only) ─────────────────────────
 
-    public SignInResult SignInWithPassword(string account, string password, bool acknowledgeUnprotectedStore = false)
+    public SignInResult SignInWithPassword(string account, string password, bool acknowledgeUnprotectedStore = false, NoticeAcceptance? notice = null)
     {
         lock (_gate)
         {
             account = (account ?? "").Trim();
+            if (RefuseWithoutNotice(notice, account, "mod=parolă") is { } noNotice) return noNotice;
             var now = _clock();
             var store = StoreProtection;
             if (!store.Protected && !acknowledgeUnprotectedStore)
@@ -361,7 +403,8 @@ public sealed partial class AuthService
                 warnings.Add(store.Message);
             }
             var s = NewSession(acc, SignInMode.Password, null, null);
-            Audit("auth.signin", acc.Account, acc.Account, "ok", "password", "mod=parolă");
+            Audit("auth.signin", acc.Account, acc.Account, "ok", "password", WithNotice("mod=parolă", notice));
+            AuditNoticeAccepted(acc, notice);
             return new SignInResult(true, "ok", "autentificat cu parolă", s, warnings);
         }
     }
@@ -374,10 +417,11 @@ public sealed partial class AuthService
     /// Card + PIN: lists certificates with a private key on inserted smart cards, validates the chain/revocation offline, asks the card to sign a random
     /// challenge (Windows / SafeNet shows the PIN prompt) and verifies the signature with the certificate's public key.
     /// </summary>
-    public SignInResult SignInWithCard(ICardProvider provider, string? sha256Thumbprint = null, bool acknowledgeUnprotectedStore = false)
+    public SignInResult SignInWithCard(ICardProvider provider, string? sha256Thumbprint = null, bool acknowledgeUnprotectedStore = false, NoticeAcceptance? notice = null)
     {
         lock (_gate)
         {
+            if (RefuseWithoutNotice(notice, "", "mod=card+PIN") is { } noNotice) return noNotice;   // before the PIN prompt
             var picked = SelectCard(provider, sha256Thumbprint, out var early);
             if (early is not null) return early;
             var (card, acc, binding) = picked!.Value;
@@ -398,7 +442,8 @@ public sealed partial class AuthService
                 warnings.Add(store.Message);
             }
             var s = NewSession(acc, SignInMode.Card, card.Sha256Thumbprint, card.Reader);
-            Audit("auth.signin", acc.Account, acc.Account, "ok", "card", "mod=card+PIN", Short(card.Sha256Thumbprint), card.Reader);
+            Audit("auth.signin", acc.Account, acc.Account, "ok", "card", WithNotice("mod=card+PIN", notice), Short(card.Sha256Thumbprint), card.Reader);
+            AuditNoticeAccepted(acc, notice, Short(card.Sha256Thumbprint), card.Reader);
             return new SignInResult(true, "ok", "autentificat cu card", s, warnings);
         }
     }

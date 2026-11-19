@@ -132,6 +132,11 @@ namespace LogAnalyzer.UI.ViewModels
             return l;
         }
 
+        /// <summary>HG 585 ID-03: the system-use notice shown (and accepted) at sign-in; empty = the module default text.</summary>
+        [ObservableProperty] private string _signInNotice = "";
+        public const string SignInNoticeHelp = "Textul notificării de utilizare afișat la autentificare, aprobat de ofițerul de securitate (cel mult 2000 de caractere). Dacă rămâne gol, se folosește textul implicit al aplicației. Fiecare acceptare se înregistrează în jurnalul sigilat împreună cu amprenta textului.";
+        public const int SignInNoticeMaxLength = LogAnalyzer.Dfir.Profile.SignInNoticeResolver.MaxLength;
+
         // WP18 S5 (decision D3): the unit's report header, next to the procedure profile; only the administrator saves it.
         public string HeaderPath { get; } = LogAnalyzer.Dfir.Reporting.ReportHeaderProfile.DefaultPath;
         [ObservableProperty] private string _headerUnit = "";
@@ -194,6 +199,7 @@ namespace LogAnalyzer.UI.ViewModels
         {
             foreach (var t in Tables) ProfileTables.SetCells(_profile, t.Table, t.Rows());
             _profile.StationLevel = StationLevel ?? "";
+            _profile.SignInNotice = LogAnalyzer.Dfir.Profile.SignInNoticeResolver.Normalize(SignInNotice);
         }
 
         private void Push()
@@ -201,6 +207,7 @@ namespace LogAnalyzer.UI.ViewModels
             foreach (var t in Tables) t.Load(_profile);
             // an imported or hand-written marking ("SSID", "secret") is shown as the level's name, so the picker finds it and never clears it
             StationLevel = LogAnalyzer.Dfir.Profile.StationLevelRules.Resolve(_profile.StationLevel)?.Name ?? _profile.StationLevel ?? "";
+            SignInNotice = _profile.SignInNotice ?? "";
             Refresh();
             OnPropertyChanged(nameof(IsEmpty));
         }

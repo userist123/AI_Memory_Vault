@@ -93,9 +93,9 @@ public sealed partial class AuthService
             if (session.Mode == SignInMode.Card)
             {
                 if (provider is null) return AuthResult.Fail("no_card", "introduceți cardul");
-                r = SignInWithCard(provider, session.CardThumbprint);
+                r = SignInWithCard(provider, session.CardThumbprint, notice: UnlockReauth);
             }
-            else r = SignInWithPassword(session.Account, password ?? "");
+            else r = SignInWithPassword(session.Account, password ?? "", notice: UnlockReauth);
             if (!r.Ok) return AuthResult.Fail(r.Reason, r.Message);
             _sessions.Remove(r.Session!.Id); r.Session.Ended = true;      // the probe session is discarded; the original one is unlocked
             if (!SameName(r.Session.Account, session.Account)) return AuthResult.Fail("other_account", "altă persoană nu poate debloca sesiunea");
