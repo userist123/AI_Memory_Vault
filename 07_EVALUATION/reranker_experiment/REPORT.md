@@ -115,14 +115,20 @@ queries (`results/wired_check.json`: identical served top 5 160/160, hit@5 71). 
 default opener honours `HTTP_PROXY`/system proxies, which would have sent note text to a proxy despite the loopback check;
 the client now uses an opener with no proxy and no redirects (regression tests in `20_TESTS/test_controller_reranker.py`).
 
-Enable on the owner's PC:
+Enable on a machine (no administrator rights needed):
 
 ```text
-<reranker venv>/python 30_SCRIPTS/retrieval/reranker_server.py --port 8765 --fp16
-etrieval
-eranker_server.py --port 8765 --fp16
-set AI_MEMORY_VAULT_RERANKER_URL=http://127.0.0.1:8765      (then start the MCP server / CLI)
+python -m cognitive_core.recall_cli --init-secret        (once per machine, from 03_IMPLEMENTATION/packages)
+<reranker venv>/python 30_SCRIPTS/retrieval/reranker_server.py --port 18765 --fp16
+AI_MEMORY_VAULT_RERANKER_URL=http://127.0.0.1:18765      (user environment; new MCP/CLI processes pick it up)
+optional: AI_MEMORY_VAULT_RERANKER_K=50                  (1-200; 50 is the measured default)
 ```
+
+The server refuses a port another process holds. If it is not running, search keeps the production order: the first
+call waits ~2 s for the refused loopback connection, then the client fails at once for 60 s (`HttpReranker.RETRY_AFTER_SECONDS`).
+End to end through the real MCP server (`memory_search`, 2026-11-19): with the variable set, results equal the
+experiment's served lists and the gold note is in the top 5 for 5 of 5 sampled win cases (~0.9 s per call after the
+first, which loads the index); without it, results equal the baseline.
 
 **Co-residency, measured 2026-11-19 (`results/wired_check_coresident.json`):** with `qwen2.5:7b-instruct` loaded in Ollama
 (5.0 GB, 100% GPU) and the reranker server up, VRAM is 7.4 of 8.1 GB; the wired path still serves the identical top 5 on
