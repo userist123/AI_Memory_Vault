@@ -264,3 +264,37 @@ def test_factory_reranker_k_defaults_to_50_and_is_bounded(monkeypatch, tmp_path)
         with pytest.raises(ValueError):
             controller_factory.get_memory_controller()
     monkeypatch.setattr(controller_factory, "_CACHED_CONTROLLER", None)
+
+
+def test_http_reranker_stops_calling_a_down_server_for_a_while():
+    """A refused loopback connect costs ~2 s on Windows: after one failure, fail fast until the retry window ends."""
+    now = {"t": 1000.0}
+    client = HttpReranker("http://127.0.0.1:9", timeout=0.5, clock=lambda: now["t"])
+    calls = {"n": 0}
+    real = client._score
+
+    def counting(q, d):
+        calls["n"] += 1
+        return real(q, d)
+
+    client._score = counting
+    with pytest.raises(RerankerError):
+        client.score("q", ["d"])
+    for _ in range(5):
+        with pytest.raises(RerankerError, match="unavailable"):
+            client.score("q", ["d"])
+    assert calls["n"] == 1
+    now["t"] += HttpReranker.RETRY_AFTER_SECONDS + 1
+    with pytest.raises(RerankerError):
+        client.score("q", ["d"])
+    assert calls["n"] == 2
+
+
+def test_a_bad_answer_does_not_open_the_circuit():
+    """Only transport failures pause the client; a malformed answer is reported per call."""
+    client = HttpReranker("http://127.0.0.1:9")
+    client._score = lambda q, d: (_ for _ in ()).throw(RerankerError("expected 1 scores, got list of length 2"))
+    for _ in range(2):
+        with pytest.raises(RerankerError, match="expected"):
+            client.score("q", ["d"])
+    assert client._down_until == 0.0

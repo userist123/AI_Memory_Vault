@@ -21,6 +21,8 @@ from __future__ import annotations
 import ipaddress
 import json
 import math
+import threading
+import time
 import urllib.error
 import urllib.parse
 import urllib.request
@@ -95,7 +97,13 @@ _LOOPBACK_OPENER = urllib.request.build_opener(urllib.request.ProxyHandler({}), 
 class HttpReranker:
     """Client for the local reranker server. Loopback URLs only."""
 
-    def __init__(self, url: str, timeout: float = 5.0, k: int = DEFAULT_RERANK_K):
+    #: After a transport failure the client stops calling the server for this many
+    #: seconds and fails at once (the controller keeps the production order). On
+    #: Windows a refused loopback connection takes ~2 s, so without this every
+    #: search would pay 2 s while the reranker server is not running.
+    RETRY_AFTER_SECONDS = 60.0
+
+    def __init__(self, url: str, timeout: float = 5.0, k: int = DEFAULT_RERANK_K, clock=time.monotonic):
         parsed = urllib.parse.urlparse(url)
         if parsed.scheme != "http" or not _is_loopback(url):
             raise ValueError("reranker URL must be http:// on a loopback host (note text must not leave the machine)")
@@ -103,8 +111,23 @@ class HttpReranker:
         self.timeout = float(timeout)
         self.k = int(k)
         self.model = "unknown"
+        self._clock = clock
+        self._down_until = 0.0
+        self._lock = threading.Lock()
 
     def score(self, query: str, documents: Sequence[str]) -> List[float]:
+        with self._lock:
+            if self._clock() < self._down_until:
+                raise RerankerError("reranker unavailable (recent connection failure; retry later)")
+        try:
+            return self._score(query, documents)
+        except RerankerError as exc:
+            if str(exc).startswith("reranker unreachable"):
+                with self._lock:
+                    self._down_until = self._clock() + self.RETRY_AFTER_SECONDS
+            raise
+
+    def _score(self, query: str, documents: Sequence[str]) -> List[float]:
         body = json.dumps({"query": query, "documents": list(documents)}).encode("utf-8")
         req = urllib.request.Request(f"{self.url}/rerank", data=body,
                                      headers={"Content-Type": "application/json"}, method="POST")
