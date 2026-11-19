@@ -1,5 +1,5 @@
 'use client';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
 import type { Catalog, Floor, Snapshot, Severity, Wall } from '@/core/types';
 import { footprintOf } from '@/core/validate';
 import { resolve } from '@/core/catalog';
@@ -82,7 +82,11 @@ interface Props { snap: Snapshot; catalog: Catalog; sel: Sel; tool: Tool; severi
   /** golurile din placă ale acestui nivel (scările care urcă de dedesubt) */
   voids?: { x0: number; z0: number; x1: number; z1: number }[];
   /** tastatura cu planul în focus: mută / rotește / șterge / renunță (Tab alege direct, prin onSelect) */
-  onKey?(a: PlanKeyAction): void; }
+  onKey?(a: PlanKeyAction): void;
+  /** strat suplimentar în coordonatele planului (studiul de însorire), desenat peste plan, fără evenimente */
+  overlay?: ReactNode;
+  /** puncte în plus pe care „Încadrează tot” le cuprinde (vecinii din studiul de însorire) */
+  fitExtra?: [number, number][]; }
 const ROOM_FILL: Record<string, string> = { baie: '#e4e8e6', bucatarie: '#e6e8e3', hol: '#efeae1', living: '#f0e8da', dormitor: '#efe6dc' };
 const SEV: Record<Severity, string> = { PASS: '#8B6A45', WARNING: '#B7791F', ERROR: '#B3261E' };
 const G = .05;
@@ -400,7 +404,10 @@ export default function PlanView(p: Props){
     if (!t0 || !k || !['wall', 'room', 'placement', 'stair', 'column', 'beam', 'glass_wall', 'opening', 'niche', 'wall_item', 'annotation', 'floor_zone', 'ceiling_zone', 'railing'].includes(k)){ setMenu(null); return; }
     const s: Sel = k === 'opening' ? { kind: 'opening', id: t0.dataset.id!, wallId: t0.dataset.w! } : { kind: k as Exclude<ContextKind, 'opening'>, id: t0.dataset.id! };
     p.onSelect(s); setMenu({ x: e.clientX, y: e.clientY, kind: s.kind }); }
-  const fitAll = () => { const pad = 1.2; setVb({ x: bounds.x0 - pad, y: bounds.z0 - pad, w: bounds.x1 - bounds.x0 + pad * 2, h: bounds.z1 - bounds.z0 + pad * 2 }); };
+  const fitAll = () => { const pad = 1.2, e = p.fitExtra ?? [], x0 = Math.min(bounds.x0, ...e.map(q => q[0])), x1 = Math.max(bounds.x1, ...e.map(q => q[0])), z0 = Math.min(bounds.z0, ...e.map(q => q[1])), z1 = Math.max(bounds.z1, ...e.map(q => q[1]));
+    // peste 80 m (limita zoomului) încadrarea rămâne centrată pe casă, nu pe colțul celui mai îndepărtat vecin
+    const w = x1 - x0 + pad * 2, h = z1 - z0 + pad * 2, cx = w > 80 ? (bounds.x0 + bounds.x1) / 2 : (x0 + x1) / 2, cz = h > 80 ? (bounds.z0 + bounds.z1) / 2 : (z0 + z1) / 2;
+    setVb({ x: cx - Math.min(80, w) / 2, y: cz - Math.min(80, h) / 2, w: Math.min(80, w), h: Math.min(80, h) }); };
   return (<><svg ref={svg} className="plan" viewBox={`${vb.x} ${vb.y} ${vb.w} ${vb.h}`} onPointerDown={down} onPointerMove={move} onPointerUp={up} onPointerCancel={up} onContextMenu={contextMenu}
     style={{ cursor: p.tool === 'select' ? 'default' : 'crosshair', color: '#1A141C' }} role="application" aria-label={t('plan.aria')} tabIndex={0} onKeyDown={keyDown}>
     <defs><pattern id="g" width="1" height="1" patternUnits="userSpaceOnUse"><path d="M1 0H0V1" fill="none" stroke="#e4e5e0" strokeWidth=".01" /></pattern>
@@ -444,6 +451,8 @@ export default function PlanView(p: Props){
           {sym.detail && <path d={sym.detail} strokeWidth={sw * .8} />}</g>
         <rect data-k="placement" data-id={pl.id} x={fp.x0} y={fp.z0} width={fp.x1 - fp.x0} height={fp.z1 - fp.z0} fill={on ? '#8B6A45' : sv === 'PASS' ? 'transparent' : SEV[sv]} fillOpacity={on ? .12 : sv === 'PASS' ? 0 : .12} stroke={on ? '#8B6A45' : hov ? '#C63C29' : 'none'} strokeOpacity={hov && !on ? .7 : 1} strokeWidth={.02} strokeDasharray={on || hov ? '.06 .04' : undefined} style={{ cursor: 'move' }}
           onPointerEnter={p.onHover ? () => p.onHover!(pl.id) : undefined} onPointerLeave={p.onHover ? () => p.onHover!(null) : undefined} /></g>); })}
+    {/* studiul de însorire: harta orelor de soare și petele de lumină, peste pardoseală și sub mobilier */}
+    {p.overlay}
     {/* covoarele camerelor (stratul de finisaje): dreptunghi textil punctat sub piese, cu numărul covorului când sunt mai multe */}
     {p.showFinishes && p.mc && floor.rooms.flatMap(r => { const rugs = roomRugs(finishesOf(p.snap, r));
       return rugs.map((c, i) => { const m = p.mc!.materials.find(x => x.id === c.material), s = m ? rugSize(r, m, c.rotate) : null; if (!s) return null; const q = rugRectAt(r, s, c);
