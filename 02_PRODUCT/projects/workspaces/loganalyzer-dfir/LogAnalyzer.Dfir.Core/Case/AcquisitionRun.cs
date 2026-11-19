@@ -107,16 +107,34 @@ public sealed class AcquisitionRunRecorder
         return manifest;
     }
 
-    /// <summary>Evidence a collector registered since <paramref name="start"/> (used when the collector was interrupted and returned no outcome).</summary>
-    public static List<EvidenceItem> EvidenceSince(CaseWorkspace ws, string collectorName, DateTimeOffset start)
+    /// <summary>
+    /// Planner #9 item 2: the number of entries in evidence_index.jsonl, taken when a collector starts. The index is append-only (a state rewrite keeps
+    /// order and count), so the entries after this position are exactly the ones registered since then, whatever the wall clock did meanwhile.
+    /// -1 when the index cannot be read (the caller then falls back to the start time).
+    /// </summary>
+    public static int EvidenceMark(CaseWorkspace ws)
     {
-        try { return ws.LoadEvidence().Where(e => e.Collector == collectorName && e.AcquiredAtUtc >= start).ToList(); }
+        try { return ws.LoadEvidence().Count; }
+        catch (Exception ex) when (ex is JsonException or InvalidDataException or IOException or UnauthorizedAccessException) { return -1; }
+    }
+
+    /// <summary>
+    /// Evidence a collector registered since it started (used when the collector was interrupted and returned no outcome): the entries after
+    /// <paramref name="mark"/> (see <see cref="EvidenceMark"/>); only without a mark (-1) by <paramref name="start"/>, which a clock step can defeat.
+    /// </summary>
+    public static List<EvidenceItem> EvidenceSince(CaseWorkspace ws, string collectorName, DateTimeOffset start, int mark = -1)
+    {
+        try
+        {
+            var all = ws.LoadEvidence();
+            return (mark >= 0 ? all.Skip(mark) : all.Where(e => e.AcquiredAtUtc >= start)).Where(e => e.Collector == collectorName).ToList();
+        }
         catch (Exception ex) when (ex is JsonException or InvalidDataException or IOException or UnauthorizedAccessException) { return []; }
     }
 
     /// <summary>Adds a collector that was cancelled or failed without an outcome, with the evidence it had already registered.</summary>
-    public string AddInterrupted(string collectorName, string collectorVersion, EvidenceStatus status, string error, DateTimeOffset start, DateTimeOffset end) =>
-        Add(collectorName, collectorVersion, "", "", status, [error], [], EvidenceSince(_ws, collectorName, start), start, end);
+    public string AddInterrupted(string collectorName, string collectorVersion, EvidenceStatus status, string error, DateTimeOffset start, DateTimeOffset end, int mark = -1) =>
+        Add(collectorName, collectorVersion, "", "", status, [error], [], EvidenceSince(_ws, collectorName, start, mark), start, end);
 
     /// <summary>Writes the record atomically (temp file in the same folder, no overwrite), registers it as an output and audits it. A second call does nothing.</summary>
     public void Complete(OperationState state, string reason)

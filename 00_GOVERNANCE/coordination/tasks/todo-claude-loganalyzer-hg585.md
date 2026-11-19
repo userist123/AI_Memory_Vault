@@ -1468,3 +1468,26 @@
   Dfir suite only in CI (Defender).
   Next: read CI once (Dfir suite!). Then a NEW planner (planner #8 done). Owner: Defender exclusion for the Dfir test build (now blocks every build),
   QuestPDF licence, RDP manual test, registry witness decision, WS01/WS02 reinstall, lab cleanup (LAB-SRV01 Saved).
+- 2026-11-19 (claude, hg585) CI of 440403109 read once: 33/33 success. PLANNER #9 (Plan agent, verified in code at 440403109; ranked):
+  1 MRK classification marking (manual, "neverificat") on every page of investigation / checks / cross-station / incident PDFs + "Document în lucru"
+  until case.closed (HG585_ACCREDITATION_REQUIREMENTS MRK-01/03; only ControlReportPdf + TransferReportPdf print it today) - medium, worker;
+  2 AcquisitionRun.EvidenceSince by index watermark, not wall clock (R7b residual, line 90) - low; 3 FileHeadWitness.MovedAside -> audit
+  auth.witness_moved_aside + admin warning (line 1292) - low; 4 matrix #18 approved-software hash control check (NECONFORM / DE VERIFICAT /
+  NEDETERMINAT) - medium; 5 ID-03 sign-in notice from profile, explicit accept, notice.accepted + SHA-256 in sealed auth audit - medium;
+  6 R2b leftovers: rights checked inside services (report.pv, control.station, collect.*) + read-only mode on licence expiry - RISKY (worker + Opus);
+  7 (capacity) intervention register with witness (matrix #20/#29/#23). Deferred (lab/sample): RdpCoreTS 131, RDPClient 1024/1102, TaskCache
+  Triggers, OneDrive transcripts, per-entry nonce. CONTRADICTIONS found: R2 marked DONE but read-only-on-expiry and "Licență și modul" screen never
+  built (item 6); HG585_ACCREDITATION_REQUIREMENTS body stale (AUD-05 PAdES exists, ID-03 static notice exists, MRK-01 category exists, P1-P3 table)
+  -> refresh doc with item 1/5; MATRICE #18 partly stale (profile Sha256 exists, no control check).
+- 2026-11-19 (claude, hg585) PLANNER #9 ITEM 1 DONE (vault-worker; main-session fix; medium, not Opus-reviewed: text/print only, no verdict changes).
+  CaseScope.Marking (typed in the scope dialog, ScopeForm rejects "unclassified" words, decision 21; old case.json -> ""). Shared MarkingText.Line
+  (ControlReportHeader uses it, same text). Investigation / checks / cross-station / incident PDFs print the marking in the header and on every footer;
+  empty = "fără marcaj introdus"; investigation PDF header says "Document în lucru — cazul nu este închis" until case.closed (CaseLoader.IsClosed).
+  Main-session fix: InvestigationViewModel.AskScopeAtStart always takes the marking from the confirmed scope (the form has no marking field, so a
+  complete form used to keep the old/empty marking). Tests App.Tests MarkingTests (5; compile-level red only). LocalizationLeftoverTests 10 -> 11 fields.
+  HG585_ACCREDITATION_REQUIREMENTS MRK-01..03 -> PARTIAL; GHID updated. RESIDUAL: incident PDF footer has no test hook (built, not asserted);
+  marking not per paragraph and not verified (stated in docs).
+- 2026-11-19 (claude, hg585) PLANNER #9 ITEM 2 DONE (main session, low): AcquisitionRunRecorder.EvidenceMark (index count at collector start) +
+  EvidenceSince/AddInterrupted(mark): entries after the mark, -1 (unreadable index) falls back to the start time. Pipeline passes the mark in the 3
+  catch blocks. Tests App.Tests InterruptedCollectorMarkTests (3; 2 fail with the mark ignored - verified). Suites: App 1149, UI 370 (1 skipped),
+  Edition 45, exit 0; Dfir builds, suite only in CI. Next: read CI once; item 3 (witness MovedAside -> audit + admin warning).

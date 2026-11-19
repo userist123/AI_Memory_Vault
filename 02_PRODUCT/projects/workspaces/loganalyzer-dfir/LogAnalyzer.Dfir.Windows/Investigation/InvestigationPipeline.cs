@@ -459,23 +459,24 @@ public sealed class InvestigationPipeline
                     ct.ThrowIfCancellationRequested();
                     progress?.Report($"Colectare: {c.Name}");
                     var start = DateTimeOffset.UtcNow;
+                    var mark = AcquisitionRunRecorder.EvidenceMark(ws);   // planner #9 item 2: index position, not the clock
                     CollectorOutcome o;
                     try { o = c.Collect(new CollectorContext { Case = ws, IsElevated = elevated }, ct); }
                     catch (OperationCanceledException)
                     {
                         // Whatever the collector had already stored belongs to the record even though it never returned an outcome.
-                        recorder.AddInterrupted(c.Name, c.Version, EvidenceStatus.Partial, "colectare întreruptă (anulată)", start, DateTimeOffset.UtcNow);
+                        recorder.AddInterrupted(c.Name, c.Version, EvidenceStatus.Partial, "colectare întreruptă (anulată)", start, DateTimeOffset.UtcNow, mark);
                         throw;
                     }
                     catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidOperationException)
                     {
                         o = new CollectorOutcome { Status = EvidenceStatus.Failed, Errors = { ex.Message } };
-                        o.Evidence.AddRange(AcquisitionRunRecorder.EvidenceSince(ws, c.Name, start));
+                        o.Evidence.AddRange(AcquisitionRunRecorder.EvidenceSince(ws, c.Name, start, mark));
                     }
                     catch (Exception ex) when (ex is not OutOfMemoryException)
                     {
                         // Review round 2: an unexpected failure still ends the run, but the evidence already stored is not left out of the record.
-                        recorder.AddInterrupted(c.Name, c.Version, EvidenceStatus.Failed, $"{ex.GetType().Name}: {ex.Message}", start, DateTimeOffset.UtcNow);
+                        recorder.AddInterrupted(c.Name, c.Version, EvidenceStatus.Failed, $"{ex.GetType().Name}: {ex.Message}", start, DateTimeOffset.UtcNow, mark);
                         throw;
                     }
                     var end = DateTimeOffset.UtcNow;
