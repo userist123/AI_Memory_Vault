@@ -24,9 +24,26 @@ public static class FindingCardActions
 public sealed record FindingCardModel(
     string FindingId, string RuleId, string Title, string HumanSummary, string SeverityText, string SeveritySpec, string SeverityIcon,
     string StateLabel, string StateMeaning, string VerificationLabel, string VerificationText,
-    WhyExplanation Why, EvidenceLevels Evidence, KnowThinkDontKnow Know, IReadOnlyList<string> NextSteps, string TechnicalSummary, string Plain = "")
+    WhyExplanation Why, EvidenceLevels Evidence, KnowThinkDontKnow Know, IReadOnlyList<string> NextSteps, string TechnicalSummary, string Plain = "",
+    IReadOnlyList<string>? ManualStepsOrNull = null)
 {
     public const string NoNextStep = "Niciun pas recomandat nu este înregistrat pentru această constatare.";
+
+    /// <summary>The „Cum verifici tu” steps (manual, with standard Windows tools), as printable lines; never empty text is shown as a step.</summary>
+    public IReadOnlyList<string> ManualSteps => ManualStepsOrNull ?? [];
+    public bool HasManualSteps => ManualSteps.Count > 0;
+    public string ManualStepsText => string.Join(Environment.NewLine, ManualSteps);
+
+    private static IReadOnlyList<string> ManualStepLines(Finding f, EvidenceContext ctx)
+    {
+        var lines = new List<string>();
+        foreach (var r in f.SupportingEvidence.GroupBy(e => (e.EvidenceId, e.Locator)).Select(g => g.First()).Take(8))
+        {
+            lines.Add($"Element de probă {r.EvidenceId} · {r.Locator}:");
+            foreach (var s in ManualVerification.For(r, ctx.ItemOf(r.EvidenceId), ctx.CaseRoot, ctx.EventOf(r))) lines.Add("  • " + s.ToLine());
+        }
+        return lines;
+    }
 
     public static FindingCardModel Build(Finding f, EvidenceContext ctx, IReadOnlyList<string>? verificationChecks = null, LegacyScore? legacyScore = null)
     {
@@ -39,6 +56,7 @@ public sealed record FindingCardModel(
             WhyExplainer.Build(f, ctx, verificationChecks, legacyScore), EvidenceLevels.Build(f, ctx), KnowThinkDontKnow.Build(f, ctx),
             f.RecommendedNextSteps.Count > 0 ? f.RecommendedNextSteps.ToList() : [NoNextStep], f.TechnicalSummary,
             // the plain sentence comes first on the card (owner 2026-11-06); a case saved before it existed gets it told now, by account
-            LogAnalyzer.Dfir.Language.PlainStory.Current(f));
+            LogAnalyzer.Dfir.Language.PlainStory.Current(f),
+            ManualStepLines(f, ctx));
     }
 }

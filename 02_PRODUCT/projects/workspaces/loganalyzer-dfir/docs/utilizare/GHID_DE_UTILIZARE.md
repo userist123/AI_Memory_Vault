@@ -132,6 +132,10 @@ Coloanele sunt: **Relevanță** (folder clasificat din profilul de proceduri, vo
 
 **Important:** lipsa urmelor nu dovedește că un lucru nu s-a întâmplat. De aceea, de exemplu, „niciun stick USB găsit” apare DE VERIFICAT, nu CONFORM: jurnalele au o istorie limitată.
 
+### 5.1 Cum verifici tu o constatare
+
+Butonul „Verifică” de la o constatare arată verificarea automată, făcută de aplicație. Pentru o verificare a dumneavoastră, cu instrumente obișnuite din Windows, deschideți „Arată dovezile”: sub tabel apare „Cum verifici tu”, iar raportul de investigație (PDF) tipărește același bloc sub fiecare dovadă. Pentru fiecare dovadă primiți pași în ordine: instrumentul (Event Viewer, PowerShell, Registry Editor, Proprietăți fișier), comanda sau calea exactă și ce trebuie să comparați. De exemplu, pentru o înregistrare din jurnalul de evenimente: o comandă `Get-WinEvent` pe copia din caz, apoi, dacă jurnalul original este cunoscut, căutarea aceleiași înregistrări în Event Viewer (jurnalul de pe stație poate fi ciclat între timp, iar atunci contează copia din caz). Pentru orice fișier din caz: `Get-FileHash -Algorithm SHA256` trebuie să dea amprenta din raport. Comenzile doar citesc; singura excepție este încărcarea unui fișier de registru, care se face doar pe o copie de lucru, sub numele `LA_VERIFY`, și se descarcă la final. Procese și conexiuni din starea live sunt un instantaneu de la colectare: se pot reverifica doar din copia din caz. Dacă pentru o dovadă nu există procedură automată, apare „Verificare de specialist”, fără nicio comandă.
+
 ## 6. Mediile de stocare și dispozitivele
 
 Pagina **„Medii de stocare și dispozitive”** (din meniu, „Monitor dispozitive”) urmărește mediile de stocare și dispozitivele conectate extern (stick-uri și discuri externe, carduri, CD/DVD, telefoane, camere, scanere, imprimante, adaptoare de rețea sau Wi-Fi USB, dispozitive Bluetooth, tastaturi și mouse-uri externe, cititoare de carduri); filele „Acum” și „Toate dispozitivele” arată și restul mediilor cunoscute de stație (discuri interne, unități de rețea, discuri virtuale ISO/VHD).

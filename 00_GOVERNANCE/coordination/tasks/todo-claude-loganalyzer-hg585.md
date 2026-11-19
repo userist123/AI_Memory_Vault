@@ -1678,3 +1678,14 @@
   RDP NLA, audit policy, guest/local admins), wording not "neconform" - medium; A6 live browser history / PSReadLine / hosts - medium; A7 Sigma/IOC/YARA
   hits into the summary + Greșeli găsite - low; A8 WMI subscriptions + startup folder - medium. STALE: MASTER_PLAN_STATUS 6.3 (browsers/registry REAL only
   as parsers), test counts, 6.13 conformity wording; card button "Verifică" = automatic verifier (owner's checks need "Cum verifici tu").
+- 2026-11-19 (claude, hg585) PLANNER #11 A2 DONE (vault-worker, low, not Opus-reviewed: pure function + printed text; guard test forbids reg add/delete,
+  wevtutil cl, Remove-, Clear-): Presentation/ManualVerification.For(EvidenceRef, EvidenceItem) -> ordered steps (tool, exact action, what to compare) per
+  locator family found in the code: EVTX EventRecordID=N (Get-WinEvent -Path '<copy>' -FilterXPath + Event Viewer route, live log may have rolled over),
+  live RecordID, registry SYSTEM\/SOFTWARE\/NTUSER\/UsrClass\/Amcache.hve\ (live reg query, or copy -> reg load HKLM\LA_VERIFY -> query -> unload, or
+  regedit Load Hive), Prefetch X.pf#runN, live snapshot Services[]/Tasks[]/Processes[]/Autoruns[], text logs line=N, file-position families (hash + size,
+  specialist step for the position), unknown -> "Verificare de specialist", never a command. PDF: "Cum verifici tu:" under each evidence line (cap 8,
+  <=3 steps, no repeats per finding); App finding card "Arată dovezile" -> box "Cum verifici tu" (the automatic "Verifică" button unchanged). GHID 5.1.
+  Tests App.Tests ManualVerificationTests (23; red: -Path -> -FilePath fails 4). Suites: App 1424, UI 370 (1 skipped), Edition 45, exit 0. DFIR TESTS RAN
+  LOCALLY (no Defender detection since ec9043ccd): 4026 passed, 34 skipped, 3 failed (AnyDesk/RustDesk parser tests; pass alone 63/63 -> load/timing,
+  not A2). RESIDUALS: registry key-vs-value heuristic; reg load needs admin; line=N counting; event id/time in steps only when a timeline row matches.
+  Card look not seen on screen. Next: A1 (Quote/TimeSource/Channel on EvidenceRef).

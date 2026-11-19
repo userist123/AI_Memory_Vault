@@ -78,6 +78,13 @@
                         </DataGrid>
                     </StackPanel>
                 </Expander>
+                <StackPanel Visibility="{Binding Card.HasManualSteps, Converter={StaticResource BoolToVis}}" Margin="0,8,0,0">
+                    <TextBlock Text="Cum verifici tu" FontWeight="SemiBold" FontSize="14" Foreground="{StaticResource TextPrimaryBrush}"/>
+                    <TextBlock Text="Pași pe care îi faci singur, cu instrumente Windows obișnuite, pentru fiecare dovadă. Nu înlocuiesc butonul „Verifică”, care arată verificarea automată a aplicației."
+                               TextWrapping="Wrap" Foreground="{StaticResource TextSecondaryBrush}"/>
+                    <TextBox Text="{Binding Card.ManualStepsText, Mode=OneWay}" IsReadOnly="True" TextWrapping="Wrap" BorderThickness="0" Background="{StaticResource CanvasBrush}" Foreground="{StaticResource TextPrimaryBrush}"
+                             Padding="8" Margin="0,4,0,0" AutomationProperties.Name="Cum verifici tu: pașii de verificare manuală ai dovezilor"/>
+                </StackPanel>
             </StackPanel>
 
             <!-- Verifică -->

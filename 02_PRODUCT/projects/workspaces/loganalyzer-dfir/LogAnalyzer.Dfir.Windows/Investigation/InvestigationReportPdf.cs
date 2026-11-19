@@ -73,6 +73,9 @@ public static class InvestigationReportPdf
         var seal = LogAnalyzer.Dfir.Case.ReportSeal.For(r.Case);   // chain heads at the moment the report is printed (decision 30)
         var evidence = r.Case.LoadEvidence().ToDictionary(e => e.EvidenceId, StringComparer.Ordinal);
         var verification = r.Verification ?? ReadVerification(r.Case.Root);
+        // the event id and time of an EVTX record come from its timeline row (one pass, only when a finding prints evidence lines)
+        var EvtxRows = new Lazy<Dictionary<(string, string), TimelineEvent>>(() => r.Timeline.Where(t => t.Locator.StartsWith("EventRecordID=", StringComparison.Ordinal))
+            .GroupBy(t => (t.EvidenceId, t.Locator)).ToDictionary(g => g.Key, g => g.First()));
         var station = LogAnalyzer.Dfir.Analysis.StationIdentity.FromEvidence(r.Timeline, info.Host);   // the evidence's station, not the examiner's machine (review I1)
         var summary = InvestigationReportText.Summarize(r, integrity);
         var printed = new List<string>();
@@ -252,7 +255,15 @@ public static class InvestigationReportPdf
                             if (g.Members.Count > 15) P(cc, $"… încă {g.Members.Count - 15} (lista completă în Analysis/findings.json)").FontSize(7).Italic().FontColor(Muted);
                         }
                         var refs = InvestigationReportText.GroupEvidence(g);
-                        foreach (var e in refs.Take(8)) P(cc, $"Element de probă {e.EvidenceId} · {RoText.CleanPathsInText(e.Locator)} · {RoText.CleanPathsInText(e.Description)}").FontSize(7).FontColor(Muted);
+                        var shownSteps = new HashSet<string>(StringComparer.Ordinal);   // the same command is printed once per finding (the file hash of one evidence item repeats)
+                        foreach (var e in refs.Take(8))
+                        {
+                            P(cc, $"Element de probă {e.EvidenceId} · {RoText.CleanPathsInText(e.Locator)} · {RoText.CleanPathsInText(e.Description)}").FontSize(7).FontColor(Muted);
+                            var how = LogAnalyzer.Dfir.Presentation.ManualVerification.For(e, evidence.GetValueOrDefault(e.EvidenceId), r.Case.Root, EvtxRows.Value.GetValueOrDefault((e.EvidenceId, e.Locator)))
+                                .Where(s => shownSteps.Add(s.ToLine())).Take(3).ToList();
+                            if (how.Count > 0) P(cc, LogAnalyzer.Dfir.Presentation.ManualVerification.Heading + ":").FontSize(6.5f).Bold().FontColor(Muted);
+                            foreach (var s in how) P(cc, "  • " + s.ToLine()).FontSize(6.5f).FontColor(Muted);
+                        }
                         if (refs.Count > 8) P(cc, $"… încă {RoText.Count(refs.Count - 8, "referință", "referințe")} la elemente de probă (în Analysis/findings.json)").FontSize(7).Italic().FontColor(Muted);
                         foreach (var a in f.AlternativeExplanations) P(cc, "Explicație nevinovată posibilă: " + a).FontSize(7).Italic();
                         foreach (var m in f.MissingEvidence) P(cc, "Lipsește: " + m).FontSize(7).Italic();
