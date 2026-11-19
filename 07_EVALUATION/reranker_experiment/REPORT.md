@@ -57,8 +57,8 @@ Abstain: AUROC of the top reranker score, measurable vs abstain queries = 0.83 (
 - **Generality.** v3 queries were written from a note's title plus a 700-character excerpt, and the reranker reads title +
   1200 characters. The benchmark therefore favours head-text reranking by construction; the size of the gain on real work
   questions, and on answers deep inside long notes, is UNVERIFIED.
-- **Harm on real questions.** The harm check on the 20 work questions (`07_EVALUATION/memory_usage/`) was NOT RUN: it needs
-  blind judging of new entrants.
+- **Harm on real questions: none found (section 9).** On the 20 work questions the reranker gave 3 wins and 0 losses, but
+  20 questions is an observation, not a benchmark.
 - **Pooling bias** would only add wins (unjudged notes promoted by the reranker count as misses); with 0 losses the
   sensitivity adjudication was not needed for the verdict and was not done.
 - **Decisions.** Better retrieval is not better agent decisions; the two earlier memory ablations were null
@@ -90,3 +90,39 @@ python 30_SCRIPTS/evaluation/reranker_analyze.py --served .../served/bge_fp16_r1
 Wire the reranker into `search()` behind a flag, OFF by default, with the MiniLM model as the cheaper candidate (70 vs 71,
 2.7× faster, half the VRAM), keep it out of the CPU path, then measure harm on the real work questions and run a causal
 agent ablation with the flag ON.
+
+## 9. Harm check on the 20 real work questions (run after the verdict)
+
+`30_SCRIPTS/evaluation/reranker_worklist_harm.py`: each question from `07_EVALUATION/memory_usage/work_queries.json` through
+the production controller with the reranker OFF and ON; the first three results (what an agent reads) of both arms pooled
+into 88 distinct (question, note) pairs, shuffled, arm hidden; two independent blind judges (Claude Sonnet, Claude Opus),
+rule "relevant only if it would help do the task the question was taken from".
+
+| | Reranker OFF | Reranker ON |
+|---|---:|---:|
+| Relevant results in the first three, judge A / judge B | 8 / 8 | 13 / 14 |
+| Questions with at least one relevant result (of 20), A / B | 6 / 7 | 9 / 10 |
+| Questions won / lost by ON (both judges agree) | — | 3 / 0 |
+
+Inter-judge agreement: 86 of 88 pairs, Cohen's kappa 0.92. No human judgement. Files: `worklist/`.
+
+## 10. Wiring (after the verdict)
+
+`MemoryController(reranker=...)`, OFF by default; `controller_factory` builds `retrieval.reranker.HttpReranker` only when
+`AI_MEMORY_VAULT_RERANKER_URL` is set (loopback `http://` only). The model runs in `30_SCRIPTS/retrieval/reranker_server.py`
+(own environment, binds 127.0.0.1, checks the Host header). The wired path reproduces the confirmatory arm on all 160
+queries (`results/wired_check.json`: identical served top 5 160/160, hit@5 71). Independent review found that urllib's
+default opener honours `HTTP_PROXY`/system proxies, which would have sent note text to a proxy despite the loopback check;
+the client now uses an opener with no proxy and no redirects (regression tests in `20_TESTS/test_controller_reranker.py`).
+
+Enable on the owner's PC:
+
+```text
+<reranker venv>/python 30_SCRIPTS/retrieval/reranker_server.py --port 8765 --fp16
+etrieval
+eranker_server.py --port 8765 --fp16
+set AI_MEMORY_VAULT_RERANKER_URL=http://127.0.0.1:8765      (then start the MCP server / CLI)
+```
+
+The server process commits about 6.4 GB of virtual memory (CUDA context); on this PC it cannot run next to a 7B Ollama model
+while the page file sits on a nearly full drive.

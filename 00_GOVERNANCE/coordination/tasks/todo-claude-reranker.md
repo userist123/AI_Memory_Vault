@@ -1,24 +1,27 @@
 # todo-claude-reranker
 
-- Task: measure a cross-encoder reranker over production `search()` candidates (loss-funnel follow-up).
-- Branch: `claude/retrieval-reranker-experiment` (base `main` `f28d1eb93`). PR: draft, see branch.
-- Status: experiment DONE; verdict ADOPT (bge-reranker-v2-m3 K=50: served hit@5 24 → 71 of 130, 47 wins / 0 losses).
-  Production unchanged.
+- Task: reranker over production `search()` candidates: experiment, wiring behind a flag, harm check, causal QA ablation.
+- Branch: `claude/retrieval-reranker-experiment` (base `main` `f28d1eb93`). PR #392 (draft).
 
 ## Done
-- Production-path snapshot, preregistration frozen (`77a2f8593`), amendment A1 after NO-GO review (`ab3406e35`),
-  controls enforced (`4ce3d982f`), confirmatory + 2 descriptive arms scored. Report: `07_EVALUATION/reranker_experiment/REPORT.md`.
+1. Preregistered experiment: served hit@5 24 → 71 of 130 (47 wins / 0 losses), verdict ADOPT
+   (`07_EVALUATION/reranker_experiment/REPORT.md`).
+2. Wired: `MemoryController(reranker=...)` OFF by default, `AI_MEMORY_VAULT_RERANKER_URL` (loopback only) in
+   `controller_factory`, model server `30_SCRIPTS/retrieval/reranker_server.py`; wired path reproduces the experiment
+   160/160. Review NO-GO (proxy bypass) fixed in `71e55490e` with tests.
+3. Harm check on 20 real work questions: 3 wins / 0 losses, two blind judges, kappa 0.92.
+4. Causal QA ablation preregistered (`07_EVALUATION/memory_qa_ablation/PREREGISTRATION.md`, `777f61525`), contexts frozen,
+   manipulation check passed (B 24, C 71). Answers: `memory_qa_answer.py`; judging: `memory_qa_judge.py`.
 
 ## Next
-1. Wire the reranker into `MemoryController.search()` behind a flag, OFF by default; candidate model MiniLM
-   (70/130, 287 ms p95) or bge (71/130, 765 ms p95); GPU only, fail closed to current order if the model is absent.
-2. Harm check on the 20 work questions (`07_EVALUATION/memory_usage/`), new entrants judged blind.
-3. Causal agent ablation with the flag ON (two earlier ablations were null).
-4. Side finding: `search()` serves REVIEW/`inferred` notes that `memory_access.get` refuses (16 notes, 14 gold).
+- Finish the QA ablation: answers → blind packet → two judges → score → report.
+- Delta review of the proxy fix + QA harness, then final full suite, push, PR update.
 
-## Blockers / environment
-- Reranker venv lives outside the repo (sentence-transformers, torch cu128). Models in a local HF cache, pinned revisions.
-- The PC hit its Windows commit limit during the run (pagefile on a full drive); latency was measured without Ollama resident.
+## Open owner decisions (not changed by this work)
+- `memory_get` withholds REVIEW notes whose verification is not `unverified` (e.g. `inferred`) while `search()` serves them
+  (`interfaces/memory_access.py` `_review_candidate`): 16 such notes, 14 of them v3 gold. Trust-boundary change → owner.
+- Turning the reranker ON by default (it needs the GPU server; CPU is > 30 s per query).
 
-## Key files
-`30_SCRIPTS/evaluation/reranker_{snapshot,rerank,replay,analyze}.py`, `07_EVALUATION/reranker_experiment/`.
+## Environment
+- Reranker venv and HF cache live outside the repo (drive E:). The server commits ~6.4 GB; it cannot run next to a 7B
+  Ollama model on this PC (page file on a nearly full drive D:), so phases are run one after the other.
