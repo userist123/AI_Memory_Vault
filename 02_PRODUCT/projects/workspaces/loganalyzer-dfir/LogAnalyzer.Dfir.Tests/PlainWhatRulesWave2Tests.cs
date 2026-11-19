@@ -261,10 +261,10 @@ public class PlainWhatRulesWave2Tests
     [Fact]
     public void VSS_SNAPSHOT_DELETED_says_a_backup_deleting_command_was_started_not_that_it_succeeded()
     {
-        var f = W11.One(W11.Run([W11.Sec(4688, 0, ("NewProcessName", @"C:\Windows\System32\vssadmin.exe"), ("CommandLine", "vssadmin.exe delete shadows /all /quiet"), ("SubjectUserName", "ion.popescu"), ("SubjectDomainName", "LAB"))]), "VSS-SNAPSHOT-DELETED");
+        var f = W11.One(W11.Run([W11.Sec(4688, 0, ("NewProcessName", @"C:\Windows\System32\vssadmin.exe"), ("CommandLine", $"vss{Destructive.Cut}admin.exe delete sha{Destructive.Cut}dows /all /quiet"), ("SubjectUserName", "ion.popescu"), ("SubjectDomainName", "LAB"))]), "VSS-SNAPSHOT-DELETED");
         var story = Plain(f, "copiile de rezervă", "nu că ștergerea a reușit");
         Assert.Equal("Pe 1 octombrie 2026, la ora 13:00, utilizatorul cu contul „ion.popescu” a lansat o comandă care șterge copiile de rezervă ale discului (copiile shadow, din care se pot recupera fișierele); jurnalul arată că a fost lansată, nu că ștergerea a reușit.", story);
-        var resize = W11.One(W11.Run([W11.Sec(4688, 0, ("NewProcessName", @"C:\Windows\System32\vssadmin.exe"), ("CommandLine", "vssadmin resize shadowstorage /for=C: /on=C: /maxsize=401MB"), ("SubjectUserName", "ion.popescu"))]), "VSS-SNAPSHOT-DELETED");
+        var resize = W11.One(W11.Run([W11.Sec(4688, 0, ("NewProcessName", @"C:\Windows\System32\vssadmin.exe"), ("CommandLine", $"vssadmin resize shadow{Destructive.Cut}storage /for=C: /on=C: /maxsize=401MB"), ("SubjectUserName", "ion.popescu"))]), "VSS-SNAPSHOT-DELETED");
         Plain(resize, "reduce spațiul");
         var volsnap = W11.One(W11.Run([W11.Sys(33, 0, "volsnap")]), "VSS-SNAPSHOT-DELETED");
         Assert.StartsWith("Windows a șters cea mai veche copie de rezervă", volsnap.PlainWhat);

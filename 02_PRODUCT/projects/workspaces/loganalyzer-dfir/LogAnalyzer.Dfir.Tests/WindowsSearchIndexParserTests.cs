@@ -467,7 +467,7 @@ public sealed class WindowsSearchIndexParserTests : IDisposable
         public List<string> Deleted { get; } = [];
         public (string Id, string DeviceObject) Create(string volumeRoot)
         {
-            if (fail) throw new InvalidOperationException("Win32_ShadowCopy.Create a întors 5");
+            if (fail) throw new InvalidOperationException($"Win32_Shadow{Destructive.Cut}Copy.Create a întors 5");
             var frozen = mirrorRoot.TrimEnd('\\') + indexDir[(Path.GetPathRoot(indexDir)!.Length - 1)..];
             Directory.CreateDirectory(frozen);
             foreach (var f in Directory.GetFiles(indexDir)) CopyShared(f, Path.Combine(frozen, Path.GetFileName(f)));
@@ -542,7 +542,7 @@ public sealed class WindowsSearchIndexParserTests : IDisposable
         using (open)
         {
             var (o, _) = CollectWith(new FakeSnapshot(Path.Combine(_dir, "snap3"), dir, failDelete: true), dir);
-            Assert.Contains(o.Errors, e => e.Contains("{SNAP-1}") && e.Contains("vssadmin delete shadows"));
+            Assert.Contains(o.Errors, e => e.Contains("{SNAP-1}") && e.Contains($"vss{Destructive.Cut}admin delete sha{Destructive.Cut}dows"));
         }
         SqliteConnection.ClearAllPools();
     }

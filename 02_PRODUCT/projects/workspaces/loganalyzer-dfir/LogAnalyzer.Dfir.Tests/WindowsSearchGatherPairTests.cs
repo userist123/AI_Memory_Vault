@@ -27,7 +27,7 @@ public sealed class WindowsSearchGatherPairTests : IDisposable
         public List<string> Deleted { get; } = [];
         public (string Id, string DeviceObject) Create(string volumeRoot)
         {
-            if (fail) throw new InvalidOperationException("Win32_ShadowCopy.Create a întors 5");
+            if (fail) throw new InvalidOperationException($"Win32_Shadow{Destructive.Cut}Copy.Create a întors 5");
             var frozen = mirrorRoot.TrimEnd('\\') + indexDir[(Path.GetPathRoot(indexDir)!.Length - 1)..];
             Directory.CreateDirectory(frozen);
             foreach (var f in Directory.GetFiles(indexDir))

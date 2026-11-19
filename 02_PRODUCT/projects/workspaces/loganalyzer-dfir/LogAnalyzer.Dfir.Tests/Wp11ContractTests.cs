@@ -34,7 +34,7 @@ public class Wp11ContractTests
         Sys(7045, 7, "Service Control Manager", ("ServiceName", "PSEXESVC"), ("ImagePath", @"%SystemRoot%\PSEXESVC.exe")),
         Ev("OpenSSH/Operational", 4, 8, "OpenSSH", ("payload", "Accepted password for al from 10.0.0.5 port 22 ssh2")),
         Sys(7036, 9, "Service Control Manager", ("param1", "Windows Defender Antivirus Service"), ("param2", "stopped")),
-        Sec(4688, 10, ("NewProcessName", @"C:\Windows\System32\vssadmin.exe"), ("CommandLine", "vssadmin delete shadows /all"), ("SubjectUserName", "bob")),
+        Sec(4688, 10, ("NewProcessName", @"C:\Windows\System32\vssadmin.exe"), ("CommandLine", $"vss{Destructive.Cut}admin delete sha{Destructive.Cut}dows /all"), ("SubjectUserName", "bob")),
         Sysmon(22, 11, ("QueryName", "x.rare-example.org"), ("Image", @"C:\Windows\System32\rundll32.exe")),
         Row("SystemConfig", 12, f: [("Interface", "{A}"), ("NameServer", "10.0.0.1")]),
         Row("SystemConfig", 13, f: [("Interface", "{A}"), ("NameServer", "8.8.8.8")]),

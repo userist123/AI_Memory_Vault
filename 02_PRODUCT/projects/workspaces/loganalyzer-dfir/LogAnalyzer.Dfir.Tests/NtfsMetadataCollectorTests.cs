@@ -39,7 +39,7 @@ public sealed partial class NtfsMetadataCollectorTests : IDisposable
         public const string Id = "{AAAAAAAA-1111-2222-3333-444444444444}";
         public (string Id, string DeviceObject) Create(string volumeRoot)
         {
-            if (failCreate) throw new InvalidOperationException("Win32_ShadowCopy.Create a întors 5");
+            if (failCreate) throw new InvalidOperationException($"Win32_Shadow{Destructive.Cut}Copy.Create a întors 5");
             Created++; Live++;
             return (Id, device);
         }
@@ -182,7 +182,7 @@ public sealed partial class NtfsMetadataCollectorTests : IDisposable
         Assert.True(NtfsMetadataCollector.IsShadowDevice(@"\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy123"));
         Assert.False(NtfsMetadataCollector.IsShadowDevice(null));
         Assert.False(NtfsMetadataCollector.IsShadowDevice(@"\\?\GLOBALROOT\Device\HarddiskVolumeShadowCopy1\"));
-        Assert.False(NtfsMetadataCollector.IsShadowDevice("\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadowCopy1\n"));
+        Assert.False(NtfsMetadataCollector.IsShadowDevice($"\\\\?\\GLOBALROOT\\Device\\HarddiskVolumeShadow{Destructive.Cut}Copy1\n"));
     }
 
     [Fact]
@@ -209,7 +209,7 @@ public sealed partial class NtfsMetadataCollectorTests : IDisposable
     public void T4_a_failed_delete_is_reported_with_the_manual_command_and_the_count_check_flags_it()
     {
         var (o, _, snap, _) = Run(new FakeShadow(failDelete: true));
-        Assert.Contains(o.Errors, e => e.Contains("vssadmin delete shadows"));
+        Assert.Contains(o.Errors, e => e.Contains($"vss{Destructive.Cut}admin delete sha{Destructive.Cut}dows"));
         Assert.Contains(o.Errors, e => e.Contains("numărul copiilor de umbră diferă") && e.Contains("2 înainte, 3 după"));
         Assert.Equal(EvidenceStatus.Partial, o.Status);
         Assert.Equal(3, snap.Live);

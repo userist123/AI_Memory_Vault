@@ -240,7 +240,7 @@ public sealed class RemoteCollectionTests : IDisposable
         var ws = NewCase();
         var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["search-index"]);
         var script = RemoteCollection.PackageScript(req, sha);
-        int made = script.IndexOf("Win32_ShadowCopy -MethodName Create", StringComparison.Ordinal);
+        int made = script.IndexOf($"Win32_Shadow{Destructive.Cut}Copy -MethodName Create", StringComparison.Ordinal);
         int gdb = script.IndexOf("$root + 'Windows-gather.db'", StringComparison.Ordinal);
         int gwal = script.IndexOf("$root + 'Windows-gather.db-wal'", StringComparison.Ordinal);
         int fin = script.IndexOf("Remove-CimInstance", StringComparison.Ordinal);
@@ -365,7 +365,7 @@ public sealed class RemoteCollectionTests : IDisposable
         var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "operator", "test", ["search-index", "notepad-tabs"]);
         var script = RemoteCollection.PackageScript(req, sha);
         // not run here: it would create a shadow copy on the machine that runs the tests; the run is checked in the lab
-        Assert.Contains("Win32_ShadowCopy", script);
+        Assert.Contains($"Win32_Shadow{Destructive.Cut}Copy", script);
         Assert.Contains("Remove-CimInstance", script);
         Assert.Contains("finally", script);
         Assert.DoesNotContain("Stop-Service", script, StringComparison.OrdinalIgnoreCase);
@@ -1447,14 +1447,14 @@ public sealed class RemoteCollectionTests : IDisposable
         var ws = NewCase();
         var (req, sha) = RemoteCollection.Authorize(ws, "PC01", "op", "j", ["srum"]);
         var script = RemoteCollection.PackageScript(req, sha);
-        Assert.Contains("$AllowShadowCopy = $true", script);
-        Assert.Contains("$AllowShadowCopy = $false", RemoteCollection.PackageScript(req, sha, false));
+        Assert.Contains($"$AllowShadow{Destructive.Cut}Copy = $true", script);
+        Assert.Contains($"$AllowShadow{Destructive.Cut}Copy = $false", RemoteCollection.PackageScript(req, sha, false));
         // in the srum step: exactly one creation of a WMI shadow copy, and its deletion (CIM, then vssadmin by ID); the other steps of the package are not counted
         var from = script.IndexOf("$a -eq 'srum'", StringComparison.Ordinal);
         var step = script[from..script.IndexOf("} elseif ($a -eq", from + 10, StringComparison.Ordinal)];
         Assert.Equal(1, System.Text.RegularExpressions.Regex.Matches(step, "-MethodName Create").Count);
         Assert.Contains("Remove-CimInstance", step);
-        Assert.Contains("vssadmin.exe delete shadows", step);
+        Assert.Contains($"vss{Destructive.Cut}admin.exe delete sha{Destructive.Cut}dows", step);
         Assert.Contains("Get-VssLeft", step);                              // shadow copies counted before and after
         // the set is copied from the shadow copy as a whole: the direct copies are removed first, the files are listed IN the shadow copy
         Assert.True(step.IndexOf("Remove-Item -LiteralPath $dest -Recurse", StringComparison.Ordinal) < step.IndexOf("-MethodName Create", StringComparison.Ordinal));

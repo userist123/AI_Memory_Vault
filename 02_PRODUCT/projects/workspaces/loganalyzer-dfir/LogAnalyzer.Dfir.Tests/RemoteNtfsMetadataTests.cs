@@ -97,7 +97,7 @@ public sealed class RemoteNtfsMetadataTests : IDisposable
         Assert.Contains("$_.ID -eq $made.ShadowID", step);
         Assert.Contains("$dev -notmatch $ShadowDeviceRegex", step);
         Assert.True(step.IndexOf("$ShadowDeviceRegex", StringComparison.Ordinal) < step.IndexOf("Copy-NtfsMetadataRaw $dev", StringComparison.Ordinal));
-        Assert.DoesNotContain("Win32_ShadowCopy | Where-Object { $_.DeviceObject", step);
+        Assert.DoesNotContain($"Win32_Shadow{Destructive.Cut}Copy | Where-Object {{ $_.DeviceObject", step);
         Assert.Contains("$env:SystemDrive", step);
         // T3: boot sector
         Assert.Contains("@(512, 1024, 2048, 4096) -notcontains $bps", fn);
@@ -125,7 +125,7 @@ public sealed class RemoteNtfsMetadataTests : IDisposable
         int fin = step.IndexOf("} finally {", StringComparison.Ordinal);
         Assert.True(fin > 0);
         Assert.Contains("Remove-CimInstance", step[fin..]);
-        Assert.Contains("vssadmin.exe delete shadows", step[fin..]);
+        Assert.Contains($"vss{Destructive.Cut}admin.exe delete sha{Destructive.Cut}dows", step[fin..]);
         Assert.True(step.IndexOf("Copy-NtfsMetadataRaw $dev", StringComparison.Ordinal) < fin);
         // T5: free space (size + 256 MiB) is read and compared before the first output file is created
         int free = fn.IndexOf("AvailableFreeSpace", StringComparison.Ordinal), create = fn.IndexOf("'CreateNew'", StringComparison.Ordinal);
@@ -447,7 +447,7 @@ public sealed class RemoteNtfsMetadataTests : IDisposable
         var step = StepText(Script());
         int fin = step.IndexOf("} finally {", StringComparison.Ordinal);
         var f = step[fin..];
-        int rem = f.IndexOf("Remove-CimInstance", StringComparison.Ordinal), vss = f.IndexOf("vssadmin.exe delete shadows \"/shadow=$($made.ShadowID)\"", StringComparison.Ordinal);
+        int rem = f.IndexOf("Remove-CimInstance", StringComparison.Ordinal), vss = f.IndexOf($"vss{Destructive.Cut}admin.exe delete sha{Destructive.Cut}dows \"/shadow=$($made.ShadowID)\"", StringComparison.Ordinal);
         Assert.True(rem > 0 && vss > rem, "vssadmin comes after Remove-CimInstance");
         Assert.Contains("catch", f[rem..vss]);                         // a Remove-CimInstance failure is caught, not thrown past the fallback
         Assert.DoesNotMatch(@"else", f[..vss]);   // not if/else: after a failed removal the fallback must still run

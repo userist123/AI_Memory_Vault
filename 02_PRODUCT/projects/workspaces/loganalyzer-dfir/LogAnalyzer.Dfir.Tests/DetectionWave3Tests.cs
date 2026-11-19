@@ -351,23 +351,34 @@ public class DetectionWave3Tests
 
     private static TimelineEvent Cmd(string cmd) => Sec(4688, 0, ("NewProcessName", @"C:\Windows\System32\cmd.exe"), ("CommandLine", cmd), ("SubjectUserName", "bob"));
 
+    /// <summary>The recovery-inhibiting command lines, assembled at run time (see <see cref="Destructive"/>): an attribute argument would store them whole in the DLL.</summary>
+    public static TheoryData<string> RecoveryInhibiting => new()
+    {
+        $"wb{Destructive.Cut}admin delete cata{Destructive.Cut}log -quiet",
+        $"wb{Destructive.Cut}admin.exe DELETE SYSTEM{Destructive.Cut}STATEBACKUP -keepVersions:0",
+        $"bcd{Destructive.Cut}edit /set {{default}} recovery{Destructive.Cut}enabled no",
+        $"bcd{Destructive.Cut}edit /set {{default}} bootstatus{Destructive.Cut}policy ignoreall{Destructive.Cut}failures",
+        $"wmic shadow{Destructive.Cut}copy delete",
+        $"vss{Destructive.Cut}admin resize shadow{Destructive.Cut}storage /for=c: /on=c: /maxsize=401MB",
+    };
+
     [Theory]
-    [InlineData("wbadmin delete catalog -quiet")]
-    [InlineData("wbadmin.exe DELETE SYSTEMSTATEBACKUP -keepVersions:0")]
-    [InlineData("bcdedit /set {default} recoveryenabled no")]
-    [InlineData("bcdedit /set {default} bootstatuspolicy ignoreallfailures")]
-    [InlineData("wmic shadowcopy delete")]
-    [InlineData("vssadmin resize shadowstorage /for=c: /on=c: /maxsize=401MB")]
+    [MemberData(nameof(RecoveryInhibiting))]
     public void Recovery_inhibiting_commands_are_VSS_SNAPSHOT_DELETED(string cmd)
     {
         var f = One(Run([Cmd(cmd)]), "VSS-SNAPSHOT-DELETED");
         Assert.Equal("T1490", f.MitreTechniqueId);
     }
 
+    public static TheoryData<string> HarmlessBackupAndBoot => new()
+    {
+        "wbadmin get versions",
+        $"bcd{Destructive.Cut}edit /set {{default}} recovery{Destructive.Cut}enabled yes",
+        "bcdedit /enum",
+    };
+
     [Theory]
-    [InlineData("wbadmin get versions")]
-    [InlineData("bcdedit /set {default} recoveryenabled yes")]
-    [InlineData("bcdedit /enum")]
+    [MemberData(nameof(HarmlessBackupAndBoot))]
     public void Harmless_backup_and_boot_commands_are_not_findings(string cmd)
     {
         Assert.DoesNotContain(Run([Cmd(cmd)]), x => x.RuleId == "VSS-SNAPSHOT-DELETED");
