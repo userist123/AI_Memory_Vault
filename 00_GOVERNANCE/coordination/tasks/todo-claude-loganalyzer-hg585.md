@@ -1782,3 +1782,12 @@
   clock ok, sign-in shown. Planner #12 done (B1 real-machine smoke, B2 grouping, B3 audit policy / Guest / admins). Next candidates (owner filter):
   Quick-profile config coverage (save hives in Quick too, or live fallback with a stored snapshot), VS Code/ISE history, Amcache transaction-log replay
   (8825 entries without values on a dirty hive in the real run), auditpol other languages, IncomingEvidence import of auditpol/accounts files.
+- 2026-11-20 (claude, hg585) CORRECTION + C2 DONE: the real run's "Amcache 8827 intrări fără valori … hive murdar" was investigated: the VSS copy is CLEAN
+  (seq 92655/92655; LOG1 older 92654) and Windows reg load sees values on all 12,927 keys. My first reading ("reader bug, 68% values lost") was WRONG:
+  RawRegistry reads every value; 8,827 keys are Windows 11 stubs with only ProgramId + FileId. AmcacheParser now: valueless = no values at all; stub keys
+  (values but no Name/path) get their own row text and a gap "N intrări au valorile citite complet, dar fără nume și cale (… nu este o problemă de hive
+  murdar)", suggesting Prefetch/ShimCache/EVTX correlation. Tests: ExecutionArtifactParserTests + stub test (red with old predicate); opt-in
+  RealAmcacheDiagnosticTests (LA_REAL_AMCACHE=<path>, owner data stays local). Full Dfir 4064 / 36 skipped / 0 failed. Also fixed my B3 slip:
+  ParserRegistryTests counts 37 -> 39 (AuditPolicyCsvParser, LocalAccountsParser). C1 (HvLE replay) stays UNCOMMITTED: review REQUEST_CHANGES (HIGH
+  parented/remote hives skipped silently; MEDIUM rerun integrity, cross-acquisition log matching, stale-tail gap; LOW checksum special cases, oversized
+  hbds, orphan copy on register failure) -> fixes next.

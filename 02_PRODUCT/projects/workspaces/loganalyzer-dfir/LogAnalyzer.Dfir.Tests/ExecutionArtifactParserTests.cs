@@ -2,6 +2,7 @@ using System.Buffers.Binary;
 using System.Text;
 using DiscUtils.Registry;
 using LogAnalyzer.Dfir.Model;
+using LogAnalyzer.Dfir.Tests.Synthetic;
 using LogAnalyzer.Dfir.Windows.Parsers;
 using Xunit;
 
@@ -159,6 +160,26 @@ public sealed class ExecutionArtifactParserTests : IDisposable
         Assert.StartsWith("Amcache: whoami.exe — intrare fără valori", e.Summary);
         Assert.DoesNotContain("( )", e.Summary);
         Assert.Contains(r.Gaps, g => g.Artifact == "Amcache InventoryApplicationFile" && g.Reason.StartsWith("1 intrări fără valori"));
+    }
+
+    [Fact]
+    public void Amcache_key_with_only_ProgramId_and_FileId_is_a_read_stub_not_a_dirty_hive()
+    {
+        // real Windows 11 hive (clean, seq equal): 8827 of 12927 keys hold exactly ProgramId + FileId; Windows shows the same two values
+        var root = new RegfBuilder.Key("ROOT", new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc));
+        var k = root.Sub(@"Root\InventoryApplicationFile\whoami.exe|7380676a876ce9b1");
+        k.Value("ProgramId", RegfBuilder.String, "0006" + new string('a', 40));
+        k.Value("FileId", RegfBuilder.String, "0000" + new string('B', 40));
+        var path = Path.Combine(_dir, "Amcache.hve");
+        File.WriteAllBytes(path, RegfBuilder.Build(root, "Amcache.hve"));
+        var sink = new ListSink();
+        var r = new AmcacheParser().Parse(Item(path, "amcache"), path, sink, default);
+        var e = Assert.Single(sink.Events);
+        Assert.Equal("whoami.exe", e.Process);
+        Assert.Equal(new string('B', 40), e.Hash);
+        Assert.Contains("ProgramId/FileId", e.Summary);
+        Assert.DoesNotContain(r.Gaps, g => g.Reason.Contains("era „murdar” la copiere") && g.Artifact == "Amcache InventoryApplicationFile");
+        Assert.Contains(r.Gaps, g => g.Artifact == "Amcache InventoryApplicationFile" && g.Reason.StartsWith("1 intrări au valorile citite complet"));
     }
 
     /// <summary>
