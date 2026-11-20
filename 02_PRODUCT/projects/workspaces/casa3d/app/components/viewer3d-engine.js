@@ -366,18 +366,21 @@ function model(it){
       B(sxc - .3 + w / 2, .78, wd - .02, (-w / 2 + sxc - .3) / 2, .47, -d / 2 + wd / 2, carc); B(w / 2 - sxc - .3, .78, wd - .02, (sxc + .3 + w / 2) / 2, .47, -d / 2 + wd / 2, carc); B(.6, .56, wd - .02, sxc, .36, -d / 2 + wd / 2, carc);
       const n = Math.round(w / .6); for (let i = 0; i < n; i++){ const cx = -w / 2 + w / n * (i + .5); B(w / n - .006, .74, .018, cx, .46, -d / 2 + wd + .009, front); handle(cx, htype === 'profile' ? .82 : .78, -d / 2 + wd + .025, false); }
       // blatul cu decupajul chiuvetei (ca la montaj: gaura e mai mică decât rama chiuvetei)
-      { const sh = rrectPath(new THREE.Shape(), 0, 0, w + .01, d, .003); sh.holes.push(rrectPath(new THREE.Path(), -w / 2 + .45, 0, .42, .36, .03)); SLAB(sh, topM, .86 + topM, topMat); }
+      // chiuveta aleasă la mărimea ei (ramă = lățimea × adâncimea produsului; cuva cel mult 45 cm, restul e picurătorul)
+      const skw = k && k.sinkCm ? Math.min(w * .45, k.sinkCm[0] / 100) : .48, skd = k && k.sinkCm ? Math.min(.54, k.sinkCm[1] / 100) : .42, bww = Math.min(skw - .08, .45), bdd = skd - .08;
+      { const sh = rrectPath(new THREE.Shape(), 0, 0, w + .01, d, .003); sh.holes.push(rrectPath(new THREE.Path(), -w / 2 + .45, 0, skw - .06, skd - .06, .03)); SLAB(sh, topM, .86 + topM, topMat); }
       const sinkMat = k ? MAT(lumOf(k.sinkColor) > .55 ? 'chrome' : 'paint', k.sinkColor) : MAT('chrome', '#c6c9cc'), tapMat = MAT('chrome', k ? k.tapColor : '#c6c9cc');
       // chiuveta: ramă subțire și cuva (mai închisă, cu scurgere), bateria cu pipă curbată
       const ct = .86 + topM, sx = -w / 2 + .45;
       { // chiuveta încastrată: rama subțire pe blat, cuva adâncă de 18 cm cu pereți și fund, sita de scurgere
-        const rim = rrectPath(new THREE.Shape(), sx, 0, .48, .42, .035); rim.holes.push(rrectPath(new THREE.Path(), sx, 0, .4, .34, .025)); SLAB(rim, .006, ct + .006, sinkMat);
+        const rim = rrectPath(new THREE.Shape(), sx, 0, skw, skd, .035); rim.holes.push(rrectPath(new THREE.Path(), sx, 0, bww, bdd, .025)); SLAB(rim, .006, ct + .006, sinkMat);
         const bowlM = k ? MAT(lumOf(k.sinkColor) > .55 ? 'chrome' : 'paint', k.sinkColor) : MAT('chrome', '#b9bcbf'), dep = .18, by = ct - dep;
-        B(.4, .006, .34, sx, by, 0, bowlM); B(.4, dep, .006, sx, by + dep / 2, -.17, bowlM); B(.4, dep, .006, sx, by + dep / 2, .17, bowlM); B(.006, dep, .34, sx - .2, by + dep / 2, 0, bowlM); B(.006, dep, .34, sx + .2, by + dep / 2, 0, bowlM);
+        B(bww, .006, bdd, sx, by, 0, bowlM); B(bww, dep, .006, sx, by + dep / 2, -bdd / 2, bowlM); B(bww, dep, .006, sx, by + dep / 2, bdd / 2, bowlM); B(.006, dep, bdd, sx - bww / 2, by + dep / 2, 0, bowlM); B(.006, dep, bdd, sx + bww / 2, by + dep / 2, 0, bowlM);
         CY(.035, .035, .004, sx + .08, by + .005, .06, MAT('metal', '#6a6d71'), 24); CY(.012, .012, .005, sx + .08, by + .007, .06, MAT('paint', '#2a2b2d'), 12); }
-      CY(.022, .026, .03, sx, ct + .015, -.2, tapMat, 16); CY(.012, .012, .3, sx, ct + .17, -.2, tapMat, 12);
-      { const sp = new THREE.Mesh(new THREE.TorusGeometry(.09, .012, 8, 16, Math.PI), tapMat); sp.rotation.y = Math.PI / 2; sp.position.set(sx, ct + .32, -.11); sp.castShadow = true; g.add(sp); }
-      B(.016, .05, .016, sx, ct + .26, -.02, tapMat); B(.012, .012, .1, sx + .03, ct + .27, -.2, tapMat);
+      const tz = -skd / 2 + .01;   // bateria în spatele ramei chiuvetei
+      CY(.022, .026, .03, sx, ct + .015, tz, tapMat, 16); CY(.012, .012, .3, sx, ct + .17, tz, tapMat, 12);
+      { const sp = new THREE.Mesh(new THREE.TorusGeometry(.09, .012, 8, 16, Math.PI), tapMat); sp.rotation.y = Math.PI / 2; sp.position.set(sx, ct + .32, tz + .09); sp.castShadow = true; g.add(sp); }
+      B(.016, .05, .016, sx, ct + .26, tz + .18, tapMat); B(.012, .012, .1, sx + .03, ct + .27, tz, tapMat);
       // plita: sticlă neagră cu cele patru zone de gătit marcate; pe gaz (produsul ales), arzătoarele cu grătare de fontă
       const hx = w / 2 - .55, gas = s.hob && /gas/.test(s.hob.kind || ''); B(.58, .006, .5, hx, ct + .003, 0, gas && s.hob.col && lumOf(s.hob.col) > .5 ? MAT('metal', s.hob.col) : MAT('screen', '#0d0d0e'));
       if (gas) for (const [dx, dz, r] of [[-.14, -.1, .05], [.14, -.1, .04], [-.14, .12, .04], [.14, .12, .06]]){ CY(r, r, .02, hx + dx, ct + .016, dz, MAT('paint', '#1b1b1c'), 20); B(.2, .012, .012, hx + dx, ct + .03, dz, MAT('paint', '#121213')); B(.012, .012, .2, hx + dx, ct + .03, dz, MAT('paint', '#121213')); }
