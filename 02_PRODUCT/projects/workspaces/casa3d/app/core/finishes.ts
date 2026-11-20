@@ -294,7 +294,7 @@ export interface WallVisual { side: WallFeature['side']; kind: WallFeatureKind; 
   /** doar la boiserie: casetele [de la, sus de la, până la, sus până la] și lățimea baghetei (m) */ frames?: [number, number, number, number][]; profile?: number }
 export interface CeilingVisual { type: 'flat' | 'drop' | 'cove'; drop: number; cove: number; led: string | null; cornice: [number, number] | null; spots: number }
 /** Ce trebuie să deseneze motorul 3D pentru finisajele unei camere: dimensiuni în metri, culori, modul de așezare. */
-export function roomVisual(mc: MaterialsCatalog, f: RoomFinishes, roomType = '', room?: Pick<Room, 'rect'>, fl?: Floor): { floor: FloorVisual | null; walls: WallVisual[]; ceiling: CeilingVisual } {
+export function roomVisual(mc: MaterialsCatalog, f: RoomFinishes, roomType = '', room?: Pick<Room, 'rect'>, fl?: Floor): { floor: FloorVisual | null; walls: WallVisual[]; ceiling: CeilingVisual; baseboard?: { h: number; color: string } } {
   const fm = materialOf(mc, f.floor), lay = layoutOf(f, fm), [L, W] = pieceSizeCm(fm), tile = fm?.category === 'floor_tile', c = ceilingOf(f);
   const led = materialOf(mc, c.led), cct = led?.specs?.cctK ?? 3000;
   return {
@@ -307,5 +307,7 @@ export function roomVisual(mc: MaterialsCatalog, f: RoomFinishes, roomType = '',
         ...(w.kind === 'frames' ? { frames: fl && room ? frameRects(fl, room as Room, w) : [], profile: m?.specs?.sizeCm ? Math.min(.1, Math.max(.02, Math.min(m.specs.sizeCm[0], m.specs.sizeCm[1]) / 100)) : .04 } : {}) }; }),
     ceiling: { type: c.type, drop: c.dropCm / 100, cove: c.coveCm / 100, led: c.type === 'cove' && led ? (cct <= 3000 ? '#ffd29a' : cct <= 4000 ? '#fff1dc' : '#f4f7ff') : null,
       cornice: (() => { const m = materialOf(mc, c.cornice); return m ? (m.specs?.sizeCm ? [m.specs.sizeCm[0] / 100, m.specs.sizeCm[1] / 100] as [number, number] : [.1, .1] as [number, number]) : null; })(), spots: c.spots },
+    // plinta aleasă: înălțimea (latura mică din sizeCm) și culoarea produsului; fără plintă aleasă motorul păstrează plinta implicită
+    ...(() => { const b = materialOf(mc, f.baseboard), sz = b?.specs?.sizeCm; return b && sz ? { baseboard: { h: Math.min(sz[0], sz[1]) / 100, color: renderColor(b, '#f4f4f1') } } : {}; })()
   };
 }

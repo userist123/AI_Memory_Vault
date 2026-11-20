@@ -807,7 +807,8 @@ function fitToProduct(g, it){
       const gs = [...wl.goluri].sort((a, b) => a.la - b.la); let q = 0;
       // plintă de 7 cm pe fețele care dau într-o cameră uscată (baia și bucătăria au faianță/gresie)
       const skirting = (s0, s1, m) => { for (const sg of [1, -1]){ const px = ax + ux * m + nx * sg * off, pz = az + uz * m + nz * sg * off, r = roomAt(px, pz); if (!r || r.tip === 'baie' || r.tip === 'bucatarie') continue;
-        const k = th / 2 + .006; box(s1 - s0, .07, .012, skirtMat, ax + ux * m + nx * sg * k, .035, az + uz * m + nz * sg * k, rot, walls).castShadow = false; } };
+        const bb = r.fin && r.fin.baseboard, bh = bb ? bb.h : .07, k = th / 2 + .006;   // plinta aleasă: înălțimea și culoarea produsului
+        box(s1 - s0, bh, .012, bb ? MAT('paint', bb.color) : skirtMat, ax + ux * m + nx * sg * k, bh / 2, az + uz * m + nz * sg * k, rot, walls).castShadow = false; } };
       const piece = (s0, s1, y0, y1) => { if (s1 - s0 < .005 || y1 - y0 < .005) return; const m = (s0 + s1) / 2; box(s1 - s0, y1 - y0, th, matAt(m), ax + ux * m, (y0 + y1) / 2, az + uz * m, rot, walls).userData.wall = true; if (y0 === 0) skirting(s0, s1, m); };
       const seg = (s0, s1, y0, y1) => { let q0 = s0; for (const t of breaks){ if (t > q0 + .005 && t < s1 - .005){ piece(q0, t, y0, y1); q0 = t; } } piece(q0, s1, y0, y1); };
       gs.forEach(g => { seg(q, g.la, 0, H);
