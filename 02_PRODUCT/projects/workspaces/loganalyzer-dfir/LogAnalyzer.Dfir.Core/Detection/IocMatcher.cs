@@ -12,7 +12,7 @@ public enum DetectionKind { Ioc, Hash, Yara, Sigma, Behavior, Correlation }
 
 /// <summary>A rule or rule set as loaded: identity, version and the SHA-256 of its text, so a result names exactly what matched.</summary>
 public sealed record DetectionRule(string RuleId, string Version, DetectionKind Kind, string Title, string Sha256, string Source,
-                                   string MitreTechniqueId = "", string Level = "");
+                                   string MitreTechniqueId = "", string Level = "", string FalsePositives = "");
 
 /// <summary>Spec §10 DetectionResult: which rule (and version / hash) matched which evidence, and how.</summary>
 public sealed record DetectionResult(

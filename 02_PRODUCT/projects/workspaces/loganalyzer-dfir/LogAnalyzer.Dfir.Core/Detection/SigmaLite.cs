@@ -134,12 +134,14 @@ public sealed class SigmaLite
             });
         }
         if (condition.Length == 0) throw new FormatException($"{name}: lipsește condition.");
+        var falsePositives = root.Children.TryGetValue(new YamlScalarNode("falsepositives"), out var fpNode)
+            ? fpNode switch { YamlSequenceNode fs => string.Join("; ", fs.Children.OfType<YamlScalarNode>().Select(x => x.Value ?? "").Where(x => x.Length > 0)), YamlScalarNode fv => fv.Value ?? "", _ => "" } : "";
         var tags = root.Children.TryGetValue(new YamlScalarNode("tags"), out var t) && t is YamlSequenceNode ts ? ts.Children.Select(x => ((YamlScalarNode)x).Value ?? "").ToList() : [];
         var sha = Convert.ToHexString(SHA256.HashData(Encoding.UTF8.GetBytes(yaml)));
         var mitre = tags.FirstOrDefault(x => Regex.IsMatch(x, @"^attack\.t\d{4}", RegexOptions.IgnoreCase))?[7..].ToUpperInvariant() ?? "";
         var rule = new SigmaRule(title, S(root, "id"), S(root, "level"), channel, condition, tags,
             new DetectionRule($"SIGMA:{(S(root, "id") is { Length: > 0 } id ? id : name)}", S(root, "modified") is { Length: > 0 } mod ? mod : S(root, "date") is { Length: > 0 } d ? d : sha[..12],
-                DetectionKind.Sigma, title, sha, name, mitre, S(root, "level")), S(root, "description"), S(root, "name"));
+                DetectionKind.Sigma, title, sha, name, mitre, S(root, "level"), falsePositives), S(root, "description"), S(root, "name"));
         var entry = (rule, selections);
         _ = Evaluate(entry, null);                                     // condition syntax checked at load time
         _rules.Add(entry);

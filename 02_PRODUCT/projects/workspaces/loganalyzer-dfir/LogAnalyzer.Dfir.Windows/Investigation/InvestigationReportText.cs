@@ -1,6 +1,7 @@
 using System.Text.RegularExpressions;
 using LogAnalyzer.Dfir.Analysis;
 using LogAnalyzer.Dfir.Language;
+using LogAnalyzer.Dfir.Detection;
 using LogAnalyzer.Dfir.Model;
 
 namespace LogAnalyzer.Dfir.Windows.Investigation;
@@ -106,6 +107,7 @@ public static class InvestigationReportText
     public const string MistakesHeading = "Greșeli găsite";
     public const int MistakesCap = 50;
     public const string MistakesRule = "Regula de includere: constatările de peste nivelul informativ care nu sunt marcate drept inofensive sau contrazise de verificarea automată; ordinea este gravitatea, apoi ora primei apariții.";
+    public const string RuleMistakesRule = "Potrivirile de reguli incluse: Sigma cu nivel high sau critical, YARA cu severitate high sau critical și indicatori IOC de încredere cel puțin medie; câte un bloc pentru fiecare pereche regulă și element de probă (cu numărul repetărilor), după constatările de mai sus.";
     public const string MistakesNone = "Nu s-au găsit greșeli în datele analizate. Absența constatărilor nu dovedește că nu există probleme: vedeți acoperirea și lacunele.";
     public const string NoAlternatives = "Constatarea nu are explicații alternative înregistrate; verificați totuși contextul.";
     public const string QuoteMissing = "citat indisponibil";
@@ -120,6 +122,85 @@ public static class InvestigationReportText
     public static List<Finding> Mistakes(IEnumerable<Finding> findings) =>
         findings.Where(f => f.RuleId != "INCIDENT-CHAIN" && IsMistake(f))
             .OrderByDescending(f => f.Severity).ThenBy(f => f.FirstSeenUtc ?? f.LastSeenUtc ?? DateTimeOffset.MaxValue).ThenBy(f => f.FindingId, StringComparer.Ordinal).ToList();
+
+    // ---- Rule matches in "Greșeli găsite" (planner #11 A7) ----
+
+    /// <summary>
+    /// Inclusion rule for detections: Sigma and Sigma-correlation matches whose rule level is high or critical; YARA matches whose rule meta severity is high or critical;
+    /// IOC-list matches (a list of known-bad indicators) of at least medium confidence. Known-bad hash-set matches already produce their own finding, so they are not counted twice.
+    /// A rule that is not among the rules used falls back to the confidence the engine gave the match (High only for high/critical rules).
+    /// </summary>
+    public static bool IsRuleMistake(DetectionResult d, IReadOnlyDictionary<string, DetectionRule> rules)
+    {
+        switch (d.Kind)
+        {
+            case LogAnalyzer.Dfir.Detection.DetectionKind.Sigma:
+            case LogAnalyzer.Dfir.Detection.DetectionKind.Correlation:
+            case LogAnalyzer.Dfir.Detection.DetectionKind.Yara:
+                return rules.TryGetValue(d.RuleId, out var rule) ? LevelRank(rule.Level) >= 3 : d.Confidence == Confidence.High;
+            case LogAnalyzer.Dfir.Detection.DetectionKind.Ioc:
+                return d.Confidence >= Confidence.Medium;
+            default: return false;
+        }
+    }
+
+    private static int LevelRank(string level) => (level ?? "").Trim().ToLowerInvariant() switch { "critical" => 4, "high" => 3, "medium" => 2, "low" => 1, _ => 0 };
+
+    /// <summary>One rule match per (rule, evidence, locator); <paramref name="Count"/> says how many times it repeated.</summary>
+    public sealed record RuleMistake(DetectionResult Hit, DetectionRule? Rule, int Count, DateTimeOffset? FirstUtc);
+
+    public static List<RuleMistake> RuleMistakes(IEnumerable<DetectionResult> detections, IEnumerable<DetectionRule> rulesUsed)
+    {
+        var rules = new Dictionary<string, DetectionRule>(StringComparer.Ordinal);
+        foreach (var r in rulesUsed) rules.TryAdd(r.RuleId, r);
+        return detections.Where(d => IsRuleMistake(d, rules))
+            .GroupBy(d => (d.RuleId, d.EvidenceId, d.Locator))
+            .Select(g => new RuleMistake(g.First(), rules.GetValueOrDefault(g.Key.RuleId), g.Count(), g.Select(x => x.TimeUtc).Where(t => t is not null).Min()))
+            .OrderByDescending(m => m.Rule is null ? 3 : LevelRank(m.Rule.Level)).ThenBy(m => m.FirstUtc ?? DateTimeOffset.MaxValue)
+            .ThenBy(m => m.Hit.RuleId, StringComparer.Ordinal).ThenBy(m => m.Hit.EvidenceId, StringComparer.Ordinal).ThenBy(m => m.Hit.Locator, StringComparer.Ordinal).ToList();
+    }
+
+    private static string KindWord(LogAnalyzer.Dfir.Detection.DetectionKind k) => k switch
+    {
+        LogAnalyzer.Dfir.Detection.DetectionKind.Sigma => "Sigma", LogAnalyzer.Dfir.Detection.DetectionKind.Correlation => "Sigma (corelare)",
+        LogAnalyzer.Dfir.Detection.DetectionKind.Yara => "YARA", LogAnalyzer.Dfir.Detection.DetectionKind.Ioc => "IOC", _ => k.ToString(),
+    };
+
+    public const string RuleNotProven = "o potrivire de regulă nu dovedește intenția; regula poate avea rezultate fals pozitive";
+
+    public static MistakeBlock RuleMistakeBlockOf(RuleMistake m, TimeZoneInfo zone, TimelineEvent? row, EvidenceItem? item,
+                                                  Func<EvidenceRef, IReadOnlyList<LogAnalyzer.Dfir.Presentation.VerificationStep>> steps)
+    {
+        var d = m.Hit;
+        string kind = KindWord(d.Kind);
+        string level = m.Rule is { Level.Length: > 0 } ? m.Rule.Level : "";
+        string what = $"Potrivire de regulă {kind}: {d.Title} (regula {d.RuleId})";
+        if (m.Count > 1) what += $" — apare de {m.Count} ori pe același element";
+        var lines = new List<string> { "Ce s-a întâmplat: " + what };
+        string when = d.TimeUtc is { } t ? RoText.LocalWithUtc(t, zone) : "oră necunoscută";
+        string ts = row is null ? LogAnalyzer.Dfir.Integrity.EvidenceQuote.UnknownTimeSource : LogAnalyzer.Dfir.Integrity.EvidenceQuote.From(row).TimeSource;
+        lines.Add($"Când: {when} · ora din: {ts}");
+        var where = new List<string>();
+        if (row is { Host.Length: > 0 }) where.Add("stația " + row.Host);
+        if (item is { OriginalName.Length: > 0 }) where.Add("fișierul " + item.OriginalName);
+        where.Add($"locul în probă {d.EvidenceId} · {d.Locator}");
+        lines.Add("Unde: " + string.Join(" · ", where));
+        lines.Add("Dovada:");
+        string quote = row is null ? "" : LogAnalyzer.Dfir.Integrity.EvidenceQuote.From(row).Quote;
+        lines.Add(quote.Length > 0 ? $"  {d.EvidenceId} · {d.Locator} · Citat: „{quote}”" : $"  {d.EvidenceId} · {d.Locator} · Valoare potrivită: „{LogAnalyzer.Dfir.Integrity.EvidenceQuote.Truncate(d.Match, 300)}”");
+        lines.Add("Cum verifici tu:");
+        var ev = new EvidenceRef(d.EvidenceId, d.Locator, d.Title, d.EvidenceSha256, quote, row is null ? "Necunoscut" : ts, "");
+        var how = steps(ev).Take(2).ToList();
+        int n = 0;
+        foreach (var h in how) lines.Add($"  {++n}. {h.ToLine()}");
+        string ruleName = d.Kind is LogAnalyzer.Dfir.Detection.DetectionKind.Ioc ? $"lista de indicatori (intrarea {d.RuleId})" : $"regula {d.RuleId} „{d.Title}” (versiunea {d.RuleVersion})";
+        lines.Add($"  {++n}. Căutați {ruleName} după identificator în fișierul de reguli folosit (vezi Analysis/rules.json, SHA-256 {(d.RuleSha256.Length >= 12 ? d.RuleSha256[..12] : d.RuleSha256)}) și verificați că potrivirea din citat respectă condiția ei.");
+        lines.Add("Ce NU dovedește:");
+        lines.Add("  • " + RuleNotProven);
+        if (m.Rule is { FalsePositives.Length: > 0 }) lines.Add("  • Rezultate fals pozitive cunoscute de regulă: " + m.Rule.FalsePositives);
+        lines.Add("Siguranță: " + (level.Length > 0 ? $"nivelul regulii: {level}; " : d.Kind is LogAnalyzer.Dfir.Detection.DetectionKind.Ioc ? "indicator dintr-o listă IOC; " : "") + $"încredere {ConfidenceWord(d.Confidence)}.");
+        return new MistakeBlock(d.RuleId + "|" + d.EvidenceId + "|" + d.Locator, lines);
+    }
 
     private static string ConfidenceWord(Confidence c) => c switch { Confidence.High => "ridicată", Confidence.Medium => "medie", _ => "scăzută" };
 
