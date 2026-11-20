@@ -36,6 +36,12 @@ public static class RuleContracts
             ["Politicile de grup aplicate (gpresult), starea efectivă pe stație și jurnalul de audit al modificării (Security 4657) dacă a fost activat."],
             [step, "Comparați valoarea cu comanda „reg query” din secțiunea „Cum verifici tu”."]);
 
+    /// <summary>Planner #12 B3: rules of LocalSecurityAudit (stored auditpol CSV / local accounts JSON snapshot).</summary>
+    private static RuleContract L(string id, string meaning, string[] limits, string[] missing, string[] steps) =>
+        R(id, "LogAnalyzer.Dfir.Analysis.LocalSecurityAudit", SemanticType.Configuration, meaning, limits, missing, steps);
+
+    private static readonly string[] SnapshotLimit = ["Arată starea la colectare (instantaneu), nu de când este așa și nici cine a setat-o."];
+
     public static IReadOnlyList<RuleContract> All { get; } =
     [
         R("DEF-DETECTION", Corr, SemanticType.Observation, "Antivirusul Windows a înregistrat o detecție; asta nu arată că programul a rulat.",
@@ -615,6 +621,26 @@ public static class RuleContracts
         C("CFG-LSA-PPL", "Protecția procesului de securitate lsass (RunAsPPL) este oprită sau nu este setată explicit în registru.", "Verificați starea efectivă în Securitate Windows → Securitatea dispozitivului → Izolarea nucleului sau evenimentul 12 din jurnalul Wininit."),
         C("CFG-DEFENDER-OFF", "Registrul cere oprirea protecției în timp real sau a antivirusului Microsoft Defender.", "Verificați starea efectivă cu Get-MpComputerStatus și dacă un alt antivirus este înregistrat în Securitate Windows."),
         C("CFG-DEFENDER-EXCL", "Microsoft Defender are excluderi de la scanare (căi, extensii sau procese) în registru.", "Comparați cu Get-MpPreference și cereți justificarea fiecărei excluderi."),
+        // Planner #12 B3: audit policy, Guest and local administrators from the stored snapshots (facts: a setting and its raw line; never a verdict about a procedure).
+        L("CFG-AUDIT-PROCESS", "Politica de audit nu înregistrează succesul la crearea proceselor: evenimentele Security 4688 nu se scriu.",
+            [.. SnapshotLimit, "Linia de comandă din 4688 depinde de o altă politică, necitită aici."],
+            ["Un EDR sau Sysmon care înregistrează procesele în alt jurnal.", "Security 4719 (schimbarea politicii), dacă a fost auditat."],
+            ["Rulați „auditpol /get /subcategory:\"Process Creation\"” într-o consolă de administrator și comparați setarea cu citatul."]),
+        L("CFG-AUDIT-LOGON", "Politica de audit nu înregistrează succesul și eșecul autentificărilor: evenimentele Security 4624 / 4625 au goluri.",
+            SnapshotLimit, ["Alte surse de autentificări (EDR, controlerul de domeniu).", "Security 4719 (schimbarea politicii)."],
+            ["Rulați „auditpol /get /subcategory:\"Logon\"” într-o consolă de administrator și comparați setarea cu citatul."]),
+        L("CFG-AUDIT-CREDVAL", "Politica de audit nu înregistrează succesul și eșecul validării de credențiale: evenimentele Security 4776 au goluri.",
+            [.. SnapshotLimit, "Pe un PC din domeniu validarea parolelor de domeniu se scrie pe controlerul de domeniu."],
+            ["Jurnalul controlerului de domeniu.", "Security 4719 (schimbarea politicii)."],
+            ["Rulați „auditpol /get /subcategory:\"Credential Validation\"” într-o consolă de administrator și comparați setarea cu citatul."]),
+        L("CFG-GUEST-ENABLED", "Contul Guest (RID 501) este activat.",
+            [.. SnapshotLimit, "Starea activat nu arată că contul a fost folosit."],
+            ["Security 4624 pentru contul respectiv.", "Grupurile din care face parte contul."],
+            ["Rulați „net user Guest” (sau numele tradus al contului) și verificați linia „Account active”.", "Verificați după SID: Get-LocalUser cu SID care se termină în -501."]),
+        L("CFG-EXTRA-ADMINS", "Grupul local Administrators are membri în afara contului Administrator încorporat (RID 500) și, pe un PC din domeniu, a grupului Domain Admins.",
+            [.. SnapshotLimit, "Grupurile imbricate nu sunt desfăcute.", "Un singur membru în plus, utilizatorul curent, este o stare normală pe un PC personal (gravitate mică)."],
+            ["Security 4732 (adăugarea în grup), dacă a fost auditat.", "Justificarea fiecărui cont."],
+            ["Verificați dacă fiecare cont are nevoie de drepturi de administrator.", "Rulați „Get-LocalGroupMember -SID S-1-5-32-544” (numele grupului este localizat; „net localgroup Administrators” funcționează doar cu numele local)."]),
         C("CFG-RDP-NLA", "Remote Desktop este pornit și nu cere autentificare la nivel de rețea (fDenyTSConnections = 0, UserAuthentication = 0).", "Verificați regulile firewall pentru portul 3389 și politica de grup Terminal Services."),
     ];
 

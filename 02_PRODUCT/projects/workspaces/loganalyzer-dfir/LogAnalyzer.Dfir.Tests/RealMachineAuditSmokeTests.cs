@@ -57,7 +57,7 @@ public sealed class RealMachineAuditSmokeTests(ITestOutputHelper output)
             Line($"Case folder (deleted at the end): {ws.Root}");
 
             // 2. the collectors, each on its own: one that throws is a failure of the test, one that is not available is recorded
-            ICollector[] collectors = [new SoftwareHiveCollector(), new ExecutionArtifactsCollector(), new UserHistoryCollector(), new LiveStateCollector()];
+            ICollector[] collectors = [new SoftwareHiveCollector(), new ExecutionArtifactsCollector(), new UserHistoryCollector(), new LiveStateCollector(), new LocalSecurityStateCollector()];
             Line(); Line("== COLLECTORS ==");
             foreach (var c in collectors)
             {

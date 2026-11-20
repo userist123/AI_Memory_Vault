@@ -31,6 +31,7 @@ public static class EvidenceFingerprint
         if (IsDefenderHistory(path)) return LogAnalyzer.Dfir.FileSystem.DefenderDetectionHistoryParser.FingerprintName;
         if (IsNotepadTab(path)) return LogAnalyzer.Dfir.FileSystem.NotepadTabStateParser.FingerprintName;
         if (LogAnalyzer.Dfir.RemoteTools.RemoteToolLogFormats.Detect(path) is { } remoteToolLog) return remoteToolLog;
+        if (IsAuditpolCsv(path)) return "auditpol_csv";
         if (IsFirewallLog(path)) return "pfirewall";
         if (IsZeekTsv(path)) return LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint;
         if (IsRecycleInfo(path)) return "recycle_info";
@@ -131,6 +132,18 @@ public static class EvidenceFingerprint
         return LogAnalyzer.Dfir.FileSystem.RecycleBinInfoParser.LooksLikeInfo(buf.AsSpan(0, n), length, Path.GetFileName(path));
     }
 
+    private static readonly System.Text.RegularExpressions.Regex AuditpolGuidLine = new(@",\{[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12}\},", System.Text.RegularExpressions.RegexOptions.Compiled);
+
+    /// <summary>Output of <c>auditpol /get /category:* /r</c>: CSV lines with a braced subcategory GUID between commas (the header is localized, the GUID is not); planner #12 B3.</summary>
+    private static bool IsAuditpolCsv(string path)
+    {
+        var buf = new byte[2048];
+        int n;
+        using (var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
+            n = fs.ReadAtLeast(buf, buf.Length, throwOnEndOfStream: false);
+        return n > 0 && AuditpolGuidLine.IsMatch(System.Text.Encoding.UTF8.GetString(buf, 0, n));
+    }
+
     /// <summary>Windows Firewall text log: "#Version:" then "#Software: Microsoft Windows Firewall".</summary>
     private static bool IsFirewallLog(string path)
     {
@@ -161,7 +174,8 @@ public static class EvidenceFingerprint
         if (t == "srum" || name.Equals("SRUDB.dat", StringComparison.OrdinalIgnoreCase)) return ["ese"];
         if (t is "system_hive" or "amcache" or "ntuser_hive" or "usrclass_hive" or "software_hive") return ["regf"];
         if (t == "pcapng" || name.EndsWith(".pcapng", StringComparison.OrdinalIgnoreCase)) return ["pcapng"];
-        if (t is "live_snapshot" or "airgap_facts") return ["json"];
+        if (t is "live_snapshot" or "airgap_facts" or "local_accounts_json") return ["json"];
+        if (t == "auditpol_csv") return ["auditpol_csv"];
         if (t == "task_xml") return ["task_xml"];
         if (t == LogAnalyzer.Dfir.Network.FirewallLogParser.SourceTypeName) return ["pfirewall"];
         if (t == LogAnalyzer.Dfir.Network.ZeekLogParser.SourceTypeName) return [LogAnalyzer.Dfir.Network.ZeekLogParser.TsvFingerprint, "json"];

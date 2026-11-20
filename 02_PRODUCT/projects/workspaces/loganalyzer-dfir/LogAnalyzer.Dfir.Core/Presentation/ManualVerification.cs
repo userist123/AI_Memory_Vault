@@ -34,6 +34,9 @@ public static class ManualVerification
     private static readonly Regex WmiSub = new(@"^WmiSubscriptions\[(?<f>.*?)->(?<c>.+)\]$", RegexOptions.Compiled | RegexOptions.Singleline);
     private static readonly Regex StartupItem = new(@"^Startup\[(?<x>.+)\]$", RegexOptions.Compiled | RegexOptions.Singleline);
     private static readonly Regex Autorun = new(@"^Autoruns\[(?<x>.+)\]$", RegexOptions.Compiled | RegexOptions.Singleline);
+    private static readonly Regex AuditPol = new(@"^auditpol:\{?(?<g>[0-9A-Fa-f]{8}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{4}-[0-9A-Fa-f]{12})\}?$", RegexOptions.Compiled);
+    private static readonly Regex LocalAccount = new(@"^LocalAccounts\[(?<x>.+)\]$", RegexOptions.Compiled | RegexOptions.Singleline);
+    private static readonly Regex LocalAdmin = new(@"^LocalAdministrators\[(?<x>.+)\]$", RegexOptions.Compiled | RegexOptions.Singleline);
     private static readonly Regex TextLine = new(@"(^|:)line=(?<n>\d+)$", RegexOptions.Compiled);
     private static readonly Regex Registry = new(@"^(?<hive>SYSTEM|SOFTWARE|NTUSER|UsrClass|Amcache\.hve)\\(?<rel>.+)$", RegexOptions.Compiled | RegexOptions.Singleline);
 
@@ -130,6 +133,37 @@ public static class ManualVerification
         if (Process.IsMatch(loc) || Autorun.IsMatch(loc))
         {
             steps.Add(Snapshot(Process.IsMatch(loc) ? "procesele (și conexiunile TCP)" : "intrările de pornire automată"));
+            AddHash(steps, stored, sha, item);
+            return steps;
+        }
+        // planner #12 B3: audit policy, local accounts and local administrators (stored snapshots of live commands); every step only READS
+        if (AuditPol.Match(loc) is { Success: true } ap)
+        {
+            string sub = row is not null && row.Fields.TryGetValue("Subcategory", out var sn) && sn.Length > 0 ? sn : "{" + ap.Groups["g"].Value + "}";
+            steps.Add(new("PowerShell (ca administrator)", $"auditpol /get /subcategory:{Dq(sub)}",
+                "coloana „Setting” (Success / Failure / No Auditing) cu setarea din citat. Comanda cere o consolă pornită ca administrator; politica de pe stația live poate fi diferită de cea de la colectare" + QuoteHint(reference), true));
+            steps.Add(Snapshot("setările politicii de audit"));
+            AddHash(steps, stored, sha, item);
+            return steps;
+        }
+        if (LocalAccount.Match(loc) is { Success: true } la)
+        {
+            string name = la.Groups["x"].Value;
+            steps.Add(new("PowerShell", $"net user {Dq(name)}", $"linia „Account active” (în Windows în limba română „Cont activ”) cu starea „Enabled” din citat: Yes = activ, No = dezactivat{QuoteHint(reference)}", true));
+            steps.Add(new("PowerShell", "Get-LocalUser | Where-Object { $_.SID.Value -like '*-501' } | Format-List Name,Enabled,SID",
+                "contul Guest se găsește după SID-ul care se termină în -501, deci și când numele este tradus sau schimbat; câmpul Enabled cu starea din citat", true));
+            steps.Add(Snapshot("conturile locale"));
+            AddHash(steps, stored, sha, item);
+            return steps;
+        }
+        if (LocalAdmin.Match(loc) is { Success: true } lm)
+        {
+            string member = lm.Groups["x"].Value;
+            steps.Add(new("PowerShell", "Get-LocalGroupMember -SID S-1-5-32-544 | Format-Table Name,SID,ObjectClass,PrincipalSource",
+                $"membrul {Clean(member)} trebuie să fie în listă, cu SID-ul din citat. Grupul se găsește după SID-ul S-1-5-32-544, deci numele lui localizat nu contează{QuoteHint(reference)}", true));
+            steps.Add(new("PowerShell", "net localgroup Administrators",
+                "lista de membri cu cea din constatare. Numele grupului este localizat (în Windows în limba română „Administratori”): dacă „Administrators” nu este găsit, folosește comanda cu SID de mai sus", true));
+            steps.Add(Snapshot("membrii grupului Administrators"));
             AddHash(steps, stored, sha, item);
             return steps;
         }

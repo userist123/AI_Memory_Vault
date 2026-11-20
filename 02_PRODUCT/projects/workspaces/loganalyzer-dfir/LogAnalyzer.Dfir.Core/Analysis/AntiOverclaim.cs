@@ -18,7 +18,7 @@ public static class AntiOverclaim
     {
         _ when ExecutionArtifacts.Contains(artifact) => SemanticType.Execution,
         "Amcache" or "ShimCache" or "MUICache" or "WindowsSearch" or "LNK" or "JumpList" => SemanticType.Presence,
-        "Service" or "ScheduledTask" or "RunKey" or "Winlogon" or "IFEO" or "SystemConfig" => SemanticType.Configuration,
+        "Service" or "ScheduledTask" or "RunKey" or "Winlogon" or "IFEO" or "SystemConfig" or "auditpol" or "Conturi locale" => SemanticType.Configuration,
         _ => SemanticType.Observation,
     };
 

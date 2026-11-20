@@ -147,7 +147,7 @@ public sealed class InvestigationPipeline
          // NtfsMetadata is second on purpose: the case folder usually sits on the system volume, so what the other collectors write rotates $LogFile
          // (measured window ~4.8 h / 64 MiB) before the shadow copy freezes it; live state stays first because it is the most volatile.
          new NtfsMetadataCollector(),
-         new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SoftwareHiveCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new RemoteToolLogsCollector(), new UserHistoryCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector()];
+         new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SoftwareHiveCollector(), new LocalSecurityStateCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new RemoteToolLogsCollector(), new UserHistoryCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -646,6 +646,10 @@ public sealed class InvestigationPipeline
         int cfgNo = LiveStateAnalyzer.MaxFindingNo(found);
         var cfg = ConfigurationFindings(ws, () => $"F-{++cfgNo:D4}");
         found.AddRange(cfg.Findings); r.Gaps.AddRange(cfg.Gaps);
+        // Planner #12 B3: audit-policy, Guest and local-Administrators findings from the stored auditpol CSV / local accounts JSON (quote = the raw line)
+        int lsNo = LiveStateAnalyzer.MaxFindingNo(found);
+        var localSec = LocalSecurityAudit.Evaluate(r.Timeline, ws.Info.Host, () => $"F-{++lsNo:D4}");
+        found.AddRange(localSec.Findings); r.Gaps.AddRange(localSec.Gaps);
         r.MediaRegisterSha256 = wp14.MediaSha256; r.UsersRegisterSha256 = wp14.UsersSha256; r.RegisterLine = wp14.Line;
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))
         {

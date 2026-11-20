@@ -46,6 +46,8 @@ public static class FindingContract
         "HostsFileParser" => "Fișierul hosts",
         "PowerShellTranscriptParser" => "Transcrierile PowerShell (PowerShell_transcript*.txt)",
         "ServicesParser" => "Instantaneul serviciilor",
+        "AuditPolicyCsvParser" => "Politica de audit (auditpol)",
+        "LocalAccountsParser" => "Conturile locale și administratorii locali",
         "ScheduledTaskParser" => "Definițiile activităților planificate",
         "UsbDevicesParser" => "Dispozitivele USB din registry",
         "SystemHiveExecutionParser" => "Registry-ul sistemului (SYSTEM)",

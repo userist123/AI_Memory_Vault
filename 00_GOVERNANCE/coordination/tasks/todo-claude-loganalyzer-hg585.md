@@ -1770,3 +1770,11 @@
   LiveFindingGroupingTests (9; red 8/9). Suites: App 1473, UI 370 (1 skipped), Edition 45, Dfir full 4046 / 35 skipped / 4 failed under load
   (MultiProcessChain, VaultExport, 2x EvtxRepair; 18/18 alone). REAL RUN after B2: 45 -> 27 findings (LIVE 24 -> 6), same evidence.
   RESIDUALS: task merge relies on the PERSIST-TASK-CONFIG description wording; %APPDATA% Run values not matched (kept both).
+- 2026-11-20 (claude, hg585) PLANNER #12 B3 DONE (vault-worker, medium): LocalSecurityStateCollector (StandardAndUp, elevated): auditpol /get /category:* /r
+  (OEM decode -> UTF-8 CSV, auditpol_csv) + local accounts / Administrators by SID S-1-5-32-544 via WMI (local_accounts_json, one JSON object per line);
+  parsers AuditPolicyCsvParser (match by GUID; EN + RO Success/Failure, else gap) and LocalAccountsParser; LocalSecurityAudit rules CFG-AUDIT-PROCESS,
+  CFG-AUDIT-LOGON, CFG-AUDIT-CREDVAL (Medium), CFG-GUEST-ENABLED (High, by RID 501), CFG-EXTRA-ADMINS (Medium; Low when only the interactive user;
+  -500 and Domain Admins excluded); quotes = RawLine; ManualVerification auditpol /get /subcategory, net user, Get-LocalGroupMember -SID S-1-5-32-544.
+  Tests LocalSecurityStateTests (16; red 8/16). Suites App 1489, UI 370 (1 skipped), Edition 45, affected Dfir 117 (+2 skipped). Smoke test now includes
+  the collector. REAL RUN: collector Success (auditpol 60 subcategories, accounts), 31 findings incl. the 3 audit-policy and the Low admin finding.
+  RESIDUALS: other auditpol languages -> gap; import of these files not wired in IncomingEvidence.
