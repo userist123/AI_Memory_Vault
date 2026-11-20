@@ -782,11 +782,12 @@ function fitToProduct(g, it){
     (p.lumini || []).forEach(f => { const sm = MAT('paint', f.color || '#1c1c1c'), shade = owned(sm.clone()); shade.side = THREE.DoubleSide;
       const T = f.top || H;
       if (f.kind === 'pendant'){ const drop = Math.max(.1, T - f.y - .22), c = new THREE.Mesh(new THREE.CylinderGeometry(.004, .004, drop, 6), cord); c.position.set(f.x, T - drop / 2, f.z); ceilings.add(c);
-        const sh = new THREE.Mesh(new THREE.ConeGeometry(.17, .22, 28, 1, true), shade); sh.position.set(f.x, f.y + .11, f.z); sh.castShadow = true; ceilings.add(sh);
+        const pr = f.diam ? f.diam / 2 : .17, ph = f.diam ? Math.min(.45, Math.max(.12, pr * 1.3)) : .22;   // abajurul la diametrul produsului
+        const sh = new THREE.Mesh(new THREE.ConeGeometry(pr, ph, 28, 1, true), shade); sh.position.set(f.x, f.y + ph / 2, f.z); sh.castShadow = true; ceilings.add(sh);
         const b = new THREE.Mesh(new THREE.SphereGeometry(.045, 16, 10), bulb); b.position.set(f.x, f.y + .05, f.z); ceilings.add(b);
         const cp = new THREE.Mesh(new THREE.CylinderGeometry(.05, .05, .02, 16), sm); cp.position.set(f.x, T - .01, f.z); ceilings.add(cp); }
       else if (f.kind === 'sconce'){ const x = f.x + f.nx * .02, z = f.z + f.nz * .02, rot = Math.atan2(f.nx, f.nz);
-        box(.1, .14, .02, sm, x, f.y, z, rot, house); const sh = new THREE.Mesh(new THREE.CylinderGeometry(.06, .08, .14, 20, 1, true), shade); sh.position.set(f.x + f.nx * .12, f.y + .03, f.z + f.nz * .12); house.add(sh);
+        box(.1, .14, .02, sm, x, f.y, z, rot, house); const sr = f.diam ? f.diam / 2 : .08, sh = new THREE.Mesh(new THREE.CylinderGeometry(sr * .75, sr, f.diam ? Math.min(.3, sr * 1.4) : .14, 20, 1, true), shade); sh.position.set(f.x + f.nx * (sr + .04), f.y + .03, f.z + f.nz * (sr + .04)); house.add(sh);
         const b = new THREE.Mesh(new THREE.SphereGeometry(.03, 12, 8), bulb); b.position.set(f.x + f.nx * .12, f.y, f.z + f.nz * .12); house.add(b); }
       else if (f.kind === 'track'){ const L = f.len || 2, bar = box(f.alongX ? L : .035, .035, f.alongX ? .035 : L, sm, f.x, T - .02, f.z, 0, ceilings); bar.castShadow = false;
         const n = Math.max(2, Math.round(L / .5)); for (let k = 0; k < n; k++){ const o = ((k + .5) / n - .5) * L, x = f.alongX ? f.x + o : f.x, z = f.alongX ? f.z : f.z + o;

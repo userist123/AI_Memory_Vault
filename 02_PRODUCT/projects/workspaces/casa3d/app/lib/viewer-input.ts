@@ -57,7 +57,9 @@ export function viewerInput(snap: Snapshot, catalog: Catalog, engineCat: ReturnT
   // sensul de deschidere al fiecărei uși (balamaua și partea), același ca în plan
   snap.floor.walls.forEach((w, wi) => w.openings.forEach((o, oi) => { if (o.kind !== 'door') return; const g = plan.pereti[wi]?.goluri[oi]; if (g) g.sw = doorSwing(snap.floor, wi, oi); }));
   // corpurile de iluminat plasate (culoarea: aleasă, a produsului, sau negru)
-  const lumini = allFixturePoints(snap, catalog, snap.floor.rooms, finishesOf).map(f => ({ kind: f.kind, x: f.x, z: f.z, y: f.y, nx: f.nx, nz: f.nz, len: f.len, alongX: f.alongX, top: f.top, color: f.color ?? (mc ? materialOf(mc, f.material)?.specs?.color : undefined) ?? '#1c1c1c' }));
+  const lumini = allFixturePoints(snap, catalog, snap.floor.rooms, finishesOf).map(f => ({ kind: f.kind, x: f.x, z: f.z, y: f.y, nx: f.nx, nz: f.nz, len: f.len, alongX: f.alongX, top: f.top, color: f.color ?? (mc ? materialOf(mc, f.material)?.specs?.color : undefined) ?? '#1c1c1c',
+    // diametrul abajurului produsului ales (fișa produsului); fără el motorul păstrează abajurul implicit
+    ...(() => { const dm = mc ? materialOf(mc, f.material)?.specs?.diameterCm : undefined; return dm ? { diam: dm / 100 } : {}; })() }));
   const stalpi = snap.floor.columns ?? [];
   const grinzi = snap.floor.beams ?? [];
   // balustradele: cele de sticlă refolosesc pereții de sticlă (cu înălțimea lor, `h`), cele de metal au lista lor
