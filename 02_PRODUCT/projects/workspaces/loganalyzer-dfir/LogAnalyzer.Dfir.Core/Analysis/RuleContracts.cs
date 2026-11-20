@@ -30,6 +30,12 @@ public static class RuleContracts
     private static RuleContract RF(string id, string producer, Func<Finding, SemanticType> t, string meaning, string[] limits, string[] missing, string[] steps, string? contra = null) =>
         new(id, producer, t, meaning, limits, missing, steps, contra);
 
+    private static RuleContract C(string id, string meaning, string step) =>
+        R(id, "LogAnalyzer.Dfir.Analysis.ConfigurationAudit", SemanticType.Configuration, meaning,
+            ["Arată starea setării în copia de registru păstrată în caz la colectare, nu de când este așa și nici cine a setat-o.", "O politică de grup sau un produs de administrare poate înlocui valoarea."],
+            ["Politicile de grup aplicate (gpresult), starea efectivă pe stație și jurnalul de audit al modificării (Security 4657) dacă a fost activat."],
+            [step, "Comparați valoarea cu comanda „reg query” din secțiunea „Cum verifici tu”."]);
+
     public static IReadOnlyList<RuleContract> All { get; } =
     [
         R("DEF-DETECTION", Corr, SemanticType.Observation, "Antivirusul Windows a înregistrat o detecție; asta nu arată că programul a rulat.",
@@ -589,6 +595,15 @@ public static class RuleContracts
              "Ora este a ștergerii (mutarea în Coș), nu a accesării; ștergerea definitivă (Shift+Del) nu lasă $I.", "Legătura cu un volum amovibil este după litera unității. Severitatea este provizorie (DE VERIFICAT, niciodată NECONFORM din aceste urme singure)."],
             ["Procesul-verbal de distrugere, conținutul din copii de umbră, auditul ștergerii (4660)."],
             ["Cereți procesul-verbal de distrugere.", "Verificați copiile de umbră și backup-urile pentru conținut.", "Corelați cu CLASSIFIED-DELETED (audit 4663 / 4660)."]),
+        // Planner #11 A5: configuration findings from the stored SOFTWARE / SYSTEM hives (facts: a value and its registry path; never a verdict about a procedure).
+        C("CFG-UAC-OFF", "Controlul contului de utilizator (UAC) este oprit în registru (EnableLUA = 0).", "Verificați dacă setarea vine dintr-o politică de grup (gpresult /h) și dacă are o justificare documentată."),
+        C("CFG-UAC-NOPROMPT", "Administratorii primesc drepturi ridicate fără întrebare (ConsentPromptBehaviorAdmin = 0).", "Verificați politica de grup „Comportamentul solicitării de ridicare pentru administratori”."),
+        C("CFG-SMB1", "Serverul SMB1 este activat explicit în registru (SMB1 = 1).", "Verificați funcția Windows SMB1 (Get-WindowsOptionalFeature -Online -FeatureName SMB1Protocol) și ce echipament o cere."),
+        C("CFG-WDIGEST", "WDigest păstrează parolele în clar în memorie (UseLogonCredential = 1).", "Verificați cine a setat valoarea (Security 4657, ora cheii) și dacă o aplicație veche o cere."),
+        C("CFG-LSA-PPL", "Protecția procesului de securitate lsass (RunAsPPL) este oprită sau nu este setată explicit în registru.", "Verificați starea efectivă în Securitate Windows → Securitatea dispozitivului → Izolarea nucleului sau evenimentul 12 din jurnalul Wininit."),
+        C("CFG-DEFENDER-OFF", "Registrul cere oprirea protecției în timp real sau a antivirusului Microsoft Defender.", "Verificați starea efectivă cu Get-MpComputerStatus și dacă un alt antivirus este înregistrat în Securitate Windows."),
+        C("CFG-DEFENDER-EXCL", "Microsoft Defender are excluderi de la scanare (căi, extensii sau procese) în registru.", "Comparați cu Get-MpPreference și cereți justificarea fiecărei excluderi."),
+        C("CFG-RDP-NLA", "Remote Desktop este pornit și nu cere autentificare la nivel de rețea (fDenyTSConnections = 0, UserAuthentication = 0).", "Verificați regulile firewall pentru portul 3389 și politica de grup Terminal Services."),
     ];
 
     private static readonly Dictionary<string, RuleContract> ById = All.ToDictionary(r => r.RuleId, StringComparer.Ordinal);

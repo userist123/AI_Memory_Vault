@@ -1720,3 +1720,13 @@
   copies stay separate items (as SYSTEM). CoverageMatrix registry family + ParserCapabilities limitation updated. Tests App.Tests
   SoftwareHiveCollectorTests (7; red 2/7). Suites: App 1447, UI 370 (1 skipped), Edition 45, affected Dfir classes 176 (+3 skipped). RESIDUALS: not run
   on a real elevated PC; no disk pre-check; SoftwareHiveParser tags Historical copies as CurrentSnapshot (pre-existing).
+- 2026-11-20 (claude, hg585) PLANNER #11 A5 DONE (vault-worker, medium, not Opus-reviewed: read-only facts -> findings): configuration findings read ONLY
+  from stored hashed hive evidence (software_hive / system_hive: live reg save, VSS, Windows.old, imports; SYSTEM via Select\Current) - Analysis/
+  ConfigurationAudit (pure rules) + Investigation/ConfigurationHiveReader; SemanticType.Configuration, Category "Configurație", facts wording (no
+  conform/neconform), TimeSource Registry LastWrite (cheie), Channel Registry, honest alternatives (GPO may override; state at collection). Rules:
+  CFG-UAC-OFF High, CFG-UAC-NOPROMPT Medium, CFG-SMB1 High, CFG-WDIGEST High, CFG-LSA-PPL Low (missing = low confidence, Win11 may default on),
+  CFG-DEFENDER-OFF High, CFG-DEFENDER-EXCL Medium (<=20 listed), CFG-RDP-NLA Medium; safe = nothing; unreadable/missing hive = EvidenceGap.
+  ManualVerification: Defender Exclusions\* treated as keys. RuleContracts +8. Tests App.Tests ConfigurationFindingsTests (8; red 3/8) + Dfir
+  ConfigurationHiveReaderTests (3, synthetic regf). Suites: App 1455, UI 370 (1 skipped), Edition 45, affected Dfir 927 (+5 skipped). RESIDUALS: audit
+  policy, Guest, local Administrators not done (live-only, no hashed copy; SAM not collected); Quick profile has no hives -> no config findings; SMB1 server
+  value only; Terminal Services policy NLA override not read; not run on a real hive (session not elevated).

@@ -175,7 +175,8 @@ public static class ManualVerification
     /// <summary>Whether the last segment of the locator is a key, not a value, for the families whose parsers write a key path.</summary>
     private static bool IsKey(string hive, string rel) =>
         hive == "Amcache.hve" || Regex.IsMatch(rel, @"(^|\\)Services\\[^\\]+$") || rel.Contains(@"\Tree", StringComparison.Ordinal) || Regex.IsMatch(rel, @"\\Actions\[\d+\]$")
-        || rel.EndsWith(@"\AppCompatCache", StringComparison.Ordinal);
+        || rel.EndsWith(@"\AppCompatCache", StringComparison.Ordinal)
+        || Regex.IsMatch(rel, @"\\Exclusions\\(Paths|Extensions|Processes)$");   // planner #11 A5: Defender exclusions are listed by the NAMES of the values of this key
 
     // ---- shared pieces ----
 

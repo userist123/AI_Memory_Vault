@@ -357,6 +357,29 @@ public sealed class InvestigationPipeline
     }
 
     /// <summary>The newest facts file of the case (adapters, burn tooling, printers, screenshots, virtual machines, archivers, camera / microphone), checked against its acquisition hash first; null when the case has none or it is unreadable.</summary>
+    /// <summary>
+    /// Planner #11 A5: the configuration audit over the stored SOFTWARE and SYSTEM hives of the case (the live "reg save" copies, VSS / Windows.old copies, imported hives).
+    /// With neither hive in the case nothing is added (the coverage matrix already says the registry hives were not collected); with only one, the other is a gap.
+    /// </summary>
+    public static ConfigAuditResult ConfigurationFindings(CaseWorkspace ws, Func<string> nextId)
+    {
+        var hives = new List<ConfigHive>();
+        foreach (var item in ws.LoadEvidence().Where(e => ConfigurationHiveReader.HiveOf(e) is not null))
+        {
+            var label = ConfigurationHiveReader.HiveOf(item)!;
+            if (!ws.TryFullPath(item.StoredPath, out var full) || !File.Exists(full))
+                hives.Add(new ConfigHive { Hive = label, EvidenceId = item.EvidenceId, Sha256 = item.Sha256, Error = $"copia hive-ului {label} din caz ({item.EvidenceId}) lipsește sau este în afara folderului cazului" });
+            else hives.Add(ConfigurationHiveReader.Read(item, full));
+        }
+        var res = ConfigurationAudit.Evaluate(hives, ws.Info.Host, nextId);
+        if (hives.Count > 0)
+            foreach (var missing in new[] { "SOFTWARE", "SYSTEM" }.Where(l => hives.All(h => h.Hive != l)))
+                res.Gaps.Add(new EvidenceGap($"Configurație din hive-ul {missing}", EvidenceStatus.NotAvailable, $"hive-ul {missing} nu este în caz (profilul de colectare Rapid nu îl salvează, sau colectarea lui a eșuat)",
+                    missing == "SOFTWARE" ? "UAC și Defender (protecție în timp real, excluderi) nu au putut fi verificate" : "SMB1, WDigest, protecția LSA și RDP/NLA nu au putut fi verificate",
+                    $@"reg query pe stație sau o colectare Standard / Completă", "Da, printr-o nouă colectare"));
+        return res;
+    }
+
     private static AirGapFacts? LoadAirGapFacts(CaseWorkspace ws, InvestigationResult r)
     {
         var item = ws.LoadEvidence().Where(e => e.SourceType == AirGapFacts.SourceType).OrderByDescending(e => e.AcquiredAtUtc).FirstOrDefault();
@@ -613,6 +636,10 @@ public sealed class InvestigationPipeline
         r.FactsRemovableLetters.AddRange(airGapFacts?.RemovableLetters ?? []);
         var wp14 = Wp14Analysis.Run(ws, r.Timeline, () => $"F-{++wp14No:D4}", mediaRegister, usersRegister, procedureProfile, systemZone, facts: airGapFacts);
         found.AddRange(wp14.Findings);
+        // Planner #11 A5: configuration findings (UAC, SMB1, WDigest, LSA, Defender, RDP/NLA) read from the STORED SOFTWARE / SYSTEM hives, so the evidence is a hashed copy in the case
+        int cfgNo = LiveStateAnalyzer.MaxFindingNo(found);
+        var cfg = ConfigurationFindings(ws, () => $"F-{++cfgNo:D4}");
+        found.AddRange(cfg.Findings); r.Gaps.AddRange(cfg.Gaps);
         r.MediaRegisterSha256 = wp14.MediaSha256; r.UsersRegisterSha256 = wp14.UsersSha256; r.RegisterLine = wp14.Line;
         foreach (var live in ws.LoadEvidence().Where(e => e.SourceType == "live_snapshot"))
         {
