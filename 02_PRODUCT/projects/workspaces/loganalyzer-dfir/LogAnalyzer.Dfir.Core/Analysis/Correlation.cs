@@ -1040,6 +1040,54 @@ public static class Correlation
                 SupportingEvidence = trOrdered.Skip(100).Take(20).Select(x => x.FirstRef).ToList(),
             });
 
+        // 7d. The same assessment (AssessPsCommand) on the lines of the PSReadLine history (ConsoleHost_history.txt): one finding per suspicious line, with the line quoted
+        // (locator line=N). The file has no times, so the findings have none either. Direct: the text IS in the file; the keyword match itself is an indication.
+        var rlCmds = new List<(int Score, EvidenceRef FirstRef, Func<string, Finding> Make)>();
+        foreach (var e in events.Where(e => e.Source == "PsReadLineHistory" && e.EventId == "Command"))
+        {
+            var text = F(e, "RawLine");
+            if (text.Length == 0) continue;
+            var (decoded, hitKw, labels, score, suspicious) = AssessPsCommand(text, psCfg);
+            if (!suspicious) continue;
+            var high = hitKw.Any(k => k.High) || score >= psCfg.HighScore;
+            var mitre = decoded.Length > 0 ? "T1027" : hitKw.OrderByDescending(k => k.Weight).Select(k => k.Mitre).FirstOrDefault(m => m.Length > 0) ?? "T1059.001";
+            var shown = Visible(Trunc(text, 300));
+            var shownDecoded = Visible(Trunc(decoded, 300));
+            var profileOf = F(e, "Profile");
+            var rd = $"Istoric PowerShell PSReadLine, rândul {F(e, "Line")}";
+            rlCmds.Add((score, Ref(e, rd), id => new Finding
+            {
+                FindingId = id, RuleId = "PS-HISTORY-SUSPICIOUS",
+                Title = $"Comandă PowerShell suspectă în istoricul PSReadLine: {string.Join(", ", labels.Take(4))}",
+                Severity = high ? Severity.High : Severity.Medium, Category = "Execution",
+                Classification = Classification.Direct, Confidence = e.Confidence, MitreTechniqueId = mitre,
+                Host = e.Host, User = e.User,
+                PlainWhat = $"în istoricul PSReadLine al unui profil apare o comandă care conține: {string.Join(", ", labels.Take(3))}" + (decoded.Length > 0 ? $"; comanda codificată face: {PlainPhrases.Cut(shownDecoded, 160)}" : ""),
+                Description = $"Ce s-a întâmplat: fișierul istoric PSReadLine (profil {Visible(profileOf)}) conține, la rândul {F(e, "Line")}, comanda: {shown}." +
+                              (shownDecoded.Length > 0 ? $" Comanda codificată, decodată: {shownDecoded}." : "") +
+                              " De ce contează: aceste elemente apar în atacuri, dar și în scripturi de administrare. Ce verificați: contul profilului, scopul comenzii și ce s-a întâmplat după ea (fișierul nu are ore și nu păstrează rezultatul).",
+                ClassificationReason = $"Comanda este în fișierul de istoric (Direct); potrivirea cu cuvinte-cheie ponderate (scor {score}) este o indicație, nu o dovadă de intenție. Fișierul arată că textul a fost tastat într-o consolă cu PSReadLine sub profilul respectiv; nu are ore și poate fi modificat sau șters de cine are acces la profil.",
+                SupportingEvidence = [Ref(e, rd)],
+                AlternativeExplanations = ["Comandă de administrare sau de instalare tastată de utilizatorul profilului."],
+                RecommendedNextSteps = ["Deschideți rândul în copia fișierului din caz și corelați-l cu jurnalele PowerShell/Operational și cu Prefetch."],
+            }));
+        }
+        var rlOrdered = rlCmds.OrderByDescending(x => x.Score).ToList();
+        foreach (var (_, _, make) in rlOrdered.Take(100)) f.Add(make(Id()));
+        if (rlCmds.Count > 100)
+            f.Add(new Finding
+            {
+                FindingId = Id(), RuleId = "PS-HISTORY-SUSPICIOUS", Title = $"Alte {rlCmds.Count - 100} comenzi PowerShell suspecte din istoricul PSReadLine nu au fost listate individual",
+                Severity = Severity.Low, Category = "Execution", Classification = Classification.Candidate, Confidence = Confidence.Low, MitreTechniqueId = "T1059.001",
+                PlainWhat = $"Mai multe comenzi suspecte din istoricul PSReadLine ({rlCmds.Count - 100}, peste cele 100 afișate) nu au fost listate individual; ele se găsesc în cronologie",
+                Description = "Raportul listează primele 100 de comenzi după scor; restul sunt în cronologie (evenimente PsReadLineHistory).",
+                ClassificationReason = "Limită de afișare, nu o concluzie.",
+                SupportingEvidence = rlOrdered.Skip(100).Take(20).Select(x => x.FirstRef).ToList(),
+            });
+
+        // 7e. The hosts file: entries that redirect or block the names of updates and security, or map a name to a network address.
+        f.AddRange(HostsFileRules.Run(events, Id));
+
         // 7b. WP11 Tier 1: SMB shares, account lifecycle, remote administration, security agents, snapshot deletion, DNS, remote-access tools.
         f.AddRange(Wp11Rules.Run(events, f.ToList(), Id, profile));
 

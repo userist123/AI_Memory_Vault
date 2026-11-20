@@ -1730,3 +1730,13 @@
   ConfigurationHiveReaderTests (3, synthetic regf). Suites: App 1455, UI 370 (1 skipped), Edition 45, affected Dfir 927 (+5 skipped). RESIDUALS: audit
   policy, Guest, local Administrators not done (live-only, no hashed copy; SAM not collected); Quick profile has no hives -> no config findings; SMB1 server
   value only; Terminal Services policy NLA override not read; not run on a real hive (session not elevated).
+- 2026-11-20 (claude, hg585) PLANNER #11 A6 DONE (vault-worker, medium): UserHistoryCollector (StandardAndUp, no elevation needed for the current user;
+  other profiles' refusals reported): Chromium History (Chrome/Edge/Brave, Default + Profile N) + Firefox places.sqlite with -wal/-journal copied first
+  (own source types; notes say DB and WAL may come from different moments when VSS is used), cap 512 MB/file -> gap; locked -> esentutl /y /vss like
+  NTUSER; PSReadLine ConsoleHost_history.txt (ps_readline_history) and hosts (hosts_file). New parsers PsReadLineHistoryParser, HostsFileParser
+  (line=N, Fields RawLine -> A1 quotes the original line; no invented time). Findings PS-HISTORY-SUSPICIOUS (reuses AssessPsCommand),
+  HOSTS-SECURITY-DOMAIN (High non-loopback / Medium loopback-0.0.0.0), HOSTS-REDIRECT (Low). Browser visits timeline-only (existing download rules).
+  ManualVerification line=N adds Get-Content … | Select-Object -Index N-1. Tests Dfir UserHistoryTests (18) + App ManualVerification (+1); red 8+1.
+  Suites: App 1456, UI 370 (1 skipped), Edition 45, full Dfir 4049 passed / 34 skipped / 1 failed = RemoteCollectionTests hard-link test, which
+  passes with TEMP on C: (fails only when TEMP is on another volume, E:) - environment, not A6. RESIDUALS: no real browser lock tested; VS Code/ISE
+  history and remote-package path not covered; multi-line PSReadLine commands = one event per physical line.

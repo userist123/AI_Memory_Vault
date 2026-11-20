@@ -111,6 +111,10 @@ public static class ManualVerification
         if (TextLine.Match(loc) is { Success: true } tl)
         {
             AddHash(steps, stored, sha, item);
+            // planner #11 A6: a text file (PSReadLine history, hosts, logs): the line is read by a command that only reads the case copy
+            if (stored is not null && int.TryParse(tl.Groups["n"].Value, out var lineNumber) && lineNumber >= 1)
+                steps.Add(new("PowerShell", $"Get-Content -LiteralPath {Sq(stored)} | Select-Object -Index {lineNumber - 1}",
+                    $"rândul {lineNumber} al fișierului (indexul începe de la 0, deci {lineNumber - 1}) trebuie să fie textul din constatare" + QuoteHint(reference), true));
             steps.Add(new("Notepad", $"deschide copia din caz → Editare → Salt la… → linia {tl.Groups["n"].Value}",
                 "textul liniei cu cel din constatare (dacă fișierul are antet, verifică și liniile vecine)" + QuoteHint(reference), false));
             return steps;

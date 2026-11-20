@@ -42,6 +42,8 @@ public static class FindingContract
     public static string ParserLabel(string parserId) => parserId switch
     {
         "EvtxParser" => "Jurnalele de evenimente (EVTX)",
+        "PsReadLineHistoryParser" => "Istoricul PowerShell PSReadLine (ConsoleHost_history.txt)",
+        "HostsFileParser" => "Fișierul hosts",
         "PowerShellTranscriptParser" => "Transcrierile PowerShell (PowerShell_transcript*.txt)",
         "ServicesParser" => "Instantaneul serviciilor",
         "ScheduledTaskParser" => "Definițiile activităților planificate",

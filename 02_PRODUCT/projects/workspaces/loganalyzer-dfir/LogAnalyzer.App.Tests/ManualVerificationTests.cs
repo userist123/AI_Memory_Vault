@@ -64,6 +64,27 @@ public sealed class ManualVerificationTests
     }
 
     [Fact]
+    public void A_text_file_line_locator_gets_a_Get_Content_command_with_the_zero_based_index_on_the_case_copy_and_the_Notepad_path()
+    {
+        // planner #11 A6: PSReadLine history and hosts file (locator line=N)
+        var item = Item("PSReadLine:S-1-5-21-1", "ps_readline_history", @"Raw\UserHistory\PSReadLine\S-1\ConsoleHost_history.txt");
+        var reference = new EvidenceRef("E-0001", "line=7", "Istoric PowerShell PSReadLine, rândul 7") { Quote = "whoami /all" };
+        var steps = ManualVerification.For(reference, item, @"C:\Cazuri\C1");
+        var cmd = Assert.Single(steps, s => s.Action.StartsWith("Get-Content", StringComparison.Ordinal));
+        Assert.True(cmd.IsCommand);
+        Assert.Equal(@"Get-Content -LiteralPath 'C:\Cazuri\C1\Raw\UserHistory\PSReadLine\S-1\ConsoleHost_history.txt' | Select-Object -Index 6", cmd.Action);
+        Assert.Contains("rândul 7", cmd.Compare);
+        Assert.Contains("Citat:", cmd.Compare);
+        Assert.Contains(steps, s => s.Tool == "Notepad" && s.Action.Contains("linia 7"));
+        Assert.Contains(steps, s => s.Action.StartsWith("Get-FileHash -Algorithm SHA256", StringComparison.Ordinal));
+        // an apostrophe in the case path is doubled, never interpreted
+        var odd = ManualVerification.For(reference, Item("Hosts", "hosts_file", @"Raw\O'Neil\hosts"), @"C:\C");
+        Assert.Contains(odd, s => s.Action == @"Get-Content -LiteralPath 'C:\C\Raw\O''Neil\hosts' | Select-Object -Index 6");
+        // without a stored copy there is no command, only the specialist step
+        Assert.DoesNotContain(ManualVerification.For(reference, null, @"C:\C"), s => s.Action.StartsWith("Get-Content", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public void A_stored_artefact_copy_gets_the_hash_command_and_the_size_to_compare()
     {
         var item = Item("Prefetch", "prefetch", @"Raw\CMD.EXE-0BD30981.pf", 3072);

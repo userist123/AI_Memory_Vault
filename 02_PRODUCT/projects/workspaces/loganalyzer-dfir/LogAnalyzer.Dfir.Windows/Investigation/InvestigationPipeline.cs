@@ -147,7 +147,7 @@ public sealed class InvestigationPipeline
          // NtfsMetadata is second on purpose: the case folder usually sits on the system volume, so what the other collectors write rotates $LogFile
          // (measured window ~4.8 h / 64 MiB) before the shadow copy freezes it; live state stays first because it is the most volatile.
          new NtfsMetadataCollector(),
-         new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SoftwareHiveCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new RemoteToolLogsCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector()];
+         new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SoftwareHiveCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new RemoteToolLogsCollector(), new UserHistoryCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -304,6 +304,9 @@ public sealed class InvestigationPipeline
                 // the gatherer database beside it: the name Windows-gather.db and an SQLite header (the parser checks the tables)
                 _ when Path.GetFileName(f).Equals(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.DatabaseFileName, StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName,
                 _ when Path.GetFileName(f).Equals("History", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "chromium_history",
+                // planner #11 A6: the PSReadLine history and the hosts file are plain text without a signature: the exact file name only (the parser reads any text)
+                _ when Path.GetFileName(f).Equals(LogAnalyzer.Dfir.Scripting.PsReadLineHistoryParser.FileName, StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) is "unknown" or "json" => LogAnalyzer.Dfir.Scripting.PsReadLineHistoryParser.SourceTypeName,
+                _ when Path.GetFileName(f).Equals("hosts", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) is "unknown" or "json" => LogAnalyzer.Dfir.Network.HostsFileParser.SourceTypeName,
                 _ when Path.GetFileName(f).Equals("places.sqlite", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "firefox_places",
                 _ when RegistryHiveType(Path.GetFileName(f)) is { } hiveType && EvidenceFingerprint.Detect(f) == "regf" => hiveType,
                 // Any other file is still evidence: copied, hashed, listed (no parser → SKIPPED_BY_DESIGN) and available to
@@ -418,6 +421,9 @@ public sealed class InvestigationPipeline
             "însoțitor (-wal / -shm) al indexului Windows Search: nu se citește separat; parserul îl pune lângă copia de lucru a bazei",
         LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.WalSourceType or LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.ShmSourceType =>
             "însoțitor (-wal / -shm) al bazei gather Windows Search: nu se citește separat; parserul îl pune lângă copia de lucru a bazei",
+        LogAnalyzer.Dfir.Windows.Acquisition.UserHistoryCollector.ChromiumWalSourceType or LogAnalyzer.Dfir.Windows.Acquisition.UserHistoryCollector.ChromiumJournalSourceType
+            or LogAnalyzer.Dfir.Windows.Acquisition.UserHistoryCollector.FirefoxWalSourceType =>
+            "însoțitor (-wal / -journal) al istoricului unui browser: nu se citește separat; parserul îl pune lângă copia de lucru a bazei",
         LogAnalyzer.Dfir.Windows.Acquisition.WindowsSearchIndexCollector.EdbSourceType =>
             "Windows.edb (ESE): păstrat doar ca probă; nu există parser pentru el",
         LogAnalyzer.Dfir.Windows.Acquisition.NtfsMetadataCollector.BootSourceType =>
