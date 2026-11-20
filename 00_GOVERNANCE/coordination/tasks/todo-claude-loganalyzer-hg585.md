@@ -1706,3 +1706,11 @@
   modules insula (2027-11-19, R1 folder; the 21:25 licence written by another session failed the signature, kept as .bak-20261119-2125), continent and
   arhipelag (2027-11-20). Continent start verified (licence ok, clock ok, sign-in shown). LicenseManager publish blocked by NU1004 (packages.lock.json
   without win-x64 RID; pre-existing). Next: A3 "Greșeli găsite".
+- 2026-11-20 (claude, hg585) PLANNER #11 A3 DONE (vault-worker; low-medium, not Opus-reviewed: report layout only): section "Greșeli găsite" at the start
+  of the Findings block (where the audience includes ReportSection.Findings): findings with severity > Info, not BenignKnown, verifier not Contradicted/
+  Rejected, INCIDENT-CHAIN excluded; order severity desc, FirstSeen, FindingId; cap 50 + "Încă N greșeli…". Per block: Ce s-a întâmplat / Când (+ ora
+  din) / Unde (+ locator, canal) / Dovada (<=3, Citat) / Cum verifici tu (ManualVerification of the first evidence, <=3) / Ce NU dovedește (specific
+  limitations, fallback sentence) / Siguranță. Absence sentence when none. Page-1 line "Greșeli găsite: N". Masked like all printed text. Tests
+  App.Tests MistakesSectionTests (5; red: ascending order fails). Suites: App 1440, UI 370 (1 skipped), Edition 45, report Dfir classes 105 (+1 skipped).
+  Note: the worker tried a whole-worktree git stash once (denied, nothing ran) - stash is forbidden in this shared worktree. RESIDUALS: repeated rule =
+  repeated blocks (no grouping); "citat indisponibil" vs EvidenceLevels "indisponibil în acest caz". Next: A4 (live SOFTWARE hive), A5 (config findings).

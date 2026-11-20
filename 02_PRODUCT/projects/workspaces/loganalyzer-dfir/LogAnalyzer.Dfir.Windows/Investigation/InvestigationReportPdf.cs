@@ -78,6 +78,8 @@ public static class InvestigationReportPdf
             .GroupBy(t => (t.EvidenceId, t.Locator)).ToDictionary(g => g.Key, g => g.First()));
         var station = LogAnalyzer.Dfir.Analysis.StationIdentity.FromEvidence(r.Timeline, info.Host);   // the evidence's station, not the examiner's machine (review I1)
         var summary = InvestigationReportText.Summarize(r, integrity);
+        var mistakes = InvestigationReportText.Mistakes(others);
+        bool showMistakes = S(LogAnalyzer.Dfir.Reporting.ReportSection.Findings);   // the line on page 1 exists only where the section is printed
         var printed = new List<string>();
         var numbers = new InvestigationReportText.SectionCounter();
 
@@ -139,6 +141,8 @@ public static class InvestigationReportPdf
                     P(sc, "Ce poate și ce nu poate dovedi acest raport").Bold().FontSize(8.5f);
                     P(sc, summary.CanProve).FontSize(8);
                     P(sc, summary.CannotProve).FontSize(8);
+                    if (showMistakes)
+                        P(sc, $"Greșeli găsite: {mistakes.Count} (vezi secțiunea „Greșeli găsite”)").Bold().FontSize(8.5f);
                 });
 
                 // Red: a source changed or vanished. Amber: every hash matches, but a source was empty or of an unexpected format (not interpreted).
@@ -207,6 +211,25 @@ public static class InvestigationReportPdf
                 }
                 if (S(LogAnalyzer.Dfir.Reporting.ReportSection.Findings))
                 {
+                // planner #11 A3: the mistakes first, each one checkable on paper
+                Head(InvestigationReportText.MistakesHeading);
+                P(col, InvestigationReportText.MistakesRule).FontSize(7.5f).Italic().FontColor(Muted);
+                if (mistakes.Count == 0) P(col, InvestigationReportText.MistakesNone).FontSize(8.5f);
+                foreach (var mf in mistakes.Take(InvestigationReportText.MistakesCap))
+                {
+                    var blk = InvestigationReportText.MistakeBlockOf(mf, zone, e => LogAnalyzer.Dfir.Presentation.ManualVerification.For(e, evidence.GetValueOrDefault(e.EvidenceId), r.Case.Root, EvtxRows.Value.GetValueOrDefault((e.EvidenceId, e.Locator))));
+                    col.Item().Border(0.5f).BorderColor(Line).Padding(5).Column(mc =>
+                    {
+                        mc.Spacing(1);
+                        foreach (var l in blk.Lines)
+                        {
+                            var t = P(mc, l).FontSize(l.StartsWith("  ", StringComparison.Ordinal) ? 7 : 8);
+                            if (!l.StartsWith("  ", StringComparison.Ordinal)) t.Bold();
+                        }
+                    });
+                }
+                if (mistakes.Count > InvestigationReportText.MistakesCap)
+                    P(col, $"Încă {mistakes.Count - InvestigationReportText.MistakesCap} greșeli nu sunt afișate aici; vedeți lista completă a constatărilor.").FontSize(8).Italic();
                 // owner 2026-11-06 („cine se face vinovat”): the same findings regrouped by person, each in the order it happened; never a verdict of guilt
                 if (stories.Count > 0)
                 {

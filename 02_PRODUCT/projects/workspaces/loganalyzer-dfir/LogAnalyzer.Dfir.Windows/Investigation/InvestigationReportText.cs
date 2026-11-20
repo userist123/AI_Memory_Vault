@@ -101,6 +101,62 @@ public static class InvestigationReportText
     public static List<EvidenceRef> GroupEvidence(FindingGroup g) =>
         g.Members.SelectMany(m => m.SupportingEvidence).GroupBy(e => (e.EvidenceId, e.Locator)).Select(x => x.First()).ToList();
 
+    // ---- "Greșeli găsite" (planner #11 A3) ----
+
+    public const string MistakesHeading = "Greșeli găsite";
+    public const int MistakesCap = 50;
+    public const string MistakesRule = "Regula de includere: constatările de peste nivelul informativ care nu sunt marcate drept inofensive sau contrazise de verificarea automată; ordinea este gravitatea, apoi ora primei apariții.";
+    public const string MistakesNone = "Nu s-au găsit greșeli în datele analizate. Absența constatărilor nu dovedește că nu există probleme: vedeți acoperirea și lacunele.";
+    public const string NoAlternatives = "Constatarea nu are explicații alternative înregistrate; verificați totuși contextul.";
+    public const string QuoteMissing = "citat indisponibil";
+
+    /// <summary>One printable block of the section: the lines, each label starting its own line (steps and bullets are indented lines under their label).</summary>
+    public sealed record MistakeBlock(string FindingId, IReadOnlyList<string> Lines);
+
+    /// <summary>Inclusion rule: above informational level, not BenignKnown, and not contradicted or rejected by the verifier.</summary>
+    public static bool IsMistake(Finding f) =>
+        f.Severity > Severity.Info && f.Classification != Classification.BenignKnown && f.Verification.State is not (StandardState.Contradicted or StandardState.Rejected);
+
+    public static List<Finding> Mistakes(IEnumerable<Finding> findings) =>
+        findings.Where(f => f.RuleId != "INCIDENT-CHAIN" && IsMistake(f))
+            .OrderByDescending(f => f.Severity).ThenBy(f => f.FirstSeenUtc ?? f.LastSeenUtc ?? DateTimeOffset.MaxValue).ThenBy(f => f.FindingId, StringComparer.Ordinal).ToList();
+
+    private static string ConfidenceWord(Confidence c) => c switch { Confidence.High => "ridicată", Confidence.Medium => "medie", _ => "scăzută" };
+
+    public static MistakeBlock MistakeBlockOf(Finding f, TimeZoneInfo zone, Func<EvidenceRef, IReadOnlyList<LogAnalyzer.Dfir.Presentation.VerificationStep>> steps)
+    {
+        var lines = new List<string> { "Ce s-a întâmplat: " + Plain(f) };
+        var first = f.SupportingEvidence.FirstOrDefault();
+        string when = f.FirstSeenUtc is { } a ? RoText.LocalWithUtc(a, zone) : "oră necunoscută";
+        if (f.FirstSeenUtc is { } a2 && f.LastSeenUtc is { } b && b != a2) when += " – " + RoText.LocalWithUtc(b, zone);
+        string ts = first is null ? LogAnalyzer.Dfir.Integrity.EvidenceQuote.UnknownTimeSource : first.TimeSource.Length > 0 ? first.TimeSource : LogAnalyzer.Dfir.Integrity.EvidenceQuote.UnknownTimeSource;
+        lines.Add($"Când: {when} · ora din: {ts}");
+        var where = new List<string>();
+        if (f.Host.Length > 0) where.Add("stația " + f.Host);
+        if (f.User.Length > 0) where.Add("contul " + f.User);
+        if (f.File.Length > 0) where.Add("fișierul " + f.File);
+        if (f.Process.Length > 0) where.Add("procesul " + f.Process);
+        if (f.Ip.Length > 0) where.Add("adresa " + f.Ip);
+        if (first is not null) where.Add($"locul în probă {first.Locator}" + (first.Channel.Length > 0 ? $" (canal: {first.Channel})" : ""));
+        lines.Add("Unde: " + (where.Count > 0 ? string.Join(" · ", where) : "nespecificat în date"));
+        lines.Add("Dovada:");
+        foreach (var e in f.SupportingEvidence.Take(3))
+            lines.Add($"  {e.EvidenceId} · {e.Locator} · Citat: " + (e.Quote.Length > 0 ? $"„{e.Quote}”" : QuoteMissing));
+        if (f.SupportingEvidence.Count == 0) lines.Add("  nicio dovadă atașată");
+        lines.Add("Cum verifici tu:");
+        var how = first is null ? [] : steps(first).Take(3).ToList();
+        if (how.Count == 0) lines.Add("  1. Cereți unui specialist să verifice constatarea în elementul de probă original.");
+        for (int i = 0; i < how.Count; i++) lines.Add($"  {i + 1}. {how[i].ToLine()}");
+        lines.Add("Ce NU dovedește:");
+        var not = f.AlternativeExplanations.Concat(SpecificLimitations(f, 2).Specific).Concat(f.MissingEvidence.Select(m => "Lipsește: " + m))
+            .Where(x => !string.IsNullOrWhiteSpace(x)).Distinct(StringComparer.Ordinal).Take(3).ToList();
+        if (not.Count == 0) lines.Add("  " + NoAlternatives);
+        foreach (var x in not) lines.Add("  • " + x);
+        lines.Add($"Siguranță: încredere {ConfidenceWord(f.Confidence)}; verificarea automată: {StateLabels.Romanian(f.Verification.State)}" +
+                  (f.Verification.State == StandardState.NotAssessed ? " (nu s-a pronunțat)" : "") + ".");
+        return new MistakeBlock(f.FindingId, lines);
+    }
+
     // ---- First-page summary ----
 
     private static bool Solid(Finding f) => f.Verification.State is StandardState.Verified or StandardState.Supported;
