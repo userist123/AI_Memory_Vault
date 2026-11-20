@@ -89,7 +89,7 @@ public sealed class CoverageMatrix
         new("shimcache", "ShimCache (AppCompatCache)", ["SystemHiveExecutionParser"], ["ExecutionArtifactsCollector"], [], [], "citit de același parser ca BAM"),
         new("bam", "BAM", ["SystemHiveExecutionParser"], ["ExecutionArtifactsCollector"], [], [], "citit de același parser ca ShimCache"),
         new("srum", "SRUM", ["SrumNetworkParser"], ["SrumCollector"], [], [], "se citesc utilizarea rețelei per aplicație și durata conectării per interfață"),
-        new("registry", "Hive-uri de registru (NTUSER, SOFTWARE)", ["UserHiveParser", "SoftwareHiveParser"], ["UserArtifactsCollector"], [], []),   // not ExecutionArtifactsCollector: it saves only SYSTEM + Amcache (lab WS02 2026-11-17: Standard showed a false "ran but produced no source")
+        new("registry", "Hive-uri de registru (NTUSER, SOFTWARE)", ["UserHiveParser", "SoftwareHiveParser"], ["UserArtifactsCollector", "SoftwareHiveCollector"], [], []),   // not ExecutionArtifactsCollector: it saves only SYSTEM + Amcache (lab WS02 2026-11-17: Standard showed a false "ran but produced no source"); the live SOFTWARE hive comes from SoftwareHiveCollector (Standard / Full)
         new("services", "Servicii și drivere (hive SYSTEM)", ["ServicesParser"], [], [], []),
         new("usn", "Jurnal USN", ["UsnJournalParser"], [], [], []),
         new("lnk_jumplist", "LNK și Jump Lists", ["LnkParser", "JumpListParser"], [], [], []),

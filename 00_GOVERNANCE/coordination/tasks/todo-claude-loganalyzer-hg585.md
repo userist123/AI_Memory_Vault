@@ -1714,3 +1714,9 @@
   App.Tests MistakesSectionTests (5; red: ascending order fails). Suites: App 1440, UI 370 (1 skipped), Edition 45, report Dfir classes 105 (+1 skipped).
   Note: the worker tried a whole-worktree git stash once (denied, nothing ran) - stash is forbidden in this shared worktree. RESIDUALS: repeated rule =
   repeated blocks (no grouping); "citat indisponibil" vs EvidenceLevels "indisponibil în acest caz". Next: A4 (live SOFTWARE hive), A5 (config findings).
+- 2026-11-20 (claude, hg585) PLANNER #11 A4 DONE (vault-worker, low-medium): new SoftwareHiveCollector (StandardAndUp, elevated, `reg save HKLM\SOFTWARE
+  Raw\Registry\SOFTWARE /y`, 10 min timeout) -> evidence software_hive / Registry:SOFTWARE / CurrentSnapshot, hashed; not elevated -> NotAvailable, failure
+  -> Failed -> EvidenceGap (run continues); registered in AllCollectors after ExecutionArtifactsCollector; SoftwareHiveParser accepts it; VSS/Windows.old
+  copies stay separate items (as SYSTEM). CoverageMatrix registry family + ParserCapabilities limitation updated. Tests App.Tests
+  SoftwareHiveCollectorTests (7; red 2/7). Suites: App 1447, UI 370 (1 skipped), Edition 45, affected Dfir classes 176 (+3 skipped). RESIDUALS: not run
+  on a real elevated PC; no disk pre-check; SoftwareHiveParser tags Historical copies as CurrentSnapshot (pre-existing).
