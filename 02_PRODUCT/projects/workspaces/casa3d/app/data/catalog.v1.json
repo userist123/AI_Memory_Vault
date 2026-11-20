@@ -3000,9 +3000,7 @@
         "h": 75
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "type": "micke"
-      }
+      "style": {"type": "micke", "col": "#f2f2ef"}
     },
     {
       "id": "birou-1",
@@ -3015,9 +3013,7 @@
         "h": 75
       },
       "dimensionsConfidence": "MEDIUM",
-      "style": {
-        "type": "micke"
-      }
+      "style": {"type": "micke", "col": "#f2f2ef"}
     },
     {
       "id": "birou-2",
@@ -3030,9 +3026,7 @@
         "h": 75
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "type": "micke"
-      }
+      "style": {"type": "micke", "col": "#f2f2ef"}
     },
     {
       "id": "birou-3",
@@ -3045,9 +3039,7 @@
         "h": 75
       },
       "dimensionsConfidence": "MEDIUM",
-      "style": {
-        "type": "torald"
-      }
+      "style": {"type": "torald", "col": "#f2f2ef"}
     },
     {
       "id": "scaunBirou-0",
@@ -3060,7 +3052,7 @@
         "h": 129
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#3b3d42"}
     },
     {
       "id": "scaunBirou-1",
@@ -3073,7 +3065,7 @@
         "h": 136
       },
       "dimensionsConfidence": "MEDIUM",
-      "style": {}
+      "style": {"col": "#3b3d42"}
     },
     {
       "id": "scaunBirou-2",
@@ -3086,7 +3078,7 @@
         "h": 140
       },
       "dimensionsConfidence": "MEDIUM",
-      "style": {}
+      "style": {"col": "#3b3d42"}
     },
     {
       "id": "bucatarie-0",
@@ -3471,7 +3463,7 @@
         "h": 200
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#f2f2ef"}
     },
     {
       "id": "oglinda-1",
@@ -3484,9 +3476,7 @@
         "h": 98
       },
       "dimensionsConfidence": "MEDIUM",
-      "style": {
-        "wall": true
-      }
+      "style": {"wall": true, "col": "#f2f2ef"}
     },
     {
       "id": "canapea-5",
@@ -3643,10 +3633,7 @@
         "h": 92
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "pat-5",
@@ -3659,10 +3646,7 @@
         "h": 100
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "pat-6",
@@ -3675,10 +3659,7 @@
         "h": 111
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "pat-7",
@@ -3755,10 +3736,7 @@
         "h": 63
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "noptiera-5",
@@ -3786,10 +3764,7 @@
         "h": 69
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "dulap-3",
@@ -3802,10 +3777,7 @@
         "h": 176
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "dulap-4",
@@ -3818,10 +3790,7 @@
         "h": 191
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "dulap-5",
@@ -3834,10 +3803,7 @@
         "h": 236
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "comoda-0",
@@ -3850,10 +3816,7 @@
         "h": 98
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "comoda-1",
@@ -3945,11 +3908,7 @@
         "h": 53
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "fronts": 3,
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee", "fronts": 3}
     },
     {
       "id": "comodaTv-6",
@@ -4075,10 +4034,7 @@
         "h": 190
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "masa-5",
@@ -4176,7 +4132,7 @@
         "h": 73
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#f2f2ef"}
     },
     {
       "id": "birou-5",
@@ -4189,7 +4145,7 @@
         "h": 85
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#f2f2ef"}
     },
     {
       "id": "birou-6",
@@ -4202,7 +4158,7 @@
         "h": 75
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#f2f2ef"}
     },
     {
       "id": "scaunBirou-3",
@@ -4215,7 +4171,7 @@
         "h": 140
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#3b3d42"}
     },
     {
       "id": "scaunBirou-4",
@@ -4228,7 +4184,7 @@
         "h": 114
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#1c1c1e"}
     },
     {
       "id": "scaunBirou-5",
@@ -4241,7 +4197,7 @@
         "h": 111
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#1c1c1e"}
     },
     {
       "id": "scaunBirou-6",
@@ -4254,7 +4210,7 @@
         "h": 114
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#d9cfbf"}
     },
     {
       "id": "scaunBirou-7",
@@ -4267,7 +4223,7 @@
         "h": 85
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#1c1c1e"}
     },
     {
       "id": "canapea-9",
@@ -4825,7 +4781,7 @@
         "h": 73
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#d6b98c", "wood": true}
     },
     {
       "id": "birou-8",
@@ -4838,7 +4794,7 @@
         "h": 76
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#c9a979", "wood": true}
     },
     {
       "id": "birou-9",
@@ -4851,7 +4807,7 @@
         "h": 76
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#f2f2ef"}
     },
     {
       "id": "birou-10",
@@ -4864,7 +4820,7 @@
         "h": 76
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#f2f2ef"}
     },
     {
       "id": "scaunBirou-8",
@@ -4877,7 +4833,7 @@
         "h": 104
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#1c1c1e"}
     },
     {
       "id": "scaunBirou-9",
@@ -4890,7 +4846,7 @@
         "h": 128
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#1c1c1e"}
     },
     {
       "id": "scaunBirou-10",
@@ -4903,7 +4859,7 @@
         "h": 80
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#8a8c8f"}
     },
     {
       "id": "pantofar-3",
@@ -4916,10 +4872,7 @@
         "h": 195
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "pantofar-4",
@@ -4932,10 +4885,7 @@
         "h": 68
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "pantofar-5",
@@ -4980,10 +4930,7 @@
         "h": 199
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "lavoar-4",
@@ -5042,9 +4989,7 @@
         "h": 86
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#c8a24a"
-      }
+      "style": {"col": "#c8a24a", "wood": true}
     },
     {
       "id": "lavoar-8",
@@ -5343,9 +5288,7 @@
         "h": 75
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "wall": true
-      }
+      "style": {"wall": true, "col": "#1e1e20"}
     },
     {
       "id": "oglinda-3",
@@ -5358,7 +5301,7 @@
         "h": 160
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#c9a54c"}
     },
     {
       "id": "oglinda-4",
@@ -5371,9 +5314,7 @@
         "h": 55
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "wall": true
-      }
+      "style": {"wall": true, "col": "#b8935f", "wood": true}
     },
     {
       "id": "oglinda-5",
@@ -5386,9 +5327,7 @@
         "h": 60
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "wall": true
-      }
+      "style": {"wall": true, "col": "#1e1e20"}
     },
     {
       "id": "canapea-13",
@@ -5465,10 +5404,7 @@
         "h": 91
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "pat-15",
@@ -5529,10 +5465,7 @@
         "h": 200
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "scaunBirou-11",
@@ -5545,7 +5478,7 @@
         "h": 126
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#8a8c8f"}
     },
     {
       "id": "scaunBirou-12",
@@ -5558,7 +5491,7 @@
         "h": 119
       },
       "dimensionsConfidence": "HIGH",
-      "style": {}
+      "style": {"col": "#1c1c1e"}
     },
     {
       "id": "comodaTv-13",
@@ -5588,10 +5521,7 @@
         "h": 124
       },
       "dimensionsConfidence": "HIGH",
-      "style": {
-        "col": "#f2f2ee",
-        "wood": true
-      }
+      "style": {"col": "#f2f2ee"}
     },
     {
       "id": "comodaTv-14",
@@ -7448,12 +7378,12 @@
     {"id": "masa-20", "productId": "masa-tonstad-masa-2-scaune-tonstad", "name": "TONSTAD / TONSTAD masă + 2 scaune, alb murdar/alb murdar Fridtuna bej deschis, 80/120x70 cm", "legacyIndex": 20, "dimensionsCm": {"w": 80, "d": 70, "h": 75}, "dimensionsConfidence": "HIGH", "style": {"top": "#ece9e1", "chair": "orrstaWhite"}, "chairs": 2},
     {"id": "masa-21", "productId": "masa-tonstad-krylbo-masa-2-scaune", "name": "TONSTAD / KRYLBO masă + 2 scaune, frnr stjr/Tonerud bej închis, 80/120x70 cm", "legacyIndex": 21, "dimensionsCm": {"w": 80, "d": 70, "h": 75}, "dimensionsConfidence": "HIGH", "style": {"top": "#c4a273", "chair": "orrsta"}, "chairs": 2},
     {"id": "pat-17", "productId": "pat-malm-cadru-pat-inalt-160x200", "name": "MALM cadru pat înalt, alb, 160x200 cm", "legacyIndex": 17, "dimensionsCm": {"w": 176, "d": 209, "h": 100}, "dimensionsConfidence": "HIGH", "style": {"col": "#f1f1ee"}},
-    {"id": "pat-18", "productId": "pat-malm-cadru-pat-inalt-luroy-160x200", "name": "MALM cadru pat înalt, alb/Luröy, 160x200 cm", "legacyIndex": 18, "dimensionsCm": {"w": 176, "d": 209, "h": 100}, "dimensionsConfidence": "HIGH", "style": {"col": "#f2f2ee", "wood": true}},
+    {"id": "pat-18", "productId": "pat-malm-cadru-pat-inalt-luroy-160x200", "name": "MALM cadru pat înalt, alb/Luröy, 160x200 cm", "legacyIndex": 18, "dimensionsCm": {"w": 176, "d": 209, "h": 100}, "dimensionsConfidence": "HIGH", "style": {"col": "#f2f2ee"}},
     {"id": "pat-19", "productId": "pat-malm-cadru-pat-inalt-luroy-140x200", "name": "MALM cadru pat înalt, negru-maro/Luröy, 140x200 cm", "legacyIndex": 19, "dimensionsCm": {"w": 156, "d": 209, "h": 100}, "dimensionsConfidence": "HIGH", "style": {"col": "#2f2621", "wood": true}},
     {"id": "bucatarie-3", "productId": "bucatarie-knoxhult-bucatarie", "name": "KNOXHULT bucătărie, gri închis, 240x61x220 cm", "legacyIndex": 3, "dimensionsCm": {"w": 240, "d": 61, "h": 220}, "dimensionsConfidence": "HIGH", "style": {"frame": "#3d3f42", "fronts": "#55585b"}},
     {"id": "bucatarie-4", "productId": "bucatarie-metod-bucatarie-veddinge", "name": "METOD bucătărie, alb/Veddinge alb, 210x60x227 cm", "legacyIndex": 4, "dimensionsCm": {"w": 210, "d": 64, "h": 227}, "dimensionsConfidence": "HIGH", "style": {"frame": "#f2f2ee", "fronts": "#f4f4f1"}},
     {"id": "bucatarie-5", "productId": "bucatarie-metod-bucatarie-veddinge", "name": "METOD bucătărie, alb/Veddinge alb, 170x60x227 cm", "legacyIndex": 5, "dimensionsCm": {"w": 170, "d": 64, "h": 227}, "dimensionsConfidence": "HIGH", "style": {"frame": "#f2f2ee", "fronts": "#f4f4f1"}},
-    {"id": "pantofar-9", "productId": "pantofar-gullaberg-dulap-pantofi-4-compartimente", "name": "GULLABERG dulap pantofi cu 4 compartimente, alb", "legacyIndex": 9, "dimensionsCm": {"w": 105, "d": 22, "h": 107}, "dimensionsConfidence": "HIGH", "style": {"col": "#f3f3f0"}},
+    {"id": "pantofar-9", "productId": "pantofar-gullaberg-dulap-pantofi-4-compartimente", "name": "GULLABERG dulap pantofi cu 4 compartimente, alb", "legacyIndex": 9, "dimensionsCm": {"w": 105, "d": 22, "h": 107}, "dimensionsConfidence": "HIGH", "style": {"col": "#f2f2ef"}},
     {"id": "pantofar-10", "productId": "pantofar-gullaberg-dulap-pantofi-4-compartimente", "name": "GULLABERG dulap pantofi cu 4 compartimente, gri", "legacyIndex": 10, "dimensionsCm": {"w": 105, "d": 22, "h": 107}, "dimensionsConfidence": "HIGH", "style": {"col": "#8d8a85"}},
     {"id": "pantofar-11", "productId": "pantofar-gullaberg-dulap-pantofi-2-compartimente", "name": "GULLABERG dulap pantofi cu 2 compartimente, gri", "legacyIndex": 11, "dimensionsCm": {"w": 88, "d": 30, "h": 122}, "dimensionsConfidence": "HIGH", "style": {"col": "#8d8a85", "two": true}},
     {"id": "dulap-11", "productId": "dulap-hauga-dulap-de-haine-cu-usi-glisante", "name": "HAUGA dulap de haine cu uși glisante, alb", "legacyIndex": 11, "dimensionsCm": {"w": 118, "d": 55, "h": 199}, "dimensionsConfidence": "HIGH", "style": {"col": "#f2f2ee", "sliding": true}}
