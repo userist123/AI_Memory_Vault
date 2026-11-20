@@ -4,12 +4,11 @@
 //
 // Ce se măsoară: cutia produsului fără accesoriile de punere în scenă (televizorul de pe comodă, lampa de pe noptieră,
 // oglinda peste lavoar, burlanul sobei: userData.prop) și fără piesele de set (scaunele unei mese: userData.setPiece).
-// Excepții (cotele din fișă au alt înțeles): planta (ghiveciul), oglinda pe suport (înclinată), dușul walk-in (zona de duș),
-// bucătăria (corpurile suspendate). Pragul: 2 cm pe fiecare axă și 2 cm față de centrul amprentei din plan.
+// Excepții (cotele din fișă au alt înțeles): planta (ghiveciul), oglinda pe suport (înclinată) și dușul walk-in (zona de duș). Pragul: 2 cm pe fiecare axă și 2 cm față de centrul amprentei din plan.
 (() => {
   const V = window.__casa3dViewer, C = window.__casa3dEngineCat;
   if (!V || !C) return 'Deschide un proiect în vederea 3D (npm run dev).';
-  const SKIP = new Set(['mirror', 'plant', 'shower', 'kitchen']), TOL = 2.05, rows = [];
+  const SKIP = new Set(['mirror', 'plant', 'shower']), TOL = 2.05, rows = [];
   for (const [g, grp] of Object.entries(C)){
     if (!grp.model) continue;
     grp.v.forEach((v, i) => { if (!v.w) return; const m = V.measureModel({ ...v, model: grp.model, s: v.s || {} });

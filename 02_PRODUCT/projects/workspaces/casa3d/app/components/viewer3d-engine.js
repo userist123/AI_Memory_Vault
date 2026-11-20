@@ -404,11 +404,11 @@ function model(it){
       B(.46, .016, .016, hx, .62, oz + .035, MAT('metal', '#c4c7ca')); [-.18, .18].forEach(a => B(.012, .012, .03, hx + a, .62, oz + .02, MAT('metal', '#c4c7ca')));
       [-.2, -.14, .14, .2].forEach(a => CY(.014, .014, .015, hx + a, .68, oz + .015, MAT('metal', '#c4c7ca'), 16).rotation.x = Math.PI / 2);
       // pe blat, ca într-o casă locuită: tocătorul sprijinit de perete, ibricul, un bol cu fructe, sticlele lângă plită
-      { const wood = MAT('wood', '#b38a5e'), bx = w > 2 ? -w / 2 + 1.05 : sx; const cb = B(.3, .4, .02, bx, ct + .2, -d / 2 + .06, wood); cb.rotation.x = -.12; B(.22, .3, .018, bx + .2, ct + .15, -d / 2 + .07, MAT('wood', '#8a6340')).rotation.x = -.12;
+      prop(() => { const wood = MAT('wood', '#b38a5e'), bx = w > 2 ? -w / 2 + 1.05 : sx; const cb = B(.3, .4, .02, bx, ct + .2, -d / 2 + .06, wood); cb.rotation.x = -.12; B(.22, .3, .018, bx + .2, ct + .15, -d / 2 + .07, MAT('wood', '#8a6340')).rotation.x = -.12;
         if (w > 1.6){ const kx = hx - .45; CY(.075, .085, .2, kx, ct + .1, -.1, MAT('ceramic', '#ece8e0'), 24); CY(.05, .07, .02, kx, ct + .21, -.1, MAT('ceramic', '#ece8e0'), 24); B(.03, .14, .06, kx - .09, ct + .1, -.1, MAT('paint', '#2b2b2b'));
           const bowl = new THREE.Mesh(new THREE.CylinderGeometry(.14, .07, .07, 32, 1, true), MAT('ceramic', '#cfc5b4')); bowl.material.side = THREE.DoubleSide; bowl.position.set(kx - .35, ct + .04, .05); bowl.castShadow = true; g.add(bowl);
           [['#c9572f', -.04, .02], ['#e0a83a', .05, -.02], ['#8aa04a', 0, .06], ['#c9572f', .03, .05]].forEach(([c, a, b], i) => { const f = new THREE.Mesh(new THREE.SphereGeometry(.038, 16, 12), MAT('paint', c)); f.position.set(kx - .35 + a, ct + .07 + (i > 2 ? .03 : 0), .05 + b); f.castShadow = true; g.add(f); }); }
-        [['#3d4a2a', .32, .03], ['#6b3f22', .24, .028]].forEach(([c, hh, r], i) => { CY(r, r, hh, hx + .36 + i * .07, ct + hh / 2, -d / 2 + .08, MAT('glass', c), 16); CY(.01, .01, .04, hx + .36 + i * .07, ct + hh + .02, -d / 2 + .08, MAT('wood', '#9c7a52'), 8); }); }
+        [['#3d4a2a', .32, .03], ['#6b3f22', .24, .028]].forEach(([c, hh, r], i) => { CY(r, r, hh, hx + .36 + i * .07, ct + hh / 2, -d / 2 + .08, MAT('glass', c), 16); CY(.01, .01, .04, hx + .36 + i * .07, ct + hh + .02, -d / 2 + .08, MAT('wood', '#9c7a52'), 8); }); });
       const upper = k ? k.upper : 'open', top = h - .02, wallBottom = upper === 'none' ? 1.5 : top - .72;
       if (upper === 'open'){ // polițe ENHET cu cadru deschis + uși pe jumătate din module
         B(w, .02, .32, 0, top, -d / 2 + .16, frame); B(w, .02, .32, 0, top - .72, -d / 2 + .16, frame); for (let i = 0; i <= n; i++) B(.02, .72, .32, -w / 2 + .01 + i * (w - .02) / n, top - .36, -d / 2 + .16, frame);
@@ -651,8 +651,8 @@ function model(it){
 // Precizie: produsul desenat (fără accesoriile de punere în scenă) are exact cotele din fișa produsului. Dacă un model generic
 // iese mai mare sau mai mic cu peste 2 cm pe o axă, piesele produsului se scalează împreună pe acea axă, centrate pe amprentă,
 // cu baza la aceeași cotă (pardoseală sau înălțimea de montaj). Excepții: oglinda pe suport (înclinată), planta (cotele sunt
-// ale ghiveciului), dușul walk-in (amprenta e zona de duș) și bucătăria (corpurile suspendate au cotele lor).
-const FIT_SKIP = new Set(['mirror', 'plant', 'shower', 'kitchen']), FIT_TOL = .02;
+// ale ghiveciului) și dușul walk-in (amprenta e zona de duș).
+const FIT_SKIP = new Set(['mirror', 'plant', 'shower']), FIT_TOL = .02;
 function fitToProduct(g, it){
   if (!it || !it.model || FIT_SKIP.has(it.model) || !(it.w > 0 && it.d > 0 && it.h > 0)) return;
   const kids = g.children.filter(c => !c.userData.prop && !c.userData.setPiece); if (!kids.length) return;
