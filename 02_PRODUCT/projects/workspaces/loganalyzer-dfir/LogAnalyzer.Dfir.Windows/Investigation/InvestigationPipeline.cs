@@ -660,6 +660,9 @@ public sealed class InvestigationPipeline
             }
             found.AddRange(LiveStateAnalyzer.Analyze(live, liveFull, LiveStateAnalyzer.MaxFindingNo(found)).ToList());   // evaluation 2026-11-05: found.Count collided with a reserved id (F-0305 twice -> EvidenceGraph crash)
         }
+        // Planner #12 B2: one finding per task / Run value / Startup entry seen both live and in a stored copy (before sequences and the rest point at finding ids)
+        var merged = LiveFindingMerger.Merge(found);
+        if (merged.Merged > 0) { found = merged.Findings; ws.Audit("finding.live_merged", $"{merged.Merged} constatări din starea live unite cu copia stocată a aceluiași obiect"); }
         // WP15b: policy change timeline, configured/applied/enforced/observed and control gaps, from the case timeline alone (EVTX is enough; the expected policy comes from the profile link).
         progress?.Report("Cronologie politici");
         var expectedIssues = new List<string>();
@@ -920,19 +923,33 @@ public static class LiveStateAnalyzer
         int n = offset;
         string Id() => $"F-{++n:D4}";
         var internet = snap.Connections.Where(c => c.State != "LISTEN" && IpClassifier.IsExternal(c.Remote.Address.ToString())).ToLookup(c => c.Pid);
-        foreach (var p in snap.Processes.Where(p => p.UserWritable && p.Signature.StartsWith("NESEMNAT", StringComparison.Ordinal)))
+        // planner #12 B2: one finding per executable (full path), not per process; the -NET variant wins for the exe, every PID stays as evidence (capped at MaxProcessRefs).
+        // Order is the order of first appearance in the snapshot, so ids stay deterministic. A process without a path is its own group (keyed by pid).
+        var groups = snap.Processes.Where(p => p.UserWritable && p.Signature.StartsWith("NESEMNAT", StringComparison.Ordinal))
+            .GroupBy(p => p.Path.Length > 0 ? p.Path.Trim().ToLowerInvariant() : "pid:" + p.Pid.ToString(CultureInfo.InvariantCulture), StringComparer.Ordinal).ToList();
+        foreach (var grp in groups)
         {
-            var conns = internet[p.Pid].Select(c => $"{c.Remote.Address}:{c.Remote.Port}").Distinct().ToList();
+            var procs = grp.ToList();
+            var p = procs[0];
+            var conns = procs.SelectMany(x => internet[x.Pid]).Select(c => $"{c.Remote.Address}:{c.Remote.Port}").Distinct().ToList();
+            int count = procs.Count;
+            var shown = procs.Take(MaxProcessRefs).ToList();
+            var more = count - shown.Count;
+            var lines = shown.Select(x => $"PID {x.Pid}, părinte {x.Ppid}; linie de comandă: {x.CommandLine}");
+            var limitations = new List<string>();
+            if (more > 0) limitations.Add($"Sunt păstrate doar primele {MaxProcessRefs} referințe de probă; și încă {more} procese ale aceluiași program nu au referință proprie.");
             yield return new Finding
             {
                 FindingId = Id(), RuleId = conns.Count > 0 ? "LIVE-UNSIGNED-USERPATH-NET" : "LIVE-UNSIGNED-USERPATH",
-                Title = $"Proces nesemnat dintr-o locație în care utilizatorii pot scrie{(conns.Count > 0 ? ", cu conexiuni în Internet" : "")}: {p.Name}",
+                Title = $"Proces nesemnat dintr-o locație în care utilizatorii pot scrie{(conns.Count > 0 ? ", cu conexiuni în Internet" : "")}: {p.Name}" + (count > 1 ? $" ({count} procese)" : ""),
                 Severity = conns.Count > 0 ? Severity.High : Severity.Medium, Category = "Execution", Classification = Classification.Direct,
-                Confidence = conns.Count > 0 ? Confidence.High : Confidence.Medium, Process = p.Name, Pid = p.Pid, File = p.Path,
+                Confidence = conns.Count > 0 ? Confidence.High : Confidence.Medium, Process = p.Name, Pid = count == 1 ? p.Pid : null, File = p.Path,
                 Ip = string.Join(", ", conns.Take(10)), FirstSeenUtc = snap.TakenUtc,
-                Description = $"PID {p.Pid}, părinte {p.Ppid}; linie de comandă: {p.CommandLine}" + (conns.Count > 0 ? $"; conexiuni: {string.Join(", ", conns.Take(10))}" : ""),
+                Description = (count > 1 ? $"{count} procese ale aceluiași program ({p.Path}). " : "") + string.Join(" | ", lines) + (more > 0 ? $" | și încă {more} procese" : "")
+                              + (conns.Count > 0 ? $"; conexiuni: {string.Join(", ", conns.Take(10))}" : ""),
                 ClassificationReason = "Observat în fotografia stării live (semnătură verificată, tabela TCP).",
-                SupportingEvidence = [LiveRef(item, $"Processes[pid={p.Pid}]", "Stare live: procese", ("Name", p.Name), ("Pid", p.Pid.ToString(CultureInfo.InvariantCulture)), ("Path", p.Path), ("CommandLine", p.CommandLine), ("Signature", p.Signature))],
+                SupportingEvidence = [.. shown.Select(x => LiveRef(item, $"Processes[pid={x.Pid}]", "Stare live: procese", ("Name", x.Name), ("Pid", x.Pid.ToString(CultureInfo.InvariantCulture)), ("Path", x.Path), ("CommandLine", x.CommandLine), ("Signature", x.Signature)))],
+                Limitations = limitations,
                 AlternativeExplanations = ["Aplicație legitimă instalată per utilizator, fără semnătură."],
                 RecommendedNextSteps = ["Izolați programul din fila „Izolare procese suspecte” pentru scanare completă."],
             };
@@ -1013,6 +1030,9 @@ public static class LiveStateAnalyzer
             };
         }
     }
+
+    /// <summary>Most process references kept on one grouped finding; the rest are counted in the description and the limitations.</summary>
+    public const int MaxProcessRefs = 10;
 
     internal const string DefaultOneDriveNote = LogAnalyzer.Dfir.Analysis.KnownDefaults.OneDriveNote;
 

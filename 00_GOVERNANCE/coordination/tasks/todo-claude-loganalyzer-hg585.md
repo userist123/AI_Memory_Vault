@@ -1763,3 +1763,10 @@
   (2 CFG-*, 5 HOSTS/PS-HISTORY, 24 LIVE-*, 14 other); 2 gaps (TaskCache Tree without Tasks; Amcache dirty hive, logs not replayed). QUALITY ISSUES seen:
   LIVE-UNSIGNED-USERPATH repeats one finding per PROCESS of the same exe (18 near-duplicates); LIVE-TASK-USERPATH and PERSIST-TASK-CONFIG report the same
   task twice -> planner #12 B2 grouping. Results not printed here (owner's PC data).
+- 2026-11-20 (claude, hg585) PLANNER #12 B2 DONE (vault-worker, medium): LiveStateAnalyzer one finding per (rule, exe full path) with process count in the
+  title, <=10 evidence refs + "și încă N procese", NET variant wins; LiveFindingMerger (after the live-snapshot loop, before sequences/policy; audited
+  finding.live_merged) merges LIVE-TASK-USERPATH->PERSIST-TASK-CONFIG, LIVE-AUTORUN-USERPATH->PERSIST-RUNKEY-USERPATH, LIVE-STARTUP-*->
+  PERSIST-STARTUP-FOLDER; the stored-copy rule is primary (hashed copy, own timestamps), live refs appended, ambiguous -> keep both. Tests
+  LiveFindingGroupingTests (9; red 8/9). Suites: App 1473, UI 370 (1 skipped), Edition 45, Dfir full 4046 / 35 skipped / 4 failed under load
+  (MultiProcessChain, VaultExport, 2x EvtxRepair; 18/18 alone). REAL RUN after B2: 45 -> 27 findings (LIVE 24 -> 6), same evidence.
+  RESIDUALS: task merge relies on the PERSIST-TASK-CONFIG description wording; %APPDATA% Run values not matched (kept both).
