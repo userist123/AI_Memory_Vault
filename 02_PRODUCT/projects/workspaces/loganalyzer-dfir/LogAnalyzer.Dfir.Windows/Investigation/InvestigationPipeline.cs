@@ -980,6 +980,38 @@ public static class LiveStateAnalyzer
                 RecommendedNextSteps = oneDrive ? ["Verificați semnătura digitală Microsoft a fișierului (Proprietăți → Semnături digitale)."] : [],
             };
         }
+        // planner #11 A8: permanent WMI subscriptions and Startup folders
+        foreach (var w in (snap.WmiSubscriptions ?? []).Where(w => w.ConsumerClass is "CommandLineEventConsumer" or "ActiveScriptEventConsumer"))
+            yield return new Finding
+            {
+                FindingId = Id(), RuleId = "LIVE-WMI-SUBSCRIPTION",
+                Title = $"Abonament WMI permanent care rulează o comandă sau un script: {w.Consumer}",
+                Severity = Severity.High, Category = "Persistence", Classification = Classification.Direct, Confidence = Confidence.High, MitreTechniqueId = "T1546.003",
+                FirstSeenUtc = snap.TakenUtc,
+                Description = $"Filtrul „{w.Filter}” (interogare: {w.FilterQuery}) este legat de consumatorul {w.ConsumerClass} „{w.Consumer}”, care rulează: {(w.Command.Length > 0 ? w.Command : "(conținut necitit)")}.",
+                ClassificationReason = "Starea curentă a spațiului de nume root\\subscription (legătură activă filtru-consumator).",
+                SupportingEvidence = [LiveRef(item, $"WmiSubscriptions[{w.Filter}->{w.Consumer}]", "Stare live: abonamente WMI",
+                    ("Filter", w.Filter), ("FilterQuery", w.FilterQuery), ("Consumer", w.Consumer), ("ConsumerClass", w.ConsumerClass), ("Command", w.Command))],
+                AlternativeExplanations = ["Unii producători de calculatoare și de produse de administrare folosesc abonamente WMI legitime; comparați comanda cu produsele instalate."],
+                RecommendedNextSteps = ["Verificați comanda cu Get-CimInstance (pașii din secțiunea „Cum verifici tu”) și identificați programul care a creat abonamentul."],
+            };
+        foreach (var st in snap.Startup ?? [])
+        {
+            if (LogAnalyzer.Dfir.Windows.Acquisition.StartupRules.Classify(st) is not { } c) continue;
+            yield return new Finding
+            {
+                FindingId = Id(), RuleId = st.Name.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase) ? "LIVE-STARTUP-LNK" : "LIVE-STARTUP-FILE",
+                Title = $"Intrare în folderul Startup ({st.Scope}): {st.Name}",
+                Severity = c.Severity, Category = "Persistence", Classification = Classification.Direct, Confidence = c.Severity >= Severity.High ? Confidence.High : Confidence.Medium,
+                MitreTechniqueId = "T1547.001", File = st.Path, FirstSeenUtc = snap.TakenUtc,
+                Description = $"{st.Path}: {c.Reason}" + (st.Target.Length > 0 ? $"; țintă: {st.Target} {st.Arguments}".TrimEnd() : "") + $"; {st.Size} octeți, SHA-256 {st.Sha256}, modificat {st.ModifiedUtc}.",
+                ClassificationReason = "Conținutul curent al folderului Startup (fișierul se execută la autentificarea utilizatorului).",
+                SupportingEvidence = [LiveRef(item, $"Startup[{st.Path}]", "Stare live: foldere Startup",
+                    ("Path", st.Path), ("Target", st.Target), ("Arguments", st.Arguments), ("Sha256", st.Sha256), ("Size", st.Size.ToString(CultureInfo.InvariantCulture)), ("Modified", st.ModifiedUtc), ("Signature", st.Signature))],
+                AlternativeExplanations = ["Unele aplicații instalate de utilizator își pun scurtături în Startup pentru a porni cu sistemul."],
+                RecommendedNextSteps = ["Verificați fișierul și ținta scurtăturii (pașii din „Cum verifici tu”) și semnătura digitală a programului."],
+            };
+        }
     }
 
     internal const string DefaultOneDriveNote = LogAnalyzer.Dfir.Analysis.KnownDefaults.OneDriveNote;

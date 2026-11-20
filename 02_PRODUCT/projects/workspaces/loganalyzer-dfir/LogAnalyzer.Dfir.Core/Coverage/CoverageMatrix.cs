@@ -102,7 +102,7 @@ public sealed class CoverageMatrix
         new("hosts_file", "Fișierul hosts", ["HostsFileParser"], ["UserHistoryCollector"], [], []),
         new("tasks", "Sarcini programate", ["ScheduledTaskParser"], [], [], []),
         new("ps_transcripts", "Transcrieri PowerShell", ["PowerShellTranscriptParser"], ["UserArtifactsCollector"], [], [], "există doar dacă transcrierea este pornită (politică sau Start-Transcript); colectată cu profilul complet"),
-        new("live_state", "Starea live (procese, conexiuni, rulare automată)", [], ["LiveStateCollector"], ["live_snapshot"], [], "analizor propriu, fără parser"),
+        new("live_state", "Starea live (procese, conexiuni, rulare automată, abonamente WMI permanente, foldere Startup)", [], ["LiveStateCollector"], ["live_snapshot"], [], "analizor propriu, fără parser; abonamentele WMI și folderele Startup se citesc doar în starea curentă (nu istoricul: pentru istoric există evenimentele WMI-Activity 5861 și Sysmon 19-21)"),
     ];
 
     public static CoverageMatrix Build(CoverageInputs inp)

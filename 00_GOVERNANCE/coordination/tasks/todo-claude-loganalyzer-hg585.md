@@ -1740,3 +1740,13 @@
   Suites: App 1456, UI 370 (1 skipped), Edition 45, full Dfir 4049 passed / 34 skipped / 1 failed = RemoteCollectionTests hard-link test, which
   passes with TEMP on C: (fails only when TEMP is on another volume, E:) - environment, not A6. RESIDUALS: no real browser lock tested; VS Code/ISE
   history and remote-package path not covered; multi-line PSReadLine commands = one event per physical line.
+- 2026-11-20 (claude, hg585) PLANNER #11 A7 DONE (vault-worker, low): high-severity detections in "Greșeli găsite": Sigma/correlation level high/critical
+  (RulesUsed), YARA meta severity high/critical, IOC confidence >= medium; hash-set known-bad excluded (own finding); one block per (rule, evidence,
+  locator) with repeat count; 7 labels; Cum verifici tu = ManualVerification + rule id/title step; Ce NU dovedește = rule-match caveat + falsepositives
+  (DetectionRule.FalsePositives filled by SigmaLite); page-1 "Greșeli găsite: N (din care M potriviri de reguli)". Tests RuleMistakesTests (3; red 3/3).
+  PLANNER #11 A8 DONE (vault-worker, medium): LiveStatePersistence (read-only WMI root\subscription bindings/filters/consumers; all-users + per-user
+  Startup folders with SHA-256, size, times, LNK target/args, Authenticode); Snapshot + 2 optional lists; LiveStateAnalyzer LIVE-WMI-SUBSCRIPTION (High
+  for CommandLine/ActiveScript consumers; SCM built-in none), LIVE-STARTUP-LNK / LIVE-STARTUP-FILE (interpreter+args High, user-writable unsigned
+  Medium/High, script Medium, unsigned exe High, valid signature none); locators WmiSubscriptions[f->c], Startup[path] with ManualVerification steps.
+  Tests LiveWmiStartupTests (5; red 2). Suites: App 1464, UI 370 (1 skipped), Edition 45, FULL Dfir 4050 passed / 34 skipped / 0 failed (TEMP on C:).
+  RESIDUALS: WMI/Startup not run on a real machine; other users' Startup needs elevation; non-command WMI consumers no finding. PLANNER #11 DONE (A1-A8).

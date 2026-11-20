@@ -31,6 +31,8 @@ public static class ManualVerification
     private static readonly Regex Service = new(@"^Services\[(?<x>.+)\]$", RegexOptions.Compiled | RegexOptions.Singleline);
     private static readonly Regex Task = new(@"^Tasks\[(?<x>.+)\]$", RegexOptions.Compiled | RegexOptions.Singleline);
     private static readonly Regex Process = new(@"^Processes\[pid=(?<x>\d+)\]$", RegexOptions.Compiled);
+    private static readonly Regex WmiSub = new(@"^WmiSubscriptions\[(?<f>.*?)->(?<c>.+)\]$", RegexOptions.Compiled | RegexOptions.Singleline);
+    private static readonly Regex StartupItem = new(@"^Startup\[(?<x>.+)\]$", RegexOptions.Compiled | RegexOptions.Singleline);
     private static readonly Regex Autorun = new(@"^Autoruns\[(?<x>.+)\]$", RegexOptions.Compiled | RegexOptions.Singleline);
     private static readonly Regex TextLine = new(@"(^|:)line=(?<n>\d+)$", RegexOptions.Compiled);
     private static readonly Regex Registry = new(@"^(?<hive>SYSTEM|SOFTWARE|NTUSER|UsrClass|Amcache\.hve)\\(?<rel>.+)$", RegexOptions.Compiled | RegexOptions.Singleline);
@@ -97,6 +99,31 @@ public static class ManualVerification
         {
             steps.Add(new("PowerShell", $"schtasks /query /tn {Dq(tk.Groups["x"].Value)} /v /fo LIST", "Task To Run, Run As User, Next Run Time cu cele din constatare. Starea live poate fi diferită de cea de la colectare", true));
             steps.Add(Snapshot("activitățile planificate"));
+            AddHash(steps, stored, sha, item);
+            return steps;
+        }
+        if (WmiSub.Match(loc) is { Success: true } ws)
+        {
+            string filter = ws.Groups["f"].Value, consumer = ws.Groups["c"].Value;
+            steps.Add(new("PowerShell", "Get-CimInstance -Namespace root\\subscription -ClassName __FilterToConsumerBinding | Format-List Filter,Consumer",
+                $"în lista trebuie să existe legătura dintre filtrul „{filter}” și consumatorul „{consumer}”", true));
+            steps.Add(new("PowerShell", $"Get-CimInstance -Namespace root\\subscription -ClassName __EventFilter -Filter {DqParam($"Name='{Wql(filter)}'")} | Format-List Name,Query,EventNamespace",
+                "Query și EventNamespace cu cele din citat", true));
+            steps.Add(new("PowerShell", $"Get-CimInstance -Namespace root\\subscription -ClassName CommandLineEventConsumer -Filter {DqParam($"Name='{Wql(consumer)}'")} | Format-List Name,CommandLineTemplate,ExecutablePath",
+                "CommandLineTemplate / ExecutablePath cu comanda din citat (pentru ActiveScriptEventConsumer se citesc ScriptFileName și ScriptText cu aceeași interogare pe clasa respectivă). Stația live poate fi diferită de cea de la colectare", true));
+            steps.Add(Snapshot("abonamentele WMI"));
+            AddHash(steps, stored, sha, item);
+            return steps;
+        }
+        if (StartupItem.Match(loc) is { Success: true } su)
+        {
+            string file = su.Groups["x"].Value;
+            string dir = file.Contains('\\') ? file[..file.LastIndexOf('\\')] : file;
+            steps.Add(new("PowerShell", $"Get-ChildItem -Force {Sq(dir)} | Format-Table Name,Length,CreationTimeUtc,LastWriteTimeUtc", $"fișierul {Clean(file[(file.LastIndexOf('\\') + 1)..])} trebuie să fie în listă, cu dimensiunea și ora din citat", true));
+            steps.Add(new("PowerShell", $"Get-FileHash -LiteralPath {Sq(file)} -Algorithm SHA256", "SHA-256 cu cel din citat (dacă diferă, fișierul s-a schimbat după colectare)", true));
+            if (file.EndsWith(".lnk", StringComparison.OrdinalIgnoreCase))
+                steps.Add(new("PowerShell", $"(New-Object -ComObject WScript.Shell).CreateShortcut({Sq(file)}) | Format-List TargetPath,Arguments,WorkingDirectory", "TargetPath și Arguments cu cele din citat", true));
+            steps.Add(Snapshot("folderele Startup"));
             AddHash(steps, stored, sha, item);
             return steps;
         }

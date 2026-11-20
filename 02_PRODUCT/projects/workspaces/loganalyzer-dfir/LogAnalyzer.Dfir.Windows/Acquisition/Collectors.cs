@@ -219,7 +219,7 @@ public sealed class FirewallLogCollector : ICollector
 
 /// <summary>
 /// Snapshot of the running state (CURRENT_SNAPSHOT): processes with parent, command line and signature, TCP connections,
-/// services, scheduled tasks and autostart entries. Read-only.
+/// services, scheduled tasks and autostart entries, permanent WMI event subscriptions and the Startup folders. Read-only.
 /// </summary>
 public sealed class LiveStateCollector : ICollector
 {
@@ -233,12 +233,13 @@ public sealed class LiveStateCollector : ICollector
     public sealed record TaskRow(string Path, string Command, bool UserWritable);
     public sealed record AutorunRow(string Location, string Name, string Value, bool UserWritable);
     public sealed record Snapshot(DateTimeOffset TakenUtc, string Host, List<ProcessRow> Processes, List<TcpConnection> Connections,
-                                  List<ServiceRow> Services, List<TaskRow> Tasks, List<AutorunRow> Autoruns, List<string> Errors);
+                                  List<ServiceRow> Services, List<TaskRow> Tasks, List<AutorunRow> Autoruns, List<string> Errors,
+                                  List<WmiSubscriptionRow>? WmiSubscriptions = null, List<StartupRow>? Startup = null);
 
     public CollectorOutcome Collect(CollectorContext ctx, CancellationToken ct)
     {
         var errors = new List<string>();
-        var snap = new Snapshot(DateTimeOffset.UtcNow, Environment.MachineName, [], [], [], [], [], errors);
+        var snap = new Snapshot(DateTimeOffset.UtcNow, Environment.MachineName, [], [], [], [], [], errors, [], []);
         Try(errors, "procese", () =>
         {
             using var s = new ManagementObjectSearcher("SELECT ProcessId, ParentProcessId, Name, ExecutablePath, CommandLine FROM Win32_Process");
@@ -289,6 +290,9 @@ public sealed class LiveStateCollector : ICollector
             }
         });
 
+        Try(errors, "abonamente WMI permanente", () => snap.WmiSubscriptions!.AddRange(LiveStatePersistence.ReadWmiSubscriptions()));
+        Try(errors, "foldere Startup", () => snap.Startup!.AddRange(LiveStatePersistence.ReadStartupFolders(errors)));
+
         var dir = ctx.Case.RawDir("LiveState");
         var path = Path.Combine(dir, $"live_state_{snap.TakenUtc:yyyyMMdd_HHmmss}.json");
         File.WriteAllText(path, JsonSerializer.Serialize(snap, new JsonSerializerOptions { WriteIndented = true }));
@@ -298,7 +302,7 @@ public sealed class LiveStateCollector : ICollector
         return o;
     }
 
-    private static string Describe(SignatureInfo s) => s.IsSigned ? (s.IsValid ? $"semnat ({s.Kind}) {s.Signer}" : $"semnătură invalidă: {s.Status}") : "NESEMNAT";
+    internal static string Describe(SignatureInfo s) => s.IsSigned ? (s.IsValid ? $"semnat ({s.Kind}) {s.Signer}" : $"semnătură invalidă: {s.Status}") : "NESEMNAT";
 
     /// <summary>Executable part of a command line or service ImagePath ("C:\a b\x.exe" -arg, or C:\x.exe -arg).</summary>
     public static string ExePath(string cmd) => LogAnalyzer.Dfir.Analysis.Correlation.CommandExecutable(cmd);
