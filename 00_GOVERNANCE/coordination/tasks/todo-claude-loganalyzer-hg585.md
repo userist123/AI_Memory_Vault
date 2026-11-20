@@ -1791,3 +1791,13 @@
   ParserRegistryTests counts 37 -> 39 (AuditPolicyCsvParser, LocalAccountsParser). C1 (HvLE replay) stays UNCOMMITTED: review REQUEST_CHANGES (HIGH
   parented/remote hives skipped silently; MEDIUM rerun integrity, cross-acquisition log matching, stale-tail gap; LOW checksum special cases, oversized
   hbds, orphan copy on register failure) -> fixes next.
+- 2026-11-20 (claude, hg585) PLANNER #13 C1 DONE (RISKY; vault-worker 2 rounds + independent review r1 REQUEST_CHANGES (1 HIGH, 3 MEDIUM, 3 LOW) all fixed
+  by the worker; one residual fixed by main session): Core/IO/RegfLogReplay (HvLE per msuhanov/regf: dirty = checksum bad or seq1 != seq2; entry
+  signature/size/hbds/Marvin32 Hash-1 (40..Size) + Hash-2 (first 32) - verified by the reviewer against real NTUSER.DAT.LOG1/2 entries; chain from
+  secondary+1, stop only on a break of the expected sequence; dual-log rule; growth cap min(512 MiB, max(4x, 1 MiB)); checksum special cases 0->1,
+  FFFFFFFF->FFFFFFFE) + Windows/Investigation/HiveLogReplay (derived copy CreateNew inside the case, RegisterStored action "derived" with parent and own
+  SHA-256, original SkippedByDesign "înlocuit"; parented remote hives replayed; logs only from the same parent/folder, ambiguous -> gap; rerun re-checks
+  original and copy (EvidencePreflight) -> EVIDENCE_MUTATED gap and, main-session fix, the derived copy is then NOT parsed either (rejectedCopies);
+  unregistered copy deleted on failure; OOM -> gap). Tests HiveLogReplayTests (20; red 7 + main-session red). Suites: Dfir 4071 / 36 skipped / 0 failed,
+  App 1489, UI 370 (1 skipped), Edition 45. Real PC: Amcache clean (nothing to replay, correct). RESIDUALS: DIRT legacy format and base-block recovery not
+  implemented; only Amcache is collected with its logs (SYSTEM/SOFTWARE via reg save are consistent; user hives copied without logs).

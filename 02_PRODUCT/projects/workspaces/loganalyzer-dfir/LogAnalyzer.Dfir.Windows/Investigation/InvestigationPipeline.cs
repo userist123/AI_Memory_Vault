@@ -432,7 +432,7 @@ public sealed class InvestigationPipeline
             "$LogFile conservat brut din copia de umbră; nu are încă parser în această versiune",
         LogAnalyzer.Dfir.Windows.Acquisition.NtfsMetadataCollector.ManifestSourceType =>
             "manifestul colectării NTFS (SHA-256, copia de umbră, ora): document de proveniență, nu are parser",
-        "amcache_log" => "jurnal de tranzacții al hive-ului Amcache: păstrat în caz ca probă; reaplicarea lui pe hive nu este încă implementată (intrările scrise doar în jurnal pot lipsi)",
+        "amcache_log" => "jurnal de tranzacții al hive-ului Amcache: nu se citește separat; se reaplică pe o copie derivată a hive-ului (probă derivată, originalul rămâne nemodificat); dacă reaplicarea eșuează, motivul apare ca gol",
         _ => null,
     };
 
@@ -531,6 +531,8 @@ public sealed class InvestigationPipeline
         var analysisDir = Path.Combine(ws.Root, "Analysis");
         Directory.CreateDirectory(analysisDir);
         var sink = new ListSink();
+        // Planner #13 C1: dirty hives with their transaction logs in the case are replayed onto a derived copy; the parsers read the copy, never the original
+        var replayed = HiveLogReplay.Apply(ws, r, out var rejectedCopies);
         File.WriteAllText(Path.Combine(analysisDir, "parsers.json"), JsonSerializer.Serialize(_registry.Descriptors, new JsonSerializerOptions { WriteIndented = true }));
         ws.RecordOutput("Analysis/parsers.json", Producer, DfirInfo.ApplicationVersion);
         foreach (var ev in ws.LoadEvidence())
@@ -544,6 +546,24 @@ public sealed class InvestigationPipeline
                     Error = CaseWorkspace.OutsideCaseReason, ExpectedSha256 = ev.Sha256,
                 });
                 r.Gaps.Add(OutsideCaseGap(ws, ev));
+                continue;
+            }
+            if (rejectedCopies.Contains(ev.EvidenceId))
+            {
+                r.Parsing.Add(new ParseResult
+                {
+                    EvidenceId = ev.EvidenceId, Parser = "-", ParserVersion = "-", Status = EvidenceStatus.SkippedByDesign,
+                    Error = "copie derivată nefolosită: originalul ei sau copia s-a schimbat după reaplicarea jurnalelor (vezi golul EVIDENCE_MUTATED)", ExpectedSha256 = ev.Sha256,
+                });
+                continue;
+            }
+            if (replayed.TryGetValue(ev.EvidenceId, out var derivedCopy))
+            {
+                r.Parsing.Add(new ParseResult
+                {
+                    EvidenceId = ev.EvidenceId, Parser = "-", ParserVersion = "-", Status = EvidenceStatus.SkippedByDesign,
+                    Error = $"înlocuit pentru parsare de copia derivată {derivedCopy.EvidenceId} (jurnalele de tranzacții aplicate); originalul rămâne nemodificat în caz", ExpectedSha256 = ev.Sha256,
+                });
                 continue;
             }
             var sel = _registry.Select(ev, full);
