@@ -26,7 +26,7 @@ public sealed record LocalSecuritySnapshot(string Machine, bool? PartOfDomain, s
 /// <c>auditpol /get /category:* /r</c> (CSV, type auditpol_csv; needs elevation) and a JSON snapshot of the local accounts (name, SID, RID, enabled, last logon) and of the
 /// members of the local Administrators group found by its well-known SID, so the localized group name does not matter (type local_accounts_json; WMI, the same
 /// source as the station control, no PowerShell process). A part that fails is an error of the outcome (a gap), never a silent omission.
-/// Profiles: Standard and FullForensic. The output of auditpol is in the OEM code page of the station; it is stored as UTF-8.
+/// Profiles: Quick, Standard and FullForensic (planner #13 D1: both parts are tiny and take seconds, like AirGapFactsCollector and SetupApiLogCollector; the audit policy and the local accounts feed findings the Quick triage should also give). The output of auditpol is in the OEM code page of the station; it is stored as UTF-8.
 /// </summary>
 public sealed class LocalSecurityStateCollector : ICollector
 {
@@ -46,7 +46,7 @@ public sealed class LocalSecurityStateCollector : ICollector
     public string Name => "LocalSecurityStateCollector";
     public string Version => "1.0";
     public bool RequiresElevation => true;
-    public CollectionProfile Profiles => CollectionProfile.StandardAndUp;
+    public CollectionProfile Profiles => CollectionProfile.QuickAndUp;
 
     private static readonly JsonSerializerOptions Compact = new()
     {

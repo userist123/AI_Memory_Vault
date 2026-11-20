@@ -91,7 +91,7 @@ public sealed class CoverageMatrix
         new("srum", "SRUM", ["SrumNetworkParser"], ["SrumCollector"], [], [], "se citesc utilizarea rețelei per aplicație și durata conectării per interfață"),
         new("registry", "Hive-uri de registru (NTUSER, SOFTWARE)", ["UserHiveParser", "SoftwareHiveParser"], ["UserArtifactsCollector", "SoftwareHiveCollector"], [], []),   // not ExecutionArtifactsCollector: it saves only SYSTEM + Amcache (lab WS02 2026-11-17: Standard showed a false "ran but produced no source"); the live SOFTWARE hive comes from SoftwareHiveCollector (Standard / Full)
         new("services", "Servicii și drivere (hive SYSTEM)", ["ServicesParser"], [], [], []),
-        new("local_security", "Politica de audit, conturi locale și administratori locali (instantaneu)", ["AuditPolicyCsvParser", "LocalAccountsParser"], ["LocalSecurityStateCollector"], [], [], "auditpol cere drepturi de administrator; profilurile Standard și Complet; starea la colectare, fără istoric"),
+        new("local_security", "Politica de audit, conturi locale și administratori locali (instantaneu)", ["AuditPolicyCsvParser", "LocalAccountsParser"], ["LocalSecurityStateCollector"], [], [], "auditpol cere drepturi de administrator; profilurile Rapid, Standard și Complet; starea la colectare, fără istoric"),
         new("usn", "Jurnal USN", ["UsnJournalParser"], [], [], []),
         new("lnk_jumplist", "LNK și Jump Lists", ["LnkParser", "JumpListParser"], [], [], []),
         new("usb", "Istoric dispozitive USB", ["UsbDevicesParser"], [], [], []),

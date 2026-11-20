@@ -9,11 +9,12 @@ public sealed record ConfigProbe(string Hive, string Key, string Name)
     public string Locator => $@"{Hive}\{Key}\{Name}";
 }
 
-/// <summary>What the reader found for one probe: <see cref="Data"/> = the value as text, null = key or value absent. <see cref="KeyLastWriteUtc"/> = LastWrite of the key that holds the value.</summary>
-public sealed record ConfigValue(string? Data, DateTimeOffset? KeyLastWriteUtc);
+/// <summary>What the reader found for one probe: <see cref="Data"/> = the value as text, null = key or value absent. <see cref="KeyLastWriteUtc"/> = LastWrite of the key that holds the value.
+/// <see cref="EvidenceId"/> / <see cref="Sha256"/> are set only when the value comes from another evidence item than the hive's own (Quick profile: a saved SOFTWARE subkey hive); null = the hive's own.</summary>
+public sealed record ConfigValue(string? Data, DateTimeOffset? KeyLastWriteUtc, string? EvidenceId = null, string? Sha256 = null);
 
 /// <summary>The value names of one list key (Defender exclusions: the name is the excluded path / extension / process); null names = the key does not exist.</summary>
-public sealed record ConfigNames(IReadOnlyList<string>? Names, DateTimeOffset? KeyLastWriteUtc);
+public sealed record ConfigNames(IReadOnlyList<string>? Names, DateTimeOffset? KeyLastWriteUtc, string? EvidenceId = null, string? Sha256 = null);
 
 /// <summary>One stored hive (SOFTWARE or SYSTEM) read for the configuration audit. <see cref="Error"/> non-empty = the hive could not be read at all.</summary>
 public sealed class ConfigHive
@@ -243,7 +244,7 @@ public static class ConfigurationAudit
     private static Finding Make(ConfigHive h, string host, Func<string> nextId, string rule, Severity sev, Confidence conf, string title, string description, string plainWhat,
                                 string sevReason, IReadOnlyList<(ConfigProbe P, ConfigValue V)> refs, string[] alternatives, string[] limitations)
     {
-        var evidence = refs.Select(x => new EvidenceRef(h.EvidenceId, x.P.Locator, $"valoarea {x.P.Name} din hive-ul {h.Hive} păstrat în caz", h.Sha256,
+        var evidence = refs.Select(x => new EvidenceRef(x.V.EvidenceId ?? h.EvidenceId, x.P.Locator, $"valoarea {x.P.Name} din hive-ul {h.Hive} păstrat în caz", x.V.Sha256 ?? h.Sha256,
             $"{x.P.Name} = {x.V.Data}", TimeSource, Channel)).ToList();
         var times = refs.Where(x => x.V.KeyLastWriteUtc is not null).Select(x => x.V.KeyLastWriteUtc!.Value).ToList();
         return Build(h, host, nextId, rule, sev, conf, title, description, plainWhat, sevReason, evidence, times, alternatives, limitations);
@@ -251,7 +252,7 @@ public static class ConfigurationAudit
 
     private static Finding MakeList(ConfigHive h, string host, Func<string> nextId, int total, string shown, List<(string Key, ConfigNames N)> found)
     {
-        var evidence = found.Select(x => new EvidenceRef(h.EvidenceId, "SOFTWARE\\" + x.Key, $"cheia {x.Key} din hive-ul SOFTWARE păstrat în caz", h.Sha256,
+        var evidence = found.Select(x => new EvidenceRef(x.N.EvidenceId ?? h.EvidenceId, "SOFTWARE\\" + x.Key, $"cheia {x.Key} din hive-ul SOFTWARE păstrat în caz", x.N.Sha256 ?? h.Sha256,
             $"{x.N.Names!.Count} excluderi: " + string.Join("; ", x.N.Names!.Take(ListCap)) + (x.N.Names!.Count > ListCap ? $"; … încă {x.N.Names!.Count - ListCap}" : ""), TimeSource, Channel)).ToList();
         var times = found.Where(x => x.N.KeyLastWriteUtc is not null).Select(x => x.N.KeyLastWriteUtc!.Value).ToList();
         return Build(h, host, nextId, RuleDefenderExcl, Severity.Medium, Confidence.High,

@@ -126,6 +126,39 @@ public sealed class UserHistoryTests : IDisposable
     }
 
     [Fact]
+    public void Every_history_txt_of_the_PSReadLine_folder_is_collected_not_only_ConsoleHost_and_other_files_are_not()
+    {
+        const string folder = @"vol\Users\u1\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\";
+        PutText(folder + "ConsoleHost_history.txt", "whoami\r\n");
+        PutText(folder + "Visual Studio Code Host_history.txt", "Get-Process\r\nipconfig\r\n");   // the VS Code integrated terminal
+        PutText(folder + "notes.txt", "not a history");
+        PutText(folder + "ConsoleHost_history.txt.bak", "old copy");
+        PutText(@"vol\Users\u2\AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt", "ipconfig\r\n");
+        PutText(@"etc\hosts", "127.0.0.1 localhost\r\n");
+
+        var (o, ws) = Collect();
+
+        var ps = o.Evidence.Where(e => e.SourceType == PsReadLineHistoryParser.SourceTypeName).ToList();
+        Assert.Equal(3, ps.Count);
+        Assert.Equal(["ConsoleHost_history.txt", "Visual Studio Code Host_history.txt"], ps.Where(e => e.Source == $"PSReadLine:{Sid1}").Select(e => Path.GetFileName(e.OriginalPath)).OrderBy(n => n));
+        var vsc = ps.Single(e => e.OriginalPath.EndsWith("Visual Studio Code Host_history.txt", StringComparison.Ordinal));
+        Assert.Equal("Visual Studio Code Host_history.txt", Path.GetFileName(vsc.StoredPath));
+        Assert.Equal("Get-Process\r\nipconfig\r\n", File.ReadAllText(Path.Combine(ws.Root, vsc.StoredPath)));
+        Assert.Contains("Visual Studio Code Host_history.txt", vsc.Notes);
+        Assert.DoesNotContain(ps, e => e.OriginalPath.EndsWith("notes.txt", StringComparison.Ordinal) || e.OriginalPath.EndsWith(".bak", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void A_VS_Code_history_file_is_parsed_with_the_same_parser_and_rules_as_ConsoleHost_and_typed_on_import()
+    {
+        var path = PutText("vsc\\Visual Studio Code Host_history.txt", "Get-ChildItem\r\npowershell -w hidden -enc SQBFAFgA\r\n");
+        var e = Parse(new Ps(), path, PsReadLineHistoryParser.SourceTypeName, "PSReadLine:" + Sid1);
+        Assert.Equal(2, e.Count);
+        Assert.All(e, x => Assert.Equal("PsReadLineHistory", x.Source));
+        Assert.Equal(PsReadLineHistoryParser.SourceTypeName, InvestigationPipeline.ImportType(path));
+    }
+
+    [Fact]
     public void A_database_held_open_by_the_browser_falls_back_to_the_shadow_copy_and_the_note_says_so()
     {
         var db = Put(@"vol\Users\u1\AppData\Local\Google\Chrome\User Data\Default\History");

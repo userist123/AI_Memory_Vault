@@ -151,10 +151,10 @@ public sealed class LocalSecurityStateTests : IDisposable
     public void Collector_profile_pipeline_registration_and_parsers_are_wired()
     {
         var c = new LocalSecurityStateCollector();
-        Assert.Equal(CollectionProfile.StandardAndUp, c.Profiles);
+        Assert.Equal(CollectionProfile.QuickAndUp, c.Profiles);   // planner #13 D1: small and fast, so the Quick triage also saves the audit policy and the accounts
         Assert.True(c.RequiresElevation);
         Assert.Single(InvestigationPipeline.AllCollectors, x => x is LocalSecurityStateCollector);
-        Assert.DoesNotContain(InvestigationPipeline.AllCollectors.Where(x => (x.Profiles & CollectionProfile.Quick) != 0), x => x is LocalSecurityStateCollector);
+        Assert.Contains(InvestigationPipeline.AllCollectors.Where(x => (x.Profiles & CollectionProfile.Quick) != 0), x => x is LocalSecurityStateCollector);
         Assert.Contains(WindowsParsers.Registry.Descriptors, d => d.ParserId == "AuditPolicyCsvParser");
         Assert.Contains(WindowsParsers.Registry.Descriptors, d => d.ParserId == "LocalAccountsParser");
         Assert.NotNull(ParserCapabilities.For("AuditPolicyCsvParser"));

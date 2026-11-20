@@ -7,11 +7,91 @@ namespace LogAnalyzer.Dfir.Windows.Investigation;
 /// <summary>
 /// Planner #11 A5: reads the configuration values of <see cref="ConfigurationAudit"/> from a STORED SOFTWARE or SYSTEM hive (read-only, through <see cref="RawRegistry"/>),
 /// so every configuration finding points at a hashed copy in the case. The live registry is not read here: on a live run the hives are the "reg save" copies made by the
-/// collectors in the Standard and Full profiles (Quick does not save them, and the audit then reports a gap, never a guess).
+/// collectors in the Standard and Full profiles. The Quick profile saves SYSTEM and three SMALL SOFTWARE subkey hives instead of the whole SOFTWARE hive
+/// (<see cref="LogAnalyzer.Dfir.Windows.Acquisition.SoftwareSubkeyHivesCollector"/>): <see cref="ReadSoftwareSubkeys"/> reads the same values from them. A subkey that is missing is a gap, never a guess.
 /// </summary>
 public static class ConfigurationHiveReader
 {
     public static string? HiveOf(EvidenceItem item) => item.SourceType switch { "software_hive" => "SOFTWARE", "system_hive" => "SYSTEM", _ => null };
+
+    /// <summary>Evidence type of a SOFTWARE subkey saved with <c>reg save HKLM\SOFTWARE\&lt;subkey&gt;</c>; the subkey becomes the ROOT of the file and <c>OriginalPath</c> is the subkey path.</summary>
+    public const string SubkeyHiveType = "software_subkey_hive";
+    /// <summary>Evidence type of the JSON marker that proves a SOFTWARE subkey does not exist on the station ({"key":..., "exists":false, "checkedUtc":...}); OriginalPath = the key.</summary>
+    public const string AbsentType = "software_subkey_absent";
+
+    /// <summary>The subkey path below SOFTWARE of a subkey hive item (from OriginalPath, "HKLM\SOFTWARE\" prefix removed), or null when it does not name one.</summary>
+    public static string? SubkeyOf(EvidenceItem item)
+    {
+        if (item.SourceType != SubkeyHiveType && item.SourceType != AbsentType) return null;
+        var p = item.OriginalPath.Trim().TrimEnd('\\');
+        foreach (var prefix in new[] { @"HKLM\SOFTWARE\", @"HKEY_LOCAL_MACHINE\SOFTWARE\", @"SOFTWARE\" })
+            if (p.StartsWith(prefix, StringComparison.OrdinalIgnoreCase)) { p = p[prefix.Length..]; return p.Length > 0 ? p : null; }
+        return null;
+    }
+
+    /// <summary>
+    /// The SOFTWARE configuration values from the saved subkey hives (Quick profile), merged into ONE <see cref="ConfigHive"/> labelled SOFTWARE. Every probe and list key keeps its
+    /// full-path locator (SOFTWARE\Microsoft\...\EnableLUA, so the "reg query" of the manual verification stays right) and carries the evidence id and SHA-256 of the subkey file it
+    /// was read from. A probe whose subkey was not saved (or not readable) is not recorded, so the audit reports it as a gap. An unreadable subkey file is skipped (its probes become gaps).
+    /// </summary>
+    public static ConfigHive ReadSoftwareSubkeys(IReadOnlyList<(EvidenceItem Item, string FullPath)> subkeyHives, IReadOnlyList<(EvidenceItem Item, string FullPath)>? absentMarkers = null)
+    {
+        var first = subkeyHives.Count > 0 ? subkeyHives[0].Item : absentMarkers![0].Item;
+        string origin = subkeyHives.All(x => x.Item.TemporalType == TemporalType.CurrentSnapshot) ? "" : (first.OriginalPath.Length > 0 ? first.OriginalPath : first.Source);
+        var h = new ConfigHive { Hive = "SOFTWARE", EvidenceId = first.EvidenceId, Sha256 = first.Sha256, Origin = origin };
+        // a subkey PROVEN absent (hashed marker, exists=false) has absent values: the rules'' default semantics, not a gap
+        foreach (var (item, path) in absentMarkers ?? [])
+        {
+            if (SubkeyOf(item) is not { } asub || !MarkerSaysAbsent(path)) continue;
+            foreach (var p in ConfigurationAudit.Probes("SOFTWARE", "ControlSet001"))
+                if (RelOf(p.Key, asub) is not null) h.Values[p.Locator] = new ConfigValue(null, null, item.EvidenceId, item.Sha256);
+            foreach (var lk in ConfigurationAudit.ListKeys("SOFTWARE"))
+                if (RelOf(lk, asub) is not null) h.Lists["SOFTWARE\\" + lk] = new ConfigNames(null, null, item.EvidenceId, item.Sha256);
+        }
+        foreach (var (item, path) in subkeyHives)
+        {
+            if (SubkeyOf(item) is not { } sub) continue;
+            try
+            {
+                using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                var reg = new RawRegistry(fs);
+                // a key of the full SOFTWARE path maps onto the file root: the subkey itself is the root, a deeper key is its remainder
+                static string? Rel(string key, string sub) => RelOf(key, sub);
+                foreach (var p in ConfigurationAudit.Probes("SOFTWARE", "ControlSet001"))
+                {
+                    if (Rel(p.Key, sub) is not { } rel) continue;
+                    var key = reg.OpenKey(rel);
+                    var v = key?.Value(p.Name);
+                    h.Values[p.Locator] = new ConfigValue(v?.AsText, key is null ? null : new DateTimeOffset(DateTime.SpecifyKind(key.LastWriteUtc, DateTimeKind.Utc)), item.EvidenceId, item.Sha256);
+                }
+                foreach (var lk in ConfigurationAudit.ListKeys("SOFTWARE"))
+                {
+                    if (Rel(lk, sub) is not { } rel) continue;
+                    var key = reg.OpenKey(rel);
+                    h.Lists["SOFTWARE\\" + lk] = new ConfigNames(key?.Values.Select(x => x.Name).Where(x => x.Length > 0).ToList(),
+                        key is null ? null : new DateTimeOffset(DateTime.SpecifyKind(key.LastWriteUtc, DateTimeKind.Utc)), item.EvidenceId, item.Sha256);
+                }
+            }
+            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or InvalidDataException or ArgumentException or NotSupportedException or OverflowException or IndexOutOfRangeException)
+            {
+                // unreadable subkey file: its values stay unrecorded and the audit reports them as gaps
+            }
+        }
+        return h;
+    }
+
+    private static string? RelOf(string key, string sub) =>
+        key.Equals(sub, StringComparison.OrdinalIgnoreCase) ? "" : key.StartsWith(sub + "\\", StringComparison.OrdinalIgnoreCase) ? key[(sub.Length + 1)..] : null;
+
+    private static bool MarkerSaysAbsent(string path)
+    {
+        try
+        {
+            using var doc = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path));
+            return doc.RootElement.ValueKind == System.Text.Json.JsonValueKind.Object && doc.RootElement.TryGetProperty("exists", out var e) && e.ValueKind == System.Text.Json.JsonValueKind.False;
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or System.Text.Json.JsonException) { return false; }
+    }
 
     public static ConfigHive Read(EvidenceItem item, string fullPath)
     {

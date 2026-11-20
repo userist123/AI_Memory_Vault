@@ -38,6 +38,7 @@ public static class IncomingEvidence
         ("lnk", "Scurtături și liste de documente recente", ["lnk", "jumplist_auto"]),
         ("recycle", "Metadate Coș de reciclare ($I)", ["recycle_info"]),
         ("browser", "Istoric de navigare", ["chromium_history", "firefox_places"]),
+        ("localsecurity", "Politica de audit și conturi locale (auditpol, conturi, administratori)", ["auditpol_csv", "local_accounts_json"]),
         ("userhistory", "Istoric PowerShell (PSReadLine) și fișierul hosts", ["ps_readline_history", "hosts_file"]),
         (OtherFamily, "Alte fișiere (inclusiv exporturi de control)", ["file"]),
     ];

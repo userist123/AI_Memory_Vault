@@ -147,7 +147,7 @@ public sealed class InvestigationPipeline
          // NtfsMetadata is second on purpose: the case folder usually sits on the system volume, so what the other collectors write rotates $LogFile
          // (measured window ~4.8 h / 64 MiB) before the shadow copy freezes it; live state stays first because it is the most volatile.
          new NtfsMetadataCollector(),
-         new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SoftwareHiveCollector(), new LocalSecurityStateCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new RemoteToolLogsCollector(), new UserHistoryCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector()];
+         new EventLogCollector(), new ArchivedLogsCollector(), new PrefetchCollector(), new ExecutionArtifactsCollector(), new SoftwareHiveCollector(), new SoftwareSubkeyHivesCollector(), new LocalSecurityStateCollector(), new SrumCollector(), new AirGapFactsCollector(), new FirewallLogCollector(), new UserArtifactsCollector(), new RemoteToolLogsCollector(), new UserHistoryCollector(), new UsnJournalCollector(), new SetupApiLogCollector(), new RecentItemsCollector(), new DefenderDetectionHistoryCollector(), new WindowsSearchIndexCollector()];
 
     /// <summary>Creates a case. <paramref name="scope"/> is mandatory (owner decision 23): an incomplete scope is refused with <see cref="CaseScopeIncompleteException"/>.</summary>
     public static CaseWorkspace NewCase(string casesRoot, string name, CaseScope scope)
@@ -304,8 +304,12 @@ public sealed class InvestigationPipeline
                 // the gatherer database beside it: the name Windows-gather.db and an SQLite header (the parser checks the tables)
                 _ when Path.GetFileName(f).Equals(LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.DatabaseFileName, StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => LogAnalyzer.Dfir.Windows.Parsers.WindowsSearchGatherParser.SourceTypeName,
                 _ when Path.GetFileName(f).Equals("History", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "chromium_history",
+                // planner #13 D2: the files LocalSecurityStateCollector writes, recognised by content on import (B3 residual): the auditpol CSV by its GUID columns (the header is localized),
+                // the local accounts snapshot by the keys of its first JSON object
+                _ when EvidenceFingerprint.Detect(f) == "auditpol_csv" => LogAnalyzer.Dfir.Windows.Acquisition.LocalSecurityStateCollector.AuditSourceType,
+                _ when LogAnalyzer.Dfir.Windows.Parsers.LocalAccountsParser.LooksLikeAccountsJson(f) => LogAnalyzer.Dfir.Windows.Acquisition.LocalSecurityStateCollector.AccountsSourceType,
                 // planner #11 A6: the PSReadLine history and the hosts file are plain text without a signature: the exact file name only (the parser reads any text)
-                _ when Path.GetFileName(f).Equals(LogAnalyzer.Dfir.Scripting.PsReadLineHistoryParser.FileName, StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) is "unknown" or "json" => LogAnalyzer.Dfir.Scripting.PsReadLineHistoryParser.SourceTypeName,
+                _ when LogAnalyzer.Dfir.Scripting.PsReadLineHistoryParser.IsHistoryFileName(Path.GetFileName(f)) && EvidenceFingerprint.Detect(f) is "unknown" or "json" => LogAnalyzer.Dfir.Scripting.PsReadLineHistoryParser.SourceTypeName,
                 _ when Path.GetFileName(f).Equals("hosts", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) is "unknown" or "json" => LogAnalyzer.Dfir.Network.HostsFileParser.SourceTypeName,
                 _ when Path.GetFileName(f).Equals("places.sqlite", StringComparison.OrdinalIgnoreCase) && EvidenceFingerprint.Detect(f) == "sqlite" => "firefox_places",
                 _ when RegistryHiveType(Path.GetFileName(f)) is { } hiveType && EvidenceFingerprint.Detect(f) == "regf" => hiveType,
@@ -374,10 +378,19 @@ public sealed class InvestigationPipeline
                 hives.Add(new ConfigHive { Hive = label, EvidenceId = item.EvidenceId, Sha256 = item.Sha256, Error = $"copia hive-ului {label} din caz ({item.EvidenceId}) lipsește sau este în afara folderului cazului" });
             else hives.Add(ConfigurationHiveReader.Read(item, full));
         }
+        // Quick profile: SOFTWARE subkey hives (reg save of 3 small keys). The full SOFTWARE hive is preferred whenever it is in the case and readable.
+        if (!hives.Any(h => h.Hive == "SOFTWARE" && h.Error.Length == 0))
+        {
+            var subs = new List<(EvidenceItem Item, string FullPath)>();
+            var absent = new List<(EvidenceItem Item, string FullPath)>();
+            foreach (var item in ws.LoadEvidence().Where(e => e.SourceType is ConfigurationHiveReader.SubkeyHiveType or ConfigurationHiveReader.AbsentType && ConfigurationHiveReader.SubkeyOf(e) is not null))
+                if (ws.TryFullPath(item.StoredPath, out var full) && File.Exists(full)) (item.SourceType == ConfigurationHiveReader.AbsentType ? absent : subs).Add((item, full));
+            if (subs.Count + absent.Count > 0) hives.Add(ConfigurationHiveReader.ReadSoftwareSubkeys(subs, absent));
+        }
         var res = ConfigurationAudit.Evaluate(hives, ws.Info.Host, nextId);
         if (hives.Count > 0)
             foreach (var missing in new[] { "SOFTWARE", "SYSTEM" }.Where(l => hives.All(h => h.Hive != l)))
-                res.Gaps.Add(new EvidenceGap($"Configurație din hive-ul {missing}", EvidenceStatus.NotAvailable, $"hive-ul {missing} nu este în caz (profilul de colectare Rapid nu îl salvează, sau colectarea lui a eșuat)",
+                res.Gaps.Add(new EvidenceGap($"Configurație din hive-ul {missing}", EvidenceStatus.NotAvailable, $"hive-ul {missing} nu este în caz (nici hive-ul întreg, nici subcheile salvate de profilul Rapid: colectarea a eșuat sau a rulat fără drepturi de administrator)",
                     missing == "SOFTWARE" ? "UAC și Defender (protecție în timp real, excluderi) nu au putut fi verificate" : "SMB1, WDigest, protecția LSA și RDP/NLA nu au putut fi verificate",
                     $@"reg query pe stație sau o colectare Standard / Completă", "Da, printr-o nouă colectare"));
         return res;

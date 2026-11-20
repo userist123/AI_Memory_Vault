@@ -16,6 +16,10 @@ public sealed class PsReadLineHistoryParser : EvidenceParserBase
     public const string SourceTypeName = "ps_readline_history";
     public const string EventSource = "PsReadLineHistory";
     public const string FileName = "ConsoleHost_history.txt";
+    /// <summary>PSReadLine names the file after the host: <c>ConsoleHost_history.txt</c> (console), <c>Visual Studio Code Host_history.txt</c> (VS Code integrated terminal); both are the same text format.
+    /// Windows PowerShell ISE does NOT use PSReadLine and writes no history file of this kind (there is no source to collect for it).</summary>
+    public const string FileSuffix = "_history.txt";
+    public static bool IsHistoryFileName(string name) => name.Length > FileSuffix.Length && name.EndsWith(FileSuffix, StringComparison.OrdinalIgnoreCase);
     public const long MaxFileBytes = 16L * 1024 * 1024;
     public const int MaxLines = 100_000;
     public const int MaxLineChars = 32_768;

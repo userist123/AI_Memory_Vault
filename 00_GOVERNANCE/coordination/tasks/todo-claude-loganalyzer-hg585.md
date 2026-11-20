@@ -1801,3 +1801,14 @@
   unregistered copy deleted on failure; OOM -> gap). Tests HiveLogReplayTests (20; red 7 + main-session red). Suites: Dfir 4071 / 36 skipped / 0 failed,
   App 1489, UI 370 (1 skipped), Edition 45. Real PC: Amcache clean (nothing to replay, correct). RESIDUALS: DIRT legacy format and base-block recovery not
   implemented; only Amcache is collected with its logs (SYSTEM/SOFTWARE via reg save are consistent; user hives copied without logs).
+- 2026-11-21 (claude, hg585) PLANNER #13 D1 + D2 DONE (vault-worker + main-session-requested fix; medium/low, not Opus-reviewed: collection + readers, no
+  write path to evidence). D1: SoftwareSubkeyHivesCollector (Quick only, elevated): `reg save` of HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\
+  System, \Microsoft\Windows Defender, \Policies\Microsoft\Windows Defender -> software_subkey_hive (OriginalPath = key; the reader maps the file root
+  onto full-path SOFTWARE\… locators so reg query stays right; full SOFTWARE hive preferred when present); a key that DOES NOT EXIST (read-only check,
+  64-bit view) is not saved and not an error: a hashed JSON marker software_subkey_absent {"exists":false} proves the absence and its values count as
+  absent (no false gap on PCs without a Defender policy key); existing-but-unsavable key = gap. LocalSecurityStateCollector now QuickAndUp. D2:
+  UserHistoryCollector takes every *_history.txt in PSReadLine (VS Code "Visual Studio Code Host_history.txt"; ISE has no history - none invented);
+  ImportType recognises auditpol CSV (GUID columns, any language) and local_accounts_json; auditpol parser prefers a numeric "Setting Value" column when
+  present (not confirmed that /get /r emits it; else text, unknown language -> gap). Tests: SoftwareSubkeyHivesCollectorTests (6), PlannerD2Tests,
+  ConfigurationHiveReaderTests +, UserHistoryTests +2, LocalSecurityStateTests (Quick profile). Suites: App 1500, UI 370 (1 skipped), Edition 45, Dfir
+  4078 / 36 skipped / 0 failed.

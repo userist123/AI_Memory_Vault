@@ -26,7 +26,7 @@ public sealed class AuditPolicyCsvParser : EvidenceParserBase
         FormatVersions = ["CSV: Machine Name, Policy Target, Subcategory, Subcategory GUID, Inclusion Setting, Exclusion Setting"],
         Limitations =
         [
-            "Setările se citesc din textul în limba engleză sau română („Success”/„Succes”, „Failure”/„Eșec”, „No Auditing”/„Fără auditare”); alt text dă „necunoscut”.",
+            "Setările se citesc din coloana numerică „Setting Value” (0-3) când fișierul o are, altfel din textul în limba engleză sau română („Success”/„Succes”, „Failure”/„Eșec”, „No Auditing”/„Fără auditare”); pe o stație în altă limbă, fără coloana numerică, textul dă „necunoscut” (lacună păstrată: auditpol /get /r scrie doar coloanele text).",
             "Este politica efectivă la colectare, nu istoricul ei (schimbările se văd în Security 4719, dacă a fost auditat).",
             "Fără oră proprie: rândul poartă ora colectării.",
         ],
@@ -47,7 +47,7 @@ public sealed class AuditPolicyCsvParser : EvidenceParserBase
             int g = f.FindIndex(x => Guid.IsMatch(x.Trim()));
             if (g < 1 || g + 1 >= f.Count) continue;   // the header line (localized, no GUID) and anything that is not a subcategory row
             string guid = Guid.Match(f[g].Trim()).Groups[1].Value.ToUpperInvariant(), name = f[g - 1].Trim(), setting = f[g + 1].Trim();
-            var (ok, s, fl) = Interpret(setting);
+            var (ok, s, fl) = f.Count > g + 3 ? InterpretValue(f[g + 3], setting) : Interpret(setting);   // the numeric "Setting Value" column (when the file has one) is language independent and wins over the text
             sink.Add(new TimelineEvent
             {
                 Time = time, TimeSemantics = "collection time (snapshot)", Source = Source, EvidenceId = item.EvidenceId, Host = f.Count > 0 ? f[0].Trim() : "",
@@ -64,6 +64,18 @@ public sealed class AuditPolicyCsvParser : EvidenceParserBase
         if (result.Records == 0)
             result.Gaps.Add(new EvidenceGap("Politica de audit (auditpol)", EvidenceStatus.Failed, "fișierul nu conține nicio linie cu GUID de subcategorie",
                 "CFG-AUDIT-* nu pot fi evaluate", @"auditpol /get /category:*", "Da, pe stație, cu drepturi de administrator"));
+    }
+
+    /// <summary>
+    /// planner #13 D2: the numeric "Setting Value" column of the audit CSV (0 = no auditing, 1 = Success, 2 = Failure, 3 = both; the same column the audit.csv of <c>auditpol /backup</c> has),
+    /// which does not depend on the language of the station. A value that is not 0..3 (or an empty column) falls back to the text of the Inclusion Setting (<see cref="Interpret"/>).
+    /// <c>auditpol /get /r</c> on the stations seen so far writes only the six text columns, so a station in another language gives "necunoscut" until the file carries the numeric column.
+    /// </summary>
+    public static (bool Understood, bool Success, bool Failure) InterpretValue(string numeric, string inclusionText)
+    {
+        var v = numeric.Trim();
+        if (v.Length == 1 && v[0] is >= '0' and <= '3') { int n = v[0] - '0'; return (true, (n & 1) != 0, (n & 2) != 0); }
+        return Interpret(inclusionText);
     }
 
     /// <summary>(understood, success, failure). "No Auditing" first: it contains neither word, but must not be read as unknown.</summary>
@@ -117,6 +129,24 @@ public sealed class LocalAccountsParser : EvidenceParserBase
         Validation = "LocalSecurityStateTests: JSON sintetic (conturi, membri, parte necitită)",
         MaxInputBytes = 8_000_000,
     };
+
+    /// <summary>True when the file is the local accounts snapshot: a JSON object (within the parser's size cap) whose keys include "schema" = "la.local_accounts/..." or the pair "collectedUtc" + ("accounts" or "administrators") as arrays. Never throws.</summary>
+    public static bool LooksLikeAccountsJson(string path)
+    {
+        try
+        {
+            var fi = new FileInfo(path);
+            if (!fi.Exists || fi.Length == 0 || fi.Length > 8_000_000) return false;
+            using var fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete);
+            using var doc = JsonDocument.Parse(fs);
+            var r = doc.RootElement;
+            if (r.ValueKind != JsonValueKind.Object) return false;
+            if (r.TryGetProperty("schema", out var sc) && sc.ValueKind == JsonValueKind.String && (sc.GetString() ?? "").StartsWith("la.local_accounts", StringComparison.Ordinal)) return true;
+            bool Arr(string n) => r.TryGetProperty(n, out var a) && a.ValueKind == JsonValueKind.Array;
+            return r.TryGetProperty("collectedUtc", out _) && (Arr("accounts") || Arr("administrators"));
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException or JsonException or InvalidOperationException) { return false; }
+    }
 
     protected override void ParseCore(EvidenceItem item, string fullPath, IEventSink sink, ParseResult result, CancellationToken ct)
     {

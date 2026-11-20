@@ -12,7 +12,7 @@ namespace LogAnalyzer.Dfir.Windows.Acquisition;
 /// <c>History-wal</c> / <c>History-journal</c>) and Firefox (<c>Profiles\*\places.sqlite</c> with <c>places.sqlite-wal</c>). The side files are copied FIRST and the database after
 /// them, into the same folder under their own names, so the parsers find them beside the database; each is registered with its own type. They are copied one file at a time:
 /// a database taken by shadow copy and its -wal taken directly can be from different moments (noted on the evidence);</item>
-/// <item>the PowerShell PSReadLine history of every profile (<c>AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine\ConsoleHost_history.txt</c>);</item>
+/// <item>the PowerShell PSReadLine history of every profile: every <c>*_history.txt</c> of <c>AppData\Roaming\Microsoft\Windows\PowerShell\PSReadLine</c> (<c>ConsoleHost_history.txt</c>, and <c>Visual Studio Code Host_history.txt</c> of the VS Code integrated terminal). PowerShell ISE has no PSReadLine and no history file, so there is nothing to collect for it;</item>
 /// <item>the hosts file (<c>%SystemRoot%\System32\drivers\etc\hosts</c>).</item>
 /// </list>
 /// Profiles come from ProfileList (SIDs only, local drive paths, no reparse point on the way). A file is first read directly with shared access; only a sharing violation
@@ -41,7 +41,8 @@ public sealed class UserHistoryCollector : ICollector
         ["AppData", "Local", "BraveSoftware", "Brave-Browser", "User Data"],
     ];
     private static readonly string[] FirefoxProfilesRoot = ["AppData", "Roaming", "Mozilla", "Firefox", "Profiles"];
-    private static readonly string[] PsReadLineFile = ["AppData", "Roaming", "Microsoft", "Windows", "PowerShell", "PSReadLine", PsReadLineHistoryParser.FileName];
+    private static readonly string[] PsReadLineFolder = ["AppData", "Roaming", "Microsoft", "Windows", "PowerShell", "PSReadLine"];
+    public const int MaxPsReadLineFilesPerProfile = 20;
 
     private readonly Func<IReadOnlyList<UserProfileEntry>> _profiles;
     private readonly Func<string, string, string, string, CancellationToken, VssCopyResult> _vssCopy;
@@ -74,7 +75,7 @@ public sealed class UserHistoryCollector : ICollector
     {
         var o = new CollectorOutcome
         {
-            Source = @"istoricul browserelor, ConsoleHost_history.txt (toate profilurile) și drivers\etc\hosts",
+            Source = @"istoricul browserelor, *_history.txt PSReadLine (ConsoleHost, VS Code; toate profilurile) și drivers\etc\hosts",
             Tool = "copiere directă (acces partajat); esentutl.exe /vss doar pentru un fișier blocat",
             ToolVersion = ToolRunner.FileVersion(ToolRunner.System32("esentutl.exe")),
         };
@@ -122,15 +123,32 @@ public sealed class UserHistoryCollector : ICollector
             notes: $"Fișierul hosts al stației ({how}); SHA-256 calculat la colectare. Ora fișierului este ora ultimei modificări, nu a unei intrări."));
     }
 
+    /// <summary>Every <c>*_history.txt</c> of the profile's PSReadLine folder, not only ConsoleHost: the VS Code integrated terminal writes <c>Visual Studio Code Host_history.txt</c> there. Same copy, same parser, same rules.</summary>
     private void CollectPsReadLine(CollectorContext ctx, CollectorOutcome o, UserProfileEntry p, StrongBox<bool> vssUsed, string logDir, CancellationToken ct)
     {
-        var src = Path.Combine([p.ProfilePath, .. PsReadLineFile]);
-        if (!Present(o, $"PSReadLine ({p.KeyName})", src, PsReadLineHistoryParser.FileName, p.ProfilePath)) return;
-        var dir = Path.Combine(ctx.Case.RawDir("UserHistory"), "PSReadLine", Safe(p.KeyName));
-        var dest = NewDest(dir, PsReadLineHistoryParser.FileName);
-        if (!CopyOne(o, $"PSReadLine ({p.KeyName})", src, dest, PsReadLineHistoryParser.MaxFileBytes, vssUsed, logDir, $"esentutl_psreadline_{Safe(p.KeyName)}", ct, out var how)) return;
-        o.Evidence.Add(ctx.Case.RegisterStored(dest, src, "PSReadLine:" + p.KeyName, PsReadLineHistoryParser.SourceTypeName, TemporalType.Historical, Name, Version,
-            notes: $"Profil {p.KeyName} ({p.ProfilePath}). Istoricul PSReadLine ({how}); SHA-256 calculat la colectare. Fișierul nu are ore."));
+        var folder = Path.Combine([p.ProfilePath, .. PsReadLineFolder]);
+        List<string> names;
+        try
+        {
+            if (!Directory.Exists(folder)) return;
+            names = [.. Directory.EnumerateFiles(folder).Select(Path.GetFileName).OfType<string>().Where(PsReadLineHistoryParser.IsHistoryFileName).OrderBy(n => n, StringComparer.OrdinalIgnoreCase)];
+        }
+        catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+        { o.Errors.Add($"PSReadLine ({p.KeyName}): folderul nu poate fi citit ({ex.Message})."); return; }
+        if (names.Count > MaxPsReadLineFilesPerProfile) { o.Errors.Add($"PSReadLine ({p.KeyName}): {names.Count} fișiere *_history.txt; se iau primele {MaxPsReadLineFilesPerProfile}."); names = names[..MaxPsReadLineFilesPerProfile]; }
+        int n = 0;
+        foreach (var name in names)
+        {
+            ct.ThrowIfCancellationRequested();
+            n++;
+            var src = Path.Combine(folder, name);
+            if (!Present(o, $"PSReadLine ({p.KeyName})", src, name, p.ProfilePath)) continue;
+            var dir = Path.Combine(ctx.Case.RawDir("UserHistory"), "PSReadLine", Safe(p.KeyName));
+            var dest = NewDest(dir, name);
+            if (!CopyOne(o, $"PSReadLine ({p.KeyName}) {name}", src, dest, PsReadLineHistoryParser.MaxFileBytes, vssUsed, logDir, $"esentutl_psreadline_{Safe(p.KeyName)}_{n}", ct, out var how)) continue;
+            o.Evidence.Add(ctx.Case.RegisterStored(dest, src, "PSReadLine:" + p.KeyName, PsReadLineHistoryParser.SourceTypeName, TemporalType.Historical, Name, Version,
+                notes: $"Profil {p.KeyName} ({p.ProfilePath}). Istoricul PSReadLine, fișierul {name} ({how}); SHA-256 calculat la colectare. Fișierul nu are ore."));
+        }
     }
 
     // ---- browsers ----
