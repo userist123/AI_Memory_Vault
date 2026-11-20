@@ -4,6 +4,7 @@ import { sanitizeFinishes, roomCeilingDropCm } from '../core/finishes';
 import { sanitizeRoomOptions } from '../core/room-options';
 import { demoBeforeCreate } from './demo';
 import { sanitizeDoors } from '../core/doors';
+import { sanitizeWindows } from '../core/windows';
 import { sanitizeTech, MAX_TECH_POINTS, techBodyCount, pruneProducts } from '../core/technical';
 import { sanitizeFloorElements, PlanLimitError, PLAN_LIMITS } from '../core/plan-limits';
 import catalogSeed from '../data/catalog.v1.json';
@@ -65,7 +66,7 @@ export function checkUnderlay(u: any): Underlay {
 /** Cheile de pe primul nivel ale modelului (core/types.ts, interfața Snapshot). Orice altă cheie se elimină la salvare,
  *  ca la scări: în proiect nu ajung câmpuri pe care nimic nu le validează. Testul din tests/audit-fixes.test.ts (C-2)
  *  compară lista cu interfața, ca o cheie nouă din model să nu fie ștearsă din greșeală. */
-export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary'] as const;
+export const SNAPSHOT_KEYS = ['name', 'floor', 'levels', 'placements', 'selections', 'picked', 'finishes', 'appearance', 'underlay', 'tech', 'doors', 'budget', 'brief', 'joinery', 'roomOptions', 'userLibrary', 'windowUnits'] as const;
 /** Coordonatele (metri) rămân într-un pătrat de 2 km: valori uriașe (1e300) ar face suprafețele și bugetul Infinity. */
 export const COORD_MAX_M = 1000;
 /** `mc` (catalogul de materiale, la salvare): produsele alese la calorifer, aer condiționat și balustradă trebuie să existe în el, cu categoria potrivită. */
@@ -126,6 +127,7 @@ export function checkSnapshot(s: any, mc?: Pick<MaterialsCatalog, 'materials'>):
   { const bad = sanitizeFinishes(s.finishes); if (bad) throw new HttpError(400, bad); }
   { const bad = sanitizeRoomOptions(s); if (bad) throw new HttpError(400, bad); }
   if (s.doors != null){ const d = sanitizeDoors(s.doors, s); if (d.error) throw new HttpError(400, d.error); if (d.value && Object.keys(d.value).length) s.doors = d.value; else delete s.doors; }
+  if (s.windowUnits != null){ const w = sanitizeWindows(s.windowUnits, s); if (w.error) throw new HttpError(400, w.error); if (w.value && Object.keys(w.value).length) s.windowUnits = w.value; else delete s.windowUnits; }
   if (s.budget != null){ const b = s.budget; const okNum = (v: unknown) => v == null || (typeof v === 'number' && Number.isFinite(v) && v >= 0);
     if (typeof b !== 'object' || !okNum(b.target) || !okNum(b.contingencyPct) || !okNum(b.deliveryDedeman) || !okNum(b.furnitureAssembly) || !okNum(b.design) || (b.contingencyPct ?? 0) > 100) throw new HttpError(400, 'Setările de buget sunt invalide.'); }
   if (s.brief != null){ try { s.brief = checkBrief(s.brief); } catch { delete s.brief; } }

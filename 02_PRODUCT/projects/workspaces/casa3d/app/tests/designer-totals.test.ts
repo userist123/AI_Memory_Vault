@@ -72,8 +72,10 @@ test('un singur total: bugetul, panoul comercial și proforma se reconciliază p
   assert.equal(ch.total, Math.round((ch.invoiceable + ch.contingency) * 100) / 100);
 
   // 2. proforma = de facturat (cu rotunjirile TVA pe linie), iar transportul și montajul sunt pe proformă
-  const lines = pf.proforma.groups.reduce((a, g) => a + g.lines.length, 0);
-  near(pf.proforma.gross, ch.invoiceable, 0.01 * lines, 'proforma ≈ de facturat');
+  // limita rotunjirii: prețul unitar fără TVA se rotunjește la bani (≤ 0,005 × cantitate), iar TVA-ul pe linie la bani (≤ 0,01);
+  // la cantități în m² (parchet, gresie) eroarea pe linie crește cu cantitatea, deci marja se calculează din cantități
+  const tol = pf.proforma.groups.reduce((a, g) => a + g.lines.reduce((b, l) => b + 0.005 * l.qty * (1 + l.vatPct / 100) + 0.01, 0), 0);
+  near(pf.proforma.gross, ch.invoiceable, tol, 'proforma ≈ de facturat');
   if (ch.extras > 0) assert.ok(pf.proforma.groups.some(g => g.category === 'extras'), 'transportul / montajul cunoscut e pe proformă');
   assert.deepEqual(pf.chain, { invoiceable: ch.invoiceable, contingency: ch.contingency, contingencyPct: ch.contingencyPct, total: ch.total });
 

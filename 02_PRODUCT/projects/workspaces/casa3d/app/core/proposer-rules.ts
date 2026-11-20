@@ -26,7 +26,10 @@ function candidates(cat: Catalog, g: string, brief: DesignBrief, banned: Set<str
     if (brief.pets && ['velvet', 'leather'].includes(v.style?.mat)){ notes.push('fără catifea și piele, din cauza animalelor'); return false; }
     if (brief.children && (/sticl/i.test(v.name) || v.style?.type === 'vittsjo')){ notes.push('fără blat de sticlă, pentru copii'); return false; }
     return true; });
-  return { list: list.map(v => ({ v, price: cat.offers.find(x => x.variantId === v.id)!.price })).sort((a, b) => a.price - b.price), notes: [...new Set(notes)] };
+  // produsele a căror pagină a dispărut la reverificare (data/offers-gone.json) nu se propun, dacă grupa are altceva disponibil
+  const avail = list.filter(v => cat.offers.find(x => x.variantId === v.id)?.availability !== 'OUT_OF_STOCK');
+  if (avail.length && avail.length < list.length) notes.push('am exclus produsele scoase din vânzare');
+  return { list: (avail.length ? avail : list).map(v => ({ v, price: cat.offers.find(x => x.variantId === v.id)!.price })).sort((a, b) => a.price - b.price), notes: [...new Set(notes)] };
 }
 function pick(cat: Catalog, g: string, tier: Tier, brief: DesignBrief, banned: Set<string>){
   const { list, notes } = candidates(cat, g, brief, banned); if (!list.length) return null;

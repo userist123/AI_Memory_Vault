@@ -7,3 +7,6 @@ node_modules
 
 # Next.js 16 scrie singur un AGENTS.md (documentația versiunii) când detectează un agent de programare; nu e al proiectului
 /AGENTS.md
+
+# rapoartele scriptului de reverificare a prețurilor (npm run prices:recheck)
+/research/

@@ -20,4 +20,14 @@ export const isHttps = (req: Request) => { try { if (new URL(req.url).protocol =
  *  nu depinde de x-forwarded-proto. Un antet fals poate doar adăuga Secure, niciodată să-l scoată pentru o cerere din tunel. */
 export const wantsSecureCookie = (req: Request) => { if (isHttps(req)) return true;
   let host = req.headers.get('host'); if (!host) try { host = new URL(req.url).host; } catch { host = null; }
+  if (lanHttpDev(host, req.headers)) return false;
   return !isLocalRequest(host, req.headers); };
+/** Adresă privată de rețea locală (RFC 1918), cu port opțional: 10.x, 172.16–31.x, 192.168.x. */
+const PRIVATE_LAN = /^(10\.\d{1,3}\.\d{1,3}\.\d{1,3}|172\.(1[6-9]|2\d|3[01])\.\d{1,3}\.\d{1,3}|192\.168\.\d{1,3}\.\d{1,3})(:\d+)?$/;
+/** Excepție opt-in pentru `next dev` deschis de pe telefon în aceeași rețea, pe http simplu: acolo un cookie Secure ar fi
+ *  aruncat de browser și login-ul n-ar ține. Doar cu CASA3D_LAN_HTTP=1, doar în dezvoltare, doar pe http, doar pentru o gazdă
+ *  privată și fără antetul tunelului. Producția și tunelul (https) rămân mereu cu Secure. */
+export function lanHttpDev(host: string | null, headers: { get(k: string): string | null }){
+  return process.env.CASA3D_LAN_HTTP === '1' && process.env.NODE_ENV !== 'production' && !!host && PRIVATE_LAN.test(host)
+    && !headers.get('cf-connecting-ip') && (headers.get('x-forwarded-proto') ?? 'http').split(',')[0]!.trim().toLowerCase() !== 'https';
+}

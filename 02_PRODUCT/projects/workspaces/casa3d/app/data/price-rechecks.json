@@ -1,0 +1,4489 @@
+{
+ "note": "Prețuri reverificate pe pagina produsului pe 2026-11-18 (preț observat, nu ofertă a magazinului), citite doar din datele structurate ale paginii (JSON-LD) sau, la Dedeman, din prețul final legat de codul produsului din adresă. Se aplică la pornire peste baza de date, doar dacă sunt mai noi. „per”: la materialele vândute la pachet, prețul e pe unitate (m², ml, L) sau pe pachet / bucată.",
+ "items": [
+  {
+   "kind": "m",
+   "id": "parchet-egger-h2099",
+   "price": 38.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/parchet-laminat-8-mm-egger-home-laminate-h2099-stejar-inuvik-clasa-32/p/4029081",
+   "evidence": "cod 4029081: finalPrice 38.9 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "m",
+   "id": "parchet-pergo-5006",
+   "price": 69.3,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/parchet-laminat-8-mm-pergo-stavanger-5006-atelier-oak-clasa-32/p/4027179",
+   "evidence": "cod 4027179: finalPrice 69.3 lei"
+  },
+  {
+   "kind": "m",
+   "id": "gresie-mckinley",
+   "price": 69.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-mckinley-60-x-60-cm-alb-lucioasa-rectificata-aspect-marmura/p/4025732",
+   "evidence": "cod 4025732: finalPrice 69.9 lei"
+  },
+  {
+   "kind": "m",
+   "id": "gresie-glocal-bianco",
+   "price": 79.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-glocal-bianco-60-x-60-cm-gri-mata-rectificata/p/4026124",
+   "evidence": "cod 4026124: finalPrice 79.9 lei"
+  },
+  {
+   "kind": "m",
+   "id": "faianta-grafen",
+   "price": 59.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-grafen-30-x-60-cm-mata-bej/p/4017003",
+   "evidence": "cod 4017003: finalPrice 59.9 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "m",
+   "id": "faianta-lumiere",
+   "price": 59.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-lumiere-natural-30-x-60-cm-lucioasa-bej-aspect-marmura/p/4027264",
+   "evidence": "cod 4027264: finalPrice 59.9 lei"
+  },
+  {
+   "kind": "m",
+   "id": "faianta-lane-blanco",
+   "price": 94.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-lane-blanco-30-x-60-cm-mata-alb/p/4027172",
+   "evidence": "cod 4027172: finalPrice 94.9 lei"
+  },
+  {
+   "kind": "m",
+   "id": "vopsea-innenweiss",
+   "price": 149,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vopsea-lavabila-interior-innenweiss-alb-15-l-amorsa-innenweiss-4-l/p/5014506",
+   "evidence": "cod 5014506: finalPrice 149 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "vopsea-caparol-alb",
+   "price": 211,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vopsea-lavabila-caparol-alb-interior-interior-alb-15-l/p/5011835",
+   "evidence": "cod 5011835: finalPrice 211 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "plinta-mdf-60",
+   "price": 26.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/plinta-parchet-mdf-set-alb-2440-x-60-x-19-mm/p/4021233",
+   "evidence": "cod 4021233: finalPrice 26.9 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "plinta-mdf-90",
+   "price": 48.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/plinta-parchet-mdf-set-alb-2440-x-90-x-19-mm/p/4021710",
+   "evidence": "cod 4021710: finalPrice 48.9 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "adeziv-baumacol-flexuni",
+   "price": 62.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/adeziv-flexibil-pentru-gresie-si-faianta-baumit-baumacol-flexuni-interior/-exterior-gri-25-kg/p/5009101",
+   "evidence": "cod 5009101: finalPrice 62.99 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "lampa-virrmo",
+   "price": 179.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/virrmo-plafoniera-led-nichelat-70430780/",
+   "evidence": "offers.price=179.9 RON"
+  },
+  {
+   "kind": "m",
+   "id": "lampa-kabomba",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kabomba-plafoniera-led-mat-negru-60485278/",
+   "evidence": "offers.price=299 RON"
+  },
+  {
+   "kind": "m",
+   "id": "lampa-karrnocka",
+   "price": 69.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kaerrnocka-plafoniera-alb-50599402/",
+   "evidence": "offers.price=69.9 RON"
+  },
+  {
+   "kind": "m",
+   "id": "parchet-krono-herringbone-k450",
+   "price": 76.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/parchet-laminat-8-mm-krono-original-herringbone-k450-firebrand-oak-clasa-32/p/4026660",
+   "evidence": "cod 4026660: finalPrice 76.9 lei"
+  },
+  {
+   "kind": "m",
+   "id": "parchet-classen-herringbone-ve96",
+   "price": 87.89,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/parchet-laminat-8-mm-classen-herringbone-ve96-almagro-oak-clasa-32/p/4028501",
+   "evidence": "cod 4028501: finalPrice 87.89 lei"
+  },
+  {
+   "kind": "m",
+   "id": "gresie-emarble-60x120",
+   "price": 54.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-2055-e-marble-grey-60-x-120-cm-alb-mata-rectificata-aspect-marmura/p/4030050",
+   "evidence": "cod 4030050: finalPrice 54.9 lei"
+  },
+  {
+   "kind": "m",
+   "id": "tapet-grandeco-marmor",
+   "price": 101.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/tapet-vinil-model-marmura-grandeco-marmor-a74801-10-x-0-53-m/p/8123684",
+   "evidence": "cod 8123684: finalPrice 101.99 lei"
+  },
+  {
+   "kind": "m",
+   "id": "riflaj-mdf-unic-alb",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/riflaj-decorativ-tip-panou-acustic-mdf-unic-spot-alb-2400-x-600-x-21-mm/p/4026478",
+   "evidence": "cod 4026478: finalPrice 299 lei"
+  },
+  {
+   "kind": "m",
+   "id": "tencuiala-kober-bob-orez",
+   "price": 165,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/tencuiala-decorativa-siliconata-kober-profesional-1-5-mm-structurata-aspect-bob-de-orez-gri-piatra-interior/-exterior-25-kg/p/5019293",
+   "evidence": "cod 5019293: finalPrice 165 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "caramida-bronx-60",
+   "price": 133.85,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/caramida-aparenta-bronx-60-maro-41-x-7-cm/p/5020782",
+   "evidence": "cod 5020782: finalPrice 133.85 lei /cutie",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "piatra-modulo-oslo-white",
+   "price": 84.07,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/piatra-decorativa-interior-modulo-oslo-white-alb/p/4013697",
+   "evidence": "cod 4013697: finalPrice 84.07 lei /cutie",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "piatra-modulo-canyon-brown",
+   "price": 91.4,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/piatra-decorativa-exterior/-interior-modulo-canyon-brown-maro/p/4025929",
+   "evidence": "cod 4025929: finalPrice 91.4 lei /cutie",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "rigips-rb-12-5",
+   "price": 46.2,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/placa-gips-carton-tip-a-rigips-rb-12-5-x-1200-x-2600-mm/p/5006976",
+   "evidence": "cod 5006976: finalPrice 46.2 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "cornisa-nmc-nc109",
+   "price": 168,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cornisa-decorativa-polistiren-expandat-nc109-200-x-13-5-x-10-cm/p/6037113",
+   "evidence": "cod 6037113: finalPrice 168 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "spot-mt143-9w",
+   "price": 85.32,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/spot-led-incastrat-mt-143-70385-9-w-lumina-calda-alb-mat/p/1081737",
+   "evidence": "cod 1081737: finalPrice 85.32 lei"
+  },
+  {
+   "kind": "m",
+   "id": "perdea-bergnejlika-alb",
+   "price": 89.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/bergnejlika-perdele-set-2-buc-alb-rjns-60598138/",
+   "evidence": "offers.price=89.9 RON"
+  },
+  {
+   "kind": "m",
+   "id": "draperie-pelarkorsbar-floral",
+   "price": 129.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/pelarkoersbaer-draperii-2buc-alb-negru-model-floral-rjns-70621336/",
+   "evidence": "offers.price=129.9 RON"
+  },
+  {
+   "kind": "m",
+   "id": "draperie-annakajsa-bej",
+   "price": 429,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/annakajsa-draperii-semiopace-2buc-bej-rjns-30462792/",
+   "evidence": "offers.price=429 RON"
+  },
+  {
+   "kind": "m",
+   "id": "stor-fonsterblad-60",
+   "price": 69.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/foensterblad-stor-opac-alb-80538389/",
+   "evidence": "offers.price=69.9 RON"
+  },
+  {
+   "kind": "m",
+   "id": "stor-fonsterblad-80",
+   "price": 79.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/foensterblad-stor-opac-alb-20538392/",
+   "evidence": "offers.price=79.9 RON"
+  },
+  {
+   "kind": "m",
+   "id": "stor-fonsterblad-100",
+   "price": 89.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/foensterblad-stor-opac-alb-40514823/",
+   "evidence": "offers.price=89.9 RON"
+  },
+  {
+   "kind": "m",
+   "id": "stor-fonsterblad-140",
+   "price": 109.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/foensterblad-stor-opac-alb-40538386/",
+   "evidence": "offers.price=109.9 RON"
+  },
+  {
+   "kind": "m",
+   "id": "stor-fridans-120",
+   "price": 149.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/fridans-stor-opac-alb-10396859/",
+   "evidence": "offers.price=149.9 RON"
+  },
+  {
+   "kind": "m",
+   "id": "stor-ringblomma-80",
+   "price": 79.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ringblomma-jaluzele-romane-alb-90258062/",
+   "evidence": "offers.price=79.9 RON"
+  },
+  {
+   "kind": "m",
+   "id": "stor-ringblomma-140",
+   "price": 119.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ringblomma-storuri-romane-alb-10258061/",
+   "evidence": "offers.price=119.9 RON"
+  },
+  {
+   "kind": "m",
+   "id": "jaluzea-vecklarfly-80",
+   "price": 199.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/vecklarfly-jaluzele-venetiene-alb-00583700/",
+   "evidence": "offers.price=199.9 RON"
+  },
+  {
+   "kind": "m",
+   "id": "covor-morum-80x200",
+   "price": 129.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/morum-covor-tesatura-plata-int-ext-verde-inchis-60624175/",
+   "evidence": "offers.price=129.9 RON"
+  },
+  {
+   "kind": "m",
+   "id": "covor-arende-gri-160x230",
+   "price": 249,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/aerende-covor-fir-lung-gri-00576436/",
+   "evidence": "offers.price=249 RON"
+  },
+  {
+   "kind": "m",
+   "id": "covor-morum-bej-160x230",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/morum-covor-tesatura-plata-int-ext-bej-20203563/",
+   "evidence": "offers.price=299 RON"
+  },
+  {
+   "kind": "m",
+   "id": "covor-arende-alb-200x300",
+   "price": 399,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/aerende-covor-fir-lung-alb-murdar-90628780/",
+   "evidence": "offers.price=399 RON"
+  },
+  {
+   "kind": "m",
+   "id": "covor-stoense-200x300",
+   "price": 699,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/stoense-covor-fir-scurt-alb-murdar-20426808/",
+   "evidence": "offers.price=699 RON"
+  },
+  {
+   "kind": "m",
+   "id": "covor-bronden-170x240",
+   "price": 1799,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/broenden-covor-fir-scurt-lucrat-manual-bej-10480551/",
+   "evidence": "offers.price=1799 RON"
+  },
+  {
+   "kind": "m",
+   "id": "usa-megadoor-clasic-alb-77",
+   "price": 925,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/usa-celulara-interior-clasic-megadoor-stanga/-dreapta-alb-perlat-77-x-202-cm/p/6053878",
+   "evidence": "cod 6053878: finalPrice 925 lei"
+  },
+  {
+   "kind": "m",
+   "id": "usa-megadoor-clasic-alb-87",
+   "price": 925,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/usa-celulara-interior-clasic-megadoor-stanga/-dreapta-alb-perlat-87-x-202-cm/p/6053879",
+   "evidence": "cod 6053879: finalPrice 925 lei"
+  },
+  {
+   "kind": "m",
+   "id": "usa-superdoor-f12-alb-88",
+   "price": 545,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/usa-de-interior-cu-geam-super-door-f12-88-a-stanga/-dreapta-alb-88-x-203-cm/p/6062500",
+   "evidence": "cod 6062500: finalPrice 545 lei"
+  },
+  {
+   "kind": "m",
+   "id": "usa-bestimp-g6-gri-88",
+   "price": 838,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/usa-de-interior-cu-geam-bestimp-g6-88-c-stanga/-dreapta-gri-ciment-88-x-203-cm/p/6062497",
+   "evidence": "cod 6062497: finalPrice 838 lei"
+  },
+  {
+   "kind": "m",
+   "id": "usa-r80-stejar-gri-86",
+   "price": 789,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/usa-interior-celulara-cu-geam-r80-dreapta-gol-d3-stejar-gri-86-x-202-cm/p/6022716",
+   "evidence": "cod 6022716: finalPrice 789 lei"
+  },
+  {
+   "kind": "m",
+   "id": "maner-kuchinox-sombra-negru",
+   "price": 217,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/maner-cu-blocare-pentru-usa-interior-kuchinox-sombra-kmb_900a-zamac-negru-mat-167-x-32-mm/p/6075879",
+   "evidence": "cod 6075879: finalPrice 217 lei"
+  },
+  {
+   "kind": "m",
+   "id": "maner-sterk-sm1703-inox",
+   "price": 99.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/maner-cu-rozeta-patrata-pentru-usa-interior-sterk-sm1703-inox-argintiu-140-x-49-mm/p/6073491",
+   "evidence": "cod 6073491: finalPrice 99.9 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kadda-clover-my1708-2-lavoar-cromat",
+   "price": 198,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-kadda-clover-my1708-2-cr-montaj-stativ-monocomanda-finisaj-cromat/p/3033761",
+   "evidence": "cod 3033761: finalPrice 198 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-hansgrohe-logis-e-71160000-lavoar-cromat",
+   "price": 324.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-hansgrohe-logis-e-71160000-montaj-stativ-monocomanda-finisaj-cromat-ventil-inclus/p/3035165",
+   "evidence": "cod 3035165: finalPrice 324.99 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-grohe-start-235502432-lavoar-negru-mat",
+   "price": 399,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-grohe-start-235502432-montaj-stativ-monocomanda-finisaj-negru-mat/p/3048968",
+   "evidence": "cod 3048968: finalPrice 399 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kadda-girard-my2061-2g-lavoar-auriu",
+   "price": 329,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-kadda-girard-my2061-2g-montaj-stativ-monocomanda-finisaj-auriu-ventil-inclus/p/3040044",
+   "evidence": "cod 3040044: finalPrice 329 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kludi-renon-42266n075-lavoar-auriu-periat",
+   "price": 700,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-kludi-renon-42266n075-montaj-stativ-monocomanda-finisaj-auriu-periat/p/3057686",
+   "evidence": "cod 3057686: finalPrice 700 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-grohe-essence-32628al1-lavoar-grafit-mat",
+   "price": 1330,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-grohe-essence-32628al1-3/8-marimea-l-montaj-stativ-monocomanda-finisaj-grafit-mat-set-evacuare-cu-tija/p/3041063",
+   "evidence": "cod 3041063: finalPrice 1330 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kadda-girard-my2061-p2h-lavoar-gri-periat",
+   "price": 399,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/baterie-baie-pentru-lavoar-kadda-girard-my2061-p2h-montaj-stativ-monocomanda-finisaj-gri-periat-ventil-inclus/p/3048427",
+   "evidence": "cod 3048427: finalPrice 399 lei"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-runskar-baterie-lavoar-alama",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/runskaer-baterie-lavoar-alama-90532867/",
+   "evidence": "offers.price=299 RON"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kadda-clover-my1708-42-bucatarie-cromat",
+   "price": 158.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/baterie-bucatarie-kadda-clover-my1708-42-cr-stativa-monocomanda-alama-finisaj-cromat/p/3033766",
+   "evidence": "cod 3033766: finalPrice 158.99 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-ferro-fitness-nero-bfs4blb-bucatarie-negru",
+   "price": 255,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/baterie-bucatarie-ferro-fitness-nero-bfs4blb-stativa-monocomanda-alama-finisaj-negru/p/3050236",
+   "evidence": "cod 3050236: finalPrice 255 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-ferro-coretto-square-bcx4-bucatarie-inox",
+   "price": 179,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/baterie-bucatarie-ferro-coretto-square-bcx4-stativa-monocomanda-inox-finisaj-inox/p/3044543",
+   "evidence": "cod 3044543: finalPrice 179 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-grohe-minta-31375gn0-bucatarie-auriu-mat",
+   "price": 1337,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/baterie-bucatarie-grohe-minta-31375gn0-stativa-monocomanda-finisaj-auriu-mat/p/3041120",
+   "evidence": "cod 3041120: finalPrice 1337 lei"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-almaren-baterie-bucatarie-negru",
+   "price": 399,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/aelmaren-baterie-bucatarie-negru-00603500/",
+   "evidence": "offers.price=399 RON"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-taksjon-baterie-bucatarie-aspect-inox",
+   "price": 499,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/taksjoen-baterie-monocomanda-bucatarie-aspect-otel-inoxidabil-00602303/",
+   "evidence": "offers.price=499 RON"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kadda-girard-my2061-77c-sistem-dus-cromat",
+   "price": 529,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/sistem-dus-kadda-girard-my2061-77c-finisaj-cromat/p/3040026",
+   "evidence": "cod 3040026: finalPrice 529 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-roca-vega-a5a976ec00-sistem-dus-cromat",
+   "price": 699,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/sistem-dus-roca-vega-a5a976ec00-finisaj-cromat/p/3050945",
+   "evidence": "cod 3050945: finalPrice 699 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kadda-girard-my2061-77b-sistem-dus-negru",
+   "price": 628.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/sistem-dus-kadda-girard-my2061-77b-finisaj-negru/p/3040043",
+   "evidence": "cod 3040043: finalPrice 628.99 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-ideal-standard-ceratherm-alu-bd583-sistem-dus-negru-mat",
+   "price": 1299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/sistem-dus-ideal-standard-ceratherm-alu-bd583-baterie-termostatata-finisaj-negru-mat/p/3051634",
+   "evidence": "cod 3051634: finalPrice 1299 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kadda-girard-my2061-77g-sistem-dus-auriu",
+   "price": 629,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/sistem-dus-kadda-girard-my2061-77g-finisaj-auriu/p/3040048",
+   "evidence": "cod 3040048: finalPrice 629 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-radox-scala-portprosop-alb-500x1200",
+   "price": 526,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-baie-radox-scala-portprosop-drept-alb-500-x-1200-mm-accesorii-montaj/p/2001968",
+   "evidence": "cod 2001968: finalPrice 526 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-radox-scala-portprosop-negru-mat-600x1200",
+   "price": 903,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-baie-radox-scala-portprosop-drept-negru-mat-600-x-1200-mm-accesorii-montaj/p/2025922",
+   "evidence": "cod 2025922: finalPrice 903 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-purmo-banga-portprosop-negru-500x1222",
+   "price": 377,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-baie-purmo-banga-portprosop-drept-negru-500-x-1222-mm-accesorii-montaj/p/2034304",
+   "evidence": "cod 2034304: finalPrice 377 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-radox-scala-portprosop-cromat-600x1200",
+   "price": 1374,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-baie-radox-scala-portprosop-drept-cromat-600-x-1200-mm-accesorii-montaj/p/2006579",
+   "evidence": "cod 2006579: finalPrice 1374 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-radox-scala-portprosop-auriu-600x1200",
+   "price": 903,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-baie-radox-scala-portprosop-drept-auriu-600-x-1200-mm-accesorii-montaj/p/2034303",
+   "evidence": "cod 2034303: finalPrice 903 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-savini-due-spr101-oglinda-led-60x80",
+   "price": 436.46,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/oglinda-baie-cu-led-savini-due-spr101-60-x-80-cm-margini-rotunjite/p/3036564",
+   "evidence": "cod 3036564: finalPrice 436.46 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kadda-h-3025-oglinda-led-ovala-60x80",
+   "price": 548,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/oglinda-baie-cu-led-kadda-h-3025-60-x-80-cm-actionare-touch-functie-dezaburire-functie-ceas-dimabila-ovala/p/3052301",
+   "evidence": "cod 3052301: finalPrice 548 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-savini-due-br-80-60-oglinda-led-80x60",
+   "price": 625,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/oglinda-baie-cu-led-savini-due-br-80-60-re-fr-80-x-60-cm-actionare-touch-dezaburire-dreptunghiulara/p/3056342",
+   "evidence": "cod 3056342: finalPrice 625 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kadda-nw-18-oglinda-led-rotunda-60",
+   "price": 302,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/oglinda-baie-cu-led-kadda-nw-18-60-x-60-cm-dezaburire-iluminare-led-dimabila-actionare-touch-rotunda/p/3057257",
+   "evidence": "cod 3057257: finalPrice 302 lei"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-karrsjon-oglinda-iluminat-anti-ceata-60x80",
+   "price": 599,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kaerrsjoen-oglinda-cu-iluminat-integrat-anti-ceata-60613394/",
+   "evidence": "offers.price=599 RON"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-faxalven-oglinda-iluminat-60x95",
+   "price": 749,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/faxaelven-oglinda-cu-iluminat-integrat-s79516703/",
+   "evidence": "offers.price=749 RON"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-franke-bsg-611-78-chiuveta-fragranit-avena-bej",
+   "price": 919,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/chiuveta-bucatarie-compozit-fragranite-franke-bsg-611-78-avena-bej-dreptunghiulara-pozitionare-cuva-stanga/-dreapta-78-x-50-cm-adancime-cuva-20-cm/p/3032116",
+   "evidence": "cod 3032116: finalPrice 919 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-franke-bsg-611-78-s-chiuveta-fragranit-negru",
+   "price": 799,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/chiuveta-bucatarie-compozit-fragranite-franke-bsg-611-78-s-negru-dreptunghiulara-pozitionare-cuva-stanga/-dreapta-78-x-43-5-cm-adancime-cuva-20-cm/p/3043485",
+   "evidence": "cod 3043485: finalPrice 799 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-sandonna-lena-chiuveta-quartz-alb-rotunda",
+   "price": 549,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/chiuveta-bucatarie-compozit-quartz-sandonna-lena-alb-rotunda-51-x-51-cm-adancime-cuva-20-cm/p/3046895",
+   "evidence": "cod 3046895: finalPrice 549 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-evido-quadro-6-chiuveta-granit-antracit",
+   "price": 699,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/chiuveta-bucatarie-compozit-granit-evido-quadro-6-antracit-negru-dreptunghiulara-56-5-x-51-cm-adancime-cuva-20-cm/p/3037615",
+   "evidence": "cod 3037615: finalPrice 699 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-alveus-compact-10-chiuveta-inox-leinen",
+   "price": 339,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/chiuveta-bucatarie-inox-leinen-alveus-compact-10-7365-dreptunghiulara-pozitionare-cuva-dreapta-80-x-50-cm-adancime-cuva-15-5-cm/p/3003735",
+   "evidence": "cod 3003735: finalPrice 339 lei"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-kilsviken-chiuveta-1-cuva-uscator-negru-compozit-cuart",
+   "price": 1119,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kilsviken-chiuveta-incorporata-1cuva-uscator-negru-compozit-cuart-s89337027/",
+   "evidence": "offers.price=1119 RON"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-kilsviken-chiuveta-1-cuva-gri-bej-compozit-cuart",
+   "price": 1019,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kilsviken-chiuveta-incorporata-1-cuva-gri-bej-compozit-cuart-s79590397/",
+   "evidence": "offers.price=1019 RON"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kronodesign-k003fp-blat-stejar-3040x600x28",
+   "price": 315.89,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/blat-bucatarie-kronodesign-k003fp-pal-finisaj-lemn-stejar-3040-x-600-x-28-mm/p/6048866",
+   "evidence": "cod 6048866: finalPrice 315.89 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kronodesign-k095su-blat-marmura-gri-3040x600x28",
+   "price": 315.89,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/blat-bucatarie-kronodesign-k095su-pal-finisaj-marmura-gri-3040-x-600-x-28-mm/p/6048864",
+   "evidence": "cod 6048864: finalPrice 315.89 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kronodesign-k205rs-blat-piatra-negru-3040x600x28",
+   "price": 315.89,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/blat-bucatarie-kronodesign-k205rs-pal-finisaj-piatra-negru-3040-x-600-x-28-mm/p/6048862",
+   "evidence": "cod 6048862: finalPrice 315.89 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kronodesign-k217ggu-blat-piatra-alb-4100x600x38",
+   "price": 556,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/blat-bucatarie-kronodesign-k217ggu-pal-finisaj-piatra-sclipitoare-alb-4100-x-600-x-38-mm/p/6048867",
+   "evidence": "cod 6048867: finalPrice 556 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-smarty-blat-alb-2000x600x25",
+   "price": 209,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/blat-bucatarie-smarty-pal-alb-2000-x-600-x-25-mm/p/8133618",
+   "evidence": "cod 8133618: finalPrice 209 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kronospan-bk201rsl-blat-beton-gri-inchis-2600x600x28",
+   "price": 235.45,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/blat-bucatarie-kronospan-bk201rsl-pal-finisaj-beton-gri-inchis-2600-x-600-x-28-mm/p/6053764",
+   "evidence": "cod 6053764: finalPrice 235.45 lei"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-ekbacken-blat-negru-186x2-8",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ekbacken-blat-negru-laminat-10589674/",
+   "evidence": "offers.price=299 RON"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-ekbacken-blat-alb-aspect-marmura-246x2-8",
+   "price": 349,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ekbacken-blat-alb-aspect-marmura-laminat-60609033/",
+   "evidence": "offers.price=349 RON"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-karlby-blat-stejar-furnir-186x3-8",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/karlby-blat-stejar-furnir-70335189/",
+   "evidence": "offers.price=999 RON"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-smarter-fold-01-4341-suspensie-led-negru",
+   "price": 382,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/suspensie-led-fold-01-4341-40-w-2500-lm-lumina-neutra-negru-modern/p/1095719",
+   "evidence": "cod 1095719: finalPrice 382 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-smarter-kaya-01-4750-suspensie-3xe27-auriu-alb",
+   "price": 431.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/suspensie-kaya-01-4750-3-x-e27-auriu-alb-modern/p/1108586",
+   "evidence": "cod 1108586: finalPrice 431.99 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-smarter-global-01-3167-suspensie-e27-alama",
+   "price": 201,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/suspensie-global-01-3167-1-x-e27-alama-d-250-mm-modern/p/1081693",
+   "evidence": "cod 1081693: finalPrice 201 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-rabalux-rattan-72025-suspensie-e27-bej",
+   "price": 254.02,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/suspensie-rattan-72025-1-x-e27-bej-modern/p/1074382",
+   "evidence": "cod 1074382: finalPrice 254.02 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-smarter-boom-01-3480-suspensie-3xgu10-negru-mat",
+   "price": 323,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/suspensie-boom-01-3480-3-x-gu10-negru-mat-modern/p/1085779",
+   "evidence": "cod 1085779: finalPrice 323 lei"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-akterspring-lustra-opalin-alamit-73",
+   "price": 329,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/akterspring-lustra-opalin-sticla-alamit-80577880/",
+   "evidence": "offers.price=329 RON"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-stockholm-2025-lustra-sticla-alamit-38",
+   "price": 499,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/stockholm-2025-lustra-sticla-alamit-50586305/",
+   "evidence": "offers.price=499 RON"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-narrkolv-lustra-ratan-56",
+   "price": 249,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/narrkolv-lustra-ratan-00594341/",
+   "evidence": "offers.price=249 RON"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-smarter-kaya-01-4741-aplica-e14-negru-alb",
+   "price": 106,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/aplica-kaya-01-4741-1-x-e14-negru-alb-modern/p/1108575",
+   "evidence": "cod 1108575: finalPrice 106 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-hoff-douche-aplica-led-baie-ip44-crom",
+   "price": 109,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/aplica-led-pentru-baie-hoff-douche-10-w-750-lm-lumina-neutra/-rece-ip44-crom-alb-modern/p/1084177",
+   "evidence": "cod 1084177: finalPrice 109 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-klausen-intrigue-kl141015-aplica-led-negru",
+   "price": 279.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/aplica-led-intrigue-kl141015-16-w-1300-lm-lumina-neutra-4000k-negru-modern/p/1070422",
+   "evidence": "cod 1070422: finalPrice 279.99 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-smarter-timber-01-1663-aplica-e27-negru-fag",
+   "price": 95.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/aplica-timber-01-1663-1-x-e27-negru-mat-lemn-de-fag-natur-modern/p/1051533",
+   "evidence": "cod 1051533: finalPrice 95.99 lei"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-kabomba-aplica-led-oglinda-negru-20",
+   "price": 249,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kabomba-aplica-led-cu-oglinda-intensitate-reglabila-mat-negru-60485283/",
+   "evidence": "offers.price=249 RON"
+  },
+  {
+   "kind": "m",
+   "id": "ikea-varmblixt-aplica-led-perete-oglinda-bronz-55",
+   "price": 399,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/varmblixt-aplica-led-perete-oglinda-intensitate-reglabila-bronz-rotund-10531541/",
+   "evidence": "offers.price=399 RON"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-bagheta-polistiren-was-063-alb-200cm",
+   "price": 42.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/bagheta-decorativa-polistiren-was-063-modern-alb-200-x-7-x-4-cm/p/8096542",
+   "evidence": "cod 8096542: finalPrice 42.99 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-bagheta-polistiren-decosa-a80-alb-200cm",
+   "price": 19.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/bagheta-decorativa-polistiren-decosa-a80-clasic-alb-200-x-8-cm/p/8042061",
+   "evidence": "cod 8042061: finalPrice 19.99 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-bagheta-polimer-dur-wood-class-chp2040-alb-200cm",
+   "price": 22.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/bagheta-decorativa-polimer-dur-wood-class-chp2040-modern-alb-200-x-4-x-2-cm/p/8132039",
+   "evidence": "cod 8132039: finalPrice 22.99 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-cornisa-polimer-aw08080-alb-200cm",
+   "price": 30,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cornisa-decorativa-polimer-aw08080-clasic-alb-200-x-8-x-8-cm/p/8115290",
+   "evidence": "cod 8115290: finalPrice 30 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-bagheta-polistiren-cm17-rwg-alb-auriu-200cm",
+   "price": 13.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/bagheta-decorativa-polistiren-cm17-rwg-clasic-alb-auriu-200-x-9-5-cm/p/8063303",
+   "evidence": "cod 8063303: finalPrice 13.99 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-parchet-swiss-krono-sigma-d5382-pamphylia-oak-8mm",
+   "price": 48.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/parchet-laminat-8-mm-swiss-krono-sigma-d5382-pamphylia-oak-clasa-32/p/4027359",
+   "evidence": "cod 4027359: finalPrice 48.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-parchet-classen-wr-story-68138-oak-brava-12mm",
+   "price": 87.89,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/parchet-laminat-12-mm-classen-wr-story-68138-oak-brava-clasa-33/p/4030095",
+   "evidence": "cod 4030095: finalPrice 87.89 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-parchet-egger-neutral-h2970-stejar-nord-10mm",
+   "price": 59.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/parchet-laminat-10-mm-egger-neutral-h2970-stejar-nord-natur-clasa-32/p/4028495",
+   "evidence": "cod 4028495: finalPrice 59.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-parchet-kaindl-classic-touch-37813-severina-oak-8mm",
+   "price": 44.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/parchet-laminat-8-mm-kaindl-laminate-classic-touch-37813-severina-oak-clasa-32/p/4027952",
+   "evidence": "cod 4027952: finalPrice 44.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-parchet-floorpan-stonex-012-tunisia-10mm",
+   "price": 75.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/parchet-laminat-10-mm-floorpan-stonex-012-tunisia-v-clasa-33/p/4025865",
+   "evidence": "cod 4025865: finalPrice 75.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-parchet-swiss-krono-sound-d3342-chestnut-12mm",
+   "price": 82.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/parchet-laminat-12-mm-swiss-krono-sound-d3342-chestnut-v-clasa-33/p/4024485",
+   "evidence": "cod 4024485: finalPrice 82.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-gresie-e-stone-limestone-3587-60x120-bej",
+   "price": 59.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-e-stone-limestone-3587-60-x-120-cm-bej-mata-rectificata-aspect-piatra/p/4030427",
+   "evidence": "cod 4030427: finalPrice 59.9 lei /m2 (pagina arată și un preț vechi: promoție)",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-gresie-mckinley-60x120-alb-lucios",
+   "price": 89.89,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-mckinley-60-x-120-cm-alb-lucioasa-rectificata-imitatie-marmura/p/4025688",
+   "evidence": "cod 4025688: finalPrice 89.89 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-gresie-havana-grey-60x120",
+   "price": 74.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-havana-grey-60-x-120-cm-gri-mata-rectificata-aspect-piatra/p/4030732",
+   "evidence": "cod 4030732: finalPrice 74.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-gresie-milena-nuez-20x120-lemn",
+   "price": 89.89,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-milena-nuez-20-x-120-cm-maro-mata-rectificata-aspect-lemn/p/4030414",
+   "evidence": "cod 4030414: finalPrice 89.89 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-gresie-dazzle-onyx-black-60x120",
+   "price": 119,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-dazzle-onyx-black-60-x-120-cm-negru-lucioasa-rectificata-aspect-marmura/p/4026195",
+   "evidence": "cod 4026195: finalPrice 119 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-gresie-pmr-96120472-60x120-ciment",
+   "price": 74.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-pmr-96120472-60-x-120-cm-gri-mata-rectificata-aspect-ciment/p/4032450",
+   "evidence": "cod 4032450: finalPrice 74.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-gresie-cancun-30x60-antiderapanta",
+   "price": 58.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/gresie-exterior/-interior-portelanata-cancun-30-x-60-cm-gri-mata-antiderapanta-imitatie-piatra/p/4020416",
+   "evidence": "cod 4020416: finalPrice 58.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-faianta-alpino-white-30x60",
+   "price": 59.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-alpino-white-30-x-60-cm-lucioasa-rectificata-alb-aspect-marmura/p/4027492",
+   "evidence": "cod 4027492: finalPrice 59.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-faianta-toja-beige-40x120",
+   "price": 119,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-toja-beige-40-x-120-cm-mata-rectificata-bej/p/4029653",
+   "evidence": "cod 4029653: finalPrice 119 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-faianta-layla-grey-30x60",
+   "price": 59.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-layla-grey-30-x-60-cm-lucioasa-rectificata-gri-aspect-piatra/p/4031244",
+   "evidence": "cod 4031244: finalPrice 59.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-faianta-rockstone-pearl-33x90",
+   "price": 89.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-rockstone-pearl-33-3-x-90-cm-mata-rectificata-gri-imitatie-piatra/p/4022707",
+   "evidence": "cod 4022707: finalPrice 89.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-faianta-holiday-30x60-verde",
+   "price": 59.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-holiday-30-x-60-cm-lucioasa-verde/p/4031201",
+   "evidence": "cod 4031201: finalPrice 59.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-faianta-timber-line-roble-30x60",
+   "price": 59.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-timber-line-roble-30-x-60-cm-mata-maro-aspect-lemn/p/4031200",
+   "evidence": "cod 4031200: finalPrice 59.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-faianta-jasper-white-25x75",
+   "price": 64.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/faianta-baie/-bucatarie-jasper-white-25-x-75-cm-mata-gri-aspect-ciment/p/4026280",
+   "evidence": "cod 4026280: finalPrice 64.9 lei /m2",
+   "per": "unit"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-vopsea-savana-superculoare-bej-armonie-5l",
+   "price": 136,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vopsea-gata-colorata-interior-savana-superculoare-bej-armonie-5-l/p/5017136",
+   "evidence": "cod 5017136: finalPrice 136 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-vopsea-savana-superculoare-verde-senin-5l",
+   "price": 136,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vopsea-gata-colorata-interior-savana-superculoare-verde-senin-calm-5-l/p/5017139",
+   "evidence": "cod 5017139: finalPrice 136 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-vopsea-savana-superculoare-gri-nordic-5l",
+   "price": 197,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vopsea-gata-colorata-interior-savana-superculoare-gri-nordic-rafinament-5-l/p/5017144",
+   "evidence": "cod 5017144: finalPrice 197 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-vopsea-savana-superculoare-bleumarin-5l",
+   "price": 197,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vopsea-gata-colorata-interior-savana-superculoare-bleumarin-extravaganta-5-l/p/5017145",
+   "evidence": "cod 5017145: finalPrice 197 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-vopsea-kober-cafeniu-v8370-8-5l",
+   "price": 112,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vopsea-lavabila-interior-kober-cafeniu-v8370-8-5-l/p/5013930",
+   "evidence": "cod 5013930: finalPrice 112 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-vopsea-oskar-coloris-scandinavian-grey-5l",
+   "price": 149,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vopsea-lavabila-interior-oskar-coloris-scandinavian-grey-5-l/p/5021274",
+   "evidence": "cod 5021274: finalPrice 149 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-vopsea-oskar-coloris-classic-cream-5l",
+   "price": 149,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vopsea-lavabila-interior-oskar-coloris-classic-cream-5-l/p/5021285",
+   "evidence": "cod 5021285: finalPrice 149 lei /bucată",
+   "per": "pack"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-caseta-cu-sistem-culisare-megadoor-140-x-205-cm",
+   "price": 1135,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/caseta-cu-sistem-culisare-megadoor-140-x-205-cm/p/6071737",
+   "evidence": "cod 6071737: finalPrice 1135 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-caseta-cu-sistem-culisare-megadoor-160-x-205-cm",
+   "price": 1135,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/caseta-cu-sistem-culisare-megadoor-160-x-205-cm/p/6071738",
+   "evidence": "cod 6071738: finalPrice 1135 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-caseta-cu-sistem-culisare-megadoor-180-x-205-cm",
+   "price": 1255,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/caseta-cu-sistem-culisare-megadoor-180-x-205-cm/p/6071739",
+   "evidence": "cod 6071739: finalPrice 1255 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-sistem-culisare-usa-interior-unic-spot-l200-otel-2-m",
+   "price": 301,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/sistem-culisare-usa-interior-unic-spot-l200-otel-2-m/p/6076049",
+   "evidence": "cod 6076049: finalPrice 301 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-sistem-culisare-usa-interior-midica-otel-zincat-1-85-m-60-kg",
+   "price": 357,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/sistem-culisare-usa-interior-midica-otel-zincat-1-85-m-60-kg/p/6009418",
+   "evidence": "cod 6009418: finalPrice 357 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-sistem-culisare-usa-interior-aluminiu-5-orificii-montare-1-9-m-60-kg",
+   "price": 423,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/sistem-culisare-usa-interior-aluminiu-5-orificii-montare-1-9-m-60-kg/p/6038599",
+   "evidence": "cod 6038599: finalPrice 423 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-sistem-culisare-usa-interior-loft-otel-2-m-100-kg",
+   "price": 459.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/sistem-culisare-usa-interior-loft-otel-2-m-100-kg/p/6065029",
+   "evidence": "cod 6065029: finalPrice 459.99 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-sistem-culisare-usa-interior-megadoor-2-m-2-3-kg",
+   "price": 610,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/sistem-culisare-usa-interior-megadoor-2-m-2-3-kg/p/6071712",
+   "evidence": "cod 6071712: finalPrice 610 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-usa-de-interior-plianta-italbox-alb-85-x-203-cm",
+   "price": 226,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/usa-de-interior-plianta-italbox-alb-85-x-203-cm/p/6002984",
+   "evidence": "cod 6002984: finalPrice 226 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-usa-de-interior-plianta-italbox-alb-100-x-203-cm",
+   "price": 271,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/usa-de-interior-plianta-italbox-alb-100-x-203-cm/p/6009737",
+   "evidence": "cod 6009737: finalPrice 271 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-usa-de-interior-plianta-italbox-frasin-85-x-203-cm",
+   "price": 231,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/usa-de-interior-plianta-italbox-frasin-85-x-203-cm/p/6006162",
+   "evidence": "cod 6006162: finalPrice 231 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-calorifer-otel-mastas-22pkkp-600-x-800-mm-accesorii-incluse",
+   "price": 269,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-otel-mastas-22pkkp-600-x-800-mm-accesorii-incluse/p/2002705",
+   "evidence": "cod 2002705: finalPrice 269 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-calorifer-otel-pekpan-22k-600-x-800-accesorii-incluse",
+   "price": 285,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-otel-pekpan-22k-600-x-800-accesorii-incluse/p/2014131",
+   "evidence": "cod 2014131: finalPrice 285 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-calorifer-otel-ferroli-gr-f-22k-600-x-800-mm-accesorii-incluse",
+   "price": 369,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-otel-ferroli-gr-f-22k-600-x-800-mm-accesorii-incluse/p/2002546",
+   "evidence": "cod 2002546: finalPrice 369 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-calorifer-otel-purmo-c22-600-x-800-mm-accesorii-incluse",
+   "price": 409,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-otel-purmo-c22-600-x-800-mm-accesorii-incluse/p/2017063",
+   "evidence": "cod 2017063: finalPrice 409 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-calorifer-baie-hirapan-hs4001000wf-portprosop-drept-alb-400-x-1000-mm-",
+   "price": 143,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-baie-hirapan-hs4001000wf-portprosop-drept-alb-400-x-1000-mm-accesorii-incluse/p/2036213",
+   "evidence": "cod 2036213: finalPrice 143 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-calorifer-baie-hirapan-hs5001200wf-portprosop-drept-alb-500-x-1200-mm-",
+   "price": 175,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-baie-hirapan-hs5001200wf-portprosop-drept-alb-500-x-1200-mm-accesorii-incluse/p/2036218",
+   "evidence": "cod 2036218: finalPrice 175 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-calorifer-baie-ferroli-talia-portprosop-curbat-alb-600-x-1170-mm-acces",
+   "price": 310,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-baie-ferroli-talia-portprosop-curbat-alb-600-x-1170-mm-accesorii-montaj/p/2019177",
+   "evidence": "cod 2019177: finalPrice 310 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-mana-curenta-balustrada-akdemir-aluminiu-eloxat-gri-antracit-2000-x-60",
+   "price": 71.5,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/mana-curenta-balustrada-akdemir-aluminiu-eloxat-gri-antracit-2000-x-60-x-20-mm/p/6074052",
+   "evidence": "cod 6074052: finalPrice 71.5 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kit-stalp-balcon-akdemir-p5-aluminiu-eloxat-gri-antracit-1010-x-60-x-6",
+   "price": 364,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/kit-stalp-balcon-akdemir-p5-aluminiu-eloxat-gri-antracit-1010-x-60-x-60-mm/p/6074047",
+   "evidence": "cod 6074047: finalPrice 364 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-kit-panou-balustrada-catumia-aluminiu-negru-1000-x-1000-x-110-mm",
+   "price": 975,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/kit-panou-balustrada-catumia-aluminiu-negru-1000-x-1000-x-110-mm/p/6077743",
+   "evidence": "cod 6077743: finalPrice 975 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-bagheta-decorativa-polistiren-a40-clasic-alb-200-x-3-x-3-cm",
+   "price": 5.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/bagheta-decorativa-polistiren-a40-clasic-alb-200-x-3-x-3-cm/p/4002646",
+   "evidence": "cod 4002646: finalPrice 5.9 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-bagheta-decorativa-polimer-chp7050-clasic-alb-200-x-7-x-5-cm",
+   "price": 32.49,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/bagheta-decorativa-polimer-chp7050-clasic-alb-200-x-7-x-5-cm/p/8117734",
+   "evidence": "cod 8117734: finalPrice 32.49 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-bagheta-decorativa-polimer-chp4545-modern-alb-200-x-4-5-x-4-5-cm",
+   "price": 37.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/bagheta-decorativa-polimer-chp4545-modern-alb-200-x-4-5-x-4-5-cm/p/8117733",
+   "evidence": "cod 8117733: finalPrice 37.9 lei"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-aparat-aer-conditionat-ariston-nevis-12000-btu-a-a-inverter-wi-fi-r32-",
+   "price": 2199,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/aparat-aer-conditionat-ariston-nevis-12000-btu-a-a-inverter-wi-fi-r32-ionizare-filtru-aer-mod-de-noapte-mod-eco-follow-me-ventilare-dezumidificare-alb/p/2035393",
+   "evidence": "cod 2035393: finalPrice 2199 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masuta-0",
+   "price": 179.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/lack-masuta-cafea-alb-80449901/",
+   "evidence": "offers.price=179.9 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masuta-1",
+   "price": 199.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/vittsjoe-masuta-cafea-negru-maro-sticla-80213309/",
+   "evidence": "offers.price=199.9 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-1",
+   "price": 279,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/billy-biblioteca-alb-00263850/",
+   "evidence": "offers.price=279 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-2",
+   "price": 349,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/billy-biblioteca-aspect-stejar-10508932/",
+   "evidence": "offers.price=349 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-noptiera-0",
+   "price": 159,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/brimnes-noptiera-alb-10234942/",
+   "evidence": "offers.price=159 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulap-0",
+   "price": 699,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/brimnes-dulap-cu-3-usi-alb-40407922/",
+   "evidence": "offers.price=699 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulap-1",
+   "price": 799,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/brimnes-dulap-cu-3-usi-negru-60407577/",
+   "evidence": "offers.price=799 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-birou-0",
+   "price": 399,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/micke-birou-alb-80213074/",
+   "evidence": "offers.price=399 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-birou-2",
+   "price": 249,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/micke-birou-alb-30213076/",
+   "evidence": "offers.price=249 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-0",
+   "price": 599,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/markus-scaun-rotativ-vissle-gri-inchis-30588800/",
+   "evidence": "offers.price=599 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-frigider-0",
+   "price": 1999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/lagan-frigider-congelator-independent-alb-00571293/",
+   "evidence": "offers.price=1999 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-frigider-1",
+   "price": 1899,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/lagan-frigider-congelator-independent-alb-50619457/",
+   "evidence": "offers.price=1899 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-1",
+   "price": 1784,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cabina-dus-patrata-west-cb84-90wst09-profil-cromat-90-x-90-x-190-cm/p/3035756",
+   "evidence": "cod 3035756: finalPrice 1784 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-2",
+   "price": 794.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cabina-dus-semirotunda-cadita-kadda-rena-90-x-90-x-192-5-cm-sticla-securizata-cu-model-profil-alb/p/3024530",
+   "evidence": "cod 3024530: finalPrice 794.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-3",
+   "price": 3172,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cabina-dus-patrata-west-cb90wst03-profil-cromat-90-x-90-x-200-cm/p/3028598",
+   "evidence": "cod 3028598: finalPrice 3172 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-lavoar-3",
+   "price": 1079,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-oglinda-lampa-savini-due-creta-60-cu-sertare-stejar-gri-alb-lucios/p/3050421",
+   "evidence": "cod 3050421: finalPrice 1079 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-wc-1",
+   "price": 577.84,
+   "seenAt": "2026-11-18",
+   "url": "https://dedeman.ro/ro/vas-wc-suspendat-roca-debba-square-rimless-a34699l000-cu-evacuare-orizontala-35-5-x-54-x-40-cm/p/3033605",
+   "evidence": "cod 3033605: finalPrice 577.84 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-oglinda-0",
+   "price": 1199,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-corp-inalt-usa-cu-oglinda-alb-70217685/",
+   "evidence": "offers.price=1199 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-5",
+   "price": 1999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ektorp-canapea-3-locuri-mangbyn-maro-multicolor-s89627201/",
+   "evidence": "offers.price=1999 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-6",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/saltmyran-canapea-3-locuri-oereryd-gri-bej-40618514/",
+   "evidence": "offers.price=999 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-7",
+   "price": 3299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/valnaes-canapea-3-locuri-knaebaeck-bej-deschis-s89615335/",
+   "evidence": "offers.price=3299 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-8",
+   "price": 2599,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ekholma-canapea-3-locuri-kilanda-bej-deschis-s09535597/",
+   "evidence": "offers.price=2599 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-fotoliu-1",
+   "price": 199.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/gaevle-fotoliu-diseroed-gri-60588846/",
+   "evidence": "offers.price=199.9 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-fotoliu-2",
+   "price": 899,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/ekenaeset-fotoliu-kilanda-bej-deschis-90533174/",
+   "evidence": "offers.price=899 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-fotoliu-3",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/dyvlinge-fotoliu-rotativ-kelinge-verde-60555153/",
+   "evidence": "offers.price=999 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-fotoliu-4",
+   "price": 1499,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/oskarshamn-fotoliu-tonerud-rosu-50521682/",
+   "evidence": "offers.price=1499 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-4",
+   "price": 599,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/tarva-cadru-pat-vopsit-alb-s09553973/",
+   "evidence": "offers.price=599 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-6",
+   "price": 1599,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/brimnes-cadru-pat-cu-depozitare-si-tablie-alb-s19099157/",
+   "evidence": "offers.price=1599 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-7",
+   "price": 3299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/idanaes-pat-tapitat-cu-depozitare-gunnared-gri-inchis-10458970/",
+   "evidence": "offers.price=3299 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-8",
+   "price": 599,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/slattum-cadru-pat-tapitat-vissle-gri-inchis-40571248/",
+   "evidence": "offers.price=599 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-9",
+   "price": 899,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/fagelfjaellet-cadru-pat-alb-murdar-50607157/",
+   "evidence": "offers.price=899 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-noptiera-3",
+   "price": 349,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/radmansoe-noptiera-maro-aspect-nuc-80593597/",
+   "evidence": "offers.price=349 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-noptiera-4",
+   "price": 179.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hauga-noptiera-alb-00488963/",
+   "evidence": "offers.price=179.9 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-noptiera-5",
+   "price": 399,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/tyssedal-noptiera-alb-70299959/",
+   "evidence": "offers.price=399 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulap-3",
+   "price": 649,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kleppstad-dulap-de-haine-cu-usi-glisante-alb-90437238/",
+   "evidence": "offers.price=649 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulap-5",
+   "price": 2893,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/pax-forsand-dulap-alb-alb-s49502726/",
+   "evidence": "offers.price=2893 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comoda-0",
+   "price": 499,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/storklinta-comoda-4-sertare-alb-40627537/",
+   "evidence": "offers.price=499 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comoda-1",
+   "price": 1199,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/radmansoe-comoda-6-sertare-maro-aspect-nuc-90593605/",
+   "evidence": "offers.price=1199 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comoda-2",
+   "price": 1599,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/tonstad-comoda-6-sertare-frnr-stjr-50614624/",
+   "evidence": "offers.price=1599 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comoda-3",
+   "price": 1599,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-comoda-8-sertare-vopsit-alb-10239280/",
+   "evidence": "offers.price=1599 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comoda-4",
+   "price": 250,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/gursken-comoda-3-sertare-bej-deschis-00486327/",
+   "evidence": "offers.price=250 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comodaTv-5",
+   "price": 499,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/brimnes-comoda-tv-alb-50409874/",
+   "evidence": "offers.price=499 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comodaTv-6",
+   "price": 279,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/lack-comoda-tv-negru-maro-20498904/",
+   "evidence": "offers.price=279 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comodaTv-7",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/radmansoe-comoda-tv-maro-aspect-nuc-40597818/",
+   "evidence": "offers.price=999 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comodaTv-8",
+   "price": 549,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/byas-comoda-tv-lucios-alb-80227797/",
+   "evidence": "offers.price=549 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comodaTv-9",
+   "price": 1499,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/fryksas-comoda-tv-ratan-80574099/",
+   "evidence": "offers.price=1499 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-6",
+   "price": 1499,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/tonstad-biblioteca-frnr-stjr-70528461/",
+   "evidence": "offers.price=1499 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-7",
+   "price": 139.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/baggebo-biblioteca-alb-20436713/",
+   "evidence": "offers.price=139.9 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-8",
+   "price": 379,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/brimnes-biblioteca-alb-90301225/",
+   "evidence": "offers.price=379 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-5",
+   "price": 699,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/skalsta-masa-aspect-stejar-forma-x-negru-gri-s19590767/",
+   "evidence": "offers.price=699 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-6",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/vihals-masa-alb-alb-s39578509/",
+   "evidence": "offers.price=299 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-7",
+   "price": 749,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/lisabo-masa-furnir-frasin-70294339/",
+   "evidence": "offers.price=749 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-8",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/nackanaes-masa-acacia-40511056/",
+   "evidence": "offers.price=999 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-9",
+   "price": 749,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/docksta-masa-alb-alb-s19324995/",
+   "evidence": "offers.price=749 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-birou-5",
+   "price": 1049,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/mittzon-birou-alb-s09529087/",
+   "evidence": "offers.price=1049 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-birou-6",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/trotten-birou-alb-s59621917/",
+   "evidence": "offers.price=299 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-3",
+   "price": 699,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/markus-scaun-rotativ-vissle-gri-inchis-70261150/",
+   "evidence": "offers.price=699 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-4",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/flintan-scaun-rotativ-negru-10489028/",
+   "evidence": "offers.price=299 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-5",
+   "price": 249,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/renberget-scaun-rotativ-bomstad-negru-60493546/",
+   "evidence": "offers.price=249 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-6",
+   "price": 949,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hattefjaell-scaun-rotativ-cu-brate-gunnared-bej-alb-60538955/",
+   "evidence": "offers.price=949 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-7",
+   "price": 119,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/smaellen-scaun-rotativ-negru-00503435/",
+   "evidence": "offers.price=119 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-9",
+   "price": 1999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/canapea-fixa-3-locuri-andy-cappuccino-215-x-78-x-90-cm-1c/p/8130788",
+   "evidence": "cod 8130788: finalPrice 1999 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-10",
+   "price": 3499,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/canapea-fixa-3-locuri-chesterfield-maro-stofa-215-x-90-x-80-cm-1c/p/8096673",
+   "evidence": "cod 8096673: finalPrice 3499 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-12",
+   "price": 3198.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/canapea-fixa-3-locuri-romano-maro-deschis-textil-215-x-88-x-73-cm-1c/p/8122462",
+   "evidence": "cod 8122462: finalPrice 3198.99 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-fotoliu-5",
+   "price": 499,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/fotoliu-extensibil-eva-kt1908bd-1-gri-inchis-65-x-60-x-78-cm-1c/p/8129367",
+   "evidence": "cod 8129367: finalPrice 499 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-fotoliu-6",
+   "price": 1399,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/fotoliu-fix-charlot-textil-maro-fag-1c/p/8091835",
+   "evidence": "cod 8091835: finalPrice 1399 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-fotoliu-7",
+   "price": 1379,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/fotoliu-recliner-forest-textil-maro-ciocolatiu-1c/p/8091844",
+   "evidence": "cod 8091844: finalPrice 1379 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-10",
+   "price": 799,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/pat-dormitor-dr-home-matrimonial-metalic-cu-sertare-negru-stejar-gri-160-x-200-cm-1c/p/8124257",
+   "evidence": "cod 8124257: finalPrice 799 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-11",
+   "price": 789,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/pat-dormitor-dr-home-matrimonial-tapitat-crem-160-x-200-cm-2c/p/8132518",
+   "evidence": "cod 8132518: finalPrice 789 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-12",
+   "price": 1599,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/pat-dormitor-fidelio-matrimonial-tapitat-cu-lada-bej-deschis-160-x-200-cm-5c/p/8071675",
+   "evidence": "cod 8071675: finalPrice 1599 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-noptiera-7",
+   "price": 389,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/noptiera-corsica-cu-raft-sertar-bej-50-x-40-x-60-cm-1c/p/8129721",
+   "evidence": "cod 8129721: finalPrice 389 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-noptiera-8",
+   "price": 300,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/noptiera-duero-3f-cu-3-sertare-stejar-gri-45-x-40-x-63-cm-1c/p/8063974",
+   "evidence": "cod 8063974: finalPrice 300 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-noptiera-9",
+   "price": 316,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/noptiera-colhida-cu-2-sertare-bej-cashmere-stejar-inchis-48-x-40-1-x-59-4-cm-1c/p/8130657",
+   "evidence": "cod 8130657: finalPrice 316 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulap-6",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/dulap-dormitor-nevis-3k1f1o-stejar-artisan-3-usi-cu-oglinda-116-8-x-51-6-x-207-3-cm-4c/p/8130661",
+   "evidence": "cod 8130661: finalPrice 999 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulap-7",
+   "price": 1269,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/dulap-dormitor-varadero-4k1f1o-stejar-artisan-negru-4-usi-cu-oglinda-157-6-x-53-x-203-7-cm-3c/p/8098360",
+   "evidence": "cod 8098360: finalPrice 1269 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulap-8",
+   "price": 2299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/dulap-dormitor/-dressing-sierra-220-gri-grafit-2-usi-glisante-cu-oglinda-217-x-62-5-x-210-cm-8c/p/8063961",
+   "evidence": "cod 8063961: finalPrice 2299 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comoda-5",
+   "price": 668.98,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/comoda-dormitor-duero-5f-90-cu-5-sertare-stejar-gri-90-x-95-x-40-cm-1c/p/8063957",
+   "evidence": "cod 8063957: finalPrice 668.98 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comodaTv-10",
+   "price": 578.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/comoda-tv-rex-cu-lumini-cu-usi-alb-mat-negru-folie-lucioasa-alba-170-x-41-5-x-41-5-cm-2c/p/8054377",
+   "evidence": "cod 8054377: finalPrice 578.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comodaTv-11",
+   "price": 829,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/comoda-tv-darwen-3k2f2v-cu-usi-si-sertare-bej-cashmere-stejar-artisan-179-5-x-40-x-52-5-cm-2c/p/8124717",
+   "evidence": "cod 8124717: finalPrice 829 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comodaTv-12",
+   "price": 469,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/comoda-tv-arles-3k3v-cu-usi-bej-cashmere-stejar-artisan-192-2-x-44-x-32-cm-1c/p/8125262",
+   "evidence": "cod 8125262: finalPrice 469 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-9",
+   "price": 979,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/biblioteca-living-cantal-stejar-artisan-gri-259-cm-3c/p/8108282",
+   "evidence": "cod 8108282: finalPrice 979 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-10",
+   "price": 698.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/biblioteca-living-margate-ah-stejar-artisan-negru-208-cm-2c/p/8124741",
+   "evidence": "cod 8124741: finalPrice 698.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-11",
+   "price": 729,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/biblioteca-living-retimno-stejar-artisan-negru-207-5-cm-2c/p/8119446",
+   "evidence": "cod 8119446: finalPrice 729 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-12",
+   "price": 739,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/biblioteca-living-glen-stejar-gri-alb-mat-170-5-cm-2c/p/8050440",
+   "evidence": "cod 8050440: finalPrice 739 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-13",
+   "price": 899,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/biblioteca-living-lorca-stejar-gri-lemn-negru-195-5-cm-2c/p/8063761",
+   "evidence": "cod 8063761: finalPrice 899 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masuta-4",
+   "price": 358.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masuta-cafea-oscar-ks-dreptunghiulara-stejar-alb-120-x-60-x-41-5-cm-1c/p/8050333",
+   "evidence": "cod 8050333: finalPrice 358.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masuta-5",
+   "price": 673.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masuta-cafea-aberdeen-dreptunghiulara-alb-stejar-porto-120-x-56-4-x-49-5-cm-2c/p/8130622",
+   "evidence": "cod 8130622: finalPrice 673.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masuta-6",
+   "price": 469,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masuta-cafea-cirko-rotunda-alb-marmorat-negru-80-x-80-x-48-cm-set-2-in-1-1c/p/8128881",
+   "evidence": "cod 8128881: finalPrice 469 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masuta-7",
+   "price": 579,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masuta-cafea-din-sticla-kugu-rotunda-crom-aramiu-75-x-75-x-50-cm-1c/p/8106760",
+   "evidence": "cod 8106760: finalPrice 579 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masuta-8",
+   "price": 538.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masuta-cafea-aralyn-dreptunghiulara-stejar-negru-110-x-50-x-54-cm-1c/p/8128866",
+   "evidence": "cod 8128866: finalPrice 538.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-10",
+   "price": 599,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masa-bucatarie/-dining-fixa-eva-ab2820-dreptunghiulara-6-persoane-natur-negru-160-x-80-x-76-cm-1c/p/8123970",
+   "evidence": "cod 8123970: finalPrice 599 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-11",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masa-bucatarie/-dining-fixa-grandio-mob-tonia-dreptunghiulara-6-persoane-negru-stejar-180-x-90-x-75-cm-2c/p/8115917",
+   "evidence": "cod 8115917: finalPrice 999 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-12",
+   "price": 899,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masa-bucatarie/-dining-extensibila-mb-13-dreptunghiulara-4-persoane-stejar-sonoma-120-x-80-x-78-cm-2c/p/8099510",
+   "evidence": "cod 8099510: finalPrice 899 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-13",
+   "price": 390,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masa-bucatarie/-dining-extensibila-saxonia-dreptunghiulara-4-persoane-nuc-105/-165-x-68-x-77-5-cm-1c/p/8063498",
+   "evidence": "cod 8063498: finalPrice 390 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-birou-7",
+   "price": 209,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/birou-calculator-standard-rubin-stejar-cannolo-130-x-65-x-73-cm-1c/p/8705096",
+   "evidence": "cod 8705096: finalPrice 209 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-birou-8",
+   "price": 638.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/birou-calculator-cu-sertare-si-dulap-alfa-stejar-sonoma-145-x-65-5-x-75-5-cm-2c/p/8029895",
+   "evidence": "cod 8029895: finalPrice 638.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-birou-9",
+   "price": 649,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/birou-cu-sertar-si-dulap-bany-pentru-calculator-alb-140-x-60-x-76-cm-2c/p/8097492",
+   "evidence": "cod 8097492: finalPrice 649 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-birou-10",
+   "price": 929,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/birou-cu-sertare-si-dulap-eustach-pentru-calculator-alb-137-x-60-x-76-3-cm-2c/p/8097564",
+   "evidence": "cod 8097564: finalPrice 929 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-8",
+   "price": 358.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/scaun-birou-ergonomic-cu-suport-lombar-ericsson-rotativ-material-textil-negru/p/8115577",
+   "evidence": "cod 8115577: finalPrice 358.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-9",
+   "price": 469,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/scaun-birou-ergonomic-cu-suport-lombar-si-tetiera-sd-mch801-rotativ-mesh-negru/p/8066569",
+   "evidence": "cod 8066569: finalPrice 469 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-10",
+   "price": 279,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/scaun-birou-operational-carbo-rotativ-textil-gri/p/8132330",
+   "evidence": "cod 8132330: finalPrice 279 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pantofar-3",
+   "price": 479,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/pantofar-buseto-2k-hdf-pal-alb-67-4-x-34-8-x-195-cm-1c/p/8098391",
+   "evidence": "cod 8098391: finalPrice 479 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pantofar-4",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/pantofar-elia-pal-alb-104-x-30-x-68-cm-2c/p/8111202",
+   "evidence": "cod 8111202: finalPrice 299 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pantofar-5",
+   "price": 638.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/pantofar-hugo-24-cu-oglinda-pal-stejar-gri-67-x-28-x-155-5-cm-2c/p/8054497",
+   "evidence": "cod 8054497: finalPrice 638.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pantofar-7",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/pantofar-menorca-2k-2og-ob-blf-cu-oglinda-hdf-alb-texturat-89-5-x-37-5-x-199-cm-2c/p/8093485",
+   "evidence": "cod 8093485: finalPrice 999 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-lavoar-4",
+   "price": 621,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-savini-due-60w-cu-usi-alb-pe-pardoseala-pal-mdf-60-5-x-36-3-x-84-6-cm/p/3049330",
+   "evidence": "cod 3049330: finalPrice 621 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-lavoar-5",
+   "price": 500,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-savini-due-rimini-cu-usi-alb-pe-pardoseala-pal-mdf-56-5-x-42-5-x-87-cm/p/3024503",
+   "evidence": "cod 3024503: finalPrice 500 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-lavoar-6",
+   "price": 1463.63,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-roca-a851925529-cu-sertare-alb-suspendat-mdf-ceramica-61-3-x-46-5-x-65-6-cm/p/3045617",
+   "evidence": "cod 3045617: finalPrice 1463.63 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-lavoar-7",
+   "price": 1246,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-savini-due-creta-80-c/f40/00-cu-sertare-stejar-auriu-pe-pardoseala-pal-mdf-ceramica-81-5-x-46-5-x-85-5-cm/p/3052335",
+   "evidence": "cod 3052335: finalPrice 1246 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-lavoar-8",
+   "price": 1450.25,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-fayans-kuandra-cu-sertare-si-usi-gri-negru-pe-pardoseala-pal-65-x-42-x-85-cm/p/3018387",
+   "evidence": "cod 3018387: finalPrice 1450.25 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-lavoar-9",
+   "price": 1188.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-cersanit-moduo-s801-221-dsm-cu-sertare-alb-suspendat-pal-80-x-44-7-x-62-cm/p/3045112",
+   "evidence": "cod 3045112: finalPrice 1188.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-frigider-3",
+   "price": 1599,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/frigider-arctic-ad60310m40s-cu-2-usi-si-3-rafturi-306-litri-clasa-e-gri-inaltime-175-cm-termostat-reglabil-compartiment-garden-fresh-usi-reversibile-eco-led/p/3050640",
+   "evidence": "cod 3050640: finalPrice 1599 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-frigider-4",
+   "price": 2299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/combina-frigorifica-beko-rcsa406k40dxbn-386-litri-clasa-e-inaltime-202-5-cm-dozator-apa-usi-reversibile-termostat-reglabil-iluminare-led-argintiu/p/3037924",
+   "evidence": "cod 3037924: finalPrice 2299 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-frigider-5",
+   "price": 1069,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/combina-frigorifica-albatros-cf343e-262-litri-clasa-e-inaltime-180-cm-termostat-reglabil-dezghetare-automata-frigider-usi-reversibile-lumina-interioara-tip-led-picioare-reglabile-alb/p/3049373",
+   "evidence": "cod 3049373: finalPrice 1069 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-frigider-6",
+   "price": 1049,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/frigider-candy-cdg1s514ew-cu-2-usi-si-3-rafturi-211-litri-clasa-e-alb-inaltime-143-cm-termostat-reglabil-iluminare-led-usi-reversibile-picioare-reglabile/p/3051493",
+   "evidence": "cod 3051493: finalPrice 1049 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-frigider-7",
+   "price": 1349,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/frigider-arctic-ad54280m40w-cu-2-usi-si-3-rafturi-250-litri-clasa-e-alb-inaltime-160-6-cm-termostat-reglabil-compartiment-garden-fresh-usi-reversibile-eco-led/p/3050646",
+   "evidence": "cod 3050646: finalPrice 1349 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-frigider-8",
+   "price": 2099,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/frigider-samus-srx474nfe-cu-1-usa-si-4-rafturi-359-litri-clasa-e-argintiu-inaltime-185-cm-full-no-frost-multi-air-flow-system-functie-supercool-afisaj-electronic-lcd-usa-reversibila/p/3051743",
+   "evidence": "cod 3051743: finalPrice 2099 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-4",
+   "price": 1149,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cabina-dus-patrata-kadda-jf-90k-sticla-securizata-transparenta-profil-cromat-90-x-90-x-200-cm/p/3056643",
+   "evidence": "cod 3056643: finalPrice 1149 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-5",
+   "price": 1685,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cabina-dus-dreptunghiulara-cadita-seldus-eur5-100-x-80-x-205-cm-sticla-securizata-transparenta-profil-negru/p/3052044",
+   "evidence": "cod 3052044: finalPrice 1685 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-6",
+   "price": 698.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cabina-dus-semirotunda-cadita-inalta-kadda-2018-b-90-x-90-x-200-cm-sticla-securizata-mata-profil-alb/p/3006432",
+   "evidence": "cod 3006432: finalPrice 698.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-7",
+   "price": 3520,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cabina-dus-dreptunghiulara-westcb150wst10gb-profil-negru-150-x-90-x-200-cm/p/3037972",
+   "evidence": "cod 3037972: finalPrice 3520 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-wc-2",
+   "price": 358.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vas-wc-cu-rezervor-mecanism-capac-set-cersanit-koral-k681-001-alb-evacuare-orizontala-montaj-pe-pardoseala/p/3049455",
+   "evidence": "cod 3049455: finalPrice 358.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-wc-3",
+   "price": 499,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vas-wc-suspendat-kadda-therma-mgz-55-alb-evacuare-orizontala-36-3-x-48-6-x-36-4-cm-capac-wc-inclus/p/3057242",
+   "evidence": "cod 3057242: finalPrice 499 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-wc-4",
+   "price": 699,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vas-wc-suspendat-roca-gap-a34647f000-alb-evacuare-orizontala-35-x-54-x-40-cm/p/3056839",
+   "evidence": "cod 3056839: finalPrice 699 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-wc-5",
+   "price": 922,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vas-wc-suspendat-geberit-selnova-square-501-546-01-1-alb-evacuare-orizontala-35-x-54-x-33-cm/p/3049243",
+   "evidence": "cod 3049243: finalPrice 922 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-wc-6",
+   "price": 490,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vas-wc-cersanit-bonica-k3029-002-alb-evacuare-dubla-montaj-pe-pardoseala-39-x-61-x-42-cm-capac-wc-inclus/p/3057961",
+   "evidence": "cod 3057961: finalPrice 490 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-wc-7",
+   "price": 699,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vas-wc-suspendat-cersanit-mito-vortex-szcz1003790001-alb-evacuare-orizontala-36-x-49-x-36-cm-capac-wc-inclus/p/3055926",
+   "evidence": "cod 3055926: finalPrice 699 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-oglinda-2",
+   "price": 290,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/oglinda-decorativa-f2203-dreptunghiulara-negru-55-x-75-cm/p/3043894",
+   "evidence": "cod 3043894: finalPrice 290 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-oglinda-3",
+   "price": 429,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/oglinda-decorativa-rona-0065lk-cu-suport-de-podea-auriu-60-x-160-cm-1c/p/8118894",
+   "evidence": "cod 8118894: finalPrice 429 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-oglinda-4",
+   "price": 578.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/oglinda-living-cottage-0162miroc-stejar-natur-160-x-2-x-55-cm-1c/p/8056934",
+   "evidence": "cod 8056934: finalPrice 578.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-15",
+   "price": 3261.2,
+   "seenAt": "2026-11-18",
+   "url": "https://mobexpert.ro/products/prm114-oskar-canapea-3-locuri-extensibila",
+   "evidence": "offers.price=3261.20 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-16",
+   "price": 2809.3,
+   "seenAt": "2026-11-18",
+   "url": "https://mobexpert.ro/products/outprm002",
+   "evidence": "offers.price=2809.30 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-11",
+   "price": 699,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/birou/scaune-de-birou/scaun-birou-marbjerg-gri",
+   "evidence": "offers.price=699 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comodaTv-13",
+   "price": 899,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/sufragerie/comode-tv/comoda-tv-vedde-stejar-salbatic",
+   "evidence": "offers.price=899 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comodaTv-14",
+   "price": 1226.65,
+   "seenAt": "2026-11-18",
+   "url": "https://mobexpert.ro/products/jen01-jennifer-comoda-tv",
+   "evidence": "offers.price=1226.65 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-14",
+   "price": 1931.2,
+   "seenAt": "2026-11-18",
+   "url": "https://mobexpert.ro/products/prl09-priscilla-masa-dining-extensibila",
+   "evidence": "offers.price=1931.20 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-14",
+   "price": 3801.53,
+   "seenAt": "2026-11-18",
+   "url": "https://mobexpert.ro/products/siteavnubibl02-avenue-biblioteca",
+   "evidence": "offers.price=3801.53 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masuta-9",
+   "price": 686.4,
+   "seenAt": "2026-11-18",
+   "url": "https://mobexpert.ro/products/snr29-lia-masuta-cafea",
+   "evidence": "offers.price=686.40 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masuta-10",
+   "price": 262.71,
+   "seenAt": "2026-11-18",
+   "url": "https://mobexpert.ro/products/wnn1318",
+   "evidence": "offers.price=262.71 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masuta-11",
+   "price": 2769.6,
+   "seenAt": "2026-11-18",
+   "url": "https://mobexpert.ro/products/ehfoc18194-tuycan-masuta-cafea",
+   "evidence": "offers.price=2769.60 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cada-0",
+   "price": 1266,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cada-baie-dreptunghiulara-west-elegancia-acril-170-x-70-cm-suport-inclus/p/3003702",
+   "evidence": "cod 3003702: finalPrice 1266 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cada-1",
+   "price": 943,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cada-baie-dreptunghiulara-west-amalia-acril-170-x-70-cm/p/3033880",
+   "evidence": "cod 3033880: finalPrice 943 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cada-2",
+   "price": 839.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cada-baie-dreptunghiulara-kolo-supero-5343-acril-170-x-70-cm-suport-inclus/p/3001041",
+   "evidence": "cod 3001041: finalPrice 839.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cada-3",
+   "price": 5253,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cada-freestanding-rectangulara-west-hades-acril-178-x-80-cm-alb/p/3029269",
+   "evidence": "cod 3029269: finalPrice 5253 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cada-4",
+   "price": 5645,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cada-freestanding-ovala-martplast-epoca-compozit-168-x-80-cm-alb/p/3015189",
+   "evidence": "cod 3015189: finalPrice 5645 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cada-5",
+   "price": 5070,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cada-freestanding-ovala-west-roya-acril-160-x-66-cm-alb/p/3028741",
+   "evidence": "cod 3028741: finalPrice 5070 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cada-6",
+   "price": 1029,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cada-baie-asimetrica-pe-colt-varianta-montaj-pe-dreapta-west-artemide-masca-si-suport-incluse-acril-150-x-100-cm/p/3024315",
+   "evidence": "cod 3024315: finalPrice 1029 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-bideu-0",
+   "price": 842.54,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/bideu-suspendat-roca-gap-357475000-alb-35-x-54-x-31-5-cm/p/3024051",
+   "evidence": "cod 3024051: finalPrice 842.54 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-8",
+   "price": 296,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/perete-dus-walk-in-kadda-w-66-sticla-transparenta-profil-cromat-90-x-200-cm/p/3057180",
+   "evidence": "cod 3057180: finalPrice 296 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-9",
+   "price": 624.97,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/perete-dus-tip-walk-in-seldus-emy105-sticla-transparenta-profil-negru-90-x-200-cm/p/3052052",
+   "evidence": "cod 3052052: finalPrice 624.97 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-10",
+   "price": 738.95,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/perete-dus-tip-walk-in-seldus-st6-sticla-transparenta-profil-auriu-120-x-200-cm/p/3052058",
+   "evidence": "cod 3052058: finalPrice 738.95 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-12",
+   "price": 1219.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cabina-dus-semirotunda-cersanit-s158-005-90-x-90-x-185-cm-sticla-securizata-transparenta-profil-cromat/p/3041213",
+   "evidence": "cod 3041213: finalPrice 1219.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-13",
+   "price": 3790,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cabina-dus-dreptunghiulara-west-wst23-profil-gri-120-x-80-x-200-cm/p/3053003",
+   "evidence": "cod 3053003: finalPrice 3790 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-wc-8",
+   "price": 1159,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vas-wc-suspendat-cersanit-zen-s701-428-alb-evacuare-orizontala-35-5-x-49-5-x-42-9-cm-capac-wc-inclus/p/3038654",
+   "evidence": "cod 3038654: finalPrice 1159 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-wc-9",
+   "price": 763.23,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vas-wc-cu-functie-de-bideu-roca-nexo-a34664t000-alb-evacuare-orizontala-montaj-suspendat-35-5-x-53-5-x-34-cm/p/3037450",
+   "evidence": "cod 3037450: finalPrice 763.23 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-wc-10",
+   "price": 1149,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vas-wc-cu-functie-de-bideu-dura-petra-6033mb-negru-mat-evacuare-orizontala-montaj-suspendat-35-5-x-54-x-40-cm/p/3047516",
+   "evidence": "cod 3047516: finalPrice 1149 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-wc-11",
+   "price": 968.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/vas-wc-cu-rezervor-mecanism-capac-set-hansgrohe-gladelake-s-60312450-alb-evacuare-dubla-montaj-pe-pardoseala/p/3055424",
+   "evidence": "cod 3055424: finalPrice 968.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-caloriferBaie-0",
+   "price": 1439,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-electric-baie-radox-round-portprosop-drept-cromat-500-x-800-mm-accesorii-montaj/p/2035018",
+   "evidence": "cod 2035018: finalPrice 1439 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-caloriferBaie-1",
+   "price": 3580,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/calorifer-electric-baie-radox-aztec-portprosop-drept-negru-600-x-1265-mm-accesorii-montaj/p/2035174",
+   "evidence": "cod 2035174: finalPrice 3580 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-coloanaBaie-0",
+   "price": 690,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/dulap-baie-suspendat-frame-2-usi-rigoletto-gri-143-x-35-x-32-cm/p/3032235",
+   "evidence": "cod 3032235: finalPrice 690 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-coloanaBaie-1",
+   "price": 405,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/dulap-pe-sol-pentru-masina-de-spalat-badenmob-eco-19537-2-usi-alb-64-x-195-x-27-cm/p/3056901",
+   "evidence": "cod 3056901: finalPrice 405 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulapOglinda-0",
+   "price": 308,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/dulap-baie-cu-oglinda-iluminare-si-polita-1-usa-dreapta-neo-alb-55-x-14-x-71-cm/p/3022782",
+   "evidence": "cod 3022782: finalPrice 308 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulapOglinda-1",
+   "price": 562,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/dulap-baie-cu-oglinda-si-iluminare-3-usi-savini-due-fly-77-x-16-x-71-cm/p/3021551",
+   "evidence": "cod 3021551: finalPrice 562 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulapOglinda-2",
+   "price": 726,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/oglinda-baie-cu-led-goodmob-avonia-diametru-60-cm-actionare-touch-rotunda/p/3049631",
+   "evidence": "cod 3049631: finalPrice 726 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulapOglinda-3",
+   "price": 749,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/oglinda-baie-cu-led-h-501-80-x-65-cm-actionare-touch-rotunda-cu-etajera-alb/p/3033782",
+   "evidence": "cod 3033782: finalPrice 749 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-boiler-0",
+   "price": 1798.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/boiler-electric-ariston-velis-tech-100-afisaj-digital-ipx4-functie-eco-80-l-1500-w/p/2033764",
+   "evidence": "cod 2033764: finalPrice 1798.99 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plantaArtificiala-0",
+   "price": 199.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/fejka-planta-artificiala-interior-exterior-palmier-areca-00600894/",
+   "evidence": "offers.price=199.9 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plantaArtificiala-1",
+   "price": 349,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/fejka-planta-artificiala-interior-exterior-ficus-benjamina-10610604/",
+   "evidence": "offers.price=349 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plantaArtificiala-2",
+   "price": 349,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/fejka-planta-artificiala-interior-exterior-strelizia-nikolai-70610601/",
+   "evidence": "offers.price=349 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plantaNaturala-0",
+   "price": 89.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/calathea-planta-naturala-calathea-asortate-10258829/",
+   "evidence": "offers.price=89.9 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plantaNaturala-1",
+   "price": 189.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/planta-interior-codiaeum-petra-croton-h-70-cm-d-21-cm/p/7016732",
+   "evidence": "cod 7016732: finalPrice 189.9 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plantaNaturala-2",
+   "price": 199.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/dypsis-lutescens-planta-naturala-palmier-areca-46804005/",
+   "evidence": "offers.price=199.9 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plantaNaturala-3",
+   "price": 299.98,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/planta-interior-ficus-ginseng-s-shape-h-55-cm-d-22-cm/p/7036495",
+   "evidence": "cod 7036495: finalPrice 299.98 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-lampadar-0",
+   "price": 49.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/barlast-lampadar-negru-alb-10430368/",
+   "evidence": "offers.price=49.9 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-lampadar-1",
+   "price": 142,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/lampadar-action-pro-74103-e27-e14-1800-mm-bej-alb-modern/p/1118888",
+   "evidence": "cod 1118888: finalPrice 142 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-lampadar-2",
+   "price": 279,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kinnahult-lampadar-frasin-alb-10559257/",
+   "evidence": "offers.price=279 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-lampadar-3",
+   "price": 1799,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/evedal-lampadar-marmura-gri-40358592/",
+   "evidence": "offers.price=1799 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-veioza-0",
+   "price": 24.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/lampan-veioza-alb-20046988/",
+   "evidence": "offers.price=24.9 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-veioza-1",
+   "price": 66.91,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/veioza-four-01-1375-1-x-e14-lemn-bej-modern/p/1049349",
+   "evidence": "cod 1049349: finalPrice 66.91 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-veioza-2",
+   "price": 119.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/arstid-veioza-alama-alb-30321373/",
+   "evidence": "offers.price=119.9 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-veioza-3",
+   "price": 202.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/veioza-dalton-15885t-1-x-e27-negru-fumuriu-modern/p/1086837",
+   "evidence": "cod 1086837: finalPrice 202.9 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-veioza-4",
+   "price": 349,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/snoebyar-veioza-gri-turcoaz-ceramica-gri-50450401/",
+   "evidence": "offers.price=349 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-semineu-0",
+   "price": 1429,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/focar-semineu-electric-de-perete-art-flame-madrid-negru-metal-efect-flacara-telecomanda-1-5-kw-1280-x-550-x-140-mm/p/2023436",
+   "evidence": "cod 2023436: finalPrice 1429 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-semineu-1",
+   "price": 1449,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/semineu-electric-decorativ-de-perete-london-negru-2-kw-1000-x-450-x-130-mm/p/2021008",
+   "evidence": "cod 2021008: finalPrice 1449 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-semineu-2",
+   "price": 1999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/semineu-electric-decorativ-de-perete-safecare-5201-wi-fi-alb-din-metal-2-kw-1240-x-540-x-187-mm/p/2038192",
+   "evidence": "cod 2038192: finalPrice 1999 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-semineu-3",
+   "price": 2448.11,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/focar-semineu-electric-incorporabil-paxton-a-801-65-negru-1-5-kw-3d-efect-12-culori-2-trepte-1500-x-240-x-500-mm/p/2035689",
+   "evidence": "cod 2035689: finalPrice 2448.11 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-semineu-4",
+   "price": 2919,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/focar-semineu-electric-incorporabil-safecare-yfg-5001werb-negru-metal-1-8-kw-3d-sunet-wi-fi-7-culori-1250-x-320-x-555-mm/p/2033641",
+   "evidence": "cod 2033641: finalPrice 2919 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-focarLemne-0",
+   "price": 2249,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/focar-semineu-etna-a-din-fonta-cu-regulator-tiraj-66-x-62-2-x-35-5-cm/p/2033911",
+   "evidence": "cod 2033911: finalPrice 2249 lei"
+  },
+  {
+   "kind": "o",
+   "id": "offer-focarLemne-1",
+   "price": 3490,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/focar-semineu-remus-din-fonta-cu-regulator-tiraj-830-x-750-x-432-mm/p/2024736",
+   "evidence": "cod 2024736: finalPrice 3490 lei (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-0",
+   "price": 199,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/billy-biblioteca-alb-50263838/",
+   "evidence": "offers.price=199 RON; pagina produsului: „BILLY bibliotecă, alb, 40x28x202 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-noptiera-2",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-noptiera-gri-verde-maro-deschis-vopsit-50610739/",
+   "evidence": "offers.price=299 RON; pagina produsului: „HEMNES Noptieră, gri-verde/maro deschis vopsit, 46x35 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulap-2",
+   "price": 649,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kleppstad-dulap-de-haine-cu-usi-glisante-alb-90437238/",
+   "evidence": "offers.price=649 RON; pagina produsului: „KLEPPSTAD dulap de haine cu uşi glisante, alb, 117x55x176 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-birou-1",
+   "price": 449,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/micke-birou-alb-90214308/",
+   "evidence": "offers.price=449 RON; pagina produsului: „MICKE Birou, alb, 142x50 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-birou-3",
+   "price": 99.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/torald-birou-alb-90493955/",
+   "evidence": "offers.price=99.9 RON; pagina produsului: „TORALD birou, alb, 65x40 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-1",
+   "price": 699,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/markus-scaun-rotativ-vissle-gri-inchis-70261150/",
+   "evidence": "offers.price=699 RON; pagina produsului: „MARKUS scaun rotativ, Vissle gri închis, Mediu (M)  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-2",
+   "price": 899,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/markus-scaun-rotativ-vissle-gri-inchis-10588801/",
+   "evidence": "offers.price=899 RON; pagina produsului: „MARKUS scaun rotativ, Vissle gri închis, Mare (L)  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-frigider-2",
+   "price": 3499,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/alingsas-frigider-congelator-ikea-500-independent-inox-20567959/",
+   "evidence": "offers.price=3499 RON; pagina produsului: „ALINGSÅS frigider/congelator, IKEA 500 independent/inox, 210/106 l  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plita-0",
+   "price": 1199,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/vilsta-plita-cu-inductie-ikea-300-negru-90557725/",
+   "evidence": "offers.price=1199 RON; pagina produsului: „VILSTA plită cu inducţie, IKEA 300 negru, 59 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plita-1",
+   "price": 1699,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/matmaessig-plita-cu-inductie-ikea-300-negru-10467093/",
+   "evidence": "offers.price=1699 RON; pagina produsului: „MATMÄSSIG plită cu inducţie, IKEA 300 negru, 59 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cuptor-0",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/lagan-cuptor-alb-10600054/",
+   "evidence": "offers.price=999 RON; pagina produsului: „LAGAN cuptor, alb  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cuptor-1",
+   "price": 1999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/mataelskare-cuptor-cu-convectie-ikea-300-inox-40368765/",
+   "evidence": "offers.price=1999 RON; pagina produsului: „MATÄLSKARE Cuptor cu convecţie, aspect inox  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-hota-0",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/lagan-hota-perete-alb-50401383/",
+   "evidence": "offers.price=299 RON; pagina produsului: „LAGAN Hotă perete, alb  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-hota-1",
+   "price": 399,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/viggbo-hota-perete-ikea-300-negru-40593132/",
+   "evidence": "offers.price=399 RON; pagina produsului: „VIGGBO hotă perete, IKEA 300 negru, 52 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dus-0",
+   "price": 959.05,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/cabina-dus-patrata-seldus-eur4-sticla-securizata-transparenta-profil-cromat-90-x-90-x-190-cm/p/3054624",
+   "evidence": "cod 3054624: finalPrice 959.05 lei; pagina produsului: „Cabina dus patrata, Seldus EUR4, sticla securizata transparenta, profil cromat, 90 x 90 x ” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-oglinda-1",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-baie-cu-oglinda-alb-80217675/",
+   "evidence": "offers.price=999 RON; pagina produsului: „HEMNES Dulap oglindă cu 2 uşi, alb, 103x16x98 cm  - IKEA” (linkul vechi ducea la alt produs)"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-fereastra-pvc-termopan-5-camere-alb-86-x-116-cm-dubla-deschidere-dreap",
+   "price": 469,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/fereastra-pvc-termopan-5-camere-alb-86-x-116-cm-dubla-deschidere-dreapta/p/6019494",
+   "evidence": "cod 6019494: finalPrice 469 lei /bucată (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-fereastra-pvc-termopan-gealan-6-camere-nuc-116-x-114-cm-fixa-dubla-des",
+   "price": 1090,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/fereastra-pvc-termopan-gealan-6-camere-nuc-116-x-114-cm-fixa-dubla-deschidere-dreapta/p/6072411",
+   "evidence": "cod 6072411: finalPrice 1090 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-fereastra-pvc-termopan-gealan-6-camere-gri-antracit-146-x-114-cm-fixa",
+   "price": 1215,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/fereastra-pvc-termopan-gealan-6-camere-gri-antracit-146-x-114-cm-fixa-dubla-deschidere-dreapta/p/6072423",
+   "evidence": "cod 6072423: finalPrice 1215 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-fereastra-mansarda-velux-standard-gll-ck04-1061-operare-de-sus-55-x-98",
+   "price": 2041,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/fereastra-mansarda-velux-standard-gll-ck04-1061-operare-de-sus-55-x-98-cm/p/6030535",
+   "evidence": "cod 6030535: finalPrice 2041 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-fereastra-mansarda-velux-standard-gll-mk08-1061-operare-de-sus-78-x-14",
+   "price": 2696,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/fereastra-mansarda-velux-standard-plus-gll-mk08-1061-operare-de-sus-78-x-140-cm/p/6031434",
+   "evidence": "cod 6031434: finalPrice 2696 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "emag-fereastra-pvc-aluplast-cu-geam-termopan-barrier-75-antracit-1160x860-m",
+   "price": 1308.98,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/fereastra-pvc-aluplast-cu-geam-termopan-barrier-75-antracit-1160x860-mm-profil-70-mm-1-canat-protectie-solara-oscilobatant-bagheta-warm-edge-5-camere-2-garnituri-b752706586a/pd/DC15D33BM/",
+   "evidence": "offers.price=1308.98 RON"
+  },
+  {
+   "kind": "m",
+   "id": "emag-fereastra-pvc-termopan-klass-6-camere-izolare-1200x1000-mm-gri-antraci",
+   "price": 939.46,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/fereastra-pvc-termopan-klass-6-camere-izolare-1200x1000-mm-gri-antracit-deschidere-oscilobatanta-dreapta-102397/pd/DWDBC03BM/",
+   "evidence": "offers.price=939.46 RON"
+  },
+  {
+   "kind": "m",
+   "id": "emag-fereastra-termopan-kobezol-lemn-masiv-deschidere-centrala-dreapta-vops",
+   "price": 3627.58,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/fereastra-termopan-kobezol-lemn-masiv-deschidere-centrala-dreapta-vopsit-antracit-118x148-cm-kob-61/pd/DR75MQMBM/",
+   "evidence": "offers.price=3627.58 RON"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-priza-schuko-simpla-schneider-electric-asfora-eph2900221-incastrat-ram",
+   "price": 14.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/priza-schuko-simpla-schneider-electric-asfora-eph2900221-incastrat-rama-inclusa-contact-de-protectie-alb/p/1036843",
+   "evidence": "cod 1036843: finalPrice 14.9 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-intrerupator-simplu-schneider-electric-asfora-eph0100121-incastrat-ram",
+   "price": 14.24,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/intrerupator-simplu-schneider-electric-asfora-eph0100121-incastrat-rama-inclusa-alb/p/1036845",
+   "evidence": "cod 1036845: finalPrice 14.24 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-intrerupator-simplu-gewiss-chorus-gw10001-1bl-incastrat-modular-1-alb",
+   "price": 12.85,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/intrerupator-simplu-gewiss-chorus-gw10001-1bl-incastrat-modular-1-alb/p/1029198",
+   "evidence": "cod 1029198: finalPrice 12.85 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-priza-schuko-simpla-gewiss-chorus-gw14203-1bl-incastrata-modulara-1-co",
+   "price": 31.84,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/priza-schuko-simpla-gewiss-chorus-gw14203-1bl-incastrata-modulara-1-contact-de-protectie-gri-titan/p/1029220",
+   "evidence": "cod 1029220: finalPrice 31.84 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "termix-termostat-wireless-programabil-salus-rt510rf",
+   "price": 391.63,
+   "seenAt": "2026-11-18",
+   "url": "https://www.termix.ro/en/cumpara/wireless-programmable-thermostat-salus-rt510rfplus-911",
+   "evidence": "offers.price=391.63 RON"
+  },
+  {
+   "kind": "m",
+   "id": "intrare-usa-interior-metalica-megadoor-prestige-1-lux-1017-dreapta-alb-88-x-20",
+   "price": 1859,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/usa-interior-metalica-megadoor-prestige-1-lux-1017-dreapta-alb-88-x-200-cm/p/6038991",
+   "evidence": "cod 6038991: finalPrice 1859 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "intrare-usa-interior-metalica-megadoor-prestige-1-lux-dreapta-gri-antracit-88-",
+   "price": 1859,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/usa-interior-metalica-megadoor-prestige-1-lux-dreapta-gri-antracit-88-x-200-cm/p/6037354",
+   "evidence": "cod 6037354: finalPrice 1859 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "intrare-usa-interior-metalica-megadoor-elite-plus-1047-stanga-gri-antracit-ste",
+   "price": 2343,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/usa-interior-metalica-megadoor-elite-plus-1047-stanga-gri-antracit-stejar-88-x-200-cm/p/6040707",
+   "evidence": "cod 6040707: finalPrice 2343 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "intrare-usa-interior-metalica-bestimp-l05g-stanga-dreapta-maro-88-x-202-cm",
+   "price": 979,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/usa-interior-metalica-bestimp-l05g-stanga/-dreapta-maro-88-x-202-cm/p/6036309",
+   "evidence": "cod 6036309: finalPrice 979 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "intrare-usa-metalica-apartament-usa-intrare-izolatie-34-db-maco-u8-alb-202-x-8",
+   "price": 3417.04,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/usa-metalica-apartament-usa-intrare-izolatie-34-db-maco-u8-alb-202-x-88-x-13-cm-macou8alb/pd/D19PX5MBM/",
+   "evidence": "offers.price=3417.04 RON"
+  },
+  {
+   "kind": "m",
+   "id": "intrare-usa-metalica-intrare-in-apartament-main-clasa-4-antiefractie-izolatie-",
+   "price": 3446.96,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/usa-metalica-intrare-in-apartament-main-clasa-4-antiefractie-izolatie-fonica-42-decibeli-culoare-negru-exterior-stejar-interior-860x2050-mm-deschidere-stanga-pro402/pd/DP587XYBM/",
+   "evidence": "offers.price=3446.96 RON"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-ventilator-baie-axial-vents-100-dt",
+   "price": 89.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/ventilator-baie-axial-vents-100-dt-cu-timer-cu-plasa-anti-insecte-plastic-ip34-14-w-2300-rpm-95-mc/h-d-100-mm/p/2008850",
+   "evidence": "cod 2008850: finalPrice 89.9 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-ventilator-baie-axial-elicent-elegance-100",
+   "price": 165,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/ventilator-baie-axial-elicent-elegance-100-cu-clapeta-antiretur-cu-panou-decorativ-plastic-ipx4-14-w-2650-rpm-90-mc/h-d-100-mm/p/2027777",
+   "evidence": "cod 2027777: finalPrice 165 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-ventilator-baie-axial-vents-quiet",
+   "price": 239,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/ventilator-baie-axial-vents-quiet-cu-clapeta-antiretur-silentios-plastic-ip45-7-5-w-2100-rpm-97-mc/h-d-100-mm/p/2034117",
+   "evidence": "cod 2034117: finalPrice 239 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-ventilator-baie-axial-vents-quiet-style",
+   "price": 259.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/ventilator-baie-axial-vents-quiet-style-cu-panou-decorativ-plastic-ip45-7-5-w-1700-rpm-90-mc/h-d-100-mm/p/2024578",
+   "evidence": "cod 2024578: finalPrice 259.99 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-ventilator-baie-axial-turbionaire-trend-100-swm",
+   "price": 119,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/ventilator-baie-axial-turbionaire-trend-100-swm-cu-clapeta-antiretur-cu-panou-decorativ-plastic-ipx4-21-w-2600-rpm-85-mc/h-d-100-mm/p/2027766",
+   "evidence": "cod 2027766: finalPrice 119 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-ventilator-baie-axial-vents-x1",
+   "price": 134,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/ventilator-baie-axial-vents-x1-plastic-ip24-14-w-2300-rpm-99-mc/h-d-100-mm/p/2034122",
+   "evidence": "cod 2034122: finalPrice 134 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-priza-internet-schneider-electric-asfora-eph4700121-rj45-cat-6-alb",
+   "price": 53.3,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/priza-internet-schneider-electric-asfora-eph4700121-rj45-cat-6-incastrat-rama-inclusa-alb/p/1086580",
+   "evidence": "cod 1086580: finalPrice 53.3 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-priza-tv-de-capat-schneider-asfora-eph3200121-alb",
+   "price": 27.36,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/priza-tv-de-capat-asfora-eph3200121-rama-inclusa-alb/p/1036847",
+   "evidence": "cod 1036847: finalPrice 27.36 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-priza-internet-gewiss-chorus-gw10421-1bl-rj45-cat-5e-alb",
+   "price": 40.45,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/priza-internet-chorus-gw10421-1bl-rj45-cat-5e-incastrata-modulara-1-m-alba/p/1029197",
+   "evidence": "cod 1029197: finalPrice 40.45 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-priza-internet-gewiss-chorus-gw12423-utp-rj45-cat-6-negru",
+   "price": 89.75,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/priza-internet-gewiss-chorus-gw12423-utp-rj45-cat-6-modular-negru/p/1046040",
+   "evidence": "cod 1046040: finalPrice 89.75 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-priza-tv-directa-gewiss-chorus-gw10361-1bl-alb",
+   "price": 42.97,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/priza-tv-directa-tata-chorus-gw10361-1bl-modulara-1-m-alba/p/1029194",
+   "evidence": "cod 1029194: finalPrice 42.97 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "dedeman-priza-tv-gewiss-chorus-gw12361-negru",
+   "price": 58.87,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/priza-tv-chorus-gw12361-modular-1-negru/p/1035288",
+   "evidence": "cod 1035288: finalPrice 58.87 lei /bucată"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-0",
+   "price": 1699,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-tibbleby-bej-gri-s49440597/",
+   "evidence": "offers.priceSpecification.price=1699 RON (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-2",
+   "price": 1899,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-kelinge-gri-turcoaz-s39443049/",
+   "evidence": "offers.priceSpecification.price=1899 RON (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-3",
+   "price": 3500,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-grann-bomstad-negru-00519525/",
+   "evidence": "offers.priceSpecification.price=3500 RON (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comodaTv-0",
+   "price": 650,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/besta-comoda-tv-cu-usi-alb-lappviken-alb-s89330691/",
+   "evidence": "offers.priceSpecification.price=650 RON (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-3",
+   "price": 259,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kallax-etajera-alb-80275887/",
+   "evidence": "offers.priceSpecification.price=259 RON (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-4",
+   "price": 359,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/kallax-etajera-cu-usi-alb-s99017186/",
+   "evidence": "offers.priceSpecification.price=359 RON (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-0",
+   "price": 1998,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-saltea-alb-valevag-ferma-s99536842/",
+   "evidence": "offers.priceSpecification.price=1998 RON (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-1",
+   "price": 2348,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-saltea-negru-maro-valevag-ferma-s79536838/",
+   "evidence": "offers.priceSpecification.price=2348 RON (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-fotoliu-0",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/poaeng-fotoliu-furnir-mesteacan-knisa-bej-deschis-s39240787/",
+   "evidence": "offers.priceSpecification.price=299 RON (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-noptiera-6",
+   "price": 299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/gullaberg-noptiera-cu-1-sertar-cu-polita-alb-20561740/",
+   "evidence": "offers.priceSpecification.price=299 RON (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-comodaTv-4",
+   "price": 1070,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/besta-comoda-tv-usi-alb-bjoerkoeviken-frnr-stjr-s59622912/",
+   "evidence": "offers.priceSpecification.price=1070 RON (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-biblioteca-5",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-biblioteca-gri-verde-maro-deschis-vopsit-40596159/",
+   "evidence": "offers.priceSpecification.price=999 RON (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-birou-4",
+   "price": 429,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/lagkapten-alex-birou-alb-s09521595/",
+   "evidence": "offers.priceSpecification.price=429 RON (pagina arată și un preț vechi: promoție)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pantofar-6",
+   "price": 929,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/pantofar-islay-2k-mdf-hdf-pal-stejar-artisan-91-6-x-32-4-x-184-4-cm-2c/p/8130163",
+   "evidence": "cod 8130163: finalPrice 929 lei /bucată"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-0",
+   "price": 1899,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-lg-8-kg-clasa-a-1400-rpm-6-motion-inverter-direct-drive-wi-fi-alb-f4x1008nwk/pd/DR6QF5YBM/",
+   "evidence": "offers.price=1899 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-1",
+   "price": 2473.31,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-samsung-9-kg-1400-rpm-clasa-a-motor-digital-inverter-eco-bubble-wifi-smartthings-ai-energy-negru-ww90cgc04dable/pd/DCLH27YBM/",
+   "evidence": "offers.price=2473.31 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-2",
+   "price": 2240.88,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-bosch-8-kg-1400-rpm-iron-assist-hygiene-plus-ecosilence-drive-control-electronic-touch-speed-perfect-program-dark-colors-clasa-a-60-cm-alb-antracit-wan2826sby/pd/DGJ5KY2BM/",
+   "evidence": "offers.price=2240.88 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-3",
+   "price": 2779.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-electrolux-8-kg-1400-rpm-clasa-a-motor-inverter-display-led-sensicare-timemanager-alb-ew6f3484e/pd/DTP13LYBM/",
+   "evidence": "offers.price=2779.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-5",
+   "price": 3186,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-incorporabila-whirlpool-bi-wmwg-81486e-eu-8-kg-1400-rpm-clasa-a-motor-inverter-display-digital-tehnologia-al-6-lea-simt-alb-wmwg81486e/pd/D56FZD2BM/",
+   "evidence": "offers.price=3186 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-6",
+   "price": 3699.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-cu-incarcare-verticala-aeg-6-kg-1300-rpm-clasa-a-motor-inverter-cu-magnet-permanent-powercare-okomix-prosteam-prosense-powerclean-alb-ltr8e363e/pd/D5DGX3YBM/",
+   "evidence": "offers.price=3699.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-8",
+   "price": 2599,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masina-de-spalat-rufe-verticala-electrolux-perfectcare-700-ew7tn3272-6-kg-1251-rpm-clasa-b-latime-40-cm-afisaj-lcd-motor-inverter-protectie-impotriva-scurgerilor-de-apa-alb/p/3043240",
+   "evidence": "cod 3043240: finalPrice 2599 lei /bucată"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-9",
+   "price": 3225.67,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-cu-uscator-samsung-spalare-9-kg-uscare-6-kg-1400-rpm-clasa-a-spalare-clasa-d-spalare-uscare-ai-wash-ai-ecobubble-auto-dispense-ai-control-wifi-negru-wd90hg6u94bbu4/pd/D01J2K2BM/",
+   "evidence": "offers.price=3225.67 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-11",
+   "price": 3099,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-frontala-cu-uscator-gorenje-wd2a164ads-a-10-6-kg-1400rpm-clasa-a-d-antracit-kxg0102091/pd/DDQZFGMBM/",
+   "evidence": "offers.price=3099 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-uscator-0",
+   "price": 3560.22,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/uscator-de-rufe-samsung-pompa-de-caldura-9-kg-clasa-a-smartthings-ai-control-hygiene-care-ai-dry-wifi-negru-dv90db7845gbu4/pd/DP3VL93BM/",
+   "evidence": "offers.price=3560.22 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-uscator-1",
+   "price": 2999.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/uscator-de-rufe-bosch-pompa-de-caldura-8-kg-15-programe-autodry-technology-antivibration-filtru-easyclean-clasa-d-alb-negru-wth8520bby/pd/DK77M73BM/",
+   "evidence": "offers.price=2999.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-uscator-2",
+   "price": 4994.1,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/uscator-rufe-lg-rhx5009tb-9kg-turbo-dryer-dual-inverter-wifi-clasa-b-negru-mat-rhx5009tbb/pd/DSX15C2BM/",
+   "evidence": "offers.price=4994.1 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-uscator-3",
+   "price": 3749.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/uscator-de-rufe-electrolux-pompa-de-caldura-8-kg-clasa-c-motor-inverter-delicatecare-sensicare-display-led-iluminare-interioara-tambur-alb-ew7d384ae/pd/DYPDGCYBM/",
+   "evidence": "offers.price=3749.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaVase-0",
+   "price": 2799.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-vase-bosch-14-seturi-6-programe-efficientdry-sistem-rackmatic-home-connect-ecosilence-drive-tab-count-clasa-b-60-cm-alb-sms4evw08e/pd/D5XMY5YBM/",
+   "evidence": "offers.price=2799.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaVase-2",
+   "price": 1999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/lagan-masina-spalat-vase-autonoma-alb-70576744/",
+   "evidence": "offers.price=1999 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaVase-4",
+   "price": 2298.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-vase-incorporabila-bosch-14-seturi-6-programe-efficientdry-tab-count-silence-plus-sistem-rackmatic-infolight-ecosilence-drive-home-connect-60-cm-clasa-b-smv4evx08e/pd/D79MY5YBM/",
+   "evidence": "offers.price=2298.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaVase-5",
+   "price": 1999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/rengoera-masina-spalat-vase-incorporata-ikea-300-40475572/",
+   "evidence": "offers.price=1999 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-microunde-0",
+   "price": 368.59,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/cuptor-cu-microunde-heinner-25-l-control-mecanic-800-w-negru-hmw-md25mbk/pd/DQL0P4YBM/",
+   "evidence": "offers.price=368.59 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-microunde-2",
+   "price": 711.54,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/cuptor-cu-microunde-samsung-23l-800w-digital-inox-negru-ms23k3513as-eo/pd/DZZ53JBBM/",
+   "evidence": "offers.price=711.54 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-microunde-3",
+   "price": 1599.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/cuptor-cu-microunde-incorporabil-bosch-25-l-900-w-autopilot-7-butoane-retractabile-control-digital-sticla-neagra-bfl554mb0/pd/DMNDJFBBM/",
+   "evidence": "offers.price=1599.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-microunde-4",
+   "price": 1139.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/cuptor-cu-microunde-incorporabil-samsung-22-l-850-w-dezghetare-rapida-pastrare-la-cald-grill-mod-eco-interior-ceramic-negru-mg22m8254ak-e2/pd/DP3D54MBM/",
+   "evidence": "offers.price=1139.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-microunde-5",
+   "price": 899,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/lagan-cuptor-cu-microunde-incorporabil-negru-40600057/",
+   "evidence": "offers.price=899 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-hota-2",
+   "price": 802.74,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/hota-decorativa-heinner-60cm-design-t-shape-800-m-h-4-trepte-de-viteza-motor-1-x-250w-lumina-led-2-x-1-5w-2-filtre-aluminiu-control-touch-senzor-miscare-diametru-tub-evacuare-150mm-inox-sticla-neagra-/pd/DNQ0PF3BM/",
+   "evidence": "offers.price=802.74 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-hota-3",
+   "price": 1049.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/hota-incorporabila-decorativa-bosch-3-trepte-intensiv-putere-de-absorbtie-550-mc-h-60-cm-sticla-neagra-dwk65dk60/pd/DJLF60YBM/",
+   "evidence": "offers.price=1049.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-hota-4",
+   "price": 999,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/stackbo-hota-perete-ikea-300-negru-70602371/",
+   "evidence": "offers.price=999 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-hota-5",
+   "price": 839.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/hota-telescopica-incorporabila-electrolux-putere-de-absorbtie-600-mc-h-1-motor-60-cm-inox-lfp616x/pd/DC7WGVMBM/",
+   "evidence": "offers.price=839.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-hota-6",
+   "price": 695.74,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/hota-incorporabila-telescopica-samsung-putere-de-absorbtie-392-m3-h-60-cm-led-negru-nk24m1030ib-ur/pd/DSL9SSBBM/",
+   "evidence": "offers.price=695.74 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-hota-8",
+   "price": 1361,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/hota-de-tavan-klarstein-high-line-eco-578-m-h-cu-evacuare-sau-fara-evacuare-recirculare-3-trepte-de-putere-panou-touch-functie-turbo-telecomanda-filtru-de-carbon-inclus-inox-si-sticla-clasa-energetica/pd/D847TY2BM/",
+   "evidence": "offers.price=1361 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cuptor-2",
+   "price": 1899.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/cuptor-incorporabil-bosch-71-l-electric-multifunctional-grill-7-functii-autocuratare-ecoclean-hidrolitica-3d-hotair-suport-telescopic-clasa-a-negru-hba534eb3/pd/DDXMY5YBM/",
+   "evidence": "offers.price=1899.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cuptor-3",
+   "price": 1399.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/cuptor-electric-pyramis-60in-2060-md-black-glass-10-functii-clasa-a-volum-65-litri-aqua-clean-ghidaje-ambutisate-butoane-rotative-timer-digital-finisaj-sticla-neagra-pyr-202300655/pd/D8ZNP02BM/",
+   "evidence": "offers.price=1399.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cuptor-5",
+   "price": 1098.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/cuptor-electric-teka-neo-hsb-6350-ss-8-functii-thermoseal-hydrocleanr-60-cm-70l-a-inox-anti-pata-111010068/pd/D4F7FF3BM/",
+   "evidence": "offers.price=1098.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cuptor-6",
+   "price": 1299,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/stenaby-cuptor-cu-ventilatie-functie-grill-alb-ikea-300-00600059/",
+   "evidence": "offers.price=1299 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plita-3",
+   "price": 949.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/plita-incorporabila-samsung-inductie-4-zone-de-gatit-control-tactil-power-boost-indicator-caldura-reziduala-60-cm-negru-nz64m3nm1bb-ol/pd/DL2F5CMBM/",
+   "evidence": "offers.price=949.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plita-4",
+   "price": 1199,
+   "seenAt": "2026-11-18",
+   "url": "https://www.ikea.com/ro/ro/p/vilsta-plita-cu-inductie-ikea-300-negru-90557725/",
+   "evidence": "offers.price=1199 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plita-5",
+   "price": 3646.03,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/plita-incorporata-cu-inductie-electrolux-senseboil-hob2hood-functie-bridge-80-cm-eis82453/pd/DY43RXYBM/",
+   "evidence": "offers.price=3646.03 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plita-8",
+   "price": 639.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/plita-gaz-pyramis-4102-dimensiune-60x51cm-4-arzatoare-gratare-emailate-butoane-laterale-finisaj-inox-pyr-202300362/pd/DZL17P3BM/",
+   "evidence": "offers.price=639.99 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-centrala-0",
+   "price": 5497,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/centrala-termica-pe-gaz-in-condensare-ariston-alteas-one-net-24-murala-afisaj-lcd-ipx5d-protectie-inghet-fara-kit-evacuare/p/2030928",
+   "evidence": "cod 2030928: finalPrice 5497 lei /bucată"
+  },
+  {
+   "kind": "o",
+   "id": "offer-centrala-1",
+   "price": 2974,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/centrala-termica-pe-gaz-in-condensare-motan-komfort-24-murala-afisaj-digital-ipx5d-protectie-inghet-schimbator-caldura-inox-fara-kit-evacuare/p/2031533",
+   "evidence": "cod 2031533: finalPrice 2974 lei /bucată"
+  },
+  {
+   "kind": "o",
+   "id": "offer-centrala-3",
+   "price": 5293.05,
+   "seenAt": "2026-11-18",
+   "url": "https://www.termix.ro/en/cumpara/condensing-gas-boiler-ecotec-pure%20vuw-286-7-2-hint-ii-1281",
+   "evidence": "offers.price=5293.05 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-boiler-1",
+   "price": 620,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/boiler-electric-ariston-pro-1-eco-50v-slim-50-l-1800-w/p/2023123",
+   "evidence": "cod 2023123: finalPrice 620 lei /bucată"
+  },
+  {
+   "kind": "o",
+   "id": "offer-boiler-2",
+   "price": 849,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/boiler-electric-ariston-lydos-eco-80-v-75-l-1800-w/p/2023263",
+   "evidence": "cod 2023263: finalPrice 849 lei /bucată"
+  },
+  {
+   "kind": "m",
+   "id": "banda-led-hoff-3000k",
+   "price": 98.07,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/banda-led-dublu-adeziva-pentru-interior-hoff-smd-2835-12-v-24-w-2500-lm-lumina-calda-cu-alimentator-arelux-5-m/p/1070874-1048524",
+   "evidence": "cod 1070874 (produsul 893876 din formularul paginii): finalPrice 98.07 lei /pachet",
+   "per": "pack"
+  },
+  {
+   "kind": "o",
+   "id": "offer-lavoar-10",
+   "price": 1556,
+   "seenAt": "2026-11-18",
+   "url": "https://www.dedeman.ro/ro/masca-baie-lavoar-geberit-modo-cu-sertare-alb-suspendat-60-x-48-5-x-65-cm-mdf/p/3054343-3054344",
+   "evidence": "cod 3054343 (produsul 986983 din formularul paginii): finalPrice 1556 lei /pachet"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-4",
+   "price": 1836.86,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-arctic-9-kg-1400-rpm-clasa-a-motor-silent-inverter-extrasteam-ironexpress-fast-intensive-steam-child-lock-add-in-alb-aplm2wfsu29412w/pd/DKBLWFYBM/",
+   "evidence": "offers.price=1836.86 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-7",
+   "price": 3336.55,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-cu-incarcare-verticala-whirlpool-6-kg-1200-rpm-tehnologia-al-6lea-simt-clasa-b-motor-inverter-zen-display-digital-alb-tdlrbx6252bseu/pd/DRGFQBYBM/",
+   "evidence": "offers.price=3336.55 RON (vânzător: Dragtek com)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaSpalat-10",
+   "price": 2699.9,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-rufe-cu-uscator-beko-10-kg-spalare-6-kg-uscare-clasa-a-1400-rpm-motor-prosmart-inverter-homewhiz-steamcure-ultrafast-addxtra-gri-b5dft510442m/pd/DN3S3DYBM/",
+   "evidence": "offers.price=2699.9 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaVase-1",
+   "price": 1699.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-vase-arctic-14-seturi-6-programe-clasa-d-deschidere-automata-a-usii-aqua-protect-mini-35-60-cm-alb-dfn363/pd/DLD1BKMBM/",
+   "evidence": "offers.price=1699.99 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masinaVase-3",
+   "price": 2017.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/masina-de-spalat-vase-beko-10-seturi-6-programe-clasa-e-motor-prosmart-inverter-hygiene-intense-fast-45-cm-inox-bdfs26020xq/pd/DVT2FVMBM/",
+   "evidence": "offers.price=2017.99 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-microunde-1",
+   "price": 399.3,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/cuptor-cu-microunde-gorenje-17-l-5-nivele-700-w-alb-mo17e1w/pd/DC8JP1BBM/",
+   "evidence": "offers.price=399.3 RON (vânzător: ELECTRICS SHOP & BATTERY)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-hota-7",
+   "price": 7799.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/hota-insula-pyramis-corso-90cm-704mc-h-43db-touch-control-inox-si-sticla-neagra-pyr-065021701/pd/DC0T5BBBM/",
+   "evidence": "offers.price=7799.99 RON (vânzător: Pyramis)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-cuptor-4",
+   "price": 1148.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/cuptor-incorporabil-beko-electric-72-l-grill-steamshine-cleaning-timer-clasa-a-inox-bbie12300xd/pd/D04J13MBM/",
+   "evidence": "offers.price=1148.99 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plita-6",
+   "price": 999.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/plita-incorporabila-beko-gaz-4-arzatoare-arzator-wok-60-cm-sticla-neagra-hilw64225s/pd/DWWGCKBBM/",
+   "evidence": "offers.price=999.99 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-plita-7",
+   "price": 699.99,
+   "seenAt": "2026-11-18",
+   "url": "https://www.emag.ro/plita-incorporabila-whirlpool-gaz-4-arzatoare-gratare-fonta-multistep-60-cm-negru-gowl628nbee/pd/D20X32MBM/",
+   "evidence": "offers.price=699.99 RON (vânzător: eMAG)"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-13",
+   "price": 1500,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/sufragerie/canapele/canapea-egense-3-locuri-nisipie",
+   "evidence": "offers.price=1500 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-canapea-14",
+   "price": 1699,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/sufragerie/canapele/canapea-falslev-3-locuri-gri",
+   "evidence": "offers.price=1699 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-13",
+   "price": 1799,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/dormitor/paturi/cadre-de-pat-si-somiere/cadre-de-pat/cadru-pat-markskel-160x200-stejar-salbatic-alb",
+   "evidence": "offers.price=1799 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-14",
+   "price": 1350,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/dormitor/paturi/cadre-de-pat-si-somiere/cadre-de-pat/cadru-pat-limfjorden-160x200-3-sertare-alb",
+   "evidence": "offers.price=1350 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pat-15",
+   "price": 1150,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/dormitor/paturi/cadre-de-pat-si-somiere/cadre-de-pat/cadru-pat-kongsberg-160x200-bej",
+   "evidence": "offers.price=1150 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulap-9",
+   "price": 875,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/depozitare/dulapuri/dulap-fandrup-96x176-2-usi-3-sertare-stejar-deschis",
+   "evidence": "offers.price=875 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-dulap-10",
+   "price": 2000,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/depozitare/dulapuri/dulap-vellerup-200x200-4-usi-3-sertare-alb",
+   "evidence": "offers.price=2000 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-scaunBirou-12",
+   "price": 300,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/birou/scaune-de-birou/scaun-birou-billum-negru",
+   "evidence": "offers.price=300 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-pantofar-8",
+   "price": 350,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/depozitare/pantofare/pantofar-bakhuse-3-compartimente-alb",
+   "evidence": "offers.price=350 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masuta-12",
+   "price": 799,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/sufragerie/masute-de-cafea/masuta-cafea-ravnsbjerg-90x90-stejar-natur",
+   "evidence": "offers.price=799 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-15",
+   "price": 699,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/bucatarie/mese-dining/masa-aabenraa-90x160-stejar-cald-negru",
+   "evidence": "offers.price=699 RON"
+  },
+  {
+   "kind": "o",
+   "id": "offer-masa-16",
+   "price": 500,
+   "seenAt": "2026-11-18",
+   "url": "https://jysk.ro/bucatarie/mese-dining/masa-ringsted-o100-alba",
+   "evidence": "offers.price=500 RON"
+  }
+ ],
+ "notVerified": [
+  {
+   "kind": "material",
+   "id": "vopsea-savana-super",
+   "url": "https://dedeman.ro/ro/vopsea-superlavabila-interior-savana-alba-15-l-amorsa-4-l-prosop-de-plaja-cadou/p/5015076",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "ikea-dalskar-baterie-lavoar-negru",
+   "url": "https://www.ikea.com/ro/ro/p/dalskaer-baterie-lavoar-negru-70603498/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "dedeman-casa-blanca-steel-blr4a-bucatarie-inox",
+   "url": "https://www.dedeman.ro/ro/baterie-bucatarie-casa-blanca-steel-blr4a-stativ-monocomanda-inox-finisaj-inox/p/3054369",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-sistem-eclisse-cu-dimensiunea-exterioara-174-6x212-cm-pentru-usi-glisa",
+   "url": "https://www.hornbach.ro/p/sistem-eclisse-cu-dimensiunea-exterioara-174-6x212-cm-pentru-usi-glisante-84-4x204-cm/10727684/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-balustrada-pertura-din-otel-inoxidabil-2-m-40-mm",
+   "url": "https://www.hornbach.ro/p/balustrada-pertura-din-otel-inoxidabil-2-m-o40-mm/7512021/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-balustrada-pertura-forma-g-1-5-m-prindere-podea",
+   "url": "https://www.hornbach.ro/p/balustrada-pertura-forma-g-1-5-m-prindere-podea/6762473/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-aparat-aer-conditionat-chigo-12000-btu-alb-incl-kit-de-instalare-3m",
+   "url": "https://www.hornbach.ro/p/aparat-aer-conditionat-chigo-12000-btu-alb-incl-kit-de-instalare-3m/10692498/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-aparat-aer-conditionat-bosch-ac-climate-2000-12000-btu-fara-kit-de-ins",
+   "url": "https://www.hornbach.ro/p/aparat-aer-conditionat-bosch-ac-climate-2000-12000-btu-fara-kit-de-instalare/12418274/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-aparat-aer-conditionat-mitsubishi-nioko-12000-btu-wifi-ready-fara-kit-",
+   "url": "https://www.hornbach.ro/p/aparat-aer-conditionat-mitsubishi-nioko-12000-btu-wifi-ready-fara-kit-de-instalare/12524978/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-canapea-1",
+   "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-tresund-bej-deschis-s89482830/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-canapea-4",
+   "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-cu-sezlong-tresund-antracit-s99482839/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-comodaTv-1",
+   "url": "https://www.ikea.com/ro/ro/cat/comode-tv-besta-12153/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-comodaTv-2",
+   "url": "https://www.ikea.com/ro/ro/cat/comode-tv-besta-12153/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-comodaTv-3",
+   "url": "https://www.ikea.com/ro/ro/cat/comode-tv-besta-12153/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-masuta-2",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-masuta-cafea-negru-maro-10176292/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-masuta-3",
+   "url": "https://www.ikea.com/ro/ro/p/listerby-masuta-cafea-frnr-stjr-30513904/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-masa-0",
+   "url": "https://www.ikea.com/ro/ro/p/ekedalen-ekedalen-masa-4-scaune-maro-i-orrsta-gri-s69221278/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-masa-1",
+   "url": "https://www.ikea.com/ro/ro/p/ekedalen-aelvsta-masa-4-scaune-maro-i-ratan-negru-s49570819/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-masa-2",
+   "url": "https://www.ikea.com/ro/ro/p/laneberg-ekedalen-masa-4-scaune-alb-alb-gri-s89304791/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-masa-3",
+   "url": "https://www.ikea.com/ro/ro/p/ekedalen-ingolf-masa-4-scaune-alb-alb-s69482968/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-masa-4",
+   "url": "https://www.ikea.com/ro/ro/p/ekedalen-ekedalen-masa-2-scaune-maro-i-orrsta-gri-s29296874/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-pat-2",
+   "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-4-cutii-depozitare-alb-s99931611/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-pat-3",
+   "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-furnir-stejar-alb-luroey-s59027390/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-noptiera-1",
+   "url": "https://www.ikea.com/ro/ro/cat/noptiere-20656/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-bucatarie-0",
+   "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-alb-s19338049/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-bucatarie-1",
+   "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-gri-cadru-s19337399/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-bucatarie-2",
+   "url": "https://www.ikea.com/ro/ro/p/enhet-bucatarie-antracit-alb-s99337282/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-plita-2",
+   "url": "https://www.ikea.com/ro/ro/cat/familia-lagan-53227/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-lavoar-0",
+   "url": "https://www.dedeman.ro/ro/mobilier-baie/c/65",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-lavoar-1",
+   "url": "https://www.dedeman.ro/ro/chiuvete-baie-cu-masca/c/1390",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-lavoar-2",
+   "url": "https://www.dedeman.ro/ro/mobilier-baie/c/65",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-wc-0",
+   "url": "https://www.dedeman.ro/ro/seturi-rezervoare-incastrate-cu-vase-wc/c/3934",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-pantofar-0",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-pantofi-cu-4-compartimente-alb-60156121/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-pantofar-1",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-pantofi-cu-4-compartimente-negru-maro-80156120/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-pantofar-2",
+   "url": "https://www.ikea.com/ro/ro/p/hemnes-dulap-pantofi-cu-2-compartimente-negru-maro-40216908/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-pat-5",
+   "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-alb-luroey-s69002431/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-dulap-4",
+   "url": "https://www.ikea.com/ro/ro/p/songesand-dulap-de-haine-alb-90347351/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-canapea-11",
+   "url": "https://www.dedeman.ro/ro/canapea-fixa-3-locuri-panda-maro-taupe-280-x-104-x-81-cm-2c/p/8130382",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-oglinda-5",
+   "url": "https://www.dedeman.ro/ro/oglinda-decorativa-f2205-rotunda-negru-60-x-60-cm/p/3043896",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-dus-11",
+   "url": "https://www.dedeman.ro/ro/perete-dus-tip-walk-in-west-wst07-sticla-sablata-profil-cromat-90-x-200-cm/p/3050382",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-fereastra-pvc-termopan-4k-80x116-cm-alba-fixa",
+   "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-4k-80x116-cm-alba-fixa/4692264/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-fereastra-pvc-termopan-6-camere-56x56-cm-stejar-auriu-dreapta-deschide",
+   "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-6-camere-56x56-cm-stejar-auriu-dreapta-deschidere-dubla/4692254/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-fereastra-pvc-termopan-100x50-cm-alba-antracit-deschidere-batanta",
+   "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-100x50-cm-alba-antracit-deschidere-batanta/12019694/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-fereastra-pvc-termopan-5-camere-tripan-116x116-cm-alba-antracit-deschi",
+   "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-5-camere-tripan-116x116-cm-alba-antracit-deschidere-dubla-stanga-fixa/12019673/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-fereastra-pvc-termopan-6-camere-116x116-cm-stejar-auriu-fixa-deschider",
+   "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-6-camere-116x116-cm-stejar-auriu-fixa-deschidere-dubla-dreapta/6301621/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-fereastra-pvc-termopan-4-camere-142x116-cm-alba-fixa-deschidere-dubla",
+   "url": "https://www.hornbach.ro/p/fereastra-pvc-termopan-4-camere-142x116-cm-alba-fixa-deschidere-dubla-dreapta/6301636/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-usa-balcon-pvc-termopan-aron-5k-86x204-cm-alba-dreapta",
+   "url": "https://www.hornbach.ro/p/usa-balcon-pvc-termopan-aron-5k-86x204-cm-alba-dreapta/12019695/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-usa-balcon-pvc-termopan-6k-84x204-cm-stejar-auriu-dreapta-deschidere-s",
+   "url": "https://www.hornbach.ro/p/usa-balcon-pvc-termopan-6k-84x204-cm-stejar-auriu-dreapta-deschidere-simpla/4692261/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-usa-balcon-pvc-termopan-5k-86x204-cm-nuc-dreapta-deschidere-simpla",
+   "url": "https://www.hornbach.ro/p/usa-balcon-pvc-termopan-5k-86x204-cm-nuc-dreapta-deschidere-simpla/12845987/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-fereastra-de-mansarda-fakro-ftp-v-u4-78x118-cm",
+   "url": "https://www.hornbach.ro/p/fereastra-de-mansarda-fakro-ftp-v-u4-78x118-cm/10451935/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-priza-2p-e-simpla-schneider-sedna-design-obturatoare-alb",
+   "url": "https://www.hornbach.ro/p/priza-2pe-simpla-schneider-sedna-design-obturatoare-alb/12013413/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-intrerupator-simplu-schneider-sedna-design-alb",
+   "url": "https://www.hornbach.ro/p/intrerupator-simplu-schneider-sedna-design-alb/12013357/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-intrerupator-simplu-schneider-sedna-design-antracit",
+   "url": "https://www.hornbach.ro/p/intrerupator-simplu-schneider-sedna-design-antracit/12013433/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-intrerupator-simplu-fara-surub-schneider-electric-asfora-crem",
+   "url": "https://www.hornbach.ro/p/intrerupator-simplu-fara-surub-schneider-electric-asfora-crem/6132290/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-priza-simpla-cu-impamantare-legrand-valena-life-alb",
+   "url": "https://www.hornbach.ro/p/priza-simpla-cu-impamantare-legrand-valena-life-alb/10525724/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-priza-simpla-cu-impamantare-legrand-valena-life-negru-mat",
+   "url": "https://www.hornbach.ro/p/priza-simpla-cu-impamantare-legrand-valena-life-negru-mat/10553855/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-intrerupator-simplu-legrand-valena-life-alb",
+   "url": "https://www.hornbach.ro/p/intrerupator-simplu-legrand-valena-life-alb/10470675/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-intrerupator-simplu-legrand-valena-life-negru-mat",
+   "url": "https://www.hornbach.ro/p/intrerupator-simplu-legrand-valena-life-negru-mat/10553607/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-priza-simpla-cu-impamantare-panasonic-karre-plus-alb-incl-rama",
+   "url": "https://www.hornbach.ro/p/priza-simpla-cu-impamantare-panasonic-karre-plus-alb-incl-rama/10301785/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-intrerupator-simplu-panasonic-karre-plus-alb-incl-rama",
+   "url": "https://www.hornbach.ro/p/intrerupator-simplu-panasonic-karre-plus-alb-incl-rama/10301770/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-termostat-centrala-digital-programabil-wireless-bautech-i-8w",
+   "url": "https://www.hornbach.ro/p/termostat-centrala-digital-programabil-wireless-bautech-i-8w/10610598/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "intrare-usa-exterior-metalica-deceneu-88x205-cm-dreapta",
+   "url": "https://www.hornbach.ro/p/usa-exterior-metalica-deceneu-88x205-cm-dreapta/12273494/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "intrare-usa-exterior-metalica-tracia-classic-88x205-cm-stanga",
+   "url": "https://www.hornbach.ro/p/usa-de-intrare-metalica-pentru-exterior-tracia-classic-88x205-cm-stanga/10276606/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "intrare-usa-exterior-metalica-callatis-88x205-cm-dreapta",
+   "url": "https://www.hornbach.ro/p/usa-exterior-metalica-callatis-88x205-cm-dreapta/6342556/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "intrare-usa-exterior-metalica-still-627-1-gri-antracit-1-geam-88x201-cm-dreapt",
+   "url": "https://www.hornbach.ro/p/usa-exterior-metalica-still-627-1-gri-antracit-1-geam-88x201-cm-dreapta/10369539/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "intrare-usa-exterior-metalica-still-627-1-2-geamuri-gri-140x201-cm-stanga",
+   "url": "https://www.hornbach.ro/p/usa-de-intrare-metalica-pentru-exterior-still-627-1-2-geamuri-gri-140x201-cm-stanga/10369535/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "intrare-usa-exterior-metalica-antracit-98x205-cm-stanga",
+   "url": "https://www.hornbach.ro/p/usa-exterior-metalica-antracit-98x205-cm-stanga/12700457/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "intrare-usa-exterior-metalica-arhitect-425-nuc-wenge-120x201-cm-dreapta",
+   "url": "https://www.hornbach.ro/p/usa-exterior-metalica-arhitect-425-nuc-wenge-120x201-cm-dreapta/10369528/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "intrare-usa-de-intrare-metalica-pentru-interior-n25-maro-88x201-cm-stanga",
+   "url": "https://www.hornbach.ro/p/usa-de-intrare-metalica-pentru-interior-n25-maro-88x201-cm-stanga/10473378/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-ventilator-axial-elplast-cu-masca-inox-100-mm",
+   "url": "https://www.hornbach.ro/p/ventilator-axial-elplast-cu-masca-inox-o-100-mm/5499366/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-ventilator-axial-elplast-pentru-baie-cu-masca-100-mm",
+   "url": "https://www.hornbach.ro/p/ventilator-axial-elplast-pentru-baie-cu-masca-o-100-mm/5527271/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-priza-date-rj45-simpla-schneider-sedna-design-cat6-utp-alb",
+   "url": "https://www.hornbach.ro/p/priza-date-rj45-simpla-schneider-sedna-design-cat6-utp-alb/12013416/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-priza-tv-de-capat-schneider-sedna-design-4db-alb",
+   "url": "https://www.hornbach.ro/p/priza-tv-de-capat-shneider-sedna-design-4db-alb/12013389/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "material",
+   "id": "hornbach-priza-date-rj45-simpla-legrand-valena-life-cat6-negru-mat",
+   "url": "https://www.hornbach.ro/p/priza-date-rj45-simpla-legrand-valena-life-cat6-negru-mat/10553858/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-centrala-2",
+   "url": "https://www.hornbach.ro/p/centrala-termica-pe-gaz-in-condensatie-bosch-condens-gc5700iw-30-30-c-23-30-kw-acm-30-kw/12299061/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  },
+  {
+   "kind": "offer",
+   "id": "offer-boiler-3",
+   "url": "https://www.hornbach.ro/p/boiler-electric-tesy-bilight-100-l-2000-w-termostat-reglabil/8861585/",
+   "status": "manual",
+   "why": "preț negăsit clar în pagină"
+  }
+ ],
+ "relinkNotApplied": [
+  {
+   "id": "offer-comodaTv-1",
+   "name": "BESTÅ comodă TV + uși, alb/Lappviken, 240x42x38",
+   "why": "Model, culoare (alb/Lappviken alb) și dimensiuni identice."
+  },
+  {
+   "id": "offer-comodaTv-2",
+   "name": "BESTÅ comodă TV cu uși, aspect stejar antichizat, 120x42x74",
+   "why": "variantă nesigură (marcată de agent)"
+  },
+  {
+   "id": "offer-comodaTv-3",
+   "name": "BESTÅ comodă TV, alb, 120x40x48 (deschisă)",
+   "why": "Varianta deschisă, fără uși, alb, aceleași dimensiuni."
+  },
+  {
+   "id": "offer-noptiera-1",
+   "name": "SONGESAND noptieră, alb, 42x40 cm",
+   "why": "negăsit de agent: Pagina cunoscută de motoare (/ro/ro/p/songesand-noptiera-alb-30367441/) redirecționează acum la /ro/ro/cat/produse-products/; nu apare în prima pagină a categoriei noptiere. Probabil scos din vânzare pe ikea.ro; neconfirmat definitiv."
+  },
+  {
+   "id": "offer-plita-2",
+   "name": "LAGAN plită cu inducție plug-in, 2 zone",
+   "why": "negăsit de agent: Pagina cunoscută (/ro/ro/p/lagan-plita-cu-inductie-plug-in-2-zone-negru-70506096/) redirecționează la /ro/ro/cat/produse-products/, iar pagina familiei LAGAN nu conține nicio plită. Probabil scos din vânzare pe ikea.ro."
+  },
+  {
+   "id": "offer-lavoar-0",
+   "name": "Mască baie + lavoar Goodmob Nemo/Neon 60, alb, suspendat",
+   "why": "variantă nesigură (marcată de agent)"
+  },
+  {
+   "id": "offer-lavoar-1",
+   "name": "Mască baie + lavoar Larisa, cu uși, alb, 60x33.6x72",
+   "why": "Titlu identic cu numele din catalog."
+  },
+  {
+   "id": "offer-lavoar-2",
+   "name": "Mască baie + lavoar Goodmob Crea/Neon, negru, suspendat, 60 cm",
+   "why": "negăsit de agent: Nu există pagină cu pachet mască Crea 60 negru + lavoar Neon fără dulap cu oglindă. Găsite doar: pachet cu dulap cu oglindă (p/3046665-3046678-3046469, ~1217.99 lei), masca Crea 60 negru singură cu uși (3046665, ~521 lei) sau cu sertare (3046692, ~760 lei) și lavoarul Neon 60 (3046469). Nu aleg alt produs."
+  },
+  {
+   "id": "offer-wc-0",
+   "name": "Set rezervor încastrat + vas WC Grohe Solido 4 în 1, Rimless",
+   "why": "Singura pagină 'Solido 4 in 1, Rimless'; există și varianta Square 39467000, neverificată. Fără localitate selectată, fetch-ul simplu nu arată prețul; l-am citit în browser. Prețul s-a schimbat față de 1389."
+  }
+ ]
+}

@@ -12,7 +12,7 @@ import { floorToPlan, planToFloor } from '../features/migration/legacy.js';
 import { viewerInput } from '../lib/viewer-input';
 import { describePlan } from '../core/plan-describe';
 import { translator } from '../lib/i18n';
-import { planToDxf } from '../core/dxf';
+import { planToDxf, dxfLayerName } from '../core/dxf';
 import { nicheGeometry, nicheRoom, nicheSide, nicheTileArea } from '../core/niches';
 import { addLevel } from '../core/levels';
 import { selectionBox } from '../core/frame';
@@ -26,7 +26,8 @@ const cat = catalogJson as unknown as Catalog, mc = materialsJson as unknown as 
 // camera 5 × 4 m cu pereți exteriori (wall-1 = latura de nord, de la [0,0] la [5,0], fereastră la 1,8–3,2 m) și ușa de intrare pe wall-4
 const blank = (): Snapshot => newSnapshot(cat, 'Unelte', 'blank');
 const desc = (s: Snapshot) => describePlan(s, cat, { t: translator('ro'), units: 'metric', lang: 'ro' }).flatMap(g => g.items);
-const ents = (dxf: string, type: string, layer: string) => dxf.split(`0\n${type}\n8\n${layer}\n`).length - 1;
+// stratul se dă cu identificatorul din cod (WALLS); fișierul românesc îl scrie tradus (PERETI)
+const ents = (dxf: string, type: string, layer: string) => dxf.split(`0\n${type}\n8\n${dxfLayerName(layer, 'ro')}\n`).length - 1;
 
 describe('gol de trecere', () => {
   const withPassage = () => { const s = blank(); s.floor.walls[0]!.openings.push({ id: 'tr-1', kind: 'door', offset: .3, width: .9, passage: true }); return s; };
@@ -142,7 +143,7 @@ describe('cote persistente și text', () => {
     const s = withNotes(); s.floor.annotations!.push({ id: 'text-2', kind: 'text', at: [2, 2], text: 'a\b %%c' });
     const dxf = planToDxf(s, cat, { lang: 'ro' }), base = planToDxf(blank(), cat, { lang: 'ro' });
     assert.equal(ents(dxf, 'LINE', 'DIMENSIONS'), ents(base, 'LINE', 'DIMENSIONS') + 10); assert.ok(dxf.includes('\n1\n5000\n')); assert.ok(dxf.includes('\n1\n3000\n'));
-    assert.equal(ents(dxf, 'TEXT', 'NOTES'), 2); assert.ok(dxf.includes('2\nNOTES\n')); assert.ok(!dxf.includes('a\b')); assert.ok(!dxf.includes('%%c'));
+    assert.equal(ents(dxf, 'TEXT', 'NOTES'), 2); assert.ok(dxf.includes('2\nNOTE\n')); assert.ok(!dxf.includes('a\b')); assert.ok(!dxf.includes('%%c'));
   });
   test('server: textul fără marcaj; o cotă de 0 cm respinsă; proiectul vechi fără adnotări rămâne la fel', () => {
     const s: any = withNotes(); s.floor.annotations[2].text = '<img src=x onerror=alert(1)>'; const r: any = checkSnapshot(s);

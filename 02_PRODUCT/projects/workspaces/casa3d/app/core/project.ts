@@ -7,8 +7,9 @@ import { getTemplate, localizeRoomNames } from './templates';
 import { floors, levelView, mergeLevel, levelOfRoom } from './levels';
 import { refineFurnishing } from './furnish';
 import { decorateSnapshot } from './decor';
+import { randomId } from './uuid';
 
-const uid = () => (globalThis.crypto as Crypto).randomUUID();
+const uid = () => randomId();
 
 export function defaultSelections(cat: Catalog){ const s: Record<string, string> = {}; for (const v of cat.variants){ const g = groupOf(v.id); if (v.legacyIndex === 0) s[g] = v.id; } return s; }
 export function emptyFloor(h = 2.6): Floor {

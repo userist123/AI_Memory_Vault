@@ -14,6 +14,7 @@ import { openingsOnSide, doorZones, doorZoneDepth } from './validate';
 import { rectHit, insideRect, r3 } from './geometry';
 import { DINING_CLEARANCE } from './rules';
 import { activeOpenings } from './renovation';
+import { randomId } from './uuid';
 
 type Side = 'N' | 'S' | 'W' | 'E';
 const SIDES: Side[] = ['N', 'E', 'S', 'W'];
@@ -28,7 +29,7 @@ export const FURNISH_RULES = { deskMinArea: 11, smallWcWidth: 1.6, smallWcArea: 
 
 const area = (r: RoomRect) => (r.x1 - r.x0) * (r.z1 - r.z0);
 const horizontal = (s: Side) => s === 'N' || s === 'S';
-const uid = () => (globalThis.crypto as Crypto).randomUUID();
+const uid = () => randomId();
 
 interface Item { group: string; variantId: string; fp: RoomRect; front: RoomRect | null; x: number; z: number; rot: number; side?: Side; along?: number; ghost?: boolean; keep?: boolean; id?: string; source?: 'auto' | 'manual'; size?: FurniturePlacement['size'] }
 /** `extra`: zone interzise amprentei și zonei din față; `extraFp`: zone interzise doar amprentei (ex. bătaia ușii pentru pat). */

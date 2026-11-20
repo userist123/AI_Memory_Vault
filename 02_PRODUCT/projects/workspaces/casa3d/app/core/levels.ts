@@ -6,6 +6,7 @@ import type { Catalog, Floor, Issue, RoomRect, Snapshot, Stair } from './types';
 import { footprintAt, insideRect, rectHit } from './geometry';
 import { footprintOf, doorZones } from './validate';
 import { isDemolished } from './renovation';
+import { randomId } from './uuid';
 
 /** Grosimea plăcii dintre niveluri (m); cota unui nivel = înălțimile de sub el + câte o placă. */
 export const SLAB = 0.2;
@@ -51,7 +52,7 @@ export function mergeLevel(full: Snapshot, i: number, view: Snapshot): Snapshot 
  *  nișele lor); pereții noi se copiază ca ceilalți. */
 export function addLevel(s: Snapshot, o: { name: string; id?: () => string }): Snapshot {
   const fl = floors(s); if (fl.length >= MAX_LEVELS) throw new RangeError(`Cel mult ${MAX_LEVELS} niveluri.`);
-  const id = o.id ?? (() => globalThis.crypto.randomUUID().slice(0, 8)), top = fl[fl.length - 1];
+  const id = o.id ?? (() => randomId().slice(0, 8)), top = fl[fl.length - 1];
   // pereții primesc id-uri noi; nișele îi urmează pe pereții lor; cotele și textele țin de planșa nivelului, nu se copiază
   const kept = top.walls.filter(w => !isDemolished(w)), wallIds = new Map(kept.map(w => [w.id, `wall-${id()}`]));
   const floor: Floor = { id: `nivel-${id()}`, name: o.name, ceilingHeight: top.ceilingHeight,

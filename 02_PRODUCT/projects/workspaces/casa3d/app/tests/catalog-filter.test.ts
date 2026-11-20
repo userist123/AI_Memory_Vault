@@ -34,7 +34,9 @@ describe('catalog-filter', () => {
     assert.equal(searchCatalog(cat, { retailers: ['IKEA', 'Dedeman'] }).filter(r => r.offerId).length, ikea.length + ded.length);
     const jysk = searchCatalog(cat, { retailers: ['jysk-ro'] }), mob = searchCatalog(cat, { retailers: ['Mobexpert'] });
     assert.ok(jysk.length > 0 && jysk.every(r => r.retailer === 'JYSK') && mob.length > 0 && mob.every(r => r.retailer === 'Mobexpert'));
-    assert.equal(searchCatalog(cat, { markets: ['RO'] }).filter(r => r.offerId).length, ikea.length + ded.length + jysk.length + mob.length);
+    // magazinele adăugate pe 2026-11-10 (electrocasnice, centrale, boilere): eMAG, Hornbach, Termix
+    const rest = ['hornbach', 'emag-ro', 'termix'].reduce((a, r) => a + searchCatalog(cat, { retailers: [r] }).filter(x => x.offerId).length, 0);
+    assert.equal(searchCatalog(cat, { markets: ['RO'] }).filter(r => r.offerId).length, ikea.length + ded.length + jysk.length + mob.length + rest);
     assert.equal(searchCatalog(cat, { markets: ['DE'] }).length, 0);
   });
   test('limite de preț: necunoscutele ies doar când e setată o limită', () => {

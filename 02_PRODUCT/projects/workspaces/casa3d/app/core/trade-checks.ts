@@ -31,7 +31,9 @@ function lateralClearance(room: Room, p: FurniturePlacement, fp: RoomRect, other
 }
 const distToRect = (x: number, z: number, r: RoomRect) => Math.hypot(Math.max(r.x0 - x, 0, x - r.x1), Math.max(r.z0 - z, 0, z - r.z1));
 
-export function tradeChecks(snap: Snapshot, cat: Catalog, fps: Map<string, RoomRect>, nameOf: (p: FurniturePlacement) => string): Out[] {
+/** Datele produsului ales pe un punct tehnic (din catalogul de materiale), citite de pe pagina produsului; lipsa = nedeclarat. */
+export type TechProductInfo = { name: string; ip?: string; flowM3h?: number };
+export function tradeChecks(snap: Snapshot, cat: Catalog, fps: Map<string, RoomRect>, nameOf: (p: FurniturePlacement) => string, productOf: (id: string) => TechProductInfo | undefined = () => undefined): Out[] {
   const out: Out[] = [], tech = snap.tech ?? [];
   const mainRooms = snap.floor.rooms.filter(r => MAIN_ROOM_TYPES.has(r.type)).length;
   for (const room of snap.floor.rooms){
@@ -54,14 +56,25 @@ export function tradeChecks(snap: Snapshot, cat: Catalog, fps: Map<string, RoomR
       const showers = inRoom.filter(q => q.group === 'dus');
       for (const p of showers){ const fp = fps.get(p.id)!, side = r2(Math.min(fp.x1 - fp.x0, fp.z1 - fp.z0));
         if (side < NKBA.showerMin) out.push({ rule: 'SHOWER_SMALL', a: { severity: 'WARNING', category: 'ergonomie', refs: { roomId: room.id, placementIds: [p.id] }, code: 'SHOWER_SMALL', vars: { nm: nameOf(p), rn, side_m: side, min_m: NKBA.showerMin, rec_m: NKBA.showerRec } } }); }
-      // volumele electrice din baie: prize și întrerupătoare la peste 0,60 m de duș/cadă
+      // volumele electrice din baie: prize și întrerupătoare la peste 0,60 m de duș sau de cadă
+      const wet = inRoom.filter(q => q.group === 'dus' || q.group === 'cada');
       for (const t of tech.filter(t => t.roomId === room.id && ['outlet', 'outlet_double', 'switch', 'data'].includes(t.kind))){
-        const sh = showers.find(p => distToRect(t.x, t.z, fps.get(p.id)!) < BATH_ZONE2_M);
+        const sh = wet.find(p => distToRect(t.x, t.z, fps.get(p.id)!) < BATH_ZONE2_M);
         if (sh) out.push({ rule: `BATH_ZONE:${t.id}`, a: { severity: 'WARNING', category: 'siguranta', refs: { roomId: room.id, placementIds: [sh.id] }, code: 'BATH_ZONE', vars: { rn, d_m: r2(distToRect(t.x, t.z, fps.get(sh.id)!)), min_m: BATH_ZONE2_M } } });
       }
-      // baie fără fereastră: ventilator de evacuare cu debitul din I5-2022
+      // ventilatorul și corpul de iluminat aproape de duș / cadă: doar notă cu IP-ul declarat pe pagina produsului (fără un IP minim:
+      // cerințele pe volume sunt în SR HD 60364-7-701, pe care aplicația nu îl are integral) — de verificat cu electricianul
+      for (const t of tech.filter(t => t.roomId === room.id && (t.kind === 'vent_exhaust' || t.kind === 'light_point'))){
+        const sh = wet.find(p => distToRect(t.x, t.z, fps.get(p.id)!) < BATH_ZONE2_M); if (!sh) continue; const pr = t.product ? productOf(t.product) : undefined;
+        out.push({ rule: `BATH_ZONE_DEVICE:${t.id}`, a: { severity: 'TIP', category: 'siguranta', refs: { roomId: room.id, placementIds: [sh.id] }, code: pr?.ip ? 'BATH_ZONE_DEVICE' : 'BATH_ZONE_DEVICE_NOIP', vars: { rn, d_m: r2(distToRect(t.x, t.z, fps.get(sh.id)!)), min_m: BATH_ZONE2_M, ip: pr?.ip ?? '', nm: pr?.name ?? '' } } }); }
+      // baie fără fereastră: ventilator de evacuare cu debitul din I5-2022; cu ventilator ales, debitul liber declarat pe pagină
+      // e o limită de sus (debitul real scade pe tubulatură): sub cerință = avertisment, nedeclarat = de verificat, altfel nimic
       const windowless = !snap.floor.walls.some(w => activeOpenings(w).some(o => o.kind === 'window' && openingInRoom(w, o, room)));
-      if (windowless) out.push({ rule: 'VENT_BATH', a: { severity: 'WARNING', category: 'instalatii', refs: { roomId: room.id }, code: 'VENT_BATH', vars: { rn, flow: i5ExtractFlow(mainRooms).bath } } });
+      if (windowless){ const need = i5ExtractFlow(mainRooms).bath, fans = tech.filter(t => t.roomId === room.id && t.kind === 'vent_exhaust');
+        const flows = fans.map(t => (t.product ? productOf(t.product) : undefined)?.flowM3h).filter((x): x is number => typeof x === 'number' && x > 0), best = flows.length ? Math.max(...flows) : 0;
+        if (!fans.length) out.push({ rule: 'VENT_BATH', a: { severity: 'WARNING', category: 'instalatii', refs: { roomId: room.id }, code: 'VENT_BATH', vars: { rn, flow: need } } });
+        else if (!flows.length) out.push({ rule: 'VENT_BATH', a: { severity: 'TIP', category: 'instalatii', refs: { roomId: room.id }, code: 'VENT_BATH_UNKNOWN', vars: { rn, flow: need } } });
+        else if (best < need) out.push({ rule: 'VENT_BATH', a: { severity: 'WARNING', category: 'instalatii', refs: { roomId: room.id }, code: 'VENT_BATH_LOW', vars: { rn, flow: need, have: best } } }); }
     }
   }
   return out;

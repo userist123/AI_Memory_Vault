@@ -18,6 +18,8 @@ export default function ProjectHealthPanel({
 }) {
   const { lang, t } = usePrefs();
   const report = useMemo(() => evaluateProjectHealth(snap, catalog, mc), [snap, catalog, mc]);
+  // cardurile numără exact ce e în listă (inclusiv scurgerile lipsă, marcate „Atenție”), ca cifra să nu contrazică lista
+  const nBlock = report.actionsQueue.filter(a => a.severity === 'BLOCKER').length, nWarn = report.actionsQueue.filter(a => a.severity === 'WARNING').length;
 
   const scoreColor =
     report.score >= 85 ? 'var(--ok)' : report.score >= 65 ? 'var(--warn)' : 'var(--err)';
@@ -72,14 +74,14 @@ export default function ProjectHealthPanel({
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 6, fontSize: 'var(--fs-xs)' }}>
         <div style={{ padding: '6px 8px', backgroundColor: '#fff', border: '1px solid var(--line)', borderRadius: 6, textAlign: 'center' }}>
           <span className="prov">{t('health.errors')}</span>
-          <b style={{ display: 'block', color: report.facts.errorsCount > 0 ? 'var(--err)' : 'var(--ok)' }}>
-            {report.facts.errorsCount}
+          <b style={{ display: 'block', color: nBlock > 0 ? 'var(--err)' : 'var(--ok)' }}>
+            {nBlock}
           </b>
         </div>
         <div style={{ padding: '6px 8px', backgroundColor: '#fff', border: '1px solid var(--line)', borderRadius: 6, textAlign: 'center' }}>
           <span className="prov">{t('health.warnings')}</span>
-          <b style={{ display: 'block', color: report.facts.warningsCount > 0 ? 'var(--warn)' : 'var(--ok)' }}>
-            {report.facts.warningsCount}
+          <b style={{ display: 'block', color: nWarn > 0 ? 'var(--warn)' : 'var(--ok)' }}>
+            {nWarn}
           </b>
         </div>
         <div style={{ padding: '6px 8px', backgroundColor: '#fff', border: '1px solid var(--line)', borderRadius: 6, textAlign: 'center' }}>
@@ -116,7 +118,7 @@ export default function ProjectHealthPanel({
                     className={`tag ${act.severity === 'BLOCKER' ? 'ERROR' : act.severity === 'WARNING' ? 'WARNING' : 'PASS'}`}
                     style={{ fontSize: 9, padding: '1px 5px', marginRight: 6 }}
                   >
-                    {act.severity}
+                    {t(`advisor.sev.${act.severity}`)}
                   </span>
                   <span style={{ color: 'var(--ink-2)' }}>{act.title[lang === 'ro' ? 'ro' : 'en']}</span>
                 </div>

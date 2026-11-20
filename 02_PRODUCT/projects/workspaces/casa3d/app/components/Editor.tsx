@@ -1,4 +1,5 @@
 'use client';
+import { windowOpenings, windowCandidates, windowIssues } from '@/core/windows';
 import StylePanel from './StylePanel';
 import TraceabilityPanel from './TraceabilityPanel';
 import DesignOptionsLab from './DesignOptionsLab';
@@ -27,7 +28,7 @@ import { downloadSchedule } from './FinishSchedule';
 import { finishSchedule } from '@/core/finish-schedule';
 import { WALL_ITEM_KINDS, WALL_ITEM_CATEGORY, wallItemDefaults, furnitureBelow, wallItemFurnitureIssues } from '@/core/wall-items';
 import { materialOf, insertBand, sideSpan, FEATURE_CATEGORY, featureMarks, roomCeilingDropCm } from '@/core/finishes';
-import { doorIssues, doorSwing, doorTypeOf, isSlidingType } from '@/core/doors';
+import { doorIssues, doorOpenings, doorOptions, isBalconyDoor, doorSwing, doorTypeOf, isSlidingType } from '@/core/doors';
 import { DOOR_TYPES, DOOR_TYPE_RULES, WALL_ITEM_RULES } from '@/core/rules';
 import { normalizeHex } from '@/core/appearance';
 import { footprintOf } from '@/core/validate';
@@ -98,9 +99,11 @@ import ToolRail from './ToolRail';
 import { dimGeometry } from '@/core/annotations';
 import { describePlan, describeSelection, type MirrorItem } from '@/core/plan-describe';
 import { flushSync } from 'react-dom';
+import { randomId } from '@/core/uuid';
+import { OFFERS_GONE, OFFER_REPLACEMENTS } from '@/lib/offers-gone';
 const Viewer3D = dynamic(() => import('./Viewer3D'), { ssr: false });
 
-const uid = () => crypto.randomUUID();
+const uid = () => randomId();
 const newWallId = () => `wall-${uid().slice(0, 8)}`;
 /** Tipurile oferite de unealta „Placare” (lemnul decorativ întâi); bagheta se pune din panou. */
 const CLAD_KINDS: WallFeatureKind[] = ['slats', 'panel', 'frames', 'wallpaper', 'plaster', 'stone', 'brick', 'paint', 'tile'];
@@ -194,10 +197,12 @@ export default function Editor({ id }: { id: string }){
     return alts;
   }, [preview, snap, catalog, t]);
   const [wallItemKind, setWallItemKind] = useState<WallItemKind>('art'), [cladKind, setCladKind] = useState<WallFeatureKind>('slats'), [cladFocus, setCladFocus] = useState<{ room: string; i: number; n: number } | null>(null);
-  const toastT = useRef<any>(null), say = (msg: string) => { setToast(msg); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(''), 6000); };
+  // proiectul nu s-a putut încărca (inexistent, al altui utilizator, rețea): mesaj permanent, nu un toast care dispare și lasă „Se încarcă…”
+  const [loadFailed, setLoadFailed] = useState(false);
+  const toastT = useRef<any>(null), say =(msg: string) => { setToast(msg); clearTimeout(toastT.current); toastT.current = setTimeout(() => setToast(''), 6000); };
 
   useEffect(() => { Promise.all([fetch(`/api/projects/${id}`).then(r => r.ok ? r.json() : Promise.reject(r)), fetch('/api/catalog').then(r => r.json()), fetch('/api/health').then(r => r.json()), fetch('/api/materials').then(r => r.json())])
-    .then(([p, c, h, m]) => { setHouse(p.draft); latest.current = p.draft; baseRev.current = p.draftRev ?? null; setMeta(p.meta ?? { status: 'design' }); setCatalog(c); setMc(m); setRev(p.currentRevision); setPersistent(h.persistent); setDemo(!!h.demo); const st = readStash(store(), id); if (st){ stashOpen.current = true; setStash(st); } }).catch(() => say(t('editor.loadError')));
+    .then(([p, c, h, m]) => { setHouse(p.draft); latest.current = p.draft; baseRev.current = p.draftRev ?? null; setMeta(p.meta ?? { status: 'design' }); setCatalog(c); setMc(m); setRev(p.currentRevision); setPersistent(h.persistent); setDemo(!!h.demo); const st = readStash(store(), id); if (st){ stashOpen.current = true; setStash(st); } }).catch(() => setLoadFailed(true));
     fetch('/api/outbound').then(r => r.ok ? r.json() : null).then(setOut).catch(() => {});
     loadRevs(); }, [id]); // eslint-disable-line
   const loadRevs = () => { fetch(`/api/projects/${id}/revisions`).then(r => r.ok ? r.json() : []).then(setRevs); fetch(`/api/projects/${id}/shares`).then(r => r.ok ? r.json() : []).then(setShares); };
@@ -262,7 +267,8 @@ export default function Editor({ id }: { id: string }){
   // problemele nivelului: pereți/goluri și scările lui (cele legate de o piesă apar la piesă)
   const floorIssues = useMemo(() => snap ? [...validateFloor(snap.floor, id => roomCeilingDropCm(snap, id)), ...(catalog ? wallItemFurnitureIssues(snap, catalog, snap.floor) : []), ...(catalog ? techIssues(snap, catalog, snap.floor) : []), ...stairIss.filter(i => !i.with && snap.floor.stairs?.some(s => s.id === i.vars?.stair))] : [], [snap, stairIss, catalog]);
   const advice = useMemo(() => { if (!snap || !catalog) return [] as Advice[]; let budget; if (mc && house){ const b = computeBudget(house, catalog, mc); budget = { total: b.chosen.total, target: b.target, unknown: b.unknownItems.length }; }
-    return adviseProject(snap, catalog, { accessibility: !!snap.brief?.accessibility, budget, colorsOf: appearanceColors, currency: catalogCurrency(catalog) }); }, [snap, house, catalog, mc]);
+    return adviseProject(snap, catalog, { accessibility: !!snap.brief?.accessibility, budget, colorsOf: appearanceColors, currency: catalogCurrency(catalog),
+      productOf: id => { const m = mc?.materials.find(x => x.id === id); return m ? { name: m.name, ip: m.specs?.ip, flowM3h: m.specs?.flowM3h } : undefined; } }); }, [snap, house, catalog, mc]);
   const showAdvice = (a: Advice) => { setStageRaw(a.refs.placementIds?.length ? 'ffe' : 'survey'); const pid = a.refs.placementIds?.[0], wid = a.refs.wallIds?.[0]; if (pid) setSel({ kind: 'placement', id: pid }); else if (a.refs.roomId) setSel({ kind: 'room', id: a.refs.roomId }); else if (wid) setSel({ kind: 'wall', id: wid }); };
   // tavanul fals pe zonă se editează în Finisaje; restul planului în Releveu, piesele în Mobilier
   const focusIssue = (i: Issue) => { const tgt = issueTarget(i, snap?.floor, snap?.placements); if (!tgt) return; setStageRaw(tgt.kind === 'placement' ? 'ffe' : tgt.kind === 'ceiling_zone' ? 'finishes' : 'survey'); setSel(tgt as Sel); if (compact && sheet === 'peek') setSheet('half'); };
@@ -479,7 +485,8 @@ export default function Editor({ id }: { id: string }){
   // arborele Structură: toate nivelurile (nivelul curent refolosește descrierea de mai sus); doar în layoutul nou sau pe telefon
   const outline = useMemo(() => house && catalog && (mode === 'studio' || compact) ? buildOutliner(floors(house).map((_, i) => ({ name: levelName(i), groups: i === L ? mirror : describePlan(levelView(house, i), catalog, { t, units, lang }) }))) : [],
     [house, catalog, mode, compact, L, mirror, t, units, lang]); // eslint-disable-line react-hooks/exhaustive-deps
-  if (!snap || !catalog || !mc) return toast ? <div className="home"><p className="muted" role="status">{toast}</p></div> : <EditorSkeleton label={t('editor.loading')} />;
+  if (loadFailed) return <div className="home"><p role="alert">{t('editor.loadError')}</p><p><a className="btn" href="/">{t('nf.back')}</a></p></div>;
+  if (!snap || !catalog || !mc) return toast ?<div className="home"><p className="muted" role="status">{toast}</p></div> : <EditorSkeleton label={t('editor.loading')} />;
   const G = groups(catalog);
   const onAddWall = (a: [number, number], b: [number, number]) => mutate(s => { s.floor.walls.push({ id: `wall-${uid().slice(0, 8)}`, a, b, thickness: SEGMENT_THICKNESS.wall, exterior: false, openings: [] }); });
   // lungimea peretelui (inspector și cota din plan): core/wall-edit.ts păstrează colțul închis; un refuz se anunță, nu se aplică
@@ -685,7 +692,8 @@ export default function Editor({ id }: { id: string }){
       {health && (
         <button
           type="button"
-          className="btn sm"
+          className="btn sm tb-health"
+          aria-label={`${health.score}% · ${t('health.short')}`}
           style={{
             height: 32,
             padding: '0 10px',
@@ -903,6 +911,8 @@ export default function Editor({ id }: { id: string }){
                   <small className="prov" style={{ gridColumn: '1/-1' }}>{sw.auto ? t(sliding ? 'door.slideAuto' : 'door.swingAuto') : t('door.swingSet')}</small></div></>; })()}
             {selOp.kind === 'door' && !selOp.passage && mc && <DoorPanel op={selOp} snap={house!} mc={mc} cur={cur} onChange={(p: DoorChoice) => mutate(s => { const cur0 = s.doors?.[selOp.id] ?? {}, next = { ...cur0, ...p };
               const clean = { ...(next.product ? { product: next.product } : {}), ...(next.handle ? { handle: next.handle } : {}), ...(next.system ? { system: next.system } : {}) }; s.doors = { ...(s.doors || {}) }; if (Object.keys(clean).length) s.doors[selOp.id] = clean; else delete s.doors[selOp.id]; })} />}
+            {selOp.kind === 'window' && mc && <WindowPanel op={selOp} snap={house!} mc={mc} cur={cur} onChange={(product: string | null) => mutate(s => { s.windowUnits = { ...(s.windowUnits || {}) };
+              if (product) s.windowUnits[selOp.id] = { product }; else delete s.windowUnits[selOp.id]; if (!Object.keys(s.windowUnits).length) delete s.windowUnits; })} />}
             <button className="btn danger" onClick={del}>{t('editor.deleteOpening')}</button>
           </>}
           {/* inspector:end */}
@@ -1138,7 +1148,8 @@ export default function Editor({ id }: { id: string }){
         {stage === 'mep' && <TechPanel onDraw={() => setTool('tech')} snap={snap} show={showTech} kind={techKind} onShow={setShowTech} onKind={k => { setTechKind(k); setTool('tech'); }}
           onSuggest={() => { const pts = suggestTechPoints(snap); mutate(s => { s.tech = pts; }); setShowTech(true); say(t('tech.suggested', { n: pts.length })); }}
           onClear={() => mutate(s => { delete s.tech; })} onDelete={id => mutate(s => { s.tech = (s.tech || []).filter(p => p.id !== id); })}
-          onPatch={(id, patch) => patchTech(id, p => { Object.assign(p, patch); if (!p.product) delete p.product; })} mc={mc} cur={cur} issues={catalog ? techIssues(snap, catalog, snap.floor).map(i => ({ text: iT(i), severity: i.severity })) : []} />}
+          onPatch={(id, patch) => patchTech(id, p => { Object.assign(p, patch); if (!p.product) delete p.product; })}
+          onPatchMany={(ids, patch) => { const set = new Set(ids); mutate(s => { s.tech = (s.tech || []).map(p => set.has(p.id) ? { ...p, ...patch } : p); }); }} mc={mc} cur={cur} issues={catalog ? techIssues(snap, catalog, snap.floor).map(i => ({ text: iT(i), severity: i.severity })) : []} />}
         {stage === 'docs' && <DocsPanel id={id} lang={lang} onSchedule={() => downloadSchedule(finishSchedule(house!, catalog, mc), t, cur, snap.name || 'proiect', levelName)} />}
         {stage === 'docs' && <AdvisorPanel lang={lang} units={units} currency={cur} advice={advice} rooms={snap.floor.rooms} onShow={showAdvice} />}
         {stage === 'quote' && <BudgetWithCustom id={id} snap={house!} catalog={catalog} mc={mc} out={out} onBudget={(patch: Partial<BudgetSettings>) => mutate(s => { s.budget = { ...budgetOf(s), ...patch }; })} />}
@@ -1263,7 +1274,7 @@ function RoomPanel({ part, focusFeature, room, snap, G, cat, mc, cur, onFinish, 
     <label className="f"><span>{t('editor.addGroup')}</span><select value={grp} onChange={e => { setGrp(e.target.value); setVi(0); }}>
       {fit.suggested.length > 0 && <optgroup label={t('editor.groupsFor', { room: t(`roomType.${room.type}`) })}>{fit.suggested.map(k => <option key={k} value={k}>{G[k].label}</option>)}</optgroup>}
       <optgroup label={fit.suggested.length ? t('editor.groupsOther') : t('editor.groupsAll')}>{fit.others.map(k => <option key={k} value={k}>{G[k].label}</option>)}</optgroup></select></label>
-    <label className="f"><span>{t('editor.addVariant')}</span><select value={vi} onChange={e => setVi(Number(e.target.value))}>{(G[grp]?.variants ?? []).map((v: any, i: number) => <option key={v.id} value={i}>{v.name}</option>)}</select></label>
+    <label className="f"><span>{t('editor.addVariant')}</span><select value={vi} onChange={e => setVi(Number(e.target.value))}>{(G[grp]?.variants ?? []).map((v: any, i: number) => <option key={v.id} value={i}>{v.name}{cat.offers.find((o: { variantId: string }) => o.variantId === v.id)?.availability === 'OUT_OF_STOCK' ? ` · ${t('stock.OUT_OF_STOCK')}` : ''}</option>)}</select></label>
     <button className="btn primary" disabled={!G[grp]?.variants[vi]} onClick={() => onAdd(G[grp].variants[vi].id)}>{t('editor.addToRoom')}</button></>}
   </>);
 }
@@ -1274,7 +1285,10 @@ function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMo
   return (<>
     <h3>{rv.variant.name}</h3>
     <div className="prov">{g.label} · {room?.name} · {rv.offer ? lei(rv.offer.price) : t('common.unknownPrice')}</div>
-    {rv.offer && <div className="prov">{t('editor.provenance', { source: rv.offer.provenance.source ?? '', date: rv.offer.provenance.verifiedAt ?? '', conf: rv.offer.provenance.confidence ?? '', dimConf: rv.variant.dimensionsConfidence, stock: rv.offer.availability === 'UNKNOWN' ? t('common.unknown') : rv.offer.availability })}{freshness(rv.offer.provenance.verifiedAt).stale ? ` · ${t('editor.priceRecheck')}` : ''}</div>}
+    {rv.offer && <div className="prov">{t('editor.provenance', { source: rv.offer.provenance.source ?? '', date: rv.offer.provenance.verifiedAt ?? '', conf: t(`conf.${rv.offer.provenance.confidence ?? 'UNKNOWN'}`), dimConf: t(`conf.${rv.variant.dimensionsConfidence ?? 'UNKNOWN'}`), stock: t(`stock.${rv.offer.availability ?? 'UNKNOWN'}`) })}{freshness(rv.offer.provenance.verifiedAt).stale ? ` · ${t('editor.priceRecheck')}` : ''}</div>}
+    {rv.offer?.availability === 'OUT_OF_STOCK' && <div className="prov err" role="status">{t('editor.offerGone', { date: OFFERS_GONE.get(rv.offer.id) ?? rv.offer.provenance.verifiedAt ?? '' })}</div>}
+    {(() => { const r = rv.offer?.availability === 'OUT_OF_STOCK' ? OFFER_REPLACEMENTS.get(rv.offer.id) : undefined, nv = r ? resolve(catalog, r.variantId) : null;
+      return nv && nv.offer?.availability !== 'OUT_OF_STOCK' ? <div className="repl"><button className="btn" onClick={() => onVariant(nv.variant.id)}>{t('editor.useReplacement', { name: nv.variant.name, price: nv.offer ? lei(nv.offer.price) : t('common.unknownPrice') })}</button>{r!.why ? <small className="prov">{r!.why}</small> : null}</div> : null; })()}
     {issues.length ? issues.map((i, k) => { const tg = issueTarget(i, snap.floor, snap.placements); return <div key={k} className={`issue ${i.severity}`} role={tg ? 'button' : undefined} tabIndex={tg ? 0 : undefined} style={tg ? { cursor: 'pointer' } : undefined} onClick={tg ? () => onFocusIssue(i) : undefined} onKeyDown={tg ? e => { if (e.key === 'Enter' || e.key === ' '){ e.preventDefault(); onFocusIssue(i); } } : undefined}>{iT(i)}</div>; }) : <div className="issue PASS">{t('editor.positionValid')}</div>}
     <div className="grid2">
       <label className="f"><span>{t('editor.xField', { u })}</span><input type="number" value={inField(p.x)} onChange={e => num(e.target.value, (x: number) => onMove(x / 100, p.z), -1e9)} /></label>
@@ -1282,8 +1296,9 @@ function PlacementPanel({ out, p, snap, catalog, issues, G, num, onVariant, onMo
     </div>
     <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}><button className="btn" onClick={onRotate}>{t('editor.rotate')}</button><button className="btn" onClick={onDuplicate} title={commandHint('duplicate', { mac: typeof navigator !== 'undefined' && /Mac|iPhone|iPad/.test(navigator.platform || navigator.userAgent) })}>{t('editor.duplicate')}</button>{rv.offer && out?.targets[`o:${rv.offer.id}`] && <a className="btn" href={`/go/o/${rv.offer.id}`} target="_blank" rel={relFor(out.targets[`o:${rv.offer.id}`])}>{t('editor.viewProduct')}{out.targets[`o:${rv.offer.id}`] === 'affiliate' ? ` ${t('editor.affiliateTag')}` : ''}</a>}<button className="btn danger" onClick={onDelete}>{t('common.delete')}</button></div>
     <h4>{t('editor.variantsOnly', { n: g.variants.length })}</h4>
-    {g.variants.map((v: any) => { const o = catalog.offers.find(x => x.variantId === v.id), dm = v.dimensionsCm;
-      return <button key={v.id} className="var" aria-pressed={v.id === p.variantId} onClick={() => onVariant(v.id)}><span>{v.name}</span><span className="mono">{o ? lei(o.price) : '—'}</span><small>{dm ? formatDimsCm(dm, units, lang) : t('common.unknownDims')}{v.dimensionsConfidence === 'MEDIUM' ? ` ${t('common.approx')}` : ''}</small></button>; })}
+    {/* cele scoase din vânzare la sfârșit, marcate (rămân alegibile: proiectul vechi le poate păstra) */}
+    {[...g.variants].sort((a: any, b: any) => Number(catalog.offers.find(x => x.variantId === a.id)?.availability === 'OUT_OF_STOCK') - Number(catalog.offers.find(x => x.variantId === b.id)?.availability === 'OUT_OF_STOCK')).map((v: any) => { const o = catalog.offers.find(x => x.variantId === v.id), dm = v.dimensionsCm, goneV = o?.availability === 'OUT_OF_STOCK';
+      return <button key={v.id} className={goneV ? 'var gone' : 'var'} aria-pressed={v.id === p.variantId} onClick={() => onVariant(v.id)}><span>{v.name}</span><span className="mono">{o ? lei(o.price) : '—'}</span><small>{dm ? formatDimsCm(dm, units, lang) : t('common.unknownDims')}{v.dimensionsConfidence === 'MEDIUM' ? ` ${t('common.approx')}` : ''}{goneV ? ` · ${t('stock.OUT_OF_STOCK')}` : ''}</small></button>; })}
   </>);
 }
 
@@ -1293,15 +1308,30 @@ function DoorPanel({ op, snap, mc, cur, onChange }: { op: Opening; snap: Snapsho
   // sistemul (șina, caseta, kitul pliant) doar pe tipurile care îl cer și doar cu produsele făcute pentru tipul golului
   const systems = by('door_system').filter(m => m.specs?.system === type);
   const iss = doorIssues(snap, mc).filter(i => i.openingId === op.id);
+  // ușa de balcon are feroneria ei: fără mâner de interior și fără sistem de glisare
+  const bal = isBalconyDoor(mc.materials.find(m => m.id === c.product));
   return (<>
     <h4>{t('door.title')}</h4>
     {iss.map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.key === 'door.typeMismatch' ? { ...i.vars, type: String(i.vars?.type ?? '').split(', ').map(x => t(`door.type.${x}`)).join(', '), gap: t(`door.type.${i.vars?.gap}`) } : i.key === 'door.techInSlide' ? { ...i.vars, point: TECH_KINDS[i.vars?.point as TechKind]?.label[lang === 'en' ? 'en' : 'ro'] ?? String(i.vars?.point) } : i.vars)}</div>)}
-    <label className="f"><span>{t('door.product')}</span><MaterialPicker cur={cur} value={c.product} options={by('door')} none={t('door.none')} onChange={v => onChange({ product: v || null })} /></label>
-    <label className="f"><span>{t('door.handle')}</span><MaterialPicker cur={cur} value={c.handle} options={by('door_handle')} none={t('door.none')} onChange={v => onChange({ handle: v || null })} /></label>
-    {(type === 'sliding' || type === 'pocket' || type === 'folding') && (systems.length > 0 || !!c.system) && <label className="f"><span>{t('door.system')}</span><MaterialPicker cur={cur} value={c.system} options={systems} none={t('door.none')} onChange={v => onChange({ system: v || null })} /></label>}
+    <label className="f"><span>{t('door.product')}</span><MaterialPicker cur={cur} value={c.product} options={doorOptions(mc, !!op.entrance, !!doorOpenings(snap).find(d => d.id === op.id)?.exterior)} none={t('door.none')} onChange={v => onChange({ product: v || null })} /></label>
+    {!bal && <label className="f"><span>{t('door.handle')}</span><MaterialPicker cur={cur} value={c.handle} options={by('door_handle')} none={t('door.none')} onChange={v => onChange({ handle: v || null })} /></label>}
+    {!bal && (type === 'sliding' || type === 'pocket' || type === 'folding') && (systems.length > 0 || !!c.system) && <label className="f"><span>{t('door.system')}</span><MaterialPicker cur={cur} value={c.system} options={systems} none={t('door.none')} onChange={v => onChange({ system: v || null })} /></label>}
   </>);
 }
 
+/** Tâmplăria golului de fereastră: produsele care se potrivesc golului întâi, cu diferența de mărime; avertismentele. */
+function WindowPanel({ op, snap, mc, cur, onChange }: { op: Opening; snap: Snapshot; mc: MaterialsCatalog; cur: string; onChange(product: string | null): void }){
+  const { t } = usePrefs(), o = windowOpenings(snap).find(x => x.id === op.id); if (!o) return null;
+  const cands = windowCandidates(mc, o), value = snap.windowUnits?.[op.id]?.product ?? '', iss = windowIssues(snap, mc).filter(i => i.openingId === op.id);
+  if (!cands.length) return <p className="prov">{t('win.noProducts')}</p>;
+  return (<>
+    <h4>{t('win.title')}</h4>
+    {iss.map((i, k) => <div key={k} className="issue WARNING">{t(i.key, i.vars)}</div>)}
+    <label className="f"><span>{t('win.product', { gap: `${Math.round(o.widthM * 100)}×${Math.round(o.heightM * 100)}` })}</span>
+      <MaterialPicker cur={cur} value={value} options={cands.map(c => c.m)} none={t('win.none')} onChange={v => onChange(v || null)} /></label>
+    <small className="prov">{t('win.fitNote', { n: cands.filter(c => c.fits).length })}</small>
+  </>);
+}
 /** Sub titlul etapei: faza, câte etape sunt gata și ce face etapa aceasta „gata” (aceeași regulă ca bulina din bara de etape). */
 function StageMeta({ stage, done }: { stage: Stage; done: Record<Stage, boolean> | null }){
   const { t } = usePrefs(); if (!done) return null; const ok = done[stage];

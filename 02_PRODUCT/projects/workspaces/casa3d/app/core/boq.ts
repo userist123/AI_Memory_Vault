@@ -1,10 +1,12 @@
+import { windowOpenings } from './windows';
+import { TECH_PRODUCT_CATEGORY, FRAMED_CATEGORY } from './technical';
 import type { Catalog, Floor, Snapshot, Room, MaterialsCatalog, Material, RoomFinishes, BudgetSettings, Confidence } from './types';
 import { resolve, groupOf } from './catalog';
 import { area as rectArea } from './geometry';
 import { openingsOnSide } from './validate';
 import { floors, floorOfRoom } from './levels';
 import { roomWindows, curtainPlan, blindPlan } from './textiles';
-import { doorOpenings } from './doors';
+import { doorOpenings, isBalconyDoor } from './doors';
 import { kitchenOf, kitchenRun, kitchenQuantities, KITCHEN_DEFAULT } from './kitchen';
 import { bathOf } from './bath';
 import { fixtureCount } from './fixtures';
@@ -77,6 +79,8 @@ const FEATURE_LABEL: Record<string, string> = { paint: 'Vopsea', panel: 'Lambriu
 export type BoqCategory = 'furniture' | 'finishes' | 'lighting' | 'appliances' | 'sanitary' | 'textiles';
 export interface BoqItem { key: string; category: BoqCategory; roomId: string | null; label: string; refId: string; netQty: number; unit: string; wastePct: number;
   orderedQty: number; packs: number | null; packLabel: string | null; unitPrice: number | null; total: number | null; supplier: string; sourceUrl: string | null; verifiedAt: string | null; confidence: Confidence; note?: string;
+  /** pagina produsului a dispărut la ultima reverificare (data/offers-gone.json): de înlocuit înainte de comandă */
+  unavailable?: true;
   /** culoarea exactă (#rrggbb) a unei vopsele nuanțate: pentru mostră și comandă; eticheta poartă doar numele culorii */
   color?: string }
 export interface LaborItem { key: string; roomId: string; rateId: string; label: string; qty: number; unit: string; low: number; expected: number; high: number; confidence: Confidence; sources: { name: string; url: string }[] }
@@ -263,11 +267,29 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
       if (tm && tm.category === RADIATOR_CATEGORY[tp.model ?? 'panel']){ const ps = tm.specs?.sizeCm;
         unknown.push(`Calorifer ${RADIATOR_RO[tp.model ?? 'panel']} ${Math.round(sz.w * 100)}×${Math.round(sz.h * 100)} cm · ${room.name}: produsul ales are altă mărime (${ps ? `${ps[0]}×${ps[1]} cm` : 'nedeclarată'}), fără preț verificat`); continue; }
       unknown.push(`Calorifer ${RADIATOR_RO[tp.model ?? 'panel']} ${Math.round(sz.w * 100)}×${Math.round(sz.h * 100)} cm (1 buc, nou sau mutat, cu racordare) · ${room.name}: fără preț verificat`); } }
+  // ferestre (tâmplăria completă), pe golul lor; montajul și glafurile nu au tarif verificat
+  for (const o of windowOpenings(snap)){ const wm = M(snap.windowUnits?.[o.id]?.product); if (!wm || wm.category !== 'window') continue;
+    items.push(materialLine(wm, `window:${o.id}`, o.roomIds[0] ?? null, `Fereastră · gol ${Math.round(o.widthM * 100)}×${Math.round(o.heightM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj fereastră ${wm.name}`); }
+  // aparatajul electric ales pe puncte (priză, întrerupător, termostat); manopera electricianului e în tarifele de instalații
+  const frames = new Map<string, number>();
+  for (const tp of snap.tech ?? []){ const want = TECH_PRODUCT_CATEGORY[tp.kind], tm = M(tp.product); if (!want || !tm || tm.category !== want) continue;
+    const room = floors(snap).flatMap(fl => fl.rooms).find(r => r.id === tp.roomId);
+    // priza dublă = două module simple (catalogul are doar prize simple); rama dublă / suportul se cumpără separat
+    const n = tp.kind === 'outlet_double' ? 2 : 1;
+    items.push(materialLine(tm, `${tp.roomId}:${tp.kind}:${tp.id}`, tp.roomId, `${tm.name}${n > 1 ? ' (2 module, priză dublă)' : ''} · ${room?.name ?? ''}`, n, mc.verifiedAt, 0));
+    // rama: la priza dublă trebuie o ramă dublă oricum (rama inclusă în produs e simplă); la restul, doar dacă pagina nu o include
+    if (want === 'bath_fan'){ unknown.push(`Montaj ventilator ${tm.name}: tubulatură, străpungere și racord electric, fără preț verificat`); continue; }
+    const fk = !FRAMED_CATEGORY.has(want) ? null : n > 1 ? `dublă|${tm.name}` : tm.specs?.withFrame !== true ? `simplă|${tm.name}` : null; if (fk) frames.set(fk, (frames.get(fk) ?? 0) + 1); }
+  for (const [k, n] of frames){ const [kind, name] = k.split('|') as [string, string];
+    unknown.push(`Ramă ${kind} și suport pentru ${name} (${n} buc): ${kind === 'dublă' ? 'priza dublă cere o ramă dublă' : 'pagina produsului nu spune că rama e inclusă'}, fără preț verificat`); }
   // uși de interior (foaie + toc) și mânere, pe golul lor; montajul nu are tarif verificat
   for (const d of doorOpenings(snap)){ const c = snap.doors?.[d.id], dm = M(c?.product), hm = M(c?.handle), roomId = d.roomIds[0] ?? null;
-    if (dm){ items.push(materialLine(dm, `door:${d.id}`, roomId, `Ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj ușă ${dm.name}`);
+    if (dm && isBalconyDoor(dm)){ items.push(materialLine(dm, `door:${d.id}`, roomId, `Ușă de balcon · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj ușă de balcon ${dm.name} (glaf, pervaz, prag)`); }
+    else if (dm){ items.push(materialLine(dm, `door:${d.id}`, roomId, `Ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); unknown.push(`Montaj ușă ${dm.name}`);
       // ușa pliantă completă se vinde fără accesoriile de prindere (scrie pe pagina produsului)
       if (dm.specs?.doorTypes?.includes('folding')) unknown.push(`Accesorii de prindere ușă pliantă (nu sunt incluse) · gol ${Math.round(d.widthM * 100)} cm`); }
+    // ușa de balcon are feroneria ei (tâmplărie PVC): un mâner sau un sistem rămas de la ușa veche nu intră în deviz
+    if (isBalconyDoor(dm)) continue;
     if (hm) items.push(materialLine(hm, `handle:${d.id}`, roomId, `Mâner ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0));
     // sistemul ușii (șina glisantei, caseta ușii în perete, kitul pliantei): doar pe tipul pentru care e făcut
     const sm = M(c?.system); if (sm && sm.specs?.system === d.type) items.push(materialLine(sm, `doorsys:${d.id}`, roomId, `Sistem ușă · gol ${Math.round(d.widthM * 100)} cm`, 1, mc.verifiedAt, 0)); }
@@ -279,7 +301,8 @@ export function computeBOQ(snap: Snapshot, cat: Catalog, mc: MaterialsCatalog){
   const lineFor = (key: string, roomId: string | null, vid: string, custom?: { w: number; d: number; h: number }) => { const rv = resolve(cat, vid); const g = groupOf(vid);
     if (!rv){ unknown.push(vid); return; } const price = custom ? null : rv.offer?.price ?? null; const label = custom ? `${rv.variant.name} — pe comandă ${custom.w}×${custom.d}×${custom.h} cm` : rv.variant.name; if (price == null) unknown.push(label);
     items.push({ key, category: SANITARY.has(g) ? 'sanitary' : APPLIANCES.has(g) ? 'appliances' : 'furniture', roomId, label, refId: vid, netQty: 1, unit: 'buc', wastePct: 0, orderedQty: 1, packs: null, packLabel: null,
-      unitPrice: price, total: price, supplier: rv.offer?.provenance.source || 'UNKNOWN', sourceUrl: rv.offer?.provenance.sourceUrl ?? null, verifiedAt: rv.offer?.provenance.verifiedAt ?? null, confidence: rv.offer?.provenance.confidence ?? 'UNKNOWN' }); };
+      unitPrice: price, total: price, supplier: rv.offer?.provenance.source || 'UNKNOWN', sourceUrl: rv.offer?.provenance.sourceUrl ?? null, verifiedAt: rv.offer?.provenance.verifiedAt ?? null, confidence: rv.offer?.provenance.confidence ?? 'UNKNOWN',
+      ...(rv.offer?.availability === 'OUT_OF_STOCK' ? { unavailable: true as const } : {}) }); };
   // fiecare piesă sanitară e produsul ales (walk-in, WC suspendat, cadă...): se plătește exact ce s-a ales
   for (const p of snap.placements){ const room = p.roomId ? floors(snap).flatMap(f => f.rooms).find(r => r.id === p.roomId) : undefined, bb = room?.type === 'baie' && snap.finishes?.[room.id]?.bath ? bathOf(finishesOf(snap, room)) : null;
     lineFor(p.id, p.roomId, p.variantId, p.size); }

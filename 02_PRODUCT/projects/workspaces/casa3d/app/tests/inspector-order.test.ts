@@ -140,8 +140,13 @@ describe('ordinea câmpurilor din inspector', () => {
         "placement": [
           "common.unknownPrice",
           "editor.provenance",
-          "common.unknown",
+          "conf.\${rv.offer.provenance.confidence ?? 'UNKNOWN'}",
+          "conf.\${rv.variant.dimensionsConfidence ?? 'UNKNOWN'}",
+          "stock.\${rv.offer.availability ?? 'UNKNOWN'}",
           "editor.priceRecheck",
+          "editor.offerGone",
+          "editor.useReplacement",
+          "common.unknownPrice",
           "editor.positionValid",
           "editor.xField",
           "editor.zField",
@@ -153,6 +158,7 @@ describe('ordinea câmpurilor din inspector', () => {
           "editor.variantsOnly",
           "common.unknownDims",
           "common.approx",
+          "stock.OUT_OF_STOCK",
         ],
         "railing": [
           "tool.railing",
@@ -187,6 +193,7 @@ describe('ordinea câmpurilor din inspector', () => {
           "editor.groupsOther",
           "editor.groupsAll",
           "editor.addVariant",
+          "stock.OUT_OF_STOCK",
           "editor.addToRoom",
         ],
         "stair": [

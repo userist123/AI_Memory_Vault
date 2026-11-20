@@ -1,0 +1,277 @@
+{
+  "note": "Înlocuitori IKEA pentru produsele a căror pagină trimite la o categorie (reverificarea din 2026-11-18): pagina produsului deschisă, prețul din datele paginii (JSON-LD), dimensiunile din pagină. Echivalente, nu același produs: diferența e în „why”.",
+  "items": [
+    {
+      "url": "https://www.ikea.com/ro/ro/p/kivik-canapea-3-locuri-cu-sezlong-tresund-bej-deschis-s79482840/",
+      "name": "KIVIK Canapea 3 locuri cu șezlong, Tresund bej deschis",
+      "price": 3349,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.priceSpecification.price=3349 RON (pagina arată și un preț vechi: promoție)",
+      "dimensionsCm": {
+        "w": 280,
+        "d": 163,
+        "h": 83
+      },
+      "dimsSource": "sectiunea Dimensiuni a paginii (Lățime max. 280, Adâncime maximă 163, Înălțime 83)",
+      "replaces": "offer-canapea-4",
+      "why": "Aceeași canapea KIVIK cu șezlong, aceeași husă Tresund și aceleași dimensiuni, dar în bej deschis, pentru că varianta antracit nu se mai vinde în RO (preț redus de la 4249)."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/tranered-masuta-cafea-maro-i-10608998/",
+      "name": "TRANERED măsuță cafea, maro-î, 90x90 cm",
+      "price": 699,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.price=699 RON (vânzător: IKEA)",
+      "dimensionsCm": {
+        "w": 90,
+        "d": 90,
+        "h": 41
+      },
+      "dimsSource": "JSON-LD (90 x 90 x 41 cm) si titlul paginii",
+      "replaces": "offer-masuta-2",
+      "why": "HEMNES nu mai are măsuță de cafea în RO; TRANERED are aceeași bază 90x90 cm, culoare maro închis și același preț, dar e altă familie și cu 5 cm mai joasă (41 față de 46 cm)."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/alhult-alhult-masa-4-scaune-negru-maro-bomstad-negru-negru-s69610089/",
+      "name": "ÅLHULT / ÅLHULT masă + 4 scaune, negru/maro/Bomstad negru negru, 120/170x80 cm",
+      "price": 1715,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.price=1715 RON (vânzător: IKEA)",
+      "dimensionsCm": {
+        "w": 120,
+        "d": 80,
+        "h": 74
+      },
+      "dimsSource": "sectiunea Dimensiuni a paginii (L min masă 120, L max 170, Lățime masă 80, Înălțime masă 74)",
+      "replaces": "offer-masa-0",
+      "why": "EKEDALEN nu se mai vinde; ÅLHULT este tot o masă extensibilă de 120x80 cu 4 scaune tapițate, dar se extinde doar până la 170 cm (nu 180), iar scaunele sunt negre cu Bomstad negru în loc de gri Orrsta."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/alhult-odger-masa-4-scaune-negru-maro-antracit-s09610092/",
+      "name": "ÅLHULT / ODGER masă + 4 scaune, negru/maro/antracit, 120/170x80 cm",
+      "price": 1995,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.price=1995 RON (vânzător: IKEA)",
+      "dimensionsCm": {
+        "w": 120,
+        "d": 80,
+        "h": 74
+      },
+      "dimsSource": "sectiunea Dimensiuni a paginii (L min masă 120, L max 170, Lățime masă 80, Înălțime masă 74)",
+      "replaces": "offer-masa-1",
+      "why": "Nu mai există combinație cu scaune din ratan; ÅLHULT/ODGER are tot masă extensibilă închisă la culoare de 120x80, dar se extinde doar până la 170 cm, iar scaunele sunt ODGER antracit în loc de ÄLVSTA din ratan."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/naesinge-naesinge-masa-4-scaune-alb-alb-tibbleby-bej-gri-s29596943/",
+      "name": "NÄSINGE / NÄSINGE masă + 4 scaune, alb/alb Tibbleby bej-gri, 130/190x80 cm",
+      "price": 1995,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.price=1995 RON (vânzător: IKEA)",
+      "dimensionsCm": {
+        "w": 130,
+        "d": 80,
+        "h": 75
+      },
+      "dimsSource": "sectiunea Dimensiuni a paginii (L min masă 130, L max 190, Lățime masă 80, Înălțime masă 75)",
+      "replaces": "offer-masa-2",
+      "why": "Are aceleași dimensiuni (masă extensibilă albă 130/190x80 cu 4 scaune albe), dar e din familia NÄSINGE, iar pernele scaunelor sunt Tibbleby bej-gri."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/tonstad-tonstad-masa-2-scaune-alb-murdar-alb-murdar-fridtuna-bej-deschis-s79596587/",
+      "name": "TONSTAD / TONSTAD masă + 2 scaune, alb murdar/alb murdar Fridtuna bej deschis, 80/120x70 cm",
+      "price": 1697,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.price=1697 RON (vânzător: IKEA)",
+      "dimensionsCm": {
+        "w": 80,
+        "d": 70,
+        "h": 75
+      },
+      "dimsSource": "sectiunea Dimensiuni a paginii (L min masă 80, L max 120, Lățime masă 70, Înălțime masă 75)",
+      "replaces": "offer-masa-3",
+      "why": "Este singura masă extensibilă 80/120x70 vândută ca set, dar are doar 2 scaune în loc de 4 (celelalte 2 se cumpără separat) și e alb murdar; în RO nu există set cu 4 scaune în această dimensiune."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/tonstad-krylbo-masa-2-scaune-frnr-stjr-tonerud-bej-inchis-s69596658/",
+      "name": "TONSTAD / KRYLBO masă + 2 scaune, frnr stjr/Tonerud bej închis, 80/120x70 cm",
+      "price": 1897,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.price=1897 RON (vânzător: IKEA)",
+      "dimensionsCm": {
+        "w": 80,
+        "d": 70,
+        "h": 75
+      },
+      "dimsSource": "titlul paginii (80/120x70) + „Înălțime masă 75 cm” din pagină",
+      "replaces": "offer-masa-4",
+      "why": "Are aceleași dimensiuni (masă extensibilă 80/120x70 cu 2 scaune tapițate), dar masa e din furnir de stejar deschis, nu maro închis, scaunele sunt KRYLBO Tonerud bej închis și prețul e vizibil mai mare (1897 față de 1137)."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-alb-s09929373/",
+      "name": "MALM cadru pat înalt, alb, 160x200 cm",
+      "price": 799,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.price=799 RON (vânzător: IKEA)",
+      "dimensionsCm": {
+        "w": 176,
+        "d": 209,
+        "h": 100
+      },
+      "dimsSource": "JSON-LD si sectiunea Dimensiuni a paginii (Lățime 176, Lungime 209, Înălțime 100)",
+      "replaces": "offer-pat-2",
+      "why": "Este același cadru MALM alb 160x200 cu aceleași dimensiuni, dar fără cele 4 cutii de depozitare, care nu mai apar deloc în RO (de aici și prețul mai mic)."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-alb-luroey-s29002433/",
+      "name": "MALM cadru pat înalt, alb/Luröy, 160x200 cm",
+      "price": 999,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.price=999 RON (vânzător: IKEA)",
+      "dimensionsCm": {
+        "w": 176,
+        "d": 209,
+        "h": 100
+      },
+      "dimsSource": "JSON-LD (176 x 209 x 100 cm)",
+      "replaces": "offer-pat-3",
+      "why": "Este același MALM 160x200 cu somieră Luröy, dar MALM se mai vinde în RO doar în alb și negru-maro, așa că finisajul e alb în loc de furnir de stejar alb."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/malm-cadru-pat-inalt-negru-maro-luroey-s89002430/",
+      "name": "MALM cadru pat înalt, negru-maro/Luröy, 140x200 cm",
+      "price": 1149,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.price=1149 RON (vânzător: IKEA)",
+      "dimensionsCm": {
+        "w": 156,
+        "d": 209,
+        "h": 100
+      },
+      "dimsSource": "JSON-LD si sectiunea Dimensiuni a paginii (Lățime 156, Lungime 209, Înălțime 100)",
+      "replaces": "offer-pat-5",
+      "why": "Este același MALM 140x200 cu Luröy, dar în negru-maro în loc de alb, pentru că MALM alb nu mai are varianta de 140x200 în RO (doar 90 și 160)."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/knoxhult-bucatarie-gri-inchis-s59614945/",
+      "name": "KNOXHULT bucătărie, gri închis, 240x61x220 cm",
+      "price": 1769,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.price=1769 RON (vânzător: IKEA)",
+      "dimensionsCm": {
+        "w": 240,
+        "d": 61,
+        "h": 220
+      },
+      "dimsSource": "titlul paginii (240x61x220 cm); JSON-LD confirma latimea 240 si inaltimea 220",
+      "replaces": "offer-bucatarie-0",
+      "why": "ENHET nu se mai vinde ca bucătărie în RO; KNOXHULT e o bucătărie gata asamblată, cu un singur preț, de 240 cm lățime (cu 3 cm mai îngustă), gri închis în loc de antracit/alb, mai puțin adâncă (61 față de 63,5 cm) și mai joasă (220 față de 241 cm)."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/metod-bucatarie-alb-veddinge-alb-s69614916/",
+      "name": "METOD bucătărie, alb/Veddinge alb, 210x60x227 cm",
+      "price": 3215,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.price=3215 RON (vânzător: IKEA)",
+      "dimensionsCm": {
+        "w": 210,
+        "d": 64,
+        "h": 227
+      },
+      "dimsSource": "JSON-LD si sectiunea Dimensiuni a paginii (Lățime 209.6, Adâncime 63.5, Înălțime 226.8)",
+      "replaces": "offer-bucatarie-1",
+      "why": "Nicio KNOXHULT nu are lățimea potrivită (120/180/220/240), așa că am ales bucătăria METOD de 210 cm, gata configurată și cu un singur preț, dar albă (Veddinge) în loc de antracit/gri."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/metod-bucatarie-alb-veddinge-alb-s09614919/",
+      "name": "METOD bucătărie, alb/Veddinge alb, 170x60x227 cm",
+      "price": 2805,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.price=2805 RON (vânzător: IKEA)",
+      "dimensionsCm": {
+        "w": 170,
+        "d": 64,
+        "h": 227
+      },
+      "dimsSource": "JSON-LD si sectiunea Dimensiuni a paginii (Lățime 169.6, Adâncime 63.5, Înălțime 226.8)",
+      "replaces": "offer-bucatarie-2",
+      "why": "Nicio KNOXHULT nu are 153-173 cm, așa că am ales bucătăria METOD de 170 cm, gata configurată, care e însă albă (Veddinge) în loc de antracit/alb și aproape cu 830 lei mai scumpă."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/gullaberg-dulap-pantofi-cu-4-compartimente-alb-50587710/",
+      "name": "GULLABERG dulap pantofi cu 4 compartimente, alb",
+      "price": 399,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.priceSpecification.price=399 RON (pagina arată și un preț vechi: promoție)",
+      "dimensionsCm": {
+        "w": 105,
+        "d": 22,
+        "h": 107
+      },
+      "dimsSource": "JSON-LD (105 x 22 x 107 cm) si titlul paginii",
+      "replaces": "offer-pantofar-0",
+      "why": "Este tot un dulap alb cu 4 compartimente și aproape aceleași dimensiuni (105x22x107 față de 107x22x101), dar din familia GULLABERG; prețul de 399 e redus de la 499, ofertă valabilă până la 28.02.2027."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/gullaberg-dulap-pantofi-cu-4-compartimente-gri-10587707/",
+      "name": "GULLABERG dulap pantofi cu 4 compartimente, gri",
+      "price": 399,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.priceSpecification.price=399 RON (pagina arată și un preț vechi: promoție)",
+      "dimensionsCm": {
+        "w": 105,
+        "d": 22,
+        "h": 107
+      },
+      "dimsSource": "JSON-LD si sectiunea Dimensiuni a paginii (Lățime 105, Adâncime 22, Înălțime 107)",
+      "replaces": "offer-pantofar-1",
+      "why": "Are 4 compartimente și practic aceleași dimensiuni, dar e din familia GULLABERG, gri în loc de negru-maro (nu există variantă închisă la culoare); prețul e redus de la 499."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/gullaberg-dulap-pantofi-cu-2-compartimente-gri-40587697/",
+      "name": "GULLABERG dulap pantofi cu 2 compartimente, gri",
+      "price": 599,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.priceSpecification.price=599 RON (pagina arată și un preț vechi: promoție)",
+      "dimensionsCm": {
+        "w": 88,
+        "d": 30,
+        "h": 122
+      },
+      "dimsSource": "JSON-LD (88 x 30 x 122 cm) si titlul paginii",
+      "replaces": "offer-pantofar-2",
+      "why": "Este tot un dulap cu 2 compartimente de 88x30 cm (față de 89x30), cu 5 cm mai jos, din familia GULLABERG și gri în loc de negru-maro; prețul e redus de la 699."
+    },
+    {
+      "url": "https://www.ikea.com/ro/ro/p/hauga-dulap-de-haine-cu-usi-glisante-alb-60456916/",
+      "name": "HAUGA dulap de haine cu uși glisante, alb",
+      "price": 1299,
+      "readAt": "2026-11-18",
+      "store": "IKEA",
+      "evidence": "offers.price=1299 RON (vânzător: IKEA)",
+      "dimensionsCm": {
+        "w": 118,
+        "d": 55,
+        "h": 199
+      },
+      "dimsSource": "JSON-LD (118 x 55 x 199 cm) si titlul paginii",
+      "replaces": "offer-dulap-4",
+      "why": "SONGESAND nu se mai vinde; HAUGA e tot un dulap alb de haine de aproximativ 120 cm, dar cu uși glisante, cu 5 cm mai puțin adânc (55 cm) și cu 8 cm mai înalt (199 cm)."
+    }
+  ]
+}
