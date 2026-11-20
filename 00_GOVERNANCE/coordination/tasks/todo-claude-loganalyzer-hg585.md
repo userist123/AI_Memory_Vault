@@ -1697,3 +1697,12 @@
   (it must never be compared word for word as the source). Dfir tests edited: FindingContractTests:464, Wp5CaseHomeTests:223 (2.1). Tests App.Tests
   EvidenceQuoteTests (11; red 6/11 without the bind). Suites: App 1435, UI 370 (1 skipped), Edition 45, affected Dfir classes 118/118. RESIDUALS:
   detection-engine findings have no quote; IncidentPdfReport unmasked/unquoted; card columns not seen on screen.
+- 2026-11-20 (claude, hg585) ALL EDITIONS INSTALLED from 6639dca85 (owner: "update-urile la aplicația completă, nu doar standalone"). D: was FULL (0 GB:
+  D:\WSL 279 GB, SteamLibrary 71 GB, D:\w 63 GB - owner data, not touched); own publish outputs moved to E:\LA-builds\20261120 (D: 0.42 GB free after);
+  publish with -p:PublishDir=E:\... and TEMP on E:. Continent (LogAnalyzer.Internet) -> C:\Program Files\LogAnalyzer Continent, Arhipelag
+  (LogAnalyzer.Retea; first bundle was truncated by the full disk, republished) -> C:\Program Files\LogAnalyzer Arhipelag, owner's main C:\Program
+  Files\LogAnalyzer updated to the new Insula exe (old exe kept as LogAnalyzer.Standalone.exe.bak-20261023, its licence untouched). LA2 licences signed with
+  the owner's key (%USERPROFILE%\.loganalyzer-license\license-private.key, public key = Core\Licensing\license-public-keys.txt) for the test PC hardware id,
+  modules insula (2027-11-19, R1 folder; the 21:25 licence written by another session failed the signature, kept as .bak-20261119-2125), continent and
+  arhipelag (2027-11-20). Continent start verified (licence ok, clock ok, sign-in shown). LicenseManager publish blocked by NU1004 (packages.lock.json
+  without win-x64 RID; pre-existing). Next: A3 "Greșeli găsite".
