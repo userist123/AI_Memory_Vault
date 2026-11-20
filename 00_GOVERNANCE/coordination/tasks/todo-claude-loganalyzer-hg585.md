@@ -1778,3 +1778,7 @@
   Tests LocalSecurityStateTests (16; red 8/16). Suites App 1489, UI 370 (1 skipped), Edition 45, affected Dfir 117 (+2 skipped). Smoke test now includes
   the collector. REAL RUN: collector Success (auditpol 60 subcategories, accounts), 31 findings incl. the 3 audit-policy and the Low admin finding.
   RESIDUALS: other auditpol languages -> gap; import of these files not wired in IncomingEvidence.
+- 2026-11-20 (claude, hg585) ALL EDITIONS REINSTALLED from 674ca0e62 (planner #12 B1-B3) via E:\LA-builds\20261120b; Continent relaunched: licence ok,
+  clock ok, sign-in shown. Planner #12 done (B1 real-machine smoke, B2 grouping, B3 audit policy / Guest / admins). Next candidates (owner filter):
+  Quick-profile config coverage (save hives in Quick too, or live fallback with a stored snapshot), VS Code/ISE history, Amcache transaction-log replay
+  (8825 entries without values on a dirty hive in the real run), auditpol other languages, IncomingEvidence import of auditpol/accounts files.
