@@ -1750,3 +1750,9 @@
   Medium/High, script Medium, unsigned exe High, valid signature none); locators WmiSubscriptions[f->c], Startup[path] with ManualVerification steps.
   Tests LiveWmiStartupTests (5; red 2). Suites: App 1464, UI 370 (1 skipped), Edition 45, FULL Dfir 4050 passed / 34 skipped / 0 failed (TEMP on C:).
   RESIDUALS: WMI/Startup not run on a real machine; other users' Startup needs elevation; non-command WMI consumers no finding. PLANNER #11 DONE (A1-A8).
+- 2026-11-20 (claude, hg585) ALL EDITIONS REINSTALLED from 0a78d812a (planner #11 A1-A8): published to E:\LA-builds\20261120b, robocopy into Continent,
+  Arhipelag, the owner's main Insula and Insula (R1) (installed licences kept). Start probes: Continent, Arhipelag and main Insula all "IsActivated: True",
+  clock ok, sign-in shown; Arhipelag and main Insula closed after the probe, Continent left open for the owner. Next session: a NEW planner under the owner
+  filter (full PC audit); candidates from residuals: real-machine run of SOFTWARE hive / WMI / Startup / browser collection (elevated), audit policy +
+  Guest + local Administrators as live findings with a stored snapshot as evidence, Quick profile config coverage, VS Code/ISE history, grouping of
+  repeated rule blocks in Greșeli găsite.
