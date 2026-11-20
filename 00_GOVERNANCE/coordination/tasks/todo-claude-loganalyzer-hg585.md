@@ -1756,3 +1756,10 @@
   filter (full PC audit); candidates from residuals: real-machine run of SOFTWARE hive / WMI / Startup / browser collection (elevated), audit policy +
   Guest + local Administrators as live findings with a stored snapshot as evidence, Quick profile config coverage, VS Code/ISE history, grouping of
   repeated rule blocks in Greșeli găsite.
+- 2026-11-20 (claude, hg585) PLANNER #12 B1 DONE: Dfir.Tests RealMachineAuditSmokeTests (opt-in LA_REAL_MACHINE=1, skipped otherwise; runs SoftwareHive,
+  ExecutionArtifacts, UserHistory and LiveState collectors on THIS PC into a %TEMP% case, then InvestigationPipeline.Run(collect:false); summary
+  %TEMP%\la-real-audit-summary.txt (local only, not in the repo); asserts no throw, non-empty locators, stored hashes). REAL RUN (elevated, 2026-11-20):
+  all collectors Success (SOFTWARE 214 MB, SYSTEM 28 MB, Amcache, hosts, PSReadLine 3757 lines, 3 Chromium DBs, live snapshot); parsers ok; 45 findings
+  (2 CFG-*, 5 HOSTS/PS-HISTORY, 24 LIVE-*, 14 other); 2 gaps (TaskCache Tree without Tasks; Amcache dirty hive, logs not replayed). QUALITY ISSUES seen:
+  LIVE-UNSIGNED-USERPATH repeats one finding per PROCESS of the same exe (18 near-duplicates); LIVE-TASK-USERPATH and PERSIST-TASK-CONFIG report the same
+  task twice -> planner #12 B2 grouping. Results not printed here (owner's PC data).
