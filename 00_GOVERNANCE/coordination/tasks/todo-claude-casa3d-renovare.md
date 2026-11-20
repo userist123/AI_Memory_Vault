@@ -20,6 +20,12 @@ DONE:
     Două prețuri reverificate independent (Dedeman 1859 lei, Hornbach 2050 lei).
   - Desen 3D mai fidel: fereastra „fixă + deschidere” are primul canat fix (win.fixedSashes, din titlul paginii, 4 produse);
     cuptorul ales (cu tip) dă culoarea / inoxul ramei.
+  - Precizia randării din aplicație (2026-11-20): auditul modelelor (scripts/audit-model-dims.js, în browser pe npm run dev)
+    a găsit 225 din 308 variante cu abateri > 3 cm. Accesoriile de punere în scenă (televizor, veioză, monitor, oglinda peste
+    lavoar, bateria, burlanul, cadrul încastrat) sunt marcate prop(); scaunele setului setPiece; erori de formă reparate (pat
+    tapițat, oglinda ovală, POÄNG, calorifer port-prosop, lampadar, WC/bideu în afara amprentei, cada freestanding, walk-in);
+    fitToProduct() aduce produsul la cotele din fișă. Rezultat: 275/275 verificate în ±2 cm, centrate în ±1,8 cm.
+    Comutator nou în 3D: „Doar produsele” (setDecor) ascunde accesoriile.
   - Verificare vizuală: randări Blender Cycles în D:/casa3d-render/renovare/out/.
   - Revizie: runda 1 PARTIAL → reparat (532ee851f); runda 2 PARTIAL → rama dublă reparată de sesiunea principală.
   - Hota de insulă (2026-11-17): fără suspendate, baldachin centrat pe plită și coș până la tavanul camerei (sticla stă pe

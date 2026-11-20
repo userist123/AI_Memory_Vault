@@ -44,13 +44,15 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
   useEffect(() => { setTouch(matchMedia('(pointer: coarse)').matches || navigator.maxTouchPoints > 0); }, []);
   pickRef.current = onPick;
   const [doorsOpen, setDoorsOpen] = useState(true);
+  // doar produsele: fără accesoriile de punere în scenă (televizorul pe comodă, lampa pe noptieră, decorul), la cotele din fișă
+  const [productsOnly, setProductsOnly] = useState(false);
   // la refacerea contextului se aplică starea de acum (lumina, planul), nu cea de la montare
   const restoreRef = useRef(() => {}); restoreRef.current = () => { applyLight(); applyTier(); push(); };
   useEffect(() => { let alive = true;
     import('./viewer3d-engine.js').then(m => { if (!alive || !ref.current) return; try { v.current = m.createViewer(ref.current, { onPick: (id: string | null) => pickRef.current(id), onHover: (id: string | null) => hoverRef.current?.(id), onContextLost: () => setErr('context-lost'), onContextRestored: () => { setErr(''); restoreRef.current(); }, onTierDrop: (d: Tier) => { autoTier.current = d; setTierNow(d); } }); if (process.env.NODE_ENV !== 'production') (window as any).__casa3dViewer = v.current; applyLight(); applyTier(); push(); syncSel.current(); } catch (e){ console.error('3D', e); setErr('webgl'); } });
     return () => { alive = false; v.current?.dispose(); v.current = null; hoverRef.current?.(null); }; }, []); // eslint-disable-line
   const engineCat = useRef<ReturnType<typeof toEngineCatalog> | null>(null);
-  function push(){ if (!v.current) return; engineCat.current ||= toEngineCatalog(catalog);
+  function push(){ if (!v.current) return; engineCat.current ||= toEngineCatalog(catalog); if (process.env.NODE_ENV !== 'production') (window as any).__casa3dEngineCat = engineCat.current;
     const { plan, items } = viewerInput(snap, catalog, engineCat.current, { voids, mc }); v.current.setState(plan, items); }
   useEffect(push, [snap, mc]); // eslint-disable-line
   useEffect(() => { v.current?.setSelection?.(selectedId); }, [selectedId, snap]);
@@ -126,6 +128,7 @@ export default function Viewer3D({ snap, catalog, mc = null, onPick, voids = NO_
     </div>
     {lightOpen && <div className="v3light" role="group" aria-label={t('viewer.displayTitle')}>
       <button className="btn" aria-pressed={doorsOpen} title={t('viewer.doors')} onClick={() => { const n = !doorsOpen; setDoorsOpen(n); v.current?.setDoors(n); }}><Icon name="door" size={16} />{t('viewer.doorsOpen')}</button>
+      <button className="btn" aria-pressed={productsOnly} title={t('viewer.productsOnlyTitle')} onClick={() => { const n = !productsOnly; setProductsOnly(n); v.current?.setDecor(!n); }}>{t('viewer.productsOnly')}</button>
       <button className="btn" aria-pressed={xray} title={t('viewer.xrayTitle')} onClick={() => setXray(x => !x)}>{t('viewer.xray')}</button>
       {mode === 'house' && <label className="f" style={{ minWidth: 160 }} title={t('viewer.cutTitle')}><span>{t('viewer.cut', { pct: cutPct })}</span><input type="range" min={12} max={100} value={cutPct} onChange={e => { const n = Number(e.target.value); setCutPct(n); v.current?.setCut?.(clampCut(n / 100)); }} /></label>}
       {(['day', 'evening', 'night'] as const).map(tod => <button key={tod} className="btn" aria-pressed={time === tod} onClick={() => setTime(tod)}>{t(tod === 'day' ? 'viewer.day' : tod === 'evening' ? 'viewer.evening' : 'viewer.night')}</button>)}
