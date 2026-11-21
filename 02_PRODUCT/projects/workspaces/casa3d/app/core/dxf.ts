@@ -26,6 +26,9 @@ export const DXF_ZONE_LAYERS = [{ name: 'FLOOR_ZONES', color: 9 }] as const;
 /** Straturile lotului 4, doar când proiectul le folosește: tavanele false pe zonă (deasupra planului de secțiune) și balustradele. */
 export const DXF_CEILING_ZONE_LAYERS = [{ name: 'CEILING_ZONES', color: 6 }] as const;
 export const DXF_RAILING_LAYERS = [{ name: 'RAILINGS', color: 4 }] as const;
+/** Straturile BIM (apar doar când sunt folosite): culori ACI apropiate de cele din aplicație (core/mep.ts). */
+export const BIM_LAYER_COLOR: Record<string, number> = { MEP_WATER_COLD: 5, MEP_WATER_HOT: 1, MEP_DRAIN: 34, MEP_HVAC_SUPPLY: 4, MEP_HVAC_RETURN: 3,
+  MEP_REFRIGERANT: 6, MEP_ELECTRIC: 40, STRUCT_FOOTINGS: 8, STRUCT_WALLS: 30 };
 export const TECH_SYMBOL: Record<TechKind, string> = { outlet: 'P', outlet_double: 'P2', switch: 'I', light_point: 'L', data: 'D', cooker: 'K', water_cold: 'A', water_hot: 'C', drain: 'S', hvac_split: 'AC', thermostat: 'T', vent_exhaust: 'V', radiator: 'R' };
 
 /** Text sigur pentru R12: fără caractere de control, fără coduri %% (oricâte %), fără \, non-ASCII ca \U+XXXX (convenția AutoCAD). */
@@ -47,6 +50,7 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
   const grow = (x: number, y: number) => { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); };
   let ox = 0;   // deplasarea nivelului curent pe X (mm)
   let usedRenovation = false, usedZones = false, usedCeilingZones = false, usedRailings = false;
+  const usedBim = new Set<string>();   // straturile BIM folosite (trasee, fundații, pereți structurali), în ordinea apariției
   const P = (x: number, z: number): Pt => [x * 1000 + ox, -z * 1000];   // metri plan -> mm DXF
   const line = (layer: string, a: Pt, b: Pt) => { grow(...a); grow(...b);
     ents.push(['0\nLINE', tag(8, layer), tag(10, num(a[0])), tag(20, num(a[1])), tag(30, 0), tag(11, num(b[0])), tag(21, num(b[1])), tag(31, 0)].join('\n')); };
@@ -171,6 +175,14 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
     // ---- instalații ----
     for (const t of snap.tech ?? []){ if (!(t.kind in TECH_KINDS) || !Number.isFinite(t.x) || !Number.isFinite(t.z)) continue;
       const c = P(t.x, t.z); circle('SERVICES', c, 80); text('SERVICES', [c[0] + 120, c[1] - 50], 100, TECH_SYMBOL[t.kind]); }
+
+    // ---- ghidul BIM (faza 4): trasee pe straturi de sistem (MEP_<SISTEM>), fundații, axa pereților structurali ----
+    // Traseul se desenează în plan (proiecția x/z); eticheta are diametrul declarat sau „D?”, nu o valoare inventată.
+    for (const r of snap.floor.mepRuns ?? []){ const L = `MEP_${r.system.toUpperCase()}`; usedBim.add(L);
+      for (let k = 1; k < r.points.length; k++){ const a = r.points[k - 1]!, b = r.points[k]!; if (a[0] !== b[0] || a[2] !== b[2]) line(L, P(a[0], a[2]), P(b[0], b[2])); }
+      const m = r.points[Math.floor(r.points.length / 2)]!; text(L, [P(m[0], m[2])[0] + 60, P(m[0], m[2])[1] + 60], 80, `${r.id} ${r.diameterMm ? `D${r.diameterMm}` : 'D?'}`); }
+    for (const fd of snap.floor.footings ?? []){ usedBim.add('STRUCT_FOOTINGS'); poly('STRUCT_FOOTINGS', [P(fd.x - fd.w / 2, fd.z - fd.d / 2), P(fd.x + fd.w / 2, fd.z - fd.d / 2), P(fd.x + fd.w / 2, fd.z + fd.d / 2), P(fd.x - fd.w / 2, fd.z + fd.d / 2)]); }
+    for (const w of snap.floor.walls) if (w.structural){ usedBim.add('STRUCT_WALLS'); line('STRUCT_WALLS', P(...w.a), P(...w.b)); }
   };
   const drawStairs = (full: Snapshot, i: number) => {
     const f = floors(full)[i]!, ST = 'STAIRS', rect = (r: RoomRect) => [P(r.x0, r.z0), P(r.x1, r.z0), P(r.x1, r.z1), P(r.x0, r.z1)];
@@ -202,7 +214,7 @@ export function planToDxf(snap: Snapshot, cat: Catalog, opts: { lang: 'ro' | 'en
 
   if (!Number.isFinite(x0)){ x0 = y0 = 0; x1 = y1 = 1000; }
   const lt = ['0\nLTYPE', tag(2, 'CONTINUOUS'), tag(70, 0), tag(3, 'Solid line'), tag(72, 65), tag(73, 0), tag(40, 0)];
-  const layers = [...DXF_LAYERS, ...DXF_LEVEL_LAYERS, ...DXF_NOTE_LAYERS, ...(usedRenovation ? DXF_RENOVATION_LAYERS : []), ...(usedZones ? DXF_ZONE_LAYERS : []), ...(usedCeilingZones ? DXF_CEILING_ZONE_LAYERS : []), ...(usedRailings ? DXF_RAILING_LAYERS : [])].map(l => ['0\nLAYER', tag(2, l.name), tag(70, 0), tag(62, l.color), tag(6, 'CONTINUOUS')].join('\n'));
+  const layers = [...DXF_LAYERS, ...DXF_LEVEL_LAYERS, ...DXF_NOTE_LAYERS, ...(usedRenovation ? DXF_RENOVATION_LAYERS : []), ...(usedZones ? DXF_ZONE_LAYERS : []), ...(usedCeilingZones ? DXF_CEILING_ZONE_LAYERS : []), ...(usedRailings ? DXF_RAILING_LAYERS : []), ...[...usedBim].sort().map(name => ({ name, color: BIM_LAYER_COLOR[name] ?? 7 }))].map(l => ['0\nLAYER', tag(2, l.name), tag(70, 0), tag(62, l.color), tag(6, 'CONTINUOUS')].join('\n'));
   void opts;   // limba: etichetele din desen sunt neutre (nume de camere deja localizate, cote în mm, simboluri)
   return [
     '0\nSECTION', '2\nHEADER', '9\n$ACADVER\n1\nAC1009', '9\n$INSUNITS\n70\n4', '9\n$MEASUREMENT\n70\n1',
