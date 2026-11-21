@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import enum
 import hashlib
+import inspect
 import json
 import os
 import sys
@@ -90,6 +91,50 @@ def snapshot_of(notes: List[Dict[str, Any]], skips: Optional[Dict[str, Any]] = N
             "sha256": _sha256(_canonical({"notes": entries, "skipped": skipped}))}
 
 
+PACKAGES_ROOT = Path(__file__).resolve().parents[1]
+#: Source that decides what a stage measures; any change makes a different job.
+FINGERPRINTED_SOURCES = (
+    "active_knowledge_engine",              # this package (all *.py)
+    "retrieval/context",                    # candidate generation, fusion, retrieval engine (all *.py)
+    "learning/sleep_consolidation.py",
+    "security/conflict_detector.py",
+    "lifecycle/conflict_review.py",
+    "interfaces/vault_cli.py",              # eligible_for_agent
+    "interfaces/memory_access.py",
+)
+#: Controller settings that change ranking or the candidate pool.
+CONTROLLER_SETTINGS = ("ranking_arm", "classifier_filter_arm", "enable_graph_expansion",
+                       "strict_graph_expansion", "graph_expansion_budget", "enable_cognitive_core")
+
+
+def code_fingerprint(controller) -> Dict[str, Any]:
+    """SHA-256 over the source files that decide the measurement, plus the controller's own source."""
+    files: List[Path] = []
+    for rel in FINGERPRINTED_SOURCES:
+        path = PACKAGES_ROOT / rel
+        files.extend(sorted(path.glob("*.py")) if path.is_dir() else [path])
+    try:
+        controller_src = inspect.getsourcefile(type(controller))
+    except TypeError:
+        controller_src = None
+    if controller_src:
+        files.append(Path(controller_src))
+    digest = hashlib.sha256()
+    count = 0
+    for path in files:
+        if not path.is_file():
+            continue
+        digest.update(path.name.encode("utf-8") + bytes([0]))
+        digest.update(path.read_bytes().replace(bytes([13, 10]), bytes([10])))
+        count += 1
+    return {"sha256": digest.hexdigest(), "files": count,
+            "controller_class": f"{type(controller).__module__}.{type(controller).__qualname__}"}
+
+
+def controller_settings(controller) -> Dict[str, str]:
+    return {name: repr(getattr(controller, name, None)) for name in CONTROLLER_SETTINGS}
+
+
 def _free_name(directory: Path, stem: str, label: str) -> Path:
     n = 1
     while (directory / f"{stem}.{label}{n}.json").exists():
@@ -136,8 +181,20 @@ class AKEShadowRunner:
             "as_of_utc_date": as_of,
             "benchmark": self.benchmark_path.name if self.benchmark_path else None,
             "benchmark_sha256": self._benchmark_digest(),
+            "benchmark_sidecar_sha256": self._sidecar_digest(),
             "k": self.k,
+            "code_fingerprint": code_fingerprint(self.controller),
+            "controller": controller_settings(self.controller),
         }
+
+    def _sidecar_digest(self) -> Optional[str]:
+        if not self.benchmark_path:
+            return None
+        sidecar = self.benchmark_path.with_suffix(self.benchmark_path.suffix + ".sha256")
+        try:
+            return _sha256(sidecar.read_bytes().strip())
+        except OSError:
+            return None
 
     def _benchmark_digest(self) -> Optional[str]:
         if not self.benchmark_path:

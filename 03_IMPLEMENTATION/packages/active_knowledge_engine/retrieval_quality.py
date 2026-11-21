@@ -2,14 +2,25 @@
 
 Each case runs ``MemoryController.search(Principal.AI_AGENT, query, page_size=k)``: the call
 ``interfaces/memory_access.search`` makes for ``memory_search``, at the agent page size (5).
-A miss is classified from the controller's own ``candidate_trace.fused_ranking``:
+A miss is classified in this order (the first that applies):
 
-- ``PAGINATION_CUT``      gold was a candidate, ranked below k;
-- ``FILTERED``            gold ranked within k but was not served (lifecycle floor, quarantine, ...);
-- ``NEVER_CANDIDATE``     gold is in storage but never became a candidate;
-- ``GOLD_NOT_IN_STORAGE`` the storage engine cannot see the gold note at all: a structural zero,
-  reported apart so it is not mistaken for a retrieval failure (VaultIndex and FileStorageEngine
-  scan different populations, VAULT_STATE.md section 4).
+- ``GOLD_NOT_IN_STORAGE``     the storage engine cannot see the gold note at all: a structural zero
+  (VaultIndex and FileStorageEngine scan different populations, VAULT_STATE.md section 4);
+- ``CANDIDATE_LIMIT_CUT``     scored, but cut by the candidate limit (``candidate_trace.cut_candidates``);
+- ``GOLD_NOT_AGENT_ELIGIBLE`` never a candidate because the agent policy excludes it: lifecycle outside
+  the controller's ``AGENT_LIFECYCLE_FLOOR`` (ACTIVE, REVIEW) or flagged quarantined. A policy
+  exclusion, not a retrieval failure;
+- ``NEVER_CANDIDATE``         policy-eligible, never among the candidates;
+- ``PAGINATION_CUT``          a candidate with **fused** rank > k;
+- ``REORDERED_OUT``           fused rank <= k, but the served page (reordered after fusion by the
+  classifier boost and the scorer) did not include it.
+
+Separately, every case records ``gold_readable``: whether ``memory_get`` would hand the agent a
+gold note (``vault_cli.eligible_for_agent``, fail closed). A gold note can be ranked and served by
+id while ``memory_get`` refuses it, e.g. when ``cognitive_read`` exceeds its context budget.
+
+Ranks are fused ranks: the served page is reordered after fusion, so PAGINATION_CUT and
+REORDERED_OUT describe the fused order, not the exact position where the page was cut.
 
 Abstain cases are ``ABSTAIN_UNMEASURABLE``: there is no abstention signal to score yet.
 The output carries case ids, classes and ranks; never the query text or note content.
@@ -26,6 +37,27 @@ from typing import Any, Dict, List, Optional, Tuple
 from memory_controller.authorizer import Principal
 
 AGENT_PAGE_SIZE = 5
+MAX_K = 20  # interfaces/memory_access.MAX_LIMIT: an agent cannot ask for a larger page
+
+
+def agent_policy_eligible(controller, note_id: str) -> bool:
+    """Whether search may consider the note for an agent: lifecycle floor and quarantine only."""
+    from interfaces.memory_access import _is_quarantined
+    from memory_controller.controller import AGENT_LIFECYCLE_FLOOR
+
+    try:
+        note = controller.storage.get(note_id) or {}
+    except Exception:  # noqa: BLE001 - unreadable from storage: not eligible (fail closed)
+        return False
+    floor = {lc.value.upper() for lc in AGENT_LIFECYCLE_FLOOR}
+    return str(note.get("lifecycle") or "").upper() in floor and not _is_quarantined(note)
+
+
+def agent_readable(controller, note_id: str) -> bool:
+    """Whether memory_get would serve the note (``interfaces/vault_cli.eligible_for_agent``); fails closed."""
+    from interfaces.vault_cli import eligible_for_agent
+
+    return eligible_for_agent(controller, note_id)
 
 
 class BenchmarkIntegrityError(ValueError):
@@ -85,7 +117,9 @@ def _run_case(controller, case: Dict[str, Any], k: int) -> Dict[str, Any]:
     gold = [str(g) for g in case.get("gold_relevant_notes") or []]
     pack = controller.search(Principal.AI_AGENT, case["query"], page_size=k)
     served = [r.get("id") for r in (pack.get("results") or [])[:k] if isinstance(r, dict)]
-    fused = (pack.get("candidate_trace") or {}).get("fused_ranking") or []
+    trace = pack.get("candidate_trace") or {}
+    fused = trace.get("fused_ranking") or []
+    cut = {str(c.get("id")) for c in trace.get("cut_candidates") or [] if isinstance(c, dict)}
     fused_rank = {}
     for pos, entry in enumerate(fused, start=1):
         if isinstance(entry, dict) and entry.get("id") is not None:
@@ -93,23 +127,30 @@ def _run_case(controller, case: Dict[str, Any], k: int) -> Dict[str, Any]:
     page_ranks = [served.index(g) + 1 for g in gold if g in served]
     gold_ranks = [fused_rank[g] for g in gold if g in fused_rank]
     best_fused = min(gold_ranks) if gold_ranks else None
+    stored = [g for g in gold if _in_storage(controller, g)]
+    row["gold_readable"] = any(agent_readable(controller, g) for g in stored)
     if page_ranks:
         return {**row, "hit": 1, "rank_in_page": min(page_ranks), "fused_rank": best_fused, "miss_class": None}
-    if not any(_in_storage(controller, g) for g in gold):
+    if not stored:
         miss = "GOLD_NOT_IN_STORAGE"
+    elif best_fused is None and any(g in cut for g in stored):
+        miss = "CANDIDATE_LIMIT_CUT"
+    elif best_fused is None and not any(agent_policy_eligible(controller, g) for g in stored):
+        miss = "GOLD_NOT_AGENT_ELIGIBLE"
     elif best_fused is None:
         miss = "NEVER_CANDIDATE"
     elif best_fused > k:
         miss = "PAGINATION_CUT"
     else:
-        miss = "FILTERED"
+        miss = "REORDERED_OUT"
     return {**row, "hit": 0, "rank_in_page": None, "fused_rank": best_fused, "miss_class": miss}
 
 
 def evaluate(controller, cases: List[Dict[str, Any]], k: int = AGENT_PAGE_SIZE) -> Dict[str, Any]:
+    k = max(1, min(int(k), MAX_K))
     rows = [_run_case(controller, case, k) for case in cases]
     measurable = [r for r in rows if r["hit"] is not None]
-    scorable = [r for r in measurable if r["miss_class"] != "GOLD_NOT_IN_STORAGE"]
+    scorable = [r for r in measurable if r["miss_class"] not in {"GOLD_NOT_IN_STORAGE", "GOLD_NOT_AGENT_ELIGIBLE"}]
     hits = sum(r["hit"] for r in measurable)
     mrr = (sum(1.0 / r["rank_in_page"] for r in measurable if r["rank_in_page"]) / len(measurable)) if measurable else None
     by_class: Dict[str, Dict[str, Any]] = {}
@@ -128,6 +169,7 @@ def evaluate(controller, cases: List[Dict[str, Any]], k: int = AGENT_PAGE_SIZE) 
         "hit_rate_scorable": (sum(r["hit"] for r in scorable) / len(scorable)) if scorable else None,
         "mrr_at_k": mrr,
         "miss_classes": dict(Counter(r["miss_class"] for r in rows if r["miss_class"])),
+        "gold_unreadable_by_memory_get": sum(1 for r in measurable if r.get("gold_readable") is False),
         "by_class": by_class,
     }
     return {"cases": rows, "summary": summary}

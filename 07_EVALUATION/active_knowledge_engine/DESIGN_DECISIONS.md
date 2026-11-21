@@ -57,15 +57,39 @@ Decisions taken under the same standing instruction:
 ### Baseline (real vault, 2026-11-21)
 
 `baselines/heldout_v2_ai_agent_k5.json`: **2/29 hits at k=5** (6.9%, Wilson 95% CI 1.9-22.0%), MRR@5 0.026.
-Misses: 17 `NEVER_CANDIDATE`, 10 `PAGINATION_CUT`, 0 `FILTERED`, 0 `GOLD_NOT_IN_STORAGE` (all 29 gold notes are in storage).
-By class: exact identifier 1/5, synonym 1/4, paraphrase 0/4, lexical trap 0/4, one-hop graph 0/12.
-Corroborated by R016 graph-off context recall, 2/29 (HUMAN, page 10).
+
+| Miss class | Cases | Meaning |
+|---|---:|---|
+| `GOLD_NOT_AGENT_ELIGIBLE` | 13 | never a candidate because policy excludes the gold for an agent: 11 notes carry **no `lifecycle` at all** (type `core`), 2 carry `lifecycle: raw` |
+| `PAGINATION_CUT` | 10 | candidate, fused rank > 5 |
+| `CANDIDATE_LIMIT_CUT` | 3 | scored, cut by the 200-candidate limit |
+| `NEVER_CANDIDATE` | 1 | eligible, never a candidate |
+| `ABSTAIN_UNMEASURABLE` | 3 | no abstention signal exists |
+
+Of the 16 cases whose gold an agent may be served, 2 are hits (12.5%).
+Separately, **`memory_get` refuses 20 of the 29 gold notes**, 7 of them policy-eligible. Two ACTIVE, verified
+gold notes (cases H03, H27) fail with `BudgetExceededError: Context usage 925351 exceeds hard limit 32768
+bytes` inside `cognitive_read`. An agent can see their id in `memory_search` but cannot read them. This is
+a production read-path defect, recorded and not changed here.
 
 What this says, and what it does not:
-- The agent operating point retrieves almost nothing from held-out v2. The dominant loss here is
-  `NEVER_CANDIDATE` (17/29), not `PAGINATION_CUT` (10/29). The loss funnel's 71.6% `PAGINATION_CUT`
-  was measured on benchmark v3 (130 cases): a different population, so it is not contradicted.
-- R016 reports candidate recall 0.69 with a controller built on `VaultIndex`; the production agent path
-  (FileStorageEngine, no index) finds 12/29 as candidates. Why the two candidate generators differ is the
-  first open question for Loop B; nothing is changed here.
+- At the agent operating point the dominant loss on held-out v2 is policy, not ranking: 13/29 gold notes
+  are notes an agent is never allowed to see (no lifecycle, or raw). Whether those notes should get a
+  lifecycle, or whether the benchmark should not use them as gold, is an owner decision.
+- Among eligible gold, the loss is ranking (10 `PAGINATION_CUT` + 3 `CANDIDATE_LIMIT_CUT`). The loss
+  funnel's 71.6% `PAGINATION_CUT` was measured on benchmark v3 (130 cases), another population.
+- R016 reports the same count (2/29 graph-off context recall) but on **different cases** (exact 1/5 +
+  one-hop 1/12 there; exact H01 + synonym H13 here) and at **another operating point**: HUMAN, whose
+  owner historical view searches the whole non-RAW corpus, page 10, `RANKING_ARM_BASELINE` pinned.
+  Its candidate recall 0.69 therefore mixes principal, candidate pool and ranking arm, and is not
+  comparable with the agent path. Equal counts are not corroboration.
 - 29 measurable cases cannot resolve small effects: a change must flip several cases to be distinguishable.
+
+### Review round 1 (Milestone 2)
+
+`vault-reviewer`: CHANGES_REQUIRED.
+- 1 HIGH, reproduced: the job id ignored code and controller settings, so a candidate run could get the baseline record back. Fixed: the config now includes `code_fingerprint`, the controller settings and the sidecar hash.
+- 2 MEDIUM: the "corroborated by R016" wording, and the R016 confounder left unnamed. Both are reworded above.
+- 2 LOW: the fused-order miss classes, and `k` not clamped. Fixed with `REORDERED_OUT` / `CANDIDATE_LIMIT_CUT` / `GOLD_NOT_AGENT_ELIGIBLE`, and `k` capped at 20 like `memory_access`.
+
+All fixes were written test-first.

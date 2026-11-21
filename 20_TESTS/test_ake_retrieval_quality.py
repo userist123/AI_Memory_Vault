@@ -118,7 +118,7 @@ def test_evaluate_classifies_hits_and_misses(vault_and_ids):
     assert s["n"] == 4 and s["n_measurable"] == 3 and s["hits"] == 1 + rows["C2"]["hit"]
     assert s["principal"] == "AI_AGENT" and s["k"] == 5
     assert s["miss_classes"]["GOLD_NOT_IN_STORAGE"] == 1
-    assert s["n_scorable"] == 2  # gold visible to storage
+    assert s["n_scorable"] == 2  # gold visible to storage and agent-eligible
     assert s["hit_rate_ci95"][0] is not None
 
 
@@ -136,12 +136,16 @@ class _ScriptedController:
                 "candidate_trace": {"fused_ranking": [{"rank": n, "id": i} for n, i in enumerate(self._fused, 1)]}}
 
 
-def test_miss_classes_with_a_controlled_search():
+def test_miss_classes_with_a_controlled_search(monkeypatch):
+    import active_knowledge_engine.retrieval_quality as rq
+
+    monkeypatch.setattr(rq, "agent_policy_eligible", lambda controller, nid: True)
+    monkeypatch.setattr(rq, "agent_readable", lambda controller, nid: True)
     case = lambda gold: {"id": gold, "class": "c", "query": "q", "gold_relevant_notes": [gold], "abstain": False}
     ctl = _ScriptedController(served=["a", "b"], fused=["a", "f", "b", "x", "y", "late"], known={"a", "b", "f", "late", "never"})
     rows = {r["id"]: r for r in evaluate(ctl, [case("a"), case("f"), case("late"), case("never"), case("ghost")], k=5)["cases"]}
     assert rows["a"]["hit"] == 1 and rows["a"]["rank_in_page"] == 1
-    assert rows["f"]["miss_class"] == "FILTERED" and rows["f"]["fused_rank"] == 2
+    assert rows["f"]["miss_class"] == "REORDERED_OUT" and rows["f"]["fused_rank"] == 2
     assert rows["late"]["miss_class"] == "PAGINATION_CUT" and rows["late"]["fused_rank"] == 6
     assert rows["never"]["miss_class"] == "NEVER_CANDIDATE"
     assert rows["ghost"]["miss_class"] == "GOLD_NOT_IN_STORAGE"
@@ -261,3 +265,99 @@ def test_cli_compare_exit_codes(tmp_path):
     other = tmp_path / "o.json"
     other.write_text(json.dumps(_record({"1": 1}, k=10)), encoding="utf-8")
     assert run(base, other).returncode == 2
+
+
+# --- review round 1 (Milestone 2) -------------------------------------------------------------
+
+def test_controller_settings_are_part_of_the_job(tmp_path, vault_and_ids):
+    """A candidate run (other ranking arm, other code) must never get the baseline record back."""
+    vault, ids = vault_and_ids
+    bench = _freeze(tmp_path / "bench.json", _cases(ids))
+    out = vault / "08_OBSERVABILITY" / "ake"
+    first = AKEShadowRunner(_controller(vault), output_dir=out, vault_root=vault, benchmark_path=bench).run(trigger="manual")
+    other = _controller(vault)
+    other.ranking_arm = "some_other_arm"
+    second = AKEShadowRunner(other, output_dir=out, vault_root=vault, benchmark_path=bench).run(trigger="manual")
+    assert second["job_id"] != first["job_id"] and second["reused_existing_record"] is False
+    assert first["config"]["code_fingerprint"]["sha256"]
+    assert first["config"]["controller"]["ranking_arm"] != second["config"]["controller"]["ranking_arm"]
+
+
+def test_code_fingerprint_changes_with_the_controller_source(tmp_path, vault_and_ids, monkeypatch):
+    import active_knowledge_engine.runner as runner_mod
+
+    vault, ids = vault_and_ids
+    runner = AKEShadowRunner(_controller(vault), output_dir=vault / "08_OBSERVABILITY" / "ake", vault_root=vault)
+    a = runner_mod.code_fingerprint(runner.controller)
+    fake_src = tmp_path / "patched_controller.py"
+    fake_src.write_text("# changed\n", encoding="utf-8")
+    monkeypatch.setattr(runner_mod.inspect, "getsourcefile", lambda obj: str(fake_src))
+    b = runner_mod.code_fingerprint(runner.controller)
+    assert a["sha256"] != b["sha256"]
+
+
+def test_sidecar_is_part_of_the_job(tmp_path, vault_and_ids):
+    vault, ids = vault_and_ids
+    bench = _freeze(tmp_path / "bench.json", _cases(ids))
+    out = vault / "08_OBSERVABILITY" / "ake"
+    first = AKEShadowRunner(_controller(vault), output_dir=out, vault_root=vault, benchmark_path=bench).run(trigger="manual")
+    bench.with_suffix(".json.sha256").write_text("0" * 64 + "\n", encoding="utf-8")
+    second = AKEShadowRunner(_controller(vault), output_dir=out, vault_root=vault, benchmark_path=bench).run(trigger="manual")
+    assert second["job_id"] != first["job_id"]
+    assert second["status"] == JobStatus.FAILED.value
+
+
+def test_k_is_clamped_like_memory_search():
+    ctl = _ScriptedController(served=["a"], fused=["a"], known={"a"})
+    case = {"id": "a", "class": "c", "query": "q", "gold_relevant_notes": ["a"], "abstain": False}
+    assert evaluate(ctl, [case], k=50)["summary"]["k"] == 20
+    assert set(ctl.calls) == {("AI_AGENT", 20)}
+
+
+def test_policy_exclusion_and_candidate_limit_are_their_own_classes(monkeypatch):
+    import active_knowledge_engine.retrieval_quality as rq
+
+    case = lambda gold: {"id": gold, "class": "c", "query": "q", "gold_relevant_notes": [gold], "abstain": False}
+    ctl = _ScriptedController(served=["a"], fused=["a"], known={"a", "nolife", "cut", "never"})
+    ctl.cut = [{"id": "cut"}]
+    original = ctl.search
+
+    def search(principal, query, page_size=10, **kw):
+        pack = original(principal, query, page_size=page_size)
+        pack["candidate_trace"]["cut_candidates"] = ctl.cut
+        return pack
+
+    ctl.search = search
+    monkeypatch.setattr(rq, "agent_policy_eligible", lambda controller, nid: nid != "nolife")
+    monkeypatch.setattr(rq, "agent_readable", lambda controller, nid: nid != "nolife")
+    rows = {r["id"]: r for r in evaluate(ctl, [case("nolife"), case("cut"), case("never")], k=5)["cases"]}
+    assert rows["nolife"]["miss_class"] == "GOLD_NOT_AGENT_ELIGIBLE"
+    assert rows["cut"]["miss_class"] == "CANDIDATE_LIMIT_CUT"
+    assert rows["never"]["miss_class"] == "NEVER_CANDIDATE"
+
+
+def test_real_eligibility_predicate_rejects_a_note_without_lifecycle(tmp_path):
+    from memory_vault_fixture import make_vault
+
+    vault = make_vault(tmp_path)
+    nid = str(uuid.uuid4())
+    (vault / "01_ARCHITECTURE" / "knowledge" / "core.md").write_text(
+        f"---\nid: {nid}\ntype: core\ncategory: x\n---\n# core\n\nzebra protocol core body\n", encoding="utf-8")
+    ctl = _controller(vault)
+    case = {"id": "Z", "class": "c", "query": "zebra protocol core", "gold_relevant_notes": [nid], "abstain": False}
+    row = evaluate(ctl, [case], k=5)["cases"][0]
+    assert row["hit"] == 0 and row["miss_class"] == "GOLD_NOT_AGENT_ELIGIBLE"
+
+
+def test_a_ranked_gold_is_classed_by_rank_even_if_memory_get_refuses_it(monkeypatch):
+    """Readability is reported per case, it never relabels a candidate as a policy exclusion."""
+    import active_knowledge_engine.retrieval_quality as rq
+
+    monkeypatch.setattr(rq, "agent_policy_eligible", lambda controller, nid: True)
+    monkeypatch.setattr(rq, "agent_readable", lambda controller, nid: False)
+    ctl = _ScriptedController(served=["a"], fused=["a", "b", "c", "d", "e", "late"], known={"a", "late"})
+    case = {"id": "late", "class": "c", "query": "q", "gold_relevant_notes": ["late"], "abstain": False}
+    result = evaluate(ctl, [case], k=5)
+    row = result["cases"][0]
+    assert row["miss_class"] == "PAGINATION_CUT" and row["gold_readable"] is False
+    assert result["summary"]["gold_unreadable_by_memory_get"] == 1
